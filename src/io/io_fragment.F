@@ -82,8 +82,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  !
  if (present(ierr)) ierr=ierr_
  !
- ! io_action must be saved otherwise any io_disconnect call would
- ! call io_reset (like in ioWF) 
+ ! io_action must be saved otherwise any io_disconnect call would call io_reset (like in ioWF) 
  !
  if (close_is_on_save) io_resetable(ID)=.true.
  !

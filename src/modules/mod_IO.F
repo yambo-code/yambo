@@ -43,24 +43,36 @@ module IO_m
  !
  logical :: IO_write
  logical :: IO_read
- logical :: IO_write_not_fragmented_DB
- logical :: Fragmented_IO
- logical :: Fragmented_IO_save
  !
  ! Global DB I/O control string
  !
  character(lchlen) :: DBs_IO_control_string = "none"
- logical           :: io_DIP     =.TRUE.
- logical           :: io_RESPONSE=.TRUE.
- logical           :: io_WF      =.TRUE.
- logical           :: io_HF      =.TRUE.
- logical           :: io_COLLs   =.TRUE.
- logical           :: io_J       =.TRUE.
- logical           :: io_CARRIERs    =.TRUE.
- logical           :: io_GF      =.TRUE.
- logical           :: io_SC      =.TRUE.
- logical           :: io_BS_K    =.TRUE.
- logical           :: io_SCREEN  =.TRUE.
+ logical           :: io_DIP
+ logical           :: io_RESPONSE
+ logical           :: io_HF
+ logical           :: io_COLLs
+ logical           :: io_J
+ logical           :: io_CARRIERs
+ logical           :: io_GF
+ logical           :: io_SC
+ logical           :: io_BS_K
+ logical           :: io_SCREEN
+ !
+ character(lchlen) :: DBs_FRAG_control_string = "none"
+ logical           :: frag_DIP
+ logical           :: frag_RESPONSE
+ logical           :: frag_WF
+ logical           :: frag_QINDX
+ logical           :: frag_HF
+ logical           :: frag_COLLs
+ logical           :: frag_J
+ logical           :: frag_CARRIERs
+ logical           :: frag_GF
+ logical           :: frag_SC
+ logical           :: frag_RT
+ logical           :: frag_ELPH
+ logical           :: frag_BS_K
+ logical           :: frag_SCREEN
  !
  ! Actions
  !
@@ -156,10 +168,9 @@ module IO_m
    end subroutine
    !
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
-&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,USE_SYSTEM_FRAGMENTATION)
+&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE)
      integer               :: ID
-     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,&
-&                             USE_SYSTEM_FRAGMENTATION
+     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE
      character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
    end function
    !
@@ -532,7 +543,6 @@ module IO_m
        io_sec(ID,:)=0
        io_sec(ID,:size(SEC))=SEC
      endif
-     if (write_is_on(ID)) io_fragmented(ID)=Fragmented_IO
      !
 #if defined _NETCDF_IO
      if (present(NETCDF)) io_netcdf_support(ID)=NETCDF

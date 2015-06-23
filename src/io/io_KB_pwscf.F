@@ -31,7 +31,7 @@ integer function io_KB_pwscf(ID)
 &                           n_atoms_species_max
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,io_fragmented,&
-&                           read_is_on,write_is_on,io_fragment
+&                           read_is_on,write_is_on,io_fragment,frag_WF
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_pwscf
@@ -44,11 +44,12 @@ integer function io_KB_pwscf(ID)
  !
  integer :: ik
  !
- !
  ik=maxval(io_sec(ID,:))-1
  !
  io_KB_pwscf=io_connect(desc="kb_pp_pwscf",type=0,ID=ID)
  if (io_KB_pwscf/=0) goto 1
+ !
+ if(write_is_on(ID)) io_fragmented(ID)=frag_WF
  !
  ! Dimensions
  !
@@ -114,7 +115,7 @@ integer function io_KB_pwscf(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
+ call io_fragment(ID,i_fragment=ik)
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP

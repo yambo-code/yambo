@@ -27,7 +27,7 @@ integer function io_ELPH(ID,what)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
-&                         io_mode,DUMP,ver_is_gt_or_eq,io_fragment
+&                         io_mode,DUMP,ver_is_gt_or_eq,io_fragment,io_fragmented,frag_ELPH
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
 &                         QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
@@ -54,7 +54,7 @@ integer function io_ELPH(ID,what)
  !
  !Work Space
  !
- integer                ::iq,im,ik,i1,i2,ierr,VAR_SZ_,i_qp,iq_mem
+ integer                ::iq,im,ik,i1,i2,ierr,VAR_SZ_,iq_mem
  real(SP), allocatable  ::elph_gkkp_disk(:,:,:),pol_vec_disk(:,:,:,:)
  character(schlen)      ::db_name
  !
@@ -65,6 +65,8 @@ integer function io_ELPH(ID,what)
  if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
  if (what=='gkkp_expanded')           db_name='elph_gkkp_expanded'
  if (what=='gFsq')                    db_name='elph_gFsq'
+ !
+ if(write_is_on(ID)) io_fragmented(ID)=frag_ELPH
  !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_ELPH/=0) goto 1

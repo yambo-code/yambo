@@ -93,7 +93,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _OPENMP
  use openmp,               ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
 #endif
- use IO_m,                 ONLY:DBs_IO_control_string
+ use IO_m,                 ONLY:DBs_IO_control_string,DBs_FRAG_control_string
  !
  implicit none
  type(initdefs)::defs
@@ -207,8 +207,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,WF,W,SC,BS)',&
-&                         DBs_IO_control_string,verb_level=V_io)
+ call it(defs,'DBsIOoff', &
+& '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,W,SC,BS)',&
+& DBs_IO_control_string,verb_level=V_io)
+ call it(defs,'DBsFRAGpm', &
+& '[IO] Space-separated list of +DB to be FRAG and -DB NOT to be FRAG. DB=(DIP,X,W,HF,COLLs,K,BS,QINDX)',&
+& DBs_FRAG_control_string,verb_level=V_io)
  !
  ! S_xc
  !

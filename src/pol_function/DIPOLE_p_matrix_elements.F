@@ -25,7 +25,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_P_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
+subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
  !
  use pars,          ONLY:SP,cZERO,cONE,pi
  use wrapper,       ONLY:M_by_V
@@ -98,7 +98,7 @@ subroutine Dipole_P_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
    !
    ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
    !
-   coeff=cmplx(real(i_spinor-1,SP),0._SP)
+   coeff=cmplx(i_spinor-1,0.,SP)
    call M_by_V('C',wf_ng,wf_dim,cONE,wf_xyz,wf_ng,WF%c(:,icfft(i_spinor)),1,coeff,rho(:wf_dim),1)
    !
  enddo

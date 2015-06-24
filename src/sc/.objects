@@ -1,6 +1,6 @@
 MAGNETIC_objects = 
 #if defined _MAGNETIC
-MAGNETIC_objects = MAG_Hamiltonian.o MAG_common_build_A.o MAG_A_phase.o \
+MAGNETIC_objects = MAG_initial_check.o MAG_Hamiltonian.o MAG_common_build_A.o MAG_A_phase.o \
                    MAG_pseudo_nl.o MAG_H_pseudo.o
 #endif
 objs =	SC_driver.o SC_start_and_restart.o SC_Energy.o \

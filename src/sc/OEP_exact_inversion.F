@@ -160,7 +160,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
    end do
  end do 
  deallocate(rhotw_sum,rhotw_sum_TR,rho_tw_rs)
- call X_alloc('DIP_q_dot_iR')
+ call X_alloc('DIP_projected')
  !
  ! Add c.c. contribution
  !

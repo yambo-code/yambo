@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,31 +23,35 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics,l_sc_run
+ ! Presently there exist two gauges: (i ) the length which uses <r>
+ !                                   (ii) the velocity which uses <p>
+ !
+ ! For each of the two gauges there exist three approaches of computing the dipoles
+ ! 1) transverse approach   --> directly computes <p> and then <r>=<p>/DeltaE
+ ! 2) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
+ !                              and then <p> as <r>*DeltaE
+ ! 3) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
+ !                              takes into account the phases. symmetries not yet implemented 
+ !
+ use drivers,        ONLY:l_optics
  use LIVE_t,         ONLY:is_section_time_short
- use interfaces,     ONLY:WF_load
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning,grid_path
- use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp,k_map
- use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,Dipole_covariant,&
-&                         DIP_cov,l_rotate_dipoles,Vnl_commutator_warning,         &
-&                         Dipole_uses_shifted_grids,DIP_P,DIP_S
+ use electrons,      ONLY:levels,n_sp_pol
+ use R_lattice,      ONLY:bz_samp
+ use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,&
+&                         Vnl_commutator_warning,use_direct_approach,&
+&                         use_shifted_grids_approach,DIP_P,force_p_direct_approach
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
 &                         IO_and_Messaging_switch,io_DIP
- use wave_func,      ONLY:wf_ng,WF
+ use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,ncpu,&
 &                         PAR_COM_q_for_Xo
-#if defined _SC || defined _KERR
- use X_m,            ONLY:DIP_P
-#endif
+ use parser_m,       ONLY:parser
 #if defined _SC
  use com,            ONLY:secnm
- use drivers,        ONLY:l_real_time
+ use drivers,        ONLY:l_real_time,l_sc_run
  use X_m,            ONLY:P_square
-#endif
-#if defined _KERR
- use X_m,            ONLY:global_gauge
 #endif
  !
  implicit none
@@ -59,87 +63,39 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer           :: ik,bands_to_load(2)
- logical           :: use_trans_gauge
+ integer           :: ik,i_sp_pol
+ logical           :: use_dipole_transverse
  !
  ! I/O
  !
- integer           :: ID,io_err(3)
- integer, external :: io_DIPOLES,io_Overlaps
+ integer           :: ID,io_err
+ integer, external :: io_DIPOLES
 #if defined _SC
  logical           :: l_evaluating_em1s 
- integer, external :: io_P_and_P2
 #endif
  !
- ! Transitions ordering
+ ! Setup logicals and other variables
+ !====================================
  !
- Dipole_bands_ordered=.true.
+ call parser('DipoleCov',use_covariant_approach)
+ call parser('PDirect'  ,force_p_direct_approach)
  !
- ! NOTE that in case we will enter here during a SC run to update the screened interaction
- ! all transitions must be considered in order to rotate <P>.
- !
- ! in real-time simulations P and P^2 are ALWAYS calculated => no band ordering
- !
-#if defined _SC 
- !
- l_evaluating_em1s=index(secnm,"Dielectric")/=0
- !
- if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.FALSE.
- !
-#endif
- !
-#if defined _YPP_RT
- !
- Dipole_bands_ordered=.false.
- !
-#endif
- !
- Dipole_uses_shifted_grids=trim(grid_path)/='none'
- !
- ! Check first if ostnts DB is already done
+ use_shifted_grids_approach = trim(grid_path)/='none'
+ use_direct_approach        = (.not.use_covariant_approach).and.(.not.use_shifted_grids_approach)
  !
  X%ngostnts=wf_ng
  !
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_err(1)=io_DIPOLES(X,Xen,ID) 
- !
- if (io_err(1)==0) then
-   !
-   do ik=1,Xk%nibz
-     !
-     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
-     !
-     call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+ik/),ID=ID)
-     io_err(1)=io_DIPOLES(X,Xen,ID)
-     !
-   enddo
-   !
- endif
- !
- io_err(2:3)=0
- !
 #if defined _SC 
- !
- if(l_sc_run .or. l_real_time) then
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err(2)=io_P_and_P2(X,Xen,ID)
- endif
- !
+ l_evaluating_em1s=index(secnm,"Dielectric")/=0
 #endif
  !
- !GPL_EXCLUDE_START
+ ! Check if Dipoles DBs exist and are ok
+ !=======================================
+ call Dipoles_IO('read ')
  !
- if(Dipole_covariant) then
-    call k_map_nearest_by_dir(Xk,k_map)
-    call X_alloc('DIP_cov',(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
-    DIP_cov=(0._SP,0._SP)
-    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-    io_err(3)=io_Overlaps(X,Xen,ID)
- endif
- !
- !GPL_EXCLUDE_END
- !
- if (any(io_err/=0)) then
+ ! In case dipoles were not found/ok then I need to compute them
+ !==============================================================
+ if (io_err/=0) then
    !
    ! I/O privilegies: temporarly switch it on
    !
@@ -147,84 +103,35 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! OptGrad allocation...
    !
-   ! When using internal SC potentials oscilators must be rotated
-   ! in the new basis. So all transitions are needed
-   !
-   if (Dipole_bands_ordered) then
-     call X_alloc('DIP_iR',(/3,X%ib(2),Xen%nbm,PAR_DIPk_nibz/))
-   else
-     call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
-   endif
-   DIP_iR=(0._SP,0._SP)
-   !
-#if defined _KERR
-   if (trim(global_gauge)=='velocity') then
-     call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
-     DIP_P=(0._SP,0._SP)
-   endif
-#endif
-#if defined _SC
-   if (l_sc_run.or.l_real_time) then
-     call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
-     call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_DIPk_nibz/))
-     DIP_P=(0._SP,0._SP)
-     P_square=(0._SP,0._SP)
-   endif
-#endif
-   !
-   bands_to_load=X%ib
-   !
-   ! GPL_EXCLUDE_START
-   !
-   if (Dipole_covariant) then
-     bands_to_load(1)=1
-     ! Notice that DIP_S is defined in the BZ       
-     call X_alloc('DIP_S',(/X%ib(2),X%ib(2),3,Xk%nbz/))
-     DIP_S=(0._SP,0._SP)
-   endif
-   !
-   ! GPL_EXCLUDE_END
-   !   
-   ! WF load 
+   call Dipoles_alloc()
    !
    ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
    ! there will be other WF_load calls using the present WF distribution. 
    !
-   call WF_load(WF,0,1,bands_to_load,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&               force_WFo=(l_sc_run.or.l_rotate_dipoles),keep_states_to_load=.TRUE.)
-   !
-   use_trans_gauge = .true.
-   !
    ! GPL_EXCLUDE_START 
    !
-   ! Attempt calculation using shifted grids if requested
+   ! Using shifted grids; supporting fallback to direct approach
    !
-   if (Dipole_uses_shifted_grids) then
-     !
-     ! Use shifted grids, supporting fallback to transverse gauge
-     !
-     call DIPOLE_shifted_grids(Xen,Xk,X,use_trans_gauge)
-     !
-     if (use_trans_gauge) call warning('Reverting to transverse gauge')
-     if (use_trans_gauge) Dipole_uses_shifted_grids=.FALSE.
-     !
-   endif
+   if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,X)
    !
-   ! Fallback to transverse
+   ! Using covariant derivatives; supporting fallback to direct approach
+   !
+   if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
    !
    ! GPL_EXCLUDE_END 
    !
-   if (use_trans_gauge)  call DIPOLE_transverse(Xen,Xk,X)
+   ! Using the direct approach, i.e. computing <P>
    !
-   ! GPL_EXCLUDE_START
+   force_p_direct_approach=force_p_direct_approach.and.(.not.use_direct_approach)
+   use_dipole_transverse  =use_direct_approach  .or.force_p_direct_approach
+#if defined _SC
+   use_dipole_transverse  =use_dipole_transverse.or.l_sc_run.or.l_real_time
+#endif
+   if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
    !
-   if (Dipole_covariant) call DIPOLE_overlaps(Xen,Xk,X)
-   !
-   ! GPL_EXCLUDE_END
-   !
-   ! Free any loaded WFs
-   !
-   call WF_free(WF)
+#if defined _SC
+   ! if(.not.l_sc_run.and.l_rotate_dipoles) call DIPOLE_rotate(SC_R,Xen,Xk,X)
+#endif
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
@@ -235,58 +142,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    endif
 #endif
    !
-   if (master_cpu) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err(1)=io_DIPOLES(X,Xen,ID)
-#if defined _SC 
-     if(l_sc_run .or. l_real_time) then
-       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-       io_err(2)=io_P_and_P2(X,Xen,ID)
-     endif
-#endif
-     !
-     ! GPL_EXCLUDE_START
-     !
-     if(Dipole_covariant) then
-       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-       io_err(3)=io_Overlaps(X,Xen,ID)
-     endif
-     !
-     ! GPL_EXCLUDE_END
-     !
-   endif
+   call Dipoles_IO('write')
    !
-   do ik=1,Xk%nibz
-     !
-     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
-     if (.not. (PAR_COM_k_for_P%CPU_id==0.or.PAR_COM_k_for_P%n_CPU==ncpu) ) cycle
-     ! 
-     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
-     io_err(1)=io_DIPOLES(X,Xen,ID)
-     !
-   enddo
+   ! I/O privilegies: RESTORE to previous values
    !
-#if defined _SC 
-   if(l_sc_run .or. l_real_time) then
-     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
-     io_err(2)=io_P_and_P2(X,Xen,ID)
-   endif
-#endif
+   call IO_and_Messaging_switch("RESTORE")
    !
-   ! GPL_EXCLUDE_START
-   !
-   if(Dipole_covariant) then
-     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
-     io_err(3)=io_Overlaps(X,Xen,ID)
-   endif
-   !
-   ! GPL_EXCLUDE_END
-   !
- end if
- !
- ! I/O privilegies: RESTORE to previous values
- !
- call IO_and_Messaging_switch("RESTORE")
+ endif
  !
 #if defined _SC
  if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
@@ -294,31 +156,77 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Warn about missing [Vnl,r] commutator
  !
- if (.not.X%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics) then
+ if (.not.X%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics.and.use_dipole_transverse) then
    call warning(' Missing non-local pseudopotential contribution')
    Vnl_commutator_warning=.TRUE.
  endif
  !
- ! GPL_EXCLUDE_START
- !
- if(Dipole_covariant) call DIPOLE_build_covariants(Xen,Xk,X)
- !
- ! GPL_EXCLUDE_END
- !
- call DIPOLE_dip_dot_field(Xen,Xk,X,field_dir)
+ ! Finally project the dipoles along q
+ !=====================================
+ call DIPOLE_project_along_q(Xen,Xk,X,field_dir)
  !
  ! Clean up
  !
  call X_alloc('DIP_iR') 
+ call X_alloc('DIP_P')
 #if defined _SC
- call X_alloc('DIP_P') 
  call X_alloc('P_square') 
 #endif
  !
- ! GPL_EXCLUDE_START
- !
- if(Dipole_covariant) call X_alloc('DIP_S DIP_cov')
- !
- ! GPL_EXCLUDE_END
- !
+ contains
+   !
+   subroutine Dipoles_IO(read_or_write)
+     !
+     character(5), intent(in) :: read_or_write
+     !
+     integer                  :: IO_ACTION
+     logical                  :: do_io,reading,writing
+     !
+     reading=trim(read_or_write)=="read"
+     writing=trim(read_or_write)=="write"
+     !
+     do_io  =master_cpu.or.reading
+     !
+     if(do_io) then
+       if(reading) IO_ACTION=OP_RD_CL
+       if(writing) IO_ACTION=OP_WR_CL
+       call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+       io_err=io_DIPOLES(X,Xen,ID)
+       !
+     endif
+     !
+     if (io_err==0) then
+       !
+       if(reading) IO_ACTION=OP_RD_CL
+       if(writing) IO_ACTION=OP_APP_WR_CL
+       !
+       do ik=1,Xk%nibz
+         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+         if (.not. (PAR_COM_k_for_P%CPU_id==0.or.PAR_COM_k_for_P%n_CPU==ncpu) .and. writing) cycle
+         do i_sp_pol=1,n_sp_pol
+           call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
+           io_err=io_DIPOLES(X,Xen,ID)
+        enddo
+       enddo
+     endif
+     !
+   end subroutine Dipoles_IO
+   !
+   !
+   subroutine Dipoles_alloc()
+     !
+     call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
+     call X_alloc('DIP_P' ,(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
+     DIP_iR=cZERO
+     DIP_P=cZERO
+     !
+#if defined _SC
+     if (l_sc_run.or.l_real_time) then
+       call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_DIPk_nibz/))
+       P_square=cZERO
+     endif
+#endif
+     !
+   end subroutine Dipoles_alloc
+   !
 end subroutine

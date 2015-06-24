@@ -48,7 +48,7 @@ module optcut
   complex, allocatable      :: Fzgp(:,:)
 
   complex(SP), allocatable  :: DIP_iR_cut(:,:,:,:,:)
-  complex(SP), allocatable  :: DIP_q_dot_iR_cut(:,:,:,:)
+  complex(SP), allocatable  :: DIP_projected_cut(:,:,:,:)
   complex(SP), allocatable  :: cutmat(:,:)
 
   real(SP)                  :: dcf,dc ! fractional/cartesian cut length
@@ -59,7 +59,7 @@ module optcut
   save
   public  :: init_cutoff
   public  :: loptcut, dc  
-  public  :: DIP_iR_cut, DIP_q_dot_iR_cut
+  public  :: DIP_iR_cut, DIP_projected_cut
   public  :: setup_gvecaff, nG_limits, setup_optcut, PScut , PScut_slow, setup_cutmat
   public  :: end_optcut, setup_cutoff, print_cutoff, z0f, dcf
 

@@ -32,9 +32,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_DbGd,use_X_Drude,X_DbGd_nkpts,Dipole_bands_ordered,Chi_mode,&
-&                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
+&                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_direct_approach,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
-&                      X_terminator,X_en_comp,global_gauge,l_rotate_dipoles
+&                      X_terminator,X_en_comp,global_gauge,l_rotate_dipoles,use_covariant_approach,&
+&                      force_p_direct_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,&
@@ -377,7 +378,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  half_X_mat_only=.FALSE.
  Dipole_bands_ordered=.TRUE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
- Dipole_uses_shifted_grids=.FALSE.
+ use_shifted_grids_approach=.FALSE.
+ use_covariant_approach=.FALSE.
+ use_direct_approach=.TRUE.
+ force_p_direct_approach=.TRUE.
  use_X_DbGd=.FALSE.
  use_X_Drude=.FALSE.
  eps_2_alpha=1._SP

@@ -29,7 +29,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use D_lattice,       ONLY:alat
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
- use X_m,             ONLY:X_t,DIP_q_dot_iR
+ use X_m,             ONLY:X_t,DIP_projected
  use rt_ctl,          ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
  use IO_m,            ONLY:io_DIP
  use YPP,             ONLY:X_rt
@@ -135,11 +135,11 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        !
        if(i_v<SC_bands(1) .or. i_c>SC_bands(2) ) cycle
        !
-       f_cv=      (Xen%fo(i_v,i_kibz,i_spin)-  Xen%fo(i_c,i_kibz,i_spin))/spin_occ
-       delta_f_cv=(Xen%f(i_v,i_kibz,i_spin)-Xen%fo(i_v,i_kibz,i_spin)-Xen%f(i_c,i_kibz,i_spin)+Xen%fo(i_c,i_kibz,i_spin))/spin_occ
+       f_cv=      ( Xen%f(i_v,i_kibz,i_spin)- Xen%f(i_c,i_kibz,i_spin))/spin_occ
+       delta_f_cv=(Xen%df(i_v,i_kibz,i_spin)-Xen%df(i_c,i_kibz,i_spin))/spin_occ
        !
-       BS_R0(i_l)=BS_R0(i_l)-DIP_q_dot_iR(i_c,i_v,i_kbz,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
-       BS_R1(i_l)=BS_R1(i_l)-DIP_q_dot_iR(i_c,i_v,i_kbz,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
+       BS_R0(i_l)=BS_R0(i_l)-DIP_projected(i_c,i_v,i_kbz,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
+       BS_R1(i_l)=BS_R1(i_l)-DIP_projected(i_c,i_v,i_kbz,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
        !
      enddo 
      !
@@ -169,8 +169,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              !
              if(i_v==i_vp) cycle
              !
-             f_vpv=-Xen%fo(i_v,i_kibz,i_spin)*(Xen%f(i_vp,i_kibz,i_spin)-Xen%fo(i_vp,i_kibz,i_spin))/spin_occ/spin_occ
-             IP_R=-conjg(DIP_q_dot_iR(i_vp,i_v,i_kbz,i_spin))*sqrt(f_vpv)
+             f_vpv=-Xen%f(i_v,i_kibz,i_spin)*(Xen%df(i_vp,i_kibz,i_spin))/spin_occ/spin_occ
+             IP_R=-conjg(DIP_projected(i_vp,i_v,i_kbz,i_spin))*sqrt(f_vpv)
              IP_E=Xen%E(i_vp,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
              ! Photo-induced absorption and stimulated emission in v-v'
              X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
@@ -185,8 +185,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              !
              if(i_c==i_cp) cycle
              !
-             f_ccp= (Xen%f(i_cp,i_kibz,i_spin)-Xen%fo(i_cp,i_kibz,i_spin))*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
-             IP_R=-conjg(DIP_q_dot_iR(i_c,i_cp,i_kbz,i_spin))*sqrt(f_ccp)
+             f_ccp= (Xen%df(i_cp,i_kibz,i_spin))*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
+             IP_R=-conjg(DIP_projected(i_c,i_cp,i_kbz,i_spin))*sqrt(f_ccp)
              IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_cp,i_kibz,i_spin)
              X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
              X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)

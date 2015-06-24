@@ -53,9 +53,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
 #endif
-#if defined _KERR || defined _SC
  use X_m,           ONLY:global_gauge
-#endif
 #if defined _SC
  use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
@@ -263,6 +261,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! GPL_EXCLUDE_START
  !
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
+ call it(defs,'Gauge' ,  '[BSE/Xd] Gauge (length|velocity)',global_gauge)
  !
  ! GPL_EXCLUDE_END
  !
@@ -297,7 +296,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE: Kerr
  !
- call it(defs,'Gauge'       , '[BSE] Gauge (length|velocity). In metals length misses An-Hall',global_gauge)
  call it('f',defs,'EvalKerr', '[BSE] Compute the Kerr effect')
  call it('f',defs,'AnHall'  , '[BSE] Compute the anomalous Hall effect and if length add it to eps')
  !
@@ -478,11 +476,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Optics
  !
- call it(defs,'ShiftedPath',    '[Xd] Shifted grids path',grid_path,verb_level=V_resp)
  call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
  !
+ call it(defs,'ShiftedPath',    '[Xd] Shifted grids path',grid_path,verb_level=V_resp)
  call it('f',defs,'DipoleCov',  '[X] Use covariant dipoles',verb_level=V_resp)
+ call it('f',defs,'PDirect',    '[X] Directly compute <p> also when using other approaches for dipoles',verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !
@@ -518,7 +517,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
- call it(defs,'Gauge',     '[Xd,RT] Gauge type (length|velocity)',global_gauge,verb_level=V_real_time)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)

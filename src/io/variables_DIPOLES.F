@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,8 +24,9 @@
 integer function variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
  !
  use units,         ONLY:HA2EV
- use X_m,           ONLY:X_t,Dipole_bands_ordered,&
-&                        Dipole_uses_shifted_grids
+ use drivers,       ONLY:l_sc_run,l_real_time
+ use X_m,           ONLY:X_t,Dipole_bands_ordered,use_shifted_grids_approach,&
+&                        use_direct_approach,use_covariant_approach,force_p_direct_approach
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:q0_def_norm
  use IO_m,          ONLY:io_elemental,io_status
@@ -40,12 +41,11 @@ integer function variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
  !
  ! Work Space
  !
- integer :: sec_size
  integer :: db_nbf
  !
- sec_size=16
  !
- call io_elemental(ID,VAR="PARS",VAR_SZ=sec_size,MENU=0)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=14,MENU=0)
+ !
  call io_elemental(ID,DB_I1=db_nb,&
 &     VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/">=","<="/))
  call io_elemental(ID,UNIT=HA2EV,&
@@ -61,7 +61,13 @@ integer function variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
  call io_elemental(ID,&
 &     VAR=" Transitions ordered    :",L0=Dipole_bands_ordered,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
-&     VAR=" Using shifted grids    :",L0=Dipole_uses_shifted_grids,CHECK=.true.,OP=(/"=="/))
+&     VAR=" Using shifted grids    :",L0=use_shifted_grids_approach,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,&
+&     VAR=" Using covariant dipoles:",L0=use_covariant_approach,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,&
+&     VAR=" Using direct approach  :",L0=use_direct_approach,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,&
+&     VAR=" Direct p evaluation    :",L0=force_p_direct_approach,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
 &     VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
  !

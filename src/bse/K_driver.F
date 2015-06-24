@@ -30,7 +30,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use stderr,         ONLY:string_remove
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
- use X_m,            ONLY:X_t,X_duplicate,X_reset
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use BS,             ONLY:BS_bands,BS_q,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
@@ -47,9 +47,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use parser_m,       ONLY:parser
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
-#endif
-#if defined _SC || defined _KERR
- use X_m,            ONLY:global_gauge
 #endif
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
@@ -90,14 +87,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  call TDDFT_do_X_W_typs(-1,X_tddft,Xw)
  !
-#if defined _SC || defined _KERR
- !                 =============
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
    call warning(" Not a valid gauge in input. Switching to lenght gauge")
    global_gauge="length"
  endif
- !
-#endif
  !
  ! GPL_EXCLUDE_START
  !

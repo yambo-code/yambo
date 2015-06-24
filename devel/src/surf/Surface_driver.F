@@ -34,7 +34,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
   use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
   use X_m,                     only : X_t, X_epsilon, X_mat, X_alloc
   use frequency,               only : w_samp 
-  use optcut,                  only : loptcut, DIP_q_dot_iR_cut, setup_cutmat ! just for dealloc
+  use optcut,                  only : loptcut, DIP_projected_cut, setup_cutmat ! just for dealloc
   use vec_operate,             only : v_norm
   use parallel_m,              only : pp_redux_wait
   use wave_func,               only : wf
@@ -177,7 +177,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
       eps_i(iw,ipol) = X_epsilon(1,iw)
     enddo
     call X_alloc('OptOsc')  ! DIP_iq_dot_r
-    if(loptcut) deallocate(DIP_q_dot_iR_cut)
+    if(loptcut) deallocate(DIP_projected_cut)
      
   enddo    
   deallocate(X_epsilon)

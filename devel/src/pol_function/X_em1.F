@@ -41,7 +41,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load
  use QP_m,          ONLY:QP_n_W_freqs_redux
+ !
  implicit none
+ !
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
  type(X_t)    ::X
@@ -243,7 +245,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  if (io_RESPONSE) call X_alloc('X')
  !
- call X_alloc('DIP_q_dot_iR')
+ call X_alloc('DIP_projected')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function

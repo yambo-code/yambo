@@ -26,16 +26,16 @@
    use YPP
    use units,                   ONLY : HA2EV
    use com,                     ONLY : error, msg
-   use stderr,       ONLY: intc
+   use stderr,                  ONLY : intc
    use electrons,               ONLY : levels, n_sp_pol
    use matrix_operate,          ONLY : mat_r2c
- use vec_operate,         ONLY:c2a, sort
+   use vec_operate,             ONLY : c2a, sort
 !  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
    use IO_m
-   use optcut,                  ONLY : DIP_iR_cut, DIP_q_dot_iR_cut
+   use optcut,                  ONLY : DIP_iR_cut
    use R_lattice,               ONLY : nkibz, bz_samp, nXkibz
-   use X_m,           ONLY:X_t,DIP_iR,X_alloc
- use LIVE_t,              ONLY:live_timing_is_on
+   use X_m,                     ONLY : X_t,DIP_iR,X_alloc
+   use LIVE_t,                  ONLY : live_timing_is_on
 
    implicit none
    real(SP),allocatable :: DIP_iR_disk(:,:,:),DIP_iR_cut_disk(:,:,:)

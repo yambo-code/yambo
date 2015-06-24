@@ -44,7 +44,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
  use memory_m,      ONLY:mem_est
- use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
+ use X_m,           ONLY:X_t,X_poles,DIP_projected,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
 &                        X_terminator
  use IO_m,          ONLY:IO_and_Messaging_switch
@@ -278,7 +278,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
            enddo
          endif
        endif
-       isc%rhotw(1)=-conjg(DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin))
+       isc%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
      else
        isc%is=(/ic,ik,is,i_spin/)
        isc%os=(/iv,ikp,isp,i_spin/)
@@ -409,11 +409,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #if defined _SC
  !
  ! Divide the head by w^2 in case a velocity gauge is used
+ ! DAVIDE: shouldn't I divide also the wings by w ?
  !=========================================================
  !
  if (trim(global_gauge)=='velocity') then
    do iw=1,Xw%n_freqs
      Xo(1,1,iw)=Xo(1,1,iw)/real(Xw%p(iw))**2
+     !Xo(2:,1,iw)=Xo(2:,1,iw)/real(Xw%p(iw))
+     !Xo(1,2:,iw)=Xo(1,2:,iw)/real(Xw%p(iw))
    enddo
  endif
  !

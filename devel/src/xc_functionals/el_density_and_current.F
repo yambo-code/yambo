@@ -63,7 +63,7 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  ! Work Space 
  !
  integer    :: ib,ik,i_spin_wf,i_spin_E,ifft,rho_syms,i_s,i_r
- real(SP)   :: rho_no_sym(fft_size),f_occ,J_no_sym(fft_size,3)
+ real(SP)   :: rho_no_sym(fft_size),J_no_sym(fft_size,3)
  complex(SP):: WF_der(3,fft_size)
  logical    :: warn_done,l_si,l_rho,l_J
  !
@@ -107,12 +107,9 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
          cycle
        endif
        !
-       if (.not.associated(E%fo)) f_occ=E%f(ib,ik,i_spin_E)
-       if (     associated(E%fo)) f_occ=E%fo(ib,ik,i_spin_E)
-       !
        if (l_rho) then
          !
-         rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,ifft))**2.
+         rho_no_sym(:)=rho_no_sym(:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*abs(WF%c(:,ifft))**2.
          !
        endif
        !
@@ -121,7 +118,7 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
          call eval_Gradient(WF%c(:,ifft),WF_der)
          !
          do i_r=1,fft_size
-           J_no_sym(i_r,:)=J_no_sym(i_r,:)+f_occ*k%weights(ik)*aimag(WF%c(i_r,ifft)*WF_der(i_r,:))
+           J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*aimag(WF%c(i_r,ifft)*WF_der(i_r,:))
          enddo
          !
        endif

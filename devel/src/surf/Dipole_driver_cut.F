@@ -35,14 +35,16 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
  use wave_func,               ONLY : WF, wf_ng
- use optcut,                  ONLY : DIP_iR_cut, DIP_q_dot_iR_cut, ng_limits, setup_optcut, pscut
+ use optcut,                  ONLY : DIP_iR_cut, DIP_projected_cut, ng_limits, setup_optcut, pscut
  use drivers,                 ONLY : l_col_cut
  use interfaces,              ONLY : WF_load
 #if defined _SURF
  use ras_module,              ONLY : transloc, lras
 #endif
   use vec_operate,    ONLY:v_norm
+ !
  implicit none
+ !
  type(bz_samp),  intent(in)       :: Xk
  type(levels),   intent(in)       :: Xen
  type(X_t)                        :: X
@@ -50,7 +52,7 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
 !ws
  integer                          :: io_db, io_err, i_spin
  integer                          :: ik, i1, icfft, ivfft, ic, iv, is
-
+ !
  real(SP)                         :: omega, field_dir_rot(3)
  type(pp_indexes)                 :: px
  complex(SP)                      :: PS(3), spinor_avg(3)
@@ -59,16 +61,16 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
  logical                          :: use_trans_gauge
 !functions
  integer,  external               :: io_DIPOLES_cut
-
+ !
  call section('=','Optical oscillators with cut off')
-
- if (allocated(DIP_q_dot_iR_cut)) return
+ !
+ if (allocated(DIP_projected_cut)) return
  Dipole_bands_ordered=.true.
- 
+ !
  X%ngostnts = wf_ng
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=io_db)
  io_err = io_DIPOLES_cut(X, Xen, io_db)
-
+ !
  if (io_err.ne.0) then
    !
    ! WF loading (needed in both cases)
@@ -83,7 +85,7 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
    !
    allocate(DIP_iR_cut(3, X%ib(2), Xen%nbm, Xk%nibz, n_spin))
    call mem_est('DIP_iR_cut', (/product( (/3, X%ib(2), Xen%nbm, Xk%nibz, n_spin/) )/) )
-   DIP_iR_cut = (0.,0.)
+   DIP_iR_cut = cZERO
    !
    ! Cutoff with shifted grids has been removed because it is too unstable.
    !
@@ -97,6 +99,7 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
    io_err=io_DIPOLES_cut(X,Xen,io_db)
+   !
  endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
@@ -104,16 +107,15 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
  ! In this case q0_def_norm is not the default one but corresponds
  ! to the norm of the grid shift.
  !
-
  field_dir=field_dir*q0_def_norm/v_norm(field_dir)
  q_norm(1)=q0_def_norm
  if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
  !
  ! Calculate the q-dependent oscillators (OptOscCut)
  !
- allocate(DIP_q_dot_iR_cut(X%ib(2),Xen%nbm,Xk%nbz,n_spin))
- call mem_est('DIP_q_dot_iR_cut',(/ product( (/X%ib(2),Xen%nbm,Xk%nbz,n_spin/) ) /) )
- DIP_q_dot_iR_cut=(0.0_SP,0.0_SP)
+ allocate(DIP_projected_cut(X%ib(2),Xen%nbm,Xk%nbz,n_spin))
+ call mem_est('DIP_projected_cut',(/ product( (/X%ib(2),Xen%nbm,Xk%nbz,n_spin/) ) /) )
+ DIP_projected_cut = cZERO
 
  do i1=1,Xk%nbz
    !
@@ -133,13 +135,13 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
          !
          ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
-         DIP_q_dot_iR_cut(ic,iv,i1,i_spin) = &
+         DIP_projected_cut(ic,iv,i1,i_spin) = &
 &          dot_product( field_dir_rot, DIP_iR_cut(:,ic,iv,ik,i_spin) ) 
-         if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR_cut(ic,iv,i1,i_spin) = &
+         if ( is > nsym/(i_time_rev+1) ) DIP_projected_cut(ic,iv,i1,i_spin) = &
 &          dot_product( DIP_iR_cut(:,ic,iv,ik,i_spin), field_dir_rot ) 
        enddo
      enddo
-     DIP_q_dot_iR_cut(iv,iv,i1,:)=(1.0_SP,0.0_SP)
+     DIP_projected_cut(iv,iv,i1,:)= cONE
    enddo
  enddo
  call pp_redux_wait()
@@ -148,6 +150,7 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
  !
  deallocate(DIP_iR_cut)
  call mem_est('DIP_iR_cut')
+ !
  return
  !
 end subroutine Dipole_driver_cut

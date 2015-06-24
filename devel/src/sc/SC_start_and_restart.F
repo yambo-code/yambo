@@ -42,8 +42,6 @@ subroutine SC_start_and_restart(X,E,Xk)
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
- use interfaces,     ONLY:WF_load
- use wave_func,      ONLY:WF
  !
  implicit none
  type(bz_samp)::Xk
@@ -73,7 +71,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
 #if defined _MAGNETIC
  !
- if (l_sc_magnetic) call MAG_Hamiltonian(.TRUE.)
+ if (l_sc_magnetic) call MAG_initial_check()
  !
 #endif
  !
@@ -188,48 +186,12 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  if (.not.l_SC_cycle.and..not.l_NSC_shot) return
  !
- ! Dipoles
- !========
- !
- ! before loading the WF in R-space I check and/or calculate
- ! the optical collisions that are done in G-space and would
- ! force the reloading of the WFs
- !
- if (l_sc_exx.and.l_SC_cycle) call DIPOLE_driver(E, Xk, X(1), X(1)%q0)
- if (SC_up_W_iters>0)         call DIPOLE_driver(E, Xk, X(2), X(2)%q0)
- !
-#if defined _MAGNETIC
- !
- if (l_sc_magnetic) then
-   !
-   ! MAG_Hamiltonian
-   !=================
-   ! - call WF_derivative which computes the derivative in space G
-   ! - load the wf in real space
-   ! - compute the magnetic part of the hamiltonian, 
-   !   allocate and initialise Ho, write H_magnetic in Ho 
-   !
-   call MAG_Hamiltonian(.FALSE.)
-   !
-   ! If exist the non local part of the pseudo then construct kbv
-   !
-   call MAG_H_pseudo(Xk,E)
-   !
- endif
- !
-#endif
- ! 
- ! WF Loading
- !============
- !
- call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
- !
  ! Check FFT size to be consistent with local V in NSC shot
  !       --------
+ call fft_setup(WF_G_max,WF_Go_indx,.false.)
  !
  if (l_NSC_shot.and.SC_fft_size/=fft_size) then
    call warning(' FFT size of local SC potential does not fit. Skipping NSC run.')
-   call WF_free(WF)
    l_NSC_shot=.FALSE.
    return
  endif

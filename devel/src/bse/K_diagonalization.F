@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, MG, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,11 +26,12 @@ subroutine K_diagonalization(iq,W)
  ! Generic diagonalization method to solve resonant and non resonant
  ! Hamiltonians.
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp,Vstar_dot_V_omp,V_dot_V_omp
- use X_m,            ONLY:X_epsilon,X_drude_term
+ use X_m,            ONLY:X_epsilon,X_drude_term,global_gauge,iw_ref
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,io_BSS_diago,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_anti_res,BS_mat_free,BS_H_dim
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_anti_res,BS_mat_free, &
+&                         BS_H_dim,BSS_n_freqs
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:DIAGO,INV
@@ -45,16 +46,10 @@ subroutine K_diagonalization(iq,W)
  !
  ! GPL_EXCLUDE_START
  !
-#if defined _SC
- use X_m,            ONLY:global_gauge
-#endif
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
  use units,          ONLY:DEG2RAD
- use X_m,            ONLY:iw_ref
- use BS,             ONLY:BSS_n_freqs
- use X_m,            ONLY:global_gauge
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -71,18 +66,10 @@ subroutine K_diagonalization(iq,W)
  ! Work Space
  !
  type(PP_indexes)     ::px
- integer              ::i1
+ integer              ::i1,iw
  logical              ::K_is_not_hermitian
  real(SP)             ::gauge_factor,Co
- !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- integer              ::iw
- real(SP)             ::factor_jj
-#endif
- !
- ! GPL_EXCLUDE_END
+ complex(SP)          ::factor_jj
  !
  ! Residuals & Energies
  !
@@ -257,7 +244,7 @@ subroutine K_diagonalization(iq,W)
      call live_timing('BSK R residuals',px%n_of_elements(myid+1))
      !
      do i1=1,BS_H_dim
-       BS_R_right(i1)=cmplx(0.,0.,SP)
+       BS_R_right(i1)=cZERO
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R_right(i1)=Vstar_dot_V_omp(BS_H_dim,BSS_rhoq0,BS_V_right(:,i1))
@@ -274,7 +261,7 @@ subroutine K_diagonalization(iq,W)
        call live_timing(' KERR residuals',px%n_of_elements(myid+1))
        !
        do i1=1,BS_H_dim
-         BS_R_right_kerr(i1)=cmplx(0.,0.,SP)
+         BS_R_right_kerr(i1)=cZERO
          if (.not.px%element_1D(i1)) cycle
          !
          BS_R_right_kerr(i1)=Vstar_dot_V_omp(BS_H_dim,BSS_rhoq0_kerr,BS_V_right(:,i1))
@@ -294,7 +281,7 @@ subroutine K_diagonalization(iq,W)
      call live_timing('BSK L residuals',px%n_of_elements(myid+1))
      !
      do i1=1,BS_H_dim
-       BS_R(i1)=cmplx(0.,0.,SP)
+       BS_R(i1)=cZERO
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R(i1)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i1), &
@@ -321,7 +308,7 @@ subroutine K_diagonalization(iq,W)
      !
      call live_timing('BSK L x overlap',px%n_of_elements(myid+1))
      do i1=1,BS_H_dim
-       BS_R_left(i1)=cmplx(0.,0.,SP)
+       BS_R_left(i1)=cZERO
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R_left(i1)=V_dot_V_omp(BS_H_dim,BS_overlap(i1,:),BS_R)
@@ -396,7 +383,7 @@ subroutine K_diagonalization(iq,W)
  ! Now I calculate epsilon
  !=========================
  !
- ! eps2(iw)= 1 - Sum  BS_R(K)/(w +I eta - E)     (coupling or non-hermitian)
+ ! eps2(iw)= 1 - Sum  BS_R(K)   /(w +I eta - E)  (coupling or non-hermitian)
  !           1 - Sum |BS_R(K)|^2/(w +I eta - E)  (resonant)
  !
  X_epsilon(1,:)=(0.,0.)
@@ -407,10 +394,12 @@ subroutine K_diagonalization(iq,W)
  !
 #if defined _KERR
  if(l_kerr) then
-   X_epsilon(5,:)=(0.,0.)
+   X_epsilon(5,:)=cZERO
    X_epsilon(6,:)=X_epsilon(6,:)/real(ncpu,SP)
-   B_Hall(2)=(0.,0.)
-   B_Hall(1)=B_Hall(1)/real(ncpu,SP)
+   if(l_anomalous_Hall) then
+     B_Hall(2)=cZERO
+     B_Hall(1)=B_Hall(1)/real(ncpu,SP)
+   endif
  endif
 #endif
  !
@@ -420,21 +409,15 @@ subroutine K_diagonalization(iq,W)
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !
-   gauge_factor=1._SP
-   !
    ! GPL_EXCLUDE_START
    !
-#if defined _SC  || defined _KERR
-   if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
-   if (     K_is_not_hermitian) gauge_factor=     gauge_factor **2._SP
-   if (.not.K_is_not_hermitian) gauge_factor=real(gauge_factor)**2._SP
-#endif
 #if defined _KERR
    if (l_kerr.and.l_anomalous_Hall) then
-     if (     K_is_not_hermitian) B_Hall(2)=B_Hall(2)+      BS_R_kerr(i1)          /gauge_factor
-     if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)/gauge_factor
+     if (trim(global_gauge)=='length'  ) gauge_factor=1._SP
+     if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
+     if (     K_is_not_hermitian) B_Hall(2)=B_Hall(2)+      BS_R_kerr(i1)          /     gauge_factor **2._SP
+     if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)/real(gauge_factor)**2._SP
    endif
-   gauge_factor=1._SP
 #endif
    !
    ! GPL_EXCLUDE_END
@@ -442,10 +425,10 @@ subroutine K_diagonalization(iq,W)
    ! Note the use of a causal expression here needed to avoid any
    ! distinction between the resonant and antiresonant e/h Green's functions.
    !
-   if (     K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))/gauge_factor
+   if (     K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
    if (.not.K_is_not_hermitian) then
-     X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/gauge_factor
-     if (BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor
+     X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
+     if (BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))
    endif
    !
    ! GPL_EXCLUDE_START
@@ -470,43 +453,38 @@ subroutine K_diagonalization(iq,W)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- call PP_redux_wait(B_Hall)
+ if(l_anomalous_Hall) call PP_redux_wait(B_Hall)
 #endif
  !
  ! GPL_EXCLUDE_END
  !
- Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
+ Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi
+ !
+ if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(2,iw_ref)
+ !
+ if(trim(global_gauge)=='length'  ) X_epsilon(2,:)=1._SP+(X_epsilon(2,:)          +X_drude_term(:))*Co/  q_norm(1) **2
+ if(trim(global_gauge)=='velocity') X_epsilon(2,:)=1._SP+(X_epsilon(2,:)-factor_jj+X_drude_term(:))*Co/real(W%p(:))**2
  !
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  !
- if(trim(global_gauge)=='length')   factor_jj=0._SP
- if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
- !
- if(l_anomalous_Hall) then
-   B_Hall(2)=B_Hall(2)*Co
-   if(BS_anti_res) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
+ if(l_kerr) then
+   if(trim(global_gauge)=='length'  ) X_epsilon(5,:)=X_epsilon(5,:)*Co/  q_norm(1) **2
+   if(trim(global_gauge)=='velocity') X_epsilon(5,:)=X_epsilon(5,:)*Co/real(W%p(:))**2
+   !
+   if(l_anomalous_Hall) then
+     if(BS_anti_res) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
+     if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co/q_norm(1)**2
+     if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*Co
+     !
+     ! I add the term describing the Anomalous Hall effect which is
+     ! missing in the length gauge (this should be zero for systems with a gap)
+     if (trim(global_gauge)=='length') X_epsilon(5,:)=X_epsilon(5,:)+B_Hall(2)/W%p(:)
+     !
+   endif
+   !
  endif
- !
- gauge_factor=1._SP
- do iw=1,BSS_n_freqs
-   if(trim(global_gauge)=='velocity')  gauge_factor=(real(W%p(iw))**2+epsilon(1.))/q_norm(1)**2
-   X_epsilon(2,iw)=1.+(X_epsilon(2,iw)-factor_jj+X_drude_term(iw))*Co/gauge_factor
-   if(l_kerr) X_epsilon(5,iw)=X_epsilon(5,iw)*Co/gauge_factor
- enddo
- !
- ! I add the term describing the Anomalous Hall effect which is
- ! missing in the length gauge (this should be zero for systems with a gap)
- if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)+B_Hall(2)/W%p(:)
- !
-#else
- !
- ! GPL_EXCLUDE_END
- !
- X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude_term(:))*Co
- !
- ! GPL_EXCLUDE_START
  !
 #endif
  !

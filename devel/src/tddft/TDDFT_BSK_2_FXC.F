@@ -25,7 +25,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:spin_occ,spin
- use X_m,           ONLY:DIP_q_dot_iR,X_t
+ use X_m,           ONLY:DIP_projected,X_t
  use BS,            ONLY:BS_nT_at_k,BSS_eh_table,BS_mat,BSS_eh_E,BSS_eh_W
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
 &                        FXC_is_causal,io_BS_Fxc
@@ -85,7 +85,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
      iv=BSS_eh_table(i1,2)
      ic=BSS_eh_table(i1,3)
      i_sp=spin(BSS_eh_table(i1,:))
-     O1x(1,i1-blk_pos(1))=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))/bare_qpg(iq,1)
+     O1x(1,i1-blk_pos(1))=-conjg(DIP_projected(ic,iv,ik,i_sp))/bare_qpg(iq,1)
    enddo
    if (ik1/=ik2) then
      do i1=blk_pos(2)+1,blk_pos(2)+BS_nT_at_k(ik2)
@@ -93,7 +93,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
        iv=BSS_eh_table(i1,2)
        ic=BSS_eh_table(i1,3)
        i_sp=spin(BSS_eh_table(i1,:))
-       O2x(1,i1-blk_pos(2))=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))/bare_qpg(iq,1)
+       O2x(1,i1-blk_pos(2))=-conjg(DIP_projected(ic,iv,ik,i_sp))/bare_qpg(iq,1)
      enddo
    else
      O2x=O1x

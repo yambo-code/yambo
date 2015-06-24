@@ -25,7 +25,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv,pp_kind)
+subroutine Dipole_kb_sum(icfft,ivfft,rho,kbv,pp_kind)
  !
  use pars,          ONLY:SP,DP
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp,V_by_V_plus_V_omp

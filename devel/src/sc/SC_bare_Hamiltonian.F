@@ -26,13 +26,15 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
- use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc
+ use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
+&                         WF_G_max,WF_Go_indx,SC_bands
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
  use wave_func,      ONLY:WF
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
- use interfaces,     ONLY:el_density_and_current
+ use interfaces,     ONLY:el_density_and_current,WF_load
+ use wave_func,      ONLY:WF
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,G_lesser,RT_ibz_coo
@@ -40,6 +42,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
 #endif
+ !
  implicit none
  !
  type(levels)             :: E
@@ -49,10 +52,32 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  integer     :: ik,ib,i_spin
  !
- allocate(QP_Vxc(QP_n_states))
- call mem_est("QP_Vxc",(/QP_n_states/))    
+ Ho=cZERO
  !
- QP_Vxc=cZERO
+#if defined _MAGNETIC
+ !
+ if (l_sc_magnetic) then
+   !
+   ! MAG_Hamiltonian
+   !=================
+   ! - call WF_derivative which computes the derivative in space G
+   ! - load the wf in real space
+   ! - compute the magnetic part of the hamiltonian, 
+   !   allocate and initialise Ho, write H_magnetic in Ho 
+   !
+   call MAG_Hamiltonian()
+   !
+   ! If exist the non local part of the pseudo then construct kbv
+   !
+   call MAG_H_pseudo(Xk,E)
+   !
+ endif
+ !
+#endif
+ !
+ ! WF Loading, density and magnetization
+ !=======================================
+ call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
  !
 #if defined _RT
  !
@@ -84,23 +109,13 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! ... so first store -Vhartree in Ho ...
  !========================================
  !
-#if defined _MAGNETIC
- !
- ! If we are using yambo_magnetic now Ho already
- ! contains H_magnetic
- !
- if (.not.l_sc_magnetic) Ho=cZERO
- !
-#else
- !
- Ho=cZERO
- !
-#endif
- ! 
  ! V_hartree
  call V_Hartree(rho_n,V_hartree_sc)
  !
  ! QP_Vxc
+ allocate(QP_Vxc(QP_n_states))
+ call mem_est("QP_Vxc",(/QP_n_states/))    
+ QP_Vxc=cZERO
  call XCo_local(E,k)
  !
  do ik=1,QP_nk

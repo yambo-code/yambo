@@ -32,9 +32,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_DbGd,use_X_Drude,X_DbGd_nkpts,Dipole_bands_ordered,Chi_mode,&
-&                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
+&                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_direct_approach,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
-&                      X_terminator,X_en_comp,global_gauge,l_rotate_dipoles
+&                      X_terminator,X_en_comp,global_gauge,l_rotate_dipoles,use_covariant_approach,&
+&                      force_p_direct_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,&
@@ -64,8 +65,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,&
-&                     Fragmented_IO_save 
+ use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
@@ -179,11 +179,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
    n_alt_jobstr=i1-1
  enddo
  !
- ! Global Logicals
+ ! WFs fragmentation, this is for the interfaces
  !
- Fragmented_IO_save=.not.index(INSTR,'nodbfr')>0.or.ncpu>1.or.index(INSTR,'fragnb')>0
+ frag_WF = (.not.index(INSTR,'nodbfr')>0 .or. index(INSTR,'fragnb')>0)
  !
- ! Logical Setup (mainly for interfaces and ypp. As far as yambo is concerned this call is done in init.F)
+ ! Logical Setup (Mainly for interfaces and ypp. As far as yambo is concerned this call is done in init.F)
  !
  call SET_logicals()
  !
@@ -378,7 +378,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  half_X_mat_only=.FALSE.
  Dipole_bands_ordered=.TRUE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
- Dipole_uses_shifted_grids=.FALSE.
+ use_shifted_grids_approach=.FALSE.
+ use_covariant_approach=.FALSE.
+ use_direct_approach=.TRUE.
+ force_p_direct_approach=.TRUE.
  use_X_DbGd=.FALSE.
  use_X_Drude=.FALSE.
  eps_2_alpha=1._SP

@@ -24,7 +24,7 @@
 subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  use pars,           ONLY:schlen
- use IO_m,           ONLY:IO_write,IO_read,Fragmented_IO_save,Fragmented_IO
+ use IO_m,           ONLY:IO_write,IO_read
  use com,            ONLY:write_to_report,write_to_of
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:string_split,write_to_log
@@ -102,9 +102,6 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="-io_out") IO_write=local_FALSE
      if (trim(ch_piece(ich))=="+io_in" ) IO_read=local_TRUE
      if (trim(ch_piece(ich))=="+io_out") IO_write=local_TRUE
-     !
-     if (trim(ch_piece(ich))=="+DB_is_fragmented") Fragmented_IO=local_TRUE
-     if (trim(ch_piece(ich))=="-DB_is_fragmented") Fragmented_IO=Fragmented_IO_save
      !
      if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=local_TRUE
      if (trim(ch_piece(ich))=="-fragments_IO_log") write_fragments_IO_log=local_FALSE

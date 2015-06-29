@@ -41,7 +41,7 @@ subroutine Build_Overlaps_Det(Xen,ik,X,Sm1_plus,Sm1_minus,S_det)
  !
  ! Work Space
  !
- integer     :: i1,i2,i3,i4,iv,idx(3),id,ikp,ikm,i_spin
+ integer     :: i1,i2,i3,i4,iv,idx(3),id,ikp,ikm,i_sp_pol
  complex(SP) :: S_val(1:Xen%nbf,1:Xen%nbf)
  !
  S_det=cZERO
@@ -50,34 +50,33 @@ subroutine Build_Overlaps_Det(Xen,ik,X,Sm1_plus,Sm1_minus,S_det)
    !
    if(k_map%max_kdir(id)/=1) then
      !
-     ! Overlap S(k, k-dk)
-     !
      idx=k_map%k_map_inv(ik,:)
      idx(id)=idx(id)-1
      idx=k_periodic_idx(idx,k_map)
      ikm=k_map%k_map_dir(idx(1),idx(2),idx(3))
      !
-     do i_spin=1,n_sp_pol
+     do i_sp_pol=1,n_sp_pol
        !
-       S_val=hermitian(DIP_S(1:Xen%nbf,1:Xen%nbf,id,ikm,i_spin))
+       ! Overlap S(k, k-dk)
+       !
+       S_val=hermitian(DIP_S(1:Xen%nbf,1:Xen%nbf,id,ikm,i_sp_pol))
        call MATRIX_driver(INV,S_val,lib_in=USE_LK)
-       !
-       Sm1_minus(:,:,id,i_spin)=S_val
+       Sm1_minus(:,:,id,i_sp_pol)=S_val
        !
        ! Overlap S(k, k+dk)
        !
-       S_val=DIP_S(1:Xen%nbf,1:Xen%nbf,id,ik,i_spin)
-       call MATRIX_driver(INV,S_val,lib_in=USE_LK,det=S_det(id,i_spin))
-       Sm1_plus(:,:,id,i_spin)=S_val
+       S_val=DIP_S(1:Xen%nbf,1:Xen%nbf,id,ik,i_sp_pol)
+       call MATRIX_driver(INV,S_val,lib_in=USE_LK,det=S_det(id,i_sp_pol))
+       Sm1_plus(:,:,id,i_sp_pol)=S_val
        !
      enddo
      !
    else  ! non-periodic directions
      !
-     do i_spin=1,n_sp_pol
-       S_det(id,i_spin)        =cZERO
-       Sm1_plus(:,:,id,i_spin) =cZERO
-       Sm1_minus(:,:,id,i_spin)=cZERO
+     do i_sp_pol=1,n_sp_pol
+       S_det(id,i_sp_pol)        =cZERO
+       Sm1_plus(:,:,id,i_sp_pol) =cZERO
+       Sm1_minus(:,:,id,i_sp_pol)=cZERO
      enddo
      !
    endif

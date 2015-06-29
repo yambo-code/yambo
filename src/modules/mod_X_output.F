@@ -27,9 +27,8 @@ module X_output
  use stderr,  ONLY:intc
  use com,     ONLY:msg
  use X_m,     ONLY:alpha_dim,global_gauge
-#if defined _KERR
  use drivers,   ONLY:l_kerr
-#endif
+ !
  implicit none
  !
  character(15)     :: headers(7)
@@ -183,15 +182,11 @@ module X_output
        moke_file_name =  trim(moke_file_name)//'_'//equation
      endif
      !
-#if defined _KERR
      if (.not.l_kerr) then
-#endif
        off_file_name=' '
        beta_file_name=' '
        moke_file_name=' '
-#if defined _KERR
      endif
-#endif
      !
    end subroutine
    !

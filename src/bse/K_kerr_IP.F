@@ -28,8 +28,8 @@ subroutine K_kerr_IP(w)
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_rpa_IP
- use X_m,            ONLY:X_epsilon,DIP_q_dot_iR,global_gauge
- use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,B_Hall
+ use X_m,            ONLY:X_epsilon,DIP_projected,global_gauge
+ use KERR,           ONLY:BSS_rhoq0_kerr,DIP_projected_r90,B_Hall
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BS_T_grp,BSS_eh_f,BSS_eh_table,&
 &                         BSS_eh_E,BSS_eh_W,BS_K_coupling,BS_anti_res,BS_nT_grps
  use electrons,      ONLY:spin_occ,spin
@@ -71,15 +71,11 @@ subroutine K_kerr_IP(w)
      local_Z=1.
      if (allocated(BS_T_grp(i_T_g)%Z)) local_Z=BS_T_grp(i_T_g)%Z(i_T)
      !
-     if (trim(global_gauge)=='length')   BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=-conjg(DIP_q_dot_iR_kerr(ic,iv,ik_mem,i_sp))
-     if (trim(global_gauge)=='velocity') BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)= conjg(DIP_P_symm(2,ic,iv,ik_mem,i_sp))
+     if (trim(global_gauge)=='length')    BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=-conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp))
+     if (trim(global_gauge)=='velocity')  BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)= conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp))
      BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)*sqrt(BS_T_grp(i_T_g)%f(i_T))
      !
-     if (BS_K_coupling) then
-       if (trim(global_gauge)=='length')   BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_q_dot_iR_kerr(ic,iv,ik_mem,i_sp)
-       if (trim(global_gauge)=='velocity') BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_P_symm(2,ic,iv,ik_mem,i_sp)
-       BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)*sqrt(BS_T_grp(i_T_g)%f(i_T))
-     endif
+     if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_projected_r90(ic,iv,ik_mem,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))
      !
      if (abs(BS_T_grp(i_T_g)%E(i_T))<1.E-5) cycle
      !    
@@ -109,13 +105,13 @@ subroutine K_kerr_IP(w)
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  !
- if(trim(global_gauge)=='length')   X_epsilon(6,:)= X_epsilon(6,:)*Co/q_norm(1)**2
- if(trim(global_gauge)=='velocity') X_epsilon(6,:)= X_epsilon(6,:)*Co/(real(w(:))**2+epsilon(1.))
+ if(trim(global_gauge)=='length'   ) X_epsilon(6,:)= X_epsilon(6,:)*Co/q_norm(1) **2
+ if(trim(global_gauge)=='velocity' ) X_epsilon(6,:)= X_epsilon(6,:)*Co/real(w(:))**2
  !
  if (BS_anti_res) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
- if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)*Co/q_norm(1)**2
- if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)*Co
+ if(trim(global_gauge)=='length'   ) B_Hall(1)=B_Hall(1)*Co/q_norm(1)**2
+ if(trim(global_gauge)=='velocity' ) B_Hall(1)=B_Hall(1)*Co
  !
  ! I add the term describing the Anomalous Hall effect which is
  ! missing in the length gauge (this should be zero for systems with a gap)

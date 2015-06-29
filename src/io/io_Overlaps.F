@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): CA MG
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -30,7 +30,7 @@ integer function io_Overlaps(X,Xen,ID)
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_DIP,io_fragment
+&                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
  use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_nbz,PAR_IND_Xk_bz
  !
  implicit none
@@ -40,7 +40,7 @@ integer function io_Overlaps(X,Xen,ID)
  !
  ! Work Space
  !
- integer :: ik,ixyz,i_spin,db_nbm,db_nb(2),ik_mem
+ integer :: ik,ixyz,i_sp_pol,db_nbm,db_nb(2),ik_mem
  character(schlen)    :: VAR_name
  real(SP),allocatable :: disk_data(:,:,:)
  integer, external    :: variables_DIPOLES
@@ -55,7 +55,9 @@ integer function io_Overlaps(X,Xen,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
+   if(write_is_on(ID)) io_fragmented(ID)=frag_DIP
    io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
+   if(read_is_on(ID) ) frag_DIP=io_fragmented(ID)
    if (io_Overlaps/=0) goto 1
    !
    io_Overlaps=variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
@@ -81,19 +83,19 @@ integer function io_Overlaps(X,Xen,ID)
      ! Fragmentation
      !
      io_extension(ID)='Overlaps'
-     if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
+     call io_fragment(ID,i_fragment=ik)
      !
      do ixyz=1,3
        !
-       do i_spin=1,n_sp_pol
+       do i_sp_pol=1,n_sp_pol
          !
-         if (write_is_on(ID)) call mat_c2r(DIP_S(:,:,ixyz,ik_mem,i_spin),disk_data)
+         if (write_is_on(ID)) call mat_c2r(DIP_S(:,:,ixyz,ik_mem,i_sp_pol),disk_data)
          !
-         write (VAR_name,'(3(a,i4.4))') 'DIP_S_k_',ik,'_xyz_',ixyz,'_spin_',i_spin
+         write (VAR_name,'(3(a,i4.4))') 'DIP_S_k_',ik,'_xyz_',ixyz,'_spin_',i_sp_pol
          call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
          call io_bulk(ID,R3=disk_data)
          !
-         if (read_is_on(ID)) call mat_r2c(disk_data,DIP_S(:,:,ixyz,ik_mem,i_spin))
+         if (read_is_on(ID)) call mat_r2c(disk_data,DIP_S(:,:,ixyz,ik_mem,i_sp_pol))
          !
        enddo
        !

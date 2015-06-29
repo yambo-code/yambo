@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): DS AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,15 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MAG_Hamiltonian(initial_check_only)
- !
- ! ANDREA 3/7/09
- ! 
- ! STILL TODO: 
- !
- !  1. add spin density check in SC cycle (including mixing)
- !  2. Save el_spin_density in SC DBs
- !  3. Check if SC works in metals (not obvious)
+subroutine MAG_Hamiltonian()
  !
  ! WARNING: you need to put you system at the corner of the supercell <---
  !
@@ -62,30 +54,23 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! *******************************************************************************************
  !
  !
- use pars,           ONLY:SP,pi,cZERO,cI,cONE
- use parser_m,       ONLY:parser
+ use pars,           ONLY:SP,cZERO,cI,cONE
  use units,          ONLY:SPEED_OF_LIGHT
  use SC,             ONLY:Ho
  use memory_m,       ONLY:mem_est
- use com,            ONLY:warning,error
  use FFT_m,          ONLY:fft_size
- use D_lattice,      ONLY:a
  use R_lattice,      ONLY:nkibz
- use magnetic,       ONLY:MAG_radius,MAG_B,MAG_hamiltonian_type,MAG_landau,MAG_pauli, &
-&                         MAG_gauge,A_magn_x,A_magn_y,A_magn_z,        &
-&                         Bx,By,Bz,MAG_theta,MAG_psi,ir_table,phase_trick
+ use magnetic,       ONLY:MAG_B,MAG_landau,MAG_pauli,ir_table, &
+&                         A_magn_x,A_magn_y,A_magn_z,Bx,By,Bz
  use electrons,      ONLY:n_sp_pol,n_spinor,n_spin
- use SC,             ONLY:SC_bands,SC_potential
+ use SC,             ONLY:SC_bands
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index,WF_load
  use wrapper,        ONLY:Vstar_dot_V
- use vec_operate,    ONLY:v_norm
  !
  implicit none
- !
- logical :: initial_check_only
  !
  ! Parallelization indexes
  !
@@ -94,7 +79,6 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! Dummies
  !
  integer    :: ir,i_sp_pol,i_wf(n_spin),j_wf(n_spin),ik,ib,ibp,i_spinor,j_spinor,i_spin
- real(SP)   :: radius
  complex(SP):: sigma_x(2,2),sigma_y(2,2),sigma_z(2,2)
  logical    :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on,timing_init
  !
@@ -104,53 +88,6 @@ subroutine MAG_Hamiltonian(initial_check_only)
  complex(SP), allocatable :: H_tmp(:,:,:),H_pauli(:,:,:)
  real(SP),    allocatable :: H_paramagn_x(:),H_paramagn_y(:),H_paramagn_z(:),&
 &                            H_diamagn(:) 
- !
- !
- if (trim(SC_potential)=='default'.and.initial_check_only) then
-   call section('*','Magnetic field ('//trim(MAG_hamiltonian_type)//') Hamiltonian') 
- else if (initial_check_only) then
-   call section('+','Magnetic field ('//trim(MAG_hamiltonian_type)//') Hamiltonian') 
- endif
- !
- if (initial_check_only) then
-   ! Set up MAG_hamiltonian_type
-   !============================
-   MAG_landau=trim(MAG_hamiltonian_type)=='landau'.or.trim(MAG_hamiltonian_type)=='all'
-   MAG_pauli =trim(MAG_hamiltonian_type)=='pauli'.or.trim(MAG_hamiltonian_type)=='all'
-   ! Switch off Pauli if spin is not present
-   if(n_spin==1) then
-     if(MAG_pauli) then
-       MAG_pauli=.false.
-       call warning('Pauli magnetism switched off (spin unpolarized system).')
-     endif
-     if(MAG_landau) MAG_hamiltonian_type='landau'
-!     if(.not.MAG_landau) call error('You need a spin polarized system')
-   endif
-   if(MAG_pauli .and. MAG_theta/=0. .and. n_sp_pol==2) &
-&    call warning('The B field is not along z => the spins are assumed to be aligned to B. Please check.')
-   ! Impose the symmetric gauge
-   ! Impose flux to follow the a(3,:) direction 
-   if(MAG_radius/=0) then
-     if(.not.MAG_gauge=='SYMM') then
-       MAG_gauge='SYMM'
-       call warning('Finite radius B field in the asymm. gauge has not been implemented. Symm. gauge imposed')
-     endif
-     if(MAG_landau) then
-       if(any(a(3,:2)>epsilon(1.))) then
-         MAG_theta=atan(v_norm((/a(3,1),a(3,2),0._SP/))/a(3,3)) 
-         if(a(3,1)/=0) MAG_psi= atan( a(3,2) / a(3,1) )
-         if(a(3,1)<0.) MAG_psi= MAG_psi+pi
-         if(a(3,1)==0 .and. a(3,2)>0.) MAG_psi=pi/2.
-         if(a(3,1)==0 .and. a(3,2)<0.) MAG_psi=-pi/2.
-       else
-         MAG_theta=0.
-         MAG_psi=0.
-       endif
-     endif
-   endif
-   call parser('PhaseTrick',phase_trick)
-   return
- endif
  !
  call MAG_common_build_A(.true.)
  !
@@ -230,7 +167,6 @@ subroutine MAG_Hamiltonian(initial_check_only)
    if(H_magn_z_on) do_derivatives(3)=.true.
  endif
  !
- Ho=(0.,0.)
  timing_init=.true.
  !
  do ik=1,nkibz   
@@ -238,7 +174,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    if( any(px%element_2D(ik,:)) ) then
      if (MAG_landau) call WF_derivative((/1,SC_bands(2)/),(/ik,ik/),do_derivatives)
      call WF_load(WF,0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
-     if(timing_init) call live_timing('MAG-Hamiltonian',px%n_of_elements(myid+1))
+     if(timing_init) call live_timing('MAG-Hamiltonian',px%n_of_elements(myid+1)*n_sp_pol)
      timing_init=.false.
    endif
    !
@@ -285,9 +221,10 @@ subroutine MAG_Hamiltonian(initial_check_only)
          enddo
          !
        enddo
+       !
+       call live_timing(steps=1)
+       !
      enddo
-     !
-     call live_timing(steps=1)
      !
    enddo
    !
@@ -320,10 +257,10 @@ subroutine MAG_Hamiltonian(initial_check_only)
            call mem_est("H_paramagn_x H_paramagn_y H_paramagn_y",(/fft_size,fft_size,fft_size/))
            allocate(H_diamagn(fft_size))
            call mem_est("H_diamagn",(/fft_size/))
-           if(H_magn_x_on) H_paramagn_x=0.
-           if(H_magn_y_on) H_paramagn_y=0.
-           if(H_magn_z_on) H_paramagn_z=0.
-           H_diamagn=0.
+           if(H_magn_x_on) H_paramagn_x=0._SP
+           if(H_magn_y_on) H_paramagn_y=0._SP
+           if(H_magn_z_on) H_paramagn_z=0._SP
+           H_diamagn=0._SP
          endif
          if (MAG_pauli) then
            allocate(H_pauli(fft_size,n_spin,n_spinor))
@@ -333,9 +270,6 @@ subroutine MAG_Hamiltonian(initial_check_only)
        case(1)
          allocate(H_tmp(fft_size,n_spinor,n_spinor))
          call mem_est("H_tmp",(/size(H_tmp)/))
-         allocate(Ho(SC_bands(2),SC_bands(2),nkibz,n_sp_pol))
-         call mem_est("Ho",(/size(Ho)/),(/2*SP/))
-         Ho    = cZERO
          H_tmp = cZERO
      end select
    end subroutine

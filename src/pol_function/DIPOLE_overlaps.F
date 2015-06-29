@@ -1,7 +1,9 @@
 !
-! Copyright (C) 2000-2015 M. Gruning, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
-! 
+!
+! Authors (see AUTHORS file for details): MG, CA
+!
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
 ! modify it under the terms of the GNU General Public 
@@ -28,7 +30,7 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  use vec_operate,       ONLY:k_periodic_idx,c2a
  use com,               ONLY:msg,error
  use X_m,               ONLY:X_t,DIP_S
- use electrons,         ONLY:levels,n_spinor,spin
+ use electrons,         ONLY:levels,n_spinor,n_sp_pol
  use memory_m,          ONLY:mem_est
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng,WF
@@ -42,7 +44,7 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  ! Work Space
  !
  character(schlen) :: dump_ch
- integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,iw,iwp,i_spin,ik,ikp,ig
+ integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_wf,i_spin,i_spinor,i_sp_pol,ik,ikp,ig
  integer           :: idx_kp(3),idx_k(3),shift_ik(3),shift_ikp(3)
  complex(SP), allocatable :: WF_tmp(:,:),WF_ik(:,:),WF_ikp(:,:)
  real(SP)          :: v1(3),v2(3),PHASE
@@ -100,32 +102,36 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
        !
      endif
      !
-     do ib=1,X%ib(2)
+     do i_sp_pol=1,n_sp_pol
        !
-       do i_spin=1,n_spinor
-         iw   =WF%index(ib,ik,i_spin)
-         WF_ik(:wf_ng,i_spin)=WF%c(:wf_ng,iw)
-       enddo
-       !
-!       call WF_shift_by_G((/ib,ik,1/),WF_tmp,shift_ik)
-       ! 
-!       do ig = 1,WF_ng
-!          WF_ik(ig,:)=WF_tmp(g_rot(is,ig),:)
-!       enddo
-       !
-       do ibp=1,X%ib(2)
+       do ib=1,X%ib(2)
+         !
+         do i_spinor=1,n_spinor
+           i_spin=i_spinor+i_sp_pol-1
+           i_wf  =WF%index(ib,ik,i_spin)
+           WF_ik(:wf_ng,i_spinor)=WF%c(:wf_ng,i_wf)
+         enddo
+         !
+!         call WF_shift_by_G((/ib,ik,i_sp_pol/),WF_tmp,shift_ik)
          ! 
-         ! Check if I crossed BZ border and impose periodic Gauge
-         !
-         call WF_shift_by_G((/ibp,ikp,1/),WF_ikp,shift_ikp)
-         !
 !         do ig = 1,WF_ng
-!           WF_ikp(ig,:)=WF_tmp(g_rot(isp,ig),:)
+!            WF_ik(ig,:)=WF_tmp(g_rot(is,ig),:)
 !         enddo
          !
-         do i_spin=1,n_spinor
+         do ibp=1,X%ib(2)
+           ! 
+           ! Check if I crossed BZ border and impose periodic Gauge
            !
-           DIP_S(ib,ibp,id,ikbz,i_spin)=Vstar_dot_V_omp(wf_ng,WF_ikp(:wf_ng,i_spin),WF_ik(:wf_ng,i_spin)) 
+           call WF_shift_by_G((/ibp,ikp,i_sp_pol/),WF_ikp,shift_ikp)
+           !
+!           do ig = 1,WF_ng
+!             WF_ikp(ig,:)=WF_tmp(g_rot(isp,ig),:)
+!           en  ddo
+           !
+           do i_spinor=1,n_spinor
+             DIP_S(ib,ibp,id,ikbz,i_sp_pol)=DIP_S(ib,ibp,id,ikbz,i_sp_pol)+&
+&                            Vstar_dot_V_omp(wf_ng,WF_ikp(:wf_ng,i_spinor),WF_ik(:wf_ng,i_spinor)) 
+           enddo
            !
          enddo
        enddo

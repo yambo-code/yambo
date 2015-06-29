@@ -27,7 +27,7 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:error
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use memory_m,       ONLY:mem_est
- use X_m,            ONLY:X_epsilon,X_drude_term
+ use X_m,            ONLY:X_epsilon,X_drude_term,iw_ref,global_gauge
  use R_lattice,      ONLY:d3k_factor,q_norm
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
@@ -49,7 +49,6 @@ subroutine K_Haydock(iq,W)
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
- use X_m,            ONLY:iw_ref,global_gauge
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -79,8 +78,7 @@ subroutine K_Haydock(iq,W)
  !
  ! GPL_EXCLUDE_END
  !
- real(SP)           ::reached_treshold, Bf(Max_iterations)&
-&,                    Af(Max_iterations)
+ real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
  real(SP)           ::ItParity
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
@@ -281,6 +279,7 @@ subroutine K_Haydock(iq,W)
    ! GPL_EXCLUDE_END
    !
  enddo
+ !
  do i_g = 2,BS_nT_grps
    if (.not.Haydock_parallel_mask(i_g)) cycle
 #if defined _MPI
@@ -598,14 +597,8 @@ subroutine K_Haydock(iq,W)
      integer     :: i1,iw,i_eps(2)
      real(SP)    :: Co
      !
-     ! GPL_EXCLUDE_START
-     !
-#if defined _KERR
-     real(SP)    :: factor_jj
+     complex(SP) :: factor_jj(2)
      real(SP)    :: gauge_factor
-#endif
-     !
-     ! GPL_EXCLUDE_END
      !
      complex(SP) :: X_o(4,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
@@ -618,7 +611,7 @@ subroutine K_Haydock(iq,W)
      logical     :: UseTerminator
      logical     :: causal, coupling
      !
-     Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi/q_norm(1)**2._SP
+     Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi*Haydock_v0_mod**2._SP
      !
      X_t =(0._SP,0._SP)
      UseTerminator = .false.  
@@ -651,7 +644,7 @@ subroutine K_Haydock(iq,W)
      end if
      !
      do iw=1,W%n_freqs
-       X_o=(0._SP,0._SP)
+       X_o=cZERO
        if (UseTerminator) then 
          if (.not.coupling) then
            X_t(1) = terminator(W%p(iw), Av1,Av2, RES)
@@ -660,7 +653,7 @@ subroutine K_Haydock(iq,W)
          if (coupling.and.(mod(it,2)==0)) X_t(1) = terminator(W%p(iw),Av1,Av2,COUPL)
          if (coupling.and.(mod(it,2)==1)) X_t(1) = terminator(W%p(iw),Av2,Av1,COUPL)
        endif
-       X_o(:2,it) = 1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t(1))
+       X_o(1:2,it) = 1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t(1))
        if (causal) X_o(3:4,it)= 1._SP/(W%p(iw)+Af(it)-Bf(it+1)**2*X_t(2))
        do i1=it-1,1,-1
          X_o(1,i1) = 1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1) )
@@ -692,46 +685,35 @@ subroutine K_Haydock(iq,W)
        endif
        X_epsilon(1,iw)=W%p(iw)
        !
-       ! GPL_EXCLUDE_START
+       if(trim(global_gauge)=='length'   .and. iw==iw_ref) factor_jj=0._SP
+       if(trim(global_gauge)=='velocity' .and. iw==iw_ref) factor_jj=X_o(1:2,1)
+       !
+       if(trim(global_gauge)=='length'  ) gauge_factor=Co/   q_norm(1) **2
+       if(trim(global_gauge)=='velocity') gauge_factor=Co/real(W%p(iw))**2
+       !
+       if (.not.causal) X_epsilon(i_eps(:),iw)=1._SP-(X_o(1:2,1)           -factor_jj)*gauge_factor
+       if (     causal) X_epsilon(i_eps(:),iw)=1._SP-(X_o(1:2,1)-X_o(3:4,1)-factor_jj)*gauge_factor
+       if (i_eps(1)==2) then
+         X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*gauge_factor
+         X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*gauge_factor
+       endif
+       if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
        !
 #if defined _KERR
        !
-       if(trim(global_gauge)=='length')   factor_jj=0._SP
-       if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
-       !
-       if(l_anomalous_Hall) B_Hall(2)=B_Hall(2)*Co
-       !
-       gauge_factor=1._SP
-       if(trim(global_gauge)=='velocity')  gauge_factor=(real(W%p(iw))**2+epsilon(1.))/q_norm(1)**2
-       X_epsilon(i_eps(:),iw)=1._SP-(X_o(:2,1)-factor_jj)*Co/gauge_factor*Haydock_v0_mod**2._SP
-       if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_o(3:4,1)*Co/gauge_factor*Haydock_v0_mod**2._SP
-       if (i_eps(1)==2) then
-         X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*Co/gauge_factor
-         X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*Co/gauge_factor
-       endif
-       if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
-       !
        ! I add the term describing the Anomalous Hall effect which is
        ! missing in the length gauge (this should be zero for systems with a gap)
-       if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,iw)=X_epsilon(5,iw)+B_Hall(2)/W%p(iw)
        !
-#else
-       !
-       ! GPL_EXCLUDE_END
-       !
-       X_epsilon(i_eps(:),iw)=1._SP-X_o(:2,1)*Co*Haydock_v0_mod**2._SP
-       if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_o(3:4,1)*Co*Haydock_v0_mod**2._SP
-       if (i_eps(1)==2) then
-         X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*Co
-         X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*Co
+       if (l_anomalous_Hall) then
+         if (trim(global_gauge)=='length') then
+           B_Hall(2)=B_Hall(2)*Co/q_norm(1)**2
+           X_epsilon(5,iw)=X_epsilon(5,iw)+B_Hall(2)/W%p(iw)
+         else if (trim(global_gauge)=='length') then
+           B_Hall(2)=B_Hall(2)*Co
+         endif
        endif
-       if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
-       !
-       ! GPL_EXCLUDE_START
        !
 #endif
-       !
-       ! GPL_EXCLUDE_END
        !
        if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(i_eps(1),iw)-X_epsilon(i_eps(2),iw))/abs(X_epsilon(2,iw)))

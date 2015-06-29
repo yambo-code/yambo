@@ -169,10 +169,8 @@ module SC
      !
      ! In the magnetic project Ho has already been allocated
      !
-     if (.not.allocated(Ho)) then
-       allocate(Ho(SC_bands(2),SC_bands(2),E%nk,n_sp_pol))
-       call mem_est("Ho",(/size(Ho)/),(/2*SP/))
-     endif
+     allocate(Ho(SC_bands(2),SC_bands(2),E%nk,n_sp_pol))
+     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
      !
      allocate(rho_n(fft_size))
      call mem_est("rho",(/fft_size/),(/SP/))

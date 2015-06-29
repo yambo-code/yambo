@@ -28,7 +28,7 @@
 # [ @FFT_str@ ] FFT      : @FFT_LIBS@ @FFT_DESCRIPTION@
 # [ @BLAS_str@ ] BLAS     : @BLAS_LIBS@
 # [ @LAPACK_str@ ] LAPACK   : @LAPACK_LIBS@
-# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@
+# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@ @BLACS_LIBS@
 #
 #  OTHER
 # [ @LIBXC_str@ ] LibXC      : @LIBS_LIBXC@

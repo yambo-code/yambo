@@ -29,8 +29,7 @@ module KERR
  !
  complex(SP)              :: B_Hall(2)
  complex(SP), allocatable :: BSS_rhoq0_kerr(:)
- complex(SP), allocatable :: DIP_q_dot_iR_kerr(:,:,:,:)
- complex(SP), allocatable :: DIP_P_symm(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_projected_r90(:,:,:,:)
  !
  contains
    !
@@ -47,23 +46,16 @@ module KERR
      !
      if (present(d)) then
        select case(what)
-       case('DIP_q_dot_iR')
-         if (allocated(DIP_q_dot_iR_kerr)) return
-         allocate(DIP_q_dot_iR_kerr(d(1),d(2),d(3),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
-       case('DIP_P_symm')
-         if (allocated(DIP_P_symm)) return
-         allocate(DIP_P_symm(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
+       case('DIP_projected')
+         if (allocated(DIP_projected_r90)) return
+         allocate(DIP_projected_r90(d(1),d(2),d(3),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        end select
      else
        select case(what)
-       case('DIP_q_dot_iR')
-         if (.not.allocated(DIP_q_dot_iR_kerr)) return
-         deallocate(DIP_q_dot_iR_kerr)
-       case('DIP_P_symm')
-         if (.not.allocated(DIP_P_symm)) return
-         deallocate(DIP_P_symm)
+       case('DIP_projected')
+         if (.not.allocated(DIP_projected_r90)) return
+         deallocate(DIP_projected_r90)
        end select
        call mem_est(what)
      endif

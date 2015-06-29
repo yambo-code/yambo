@@ -58,9 +58,12 @@ INTERFCS = a2y p2y e2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io stop_and_restart wf_and_fft 
+BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io \
+               interface stop_and_restart wf_and_fft 
+BASIC_SURF_LIBS   = external_c modules surf_modules parallel xc_functionals parser communicate linear_algebra common io \
+                    interface stop_and_restart wf_and_fft 
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface \
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
                tddft pol_function qp bse
 #
 # Interfaces
@@ -70,13 +73,13 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate pol_function bse
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interpolate tddft pol_function bse
 #
 # PROJECTS
 #
 PROJECTS = yambo_surf ypp_surf yambo_kerr yambo_ph ypp_ph
-PJ_SURFLIBS   = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_control surf setup interface tddft pol_function qp bse
-YPPSURFLIBS   = $(BASIC_LIBS) surf_modules bz_ops qp_control setup interface interpolate surf pol_function bse
+PJ_SURFLIBS   = $(BASIC_SURF_LIBS) coulomb bz_ops qp_control surf setup tddft pol_function qp bse
+YPPSURFLIBS   = $(BASIC_SURF_LIBS) bz_ops qp_control setup interpolate surf tddft pol_function bse
 EXE      = $(TARGETS) $(PROJECTS)
 #
 nothing: 

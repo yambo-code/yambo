@@ -25,7 +25,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen,cZERO
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree
+ use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
+&                         l_sc_exx
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -55,6 +56,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use electrons,      ONLY:Total_magn
  !
  implicit none
+ !
  type(levels) ::E
  type(bz_samp)::k,q,Xk
  type(X_t)    ::X(2)  ! Xx Em1s
@@ -89,7 +91,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! SC_bands(1)
  !=============
  !
- if (SC_bands(1)/=1) call error('Lower bound of band indexes forced to be 1')
+ if (SC_bands(1)/= 1  ) call error(' Lower bound of band indexes must to be 1')
+ if (SC_bands(2)> E%nb) call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
  !
  call SC_QP_setup(E)
  !
@@ -107,6 +110,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !==========================
  ! 
  call SC_start_and_restart(X,E,Xk)
+ !
+ ! DIPOLES
+ !=========
+ if (l_sc_exx.and.l_SC_cycle) call DIPOLE_driver(E, Xk, X(1), X(1)%q0)
+ if (SC_up_W_iters>0)         call DIPOLE_driver(E, Xk, X(2), X(2)%q0)
  !
  if (.not.any((/l_SC_RESTART,l_SC_cycle,l_NSC_shot/))) return
  !
@@ -126,15 +134,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  if(.not.l_SC_RESTART.and.l_use_collisions) then
    !      
-   SC_R=(0.,0.)
+   SC_R=cZERO
    forall(i1=1:SC_bands(2))
-     SC_R(i1,i1,:,:)=1.
+     SC_R(i1,i1,:,:)=1._SP
    end forall
    !
  else if (.not.l_SC_cycle.and.l_SC_RESTART) then
    !
    ! load SC_R rotation matrices
-   !-----------------------------
+   !=============================
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
    io_WF=io_SC_components('WF',E,ID(2))
    do ik=1,QP_nk
@@ -148,10 +156,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  endif
  !
- !  Ho (kinetic + potential)
- !---------------------------
- !
  call msg('r','')
+ !
+ !  Ho (kinetic + potential)
+ !===========================
  call SC_bare_Hamiltonian(E,Xk,k)
  !
  ! Reference wavefunctions
@@ -161,7 +169,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Start-Up setup.  Eventually restart setup.
  !
  ! WFs
- !-----
+ !=====
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
  io_WF=io_SC_components('WF',E,ID(2))
  !
@@ -389,7 +397,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        ! Update dipoles
        !
        call DIPOLE_rotate(SC_R,E,Xk,X(2), 1)
-       call DIPOLE_dip_dot_field(E,Xk,X(2),X(2)%q0)
+       call DIPOLE_project_along_q(E,Xk,X(2),X(2)%q0)
        call DIPOLE_rotate(SC_R,E,Xk,X(2),-1)
        !
        ! Recalcolate Xo and X  

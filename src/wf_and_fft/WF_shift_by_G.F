@@ -33,7 +33,7 @@ subroutine WF_shift_by_G(isc,WF_shifted,shift_vec)
  !
  ! Work Space
  !
- integer           :: i_wf(n_spinor),ic,ig,igp,is,iG0,wf_ng_eff,ik
+ integer           :: i_wf(n_spinor),ic,ig,igp,i_spinor,iG0,wf_ng_eff,ik
  integer, external :: eval_G_minus_G
  !
  ik     =isc(2)
@@ -41,8 +41,8 @@ subroutine WF_shift_by_G(isc,WF_shifted,shift_vec)
  if(n_spinor==2)  i_wf(n_spinor)=WF%index(isc(1),isc(2),n_spinor)
  !
  if(all(shift_vec==0)) then
-   do is=1,n_spinor
-     WF_shifted(:,is)=WF%c(:,i_wf(is))
+   do i_spinor=1,n_spinor
+     WF_shifted(:,i_spinor)=WF%c(:,i_wf(i_spinor))
    enddo
    return
  else
@@ -65,8 +65,8 @@ subroutine WF_shift_by_G(isc,WF_shifted,shift_vec)
    if(ig>wf_ng_eff) cycle
    igp=G_m_G(ig,k_map%g_idx(shift_vec(1),shift_vec(2),shift_vec(3)))
    if(igp>wf_ng.or.ig>wf_ng) cycle
-   do is=1,n_spinor
-     WF_shifted(igp,is)=WF%c(ig,i_wf(is))
+   do i_spinor=1,n_spinor
+     WF_shifted(igp,i_spinor)=WF%c(ig,i_wf(i_spinor))
    enddo
  enddo
  !

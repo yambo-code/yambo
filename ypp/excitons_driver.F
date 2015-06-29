@@ -51,7 +51,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index,WF_load
  use com,           ONLY:msg,error,warning,of_open_close
- use X_m,           ONLY:X_t,DIP_q_dot_iR
+ use X_m,           ONLY:X_t,DIP_projected
  use memory_m,      ONLY:mem_est
  use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:c2a
@@ -319,7 +319,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
          iv    = BSS_eh_table(neh,2)
          ic    = BSS_eh_table(neh,3)
          i_spin= spin(BSS_eh_table(neh,:))
-         dip_factor=-conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))
+         dip_factor=-conjg(DIP_projected(ic,iv,ikbz,i_spin))
        endif
        !
        do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1

@@ -247,13 +247,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! LOG the states loaded
  !
-#if !defined _YPP_RT 
- if (buffer_is_ok.and.WF%space/="B") then
-   call msg('rns','[WF] Loading Wave-Functions from buffer')
- else
-   call msg('rns','[WF] Performing Wave-Functions I/O')
+ if (.not.(QUIET_alloc.or.QUIET_free)) then
+   if (buffer_is_ok.and.WF%space/="B") then
+     call msg('rns','[WF] Loading Wave-Functions from buffer')
+   else
+     call msg('rns','[WF] Performing Wave-Functions I/O')
+   endif
  endif
-#endif
  !
  if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
@@ -286,7 +286,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      !
      if (.not.buffer_is_ok) then
        !
-       ! Use fragmentation ot NETCDF support to reduce the I/O
+       ! Use fragmentation or NETCDF support to reduce the I/O
        ! to the k-pts and bands needed only
        !
        if (io_fragmented(ID).or.io_netcdf_support(ID)) then

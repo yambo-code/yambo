@@ -442,7 +442,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
    call section('*','Single Particle Magnetization along '//mag_dir)
    !
-   call el_magnetization(Xen,Xk)
+   call el_magnetization(Xen,Xk,magn)
    !
    v2plot=magn(:,mag_i_dir)
    !

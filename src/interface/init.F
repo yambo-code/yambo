@@ -458,7 +458,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn')
  !
  !FFT
  !
@@ -567,11 +567,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    !
    call init_QP_ctl_switch('X')
-   call initactivate(1,'DipoleCov ShiftedPath Qdirection QShiftOrder')
-   !
-#if defined _SC
-   call initactivate(1,'Gauge')
-#endif
+   call initactivate(1,'DipoleCov PDirect ShiftedPath Qdirection QShiftOrder Gauge')
    !
  endif
  !
@@ -599,10 +595,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call init_QP_ctl_switch('K')
    !
-   call initactivate(1,'ShiftedPath')
-#if defined _SC || defined _KERR
-   call initactivate(1,'Gauge')
-#endif
+   call initactivate(1,'ShiftedPath Gauge')
 #if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif

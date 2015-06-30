@@ -40,8 +40,8 @@ subroutine eval_Gradient(f,f_gradient)
  use wave_func,     ONLY:wf_ng
  !
  implicit none
- real(SP),intent(in)     ::f(fft_size)
- real(SP),intent(out)    ::f_gradient(3,fft_size)
+ complex(SP),intent(in)     ::f(fft_size)
+ complex(SP),intent(out)    ::f_gradient(3,fft_size)
  !
  ! Work Space 
  !
@@ -71,7 +71,7 @@ subroutine eval_Gradient(f,f_gradient)
 #else
    call fft_3d(Vr,fft_dim,1)
 #endif
-   f_gradient(ic,:) = real(Vr(:),SP)
+   f_gradient(ic,:) = Vr(:)
  enddo
  !
 end subroutine eval_Gradient

@@ -29,7 +29,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use electrons,           ONLY:levels,spin
  use D_lattice,           ONLY:alat,a,DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,g_vec,RL_vol,RIM_n_rand_pts
- use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_table,QP_Sc,QP_dSc_steps,QP_QED_ng,QP_nb
+ use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_table,QP_Sc,QP_dSc_steps,QP_QED_ng,QP_nb,&
+&                              QP_states_simmetrize
  use vec_operate,         ONLY:v_norm
  use collision,           ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use wave_func,           ONLY:WF
@@ -52,7 +53,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  ! WorkSpace
  !
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_k,i_n,i_p_G0,i_m,i_p,i_c,i_cp,i_wf_at_p,&
-                             i_wf_at_p_g,timing_steps,i_g
+                             i_wf_at_p_g,timing_steps,i_g,i_w
  complex(SP)               ::XHI_p(3),XHI_k(3),I_wfk_wfp,Dipole_sum,P_i_cp,P_i_c,Sc_dummy
  real(SP)                  ::q_photon(3),q_cc(3),Photon_E,trans_matrix(3,3),bose,t_vec(3),E_diff
  real(SP),    allocatable  ::q_weight(:)
@@ -243,6 +244,12 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call live_timing( )
  !
  call PP_redux_wait(QP_Sc)
+ !
+ ! Symmetrize
+ !
+ do i_w=1,QP_dSc_steps
+   call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))
+ enddo
  !
  ! Clean-UP
  !

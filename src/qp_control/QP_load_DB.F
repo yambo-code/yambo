@@ -25,13 +25,13 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
 &                           DB_corrected,GFs_From_DB)
  !
  use drivers,       ONLY:l_chi,l_bss
- use pars,          ONLY:SP,schlen,lchlen,rZero,cZero
+ use pars,          ONLY:SP,schlen,lchlen,rZero
  use stderr,        ONLY:string_split,string_pack
  use QP_m,          ONLY:QP_t,QP_reset
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol
- use com,           ONLY:msg,warning,error
+ use com,           ONLY:msg,warning
  use QP_CTL_m,      ONLY:QP_ctl_t
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,REP,io_reset
  !
@@ -146,7 +146,10 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        if (index(trim(dummy_db_name),'.QP')/=0) io_err=io_QP_and_GF(trim(dummy_db_name),qp_from_dbs(n_qp_db),ID(n_qp_db))
 #endif
        !
-       if (io_err/=0) n_qp_db=n_qp_db-1
+       if (io_err/=0) then
+         call warning("I/O problems from QP database "//trim(dummy_db_name))
+         n_qp_db=n_qp_db-1
+       endif
        !
      endif
    enddo

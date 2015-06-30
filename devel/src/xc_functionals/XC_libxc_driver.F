@@ -31,7 +31,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use pars,           ONLY:SP,DP,pi,RZERO
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol, alat
- use com,            ONLY:msg,warning,error
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use SC,             ONLY:rho_n,magn_n
@@ -40,7 +39,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:real_V_dot_V
  use xc_functionals, ONLY:E_xc,F_xc,magn,V_xc,xc_setup_hyb,&
-&                         xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
+&                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use interfaces,     ONLY:el_density_and_current
  implicit none
@@ -60,6 +59,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  real(SP) :: spin_rho_SP(fft_size,n_spin),rho(fft_size)
  real(DP) :: spin_rho_DP(n_spin,fft_size),rspts(fft_size)
  real(SP),allocatable:: drho(:,:,:)
+ real(SP),allocatable:: drho_cmplx(:,:)
  real(DP),allocatable:: sigma(:,:)
  !
  ! note that multidimensional dvxc & vxc is allowed only in xcspol
@@ -86,11 +86,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  local_exx_fraction = RZERO
  if (present(EXX_FRACTION).and.fnctl(1)%family==XC_FAMILY_HYB_GGA) then 
    call xc_setup_hyb(fnctl,EXX_FRACTION,EXX_SCREENING)
-!   if (abs(EXX_FRACTION - fnctl(1)%exx_fraction).gt.RZERO) then
-!     call msg('rns','[xc] EXX fraction read from disk: ',EXX_FRACTION)
-!   else
-!   end if
-     local_exx_fraction = fnctl(1)%exx_fraction
+   local_exx_fraction = fnctl(1)%exx_fraction
  end if
  !
  EvaluateDGradient = any((fnctl(:)%family==XC_FAMILY_GGA).or.any(fnctl(:)%family==XC_FAMILY_HYB_GGA))
@@ -134,11 +130,13 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !=============================
  !
  if (EvaluateDGradient) then 
-   allocate(drho(3,n_spin,fft_size),sigma(n_spin*(n_spin+1)/2,fft_size))
+   !
+   allocate(drho(3,n_spin,fft_size),sigma(n_spin*(n_spin+1)/2,fft_size),drho_cmplx(3,fft_size))
    if (ORDER==1) allocate(vdrho(3,fft_size),vsigma(n_spin*(n_spin+1)/2,fft_size))
    !
    do is1 = 1,n_spin
-     call eval_Gradient(spin_rho_SP(:,is1),drho(:,is1,:))
+     call eval_Gradient(cmplx(spin_rho_SP(:,is1),SP),drho_cmplx)
+     drho(:,is1,:)=real(drho_cmplx)
      forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*fft_size/DL_vol*2._SP*pi/alat(:)
    end do
    !
@@ -150,6 +148,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        end do
      end do
    end do
+   !
+   deallocate(drho_cmplx)
    !
  endif
  !

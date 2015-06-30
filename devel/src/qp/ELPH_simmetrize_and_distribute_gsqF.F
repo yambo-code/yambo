@@ -52,23 +52,23 @@ subroutine ELPH_simmetrize_and_distribute_gsqF(en)
    do il=elph_branches(1),elph_branches(2)
      !
      call PP_redux_wait(gsqF_dw(:,iq_mem,il),COMM=PAR_COM_Q_A2A%COMM)
-     call QP_states_simmetrize(en,vec_2_sim=gsqF_dw(:,iq_mem,il))
+     call QP_states_simmetrize(en,V_real=gsqF_dw(:,iq_mem,il))
      !
      do iw=1,gsqF_energy_steps
        !
        call PP_redux_wait(gsqF_life_bose(:,iq_mem,il,iw),COMM=PAR_COM_Q_A2A%COMM)
-       call QP_states_simmetrize(en,vec_2_sim=gsqF_life_bose(:,iq_mem,il,iw))
+       call QP_states_simmetrize(en,V_real=gsqF_life_bose(:,iq_mem,il,iw))
        !
        call PP_redux_wait(gsqF_life_f(:,iq_mem,il,iw),COMM=PAR_COM_Q_A2A%COMM)
-       call QP_states_simmetrize(en,vec_2_sim=gsqF_life_f(:,iq_mem,il,iw))
+       call QP_states_simmetrize(en,V_real=gsqF_life_f(:,iq_mem,il,iw))
        !
        if (.not.eval_G_using_KK) then
          !
          call PP_redux_wait(gsqF_fan(:,iq_mem,il,iw),COMM=PAR_COM_Q_A2A%COMM)
-         call QP_states_simmetrize(en,vec_2_sim=gsqF_fan(:,iq_mem,il,iw))
+         call QP_states_simmetrize(en,V_real=gsqF_fan(:,iq_mem,il,iw))
          !
          call PP_redux_wait(gsqF_ca_corr(:,iq_mem,il,iw),COMM=PAR_COM_Q_A2A%COMM)
-         call QP_states_simmetrize(en,vec_2_sim=gsqF_ca_corr(:,iq_mem,il,iw))
+         call QP_states_simmetrize(en,V_real=gsqF_ca_corr(:,iq_mem,il,iw))
          !
        endif
        !

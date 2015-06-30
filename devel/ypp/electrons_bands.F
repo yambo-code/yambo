@@ -125,22 +125,24 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  allocate(circuit_versor(USER_K%nibz-1,3))
  !
+ do ik=1,USER_K%nibz-1
+   v=USER_K%pt(ik+1,:)-USER_K%pt(ik,:)
+   circuit_versor(ik,:)=v/v_norm(v)
+ enddo
+ !
  coo_out="iku"
  do ik=1,USER_K%nibz
    call k_transform(USER_K%pt(ik,:),coo_in)
  enddo
  !
- if((BANDS_steps==0.or.USER_K%nibz==0).and.any(interp_grid<=0)) return
+ if((BANDS_steps==0.and.USER_K%nibz==0).and.any(interp_grid<=0)) return
  !
  ! Define the path (CIRCUIT_K) from the user kpts if BANDS_steps>0
  ! 
  if( BANDS_steps> 0) then
+   !
    allocate(distances(USER_K%nibz-1),int_distances(USER_K%nibz-1))
    !
-   do ik=1,USER_K%nibz-1
-     v=USER_K%pt(ik+1,:)-USER_K%pt(ik,:)
-     circuit_versor(ik,:)=v/v_norm(v)
-   enddo
    do ik=1,USER_K%nibz-1
      v=USER_K%pt(ik,:)-USER_K%pt(ik+1,:)
      call c2a(v_in=v,mode="ki2c")
@@ -190,45 +192,48 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  call k_ibz2bz(Xk,'iku',.TRUE.)
  !
- ! Interpolation: Initial setup
- !
- call bz_interp_setup(Xk)
- !
- ! Energies interpolation.
- !===========================
- !
- ! STEP 1: define coefficients for bands
- !
- allocate(bands_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
- do is=1,n_sp_pol
+ if((BANDS_steps>0.and.USER_K%nibz>0).or.all(interp_grid>0)) then
+   !
+   ! Interpolation: Initial setup
+   !
+   call bz_interp_setup(Xk)
+   !
+   ! Energies interpolation.
+   !===========================
+   !
+   ! STEP 1: define coefficients for bands
+   !
+   allocate(bands_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
+   do is=1,n_sp_pol
 #if defined _YPP_RT
-   if(BZ_DbGd_tot_Nkpts>0) then
-     do ik=1,Xk%nibz
-       bands_grid(BANDS_range(1):BANDS_range(2),is,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))= &
-&         Xen%E_DbGd(BANDS_range(1):BANDS_range(2),DbGd_ibz_coo(ik,1):DbGd_ibz_coo(ik,2),is)
-     enddo
-   endif
+     if(BZ_DbGd_tot_Nkpts>0) then
+       do ik=1,Xk%nibz
+         bands_grid(BANDS_range(1):BANDS_range(2),is,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))= &
+&           Xen%E_DbGd(BANDS_range(1):BANDS_range(2),DbGd_ibz_coo(ik,1):DbGd_ibz_coo(ik,2),is)
+      enddo
+    endif
 #endif
-   if(BZ_DbGd_tot_Nkpts==0) bands_grid(BANDS_range(1):BANDS_range(2),is,1:Nk)=Xen%E(BANDS_range(1):BANDS_range(2),1:Nk,is)
- enddo
- call eval_interpolation_coeff(R2D=bands_grid,k=Xk,Nk=Nk,ID=ID_interp)
- deallocate(bands_grid)
- !
- ! STEP 2
- ! 1: interpolate on the circuit      if (BANDS_steps>0)
- ! 2: interpolate on the regular grid if (interp_grid>0)
- !
- if (BANDS_steps> 0) then
-   allocate(bands_circuit(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz))
-   call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands_circuit,ID=ID_interp)
+    if(BZ_DbGd_tot_Nkpts==0) bands_grid(BANDS_range(1):BANDS_range(2),is,1:Nk)=Xen%E(BANDS_range(1):BANDS_range(2),1:Nk,is)
+  enddo
+  call eval_interpolation_coeff(R2D=bands_grid,k=Xk,Nk=Nk,ID=ID_interp)
+  deallocate(bands_grid)
+   !
+   ! STEP 2
+   ! 1: interpolate on the circuit      if (BANDS_steps>0)
+   ! 2: interpolate on the regular grid if (interp_grid>0)
+   !
+   if (BANDS_steps> 0) then
+     allocate(bands_circuit(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz))
+     call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands_circuit,ID=ID_interp)
+   endif
+   !
+   if(all(interp_grid>0)) then
+     allocate(bands_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
+     call bz_interpolation(USER_k=INTERP_k,R2D=bands_grid,ID=ID_interp)
+   endif
+   !
+   call reset_interpolation(ID_interp)
  endif
- !
- if(all(interp_grid>0)) then
-   allocate(bands_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
-   call bz_interpolation(USER_k=INTERP_k,R2D=bands_grid,ID=ID_interp)
- endif
- !
- call reset_interpolation(ID_interp)
  !
 #if defined _YPP_RT
  !
@@ -385,32 +390,33 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
    coo_out=coo_in
    !
-   if(BANDS_steps> 0) then
+   values(1)=0.
+   !
+   do ik=1,USER_K%nibz-1
      !
-     values(1)=0.
+     if (ik>1) values(1)=values(1)+iku_v_norm(USER_K%pt(ik,:)-USER_K%pt(ik-1,:))
      !
-     do ik=1,USER_K%nibz-1
+     do ikbz=1,Xk%nbz
        !
-       if (ik>1) values(1)=values(1)+iku_v_norm(USER_K%pt(ik,:)-USER_K%pt(ik-1,:))
+       v=Xk%ptbz(ikbz,:)-USER_K%pt(ik,:)
        !
-       do ikbz=1,Xk%nbz
+       if ((abs(v_norm(v)-dot_product(v,circuit_versor(ik,:)))<1.E-5).and.&
+&           iku_v_norm(v)<=iku_v_norm(USER_K%pt(ik+1,:)-USER_K%pt(ik,:))         ) then
          !
-         v=Xk%ptbz(ikbz,:)-USER_K%pt(ik,:)
+         do is=1,n_sp_pol
+           values(2:2+BANDS_range(2)-BANDS_range(1))=Xen%E(BANDS_range(1):BANDS_range(2),Xk%sstar(ikbz,1),is)*HA2EV
+           values(2+BANDS_range(2)-BANDS_range(1)+1:4+BANDS_range(2)-BANDS_range(1)+1)=Xk%ptbz(ikbz,:)
+           call msg('o '//file_name_bands(2,is),' ',(/values(1)+iku_v_norm(v),values(2:)/),INDENT=0,USE_TABS=.true.)
+         enddo
          !
-         if (abs(v_norm(v)-dot_product(v,circuit_versor(ik,:)))<1.E-5) then
-           !
-           do is=1,n_sp_pol
-             values(2:2+BANDS_range(2)-BANDS_range(1))=Xen%E(BANDS_range(1):BANDS_range(2),Xk%sstar(ikbz,1),is)*HA2EV
-             values(2+BANDS_range(2)-BANDS_range(1)+1:4+BANDS_range(2)-BANDS_range(1)+1)=Xk%ptbz(ikbz,:)
-             call msg('o '//file_name_bands(2,is),' ',(/values(1)+iku_v_norm(v),values(2:)/),INDENT=0,USE_TABS=.true.)
-           enddo
-           !
-           !write (100,'(3f10.6,i6)') values(1)+iku_v_norm(v),Xen%E(4:5,Xk%sstar(ikbz,1),1)*HA2EV,Xk%sstar(ikbz,1)
-           !
-         endif
-        !
-       enddo
+         write (*,'(10f10.6)') values(1)+iku_v_norm(v),Xen%E(4,Xk%sstar(ikbz,1),1)*HA2EV,v
+         !
+       endif
+       !
      enddo
+   enddo
+   !
+   if(BANDS_steps> 0) then
      !
      values(1)=0.
      !

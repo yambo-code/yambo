@@ -86,17 +86,21 @@ subroutine k_grids(en,k,Xk,q)
        allocate(BZ_weights(Xk%nbz))
        BZ_weights=1._SP
        call msg("s",'K-points (BZ) formatted')
-       call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.TRUE.)
+       call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.TRUE.,.FALSE.)
        call msg("s",'K-points (BZ) un-formatted')
-       call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.FALSE.)
+       call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.FALSE.,.FALSE.)
+       call msg("s",'K-points (BZ) PW-formatted')
+       call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.FALSE.,.TRUE.)
        deallocate(BZ_weights)
      else
        allocate(BZ_weights(Xk%nibz))
        BZ_weights(:)=Xk%weights(:)*real(Xk%nbz,SP)
        call msg("s",'K-points (IBZ) formatted')
-       call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.TRUE.)
+       call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.TRUE.,.FALSE.)
        call msg("s",'K-points (IBZ) un-formatted')
-       call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.)
+       call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.,.FALSE.)
+       call msg("s",'K-points (BZ) PW-formatted')
+       call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.,.TRUE.)
        deallocate(BZ_weights)
      endif
    endif
@@ -107,17 +111,21 @@ subroutine k_grids(en,k,Xk,q)
        allocate(BZ_weights(q%nbz))
        BZ_weights=1._SP
        call msg("s",'Q-points (BZ) formatted')
-       call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.TRUE.)
+       call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.TRUE.,.FALSE.)
        call msg("s",'Q-points (BZ) un-formatted')
-       call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.FALSE.)
+       call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.FALSE.,.FALSE.)
+       call msg("s",'Q-points (BZ) PW-formatted')
+       call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.FALSE.,.TRUE.)
        deallocate(BZ_weights)
      else
        allocate(BZ_weights(q%nibz))
        BZ_weights(:)=q%weights(:)*real(q%nbz,SP)
        call msg("s",'Q-points (IBZ) formatted')
-       call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.TRUE.)
+       call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.TRUE.,.FALSE.)
        call msg("s",'Q-points (IBZ) un-formatted')
-       call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.FALSE.)
+       call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.FALSE.,.FALSE.)
+       call msg("s",'Q-points (IBZ) PW-formatted')
+       call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.FALSE.,.TRUE.)
        deallocate(BZ_weights)
      endif
    endif
@@ -133,7 +141,7 @@ subroutine k_grids(en,k,Xk,q)
    call section('+',trim(ch))
    allocate(BZ_weights(Xk%nibz))
    BZ_weights(:)=Xk%weights(:)*real(Xk%nbz,SP)
-   call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.)
+   call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.,.FALSE.)
    deallocate(BZ_weights)
    !
  endif
@@ -237,7 +245,7 @@ subroutine k_grids(en,k,Xk,q)
    if (Force_User_points) then
      allocate(BZ_weights(Q_user%nibz))
      BZ_weights=0._SP
-     call print_the_grid(Q_user%pt,Q_user%nibz,BZ_weights,coo_in,.TRUE.)
+     call print_the_grid(Q_user%pt,Q_user%nibz,BZ_weights,coo_in,.TRUE.,.FALSE.)
      deallocate(BZ_weights)
      goto 1
    endif
@@ -318,7 +326,7 @@ subroutine k_grids(en,k,Xk,q)
        !
        allocate(BZ_weights(Xk%nibz))
        BZ_weights=1._SP
-       call print_the_grid(k_plus_q,Xk%nibz,BZ_weights,coo_out,.FALSE.)
+       call print_the_grid(k_plus_q,Xk%nibz,BZ_weights,coo_out,.FALSE.,.FALSE.)
        deallocate(BZ_weights)
        !
        call set_real_printed_length( )
@@ -356,7 +364,7 @@ subroutine k_grids(en,k,Xk,q)
  !
  contains
    !
-   subroutine print_the_grid(k,nk,wk,coo_in_,formatted_)
+   subroutine print_the_grid(k,nk,wk,coo_in_,formatted_,PW_format)
      !
      ! Whatever coo_in this routine prints the list of points 
      ! using coo_out
@@ -364,7 +372,7 @@ subroutine k_grids(en,k,Xk,q)
      integer         ::nk,i1_
      real(SP)        ::k(nk,3),wk(nk),nk_replica
      character(*)    ::coo_in_
-     logical         ::formatted_
+     logical         ::formatted_,PW_format
      !
      live_timing_is_on=.false.
      do i1_=1,nk
@@ -383,6 +391,8 @@ subroutine k_grids(en,k,Xk,q)
          else
            write(ch,'(4(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|',nk_replica
          endif
+       else if (PW_format) then
+           write(ch,'(3(f12.7,1x),i1)') v(:),1
        else
          if(No_Weight) then
            write(ch,'(3(f12.7,1x))') v(:)

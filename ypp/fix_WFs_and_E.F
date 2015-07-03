@@ -302,7 +302,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
    ACTION_=OP_APP_WR_CL
-   if(io_fragmented(ID)) ACTION_=OP_WR_CL
+   if(frag_WF) ACTION_=OP_WR_CL
    !
    do ik=1,k%nibz
      !
@@ -343,7 +343,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
  end select
  ! 
- if(io_fragmented(ID)) then
+ if(frag_WF) then
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)
  endif

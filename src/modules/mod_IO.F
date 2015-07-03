@@ -27,9 +27,7 @@ module IO_m
  use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
  use parallel_m, ONLY:myid
  use com,        ONLY:error
-#if defined _NETCDF_IO
  use netcdf
-#endif
  implicit none
  !
  ! World known variables
@@ -110,7 +108,6 @@ module IO_m
  integer :: io_serial_number(max_io_units)
  integer :: io_netcdf_var(max_io_units)
  logical :: io_resetable(max_io_units)
- logical :: io_netcdf_support(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
  !
@@ -271,24 +268,15 @@ module IO_m
          ! NEW databases are always written respecting the "type" (see mod_com.F)
          !
          io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
-&                             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+&                             MORE_IO=.TRUE.,COM_IO=.FALSE.)
          !
        else if (read_is_on(ID)) then
          !
-         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
-&                             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
-         !
-         if (type/=-2.and.type/=1.and.type/=2) then
-           !
-           ! Alternative is the same as when write_is_on(ID)=.TRUE. with(/out) NETCDF support
-           !
-           alternative_file(1)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
-&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
-         endif
+         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
          !
          if (type==1.or.type==2) then
            !
-           alternative_file=all_locations(desc,subfolder_,io_netcdf_support(ID))
+           alternative_file=all_locations(desc,subfolder_)
            !
          endif
          !
@@ -315,69 +303,45 @@ module IO_m
      ! Open if to open and to write
      !
      if (open_is_on(ID).and.write_is_on(ID)) then
-       if (io_netcdf_support(ID)) then
-         !
-#if defined _NETCDF_IO
-         !
-         CREATE_MODE=nf90_share
-         !
+       !
+       CREATE_MODE=nf90_share
+       !
+       ! Setting NF90_64BIT_OFFSET causes netCDF to create a 64-bit 
+       ! offset format file, instead of a netCDF classic format file. 
+       ! The 64-bit offset format imposes far fewer restrictions on very large 
+       ! (i.e. over 2 GB) data files. See Large File Support.
+       !
+       ! http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Large-File-Support.html
+       ! http://www.unidata.ucar.edu/software/netcdf/faq-lfs.html
+       !
+#if defined _64BIT_OFFSET
+       !
+       if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
+&                index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
+&                index(desc,'elph')/=0,index(desc,'gops')/=0, & 
+&                index(desc,'kindx')/=0/))) & 
+&                CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+       !
+#elif defined _HDF5_IO
+       CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif
+       !
+       if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
          !
-         ! Setting NF90_64BIT_OFFSET causes netCDF to create a 64-bit 
-         ! offset format file, instead of a netCDF classic format file. 
-         ! The 64-bit offset format imposes far fewer restrictions on very large 
-         ! (i.e. over 2 GB) data files. See Large File Support.
-         !
-         ! http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Large-File-Support.html
-         ! http://www.unidata.ucar.edu/software/netcdf/faq-lfs.html
-         !
-#if defined _NETCDF_IO && defined _64BIT_OFFSET
-         !
-         if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
-&                  index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
-&                  index(desc,'elph')/=0,index(desc,'gops')/=0, & 
-&                  index(desc,'kindx')/=0/))) & 
-&                  CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
-         !
-#elif defined _NETCDF_IO && defined _HDF5_IO
-         CREATE_MODE=ior(nf90_share,nf90_hdf5)
-#endif
-         !
-#if defined _NETCDF_IO
-         !
-         if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
-           !
-           if( file_exists(trim(io_file(ID))) ) then
-             call netcdf_call(nf90_open(trim(io_file(ID)),&
-&                             ior(nf90_write,nf90_share),io_unit(ID)))
-           else
-             call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)))
-             call netcdf_call(nf90_enddef(io_unit(ID)))
-             if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
-             if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
-           endif
-           !
+         if( file_exists(trim(io_file(ID))) ) then
+           call netcdf_call(nf90_open(trim(io_file(ID)),&
+&                           ior(nf90_write,nf90_share),io_unit(ID)))
          else
-           !
            call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)))
            call netcdf_call(nf90_enddef(io_unit(ID)))
-           !
+           if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
+           if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
          endif
-#endif
+         !
        else
          !
-         if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
-           if( file_exists(trim(io_file(ID))) ) then
-             open(unit=io_unit(ID),file=trim(io_file(ID)),&
-&                 form='unformatted',position='append')
-           else
-             open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
-             if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
-             if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
-           endif
-         else
-           open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
-         endif
+         call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)))
+         call netcdf_call(nf90_enddef(io_unit(ID)))
          !
        endif
        !
@@ -395,50 +359,26 @@ module IO_m
          !
          if (file_exists(trim(alternative_file(1)))) then
            io_file(ID)=alternative_file(1)
-           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
            file_found=.TRUE.
          else if (file_exists(trim(alternative_file(2)))) then
            io_file(ID)=alternative_file(2)
            file_found=.TRUE.
          else if (file_exists(trim(alternative_file(3)))) then
            io_file(ID)=alternative_file(3)
-           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
            file_found=.TRUE.
          else if (file_exists(trim(alternative_file(4)))) then
            io_file(ID)=alternative_file(4)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(5)))) then
-           io_file(ID)=alternative_file(5)
-           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(6)))) then
-           io_file(ID)=alternative_file(6)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(7)))) then
-           io_file(ID)=alternative_file(7)
-           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(8)))) then
-           io_file(ID)=alternative_file(8)
            file_found=.TRUE.
          endif
          !
          if (.not.file_found) then
            do i_jobstr=1,n_alt_jobstr
-             if (file_exists(trim(alternative_file(5+4*i_jobstr)))) then
-               io_file(ID)=alternative_file(5+4*i_jobstr)
+             if (file_exists(trim(alternative_file(3+2*i_jobstr)))) then
+               io_file(ID)=alternative_file(3+2*i_jobstr)
                file_found=.TRUE.
                exit
-             else if (file_exists(trim(alternative_file(6+4*i_jobstr)))) then
-               io_file(ID)=alternative_file(6+4*i_jobstr)
-               file_found=.TRUE.
-               exit
-             else if (file_exists(trim(alternative_file(7+4*i_jobstr)))) then
-               io_file(ID)=alternative_file(7+4*i_jobstr)
-               file_found=.TRUE.
-               exit
-             else if (file_exists(trim(alternative_file(8+4*i_jobstr)))) then
-               io_file(ID)=alternative_file(8+4*i_jobstr)
+             else if (file_exists(trim(alternative_file(4+2*i_jobstr)))) then
+               io_file(ID)=alternative_file(4+2*i_jobstr)
                file_found=.TRUE.
                exit
              endif
@@ -456,22 +396,7 @@ module IO_m
            return
          endif
        endif
-       if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
-         call netcdf_call(nf90_open(trim(io_file(ID)),nf90_nowrite,io_unit(ID)))
-#else
-         io_connect=IO_NO_DATABASE
-         if (present(no_full_RESET)) then
-           io_file(ID)=''
-         else
-           call io_reset(ID)
-           io_type(ID)=0
-         endif
-         return
-#endif
-       else
-         open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
-       endif
+       call netcdf_call(nf90_open(trim(io_file(ID)),nf90_nowrite,io_unit(ID)))
        !
        io_type(ID)=type
        !
@@ -491,13 +416,7 @@ module IO_m
      endif
      !
      if (file_is_open(io_file(ID),ID)) then
-       if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
-         call netcdf_call(nf90_close(io_unit(ID)))
-#endif
-       else
-         close(unit=io_unit(ID))
-       endif
+       call netcdf_call(nf90_close(io_unit(ID)))
        io_unit(ID)=0
      endif
      !
@@ -505,11 +424,10 @@ module IO_m
      !
    end subroutine
    !
-   subroutine io_control(ACTION,MODE,COM,SEC,ID,NETCDF)
+   subroutine io_control(ACTION,MODE,COM,SEC,ID)
      !
      integer :: ACTION,ID
      integer,optional :: MODE,COM,SEC(:)
-     logical,optional :: NETCDF
      !
      ! Work Space
      !
@@ -539,10 +457,6 @@ module IO_m
        io_sec(ID,:)=0
        io_sec(ID,:size(SEC))=SEC
      endif
-     !
-#if defined _NETCDF_IO
-     if (present(NETCDF)) io_netcdf_support(ID)=NETCDF
-#endif
      !
    end subroutine
    !
@@ -576,10 +490,6 @@ module IO_m
      io_code_revision(ID,:)=(/code_revision,code_GPL_revision/)
      io_serial_number(ID)=serial_number
      io_resetable(ID)=.true.
-     io_netcdf_support(ID)=.false.
-#if defined _NETCDF_IO
-     io_netcdf_support(ID)=.true.
-#endif
    end subroutine
    !
    subroutine mk_dir(dirname)
@@ -638,7 +548,7 @@ module IO_m
      subfolder_=' '
      if (present(subfolder)) subfolder_=subfolder
      !
-     possible_locations=all_locations(desc,subfolder_,.TRUE.)
+     possible_locations=all_locations(desc,subfolder_)
      !
      file_is_present=.true.
      do i_f=1,num_of_alternative_locations
@@ -655,14 +565,8 @@ module IO_m
      file_is_open=.false.
      if (trim(filename)=='') return
      if (present(ID)) then
-       if (io_netcdf_support(ID))  then
-#if defined _NETCDF_IO
-         NC_ERR=nf90_inquire(io_unit(ID))
-         file_is_open=NC_ERR==NF90_NOERR
-#endif
-       else
-         inquire(file=filename,opened=file_is_open)
-       endif
+       NC_ERR=nf90_inquire(io_unit(ID))
+       file_is_open=NC_ERR==NF90_NOERR
      else
        inquire(file=filename,opened=file_is_open)
      endif
@@ -672,13 +576,11 @@ module IO_m
    subroutine netcdf_call(status)
      use com,           ONLY:error
      integer, intent ( in) :: status
-#if defined _NETCDF_IO
      character(schlen) :: msg
      if(status /= nf90_noerr) then
        write (msg,'(2a)') '[NetCDF] ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
-#endif
    end subroutine
    !
    integer function netcdf_dim(ID,DIM)
@@ -686,12 +588,10 @@ module IO_m
      integer       :: dim_found
      character(12) :: dim_strng
      netcdf_dim=0
-#if defined _NETCDF_IO
      write (dim_strng,'(a,i10.10)') 'D_',dim
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (dim_found/=nf90_noerr) call netcdf_call(&
 &                               nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim))
-#endif
    end function
    !
    integer function variable_is_found(ID,var_name)
@@ -699,10 +599,8 @@ module IO_m
      character(*), intent ( in) :: var_name
      integer :: var_ID ! Work Space
      variable_is_found=-1
-#if defined _NETCDF_IO
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=1  
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=0  
-#endif
    end function
    !
    subroutine deliver_IO_error_message(i_err,DB)

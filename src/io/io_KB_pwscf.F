@@ -67,7 +67,7 @@ integer function io_KB_pwscf(ID)
    call io_elemental(ID,I0=n_atomic_species)
    call io_elemental(ID,I0=pp_n_l_times_proj_max)
    call io_elemental(ID,I0=pp_n_l_max)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    if (read_is_on(ID)) then
      ! 

@@ -71,7 +71,7 @@ integer function io_KB_abinit(ID)
    if (ver_is_gt_or_eq(ID,revision=898)) &
 &    call io_elemental(ID,I0=pp_n_l_times_proj_max)
    call io_elemental(ID,I0=pp_n_l_max)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    if (read_is_on(ID)) then
      ! 

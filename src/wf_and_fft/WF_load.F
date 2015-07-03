@@ -43,7 +43,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
-&                        io_netcdf_support, RD_CL,DUMP,IO_and_Messaging_switch,frag_WF
+&                        RD_CL,DUMP,IO_and_Messaging_switch,frag_WF
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
@@ -286,22 +286,19 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      !
      if (.not.buffer_is_ok) then
        !
-       ! Use fragmentation or NETCDF support to reduce the I/O
-       ! to the k-pts and bands needed only
+       ! Use NETCDF support to reduce the I/O to the k-pts and bands needed only
        !
-       if (frag_WF.or.io_netcdf_support(ID)) then
-         if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
-         if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
-         !
-         ! In case the states to load are distributed in a complex way
-         ! by PARALLEL_WF_distribute I skip fragments that are not needed
-         ! 
-         if ( allocated(states_to_load) ) then
-           ib1=wf_nb_io*(ib_grp-1)+1
-           ib2=wf_nb_io*ib_grp
-           if(ib2>WF%b(2)) ib2=WF%b(2)
-           if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
-         endif
+       if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
+       if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
+       !
+       ! In case the states to load are distributed in a complex way
+       ! by PARALLEL_WF_distribute I skip fragments that are not needed
+       ! 
+       if ( allocated(states_to_load) ) then
+         ib1=wf_nb_io*(ib_grp-1)+1
+         ib2=wf_nb_io*ib_grp
+         if(ib2>WF%b(2)) ib2=WF%b(2)
+         if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
        endif
        !
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)

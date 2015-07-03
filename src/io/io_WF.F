@@ -71,7 +71,7 @@ integer function io_WF(ID,wf)
    io_WF=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    !
    if (ver_is_gt_or_eq(ID,(/3,1,1/))) then
-     call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2)
+     call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2,MENU=0)
      call io_elemental(ID,VAR=&
 &         ' Bands in each block             :',I0=wf_nb_io)
      call io_elemental(ID,VAR=&

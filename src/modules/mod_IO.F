@@ -65,9 +65,6 @@ module IO_m
  logical           :: frag_QINDX
  logical           :: frag_HF
  logical           :: frag_COLLs
- logical           :: frag_J
- logical           :: frag_CARRIERs
- logical           :: frag_GF
  logical           :: frag_SC
  logical           :: frag_RT
  logical           :: frag_ELPH
@@ -112,7 +109,6 @@ module IO_m
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
  integer :: io_netcdf_var(max_io_units)
- logical :: io_fragmented(max_io_units)
  logical :: io_resetable(max_io_units)
  logical :: io_netcdf_support(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
@@ -168,9 +164,9 @@ module IO_m
    end subroutine
    !
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
-&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE)
+&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG)
      integer               :: ID
-     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE
+     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG
      character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
    end function
    !

@@ -30,7 +30,7 @@ integer function io_Vnl(X,Xen,ID)
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
-&                        read_is_on,write_is_on,io_header,io_fragmented,io_extension,&
+&                        read_is_on,write_is_on,io_header,io_extension,&
 &                        io_fragment,frag_WF
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  use com,           ONLY:warning
@@ -54,9 +54,7 @@ integer function io_Vnl(X,Xen,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   if (write_is_on(ID)) io_fragmented(ID)=frag_WF
-   io_Vnl=io_header(ID,IMPOSE_SN=.true.)
-   if (read_is_on(ID))  frag_WF=io_fragmented(ID)
+   io_Vnl=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    if (io_Vnl/=0) goto 1
    !
    sec_size=5

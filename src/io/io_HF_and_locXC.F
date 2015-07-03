@@ -30,8 +30,7 @@ integer function io_HF_and_locXC(ID)
 &                         QP_table,QP_state
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,io_HF,frag_HF,&
 &                         io_elemental,io_status,io_bulk,read_is_on,IO_NOT_ALLOWED,&
-&                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
-&                         io_fragmented
+&                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -65,9 +64,8 @@ integer function io_HF_and_locXC(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   if(write_is_on(ID)) io_fragmented(ID)=frag_HF
-   io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,XC_KIND="G_WF force",CUTOFF=.true.)
-   if(read_is_on(ID))  frag_HF=io_fragmented(ID)
+   io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,&
+&                               XC_KIND="G_WF force",CUTOFF=.true.,FRAG=frag_HF)
    !
    if (io_HF_and_locXC/=0) goto 1
    !

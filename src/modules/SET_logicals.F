@@ -29,7 +29,7 @@ subroutine SET_logicals()
  use com,        ONLY:write_to_of,write_to_report
  use IO_m,       ONLY:IO_write,IO_read,DBs_IO_control_string,DBs_FRAG_control_string,                   &
 &                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_J,io_CARRIERs,io_SC,io_BS_K,io_SCREEN, &
-&                     frag_DIP,frag_RESPONSE,frag_HF,frag_COLLs,frag_GF,frag_J,frag_CARRIERs,frag_SC,   &
+&                     frag_DIP,frag_RESPONSE,frag_HF,frag_COLLs,frag_SC,   &
 &                     frag_BS_K,frag_SCREEN,frag_QINDX,frag_ELPH,frag_RT
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split,write_to_log_default
  use LIVE_t,     ONLY:live_timing_is_on
@@ -91,8 +91,8 @@ subroutine SET_logicals()
  enddo
  !
  ! Override input in some cases
- io_RESPONSE=io_RESPONSE.or.l_eval_collisions
  !
+ io_RESPONSE=io_RESPONSE.or.l_eval_collisions
  !
  ! DBs fragmentation
  !===================
@@ -101,9 +101,6 @@ subroutine SET_logicals()
  frag_SCREEN  =.TRUE.
  frag_HF      =.FALSE.
  frag_COLLs   =.TRUE.
- frag_J       =.TRUE.
- frag_CARRIERs=.TRUE.
- frag_GF      =.TRUE.
  frag_SC      =.TRUE.
  frag_RT      =.TRUE.
  frag_ELPH    =.TRUE.
@@ -134,6 +131,5 @@ subroutine SET_logicals()
    if (any( (/"-QINDX","-qindx"/)               ==trim(ch_piece(i_ch)) )) frag_QINDX   =.FALSE.
    !
  enddo 
- !
  !
 end subroutine

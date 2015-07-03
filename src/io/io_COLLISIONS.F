@@ -27,7 +27,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLLISIONS_IO_status
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
-&                        io_bulk,write_is_on,io_disconnect,io_fragmented,frag_COLLs,&
+&                        io_bulk,write_is_on,io_disconnect,frag_COLLs,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ
@@ -80,9 +80,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  if (any(io_sec(ID,:)==1)) then
    !
-   if(write_is_on(ID)) io_fragmented(ID)=frag_COLLs
-   io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
-   if(read_is_on(ID))  frag_COLLs=io_fragmented(ID)
+   io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,FRAG=frag_COLLS)
    !
    VAR_size=7
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=VAR_size,MENU=0)

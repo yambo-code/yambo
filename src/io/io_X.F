@@ -36,7 +36,7 @@ integer function io_X(X,Xw,ID)
 &                        RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
-&                        io_fragment,IO_OUTDATED_DB,io_fragmented,frag_RESPONSE,&
+&                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
 &                        IO_NO_DATABASE
  use stderr,        ONLY:intc
 #if defined _TIMING
@@ -86,10 +86,8 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
-   if(write_is_on(ID)) io_fragmented(ID)=frag_RESPONSE
    io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,&
-&                    CUTOFF=.true.,GAUGE=.TRUE.)
-   if(read_is_on(ID))  frag_RESPONSE=io_fragmented(ID)
+&                    CUTOFF=.true.,GAUGE=.TRUE.,FRAG=frag_RESPONSE)
    if (io_X/=0) goto 1
    !
    if (.not.ver_is_gt_or_eq(ID,revision=308)) then

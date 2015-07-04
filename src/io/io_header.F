@@ -267,6 +267,9 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  ! Fragmentation
  !
  if (present(FRAG)) then
+   !
+   io_mode(ID)=MODE
+   !
    call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=MENU)
    MENU=0
    call io_elemental(ID,L0=FRAG,&

@@ -53,7 +53,7 @@ integer function io_QINDX(Xk,q,io_db)
    if (.not.ver_is_gt_or_eq(io_db,revision=3085)) io_QINDX=-1
    if (io_QINDX/=0) goto 1
    !
-   call io_elemental(io_db,VAR="PARS",VAR_SZ=10)
+   call io_elemental(io_db,VAR="PARS",VAR_SZ=10,MENU=0)
    !
    call io_elemental(io_db,I0=nXkbz)
    call io_elemental(io_db,&

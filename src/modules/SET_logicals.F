@@ -77,17 +77,18 @@ subroutine SET_logicals()
  call string_split(DBs_IO_control_string,ch_piece)
  !
  do i_ch=1,n_max
-   if (any( (/"DIP","dip"/)                     ==trim(ch_piece(i_ch)) )) io_DIP     =.FALSE.
-   if (any( (/"X","x"/)                         ==trim(ch_piece(i_ch)) )) io_RESPONSE=.FALSE.
-   if (any( (/"W","w"/)                         ==trim(ch_piece(i_ch)) )) io_SCREEN  =.FALSE.
-   if (any( (/"HF","hf"/)                       ==trim(ch_piece(i_ch)) )) io_HF      =.FALSE.
-   if (any( (/"COLLS","COLLs","colls"/)         ==trim(ch_piece(i_ch)) )) io_COLLs   =.FALSE.
-   if (any( (/"GF","gf"/)                       ==trim(ch_piece(i_ch)) )) io_GF      =.FALSE.
-   if (any( (/"J","j"/)                         ==trim(ch_piece(i_ch)) )) io_J       =.FALSE.
-   if (any( (/"CARRIERs","carriers","CARRIERS"/)==trim(ch_piece(i_ch)) )) io_CARRIERs=.FALSE.
-   if (any( (/"SC","sc"/)                       ==trim(ch_piece(i_ch)) )) io_SC      =.FALSE.
-   if (any( (/"k","K"/)                         ==trim(ch_piece(i_ch)) )) io_BS_K    =.FALSE.
-   if (any( (/"BS","bs"/)                       ==trim(ch_piece(i_ch)) )) io_BS_K    =.FALSE.
+   if (any( (/"DIP","dip","ALL","all"/)             ==trim(ch_piece(i_ch)) )) io_DIP     =.FALSE.
+   if (any( (/"X","x","ALL","all"/)                 ==trim(ch_piece(i_ch)) )) io_RESPONSE=.FALSE.
+   if (any( (/"W","w","ALL","all"/)                 ==trim(ch_piece(i_ch)) )) io_SCREEN  =.FALSE.
+   if (any( (/"HF","hf","ALL","all"/)               ==trim(ch_piece(i_ch)) )) io_HF      =.FALSE.
+   if (any( (/"COLLS","COLLs","colls","ALL","all"/) ==trim(ch_piece(i_ch)) )) io_COLLs   =.FALSE.
+   if (any( (/"GF","gf","ALL","all"/)               ==trim(ch_piece(i_ch)) )) io_GF      =.FALSE.
+   if (any( (/"J","j","ALL","all"/)                 ==trim(ch_piece(i_ch)) )) io_J       =.FALSE.
+   if (any( (/"CARRIERs","carriers","CARRIERS",&
+&             "ALL","all"/)                         ==trim(ch_piece(i_ch)) )) io_CARRIERs=.FALSE.
+   if (any( (/"SC","sc","ALL","all"/)               ==trim(ch_piece(i_ch)) )) io_SC      =.FALSE.
+   if (any( (/"k","K","ALL","all"/)                 ==trim(ch_piece(i_ch)) )) io_BS_K    =.FALSE.
+   if (any( (/"BS","bs","ALL","all"/)               ==trim(ch_piece(i_ch)) )) io_BS_K    =.FALSE.
  enddo
  !
  ! Override input in some cases
@@ -112,23 +113,25 @@ subroutine SET_logicals()
  !
  do i_ch=1,n_max
    !
-   if (any( (/"+DIP","+dip"/)                   ==trim(ch_piece(i_ch)) )) frag_DIP     =.TRUE.
-   if (any( (/"+X","+x"/)                       ==trim(ch_piece(i_ch)) )) frag_RESPONSE=.TRUE.
-   if (any( (/"+W","+w"/)                       ==trim(ch_piece(i_ch)) )) frag_SCREEN  =.TRUE.
-   if (any( (/"+HF","+hf"/)                     ==trim(ch_piece(i_ch)) )) frag_HF      =.TRUE.
-   if (any( (/"+COLLS","+COLLs","+colls"/)      ==trim(ch_piece(i_ch)) )) frag_COLLs   =.TRUE.
-   if (any( (/"+k","+K"/)                       ==trim(ch_piece(i_ch)) )) frag_BS_K    =.TRUE.
-   if (any( (/"+BS","+bs"/)                     ==trim(ch_piece(i_ch)) )) frag_BS_K    =.TRUE.
-   if (any( (/"+QINDX","+qindx"/)               ==trim(ch_piece(i_ch)) )) frag_QINDX   =.TRUE.
+   if (any( (/"+DIP","+dip","+ALL","+all"/)     ==trim(ch_piece(i_ch)) )) frag_DIP     =.TRUE.
+   if (any( (/"+X","+x","+ALL","+all"/)         ==trim(ch_piece(i_ch)) )) frag_RESPONSE=.TRUE.
+   if (any( (/"+W","+w","+ALL","+all"/)         ==trim(ch_piece(i_ch)) )) frag_SCREEN  =.TRUE.
+   if (any( (/"+HF","+hf","+ALL","+all"/)       ==trim(ch_piece(i_ch)) )) frag_HF      =.TRUE.
+   if (any( (/"+COLLS","+COLLs","+colls",&
+&             "+ALL","+all"/)                   ==trim(ch_piece(i_ch)) )) frag_COLLs   =.TRUE.
+   if (any( (/"+k","+K","+ALL","+all"/)         ==trim(ch_piece(i_ch)) )) frag_BS_K    =.TRUE.
+   if (any( (/"+BS","+bs","+ALL","+all"/)       ==trim(ch_piece(i_ch)) )) frag_BS_K    =.TRUE.
+   if (any( (/"+QINDX","+qindx","+ALL","+all"/) ==trim(ch_piece(i_ch)) )) frag_QINDX   =.TRUE.
    !
-   if (any( (/"-DIP","-dip"/)                   ==trim(ch_piece(i_ch)) )) frag_DIP     =.FALSE.
-   if (any( (/"-X","-x"/)                       ==trim(ch_piece(i_ch)) )) frag_RESPONSE=.FALSE.
-   if (any( (/"-W","-w"/)                       ==trim(ch_piece(i_ch)) )) frag_SCREEN  =.FALSE.
-   if (any( (/"-HF","-hf"/)                     ==trim(ch_piece(i_ch)) )) frag_HF      =.FALSE.
-   if (any( (/"-COLLS","-COLLs","-colls"/)      ==trim(ch_piece(i_ch)) )) frag_COLLs   =.FALSE.
-   if (any( (/"-k","-K"/)                       ==trim(ch_piece(i_ch)) )) frag_BS_K    =.FALSE.
-   if (any( (/"-BS","-bs"/)                     ==trim(ch_piece(i_ch)) )) frag_BS_K    =.FALSE.
-   if (any( (/"-QINDX","-qindx"/)               ==trim(ch_piece(i_ch)) )) frag_QINDX   =.FALSE.
+   if (any( (/"-DIP","-dip","-ALL","-all"/)     ==trim(ch_piece(i_ch)) )) frag_DIP     =.FALSE.
+   if (any( (/"-X","-x","-ALL","-all"/)         ==trim(ch_piece(i_ch)) )) frag_RESPONSE=.FALSE.
+   if (any( (/"-W","-w","-ALL","-all"/)         ==trim(ch_piece(i_ch)) )) frag_SCREEN  =.FALSE.
+   if (any( (/"-HF","-hf","-ALL","-all"/)       ==trim(ch_piece(i_ch)) )) frag_HF      =.FALSE.
+   if (any( (/"-COLLS","-COLLs","-colls",&
+&             "-ALL","-all"/)                   ==trim(ch_piece(i_ch)) )) frag_COLLs   =.FALSE.
+   if (any( (/"-k","-K","-ALL","-all"/)         ==trim(ch_piece(i_ch)) )) frag_BS_K    =.FALSE.
+   if (any( (/"-BS","-bs","-ALL","-all"/)       ==trim(ch_piece(i_ch)) )) frag_BS_K    =.FALSE.
+   if (any( (/"-QINDX","-qindx","-ALL","-all"/) ==trim(ch_piece(i_ch)) )) frag_QINDX   =.FALSE.
    !
  enddo 
  !

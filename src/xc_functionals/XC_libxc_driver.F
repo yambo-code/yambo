@@ -59,8 +59,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  real(SP) :: spin_rho_SP(fft_size,n_spin),rho(fft_size)
  real(DP) :: spin_rho_DP(n_spin,fft_size),rspts(fft_size)
  real(SP),allocatable:: drho(:,:,:)
- real(SP),allocatable:: drho_cmplx(:,:)
  real(DP),allocatable:: sigma(:,:)
+ complex(SP), allocatable:: drho_cmplx(:,:)
  complex(SP), allocatable:: spin_rho_SP_cmplx(:)
  !
  ! note that multidimensional dvxc & vxc is allowed only in xcspol
@@ -138,7 +138,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    !
    do is1 = 1,n_spin
      spin_rho_SP_cmplx(:)=cmplx(spin_rho_SP(:,is1),0.0_SP,kind=SP)
+     !
      call eval_Gradient(spin_rho_SP_cmplx,drho_cmplx)
+     !
      drho(:,is1,:)=real(drho_cmplx)
      forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*fft_size/DL_vol*2._SP*pi/alat(:)
    end do

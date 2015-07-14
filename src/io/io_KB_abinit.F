@@ -33,7 +33,7 @@ integer function io_KB_abinit(ID)
 &                           PP_alloc_abinit
  use memory_m,         ONLY:mem_est
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
-&                           io_elemental,io_bulk,io_header,io_fragmented,&
+&                           io_elemental,io_bulk,io_header,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,frag_WF
  use electrons,        ONLY:n_sp_pol
  implicit none
@@ -49,13 +49,11 @@ integer function io_KB_abinit(ID)
  io_KB_abinit=io_connect(desc="kb_pp",type=0,ID=ID)
  if (io_KB_abinit/=0) goto 1
  !
- if(write_is_on(ID)) io_fragmented(ID)=frag_WF
- !
  ! Dimensions
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_KB_abinit=io_header(ID,IMPOSE_SN=.true.)
+   io_KB_abinit=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    if (io_KB_abinit/=0) goto 1
    !
    var_size=3
@@ -73,7 +71,7 @@ integer function io_KB_abinit(ID)
    if (ver_is_gt_or_eq(ID,revision=898)) &
 &    call io_elemental(ID,I0=pp_n_l_times_proj_max)
    call io_elemental(ID,I0=pp_n_l_max)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    if (read_is_on(ID)) then
      ! 
@@ -130,7 +128,7 @@ integer function io_KB_abinit(ID)
  !
  allocate(pp_disk(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
  !
- if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
+ call io_fragment(ID,i_fragment=ik)
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP

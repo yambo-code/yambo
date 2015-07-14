@@ -57,7 +57,7 @@ module com
  !
  integer,parameter  :: nofs=400
  integer,parameter  :: max_open_ofs=400
- integer, parameter :: num_of_alternative_locations=8+8*n_max_jobstr
+ integer, parameter :: num_of_alternative_locations=4+2*n_max_jobstr
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)
@@ -70,17 +70,17 @@ module com
  !
  contains
    !
-   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,NETCDF,ALT_JOB_STRING)
+   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING)
      !
-     ! -2 ----------------  -> desc (NETCDF deduced from presence of "ndb" in desc)
-     ! -1 ----------------  -> subfolder/(n)desc
-     !  0 Stable s.         -> CORE_IO_PATH/SAVE/subfolder/(n)s.desc
-     !  1 Stable db.        -> CORE_IO_PATH/SAVE/subfolder/(n)db.desc
-     !  2 Job dependent db. -> PATH/JOBSTR/subfolder/(n)db.desc 
+     ! -2 ----------------  -> desc 
+     ! -1 ----------------  -> subfolder/ndesc
+     !  0 Stable s.         -> CORE_IO_PATH/SAVE/subfolder/ns.desc
+     !  1 Stable db.        -> CORE_IO_PATH/SAVE/subfolder/ndb.desc
+     !  2 Job dependent db. -> PATH/JOBSTR/subfolder/ndb.desc 
      !  3 Job dependent o.  -> COM_PATH/o.desc-JOBSTR
-     !  4 ----------------  -> MORE_IO_PATH/RESTART/(n)db.desc_FOLDER
-     !                                                    |
-     !                                                    JOBSTR, or  SAVE if no JOBSTR 
+     !  4 ----------------  -> MORE_IO_PATH/RESTART/ndb.desc_FOLDER
+     !                                                  |
+     !                                                  JOBSTR, or  SAVE if no JOBSTR 
      ! if (CORE_IO) PATH=core_io_path
      ! if (MORE_IO) PATH=more_io_path
      ! if ( COM_IO) PATH=com_path
@@ -89,7 +89,7 @@ module com
      !
      character(*)           ::desc
      integer                ::type
-     logical                ::CORE_IO,MORE_IO,NETCDF,COM_IO
+     logical                ::CORE_IO,MORE_IO,COM_IO
      character(*), optional ::subfolder
      character(*), optional ::ALT_JOB_STRING
      ! 
@@ -109,7 +109,6 @@ module com
      select case(type)
        case(-2)
          get_name="./"//trim(desc)
-         NETCDF=index(desc,'ndb')>0
          return
        case(-1)
          ch(2)=desc
@@ -153,19 +152,15 @@ module com
      if (len_trim(folder)>0) ch(1)=trim(ch(1))//"/"//trim(folder)
      if (present(subfolder).and.type>=0) ch(1)=trim(ch(1))//"/"//trim(subfolder)
      !
-     if (NETCDF) then
-       get_name=trim(ch(1))//"/n"//trim(ch(2))
-     else
-       get_name=trim(ch(1))//"/"//trim(ch(2))
-     endif
+     get_name=trim(ch(1))//"/"//trim(ch(2))
+     if (type/=3) get_name=trim(ch(1))//"/n"//trim(ch(2))
      !
    end function
    !
-   function all_locations(desc,subfolder,NETCDF_DB)
+   function all_locations(desc,subfolder)
      !
      character(*)           ::desc
      character(*), optional ::subfolder
-     logical                ::NETCDF_DB
      character(lchlen)      ::all_locations(num_of_alternative_locations)
      !
      ! WS
@@ -173,55 +168,36 @@ module com
      !
      ! Possible Paths
      !
-     ! 1/2.  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
-     ! 3/4.  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
-     ! 5/6.  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with JOBSTR)
-     ! 7/8.  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=1 (no   JOBSTR)
-     ! 9/10. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with ALT_JOBSTR(1))
-     ! 11/12.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with ALT_JOBSTR(1))
+     ! 1  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
+     ! 2  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
+     ! 3  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with JOBSTR)
+     ! 4  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=1 (no   JOBSTR)
      ! .
      ! .
      ! .
-     ! 5+4*I/6+4*I.MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with ALT_JOBSTR(I))
-     ! 7+4*I/8+4*I.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with ALT_JOBSTR(I))
+     ! 3+2*I MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with ALT_JOBSTR(I))
+     ! 4+2*I MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with ALT_JOBSTR(I))
      !
-     all_locations(1)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
-&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
-     all_locations(2)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
-&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
-     all_locations(3)=get_name(desc,subfolder,1,CORE_IO=.FALSE.,&
-&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
-     all_locations(4)=get_name(desc,subfolder,1,CORE_IO=.FALSE.,&
-&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
-     all_locations(5)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
-&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
-     all_locations(6)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
-&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
-     all_locations(7)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
-&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
-     all_locations(8)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
-&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
+     all_locations(1)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+     all_locations(2)=get_name(desc,subfolder,1,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+     all_locations(3)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,MORE_IO=.FALSE.,COM_IO=.FALSE.)
+     all_locations(4)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,MORE_IO=.FALSE.,COM_IO=.FALSE.)
      !
      ! Added on 27/12/2012 using second_jobstr (Andrea)
      ! Added on 27/6/2013 using third_jobstr (Andrea)
      ! 30/8/2013 Merged and added general number of jobstrs (Andrea)
      !
      do i_jobstr=1,n_max_jobstr
-       all_locations(5+4*i_jobstr:8+4*i_jobstr) = ' '
+       all_locations(3+2*i_jobstr:4+2*i_jobstr) = ' '
      enddo
+     !
      do i_jobstr=1,n_alt_jobstr
-       all_locations(5+4*i_jobstr) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
-&                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
-       all_locations(6+4*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
-&                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
-       all_locations(7+4*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
-&                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
-       all_locations(8+4*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
-&                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+       all_locations(3+2*i_jobstr) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                                            MORE_IO=.TRUE.,COM_IO=.FALSE.,&
+&                                            ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+       all_locations(4+2*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                                           MORE_IO=.FALSE.,COM_IO=.FALSE.,&
+&                                           ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
      enddo
      !
    end function
@@ -261,7 +237,7 @@ module com
        !
        if (index(mode,'a')==0.and.index(mode,'O')==0) then
          local_file_name=get_name(desc=of_name,type=3,CORE_IO=.false.,&
-&                                 MORE_IO=.false.,COM_IO=.true.,NETCDF=.false.)
+&                                 MORE_IO=.false.,COM_IO=.true.)
          call rename_file(local_file_name)
        endif
        !

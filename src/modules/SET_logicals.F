@@ -29,7 +29,7 @@ subroutine SET_logicals()
  use com,        ONLY:write_to_of,write_to_report
  use IO_m,       ONLY:IO_write,IO_read,DBs_IO_control_string,DBs_FRAG_control_string,                   &
 &                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_J,io_CARRIERs,io_SC,io_BS_K,io_SCREEN, &
-&                     frag_DIP,frag_RESPONSE,frag_HF,frag_COLLs,frag_GF,frag_J,frag_CARRIERs,frag_SC,   &
+&                     frag_DIP,frag_RESPONSE,frag_HF,frag_SC,   &
 &                     frag_BS_K,frag_SCREEN,frag_QINDX,frag_ELPH,frag_RT
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split,write_to_log_default
  use LIVE_t,     ONLY:live_timing_is_on
@@ -77,22 +77,23 @@ subroutine SET_logicals()
  call string_split(DBs_IO_control_string,ch_piece)
  !
  do i_ch=1,n_max
-   if (any( (/"DIP","dip"/)                     ==trim(ch_piece(i_ch)) )) io_DIP     =.FALSE.
-   if (any( (/"X","x"/)                         ==trim(ch_piece(i_ch)) )) io_RESPONSE=.FALSE.
-   if (any( (/"W","w"/)                         ==trim(ch_piece(i_ch)) )) io_SCREEN  =.FALSE.
-   if (any( (/"HF","hf"/)                       ==trim(ch_piece(i_ch)) )) io_HF      =.FALSE.
-   if (any( (/"COLLS","COLLs","colls"/)         ==trim(ch_piece(i_ch)) )) io_COLLs   =.FALSE.
-   if (any( (/"GF","gf"/)                       ==trim(ch_piece(i_ch)) )) io_GF      =.FALSE.
-   if (any( (/"J","j"/)                         ==trim(ch_piece(i_ch)) )) io_J       =.FALSE.
-   if (any( (/"CARRIERs","carriers","CARRIERS"/)==trim(ch_piece(i_ch)) )) io_CARRIERs=.FALSE.
-   if (any( (/"SC","sc"/)                       ==trim(ch_piece(i_ch)) )) io_SC      =.FALSE.
-   if (any( (/"k","K"/)                         ==trim(ch_piece(i_ch)) )) io_BS_K    =.FALSE.
-   if (any( (/"BS","bs"/)                       ==trim(ch_piece(i_ch)) )) io_BS_K    =.FALSE.
+   if (any( (/"DIP","dip","ALL","all"/)             ==trim(ch_piece(i_ch)) )) io_DIP     =.FALSE.
+   if (any( (/"X","x","ALL","all"/)                 ==trim(ch_piece(i_ch)) )) io_RESPONSE=.FALSE.
+   if (any( (/"W","w","ALL","all"/)                 ==trim(ch_piece(i_ch)) )) io_SCREEN  =.FALSE.
+   if (any( (/"HF","hf","ALL","all"/)               ==trim(ch_piece(i_ch)) )) io_HF      =.FALSE.
+   if (any( (/"COLLS","COLLs","colls","ALL","all"/) ==trim(ch_piece(i_ch)) )) io_COLLs   =.FALSE.
+   if (any( (/"GF","gf","ALL","all"/)               ==trim(ch_piece(i_ch)) )) io_GF      =.FALSE.
+   if (any( (/"J","j","ALL","all"/)                 ==trim(ch_piece(i_ch)) )) io_J       =.FALSE.
+   if (any( (/"CARRIERs","carriers","CARRIERS",&
+&             "ALL","all"/)                         ==trim(ch_piece(i_ch)) )) io_CARRIERs=.FALSE.
+   if (any( (/"SC","sc","ALL","all"/)               ==trim(ch_piece(i_ch)) )) io_SC      =.FALSE.
+   if (any( (/"k","K","ALL","all"/)                 ==trim(ch_piece(i_ch)) )) io_BS_K    =.FALSE.
+   if (any( (/"BS","bs","ALL","all"/)               ==trim(ch_piece(i_ch)) )) io_BS_K    =.FALSE.
  enddo
  !
  ! Override input in some cases
- io_RESPONSE=io_RESPONSE.or.l_eval_collisions
  !
+ io_RESPONSE=io_RESPONSE.or.l_eval_collisions
  !
  ! DBs fragmentation
  !===================
@@ -100,10 +101,6 @@ subroutine SET_logicals()
  frag_RESPONSE=.TRUE.
  frag_SCREEN  =.TRUE.
  frag_HF      =.FALSE.
- frag_COLLs   =.TRUE.
- frag_J       =.TRUE.
- frag_CARRIERs=.TRUE.
- frag_GF      =.TRUE.
  frag_SC      =.TRUE.
  frag_RT      =.TRUE.
  frag_ELPH    =.TRUE.
@@ -115,25 +112,22 @@ subroutine SET_logicals()
  !
  do i_ch=1,n_max
    !
-   if (any( (/"+DIP","+dip"/)                   ==trim(ch_piece(i_ch)) )) frag_DIP     =.TRUE.
-   if (any( (/"+X","+x"/)                       ==trim(ch_piece(i_ch)) )) frag_RESPONSE=.TRUE.
-   if (any( (/"+W","+w"/)                       ==trim(ch_piece(i_ch)) )) frag_SCREEN  =.TRUE.
-   if (any( (/"+HF","+hf"/)                     ==trim(ch_piece(i_ch)) )) frag_HF      =.TRUE.
-   if (any( (/"+COLLS","+COLLs","+colls"/)      ==trim(ch_piece(i_ch)) )) frag_COLLs   =.TRUE.
-   if (any( (/"+k","+K"/)                       ==trim(ch_piece(i_ch)) )) frag_BS_K    =.TRUE.
-   if (any( (/"+BS","+bs"/)                     ==trim(ch_piece(i_ch)) )) frag_BS_K    =.TRUE.
-   if (any( (/"+QINDX","+qindx"/)               ==trim(ch_piece(i_ch)) )) frag_QINDX   =.TRUE.
+   if (any( (/"+DIP","+dip","+ALL","+all"/)     ==trim(ch_piece(i_ch)) )) frag_DIP     =.TRUE.
+   if (any( (/"+X","+x","+ALL","+all"/)         ==trim(ch_piece(i_ch)) )) frag_RESPONSE=.TRUE.
+   if (any( (/"+W","+w","+ALL","+all"/)         ==trim(ch_piece(i_ch)) )) frag_SCREEN  =.TRUE.
+   if (any( (/"+HF","+hf","+ALL","+all"/)       ==trim(ch_piece(i_ch)) )) frag_HF      =.TRUE.
+   if (any( (/"+k","+K","+ALL","+all"/)         ==trim(ch_piece(i_ch)) )) frag_BS_K    =.TRUE.
+   if (any( (/"+BS","+bs","+ALL","+all"/)       ==trim(ch_piece(i_ch)) )) frag_BS_K    =.TRUE.
+   if (any( (/"+QINDX","+qindx","+ALL","+all"/) ==trim(ch_piece(i_ch)) )) frag_QINDX   =.TRUE.
    !
-   if (any( (/"-DIP","-dip"/)                   ==trim(ch_piece(i_ch)) )) frag_DIP     =.FALSE.
-   if (any( (/"-X","-x"/)                       ==trim(ch_piece(i_ch)) )) frag_RESPONSE=.FALSE.
-   if (any( (/"-W","-w"/)                       ==trim(ch_piece(i_ch)) )) frag_SCREEN  =.FALSE.
-   if (any( (/"-HF","-hf"/)                     ==trim(ch_piece(i_ch)) )) frag_HF      =.FALSE.
-   if (any( (/"-COLLS","-COLLs","-colls"/)      ==trim(ch_piece(i_ch)) )) frag_COLLs   =.FALSE.
-   if (any( (/"-k","-K"/)                       ==trim(ch_piece(i_ch)) )) frag_BS_K    =.FALSE.
-   if (any( (/"-BS","-bs"/)                     ==trim(ch_piece(i_ch)) )) frag_BS_K    =.FALSE.
-   if (any( (/"-QINDX","-qindx"/)               ==trim(ch_piece(i_ch)) )) frag_QINDX   =.FALSE.
+   if (any( (/"-DIP","-dip","-ALL","-all"/)     ==trim(ch_piece(i_ch)) )) frag_DIP     =.FALSE.
+   if (any( (/"-X","-x","-ALL","-all"/)         ==trim(ch_piece(i_ch)) )) frag_RESPONSE=.FALSE.
+   if (any( (/"-W","-w","-ALL","-all"/)         ==trim(ch_piece(i_ch)) )) frag_SCREEN  =.FALSE.
+   if (any( (/"-HF","-hf","-ALL","-all"/)       ==trim(ch_piece(i_ch)) )) frag_HF      =.FALSE.
+   if (any( (/"-k","-K","-ALL","-all"/)         ==trim(ch_piece(i_ch)) )) frag_BS_K    =.FALSE.
+   if (any( (/"-BS","-bs","-ALL","-all"/)       ==trim(ch_piece(i_ch)) )) frag_BS_K    =.FALSE.
+   if (any( (/"-QINDX","-qindx","-ALL","-all"/) ==trim(ch_piece(i_ch)) )) frag_QINDX   =.FALSE.
    !
  enddo 
- !
  !
 end subroutine

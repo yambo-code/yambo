@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,&
-&                          CUTOFF,GAUGE,IMPOSE_GAUGE,PARALLEL_STRUCTURE)
+&                          CUTOFF,GAUGE,IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2KEL
@@ -40,7 +40,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  use IO_m,          ONLY:io_elemental,io_bulk,io_code_version,io_status,&
 &                        read_is_on,write_is_on,serial_number,variable_is_found,&
 &                        io_serial_number,io_file,io_com,io_mode,&
-&                        DUMP,VERIFY,NONE,io_fragmented,&
+&                        DUMP,VERIFY,NONE,&
 &                        ver_is_gt_or_eq,db_alat,io_code_revision,read_is_on
  use zeros,         ONLY:define_zeros
  use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,loaded_WF_xc_string,&
@@ -48,7 +48,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  implicit none
  integer               :: ID
- logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE
+ logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG
  character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
  !
  ! Work Space
@@ -71,12 +71,6 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  MENU=1
  MODE=io_mode(ID)
  if (io_mode(ID)==DUMP) io_mode(ID)=VERIFY
- !
- ! Fragmentation can be dumped
- !==============================
- call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=0)
- call io_elemental(ID,DB_L0=io_fragmented(ID),L0=io_fragmented(ID))
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  ! Things that CANNOT be dumped
  !==============================
@@ -269,6 +263,19 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! Things that can be dumped
  !===========================
+ !
+ ! Fragmentation
+ !
+ if (present(FRAG)) then
+   !
+   io_mode(ID)=MODE
+   !
+   call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=MENU)
+   MENU=0
+   call io_elemental(ID,L0=FRAG,&
+&                    VAR=' Fragmentation                    :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
  !
  ! Temperature
  !

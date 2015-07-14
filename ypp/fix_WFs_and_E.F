@@ -28,7 +28,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
 &                              OP_APP,cp_file,cp_directory, &
-&                              io_fragmented,OP_RD_CL,RD_CL,RD
+&                              OP_RD_CL,RD_CL,RD,frag_WF
  use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_spin
@@ -174,7 +174,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      io_err=io_WF(ID)
      !
      ACTION_=OP_APP_WR_CL
-     if(io_fragmented(ID)) ACTION_=OP_WR_CL
+     if(frag_WF) ACTION_=OP_WR_CL
      !
      do ik=1,k_save%nibz
        !
@@ -223,7 +223,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    allocate(wf_tmp(wf_ncx_new,n_spin))
    !
    ACTION_=OP_APP_WR_CL
-   if(io_fragmented(ID)) ACTION_=OP_WR_CL
+   if (frag_WF) ACTION_=OP_WR_CL
    !
    do ik=k_save%nibz+1,k%nibz 
      !      
@@ -302,7 +302,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
    ACTION_=OP_APP_WR_CL
-   if(io_fragmented(ID)) ACTION_=OP_WR_CL
+   if(frag_WF) ACTION_=OP_WR_CL
    !
    do ik=1,k%nibz
      !
@@ -343,7 +343,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
  end select
  ! 
- if(io_fragmented(ID)) then
+ if(frag_WF) then
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)
  endif

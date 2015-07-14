@@ -39,15 +39,13 @@ if test "$mpibuild" = "yes" ; then
 fi
 
 NETCDF_str="-"
-if test "$netcdf" = "yes" ; then
-  if test "$compile_netcdf" = "yes" ; then
-    NETCDF_str="I"
-  else
-    NETCDF_str="E"
-  fi
-  NETCDF_LF_str="(No large files support)"
-  if test "$enable_netcdf_LFS" = "yes"; then NETCDF_LF_str="(With large files support)"; fi
+if test "$compile_netcdf" = "yes" ; then
+  NETCDF_str="I"
+else
+  NETCDF_str="E"
 fi
+NETCDF_LF_str="(No large files support)"
+if test "$enable_netcdf_LFS" = "yes"; then NETCDF_LF_str="(With large files support)"; fi
 
 HDF5_str="-"
 if test "$hdf5" = "yes" ; then

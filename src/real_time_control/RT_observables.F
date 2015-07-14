@@ -33,7 +33,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use rt_ctl,         ONLY:RT_do_IO
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
 &                         XC0_and_HARTREE0,REF_V_xc_sc,RT_average_operator,           &
-&                         DbGd_ibz_coo,l_RT_uses_E_DbGd,   &
+&                         DbGd_ibz_coo,l_RT_uses_E_DbGd,REF_V_hartree_sc,   &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
 &                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc
  use electrons,      ONLY:levels
@@ -93,12 +93,16 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  if (.not.l_sc_ip) then
    !
-   ! Hartree potential Energy
+   ! Hartree potential Energy:
    !
-   call RT_average_operator(O_VALUE=VALUE_tmp(1),O_REAL=V_hartree_sc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
+   ! [AM July 2015]. Here, V_hartree_sc=V_h[delta_rho]
+   !
+   ! Now. 
+   !
+   ! E_h=1/2 <V_h[rho]rho> => dE_h= <V_h[rho_ref]delta_rho> + 1/2  <V_h[delta_ref]delta_rho>
+   !
+   call RT_average_operator(O_VALUE=VALUE_tmp(1),O_REAL=REF_V_hartree_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    call RT_average_operator(O_VALUE=VALUE_tmp(2),O_REAL=V_hartree_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
-   !
-   ! delta E_H ~ rho_0*delta_rho + 0.5*delta_rho**2
    !
    dE_h=VALUE_tmp(1)+VALUE_tmp(2)/2._SP
    !

@@ -185,11 +185,6 @@ if test x"$enable_openmpi" = "x"; then enable_openmpi="no"; fi
 openmpi_cpp=" "
 if test x"$enable_openmpi" = "xyes"; then
  #
- if test x"$ac_compiler_gnu" = x"yes"; then
-   OPENMPLIBS="-fopenmp -lpthread";
- else
-   OPENMPLIBS="-openmp -lpthread";
- fi
  openmpi_cpp="-D_OPENMPI"
  #
 fi
@@ -411,7 +406,6 @@ if test "$mpibuild" = "yes"; then
 # OVERALL CHECK
 #
  if test "$mpibuild" = "no" ; then 
-  openmp_cpp=""
   mpi_cpp=""
   MPILIBS=""
   PF90=""

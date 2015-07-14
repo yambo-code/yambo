@@ -29,7 +29,7 @@ integer function io_QINDX(Xk,q,io_db)
 &                         Xk_impose_minus_q
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on,io_header,&
-&                         ver_is_gt_or_eq,io_fragmented,io_extension,io_fragment
+&                         ver_is_gt_or_eq,io_extension,io_fragment
  implicit none
  type(bz_samp)::q,Xk
  integer      ::io_db
@@ -43,9 +43,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
  if (any((/io_sec(io_db,:)==1/))) then
    !
-   if (write_is_on(io_db)) io_fragmented(io_db)=frag_QINDX
-   io_QINDX=io_header(io_db,IMPOSE_SN=.true.)
-   if (read_is_on(io_db))  frag_QINDX=io_fragmented(io_db)
+   io_QINDX=io_header(io_db,IMPOSE_SN=.true.,FRAG=frag_QINDX)
    !
    ! In V. 3.0.7 a real parameter (RL_v_comp_norm) has been removed
    ! In revision 3085 the coll indx has been ceated with two new logicals
@@ -55,7 +53,7 @@ integer function io_QINDX(Xk,q,io_db)
    if (.not.ver_is_gt_or_eq(io_db,revision=3085)) io_QINDX=-1
    if (io_QINDX/=0) goto 1
    !
-   call io_elemental(io_db,VAR="PARS",VAR_SZ=10)
+   call io_elemental(io_db,VAR="PARS",VAR_SZ=10,MENU=0)
    !
    call io_elemental(io_db,I0=nXkbz)
    call io_elemental(io_db,&

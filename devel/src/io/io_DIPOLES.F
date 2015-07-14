@@ -28,7 +28,7 @@ integer function io_DIPOLES(X,Xen,ID)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,frag_DIP,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
@@ -79,9 +79,7 @@ integer function io_DIPOLES(X,Xen,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   if(write_is_on(ID)) io_fragmented(ID)=frag_DIP
-   io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
-   if(read_is_on(ID)) frag_DIP=io_fragmented(ID)
+   io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_DIPOLES/=0) goto 1
    !
    io_DIPOLES=variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)

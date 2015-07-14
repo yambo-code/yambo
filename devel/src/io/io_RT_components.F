@@ -35,7 +35,7 @@ integer function io_RT_components(what,ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,io_fragment, &
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found,&
-&                         frag_RT,io_fragmented
+&                         frag_RT
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,REF_lifetime,&
@@ -72,8 +72,6 @@ integer function io_RT_components(what,ID)
 #if defined _TIMING
  call timing('io_RT_components',OPR='start')
 #endif
- !
- if (write_is_on(ID)) io_fragmented(ID)=frag_RT
  !
  l_carriers   =what=="carriers"
  l_THETA      =what=="THETA"
@@ -163,15 +161,15 @@ integer function io_RT_components(what,ID)
    !
    if (any((/l_J_and_P,l_G,l_THETA,l_REF/))) then
      if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")/=0) then
-       io_RT_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)
+       io_RT_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL,FRAG=frag_RT)
      else
-       io_RT_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
+       io_RT_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,FRAG=frag_RT)
      endif
    endif
    !
    if (l_carriers) then
      if (write_is_on(ID).or.(read_is_on(ID).and.variable_is_found(ID,"TEMPERATURES")/=0) ) then
-       io_RT_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)
+       io_RT_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL,FRAG=frag_RT)
      endif
    endif
    !

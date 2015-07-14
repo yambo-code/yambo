@@ -31,7 +31,7 @@ integer function io_WF(ID,wf)
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_bulk,io_header,ver_is_gt_or_eq,read_is_on,&
 &                           RD_CL_IF_END,RD_CL,io_action,io_fragment,&
-&                           io_elemental,io_fragmented,write_is_on,frag_WF
+&                           io_elemental,write_is_on,frag_WF
 #if defined _TIMING
  use timing_m,         ONLY:timing
 #endif
@@ -68,12 +68,10 @@ integer function io_WF(ID,wf)
  !
  if (head_io==1) then
    !
-   if (write_is_on(ID)) io_fragmented(ID)=frag_WF
-   io_WF=io_header(ID,IMPOSE_SN=.true.)
-   if (read_is_on(ID))  frag_WF=io_fragmented(ID)
+   io_WF=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    !
    if (ver_is_gt_or_eq(ID,(/3,1,1/))) then
-     call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2)
+     call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2,MENU=0)
      call io_elemental(ID,VAR=&
 &         ' Bands in each block             :',I0=wf_nb_io)
      call io_elemental(ID,VAR=&

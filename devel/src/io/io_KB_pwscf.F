@@ -30,7 +30,7 @@ integer function io_KB_pwscf(ID)
  use D_lattice,        ONLY:n_atomic_species,atom_pos,n_atoms_species, &
 &                           n_atoms_species_max
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
-&                           io_elemental,io_bulk,io_header,io_fragmented,&
+&                           io_elemental,io_bulk,io_header,&
 &                           read_is_on,write_is_on,io_fragment,frag_WF
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
@@ -49,13 +49,11 @@ integer function io_KB_pwscf(ID)
  io_KB_pwscf=io_connect(desc="kb_pp_pwscf",type=0,ID=ID)
  if (io_KB_pwscf/=0) goto 1
  !
- if(write_is_on(ID)) io_fragmented(ID)=frag_WF
- !
  ! Dimensions
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_KB_pwscf=io_header(ID,IMPOSE_SN=.true.)
+   io_KB_pwscf=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    if (io_KB_pwscf/=0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
@@ -69,7 +67,7 @@ integer function io_KB_pwscf(ID)
    call io_elemental(ID,I0=n_atomic_species)
    call io_elemental(ID,I0=pp_n_l_times_proj_max)
    call io_elemental(ID,I0=pp_n_l_max)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    if (read_is_on(ID)) then
      ! 

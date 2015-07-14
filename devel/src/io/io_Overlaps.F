@@ -28,7 +28,7 @@ integer function io_Overlaps(X,Xen,ID)
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,nXkbz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
  use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_nbz,PAR_IND_Xk_bz
@@ -55,9 +55,7 @@ integer function io_Overlaps(X,Xen,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   if(write_is_on(ID)) io_fragmented(ID)=frag_DIP
-   io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
-   if(read_is_on(ID) ) frag_DIP=io_fragmented(ID)
+   io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_Overlaps/=0) goto 1
    !
    io_Overlaps=variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)

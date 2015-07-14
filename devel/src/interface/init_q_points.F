@@ -98,7 +98,7 @@ subroutine init_q_points(l_WRITE)
      !
      use D_lattice,   ONLY:alat
      use IO_m,        ONLY:io_control,io_connect,io_unit,OP_RD_CL,&
-&                          io_netcdf_support,io_disconnect
+&                          io_disconnect
      !
      integer :: i_q
      real(DP):: q_in(3)
@@ -108,7 +108,6 @@ subroutine init_q_points(l_WRITE)
      real(DP)          :: alat_DP
      !
      call io_control(ACTION=OP_RD_CL,ID=ID)
-     io_netcdf_support(ID)=.FALSE.
      write (db_name,'(a,i6.6)') 's.dbph_',iabs(i_q)
      io_err=io_connect(desc=trim(db_name),type=-2,ID=ID)
      get_e_p_q_point=io_err

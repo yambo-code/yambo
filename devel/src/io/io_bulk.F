@@ -24,13 +24,10 @@
 subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
 &                  C1,L1,L3,IPOS)
  !
- use pars,    ONLY:SP,LP
-#if defined _NETCDF_IO
- use pars,    ONLY:nf90_SP
+ use pars,    ONLY:SP,LP,nf90_SP
  use netcdf
-#endif
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
-&                  netcdf_dim,io_rec_pos,read_is_on,io_netcdf_support
+&                  netcdf_dim,io_rec_pos,read_is_on
  implicit none
  integer      :: ID
  character(*),optional :: VAR
@@ -48,13 +45,10 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
  !
  integer :: var_dim(10),j1
  !
- if (.not.io_netcdf_support(ID)) goto 1
- !
  !====================
  !== NETCDF I/O ======
  !====================
  !
-#if defined _NETCDF_IO
  if (present(VAR).and.present(VAR_SZ)) then
    if (write_is_on(ID)) then
      call netcdf_call(nf90_redef(io_unit(ID)))
@@ -207,102 +201,6 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
      endif
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(R3)
- endif
-#endif
- !
- return
- !
- !==============
- !== FORTRAN ===
- !==============
-1 continue
- !
- if (present(I0)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) I0
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) I0
-   endif
- endif
- !
- if (present(I1)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) I1
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) I1
-   endif
- endif
- !
- if (present(I2)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) I2
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) I2
-   endif
- endif
- !
- if (present(I3)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) I3
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) I3
-   endif
- endif
- !
- if (present(L1)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) L1
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) L1
-   endif
- endif
- !
- if (present(L3)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) L3
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) L3
-   endif
- endif
- !
- if (present(R0)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) R0
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) R0
-   endif
- endif
- !
- if (present(R1)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) R1
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) R1
-   endif
- endif
- !
- if (present(R2)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) R2
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) R2
-   endif
- endif
- !
- if (present(R3)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) R3
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) R3
-   endif
- endif
- !
- if (present(C1)) then
-   if (write_is_on(ID)) then
-     write(io_unit(ID)) C1
-   else if (read_is_on(ID)) then
-     read(io_unit(ID)) C1
-   endif
  endif
  !
 end subroutine

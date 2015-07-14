@@ -85,8 +85,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  V_xc_sc           =rZERO
  V_hartree_sc      =rZERO
  H_nl_sc           =cZERO
- V_xc_sc           =rZERO
- V_hartree_sc      =rZERO
  XC0_and_HARTREE0  =cZERO
  rho_reference     =rZERO
  if(n_spin>1) magn_reference    =rZERO
@@ -150,13 +148,19 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
  enddo
  !
+ ! In the driver loop both V_hartree_sc and V_xc corresponds to the [delta_rho] value. As here
+ ! delta_rho=0 both V_hartree_sc and V_xc must be set to zero. Eventually a non zero value is read
+ ! from the potential databaes in case of a RESTARTed run
+ !
+ V_xc_sc           =rZERO
+ V_hartree_sc      =rZERO
+ !
  call PP_redux_wait(XC0_and_HARTREE0)
  !
  ! Reference density
  !====================
  rho_reference=rho_n
  if(n_spin>1) magn_reference=magn_n
- !
  !
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================

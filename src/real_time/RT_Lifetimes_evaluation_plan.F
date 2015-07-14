@@ -23,8 +23,7 @@
 !
 integer function RT_Lifetimes_evaluation_plan( )
  !
- ! Here I define the components of an integer array
- ! RT_GAMMA_T_status(NE_steps)
+ ! Here I define the components of an integer array RT_TIME_status(NE_steps)
  !
  use pars,           ONLY:IP2,SP
  use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
@@ -53,11 +52,12 @@ integer function RT_Lifetimes_evaluation_plan( )
  l_interpolate=trim(RT_life_interp_KIND)=="DEFAULT" .or. trim(RT_life_interp_KIND)=="FIELD" .or. &
 &              trim(RT_life_interp_KIND)=="FLAT"
  !
- if(.not.l_interpolate) RT_life_interp_KIND="NONE"
+ if (.not.l_interpolate) RT_life_interp_KIND="NONE"
  !
  if (RT_life_interp_steps(1)<0. .or. it_start>=NE_steps .or. trim(RT_life_interp_KIND)=="NONE") then
    RT_life_interp_KIND="NONE"
    Life_MEM_steps=1
+   RT_Lifetimes_evaluation_plan=0
    return
  endif 
  !

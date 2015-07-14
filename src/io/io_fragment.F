@@ -34,7 +34,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  use IO_m,       ONLY:close_is_on,io_connect,io_resetable,io_file,&
 &                     io_sec,io_extension,io_action,read_is_on,write_is_on,&
 &                     OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_folder,io_raw_extension
- use IO_m,       ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,frag_COLLs,&
+ use IO_m,       ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
                       frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_SCREEN
  use stderr,     ONLY:intc,write_fragments_IO_log,logfile
  use interfaces, ONLY:PARALLEL_live_message
@@ -65,8 +65,6 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
      if (.not.frag_HF) return
    case("em1s","em1d","pp","Xx")
      if (.not.frag_RESPONSE) return
-   case("COLLISIONS_FOCK","COLLISIONS_COHSEX","COLLISIONS_GW_NEQ")
-     if (.not.frag_COLLS) return
    case("carriers","THETA","J_and_P","G","REF")
      if (.not.frag_RT) return
    case("scE","scWFs","scV","sc_MeanPotential")

@@ -62,7 +62,6 @@ module IO_m
  logical           :: frag_WF
  logical           :: frag_QINDX
  logical           :: frag_HF
- logical           :: frag_COLLs
  logical           :: frag_SC
  logical           :: frag_RT
  logical           :: frag_ELPH

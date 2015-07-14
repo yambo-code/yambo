@@ -574,9 +574,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Scattering
  !
- RT_life_interp_KIND="FLAT"
- RT_life_interp_steps(1)=4.*FS2AUT
- RT_life_interp_steps(2)=1.*FS2AUT
+ RT_life_interp_KIND="NONE"
+ RT_life_interp_steps(1)=-1.*FS2AUT
+ RT_life_interp_steps(2)=-1.*FS2AUT
  !
  ! G_retarded
  !

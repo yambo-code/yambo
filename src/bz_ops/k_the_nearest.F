@@ -53,7 +53,7 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
  if (present(i_err)) then
    i_err=-1
  endif
- k_distance_loc=10000.
+ k_distance_loc=10000._SP
  !
  local_flag=.FALSE.
  if (present(ROTATE_k_ref)) then

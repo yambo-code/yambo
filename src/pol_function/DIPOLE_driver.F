@@ -23,15 +23,20 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- ! Presently there exist two gauges: (i ) the length which uses <r>
- !                                   (ii) the velocity which uses <p>
+ ! Presently there exist two gauges: (i ) the length   which uses <r>            
+ !                                   (ii) the velocity which uses <v>=<p-[x,Vnl]> 
+ !
+ ! DIP_iR=i<r>
+ ! DIP_P = <v>   (should be called DIP_V ... )
  !
  ! For each of the two gauges there exist three approaches of computing the dipoles
- ! 1) transverse approach   --> directly computes <p> and then <r>=<p>/DeltaE
+ ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)
+ ! 2) real space approach   --> directly computes <r> and then <v>=<r>*DeltaE (only for non periodic directions)
  ! 2) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
- !                              and then <p> as <r>*DeltaE
+ !                              and then <v> as <r>*DeltaE
  ! 3) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
  !                              takes into account the phases. symmetries not yet implemented 
+ !                              and then <v> as <r>*DeltaE
  !
  use drivers,        ONLY:l_optics
  use LIVE_t,         ONLY:is_section_time_short
@@ -39,9 +44,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use com,            ONLY:warning,grid_path
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,&
-&                         Vnl_commutator_warning,use_direct_approach,&
-&                         use_shifted_grids_approach,DIP_P,force_p_direct_approach
+ use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
+&                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
+&                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
 &                         IO_and_Messaging_switch,io_DIP
  use wave_func,      ONLY:wf_ng
@@ -64,7 +69,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Work Space
  !
  integer           :: ik,i_sp_pol
- logical           :: use_dipole_transverse
+ logical           :: use_dipole_transverse,idir_not_done(3)
  !
  ! I/O
  !
@@ -74,14 +79,22 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  logical           :: l_evaluating_em1s 
 #endif
  !
- ! Setup logicals and other variables
- !====================================
+ ! Setup logicals 
+ !================
  !
- call parser('DipoleCov',use_covariant_approach)
- call parser('PDirect'  ,force_p_direct_approach)
+ use_g_space_approach        = trim(Dipole_approach)=='G-space v' 
+ use_real_space_approach     = trim(Dipole_approach)=='R-space x'
+ use_covariant_approach      = trim(Dipole_approach)=='Covariant'
+ use_shifted_grids_approach  = trim(Dipole_approach)=='Shifted grids'
  !
- use_shifted_grids_approach = trim(grid_path)/='none'
- use_direct_approach        = (.not.use_covariant_approach).and.(.not.use_shifted_grids_approach)
+ call parser('PDirect'  ,force_v_g_space_approach)
+ !
+#if defined _SC
+ force_v_g_space_approach=force_v_g_space_approach.or.l_sc_run.or.l_real_time
+#endif
+ force_v_g_space_approach=force_v_g_space_approach.and.(.not.use_g_space_approach)
+ use_dipole_transverse   =force_v_g_space_approach.or.use_g_space_approach
+ idir_not_done           =.true.
  !
  X%ngostnts=wf_ng
  !
@@ -101,46 +114,27 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    call IO_and_Messaging_switch("+io_out")
    !
-   ! OptGrad allocation...
+   ! Allocation
    !
    call Dipoles_alloc()
    !
-   ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
-   ! there will be other WF_load calls using the present WF distribution. 
-   !
    ! GPL_EXCLUDE_START 
-   !
-   ! Using shifted grids; supporting fallback to direct approach
    !
    if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,X)
    !
-   ! Using covariant derivatives; supporting fallback to direct approach
-   !
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
+   !
+   if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
    !
    ! GPL_EXCLUDE_END 
    !
-   ! Using the direct approach, i.e. computing <P>
-   !
-   force_p_direct_approach=force_p_direct_approach.and.(.not.use_direct_approach)
-   use_dipole_transverse  =use_direct_approach  .or.force_p_direct_approach
-#if defined _SC
-   use_dipole_transverse  =use_dipole_transverse.or.l_sc_run.or.l_real_time
-#endif
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
    !
-#if defined _SC
-   ! if(.not.l_sc_run.and.l_rotate_dipoles) call DIPOLE_rotate(SC_R,Xen,Xk,X)
-#endif
-   !
    ! If the calculation of the dipoles is very short the I/O is switched off
-   !
-#if !defined _YPP_RT
    if (is_section_time_short(COMM=PAR_COM_q_for_Xo%COMM)) then
      io_DIP=.FALSE.
      call warning('DIPOLEs I/O switched-off to prevent MPI communication problems')
    endif
-#endif
    !
    call Dipoles_IO('write')
    !

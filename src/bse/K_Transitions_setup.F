@@ -26,6 +26,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  ! Out: 
  !
  !   BS_K_dim
+ !   BS_H_dim
  !   BS_nT_at_k
  !
  ! Filling (FILL_the_groups=.TRUE.) of Transition groups
@@ -44,12 +45,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use com,          ONLY:warning,error
- use BS,           ONLY:BS_K_dim,T_group,BS_eh_en,BS_K_coupling,&
+ use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BS_anti_res,&
 &                       BS_not_const_eh_f,BS_drude_f_eh,BS_Blocks_and_Transitions_alloc,&
 &                       BSE_mode,BS_T_grp,BS_nT_grps
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups
- use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh
+ use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
@@ -62,9 +63,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  ! Work Space
  !
- integer :: ikbz,iv,ic,ik,ikp,i_sp,i_star,nb(2),&
+ integer :: ikbz,iv,ic,iv_SOC(2),ic_SOC(2),ik,ikp,i_sp,i_star,nb(2),&
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp
- real(SP):: E_eh,f_eh,f_e,f_h
+ real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2),f_eh,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
  !
  if (FILL_the_groups) call section('+','Transition Groups build-up')
@@ -107,6 +108,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    i_T_group_last=0
    !
    do ik=1,Xk%nibz
+     !
      do iv=BS_bands(1),nb(2)
        do ic=nb(1),BS_bands(2)
          !
@@ -177,6 +179,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                    !
                    BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
                  endif
+                 if (E_SOC_nbands/=0) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
                  !
                endif
                !
@@ -194,6 +197,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    enddo ! valence
    !
  enddo ! loop
+ !
+ BS_H_dim=BS_K_dim
+ if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  !
  if (.not.FILL_the_groups.and..not.BS_anti_res.and.BS_not_const_eh_f) then
    call warning('Fractional e/h occupations. Causal BSEmode forced.')
@@ -216,6 +222,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      T_is_ok=.TRUE.
      !
      E_eh= Ken%E(ic,ik ,i_sp)-Ken%E(iv,ikp,i_sp)
+     if(     associated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
+     if(.not.associated(Ken%Eo)) Eo_eh= E_eh
+     if(E_SOC_nbands/=0) then
+       iv_SOC(:)=E_SOC_table(:,iv,ikp)
+       ic_SOC(:)=E_SOC_table(:,ic,ik )
+       E_eh_SOC_corr(:)=Ken%E_SOC(ic_SOC(:),ik)-Ken%E_SOC(iv_SOC(:),ikp)-Eo_eh
+     endif
+     !
      f_eh=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
@@ -231,7 +245,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      ! Small energy transitions
      ! If I add a Drude term just the poles inside K_f are considered
      ! Remember that the Drude terms wants the f_e*f_h occupation factor
-     if (abs(E_eh)<1.E-5 .and. all((/real(Wd)/=0.,aimag(Wd)/=0./)) ) then
+     if (abs(E_eh)<1.E-5_SP .and. all((/real(Wd)/=0._SP,aimag(Wd)/=0._SP/)) ) then
        if(all((/ic==Ken%bf,iv==Ken%bf,ik==Ken%kf,i_sp==Ken%sf/))) BS_drude_f_eh=f_e*f_h
        T_is_ok=.FALSE.
      endif
@@ -240,9 +254,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      ! or in conduction states that are almost full, those are neglected
      if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
      !
-     if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0.,&
-&              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0./))) T_is_ok=.FALSE.
+     if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
+&              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) T_is_ok=.FALSE.
      !
-  end function
-  !
+   end function
+   !
 end subroutine

@@ -25,10 +25,11 @@ subroutine MAG_A_phase()
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,AU2Tesla,BO2ANG
+ use D_lattice,      ONLY:x_cc
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:msg,error
  use stderr,         ONLY:intc
- use magnetic,       ONLY:Bz,x,MAG_radius,phase_radius,n_loops
+ use magnetic,       ONLY:Bz,MAG_radius,phase_radius,n_loops
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:default_nel,n_sp_pol
@@ -48,7 +49,7 @@ subroutine MAG_A_phase()
 #endif
  !
  n_loops=0
- r2_cyl(:)=x(:,1)**2+x(:,2)**2
+ r2_cyl(:)=x_cc(:,1)**2+x_cc(:,2)**2
  !
  if(MAG_radius>1.E-5) then
    n_loops=int(MAG_radius**2*Bz/(2*SPEED_OF_LIGHT)+0.5)

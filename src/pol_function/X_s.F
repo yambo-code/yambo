@@ -23,7 +23,7 @@
 !
 subroutine X_s(iq,X,Xw,W_range)
  !
- use pars,          ONLY:SP,pi,cZero
+ use pars,          ONLY:SP,pi,cZERO,cONE
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
@@ -92,13 +92,13 @@ subroutine X_s(iq,X,Xw,W_range)
    iw_mat=iw+W_range(1)-1
    !
    if (.not.PAR_IND_freqs%element_1D(iw)) then
-     X_mat(:,:,iw_mat)=cZero
+     X_mat(:,:,iw_mat)=cZERO
      cycle
    endif
    !
    Xo=X_mat(:,:,iw_mat)
    !
-   tddftk=(0.,0.) 
+   tddftk=cZERO
    !
    ! If the freqs remaining are not enough for all the cpu's or
    ! Fxc needs the SVD procedure use the SLK
@@ -171,8 +171,8 @@ subroutine X_s(iq,X,Xw,W_range)
    !if (.not.PAR_IND_freqs%element_1D(iw)) cycle
    !
    do i1=1,X%ng ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
-     tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4.*pi/bare_qpg(iq,i1)**2
-     tddftk(i1,i1)=tddftk(i1,i1)+1.
+     tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4._SP*pi/bare_qpg(iq,i1)**2
+     tddftk(i1,i1)=tddftk(i1,i1)+cONE
    enddo
    !
    call MATRIX_driver(INV,tddftk)
@@ -185,12 +185,12 @@ subroutine X_s(iq,X,Xw,W_range)
 !$omp parallel do default(shared), private(i1,i2)
    do i2=1,X%ng
      do i1=1,X%ng
-       X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+       X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4._SP*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
      enddo
    enddo
 !$omp end parallel do
 #else
-   forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+   forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4._SP*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
 #endif
    !
    call live_timing(steps=1)

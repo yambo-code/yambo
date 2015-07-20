@@ -25,7 +25,7 @@ integer function MATRIX_resolvant_via_exact_inversion(N,W,C,f,V,M)
  !
  ! C<W|1./(V^{-1}-M)|W>
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use interfaces,     ONLY:MATRIX_driver
  use matrix_operate, ONLY:INV
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
@@ -45,10 +45,10 @@ integer function MATRIX_resolvant_via_exact_inversion(N,W,C,f,V,M)
  MATRIX_resolvant_via_exact_inversion=0
  !
  allocate(wk(N,N))
- wk=(0.,0.)
+ wk=cZERO
  !
  do i1=1,N 
-   wk(i1,i1)=1./V(i1)
+   wk(i1,i1)=1._SP/V(i1)
    do i2=1,N 
      wk(i1,i2)=wk(i1,i2)-M(i1,i2)
    enddo

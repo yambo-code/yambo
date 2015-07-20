@@ -21,55 +21,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function G_index(v1)
+subroutine FREQUENCIES_set_iw_ref(omega,n_freq)
  !
- use pars,         ONLY:SP
- use zeros,        ONLY:G_iku_zero
- use vec_operate,  ONLY:v_is_zero,iku_v_norm
- use R_lattice,    ONLY:g_vec,ng_in_shell,n_g_shells,E_of_shell
- use com,          ONLY:error
+ ! Look for the W(iw_ref) closest 0
+ ! This is needed by the velocity gauge to impose the diamagnetic sum-rule
+ !
+ use pars,          ONLY:SP
+ use X_m,           ONLY:iw_ref,global_gauge
+ use com,           ONLY:warning,error
  !
  implicit none
  !
- real(SP), intent(in)  :: v1(3)
+ integer,     intent(in)        :: n_freq
+ complex(SP), intent(inout)     :: omega(n_freq)
  !
- integer   :: ig,i_shell,ng1,ng2
- real(SP)  :: E_of_shell_v1
+ ! Work space
  !
- G_index=0
+ integer :: iw
  !
- E_of_shell_v1=iku_v_norm(v1)**2/2._SP
+ iw_ref=1
  !
- if(abs(E_of_shell_v1)<1.E-5_SP) then
-   G_index=1
+ if(all(abs(real(omega(:)))>0.01) .and. trim(global_gauge)=="velocity" ) then
+   call warning(' No w close to 0 in the frequency grid. Length gauge imposed')
+   global_gauge='length'
    return
  endif
  !
- ng1=1
- ng2=ng_in_shell(n_g_shells)
- !
- do i_shell=2,n_g_shells
-   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4_SP) then
-     ng1=ng_in_shell(i_shell-1)
-     exit
-   endif
+ do iw=1,n_freq
+   if(abs(real(omega(iw)))>0.01) cycle
+   if(abs(omega(iw))<abs(omega(iw_ref))) iw_ref=iw
  enddo
  !
- do i_shell=n_g_shells-1,2,-1
-   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4_SP) then
-     ng2=ng_in_shell(minval((/i_shell+2,n_g_shells/)))
-     exit
-   endif
- enddo
+ if(trim(global_gauge)=="velocity" .and. abs(real(omega(iw_ref)))==0._SP) omega(iw_ref)=cmplx(1.E-10,aimag(omega(iw_ref))) 
  !
- do ig=ng1,ng2
-   if (v_is_zero(v1-g_vec(ig,:),zero_=G_iku_zero)) then
-     G_index=ig
-     exit
-   endif
- enddo
- !
- if(G_index==0) call error(" Error search for G=G1-G2 !!")
- return
- !
-end function
+end subroutine FREQUENCIES_set_iw_ref

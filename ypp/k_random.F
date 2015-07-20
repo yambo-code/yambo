@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_random
+subroutine k_random(No_Weight)
  !
  use pars,                ONLY:SP,DP,lchlen,schlen
  use units,               ONLY:HA2EV
@@ -30,19 +30,20 @@ subroutine k_random
  use parser_m,            ONLY:parser
  use com,                 ONLY:msg,of_open_close,error,warning
  use vec_operate,         ONLY:v_norm,c2a,k2bz,v_is_zero
- use YPP,                 ONLY:BZ_DbGd_nkpts,gamma_radius,K_transform
+ use YPP,                 ONLY:BZ_random_nkpts,gamma_radius,K_transform
  use electrons,           ONLY:levels,E_reset
  use LIVE_t,              ONLY:live_timing
  !
  implicit none
  !
+ logical, intent(in)     :: No_Weight
+ !
  ! Work Space
  !
- real(SP)     ::rand_k(BZ_DbGd_nkpts+1,3)
+ real(SP)     ::rand_k(BZ_random_nkpts+1,3)
  integer      ::i1
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
- logical           :: No_Weight
  !
  ! Random Generator
  !
@@ -63,7 +64,7 @@ subroutine k_random
  !
  call section('*',"== Random k-points generator ==")
  !
- call live_timing('Random k-points',BZ_DbGd_nkpts,SERIAL=.true.)
+ call live_timing('Random k-points',BZ_random_nkpts,SERIAL=.true.)
  !
  call set_real_printed_length(f_length=20,g_length=20)
  !
@@ -77,7 +78,7 @@ subroutine k_random
  !
  k_counter=0
  !
- do while ( k_counter < BZ_DbGd_nkpts )
+ do while ( k_counter < BZ_random_nkpts )
    !
    if (impose_gamma_radius) then
      !

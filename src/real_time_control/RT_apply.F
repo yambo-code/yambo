@@ -184,12 +184,15 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  !
  if (l_f) then
    !
-   allocate(E%fo(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-fo",(/size(E%fo)/),(/SP/))
-   !
+   allocate(E%df(E%nb,E%nk,n_sp_pol))
+   call mem_est("E-df",(/size(E%df)/),(/SP,SP/))
    call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt,E%nk)
    !
-   if (l_DbGd) call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
+   if (l_DbGd) then
+     allocate(E%df_DbGd(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
+     call mem_est("E-df_DbGd",(/size(E%df_DbGd)/),(/SP,SP/))
+     call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
+   endif
    !
  endif
  !
@@ -197,7 +200,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    !
    allocate(E%Eo(E%nb,E%nk,n_sp_pol))
    call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
-   !
    call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt,E%nk)
    !
    if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
@@ -207,7 +209,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  !DEBUG>
  !do i1=1,E%nk
  !  do i2=1,E%nb
- !    write (100,*) E%E(i2,i1,1)*HA2EV,E%f(i2,i1,1),E%f(i2,i1,1)-E%fo(i2,i1,1)
+ !    write (100,*) E%E(i2,i1,1)*HA2EV,E%f(i2,i1,1),E%df(i2,i1,1)
  !  enddo
  !enddo
  !if (l_DbGd) then
@@ -220,9 +222,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  !DEBUG<
  !
  ! Metallic and Insulating bands update
- !
- E%nbm=max(RT_carriers%nb(2)  ,E%nbm)
- E%nbf=min(RT_carriers%nb(1)-1,E%nbf)
  !
  if (.not.present(keep_RT_carriers)) call RT_obj_free(RT_carriers)
  !
@@ -272,38 +271,36 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
     if (NK==E%nk) K_weights(:)=K%weights(:)
     !
     call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
-&                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,&
-&                                  what_,.TRUE.)
+&                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,what_,.TRUE.)
     !
-    if (OBJ=="df".and.NK==E%nk) then
-      E%fo=E%f
-      E%f ( nb(1):nb(2),:,:)=E%f(nb(1):nb(2),:,:)+V_out(nb(1):nb(2),:,:)
-      df_Max=maxval(abs(V_out))
+    if (OBJ=="df") then
+      !
+      if(NK==E%nk) then
+        E%df( nb(1):nb(2),:,:)=V_out(nb(1):nb(2),:,:)
+        df_Max=maxval(abs(V_out))
+        i_carr=1
+      else if (NK/=E%nk) then
+        nb_DbGd=min(nb(2),BZ_DbGd_nbands)
+        E%df_DbGd( nb(1):nb_DbGd,:,:)=V_out(nb(1):nb_DbGd,:,:)
+        i_carr=2
+      endif
+      !
+      do ik=1,NK
+        N_carriers(i_carr)=N_carriers(i_carr)+sum(abs(V_out(:,ik,:)))*K_weights(ik)/2._SP
+      enddo
+      !
+    else if (OBJ=="dE") then
+      !
+      if(NK==E%nk) then
+        E%Eo=E%E
+        E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+V_out(nb(1):nb(2),:,:)
+        dE_Max=maxval(abs(V_out))
+      else if (NK/=E%nk) then
+        E%E_DbGd( nb(1):nb_DbGd,:,:)=E%E_DbGd(nb(1):nb_DbGd,:,:)+V_out(nb(1):nb_DbGd,:,:)
+      endif
+      !
     endif
     !
-    nb_DbGd=min(nb(2),BZ_DbGd_nbands)
-    !
-    if (OBJ=="df".and.NK/=E%nk) then
-      E%f_DbGd( nb(1):nb_DbGd,:,:)=E%f_DbGd(nb(1):nb_DbGd,:,:)+V_out(nb(1):nb_DbGd,:,:)
-    endif
-    !
-    if (OBJ=="dE".and.NK==E%nk) then
-      E%Eo=E%E
-      E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+V_out(nb(1):nb(2),:,:)
-      dE_Max=maxval(abs(V_out))
-    endif
-    !
-    if (OBJ=="dE".and.NK/=E%nk) then
-      E%E_DbGd( nb(1):nb_DbGd,:,:)=E%E_DbGd(nb(1):nb_DbGd,:,:)+V_out(nb(1):nb_DbGd,:,:)
-    endif
-    !
-    i_carr=1
-    if (NK/=E%nk) i_carr=2
-    !
-    do ik=1,NK
-      N_carriers(i_carr)=N_carriers(i_carr)+sum(abs(V_out(:,ik,:)))*K_weights(ik)/2._SP
-    enddo
-    !
-  end subroutine
+  end subroutine Interpolate_and_transfer
   !
 end subroutine

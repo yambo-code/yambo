@@ -59,7 +59,9 @@ subroutine ypp_init_load(defs)
  !
  ! GPL_EXCLUDE_END
  !
- call it('r',defs,'High_Symm', '[R] High_Symmetry points and paths') 
+ call it('r',defs,'Random_Grid','[R] Random grids')
+ call it('r',defs,'High_Symm',  '[R] High_Symmetry points and paths') 
+ !
  call it('r',defs,'excitons',  '[R] Excitons')
  call it('r',defs,'electrons', '[R] Electrons (and holes)')
  call it('r',defs,'freehole',  '[R] Free hole position')
@@ -89,8 +91,8 @@ subroutine ypp_init_load(defs)
  call init_QP_ctl_load(defs,3)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
- call it('r',defs,'bzrim',        '[R] BZ Random kpt generator')
  call it('r',defs,'kpts_map',     '[R] BZ map fine grid to coarse')
+ call it('r',defs,'WFs_map',      '[R] WF map WFs with SOC to present WFs')
  call it('r',defs,'QPDBs', '[R] Quasi-particle databases')
  call it('r',defs,'QPDB_edit', '[R] Generation/editing')
  call it('r',defs,'QPDB_merge','[R] Mergering')
@@ -174,6 +176,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'NPtsPath','Number of Points for each segment of the path',N_path_pts)
  !
  ! GPL_EXCLUDE_END
+ !
+ call it(defs,'BZ_random_Nk','BZ Random points to be printed',BZ_random_nkpts)
  !
  call it('f',defs,'NoWeights',    ' Do not print points weight') 
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
@@ -263,9 +267,13 @@ subroutine ypp_init_load(defs)
  !
  !BZ E Double Grid
  !
- call it(defs,'BZ_DbGd_Nk','BZ Random Integration points',BZ_DbGd_nkpts)
+ call it(defs,'BZ_DbGd_Nk','BZ Number of points in the double grid',BZ_DbGd_nkpts_to_use)
  call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
  call it('f',defs,'noBZExpand' , 'Keep the Double Grid k-points in the IBZ without using the symmetries')
+ !
+ !WFs perturbative SOC mapping
+ !
+ call it(defs,'SOC_DBs',"Path to the folder containing the DB with SOC",perturbative_SOC_path)
  !
  ! Wannier bands
  !

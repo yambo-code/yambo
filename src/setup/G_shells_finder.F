@@ -95,7 +95,7 @@ subroutine G_shells_finder()
  !
  g_rot=0
  if (myid==0) g_rot(:,1)=1 ! Gamma point
- E_of_shell_TMP=0.
+ E_of_shell_TMP=0._SP
  !
  ! Parallel Setup
  !================
@@ -115,7 +115,7 @@ subroutine G_shells_finder()
      !
      ig_1=G_mod_indx(i_1)
      !
-     if (i_1==first_G_in_shell(i_m)) E_of_shell_TMP(i_m)=iku_v_norm(g_vec(ig_1,:))**2./2.
+     if (i_1==first_G_in_shell(i_m)) E_of_shell_TMP(i_m)=iku_v_norm(g_vec(ig_1,:))**2/2._SP
      !
      do i_s=1,nsym
        !

@@ -42,7 +42,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use interfaces,     ONLY:el_density_and_current
+ !
  implicit none
+ !
  type(levels) ::en
  type(bz_samp)::Xk
  integer      ::FUNCTIONAL,ORDER

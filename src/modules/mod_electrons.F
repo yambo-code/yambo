@@ -76,10 +76,8 @@ module electrons
    integer,pointer :: QP_corrected(:,:,:)  => null()
    real(SP),   pointer :: E(:,:,:)         => null()
    real(SP),   pointer :: Eo(:,:,:)        => null()
-   real(SP),   pointer :: E_dip(:,:,:)     => null()
    real(SP),   pointer :: f(:,:,:)         => null()
    real(SP),   pointer :: df(:,:,:)        => null()
-   real(SP),   pointer :: fo(:,:,:)        => null()
    real(SP),   pointer :: W(:,:,:)         => null()
    complex(SP),pointer :: Z(:,:,:)         => null()
    !
@@ -95,12 +93,18 @@ module electrons
    real(SP),   pointer :: E_DbGd(:,:,:)        => null()
    real(SP),   pointer :: W_DbGd(:,:,:)        => null()
    real(SP),   pointer :: f_DbGd(:,:,:)        => null()
+   real(SP),   pointer :: df_DbGd(:,:,:)       => null()
+   !
+   ! Perturbative SOC
+   !
+   real(SP),   pointer :: E_SOC(:,:)           => null()
    !
  end type levels
  ! 
  ! Fine energy grid Tables
  !   
  integer  :: BZ_DbGd_max_filling = 1
+ integer  :: BZ_DbGd_nkpts
  integer  :: BZ_DbGd_tot_nkpts
  integer  :: BZ_ASSOCIATED_nkpts
  integer  :: BZ_DbGd_nbands
@@ -109,6 +113,11 @@ module electrons
  integer ,allocatable :: BZ_DbGd_table(:,:)
  real(SP),allocatable :: BZ_DbGd_ipol_weight(:)
  real(SP),allocatable :: BZ_DbGd_kpts(:,:)
+ !
+ ! Perturbative SOC table
+ !
+ integer :: E_SOC_nbands
+ integer, allocatable :: E_SOC_table(:,:,:)
  !
  contains
    !
@@ -139,11 +148,10 @@ module electrons
      Eo%f=0._SP
      !
      ! This line is beacause in _RT calculations the actual first size of %Eo may differ
-     ! from %nb as it is limited by SC_bands. To be checked after implementatio of E_dip
+     ! from %nb as it is limited by SC_bands.
      !
      BOUNDS(1)=size(Ei%Eo,1)
      BOUNDS(2)=BOUNDS(1)
-     if (associated(Ei%E_dip)) BOUNDS(2)=size(Ei%E_dip,1)
      !
      if (naive) then
        Eo%f(:,:,:)=Ei%f(:,:,:)
@@ -152,16 +160,6 @@ module electrons
          allocate(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
          call mem_est("E-Eo",(/size(Eo%Eo)/),(/SP/))
          Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
-       endif
-       if (associated(Ei%E_dip)) then
-         allocate(Eo%E_dip(BOUNDS(2),Eo%nk,n_sp_pol))
-         call mem_est("E-E_dip",(/size(Eo%E_dip)/),(/SP/))
-         Eo%E_dip(:BOUNDS(2),:,:)=Ei%E_dip(:BOUNDS(2),:,:)
-       endif
-       if (associated(Ei%fo)) then
-         allocate(Eo%fo(BOUNDS(2),Eo%nk,n_sp_pol))
-         call mem_est("E-fo",(/size(Eo%fo)/),(/SP/))
-         Eo%fo(:BOUNDS(2),:,:)=Ei%fo(:BOUNDS(2),:,:)
        endif
        if (associated(Ei%W)) then
          allocate(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
@@ -194,6 +192,19 @@ module electrons
        Eo%E_DbGd=Ei%E_DbGd
        Eo%W_DbGd=Ei%W_DbGd
        Eo%f_DbGd=Ei%f_DbGd
+       if(associated(Ei%df_DbGd)) then
+         allocate(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+         call mem_est("df_DbGd",(/size(Eo%df_DbGd)/),(/SP/))
+         Eo%df_DbGd=Ei%df_DbGd
+       endif
+     endif
+     !
+     ! E_SOC
+     !
+     if (E_SOC_nbands/=0.and.Ei%nk==Eo%nk) then
+       allocate(Eo%E_SOC(E_SOC_nbands,Eo%nk))
+       call mem_est("E_SOC",(/size(Eo%E_SOC)/),(/SP/))
+       Eo%E_SOC=Ei%E_SOC
      endif
      !
    end subroutine
@@ -215,18 +226,18 @@ module electrons
      E%GreenF_is_causal=.FALSE. 
      if(associated(E%E))              deallocate(E%E)
      if(associated(E%Eo))             deallocate(E%Eo)
-     if(associated(E%E_dip))          deallocate(E%E_dip)
      if(associated(E%Z))              deallocate(E%Z)
      if(associated(E%W))              deallocate(E%W)
      if(associated(E%f))              deallocate(E%f)
-     if(associated(E%fo))             deallocate(E%fo)
      if(associated(E%QP_corrected))   deallocate(E%QP_corrected)
      if(associated(E%GreenF))         deallocate(E%GreenF)
      if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
-     nullify(E%E,E%Eo,E%E_dip,E%Z,E%W,E%f,E%fo,E%QP_corrected,E%GreenF,E%GreenF_W)
-     call mem_est("E-E E-Eo E-E_dip E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
+     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
+     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
      call E_DbGd_components_reset(E,.FALSE.)
+     !
+     if(associated(E%E_SOC))          deallocate(E%E_SOC)
      !
    end subroutine
    !
@@ -240,12 +251,14 @@ module electrons
      if(associated(E%E_DbGd) )      deallocate(E%E_DbGd )
      if(associated(E%W_DbGd) )      deallocate(E%W_DbGd )
      if(associated(E%f_DbGd) )      deallocate(E%f_DbGd )
+     if(associated(E%df_DbGd))      deallocate(E%df_DbGd)
      !
-     nullify(E%E_DbGd,E%W_DbGd,E%f_DbGd)
-     call mem_est("E_DbGd W_DbGd f_DbGd")
+     nullify(E%E_DbGd,E%W_DbGd,E%f_DbGd,E%df_DbGd)
+     call mem_est("E_DbGd W_DbGd f_DbGd df_DbGd")
      !
      if (.not.FULL_RESET) return
      !
+     BZ_DbGd_nkpts=0
      BZ_DbGd_tot_nkpts=0
      BZ_ASSOCIATED_nkpts=0
      BZ_DbGd_nbands=0

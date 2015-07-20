@@ -30,7 +30,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,Angle_unit,V_parallel,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        X_en_comp
+&                        X_en_comp,global_gauge,Dipole_approach
  use com,           ONLY:grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,GW_terminator_E,GW_terminator_Kind,&
@@ -45,15 +45,16 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_inversion_PERT_FULL_ratio
+&                        BSS_inversion_PERT_FULL_ratio,BSS_Wd
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use functions,     ONLY:bose_E_cut
+ use parallel_m,    ONLY:n_log_CPUs
+ use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
 #endif
- use X_m,           ONLY:global_gauge
 #if defined _SC
  use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
@@ -73,6 +74,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
+#if defined _ELPH 
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
+&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
+#endif
+#if defined _OPENMP
+ use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
+#endif
 #if defined _SURF
  use bulkeps,              ONLY:init_bulk
  use eels_kinematics,      ONLY:init_kinematics
@@ -83,15 +91,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use convolute,            ONLY:init_convolute
  use ras_module,           ONLY:locfac, loctype
 #endif
-#if defined _ELPH 
- use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
-&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
-#endif
- use parallel_m,           ONLY:n_log_CPUs
-#if defined _OPENMP
- use openmp,               ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
-#endif
- use IO_m,                 ONLY:DBs_IO_control_string,DBs_FRAG_control_string
  !
  implicit none
  type(initdefs)::defs
@@ -274,7 +273,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
  call it(defs,'BSHayTrs',  '[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
- call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
+ call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
@@ -474,14 +473,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'AC_n_FR',  '[ACFDT] Integration frequency points',ACFDT_n_freqs)
  call it(defs,'AC_E_Rng', '[ACFDT] Imaginary axis 2nd & 3rd energy points',ACFDT_E_range,E_unit)
  !
- ! Optics
+ ! DIPOLES
  !
  call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
- !
  call it(defs,'ShiftedPath',    '[Xd] Shifted grids path',grid_path,verb_level=V_resp)
- call it('f',defs,'DipoleCov',  '[X] Use covariant dipoles',verb_level=V_resp)
- call it('f',defs,'PDirect',    '[X] Directly compute <p> also when using other approaches for dipoles',verb_level=V_resp)
+ call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Covariant/Shifted grids]',Dipole_approach,verb_level=V_resp)
+ call it('f',defs,'DipPDirect', '[Xd] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !
@@ -526,6 +524,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
  call it('f',defs,'SCdiag','[SC] Diagonal approximation for the self-energy(WF unchaged)',verb_level=V_sc)
 #endif
+ !
  ! 
  contains 
    !
@@ -571,13 +570,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
-       call it(defs,trim(name),'[PARALLEL] CPUs for each role',CPU_structure(i_s)%CPU_string)
+       call it(defs,trim(name),'[PARALLEL] CPUs for each role',&
+&              CPU_structure(i_s)%CPU_string,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
-       call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),CPU_structure(i_s)%ROLE_string)
+       call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
+&              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_diago"
-       call it(defs,trim(name),'[PARALLEL] CPUs for matrix diagonalization',CPU_structure(i_s)%nCPU_diagonalization)
+       call it(defs,trim(name),'[PARALLEL] CPUs for matrix diagonalization',&
+&              CPU_structure(i_s)%nCPU_diagonalization,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_invert"
-       call it(defs,trim(name),'[PARALLEL] CPUs for matrix inversion',CPU_structure(i_s)%nCPU_inversion)
+       call it(defs,trim(name),'[PARALLEL] CPUs for matrix inversion',&
+&              CPU_structure(i_s)%nCPU_inversion,verb_level=V_parallel)
      enddo
    end subroutine
    !
@@ -632,7 +635,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
        V_damp=V_resp 
        wv%dr=0.001/HA2EV
      endif
-     if (X%whoami==3) V_iq  =V_resp 
+     if (.not.X%whoami==3) V_iq  =V_resp 
      !
      call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_resp)
      call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
@@ -640,13 +643,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_resp)
      call it(defs,nms( 5),des( 5),wv%n_freqs,verb_level=0)
      call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=V_resp)
-     call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=V_resp) 
+     call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=V_resp)
      call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
      call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_resp)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
      call it(defs,nms(11),des(11),X%ng,G_unit,verb_level=0) 
      call it(defs,nms(12),des(12),X%iq,verb_level=V_iq)
-       call it(defs,nms(13),des(13),X%ib,verb_level=0)
+     call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
      !
    end subroutine

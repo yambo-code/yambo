@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS AM
+! Authors (see AUTHORS file for details): AM, DS
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,
 !   Francesco Sottile, Stefan Albrecht, Giovanni Onida,
@@ -28,7 +28,7 @@
 subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
  !
  use pars,          ONLY:SP,cZERO,cONE,pi
- use wrapper,       ONLY:M_by_V
+ use wrapper_omp,   ONLY:M_by_V_omp
  use D_lattice,     ONLY:alat
  use wave_func,     ONLY:WF,wf_ng
  use R_lattice,     ONLY:g_vec,bz_samp
@@ -99,7 +99,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
    ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
    !
    coeff=cmplx(i_spinor-1,0.,SP)
-   call M_by_V('C',wf_ng,wf_dim,cONE,wf_xyz,wf_ng,WF%c(:,icfft(i_spinor)),1,coeff,rho(:wf_dim),1)
+   call M_by_V_omp('C',wf_ng,wf_dim,cONE,wf_xyz,wf_ng,WF%c(:,icfft(i_spinor)),1,coeff,rho(:wf_dim),1)
    !
  enddo
  !

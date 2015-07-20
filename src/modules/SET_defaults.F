@@ -31,11 +31,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_DbGd,use_X_Drude,X_DbGd_nkpts,Dipole_bands_ordered,Chi_mode,&
-&                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_direct_approach,&
+&                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Dipole_bands_ordered,Chi_mode,&
+&                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
-&                      X_terminator,X_en_comp,global_gauge,l_rotate_dipoles,use_covariant_approach,&
-&                      force_p_direct_approach
+&                      X_terminator,X_en_comp,global_gauge,use_covariant_approach,&
+&                      force_v_g_space_approach,use_real_space_approach,Dipole_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,&
@@ -55,7 +55,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     cutoff_presets,k_map
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
-&                     eval_magn
+&                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
@@ -330,6 +330,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BZ_DbGd_nbands=0
  BZ_DbGd_tot_nkpts=0
  BZ_ASSOCIATED_nkpts=0
+ E_SOC_nbands=0
  filled_tresh=0.00001
  !
  ! Magnetization
@@ -378,19 +379,19 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  half_X_mat_only=.FALSE.
  Dipole_bands_ordered=.TRUE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
- use_shifted_grids_approach=.FALSE.
- use_covariant_approach=.FALSE.
- use_direct_approach=.TRUE.
- force_p_direct_approach=.TRUE.
+ Dipole_approach="G-space v"
+ use_shifted_grids_approach = .FALSE.
+ use_covariant_approach     = .FALSE.
+ use_real_space_approach    = .FALSE.
+ use_g_space_approach       = .TRUE.
+ force_v_g_space_approach   = .FALSE.
  use_X_DbGd=.FALSE.
- use_X_Drude=.FALSE.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
  grid_path='none'
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
- l_rotate_dipoles=.FALSE.
  q_plus_G_direction=0.
  Q_Shift_Order=1
  n_X_descs=0

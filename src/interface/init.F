@@ -32,7 +32,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use drivers
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
- use electrons,      ONLY:levels,E_reset
+ use electrons,      ONLY:levels,E_reset,n_spin
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -104,7 +104,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     io_COL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
  !
- integer, external :: io_Double_Grid
+ integer, external :: io_Double_Grid,io_E_SOC_map
  !
 #if defined _SC || defined _RT
  integer, external :: io_SC_components,io_RT_components
@@ -284,7 +284,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! E_rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_Double_Grid(en,k,io_ID) 
+ io_err=io_Double_Grid(en,k,io_ID)
+ !
+ ! E SOC perturbative
+ ! 
+ if(n_spin==1) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+   io_err=io_E_SOC_map(en,k,io_ID)
+ endif
  !
  ! xxvxc
  !
@@ -567,7 +574,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    !
    call init_QP_ctl_switch('X')
-   call initactivate(1,'DipoleCov PDirect ShiftedPath Qdirection QShiftOrder Gauge')
+   call initactivate(1,'DipApproach DipPDirect ShiftedPath Qdirection QShiftOrder Gauge')
    !
  endif
  !
@@ -595,7 +602,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call init_QP_ctl_switch('K')
    !
-   call initactivate(1,'ShiftedPath Gauge')
+   call initactivate(1,'DipApproach DipPDirect ShiftedPath Gauge')
 #if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
@@ -979,6 +986,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine CPU_activate(what)
      character(*) :: what 
+     if(ncpu==1) return
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
      if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") then

@@ -25,15 +25,18 @@ subroutine FREQUENCIES_setup(W)
  !
  ! %er %dr %n_freqs -> %p
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cI
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
+ !
  implicit none
+ !
  type(w_samp):: W 
  ! 
  ! Work Space
  !
  integer          :: i1
+ real(SP)         :: delta_w
  real(SP),external:: FREQUENCIES_damping
  !
  !If %p is associated and consitent with %er/%dr return
@@ -54,7 +57,7 @@ subroutine FREQUENCIES_setup(W)
  ! First the total/mem steps
  !
  if (W%er(2)==W%er(1)) W%n_freqs=1
- W%n_freqs=nint(W%per_memstps*real(W%n_freqs)/100.)
+ W%n_freqs=nint(W%per_memstps*real(W%n_freqs)/100._SP)
  !
  allocate(W%p(W%n_freqs))
  call mem_est("W-p",(/W%n_freqs/))
@@ -65,9 +68,13 @@ subroutine FREQUENCIES_setup(W)
    W%dr(2)=W%dr(1)
    return
  endif
- forall(i1=1:W%n_freqs-1) W%p(i1+1)=W%er(1)+(W%er(2)-W%er(1))/(W%n_freqs-1)*i1
+ !
+ delta_w=(W%er(2)-W%er(1))/(W%n_freqs-1)
+ !
+ forall(i1=1:W%n_freqs-1) W%p(i1+1)=cmplx(W%er(1)+delta_w*real(i1,SP),0.,SP)
+ !
  do i1=1,W%n_freqs
-   W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cmplx(0.,1.,SP)
+   W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cI
  enddo
  !
 end subroutine

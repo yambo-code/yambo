@@ -28,13 +28,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
- use electrons,     ONLY:levels,spin_occ,spin
+ use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands
  use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,&
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge
- use BS,            ONLY:BSS_Vnl_included,BS_anti_res,BS_drude_f_eh,&
+ use BS,            ONLY:BSS_Vnl_included,BS_anti_res,BS_drude_f_eh,BSS_Wd,&
 &                        BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
@@ -56,8 +56,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Work space
  !
- integer           ::ik,iv,ic,i_sp,epsilon_dim,iw,i_T_g,i_T,ik_mem
- real(SP)          ::Co,conjg_fac
+ integer           ::ik,iv,ic,i_sp,epsilon_dim,i_T_g,i_T,ik_mem,&
+&                    n_soc,i_pert_SOC
+ real(SP)          ::Co,conjg_fac,IP_E(2)
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),local_Z,factor_jj
  !
  call section('=','Independent Particles absorption') 
@@ -77,29 +78,12 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 !   !
 ! endif
  !
- ! Check if it is possible to use the velocity gauge
- !                                    ==============
- if(trim(global_gauge)=="velocity".and.all(abs(real(W_bss%p(:)))>0.01)) then
-   !
-   call warning(' No w close to 0 in the frequency grid. Length gauge imposed')
-   global_gauge='length'
-   !
- endif
+ n_SOC=1
+ if( E_SOC_nbands/=0) n_SOC=2
  !
  ! Look for the W(iw_ref) closest 0
  !==================================
- iw_ref=1
- !
- if(any(abs(real(W_bss%p(:)))<0.01)) then 
-   !
-   do iw=1,BSS_n_freqs
-     if(abs(real(W_bss%p(iw)))>0.01) cycle
-     if(abs(W_bss%p(iw))<abs(W_bss%p(iw_ref))) iw_ref=iw
-   enddo
-   !
-   if(abs(real(W_bss%p(iw_ref)))==0._SP) W_bss%p(iw_ref)=cmplx(epsilon(1._SP),aimag(W_bss%p(iw_ref))) 
-   !
- endif
+ call FREQUENCIES_set_iw_ref(W_bss%p,BSS_n_freqs)
  !
  if (l_bs_fxc) goto 1
  !
@@ -122,7 +106,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  X_drude_term=cZERO
  !
  !...Drude
- call X_Drude(1,Ken,Xk,W_bss,X_oscillators%Wd,drude_GreenF,'c')
+ call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF,'c')
  !
  ! WF distribution
  !=================
@@ -159,6 +143,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
        ik_mem= PAR_Xk_bz_index(ik)
        !
+       if (E_SOC_nbands==0) IP_E(1)=BS_T_grp(i_T_g)%E(i_T)
+       if (E_SOC_nbands/=0) IP_E(:)=BS_T_grp(i_T_g)%E(i_T)+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+       !
        if (allocated(BS_T_grp(i_T_g)%Z)) local_Z=BS_T_grp(i_T_g)%Z(i_T)
        !
        ! *length*   : DIP_projected(c,v,k) is    iq*<v|r|c> while I need    iq*<c|r|v> = -conjg(   iq*<v|r|c>)
@@ -171,16 +158,19 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
        if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_mem,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))
        !    
-       X_epsilon(3,:)=X_epsilon(3,:)-BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg( BS_T_grp(i_T_g)%dipoles_R(i_T) )*&
-&                     local_Z/(W_bss%p(:)-BS_T_grp(i_T_g)%E(i_T))
-    
+       do i_pert_SOC=1,n_SOC
+         X_epsilon(3,:)=X_epsilon(3,:)-BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg( BS_T_grp(i_T_g)%dipoles_R(i_T) )*&
+&                       local_Z/(W_bss%p(:)-IP_E(i_pert_SOC))
+       enddo    
        !
        if (BS_anti_res.or.BS_K_coupling) then
          !
          ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
          !
-         X_epsilon(3,:)=X_epsilon(3,:)+conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%dipoles_R(i_T)*&
-&                       local_Z/(W_bss%p(:)+BS_T_grp(i_T_g)%E(i_T))
+         do i_pert_SOC=1,n_SOC
+           X_epsilon(3,:)=X_epsilon(3,:)+conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%dipoles_R(i_T)*&
+&                       local_Z/(W_bss%p(:)+IP_E(i_pert_SOC))
+         enddo    
          !
        endif
        !
@@ -197,15 +187,16 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call PP_redux_wait( X_epsilon ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( X_epsilon ,COMM=PAR_COM_eh_INDEX%COMM )
    !
-   Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi
+   if (E_SOC_nbands==0) Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
+   if (E_SOC_nbands/=0) Co=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
    !
    if (trim(global_gauge)=='velocity') then
      call msg('nsr','Gauge velocity: reference freq. for w=0 is [eV]:',real(W_bss%p(iw_ref))*HA2EV )
      factor_jj=X_epsilon(3,iw_ref)
    endif
    !
-   if (trim(global_gauge)=='length'   ) X_epsilon(3,:)=1._SP+ X_epsilon(3,:)           *Co/     q_norm(1)  **2
-   if (trim(global_gauge)=='velocity' ) X_epsilon(3,:)=1._SP+(X_epsilon(3,:)-factor_jj)*Co/real(W_bss%p(:))**2
+   if (trim(global_gauge)=='length'   ) X_epsilon(3,:)=1._SP+ X_epsilon(3,:)           *Co/q_norm(1) **2
+   if (trim(global_gauge)=='velocity' ) X_epsilon(3,:)=1._SP+(X_epsilon(3,:)-factor_jj)*Co/W_bss%p(:)**2
    !
 #if defined _KERR
    if (l_kerr) call K_kerr_IP(W_bss%p)

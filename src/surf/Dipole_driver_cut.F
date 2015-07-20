@@ -116,7 +116,7 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
  allocate(DIP_projected_cut(X%ib(2),Xen%nbm,Xk%nbz,n_spin))
  call mem_est('DIP_projected_cut',(/ product( (/X%ib(2),Xen%nbm,Xk%nbz,n_spin/) ) /) )
  DIP_projected_cut = cZERO
-
+ !
  do i1=1,Xk%nbz
    !
    ik  = Xk%sstar(i1, 1)

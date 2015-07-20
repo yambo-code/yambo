@@ -70,7 +70,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  !
  ! Check if it is a shifted grid
  !
- dshift=10E10_SP
+ dshift=10.E10_SP
  do ik=1,Xk%nbz
    if(sqrt(sum(Xk%ptbz(ik,:)**2))<dshift) then
       dshift=sqrt(sum(Xk%ptbz(ik,:)**2))

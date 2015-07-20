@@ -209,7 +209,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  if(l_bands.or.l_RT_occ_Bands.or.l_RT_life_Bands) then
    !
-   if ( i_time_rev==1 .and. BANDS_steps>0 ) call error(' Bands interpolation does not work with T-rev symmetry')
+   if ( i_time_rev==1 ) call error(' Bands interpolation does not work with T-rev symmetry')
    !
    call electrons_bands(Xk,Xen,nb_to_load)
    !
@@ -524,6 +524,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !=========
  !
  if (l_current) then
+   !
+   call error(' Implementation to be finalized. Presently it is not working.')
    !
    call section('*','Current Plot')
    !

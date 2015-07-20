@@ -182,7 +182,7 @@ module mod_com2y
      if (mag_syms) call msg('s','[MAG-SYMS] T-rev with (A) Magnetic field or (B) SOC and magnetization')
      !
      nsym=nsym_
-     if (double_symmetries) nsym=2.*nsym_
+     if (double_symmetries) nsym=2*nsym_
      !
      !From abinit help ...
      !

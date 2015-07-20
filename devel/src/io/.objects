@@ -10,7 +10,7 @@ ELPH_objects =
 ELPH_objects = io_ELPH.o
 #endif
 objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o io_fragment.o \
-       io_Vnl.o \
+       io_Vnl.o       io_E_SOC_map.o \
        io_RIM.o       io_GROT.o     $(ELPH_objects) \
        io_DIPOLES.o   io_QINDX.o    io_QP_and_GF.o   io_X.o \
        io_DB1.o       io_WF.o       io_KB_abinit.o   io_KB_pwscf.o   io_HF_and_locXC.o \

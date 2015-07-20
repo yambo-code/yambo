@@ -46,7 +46,6 @@ module X_m
  ! Warning about non-local commutator
  !
  logical                  :: Vnl_commutator_warning
- logical                  :: l_rotate_dipoles
  !
  ! Real-Time
  !
@@ -55,11 +54,14 @@ module X_m
  !
  ! Dipole M.E.
  !
+ character(schlen)        :: Dipole_approach
  logical                  :: Dipole_bands_ordered
  logical                  :: use_covariant_approach
  logical                  :: use_shifted_grids_approach
- logical                  :: use_direct_approach
- logical                  :: force_p_direct_approach
+ logical                  :: use_g_space_approach
+ logical                  :: use_real_space_approach
+ logical                  :: force_v_g_space_approach
+ integer                  :: num_shifted_grids
  real(SP)                 :: Dipole_Energy_treshold
  complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
@@ -86,7 +88,6 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
- logical :: use_X_Drude
  real(SP):: X_en_comp
  logical :: X_terminator
  !
@@ -220,20 +221,21 @@ module X_m
    end subroutine
    !
    subroutine X_reset(X,type)
+     use pars,  ONLY:czero
      integer, optional :: type
      type(X_t)::X
      X%ng=1
-     X%ng_db=0 
+     X%ng_db=0
      X%iq=(/1,-1/)
      X%ngostnts=0
      X%whoami=0
      X%Vnl_included=.false.
      if (present(type)) X%whoami=type
-     X%ehe=(/-1.,-1./)/HA2EV
-     X%q0=(/1.,0.,0./)
-     X%Wd=cmplx(0.,0.,SP)
-     X%cg_percentual=100.
-     X%ppaE=1.
+     X%ehe=(/-1._SP,-1._SP/)/HA2EV
+     X%q0=(/1._SP,0._SP,0._SP/)
+     X%Wd=cZERO
+     X%cg_percentual=100._SP
+     X%ppaE=1._SP
      X%ordering="t"       
      X%f_xc="none"       
    end subroutine

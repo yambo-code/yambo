@@ -70,7 +70,7 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  ! Basic Setups
  !
  l_rho     =present(rho)
- l_J       =present(J)
+ !l_J       =present(J)
  l_si      =.false.
  if (present(force_spatial_inversion)) l_si=force_spatial_inversion
  !
@@ -78,10 +78,10 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
    rho       =0._SP
    rho_no_sym=0._SP
  endif
- if (l_J) then
-   J         =0._SP
-   J_no_sym  =0._SP
- endif
+ !if (l_J) then
+ !  J         =0._SP
+ !  J_no_sym  =0._SP
+ !endif
  !
  warn_done=.false.
  i_spin_E=1
@@ -113,22 +113,22 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
          !
        endif
        !
-       if (l_J) then
-         !
-         call eval_Gradient(WF%c(:,ifft),WF_der)
-         !
-         do i_r=1,fft_size
-           J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*aimag(WF%c(i_r,ifft)*WF_der(i_r,:))
-         enddo
-         !
-       endif
+       !if (l_J) then
+       !  !
+       !  call eval_Gradient(WF%c(:,ifft),WF_der)
+       !  !
+       !  do i_r=1,fft_size
+       !    J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*aimag(WF%c(i_r,ifft)*WF_der(i_r,:))
+       !  enddo
+       !  !
+       !endif
        !
      enddo
    enddo
  enddo bands_loop
  !
  if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
- if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)
+ !if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)
  !
  ! Symmetrization
  !
@@ -145,10 +145,10 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
    if (     l_si) rho(:)=   i_time_rev *real(rho(fft_rot_r_inv(:)),SP)+rho(:)
  endif
  !
- if (l_J) then
-   do i_s=1,rho_syms
-     J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(i_s,:),:),SP)/real(nsym,SP)
-   enddo
- endif
+ !if (l_J) then
+ !  do i_s=1,rho_syms
+ !    J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(i_s,:),:),SP)/real(nsym,SP)
+ !  enddo
+ !endif
  ! 
 end subroutine

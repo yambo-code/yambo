@@ -23,7 +23,7 @@
 !
 subroutine X_pre_setup(Xen,X)
  !
- use X_m,           ONLY:X_t,use_X_DbGd,use_X_drude,X_DbGd_nkpts
+ use X_m,           ONLY:X_t,use_X_DbGd,x_dbgd_nkpts
  use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
  use com,           ONLY:warning
@@ -56,16 +56,12 @@ subroutine X_pre_setup(Xen,X)
  if (X%ib(1)<0.or.X%ib(1)>Xen%nbm.or.X%ib(2)<X%ib(1)) X%ib(1)=1
  if (X%ib(2)>Xen%nb.or.X%ib(2)<Xen%nbf)               X%ib(2)=Xen%nb
  !
- use_X_Drude=.not.(real(X%Wd)==0..and.aimag(X%Wd)==0.)
- !
  ! Here I set up the Double Grid flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation
  !
  use_X_DbGd=BZ_DbGd_nbands/=0.and.X%ib(1)<BZ_DbGd_nbands.and.(.not.l_bs_fxc)
  !
  if (use_X_DbGd) X_DbGd_nkpts=BZ_DbGd_tot_nkpts
- !
- if (use_X_DbGd .and. use_X_Drude) call warning('Both double grid and Drude model active')
  !
  ! CHO checks
  !

@@ -39,8 +39,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &                              pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,&
-&                              Dipole_Energy_treshold,l_rotate_dipoles,&
-&                              use_direct_approach,force_p_direct_approach
+&                              Dipole_Energy_treshold,use_g_space_approach,force_v_g_space_approach
  use IO_m,                ONLY:io_control,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf_ng,WF
@@ -78,7 +77,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  io_KB_abinit_err= io_err(1)
  io_KB_pwscf_err = io_err(2)
- io_Vnl_err     = io_err(3)
+ io_Vnl_err      = io_err(3)
  !
  if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
    allocate(kbv(wf_ng,pp_kbv_dim,4,n_spinor),stat=alloc_err)
@@ -113,26 +112,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ic_min=X%ib(1)
  endif
  !
+ ! WF load
+ ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
+ ! there will be other WF_load calls using the present WF distribution. 
+ !
  call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&             force_WFo=(l_sc_run.or.l_rotate_dipoles),keep_states_to_load=.TRUE.)
+&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
-#if defined _SC
- !
- ! See for this PRB 48, 11789 (1993)
- ! E_dip are always DFT eigenvalues
  ! Eo    are always the eigenvalues consistent with the WFs
  ! E     do also include the QP corrections when Eo are associated
- if (l_rotate_dipoles) then
-   if (.not.associated(Xen%E_dip)) call error('Bare dipoles energies not associated')
-   if (     associated(Xen%E_dip)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles')
- else
-   if (associated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
-   if (associated(Xen%E_dip)) call warning(' Missing non-local Hamiltonian contributions different from Vnl')
- endif
- !
-#else
  if (associated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
-#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -157,8 +146,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! GPL_EXCLUDE_END
  !
- l_eval_DIP_iR=use_direct_approach
- l_eval_DIP_P =use_direct_approach.or.force_p_direct_approach
+ l_eval_DIP_iR=use_g_space_approach
+ l_eval_DIP_P =use_g_space_approach.or.force_v_g_space_approach
  l_eval_DIP_P2=.false.
  wf_dim=3
  !
@@ -240,14 +229,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
          enddo
          !
-         if(l_rotate_dipoles) then
-           Ev_m_Ec=Xen%E_dip(iv,ik,i_sp_pol)-Xen%E_dip(ic,ik,i_sp_pol)
+         if (associated(Xen%Eo)) then 
+           Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+           Ev_m_Ec_QP=Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
          else
-           Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
-           if (associated(Xen%Eo) ) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+           Ev_m_Ec   =Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+           Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
          endif
-         !
-         if (associated(Xen%Eo)) Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/)).or.&
 &            abs(Ev_m_Ec)<=Dipole_Energy_treshold.and..not.l_real_time) then
@@ -257,11 +245,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
          endif
          !
-         ! Evaluate <ivfft|p|icfft>
+         ! Evaluate <ivfft|   p   |icfft>
          call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
          !
-         ! This is outside the nspinor loop because the kb operator can be non diagonal
-         ! in spin space if n_spinor=2
+         ! Evaluate <ivfft|[x,Vnl]|icfft>
          if (io_Vnl_err==0) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
          if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,1)
          if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,2)
@@ -272,9 +259,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! P_vc=rho(:3)
          !
          if (l_eval_DIP_P) then
-           DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
            ! See for this PRB 48, 11789 (1993), definition of p_eff
-           if(associated(Xen%Eo)) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=DIP_P(:,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec_QP/Ev_m_Ec
+           DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)*Ev_m_Ec_QP/Ev_m_Ec
          endif
          !
          !======

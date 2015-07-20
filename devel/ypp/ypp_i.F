@@ -175,9 +175,9 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !   =========
  !
- if (l_bzrim) call k_random
- !
  if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
+ !
+ if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
  !
  if (l_bxsf)  call bxsf_read(Xk,Xen)
  !

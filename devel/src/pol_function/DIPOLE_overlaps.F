@@ -46,14 +46,9 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  character(schlen) :: dump_ch
  integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_wf,i_spin,i_spinor,i_sp_pol,ik,ikp,ig
  integer           :: idx_kp(3),idx_k(3),shift_ik(3),shift_ikp(3)
- complex(SP), allocatable :: WF_tmp(:,:),WF_ik(:,:),WF_ikp(:,:)
+ complex(SP)       :: WF_tmp(wf_ng,n_spinor),WF_ik(wf_ng,n_spinor),WF_ikp(wf_ng,n_spinor)
  real(SP)          :: v1(3),v2(3),PHASE
  logical           :: USE_shifted_wf
- !
- allocate(WF_tmp(wf_ng,n_spinor),WF_ik(wf_ng,n_spinor),WF_ikp(wf_ng,n_spinor))
- call mem_est("WF_shited",(/size(WF_tmp)/),(/2*SP/))
- call mem_est("WF_ikp",(/size(WF_ikp)/),(/2*SP/))
- call mem_est("WF_ik",(/size(WF_ik)/),(/2*SP/))
  !
  DIP_S=cZERO
  !
@@ -144,8 +139,5 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  enddo
  !
  call live_timing()
- !
- deallocate(WF_tmp,WF_ik,WF_ikp)
- call mem_est("WF_ik WF_ikp WF_tmp")
  !
 end subroutine Dipole_Overlaps

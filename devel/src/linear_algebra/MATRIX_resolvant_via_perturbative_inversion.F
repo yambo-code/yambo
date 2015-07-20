@@ -25,7 +25,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(N,W,C,f,V)
  !
  ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| (1-VM)^{-1} V |W> = \sum_n C<W| ( VM )^n V |W>
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
  use BS,             ONLY:BS_mat
  use parallel_m
@@ -49,11 +49,11 @@ integer function MATRIX_resolvant_via_perturbative_inversion(N,W,C,f,V)
  !
  fo=C*Vstar_dot_V_omp(N,W,A_nm1)
  !
- if (abs(f)==0.) f=fo
+ if (abs(f)==0._SP) f=fo
  !
  it=1
  !
- delta_f=0.
+ delta_f=0._SP
  !
  do while (it<=BSS_inv_iter_max) 
    !
@@ -76,6 +76,6 @@ integer function MATRIX_resolvant_via_perturbative_inversion(N,W,C,f,V)
  enddo
  !
  MATRIX_resolvant_via_perturbative_inversion=1
- f=(0.,0.)
+ f=cZERO
  !
 end function

@@ -31,10 +31,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg,error,warning
- use YPP,                 ONLY:BZ_DbGd_nkpts,DbGd_DB1_paths,MAX_DbGd_DBs,n_DbGd_DBs
+ use YPP,                 ONLY:BZ_DbGd_nkpts_to_use,DbGd_DB1_paths,MAX_DbGd_DBs,n_DbGd_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
 &                              BZ_DbGd_nbands,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_kpts,&
-&                              BZ_DbGd_tot_nkpts,n_sp_pol,BZ_DbGd_max_filling,&
+&                              BZ_DbGd_tot_nkpts,BZ_DbGd_nkpts,n_sp_pol,BZ_DbGd_max_filling,&
 &                              BZ_DbGd_ipol_weight,E_reset,DbGd_is_symmetry_expanded
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,          ONLY:PARALLEL_index
@@ -48,10 +48,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Work Space
  !
- real(SP)     ::rand_k(BZ_DbGd_nkpts+1,3),a_save(3,3),alat_save(3),&
+ real(SP)     ::rand_k(BZ_DbGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),&
 &               gap(2),tmp_zero(3)
- integer      ::i1,ik_near,ik_near_ibz,is_near,DbGd_nk,ik_bz,ik_DbGd
- logical      ::No_Weight,l_skip_check,l_flag
+ integer      ::i1,ik_near,ik_near_ibz,is_near,ik_bz,ik_DbGd
+ logical      ::l_skip_check,l_flag
  integer,  allocatable :: BZ_SYM_table(:,:)
  real(SP), allocatable :: rand_E(:,:,:)
  !
@@ -132,7 +132,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    dl_sop=dl_sop_SAVE(:,:,:nsym)
  endif
  !
- call parser('NoWeights',No_Weight)
  call parser('SkipCheck',l_skip_check)
  call parser('noBZExpand',l_flag)
  !
@@ -173,8 +172,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Use of less (only BZ_DbGd_nkpts, read from input) k-points
  !
- if (BZ_DbGd_nkpts<nkibz.and.BZ_DbGd_nkpts>0) then
-   nkibz   =BZ_DbGd_nkpts
+ if (BZ_DbGd_nkpts_to_use<nkibz.and.BZ_DbGd_nkpts_to_use>0) then
+   nkibz   =BZ_DbGd_nkpts_to_use
    DbGd_E(i_db_merge)%nk=nkibz
    DbGd_k(i_db_merge)%nibz=nkibz
    allocate(rand_E(DbGd_E(i_db_merge)%nb,nkibz,n_sp_pol))
@@ -188,14 +187,14 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  endif
  !
  gap(1)=minval(DbGd_E(i_db_merge)%E(Xen%nbf+1,:,1))-maxval(DbGd_E(i_db_merge)%E(Xen%nbf,:,1)) 
- gap(2)=10000.
+ gap(2)=10000._SP
  do i1=1,nkibz
    if (DbGd_E(i_db_merge)%E(Xen%nbf+1,i1,1)-DbGd_E(i_db_merge)%E(Xen%nbf,i1,1)<gap(2)) then
      gap(2)=DbGd_E(i_db_merge)%E(Xen%nbf+1,i1,1)-DbGd_E(i_db_merge)%E(Xen%nbf,i1,1)
    endif
  enddo
  !
- call msg('s','::              [imposed]:',BZ_DbGd_nkpts)
+ call msg('s','::              [imposed]:',BZ_DbGd_nkpts_to_use)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym_DbGd_DB)
  if(i_time_rev_DB==1)&
@@ -226,11 +225,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  BZ_DbGd_nbands=DbGd_E(i_db_merge)%nb
  !
- DbGd_nk=DbGd_k(i_db_merge)%nibz
- BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz+Xk%nbz
  BZ_ASSOCIATED_nkpts=Xk%nbz
- !
- if(ik_ref(2)>0) BZ_DbGd_tot_nkpts=BZ_DbGd_tot_nkpts-1
  !
  if (DbGd_is_symmetry_expanded) then
    !
@@ -242,9 +237,20 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    !
    call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
    !
-   DbGd_nk=DbGd_k(i_db_merge)%nbz
+   BZ_DbGd_nkpts=DbGd_k(i_db_merge)%nbz
    !
    BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz
+   !
+ else
+   !
+   call section('+','BZ Double Grid K-points summary ...')
+   !
+   BZ_DbGd_nkpts=DbGd_k(i_db_merge)%nibz
+   BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz+Xk%nbz
+   !
+   if(ik_ref(2)>0) BZ_DbGd_tot_nkpts=BZ_DbGd_tot_nkpts-1
+   !
+   call msg('l','using '//trim(intc(BZ_DbGd_nkpts))//' k-points for a total of '//trim(intc(BZ_DbGd_tot_nkpts))//' k-points')
    !
  endif
  !
@@ -255,19 +261,19 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! The -1 is for the reference k that should not be added
  !
- allocate(BZ_DbGd_nkpt(Xk%nbz),TMP_map(DbGd_nk,2))
+ allocate(BZ_DbGd_nkpt(Xk%nbz),TMP_map(BZ_DbGd_nkpts,2))
  BZ_DbGd_nkpt=1
  TMP_map=0
  !
  ! Par Proc
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/DbGd_nk/))
+ call PARALLEL_index(px,(/BZ_DbGd_nkpts/))
  call PP_redux_wait
  !
  call live_timing('BZ Double Grid Map',px%n_of_elements(myid+1))
  !                ============
- do i1=1,DbGd_nk
+ do i1=1,BZ_DbGd_nkpts
    !
    if (.not.px%element_1D(i1)) cycle
    !
@@ -294,7 +300,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! Number of points in each zone
  !
  BZ_DbGd_nkpt=1
- do i1=1,DbGd_nk
+ do i1=1,BZ_DbGd_nkpts
    if (i1==ik_ref(2)) cycle
    ik_near=TMP_map(i1,1)
    if (.not.DbGd_is_symmetry_expanded) then
@@ -318,14 +324,14 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  endif
  !
  BZ_DbGd_nkpt=1
- do i1=1,DbGd_nk
+ do i1=1,BZ_DbGd_nkpts
    if (i1==ik_ref(2)) cycle
    ik_near=TMP_map(i1,1)
    if (.not.DbGd_is_symmetry_expanded) then
      ik_near_ibz = TMP_map(i1,1)
      ik_near     = Xk%k_table(ik_near_ibz,1)
    endif
-   BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1 
+   BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1
    !
    if (DbGd_is_symmetry_expanded) then
      BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near))=DbGd_k(i_db_merge)%sstar(i1,1)
@@ -347,13 +353,12 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  BZ_DbGd_ipol_weight = 1.0_SP
  !
  allocate(Xen%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
- allocate(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
+ allocate(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
  !
  if (DbGd_is_symmetry_expanded) then
    !
-   !
    Xen%E_DbGd(:,:,:)=DbGd_E(i_db_merge)%E(:,:,:)
-   BZ_DbGd_kpts(:,:)=DbGd_k(i_db_merge)%pt(:,:)
+   BZ_DbGd_kpts(:,:)=DbGd_k(i_db_merge)%ptbz(:,:)
    !
  else
    !

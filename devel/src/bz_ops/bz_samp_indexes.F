@@ -150,8 +150,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
      !
-     if (Xk_impose_minus_q)      call c2a(v_in=-v1,v_out=q%ptbz(i1,:),mode='ka2i')
-     if (.not.Xk_impose_minus_q) call c2a(v_in=v1,v_out=q%ptbz(i1,:),mode='ka2i')
+     if (     Xk_impose_minus_q) call c2a(v_in=-v1,v_out=q%ptbz(i1,:),mode='ka2i')
+     if (.not.Xk_impose_minus_q) call c2a(v_in= v1,v_out=q%ptbz(i1,:),mode='ka2i')
      !
    enddo
    if (.not.allocated(q_pt)) then
@@ -244,17 +244,17 @@ subroutine bz_samp_indexes(k,Xk,q)
      v1=matmul(k_b_m1,Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)) ! K-K_p= Q + Go
      iv1=nint(v1)
      call k_grid_shift(iv1)
-     iqbz=q_map(iv1(1),iv1(2),iv1(3))
+     iqbz =q_map(iv1(1),iv1(2),iv1(3))
      iqibz=q%sstar(iqbz,1)
-     iqs=q%sstar(iqbz,2)
+     iqs  =q%sstar(iqbz,2)
      if (iqs/=1.and..not.bse_scattering) cycle
      if (iqs==1) qindx_X(iqibz,ikbz,1)=ikbz_p
      if (bse_scattering) qindx_B(ikbz,ikbz_p,1)=iqbz
      v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
      !
-     if (iqs==1) qindx_X(iqibz,ikbz,2)=G_index(v1)
-     if (bse_scattering) qindx_B(ikbz,ikbz_p,2)=G_index(v1)
+     if (iqs==1)         qindx_X(iqibz,ikbz  ,2)=G_index(v1)
+     if (bse_scattering) qindx_B(ikbz ,ikbz_p,2)=G_index(v1)
      !
    enddo
    !
@@ -276,7 +276,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  call k_ibz2bz(k,'a',.false.)
  !
  connected_grids=.true.
- local_zero=1.E-4
+ local_zero=1.E-4_SP
  !
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
@@ -296,8 +296,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      v1=matmul(k_b_m1,k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:))
      iv1=nint(v1)
      !
-     if (.not.v_is_zero(v1-real(iv1),zero_=local_zero)) connected_grids=.false.
-     if (.not.v_is_zero(v1-real(iv1),zero_=local_zero)) cycle
+     if (.not.v_is_zero(v1-real(iv1,SP),zero_=local_zero)) connected_grids=.false.
+     if (.not.v_is_zero(v1-real(iv1,SP),zero_=local_zero)) cycle
      !
      call k_grid_shift(iv1)
      iqbz=q_map(iv1(1),iv1(2),iv1(3))
@@ -310,7 +310,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      if (coll_scattering) qindx_C(ikbz,iqbz,2)=G_index(v1)
    enddo
    !
-   if (any(qindx_S(ikibz,:,:)==0)) call error('Null transition detected [qindx_S]')
+   if (any(qindx_S(ikibz,:,:)==0)) call error(' Null transition detected [qindx_S]')
    !
    call live_timing(steps=1)
    !

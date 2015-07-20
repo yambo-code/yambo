@@ -29,13 +29,13 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  ! M = r x (p+1/c*A) = r x mv     is the mechanical angula momentum,
  !                                which is gauge invariant
  !
- use pars,           ONLY:SP,lchlen,schlen
+ use pars,           ONLY:SP,lchlen,schlen,cZERO
  use magnetic,       ONLY:MAG_landau,MAG_pauli,             &
 &                         A_magn_x,A_magn_y,A_magn_z,       &
 &                         MAG_hamiltonian_type,Bx,By,Bz,    &
-&                         MAG_gauge,load_cc,free_cc,x
+&                         MAG_gauge
  use FFT_m,          ONLY:fft_size
- use D_lattice,      ONLY:a
+ use D_lattice,      ONLY:a,x_cc
  use wrapper,        ONLY:Vstar_dot_V
  use interfaces,     ONLY:WF_load
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
@@ -160,19 +160,19 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        ! Li =(r x p)_i for i=x,y,z
        ! These are gauge dependent if MAG_landau=.true.
        ! These are quantized if wfs are eigenstate
-       if(angular_dir(1)) L_tmp(1,:)=x(:,2)*wf_z(:,ifft)-x(:,3)*wf_y(:,ifft)
-       if(angular_dir(2)) L_tmp(2,:)=x(:,3)*wf_x(:,ifft)-x(:,1)*wf_z(:,ifft)
-       if(angular_dir(3)) L_tmp(3,:)=x(:,1)*wf_y(:,ifft)-x(:,2)*wf_x(:,ifft)
+       if(angular_dir(1)) L_tmp(1,:)=x_cc(:,2)*wf_z(:,ifft)-x_cc(:,3)*wf_y(:,ifft)
+       if(angular_dir(2)) L_tmp(2,:)=x_cc(:,3)*wf_x(:,ifft)-x_cc(:,1)*wf_z(:,ifft)
+       if(angular_dir(3)) L_tmp(3,:)=x_cc(:,1)*wf_y(:,ifft)-x_cc(:,2)*wf_x(:,ifft)
        !
        if(MAG_landau) then
          ! Mi = [r x (p + 1/c*A)]_i = Li +1/c*(r x A)_i for i=x,y,z
          ! These are the mechanicals momenta and are gauge independent
-         if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)+1./SPEED_OF_LIGHT*(x(:,2)*A_magn_z(:)- &
-&                             x(:,3)*A_magn_y(:))*WF%c(:,ifft)
-         if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)+1./SPEED_OF_LIGHT*(x(:,3)*A_magn_x(:)- &
-&                             x(:,1)*A_magn_z(:))*WF%c(:,ifft)
-         if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)+1./SPEED_OF_LIGHT*(x(:,1)*A_magn_y(:)- &
-&                             x(:,2)*A_magn_x(:))*WF%c(:,ifft)
+         if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)+1./SPEED_OF_LIGHT*(x_cc(:,2)*A_magn_z(:)- &
+&                             x_cc(:,3)*A_magn_y(:))*WF%c(:,ifft)
+         if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)+1./SPEED_OF_LIGHT*(x_cc(:,3)*A_magn_x(:)- &
+&                             x_cc(:,1)*A_magn_z(:))*WF%c(:,ifft)
+         if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)+1./SPEED_OF_LIGHT*(x_cc(:,1)*A_magn_y(:)- &
+&                             x_cc(:,2)*A_magn_x(:))*WF%c(:,ifft)
        endif
        !
        do i1=1,3
@@ -242,21 +242,21 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  !
  ! Free the vector potential
  call MAG_common_build_A(.false.)
- call free_cc()
+ deallocate(x_cc)
  !
  contains
    subroutine local_alloc()
      allocate(L_tmp(3,fft_size))
      allocate(L_tot(3,nkpt_tot+1))
-     L_tmp=(0.,0.)
-     L_tot=0.
-     L=(0.,0.)
+     L_tmp=cZERO
+     L_tot=0._SP
+     L=cZERO
      if(MAG_landau) then
        allocate(M_tmp(3,fft_size))
        allocate(M_tot(3,nkpt_tot+1))
-       M_tmp=(0.,0.)
-       M_tot=0.
-       M=(0.,0.)
+       M_tmp=cZERO
+       M_tot=0._SP
+       M=cZERO
      endif
    end subroutine 
    !

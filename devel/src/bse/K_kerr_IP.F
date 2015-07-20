@@ -105,8 +105,8 @@ subroutine K_kerr_IP(w)
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  !
- if(trim(global_gauge)=='length'   ) X_epsilon(6,:)= X_epsilon(6,:)*Co/q_norm(1) **2
- if(trim(global_gauge)=='velocity' ) X_epsilon(6,:)= X_epsilon(6,:)*Co/real(w(:))**2
+ if(trim(global_gauge)=='length'   ) X_epsilon(6,:)= X_epsilon(6,:)*Co/q_norm(1)**2
+ if(trim(global_gauge)=='velocity' ) X_epsilon(6,:)= X_epsilon(6,:)*Co/  w(:)   **2
  !
  if (BS_anti_res) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !

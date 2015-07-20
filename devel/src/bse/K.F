@@ -345,7 +345,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
        io_X_err=io_X(X,Xw,XID)
        !
-       forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1.
+       forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
        do i_g2=1,BS_n_g_W
          do i_g3=1,BS_n_g_W
            if (.not.BS_W_is_diagonal) then
@@ -468,8 +468,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1)
        iq_W_s =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,2)
        !
-       H_x=(0.,0.)
-       H_c=(0.,0.)
+       H_x=cZERO
+       H_c=cZERO
        !
        if (BS_blk(i_block)%mode=="R") then
          if (BS_res_K_exchange) then
@@ -523,13 +523,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          iOcc = BS_blk(i_block)%O_table(i_k_p_s,i_c_k,i_c_p,i_k_spin)
          PHASE_1=WF_phase(i_p,i_k_p_s,i_c_p,i_p_spin)
-         if (PHASE_1==cZERO  ) PHASE_1=1.
-         if (PHASE_1==-99._SP) PHASE_1=1.
+         if (PHASE_1==cZERO  ) PHASE_1=1._SP
+         if (PHASE_1==-99._SP) PHASE_1=1._SP
          !
          iOvv = BS_blk(i_block)%O_table(i_k_p_s,i_v_k,i_v_p,i_k_spin)
          PHASE_2=WF_phase(i_p,i_k_p_s,i_v_p,i_p_spin)
-         if (PHASE_2==cZERO  ) PHASE_2=1.
-         if (PHASE_2==-99._SP) PHASE_2=1.
+         if (PHASE_2==cZERO  ) PHASE_2=1._SP
+         if (PHASE_2==-99._SP) PHASE_2=1._SP
          !
 !$omp parallel default(shared), private(i_g1)
 !$omp do

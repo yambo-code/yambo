@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CH
+! Authors (see AUTHORS file for details): AM CH DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,35 +21,36 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_approach)
+subroutine Dipole_shifted_grids(Xen,Xk,X)
  !
  ! Using the wfc at the k,k-q points to construct <r>
  !
  !  i q.<nk|r|mk> =  \sum_i=1,3 q(i) <u_n(k+q0(i))|u_mk>/q0(i)
  !
  use pars,                ONLY: SP,lchlen,cZERO
- use drivers,             ONLY:l_sc_run
- use com,                 ONLY: warning, core_io_path, error, grid_path
+ use drivers,             ONLY: l_sc_run
+ use com,                 ONLY: warning,msg,core_io_path,error,grid_path
  use stderr,              ONLY: intc
  use LIVE_t,              ONLY: live_timing
- use electrons,           ONLY: levels,n_spin,n_spinor,n_sp_pol
+ use electrons,           ONLY: levels,n_spinor,n_sp_pol
  use parallel_m,          ONLY: PP_redux_wait,PP_indexes,myid,&
 &                               PP_indexes_reset,PAR_COM_k_for_P
  use interfaces,          ONLY: PARALLEL_index,WF_load
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR,DIP_P,use_shifted_grids_approach,&
-&                               force_p_direct_approach,l_rotate_dipoles
+&                               force_v_g_space_approach,num_shifted_grids
  use wrapper_omp,         ONLY: Vstar_dot_V_omp
  use memory_m,            ONLY: mem_est
- use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx
+ use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,wf_nc_k,WAVEs
 #if defined _SC           
  use SC,                  ONLY: SC_bands
 #endif
+ !
  implicit none
+ !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
- logical,       intent(inout) :: use_trans_approach
  !
  ! Saves
  !
@@ -63,25 +64,25 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_approach)
  !
  ! Work Space
  !
- integer                      :: ik,icfft(n_spinor),ivfft(n_spinor),ic,iv, ik_grid, iq, ikpq
- integer                      :: i_spin,i_spinor,j_spinor,i_sp_pol,err,ifail,ir,num_shifted_grid
+ logical                      :: idir_not_done(3)=.true.
+ integer                      :: ik,icfft(n_spinor),ivfft(n_spinor),ic,iv,iq
+ integer                      :: i_spin,i_spinor,i_sp_pol,ifail,ir
  complex(SP)                  :: rho
- real(SP)                     :: Ev_m_Ec
+ real(SP)                     :: Ev_m_Ec,q_mod(3)
  type(PP_indexes)             :: px
  !
  !ioDB1 shifted grids
  !
- type(levels)                 :: E_shift
- type(bz_samp)                :: Xk_shift
+ type(levels)                 :: E_shift(3)
+ type(bz_samp)                :: Xk_shift(3)
  !
  !ioWF local copies           
  !
- complex(SP), allocatable     :: wf_local(:,:)
- integer    , allocatable     :: WF_index_local(:,:,:)
+ type(WAVEs)                  :: WF_shifted
  !
  !I/O and external functions
  !
- integer                      :: io_err
+ integer                      :: io_err(3)
  integer, external            :: io_DB1_selective_scan
  !
  ! saves...
@@ -93,77 +94,68 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_approach)
  !
  ! Read the k-point grids from second ioDB1
  !
- io_err=io_DB1_selective_scan(E_shift,Xk_shift,trim(grid_path),'all')
- call set_parms(grid='shifted', command=' define')
+ num_shifted_grids=2
  !
- if(io_err/=0) then
-   call warning(' Reading of shifted DB1 failed')
-   call DB1_reset()
-   call warning(' Reverting to transverse approach')
-   use_shifted_grids_approach=.false.
-   use_trans_approach        =.true.
-   return
- endif
+ do iq =1,num_shifted_grids
+   !
+   io_err(iq)=io_DB1_selective_scan(E_shift(iq),Xk_shift(iq),trim(grid_path)//'/shift_'//trim(intc(iq)),'all')
+   call set_parms(grid='shifted',i_grid=iq,command=' define')
+   !
+   idir_not_done(iq)= (io_err(iq)/=0)
+   !
+ enddo
  !
- ! Determine grid displacement
+ if(all(idir_not_done)) call error(' Shifted grids are not ok')
  !
- ifail = 0
- call DIPOLE_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid)
- if(ifail>0) then
-   call warning(' Shifted grids are not ok')
-   call DB1_reset()
-   call warning(' Reverting to transverse approach')
-   use_shifted_grids_approach=.false.
-   use_trans_approach        =.true.
-   return
- endif
+ call msg('r','Shifted grids found: '//trim(intc(num_shifted_grids)))
  !
- ! Load and Save local copy of unshifted WFs {k} 
+ if(any(idir_not_done)) call warning(' Shifted grids are '//trim(intc(num_shifted_grids))//'. Assuming non periodic system.')
  !
- call WF_load(WF,0,1,(/ Xen%nbf+1, X%ib(2) /),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&               force_WFo=(l_sc_run.or.l_rotate_dipoles),keep_states_to_load=.TRUE.)
+ ! Load unshifted WFs
+ ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
+ ! there will be other WF_load calls using the present WF distribution. 
  !
- allocate(wf_local( size(WF%c,1), size(WF%c,2) ), stat=err )
- allocate(WF_index_local( size(WF%index,1), size(WF%index,2), size(WF%index,3) ), stat=err )
- call mem_est('WFshifted0',(/ size(WF%c,1), size(WF%c,2) /), errors=(/err/))
- call mem_est('WFstate0',(/ size(WF%c,1), size(WF%c,2) /), errors=(/err/))
- wf_local(:,:)         = WF%c(:,:)
- WF_index_local(:,:,:) = WF%index(:,:,:)
+ call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
+&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
- wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
- !
- call WF_free(WF)
  !
  ! Load WFs {k + q_iq}
  !
- core_io_path = grid_path
- call WF_load(WF,0,1,(/ X%ib(1), Xen%nbm /),&
-&                 (/1,num_shifted_grid*Xk%nibz/),&
-&                 space='G',title='-Oscillators/G space (shifted grid)') 
- !
  ! Main loop over cartesian directions
  !
- do iq = 1, num_shifted_grid
+ do iq = 1, num_shifted_grids
    !
-   ik_grid = (iq-1)*Xk%nibz + 1 ! The index of the first k point for each grid
+   if(idir_not_done(iq)) cycle
+   !
+   ! Determine grid displacement
+   !
+   call DIPOLE_check_shifted_grids( Xk_shift(iq), Xk, iq, num_shifted_grids, q_mod)
+   !
+   core_io_path = trim(grid_path)//'/shift_'//trim(intc(iq))
+   !
+   call WF_load(WF_shifted,0,1,X%ib,(/1,Xk%nibz/),space='G',&
+   &  title='-Oscillators/G space (shifted grid)',keep_states_to_load=.TRUE.) 
+   !
+   wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
+   !
    ir = iq
    !
    ! Set up the parallel environment 
    !
-   call PP_indexes_reset(px)
-   call PARALLEL_index(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
-   call live_timing('Dipole @ grid '//trim(intc(iq))//':',px%n_of_elements(myid+1))
-   call PP_redux_wait(COMM=PAR_COM_k_for_P%COMM)
+   !call PP_indexes_reset(px)
+   !call PARALLEL_index(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
+   !call live_timing('Dipole @ grid '//trim(intc(iq))//':',px%n_of_elements(myid+1))
+   !call PP_redux_wait(COMM=PAR_COM_k_for_P%COMM)
+   !
+   call live_timing('Dipole @ grid '//trim(intc(iq))//':',Xk%nibz*n_sp_pol)
    !
    do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]
-     !
-     ikpq = ik_grid + ik - 1 ! Corresponding k in set of shifted grids
      !
      do i_sp_pol = 1,n_sp_pol
        !
        do iv = X%ib(1),Xen%nbm
          !
-         if (.not.px%element_2D(ik,iv)) cycle
+         !if (.not.px%element_2D(ik,iv)) cycle
          !
          do ic = Xen%nbf+1, X%ib(2)
            !
@@ -180,21 +172,17 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_approach)
            do i_spinor=1,n_spinor
              !
              i_spin=i_sp_pol+i_spinor-1
-             ivfft(i_spin)=WF%index(iv,ik,i_spin)
-             icfft(i_spin)=WF%index(ic,ik,i_spin)
+             ivfft(i_spinor)=WF_shifted%index(iv,ik,i_spin)
+             icfft(i_spinor)=WF%index(ic,ik,i_spin)
              !
-             if (ivfft(i_spin)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-             if (icfft(i_spin)==0) call error(" Error in parallel wf distribution (Dipole ic)")
+             if (ivfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
+             if (icfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
              !
-           enddo
-           !
-           ! rho = < v,k+q | c,k >/q
-           !
-           do i_spinor=1,n_spinor
-             do j_spinor=1,n_spinor
-               rho = rho + Vstar_dot_V_omp(wf_ng_eff,WF%c(1:wf_ng_eff,ivfft(i_spinor)), &
-&                                                    wf_local(1:wf_ng_eff,icfft(j_spinor)))
-             enddo
+             ! rho = < v,k+q | c,k >
+             !
+             rho = rho + Vstar_dot_V_omp(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,ivfft(i_spinor)), &
+&                                                  WF%c(1:wf_ng_eff,icfft(i_spinor)))
+             !
            enddo
            !
            !======
@@ -205,9 +193,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_approach)
            !=====
            ! <P>
            !=====
-           if(.not.force_p_direct_approach) DIP_P(ir,ic,iv,ik,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
+           if(.not.force_v_g_space_approach) DIP_P(ir,ic,iv,ik,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
            !
-         enddo  ! ic    
+         enddo  ! ic
          !
        enddo    ! iv
        !
@@ -217,6 +205,8 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_approach)
      !
    enddo        ! ik
    !
+   call WF_free(WF_shifted)
+   !
    call live_timing()
    !
  enddo          ! iq
@@ -225,11 +215,13 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_approach)
  !
  call WF_free(WF)
  !
- do i_spin=1,n_sp_pol
-   call PP_redux_wait(DIP_iR(:,:,:,:,i_spin),COMM=PAR_COM_k_for_P%COMM)
- enddo
+ !do i_spin=1,n_sp_pol
+ !  call PP_redux_wait(DIP_iR(:,:,:,:,i_spin),COMM=PAR_COM_k_for_P%COMM)
+ !enddo
  !
  call DB1_reset()
+ !
+ if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
  !
  contains
    !
@@ -240,15 +232,16 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_approach)
      ! not rewritten.
      !
      core_io_path = core_io_path_save
-     io_err=io_DB1_selective_scan(E_shift,Xk_shift,trim(core_io_path),'all')
+     io_err(1)=io_DB1_selective_scan(E_shift,Xk_shift,trim(core_io_path),'all')
      wf_ng=wf_ng_shifted
      !
      call set_parms(grid='  local', command='  reset')
      !
    end subroutine
    !
-   subroutine set_parms(grid,command)
+   subroutine set_parms(grid,i_grid,command)
      implicit none
+     integer,          intent(in), optional :: i_grid
      character(len=7), intent(in), optional :: grid, command
      !
      if(      grid.eq.'  local'.and. command.eq.' define') then
@@ -272,7 +265,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_approach)
        SC_bands = SC_bands_save
 #endif
      else if( grid.eq.'shifted'.and. command.eq.'  reset') then
-       core_io_path = grid_path
        nkibz   = nkibz_shifted
        wf_ncx  = wf_ncx_shifted
        wf_ng   = wf_ng_shifted

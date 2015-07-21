@@ -25,9 +25,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  use YPP,                 ONLY:perturbative_SOC_path
  use pars,                ONLY:lchlen,rZERO,SP,IP
+ use stderr,              ONLY:real2ch
  use units,               ONLY:HA2EV
  use R_lattice,           ONLY:bz_samp
- use com,                 ONLY:core_io_path,msg
+ use com,                 ONLY:core_io_path,msg,warning,error
  use vec_operate,         ONLY:degeneration_finder
  use wave_func,           ONLY:WAVEs
  use interfaces,          ONLY:WF_load
@@ -52,7 +53,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  integer              :: i_k,i_b,i_grp,i_b_SOC,i_wf,i_wf_SOC(2),i_sp_pol
  integer              :: n_spin_save,n_spinor_save,n_sp_pol_save
  logical              :: group_already_mapped(En%nb),DB_is_ok,map_up,map_dw
- real(SP)             :: sq2,proj_up,proj_dw
+ real(SP)             :: sq2,proj_up,proj_dw,mapping_tresh
  !
  integer                      :: io_err,ID
  integer, external            :: io_DB1_selective_scan,io_E_SOC_map
@@ -82,7 +83,9 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  allocate(E_SOC_table(2,En%nb,kpt%nibz))
  call mem_est("E_SOC E_SOC_table",(/size(En%E_SOC),size(E_SOC_table)/),(/SP,IP/))
  !
- E_SOC_table=0
+ mapping_tresh=0.85_SP
+ !
+1 E_SOC_table=0
  !
  do i_k=1,kpt%nibz
    !
@@ -126,7 +129,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
            !
          enddo ! i_b
          !
-         if ( sqrt(sq2)>0.75 ) then
+         if ( sqrt(sq2)>mapping_tresh) then
            map_up=((abs(proj_up-proj_dw)> 1.E-3_SP).and.(proj_up>proj_dw)).or. &
            &      ((abs(proj_up-proj_dw)<=1.E-3_SP).and.mapped_in_group(1,i_grp)<=mapped_in_group(2,i_grp))
            map_dw=((abs(proj_up-proj_dw)> 1.E-3_SP).and.(proj_up<proj_dw)).or. &
@@ -149,6 +152,15 @@ subroutine WF_map_perturbative_SOC(kpt,En)
      enddo     ! i_b_SOC
    enddo       ! i_sp_pol
  enddo         ! i_k
+ !
+ if(any(E_SOC_table==0)) then
+   call warning(' With treshold '//trim(real2ch(mapping_tresh))//' mapping non finalized. Reducing it.' )
+   if(abs(mapping_tresh-0.05_SP)<1.E-5) call error(' Minimum treshold reached.')
+   mapping_tresh=mapping_tresh-0.1_SP
+   goto 1
+ endif
+ !
+ call msg('s',' Mapping finalized with treshold '//trim(real2ch(mapping_tresh))//' ')
  !
  call WF_free(WF)
  call WF_free(WF_soc)

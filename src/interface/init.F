@@ -341,7 +341,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (nqibz>0) then
    !
-   do i1=1,4 ! Xx Xs Xp Xd
+   do i1=1,4 ! Xx Xs Xd Xp
      !
      X(i1)%iq=(/1,nqibz/)
      !
@@ -364,6 +364,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_BS_err=io_BS(1,Xbsk,io_ID)
+ !
+ ! When a PPA screen is used to build the kernel the %ppaE component of Xbsk must be overwritten.
+ ! Otherwise yambo will re-calculate the ppa interaction when the %ppaE is changed with respect to 
+ ! the default (notice by MP, July 2015).
+ !
+ if (io_X_err(4)>=0) Xbsk%ppaE=X(4)%ppaE
  !
  ! GPL_EXCLUDE_START
  !

@@ -24,6 +24,7 @@
 module stderr
  !
  use pars
+ !
  implicit none
  !
  integer          :: tty_size

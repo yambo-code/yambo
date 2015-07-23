@@ -29,7 +29,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev
  use R_lattice,      ONLY:b,g_vec,ng_vec
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
-&                         fft_norm,fft_g_table,fft_multiplier,modx
+&                         fft_norm,fft_g_table,fft_multiplier,modx,&
+&                         fft_rot_r_t
  use wave_func,      ONLY:wf_ng
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
@@ -54,7 +55,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      deallocate(fft_g_table)
    endif
    allocate(fft_g_table(max(iG_max,wf_ng),iGo_max))
-   call mem_est('FFT_g_tab',(/product(fft_g_table)/),(/IP/))
+   call mem_est('FFT_g_tab',(/size(fft_g_table)/),(/IP/))
  endif
  !
  ! SIZE estimation
@@ -100,10 +101,18 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      call mem_est('FFT_rot')
    endif
    allocate(fft_rot_r(nsym,fft_size))
-   call mem_est('FFT_rot',(/product(fft_rot_r)/),(/IP/))
+   call mem_est('FFT_rot',(/size(fft_rot_r)/),(/IP/))
+   !
+   if (allocated(fft_rot_r_t)) then
+     deallocate(fft_rot_r_t)
+     call mem_est('FFT_rot_t')
+   endif
+   allocate(fft_rot_r_t(fft_size,nsym))
+   call mem_est('FFT_rot_t',(/size(fft_rot_r_t)/),(/IP/))
    !
    if (allocated(fft_rot_r_inv)) deallocate(fft_rot_r_inv)
    allocate(fft_rot_r_inv(fft_size))
+
    !
    !Remember
    !-------
@@ -147,7 +156,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      enddo
    enddo
    i4=1
+   fft_rot_r_t=TRANSPOSE(fft_rot_r)
  enddo
+ 
  !
  contains
    !

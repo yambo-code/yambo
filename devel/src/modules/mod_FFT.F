@@ -23,7 +23,6 @@
 !
 module FFT_m
  use pars,         ONLY: SP
- !
  implicit none
  !
  real(SP)             :: fft_norm
@@ -33,6 +32,7 @@ module FFT_m
  integer              :: fft_dim_loaded(3)
  integer, allocatable :: fft_g_table(:,:)
  integer, allocatable :: fft_rot_r(:,:)
+ integer, allocatable :: fft_rot_r_t(:,:)
  integer, allocatable :: fft_rot_r_inv(:)
  !
  ! FFTW support

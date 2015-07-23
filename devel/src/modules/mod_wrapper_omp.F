@@ -77,7 +77,7 @@ module wrapper_omp
      complex(SP), intent(out) :: C(msize,msize)
      character,   intent(in)  :: TRANSA,TRANSB
      !
-#if defined _OPNEMP
+#if defined _OPENMP
      integer :: i,j,k
 !$omp parallel do default(shared), private(i,j)
      do i=1,N

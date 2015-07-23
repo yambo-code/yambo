@@ -80,10 +80,10 @@ module wrapper_omp
 #if defined _OPENMP
      integer :: i,j,k
 !$omp parallel do default(shared), private(i,j)
-     do i=1,N
-       do j=1,N
+     do i=1,msize
+       do j=1,msize
          C(i,j) = (0.,0.)
-         do k=1,N
+         do k=1,msize
            C(i,j) = C(i,j) + A(i,k) * B(k,j)
          enddo
        enddo

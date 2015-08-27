@@ -65,6 +65,12 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  integer ,allocatable:: bg_sorted_x(:),i_vec(:)
  real(SP),allocatable:: bg_diffs(:),bg_sorted(:)
  !
+ if(npts==0) then
+   allocate(ordered_grid_index(npts),coarse_grid_index(npts),bare_grid_N(npts),coarse_grid_Pt(npts))
+   coarse_grid_N=0
+   return
+ endif   
+ !
  if (cg_percentual==0._SP .or. npts==1) then
    !
    ! Zero cg_percentual does nothing!  This is used when 

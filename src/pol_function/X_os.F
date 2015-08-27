@@ -29,13 +29,13 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  use drivers,       ONLY:l_life,l_em1s
  use IO_m,          ONLY:io_RESPONSE
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg
+ use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_q_for_Xo,PAR_COM_Q_INDEX
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_q_for_Xo,PAR_COM_Q_INDEX,myid
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,n_threads_DIP
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
@@ -64,6 +64,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Work Space
  !
+ character(schlen)       :: live_t_string
  integer                 :: ig1,ig2,iw,n_poles,i_cg
  logical                 :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU)
@@ -121,6 +122,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
    !
+   if (n_poles==0) call warning(' [CPU '//trim(intc(myid))//'] has no poles')
+   !
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
@@ -177,15 +180,16 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Timing
  !========
  ! 
+ live_t_string='Xo@q['//trim(intc(iq))//'] '
+ !
 #if defined _SC 
- if (l_sc_run.and..not.l_eval_collisions) then
-   call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N)
- else
-   call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N)
- endif
-#else
- call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N)
+ if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
 #endif
+#if defined _RT
+ if (computing_Xo_variation)              live_t_string='delta Xo@q['//trim(intc(iq))//'] '
+#endif
+ !
+ if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N)
  !
  call OPENMP_update(master_thread)
  !
@@ -242,7 +246,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  enddo 
  !
- call live_timing()
+ if(coarse_grid_N>0)  call live_timing()
  !
  call OPENMP_update(master_thread) 
  !

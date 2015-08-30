@@ -31,11 +31,11 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  use wrapper_omp,        ONLY:Vstar_dot_V_omp
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:bz_samp
- use matrix_operate,     ONLY:hermitian
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
  use X_m,                ONLY:X_t,DIP_iR,DIP_P,force_v_g_space_approach
  use com,                ONLY:error,warning
  use LIVE_t,             ONLY:live_timing
+ use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  !
  implicit none
  !
@@ -46,10 +46,11 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  !
  ! Work space
  !
- integer                      :: ik,i_sp_pol,i_spinor,i_spin,ic,iv,icfft(n_spinor),ivfft(n_spinor),idir,&
-&                                n_LT_steps
+ integer                      :: ik,ik_mem,i_sp_pol,i_spinor,i_spin,ic,iv,&
+&                                icfft(n_spinor),ivfft(n_spinor),idir,n_LT_steps
+ logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  real(SP)                     :: Ev_m_Ec
- complex(SP)                  :: DIP_tmp(3,1:X%ib(2),1:X%ib(2))
+ complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  !
  call load_cc(.false.,.true.)
  !
@@ -60,20 +61,24 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
- n_LT_steps=Xk%nibz*(X%ib(2)-Xen%nbf)*(Xen%nbm-X%ib(1)+1)*n_sp_pol
+ call SET_dip_parallelization(X,l_mat_eval_DIP,n_LT_steps) 
+ !
  if (n_LT_steps>0) call live_timing('Dipoles in real space',n_LT_steps)
  !
- do ik=1,Xk%nibz 
+ do i_sp_pol=1,n_sp_pol
    !
-   do i_sp_pol=1,n_sp_pol
+   do ik=1,Xk%nibz 
+     !
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+     !
+     ik_mem=PAR_DIPk_ibz_index(ik)
      !
      DIP_tmp=cZERO
      !
-     do iv = X%ib(1),Xen%nbm
-       !
-       !if (.not.px%element_2D(ik,iv)) cycle
-       !
-       do ic = Xen%nbf+1, X%ib(2)
+     do iv=X%ib(1),X%ib_lim(1) 
+       do ic=max(iv,X%ib_lim(2)),X%ib(2)
+         !
+         if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
          do i_spinor=1,n_spinor
            !
@@ -109,20 +114,21 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
      !======
      do idir=1,3
        if(.not.idir_todo(idir)) cycle
-       DIP_iR(idir,:,:,ik,i_sp_pol)=(DIP_tmp(idir,:,:)+hermitian(DIP_tmp(idir,:,:)))/cI
+       DIP_iR(idir,:,:,ik_mem,i_sp_pol)=cI*DIP_tmp(idir,:,:)
      enddo
      !
      !=====
      ! <P>
      !=====
      if(.not.force_v_g_space_approach) then
-       do iv=X%ib(1),X%ib(2)
-         do ic=X%ib(1),X%ib(2)
+       do iv=X%ib(1),X%ib_lim(1) 
+         do ic=max(iv,X%ib_lim(2)),X%ib(2)
+           if (.not.l_mat_eval_DIP(ic,iv)) cycle
            ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
            Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
            do idir=1,3
              if(.not.idir_todo(idir)) cycle
-             DIP_P(idir,ic,iv,ik,i_sp_pol)=DIP_iR(idir,ic,iv,ik,i_sp_pol)*Ev_m_Ec
+             DIP_P(idir,ic,iv,ik_mem,i_sp_pol)=DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
            enddo
          enddo
        enddo

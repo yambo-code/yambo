@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_check_shifted_grids( Xk_shift, Xk, iq, num_shifted_grid,q_mod)
+subroutine Dipole_check_shifted_grids( Xk_shift, Xk, iq, num_shifted_grid,q_mod,grid_order)
  !
  use pars,            ONLY:SP
  use stderr,          ONLY:intc
@@ -35,6 +35,7 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, iq, num_shifted_grid,q_mod)
  !
  type(bz_samp), intent(in)    :: Xk_shift, Xk
  integer,       intent(in)    :: iq,num_shifted_grid
+ integer,       intent(inout) :: grid_order(3)
  real(SP),      intent(inout) :: q_mod(3)
  !
  ! Work Space
@@ -55,8 +56,7 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, iq, num_shifted_grid,q_mod)
  !
  ! This is a dirty fix to solve problems arising with small shifts 
  ! close to the limit of single precision
- !
- where(abs(q_init).lt.abs(Xk%pt(1,:)*1e-6)) q_init = 0._SP
+ !where(abs(q_init).lt.abs(Xk%pt(1,:)*1e-6)) q_init = 0._SP
  !
  ! Check grid is uniformly shifted
  !
@@ -68,7 +68,12 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, iq, num_shifted_grid,q_mod)
  !
  q_long_tmp(:) = q_init(:)
  call c2a(v_in=q_long_tmp(:), v_out=qtemp, mode="ki2c")
- call msg('r','Grid '//trim(intc(iq))//' has shift vector [c.c.]: ',qtemp )
+ call msg('s','Grid '//trim(intc(iq))//' has shift vector [c.c.]: ',qtemp )
+ !
+ if( qtemp(1)>=1.E-6 .and. qtemp(2)< 1.E-6 .and. qtemp(3)< 1.E-6) grid_order(iq)=1
+ if( qtemp(1)< 1.E-6 .and. qtemp(2)>=1.E-6 .and. qtemp(3)< 1.E-6) grid_order(iq)=2
+ if( qtemp(1)< 1.E-6 .and. qtemp(2)< 1.E-6 .and. qtemp(3)>=1.E-6) grid_order(iq)=3
+ !
  q_mod(iq) = iku_v_norm(q_long_tmp(:))
  call msg('r','            and modulus [a.u.]: ',q_mod(iq))
  if (iq==num_shifted_grid) call msg('r','')

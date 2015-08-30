@@ -40,7 +40,7 @@ integer function io_Overlaps(X,Xen,ID)
  !
  ! Work Space
  !
- integer :: ik,ixyz,i_sp_pol,db_nbm,db_nb(2),ik_mem
+ integer :: ik,ixyz,i_sp_pol,db_nbm,db_nb(2),ik_mem,i_fragment
  character(schlen)    :: VAR_name
  real(SP),allocatable :: disk_data(:,:,:)
  integer, external    :: variables_DIPOLES
@@ -58,34 +58,40 @@ integer function io_Overlaps(X,Xen,ID)
    io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_Overlaps/=0) goto 1
    !
-   io_Overlaps=variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
+   io_Overlaps=variables_DIPOLES(X,Xen,ID)
    if (io_Overlaps/=0) goto 1
    !
  endif
  !
- db_nb =X%ib
- db_nbm=db_nb(2)
- !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   allocate(disk_data(db_nb(2),db_nbm,2))
+   i_fragment=maxval(io_sec(ID,:))-1
+   if(i_fragment<=nXkibz) then
+     i_sp_pol=1
+     ik=i_fragment
+   else
+     i_sp_pol=2
+     ik=i_fragment-nXkibz
+   endif
    !
-   if (read_is_on(ID)) call X_alloc('DIP_S',(/X%ib(2),db_nbm,3,PAR_Xk_nbz/))
+   allocate(disk_data(X%ib(2),X%ib(2),2))
    !
-   do ik=1,nXkbz
+   if (read_is_on(ID)) call X_alloc('DIP_S',(/X%ib(2),X%ib(2),3,PAR_Xk_nbz/))
+   !
+   do i_sp_pol=1,n_sp_pol
      !
-     if (.not.PAR_IND_Xk_bz%element_1D(ik)) cycle
-     !
-     ik_mem=PAR_Xk_bz_index(ik)
-     !
-     ! Fragmentation
-     !
-     io_extension(ID)='Overlaps'
-     call io_fragment(ID,i_fragment=ik)
-     !
-     do ixyz=1,3
+     do ik=1,nXkbz
        !
-       do i_sp_pol=1,n_sp_pol
+       if (.not.PAR_IND_Xk_bz%element_1D(ik)) cycle
+       !
+       ik_mem=PAR_Xk_bz_index(ik)
+       !
+       ! Fragmentation
+       !
+       io_extension(ID)='Overlaps'
+       call io_fragment(ID,i_fragment=i_fragment)
+       !
+       do ixyz=1,3
          !
          if (write_is_on(ID)) call mat_c2r(DIP_S(:,:,ixyz,ik_mem,i_sp_pol),disk_data)
          !

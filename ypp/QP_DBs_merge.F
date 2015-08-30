@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -98,11 +98,11 @@ subroutine QP_DBs_merge(en,k)
          dE_to_add= real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
          COHSEX_eq= real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
          dE_Neq   = real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
-         if (index(trim(QP_db_what(i_qp)),"W")==0) W_to_add =0.
-         if (index(trim(QP_db_what(i_qp)),"E")==0) dE_to_add=0.
-         if (index(trim(QP_db_what(i_qp)),"C")==0) COHSEX_eq=0.
-         if (index(trim(QP_db_what(i_qp)),"N")==0) dE_Neq=0.
-         if (Z_input<=0.) then
+         if (index(trim(QP_db_what(i_qp)),"W")==0) W_to_add =0._SP
+         if (index(trim(QP_db_what(i_qp)),"E")==0) dE_to_add=0._SP
+         if (index(trim(QP_db_what(i_qp)),"C")==0) COHSEX_eq=0._SP
+         if (index(trim(QP_db_what(i_qp)),"N")==0) dE_Neq   =0._SP
+         if (Z_input<=0._SP) then
            if(index(trim(QP_db_what(i_qp)),"Z")==0) then
              Z_local=real(QP_db(i_qp_ref)%E(i_sp)-QP_db(i_qp_ref)%E_bare(i_sp))/ &
   &                  real(QP_db(1)%E(i_sp)-QP_db(1)%E_bare(i_sp))

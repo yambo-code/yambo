@@ -165,9 +165,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Evaluate the xc functional
  !===========================
  !
- if (order==0) E_xc=0.
- if (order==1) V_xc=0.
- if (order==2) F_xc=0.
+ if (order==0) E_xc=0._SP
+ if (order==1) V_xc=0._SP
+ if (order==2) F_xc=0._SP
  !
  ! GPL_EXCLUDE_START
  !

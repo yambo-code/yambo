@@ -58,10 +58,6 @@ subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NC)
 &                            trim(intc(int(real(LOADED*100)/real(TOTAL))))//"%)"
  endif
  !
- if (present(LOADED)) then
-   if (LOADED/=TOTAL) call LIVE_message(message=trim(local_message),lfmt="n")
- else
-   call LIVE_message(message=trim(local_message),lfmt="n")
- endif
+ call LIVE_message(message=trim(local_message),lfmt="n")
  !
 end subroutine

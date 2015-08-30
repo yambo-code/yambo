@@ -23,7 +23,7 @@
 !
 module matrix_operate
  !
- use pars, ONLY:SP
+ use pars, ONLY:SP,cI
  !
  implicit none
  !
@@ -136,18 +136,19 @@ module matrix_operate
      !
      do i1=1,min(mr_shp(1),mc_shp(1))
        do i2=1,min(mr_shp(2),mc_shp(2))
-         mc(m_order(i1),m_order(i2))=mr(i1,i2,1)+(0._SP,1._SP)*mr(i1,i2,2)
+         mc(m_order(i1),m_order(i2))=mr(i1,i2,1)+cI*mr(i1,i2,2)
        enddo
      enddo
      !
    end subroutine
    !
-   subroutine mat_r2c(mr,mc)
+   subroutine mat_r2c(mr,mc,shift)
      !
      ! Copy mr in mc 
      !
      real(SP)    :: mr(:,:,:)
      complex(SP) :: mc(:,:)
+     integer, optional :: shift(2)
      integer     :: i1,i2,mr_shp(3),mc_shp(2) ! Work Space
      !
      mr_shp=shape(mr)
@@ -155,7 +156,8 @@ module matrix_operate
      !
      do i1=1,min(mr_shp(1),mc_shp(1))
        do i2=1,min(mr_shp(2),mc_shp(2))
-         mc(i1,i2)=mr(i1,i2,1)+(0._SP,1._SP)*mr(i1,i2,2)
+         if(.not.present(shift)) mc(i1,i2)=mr(i1,i2,1)+cI*mr(i1,i2,2)
+         if(     present(shift)) mc(i1,i2)=mr(i1+shift(1),i2+shift(2),1)+cI*mr(i1+shift(1),i2+shift(2),2)
        enddo
      enddo 
      !
@@ -225,7 +227,7 @@ module matrix_operate
      !
      !if (abs(det)<=1.E-7) call error('Null determinant. Inversion failed.')
      !
-     if (present(m_inv))      m_inv=inv
+     if (     present(m_inv)) m_inv=inv
      if (.not.present(m_inv)) m=inv
      !
    end subroutine

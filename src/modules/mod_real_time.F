@@ -129,7 +129,7 @@ module real_time
  real(SP),    allocatable :: REF_V_hartree_sc(:,:)  
  real(SP),    allocatable :: REF_Vnl_xc(:)  
  real(SP)                 :: BGR(5) ! (BGR at the minimum dir/ind gap, H contrib., xc contrib., SE contrib.)
- type(levels)             :: E_reference
+ type(levels),save        :: E_reference
  !
  ! Relaxation and Dissipation 
  !----------------------------
@@ -275,7 +275,7 @@ module real_time
  !
  ! TD-ABS and RT-BSE
  !
- real(SP) :: RT_PP_time
+ character(schlen)       :: RT_ctl_db(3)
  !
  type RT_t
    !
@@ -317,7 +317,7 @@ module real_time
    !
  end type RT_t
  !
- type(RT_t)  :: RT_carriers
+ type(RT_t),save  :: RT_carriers
  !
  ! Interface
  !

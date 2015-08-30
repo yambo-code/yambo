@@ -46,7 +46,7 @@ subroutine SET_logicals()
  if (n_log_CPUs==0) then
    write_to_log            =.TRUE.
  else
-   i_chain=nint(log(real(ncpu)/real(n_log_CPUs))/log(2.))
+   i_chain=1 !nint(log(real(ncpu)/real(n_log_CPUs))/log(2.))
    if (i_chain==0) write_to_log=.TRUE.
    if (i_chain> 0) write_to_log=INTER_CHAIN(i_chain)%CPU_id==0
  endif
@@ -98,7 +98,7 @@ subroutine SET_logicals()
  !
  ! DBs fragmentation
  !===================
- frag_DIP     =.FALSE.
+ frag_DIP     =.TRUE.
  frag_RESPONSE=.TRUE.
  frag_SCREEN  =.TRUE.
  frag_HF      =.FALSE.

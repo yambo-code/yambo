@@ -33,10 +33,16 @@ module X_m
  real(SP)                 :: eps_2_alpha
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
+ logical                  :: l_drude
  !
  ! Main Gauge
  !
  character(schlen)        :: global_gauge
+ !
+ ! Velocity gauge specific variables
+ !
+ logical                  :: skip_cond_sum_rule
+ complex(SP)              :: A_drude(2)
  !
  ! Large Q-vector support 
  !
@@ -55,7 +61,6 @@ module X_m
  ! Dipole M.E.
  !
  character(schlen)        :: Dipole_approach
- logical                  :: Dipole_bands_ordered
  logical                  :: use_covariant_approach
  logical                  :: use_shifted_grids_approach
  logical                  :: use_g_space_approach
@@ -108,6 +113,9 @@ module X_m
    integer    :: ng_db
    integer    :: iq(2)
    integer    :: ib(2)
+   integer    :: ib_lim(2)
+   integer    :: db_ib(2)
+   integer    :: db_ib_lim(2)
    integer    :: ngostnts
    real(SP)   :: ehe(2)
    real(SP)   :: q0(3)
@@ -151,11 +159,11 @@ module X_m
          call mem_est(what,(/product(d)/),errors=(/err/))
        case('DIP_iR')
          if (allocated(DIP_iR)) return
-         allocate(DIP_iR(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
+         allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        case('DIP_P')
          if (allocated(DIP_P)) return
-         allocate(DIP_P(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
+         allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        case('DIP_S')
          if (allocated(DIP_S)) return
@@ -163,11 +171,11 @@ module X_m
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        case('DIP_projected')
          if (allocated(DIP_projected)) return
-         allocate(DIP_projected(d(1),d(2),d(3),n_sp_pol),stat=err)
+         allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        case('P_square')
          if (allocated(P_square)) return
-         allocate(P_square(d(1),d(2),d(3),n_sp_pol),stat=err)
+         allocate(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        end select
      else
@@ -208,7 +216,10 @@ module X_m
      Xo%ng=Xi%ng
      Xo%ng_db=Xi%ng_db
      Xo%iq=Xi%iq
-     Xo%ib=Xi%ib
+     Xo%ib    =Xi%ib
+     Xo%ib_lim=Xi%ib_lim
+     Xo%db_ib    =Xi%db_ib
+     Xo%db_ib_lim=Xi%db_ib_lim
      Xo%ngostnts=Xi%ngostnts
      Xo%ordering=Xi%ordering
      Xo%Vnl_included=Xi%Vnl_included

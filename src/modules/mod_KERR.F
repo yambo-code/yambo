@@ -48,7 +48,7 @@ module KERR
        select case(what)
        case('DIP_projected')
          if (allocated(DIP_projected_r90)) return
-         allocate(DIP_projected_r90(d(1),d(2),d(3),n_sp_pol),stat=err)
+         allocate(DIP_projected_r90(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        end select
      else

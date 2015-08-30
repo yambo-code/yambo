@@ -27,7 +27,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res)
  !
  use pars,          ONLY:SP,cZERO
  use wrapper,       ONLY:V_by_V_plus_V
- use X_m,           ONLY:X_t,DIP_projected,X_poles_tab,global_gauge !,X_terminator
+ use X_m,           ONLY:X_t,DIP_projected,X_poles_tab !,X_terminator
  use parallel_m,    ONLY:PAR_Xk_bz_index !,HEAD_QP_cpu
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
@@ -120,7 +120,6 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res)
        endif
      endif
      isc%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
-     if(trim(global_gauge)=="velocity") isc%rhotw(1)=isc%rhotw(1)/coarse_grid_Pt(i_cg)*q0_def_norm
    else
      isc%is=(/ic,ik,is,i_spin/)
      isc%os=(/iv,ikp,isp,i_spin/)

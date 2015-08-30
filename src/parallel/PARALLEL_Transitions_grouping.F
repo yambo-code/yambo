@@ -24,7 +24,7 @@
 subroutine PARALLEL_Transitions_grouping(Xk)
  !
  use pars,          ONLY:IP,SP
- use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_nT_grps_at_k,BS_T_grp_1st_el
+ use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_T_grp_1st_el
  use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_BS_T_grps_index,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -47,12 +47,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! In this subroutine I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
  ! Once the group of transitions are build-up the goal is to map them in the total world of transitions groups.
  !
- ! Each k is diveded in BS_nT_grps_at_k(k) groups of Transitions.
- !
- allocate(BS_nT_grps_at_k(nXkibz))
- call mem_est("BS_nT_grps_at_k",(/nXkibz/),(/IP/))
- !
- n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
+ n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU
  !
  allocate(BS_T_grp_1st_el(n_GRP),GRP_data(n_GRP),GRP_index(n_GRP))
  call mem_est("BS_T_grp_1st_el",(/n_GRP/),(/IP/))
@@ -61,7 +56,6 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! This is done to define properly the BS_T_grp_1st_el array
  !
  BS_T_grp_1st_el=0
- BS_nT_grps_at_k=0
  PAR_BS_nT_col_grps =0
  i_counter=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
  !
@@ -78,7 +72,6 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      !
      if ( l_check ) cycle
      !
-     BS_nT_grps_at_k(i_k)=BS_nT_grps_at_k(i_k)+1
      PAR_BS_nT_col_grps = PAR_BS_nT_col_grps +1
      !
      BS_T_grp_1st_el(i_counter)=i_t+sum(BS_nT_at_k(:i_k-1))

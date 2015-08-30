@@ -25,6 +25,7 @@ module com
  !
  use pars,       ONLY:lchlen,SP,schlen
  use stderr,     ONLY:gen_fmt
+ !
  implicit none
  !
  ! PATHS
@@ -36,7 +37,7 @@ module com
  !
  ! Path for the shifted grids
  !
- character(lchlen) :: grid_path
+ character(lchlen) :: grid_paths
  !
  character(3)      :: terminator(4)
  !
@@ -420,8 +421,8 @@ module com
      logical          :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     if (val) call na1msg(how,mesg,"yes",USE_TABS=USE_TABS,INDENT=INDENT)
-     if (.not.val) call na1msg(how,mesg,"no",USE_TABS=USE_TABS,INDENT=INDENT)
+     if (     val) call na1msg(how,mesg,"yes",USE_TABS=USE_TABS,INDENT=INDENT)
+     if (.not.val) call na1msg(how,mesg,"no" ,USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
    subroutine na1msg(how,mesg,val,USE_TABS,INDENT)
@@ -442,13 +443,14 @@ module com
      call nimsg(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
-   subroutine nr1msg(how,mesg,val,USE_TABS,INDENT)
+   subroutine nr1msg(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT)
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call nrmsg(how,mesg,(/val/),USE_TABS,INDENT)
+     logical,optional :: EXT_FORMAT
+     call nrmsg(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT)
    end subroutine
    !
    subroutine namsg(how,mesg,val,USE_TABS,INDENT)
@@ -510,10 +512,10 @@ module com
      !
      if (len_trim(how)==0) return
      call msg_manager(how)
-     l_fmt=.false.
-     l_indent=-1
-     if (present(USE_TABS)) l_fmt=.true.
-     if (present(INDENT)) l_indent=INDENT
+     l_fmt     = .false.
+     l_indent  = -1
+     if (present(USE_TABS))   l_fmt    = .true.
+     if (present(INDENT))     l_indent = INDENT
      msgfmt=composed_fmt(trim(gen_fmt(val)),size(val),l_fmt,l_indent)
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
@@ -531,7 +533,7 @@ module com
      if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
    end subroutine
    !
-   subroutine nrmsg(how,mesg,val,USE_TABS,INDENT,formatted_msg)
+   subroutine nrmsg(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
      use stderr,   ONLY: c_print,write_to_log,log_as_a_file
      use LIVE_t,   ONLY: LIVE_message
      character(*)     :: mesg
@@ -539,20 +541,28 @@ module com
      real(SP)         :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
+     logical,optional :: EXT_FORMAT
      character(lchlen), optional :: formatted_msg
      ! 
      ! Work Space
      !
      integer  :: i1,l_indent
+     character(schlen):: gen_fmt_local
      character(lchlen):: lch,msgfmt
-     logical          :: l_fmt
+     logical          :: l_fmt,l_ext_fmt
      if (len_trim(how)==0) return
      call msg_manager(how)
-     l_fmt=.false.
-     l_indent=-1
-     if (present(USE_TABS)) l_fmt=.true.
-     if (present(INDENT)) l_indent=INDENT
-     msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),size(val),l_fmt,l_indent)
+     l_ext_fmt = .false.
+     l_fmt     = .false.
+     l_indent  = -1
+     if (present(EXT_FORMAT)) l_ext_fmt = EXT_FORMAT
+     if (present(USE_TABS))   l_fmt     = .true.
+     if (present(INDENT))     l_indent  = INDENT
+     if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),size(val),l_fmt,l_indent)
+     if (     l_ext_fmt) then
+       write(gen_fmt_local,'(a)') 'F11.06'
+       msgfmt=composed_fmt(trim(gen_fmt_local),size(val),l_fmt,l_indent)
+     endif
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
        if (of_unit(i1)==11) open(unit=11,file=trim(repfile),position='append')
@@ -566,7 +576,11 @@ module com
      enddo
      if (index(how,'o')>0.or.index(how,'O')>0) return
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
-     msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),-size(val),.false.,-1)
+     if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),-size(val),.false.,-1)
+     if (     l_ext_fmt) then
+       write(gen_fmt_local,'(a)') 'F11.06'
+       msgfmt=composed_fmt(trim(gen_fmt_local),-size(val),.false.,-1)
+     endif
      write (lch,trim(msgfmt)) mesg,val 
      if (index(how,'l')/=0.and..not.log_as_a_file) call &
 &       c_print(terminator(3),lch,terminator(4),"%s")

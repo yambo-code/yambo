@@ -90,7 +90,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  call PARALLEL_clean_up_the_structure( n_structures )
  !
- if (n_eh<n_t) call error('"eh" CPU`s cannot be smaller than "t" CPU`s.')
+ !if (n_eh<n_t) call error('"eh" CPU`s cannot be smaller than "t" CPU`s.')
  !
  if (ncpu==1) then
    CPU_structure(i_PAR_structure)%nCPU_diagonalization=1

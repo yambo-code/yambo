@@ -34,23 +34,25 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  use memory_m,          ONLY:mem_est
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng,WF
+ use parallel_m,        ONLY:PAR_IND_DIPk_ibz,PAR_COM_k_for_P,PP_redux_wait,PAR_Xk_bz_index
  !
  implicit none
  !
  type(levels),  intent(in)    :: Xen
- type(X_t),     intent(in)    :: X
  type(bz_samp), intent(in)    :: Xk 
+ type(X_t),     intent(in)    :: X
  !
  ! Work Space
  !
- character(schlen) :: dump_ch
- integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_wf,i_spin,i_spinor,i_sp_pol,ik,ikp,ig
+ integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_wf,i_spin,i_spinor,i_sp_pol,ik,ikp,ig,n_LT_steps,ik_mem
  integer           :: idx_kp(3),idx_k(3),shift_ik(3),shift_ikp(3)
  complex(SP)       :: WF_tmp(wf_ng,n_spinor),WF_ik(wf_ng,n_spinor),WF_ikp(wf_ng,n_spinor)
  real(SP)          :: v1(3),v2(3),PHASE
- logical           :: USE_shifted_wf
+ logical           :: USE_shifted_wf !,l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  !
  DIP_S=cZERO
+ !
+ !call SET_dip_parallelization(X,l_mat_eval_DIP,n_LT_steps)
  !
  call live_timing("Overlaps:",Xk%nbz)
  !
@@ -60,6 +62,10 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
    !
    ik = Xk%sstar(ikbz,1)
    is = Xk%sstar(ikbz,2)
+   !
+   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+   !
+   ik_mem=PAR_Xk_bz_index(ikbz)
    !
 !   shift_ik=-symm_shift(ikbz,:)
    !
@@ -101,6 +107,8 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
        !
        do ib=1,X%ib(2)
          !
+         !if ( ib>=X%ib(1) .and. .not.any( (/l_mat_eval_DIP(:,ib)/) ) ) cycle
+         !
          do i_spinor=1,n_spinor
            i_spin=i_spinor+i_sp_pol-1
            i_wf  =WF%index(ib,ik,i_spin)
@@ -114,6 +122,8 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
 !         enddo
          !
          do ibp=1,X%ib(2)
+           !
+           !if ( ibp>=X%ib(1) .and. .not.any( (/l_mat_eval_DIP(ibp,:)/) ) ) cycle
            ! 
            ! Check if I crossed BZ border and impose periodic Gauge
            !
@@ -124,19 +134,22 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
 !           en  ddo
            !
            do i_spinor=1,n_spinor
-             DIP_S(ib,ibp,id,ikbz,i_sp_pol)=DIP_S(ib,ibp,id,ikbz,i_sp_pol)+&
+             DIP_S(ib,ibp,id,ik_mem,i_sp_pol)=DIP_S(ib,ibp,id,ik_mem,i_sp_pol)+&
 &                            Vstar_dot_V_omp(wf_ng,WF_ikp(:wf_ng,i_spinor),WF_ik(:wf_ng,i_spinor)) 
            enddo
            !
-         enddo
-       enddo
-     enddo
+         enddo ! ibp
+       enddo ! ib
+       !
+       call PP_redux_wait(DIP_S(:,:,id,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
+       !
+     enddo ! i_sp_pol
      !
-   enddo
+   enddo ! idir
    !
    call live_timing(steps=1)
    !
- enddo
+ enddo ! ik
  !
  call live_timing()
  !

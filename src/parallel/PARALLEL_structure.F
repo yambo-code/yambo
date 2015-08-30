@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,130 +23,83 @@
 !
 subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
- use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,n_chains,INTRA_CHAIN,MAX_N_OF_CHAINS
-#if defined _BLUEGENE
- use parallel_m,  ONLY:PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active
-#endif
- use com,         ONLY:error
+ use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,nchains_group,n_groups,INTRA_CHAIN,MAX_N_OF_CHAINS,&
+&                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
+&                      ncpu_chain
+ !
  implicit none
  !
- character(*), optional :: ENVIRONMENT
- integer,      optional :: n_elements 
- character(*), optional :: ROLE(:)
+ character(*)   :: ENVIRONMENT
+ integer        :: n_elements 
+ character(*)   :: ROLE(:)
  !
  ! Work Space 
  !
- integer     ::i_err,ID(ncpu+1),i_cpu,ID_save(ncpu+1),i_chain,n_groups
- integer     ::tmp_comm_inter,tmp_comm_intra
- logical     ::chain_activate(MAX_N_OF_CHAINS)
-#if defined _BLUEGENE
- integer, allocatable :: role_cpu(:)
- integer     ::ir,i
-#endif
+ integer     ::i_err,ID(n_elements),i_cpu,i_chain,i_chain_lim(2),chain_now,i_order
+ integer     ::tmp_comm_inter,tmp_comm_intra,i_structure
  !
 #if defined _MPI
  include 'mpif.h'
 #endif
  !
-#if !defined _BLUEGENE
- if (present(ROLE)) return
-#endif
- !
  if (ncpu==1) then
    INTRA_CHAIN(1)%n_CPU=1
    INTER_CHAIN(1)%n_CPU=1
+   return
  endif
  !
 #if defined _MPI
  !
- if (ncpu==1) return
- !
- ! define which chains have to be activated
- !
-#if defined _BLUEGENE
- !
- chain_activate(:) = .false.
- !
- if ( present(ENVIRONMENT) ) then
-   !
-   if (.not. present(n_elements) .or..not. present(ROLE) ) call error(' Missing args in call: n_elements or ROLE')
-   !
-   allocate(role_cpu(size(ROLE)))
-   !
-   do ir = 1, n_elements
-     !
-     role_cpu(ir)=1
-     do i = 1, PARALLEL_n_structures_active
-       if ( trim(PARALLEL_CPU_role(i)) == trim(ROLE(ir)) ) role_cpu(ir)=PARALLEL_CPU_used(i)
-     enddo
-     !
-   enddo
-   !
-   if ( any(role_cpu(1:n_elements)==0) ) call error(' Invalid 0-value for role_size')
-   !
-   do ir = 1, n_elements
-     !
-     i_chain=nint(log(real(ncpu))/log(2.)) -nint(log(real(product(role_cpu(1:ir))))/log(2.))
-     chain_activate(i_chain) = .true.
-     !
-   enddo
-   !
-   ! this is always required in PARALLEL_assign_chains_and_COMMs
-   !
-   chain_activate(n_chains) = .true.
-   !
-   deallocate(role_cpu)
-   !
+ n_groups=n_groups+1
+ chain_now=n_groups*2-1
+ if(chain_now>1) then
+   nchains_group(chain_now)  =nchains_group(chain_now-1)+1
+   nchains_group(chain_now+1)=nchains_group(chain_now-1)+n_elements
+ else
+   nchains_group(chain_now)  =1
+   nchains_group(chain_now+1)=n_elements
  endif
  !
-#else
- chain_activate(:) = .true.
+ i_chain_lim(1:2)=nchains_group(chain_now:chain_now+1)
  !
- if (present(ENVIRONMENT)) return
-#endif
+ do i_chain=i_chain_lim(1),i_chain_lim(2)
+   i_order=i_chain-i_chain_lim(1)+1
+   !
+   ncpu_chain(i_chain)=1
+   do i_structure = 1, PARALLEL_n_structures_active
+     if ( trim(PARALLEL_CPU_role(i_structure)) == trim(ROLE(i_order)) ) ncpu_chain(i_chain)=PARALLEL_CPU_used(i_structure)
+   enddo
+   !
+ enddo
  !
- ! init
+ !do ir = 1, n_elements
+ !  if(role_cpu(ir)==1) cycle
+ !  nchains_group(2)=nchains_group(2)+1
+ !enddo
+ !
+ ! I need to define: ID,chain_order,my_chain=ID(1+i_chain),n_CPU
  !
  ID=0
- ID_save=0
- !
- n_groups=ncpu/2
- n_MPI=n_groups*2
- !
- ! 2^n_chains = N  =>  n_chains=log_2(N)
- !
- n_chains=log(real(ncpu))/log(2.)
- !
- ! ID = (POOL_id, CHAIN_id(1),...., CHAIN_id(n_chains))
  !
  do i_cpu=1,ncpu
    !
-   ID(1)=ID(1)+1 
-   ID(2)=ID(2)+1 
-   !
-   do i_chain=1,n_chains
-     ID(2+i_chain)=ID(2+i_chain)+1 ! CHAINS
-   enddo
+   ID(:)=ID(:)+1 ! CHAINS
    !
    if (myid+1==i_cpu) then
      !
-     do i_chain=1,n_chains
-       INTRA_CHAIN(i_chain)%chain_order=i_chain
-       INTRA_CHAIN(i_chain)%my_CHAIN=ID(2+i_chain)
-       INTRA_CHAIN(i_chain)%n_CPU=ncpu/2**(i_chain)
+     do i_chain=i_chain_lim(1),i_chain_lim(2)
+       i_order=i_chain-i_chain_lim(1)+1
+       INTRA_CHAIN(i_chain)%chain_order=i_order
+       INTRA_CHAIN(i_chain)%my_CHAIN=ID(i_order)
+       INTRA_CHAIN(i_chain)%n_CPU=product(ncpu_chain(i_chain_lim(1):i_chain))
      enddo
      !
    endif
    !
-   do i_chain=1,n_chains
-    if (mod(i_cpu,2*n_groups/(ncpu/2**i_chain))==0) ID(2+i_chain)=0
+   do i_chain=i_chain_lim(1),i_chain_lim(2)
+     i_order=i_chain-i_chain_lim(1)+1
+     if ( mod( i_cpu,ncpu/product(ncpu_chain(i_chain_lim(1):i_chain)) )==0) ID(i_order)=0
    enddo
-   !
-   if (mod(i_cpu,2)==0) then
-     ID_save(2)=ID(2)
-   else
-     ID(2)=ID_save(2)
-   endif
    !
  enddo
  !
@@ -154,9 +107,8 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
  tmp_comm_intra = mpi_comm_world
  !
- do i_chain=1,n_chains
-   !
-   if ( .not. chain_activate(i_chain) ) cycle
+ do i_chain=i_chain_lim(2),i_chain_lim(1),-1
+   i_order=i_chain-nchains_group(chain_now)+1
    !
    call MPI_COMM_SPLIT(tmp_comm_intra,INTRA_CHAIN(i_chain)%my_CHAIN,myid,INTRA_CHAIN(i_chain)%COMM,i_err)
    tmp_comm_intra = INTRA_CHAIN(i_chain)%COMM
@@ -164,8 +116,8 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
    call MPI_COMM_RANK(INTRA_CHAIN(i_chain)%COMM,INTRA_CHAIN(i_chain)%CPU_id,i_err)
    !
    INTER_CHAIN(i_chain)%my_CHAIN=INTRA_CHAIN(i_chain)%my_CHAIN
-   INTER_CHAIN(i_chain)%n_CPU=2**(i_chain)
-   INTER_CHAIN(i_chain)%chain_order=i_chain
+   INTER_CHAIN(i_chain)%n_CPU=ncpu/product(ncpu_chain(i_chain_lim(1):i_chain))
+   INTER_CHAIN(i_chain)%chain_order=i_order
    !
  enddo
  !
@@ -173,9 +125,7 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
  tmp_comm_inter = mpi_comm_world
  !
- do i_chain=n_chains,1,-1
-   !
-   if ( .not. chain_activate(i_chain) ) cycle
+ do i_chain=i_chain_lim(1),i_chain_lim(2)
    !
    call MPI_COMM_SPLIT(tmp_comm_inter,INTRA_CHAIN(i_chain)%CPU_id,myid,INTER_CHAIN(i_chain)%COMM,i_err)
    tmp_comm_inter = INTER_CHAIN(i_chain)%COMM

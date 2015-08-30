@@ -200,9 +200,9 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        values(26)=values(5)
      endif
      !
-     if (qp_isp==1) values(14)= 1.
-     if (qp_isp==2) values(14)=-1.
-     if (aimag(qp%E(i1))==0.) values(12:13)=0.
+     if (qp_isp==1) values(14)= 1._SP
+     if (qp_isp==2) values(14)=-1._SP
+     if (aimag(qp%E(i1))==0._SP) values(12:13)=0._SP
      call msg('o '//what,'',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
@@ -241,7 +241,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      endif
      call msg('o G_Sc','#')
      do i2=1,QP_Sc_steps
-       values=0.
+       values=0._SP
        values(1)  =real(qp%GreenF_W(i1,i2))*HA2EV
        values(2:3)=(/real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)/HA2EV
        values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HA2EV

@@ -292,22 +292,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  endif
  !
- ! Divide the head by w^2 in case a velocity gauge is used
- !=========================================================
- !
- ! DAVIDE: this is wrong. To build Epsilon I need to devide
- !         by w^2. However the definition of the microscopic
- !         epsilon is not trivial. I comment these and rescale
- !         the dipoles to the length gauge in G-space
- !         
- !if (trim(global_gauge)=='velocity') then
- !  do iw=1,Xw%n_freqs
- !    Xo(1,1,iw)= Xo(1 , 1,iw)/real(Xw%p(iw))**2
- !    Xo(2:,1,iw)=Xo(2:, 1,iw)/real(Xw%p(iw))
- !    Xo(1,2:,iw)=Xo(1 ,2:,iw)/real(Xw%p(iw))
- !  enddo
- !endif
- !
  ! CLEAN
  !=======
  deallocate(Xo_res)

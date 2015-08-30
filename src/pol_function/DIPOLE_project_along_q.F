@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_project_along_q(Xen,Xk,X,field_dir)
+subroutine DIPOLE_project_along_q(Xen,Xk,X,field_dir)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_col_cut
@@ -31,9 +31,9 @@ subroutine Dipole_project_along_q(Xen,Xk,X,field_dir)
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:DIP_projected,X_alloc,X_t,DIP_iR,Dipole_bands_ordered,   &
-&                         DIP_P,global_gauge
+ use X_m,            ONLY:DIP_projected,X_alloc,X_t,DIP_iR,DIP_P,global_gauge
  use vec_operate,    ONLY:v_norm
+ use com,            ONLY:secnm
 #if defined _KERR
  use pars,           ONLY:pi
  use vec_operate,    ONLY:rot_v_xy_plane
@@ -50,23 +50,24 @@ subroutine Dipole_project_along_q(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer                   :: ik,ik_bz,ic,iv,is,i_spin,ik_mem,ik_bz_mem,i_star,iv_max,ic_min,&
-&                             nb_alloc
+ integer                   :: ik,ik_bz,ic,iv,is,i_sp_pol,ik_mem,ik_bz_mem,i_star
  real(SP)                  :: field_dir_rot(3)
  complex(SP)               :: dipole(3)
- logical                   :: t_rev
+ logical                   :: t_rev,use_dip_iR,use_dip_P
 #if defined _KERR
  real(SP)                  :: dipole_dir(3),dipole_dir_rot(3)
 #endif
- !
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
  ! oscillator strengths have been calculated using the shifted grids.
  ! In this case q0_def_norm is not the default one but corresponds
  ! to the norm of the grid shift.
  !
- if(trim(global_gauge)=='lenght'   ) field_dir=field_dir/v_norm(field_dir)*q0_def_norm
- if(trim(global_gauge)=='velocity' ) field_dir=field_dir/v_norm(field_dir)
+ use_dip_iR=trim(global_gauge)=='length'   .or. .not.(index(secnm,"absorption")/=0)
+ use_dip_P =trim(global_gauge)=='velocity'.and.      (index(secnm,"absorption")/=0)
+ !
+ if(use_dip_iR) field_dir=field_dir/v_norm(field_dir)*q0_def_norm
+ if(use_dip_P ) field_dir=field_dir/v_norm(field_dir)
  !
 #if defined _KERR
  if(l_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir,dipole_dir)
@@ -77,58 +78,46 @@ subroutine Dipole_project_along_q(Xen,Xk,X,field_dir)
  !
  ! Calculate the q-dependent oscillators
  !
- if (Dipole_bands_ordered) then
-   iv_max=Xen%nbm
-   ic_min=Xen%nbf+1
-   nb_alloc=Xen%nbm
- else
-   iv_max=X%ib(2)
-   ic_min=X%ib(1)
-   nb_alloc=X%ib(2)
- endif
- !
  ! This is q       *iR in the length gauge
  !         q_versor*P  in the velocity
  !
- call X_alloc('DIP_projected',(/X%ib(2),nb_alloc,PAR_Xk_nbz/))
+ call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
  DIP_projected = cZERO
  !
 #if defined _KERR
  if(l_kerr) then
-   call KERR_alloc('DIP_projected',(/X%ib(2),nb_alloc,PAR_Xk_nbz/))
+   call KERR_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
    DIP_projected_r90 = cZERO
  endif
 #endif
  !
- do ik=1,Xk%nibz
+ do i_sp_pol=1,n_sp_pol
    !
-   do iv=X%ib(1),iv_max 
+   do ik=1,Xk%nibz
      !
-     do ic=ic_min,X%ib(2)
+     do iv=X%ib(1),X%ib_lim(1) 
        !
-       do i_spin=1,n_sp_pol
+       do ic=X%ib_lim(2),X%ib(2)
          !
          dipole = cZERO
          !
          if (PAR_IND_DIPk_ibz%element_1D(ik)) then
            !      
            ik_mem = PAR_DIPk_ibz_index(ik)
-           if(trim(global_gauge)=='velocity' ) dipole = DIP_P(:,ic,iv,ik_mem,i_spin)
-           if(trim(global_gauge)=='length'   ) dipole = DIP_iR(:,ic,iv,ik_mem,i_spin)
+           if(use_dip_iR) dipole = DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
+           if(use_dip_P ) dipole = DIP_P (:,ic,iv,ik_mem,i_sp_pol)
            !
          endif
          !
          ! Here I use PAR_COM_Xk_bz_INDEX as it connects two CPUS belonging to different
          ! k_bz points but with the same k_ibz. Those two CPUS belong to the q communicator
          !
-#if !defined _YPP_RT
          if (l_par_X_G_all_q) call PP_redux_wait(dipole,COMM=PAR_COM_Xk_bz_INDEX%COMM)
-#endif
          !
          do i_star=1,Xk%nstar(ik)
            !
-           is              = sop_inv(Xk%star(ik,i_star))
-           ik_bz           = i_star
+           is                = sop_inv(Xk%star(ik,i_star))
+           ik_bz             = i_star
            if ( ik>1 ) ik_bz = sum(Xk%nstar(1:ik-1))+i_star
            !
            if (PAR_IND_Xk_bz%element_1D(ik_bz)) then
@@ -140,29 +129,29 @@ subroutine Dipole_project_along_q(Xen,Xk,X,field_dir)
              !
              field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
              !
-             if(.not.t_rev) DIP_projected(ic,iv,ik_bz_mem,i_spin) = dot_product( field_dir_rot, dipole )
-             if(     t_rev) DIP_projected(ic,iv,ik_bz_mem,i_spin) = dot_product( dipole, field_dir_rot ) 
-             if(iv==ic)     DIP_projected(ic,iv,ik_bz_mem,:)     = cONE
+             if (.not.t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( field_dir_rot, dipole )
+             if (     t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, field_dir_rot ) 
+             if (  iv==ic  ) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = cONE
              !
 #if defined _KERR
              if(l_kerr) then
                dipole_dir_rot = matmul( dl_sop(:,:,is), dipole_dir )
-               if(.not.t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_spin) = dot_product( dipole_dir_rot, dipole )
-               if(     t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_spin) = dot_product( dipole, dipole_dir_rot )
-               if (iv==ic)    DIP_projected_r90(ic,iv,ik_bz_mem,:)      = cONE
+               if (.not.t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole_dir_rot, dipole )
+               if (     t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, dipole_dir_rot )
+               if (  iv==ic  ) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = cONE
              endif
 #endif
              !
            endif
            !
-         enddo ! i_spin
+         enddo ! ic
          !
-       enddo ! ic
+       enddo ! iv
        !
-     enddo ! iv
+     enddo ! ik
      !
-   enddo ! ik
+   enddo ! i_sp_pol
    !
  enddo
  !
-end subroutine Dipole_project_along_q
+end subroutine DIPOLE_project_along_q

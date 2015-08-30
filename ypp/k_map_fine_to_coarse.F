@@ -237,15 +237,14 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    !
    call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
    !
-   BZ_DbGd_nkpts=DbGd_k(i_db_merge)%nbz
-   !
+   BZ_DbGd_nkpts    =DbGd_k(i_db_merge)%nbz
    BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz
    !
  else
    !
    call section('+','BZ Double Grid K-points summary ...')
    !
-   BZ_DbGd_nkpts=DbGd_k(i_db_merge)%nibz
+   BZ_DbGd_nkpts    =DbGd_k(i_db_merge)%nibz
    BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz+Xk%nbz
    !
    if(ik_ref(2)>0) BZ_DbGd_tot_nkpts=BZ_DbGd_tot_nkpts-1
@@ -354,6 +353,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  allocate(Xen%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
  allocate(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
+ BZ_DbGd_kpts=0._SP
  !
  if (DbGd_is_symmetry_expanded) then
    !
@@ -373,8 +373,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
          BZ_DbGd_kpts(i1,:)=Xk%ptbz(ik_bz,:)
        else
          Xen%E_DbGd(:,i1,:)=DbGd_E(i_db_merge)%E(:,BZ_DbGd_table(ik_bz,ik_DbGd)-1,:)
-         BZ_DbGd_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_DbGd) ), &
-&                                  DbGd_k(i_db_merge)%pt(BZ_DbGd_table(ik_bz,ik_DbGd)-1,:) )
+!         BZ_DbGd_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_DbGd) ), &
+!&                                  DbGd_k(i_db_merge)%pt(BZ_DbGd_table(ik_bz,ik_DbGd)-1,:) )
        endif
        BZ_DbGd_table(ik_bz,ik_DbGd)=ik_DbGd+sum(BZ_DbGd_nkpt(:ik_bz-1))
      enddo

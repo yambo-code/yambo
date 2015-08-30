@@ -794,8 +794,8 @@ module it_m
            ch_length=max(len_trim(defs%chdef(i2))+len_trim(chvars(i2,1))+6,30)
            !  
            ch(1)='(4a,t'//trim(intc(ch_length))//',2a)'
-           write (flines(nflines),trim(ch(1))) &
-&            trim(chvars(i2,1)),'= "',trim(defs%chdef(i2)),'"','# ',trim(chvars(i2,2))
+           write (flines(nflines),trim(ch(1))) &                                                     !
+&            trim(chvars(i2,1)),'= "',trim(defs%chdef(i2)),'"','# ',trim(chvars(i2,2))               !
          endif
        enddo
        do i2=1,ni1v

@@ -111,10 +111,10 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
    if(.not.l_dumping(ifit)) then
      ! Random guess seems more stable than previous
      ! fit guess in case of Gauss-Newton
-     T_guess(ifit)=1.E-3
+     T_guess(ifit)=1.E-3_SP
      Ef_guess(ifit)=RT_E(last_occupied+(ifit-1))
    else
-     if(T_save(ifit) <=0._SP) T_guess(ifit)=1.E-3
+     if(T_save(ifit) <=0._SP) T_guess(ifit)=1.E-3_SP
      if(Ef_save(ifit)==0._SP) Ef_guess(ifit)=RT_E(last_occupied+(ifit-1))
      if(T_save(ifit) > 0._SP) T_guess(ifit)=T_save(ifit)
      if(Ef_save(ifit)/=0._SP) Ef_guess(ifit)=Ef_save(ifit)
@@ -131,15 +131,15 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  do ifit=1,nfit
    !
    ! I cannot fit over constant occupations
-   if( ifit==1 .and. all(abs(RT_occ(1:last_occupied )-RT_occ(1))<1.E-3)        ) cycle
-   if( ifit==2 .and. all(abs(RT_occ(last_occupied+1:)-RT_occ(nstates))<1.E-3 ) ) cycle
+   if( ifit==1 .and. all(abs(RT_occ(1:last_occupied )-RT_occ(1))<1.E-3_SP)        ) cycle
+   if( ifit==2 .and. all(abs(RT_occ(last_occupied+1:)-RT_occ(nstates))<1.E-3_SP ) ) cycle
    !
 2000 ntry=ntry+1
    !
    ! Starting point for high temperatures
    if(ntry>1) then 
-     T_guess(ifit)=1.E-3_SP*10**real(ntry-1,SP)
-     Ef_guess(ifit)= RT_E(last_occupied+1)*(-1._SP)**real(ifit,SP)
+     T_guess(ifit)=1.E-3_SP*10**(ntry-1)
+     Ef_guess(ifit)= RT_E(last_occupied+1)*(-1._SP)**ifit
      if(l_dumping(ifit)) then
        if(T_save(ifit)>0._SP) T_guess(ifit)=T_save(ifit)
        if(Ef_save(ifit)/=0._SP) Ef_guess(ifit)=Ef_save(ifit)
@@ -179,8 +179,8 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
          x(i_RT)=RT_occ(i_RT)-Fermi_fnc(E_shifted,T_guess(ifit))*spin_occ
          Jacob(i_RT,1)=-Fermi_fnc_T_derivative(E_shifted,T_guess(ifit))*spin_occ
          Jacob(i_RT,2)=-Fermi_fnc_derivative(E_shifted,T_guess(ifit))*spin_occ
-         err_fit(ifit)  =err_fit(ifit)+(x(i_RT)/spin_occ)**2._SP
-         err_fit(ifit+2)=max(err_fit(ifit+2),(x(i_RT)/spin_occ)**2._SP)
+         err_fit(ifit)  =err_fit(ifit)+(x(i_RT)/spin_occ)**2
+         err_fit(ifit+2)=max(err_fit(ifit+2),(x(i_RT)/spin_occ)**2)
        enddo
        !
      enddo
@@ -193,8 +193,8 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
      ! This shifts from the Gauss-Newton algorithm to the
      ! to the Levenberg-Marquartd algorithm  with a dumping
      if(l_dumping(ifit)) then
-       Jacob_sq(1,1)=Jacob_sq(1,1)*(1._SP+10.**-real(4-ntry))
-       Jacob_sq(2,2)=Jacob_sq(2,2)*(1._SP+10.**-real(4-ntry))
+       Jacob_sq(1,1)=Jacob_sq(1,1)*(1._SP+10._SP**(ntry-4))
+       Jacob_sq(2,2)=Jacob_sq(2,2)*(1._SP+10._SP**(ntry-4))
      endif
      !  Jacob_sq(1,1)=Jacob_sq(1,1)*(1._SP+1.E-3/real(i2))
      !  Jacob_sq(2,2)=Jacob_sq(2,2)*(1._SP+1.E-3/real(i2))
@@ -224,8 +224,8 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
      T_fit(ifit)=T_guess(ifit)-Fit_new(1)
      Ef_fit(ifit)=Ef_guess(ifit)-Fit_new(2)
      !
-     if( ( abs(Fit_new(1))<1.E-6.and.abs(Fit_new(2))<1.E-3                                     ) .or.  &
-       & ( abs(Fit_new(1))<1.E-5.and.abs(Fit_new(2))<1.E-2.and.i2>70.and.err_fit(ifit+2)<0.05) )  then
+     if( ( abs(Fit_new(1))<1.E-6_SP.and.abs(Fit_new(2))<1.E-3_SP                                        ) .or.  &
+       & ( abs(Fit_new(1))<1.E-5_SP.and.abs(Fit_new(2))<1.E-2_SP.and.i2>70.and.err_fit(ifit+2)<0.05_SP) )  then
        !write(100,*) 'FIT done'
        !write(100,*) '  '
        nfound(ifit)=nfound(ifit)+1

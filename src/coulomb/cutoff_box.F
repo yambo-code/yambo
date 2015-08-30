@@ -29,7 +29,7 @@ subroutine cutoff_box(q,is_cut)
  !
  ! F(v,w)= \prod_i 2 sin[(v_i-w_i)L_i/2]/(v_i-w_i)
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,cZERO
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:iku_v_norm,v_norm
  use D_lattice,     ONLY:DL_vol,alat,sop_inv,a
@@ -63,11 +63,11 @@ subroutine cutoff_box(q,is_cut)
  do ig=1,ng_closed
    do iq=1,q%nibz
      if (iq==1.and.ig==1) cycle
-     V_bare(iq,ig)=1./iku_v_norm(q%pt(iq,:)+g_vec(ig,:))**2.
+     V_bare(iq,ig)=1./iku_v_norm(q%pt(iq,:)+g_vec(ig,:))**2
    enddo
  enddo
 !$omp end parallel do
- V_bare(1,1)=7.7956*(RL_vol/real(q%nbz))**(-2./3.)
+ V_bare(1,1)=7.7956*(RL_vol/real(q%nbz))**(-2._SP/3._SP)
  !
  ! RIM contribution
  !
@@ -77,7 +77,7 @@ subroutine cutoff_box(q,is_cut)
 !$omp parallel do default(shared), private(ig,iq)
    do ig=1,RIM_ng
      do iq=1,q%nibz
-       V_bare(iq,ig)=RIM_qpg(iq,ig,ig)*DL_vol*real(q%nbz)/2.
+       V_bare(iq,ig)=RIM_qpg(iq,ig,ig)*DL_vol*real(q%nbz,SP)/2._SP
      enddo
    enddo
 !$omp end parallel do
@@ -88,7 +88,7 @@ subroutine cutoff_box(q,is_cut)
  !
  call k_ibz2bz(q,'i',.true.)
  !
- V_cut=cmplx(0.)
+ V_cut=cZERO
  !
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
@@ -202,10 +202,10 @@ subroutine cutoff_box(q,is_cut)
      F_box=1.
      do i_s=1,3
        if (.not.is_cut(i_s)) cycle
-       if (abs(v1(i_s)-v2(i_s))<=1.E-5) then
+       if (abs(v1(i_s)-v2(i_s))<=1.E-5_SP) then
          F_box=F_box*box_length(i_s)
        else
-         F_box=F_box*2.*sin((v1(i_s)-v2(i_s))*box_length(i_s)/2.)/(v1(i_s)-v2(i_s))
+         F_box=F_box*2._SP*sin((v1(i_s)-v2(i_s))*box_length(i_s)/2.)/(v1(i_s)-v2(i_s))
        endif
      enddo
    end function

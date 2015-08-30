@@ -30,7 +30,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,frag_WF
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_chains,PARALLEL_message,n_CPU_str_max
+ use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,PARALLEL_message,n_CPU_str_max
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads
@@ -64,7 +64,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
      call msg( 'r','* CPU-Threads     :',trim(PARALLEL_message(i_s)))
    enddo
    !
-   call msg( 'r','* MPI CHAINS      :',n_chains)
    call msg( 'r','* MPI CPU         :',n_MPI)
    !
  else

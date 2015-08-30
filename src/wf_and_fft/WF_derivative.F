@@ -26,7 +26,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !  Remember wf_t = -i \der_t wf   with t=x,y,z
  !  is the periodic part of the derivative
  !
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,DP,pi,cZERO
  use interfaces,     ONLY:WF_load
  use wave_func,      ONLY:WF,wf_ng,wf_x,wf_y,wf_z,WF_derivative_alloc
  use electrons,      ONLY:n_sp_pol
@@ -100,7 +100,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
        !
        do i1=1,3
          if (.not.do_derivative(i1)) cycle
-         wf_der=(0.,0.)
+         wf_der=cZERO
          wf_der(:)=WF%c(:,ifft)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
          !
          ! Here we FFT wf_derivative to real space
@@ -115,9 +115,9 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
          ! when using FFTQE
          call fft_3d(wf_DP,fft_dim,2)
 #endif
-         if(i1==1) wf_x(:,ifft)=wf_DP(:)
-         if(i1==2) wf_y(:,ifft)=wf_DP(:)
-         if(i1==3) wf_z(:,ifft)=wf_DP(:)
+         if(i1==1) wf_x(:,ifft)=cmplx(wf_DP(:),kind=SP)
+         if(i1==2) wf_y(:,ifft)=cmplx(wf_DP(:),kind=SP)
+         if(i1==3) wf_z(:,ifft)=cmplx(wf_DP(:),kind=SP)
          !
        enddo
        if(use_live_timing) call live_timing(steps=1)

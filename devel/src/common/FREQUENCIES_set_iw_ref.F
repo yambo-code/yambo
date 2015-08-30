@@ -27,7 +27,8 @@ subroutine FREQUENCIES_set_iw_ref(omega,n_freq)
  ! This is needed by the velocity gauge to impose the diamagnetic sum-rule
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:iw_ref,global_gauge
+ use X_m,           ONLY:iw_ref,global_gauge,skip_cond_sum_rule
+ use parser_m,      ONLY:parser
  use com,           ONLY:warning,error
  !
  implicit none
@@ -41,8 +42,11 @@ subroutine FREQUENCIES_set_iw_ref(omega,n_freq)
  !
  iw_ref=1
  !
- if(all(abs(real(omega(:)))>0.01) .and. trim(global_gauge)=="velocity" ) then
+ if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
+ !
+ if(all(abs(real(omega(:)))>0.01) .and. trim(global_gauge)=="velocity".and..not.skip_cond_sum_rule) then
    call warning(' No w close to 0 in the frequency grid. Length gauge imposed')
+   skip_cond_sum_rule=.false.
    global_gauge='length'
    return
  endif
@@ -52,6 +56,6 @@ subroutine FREQUENCIES_set_iw_ref(omega,n_freq)
    if(abs(omega(iw))<abs(omega(iw_ref))) iw_ref=iw
  enddo
  !
- if(trim(global_gauge)=="velocity" .and. abs(real(omega(iw_ref)))==0._SP) omega(iw_ref)=cmplx(1.E-10,aimag(omega(iw_ref))) 
+ if(trim(global_gauge)=="velocity" .and. abs(real(omega(iw_ref)))==0._SP) omega(iw_ref)=cmplx(1.E-10,aimag(omega(iw_ref)))
  !
 end subroutine FREQUENCIES_set_iw_ref

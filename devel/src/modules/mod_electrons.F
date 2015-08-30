@@ -77,6 +77,7 @@ module electrons
    real(SP),   pointer :: E(:,:,:)         => null()
    real(SP),   pointer :: Eo(:,:,:)        => null()
    real(SP),   pointer :: f(:,:,:)         => null()
+   real(SP),   pointer :: fo(:,:,:)        => null()
    real(SP),   pointer :: df(:,:,:)        => null()
    real(SP),   pointer :: W(:,:,:)         => null()
    complex(SP),pointer :: Z(:,:,:)         => null()
@@ -154,23 +155,38 @@ module electrons
      BOUNDS(2)=BOUNDS(1)
      !
      if (naive) then
-       Eo%f(:,:,:)=Ei%f(:,:,:)
+       ! %E
        Eo%E(:,:,:)=Ei%E(:,:,:)
        if (associated(Ei%Eo)) then
          allocate(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
          call mem_est("E-Eo",(/size(Eo%Eo)/),(/SP/))
          Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
        endif
+       ! %f
+       Eo%f(:,:,:)=Ei%f(:,:,:) 
+       if (associated(Ei%fo)) then
+         allocate(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
+         call mem_est("E-fo",(/size(Eo%fo)/),(/SP/))
+         Eo%fo(:BOUNDS(1),:,:)=Ei%fo(:BOUNDS(1),:,:)
+       endif
+       if (associated(Ei%df)) then
+         allocate(Eo%df(BOUNDS(1),Eo%nk,n_sp_pol))
+         call mem_est("E-df",(/size(Eo%df)/),(/SP/))
+         Eo%df(:BOUNDS(1),:,:)=Ei%df(:BOUNDS(1),:,:)
+       endif
+       ! %W
        if (associated(Ei%W)) then
          allocate(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
          call mem_est("E-W",(/size(Eo%W)/),(/SP/))
          Eo%W(:BOUNDS(2),:,:)=Ei%W(:BOUNDS(2),:,:)
        endif
+       ! %Z
        if (associated(Ei%Z)) then
          allocate(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
          call mem_est("E-Z",(/size(Eo%Z)/))
          Eo%Z(:BOUNDS(2),:,:)=Ei%Z(:BOUNDS(2),:,:)
        endif
+       ! %QP_corrected
        if (associated(Ei%QP_corrected)) then
          BOUNDS(1)=size(Ei%QP_corrected,1)
          BOUNDS(2)=size(Ei%QP_corrected,2)
@@ -229,11 +245,13 @@ module electrons
      if(associated(E%Z))              deallocate(E%Z)
      if(associated(E%W))              deallocate(E%W)
      if(associated(E%f))              deallocate(E%f)
+     if(associated(E%fo))             deallocate(E%fo)
+     if(associated(E%df))             deallocate(E%df)
      if(associated(E%QP_corrected))   deallocate(E%QP_corrected)
      if(associated(E%GreenF))         deallocate(E%GreenF)
      if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
      nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
-     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
+     call mem_est("E-E E-Eo E-f E-fo E-df E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
      call E_DbGd_components_reset(E,.FALSE.)
      !

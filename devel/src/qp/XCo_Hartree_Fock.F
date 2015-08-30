@@ -205,7 +205,7 @@ endif
        !
        DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
        !
-       QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+cmplx(real(DP_Sx),aimag(DP_Sx),SP)
+       QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+cmplx(DP_Sx,KIND=SP)
        !
        if (q%sstar(iq,2)==1) call live_timing(steps=1)
        !

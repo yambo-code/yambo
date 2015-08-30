@@ -98,7 +98,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
    !
    ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
    !
-   coeff=cmplx(i_spinor-1,0.,SP)
+   coeff=cmplx(i_spinor-1,0,SP)
    call M_by_V_omp('C',wf_ng,wf_dim,cONE,wf_xyz,wf_ng,WF%c(:,icfft(i_spinor)),1,coeff,rho(:wf_dim),1)
    !
  enddo

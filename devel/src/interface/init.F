@@ -74,7 +74,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _OPENMP
  use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
 #endif
- use interfaces,     ONLY:PARALLEL_structure
  !
  implicit none
  !
@@ -142,10 +141,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _QED
  what_is_running='YAMBO_QED'
 #endif
- !
- ! CPU structure
- !
- call PARALLEL_structure()
  !
  ! Global Logicals
  !
@@ -574,7 +569,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    !
    call init_QP_ctl_switch('X')
-   call initactivate(1,'DipApproach DipPDirect ShiftedPath Qdirection QShiftOrder Gauge')
+#if defined _RT
+   call init_RT_ctl_switch('X')
+#endif
+   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Qdirection QShiftOrder')
    !
  endif
  !
@@ -601,14 +599,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.and.l_bse) then
    !
    call init_QP_ctl_switch('K')
+#if defined _RT
+   call init_RT_ctl_switch('K')
+#endif
    !
-   call initactivate(1,'DipApproach DipPDirect ShiftedPath Gauge')
+   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
 #if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
    !
    call initactivate(1,'DrudeWBS Reflectivity')
-   call initactivate(1,'BoseCut ShiftedPath')
+   call initactivate(1,'BoseCut ShiftedPaths')
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
    !
@@ -643,7 +644,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_em1s) then
    call init_QP_ctl_switch('X')
-   call initactivate(1,'ShiftedPath')
+#if defined _RT
+   call init_RT_ctl_switch('X')
+#endif
+   call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','DmRnge','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
    call initactivate(1,'XTermKind'//'Xs')
@@ -654,7 +658,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call init_QP_ctl_switch('X')
-   call initactivate(1,'ShiftedPath')
+#if defined _RT
+   call init_RT_ctl_switch('X')
+#endif
+   call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
      call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                           'EhEngy','LongDr','PPAPnt'/))
@@ -672,7 +679,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_acfdt) then
    call init_QP_ctl_switch('X')
-   call initactivate(1,'ShiftedPath')
+#if defined _RT
+   call init_RT_ctl_switch('X')
+#endif
+   call initactivate(1,'ShiftedPaths')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
@@ -697,7 +707,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      call init_QP_ctl_switch('X')
      call init_QP_ctl_switch('G')
-     call initactivate(1,'BoseCut ShiftedPath')
+#if defined _RT
+     call init_RT_ctl_switch('X')
+     call init_RT_ctl_switch('G')
+#endif
+     call initactivate(1,'BoseCut ShiftedPaths')
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
@@ -727,11 +741,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                                     'DmRnge','CGrdSp',&
 &                                     'DrudeW','EhEngy','LongDr'/)) 
      endif
-   endif 
+   endif
    !
 #if defined  _ELPH 
-   !
-   call init_QP_ctl_switch('G')
    !
    if (l_elph_corr) then
      call initactivate(1,'DysSolver')
@@ -742,6 +754,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
+   !
 #endif
    !
  endif
@@ -768,7 +781,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  if (l_sc_run) then
-   call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
+   call initactivate( 1,'Potential FFTGvecs SCBands EXXCut')
    if (.not.l_real_time) then
      call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
      call initactivate(-1,'QpntsRXs')
@@ -790,7 +803,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'GbndRnge UseEbands BandMix SCUpWIter') 
    call initactivate(-1,'SCIter SCEtresh SCRhoTresh TF_precondition')
    !
-   call initactivate( 1,'FFTGvecs Gauge SCBands')
+   call initactivate( 1,'FFTGvecs SCBands')
    !
    if (l_elel_scatt)     call initactivate(1,'PlasmaPerc')
    if (l_elel_corr)      call initactivate(1,'EXXCut')
@@ -802,6 +815,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_real_time) then
    call init_QP_ctl_switch('G')
+   call init_RT_ctl_switch('G')
    call initactivate(-1,'SCmixing')
    call initactivate(1,'Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime COHsteps DipoleEtresh')
@@ -813,7 +827,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !
-   call initactivate(1,'ShiftedPath')
+   call initactivate(1,'ShiftedPaths')
    !
  endif
  !

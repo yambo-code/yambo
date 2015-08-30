@@ -148,9 +148,9 @@ module interfaces
    end subroutine
    !
    subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
-     character(*), optional :: ENVIRONMENT
-     integer,      optional :: n_elements
-     character(*), optional :: ROLE(:)
+     character(*) :: ENVIRONMENT
+     integer      :: n_elements
+     character(*) :: ROLE(:)
    end subroutine
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)

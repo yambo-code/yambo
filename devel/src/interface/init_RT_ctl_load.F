@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,32 +21,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_build_up_child_chains(i_child,COMM_child,i_father)
+subroutine init_RT_ctl_load(defs,i_type)
  !
- ! Create hierarchy-based communicators
+ ! Note that this routine is called in 'load' mode BEFORE
+ ! the DB1 is read, so before n_sp_pol is set to the correct value.
+ ! 
+ ! Thus we must call it on the no spin, spin + and spin - cases 
+ ! because the code does not know if there is
+ ! spin unless the DB1 is read. 
  !
-#if defined _MPI
- !
- use parallel_m,    ONLY:MPI_comm,myid,mpi_comm_world,ncpu_chain,nchains_group,n_groups,ncpu
+ use drivers,       ONLY:l_real_time
+ use real_time,     ONLY:RT_ctl_db
+ use it_m,          ONLY:it,initmode,initdefs,V_real_time
  !
  implicit none
+ integer, intent(in) :: i_type
+ type(initdefs)      :: defs
+ ! 
+ ! Work Space
+ ! 
+ character(1)      ::prefix(3)
+ character(7)      ::description_ch(3)
  !
- type(MPI_comm) :: COMM_child
- integer        :: i_err,i_child,i_father,n_father,n_child
+ prefix=(/'X','K','G'/)
+ description_ch(1)='Xd'
+ description_ch(2)='BSK BSS'
+ description_ch(3)='G'
  !
- n_father=ncpu/product(ncpu_chain(nchains_group(n_groups*2-1):i_father))
- n_child =             ncpu_chain(i_child)
- !
- ! Warning, doing like that CPUs with the same my_chain are not countiguous
- !
- COMM_child%my_CHAIN=(myid/n_father)*(n_father/n_child)+mod(myid,n_father/n_child)
- !
- call MPI_COMM_SPLIT(mpi_comm_world,COMM_child%my_CHAIN,myid,COMM_child%COMM,i_err)
- call MPI_COMM_RANK(COMM_child%COMM,COMM_child%CPU_id,i_err)
- !
- COMM_child%n_CPU=n_child
- COMM_child%chain_order=i_child-nchains_group(n_groups*2-1)+1
- !
-#endif
- !
+ call it(defs,prefix(i_type)//'fnRTdb',&
+&        '[EXTRT '//trim(description_ch(i_type))//'] Database',&
+&        Rt_ctl_db(i_type),verb_level=V_real_time)
+ ! 
 end subroutine

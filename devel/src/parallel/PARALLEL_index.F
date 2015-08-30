@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,7 +26,9 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
 &                     MPI_comm,comm_default_value
  use com,        ONLY:error
+ !
  implicit none
+ !
  type(PP_indexes)       ::px
  integer                ::uplim(:)
  integer,       optional::low_range(:)
@@ -37,9 +39,9 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  ! 
  ! Work Space
  !
- integer :: nindxs,i1,i2,i3,i4,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
-&           i_range(2),increment,missing_cpus
- logical :: SERIAL
+ integer :: nindxs,i1,i2,i3,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
+&           i_range(2),missing_cpus,par_kind_2D
+ logical :: SERIAL,local_ORDERED,local_CONSECUTIVE
  integer,allocatable :: i_done(:),lowlim(:)
  !
  myid_loop =myid
@@ -52,6 +54,12 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
    myid_loop =COMM%CPU_id
    local_comm=COMM%COMM
  endif
+ !
+ local_ORDERED=.false.
+ if(present(ORDERED)) local_ORDERED=ORDERED
+ !
+ local_CONSECUTIVE=.false.
+ if(present(CONSECUTIVE)) local_CONSECUTIVE=CONSECUTIVE
  !
  if (ncpu_loop==1) then
    myid_loop =0
@@ -67,7 +75,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  allocate(px%n_of_elements(ncpu_loop))
  px%n_of_elements=0
  !
- if (nindxs==1.and.present(CONSECUTIVE)) then
+ if (nindxs==1.and.local_CONSECUTIVE) then
    !
    allocate(px%element_1D(uplim(1)),i_done(uplim(1)))
    px%element_1D=.false.
@@ -95,7 +103,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
    if (.not.SERIAL) call PP_redux_wait(i_done,p_prod,COMM=local_comm)
    if (any(i_done==1)) call error('Incomplete Parallel Index Filling')
    !
- else if (nindxs==1.and..not.present(CONSECUTIVE)) then
+ else if (nindxs==1.and..not.local_CONSECUTIVE) then
    if (.not.associated(px%weight_1D)) then
      allocate(px%weight_1D(uplim(1)))
      px%weight_1D=1
@@ -107,7 +115,8 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
    tot_steps=sum(px%weight_1D)
    i_done=1
    if (lowlim(1)>1) i_done(:lowlim(1)-1) =0
-   average_steps=(tot_steps+ncpu_loop-mod(tot_steps,ncpu_loop))/ncpu_loop
+   average_steps=tot_steps/ncpu_loop
+   if( mod(tot_steps,ncpu_loop)>0 ) average_steps=average_steps+1
    !
    ! Here the linear chain is distributed
    !
@@ -136,62 +145,50 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
    enddo
    !
    if (any(i_done==1)) call error('Incomplete Parallel Index Filling')
-   deallocate(i_done)
    !
  else if (nindxs==2) then
    !
+   if (     local_ORDERED.and..not.present(MASK)) par_kind_2D=1
+   if (     local_ORDERED.and.     present(MASK)) par_kind_2D=2
+   if (.not.local_ORDERED.and..not.present(MASK)) par_kind_2D=3
+   if (.not.local_ORDERED.and.     present(MASK)) par_kind_2D=4
+   !
+   if (par_kind_2D==1) call error(' PARALLEL index structure not implemented')
+   !
    allocate(px%element_2D(uplim(1),uplim(2)))
-   d2=uplim(2)-lowlim(2)+1
    px%element_2D=.false.
    !
-   if (present(MASK).or.present(ORDERED)) then
+   if (present(MASK)) then
      !
      i3=0
-     i4=0
      !
      do i1=lowlim(1),uplim(1)
-       !
-       if (present(MASK)) then
-         if (.not.MASK(i1)) cycle
-       endif
-       !
-       i4=i4+1
-       !
-       px%element_2D(i1,i1)= mod(i4+1-myid_loop,ncpu_loop)==1
-       !
-       if (ncpu_loop==1) px%element_2D(i1,i1)=.TRUE.
-       !
-       if (px%element_2D(i1,i1)) px%n_of_elements(myid_loop+1)=px%n_of_elements(myid_loop+1)+1
-       !
        do i2=lowlim(2),uplim(2)
          !
-         if (present(ORDERED)) then
-           if (ORDERED.and.i1>i2) cycle
-         endif
-         !
-         if  (i1==i2) cycle
+         if ( local_ORDERED .and. i2<i1 ) cycle
+         if ( .not.( (MASK(i1).and.abs(i2-i1)<=uplim(1)/2) .or. (MASK(i2).and.abs(i2-i1)>uplim(1)/2) ) ) cycle
          !
          i3=i3+1
+         if ( .not.(mod(i3+myid_loop,ncpu_loop)==0) ) cycle
          !
-         if (mod(i3+1-myid_loop,ncpu_loop)==1) px%element_2D(i1,i2)=.true.
-         !
-         if (ncpu_loop==1) px%element_2D(i1,i2)=.true.
-         !
-         if (px%element_2D(i1,i2)) px%n_of_elements(myid_loop+1)=px%n_of_elements(myid_loop+1)+1
+         px%element_2D(i1,i2)=.true.
+         px%n_of_elements(myid_loop+1)=px%n_of_elements(myid_loop+1)+1
          !
        enddo
-       !
      enddo
      !
    else
+     !
+     d2=uplim(2)-lowlim(2)+1
+     !
      do i1=lowlim(1),uplim(1)
        do i2=lowlim(2),uplim(2)
          i3=(i1-lowlim(1))*d2+i2-lowlim(2)+1-myid
-         if (mod(i3,ncpu)==1) px%element_2D(i1,i2)=.true.
-         if (ncpu==1) px%element_2D(i1,i2)=.true.
+         if (mod(i3,ncpu)==0) px%element_2D(i1,i2)=.true.
          if (px%element_2D(i1,i2)) px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+1
        enddo
      enddo
+     !
    endif
    !
  endif

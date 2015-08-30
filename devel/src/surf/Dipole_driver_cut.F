@@ -31,7 +31,7 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
 &                                    master_cpu, pp_indexes_reset
  use D_lattice,               ONLY : nsym, i_time_rev, alat, dl_sop, sop_inv
  use R_lattice,               ONLY : g_vec, bz_samp, q0_def_norm,q_norm,bare_qpg
- use X_m,                     ONLY : X_alloc, X_t, Dipole_bands_ordered
+ use X_m,                     ONLY : X_alloc, X_t
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
  use wave_func,               ONLY : WF, wf_ng
@@ -65,7 +65,6 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
  call section('=','Optical oscillators with cut off')
  !
  if (allocated(DIP_projected_cut)) return
- Dipole_bands_ordered=.true.
  !
  X%ngostnts = wf_ng
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=io_db)

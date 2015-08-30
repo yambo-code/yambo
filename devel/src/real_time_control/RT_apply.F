@@ -30,12 +30,11 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nkpts,BZ_DbGd_kpts,BZ_DbGd_nbands
  use R_lattice,      ONLY:bz_samp,nkibz
- use QP_m,           ONLY:QP_ctl_db
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
  use units,          ONLY:FS2AUT,PS2AUT,HA2EV
- use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
+ use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
  use rt_ctl,         ONLY:RT_IO_JPO_steps
- use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists
+ use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth
  !
  implicit none
  !
@@ -54,13 +53,19 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  real(SP)              :: l_Time,df_Max,dE_Max,N_carriers(2)
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
- character(schlen)     :: db_piece(n_pieces),db_name,T_unit
+ character(schlen)     :: db_piece(n_pieces),db_name,T_unit,ch
  character(3)          :: what_
- logical               :: l_E,l_f,l_elel_corr_save,is_def,l_DbGd
+ logical               :: l_E,l_f,l_elel_corr_save,is_def,l_DbGd,l_verbose,l_keep_carriers
  !
  l_Time=0._SP
  !
  l_DbGd=BZ_DbGd_tot_nkpts>0
+ !
+ l_verbose=.false.
+ if (present(VERBOSE)) l_verbose=VERBOSE
+ !
+ l_keep_carriers=.false.
+ if (present(keep_RT_carriers)) l_keep_carriers=keep_RT_carriers
  !
  if (present(what)) then
    !
@@ -73,7 +78,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    if (what=="K")  I_id=2
    if (what=="G")  I_id=3
    !
-   call parser(what//'fnQPdb',is_def)
+   call parser(what//'fnRTdb',is_def)
    !
    if (.not.is_def) return
    !
@@ -83,7 +88,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    ! First check the DB file & Time
    !================================
    !
-   call string_split(QP_ctl_db(I_id),db_piece)
+   call string_split(RT_ctl_db(I_id),db_piece)
    !
    T_unit='fs'
    !
@@ -174,6 +179,14 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    !
  endif
  !
+ if (present(what)) then
+   ch='External RT corrections ('//what//')'
+   if (depth>0 ) call section('=',trim(ch))
+   if (depth==0) call section('+',trim(ch))
+ endif
+ !
+ if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(l_Time/FS2AUT))//' fs')
+ !
  ! Interpolation
  !===============
  !
@@ -185,12 +198,17 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  if (l_f) then
    !
    allocate(E%df(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-df",(/size(E%df)/),(/SP,SP/))
+   allocate(E%fo(E%nb,E%nk,n_sp_pol))
+   call mem_est("E-df E-fo",(/size(E%fo),size(E%df)/),(/SP,SP/))
+   E%df=0._SP
+   E%fo=E%f
    call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt,E%nk)
+   E%f=E%fo+E%df
    !
    if (l_DbGd) then
      allocate(E%df_DbGd(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
      call mem_est("E-df_DbGd",(/size(E%df_DbGd)/),(/SP,SP/))
+     E%df_DbGd=0._SP
      call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
    endif
    !
@@ -223,34 +241,28 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  !
  ! Metallic and Insulating bands update
  !
- if (.not.present(keep_RT_carriers)) call RT_obj_free(RT_carriers)
+ if (.not.l_keep_carriers) call RT_obj_free(RT_carriers)
  !
- if (present(VERBOSE)) then
+ if (l_verbose) then
    !
-   if (VERBOSE) then
-     !
-     call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(l_Time/FS2AUT))//' fs')
-     !
-     call msg('nr',   'Updated Carrier components')
-     call msg('rn',   '==========================')
-     call msg('r',    '[RT] Reference Time           [fs]: ',l_Time/FS2AUT)
-     call msg('r',    '[RT] Bands range                  : ', (/nb(1),nb(2)/)) 
-     !
-     if (l_f) then
-       call msg('r',  '[RT] Maximum occupations change   : ',df_Max)
-       call msg('r',  '[RT] N of carriers                : ',N_carriers(1))
-       if (l_DbGd) call msg('r',  '[RT]                 (Double Grid): ',N_carriers(2))
-     endif
-     !
-     if (l_E) then
-       call msg('r',  '[RT] Max energy levels change [ev]: ',dE_Max*HA2EV)
-     endif
-     !
-     call msg('rn',  '[RT] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
-     !
-     call REPORT_OCCUPATIONS(E)
-     !
+   call msg('nr',   'Updated Carrier components')
+   call msg('rn',   '==========================')
+   call msg('r',    '[RT] Reference Time           [fs]: ',l_Time/FS2AUT)
+   call msg('r',    '[RT] Bands range                  : ', (/nb(1),nb(2)/)) 
+   !
+   if (l_f) then
+     call msg('r',  '[RT] Maximum occupations change   : ',df_Max)
+     call msg('r',  '[RT] N of carriers                : ',N_carriers(1))
+     if (l_DbGd) call msg('r',  '[RT]                 (Double Grid): ',N_carriers(2))
    endif
+   !
+   if (l_E) then
+     call msg('r',  '[RT] Max energy levels change [ev]: ',dE_Max*HA2EV)
+   endif
+   !
+   call msg('rn',  '[RT] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
+   !
+   call REPORT_OCCUPATIONS(E)
    !
  endif
  !
@@ -274,6 +286,9 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
 &                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,what_,.TRUE.)
     !
     if (OBJ=="df") then
+      !
+      E%nbf=nb(1)-1
+      E%nbm=nb(2)
       !
       if(NK==E%nk) then
         E%df( nb(1):nb(2),:,:)=V_out(nb(1):nb(2),:,:)

@@ -44,7 +44,7 @@ integer function io_BS(iq,X,ID)
  character(lchlen)   ::local_description(100)
  real(SP),allocatable::BS_mat_disk(:,:,:)
  !
- if (.not.io_BS_K) then
+ if (.not.io_BS_K.and.maxval(io_sec(ID,:))>1) then
    io_BS=IO_NOT_ALLOWED
    call io_disconnect(ID,FORCE=.TRUE.)
    return

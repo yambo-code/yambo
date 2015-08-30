@@ -84,7 +84,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
     call setup_gvecaff
     call setup_cutmat
   endif
-  call setup_loc(X%ib(1), Xen%nbm, Xen%nbf+1, X%ib(2), Xk%nibz)
+  call setup_loc(X%ib(1), X%ib_lim(1), X%ib_lim(2), X%ib(2), Xk%nibz)
   !
   ! REELS input parameters
   !

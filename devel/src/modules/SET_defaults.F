@@ -31,7 +31,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Dipole_bands_ordered,Chi_mode,&
+&                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
 &                      X_terminator,X_en_comp,global_gauge,use_covariant_approach,&
@@ -59,14 +59,14 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use parallel_m, ONLY:ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
-&                     n_max_jobstr,grid_path
+&                     n_max_jobstr,grid_paths
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
 &                     string_split,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
- use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
+ use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,BS_drude_f_eh,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_DbGd,BSS_damp_reference,&
@@ -100,7 +100,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
-&                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk
+&                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
+&                     RT_ctl_db
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,i_Pump,i_Probe,A_vecpot_reset,     &
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
  use plasma,     ONLY:Plasma_redux_percent
@@ -377,7 +378,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
  half_X_mat_only=.FALSE.
- Dipole_bands_ordered=.TRUE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
  Dipole_approach="G-space v"
  use_shifted_grids_approach = .FALSE.
@@ -389,7 +389,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
- grid_path='none'
+ grid_paths=' '
+ skip_cond_sum_rule=.FALSE.
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0.
@@ -433,13 +434,22 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  forall (i1=1:3,i2=1:2) QP_ctl_Wv(i1,:,i2)=0.
  forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1.,0.)
  !
+#if defined _RT
+ !
+ ! RT control
+ !
+ RT_ctl_db="none"
+ !
+#endif
+ !
  ! BS/BSS
  !
  BS_n_g_W=1
- BS_eh_en=(/-1.,-1./)/HA2EV
+ BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
+ BS_drude_f_eh=0._SP
  BS_identifier=0
  BS_q=1
- BS_eh_win=100.
+ BS_eh_win=100._SP
  BS_res_mode='xc'
  BS_cpl_mode='none'
  BSE_mode='causal'
@@ -451,14 +461,14 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BSS_inversion_mode='pf'
  BSS_n_freqs=100
  BSS_n_descs=0
- BSS_er=(/0.,10./)/HA2EV
- BSS_dr=.1/HA2EV
- BSS_q0=(/1.,0.,0./)
+ BSS_er=(/0._SP,10._SP/)/HA2EV
+ BSS_dr=0.1_SP/HA2EV
+ BSS_q0=(/1._SP,0._SP,0._SP/)
  BSS_uses_DbGd=.FALSE.
- BSS_damp_reference=0.
+ BSS_damp_reference=0._SP
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
- Haydock_treshold=-0.02
+ Haydock_treshold=-0.02_SP
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  !
@@ -569,7 +579,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_scatt_tresh=1.
  Eh_pumped_pair_energy=-1./HA2EV
  Eh_pumped_pair_width=0.1/HA2EV
- Eh_pumped_Nel=1.
+ Eh_pumped_Nel=1._SP
  Plasma_redux_percent=100._SP
  DbGd_EE_percent=0._SP
  !

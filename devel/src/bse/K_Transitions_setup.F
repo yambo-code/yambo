@@ -35,7 +35,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !  integer                       :: ik         ! ik index (\in IBZ)
  !  integer                       :: first_cv   ! Position in the cv transitions @ k
  !  integer                       :: size       
- !  complex(SP), allocatable      :: table(:,:) ! (/is,iv,ic,i_sp/)
+ !  complex(SP), allocatable      :: table(:,:) ! (/ikbz,iv,ic,i_sp/)
  !  complex(SP), allocatable      :: Z(size)
  !  real(SP)   , allocatable      :: E(size)
  !  real(SP)   , allocatable      :: f(size)
@@ -48,8 +48,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BS_anti_res,&
 &                       BS_not_const_eh_f,BS_drude_f_eh,BS_Blocks_and_Transitions_alloc,&
-&                       BSE_mode,BS_T_grp,BS_nT_grps
- use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups
+&                       BSE_mode,BS_T_grp,BS_nT_grps,BSS_mode
+ use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups,&
+&                       PAR_IND_T_Haydock
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
@@ -59,7 +60,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  type(bz_samp):: Xk
  complex(SP)  :: Wd
  integer      :: iq
- logical      :: FILL_the_groups,l_check
+ logical      :: FILL_the_groups,l_trans_in_group,l_grp_to_grp
  !
  ! Work Space
  !
@@ -84,6 +85,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    allocate(PAR_IND_WF_b_and_k%element_2D(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
+   if (index(BSS_mode,'h')/=0) then
+     allocate(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
+     PAR_IND_T_Haydock%element_1D=.FALSE.
+   endif
+   !
  else
    allocate(BS_nT_at_k(Xk%nibz))
    call mem_est("BS_nT_at_k",(/Xk%nibz/),(/IP/))
@@ -106,6 +112,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    BS_K_dim=0
    i_T_group_now=0
    i_T_group_last=0
+   BS_drude_f_eh=0._SP
    !
    do ik=1,Xk%nibz
      !
@@ -124,70 +131,63 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
              BS_K_dim=BS_K_dim+1
              i_T_at_k(ik)=i_T_at_k(ik)+1
              !
-             if (FILL_the_groups) then
+             if (.not. FILL_the_groups) then
+               BS_nT_at_k(ik)=BS_nT_at_k(ik)+1
+               cycle
+             endif
+             !
+             i_T_group_now=T_group(BS_K_dim)
+             !
+             if (i_loop==1) BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
+             !
+             l_trans_in_group=PAR_IND_T_groups%element_1D(i_T_group_now)
+             !
+             l_grp_to_grp= any( PAR_IND_T_ordered%element_2D(i_T_group_now,:)) .or. &
+&                          any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
+             !
+             if (BS_k_coupling) l_grp_to_grp=l_grp_to_grp .or. any( PAR_IND_T_all%element_2D(i_T_group_now,:) ) &
+&                                                         .or. any( PAR_IND_T_all%element_2D(:,i_T_group_now))
+             !
+             if ( .not. (l_trans_in_group .or. l_grp_to_grp) ) cycle
+             !
+             if (i_T_group_now/=i_T_group_last) then
                !
-               i_T_group_now=T_group(BS_K_dim)
-               !
-               if (i_loop==1) then
-                 !
-                 BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
-                 !
-               endif
-               !
-               l_check=PAR_IND_T_groups%element_1D(i_T_group_now).or.&
-&                      any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
-               !
-               if (BS_k_coupling) l_check=l_check .or. any( PAR_IND_T_all%element_2D(:,i_T_group_now) )
-               !
-               if ( .not. l_check ) cycle
-               !
-               if (i_T_group_now/=i_T_group_last) then
-                 !
-                 i_T_group_last=i_T_group_now
-                 i_T_in_the_grp=0
-                 !
-                 if (i_loop==1) then
-                   !
-                 else if (i_loop==2) then
-                   !
-                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now)
-                   !
-                   BS_T_grp(i_T_group_now)%ik      =ik
-                   BS_T_grp(i_T_group_now)%first_cv=BS_K_dim
-                   !
-                 endif
-                 !
-               endif
+               i_T_group_last=i_T_group_now
+               i_T_in_the_grp=0
                !
                if (i_loop==2) then
                  !
-                 i_T_in_the_grp=i_T_in_the_grp+1
+                 call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now)
                  !
-                 BS_T_grp(i_T_group_now)%table(i_T_in_the_grp,:)=(/ikbz,iv,ic,i_sp/)
-                 !
-                 PAR_IND_WF_b_and_k%element_2D(ic, ik)=.TRUE.
-                 PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
-                 !
-                 BS_T_grp(i_T_group_now)%E(i_T_in_the_grp)=E_eh
-                 BS_T_grp(i_T_group_now)%f(i_T_in_the_grp)=f_eh
-                 if (associated(Ken%Z)) then
-                   BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
-                 endif
-                 if (associated(Ken%W)) then
-                   !
-                   ! Note that W is negative as the linewidth is positive(negative) above(below) the Fermi level.
-                   !
-                   BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
-                 endif
-                 if (E_SOC_nbands/=0) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
+                 BS_T_grp(i_T_group_now)%ik      =ik
+                 BS_T_grp(i_T_group_now)%first_cv=BS_K_dim
                  !
                endif
                !
-             else
-               !
-               BS_nT_at_k(ik)=BS_nT_at_k(ik)+1
-               !
              endif
+             !
+             if (i_loop==1) cycle
+             !
+             i_T_in_the_grp=i_T_in_the_grp+1
+             !
+             BS_T_grp(i_T_group_now)%table(i_T_in_the_grp,:)=(/ikbz,iv,ic,i_sp/)
+             !
+             PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
+             PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
+             !
+             if (index(BSS_mode,'h')/=0) PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
+             !
+             BS_T_grp(i_T_group_now)%E(i_T_in_the_grp)=E_eh
+             BS_T_grp(i_T_group_now)%f(i_T_in_the_grp)=f_eh
+             !
+             if (associated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
+             !
+             ! Note that W is negative as the linewidth is positive(negative) above(below) the Fermi level.
+             !
+             if (associated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
+             !
+             if (E_SOC_nbands/=0) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
+             !
              !
            enddo ! spin
          enddo ! symmetries
@@ -247,7 +247,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      ! Remember that the Drude terms wants the f_e*f_h occupation factor
      if (abs(E_eh)<1.E-5_SP .and. all((/real(Wd)/=0._SP,aimag(Wd)/=0._SP/)) ) then
        if(all((/ic==Ken%bf,iv==Ken%bf,ik==Ken%kf,i_sp==Ken%sf/))) BS_drude_f_eh=f_e*f_h
-       T_is_ok=.FALSE.
      endif
      !
      ! If I've included in valence states that are almost empty

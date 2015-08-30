@@ -174,7 +174,7 @@ subroutine k_grids(en,k,Xk,q)
      if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="kc2i")
      if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="ka2i")
      !
-     if (real_ctl/=999.) then
+     if (real_ctl/=999._SP) then
        !
        do i1=1,Xk%nbz
          if (v_is_zero(Xk%ptbz(i1,:)-USER_K%pt(USER_K%nibz,:),zero_=k_iku_zero)) then
@@ -374,6 +374,8 @@ subroutine k_grids(en,k,Xk,q)
    !
    subroutine print_the_grid(k,nk,wk,coo_in_,formatted_,PW_format)
      !
+     use stderr,     ONLY:f_format_length,intc
+     !
      ! Whatever coo_in this routine prints the list of points using coo_out
      !
      integer         ::nk,i1_
@@ -394,17 +396,17 @@ subroutine k_grids(en,k,Xk,q)
        !
        if (formatted_) then
          if(No_Weight) then
-           write(ch,'(3(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3)
+           write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x,a,1x))') v(1),'|',v(2),'|',v(3)
          else
-           write(ch,'(4(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|',nk_replica
+           write(ch,'(4(f12.'//trim(intc(f_format_length))//',1x,a,1x))') v(1),'|',v(2),'|',v(3),'|',nk_replica
          endif
        else if (PW_format) then
-           write(ch,'(3(f12.7,1x),i1)') v(:),1
+           write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x),i1)') v(:),1
        else
          if(No_Weight) then
-           write(ch,'(3(f12.7,1x))') v(:)
+           write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x))') v(:)
          else
-           write(ch,'(4(f12.7,1x))') v(:),nk_replica
+           write(ch,'(4(f12.'//trim(intc(f_format_length))//',1x))') v(:),nk_replica
          endif
        endif
        !

@@ -26,20 +26,21 @@ subroutine cutoff_sphere()
  use pars,          ONLY:SP
  use wave_func,     ONLY:wf_ng
  use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,nqibz
+ !
  implicit none
  !
  ! Work Space
- ! 
+ !
  integer ::iq,ig
  real(SP)::dummy
  !
  do ig=1,wf_ng
    do iq=1,nqibz
-     dummy=sqrt(1. - cos(bare_qpg(iq,ig)*cyl_ph_radius) )
-     if (abs(dummy)<1.E-5) dummy=1.E-5
+     dummy=sqrt(1._SP - cos(real(bare_qpg(iq,ig),SP)*cyl_ph_radius) )
+     if (abs(dummy)<1.E-5_SP) dummy=1.E-5_SP
      bare_qpg(iq,ig)=bare_qpg(iq,ig)/dummy
    enddo
  enddo
- bare_qpg(1,1)=sqrt(2.0)/cyl_ph_radius
+ bare_qpg(1,1)=sqrt(2.0_SP)/cyl_ph_radius
  !
 end subroutine

@@ -87,9 +87,7 @@ module BS
    !
  end type Haydock_vector
  !
- logical, allocatable :: Haydock_parallel_mask(:)
  integer, allocatable :: Haydock_parallel_group_comm(:)
- integer, allocatable :: Haydock_parallel_col_comm(:)
  !
  ! CV transitions space ...
  !=========================
@@ -118,7 +116,6 @@ module BS
  type(BS_T_group), allocatable  :: BS_T_grp(:)
  integer         , allocatable  :: BS_T_grp_1st_el(:)
  integer         , allocatable  :: BS_nT_at_k(:)
- integer         , allocatable  :: BS_nT_grps_at_k(:)
  integer                        :: BS_nT_grps
  !
  ! Blocks ...
@@ -140,8 +137,8 @@ module BS
    ! ... correlation
    !------------------
    integer                       :: N_oscillators 
-   integer,     allocatable      :: O_table(:,:,:,:) ! sym,n,n',spin @ k
-   complex(SP), allocatable      :: O(:,:)
+   integer,     allocatable      :: O_table(:,:,:,:,:) ! 2,sym,n,n',spin @ k = (iOnn,i_block_ref)
+   complex(SP), allocatable      :: O_c(:,:)
    !
  end type BS_block
  !
@@ -243,34 +240,39 @@ module BS
      !
      if (EXCHANGE) then
        allocate(BS_T_grp(iG)%O_x(BS_n_g_exch,BS_T_grp(iG)%size))
-       call mem_est("BS_T_group_X_oscillators",(/size (BS_T_grp(iG)%O_x)/))
+       if(iG==1) call mem_est("BS_T_group_X_oscillators",(/BS_n_g_exch*sum(BS_T_grp(:)%size)/))
      endif
      !
-     if (CORRELATION) then
-       allocate(BS_blk(iB)%O(O_ng,BS_blk(iB)%N_oscillators))
-       call mem_est("BS_blk_Oscillators",(/size (BS_blk(iB)%O)/))
-     endif
+     if (CORRELATION) allocate(BS_blk(iB)%O_c(O_ng,BS_blk(iB)%N_oscillators))
      !
    end subroutine
    !
    subroutine BS_oscillators_free(iG,iB)
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     integer :: iG,IB,i_g,i_b
-     do i_g=1,BS_nT_grps
-       if (iG/=0.and.i_g/=iG) cycle
-       if (allocated(BS_T_grp(i_g)%O_x)) then
-         deallocate(BS_T_grp(i_g)%O_x)
-         call mem_est("BS_T_group_X_oscillators")
-       endif
+     integer :: iG,iB
+     integer :: i_g,i_b,ik_next,ip_next,ik_now,ip_now
+     do i_g=iG,1,-1
+       if (i_g==BS_nT_grps) call mem_est("BS_T_group_X_oscillators")
+       if (.not.allocated(BS_T_grp(i_g)%O_x)) exit
+       if (     allocated(BS_T_grp(i_g)%O_x)) deallocate(BS_T_grp(i_g)%O_x)
      enddo
-     do i_b=1,n_BS_blks
-       if (iB/=0.and.i_b/=iB) cycle
-       if (allocated(BS_blk(i_b)%O)) then
-         deallocate(BS_blk(i_b)%O)
-         call mem_est("BS_blk_"//trim(intc(i_b))//"_O")
+     if(iB+1<=n_BS_blks) then
+       ik_next=BS_blk(iB)%iT_k
+       ip_next=BS_blk(iB)%iT_p
+     endif
+     if(iB+1> n_BS_blks) then
+       ik_next=0
+       ip_next=0
+     endif
+     do i_b=iB,1,-1
+       ik_now=BS_blk(i_b)%iT_k
+       ip_now=BS_blk(i_b)%iT_p
+       if ( ik_now==ik_next .and. ip_now==ip_next ) cycle
+       if (.not.allocated(BS_blk(i_b)%O_c)) exit
+       if (     allocated(BS_blk(i_b)%O_c)) then
+         deallocate(BS_blk(i_b)%O_c)
          deallocate(BS_blk(i_b)%O_table)
-         call mem_est("BS_blk_"//trim(intc(i_b))//"_O_table")
        endif
      enddo
      !
@@ -388,9 +390,8 @@ module BS
      integer :: i_g
      !
      if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
-     if (allocated(BS_nT_grps_at_k))     deallocate(BS_nT_grps_at_k)
      if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
-     call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_nT_grps_at_k")
+     call mem_est("BS_nT_at_k PAR_BS_T_grps_index")
      !
      do i_g=1,BS_nT_grps
        !
@@ -429,12 +430,13 @@ module BS
      integer              :: i_block
      integer(IP)          :: BS_Block_size
      !
-     BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)/BS_LiveTiming_prefactor
-     !
      if (BS_blk(i_block)%iT_k==BS_blk(i_block)%iT_p.and.BS_blk(i_block)%mode=="R") then
-       BS_Block_size=( (BS_blk(i_block)%size(1)**2-BS_blk(i_block)%size(1))/2+&
-&                       BS_blk(i_block)%size(1) )/BS_LiveTiming_prefactor
+       BS_Block_size= (BS_blk(i_block)%size(1)*(BS_blk(i_block)%size(1)+1))/2
+     else
+       BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)
      endif
+     !
+     BS_Block_size=BS_Block_size/BS_LiveTiming_prefactor
      !
    end function BS_Block_size
    !
@@ -461,12 +463,13 @@ module BS
    end subroutine BS_Blocks_symmetrize_K
    !
    subroutine BS_HAYVEC_alloc(V)
+     use parallel_m,    ONLY:PAR_IND_T_Haydock
      type(Haydock_vector) :: V(:)
      ! ws:
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
      enddo
    end subroutine BS_HAYVEC_alloc
@@ -478,9 +481,7 @@ module BS
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
-       if (allocated(V(i_g)%fragment)) then
-         deallocate(V(i_g)%fragment)
-       end if
+       if (allocated(V(i_g)%fragment)) deallocate(V(i_g)%fragment)
      end do
    end subroutine BS_HAYVEC_free
    !

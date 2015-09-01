@@ -53,11 +53,6 @@ module X_m
  !
  logical                  :: Vnl_commutator_warning
  !
- ! Real-Time
- !
- logical                  :: computing_Xo_variation
- !
- !
  ! Dipole M.E.
  !
  character(schlen)        :: Dipole_approach

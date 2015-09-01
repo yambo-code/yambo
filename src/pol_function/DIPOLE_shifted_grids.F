@@ -134,7 +134,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  !
  ! Main loop over cartesian directions
  !
- call SET_dip_parallelization(X,l_mat_eval_DIP,n_LT_steps)
+ call SET_dipole_parallelization_scheme(X,l_mat_eval_DIP,n_LT_steps)
  !
  do iq = 1, num_shifted_grids
    !

@@ -81,7 +81,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Look for the W(iw_ref) closest 0
  !==================================
- call FREQUENCIES_set_iw_ref(W_bss%p,BSS_n_freqs)
+ call FREQUENCIES_set_reference_point(W_bss%p,BSS_n_freqs)
  !
  if (l_bs_fxc) goto 1
  !

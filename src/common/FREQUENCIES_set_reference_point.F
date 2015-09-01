@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FREQUENCIES_set_iw_ref(omega,n_freq)
+subroutine FREQUENCIES_set_reference_point(omega,n_freq)
  !
  ! Look for the W(iw_ref) closest 0
  ! This is needed by the velocity gauge to impose the diamagnetic sum-rule
@@ -58,4 +58,4 @@ subroutine FREQUENCIES_set_iw_ref(omega,n_freq)
  !
  if(trim(global_gauge)=="velocity" .and. abs(real(omega(iw_ref)))==0._SP) omega(iw_ref)=cmplx(1.E-10,aimag(omega(iw_ref)))
  !
-end subroutine FREQUENCIES_set_iw_ref
+end subroutine FREQUENCIES_set_reference_point

@@ -72,6 +72,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  integer :: ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt
+ real(SP):: df_H
  integer, external :: io_SC_components,io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
  !
@@ -280,9 +281,14 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Update occupations after manual pump or G_lesser from DB (?)
  !==============================================================
  do ib=SC_bands(1),SC_bands(2)
-   RT_E_occupations(ib,:)= aimag(dG_lesser(ib,ib,:,1))+          aimag(G_lesser_reference(ib,ib,:))
-   RT_H_occupations(ib,:)=-aimag(dG_lesser(ib,ib,:,1))+(spin_occ-aimag(G_lesser_reference(ib,ib,:)))
-   RT_delta0_occupations(ib,:)=aimag(dG_lesser(ib,ib,:,1))
+   do ik=1,k%nibz
+     do ik_RT_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       RT_E_occupations(ib,ik_RT_rim)     =  aimag(dG_lesser(ib,ib,ik_RT_rim,1))+aimag(G_lesser_reference(ib,ib,ik_RT_rim))
+       df_H=spin_occ-aimag(G_lesser_reference(ib,ib,ik_RT_rim))
+       RT_H_occupations(ib,ik_RT_rim)     = -aimag(dG_lesser(ib,ib,ik_RT_rim,1))+df_H
+       RT_delta0_occupations(ib,ik_RT_rim)=  aimag(dG_lesser(ib,ib,ik_RT_rim,1))
+     enddo
+   enddo
  enddo
  !
  if (l_NE_dynamics) NE_i_time=it_start

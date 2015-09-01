@@ -61,7 +61,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
- call SET_dip_parallelization(X,l_mat_eval_DIP,n_LT_steps) 
+ call SET_dipole_parallelization_scheme(X,l_mat_eval_DIP,n_LT_steps) 
  !
  if (n_LT_steps>0) call live_timing('Dipoles in real space',n_LT_steps)
  !

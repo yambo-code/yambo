@@ -58,7 +58,10 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
  !
  complex(SP) :: dG1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  complex(SP) :: dG2(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- ! 
+ !
+ ! Work Space
+ !
+ real(SP)    :: df_H
  !
 #if defined _TIMING
  call timing('RT integrator',OPR='start')
@@ -269,7 +272,12 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
        do ib=SC_bands(1),SC_bands(2)
          !
          RT_E_occupations(ib,ik)= aimag(G_inonly(ib,ib,ik))+            aimag(G_lesser_reference(ib,ib,ik))
-         RT_H_occupations(ib,ik)=-aimag(G_inonly(ib,ib,ik))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
+         !
+         ! AM, July 2015. Intel compilers nest in ordered way the mathematical parenthesis. By using 
+         ! df_H this problem is solved.
+         !
+         df_H=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
+         RT_H_occupations(ib,ik)=-aimag(G_inonly(ib,ib,ik))+ dF_H
          !
          RT_delta0_occupations(ib,ik)=aimag(G_inonly(ib,ib,ik))
          !

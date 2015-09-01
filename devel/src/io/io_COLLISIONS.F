@@ -73,14 +73,14 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
  if(io_COLLISIONS/=0) goto 1
  !
- if (.not.ver_is_gt_or_eq(ID,revision=2800)) then
-   io_COLLISIONS=IO_OUTDATED_DB
-   goto 1
- endif
- !
  if (any(io_sec(ID,:)==1)) then
    !
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
+   !
+   if (.not.ver_is_gt_or_eq(ID,revision=2800)) then
+     io_COLLISIONS=IO_OUTDATED_DB
+     goto 1
+   endif
    !
    VAR_size=7
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=VAR_size,MENU=0)

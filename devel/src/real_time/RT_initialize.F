@@ -136,6 +136,7 @@ subroutine RT_initialize(E,k,q)
  do i1=1,3
    !
    if (RT_IO_time(i1)>0) IO_steps(i1) =nint(RT_IO_time(i1)/RT_step)
+   if (IO_steps(i1)== 0) IO_steps(i1) =1
    !
    if(IO_steps(i1)>0.and.mod(NE_steps-1,IO_steps(i1))/=0) then
      !
@@ -298,7 +299,14 @@ subroutine RT_initialize(E,k,q)
  !
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
- if (l_elph_scatt.or.l_elel_scatt) N_T_samplings=RT_Lifetimes_evaluation_plan( )
+ if (l_elph_scatt.or.l_elel_scatt) then
+   if (.not.associated(E%W)) then
+     call warning("NO QP damping provided. E-E and/or E-P switched off")
+     l_elph_scatt=.FALSE.
+     l_elel_scatt=.FALSE.
+   endif
+   N_T_samplings =RT_Lifetimes_evaluation_plan( )
+ endif
  !
  ! Checking extended COLLISIONS
  !==============================
@@ -315,6 +323,7 @@ subroutine RT_initialize(E,k,q)
    call COLLISIONS_load(.TRUE.)
    !
  endif
+ !
  !
  ! Initial allocation and basic definitions of the RT_carriers object
  !====================================================================
@@ -334,7 +343,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'NE time                [fs]:',(NE_steps-1)*RT_step/FS2AUT)
  call msg( 'r', 'Memory depth(G)        [fs]:',T_memory/FS2AUT)
  call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
- if  (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)
+ if (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)
  !
  if (.not.trim(RT_life_interp_KIND)=="NONE") then
    call msg( 'nr','---Dynamics---')

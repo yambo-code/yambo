@@ -31,11 +31,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_DbGd,use_X_Drude,X_DbGd_nkpts,Dipole_bands_ordered,Chi_mode,&
-&                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_direct_approach,&
+&                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
+&                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
-&                      X_terminator,X_en_comp,global_gauge,l_rotate_dipoles,use_covariant_approach,&
-&                      force_p_direct_approach
+&                      X_terminator,X_en_comp,global_gauge,use_covariant_approach,&
+&                      force_v_g_space_approach,use_real_space_approach,Dipole_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,&
@@ -55,18 +55,18 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     cutoff_presets,k_map
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
-&                     eval_magn
+&                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
-&                     n_max_jobstr,grid_path
+&                     n_max_jobstr,grid_paths
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
 &                     string_split,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
- use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
+ use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,BS_drude_f_eh,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_DbGd,BSS_damp_reference,&
@@ -100,7 +100,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
-&                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk
+&                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
+&                     RT_ctl_db
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,i_Pump,i_Probe,A_vecpot_reset,     &
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
  use plasma,     ONLY:Plasma_redux_percent
@@ -330,6 +331,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BZ_DbGd_nbands=0
  BZ_DbGd_tot_nkpts=0
  BZ_ASSOCIATED_nkpts=0
+ E_SOC_nbands=0
  filled_tresh=0.00001
  !
  ! Magnetization
@@ -376,21 +378,21 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
  half_X_mat_only=.FALSE.
- Dipole_bands_ordered=.TRUE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
- use_shifted_grids_approach=.FALSE.
- use_covariant_approach=.FALSE.
- use_direct_approach=.TRUE.
- force_p_direct_approach=.TRUE.
+ Dipole_approach="G-space v"
+ use_shifted_grids_approach = .FALSE.
+ use_covariant_approach     = .FALSE.
+ use_real_space_approach    = .FALSE.
+ use_g_space_approach       = .TRUE.
+ force_v_g_space_approach   = .FALSE.
  use_X_DbGd=.FALSE.
- use_X_Drude=.FALSE.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
- grid_path='none'
+ grid_paths=' '
+ skip_cond_sum_rule=.FALSE.
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
- l_rotate_dipoles=.FALSE.
  q_plus_G_direction=0.
  Q_Shift_Order=1
  n_X_descs=0
@@ -432,13 +434,22 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  forall (i1=1:3,i2=1:2) QP_ctl_Wv(i1,:,i2)=0.
  forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1.,0.)
  !
+#if defined _RT
+ !
+ ! RT control
+ !
+ RT_ctl_db="none"
+ !
+#endif
+ !
  ! BS/BSS
  !
  BS_n_g_W=1
- BS_eh_en=(/-1.,-1./)/HA2EV
+ BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
+ BS_drude_f_eh=0._SP
  BS_identifier=0
  BS_q=1
- BS_eh_win=100.
+ BS_eh_win=100._SP
  BS_res_mode='xc'
  BS_cpl_mode='none'
  BSE_mode='causal'
@@ -450,14 +461,14 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BSS_inversion_mode='pf'
  BSS_n_freqs=100
  BSS_n_descs=0
- BSS_er=(/0.,10./)/HA2EV
- BSS_dr=.1/HA2EV
- BSS_q0=(/1.,0.,0./)
+ BSS_er=(/0._SP,10._SP/)/HA2EV
+ BSS_dr=0.1_SP/HA2EV
+ BSS_q0=(/1._SP,0._SP,0._SP/)
  BSS_uses_DbGd=.FALSE.
- BSS_damp_reference=0.
+ BSS_damp_reference=0._SP
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
- Haydock_treshold=-0.02
+ Haydock_treshold=-0.02_SP
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  !
@@ -568,7 +579,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_scatt_tresh=1.
  Eh_pumped_pair_energy=-1./HA2EV
  Eh_pumped_pair_width=0.1/HA2EV
- Eh_pumped_Nel=1.
+ Eh_pumped_Nel=1._SP
  Plasma_redux_percent=100._SP
  DbGd_EE_percent=0._SP
  !

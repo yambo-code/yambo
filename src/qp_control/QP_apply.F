@@ -147,8 +147,8 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! Sectioning
  !
- if (depth>0 ) call section('p',trim(ch))
- if (depth==0) call section('*',trim(ch))
+ if (depth>0 ) call section('=',trim(ch))
+ if (depth==0) call section('+',trim(ch))
  !
  ! Interpolation neighbours is always input file controlled
  !

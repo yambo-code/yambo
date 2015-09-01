@@ -23,7 +23,7 @@
 !
 subroutine K_kerr_IP(w)
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,cZERO
  use units,          ONLY:DEG2RAD
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
@@ -32,7 +32,7 @@ subroutine K_kerr_IP(w)
  use KERR,           ONLY:BSS_rhoq0_kerr,DIP_projected_r90,B_Hall
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BS_T_grp,BSS_eh_f,BSS_eh_table,&
 &                         BSS_eh_E,BSS_eh_W,BS_K_coupling,BS_anti_res,BS_nT_grps
- use electrons,      ONLY:spin_occ,spin
+ use electrons,      ONLY:spin_occ,spin,E_SOC_nbands
  use R_lattice,      ONLY:d3k_factor,q_norm
  use drivers,        ONLY:l_anomalous_Hall
  use parallel_m,     ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
@@ -42,17 +42,22 @@ subroutine K_kerr_IP(w)
  implicit none
  !
  complex(SP)       :: w(BSS_n_freqs) 
- real(SP)          :: Co
+ real(SP)          :: Co,conjg_fac
  !
  ! Work Space
  !
+ real(SP)          ::IP_E(2)
  complex(SP)       ::local_Z
- integer           ::ik,iv,ic,i1,i_sp,i_T,i_T_g,ik_mem
+ integer           ::ik_bz,iv,ic,i1,i_sp,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
  !
+ n_SOC=1
+ if( E_SOC_nbands/=0) n_SOC=2
  !
- B_Hall=(0._SP,0._SP)
+ B_Hall=cZERO
  !
- ! eps0_xy
+ local_Z=1._SP
+ if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
+ if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
  !
  if (l_rpa_IP) call live_timing('IP Off-diagonal absorption',PAR_BS_nT_col_grps)
  !
@@ -62,36 +67,43 @@ subroutine K_kerr_IP(w)
    !    
    do i_T=1,BS_T_grp(i_T_g)%size    
      !    
-     ik    = BS_T_grp(i_T_g)%table(i_T,1)
-     ik_mem= PAR_Xk_bz_index(ik)
+     ik_bz = BS_T_grp(i_T_g)%table(i_T,1)
      iv    = BS_T_grp(i_T_g)%table(i_T,2)
      ic    = BS_T_grp(i_T_g)%table(i_T,3)
      i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
      !
-     local_Z=1.
+     ik_mem= PAR_Xk_bz_index(ik_bz)
+     !
+     if (E_SOC_nbands==0) IP_E(1)=BS_T_grp(i_T_g)%E(i_T)
+     if (E_SOC_nbands/=0) IP_E(:)=BS_T_grp(i_T_g)%E(i_T)+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+     !
      if (allocated(BS_T_grp(i_T_g)%Z)) local_Z=BS_T_grp(i_T_g)%Z(i_T)
      !
-     if (trim(global_gauge)=='length')    BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=-conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp))
-     if (trim(global_gauge)=='velocity')  BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)= conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp))
-     BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)*sqrt(BS_T_grp(i_T_g)%f(i_T))
-     !
+     BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=conjg_fac*conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp))*sqrt(BS_T_grp(i_T_g)%f(i_T))
      if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_projected_r90(ic,iv,ik_mem,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))
      !
-     if (abs(BS_T_grp(i_T_g)%E(i_T))<1.E-5) cycle
-     !    
-     X_epsilon(6,:)=X_epsilon(6,:)-BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg( BS_T_grp(i_T_g)%dipoles_R_kerr(i_T) )*&
-&                     local_Z/(w(:)-BS_T_grp(i_T_g)%E(i_T))
+     if ( (abs(IP_E(1))<1.E-5 .or. (abs(IP_E(2))<1.E-5.and.E_SOC_nbands/=0))) cycle
      !
-     if (l_anomalous_Hall) then
+     do i_pert_SOC=1,n_SOC
+       X_epsilon(6,:)=X_epsilon(6,:)-BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg( BS_T_grp(i_T_g)%dipoles_R_kerr(i_T) )*&
+&                       local_Z/(w(:)-IP_E(i_pert_SOC))
+       !
+       ! Anomalous Hal term, Eq.(1.12) PRB 48, 11705 (1993)
        if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+BS_T_grp(i_T_g)%dipoles_R(i_T)* &
 &                                           conjg( BS_T_grp(i_T_g)%dipoles_R_kerr(i_T) )
        if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+BS_T_grp(i_T_g)%dipoles_R(i_T)* &
-&                                           conjg( BS_T_grp(i_T_g)%dipoles_R_kerr(i_T) )/real(BS_T_grp(i_T_g)%E(i_T))**2
-     endif
+&                                           conjg( BS_T_grp(i_T_g)%dipoles_R_kerr(i_T) )/real(IP_E(i_pert_SOC))**2
+       !
+     enddo
      !
      if (BS_anti_res) then
-       X_epsilon(6,:)=X_epsilon(6,:)+conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)*&
-&                       local_Z/(w(:)+BS_T_grp(i_T_g)%E(i_T))
+       !
+       ! Note the plus in "+" coming from the change of sign in the occupation factor
+       !
+       do i_pert_SOC=1,n_SOC
+         X_epsilon(6,:)=X_epsilon(6,:)+conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)*&
+&                         local_Z/(w(:)+IP_E(i_pert_SOC))
+       enddo
        !
      endif
      !
@@ -103,11 +115,13 @@ subroutine K_kerr_IP(w)
  !
  if (l_rpa_IP) call live_timing()
  !
- Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
+ if (E_SOC_nbands==0) Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
+ if (E_SOC_nbands/=0) Co=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
  !
- if(trim(global_gauge)=='length'   ) X_epsilon(6,:)= X_epsilon(6,:)*Co/q_norm(1) **2
- if(trim(global_gauge)=='velocity' ) X_epsilon(6,:)= X_epsilon(6,:)*Co/real(w(:))**2
+ if(trim(global_gauge)=='length'   ) X_epsilon(6,:)= X_epsilon(6,:)*Co/q_norm(1)**2
+ if(trim(global_gauge)=='velocity' ) X_epsilon(6,:)= X_epsilon(6,:)*Co/  w(:)   **2
  !
+ ! Anomalous Hal term, Eq.(1.12) PRB 48, 11705 (1993)
  if (BS_anti_res) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
  if(trim(global_gauge)=='length'   ) B_Hall(1)=B_Hall(1)*Co/q_norm(1)**2

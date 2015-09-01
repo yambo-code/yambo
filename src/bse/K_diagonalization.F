@@ -26,20 +26,18 @@ subroutine K_diagonalization(iq,W)
  ! Generic diagonalization method to solve resonant and non resonant
  ! Hamiltonians.
  !
- use pars,           ONLY:SP,pi,cZERO
- use wrapper_omp,    ONLY:M_by_M_omp,Vstar_dot_V_omp,V_dot_V_omp
- use X_m,            ONLY:X_epsilon,X_drude_term,global_gauge,iw_ref
+ use pars,           ONLY:SP,pi,cZERO,cI
+ use wrapper_omp,    ONLY:M_by_M_omp,Vstar_dot_V_omp,V_dot_V_omp,real_V_dot_V_omp
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,io_BSS_diago,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_anti_res,BS_mat_free, &
-&                         BS_H_dim,BSS_n_freqs
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim,&
+&                         BSS_eh_E_SOC_corr
+ use electrons,      ONLY:E_SOC_nbands
  use memory_m,       ONLY:mem_est
- use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:DIAGO,INV
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:d3k_factor,q_norm
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,ncpu,myid,PP_indexes_reset
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index,MATRIX_driver
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
@@ -47,9 +45,8 @@ subroutine K_diagonalization(iq,W)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
- use drivers,        ONLY:l_kerr,l_anomalous_Hall
- use units,          ONLY:DEG2RAD
+ use KERR,           ONLY:BSS_rhoq0_kerr
+ use drivers,        ONLY:l_kerr
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -66,44 +63,25 @@ subroutine K_diagonalization(iq,W)
  ! Work Space
  !
  type(PP_indexes)     ::px
- integer              ::i1,iw
+ integer              ::i1
  logical              ::K_is_not_hermitian
- real(SP)             ::gauge_factor,Co
- complex(SP)          ::factor_jj
  !
  ! Residuals & Energies
  !
- complex(SP), allocatable ::BS_E(:)
- complex(SP), allocatable ::BS_R(:) 
- !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- complex(SP), allocatable ::BS_R_kerr(:) 
-#endif
- !
- ! GPL_EXCLUDE_END
+ complex(SP) ::BS_E(BS_H_dim),BS_E_SOC_corr(2,BS_H_dim)
+ complex(SP) ::BS_R(BS_H_dim),BS_R_kerr(BS_H_dim)
  !
  ! Resonant K
  !
- real(SP),    allocatable ::BS_E_real(:)
+ real(SP)    ::BS_E_real(BS_H_dim)
  !
  ! Coupling
  !
- complex(SP), allocatable ::BS_overlap(:,:)
- complex(SP), allocatable ::BS_V_left(:,:)
- complex(SP), allocatable ::BS_V_right(:,:)
- complex(SP), allocatable ::BS_R_left(:)
- complex(SP), allocatable ::BS_R_right(:)
- !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- complex(SP), allocatable ::BS_R_right_kerr(:)
-#endif
- !
- ! GPL_EXCLUDE_END
- !
+ complex(SP) ::BS_overlap(BS_H_dim,BS_H_dim)
+ complex(SP) ::BS_V_left(BS_H_dim,BS_H_dim)
+ complex(SP) ::BS_V_right(BS_H_dim,BS_H_dim)
+ complex(SP) ::BS_R_left(BS_H_dim)
+ complex(SP) ::BS_R_right(BS_H_dim),BS_R_right_kerr(BS_H_dim)
  !
  ! I/O
  !
@@ -130,12 +108,6 @@ subroutine K_diagonalization(iq,W)
  ! Diagonalization DB (IN)
  !========================
  !
- BS_H_dim=BS_K_dim
- if (BS_K_coupling) BS_H_dim=2*BS_K_dim
- !
- allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
- call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
- !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R)
  !
@@ -149,7 +121,7 @@ subroutine K_diagonalization(iq,W)
    !
    if (allocated(BSS_eh_W)) then
      do i1=1,BS_K_dim
-       BS_mat(i1,i1)=BS_mat(i1,i1)+(0.,1.)*BSS_eh_W(i1)
+       BS_mat(i1,i1)=BS_mat(i1,i1)+cI*BSS_eh_W(i1)
      enddo
    endif
    !
@@ -163,39 +135,7 @@ subroutine K_diagonalization(iq,W)
  !
  K_is_not_hermitian=BS_K_coupling.or.allocated(BSS_eh_W)
  !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- if(l_kerr) then
-   allocate(BS_R_kerr(BS_H_dim))
-   call mem_est("BS_R_kerr",(/BS_H_dim/))
- endif
-#endif
- !
- ! GPL_EXCLUDE_END
- !
- if (K_is_not_hermitian) then
-   allocate(BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim))
-   call mem_est("BS_V_left BS_V_right",(/BS_H_dim,size(BS_V_left),size(BS_V_right)/))
-   allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim))
-   call mem_est("BS_R_left BS_R_right BS_overlap",(/BS_H_dim,BS_H_dim,size(BS_overlap)/))
-   !
-   ! GPL_EXCLUDE_START
-   !
-#if defined _KERR
-   if(l_kerr) then
-     allocate(BS_R_right_kerr(BS_H_dim))
-     call mem_est("BS_R_right_kerr",(/BS_H_dim/))
-  endif
-#endif
-   !
-   ! GPL_EXCLUDE_END
-   !
-   BS_overlap=(0.,0.)
- else
-   allocate(BS_E_real(BS_H_dim))
-   call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))
- endif
+ if (K_is_not_hermitian) BS_overlap=cZERO
  !
  ! Initialize the output file 
  !============================
@@ -241,10 +181,11 @@ subroutine K_diagonalization(iq,W)
      ! [1] BS_R_right(i)=<q0|j><j|i_R>
      !                  =conjg(BSS_rhoq0(j))*BS_V_right(j,i)
      !
+     BS_R_right=cZERO
+     !
      call live_timing('BSK R residuals',px%n_of_elements(myid+1))
      !
      do i1=1,BS_H_dim
-       BS_R_right(i1)=cZERO
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R_right(i1)=Vstar_dot_V_omp(BS_H_dim,BSS_rhoq0,BS_V_right(:,i1))
@@ -256,12 +197,13 @@ subroutine K_diagonalization(iq,W)
      !
      ! GPL_EXCLUDE_START
      !
+     BS_R_right_kerr=cZERO
+     !
 #if defined _KERR
      if(l_kerr) then
        call live_timing(' KERR residuals',px%n_of_elements(myid+1))
        !
        do i1=1,BS_H_dim
-         BS_R_right_kerr(i1)=cZERO
          if (.not.px%element_1D(i1)) cycle
          !
          BS_R_right_kerr(i1)=Vstar_dot_V_omp(BS_H_dim,BSS_rhoq0_kerr,BS_V_right(:,i1))
@@ -278,10 +220,11 @@ subroutine K_diagonalization(iq,W)
      ! [2] BS_R(i)= <i_K|j><j|q0> 
      !            = conjg( BS_V_left(k,i))*BSS_rhoq0(k)*R_k
      !
+     BS_R=cZERO
+     !
      call live_timing('BSK L residuals',px%n_of_elements(myid+1))
      !
      do i1=1,BS_H_dim
-       BS_R(i1)=cZERO
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R(i1)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i1), &
@@ -306,9 +249,10 @@ subroutine K_diagonalization(iq,W)
      !
      ! [4] BS_R_left(i)=BS_overlap(i,j)BS_R(j)
      !
+     BS_R_left=cZERO
+     !
      call live_timing('BSK L x overlap',px%n_of_elements(myid+1))
      do i1=1,BS_H_dim
-       BS_R_left(i1)=cZERO
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R_left(i1)=V_dot_V_omp(BS_H_dim,BS_overlap(i1,:),BS_R)
@@ -341,26 +285,35 @@ subroutine K_diagonalization(iq,W)
      ! BS_R(i)=\sum_k <q0|k><k|i> =
      !         \sum_k BS_mat(k,i) x conjg( BSS_rhoq0(k) )
      !
+     BS_R=cZERO
+     if(E_SOC_nbands/=0) BS_E_SOC_corr=cZERO
+     !
      call live_timing('BSK   residuals',px%n_of_elements(myid+1))
-     BS_R=(0.,0.)
      !
      do i1=1,BS_K_dim
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R(i1)=Vstar_dot_V_omp(BS_K_dim,BSS_rhoq0,BS_mat(:,i1))
        !
+       if(E_SOC_nbands/=0) then
+         BS_E_SOC_corr(1,i1)=real_V_dot_V_omp( BS_K_dim,BSS_eh_E_SOC_corr(1,:),real(BS_mat(:,i1)*conjg(BS_mat(:,i1)),SP) )
+         BS_E_SOC_corr(2,i1)=real_V_dot_V_omp( BS_K_dim,BSS_eh_E_SOC_corr(2,:),real(BS_mat(:,i1)*conjg(BS_mat(:,i1)),SP) )
+       endif
+       !
        call live_timing(steps=1)
      enddo
      call live_timing
      !
      call PP_redux_wait(BS_R)
+     if(E_SOC_nbands/=0) call PP_redux_wait(BS_E_SOC_corr) 
      !
      ! GPL_EXCLUDE_START
+     !
+     BS_R_kerr=cZERO
      !
 #if defined _KERR
      if(l_kerr) then
        call live_timing(' KERR residuals',px%n_of_elements(myid+1))
-       BS_R_KERR=(0.,0.)
        !
        do i1=1,BS_K_dim
          if (.not.px%element_1D(i1)) cycle
@@ -382,115 +335,7 @@ subroutine K_diagonalization(iq,W)
  !
  ! Now I calculate epsilon
  !=========================
- !
- ! eps2(iw)= 1 - Sum  BS_R(K)   /(w +I eta - E)  (coupling or non-hermitian)
- !           1 - Sum |BS_R(K)|^2/(w +I eta - E)  (resonant)
- !
- X_epsilon(1,:)=(0.,0.)
- X_epsilon(2,:)=(0.,0.)
- X_epsilon(3,:)=X_epsilon(3,:)/real(ncpu,SP)
- !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- if(l_kerr) then
-   X_epsilon(5,:)=cZERO
-   X_epsilon(6,:)=X_epsilon(6,:)/real(ncpu,SP)
-   if(l_anomalous_Hall) then
-     B_Hall(2)=cZERO
-     B_Hall(1)=B_Hall(1)/real(ncpu,SP)
-   endif
- endif
-#endif
- !
- ! GPL_EXCLUDE_END
- !
- call live_timing('BSK     epsilon',px%n_of_elements(myid+1))
- do i1=1,BS_H_dim
-   if (.not.px%element_1D(i1)) cycle
-   !
-   ! GPL_EXCLUDE_START
-   !
-#if defined _KERR
-   if (l_kerr.and.l_anomalous_Hall) then
-     if (trim(global_gauge)=='length'  ) gauge_factor=1._SP
-     if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
-     if (     K_is_not_hermitian) B_Hall(2)=B_Hall(2)+      BS_R_kerr(i1)          /     gauge_factor **2._SP
-     if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)/real(gauge_factor)**2._SP
-   endif
-#endif
-   !
-   ! GPL_EXCLUDE_END
-   !
-   ! Note the use of a causal expression here needed to avoid any
-   ! distinction between the resonant and antiresonant e/h Green's functions.
-   !
-   if (     K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
-   if (.not.K_is_not_hermitian) then
-     X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
-     if (BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))
-   endif
-   !
-   ! GPL_EXCLUDE_START
-   !
-#if defined _KERR
-   if(l_kerr) then
-     if (     K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
-     if (.not.K_is_not_hermitian) then
-       X_epsilon(5,:)=X_epsilon(5,:)-conjg(BS_R(i1))*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
-       if(BS_anti_res) X_epsilon(5,:)=X_epsilon(5,:)+BS_R(i1)*conjg(BS_R_kerr(i1))/(W%p(:)+BS_E(i1))
-     endif
-   endif
-#endif
-   !
-   ! GPL_EXCLUDE_END
-   !
-   call live_timing(steps=1)
- enddo
- call live_timing
- call PP_redux_wait(X_epsilon)
- !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- if(l_anomalous_Hall) call PP_redux_wait(B_Hall)
-#endif
- !
- ! GPL_EXCLUDE_END
- !
- Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi
- !
- if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(2,iw_ref)
- !
- if(trim(global_gauge)=='length'  ) X_epsilon(2,:)=1._SP+(X_epsilon(2,:)          +X_drude_term(:))*Co/  q_norm(1) **2
- if(trim(global_gauge)=='velocity') X_epsilon(2,:)=1._SP+(X_epsilon(2,:)-factor_jj+X_drude_term(:))*Co/real(W%p(:))**2
- !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- !
- if(l_kerr) then
-   if(trim(global_gauge)=='length'  ) X_epsilon(5,:)=X_epsilon(5,:)*Co/  q_norm(1) **2
-   if(trim(global_gauge)=='velocity') X_epsilon(5,:)=X_epsilon(5,:)*Co/real(W%p(:))**2
-   !
-   if(l_anomalous_Hall) then
-     if(BS_anti_res) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
-     if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co/q_norm(1)**2
-     if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*Co
-     !
-     ! I add the term describing the Anomalous Hall effect which is
-     ! missing in the length gauge (this should be zero for systems with a gap)
-     if (trim(global_gauge)=='length') X_epsilon(5,:)=X_epsilon(5,:)+B_Hall(2)/W%p(:)
-     !
-   endif
-   !
- endif
- !
-#endif
- !
- ! GPL_EXCLUDE_END
- !
- X_epsilon(1,:)=W%p(:)
+ call K_diag_compute_epsilon(iq,W,BS_E,BS_E_SOC_corr,BS_R,BS_R_kerr)
  !
  ! I write the output file 
  !
@@ -529,39 +374,6 @@ subroutine K_diagonalization(iq,W)
  !
  call BS_mat_free( )
  !
- deallocate(BS_R,BS_E)
- call mem_est("BS_R BS_E")
- !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- if(l_kerr) then
-   deallocate(BS_R_kerr)
-   call mem_est("BS_R_kerr")
- endif
-#endif
- !
- ! GPL_EXCLUDE_END
- !
- if (K_is_not_hermitian) then
-   deallocate(BS_V_left,BS_V_right,BS_R_left,BS_R_right)
-   call mem_est("BS_V_left BS_V_right BS_R_left BS_R_right")
-   !
-   ! GPL_EXCLUDE_START
-   !
-#if defined _KERR
-   if(l_kerr) then
-     deallocate(BS_R_right_kerr)
-     call mem_est("BS_R_right_kerr")
-   endif
-#endif
-   !
-   ! GPL_EXCLUDE_END
-   !
- else
-   deallocate(BS_E_real)
-   call mem_est("BS_E_real")
- endif
  call PP_indexes_reset(px)
  !
 #if defined _TIMING

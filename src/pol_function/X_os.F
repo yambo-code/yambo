@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM,AF
+! Authors (see AUTHORS file for details): AM,AF,DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -29,29 +29,27 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  use drivers,       ONLY:l_life,l_em1s
  use IO_m,          ONLY:io_RESPONSE
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
- use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg
+ use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo,HEAD_QP_cpu,PAR_COM_Q_INDEX
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_q_for_Xo,PAR_COM_Q_INDEX,myid
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,n_threads_DIP
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
- use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
- use electrons,     ONLY:levels,spin_occ
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
+ use D_lattice,     ONLY:i_space_inv
+ use electrons,     ONLY:levels
+ use R_lattice,     ONLY:qindx_X,bz_samp
  use memory_m,      ONLY:mem_est
- use X_m,           ONLY:X_t,X_poles,DIP_projected,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
-&                        X_terminator
+ use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,&
+&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,   &
+&                        X_terminator,global_gauge
  use IO_m,          ONLY:IO_and_Messaging_switch
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
- use X_m,           ONLY:global_gauge
 #endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -66,14 +64,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Work Space
  !
- integer                 :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
-&                           isp,iv,ic,iw,isave(4),n_poles,i_cg,i_bg,alloc_err
+ character(schlen)       :: live_t_string
+ integer                 :: ig1,ig2,iw,n_poles,i_cg
  logical                 :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU),eh_occ
- type(ggwinfo)           :: isc
+ real(SP)                :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU)
  complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),pole
- complex(SP),allocatable :: rhotw_save(:),Xo_residual(:,:)
- complex(SP),allocatable :: eet_factor(:,:)
+ complex(SP),allocatable :: Xo_res(:,:)
  integer,    external    :: X_eh_setup
  complex(SP),external    :: X_simple_GreenF
  !
@@ -103,6 +99,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    !
    call DIPOLE_driver(Xen, Xk, X, X%q0)
+   !
    call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF,X%ordering)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
@@ -124,6 +121,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  if (iq/=current_iq) then
    !
    n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+   !
+   if (n_poles==0) call warning(' [CPU '//trim(intc(myid))//'] has no poles')
    !
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
@@ -150,15 +149,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  endif 
  !
- ! X Terminator
- !==============
- if (X_terminator) then
-   !
-   allocate(eet_factor(X%ng,X%ng),stat=alloc_err)
-   call mem_est("EET_factor",(/size(eet_factor)/),(/2*SP/),errors=(/alloc_err/))
-   !
- endif
- !
  ! GPL_EXCLUDE_START
  !
 #if defined _ELPH
@@ -182,143 +172,48 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  endif
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
- ! Mem est of Xo_residual 
+ ! Xo_residual allocation 
  !------------------------
+ allocate(Xo_res(X%ng,X%ng))
  call mem_est("Xo_WS",(/X%ng**2/))
  !
  ! Timing
  !========
  ! 
+ live_t_string='Xo@q['//trim(intc(iq))//'] '
+ !
 #if defined _SC 
- if (l_sc_run.and..not.l_eval_collisions) then
-   call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N)
- else
-   call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N)
- endif
-#else
- call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N)
+ if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
+#endif
+#if defined _RT
+ if (computing_Xo_variation)              live_t_string='delta Xo@q['//trim(intc(iq))//'] '
 #endif
  !
+ if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N)
  !
  call OPENMP_update(master_thread)
- !
- ! prepare the scattering module
- !
- call collision_reset(isc,INIT_ONLY=.true.)
  !
  ! MAIN LOOP
  !===========
  !
- ! Main allocation
- !-----------------
- isc%ngrho=X%ng
- if (iq==1) allocate(rhotw_save(X%ng))
- allocate(Xo_residual(X%ng,X%ng))
- allocate(isc%rhotw(X%ng))
- call scatterBamp_alloc(isc)
- !
- isave=0
- !
  do i_cg = 1,coarse_grid_N
    !
-   n_poles = sum(bare_grid_N(1:i_cg-1))
-   !
-   ! 1) First compute the residual
+   ! 1) First compute the residuals
    !================================
-   !
-   Xo_residual(:,:) = cZERO
-   !
-   loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
-     !
-     n_poles=n_poles+1
-     !
-     ! Scattering geometry
-     !---------------------
-     !
-     ikbz   = X_poles_tab(n_poles,1)
-     iv     = X_poles_tab(n_poles,2)
-     ic     = X_poles_tab(n_poles,3)
-     i_spin = X_poles_tab(n_poles,4)
-     ik = Xk%sstar(ikbz,1)
-     is = Xk%sstar(ikbz,2)
-     ikpbz=qindx_X(iq,ikbz,1)
-     ikp=Xk%sstar(ikpbz,1)
-     isp=Xk%sstar(ikpbz,2)
-     !
-     ! Note the renormalization of the eh_occ=f(1-f) factor
-     !
-     !     n_spin n_sp_pol n_spinor  spin_occ eh_occ
-     !       1        1        1         2      2
-     !       2        1        2         1      1
-     !       2        2        1         1      1
-     !
-     eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/spin_occ/real(Xk%nbz)/DL_vol
-     !
-     ! Scattering CALL
-     !-----------------
-     !
-     if (iq==1) then
-       isc%is = (/ic,ik,1,i_spin/)
-       isc%os = (/iv,ik,1,i_spin/)
-       isc%qs = (/1,1,1/)
-       ik_bz_mem=PAR_Xk_bz_index(ikbz)
-       if (.not. skip_WF_load) then
-         if (any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/))) then
-           call scatterBamp(isc)
-           rhotw_save=isc%rhotw
-           isave=(/iv,ic,ik,i_spin/)
-         endif
-         do ig1=1,X%ng
-           ig2=g_rot(sop_inv(is),ig1)
-           isc%rhotw(ig1)=rhotw_save(ig2)
-         enddo
-         if (is>nsym/(i_time_rev+1)) then
-           do ig1=1,X%ng
-             isc%rhotw(ig1)=conjg(isc%rhotw(ig1))
-           enddo
-         endif
-       endif
-       isc%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
-     else
-       isc%is=(/ic,ik,is,i_spin/)
-       isc%os=(/iv,ikp,isp,i_spin/)
-       isc%qs=(/qindx_X(iq,ikbz,2),iq,1/)
-       call scatterBamp(isc)
-     endif
-     !
-     if (X_terminator) then
-       !
-       if ( HEAD_QP_cpu ) then
-         !$omp parallel do default(shared), private(ig1,ig2)
-         do ig1=1,X%ng
-           do ig2=1,X%ng
-               eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
-           enddo
-         enddo
-         !$omp end parallel do
-       endif
-       ! 
-     endif
-     !
-     ! Filling the upper triangular part of the residual here ! 
-     !-------------^^^^^---------------------------------------
-     !$omp parallel do default(shared), private(ig2)
-     do ig2=1,X%ng
-       call V_by_V_plus_V(ig2,eh_occ*isc%rhotw(ig2),conjg(isc%rhotw(:ig2)),Xo_residual(:ig2,ig2))
-     enddo
-     !$omp end parallel do
-     !
-   enddo loop_bare_grid
+   call X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res)
    !
    ! 2) Then the frequency dependent term
    !=======================================
+   Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
    !
-   Drude_pole=iq==1.and.abs(coarse_grid_Pt(i_cg))<1.E-5
+   if(Drude_pole) then
+     Xo(1,1,:)=Xo(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
+     call live_timing(steps=1)
+     cycle
+   endif
    !
-   if (Drude_pole) then
-     GreenF=drude_GreenF/real(bare_grid_N(i_cg))
-   else if(force_bare_X_G) then
-     call X_bare_Double_Grid_GreenF(iq,X_poles_tab(i_cg,:),Xw,Xen,Xk,GreenF,X%ordering)
+   if(force_bare_X_G) then
+     call X_bare_Double_Grid_GreenF(iq,X_poles_tab(i_cg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
    else
      pole=cmplx(coarse_grid_Pt(i_cg),0._SP)
      do iw=1,Xw%n_freqs
@@ -328,23 +223,22 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
-   !
    do iw=1,Xw%n_freqs
      !
      !$omp parallel default(shared)
      !$omp do private(ig2)
      do ig2=1,X%ng
-       call V_by_V_plus_V(ig2,GreenF(iw),Xo_residual(:ig2,ig2),Xo(:ig2,ig2,iw))
+       call V_by_V_plus_V(ig2,GreenF(iw),Xo_res(:ig2,ig2),Xo(:ig2,ig2,iw))
      enddo
      !$omp end do
      if (.not.half_X_mat_only ) then 
        !$omp do private(ig2)
        do ig2=1,X%ng
-         call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_residual(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
+         call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_res(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
        enddo
        !$omp end do
      endif
-     !$omp end parallel 
+     !$omp end parallel
      !
    enddo
    !
@@ -352,15 +246,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  enddo 
  !
- ! Cleaning workspace
- !-------------------------
- !
- if (iq==1) deallocate(rhotw_save)
- deallocate(isc%rhotw,Xo_residual)
- call scatterBamp_free(isc)
- !
- !
- call live_timing()
+ if(coarse_grid_N>0)  call live_timing()
  !
  call OPENMP_update(master_thread) 
  !
@@ -406,26 +292,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  endif
  !
-#if defined _SC
- !
- ! Divide the head by w^2 in case a velocity gauge is used
- ! DAVIDE: shouldn't I divide also the wings by w ?
- !=========================================================
- !
- if (trim(global_gauge)=='velocity') then
-   do iw=1,Xw%n_freqs
-     Xo(1,1,iw)=Xo(1,1,iw)/real(Xw%p(iw))**2
-     !Xo(2:,1,iw)=Xo(2:,1,iw)/real(Xw%p(iw))
-     !Xo(1,2:,iw)=Xo(1,2:,iw)/real(Xw%p(iw))
-   enddo
- endif
- !
-#endif
- !
  ! CLEAN
  !=======
- !
- call collision_reset(isc)
+ deallocate(Xo_res)
  call mem_est("Xo_WS")
  !
  current_iq=iq

@@ -27,16 +27,18 @@ subroutine K_output_file(iq,mode)
  use units,     ONLY:HA2EV
  use BS,        ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
- use X_m,       ONLY:X_epsilon,eval_alpha,eps_2_alpha,O_eels
+ use X_m,       ONLY:X_epsilon,eval_alpha,eps_2_alpha,O_eels,A_drude
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
+ use R_lattice, ONLY:nkbz
+ use electrons, ONLY:spin_occ
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,&
 &                    eel_file_name,alpha_file_name,refl_file_name,X_write_descriptions,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
 #if defined _KERR
  use pars,      ONLY:cI
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,hbar_SI
- use drivers,   ONLY:l_kerr,l_anomalous_Hall
+ use drivers,   ONLY:l_kerr
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name
  use KERR,      ONLY:B_Hall
 #endif
@@ -109,6 +111,22 @@ subroutine K_output_file(iq,mode)
  !
  if (mode>0) then 
    !
+   ! Diamagnetic term
+   !
+   call msg('o eps','#','Diamagnetic term',INDENT=0,USE_TABS=.true.)
+   !
+   n_output_data=2
+   if(mode==4) n_output_data=1
+   headers(:2)=(/'A [nel]','A0[nel]'/)
+   call msg("o eps",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+   !
+   A_drude(:)=A_drude(:)/real(nkbz,SP)*spin_occ
+   output_data(1)=real(A_drude(2))
+   output_data(2)=real(A_drude(1))
+   if(mode==4) output_data(1)=output_data(2)
+   call msg('o eps','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+   call msg('o eps','#')
+   !
    ! Headers
    !
    call X_setup_headers('eps')
@@ -142,30 +160,27 @@ subroutine K_output_file(iq,mode)
      !
      ! Hanomalous Hall term
      !
-     if(l_anomalous_Hall) then
-       call msg('o off','#','Anomalous Hall effect sH',INDENT=0,USE_TABS=.true.)
-       !
-       n_output_data=6
-       if(mode==4) n_output_data=3
-       headers(:6)=(/'sH ','   ','   ','sH0','   ','   '/)
-       call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
-       headers(:6)=(/'  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] ','  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] '/)
-       call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
-       !
-       B_Hall(:)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
-       output_data(1)=real(B_Hall(2))
-       output_data(4)=real(B_Hall(1))
-       B_Hall(:)=B_Hall(:)*1.E5/(SPEED_OF_LIGHT_SI)**2/FEMTO
-       output_data(2)=real(B_Hall(2))
-       output_data(5)=real(B_Hall(1))
-       B_Hall(:)=B_Hall(:)*1.E2*HBAR_SI/e_SI**2
-       output_data(3)=real(B_Hall(2))
-       output_data(6)=real(B_Hall(1))
-       if(mode==4) output_data(1:3)=output_data(4:6)
-       call msg('o off','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o off','#')
-       !
-     endif
+     call msg('o off','#','Anomalous Hall effect sH',INDENT=0,USE_TABS=.true.)
+     !
+     n_output_data=6
+     if(mode==4) n_output_data=3
+     headers(:6)=(/'sH ','   ','   ','sH0','   ','   '/)
+     call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+     headers(:6)=(/'  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] ','  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] '/)
+     call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+     !
+     B_Hall(:)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
+     output_data(1)=real(B_Hall(2))
+     output_data(4)=real(B_Hall(1))
+     B_Hall(:)=B_Hall(:)*1.E5/(SPEED_OF_LIGHT_SI)**2/FEMTO
+     output_data(2)=real(B_Hall(2))
+     output_data(5)=real(B_Hall(1))
+     B_Hall(:)=B_Hall(:)*1.E2*HBAR_SI/e_SI**2
+     output_data(3)=real(B_Hall(2))
+     output_data(6)=real(B_Hall(1))
+     if(mode==4) output_data(1:3)=output_data(4:6)
+     call msg('o off','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o off','#')
      !
      call X_setup_headers('off')
      if (mode==1) call msg("o off",'#',headers,INDENT=0,USE_TABS=.TRUE.)

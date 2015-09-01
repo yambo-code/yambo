@@ -30,11 +30,10 @@ subroutine MAG_pseudo_nl(kbv)
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos
+ use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc
  use memory_m,      ONLY:mem_est
  use com,           ONLY:warning
- use magnetic,      ONLY:Bz,x,load_cc,free_cc,new_pp,old_pp,phase_trick,&
-&                        MAG_radius,n_loops
+ use magnetic,      ONLY:Bz,new_pp,old_pp,phase_trick,MAG_radius,n_loops
  !
  implicit none
  !
@@ -63,18 +62,18 @@ subroutine MAG_pseudo_nl(kbv)
      !
      if(MAG_radius==0) then
        ! int_A_dl (R-->r') = 0.5 B_0/c (x_R y' - y_R x') (landau)
-       int_A_dl(:)= 0.5*Bz/SPEED_OF_LIGHT*(x(:,2)*atom_pos(1,ia,is)-atom_pos(2,ia,is)*x(:,1))
+       int_A_dl(:)= 0.5*Bz/SPEED_OF_LIGHT*(x_cc(:,2)*atom_pos(1,ia,is)-atom_pos(2,ia,is)*x_cc(:,1))
        gauge_factor(:)=cmplx( cos(int_A_dl(:)),sin(int_A_dl(:)) )
      else
        gauge_factor(:)=1.
      endif
      if(MAG_radius>0. .or. (phase_trick.and.n_loops>0) ) then
        r_atom_pos(:)=sqrt(atom_pos(1,ia,is)**2+atom_pos(2,ia,is)**2)
-       r_x(:)=sqrt(x(:,1)**2+x(:,2)**2)
+       r_x(:)=sqrt(x_cc(:,1)**2+x_cc(:,2)**2)
        ! cos(\delta_phi)= (R,r') / (||a|| ||b||)
-       cos_delta_phi(:)=(atom_pos(1,ia,is)*x(:,1)+atom_pos(2,ia,is)*x(:,2))/(r_atom_pos(:)*r_x(:))
+       cos_delta_phi(:)=(atom_pos(1,ia,is)*x_cc(:,1)+atom_pos(2,ia,is)*x_cc(:,2))/(r_atom_pos(:)*r_x(:))
        ! sin(\delta_phi)= R x r' / (||a|| ||b||)
-       sin_delta_phi(:)=(x(:,2)*atom_pos(1,ia,is)-atom_pos(2,ia,is)*x(:,1))/(r_atom_pos(:)*r_x(:))
+       sin_delta_phi(:)=(x_cc(:,2)*atom_pos(1,ia,is)-atom_pos(2,ia,is)*x_cc(:,1))/(r_atom_pos(:)*r_x(:))
        ! e^(i/c*int_A_dl) (R-->r') = e^i( \Phi/\Phi_0 (\phi'-\phi_R) (AB)
        if(MAG_radius>0.) Phi_over_Phio=0.5*Bz*MAG_radius**2/SPEED_OF_LIGHT
        if(phase_trick.and.n_loops>0.and.MAG_radius>0.) Phi_over_Phio=Phi_over_Phio-n_loops
@@ -113,6 +112,6 @@ subroutine MAG_pseudo_nl(kbv)
    enddo   ! ia
  enddo  ! is
  !
- call free_cc()
+ deallocate(x_cc)
  !
 end subroutine

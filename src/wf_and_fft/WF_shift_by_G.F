@@ -55,7 +55,7 @@ subroutine WF_shift_by_G(isc,WF_shifted,shift_vec)
  !
  if(.not.allocated(G_m_G)) then
    iG0=max(maxval(k_map%g0_plus_idx(:,2)),maxval(k_map%g0_minus_idx(:,2)))
-   wf_ng_eff=eval_G_minus_G(minval((/ng_closed,wf_ng/)),iG0)
+   wf_ng_eff=eval_G_minus_G(wf_ng,iG0)
  else
    wf_ng_eff=size(G_m_G(:,1))
  endif

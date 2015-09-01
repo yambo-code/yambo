@@ -269,12 +269,12 @@ module stderr
      endif
      !
      if (present(r_v)) then
-       MN=huge(SP)
+       MN= huge(SP)
        MX=-huge(SP)
        do i1=1,size(r_v)
          abs_r_v=abs(r_v(i1))
-         if (abs_r_v<MN.and.abs_r_v>0.) MN=abs_r_v
-         if (abs_r_v>MX.and.abs_r_v>0.) MX=abs_r_v
+         if (abs_r_v<MN.and.abs_r_v>0._SP) MN=abs_r_v
+         if (abs_r_v>MX.and.abs_r_v>0._SP) MX=abs_r_v
        enddo
        MXexp=int(log10(MX))
        MNexp=int(log10(MN))
@@ -284,11 +284,13 @@ module stderr
          iexp=0
          MDexp=0
        endif
+       !
        if (iexp<=2.and.MDexp<=2) then
          !
          !  f_format_length-3-iexp:  3 for '-','.' + 1 as iexp(10)=1/iexp(100)=2
          !
          write (gen_fmt,'(2(a,i2.2))')  'F',f_format_length,'.',f_format_length-3-iexp
+         !
        else
          !
          ! 23/9/2011. Field intensities formats are wrong when iexp=9. This is beacause
@@ -302,6 +304,7 @@ module stderr
          if (iexp> 8) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-6,''
          !
        endif
+       !
      endif
      !
   end function

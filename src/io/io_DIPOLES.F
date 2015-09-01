@@ -24,7 +24,7 @@
 integer function io_DIPOLES(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,DIP_iR,DIP_P,P_square,X_alloc,Dipole_bands_ordered
+ use X_m,           ONLY:X_t,DIP_iR,DIP_P,X_alloc
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
@@ -32,8 +32,9 @@ integer function io_DIPOLES(X,Xen,ID)
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
- use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
 #if defined _SC
+ use X_m,           ONLY:P_square
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
 #if defined _RT
@@ -50,14 +51,10 @@ integer function io_DIPOLES(X,Xen,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,ixyz,sec_size,i_sp_pol,db_nbm,db_nb(2)
+ integer :: ik,ik_mem,i_fragment,ixyz,sec_size,i_sp_pol,shift(2)
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  real(SP),allocatable :: disk_data(:,:,:)
- !
-#if defined _RT
- if (l_real_time.or.l_eval_collisions) io_DIP=.FALSE.
-#endif
  !
  if (.not.io_DIP) then
    io_DIPOLES=IO_NOT_ALLOWED
@@ -82,45 +79,43 @@ integer function io_DIPOLES(X,Xen,ID)
    io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_DIPOLES/=0) goto 1
    !
-   io_DIPOLES=variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
+   io_DIPOLES=variables_DIPOLES(X,Xen,ID)
    if (io_DIPOLES/=0) goto 1
    !
  endif
  !
- db_nb=X%ib
- db_nbm=Xen%nbm
+ sec_size=3*(X%db_ib(2)-X%db_ib_lim(2)+1)*(X%db_ib_lim(1)-X%db_ib(1)+1)
+ shift(1)=X%ib_lim(2)-X%db_ib_lim(2)
+ shift(2)=X%ib(1)-X%db_ib(1)
  !
- if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
- !
- ! On disk the size is DIP_iR_or_P(3,X%ib(2),X%ib(2),nXkibz)
- !
- sec_size=3*db_nb(2)*X%ib(2)
- !
- i_sp_pol=1
- ik=maxval(io_sec(ID,:))-1
- if(ik>nXkibz) then
+ i_fragment=maxval(io_sec(ID,:))-1
+ if(i_fragment<=nXkibz) then
+   i_sp_pol=1
+   ik=i_fragment
+ else
    i_sp_pol=2
-   ik=ik-nXkibz
+   ik=i_fragment-nXkibz
  endif
  !
  if (ik==0) goto 1
  !
- ik_mem=PAR_Xk_ibz_index(ik)
+ ik_mem=PAR_DIPk_ibz_index(ik)
  !
- allocate(disk_data(X%ib(2),X%ib(2),2))
+ allocate(disk_data(X%db_ib_lim(2):X%db_ib(2),X%db_ib(1):X%db_ib_lim(1),2))
  !
  if (read_is_on(ID)) then
-   call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),PAR_Xk_nibz/))
-   call X_alloc('DIP_P' ,(/3,X%ib(2),X%ib(2),PAR_Xk_nibz/))
+   call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
  endif
  !
 #if defined _SC
- if (l_sc_run.or.l_real_time.and.read_is_on(ID)) call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_Xk_nibz/))
+ if (l_sc_run.or.l_real_time.and.read_is_on(ID)) &
+&  call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
 #endif
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=ik)
+ call io_fragment(ID,i_fragment=i_fragment)
  !
  ! Manage RD_CL_IF_END
  !
@@ -134,7 +129,7 @@ integer function io_DIPOLES(X,Xen,ID)
    write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',ik,'_xyz_',ixyz,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
    call io_bulk(ID,R3=disk_data)
-   if (read_is_on(ID)) call mat_r2c(disk_data,DIP_iR(ixyz,:,:,ik_mem,i_sp_pol))
+   if (read_is_on(ID)) call mat_r2c(disk_data,DIP_iR(ixyz,:,:,ik_mem,i_sp_pol),shift=shift)
    !
    ! P
    !
@@ -142,7 +137,7 @@ integer function io_DIPOLES(X,Xen,ID)
    write (VAR_name,'(3(a,i4.4))') 'DIP_P_k_',ik,'_xyz_',ixyz,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
    call io_bulk(ID,R3=disk_data)
-   if (read_is_on(ID)) call mat_r2c(disk_data,DIP_P(ixyz,:,:,ik_mem,i_sp_pol))
+   if (read_is_on(ID)) call mat_r2c(disk_data,DIP_P(ixyz,:,:,ik_mem,i_sp_pol),shift=shift)
    !
  enddo
  !
@@ -155,7 +150,7 @@ integer function io_DIPOLES(X,Xen,ID)
    write (VAR_name,'(2(a,i4.4))') 'P_square_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
    call io_bulk(ID,R3=disk_data)
-   if (read_is_on(ID)) call mat_r2c(disk_data,P_square(:,:,ik_mem,i_sp_pol))
+   if (read_is_on(ID)) call mat_r2c(disk_data,P_square(:,:,ik_mem,i_sp_pol),shift=shift)
    !
  endif
 #endif

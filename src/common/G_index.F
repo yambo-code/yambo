@@ -38,9 +38,9 @@ integer function G_index(v1)
  !
  G_index=0
  !
- E_of_shell_v1=iku_v_norm(v1)**2./2._SP
+ E_of_shell_v1=iku_v_norm(v1)**2/2._SP
  !
- if(abs(E_of_shell_v1)<1.E-5) then
+ if(abs(E_of_shell_v1)<1.E-5_SP) then
    G_index=1
    return
  endif
@@ -49,14 +49,14 @@ integer function G_index(v1)
  ng2=ng_in_shell(n_g_shells)
  !
  do i_shell=2,n_g_shells
-   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4) then
+   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4_SP) then
      ng1=ng_in_shell(i_shell-1)
      exit
    endif
  enddo
  !
  do i_shell=n_g_shells-1,2,-1
-   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4) then
+   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4_SP) then
      ng2=ng_in_shell(minval((/i_shell+2,n_g_shells/)))
      exit
    endif

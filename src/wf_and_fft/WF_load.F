@@ -29,7 +29,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  use pars,          ONLY:SP,DP,schlen
  use memory_m,      ONLY:mem_est
- use com,           ONLY:msg
+ use com,           ONLY:msg,core_io_path
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spin,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz
@@ -43,7 +43,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
-&                        RD_CL,DUMP,IO_and_Messaging_switch,frag_WF
+&                        RD_CL,DUMP,IO_and_Messaging_switch
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
@@ -193,7 +193,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  WF%space=wf_space_here
  !
  ! If the cpu has no WF to load %state must be set to .FALSE. before returning.
- ! This is needed, for example, when in a group od cpus some of them do not 
+ ! This is needed, for example, when in a group of cpus some of them do not 
  ! read the DB
  !
  if (allocated(states_to_load)) then
@@ -251,7 +251,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    if (buffer_is_ok.and.WF%space/="B") then
      call msg('rns','[WF] Loading Wave-Functions from buffer')
    else
-     call msg('rns','[WF] Performing Wave-Functions I/O')
+     call msg('rns','[WF] Performing Wave-Functions I/O from '//trim(core_io_path)//'/SAVE')
    endif
  endif
  !
@@ -332,11 +332,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
            if (buffer_is_ok) then
              wf_DP(igfft)=WF_buffer%c(ic,WF_buffer%index(ib,ikibz,is))
            else
-             wf_DP(igfft)=cmplx(wf_disk(1,i2,ic,is),wf_disk(2,i2,ic,is),DP)
+             wf_DP(igfft)=cmplx(wf_disk(1,i2,ic,is),wf_disk(2,i2,ic,is),kind=DP)
            endif
          enddo
          if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
-           WF%c(:,WF%N)=cmplx(wf_DP(:))
+           WF%c(:,WF%N)=cmplx(wf_DP(:),kind=SP)
            cycle
          endif
          !
@@ -348,7 +348,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          !
          call fft_3d(wf_DP,fft_dim,+2)
 #endif
-         WF%c(:,WF%N)=cmplx(wf_DP(:))*fft_norm
+         WF%c(:,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
          !
        enddo
      enddo

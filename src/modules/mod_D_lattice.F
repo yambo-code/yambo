@@ -24,6 +24,7 @@
 module D_lattice
  !
  use pars,      ONLY:SP,lchlen
+ !
  implicit none
  !
  ! Non periodic directions
@@ -66,6 +67,11 @@ module D_lattice
  real(SP), allocatable :: atom_pos(:,:,:)
  character(lchlen)     :: atoms_string
  character(7)          :: lattice
+ !
+ ! Centered cartesian coordinates inside the cell
+ !
+ real(SP),    allocatable :: x_cc(:,:)
+ real(SP)                 :: x_zero_point(3)
  !
  ! Gradients
  !

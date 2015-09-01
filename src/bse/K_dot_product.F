@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG
+! Authors (see AUTHORS file for details): MG, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,9 +26,8 @@ subroutine K_dot_product(dot,V,W)
  ! Dot product between distributed vectors 
  !
  use pars,           ONLY:SP,cZERO
- use BS,             ONLY:BS_blk,n_BS_blks,Haydock_vector,BS_nT_grps,&
-&                         Haydock_parallel_group_comm,Haydock_parallel_col_comm 
- use parallel_m, ONLY:PP_bcast,PP_redux_wait
+ use BS,             ONLY:BS_nT_grps,Haydock_vector
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX
  !
  implicit none
  !
@@ -37,39 +36,22 @@ subroutine K_dot_product(dot,V,W)
  !
  ! Workspace
  !
- integer       :: i_b,i_Tk,i_Tp,i_g
- complex(SP)   :: dot_
+ integer       :: i_T_g
  !
- dot_ = cZERO
+ dot = cZERO
  ! 
  ! NOTE FOR DEVELOPERS:
- ! Anti-block contains the same vector components as the corrisponding 
- ! res-block. Sum on all blocks will give twice the value in the case
- ! with coupling.
+ ! Anti-block contains the same vector components as the corrisponding res-block.
+ ! Sum on all blocks will give twice the value in the case with coupling.
  !
- do i_b=1,n_BS_blks
-   if (BS_blk(i_B)%mode == "A") cycle 
-   i_Tk  =BS_blk(i_b)%iT_k
-   i_Tp  =BS_blk(i_b)%iT_p
-   if (i_Tk.ne.1) cycle
-   dot_ = dot_ + dot_product(V(i_Tp)%fragment,W(i_Tp)%fragment)
- end do
+ do i_T_g=1,BS_nT_grps
+   if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
+   dot = dot + dot_product(V(i_T_g)%fragment,W(i_T_g)%fragment)
+ enddo
  !
-#if defined _MPI
+ ! Reduce all
  !
- ! Reduce all (sum) on first row
- !
- call PP_redux_wait(dot_,COMM=Haydock_parallel_group_comm(1))
- !
- ! BCast on all other procs along 'the columns'
- !
- do i_g = 2,BS_nT_grps
-   call PP_bcast(dot_,0,COMM=Haydock_parallel_col_comm(i_g))
- end do
- !
-#endif
- !
- dot = dot_
+ call PP_redux_wait( dot ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait( dot ,COMM=PAR_COM_eh_INDEX%COMM )
  !
 end subroutine K_dot_product
-

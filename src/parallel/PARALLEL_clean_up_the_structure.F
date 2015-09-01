@@ -54,8 +54,6 @@ subroutine PARALLEL_clean_up_the_structure(n_structures)
    PARALLEL_CPU_used(n_structures)=CPU_structure(i_PAR_structure)%CPU(i_c)
    PARALLEL_CPU_role(n_structures)=CPU_structure(i_PAR_structure)%ROLE(i_c)
    !
-   PARALLEL_CPU_used(n_structures)=2**(log(real(PARALLEL_CPU_used(n_structures)))/log(2.))
-   !
  enddo
  !
 end subroutine

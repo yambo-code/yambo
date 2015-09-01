@@ -33,7 +33,6 @@ module parallel_m
  integer            :: mpi_comm_world=0
 #endif
  !
- integer            :: N_basis  = 2
  integer            :: myid
  integer            :: ncpu
  integer            :: n_nodes  = 1
@@ -57,8 +56,11 @@ module parallel_m
  !
  ! Communicators
  !
+ integer, parameter :: MAX_N_GROUPS   =100  ! MAX number of groups
  integer, parameter :: MAX_N_OF_CHAINS=100
- integer            :: n_chains = 1
+ integer            :: n_groups                =0     ! groups of active chains
+ integer            :: nchains_group(2*MAX_N_GROUPS)=0     ! chains limits in the group
+ integer            :: ncpu_chain(MAX_N_OF_CHAINS)=1  ! #CPUs in each chain
  !
  ! MPI intra-groups Communicators
  !
@@ -67,7 +69,7 @@ module parallel_m
    integer  :: CPU_id    
    integer  :: my_CHAIN    ! equivalent to CPU_id+1 in INTER_CHAIN
    integer  :: chain_name  ! INTRA, INTER, CHILD
-   integer  :: chain_order ! this corresponds to the order in the global power of 2 hierarchy
+   integer  :: chain_order ! this corresponds to the order in the local hierarchy
    integer  :: n_CPU     
  end type MPI_comm
  ! 
@@ -129,7 +131,7 @@ module parallel_m
  !
  ! PP indexes
  !
- type PP_indexes 
+ type PP_indexes
    logical, pointer :: element_1D(:)     => null()
    logical, pointer :: element_2D(:,:)   => null()
    integer, pointer :: n_of_elements(:)  => null()
@@ -196,6 +198,7 @@ module parallel_m
  ! ... Transitions
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
  type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
+ type(PP_indexes)            ,SAVE :: PAR_IND_T_Haydock
  type(PP_indexes)            ,SAVE :: PAR_IND_T_all
  type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
  !
@@ -290,6 +293,9 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_eh_A2A
  type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
  type(MPI_comm),SAVE :: PAR_COM_T_INDEX
+ !
+ ! ... Haydock solver
+ type(MPI_comm),allocatable,SAVE :: PAR_COM_T_Haydock(:)
  !
  ! ... density
  type(MPI_comm),SAVE :: PAR_COM_density
@@ -399,9 +405,9 @@ module parallel_m
    subroutine COMM_reset(COMM)
      type(MPI_comm):: COMM
      COMM%n_CPU      =1
-     COMM%COMM       = comm_default_value
+     COMM%COMM       =comm_default_value
      COMM%my_CHAIN   =1
-     COMM%chain_order=n_chains
+     COMM%chain_order=nchains_group(2)
      COMM%CPU_ID     =0
    end subroutine
    !

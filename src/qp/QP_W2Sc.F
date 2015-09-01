@@ -27,7 +27,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  ! \int dw' G(w-w')W(w')
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cZERO
  use QP_m,          ONLY:QP_t,QP_W,QP_Sc,QP_n_states,QP_G_damp,QP_n_G_bands,&
 &                        QP_solver_state,QP_n_W_freqs,QP_table
  use drivers,       ONLY:Finite_Tel
@@ -71,7 +71,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
    !
    allocate(dSc(Sc_W(i_qp)%n_freqs))
    !
-   dSc=(0._SP,0._SP)
+   dSc=cZERO
    !
    do ib=QP_n_G_bands(1),QP_n_G_bands(2)
      !

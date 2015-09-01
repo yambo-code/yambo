@@ -24,7 +24,7 @@
 integer function io_Vnl(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,Dipole_bands_ordered
+ use X_m,           ONLY:X_t
  use electrons,     ONLY:levels,n_sp_pol
  use pseudo,        ONLY:Vnl
  use R_lattice,     ONLY:nXkibz
@@ -84,8 +84,6 @@ integer function io_Vnl(X,Xen,ID)
      goto 1
    endif
  endif
- !
- if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
  !
  ! On disk the size is Vnl(3,db_nb(2),db_nbm,nXkibz)
  !

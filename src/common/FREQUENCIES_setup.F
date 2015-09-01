@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,15 +25,20 @@ subroutine FREQUENCIES_setup(W)
  !
  ! %er %dr %n_freqs -> %p
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cI
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
+ use parser_m,      ONLY:parser
+ !
  implicit none
+ !
  type(w_samp):: W 
  ! 
  ! Work Space
  !
  integer          :: i1
+ logical          :: metallic_damping
+ real(SP)         :: delta_w,w_n
  real(SP),external:: FREQUENCIES_damping
  !
  !If %p is associated and consitent with %er/%dr return
@@ -54,7 +59,7 @@ subroutine FREQUENCIES_setup(W)
  ! First the total/mem steps
  !
  if (W%er(2)==W%er(1)) W%n_freqs=1
- W%n_freqs=nint(W%per_memstps*real(W%n_freqs)/100.)
+ W%n_freqs=nint(W%per_memstps*real(W%n_freqs)/100._SP)
  !
  allocate(W%p(W%n_freqs))
  call mem_est("W-p",(/W%n_freqs/))
@@ -65,9 +70,34 @@ subroutine FREQUENCIES_setup(W)
    W%dr(2)=W%dr(1)
    return
  endif
- forall(i1=1:W%n_freqs-1) W%p(i1+1)=W%er(1)+(W%er(2)-W%er(1))/(W%n_freqs-1)*i1
+ !
+ delta_w=(W%er(2)-W%er(1))/(W%n_freqs-1)
+ !
+ forall(i1=1:W%n_freqs-1) W%p(i1+1)=cmplx(W%er(1)+delta_w*real(i1,SP),0.,SP)
+ !
  do i1=1,W%n_freqs
-   W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cmplx(0.,1.,SP)
+   W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cI
+ enddo
+ !
+ call parser('MetDamp',metallic_damping)
+ !
+ if(.not.metallic_damping) return
+ !
+ ! Davide
+ ! Implementation of eq. 10, PRB 82, 035104 (2010): w=sqrt(Re[w]*(Re[w]+2*i*Im[w])),
+ ! notice that this is sqrt(w^2+Im[w]^2)
+ ! 1) This expression should guarantee the correct behaviour of Re[eps^m1] nearby w=0
+ !    in metals. Sistems with a gap are not affected.
+ ! 2) Thanks to this expression the length and the velocity gauge are finally identical
+ !    and the divergency for w->0 in the velocity is removed (there is just some numerical noise)
+ !
+ do i1=1,W%n_freqs-1
+   w_n=W%er(1)+delta_w*real(i1,SP)
+   W%p(i1+1)=cmplx(w_n**2/sqrt(w_n**2+aimag(W%p(i1+1))**2),aimag(W%p(i1+1)),SP)
+ enddo
+ !
+ do i1=1,W%n_freqs
+   W%p(i1)=sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
  enddo
  !
 end subroutine

@@ -108,7 +108,9 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
 #endif
 #if defined _RT
  l_apply_RT_corrections=l_cohsex
- if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,Xk,what="G",VERBOSE=VERBOSE)
+ if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=VERBOSE)
 #endif
+ !
+ call section('r',' ')
  !
 end subroutine

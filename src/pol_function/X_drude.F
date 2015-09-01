@@ -45,7 +45,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
  character(1) ,intent(in)   :: drude_ordering
  !
  real(SP)             :: drude_factor,f_e,f_h
- logical              :: Drude_term(4)
+ logical              :: Drude_term(4),neq_carriers
  integer              :: iw
  !
  drude_GreenF = cZERO
@@ -56,17 +56,17 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
  !  . Metallic system 
  !  . Optical response @ q = Gamma
  !
+ neq_carriers   = .false.
  !
  Drude_term(1) = real(Wd)>0._SP .and. aimag(Wd)>0._SP
- Drude_term(2) = Xen%nbf/=Xen%nbm
- Drude_term(3) = Xen%kf>0        
+ Drude_term(2) = Xen%nbf/=Xen%nbm.or.neq_carriers
+ Drude_term(3) = Xen%kf>0        .or.neq_carriers
  Drude_term(4) = (iq==1)
  !
  ! Checks
  !
  if (.not.Drude_term(4)) then
    call warning(' Not q=0. I should not be here!')
-   return
  endif
  !
  if (.not.Drude_term(1).and. all((/Drude_term(2:3)/)) .and..not.use_X_DbGd ) then
@@ -75,12 +75,12 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
  !
  if(      Drude_term(1) .and. .not.Drude_term(2) ) then
    call warning(' System is not a metal. Drude term not included')
-   Wd=(0._SP,0._SP)
+   Wd=cZERO
  endif
  !
  if(      Drude_term(1) .and.      Drude_term(2) .and. .not.Drude_term(3) ) then
    call warning(' Too low ElecTemp. Drude term not included.')
-   Wd=(0._SP,0._SP)
+   Wd=cZERO
  endif
  !
  if(.not.all(Drude_term)) return
@@ -98,25 +98,21 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
    drude_GreenF(iw)=Jellium_drude(real(Xw%p(iw)),Wd,q_norm(1))/drude_factor
  enddo
  !
- if(drude_ordering/='c') return
- !
- call msg('nsr','[X/K] Drude reference freq. for w=0 is [eV]:',real(Xw%p(iw_ref))*HA2EV )
- !
- do iw=1,iw_ref-1
-   drude_GreenF(iw_ref-iw)=cmplx(real(Drude_GreenF(iw_ref-iw)),-aimag(Drude_GreenF(iw_ref+iw)))
- enddo
- !
  contains
    !
    function Jellium_drude(W,Wd,q0_norm)
    !
-   !Jellium Xo propagator with a given plasma frequency
-   !The propagator is T-ordered. 
-   !See R.D. Mattuck "A guide to Feynmann diagrams in the Many-Body
-   !                  problem", pag. 197.
+   !See R.D. Mattuck "A guide to Feynmann diagrams in the Many-Body problem", pag. 197.
+   !Jellium Xo propagator with a given plasma frequency.
+   !The propagator is T-ordered.
+   !Davide: If Drude is used at finite temperature / with fractional occupations
+   !        I would need the retarded propagator
+   !
    !  
-   use pars,  ONLY:SP,pi
+   use pars,  ONLY:SP,pi,cI
+   !
    implicit none
+   !
    real(SP)    :: q0_norm,W
    complex(SP) :: Wd
    !
@@ -125,9 +121,9 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
    complex(SP) :: xi,Jellium_drude
    real(SP)    :: Kf,rxi,fac
    !
-   Kf =((3.*pi*real(Wd)**2.)/4.)**(1./3.)
+   Kf =((3._SP*pi*real(Wd)**2)/4._SP)**(1._SP/3._SP)
    fac=Kf*q0_norm
-   xi =W+(0.,1.)*aimag(Wd)*fac
+   xi =W+cI*aimag(Wd)*fac
    rxi=real(xi)
    !
    if (abs(W)<=10*fac) then

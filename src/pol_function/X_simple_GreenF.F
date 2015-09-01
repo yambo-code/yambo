@@ -32,11 +32,11 @@ function X_simple_GreenF(W,pole,ordering)
  !              
  logical      ::ord_t_ordered,ord__retarded,ord__resonant,ord_anti_reso,ord_ret_areso
  !
- ord_t_ordered= trim(ordering)=="t"                             ! T-ordered
- ord__retarded= trim(ordering)=="c"                             ! Retarded   (in yambo it is called "c"=causal)
- ord__resonant= trim(ordering)=="r" .or. trim(ordering)=="sr"   ! Resonant      part of the T-ordered
- ord_anti_reso= trim(ordering)=="a" .or. trim(ordering)=="sa"   ! Anti-resonant part of the T-ordered
- ord_ret_areso= trim(ordering)=="ca"                            ! Anti-resonant part of the Retarded
+ ord_t_ordered= trim(ordering)=="t"      ! T-ordered
+ ord__retarded= trim(ordering)=="c"      ! Retarded   (in yambo it is called "c"=causal)
+ ord__resonant= trim(ordering)=="r"      ! Resonant      part of the T-ordered
+ ord_anti_reso= trim(ordering)=="a"      ! Anti-resonant part of the T-ordered
+ ord_ret_areso= trim(ordering)=="ca"     ! Anti-resonant part of the Retarded
  !
  if ( ord_t_ordered ) X_simple_GreenF=1._SP/(W-pole)-1._SP/(conjg(W)+      pole )
  if ( ord__retarded ) X_simple_GreenF=1._SP/(W-pole)-1._SP/(      W +conjg(pole))       

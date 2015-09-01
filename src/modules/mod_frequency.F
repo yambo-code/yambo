@@ -135,10 +135,10 @@ module frequency
      use memory_m, ONLY:mem_est
      type(w_samp)::W
      W%n_freqs=100
-     W%per_memstps=100.
-     W%er=(/0.,10./)/HA2EV
-     W%dr=(/.1,.1/)/HA2EV
-     W%damp_reference=0.
+     W%per_memstps=100._SP
+     W%er=(/0._SP,10._SP/)/HA2EV
+     W%dr=(/0.1_SP,0.1_SP/)/HA2EV
+     W%damp_reference=0._SP
      nullify(W%p)
      call mem_est("W-p")
    end subroutine W_reset

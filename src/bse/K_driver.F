@@ -36,7 +36,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BSE_mode,&
+&                         BSS_damp_reference,BSE_mode,BSS_Wd,&
 &                         BSS_uses_DbGd,BSS_q0,BS_Blocks_and_Transitions_free
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
@@ -44,14 +44,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use R_lattice,      ONLY:bz_samp,qindx_B
- use parser_m,       ONLY:parser
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
  use com,            ONLY:error
- use parser_m,       ONLY:parser
 #endif
  !
  implicit none
@@ -177,17 +175,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !================
  call X_duplicate(X_static_pp,X_oscillators) 
  X_oscillators%whoami=5
- X_oscillators%ib=BS_bands
+ X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
  !
  ! ... EH space (no parallelization)
- call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.FALSE.)
+ call K_Transitions_setup(iq,Ken,Xk,BSS_Wd,.FALSE.)
  !
  !... Parallel distribution
  call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
  !
  ! ... EH space (with parallelization) and Transition groups build-up
- call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.TRUE.)
+ call K_Transitions_setup(iq,Ken,Xk,BSS_Wd,.TRUE.)
  !
  !... Blocks build-up
  if (.not.l_rpa_IP) call K_blocks( )

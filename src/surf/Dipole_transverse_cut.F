@@ -29,10 +29,10 @@
    use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
    use parallel_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
 &                                      pp_indexes_reset
-   use interfaces,           ONLY : PARALLEL_index
+   use interfaces,              ONLY : PARALLEL_index
    use D_lattice,               ONLY : alat
    use R_lattice,               ONLY : g_vec, bz_samp
-   use X_m,                     ONLY : X_t, Dipole_bands_ordered
+   use X_m,                     ONLY : X_t
    use memory_m,                ONLY : mem_est
    use wave_func,               ONLY : WF, wf_ng
    use optcut,                  ONLY : DIP_iR_cut, ng_limits, setup_optcut, pscut, PScut_slow
@@ -45,26 +45,18 @@
    ! Work Space
    !
    integer                          :: ik, i1, icfft, ivfft, ic, iv, is, i_spin, E_i_spin
-   integer                          :: iv_max, ic_min
    real(SP)                         :: Ev_m_Ec, field_dir_rot(3)
    type(pp_indexes)                 :: px
    real(SP), allocatable            :: kg(:,:)
    complex(SP)                      :: PS(3), spinor_avg(3)
    complex(SP)                      :: rho(4)
    character(schlen)                :: sch 
+ !
+ call error('Dipole_transverse_cut to be restored')
+ !
 
    allocate( kg(3,wf_ng) )
 
- !
- ! Set up band limits
- !
- if (Dipole_bands_ordered) then
-   iv_max=Xen%nbm
-   ic_min=Xen%nbf+1
- else
-   iv_max=X%ib(2)
-   ic_min=X%ib(1)
- endif
  !
  ! Set up the parallel environment
  !
@@ -85,11 +77,11 @@
      do i_spin   = 1, n_spin
        E_i_spin=i_spin
        if (n_spinor==2) E_i_spin=1
-       do iv=X%ib(1),iv_max
+       do iv=X%ib(1),X%ib(2)
          !
          if (.not.px%element_2D(ik,iv)) cycle
          !
-         do ic=ic_min,X%ib(2)
+         do ic=X%ib(1),X%ib(2)
            !
            rho(:)=(0._SP,0._SP)
            !

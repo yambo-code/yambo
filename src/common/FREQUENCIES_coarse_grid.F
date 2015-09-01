@@ -45,7 +45,8 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  use com,         ONLY:msg
  use frequency,   ONLY:bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index,coarse_grid_index
  use vec_operate, ONLY:sort
- use memory_m   , ONLY:mem_est
+ use memory_m,    ONLY:mem_est
+ !
  implicit none
  !
  character(*),intent(in) :: title
@@ -65,6 +66,12 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  integer ,allocatable:: bg_sorted_x(:),i_vec(:)
  real(SP),allocatable:: bg_diffs(:),bg_sorted(:)
  !
+ if(npts==0) then
+   allocate(ordered_grid_index(npts),coarse_grid_index(npts),bare_grid_N(npts),coarse_grid_Pt(npts))
+   coarse_grid_N=0
+   return
+ endif   
+ !
  if (cg_percentual==0._SP .or. npts==1) then
    !
    ! Zero cg_percentual does nothing!  This is used when 
@@ -83,12 +90,13 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  !
  allocate(bg_diffs(npts-1),bg_sorted(npts),bg_sorted_x(npts))
  bg_sorted=bg_pt
+ !
  call sort(bg_sorted,indx=bg_sorted_x)
  do i_bg=1,npts-1
    bg_diffs(i_bg)=bg_sorted(i_bg+1)-bg_sorted(i_bg)
  enddo
  !
- call sort(bg_diffs)
+ if(npts>2) call sort(bg_diffs)
  !
  tresh=default_treshold
  if (cg_percentual<0.) tresh=minval(bg_diffs)+&

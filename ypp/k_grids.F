@@ -32,7 +32,7 @@ subroutine k_grids(en,k,Xk,q)
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
  use YPP,                 ONLY:coo_in,coo_out,l_k_grid,l_q_grid,&
 &                              l_shifted_grid,l_high_sym_pts,K_transform,&
-&                              n_u_k_pts,n_u_q_pts,&
+&                              n_u_k_pts,n_u_q_pts,l_random_grid,&
 &                              U_k_pts,U_q_pts,U_q_shifts
  use LIVE_t,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero
@@ -56,8 +56,6 @@ subroutine k_grids(en,k,Xk,q)
  call bz_samp_reset(Q_user)
  call bz_samp_reset(Final_K)
  !
- if (len_trim(coo_in)==0) return
- !
  call section('*',"BZ grid analyzer/generator") 
  !
  ! Setup logicals 
@@ -66,13 +64,23 @@ subroutine k_grids(en,k,Xk,q)
  !
  !Q/Xk (IBZ->BZ)
  !
- call k_ibz2bz(q,'i',.false.)
+ call k_ibz2bz( q,'i',.false.)
  call k_ibz2bz(Xk,'i',.false.)
- call msg("s",'Q-points  (BZ):',q%nbz)
- call parser('NoWeights',No_Weight)
+ !
+ call msg("s",'Q-points  (BZ):', q%nbz)
+ call msg("s",'K-points  (BZ):',Xk%nbz)
+ !
+ call parser('NoWeights'   ,No_Weight)
  call parser('ForceUserPts',Force_User_points)
- call parser('ListPts',List_internal_points)
- call parser('ExpandPts',Expand_internal_points)
+ call parser('ListPts'     ,List_internal_points)
+ call parser('ExpandPts'   ,Expand_internal_points)
+ !
+ if (l_random_grid) then
+   call k_random(No_Weight)
+   goto 1
+ endif
+ !
+ if (len_trim(coo_in)==0) return
  !
  if (List_internal_points) then
    !
@@ -166,7 +174,7 @@ subroutine k_grids(en,k,Xk,q)
      if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="kc2i")
      if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="ka2i")
      !
-     if (real_ctl/=999.) then
+     if (real_ctl/=999._SP) then
        !
        do i1=1,Xk%nbz
          if (v_is_zero(Xk%ptbz(i1,:)-USER_K%pt(USER_K%nibz,:),zero_=k_iku_zero)) then
@@ -278,7 +286,7 @@ subroutine k_grids(en,k,Xk,q)
   call section('=',"== Shifted grids generator ==")
    !================================================
    !
-   if(any(abs(U_q_shifts)/=0.)) then
+   if(any(abs(U_q_shifts)/=0._SP)) then
      !
      kout(:,:) = Xk%pt(:,:)
      !
@@ -366,8 +374,9 @@ subroutine k_grids(en,k,Xk,q)
    !
    subroutine print_the_grid(k,nk,wk,coo_in_,formatted_,PW_format)
      !
-     ! Whatever coo_in this routine prints the list of points 
-     ! using coo_out
+     use stderr,     ONLY:f_format_length,intc
+     !
+     ! Whatever coo_in this routine prints the list of points using coo_out
      !
      integer         ::nk,i1_
      real(SP)        ::k(nk,3),wk(nk),nk_replica
@@ -387,17 +396,17 @@ subroutine k_grids(en,k,Xk,q)
        !
        if (formatted_) then
          if(No_Weight) then
-           write(ch,'(3(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3)
+           write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x,a,1x))') v(1),'|',v(2),'|',v(3)
          else
-           write(ch,'(4(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|',nk_replica
+           write(ch,'(4(f12.'//trim(intc(f_format_length))//',1x,a,1x))') v(1),'|',v(2),'|',v(3),'|',nk_replica
          endif
        else if (PW_format) then
-           write(ch,'(3(f12.7,1x),i1)') v(:),1
+           write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x),i1)') v(:),1
        else
          if(No_Weight) then
-           write(ch,'(3(f12.7,1x))') v(:)
+           write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x))') v(:)
          else
-           write(ch,'(4(f12.7,1x))') v(:),nk_replica
+           write(ch,'(4(f12.'//trim(intc(f_format_length))//',1x))') v(:),nk_replica
          endif
        endif
        !

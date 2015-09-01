@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Build_Overlaps_Det(Xen,ik,X,Sm1_plus,Sm1_minus,S_det)
+subroutine Build_Overlaps_Det(Xen,i_sp_pol,ik,X,Sm1_plus,Sm1_minus,S_det)
  !
  ! Build inverse overlaps qnd overlaps determinants between valence bands
  !
@@ -32,17 +32,17 @@ subroutine Build_Overlaps_Det(Xen,ik,X,Sm1_plus,Sm1_minus,S_det)
  use X_m,            ONLY:X_t,DIP_S
  implicit none
  !
- integer,      intent(in) :: ik
+ integer,      intent(in) :: ik,i_sp_pol
  type(levels), intent(in) :: Xen
  type(X_t),    intent(in) :: X
- complex(SP), intent(out) :: Sm1_plus (Xen%nbf,Xen%nbf,3,n_sp_pol)
- complex(SP), intent(out) :: Sm1_minus(Xen%nbf,Xen%nbf,3,n_sp_pol)
- complex(SP), intent(out) :: S_det(3,n_sp_pol)
+ complex(SP), intent(out) :: Sm1_plus (Xen%nbm,Xen%nbm,3)
+ complex(SP), intent(out) :: Sm1_minus(Xen%nbm,Xen%nbm,3)
+ complex(SP), intent(out) :: S_det(3)
  !
  ! Work Space
  !
- integer     :: i1,i2,i3,i4,iv,idx(3),id,ikp,ikm,i_sp_pol
- complex(SP) :: S_val(1:Xen%nbf,1:Xen%nbf)
+ integer     :: i1,i2,i3,i4,iv,idx(3),id,ikp,ikm
+ complex(SP) :: S_val(1:Xen%nbm,1:Xen%nbm)
  !
  S_det=cZERO
  !   
@@ -55,29 +55,23 @@ subroutine Build_Overlaps_Det(Xen,ik,X,Sm1_plus,Sm1_minus,S_det)
      idx=k_periodic_idx(idx,k_map)
      ikm=k_map%k_map_dir(idx(1),idx(2),idx(3))
      !
-     do i_sp_pol=1,n_sp_pol
-       !
-       ! Overlap S(k, k-dk)
-       !
-       S_val=hermitian(DIP_S(1:Xen%nbf,1:Xen%nbf,id,ikm,i_sp_pol))
-       call MATRIX_driver(INV,S_val,lib_in=USE_LK)
-       Sm1_minus(:,:,id,i_sp_pol)=S_val
-       !
-       ! Overlap S(k, k+dk)
-       !
-       S_val=DIP_S(1:Xen%nbf,1:Xen%nbf,id,ik,i_sp_pol)
-       call MATRIX_driver(INV,S_val,lib_in=USE_LK,det=S_det(id,i_sp_pol))
-       Sm1_plus(:,:,id,i_sp_pol)=S_val
-       !
-     enddo
+     ! Overlap S(k, k-dk)
+     !
+     S_val=hermitian(DIP_S(1:Xen%nbm,1:Xen%nbm,id,ikm,i_sp_pol))
+     call MATRIX_driver(INV,S_val,lib_in=USE_LK)
+     Sm1_minus(:,:,id)=S_val
+     !
+     ! Overlap S(k, k+dk)
+     !
+     S_val=DIP_S(1:Xen%nbm,1:Xen%nbm,id,ik,i_sp_pol)
+     call MATRIX_driver(INV,S_val,lib_in=USE_LK,det=S_det(id))
+     Sm1_plus(:,:,id)=S_val
      !
    else  ! non-periodic directions
      !
-     do i_sp_pol=1,n_sp_pol
-       S_det(id,i_sp_pol)        =cZERO
-       Sm1_plus(:,:,id,i_sp_pol) =cZERO
-       Sm1_minus(:,:,id,i_sp_pol)=cZERO
-     enddo
+     S_det(id)        =cZERO
+     Sm1_plus(:,:,id) =cZERO
+     Sm1_minus(:,:,id)=cZERO
      !
    endif
    ! 

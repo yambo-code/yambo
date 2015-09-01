@@ -40,21 +40,22 @@ function FREQUENCIES_damping(W,E)
  d2=W%dr(2)
  E_=E
  !
- if (W%er(1)<0..and.W%er(2)<=0.) then
+ if (W%er(1)<0._SP .and. W%er(2)<=0._SP) then
    e1=-W%er(2)
    e2=-W%er(1)
    E_=-E
  endif
- if (W%er(1)<0..and.W%er(2)>0. ) then
+ !
+ if (W%er(1)<0._SP .and. W%er(2)>0._SP ) then
    !
    ! Cannot use Fermi damping is the E range is not everywhere positve
    !
-   W%damp_reference=0. 
-   if (E>=0.) then
-     e1=0.
+   W%damp_reference=0._SP
+   if (E>=0._SP) then
+     e1=0._SP
      e2=W%er(2)
    else
-     e1=0.
+     e1=0._SP
      e2=-W%er(1)
      E_=-E
    endif
@@ -62,11 +63,11 @@ function FREQUENCIES_damping(W,E)
  !
  ! To use Fermi we need that d2/2 > d1 
  !
- if (d2/2.<= d1) then
-   W%damp_reference=0. 
+ if (d2/2._SP<= d1) then
+   W%damp_reference=0._SP
  endif
  !
- if (W%damp_reference==0.) then
+ if (W%damp_reference==0._SP) then
    !
    !           /(E2,D2)
    !          /
@@ -75,8 +76,8 @@ function FREQUENCIES_damping(W,E)
    !
    FREQUENCIES_damping=d1+(d2-d1)/(e2-e1)*(E_-e1)
  else
-   beta=1./(W%damp_reference-e1)*log( (d2-d1)/d1 )
-   FREQUENCIES_damping=d2/(1+exp(-beta*(E_-W%damp_reference)))
+   beta=1._SP/(W%damp_reference-e1)*log( (d2-d1)/d1 )
+   FREQUENCIES_damping=d2/(1._SP+exp(-beta*(E_-W%damp_reference)))
  endif
  !
 end function

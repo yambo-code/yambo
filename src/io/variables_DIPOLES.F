@@ -21,53 +21,45 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
+integer function variables_DIPOLES(X,Xen,ID)
  !
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_sc_run,l_real_time
- use X_m,           ONLY:X_t,Dipole_bands_ordered,use_shifted_grids_approach,&
-&                        use_direct_approach,use_covariant_approach,force_p_direct_approach
+ use X_m,           ONLY:X_t,use_shifted_grids_approach,use_real_space_approach,&
+&                        use_g_space_approach,use_covariant_approach,force_v_g_space_approach
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:q0_def_norm
  use IO_m,          ONLY:io_elemental,io_status
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  !
  implicit none
+ !
  type(X_t)   ::X
  type(levels)::Xen
  integer     ::ID
  !
- integer :: db_nbm,db_nb(2)
- !
- ! Work Space
- !
- integer :: db_nbf
- !
- !
  call io_elemental(ID,VAR="PARS",VAR_SZ=14,MENU=0)
  !
- call io_elemental(ID,DB_I1=db_nb,&
-&     VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/">=","<="/))
+ call io_elemental(ID,DB_I1=X%db_ib,&
+&     VAR=" X band range           :",I1=X%ib    ,CHECK=.true.,OP=(/">=","<="/))
+ call io_elemental(ID,DB_I1=X%db_ib_lim,&
+&     VAR=" X band range limits    :",I1=X%ib_lim,CHECK=.true.,OP=(/"<=",">="/))
  call io_elemental(ID,UNIT=HA2EV,&
 &     VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
- call io_elemental(ID,DB_I0=db_nbm,&
-&     VAR=" Metallic bands         :",I0=Xen%nbm,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,DB_I0=db_nbf,&
-&     VAR=" Filled bands           :",I0=Xen%nbf,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
 &     VAR=" RL vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
  call io_elemental(ID,&
 &     VAR=" [r,Vnl] included       :",L0=X%Vnl_included,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
-&     VAR=" Transitions ordered    :",L0=Dipole_bands_ordered,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,&
 &     VAR=" Using shifted grids    :",L0=use_shifted_grids_approach,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
 &     VAR=" Using covariant dipoles:",L0=use_covariant_approach,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
-&     VAR=" Using direct approach  :",L0=use_direct_approach,CHECK=.true.,OP=(/"=="/))
+&     VAR=" Using G-space approach :",L0=use_g_space_approach,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
-&     VAR=" Direct p evaluation    :",L0=force_p_direct_approach,CHECK=.true.,OP=(/"=="/))
+&     VAR=" Using R-space approach :",L0=use_real_space_approach,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,&
+&     VAR=" Direct v evaluation    :",L0=force_v_g_space_approach,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
 &     VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
  !

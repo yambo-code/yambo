@@ -34,15 +34,14 @@ subroutine K_Haydock(iq,W)
  use BS,             ONLY:BSS_n_descs,Haydock_treshold,BSS_description,& 
 &                         io_BSS_Haydock, BS_K_Coupling,&
 &                         Haydock_terminator, BSE_mode,Haydock_v0_mod,BS_Blocks_symmetrize_K,&
-&                         BS_HAYVEC_free,BS_HAYVEC_alloc, BS_T_grp,BS_nT_grps,&
-&                         Haydock_vector,Haydock_parallel_mask,Haydock_parallel_group_comm
+&                         BS_HAYVEC_free,BS_HAYVEC_alloc, BS_T_grp,BS_nT_grps,Haydock_vector
  use interfaces,     ONLY:K_multiply_by_V,K_dot_product
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast
+ use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock
  !
  ! GPL_EXCLUDE_START
  !
@@ -152,10 +151,10 @@ subroutine K_Haydock(iq,W)
  call BS_HAYVEC_alloc(Vn)
  call BS_HAYVEC_alloc(Vnm1)
  call BS_HAYVEC_alloc(Vnp1)
-  !
-  !
-  ! Haydock Coefficients and restart vector on disk
-  !=================================================
+ !
+ !
+ ! Haydock Coefficients and restart vector on disk
+ !=================================================
  it_on_disk=0
  ! call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  ! !
@@ -244,8 +243,11 @@ subroutine K_Haydock(iq,W)
  ! Initialization of Haydock vectors and tridiagonal matrix elements
  !
  if (it_on_disk==0) then
+   !
    do i_g=1,BS_nT_grps
-     if (.not.Haydock_parallel_mask(i_g)) cycle
+     !
+     if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+     !
      Vn(i_g)%fragment  = cZERO
      Vnm1(i_g)%fragment= cZERO
      Vnp1(i_g)%fragment= cZERO
@@ -262,8 +264,9 @@ subroutine K_Haydock(iq,W)
      !
    enddo
    !
-   Af= 0.
-   Bf= 0.
+   Af= 0._SP
+   Bf= 0._SP
+   !
  end if
  !
  do i_g=1,BS_nT_grps
@@ -280,16 +283,16 @@ subroutine K_Haydock(iq,W)
    !
  enddo
  !
- do i_g = 2,BS_nT_grps
-   if (.not.Haydock_parallel_mask(i_g)) cycle
+ do i_g = 1,BS_nT_grps
+   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
-   call PP_bcast(V0(i_g)%fragment(:),0,COMM=Haydock_parallel_group_comm(i_g))
+   call PP_bcast(V0(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif    
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR && defined _MPI
-   if(l_kerr) call PP_bcast(V0_kerr(i_g)%fragment(:),0,COMM=Haydock_parallel_group_comm(i_g))
+   if(l_kerr) call PP_bcast(V0_kerr(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif
    !
    ! GPL_EXCLUDE_END
@@ -305,21 +308,17 @@ subroutine K_Haydock(iq,W)
    !
    ItParity = (-1._SP)**it_on_disk
    if (it_on_disk==0) then
-      Cf= (0.,0.)
+      Cf= cZERO
       !
       ! GPL_EXCLUDE_START
       !
 #if defined _KERR
-      if(l_kerr) Cf_kerr= (0.,0.)
+      if(l_kerr) Cf_kerr= cZERO
 #endif
       !
       ! GPL_EXCLUDE_END
       !
       call K_multiply_by_V(it_on_disk,V0,Vnp1,iter_par=ItParity,call_kind='Hay')
-      do i_g=1,BS_nT_grps
-        if (.not.Haydock_parallel_mask(i_g)) cycle
-        !
-      enddo
       call K_dot_product(v0_mod_,V0,Vnp1)
       Haydock_v0_mod=sqrt(2._SP*real(v0_mod_))
       Cf(1) =  0._SP
@@ -336,14 +335,14 @@ subroutine K_Haydock(iq,W)
       ! GPL_EXCLUDE_END
       !
       do i_g=1,BS_nT_grps
-        if (.not.Haydock_parallel_mask(i_g)) cycle
+        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
         !
         Vn(i_g)%fragment   = V0(i_g)%fragment/Haydock_v0_mod
         Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
       enddo
    else
-   !   Haydock_v0_mod = Bf(1)
-   !   Bf(1) = 0._SP
+      !   Haydock_v0_mod = Bf(1)
+      !   Bf(1) = 0._SP
    endif
    !
  else ! [***] Initialization Hermitian case
@@ -355,7 +354,7 @@ subroutine K_Haydock(iq,W)
    !
    if (it_on_disk==0) then
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vn(i_g)%fragment  = V0(i_g)%fragment/Haydock_v0_mod
      enddo
    endif
@@ -384,7 +383,7 @@ subroutine K_Haydock(iq,W)
      !|Vm+1> = |Vm+1> - A(n)|Vm> - B(n)|Vm-1>
      !
      do i_g = 1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
@@ -398,14 +397,14 @@ subroutine K_Haydock(iq,W)
      !|Vm-1> = |Vm>
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle 
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle 
        Vnm1(i_g)%fragment  =Vn(i_g)%fragment
      enddo
      !
      !|Vm> =|Vm+1> / B(n+1)
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vn(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
      enddo
      !
@@ -422,7 +421,7 @@ subroutine K_Haydock(iq,W)
      !|Vm+1> = |Vm+1> - B(n)|Vm-1> (as Am is zero by symmetry)
      !
      do i_g = 1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
      !
@@ -430,7 +429,7 @@ subroutine K_Haydock(iq,W)
      ! |Vm>   = |Vm+1> 
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vnm1(i_g)%fragment = Vn(i_g)%fragment
        Vn(i_g)%fragment   = Vnp1(i_g)%fragment
      enddo
@@ -454,7 +453,7 @@ subroutine K_Haydock(iq,W)
      !|Vm> =|Vm+1> / B(n+1)
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vnp1(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
        Vn(i_g)%fragment    =Vn(i_g)%fragment/Bf(it+1)
      enddo

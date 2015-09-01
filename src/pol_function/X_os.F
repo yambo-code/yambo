@@ -47,9 +47,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,   &
 &                        X_terminator,global_gauge
  use IO_m,          ONLY:IO_and_Messaging_switch
-#if defined _RT 
- use X_m,           ONLY:computing_Xo_variation
-#endif
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -187,9 +184,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
 #if defined _SC 
  if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
-#endif
-#if defined _RT
- if (computing_Xo_variation)              live_t_string='delta Xo@q['//trim(intc(iq))//'] '
 #endif
  !
  if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N)

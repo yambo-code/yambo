@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SET_dip_parallelization(X,eval_DIP,n_LT_steps)
+subroutine SET_dipole_parallelization_scheme(X,eval_DIP,n_LT_steps)
  !
  use X_m,                 ONLY:X_t
  use electrons,           ONLY:n_sp_pol
@@ -53,8 +53,7 @@ subroutine SET_dip_parallelization(X,eval_DIP,n_LT_steps)
  use_X_parallel_scheme =l_evaluating_em1s.or.l_evaluating_eps_G.or.l_evaluating_eps_eh
  use_sc_parallel_scheme=(l_sc_run.or.l_real_time).and..not.l_evaluating_em1s
  !
- if(.not.(use_X_parallel_scheme.or.use_sc_parallel_scheme)) &
-&  call error(' DIP parallelization scheme unkonw')
+ if(.not.(use_X_parallel_scheme.or.use_sc_parallel_scheme)) call error(' DIP parallelization scheme unknown')
  !
  n_LT_steps=0
  !

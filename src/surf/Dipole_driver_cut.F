@@ -24,7 +24,7 @@
 subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
  !
  use pars
- use com,                     ONLY : msg, warning, grid_path
+ use com,                     ONLY : msg, warning, grid_paths
  use LIVE_t,                  ONLY : live_timing
  use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
  use parallel_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
@@ -88,7 +88,7 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
    !
    ! Cutoff with shifted grids has been removed because it is too unstable.
    !
-   if(trim(grid_path)/='none') call warning('Cutoff with shifted grids not supported! Reverting to transverse gauge')
+   if(trim(grid_paths)/='none') call warning('Cutoff with shifted grids not supported! Reverting to transverse gauge')
    !
    call DIPOLE_transverse_cut(Xen,Xk,X)
    !

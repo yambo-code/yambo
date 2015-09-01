@@ -101,7 +101,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  l_eval_DIP_P2=.false.
  wf_dim=3
  !
- call SET_dip_parallelization(X,l_mat_eval_DIP,n_LT_steps)
+ call SET_dipole_parallelization_scheme(X,l_mat_eval_DIP,n_LT_steps)
  !
 #if defined _SC
  l_eval_DIP_P2=l_sc_run.or.l_real_time

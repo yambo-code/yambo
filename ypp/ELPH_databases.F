@@ -602,7 +602,7 @@ integer function ELPH_databases(k,E,q)
    deallocate(ph_freqs_sq_disk,gkkp_disk,pol_vec)
    !
 1  call io_control(ACTION=RD_CL,ID=ID)
-   call io_disconnect(ID)
+   call io_disconnect(ID,FORCE=.TRUE.)
    !
    end function
    !

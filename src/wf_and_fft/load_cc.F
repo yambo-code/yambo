@@ -39,6 +39,7 @@ subroutine load_cc(manage_zero,center_cc)
  integer    :: ir,ir1,ir2,ir3,i_dir   
  !
  call fft_setup(0,1,.true.)      ! FFT size
+ !
  allocate(x_cc(fft_size,3))
  !
  ! Now x cross zero at the corner of the super-cell

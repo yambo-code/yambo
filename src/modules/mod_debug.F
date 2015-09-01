@@ -24,7 +24,7 @@
 module debug
  !
  use pars,    ONLY:schlen
- use com,     ONLY:msg
+ use com,     ONLY:msg,secnm
  use stderr,  ONLY:intc
  !
  implicit none
@@ -37,27 +37,33 @@ module debug
    !
    subroutine dbg(name)
      !
-     character(*) :: name
-     integer      :: id
+     character(*), optional :: name
+     integer                :: id
+     character(schlen)      :: db_name
      !
-     if (name=="reset") then
+     db_name=trim(secnm)
+     if (present(name)) then
+       db_name=name
+     endif
+     !
+     if (trim(db_name)=="reset") then
        debug_name=" "
        debug_point=0
      endif
      !
      do id=1,n_debugs_max
-       if (name==trim(debug_name(id))) then
+       if (trim(db_name)==trim(debug_name(id))) then
          debug_point(id)=debug_point(id)+1
-         call msg('nln',name//" "//intc(debug_point(id)))
+         call msg('nln',trim(db_name)//" "//intc(debug_point(id)))
          return
        endif
      enddo
      !
      do id=1,n_debugs_max
        if (len_trim(debug_name(id))==0) then
-         debug_name(id)=name
+         debug_name(id)=trim(db_name)
          debug_point(id)=debug_point(id)+1
-         call msg('nln',name//" "//intc(debug_point(id)))
+         call msg('nln',trim(db_name)//" "//intc(debug_point(id)))
          return
        endif
        !

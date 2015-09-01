@@ -89,7 +89,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  if (.not.coll_scattering) coll_scattering=l_elel_scatt
 #if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)
- if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt
+ if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.&
+&                                          trim(q_source)=="Electron-Phonon databases"
 #endif
  !
  q%description='q'

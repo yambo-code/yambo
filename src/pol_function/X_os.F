@@ -47,6 +47,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,   &
 &                        X_terminator,global_gauge
  use IO_m,          ONLY:IO_and_Messaging_switch
+#if defined _RT 
+ use X_m,           ONLY:computing_Xo_variation
+#endif
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now

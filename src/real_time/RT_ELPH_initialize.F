@@ -59,7 +59,7 @@ subroutine RT_ELPH_initialize(E,k,q)
 &                      q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E
  complex(SP)         ::gkkp_average
  integer, external   ::io_ELPH,io_RT_components
- logical             ::l_use_Debye_E
+ logical             ::l_use_Debye_E,SETUP_failure
  !
  ! Restart
  !==========
@@ -75,10 +75,12 @@ subroutine RT_ELPH_initialize(E,k,q)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
  io_err=io_ELPH(ID,'gkkp_expanded')
  !
- if (io_err/=0) then
+ SETUP_failure=io_err/=0.or.elph_nb<SC_bands(2)
+ !
+ if (SETUP_failure) then
    l_elph_scatt   =.FALSE.
    l_RT_CCA_Kernel=.FALSE.
-   call warning('ELPH database not found. E-P scattering switched off')
+   call warning('ELPH database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
    return
  endif
  !

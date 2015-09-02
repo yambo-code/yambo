@@ -142,7 +142,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    endif
    !
    ! This call is needed as Xw%p is deallocated inside
-   ! the q-loop of X_em1. But only when the EM1D is written or when it is not but we are not  doing
+   ! the q-loop of X_em1. But only when the EM1D is written or when it is not but we are not doing
    ! lifetimes calculations
    !
    if (io_RESPONSE.or.(.not.io_RESPONSE.and..not.l_life)) call FREQUENCIES_setup(Xw)

@@ -2,8 +2,10 @@
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-# Copyright (C) 2000-2014 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2015 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -52,7 +54,7 @@ AC_LANG_CASE([C], [
         AC_SUBST(MPIF77)
 ],
 [Fortran], [
-        AC_CHECK_PROGS(PFC, mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
+        AC_CHECK_PROGS(PFC, mpiifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
         FC="$PFC"
         acx_mpi_save_FC="$PFC"
 ])

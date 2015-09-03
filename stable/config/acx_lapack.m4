@@ -6,13 +6,13 @@ AC_DEFUN([ACX_LAPACK], [
 AC_REQUIRE([ACX_BLAS])
 acx_lapack_ok=no
 
-AC_ARG_WITH(lapack,
-        [AC_HELP_STRING([--with-lapack=<lib>], [Use LAPACK library <lib>])])
-case $with_lapack in
+AC_ARG_WITH(lapack_libs,
+        [AC_HELP_STRING([--with-lapack-libs=<libs>], [Use LAPACK libraries <libs>],[32])])
+case $with_lapack_libs in
         yes | "") ;;
         no) acx_lapack_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) LAPACK_LIBS="$with_lapack" ;;
-        *) LAPACK_LIBS="-l$with_lapack" ;;
+        -* | */* | *.a | *.so | *.so.* | *.o) LAPACK_LIBS="$with_lapack_libs" ;;
+        *) LAPACK_LIBS="-l$with_lapack_libs" ;;
 esac
 
 # Set fortran linker name of LAPACK function to check for.

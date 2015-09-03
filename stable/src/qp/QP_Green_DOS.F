@@ -48,9 +48,9 @@ subroutine QP_Green_DOS(qp,k)
  character(lchlen)     :: DOS_Green_name,filename
  character(schlen)     :: titles(4),out_units(4)
  real(SP)              :: values(4),tmp_vect(QP_n_states)
- real(SP)              :: GreenF1,GreenF2,shifted_GreenF
+ real(SP)              :: GreenF1,GreenF2,shifted_GreenF,deltaE_tmp
  real(SP),allocatable  :: Green_DOS(:,:,:,:),E_grid(:,:),off_set(:)
- real(SP),allocatable  :: E_range(:,:),deltaE(:),deltaE_tmp
+ real(SP),allocatable  :: E_range(:,:),deltaE(:)
  !
  do iqp=1,QP_n_states
    iw=maxloc( abs(aimag(qp%GreenF(iqp,:))),1 )

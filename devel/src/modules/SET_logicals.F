@@ -25,7 +25,7 @@ subroutine SET_logicals()
  !
  use pars,       ONLY:schlen
  use drivers,    ONLY:l_eval_collisions
- use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,INTER_CHAIN,n_log_CPUs,ncpu
+ use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,n_log_CPUs,ncpu
  use com,        ONLY:write_to_of,write_to_report
  use IO_m,       ONLY:IO_write,IO_read,DBs_IO_control_string,DBs_FRAG_control_string,                   &
 &                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_J,io_CARRIERs,io_SC,io_BS_K,io_SCREEN, &
@@ -43,13 +43,8 @@ subroutine SET_logicals()
  !
  master_cpu                =myid==0
  !
- if (n_log_CPUs==0) then
-   write_to_log            =.TRUE.
- else
-   i_chain=1 !nint(log(real(ncpu)/real(n_log_CPUs))/log(2.))
-   if (i_chain==0) write_to_log=.TRUE.
-   if (i_chain> 0) write_to_log=INTER_CHAIN(i_chain)%CPU_id==0
- endif
+ if (n_log_CPUs==0) write_to_log = .TRUE.
+ if (n_log_CPUs> 0) write_to_log = master_cpu
  !
  write_to_log_default      =write_to_log
  write_fragments_IO_log    =write_to_log

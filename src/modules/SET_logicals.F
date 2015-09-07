@@ -33,23 +33,24 @@ subroutine SET_logicals()
 &                     frag_BS_K,frag_SCREEN,frag_QINDX,frag_ELPH,frag_RT
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split,write_to_log_default
  use LIVE_t,     ONLY:live_timing_is_on
+ !
  implicit none
  !
  ! Work Space
  !
- integer            ::i_chain,i_ch
+ integer            ::i_ch
  integer, parameter ::n_max=20
  character(schlen)  ::ch_piece(n_max)
  !
  master_cpu                =myid==0
  !
  if (n_log_CPUs==0) write_to_log = .TRUE.
- if (n_log_CPUs> 0) write_to_log = master_cpu
+ if (n_log_CPUs> 0) write_to_log = (mod(myid,(ncpu-1)/n_log_CPUs+1)==0)
  !
  write_to_log_default      =write_to_log
  write_fragments_IO_log    =write_to_log
  IO_write_default(myid+1)  =master_cpu
- IO_write                  =IO_write_default(myid+1)
+ IO_write                  =master_cpu
  write_to_of               =master_cpu
  write_to_report           =master_cpu
  IO_read                   =.TRUE.

@@ -24,7 +24,7 @@
 subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd
+ use X_m,        ONLY:use_X_DbGd,integrating_over_q
  use BS,         ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
                       BZ_DbGd_ipol_weight,BZ_DbGd_kpts
@@ -165,14 +165,31 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  !
  ! [DAVIDE]
  ! Define which kpts I will use in a consistent way between q=0 and q/=0
- ! For q/=0 all KPTs.
- ! For q==0 only KPTs with i1==i2
+ ! For q/=0 this change makes the code much faster as it avoids the use of all 
+ ! double-grid kpts in the two spheres (k and kp) which would smear out too much
+ ! the absorption.
+ ! For q==0 the approach can be used to properly describe the q->0 limit
+ ! This part of the code should be moved away from this subroutine as here the 
+ ! same procedure is repeated for each v -> c transition, which is a waste of CPU time.
+ !
+ q_norm_ref=100000._SP
+ do i1=2,nqibz
+    q_norm_ref=min(q_norm_ref,iku_v_norm(q_pt(i1,:)))
+ enddo
+ !
+ qsize_fac=2._SP
+ if(.not.integrating_over_q) qsize_fac=qsize_fac*10._SP
+ !
+ q_norm_ref=q_norm_ref/qsize_fac
  !
  BZ_DbGd_iq_npt=0
  use_kpt=.false.
  do i1=1,BZ_DbGd_nkpt(ikbz)
+   ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
    do i2=1,BZ_DbGd_nkpt(ikpbz)
-     if ( iq==1 .and. i1/=i2 ) cycle
+     ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
+     q_pt_shift(:)=BZ_DbGd_kpts(ikbz_rand,:)-BZ_DbGd_kpts(ikpbz_rand,:)-q_pt(iq,:)
+     if ( iku_v_norm(q_pt_shift) > q_norm_ref ) cycle
      BZ_DbGd_iq_npt(i1)=BZ_DbGd_iq_npt(i1)+1
      use_kpt(i1,i2)=.true.
    enddo
@@ -181,7 +198,8 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  do i1=1,BZ_DbGd_nkpt(ikbz)
    !
    weight1   = BZ_DbGd_ipol_weight(i1)/real(BZ_DbGd_nkpt(ikbz),SP)
-   ik_rand   = BZ_DbGd_table(ikbz,i1)
+   ik_rand   = BZ_DbGd_table(ikbz,i1,1)
+   ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
    !
    if( X_os_run  ) f_h = spin_occ-Xen%f_DbGd(ic,ik_rand,i_spin)
    if( K_inv_run ) f_h =          Xen%f_DbGd(ic,ik_rand,i_spin)
@@ -191,7 +209,8 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
      if(.not.use_kpt(i1,i2)) cycle
      !
      weight2    = BZ_DbGd_ipol_weight(i2)/real(BZ_DbGd_iq_npt(i1),SP)
-     ikp_rand   = BZ_DbGd_table(ikpbz,i2)
+     ikp_rand   = BZ_DbGd_table(ikpbz,i2,1)
+     ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
      !
      if( X_os_run  ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)*f_h)/cg_ffac
      if( K_inv_run ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac

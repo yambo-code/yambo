@@ -25,6 +25,7 @@ module memory_m
  !
  use pars,       ONLY:SP,lchlen,schlen
  use stderr,     ONLY:string_split
+ !
  implicit none
  !
  integer, parameter :: max_mem_elements=100000
@@ -38,9 +39,9 @@ module memory_m
    !
    subroutine mem_reset()
      mem_element=' '
-     mem_element_size=0.
+     mem_element_size=0._SP
      element_loaded=0
-     mem_sum=0.
+     mem_sum=0._SP
    end subroutine
    !
    subroutine mem_est(what,elements_size,elements_kind,errors,quiet,overall_report)
@@ -58,7 +59,7 @@ module memory_m
      integer :: i1,i2,local_kind
      logical :: loading,stdout_report
      real(SP):: mem_moved,mem_element_size_change(max_mem_elements)
-     real(SP),parameter :: mem_tresh=0.01  ! ( in Gb. CAREFUL! mem_tresh must be >0)
+     real(SP),parameter :: mem_tresh=0.01_SP  ! ( in Gb. CAREFUL! mem_tresh must be >0)
      character(lchlen)  ::ch(2)
      character(schlen)  ::input_name(10),action
      !
@@ -70,7 +71,7 @@ module memory_m
      !
      call string_split(what,input_name)
      !
-     mem_moved=0.
+     mem_moved=0._SP
      ch(1)=""
      if (loading) then
        action="Alloc"
@@ -87,8 +88,8 @@ module memory_m
          mem_element(i2)=trim(input_name(i1))
          local_kind=preset_kind
          if (present(elements_kind)) local_kind=elements_kind(i1)
-         mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1))*real(local_kind)/Gigabyte
-         mem_element_size_change(i2)=mem_element_size_change(i2)+real(elements_size(i1))*real(local_kind)/Gigabyte
+         mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1),SP)*real(local_kind,SP)/Gigabyte
+         mem_element_size_change(i2)=mem_element_size_change(i2)+real(elements_size(i1),SP)*real(local_kind,SP)/Gigabyte
          if (present(errors)) then
            if (errors(i1)/=0) then
              write (ch(1),'(3a,f10.5,a)') 'Mem All. failed. Element ',trim(mem_element(i2)),&
@@ -142,8 +143,7 @@ module memory_m
      if (stdout_report.and.present(quiet)) stdout_report=.not.quiet
      if (.not.stdout_report) return
      !
-     write (ch(2),'(a,f6.3,4a,f6.3,a)') "[M ",mem_sum," Gb] ",trim(action),&
-&                                       trim(ch(1))," (",mem_moved,")"
+     write (ch(2),'(a,f6.3,4a,f6.3,a)') "[M ",mem_sum," Gb] ",trim(action),trim(ch(1))," (",mem_moved,")"
      call msg('s',trim(ch(2)))
      !
    end subroutine

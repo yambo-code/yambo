@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DV
+! Authors (see AUTHORS file for details): DK CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -228,7 +228,7 @@ subroutine bxsf_read(Xk,Xen)
    !
    do while(.not.allocated(BZ_DbGd_table)) 
      if (maxval(BZ_DbGd_nkpt)>0) then
-       allocate(BZ_DbGd_table(Xk%nbz,maxval(BZ_DbGd_nkpt)))
+       allocate(BZ_DbGd_table(Xk%nbz,maxval(BZ_DbGd_nkpt),2))
        BZ_DbGd_table=0
      endif
      BZ_DbGd_nkpt=0
@@ -237,7 +237,8 @@ subroutine bxsf_read(Xk,Xen)
        ikbz=k_the_nearest(DbGd_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
        BZ_DbGd_nkpt(ikbz)=BZ_DbGd_nkpt(ikbz)+1
        !
-       if (allocated(BZ_DbGd_table)) BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz))= ii !DbGd_k%sstar(i1,1)
+       if (allocated(BZ_DbGd_table)) BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz),1)= ii !DbGd_k%sstar(i1,1)
+       !if (allocated(BZ_DbGd_table)) BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz),2)= ?? !i1
        !   
        call live_timing(steps=1)
        !

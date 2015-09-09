@@ -175,9 +175,9 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
          ifft=WF%index(iv1,ik,1)
          offt=WF%index(iv2,isc%os(2),1)
          rhotw_rs(:)=E%f(iv2,isc%os(2),1)/spin_occ
-         if (lostr)      rhotw_rs(1:fft_size)=rhotw_rs(:)*conjg(WF%c(fft_rot_r(os,1:fft_size),offt))
-         if (.not.lostr) rhotw_rs(1:fft_size)=rhotw_rs(:)*WF%c(fft_rot_r(os,1:fft_size),offt)
-         local_u(:) =  u_rs(fft_rot_r(iqs,:))*rhotw_rs(:)
+         if (lostr)      rhotw_rs(1:fft_size)=rhotw_rs(:)*conjg(WF%c(fft_rot_r(1:fft_size,os),offt))
+         if (.not.lostr) rhotw_rs(1:fft_size)=rhotw_rs(:)*WF%c(fft_rot_r(1:fft_size,os),offt)
+         local_u(:) =  u_rs(fft_rot_r(:,iqs))*rhotw_rs(:)
          U_csx(ik,iv1,:) = U_csx(ik,iv1,:)-local_u(:)
           call live_timing(steps=1)
          !

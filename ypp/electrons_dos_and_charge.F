@@ -231,7 +231,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              do ik_bz=1,nkbz
                ik=Xk%sstar(ik_bz,1)
                do i1=1,BZ_DbGd_nkpt(ik_bz)
-                 ik_rand=BZ_DbGd_table(ik_bz,i1)
+                 ik_rand=BZ_DbGd_table(ik_bz,i1,1)
                  f_occ=spin_occ
                  if(l_prt_occ_only) f_occ=Xen%f_DbGd(ib,ik_rand,i_spin)
 #if defined _YPP_RT

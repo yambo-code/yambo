@@ -50,7 +50,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! in QP_apply_global_stretch and  QP_apply_DB_interpolation
  !
  use pars,          ONLY:SP,schlen,IP
- use drivers,       ONLY:l_rt_carriers_in_use,l_sc_run
+ use drivers,       ONLY:l_sc_run
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
@@ -253,7 +253,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      ik_ibz=k%sstar(ik_bz,1)
      !
      do i1=1,BZ_DbGd_nkpt(ik_bz)
-       ik_r=BZ_DbGd_table(ik_bz,i1)
+       ik_r=BZ_DbGd_table(ik_bz,i1,1)
        !
        if (DbGd_k_done(ik_r)==1) cycle
        !
@@ -278,7 +278,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
    !
-   if (.not.l_rt_carriers_in_use .and. .not. l_sc_run) call OCCUPATIONS_Fermi(en,k,1)
+   if (.not.associated(en%fo) .and. .not. l_sc_run) call OCCUPATIONS_Fermi(en,k,1)
    !
    if (input_Tel_is_negative) then
      en%nbf=nbf_m_SAVE(1)

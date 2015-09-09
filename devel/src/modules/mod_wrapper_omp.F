@@ -29,7 +29,7 @@ module wrapper_omp
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,   ONLY:SP
+ use pars,   ONLY:SP,cZERO,cONE
  !
  implicit none
  !
@@ -82,7 +82,7 @@ module wrapper_omp
 !$omp parallel do default(shared), private(i,j)
      do i=1,msize
        do j=1,msize
-         C(i,j) = (0.,0.)
+         C(i,j) = cZERO
          do k=1,msize
            C(i,j) = C(i,j) + A(i,k) * B(k,j)
          enddo
@@ -91,9 +91,9 @@ module wrapper_omp
 !$omp end parallel do
      !
 #elif defined _DOUBLE
-     call ZGEMM(TRANSA,TRANSB,msize,msize,msize,(1._SP,0._SP),A,msize,B,msize,(0._SP,0._SP),C,msize)
+     call ZGEMM(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
 #else
-     call CGEMM(TRANSA,TRANSB,msize,msize,msize,(1._SP,0._SP),A,msize,B,msize,(0._SP,0._SP),C,msize)
+     call CGEMM(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
 #endif
    end subroutine mm_c_omp
    !
@@ -142,13 +142,13 @@ module wrapper_omp
      complex(SP), intent(out):: Y(*)
      character,   intent(in) :: TRANS
 #if defined _OPENMP && defined _DOUBLE
-     call ZGEMV_omp(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+     call ZGEMV_omp(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
 #elif defined _OPENMP && !defined _DOUBLE
-     call CGEMV_omp(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+     call CGEMV_omp(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
 #elif defined _DOUBLE
-     call ZGEMV(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+     call ZGEMV(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
 #else
-     call CGEMV(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+     call CGEMV(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
 #endif
    end subroutine mv_c_omp
    !
@@ -276,7 +276,7 @@ module wrapper_omp
      integer     :: i
      complex(SP) :: ctmp
      !
-     ctmp=0.0_SP
+     ctmp=cZERO
 !$omp parallel do default(shared), private(i), reduction(+:ctmp)
      do i=1,N
        ctmp=ctmp +conjg(CX(i))*CY(i)

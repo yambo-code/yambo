@@ -115,8 +115,10 @@ module BS
  !
  type(BS_T_group), allocatable  :: BS_T_grp(:)
  integer         , allocatable  :: BS_T_grp_1st_el(:)
+ integer         , allocatable  :: BS_T_grps_index(:,:)
  integer         , allocatable  :: BS_nT_at_k(:)
  integer                        :: BS_nT_grps
+ integer                        :: BS_nT_grps_at_k
  !
  ! Blocks ...
  !============
@@ -243,7 +245,9 @@ module BS
        if(iG==1) call mem_est("BS_T_group_X_oscillators",(/BS_n_g_exch*sum(BS_T_grp(:)%size)/))
      endif
      !
-     if (CORRELATION) allocate(BS_blk(iB)%O_c(O_ng,BS_blk(iB)%N_oscillators))
+     if (CORRELATION) then
+       allocate(BS_blk(iB)%O_c(O_ng,BS_blk(iB)%N_oscillators))
+     endif
      !
    end subroutine
    !
@@ -251,24 +255,23 @@ module BS
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
      integer :: iG,iB
-     integer :: i_g,i_b,ik_next,ip_next,ik_now,ip_now
+     integer :: i_g,i_b,ik_loop,ip_loop,ik_now,ip_now
+     if (iG==BS_nT_grps) call mem_est("BS_T_group_X_oscillators")
      do i_g=iG,1,-1
-       if (i_g==BS_nT_grps) call mem_est("BS_T_group_X_oscillators")
        if (.not.allocated(BS_T_grp(i_g)%O_x)) exit
        if (     allocated(BS_T_grp(i_g)%O_x)) deallocate(BS_T_grp(i_g)%O_x)
      enddo
-     if(iB+1<=n_BS_blks) then
-       ik_next=BS_blk(iB)%iT_k
-       ip_next=BS_blk(iB)%iT_p
-     endif
-     if(iB+1> n_BS_blks) then
-       ik_next=0
-       ip_next=0
+     if(iB==0) return
+     ik_now=BS_blk(iB)%ik
+     ip_now=BS_blk(iB)%ip
+     if(iB==n_BS_blks) then
+       ik_now=0
+       ip_now=0
      endif
      do i_b=iB,1,-1
-       ik_now=BS_blk(i_b)%iT_k
-       ip_now=BS_blk(i_b)%iT_p
-       if ( ik_now==ik_next .and. ip_now==ip_next ) cycle
+       ik_loop=BS_blk(i_b)%ik
+       ip_loop=BS_blk(i_b)%ip
+       if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
        if (.not.allocated(BS_blk(i_b)%O_c)) exit
        if (     allocated(BS_blk(i_b)%O_c)) then
          deallocate(BS_blk(i_b)%O_c)
@@ -391,7 +394,9 @@ module BS
      !
      if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
      if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
-     call mem_est("BS_nT_at_k PAR_BS_T_grps_index")
+     if (allocated(BS_T_grps_index))     deallocate(BS_T_grps_index)
+     if (allocated(BS_T_grp_1st_el))     deallocate(BS_T_grp_1st_el)  
+     call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_T_grps_index BS_T_grp_1st_el")
      !
      do i_g=1,BS_nT_grps
        !

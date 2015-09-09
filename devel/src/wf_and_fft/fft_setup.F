@@ -29,8 +29,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev
  use R_lattice,      ONLY:b,g_vec,ng_vec
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
-&                         fft_norm,fft_g_table,fft_multiplier,modx,&
-&                         fft_rot_r_t
+&                         fft_norm,fft_g_table,fft_multiplier,modx
  use wave_func,      ONLY:wf_ng
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
@@ -100,15 +99,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      deallocate(fft_rot_r)
      call mem_est('FFT_rot')
    endif
-   allocate(fft_rot_r(nsym,fft_size))
+   allocate(fft_rot_r(fft_size,nsym))
    call mem_est('FFT_rot',(/size(fft_rot_r)/),(/IP/))
-   !
-   if (allocated(fft_rot_r_t)) then
-     deallocate(fft_rot_r_t)
-     call mem_est('FFT_rot_t')
-   endif
-   allocate(fft_rot_r_t(fft_size,nsym))
-   call mem_est('FFT_rot_t',(/size(fft_rot_r_t)/),(/IP/))
    !
    if (allocated(fft_rot_r_inv)) deallocate(fft_rot_r_inv)
    allocate(fft_rot_r_inv(fft_size))
@@ -148,7 +140,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 &                            modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
              cycle
            endif
-           fft_rot_r(is,i4)=1+modx(iv(1),fft_dim(1))+&
+           fft_rot_r(i4,is)=1+modx(iv(1),fft_dim(1))+&
 &                          modx(iv(2),fft_dim(2))*fft_dim(1)+&
 &                          modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
          enddo
@@ -156,7 +148,6 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      enddo
    enddo
    i4=1
-   fft_rot_r_t=TRANSPOSE(fft_rot_r)
  enddo
  
  !

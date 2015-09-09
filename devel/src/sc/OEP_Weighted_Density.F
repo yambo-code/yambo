@@ -62,7 +62,7 @@ subroutine OEP_Weighted_Density(en,Xk,rho)
   ! Symmetrization
   !
   do i1=1,nsym
-    rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)),SP)/real(nsym,SP)
+    rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(:,i1)),SP)/real(nsym,SP)
   enddo
   !
 end subroutine

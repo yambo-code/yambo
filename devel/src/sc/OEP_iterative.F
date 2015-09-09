@@ -127,7 +127,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
      end do
      V_io = 0._SP
      do is=1,nsym
-       V_io(:)=V_io(:)+real(V_resp(fft_rot_r(is,:)),SP)/real(nsym,SP)
+       V_io(:)=V_io(:)+real(V_resp(fft_rot_r(:,is)),SP)/real(nsym,SP)
      enddo
      V_io = V_io/rho
      !

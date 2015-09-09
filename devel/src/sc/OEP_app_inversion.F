@@ -35,7 +35,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !  rho_{xc}(G)= W(G) - 2*int_k sum_{v} rho_{v,v}(k,G) [SigmaXC_{v,v}(k)]^* +c.c.  
  !  where W(G) is the Hole/Slater part of the potential multiplied by the density
  !
- use pars,            ONLY:SP,DP,SCHLEN
+ use pars,            ONLY:SP,DP,SCHLEN,cZERO
  use D_lattice,       ONLY:DL_vol,i_time_rev,nsym
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
@@ -140,11 +140,11 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          isc%qs = (/1,1,1/)
          call scatterBamp(isc)
          !
-         !rhotw_ds(:)=conjg(WF%c(fft_rot_r(is,:),ifft))*WF%c(fft_rot_r(is,:),offt)/EWeight
-         rhotw_ds(:)=WF%c(fft_rot_r(is,:),ifft)*conjg(WF%c(fft_rot_r(is,:),offt))/EWeight
+         !rhotw_ds(:)=conjg(WF%c(fft_rot_r(:,is),ifft))*WF%c(fft_rot_r(:,is),offt)/EWeight
+         rhotw_ds(:)=WF%c(fft_rot_r(:,is),ifft)*conjg(WF%c(fft_rot_r(:,is),offt))/EWeight
          !
-         rhotw_ds =rhotw_ds/(rho*real(fft_size,SP)) 
-         rhotw_rs = (0._SP,0._SP)
+         rhotw_ds = rhotw_ds/(rho*real(fft_size,SP)) 
+         rhotw_rs = cZERO
          !
          ! r -> G transform; 
          ! In order to be compliant with FFTQE -1 should be used in calls to FFT

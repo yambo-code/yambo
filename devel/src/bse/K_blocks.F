@@ -38,18 +38,17 @@ subroutine K_blocks( )
  use pars,         ONLY:cZERO
  use memory_m,     ONLY:mem_est
  use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered,PP_redux_wait
- use BS,           ONLY:BS_blk,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps_at_k,&
+ use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,&
-&                       BS_LiveTiming_prefactor,BS_T_grps_index
+&                       BS_LiveTiming_prefactor
  use com,          ONLY:msg
- use R_lattice,    ONLY:nXkibz
  use interfaces,   ONLY:PARALLEL_live_message
  !
  implicit none
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_k,j_k,i_Tgrp_at_k,j_Tgrp_at_k,i_loop,tot_size,N_Ts_total(1),i_block
+ integer    :: i_T,j_T,i_loop,tot_size,N_Ts_total(1),i_block
  !
  call section('=','CPU-dependent Block structure')
  !                 =============================
@@ -64,58 +63,51 @@ subroutine K_blocks( )
    tot_size    =0
    n_BS_blks   =0
    !
-   do i_k=1,nXkibz
-     do j_k=1,nXkibz
+   do i_T=1,BS_nT_grps
+     !
+     do j_T=1,BS_nT_grps
        !
-       do i_Tgrp_at_k=1,BS_nT_grps_at_k
-         do j_Tgrp_at_k=1,BS_nT_grps_at_k
-           !
-           i_T=BS_T_grps_index(i_Tgrp_at_k,i_k)   
-           j_T=BS_T_grps_index(j_Tgrp_at_k,j_k)   
-           !
-           if (PAR_IND_T_ordered%element_2D(i_T,j_T)) then 
-             !
-             n_BS_blks=n_BS_blks+1
-             !
-             if (i_loop==2) then
-               allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-               BS_blk(n_BS_blks)%mat=cZERO
-               tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
-               BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-               BS_blk(n_BS_blks)%mode="R"
-               BS_blk(n_BS_blks)%iT_k=i_T
-               BS_blk(n_BS_blks)%iT_p=j_T
-               BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
-               BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
-             endif
-             !
-           endif
-           !
-           if (BS_K_coupling) then
-             !
-             if (.not.PAR_IND_T_all%element_2D(i_T,j_T)) cycle
-             !
-             n_BS_blks=n_BS_blks+1
-             !
-             if (i_loop==2) then
-               allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-               tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
-               BS_blk(n_BS_blks)%mat=cZERO
-               BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-               BS_blk(n_BS_blks)%mode="A"
-               BS_blk(n_BS_blks)%iT_k=i_T
-               BS_blk(n_BS_blks)%iT_p=j_T
-               BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
-               BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
-             endif
-             !
-           endif
-           !
-         enddo  !i_T_at_k
-       enddo    !i_T_at_p
+       if (PAR_IND_T_ordered%element_2D(i_T,j_T)) then 
+         !
+         n_BS_blks=n_BS_blks+1
+         !
+         if (i_loop==2) then
+           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           BS_blk(n_BS_blks)%mat=cZERO
+           tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+           BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+           BS_blk(n_BS_blks)%mode="R"
+           BS_blk(n_BS_blks)%iT_k=i_T
+           BS_blk(n_BS_blks)%iT_p=j_T
+           BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
+           BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+         endif
+         !
+       endif
        !
-     enddo      !i_p
-   enddo        !i_k
+       if (BS_K_coupling) then
+         !
+         if (.not.PAR_IND_T_all%element_2D(i_T,j_T)) cycle
+         !
+         n_BS_blks=n_BS_blks+1
+         !
+         if (i_loop==2) then
+           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+           BS_blk(n_BS_blks)%mat=cZERO
+           BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+           BS_blk(n_BS_blks)%mode="A"
+           BS_blk(n_BS_blks)%iT_k=i_T
+           BS_blk(n_BS_blks)%iT_p=j_T
+           BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
+           BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+         endif
+         !
+       endif
+       !
+     enddo
+     !
+   enddo
    !
  enddo
  !
@@ -134,7 +126,7 @@ subroutine K_blocks( )
    BS_LiveTiming_steps=BS_LiveTiming_steps+BS_Block_size(i_block)
  enddo
  !
- N_Ts_total(1)=BS_LiveTiming_steps
+ N_Ts_total=BS_LiveTiming_steps
  !
  call PP_redux_wait(N_Ts_total)
  !

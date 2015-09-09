@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -24,14 +24,13 @@
 subroutine PARALLEL_Transitions_grouping(Xk)
  !
  use pars,          ONLY:IP,SP
- use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_nT_grps_at_k,BS_T_grps_index,BS_T_grp_1st_el
+ use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_T_grp_1st_el
  use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_BS_T_grps_index,&
 &                        PAR_COM_Xk_ibz_INDEX
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nXkibz,bz_samp
  use vec_operate,   ONLY:sort
- !
  implicit none
  !
  type(bz_samp) :: Xk
@@ -39,20 +38,22 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! Work Space
  !
  logical              :: l_check
- integer              :: i_k,i_t_at_k,i_Tgrp,i_Tgrp_at_k,it_ref,i_counter
+ integer              :: i_k,i_t_at_k,n_GRP,i_Tgrp,it_ref,i_counter
+ integer, allocatable :: GRP_data(:)
+ integer, allocatable :: GRP_index(:)
  !
  ! E/h pairs (k resolved)
  !
  ! In this subroutine I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
  ! Once the group of transitions are build-up the goal is to map them in the total world of transitions groups.
  !
- BS_nT_grps_at_k=PAR_COM_eh_INDEX%n_CPU
- BS_nT_grps=nXkibz*BS_nT_grps_at_k
+ n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU
  !
- ! Loop to define the BS_T_grp_1st_el array
+ allocate(BS_T_grp_1st_el(n_GRP),GRP_data(n_GRP),GRP_index(n_GRP))
+ call mem_est("BS_T_grp_1st_el",(/n_GRP/),(/IP/))
  !
- allocate(BS_T_grp_1st_el(BS_nT_grps))
- call mem_est("BS_T_grp_1st_el",(/BS_nT_grps/),(/IP/))
+ ! Here PAR_BS_nT_grps is the number of groups without taking into account the k-parallelization.
+ ! This is done to define properly the BS_T_grp_1st_el array
  !
  BS_T_grp_1st_el=0
  PAR_BS_nT_col_grps =0
@@ -80,13 +81,24 @@ subroutine PARALLEL_Transitions_grouping(Xk)
    enddo
  enddo
  !
- ! ALL k-eh transitions are diveded in BS_nT_grps groups of transitions
- ! Each CPU takes PAR_BS_nT_grps of them
- !
  call PP_redux_wait(BS_T_grp_1st_el,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(BS_T_grp_1st_el,COMM=PAR_COM_eh_INDEX%COMM)
  !
- call sort(BS_T_grp_1st_el)
+ ! ALL k are diveded in BS_nT_grps groups of transitions and each CPU takes PAR_BS_nT_grps of them
+ !
+ GRP_data(:)=BS_T_grp_1st_el(:)
+ !
+ call sort(GRP_data,indx=GRP_index)
+ !
+ BS_nT_grps     =0
+ BS_T_grp_1st_el=0
+ !
+ do i_Tgrp=1,n_GRP
+   if (GRP_data(i_Tgrp)>0._SP) then
+     BS_nT_grps=BS_nT_grps+1
+     BS_T_grp_1st_el(BS_nT_grps)=GRP_data(i_Tgrp)
+   endif
+ enddo
  !
  ! Groups index
  !
@@ -123,7 +135,8 @@ subroutine PARALLEL_Transitions_grouping(Xk)
 &                                         PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)+1
          !
          ! Warning: this index is modified by the sorting previously done.
-         !          However it is not presently used in the code
+         !          Should be probably defined via the GRP_index or similar
+         !          However it is not presently used in the code.
          PAR_BS_T_grps_index(i_Tgrp)=PAR_BS_nT_col_grps
        endif
      enddo
@@ -131,18 +144,8 @@ subroutine PARALLEL_Transitions_grouping(Xk)
    enddo
  enddo
  !
- allocate(BS_T_grps_index(BS_nT_grps_at_k,nXkibz))
- call mem_est("BS_T_grps_index",(/BS_nT_grps/),(/IP/))
+ ! CLEAN UP
  !
- ! This is in agreement to how the transitions are ordered
- ! according to the sorting of BS_T_grp_1st_el
- ! 
- i_Tgrp=0
- do i_k=1,nXkibz
-   do i_Tgrp_at_k=1,BS_nT_grps_at_k
-     i_Tgrp=i_Tgrp+1
-     BS_T_grps_index(i_Tgrp_at_k,i_k)=i_Tgrp
-   enddo
- enddo
+ deallocate(GRP_data,GRP_index)
  !
 end subroutine

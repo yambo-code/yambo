@@ -115,10 +115,8 @@ module BS
  !
  type(BS_T_group), allocatable  :: BS_T_grp(:)
  integer         , allocatable  :: BS_T_grp_1st_el(:)
- integer         , allocatable  :: BS_T_grps_index(:,:)
  integer         , allocatable  :: BS_nT_at_k(:)
  integer                        :: BS_nT_grps
- integer                        :: BS_nT_grps_at_k
  !
  ! Blocks ...
  !============
@@ -394,9 +392,8 @@ module BS
      !
      if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
      if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
-     if (allocated(BS_T_grps_index))     deallocate(BS_T_grps_index)
      if (allocated(BS_T_grp_1st_el))     deallocate(BS_T_grp_1st_el)  
-     call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_T_grps_index BS_T_grp_1st_el")
+     call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_T_grp_1st_el")
      !
      do i_g=1,BS_nT_grps
        !

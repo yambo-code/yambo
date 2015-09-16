@@ -1,7 +1,9 @@
 #! @SHELL@
 #
-# Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+#        Copyright (C) 2000-2015 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 # 
 # This file is distributed under the terms of the GNU 
 # General Public License. You can redistribute it and/or 
@@ -54,10 +56,7 @@ for arg in $@; do
    fcflags="\$(pf90flags)"
    llmpi="\$(lmpi)"
    ;;
-  -D_OPENMP)
-   dopts="$dopts $arg";
-   ;;
-  -D_NETCDF_IO|-D_64BIT_OFFSET)
+  -D_64BIT_OFFSET)
    dopts="$dopts $arg";
    ;;
   -D_*) 
@@ -77,24 +76,33 @@ linclude="-I\$(includedir)"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi
+llibinclude="\$(netcdf_idir)"
+#
 case $target in
   yambo*)
-   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(netcdf_idir)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(netcdf_idir)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -liotk  \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude -I\$(iotk_dir)"
+   llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(iotk_idir) \$(netcdf_idir)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -letsf_io \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude -I\$(etsf_dir)"
+   llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(etsf_idir) \$(netcdf_idir)"
     ;;
   ypp*)
-   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(netcdf_idir)"
+    ;;
+  ydb*)
+   llibs="$llibs \$(lfftqe) \$(llapack) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal"
+   linclude="$linclude \$(netcdf_idir)"
     ;;
 esac
 
@@ -104,7 +112,8 @@ echo "fcflags=$fcflags" >> $cdir/Makefile
 echo "fcuflags=$fcuflags" >> $cdir/Makefile
 echo "llibs=$llibs" >> $cdir/Makefile
 echo "linclude=$linclude" >> $cdir/Makefile
-echo "lf90include=$lf90include" >> $cdir/Makefile
+echo "llibinclude=$llibinclude" >> $cdir/Makefile
+echo "lf90include=$lf90include $llibinclude" >> $cdir/Makefile
 echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile

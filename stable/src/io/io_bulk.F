@@ -23,10 +23,8 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
 &                  C1,L1,L3,IPOS)
  !
  use pars,    ONLY:SP,LP,lchlen
-#if defined _NETCDF_IO
  use pars,    ONLY:nf90_SP
  use netcdf
-#endif
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_netcdf_support
  implicit none
@@ -53,7 +51,6 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
  !== NETCDF I/O ======
  !====================
  !
-#if defined _NETCDF_IO
  if (present(VAR).and.present(VAR_SZ)) then
    if (write_is_on(ID)) then
      call netcdf_call(nf90_redef(io_unit(ID)))
@@ -207,7 +204,6 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(R3)
  endif
-#endif
  !
  return
  !

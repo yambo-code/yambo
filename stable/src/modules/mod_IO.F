@@ -24,9 +24,8 @@ module IO_m
  use pars,       ONLY:SP,lchlen,schlen
  use LOGO,       ONLY:code_version,code_revision
  use com,        ONLY:error
-#if defined _NETCDF_IO
  use netcdf
-#endif
+ !
  implicit none
  !
  ! World known variables
@@ -274,11 +273,7 @@ module IO_m
      if (open_is_on(ID).and.write_is_on(ID)) then
        if (io_netcdf_support(ID)) then
          !
-#if defined _NETCDF_IO
-         !
          CREATE_MODE=nf90_share
-         !
-#endif
          !
          ! Setting NF90_64BIT_OFFSET causes netCDF to create a 64-bit 
          ! offset format file, instead of a netCDF classic format file. 
@@ -288,7 +283,7 @@ module IO_m
          ! http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Large-File-Support.html
          ! http://www.unidata.ucar.edu/software/netcdf/faq-lfs.html
          !
-#if defined _NETCDF_IO && defined _64BIT_OFFSET
+#if defined _64BIT_OFFSET
          !
          if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
 &                  index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
@@ -296,11 +291,9 @@ module IO_m
 &                  index(desc,'kindx')/=0/))) & 
 &                  CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
          !
-#elif defined _NETCDF_IO && defined _HDF5_IO
+#elif defined _HDF5_IO
          CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif
-         !
-#if defined _NETCDF_IO
          !
          if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
            !
@@ -320,7 +313,7 @@ module IO_m
            call netcdf_call(nf90_enddef(io_unit(ID)))
            !
          endif
-#endif
+         !
        else
          !
          if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
@@ -387,19 +380,8 @@ module IO_m
          endif
        endif
        if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
          call netcdf_call(nf90_open(trim(io_file(ID)),&
 &                         nf90_nowrite,io_unit(ID)))
-#else
-         io_connect=IO_NO_DATABASE
-         if (present(no_full_RESET)) then
-           io_file(ID)=''
-         else
-           call io_reset(ID)
-           io_type(ID)=0
-         endif
-         return
-#endif
        else
          open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
        endif
@@ -418,9 +400,7 @@ module IO_m
      !
      if (file_is_open(io_file(ID),ID)) then
        if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
          call netcdf_call(nf90_close(io_unit(ID)))
-#endif
        else
          close(unit=io_unit(ID))
        endif
@@ -466,9 +446,7 @@ module IO_m
      endif
      if (write_is_on(ID)) io_fragmented(ID)=Fragmented_IO
      !
-#if defined _NETCDF_IO
      if (present(NETCDF)) io_netcdf_support(ID)=NETCDF
-#endif
      !
    end subroutine
    !
@@ -503,9 +481,7 @@ module IO_m
      io_serial_number(ID)=serial_number
      io_resetable(ID)=.true.
      io_netcdf_support(ID)=.false.
-#if defined _NETCDF_IO
      io_netcdf_support(ID)=.true.
-#endif
    end subroutine
    !
    subroutine mk_dir(dirname)
@@ -619,10 +595,8 @@ module IO_m
      if (trim(filename)=='') return
      if (present(ID)) then
        if (io_netcdf_support(ID))  then
-#if defined _NETCDF_IO
          NC_ERR=nf90_inquire(io_unit(ID))
          file_is_open=NC_ERR==NF90_NOERR
-#endif
        else
          inquire(file=filename,opened=file_is_open)
        endif
@@ -635,13 +609,11 @@ module IO_m
    subroutine netcdf_call(status)
      use com,           ONLY:error
      integer, intent ( in) :: status
-#if defined _NETCDF_IO
      character(schlen) :: msg
      if(status /= nf90_noerr) then
        write (msg,'(2a)') '[NetCDF] ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
-#endif
    end subroutine
    !
    integer function netcdf_dim(ID,DIM)
@@ -649,12 +621,10 @@ module IO_m
      integer       :: dim_found
      character(12) :: dim_strng
      netcdf_dim=0
-#if defined _NETCDF_IO
      write (dim_strng,'(a,i10.10)') 'D_',dim
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (dim_found/=nf90_noerr) call netcdf_call(&
 &                               nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim))
-#endif
    end function
    !
    integer function variable_is_found(ID,var_name)
@@ -662,10 +632,8 @@ module IO_m
      character(*), intent ( in) :: var_name
      integer :: var_ID ! Work Space
      variable_is_found=-1
-#if defined _NETCDF_IO
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=1  
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=0  
-#endif
    end function
    !
 end module IO_m

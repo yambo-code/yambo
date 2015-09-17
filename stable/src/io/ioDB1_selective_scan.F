@@ -57,11 +57,6 @@ integer function ioDB1_selective_scan(E,k,DB1_path,what)
  ! I can use also a plain fortran database.
  ! 
  if (what/='all') then
-#if !defined _NETCDF_IO
-   ioDB1_selective_scan=-1
-   core_io_path=core_io_path_save
-   return
-#endif
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
    ioDB1_selective_scan =io_connect(desc="db1",type=0,ID=ID)
    if (ioDB1_selective_scan/=0) then 

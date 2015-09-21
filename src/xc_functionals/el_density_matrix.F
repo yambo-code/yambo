@@ -114,7 +114,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  rho_syms=nsym/(i_time_rev+1)
  !
  do ir=1,rho_syms
-   rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(ir,:)),SP)/real(nsym,SP)
+   rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(:,ir)),SP)/real(nsym,SP)
  enddo
  !
  rho(:)=(1+i_time_rev)*rho(:)

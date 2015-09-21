@@ -145,7 +145,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    endif
    !
    ! This call is needed as Xw%p is deallocated inside
-   ! the q-loop of X_em1. But only when the EM1D is written or when it is not but we are not  doing
+   ! the q-loop of X_em1. But only when the EM1D is written or when it is not but we are not doing
    ! lifetimes calculations
    !
    if (io_RESPONSE.or.(.not.io_RESPONSE.and..not.l_life)) call FREQUENCIES_setup(Xw)
@@ -187,9 +187,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
 #if defined _SC 
  if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
-#endif
-#if defined _RT
- if (computing_Xo_variation)              live_t_string='delta Xo@q['//trim(intc(iq))//'] '
 #endif
  !
  if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N)

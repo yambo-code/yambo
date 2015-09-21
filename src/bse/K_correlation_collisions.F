@@ -80,7 +80,7 @@ subroutine K_correlation_collisions(i_block,Xk,q)
  !
  call scatterBamp_alloc(K_CORR_collision)
  !
- allocate(BS_blk(i_block)%O_table(2,nsym,BS_bands(2),BS_bands(2),n_sp_pol))
+ allocate(BS_blk(i_block)%O_table(2,nsym,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  !
  do i_cycle=1,2
    !
@@ -128,7 +128,7 @@ subroutine K_correlation_collisions(i_block,Xk,q)
          if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
          i_block_ref=-1
          do i_block_p=i_block,1,-1
-           if(BS_blk(i_block_p)%iT_k/=BS_blk(i_block)%iT_k .or. BS_blk(i_block_p)%iT_p/=BS_blk(i_block)%iT_p) exit
+           if(BS_blk(i_block_p)%ik/=BS_blk(i_block)%ik .or. BS_blk(i_block_p)%ip/=BS_blk(i_block)%ip) exit
            if(BS_blk(i_block_p)%O_table(1,i_s_collision,i_v_k,i_v_p,i_k_sp)==0) cycle
            i_block_ref=i_block_p
            exit
@@ -148,7 +148,7 @@ subroutine K_correlation_collisions(i_block,Xk,q)
          if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
          i_block_ref=-1
          do i_block_p=i_block,i_block,-1
-           if(BS_blk(i_block_p)%iT_k/=BS_blk(i_block)%iT_k .or. BS_blk(i_block_p)%iT_p/=BS_blk(i_block)%iT_p) exit
+           if(BS_blk(i_block_p)%ik/=BS_blk(i_block)%ik .or. BS_blk(i_block_p)%ip/=BS_blk(i_block)%ip) exit
            if(BS_blk(i_block_p)%O_table(1,i_s_collision,i_c_k,i_c_p,i_k_sp)==0) cycle
            i_block_ref=i_block_p
            exit
@@ -170,7 +170,7 @@ subroutine K_correlation_collisions(i_block,Xk,q)
          if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
          i_block_ref=-1
          do i_block_p=i_block,1,-1
-           if(BS_blk(i_block_p)%iT_k/=BS_blk(i_block)%iT_k .or. BS_blk(i_block_p)%iT_p/=BS_blk(i_block)%iT_p) exit
+           if(BS_blk(i_block_p)%ik/=BS_blk(i_block)%ik .or. BS_blk(i_block_p)%ip/=BS_blk(i_block)%ip) exit
            if(BS_blk(i_block_p)%O_table(1,i_s_collision,i_v_k,i_c_p,i_k_sp)==0) cycle
            i_block_ref=i_block_p
            exit
@@ -190,7 +190,7 @@ subroutine K_correlation_collisions(i_block,Xk,q)
          if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
          i_block_ref=-1
          do i_block_p=i_block,1,-1
-           if(BS_blk(i_block_p)%iT_k/=BS_blk(i_block)%iT_k .or. BS_blk(i_block_p)%iT_p/=BS_blk(i_block)%iT_p) exit
+           if(BS_blk(i_block_p)%ik/=BS_blk(i_block)%ik .or. BS_blk(i_block_p)%ip/=BS_blk(i_block)%ip) exit
            if(BS_blk(i_block_p)%O_table(1,i_s_collision,i_c_k,i_v_p,i_k_sp)==0) cycle
            i_block_ref=i_block_p
            exit

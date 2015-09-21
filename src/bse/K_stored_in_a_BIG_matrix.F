@@ -219,6 +219,10 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_eh_INDEX%COMM)
+ if (E_SOC_nbands/=0) then
+   call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
+ endif
  call PP_redux_wait(BSS_eh_f,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_eh_f,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_eh_table,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

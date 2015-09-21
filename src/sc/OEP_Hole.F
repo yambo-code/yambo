@@ -79,7 +79,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  Vslt= 0._SP
  !
  do i1=1,nsym
-   Vslt(:fft_size)=Vslt(:fft_size)+real(Vslt_DP(fft_rot_r(i1,:fft_size)),SP)/real(nsym,SP)
+   Vslt(:fft_size)=Vslt(:fft_size)+real(Vslt_DP(fft_rot_r(:fft_size,i1)),SP)/real(nsym,SP)
  enddo
  !
 end subroutine OEP_Hole

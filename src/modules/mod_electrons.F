@@ -111,7 +111,7 @@ module electrons
  integer  :: BZ_DbGd_nbands
  logical  :: DbGd_is_symmetry_expanded=.FALSE.
  integer ,allocatable :: BZ_DbGd_nkpt(:)
- integer ,allocatable :: BZ_DbGd_table(:,:)
+ integer ,allocatable :: BZ_DbGd_table(:,:,:)
  real(SP),allocatable :: BZ_DbGd_ipol_weight(:)
  real(SP),allocatable :: BZ_DbGd_kpts(:,:)
  !

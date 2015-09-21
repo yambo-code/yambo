@@ -311,10 +311,11 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Tables
  !
- allocate(BZ_DbGd_table(Xk%nbz,maxval(BZ_DbGd_nkpt)))
+ allocate(BZ_DbGd_table(Xk%nbz,maxval(BZ_DbGd_nkpt),2))
  BZ_DbGd_table=0
  do i1=1,Xk%nbz
-   BZ_DbGd_table(i1,1)=Xk%sstar(i1,1)
+   BZ_DbGd_table(i1,1,1)=Xk%sstar(i1,1)
+   BZ_DbGd_table(i1,1,2)=i1
  enddo
  if (.not.DbGd_is_symmetry_expanded) then
    allocate(BZ_SYM_table(Xk%nbz,maxval(BZ_DbGd_nkpt)))
@@ -333,10 +334,11 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1
    !
    if (DbGd_is_symmetry_expanded) then
-     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near))=DbGd_k(i_db_merge)%sstar(i1,1)
+     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),1)=DbGd_k(i_db_merge)%sstar(i1,1)
+     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),2)=i1
    else
      BZ_SYM_table(ik_near,BZ_DbGd_nkpt(ik_near))=TMP_map(i1,2)
-     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near))=i1+1
+     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),1)=i1+1
    endif
    !
  enddo
@@ -352,15 +354,19 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  BZ_DbGd_ipol_weight = 1.0_SP
  !
  allocate(Xen%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
- allocate(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
- BZ_DbGd_kpts=0._SP
  !
  if (DbGd_is_symmetry_expanded) then
+   !
+   allocate(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
+   BZ_DbGd_kpts=0._SP
    !
    Xen%E_DbGd(:,:,:)=DbGd_E(i_db_merge)%E(:,:,:)
    BZ_DbGd_kpts(:,:)=DbGd_k(i_db_merge)%ptbz(:,:)
    !
  else
+   !
+   allocate(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
+   BZ_DbGd_kpts=0._SP
    !
    call live_timing('DbGd re-ordering and distribution',Xk%nbz,SERIAL=.true.)
    !                ===============
@@ -369,14 +375,14 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
      do ik_DbGd=1,BZ_DbGd_nkpt(ik_bz)
        i1=i1+1
        if (ik_DbGd==1) then
-         Xen%E_DbGd(:,i1,:)=Xen%E(:BZ_DbGd_nbands,BZ_DbGd_table(ik_bz,1),:)+Xen%E_fermi
+         Xen%E_DbGd(:,i1,:)=Xen%E(:BZ_DbGd_nbands,BZ_DbGd_table(ik_bz,1,1),:)+Xen%E_fermi
          BZ_DbGd_kpts(i1,:)=Xk%ptbz(ik_bz,:)
        else
-         Xen%E_DbGd(:,i1,:)=DbGd_E(i_db_merge)%E(:,BZ_DbGd_table(ik_bz,ik_DbGd)-1,:)
-!         BZ_DbGd_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_DbGd) ), &
-!&                                  DbGd_k(i_db_merge)%pt(BZ_DbGd_table(ik_bz,ik_DbGd)-1,:) )
+         Xen%E_DbGd(:,i1,:)=DbGd_E(i_db_merge)%E(:,BZ_DbGd_table(ik_bz,ik_DbGd,1)-1,:)
+         BZ_DbGd_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_DbGd) ), &
+&                                  DbGd_k(i_db_merge)%pt(BZ_DbGd_table(ik_bz,ik_DbGd,1)-1,:) )
        endif
-       BZ_DbGd_table(ik_bz,ik_DbGd)=ik_DbGd+sum(BZ_DbGd_nkpt(:ik_bz-1))
+       BZ_DbGd_table(ik_bz,ik_DbGd,1)=ik_DbGd+sum(BZ_DbGd_nkpt(:ik_bz-1))
      enddo
      call live_timing(steps=1)
    enddo

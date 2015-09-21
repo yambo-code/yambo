@@ -47,13 +47,13 @@ function WF_symm(ifft,isc)
    return
  endif
  !
- if(n_spinor==1) WF_symm(1)=WF%c(fft_rot_r(isc(3),ifft),i_wf(1))
+ if(n_spinor==1) WF_symm(1)=WF%c(fft_rot_r(ifft,isc(3)),i_wf(1))
  !
  if (n_spinor==2) then
-   WF_symm(1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(isc(3),ifft),i_wf(1))+ &
-&                    spin_sop(1,2,isc(3))*WF%c(fft_rot_r(isc(3),ifft),i_wf(2))
-   WF_symm(2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(isc(3),ifft),i_wf(1))+ &
-&                    spin_sop(2,2,isc(3))*WF%c(fft_rot_r(isc(3),ifft),i_wf(2))
+   WF_symm(1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),i_wf(1))+ &
+&                    spin_sop(1,2,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),i_wf(2))
+   WF_symm(2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),i_wf(1))+ &
+&                    spin_sop(2,2,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),i_wf(2))
  endif
  !
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)

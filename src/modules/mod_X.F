@@ -53,10 +53,10 @@ module X_m
  !
  logical                  :: Vnl_commutator_warning
  !
- ! Real-Time
+ ! Logical used to decid how to use the double grid in X_os
+ ! and in particular in X_bare_Double_Grid_GreenF
  !
- logical                  :: computing_Xo_variation
- !
+ logical                  :: integrating_over_q
  !
  ! Dipole M.E.
  !
@@ -156,27 +156,27 @@ module X_m
        case('X')
          if (allocated(X_mat)) return
          allocate(X_mat(d(1),d(2),d(3)),stat=err)
-         call mem_est(what,(/product(d)/),errors=(/err/))
+         call mem_est(what,(/size(X_mat)/),errors=(/err/))
        case('DIP_iR')
          if (allocated(DIP_iR)) return
          allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         call mem_est(what,(/size(dip_iR)/),errors=(/err/))
        case('DIP_P')
          if (allocated(DIP_P)) return
          allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         call mem_est(what,(/size(dip_P)/),errors=(/err/))
        case('DIP_S')
          if (allocated(DIP_S)) return
          allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         call mem_est(what,(/size(dip_S)/),errors=(/err/))
        case('DIP_projected')
          if (allocated(DIP_projected)) return
          allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         call mem_est(what,(/size(DIP_projected)/),errors=(/err/))
        case('P_square')
          if (allocated(P_square)) return
          allocate(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         call mem_est(what,(/size(P_square)/),errors=(/err/))
        end select
      else
        select case(what)

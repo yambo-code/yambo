@@ -96,9 +96,9 @@ subroutine el_magnetization(en,Xk,magn)
      tmp_sop(:,:)=dl_sop(:,:,i1)*m3det(dl_sop(:,:,i1))
      if( i1> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
      forall(i2=1:fft_size) magn(i2,:)=magn(i2,:)+ &
-&                            matmul(tmp_sop,real( cv(fft_rot_r(i1,i2),:)/real(nsym) ))
+&                            matmul(tmp_sop,real( cv(fft_rot_r(i2,i1),:)/real(nsym) ))
    else
-     magn(:,3)=magn(:,3)+real(cv(fft_rot_r(i1,:),3)/real(nsym))
+     magn(:,3)=magn(:,3)+real(cv(fft_rot_r(:,i1),3)/real(nsym))
    endif
    !
  enddo

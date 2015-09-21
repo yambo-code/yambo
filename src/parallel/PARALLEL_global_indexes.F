@@ -984,8 +984,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        MASK=PAR_IND_T_groups%element_1D)
      !
      call PARALLEL_live_message("(e/h)->(e/h)' Transitions (all)",ENVIRONMENT=ENVIRONMENT,&
-&                               LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=BS_nT_grps*BS_nT_grps,&
-&                               NCPU=PAR_COM_T_INDEX%n_CPU)
+&                               LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&
+&                               TOTAL=BS_nT_grps*BS_nT_grps,NCPU=PAR_COM_T_INDEX%n_CPU)
      !
    endif
    !
@@ -994,8 +994,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_live_message("(e/h)->(e/h)' Transitions (ordered)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_T_ordered%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&
-&                             TOTAL=BS_nT_grps*(BS_nT_grps-1)/2+BS_nT_grps,&
-&                             NCPU=PAR_COM_T_INDEX%n_CPU)
+&                             TOTAL=BS_nT_grps*(BS_nT_grps+1)/2,NCPU=PAR_COM_T_INDEX%n_CPU)
    !
    ! Inversion
    !

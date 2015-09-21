@@ -134,6 +134,8 @@ module parallel_m
  type PP_indexes
    logical, pointer :: element_1D(:)     => null()
    logical, pointer :: element_2D(:,:)   => null()
+   ! Davide 40/09/2015: n_of_elements should be a number. It is useless that it is a pointer
+   !                    allocated to nCPU and that each CPU fills only the element myid.
    integer, pointer :: n_of_elements(:)  => null()
    integer, pointer :: weight_1D(:)      => null()
    integer, pointer :: first_of_1D(:)    => null()
@@ -256,8 +258,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_DIAGO
  !
  ! ... RL vectors
- integer            :: PAR_nRL
- integer,allocatable:: PAR_RL_index(:)
+ integer             :: PAR_nRL
+ integer,allocatable :: PAR_RL_index(:)
  !
  ! ... QP
  type(MPI_comm),SAVE :: PAR_COM_QP_INDEX

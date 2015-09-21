@@ -26,7 +26,8 @@ integer function io_Double_Grid(E,Xk,ID)
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_max_filling,&
 &                         BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol,BZ_DbGd_ipol_weight,&
-&                         DbGd_is_symmetry_expanded,BZ_ASSOCIATED_nkpts,BZ_DbGd_kpts
+&                         DbGd_is_symmetry_expanded,BZ_ASSOCIATED_nkpts,BZ_DbGd_kpts,&
+&                         BZ_DbGd_nkpts
  use R_lattice,      ONLY:nXkbz,bz_samp
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
@@ -66,12 +67,13 @@ integer function io_Double_Grid(E,Xk,ID)
  if (io_Double_Grid/=0) goto 1
  !
  if (DG_format==1) then
-   call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=1)
  else
-   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=1)
  endif
  !
  call io_elemental(ID,I0=BZ_DbGd_nbands,    VAR=' Bands                           :')
+ call io_elemental(ID,I0=BZ_DbGd_nkpts,     VAR=' Fine grid number of points      :')
  call io_elemental(ID,I0=BZ_DbGd_tot_nkpts, VAR=' Total number of points          :')
  ! 
  if (DG_format==3) then
@@ -93,8 +95,9 @@ integer function io_Double_Grid(E,Xk,ID)
    allocate(E%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
    allocate(E%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
    allocate(E%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   allocate(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
-   allocate(BZ_DbGd_nkpt(BZ_ASSOCIATED_nkpts),BZ_DbGd_table(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling))
+   if(.not.DbGd_is_symmetry_expanded) allocate(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
+   if(     DbGd_is_symmetry_expanded) allocate(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
+   allocate(BZ_DbGd_nkpt(BZ_ASSOCIATED_nkpts),BZ_DbGd_table(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling,2))
    allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
    call mem_est("E_DbGd W_DbGd f_DbGd k_DbGd BZ_DbGd_nkpt BZ_DbGd_table",&
 &               (/size(E%E_DbGd),size(E%W_DbGd),size(E%f_DbGd),size(BZ_DbGd_kpts),size(BZ_DbGd_nkpt),&
@@ -137,7 +140,7 @@ integer function io_Double_Grid(E,Xk,ID)
  else
    call io_bulk(ID, VAR="RIM_BLOCK_TABLE", VAR_SZ=shape(BZ_DbGd_table) ) 
  endif
- call io_bulk(ID, I2=BZ_DbGd_table )
+ call io_bulk(ID, I3=BZ_DbGd_table )
  !
  ! Double grid interpolation weights of each element in table
  !

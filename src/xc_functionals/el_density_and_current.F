@@ -138,7 +138,7 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  !
  if (l_rho) then
    do i_s=1,rho_syms
-     rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i_s,:)),SP)/real(nsym,SP)
+     rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(:,i_s)),SP)/real(nsym,SP)
    enddo
    if (mag_syms)      return
    if (.not.l_si) rho(:)=(1+i_time_rev)*     rho(:)
@@ -147,7 +147,7 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  !
  !if (l_J) then
  !  do i_s=1,rho_syms
- !    J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(i_s,:),:),SP)/real(nsym,SP)
+ !    J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(:,i_s),:),SP)/real(nsym,SP)
  !  enddo
  !endif
  ! 

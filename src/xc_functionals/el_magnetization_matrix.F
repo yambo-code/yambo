@@ -156,9 +156,9 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
      tmp_sop(:,:)=dl_sop(:,:,isym)*m3det(dl_sop(:,:,isym))
      if( isym> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
      forall(ifft=1:fft_size) magn(ifft,:)=magn(ifft,:)+ &
-&                            matmul(tmp_sop,real( cv(fft_rot_r(isym,ifft),:)/real(nsym) ))
+&                            matmul(tmp_sop,real( cv(fft_rot_r(ifft,isym),:)/real(nsym) ))
    else
-     magn(:,3)=magn(:,3)+real(cv(fft_rot_r(isym,:),3)/real(nsym))
+     magn(:,3)=magn(:,3)+real(cv(fft_rot_r(:,isym),3)/real(nsym))
    endif
    !
  enddo

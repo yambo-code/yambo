@@ -27,7 +27,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
- use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles
+ use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,integrating_over_q
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -65,7 +65,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! the comparison in ioX can be done safely
  !
  call TDDFT_do_X_W_typs(-1,X,Xw)
- ! 
+ !
  ! Sectioning
  !
  sec_mode='*'
@@ -153,7 +153,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
  if (.not.allocated(X_mat)) then
-   if (io_RESPONSE)      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+   if (     io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
    if (.not.io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
  endif
  !
@@ -173,6 +173,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    endif
    !
  endif
+ !
+ integrating_over_q=.true.
  !
  do iq=X%iq(1),X%iq(2)
    !
@@ -235,6 +237,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    endif
    !
  enddo
+ !
+ integrating_over_q=.false.
  !
  ! X%ngostnts is defined only for the group of CPU's that
  ! eval q=1 and must be spread to all CPUs to allow futrher I/O

@@ -612,7 +612,7 @@ subroutine K_Haydock(iq,W)
      !
      Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi*Haydock_v0_mod**2._SP
      !
-     X_t =(0._SP,0._SP)
+     X_t =cZERO
      UseTerminator = .false.  
      !
      causal  = (trim(BSE_mode)=='causal'.and..not.use_cpl_scheme)

@@ -98,10 +98,12 @@ module interfaces
      logical,         optional::RESET
    end subroutine
    !
-   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU)
+   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,NCPU)
+     use pars,           ONLY:SP
      character(*)          :: WHAT
      character(*),optional :: ENVIRONMENT
      integer,     optional :: LOADED,TOTAL,NCPU
+     real(SP),    optional :: LOADED_r,TOTAL_r
    end subroutine
    !
    subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&

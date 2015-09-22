@@ -1,13 +1,12 @@
 
-!===============
-program mytest
-  !===============
+ subroutine SLK_test() 
   ! 
   ! simple program to invert a NxN matrix using scalapack 
   !
-  use kinds
-  use constants
-  use para_module
+  use pars
+  use parallel_m
+  use com
+  use SLK_m
   implicit none
   !
   integer        :: iargc              ! function giving no of arguments
@@ -17,75 +16,54 @@ program mytest
   !
   integer        :: ndim, nprow, npcol
   integer        :: ivar
-  real(dbl), allocatable :: Amat(:,:), Ainv(:,:)
+  real(DP),   allocatable :: Amat(:,:), Ainv(:,:)
   !
   integer        :: ind, ierr
 
 !===================
-
-  ionode=.true.
-  ionode_id=0
   !
-#ifdef __MPI
+!  ndim=0
+!  nprow=1
+!  npcol=1
+!  npool=1
   !
-  call MPI_INIT(ierr)
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ierr)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,mpime,ierr)
-  !
-  ionode=.false.
-  if (mpime==0) ionode=.true.
-  if (ionode) ionode_id=mpime
-  !
-#endif
-
-  !
-  ! get cmd line options
-  !
-  nargs = iargc ()
-  if ( nargs < 1 ) call errore(subname,'invalid # of args',10)
-  !
-  ndim=0
-  nprow=1
-  npcol=1
-  npool=1
-  !
-  ind=1
-  do while (ind <= nargs)
-     !
-     call getarg(ind,str)
-     call getarg(ind+1,str1)
-     read(str1,*,iostat=ierr) ivar
-     if ( ierr /=0 ) call errore(subname,'reading arg',10)
-     !
-     select case ( trim(str) )
-     case ("-n", "--ndim") 
-          ndim=ivar
-     case ("-ng", "--ngrid") 
-          nprow=ivar
-          npcol=ivar
-     case ("-np", "--npool") 
-          npool=ivar
-     end select
-     !
-     ind=ind+2
-     !
-  enddo 
-  !
-  np_ortho(1)=nprow
-  np_ortho(2)=npcol
+!  ind=1
+!  do while (ind <= nargs)
+!     !
+!     call getarg(ind,str)
+!     call getarg(ind+1,str1)
+!     read(str1,*,iostat=ierr) ivar
+!     if ( ierr /=0 ) call errore(subname,'reading arg',10)
+!     !
+!     select case ( trim(str) )
+!     case ("-n", "--ndim") 
+!          ndim=ivar
+!     case ("-ng", "--ngrid") 
+!          nprow=ivar
+!          npcol=ivar
+!     case ("-np", "--npool") 
+!          npool=ivar
+!     end select
+!     !
+!     ind=ind+2
+!     !
+!  enddo 
+!  !
+!  np_ortho(1)=nprow
+!  np_ortho(2)=npcol
   !
   ! report
   !
-  if ( ionode ) then
+  if ( master_cpu ) then
      write(0,"(/,2x,'INPUT report')")
      write(0,"(2x,'      ndim : ',i5)") ndim
-     write(0,"(2x,'      ncpu : ',i5)") nproc
+     write(0,"(2x,'      ncpu : ',i5)") ncpu
      write(0,"(2x,' para grid : ',3x,i2,' x',i2)") nprow,npcol
-     write(0,"(2x,'     npool : ',i5)") npool
+     write(0,"(2x,'     npool : ',i5)") n_pools
      write(0,"()")
   endif
   !
-  if ( nprow*npcol*npool /= nproc ) CALL errore(subname,"invalid number of MPI tasks",10)
+!  if ( nprow*npcol*npool /= ncpu ) CALL errore(subname,"invalid number of MPI tasks",10)
   
   !
   ! setup parallel structure
@@ -101,25 +79,25 @@ program mytest
   !
   ! init
   !
-  if (ionode) write(0,"(/,1x,'Matrix Building')") 
+  if (master_cpu) write(0,"(/,1x,'Matrix Building')") 
   call build_matrix( ndim, Amat )
 
   !
   ! serial inversion
   !
-  if (ionode) write(0,"(/,1x,'Serial Inversion')") 
+  if (master_cpu) write(0,"(/,1x,'Serial Inversion')") 
   call serial_inverse( ndim, Amat, Ainv )
   !
-  if (ionode) write(0,"(/,2x,'Check A*Ainv=Id')") 
+  if (master_cpu) write(0,"(/,2x,'Check A*Ainv=Id')") 
   call inverse_check( ndim, Amat, Ainv )
 
   !
   ! parallel inversion
   !
-  if (ionode) write(0,"(/,1x,'Parallel Inversion')") 
+  if (master_cpu) write(0,"(/,1x,'Parallel Inversion')") 
   call para_inverse( ndim, Amat, Ainv )
   !
-  if (ionode) write(0,"(/,2x,'Check A*Ainv=Id')") 
+  if (master_cpu) write(0,"(/,2x,'Check A*Ainv=Id')") 
   call inverse_check( ndim, Amat, Ainv )
 
 
@@ -132,20 +110,17 @@ program mytest
   call MPI_FINALIZE(ierr)
 #endif
   !
-end program mytest
+end subroutine SLK_test 
   
 
 !===========================================
   subroutine parallel_structure( )
   !===========================================
-  use kinds
-  use para_module
+  use parallel_m
   implicit none
   !
-  world_comm = MPI_COMM_WORLD
-  !
   ! init pools
-  call SLK_POOLS_init( world_comm )
+  call SLK_POOLS_init( mpi_comm_world )
   !
   ! init the scalapack grid
   call SLK_ORTHO_init( product(np_ortho), intra_pool_comm )
@@ -435,11 +410,3 @@ end subroutine para_inverse
   return
   !
 end subroutine inverse_check
-
-
-
-  
-
-
-  
-

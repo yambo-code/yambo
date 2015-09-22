@@ -698,6 +698,8 @@ subroutine K_Haydock(iq,W)
        endif
        if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
        !
+       ! GPL_EXCLUDE_START
+       !
 #if defined _KERR
        !
        ! I add the term describing the Anomalous Hall effect which is
@@ -713,6 +715,8 @@ subroutine K_Haydock(iq,W)
        endif
        !
 #endif
+       !
+       ! GPL_EXCLUDE_END
        !
        if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(i_eps(1),iw)-X_epsilon(i_eps(2),iw))/abs(X_epsilon(2,iw)))

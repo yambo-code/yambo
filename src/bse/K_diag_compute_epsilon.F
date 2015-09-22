@@ -167,7 +167,11 @@ subroutine K_diag_compute_epsilon(iq,W,BS_E,BS_E_SOC_corr,BS_R,BS_R_kerr)
  if (E_SOC_nbands==0) Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
  if (E_SOC_nbands/=0) Co=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
  !
+ ! GPL_EXCLUDE_START
+ !
  if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(2,iw_ref)
+ !
+ ! GPL_EXCLUDE_END
  !
  if(trim(global_gauge)=='length'  ) X_epsilon(2,:)=1._SP+(X_epsilon(2,:)          +X_drude_term(:))*Co/q_norm(1)**2
  if(trim(global_gauge)=='velocity') X_epsilon(2,:)=1._SP+(X_epsilon(2,:)-factor_jj+X_drude_term(:))*Co/ W%p(:)  **2

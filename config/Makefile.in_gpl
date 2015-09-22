@@ -77,9 +77,7 @@ YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interpolate tddft p
 #
 # PROJECTS
 #
-PROJECTS = yambo_surf ypp_surf yambo_kerr yambo_ph ypp_ph
-PJ_SURFLIBS   = $(BASIC_SURF_LIBS) coulomb bz_ops qp_control surf setup tddft pol_function qp bse
-YPPSURFLIBS   = $(BASIC_SURF_LIBS) bz_ops qp_control setup interpolate surf tddft pol_function bse
+PROJECTS = yambo_kerr yambo_ph ypp_ph
 EXE      = $(TARGETS) $(PROJECTS)
 #
 nothing: 
@@ -113,12 +111,6 @@ yambo: libs
 yambo_kerr: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_KERR"; $(mksrc)
 	@X2DO="yambo_kerr"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_KERR";$(mkx)
-yambo_surf: libs
-	@LIBS2DO="$(PJ_SURFLIBS)";ADF="-D_SURF"; $(mksrc)
-	@X2DO="yambo_surf"; XPATH="driver";XLIBS="$(PJ_SURFLIBS)";ADF="-D_SURF";$(mkx)
-ypp_surf: libs
-	@LIBS2DO="$(YPPSURFLIBS)" ; ADF="-D_YPP_SURF";$(mksrc)
-	@X2DO="ypp_surf" ;XPATH="ypp";XLIBS="$(YPPSURFLIBS)"; ADF="-D_YPP_SURF";$(mkx)
 yambo_ph: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)

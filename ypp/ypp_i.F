@@ -177,7 +177,11 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
  !
+ ! GPL_EXCLUDE_START
+ !
  if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_bxsf)  call bxsf_read(Xk,Xen)
  !

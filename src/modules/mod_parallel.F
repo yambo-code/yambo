@@ -36,7 +36,6 @@ module parallel_m
  integer            :: myid
  integer            :: ncpu
  integer            :: n_nodes  = 1
- integer            :: n_MPI    = 1
 #if defined _OPENMPI
  integer, parameter :: comm_default_value  = -1
 #else
@@ -134,8 +133,8 @@ module parallel_m
  type PP_indexes
    logical, pointer :: element_1D(:)     => null()
    logical, pointer :: element_2D(:,:)   => null()
-   ! Davide 40/09/2015: n_of_elements should be a number. It is useless that it is a pointer
-   !                    allocated to nCPU and that each CPU fills only the element myid.
+   ! Davide 4/09/2015: n_of_elements should be a number. It is useless that it is a pointer
+   !                   allocated to nCPU and that each CPU fills only the element myid.
    integer, pointer :: n_of_elements(:)  => null()
    integer, pointer :: weight_1D(:)      => null()
    integer, pointer :: first_of_1D(:)    => null()
@@ -248,7 +247,7 @@ module parallel_m
  ! Specific MPI COMMUNICATORS...
  !==============================
  !
- ! ... linear algebra
+ ! ... World
  type(MPI_comm),SAVE :: PAR_COM_WORLD
  !
  ! ... linear algebra

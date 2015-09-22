@@ -46,9 +46,10 @@ MOD_FLAG            = -I
 # -----------------------------
 # libraries
 
-BLAS_LIBS           = -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
+BLAS_LIBS           = -L/opt/intel/Compiler/11.1/073/mkl/lib/em64t/  -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
 LAPACK_LIBS         = 
-SCALAPACK           = -lscalapack 
+SCALAPACK           = /opt/scalapack/libscalapack.a  /opt/blacs/LIB/blacsF77init_MPI-LINUX-0.a /opt/blacs/LIB/blacs_MPI-LINUX-0.a /opt/blacs/LIB/blacsF77init_MPI-LINUX-0.a
+#-lmkl_scalapack_lp64 -lmkl_blacs_lp64
 
 # -----------------------------
 # application-specific settings

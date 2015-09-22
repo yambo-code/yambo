@@ -146,10 +146,10 @@ end program mytest
   world_comm = MPI_COMM_WORLD
   !
   ! init pools
-  call init_pools( world_comm )
+  call SLK_POOLS_init( world_comm )
   !
   ! init the scalapack grid
-  call init_ortho( product(np_ortho), intra_pool_comm )
+  call SLK_ORTHO_init( product(np_ortho), intra_pool_comm )
   !
   return
   !
@@ -263,7 +263,7 @@ end subroutine serial_inverse
   !
   use kinds
   use util_module
-  use para_module
+  use para_module, ONLY : ortho_cntx,np_ortho,me_ortho,MPI_DOUBLE_PRECISION,MPI_SUM,intra_pool_comm,root_pool,my_pool_id,me_pool,mpi_comm_world
   implicit none
   !
   integer, parameter :: dlen_ = 9

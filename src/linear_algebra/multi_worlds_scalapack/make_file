@@ -6,11 +6,11 @@ include ./make.sys
 
 OBJS= \
 kind.o \
-distools.o \
+SLK_tools.o \
 error.o \
 para.o \
 constants.o \
-mp_global.o \
+SLK_ORTHO_group.o  SLK_ORTHO_init.o   SLK_POOLS_init.o \
 util.o 
 
 #

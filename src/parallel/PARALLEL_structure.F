@@ -23,7 +23,7 @@
 !
 subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
- use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,nchains_group,n_groups,INTRA_CHAIN,MAX_N_OF_CHAINS,&
+ use parallel_m,  ONLY:ncpu,myid,INTER_CHAIN,nchains_group,n_groups,INTRA_CHAIN,MAX_N_OF_CHAINS,&
 &                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
 &                      ncpu_chain
  !

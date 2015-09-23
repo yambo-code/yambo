@@ -60,6 +60,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
  !
  implicit none
+ !
  type(levels) ::E
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
@@ -419,7 +420,7 @@ endif
 #endif
          endif
          !
-         forall (i4=1:QP_dSc_steps) W_(i4)=qp%E_bare(i_qp)+(i4-1._SP)*QP_dSc_delta+cI*QP_G_damp
+         forall (i4=1:QP_dSc_steps) W_(i4)=qp%E_bare(i_qp)+real(i4-1,SP)*QP_dSc_delta+cI*QP_G_damp
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -483,7 +484,7 @@ endif
      enddo ! loop on scattering states
      !
      if(l_GW_terminator) then
-       forall (i4=1:QP_dSc_steps) W_(i4)=qp%E_bare(i_qp)+(i4-1._SP)*QP_dSc_delta+cI*QP_G_damp
+       forall (i4=1:QP_dSc_steps) W_(i4)=qp%E_bare(i_qp)+real(i4-1,SP)*QP_dSc_delta+cI*QP_G_damp
        !
        do i4=1,QP_dSc_steps
          !

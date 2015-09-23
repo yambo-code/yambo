@@ -200,12 +200,11 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  if (mode==0) return
  !
- ! build the occupations ...
+ ! Build the occupations and find the nearest occupied state to the Fermi level
  !
- !... and find the nearest occupied state to the Fermi level
+ if (.not.associated(E%f))          allocate(E%f(E%nb,E%nk,n_sp_pol))
+ Efdist=1.E5_SP
  !
- if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_sp_pol))
- Efdist=1.E5
  do i1=1,n_total_states
    ib=index( index_E_sorted(i1) , 1)
    ik=index( index_E_sorted(i1) , 2)
@@ -233,22 +232,21 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    nel_DbGd=0._SP 
    !
    E%E_DbGd(:,:,:)=E%E_DbGd(:,:,:)-E%E_Fermi
-   do ikbz=1,K%nbz
-     do i1=1,BZ_DbGd_nkpt(ikbz)
-       ik_rand   = BZ_DbGd_table(ikbz,i1,1)
-       do ib=1,BZ_DbGd_nbands
-         do is=1,n_sp_pol
+   do is=1,n_sp_pol
+     do ikbz=1,K%nbz
+       do i1=1,BZ_DbGd_nkpt(ikbz)
+         ik_rand   = BZ_DbGd_table(ikbz,i1,1)
+         do ib=1,BZ_DbGd_nbands
            E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
-           nel_DbGd=nel_DbGd+E%f_DbGd(ib,ik_rand,is)/real(BZ_DbGd_nkpts+K%nbz)
+           nel_DbGd=nel_DbGd+E%f_DbGd(ib,ik_rand,is)
          enddo
        enddo
      enddo
    enddo
+   nel_DbGd=nel_DbGd/real(sum(BZ_DbGd_nkpt),SP)
    !
-   if (abs(nel-nel_DbGd)>0.01*nel) then
-     call warning('Double grid produces  '//trim(real2ch(nel_DbGd))//' e-. It has been, therefore, switched off')
-     call E_DbGd_components_reset(E,.TRUE.)
-   endif
+   if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
    !
  endif
  !

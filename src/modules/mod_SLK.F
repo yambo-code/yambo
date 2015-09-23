@@ -29,14 +29,14 @@ module SLK_m
  !
  ! POOL type
  !===========
- type POOL 
+ type POOL_group
    integer :: CPU_id      = 0  ! index of the processor within a pool 
-   integer :: root_index  = 0  ! index of the root processor within a pool
+   integer :: ROOT_id     = 0  ! index of the root processor within a pool
    integer :: ID          = 0  ! index of my pool
    integer :: n_CPU       = 1  ! number of processors within a pool
    integer :: INTER_comm  = 0  ! inter pool communicator
    integer :: INTRA_comm  = 0  ! intra pool communicator
- end type POOL
+ end type POOL_group
  ! 
  ! BLACS Ortho group
  !===================

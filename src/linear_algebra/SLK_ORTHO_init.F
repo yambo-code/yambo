@@ -1,3 +1,15 @@
+!
+!        Copyright (C) 2000-2015 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM, AF
+!
+! Copyright (C) 2001-2007 Quantum-ESPRESSO group
+! This file is distributed under the terms of the
+! GNU General Public License. See the file `License'
+! in the root directory of the present distribution,
+! or http://www.gnu.org/copyleft/gpl.txt .
+!
 SUBROUTINE SLK_ORTHO_init( nproc_ortho_in, parent_comm )
  !---------------------------------------------------------------------------
  !

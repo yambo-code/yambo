@@ -1,16 +1,31 @@
-SUBROUTINE SLK_POOLS_init( parent_comm )
+!
+!
+!        Copyright (C) 2000-2015 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM, AF
+!
+! Copyright (C) 2001-2007 Quantum-ESPRESSO group
+! This file is distributed under the terms of the
+! GNU General Public License. See the file `License'
+! in the root directory of the present distribution,
+! or http://www.gnu.org/copyleft/gpl.txt .
+!
+SUBROUTINE SLK_POOLS_init( parent_comm , POOL )
  !---------------------------------------------------------------------------
  !
  use para_module, ONLY : npool,my_pool_id,me_pool,nproc_pool,intra_pool_comm,inter_pool_comm
+ !
+ USE SLK_m, ONLY: POOL_group,n_pool
+ !
  IMPLICIT NONE
  !
- INTEGER, INTENT(IN) :: parent_comm
+ INTEGER,          INTENT(IN)    :: parent_comm
+ TYPE(POOL_GROUP), INTENT(INOUT) :: POOL
  !
  INTEGER :: ierr = 0
  INTEGER :: parent_nproc = 1
  INTEGER :: parent_mype  = 0
- !
-#if defined (__MPI)
  !
  CALL MPI_COMM_SIZE(parent_comm,parent_nproc,ierr)
  CALL MPI_COMM_RANK(parent_comm,parent_mype,ierr)
@@ -45,8 +60,6 @@ SUBROUTINE SLK_POOLS_init( parent_comm )
  !
  IF ( ierr /= 0 ) &
     CALL errore( 'SLK_POOLS_init', 'inter pool communicator initialization', ABS(ierr) )
- !
-#endif
  !
  RETURN
  !

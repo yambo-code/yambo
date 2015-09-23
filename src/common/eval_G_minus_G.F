@@ -37,6 +37,7 @@ integer function eval_G_minus_G(iG,iGo)
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
  !
  implicit none
+ !
  integer :: iG,iGo
  !
  ! Work Space

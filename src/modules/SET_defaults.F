@@ -227,7 +227,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !functions
  !
- bose_E_cut=0.1
+ bose_E_cut=0.1_SP
  !
  !D_lattice
  !
@@ -244,7 +244,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  coll_scattering=.FALSE.
  bse_scattering=.FALSE.
  Xk_grid_is_uniform=.TRUE.
- q0_def_norm=1.E-5
+ q0_def_norm=1.E-5_SP
  k_map%g0_minus_idx  =-1
  k_map%g0_plus_idx   =-1
  k_map%q_step  =-1
@@ -254,7 +254,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  RIM_id_epsm1_reference=0
  RIM_epsm1=0.
- RIM_anisotropy=0.
+ RIM_anisotropy=0._SP
  RIM_ng=0
  RIM_n_rand_pts=0
  !
@@ -289,6 +289,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_ppa=.FALSE.
  l_cohsex=.FALSE.
  l_gw0=.FALSE.
+ l_life=.FALSE.
  l_chi=.FALSE.
  l_bse=.FALSE.
  l_bsk=.FALSE.
@@ -394,7 +395,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
  integrating_over_q=.FALSE.
- q_plus_G_direction=0.
+ q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
  X_terminator=.FALSE.
@@ -404,7 +405,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  QP_n_states=0
  QP_dSc_steps=2
- QP_G_Zoom_treshold=0.
+ QP_G_Zoom_treshold=0._SP
  QP_Sc_steps=100
  QP_n_W_freqs=100
  QP_dSc_test=.FALSE.
@@ -413,13 +414,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  QP_dSc_delta=0.1/HA2EV
  QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
  QP_G_dr=0.1/HA2EV
- QP_cg_percent=100.
+ QP_cg_percent=100._SP
  GWo_iterations=0
  GWo_SC_done=.FALSE.
  COHSEX_use_empties=.FALSE.
  On_Mass_Shell_approx=.FALSE.
  SC_E_threshold=0.01/HA2EV
- SC_band_mixing=100.
+ SC_band_mixing=100._SP
  Vnlxc_kind='HF'
  Vxc_kind='LDA'
  l_extended_output=.FALSE.
@@ -431,9 +432,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  QP_ctl_db="none"
  QP_ctl_interp_neigh=1
  forall (i1=1:3,i2=1:2) QP_ctl_E(i1,:,i2)=(/0.,1.,1./)
- forall (i1=1:3,i2=1:2) QP_ctl_Wc(i1,:,i2)=0.
- forall (i1=1:3,i2=1:2) QP_ctl_Wv(i1,:,i2)=0.
- forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1.,0.)
+ forall (i1=1:3,i2=1:2) QP_ctl_Wc(i1,:,i2)=0._SP
+ forall (i1=1:3,i2=1:2) QP_ctl_Wv(i1,:,i2)=0._SP
+ forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1._SP,0._SP)
  !
 #if defined _RT
  !
@@ -479,9 +480,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  FXC_type='rpa'
  FXC_n_descs=0
  FXC_n_g_corr=1
- FXC_per_memstps=100.
- FXC_LRC_alpha=0.
- FXC_LRC_beta=0.
+ FXC_per_memstps=100._SP
+ FXC_LRC_alpha=0._SP
+ FXC_LRC_beta=0._SP
  FXC_SVD_digits=0
  FXC_is_causal=.FALSE.
  !
@@ -509,7 +510,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  eval_G_using_KK=.FALSE.
  elph_Ham_bands=0
  elph_Ham_ik=1
- RES_tresh=0.01
+ RES_tresh=0.01_SP
  DW_deltaE_treshold=1.E-6_SP/HA2EV
  FAN_deltaE_treshold=1.E-6_SP/HA2EV
 #endif
@@ -519,15 +520,15 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  SC_fft_size=0
  SC_iterations=100
- SC_cycle_mixing=0.5
- SC_rho_threshold=1.E-5
+ SC_cycle_mixing=0.5_SP
+ SC_rho_threshold=1.E-5_SP
  SC_up_W_iters=0
  SC_potential='none'
  OEP_approx='n'
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
  l_Mean_Potential=.FALSE.
- COLLISIONS_cutoff=0.001
+ COLLISIONS_cutoff=0.001_SP
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
@@ -535,7 +536,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! COLLISIONS I/O
  !
- COLLISIONS_cutoff=0.0005
+ COLLISIONS_cutoff=0.0005_SP
  !
 #endif
 #if defined _RT
@@ -569,17 +570,17 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  NE_tot_time= 1000._SP*FS2AUT
  integrator_step=1
  Integrator_name='RK2'
- RAD_LifeTime = 0.
- Phase_LifeTime = 0.
+ RAD_LifeTime = 0._SP
+ Phase_LifeTime = 0._SP
  RT_is_dephased=.FALSE.
  l_RT_induced_field=.FALSE.
  NE_MEM_treshold=0.
  G_MEM_steps=2   ! By default only G_lesser@t and @t+1
  RT_nk=0
  RT_eh_en=0._SP
- RT_scatt_tresh=1.
- Eh_pumped_pair_energy=-1./HA2EV
- Eh_pumped_pair_width=0.1/HA2EV
+ RT_scatt_tresh=1._SP
+ Eh_pumped_pair_energy=-1._SP/HA2EV
+ Eh_pumped_pair_width=0.1_SP/HA2EV
  Eh_pumped_Nel=1._SP
  Plasma_redux_percent=100._SP
  DbGd_EE_percent=0._SP
@@ -587,8 +588,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! Scattering
  !
  RT_life_interp_KIND="NONE"
- RT_life_interp_steps(1)=-1.*FS2AUT
- RT_life_interp_steps(2)=-1.*FS2AUT
+ RT_life_interp_steps(1)=-1._SP*FS2AUT
+ RT_life_interp_steps(2)=-1._SP*FS2AUT
  !
  ! G_retarded
  !
@@ -599,10 +600,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  l_lftm_fit_stable=.FALSE.
  Nfitted_lifetimes=0
- RT_Tfit_lifetimes=0.
- RT_Efit_lifetimes=0.
- RT_Tfit_occupations=0.
- RT_Efit_occupations=0.
+ RT_Tfit_lifetimes=0._SP
+ RT_Efit_lifetimes=0._SP
+ RT_Tfit_occupations=0._SP
+ RT_Efit_occupations=0._SP
  EE_prefactor=0._SP
  EP_prefactor=0._SP
  EP_abs_prefactor=0._SP
@@ -620,13 +621,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! Magnetic
  !
  MAG_B=0.
- MAG_radius=0.
+ MAG_radius=0._SP
  MAG_hamiltonian_type=' '
  MAG_pauli=.FALSE.
  MAG_landau=.FALSE.
  MAG_gauge='SYMM'
- MAG_psi=0.
- MAG_theta=0.
+ MAG_psi=0._SP
+ MAG_theta=0._SP
  phase_trick=.FALSE.
  !
 #endif

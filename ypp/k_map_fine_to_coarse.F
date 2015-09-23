@@ -217,9 +217,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  else 
    call msg('l','failed') 
    if (l_skip_check) then
-     call error("Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
+     call warning(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
    else
-     call warning("Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
+     call error(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
    endif
  endif
  !
@@ -247,6 +247,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    BZ_DbGd_nkpts    =DbGd_k(i_db_merge)%nibz
    BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz+Xk%nbz
    !
+   ! The -1 is for the reference k that should not be added
    if(ik_ref(2)>0) BZ_DbGd_tot_nkpts=BZ_DbGd_tot_nkpts-1
    !
    call msg('l','using '//trim(intc(BZ_DbGd_nkpts))//' k-points for a total of '//trim(intc(BZ_DbGd_tot_nkpts))//' k-points')
@@ -258,7 +259,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  call k_build_up_BZ_tables(Xk)
  call k_ibz2bz(Xk,'i',.true.)
  !
- ! The -1 is for the reference k that should not be added
  !
  allocate(BZ_DbGd_nkpt(Xk%nbz),TMP_map(BZ_DbGd_nkpts,2))
  BZ_DbGd_nkpt=1

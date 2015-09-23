@@ -14,8 +14,6 @@
 SUBROUTINE SLK_POOLS_init( parent_comm , POOL )
  !---------------------------------------------------------------------------
  !
- use para_module, ONLY : npool,my_pool_id,me_pool,nproc_pool,intra_pool_comm,inter_pool_comm
- !
  USE SLK_m, ONLY: POOL_group,n_pool
  !
  IMPLICIT NONE
@@ -32,31 +30,31 @@ SUBROUTINE SLK_POOLS_init( parent_comm , POOL )
  !
  ! ... number of cpus per pool of k-points (they are created inside each image)
  !
- nproc_pool = parent_nproc / npool
+ POOL%n_CPU = parent_nproc / n_pools
  !
- IF ( MOD( parent_nproc, npool ) /= 0 ) &
-      CALL errore( 'SLK_POOLS_init', 'invalid number of pools, parent_nproc /= nproc_pool * npool', 1 )
+ IF ( MOD( parent_nproc, n_pools ) /= 0 ) &
+      CALL errore( 'SLK_POOLS_init', 'invalid number of pools, parent_nproc /= POOL%n_CPU * n_pools', 1 )
  !
- ! ... my_pool_id  =  pool index for this processor    ( 0 : npool - 1 )
- ! ... me_pool     =  processor index within the pool  ( 0 : nproc_pool - 1 )
+ ! ... POOL%ID  =  pool index for this processor    ( 0 : n_pools - 1 )
+ ! ... POOL%CPU_id     =  processor index within the pool  ( 0 : POOL%n_CPU - 1 )
  !
- my_pool_id = parent_mype / nproc_pool
- me_pool    = MOD( parent_mype, nproc_pool )
+ POOL%ID = parent_mype / POOL%n_CPU
+ POOL%CPU_id    = MOD( parent_mype, POOL%n_CPU )
  !
  CALL MPI_barrier( parent_comm, ierr )
  !
- ! ... the intra_pool_comm communicator is created
+ ! ... the POOL%INTRA_comm communicator is created
  !
- CALL MPI_COMM_SPLIT( parent_comm, my_pool_id, parent_mype, intra_pool_comm, ierr )
+ CALL MPI_COMM_SPLIT( parent_comm, POOL%ID, parent_mype, POOL%INTRA_comm, ierr )
  !
  IF ( ierr /= 0 ) &
     CALL errore( 'SLK_POOLS_init', 'intra pool communicator initialization', ABS(ierr) )
  !
  CALL MPI_barrier( parent_comm, ierr )
  !
- ! ... the inter_pool_comm communicator is created
+ ! ... the POLL%INTRA_comm communicator is created
  !
- CALL MPI_COMM_SPLIT( parent_comm, me_pool, parent_mype, inter_pool_comm, ierr )
+ CALL MPI_COMM_SPLIT( parent_comm, POOL%CPU_id, parent_mype, POLL%INTRA_comm, ierr )
  !
  IF ( ierr /= 0 ) &
     CALL errore( 'SLK_POOLS_init', 'inter pool communicator initialization', ABS(ierr) )

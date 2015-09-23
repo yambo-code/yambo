@@ -10,7 +10,7 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-SUBROUTINE SLK_ORTHO_group( nproc_try_in, comm_all )
+SUBROUTINE SLK_ORTHO_group( ORTHO, nproc_try_in, comm_all )
  !
  use para_module, ONLY:ortho_comm,ortho_comm_id,ortho_cntx,np_ortho,nproc_ortho,leg_ortho,me_ortho,ortho_col_comm,ortho_row_comm,&
 &                      me_ortho1,mpi_comm_world,npool,my_pool_id,world_cntx,me_blacs,nproc_pool,MPI_INTEGER,MPI_SUM
@@ -22,7 +22,6 @@ SUBROUTINE SLK_ORTHO_group( nproc_try_in, comm_all )
  LOGICAL, SAVE :: first = .true.
  INTEGER :: ierr, color, key, me_all, nproc_all, nproc_try
  !
-#if defined __SCALAPACK
  INTEGER, ALLOCATABLE :: blacsmap(:,:), buff(:,:)
  INTEGER, ALLOCATABLE :: ortho_cntx_pe(:,:)
  INTEGER :: nprow, npcol, myrow, mycol, i, j
@@ -33,9 +32,6 @@ SUBROUTINE SLK_ORTHO_group( nproc_try_in, comm_all )
  INTEGER :: total_mype=0
  INTEGER :: nproc_parent=1
  INTEGER :: my_parent_id=0
-#endif
- !
-#if defined __MPI
  !
  CALL MPI_COMM_RANK( comm_all, me_all, ierr )
  CALL MPI_COMM_SIZE( comm_all, nproc_all, ierr )
@@ -50,12 +46,10 @@ SUBROUTINE SLK_ORTHO_group( nproc_try_in, comm_all )
    !CALL mp_comm_free( ortho_comm )
    CALL MPI_comm_free( ortho_comm, ierr )
    !
-#if defined __SCALAPACK
    IF(  ortho_comm_id > 0  ) THEN
       CALL BLACS_GRIDEXIT( ortho_cntx )
    ENDIF
    ortho_cntx = -1
-#endif
    !
  END IF
  !
@@ -140,8 +134,6 @@ SUBROUTINE SLK_ORTHO_group( nproc_try_in, comm_all )
    !
  endif
  !
-#if defined __SCALAPACK
- !
  !  This part is used to eliminate the image dependency from ortho groups
  !  SCALAPACK is now independent of whatever level of parallelization
  !  is present on top of pool parallelization
@@ -208,14 +200,6 @@ SUBROUTINE SLK_ORTHO_group( nproc_try_in, comm_all )
  !
  DEALLOCATE( blacsmap )
  DEALLOCATE( ortho_cntx_pe )
- !
-#endif
- !
-#else
- !
- ortho_comm_id = 1
- !
-#endif
  !
  first = .false.
  !

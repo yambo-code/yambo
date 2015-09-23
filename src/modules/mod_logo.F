@@ -59,7 +59,7 @@ module LOGO
    subroutine pickup_a_logo(unit_)
      !
      use pars,     ONLY:schlen,SP
-     use stderr,   ONLY:intc
+     use stderr,   ONLY:intc,slash
      !
      integer      :: unit_
      ! 
@@ -285,11 +285,7 @@ module LOGO
        ch=logo_line(i1)
        do while (index(ch,'S')/=0) 
          iA=index(ch,'S')
-#if defined _aix || defined _BLUEGENE
-         ch(iA:iA)="\\"
-#else 
-         ch(iA:iA)="\"
-#endif
+         ch(iA:iA)=slash
        enddo
        logo_line(i1)=ch
      enddo

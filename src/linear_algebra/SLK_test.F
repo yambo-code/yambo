@@ -2,20 +2,13 @@ subroutine SLK_test()
  ! 
  ! simple program to invert a NxN matrix using scalapack 
  !
- use pars
- use parallel_m
- use com
- use SLK_m
+ use pars,       ONLY:DP
+ use parallel_m, ONLY:ncpu,master_cpu
+ use SLK_m,      ONLY:POOL_group,ORTHO_group,n_pools
  !
  implicit none
  !
- integer        :: iargc              ! function giving no of arguments
- integer        :: nargs
- character(256) :: str, str1 
- character(6)   :: subname="mytest"
- !
- integer        :: ndim, nprow, npcol
- integer        :: ivar
+ integer        :: ndim
  real(DP),   allocatable :: Amat(:,:), Ainv(:,:)
  !
  integer        :: ind, ierr
@@ -23,35 +16,17 @@ subroutine SLK_test()
  type (POOL_group)  :: POOL
  type (ORTHO_group) :: ORTHO
  !
-! ndim=0
-! nprow=1
-! npcol=1
-! npool=1
+ if (ncpu/=8) return
  !
-! ind=1
-! do while (ind <= nargs)
-!   !
-!   call getarg(ind,str)
-!   call getarg(ind+1,str1)
-!   read(str1,*,iostat=ierr) ivar
-!   if ( ierr /=0 ) call errore(subname,'reading arg',10)
-!   !
-!   select case ( trim(str) )
-!   case ("-n", "--ndim") 
-!     ndim=ivar
-!   case ("-ng", "--ngrid") 
-!     nprow=ivar
-!     npcol=ivar
-!   case ("-np", "--npool") 
-!     npool=ivar
-!   end select
-!   !
-!   ind=ind+2
-!   !
-! enddo 
-! !
-! np_ortho(1)=nprow
-! np_ortho(2)=npcol
+ call section("*","SCALAPACK test")
+ !
+ ORTHO%grid=2
+ n_pools   =2
+ ndim=10
+ !
+ ! setup parallel structure
+ !
+ call parallel_structure(POOL,ORTHO)
  !
  ! report
  !
@@ -59,16 +34,11 @@ subroutine SLK_test()
     write(0,"(/,2x,'INPUT report')")
     write(0,"(2x,'      ndim : ',i5)") ndim
     write(0,"(2x,'      ncpu : ',i5)") ncpu
-    write(0,"(2x,' para grid : ',3x,i2,' x',i2)") nprow,npcol
+    write(0,"(2x,' para grid : ',3x,i2,' x',i2)") ORTHO%grid
     write(0,"(2x,'     npool : ',i5)") n_pools
     write(0,"()")
  endif
- !
-! if ( nprow*npcol*npool /= ncpu ) CALL errore(subname,"invalid number of MPI tasks",10)
- !
- ! setup parallel structure
- !
- call parallel_structure()
+ return
  !
  ! workspace
  !
@@ -108,8 +78,8 @@ end subroutine SLK_test
 subroutine parallel_structure(POOL,ORTHO)
  !===========================================
  !
- use parallel_m
- use SLK_m,    ONLY: POOL_group,ORTHO_group
+ use parallel_m, ONLY:mpi_comm_world
+ use SLK_m,      ONLY:POOL_group,ORTHO_group
  !
  implicit none
  !
@@ -117,10 +87,10 @@ subroutine parallel_structure(POOL,ORTHO)
  type(ORTHO_group) :: ORTHO
  !
  ! init pools
- call SLK_POOLS_init( mpi_comm_world, POOL )
+ call SLK_POOLS_init( POOL, mpi_comm_world )
  !
  ! init the scalapack grid
- call SLK_ORTHO_init( product(ORTHO%grid), POOL%INTRA_comm )
+ call SLK_ORTHO_init( ORTHO, POOL, product(ORTHO%grid), POOL%INTRA_comm )
  !
  return
  !
@@ -133,12 +103,10 @@ end subroutine parallel_structure
  ! build A = I + scal * randmat
  ! a small value of scal ensures A is invertible
  !
- !use kinds
- !use util_module
- !use para_module
  use pars
- use parallel_m
- use SLK_m,    ONLY: POOL_group
+ use util_module
+ use parallel_m, ONLY:MPI_DOUBLE_PRECISION,mpi_comm_world
+ use SLK_m,      ONLY: POOL_group
  use ifport
  !
  implicit none
@@ -177,9 +145,9 @@ end subroutine parallel_structure
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Amat, ndim )
  !
- if ( me_pool == root_pool ) then 
+ if ( POOL%CPU_id == POOL%ROOT_id ) then 
     write(0,"(5x,i2,' Amat Inv Eigenvalues')") POOL%id
-    write(0,"(5x,i2,15f10.6)") my_pool_id, 1.0d0/w(1:ndim)
+    write(0,"(5x,i2,15f10.6)") POOL%ID, 1.0d0/w(1:ndim)
  endif
  !
  deallocate( w, zmat )
@@ -189,32 +157,36 @@ end subroutine parallel_structure
  !
 end subroutine build_matrix
 !
-!===========================================
- subroutine serial_inverse( ndim, Amat, Ainv )
- !===========================================
- use kinds
+!===================================================
+ subroutine serial_inverse( POOL, ndim, Amat, Ainv )
+ !===================================================
+ !
  use util_module
- use para_module
+ use com,          ONLY:error
+ use pars,         ONLY:DP
+ use parallel_m,   ONLY:mpi_comm_world
+ use SLK_m,        ONLY:POOL_group
  implicit none
  !
  integer   :: ndim
- real(DP) :: Amat(ndim,ndim)
- real(DP) :: Ainv(ndim,ndim)
- integer   :: ierr
+ type(POOL_group) :: POOL
+ real(DP)         :: Amat(ndim,ndim)
+ real(DP)         :: Ainv(ndim,ndim)
+ integer          :: ierr
  !
  real(DP), allocatable :: w(:), zmat(:,:)
  !
  call mat_inv( ndim, Amat, Ainv, IERR=ierr )
- if (ierr/=0 ) call errore('serial_inverse','inverting Amat',10)
+ if (ierr/=0 ) call error('serial_inverse inverting Amat')
  !
  ! compute and report eigenvalues of Ainv
  !
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Ainv, ndim )
  !
- if ( me_pool == root_pool ) then 
-   write(0,"(5x,i2,' Ainv Eigenvalues')") my_pool_id
-   write(0,"(5x,i2,15f10.6)") my_pool_id, w(ndim:1:-1)
+ if ( POOL%CPU_id == POOL%ROOT_id ) then 
+   write(0,"(5x,i2,' Ainv Eigenvalues')") POOL%ID
+   write(0,"(5x,i2,15f10.6)") POOL%ID, w(ndim:1:-1)
  endif
  !
  deallocate( w, zmat )
@@ -224,20 +196,26 @@ end subroutine build_matrix
  !
 end subroutine serial_inverse
 !
-!===========================================
- subroutine para_inverse( ndim, Amat, Ainv )
- !===========================================
+!========================================================
+ subroutine para_inverse( POOL, ORTHO, ndim, Amat, Ainv )
+ !========================================================
  !
  ! perform the inversion by using scalapack
  !
- use kinds
+ !
  use util_module
- use para_module, ONLY : ortho_cntx,np_ortho,me_ortho,MPI_DOUBLE_PRECISION,MPI_SUM,intra_pool_comm,root_pool,my_pool_id,me_pool,mpi_comm_world
+ use com,        ONLY:error
+ use pars,       ONLY:DP
+ use parallel_m, ONLY:mpi_comm_world,MPI_DOUBLE_PRECISION, MPI_SUM
+ use SLK_m,      ONLY:POOL_group,ORTHO_group
+ !
  implicit none
  !
  integer, parameter :: dlen_ = 9
  !
- integer   :: ndim
+ type(POOL_group)  :: POOL
+ type(ORTHO_group) :: ORTHO
+ integer  :: ndim
  real(DP) :: Amat(ndim,ndim)
  real(DP) :: Ainv(ndim,ndim)
  !
@@ -248,24 +226,25 @@ end subroutine serial_inverse
  integer   :: info, ierr
  integer   :: lwork, liwork
  integer   :: ils, ile, jls, jle
+ !
  real(DP), allocatable :: Amat_loc(:,:), Ainv_loc(:,:)
  real(DP), allocatable :: buff(:,:)
- integer,   allocatable :: ipiv(:)
- integer,   allocatable :: iwork(:)
+ integer,  allocatable :: ipiv(:)
+ integer,  allocatable :: iwork(:)
  real(DP), allocatable :: work(:)
  real(DP), allocatable :: w(:), zmat(:,:)
  !
  ! init global blacs grid
  !
- call BLACS_GRIDINFO( ortho_cntx, np_ortho(1), np_ortho(2), me_ortho(1), me_ortho(2) )
+ call BLACS_GRIDINFO( ORTHO%ortho_cntx, ORTHO%grid(1), ORTHO%grid(2), ORTHO%coordinate(1), ORTHO%coordinate(2) )
  !
- nprow=np_ortho(1)
- npcol=np_ortho(2)
- myrow=me_ortho(1)
- mycol=me_ortho(2)
+ nprow=ORTHO%grid(1)
+ npcol=ORTHO%grid(2)
+ myrow=ORTHO%coordinate(1)
+ mycol=ORTHO%coordinate(2)
  !
  ! spectator tasks
- if ( me_ortho(1) == -1 ) return   ! or do something else
+ if ( ORTHO%coordinate(1) == -1 ) return   ! or do something else
  !
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B
@@ -275,7 +254,7 @@ end subroutine serial_inverse
  !
  lld = ndim_blc
  !
- call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ortho_cntx, lld, info )
+ call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ORTHO%ortho_cntx, lld, info )
  !
  allocate( Amat_loc(ndim_blc,ndim_blc) )
  allocate( Ainv_loc(ndim_blc,ndim_blc) )
@@ -302,11 +281,11 @@ end subroutine serial_inverse
  ! perform the inversion
  !
  CALL PDGETRF( ndim, ndim, Amat_loc, 1, 1, descA, ipiv, info )
- if ( info /= 0 ) call errore('para_inverse','performing PDGETRF',10)
+ if ( info /= 0 ) call error('para_inverse performing PDGETRF')
  !
  CALL PDGETRI( ndim, Amat_loc, 1, 1, descA, &
                ipiv, work, lwork, iwork, liwork, info )
- if ( info /= 0 ) call errore('para_inverse','performing PDGETRI',10)
+ if ( info /= 0 ) call error('para_inverse performing PDGETRI')
  !
  ! gather the inverse matrix
  !
@@ -316,8 +295,8 @@ end subroutine serial_inverse
  allocate( buff(ndim,ndim) )
  !
  buff = Ainv
- call MPI_ALLREDUCE( buff, Ainv, ndim*ndim, MPI_DOUBLE_PRECISION, MPI_SUM, intra_pool_comm, info)
- if ( info /= 0 ) call errore('para_inverse','performing MPIALLGATHER',10)
+ call MPI_ALLREDUCE( buff, Ainv, ndim*ndim, MPI_DOUBLE_PRECISION, MPI_SUM, POOL%INTRA_comm, info)
+ if ( info /= 0 ) call error('para_inverse performing MPIALLGATHER')
  !
  deallocate(buff)
  ! 
@@ -331,9 +310,9 @@ end subroutine serial_inverse
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Ainv, ndim )
  !
- if ( me_pool == root_pool ) then
-   write(0,"(5x,i2,' Ainv Eigenvalues')") my_pool_id
-   write(0,"(5x,i2,15f10.6)") my_pool_id,w(ndim:1:-1)
+ if ( POOL%CPU_id == POOL%ROOT_id ) then
+   write(0,"(5x,i2,' Ainv Eigenvalues')") POOL%ID
+   write(0,"(5x,i2,15f10.6)") POOL%ID,w(ndim:1:-1)
  endif
  !
  deallocate( w, zmat )
@@ -343,15 +322,18 @@ end subroutine serial_inverse
  !
 end subroutine para_inverse
 !
-!===========================================
- subroutine inverse_check( ndim, Amat, Ainv )
- !===========================================
- use kinds
+!==================================================
+ subroutine inverse_check( POOL, ndim, Amat, Ainv )
+ !==================================================
+ use pars,       ONLY:DP
  use util_module
- use para_module
+ use com,        ONLY:error
+ use SLK_m,      ONLY:POOL_group
+ use parallel_m, ONLY:mpi_comm_world
  implicit none
  !
  integer   :: ndim
+ type (POOL_group)  :: POOL
  real(DP) :: Amat(ndim,ndim)
  real(DP) :: Ainv(ndim,ndim)
  !
@@ -374,7 +356,7 @@ end subroutine para_inverse
      endif
  enddo
  enddo outer_loop
- !if ( lerror ) call errore('inverse_check','A * Ainv /= Id',10)
+ if ( lerror ) call error('inverse_check   A * Ainv /= Id')
  !
  do i = 1, ndim
      if ( abs( zmat(i,i)-1.0d0 ) > toll ) then 
@@ -382,12 +364,12 @@ end subroutine para_inverse
          exit
      endif
  enddo
- !if ( lerror ) call errore('inverse_check','A * Ainv /= Id',11)
+ if ( lerror ) call error('inverse_check   A * Ainv /= Id')
  !
  if ( .not. lerror ) then 
-    if (me_pool==root_pool) write(0,"(5x,i2,' Inverse_check:   passed')") my_pool_id
+    if (POOL%CPU_id==POOL%ROOT_id) write(0,"(5x,i2,' Inverse_check:   passed')") POOL%ID
  else
-    if (me_pool==root_pool) write(0,"(5x,i2,' Inverse_check:   failed')") my_pool_id
+    if (POOL%CPU_id==POOL%ROOT_id) write(0,"(5x,i2,' Inverse_check:   failed')") POOL%ID
  endif
  !
  deallocate( zmat )

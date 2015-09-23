@@ -494,6 +494,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #endif
  !
+#if defined _SCALAPACK
+ if (l_slk_test) call CPU_activate("SLK")
+#endif
+ !
  if (l_eval_collisions) then
 #if defined _SC && ! defined _RT && defined _MPI
    call CPU_activate("SE")
@@ -1014,6 +1018,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (what=="BS") then
        call initactivate(1,what//"_nCPU_diago")
      endif
+#if defined _SCALAPACK
+     if (what=="SLK") then
+       call initactivate(1,what//"_nCPU_diago")
+       call initactivate(1,what//"_nCPU_invert")
+     endif
+#endif
      !
    end subroutine
    !
@@ -1065,6 +1075,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! GPL_EXCLUDE_END
        ! 
+#if defined _SCALAPACK
+       l_slk_test =runlevel_is_on('slktest')
+#endif
 #if defined _RT
        l_elel_scatt =runlevel_is_on('el_el_scatt')
        l_elph_scatt=runlevel_is_on('el_ph_scatt')

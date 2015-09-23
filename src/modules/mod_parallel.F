@@ -99,6 +99,9 @@ module parallel_m
  !      if (i_s==4) possible_fields='(k,eh,t)'  ! BS
  !      if (i_s==5) possible_fields='(q,qp,b)'  ! SE
  !      if (i_s==6) possible_fields='(k,b,q,qp)'! RT
+#if defined _SCALAPACK
+ !      if (i_s==7) possible_fields='  '        ! SLK test
+#endif
  !
  integer,parameter   :: n_CPU_str_max=20
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
@@ -401,6 +404,8 @@ module parallel_m
      CPU_structure(5)%Short_Description="SE"
      CPU_structure(6)%Long_Description="Real_Time"
      CPU_structure(6)%Short_Description="RT"
+     CPU_structure(7)%Long_Description="SLK"
+     CPU_structure(7)%Short_Description="SLK"
    end subroutine
    !
    subroutine COMM_reset(COMM)
@@ -450,11 +455,12 @@ module parallel_m
      implicit none
 #if defined _MPI
      if (ncpu>1) then
-       call mpi_barrier(mpi_comm_world,i_err)
+       !call mpi_abort(mpi_comm_world,i_err)
        call mpi_finalize(i_err)
      endif
 #endif
-     stop
+     stop 
+     return
    end subroutine
    !
    subroutine PP_indexes_reset(ip)

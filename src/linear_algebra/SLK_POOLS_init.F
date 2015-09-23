@@ -11,10 +11,11 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-SUBROUTINE SLK_POOLS_init( parent_comm , POOL )
+SUBROUTINE SLK_POOLS_init( POOL, parent_comm )
  !---------------------------------------------------------------------------
  !
- USE SLK_m, ONLY: POOL_group,n_pool
+ use com,   ONLY: error
+ USE SLK_m, ONLY: POOL_group,n_pools
  !
  IMPLICIT NONE
  !
@@ -33,7 +34,7 @@ SUBROUTINE SLK_POOLS_init( parent_comm , POOL )
  POOL%n_CPU = parent_nproc / n_pools
  !
  IF ( MOD( parent_nproc, n_pools ) /= 0 ) &
-      CALL errore( 'SLK_POOLS_init', 'invalid number of pools, parent_nproc /= POOL%n_CPU * n_pools', 1 )
+      CALL error( 'SLK_POOLS_init  invalid number of pools, parent_nproc /= POOL%n_CPU * n_pools' )
  !
  ! ... POOL%ID  =  pool index for this processor    ( 0 : n_pools - 1 )
  ! ... POOL%CPU_id     =  processor index within the pool  ( 0 : POOL%n_CPU - 1 )
@@ -47,17 +48,15 @@ SUBROUTINE SLK_POOLS_init( parent_comm , POOL )
  !
  CALL MPI_COMM_SPLIT( parent_comm, POOL%ID, parent_mype, POOL%INTRA_comm, ierr )
  !
- IF ( ierr /= 0 ) &
-    CALL errore( 'SLK_POOLS_init', 'intra pool communicator initialization', ABS(ierr) )
+ IF ( ierr /= 0 ) CALL error( 'SLK_POOLS_init intra pool communicator initialization' )!, ABS(ierr))
  !
  CALL MPI_barrier( parent_comm, ierr )
  !
- ! ... the POLL%INTRA_comm communicator is created
+ ! ... the POOL%INTRA_comm communicator is created
  !
- CALL MPI_COMM_SPLIT( parent_comm, POOL%CPU_id, parent_mype, POLL%INTRA_comm, ierr )
+ CALL MPI_COMM_SPLIT( parent_comm, POOL%CPU_id, parent_mype, POOL%INTRA_comm, ierr )
  !
- IF ( ierr /= 0 ) &
-    CALL errore( 'SLK_POOLS_init', 'inter pool communicator initialization', ABS(ierr) )
+ IF ( ierr /= 0 ) CALL error( 'SLK_POOLS_init inter pool communicator initialization')!, ABS(ierr) )
  !
  RETURN
  !

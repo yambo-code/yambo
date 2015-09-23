@@ -58,4 +58,13 @@ module SLK_m
    INTEGER :: ortho_cntx = -1    ! BLACS context for ortho_comm
  end type ORTHO_group
  !
+ ! Specific SLK worlds ...
+ !========================
+ !
+ type(POOL_group ),SAVE :: SLK_INV_pool
+ type(ORTHO_group),SAVE :: SLK_INV_ortho
+ !
+ type(POOL_group ),SAVE :: SLK_DIAGO_pool
+ type(ORTHO_group),SAVE :: SLK_DIAGO_ortho
+ !
 end module SLK_m

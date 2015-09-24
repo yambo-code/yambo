@@ -29,7 +29,6 @@ SUBROUTINE SLK_ORTHO_init( ORTHO, POOL, n_CPU_in, parent_comm)
  INTEGER :: ierr = 0
  !
  CALL MPI_COMM_SIZE(parent_comm,parent_nproc,ierr)
- write (*,*) parent_nproc,' A'
  !
  ! define a 1D grid containing all MPI task of MPI_COMM_WORLD communicator
  !

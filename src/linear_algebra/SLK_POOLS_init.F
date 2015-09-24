@@ -52,9 +52,9 @@ SUBROUTINE SLK_POOLS_init( POOL, parent_comm )
  !
  CALL MPI_barrier( parent_comm, ierr )
  !
- ! ... the POOL%INTRA_comm communicator is created
+ ! ... the POOL%INTER_comm communicator is created
  !
- CALL MPI_COMM_SPLIT( parent_comm, POOL%CPU_id, parent_mype, POOL%INTRA_comm, ierr )
+ CALL MPI_COMM_SPLIT( parent_comm, POOL%CPU_id, parent_mype, POOL%INTER_comm, ierr )
  !
  IF ( ierr /= 0 ) CALL error( 'SLK_POOLS_init inter pool communicator initialization')!, ABS(ierr) )
  !

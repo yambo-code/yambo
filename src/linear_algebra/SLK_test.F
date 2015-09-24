@@ -3,7 +3,8 @@ subroutine SLK_test()
  ! simple program to invert a NxN matrix using scalapack 
  !
  use pars,       ONLY:DP
- use parallel_m, ONLY:ncpu,master_cpu
+ use com,        ONLY:error
+ use parallel_m, ONLY:ncpu
  use SLK_m,      ONLY:POOL_group,ORTHO_group,n_pools
  !
  implicit none
@@ -11,7 +12,7 @@ subroutine SLK_test()
  integer        :: ndim
  real(DP),   allocatable :: Amat(:,:), Ainv(:,:)
  !
- integer        :: ind, ierr
+ integer        :: ierr
  !
  type (POOL_group)  :: POOL
  type (ORTHO_group) :: ORTHO
@@ -20,25 +21,17 @@ subroutine SLK_test()
  !
  call section("*","SCALAPACK test")
  !
+#if !defined _DOUBLE
+ call error("This test works only if the code is compiled in double precision")
+#endif
+ !
  ORTHO%grid=2
  n_pools   =2
- ndim=10
+ ndim=4
  !
  ! setup parallel structure
  !
  call parallel_structure(POOL,ORTHO)
- !
- ! report
- !
- if ( master_cpu ) then
-    write(0,"(/,2x,'INPUT report')")
-    write(0,"(2x,'      ndim : ',i5)") ndim
-    write(0,"(2x,'      ncpu : ',i5)") ncpu
-    write(0,"(2x,' para grid : ',3x,i2,' x',i2)") ORTHO%grid
-    write(0,"(2x,'     npool : ',i5)") n_pools
-    write(0,"()")
- endif
- return
  !
  ! workspace
  !
@@ -47,31 +40,29 @@ subroutine SLK_test()
  !
  ! init
  !
- if (master_cpu) write(0,"(/,1x,'Matrix Building')") 
- call build_matrix( ndim, Amat )
+ call section("+",'Matrix Building')
+ call build_matrix( POOL, ndim, Amat )
  !
  ! serial inversion
  !
- if (master_cpu) write(0,"(/,1x,'Serial Inversion')") 
- call serial_inverse( ndim, Amat, Ainv )
+ call section("=",'Serial Inversion')
+ call serial_inverse( POOL, ndim, Amat, Ainv )
  !
- if (master_cpu) write(0,"(/,2x,'Check A*Ainv=Id')") 
- call inverse_check( ndim, Amat, Ainv )
+ call section("=",'Check A*Ainv=Id')
+ call inverse_check( POOL, ndim, Amat, Ainv )
  !
  ! parallel inversion
  !
- if (master_cpu) write(0,"(/,1x,'Parallel Inversion')") 
- call para_inverse( ndim, Amat, Ainv )
+ call section("=",'Parallel Inversion')
+ call para_inverse( POOL, ORTHO, ndim, Amat, Ainv )
  !
- if (master_cpu) write(0,"(/,2x,'Check A*Ainv=Id')") 
- call inverse_check( ndim, Amat, Ainv )
+ call section("=",'Check A*Ainv=Id')
+ call inverse_check( POOL, ndim, Amat, Ainv )
  !
  ! cleanup
  !
  deallocate( Amat, Ainv )
  !
- call MPI_FINALIZE(ierr)
-  !
 end subroutine SLK_test 
 !
 !===========================================
@@ -106,7 +97,8 @@ end subroutine parallel_structure
  use pars
  use util_module
  use parallel_m, ONLY:MPI_DOUBLE_PRECISION,mpi_comm_world
- use SLK_m,      ONLY: POOL_group
+ use SLK_m,      ONLY:POOL_group
+ use com,        ONLY:msg
  use ifport
  !
  implicit none
@@ -118,6 +110,8 @@ end subroutine parallel_structure
  integer   :: i, j, ierr
  real(DP) :: scal=0.2d0 
  real(DP), allocatable :: w(:), zmat(:,:)
+ !
+ call msg("r",'  Matrix Sized:',ndim)
  !
  if ( POOL%CPU_id == POOL%ROOT_id ) then
    !
@@ -144,11 +138,13 @@ end subroutine parallel_structure
  !
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Amat, ndim )
+   do j = 1, ndim
+     do i = j, ndim
+     enddo
+   enddo
  !
- if ( POOL%CPU_id == POOL%ROOT_id ) then 
-    write(0,"(5x,i2,' Amat Inv Eigenvalues')") POOL%id
-    write(0,"(5x,i2,15f10.6)") POOL%ID, 1.0d0/w(1:ndim)
- endif
+ call msg("s",'  Amat Inv Eigenvalue@POOL:',POOL%id)
+ call msg("s",' ',1.0d0/w(1:ndim))
  !
  deallocate( w, zmat )
  !
@@ -162,7 +158,7 @@ end subroutine build_matrix
  !===================================================
  !
  use util_module
- use com,          ONLY:error
+ use com,          ONLY:error,msg
  use pars,         ONLY:DP
  use parallel_m,   ONLY:mpi_comm_world
  use SLK_m,        ONLY:POOL_group
@@ -184,10 +180,8 @@ end subroutine build_matrix
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Ainv, ndim )
  !
- if ( POOL%CPU_id == POOL%ROOT_id ) then 
-   write(0,"(5x,i2,' Ainv Eigenvalues')") POOL%ID
-   write(0,"(5x,i2,15f10.6)") POOL%ID, w(ndim:1:-1)
- endif
+ call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
+ call msg("s",' ',w(ndim:1:-1))
  !
  deallocate( w, zmat )
  !
@@ -204,7 +198,7 @@ end subroutine serial_inverse
  !
  !
  use util_module
- use com,        ONLY:error
+ use com,        ONLY:error,msg
  use pars,       ONLY:DP
  use parallel_m, ONLY:mpi_comm_world,MPI_DOUBLE_PRECISION, MPI_SUM
  use SLK_m,      ONLY:POOL_group,ORTHO_group
@@ -310,10 +304,8 @@ end subroutine serial_inverse
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Ainv, ndim )
  !
- if ( POOL%CPU_id == POOL%ROOT_id ) then
-   write(0,"(5x,i2,' Ainv Eigenvalues')") POOL%ID
-   write(0,"(5x,i2,15f10.6)") POOL%ID,w(ndim:1:-1)
- endif
+ call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
+ call msg("s",' ',w(ndim:1:-1))
  !
  deallocate( w, zmat )
  !
@@ -327,7 +319,7 @@ end subroutine para_inverse
  !==================================================
  use pars,       ONLY:DP
  use util_module
- use com,        ONLY:error
+ use com,        ONLY:error,msg
  use SLK_m,      ONLY:POOL_group
  use parallel_m, ONLY:mpi_comm_world
  implicit none
@@ -344,33 +336,32 @@ end subroutine para_inverse
  !
  allocate( zmat(ndim,ndim) )
  !
+ zmat=0._DP
+ !
  call mat_mul( zmat, Amat, 'N', Ainv, 'N', ndim,ndim,ndim)
  !
  lerror = .false.
  outer_loop:&
  do j = 1, ndim
  do i = j+1, ndim
-     if ( abs( zmat(i,j) ) > toll ) then 
-         lerror = .true.
-         exit outer_loop
-     endif
+   if ( abs( zmat(i,j) ) > toll ) then 
+     lerror = .true.
+     exit outer_loop
+   endif
  enddo
  enddo outer_loop
  if ( lerror ) call error('inverse_check   A * Ainv /= Id')
  !
  do i = 1, ndim
-     if ( abs( zmat(i,i)-1.0d0 ) > toll ) then 
-         lerror = .true.
-         exit
-     endif
+   if ( abs( zmat(i,i)-1.0d0 ) > toll ) then 
+     lerror = .true.
+     exit
+   endif
  enddo
  if ( lerror ) call error('inverse_check   A * Ainv /= Id')
  !
- if ( .not. lerror ) then 
-    if (POOL%CPU_id==POOL%ROOT_id) write(0,"(5x,i2,' Inverse_check:   passed')") POOL%ID
- else
-    if (POOL%CPU_id==POOL%ROOT_id) write(0,"(5x,i2,' Inverse_check:   failed')") POOL%ID
- endif
+ if ( .not. lerror ) call msg("sr",'  Inverse_check:   passed')
+ if (       lerror ) call msg("sr",'  Inverse_check:   failed')
  !
  deallocate( zmat )
  !

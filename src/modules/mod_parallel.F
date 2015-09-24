@@ -455,7 +455,6 @@ module parallel_m
      implicit none
 #if defined _MPI
      if (ncpu>1) then
-       !call mpi_abort(mpi_comm_world,i_err)
        call mpi_finalize(i_err)
      endif
 #endif

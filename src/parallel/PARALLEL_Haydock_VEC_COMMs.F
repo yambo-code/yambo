@@ -38,6 +38,8 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  integer :: i_g,i_err,i_b,iT_grp_k,iT_grp_p
  integer :: local_key
  !
+#if defined _MPI
+ !
  select case (what)
    case('assign')
      !
@@ -91,5 +93,9 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
        deallocate(PAR_IND_T_Haydock%element_1D)
        !
    end select
+   !
+#else
+   return
+#endif
    !
 end subroutine PARALLEL_Haydock_VEC_COMMs

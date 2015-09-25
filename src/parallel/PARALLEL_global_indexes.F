@@ -292,18 +292,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="ScaLapacK") then
    !====================================================
    !
-!   CALL PARALLEL_structure(2,(/"k","b"/))
-!   !
-!   call PARALLEL_assign_chains_and_COMMs(2,ROLE=(/"k","b"/),&
-!&                                        COMM_index_1=SLK_COM_INDEX(1),COMM_index_2=SLK_COM_INDEX(2),&
-!&                                        COMM_A2A_1=SLK_COM_A2A(1),    COMM_A2A_2=SLK_COM_A2A(2))
-!   !
-!   ! Linear Algebra (using Inversion only)
-!   !
-!   PARALLEL_cpu_mat_inversion=CPU_structure(7)%nCPU_inversion
-!   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
-!   PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
-!   !
+   CALL PARALLEL_structure(2,(/"p","d"/))
+   !
+   call PARALLEL_assign_chains_and_COMMs(2,ROLE=(/"p","d"/),&
+&                                        COMM_index_1=SLK_COM_INDEX(1),COMM_index_2=SLK_COM_INDEX(2),&
+&                                        COMM_A2A_1=SLK_COM_A2A(1),    COMM_A2A_2=SLK_COM_A2A(2))
+   !
+   ! Linear Algebra (using Inversion only)
+   !
+   PARALLEL_cpu_mat_inversion=CPU_structure(7)%nCPU_inversion
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
+   PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
+   !
  endif
  !
 #endif

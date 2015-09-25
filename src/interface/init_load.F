@@ -584,6 +584,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      use parallel_m, ONLY:n_CPU_str_max,CPU_structure
      integer           :: i_s
      character(schlen) :: name,possible_fields
+     !
      do i_s=1,n_CPU_str_max 
        !
        if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
@@ -592,7 +593,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
        if (i_s==4) possible_fields='(k,eh,t)'  ! BS
        if (i_s==5) possible_fields='(q,qp,b)'  ! SE
        if (i_s==6) possible_fields='(k,b,q,qp)'! RT
-       if (i_s==7) possible_fields='(k,b)'     ! SLK
+       if (i_s==7) possible_fields='(p,d) '    ! SLK
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
@@ -608,6 +609,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
        call it(defs,trim(name),'[PARALLEL] CPUs for matrix inversion',&
 &              CPU_structure(i_s)%nCPU_inversion,verb_level=V_parallel)
      enddo
+     !
    end subroutine
    !
 #endif

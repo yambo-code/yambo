@@ -29,18 +29,19 @@ SUBROUTINE SLK_POOLS_init( POOL, parent_comm )
  CALL MPI_COMM_SIZE(parent_comm,parent_nproc,ierr)
  CALL MPI_COMM_RANK(parent_comm,parent_mype,ierr)
  !
- ! ... number of cpus per pool of k-points (they are created inside each image)
+ ! ... number of cpus per pool 
  !
  POOL%n_CPU = parent_nproc / n_pools
  !
- IF ( MOD( parent_nproc, n_pools ) /= 0 ) &
-      CALL error( 'SLK_POOLS_init  invalid number of pools, parent_nproc /= POOL%n_CPU * n_pools' )
+ IF ( MOD( parent_nproc, n_pools ) /= 0 ) then
+   CALL error( 'SLK_POOLS_init  invalid number of pools, parent_nproc /= POOL%n_CPU * n_pools' )
+ endif
  !
- ! ... POOL%ID  =  pool index for this processor    ( 0 : n_pools - 1 )
- ! ... POOL%CPU_id     =  processor index within the pool  ( 0 : POOL%n_CPU - 1 )
+ ! ... POOL%ID      =  pool index for this processor    ( 0 : n_pools - 1 )
+ ! ... POOL%CPU_id  =  processor index within the pool  ( 0 : POOL%n_CPU - 1 )
  !
- POOL%ID = parent_mype / POOL%n_CPU
- POOL%CPU_id    = MOD( parent_mype, POOL%n_CPU )
+ !POOL%ID        = parent_mype / POOL%n_CPU
+ !POOL%CPU_id    = MOD( parent_mype, POOL%n_CPU )
  !
  CALL MPI_barrier( parent_comm, ierr )
  !

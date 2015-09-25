@@ -58,8 +58,9 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  !
  call DEFAULT_action("define")
  !
- if (product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))/=ncpu) &
-&    call error('Impossible to define an appropriate parallel structure')
+ if (product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))/=ncpu) then
+   call error('Impossible to define an appropriate parallel structure')
+ endif
  !
  contains
    !
@@ -100,6 +101,13 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
            endif
+#if defined _SCALAPACK
+         case("ScaLapacK") 
+           if (trim(PARALLEL_CPU_role(i_c))=="p".or.trim(PARALLEL_CPU_role(i_c))=="d") then
+             N_fields=N_fields+1
+             CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
+           endif
+#endif
        end select
        !
      enddo
@@ -133,6 +141,14 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
            CPU_structure(i_PAR_structure)%ROLE(3)="q"
            CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(Q_range(2))
            CPU_structure(i_PAR_structure)%N_chains=3
+#endif
+#if defined _SCALAPACK
+         case("ScaLapacK") 
+           CPU_structure(i_PAR_structure)%ROLE(1)="p"
+           CPU_structure(i_PAR_structure)%CPU(1)=ncpu
+           CPU_structure(i_PAR_structure)%ROLE(2)="d"
+           CPU_structure(i_PAR_structure)%CPU(2)=1
+           CPU_structure(i_PAR_structure)%N_chains=2
 #endif
          case("Self_Energy") 
            CPU_structure(i_PAR_structure)%ROLE(1)="b"

@@ -3,9 +3,9 @@ subroutine SLK_test(E,k,q)
  ! simple program to invert a NxN matrix using scalapack 
  !
  use pars,          ONLY:DP
- use com,           ONLY:error
+ use com,           ONLY:msg
  use parallel_m,    ONLY:ncpu,PAR_COM_WORLD
- use SLK_m,         ONLY:POOL_group,ORTHO_group,n_pools,SLK_test_H_dim
+ use SLK_m,         ONLY:POOL_group,ORTHO_group,n_pools,SLK_test_H_dim,SLK_COM_A2A,SLK_COM_INDEX
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use interfaces,    ONLY:PARALLEL_global_indexes
@@ -22,28 +22,48 @@ subroutine SLK_test(E,k,q)
  type (POOL_group)       :: POOL
  type (ORTHO_group)      :: ORTHO
  !
- if (ncpu/=8) return
- !
  call section("*","ScaLapacK test")
  !
  call PARALLEL_global_indexes(E,k,q,"ScaLapacK")
  !
-!#if !defined _DOUBLE
-! call error("This test works only if the code is compiled in double precision")
-!#endif
- !
- ORTHO%grid=2
- n_pools   =2
  ndim = SLK_test_H_dim
  !
- ! setup parallel structure
+ if (SLK_COM_INDEX(1)%n_CPU/=ncpu) then
+   !
+   n_pools=ncpu/SLK_COM_INDEX(1)%n_CPU
+   !
+   ! BLACS grid
+   !
+   ORTHO%grid=nint(sqrt(real(SLK_COM_INDEX(1)%n_CPU)))
+   !
+   ! Init pools
+   !
+   POOL%CPU_id      = SLK_COM_INDEX(1)%CPU_id
+   POOL%ID          = SLK_COM_INDEX(1)%my_CHAIN-1
+   POOL%n_CPU       = SLK_COM_INDEX(1)%n_CPU
+   POOL%INTER_comm  = SLK_COM_INDEX(1)%COMM
+   POOL%INTRA_comm  = SLK_COM_A2A(1)%COMM
+   call SLK_POOLS_init( POOL, PAR_COM_WORLD%COMM )
+   !
+ else
+   !
+   !call POOL_copy( )
+   !
+ endif
  !
- call parallel_structure(PAR_COM_WORLD%COMM,POOL,ORTHO)
+ ! Init the scalapack grid
+ call SLK_ORTHO_init( ORTHO, POOL, product(ORTHO%grid), POOL%INTRA_comm )
  !
  ! workspace
  !
  allocate( Amat(ndim,ndim) )
  allocate( Ainv(ndim,ndim) )
+ !
+ ! report
+ !
+ call msg("r",'  Pools        :',n_pools)
+ call msg("r",'  BLACS grid   :',ORTHO%grid)
+ call msg("r",'  Matrix Sized :',ndim)
  !
  ! init
  !
@@ -72,29 +92,6 @@ subroutine SLK_test(E,k,q)
  !
 end subroutine SLK_test 
 !
-!=============================================
-subroutine parallel_structure(COMM,POOL,ORTHO)
- !=============================================
- !
- use parallel_m, ONLY:mpi_comm_world
- use SLK_m,      ONLY:POOL_group,ORTHO_group
- !
- implicit none
- !
- integer           :: COMM
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
- !
- ! init pools
- call SLK_POOLS_init( POOL, COMM )
- !
- ! init the scalapack grid
- call SLK_ORTHO_init( ORTHO, POOL, product(ORTHO%grid), POOL%INTRA_comm )
- !
- return
- !
-end subroutine parallel_structure
-!
 !===========================================
  subroutine build_matrix(POOL, ndim, Amat )
  !===========================================
@@ -119,9 +116,7 @@ end subroutine parallel_structure
  real(DP) :: scal=0.2d0 
  real(DP), allocatable :: w(:), zmat(:,:)
  !
- call msg("r",'  Matrix Sized:',ndim)
- !
- if ( POOL%CPU_id == POOL%ROOT_id ) then
+ if ( POOL%CPU_id == 0 ) then
    !
    Amat = 0.0d0
    do i = 1, ndim
@@ -140,7 +135,7 @@ end subroutine parallel_structure
    !
  endif
  !
- call MPI_bcast(Amat,ndim*ndim,MPI_DOUBLE_PRECISION,POOL%ROOT_id,POOL%INTRA_comm,ierr)
+ call MPI_bcast(Amat,ndim*ndim,MPI_DOUBLE_PRECISION,0,POOL%INTRA_comm,ierr)
  !
  ! compute and report eigenvalues
  !

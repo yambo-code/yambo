@@ -11,11 +11,17 @@
   MODULE util_module
   !*********************************************
   !
-  USE pars
+  USE pars, ONLY:DP
   !
   IMPLICIT NONE
   PRIVATE
-
+  !
+  real(DP),    parameter :: rZERO=0._DP
+  real(DP),    parameter :: rONE =1._DP
+  complex(DP), parameter :: cI   =(0._DP,1._DP)
+  complex(DP), parameter :: cONE =(1._DP,0._DP)
+  complex(DP), parameter :: cZERO=(0._DP,0._DP)
+  !
 ! General purpose utilities
 !
 ! routines in this module:

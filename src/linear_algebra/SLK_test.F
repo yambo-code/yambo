@@ -1,10 +1,10 @@
-subroutine SLK_test(E,k,q,PARENT_comm) 
+subroutine SLK_test(E,k,q) 
  ! 
  ! simple program to invert a NxN matrix using scalapack 
  !
  use pars,          ONLY:DP
  use com,           ONLY:error
- use parallel_m,    ONLY:ncpu,MPI_comm
+ use parallel_m,    ONLY:ncpu,PAR_COM_WORLD
  use SLK_m,         ONLY:POOL_group,ORTHO_group,n_pools,SLK_test_H_dim
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -14,7 +14,6 @@ subroutine SLK_test(E,k,q,PARENT_comm)
  !
  type(levels)   ::E
  type(bz_samp)  ::k,q
- type(MPI_comm) :: PARENT_comm
  !
  ! Work Space
  !
@@ -28,11 +27,10 @@ subroutine SLK_test(E,k,q,PARENT_comm)
  call section("*","ScaLapacK test")
  !
  call PARALLEL_global_indexes(E,k,q,"ScaLapacK")
- stop
  !
-#if !defined _DOUBLE
- call error("This test works only if the code is compiled in double precision")
-#endif
+!#if !defined _DOUBLE
+! call error("This test works only if the code is compiled in double precision")
+!#endif
  !
  ORTHO%grid=2
  n_pools   =2
@@ -40,7 +38,7 @@ subroutine SLK_test(E,k,q,PARENT_comm)
  !
  ! setup parallel structure
  !
- call parallel_structure(PARENT_comm%COMM,POOL,ORTHO)
+ call parallel_structure(PAR_COM_WORLD%COMM,POOL,ORTHO)
  !
  ! workspace
  !
@@ -150,7 +148,7 @@ end subroutine parallel_structure
  call mat_hdiag( zmat, w, Amat, ndim )
  !
  call msg("s",'  Amat Inv Eigenvalue@POOL:',POOL%id)
- call msg("s",' ',1.0d0/w(1:ndim))
+ call msg("s",' ',real(1.0d0/w(1:ndim),SP))
  !
  deallocate( w, zmat )
  !
@@ -165,7 +163,7 @@ end subroutine build_matrix
  !
  use util_module
  use com,          ONLY:error,msg
- use pars,         ONLY:DP
+ use pars,         ONLY:DP,SP
  use parallel_m,   ONLY:mpi_comm_world
  use SLK_m,        ONLY:POOL_group,ndim
  implicit none
@@ -186,7 +184,7 @@ end subroutine build_matrix
  call mat_hdiag( zmat, w, Ainv, ndim )
  !
  call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
- call msg("s",' ',w(ndim:1:-1))
+ call msg("s",' ',real(w(ndim:1:-1),SP))
  !
  deallocate( w, zmat )
  !
@@ -204,7 +202,7 @@ end subroutine serial_inverse
  !
  use util_module
  use com,        ONLY:error,msg
- use pars,       ONLY:DP
+ use pars,       ONLY:DP,SP
  use parallel_m, ONLY:mpi_comm_world,MPI_DOUBLE_PRECISION, MPI_SUM
  use SLK_m,      ONLY:POOL_group,ORTHO_group,ndim
  !
@@ -310,7 +308,7 @@ end subroutine serial_inverse
  call mat_hdiag( zmat, w, Ainv, ndim )
  !
  call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
- call msg("s",' ',w(ndim:1:-1))
+ call msg("s",' ',real(w(ndim:1:-1),SP))
  !
  deallocate( w, zmat )
  !

@@ -30,7 +30,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  implicit none
  !
  integer        :: n_elements 
- character(*)   :: ROLE(:)
+ character(*)   :: ROLE(n_elements)
  !
  ! Work Space 
  !

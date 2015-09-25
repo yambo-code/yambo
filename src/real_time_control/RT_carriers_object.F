@@ -63,9 +63,9 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      call RT_obj_alloc(RT)
      !
-     RT%E_bare=0.
-     RT%f_bare=0.
-     if (allocated(REF_lifetime)) RT%GAMMA_bare=0.
+     RT%E_bare=0._SP
+     RT%f_bare=0._SP
+     if (allocated(REF_lifetime)) RT%GAMMA_bare=0._SP
      !
      do i_k=1,K%nibz
        if(     l_RT_uses_E_DbGd) then

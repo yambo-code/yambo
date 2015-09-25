@@ -103,7 +103,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  if(l_rescale) then
    toti=0._SP
    do i_state=1,Nstates
-     iki=table(i_state,2)
+     iki=table(i_state,3)
      toti(:)=toti(:)+abs(Vali(i_state,:))*wki(iki)
    enddo
    toto=0._SP

@@ -23,7 +23,7 @@
 !
 subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use units,          ONLY:HA2EV,HA2KEL
  use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_hf,l_sc_is_libDFT,l_sc_cohsex,&
 &                         l_elel_scatt,l_elph_scatt
@@ -66,14 +66,14 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  call timing('RT observables',OPR='start')
 #endif
  !
- dE_tot    =(0._SP,0._SP)
- dE_kin    =(0._SP,0._SP)
- dE_ion    =(0._SP,0._SP)
- dE_h      =(0._SP,0._SP)
- dE_xc     =(0._SP,0._SP)
- N_holes  =(0._SP,0._SP)
- N_elecs  =(0._SP,0._SP)
- N_err    =(0._SP,0._SP)
+ dE_tot    =cZERO
+ dE_kin    =cZERO
+ dE_ion    =cZERO
+ dE_h      =cZERO
+ dE_xc     =cZERO
+ N_holes   =cZERO
+ N_elecs   =cZERO
+ N_err     =cZERO
  !
  ! Non-interaction kinetc energy
  !
@@ -147,8 +147,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    !
    call RT_occupations_FIT(en,k,RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations)
    !
-   if (RT_Tfit_occupations(1)>50000/HA2KEL.or.RT_Tfit_occupations(1)<0.) RT_Tfit_occupations(1)=0.
-   if (RT_Tfit_occupations(2)>50000/HA2KEL.or.RT_Tfit_occupations(2)<0.) RT_Tfit_occupations(2)=0.
+   if (RT_Tfit_occupations(1)>50000/HA2KEL.or.RT_Tfit_occupations(1)<0.) RT_Tfit_occupations(1)=0._SP
+   if (RT_Tfit_occupations(2)>50000/HA2KEL.or.RT_Tfit_occupations(2)<0.) RT_Tfit_occupations(2)=0._SP
    !
  endif
  !
@@ -158,7 +158,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  do ik=1,en%nk
    do ib=SC_bands(1),SC_bands(2)
-     VALUE_tmp=(0._SP,0._SP)
+     VALUE_tmp=cZERO
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if (l_RT_uses_E_DbGd) then
          iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
@@ -166,14 +166,16 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
        else
          Energy=en%E(ib,ik,1)
        endif
-       if ( Energy<=0. ) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_rim)
-       if ( Energy> 0. ) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_rim)
+       if ( Energy<=0._SP ) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_rim)
+       if ( Energy> 0._SP ) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_rim)
      enddo
      N_holes=N_holes+VALUE_tmp(1)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
      N_elecs=N_elecs+VALUE_tmp(2)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
    enddo
  enddo
+ !
  N_err=N_elecs-N_holes
+ !
  !
  ! Transfer the shadow variables
  !

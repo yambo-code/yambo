@@ -66,7 +66,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  call msg('rn','[Newton] SC iterations :',GWo_iterations)
  !
  iter=0
- SC_corr_prev=1.
+ SC_corr_prev=1._SP
  !
  ! GPL_EXCLUDE_START
  !

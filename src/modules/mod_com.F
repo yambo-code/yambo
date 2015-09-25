@@ -38,6 +38,7 @@ module com
  ! Path for the shifted grids
  !
  character(lchlen) :: grid_paths
+ !
  character(3)      :: terminator(4)
  !
  ! JOB strings

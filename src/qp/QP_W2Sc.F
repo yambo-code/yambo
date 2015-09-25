@@ -27,7 +27,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  ! \int dw' G(w-w')W(w')
  !
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,cI
  use QP_m,          ONLY:QP_t,QP_W,QP_Sc,QP_n_states,QP_G_damp,QP_n_G_bands,&
 &                        QP_solver_state,QP_n_W_freqs,QP_table
  use drivers,       ONLY:Finite_Tel
@@ -50,8 +50,8 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  complex(SP)     :: QP_W_here(QP_n_W_freqs)
  complex(SP), allocatable :: dSc(:)
  !
- tsign=-1.
- if (Finite_Tel) tsign=1.
+ tsign=-1._SP
+ if (Finite_Tel) tsign=1._SP
  !
  i_q_mem=PAR_Q_bz_index(iqbz)
  !
@@ -83,24 +83,23 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
      ! 1st term: (spin_occ-f_os+fbose)
      !
-     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)*&
-&                        (spin_occ-E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))*&
+     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)*    &
+&                        (spin_occ-E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))* &
 &                         bose_decay(real(Xw%p(i_w)))
      !
-     call Kramers_Kronig(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
-&            real(Sc_W(i_qp)%p(:))-cmplx(0.,tsign,SP)*aimag(Sc_W(i_qp)%p(:)),&
-&            Sc_W(i_qp)%n_freqs,&
-&            E%E(os(1),os(2),os(3))+tsign*cmplx(0.,QP_G_damp,SP))
+     call Kramers_Kronig(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,          &
+&            real(Sc_W(i_qp)%p(:))-tsign*cI*aimag(Sc_W(i_qp)%p(:)),         &
+&            Sc_W(i_qp)%n_freqs, E%E(os(1),os(2),os(3))+tsign*cI*QP_G_damp)
      !
      ! 2nd term: (f_os+fbose)
      !
-     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)*&
-&                         (E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))*&
+     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)* &
+&                         (E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))*      &
 &                         bose_decay(real(Xw%p(i_w)))
      !
-     call Kramers_Kronig(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
-&            -real(Sc_W(i_qp)%p(:))+cmplx(0.,1.,SP)*aimag(Sc_W(i_qp)%p(:)),Sc_W(i_qp)%n_freqs,&
-&            -E%E(os(1),os(2),os(3))-cmplx(0.,QP_G_damp,SP))
+     call Kramers_Kronig(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,         &
+&            -real(Sc_W(i_qp)%p(:))+cI*aimag(Sc_W(i_qp)%p(:)),              &
+&             Sc_W(i_qp)%n_freqs,-E%E(os(1),os(2),os(3))-cI*QP_G_damp)
      !
    enddo
    !

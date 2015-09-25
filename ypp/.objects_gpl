@@ -4,7 +4,6 @@ ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o ELPH_general_gFsq.o ELPH_g
 #if defined _YPP_SURF
 SURF_objects = ras_ypp.o reels_ypp.o ras_loc_ypp.o ras_trans_ypp.o
 #endif
-#
 bands_objects = electrons_bands.o
 objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
        k_grids.o k_special.o QP_DBs_initialize.o QP_DBs_setup.o QP_DBs_merge.o \

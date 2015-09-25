@@ -41,6 +41,8 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  select case (what)
    case('assign')
      !
+#if defined _MPI
+     !
      !allocate(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
      !
      !PAR_IND_T_Haydock%element_1D = .false.
@@ -82,12 +84,21 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
        !
      enddo
      !
+#else
+     !
+     return
+     !
+#endif
+     !
      case('reset')
        !
+#if defined _MPI
        do i_g=1,BS_nT_grps
          call MPI_Comm_free(PAR_COM_T_Haydock(i_g)%COMM)
        enddo
        deallocate(PAR_COM_T_Haydock)
+#endif
+       ! This is allocated in K_Transitions setup
        deallocate(PAR_IND_T_Haydock%element_1D)
        !
    end select

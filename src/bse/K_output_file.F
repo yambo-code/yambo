@@ -111,9 +111,11 @@ subroutine K_output_file(iq,mode)
  !
  if (mode>0) then 
    !
+#if defined _KERR
+   !
    ! Diamagnetic term
    !
-   call msg('o eps','#','Diamagnetic term',INDENT=0,USE_TABS=.true.)
+   call msg('o eps','#','Diamagnetic term',INDENT=0,USE_TABS=.TRUE.)
    !
    n_output_data=2
    if(mode==4) n_output_data=1
@@ -126,6 +128,8 @@ subroutine K_output_file(iq,mode)
    if(mode==4) output_data(1)=output_data(2)
    call msg('o eps','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
    call msg('o eps','#')
+   !
+#endif
    !
    ! Headers
    !

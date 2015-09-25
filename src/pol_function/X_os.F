@@ -44,12 +44,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use R_lattice,     ONLY:qindx_X,bz_samp
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,   &
-&                        X_terminator,global_gauge
+&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,X_terminator
  use IO_m,          ONLY:IO_and_Messaging_switch
-#if defined _RT 
- use X_m,           ONLY:computing_Xo_variation
-#endif
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -78,9 +74,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Defaults & Setups
  !===================
- Xo           = cZERO
- GreenF       = cZERO
- drude_GreenF = cZERO
+ Xo             = cZERO
+ GreenF         = cZERO
+ drude_GreenF   = cZERO
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
@@ -170,9 +166,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  call WF_spatial_invertion(Xen,Xk)
  !
  half_X_mat_only=i_space_inv==1
- if (.not.half_X_mat_only) then
-   half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
- endif
+ if (.not.half_X_mat_only) half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
  ! Xo_residual allocation 
@@ -182,7 +176,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Timing
  !========
- ! 
+ !
  live_t_string='Xo@q['//trim(intc(iq))//'] '
  !
 #if defined _SC 
@@ -246,7 +240,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  enddo 
  !
- if(coarse_grid_N>0)  call live_timing()
+ if(coarse_grid_N>0) call live_timing()
  !
  call OPENMP_update(master_thread) 
  !

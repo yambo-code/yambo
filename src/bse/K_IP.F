@@ -79,9 +79,15 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 !   !
 ! endif
  !
+ !
+ ! GPL_EXCLUDE_START 
+ !
  ! Look for the W(iw_ref) closest 0
  !==================================
  call FREQUENCIES_set_reference_point(W_bss%p,BSS_n_freqs)
+ !
+ ! GPL_EXCLUDE_END
+ !
  !
  if (l_bs_fxc) goto 1
  !
@@ -121,7 +127,11 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    n_SOC=1
    if( E_SOC_nbands/=0) n_SOC=2
    !
+   ! GPL_EXCLUDE_START 
+   !
    if (trim(global_gauge)=='velocity') A_drude(1)=cZERO
+   !
+   ! GPL_EXCLUDE_END 
    !
    call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
    !
@@ -129,7 +139,12 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    local_Z=1._SP
    if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
+   !
+   ! GPL_EXCLUDE_START 
+   !
    if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
+   !
+   ! GPL_EXCLUDE_END
    !
    if (l_rpa_IP) call live_timing('IP absorption',PAR_BS_nT_col_grps)
    !
@@ -152,8 +167,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        if (allocated(BS_T_grp(i_T_g)%Z)) local_Z=BS_T_grp(i_T_g)%Z(i_T)
        !
        ! *length*   : DIP_projected(c,v,k) is    iq*<v|r|c> while I need    iq*<c|r|v> = -conjg(   iq*<v|r|c>)
+       !
+       ! GPL_EXCLUDE_START 
+       !
        ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
        !              see definition of conjg_fac few lines before for the -1
+       !
+       ! GPL_EXCLUDE_END
+       !
        !
        BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_mem,i_sp))*sqrt(BS_T_grp(i_T_g)%f(i_T))
        if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_mem,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))
@@ -166,8 +187,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
          !
          if(trim(global_gauge)=='length')   A_drude(1)=A_drude(1)+BS_T_grp(i_T_g)%dipoles_R(i_T)* &
 &                                             conjg( BS_T_grp(i_T_g)%dipoles_R(i_T) )*real(IP_E(i_pert_SOC))
+         !
+         ! GPL_EXCLUDE_START 
+         !
          if(trim(global_gauge)=='velocity') A_drude(1)=A_drude(1)+BS_T_grp(i_T_g)%dipoles_R(i_T)* &
 &                                             conjg( BS_T_grp(i_T_g)%dipoles_R(i_T) )/real(IP_E(i_pert_SOC))
+         !
+         ! GPL_EXCLUDE_END
+         !
          !
        enddo
        !
@@ -205,6 +232,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    if (BS_anti_res) A_drude(1)=A_drude(1)+conjg(A_drude(1))
    !
    if(trim(global_gauge)=='length'  ) A_drude(1)=A_drude(1)/q_norm(1)**2-diam_term
+   !
+   ! GPL_EXCLUDE_START 
+   !
    if(trim(global_gauge)=='velocity') A_drude(1)=A_drude(1)             -diam_term
    !
    ! Here I impose the conductivity sum rule for the velocity gauge
@@ -213,8 +243,11 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      diam_term=X_epsilon(3,iw_ref)
    endif
    !
-   if (trim(global_gauge)=='length'  ) X_epsilon(3,:)=1._SP+ X_epsilon(3,:)           *Co/q_norm(1) **2
    if (trim(global_gauge)=='velocity') X_epsilon(3,:)=1._SP+(X_epsilon(3,:)-diam_term)*Co/W_bss%p(:)**2
+   !
+   ! GPL_EXCLUDE_END
+   !
+   if (trim(global_gauge)=='length'  ) X_epsilon(3,:)=1._SP+ X_epsilon(3,:)           *Co/q_norm(1) **2
    !
    ! I add the term describing the intraband transitions which is
    ! missing in the length gauge (this should be zero for systems with a gap)

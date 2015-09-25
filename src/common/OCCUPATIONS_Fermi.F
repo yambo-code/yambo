@@ -40,8 +40,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
-&                        BZ_DbGd_nbands,BZ_DbGd_nkpts,BZ_DbGd_nkpt,n_spinor,n_spin,&
-&                        E_DbGd_components_reset,BZ_DbGd_table
+&                        BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_spinor,n_spin,&
+&                        E_DbGd_components_reset
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:msg,error,warning
  use stderr,        ONLY:real2ch
@@ -56,7 +56,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! Work Space
  !
- integer :: i1,is,ib,ik,ikbz,ik_rand,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
+ integer :: i1,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd
  logical :: Fermi_is_converged
@@ -231,16 +231,13 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  if (BZ_DbGd_nbands>0.and.associated(E%E_DbGd)) then
    ! 
    nel_DbGd=0._SP 
-   !
+   ! 
    E%E_DbGd(:,:,:)=E%E_DbGd(:,:,:)-E%E_Fermi
-   do ikbz=1,K%nbz
-     do i1=1,BZ_DbGd_nkpt(ikbz)
-       ik_rand   = BZ_DbGd_table(ikbz,i1,1)
-       do ib=1,BZ_DbGd_nbands
-         do is=1,n_sp_pol
-           E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
-           nel_DbGd=nel_DbGd+E%f_DbGd(ib,ik_rand,is)/real(BZ_DbGd_nkpts+K%nbz)
-         enddo
+   do ik=1,BZ_DbGd_tot_nkpts
+     do ib=1,BZ_DbGd_nbands
+       do is=1,n_sp_pol
+         E%f_DbGd(ib,ik,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik,is),Tel)
+         nel_DbGd=nel_DbGd+E%f_DbGd(ib,ik,is)/real(BZ_DbGd_tot_nkpts)
        enddo
      enddo
    enddo

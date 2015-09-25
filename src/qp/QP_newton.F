@@ -23,7 +23,7 @@
 !
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
  use com,           ONLY:msg
@@ -66,7 +66,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  call msg('rn','[Newton] SC iterations :',GWo_iterations)
  !
  iter=0
- SC_corr_prev=1.
+ SC_corr_prev=1._SP
  !
  ! GPL_EXCLUDE_START
  !
@@ -85,7 +85,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        !
      endif
    else
-     QP_Sc=cmplx(0.,0.,SP)
+     QP_Sc=cZERO
    endif
    !
 # if defined _QED 
@@ -104,7 +104,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      !
      if(.not.l_cohsex) then
        !     
-       QP_dSc(i1,1)=(0._SP,0._SP)
+       QP_dSc(i1,1)=cZERO
        !     
        if (.not.On_Mass_Shell_approx) then
          do i2=1,QP_dSc_steps-1

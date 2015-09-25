@@ -28,7 +28,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! [1] Real axis GW S.E.
  ! [2] Electronic Lifetimes
  !
- use pars,          ONLY:SP,schlen,pi,IP
+ use pars,          ONLY:SP,schlen,pi,IP,cZERO,cI
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_life
  use electrons,     ONLY:levels,spin,spin_occ
@@ -104,7 +104,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! W energy and damping ranges
  !-----------------------------
- allocate(QP_W_er(q%nbz,2),QP_W_dr(q%nbz,2))
+ if (GW_iter==0) allocate(QP_W_er(q%nbz,2),QP_W_dr(q%nbz,2))
  !
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
@@ -118,7 +118,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
    ! I need to put to 0. the G damping embodied in QP_W2Sc
    !
-   QP_G_damp=0.
+   QP_G_damp=0._SP
    !
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs =QP_Sc_steps
@@ -170,7 +170,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
      !
      if (QP_solver=="n".or.QP_solver=="g") then
-       QP_Sc=cmplx(0.,0.,SP)
+       QP_Sc=cZERO
        call live_timing(trim(Sc_name)//'W0',q%nbz)
        do iqbz=1,q%nbz
          if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
@@ -276,7 +276,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    QP_n_W_freqs_redux=Xw%n_freqs
    allocate(QP_W(PAR_nQP,PAR_nQ_bz,PAR_nG_bands,QP_n_W_freqs),stat=i_err)
    call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
-   QP_W=(0.,0.)
+   QP_W=cZERO
  endif
  !
  ! Test the spatial Inversion
@@ -292,7 +292,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  allocate(scattering_main%gamp(X%ng,X%ng),scattering_main%rhotw(X%ng),scattering_prime%rhotw(X%ng),stat=i_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/i_err/))
  !
- QP_Sc=cmplx(0.,0.,SP)
+ QP_Sc=cZERO
  scattering_main%ngrho=X%ng
  scattering_main%iqref=0
  !
@@ -316,7 +316,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  do iqbz=i_q_to_start,q%nbz
    !
-   if (.not.l_life.and.io_SCREEN) QP_W=(0.,0.)
+   if (.not.l_life.and.io_SCREEN) QP_W=cZERO
    !
    scattering_main%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=scattering_main%qs(2)
@@ -456,7 +456,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          ! Note that the same procedure is applied in QP_W2Sc when S_c is
          ! calculated
          ! 
-         qp%E(i_qp)=qp%E(i_qp)-(0.,2.)*pi*(life_Fe+life_Fh)*bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
+         qp%E(i_qp)=qp%E(i_qp)-2._SP*cI*pi*(life_Fe+life_Fh)*bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
 &                   Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
          !
        else ! .not.l_life

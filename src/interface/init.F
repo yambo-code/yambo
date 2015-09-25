@@ -495,7 +495,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  !
 #if defined _SCALAPACK
- if (l_slk_test) call CPU_activate("SLK")
+ if (l_slk_test) then
+   call initactivate(1,"SLKdim")
+   call CPU_activate("SLK")
+ endif
 #endif
  !
  if (l_eval_collisions) then
@@ -532,6 +535,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'MinusQ BSEscatt')
 #endif
+ !
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')
  !

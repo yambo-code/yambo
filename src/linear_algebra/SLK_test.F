@@ -1,25 +1,34 @@
-subroutine SLK_test() 
+subroutine SLK_test(E,k,q,PARENT_comm) 
  ! 
  ! simple program to invert a NxN matrix using scalapack 
  !
- use pars,       ONLY:DP
- use com,        ONLY:error
- use parallel_m, ONLY:ncpu
- use SLK_m,      ONLY:POOL_group,ORTHO_group,n_pools
+ use pars,          ONLY:DP
+ use com,           ONLY:error
+ use parallel_m,    ONLY:ncpu,MPI_comm
+ use SLK_m,         ONLY:POOL_group,ORTHO_group,n_pools,SLK_test_H_dim
+ use electrons,     ONLY:levels
+ use R_lattice,     ONLY:bz_samp
+ use interfaces,    ONLY:PARALLEL_global_indexes
  !
  implicit none
  !
- integer        :: ndim
+ type(levels)   ::E
+ type(bz_samp)  ::k,q
+ type(MPI_comm) :: PARENT_comm
+ !
+ ! Work Space
+ !
+ integer                 :: ndim
  real(DP),   allocatable :: Amat(:,:), Ainv(:,:)
- !
- integer        :: ierr
- !
- type (POOL_group)  :: POOL
- type (ORTHO_group) :: ORTHO
+ type (POOL_group)       :: POOL
+ type (ORTHO_group)      :: ORTHO
  !
  if (ncpu/=8) return
  !
- call section("*","SCALAPACK test")
+ call section("*","ScaLapacK test")
+ !
+ call PARALLEL_global_indexes(E,k,q,"ScaLapacK")
+ stop
  !
 #if !defined _DOUBLE
  call error("This test works only if the code is compiled in double precision")
@@ -27,11 +36,11 @@ subroutine SLK_test()
  !
  ORTHO%grid=2
  n_pools   =2
- ndim=4
+ ndim = SLK_test_H_dim
  !
  ! setup parallel structure
  !
- call parallel_structure(POOL,ORTHO)
+ call parallel_structure(PARENT_comm%COMM,POOL,ORTHO)
  !
  ! workspace
  !
@@ -65,20 +74,21 @@ subroutine SLK_test()
  !
 end subroutine SLK_test 
 !
-!===========================================
-subroutine parallel_structure(POOL,ORTHO)
- !===========================================
+!=============================================
+subroutine parallel_structure(COMM,POOL,ORTHO)
+ !=============================================
  !
  use parallel_m, ONLY:mpi_comm_world
  use SLK_m,      ONLY:POOL_group,ORTHO_group
  !
  implicit none
  !
+ integer           :: COMM
  type(POOL_group)  :: POOL
  type(ORTHO_group) :: ORTHO
  !
  ! init pools
- call SLK_POOLS_init( POOL, mpi_comm_world )
+ call SLK_POOLS_init( POOL, COMM )
  !
  ! init the scalapack grid
  call SLK_ORTHO_init( ORTHO, POOL, product(ORTHO%grid), POOL%INTRA_comm )
@@ -97,15 +107,15 @@ end subroutine parallel_structure
  use pars
  use util_module
  use parallel_m, ONLY:MPI_DOUBLE_PRECISION,mpi_comm_world
- use SLK_m,      ONLY:POOL_group
+ use SLK_m,      ONLY:POOL_group,ndim
  use com,        ONLY:msg
  use ifport
  !
  implicit none
  !
+ integer           :: ndim
  type(POOL_group)  :: POOL
- integer   :: ndim
- real(DP) :: Amat(ndim,ndim)
+ real(DP)          :: Amat(ndim,ndim)
  !
  integer   :: i, j, ierr
  real(DP) :: scal=0.2d0 
@@ -138,10 +148,6 @@ end subroutine parallel_structure
  !
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Amat, ndim )
-   do j = 1, ndim
-     do i = j, ndim
-     enddo
-   enddo
  !
  call msg("s",'  Amat Inv Eigenvalue@POOL:',POOL%id)
  call msg("s",' ',1.0d0/w(1:ndim))
@@ -161,14 +167,13 @@ end subroutine build_matrix
  use com,          ONLY:error,msg
  use pars,         ONLY:DP
  use parallel_m,   ONLY:mpi_comm_world
- use SLK_m,        ONLY:POOL_group
+ use SLK_m,        ONLY:POOL_group,ndim
  implicit none
  !
- integer   :: ndim
  type(POOL_group) :: POOL
  real(DP)         :: Amat(ndim,ndim)
  real(DP)         :: Ainv(ndim,ndim)
- integer          :: ierr
+ integer          :: ierr,ndim
  !
  real(DP), allocatable :: w(:), zmat(:,:)
  !
@@ -201,15 +206,15 @@ end subroutine serial_inverse
  use com,        ONLY:error,msg
  use pars,       ONLY:DP
  use parallel_m, ONLY:mpi_comm_world,MPI_DOUBLE_PRECISION, MPI_SUM
- use SLK_m,      ONLY:POOL_group,ORTHO_group
+ use SLK_m,      ONLY:POOL_group,ORTHO_group,ndim
  !
  implicit none
  !
  integer, parameter :: dlen_ = 9
  !
+ integer           :: ndim
  type(POOL_group)  :: POOL
  type(ORTHO_group) :: ORTHO
- integer  :: ndim
  real(DP) :: Amat(ndim,ndim)
  real(DP) :: Ainv(ndim,ndim)
  !
@@ -320,11 +325,11 @@ end subroutine para_inverse
  use pars,       ONLY:DP
  use util_module
  use com,        ONLY:error,msg
- use SLK_m,      ONLY:POOL_group
+ use SLK_m,      ONLY:POOL_group,ndim
  use parallel_m, ONLY:mpi_comm_world
  implicit none
  !
- integer   :: ndim
+ integer            :: ndim
  type (POOL_group)  :: POOL
  real(DP) :: Amat(ndim,ndim)
  real(DP) :: Ainv(ndim,ndim)

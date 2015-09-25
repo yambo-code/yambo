@@ -92,6 +92,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use convolute,            ONLY:init_convolute
  use ras_module,           ONLY:locfac, loctype
 #endif
+#if defined _SCALAPACK
+ use SLK_m,                ONLY:SLK_test_H_dim
+#endif
  !
  implicit none
  type(initdefs)::defs
@@ -158,7 +161,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'el_photon_corr','[R] Electron-Photon Correlation') 
 #endif
 #if defined _SCALAPACK
- call it('r',defs,'slktest','[R] SLK test') 
+ call it('r',defs,'slktest','[R] ScaLapacK test') 
 #endif
  !
  !=======
@@ -419,6 +422,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #endif
  !
+ ! SLK test
+ !
+#if defined _SCALAPACK
+ call it(defs,'SLKdim',  '[SLK] Matrix Dimension',SLK_test_H_dim)
+#endif
+ !
 #if defined _MAGNETIC
  call it(defs,'Hamiltonian',   '[MAG] Hamiltonian kind [pauli,landau,all]',MAG_hamiltonian_type,protect=.FALSE.)
  call it(defs,'B_Field',       '[MAG] Magnetic field modulus',MAG_B,unit=Bfield_unit)
@@ -557,13 +566,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &    Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &    Efield(i_field)%intensity,unit=I_unit)
-     call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&
+     call it(defs,trim(name)//'_Damp',            '[RT '//trim(name)//'] Damping',&
 &    Efield(i_field)%damping,unit=Time_unit(1))
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &    Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
 &    Efield(i_field)%versor,verb_level=0)
-     call it(defs,trim(name)//'_Tstart',        '[RT '//trim(name)//'] Initial Time',&
+     call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &    Efield(i_field)%t_initial,unit=Time_unit(1))
    end subroutine
    !
@@ -583,7 +592,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
        if (i_s==4) possible_fields='(k,eh,t)'  ! BS
        if (i_s==5) possible_fields='(q,qp,b)'  ! SE
        if (i_s==6) possible_fields='(k,b,q,qp)'! RT
-       if (i_s==7) possible_fields=' '         ! SLK
+       if (i_s==7) possible_fields='(k,b)'     ! SLK
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"

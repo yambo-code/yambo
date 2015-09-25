@@ -54,6 +54,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
+#if defined _SCALAPACK
+ use parallel_m,    ONLY:PAR_COM_WORLD
+#endif
  !
  implicit none
  type(levels) ::en,Xen,Ken
@@ -274,7 +277,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! SLK TESTER
  !============
- if (l_slk_test) call SLK_test( )
+ if (l_slk_test) call SLK_test(en,k,q,PAR_COM_WORLD)
  !
 #endif
  !

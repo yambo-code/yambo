@@ -93,7 +93,7 @@ if(.not.l_sc_run .and. .not.l_real_time) then
    !=======================
    !
    call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-   !
+   
    call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
    call PARALLEL_WF_index()

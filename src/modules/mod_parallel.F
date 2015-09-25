@@ -77,7 +77,7 @@ module parallel_m
  type(MPI_comm),SAVE   :: INTRA_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs of the same chain
  type(MPI_comm),SAVE   :: INTER_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among same CPU (same ID) of different CHAINS 
  type(MPI_comm),SAVE   :: CHILD_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs (same ID) of different CHAINS enclosed in 
-                                                  ! the above INTER_CHAIN cpu's'
+                                                       ! the above INTER_CHAIN cpu's'
  !
  ! CPU's
  !=======
@@ -404,7 +404,7 @@ module parallel_m
      CPU_structure(5)%Short_Description="SE"
      CPU_structure(6)%Long_Description="Real_Time"
      CPU_structure(6)%Short_Description="RT"
-     CPU_structure(7)%Long_Description="SLK"
+     CPU_structure(7)%Long_Description="ScaLapacK"
      CPU_structure(7)%Short_Description="SLK"
    end subroutine
    !

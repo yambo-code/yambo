@@ -46,7 +46,6 @@ SUBROUTINE SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
    !  
    !  free resources associated to the communicator
    !
-   !CALL mp_comm_free( ortho_comm )
    CALL MPI_comm_free( ORTHO%COMM, ierr )
    !
    IF(  ORTHO%COMM_id > 0  ) THEN

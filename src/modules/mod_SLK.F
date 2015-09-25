@@ -23,9 +23,15 @@
 !
 module SLK_m
  !
+ use parallel_m, ONLY  : MPI_comm
+ !
  implicit none
  !
- integer            :: n_pools = 1 ! number of pools
+ integer              :: n_pools = 1 ! number of pools
+ !
+ ! SLK test
+ !
+ integer              :: SLK_test_H_dim=1
  !
  ! POOL type
  !===========
@@ -66,5 +72,8 @@ module SLK_m
  !
  type(POOL_group ),SAVE :: SLK_DIAGO_pool
  type(ORTHO_group),SAVE :: SLK_DIAGO_ortho
+ !
+ type(MPI_comm),SAVE    :: SLK_COM_INDEX(2)
+ type(MPI_comm),SAVE    :: SLK_COM_A2A(2)
  !
 end module SLK_m

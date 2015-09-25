@@ -89,7 +89,7 @@
   {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},
 #endif
 #if defined _SCALAPACK
-  {"slktest",  "s","SLK test",0,0,0,0,0},
+  {"slktest",  "s","ScaLapacK test",0,0,0,0,0},
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };

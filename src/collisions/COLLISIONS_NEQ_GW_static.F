@@ -315,7 +315,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  call live_timing()
  !
 #if defined _TIMING
- call timing('GW NEQ Collisions',OPR='stop')
+ call timing('NEQ GW Collisions',OPR='stop')
 #endif
  !
  ! CLEAN

@@ -104,7 +104,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! W energy and damping ranges
  !-----------------------------
- allocate(QP_W_er(q%nbz,2),QP_W_dr(q%nbz,2))
+ if (GW_iter==0) allocate(QP_W_er(q%nbz,2),QP_W_dr(q%nbz,2))
  !
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------

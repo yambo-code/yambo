@@ -52,7 +52,7 @@ integer function io_QP_and_GF(what,qp,ID)
  if (what=="QP".or.what=="G") then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
  else
-   io_QP_and_GF=io_connect(desc=what,type=-2,ID=ID)
+   io_QP_and_GF=io_connect(desc=what,type=-3,ID=ID)
  endif
  if (io_QP_and_GF/=0) goto 1
  !

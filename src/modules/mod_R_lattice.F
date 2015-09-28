@@ -67,11 +67,9 @@ module R_lattice
  type bz_map
    integer, allocatable :: k_map_inv(:,:)
    integer, allocatable :: k_map_dir(:,:,:)
-   integer      :: g0_plus_idx(3,2)
-   integer      :: g0_minus_idx(3,2)
+   integer      :: g0_idx(3,2)
    integer      :: max_kdir(3)
-   integer      :: g_idx(-3:3,-3:3,-3:3) 
-   real(SP)     :: g0_length(3,2)
+   real(SP)     :: g0_length(3)
    real(SP)     :: q_step(3)
  end type bz_map 
  !
@@ -134,9 +132,10 @@ module R_lattice
  !
  type(bz_map) :: k_map
  !
- ! Shift by a G-vector associated to each symmtry to respect the periodic gauge
+ ! Shift by a G-vector associated for points out of the BZ
+ ! because of symmtry operations
  ! 
- integer, allocatable :: symm_shift(:,:)
+ integer, allocatable :: WF_shifts(:,:)
  !
  interface
    !

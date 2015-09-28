@@ -25,16 +25,16 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  !    
  use pars,              ONLY:SP,cZERO,schlen,pi
  use LIVE_t,            ONLY:live_timing
- use R_lattice,         ONLY:k_map,bz_samp,rl_sop,symm_shift,g_rot
- use D_lattice,         ONLY:nsym,idt_index,sop_inv
- use vec_operate,       ONLY:k_periodic_idx,c2a
+ use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,ng_closed,ng_vec
+ use vec_operate,       ONLY:k_periodic_idx
  use com,               ONLY:msg,error
  use X_m,               ONLY:X_t,DIP_S
  use electrons,         ONLY:levels,n_spinor,n_sp_pol
  use memory_m,          ONLY:mem_est
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
- use wave_func,         ONLY:wf_ng,WF
+ use wave_func,         ONLY:wf_ng,wf_ncx
  use parallel_m,        ONLY:PAR_IND_DIPk_ibz,PAR_COM_k_for_P,PP_redux_wait,PAR_Xk_bz_index
+ use IO_m,              ONLY:IO_and_Messaging_switch
  !
  implicit none
  !
@@ -44,15 +44,21 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  !
  ! Work Space
  !
- integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_wf,i_spin,i_spinor,i_sp_pol,ik,ikp,ig,n_LT_steps,ik_mem
- integer           :: idx_kp(3),idx_k(3),shift_ik(3),shift_ikp(3)
- complex(SP)       :: WF_tmp(wf_ng,n_spinor),WF_ik(wf_ng,n_spinor),WF_ikp(wf_ng,n_spinor)
- real(SP)          :: v1(3),v2(3),PHASE
- logical           :: USE_shifted_wf !,l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+ integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_wf,i_spinor,i_sp_pol,ik,ikp,ig
+ integer           :: idx_kp(3),idx_k(3),shift(3)
+ complex(SP)       :: WF_symm(wf_ng,X%ib(2),n_spinor)
+ complex(SP)       :: WF_shifted(wf_ng,X%ib(2),n_spinor)
+ complex(SP)       :: WF_ik(wf_ng,X%ib(2),n_spinor),WF_ikp(wf_ng,X%ib(2),n_spinor)
+ logical           :: USE_shifted_wf
  !
+ ! This is needed to construct grot for all wf_ngs.
+ !
+ call IO_and_messaging_switch("-io_out")
+ ng_closed=ng_vec
+ call G_shells_finder()
+ call IO_and_messaging_switch("+io_out")
+ !  
  DIP_S=cZERO
- !
- !call SET_dip_parallelization(X,l_mat_eval_DIP,n_LT_steps)
  !
  call live_timing("Overlaps:",Xk%nbz)
  !
@@ -63,11 +69,9 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
    ik = Xk%sstar(ikbz,1)
    is = Xk%sstar(ikbz,2)
    !
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
-   !
-   ik_mem=PAR_Xk_bz_index(ikbz)
-   !
-!   shift_ik=-symm_shift(ikbz,:)
+   call WF_symm_kpoint((/1,X%ib(2)/),ikbz,Xk,WF_symm)
+   !  
+   call WF_shift_kpoint((/1,X%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
    !
    do id=1,3
      !
@@ -85,63 +89,31 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
      ikp = Xk%sstar(ikbzp,1)
      isp = Xk%sstar(ikbzp,2)
      !
-!     shift_ikp=-symm_shift(ikbzp,:)
+     call WF_symm_kpoint((/1,X%ib(2)/),ikbzp,Xk,WF_symm)
      !
-     shift_ikp(:) =0 
+     call WF_shift_kpoint((/1,X%ib(2)/),ikbzp,WF_shifts(ikbzp,:),Xk,WF_symm,WF_ikp)
      !
      if(USE_shifted_wf) then
+       !  
+       ! Check if I crossed BZ border and impose periodic Gauge
        !
-       ! Add the shift due to border zone
+       shift=0
+       shift(id)=1
+       call WF_shift_kpoint((/1,X%ib(2)/),ikbzp,shift,Xk,WF_ikp,WF_shifted)
        !
-!       v1    =0._SP
-!       v1(id)=1._SP
-!       call c2a(v_in=v1,v_out=v2,mode='ka2i')
-!       v1=matmul(rl_sop(:,:,sop_inv(isp)),v2)
-!       call c2a(v_in=v1,mode='ki2a')
-!       shift_ikp=shift_ikp+nint(v1)
-       shift_ikp(id)=1
-       !
+     else
+       WF_shifted=WF_ikp
      endif
      !
      do i_sp_pol=1,n_sp_pol
        !
        do ib=1,X%ib(2)
-         !
-         !if ( ib>=X%ib(1) .and. .not.any( (/l_mat_eval_DIP(:,ib)/) ) ) cycle
-         !
-         do i_spinor=1,n_spinor
-           i_spin=i_spinor+i_sp_pol-1
-           i_wf  =WF%index(ib,ik,i_spin)
-           WF_ik(:wf_ng,i_spinor)=WF%c(:wf_ng,i_wf)
-         enddo
-         !
-!         call WF_shift_by_G((/ib,ik,i_sp_pol/),WF_tmp,shift_ik)
-         ! 
-!         do ig = 1,WF_ng
-!            WF_ik(ig,:)=WF_tmp(g_rot(is,ig),:)
-!         enddo
-         !
          do ibp=1,X%ib(2)
-           !
-           !if ( ibp>=X%ib(1) .and. .not.any( (/l_mat_eval_DIP(ibp,:)/) ) ) cycle
-           ! 
-           ! Check if I crossed BZ border and impose periodic Gauge
-           !
-           call WF_shift_by_G((/ibp,ikp,i_sp_pol/),WF_ikp,shift_ikp)
-           !
-!           do ig = 1,WF_ng
-!             WF_ikp(ig,:)=WF_tmp(g_rot(isp,ig),:)
-!           en  ddo
-           !
            do i_spinor=1,n_spinor
-             DIP_S(ib,ibp,id,ik_mem,i_sp_pol)=DIP_S(ib,ibp,id,ik_mem,i_sp_pol)+&
-&                            Vstar_dot_V_omp(wf_ng,WF_ikp(:wf_ng,i_spinor),WF_ik(:wf_ng,i_spinor)) 
+             DIP_S(ib,ibp,id,ikbz,i_sp_pol)=Vstar_dot_V_omp(wf_ng,WF_shifted(:wf_ng,ibp,i_spinor),WF_ik(:wf_ng,ib,i_spinor)) 
            enddo
-           !
          enddo ! ibp
        enddo ! ib
-       !
-       call PP_redux_wait(DIP_S(:,:,id,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
        !
      enddo ! i_sp_pol
      !
@@ -149,7 +121,7 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
    !
    call live_timing(steps=1)
    !
- enddo ! ik
+ enddo ! ikbz
  !
  call live_timing()
  !

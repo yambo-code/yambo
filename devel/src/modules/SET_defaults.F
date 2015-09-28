@@ -245,8 +245,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  bse_scattering=.FALSE.
  Xk_grid_is_uniform=.TRUE.
  q0_def_norm=1.E-5_SP
- k_map%g0_minus_idx  =-1
- k_map%g0_plus_idx   =-1
+ k_map%g0_idx  =-1
  k_map%q_step  =-1
  k_map%max_kdir= 0
  !

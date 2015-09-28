@@ -24,7 +24,7 @@
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,core_io_path,more_io_path
+ use com,                 ONLY:msg,core_io_path,more_io_path,error
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
 &                              OP_APP,cp_file,cp_directory, &
@@ -75,6 +75,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  integer               :: is,ik,ik_save
  integer               :: ib,ib_grp,ib_disk,i_wf,i_spin
  integer               :: ic,ic_rot,ig,ig_rot
+ logical               :: found
  !
  ! External functions
  !
@@ -233,10 +234,15 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      ic_rot_table=-1
      do ic=1,wf_nc_k_save(ik_save)
        ig_rot=g_rot(is,wf_igk_save(ic,ik_save))
+       found=.false.
        do ic_rot=1,wf_nc_k_new(ik)
          ig=wf_igk_new(ic_rot,ik)
-         if(ig==ig_rot) exit
+         if(ig==ig_rot) then
+           found=.true.
+           exit
+         endif
        enddo
+       if(.not.found) call error("Erro rotating an wf_igk array")
        ic_rot_table(ic)=ic_rot
      enddo
      !

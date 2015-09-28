@@ -63,8 +63,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  integer           :: io_err,ID
  integer, external :: io_Overlaps
  !
- if (nsym>1) call error(' Dipole covariant implementation to be extended to the case with symmetries')
- !
  ! WF load 
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
  ! there will be other WF_load calls using the present WF distribution. 
@@ -101,6 +99,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
    !
  endif
  !
+ call k_build_up_BZ_tables(Xk)
+ !
  idir_not_done(:)= (k_map%max_kdir(:)==1)
  !
  if(any(idir_not_done)) call warning(' Covariant Dipoles not in 3d. Assuming non periodic system.')
@@ -119,9 +119,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
      !
-     ikbz=Xk%sstar(ik,1)
+     ikbz=Xk%k_table(ik,1)
      !
-     call Build_Overlaps_Det(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
+     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
      !
      DIP_tmp=cZERO
      !
@@ -141,12 +141,11 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
        !
        forall(i1=Xen%nbm+1:X%ib(2),i2=1:Xen%nbf) 
          Wop(i1,i2)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red))- &
-&                   sum(S_tmp(i1,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,i2,id_red))
+&                   sum(S_tmp(i1,1:Xen%nbf,2)* Sm1_minus(1:Xen%nbf,i2,id_red))
        end forall
        !
        Wop=Wop*cI*k_map%max_kdir(id_red)/(4._SP*pi)
        !
-       ! 
        ! Transform in cartesian coordinates 
        !
        do idir=1,3

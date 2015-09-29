@@ -24,9 +24,9 @@
 subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
  !
  use pars,          ONLY:SP,cZERO
- use electrons,     ONLY:n_spinor,n_spin
- use wave_func,     ONLY:WF,wf_ng,wf_nc_k,wf_igk,wf_ncx
- use R_lattice,     ONLY:bz_samp,g_rot,ng_closed,ng_vec
+ use electrons,     ONLY:n_spinor
+ use wave_func,     ONLY:WF,wf_ng
+ use R_lattice,     ONLY:bz_samp,g_rot
  use D_lattice,     ONLY:idt_index,spin_sop,i_time_rev,nsym
  use com,           ONLY:error
  use vec_operate,   ONLY:sort
@@ -62,7 +62,7 @@ subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
    do ib=b_to_load(1),b_to_load(2)
      do i_spinor=1,n_spinor
        iwf=WF%index(ib,ik,i_spinor)
-       WF_k_out(:wf_ng,ib,i_spinor)=WF%c(g_rot(is,:wf_ng),iwf)
+       WF_k_out(g_rot(is,:wf_ng),ib,i_spinor)=WF%c(:wf_ng,iwf)
      enddo
      !
      forall(ig=1:wf_ng) WF_k_out(ig,ib,:)=matmul(spin_sop(:,:,is),WF_k_out(ig,ib,:))

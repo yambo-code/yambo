@@ -24,21 +24,21 @@
 subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  use pars,          ONLY:SP,cZERO
- use electrons,     ONLY:n_spinor
+ use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:G_m_G,k_map,bz_samp
  use wave_func,     ONLY:wf_ng
  !
  implicit none
  !
- integer,       intent(in)  :: wf_shift(3),ikbz,b_to_shift(2)
- type(bz_samp), intent(in)  :: Xk
- complex(SP), intent(out) :: WF_k_out(wf_ng,b_to_shift(1):b_to_shift(2),n_spinor)
- complex(SP), intent(in)  ::  WF_k_in(wf_ng,b_to_shift(1):b_to_shift(2),n_spinor)
+ integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
+ type(bz_samp), intent(in) :: Xk
+ complex(SP), intent(out)  :: WF_k_out(wf_ng,b_to_shift(1):b_to_shift(2),n_spin)
+ complex(SP), intent(in)   :: WF_k_in(wf_ng,b_to_shift(1):b_to_shift(2),n_spin)
  !
  ! Work space
  !
  integer :: id,ik,is
- complex(SP) :: WF_tmp(wf_ng,b_to_shift(1):b_to_shift(2),n_spinor)
+ complex(SP) :: WF_tmp(wf_ng,b_to_shift(1):b_to_shift(2),n_spin)
  integer           :: ig,igp,iG0,ng_max
  integer, external :: eval_G_minus_G
  integer           :: g0_idx(3,2)

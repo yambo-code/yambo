@@ -39,13 +39,13 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
  type(levels), intent(in) :: Xen
  type(X_t),    intent(in) :: X
  complex(SP), intent(out) :: S_det(3)
- complex(SP), intent(out) :: Sm1_plus (Xen%nbm,Xen%nbm,3)
- complex(SP), intent(out) :: Sm1_minus(Xen%nbm,Xen%nbm,3)
+ complex(SP), intent(out) :: Sm1_plus (Xen%nbf,Xen%nbf,3)
+ complex(SP), intent(out) :: Sm1_minus(Xen%nbf,Xen%nbf,3)
  !
  ! Work Space
  !
  integer     :: i1,i2,i3,i4,iv,idx(3),id,ikp,ikm
- complex(SP) :: S_val(1:Xen%nbm,1:Xen%nbm)
+ complex(SP) :: S_val(1:Xen%nbf,1:Xen%nbf)
  !
  S_det=cZERO
  !   
@@ -60,13 +60,13 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
      !
      ! Overlap S(k, k-dk)
      !
-     S_val=hermitian(DIP_S(1:Xen%nbm,1:Xen%nbm,id,ikm,i_sp_pol))
+     S_val=hermitian(DIP_S(1:Xen%nbf,1:Xen%nbf,id,ikm,i_sp_pol))
      call MATRIX_driver(INV,S_val,lib_in=USE_LK)
      Sm1_minus(:,:,id)=S_val
      !
      ! Overlap S(k, k+dk)
      !
-     S_val=DIP_S(1:Xen%nbm,1:Xen%nbm,id,ikbz,i_sp_pol)
+     S_val=DIP_S(1:Xen%nbf,1:Xen%nbf,id,ikbz,i_sp_pol)
      call MATRIX_driver(INV,S_val,lib_in=USE_LK,det=S_det(id))
      Sm1_plus(:,:,id)=S_val
      !

@@ -27,13 +27,16 @@ module parallel_m
  !
  implicit none
  !
+ integer, parameter :: max_n_of_cpus=100000
+ !
 #if defined _MPI
  include 'mpif.h'
 #else
  integer            :: mpi_comm_world=0
 #endif
  !
- integer            :: myid
+ integer            :: myid      ! CPU id defined locally (eventually re-mapped for SLK compliance)
+ integer            :: myid_mpi  ! CPU id in the MPI WORLD as it comes out of the C-driver
  integer            :: ncpu
  integer            :: n_nodes  = 1
 #if defined _OPENMPI
@@ -122,8 +125,6 @@ module parallel_m
  !
  integer, parameter :: p_sum=1
  integer, parameter :: p_prod=2
- !
- integer, parameter :: max_n_of_cpus=10000
  !
  ! Logicals
  !

@@ -81,9 +81,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Presets
  !
- ncpu  =np
- myid  =pid
- infile=inf
+ ncpu     =np
+ myid     =pid
+ infile   =inf
  !
  call SET_defaults(instr,ind,od,js,com_dir)
 #ifdef _SURF

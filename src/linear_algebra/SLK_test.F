@@ -4,7 +4,7 @@ subroutine SLK_test(E,k,q)
  !
  use pars,          ONLY:DP
  use com,           ONLY:msg
- use parallel_m,    ONLY:ncpu,PAR_COM_WORLD
+ use parallel_m,    ONLY:ncpu,myid
  use SLK_m,         ONLY:POOL_group,ORTHO_group,n_pools,SLK_test_H_dim,SLK_COM_A2A,SLK_COM_INDEX
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -17,7 +17,7 @@ subroutine SLK_test(E,k,q)
  !
  ! Work Space
  !
- integer                 :: ndim
+ integer                 :: ndim,ierr,ncpu_each_pool
  real(DP),   allocatable :: Amat(:,:), Ainv(:,:)
  type (POOL_group)       :: POOL
  type (ORTHO_group)      :: ORTHO
@@ -26,32 +26,26 @@ subroutine SLK_test(E,k,q)
  !
  call PARALLEL_global_indexes(E,k,q,"ScaLapacK")
  !
- ndim = SLK_test_H_dim
+ ndim    = SLK_test_H_dim
  !
- if (SLK_COM_INDEX(1)%n_CPU/=ncpu) then
-   !
-   n_pools=ncpu/SLK_COM_INDEX(1)%n_CPU
-   !
-   ! BLACS grid
-   !
-   ORTHO%grid=nint(sqrt(real(SLK_COM_INDEX(1)%n_CPU)))
-   !
-   ! Init pools
-   !
-   POOL%CPU_id      = SLK_COM_INDEX(1)%CPU_id
-   POOL%ID          = SLK_COM_INDEX(1)%my_CHAIN-1
-   POOL%n_CPU       = SLK_COM_INDEX(1)%n_CPU
-   POOL%INTER_comm  = SLK_COM_INDEX(1)%COMM
-   POOL%INTRA_comm  = SLK_COM_A2A(1)%COMM
-   call SLK_POOLS_init( POOL, PAR_COM_WORLD%COMM )
-   !
- else
-   !
-   !call POOL_copy( )
-   !
- endif
+ n_pools = SLK_COM_INDEX(1)%n_CPU
+ !
+ ncpu_each_pool = ncpu/n_pools
+ !
+ ! BLACS grid
+ !
+ ORTHO%grid=nint(sqrt(real(ncpu_each_pool)))
+ !
+ ! Init pools
+ !
+ POOL%CPU_id      = SLK_COM_A2A(1)%CPU_id
+ POOL%n_CPU       = SLK_COM_A2A(1)%n_CPU
+ POOL%ID          = myid/POOL%n_CPU
+ POOL%INTER_comm  = SLK_COM_INDEX(1)%COMM
+ POOL%INTRA_comm  = SLK_COM_A2A(1)%COMM
  !
  ! Init the scalapack grid
+ !
  call SLK_ORTHO_init( ORTHO, POOL, product(ORTHO%grid), POOL%INTRA_comm )
  !
  ! workspace
@@ -142,8 +136,8 @@ end subroutine SLK_test
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Amat, ndim )
  !
- call msg("s",'  Amat Inv Eigenvalue@POOL:',POOL%id)
- call msg("s",' ',real(1.0d0/w(1:ndim),SP))
+ !call msg("s",'  Amat Inv Eigenvalue@POOL:',POOL%id)
+ !call msg("s",' ',real(1.0d0/w(1:ndim),SP))
  !
  deallocate( w, zmat )
  !
@@ -178,8 +172,8 @@ end subroutine build_matrix
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Ainv, ndim )
  !
- call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
- call msg("s",' ',real(w(ndim:1:-1),SP))
+ !call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
+ !call msg("s",' ',real(w(ndim:1:-1),SP))
  !
  deallocate( w, zmat )
  !
@@ -302,8 +296,8 @@ end subroutine serial_inverse
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Ainv, ndim )
  !
- call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
- call msg("s",' ',real(w(ndim:1:-1),SP))
+ !call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
+ !call msg("s",' ',real(w(ndim:1:-1),SP))
  !
  deallocate( w, zmat )
  !

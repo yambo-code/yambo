@@ -86,7 +86,7 @@ integer function io_RT_components(what,ID)
    db_name=trim(what)
    local_what='carriers'
    l_carriers=.TRUE.
-   db_type=-2
+   db_type=-3
  endif
  !
  if (l_REF) db_name="RT_reference_components"

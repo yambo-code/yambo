@@ -73,7 +73,8 @@ module com
    !
    character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING)
      !
-     ! -2 ----------------  -> desc 
+     ! -3 ----------------  -> desc 
+     ! -2 ----------------  -> desc (no NETCDF support)
      ! -1 ----------------  -> subfolder/ndesc
      !  0 Stable s.         -> CORE_IO_PATH/SAVE/subfolder/ns.desc
      !  1 Stable db.        -> CORE_IO_PATH/SAVE/subfolder/ndb.desc
@@ -108,7 +109,7 @@ module com
      ch(1)=core_io_path
      !
      select case(type)
-       case(-2)
+       case(-2,-3)
          get_name="./"//trim(desc)
          return
        case(-1)
@@ -382,6 +383,7 @@ module com
      call MPI_close
      !
      stop
+     !
    end subroutine
    !
    subroutine msg_deliver(formatted_msg)

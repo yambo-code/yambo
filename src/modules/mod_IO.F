@@ -395,7 +395,11 @@ module IO_m
          endif
        endif
        !
-       call netcdf_call(nf90_open(trim(io_file(ID)),nf90_nowrite,io_unit(ID)))
+       if (type==-2) then
+         open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
+       else
+         call netcdf_call(nf90_open(trim(io_file(ID)),nf90_nowrite,io_unit(ID)))
+       endif
        !
        io_type(ID)=type
        !
@@ -419,9 +423,14 @@ module IO_m
        !
      endif
      !
-     if ( file_is_open(io_file(ID),ID)  ) then
+     if ( (io_type(ID)/=-2.and.file_is_open(io_file(ID),ID)) .or.&
+&         (io_type(ID)==-2.and.file_is_open(io_file(ID)))          ) then
        !
-       call netcdf_call(nf90_close(io_unit(ID)))
+       if (io_type(ID)==-2) then
+         close(unit=io_unit(ID))
+       else
+         call netcdf_call(nf90_close(io_unit(ID)))
+       endif
        !
        io_unit(ID)=0
        !

@@ -29,7 +29,7 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  use vec_operate,       ONLY:k_periodic_idx
  use com,               ONLY:msg,error
  use X_m,               ONLY:X_t,DIP_S
- use electrons,         ONLY:levels,n_spinor,n_sp_pol
+ use electrons,         ONLY:levels,n_spinor,n_sp_pol,n_spin
  use memory_m,          ONLY:mem_est
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng,wf_ncx
@@ -44,11 +44,11 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  !
  ! Work Space
  !
- integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_wf,i_spinor,i_sp_pol,ik,ikp,ig
+ integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_wf,i_spin,i_spinor,i_sp_pol,ik,ikp,ig
  integer           :: idx_kp(3),idx_k(3),shift(3)
- complex(SP)       :: WF_symm(wf_ng,X%ib(2),n_spinor)
- complex(SP)       :: WF_shifted(wf_ng,X%ib(2),n_spinor)
- complex(SP)       :: WF_ik(wf_ng,X%ib(2),n_spinor),WF_ikp(wf_ng,X%ib(2),n_spinor)
+ complex(SP)       :: WF_symm(wf_ng,X%ib(2),n_spin)
+ complex(SP)       :: WF_shifted(wf_ng,X%ib(2),n_spin)
+ complex(SP)       :: WF_ik(wf_ng,X%ib(2),n_spin),WF_ikp(wf_ng,X%ib(2),n_spin)
  logical           :: USE_shifted_wf
  !
  ! This is needed to construct grot for all wf_ngs.
@@ -110,7 +110,9 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
        do ib=1,X%ib(2)
          do ibp=1,X%ib(2)
            do i_spinor=1,n_spinor
-             DIP_S(ib,ibp,id,ikbz,i_sp_pol)=Vstar_dot_V_omp(wf_ng,WF_shifted(:wf_ng,ibp,i_spinor),WF_ik(:wf_ng,ib,i_spinor)) 
+             i_spin=i_sp_pol+i_spinor-1
+             DIP_S(ib,ibp,id,ikbz,i_sp_pol)=DIP_S(ib,ibp,id,ikbz,i_sp_pol)+&
+ &                   Vstar_dot_V_omp(wf_ng,WF_shifted(:wf_ng,ibp,i_spin),WF_ik(:wf_ng,ib,i_spin)) 
            enddo
          enddo ! ibp
        enddo ! ib

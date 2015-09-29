@@ -54,14 +54,16 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  logical     :: idir_not_done(3)
  integer     :: ik,iv,ic,i_sp_pol,ikm1,id_red,idir,idx(3),i1,i2,ikbz,ik_mem
  real(SP)    :: Ev_m_Ec
- complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,3)
- complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,3)
+ complex(SP) :: Sm1_plus (Xen%nbf,Xen%nbf,3)
+ complex(SP) :: Sm1_minus(Xen%nbf,Xen%nbf,3)
  complex(SP) :: S_det(3)
  complex(SP) :: Wop(1:X%ib(2),1:X%ib(2)),DIP_tmp(3,1:X%ib(2),1:X%ib(2))
  complex(SP) :: S_tmp(X%ib(2),X%ib(2),2)
  !
  integer           :: io_err,ID
  integer, external :: io_Overlaps
+ !
+ if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
  ! WF load 
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
@@ -139,7 +141,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
        !
        Wop=cZERO
        !
-       forall(i1=Xen%nbm+1:X%ib(2),i2=1:Xen%nbf) 
+       forall(i1=Xen%nbf+1:X%ib(2),i2=1:Xen%nbf) 
          Wop(i1,i2)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red))- &
 &                   sum(S_tmp(i1,1:Xen%nbf,2)* Sm1_minus(1:Xen%nbf,i2,id_red))
        end forall

@@ -37,7 +37,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel,V_real_time,V_parallel
+&                         switch_off_runlevel,V_real_time,V_parallel,V_qp
  use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu,myid
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
@@ -944,7 +944,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    endif
    !
-   call init_QP(.TRUE.,.TRUE.)
+   call init_QP(.TRUE.,infile_verbosity==V_qp)
    !
    ! I use it to propose the value in the input file ...
    !

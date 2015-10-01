@@ -48,7 +48,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  integer,       intent(in) :: nK_mem
  complex(SP),     optional,intent(out) :: O_VALUE,V_VALUE(3)
  complex(SP),     optional, intent(in) :: PV_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
- complex(SP),     optional, intent(in) :: V_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
+ complex(SP),     optional, intent(in) :: V_MATRIX(3,SC_bands(1):SC_bands(2),&
+&                                                    SC_bands(1):SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_MATRIX_limited(SC_bands(1):SC_bands(2),&
 &                                                          SC_bands(1):SC_bands(2),nK_mem,n_sp_pol)

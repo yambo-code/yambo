@@ -54,8 +54,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  logical     :: idir_not_done(3)
  integer     :: ik,iv,ic,i_sp_pol,ikm1,id_red,idir,idx(3),i1,i2,ikbz,ik_mem
  real(SP)    :: Ev_m_Ec
- complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,3)
- complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,3)
+ complex(SP) :: Sm1_plus (Xen%nbf,Xen%nbf,3)
+ complex(SP) :: Sm1_minus(Xen%nbf,Xen%nbf,3)
  complex(SP) :: S_det(3)
  complex(SP) :: Wop(1:X%ib(2),1:X%ib(2)),DIP_tmp(3,1:X%ib(2),1:X%ib(2))
  complex(SP) :: S_tmp(X%ib(2),X%ib(2),2)
@@ -63,7 +63,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  integer           :: io_err,ID
  integer, external :: io_Overlaps
  !
- if (nsym>1) call error(' Dipole covariant implementation to be extended to the case with symmetries')
+ if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
  ! WF load 
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
@@ -101,6 +101,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
    !
  endif
  !
+ call k_build_up_BZ_tables(Xk)
+ !
  idir_not_done(:)= (k_map%max_kdir(:)==1)
  !
  if(any(idir_not_done)) call warning(' Covariant Dipoles not in 3d. Assuming non periodic system.')
@@ -119,9 +121,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
      !
-     ikbz=Xk%sstar(ik,1)
+     ikbz=Xk%k_table(ik,1)
      !
-     call Build_Overlaps_Det(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
+     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
      !
      DIP_tmp=cZERO
      !
@@ -139,14 +141,13 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
        !
        Wop=cZERO
        !
-       forall(i1=Xen%nbm+1:X%ib(2),i2=1:Xen%nbf) 
+       forall(i1=Xen%nbf+1:X%ib(2),i2=1:Xen%nbf) 
          Wop(i1,i2)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red))- &
-&                   sum(S_tmp(i1,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,i2,id_red))
+&                   sum(S_tmp(i1,1:Xen%nbf,2)* Sm1_minus(1:Xen%nbf,i2,id_red))
        end forall
        !
        Wop=Wop*cI*k_map%max_kdir(id_red)/(4._SP*pi)
        !
-       ! 
        ! Transform in cartesian coordinates 
        !
        do idir=1,3

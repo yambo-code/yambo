@@ -61,7 +61,9 @@ subroutine el_magnetization(en,Xk,magn)
  do ik=1,Xk%nibz
    do ib=1,en%nbm
      !
-     if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+     if (associated(PAR_IND_WF_linear%element_2D)) then
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+     endif
      !
      if (size(WF%index,1)<ib)        cycle
      if (size(WF%index,2)<ik)        cycle
@@ -95,7 +97,9 @@ subroutine el_magnetization(en,Xk,magn)
    enddo
  enddo
  !
- call PP_redux_wait(cv,COMM=PAR_COM_density%COMM)
+ if (associated(PAR_IND_WF_linear%element_2D)) then
+   call PP_redux_wait(cv,COMM=PAR_COM_density%COMM)
+ endif
  ! 
  ! Symmetrization
  !

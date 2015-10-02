@@ -76,7 +76,7 @@ subroutine RT_Ext_fields(A,time)
 &                         (small_a(Field_time,Efield(i_f),1)*theta_function(real(Field_time),RT_step,0)+&
 &                          small_a(Field_time,Efield(i_f),0)*theta_function(real(Field_time),RT_step,1))
    !
-   A%vecpot_acc(:)=A%vecpot_vel(:)-E_times_c(:)*&
+   A%vecpot_acc(:)=A%vecpot_acc(:)-E_times_c(:)*&
 &                         (small_a(Field_time,Efield(i_f),2)*theta_function(real(Field_time),RT_step,0)+&
 &                          small_a(Field_time,Efield(i_f),1)*theta_function(real(Field_time),RT_step,1)+&
 &                          small_a(Field_time,Efield(i_f),0)*theta_function(real(Field_time),RT_step,2))

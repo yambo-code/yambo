@@ -51,6 +51,9 @@
 #if defined _MPI
   {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
 #endif
+#if defined _OPENMP
+  {"noopenmp","M","Skip MPI initialization",0,0,0,0,0}, 
+#endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
   {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex/bsfxc]",0,0,1,0,0},

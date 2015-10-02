@@ -37,7 +37,13 @@ module openmp
  integer     :: n_threads_DIP = 0  
  integer     :: n_threads_K   = 0  
  integer     :: n_threads_now = 0
+ !
  logical     :: master_thread = .TRUE.
+#if defined _OPENMP
+ logical     :: omp_is_off    = .FALSE.
+#else
+ logical     :: omp_is_off    = .TRUE.
+#endif
  !
 #if defined _OPENMP
  !
@@ -54,47 +60,53 @@ module openmp
    !
    subroutine OPENMP_initialize( )
      !
+     if (omp_is_off) then
+       !
+       n_threads     = 1
+       n_threads_now = 1
+       n_threads_X   = 1
+       n_threads_SE  = 1
+       n_threads_RT  = 1
+       n_threads_K   = 1
+       n_threads_DIP = 1
+       !
+     else
 #if defined _OPENMP
-     !
-     n_threads=omp_get_max_threads()
-     n_threads_now=n_threads
-     !
-     call omp_set_dynamic(.false.)
-     call omp_set_nested(.false.)
-#else
-     !
-     n_threads     = 1
-     n_threads_now = 1
-     n_threads_X   = 1
-     n_threads_SE  = 1
-     n_threads_RT  = 1
-     n_threads_K   = 1
-     n_threads_DIP = 1
-     !
+       !
+       n_threads=omp_get_max_threads()
+       n_threads_now=n_threads
+       !
+       call omp_set_dynamic(.false.)
+       call omp_set_nested(.false.)
+       !
 #endif
+     endif
      !
    end subroutine
    !
    subroutine OPENMP_set_threads(n_threads_in)
      !
      integer, optional :: n_threads_in
+     !
+     if (omp_is_off) then
+       if (present(n_threads_in)) then
+         n_threads_in=1
+       else
+         n_threads=1
+       endif
+       n_threads_now=1
+     else
 #if defined _OPENMP
-     if (present(n_threads_in)) then
-       if (n_threads_in==0) n_threads_in=n_threads
-       call omp_set_num_threads( n_threads_in )
-       n_threads_now=n_threads_in
-     else
-       call omp_set_num_threads( n_threads )
-       n_threads_now=n_threads
-     endif
-#else
-     if (present(n_threads_in)) then
-       n_threads_in=1
-     else
-       n_threads=1
-     endif
-     n_threads_now=1
+       if (present(n_threads_in)) then
+         if (n_threads_in==0) n_threads_in=n_threads
+         call omp_set_num_threads( n_threads_in )
+         n_threads_now=n_threads_in
+       else
+         call omp_set_num_threads( n_threads )
+         n_threads_now=n_threads
+       endif
 #endif
+     endif
      !
    end subroutine
    !
@@ -102,13 +114,15 @@ module openmp
      !
      logical :: master_
      !
+     if (omp_is_off) then
+       master_=.TRUE.
+       n_threads_now=1
+     else
 #if defined _OPENMP
-     master_= ( omp_get_thread_num() == 0)
-     n_threads_now= omp_get_num_threads()
-#else
-     master_=.TRUE.
-     n_threads_now=1
+       master_= ( omp_get_thread_num() == 0)
+       n_threads_now= omp_get_num_threads()
 #endif
+     endif
      !
    end subroutine
    !

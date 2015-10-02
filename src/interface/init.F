@@ -72,7 +72,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ras_module,     ONLY:lras, lreels
 #endif
 #if defined _OPENMP
- use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
+ use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,omp_is_off
 #endif
  !
  implicit none
@@ -196,9 +196,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! 
  call call_init_load('create_shadow_vars')
  !
- ! DB props listing mode ?
+ ! Command line reading
  !
  call read_command_line(instr,init)
+ !
+#if defined _OPENMP
+ !
+ if (index(instr,'noopenmp')>0) omp_is_off=.TRUE.
+ !
+#endif
+ !
+ ! DB props listing mode ?
  !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.

@@ -53,14 +53,21 @@ integer function io_DB1(E,k,ID)
  !
  type(levels)  :: E
  type(bz_samp) :: k
- integer       :: ID,code_version_local(3),code_revision_local,var_err,MENU
+ integer       :: ID
+ !
+ ! Work Space
+ !
+ integer :: code_version_local(3),code_revision_local,var_err,MENU
+ integer :: menu_is_closed
  !
  io_DB1 =io_connect(desc="db1",type=0,ID=ID)
  if (io_DB1/=0) goto 1
  !
  MENU=1
+ menu_is_closed=.FALSE.
  !
  var_err= variable_is_found(ID,"EXX_FRACTION")
+ !
  if ( read_is_on(ID) .and.  var_err < 0 ) call compatibility_message( )
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -198,11 +205,13 @@ integer function io_DB1(E,k,ID)
      endif
      !
    endif
+   !
    if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)
      call io_elemental(ID, L0=mag_syms,VAR=' Magnetic symmetries             : ')
      call io_elemental(ID, VAR="",VAR_SZ=0,MENU=MENU)
      MENU=0
+     menu_is_closed=.TRUE.
    endif
    !
    if (ver_is_gt_or_eq(ID,revision=4351)) then
@@ -211,8 +220,15 @@ integer function io_DB1(E,k,ID)
      call io_elemental(ID,DB_I0=io_code_revision(ID,2),I0=code_revision_local)
      call io_elemental(ID, VAR="",VAR_SZ=0,MENU=MENU)
      MENU=0
+     menu_is_closed=.TRUE.
    else
      io_code_revision(ID,2)=code_GPL_revision
+   endif
+   !
+   if (.not.menu_is_closed) then
+     call io_elemental(ID, VAR="",VAR_SZ=0,MENU=MENU)
+     MENU=0
+     menu_is_closed=.TRUE.
    endif
    !
    ! Exporting E%nb/k%nibz when in DUMP

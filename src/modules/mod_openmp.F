@@ -60,27 +60,35 @@ module openmp
    !
    subroutine OPENMP_initialize( )
      !
+#if !defined _OPENMP
+     !
+     n_threads     = 1
+     n_threads_now = 1
+     n_threads_X   = 1
+     n_threads_SE  = 1
+     n_threads_RT  = 1
+     n_threads_K   = 1
+     n_threads_DIP = 1
+     !
+#endif
+     !
+#if defined _OPENMP
+     !
      if (omp_is_off) then
        !
-       n_threads     = 1
-       n_threads_now = 1
-       n_threads_X   = 1
-       n_threads_SE  = 1
-       n_threads_RT  = 1
-       n_threads_K   = 1
-       n_threads_DIP = 1
+       n_threads=1
+       n_threads_now=1
        !
      else
-#if defined _OPENMP
        !
        n_threads=omp_get_max_threads()
        n_threads_now=n_threads
        !
-       call omp_set_dynamic(.false.)
-       call omp_set_nested(.false.)
-       !
-#endif
      endif
+     !
+     call omp_set_dynamic(.false.)
+     call omp_set_nested(.false.)
+#endif
      !
    end subroutine
    !
@@ -95,6 +103,9 @@ module openmp
          n_threads=1
        endif
        n_threads_now=1
+#if defined _OPENMP
+       call omp_set_num_threads( 1 )
+#endif
      else
 #if defined _OPENMP
        if (present(n_threads_in)) then

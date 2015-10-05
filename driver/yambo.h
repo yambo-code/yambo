@@ -49,10 +49,10 @@
   {"parinfo","P","Report some informations about the parallel field of the current input file",0,0,0,0,1}, 
   {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
 #if defined _MPI
-  {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
+  {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
 #endif
 #if defined _OPENMP
-  {"noopenmp","M","Skip MPI initialization",0,0,0,0,0}, 
+  {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,0}, 
 #endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},

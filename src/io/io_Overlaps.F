@@ -22,9 +22,10 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_Overlaps(X,Xen,ID)
+
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,X_alloc,P_square,DIP_S
+ use X_m,           ONLY:X_t,X_alloc,DIP_S
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,nXkbz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
@@ -40,7 +41,7 @@ integer function io_Overlaps(X,Xen,ID)
  !
  ! Work Space
  !
- integer :: ik,ixyz,i_sp_pol,db_nbm,db_nb(2),ik_mem,i_fragment
+ integer :: ik,ixyz,i_sp_pol,ik_mem,i_fragment
  character(schlen)    :: VAR_name
  real(SP),allocatable :: disk_data(:,:,:)
  integer, external    :: variables_DIPOLES
@@ -76,7 +77,7 @@ integer function io_Overlaps(X,Xen,ID)
    !
    allocate(disk_data(X%ib(2),X%ib(2),2))
    !
-   if (read_is_on(ID)) call X_alloc('DIP_S',(/X%ib(2),X%ib(2),3,PAR_Xk_nbz/))
+   if (read_is_on(ID)) call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,PAR_Xk_nbz/))
    !
    do i_sp_pol=1,n_sp_pol
      !
@@ -91,7 +92,7 @@ integer function io_Overlaps(X,Xen,ID)
        io_extension(ID)='Overlaps'
        call io_fragment(ID,i_fragment=i_fragment)
        !
-       do ixyz=1,3
+       do ixyz=1,6
          !
          if (write_is_on(ID)) call mat_c2r(DIP_S(:,:,ixyz,ik_mem,i_sp_pol),disk_data)
          !

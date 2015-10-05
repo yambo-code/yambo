@@ -37,8 +37,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  use matrix_operate, ONLY:hermitian
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_Xk_ibz_ID,&
 &                         PAR_Xk_nbz,PAR_COM_q_for_Xo,PP_redux_wait
- use com,            ONLY:error,warning
- use D_lattice,      ONLY:a,nsym
+ use com,            ONLY:error,warning,msg
+ use D_lattice,      ONLY:a
  use drivers,        ONLY:l_sc_run
  use parallel_m,     ONLY:master_cpu
  use IO_m,           ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD_CL
@@ -53,11 +53,12 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  logical     :: idir_not_done(3)
  integer     :: ik,iv,ic,i_sp_pol,ikm1,id_red,idir,idx(3),i1,i2,ikbz,ik_mem
+ integer     :: istep,max_step
  real(SP)    :: Ev_m_Ec
- complex(SP) :: Sm1_plus (Xen%nbf,Xen%nbf,3)
- complex(SP) :: Sm1_minus(Xen%nbf,Xen%nbf,3)
- complex(SP) :: S_det(3)
- complex(SP) :: Wop(1:X%ib(2),1:X%ib(2)),DIP_tmp(3,1:X%ib(2),1:X%ib(2))
+ complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
+ complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
+ complex(SP) :: S_det(6)
+ complex(SP) :: Wop(1:X%ib(2),1:X%ib(2),2),DIP_tmp(6,1:X%ib(2),1:X%ib(2))
  complex(SP) :: S_tmp(X%ib(2),X%ib(2),2)
  !
  integer           :: io_err,ID
@@ -65,6 +66,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
+
  ! WF load 
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
  ! there will be other WF_load calls using the present WF distribution. 
@@ -81,7 +83,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  ! If they do not I have to compute them
  if(io_err/=0) then
    ! Notice that DIP_S is defined in the BZ       
-   call X_alloc('DIP_S',(/X%ib(2),X%ib(2),3,PAR_Xk_nbz/))
+   call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,PAR_Xk_nbz/))
    DIP_S=cZERO
    !
    call DIPOLE_overlaps(Xen,Xk,X)
@@ -107,6 +109,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  if(any(idir_not_done)) call warning(' Covariant Dipoles not in 3d. Assuming non periodic system.')
  !
+ if(any(k_map%max_kdir(:)>=6)) &
+&   call msg('rs','Using second order approximation for covariant dipoles')
+ !
  call live_timing('Covariant Dipoles:',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*n_sp_pol)
  !
  ! Notice that DIP_iR/DIP_P are defined only in the IBZ
@@ -131,30 +136,51 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
        !
        if(k_map%max_kdir(id_red)==1) cycle
        !
-       idx=k_map%k_map_inv(ikbz,:)
-       idx(id_red)=idx(id_red)-1
-       idx=k_periodic_idx(idx,k_map)
-       ikm1=k_map%k_map_dir(idx(1),idx(2),idx(3))
+       max_step=1
+       if(k_map%max_kdir(id_red)>=6) max_step=2
        !
-       S_tmp(:,:,1)=          DIP_S(:,:,id_red,ikbz,i_sp_pol)
-       S_tmp(:,:,2)=hermitian(DIP_S(:,:,id_red,ikm1,i_sp_pol))
-       !
-       Wop=cZERO
-       !
-       forall(i1=Xen%nbf+1:X%ib(2),i2=1:Xen%nbf) 
-         Wop(i1,i2)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red))- &
-&                   sum(S_tmp(i1,1:Xen%nbf,2)* Sm1_minus(1:Xen%nbf,i2,id_red))
-       end forall
-       !
-       Wop=Wop*cI*k_map%max_kdir(id_red)/(4._SP*pi)
+       do istep=1,max_step 
+         !
+         idx=k_map%k_map_inv(ikbz,:)
+         idx(id_red)=idx(id_red)-istep
+         idx=k_periodic_idx(idx,k_map)
+         ikm1=k_map%k_map_dir(idx(1),idx(2),idx(3))
+         !
+         S_tmp(:,:,1)=          DIP_S(:,:,id_red+(istep-1)*3,ikbz,i_sp_pol)
+         S_tmp(:,:,2)=hermitian(DIP_S(:,:,id_red+(istep-1)*3,ikm1,i_sp_pol))
+         !
+         Wop(:,:,istep)=cZERO
+         !
+         forall(i1=Xen%nbm+1:X%ib(2),i2=1:Xen%nbf) 
+           Wop(i1,i2,istep)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red + (istep-1)*3))- &
+&                     sum(S_tmp(i1,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,i2,id_red + (istep-1)*3))
+         end forall
+         !
+         Wop(:,:,istep)=Wop(:,:,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
+         !
+       enddo ! istep
        !
        ! Transform in cartesian coordinates 
        !
-       do idir=1,3
-         DIP_tmp(idir,:,:)=DIP_tmp(idir,:,:)+transpose(Wop(:,:))*a(id_red,idir)
-       enddo
+       if(max_step==1) then 
+         !      
+         ! First order formula D(dk)      
+         ! Eq. 96 of PRB 63, 155107(2001)
+         !
+         do idir=1,3
+           DIP_tmp(idir,:,:)=DIP_tmp(idir,:,:)+transpose(Wop(:,:,1))*a(id_red,idir)
+         enddo
+       else
+         !      
+         ! Second order formula   ( 4*D(dk) - D(2*dk) ) / 3
+         ! Eq. 97 of PRB 63, 155107(2001)
+         !
+         do idir=1,3
+           DIP_tmp(idir,:,:)=DIP_tmp(idir,:,:)+transpose(4._SP*Wop(:,:,1)-Wop(:,:,2))/3._SP*a(id_red,idir)
+         enddo
+       endif
        !
-     enddo 
+     enddo ! id_red
      !
      !======
      ! <iR>

@@ -12,7 +12,8 @@
 # 
 # - PARALLEL SUPPORT -
 #
-# [@MPI_str@] MPI (@OPENMPI_str@)
+# [@MPI_str@] MPI 
+# [@OPENMPI_str@] OpenMPI 
 # [@OPENMP_str@] OpenMP 
 # [@BGQ_str@] Blue-Gene specific procedures
 # 

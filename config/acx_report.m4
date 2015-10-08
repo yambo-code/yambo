@@ -34,8 +34,11 @@ if test "$enable_debug" = "yes" ; then Red_str="X"; fi
 MPI_str="-"
 if test "$mpibuild" = "yes" ; then
   MPI_str="X"
-  OPENMPI_str="not open-mpi kind"
-  if test "$enable_openmpi" = "yes" ; then OPENMPI_str="open-mpi kind";  fi
+  OPENMPI_str="-"
+  if test "$enable_openmpi" = "yes" ; then 
+   MPI_str="-";  
+   OPENMPI_str="X";  
+  fi
 fi
 
 NETCDF_str="-"

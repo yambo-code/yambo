@@ -52,7 +52,7 @@
   {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
 #endif
 #if defined _OPENMP
-  {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,0}, 
+  {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,1}, 
 #endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},

@@ -23,9 +23,10 @@
 !
 logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  ! 
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,cZERO,cI
  use units,         ONLY:HA2EV
  use com,           ONLY:warning
+ !
  implicit none
  !
  integer              :: nw
@@ -53,28 +54,28 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  endif
  !
  if (ordering=='t'.or.ordering=='c') then
-   eel(:)=-1./eps(:)
+   eel(:)=-1._SP/eps(:)
    return
  endif
  !
- if ( (maxval(aimag(eps))/aimag(eps(1))<100..or.&
-&      maxval(aimag(eps))/aimag(eps(nw))<100.) .and. be_verbose) &
+ if ( (maxval(aimag(eps))/aimag(eps(1))<100._SP   .or.               &
+&      maxval(aimag(eps))/aimag(eps(nw))<100._SP) .and. be_verbose)  &
 &   call warning(' [O_eels] Possible inaccuracy in the EPS prolungation')
  !
  ! extend eps to the negative frequencies
  !
- eps_kk         =-1./pi*aimag(eps)
- eps_kk(1)      =(0.,0.)
- eps_kk(nw)     =(0.,0.)
- eps_extended   =(0.,0.)
- call Kramers_Kronig(eps_kk,real(wv),nw,eps_extended,real(wv)+(0.,0.0001)/HA2EV,nw,(0.,0.))
+ eps_kk         =-1._SP/pi*aimag(eps)
+ eps_kk(1)      =cZERO
+ eps_kk(nw)     =cZERO
+ eps_extended   =cZERO
+ call Kramers_Kronig(eps_kk,real(wv),nw,eps_extended,real(wv)+cI*1.E-4_SP/HA2EV,nw,cZERO)
  !
  forall(iw=1:nw) eps_kk(iw)=1./pi*aimag(eps(nw-iw+1))
  forall(iw=1:nw) wv_kk(iw)=-wv(nw-iw+1)
- eps_kk(1)      =(0.,0.)
- eps_kk(nw)     =(0.,0.)
- call Kramers_Kronig(eps_kk,real(wv_kk),nw,eps_extended,real(wv)+(0.,0.0001)/HA2EV,nw,(0.,0.))
+ eps_kk(1)      =cZERO
+ eps_kk(nw)     =cZERO
+ call Kramers_Kronig(eps_kk,real(wv_kk),nw,eps_extended,real(wv)+cI*1.E-4_SP/HA2EV,nw,cZERO)
  !
- eel=-1./(eps_extended+1.)
+ eel=-1._SP/(eps_extended+1._SP)
  !
 end function

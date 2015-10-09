@@ -466,7 +466,7 @@ module BS
    !
    subroutine BS_HAYVEC_alloc(V)
      use parallel_m,    ONLY:PAR_IND_T_Haydock
-     type(Haydock_vector) :: V(:)
+     type(Haydock_vector) :: V(BS_nT_grps)
      ! ws:
      integer :: i_g
      !

@@ -26,8 +26,9 @@ subroutine K_dot_product(dot,V,W)
  ! Dot product between distributed vectors 
  !
  use pars,           ONLY:SP,cZERO
- use BS,             ONLY:BS_nT_grps,Haydock_vector
+ use BS,             ONLY:BS_nT_grps,Haydock_vector,BS_T_grp
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
  implicit none
  !
@@ -46,7 +47,7 @@ subroutine K_dot_product(dot,V,W)
  !
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
-   dot = dot + dot_product(V(i_T_g)%fragment,W(i_T_g)%fragment)
+   dot = dot + Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment,W(i_T_g)%fragment)
  enddo
  !
  ! Reduce all

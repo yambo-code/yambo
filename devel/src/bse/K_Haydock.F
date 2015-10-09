@@ -683,11 +683,15 @@ subroutine K_Haydock(iq,W)
        endif
        X_epsilon(1,iw)=W%p(iw)
        !
-       if(trim(global_gauge)=='length'   .and. iw==iw_ref) factor_jj=0._SP
-       if(trim(global_gauge)=='velocity' .and. iw==iw_ref) factor_jj=X_o(1:2,1)
-       !
+       if(trim(global_gauge)=='length'  ) factor_jj=0._SP
        if(trim(global_gauge)=='length'  ) gauge_factor=Co/   q_norm(1) **2
+       !
+       ! GPL_EXCLUDE_START
+       ! 
+       if(trim(global_gauge)=='velocity' .and. iw==iw_ref) factor_jj=X_o(1:2,1)
        if(trim(global_gauge)=='velocity') gauge_factor=Co/real(W%p(iw))**2
+       !
+       ! GPL_EXCLUDE_END
        !
        if (.not.causal) X_epsilon(i_eps(:),iw)=1._SP-(X_o(1:2,1)           -factor_jj)*gauge_factor
        if (     causal) X_epsilon(i_eps(:),iw)=1._SP-(X_o(1:2,1)-X_o(3:4,1)-factor_jj)*gauge_factor
@@ -708,7 +712,7 @@ subroutine K_Haydock(iq,W)
          if (trim(global_gauge)=='length') then
            B_Hall(2)=B_Hall(2)*Co/q_norm(1)**2
            X_epsilon(5,iw)=X_epsilon(5,iw)+B_Hall(2)/W%p(iw)
-         else if (trim(global_gauge)=='length') then
+         else if (trim(global_gauge)=='velocity') then
            B_Hall(2)=B_Hall(2)*Co
          endif
        endif

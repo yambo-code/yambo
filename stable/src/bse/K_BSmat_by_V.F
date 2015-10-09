@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
+subroutine K_BSmat_by_V(iq,iter,N,Vi,Vo,iter_par,call_kind)
  !
  !
  ! Here I read the kernel (coupling included):
@@ -56,11 +56,10 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  !
  implicit none
  !
- integer                ::iq
- integer                ::iter
- complex(SP)            ::Vi(:),Vo(:)
- real(SP),optional      ::iter_par
- character(3) ,optional ::call_kind
+ integer                ::iq,iter,N
+ complex(SP)            ::Vi(N),Vo(N)
+ integer                ::iter_par
+ character(3)           ::call_kind
  !
  ! Work Space
  !
@@ -82,10 +81,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  if( (.not.l_inv) .and. (.not.l_Hay) ) call error('K_BSmat_byV: not a valid call.')
  !
  Vo=cZERO
- if (l_Hay) then
-   alpha=cONE
-   if (present(iter_par)) alpha = iter_par*cONE
- endif
+ alpha=cONE*real(iter_par,SP)
  !
  use_fragments=BS_DB_is_fragmented
  db_load= use_fragments.or..not.allocated(BS_mat)

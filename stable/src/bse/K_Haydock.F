@@ -32,8 +32,7 @@ subroutine K_Haydock(iq,W)
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
 &                         BS_DB_is_fragmented,ioBSS_Haydock,&
-&                         BS_K_Coupling,Haydock_terminator,&
-&                         K_BSmat_by_V,BSE_mode
+&                         BS_K_Coupling,Haydock_terminator,BSE_mode
  !
  ! GPL_EXCLUDE_START
  !
@@ -71,7 +70,7 @@ subroutine K_Haydock(iq,W)
  ! GPL_EXCLUDE_END
  !
  real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
- real(SP)           ::ItParity
+ integer            ::ItParity
  character(schlen)  ::dumb_ch
  logical, external  ::stop_now
  logical            ::use_cpl_scheme
@@ -222,7 +221,7 @@ subroutine K_Haydock(iq,W)
    ! | Vn > =     |q->0>/(<q->0| F (H |q->0>))
    ! | Vnp1 > = H |Vn>
    !
-   ItParity = (-1._SP)**it_on_disk
+   ItParity = (-1)**it_on_disk
    if (it_on_disk==0) then
      Cf= (0.,0.)
      !
@@ -236,7 +235,7 @@ subroutine K_Haydock(iq,W)
      !
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)
      !
-     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_BSmat_by_V(iq,it_on_disk,BS_K_dim,Vn,Vnp1,ItParity,'Hay')
      Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
      Cf(1) = 0.
      !
@@ -280,7 +279,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,call_kind='Hay')
+     call K_BSmat_by_V(iq,it-it_on_disk,BS_K_dim,Vn,Vnp1,1,'Hay')
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -315,7 +314,7 @@ subroutine K_Haydock(iq,W)
      ! A(n) = <Vn+1|F|Vn+1> (that is <Vn|HFH|Vn>), 
      !      =  0   by symmetry 
      !
-     ItParity=(-1._SP)**it
+     ItParity=(-1)**it
      Af(it)=0._SP
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
@@ -330,7 +329,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_BSmat_by_V(iq,it-it_on_disk,BS_K_dim,Vn,Vnp1,ItParity,'Hay')
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry, 
@@ -348,13 +347,13 @@ subroutine K_Haydock(iq,W)
      ! Cf=(1-ItParity)Re(<rhoq0|Vn>) + i*(1+ItParity)Im(<rhoq0|Vn>) 
      ! with all product evaluated just in the eh pairs subspace 
      !
-     Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0(:BS_K_dim),Vn)))/Haydock_v0_mod
+     Cf(it+1)= ((1._SP-real(ItParity,SP))*real(dot_product(BSS_rhoq0(:BS_K_dim),Vn),SP))/Haydock_v0_mod
      !
      ! GPL_EXCLUDE_START
      !
 #if defined _KERR
      if(l_kerr) Cf_kerr(it+1)= &
-&             ((1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn)))/Haydock_v0_mod
+&             ((1._SP+real(ItParity,SP))*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn)))/Haydock_v0_mod
 #endif
      !
      ! GPL_EXCLUDE_END

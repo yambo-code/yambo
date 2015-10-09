@@ -135,7 +135,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! OpenMP
  !
- omp_is_off    = .TRUE.
+ omp_is_off    = .FALSE.
  !
 #if defined _OPENMP
  !

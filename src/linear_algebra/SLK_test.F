@@ -57,7 +57,7 @@ subroutine SLK_test(E,k,q)
  !
  call msg("r",'  Pools        :',n_pools)
  call msg("r",'  BLACS grid   :',ORTHO%grid)
- call msg("r",'  Matrix Sized :',ndim)
+ call msg("r",'  Matrix Size  :',ndim)
  !
  ! init
  !
@@ -212,6 +212,7 @@ end subroutine serial_inverse
  integer   :: info, ierr
  integer   :: lwork, liwork
  integer   :: ils, ile, jls, jle
+ logical   :: do_SLK_job
  !
  real(DP), allocatable :: Amat_loc(:,:), Ainv_loc(:,:)
  real(DP), allocatable :: buff(:,:)
@@ -230,53 +231,59 @@ end subroutine serial_inverse
  mycol=ORTHO%coordinate(2)
  !
  ! spectator tasks
- if ( ORTHO%coordinate(1) == -1 ) return   ! or do something else
+ do_SLK_job = (ORTHO%coordinate(1) /= -1)
  !
- ! distribute the matrix on the process grid
- ! Initialize the array descriptors for the matrices A and B
- !
- ndim_blc = int(ndim/nprow)
- if (ndim_blc*nprow < ndim ) ndim_blc=ndim_blc+1
- !
- lld = ndim_blc
- !
- call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ORTHO%ortho_cntx, lld, info )
- !
- allocate( Amat_loc(ndim_blc,ndim_blc) )
- allocate( Ainv_loc(ndim_blc,ndim_blc) )
- allocate( ipiv(ndim+ndim_blc) )
- !
- ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
- ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
- lwork  = ndim_blc*ndim_blc
- liwork = ndim_blc+ndim_blc
- !
- allocate( work(lwork) )
- allocate( iwork(liwork) )
- !
- ! distribute the matrix A
- !
- ils=myrow*ndim_blc+1
- ile=min(myrow*ndim_blc+ndim_blc,ndim)
- jls=mycol*ndim_blc+1
- jle=min(mycol*ndim_blc+ndim_blc,ndim)
- !
- Amat_loc=0.0d0
- Amat_loc=Amat(ils:ile,jls:jle)
- !
- ! perform the inversion
- !
- CALL PDGETRF( ndim, ndim, Amat_loc, 1, 1, descA, ipiv, info )
- if ( info /= 0 ) call error('para_inverse performing PDGETRF')
- !
- CALL PDGETRI( ndim, Amat_loc, 1, 1, descA, &
-               ipiv, work, lwork, iwork, liwork, info )
- if ( info /= 0 ) call error('para_inverse performing PDGETRI')
+ if (do_SLK_job) then
+   !
+   ! distribute the matrix on the process grid
+   ! Initialize the array descriptors for the matrices A and B
+   !
+   ndim_blc = int(ndim/nprow)
+   if (ndim_blc*nprow < ndim ) ndim_blc=ndim_blc+1
+   !
+   lld = ndim_blc
+   !
+   call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ORTHO%ortho_cntx, lld, info )
+   !
+   allocate( Amat_loc(ndim_blc,ndim_blc) )
+   allocate( Ainv_loc(ndim_blc,ndim_blc) )
+   allocate( ipiv(ndim+ndim_blc) )
+   !
+   ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
+   ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
+   lwork  = ndim_blc*ndim_blc
+   liwork = ndim_blc+ndim_blc
+   !
+   allocate( work(lwork) )
+   allocate( iwork(liwork) )
+   !
+   ! distribute the matrix A
+   !
+   ils=myrow*ndim_blc+1
+   ile=min(myrow*ndim_blc+ndim_blc,ndim)
+   jls=mycol*ndim_blc+1
+   jle=min(mycol*ndim_blc+ndim_blc,ndim)
+   !
+   Amat_loc=0.0d0
+   Amat_loc=Amat(ils:ile,jls:jle)
+   !
+   ! perform the inversion
+   !
+   CALL PDGETRF( ndim, ndim, Amat_loc, 1, 1, descA, ipiv, info )
+   if ( info /= 0 ) call error('para_inverse performing PDGETRF')
+   !
+   CALL PDGETRI( ndim, Amat_loc, 1, 1, descA, &
+                 ipiv, work, lwork, iwork, liwork, info )
+   if ( info /= 0 ) call error('para_inverse performing PDGETRI')
+   !
+ endif
  !
  ! gather the inverse matrix
  !
  Ainv=0.0d0
- Ainv(ils:ile,jls:jle)=Amat_loc(:,:)
+ if ( do_SLK_job ) then
+   Ainv(ils:ile,jls:jle)=Amat_loc(:,:)
+ endif
  !
  allocate( buff(ndim,ndim) )
  !
@@ -288,8 +295,10 @@ end subroutine serial_inverse
  ! 
  ! local cleanup 
  ! 
- deallocate( Amat_loc, Ainv_loc )
- deallocate( ipiv, work, iwork )
+ if ( do_SLK_job ) then
+   deallocate( Amat_loc, Ainv_loc )
+   deallocate( ipiv, work, iwork )
+ endif
  !
  ! compute and report eigenvalues of Ainv
  !

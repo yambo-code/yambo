@@ -35,7 +35,6 @@ subroutine K_Haydock(iq,W)
 &                         io_BSS_Haydock, BS_K_Coupling,&
 &                         Haydock_terminator, BSE_mode,Haydock_v0_mod,BS_Blocks_symmetrize_K,&
 &                         BS_HAYVEC_free,BS_HAYVEC_alloc, BS_T_grp,BS_nT_grps,Haydock_vector
- use interfaces,     ONLY:K_multiply_by_V,K_dot_product
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
@@ -78,7 +77,7 @@ subroutine K_Haydock(iq,W)
  ! GPL_EXCLUDE_END
  !
  real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
- real(SP)           ::ItParity
+ integer            ::ItParity
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
  logical            ::use_cpl_scheme
@@ -306,7 +305,7 @@ subroutine K_Haydock(iq,W)
    ! | Vm > =     |q->0>/(<q->0| F (H |q->0>))
    ! | Vmp1 > = H |Vm>
    !
-   ItParity = (-1._SP)**it_on_disk
+   ItParity = (-1)**it_on_disk
    if (it_on_disk==0) then
       Cf= cZERO
       !
@@ -318,7 +317,7 @@ subroutine K_Haydock(iq,W)
       !
       ! GPL_EXCLUDE_END
       !
-      call K_multiply_by_V(it_on_disk,V0,Vnp1,iter_par=ItParity,call_kind='Hay')
+      call K_multiply_by_V(it_on_disk,V0,Vnp1,ItParity,'Hay')
       call K_dot_product(v0_mod_,V0,Vnp1)
       Haydock_v0_mod=sqrt(2._SP*real(v0_mod_))
       Cf(1) =  0._SP
@@ -373,7 +372,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vm+1> = H |Vm>
      !
-     call  K_multiply_by_V(it,Vn,Vnp1,call_kind='Hay')
+     call  K_multiply_by_V(it,Vn,Vnp1,1,'Hay')
      !
      ! A(n) = <Vm|Vm+1>
      !
@@ -415,7 +414,7 @@ subroutine K_Haydock(iq,W)
      ! A(n) = <Vm+1|F|Vm+1> (that is <Vm|HFH|Vm>), 
      !      =  0   by symmetry 
      !
-     ItParity=(-1._SP)**it
+     ItParity=(-1)**it
      Af(it)=0._SP
      !
      !|Vm+1> = |Vm+1> - B(n)|Vm-1> (as Am is zero by symmetry)
@@ -436,7 +435,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vm+1> = H |Vm>
      !
-     call K_multiply_by_V(it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_multiply_by_V(it-it_on_disk,Vn,Vnp1,ItParity,'Hay')
      !
      ! B(n+1)= <Vm|F|Vm+1>^(1/2) (that is <Vm|FH|Vm>^(1/2))
      !       = (2*Re(<Vm|Vmp1>))^(1/2) by symmetry, 
@@ -463,14 +462,14 @@ subroutine K_Haydock(iq,W)
      ! with all product evaluated just in the eh pairs subspace 
      !
      call K_dot_product(v0_mod_,V0,Vn) 
-     Cf(it+1)= ((1._SP-ItParity)*real(v0_mod_,SP))/Haydock_v0_mod
+     Cf(it+1)= ((1._SP-real(ItParity,SP))*real(v0_mod_,SP))/Haydock_v0_mod
      !
      ! GPL_EXCLUDE_START
      !
 #if defined _KERR
      if(l_kerr) then
        call K_dot_product(v0_mod_,V0_kerr,Vn) 
-       Cf_kerr(it+1)=((1._SP+ItParity)*cI*aimag(v0_mod_))/Haydock_v0_mod
+       Cf_kerr(it+1)=((1._SP+real(ItParity,SP)*cI*aimag(v0_mod_))/Haydock_v0_mod
      endif
 #endif
      !

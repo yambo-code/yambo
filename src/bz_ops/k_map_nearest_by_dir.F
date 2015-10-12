@@ -39,7 +39,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  !
  ! Work Space
  !
- integer  :: id,ik,idx(3),ikbz
+ integer  :: id,ik,idx(3)
  real(SP) :: k_shift(3),dshift
  character(schlen) :: dump_ch
  !

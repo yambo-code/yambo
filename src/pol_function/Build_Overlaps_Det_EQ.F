@@ -27,7 +27,7 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
  ! equilibrium
  !
  use pars,           ONLY:SP,cZERO,cONE
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use R_lattice,      ONLY:k_map
  use matrix_operate, ONLY:hermitian,INV,USE_LK
  use interfaces,     ONLY:MATRIX_driver
@@ -38,43 +38,45 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
  integer,      intent(in) :: ikbz,i_sp_pol
  type(levels), intent(in) :: Xen
  type(X_t),    intent(in) :: X
- complex(SP), intent(out) :: S_det(3)
- complex(SP), intent(out) :: Sm1_plus (Xen%nbf,Xen%nbf,3)
- complex(SP), intent(out) :: Sm1_minus(Xen%nbf,Xen%nbf,3)
+ complex(SP), intent(out) :: S_det(6)
+ complex(SP), intent(out) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
+ complex(SP), intent(out) :: Sm1_minus(Xen%nbf,Xen%nbm,6)
  !
  ! Work Space
  !
- integer     :: i1,i2,i3,i4,iv,idx(3),id,ikp,ikm
+ integer     :: idx(3),id,ikm,istep,max_step
  complex(SP) :: S_val(1:Xen%nbf,1:Xen%nbf)
  !
- S_det=cZERO
+ S_det    =cZERO
+ Sm1_plus =cZERO
+ Sm1_minus=cZERO
  !   
  do id=1,3
    !
    if(k_map%max_kdir(id)/=1) then
      !
-     idx=k_map%k_map_inv(ikbz,:)
-     idx(id)=idx(id)-1
-     idx=k_periodic_idx(idx,k_map)
-     ikm=k_map%k_map_dir(idx(1),idx(2),idx(3))
+     max_step=1
+     if(k_map%max_kdir(id)>=6) max_step=2
      !
-     ! Overlap S(k, k-dk)
-     !
-     S_val=hermitian(DIP_S(1:Xen%nbf,1:Xen%nbf,id,ikm,i_sp_pol))
-     call MATRIX_driver(INV,S_val,lib_in=USE_LK)
-     Sm1_minus(:,:,id)=S_val
-     !
-     ! Overlap S(k, k+dk)
-     !
-     S_val=DIP_S(1:Xen%nbf,1:Xen%nbf,id,ikbz,i_sp_pol)
-     call MATRIX_driver(INV,S_val,lib_in=USE_LK,det=S_det(id))
-     Sm1_plus(:,:,id)=S_val
-     !
-   else  ! non-periodic directions
-     !
-     S_det(id)        =cZERO
-     Sm1_plus(:,:,id) =cZERO
-     Sm1_minus(:,:,id)=cZERO
+     do istep=1,max_step
+       idx=k_map%k_map_inv(ikbz,:)
+       idx(id)=idx(id)-istep
+       idx=k_periodic_idx(idx,k_map)
+       ikm=k_map%k_map_dir(idx(1),idx(2),idx(3))
+       !
+       ! Overlap S(k, k-dk)
+       !
+       S_val=hermitian(DIP_S(1:Xen%nbm,1:Xen%nbm,id+(istep-1)*3,ikm,i_sp_pol))
+       call MATRIX_driver(INV,S_val,lib_in=USE_LK)
+       Sm1_minus(:,:,id+(istep-1)*3)=S_val
+       !
+       ! Overlap S(k, k+dk)
+       !
+       S_val=DIP_S(1:Xen%nbm,1:Xen%nbm,id+(istep-1)*3,ikbz,i_sp_pol)
+       call MATRIX_driver(INV,S_val,lib_in=USE_LK,det=S_det(id+(istep-1)*3))
+       Sm1_plus(:,:,id+(istep-1)*3)=S_val
+       !
+     enddo
      !
    endif
    ! 

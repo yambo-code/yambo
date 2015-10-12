@@ -81,8 +81,6 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
      if(k_map%max_kdir(id)>=6) max_step=2
      !
      do istep=1,max_step
-       !  
-       ! Check if I crossed BZ border and impose periodic Gauge
        !
        idx_kp=idx_k
        idx_kp(id)=idx_kp(id)+istep

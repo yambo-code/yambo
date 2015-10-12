@@ -43,9 +43,9 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  implicit none
  !
  integer                ::iter
- type(Haydock_vector)   ::Vi(:),Vo(:)
- real(SP),optional      ::iter_par
- character(3) ,optional ::call_kind
+ type(Haydock_vector)   ::Vi(BS_nT_grps),Vo(BS_nT_grps)
+ integer                ::iter_par
+ character(3)           ::call_kind
  !
  ! Work Space
  !
@@ -63,8 +63,7 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  if (BSS_uses_DbGd)  call error('K_multiply_by_V: BSS with Double Grid temporary disabled')
  if( (.not.l_inv) .and. (.not.l_Hay) ) call error('K_multiply_by_V: not a valid call.')
  !
- alpha=cONE
- if (present(iter_par)) alpha = iter_par*cONE 
+ alpha=real(iter_par,SP)*cONE
  !
  forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !

@@ -104,7 +104,7 @@ module openmp
        endif
        n_threads_now=1
 #if defined _OPENMP
-       call omp_set_num_threads( 1 )
+       call omp_set_num_threads( n_threads_now )
 #endif
      else
 #if defined _OPENMP

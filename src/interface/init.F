@@ -1440,7 +1440,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! BSE/LLR
          !
-         if ( trim(rstr_piece(i1)) == 'optics' )  then
+         if (i3==2.and.trim(rstr_piece(i1)) == 'optics' )  then
            !
            l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
            l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')

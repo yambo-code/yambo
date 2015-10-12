@@ -35,8 +35,7 @@ module parallel_m
  integer            :: mpi_comm_world=0
 #endif
  !
- integer            :: myid      ! CPU id defined locally (eventually re-mapped for SLK compliance)
- integer            :: myid_mpi  ! CPU id in the MPI WORLD as it comes out of the C-driver
+ integer            :: myid      
  integer            :: ncpu
  integer            :: n_nodes  = 1
 #if defined _OPENMPI

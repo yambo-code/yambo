@@ -469,7 +469,7 @@ subroutine K_Haydock(iq,W)
 #if defined _KERR
      if(l_kerr) then
        call K_dot_product(v0_mod_,V0_kerr,Vn) 
-       Cf_kerr(it+1)=((1._SP+real(ItParity,SP)*cI*aimag(v0_mod_))/Haydock_v0_mod
+       Cf_kerr(it+1)=(1._SP+real(ItParity,SP)*cI*aimag(v0_mod_))/Haydock_v0_mod
      endif
 #endif
      !

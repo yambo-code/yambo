@@ -617,6 +617,9 @@ subroutine K_Haydock(iq,W)
      causal  = (trim(BSE_mode)=='causal'.and..not.use_cpl_scheme)
      coupling= use_cpl_scheme
      !
+     if(trim(global_gauge)=='length'  ) factor_jj=0._SP
+     if(trim(global_gauge)=='length'  ) gauge_factor=Co/   q_norm(1) **2
+     !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
      if (Useterminator) then 
@@ -682,9 +685,6 @@ subroutine K_Haydock(iq,W)
          i_eps(2)=3*ii+1
        endif
        X_epsilon(1,iw)=W%p(iw)
-       !
-       if(trim(global_gauge)=='length'  ) factor_jj=0._SP
-       if(trim(global_gauge)=='length'  ) gauge_factor=Co/   q_norm(1) **2
        !
        ! GPL_EXCLUDE_START
        ! 

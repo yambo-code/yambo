@@ -23,10 +23,10 @@
 !
 module YPP
  !
- use pars,    ONLY:SP,DP
- use pars,    ONLY:lchlen
- use pars,    ONLY:schlen
+ use pars,    ONLY:SP,DP,lchlen,schlen
+ use units,   ONLY:HA2EV
  use QP_m,    ONLY:QP_t
+ !
  implicit none
  !
  ! BZ grids 
@@ -157,6 +157,7 @@ module YPP
  ! Perturbative SOC
  !
  character(lchlen) :: perturbative_SOC_path
+ real(SP)          :: SOC_split=0.1/HA2EV
  !
  ! QP databases
  !

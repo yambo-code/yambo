@@ -607,7 +607,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  if (l_map_kpts) call initactivate(1,"BZ_DbGd_nkpts SkipCheck noBZExpand NoWeights")
  !
- if (l_map_WFs)  call initactivate(1,"SOC_DBs")
+ if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call init_QP_ctl_switch('G')

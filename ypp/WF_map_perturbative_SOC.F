@@ -23,9 +23,9 @@
 !
 subroutine WF_map_perturbative_SOC(kpt,En)
  !
- use YPP,                 ONLY:perturbative_SOC_path
+ use YPP,                 ONLY:perturbative_SOC_path,SOC_split
  use pars,                ONLY:lchlen,rZERO,SP,IP
- use stderr,              ONLY:real2ch
+ use stderr,              ONLY:real2ch,intc
  use units,               ONLY:HA2EV
  use R_lattice,           ONLY:bz_samp
  use com,                 ONLY:core_io_path,msg,warning,error
@@ -34,8 +34,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use interfaces,          ONLY:WF_load
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
- use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin,&
-&                              E_SOC_table,E_SOC_nbands
+ use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin,E_SOC_table,E_SOC_nbands
  !
  implicit none
  !
@@ -50,7 +49,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  character(lchlen)    :: core_io_path_save
  integer              :: first_el(En%nb),n_of_el(En%nb),n_deg_grp,mapped_in_group(2,En%nb)
- integer              :: i_k,i_b,i_grp,i_b_SOC,i_wf,i_wf_SOC(2),i_sp_pol
+ integer              :: i_k,i_b,i_grp,i_b_SOC,i_wf,i_wf_SOC(2),i_sp_pol,n_miss
  integer              :: n_spin_save,n_spinor_save,n_sp_pol_save
  logical              :: group_already_mapped(En%nb),DB_is_ok,map_up,map_dw
  real(SP)             :: sq2,proj_up,proj_dw,mapping_tresh
@@ -68,7 +67,9 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  io_err=io_DB1_selective_scan(En_SOC,kpt_SOC,trim(perturbative_SOC_path),'all')
  if (io_err/=0) call msg("s",'SOC database NOT FOUND @'//trim(perturbative_SOC_path))
  !
- DB_is_OK=(En_SOC%nb==2*En%nb).and.(kpt_SOC%nibz==kpt%nibz)
+ DB_is_ok=(En_SOC%nb==2*En%nb).and.(kpt_SOC%nibz==kpt%nibz)
+ !
+ if (.not.DB_is_ok) call error(' SOC DBs and without SOC DB do not match')
  !
  core_io_path = trim(perturbative_SOC_path)
  call WF_load(WF_SOC,0,1,(/ 1, En_SOC%nb /),(/1,kpt%nibz/),space='G',title='-SOC mapping')
@@ -83,7 +84,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  allocate(E_SOC_table(2,En%nb,kpt%nibz))
  call mem_est("E_SOC E_SOC_table",(/size(En%E_SOC),size(E_SOC_table)/),(/SP,IP/))
  !
- mapping_tresh=0.85_SP
+ mapping_tresh=0.95_SP
  !
 1 E_SOC_table=0
  !
@@ -92,7 +93,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
    do i_sp_pol=1,n_sp_pol
      !
      call degeneration_finder(En%E(:,i_k,i_sp_pol),En%nb,first_el,n_of_el,n_deg_grp,&
-&                             0.0001/HA2EV,Include_single_values=.true.)
+&                             SOC_split,Include_single_values=.true.)
      !
      group_already_mapped=.false.
      !
@@ -154,7 +155,14 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  enddo         ! i_k
  !
  if(any(E_SOC_table==0)) then
-   call warning(' With treshold '//trim(real2ch(mapping_tresh))//' mapping non finalized. Reducing it.' )
+   n_miss=count(E_SOC_table==0)
+   call warning(' With treshold '//trim(real2ch(mapping_tresh))//' '//trim(intc(n_miss))//' WFs non mapped. Reducing it.' )
+   do i_k=1,kpt%nibz
+     do i_b=1,En%nb
+       if(all(E_SOC_table(:,i_b,i_k)/=0)) cycle
+       call warning(' State ik= '//trim(intc(i_k))//', ib= '//trim(intc(i_b))//' not mapped.' )
+     enddo
+   enddo
    if(abs(mapping_tresh-0.05_SP)<1.E-5) call error(' Minimum treshold reached.')
    mapping_tresh=mapping_tresh-0.1_SP
    goto 1

@@ -1,4 +1,4 @@
-
+!
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -508,10 +508,10 @@ module vec_operate
          !
          E_diff=2._SP*deg_accuracy
          !
-         if (iref>1) E_diff(1)=abs(E(iref)-E(iref-1))
-         if (iref<n) E_diff(2)=abs(E(iref)-E(iref+1))
+         if (deg_grps>0) E_diff(1)=abs(E(iref)-E(first_deg_el(deg_grps)))
+         if (iref<n    ) E_diff(2)=abs(E(iref)-E(iref+1))
          !
-         if (all(E_diff>deg_accuracy)) then
+         if (all(E_diff>=deg_accuracy)) then
            deg_grps=deg_grps+1
            first_deg_el(deg_grps)=iref
            deg_elmnts(deg_grps)=1
@@ -523,7 +523,7 @@ module vec_operate
        !
        do i1=iref+1,n
          !
-         if (abs(E(iref)-E(i1)).le.deg_accuracy) then
+         if (abs(E(iref)-E(i1))<deg_accuracy) then
            if (l_flag) then
              deg_grps=deg_grps+1
              first_deg_el(deg_grps)=iref
@@ -541,7 +541,7 @@ module vec_operate
        !
      enddo
      !
-     if(l_singles .and. abs(E(n)-E(n-1))>deg_accuracy) then
+     if(l_singles .and. abs(E(n)-E(first_deg_el(deg_grps)))>deg_accuracy) then
        deg_grps=deg_grps+1
        first_deg_el(deg_grps)=n
        deg_elmnts(deg_grps)=1

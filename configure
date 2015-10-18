@@ -626,7 +626,6 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 TIME_profile_str
 BGQ_str
-OPENMPI_str
 OPENMP_str
 SLK_str
 LAPACK_str
@@ -682,7 +681,6 @@ MPILIBS
 enable_mpi_libs
 mpi_cpp
 openmp_cpp
-openmpi_cpp
 MPICC
 PFC
 DLARAN
@@ -803,7 +801,6 @@ enable_keep_extlibs
 enable_dp
 with_p2y_version
 enable_bluegene
-enable_openmpi
 enable_time_profile
 enable_msgs_comps
 enable_options_check
@@ -1483,7 +1480,6 @@ Optional Features:
   --enable-keep-extlibs   Keep downloaded packages as tar.gz . Default is no.
   --enable-dp             Double-precision build. Default is no.
   --enable-bluegene       Bluegene specific code instructions.
-  --enable-openmpi        OpenMPI specific code instructions.
   --enable-time-profile   Extended timing profile of specific sections
   --enable-msgs-comps     Verbose compilation log
   --enable-options-check  Enable the command line options check in driver.c.
@@ -5731,20 +5727,6 @@ if test x"$enable_bluegene" = "xyes"; then
 fi
 
 # ============================================================================
-# OpenMPI support
-# Check whether --enable-openmpi was given.
-if test "${enable_openmpi+set}" = set; then :
-  enableval=$enable_openmpi;
-fi
-
-if test x"$enable_openmpi" = "x"; then enable_openmpi="no"; fi
-openmpi_cpp=" "
-if test x"$enable_openmpi" = "xyes"; then
- #
- openmpi_cpp="-D_OPENMPI"
- #
-fi
-# ============================================================================
 #
 # Time Profiling (mod_timing)
 #
@@ -9866,7 +9848,6 @@ fi
 
 
 
-
 fi
 
 # ============================================================================
@@ -11238,8 +11219,6 @@ if test "$enable_debug" = "yes" ; then Red_str="X"; fi
 MPI_str="-"
 if test "$mpibuild" = "yes" ; then
   MPI_str="X"
-  OPENMPI_str="not open-mpi kind"
-  if test "$enable_openmpi" = "yes" ; then OPENMPI_str="open-mpi kind";  fi
 fi
 
 NETCDF_str="-"
@@ -11300,7 +11279,6 @@ MPI_LIB_str="-"
 if test "$enable_mpi_libs" = "yes" ; then MPI_LIB_str="E"; fi
 
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
-
 
 
 

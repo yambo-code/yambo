@@ -179,16 +179,6 @@ if test x"$enable_bluegene" = "xyes"; then
 fi
 AC_SUBST(bluegene_cpp)
 # ============================================================================
-# OpenMPI support
-AC_ARG_ENABLE(openmpi, AC_HELP_STRING([--enable-openmpi],[OpenMPI specific code instructions.]))
-if test x"$enable_openmpi" = "x"; then enable_openmpi="no"; fi
-openmpi_cpp=" "
-if test x"$enable_openmpi" = "xyes"; then
- #
- openmpi_cpp="-D_OPENMPI"
- #
-fi
-# ============================================================================
 #
 # Time Profiling (mod_timing)
 #
@@ -413,7 +403,6 @@ if test "$mpibuild" = "yes"; then
   PCC=""
   PCCFLAGS=""
  fi
- AC_SUBST(openmpi_cpp)
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
  AC_SUBST(enable_mpi_libs)

@@ -12,8 +12,8 @@
 # 
 # - PARALLEL SUPPORT -
 #
-# [@MPI_str@] MPI (@OPENMPI_str@)
-# [@OPENMP_str@] OpenMP 
+# [@MPI_str@] MPI
+# [@OPENMP_str@] OpenMP
 # [@BGQ_str@] Blue-Gene specific procedures
 # 
 # - LIBRARIES (E=external library; I=internal library; -=not used;) -
@@ -36,7 +36,7 @@
 #
 # - COMPILERS, MAKE and EDITOR -
 #
-# [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @openmpi_cpp@ @time_profile_cpp@
+# [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
 # [  C  ] @CC@ @CFLAGS@
 # [MPICC] @PCC@ @PCCFLAGS@
 # [ F90 ] @F90@ @FCFLAGS@ @OPENMPLIBS@

@@ -90,9 +90,6 @@ module LOGO
 #if defined _MPI
      MPI_string="MPI"
 #endif
-#if defined _OPENMPI
-     MPI_string="OpenMPI"
-#endif
      OMP_string=" "
 #if defined _OPENMP
      OMP_string="+OpenMP"

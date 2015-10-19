@@ -75,6 +75,11 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    return
  endif
  !
+ if (allocated(BZ_DbGd_nkpt)) then
+   call msg("s",'DbGd: database components already allocated. Nothing to do.')
+   return
+ endif
+ !
  ! Saves 2 check
  !
  a_save=a

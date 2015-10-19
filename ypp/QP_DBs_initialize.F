@@ -33,6 +33,7 @@ subroutine QP_DBs_initialize()
  use IO_m,      ONLY:OP_RD_CL,DUMP,io_control,NONE
  use units,     ONLY:HA2EV
  use YPP,       ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,QP_db,QP_db_what,QP_db_name
+ !
  implicit none
  ! 
  ! Work Space
@@ -59,7 +60,7 @@ subroutine QP_DBs_initialize()
    ! QP corrections
    ! 
    write (flines(nflines+1),'(a,t22,a)') '%QPkrange',&
-&        '# '//trim(comment)//'QPDB energy correction( kp1| kp2| bnd1| bnd2| E-Eo[eV]| Img(E)[eV]| Z|)'
+&        '# '//trim(comment)//'QPDB energy correction( kp1| kp2| bnd1| bnd2| E-Eo[eV]| Img(E)[eV]| Re[Z] |)'
    if(io_QP_and_GF_err==0) then
      do i_qp=1,qp%n_states
        nflines=nflines+1

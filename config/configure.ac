@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.2 r.4854 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.2 r.4876 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="4854"
+SREVISION="4876"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -178,16 +178,6 @@ if test x"$enable_bluegene" = "xyes"; then
  bluegene_cpp="-D_BLUEGENE"
 fi
 AC_SUBST(bluegene_cpp)
-# ============================================================================
-# OpenMPI support
-AC_ARG_ENABLE(openmpi, AC_HELP_STRING([--enable-openmpi],[OpenMPI specific code instructions.]))
-if test x"$enable_openmpi" = "x"; then enable_openmpi="no"; fi
-openmpi_cpp=" "
-if test x"$enable_openmpi" = "xyes"; then
- #
- openmpi_cpp="-D_OPENMPI"
- #
-fi
 # ============================================================================
 #
 # Time Profiling (mod_timing)
@@ -413,7 +403,6 @@ if test "$mpibuild" = "yes"; then
   PCC=""
   PCCFLAGS=""
  fi
- AC_SUBST(openmpi_cpp)
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
  AC_SUBST(enable_mpi_libs)

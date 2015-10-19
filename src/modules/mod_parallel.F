@@ -35,11 +35,12 @@ module parallel_m
  integer            :: mpi_comm_world=0
 #endif
  !
- integer            :: myid      
+ integer            :: myid
  integer            :: ncpu
  integer            :: n_nodes  = 1
-#if defined _OPENMPI
- integer, parameter :: comm_default_value  = -1
+ integer            :: n_MPI    = 1
+#if defined _MPI
+ integer, parameter :: comm_default_value  = MPI_COMM_NULL
 #else
  integer, parameter :: comm_default_value  = 0
 #endif
@@ -368,7 +369,7 @@ module parallel_m
      !
      PARALLEL_message=" "
      !
-#if !defined _MPI && !defined _OPENMP && !defined _OPENMPI
+#if !defined _MPI && !defined _OPENMP
      return
 #endif
      if (i_s>0) then

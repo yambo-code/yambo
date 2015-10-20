@@ -171,12 +171,12 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_sort=.false.
  l_amplitude=.false.
  ncell = (/1, 1, 1/) 
- r_hole= (/0.,0.,0./)
+ r_hole= (/0._SP,0._SP,0._SP/)
  lambda = 1          
  state_ctl = '1 - 1'
- deg_energy =0.01/HA2EV
- min_weight =0.01
- WF_multiplier=1.
+ deg_energy =0.01_SP/HA2EV
+ min_weight =0.01_SP
+ WF_multiplier=1._SP
  !
 #if defined _YPP_ELPH
  !
@@ -247,6 +247,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  ! WFs perturbative SOC
  !
  perturbative_SOC_path=""
+ SOC_bands_to_map=(/ 1, n_bands /)
+ SOC_split=0.1_SP/HA2EV
  !
  ! BXSF interpolation
  !
@@ -258,7 +260,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  !
- t_jump=0.
+ t_jump=0._SP
  !
  !REMOVE SYMMETRIES
  !
@@ -607,7 +609,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  if (l_map_kpts) call initactivate(1,"BZ_DbGd_nkpts SkipCheck noBZExpand NoWeights")
  !
- if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting")
+ if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call init_QP_ctl_switch('G')

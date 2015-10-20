@@ -274,6 +274,7 @@ subroutine ypp_init_load(defs)
  !WFs perturbative SOC mapping
  !
  call it(defs,'SOC_DBs',"Path to the folder containing the DB with SOC",perturbative_SOC_path)
+ call it(defs,'bands_to_map',"Number of bands to map",SOC_bands_to_map)
  call it(defs,'SOC_splitting',"SOC splitting between the levels",SOC_split,E_unit) 
  !
  ! Wannier bands

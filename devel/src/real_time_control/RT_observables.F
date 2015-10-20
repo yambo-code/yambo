@@ -79,9 +79,9 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  ! dE_Kin = - i Tr { P^2 dG^<}/2  
  !
- call RT_average_operator(O_VALUE=dE_kin,O_MATRIX=P_square,G=dG_lesser,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(O_VALUE=dE_kin,O_MATRIX_limited=P_square,G=dG_lesser,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
- dE_kin=dE_kin/2.
+ dE_kin=dE_kin/2._SP
  !  
  ! dE_ion = - i Tr {Ho dG^<} - dEkin
  !

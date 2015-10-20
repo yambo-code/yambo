@@ -156,8 +156,9 @@ module YPP
  !
  ! Perturbative SOC
  !
+ integer           :: SOC_bands_to_map(2)
  character(lchlen) :: perturbative_SOC_path
- real(SP)          :: SOC_split=0.1/HA2EV
+ real(SP)          :: SOC_split
  !
  ! QP databases
  !

@@ -108,10 +108,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
  if(l_eval_DIP_P2) wf_dim=4
 #endif
  !
- if(l_eval_DIP_P)                    live_t_string='Dipole  P        (T):'
- if(l_eval_DIP_P .and.l_eval_DIP_iR) live_t_string='Dipole  P and iR (T):'
- if(l_eval_DIP_P2.and.l_eval_DIP_P)  live_t_string='Dipole  P and P2 (T):'
- if(l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dip iR, P and P2 (T):'
+ if (l_eval_DIP_P)                    live_t_string='Dipoles: P (T):'
+ if (l_eval_DIP_P .and.l_eval_DIP_iR) live_t_string='Dipoles: P-iR (T):'
+ if (l_eval_DIP_P2.and.l_eval_DIP_P)  live_t_string='Dipoles: P-P2 (T):'
+ if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR-P-P2 (T):'
  !
  if (n_LT_steps>0) call live_timing(trim(live_t_string),n_LT_steps)
  !

@@ -53,7 +53,7 @@ subroutine SET_dipole_parallelization_scheme(X,eval_DIP,n_LT_steps)
  use_X_parallel_scheme =l_evaluating_em1s.or.l_evaluating_eps_G.or.l_evaluating_eps_eh
  use_sc_parallel_scheme=(l_sc_run.or.l_real_time).and..not.l_evaluating_em1s
  !
- if(.not.(use_X_parallel_scheme.or.use_sc_parallel_scheme)) call error(' DIP parallelization scheme unknown')
+ if (.not.(use_X_parallel_scheme.or.use_sc_parallel_scheme)) call error(' DIP parallelization scheme unknown')
  !
  n_LT_steps=0
  !
@@ -61,14 +61,15 @@ subroutine SET_dipole_parallelization_scheme(X,eval_DIP,n_LT_steps)
    do ic=max(iv,X%ib_lim(2)),X%ib(2)
      !
 #if defined _SC
-     if(use_sc_parallel_scheme) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv))
+     if (use_sc_parallel_scheme) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv))
 #endif
      !
-     if( use_X_parallel_scheme) &
-&      eval_DIP(ic,iv)= PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic).and. &
-       &                PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)
+     if (use_X_parallel_scheme) then
+       eval_DIP(ic,iv)= PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic).and. &
+&                       PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)
+     endif
      !
-     if(eval_DIP(ic,iv)) n_LT_steps=n_LT_steps+1
+     if (eval_DIP(ic,iv)) n_LT_steps=n_LT_steps+1
      !
    enddo
  enddo

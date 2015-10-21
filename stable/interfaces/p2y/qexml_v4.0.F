@@ -2322,6 +2322,12 @@ CONTAINS
          CALL iotk_scan_attr( ATTR, "UNITS", degauss_units_ , IERR=ierr )
          IF (ierr/=0) RETURN
          !
+      ELSE
+         !
+         ngauss_=0
+         degauss_=0.0
+         degauss_units_=" "
+         !
       ENDIF
       !
       CALL iotk_scan_dat( iunit, "TETRAHEDRON_METHOD", ltetra_, IERR=ierr )

@@ -2379,6 +2379,12 @@ CONTAINS
          CALL iotk_scan_attr( ATTR, "UNITS", degauss_units_ , IERR=ierr )
          IF (ierr/=0) RETURN
          !
+      ELSE
+         !
+         ngauss_=0
+         degauss_=0.0
+         degauss_units_=" "
+         !
       ENDIF
       !
       CALL iotk_scan_dat( iunit, "TETRAHEDRON_METHOD", ltetra_, IERR=ierr )
@@ -2453,16 +2459,12 @@ CONTAINS
       IF (ierr/=0) RETURN
       !
       !
-      ngauss=0
-      degauss_units=" "
-      degauss=0.0
-      !
       IF ( PRESENT( lgauss ))           lgauss      = lgauss_
       IF ( PRESENT( ltetra ))           ltetra      = ltetra_
       IF ( PRESENT( tfixed_occ ))       tfixed_occ  = tfixed_occ_
-      IF ( PRESENT( ngauss ) .and. lgauss_)         ngauss      = ngauss_
-      IF ( PRESENT( degauss_units ) .and. lgauss_)  degauss_units  = TRIM(degauss_units_)
-      IF ( PRESENT( degauss ) .and. lgauss_)        degauss     = degauss_
+      IF ( PRESENT( ngauss ))           ngauss      = ngauss_
+      IF ( PRESENT( degauss_units ))    degauss_units  = TRIM(degauss_units_)
+      IF ( PRESENT( degauss ))          degauss     = degauss_
       IF ( PRESENT( ntetra ))           ntetra      = ntetra_
       IF ( PRESENT( nstates_up ))       nstates_up  = nstates_up_
       IF ( PRESENT( nstates_dw ))       nstates_dw  = nstates_dw_

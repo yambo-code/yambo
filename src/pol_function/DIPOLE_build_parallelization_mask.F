@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SET_dipole_parallelization_scheme(X,eval_DIP,n_LT_steps)
+subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  !
  use X_m,                 ONLY:X_t
  use electrons,           ONLY:n_sp_pol

@@ -36,11 +36,10 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use interfaces,          ONLY: WF_load
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
- use X_m,                 ONLY: X_t,DIP_iR,DIP_P,use_shifted_grids_approach,&
+ use X_m,                 ONLY: X_t,DIP_iR,DIP_P,&
 &                               force_v_g_space_approach,num_shifted_grids,Dipole_Energy_treshold
  use wrapper_omp,         ONLY: Vstar_dot_V_omp
- use memory_m,            ONLY: mem_est
- use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,wf_nc_k,WAVEs
+ use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,WAVEs
 #if defined _SC           
  use SC,                  ONLY: SC_bands
 #endif
@@ -67,7 +66,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  logical                      :: idir_not_done(3)=.true.,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,ik_mem,icfft(n_spinor),ivfft(n_spinor),ic,iv,iq,n_LT_steps,&
-&                                i_spin,i_spinor,i_sp_pol,ifail,ir,grid_order(3)
+&                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3)
  complex(SP)                  :: rho
  real(SP)                     :: Ev_m_Ec,Ev_m_Ec_QP,q_mod(3)
  !
@@ -134,7 +133,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  !
  ! Main loop over cartesian directions
  !
- call SET_dipole_parallelization_scheme(X,l_mat_eval_DIP,n_LT_steps)
+ call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
  do iq = 1, num_shifted_grids
    !

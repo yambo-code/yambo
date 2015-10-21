@@ -64,24 +64,6 @@ module LIVE_t
  !
  contains
    !
-   logical function is_section_time_short(COMM)
-     use parallel_m, ONLY:PP_redux_wait,ncpu
-     integer, optional :: COMM
-     integer           :: i_c
-     real(DP)          :: cput_now
-     is_section_time_short=.FALSE.
-     if (ncpu==1) return
-     call cti(cput_now)
-     if (present(COMM)) then
-       call PP_redux_wait(cput_sec,COMM)
-     else
-       call PP_redux_wait(cput_sec)
-     endif
-     do i_c=1,ncpu
-       if (cput_now-cput_sec(i_c,2)<SHORT_time) is_section_time_short=.TRUE.
-     enddo
-   end function
-   !
    subroutine GET_user_WALL_time( )
      integer           :: i_pos(3)
      i_pos=(/index(trim(USER_wall_time_string),"d"),index(trim(USER_wall_time_string),"h"),index(trim(USER_wall_time_string),"m")/) 

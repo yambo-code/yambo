@@ -2406,6 +2406,8 @@ CONTAINS
             !
          ENDDO
          !
+      ELSE
+         ntetra_ = 0
       ENDIF
       !
       CALL iotk_scan_dat( iunit, "FIXED_OCCUPATIONS", tfixed_occ_, IERR=ierr )
@@ -2453,6 +2455,9 @@ CONTAINS
             !
          ENDIF
          !
+      ELSE
+         nstates_up_=0
+         nstates_dw_=0
       ENDIF
       !
       CALL iotk_scan_end( iunit, "OCCUPATIONS", IERR=ierr )

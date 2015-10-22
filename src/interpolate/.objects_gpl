@@ -1,2 +1,0 @@
-objs = bz_interp_coeff.o  bz_interpolation.o  bz_interp_setup.o eval_interpolation_coeff.o \
-       fourier_interpolation.o grid_generator.o

@@ -90,6 +90,16 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    !
    call string_split(RT_ctl_db(I_id),db_piece)
    !
+   if(trim(db_piece(1))=="none") return
+   !
+   i1=index(RT_ctl_db(I_id),"<")
+   i2=index(RT_ctl_db(I_id),"@")
+   !
+   if (i1==0 .or. i2==0) then
+     call warning (' Input variable '//what//'fnRTdb is not properly defined')
+     return
+   endif
+   !
    T_unit='fs'
    !
    do i1=1,n_pieces

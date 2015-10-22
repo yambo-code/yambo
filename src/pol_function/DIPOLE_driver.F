@@ -50,7 +50,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,&
-&                         PAR_COM_q_for_Xo,PP_redux_wait,PAR_COM_Plasma_INDEX,PAR_COM_Q_INDEX
+&                         PAR_COM_q_for_Xo,PP_redux_wait,PAR_COM_Plasma_INDEX,PAR_COM_Q_INDEX,l_par_RT
  use parser_m,       ONLY:parser
 #if defined _SC
  use com,            ONLY:secnm
@@ -271,18 +271,26 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
       ik_mem=PAR_DIPk_ibz_index(ik)
       ! 
       do i_sp_pol=1,n_sp_pol
+        !
         call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
+        !
 #if defined _SC
+        !
         if (l_sc_run.or.l_real_time) then
           !
           call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
+          !
+        endif
+        !
+        if (l_par_RT) then
           !
           DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           !
         endif
+        !
 #endif
       enddo
       !

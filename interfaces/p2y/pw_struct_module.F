@@ -17,6 +17,7 @@
 
 !@ MANUAL
 module pw_struct_module
+use pars,                  ONLY:SP
 implicit none
 ! This module contains the definition of pw_struct and its methods
 private
@@ -26,7 +27,7 @@ public :: pw_struct, &
 
 !@ MANUAL
 type pw_struct
-  real a(3,3), b(3,3), a_omega, b_omega
+  real(SP) a(3,3), b(3,3), a_omega, b_omega
 end type pw_struct
 ! This object contains the informations about the periodic cell
 ! a(:,1), a(:,2) and a(:,3) :: basis vectors (real space)

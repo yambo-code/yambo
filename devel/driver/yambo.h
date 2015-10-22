@@ -46,7 +46,6 @@
   {"odir",   "O","Additional I/O directory",0,0,1,0,1},   
   {"cdir",   "C","Communications I/O directory",0,0,1,0,1},  
   {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
-  {"parinfo","P","Report some informations about the parallel field of the current input file",0,0,0,0,1}, 
   {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
 #if defined _MPI
   {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 

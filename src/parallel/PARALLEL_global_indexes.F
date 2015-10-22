@@ -25,7 +25,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
-&                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,mpi_comm_world,&
+&                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,&
 &                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,&
 &                        PARALLEL_cpu_mat_diagonalization,PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
@@ -58,12 +58,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
-&                        PAR_IND_QP_ID,PAR_IND_G_b_ID,myid,PAR_IND_Plasma_ID,&
+&                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_Plasma_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
 &                        PAR_IND_Kk_ibz_ID,PAR_IND_RL_ID
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message,&
-&                        PARALLEL_structure
+ use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,l_real_time,l_elphoton_corr
  use matrix_operate,ONLY:UP_matrix_index
@@ -74,6 +73,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use openmp,        ONLY:OPENMP_set_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_K
 #if defined _SC
  use SC,            ONLY:SC_bands,B_mat_index
+#endif
+#if defined _SCALAPACK
+ use SLK_m,         ONLY:SLK_COM_index,SLK_COM_A2A
 #endif
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
@@ -206,13 +208,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_WF_k_A2A)
    call COMM_reset(PAR_COM_WF_b_INDEX)
    call COMM_reset(PAR_COM_WF_k_INDEX)
-   call COMM_reset(PAR_COM_WORLD)
    call COMM_reset(PAR_COM_q_for_Xo)
    call COMM_reset(PAR_COM_k_for_P)
    call COMM_reset(PAR_COM_density)
    call COMM_reset(PAR_COM_eh_INDEX)
    call COMM_reset(PAR_COM_eh_A2A)
    call COMM_reset(PAR_COM_T_INDEX)
+#if defined _SCALAPACK
+   call COMM_reset(SLK_COM_index(1))
+   call COMM_reset(SLK_COM_index(2))
+   call COMM_reset(SLK_COM_A2A(1))
+   call COMM_reset(SLK_COM_A2A(2))
+#endif
    !
    call OPENMP_set_threads( )
    !
@@ -222,11 +229,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (RESET) return
  endif
  !
- call PARALLEL_get_user_structure(ENVIRONMENT,.TRUE.)
+ !==================================
+ ! USER provided PARALLEL structure
+ !==================================
  !
- PAR_COM_WORLD%COMM  =mpi_comm_world
- PAR_COM_WORLD%CPU_id=myid
- PAR_COM_WORLD%n_CPU =ncpu
+ call PARALLEL_get_user_structure(ENVIRONMENT,.TRUE.)
  !
  !============
  ! Dimensions
@@ -283,11 +290,33 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  CALL PARALLEL_defaults(ENVIRONMENT)
  !
+#if defined _SCALAPACK
+ !
+ !======================================================
+ if (ENVIRONMENT=="ScaLapacK") then
+   !====================================================
+   !
+   CALL PARALLEL_structure(2,(/"p","d"/))
+   !
+   call PARALLEL_assign_chains_and_COMMs(2,ROLE=(/"p","d"/),&
+&                                        COMM_index_1=SLK_COM_INDEX(1),COMM_index_2=SLK_COM_INDEX(2),&
+&                                        COMM_A2A_1=SLK_COM_A2A(1),    COMM_A2A_2=SLK_COM_A2A(2))
+   !
+   ! Linear Algebra (using Inversion only)
+   !
+   PARALLEL_cpu_mat_inversion=CPU_structure(7)%nCPU_inversion
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
+   PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
+   !
+ endif
+ !
+#endif
+ !
  !======================================================
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum") then
    !====================================================
    !
-   CALL PARALLEL_structure(ENVIRONMENT,3,(/"k","c","v"/))
+   CALL PARALLEL_structure(3,(/"k","c","v"/))
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"k","c","v"/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_CON_INDEX(X_type),&
@@ -340,7 +369,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
    !=========================================================================================
    !
-   CALL PARALLEL_structure(ENVIRONMENT,4,(/"q","k","c","v"/))
+   CALL PARALLEL_structure(4,(/"q","k","c","v"/))
    !
    call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"q","k","c","v"/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_Xk_bz_INDEX,&
@@ -470,7 +499,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
 #if defined _SC
    !
-   CALL PARALLEL_structure(ENVIRONMENT,4,(/"k ","b ","q ","qp"/))
+   CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
    !
    call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"k ","b ","q ","qp"/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_G_b_INDEX,&
@@ -745,7 +774,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Self_Energy") then
    !=================================
    !
-   CALL PARALLEL_structure(ENVIRONMENT,3,(/"q ","qp","b "/))
+   CALL PARALLEL_structure(3,(/"q ","qp","b "/))
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"q ","qp","b "/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_QP_INDEX,&
@@ -910,7 +939,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Response_T_space") then
    !======================================================================================================
    !
-   CALL PARALLEL_structure(ENVIRONMENT,3,(/"k ","eh","t "/))
+   CALL PARALLEL_structure(3,(/"k ","eh","t "/))
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"k ","eh","t "/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,&

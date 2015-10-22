@@ -14,3 +14,8 @@ How to update the branch incorporating previous commits of another branch
 ==========================================================================
 
 svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/branches/devel-andrea 
+
+How to record the merging history
+=================================
+
+svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk/devel -r1:4888 --record-only

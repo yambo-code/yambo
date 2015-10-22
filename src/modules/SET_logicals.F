@@ -42,10 +42,16 @@ subroutine SET_logicals()
  integer, parameter ::n_max=20
  character(schlen)  ::ch_piece(n_max)
  !
+ ! Parallel Master & CPU log
+ !===========================
+ !
  master_cpu                =myid==0
  !
  if (n_log_CPUs==0) write_to_log = .TRUE.
  if (n_log_CPUs> 0) write_to_log = (mod(myid,(ncpu-1)/n_log_CPUs+1)==0)
+ !
+ ! Write permissions 
+ !===================
  !
  write_to_log_default      =write_to_log
  write_fragments_IO_log    =write_to_log

@@ -27,6 +27,8 @@ module parallel_m
  !
  implicit none
  !
+ integer, parameter :: max_n_of_cpus=100000
+ !
 #if defined _MPI
  include 'mpif.h'
 #else
@@ -78,7 +80,7 @@ module parallel_m
  type(MPI_comm),SAVE   :: INTRA_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs of the same chain
  type(MPI_comm),SAVE   :: INTER_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among same CPU (same ID) of different CHAINS 
  type(MPI_comm),SAVE   :: CHILD_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs (same ID) of different CHAINS enclosed in 
-                                                  ! the above INTER_CHAIN cpu's'
+                                                       ! the above INTER_CHAIN cpu's'
  !
  ! CPU's
  !=======
@@ -100,6 +102,9 @@ module parallel_m
  !      if (i_s==4) possible_fields='(k,eh,t)'  ! BS
  !      if (i_s==5) possible_fields='(q,qp,b)'  ! SE
  !      if (i_s==6) possible_fields='(k,b,q,qp)'! RT
+#if defined _SCALAPACK
+ !      if (i_s==7) possible_fields='  '        ! SLK test
+#endif
  !
  integer,parameter   :: n_CPU_str_max=20
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
@@ -121,8 +126,6 @@ module parallel_m
  integer, parameter :: p_sum=1
  integer, parameter :: p_prod=2
  !
- integer, parameter :: max_n_of_cpus=10000
- !
  ! Logicals
  !
  logical            :: IO_write_default(max_n_of_cpus)
@@ -134,8 +137,8 @@ module parallel_m
  type PP_indexes
    logical, pointer :: element_1D(:)     => null()
    logical, pointer :: element_2D(:,:)   => null()
-   ! Davide 40/09/2015: n_of_elements should be a number. It is useless that it is a pointer
-   !                    allocated to nCPU and that each CPU fills only the element myid.
+   ! Davide 4/09/2015: n_of_elements should be a number. It is useless that it is a pointer
+   !                   allocated to nCPU and that each CPU fills only the element myid.
    integer, pointer :: n_of_elements(:)  => null()
    integer, pointer :: weight_1D(:)      => null()
    integer, pointer :: first_of_1D(:)    => null()
@@ -248,7 +251,7 @@ module parallel_m
  ! Specific MPI COMMUNICATORS...
  !==============================
  !
- ! ... linear algebra
+ ! ... World
  type(MPI_comm),SAVE :: PAR_COM_WORLD
  !
  ! ... linear algebra
@@ -353,9 +356,9 @@ module parallel_m
 #endif
  end interface PP_redux_wait
  !
- interface pp_bcast
-   module procedure c0bcast,c1bcast,c2bcast
- end interface pp_bcast
+ interface PP_bcast
+   module procedure c0bcast,c1bcast,c2bcast,i0bcast
+ end interface PP_bcast
  !
  contains
    !
@@ -402,6 +405,8 @@ module parallel_m
      CPU_structure(5)%Short_Description="SE"
      CPU_structure(6)%Long_Description="Real_Time"
      CPU_structure(6)%Short_Description="RT"
+     CPU_structure(7)%Long_Description="ScaLapacK"
+     CPU_structure(7)%Short_Description="SLK"
    end subroutine
    !
    subroutine COMM_reset(COMM)
@@ -451,11 +456,11 @@ module parallel_m
      implicit none
 #if defined _MPI
      if (ncpu>1) then
-       call mpi_barrier(mpi_comm_world,i_err)
        call mpi_finalize(i_err)
      endif
 #endif
-     stop
+     stop 
+     return
    end subroutine
    !
    subroutine PP_indexes_reset(ip)
@@ -1018,6 +1023,25 @@ module parallel_m
 #endif
    end subroutine
    !
+   subroutine i0bcast(ival,node,COMM)
+     integer  :: ival
+     integer, intent(in) :: node
+     integer, optional   :: COMM
+#if defined _MPI
+     integer::LOCAL_COMM  ! Work Space  
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     call mpi_bcast(ival,1,mpi_integer,node,LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
    subroutine c0bcast(cval,node,COMM)
      complex(SP):: cval
      integer, intent(in) :: node
@@ -1031,6 +1055,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
@@ -1052,6 +1077,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX

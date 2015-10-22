@@ -111,4 +111,8 @@ module drivers
  logical :: l_oep_ceda
  logical :: l_oep_slater
  !
+ ! TESTING
+ !
+ logical :: l_slk_test
+ !
 end module drivers

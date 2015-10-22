@@ -440,11 +440,13 @@ module real_time
      !
      call SC_alloc(en)
      !
+     !DEBUG...WHY?>
      !if (l_HF_and_locXC.or.l_sc_hf.or.l_sc_cohsex) then
      !  allocate(QP_Vnl_xc(QP_n_states))
      !  call mem_est("QP_Vnl_xc",(/QP_n_states/))
      !  QP_Vnl_xc=cZERO
      !endif
+     !DEBUG<
      !
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))

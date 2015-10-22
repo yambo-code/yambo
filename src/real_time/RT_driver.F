@@ -31,6 +31,7 @@ subroutine RT_driver(E,X,k,q)
  use electrons,      ONLY:levels,n_spin
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF
+ use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
@@ -51,7 +52,7 @@ subroutine RT_driver(E,X,k,q)
  use collision,       ONLY:Fock_collisions,SEX_collisions,GW_NEQ_collisions
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
+ use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
  implicit none
@@ -107,11 +108,11 @@ subroutine RT_driver(E,X,k,q)
  !
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
- call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_index( )
  !
  ! Dipoles
  !=========
+ !
+ call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,Bm_index=PAR_IND_B_mat,CLEAN_UP=.TRUE.)
  !
  ! before loading the WF in R-space I check and/or calculate
  ! the optical collisions that are done in G-space and would
@@ -129,7 +130,16 @@ subroutine RT_driver(E,X,k,q)
  ! WFs loading
  !=============
  !
+ call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index( )
+ !
  call WF_load(WF,WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
+ !
+ ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)
+ ! this means that the WF's are distributed only among few cpu's. But, as a consequence, the fft_size
+ ! is not defined for all CPU's. This causes seg. fault. when the density is computed.
+ !
+ call PP_bcast(fft_size,0)
  !
  ! QP-corrections 
  !================

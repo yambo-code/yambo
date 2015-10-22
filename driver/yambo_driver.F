@@ -33,6 +33,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
 &                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr
+#if defined _SCALAPACK
+ use drivers,       ONLY:l_slk_test
+#endif
  use X_m,           ONLY:X_t
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
@@ -78,9 +81,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Presets
  !
- ncpu  =np
- myid  =pid
- infile=inf
+ ncpu     =np
+ myid     =pid
+ infile   =inf
  !
  call SET_defaults(instr,ind,od,js,com_dir)
 #ifdef _SURF
@@ -265,6 +268,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !=============================
 #if defined _ELPH
  if (l_elph_Hamiltonian) call ELPH_Hamiltonian(en,k,q)
+#endif
+ !
+#if defined _SCALAPACK 
+ !
+ ! SLK TESTER
+ !============
+ if (l_slk_test) call SLK_test(en,k,q)
+ !
 #endif
  !
  ! GPL_EXCLUDE_END

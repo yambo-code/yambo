@@ -33,7 +33,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  use R_lattice,          ONLY:bz_samp
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
  use X_m,                ONLY:X_t,DIP_iR,DIP_P,force_v_g_space_approach
- use com,                ONLY:error,warning
+ use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
  use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  !
@@ -61,7 +61,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
- call SET_dipole_parallelization_scheme(X,l_mat_eval_DIP,n_LT_steps) 
+ call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps) 
  !
  if (n_LT_steps>0) call live_timing('Dipoles in real space',n_LT_steps)
  !

@@ -58,9 +58,12 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
    return
  endif
  !
- if ( (maxval(aimag(eps))/aimag(eps(1))<100._SP   .or.               &
-&      maxval(aimag(eps))/aimag(eps(nw))<100._SP) .and. be_verbose)  &
-&   call warning(' [O_eels] Possible inaccuracy in the EPS prolungation')
+ if ( (maxval(aimag(eps))/aimag(eps(1))<100._SP   .or. &
+&      maxval(aimag(eps))/aimag(eps(nw))<100._SP) .and. be_verbose) then
+   !
+   call warning(' [O_eels] Possible inaccuracy in the EPS prolungation')
+   !
+ endif
  !
  ! extend eps to the negative frequencies
  !

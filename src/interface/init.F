@@ -196,9 +196,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! 
  call call_init_load('create_shadow_vars')
  !
- ! DB props listing mode ?
+ ! Command line reading
  !
  call read_command_line(instr,init)
+ !
+ ! DB props listing mode ?
  !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
@@ -504,6 +506,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #endif
  !
+#if defined _SCALAPACK
+ if (l_slk_test) then
+   call initactivate(1,"SLKdim")
+   call CPU_activate("SLK")
+ endif
+#endif
+ !
  if (l_eval_collisions) then
 #if defined _SC && ! defined _RT && defined _MPI
    call CPU_activate("SE")
@@ -538,6 +547,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'MinusQ BSEscatt')
 #endif
+ !
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')
  !
@@ -1024,6 +1034,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (what=="BS") then
        call initactivate(1,what//"_nCPU_diago")
      endif
+#if defined _SCALAPACK
+     if (what=="SLK") then
+       call initactivate(1,what//"_nCPU_diago")
+       call initactivate(1,what//"_nCPU_invert")
+     endif
+#endif
      !
    end subroutine
    !
@@ -1075,6 +1091,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! GPL_EXCLUDE_END
        ! 
+#if defined _SCALAPACK
+       l_slk_test =runlevel_is_on('slktest')
+#endif
 #if defined _RT
        l_elel_scatt =runlevel_is_on('el_el_scatt')
        l_elph_scatt=runlevel_is_on('el_ph_scatt')
@@ -1421,7 +1440,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! BSE/LLR
          !
-         if ( trim(rstr_piece(i1)) == 'optics' )  then
+         if (i3==2.and.trim(rstr_piece(i1)) == 'optics' )  then
            !
            l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
            l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')

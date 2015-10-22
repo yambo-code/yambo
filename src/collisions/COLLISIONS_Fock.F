@@ -43,7 +43,7 @@ subroutine COLLISIONS_Fock(E,k,q)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- use wave_func,     ONLY:WF !,WF_buffer,WF_buffered_IO
+ use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load
  use wrapper_omp,   ONLY:V_dot_V_omp
  !
@@ -79,8 +79,13 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! WFs
  !
+ if (WF_buffered_IO) then
+   !
+   call WF_load(WF_buffer,0,1,SC_bands,(/1,k%nibz/),space='B',title='-BUFFER')
+   !
+ endif
+ !
  call WF_load(WF,N_g_vecs,maxval(qindx_S(:,:,2)),n_bands,(/1,k%nibz/),title='-Fock Collisions')
- !if (WF_buffered_IO) call WF_load(WF_buffer,0,1,n_bands,(/1,k%nibz/),space='B',title='-BUFFER')
  !
  isc%qs    =1
  isc%ngrho =N_g_vecs

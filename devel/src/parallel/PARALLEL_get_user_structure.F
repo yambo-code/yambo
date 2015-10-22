@@ -94,13 +94,18 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
    !
  enddo
  !
- MAX_n_blks=(nXkibz/n_k_cpus)*(n_eh_grps*nXkibz+1)/2
- if (n_t_blks>MAX_n_blks) &
-&  call error(' n_t_CPU > n_blocks=M*(N+1)/2='//trim(intc(MAX_n_blks))//' with N=nkibz*n_eh_CPU and M=nkibz/n_k_CPU')
- !
- if (n_eh_grps>1 .and. nXkibz>1 .and. nsym>1 .and. n_k_cpus<nXkibz .and. n_t_blks<nXkibz) then
-   call warning(' n_eh_CPU > 1 in a system with symmetries. This is not efficient, in particular if you have many kpts.')
-   call warning(' It is suggested to first distribute on "k" and "t". Maximum value for both is: '//trim(intc(nXkibz)))
+ if (ENVIRONMENT=="Response_T_space") then
+   !
+   MAX_n_blks=(nXkibz/n_k_cpus)*(n_eh_grps*nXkibz+1)/2
+   if (n_t_blks>MAX_n_blks) then
+     call error(' n_t_CPU > n_blocks=M*(N+1)/2='//trim(intc(MAX_n_blks))//' with N=nkibz*n_eh_CPU and M=nkibz/n_k_CPU')
+   endif
+   !
+   if (n_eh_grps>1 .and. nXkibz>1 .and. nsym>1 .and. n_k_cpus<nXkibz .and. n_t_blks<nXkibz) then
+     call warning(' n_eh_CPU > 1 in a system with symmetries. This is not efficient, in particular if you have many kpts.')
+     call warning(' It is suggested to first distribute on "k" and "t". Maximum value for both is: '//trim(intc(nXkibz)))
+   endif
+   !
  endif
  !
  call PARALLEL_clean_up_the_structure( n_structures )

@@ -30,7 +30,8 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,frag_WF
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,PARALLEL_message,n_CPU_str_max
+ use parallel_m,     ONLY:n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&
+&                         mpi_comm_world,myid,COMM_reset
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads
@@ -48,11 +49,25 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call section('*','CPU structure, Files & I/O Directories') 
  !
  ! Buffered I/O ?
+ !===============
  !
  call parser('WFbuffIO'   ,WF_buffered_IO)
  !
- ! CPU structure
- !===============
+#if defined _MPI
+ !
+ ! WORLD communicator setup
+ !==========================
+ !
+ call COMM_reset(PAR_COM_WORLD)
+ !
+ PAR_COM_WORLD%COMM  =mpi_comm_world
+ PAR_COM_WORLD%CPU_id=myid
+ PAR_COM_WORLD%n_CPU =ncpu
+ !
+#endif
+ !
+ ! CPU structure REPORT
+ !======================
  !
  n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP/))
  !
@@ -64,7 +79,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
      call msg( 'r','* CPU-Threads     :',trim(PARALLEL_message(i_s)))
    enddo
    !
-   call msg( 'r','* MPI CPU         :',n_MPI)
+   call msg( 'r','* MPI CPU         :',ncpu)
    !
  else
    !
@@ -75,19 +90,28 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', '* THREADS    (max):',n_max_threads)
  call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)
  call msg('r', '* I/O NODES       :',n_nodes)
+ !
+ ! I/O and more
+ !===============
+ !
  call msg('rn','* Fragmented WFs  :',frag_WF)
  call msg('r','CORE databases in   ',trim(core_io_path))
  call msg('r','Additional I/O in   ',trim(more_io_path))
  call msg('r','Communications in   ',trim(com_path))
  call msg('r','Input file     is   ',trim(infile))
  call msg('r','Report file    is   ',trim(repfile))
+ !
  if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time is   ',trim(USER_wall_time_string))
+ !
  if (len_trim(jobstr)>0        ) call msg('r','Job string(main): ',trim(jobstr))
  do i_s=1,n_alt_jobstr
    call msg('r','            (#'//trim(intc(i_s))//'): ',trim(alt_jobstr(i_s)))
  enddo
  if (log_as_a_file      ) call msg('r','Log files      in ',trim(trim(com_path)//"/LOG"))
  call msg('r','')
+ !
+ ! DB1 I/O
+ !===============
  !
 #if !defined _YPP_RT
  !

@@ -114,7 +114,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _TIMING
  use timing_m,    ONLY:timing_allocate,nclockx
 #endif
- use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread
+ use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
  !
  implicit none
  !
@@ -132,6 +132,16 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! CPU structures
  !
  call CPU_str_reset()
+ !
+ ! OpenMP
+ !
+ omp_is_off    = .FALSE.
+ !
+#if defined _OPENMP
+ !
+ if (index(INSTR,'noopenmp')>0) omp_is_off=.TRUE.
+ !
+#endif
  !
  call OPENMP_initialize( )
  call OPENMP_update(master_thread)

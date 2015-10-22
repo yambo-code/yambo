@@ -38,6 +38,14 @@ module stderr
  integer :: g_format_length
  integer :: of_tabs(30)
  !
+ ! Slash
+ !
+#if defined _aix || defined _BLUEGENE
+ character(2), parameter :: slash="\\"
+#else 
+ character(1), parameter :: slash="\"
+#endif
+ !
  interface  
    !
    subroutine win_size(wdim)

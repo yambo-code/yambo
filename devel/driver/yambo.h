@@ -49,7 +49,10 @@
   {"parinfo","P","Report some informations about the parallel field of the current input file",0,0,0,0,1}, 
   {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
 #if defined _MPI
-  {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
+  {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
+#endif
+#if defined _OPENMP
+  {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,1}, 
 #endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
@@ -87,6 +90,9 @@
 #endif
 #if defined _SURF
   {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},
+#endif
+#if defined _SCALAPACK
+  {"slktest",  "s","ScaLapacK test",0,0,0,0,0},
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };

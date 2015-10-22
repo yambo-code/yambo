@@ -21,16 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SET_dipole_parallelization_scheme(X,eval_DIP,n_LT_steps)
+subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  !
  use X_m,                 ONLY:X_t
  use electrons,           ONLY:n_sp_pol
- use com,                 ONLY:secnm,error
- use drivers,             ONLY:l_real_time,l_sc_run
  use parallel_m,          ONLY:PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
-&                              PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz_ID
+&                              PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz_ID,&
+&                              l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_RT
 #if defined _SC
- use parallel_m,          ONLY:PAR_IND_B_mat
+ use parallel_m,          ONLY:PAR_IND_B_mat,l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_RT
  use SC,                  ONLY:B_mat_index
 #endif
  !
@@ -42,18 +41,7 @@ subroutine SET_dipole_parallelization_scheme(X,eval_DIP,n_LT_steps)
  !
  ! Work space
  !
- logical      :: l_evaluating_em1s,l_evaluating_eps_G,l_evaluating_eps_eh,&
-&                use_X_parallel_scheme,use_sc_parallel_scheme
  integer      :: iv,ic
- !
- l_evaluating_em1s  = index(secnm,"Dielectric")/=0
- l_evaluating_eps_G = index(secnm,"Optics")/=0
- l_evaluating_eps_eh= index(secnm,"absorption")/=0
- !
- use_X_parallel_scheme =l_evaluating_em1s.or.l_evaluating_eps_G.or.l_evaluating_eps_eh
- use_sc_parallel_scheme=(l_sc_run.or.l_real_time).and..not.l_evaluating_em1s
- !
- if(.not.(use_X_parallel_scheme.or.use_sc_parallel_scheme)) call error(' DIP parallelization scheme unknown')
  !
  n_LT_steps=0
  !
@@ -61,14 +49,15 @@ subroutine SET_dipole_parallelization_scheme(X,eval_DIP,n_LT_steps)
    do ic=max(iv,X%ib_lim(2)),X%ib(2)
      !
 #if defined _SC
-     if(use_sc_parallel_scheme) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv))
+     if (l_par_RT) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv))
 #endif
      !
-     if( use_X_parallel_scheme) &
-&      eval_DIP(ic,iv)= PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic).and. &
-       &                PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)
+     if (any((/l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q/))) then
+       eval_DIP(ic,iv)= PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic).and. &
+&                       PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)
+     endif
      !
-     if(eval_DIP(ic,iv)) n_LT_steps=n_LT_steps+1
+     if (eval_DIP(ic,iv)) n_LT_steps=n_LT_steps+1
      !
    enddo
  enddo

@@ -21,26 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
+subroutine PARALLEL_structure(n_elements,ROLE)
  !
- use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,nchains_group,n_groups,INTRA_CHAIN,MAX_N_OF_CHAINS,&
+ use parallel_m,  ONLY:ncpu,myid,INTER_CHAIN,nchains_group,n_groups,INTRA_CHAIN,MAX_N_OF_CHAINS,&
 &                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
-&                      ncpu_chain
+&                      ncpu_chain,mpi_comm_world
  !
  implicit none
  !
- character(*)   :: ENVIRONMENT
  integer        :: n_elements 
- character(*)   :: ROLE(:)
+ character(*)   :: ROLE(n_elements)
  !
  ! Work Space 
  !
- integer     ::i_err,ID(n_elements),i_cpu,i_chain,i_chain_lim(2),chain_now,i_order
- integer     ::tmp_comm_inter,tmp_comm_intra,i_structure
- !
-#if defined _MPI
- include 'mpif.h'
-#endif
+ integer     ::i_err,ID(n_elements),i_cpu,i_chain,i_chain_lim(2),chain_now,i_order,&
+&              tmp_comm_inter,tmp_comm_intra,i_structure
  !
  if (ncpu==1) then
    INTRA_CHAIN(1)%n_CPU=1

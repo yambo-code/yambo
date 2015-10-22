@@ -13,7 +13,10 @@ KERR_objects = mod_KERR.o
 #if defined _ELPH 
 ELPH_objects = mod_ELPH.o
 #endif
-objs = mod_pars.o mod_units.o  mod_stderr.o mod_openmp.o mod_parallel.o \
+#if defined _SCALAPACK 
+SLK_objects = mod_SLK.o
+#endif
+objs = mod_pars.o mod_units.o  mod_stderr.o mod_openmp.o mod_parallel.o $(SLK_objects) \
        mod_wrapper.o mod_wrapper_omp.o mod_drivers.o  mod_FFT.o\
        mod_LIVE_t.o  mod_logo.o \
        mod_com.o mod_timing.o mod_memory.o  mod_R_lattice.o mod_electrons.o mod_wave_func.o \

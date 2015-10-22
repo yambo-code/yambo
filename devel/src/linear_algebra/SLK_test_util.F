@@ -11,34 +11,17 @@
   MODULE util_module
   !*********************************************
   !
-  USE kinds
-  USE constants, ONLY : ZERO, ONE, CZERO, CONE, CI
-  !
-#if defined(__CUDA) && defined(__PHIGEMM)
-  USE phigemm,            ONLY : DGEMM => phidgemm , ZGEMM => phizgemm
-#endif
-!
-#if defined(__CUDA) && defined(__MAGMA)
-  USE magma,              ONLY : DGESVD => magmaf_dgesvd, &
-                                 ZGESVD => magmaf_zgesvd, &
-                                 DGESV  => magmaf_dgesv,  &
-                                 !ZGBSV  => magmaf_zgbsv,  &
-                                 !DGELSD => magmaf_dgelsd, &
-                                 ZGEEV  => magmaf_zgeev,  &
-                                 !ZHPEVX => magmaf_zhpevx, &
-                                 !DSPEVX => magmaf_dspevx, &
-                                 !DSBEVX => magmaf_dsbevx, &
-                                 DGETRF => magmaf_dgetrf, &
-                                 !DGETRI => magmaf_dgetri, &
-                                 ZGETRF => magmaf_zgetrf!, &
-                                 !ZGETRI => magmaf_zgetri
-  USE iso_c_binding
-!  USE cuda_mem_alloc
-#endif
+  USE pars, ONLY:DP
   !
   IMPLICIT NONE
   PRIVATE
-
+  !
+  real(DP),    parameter :: rZERO=0._DP
+  real(DP),    parameter :: rONE =1._DP
+  complex(DP), parameter :: cI   =(0._DP,1._DP)
+  complex(DP), parameter :: cONE =(1._DP,0._DP)
+  complex(DP), parameter :: cZERO=(0._DP,0._DP)
+  !
 ! General purpose utilities
 !
 ! routines in this module:
@@ -200,8 +183,8 @@ CONTAINS
    SUBROUTINE zmat_pack( zp, z, n )
    !**********************************************************
     IMPLICIT NONE
-    COMPLEX(dbl), INTENT(OUT) :: zp(:)
-    COMPLEX(dbl), INTENT(IN)  :: z(:,:)
+    COMPLEX(DP), INTENT(OUT) :: zp(:)
+    COMPLEX(DP), INTENT(IN)  :: z(:,:)
     INTEGER,      INTENT(IN)  :: n
     !
     INTEGER :: i, j, ind
@@ -222,8 +205,8 @@ CONTAINS
    SUBROUTINE zmat_unpack( z, zp, n )
    !**********************************************************
    IMPLICIT NONE
-   COMPLEX(dbl), INTENT(IN)  :: zp(:)
-   COMPLEX(dbl), INTENT(OUT) :: z(:,:)
+   COMPLEX(DP), INTENT(IN)  :: zp(:)
+   COMPLEX(DP), INTENT(OUT) :: z(:,:)
    INTEGER,      INTENT(IN)  :: n
    INTEGER :: i, j, ind
 
@@ -243,8 +226,8 @@ END SUBROUTINE
    SUBROUTINE zmat_bnd_pack( zb, z, n, kl, ku )
    !**********************************************************
     IMPLICIT NONE
-    COMPLEX(dbl), INTENT(OUT)  :: zb(:,:)
-    COMPLEX(dbl), INTENT(IN)   :: z(:,:)
+    COMPLEX(DP), INTENT(OUT)  :: zb(:,:)
+    COMPLEX(DP), INTENT(IN)   :: z(:,:)
     INTEGER,      INTENT(IN)   :: n
     INTEGER,      INTENT(IN)   :: kl, ku
     !
@@ -273,8 +256,8 @@ END SUBROUTINE
    SUBROUTINE zmat_bnd_unpack( z, zb, n, kl, ku )
    !**********************************************************
     IMPLICIT NONE
-    COMPLEX(dbl), INTENT(OUT) :: z(:,:)
-    COMPLEX(dbl), INTENT(IN)  :: zb(:,:)
+    COMPLEX(DP), INTENT(OUT) :: z(:,:)
+    COMPLEX(DP), INTENT(IN)  :: zb(:,:)
     INTEGER,      INTENT(IN)  :: n
     INTEGER,      INTENT(IN)  :: kl, ku
     !
@@ -303,8 +286,8 @@ END SUBROUTINE
    SUBROUTINE dmat_bnd_pack( zb, z, n, kl, ku )
    !**********************************************************
     IMPLICIT NONE
-    REAL(dbl),    INTENT(OUT)  :: zb(:,:)
-    REAL(dbl),    INTENT(IN)   :: z(:,:)
+    REAL(DP),    INTENT(OUT)  :: zb(:,:)
+    REAL(DP),    INTENT(IN)   :: z(:,:)
     INTEGER,      INTENT(IN)   :: n
     INTEGER,      INTENT(IN)   :: kl, ku
     !
@@ -316,7 +299,7 @@ END SUBROUTINE
 
     IF ( SIZE(zb,1) < 2 *kl + ku + 1 ) CALL errore('dmat_bnd_pack','invalid ldzb',10) 
     !
-    zb(:,:) = ZERO
+    zb(:,:) = RZERO
     !
     DO j = 1, n
     DO i = MAX(1,j-ku),MIN(n,j+kl)
@@ -333,8 +316,8 @@ END SUBROUTINE
    SUBROUTINE dmat_bnd_unpack( z, zb, n, kl, ku )
    !**********************************************************
     IMPLICIT NONE
-    REAL(dbl),    INTENT(OUT) :: z(:,:)
-    REAL(dbl),    INTENT(IN)  :: zb(:,:)
+    REAL(DP),    INTENT(OUT) :: z(:,:)
+    REAL(DP),    INTENT(IN)  :: zb(:,:)
     INTEGER,      INTENT(IN)  :: n
     INTEGER,      INTENT(IN)  :: kl, ku
     !
@@ -346,7 +329,7 @@ END SUBROUTINE
 
     IF ( SIZE(zb,1) < 2 *kl + ku + 1 ) CALL errore('dmat_bnd_unpack','invalid ldzb',10) 
     !
-    z(:,:) = ZERO
+    z(:,:) = RZERO
     !
     DO j = 1, n
     DO i = MAX(1,j-ku),MIN(n,j+kl)
@@ -363,8 +346,8 @@ END SUBROUTINE
    SUBROUTINE dmat_hbnd_pack( zb, z, n, kd )
    !**********************************************************
     IMPLICIT NONE
-    REAL(dbl),    INTENT(OUT)  :: zb(:,:)
-    REAL(dbl),    INTENT(IN)   :: z(:,:)
+    REAL(DP),    INTENT(OUT)  :: zb(:,:)
+    REAL(DP),    INTENT(IN)   :: z(:,:)
     INTEGER,      INTENT(IN)   :: n
     INTEGER,      INTENT(IN)   :: kd
     !
@@ -374,7 +357,7 @@ END SUBROUTINE
 
     IF ( SIZE(zb,1) < kd+1 ) CALL errore('dmat_hbnd_pack','invalid ldzb',10) 
     !
-    zb(:,:) = ZERO
+    zb(:,:) = RZERO
     !
     DO j = 1, n
     DO i = MAX(1,j-kd),j
@@ -391,8 +374,8 @@ END SUBROUTINE
    SUBROUTINE dmat_hbnd_unpack( z, zb, n, kd )
    !**********************************************************
     IMPLICIT NONE
-    REAL(dbl),    INTENT(OUT) :: z(:,:)
-    REAL(dbl),    INTENT(IN)  :: zb(:,:)
+    REAL(DP),    INTENT(OUT) :: z(:,:)
+    REAL(DP),    INTENT(IN)  :: zb(:,:)
     INTEGER,      INTENT(IN)  :: n
     INTEGER,      INTENT(IN)  :: kd
     !
@@ -402,7 +385,7 @@ END SUBROUTINE
 
     IF ( SIZE(zb,1) < kd + 1 ) CALL errore('dmat_hbnd_unpack','invalid ldzb',10) 
     !
-    z(:,:) = ZERO
+    z(:,:) = RZERO
     !
     DO j = 1, n
     DO i = MAX(1,j-kd),j
@@ -419,8 +402,8 @@ END SUBROUTINE
    SUBROUTINE zmat_bnd_getdims( a, thr, n, kl, ku )
    !**********************************************************
     IMPLICIT NONE
-    COMPLEX(dbl), INTENT(IN)   :: a(:,:)
-    REAL(dbl),    INTENT(IN)   :: thr
+    COMPLEX(DP), INTENT(IN)   :: a(:,:)
+    REAL(DP),    INTENT(IN)   :: thr
     INTEGER,      INTENT(IN)   :: n
     INTEGER,      INTENT(OUT)  :: kl, ku
     !
@@ -454,8 +437,8 @@ END SUBROUTINE
    SUBROUTINE dmat_bnd_getdims( a, thr, n, kl, ku )
    !**********************************************************
     IMPLICIT NONE
-    REAL(dbl),    INTENT(IN)   :: a(:,:)
-    REAL(dbl),    INTENT(IN)   :: thr
+    REAL(DP),    INTENT(IN)   :: a(:,:)
+    REAL(DP),    INTENT(IN)   :: thr
     INTEGER,      INTENT(IN)   :: n
     INTEGER,      INTENT(OUT)  :: kl, ku
     !
@@ -492,13 +475,13 @@ END SUBROUTINE
    ! overwrite the input matrix with its hermitean part
    !
    IMPLICIT NONE
-   COMPLEX(dbl), INTENT(INOUT) :: z(:,:)
+   COMPLEX(DP), INTENT(INOUT) :: z(:,:)
    INTEGER,      INTENT(IN)    :: n
    INTEGER :: i, j
 
    DO j = 1, n
    DO i = j, n
-       z(i,j) = 0.5_dbl * ( z(i,j) + CONJG( z(j,i) ) )
+       z(i,j) = 0.5_DP * ( z(i,j) + CONJG( z(j,i) ) )
        z(j,i) = CONJG( z(i,j) )
    ENDDO
    ENDDO
@@ -514,13 +497,13 @@ END SUBROUTINE zmat_herm
    ! overwrite the input matrix with its hermitean part
    !
    IMPLICIT NONE
-   REAL(dbl),    INTENT(INOUT) :: z(:,:)
+   REAL(DP),    INTENT(INOUT) :: z(:,:)
    INTEGER,      INTENT(IN)    :: n
    INTEGER :: i, j
 
    DO j = 1, n
    DO i = j, n
-       z(i,j) = 0.5_dbl * ( z(i,j) + z(j,i) )
+       z(i,j) = 0.5_DP * ( z(i,j) + z(j,i) )
        z(j,i) = z(i,j)
    ENDDO
    ENDDO
@@ -536,13 +519,13 @@ END SUBROUTINE dmat_herm
    ! overwrite the input matrix with its antihermitean part
    !
    IMPLICIT NONE
-   COMPLEX(dbl), INTENT(INOUT) :: z(:,:)
+   COMPLEX(DP), INTENT(INOUT) :: z(:,:)
    INTEGER,      INTENT(IN)    :: n
    INTEGER :: i, j
 
    DO j = 1, n
    DO i = j, n
-       z(i,j) = -CI * 0.5_dbl * ( z(i,j) - CONJG( z(j,i) ) )
+       z(i,j) = -CI * 0.5_DP * ( z(i,j) - CONJG( z(j,i) ) )
        z(j,i) = CONJG( z(i,j) )
    ENDDO
    ENDDO
@@ -569,13 +552,13 @@ END SUBROUTINE
    !
    IMPLICIT NONE
    INTEGER,   INTENT(IN)  :: m, n
-   REAL(dbl), INTENT(IN)  :: a(:,:)
-   REAL(dbl), INTENT(OUT) :: s(:)
-   REAL(dbl), INTENT(OUT) :: u(:,:), vt(:,:)
+   REAL(DP), INTENT(IN)  :: a(:,:)
+   REAL(DP), INTENT(OUT) :: s(:)
+   REAL(DP), INTENT(OUT) :: u(:,:), vt(:,:)
 
    INTEGER   :: ierr, info, lwork
    !REAL(dbl) :: raux 
-   REAL(dbl), ALLOCATABLE :: atmp(:,:), work(:)
+   REAL(DP), ALLOCATABLE :: atmp(:,:), work(:)
 
    IF ( m <= 0 .OR. n<=0 ) CALL errore('dmat_svd','Invalid DIMs',1)
    IF ( m > SIZE(a,1) .OR. m > SIZE(u,1) .OR. m > SIZE(u,2) ) &
@@ -641,14 +624,14 @@ END SUBROUTINE dmat_svd
    !
    IMPLICIT NONE
    INTEGER, INTENT(IN)       :: m, n
-   COMPLEX(dbl), INTENT(IN)  :: a(:,:)
-   REAL(dbl),    INTENT(OUT) :: s(:)
-   COMPLEX(dbl), INTENT(OUT) :: u(:,:), vt(:,:)
+   COMPLEX(DP), INTENT(IN)  :: a(:,:)
+   REAL(DP),    INTENT(OUT) :: s(:)
+   COMPLEX(DP), INTENT(OUT) :: u(:,:), vt(:,:)
 
    INTEGER    :: ierr, info, lwork
    !REAL(dbl)  :: raux
-   REAL(dbl),    ALLOCATABLE :: rwork(:)
-   COMPLEX(dbl), ALLOCATABLE :: atmp(:,:), work(:)
+   REAL(DP),    ALLOCATABLE :: rwork(:)
+   COMPLEX(DP), ALLOCATABLE :: atmp(:,:), work(:)
 
    IF ( m <= 0 .OR. n<=0 ) CALL errore('zmat_svd','Invalid DIMs',1)
    IF ( m > SIZE(a,1) .OR. m > SIZE(u,1) .OR. m > SIZE(u,2) ) &
@@ -716,13 +699,13 @@ END SUBROUTINE zmat_svd
    !
    IMPLICIT NONE
    INTEGER,   INTENT(IN)       :: n, nrhs
-   REAL(dbl), INTENT(IN)       :: a(:,:)
-   REAL(dbl), INTENT(INOUT)    :: b(:,:)
+   REAL(DP), INTENT(IN)       :: a(:,:)
+   REAL(DP), INTENT(INOUT)    :: b(:,:)
    INTEGER, OPTIONAL, INTENT(out) :: ierr
 
    INTEGER :: ierr_, info
    INTEGER,      ALLOCATABLE :: ipiv(:)
-   REAL(dbl), ALLOCATABLE    :: atmp(:,:)
+   REAL(DP), ALLOCATABLE    :: atmp(:,:)
 
    IF ( PRESENT(ierr) ) ierr=0
    !
@@ -761,12 +744,12 @@ END SUBROUTINE dmat_sv
    !
    IMPLICIT NONE
    INTEGER,         INTENT(IN)    :: n, nrhs
-   REAL(dbl),       INTENT(IN)    :: a(:,:)
-   REAL(dbl),       INTENT(INOUT) :: b(:)
+   REAL(DP),       INTENT(IN)    :: a(:,:)
+   REAL(DP),       INTENT(INOUT) :: b(:)
    INTEGER, OPTIONAL, INTENT(out) :: ierr
    !
    INTEGER  :: ierr_, info
-   REAL(dbl),   ALLOCATABLE :: bl(:,:)
+   REAL(DP),   ALLOCATABLE :: bl(:,:)
 
    IF ( PRESENT(ierr) ) ierr=0
    !
@@ -811,19 +794,19 @@ END SUBROUTINE dmat_sv_1
    !
    IMPLICIT NONE
    INTEGER,   INTENT(IN)       :: m, n, nrhs
-   REAL(dbl), INTENT(IN)       :: rcond
-   REAL(dbl), INTENT(IN)       :: a(:,:)
-   REAL(dbl), INTENT(INOUT)    :: b(:,:)
-   REAL(dbl), OPTIONAL, INTENT(OUT) :: sv(:)
+   REAL(DP), INTENT(IN)       :: rcond
+   REAL(DP), INTENT(IN)       :: a(:,:)
+   REAL(DP), INTENT(INOUT)    :: b(:,:)
+   REAL(DP), OPTIONAL, INTENT(OUT) :: sv(:)
    INTEGER,   OPTIONAL, INTENT(OUT) :: rank
    INTEGER,   OPTIONAL, INTENT(OUT) :: ierr
    !
    CHARACTER(8)              :: subname="dmat_lsd"
    INTEGER                   :: ierr_, rank_, info
    INTEGER,      ALLOCATABLE :: iwork(:)
-   REAL(dbl),    ALLOCATABLE :: atmp(:,:), work(:), sv_(:)
+   REAL(DP),    ALLOCATABLE :: atmp(:,:), work(:), sv_(:)
    !
-   REAL(dbl)         :: workl
+   REAL(DP)         :: workl
    INTEGER           :: smlsiz, minmn, nlvl, lwork, liwork
    INTEGER, EXTERNAL :: ILAENV
 
@@ -910,17 +893,17 @@ END SUBROUTINE dmat_lsd
    !
    IMPLICIT NONE
    INTEGER,   INTENT(IN)       :: m, n, nrhs
-   REAL(dbl), INTENT(IN)       :: rcond
-   REAL(dbl), INTENT(IN)       :: a(:,:)
-   REAL(dbl), INTENT(INOUT)    :: b(:)
-   REAL(dbl), OPTIONAL, INTENT(OUT) :: sv(:)
+   REAL(DP), INTENT(IN)       :: rcond
+   REAL(DP), INTENT(IN)       :: a(:,:)
+   REAL(DP), INTENT(INOUT)    :: b(:)
+   REAL(DP), OPTIONAL, INTENT(OUT) :: sv(:)
    INTEGER,   OPTIONAL, INTENT(OUT) :: rank
    INTEGER,   OPTIONAL, INTENT(OUT) :: ierr
    !
    CHARACTER(10)             :: subname="dmat_lsd_1"
    INTEGER                   :: ierr_, rank_, info
-   REAL(dbl),    ALLOCATABLE :: bl(:,:)
-   REAL(dbl),    ALLOCATABLE :: sv_(:)
+   REAL(DP),    ALLOCATABLE :: bl(:,:)
+   REAL(DP),    ALLOCATABLE :: sv_(:)
 
    IF ( PRESENT(ierr) ) ierr=0
    !
@@ -971,21 +954,21 @@ END SUBROUTINE dmat_lsd_1
    !
    IMPLICIT NONE
    INTEGER,      INTENT(IN)       :: m, n, nrhs
-   REAL(dbl),    INTENT(IN)       :: rcond
-   COMPLEX(dbl), INTENT(IN)       :: a(:,:)
-   COMPLEX(dbl), INTENT(INOUT)    :: b(:,:)
-   REAL(dbl),    OPTIONAL, INTENT(OUT) :: sv(:)
+   REAL(DP),    INTENT(IN)       :: rcond
+   COMPLEX(DP), INTENT(IN)       :: a(:,:)
+   COMPLEX(DP), INTENT(INOUT)    :: b(:,:)
+   REAL(DP),    OPTIONAL, INTENT(OUT) :: sv(:)
    INTEGER,      OPTIONAL, INTENT(OUT) :: rank
    INTEGER,      OPTIONAL, INTENT(OUT) :: ierr
    !
    CHARACTER(8)              :: subname="zmat_lsd"
    INTEGER                   :: ierr_, rank_, info
    INTEGER,      ALLOCATABLE :: iwork(:)
-   REAL(dbl),    ALLOCATABLE :: rwork(:), sv_(:)
-   COMPLEX(dbl), ALLOCATABLE :: atmp(:,:), work(:)
+   REAL(DP),    ALLOCATABLE :: rwork(:), sv_(:)
+   COMPLEX(DP), ALLOCATABLE :: atmp(:,:), work(:)
    !
-   REAL(dbl)         :: rworkl
-   COMPLEX(dbl)      :: workl
+   REAL(DP)         :: rworkl
+   COMPLEX(DP)      :: workl
    INTEGER           :: smlsiz, minmn, nlvl, lwork, lrwork, liwork
    INTEGER, EXTERNAL :: ILAENV
 
@@ -1076,17 +1059,17 @@ END SUBROUTINE zmat_lsd
    !
    IMPLICIT NONE
    INTEGER,   INTENT(IN)       :: m, n, nrhs
-   REAL(dbl), INTENT(IN)       :: rcond
-   COMPLEX(dbl), INTENT(IN)    :: a(:,:)
-   COMPLEX(dbl), INTENT(INOUT) :: b(:)
-   REAL(dbl), OPTIONAL, INTENT(OUT) :: sv(:)
+   REAL(DP), INTENT(IN)       :: rcond
+   COMPLEX(DP), INTENT(IN)    :: a(:,:)
+   COMPLEX(DP), INTENT(INOUT) :: b(:)
+   REAL(DP), OPTIONAL, INTENT(OUT) :: sv(:)
    INTEGER,   OPTIONAL, INTENT(OUT) :: rank
    INTEGER,   OPTIONAL, INTENT(OUT) :: ierr
    !
    CHARACTER(10)             :: subname="dmat_lsd_1"
    INTEGER                   :: ierr_, rank_, info
-   COMPLEX(dbl), ALLOCATABLE :: bl(:,:)
-   REAL(dbl),    ALLOCATABLE :: sv_(:)
+   COMPLEX(DP), ALLOCATABLE :: bl(:,:)
+   REAL(DP),    ALLOCATABLE :: sv_(:)
 
    IF ( PRESENT(ierr) ) ierr=0
    !
@@ -1137,13 +1120,13 @@ END SUBROUTINE zmat_lsd_1
    !
    IMPLICIT NONE
    INTEGER, INTENT(IN)         :: n, nrhs
-   COMPLEX(dbl), INTENT(IN)    :: a(:,:)
-   COMPLEX(dbl), INTENT(INOUT) :: b(:,:)
+   COMPLEX(DP), INTENT(IN)    :: a(:,:)
+   COMPLEX(DP), INTENT(INOUT) :: b(:,:)
    INTEGER, OPTIONAL, INTENT(out) :: ierr
 
    INTEGER :: ierr_, info
    INTEGER,      ALLOCATABLE :: ipiv(:)
-   COMPLEX(dbl), ALLOCATABLE :: atmp(:,:)
+   COMPLEX(DP), ALLOCATABLE :: atmp(:,:)
 
    IF ( PRESENT(ierr) ) ierr=0
    !
@@ -1182,12 +1165,12 @@ END SUBROUTINE zmat_sv
    !
    IMPLICIT NONE
    INTEGER, INTENT(IN)         :: n, nrhs
-   COMPLEX(dbl), INTENT(IN)    :: a(:,:)
-   COMPLEX(dbl), INTENT(INOUT) :: b(:)
+   COMPLEX(DP), INTENT(IN)    :: a(:,:)
+   COMPLEX(DP), INTENT(INOUT) :: b(:)
    INTEGER, OPTIONAL, INTENT(out) :: ierr
    !
    INTEGER  :: ierr_, info
-   COMPLEX(dbl),   ALLOCATABLE :: bl(:,:)
+   COMPLEX(DP),   ALLOCATABLE :: bl(:,:)
 
    IF ( PRESENT(ierr) ) ierr = 0
    !
@@ -1219,14 +1202,14 @@ END SUBROUTINE zmat_sv_1
    SUBROUTINE zmat_mul( c, a, opa, b, opb, m, n, k )
    !**********************************************************
    IMPLICIT NONE
-   COMPLEX(dbl), INTENT(IN)  :: a(:,:)
-   COMPLEX(dbl), INTENT(IN)  :: b(:,:)
-   COMPLEX(dbl), INTENT(OUT) :: c(:,:)
+   COMPLEX(DP), INTENT(IN)  :: a(:,:)
+   COMPLEX(DP), INTENT(IN)  :: b(:,:)
+   COMPLEX(DP), INTENT(OUT) :: c(:,:)
    CHARACTER,    INTENT(IN)  :: opa, opb
    INTEGER,      INTENT(IN)  :: m, n, k
    !
    INTEGER :: i, j, l, ierr
-   COMPLEX(dbl), ALLOCATABLE :: c_(:,:)
+   COMPLEX(DP), ALLOCATABLE :: c_(:,:)
    !
    ! According to BLAS convention:
    ! C = opa(A) * opb(B)      op* = 'N' normal, 'C' complx conjg (i.e. herm conjg)
@@ -1319,14 +1302,14 @@ END SUBROUTINE zmat_mul
    SUBROUTINE dmat_mul( c, a, opa, b, opb, m, n, k )
    !**********************************************************
    IMPLICIT NONE
-   REAL(dbl), INTENT(IN)  :: a(:,:)
-   REAL(dbl), INTENT(IN)  :: b(:,:)
-   REAL(dbl), INTENT(OUT) :: c(:,:)
+   REAL(DP), INTENT(IN)  :: a(:,:)
+   REAL(DP), INTENT(IN)  :: b(:,:)
+   REAL(DP), INTENT(OUT) :: c(:,:)
    CHARACTER, INTENT(IN)  :: opa, opb
    INTEGER,   INTENT(IN)  :: m, n, k
    !
    INTEGER :: i, j, l, ierr
-   REAL(dbl), ALLOCATABLE :: c_(:,:)
+   REAL(DP), ALLOCATABLE :: c_(:,:)
    !
    ! According to BLAS convention:
    ! C = opa(A) * opb(B)      op* = 'N' normal, 'T' transpose 
@@ -1352,7 +1335,7 @@ END SUBROUTINE zmat_mul
            !
            DO j = 1, n
            DO i = 1, m
-               c_(i,j) = ZERO
+               c_(i,j) = RZERO
                DO l = 1, k
                    c_(i,j) = c_(i,j) + a(i,l) * b(l,j)
                ENDDO
@@ -1366,7 +1349,7 @@ END SUBROUTINE zmat_mul
            !
            DO j = 1, n
            DO i = 1, m
-               c_(i,j) = ZERO
+               c_(i,j) = RZERO
                DO l = 1, k
                    c_(i,j) = c_(i,j) + a(i,l) * b(j,l)
                ENDDO
@@ -1380,7 +1363,7 @@ END SUBROUTINE zmat_mul
            !
            DO j = 1, n
            DO i = 1, m
-               c_(i,j) = ZERO
+               c_(i,j) = RZERO
                DO l = 1, k
                    c_(i,j) = c_(i,j) + a(l,i) * b(l,j) 
                ENDDO
@@ -1394,7 +1377,7 @@ END SUBROUTINE zmat_mul
            !
            DO j = 1, n
            DO i = 1, m
-               c_(i,j) = ZERO
+               c_(i,j) = RZERO
                DO l = 1, k
                    c_(i,j) = c_(i,j) + a(l,i) * b(j,l) 
                ENDDO
@@ -1403,8 +1386,8 @@ END SUBROUTINE zmat_mul
        ENDIF
    ELSE
 
-       CALL DGEMM( opa, opb, m, n, k, ONE, a, SIZE(a,1), &
-                   b, SIZE(b,1), ZERO, c_, SIZE(c,1) )
+       CALL DGEMM( opa, opb, m, n, k,RONE, a, SIZE(a,1), &
+                   b, SIZE(b,1), RZERO, c_, SIZE(c,1) )
    ENDIF
    !
    c(:,:) = c_(:,:)
@@ -1419,14 +1402,14 @@ END SUBROUTINE dmat_mul
    SUBROUTINE dmat_mul_1( c, a, opa, b, m, k )
    !**********************************************************
    IMPLICIT NONE
-   REAL(dbl), INTENT(IN)  :: a(:,:)
-   REAL(dbl), INTENT(IN)  :: b(:)
-   REAL(dbl), INTENT(OUT) :: c(:)
+   REAL(DP), INTENT(IN)  :: a(:,:)
+   REAL(DP), INTENT(IN)  :: b(:)
+   REAL(DP), INTENT(OUT) :: c(:)
    CHARACTER, INTENT(IN)  :: opa
    INTEGER,   INTENT(IN)  :: m, k
    !
    INTEGER :: ierr
-   REAL(dbl), ALLOCATABLE :: b_(:,:), c_(:,:)
+   REAL(DP), ALLOCATABLE :: b_(:,:), c_(:,:)
    
    ALLOCATE( b_(SIZE(b),1), c_(SIZE(c),1), STAT=ierr ) 
    IF ( ierr/=0 ) CALL errore('dmat_mul_1', 'allocating b_, c_', ABS(ierr))
@@ -1451,15 +1434,15 @@ END SUBROUTINE dmat_mul_1
    ! utility to diagonalize complex hermitean matrices
    !
    IMPLICIT NONE
-   COMPLEX(dbl), INTENT(IN)  :: a(:,:)
-   COMPLEX(dbl), INTENT(OUT) :: z(:,:)
-   REAL(dbl),    INTENT(OUT) :: w(:)
+   COMPLEX(DP), INTENT(IN)  :: a(:,:)
+   COMPLEX(DP), INTENT(OUT) :: z(:,:)
+   REAL(DP),    INTENT(OUT) :: w(:)
    INTEGER,      INTENT(in)  :: n
 
    INTEGER :: i, j, ierr, info
-   COMPLEX(dbl), ALLOCATABLE :: ap(:)
-   COMPLEX(dbl), ALLOCATABLE :: work(:)
-   REAL(dbl), ALLOCATABLE :: rwork(:)
+   COMPLEX(DP), ALLOCATABLE :: ap(:)
+   COMPLEX(DP), ALLOCATABLE :: work(:)
+   REAL(DP), ALLOCATABLE :: rwork(:)
    INTEGER, ALLOCATABLE :: ifail(:)
    INTEGER, ALLOCATABLE :: iwork(:)
 
@@ -1488,7 +1471,7 @@ END SUBROUTINE dmat_mul_1
    ENDDO
 
    ! use magma if possible
-   CALL ZHPEVX( 'v', 'a', 'u', n, ap, ZERO, ZERO, 0, 0, -ONE, i, w, &
+   CALL ZHPEVX( 'v', 'a', 'u', n, ap, RZERO, RZERO, 0, 0, -RONE, i, w, &
                  z, SIZE(z,1), work, rwork, iwork, ifail, info )
 
    IF ( info < 0 ) CALL errore('zmat_hdiag', 'zhpevx: info illegal value', -info )
@@ -1509,15 +1492,15 @@ END SUBROUTINE zmat_hdiag
    ! utility to diagonalize complex hermitean matrices, in packed form
    !
    IMPLICIT NONE
-   COMPLEX(dbl), INTENT(IN)  :: ap(:)
-   COMPLEX(dbl), INTENT(OUT) :: z(:,:)
-   REAL(dbl),    INTENT(OUT) :: w(:)
+   COMPLEX(DP), INTENT(IN)  :: ap(:)
+   COMPLEX(DP), INTENT(OUT) :: z(:,:)
+   REAL(DP),    INTENT(OUT) :: w(:)
    INTEGER,      INTENT(IN)  :: n
    CHARACTER,    INTENT(IN)  :: uplo
 
    INTEGER :: i, ierr, info
-   COMPLEX(dbl), ALLOCATABLE :: work(:)
-   REAL(dbl), ALLOCATABLE :: rwork(:)
+   COMPLEX(DP), ALLOCATABLE :: work(:)
+   REAL(DP), ALLOCATABLE :: rwork(:)
    INTEGER, ALLOCATABLE :: ifail(:)
    INTEGER, ALLOCATABLE :: iwork(:)
 
@@ -1538,7 +1521,7 @@ END SUBROUTINE zmat_hdiag
       IF(ierr/=0) CALL errore('zmat_hdiag','allocating iwork',ABS(ierr))
 
    ! use magma if possible
-   CALL ZHPEVX( 'v', 'a', uplo, n, ap, ZERO, ZERO, 0, 0, -ONE, i, w, &
+   CALL ZHPEVX( 'v', 'a', uplo, n, ap, RZERO, RZERO, 0, 0, -RONE, i, w, &
                  z, SIZE(z,1), work, rwork, iwork, ifail, info )
 
    IF ( info < 0 ) CALL errore('zmat_hdiag', 'zhpevx: info illegal value', -info )
@@ -1561,16 +1544,16 @@ END SUBROUTINE zmat_hdiag_pack
    !  A * z = w * B * z
    !
    IMPLICIT NONE
-   COMPLEX(dbl), INTENT(IN)  :: a(:,:)
-   COMPLEX(dbl), INTENT(IN)  :: b(:,:)
-   COMPLEX(dbl), INTENT(OUT) :: z(:,:)
-   REAL(dbl),    INTENT(OUT) :: w(:)
+   COMPLEX(DP), INTENT(IN)  :: a(:,:)
+   COMPLEX(DP), INTENT(IN)  :: b(:,:)
+   COMPLEX(DP), INTENT(OUT) :: z(:,:)
+   REAL(DP),    INTENT(OUT) :: w(:)
    INTEGER,      INTENT(in)  :: n
 
    INTEGER :: i, j, ierr, info
-   COMPLEX(dbl), ALLOCATABLE :: ap(:), bp(:)
-   COMPLEX(dbl), ALLOCATABLE :: work(:)
-   REAL(dbl),    ALLOCATABLE :: rwork(:)
+   COMPLEX(DP), ALLOCATABLE :: ap(:), bp(:)
+   COMPLEX(DP), ALLOCATABLE :: work(:)
+   REAL(DP),    ALLOCATABLE :: rwork(:)
    INTEGER,      ALLOCATABLE :: ifail(:)
    INTEGER,      ALLOCATABLE :: iwork(:)
 
@@ -1604,7 +1587,7 @@ END SUBROUTINE zmat_hdiag_pack
    ENDDO
 
    ! use magma if possible
-   CALL ZHPGVX( 1, 'v', 'a', 'u', n, ap, bp, ZERO, ZERO, 0, 0, -ONE, i, w, &
+   CALL ZHPGVX( 1, 'v', 'a', 'u', n, ap, bp, RZERO, RZERO, 0, 0, -RONE, i, w, &
                  z, SIZE(z,1), work, rwork, iwork, ifail, info )
 
    IF ( info < 0 ) CALL errore('zmat_hdiag', 'zhpevx: info illegal value', -info )
@@ -1625,14 +1608,14 @@ END SUBROUTINE zmat_hdiag_gen
    ! utility to diagonalize real symmetric matrices
    !
    IMPLICIT NONE
-   REAL(dbl),    INTENT(IN)  :: a(:,:)
-   REAL(dbl),    INTENT(OUT) :: z(:,:)
-   REAL(dbl),    INTENT(OUT) :: w(:)
+   REAL(DP),    INTENT(IN)  :: a(:,:)
+   REAL(DP),    INTENT(OUT) :: z(:,:)
+   REAL(DP),    INTENT(OUT) :: w(:)
    INTEGER,      INTENT(in)  :: n
 
    INTEGER :: i, j, ierr, info
-   REAL(dbl), ALLOCATABLE :: ap(:)
-   REAL(dbl), ALLOCATABLE :: work(:)
+   REAL(DP), ALLOCATABLE :: ap(:)
+   REAL(DP), ALLOCATABLE :: work(:)
    INTEGER,   ALLOCATABLE :: ifail(:)
    INTEGER,   ALLOCATABLE :: iwork(:)
 
@@ -1659,7 +1642,7 @@ END SUBROUTINE zmat_hdiag_gen
    ENDDO
 
    ! use magma if possible
-   CALL DSPEVX( 'v', 'a', 'u', n, ap(1), ZERO, ZERO, 0, 0, -ONE, i, w(1), &
+   CALL DSPEVX( 'v', 'a', 'u', n, ap(1), RZERO, RZERO, 0, 0, -RONE, i, w(1), &
                  z(1,1), SIZE(z,1), work(1), iwork(1), ifail(1), info )
 
    IF ( info < 0 ) CALL errore('dmat_hdiag', 'zhpevx: info illegal value', -info )
@@ -1680,14 +1663,14 @@ END SUBROUTINE dmat_hdiag
    ! utility to diagonalize real symmetric matrices
    !
    IMPLICIT NONE
-   REAL(dbl),    INTENT(IN)  :: ab(:,:)
-   REAL(dbl),    INTENT(OUT) :: z(:,:)
-   REAL(dbl),    INTENT(OUT) :: w(:)
+   REAL(DP),    INTENT(IN)  :: ab(:,:)
+   REAL(DP),    INTENT(OUT) :: z(:,:)
+   REAL(DP),    INTENT(OUT) :: w(:)
    INTEGER,      INTENT(in)  :: ldab, n, kd
 
    CHARACTER(14) :: subname="dmat_bnd_hdiag"
    INTEGER :: i, j, m, ierr, info
-   REAL(dbl), ALLOCATABLE :: work(:), qmat(:,:)
+   REAL(DP), ALLOCATABLE :: work(:), qmat(:,:)
    INTEGER,   ALLOCATABLE :: ifail(:)
    INTEGER,   ALLOCATABLE :: iwork(:)
 
@@ -1709,7 +1692,7 @@ END SUBROUTINE dmat_hdiag
 
 
    ! use magma if possible
-   CALL DSBEVX( 'v', 'a', 'u', n, kd, ab, ldab, qmat, SIZE(qmat,1), ZERO, ZERO, 0, 0, ZERO, &
+   CALL DSBEVX( 'v', 'a', 'u', n, kd, ab, ldab, qmat, SIZE(qmat,1), RZERO, RZERO, 0, 0, RZERO, &
                  m, w, z, SIZE(z,1), work, iwork, ifail, info )
 
    IF ( info < 0 ) CALL errore(subname, 'DSBEVX: info illegal value', -info )
@@ -1729,15 +1712,15 @@ END SUBROUTINE dmat_bnd_hdiag
    ! utility to diagonalize real symmetric matrices
    !
    IMPLICIT NONE
-   REAL(dbl),    INTENT(IN)  :: ab(:,:)
-   REAL(dbl),    INTENT(OUT) :: z(:,:)
-   REAL(dbl),    INTENT(OUT) :: w(:)
+   REAL(DP),    INTENT(IN)  :: ab(:,:)
+   REAL(DP),    INTENT(OUT) :: z(:,:)
+   REAL(DP),    INTENT(OUT) :: w(:)
    INTEGER,      INTENT(in)  :: ldab, n, kd
    INTEGER,      INTENT(in)  :: il, iu
 
    CHARACTER(18) :: subname="dmat_bnd_hdiag_ext"
    INTEGER :: i, j, m, ierr, info
-   REAL(dbl), ALLOCATABLE :: work(:), qmat(:,:)
+   REAL(DP), ALLOCATABLE :: work(:), qmat(:,:)
    INTEGER,   ALLOCATABLE :: ifail(:)
    INTEGER,   ALLOCATABLE :: iwork(:)
 
@@ -1762,7 +1745,7 @@ END SUBROUTINE dmat_bnd_hdiag
 
 
    ! use magma if possible
-   CALL DSBEVX( 'v', 'i', 'u', n, kd, ab, ldab, qmat, SIZE(qmat,1), ZERO, ZERO, il, iu, ZERO, &
+   CALL DSBEVX( 'v', 'i', 'u', n, kd, ab, ldab, qmat, SIZE(qmat,1), RZERO, RZERO, il, iu, RZERO, &
                  m, w, z, SIZE(z,1), work, iwork, ifail, info )
 
    IF ( info < 0 ) CALL errore(subname, 'DSBEVX: info illegal value', -info )
@@ -1783,17 +1766,17 @@ END SUBROUTINE dmat_bnd_hdiag_ext
    ! utility to diagonalize complex non-hermitean matrices
    !
    IMPLICIT NONE
-   COMPLEX(dbl),        INTENT(IN)  :: a(:,:)
-   COMPLEX(dbl),        INTENT(OUT) :: z(:,:)
-   COMPLEX(dbl),        INTENT(OUT) :: w(:)
+   COMPLEX(DP),        INTENT(IN)  :: a(:,:)
+   COMPLEX(DP),        INTENT(OUT) :: z(:,:)
+   COMPLEX(DP),        INTENT(OUT) :: w(:)
    INTEGER,             INTENT(in)  :: n
    CHARACTER,           INTENT(in)  :: side
 
    INTEGER   :: ierr, info, lwork
    CHARACTER :: jobvl, jobvr
-   COMPLEX(dbl), ALLOCATABLE :: work(:), vl(:,:), vr(:,:)
-   COMPLEX(dbl), ALLOCATABLE :: a_(:,:)
-   REAL(dbl),    ALLOCATABLE :: rwork(:)
+   COMPLEX(DP), ALLOCATABLE :: work(:), vl(:,:), vr(:,:)
+   COMPLEX(DP), ALLOCATABLE :: a_(:,:)
+   REAL(DP),    ALLOCATABLE :: rwork(:)
 
    ! get the dimension of the problem
    IF ( n <= 0 ) CALL errore('zmat_diag','Invalid N',ABS(n)+1)
@@ -1860,9 +1843,9 @@ END SUBROUTINE zmat_diag
    !
    IMPLICIT NONE
    INTEGER,                INTENT(IN)  :: n
-   COMPLEX(dbl),           INTENT(IN)  :: a(:,:)
-   COMPLEX(dbl),           INTENT(OUT) :: z(:,:)
-   COMPLEX(dbl), OPTIONAL, INTENT(OUT) :: det_a
+   COMPLEX(DP),           INTENT(IN)  :: a(:,:)
+   COMPLEX(DP),           INTENT(OUT) :: z(:,:)
+   COMPLEX(DP), OPTIONAL, INTENT(OUT) :: det_a
    INTEGER,      OPTIONAL, INTENT(OUT) :: ierr
    !
    INTEGER           :: i, nb, info, ierr_, ldz, lwork, ipiv (n)
@@ -1870,7 +1853,7 @@ END SUBROUTINE zmat_diag
    ! info=0: inversion was successful
    ! ldz   : leading dimension (the same as n)
    ! ipiv  : work space for pivoting 
-   COMPLEX(dbl), ALLOCATABLE :: work(:)
+   COMPLEX(DP), ALLOCATABLE :: work(:)
    !
    !
    IF ( PRESENT( ierr ) ) ierr=0
@@ -1911,7 +1894,7 @@ END SUBROUTINE zmat_diag
    !
    IF ( PRESENT( det_a ) ) THEN
       !
-      det_a = ONE
+      det_a =RONE
       DO i = 1, n
          det_a = det_a * z(i,i)
       ENDDO
@@ -1944,8 +1927,8 @@ END SUBROUTINE zmat_inv
    IMPLICIT NONE
    INTEGER,                INTENT(IN)  :: n
    INTEGER,                INTENT(IN)  :: kl, ku, ldab
-   COMPLEX(dbl),           INTENT(IN)  :: ab(ldab,n)
-   COMPLEX(dbl),           INTENT(OUT) :: z(n,n)
+   COMPLEX(DP),           INTENT(IN)  :: ab(ldab,n)
+   COMPLEX(DP),           INTENT(OUT) :: z(n,n)
    INTEGER,      OPTIONAL, INTENT(OUT) :: ierr
    !
    INTEGER           :: i, info, ldz, ipiv (n)
@@ -1998,9 +1981,9 @@ END SUBROUTINE zmat_bnd_inv
    !
    IMPLICIT NONE
    INTEGER,             INTENT(IN)    :: n
-   REAL(dbl),           INTENT(IN)    :: a(:,:)
-   REAL(dbl),           INTENT(OUT)   :: z(:,:)
-   REAL(dbl), OPTIONAL, INTENT(OUT)   :: det_a
+   REAL(DP),           INTENT(IN)    :: a(:,:)
+   REAL(DP),           INTENT(OUT)   :: z(:,:)
+   REAL(DP), OPTIONAL, INTENT(OUT)   :: det_a
    INTEGER,   OPTIONAL, INTENT(OUT)   :: ierr
    !
    INTEGER           :: i, nb, info, ierr_, ldz, lwork, ipiv (n)
@@ -2008,7 +1991,7 @@ END SUBROUTINE zmat_bnd_inv
    ! info=0: inversion was successful
    ! ldz   : leading dimension (the same as n)
    ! ipiv  : work space for pivoting 
-   REAL(dbl), ALLOCATABLE :: work(:)
+   REAL(DP), ALLOCATABLE :: work(:)
    !
    !
    IF ( PRESENT( ierr ) ) ierr = 0
@@ -2048,7 +2031,7 @@ END SUBROUTINE zmat_bnd_inv
    !
    IF ( PRESENT( det_a ) ) THEN
        !
-       det_a = ONE
+       det_a =RONE
        DO i = 1, n
           det_a = det_a * z(i,i)
        ENDDO
@@ -2081,8 +2064,8 @@ END SUBROUTINE dmat_inv
    IMPLICIT NONE
    INTEGER,                INTENT(IN)  :: n
    INTEGER,                INTENT(IN)  :: kl, ku, ldab
-   REAL(dbl),              INTENT(IN)  :: ab(ldab,n)
-   REAL(dbl),              INTENT(OUT) :: z(n,n)
+   REAL(DP),              INTENT(IN)  :: ab(ldab,n)
+   REAL(DP),              INTENT(OUT) :: z(n,n)
    INTEGER,      OPTIONAL, INTENT(OUT) :: ierr
    !
    INTEGER           :: i, info, ldz, ipiv (n)
@@ -2101,9 +2084,9 @@ END SUBROUTINE dmat_inv
    !
    IF ( ldab < 2 * kl + ku + 1) CALL errore ('dmat_bnd_inv', 'invalid ldab', 10 )
    !
-   z = ZERO
+   z = RZERO
    DO i = 1, n
-       z(i,i) = ONE
+       z(i,i) =RONE
    ENDDO
    !
    ! use magma if possible
@@ -2132,12 +2115,12 @@ END SUBROUTINE dmat_bnd_inv
    !
    IMPLICIT NONE
    INTEGER,                INTENT(IN)  :: n
-   COMPLEX(dbl),           INTENT(IN)  :: a(:,:)
-   COMPLEX(dbl),           INTENT(OUT) :: z(:,:)
+   COMPLEX(DP),           INTENT(IN)  :: a(:,:)
+   COMPLEX(DP),           INTENT(OUT) :: z(:,:)
    INTEGER,      OPTIONAL, INTENT(OUT) :: ierr
    !
-   COMPLEX(dbl), ALLOCATABLE :: work(:,:), work1(:,:)
-   REAL(dbl),    ALLOCATABLE :: w(:)
+   COMPLEX(DP), ALLOCATABLE :: work(:,:), work1(:,:)
+   REAL(DP),    ALLOCATABLE :: w(:)
    INTEGER  :: ierr_, i, j
    !
    IF ( PRESENT( ierr ) ) ierr=0
@@ -2185,12 +2168,12 @@ END SUBROUTINE zmat_hsqrt
    !
    IMPLICIT NONE
    INTEGER,                INTENT(IN)  :: n
-   REAL(dbl),              INTENT(IN)  :: a(:,:)
-   REAL(dbl),              INTENT(OUT) :: z(:,:)
+   REAL(DP),              INTENT(IN)  :: a(:,:)
+   REAL(DP),              INTENT(OUT) :: z(:,:)
    INTEGER,      OPTIONAL, INTENT(OUT) :: ierr
    !
-   REAL(dbl),  ALLOCATABLE :: work(:,:), work1(:,:)
-   REAL(dbl),  ALLOCATABLE :: w(:)
+   REAL(DP),  ALLOCATABLE :: work(:,:), work1(:,:)
+   REAL(DP),  ALLOCATABLE :: w(:)
    INTEGER  :: ierr_, i, j
    !
    IF ( PRESENT( ierr ) ) ierr=0
@@ -2239,13 +2222,13 @@ END SUBROUTINE dmat_hsqrt
    !
    IMPLICIT NONE
    INTEGER,                INTENT(IN)  :: n, ldab, ka
-   REAL(dbl),              INTENT(IN)  :: ab(:,:)
-   REAL(dbl),              INTENT(OUT) :: z(:,:)
+   REAL(DP),              INTENT(IN)  :: ab(:,:)
+   REAL(DP),              INTENT(OUT) :: z(:,:)
    !INTEGER,                INTENT(OUT) :: kz
    INTEGER,      OPTIONAL, INTENT(OUT) :: ierr
    !
-   REAL(dbl),  ALLOCATABLE :: work(:,:), work1(:,:)
-   REAL(dbl),  ALLOCATABLE :: w(:)
+   REAL(DP),  ALLOCATABLE :: work(:,:), work1(:,:)
+   REAL(DP),  ALLOCATABLE :: w(:)
    INTEGER  :: ierr_, i, j
    !
    IF ( PRESENT( ierr ) ) ierr=0
@@ -2294,20 +2277,20 @@ END SUBROUTINE dmat_bnd_hsqrt
    IMPLICIT NONE
    LOGICAL               :: zmat_is_herm
    INTEGER               :: n
-   COMPLEX(dbl)          :: z(:,:)
-   REAL(dbl), OPTIONAL   :: toll
+   COMPLEX(DP)          :: z(:,:)
+   REAL(DP), OPTIONAL   :: toll
    !
    ! n : actual dimension of Z
    ! check if a complex matrix is hermitean.
    !
-   REAL(dbl)     :: toll_
+   REAL(DP)     :: toll_
    CHARACTER(12) :: subname='zmat_is_herm'
-   REAL(dbl)     :: rtmp
-   COMPLEX(dbl)  :: ztmp
+   REAL(DP)     :: rtmp
+   COMPLEX(DP)  :: ztmp
    INTEGER       :: i, j
    
 
-   toll_ = TINY(ZERO)  
+   toll_ = TINY(RZERO)  
    IF ( PRESENT(toll) ) toll_ = toll
    IF ( toll_ <= 0.0 ) CALL errore(subname,'Invalid TOLL',1)
   
@@ -2321,7 +2304,7 @@ END SUBROUTINE dmat_bnd_hsqrt
    DO i = 1, j
        !
        ztmp = z(i,j) - CONJG( z(j,i) )
-       rtmp = REAL( ztmp * CONJG( ztmp ), dbl ) 
+       rtmp = REAL( ztmp * CONJG( ztmp ), DP ) 
        !
        IF ( rtmp > toll_ ) THEN
           zmat_is_herm = .FALSE. 
@@ -2341,19 +2324,19 @@ END FUNCTION zmat_is_herm
    IMPLICIT NONE
    LOGICAL               :: dmat_is_herm
    INTEGER               :: n
-   REAL(dbl)             :: A(:,:)
-   REAL(dbl), OPTIONAL   :: toll
+   REAL(DP)             :: A(:,:)
+   REAL(DP), OPTIONAL   :: toll
    !
    ! n : actual dimension of Z
    ! check if a real matrix is hermitean.
    !
-   REAL(dbl)     :: toll_
+   REAL(DP)     :: toll_
    CHARACTER(12) :: subname='dmat_is_herm'
-   REAL(dbl)     :: rtmp
+   REAL(DP)     :: rtmp
    INTEGER       :: i, j
    
 
-   toll_ = TINY(ZERO)  
+   toll_ = TINY(RZERO)  
    IF ( PRESENT(toll) ) toll_ = toll
    IF ( toll_ <= 0.0 ) CALL errore(subname,'Invalid TOLL',1)
   
@@ -2387,9 +2370,9 @@ END FUNCTION dmat_is_herm
    IMPLICIT NONE
    LOGICAL                :: zmat_is_unitary
    INTEGER                :: m,n
-   COMPLEX(dbl)           :: z(:,:)
+   COMPLEX(DP)           :: z(:,:)
    CHARACTER(*), OPTIONAL :: side 
-   REAL(dbl),    OPTIONAL :: toll
+   REAL(DP),    OPTIONAL :: toll
    !
    ! m, n : actual dimensions of A
    ! check if a complex matrix is unitary.
@@ -2397,16 +2380,16 @@ END FUNCTION dmat_is_herm
    ! SIDE='right' only   A * A^{\dag} = I
    ! SIDE='both'  both sides (DEFAULT)
    !
-   REAL(dbl)     :: toll_
+   REAL(DP)     :: toll_
    CHARACTER(10) :: side_
    CHARACTER(15) :: subname='zmat_is_unitary'
    INTEGER       :: dim1,dim2
    INTEGER       :: i, j, ierr
-   COMPLEX(dbl), ALLOCATABLE  :: result(:,:)
+   COMPLEX(DP), ALLOCATABLE  :: result(:,:)
    
    zmat_is_unitary = .TRUE. 
 
-   toll_ = TINY(ZERO)  
+   toll_ = TINY(RZERO)  
    side_ = 'both'
    IF ( PRESENT(side) ) side_ = TRIM(side)
    IF ( PRESENT(toll) ) toll_ = toll
@@ -2481,12 +2464,12 @@ END FUNCTION zmat_is_unitary
    IMPLICIT NONE
    INTEGER          :: zmat_rank
    INTEGER          :: m,n
-   COMPLEX(dbl)     :: a(:,:)
-   REAL(dbl)        :: toll
+   COMPLEX(DP)     :: a(:,:)
+   REAL(DP)        :: toll
    !
    INTEGER :: i,ierr 
-   REAL(dbl),    ALLOCATABLE :: s(:)
-   COMPLEX(dbl), ALLOCATABLE :: atmp(:,:), u(:,:), vt(:,:)
+   REAL(DP),    ALLOCATABLE :: s(:)
+   COMPLEX(DP), ALLOCATABLE :: atmp(:,:), u(:,:), vt(:,:)
 
    IF ( m > SIZE(a,1) ) CALL errore('zmat_rank','Invalid m',ABS(m)+1)
    IF ( n > SIZE(a,2) ) CALL errore('zmat_rank','Invalid n',ABS(n)+1)
@@ -2522,12 +2505,12 @@ END FUNCTION zmat_rank
    IMPLICIT NONE
    INTEGER            :: dmat_rank
    INTEGER            :: m,n
-   REAL(dbl)          :: a(:,:)
-   REAL(dbl)          :: toll
+   REAL(DP)          :: a(:,:)
+   REAL(DP)          :: toll
    !
    INTEGER :: i,ierr 
-   REAL(dbl), ALLOCATABLE :: s(:)
-   REAL(dbl), ALLOCATABLE :: atmp(:,:), u(:,:), vt(:,:)
+   REAL(DP), ALLOCATABLE :: s(:)
+   REAL(DP), ALLOCATABLE :: atmp(:,:), u(:,:), vt(:,:)
 
 
    IF ( m > SIZE(a,1) ) CALL errore('dmat_rank','Invalid m',ABS(m)+1)
@@ -2563,11 +2546,11 @@ END FUNCTION dmat_rank
    FUNCTION  zmat_ge_dotp( m, n, a, b)
    !**********************************************************
    IMPLICIT NONE
-   COMPLEX(dbl)       :: zmat_ge_dotp
+   COMPLEX(DP)       :: zmat_ge_dotp
    INTEGER            :: m, n
-   COMPLEX(dbl)       :: a(:,:), b(:,:)
+   COMPLEX(DP)       :: a(:,:), b(:,:)
    !
-   COMPLEX(dbl) :: dotp
+   COMPLEX(DP) :: dotp
    INTEGER      :: i, j
 
    IF ( m > SIZE(a,1) ) CALL errore('zmat_dotp','Invalid m I',ABS(m)+1)
@@ -2593,11 +2576,11 @@ END FUNCTION zmat_ge_dotp
    FUNCTION  dmat_ge_dotp( m, n, a, b)
    !**********************************************************
    IMPLICIT NONE
-   REAL(dbl)       :: dmat_ge_dotp
+   REAL(DP)       :: dmat_ge_dotp
    INTEGER         :: m, n
-   REAL(dbl)       :: a(:,:), b(:,:)
+   REAL(DP)       :: a(:,:), b(:,:)
    !
-   REAL(dbl)    :: dotp
+   REAL(DP)    :: dotp
    INTEGER      :: i, j
 
    IF ( m > SIZE(a,1) ) CALL errore('dmat_ge_dotp','Invalid m I',ABS(m)+1)
@@ -2605,7 +2588,7 @@ END FUNCTION zmat_ge_dotp
    IF ( m > SIZE(b,1) ) CALL errore('dmat_ge_dotp','Invalid m II',ABS(m)+1)
    IF ( n > SIZE(b,2) ) CALL errore('dmat_ge_dotp','Invalid n II',ABS(n)+1)
 
-   dotp = ZERO
+   dotp = RZERO
    !
    DO j = 1, n
    DO i = 1, m
@@ -2622,11 +2605,11 @@ END FUNCTION dmat_ge_dotp
    FUNCTION  zmat_he_dotp( m, a, b)
    !**********************************************************
    IMPLICIT NONE
-   COMPLEX(dbl)       :: zmat_he_dotp
+   COMPLEX(DP)       :: zmat_he_dotp
    INTEGER            :: m
-   COMPLEX(dbl)       :: a(:,:), b(:,:)
+   COMPLEX(DP)       :: a(:,:), b(:,:)
    !
-   COMPLEX(dbl) :: dotp
+   COMPLEX(DP) :: dotp
    INTEGER      :: i, j
 
    IF ( m > SIZE(a,1) ) CALL errore('zmat_hdotp','Invalid m1',ABS(m)+1)
@@ -2638,12 +2621,12 @@ END FUNCTION dmat_ge_dotp
    !
    DO j = 1, m
    DO i = 1, j-1
-      dotp = dotp + 2.0_dbl * CONJG( a(i,j) ) * b(i,j)
+      dotp = dotp + 2.0_DP * CONJG( a(i,j) ) * b(i,j)
    ENDDO
    ENDDO
    !
    DO i = 1, m
-      dotp = dotp + 1.0_dbl * CONJG( a(i,i) ) * b(i,i)
+      dotp = dotp + 1.0_DP * CONJG( a(i,i) ) * b(i,i)
    ENDDO
    !
    zmat_he_dotp = dotp
@@ -2656,11 +2639,11 @@ END FUNCTION zmat_he_dotp
    FUNCTION  dmat_sy_dotp( m, a, b)
    !**********************************************************
    IMPLICIT NONE
-   REAL(dbl)          :: dmat_sy_dotp
+   REAL(DP)          :: dmat_sy_dotp
    INTEGER            :: m
-   REAL(dbl)          :: a(:,:), b(:,:)
+   REAL(DP)          :: a(:,:), b(:,:)
    !
-   REAL(dbl) :: dotp
+   REAL(DP) :: dotp
    INTEGER   :: i, j
 
    IF ( m > SIZE(a,1) ) CALL errore('dmat_sy_dotp','Invalid m1',ABS(m)+1)
@@ -2668,16 +2651,16 @@ END FUNCTION zmat_he_dotp
    IF ( m > SIZE(b,1) ) CALL errore('dmat_sy_dotp','Invalid m3',ABS(m)+1)
    IF ( m > SIZE(b,2) ) CALL errore('dmat_sy_dotp','Invalid m4',ABS(m)+1)
 
-   dotp = ZERO
+   dotp = RZERO
    !
    DO j = 1, m
    DO i = 1, j-1
-      dotp = dotp + 2.0_dbl * a(i,j) * b(i,j)
+      dotp = dotp + 2.0_DP * a(i,j) * b(i,j)
    ENDDO
    ENDDO
    !
    DO i = 1, m
-      dotp = dotp + 1.0_dbl * a(i,i) * b(i,i)
+      dotp = dotp + 1.0_DP * a(i,i) * b(i,i)
    ENDDO
    !
    dmat_sy_dotp = dotp
@@ -2694,12 +2677,12 @@ END FUNCTION dmat_sy_dotp
    !       'L', 'l', provide the lower triangular parts
    !
    IMPLICIT NONE
-   COMPLEX(dbl)       :: zmat_hp_dotp
+   COMPLEX(DP)       :: zmat_hp_dotp
    INTEGER            :: m
    CHARACTER          :: uplo
-   COMPLEX(dbl)       :: ap(:), bp(:)
+   COMPLEX(DP)       :: ap(:), bp(:)
    !
-   COMPLEX(dbl) :: dotp
+   COMPLEX(DP) :: dotp
    INTEGER      :: i, j, l
 
    IF ( m*(m+1)/2 > SIZE(ap) ) CALL errore('zmat_hdotp','Invalid m A',ABS(m)+1)
@@ -2717,11 +2700,11 @@ END FUNCTION dmat_sy_dotp
            !
            DO i = 1, j-1
                l = l+1
-               dotp = dotp + 2.0_dbl * CONJG( ap(l) ) * bp(l)
+               dotp = dotp + 2.0_DP * CONJG( ap(l) ) * bp(l)
            ENDDO
            !
            l = l+1
-           dotp = dotp + 1.0_dbl * CONJG ( ap(l) ) * bp(l)
+           dotp = dotp + 1.0_DP * CONJG ( ap(l) ) * bp(l)
            !
        ENDDO
        !
@@ -2730,11 +2713,11 @@ END FUNCTION dmat_sy_dotp
        DO j = 1, m
            !
            l = (j-1) * ( 2*m -j +2) /2 +1
-           dotp = dotp + 1.0_dbl * CONJG ( ap(l) ) * bp(l)
+           dotp = dotp + 1.0_DP * CONJG ( ap(l) ) * bp(l)
            !
            DO i = j+1, m
                l = l+1
-               dotp = dotp + 2.0_dbl * CONJG( ap(l) ) * bp(l)
+               dotp = dotp + 2.0_DP * CONJG( ap(l) ) * bp(l)
            ENDDO
            !
            !
@@ -2753,3 +2736,65 @@ END FUNCTION zmat_hp_dotp
 END MODULE util_module
 
 
+!
+! Copyright (C) 2001-2007 Quantum-ESPRESSO group
+! This file is distributed under the terms of the
+! GNU General Public License. See the file `License'
+! in the root directory of the present distribution,
+! or http://www.gnu.org/copyleft/gpl.txt .
+!
+!----------------------------------------------------------------------------
+SUBROUTINE errore( calling_routine, message, ierr )
+  !----------------------------------------------------------------------------
+  !
+  ! ... This is a simple routine which writes an error message to output: 
+  ! ... if ierr <= 0 it does nothing, 
+  ! ... if ierr  > 0 it stops.
+  !
+  ! ...          **** Important note for parallel execution ***
+  !
+  ! ... in parallel execution unit 6 is written only by the first node;
+  ! ... all other nodes have unit 6 redirected to nothing (/dev/null).
+  ! ... As a consequence an error not occurring on the first node
+  ! ... will be invisible. For T3E and ORIGIN machines, this problem
+  ! ... is solved by writing an error message to unit * instead of 6.
+  ! ... Whenever possible (IBM SP machines), we write to the standard
+  ! ... error, unit 0 (the message will appear in the error files 
+  ! ... produced by loadleveler).
+  !
+  IMPLICIT NONE
+  !
+  INCLUDE 'mpif.h'
+  !
+  INTEGER,       PARAMETER :: stdout = 6
+  INTEGER,       PARAMETER :: crashunit = 50
+  CHARACTER(10), PARAMETER :: crash_file = "CRASH"
+  !
+  CHARACTER(LEN=*), INTENT(IN) :: calling_routine, message
+    ! the name of the calling calling_routinee
+    ! the output messagee
+  INTEGER,          INTENT(IN) :: ierr
+    ! the error flag
+  INTEGER                      :: mpierr
+    ! the task id  
+    !
+  !
+  !
+  IF ( ierr <= 0 ) RETURN
+  !
+  ! ... the error message is written un the "*" unit
+  !
+  WRITE( UNIT = *, FMT = '(/,1X,78("%"))' )
+  WRITE( UNIT = *, &
+         FMT = '(5X,"from ",A," : error #",I10)' ) TRIM(calling_routine), ierr
+  WRITE( UNIT = *, FMT = '(5X,A)' ) message
+  WRITE( UNIT = *, FMT = '(1X,78("%"),/)' )
+  WRITE( *, '("     stopping ...")' )
+  !
+  CALL MPI_FINALIZE( mpierr )
+  !
+  STOP 2
+  !
+  RETURN
+  !
+END SUBROUTINE errore

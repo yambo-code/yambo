@@ -53,8 +53,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
  use stderr,        ONLY:intc
- use wrapper_omp,   ONLY:Vstar_dot_V_omp
- use wrapper,       ONLY:Vstar_dot_V,V_dot_V
+ use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -444,11 +443,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          !
          i2=life_W_table(iqibz,QP_n_W_freqs)
          !
-!$omp parallel do default(shared), private(i3)
          do i3=1,X%ng
-           lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+           lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
          enddo
-!$omp end parallel do
          !       
          ! To compensate the Tel/w divergence of the Bose function at finite
          ! Tel I multiply the X_mat function by [w/(Tel*Bose_E_cut)]^2
@@ -461,19 +458,15 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          !
        else ! .not.l_life
          !
-!$omp parallel default(shared), private(i3,i2)
          do i2=1,QP_n_W_freqs
            !
-!$omp do
            do i3=1,X%ng
-             lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+             lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
            enddo
-!$omp end do
            !
-           QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*Vstar_dot_V(X%ng,scattering_prime%rhotw,lrhotw)
+           QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
            !
          enddo
-!$omp end parallel
          !
        endif
        !

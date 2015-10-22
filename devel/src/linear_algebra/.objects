@@ -1,1 +1,5 @@
-objs = MATRIX_driver.o MATRIX_resolvant_via_perturbative_inversion.o MATRIX_resolvant_via_exact_inversion.o 
+SLK_objs = 
+#if defined _SCALAPACK
+SLK_objs = SLK_test_util.o SLK_test.o SLK_ORTHO_group.o SLK_ORTHO_init.o SLK_tools.o
+#endif
+objs = MATRIX_driver.o MATRIX_resolvant_via_perturbative_inversion.o MATRIX_resolvant_via_exact_inversion.o $(SLK_objs)

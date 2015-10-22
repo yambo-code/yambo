@@ -25,7 +25,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! This routine returns <iR> and <P^2>.
  !
- use pars,                ONLY:SP,schlen,cONE,CZERO
+ use pars,                ONLY:SP,schlen,cZERO
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
@@ -38,10 +38,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use IO_m,                ONLY:io_control,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf_ng,WF
- use com,                 ONLY:error,msg,warning
+ use com,                 ONLY:error,msg
 #if defined _SC
  use drivers,             ONLY:l_real_time
- use SC,                  ONLY:B_mat_index
  use com,                 ONLY:secnm
 #endif
  !
@@ -88,6 +87,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! WF load
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
  ! there will be other WF_load calls using the present WF distribution. 
+ ! This is the case, for example, of the response function calculation.
  !
  call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
@@ -101,17 +101,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
  l_eval_DIP_P2=.false.
  wf_dim=3
  !
- call SET_dipole_parallelization_scheme(X,l_mat_eval_DIP,n_LT_steps)
+ call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
 #if defined _SC
  l_eval_DIP_P2=l_sc_run.or.l_real_time
  if(l_eval_DIP_P2) wf_dim=4
 #endif
  !
- if(l_eval_DIP_P)                    live_t_string='Dipole  P        (T):'
- if(l_eval_DIP_P .and.l_eval_DIP_iR) live_t_string='Dipole  P and iR (T):'
- if(l_eval_DIP_P2.and.l_eval_DIP_P)  live_t_string='Dipole  P and P2 (T):'
- if(l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dip iR, P and P2 (T):'
+ if (l_eval_DIP_P)                    live_t_string='Dipoles: P (T):'
+ if (l_eval_DIP_P .and.l_eval_DIP_iR) live_t_string='Dipoles: P-iR (T):'
+ if (l_eval_DIP_P2.and.l_eval_DIP_P)  live_t_string='Dipoles: P-P2 (T):'
+ if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR-P-P2 (T):'
  !
  if (n_LT_steps>0) call live_timing(trim(live_t_string),n_LT_steps)
  !

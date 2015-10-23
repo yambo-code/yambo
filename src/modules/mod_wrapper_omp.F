@@ -77,14 +77,26 @@ module wrapper_omp
      complex(SP), intent(out) :: C(msize,msize)
      character,   intent(in)  :: TRANSA,TRANSB
      !
+     complex(SP) :: A_(msize,msize),B_(msize,msize)
+     !
 #if defined _OPENMP
+     !
      integer :: i,j,k
+     !
+     if (TRANSA=='n') A_=A
+     if (TRANSA=='t') A_=transpose(A)
+     if (TRANSA=='c') A_=conjg(transpose(A))
+     !
+     if (TRANSB=='n') B_=B
+     if (TRANSB=='t') B_=transpose(B)
+     if (TRANSB=='c') B_=conjg(transpose(B))
+     !
 !$omp parallel do default(shared), private(i,j)
      do i=1,msize
        do j=1,msize
          C(i,j) = cZERO
          do k=1,msize
-           C(i,j) = C(i,j) + A(i,k) * B(k,j)
+           C(i,j) = C(i,j) + A_(i,k) * B_(k,j)
          enddo
        enddo
      enddo

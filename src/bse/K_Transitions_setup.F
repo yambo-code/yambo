@@ -224,6 +224,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      E_eh= Ken%E(ic,ik ,i_sp)-Ken%E(iv,ikp,i_sp)
      if(     associated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
      if(.not.associated(Ken%Eo)) Eo_eh= E_eh
+     !
+     ! GPL_EXCLUDE_START
+     !
      if(E_SOC_nbands/=0) then
        iv_SOC(:)=E_SOC_table(:,iv,ikp)
        ic_SOC(:)=E_SOC_table(:,ic,ik )
@@ -233,6 +236,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
        if(.not.all(ic_SOC/=0)) E_c_SOC(:)=Ken%E(ic,ik ,i_sp)
        E_eh_SOC_corr(:)=E_c_SOC(:)-E_v_SOC(:)-Eo_eh
      endif
+     !
+     ! GPL_EXCLUDE_END
      !
      f_eh=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
      !

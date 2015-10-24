@@ -79,6 +79,8 @@ subroutine bz_interp_setup(Xk)
    !
  enddo
  !
+ if(abs(int_sop(1,1,1)+1._SP)<zero) int_sop=-int_sop
+ !
  nR_max=product(2*R_max+1)
  !
  allocate(all_vec(3,nR_max),all_vec_mod(nR_max),indx(nR_max),tmp_vec(3,nR_max))

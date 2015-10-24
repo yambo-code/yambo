@@ -63,7 +63,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  integer               :: i_T,n_T_steps
 #endif
  logical               :: l_g_space_interp,l_nearest_neig_interp
- integer               :: i1,i2,ic,is,ID_interp,ik,ikbz,ib,Nk
+ integer               :: i1,i2,ic,is,ID_interp,ik,ikbz,ib,Nk,nbands
  integer,  allocatable :: int_distances(:)
  character(3)          :: message,spin_ch
  character(schlen)     :: file_name_bands(2,n_sp_pol),file_name_grid(n_sp_pol),file_name_rt
@@ -77,6 +77,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
   BANDS_range=(/minval(BANDS_range),20/)
   call warning("Bands range reduced")
  endif
+ !
+ nbands=BANDS_range(2)-BANDS_range(1)+1
  !
  !Input file parsing
  !
@@ -356,13 +358,13 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  if (l_bands) then
    !
-   allocate(values(4+BANDS_range(2)-BANDS_range(1)+1),headings(4+BANDS_range(2)-BANDS_range(1)+1))
+   allocate(values(nbands+4),headings(nbands+4))
    !
    headings(1)=" |k| "
    do ib=BANDS_range(1),BANDS_range(2)
      headings(1+ib-BANDS_range(1)+1)=' b'//intc(ib)
    enddo
-   headings(2+BANDS_range(2)-BANDS_range(1)+1:4+BANDS_range(2)-BANDS_range(1)+1)=(/" kx  "," ky  "," kz  "/)
+   headings(nbands+2:nbands+4)=(/" kx  "," ky  "," kz  "/)
    !
    file_name_bands= " "
    file_name_grid = " "
@@ -390,7 +392,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
    coo_out=coo_in
    !
-   values(1)=0.
+   values(1)=0._SP
    !
    do ik=1,USER_K%nibz-1
      !
@@ -404,8 +406,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
 &           iku_v_norm(v)<=iku_v_norm(USER_K%pt(ik+1,:)-USER_K%pt(ik,:))         ) then
          !
          do is=1,n_sp_pol
-           values(2:2+BANDS_range(2)-BANDS_range(1))=Xen%E(BANDS_range(1):BANDS_range(2),Xk%sstar(ikbz,1),is)*HA2EV
-           values(2+BANDS_range(2)-BANDS_range(1)+1:4+BANDS_range(2)-BANDS_range(1)+1)=Xk%ptbz(ikbz,:)
+           values(1+1:nbands+1)=Xen%E(BANDS_range(1):BANDS_range(2),Xk%sstar(ikbz,1),is)*HA2EV
+           values(nbands+2:nbands+4)=Xk%ptbz(ikbz,:)
            call msg('o '//file_name_bands(2,is),' ',(/values(1)+iku_v_norm(v),values(2:)/),INDENT=0,USE_TABS=.true.)
          enddo
          !
@@ -425,8 +427,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        call k_transform(CIRCUIT_K%pt(ik,:),"iku")
        if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_K%pt(ik,:)-CIRCUIT_K%pt(ik-1,:))
        do is=1,n_sp_pol
-         values(2:3+BANDS_range(2)-BANDS_range(1))=bands_circuit(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
-         values(2+BANDS_range(2)-BANDS_range(1)+1:4+BANDS_range(2)-BANDS_range(1)+1)=CIRCUIT_K%pt(ik,:)
+         values(1+1:nbands+1)=bands_circuit(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
+         values(nbands+2:nbands+4)=CIRCUIT_K%pt(ik,:)
          call msg('o '//file_name_bands(1,is),' ',values,INDENT=0,USE_TABS=.true.)
        enddo
        !
@@ -457,7 +459,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        values(1)=real(ik,SP)
        !
        do is=1,n_sp_pol
-         values(4+1:4+BANDS_range(2)-BANDS_range(1)+1)=bands_grid(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
+         values(1+4:nbands+4)=bands_grid(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
          call msg('o '//file_name_grid(is),' ',values,INDENT=0,USE_TABS=.true.)
        enddo
        !
@@ -513,7 +515,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
          values(1)=real(ik,SP)
          values(2)=bands_circuit(ib,1,ik)*HA2EV
          if(l_RT_occ_Bands)  values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
-         if(l_RT_life_Bands) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000.
+         if(l_RT_life_Bands) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
          call msg('o '//file_name_rt,' ',values,INDENT=0,USE_TABS=.true.)
          !
        enddo

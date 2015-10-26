@@ -199,7 +199,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
 #if defined _YPP_RT
  !
- if (l_RT_X.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call RT_driver(en,k)
+ if (l_RT_X.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call RT_driver(en,k,q)
  !   ======
  !
 #endif

@@ -48,7 +48,7 @@ $nodryrun = 1;
 $manual_preprocess_files = " ";
 #
 $exclude_files = "yamboo.pl yamboo_new.pl";
-$exclude_dirs = "lib sbin bin doc";
+$exclude_dirs = "sbin bin doc";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
 @user_projects = ('ELPH', 'YPP_ELPH', 'KERR', 'SURF', 'YPP_SURF', 
                   'QED','MAGNETIC','SC','RT','YPP_RT','YPP_SC','YPP_MAGNETIC');

@@ -286,7 +286,12 @@ subroutine K_diagonalization(iq,W)
      !         \sum_k BS_mat(k,i) x conjg( BSS_rhoq0(k) )
      !
      BS_R=cZERO
+     !
+     ! GPL_EXCLUDE_START
+     !
      if(E_SOC_nbands/=0) BS_E_SOC_corr=cZERO
+     !
+     ! GPL_EXCLUDE_END
      !
      call live_timing('BSK   residuals',px%n_of_elements(myid+1))
      !
@@ -295,19 +300,24 @@ subroutine K_diagonalization(iq,W)
        !
        BS_R(i1)=Vstar_dot_V_omp(BS_K_dim,BSS_rhoq0,BS_mat(:,i1))
        !
+       ! GPL_EXCLUDE_START
+       !
        if(E_SOC_nbands/=0) then
          BS_E_SOC_corr(1,i1)=real_V_dot_V_omp( BS_K_dim,BSS_eh_E_SOC_corr(1,:),real(BS_mat(:,i1)*conjg(BS_mat(:,i1)),SP) )
          BS_E_SOC_corr(2,i1)=real_V_dot_V_omp( BS_K_dim,BSS_eh_E_SOC_corr(2,:),real(BS_mat(:,i1)*conjg(BS_mat(:,i1)),SP) )
        endif
+       !
+       ! GPL_EXCLUDE_END
        !
        call live_timing(steps=1)
      enddo
      call live_timing
      !
      call PP_redux_wait(BS_R)
-     if(E_SOC_nbands/=0) call PP_redux_wait(BS_E_SOC_corr) 
      !
      ! GPL_EXCLUDE_START
+     !
+     if(E_SOC_nbands/=0) call PP_redux_wait(BS_E_SOC_corr) 
      !
      BS_R_kerr=cZERO
      !

@@ -1,4 +1,3 @@
-objs =
 #if defined _SURF
 objs = mod_ras.o mod_reels.o mod_numerical_integration.o mod_convolute.o \
        mod_surface_geometry.o mod_model_loss_function.o \

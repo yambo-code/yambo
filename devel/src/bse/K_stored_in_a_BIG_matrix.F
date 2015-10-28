@@ -99,7 +99,12 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      BSS_eh_f(H_pos(1))=BS_T_grp(i_g)%f(i_c)
      if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos(1))=BS_T_grp(i_g)%Z(i_c)
      if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos(1))=BS_T_grp(i_g)%W(i_c)
+     !
+     ! GPL_EXCLUDE_START
+     !
      if (E_SOC_nbands/=0)            BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
+     !
+     ! GPL_EXCLUDE_END
      !
      BSS_rhoq0(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
      BS_mat(H_pos(1),H_pos(1))=BS_T_grp(i_g)%E(i_c)/real( PAR_COM_T_INDEX%n_CPU )
@@ -214,15 +219,15 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  call PP_redux_wait(BSS_rhoq0_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_rhoq0_kerr,COMM=PAR_COM_eh_INDEX%COMM)
 #endif
+ if (E_SOC_nbands/=0) then
+   call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
+ endif
  !
  ! GPL_EXCLUDE_END
  !
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_eh_INDEX%COMM)
- if (E_SOC_nbands/=0) then
-   call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
- endif
  call PP_redux_wait(BSS_eh_f,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_eh_f,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_eh_table,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

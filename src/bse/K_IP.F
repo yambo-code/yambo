@@ -125,10 +125,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  if (iq==1) then
    !
    n_SOC=1
-   if( E_SOC_nbands/=0) n_SOC=2
    !
    ! GPL_EXCLUDE_START 
    !
+   if( E_SOC_nbands/=0) n_SOC=2
    if (trim(global_gauge)=='velocity') A_drude(1)=cZERO
    !
    ! GPL_EXCLUDE_END 
@@ -162,7 +162,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ik_mem= PAR_Xk_bz_index(ik_bz)
        !
        if (E_SOC_nbands==0) IP_E(1)=BS_T_grp(i_T_g)%E(i_T)
+       !
+       ! GPL_EXCLUDE_START
+       !
        if (E_SOC_nbands/=0) IP_E(:)=BS_T_grp(i_T_g)%E(i_T)+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+       !
+       ! GPL_EXCLUDE_END
+       !
        !
        if (allocated(BS_T_grp(i_T_g)%Z)) local_Z=BS_T_grp(i_T_g)%Z(i_T)
        !
@@ -223,7 +229,12 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call PP_redux_wait( X_epsilon ,COMM=PAR_COM_eh_INDEX%COMM )
    !
    if (E_SOC_nbands==0) Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
+   !
+   ! GPL_EXCLUDE_START
+   !
    if (E_SOC_nbands/=0) Co=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Pure diamagnetic term
    diam_term=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)

@@ -64,7 +64,11 @@ module wrapper_omp
      character,   intent(in)  :: TRANSA,TRANSB
      complex(SP), intent(in)  :: A(LDA,*),B(LDB,*)
      complex(SP), intent(out) :: C(LDC,*)
-#if defined _DOUBLE
+#if defined _OPENMP && defined _DOUBLE
+     call ZGEMM_omp(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#elif defined _OPENMP && !defined _DOUBLE
+     call CGEMM_omp(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#elif defined _DOUBLE
      call ZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #else
      call CGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
@@ -77,19 +81,12 @@ module wrapper_omp
      complex(SP), intent(out) :: C(msize,msize)
      character,   intent(in)  :: TRANSA,TRANSB
      !
-#if defined _OPENMP
-     integer :: i,j,k
-!$omp parallel do default(shared), private(i,j)
-     do i=1,msize
-       do j=1,msize
-         C(i,j) = cZERO
-         do k=1,msize
-           C(i,j) = C(i,j) + A(i,k) * B(k,j)
-         enddo
-       enddo
-     enddo
-!$omp end parallel do
+     complex(SP) :: A_(msize,msize),B_(msize,msize)
      !
+#if defined _OPENMP && defined _DOUBLE
+     call ZGEMM_omp(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
+#elif defined _OPENMP && !defined _DOUBLE
+     call CGEMM_omp(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
 #elif defined _DOUBLE
      call ZGEMM(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
 #else

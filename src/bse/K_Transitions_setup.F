@@ -186,8 +186,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
              !
              if (associated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
              !
+             ! GPL_EXCLUDE_START
+             !
              if (E_SOC_nbands/=0) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
              !
+             ! GPL_EXCLUDE_END
              !
            enddo ! spin
          enddo ! symmetries

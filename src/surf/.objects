@@ -1,3 +1,4 @@
+objs =
 #if defined _YPP_SURF
 objs = Calc_REELS.o Write_RAS.o Extract_eps_surf.o \
        Write_eps_tensor.o Write_REELS.o 

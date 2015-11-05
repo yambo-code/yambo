@@ -24,22 +24,21 @@
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_use_collisions,&
-&                        l_elphoton_corr
+&                        l_elphoton_scatt
  use com,           ONLY:error
  use pars,          ONLY:IP,schlen
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
- use QP_m,          ONLY:QP_nb,QP_n_states,QP_n_G_bands,QP_state
+ use QP_m,          ONLY:QP_nb,QP_n_states,QP_state
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:SC_HF,SC_COHSEX,WF_kind,WF_xc_functional
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands,SC_potential
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
 #if defined _QED
- use global_XC,     ONLY:SC_GW_QED
+ use global_XC,     ONLY:SE_GW_QED
 #endif
- use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,nGW_NEQ_collisions,&
-&                        SEX_collisions,GW_NEQ_collisions,nSEX_collisions,COLLISIONS_IO_status
+ use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_IO_status
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
@@ -78,6 +77,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (i_time_rev==1) call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
  !
+ ! Switch 
+ !========
+ !
+ call XC_switch()
+ !
  ! No DB => EVAL
  !===============
  !
@@ -90,7 +94,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! PARALLEL Setup
  !================
- if (l_HF_and_locXC.or.l_elphoton_corr) then
+ if (trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX".or.l_elphoton_scatt) then
 #if defined _SC && defined _RT
    call PARALLEL_global_indexes(E,k,q,"Real_Time")
    call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
@@ -104,7 +108,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call PARALLEL_WF_index( )
  endif
  !
- if (l_HF_and_locXC) then
+ if (trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX") then
    !
    call section('+','Hartree-Fock')
    !================================
@@ -123,7 +127,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
  endif
  !
- if(l_cohsex) then
+ if (trim(SC_potential)=="COHSEX") then
    !
    if (l_HF_and_locXC)      call section('=','SEX (e-e correlation)')
    if (.not.l_HF_and_locXC) call section('+','SEX (e-e correlation)')
@@ -133,7 +137,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    if (IO_err/=0) then
      !
-     call COLLISIONS_SEX(X(2),Xk,E,k,q,Xw(2),i_kind)
+     call COLLISIONS_sex(X(2),Xk,E,k,q,Xw(2),i_kind)
      !
      ! COHSEX clean
      !--------------
@@ -145,16 +149,16 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
 #if defined _QED
  !
- if (l_elphoton_corr) then
+ if (l_elphoton_scatt) then
    !
    call section('+','Electron-Photon (QED)')
    !========================================
    !
-   call CHECK_and_ALLOC(SC_GW_QED)
+   call CHECK_and_ALLOC(SE_GW_QED)
    !
    if (IO_err/=0) then
      !
-     call COLLISIONS_QED_gw(E,k,q)
+     call COLLISIONS_momentum(E,k,q)
      !
      ! Clean
      !-------
@@ -166,7 +170,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
 #endif
  !
- if(l_elel_scatt) then
+ if (l_elel_scatt) then
    !
    if (l_cohsex)            call section('=','NEQ GW (e-e scattering)')
    if (.not.l_cohsex)       call section('+','NEQ GW (e-e scattering)')
@@ -209,7 +213,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    if (l_cohsex)        call COLLISIONS_alloc_and_free("SEX","v3","clean",1)
    if (l_elel_scatt)    call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",1)
 #if defined _QED
-   if (l_elphoton_corr) call COLLISIONS_alloc_and_free("GW_QED","v3","clean",1)
+   if (l_elphoton_scatt) call COLLISIONS_alloc_and_free("GW_QED","v3","clean",1)
 #endif
  endif
  !

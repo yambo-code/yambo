@@ -25,7 +25,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  !
  ! SEX collisions 
  !
- use pars,          ONLY:SP,schlen,pi,cZERO
+ use pars,          ONLY:SP,pi,cZERO
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
@@ -36,7 +36,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
-&                        COLLISIONS_element,SEX_collisions,nSEX_collisions,&
+&                        SEX_collisions,nSEX_collisions,&
 &                        COLLISIONS_IO_status,scatterBamp_alloc
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -45,9 +45,8 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
- use wave_func,     ONLY:WF
+ use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use R_lattice,     ONLY:qindx_S,bz_samp
- use wrapper,       ONLY:M_by_V
  use SC,            ONLY:SC_bands,B_mat_index
  !
  implicit none
@@ -99,6 +98,12 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  call msg('r', '[SEX] Plane waves :',N_g_vecs)
  !
  ! WFs
+ !
+ if (WF_buffered_IO) then
+   !
+   call WF_load(WF_buffer,0,1,SC_bands,(/1,k%nibz/),space='B',title='-BUFFER')
+   !
+ endif
  !
  call WF_load(WF,N_g_vecs,maxval(qindx_S(:,:,2)),(/1,n_bands_to_load/),(/1,k%nibz/),title='-SEX Collisions')
  !
@@ -190,8 +195,8 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
        !
      endif
      !
-     ! Scattering geometry (I)
-     !=========================
+     ! Scattering geometry
+     !=====================
      !
      !                      W(i_kmq_G0,iqibz,iqs)                    
      !                        _ _ _ _ \ _ _ _ _
@@ -202,7 +207,6 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
      !                          (i_kmq,i_kmq_s)
      !
      i_k_s   = 1
-     !i_kbz  = i_k
      !
      i_kmq_bz =qindx_S(i_k,iqbz,1)
      i_kmq_G0 =qindx_S(i_k,iqbz,2)

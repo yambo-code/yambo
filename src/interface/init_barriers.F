@@ -86,19 +86,19 @@ subroutine init_barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
-   on_runlevels='scpot HF_and_locXC cohsex em1s negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt el_photon_corr'
+   on_runlevels='HF_and_locXC cohsex em1s negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt el_photon_corr'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  if (l_eval_collisions) then
-   on_runlevels='scpot HF_and_locXC cohsex em1s collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt el_photon_corr'
+   on_runlevels='scrun HF_and_locXC cohsex em1s collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt el_photon_corr'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  if (l_sc_run) then
-   on_runlevels='scpot HF_and_locXC cohsex em1s negf magnetic el_el_corr collisions '
+   on_runlevels='scrun HF_and_locXC cohsex em1s negf magnetic el_el_corr collisions '
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -171,7 +171,7 @@ subroutine init_barriers()
  ! SPIN
  !=============
  if (n_spin>2) then
-   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scrun'
    on_runlevels=trim(on_runlevels)//' negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
    ! GPL_INCLUDE_START SC_IGNORE
    !on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0'
@@ -185,7 +185,7 @@ subroutine init_barriers()
  !
 #if defined _KERR
  if(l_kerr) then
-   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scrun'
    ! GPL_INCLUDE_START
    !on_runlevels='optics bse'
    ! GPL_INCLUDE_END

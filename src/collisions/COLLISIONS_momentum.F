@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_QED_gw(E,k,q)
+subroutine COLLISIONS_momentum(E,k,q)
  !
- ! Hartree-Fock
+ ! Momentum matrix elements
  !
  use pars,          ONLY:SP,schlen,pi,cI
  use IO_m,          ONLY:io_COLLs
@@ -76,7 +76,7 @@ subroutine COLLISIONS_QED_gw(E,k,q)
  call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),SC_bands,(/1,k%nibz/),space='R',title='-QED Collisions')
  !
 #if defined _TIMING
- call timing('QED GW Collisions',OPR='start')
+ call timing('Momentum Collisions',OPR='start')
 #endif
  !
  ! Allocation again
@@ -167,7 +167,7 @@ subroutine COLLISIONS_QED_gw(E,k,q)
  call collision_reset(isc_grad) 
  !
 #if defined _TIMING
- call timing('QED GW Collisions',OPR='stop')
+ call timing('Momentum Collisions',OPR='stop')
 #endif
  !
 end subroutine

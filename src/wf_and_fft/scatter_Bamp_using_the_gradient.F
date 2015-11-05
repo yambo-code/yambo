@@ -29,7 +29,7 @@ subroutine scatterBamp_using_the_gradient(isc,which)
  !
  ! or
  !
- ! rhotw(G)=(\grad <ib ik_is i_sp|) e^[I(RsG-G0).r] | ob ok_os o_sp>  ! which ="o"
+ ! rhotw(G)=(\grad <ib ik_is i_sp|) e^[I(RsG-G0).r] | ob ok_os o_sp>  ! which ="i"
  !
  !  is(3)=(ib,ik,is,i_sp) --<--:--<-- os(3)=(ob,ok,os,o_sp)
  !                             :

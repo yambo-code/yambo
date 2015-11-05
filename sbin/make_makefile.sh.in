@@ -120,7 +120,7 @@ echo "dmpi=$dmpi" >> $cdir/Makefile
 echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
 echo "lock_file=$lock_file" >> $cdir/Makefile
 cp $cdir/$ofile $cdir/$ofile.c
-$cpp $cppflags $dopts -D_$os $cdir/$ofile.c >> $cdir/Makefile
+$cpp $cppflags $dopts -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile
 rm -f $cdir/$ofile.c
 
 if [ "$mode" = "x" ] ; then 

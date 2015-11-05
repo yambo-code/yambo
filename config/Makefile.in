@@ -88,7 +88,9 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 # YPP
 #
-YPP_LIBS      = modules_ypp init_ypp qp_ypp electrons plotting excitons symmetries elph real_time_ypp k-points bits ras
+YPP_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons excitons symmetries k-points bits 
+YPPPH_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons elph excitons symmetries k-points bits 
+YPPRT_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons elph real_time_ypp excitons symmetries k-points bits 
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate tddft pol_function bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) sc
@@ -166,22 +168,27 @@ interfaces: libs
 ypp: libs
 	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; $(mksrc)
 	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; $(mksrc)
-	@X2DO="ypp" ;XPATH="ypp";XLIBS=""$(YPP_LIBS) $(YPP_MAIN_LIBS)";$(mkx)
+	@X2DO="ypp" ;XPATH="driver";XLIBS="$(YPP_MAIN_LIBS) $(YPP_LIBS)";$(mkx)
 ypp_ph: libs
 	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src";ADF="-D_ELPH"; $(mksrc)
-	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPP_MAIN_LIBS)"; ADF="-D_YPP_ELPH";$(mkx)
+	@LIBS2DO="$(YPPPH_LIBS)"; XPATH="ypp" ;  ADF="-D_YPP_ELPH"; $(mksrc)
+	@X2DO="ypp_ph" ;XPATH="driver";XLIBS="$(YPP_MAIN_LIBS) $(YPPPH_LIBS) elph"; ADF="-D_YPP_ELPH";$(mkx)
 ypp_surf: libs
 	@LIBS2DO="$(YPPSURF_MAIN_LIBS)"; XPATH="src" ; ADF="-D_YPP_SURF";$(mksrc)
-	@X2DO="ypp_surf" ;XPATH="ypp";XLIBS="$(YPPSURF_MAIN_LIBS)"; ADF="-D_YPP_SURF";$(mkx)
+	@LIBS2DO="$(YPP_LIBS) ras"; XPATH="ypp" ; $(mksrc)
+	@X2DO="ypp_surf" ;XPATH="driver";XLIBS="$(YPPSURF_MAIN_LIBS) $(YPP_LIBS) ras"; ADF="-D_YPP_SURF";$(mkx)
 ypp_rt: libs
-	@LIBS2DO="$(YPPRT_MAIN_LIBS)"; XPATH="src"; XPATH="src" ; ADF="-D_SC -D_RT -D_ELPH -D_YPP_RT";$(mksrc)
-	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRT_MAIN_LIBS)"; ADF="-D_YPP_RT -D_YPP_ELPH";$(mkx)
+	@LIBS2DO="$(YPPRT_MAIN_LIBS)"; XPATH="src" ; ADF="-D_SC -D_RT -D_ELPH -D_YPP_RT";$(mksrc)
+	@LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp" ; ADF="-D_ELPH -D_YPP_RT"; $(mksrc)
+	@X2DO="ypp_rt" ;XPATH="driver";XLIBS="$(YPPRT_MAIN_LIBS) $(YPPRT_LIBS)"; ADF="-D_YPP_RT -D_YPP_ELPH";$(mkx)
 ypp_sc: libs
 	@LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src" ; ADF="-D_SC";$(mksrc)
-	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPSC_MAIN_LIBS)"; ADF="-D_YPP_SC";$(mkx)
+	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; $(mksrc)
+	@X2DO="ypp_sc" ;XPATH="driver";XLIBS="$(YPPSC_MAIN_LIBS) $(YPP_LIBS)"; ADF="-D_YPP_SC";$(mkx)
 ypp_magnetic: libs
 	@LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src" ; ADF="-D_SC -D_MAGNETIC";$(mksrc)
-	@X2DO="ypp_magnetic" ;XPATH="ypp";XLIBS="$(YPPSC_MAIN_LIBS)"; ADF="-D_YPP_MAGNETIC";$(mkx)
+	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; $(mksrc)
+	@X2DO="ypp_magnetic" ;XPATH="driver";XLIBS="$(YPPSC_MAIN_LIBS) $(YPP_LIBS)"; ADF="-D_YPP_MAGNETIC";$(mkx)
 #
 # ydb
 #
@@ -224,7 +231,7 @@ define mksrc
   echo " " ; \
   echo ">>>[Making $$ldir]<<<" ; \
   ./sbin/make_makefile.sh $$XPATH/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
-  cd src/$$ldir ; $(make) VPATH=src/$$ldir || exit "$$?" ; cd ../../; fi \
+  cd $$XPATH/$$ldir ; $(make) VPATH=$$XPATH/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
 define mklibxc

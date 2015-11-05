@@ -1,1 +1,4 @@
 objs = yambo_driver.o 
+#if defined _ypp
+objs = ypp_driver.o 
+#endif

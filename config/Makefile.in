@@ -88,7 +88,7 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 # YPP
 #
-#YPP_LIBS      = ypp_modules ypp_init plotting
+YPP_LIBS      = modules_ypp init_ypp qp_ypp electrons plotting excitons symmetries elph real_time_ypp k-points bits ras
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate tddft pol_function bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) sc
@@ -165,7 +165,8 @@ interfaces: libs
 	XLIBS="$(E2YLIBS)" ; $(mkx) ; fi
 ypp: libs
 	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; $(mksrc)
-	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPP_MAIN_LIBS)";$(mkx)
+	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; $(mksrc)
+	@X2DO="ypp" ;XPATH="ypp";XLIBS=""$(YPP_LIBS) $(YPP_MAIN_LIBS)";$(mkx)
 ypp_ph: libs
 	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPP_MAIN_LIBS)"; ADF="-D_YPP_ELPH";$(mkx)

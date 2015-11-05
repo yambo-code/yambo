@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
    Running the Fortran YPP driver
  ===========================================================================
  */
- F90_FUNC(ypp_i,YPP_I)(
+ F90_FUNC(ypp_driver,YPP_DRIVER)(
          &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
 #endif
 #if defined _c2y 

@@ -74,7 +74,12 @@
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _RT
   {"negf",   "q","Real-time dynamic [opt=(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
-  {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/(b)oth]",0,0,1,0,0},
+#endif
+#if defined _RT && !defined _QED
+  {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/(a)ll]",0,0,1,0,0},
+#endif
+#if defined _RT && defined _QED
+  {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif
 #if defined _QED && !defined _RT
   {"corrtp", "c","Correlation [opt=(e)lectrons/p(h)otons/(a)ll]",0,0,1,0,0},
@@ -93,7 +98,7 @@
   {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 
 #endif
 #if defined _SURF
-  {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},
+  {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(a)ll]",0,0,1,0,0},
 #endif
 #if defined _SCALAPACK
   {"slktest",  "s","ScaLapacK test",0,0,0,0,0},

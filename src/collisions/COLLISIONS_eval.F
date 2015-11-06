@@ -151,8 +151,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (l_elphoton_scatt) then
    !
-   call section('+','Electron-Photon (QED)')
-   !========================================
+   call section('+','Electron-Photon (P)')
+   !=======================================
    !
    call CHECK_and_ALLOC(SE_GW_QED)
    !
@@ -162,7 +162,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      ! Clean
      !-------
-     if (io_COLLs) call COLLISIONS_alloc_and_free("GW_QED","v3 table","clean",1)
+     !if (io_COLLs) call COLLISIONS_alloc_and_free("GW_QED","v3 table","clean",1)
      !
    endif
    !

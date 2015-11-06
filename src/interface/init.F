@@ -1561,7 +1561,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if ( trim(rstr_piece(i1)) == 'sursp' )  then
            if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
            if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
-           if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
+           if ( trim(rstr_piece(i1+1)) == 'a') call initactivate(1,'ras reels')
          endif
 #endif
          !
@@ -1630,7 +1630,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! RT
          !
-#if defined  _RT 
+#if defined _RT 
          if ( trim(rstr_piece(i1)) == 'negf' ) then
            if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
            if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
@@ -1638,13 +1638,19 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
          !
          if ( trim(rstr_piece(i1)) == 'scattp' ) then
-           if ( trim(rstr_piece(i1+1)) == 'e'.or. trim(rstr_piece(i1+1)) == 'b') l_elel_scatt=.true.
-           if ( trim(rstr_piece(i1+1)) == 'p'.or. trim(rstr_piece(i1+1)) == 'b') l_elph_scatt=.true.
-           if (.not.l_elph_scatt.and..not.l_elel_scatt) l_elph_scatt=.true.
-           if (l_elph_scatt) call initactivate(1,'el_ph_scatt')
-           if (l_elel_scatt) call initactivate(1,'el_el_scatt')
+           if ( trim(rstr_piece(i1+1)) == 'e'.or. trim(rstr_piece(i1+1)) == 'a') l_elel_scatt=.true.
+           if ( trim(rstr_piece(i1+1)) == 'p'.or. trim(rstr_piece(i1+1)) == 'a') l_elph_scatt=.true.
+#endif
+#if defined _RT && defined _QED
+           if ( trim(rstr_piece(i1+1)) == 'h'.or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
+write (*,*) 'here',trim(rstr_piece(i1+1)),l_elphoton_scatt
+           if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
+#endif
+#if defined _RT 
+           if (l_elph_scatt)     call initactivate(1,'el_ph_scatt')
+           if (l_elel_scatt)     call initactivate(1,'el_el_scatt')
+           if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) l_elph_scatt=.true.
          endif
-         !
 #endif
          !
          ! COLLISIONS

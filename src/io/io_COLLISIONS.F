@@ -30,7 +30,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
- use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ
+ use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
@@ -66,6 +66,8 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    db_name                   = "COLLISIONS_COHSEX"
  elseif(V_kind==SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"
+ elseif(V_kind==SE_GW_QED) then
+   db_name = "COLLISIONS_P"
  else
    call error("COLLISIONS I/O : Unknown database type ")
  endif
@@ -112,12 +114,14 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (V_kind_disk==SC_HF) then
+     !
      call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=4,MENU=0)
      call io_elemental(ID,I0=QP_ng_Sx,&
 &         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,R0=COLLISIONS_cutoff,&
 &         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
-   else
+     !
+   else if (V_kind_disk==SE_GW_NEQ.or.V_kind_disk==SC_COHSEX) then
      !
      ! Global Response Descriptions
      !==============================

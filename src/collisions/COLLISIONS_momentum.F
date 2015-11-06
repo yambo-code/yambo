@@ -49,7 +49,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  !Work Space
  !
- type(ggwinfo)           ::isc,isc_grad
+ type(ggwinfo)           ::I,I_grad_n_k,I_grad_np_k_m_q
  integer                 ::i_qp,ig,PAR_nQP_,i_q_bz,i_q,i_q_mem,i_g,i_g_mem,i_c,i_qp_mem,i_m,i_m_mem
  real(SP)                ::p_cc(3)
  character(schlen)       ::ch
@@ -58,8 +58,9 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  ! Resets & basis setup
  !
- call collision_reset(isc)
- call collision_reset(isc_grad) 
+ call collision_reset(I)
+ call collision_reset(I_grad_n_k) 
+ call collision_reset(I_grad_np_k_m_q) 
  !
  call k_ibz2bz(k,'c',.TRUE.)
  !
@@ -81,11 +82,11 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  ! Allocation again
  !
- call scatterBamp_alloc(isc)
- call scatterBamp_alloc(isc_grad)
- allocate(isc%rhotw(QP_QED_ng),isc_grad%rhotw(3*QP_QED_ng))
- isc%ngrho =QP_QED_ng
- isc_grad%ngrho=QP_QED_ng
+ call scatterBamp_alloc(I)
+ call scatterBamp_alloc(I_grad_n_k)
+ allocate(I%rhotw(QP_QED_ng),I_grad_n_k%rhotw(3*QP_QED_ng))
+ I%ngrho =QP_QED_ng
+ I_grad_n_k%ngrho=QP_QED_ng
  !
  PAR_nQP_=PAR_nQP
  if (allocated(COLLISIONS_IO_status)) then
@@ -124,16 +125,16 @@ subroutine COLLISIONS_momentum(E,k,q)
      ! n'  =QP_table(i_qp,2)
      ! k   =QP_table(i_qp,3)
      !
-     isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
-     isc%os=(/QP_table(i_qp,2),k%sstar(qindx_S(isc%is(2),i_q_bz,1),:),spin(QP_table(i_qp,:))/)
-     isc%qs=(/qindx_S(QP_table(i_qp,3),i_q_bz,2),q%sstar(i_q_bz,1),q%sstar(i_q_bz,2)/)
+     I%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
+     I%os=(/QP_table(i_qp,2),k%sstar(qindx_S(I%is(2),i_q_bz,1),:),spin(QP_table(i_qp,:))/)
+     I%qs=(/qindx_S(QP_table(i_qp,3),i_q_bz,2),q%sstar(i_q_bz,1),q%sstar(i_q_bz,2)/)
      !
-     isc_grad%is=isc%is
-     isc_grad%os=isc%os
-     isc_grad%qs=isc%qs
+     I_grad_n_k%is=I%is
+     I_grad_n_k%os=I%os
+     I_grad_n_k%qs=I%qs
      !
-     call scatterBamp(isc)
-     call scatterBamp_using_the_gradient(isc_grad)
+     call scatterBamp(I)
+     call scatterBamp_using_the_gradient(I_grad_n_k)
      !
      do i_g=1,QP_QED_ng
        !
@@ -142,9 +143,9 @@ subroutine COLLISIONS_momentum(E,k,q)
        do i_c=1,3
          !
          if (io_COLLs) then
-           GW_QED_collisions(1)%v3_c(i_q_bz,i_g,i_c)=-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(QP_QED_ng*(i_c-1)+ig))
+           GW_QED_collisions(1)%v3_c(i_q_bz,i_g,i_c)=-cI*(p_cc(i_c)*I%rhotw(i_g)+I_grad_n_k%rhotw(QP_QED_ng*(i_c-1)+ig))
          else
-           GW_QED_collisions(i_qp_mem)%v3_c(i_q_mem,i_g_mem,i_c)=-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(QP_QED_ng*(i_c-1)+ig))
+           GW_QED_collisions(i_qp_mem)%v3_c(i_q_mem,i_g_mem,i_c)=-cI*(p_cc(i_c)*I%rhotw(i_g)+I_grad_n_k%rhotw(QP_QED_ng*(i_c-1)+ig))
          endif
          !
        enddo
@@ -161,10 +162,10 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  call live_timing()
  !
- deallocate(isc%rhotw,isc_grad%rhotw)
+ deallocate(I%rhotw,I_grad_n_k%rhotw)
  !
- call collision_reset(isc)
- call collision_reset(isc_grad) 
+ call collision_reset(I)
+ call collision_reset(I_grad_n_k) 
  !
 #if defined _TIMING
  call timing('Momentum Collisions',OPR='stop')

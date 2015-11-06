@@ -2,7 +2,7 @@ QED_objs =
 SC_objs =
 RT_objs =
 #if defined _QED
-QED_objs=COLLISIONS_QED_gw.o
+QED_objs=COLLISIONS_momentum.o
 #endif
 #if defined _SC
 SC_objs = PLASMA_parallel_setup.o \

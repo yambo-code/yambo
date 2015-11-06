@@ -53,6 +53,7 @@ module drivers
  !
  ! The non-eq. self-energy scattering "kind"
  !
+ logical :: l_elphoton_scatt
  logical :: l_elel_scatt
  logical :: l_elph_scatt
  !

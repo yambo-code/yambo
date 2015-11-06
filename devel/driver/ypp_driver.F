@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
+integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
  use parallel_m,          ONLY:ncpu,myid,MPI_close
@@ -63,11 +63,11 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Presets
  !
- iinf  =0
- ypp_i =0
- ncpu  =np
- myid  =pid
- infile=inf
+ iinf       =0
+ ypp_driver =0
+ ncpu       =np
+ myid       =pid
+ infile     =inf
  call SET_defaults(instr,ind,od,js,com_dir)
  call bz_samp_reset(k)
  call bz_samp_reset(q)
@@ -263,4 +263,4 @@ contains
     endif
   end subroutine
   !
-end function
+end function ypp_driver

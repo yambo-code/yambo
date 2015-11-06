@@ -190,7 +190,6 @@ module X_output
      !
    end subroutine
    !
-   !
    subroutine X_setup_headers(desc)
      !
      character(*),  intent(in) :: desc

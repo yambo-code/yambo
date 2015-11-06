@@ -254,7 +254,7 @@ subroutine RT_initialize(E,k,q)
  !====================================
  call RT_Field_Commensurable_Frequencies()
  !
- if ( .not. l_NE_dynamics ) call warning('Skipping simulation. No Ext fields and no manual pumping provided')
+ if ( .not. l_NE_dynamics ) call error('No external fields nor manual pumping provided')
  !
  ! RIM support
  !=============

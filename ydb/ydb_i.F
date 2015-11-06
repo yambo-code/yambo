@@ -91,7 +91,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  known_runlevels(15)='cohsex'
  known_runlevels(16)='acfdt'
  known_runlevels(17)='ElPhHam'
- known_runlevels(18)='scpot'
+ known_runlevels(18)='potential'
  known_runlevels(19)='collisions'
  known_runlevels(20)='negf'
  known_runlevels(21)='magnetic'

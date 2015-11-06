@@ -55,6 +55,10 @@
 #endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
+#if defined _SC | defined _MAGNETIC | defined _RT
+  {"potential",  "v","Self-Consistent Potential",0,0,1,0,0}, 
+  {"DESC",       " ","opt=(hf),(c)ohsex,(exx),(exxc),(srpa),(h)artree,(d)ef,(ip)",0,0,0,0,0},
+#endif
   {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex/bsfxc]",0,0,1,0,0},
   {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
   {"bss",    "y","BSE solver [opt=h/d/(p/f)i/t]",0,0,1,0,0},                      
@@ -72,17 +76,18 @@
   {"negf",   "q","Real-time dynamic [opt=(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
   {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/(b)oth]",0,0,1,0,0},
 #endif
-#if defined _QED
+#if defined _QED && !defined _RT
   {"corrtp", "c","Correlation [opt=(e)lectrons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif
 #if defined _ELPH && !defined _RT
   {"corrtp", "c","Correlation [opt=(e)lectrons/(p)honons/(a)ll]",0,0,1,0,0},
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
-#if defined _SC | defined _MAGNETIC | defined _RT
+#if defined _SC | defined _RT
   {"collisions", "e","Evaluate Collisions",0,0,0,0,0}, 
-  {"scpot",  "v","Self-Consistent Potential",0,0,1,0,0}, 
-  {"DESC",   " ","opt=(hf),(c)ohsex,(exx),(exxc),(srpa),(h)artree,(d)ef,(ip)",0,0,0,0,0},
+#endif
+#if defined _SC && !defined _RT
+  {"scrun",      "s","Self-Consistent Single-Particle Calculations",0,0,0,0,0}, 
 #endif
 #if defined _MAGNETIC 
   {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 

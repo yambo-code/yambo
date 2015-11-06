@@ -27,7 +27,6 @@
 !
 subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  !
- !
  ! Ylm(il,im) := Spherical harmonic 
  ! dYlm([1,2],il,im) := Derivative of the Spherical harmonic [1=theta,2=phi]
  !

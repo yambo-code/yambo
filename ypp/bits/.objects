@@ -1,0 +1,1 @@
+objs = WANNIER_driver.o bxsf_read.o WF_map_perturbative_SOC.o

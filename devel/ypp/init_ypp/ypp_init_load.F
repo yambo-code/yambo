@@ -108,11 +108,11 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RTabs',        '[R] Transient absorption')
- call it('r',defs,'RTcarrDos',    '[R] Analize time-dependent DOS')
  call it('r',defs,'RToccBnd',     '[R] Analize time-dependent occupations fitted on Bands')
  call it('r',defs,'RTlifeBnd',    '[R] Analize REF lifetimes fitted on Bands')
- call it('r',defs,'RToccPlot',    '[R] Plot time-dependent occupations')
- call it('r',defs,'RToccFit',     '[R] Fit occupations distribution at given time')
+ call it('r',defs,'RToccTime',    '[R] Plot time-dependent occupations')
+ call it('r',defs,'RToccEner',    '[R] Fit occupations distribution at given time')
+ call it('r',defs,'RToccDos',     '[R] Analize time-dependent DOS')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
@@ -140,6 +140,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'OCCdT','[NEGF] Occupations time step',OCC_deltaT,unit=Time_unit(1))
  call it(defs,'OCCTime','[NEGF] Occupations loading time',OCC_T_range,unit=Time_unit(1))
  call it('f',defs,'OCCgroup','[NEGF] Double grid states occupations are grouped')
+ call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations in the dos')
+ call it('f',defs,'SeparateEH','[NEGF] Separate electrons from holes in the data file') 
  !
  ! TRANSIENT ABSORPTION
  !

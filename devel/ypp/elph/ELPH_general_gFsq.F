@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
+subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  !
  use pars,                ONLY:SP,schlen
  use units,               ONLY:HA2EV
@@ -29,7 +29,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  use electrons,           ONLY:levels,n_sp_pol
  use R_lattice,           ONLY:bz_samp
  use frequency,           ONLY:w_samp,W_reset
- use YPP,                 ONLY:elph_steps,ph_broad,n_lambda
+ use YPP,                 ONLY:elph_steps,ph_broad
  use stderr,              ONLY:intc
  use ELPH,                ONLY:W_debye,elph_nDBs_used,ph_modes,elph_global_free,&
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
@@ -41,11 +41,14 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
+ !
  implicit none
+ !
  type(levels) ::en,Xen
  type(bz_samp)::k,Xk,q
- integer,  optional      ::lambda_s(:)
  integer,  optional      ::BS_E_degs(:)
+ integer,  optional      ::lambda_s(:)
+ integer,  optional      ::n_lambda
  !
  ! Work Space (electrons)
  !

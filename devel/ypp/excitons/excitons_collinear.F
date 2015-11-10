@@ -21,11 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_collinear(deg_list,S_sq,S_z)
+subroutine excitons_collinear(deg_list,S_z,S_sq)
  !
  use pars,          ONLY:SP
- use BS,            ONLY:BS_mat
- use YPP,           ONLY:BS_H_dim
+ use BS,            ONLY:BS_mat,BS_H_dim
  !
  implicit none
  !
@@ -62,7 +61,7 @@ subroutine excitons_collinear(deg_list,S_sq,S_z)
      S_sq(lambda)=S_sq(lambda)+S_sq(lambda_deg)
    enddo
    !
-   S_sq(lambda)=1.-S_sq(lambda)
+   S_sq(lambda)=1._SP-S_sq(lambda)
    !
    do lambda_deg=deg_list(lambda)+1,deg_list(lambda)+n_lambda_deg-1
      S_sq(lambda_deg)=S_sq(lambda)

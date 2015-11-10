@@ -35,7 +35,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,           ONLY:WF
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
- use functions,           ONLY:Fermi_fnc,bose_f 
+ use functions,           ONLY:Fermi_fnc
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                              PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_nQP,PAR_nG_bands,&
@@ -55,9 +55,11 @@ subroutine QED_Sigma_c(E,k,q,qp)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_k,i_n,i_p_G0,i_m,i_p,i_c,i_cp,i_wf_at_p,&
                              i_wf_at_p_g,timing_steps,i_g,i_w
  complex(SP)               ::XHI_p(3),XHI_k(3),I_wfk_wfp,Dipole_sum,P_i_cp,P_i_c,Sc_dummy
- real(SP)                  ::q_photon(3),q_cc(3),Photon_E,trans_matrix(3,3),bose,t_vec(3),E_diff
- real(SP),    allocatable  ::q_weight(:)
+ real(SP)                  ::q_photon(3),q_cc(3),Photon_E,trans_matrix(3,3),t_vec(3),E_diff,&
+&                            pre_factor,pre_factor_G_eq_0
+ real(SP),    allocatable  ::q_weight(:),q_weight_regular(:)
  type(elemental_collision) ::isc,isc_grad_k,isc_grad_p
+ logical                   ::l_regular_term,l_SI_term
  !
  if (l_elel_corr) then
    call section('+','Correlation: Photon-mediated Self-energy')
@@ -81,8 +83,11 @@ subroutine QED_Sigma_c(E,k,q,qp)
  if (RIM_n_rand_pts==0) RIM_n_rand_pts=1000000
  !
  call k_ibz2bz(q,'i',.TRUE.)
- allocate(q_weight(nqbz))
+ !
+ allocate(q_weight(nqbz),q_weight_regular(nqbz))
  call rim_spherical(nqbz,q%ptbz,q_weight,(3.*RL_vol/nqbz/4./pi)**(1./3.),1,.FALSE.)
+ call rim_spherical(nqbz,q%ptbz,q_weight_regular,(3.*RL_vol/nqbz/4./pi)**(1./3.),2,.FALSE.)
+ !
  call k_ibz2bz(q,'c',.TRUE.)
  !
  ! PARALLEL distribution
@@ -111,6 +116,13 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call live_timing('Sigma_c',PAR_nQP*PAR_nG_bands*PAR_nQ)
  !
+ !The correction is evaluated through
+ ! \delta_{nk} = \sum_{m,G,q} prefactor/\omega_{q+G}*R^{qG}_{nmk}/(e_{nk} - e_{mk-q} - \omega_{q+G})
+ !We distinguish 3 cases: 
+ ! i) G !=0, prefactor=pi/2/DL_vol/Nq
+ ! ii) G=0 and e_{nk} - e_{mk-q} !=0, prefactor= pi/2/c*DL_vol*RIM(q,power=1) 
+ ! iii) G=0 and e_{nk} - e_{mk-q} = 0, prefactor= -pi/2/c^2*DL_vol*RIM(q,power=2)
+ !
  Q_loop: do i_q_bz=1,nqbz 
    !
    i_q  =q%sstar(i_q_bz,1)
@@ -121,7 +133,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
    q_cc=q%ptbz(i_q_bz,:)
    !
    Photon_E=0._SP
-   bose=0._SP
    !
    QP_loop: do i_qp=1,qp%n_states
      !
@@ -138,10 +149,23 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        E_diff=E%E(i_n,i_k,1)-E%E(i_m,i_p,1)
        !
-       if (abs(E_diff)<1.E-5) then
-         if( i_q_s == 1) call live_timing(steps=1)
+       l_regular_term=abs(E_diff)<1.E-5
+       l_SI_term     =l_regular_term.and.i_n==i_m.and.i_q==1
+       !
+       if (l_SI_term) then
+         call live_timing(steps=1)
          cycle
        endif
+       !
+       if (l_regular_term) then
+         !prefactor for case iii)
+         pre_factor_G_eq_0=-pi*q_weight_regular(i_q_bz)*DL_vol/SPEED_OF_LIGHT**2/2._SP
+       else
+         !prefactor for case ii)
+         pre_factor_G_eq_0= pi*q_weight(i_q_bz)*DL_vol/SPEED_OF_LIGHT/2._SP
+       endif
+       !prefactor for case i)
+       pre_factor       =pi/2._SP/DL_vol/float(nqbz)
        !
        Sc_dummy=cZERO
        !
@@ -171,6 +195,10 @@ subroutine QED_Sigma_c(E,k,q,qp)
        call scatter_Bamp_using_the_gradient(isc_grad_k,"i")
        call scatter_Bamp_using_the_gradient(isc_grad_p,"o")
        !
+       ! We need the objects
+       ! i) <nk|exp(iqr)\grad|mk-q>
+       ! ii) [<mk-q|exp(-iqr)\grad|nk>]*
+       ! i) gives an i(k-q-G0) factor and ii) a -ik so we need at the end 
        ! q_cc{i_cp} + G0_{i_cp}
        !
        do i_cp=1,3
@@ -183,9 +211,13 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
          q_photon(:) = q_cc(:) + g_vec(i_g,:)*2._SP*pi/alat(:)
          !
+         ! trans_matrix(i,j) = \delta_{i,j} - q_photon(i)*q_photon(j)/q_photon^2
+         ! when q_photon -> 0, trans_matrix(i,j) = \delta_{i,j}
+         !
+         trans_matrix(:,:) = 0._SP
          do i_c=1,3
-           if (i_g==1) cycle
-           do i_cp=i_c,3
+           do i_cp=i_c,3           
+             if (i_g==1.and.i_q==1) cycle
              trans_matrix(i_c,i_cp)=-q_photon(i_c)*q_photon(i_cp)/v_norm(q_photon)**2
              trans_matrix(i_cp,i_c)=trans_matrix(i_c,i_cp)
            enddo
@@ -211,20 +243,24 @@ subroutine QED_Sigma_c(E,k,q,qp)
              !
              P_i_c=XHI_k(i_c)-XHI_p(i_c)-cI*t_vec(i_c)*I_wfk_wfp
              !
-             if (i_g==1) then
+             if (i_g==1) then !G=0 case
                !
-               if (i_c==i_cp) Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)/DL_vol*q_weight(i_q_bz)
+               Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)*trans_matrix(i_c,i_p)*pre_factor_G_eq_0
                !
              else
                !
-               Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)*trans_matrix(i_c,i_cp)/Photon_E/DL_vol/float(nqbz)
+               Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)*trans_matrix(i_c,i_cp)/Photon_E*pre_factor
                !
              endif
              !
            enddo 
          enddo
          !
-         Sc_dummy=Sc_dummy+Dipole_sum/(E_diff-Photon_E)*pi/2._SP
+         if (l_regular_term) then
+           Sc_dummy=Sc_dummy+Dipole_sum
+         else
+           Sc_dummy=Sc_dummy+Dipole_sum/(E_diff-Photon_E)
+         endif
          !
        enddo G_loop
        !
@@ -250,9 +286,11 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Clean-UP
  !
+ deallocate(q_weight,q_weight_regular)
+ !
  call elemental_collision_free(isc)
- call elemental_collision_free(isc_grad_p)
- call elemental_collision_free(isc_grad_k)
+ call elemental_collision_free(isc_grad_k) 
+ call elemental_collision_free(isc_grad_p) 
  !
 #if defined _TIMING
  call timing('GW (Lamb)',OPR='stop')

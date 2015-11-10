@@ -21,78 +21,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
+subroutine RT_occupations_FIT(T_fit,Ef_fit,Occ_bk)
  !
  ! Check if both the electrons and the holes are below a given temperature
  ! In case locks the occupations of states which are not expected to change
  ! any more
  !
  use pars,           ONLY:SP
- use QP_m,           ONLY:QP_table,QP_n_states
- use electrons,      ONLY:levels,spin
- use R_lattice,      ONLY:bz_samp
- use vec_operate,    ONLY:sort
+ use real_time,      ONLY:RT_carriers
  use functions,      ONLY:Fermi_fnc_fit
- use SC,             ONLY:SC_bands
- use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,RT_nk,RT_ibz_coo,RT_carriers
  !
  implicit none
  !
- type(levels),  intent(in)   :: E
- type(bz_samp), intent(in)   :: k
- real(SP),      intent(inout):: T_fit(2),Ef_fit(2)
- real(SP),      intent(in)   :: Occupations(SC_bands(1):SC_bands(2),RT_nk)
+ real(SP), intent(in)    :: Occ_bk(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk)   
+ real(SP), intent(inout) :: T_fit(2),Ef_fit(2)
  !
- integer,  parameter :: fit_dim=1000
- real(SP), parameter :: tresh=1.E-5
+ real(SP) :: Occ_rt(RT_carriers%nstates)
+ integer  :: nfit,i_RT,ib,ik_RT
+ real(SP) :: err_fit(4)
  !
- integer  :: i_RT,i_qp,i_b,i_k,i_k_rim,i_k_Erim,i_k_RT,i_spin,i1,&
-&            nfit,E_sort_index(RT_carriers%nstates)
- real(SP) :: err_fit(4),RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
-&            RT_occ(RT_carriers%nstates),RT_occ_tmp(RT_carriers%nstates),RT_E(RT_carriers%nstates)
- !
- i_RT=0
- do i_qp=1,QP_n_states
-   !
-   ! n   =QP_table(i_qp,1)
-   ! k   =QP_table(i_qp,3)
-   ! sp  =QP_table(i_qp,4)
-   !
-   if (QP_table(i_qp,2)/=QP_table(i_qp,1)) cycle
-   !
-   i_b   =QP_table(i_qp,1)
-   i_k   =QP_table(i_qp,3)
-   i_spin=spin(QP_table(i_qp,:))
-   !
-   if (i_b<SC_bands(1)) cycle
-   if (i_b>SC_bands(2)) cycle
-   !
-   do i_k_rim=0,DbGd_ibz_coo(i_k,2)-DbGd_ibz_coo(i_k,1)
-     i_k_RT=RT_ibz_coo(i_k,1)+i_k_rim
-     i_k_Erim =DbGd_ibz_coo(i_k,1)+i_k_rim
-     if (i_k_RT>RT_nk) cycle
-     i_RT=i_RT+1
-     !
-     ! Prepare eps,f(eps) for the report
-     !
-     RT_occ(i_RT)=Occupations(i_b ,i_k_RT)
-     if(     l_RT_uses_E_DbGd) RT_E(i_RT)=E%E_DbGd(i_b,i_k_Erim,1)
-     if(.not.l_RT_uses_E_DbGd) RT_E(i_RT)=E%E(i_b,i_k_Erim,1)
-     !
-     ! DEBUG <
-     ! write(*,*) i_RT,i_k_RT,i_k,i_b,RT_E(i_RT),RT_occ(i_RT)
-     ! DEBUG >
-     !
-   enddo
-   !
+ do i_RT=1,RT_carriers%nstates
+   ib   =RT_carriers%table(i_RT,1)
+   ik_RT=RT_carriers%table(i_RT,3)
+   Occ_rt(i_RT)=Occ_bk(ib,ik_RT)
  enddo
  !
- call sort(RT_E,indx=E_sort_index)
- RT_occ_tmp(:)=RT_occ(E_sort_index(:))
- RT_occ=RT_occ_tmp
- !
- nfit=Fermi_fnc_fit(RT_E,RT_occ,RT_carriers%nstates,T_fit,Ef_fit,err_fit,&
-&       RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit)
+ nfit=Fermi_fnc_fit(Occ_rt,RT_carriers%nstates,T_fit,Ef_fit,err_fit)
  !
  if(err_fit(1)>0.05) then
    T_fit(1) =-T_fit(1)

@@ -115,11 +115,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_dos=.false.
  dos_broadening=0.1/HA2EV
  dos_bands=(/1,n_bands/)
- dos_E_range=(/1.,-1./)/HA2EV
+ dos_E_range=(/1._SP,-1._SP/)/HA2EV
  dos_E_steps=500
  !
  !
- ! RT OCCUPATIONS and DOS
+ ! RT OCCUPATIONS
  !
 #if defined _YPP_RT
  OCC_T_range=0.
@@ -127,12 +127,17 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  !
  l_RealTime=.FALSE.
- l_RT_X=.FALSE.
+ !
+ ! Absorption
+ l_RT_X  =.FALSE.
  l_RT_abs=.FALSE.
- l_RT_occ_Plot=.FALSE.
- l_RT_occ_Fit=.FALSE.
- l_RT_dos=.FALSE.
- l_RT_occ_Bands=.FALSE.
+ !
+ ! Occupations and lifetimes
+ l_RT_occ_time  =.FALSE.
+ l_RT_occ_energy=.FALSE.
+ l_RT_occ_2D_dos=.FALSE.
+ !
+ l_RT_occ_Bands =.FALSE.
  l_RT_life_Bands=.FALSE.
  !
  !
@@ -172,7 +177,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_amplitude=.false.
  ncell = (/1, 1, 1/) 
  r_hole= (/0._SP,0._SP,0._SP/)
- lambda = 1          
  state_ctl = '1 - 1'
  deg_energy =0.01_SP/HA2EV
  min_weight =0.01_SP
@@ -351,7 +355,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='rt' )  infile_verbosity=V_real_time
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='qp' )  infile_verbosity=V_qp
-     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='all' )  infile_verbosity=V_all
+     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='all' ) infile_verbosity=V_all
    endif
    !
    call initactivate(1,'ElecTemp BoseTemp')
@@ -443,11 +447,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
      !
      l_RT_X           =trim(rstr_piece(i1+1))=='X'
      l_RT_abs         =trim(rstr_piece(i1+1))=='a'
-     l_RT_dos         =trim(rstr_piece(i1+1))=='d'
+     !
      l_RT_life_Bands  =trim(rstr_piece(i1+1))=='lb'
      l_RT_occ_Bands   =trim(rstr_piece(i1+1))=='ob'
-     l_RT_occ_Plot    =trim(rstr_piece(i1+1))=='op'
-     l_RT_occ_Fit     =trim(rstr_piece(i1+1))=='of'
+     !
+     l_RT_occ_time    =trim(rstr_piece(i1+1))=='ot'
+     l_RT_occ_energy  =trim(rstr_piece(i1+1))=='oe'
+     l_RT_occ_2D_dos  =trim(rstr_piece(i1+1))=='od'
      !
    endif
 #endif
@@ -479,11 +485,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'RealTime') then
      if (l_RT_X)           call initactivate(1,'RT_X')
      if (l_RT_abs)         call initactivate(1,'RTabs')
-     if (l_RT_dos)         call initactivate(1,'RTcarrDos')
      if (l_RT_life_Bands)  call initactivate(1,'RTlifeBnd')
      if (l_RT_occ_Bands)   call initactivate(1,'RToccBnd')
-     if (l_RT_occ_Plot)    call initactivate(1,'RToccPlot')
-     if (l_RT_occ_Fit)     call initactivate(1,'RToccFit')
+     if (l_RT_occ_time)    call initactivate(1,'RToccTime')
+     if (l_RT_occ_energy)  call initactivate(1,'RToccEner')
+     if (l_RT_occ_2D_dos)  call initactivate(1,'RToccDos')
    endif
 #endif
  enddo
@@ -515,11 +521,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_RealTime         = runlevel_is_on('RealTime')
  l_RT_X             = runlevel_is_on('RT_X')
  l_RT_abs           = runlevel_is_on('RTabs')
- l_RT_dos           = runlevel_is_on('RTcarrDos')
  l_RT_life_Bands    = runlevel_is_on('RTlifeBnd')
  l_RT_occ_Bands     = runlevel_is_on('RToccBnd')
- l_RT_occ_Plot      = runlevel_is_on('RToccPlot')
- l_RT_occ_Fit       = runlevel_is_on('RToccFit')
+ l_RT_occ_time      = runlevel_is_on('RToccTime')
+ l_RT_occ_energy    = runlevel_is_on('RToccEner')
+ l_RT_occ_2D_dos    = runlevel_is_on('RToccDos')
  !
 #endif
 #if defined _YPP_MAGNETIC
@@ -613,17 +619,17 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call init_QP_ctl_switch('G')
-   if (l_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands")
+   if (l_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands PrtOccOnly")
  endif
 #if defined _YPP_RT
  if (l_RealTime) then
-   l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_occ_Bands.or.l_RT_abs
-   if (l_flag) call init_QP_ctl_switch('G')
+   l_flag=l_RT_occ_2D_dos.or.l_RT_occ_time.or.l_RT_occ_energy.or.l_RT_occ_Bands.or.l_RT_abs
+   if (l_flag) call init_RT_ctl_switch('G')
    if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
    if (l_RT_occ_Bands.or.l_RT_life_Bands) call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
-   if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
    if (l_RT_abs) call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
-   if (l_RT_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad")
+   if (l_RT_occ_time)   call initactivate(1,"OCCgroup")
+   if (l_RT_occ_2D_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
  endif
 #endif
  !
@@ -651,7 +657,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
-   if (l_spin) call initactivate(1,"Degen_Step")
+   if (l_spin) call initactivate(1,"Degen_Step FFTGvecs")
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif
@@ -711,8 +717,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_RT
- if (.not.l_init_QP) l_init_QP=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands.or.l_RT_life_Bands
- if (l_init_QP) call init_QP(.FALSE.,.TRUE.)
+ if (.not.l_init_QP) l_init_QP=l_RT_occ_time.or.l_RT_occ_energy.or.l_RT_occ_2D_dos.or.l_RT_occ_bands.or.l_RT_life_Bands
+ if (l_init_QP) call init_QP(.FALSE.,infile_verbosity==V_real_time)
 #else
  if (l_init_QP) call init_QP(.FALSE.,.FALSE.)
 #endif
@@ -756,7 +762,6 @@ contains
    !
    integer     :: n_points,i_p,nflines_save
    real(SP)    :: real_ctl,real_v(10,3)
-   character(schlen) :: comment
    !
    real_ctl=0._SP
    real_v(:,3)=999._SP

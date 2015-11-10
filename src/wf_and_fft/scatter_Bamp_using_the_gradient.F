@@ -78,7 +78,7 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
    !$omp do
 #endif
    do ir = 1, fft_size
-     if (which=="i")  isc%rho_tw_rs(ir) = WF_der(ic,ir)*isc%WF_symm_o(ir,1)
+     if (which=="i")  isc%rho_tw_rs(ir) = conjg(WF_der(ic,ir))*isc%WF_symm_o(ir,1)
      if (which=="o")  isc%rho_tw_rs(ir) = conjg(isc%WF_symm_i(ir,1))*WF_der(ic,ir)
    enddo
 #if defined _OPENMP

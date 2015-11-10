@@ -152,7 +152,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
        l_regular_term=abs(E_diff)<1.E-5
        l_SI_term     =l_regular_term.and.i_n==i_m.and.i_q==1
        !
-       if (l_SI_term) then
+       if (l_regular_term) then !OLD
+       !if (l_SI_term) then  ! NEW
          call live_timing(steps=1)
          cycle
        endif
@@ -162,7 +163,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
          pre_factor_G_eq_0=-pi*q_weight_regular(i_q_bz)*DL_vol/SPEED_OF_LIGHT**2/2._SP
        else
          !prefactor for case ii)
-         pre_factor_G_eq_0= pi*q_weight(i_q_bz)*DL_vol/SPEED_OF_LIGHT/2._SP
+         !pre_factor_G_eq_0= pi*q_weight(i_q_bz)*DL_vol/SPEED_OF_LIGHT/2._SP ! NEW CODE
+         pre_factor_G_eq_0= pi*q_weight(i_q_bz)/DL_vol/2._SP ! OLD
        endif
        !prefactor for case i)
        pre_factor       =pi/2._SP/DL_vol/float(nqbz)
@@ -207,7 +209,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        G_loop: do i_g=1,QP_QED_ng
          !
-         if (i_g==1.and.i_q==1) cycle
+         ! q=G=0 is always zero as 1/w diverges only like |q| and DeltaE is finite
+         !
+         if (i_g==1.and.i_q==1) cycle 
          !
          q_photon(:) = q_cc(:) + g_vec(i_g,:)*2._SP*pi/alat(:)
          !
@@ -217,7 +221,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
          trans_matrix(:,:) = 0._SP
          do i_c=1,3
            do i_cp=i_c,3           
-             if (i_g==1.and.i_q==1) cycle
              trans_matrix(i_c,i_cp)=-q_photon(i_c)*q_photon(i_cp)/v_norm(q_photon)**2
              trans_matrix(i_cp,i_c)=trans_matrix(i_c,i_cp)
            enddo
@@ -245,7 +248,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
              !
              if (i_g==1) then !G=0 case
                !
-               Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)*trans_matrix(i_c,i_p)*pre_factor_G_eq_0
+               if (i_c==i_cp) Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)*pre_factor_G_eq_0 !OLD
+               !Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)*trans_matrix(i_c,i_p)*pre_factor_G_eq_0 !NEW
                !
              else
                !

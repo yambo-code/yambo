@@ -54,12 +54,17 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_k,i_n,i_p_G0,i_m,i_p,i_c,i_cp,i_wf_at_p,&
                              i_wf_at_p_g,timing_steps,i_g,i_w
- complex(SP)               ::XHI_p(3),XHI_k(3),I_wfk_wfp,Dipole_sum,P_i_cp,P_i_c,Sc_dummy
+ complex(SP)               ::Sc_dummy
  real(SP)                  ::q_photon(3),q_cc(3),Photon_E,trans_matrix(3,3),t_vec(3),E_diff,&
 &                            pre_factor,pre_factor_G_eq_0
  real(SP),    allocatable  ::q_weight(:),q_weight_regular(:)
  type(elemental_collision) ::isc,isc_grad_k,isc_grad_p
  logical                   ::l_regular_term,l_SI_term
+ !
+ ! Momentum collision 
+ !
+ complex(SP)               ::P(3)
+ real(SP)                  ::P_square_times_tau(QP_QED_ng)
  !
  if (l_elel_corr) then
    call section('+','Correlation: Photon-mediated Self-energy')
@@ -159,14 +164,20 @@ subroutine QED_Sigma_c(E,k,q,qp)
        endif
        !
        if (l_regular_term) then
+         !
          !prefactor for case iii)
+         !
          pre_factor_G_eq_0=-pi*q_weight_regular(i_q_bz)*DL_vol/SPEED_OF_LIGHT**2/2._SP
        else
+         !
          !prefactor for case ii)
          !pre_factor_G_eq_0= pi*q_weight(i_q_bz)*DL_vol/SPEED_OF_LIGHT/2._SP ! NEW CODE
+         !
          pre_factor_G_eq_0= pi*q_weight(i_q_bz)/DL_vol/2._SP ! OLD
        endif
+       !
        !prefactor for case i)
+       !
        pre_factor       =pi/2._SP/DL_vol/float(nqbz)
        !
        Sc_dummy=cZERO
@@ -207,12 +218,16 @@ subroutine QED_Sigma_c(E,k,q,qp)
          t_vec(i_cp)=q_cc(i_cp)+g_vec(i_p_G0,i_cp)*2._SP*pi/alat(i_cp)
        enddo
        !
+       P_square_times_tau=0._SP
+       !
        G_loop: do i_g=1,QP_QED_ng
          !
          ! q=G=0 is always zero as 1/w diverges only like |q| and DeltaE is finite
          !
          if (i_g==1.and.i_q==1) cycle 
          !
+         ! COLLISION SPECIFIC SECTION
+         !=============================================================================================================================
          q_photon(:) = q_cc(:) + g_vec(i_g,:)*2._SP*pi/alat(:)
          !
          ! trans_matrix(i,j) = \delta_{i,j} - q_photon(i)*q_photon(j)/q_photon^2
@@ -227,43 +242,26 @@ subroutine QED_Sigma_c(E,k,q,qp)
            trans_matrix(i_c,i_c)=1._SP-trans_matrix(i_c,i_c)
          enddo
          !
+         do i_c=1,3
+           P(i_c)=isc_grad_k%rhotw(QP_QED_ng*(i_c-1)+i_g)-isc_grad_p%rhotw(QP_QED_ng*(i_c-1)+i_g)-cI*t_vec(i_c)*isc%rhotw(i_g)
+         enddo
+         !
+         do i_cp=1,3
+           do i_c=1,3
+             P_square_times_tau(i_g)=P_square_times_tau(i_g)+P(i_cp)*conjg(P(i_c))*trans_matrix(i_c,i_cp)
+           enddo
+         enddo
+         !=============================================================================================================================
+         !
          Photon_E=SPEED_OF_LIGHT*v_norm(q_photon)
          !
-         I_wfk_wfp=isc%rhotw(i_g)
-         !
-         do i_cp=1,3
-           XHI_k(i_cp)=isc_grad_k%rhotw(QP_QED_ng*(i_cp-1)+i_g)
-           XHI_p(i_cp)=isc_grad_p%rhotw(QP_QED_ng*(i_cp-1)+i_g)
-         enddo
-         !
-         Dipole_sum=0._SP
-         !
-         do i_cp=1,3
-           !
-           P_i_cp=XHI_k(i_cp)-XHI_p(i_cp)-cI*t_vec(i_cp)*I_wfk_wfp
-           !
-           do i_c=1,3
-             !
-             P_i_c=XHI_k(i_c)-XHI_p(i_c)-cI*t_vec(i_c)*I_wfk_wfp
-             !
-             if (i_g==1) then !G=0 case
-               !
-               if (i_c==i_cp) Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)*pre_factor_G_eq_0 !OLD
-               !Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)*trans_matrix(i_c,i_p)*pre_factor_G_eq_0 !NEW
-               !
-             else
-               !
-               Dipole_sum = Dipole_sum+P_i_cp*conjg(P_i_c)*trans_matrix(i_c,i_cp)/Photon_E*pre_factor
-               !
-             endif
-             !
-           enddo 
-         enddo
+         if (i_g==1) P_square_times_tau(i_g)=P_square_times_tau(i_g)*pre_factor_G_eq_0
+         if (i_g> 1) P_square_times_tau(i_g)=P_square_times_tau(i_g)*pre_factor/Photon_E
          !
          if (l_regular_term) then
-           Sc_dummy=Sc_dummy+Dipole_sum
+           Sc_dummy=Sc_dummy+P_square_times_tau(i_g)
          else
-           Sc_dummy=Sc_dummy+Dipole_sum/(E_diff-Photon_E)
+           Sc_dummy=Sc_dummy+P_square_times_tau(i_g)/(E_diff-Photon_E)
          endif
          !
        enddo G_loop

@@ -90,7 +90,7 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 YPP_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons excitons symmetries k-points bits 
 YPPPH_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons elph excitons symmetries k-points bits 
-YPPRT_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons elph real_time_ypp excitons symmetries k-points bits 
+YPPRT_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons elph real_time_ypp excitons symmetries k-points bits
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate tddft pol_function bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) sc

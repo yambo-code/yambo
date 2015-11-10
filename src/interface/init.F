@@ -1651,6 +1651,7 @@ write (*,*) 'here',trim(rstr_piece(i1+1)),l_elphoton_scatt
            if (l_elel_scatt)     call initactivate(1,'el_el_scatt')
            if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) l_elph_scatt=.true.
          endif
+         !
 #endif
          !
          ! COLLISIONS

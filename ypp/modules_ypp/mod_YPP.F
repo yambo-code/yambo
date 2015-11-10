@@ -108,9 +108,6 @@ module YPP
  logical      ::l_free_hole
  logical      ::l_angular_momentum
  logical      ::l_position
- integer      ::lambda
- integer      ::n_lambda
- integer      ::BS_H_dim
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
@@ -204,9 +201,8 @@ module YPP
  !
  logical  :: l_RealTime
  !
- ! (RT) DOS & BANDS
+ ! (RT) BANDS
  !
- logical  :: l_RT_dos
  logical  :: l_RT_occ_Bands
  logical  :: l_RT_life_Bands
  !
@@ -219,8 +215,9 @@ module YPP
  !
  ! (RT) Occupations
  !
- logical     :: l_RT_occ_Plot
- logical     :: l_RT_occ_Fit
+ logical     :: l_RT_occ_time
+ logical     :: l_RT_occ_energy
+ logical     :: l_RT_occ_2D_dos
  !
  ! Reduce Symmetries
  !
@@ -273,30 +270,28 @@ module YPP
  !
  interface
    !
-   subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq,verbose)
+   subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,S_z,S_sq)
      use pars,          ONLY:SP
+     use BS,            ONLY:BS_H_dim
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
      implicit none
-     integer            :: BS_H_dim
-     complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
      type(bz_samp)      :: Xk
      type(levels)       :: E
-     real(SP),optional  :: A_weight(BS_H_dim)
+     complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
      real(SP),optional  :: S_z(BS_H_dim)
      real(SP),optional  :: S_sq(BS_H_dim)
-     integer, optional  :: BS_E_degs(BS_H_dim)
-     logical, optional  :: verbose
    end subroutine
    !
-   subroutine  ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
+   subroutine  ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
      implicit none
      type(bz_samp)      :: k,q,Xk
      type(levels)       :: en,Xen
-     integer, optional  :: lambda_s(:)
      integer, optional  :: BS_E_degs(:)
+     integer, optional  :: lambda_s(:)
+     integer, optional  :: n_lambda
    end subroutine
    !
    subroutine  RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)

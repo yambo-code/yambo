@@ -35,7 +35,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,l_RT_life_Bands,&
+&                         plot_title,l_dos,l_RT_occ_Bands,l_RT_life_Bands,&
 &                         l_bands,l_current,current_dir,plot_is_1D,BANDS_steps
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
@@ -108,7 +108,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
 #if defined _YPP_RT 
  if (.not.flag) then
-   flag=any((/l_RT_dos,l_RT_life_Bands,l_RT_occ_Bands/))
+   flag=any((/l_RT_life_Bands,l_RT_occ_Bands/))
    l_rt_carriers_in_use=flag
  endif
 #endif
@@ -164,9 +164,6 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #if defined _YPP_SC
  if (flag) flag=.not.l_mean_potential
 #endif
-#if defined _YPP_RT
- if(flag) flag=.not.l_RT_dos
-#endif
  !
  if(flag) then
    !
@@ -199,10 +196,13 @@ subroutine electrons_driver(Xk,Xen,Xq)
  endif
 #endif
  !
- ! DOS & DENSITY
- !===============
+ ! DOS 
+ !=====
+ if (l_dos)     call electrons_dos(Xk,Xen)
  !
- if (l_dos.or.l_density.or.l_RT_dos)  call electrons_dos_and_charge(Xk,Xen)
+ ! DENSITY
+ !=========
+ if (l_density) call electrons_density(Xk,Xen)
  !
  ! BANDS interpolation
  !======================

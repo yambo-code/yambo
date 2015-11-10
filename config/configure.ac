@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.2 r.5034 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.2 r.5036 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="5034"
+SREVISION="5036"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -79,8 +79,9 @@ hostname=`uname -n`
 AC_SUBST(hostname)
 # ============================================================================
 # EDITOR
-AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor],[32])) 
-AC_CHECK_PROGS(editor,[$with_editor vim vi pico],["none"])
+AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],
+  [User-defined editor (none for no editor)],[32]),[],[with_editor="vim vi pico"]) 
+AC_CHECK_PROGS(editor,[$with_editor],[none])
 AC_SUBST(editor)
 
 # ============================================================================

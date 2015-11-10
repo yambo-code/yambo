@@ -21,13 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
+subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  !
- use pars,                ONLY:SP,schlen
+ use pars,                ONLY:SP,schlen,cZERO
  use units,               ONLY:HA2EV,HA2FSm1
  use BS,                  ONLY:BS_mat,BS_K_dim,BSS_eh_table,BS_nT_at_k
  use R_lattice,           ONLY:bz_samp
- use YPP,                 ONLY:n_lambda
  use IO_m,                ONLY:io_control,OP_RD,DUMP,RD_CL_IF_END
  use ELPH,                ONLY:elph_nDBS_used,ph_modes,elph_global_free,&
 &                              elph_use_q_grid,ph_freqs_sq,elph_gkkp
@@ -37,9 +36,11 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  use functions,           ONLY:Fermi_fnc_derivative
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:intc
+ !
  implicit none
- integer,  optional      ::lambda_s(n_lambda)
- type(bz_samp)::Xk
+ !
+ type(bz_samp) :: Xk
+ integer       :: lambda_s(n_lambda),n_lambda
  !
  ! Work Space
  !
@@ -59,7 +60,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  if (io_err/=0.or.elph_use_q_grid) return
  !
  allocate(diagonal_xhi(elph_nDBS_used,ph_modes,n_lambda),ph_freqs(ph_modes))
- diagonal_xhi = (0.,0.)
+ diagonal_xhi = cZERO
  !
  ! Fill locally BS_blk_dim
  !

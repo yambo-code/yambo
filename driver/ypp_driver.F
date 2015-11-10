@@ -29,14 +29,15 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
 &                              nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
- use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
- use com,                 ONLY:msg,write_to_report
+ use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,mk_dir
+ use com,                 ONLY:msg,write_to_report,more_io_path,com_path
  use it_m,                ONLY:it_reset,infile
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:write_to_log
  use YPP
+ !
  implicit none
  !
  type(levels)                 :: en,Xen,Ken
@@ -90,6 +91,9 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  if (iinf/=0) then
    call ypp_finalize()
    return
+ else
+   call mk_dir(more_io_path)
+   call mk_dir(com_path)
  endif
  !
  ! WF
@@ -199,8 +203,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
 #if defined _YPP_RT
  !
- if (l_RT_X.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call RT_driver(en,k,q)
- !   ======
+ if (l_RT_X.or.l_RT_occ_time.or.l_RT_occ_energy.or.l_RT_occ_2D_dos) call RT_driver(en,k,q)
  !
 #endif
  !
@@ -214,7 +217,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  l_flag=l_flag.and.(.not.l_eliashberg)
 #endif
 #if defined _YPP_RT
- l_flag=l_flag.or.l_RT_dos.or.l_RT_life_Bands.or.l_RT_occ_Bands
+ l_flag=l_flag.or.l_RT_life_Bands.or.l_RT_occ_Bands
 #endif
  !
  if (l_flag) call electrons_driver(Xk,Xen,q)

@@ -30,21 +30,19 @@ module functions
  !
  interface
    !
-   integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out)
+   integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out)
      !
      use pars, ONLY: SP
      !
-     ! This function makes a fit of RT_occ(RT_E) to the Fermi-Dirac function using two
+     ! This function makes a fit of RT_occ_in to the Fermi-Dirac function using two
      ! temperature and two fermi level, one for the valence and one for the conduction
      !
-     integer, intent(in)   :: nstates
-     real(SP),intent(in)   :: RT_E(nstates)
-     real(SP),intent(in)   :: RT_occ(nstates)
+     integer,  intent(in)  :: nstates
+     real(SP), intent(in)  :: RT_occ_in(nstates)
      !
      real(SP), intent(out) :: T_fit(2)
      real(SP), intent(out) :: Ef_fit(2)
      real(SP), intent(out) :: err_fit(4)
-     !
      real(SP), intent(out), optional :: RT_occ_fit_out(1000,2)
      real(SP), intent(out), optional :: RT_E_fit_out(1000,2)
      !
@@ -61,12 +59,12 @@ module functions
      !
      use electrons, ONLY:filled_tresh
      real(SP)::E,T,Fermi_fnc
-     Fermi_fnc=1.
-     if (T==0..and.E>0.) Fermi_fnc=0.
+     Fermi_fnc=1._SP
+     if (T==0._SP.and.E>0._SP) Fermi_fnc=0._SP
      !
-     if (T/=0.) Fermi_fnc=1./(1.+exp(E/T))
+     if (T/=0._SP) Fermi_fnc=1._SP/(1._SP+exp(E/T))
      !
-     if (Fermi_fnc<filled_tresh)  Fermi_fnc=0.
+     if (Fermi_fnc<filled_tresh)  Fermi_fnc=0._SP
      !
    end function
    !
@@ -91,7 +89,7 @@ module functions
      real(SP) :: E,T,Fermi_fnc_T_derivative
      real(SP),parameter :: tresh=0._SP
      Fermi_fnc_T_derivative=0._SP
-     if (T/=0._SP) Fermi_fnc_T_derivative=E/(2._SP+exp(E/T)+exp(-E/T))/T**2._SP
+     if (T/=0._SP) Fermi_fnc_T_derivative=E/(2._SP+exp(E/T)+exp(-E/T))/T**2
    end function
    !
    ! Bose functions

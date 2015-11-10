@@ -25,19 +25,18 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! NEQ GW collisions 
  !
- use pars,          ONLY:SP,pi,schlen,cZERO,rZERO
+ use pars,          ONLY:SP,pi,schlen,rZERO
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,spin_occ,spin
+ use electrons,     ONLY:levels,spin
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_Plasma_index,PAR_QP_index,&
-&                        PAR_IND_Q,PAR_Q_index,&
-&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_IND_Plasma,&
-&                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
- use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
-&                        COLLISIONS_element,nGW_NEQ_collisions,GW_NEQ_collisions,&
-&                        COLLISIONS_IO_status,scatterBamp_alloc
+&                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
+&                        PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
+ use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
+&                        nGW_NEQ_collisions,GW_NEQ_collisions,&
+&                        COLLISIONS_IO_status,elemental_collision_alloc
  use plasma,        ONLY:EH_gas
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -51,7 +50,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use R_lattice,     ONLY:qindx_S,qindx_C,bz_samp
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
- use SC,            ONLY:SC_bands,B_mat_index
+ use SC,            ONLY:SC_bands
  !
  implicit none
  !
@@ -69,7 +68,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
 &                           i_m,i_p,i_p_bz,i_p_s,i_p_sp,i_p_star,n_bands,&
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp1_mem
  complex(SP), allocatable ::EM1s(:,:)
- type(ggwinfo)            ::isc,iscp
+ type(elemental_collision)::isc,iscp
  integer          ::io_err,ID
  integer, external::io_X
  character(schlen)::ch
@@ -79,8 +78,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  alloc_err=0
  !
- call collision_reset(isc)
- call collision_reset(iscp)
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
  !
  ! Setup...
  !
@@ -124,10 +123,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  allocate(EM1s(X%ng,X%ng),stat=alloc_err)
  call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
  !
- call scatterBamp_alloc(isc)
- call scatterBamp_alloc(iscp)
- allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
- call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
+ call elemental_collision_alloc(isc, NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="NEQ_GW")
+ call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="NEQ_GW")
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
@@ -158,7 +155,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      !
      if (iqibz/=isc%iqref) then
        !
-       call scatterGamp(isc,'c')
+       call scatter_Gamp(isc,'c')
        !
        call Io_and_Messaging_switch("-fragments_IO_log")
        !
@@ -228,7 +225,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      i_np     = QP_table(i_qp1,2)
      isc%os(1)= i_np
      !
-     call scatterBamp(isc)
+     call scatter_Bamp(isc)
      !
      do i_qp2=1,QP_n_states
        !
@@ -268,7 +265,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          !
          iscp%qs(1)=i_pmq_G0
          !
-         call scatterBamp(iscp)
+         call scatter_Bamp(iscp)
          !
          call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
          !
@@ -323,7 +320,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  deallocate(EM1s)
  call mem_est("EM1s")
  call X_alloc('X')
- call collision_reset(isc)
- call collision_reset(iscp)
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
  !
 end subroutine

@@ -23,6 +23,21 @@
 !
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
+ ! The EOM looks like:
+ !
+ ! i\partial_T G^<+[h+\Sigma_s,G^<]=I^<
+ !
+ ! here I evaluate the components of both \Sigma_s and I^<.
+ !
+ ! While for \Sigma_s the POTENTIAL can be specified, for I^< only the KIND is possible to define.
+ !
+ ! So we have, at the command line,
+ !
+ ! yambo_rt -e -s e/p/h/a  -> I^<
+ ! yambo_rt -e -v (hf),(c)ohsex  -> \Sigma_s
+ !
+ ! In the \Sigma_s case also yambo_sc can evaluate
+ !
  use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_use_collisions,&
 &                        l_elphoton_scatt
  use com,           ONLY:error

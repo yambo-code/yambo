@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine scatterGamp(isc,mode)
+subroutine scatter_Gamp(isc,mode)
  !
  ! isc%gamp(G,G') = \int_p (region around q) 1/|p+G|/|p+G'|/(2*pi)**3
  !
@@ -31,12 +31,12 @@ subroutine scatterGamp(isc,mode)
  !
  use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_col_cut
- use collision,     ONLY:ggwinfo
+ use collision,     ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
  implicit none
- type(ggwinfo)::isc
- character(1) ::mode
+ type(elemental_collision)::isc
+ character(1)             ::mode
  !
  !Working Space
  !

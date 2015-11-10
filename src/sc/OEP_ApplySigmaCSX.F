@@ -46,7 +46,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use frequency,       ONLY:w_samp
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use QP_m,            ONLY:QP_ng_Sx
- use collision,       ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
+ use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,elemental_collision_free
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
@@ -69,8 +69,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  ! Work space
  !
- type(ggwinfo)    ::isc
- type(PP_indexes) ::px
+ type(elemental_collision) ::isc
+ type(PP_indexes)          ::px
  integer          ::iv1,iv2,ir,ig1,ig2,i1,i2,ikbz,ik,iq,ifft,offt,os,is,iGo
  integer          ::io_err,alloc_err,ID,iqs,iqibz
  character(schlen)::ch
@@ -82,7 +82,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  ! Resets
  !
- call collision_reset(isc)
+ call elemental_collision_free(isc)
  call PP_indexes_reset(px)
  !
  isc%ngrho=maxval(G_m_G)
@@ -96,11 +96,9 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  call X_alloc('X',(/X%ng,X%ng,1/))
  allocate(PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng),stat=alloc_err)
  call mem_est("PPaR",(/2*size(PPaR_ws)/),errors=(/alloc_err/))
- allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),local_u(fft_size),u(X%ng),&
-      &u_rs(fft_size),rhotw_rs(fft_size),Vcoh(X%ng),stat=alloc_err)
- call mem_est("ISC-GAMP",(/X%ng**2+isc%ngrho/),errors=(/alloc_err/))
  !
- call scatterBamp_alloc(isc)
+ call elemental_collision_alloc(isc,TITLE="OEP_SigmaCSX",NG=X%ng,NG_GAMP=(/X%ng,X%ng/))
+ allocate(local_u(fft_size),u(X%ng),u_rs(fft_size),rhotw_rs(fft_size),Vcoh(X%ng),stat=alloc_err)
  !
  isc%qs=1
  !call scatterGamp(isc,'c') !???
@@ -114,7 +112,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
    iqibz=isc%qs(2)
    iqs  =isc%qs(3)
    if (iqibz/=isc%iqref) then
-     call scatterGamp(isc,'c')
+     call scatter_Gamp(isc,'c')
      !
      if (iq==1   ) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)    !
      if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)            ! I/O 
@@ -158,7 +156,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
          isc%qs(1)=qindx_S(ik,iq,2)
          os=isc%os(3)
          lostr = os>nsym/(i_time_rev+1)
-         call scatterBamp(isc)
+         call scatter_Bamp(isc)
 #if defined _DOUBLE
          call zgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(isc%rhotw),1,(0._SP,0_SP), u,1)
 #else 
@@ -185,8 +183,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
      end do
    end do
  end do
- deallocate(isc%gamp,isc%rhotw,local_u,u,u_rs,rhotw_rs)
- call scatterBamp_free(isc)
+ deallocate(local_u,u,u_rs,rhotw_rs)
  !
  ! COH applied to the WF: FFT,then multiply by WFs and add to SX
  !
@@ -207,7 +204,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  call live_timing()
 ! deallocate(Vcoh,Vcoh_rs)
- call collision_reset(isc)
+ call elemental_collision_free(isc)
  call PP_indexes_reset(px)
  !
 end subroutine OEP_ApplySigmaCSX

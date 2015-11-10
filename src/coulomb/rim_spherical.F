@@ -25,7 +25,7 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  !
  ! Here I want to approx the integral
  !
- ! 1/vol \int_vol F(q) d3q = 1/vol \int_vol d3q/q^2 [q^2 F(q)] =
+ ! 1/vol \int_vol F(q) d3q = 1/vol \int_vol d3q/q^power [q^power F(q)] =
  !                         = 1/vol \sum_{Qi} \int_Si d3q/q^power [q^power F(q)] ~
  !                         ~ 1/vol \sum_{Qi} [Qi^power F(Qi)] \int_Si d3q/q^power
  !

@@ -25,8 +25,7 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! Fock Collisions
  !
- use pars,          ONLY:SP,schlen,pi,cZERO
- use memory_m,      ONLY:mem_est
+ use pars,          ONLY:SP,pi,cZERO
  use IO_m,          ONLY:io_COLLs
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
@@ -34,9 +33,9 @@ subroutine COLLISIONS_Fock(E,k,q)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_IND_Q,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
- use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
+ use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
 &                        Fock_collisions,nFock_collisions,COLLISIONS_IO_status,&
-&                        scatterBamp_alloc
+&                        elemental_collision_alloc
  use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands,B_mat_index
@@ -45,7 +44,6 @@ subroutine COLLISIONS_Fock(E,k,q)
 #endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load
- use wrapper_omp,   ONLY:V_dot_V_omp
  !
  implicit none
  !
@@ -54,12 +52,12 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! Work Space
  !
- integer                 :: i_qp,ig1,iqbz,iqibz,alloc_err,iqs,&
+ integer                 :: i_qp,ig1,iqbz,iqibz,iqs,&
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,n_bands(2),N_g_vecs,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_nQP_local
  !
- type(ggwinfo)           :: isc,iscp
- complex(SP)             :: pre_factor
+ type(elemental_collision):: isc,iscp
+ complex(SP)              :: pre_factor
  !
 #if defined _TIMING
  call timing('Fock Collisions',OPR='start')
@@ -67,8 +65,8 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! Reset
  !
- call collision_reset(isc)
- call collision_reset(iscp)
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
  !
  ! Dimensions
  !
@@ -93,12 +91,10 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! Allocation
  !
- call scatterBamp_alloc(isc)
- call scatterBamp_alloc(iscp)
- allocate(isc%gamp(N_g_vecs,1),isc%rhotw(N_g_vecs),iscp%rhotw(N_g_vecs))
- call mem_est("ISC-GAMP",(/3*N_g_vecs/),errors=(/alloc_err/))
+ call elemental_collision_alloc(isc, NG=N_g_vecs,NG_GAMP=(/N_g_vecs,1/),TITLE="FOCK")
+ call elemental_collision_alloc(iscp,NG=N_g_vecs,TITLE="FOCK")
  !
- call scatterGamp(isc,'x')
+ call scatter_Gamp(isc,'x')
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
@@ -133,7 +129,7 @@ subroutine COLLISIONS_Fock(E,k,q)
      isc%qs   =(/0,iqibz,iqs/)
      iscp%qs  =(/0,iqibz,iqs/)
      !
-     if (isc%qs(2)/=isc%iqref) call scatterGamp(isc,'x')
+     if (isc%qs(2)/=isc%iqref) call scatter_Gamp(isc,'x')
      !
      ! Scattering geometry (I)
      !=========================
@@ -170,7 +166,7 @@ subroutine COLLISIONS_Fock(E,k,q)
        !
        iscp%os(1)=i_mp
        !
-       call scatterBamp(iscp)
+       call scatter_Bamp(iscp)
        !
        do i_np=n_bands(1),n_bands(2)
          !
@@ -181,7 +177,7 @@ subroutine COLLISIONS_Fock(E,k,q)
          isc%os(1)=i_np
          !
          if (any(isc%is/=iscp%is).or.any(isc%os/=iscp%os)) then
-           call scatterBamp(isc)
+           call scatter_Bamp(isc)
          else
            isc%rhotw=iscp%rhotw
          endif
@@ -221,8 +217,8 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! CLEAN
  !
- call collision_reset(isc)
- call collision_reset(iscp)
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
  !
 #if defined _TIMING
  call timing('Fock Collisions',OPR='stop')

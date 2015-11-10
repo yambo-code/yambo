@@ -32,8 +32,8 @@ subroutine COLLISIONS_momentum(E,k,q)
  use electrons,     ONLY:levels,spin,n_spinor
  use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_Q_index,PAR_RL_index,&
 &                        PAR_nQP,PAR_nQ,PAR_QP_index,PAR_G_bands_index,PAR_IND_G_b
- use collision,     ONLY:ggwinfo,collision_reset,nGW_QED_collisions,&
-&                        COLLISIONS_IO_status,GW_QED_collisions,scatterBamp_alloc
+ use collision,     ONLY:elemental_collision,elemental_collision_free,nGW_QED_collisions,&
+&                        COLLISIONS_IO_status,GW_QED_collisions,elemental_collision_alloc
  use QP_m,          ONLY:QP_table,QP_n_states,QP_QED_ng,QP_n_G_bands,QP_nb
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands
@@ -49,18 +49,18 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  !Work Space
  !
- type(ggwinfo)           ::I,I_grad_n_k,I_grad_np_k_m_q
- integer                 ::i_qp,ig,PAR_nQP_,i_q_bz,i_q,i_q_mem,i_g,i_g_mem,i_c,i_qp_mem,i_m,i_m_mem
- real(SP)                ::p_cc(3)
- character(schlen)       ::ch
+ type(elemental_collision)::I,I_grad_n_k,I_grad_np_k_m_q
+ integer                  ::i_qp,ig,PAR_nQP_,i_q_bz,i_q,i_q_mem,i_g,i_g_mem,i_c,i_qp_mem,i_m,i_m_mem
+ real(SP)                 ::p_cc(3)
+ character(schlen)        ::ch
  !
  if (n_spinor==2) call error('QED collisions not implemented in the spinorial case')
  !
  ! Resets & basis setup
  !
- call collision_reset(I)
- call collision_reset(I_grad_n_k) 
- call collision_reset(I_grad_np_k_m_q) 
+ call elemental_collision_free(I)
+ call elemental_collision_free(I_grad_n_k) 
+ call elemental_collision_free(I_grad_np_k_m_q) 
  !
  call k_ibz2bz(k,'c',.TRUE.)
  !
@@ -82,11 +82,9 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  ! Allocation again
  !
- call scatterBamp_alloc(I)
- call scatterBamp_alloc(I_grad_n_k)
- allocate(I%rhotw(QP_QED_ng),I_grad_n_k%rhotw(3*QP_QED_ng))
- I%ngrho =QP_QED_ng
- I_grad_n_k%ngrho=QP_QED_ng
+ call elemental_collision_alloc(I,NG=QP_QED_ng,TITLE="COLL_P")
+ call elemental_collision_alloc(I_grad_n_k,NG=QP_QED_ng,GRADIENT=.TRUE.,TITLE="COLL_P")
+ call elemental_collision_alloc(I_grad_np_k_m_q,NG=QP_QED_ng,GRADIENT=.TRUE.,TITLE="COLL_P")
  !
  PAR_nQP_=PAR_nQP
  if (allocated(COLLISIONS_IO_status)) then
@@ -133,8 +131,8 @@ subroutine COLLISIONS_momentum(E,k,q)
      I_grad_n_k%os=I%os
      I_grad_n_k%qs=I%qs
      !
-     call scatterBamp(I)
-     call scatterBamp_using_the_gradient(I_grad_n_k)
+     call scatter_Bamp(I)
+     call scatter_Bamp_using_the_gradient(I_grad_n_k)
      !
      do i_g=1,QP_QED_ng
        !
@@ -164,8 +162,9 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  deallocate(I%rhotw,I_grad_n_k%rhotw)
  !
- call collision_reset(I)
- call collision_reset(I_grad_n_k) 
+ call elemental_collision_free(I)
+ call elemental_collision_free(I_grad_n_k) 
+ call elemental_collision_free(I_grad_np_k_m_q) 
  !
 #if defined _TIMING
  call timing('Momentum Collisions',OPR='stop')

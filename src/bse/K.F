@@ -49,7 +49,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps
- use collision,    ONLY:ggwinfo,collision_reset
+ use collision,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
 &                       deliver_IO_error_message
@@ -90,9 +90,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: x_fft_size,c_fft_size
  logical    :: load_O_X,l_USE_all_Gexx
- complex(SP),allocatable::Ovv(:),Occ(:),O_times_W(:)
- complex(SP),allocatable::Ovc(:),Ocv(:)
- type(ggwinfo)          ::isc
+ complex(SP),allocatable  ::Ovv(:),Occ(:),O_times_W(:)
+ complex(SP),allocatable  ::Ovc(:),Ocv(:)
+ type(elemental_collision)::isc
  !
  ! I/O
  !
@@ -107,8 +107,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  io_BS_Fxc_err=-1
  call parser('ALLGexx',l_USE_all_Gexx)
  !
- call collision_reset(K_CORR_collision)
- call collision_reset(K_EXCH_collision)
+ call elemental_collision_free(K_CORR_collision)
+ call elemental_collision_free(K_EXCH_collision)
  !
  ! K/S Table
  !
@@ -253,12 +253,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
  endif
  !
- K_EXCH_collision%ngrho=BS_n_g_exch
- K_CORR_collision%ngrho=O_ng
- !
- allocate(K_EXCH_collision%rhotw(BS_n_g_exch))
- allocate(K_CORR_collision%rhotw(O_ng))
- !
  ! Wave Functions
  !================
  if (l_bs_fxc) then
@@ -277,6 +271,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call WF_load(WF,max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,Xk%nibz/),space='R',title='-BSK')
    !
  endif
+ !
+ ! Elemental collisions allocation
+ !=================================
+ !
+ call elemental_collision_alloc(K_CORR_collision,NG=O_ng,TITLE="CORR_COLL")
+ call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
  !
  ! Wave Functions Phases
  !=======================
@@ -308,7 +308,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_res_K_corr) then
    !
-   call collision_reset(isc)
+   call elemental_collision_free(isc)
    !
    X%ng=BS_n_g_W
    if (.not.l_td_hf) then
@@ -339,7 +339,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    do iq_W=1,q%nibz
      !
      isc%qs(2)=iq_W
-     call scatterGamp(isc,'c')
+     call scatter_Gamp(isc,'c')
      !
      if (.not.l_td_hf) then
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
@@ -372,7 +372,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (.not.l_td_hf) call X_alloc('X')
    !
    X%ng=X%ng_db
-   call collision_reset(isc)
+   call elemental_collision_free(isc)
    !
  endif
  !
@@ -625,8 +625,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 1 continue
  !
  call WF_free(WF)
- call collision_reset(K_CORR_collision)
- call collision_reset(K_EXCH_collision)
+ call elemental_collision_free(K_CORR_collision)
+ call elemental_collision_free(K_EXCH_collision)
  !
 #if defined _TIMING
  call timing('X T_space Kernel',OPR='stop')

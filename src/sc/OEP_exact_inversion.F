@@ -42,7 +42,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
  use interfaces,      ONLY:MATRIX_driver
  use matrix_operate,  ONLY:INV
- use collision,       ONLY:ggwinfo,collision_reset
+ use collision,       ONLY:elemental_collision,elemental_collision_free
  use QP_m,            ONLY:QP_ng_Sx,QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:SC_R,H_rotate,it_now
@@ -67,7 +67,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  complex(DP), allocatable :: Vx_dp(:),rho_tw_rs(:)
  complex(SP)              :: SigmaXC
  type(w_samp)             :: Xw
- type(ggwinfo)            :: isc
+ type(elemental_collision):: isc
  !
  ! Calculate Xo^{-1}(G,G') => 1 - initialize vars/dim
  !                            2 - calculate Xo, 
@@ -105,7 +105,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  ! NB: a. it does not work for metallic systems
  ! -----------------------------------------------
  ! 1:
- call collision_reset(isc)
+ call elemental_collision_free(isc)
  isc%ngrho=X%ng
  allocate(rhotw_sum(X%ng),rhotw_sum_TR(X%ng),rho_xc(X%ng),rho_tw_rs(fft_size))
  !
@@ -196,7 +196,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  ! CLEAN
  !
  deallocate(Voep_RL,Vx_dp)
- call collision_reset(isc)
+ call elemental_collision_free(isc)
  call W_reset(Xw)
  !
  ! Reset coarse-grid arrays used in X_os

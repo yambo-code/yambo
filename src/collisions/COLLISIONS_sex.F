@@ -35,9 +35,9 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_IND_Q,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
- use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
+ use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
 &                        SEX_collisions,nSEX_collisions,&
-&                        COLLISIONS_IO_status,scatterBamp_alloc
+&                        COLLISIONS_IO_status,elemental_collision_alloc
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -62,12 +62,12 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,n_bands(2),N_g_vecs,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_nQP_local
  !
- type(ggwinfo)           :: isc,iscp
- complex(SP)             :: pre_factor
+ type(elemental_collision):: isc,iscp
+ complex(SP)              :: pre_factor
  !
- complex(SP), allocatable:: EM1s(:,:)
- integer                 :: io_err,ID
- integer, external       :: io_X
+ complex(SP), allocatable :: EM1s(:,:)
+ integer                  :: io_err,ID
+ integer, external        :: io_X
  !
 #if defined _TIMING
  call timing('SEX Collisions',OPR='start')
@@ -77,8 +77,8 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  !
  alloc_err=0
  !
- call collision_reset(isc)
- call collision_reset(iscp)
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
  !
  ! Setup
  !
@@ -108,8 +108,6 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  call WF_load(WF,N_g_vecs,maxval(qindx_S(:,:,2)),(/1,n_bands_to_load/),(/1,k%nibz/),title='-SEX Collisions')
  !
  isc%iqref =0
- isc%ngrho =N_g_vecs
- iscp%ngrho=N_g_vecs
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -127,10 +125,8 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  allocate(EM1s(N_g_vecs,N_g_vecs),stat=alloc_err)
  call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
  !
- call scatterBamp_alloc(isc)
- call scatterBamp_alloc(iscp)
- allocate(isc%gamp(N_g_vecs,N_g_vecs),isc%rhotw(N_g_vecs),iscp%rhotw(N_g_vecs),stat=alloc_err)
- call mem_est("ISC-GAMP",(/N_g_vecs**2+2*N_g_vecs/),errors=(/alloc_err/))
+ call elemental_collision_alloc(isc, NG=N_g_vecs,NG_GAMP=(/N_g_vecs,N_g_vecs/),TITLE="SEX")
+ call elemental_collision_alloc(iscp,NG=N_g_vecs,TITLE="SEX")
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
@@ -167,7 +163,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
      !
      if (iqibz/=isc%iqref) then
        !
-       call scatterGamp(isc,'c')
+       call scatter_Gamp(isc,'c')
        !
        call Io_and_Messaging_switch("-fragments_IO_log")
        !
@@ -227,7 +223,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
        !
        iscp%os(1)=i_mp
        !
-       call scatterBamp(iscp)
+       call scatter_Bamp(iscp)
        !
        do i_np=n_bands(1),n_bands(2)
          !
@@ -238,7 +234,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
          isc%os(1)=i_np
          !
          if (any(isc%is/=iscp%is).or.any(isc%os/=iscp%os)) then
-           call scatterBamp(isc)
+           call scatter_Bamp(isc)
          else
            isc%rhotw=iscp%rhotw
          endif
@@ -281,8 +277,8 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  deallocate(EM1s)
  call mem_est("EM1s")
  call X_alloc('X')
- call collision_reset(isc)
- call collision_reset(iscp)
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
  !
 #if defined _TIMING
  call timing('SEX Collisions',OPR='stop')

@@ -44,7 +44,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  use D_lattice,       ONLY:nsym,i_time_rev
  use FFT_m,           ONLY:fft_size,fft_rot_r
  use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
- use collision,       ONLY:collision_reset 
+ use collision,       ONLY:elemental_collision_free 
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index,WF_load

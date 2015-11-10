@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine scatterBamp_using_the_gradient(isc,which)
+subroutine scatter_Bamp_using_the_gradient(isc,which)
  !
  ! It computs
  !
@@ -40,15 +40,15 @@ subroutine scatterBamp_using_the_gradient(isc,which)
  !
  use pars,           ONLY:DP,SP
  use electrons,      ONLY:n_spinor
- use collision,      ONLY:ggwinfo
+ use collision,      ONLY:elemental_collision
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:g_rot
  use FFT_m,          ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  !
  implicit none
  !
- type(ggwinfo)::isc
- character(1) ::which
+ type(elemental_collision)::isc
+ character(1)             ::which
  !
  ! Work Space
  !

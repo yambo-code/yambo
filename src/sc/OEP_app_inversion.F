@@ -43,7 +43,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
  use interfaces,      ONLY:MATRIX_driver
  use matrix_operate,  ONLY:INV
- use collision,       ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
+ use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:it_now,l_oep_EWeight
@@ -73,7 +73,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  complex(SP)              :: SigmaXC
  complex(DP), allocatable :: Vx_dp(:),W_tmp(:),rhotw_ds(:)
  character(schlen)        :: ch
- type(ggwinfo)            :: isc
+ type(elemental_collision):: isc
  type(PP_indexes)         :: px
  logical                  :: l_is_TR
  !
@@ -105,12 +105,11 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  ! -----------------------------------------------
  ! NB:   not tested for metallic systems, might not work
  ! -----------------------------------------------
- call collision_reset(isc)
+ call elemental_collision_free(isc)
  call PP_indexes_reset(px)
  !
- isc%ngrho=QP_ng_Sx
- call scatterBamp_alloc(isc)
- allocate(isc%rhotw(QP_ng_Sx),rhotw_sum(QP_ng_Sx-1),rhotw_sum_TR(QP_ng_Sx-1),rhotw_prd(QP_ng_Sx,QP_ng_Sx))
+ call elemental_collision_alloc(isc,TITLE="OEP_SigmaCSX",NG=QP_ng_Sx)
+ allocate(rhotw_sum(QP_ng_Sx-1),rhotw_sum_TR(QP_ng_Sx-1),rhotw_prd(QP_ng_Sx,QP_ng_Sx))
  allocate(rhotw_ds(fft_size),rhotw_rs(QP_ng_Sx))
  !
  call PARALLEL_index(px,(/nkibz,E%nbf/))
@@ -138,7 +137,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          isc%is = (/iv1,ik,is,1/)
          isc%os = (/iv2,ik,is,1/)
          isc%qs = (/1,1,1/)
-         call scatterBamp(isc)
+         call scatter_Bamp(isc)
          !
          !rhotw_ds(:)=conjg(WF%c(fft_rot_r(:,is),ifft))*WF%c(fft_rot_r(:,is),offt)/EWeight
          rhotw_ds(:)=WF%c(fft_rot_r(:,is),ifft)*conjg(WF%c(fft_rot_r(:,is),offt))/EWeight
@@ -188,8 +187,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
    Ko(ig1,1:QP_ng_Sx-1) = Ko(ig1,1:QP_ng_Sx-1) - rhotw_prd(ig1+1,2:QP_ng_Sx)/float(nkbz)
  end do
  !
- call scatterBamp_free(isc)
- deallocate(isc%rhotw,rhotw_sum,rhotw_sum_TR,rhotw_prd,rhotw_ds,rhotw_rs)
+ deallocate(rhotw_sum,rhotw_sum_TR,rhotw_prd,rhotw_ds,rhotw_rs)
  !
  ! Calculate Vkli (RL) 
  !
@@ -213,11 +211,11 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
 #endif
  !
  Vkli = real(Vx_dp)
-  !
-  ! CLEAN
-  !
+ !
+ ! CLEAN
+ !
  deallocate(Vkli_RL,Vx_dp)
- call collision_reset(isc)
+ call elemental_collision_free(isc)
  call PP_indexes_reset(px)
-  !
+ !
 end subroutine OEP_app_inversion

@@ -27,11 +27,11 @@ module collision
  !
  implicit none
  !
- !====================
- ! STANDARD COLLISION
- !====================
+ !=====================
+ ! ELEMENTAL COLLISION
+ !=====================
  !
- type ggwinfo
+ type elemental_collision
    !
    !  is(3)=(ib,ik,is,isp) --<--:--<-- os(3)=(ob,ok,os,osp)
    !                            :
@@ -42,16 +42,21 @@ module collision
    integer :: is(4) 
    integer :: os(4)
    integer :: qs(3)
-   integer :: ngrho,iqref
+   integer :: ngrho
+   integer :: iqref
+   !
+   character(schlen) :: name="El_Coll"
+   !
    complex(SP), pointer :: gamp(:,:) => null()
    complex(SP), pointer :: rhotw(:)  => null()
    !
    ! scatter bamp workspace
+   !
    complex(DP), pointer :: rho_tw_rs(:) => null()
    complex(SP), pointer :: WF_symm_i(:,:) => null()
    complex(SP), pointer :: WF_symm_o(:,:) => null()
    !
- end type ggwinfo
+ end type elemental_collision
  !
  !====================
  ! EXTENDED COLLISION
@@ -94,40 +99,54 @@ module collision
  !
  contains
    !
-   subroutine collision_reset(ggw,INIT_ONLY)
-     type(ggwinfo)::ggw
-     logical,optional::INIT_ONLY
+   subroutine elemental_collision_free(ggw)
+     type(elemental_collision)::ggw
      logical::init_only_=.false.
-     !
-     if(present(INIT_ONLY)) init_only_=INIT_ONLY
-     if(.not.init_only_) then
-       if(associated(ggw%gamp))  deallocate(ggw%gamp)
-       if(associated(ggw%rhotw)) deallocate(ggw%rhotw)
-       if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
-       if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
-       if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
-     endif
-     nullify(ggw%gamp,ggw%rhotw)
-     nullify(ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
-   end subroutine
-   !
-   subroutine scatterBamp_alloc(ggw)
-     use electrons,      ONLY:n_spinor
-     use FFT_m,          ONLY:fft_size
-     implicit none
-     type(ggwinfo)::ggw
-     allocate(ggw%rho_tw_rs(fft_size))
-     allocate(ggw%WF_symm_i(fft_size,n_spinor))
-     allocate(ggw%WF_symm_o(fft_size,n_spinor))
-   end subroutine
-   !
-   subroutine scatterBamp_free(ggw)
-     implicit none
-     type(ggwinfo)::ggw
+     if(associated(ggw%gamp))      deallocate(ggw%gamp)
+     if(associated(ggw%rhotw))     deallocate(ggw%rhotw)
      if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
      if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
      if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
-     nullify(ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
+     nullify(ggw%gamp,ggw%rhotw,ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
+   end subroutine
+   !
+   subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)
+     use electrons,      ONLY:n_spinor
+     use FFT_m,          ONLY:fft_size
+     use memory_m,       ONLY:mem_est
+     implicit none
+     type(elemental_collision) ::ggw
+     integer,         OPTIONAL :: NG
+     integer,         OPTIONAL :: NG_GAMP(2)
+     logical,         OPTIONAL :: GRADIENT
+     character(*),    OPTIONAL :: TITLE
+     !
+     if (present(TITLE)) then
+       ggw%name=TITLE
+     endif
+     !
+     allocate(ggw%rho_tw_rs(fft_size))
+     allocate(ggw%WF_symm_i(fft_size,n_spinor))
+     allocate(ggw%WF_symm_o(fft_size,n_spinor))
+     !
+     call mem_est(trim(ggw%name)//"-rho_tw_rs",(/fft_size/),(/2*SP/))
+     call mem_est(trim(ggw%name)//"-WF_symm_i",(/fft_size*n_spinor/),(/2*SP/))
+     call mem_est(trim(ggw%name)//"-WF_symm_o",(/fft_size*n_spinor/),(/2*SP/))
+     !
+     if (present(NG)) then
+       if (present(GRADIENT)) then
+         if (GRADIENT) allocate(ggw%rhotw(3*NG))
+       else
+         allocate(ggw%rhotw(NG))
+       endif
+       ggw%ngrho=NG
+       call mem_est(trim(ggw%name)//"-rhotw",(/size(ggw%rhotw)/),(/2*SP/))
+     endif
+     if (present(NG_GAMP)) then
+       allocate(ggw%gamp(NG_GAMP(1),NG_GAMP(2)))
+       call mem_est(trim(ggw%name)//"-gamp",(/size(ggw%gamp)/),(/2*SP/))
+     endif
+     !
    end subroutine
    !
 end module collision

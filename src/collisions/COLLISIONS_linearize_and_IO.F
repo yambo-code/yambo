@@ -24,9 +24,8 @@
 subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  !
  use pars,            ONLY:SP
- use QP_m,            ONLY:QP_n_states
  use collision,       ONLY:COLLISIONS_element,COLLISIONS_cutoff
- use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL,IO_and_Messaging_switch,io_COLLs
+ use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL,io_COLLs
  use interfaces,      ONLY:io_COLLISIONS
  use parallel_m,      ONLY:PAR_QP_index
  !
@@ -39,11 +38,12 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  ! Work Space
  !
  integer   :: ic,i1,i2,i3,i_cycle,io_err,ID,i_ref
- logical   :: store_it,l_exchange,l_GW_NEQ
+ logical   :: store_it,l_exchange,l_GW_NEQ,l_QED_P
  real(SP)  :: COLLISIONS_max
  !
  l_exchange = (index(what,"Fock")>0).or.(index(what,"SEX")>0)
  l_GW_NEQ   =  index(what,"GW_NEQ")>0
+ l_QED_P    =  index(what,"Momentum")>0
  !
  i_ref=1
  if (.not.io_COLLs) i_ref=PAR_QP_index(i_qp)
@@ -52,7 +52,6 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  ! integrals.
  !
  if(l_exchange   ) COLLISIONS_max=maxval(abs(COLL(1)%v3_c(:,:,:)))        
- if(l_GW_NEQ     ) COLLISIONS_max=maxval(abs(COLL(1)%v3_r(:,:,:)))     
  !
  COLL(i_ref)%table(:,:,:)=0
  !
@@ -68,15 +67,15 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
          !
          if (l_exchange) store_it=abs(COLL(1)%v3_c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0
          !
-         if (l_GW_NEQ  ) store_it=.TRUE.
+         if (l_GW_NEQ .or. l_QED_P ) store_it=.TRUE.
          !
          if (store_it) then
            ic=ic+1
            if (i_cycle==2) then
              !
              COLL(i_ref)%table(i1,i2,i3)=1
-             if (l_exchange ) COLL(i_ref)%v_c(ic) = COLL(1)%v3_c(i1,i2,i3)
-             if (l_GW_NEQ   ) COLL(i_ref)%v_r(ic) = COLL(1)%v3_r(i1,i2,i3)
+             if (l_exchange          ) COLL(i_ref)%v_c(ic) = COLL(1)%v3_c(i1,i2,i3)
+             if (l_GW_NEQ.or.l_QED_P ) COLL(i_ref)%v_r(ic) = COLL(1)%v3_r(i1,i2,i3)
              !
            endif
          endif

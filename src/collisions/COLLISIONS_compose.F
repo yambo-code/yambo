@@ -33,8 +33,7 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  use electrons,        ONLY:spin,n_sp_pol
  use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
 #if defined _RT
- use real_time,        ONLY:RT_nk,RT_ibz_coo,DbGd_bz_coo,RT_Nk_ibz,RT_Vnl_xc,&
-&                           l_RT_uses_E_DbGd
+ use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Vnl_xc
 #endif
  !
  implicit none
@@ -49,7 +48,7 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  !
  ! Work Space
  !
- integer           :: i_qp,ib,ibp,i_k,i_kmq,ic1,ic2,i_qp_mem,nstates,i_spin
+ integer           :: i_qp,ib,ibp,i_k,i_kmq,ic1,ic2,i_qp_mem,i_spin
 #if defined _RT
  integer           :: i_n,i_m,i_k_RT
 #endif

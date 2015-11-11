@@ -53,7 +53,7 @@ subroutine COLLISIONS_Fock(E,k,q)
  ! Work Space
  !
  integer                 :: i_qp,ig1,iqbz,iqibz,iqs,&
-&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,n_bands(2),N_g_vecs,&
+&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_nQP_local
  !
  type(elemental_collision):: isc,iscp
@@ -70,7 +70,6 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! Dimensions
  !
- n_bands   =SC_bands
  N_g_vecs  =QP_ng_Sx
  !
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
@@ -83,7 +82,7 @@ subroutine COLLISIONS_Fock(E,k,q)
    !
  endif
  !
- call WF_load(WF,N_g_vecs,maxval(qindx_S(:,:,2)),n_bands,(/1,k%nibz/),title='-Fock Collisions')
+ call WF_load(WF,N_g_vecs,maxval(qindx_S(:,:,2)),SC_bands,(/1,k%nibz/),title='-Fock Collisions')
  !
  isc%qs    =1
  isc%ngrho =N_g_vecs
@@ -162,13 +161,13 @@ subroutine COLLISIONS_Fock(E,k,q)
      isc%qs(1) =i_kmq_G0
      iscp%qs(1)=i_kmq_G0
      !
-     do i_mp=n_bands(1),n_bands(2)
+     do i_mp=SC_bands(1),SC_bands(2)
        !
        iscp%os(1)=i_mp
        !
        call scatter_Bamp(iscp)
        !
-       do i_np=n_bands(1),n_bands(2)
+       do i_np=SC_bands(1),SC_bands(2)
          !
          ! COLLISIONS(n,n',qp_n_states) = \sum_{G,q} ( rho(m,n,G,q,k) x rho*(m',n',G,q,k) /|q+G|^2 )
          !

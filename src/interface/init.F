@@ -1643,7 +1643,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _RT && defined _QED
            if ( trim(rstr_piece(i1+1)) == 'h'.or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
-write (*,*) 'here',trim(rstr_piece(i1+1)),l_elphoton_scatt
            if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
 #endif
 #if defined _RT 

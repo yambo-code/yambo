@@ -34,9 +34,9 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
 &                         nFock_collisions,nSEX_collisions,nGW_NEQ_collisions
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
- use collision,      ONLY:GW_QED_collisions,nGW_QED_collisions
+ use collision,      ONLY:P_collisions,nP_collisions
  use parallel_m,     ONLY:PAR_nRL
- use global_XC,      ONLY:SE_GW_EL_PHOTON
+ use global_XC,      ONLY:SE_GW_QED
 #endif
  !
  implicit none
@@ -46,24 +46,24 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  ! Work Space
  !
- integer :: D(3,2),I_range(2),J,mem_size(5),size_
+ integer :: D(3,2),COLL_range(2),J,mem_size(5),size_
  logical :: l_Fock,l_SEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
-&           l_clean,l_collision,l_distribute,l_GW_QED,l_complex,l_real
+&           l_clean,l_collision,l_distribute,l_Momentum,l_complex,l_real
  !
- if (I==0) I_range=(/1,PAR_nQP/)
+ if (I==0) COLL_range=(/1,PAR_nQP/)
  if (I==0) size_=PAR_nQP
- if (I> 0) I_range=(/I,I/)
+ if (I> 0) COLL_range=(/I,I/)
  if (I> 0) size_=1
  !
  ! What
  !
- l_Fock   =index(what,"Fock")>0
- l_SEX    =index(what,"SEX")>0
- l_GW_NEQ =index(what,"GW_NEQ")>0
- l_GW_QED =index(what,"GW_QED")>0
+ l_Fock    =index(what,"Fock")>0
+ l_SEX     =index(what,"SEX")>0
+ l_GW_NEQ  =index(what,"GW_NEQ")>0
+ l_Momentum=index(what,"Momentum")>0
  !
- l_complex=l_Fock.or.l_SEX.or.l_GW_QED
- l_real   =l_GW_NEQ
+ l_complex=l_Fock.or.l_SEX
+ l_real   =l_GW_NEQ.or.l_Momentum
  !
  ! Elements
  !
@@ -81,28 +81,28 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
 #if defined _QED
  !
- if (l_GW_QED) then
+ if (l_Momentum) then
+    D(2,:)=SC_bands
     if (l_distribute) then
      D(1,:)=(/1,PAR_nQ/)
-     D(2,:)=(/1,PAR_nRL/)
+     D(3,:)=(/1,PAR_nRL/)
    else
      D(1,:)=(/1,nqbz/)
-     D(2,:)=(/1,QP_QED_ng/)
+     D(3,:)=(/1,QP_QED_ng/)
    endif
-   D(3,:)=(/1,3/)
    if (l_collision.and.l_alloc) then
-     allocate(GW_QED_collisions(size_))
-     nGW_QED_collisions=size_
-     GW_QED_collisions(:)%kind=SE_GW_EL_PHOTON
-     GW_QED_collisions(:)%name="GW_QED"
+     allocate(P_collisions(size_))
+     nP_collisions=size_
+     P_collisions(:)%kind=SE_GW_QED
+     P_collisions(:)%name="Momentum"
    endif
-   call local_alloc_and_free(GW_QED_collisions,nGW_QED_collisions)
+   call local_alloc_and_free(P_collisions,nP_collisions)
    if (l_collision.and.l_clean) then
-     if (allocated(GW_QED_collisions)) then
-       call local_alloc_and_free(GW_QED_collisions,nGW_QED_collisions)
-       deallocate(GW_QED_collisions)
+     if (allocated(P_collisions)) then
+       call local_alloc_and_free(P_collisions,nP_collisions)
+       deallocate(P_collisions)
      endif
-     nGW_QED_collisions=0
+     nP_collisions=0
    endif
  endif
  !
@@ -177,14 +177,14 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      integer                  :: N
      type(COLLISIONS_element) :: COLL(N)
      mem_size=0
-     do J=I_range(1),I_range(2)
+     do J=COLL_range(1),COLL_range(2)
        if (l_alloc.and.(l_v3.or.l_all)) then
          if(l_real) then
            allocate(COLL(J)%v3_r(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
            COLL(J)%v3_r=rZERO
            mem_size(1)=mem_size(1)+size(COLL(J)%v3_r)
          endif
-         if(l_complex.or.l_GW_QED) then
+         if(l_complex) then
            allocate(COLL(J)%v3_c(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
            COLL(J)%v3_c=cZERO
            mem_size(2)=mem_size(2)+size(COLL(J)%v3_c)
@@ -201,7 +201,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
            COLL(J)%v_r=rZERO
            mem_size(3)=mem_size(3)+size(COLL(J)%v_r)
          endif
-         if(l_complex.or.l_GW_QED) then
+         if(l_complex) then
            allocate(COLL(J)%v_c(COLL(J)%N))
            COLL(J)%v_c=cZERO
            mem_size(4)=mem_size(4)+size(COLL(J)%v_c)

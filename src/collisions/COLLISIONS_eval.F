@@ -90,7 +90,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! Check for the Time Reversal Symmetry
  !
- if (i_time_rev==1) call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
+ if (trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX".or.l_elel_scatt) then
+   if (i_time_rev==1) call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
+ endif
  !
  ! Switch 
  !========
@@ -177,7 +179,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      ! Clean
      !-------
-     !if (io_COLLs) call COLLISIONS_alloc_and_free("GW_QED","v3 table","clean",1)
+     if (io_COLLs) call COLLISIONS_alloc_and_free("Momentum","v3 table","clean",1)
      !
    endif
    !
@@ -228,7 +230,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    if (l_cohsex)        call COLLISIONS_alloc_and_free("SEX","v3","clean",1)
    if (l_elel_scatt)    call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",1)
 #if defined _QED
-   if (l_elphoton_scatt) call COLLISIONS_alloc_and_free("GW_QED","v3","clean",1)
+   if (l_elphoton_scatt) call COLLISIONS_alloc_and_free("Momentum","v3","clean",1)
 #endif
  endif
  !
@@ -254,6 +256,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      if (COLL_kind==SC_HF)     COLL_name="Fock"
      if (COLL_kind==SC_COHSEX) COLL_name="SEX"
      if (COLL_kind==SE_GW_NEQ) COLL_name="GW_NEQ"
+     if (COLL_kind==SE_GW_QED) COLL_name="Momentum"
      !
      if (io_COLLs) then
        call COLLISIONS_alloc_and_free(trim(COLL_name),"collision","alloc",1)

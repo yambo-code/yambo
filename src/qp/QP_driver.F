@@ -45,7 +45,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
- use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_EL_PHOTON
+ use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_QED
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -150,7 +150,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    if (l_elph_corr) QP_DB_kind=SE_POLARON 
    !
-   if (l_elphoton_corr) QP_DB_kind=SE_GW_EL_PHOTON
+   if (l_elphoton_corr) QP_DB_kind=SE_GW_QED
    !
    ! GPL_EXCLUDE_START
    !

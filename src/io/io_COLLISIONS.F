@@ -38,7 +38,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use parallel_m,    ONLY:PAR_IND_QP
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
- use drivers,       ONLY:l_elel_scatt
+ use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -101,6 +101,11 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      endif
    endif
    !
+   if (V_kind==SE_GW_QED) then
+     call io_elemental(ID,L0=l_elphoton_scatt,&
+&         VAR=' Electron-Photon   scattering    :',WARN=.true.,OP=(/"=="/))
+   endif
+   !
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=V_kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
@@ -120,6 +125,8 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,R0=COLLISIONS_cutoff,&
 &         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
+     !
+     call io_elemental(ID,VAR="",VAR_SZ=0)
      !
    else if (V_kind_disk==SE_GW_NEQ.or.V_kind_disk==SC_COHSEX) then
      !
@@ -152,12 +159,15 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      enddo
      !
      call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=2,MENU=0)
+     call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      :',WARN=.true.)
+     call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      :',WARN=.true.)
+     call io_elemental(ID,VAR="",VAR_SZ=0)
+     !
+   else
+     !
+     call io_elemental(ID,VAR="",VAR_SZ=0)
      !
    endif
-   !
-   call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      :',WARN=.true.)
-   call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      :',WARN=.true.)
-   call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    io_COLLISIONS=io_status(ID)
    if (io_COLLISIONS/=0) goto 1
@@ -209,7 +219,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &                                COLL%D(2,1):COLL%D(2,2),&
 &                                COLL%D(3,1):COLL%D(3,2)))
    !
-   if(V_kind==SE_GW_NEQ) then
+   if(V_kind==SE_GW_NEQ.or.V_kind==SE_GW_QED) then
      ! Real collisions
      call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N/))
      call io_bulk(ID,R1=COLL%v_r)

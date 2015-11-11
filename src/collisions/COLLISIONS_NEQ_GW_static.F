@@ -278,13 +278,13 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          !
          if (io_COLLs) then
            !
-           GW_NEQ_collisions(1)%v3_r(i_J,1,iqbz)=&
-           &  GW_NEQ_collisions(1)%v3_r(i_J,1,iqbz)+abs(pre_factor)**2._SP
+           GW_NEQ_collisions(1)%v3_r(i_J,1,iqbz)=GW_NEQ_collisions(1)%v3_r(i_J,1,iqbz)+&
+&                                                abs(pre_factor)**2._SP
            !
          else
            !
            GW_NEQ_collisions(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)=&
-           &  GW_NEQ_collisions(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
+&             GW_NEQ_collisions(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
            !
          endif
          !

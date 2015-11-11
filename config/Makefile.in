@@ -69,17 +69,17 @@ BASIC_SURF_LIBS   = external_c modules surf_modules parallel xc_functionals pars
                     interface stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
-               tddft pol_function qp acfdt bse
+               collisions tddft pol_function qp acfdt bse
 
 PJ_SURFLIBS  = $(BASIC_SURF_LIBS) surf_modules coulomb bz_ops qp_control surf \
-               setup tddft pol_function qp acfdt bse
+               setup collisions tddft pol_function qp acfdt bse
 
-PJ_QEDLIBS   = $(MAIN_LIBS) collisions
+PJ_QEDLIBS   = $(MAIN_LIBS) 
 
-PJ_SCLIBS    = $(MAIN_LIBS) collisions sc
+PJ_SCLIBS    = $(MAIN_LIBS) sc
 
 PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
-               interpolate tddft pol_function qp acfdt bse collisions sc real_time
+               interpolate collisions tddft pol_function qp acfdt bse sc real_time
 #
 # Interfaces
 #
@@ -149,7 +149,7 @@ yambo_surf: libs
 	@X2DO="yambo_surf"; XPATH="driver";XLIBS="$(PJ_SURFLIBS)";ADF="-D_SURF";$(mkx)
 yambo_qed: libs
 	@LIBS2DO="$(PJ_QEDLIBS)"; XPATH="src";ADF="-D_QED"; $(mksrc)
-	@X2DO="yambo_qed"; XPATH="driver";XLIBS="$(MAIN_LIBS) collisions";ADF="-D_QED";$(mkx)
+	@X2DO="yambo_qed"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_QED";$(mkx)
 yambo_qed_rt: libs
 	@LIBS2DO="$(PJ_RTLIBS)"; XPATH="src";ADF="-D_QED -D_SC -D_RT -D_ELPH"; $(mksrc)
 	@X2DO="yambo_qed_rt"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_QED -D_SC -D_RT -D_ELPH";$(mkx)

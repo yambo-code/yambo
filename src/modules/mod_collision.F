@@ -94,10 +94,17 @@ module collision
  type(COLLISIONS_element), allocatable :: Fock_collisions(:)
  integer :: nSEX_collisions=0
  type(COLLISIONS_element), allocatable :: SEX_collisions(:)
- integer :: nGW_QED_collisions=0
- type(COLLISIONS_element), allocatable :: GW_QED_collisions(:)
+ integer :: nP_collisions=0
+ type(COLLISIONS_element), allocatable :: P_collisions(:)
  !
  contains
+   !
+   subroutine elemental_collision_copy(I,O)
+     type(elemental_collision)::I,O
+     O%is=I%is
+     O%os=I%os
+     O%qs=I%qs
+   end subroutine
    !
    subroutine elemental_collision_free(ggw)
      type(elemental_collision)::ggw

@@ -41,7 +41,7 @@ subroutine PLASMA_build_up(E,k,q)
  ! Work space
  !
  character(schlen)      :: ch
- integer                :: iqbz,i_q_mem,n_poles,iplasma,N_poles_bare
+ integer                :: iqbz,i_q_mem,n_poles,N_poles_bare
  real(SP), allocatable  :: poles(:)
  integer, external      :: PLASMA_tables_and_dimensions
  !

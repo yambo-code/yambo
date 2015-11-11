@@ -26,15 +26,15 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use pars,                ONLY:SP,pi,cI,cZERO
  use units,               ONLY:SPEED_OF_LIGHT
  use drivers,             ONLY:l_elel_corr
- use electrons,           ONLY:levels,spin
- use D_lattice,           ONLY:alat,a,DL_vol
- use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,g_vec,RL_vol,RIM_n_rand_pts
- use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_table,QP_Sc,QP_dSc_steps,QP_QED_ng,QP_nb,&
-&                              QP_states_simmetrize
- use vec_operate,         ONLY:v_norm
- use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use electrons,           ONLY:levels
+ use D_lattice,           ONLY:DL_vol
+ use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
+ use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize
+ use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
+&                              elemental_collision_copy
  use wave_func,           ONLY:WF
- use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
+ use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute,&
+&                              SCATTERING_GW_kinematics
  use functions,           ONLY:Fermi_fnc
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -52,19 +52,13 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! WorkSpace
  !
- integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_k,i_n,i_p_G0,i_m,i_p,i_c,i_cp,i_wf_at_p,&
-                             i_wf_at_p_g,timing_steps,i_g,i_w
- complex(SP)               ::Sc_dummy
- real(SP)                  ::q_photon(3),q_cc(3),Photon_E,trans_matrix(3,3),t_vec(3),E_diff,&
-&                            pre_factor,pre_factor_G_eq_0
+ integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_n,i_G0,i_c,i_cp,i_g,i_m
+ complex(SP)               ::Sc_dummy,P(3)
+ real(SP)                  ::Photon_E,T_matrix(3,3),T_vec(3),E_diff,pre_factor,pre_factor_G_eq_0,&
+&                            P_square_times_tau(QP_QED_ng)
  real(SP),    allocatable  ::q_weight(:),q_weight_regular(:)
  type(elemental_collision) ::isc,isc_grad_k,isc_grad_p
  logical                   ::l_regular_term,l_SI_term
- !
- ! Momentum collision 
- !
- complex(SP)               ::P(3)
- real(SP)                  ::P_square_times_tau(QP_QED_ng)
  !
  if (l_elel_corr) then
    call section('+','Correlation: Photon-mediated Self-energy')
@@ -138,24 +132,17 @@ subroutine QED_Sigma_c(E,k,q,qp)
    !
    if (.not.PAR_IND_Q%element_1D(i_q)) cycle
    !
-   q_cc=q%ptbz(i_q_bz,:)
-   !
    Photon_E=0._SP
    !
    QP_loop: do i_qp=1,qp%n_states
      !
      if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
      !
-     i_n    = QP_table(i_qp,1)
-     i_k    = QP_table(i_qp,3)
-     i_p_G0 = qindx_S(i_k,i_q_bz,2)
-     i_p    =k%sstar(qindx_S(i_k,i_q_bz,1),1)
-     !
      B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
        !
        if (.not.PAR_IND_G_b%element_1D(i_m)) cycle
        !
-       E_diff=E%E(i_n,i_k,1)-E%E(i_m,i_p,1)
+       call SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,isc,k,q,E=E,E_diff=E_diff,N=i_n,G0=i_G0)
        !
        l_regular_term=abs(E_diff)<1.E-5
        l_SI_term     =l_regular_term.and.i_n==i_m.and.i_q==1
@@ -183,29 +170,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        pre_factor       =pi/2._SP/DL_vol/float(nqbz)
        !
-       Sc_dummy=cZERO
-       !
-       ! m,k-q   n,k
-       ! --<--.-<--
-       !      | 
-       !      |
-       !     \|/ q,G,\alpha
-       !      |
-       !      
-       ! n   =QP_table(i_qp,1)
-       ! k   =QP_table(i_qp,3)
-       !
-       isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
-       isc%os=(/i_m,k%sstar(qindx_S(isc%is(2),i_q_bz,1),:),spin(QP_table(i_qp,:))/)
-       isc%qs=(/qindx_S(QP_table(i_qp,3),i_q_bz,2),q%sstar(i_q_bz,1),q%sstar(i_q_bz,2)/)
-       !
-       isc_grad_k%is=isc%is
-       isc_grad_k%os=isc%os
-       isc_grad_k%qs=isc%qs
-       !
-       isc_grad_p%is=isc%is
-       isc_grad_p%os=isc%os
-       isc_grad_p%qs=isc%qs
+       call elemental_collision_copy(isc,isc_grad_k)
+       call elemental_collision_copy(isc,isc_grad_p)
        !
        call scatter_Bamp(isc)
        call scatter_Bamp_using_the_gradient(isc_grad_k,"i")
@@ -217,11 +183,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
        ! i) gives an i(k-q-G0) factor and ii) a -ik so we need at the end 
        ! q_cc{i_cp} + G0_{i_cp}
        !
-       do i_cp=1,3
-         t_vec(i_cp)=q_cc(i_cp)+g_vec(i_p_G0,i_cp)*2._SP*pi/alat(i_cp)
-       enddo
-       !
-       P_square_times_tau=0._SP
+       P_square_times_tau=cZERO
+       Sc_dummy=cZERO
        !
        G_loop: do i_g=1,QP_QED_ng
          !
@@ -231,37 +194,24 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
          ! COLLISION SPECIFIC SECTION
          !=============================================================================================================================
-         q_photon(:) = q_cc(:) + g_vec(i_g,:)*2._SP*pi/alat(:)
          !
-         ! trans_matrix(i,j) = \delta_{i,j} - q_photon(i)*q_photon(j)/q_photon^2
-         ! when q_photon -> 0, trans_matrix(i,j) = \delta_{i,j}
-         !
-         trans_matrix(:,:) = 0._SP
-         do i_c=1,3
-           do i_cp=i_c,3           
-             trans_matrix(i_c,i_cp)=-q_photon(i_c)*q_photon(i_cp)/v_norm(q_photon)**2
-             trans_matrix(i_cp,i_c)=trans_matrix(i_c,i_cp)
-           enddo
-           trans_matrix(i_c,i_c)=1._SP-trans_matrix(i_c,i_c)
-         enddo
+         call SCATTERING_QED_transverse_matrix(i_q_bz,i_g,i_G0,q,T_matrix,T_vec,photon_E)
          !
          do i_c=1,3
-           P(i_c)=isc_grad_k%rhotw(QP_QED_ng*(i_c-1)+i_g)-isc_grad_p%rhotw(QP_QED_ng*(i_c-1)+i_g)-cI*t_vec(i_c)*isc%rhotw(i_g)
+           P(i_c)=isc_grad_k%rhotw(QP_QED_ng*(i_c-1)+i_g)-isc_grad_p%rhotw(QP_QED_ng*(i_c-1)+i_g)-cI*T_vec(i_c)*isc%rhotw(i_g)
          enddo
          !
          do i_cp=1,3
            do i_c=1,3
-             P_square_times_tau(i_g)=P_square_times_tau(i_g)+P(i_cp)*conjg(P(i_c))*trans_matrix(i_c,i_cp)
+             P_square_times_tau(i_g)=P_square_times_tau(i_g)+conjg(P(i_c))*T_matrix(i_c,i_cp)*P(i_cp)
            enddo
          enddo
          !=============================================================================================================================
          !
-         Photon_E=SPEED_OF_LIGHT*v_norm(q_photon)
-         !
          if (i_g==1) P_square_times_tau(i_g)=P_square_times_tau(i_g)*pre_factor_G_eq_0
          if (i_g> 1) P_square_times_tau(i_g)=P_square_times_tau(i_g)*pre_factor/Photon_E
          !
-         if (l_regular_term) then
+         if (l_regular_term.and.i_g==1) then
            Sc_dummy=Sc_dummy+P_square_times_tau(i_g)
          else
            Sc_dummy=Sc_dummy+P_square_times_tau(i_g)/(E_diff-Photon_E)
@@ -269,7 +219,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
        enddo G_loop
        !
-       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+Sc_dummy
+       QP_Sc(i_qp,1)=QP_Sc(i_qp,1)+Sc_dummy
        !
        if ( i_q_s == 1) call live_timing(steps=1)
        !
@@ -285,9 +235,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Symmetrize
  !
- do i_w=1,QP_dSc_steps
-   call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))
- enddo
+ call QP_states_simmetrize(E,V_complex=QP_Sc(:,1))
  !
  ! Clean-UP
  !

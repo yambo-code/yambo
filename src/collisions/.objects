@@ -2,7 +2,7 @@ QED_objs =
 SC_objs =
 RT_objs =
 #if defined _QED
-QED_objs=COLLISIONS_momentum.o
+QED_objs=SCATTERING_QED_transverse_matrix.o COLLISIONS_momentum.o
 #endif
 #if defined _SC
 SC_objs = PLASMA_parallel_setup.o \
@@ -11,4 +11,4 @@ SC_objs = PLASMA_parallel_setup.o \
        COLLISIONS_eval.o   COLLISIONS_linearize_and_IO.o \
        COLLISIONS_compose.o COLLISIONS_NEQ_GW_static.o COLLISIONS_sex.o COLLISIONS_Fock.o
 #endif
-objs= $(SC_objs) $(QED_objs)
+objs= SCATTERING_GW_kinematics.o $(SC_objs) $(QED_objs)

@@ -423,10 +423,10 @@ integer function io_RT_components(what,ID)
        ! Read from cache
        !
        do i1=1,3
-         RT_ind_J(i1)           =cmplx(J_and_P_cache(   2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1), &
-&                                      J_and_P_cache(   2*i1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1),SP)
-         RT_P(i1)               =cmplx(J_and_P_cache( 6+2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1), &
-&                                      J_and_P_cache( 6+2*i1  ,mod(NE_i_time-1,RT_IO_JPO_steps)+1),SP)
+         RT_ind_J(i1) =cmplx(J_and_P_cache(   2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1), &
+&                            J_and_P_cache(   2*i1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1),SP)
+         RT_P(i1)     =cmplx(J_and_P_cache( 6+2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1), &
+&                            J_and_P_cache( 6+2*i1  ,mod(NE_i_time-1,RT_IO_JPO_steps)+1),SP)
        enddo
        !
      endif 

@@ -35,7 +35,7 @@ subroutine scatterBamp(isc)
  !                                        /:\
  !  iq_is = ik_is-ok_os-Go
  !
- use pars,           ONLY:cZERO,cONE
+ use pars,           ONLY:cZERO,cONE,DP,SP
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
  use D_lattice,      ONLY:idt_index
@@ -69,14 +69,14 @@ subroutine scatterBamp(isc)
  !$omp parallel default(shared), private(ir)
  !$omp do
  do ir = 1, fft_size
-   isc%rho_tw_rs(ir) = isc%WF_symm_i(ir,1)*conjg(isc%WF_symm_o(ir,1))
+   isc%rho_tw_rs(ir) = cmplx(isc%WF_symm_i(ir,1)*conjg(isc%WF_symm_o(ir,1)),kind=DP)
  enddo
  !$omp end do
  !
  if (n_spinor==2) then
  !$omp do
    do ir = 1, fft_size
-     isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir)+isc%WF_symm_i(ir,2)*conjg(isc%WF_symm_o(ir,2))
+     isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir)+cmplx(isc%WF_symm_i(ir,2)*conjg(isc%WF_symm_o(ir,2)),kind=DP)
    enddo
  !$omp end do
  endif
@@ -88,21 +88,21 @@ subroutine scatterBamp(isc)
  !$omp parallel default(shared), private(ir)
  !$omp do
  do ir = 1, fft_size
-   isc%rho_tw_rs(ir) = conjg(isc%WF_symm_i(ir,1))*isc%WF_symm_o(ir,1)
+   isc%rho_tw_rs(ir) = cmplx(conjg(isc%WF_symm_i(ir,1))*isc%WF_symm_o(ir,1),kind=DP)
  enddo
  !$omp end do
  !
  if (n_spinor==2) then
  !$omp do
    do ir = 1, fft_size
-     isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir)+conjg(isc%WF_symm_i(ir,2))*isc%WF_symm_o(ir,2)
+     isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir)+cmplx(conjg(isc%WF_symm_i(ir,2))*isc%WF_symm_o(ir,2),kind=DP)
    enddo
  !$omp end do
  endif
  !$omp end parallel
 #else
- isc%rho_tw_rs(:)=conjg(isc%WF_symm_i(:,1))*isc%WF_symm_o(:,1)
- if (n_spinor==2) isc%rho_tw_rs(:)=isc%rho_tw_rs(:)+conjg(isc%WF_symm_i(:,2))*isc%WF_symm_o(:,2)
+ isc%rho_tw_rs(:)=cmplx(conjg(isc%WF_symm_i(:,1))*isc%WF_symm_o(:,1),kind=DP)
+ if (n_spinor==2) isc%rho_tw_rs(:)=isc%rho_tw_rs(:)+cmplx(conjg(isc%WF_symm_i(:,2))*isc%WF_symm_o(:,2),kind=DP)
 #endif
  !
 #endif
@@ -138,13 +138,13 @@ subroutine scatterBamp(isc)
  if (qs==idt_index) then 
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
-     isc%rhotw(ig)= conjg(isc%rho_tw_rs(fft_g_table(ig,iGo)))
+     isc%rhotw(ig)= cmplx(conjg(isc%rho_tw_rs(fft_g_table(ig,iGo))),kind=SP)
    enddo
    !$omp end parallel do
  else
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
-     isc%rhotw(ig)= conjg(isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo)))
+     isc%rhotw(ig)= cmplx(conjg(isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))),kind=SP)
    enddo
    !$omp end parallel do
  endif
@@ -153,19 +153,19 @@ subroutine scatterBamp(isc)
  if (qs==idt_index) then 
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
-     isc%rhotw(ig)= isc%rho_tw_rs(fft_g_table(ig,iGo))
+     isc%rhotw(ig)= cmplx(isc%rho_tw_rs(fft_g_table(ig,iGo)),kind=SP)
    enddo
    !$omp end parallel do
  else
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
-     isc%rhotw(ig)= isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))
+     isc%rhotw(ig)= cmplx(isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo)),kind=SP)
    enddo
    !$omp end parallel do
  endif
 #  else
- if (qs==idt_index) isc%rhotw(1:isc%ngrho)= isc%rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
- if (qs/=idt_index) isc%rhotw(1:isc%ngrho)= isc%rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
+ if (qs==idt_index) isc%rhotw(1:isc%ngrho)= cmplx(isc%rho_tw_rs(fft_g_table(1:isc%ngrho,iGo)),kind=SP)
+ if (qs/=idt_index) isc%rhotw(1:isc%ngrho)= cmplx(isc%rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo)),kind=SP)
 #  endif
 #endif
  !

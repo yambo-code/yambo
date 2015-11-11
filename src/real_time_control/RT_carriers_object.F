@@ -175,7 +175,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
            Hole_lifetime=Hole_lifetime+REF_lifetime(i_b,i_k_RT,1)+REF_lifetime(i_b,i_k_RT,3)+REF_lifetime(i_b,i_k_RT,5)
            Elec_lifetime=Elec_lifetime+REF_lifetime(i_b,i_k_RT,2)+REF_lifetime(i_b,i_k_RT,4)+REF_lifetime(i_b,i_k_RT,6)
            !
-           if(f_occ>0.) then
+           if(f_occ>0._SP) then
              RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime) - Hole_lifetime / f_occ
            else
              RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
@@ -188,12 +188,18 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
    case('input_output')
      !
+     ! These are written in the REF DBs
+     ! It is a waste to write them again at each time-step
+     !
      call io_bulk(DB_id,VAR="RT_carriers_E_bare",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%E_bare)
      call io_bulk(DB_id,VAR="RT_carriers_f_bare",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%f_bare)
      call io_bulk(DB_id,VAR="RT_carriers_GAMMA_bare",VAR_SZ=(/RT%nstates,6/))
      call io_bulk(DB_id,R2=RT%GAMMA_bare)
+     !
+     ! Energies
+     !
      call io_bulk(DB_id,VAR="RT_carriers_delta_E",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%delta_E)
      call io_bulk(DB_id,VAR="RT_carriers_dE_Hartree",VAR_SZ=(/RT%nstates/))
@@ -202,8 +208,14 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call io_bulk(DB_id,R1=RT%dE_V_xc)
      call io_bulk(DB_id,VAR="RT_carriers_dE_Self_Energy",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%dE_Self_Energy)
+     !
+     ! Occupations
+     !
      call io_bulk(DB_id,VAR="RT_carriers_delta_f",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%delta_f)
+     !
+     ! Lifetimes
+     !
      if (l_elel_scatt.or.l_elph_scatt) then
        call io_bulk(DB_id,VAR="RT_carriers_delta_GAMMA",VAR_SZ=(/RT%nstates/))
        call io_bulk(DB_id,R1=RT%delta_GAMMA)

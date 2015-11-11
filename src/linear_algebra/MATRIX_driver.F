@@ -23,7 +23,7 @@
 !
 subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill,det)
  !
- use pars,          ONLY:SP,cONE
+ use pars,          ONLY:SP,cONE,cZERO
  use matrix_operate,ONLY:blacs_t,INV,DIAGO,USE_LK,USE_SVD,USE_SLK,min_cpu_block_size
  use wrapper,       ONLY:M_by_M,SV_decomposition,LU_factorization,LU_inversion,M_eigenvalues
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV,PAR_COM_DIAGO,mpi_comm_world
@@ -133,11 +133,11 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
    !
    if(ifail/=0) call report_diago_error('GESVD (SVD)','failed')
    !
-   SV_min=1./10.**SVD_digits
+   SV_min=10._SP**(-SVD_digits)
    !
    do i1=1,M_size
      if (abs(SV(i1))<SV_min) then
-       VH(i1,:)=cmplx(0.,0.,SP) 
+       VH(i1,:)=cZERO
      else
        VH(i1,:)=VH(i1,:)/SV(i1)
      endif

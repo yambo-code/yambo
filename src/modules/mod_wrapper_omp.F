@@ -81,8 +81,6 @@ module wrapper_omp
      complex(SP), intent(out) :: C(msize,msize)
      character,   intent(in)  :: TRANSA,TRANSB
      !
-     complex(SP) :: A_(msize,msize),B_(msize,msize)
-     !
 #if defined _OPENMP && defined _DOUBLE
      call ZGEMM_omp(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
 #elif defined _OPENMP && !defined _DOUBLE

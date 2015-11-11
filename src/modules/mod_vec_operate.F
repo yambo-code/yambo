@@ -541,7 +541,10 @@ module vec_operate
        !
      enddo
      !
-     if(l_singles .and. abs(E(n)-E(first_deg_el(deg_grps)))>deg_accuracy) then
+     if(deg_grps> 0) i1=first_deg_el(deg_grps)
+     if(deg_grps==0) i1=1
+     !
+     if(l_singles .and.  abs(E(n)-E(i1))>deg_accuracy) then
        deg_grps=deg_grps+1
        first_deg_el(deg_grps)=n
        deg_elmnts(deg_grps)=1

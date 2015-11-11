@@ -122,11 +122,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call live_timing('Sigma_c',PAR_nQP*PAR_nG_bands*PAR_nQ)
  !
  !The correction is evaluated through
+ !
  ! \delta_{nk} = \sum_{m,G,q} prefactor/\omega_{q+G}*R^{qG}_{nmk}/(e_{nk} - e_{mk-q} - \omega_{q+G})
+ !
  !We distinguish 3 cases: 
- ! i) G !=0, prefactor=pi/2/DL_vol/Nq
- ! ii) G=0 and e_{nk} - e_{mk-q} !=0, prefactor= pi/2/c*DL_vol*RIM(q,power=1) 
- ! iii) G=0 and e_{nk} - e_{mk-q} = 0, prefactor= -pi/2/c^2*DL_vol*RIM(q,power=2)
+ !
+ ! i)   G !=0, prefactor=pi/2/DL_vol/Nq
+ ! ii)  G=0 and e_{nk} - e_{mk-q} !=0, prefactor= pi/2/c/DL_vol*RIM(q,power=1) 
+ ! iii) G=0 and e_{nk} - e_{mk-q}  =0, prefactor= -pi/2/c^2/DL_vol*RIM(q,power=2)
  !
  Q_loop: do i_q_bz=1,nqbz 
    !
@@ -157,8 +160,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
        l_regular_term=abs(E_diff)<1.E-5
        l_SI_term     =l_regular_term.and.i_n==i_m.and.i_q==1
        !
-       if (l_regular_term) then !OLD
-       !if (l_SI_term) then  ! NEW
+       if (l_SI_term) then  ! NEW
          call live_timing(steps=1)
          cycle
        endif
@@ -167,13 +169,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
          !prefactor for case iii)
          !
-         pre_factor_G_eq_0=-pi*q_weight_regular(i_q_bz)*DL_vol/SPEED_OF_LIGHT**2/2._SP
+         pre_factor_G_eq_0=-pi*q_weight_regular(i_q_bz)/DL_vol/SPEED_OF_LIGHT**2/2._SP
+         !
        else
          !
          !prefactor for case ii)
-         !pre_factor_G_eq_0= pi*q_weight(i_q_bz)*DL_vol/SPEED_OF_LIGHT/2._SP ! NEW CODE
          !
-         pre_factor_G_eq_0= pi*q_weight(i_q_bz)/DL_vol/2._SP ! OLD
+         pre_factor_G_eq_0= pi*q_weight(i_q_bz)/DL_vol/SPEED_OF_LIGHT/2._SP
+         !
        endif
        !
        !prefactor for case i)

@@ -40,7 +40,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,magn_n,V_xc_sc,SC_nbands
+ use SC,             ONLY:SC_bands,V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc,SC_nbands
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
@@ -200,20 +200,14 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu) cycle
    !
-   do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     !
-     ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-     !
-     H_nl_sc=cZERO
-     !
-     ! The gauge field
-     !=================
-     if (l_NE_with_fields) call RT_apply_field(ik,ik_DbGd,E,H_nl_sc,A_input)
-     !
-     forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
-&           Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
-     !
-   enddo
+   H_nl_sc=cZERO
+   !
+   ! The gauge field
+   !=================
+   if (l_NE_with_fields) call RT_apply_field(ik,H_nl_sc,A_input)
+   !
+   forall( ib=SC_bands(1):SC_bands(2) , ibp=SC_bands(1):SC_bands(2) , ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2) ) &
+&    Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
    !  
  enddo
  !

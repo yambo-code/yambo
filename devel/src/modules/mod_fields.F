@@ -298,10 +298,10 @@ module fields
      !
      select case(Field%ef_name)
        case('ANTIRES')
-         Divide_by_Field = (1._SP,0._SP)/Field%amplitude**order
+         if (order/=0) Divide_by_Field =(1._SP,0._SP)/Field%amplitude**order
          if (order==0) Divide_by_Field =(1._SP,0._SP)/Field%amplitude**2
        case('SIN')
-         Divide_by_Field =  (2._SP*cI/Field%amplitude)**order
+         if (order/=0) Divide_by_Field =      (2._SP*cI/Field%amplitude)**order
          if (order==0) Divide_by_Field =  (4._SP,0._SP)/Field%amplitude**2
        case('QSSIN') !Approximate relations/does not work yet
          sigma=Field%damping
@@ -310,7 +310,7 @@ module fields
          T = 2._SP*pi/W_0
          E_w= sqrt(pi/2._SP)*Field%amplitude*sigma*exp(-cI*W_0*T_0)*&
               &(erf((T-T_0)/sqrt(2._SP)/sigma)+erf(T_0/sqrt(2._SP)/sigma))
-         Divide_by_Field = (2._SP*cI/E_w)**order
+         if (order/=0) Divide_by_Field =  (2._SP*cI/E_w)**order
          if (order==0) Divide_by_Field =  (4._SP,0._SP)/(E_w*conjg(E_w))
        end select
        !
@@ -390,7 +390,5 @@ module fields
      endif
      !
    end function
-   !
-   ! GPL_EXCLUDE_END
    !
 end module

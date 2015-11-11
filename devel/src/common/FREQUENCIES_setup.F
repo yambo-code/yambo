@@ -93,13 +93,15 @@ subroutine FREQUENCIES_setup(W)
  ! 2) Thanks to this expression the length and the velocity gauge are finally identical
  !    and the divergency for w->0 in the velocity is removed (there is just some numerical noise)
  !
- do i1=1,W%n_freqs-1
-   w_n=W%er(1)+delta_w*real(i1,SP)
-   W%p(i1+1)=cmplx(w_n**2/sqrt(w_n**2+aimag(W%p(i1+1))**2),aimag(W%p(i1+1)),SP)
+ do i1=1,W%n_freqs
+   w_n=W%er(1)+delta_w*real(i1-1,SP)
+   if(w_n>0._SP) W%p(i1)=cmplx( w_n**2/sqrt(w_n**2+aimag(W%p(i1))**2),aimag(W%p(i1)),SP)
+   if(w_n<0._SP) W%p(i1)=cmplx(-w_n**2/sqrt(w_n**2+aimag(W%p(i1))**2),aimag(W%p(i1)),SP)
  enddo
  !
  do i1=1,W%n_freqs
-   W%p(i1)=sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
+   if ( real(W%p(i1))>=0._SP ) W%p(i1)= sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
+   if ( real(W%p(i1))< 0._SP ) W%p(i1)=-sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
  enddo
  !
  ! GPL_EXCLUDE_END

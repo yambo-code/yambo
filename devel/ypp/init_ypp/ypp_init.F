@@ -725,7 +725,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! Check and fill all possible vectorial USER fields
  ! 
- if (l_bands) call USER_vector_handle("BKpts")
+ if (l_bands.or.l_RT_occ_bands.or.l_RT_life_Bands) call USER_vector_handle("BKpts")
  !
  if (l_bz_grids) then
    if (l_k_grid)       call USER_vector_handle("GWKpts")

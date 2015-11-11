@@ -426,8 +426,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Check normalization @ 1st k-point only.
  !
- mndp=10.
- mxdp=-1.
+ mndp=10._SP
+ mxdp=-1._SP
  do i1=1,min(int(nel)+5,WF%b(2))
    do i2=1,min(int(nel)+5,WF%b(2))
      do is=1,n_sp_pol

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,7 +28,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  use stderr,         ONLY:string_split,real2ch,intc
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
- use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nkpts,BZ_DbGd_kpts,BZ_DbGd_nbands
+ use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,      ONLY:bz_samp,nkibz
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
  use units,          ONLY:FS2AUT,PS2AUT,HA2EV
@@ -38,28 +38,27 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  !
  implicit none
  !
- integer      :: bands(2)
- type(levels) :: E
- type(bz_samp):: K
- character(*),optional :: what ! X,K,G
- integer,     optional :: IO_com
- logical ,    optional :: VERBOSE
- real(SP),    optional :: Time
- logical ,    optional :: keep_RT_carriers
+ integer,intent(in)    :: bands(2)
+ type(levels), intent(inout) :: E
+ type(bz_samp), intent(in)   :: K
+ character(*),optional,intent(in) :: what ! X,K,G
+ integer,     optional,intent(in) :: IO_com
+ logical ,    optional,intent(in) :: VERBOSE
+ real(SP),    optional,intent(in) :: Time
+ logical ,    optional,intent(in) :: keep_RT_carriers
  !
  ! Work space
  !
- integer               :: I_id,i1,io_err,ID,i2,nb(2),ik,nkibz_save,i_j,BZ_DbGd_tot_nkpts_save
- real(SP)              :: l_Time,df_Max,dE_Max,N_carriers(2)
+ integer               :: I_id,i1,io_err,ID,i2,nkibz_save,i_j,BZ_DbGd_tot_nkpts_save
+ real(SP)              :: local_Time
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
  character(schlen)     :: db_piece(n_pieces),db_name,T_unit,ch
  character(3)          :: what_
- logical               :: l_E,l_f,l_elel_corr_save,is_def,l_DbGd,l_verbose,l_keep_carriers
+ logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers
  !
- l_Time=0._SP
- !
- l_DbGd=BZ_DbGd_tot_nkpts>0
+ local_Time=0._SP
+ if (present(Time)) local_Time=Time
  !
  l_verbose=.false.
  if (present(VERBOSE)) l_verbose=VERBOSE
@@ -68,6 +67,9 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  if (present(keep_RT_carriers)) l_keep_carriers=keep_RT_carriers
  !
  if (present(what)) then
+   !
+   ! Yambo
+   !=======
    !
    what_=' '//trim(what)//' '
    ! 
@@ -84,6 +86,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    !
    l_E=.FALSE.
    l_f=.FALSE.
+   l_W=.FALSE.
    !
    ! First check the DB file & Time
    !================================
@@ -112,23 +115,23 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
        enddo
      endif
      if (trim(db_piece(i1))=="@") then
-       read (db_piece(i1+1),*) l_Time
+       read (db_piece(i1+1),*) local_Time
        if (i1+2<=n_pieces) read (db_piece(i1+2),*) T_unit
      endif
    enddo
    !
    if (trim(T_unit)=='fs') then
-     l_Time=l_Time*FS2AUT
+     local_Time=local_Time*FS2AUT
    elseif (trim(T_unit)=='ps') then
-     l_Time=l_Time*PS2AUT
+     local_Time=local_Time*PS2AUT
    endif
    !
  else
    !
-   what_=' '
+   ! Ypp
+   !=====
    !
-   l_E=.TRUE.
-   l_f=.TRUE.
+   what_='YPP'
    !
    db_name=trim(jobstr)//'/ndb.RT_carriers'
    if (.not.file_exists(trim(db_name))) then
@@ -143,7 +146,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  ! I/O Time
  !==========
  !
- if (present(Time)) l_Time=Time
+ if (present(Time)) local_Time=Time
  !
  l_elel_corr_save      =l_elel_corr
  nkibz_save            =nkibz
@@ -174,7 +177,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  ! 
  ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
  !
- NE_i_time= nint(l_Time/RT_step)+1
+ NE_i_time= nint(local_Time/RT_step)+1
  NE_i_time= NE_i_time-mod(NE_i_time-1,RT_IO_JPO_steps)
  !
  if(NE_i_time>0) then
@@ -195,137 +198,15 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    if (depth==0) call section('+',trim(ch))
  endif
  !
- if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(l_Time/FS2AUT))//' fs')
+ if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time/FS2AUT))//' fs')
  !
- ! Interpolation
- !===============
+ ! Interpolatle the RT_carriers object inside di En levels object (energy, occupations and lifetimes)
+ ! Only yambo enters here. Ypp has his own procedure
  !
- nb(1)=max(bands(1),RT_carriers%nb(1))
- nb(2)=min(bands(2),RT_carriers%nb(2))
- !
- N_carriers=0._SP
- !
- if (l_f) then
-   !
-   allocate(E%df(E%nb,E%nk,n_sp_pol))
-   allocate(E%fo(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-df E-fo",(/size(E%fo),size(E%df)/),(/SP,SP/))
-   E%df=0._SP
-   E%fo=E%f
-   call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt,E%nk)
-   E%f=E%fo+E%df
-   !
-   if (l_DbGd) then
-     allocate(E%df_DbGd(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
-     call mem_est("E-df_DbGd",(/size(E%df_DbGd)/),(/SP,SP/))
-     E%df_DbGd=0._SP
-     call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
-   endif
-   !
- endif
- !
- if (l_E) then
-   !
-   allocate(E%Eo(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
-   call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt,E%nk)
-   !
-   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
-   !
- endif
- !
- !DEBUG>
- !do i1=1,E%nk
- !  do i2=1,E%nb
- !    write (100,*) E%E(i2,i1,1)*HA2EV,E%f(i2,i1,1),E%df(i2,i1,1)
- !  enddo
- !enddo
- !if (l_DbGd) then
- !  do i1=1,BZ_DbGd_tot_nkpts
- !    do i2=1,BZ_DbGd_nbands
- !      write (200,*) E%E_DbGd(i2,i1,1)*HA2EV,E%f_DbGd(i2,i1,1)
- !    enddo
- !  enddo
- !endif
- !DEBUG<
- !
- ! Metallic and Insulating bands update
+ ! Yambo
+ !=======
+ if (present(what))        call RT_interpolation(bands,E,K,what_,local_Time,l_f,l_E,l_W)
  !
  if (.not.l_keep_carriers) call RT_obj_free(RT_carriers)
  !
- if (l_verbose) then
-   !
-   call msg('nr',   'Updated Carrier components')
-   call msg('rn',   '==========================')
-   call msg('r',    '[RT] Reference Time           [fs]: ',l_Time/FS2AUT)
-   call msg('r',    '[RT] Bands range                  : ', (/nb(1),nb(2)/)) 
-   !
-   if (l_f) then
-     call msg('r',  '[RT] Maximum occupations change   : ',df_Max)
-     call msg('r',  '[RT] N of carriers                : ',N_carriers(1))
-     if (l_DbGd) call msg('r',  '[RT]                 (Double Grid): ',N_carriers(2))
-   endif
-   !
-   if (l_E) then
-     call msg('r',  '[RT] Max energy levels change [ev]: ',dE_Max*HA2EV)
-   endif
-   !
-   call msg('rn',  '[RT] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
-   !
-   call REPORT_OCCUPATIONS(E)
-   !
- endif
- !
- contains
-  !
-  subroutine Interpolate_and_transfer(OBJ,V_in,K_in,NK)
-    !
-    character(*) :: OBJ
-    integer      :: NK
-    real(SP)     :: V_in(RT_carriers%nstates),K_in(NK,3)
-    !
-    ! ws
-    !
-    integer      :: i_carr,nb_DbGd
-    real(SP)     :: K_weights(NK),V_out(RT_carriers%nb(1):RT_carriers%nb(2),NK,n_sp_pol)
-    !
-    if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nkpts,SP)
-    if (NK==E%nk) K_weights(:)=K%weights(:)
-    !
-    call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
-&                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,what_,.TRUE.)
-    !
-    if (OBJ=="df") then
-      !
-      E%nbf=nb(1)-1
-      E%nbm=nb(2)
-      !
-      if(NK==E%nk) then
-        E%df( nb(1):nb(2),:,:)=V_out(nb(1):nb(2),:,:)
-        df_Max=maxval(abs(V_out))
-        i_carr=1
-      else if (NK/=E%nk) then
-        nb_DbGd=min(nb(2),BZ_DbGd_nbands)
-        E%df_DbGd( nb(1):nb_DbGd,:,:)=V_out(nb(1):nb_DbGd,:,:)
-        i_carr=2
-      endif
-      !
-      do ik=1,NK
-        N_carriers(i_carr)=N_carriers(i_carr)+sum(abs(V_out(:,ik,:)))*K_weights(ik)/2._SP
-      enddo
-      !
-    else if (OBJ=="dE") then
-      !
-      if(NK==E%nk) then
-        E%Eo=E%E
-        E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+V_out(nb(1):nb(2),:,:)
-        dE_Max=maxval(abs(V_out))
-      else if (NK/=E%nk) then
-        E%E_DbGd( nb(1):nb_DbGd,:,:)=E%E_DbGd(nb(1):nb_DbGd,:,:)+V_out(nb(1):nb_DbGd,:,:)
-      endif
-      !
-    endif
-    !
-  end subroutine Interpolate_and_transfer
-  !
 end subroutine

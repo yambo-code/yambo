@@ -52,12 +52,10 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
 #if defined _RT
  logical       ::l_apply_RT_corrections
 #endif
- logical       ::l_apply_QP_corrections,l_dynamical,VERBOSE
+ logical       ::l_apply_QP_corrections,l_dynamical
  integer       ::X_kind,bands_to_correct(2)
  !
  call section('*','External corrections')
- !
- VERBOSE=.TRUE.
  !
  ! 1) Screening
  ! ==============
@@ -80,7 +78,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  l_apply_RT_corrections=l_apply_QP_corrections.and.        &
 &    (     (l_em1s.and..not.l_real_time)   &
 &      .or.(l_optics.and.l_chi)          )
- if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,what="X",VERBOSE=VERBOSE)
+ if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,what="X",VERBOSE=.true.)
 #endif
  !
  ! 2) BSE
@@ -95,7 +93,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='s')
 #if defined _RT
  l_apply_RT_corrections=l_apply_QP_corrections.and..not.l_real_time
- if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,what="K",VERBOSE=VERBOSE)
+ if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,what="K",VERBOSE=.true.)
 #endif
  !
  ! 3) Green's Function used to compute QP corrections
@@ -108,7 +106,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
 #endif
 #if defined _RT
  l_apply_RT_corrections=l_cohsex
- if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=VERBOSE)
+ if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=.true.)
 #endif
  !
  call section('r',' ')

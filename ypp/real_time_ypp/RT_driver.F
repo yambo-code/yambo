@@ -27,7 +27,7 @@ subroutine RT_driver(en,k,q)
 &                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
 &                         Probe_path,Pump_path,N_probes,l_RT_occ_energy,&
-&                         l_RT_occ_time,l_RT_occ_2D_dos
+&                         l_RT_occ_time,l_RT_occ_2D_dos,l_RT_life_bands,l_RT_occ_bands
  use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
@@ -50,7 +50,7 @@ subroutine RT_driver(en,k,q)
  !
  ! Real-Time occupations
  !=======================
- if (l_RT_occ_energy.or.l_RT_occ_time.or.l_RT_occ_2D_dos) then
+ if (l_RT_occ_energy.or.l_RT_occ_time.or.l_RT_occ_2D_dos.or.l_RT_occ_bands.or.l_RT_life_bands) then
    call RT_occupations_analyze(k,en)
    return
  endif

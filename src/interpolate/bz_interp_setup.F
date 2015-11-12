@@ -56,12 +56,7 @@ subroutine bz_interp_setup(Xk)
  ! 
  metric=matmul(a,transpose(a))
  !
-#if defined _RT
-! if(.not.associated(Xk%pt_DbGd)) sphere_radius=(lpfac*Xk%nbz               *3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
-! if(     associated(Xk%pt_DbGd)) sphere_radius=(lpfac*DbGd_bz_coo(Xk%nbz,2)*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
-#else
  sphere_radius=(lpfac*Xk%nbz*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
-#endif
  !
  call m3inv(transpose(a),a_inv)
  a_inv=transpose(a_inv)

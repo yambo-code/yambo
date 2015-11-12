@@ -49,10 +49,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:SC_HF,SC_COHSEX,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands,SC_potential
- use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
-#if defined _QED
- use global_XC,     ONLY:SE_GW_QED
-#endif
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
  use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_IO_status
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
@@ -263,7 +260,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        call COLLISIONS_alloc_and_free(trim(COLL_name),"v3 table","alloc",1)
      else
        call COLLISIONS_alloc_and_free(trim(COLL_name),"collision","alloc",0)
-       if (COLL_kind==SE_GW_NEQ) then
+       if (COLL_kind==SE_GW_NEQ.or.COLL_kind==SE_GW_QED) then
          call COLLISIONS_alloc_and_free(trim(COLL_name),"v3","alloc distribute",0)
        else
          call COLLISIONS_alloc_and_free(trim(COLL_name),"v3","alloc",1)

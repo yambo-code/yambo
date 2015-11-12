@@ -4,7 +4,7 @@ RT_objs =
 #if defined _QED
 QED_objs=SCATTERING_QED_transverse_matrix.o COLLISIONS_momentum.o
 #endif
-#if defined _SC
+#if defined _SC || _QED
 SC_objs = PLASMA_parallel_setup.o \
        PLASMA_build_up.o PLASMA_tables_and_dimensions.o \
        COLLISIONS_alloc_and_free.o COLLISIONS_load.o \

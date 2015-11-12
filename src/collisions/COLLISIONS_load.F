@@ -26,12 +26,18 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Load all collisions contribution from any kind of self-energy 
  ! exchange, COHSEX etc.. 
  !
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,&
+&                          l_elel_scatt,l_elphoton_scatt,l_elphoton_corr
  use LIVE_t,          ONLY:live_timing
- use QP_m,            ONLY:QP_n_states
+ use QP_m,            ONLY:QP_n_states,QP_QED_ng
  use R_lattice,       ONLY:nqbz
  use plasma,          ONLY:N_plasma_poles_global
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
+#if defined _QED
+ use SC,              ONLY:SC_bands
+ use global_XC,       ONLY:SE_GW_QED
+ use collision,       ONLY:P_collisions
+#endif
  use collision,       ONLY:V_kind,GW_NEQ_collisions,SEX_collisions,Fock_collisions
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
  use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
@@ -49,7 +55,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Work Space
  !
  integer            :: iqbz,i_J,ic,i_qp,ID,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
-&                      iv,i_qp_mem,i_q_mem,i_J_mem
+&                      iv,i_qp_mem,i_q_mem,i_J_mem,i_b,i_g
  logical            :: condition
  !
  n_V_kinds   =0
@@ -72,6 +78,13 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  if(l_elel_scatt) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SE_GW_NEQ
+ endif
+#endif
+ !
+#if defined _QED
+ if(l_elphoton_scatt.or.l_elphoton_corr) then
+   n_V_kinds          =n_V_kinds+1
+   V_kinds(n_V_kinds) =SE_GW_QED
  endif
 #endif
  !
@@ -106,6 +119,10 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    if (V_kind==SC_HF)     call COLLISIONS_alloc_and_free("Fock","collision","alloc",0)
    if (V_kind==SC_COHSEX) call COLLISIONS_alloc_and_free("SEX","collision","alloc",0)
+#if defined _QED
+   if (V_kind==SE_GW_QED) call COLLISIONS_alloc_and_free("Momentum","collision","alloc",0)
+   if (V_kind==SE_GW_QED) call COLLISIONS_alloc_and_free("Momentum","v3","alloc ",0)
+#endif
    if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
    if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc distribute",0)
    !
@@ -131,29 +148,54 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
          call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
        endif
      endif
+#if defined _QED
+     if (V_kind==SE_GW_QED) then
+       if(.not.associated(P_collisions(1)%v_r)) then
+         io_err(iv)=io_COLLISIONS(i_qp,ID,P_collisions(1))
+         call COLLISIONS_alloc_and_free("Momentum","v1 table","alloc",1)
+       endif
+     endif
+#endif
      !
      call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)
      !
      if (V_kind==SC_HF)     io_err(iv)=io_COLLISIONS(i_qp,ID,Fock_collisions(i_qp_mem))
      if (V_kind==SC_COHSEX) io_err(iv)=io_COLLISIONS(i_qp,ID,SEX_collisions(i_qp_mem))
      if (V_kind==SE_GW_NEQ) io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
+#if defined _QED
+     if (V_kind==SE_GW_QED) io_err(iv)=io_COLLISIONS(i_qp,ID,P_collisions(1))
+#endif
      !
-     if (V_kind==SE_GW_NEQ) then
+     ! Now the transfer %v_r => %v3_r
+     !
+     if (V_kind==SE_GW_NEQ.or.V_kind==SE_GW_QED) then
+       !
        ic=0
+       !
        do iqbz=1,nqbz
-         i_q_mem=PAR_Q_index(iqbz)
          !
-         if (.not.PAR_IND_Q%element_1D(iqbz)) then
-           ic=ic+N_plasma_poles_global
-           cycle
+         if (V_kind==SE_GW_NEQ) then
+           !
+           i_q_mem=PAR_Q_index(iqbz)
+           !
+           if (.not.PAR_IND_Q%element_1D(iqbz)) then
+             ic=ic+N_plasma_poles_global
+             cycle
+           endif
+           do i_J=1,N_plasma_poles_global
+             ic=ic+1
+             if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
+             i_J_mem  =PAR_Plasma_index(i_J)
+             GW_NEQ_collisions(i_qp_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_collisions(1)%v_r(ic)
+           enddo
+         else
+           do i_g=1,QP_QED_ng
+             do i_b=SC_bands(1),SC_bands(2)
+               ic=ic+1
+               P_collisions(i_qp_mem)%v3_r(i_g,i_b,iqbz)=P_collisions(1)%v_r(ic)
+             enddo
+           enddo
          endif
-         !
-         do i_J=1,N_plasma_poles_global
-           ic=ic+1
-           if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
-           i_J_mem  =PAR_Plasma_index(i_J)
-           GW_NEQ_collisions(i_qp_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_collisions(1)%v_r(ic)
-         enddo
          !
        enddo
      endif
@@ -164,9 +206,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    ! CLEAN
    !
-   if (V_kind==SE_GW_NEQ) then
-     call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","clean",1)
-   endif
+   if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","clean",1)
+   if (V_kind==SE_GW_QED) call COLLISIONS_alloc_and_free("Momentum","v1 table","clean",1)
    !
  enddo
  !

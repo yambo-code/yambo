@@ -35,7 +35,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
  use collision,      ONLY:P_collisions,nP_collisions
- use parallel_m,     ONLY:PAR_nRL
  use global_XC,      ONLY:SE_GW_QED
 #endif
  !
@@ -79,35 +78,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_clean     =index(actions,"clean")>0
  l_distribute=index(actions,"distribute")>0
  !
-#if defined _QED
- !
- if (l_Momentum) then
-    D(2,:)=SC_bands
-    if (l_distribute) then
-     D(1,:)=(/1,PAR_nQ/)
-     D(3,:)=(/1,PAR_nRL/)
-   else
-     D(1,:)=(/1,nqbz/)
-     D(3,:)=(/1,QP_QED_ng/)
-   endif
-   if (l_collision.and.l_alloc) then
-     allocate(P_collisions(size_))
-     nP_collisions=size_
-     P_collisions(:)%kind=SE_GW_QED
-     P_collisions(:)%name="Momentum"
-   endif
-   call local_alloc_and_free(P_collisions,nP_collisions)
-   if (l_collision.and.l_clean) then
-     if (allocated(P_collisions)) then
-       call local_alloc_and_free(P_collisions,nP_collisions)
-       deallocate(P_collisions)
-     endif
-     nP_collisions=0
-   endif
- endif
- !
-#endif
- !
  if (l_Fock) then
    D(1,:)=SC_bands
    D(2,:)=SC_bands
@@ -147,6 +117,35 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      nSEX_collisions=0
    endif
  endif
+ !
+#if defined _QED
+ !
+ if (l_Momentum) then
+    D(2,:)=SC_bands
+    D(1,:)=(/1,QP_QED_ng/)
+    D(3,:)=(/1,nqbz/)
+    !DEBUG> TO CODE the distribute part
+    if (l_distribute) then
+     !D(1,:)=(/1,PAR_nRL/)
+     !D(3,:)=(/1,PAR_nQ/)
+   endif
+   if (l_collision.and.l_alloc) then
+     allocate(P_collisions(size_))
+     nP_collisions=size_
+     P_collisions(:)%kind=SE_GW_QED
+     P_collisions(:)%name="Momentum"
+   endif
+   call local_alloc_and_free(P_collisions,nP_collisions)
+   if (l_collision.and.l_clean) then
+     if (allocated(P_collisions)) then
+       call local_alloc_and_free(P_collisions,nP_collisions)
+       deallocate(P_collisions)
+     endif
+     nP_collisions=0
+   endif
+ endif
+ !
+#endif
  !
  if (l_GW_NEQ) then
    D(1,:)=(/1,N_plasma_poles_global/)

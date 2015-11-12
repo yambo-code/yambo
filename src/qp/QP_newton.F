@@ -88,15 +88,15 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      QP_Sc=cZERO
    endif
    !
-# if defined _QED 
-   !
-   if (l_elphoton_corr) call QED_Sigma_c(en,k,q,qp)
-   !
-#endif
-   !
 # if defined _ELPH 
    !
    if (l_elph_corr)     call ELPH_Sigma_c(en,k,q,qp)
+   !
+#endif
+   !
+# if defined _QED 
+   !
+   if (l_elphoton_corr) call QED_Sigma_c(en,k,q,qp)
    !
 #endif
    !

@@ -146,7 +146,7 @@ subroutine COLLISIONS_momentum(E,k,q)
            enddo
          enddo
          !
-         P_collisions(1)%v3_r(i_q_bz,i_m,i_g_mem)=ACC
+         P_collisions(1)%v3_r(i_g_mem,i_m,i_q_bz)=ACC
          !
        enddo
        !

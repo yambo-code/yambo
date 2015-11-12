@@ -25,13 +25,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,cZERO
  use units,               ONLY:SPEED_OF_LIGHT
- use drivers,             ONLY:l_elel_corr
+ use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr
  use electrons,           ONLY:levels
  use D_lattice,           ONLY:DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize
+ use IO_m,                ONLY:io_COLLs
  use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
-&                              elemental_collision_copy
+&                              elemental_collision_copy,P_collisions
  use wave_func,           ONLY:WF
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute,&
 &                              SCATTERING_GW_kinematics
@@ -40,6 +41,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                              PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_nQP,PAR_nG_bands,&
 &                              PAR_COM_QP_A2A
+ use SC,                  ONLY:SC_bands
 #if defined _TIMING
  use timing_m,            ONLY:timing
 #endif
@@ -60,7 +62,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  type(elemental_collision) ::isc,isc_grad_k,isc_grad_p
  logical                   ::l_regular_term,l_SI_term
  !
- if (l_elel_corr) then
+ if (l_elel_corr.or.l_elph_corr) then
    call section('+','Correlation: Photon-mediated Self-energy')
  else
    call section('=','Correlation: Photon-mediated Self-energy')
@@ -69,13 +71,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
 #if defined _TIMING
  call timing('GW (Lamb)',OPR='start')
 #endif
- !
- ! Basic stuff
- !============
- !
- call elemental_collision_free(isc)
- call elemental_collision_free(isc_grad_k) 
- call elemental_collision_free(isc_grad_p) 
  !
  ! RIM 
  !=====
@@ -97,18 +92,37 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
  call PARALLEL_WF_index( )
  !
- ! WF loading and further allocation
- !===================================
+ ! COLLISIONS
+ !============
  !
- call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),(/1,max(QP_nb,QP_n_G_bands(2))/),&
-&             (/1,k%nibz/),space='R',title='-[Photon-El]Sigma_c/R space')
+ SC_bands=QP_n_G_bands
  !
- ! isc_grad_k and isc_grad_p need not to be scatterBamp-allocated
- ! since scatterBamp_using_the_gradient allocates its own workspace
+ if (io_COLLs)                       call COLLISIONS_load(.TRUE.)
+ if (io_COLLs.and.l_use_collisions)  call COLLISIONS_load(.FALSE.)
  !
- call elemental_collision_alloc(isc,NG=QP_QED_ng,TITLE="GW_QED")
- call elemental_collision_alloc(isc_grad_k,NG=QP_QED_ng,TITLE="GW_QED",GRADIENT=.TRUE.)
- call elemental_collision_alloc(isc_grad_p,NG=QP_QED_ng,TITLE="GW_QED",GRADIENT=.TRUE.)
+ if (.not.l_use_collisions) then
+   !
+   ! Elemental scattering allocation
+   !=================================
+   !
+   call elemental_collision_free(isc)
+   call elemental_collision_free(isc_grad_k) 
+   call elemental_collision_free(isc_grad_p) 
+   !
+   ! WF loading and further allocation
+   !===================================
+   !
+   call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),(/1,max(QP_nb,QP_n_G_bands(2))/),&
+&               (/1,k%nibz/),space='R',title='-[Photon-El]Sigma_c/R space')
+   !
+   ! isc_grad_k and isc_grad_p need not to be scatterBamp-allocated
+   ! since scatterBamp_using_the_gradient allocates its own workspace
+   !
+   call elemental_collision_alloc(isc,NG=QP_QED_ng,TITLE="GW_QED")
+   call elemental_collision_alloc(isc_grad_k,NG=QP_QED_ng,TITLE="GW_QED",GRADIENT=.TRUE.)
+   call elemental_collision_alloc(isc_grad_p,NG=QP_QED_ng,TITLE="GW_QED",GRADIENT=.TRUE.)
+   !
+ endif
  !
  ! Loop
  !======
@@ -170,12 +184,21 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        pre_factor       =pi/2._SP/DL_vol/float(nqbz)
        !
-       call elemental_collision_copy(isc,isc_grad_k)
-       call elemental_collision_copy(isc,isc_grad_p)
+       !zeros...
        !
-       call scatter_Bamp(isc)
-       call scatter_Bamp_using_the_gradient(isc_grad_k,"i")
-       call scatter_Bamp_using_the_gradient(isc_grad_p,"o")
+       P_square_times_tau=cZERO
+       Sc_dummy=cZERO
+       !
+       if (l_use_collisions) then
+         P_square_times_tau=P_collisions(i_qp)%v3_r(:,i_m,i_q_bz)
+       else
+         call elemental_collision_copy(isc,isc_grad_k)
+         call elemental_collision_copy(isc,isc_grad_p)
+         !
+         call scatter_Bamp(isc)
+         call scatter_Bamp_using_the_gradient(isc_grad_k,"i")
+         call scatter_Bamp_using_the_gradient(isc_grad_p,"o")
+       endif
        !
        ! We need the objects
        ! i) <nk|exp(iqr)\grad|mk-q>
@@ -183,30 +206,30 @@ subroutine QED_Sigma_c(E,k,q,qp)
        ! i) gives an i(k-q-G0) factor and ii) a -ik so we need at the end 
        ! q_cc{i_cp} + G0_{i_cp}
        !
-       P_square_times_tau=cZERO
-       Sc_dummy=cZERO
-       !
        G_loop: do i_g=1,QP_QED_ng
          !
          ! q=G=0 is always zero as 1/w diverges only like |q| and DeltaE is finite
          !
          if (i_g==1.and.i_q==1) cycle 
          !
-         ! COLLISION SPECIFIC SECTION
-         !=============================================================================================================================
-         !
          call SCATTERING_QED_transverse_matrix(i_q_bz,i_g,i_G0,q,T_matrix,T_vec,photon_E)
          !
-         do i_c=1,3
-           P(i_c)=isc_grad_k%rhotw(QP_QED_ng*(i_c-1)+i_g)-isc_grad_p%rhotw(QP_QED_ng*(i_c-1)+i_g)-cI*T_vec(i_c)*isc%rhotw(i_g)
-         enddo
-         !
-         do i_cp=1,3
+         if (.not.l_use_collisions) then
+           !
+           ! COLLISION SPECIFIC SECTION
+           !=============================================================================================================================
+           !
            do i_c=1,3
-             P_square_times_tau(i_g)=P_square_times_tau(i_g)+conjg(P(i_c))*T_matrix(i_c,i_cp)*P(i_cp)
+             P(i_c)=isc_grad_k%rhotw(QP_QED_ng*(i_c-1)+i_g)-isc_grad_p%rhotw(QP_QED_ng*(i_c-1)+i_g)-cI*T_vec(i_c)*isc%rhotw(i_g)
            enddo
-         enddo
-         !=============================================================================================================================
+           !
+           do i_cp=1,3
+             do i_c=1,3
+               P_square_times_tau(i_g)=P_square_times_tau(i_g)+conjg(P(i_c))*T_matrix(i_c,i_cp)*P(i_cp)
+             enddo
+           enddo
+           !=============================================================================================================================
+         endif
          !
          if (i_g==1) P_square_times_tau(i_g)=P_square_times_tau(i_g)*pre_factor_G_eq_0
          if (i_g> 1) P_square_times_tau(i_g)=P_square_times_tau(i_g)*pre_factor/Photon_E
@@ -220,6 +243,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
        enddo G_loop
        !
        QP_Sc(i_qp,1)=QP_Sc(i_qp,1)+Sc_dummy
+       !
        !
        if ( i_q_s == 1) call live_timing(steps=1)
        !
@@ -241,9 +265,17 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  deallocate(q_weight,q_weight_regular)
  !
- call elemental_collision_free(isc)
- call elemental_collision_free(isc_grad_k) 
- call elemental_collision_free(isc_grad_p) 
+ if(l_use_collisions) then
+   !
+   call COLLISIONS_alloc_and_free("Momentum","v3","clean",0)
+   !
+ else
+   !
+   call elemental_collision_free(isc)
+   call elemental_collision_free(isc_grad_k) 
+   call elemental_collision_free(isc_grad_p) 
+   !
+ endif
  !
 #if defined _TIMING
  call timing('GW (Lamb)',OPR='stop')

@@ -76,15 +76,27 @@ module collision
  !
  integer, allocatable       :: COLLISIONS_IO_status(:)
  !
+ ! Elements used in the code
+ !
+ ! Evaluation (COLLISION_sex ...)
+ !
+ ! SEX, HF (eval): v3_c
+ !          (I/O): v_c
+ !      (compose): v_c
+ !
+ ! GW(NEQ),(QED) (eval): v3_r
+ !                (I/O): v_r
+ !                (USE): v3_r
+ !
  type COLLISIONS_element
    character(schlen)     :: name="none"
    integer               :: kind=0
    integer               :: D(3,2)=0 ! Dimension (v3)
    integer               :: N        ! Linear Dimension
    integer(LP), pointer  :: table(:,:,:)   => null()
-   complex(SP), pointer  :: v_c(:)         => null()  ! SEX or HF collisions
+   complex(SP), pointer  :: v_c(:)         => null()
    complex(SP), pointer  :: v3_c(:,:,:)    => null()
-   real(SP)   , pointer  :: v_r(:)         => null()  ! GW NEQ collisions
+   real(SP)   , pointer  :: v_r(:)         => null()
    real(SP)   , pointer  :: v3_r(:,:,:)    => null()
  end type
  !

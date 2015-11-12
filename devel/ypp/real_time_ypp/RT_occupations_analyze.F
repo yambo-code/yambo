@@ -29,7 +29,7 @@ subroutine RT_occupations_analyze(kpt,En)
  use QP_CTL_m,       ONLY:QP_apply
  use rt_ctl,         ONLY:RT_apply
  use SC,             ONLY:SC_bands
- use YPP,            ONLY:l_RT_occ_time,l_RT_occ_energy,&
+ use YPP,            ONLY:l_RT_occ_time,l_RT_occ_energy,l_RT_life_bands,l_RT_occ_bands,&
 &                         l_RT_occ_2D_dos,RT_IO_time_range_setup
  !
  implicit none
@@ -66,5 +66,10 @@ subroutine RT_occupations_analyze(kpt,En)
  ! Occupations 2D dos plot 
  !=========================
  if (l_RT_occ_2D_dos) call RT_occ_2D_dos_plot(En,kpt,n_T_steps)
+ !
+ ! Occupations bands fit 
+ !=========================
+ if (l_RT_life_Bands) n_T_steps=1
+ if (l_RT_occ_bands.or.l_RT_life_bands) call RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
 end subroutine RT_occupations_analyze

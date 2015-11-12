@@ -36,7 +36,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_RT_occ_Bands,l_RT_life_Bands,&
-&                         l_bands,l_current,current_dir,plot_is_1D,BANDS_steps
+&                         l_bands,l_current,current_dir,plot_is_1D
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -46,9 +46,6 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
  use R_lattice,      ONLY:qindx_S
-#endif
-#if defined _YPP_RT
- use drivers,        ONLY:l_rt_carriers_in_use
 #endif
 #if defined _YPP_ELPH
  use YPP,            ONLY:elph_residual_treshold
@@ -105,12 +102,6 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential
-#endif
-#if defined _YPP_RT 
- if (.not.flag) then
-   flag=any((/l_RT_life_Bands,l_RT_occ_Bands/))
-   l_rt_carriers_in_use=flag
- endif
 #endif
  !
  if (.not.flag) return
@@ -207,7 +198,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! BANDS interpolation
  !======================
  !
- if(l_bands.or.l_RT_occ_Bands.or.l_RT_life_Bands) then
+ if(l_bands) then
    !
    if ( i_time_rev==1 ) call error(' Bands interpolation does not work with T-rev symmetry')
    !

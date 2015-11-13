@@ -127,7 +127,7 @@ subroutine XCo_local(E,Xk)
        endif
 #endif
        !
-#if defined _MPI
+#if defined _MPI && defined _RT
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
 #endif
@@ -179,14 +179,16 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
-#if defined _MPI
      if (l_real_time) then
+#if defined _MPI && defined _RT
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
-     else
-       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-     endif
 #endif
+     else
+#if defined _MPI
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+#endif
+     endif
      !
      if (n_spinor==1) then
        !

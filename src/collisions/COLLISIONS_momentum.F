@@ -36,7 +36,7 @@ subroutine COLLISIONS_momentum(E,k,q)
 &                        COLLISIONS_IO_status,P_collisions,elemental_collision_alloc,&
 &                        elemental_collision_copy,nP_collisions,&
 &                        COLLISIONS_parallel_SC_structure
- use QP_m,          ONLY:QP_n_states,QP_QED_ng
+ use QP_m,          ONLY:QP_n_states,QP_QED_ng,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands
 #if defined _TIMING
@@ -125,20 +125,19 @@ subroutine COLLISIONS_momentum(E,k,q)
        call scatter_Bamp_using_the_gradient(I_grad_k,"i")
        call scatter_Bamp_using_the_gradient(I_grad_p,"o")
        !
-       ACC=cZERO
-       !
        do i_g=1,QP_QED_ng
          !
          if (i_q_bz==1.and.i_g==1) cycle
          !
          i_g_mem=i_g
-         !i_g_mem=PAR_RL_index(i_g)
          !
          call SCATTERING_QED_transverse_matrix(i_q_bz,i_g,i_G0,q,T_matrix,T_vec,photon_E)
          !
          do i_c=1,3
            P(i_c)=I_grad_k%rhotw(QP_QED_ng*(i_c-1)+i_g)-I_grad_p%rhotw(QP_QED_ng*(i_c-1)+i_g)-cI*T_vec(i_c)*I%rhotw(i_g)
          enddo
+         !
+         ACC=cZERO
          !
          do i_cp=1,3
            do i_c=1,3

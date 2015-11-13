@@ -37,7 +37,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  !
  ! Work Space
  !
- integer   :: ic,i1,i2,i3,i_cycle,io_err,ID,i_ref
+ integer   :: ic,i1,i2,i3,i_cycle,io_err,ID,i_ref,state(3)
  logical   :: store_it,l_exchange,l_GW_NEQ,l_QED_P
  real(SP)  :: COLLISIONS_max
  !

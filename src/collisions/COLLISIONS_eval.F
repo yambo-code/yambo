@@ -42,15 +42,16 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
 &                        l_elphoton_scatt
  use com,           ONLY:error
  use pars,          ONLY:IP,schlen
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
- use QP_m,          ONLY:QP_nb,QP_n_states,QP_state
+ use QP_m,          ONLY:QP_nb,QP_n_states,QP_table,QP_state
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:SC_HF,SC_COHSEX,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands,SC_potential
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
- use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_IO_status
+ use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_IO_status,n_COLLISIONS,&
+&                        COLLISIONS_state
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
@@ -58,7 +59,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
  use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- use X_m,           ONLY:X_t
  !
  implicit none
  type(levels)  :: E
@@ -68,7 +68,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer       :: ID,i_kind,NC,IO_err
+ integer       :: ID,i_kind,NC,IO_err,i_qp
  !
  call section('*','Extended collisions')
  !=======================================
@@ -84,6 +84,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if(allocated(QP_state)) deallocate(QP_state)
  QP_nb=SC_bands(2)
  call QP_state_table_setup(E)
+ n_COLLISIONS=QP_n_states
  !
  ! Check for the Time Reversal Symmetry
  !
@@ -102,8 +103,14 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  NC=PAR_nQP
  if (io_COLLs) then
    NC=1
-   allocate(COLLISIONS_IO_status(QP_n_states))
-   call mem_est("COLLISIONS_IO_status",(/QP_n_states/),(/IP/))
+   allocate(COLLISIONS_IO_status(n_COLLISIONS))
+   call mem_est("COLLISIONS_IO_status",(/n_COLLISIONS/),(/IP/))
+   allocate(COLLISIONS_state(n_COLLISIONS,4))
+   call mem_est("COLLISIONS_state",(/n_COLLISIONS,4/),(/IP/))
+   do i_qp=1,QP_n_states
+     COLLISIONS_state(i_qp,:3)=QP_table(i_qp,:3)
+     COLLISIONS_state(i_qp, 4)=spin(QP_table(i_qp,:))
+   enddo
  endif
  !
  ! PARALLEL Setup
@@ -222,6 +229,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (io_COLLs) then
    if (allocated(COLLISIONS_IO_status)) deallocate(COLLISIONS_IO_status)
    call mem_est("COLLISIONS_IO_status")
+   if (allocated(COLLISIONS_state)) deallocate(COLLISIONS_state)
+   call mem_est("COLLISIONS_state")
  else
    if (l_HF_and_locXC)  call COLLISIONS_alloc_and_free("Fock","v3","clean",1)
    if (l_cohsex)        call COLLISIONS_alloc_and_free("SEX","v3","clean",1)

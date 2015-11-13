@@ -25,7 +25,8 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLLISIONS_IO_status
+ use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLLISIONS_IO_status,&
+&                        n_COLLISIONS,COLLISIONS_state
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
@@ -34,7 +35,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
- use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
+ use QP_m,          ONLY:QP_ng_Sx,SC_band_mixing
  use parallel_m,    ONLY:PAR_IND_QP
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
@@ -53,7 +54,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_desc,VAR_size,i_qp_loop,io_err
+ integer               :: V_kind_disk,i_desc,i_qp_loop,io_err
  character(lchlen)     :: V_kind_string,X_string
  !
 #if defined _TIMING
@@ -84,8 +85,12 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      goto 1
    endif
    !
-   VAR_size=7
-   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=VAR_size,MENU=0)
+   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
+   !
+   if (ver_is_gt_or_eq(ID,revision=5064)) then
+     call io_elemental(ID,I0=n_COLLISIONS,&
+&         VAR=' Total number of COLLISIONS      :',CHECK=.true.,OP=(/"=="/))
+   endif
    !
    call io_elemental(ID,I1=SC_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
@@ -169,6 +174,16 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      !
    endif
    !
+   ! States
+   !
+   if (ver_is_gt_or_eq(ID,revision=5064)) then
+     if (read_is_on(ID).and..not.allocated(COLLISIONS_state)) then
+       allocate(COLLISIONS_state(n_COLLISIONS,4))
+     endif
+     call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/n_COLLISIONS,4/))
+     call io_bulk(ID,I2=COLLISIONS_state)
+   endif
+   !
    io_COLLISIONS=io_status(ID)
    if (io_COLLISIONS/=0) goto 1
    !
@@ -176,10 +191,10 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  ! Check the restart point
  !
- if (io_MODE(ID)==VERIFY.and.allocated(COLLISIONS_IO_status)) then
+ if (IO_mode(ID)==VERIFY.and.allocated(COLLISIONS_IO_status)) then
    !
    COLLISIONS_IO_status=1
-   do i_qp_loop=1,QP_n_states
+   do i_qp_loop=1,n_COLLISIONS
      if (.not.PAR_IND_QP%element_1D(i_qp_loop)) cycle
      io_extension(ID)=io_raw_extension(ID)
      call io_fragment(ID,i_fragment=i_qp_loop,ierr=io_err)

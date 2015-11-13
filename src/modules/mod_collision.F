@@ -62,6 +62,7 @@ module collision
  ! EXTENDED COLLISION
  !====================
  !
+ integer                  :: n_COLLISIONS ! QP_n_states written on disk that may differ from the running value 
  integer                  :: V_kind 
  !
  ! Cut off on exchange matrix elements
@@ -75,6 +76,11 @@ module collision
  ! Fragments
  !
  integer, allocatable       :: COLLISIONS_IO_status(:)
+ !
+ ! States
+ !
+ integer, allocatable       :: COLLISIONS_state(:,:)
+ integer, allocatable       :: COLLISIONS_DB_map(:) ! COLLISIONS_DB_map(I) is the DB corresponding to the QP_state I
  !
  ! Elements used in the code
  !
@@ -91,8 +97,8 @@ module collision
  type COLLISIONS_element
    character(schlen)     :: name="none"
    integer               :: kind=0
-   integer               :: D(3,2)=0 ! Dimension (v3)
-   integer               :: N        ! Linear Dimension
+   integer               :: D(3,2)=0    ! Dimension (v3)
+   integer               :: N           ! Linear Dimension
    integer(LP), pointer  :: table(:,:,:)   => null()
    complex(SP), pointer  :: v_c(:)         => null()
    complex(SP), pointer  :: v3_c(:,:,:)    => null()

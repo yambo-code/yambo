@@ -26,6 +26,7 @@ subroutine XCo_local(E,Xk)
  ! Local V_xc
  !
  use pars,          ONLY:SP,pi
+ use drivers,       ONLY:l_real_time
  use electrons,     ONLY:levels,n_spin,n_spinor,spin
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
@@ -34,14 +35,16 @@ subroutine XCo_local(E,Xk)
  use xc_functionals,ONLY:V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
+#if defined _MPI
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear 
+#endif
 #if defined _RT
  use parallel_m,    ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
  use matrix_operate,ONLY:UP_matrix_index,matrix_index
  use SC,            ONLY:SC_bands
 #endif
 #if defined _SC
- use drivers,       ONLY:l_real_time,l_sc_run
+ use drivers,       ONLY:l_sc_run
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size,compatible_SC_DB
@@ -115,25 +118,27 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
-#if defined _RT
      if (l_real_time) then
        !
+#if defined _RT
        if(ib>ibp) then
          QP_Vxc(i1) = conjg(QP_Vxc(i1-1))
          cycle
        endif
+#endif
        !
+#if defined _MPI
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+#endif
        !
      else
-#endif
        !
+#if defined _MPI
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-       !
-#if defined _RT
-     endif
 #endif
+       !
+     endif
      !
      ! <iwf|V_xc|iwfp>
      !
@@ -150,7 +155,9 @@ subroutine XCo_local(E,Xk)
      !
    enddo
    !
+#if defined _MPI
    call PP_redux_wait(QP_Vxc)
+#endif
    !
    return
    !
@@ -172,14 +179,12 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
-#if defined _RT
+#if defined _MPI
      if (l_real_time) then
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
      else
-#endif
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-#if defined _RT
      endif
 #endif
      !
@@ -225,6 +230,8 @@ subroutine XCo_local(E,Xk)
  endif
 #endif
  !
+#if defined _MPI
  call PP_redux_wait(QP_Vxc)
+#endif
  !
 end subroutine

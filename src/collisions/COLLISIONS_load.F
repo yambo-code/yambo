@@ -33,7 +33,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use R_lattice,       ONLY:nqbz
  use plasma,          ONLY:N_plasma_poles_global
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
-#if defined _QED
+#if defined _QED || defined _RT
  use SC,              ONLY:SC_bands
  use global_XC,       ONLY:SE_GW_QED
  use collision,       ONLY:P_collisions
@@ -184,13 +184,16 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      if (V_kind==SC_HF)     io_err(iv)=io_COLLISIONS(i_db,ID,Fock_collisions(i_qp_mem))
      if (V_kind==SC_COHSEX) io_err(iv)=io_COLLISIONS(i_db,ID,SEX_collisions(i_qp_mem))
+#if defined _RT
      if (V_kind==SE_GW_NEQ) io_err(iv)=io_COLLISIONS(i_db,ID,GW_NEQ_collisions(1))
+#endif
 #if defined _QED
      if (V_kind==SE_GW_QED) io_err(iv)=io_COLLISIONS(i_db,ID,P_collisions(1))
 #endif
      !
      ! Now the transfer %v_r => %v3_r
      !
+#if defined _RT || defined _QED
      if (V_kind==SE_GW_NEQ.or.V_kind==SE_GW_QED) then
        !
        ic=0
@@ -222,6 +225,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
          !
        enddo
      endif
+#endif
      !
      call live_timing(steps=1)
      !
@@ -229,8 +233,12 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    ! CLEAN
    !
+#if defined _RT
    if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","clean",1)
+#endif
+#if defined _QED
    if (V_kind==SE_GW_QED) call COLLISIONS_alloc_and_free("Momentum","v1 table","clean",1)
+#endif
    !
  enddo
  !

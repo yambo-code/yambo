@@ -124,13 +124,15 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
    !=======================
    !
    do ib=1,QP_nb
+#if defined _MPI
      if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+#endif
      do i_spin=1,n_sp_pol
        Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
      enddo
    enddo
    !
-#if defined _RT
+#if defined _RT && defined _MPI
    if(l_real_time) then
      if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    endif
@@ -163,6 +165,8 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
  !
+#if defined _MPI
  call PP_redux_wait(Ho)
+#endif
  !
 end subroutine SC_bare_Hamiltonian

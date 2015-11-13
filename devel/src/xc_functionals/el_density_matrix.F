@@ -60,7 +60,9 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
    do ik=1,Xk%nibz
      do ib1=lowest_band,SC_bands(1)-1
        !
+#if defined _MPI
        if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
+#endif
        !
        i_wf1=WF%index(ib1,ik,1)
        f_occ=en%f(ib1,ik,1)
@@ -77,13 +79,17 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  do ik=1,Xk%nibz
    !
+#if defined _MPI
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+#endif
    !      
    do ib1=SC_bands(1),SC_bands(2)
      !
      do ib2=ib1,SC_bands(2)
        !
+#if defind _MPI
        if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
+#endif
        !
        f_occ=0._SP
        do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
@@ -107,7 +113,9 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
    !
  enddo
  !
+#if defined _MPI
  call PP_redux_wait(rho_no_sym)
+#endif
  !
  ! Symmetrization
  !

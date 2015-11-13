@@ -90,7 +90,9 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
    !
    do ik=1,k%nibz
      !
+#if defined _MPI
      if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+#endif
      !
      do i_spin_wf=1,n_spin
        !
@@ -127,8 +129,10 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
    enddo
  enddo bands_loop
  !
+#if defined _MPI
  if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
  !if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)
+#endif
  !
  ! Symmetrization
  !

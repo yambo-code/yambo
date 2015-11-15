@@ -571,7 +571,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        BS_blk(i_block)%mat(i_Tk,i_Tp)=sqrt_f_itk*(H_x*real(spin_occ)*Co-H_c)*sqrt_f_itp
        !
-       if (H_pos(1)==H_pos(2)) BS_blk(i_block)%mat(i_Tk,i_Tp)=real( BS_blk(i_block)%mat(i_Tk,i_Tp) )
+       if (H_pos(1)==H_pos(2).and.BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=real( BS_blk(i_block)%mat(i_Tk,i_Tp) )
        !
      enddo 
      !

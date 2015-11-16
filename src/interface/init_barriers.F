@@ -86,13 +86,15 @@ subroutine init_barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
-   on_runlevels='HF_and_locXC cohsex em1s negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt el_photon_scatt el_photon_corr'
+   on_runlevels='HF_and_locXC cohsex em1s negf collisions el_el_corr el_ph_corr '//&
+&               'el_el_scatt el_ph_scatt el_photon_scatt el_photon_corr'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  if (l_eval_collisions) then
-   on_runlevels='scrun HF_and_locXC cohsex em1s collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt el_photon_scatt el_photon_corr'
+   on_runlevels='scrun HF_and_locXC cohsex em1s collisions el_el_corr el_ph_corr el_el_scatt '//&
+&               'el_ph_scatt el_photon_scatt el_photon_corr'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif

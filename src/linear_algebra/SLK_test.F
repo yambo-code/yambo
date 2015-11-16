@@ -153,7 +153,7 @@ end subroutine build_matrix
  use com,          ONLY:error,msg
  use pars,         ONLY:DP,SP
  use parallel_m,   ONLY:mpi_comm_world
- use SLK_m,        ONLY:POOL_group,ndim
+ use SLK_m,        ONLY:POOL_group
  implicit none
  !
  type(POOL_group) :: POOL
@@ -192,7 +192,7 @@ end subroutine serial_inverse
  use com,        ONLY:error,msg
  use pars,       ONLY:DP,SP
  use parallel_m, ONLY:mpi_comm_world,MPI_DOUBLE_PRECISION, MPI_SUM
- use SLK_m,      ONLY:POOL_group,ORTHO_group,ndim
+ use SLK_m,      ONLY:POOL_group,ORTHO_group
  !
  implicit none
  !
@@ -320,7 +320,7 @@ end subroutine para_inverse
  use pars,       ONLY:DP
  use util_module
  use com,        ONLY:error,msg
- use SLK_m,      ONLY:POOL_group,ndim
+ use SLK_m,      ONLY:POOL_group
  use parallel_m, ONLY:mpi_comm_world
  implicit none
  !

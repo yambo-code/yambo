@@ -37,10 +37,6 @@ subroutine PARALLEL_minimal_index_from_overlaping(IND_in,IND_out,PAR_COMM)
  integer               :: i1,D_,i2,i3,i_cpu,ID_,NC_
  integer,  allocatable :: I_tmp(:),J_indx(:),J_tmp(:)
  !
-#if !defined _MPI
- return
-#endif
- !
  D_ =size( IND_in%element_1D)
  ID_=PAR_COMM%CPU_id
  NC_=PAR_COMM%n_CPU

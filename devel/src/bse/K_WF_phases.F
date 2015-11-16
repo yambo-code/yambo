@@ -47,10 +47,8 @@ subroutine K_WF_phases(Xk)
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:WF_phase,BS_res_K_corr,BS_bands
  use com,           ONLY:msg
- use electrons,     ONLY:n_sp_pol,n_spinor
-#if defined _MPI
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear
-#endif
+ use electrons,     ONLY:n_sp_pol,n_spinor
  !
  implicit none
  !
@@ -83,9 +81,7 @@ subroutine K_WF_phases(Xk)
        !
        do i_b=BS_bands(1),BS_bands(2)
          !
-#if defined _MPI
          if (.not.PAR_IND_WF_linear%element_2D(i_b,i_k)) cycle
-#endif
          !
          n_phases=n_phases+1
          WF_phase(i_k,i_s,i_b,:)=1._SP
@@ -98,9 +94,7 @@ subroutine K_WF_phases(Xk)
          !
          do i_b=BS_bands(1),BS_bands(2)
            !
-#if defined _MPI
            if (.not.PAR_IND_WF_linear%element_2D(i_b,i_k)) cycle
-#endif
            !
            if (WF_phase(i_k,i_s,i_b,i_sp)/=cZERO) cycle
            !
@@ -123,10 +117,8 @@ subroutine K_WF_phases(Xk)
    enddo
  enddo
  !
-#if defined _MPI
  call PP_redux_wait(WF_phase)
  call PP_redux_wait(n_phases)
-#endif
  !
  call msg('r','[BSE] WF phases found  [o/o]:',real(n_phases(1),SP)/real(size(WF_phase),SP)*100._SP)
  !

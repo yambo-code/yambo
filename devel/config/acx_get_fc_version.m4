@@ -45,6 +45,7 @@ case "${FC}" in
       VER_13=`grep 13. ver_ | wc -l`
       VER_14=`grep 14. ver_ | wc -l`
       VER_15=`grep 15. ver_ | wc -l`
+      VER_16=`grep 16. ver_ | wc -l`
       if ! test "$VER_8" = "0"; then
        FCVERSION="8"
       fi
@@ -68,6 +69,9 @@ case "${FC}" in
       fi
       if ! test "$VER_15" = "0"; then
        FCVERSION="15"
+      fi
+      if ! test "$VER_16" = "0"; then
+       FCVERSION="16"
       fi
       rm -f ver_
       ;;

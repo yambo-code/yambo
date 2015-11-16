@@ -88,7 +88,7 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
      p_weight(ip)=0.
      pt_cc=points(ip,:)*2.*pi/alat(:)
      if(     MULTIPLY_BY_Q) p_weight(ip)=1./float(Np)
-     if(.not.MULTIPLY_BY_Q) p_weight(ip)=1./float(Np)/v_norm(pt_cc)**power
+     if(.not.MULTIPLY_BY_Q.and.v_norm(pt_cc)>0._SP) p_weight(ip)=1./float(Np)/v_norm(pt_cc)**power
    enddo
    return
  endif

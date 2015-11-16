@@ -232,9 +232,9 @@ subroutine RT_ELPH_initialize(E,k,q)
      !
      ph_mean_speed=ph_mean_speed/float(i1)
      !
-     call k_ibz2bz(q,'i',.TRUE.)  
-     !
    endif
+   !
+   call k_ibz2bz(q,'i',.TRUE.)  
    !
    RADIUS_sphere=(3.*RL_vol/q%nbz/4./pi)**(1./3.)
    !

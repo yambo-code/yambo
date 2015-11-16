@@ -43,10 +43,6 @@ subroutine PARALLEL_WF_index(COMM)
  type(PP_indexes)     :: WF_linear,WF_linear_no_overlaps
  integer, allocatable :: b_filling(:)
  !
-#if !defined _MPI
- return
-#endif
- !
  call PP_indexes_reset(PAR_IND_WF_linear)
  call PP_indexes_reset(WF_linear)
  call PP_indexes_reset(WF_linear_no_overlaps)

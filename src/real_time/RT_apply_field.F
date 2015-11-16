@@ -21,30 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply_field(ik,ik_DbGd,En,H_nl_sc,A_input)
+subroutine RT_apply_field(ik,H_nl_sc,A_input)
  !
  ! This subroutine add the vector potential to the Hamiltonian
  !
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:levels
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:l_RT_uses_E_DbGd
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:n_sp_pol
- use X_m,            ONLY:DIP_iR,DIP_P,Dipole_Energy_treshold,global_gauge
+ use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
  use SC,             ONLY:SC_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
  !
  implicit none
- integer,           intent(in) :: ik,ik_DbGd
- type(levels),      intent(in) :: En
+ integer,           intent(in) :: ik
  complex(SP),    intent(inout) :: H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol)
  type(gauge_field), intent(in) :: A_input
  ! 
  ! Work Space
  !
  integer     :: i1,i2
- complex(SP) :: A_dot_J,E_dot_P,A_vec_pot(3),E_vec_pot(3),POL(3),CURR(3),deltaE,deltaE_DbGd
+ complex(SP) :: A_dot_J,E_dot_P,A_vec_pot(3),E_vec_pot(3),POL(3),CURR(3)
  !
  if(trim(global_gauge)=='velocity') then
    !

@@ -316,8 +316,8 @@ subroutine RT_output(what,VALUES,TIME,E)
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'el_dos'
- short_file_name(next_file)=trim(append_ch)//'el_dos'
+&   file_name(next_file)=trim(append_ch)//'2D_occ_dos'
+ short_file_name(next_file)=trim(append_ch)//'2D_occ_dos'
  n_headings(next_file)=3
  headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
  headings(next_file,3  )='DOS'
@@ -516,7 +516,7 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-Polarization_W')
        if(.not.present(VALUES)) cycle
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
-     case('YPP-X_effective','YPP-el_dos')
+     case('YPP-X_effective','YPP-2D_occ_dos')
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('YPP-eps_eq','YPP-refl_eq','YPP-transm_eq')
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)

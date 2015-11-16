@@ -63,9 +63,7 @@ subroutine PARALLEL_minimal_index_from_overlaping(IND_in,IND_out,PAR_COMM)
    !
    do i1=1,NC_
      i3=J_indx(i1)
-     if (I_tmp(i3)>0.and.i_cpu==0) then
-       i_cpu=i3
-     endif
+     if (I_tmp(i3)>0.and.i_cpu==0) i_cpu=i3
    enddo
    !
    do i1=1,NC_

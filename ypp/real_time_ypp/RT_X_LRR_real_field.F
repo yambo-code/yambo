@@ -175,12 +175,12 @@ subroutine RT_X_LRR_real_field(en)
  ! b) alpha_IRR(w,ic,ic') = ( P(w,ic),E_versor(ic') )/|E_tot(w)|
  !
  ! Then I use 
- ! a) EPS_{ic,ic'}(w) = (1-4 pi alpha_IRR(w,ic))^{-1}
- ! b) EPS_{ic,ic'}(w) =  1+4 pi alpha_RID(w,ic)
+ ! a) EPS_{ic,ic'}(w) = (1-4 pi alpha_RID(w,ic))^{-1}
+ ! b) EPS_{ic,ic'}(w) =  1+4 pi alpha_IRR(w,ic)
  !
  ! to calculate EELS I use
  !
- ! EPS=1./EELS
+ ! EPS=-1./EELS
  !
  call RT_output(what="initialize")
  call RT_output(what="open E_frequency eps_along_E eels_along_E")
@@ -189,13 +189,13 @@ subroutine RT_X_LRR_real_field(en)
    if(     l_RT_induced_field) EPS(i_w,1) = 1._SP/(1._SP-4._SP*pi*dot_product(Efield(i_Probe)%versor(:),alpha(i_w,:3))/E_w(i_w))
    if(.not.l_RT_induced_field) EPS(i_w,1) =        1._SP+4._SP*pi*dot_product(Efield(i_Probe)%versor(:),alpha(i_w,:3))/E_w(i_w)
    !
-   EELS(i_w,:)=1._SP/EPS(i_w,:)
+   EELS(i_w,:)=-1._SP/EPS(i_w,:)
    !
    W_reached = real(freqs(i_w))
    E_w_SP=E_w(i_w)
    call RT_output('E_frequency' ,VALUEs=(/ aimag(  E_w_SP   ),real(  E_w_SP   )/),E=W_reached*HA2EV)
    call RT_output('eps_along_E' ,VALUEs=(/ aimag(EPS(i_w,1) ),real(EPS(i_w,1) )/),E=W_reached*HA2EV)
-   call RT_output('eels_along_E',VALUEs=(/-aimag(EELS(i_w,1)),real(EELS(i_w,1))/),E=W_reached*HA2EV)
+   call RT_output('eels_along_E',VALUEs=(/ aimag(EELS(i_w,1)),real(EELS(i_w,1))/),E=W_reached*HA2EV)
    !
  enddo
  call RT_output(what="close E_frequency eps_along_E eels_along_E")

@@ -1,4 +1,5 @@
 #if defined _YPP_MAGNETIC
 magnetic_objects = electrons_angular_momentum.o electrons_position.o
 #endif
-objs = electrons_driver.o electrons_dos.o electrons_density.o electrons_bands.o $(magnetic_objects)
+objs = electrons_driver.o electrons_dos.o electrons_density.o \
+       electrons_bands.o electrons_bands_interpolate.o $(magnetic_objects)

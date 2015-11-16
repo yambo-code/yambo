@@ -27,6 +27,7 @@ subroutine electrons_dos(Xk,Xen)
  use pars,           ONLY:SP,schlen
  use stderr,         ONLY:intc
  use wave_func,      ONLY:WF
+ use FFT_m,          ONLY:fft_size
  use R_lattice,      ONLY:bz_samp,nkibz,nkbz
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor,n_spin,spin_occ, &
@@ -40,6 +41,7 @@ subroutine electrons_dos(Xk,Xen)
  use interfaces,     ONLY:PARALLEL_index,WF_load,el_density_and_current
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
  use parser_m,       ONLY:parser
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
  implicit none
  !
@@ -51,7 +53,7 @@ subroutine electrons_dos(Xk,Xen)
  real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,f_occ,dos_norm,&
 &                         el_dos_max,WF_fac(dos_bands(1):dos_bands(2),nkibz,n_spinor)
  integer               :: i_E,ik,ik_bz,ib,i_wf,i_spin,i_spinor,ik_rand,i1
- character(schlen)     :: ch_ws,titles(4)
+ character(schlen)     :: titles(4)
  logical               :: l_DbGd,l_prt_occ_only,l_separate_eh
  type(PP_indexes)      :: px
  !
@@ -76,7 +78,7 @@ subroutine electrons_dos(Xk,Xen)
      do ib=dos_bands(1),dos_bands(2)
        do i_spinor=1,n_spinor
          i_wf=WF%index(ib,ik,i_spinor)
-         WF_fac(ib,ik,i_spinor)=dot_product( WF%c(:, i_wf ), WF%c(:,i_wf) )
+         WF_fac(ib,ik,i_spinor)=real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf ), WF%c(:,i_wf) ),SP)
        enddo
        call live_timing(steps=1)
      enddo

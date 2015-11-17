@@ -3271,6 +3271,12 @@ subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
   !
   ! Nonlocal data
   !
+  if(nbeta==0) then
+    rewind(u)
+    close(u)
+    return
+  endif 
+  !
   rewind(u)
   call iotk_scan_begin(u,"PP_NONLOCAL")
   do ibeta=1,nbeta

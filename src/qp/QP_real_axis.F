@@ -46,9 +46,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 &                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL,io_RESPONSE,io_SCREEN
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
-&                        QP_n_W_freqs_redux 
+&                        QP_n_W_freqs_redux,e2et,h2ht
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use functions,     ONLY:e2et,h2ht,bose_decay
+ use functions,     ONLY:bose_decay
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms

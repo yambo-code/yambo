@@ -24,19 +24,20 @@
 subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,cZERO,rZERO
- use units,               ONLY:SPEED_OF_LIGHT
+ use units,               ONLY:SPEED_OF_LIGHT,HA2EV
  use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr
  use electrons,           ONLY:levels,spin_occ
  use D_lattice,           ONLY:DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
- use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,QP_dSc
+ use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
+&                              QP_dSc,QP_G_damp,QP_time_order_sign
  use IO_m,                ONLY:io_COLLs
  use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
 &                              elemental_collision_copy,P_collisions
  use wave_func,           ONLY:WF
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute,&
 &                              SCATTERING_GW_kinematics
- use functions,           ONLY:Fermi_fnc
+ use functions,           ONLY:Fermi_fnc_derivative
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -164,14 +165,15 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        call SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E=E,E_diff=E_diff,N=i_n,G0=i_G0)
        !
-       l_zero_delta_E=abs(E_diff)<Photon_Gamma_E/1000.
-       l_SI_term     =l_zero_delta_E.and.i_n==i_m.and.i_q==1
+       l_zero_delta_E=abs(E_diff)<1.E-5
+       l_SI_term     =l_zero_delta_E.and.i_q_bz==1
+       !
+       if (Photon_Gamma_E>1.E-5) l_zero_delta_E=abs(E_diff)<Photon_Gamma_E/1000.
        !
        if (l_SI_term) then  
          call live_timing(steps=1)
          cycle
        endif
-       !
        !
        !prefactor for case iii)
        !
@@ -216,10 +218,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        G_loop: do i_g=1,QP_QED_ng
          !
-         ! q=G=0 is always zero as 1/w diverges only like |q| and DeltaE is finite
-         !
-         if (i_g==1.and.i_q==1) cycle 
-         !
          call SCATTERING_QED_transverse_matrix(i_q_bz,i_g,i_G0,q,T_matrix,T_vec,photon_E)
          !  
          FRACTION(1)=(1._SP-f_k_m_q)/(E_diff-Photon_E)+f_k_m_q/(E_diff-Photon_E)
@@ -254,9 +252,13 @@ subroutine QED_Sigma_c(E,k,q,qp)
            beta =beta -P_square_times_tau(i_g)*C_G_finite/Photon_E*FRACTION(2)
          endif
          !
+         Sc_im=Sc_im+pi*P_square_times_tau(i_g)*C_G_eq_0_finite_E*&   
+&              (QP_time_order_sign*(1._SP-f_k_m_q)*Fermi_fnc_derivative(E_diff-Photon_E,QP_G_damp) +&
+&                                         f_k_m_q *Fermi_fnc_derivative(E_diff+Photon_E,QP_G_damp))
+         !
        enddo G_loop
        !
-       QP_Sc(i_qp,1) =QP_Sc(i_qp,1)  +Sc_re
+       QP_Sc(i_qp,1) =QP_Sc(i_qp,1)  +Sc_re+cI*Sc_im
        QP_dSc(i_qp,1)=QP_dSc(i_qp,1) +beta
        !
        if ( i_q_s == 1) call live_timing(steps=1)

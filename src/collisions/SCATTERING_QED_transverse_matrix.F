@@ -51,12 +51,17 @@ subroutine SCATTERING_QED_transverse_matrix(i_q_bz,i_G,i_G0,q,T_matrix,T_vec,Pho
  Photon_E=SPEED_OF_LIGHT*v_norm(q_photon)
  !
  T_matrix(:,:) = 0._SP
+ !
+ if (i_q_bz==1.and.i_G==1) return
+ !
+ do i_c=1,3
+   T_matrix(i_c,i_c)=1._SP
+ enddo
+ !
  do i_c=1,3
    do i_cp=i_c,3           
-     T_matrix(i_c,i_cp)=-q_photon(i_c)*q_photon(i_cp)/v_norm(q_photon)**2
-     T_matrix(i_cp,i_c)=T_matrix(i_c,i_cp)
+     T_matrix(i_c,i_cp)= T_matrix(i_c,i_cp)-q_photon(i_c)*q_photon(i_cp)/v_norm(q_photon)**2
    enddo
-   T_matrix(i_c,i_c)=1._SP-T_matrix(i_c,i_c)
  enddo
  !
 end subroutine SCATTERING_QED_transverse_matrix

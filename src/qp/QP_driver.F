@@ -37,7 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
-&                        QP_Sc_steps,QP_G_er,QP_G_dr,&
+&                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,&
 &                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info
@@ -88,6 +88,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Head message
  !==============
  call QP_reset(qp)
+ !
+ ! Setup Temperature pre-factor
+ !==============================
+ call QP_SET_temperature_pre_factor( )
  !
  qp%n_descs=1
  if (trim(QP_solver)=='n') then

@@ -59,14 +59,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_n,i_G0,i_c,i_cp,i_g,i_m
  complex(SP)               ::P(3)
  real(SP)                  ::Photon_E,T_matrix(3,3),T_vec(3),E_diff,Photon_Gamma_E,f_k,f_k_m_q,&
-&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta
+&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0_squared
  real(SP),    allocatable  ::q_weight_power_1(:),q_weight_power_2(:)
  type(elemental_collision) ::I,I_grad_k,I_grad_p
  logical                   ::l_zero_delta_E,l_SI_term
  !
  ! Prefactors
  !
- real(SP)                  ::C_G_finite,C_G_eq_0_finite_E,C_G_eq_0_null_E,FRACTION(2)
+ real(SP)                  ::C_G_finite,C_G_eq_0_finite_E,C_G_eq_0_null_E,FRACTION(2),C_GQ_eq_0
  !
  if (l_elel_corr.or.l_elph_corr) then
    call section('+','Correlation: Photon-mediated Self-energy')
@@ -87,6 +87,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  allocate(q_weight_power_1(nqbz),q_weight_power_2(nqbz))
  call rim_spherical(nqbz,q%ptbz,q_weight_power_1,(3.*RL_vol/nqbz/4./pi)**(1./3.),1,.FALSE.)
  call rim_spherical(nqbz,q%ptbz,q_weight_power_2,(3.*RL_vol/nqbz/4./pi)**(1./3.),2,.FALSE.)
+ !
+ R0_squared=(3.*RL_vol/nqbz/4./pi)**(2./3.) ! the radius for the sum at Q=0
  !
  call k_ibz2bz(q,'c',.TRUE.)
  !
@@ -144,7 +146,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  ! i)   G !=0, prefactor=pi/2/DL_vol/Nq
  ! ii)  G=0 and e_{nk} - e_{mk-q} !=0, prefactor= pi/2/c/DL_vol*RIM(q,power=1) 
  ! iii) G=0 and e_{nk} - e_{mk-q}  =0, prefactor= -pi/2/c^2/DL_vol*RIM(q,power=2)
- !
+ ! iV)  G=0 and q=0, prefactor= R0_square/4/pi/c
  Q_loop: do i_q_bz=1,nqbz 
    !
    i_q  =q%sstar(i_q_bz,1)
@@ -177,15 +179,19 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        !prefactor for case iii)
        !
-       C_G_eq_0_null_E  =-pi*q_weight_power_2(i_q_bz)/DL_vol/SPEED_OF_LIGHT**2/2._SP
+       C_G_eq_0_null_E    =-pi*q_weight_power_2(i_q_bz)/DL_vol/SPEED_OF_LIGHT**2/2._SP
        !
-       !prefactor for case ii)
-       !
-       C_G_eq_0_finite_E= pi*q_weight_power_1(i_q_bz)/DL_vol/SPEED_OF_LIGHT/2._SP
+       if (i_q_bz==1) then
+         !prefactor for case iv)
+         C_G_eq_0_finite_E=R0_squared/12._SP/pi/SPEED_OF_LIGHT
+       else
+         !prefactor for case ii)
+         C_G_eq_0_finite_E=pi*q_weight_power_1(i_q_bz)/DL_vol/SPEED_OF_LIGHT/2._SP
+       endif
        !
        !prefactor for case i)
        !
-       C_G_finite       = pi/2._SP/DL_vol/float(nqbz)
+       C_G_finite         = pi/2._SP/DL_vol/float(nqbz)
        !
        !zeros...
        !
@@ -219,9 +225,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
        G_loop: do i_g=1,QP_QED_ng
          !
          call SCATTERING_QED_transverse_matrix(i_q_bz,i_g,i_G0,q,T_matrix,T_vec,photon_E)
-         !  
-         FRACTION(1)=(1._SP-f_k_m_q)/(E_diff-Photon_E)+f_k_m_q/(E_diff-Photon_E)
-         FRACTION(2)=(1._SP-f_k_m_q)/(E_diff-Photon_E)**2+f_k_m_q/(E_diff+Photon_E)**2
+         !
+         if(i_q_bz==1.and.i_g==1) then
+           FRACTION(1)=1._SP/E_diff
+           FRACTION(2)=1._SP/E_diff**2
+         else  
+           FRACTION(1)=(1._SP-f_k_m_q)/(E_diff-Photon_E)+f_k_m_q/(E_diff+Photon_E)
+           FRACTION(2)=(1._SP-f_k_m_q)/(E_diff-Photon_E)**2+f_k_m_q/(E_diff+Photon_E)**2
+         endif
          !
          if (.not.l_use_collisions) then
            !
@@ -234,7 +245,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
            !
            do i_cp=1,3
              do i_c=1,3
-               P_square_times_tau(i_g)=P_square_times_tau(i_g)+conjg(P(i_c))*T_matrix(i_c,i_cp)*P(i_cp)
+               P_square_times_tau(i_g)=P_square_times_tau(i_g)+P(i_c)*T_matrix(i_c,i_cp)*conjg(P(i_cp))
              enddo
            enddo
            !=============================================================================================================================

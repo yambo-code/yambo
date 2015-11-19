@@ -40,7 +40,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,BSS_q0,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
-&                        BSS_n_descs,BSS_description
+&                        BSS_n_descs,BSS_description,ioBSS_diago
  use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
@@ -90,7 +90,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  !
  integer           ::io_err,ID,io_ID
- integer, external ::ioBSS_diago,ioBS,io_DIPOLES
+ integer, external ::ioBS,io_DIPOLES
  type(X_t)         ::Xbsk,Xdip
  !
  !... Energies and Residulas

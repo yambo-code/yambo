@@ -86,6 +86,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  !
  allocate(bg_diffs(npts-1),bg_sorted(npts),bg_sorted_x(npts))
  bg_sorted=bg_pt
+ !
  call sort(bg_sorted,indx=bg_sorted_x)
  do i1=1,npts-1
    bg_diffs(i1)=bg_sorted(i1+1)-bg_sorted(i1)
@@ -111,7 +112,6 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
        i2=i2+1
        i3=i1
      endif
-     if (df>tresh) i2=i2+1
      ipos(i1,1)=i2
      ipos(bg_sorted_x(i1),2)=i1
    enddo

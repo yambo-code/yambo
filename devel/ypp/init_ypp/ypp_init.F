@@ -25,7 +25,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  use YPP
  use pars,           ONLY:pi
- use interpolate,    ONLY:lpfac
+ use interpolate,    ONLY:lpfac,interpls,max_interpls
  use units,          ONLY:HA2EV,FS2AUT
  use D_lattice,      ONLY:alat,i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
@@ -129,17 +129,18 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_RealTime=.FALSE.
  !
  ! Absorption
+ !
  l_RT_X  =.FALSE.
  l_RT_abs=.FALSE.
  !
  ! Occupations and lifetimes
+ !
  l_RT_occ_time  =.FALSE.
  l_RT_occ_energy=.FALSE.
  l_RT_occ_2D_dos=.FALSE.
  !
  l_RT_occ_Bands =.FALSE.
  l_RT_life_Bands=.FALSE.
- !
  !
  ! BANDS
  !
@@ -151,6 +152,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  Nel_fac=1._SP
 #endif
  !
+ ! Interpolation
+ !
+ interpls(1:max_interpls)%ndim=0
  !
  ! PLOT
  !

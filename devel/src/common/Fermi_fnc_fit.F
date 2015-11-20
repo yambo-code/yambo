@@ -28,7 +28,7 @@ integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit
  ! - if this fails try with a damped Gauss–Newton algorithm, with
  !   increasing damping. This is the Levenberg-Marquartd algorithm
  !
-#if defined _BLUEGENE
+#if defined _BLUEGENE || _PGI
  use ieee_arithmetic 
 #endif
  use pars,           ONLY:SP,lchlen
@@ -224,7 +224,7 @@ integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit
      !DEBUG>
      !
 
-#if defined _BLUEGENE
+#if defined _BLUEGENE || _PGI
      if(any(ieee_is_nan(Fit_new(:)))) exit
 #else
      if(any(isnan(Fit_new(:))))            exit

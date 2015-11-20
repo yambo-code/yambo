@@ -110,6 +110,9 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
       for file in `find "$try_incdir" \( -name '*netcdf*' -o -name '*typesizes*' \) `; do
         cp $file include/ 
       done
+      for file in `find "$try_incdir" \( -name '*NETCDF*' -o -name '*TYPESIZES*' \) `; do
+        cp $file include/ 
+      done
       for file in `find $try_libdir -name '*netcdf*.a'`; do
         cp $file lib/ 
       done

@@ -23,7 +23,7 @@
 !
 subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_kind)
  !
-#if defined _BLUEGENE
+#if defined _BLUEGENE || _PGI
  use ieee_arithmetic
 #endif
  use pars,           ONLY:SP
@@ -176,7 +176,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  do i1=1,2
    !
-#if defined _BLUEGENE
+#if defined _BLUEGENE || _PGI
    if( ieee_is_nan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
      prefactor(i1)=0._SP
    endif

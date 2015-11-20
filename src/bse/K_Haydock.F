@@ -23,7 +23,7 @@
 !
 subroutine K_Haydock(iq,W)
  !
-#if defined _BLUEGENE
+#if defined _BLUEGENE || _PGI
  use ieee_arithmetic
 #endif
  use pars,           ONLY:SP,pi,schlen,cI,cZERO,cONE
@@ -449,7 +449,7 @@ subroutine K_Haydock(iq,W)
      ! Simple test for INF
      if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=INF likely because some eigenvalue of the BSE is negative.')
      ! Tests for NaN
-#if defined _BLUEGENE
+#if defined _BLUEGENE || _PGI
      if( ieee_is_nan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
 #else
      if( isnan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')

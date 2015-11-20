@@ -23,6 +23,9 @@
 !
 subroutine K_Haydock(iq,W)
  !
+#if defined _BLUEGENE
+ use ieee_arithmetic
+#endif
  use pars,           ONLY:SP,pi,schlen,cI,cZERO,cONE
  use com,            ONLY:error
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
@@ -443,10 +446,13 @@ subroutine K_Haydock(iq,W)
      !
      call K_dot_product(v0_mod_,Vn,Vnp1) 
      Bf(it+1)=sqrt(2._SP*real(v0_mod_,SP))
-     if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=NaN likely because some eigenvalue of the BSE is negative.')
-     !
-#if !defined _BLUEGENE
-     !if( isnan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
+     ! Simple test for INF
+     if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=INF likely because some eigenvalue of the BSE is negative.')
+     ! Tests for NaN
+#if defined _BLUEGENE
+     if( ieee_is_nan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
+#else
+     if( isnan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
 #endif
      !
      !|Vm> =|Vm+1> / B(n+1)

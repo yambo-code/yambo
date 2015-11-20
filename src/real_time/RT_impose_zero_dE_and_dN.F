@@ -23,6 +23,9 @@
 !
 subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_kind)
  !
+#if defined _BLUEGENE
+ use ieee_arithmetic
+#endif
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
@@ -173,11 +176,15 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  do i1=1,2
    !
-   if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
-     !
+#if defined _BLUEGENE
+   if( ieee_is_nan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
      prefactor(i1)=0._SP
-     !
    endif
+#else
+   if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
+     prefactor(i1)=0._SP
+   endif
+#endif
    !
    if ( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
    !

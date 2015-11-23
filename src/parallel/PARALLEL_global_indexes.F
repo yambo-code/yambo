@@ -188,7 +188,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_IND_Bp_mat_ID=0
    PAR_IND_RL_ID=0
    !
-   call COMM_reset(PAR_COM_WORLD)
    call COMM_reset(PAR_COM_VAL_INDEX(X_type))
    call COMM_reset(PAR_COM_CON_INDEX(X_type))
    call COMM_reset(PAR_COM_Xk_ibz_INDEX)

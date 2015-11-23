@@ -254,7 +254,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE/BSK
  !
- call it(defs,'BSEmod',  '[BSE] resonant/causal/x_coupling/xc_coupling',BSE_mode)
+ call it(defs,'BSEmod',  '[BSE] resonant/causal/coupling',BSE_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)

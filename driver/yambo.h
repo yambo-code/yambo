@@ -78,14 +78,16 @@
 #if defined _RT && !defined _QED
   {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/(a)ll]",0,0,1,0,0},
 #endif
-#if defined _RT && defined _QED
+#if defined _RT && defined _QED 
   {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif
-#if defined _QED && !defined _RT
+#if defined _QED && !defined _ELPH
   {"corrtp", "c","Correlation [opt=(e)lectrons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif
+#if defined _QED && defined _ELPH
+  {"corrtp", "c","Correlation [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0,0},
+#endif
 #if defined _ELPH && !defined _RT
-  {"corrtp", "c","Correlation [opt=(e)lectrons/(p)honons/(a)ll]",0,0,1,0,0},
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
 #if defined _SC | defined _RT

@@ -110,7 +110,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
- use interpolate, ONLY:interpls,max_interpls
 #if defined _TIMING
  use timing_m,    ONLY:timing_allocate,nclockx
 #endif
@@ -372,10 +371,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  fft_size=0
  fft_dim=0
  fft_multiplier=(/1,1,1/)
- !
- ! Interpolation
- !
- interpls(1:max_interpls)%ndim=0
  !
  do i1=1,max_io_units
    call io_reset(i1)

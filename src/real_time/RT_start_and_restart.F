@@ -144,7 +144,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF,'def') 
    !
-   call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF,'xc ') 
+   call V_real_space_to_H(ik,V_xc,        XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF,'xc ') 
    !
  enddo
  !

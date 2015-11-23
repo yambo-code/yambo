@@ -79,7 +79,7 @@ PJ_QEDLIBS   = $(MAIN_LIBS)
 PJ_SCLIBS    = $(MAIN_LIBS) sc
 
 PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
-               interpolate collisions tddft pol_function qp acfdt bse sc real_time
+               collisions tddft pol_function qp acfdt bse sc real_time
 #
 # Interfaces
 #
@@ -88,15 +88,15 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 # YPP
 #
-YPP_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons excitons symmetries k-points bits 
-YPPPH_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons elph excitons symmetries k-points bits 
-YPPRT_LIBS      = modules_ypp init_ypp qp_ypp plotting electrons elph real_time_ypp excitons symmetries k-points bits
+YPP_LIBS        = modules_ypp interpolate init_ypp qp_ypp plotting electrons excitons symmetries k-points bits 
+YPPPH_LIBS      = modules_ypp interpolate init_ypp qp_ypp plotting electrons elph excitons symmetries k-points bits 
+YPPRT_LIBS      = modules_ypp interpolate init_ypp qp_ypp plotting electrons elph real_time_ypp excitons symmetries k-points bits 
 #
-YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate tddft pol_function bse
+YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
-                     interpolate pol_function bse sc real_time
-YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface interpolate surf tddft pol_function bse
+                     pol_function bse sc real_time
+YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface surf tddft pol_function bse
 YDBLIBS            = $(BASIC_LIBS) 
 
 nothing: 

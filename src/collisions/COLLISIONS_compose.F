@@ -50,21 +50,30 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  !
  integer           :: i_qp,ib,ibp,i_k,i_kmq,ic1,ic2,i_qp_mem,i_spin
 #if defined _RT
+ complex(SP)       :: G_hf_sum(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP)       :: G_xc_sum(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
  integer           :: i_n,i_m,i_k_RT,i_kmq_RT
 #endif
  !
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
 #if defined _RT
- if(l_real_time) then
+ if(     l_real_time) then
    RT_Vnl_xc=cZERO
- else
-#endif
-   if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
-   QP_Vnl_xc=cZERO
-#if defined _RT
+   G_hf_sum =cZERO
+   G_xc_sum =cZERO
+   do i_kmq=1,QP_nk
+     do i_kmq_RT=RT_ibz_coo(i_kmq,1),RT_ibz_coo(i_kmq,2)
+       G_hf_sum(:,:,i_kmq)=G_hf_sum(:,:,i_kmq)+G_hf_input(:,:,i_kmq_RT) !/real(RT_Nk_ibz(i_kmq),SP)
+       G_xc_sum(:,:,i_kmq)=G_xc_sum(:,:,i_kmq)+G_xc_input(:,:,i_kmq_RT) !/real(RT_Nk_ibz(i_kmq),SP)
+     enddo
+   enddo
  endif
 #endif
+ if(.not.l_real_time) then
+   if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
+   QP_Vnl_xc=cZERO
+ endif
  !
  ! In _SC QP_Sc is calculated on-the-fly when the collision are not used.
  ! Here all contributions are packed in QP_Vnl_xc
@@ -99,10 +108,8 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
            if (Fock_collisions(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
 #if defined _RT
              if(l_real_time) then
-               do i_kmq_RT=RT_ibz_coo(i_kmq,1),RT_ibz_coo(i_kmq,2)
-                 RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
-&                  -cI*Fock_collisions(i_qp_mem)%v_c(ic1)*G_hf_input(ib,ibp,i_kmq_RT) !/real(RT_Nk_ibz(i_kmq),SP)
-               enddo
+               RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
+&                -cI*Fock_collisions(i_qp_mem)%v_c(ic1)*G_hf_sum(ib,ibp,i_kmq)
              else
 #endif
                QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*Fock_collisions(i_qp_mem)%v_c(ic1)*G_hf_input(ib,ibp,i_kmq)
@@ -116,10 +123,8 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
            if (SEX_collisions(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
 #if defined _RT
              if(l_real_time) then
-               do i_kmq_RT=RT_ibz_coo(i_kmq,1),RT_ibz_coo(i_kmq,2)
-                 RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
-                   -cI*SEX_collisions(i_qp_mem)%v_c(ic2)*G_xc_input(ib,ibp,i_kmq_RT) !/real(RT_Nk_ibz(i_kmq),SP)
-               enddo
+               RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
+                 -cI*SEX_collisions(i_qp_mem)%v_c(ic2)*G_xc_sum(ib,ibp,i_kmq)
              else
 #endif
                QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*SEX_collisions(i_qp_mem)%v_c(ic2)*G_xc_input(ib,ibp,i_kmq)

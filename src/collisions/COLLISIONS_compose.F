@@ -33,7 +33,7 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  use electrons,        ONLY:spin,n_sp_pol
  use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
 #if defined _RT
- use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Vnl_xc !,RT_Nk_ibz
+ use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Vnl_xc,RT_Nk_ibz
 #endif
  !
  implicit none
@@ -58,18 +58,31 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
 #if defined _RT
+ !
  if(     l_real_time) then
+   !
    RT_Vnl_xc=cZERO
    G_hf_sum =cZERO
    G_xc_sum =cZERO
+   !
    do i_kmq=1,QP_nk
      do i_kmq_RT=RT_ibz_coo(i_kmq,1),RT_ibz_coo(i_kmq,2)
-       G_hf_sum(:,:,i_kmq)=G_hf_sum(:,:,i_kmq)+G_hf_input(:,:,i_kmq_RT) !/real(RT_Nk_ibz(i_kmq),SP)
-       G_xc_sum(:,:,i_kmq)=G_xc_sum(:,:,i_kmq)+G_xc_input(:,:,i_kmq_RT) !/real(RT_Nk_ibz(i_kmq),SP)
+       G_hf_sum(:,:,i_kmq)=G_hf_sum(:,:,i_kmq)+G_hf_input(:,:,i_kmq_RT)
+       G_xc_sum(:,:,i_kmq)=G_xc_sum(:,:,i_kmq)+G_xc_input(:,:,i_kmq_RT)
      enddo
+     !
+     ! The 1/real(RT_Nk_ibz(i_kmq),SP) factor is needed here because I'm integrating
+     ! over kmq. With the DbGd the size of the integrating factor has to be reduced
+     ! 
+     G_hf_sum(:,:,i_kmq)=G_hf_sum(:,:,i_kmq)/real(RT_Nk_ibz(i_kmq),SP)
+     G_xc_sum(:,:,i_kmq)=G_xc_sum(:,:,i_kmq)/real(RT_Nk_ibz(i_kmq),SP)
+     !
    enddo
+   !
  endif
+ !
 #endif
+ !
  if(.not.l_real_time) then
    if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
    QP_Vnl_xc=cZERO

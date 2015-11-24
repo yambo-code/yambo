@@ -36,7 +36,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  use electrons,       ONLY:levels,n_met_bands,spin_occ
  use R_lattice,       ONLY:bz_samp,nkibz
  use FFT_m,           ONLY:fft_size,fft_rot_r
- use collision,       ONLY:ggwinfo,collision_reset 
+ use collision,       ONLY:elemental_collision,elemental_collision_free 
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
@@ -55,8 +55,8 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  !
  ! Work space
  !
- type(ggwinfo)    ::isc
- type(PP_indexes) ::px
+ type(elemental_collision)::isc
+ type(PP_indexes)         ::px
  integer          ::iv1,iv2,ir,ig,i1,ikbz,ik,iq,ifft,offt,tr_syms,os,is,iGo,qs
  real(DP)         ::Vslt_DP(fft_size)
  complex(DP)      ::f(fft_size)

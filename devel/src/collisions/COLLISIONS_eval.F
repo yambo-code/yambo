@@ -23,22 +23,35 @@
 !
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
+ ! The EOM looks like:
+ !
+ ! i\partial_T G^<+[h+\Sigma_s,G^<]=I^<
+ !
+ ! here I evaluate the components of both \Sigma_s and I^<.
+ !
+ ! While for \Sigma_s the POTENTIAL can be specified, for I^< only the KIND is possible to define.
+ !
+ ! So we have, at the command line,
+ !
+ ! yambo_rt -e -s e/p/h/a  -> I^<
+ ! yambo_rt -e -v (hf),(c)ohsex  -> \Sigma_s
+ !
+ ! In the \Sigma_s case also yambo_sc can evaluate
+ !
  use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_use_collisions,&
 &                        l_elphoton_scatt
  use com,           ONLY:error
  use pars,          ONLY:IP,schlen
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
- use QP_m,          ONLY:QP_nb,QP_n_states,QP_state
+ use QP_m,          ONLY:QP_nb,QP_n_states,QP_table,QP_state
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:SC_HF,SC_COHSEX,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands,SC_potential
- use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
-#if defined _QED
- use global_XC,     ONLY:SE_GW_QED
-#endif
- use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_IO_status
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
+ use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_IO_status,n_COLLISIONS,&
+&                        COLLISIONS_state
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
@@ -46,7 +59,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
  use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- use X_m,           ONLY:X_t
  !
  implicit none
  type(levels)  :: E
@@ -56,7 +68,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer       :: ID,i_kind,NC,IO_err
+ integer       :: ID,i_kind,NC,IO_err,i_qp
  !
  call section('*','Extended collisions')
  !=======================================
@@ -72,10 +84,13 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if(allocated(QP_state)) deallocate(QP_state)
  QP_nb=SC_bands(2)
  call QP_state_table_setup(E)
+ n_COLLISIONS=QP_n_states
  !
  ! Check for the Time Reversal Symmetry
  !
- if (i_time_rev==1) call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
+ if (trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX".or.l_elel_scatt) then
+   if (i_time_rev==1) call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
+ endif
  !
  ! Switch 
  !========
@@ -88,8 +103,14 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  NC=PAR_nQP
  if (io_COLLs) then
    NC=1
-   allocate(COLLISIONS_IO_status(QP_n_states))
-   call mem_est("COLLISIONS_IO_status",(/QP_n_states/),(/IP/))
+   allocate(COLLISIONS_IO_status(n_COLLISIONS))
+   call mem_est("COLLISIONS_IO_status",(/n_COLLISIONS/),(/IP/))
+   allocate(COLLISIONS_state(n_COLLISIONS,4))
+   call mem_est("COLLISIONS_state",(/n_COLLISIONS,4/),(/IP/))
+   do i_qp=1,QP_n_states
+     COLLISIONS_state(i_qp,:3)=QP_table(i_qp,:3)
+     COLLISIONS_state(i_qp, 4)=spin(QP_table(i_qp,:))
+   enddo
  endif
  !
  ! PARALLEL Setup
@@ -151,8 +172,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (l_elphoton_scatt) then
    !
-   call section('+','Electron-Photon (QED)')
-   !========================================
+   call section('+','Electron-Photon (P)')
+   !=======================================
    !
    call CHECK_and_ALLOC(SE_GW_QED)
    !
@@ -162,7 +183,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      ! Clean
      !-------
-     if (io_COLLs) call COLLISIONS_alloc_and_free("GW_QED","v3 table","clean",1)
+     if (io_COLLs) call COLLISIONS_alloc_and_free("Momentum","v3 table","clean",1)
      !
    endif
    !
@@ -208,12 +229,14 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (io_COLLs) then
    if (allocated(COLLISIONS_IO_status)) deallocate(COLLISIONS_IO_status)
    call mem_est("COLLISIONS_IO_status")
+   if (allocated(COLLISIONS_state)) deallocate(COLLISIONS_state)
+   call mem_est("COLLISIONS_state")
  else
    if (l_HF_and_locXC)  call COLLISIONS_alloc_and_free("Fock","v3","clean",1)
    if (l_cohsex)        call COLLISIONS_alloc_and_free("SEX","v3","clean",1)
    if (l_elel_scatt)    call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",1)
 #if defined _QED
-   if (l_elphoton_scatt) call COLLISIONS_alloc_and_free("GW_QED","v3","clean",1)
+   if (l_elphoton_scatt) call COLLISIONS_alloc_and_free("Momentum","v3","clean",1)
 #endif
  endif
  !
@@ -239,13 +262,14 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      if (COLL_kind==SC_HF)     COLL_name="Fock"
      if (COLL_kind==SC_COHSEX) COLL_name="SEX"
      if (COLL_kind==SE_GW_NEQ) COLL_name="GW_NEQ"
+     if (COLL_kind==SE_GW_QED) COLL_name="Momentum"
      !
      if (io_COLLs) then
        call COLLISIONS_alloc_and_free(trim(COLL_name),"collision","alloc",1)
        call COLLISIONS_alloc_and_free(trim(COLL_name),"v3 table","alloc",1)
      else
        call COLLISIONS_alloc_and_free(trim(COLL_name),"collision","alloc",0)
-       if (COLL_kind==SE_GW_NEQ) then
+       if (COLL_kind==SE_GW_NEQ.or.COLL_kind==SE_GW_QED) then
          call COLLISIONS_alloc_and_free(trim(COLL_name),"v3","alloc distribute",0)
        else
          call COLLISIONS_alloc_and_free(trim(COLL_name),"v3","alloc",1)

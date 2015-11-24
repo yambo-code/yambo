@@ -24,7 +24,7 @@
 module BS
  !
  use pars,       ONLY:IP,SP,schlen,lchlen
- use collision,  ONLY:ggwinfo
+ use collision,  ONLY:elemental_collision
  use memory_m,   ONLY:mem_est
  !
  implicit none
@@ -76,8 +76,8 @@ module BS
  !
  ! Collision
  !===========
- type(ggwinfo), save :: K_EXCH_collision
- type(ggwinfo), save :: K_CORR_collision
+ type(elemental_collision), save :: K_EXCH_collision
+ type(elemental_collision), save :: K_CORR_collision
  !
  ! Haydock
  !========== 

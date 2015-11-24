@@ -23,20 +23,21 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res)
+subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO
  use wrapper,       ONLY:V_by_V_plus_V
- use X_m,           ONLY:X_t,DIP_projected,X_poles_tab !,X_terminator
- use parallel_m,    ONLY:PAR_Xk_bz_index !,HEAD_QP_cpu
+ use X_m,           ONLY:X_t,DIP_projected,X_poles_tab
+ use parallel_m,    ONLY:PAR_Xk_bz_index
  use electrons,     ONLY:levels,spin_occ
- use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
- use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
+ use frequency,     ONLY:bare_grid_N
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q0_def_norm !,G_m_G
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
+ use collision,     ONLY:elemental_collision
  !
  implicit none
  !
+ type(elemental_collision), intent(inout) :: Xo_scatt
  type(levels), intent(in) :: Xen
  type(bz_samp),intent(in) :: Xk
  type(X_t),    intent(in) :: X
@@ -45,20 +46,10 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res)
  !
  ! Work sapce
  !
- type(ggwinfo)            :: isc
- !
  complex(SP)              :: rhotw_save(X%ng) !,eet_factor(X%ng,X%ng)
  real(SP)                 :: eh_occ
  integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
 &                            isp,iv,ic,isave(4),n_poles,i_bg !,alloc_err
- !
- ! prepare the scattering module
- !
- call collision_reset(isc,INIT_ONLY=.true.)
- !
- isc%ngrho=X%ng
- allocate(isc%rhotw(X%ng))
- call scatterBamp_alloc(isc)
  !
  isave=0
  !
@@ -99,32 +90,32 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res)
    !-----------------
    !
    if (iq==1) then
-     isc%is = (/ic,ik,1,i_spin/)
-     isc%os = (/iv,ik,1,i_spin/)
-     isc%qs = (/1,1,1/)
+     Xo_scatt%is = (/ic,ik,1,i_spin/)
+     Xo_scatt%os = (/iv,ik,1,i_spin/)
+     Xo_scatt%qs = (/1,1,1/)
      ik_bz_mem=PAR_Xk_bz_index(ikbz)
      if (.not. X%ng==1) then
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
-         call scatterBamp(isc)
-         rhotw_save=isc%rhotw
+         call scatter_Bamp(Xo_scatt)
+         rhotw_save=Xo_scatt%rhotw
          isave=(/iv,ic,ik,i_spin/)
        endif
        do ig1=1,X%ng
          ig2=g_rot(sop_inv(is),ig1)
-         isc%rhotw(ig1)=rhotw_save(ig2)
+         Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
        enddo
        if (is>nsym/(i_time_rev+1)) then
          do ig1=1,X%ng
-           isc%rhotw(ig1)=conjg(isc%rhotw(ig1))
+           Xo_scatt%rhotw(ig1)=conjg(Xo_scatt%rhotw(ig1))
          enddo
        endif
      endif
-     isc%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
+     Xo_scatt%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
    else
-     isc%is=(/ic,ik,is,i_spin/)
-     isc%os=(/iv,ikp,isp,i_spin/)
-     isc%qs=(/qindx_X(iq,ikbz,2),iq,1/)
-     call scatterBamp(isc)
+     Xo_scatt%is=(/ic,ik,is,i_spin/)
+     Xo_scatt%os=(/iv,ikp,isp,i_spin/)
+     Xo_scatt%qs=(/qindx_X(iq,ikbz,2),iq,1/)
+     call scatter_Bamp(Xo_scatt)
    endif
    !
    ! Davide: these lines seems useless ...
@@ -135,7 +126,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res)
    !    !$omp parallel do default(shared), private(ig1,ig2)
    !    do ig1=1,X%ng
    !      do ig2=1,X%ng
-   !          eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
+   !          eet_factor(ig1,ig2)=Xo_scatt%rhotw(G_m_G(ig1,ig2))
    !      enddo
    !    enddo
    !    !$omp end parallel do
@@ -147,17 +138,10 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res)
    !-------------^^^^^---------------------------------------
    !$omp parallel do default(shared), private(ig2)
    do ig2=1,X%ng
-     call V_by_V_plus_V(ig2,eh_occ*isc%rhotw(ig2),conjg(isc%rhotw(:ig2)),Xo_res(:ig2,ig2))
+     call V_by_V_plus_V(ig2,eh_occ*Xo_scatt%rhotw(ig2),conjg(Xo_scatt%rhotw(:ig2)),Xo_res(:ig2,ig2))
    enddo
    !$omp end parallel do
    !
  enddo loop_bare_grid
- !
- !
- ! Cleaning workspace
- !-------------------------
- deallocate(isc%rhotw)
- call scatterBamp_free(isc)
- call collision_reset(isc)
  !
 end subroutine X_os_residuals

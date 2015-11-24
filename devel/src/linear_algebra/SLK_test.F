@@ -96,15 +96,16 @@ end subroutine SLK_test
  use pars
  use util_module
  use parallel_m, ONLY:MPI_DOUBLE_PRECISION,mpi_comm_world
- use SLK_m,      ONLY:POOL_group,ndim
+ use SLK_m,      ONLY:POOL_group
  use com,        ONLY:msg
- use ifport
  !
  implicit none
  !
- integer           :: ndim
+ integer           :: ndim,iseed(8)
  type(POOL_group)  :: POOL
  real(DP)          :: Amat(ndim,ndim)
+ character(12)     :: ch(3)
+ real(DP),external :: dlaran
  !
  integer   :: i, j, ierr
  real(DP) :: scal=0.2d0 
@@ -117,12 +118,10 @@ end subroutine SLK_test
      Amat(i,i) = 1.0d0
    enddo
    !
-   call srand( 192*POOL%id )
-   !
    do j = 1, ndim
      do i = j, ndim
        ! 192 is just a random number
-       Amat(i,j) = Amat(i,j) + scal * rand(0)
+       Amat(i,j) = Amat(i,j) + scal * dlaran(iseed(4:))
        Amat(j,i) = Amat(i,j)
      enddo
    enddo
@@ -154,7 +153,7 @@ end subroutine build_matrix
  use com,          ONLY:error,msg
  use pars,         ONLY:DP,SP
  use parallel_m,   ONLY:mpi_comm_world
- use SLK_m,        ONLY:POOL_group,ndim
+ use SLK_m,        ONLY:POOL_group
  implicit none
  !
  type(POOL_group) :: POOL
@@ -193,7 +192,7 @@ end subroutine serial_inverse
  use com,        ONLY:error,msg
  use pars,       ONLY:DP,SP
  use parallel_m, ONLY:mpi_comm_world,MPI_DOUBLE_PRECISION, MPI_SUM
- use SLK_m,      ONLY:POOL_group,ORTHO_group,ndim
+ use SLK_m,      ONLY:POOL_group,ORTHO_group
  !
  implicit none
  !
@@ -321,7 +320,7 @@ end subroutine para_inverse
  use pars,       ONLY:DP
  use util_module
  use com,        ONLY:error,msg
- use SLK_m,      ONLY:POOL_group,ndim
+ use SLK_m,      ONLY:POOL_group
  use parallel_m, ONLY:mpi_comm_world
  implicit none
  !

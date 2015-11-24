@@ -206,8 +206,9 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !=================
    if (l_NE_with_fields) call RT_apply_field(ik,H_nl_sc,A_input)
    !
-   forall( ib=SC_bands(1):SC_bands(2) , ibp=SC_bands(1):SC_bands(2) , ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2) ) &
-&    Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
+   forall( ib=SC_bands(1):SC_bands(2) , ibp=SC_bands(1):SC_bands(2) , &
+&          ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2) ) &
+&            Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
    !  
  enddo
  !

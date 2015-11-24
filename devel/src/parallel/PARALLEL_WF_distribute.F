@@ -63,12 +63,16 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  NB=n_bands
  NBp=n_bands
  NK=nkibz 
- !
- if (present(K_index) ) NK= size(K_index%element_1D)
- if (present(B_index) ) NB= size(B_index%element_1D)
- if (present(Bp_index)) NBp=size(Bp_index%element_1D)
- !
- if (present(B_and_K_index)) then
+ if (present(K_index)) then 
+   NK=size(K_index%element_1D)
+ endif
+ if (present(B_index)) then 
+   NB=size(B_index%element_1D)
+ endif
+ if (present(Bp_index)) then 
+   NBp=size(Bp_index%element_1D)
+ endif
+ if (present(B_and_K_index)) then 
    NB=size(B_and_K_index%element_2D,1)
    NK=size(B_and_K_index%element_2D,2)
  endif

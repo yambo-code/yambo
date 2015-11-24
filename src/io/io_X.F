@@ -37,7 +37,7 @@ integer function io_X(X,Xw,ID)
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
-&                        IO_NO_DATABASE
+&                        IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -239,8 +239,10 @@ integer function io_X(X,Xw,ID)
  ! Sections 1 & 2 are used in VERIFY mode. 
  ! Now that the menu is closed I can return with io_X/=0 if there is a restart point
  !
- io_X=IO_NO_DATABASE
- if (io_err==0) io_X=iq
+ if (io_mode(ID)/=DUMP) then
+   io_X=IO_NO_DATABASE
+   if (io_err==0) io_X=iq
+ endif
  !
 1 call io_disconnect(ID)
  !

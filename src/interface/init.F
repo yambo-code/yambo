@@ -1229,6 +1229,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        if (l_alda_fxc) BS_res_mode='x'     
        !
+       !
        if (io_X_err(2)==0) then
          if (io_BS_err/=0) BS_n_g_W=X(2)%ng
        else if (io_X_err(4)==0) then

@@ -56,14 +56,12 @@ subroutine SCATTERING_QED_transverse_matrix(i_q_bz,i_G,i_G0,q,T_matrix,T_vec,Pho
    T_matrix(i_c,i_c)=1._SP
  enddo
  !
- if (i_q_bz==1.and.i_G==1) then
-   return
- else
-   do i_c=1,3
-     do i_cp=i_c,3           
-       T_matrix(i_c,i_cp)= T_matrix(i_c,i_cp)-q_photon(i_c)*q_photon(i_cp)/v_norm(q_photon)**2
-     enddo
+ if (i_q_bz==1.and.i_G==1) return
+ !
+ do i_c=1,3
+   do i_cp=i_c,3           
+     T_matrix(i_c,i_cp)= T_matrix(i_c,i_cp)-q_photon(i_c)*q_photon(i_cp)/v_norm(q_photon)**2
    enddo
- endif
+ enddo
  !
 end subroutine SCATTERING_QED_transverse_matrix

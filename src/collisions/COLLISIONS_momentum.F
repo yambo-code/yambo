@@ -127,8 +127,6 @@ subroutine COLLISIONS_momentum(E,k,q)
        !
        do i_g=1,QP_QED_ng
          !
-         if (i_q_bz==1.and.i_g==1) cycle
-         !
          i_g_mem=i_g
          !
          call SCATTERING_QED_transverse_matrix(i_q_bz,i_g,i_G0,q,T_matrix,T_vec,photon_E)

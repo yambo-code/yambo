@@ -39,7 +39,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use com,            ONLY:msg
  use X_m,            ONLY:X_t,X_alloc,X_mat
  use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Vnl_xc,QP_Vxc
- use collision,      ONLY:ggwinfo,collision_reset
+ use collision,      ONLY:elemental_collision,elemental_collision_free
  use matrix_operate, ONLY:INV,USE_LK
  use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
@@ -69,9 +69,9 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  integer       ::iw,il,FUNCTIONAL_,KIND_
  real(SP)      ::Ex_LDA,Ec_LDA,dEc_LDA,ACFDT_EXX,ACFDT_Ec,sug_E_rng
- type(ggwinfo)    ::isc
- type(PP_indexes) ::plw
- real(SP), allocatable :: lambda(:)
+ type(elemental_collision)::isc
+ type(PP_indexes)         ::plw
+ real(SP), allocatable    ::lambda(:)
  real(SP), allocatable :: lambda_weight(:)
  real(SP), allocatable :: freq(:)
  real(SP), allocatable :: freq_weight(:)
@@ -88,7 +88,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  call section('*','ACFDT Total Energy')
  !
- call collision_reset(isc)
+ call elemental_collision_free(isc)
  call PP_indexes_reset(plw)
  !
  call msg('s','[ACFDT] LDA Total energy')
@@ -212,7 +212,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
      io_err=io_X(X,Xw,ID)
      !
      isc%qs(2)=iqibz
-     call scatterGamp(isc,'x')
+     call scatter_Gamp(isc,'x')
      !
      do il=1,ACFDT_n_lambda
        do iw=1,ACFDT_n_freqs
@@ -239,7 +239,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    ! Partial CLEAN
    !
    call X_alloc('X')
-   call collision_reset(isc)
+   call elemental_collision_free(isc)
    call PP_indexes_reset(plw)
    deallocate(X_s,tddftk,dX)
    call mem_est("X_WS")

@@ -34,7 +34,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
 &                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
 &                        PAR_IND_Q_ID,n_WF_bands_to_load
- use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
+ use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
 #if defined _SC
@@ -56,11 +56,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  !Work Space
  !
- type(ggwinfo)           ::isc,iscp
- integer                 ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands
- complex(DP)             ::DP_Sx
- complex(SP),allocatable ::local_rhotw(:)
- character(schlen)       ::ch
+ type(elemental_collision)::isc,iscp
+ integer                  ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands
+ complex(DP)              ::DP_Sx
+ complex(SP),allocatable  ::local_rhotw(:)
+ character(schlen)        ::ch
  !
  !QP list
  !
@@ -69,8 +69,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  ! Resets & basis setup
  !
- call collision_reset(isc)
- call collision_reset(iscp) 
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp) 
  !
  Sx_lower_band=1
  Sx_upper_band=E%nbm
@@ -114,14 +114,12 @@ endif
  !
  ! allocation again
  !
- call scatterBamp_alloc(isc)
- call scatterBamp_alloc(iscp)
- allocate(isc%gamp(QP_ng_Sx,1),isc%rhotw(QP_ng_Sx),iscp%rhotw(QP_ng_Sx),local_rhotw(QP_ng_Sx))
+ call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="HF")
+ call elemental_collision_alloc(iscp,NG=QP_ng_Sx,TITLE="HF")
+ allocate(local_rhotw(QP_ng_Sx))
  isc%qs    =1
- isc%ngrho =QP_ng_Sx
- iscp%ngrho=QP_ng_Sx
  !
- call scatterGamp(isc,'x')
+ call scatter_Gamp(isc,'x')
  if (present(mode).and.mode=='hyb') call scatter_ModScr(isc,WF_exx_screening)
  !
  ch='EXS'
@@ -161,7 +159,7 @@ endif
      !
      isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
      if (isc%qs(2)/=isc%iqref) then 
-       call scatterGamp(isc,'x')
+       call scatter_Gamp(isc,'x')
        if (present(mode).and.mode=='hyb') call scatter_ModScr(isc,WF_exx_screening)
      endif
      !
@@ -190,12 +188,12 @@ endif
        isc%os(1)=jb
        iscp%os=isc%os
        !
-       call scatterBamp(isc)
+       call scatter_Bamp(isc)
        !
        ! Normal case, the density matrix is diagonal
        !
        iscp%rhotw=isc%rhotw
-       if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
+       if (isc%is(1)/=iscp%is(1)) call scatter_Bamp(iscp)
        !
 !$omp parallel do default(shared), private(ig)
        do ig = 1, isc%ngrho
@@ -217,12 +215,9 @@ endif
  !
  call live_timing()
  !
- call scatterBamp_free(isc)
- call scatterBamp_free(iscp)
- deallocate(isc%gamp,isc%rhotw,iscp%rhotw,local_rhotw)
- !
- call collision_reset(isc)
- call collision_reset(iscp) 
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp) 
+ deallocate(local_rhotw)
  !
 #if defined _TIMING
  call timing('HF',OPR='stop')

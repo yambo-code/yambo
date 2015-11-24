@@ -39,14 +39,12 @@ subroutine K_correlation_collisions(i_block,Xk,q)
  !
  ! where |k2 ib s1^{-1} x s2 > = PHASE * |k2 ib is_in_the_star_of_k2>
  !
- use stderr,        ONLY:intc
- use pars,          ONLY:SP,IP
+ use pars,          ONLY:SP
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_B,bz_samp
- use BS,            ONLY:WF_phase,BS_block,BS_bands,BS_res_K_corr,BS_blk,&
+ use BS,            ONLY:WF_phase,BS_bands,BS_res_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp
  use electrons,     ONLY:n_sp_pol
- use collision,     ONLY:scatterBamp_alloc,scatterBamp_free
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -77,8 +75,6 @@ subroutine K_correlation_collisions(i_block,Xk,q)
  !
  ! Table allocation
  !------------------
- !
- call scatterBamp_alloc(K_CORR_collision)
  !
  allocate(BS_blk(i_block)%O_table(2,nsym,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  !
@@ -211,8 +207,6 @@ subroutine K_correlation_collisions(i_block,Xk,q)
    !
  enddo
  !
- call scatterBamp_free(K_CORR_collision)
- !
 #if defined _TIMING
  call timing('T_space CORR Osc.',OPR='stop')
 #endif
@@ -225,7 +219,7 @@ subroutine K_correlation_collisions(i_block,Xk,q)
      K_CORR_collision%is(1)=i_b
      K_CORR_collision%os(1)=i_b_p
      K_CORR_collision%os(3)=i_s_collision
-     call scatterBamp(K_CORR_collision)
+     call scatter_Bamp(K_CORR_collision)
      BS_blk(i_block)%O_c(:,BS_blk(i_block)%N_oscillators)=K_CORR_collision%rhotw(:)
    end subroutine
 end subroutine K_correlation_collisions

@@ -53,12 +53,12 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !
  call parser('WFbuffIO'   ,WF_buffered_IO)
  !
-#if defined _MPI
- !
  ! WORLD communicator setup
  !==========================
  !
  call COMM_reset(PAR_COM_WORLD)
+ !
+#if defined _MPI
  !
  PAR_COM_WORLD%COMM  =mpi_comm_world
  PAR_COM_WORLD%CPU_id=myid

@@ -43,9 +43,7 @@ subroutine QP_state_table_setup(en)
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
 #if defined _SC
- use SC,            ONLY:SC_bands,l_SC_diagonal
-#endif
-#if defined _RT
+ use SC,            ONLY:SC_bands,l_SC_diagonal,SC_potential
  use drivers,       ONLY:l_elel_scatt
 #endif
  !
@@ -57,6 +55,7 @@ subroutine QP_state_table_setup(en)
  integer :: e_rng_lines,k_rng_lines,icheck,ik,ib,i1,i2,i3,&
 &           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,bands_mixed,v(2)
  real(SP):: rcheck
+ logical :: Mixing
  integer,    allocatable:: QP_i_limits(:,:)
  real(SP)   ,allocatable:: QP_r_limits(:,:)
  !
@@ -173,9 +172,18 @@ subroutine QP_state_table_setup(en)
  !
  ! Note (2) : a non zero mixing is allowed only in a SC/RT calculation
  !
- if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
-   !
-   SC_bands_mixed=1
+ bands_mixed   =1
+ SC_bands_mixed=1
+ !
+ Mixing=.FALSE.
+#if defined _SC
+ Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions
+ if (l_eval_collisions) then
+   Mixing=l_elel_scatt.or.trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX"
+ endif
+#endif
+ !
+ if (Mixing) then
    !
 #if !defined _ELPH
    if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.
@@ -189,8 +197,6 @@ subroutine QP_state_table_setup(en)
    !
    SC_band_mixing=float(SC_bands_mixed)*100./float(QP_nb)
    bands_mixed=SC_bands_mixed
- else
-   bands_mixed=1
  endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE

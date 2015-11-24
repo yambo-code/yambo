@@ -41,7 +41,6 @@ subroutine K_diag_compute_epsilon(iq,W,BS_E,BS_E_SOC_corr,BS_R,BS_R_kerr)
 #if defined _KERR
  use KERR,           ONLY:B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
- use units,          ONLY:DEG2RAD
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -57,7 +56,7 @@ subroutine K_diag_compute_epsilon(iq,W,BS_E,BS_E_SOC_corr,BS_R,BS_R_kerr)
  !
  type(PP_indexes)     ::px
  !
- integer              :: i1,n_soc,i_pert_SOC
+ integer              :: i1,i_pert_SOC,n_SOC
  logical              :: K_is_not_hermitian
  real(SP)             :: Co
  complex(SP)          :: factor_jj,EXC_E(2)

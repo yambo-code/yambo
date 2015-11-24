@@ -1,5 +1,5 @@
 SC_objects = 
-#if defined _SC
+#if defined _SC || _QED
 SC_objects = io_COLLISIONS.o load_SC_components.o io_SC_components.o variables_SC.o
 #endif
 #if defined _RT

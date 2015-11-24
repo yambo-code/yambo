@@ -55,6 +55,7 @@ module QP_m
  logical           :: GF_is_causal
  character(schlen) :: QP_solver
  real(SP)          :: QP_G_Zoom_treshold
+ real(SP)          :: QP_time_order_sign=-1 ! T-ordered. Set to +1 (causal) in QP_SET_temperature_pre_factor
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_dSc_delta
  real(SP)          :: QP_G_er(2)
@@ -162,6 +163,15 @@ module QP_m
  !
  contains
    !
+   ! Time-Ordering
+   !----------------
+   !
+   subroutine QP_SET_temperature_pre_factor( )
+     use drivers,  ONLY:Finite_Tel
+     QP_time_order_sign=-1                ! T-order
+     if (Finite_Tel) QP_time_order_sign=1 ! Causal
+   end subroutine
+   !
    subroutine QP_reset(qp)
      type(QP_t)::qp
      qp%description=' '
@@ -249,5 +259,59 @@ module QP_m
      enddo
      !
    end subroutine
+   !
+   ! Lifetime functions e2et/h2ht
+   !------------------------------
+   !
+   ! Gamma_n = 2 i \sum_m  { -/+ i Im[e^-1(e_n -e_m) (spin_occ-f+bose_f) <- e2et
+   !                           + i Im[e^-1(e_m -e_n) (         f+bose_f) <- h2ht }
+   !
+   ! where - for T-ordered theory, + for causal (finite Tel)
+   !
+   function e2et(is,os,E,F)
+     !
+     use functions,   ONLY:bose_f
+     use electrons,   ONLY:levels
+     use drivers,     ONLY:Finite_Tel
+     use electrons,   ONLY:spin_occ
+     integer      ::is(3),os(3),e2et
+     type(levels) ::E
+     real(SP) :: F
+     real(SP) :: dE !ws
+     e2et=0
+     !
+     ! "Electron 2 Electron" decay
+     !
+     dE=E%E(is(1),is(2),is(3))-E%E(os(1),os(2),os(3))
+     !
+     F=QP_time_order_sign*(spin_occ-E%f(os(1),os(2),os(3))+bose_f(dE))
+     !
+     if (dE>0..and.abs(F)>epsilon(1.)) e2et=1
+     if (e2et==0) F=0.
+   end function
+   !
+   function h2ht(is,os,E,F)
+     !
+     use functions, ONLY:bose_f
+     use electrons, ONLY:levels
+     integer      ::is(3),os(3),h2ht
+     type(levels) ::E
+     real(SP)     ::F
+     !
+     ! Work Space
+     !
+     real(SP) :: dE 
+     h2ht=0
+     !
+     !"Hole 2 Hole" decay
+     !
+     dE=E%E(os(1),os(2),os(3))-E%E(is(1),is(2),is(3))
+     !
+     F=E%f(os(1),os(2),os(3))+bose_f(dE)
+     !
+     if (dE>0..and.abs(F)>epsilon(1.)) h2ht=1
+     if (h2ht==0) F=0.
+   end function
+
    !
 end module 

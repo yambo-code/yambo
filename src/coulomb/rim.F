@@ -115,11 +115,11 @@ subroutine rim()
    do inn1=1,26
      v1_norm(2)=v_norm(v1-first_neighbour(inn1,:))
      if (v1_norm(2)<v1_norm(1)) cycle loop
- !   if (v1_norm(2)<v1_norm(1)-1.E-5) cycle loop
- !
- ! The small number 1E-5 seems unessential and bring to erroneous integration in
- ! the case of large samplings.
- ! 
+     !if (v1_norm(2)<v1_norm(1)-1.E-5) cycle loop
+     !
+     ! The small number 1E-5 seems unessential and bring to erroneous integration in
+     ! the case of large samplings.
+     ! 
    enddo
    qr(N_in,:)=v1*alat(:)/2./pi
    N_in=N_in+1

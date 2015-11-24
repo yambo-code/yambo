@@ -24,7 +24,7 @@
 subroutine PLASMA_parallel_setup(EH_gas)
  !
  use parallel_m,    ONLY:PAR_IND_Plasma,PAR_COM_Plasma_INDEX,PAR_IND_Plasma_ID,PAR_Plasma_index,&
-&                        PAR_nPlasma,PP_indexes_reset,COMM_reset
+&                        PAR_nPlasma
  use interfaces,    ONLY:PARALLEL_live_message,PARALLEL_index
  use plasma,        ONLY:plasma_gas
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine scatterBamp_using_the_gradient(isc,which)
+subroutine scatter_Bamp_using_the_gradient(isc,which)
  !
  ! It computs
  !
@@ -38,41 +38,34 @@ subroutine scatterBamp_using_the_gradient(isc,which)
  !
  !  iq_is = ik_is-ok_os-Go
  !
- use pars,           ONLY:DP,SP
- use electrons,      ONLY:n_spinor
- use collision,      ONLY:ggwinfo
+ use pars,           ONLY:SP
+ use collision,      ONLY:elemental_collision
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:g_rot
  use FFT_m,          ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  !
  implicit none
  !
- type(ggwinfo)::isc
- character(1) ::which
+ type(elemental_collision)::isc
+ character(1)             ::which
  !
  ! Work Space
  !
- complex(DP), allocatable :: rho_tw_rs(:)
- complex(SP), allocatable :: WF_symm_i(:,:)
- complex(SP), allocatable :: WF_symm_o(:,:)
- complex(SP), allocatable :: WF_der(:,:)
+ complex(SP) :: WF_der(3,fft_size)
  !
- integer     :: qs,iGo
- integer     :: ig, ir,ic,ig_
- !
- allocate(rho_tw_rs(fft_size),WF_symm_i(fft_size,n_spinor),WF_symm_o(fft_size,n_spinor),WF_der(3,fft_size))
+ integer     :: qs,iGo,ig, ir,ic,ig_
  !
  ! |ib ik_is i_sp>
- call WF_apply_symm(isc%is,WF_symm_i)
+ call WF_apply_symm(isc%is,isc%WF_symm_i)
  !
  ! | ob ok_os o_sp>   
- call WF_apply_symm(isc%os,WF_symm_o)
+ call WF_apply_symm(isc%os,isc%WF_symm_o)
  !
  ! \grad <ib ik_is i_sp|
- if (which=="i") call eval_Gradient(WF_symm_i,WF_der)
+ if (which=="i") call eval_Gradient(isc%WF_symm_i,WF_der)
  !
  ! \grad | ob ok_os o_sp>   
- if (which=="o") call eval_Gradient(WF_symm_o,WF_der)
+ if (which=="o") call eval_Gradient(isc%WF_symm_o,WF_der)
  !
  ! Chartesian components of the gradient loop
  !
@@ -83,23 +76,22 @@ subroutine scatterBamp_using_the_gradient(isc,which)
 #if defined _OPENMP
    !$omp parallel default(shared), private(ir)
    !$omp do
+#endif
    do ir = 1, fft_size
-     if (which=="i")  rho_tw_rs(ir) = WF_der(ic,ir)*WF_symm_o(ir,1)
-     if (which=="o")  rho_tw_rs(ir) = conjg(WF_symm_i(ir,1))*WF_der(ic,ir)
+     if (which=="i")  isc%rho_tw_rs(ir) = conjg(WF_der(ic,ir))*isc%WF_symm_o(ir,1)
+     if (which=="o")  isc%rho_tw_rs(ir) = conjg(isc%WF_symm_i(ir,1))*WF_der(ic,ir)
    enddo
+#if defined _OPENMP
    !$omp end do
    !$omp end parallel
-#else
-   if (which=="i") rho_tw_rs(:) = conjg(WF_der(ic,:))*WF_symm_o(:,1)
-   if (which=="o") rho_tw_rs(:) = conjg(WF_symm_i(:,1))*WF_der(ic,:)
 #endif
    !
    ! perform the actual FFT
    !
 #if defined _FFTW
-   call fft_3d(rho_tw_rs,fft_dim,+1,fftw_plan)
+   call fft_3d(isc%rho_tw_rs,fft_dim,+1,fftw_plan)
 #else
-   call fft_3d(rho_tw_rs,fft_dim,+1)
+   call fft_3d(isc%rho_tw_rs,fft_dim,+1)
 #endif
    !
    ! e^[I(Rs(G-G0)).r]
@@ -109,28 +101,28 @@ subroutine scatterBamp_using_the_gradient(isc,which)
    !
 #if defined _OPENMP
    if (qs==idt_index) then 
-     !$omp parallel do default(shared), private(ig)
+     !$omp parallel do default(shared), private(ig,ig_)
      do ig = 1, isc%ngrho
-       isc%rhotw(ig)= rho_tw_rs(fft_g_table(ig,iGo))
+       ig_ =isc%ngrho*(ic-1)+ig
+       isc%rhotw(ig_)= isc%rho_tw_rs(fft_g_table(ig,iGo))
      enddo
      !$omp end parallel do
    else
-     !$omp parallel do default(shared), private(ig)
+     !$omp parallel do default(shared), private(ig,ig_)
      do ig = 1, isc%ngrho
-       isc%rhotw(ig)= rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))
+       ig_ =isc%ngrho*(ic-1)+ig
+       isc%rhotw(ig_)= isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))
      enddo
      !$omp end parallel do
    endif
 #else
    do ig = 1,isc%ngrho
      ig_ =isc%ngrho*(ic-1)+ig
-     if (qs==idt_index) isc%rhotw(ig_)= rho_tw_rs(fft_g_table(ig,iGo))
-     if (qs/=idt_index) isc%rhotw(ig_)= rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))
+     if (qs==idt_index) isc%rhotw(ig_)= isc%rho_tw_rs(fft_g_table(ig,iGo))
+     if (qs/=idt_index) isc%rhotw(ig_)= isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))
    enddo
 #endif
    !
  enddo
- !
- deallocate(WF_symm_i,WF_symm_o,WF_der,rho_tw_rs)
  !
 end subroutine

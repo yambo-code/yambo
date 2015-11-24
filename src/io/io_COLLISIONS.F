@@ -25,20 +25,21 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLLISIONS_IO_status
+ use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLLISIONS_IO_status,&
+&                        n_COLLISIONS,COLLISIONS_state
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
- use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ
+ use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
- use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
+ use QP_m,          ONLY:QP_ng_Sx,SC_band_mixing
  use parallel_m,    ONLY:PAR_IND_QP
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
- use drivers,       ONLY:l_elel_scatt
+ use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -53,7 +54,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_desc,VAR_size,i_qp_loop,io_err
+ integer               :: V_kind_disk,i_desc,i_qp_loop,io_err
  character(lchlen)     :: V_kind_string,X_string
  !
 #if defined _TIMING
@@ -66,6 +67,8 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    db_name                   = "COLLISIONS_COHSEX"
  elseif(V_kind==SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"
+ elseif(V_kind==SE_GW_QED) then
+   db_name = "COLLISIONS_P"
  else
    call error("COLLISIONS I/O : Unknown database type ")
  endif
@@ -82,8 +85,12 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      goto 1
    endif
    !
-   VAR_size=7
-   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=VAR_size,MENU=0)
+   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
+   !
+   if (ver_is_gt_or_eq(ID,revision=5064)) then
+     call io_elemental(ID,I0=n_COLLISIONS,&
+&         VAR=' Total number of COLLISIONS      :',CHECK=.true.,OP=(/"=="/))
+   endif
    !
    call io_elemental(ID,I1=SC_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
@@ -99,6 +106,11 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      endif
    endif
    !
+   if (V_kind==SE_GW_QED) then
+     call io_elemental(ID,L0=l_elphoton_scatt,&
+&         VAR=' Electron-Photon   scattering    :',WARN=.true.,OP=(/"=="/))
+   endif
+   !
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=V_kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
@@ -112,12 +124,16 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (V_kind_disk==SC_HF) then
+     !
      call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=4,MENU=0)
      call io_elemental(ID,I0=QP_ng_Sx,&
 &         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,R0=COLLISIONS_cutoff,&
 &         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
-   else
+     !
+     call io_elemental(ID,VAR="",VAR_SZ=0)
+     !
+   else if (V_kind_disk==SE_GW_NEQ.or.V_kind_disk==SC_COHSEX) then
      !
      ! Global Response Descriptions
      !==============================
@@ -148,12 +164,25 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      enddo
      !
      call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=2,MENU=0)
+     call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      :',WARN=.true.)
+     call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      :',WARN=.true.)
+     call io_elemental(ID,VAR="",VAR_SZ=0)
+     !
+   else
+     !
+     call io_elemental(ID,VAR="",VAR_SZ=0)
      !
    endif
    !
-   call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      :',WARN=.true.)
-   call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      :',WARN=.true.)
-   call io_elemental(ID,VAR="",VAR_SZ=0)
+   ! States
+   !
+   if (ver_is_gt_or_eq(ID,revision=5064)) then
+     if (read_is_on(ID).and..not.allocated(COLLISIONS_state)) then
+       allocate(COLLISIONS_state(n_COLLISIONS,4))
+     endif
+     call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/n_COLLISIONS,4/))
+     call io_bulk(ID,I2=COLLISIONS_state)
+   endif
    !
    io_COLLISIONS=io_status(ID)
    if (io_COLLISIONS/=0) goto 1
@@ -162,10 +191,10 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  ! Check the restart point
  !
- if (io_MODE(ID)==VERIFY.and.allocated(COLLISIONS_IO_status)) then
+ if (IO_mode(ID)==VERIFY.and.allocated(COLLISIONS_IO_status)) then
    !
    COLLISIONS_IO_status=1
-   do i_qp_loop=1,QP_n_states
+   do i_qp_loop=1,n_COLLISIONS
      if (.not.PAR_IND_QP%element_1D(i_qp_loop)) cycle
      io_extension(ID)=io_raw_extension(ID)
      call io_fragment(ID,i_fragment=i_qp_loop,ierr=io_err)
@@ -205,7 +234,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &                                COLL%D(2,1):COLL%D(2,2),&
 &                                COLL%D(3,1):COLL%D(3,2)))
    !
-   if(V_kind==SE_GW_NEQ) then
+   if(V_kind==SE_GW_NEQ.or.V_kind==SE_GW_QED) then
      ! Real collisions
      call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N/))
      call io_bulk(ID,R1=COLL%v_r)

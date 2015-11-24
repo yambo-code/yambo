@@ -43,6 +43,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_X,bz_samp
  use memory_m,      ONLY:mem_est
+ use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,X_terminator
  use IO_m,          ONLY:IO_and_Messaging_switch
@@ -63,14 +64,15 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Work Space
  !
- character(schlen)       :: live_t_string
- integer                 :: ig1,ig2,iw,n_poles,i_cg
- logical                 :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU)
- complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),pole
- complex(SP),allocatable :: Xo_res(:,:)
- integer,    external    :: X_eh_setup
- complex(SP),external    :: X_simple_GreenF
+ character(schlen)        :: live_t_string
+ integer                  :: ig1,ig2,iw,n_poles,i_cg
+ logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
+ real(SP)                 :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU)
+ complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),pole
+ complex(SP),allocatable  :: Xo_res(:,:)
+ integer,    external     :: X_eh_setup
+ complex(SP),external     :: X_simple_GreenF
+ type(elemental_collision):: Xo_scatt
  !
  ! Defaults & Setups
  !===================
@@ -169,10 +171,13 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  if (.not.half_X_mat_only) half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
- ! Xo_residual allocation 
- !------------------------
+ ! Xo_residual & elemental collision allocation 
+ !----------------------------------------------
  allocate(Xo_res(X%ng,X%ng))
  call mem_est("Xo_WS",(/X%ng**2/))
+ !
+ call elemental_collision_free(Xo_scatt)
+ call elemental_collision_alloc(Xo_scatt,NG=X%ng,TITLE="Xo")
  !
  ! Timing
  !========
@@ -194,7 +199,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    ! 1) First compute the residuals
    !================================
-   call X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res)
+   call X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !
    ! 2) Then the frequency dependent term
    !=======================================
@@ -290,6 +295,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !=======
  deallocate(Xo_res)
  call mem_est("Xo_WS")
+ call elemental_collision_free(Xo_scatt)
  !
  current_iq=iq
  !

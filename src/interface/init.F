@@ -56,7 +56,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
 #if defined _SC
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF,SE_GW_NEQ
+ use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF,SE_GW_NEQ,SE_GW_QED
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
  use collision,      ONLY:V_kind
  use interfaces,     ONLY:io_COLLISIONS
@@ -439,6 +439,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _SC && defined _RT
  V_kind=SE_GW_NEQ
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
+#endif
+#if defined _QED && defined _RT
+ V_kind=SE_GW_QED
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
 #endif
@@ -1160,11 +1165,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      l_rpa_IP     = trim(Chi_mode)=='IP'.or.trim(BSK_mode)=='IP'
      l_td_hartree = trim(Chi_mode)=='Hartree'.or.trim(BSK_mode)=='Hartree'
-     if (l_tddft) then
-       l_alda_fxc = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
-       l_lrc_fxc  = trim(Chi_mode)=='LRC' 
-       l_bs_fxc   = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
-     endif
+     l_alda_fxc   = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
+     l_lrc_fxc    = trim(Chi_mode)=='LRC' 
+     l_bs_fxc     = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
+     l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
      l_td_hf      = trim(BSK_mode)=="HF"
      l_W_eh       = trim(BSK_mode)=="SEX"
      !
@@ -1203,8 +1207,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(3)%ordering = 'c'
      Xw(3)%n_freqs = 101 
 #endif 
+     if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) l_elel_corr=.true.
 #if defined  _ELPH 
-     if (.not.l_elel_corr.and..not.l_elph_corr) l_elel_corr=.true.
      elph_nDBs_used=elph_nDBs
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
@@ -1224,6 +1228,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bse) then
        !
        if (l_alda_fxc) BS_res_mode='x'     
+       !
        !
        if (io_X_err(2)==0) then
          if (io_BS_err/=0) BS_n_g_W=X(2)%ng
@@ -1498,8 +1503,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            endif
            !
            if((trim(rstr_piece(i1+1)) == 'alda').or.&
-             &(trim(rstr_piece(i1+1)) == 'lrc').or.&
-             &(trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
+&             (trim(rstr_piece(i1+1)) == 'lrc').or.&
+&             (trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
            !
            if(l_bse)   call initactivate(1,'bsk')
            !
@@ -1561,7 +1566,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if ( trim(rstr_piece(i1)) == 'sursp' )  then
            if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
            if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
-           if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
+           if ( trim(rstr_piece(i1+1)) == 'a') call initactivate(1,'ras reels')
          endif
 #endif
          !
@@ -1630,7 +1635,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! RT
          !
-#if defined  _RT 
+#if defined _RT 
          if ( trim(rstr_piece(i1)) == 'negf' ) then
            if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
            if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
@@ -1638,11 +1643,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
          !
          if ( trim(rstr_piece(i1)) == 'scattp' ) then
-           if ( trim(rstr_piece(i1+1)) == 'e'.or. trim(rstr_piece(i1+1)) == 'b') l_elel_scatt=.true.
-           if ( trim(rstr_piece(i1+1)) == 'p'.or. trim(rstr_piece(i1+1)) == 'b') l_elph_scatt=.true.
-           if (.not.l_elph_scatt.and..not.l_elel_scatt) l_elph_scatt=.true.
-           if (l_elph_scatt) call initactivate(1,'el_ph_scatt')
-           if (l_elel_scatt) call initactivate(1,'el_el_scatt')
+           if ( trim(rstr_piece(i1+1)) == 'e'.or. trim(rstr_piece(i1+1)) == 'a') l_elel_scatt=.true.
+           if ( trim(rstr_piece(i1+1)) == 'p'.or. trim(rstr_piece(i1+1)) == 'a') l_elph_scatt=.true.
+#endif
+#if defined _RT && defined _QED
+           if ( trim(rstr_piece(i1+1)) == 'h'.or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
+           if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
+#endif
+#if defined _RT 
+           if (l_elph_scatt)     call initactivate(1,'el_ph_scatt')
+           if (l_elel_scatt)     call initactivate(1,'el_el_scatt')
+           if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) l_elph_scatt=.true.
          endif
          !
 #endif

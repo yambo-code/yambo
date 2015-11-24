@@ -48,18 +48,18 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=26
+ integer, parameter:: tpar=27
  integer       :: ntitles,titles_order(tpar)
  real(SP)      :: values(tpar)
  character(schlen) :: titles(tpar)
  !
  titles(1)  = trim(Vxc_kind) ! 1 
- titles(2)  = 'Sc(Eo)' ! 2
- titles(3)  = 'Sc(Eqp)' ! 3
+ titles(2)  = 'Sc|Eo' ! 2
+ titles(3)  = 'Sc|E' ! 3
  titles(4)  = 'Eo'  ! 4
- titles(5)  = 'Eqp' ! 5
- titles(6)  =  'Z' ! 6
- titles(7)  =  'Sc`(Eo)' ! 7
+ titles(5)  = 'E' ! 5
+ titles(6)  = 'Z' ! 6
+ titles(7)  = 'dSc/dw|Eo' ! 7
  titles(8)  = 'E-Eo' ! 8
  titles(9)  = 'K-point' ! 9
  titles(10) = 'Band' ! 10
@@ -79,10 +79,11 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  titles(24) = 'E-Eo(Mhz)' ! 24
  titles(25) = 'E-Eo(meV)' ! 25
  titles(26) = 'Ehf' ! 26
+ titles(27) = 'Sc|Eo(meV)' ! 25
  !
 #if defined _QED
- ntitles=5
- titles_order(:ntitles)=(/9,10,4,25,24/)
+ ntitles=8
+ titles_order(:ntitles)=(/9,10,4,25,24,27,6,12/)
 #else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
@@ -182,8 +183,9 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
          values(23)=QP_G_amplitude_integral(i1)
        endif
 #if defined _QED
-       values(24)=real(QP_Sc(i1,1))*HA2GHZ*1000._SP
-       values(25)=real(QP_Sc(i1,1))*1000._SP*HA2EV
+       values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
+       values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
+       values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV
 #endif
         if (allocated(QP_G_info)) then
          values(17:18)=QP_G_info(i1,1,:)*HA2EV

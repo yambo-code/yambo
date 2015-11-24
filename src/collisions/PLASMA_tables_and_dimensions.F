@@ -25,8 +25,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp,qindx_C
- use SC,            ONLY:SC_bands
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels
  use QP_m,          ONLY:QP_n_states,QP_table
  use frequency,     ONLY:ordered_grid_index,coarse_grid_index,bare_grid_N,Coarse_grid_N,coarse_grid_Pt
  use plasma,        ONLY:EH_gas

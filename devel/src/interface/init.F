@@ -492,8 +492,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! CPU structure
  !
-#if defined _MPI
- !
  if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa) then
    if (l_optics.and..not.l_bse) then
      call CPU_activate("X_q_0")
@@ -509,8 +507,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'SE_Threads')
  endif
  !
-#endif
- !
 #if defined _SCALAPACK
  if (l_slk_test) then
    call initactivate(1,"SLKdim")
@@ -519,33 +515,31 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  !
  if (l_eval_collisions) then
-#if defined _SC && !defined _RT && defined _MPI
+#if defined _SC && !defined _RT 
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
 #endif
-#if defined _SC && defined _RT && defined _MPI
+#if defined _SC && defined _RT
    call CPU_activate("RT")
    call initactivate(1,'RT_Threads')
 #endif
  endif
  !
  if (l_real_time) then
-#if defined _RT && defined _MPI
+#if defined _RT 
    call CPU_activate("RT")
    call initactivate(1,'RT_Threads')
 #endif
  else if (l_sc_run) then
-#if !defined _RT && defined _MPI
+#if !defined _RT 
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
 #endif
  endif
  !
  if (l_bse) then
-#if defined _MPI
    call CPU_activate("BS")
    call initactivate(1,'X_Threads DIP_Threads')
-#endif
  endif
  !
  !
@@ -1042,6 +1036,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine CPU_activate(what)
      character(*) :: what 
+#if defined _MPI
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
      if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") then
@@ -1050,7 +1045,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (what=="BS") then
        call initactivate(1,what//"_nCPU_diago")
      endif
-#if defined _SCALAPACK
+#endif
+#if defined _SCALAPACK &&  defined _MPI
      if (what=="SLK") then
        call initactivate(1,what//"_nCPU_diago")
        call initactivate(1,what//"_nCPU_invert")

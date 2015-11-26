@@ -124,14 +124,20 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  endif
  !
  DB_table=0
- do i_qp=1,QP_n_states
-   state(:3)=QP_table(i_qp,:3)
-   state( 4)=spin(QP_table(i_qp,:))
-   do i_db=1,n_COLLISIONS
-     if (all(state==COLLISIONS_state(i_db,:))) DB_table(i_qp)=i_db
+ if(allocated(COLLISIONS_state)) then
+   do i_qp=1,QP_n_states
+     state(:3)=QP_table(i_qp,:3)
+     state( 4)=spin(QP_table(i_qp,:))
+     do i_db=1,n_COLLISIONS
+       if (all(state(:)==COLLISIONS_state(i_db,:))) DB_table(i_qp)=i_db
+     enddo
+     if (DB_table(i_qp)==0) call error('COLLISION components #'//trim(intc(i_qp))//' not found')
    enddo
-   if (DB_table(i_qp)==0) call error('COLLISION components #'//trim(intc(i_qp))//' not found')
- enddo
+ else
+   do i_qp=1,QP_n_states
+     DB_table(i_qp)=i_qp
+   enddo
+ endif
  !
  call live_timing('Collisions DB I/O:',PAR_nQP*n_V_kinds)
  !

@@ -35,7 +35,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
- use QP_m,          ONLY:QP_ng_Sx,SC_band_mixing
+ use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
  use parallel_m,    ONLY:PAR_IND_QP
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
@@ -87,9 +87,11 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    !
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
    !
-   if (ver_is_gt_or_eq(ID,revision=5064)) then
+   if (ver_is_gt_or_eq(ID,revision=5152)) then
      call io_elemental(ID,I0=n_COLLISIONS,&
 &         VAR=' Total number of COLLISIONS      :',CHECK=.true.,OP=(/"=="/))
+   else
+     n_COLLISIONS=QP_n_states
    endif
    !
    call io_elemental(ID,I1=SC_bands,&
@@ -176,7 +178,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    !
    ! States
    !
-   if (ver_is_gt_or_eq(ID,revision=5064)) then
+   if (ver_is_gt_or_eq(ID,revision=5152)) then
      if (read_is_on(ID).and..not.allocated(COLLISIONS_state)) then
        allocate(COLLISIONS_state(n_COLLISIONS,4))
      endif

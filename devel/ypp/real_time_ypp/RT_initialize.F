@@ -69,7 +69,7 @@ subroutine RT_initialize()
  X_rt%time_range=(/i_t_start-1,i_t_end-1/)*J_time_step
  !
  RED_steps=i_t_end-i_t_start+1
- W_RT_induced_step=2.*pi/(real(RED_steps-1,SP)*J_time_step)  ! Frequency step in real-time dynamics
+ W_RT_induced_step=2._SP*pi/(real(RED_steps-1,SP)*J_time_step)  ! Frequency step in real-time dynamics
  !
  call msg('s','[RT] Time range [fs]:',(/real(i_t_start-1),real(i_t_end-1)/)*J_time_step/FS2AUT)
  !

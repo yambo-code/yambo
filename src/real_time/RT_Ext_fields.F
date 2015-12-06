@@ -41,7 +41,7 @@ subroutine RT_Ext_fields(A,time)
  ! b. uses A" (the ext current) to evolve the Maxwell equations when
  !    the induced current is included in the dynamics ( RT_propagate_fields )
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:RT_step,NE_i_time
  use fields,         ONLY:n_ext_fields,Efield,small_a,theta_function,&
@@ -57,9 +57,9 @@ subroutine RT_Ext_fields(A,time)
  complex(SP) :: Field_time
  complex(SP) :: E_times_c(3)
  !
- A%vecpot    =(0._SP,0._SP)
- A%vecpot_vel=(0._SP,0._SP)
- A%vecpot_acc=(0._SP,0._SP)
+ A%vecpot    =cZERO
+ A%vecpot_vel=cZERO
+ A%vecpot_acc=cZERO
  !
  do i_f=1,n_ext_fields
    !

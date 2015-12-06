@@ -105,8 +105,8 @@ subroutine RT_X_LRR_real_field(en)
  iE_err=-1
  do i_w = 1, X_rt%energy_steps
    !
-   if(trim(X_rt%damp) /= "NONE")                      Field_freq=freqs(i_w)-(0._SP,1._SP)*X_rt%damp_factor
-   if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-(0._SP,1._SP)*W_RT_induced_step
+   if(trim(X_rt%damp) /= "NONE")                      Field_freq=freqs(i_w)-cI*X_rt%damp_factor
+   if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-cI*W_RT_induced_step
    !
    E_w(i_w)=Efield(i_Probe)%amplitude*small_a(Field_freq,Efield(i_Probe),iE_err)
    E_w(i_w)=E_w(i_w)*exp(cI*freqs(i_w)*(i_t_start-1)*J_time_step)  

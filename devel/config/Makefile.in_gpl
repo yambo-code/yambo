@@ -73,7 +73,10 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interpolate tddft pol_function bse
+YPP_LIBS        = modules_ypp interpolate init_ypp qp_ypp plotting electrons excitons symmetries k-points bits 
+YPPPH_LIBS      = modules_ypp interpolate init_ypp qp_ypp plotting electrons elph excitons symmetries k-points bits 
+#
+YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
 #
 # PROJECTS
 #
@@ -102,35 +105,46 @@ libs:
 	DIR2GO="lib" ; $(mklib_ext); fi
 get_extlibs:
 	@cd lib/archive; $(make) -f Makefile.loc all;
+#
+# Yambo #
+# 
 yambo: libs
-	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
+	@LIBS2DO="$(MAIN_LIBS)"; XPATH="src" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 #
-# PROJECTS #
+# Yambo PROJECTS #
 # 
 yambo_kerr: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_KERR"; $(mksrc)
+	@LIBS2DO="$(MAIN_LIBS)"; XPATH="src";ADF="-D_KERR"; $(mksrc)
 	@X2DO="yambo_kerr"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_KERR";$(mkx)
 yambo_ph: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
+	@LIBS2DO="$(MAIN_LIBS)"; XPATH="src";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)
-ypp_ph: libs
-	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
-	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
 #
-# Interfaces & ypp #
+# Interfaces #
 #
 interfaces: libs
-	@LIBS2DO="$(2YLIBS)" ; $(mksrc)
+	@LIBS2DO="$(2YLIBS)"; XPATH="src" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
 	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";$(mkx)
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
 	XLIBS="$(E2YLIBS)" ; $(mkx) ; fi
+#
+# Ypp #
+#
 ypp: libs
-	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
-	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
+	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; $(mksrc)
+	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; $(mksrc)
+	@X2DO="ypp" ;XPATH="driver";XLIBS="$(YPP_MAIN_LIBS) $(YPP_LIBS)";$(mkx)
+#
+# Ypp projects #
+#
+ypp_ph: libs
+	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src";ADF="-D_ELPH"; $(mksrc)
+	@LIBS2DO="$(YPPPH_LIBS)"; XPATH="ypp" ;  ADF="-D_YPP_ELPH"; $(mksrc)
+	@X2DO="ypp_ph" ;XPATH="driver";XLIBS="$(YPP_MAIN_LIBS) $(YPPPH_LIBS) elph"; ADF="-D_YPP_ELPH";$(mkx)
 #
 clean: clean_fast
 clean_fast: 
@@ -164,8 +178,8 @@ define mksrc
   then rm -f "$(libdir)/lib$$ldir.a" ; \
   echo " " ; \
   echo ">>>[Making $$ldir]<<<" ; \
-  ./sbin/make_makefile.sh src/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
-  cd src/$$ldir ; $(make) VPATH=src/$$ldir || exit "$$?" ; cd ../../; fi \
+  ./sbin/make_makefile.sh $$XPATH/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
+  cd $$XPATH/$$ldir ; $(make) VPATH=$$XPATH/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
 define mklibxc

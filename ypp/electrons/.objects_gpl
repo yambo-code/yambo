@@ -1,1 +1,2 @@
-objs = electrons_driver.o electrons_dos_and_charge.o electrons_bands.o 
+objs = electrons_driver.o electrons_dos.o electrons_density.o \
+       electrons_bands.o electrons_bands_interpolate.o

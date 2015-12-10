@@ -110,7 +110,7 @@ subroutine K_Haydock(iq,W)
    if(l_kerr) allocate(Cf_kerr(Max_iterations+1))
 #endif
    !
-   ! GPL_EXCLUDE_START
+   ! GPL_EXCLUDE_END
    !
  else
    allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
@@ -129,14 +129,14 @@ subroutine K_Haydock(iq,W)
    !
 #if defined _KERR
    if(l_kerr) then
-     io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),  &
-&                         Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1),Cf_kerr=Cf_kerr(1))
+     io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(:2),  &
+&                         Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:2),Cf_kerr=Cf_kerr(:2))
    else
 #endif
      !
      ! GPL_EXCLUDE_END
      !
-     io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+     io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(:2),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:2))   
      !
      ! GPL_EXCLUDE_START
      !
@@ -147,7 +147,7 @@ subroutine K_Haydock(iq,W)
    ! GPL_EXCLUDE_END
    !
  else
-   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn)
+   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(:2),Vnm1,Vn)
    !
  endif
  !

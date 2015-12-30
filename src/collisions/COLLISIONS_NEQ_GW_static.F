@@ -69,9 +69,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp1_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(elemental_collision)::isc,iscp
- integer          ::io_err,ID
+ integer          ::io_err,ID,COLL_ID
  integer, external::io_X
- character(schlen)::ch
  complex(SP)      ::local_rhotw(X%ng),pre_factor
  !
  ! Reset...
@@ -134,6 +133,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  endif
  call live_timing("GW collisions (e-e scattering)",PAR_nQP_local*PAR_nQ)
  !
+ if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",COLL_ID,0,GW_NEQ_collisions,nGW_NEQ_collisions)
+ !
  do i_qp1=1,QP_n_states
    !
    if (.not.PAR_IND_QP%element_1D(i_qp1)) cycle
@@ -173,7 +174,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
        !
        ! Poles and Residuals
        !
-       forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1.
+       forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1._SP
        !
 !$omp parallel do default(shared), private(i1,i2)
        do i1=1,X%ng
@@ -305,7 +306,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      endif
    endif
    !
-   if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_qp1,GW_NEQ_collisions,nGW_NEQ_collisions)
+   if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",COLL_ID,i_qp1,GW_NEQ_collisions,nGW_NEQ_collisions)
    !
  enddo
  !

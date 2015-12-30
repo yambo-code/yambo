@@ -119,6 +119,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
 #if defined _SC && defined _RT
    call PARALLEL_global_indexes(E,k,q,"Real_Time")
    call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+   COLLISIONS_parallel_SC_structure=.FALSE.
 #endif
 #if defined _SC && !defined _RT
    call PARALLEL_global_indexes(E,k,q,"Self_Energy")

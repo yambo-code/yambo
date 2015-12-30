@@ -178,9 +178,18 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  integrating_over_q=.true.
  !
- if(master_cpu) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb) 
+ if (io_RESPONSE) then
+   !
+   if(master_cpu) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb) 
+     i_err=io_X(X,Xw,Xdb)
+   endif
+   !
+   call PP_redux_wait()
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
+   !
  endif
  !
  ! Only the head of each q group writes the IO

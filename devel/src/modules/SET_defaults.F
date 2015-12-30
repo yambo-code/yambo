@@ -532,7 +532,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
  l_Mean_Potential=.FALSE.
- COLLISIONS_cutoff=0.001_SP
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
@@ -543,6 +542,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  COLLISIONS_cutoff=0.0005_SP
  !
 #endif
+ !
 #if defined _RT
  !
  ! Real Time

@@ -28,7 +28,6 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  use electrons,      ONLY:levels
  use real_time,      ONLY:RT_ibz_coo,DbGd_ibz_coo,l_RT_uses_E_DbGd,NE_i_Time, &
 &                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_dephased
- !use fields,         ONLY:Efield,i_Probe
  !
  implicit none
  !

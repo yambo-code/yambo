@@ -27,7 +27,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
-&                        Time_unit,I_unit,Angle_unit,V_parallel,&
+&                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
 &                        X_en_comp,global_gauge,Dipole_approach
@@ -64,12 +64,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use rt_ctl,        ONLY:RT_IO_time
+ use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        NE_tot_time,RT_life_interp_steps,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,DbGd_EE_percent
- use fields,        ONLY:Efield
+ use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:Plasma_redux_percent
 #endif
 #if defined _MAGNETIC
@@ -97,11 +98,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
  !
  implicit none
+ !
  type(initdefs)::defs
  type(levels)  ::en          
  type(bz_samp) ::q,k
  type(X_t)     ::X(4)
  type(w_samp)  ::Xw(4)
+ !
+ integer  :: i_field
  !
  !===============
  ! GPL RUNLEVELS
@@ -283,7 +287,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BLongDir',  '[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
- call it(defs,'BSHayTrs',  '[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold,verb_level=V_resp)
+ call it(defs,'BSHayTrs',  '[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
@@ -409,8 +413,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel,&
 &                            Verb_level=V_real_time)
  !
- call Afield(1) ! Probe
- call Afield(2) ! Pump
+ do i_field=1,n_ext_fields_max
+   call Afield(i_field)
+ enddo
  !
  ! OLD / EXPERIMENTAL
  !
@@ -559,10 +564,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
    !
    subroutine Afield(i_field)
-     character(5) :: name
+     character(10):: name
      integer      :: i_field
-     if (i_field==1) name='Probe'
-     if (i_field==2) name='Pump'
+     !
+     name='Field'//trim(intc(i_field))
+     !
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &    Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
@@ -573,10 +579,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &    Efield(i_field)%damping,unit=Time_unit(1))
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &    Efield(i_field)%ef_name,verb_level=0)
+     call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
+&    Efield(i_field)%ef_pol,verb_level=0)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
 &    Efield(i_field)%versor,verb_level=0)
+     call it(defs,trim(name)//'_Dir_circ',        '[RT '//trim(name)//'] Versor_circ',&
+&    Efield(i_field)%versor_circ,verb_level=0)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &    Efield(i_field)%t_initial,unit=Time_unit(1))
+     !
+     if(trim(Efield(i_field)%ef_name)/="none".and.initmode==2) n_ext_fields=n_ext_fields+1
+     !
    end subroutine
    !
 #endif

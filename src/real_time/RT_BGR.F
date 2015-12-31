@@ -25,7 +25,7 @@ subroutine RT_BGR(dG,E,k)
  !
  ! This routine calculates the BGR
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO,cI
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use SC,             ONLY:SC_bands,V_hartree_sc,V_xc_sc,rho_n
  use R_lattice,      ONLY:nkibz,bz_samp
@@ -53,14 +53,13 @@ subroutine RT_BGR(dG,E,k)
  !
  ! Work Space
  !
- complex(SP)  :: G_hf(SC_bands(2),SC_bands(2),nkibz),G_cohsex(SC_bands(2),SC_bands(2),nkibz),&
-&                H(SC_bands(2),SC_bands(2),n_sp_pol)
+ complex(SP)  :: H(SC_bands(2),SC_bands(2),n_sp_pol)
  real(SP)     :: deltaE
  integer      :: ib,ik,ik_ref,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_DbGd,i_sp
  !
- BGR_Hartree    =0.
- BGR_V_xc       =0.
- BGR_Self_Energy=0.
+ BGR_Hartree    =0._SP
+ BGR_V_xc       =0._SP
+ BGR_Self_Energy=0._SP
  !
 #if defined _TIMING
  call timing('RT BGR',OPR='start')
@@ -70,6 +69,10 @@ subroutine RT_BGR(dG,E,k)
    call E_reset(E_reference)
    call E_duplicate(E,E_reference)
  endif
+ !
+ ! Davide 20/11/2015:
+ ! Why do I recompute V_hartree_SC, V_xc_SC and RT_Vnl_xc which have just
+ ! been computed by RT_collisions ? This is a waste of CPU time.
  !
  if (.not.l_initial_equilibrium) then
    !
@@ -100,20 +103,20 @@ subroutine RT_BGR(dG,E,k)
      ! Hartree contribution to BGR
      !
      if (eval_HARTREE) then
-       H=(0._SP,0._SP)
+       H=cZERO
        call V_real_space_to_H(ik,V_hartree_sc,H,WF,'def')
        do ib=SC_bands(1),SC_bands(2)
-         BGR_Hartree(ib,ik,1)=H(ib,ib,1)
+         BGR_Hartree(ib,ik,1)=real(H(ib,ib,1),SP)
        enddo
      endif
      !
      ! XC contribution to BGR
      !
      if (eval_DFT) then
-       H=(0._SP,0._SP)
+       H=cZERO
        call V_real_space_to_H(ik,V_xc_sc,H,WF,'xc ')
        do ib=SC_bands(1),SC_bands(2)
-         BGR_V_xc(ib,ik,1)=H(ib,ib,1)
+         BGR_V_xc(ib,ik,1)=real(H(ib,ib,1),SP)
        enddo
      endif
      !
@@ -128,33 +131,13 @@ subroutine RT_BGR(dG,E,k)
  !
  if (l_sc_hf.or.l_sc_cohsex) then
    !
-   G_hf    =(0._SP,0._SP)
-   G_cohsex=(0._SP,0._SP)
+   ! Davide 20/11/2015
+   ! Here I'm computing the variation of the SEX self-energy,
+   ! not the variation of the COHSEX self-energy.
+   ! The COH part does not change during the real-time simulation.
+   ! Thus I do not see a reason for removing the diagonal from the G_lesser
    !
-   do ik=1,nkibz
-     !
-     ik_ref=RT_ibz_coo(ik,1)
-     !
-     do ib=SC_bands(1),SC_bands(2)
-       !
-       G_hf(ib,ib,ik)    =(0._SP,1._SP)*E%f(ib,ik,1)
-       G_cohsex(ib,ib,ik)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
-       !
-       if (.not.l_initial_equilibrium) then
-         do ibp=SC_bands(1),SC_bands(2)
-           !
-           G_hf(ib,ibp,ik)    =dG(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)
-           !
-           G_cohsex(ib,ibp,ik)=dG(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)
-           !
-           if (ib==ibp) G_cohsex(ib,ibp,ik)=G_cohsex(ib,ibp,ik)-(0._SP,1._SP)
-           !
-         enddo
-       endif
-     enddo
-   enddo
-   !
-   call COLLISIONS_compose(G_hf,G_cohsex)
+   call COLLISIONS_compose_rt(dG)
    !
    do i_qp=1,QP_n_states
      !
@@ -166,10 +149,10 @@ subroutine RT_BGR(dG,E,k)
      ik_RT=RT_ibz_coo(ik,1)
      !
      if (l_initial_equilibrium) then
-       REF_Vnl_xc(i_qp)=RT_Vnl_xc(ib,ibp,ik_RT,i_sp)
+       REF_Vnl_xc(i_qp)=real(RT_Vnl_xc(ib,ibp,ik_RT,i_sp),SP)
      else
        if (ib/=ibp) cycle
-       BGR_Self_Energy(ib,ik,1)=real(RT_Vnl_xc(ib,ib,ik_RT,i_sp)-REF_Vnl_xc(i_qp))
+       BGR_Self_Energy(ib,ik,1)=real(RT_Vnl_xc(ib,ib,ik_RT,i_sp),SP)
      endif
      !
    enddo
@@ -192,7 +175,7 @@ subroutine RT_BGR(dG,E,k)
          deltaE=BGR_Hartree(ib,ik_ibz,1)+BGR_V_xc(ib,ik_ibz,1)+BGR_Self_Energy(ib,ik_ibz,1)
          !
          if (     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)=E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
-         if (.not.l_RT_uses_E_DbGd) E%E(ib,ik_ibz,1)=E_reference%E(ib,ik_ibz,1)+deltaE
+         if (.not.l_RT_uses_E_DbGd) E%E(ib,ik_ibz,1)      =E_reference%E(ib,ik_ibz,1)      +deltaE
          !
        enddo
        !

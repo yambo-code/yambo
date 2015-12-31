@@ -36,7 +36,6 @@ integer function io_RT_components(what,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,io_fragment, &
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found,&
 &                         frag_RT
- use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,REF_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
@@ -65,7 +64,7 @@ integer function io_RT_components(what,ID)
  character(schlen)     :: local_what
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
- integer               :: ik,ib,i_spin,i1,file_number,i_time,i_time_range(2),db_type
+ integer               :: ik,ib,i_spin,i1,file_number,i_time,i_time_range(2),db_type,i_Probe,i_Pump
  logical               :: l_V,l_IMPOSE_SN,CHECK_,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF,l_carriers
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
@@ -181,7 +180,7 @@ integer function io_RT_components(what,ID)
    io_RT_components=variables_RT(ID,local_description,trim(local_what))
    if (io_RT_components/=0) goto 1
    !
-   if (l_G.or.l_carriers.or.l_THETA) then
+   if (l_G.or.l_carriers.or.l_THETA.and.(.not.ver_is_gt_or_eq(ID,revision=5232))) then
      call io_elemental(ID,VAR="Probe_and_Pump_index",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,I0=i_Probe)
      call io_elemental(ID,I0=i_Pump)

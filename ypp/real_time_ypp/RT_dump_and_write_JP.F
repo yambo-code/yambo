@@ -32,14 +32,14 @@ subroutine RT_dump_and_write_JP()
  use stderr,         ONLY:real2ch
  use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
  use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps
- use fields,         ONLY:Efield,i_Probe
+ use fields,         ONLY:Efield
  !
  implicit none
  !
  ! Work Space
  !
  real(SP) :: Total_time
- integer  :: i_t,i_t_field_range(2)
+ integer  :: i_t
  logical  :: l_no_damping
  !
  l_no_damping= trim(X_rt%damp) == "NONE"

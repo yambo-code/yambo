@@ -28,6 +28,7 @@ subroutine RT_initialize(E,k,q)
  use SC,             ONLY:SC_bands
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
+ use stderr,         ONLY:intc
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
@@ -49,8 +50,8 @@ subroutine RT_initialize(E,k,q)
 &                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
- use fields,         ONLY:Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
-&                         i_Pump,i_Probe,EtoT,Efield_strength
+ use fields,         ONLY:Efield,n_ext_fields,field_is_ok,&
+&                         l_manual_excitation,EtoT,Efield_strength
  use parser_m,       ONLY:parser
  !
  implicit none
@@ -91,34 +92,32 @@ subroutine RT_initialize(E,k,q)
  !
  l_RT_EULER=index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0
  !
- if (.not.l_RT_EULER) l_RT_RK2=index(Integrator_name,'RK2')/=0.or.index(Integrator_name,'rk2')/=0
+ l_RT_RK2  =index(Integrator_name,'RK2'  )/=0.or.index(Integrator_name,'rk2'  )/=0
  !
- if (.not.l_RT_EULER.and..not.l_RT_RK2) l_RT_HEUN=index(Integrator_name,'HEUN')/=0.or.&
-&                                                 index(Integrator_name,'heun')/=0
+ l_RT_HEUN =index(Integrator_name,'HEUN' )/=0.or.index(Integrator_name,'heun' )/=0
  !
- l_RT_RWA=index(Integrator_name,'RWA')/=0.or.index(Integrator_name,'rwa')/=0
+ l_RT_RWA  =index(Integrator_name,'RWA'  )/=0.or.index(Integrator_name,'rwa'  )/=0
  !
- l_RT_EXP=index(Integrator_name,'EXP')/=0.or.index(Integrator_name,'exp')/=0
+ l_RT_EXP  =index(Integrator_name,'EXP'  )/=0.or.index(Integrator_name,'exp'  )/=0
  !
- if (.not.l_RT_EXP) l_RT_INTERPOLATE=index(Integrator_name,'INTERPOLATE')/=0.or.index(Integrator_name,'interpolate')/=0
+ l_RT_INTERPOLATE=index(Integrator_name,'INTERPOLATE')/=0.or.index(Integrator_name,'interpolate')/=0
+ !
+ if (l_RT_EXP.and.l_RT_INTERPOLATE) l_RT_INTERPOLATE=.false.
+ !
+ if (l_RT_INTERPOLATE) call error(' INTERPOLATION of coherent part: status unknonw')
  !
  Integrator_name=""
- if (l_RT_EULER) Integrator_name = "EULER"
- if (l_RT_RK2)   Integrator_name = "RK2"
- if (l_RT_HEUN)  Integrator_name = "HEUN"
+ if ((     l_RT_EULER).and.(.not.l_RT_RK2).and.(.not.l_RT_HEUN)) Integrator_name = "EULER"
+ if ((.not.l_RT_EULER).and.(     l_RT_RK2).and.(.not.l_RT_HEUN)) Integrator_name = "RK2"
+ if ((.not.l_RT_EULER).and.(.not.l_RT_RK2).and.(     l_RT_HEUN)) Integrator_name = "HEUN"
  if(trim(Integrator_name)=="") then
    call warning("Bad integrator. Using default RK2")
    l_RT_RK2=.true.
    Integrator_name = "RK2"
  endif
- if (l_RT_RWA) Integrator_name = trim(Integrator_name)//" + RWA"
- if (l_RT_EXP) then 
-   Integrator_name = trim(Integrator_name)//" + EXP"
- else if (l_RT_INTERPOLATE) then
-   Integrator_name = trim(Integrator_name)//" + INTERPOLATE"
- endif
- !
- if(l_RT_INTERPOLATE) call error(' INTERPOLATION of coherent part: status unknonw')
+ if (l_RT_RWA)         Integrator_name = trim(Integrator_name)//" + RWA"
+ if (l_RT_EXP)         Integrator_name = trim(Integrator_name)//" + EXP"
+ if (l_RT_INTERPOLATE) Integrator_name = trim(Integrator_name)//" + INTERPOLATE"
  !
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
    call warning(" Not a valid gauge in input. Switching to length gauge")
@@ -127,7 +126,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Use NE_tot_time if provided
  !
- if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step)+1)
+ if (NE_tot_time>0._SP) NE_steps=max(NE_steps,nint(NE_tot_time/RT_step)+1)
  !
  ! Set a number of steps. i1=1(J,P,CARRIERs)  i1=2(GF) i1=3(output).
  ! Negative value forces the step to be set automatically
@@ -203,7 +202,8 @@ subroutine RT_initialize(E,k,q)
    !
    if((Efield(i1)%ef_name/='none')) then
      !
-     if (.not.field_is_ok( Efield(i1)) ) call error('Field '//trim(Efield(i1)%ef_name)//' not supported')
+     if (.not.field_is_ok( Efield(i1)) ) &
+&      call error('Field '//trim(Efield(i1)%ef_name)//' not supported or polarization is wrong')
      !      
      l_NE_with_fields=.true.
      !
@@ -237,11 +237,11 @@ subroutine RT_initialize(E,k,q)
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
        Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)       
-     else if ( l_field_is_a_pulse ) then
-       call RT_Fluence(i1)
+     !else if ( l_field_is_a_pulse ) then
+     !  call RT_Fluence(i1)
      else
-       Efield(i1)%t_final_indx=NE_steps
-       Efield(i1)%t_final=RT_step*NE_steps
+       Efield(i1)%t_final_indx=    NE_steps
+       Efield(i1)%t_final=RT_step*(NE_steps-1)
      endif
      !
    endif
@@ -396,17 +396,16 @@ subroutine RT_initialize(E,k,q)
  if (l_NE_with_fields) then
    call msg( 'nr','---Fields---')
    call msg('r','Gauge                       :',trim(global_gauge))
-   call msg('r','Pump/Probe periodicity  [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
-   call msg('r','Pump/Probe energy step  [eV]:',maxval(Efield(:)%W_step)*HA2EV)
-   if ( l_field_is_a_pulse ) then
-     call msg('r','Max Fluence        [kJ/cm^2]:',Efield(i_Pump)%Fluence( Efield(i_Pump)%t_final_indx ))
-     call msg('r','           reached time [fs]:',Efield(i_Pump)%t_final/FS2AUT)
-   endif
+   !call msg('r','Pump/Probe periodicity  [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
+   !call msg('r','Pump/Probe energy step  [eV]:',maxval(Efield(:)%W_step)*HA2EV)
+   !if ( l_field_is_a_pulse ) then
+   !  call msg('r','Max Fluence        [kJ/cm^2]:',Efield(1)%Fluence( Efield(1)%t_final_indx ))
+   !  call msg('r','           reached time [fs]:',Efield(1)%t_final/FS2AUT)
+   !endif
    do i1=1,n_ext_fields
-     if (i_Pump==i_Probe.and.i1/=i_Probe.and..not.any(trim(Efield(i1)%ef_name)==(/'SIN    ','ANTIRES','RES    '/)) ) cycle
-     MSG_ch="Pump"
-     if (i1==i_Probe) MSG_ch="Probe"
+     MSG_ch="Field"//trim(intc(i1))
      call msg('r', MSG_ch//' field                       :'//trim(Efield(i1)%ef_name))
+     call msg('r', MSG_ch//' polarization                :'//trim(Efield(i1)%ef_pol))
      call msg('r', MSG_ch//' energy window/period [eV/fs]:',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
      call msg('r', MSG_ch//' elemental oscillation   [fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)

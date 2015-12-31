@@ -33,8 +33,9 @@ subroutine RT_driver(en,k,q)
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
- use fields,         ONLY:Efield,i_probe
+ use fields,         ONLY:Efield,n_ext_fields
  use com,            ONLY:jobstr,error
+ !
  implicit none
  !
  type(levels)  :: en
@@ -42,7 +43,7 @@ subroutine RT_driver(en,k,q)
  !
  ! Work Space
  !
- integer           :: i_f
+ integer           :: i_f,i_Probe
  character(lchlen) :: jobstr_save
  logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
@@ -66,12 +67,14 @@ subroutine RT_driver(en,k,q)
  call parser('SkipJP_IO',l_skip_pol_and_curr_IO)
  call parser('FrMinDamp',l_force_min_damp)
  !
- l_RT_LRR_real_field= all((/&
-&   .not.any((/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="RES",&
-&   trim(Efield(i_probe)%ef_name)=="SIN"/)),N_pumps==0, N_probes==1, X_order==1/) )
- l_RT_SHG_qssin     = all( (/ trim(Efield(i_probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
+ i_Probe=1
  !
- l_RT_X_effective   = all((/any((/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="SIN"/)),X_order>=0/))
+ l_RT_LRR_real_field= all((/&
+&   .not.any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="RES",&
+&   trim(Efield(i_Probe)%ef_name)=="SIN"/)),N_pumps==0, N_probes==1, X_order==1/) )
+ l_RT_SHG_qssin     = all( (/ trim(Efield(i_Probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
+ !
+ l_RT_X_effective   = all((/any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="SIN"/)),X_order>=0/))
  !
  if (l_RT_X_effective) l_RT_X_inversion=all((/ X_order>=0, N_probe_frequencies==1, N_pumps==0/))
  !

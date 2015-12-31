@@ -49,7 +49,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT 
  use rt_ctl,         ONLY:RT_IO_JPO_steps,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:RT_step,NE_steps
- use fields,         ONLY:Efield,i_Probe
+ use fields,         ONLY:n_ext_fields
 #endif
 #if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
@@ -287,6 +287,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  Probe_Keyword ="none"
  Pump_Keyword  ="none"
  X_order       =1
+ n_ext_fields  =1
  !
 #endif
  !

@@ -194,8 +194,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Only the head of each q group writes the IO
  !
- call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
- !
  do iq=X%iq(1),X%iq(2)
    !
    ! TDDFT setup
@@ -226,6 +224,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (X%whoami/=1) call X_s(iq,X,Xw,X_range)
    !
    call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
+   !
+   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)

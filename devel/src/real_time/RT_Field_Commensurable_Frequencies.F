@@ -31,14 +31,19 @@ subroutine RT_Field_Commensurable_Frequencies()
  ! equal to 2*pi/deltaW. This must be not larger then NE_steps*RT_step 
  !
  use pars,           ONLY:SP
- use fields,         ONLY:Efield,n_ext_fields,i_Pump,i_Probe,EtoT
+ use fields,         ONLY:Efield,n_ext_fields,EtoT
  use real_time,      ONLY:NE_steps,RT_step
  !
  implicit none
  !
- integer  :: i_master_field,i_f
+ integer  :: i_master_field,i_f,i_Pump,i_Probe
  real(SP) :: W_step,T_treshold,T_step
  real(SP), parameter :: treshold=0.8
+ !
+ if (n_ext_fields<2) return
+ !
+ i_Probe=1
+ i_Pump =2
  !
  if (.not.any ((/trim(Efield(i_Pump)%ef_name)=='ANTIRES',&
 &               trim(Efield(i_Probe)%ef_name)=='ANTIRES',&

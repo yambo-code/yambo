@@ -23,7 +23,8 @@
 !                  
 subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
- ! Evalute current and polarization. The current includes the diamagnetic contribution in the velocity gauge.
+ ! Evalute current and polarization.
+ ! The current includes the diamagnetic contribution only in the velocity gauge.
  !
  ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
@@ -34,7 +35,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
- use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_average_operator,RT_P,RT_nk
+ use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_step,&
+&                         RT_average_operator,RT_P,RT_P_prev,RT_nk,integrator_step
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
@@ -51,18 +53,19 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  if ( .not. l_NE_dynamics ) return
  !
- ! The different approaches are listed below
+ ! Store the current and the polarization at the previous time-step
  !
- ! B': Polarization: store the density at the previous time-step
- !
- !RT_ind_J_prev=RT_ind_J
+ RT_ind_J_prev=RT_ind_J
+ RT_P_prev    =RT_P
  ! 
  ! A : Current
  !
- call RT_average_operator(V_VALUE=RT_ind_J, V_MATRIX=-DIP_P,&
-&                         G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(V_VALUE=RT_ind_J, V_MATRIX=-DIP_P,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
- !     Velocity gauge I mut use the correct definition of the J operator
+ ! Velocity gauge I must use the correct definition of the J operator
+ !
+ ! *warning* DS: since this is the current at time t, I should use the vecpot at time t
+ !               However I still do not have it here (it will be computed from the current in the velocity gauge)
  !
  if(trim(global_gauge)=='velocity') RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
  !
@@ -70,16 +73,15 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! B : Polarization
  !
- call RT_average_operator(V_VALUE=RT_P_tmp, V_MATRIX=cI*DIP_iR,&
-&                         G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(V_VALUE=RT_P_tmp, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ !
  RT_P    =RT_P_tmp/DL_vol
  !
- ! B': Polarization as an integral of the density
+ ! B': Polarization as an integral of the current (to be fixed, it i not stable anyway)
  !
- !RT_P_tmp=(RT_ind_J_tmp+RT_ind_J_prev)*RT_step/2._SP
+ !if(integrator_step==1) RT_P_tmp=RT_P_prev+RT_ind_J_prev*RT_step
+ !if(integrator_step==2) RT_P_tmp=RT_P_prev+RT_ind_J     *RT_step/2._SP
  !
- !if(l_RT_RK2.or.l_RT_HEUN) RT_P_tmp=RT_P_tmp/2._SP
- !
- !RT_P=RT_P+RT_P_tmp
+ !RT_P=RT_P_tmp
  !
 end subroutine RT_current_AND_polarization

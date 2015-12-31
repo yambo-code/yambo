@@ -26,7 +26,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  use pars,           ONLY:SP,pi
  use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,X_rt,i_t_start,&
 &                         i_t_end,N_pumps,J_time_step,J_steps
- use fields,         ONLY:EtoT,Efield,Divide_by_Field,i_Probe
+ use fields,         ONLY:EtoT,Efield,Divide_by_Field
  use real_time,      ONLY:RT_P
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg
@@ -40,7 +40,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  !
  real(SP)          :: T_period,time_range_save(2),T_period_max
  logical           :: use_LRR
- integer           :: i_c,i_p,i_f,i_order
+ integer           :: i_c,i_p,i_f,i_order,i_Probe
  real(SP),    allocatable :: X_w(:)
  !
  call section("=",'Response function(s) by Inversion')
@@ -124,6 +124,8 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
    end do
    !
  endif
+ !
+ i_Probe=2
  !
  do i_order=0,X_order
    !

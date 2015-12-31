@@ -28,7 +28,7 @@ subroutine RT_IO_J_and_P_paths(en)
 &                         N_pumps,N_probes,N_probe_frequencies
  use com,            ONLY:core_io_path,jobstr,file_exists,msg,error,warning
  use IO_m,           ONLY:NONE
- use fields,         ONLY:Efield,i_Probe,i_Pump
+ use fields,         ONLY:Efield
  use stderr,         ONLY:string_split,cstr,intc
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
@@ -40,11 +40,14 @@ subroutine RT_IO_J_and_P_paths(en)
  ! Work Space
  !
  character(lchlen) :: jobstr_save
- integer           :: i_f,i_fp,nf,N_pump_frequencies
+ integer           :: i_f,i_fp,nf,N_pump_frequencies,i_Probe,i_Pump
  logical           :: IO_error,l_many_paths=.false.
  character(10*max_n_of_paths) :: folder_list
  !
  call parser('CheckPaths',l_many_paths)
+ !
+ i_Probe=1
+ i_Pump =2
  !
  if (l_many_paths) then
    !

@@ -152,7 +152,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! The MB self-energy (compute RT_Vnl_xc)
  !========================================
- if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(dG_in,dG_in)
+ if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose_rt(dG_in)
  !
  ! HXC part 
  !===========

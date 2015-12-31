@@ -46,7 +46,7 @@ subroutine scatter_Gamp(isc,mode)
  !
  ! q_weight = 1./(DL_vol*q%nbz)
  !
- q_weight=d3q_factor/(2.*pi)**3. 
+ q_weight=d3q_factor/(2._SP*pi)**3
  !
  ! Note that
  !
@@ -59,11 +59,11 @@ subroutine scatter_Gamp(isc,mode)
  !
  ! reg_q_m2 = \int_q (region) 1/q^2 /(2*pi)**3
  !
- reg_q_m2=7.44/(2.*pi)**3.*d3q_factor**(1./3.)
+ reg_q_m2=7.44/(2._SP*pi)**3*d3q_factor**(1._SP/3._SP)
  !
  ! In the case of a spherical region the radius is
  !
- R_sphere=(3./4./pi)**(1./3.)*d3q_factor**(1./3.)
+ R_sphere=(3._SP/4._SP/pi)**(1._SP/3._SP)*d3q_factor**(1._SP/3._SP)
  !
  iq=isc%qs(2)
  isc%iqref=iq
@@ -74,7 +74,7 @@ subroutine scatter_Gamp(isc,mode)
    RIM_ng=0
    RIM_n_rand_pts=0
  else
-   reg_q_m2=RIM_qpg(iq,1,1)/2.
+   reg_q_m2=RIM_qpg(iq,1,1)/2._SP
  endif
  !
  ng=shape(isc%gamp)
@@ -123,7 +123,7 @@ subroutine scatter_Gamp(isc,mode)
      if (ig1==1.and.(ig2>RIM_ng.or.(RIM_is_diagonal.and.ig2>1))) then
        !
        if (iq==1) then 
-         isc%gamp(i1,i2)=R_sphere/2.*reg_q_m2/bare_qpg(iq,ig2)
+         isc%gamp(i1,i2)=R_sphere/2._SP*reg_q_m2/bare_qpg(iq,ig2)
        else
          !
          ! the sqrt(q_weight) is needed as the sqrt(reg_q_m2) contains
@@ -135,7 +135,7 @@ subroutine scatter_Gamp(isc,mode)
      endif
      if (ig2==1.and.(ig1>RIM_ng.or.(RIM_is_diagonal.and.ig1>1))) then
        if (iq==1) then
-         isc%gamp(i1,i2)=R_sphere/2.*reg_q_m2/bare_qpg(iq,ig1)
+         isc%gamp(i1,i2)=R_sphere/2._SP*reg_q_m2/bare_qpg(iq,ig1)
        else 
          isc%gamp(i1,i2)=isc%gamp(i1,i2)*& 
 &                         bare_qpg(iq,ig2)*sqrt(reg_q_m2)/sqrt(q_weight)
@@ -153,7 +153,7 @@ subroutine scatter_Gamp(isc,mode)
  ! Anisotropy correction
  !
  if (.not.l_col_cut) then
-   if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0./))) isc%gamp(1,1)=RIM_anisotropy/2.
+   if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0./))) isc%gamp(1,1)=RIM_anisotropy/2._SP
  endif
  !
 end subroutine

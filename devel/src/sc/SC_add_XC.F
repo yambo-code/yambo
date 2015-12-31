@@ -27,7 +27,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  ! difference is that in _XC the operator is written in the SC basis, while
  ! _RT works in the LDa basis.
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO,cI
  use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_is_libDFT,&
 &                         l_use_collisions,l_sc_hartree
  use R_lattice,      ONLY:bz_samp
@@ -69,18 +69,19 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    if(l_use_collisions) then
      !     
-     G_collisions=(0.,0.)
-     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,1)=(0._SP,1._SP)*E%f(ib,ik,1)
-     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,2)=(0._SP,1._SP)*(E%f(ib,ik,1)-1._SP)
+     G_collisions=cZERO
+     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,1)=cI* E%f(ib,ik,1)
+     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,2)=cI*(E%f(ib,ik,1)-1._SP)
      !
      ! Now I build the G_collisions rotating the non interaction one
      ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)
-     !  
+     !
      do ik=1,E%nk
        call H_rotate(SC_R(:,:,ik,1),G_collisions(:,:,ik,1),SC_bands(2),-1)
        call H_rotate(SC_R(:,:,ik,1),G_collisions(:,:,ik,2),SC_bands(2),-1)
      enddo
-     call COLLISIONS_compose(G_collisions(:,:,:,1),G_collisions(:,:,:,2))
+     !
+     call COLLISIONS_compose_SC(G_collisions(:,:,:,1),G_collisions(:,:,:,2))
      !    ==========
    else
      !

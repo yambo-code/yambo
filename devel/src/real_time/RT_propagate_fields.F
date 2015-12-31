@@ -27,35 +27,26 @@ subroutine RT_propagate_fields(k,E,A_new,A_old,T,T_step)
  !
  ! The general vector potential is defined as
  !
- !   A(t)=-c Eo a(t) theta(t-to) [1]
- !  
- ! the function a(t) and theta(t) are defined in mod_fields. From [1] the first and
- ! second order  derivatives are easily defined:
- !
- !   A'(t)=-c Eo ( a'(t) theta(t-to)+ a(0) delta(t-to)) [2]
+ !   A (t)=-c Eo    a(t) theta(t-to)                                     [1]
+ !   A'(t)=-c Eo ( a'(t) theta(t-to)+ a(0) delta(t-to))                  [2]
  !   A"(t)=-c Eo ( a"(t) theta(t-to)+ a'(0) delta(t-to) - a"(0) sign(t)) [3]
+ !
+ ! the function a(t) and theta(t) are defined in mod_fields.
  !
  ! Using [1-3] yambo :
  !
  ! a. calculates the analytical form of A/A'/A" in RT_Ext_fields 
- ! b. uses A" (the ext current) to evolve the Maxwell equations when
+ ! b. uses A" (the ext current/polarization) to evolve the Maxwell equations when
  !    the induced current is included in the dynamics ( RT_propagate_fields )
  ! 
- !----------------------------------------------------------------------------
- !
- ! This routine behaves differently if the l_RT_induced_field is TRUE or FALSE
- !
- ! if FALSE the analytic expression for A(t) is obtained from RT_Ext_Fields
- ! 
- ! if TRUE the A"(t) is used to integrate th Maxwell equation. A"(t) is 
- ! written in  terms of the TOTAL current
- !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:RT_ind_J,l_RT_induced_field,RT_nk,integrator_step,l_RT_EULER
+ use X_m,            ONLY:global_gauge
+ use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,&
+&                         l_RT_induced_field,RT_nk,integrator_step
  use fields,         ONLY:gauge_field,A_ind,A_ind_previous,A_ext
  !
  implicit none
@@ -71,30 +62,62 @@ subroutine RT_propagate_fields(k,E,A_new,A_old,T,T_step)
  !
  call RT_Ext_fields(A_ext,T)
  !
+ ! (See also by Yaban and co. PRB 2012)
+ ! The approach which          includes the induced field is also called longitudinal gauge.
+ ! The approach which does not include  the induced field is also called transverse   gauge.
+ ! This has nothing to do with the length and the velocity gauge.
+ ! It is instead related to distinction between \chi and overline{\chi} or
+ ! between transverse and longitudinal excitons/phonons in the literature
+ !
  if (l_RT_induced_field) then
    !
-   ! Induced current j(t) from A(t)
+   ! OPTION 1: "velocity gauge"
+   !
+   ! Induced potential A(t) from j(t)
    !
    ! Integrate the eq. for the vector potential
    !
    ! d^2 A_ind / d t^2 = 4 pi * c * J_ind(t)
    !
-   ! A''(t+dt)  = 4 pi * j(t) * c 
-   ! A'(t + dt) = A'(t) + A''(t) * dt
-   ! A(t + dt)  = A(t)  + A'(t)  * dt + A''(t) * dt^2/2
+   ! A''(t+dt) =         4 pi * j(t+dt) * c           [this is defined but it is useless]
+   ! A' (t+dt) = A'(t) + 4 pi * j(t)    * c * dt
+   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt      [this is defined but it is useless as well]
    !
-   A_ind%vecpot_acc =  real(RT_ind_J)*4._SP*pi*SPEED_OF_LIGHT
+   ! Results are almost ok, but, due to numerical errors, derived epsilon and eels are very bad
    !
-   A_ind%vecpot_vel =  A_ind_previous%vecpot_vel + (A_ind%vecpot_acc+A_ind_previous%vecpot_acc)*T_step/2._SP
+   if(trim(global_gauge)=="velocity") then
+     A_ind%vecpot_acc =                             real(RT_ind_J)     *4._SP*pi*SPEED_OF_LIGHT
+     A_ind%vecpot_vel = A_ind_previous%vecpot_vel + real(RT_ind_J_prev)*4._SP*pi*SPEED_OF_LIGHT*T_step
+     A_ind%vecpot     = A_ind_previous%vecpot     + real(RT_P_prev)    *4._SP*pi*SPEED_OF_LIGHT*T_step
+   endif
    !
-   A_ind%vecpot     =  A_ind_previous%vecpot     + (A_ind%vecpot_vel+A_ind_previous%vecpot_vel)*T_step/2._SP + &
-   &                                               (A_ind%vecpot_acc+A_ind_previous%vecpot_acc)*T_step**2._SP/4._SP
+   !
+   ! Option 2: length gauge
+   !
+   !  Induced potential A(t) from P(t)
+   !
+   !
+   ! Integrate the eq. for the vector potential
+   !
+   ! d A_ind / d t = 4 pi * c * P(t)
+   !
+   ! A''(t+dt) =         4 pi * j(t+dt) * c        [this is defined but it is useless]
+   ! A' (t+dt) =         4 pi * P(t+dt) * c
+   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt   [this is defined but it is useless as well]
+   !
+   ! It works fine
+   !
+   if(trim(global_gauge)=="length") then
+     A_ind%vecpot_acc =                         real(RT_ind_J) *4._SP*pi*SPEED_OF_LIGHT 
+     A_ind%vecpot_vel =                         real(RT_P)     *4._SP*pi*SPEED_OF_LIGHT
+     A_ind%vecpot     = A_ind_previous%vecpot + real(RT_P_prev)*4._SP*pi*SPEED_OF_LIGHT*T_step
+   endif
    !
    if(integrator_step==1) A_ind_previous  =A_ind
    !
-   A_new%vecpot    =A_ext%vecpot    +A_ind%vecpot
-   A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
    A_new%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
+   A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
+   A_new%vecpot    =A_ext%vecpot    +A_ind%vecpot
    !
  else
    !

@@ -31,8 +31,8 @@ subroutine RT_X_effective(en)
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
  use IO_m,           ONLY:NONE,LOG
- use fields,         ONLY:Efield,i_Probe,ext_field,Efield_duplicate,field_frequency,&
-&                         i_Pump,EtoT,Divide_by_Field
+ use fields,         ONLY:Efield,ext_field,Efield_duplicate,field_frequency,&
+&                         EtoT,Divide_by_Field
  use rt_ctl,         ONLY:RT_output
  use real_time,      ONLY:RT_P
  use vec_operate,    ONLY:sort
@@ -46,7 +46,7 @@ subroutine RT_X_effective(en)
  character(lchlen) :: jobstr_save
  character(schlen) :: X_file_name
  integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order,i_c,i_t,i_conv,&
-&                     i_p,N_periods
+&                     i_p,N_periods,i_Pump,i_Probe
  real(SP)          :: Pump_Frequency(1),Unit_of_Measure
  complex(SP)       :: running_X(0:X_order,3),runn_err(0:X_order,3)
  logical           :: Probe_consistency_error,CONVERGENCE_is_reached,Iterative_analysis,dump_dP,&
@@ -98,6 +98,7 @@ subroutine RT_X_effective(en)
  RT_P_pump     =0.
  Susceptibility=(0.,0.)
  Pump_Frequency=0.
+ i_Pump=2
  !
  if (N_pumps>0) then
    jobstr=trim(Pump_path)
@@ -113,6 +114,7 @@ subroutine RT_X_effective(en)
  Probe_consistency_error=.FALSE.
  !
  RT_P_probe=(0.,0.)
+ i_Probe=1
  !
  do i_f=1,N_probes
    !

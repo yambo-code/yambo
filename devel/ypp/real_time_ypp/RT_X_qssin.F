@@ -28,8 +28,9 @@ subroutine RT_X_qssin
  use pars,           ONLY:SP,DP,pi,schlen
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use memory_m,       ONLY:mem_est
+ use com,            ONLY:error
  use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
- use fields,         ONLY:Efield,small_a,i_probe,theta_function
+ use fields,         ONLY:Efield,small_a,theta_function
  use LIVE_t,         ONLY:live_timing
  !
  implicit none
@@ -39,10 +40,10 @@ subroutine RT_X_qssin
  integer, parameter :: nfreqs=2
  complex(DP), allocatable :: E_m(:),E_p(:),E_t(:)
  complex(SP), allocatable :: freqs(:)
- complex(SP) :: X_tot,outfreqs(nfreqs),Field_time
+ complex(SP) :: X_tot,outfreqs(nfreqs),E_of_t(2),A_of_t(2),theta,delta
  complex(DP) :: E_2plus,E_2minus,X_irrep(nfreqs,3)
- integer     :: i_w, i_t, i_c
- real(SP)    :: W_step
+ integer     :: i_w, i_t, i_c,i_Probe
+ real(SP)    :: W_step,Field_time
  character(9) :: FT_title
  character(schlen) :: X_file_name
  !
@@ -53,19 +54,27 @@ subroutine RT_X_qssin
  !=========================
  !
  ! Field: Definitions & Allocation
+ i_Probe=1
  !
- X_rt%energy_range(1)=-4._SP*(Efield(i_probe)%frequency(1)) ! Here I define the integration cutoff
- X_rt%energy_range(2)= 4._SP*(Efield(i_probe)%frequency(1)) ! in Eqs 20-22 as 4 time the field freq. TEST?!?
+ X_rt%energy_range(1)=-4._SP*(Efield(i_Probe)%frequency(1)) ! Here I define the integration cutoff
+ X_rt%energy_range(2)= 4._SP*(Efield(i_Probe)%frequency(1)) ! in Eqs 20-22 as 4 time the field freq. TEST?!?
  W_step=W_RT_induced_step
  X_rt%energy_steps= (X_rt%energy_range(2))/W_step  ! and I define the number of freq step
  X_rt%energy_steps= 2*X_rt%energy_steps            ! as a consequence
  !
  allocate(E_t(J_steps))
  do i_t=1,J_steps
-   Field_time=cmplx((i_t-1)*J_time_step-Efield(i_Probe)%t_initial,0._SP)
-   E_t(i_t)=Efield(i_Probe)%amplitude* &
-&            (small_a(Field_time,Efield(i_Probe),1)*theta_function(real(Field_time),J_time_step,0)+&
-&             small_a(Field_time,Efield(i_Probe),0)*theta_function(real(Field_time),J_time_step,1))
+   Field_time=(i_t-1)*J_time_step-Efield(i_Probe)%t_initial
+   A_of_t =small_a(Field_time,Efield(i_Probe),0)
+   E_of_t =small_a(Field_time,Efield(i_Probe),1)
+   theta  =theta_function(Field_time,J_time_step,0)
+   delta  =theta_function(Field_time,J_time_step,1)
+   select case(Efield(i_Probe)%ef_pol)
+   case("linear")
+     E_t(i_t)=Efield(i_Probe)%amplitude*(E_of_t(1)*theta+A_of_t(1)*delta)
+   case("circular")
+     call error(' Circular polarization not yet implemented')
+   end select
  enddo
  allocate(freqs(X_rt%energy_steps))
  allocate(E_m(X_rt%energy_steps),E_p(X_rt%energy_steps))
@@ -77,7 +86,7 @@ subroutine RT_X_qssin
  E_m=(0._DP,0._DP) ! E(Wo-W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
  do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx(Efield(i_probe)%frequency(1)-((i_w-1)*W_step+X_rt%energy_range(1)),0._SP)
+   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)-((i_w-1)*W_step+X_rt%energy_range(1)),0._SP)
  enddo
  call RT_1D_Fourier_Transform('T2W',' (E_m field)',freqs,E_m(:),X_rt%energy_steps,&
 &                             E_t(i_t_start:i_t_end),RED_steps,J_time_step,&
@@ -86,7 +95,7 @@ subroutine RT_X_qssin
  E_p=(0._DP,0._DP) ! E(Wo+W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
  do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx(Efield(i_probe)%frequency(1)+(i_w-1)*W_step+X_rt%energy_range(1),0._SP)
+   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)+(i_w-1)*W_step+X_rt%energy_range(1),0._SP)
  enddo
  call RT_1D_Fourier_Transform('T2W',' (E_p field)',freqs,E_p(:),X_rt%energy_steps,&
 &                             E_t(i_t_start:i_t_end),RED_steps,J_time_step,&
@@ -112,7 +121,7 @@ subroutine RT_X_qssin
  ! Polarization: FT at 0 and twice the field frequency
  !
  outfreqs(1)=(0._SP,0._SP)                                    ! Optical rectification
- outfreqs(2)=cmplx(Efield(i_probe)%frequency(1)*2._SP,0._SP)  ! SHG
+ outfreqs(2)=cmplx(Efield(i_Probe)%frequency(1)*2._SP,0._SP)  ! SHG
  do i_c=1,3
    !
    if (i_c==1) FT_title=' (X axis)'
@@ -142,9 +151,9 @@ subroutine RT_X_qssin
    !
    call RT_output("open "//trim(X_file_name))
    !
-   X_tot=4._SP*pi*sum(X_irrep(i_w,:)*Efield(i_probe)%versor(:))
+   X_tot=4._SP*pi*sum(X_irrep(i_w,:)*Efield(i_Probe)%versor(:))
    call RT_output(trim(X_file_name),VALUEs=(/aimag(X_tot*SVCMm12VMm1/AU2VMm1),real(X_tot*SVCMm12VMm1/AU2VMm1)/),&
-&                      E=Efield(i_probe)%frequency(1)*HA2EV)
+&                      E=Efield(i_Probe)%frequency(1)*HA2EV)
    !
    call RT_output("close "//trim(X_file_name))
  enddo

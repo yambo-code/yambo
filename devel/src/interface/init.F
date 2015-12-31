@@ -62,8 +62,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use interfaces,     ONLY:io_COLLISIONS
 #endif
 #if defined _RT
- use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
- use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
+ use fields,         ONLY:n_ext_fields,n_ext_fields_max
 #endif
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
@@ -860,8 +859,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
    call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime')
    call initactivate(1,'RTpumpEhEn RTpumpEhWd RTpumpNel')
-   if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
-   if (              l_RT_pump_and_probe) call Afield_activate('Pump')
+   !
+   do i1=1,n_ext_fields
+     call Afield_activate(i1)
+   enddo
    !
    call initactivate(1,'ShiftedPaths')
    !
@@ -1020,16 +1021,20 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
 #if defined _RT
    !
-   subroutine Afield_activate(field)
-     character(*)::field
+   subroutine Afield_activate(i1)
+     integer     ::i1
+     character(6)::field
+     field='Field'//trim(intc(i1))
      call initactivate(1,field//'_Freq')
      call initactivate(1,field//'_MaxFreq')
      call initactivate(1,field//'_FrStep')
      call initactivate(1,field//'_Int')
      call initactivate(1,field//'_Damp')
      call initactivate(1,field//'_kind')
+     call initactivate(1,field//'_pol')
      call initactivate(1,field//'_Dir')
-     if (l_RT_pump_and_probe.and.field=="Probe") call initactivate(1,field//'_Tstart')
+     call initactivate(1,field//'_Dir_circ')
+     call initactivate(1,field//'_Tstart')
    end subroutine
    !
 #endif
@@ -1285,8 +1290,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if(l_W_eh) then
          call parser('WehDiag',l_W_eh_diag)
          call parser('WehCpl' ,l_W_eh_cpl )
-         if (l_W_eh_diag)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
-         if (.not.l_W_eh_cpl)          BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
+         if (     l_W_eh_diag)         BS_res_mode=trim(string_add(BS_res_mode,'d'))
+         if (.not.l_W_eh_cpl )         BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
        endif
      endif
      !
@@ -1310,23 +1315,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0) l_elel_corr=.true.
 #endif
      !
-#if defined _RT 
-     !
-     ! The logicals l_RT_pump_and_probe and l_RT_probe are defined by read_command_line
-     ! if infile_editing=T or here when infile_editing=F and yambo is running
-     !
-     if (.not.infile_editing) then
-       !
-       if (trim(Efield(1)%ef_name)/='none'.and.trim(Efield(2)%ef_name)/='none') i_Pump=2
-       if (trim(Efield(1)%ef_name)=='none'.and.trim(Efield(2)%ef_name)/='none') then
-         call Efield_duplicate(Efield(2),Efield(1))
-         call Efield_reset(Efield(2))
-       endif
-       l_RT_probe         =i_Pump==i_Probe
-       l_RT_pump_and_probe=i_Pump/=i_Probe
-     endif
-#endif
-     !
    end subroutine varsetup2
    !
    subroutine read_command_line(rstr,init_) 
@@ -1342,7 +1330,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Work Space
      !
-     integer          ::i1,i2,n_pieces,i_cycle
+     integer          ::i1,i2,i_field,n_pieces,i_cycle
      character(schlen)::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(nrnlvls)
      !
      ! Bug fix (17/9/2012). If any string following a -### identifier contains 
@@ -1633,9 +1621,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
 #if defined _RT 
          if ( trim(rstr_piece(i1)) == 'negf' ) then
-           if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
-           if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
-           if (.not.l_RT_probe.and..not.l_RT_pump_and_probe) l_RT_probe=.true.
+           !
+           if ( trim(rstr_piece(i1+1)) == 'p'    ) n_ext_fields=1
+           if ( trim(rstr_piece(i1+1)) == 'pp'   ) n_ext_fields=2
+           !
+           do i_field=1,n_ext_fields_max
+             if ( index(rstr_piece(i1+1),'p'//trim(intc(i_field))) > 0 ) n_ext_fields=i_field
+           enddo
+           !
+           if( n_ext_fields==0) n_ext_fields=1
+           !
          endif
          !
          if ( trim(rstr_piece(i1)) == 'scattp' ) then

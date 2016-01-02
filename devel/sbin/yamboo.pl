@@ -47,7 +47,7 @@ $nodryrun = 1;
 # List any source files here that do not get processed correctly by the script
 $manual_preprocess_files = " ";
 #
-$exclude_files = "yamboo.pl yamboo_new.pl";
+$exclude_files = "yamboo.pl";
 $exclude_dirs = "sbin bin doc";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
 @user_projects = ('ELPH', 'YPP_ELPH', 'KERR', 'SURF', 'YPP_SURF', 

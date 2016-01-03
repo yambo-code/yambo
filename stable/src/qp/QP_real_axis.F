@@ -222,17 +222,17 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(X%ng),iscp%rhotw(X%ng),stat=i_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/i_err/))
  !
- ! MPI index
- call PARALLEL_index(px,(/QP_n_states,QP_n_G_bands(2)/),low_range=(/1,QP_n_G_bands(1)/))
- !
  QP_Sc=cmplx(0.,0.,SP)
  isc%ngrho=X%ng
  isc%iqref=0
  !
+ ! MPI index
+ call PARALLEL_index(px,(/QP_n_states,QP_n_G_bands(2)/),low_range=(/1,QP_n_G_bands(1)/))
+ call PP_redux_wait
+ !
  ! Main Loop
  !===========
  !
- call PP_redux_wait
  call live_timing(trim(Sc_name)//'W0',px%n_of_elements(myid+1)*(q%nbz-iq_to_start+1))
  !
  do iqbz=iq_to_start,q%nbz
@@ -345,11 +345,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      enddo
    enddo
    !
-   call PP_redux_wait(QP_W)
-   !
    ! To be written in W
    !
    if (.not.l_life) then
+     !
+     call PP_redux_wait(QP_W)
      !
      QP_W_er=Xw%er
      QP_W_dr=Xw%dr

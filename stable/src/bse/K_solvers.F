@@ -34,12 +34,15 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
-#endif
-#if defined _SC
  use fields,         ONLY:global_gauge
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  implicit none
  type(levels) ::Ken
@@ -81,17 +84,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ! Solvers
  !
  run_Diago           =index(BSS_mode,'d')/=0
-#if defined _SC
- run_Haydock         =index(BSS_mode,'h')/=0.and.trim(global_gauge)/='velocity'
-#else
  run_Haydock         =index(BSS_mode,'h')/=0
-#endif
  !
-#if defined _SC
- run_inversion      =index(BSS_mode,'i')/=0.and.trim(global_gauge)/='velocity'
-#else
  run_inversion      =index(BSS_mode,'i')/=0
-#endif
  !
  if (run_Haydock.and.associated(Ken%W)) then
    call warning('K with QP widths not supported in the Haydock solver')
@@ -101,9 +96,15 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  if (run_Haydock) then
    !
    stop_Haydock = (BS_not_const_eh_f.and.BSE_mode=='coupling')
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _KERR
    if(l_kerr) stop_Haydock = BS_not_const_eh_f
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
    if (stop_Haydock) call warning('Fractional occupations and coupling/kerr still unsupported (Haydock)')
    !
    if(.not.stop_Haydock) then

@@ -54,9 +54,15 @@ subroutine K_diagonalization(iq,W)
  use interfaces,     ONLY:PARALLEL_index
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _SC || defined _KERR
  use fields,         ONLY:global_gauge
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  implicit none
  type(w_samp)  :: W
  integer       :: iq
@@ -72,9 +78,14 @@ subroutine K_diagonalization(iq,W)
  !
  complex(SP), allocatable ::BS_E(:)
  complex(SP), allocatable ::BS_R(:) 
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  complex(SP), allocatable ::BS_R_kerr(:) 
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Resonant K
  !

@@ -51,8 +51,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #endif
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
-#endif
-#if defined _SC || defined _KERR
  use fields,         ONLY:global_gauge
 #endif
  implicit none
@@ -102,9 +100,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call warning('E/h energy range :'//trim(real2ch(BS_eh_en(1)*HA2EV))//' - '//trim(real2ch(BS_eh_en(2)*HA2EV))//' eV')
  endif
  !
-#if defined _SC || defined _KERR
+#if defined _KERR
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
-   call warning("Not a valid gauge in input. Switching to lenght gauge")
+   call warning("Not a valid gauge in input. Switching to length gauge")
    global_gauge="length"
  endif
 #endif

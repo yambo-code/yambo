@@ -30,9 +30,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use X_m,            ONLY:X_t,X_epsilon,X_drude_term
  use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode,&
 &                         BS_K_has_been_calculated_loaded
-#if defined _SC
- use X_m,            ONLY:global_gauge
-#endif
  use parallel_m,     ONLY:master_cpu
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
@@ -67,18 +64,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Solvers
  !
- run_Diago           =index(BSS_mode,'d')/=0
-#if defined _SC
- run_Haydock         =index(BSS_mode,'h')/=0.and.trim(global_gauge)/='velocity'
-#else
- run_Haydock         =index(BSS_mode,'h')/=0
-#endif
- !
-#if defined _SC
- run_inversion      =index(BSS_mode,'i')/=0.and.trim(global_gauge)/='velocity'
-#else
- run_inversion      =index(BSS_mode,'i')/=0
-#endif
+ run_Diago     = index(BSS_mode,'d')/=0
+ run_Haydock   = index(BSS_mode,'h')/=0
+ run_inversion = index(BSS_mode,'i')/=0
  !
  ! I/O. All read. Only master writes.
  !

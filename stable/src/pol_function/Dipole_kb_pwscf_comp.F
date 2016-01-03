@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 D. Sangalli and the YAMBO team 
+! Copyright (C) 2000-2016 D. Sangalli and the YAMBO team 
 !              http://www.yambo-code.org
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,

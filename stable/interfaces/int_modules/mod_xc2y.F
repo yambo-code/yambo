@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 Myrta Gruning and the YAMBO team
+! Copyright (C) 2000-2016 Myrta Gruning and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU

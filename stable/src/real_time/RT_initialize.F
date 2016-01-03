@@ -1,5 +1,5 @@
 !
-!       Copyright (C) 2000-2014 the YAMBO team 
+!       Copyright (C) 2000-2016 the YAMBO team 
 !            http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 

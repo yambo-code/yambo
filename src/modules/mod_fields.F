@@ -34,6 +34,7 @@ module fields
  ! 
  type ext_field
    character(schlen) :: ef_name
+   character(schlen) :: ef_pol
    real(SP) :: t_initial
    integer  :: t_initial_indx    ! time index of extern field switch on  (input variable)
    real(SP) :: t_final
@@ -45,13 +46,13 @@ module fields
    real(SP) :: amplitude
    real(SP) :: W_step
    real(SP) :: versor(3)
+   real(SP) :: versor_circ(3)
    real(SP), allocatable :: Fluence(:)
  end type ext_field
  !
- integer, parameter  :: n_ext_fields=2
- integer             :: i_Probe
- integer             :: i_Pump
- type(ext_field)     :: Efield(n_ext_fields)
+ integer, parameter  :: n_ext_fields_max=4
+ integer             :: n_ext_fields
+ type(ext_field)     :: Efield(n_ext_fields_max)
  !
  ! Vector potential
  ! 
@@ -77,7 +78,9 @@ module fields
 &                        trim(E_field%ef_name) == 'DELTA' ,& 
 &                        trim(E_field%ef_name) == 'GAUSS' ,& 
 &                        trim(E_field%ef_name) == 'PULSE' ,& 
-&                        trim(E_field%ef_name) == 'QSSIN' /))
+&                        trim(E_field%ef_name) == 'QSSIN' /)) .and. &
+&                 any((/ trim(E_field%ef_pol) == 'linear' ,&
+&                        trim(E_field%ef_pol) == 'circular' /))
    end function
    !
    real(SP) function EtoT(E,T)
@@ -95,135 +98,195 @@ module fields
 &       (E_field%frequency(2)-E_field%frequency(1))/(E_field%n_frequencies-1)*(i_f-1)
    end function
    !
-   complex(SP) function small_a(T_or_W,E_field,order)
+   function small_a(T_i,E_field,order)
      !
      ! The vector potential is generally written as
      !
-     !  A(t) =-cEo a(t) theta(t)
-     !  A'(t)=-cEo (a'(t) theta(t)+a(t) delta(t))
-     !  A"(t)=-cEo (a"(t) theta(t)+a'(t) delta(t)-a(t) sign(t))
+     !  order=0  A (t)=-cEo  a (t) theta(t)
+     !  order=1  A'(t)=-cEo (a'(t) theta(t)+a (t) delta(t))
+     !  order=2  A"(t)=-cEo (a"(t) theta(t)+a'(t) delta(t)-a(t) sign(t))
      !
      ! the functions theta,delta and sign can be the standard distributions
      ! or more fancy functions that can mimic the distributions.
      !
      ! Note that A is evolved using A''(t) starting from A(0) and A'(0). 
      !
-     ! If order=-1 small_a returns the Electric field at frequency T_or_W. If there
-     ! is no analytic form possible order is set to be -2.
-     !
-     use pars,      ONLY:cI,pi
+     use pars,      ONLY:cI,cZERO,pi
      type(ext_field)   ::E_field
-     complex(SP)       ::T_or_W
+     !
+     real(SP)          ::T_i
      integer           ::order
      !
+     complex(SP), dimension(2) :: small_a
+     !
+     integer           ::i_fr,i_field,n_fields
+     real(SP)          ::T_0,W_0,W_i,sigma,WT_i,EXPf,fr_shift(2)
+     complex(SP)       ::f_t(2),f_tmp(3)
+     !
+     small_a=cZERO
+     !
+     W_0=E_field%frequency(1)
+     sigma=E_field%damping
+     T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
+     f_t=cZERO
+     fr_shift(1)=0._SP
+     fr_shift(2)=pi/2._SP
+     !
+     if(trim(E_field%ef_pol)=="linear"  ) n_fields=1
+     if(trim(E_field%ef_pol)=="circular") n_fields=2
+     !
+     do i_field=1,n_fields
+       !
+       select case( trim(E_field%ef_name) )
+       case('SIN')
+         do i_fr=1,E_field%n_frequencies     
+           W_i=field_frequency(E_field,i_fr)
+           WT_i=W_i*T_i+fr_shift(i_field)
+           if (order==0 ) f_t(i_field)=f_t(i_field)-    (cos(WT_i)-1._SP)/W_i
+           if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WT_i)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+W_0* cos(WT_i)
+         enddo 
+         !
+       case('ANTIRES')
+         do i_fr=1,E_field%n_frequencies
+           W_i=field_frequency(E_field,i_fr)
+           WT_i=W_i*T_i+fr_shift(i_field)
+           if (order==0 ) f_t(i_field)=f_t(i_field)-cI*    exp(cI*WT_i)/W_i
+           if (order==1 ) f_t(i_field)=f_t(i_field)+       exp(cI*WT_i)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+cI*W_i*exp(cI*WT_i)
+         enddo
+         !
+       case('RES')
+         do i_fr=1,E_field%n_frequencies
+           W_i=field_frequency(E_field,i_fr)
+           WT_i=W_i*T_i+fr_shift(i_field)
+           if (order==0 ) f_t(i_field)=f_t(i_field)+cI*    exp(-cI*WT_i)/W_i
+           if (order==1 ) f_t(i_field)=f_t(i_field)-       exp(-cI*WT_i)
+           if (order==2 ) f_t(i_field)=f_t(i_field)-cI*W_i*exp(-cI*WT_i)
+         enddo
+         !
+       case('DELTA')
+         if (order==0 ) f_t(i_field)=1._SP
+         if (order> 0 ) f_t(i_field)=0._SP
+         if (order==-1) f_t(i_field)=1._SP
+         !
+       case('GAUSS')
+         if (order==0 ) f_t(i_field)= sigma*sqrt(pi/2._SP)* ( erf( (T_i-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
+         if (order==1 ) f_t(i_field)= exp(-(T_i-T_0)**2/(2._SP*sigma**2) )
+         if (order==2 ) f_t(i_field)=-exp(-(T_i-T_0)**2/(2._SP*sigma**2) )*(T_i-T_0)/sigma**2
+         !
+       case('QSSIN')
+         WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
+         EXPf=exp(-(T_i-T_0)**2/(2._SP*sigma**2) )
+         if (order==0 ) f_t(i_field)=0._SP
+         if (order==1 ) f_t(i_field)=     sin(WT_i)                              *EXPf
+         if (order==2 ) f_t(i_field)=(W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)*EXPf
+         ! 
+       case('PULSE')
+         f_t(i_field)= 0._SP
+         if(abs((T_i-T_0))< sigma) then
+           WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
+           if (order==0 ) f_t(i_field)= 0._SP
+           if (order==1 ) f_t(i_field)=       (T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)**2/sigma**4      *cos(WT_i)
+           if (order==2 ) f_t(i_field)=(2._SP*(T_i-T_0 + sigma)    *(T_i-T_0 -sigma)**2/sigma**4+                &
+&                                      +2._SP*(T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)   /sigma**4 )    *cos(WT_i) &
+&                                      -      (T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)**2/sigma**4  *W_0*sin(WT_i)
+         endif
+         !
+       end select
+       !
+     enddo
+     !
+     small_a=f_t
+     !
+   end function small_a
+   !
+   complex(SP) function small_a_frequency(W_i,E_field,iErr)
+     !
+     use pars,      ONLY:cZERO,cI,pi
+     type(ext_field)   ::E_field
+     complex(SP)       ::W_i
+     integer           ::iErr
+     !
      integer           ::i_f
-     real(SP)          ::T_0,freq,sigma
+     real(SP)          ::W_0
      complex(SP)       ::local_a
      !
-     freq=E_field%frequency(1)
-     sigma=E_field%damping
-     T_0=pi/freq*(real(nint(freq/pi*3._SP*sigma),SP))
-     local_a=(0._SP,0._SP)
+     if(trim(E_field%ef_name)=="circular") then
+       iErr=-1
+       small_a_frequency=cZERO
+       return
+     endif
      !
-     select case( trim(E_field%ef_name) )
+     local_a=cZERO
+     !
+     do i_f=1,E_field%n_frequencies     
+       W_0=field_frequency(E_field,i_f)
+       select case( trim(E_field%ef_name) )
        case('SIN')
-         do i_f=1,E_field%n_frequencies     
-           !
-           freq=field_frequency(E_field,i_f)
-           !
-           if (order==0 ) local_a=local_a-(cos(freq*T_or_W)-1._SP)/freq
-           if (order==1 ) local_a=local_a+ sin(freq*T_or_W)
-           if (order==2 ) local_a=local_a+freq*cos(freq*T_or_W)
-           if (order==-1) local_a=local_a+1._SP/2._SP/(T_or_W-freq)-1._SP/2._SP/(T_or_W+freq)-1._SP/freq
-           !
-         enddo 
+         local_a=local_a+   (1._SP/(W_i-W_0)-1._SP/(W_i+W_0))/2._SP-1._SP/W_0
        case('ANTIRES')
-         do i_f=1,E_field%n_frequencies
-           !
-           freq=field_frequency(E_field,i_f)
-           !
-           if (order==0 ) local_a=local_a-cI*exp(cI*freq*T_or_W)/freq
-           if (order==1 ) local_a=local_a+    exp(cI*freq*T_or_W)
-           if (order==2 ) local_a=local_a+cI*freq*exp(cI*freq*T_or_W)
-           if (order==-1) local_a=local_a-cI*(1._SP/(T_or_W+freq)+1._SP/freq)
-           !
-         enddo
+         local_a=local_a+cI*(               -1._SP/(W_i+W_0)       -1._SP/W_0)
        case('RES')
-         do i_f=1,E_field%n_frequencies
-           !
-           freq=field_frequency(E_field,i_f)
-           !
-           if (order==0 ) local_a= cI*exp(-cI*freq*T_or_W)/freq
-           if (order==1 ) local_a=    exp(-cI*freq*T_or_W)
-           if (order==2 ) local_a=-cI*freq*exp(-cI*freq*T_or_W)
-           if (order==-1) local_a=-cI*(1._SP/(T_or_W-freq)-1._SP/freq)
-           !
-         enddo
+         local_a=       -cI*(1._SP/(W_i-W_0)                       -1._SP/W_0)
        case('DELTA')
-         if (order==0 ) local_a=1._SP
-         if (order> 0 ) local_a=0._SP
-         if (order==-1) local_a=1._SP
+         local_a=1._SP
        case('GAUSS')
-         if (order==0 ) local_a= sigma*sqrt(pi/2._SP)* ( erf( (real(T_or_W,SP)-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
-         if (order==1 ) local_a= exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
-         if (order==2 ) local_a=-exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )*(T_or_W-T_0)/sigma**2
-         if (order==-1) order=-2
+         iErr=-1
        case('QSSIN')
-         if (order==0 ) local_a= 0._SP
-         if (order==1 ) local_a= sin(freq*(T_or_W-T_0))*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
-         if (order==2 ) local_a= (freq*cos(freq*(T_or_W-T_0)) &
-&            -(T_or_W-T_0)* sin(freq*(T_or_W-T_0))/sigma**2)*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
-         if (order==-1) order=-2
+         iErr=-1
        case('PULSE')
-         if(abs((real(T_or_W)-T_0))< sigma) then
-           if (order==0 ) local_a= 0._SP
-           if (order==1 ) local_a=(T_or_W-T_0 + sigma)**2 *(T_or_W-T_0 - sigma)**2/sigma**4*cos(freq*(T_or_W-T_0))
-           if (order==2 ) local_a=(2*(T_or_W-T_0 + sigma)*    (T_or_W-T_0 - sigma)**2/sigma**4  + &
-&                                  2*(T_or_W-T_0 + sigma)**2 *(T_or_W-T_0 - sigma)   /sigma**4) * &
-&                                  cos(freq*(T_or_W-T_0))    &
-&                                   -(T_or_W-T_0 + sigma)**2 *(T_or_W-T_0 - sigma)**2/sigma**4  * &
-&                                  freq*sin(freq*(T_or_W-T_0))
-         else 
-           local_a=0._SP
-         endif        
-           if (order==-1) order=-2
-     end select
+         iErr=-1
+       end select
+     enddo
      !
-     small_a=local_a
+     small_a_frequency=local_a
      !
-   end function
+   end function small_a_frequency
    !
    real(SP) function theta_function(T,step,order)
      !
      ! This is an easy numerical implementation of the
      ! theta function and its derivatives (the delta and the sign).
      !
-     integer :: iT,order
+     integer :: order
      real(SP):: T,step
+     character(4) :: step_case
      !
      theta_function=0._SP
-     !
-     iT=nint((T-1.E-5)/step)
-     !
-     if (iT==-1) then
-       if (order==0) theta_function= 0._SP
-       if (order==1) theta_function= 0._SP
-       if (order==2) theta_function= 1._SP/step**2.
+     if (abs(T/step)>1.05_SP) then
+       if(order==0.and.T>0._SP) theta_function= 1._SP
+       return
      endif
      !
-     if (iT== 0) then
+     if( abs(T/step+1.0_SP)<0.1 ) step_case="-1.0"
+     if( abs(T/step+0.5_SP)<0.1 ) step_case="-0.5"
+     if( abs(T/step+0.0_SP)<0.1 ) step_case=" 0.0"
+     if( abs(T/step-0.5_SP)<0.1 ) step_case="+0.5"
+     if( abs(T/step-1.0_SP)<0.1 ) step_case="+1.0"
+     !
+     select case(step_case)
+     case("-1.0")
+       if (order==0) theta_function= 0.00_SP
+       if (order==1) theta_function= 0.00_SP
+       if (order==2) theta_function= 1.00_SP/step**2
+     case("-0.5")
+       if (order==0) theta_function= 0.25_SP
+       if (order==1) theta_function= 0.50_SP/step
+       if (order==2) theta_function= 1.00_SP/step**2
+     case(" 0.0")
        if (order==0) theta_function= 0.5_SP
-       if (order==1) theta_function= 1._SP/step
-       if (order==2) theta_function= 0._SP
-     endif
-     !
-     if (iT==+1) then
-       if (order==0) theta_function= 1._SP
-       if (order==1) theta_function= 0._SP
-       if (order==2) theta_function=-1._SP/step**2.
-     endif
-     !
-     if (iT>+1 .and. order==0) theta_function= 1._SP
+       if (order==1) theta_function= 1.0_SP/step
+       if (order==2) theta_function= 0.0_SP
+     case("+0.5")
+       if (order==0) theta_function= 0.75_SP
+       if (order==1) theta_function= 0.50_SP/step
+       if (order==2) theta_function=-1.00_SP/step**2
+     case("+1.0")
+       if (order==0) theta_function= 1.00_SP
+       if (order==1) theta_function= 0.00_SP
+       if (order==2) theta_function=-1.00_SP/step**2
+     end select
      !
    end function
    !
@@ -240,7 +303,9 @@ module fields
      E2%intensity=E1%intensity  
      E2%amplitude=E1%amplitude  
      E2%versor=E1%versor
+     E2%versor_circ=E1%versor_circ
      E2%ef_name=E1%ef_name
+     E2%ef_pol=E1%ef_pol
    end subroutine
    !
    subroutine Efield_reset(E)
@@ -256,7 +321,9 @@ module fields
      E%intensity    =0._SP
      E%damping      =0._SP
      E%ef_name      ='none'
+     E%ef_pol       ='none'
      E%versor       =(/1._SP,0._SP,0._SP/)
+     E%versor_circ  =(/0._SP,1._SP,0._SP/)
    end subroutine
    !
    subroutine A_vecpot_reset(A)

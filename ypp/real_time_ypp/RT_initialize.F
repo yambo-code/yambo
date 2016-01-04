@@ -32,14 +32,14 @@ subroutine RT_initialize()
  use stderr,         ONLY:real2ch
  use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
  use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps,NE_time
- use fields,         ONLY:Efield,i_Probe
+ use fields,         ONLY:Efield
  !
  implicit none
  !
  ! Work Space
  !
  real(SP) :: Total_time
- integer  :: i_t,i_t_field_range(2)
+ integer  :: i_t,i_t_field_range(2),i_Probe
  logical  :: l_no_damping
  !
  !  Reduced Time range
@@ -54,6 +54,7 @@ subroutine RT_initialize()
  J_time_step= RT_step*real(RT_IO_JPO_steps,SP)
  Total_time = real(J_steps-1,SP)*J_time_step
  !
+ i_Probe=1
  X_rt%time_range=(/Efield(i_Probe)%t_initial,Total_time/)
  !
  i_t_start=nint(X_rt%time_range(1)/J_time_step)+1
@@ -69,7 +70,7 @@ subroutine RT_initialize()
  X_rt%time_range=(/i_t_start-1,i_t_end-1/)*J_time_step
  !
  RED_steps=i_t_end-i_t_start+1
- W_RT_induced_step=2.*pi/(real(RED_steps-1,SP)*J_time_step)  ! Frequency step in real-time dynamics
+ W_RT_induced_step=2._SP*pi/(real(RED_steps-1,SP)*J_time_step)  ! Frequency step in real-time dynamics
  !
  call msg('s','[RT] Time range [fs]:',(/real(i_t_start-1),real(i_t_end-1)/)*J_time_step/FS2AUT)
  !

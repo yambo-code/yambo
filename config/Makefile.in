@@ -123,11 +123,14 @@ libs:
 	DIR2GO="lib" ; $(mklib_ext); fi
 get_extlibs:
 	@cd lib/archive; $(make) -f Makefile.loc all;
+#
+# Yambo #
+# 
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)"; XPATH="src" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 #
-# PROJECTS #
+# Yambo PROJECTS #
 # 
 yambo_magnetic: libs
 	@LIBS2DO="$(PJ_SCLIBS)"; XPATH="src";ADF="-D_MAGNETIC -D_SC"; $(mksrc)
@@ -151,7 +154,7 @@ yambo_qed: libs
 	@LIBS2DO="$(PJ_RTLIBS)"; XPATH="src";ADF="-D_QED -D_SC -D_RT -D_ELPH"; $(mksrc)
 	@X2DO="yambo_qed"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_QED -D_SC -D_RT -D_ELPH";$(mkx)
 #
-# Interfaces & ypp #
+# Interfaces #
 #
 interfaces: libs
 	@LIBS2DO="$(2YLIBS)"; XPATH="src" ; $(mksrc)
@@ -162,10 +165,16 @@ interfaces: libs
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
 	XLIBS="$(E2YLIBS)" ; $(mkx) ; fi
+#
+# Ypp #
+#
 ypp: libs
 	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; $(mksrc)
 	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="driver";XLIBS="$(YPP_MAIN_LIBS) $(YPP_LIBS)";$(mkx)
+#
+# Ypp projects #
+#
 ypp_ph: libs
 	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src";ADF="-D_ELPH"; $(mksrc)
 	@LIBS2DO="$(YPPPH_LIBS)"; XPATH="ypp" ;  ADF="-D_YPP_ELPH"; $(mksrc)

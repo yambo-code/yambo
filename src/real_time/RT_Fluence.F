@@ -27,7 +27,7 @@ subroutine RT_Fluence(i_field)
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
  use rt_ctl,         ONLY:RT_IO_output_steps
  use real_time,      ONLY:RT_step,NE_steps
- use fields,         ONLY:Efield,small_a,theta_function
+ use fields,         ONLY:Efield!,small_a,theta_function
  !
  implicit none
  !
@@ -39,6 +39,10 @@ subroutine RT_Fluence(i_field)
  real(SP)     :: I(NE_steps),T(NE_steps),Fluence(NE_steps)
  complex(SP)  :: Field_time,E(NE_steps)
  real(SP),external :: RIntegrate
+ !
+ ! I broke this subroutine for the moment
+ !
+ return
  !
  ! E(t)=-d A(t)/dt / SPEED_OF_LIGHT
  !
@@ -70,9 +74,9 @@ subroutine RT_Fluence(i_field)
    !
    ! I(t) = \frac{c}{8\pi} E^2(t)
    !
-   E(it)=Efield(i_field)%amplitude*&
-&        small_a(Field_time,Efield(i_field),1)*theta_function(real(Field_time),RT_step,0)+&
-&        small_a(Field_time,Efield(i_field),0)*theta_function(real(Field_time),RT_step,1)
+!   E(it)=Efield(i_field)%amplitude*&
+!&        small_a(Field_time,Efield(i_field),1)*theta_function(real(Field_time),RT_step,0)+&
+!&        small_a(Field_time,Efield(i_field),0)*theta_function(real(Field_time),RT_step,1)
    !
    I(it)=SPEED_OF_LIGHT/8./pi*abs(E(it))**2.
    !

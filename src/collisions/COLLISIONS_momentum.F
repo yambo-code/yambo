@@ -52,7 +52,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !Work Space
  !
  type(elemental_collision)::I,I_grad_k,I_grad_p
- integer                  ::i_qp,PAR_nQP_,i_q_bz,i_q,i_q_mem,i_g,i_g_mem,i_c,i_cp,i_qp_mem,i_m,i_G0
+ integer                  ::i_qp,PAR_nQP_,i_q_bz,i_q,i_q_mem,i_g,i_g_mem,i_c,i_cp,i_qp_mem,i_m,i_G0,COLL_ID
  complex(SP)              ::P(3)
  real(SP)                 ::ACC,T_matrix(3,3),T_vec(3),photon_E
  character(schlen)        ::ch
@@ -95,6 +95,8 @@ subroutine COLLISIONS_momentum(E,k,q)
  endif
  !
  call live_timing("Momentum collisions",PAR_nQP_*PAR_nQ)
+ !
+ call COLLISIONS_linearize_and_IO("Momentum",COLL_ID,0,P_collisions,nP_collisions)
  !
  QP_loop: do i_qp=1,QP_n_states
    !
@@ -160,7 +162,7 @@ subroutine COLLISIONS_momentum(E,k,q)
      call PP_redux_wait(P_collisions(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   call COLLISIONS_linearize_and_IO("Momentum",i_qp,P_collisions,nP_collisions)
+   call COLLISIONS_linearize_and_IO("Momentum",COLL_ID,i_qp,P_collisions,nP_collisions)
    !
  enddo QP_loop
  !

@@ -195,7 +195,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
    !
-   call RT_BGR(dG_lesser(:,:,:,1),E,k)
+   !call RT_BGR(G_lesser_reference,E,k)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -245,7 +245,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  call RT_output(what="open dyn ene cur pol")
- call RT_output('open BGR')
+ !call RT_output('open BGR')
  if (l_NE_with_fields) call RT_output(what="open pot occ")
  if (l_elph_scatt) call RT_output('open EPlife')
  if (l_elel_scatt) call RT_output('open EElife')
@@ -315,8 +315,8 @@ subroutine RT_driver(E,X,k,q)
    !
    ! BGR
    !=======================================
-   call RT_BGR(dG_lesser(:,:,:,it_mem),E,k)
-   call RT_output('BGR',TIME=NE_time/FS2AUT)
+   !call RT_BGR(dG_lesser(:,:,:,it_mem),E,k)
+   !call RT_output('BGR',TIME=NE_time/FS2AUT)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================

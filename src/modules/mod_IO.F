@@ -442,8 +442,9 @@ module IO_m
    !
    subroutine io_control(ACTION,MODE,COM,SEC,ID)
      !
-     integer :: ACTION,ID
-     integer,optional :: MODE,COM,SEC(:)
+     integer,intent(in)    :: ACTION
+     integer,intent(inout) :: ID
+     integer,optional,intent(in) :: MODE,COM,SEC(:)
      !
      ! Work Space
      !

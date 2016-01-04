@@ -6216,8 +6216,6 @@ case "${FC}" in
       ;;
     *pgf9*)
       ;;
-    *pgfortran*)
-      ;;
     *abf90*)
       ;;
     *ifc*)
@@ -6471,7 +6469,7 @@ ia64*linux* )
   *ifort*)
     CPU_FLAG=""
     case "${FCVERSION}" in
-      *11* | *12* | *13* |*14* |*15* |*16* )
+      *11* | *12* | *13* |*14* |*15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
@@ -11018,7 +11016,7 @@ FCFLAGS="$FCFLAGS_LIBXC $acx_libxc_save_FCFLAGS"
 
 # set from environment variable, if not blank
 if test ! -z "$LIBS_LIBXC"; then
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
   cat > conftest.$ac_ext <<_ACEOF
 $testprog
 _ACEOF
@@ -11032,7 +11030,7 @@ fi
 # set from --with-libxc-libs flag
 if test x"$acx_libxc_ok" = xno && test ! -z "$with_libxc_libs" ; then
   LIBS_LIBXC="$with_libxc_libs"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
   cat > conftest.$ac_ext <<_ACEOF
 $testprog
 _ACEOF
@@ -11046,7 +11044,7 @@ fi
 # static linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
   LIBS_LIBXC="$libxc_libdir/libxcf90.a $libxc_libdir/libxc.a"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
   cat > conftest.$ac_ext <<_ACEOF
 $testprog
 _ACEOF
@@ -11060,7 +11058,7 @@ fi
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
   LIBS_LIBXC="-L$libxc_libdir -lxcf90 -lxc"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
   cat > conftest.$ac_ext <<_ACEOF
 $testprog
 _ACEOF
@@ -11074,7 +11072,7 @@ fi
 # static linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
   LIBS_LIBXC="$libxc_libdir/libxc.a"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
   cat > conftest.$ac_ext <<_ACEOF
 $testprog
 _ACEOF
@@ -11088,7 +11086,7 @@ fi
 # dynamic linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
   LIBS_LIBXC="-L$libxc_libdir -lxc"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
   cat > conftest.$ac_ext <<_ACEOF
 $testprog
 _ACEOF

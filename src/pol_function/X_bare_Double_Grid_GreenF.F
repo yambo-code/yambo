@@ -24,13 +24,13 @@
 subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,integrating_over_q
+ use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs
  use BS,         ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
                       BZ_DbGd_ipol_weight,BZ_DbGd_kpts
  use R_lattice,  ONLY:qindx_X,bz_samp,q_pt,nqibz
  use frequency,  ONLY:w_samp
- use vec_operate,ONLY:k2bz,iku_v_norm
+ use vec_operate,ONLY:iku_v_norm
  ! GPL_EXCLUDE_START
 #if defined _ELPH
  use units,      ONLY:pi
@@ -178,7 +178,7 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  enddo
  !
  qsize_fac=2._SP
- if(.not.integrating_over_q) qsize_fac=qsize_fac*10._SP
+ if(.not.X_is_evaluated_for_all_Qs) qsize_fac=qsize_fac*10._SP
  !
  q_norm_ref=q_norm_ref/qsize_fac
  !

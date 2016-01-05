@@ -59,8 +59,6 @@ subroutine COLLISIONS_Fock(E,k,q)
  type(elemental_collision):: isc,iscp
  complex(SP)              :: pre_factor
  !
- integer                  :: COLL_ID
- !
 #if defined _TIMING
  call timing('Fock Collisions',OPR='start')
 #endif
@@ -104,8 +102,6 @@ subroutine COLLISIONS_Fock(E,k,q)
    PAR_nQP_local=count(COLLISIONS_IO_status==-1)
  endif
  call live_timing("Fock collisions",PAR_nQP_local*PAR_nQ*PAR_n_Bp_mat_elements)
- !
- call COLLISIONS_linearize_and_IO("Fock",COLL_ID,0,Fock_collisions,nFock_collisions)
  !
  do i_qp=1,QP_n_states
    !
@@ -212,7 +208,7 @@ subroutine COLLISIONS_Fock(E,k,q)
      call PP_redux_wait(Fock_collisions(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   call COLLISIONS_linearize_and_IO("Fock",COLL_ID,i_qp,Fock_collisions,nFock_collisions)
+   call COLLISIONS_linearize_and_IO("Fock",i_qp,Fock_collisions,nFock_collisions)
    !
  enddo ! loop on i_qp
  !

@@ -158,7 +158,7 @@ integer function variables_BS(ID,local_description,X)
 &         DESCRIPTION=local_description(i_local_desc))
      i_local_desc=i_local_desc+1
      call io_elemental(ID,&
-&         VAR="    |Rl vectors in the sum   :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),&
+&         VAR="    |RL vectors in the sum   :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),&
 &         DESCRIPTION=local_description(i_local_desc))
      i_local_desc=i_local_desc+1
      call io_elemental(ID,&

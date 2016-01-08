@@ -85,7 +85,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          !
          ! Drude "transition"
          !
-         if (abs(E_eh)<1.E-5 .and. ik==ikp) then
+         if (abs(E_eh)<1.E-5 .and. abs(iq)==1 ) then
            if(any((/ic/=Xen%bf,iv/=Xen%bf,ik/=Xen%kf,i_sp/=Xen%sf/)) ) cycle
            if(real(X%Wd)==0..and.aimag(X%Wd)==0.) cycle
          endif

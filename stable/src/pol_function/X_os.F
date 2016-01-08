@@ -220,7 +220,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      if(i1>1) n_poles = sum(bg_npts(1:i1-1))
      if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
-     if (cg_pt(i1)==0.) then
+     if (cg_pt(i1)<1.E-5) then
        GreenF=drude_GreenF/real(bg_npts(i1))
      else
        if (.not.force_bare_X_G) GreenF(1) = X_simple_GreenF(Xw%p(1),cg_pt(i1),X%ordering)

@@ -240,7 +240,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
    end subroutine DIPOLES_IO
    !
-   !
    subroutine DIPOLES_alloc()
      !
      call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))

@@ -66,7 +66,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  complex(SP)              :: pre_factor
  !
  complex(SP), allocatable :: EM1s(:,:)
- integer                  :: io_err,ID,COLL_ID
+ integer                  :: io_err,ID
  integer, external        :: io_X
  !
 #if defined _TIMING
@@ -135,8 +135,6 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
    PAR_nQP_local=count(COLLISIONS_IO_status==-1)
  endif
  call live_timing("SEX collisions (e-e correlation)",PAR_nQP_local*PAR_nQ*PAR_n_Bp_mat_elements)
- !
- call COLLISIONS_linearize_and_IO("SEX",COLL_ID,0,SEX_collisions,nSEX_collisions)
  !
  do i_qp=1,QP_n_states
    !
@@ -268,7 +266,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
      call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   call COLLISIONS_linearize_and_IO("SEX",COLL_ID,i_qp,SEX_collisions,nSEX_collisions)
+   call COLLISIONS_linearize_and_IO("SEX",i_qp,SEX_collisions,nSEX_collisions)
    !
  enddo ! loop on i_qp
  !

@@ -25,7 +25,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! NEQ GW collisions 
  !
- use pars,          ONLY:SP,pi,schlen,rZERO
+ use pars,          ONLY:SP,pi,rZERO
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin
@@ -69,7 +69,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp1_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(elemental_collision)::isc,iscp
- integer          ::io_err,ID,COLL_ID
+ integer          ::io_err,ID
  integer, external::io_X
  complex(SP)      ::local_rhotw(X%ng),pre_factor
  !
@@ -132,8 +132,6 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    PAR_nQP_local=count(COLLISIONS_IO_status==-1)
  endif
  call live_timing("GW collisions (e-e scattering)",PAR_nQP_local*PAR_nQ)
- !
- if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",COLL_ID,0,GW_NEQ_collisions,nGW_NEQ_collisions)
  !
  do i_qp1=1,QP_n_states
    !
@@ -306,7 +304,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      endif
    endif
    !
-   if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",COLL_ID,i_qp1,GW_NEQ_collisions,nGW_NEQ_collisions)
+   if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_qp1,GW_NEQ_collisions,nGW_NEQ_collisions)
    !
  enddo
  !

@@ -60,7 +60,7 @@ subroutine SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E,N,G0,Ek,Ekmq,E_diff)
  i_k_m_q_s  = k%sstar(i_k_m_q_bz,2)
  i_spin     = spin(QP_table(i_qp,:))
  i_q        = q%sstar(i_q_bz,1)
- i_q_s      = q%sstar(i_q_bz,1)
+ i_q_s      = q%sstar(i_q_bz,2)
  !
  I%is=(/i_n,i_k,1,i_spin/)
  I%os=(/i_m,i_k_m_q,i_k_m_q_s,i_spin/)

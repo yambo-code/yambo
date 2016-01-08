@@ -42,7 +42,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
-&                        RD_CL,DUMP,IO_and_Messaging_switch
+&                        DUMP,IO_and_Messaging_switch
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
@@ -69,10 +69,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  integer          ::wf_size
 #endif
  integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
-&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
+&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
+ logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -159,10 +159,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    endif
    !
  endif
- !
- ! Manage direct access I/O
- ! 
- use_direct_access=(kpts_to_load(1)==kpts_to_load(2))
  !
  ! In case of k by k I/O prevent multiple free/alloc
  !
@@ -275,9 +271,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
  endif
  !
- ACTION_=RD_CL_IF_END
- if (use_direct_access) ACTION_=RD_CL
- !
  WF%N=0
  do ikibz=1,nkibz
    !
@@ -300,7 +293,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
        endif
        !
-       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
        !
        io_err=io_WF(ID,wf_disk)
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle

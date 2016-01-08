@@ -177,7 +177,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    do i_spin=1,n_sp_pol
      QP_ctl_input_or_impose(i_spin)%E=(/QP_ctl_E(Eid,1,i_spin)/HA2EV,&
-&                                           QP_ctl_E(Eid,2,i_spin),0._SP,QP_ctl_E(Eid,3,i_spin)/)
+&                                       QP_ctl_E(Eid,2,i_spin),0._SP,QP_ctl_E(Eid,3,i_spin)/)
    enddo
    !
    ! Then update scissor & stretching in the global_XC kinds 
@@ -192,6 +192,9 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    if (SE_MORE>0.and.Eid==3) call setup_global_XC(what,G_kind,SE_MORE,G_xc_functional)
    !
    QP_ctl_db(Eid)=trim(QP_ctl_from_DB(1)%db)
+   !
+   ! Now I move to the input file provided stretching and generalized QP parameters. 
+   ! Those are contained in the QP_ctl* fields.
    !
    ! Note the units of QP_ctl_W:
    !
@@ -209,37 +212,30 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)
    enddo
    !
-   ! Finally I apply the generalized stretch. I impose it in order to add the USER defined stretch top of the
-   ! DB read corrections
-   !
-   call QP_apply_global_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected,.TRUE.)
-   !
- else 
-   !
-   ! GPL_EXCLUDE_START
-   !
-   ! 2] I am imposing a qp_impose that contains qp corrections
-   !
-   if (present(qp_impose)) QP_load_DB_err=QP_load_DB(band_range,en,k,qp_impose,&
-&                                                  QP_ctl_from_DB,msg_fmt,DB_corrected,GFs_from_DB)
-   !
-   ! GPL_EXCLUDE_END
-   !
-   ! 3] I am using an externally defined FIT parameters
-   !
-   if (present(QP_ctl_impose)) then
-     do i_spin=1,n_sp_pol
-       QP_ctl_input_or_impose(i_spin)%E=QP_ctl_impose(i_spin)%E
-       QP_ctl_input_or_impose(i_spin)%W=QP_ctl_impose(i_spin)%W
-       QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_impose(i_spin)%Z
-     enddo
-   endif
-   !
-   ! Finally I apply the generalized stretch
-   !
-   call QP_apply_global_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected,.FALSE.)
-   !
  endif
+ !
+ ! GPL_EXCLUDE_START
+ !
+ ! 2] I am imposing a qp_impose that contains qp corrections
+ !
+ if (present(qp_impose)) QP_load_DB_err=QP_load_DB(band_range,en,k,qp_impose,&
+&                                                QP_ctl_from_DB,msg_fmt,DB_corrected,GFs_from_DB)
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! 3] I am using an externally defined FIT parameters
+ !
+ if (present(QP_ctl_impose)) then
+   do i_spin=1,n_sp_pol
+     QP_ctl_input_or_impose(i_spin)%E=QP_ctl_impose(i_spin)%E
+     QP_ctl_input_or_impose(i_spin)%W=QP_ctl_impose(i_spin)%W
+     QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_impose(i_spin)%Z
+   enddo
+ endif
+ !
+ ! Finally I apply the generalized stretch obtained from the procedures 1,2 and 3.
+ !
+ call QP_apply_global_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected,.FALSE.)
  !
  ! Extend the QP corrections to the RIM energies
  !
@@ -319,18 +315,25 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  call msg('r', '[QP] Fermi level variation [ev]:',en%E_Fermi*HA2EV)
  call msg('r', '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
+ !
  if (en%nbf==en%nbm) then
+   !
    if (n_sp_pol==1) then
+     !
      call msg('r','[QP] Ind. Gap Correction  [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
+     !
    else
+     !
      call msg('r','[QP] Ind. Gap Correction  (up) [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
+     !
      call msg('r','                        (down) [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,2))-maxval(en%E(en%nbf,:,2)) &
 &                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HA2EV)
+     !
    endif
    !
  endif

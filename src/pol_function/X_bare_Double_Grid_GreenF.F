@@ -162,7 +162,6 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  !
  if( K_inv_run ) cg_ffac = Xen%f(iv,ikp,i_spin)           -Xen%f(ic,ik ,i_spin)
  !
- !
  ! [DAVIDE]
  ! Define which kpts I will use in a consistent way between q=0 and q/=0
  ! For q/=0 this change makes the code much faster as it avoids the use of all 

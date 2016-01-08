@@ -84,6 +84,7 @@ module BS
  character(lchlen):: BSS_description(100)
  character(schlen):: BSS_mode
  character(schlen):: BSS_inversion_mode
+ complex(SP) :: BSS_Wd
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
  integer  :: BSS_inv_iter_max

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_eh_setup(iq,Ken,Xk,Wd)
+subroutine K_eh_setup(iq,Ken,Xk)
  !
  ! Out: 
  !
@@ -38,14 +38,13 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim,BS_anti_res,&
 &                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z,BS_drude_f_eh,&
-&                       BSE_mode,BSS_mode
+&                       BSE_mode,BSS_mode,BSS_Wd
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
  implicit none
  type(levels) ::Ken
  type(bz_samp)::Xk
- complex(SP)  ::Wd
  integer      ::iq
  !
  ! Work Space
@@ -81,7 +80,7 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
            E_eh=Ken%E(ic,ik,i_sp)-Ken%E(iv,ikp,i_sp)
            if (abs(E_eh)<1.E-5) then
              if(any((/ic/=Ken%bf,iv/=Ken%bf,ik/=Ken%kf,i_sp/=Ken%sf/)) ) cycle
-             if(real(Wd)==0..and.aimag(Wd)==0.) cycle
+             if(real(BSS_Wd)==0..and.aimag(BSS_Wd)==0.) cycle
            endif
            !
            ! Same ordering procedure of the Xo case (see X_eh_setup.F)

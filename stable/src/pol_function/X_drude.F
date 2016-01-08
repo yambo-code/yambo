@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
+subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
  !
  use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
@@ -28,14 +28,14 @@ subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:bz_samp,q_norm 
  use D_lattice,     ONLY:DL_vol
- use X_m,           ONLY:X_t,iw_ref
+ use X_m,           ONLY:iw_ref
  use com,           ONLY:warning
  !
  implicit none
  !
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
- type(X_t)            :: X
+ complex(SP)          :: Wd
  type(w_samp)         :: Xw
  !
  integer              :: iq
@@ -54,22 +54,22 @@ subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  !  . Metallic system 
  !  . Optical response @ q = Gamma
  !
- Drude_term=all((/real(X%Wd)>0.,aimag(X%Wd)>0.,Xen%kf>0,Xen%nbf/=Xen%nbm,iq==1/))
+ Drude_term=all((/real(Wd)>0.,aimag(Wd)>0.,Xen%kf>0,Xen%nbf/=Xen%nbm,iq==1/))
  !
  if(.not.Drude_term .and. iq==1) then
-   if(Xen%nbf==Xen%nbm.and.all((/real(X%Wd)>0.,aimag(X%Wd)>0./)) ) then
+   if(Xen%nbf==Xen%nbm.and.all((/real(Wd)>0.,aimag(Wd)>0./)) ) then
      call warning(' System is not a metal. Drude term not included')
-     X%Wd=(0._SP,0._SP)
+     Wd=(0._SP,0._SP)
    endif
    if(Xen%nbf/=Xen%nbm) then
-     if(real(X%Wd)>0. .and. aimag(X%Wd)>0.)   call warning(' Too low ElecTemp. Drude term not included.')
-     if(real(X%Wd)==0. .or. aimag(X%Wd)==0.)  call warning(' The system is a metal but Drude term not included.')
+     if(real(Wd)>0. .and. aimag(Wd)>0.)   call warning(' Too low ElecTemp. Drude term not included.')
+     if(real(Wd)==0. .or. aimag(Wd)==0.)  call warning(' The system is a metal but Drude term not included.')
    endif
  endif
  !
  if(.not.Drude_term) return
  !
- call msg('nrs','[X/K] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HA2EV)
+ call msg('nrs','[X/K] Drude contribution @[ev]:',(/real(Wd),aimag(Wd)/)*HA2EV)
  !
  ! drude_factor is the eh_occ factor calculated in the Xo loop
  ! evaluated at the fermi state
@@ -79,7 +79,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
 &             (spin_occ*real(Xk%nbz)*DL_vol)
  !
  do iw=1,Xw%n(1)
-   drude_GreenF(iw)=Jellium_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
+   drude_GreenF(iw)=Jellium_drude(real(Xw%p(iw)),Wd,q_norm(1))/drude_factor
  enddo
  !
  if(drude_ordering/='c') return

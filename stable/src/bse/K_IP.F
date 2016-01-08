@@ -37,7 +37,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
 &                        BSS_rhoq0,BS_eh_f,BS_eh_E,BS_eh_table,BSS_Vnl_included,     &
 &                        BS_bands,BS_eh_W,BS_anti_res,BS_drude_f_eh,BS_K_coupling, &
 &                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_res_K_corr,O_n_c_states,     &
-&                        O_n_v_states,BS_eh_Z
+&                        O_n_v_states,BS_eh_Z,BSS_Wd
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use com,           ONLY:warning
@@ -99,7 +99,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
    enddo
  endif
  !
- call K_eh_setup(iq,Ken,Xk,X_static%Wd)
+ call K_eh_setup(iq,Ken,Xk)
  if (any(BS_blk_dim==0)) then
    call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
  endif
@@ -126,7 +126,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  X_drude_term=cmplx(0.,0.,SP)
  !
  call X_duplicate(X_static,X_oscillators) 
- call X_Drude(1,Ken,Xk,W_bss,X_static,drude_GreenF,'c')
+ call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF,'c')
  !
  X_oscillators%ib=BS_bands
  if (BS_K_coupling.or.allocated(BS_eh_W)) then

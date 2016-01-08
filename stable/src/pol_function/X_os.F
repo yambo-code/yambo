@@ -110,7 +110,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 &    (lras.or.lreels).and.loptcut) call Dipole_driver_cut( Xen, Xk, X, X%q0)
 #endif
  !
- call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
+ call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF,X%ordering)
  !
  ! Poles tabulation
  !==================

@@ -570,25 +570,25 @@ subroutine init_load(defs,en,q,k,X,Xw)
      name='Field'//trim(intc(i_field))
      !
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
-&    Efield(i_field)%frequency,unit=E_unit)
+&            Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
-&    Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
+&            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
-&    Efield(i_field)%intensity,unit=I_unit)
+&            Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Damp',            '[RT '//trim(name)//'] Damping',&
-&    Efield(i_field)%damping,unit=Time_unit(1))
+&            Efield(i_field)%damping,unit=Time_unit(1))
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
-&    Efield(i_field)%ef_name,verb_level=0)
+&            Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
-&    Efield(i_field)%ef_pol,verb_level=0)
+&            Efield(i_field)%ef_pol,verb_level=0)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
-&    Efield(i_field)%versor,verb_level=0)
+&            Efield(i_field)%versor,verb_level=0)
      call it(defs,trim(name)//'_Dir_circ',        '[RT '//trim(name)//'] Versor_circ',&
-&    Efield(i_field)%versor_circ,verb_level=0)
+&            Efield(i_field)%versor_circ,verb_level=0)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
-&    Efield(i_field)%t_initial,unit=Time_unit(1))
+&            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if(trim(Efield(i_field)%ef_name)/="none".and.initmode==2) n_ext_fields=n_ext_fields+1
+     if(trim(Efield(i_field)%ef_name)/="none".and.initmode==4) n_ext_fields=n_ext_fields+1
      !
    end subroutine
    !

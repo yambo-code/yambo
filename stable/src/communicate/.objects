@@ -1,1 +1,0 @@
-objs = acknowledge_yambo.o REPORT_Occupations.o section.o REPORT_Energies.o

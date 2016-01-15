@@ -53,7 +53,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
-CLEANS   = clean clean_all
+CLEANS   = clean clean_all distclean
 PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr \
            ypp_ph ypp_sc ypp_rt ypp_magnetic 
 BROKEN   = yambo_surf ypp_surf ydb
@@ -207,6 +207,7 @@ clean_fast:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(xclean)
+distclean: clean_all
 clean_all: 
 	@$(lib_ext_distclean)
 	@$(objects_clean)
@@ -227,7 +228,7 @@ define make_message
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
  for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
  for target in $(UTILS); do echo  " [util] $$target" ; done;echo
- for target in $(DEBUG); do echo  " [debug] $$target" ; done;echo
+ #for target in $(DEBUG); do echo  " [debug] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
 define mksrc

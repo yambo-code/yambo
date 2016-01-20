@@ -34,7 +34,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
-&                      X_terminator,X_en_comp,global_gauge,use_covariant_approach,integrating_over_q,&
+&                      X_terminator,X_en_comp,global_gauge,use_covariant_approach,X_is_evaluated_for_all_Qs,&
 &                      force_v_g_space_approach,use_real_space_approach,Dipole_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
@@ -69,8 +69,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,BS_drude_f_eh,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
-&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_DbGd,BSS_damp_reference,&
-&                     BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res
+&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_DbGd,&
+&                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
+&                     BS_anti_res
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal,TDDFT_mode
@@ -91,18 +92,17 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _RT || defined _YPP_RT
  use rt_ctl,     ONLY:RT_IO_time
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,                                  &
-&                     RT_life_interp_KIND,RT_life_interp_steps,      &
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,                           &
+&                     RT_life_interp_KIND,RT_life_interp_steps,                           &
 &                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
-&                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,                         &
-&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
-&                     l_RT_probe,l_RT_pump_and_probe,RT_eh_en,                            &
-&                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
+&                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
+&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
+&                     RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,  &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RT_ctl_db
- use fields,     ONLY:Efield,Efield_reset,n_ext_fields,i_Pump,i_Probe,A_vecpot_reset,     &
+ use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
  use plasma,     ONLY:Plasma_redux_percent
 #endif
@@ -398,7 +398,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  skip_cond_sum_rule=.FALSE.
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
- integrating_over_q=.FALSE.
+ X_is_evaluated_for_all_Qs=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
@@ -532,7 +532,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
  l_Mean_Potential=.FALSE.
- COLLISIONS_cutoff=0.001_SP
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
@@ -543,13 +542,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  COLLISIONS_cutoff=0.0005_SP
  !
 #endif
+ !
 #if defined _RT
  !
  ! Real Time
  !
- i_Pump=1
- i_Probe=1
- do i1=1,n_ext_fields
+ n_ext_fields=0
+ do i1=1,n_ext_fields_max
    call Efield_reset(Efield(i1))
  enddo
  !
@@ -564,9 +563,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_RT_CCA_Kernel=.FALSE.
  !
  ! RT current 
- !
- l_RT_probe=.FALSE.
- l_RT_pump_and_probe=.FALSE.
  !
  RT_step=0.010*FS2AUT
  NE_steps=1

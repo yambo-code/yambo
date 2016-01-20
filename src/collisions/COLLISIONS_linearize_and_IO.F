@@ -37,7 +37,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  !
  ! Work Space
  !
- integer   :: ic,i1,i2,i3,i_cycle,io_err,ID,i_ref,state(3)
+ integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref,ID
  logical   :: store_it,l_exchange,l_GW_NEQ,l_QED_P
  real(SP)  :: COLLISIONS_max
  !
@@ -94,6 +94,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  !
  if (i_qp==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
  if (i_qp/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
+ !
  io_err=io_COLLISIONS(i_qp,ID,COLL=COLL(1))
  !
  call COLLISIONS_alloc_and_free(what,"v1","clean",1)

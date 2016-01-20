@@ -250,6 +250,8 @@ module parallel_m
  !
  ! Specific MPI COMMUNICATORS...
  !==============================
+ ! PAR_COM_*_INDEX is the interchain comunicator
+ ! PAR_COM_*_A2A   is the intrachain comunicator
  !
  ! ... World
  type(MPI_comm),SAVE :: PAR_COM_WORLD

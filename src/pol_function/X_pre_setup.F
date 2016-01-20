@@ -23,10 +23,10 @@
 !
 subroutine X_pre_setup(Xen,X)
  !
- use X_m,           ONLY:X_t,use_X_DbGd,x_dbgd_nkpts
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts
  use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
- use com,           ONLY:warning
+ use com,           ONLY:error
  use R_lattice,     ONLY:nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
  !
@@ -88,6 +88,11 @@ subroutine X_pre_setup(Xen,X)
  ! Transfer the GF's ordering 
  !
  if ( associated(Xen%GreenF).and.     Xen%GreenF_is_causal ) X%ordering='c'
- if ( associated(Xen%GreenF).and..not.Xen%GreenF_is_causal ) X%ordering='t'
+ if ( associated(Xen%GreenF).and..not.Xen%GreenF_is_causal ) then
+   if ( .not.(Finite_Tel.or.l_rt_carriers_in_use) ) X%ordering='t'
+   if (      (Finite_Tel.or.l_rt_carriers_in_use) ) then
+     call error('Fractional occupations but GF is not retarded (causal in yambo language)')
+   endif 
+endif
  !
 end subroutine

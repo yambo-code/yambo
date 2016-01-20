@@ -41,7 +41,7 @@ integer function variables_RT(ID,local_description,what)
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
-&                         variable_is_found
+&                         variable_is_found,read_is_on
  !
  implicit none
  !
@@ -49,7 +49,7 @@ integer function variables_RT(ID,local_description,what)
  character(lchlen)  ::local_description(100)
  character(*)       ::what
  !
- integer               :: i1,i_desc,i_dummy,RT_diagonalization_steps
+ integer               :: i1,i_desc,i_dummy,RT_diagonalization_steps,SIZE_
  logical               :: l_J,l_G,l_carriers,l_NE_with_fields_disk,l_MP,l_RT_diagonalize,l_RT_diamagnetic
  real(SP)              :: RT_life_interp_decay_time
  character(lchlen)     :: ch
@@ -277,14 +277,31 @@ integer function variables_RT(ID,local_description,what)
        call io_elemental(ID,CH0=Efield(i1)%ef_name, &
 &        VAR=' [FIELDs] Type                   :',CHECK=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
-       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        !
-       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=10,MENU=0)
+       if( ver_is_gt_or_eq(ID,revision=5232) ) then
+         call io_elemental(ID,VAR="FIELD_POL"//trim(intc(i1)),CH0="",VAR_SZ=1,MENU=0)
+         i_desc=i_desc+1
+         call io_elemental(ID,CH0=Efield(i1)%ef_pol, &
+&          VAR=' [FIELDs] Polarization           :',CHECK=.true.,OP=(/"=="/),&
+&          DESCRIPTION=local_description(i_desc))
+         call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+       else if(read_is_on(ID)) then
+         Efield(i1)%ef_pol="linear"
+       endif
        !
+       SIZE_=10
+       if( ver_is_gt_or_eq(ID,revision=5232) ) SIZE_=13
+       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=SIZE_,MENU=0)
        i_desc=i_desc+1
        call io_elemental(ID,R1=Efield(i1)%versor,WARN=.true., &
 &        VAR=" [FIELDs] Versor                 :",OP=(/"==","==","=="/),&
 &        DESCRIPTION=local_description(i_desc))
+       if( ver_is_gt_or_eq(ID,revision=5232) ) then
+         i_desc=i_desc+1
+         call io_elemental(ID,R1=Efield(i1)%versor_circ,WARN=.true., &
+&          VAR=" [FIELDs] Versor_circ            :",OP=(/"==","==","=="/),&
+&          DESCRIPTION=local_description(i_desc))
+       endif
        i_desc=i_desc+1
        call io_elemental(ID,&
 &        VAR=" [FIELDs] Intensity      [kWCMm2]:",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&

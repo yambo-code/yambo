@@ -27,15 +27,15 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
- use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,integrating_over_q
+ use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index, &
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
-&                        IO_and_Messaging_switch,io_RESPONSE,NONE
+ use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,&
+&                        IO_and_Messaging_switch,io_RESPONSE
  use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
@@ -110,7 +110,17 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
+ ! X%ngostnts is defined in DIPOLE_driver. WhenIt may happen that this is called only for the group of CPU's that eval q=1. 
+ ! To avoid erroneous errors in the VERIFY mode this value must be spread to all CPUs before doing the IO of the header
+ !
+ if (l_life.and.X%iq(1)>1) then
+   call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
+ endif
+ !
  if (io_RESPONSE) then
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
+   i_err=io_X(X,Xw,Xdb)
    !
    do iq=X%iq(1),X%iq(2)
      !
@@ -126,12 +136,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        Xw%er=minmax_ehe
      endif
      !
-     if (iq==1) then
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=Xdb)
-     else
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
-     endif
-     !
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
      io_X_done(iq)=io_X(X,Xw,Xdb)
      !
    enddo
@@ -174,7 +179,14 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  endif
  !
- integrating_over_q=.true.
+ ! As we are cycling over the q-points the screened interaction evaluated here is supposed
+ ! to be used as an integrand. Some procedures (like the DbGd) changes accordingly.
+ !
+ X_is_evaluated_for_all_Qs=.true.
+ !
+ ! Only the head of each q group writes the IO
+ !
+ call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
  !
  do iq=X%iq(1),X%iq(2)
    !
@@ -192,7 +204,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
    endif
    !
-   if (     io_X_done(iq)>0) cycle
+   if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
    iq_mem=PAR_Q_index(iq)
@@ -207,23 +219,13 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
-   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+   ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
+   ! be re-initialized for all the cpus
    !
-   if ( (iq==X%iq(1).and..not.l_life) .or. (iq==1.and.l_life) ) then
-     !
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
-     !
-   else
-     !
-     ! Only the cpus that write the q=1 component knows the value of ng_db this must 
-     ! be initialized for all the cpus
-     !
-     X%ng_db=X%ng
-     !
-     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
-     !
-   endif
+   X%ng_db=X%ng
    !
+   if (iq==1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
+   if (iq> 1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)
@@ -238,12 +240,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  enddo
  !
- integrating_over_q=.false.
- !
- ! X%ngostnts is defined only for the group of CPU's that
- ! eval q=1 and must be spread to all CPUs to allow futrher I/O
- !
- call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
+ X_is_evaluated_for_all_Qs=.false.
  !
  ! CLEAN (2)
  !

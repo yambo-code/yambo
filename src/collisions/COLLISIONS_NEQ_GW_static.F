@@ -25,7 +25,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! NEQ GW collisions 
  !
- use pars,          ONLY:SP,pi,schlen,rZERO
+ use pars,          ONLY:SP,pi,rZERO
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin
@@ -71,7 +71,6 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  type(elemental_collision)::isc,iscp
  integer          ::io_err,ID
  integer, external::io_X
- character(schlen)::ch
  complex(SP)      ::local_rhotw(X%ng),pre_factor
  !
  ! Reset...
@@ -173,7 +172,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
        !
        ! Poles and Residuals
        !
-       forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1.
+       forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1._SP
        !
 !$omp parallel do default(shared), private(i1,i2)
        do i1=1,X%ng

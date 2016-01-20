@@ -61,42 +61,48 @@ FCFLAGS="$FCFLAGS_LIBXC $acx_libxc_save_FCFLAGS"
 
 # set from environment variable, if not blank
 if test ! -z "$LIBS_LIBXC"; then
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
+dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # set from --with-libxc-libs flag
 if test x"$acx_libxc_ok" = xno && test ! -z "$with_libxc_libs" ; then
   LIBS_LIBXC="$with_libxc_libs"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
+dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # static linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
   LIBS_LIBXC="$libxc_libdir/libxcf90.a $libxc_libdir/libxc.a"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
+dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
   LIBS_LIBXC="-L$libxc_libdir -lxcf90 -lxc"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
+dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # static linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
   LIBS_LIBXC="$libxc_libdir/libxc.a"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
+dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # dynamic linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
   LIBS_LIBXC="-L$libxc_libdir -lxc"
-  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  LIBS="$LIBS_LIBXC"
+dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 

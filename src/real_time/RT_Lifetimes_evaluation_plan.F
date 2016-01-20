@@ -26,7 +26,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  ! Here I define the components of an integer array RT_TIME_status(NE_steps)
  !
  use pars,           ONLY:IP2,SP
- use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
+ use fields,         ONLY:Efield,ext_field,Efield_duplicate!,small_a
  use memory_m,       ONLY:mem_est
  use rt_ctl,         ONLY:it_start
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_steps,&
@@ -79,21 +79,23 @@ integer function RT_Lifetimes_evaluation_plan( )
  weight=1._SP
  it_0=1
  !
- if (trim(RT_life_interp_KIND)=="FIELD") then
-   call Efield_duplicate(Efield(i_Pump),E_dummy)
-   if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
-   do it=1,NE_steps
-     TIME=cmplx(RT_step*(it-1)-Efield(i_Pump)%t_initial_indx*RT_step,0._SP)
-     weight(it)=abs(small_a(TIME,E_dummy,1))**2
-     if (abs(weight(it)-1.)<1.E-7) it_0=it
-     if (it>Efield(i_Pump)%t_final_indx) then
-       !
-       it_0=it
-       weight(it+1:)=weight(it)
-       exit
-     endif
-   enddo
- endif
+ ! DS: Broken. It never worked anyway
+ !
+ !if (trim(RT_life_interp_KIND)=="FIELD") then
+ !  call Efield_duplicate(Efield(1),E_dummy)
+ !  if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
+ !  do it=1,NE_steps
+ !    TIME=cmplx(RT_step*(it-1)-Efield(1)%t_initial_indx*RT_step,0._SP)
+ !    !weight(it)=abs(small_a(TIME,E_dummy,1))**2
+ !    if (abs(weight(it)-1.)<1.E-7) it_0=it
+ !    if (it>Efield(1)%t_final_indx) then
+ !      !
+ !      it_0=it
+ !      weight(it+1:)=weight(it)
+ !      exit
+ !    endif
+ !  enddo
+ !endif
  !
  if (it_start> 1) then
    N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it_start+1)/RT_step)

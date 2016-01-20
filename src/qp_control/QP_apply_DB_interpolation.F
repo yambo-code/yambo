@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
+subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
 &                                    DB_corrected,n_neigh)
  !
  ! Extend the QP correction from the kpt in qp to the kpt in k
  ! Requires qp%nk, qp%k, qp%table, qp%n_states, qp%E, qp%E_bare, qp%Z
  !
- ! l_plan_todo_EWZI=( E W Z Interp )
+ ! do_EWZ_using_Ik_IE=( E W Z Interp/k Interp/E )
  !
  ! Note that as output of this routine W is positive(negative) above(below) the Fermi level. 
  ! This is true both at zero and finite temperature. Indeed also at finite temperature
@@ -46,8 +46,8 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  type(levels)::en
  type(QP_t)  ::qp
  type(bz_samp)::k
- integer :: n_neigh,band_range(2),DB_corrected(en%nb,en%nk,n_sp_pol)
- logical :: l_plan_todo_EWZI(5),wrong_width_sign_warn
+ integer :: n_neigh,band_range(2),DB_corrected(en%nb,en%nk,n_sp_pol),DB_band_range(2)
+ logical :: do_EWZ_using_Ik_IE(5),wrong_width_sign_warn
  !
  ! Work Space
  !
@@ -67,7 +67,12 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  nk_interpolated=0
  nk_exact=0
  !
- if (l_plan_todo_EWZI(4)) then
+ ! BUG fix by AM, 5/1/2016: as the Nearest_kpt_interpolation fills Valo in the band_range 
+ ! we need to find the bands limits of the QP states in order to use only states that fall in this range.
+ !
+ DB_band_range=(/minval(qp%table(:,1)),maxval(qp%table(:,1))/)
+ !
+ if (do_EWZ_using_Ik_IE(4)) then
    !
    ! Nearest K-point interpolation
    !===============================
@@ -79,7 +84,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
    !
    call QP_transfer('appl')
    !
- else if (l_plan_todo_EWZI(5)) then
+ else if (do_EWZ_using_Ik_IE(5)) then
    !
    ! Nearest Level interpolation
    !===============================
@@ -91,14 +96,14 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
          call Nearest_level_interpolation(En%Eo(iband,ik,i_spin)-minval(En%Eo(:,:,:)),&
 &                                         qp%E_bare(:),qp%n_states,1,ib_ref,ik_ref,.TRUE.)
          !
-         if (l_plan_todo_EWZI(1)) then
+         if (do_EWZ_using_Ik_IE(1)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
            en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+real(qp%E(ib_ref))-qp%E_bare(ib_ref)
            DB_corrected(iband,ik,i_spin)=1
            en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+1
          endif
          !
-         if (l_plan_todo_EWZI(2)) then
+         if (do_EWZ_using_Ik_IE(2)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
            if (real(qp%E_bare(ib_ref))>0..and.aimag(qp%E(ib_ref))>0) then
              if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
@@ -111,7 +116,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
            en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+2
          endif
          !
-         if (l_plan_todo_EWZI(3)) then
+         if (do_EWZ_using_Ik_IE(3)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
            en%Z(iband,ik,i_spin)=qp%Z(ib_ref)
            DB_corrected(iband,i1,i_spin)=1
@@ -124,7 +129,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
    !
  endif
  !
- if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) l_plan_todo_EWZI(:3)=.false.
+ if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) do_EWZ_using_Ik_IE(:3)=.false.
  !
  QP_ctl_applied=.true.
  !
@@ -143,24 +148,24 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
        case('init')
          !
          N_val_to_int=0
-         if(l_plan_todo_EWZI(1)) N_val_to_int=N_val_to_int+1
-         if(l_plan_todo_EWZI(2)) N_val_to_int=N_val_to_int+1
-         if(l_plan_todo_EWZI(3)) N_val_to_int=N_val_to_int+2
+         if(do_EWZ_using_Ik_IE(1)) N_val_to_int=N_val_to_int+1
+         if(do_EWZ_using_Ik_IE(2)) N_val_to_int=N_val_to_int+1
+         if(do_EWZ_using_Ik_IE(3)) N_val_to_int=N_val_to_int+2
          !
          allocate(Vali(qp%n_states,N_val_to_int))
          allocate(Valo(band_range(1):band_range(2),k%nibz,n_sp_pol,N_val_to_int))
          Valo=0._SP
          !
          i1=0
-         if(l_plan_todo_EWZI(1)) then
+         if(do_EWZ_using_Ik_IE(1)) then
            i1=i1+1
            Vali(:,i1)=real(qp%E(:)-qp%E_bare(:))
          endif
-         if(l_plan_todo_EWZI(2)) then
+         if(do_EWZ_using_Ik_IE(2)) then
            i1=i1+1
            Vali(:,i1)=aimag(qp%E(:))
          endif
-         if(l_plan_todo_EWZI(3)) then
+         if(do_EWZ_using_Ik_IE(3)) then
            i1=i1+2
            Vali(:,i1-1)= real(qp%Z(:))
            Vali(:,i1  )=aimag(qp%Z(:))
@@ -171,8 +176,11 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
          do ik=1,k%nibz
            do iband=band_range(1),band_range(2)
              !
+             if (iband<DB_band_range(1)) cycle
+             if (iband>DB_band_range(2)) cycle
+             !
              i1=0
-             if(l_plan_todo_EWZI(1)) then
+             if(do_EWZ_using_Ik_IE(1)) then
                i1=i1+1
                do i_spin=1,n_sp_pol
                  if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
@@ -181,7 +189,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
                  en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+1
                enddo
              endif
-             if(l_plan_todo_EWZI(2)) then
+             if(do_EWZ_using_Ik_IE(2)) then
                i1=i1+1
                do i_spin=1,n_sp_pol
                  if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
@@ -196,7 +204,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
                  en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+2
                enddo
              endif
-             if(l_plan_todo_EWZI(3)) then
+             if(do_EWZ_using_Ik_IE(3)) then
                i1=i1+2
                do i_spin=1,n_sp_pol
                  if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle

@@ -41,7 +41,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
 &                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
 &                         RT_H_occupations,RT_delta0_occupations,l_RT_HEUN,       &
 &                         integrator_step,RT_nk,l_RT_induced_field,NE_i_time
- use fields,         ONLY:gauge_field,Efield,i_Probe,Efield
+ use fields,         ONLY:gauge_field,Efield,Efield
  use electrons,      ONLY:levels,spin_occ
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -79,7 +79,15 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
    call RT_update_occ(dG1)
    !
-   if (l_NE_with_fields) call RT_propagate_fields(k,E,A_out,A_in,Time+T_step/2._SP,T_step/2._SP)
+   ! Recalculate the field, the polarization and then the current at t+dt/2
+   !
+   if (l_NE_with_fields) then
+     !
+     call RT_current_AND_polarization(k,E,dG1,A_out) 
+     !
+     call RT_propagate_fields(k,E,A_out,A_in,Time+T_step/2._SP,T_step/2._SP)
+     !
+   endif
    !
    ! Recalculate I1(t+dt/2) and I2(t+dt/2) using  G(t+dt/2) 
    !
@@ -103,7 +111,15 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
    call RT_update_occ(dG1)
    !
-   if (l_NE_with_fields) call RT_propagate_fields(k,E,A_out,A_in,Time+T_step,T_step)
+   ! Recalculate the field, the polarization and then the current at t+dt
+   !
+   if (l_NE_with_fields) then
+     !
+     call RT_current_AND_polarization(k,E,dG1,A_out)
+     !
+     call RT_propagate_fields(k,E,A_out,A_in,Time+T_step,T_step)
+     !
+   endif
    !
    ! Recalculate I1(t+dt) and I2(t+dt) using  G(t+dt) 
    !
@@ -271,7 +287,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
        !
        do ib=SC_bands(1),SC_bands(2)
          !
-         RT_E_occupations(ib,ik)= aimag(G_inonly(ib,ib,ik))+            aimag(G_lesser_reference(ib,ib,ik))
+         RT_E_occupations(ib,ik)= aimag(G_inonly(ib,ib,ik))+aimag(G_lesser_reference(ib,ib,ik))
          !
          ! AM, July 2015. Intel compilers nest in ordered way the mathematical parenthesis. By using 
          ! df_H this problem is solved.

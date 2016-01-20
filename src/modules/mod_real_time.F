@@ -39,8 +39,6 @@ module real_time
  logical           :: l_NE_dynamics  
  logical           :: l_NE_with_fields
  logical           :: l_NE_simulate_Irredux
- logical           :: l_RT_probe
- logical           :: l_RT_pump_and_probe
  logical           :: l_Dynamics_is_over  
  !
  ! Evaluation logicals
@@ -94,12 +92,14 @@ module real_time
  !--------------------------------
  !
  complex(SP) :: RT_ind_J(3)
+ complex(SP) :: RT_ind_J_prev(3)
  !
  ! ... and polarization ...
  !
  ! the calculated one ...
  !
  complex(SP) :: RT_P(3)
+ complex(SP) :: RT_P_prev(3)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -273,7 +273,7 @@ module real_time
  !
  complex(SP), allocatable :: XC0_and_HARTREE0(:,:,:,:)
  !
- ! TD-ABS and RT-BSE
+ ! TD-ABS and RT-BSE [yambo]
  !
  character(schlen)       :: RT_ctl_db(3)
  !

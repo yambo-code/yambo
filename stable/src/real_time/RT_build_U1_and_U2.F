@@ -1,0 +1,76 @@
+!
+! Copyright (C) 2000-2016 C. Attaccalite and the YAMBO team 
+!              http://www.yambo-code.org
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine RT_build_U1_and_U2(ik,U1_k,U2_k,dT)
+  !
+  use pars,           ONLY:SP,cZERO,cONE,cI
+  use real_time,      ONLY:Ho_plus_Sigma
+  use SC,             ONLY:SC_bands,SC_nbands
+  use wrapper,        ONLY:M_by_M
+  implicit none
+  !
+  integer, intent(in)     :: ik
+  complex(SP), intent(out) :: U1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+  complex(SP), intent(out) :: U2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+  real(SP),    intent(in)  :: dT
+  !
+  complex(SP)  :: M_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+  complex(SP)  :: M2_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+  complex(SP)  :: idT
+  integer :: i1
+  !
+  U1_k=cZERO
+  U2_k=cZERO
+  idT =-cI*dT
+  !
+  ! Taylor expantion
+  !
+  ! U(t) = exp(H * t) = 1 + (Ht) + (Ht)^2/2! + (Ht)^3/3! + (Ht)^4/4! + O(Ht^5)
+  !
+  do i1=SC_bands(1),SC_bands(2)
+    U1_k(i1,i1)=cONE
+    U2_k(i1,i1)=cONE
+  enddo
+  !
+  U1_k=U1_k+idT*Ho_plus_Sigma(:,:,ik,1)
+  U2_k=U2_k-idT*Ho_plus_Sigma(:,:,ik,1)
+  !
+  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),Ho_plus_Sigma(:,:,ik,1),M_tmp)
+  !
+  U1_k=U1_k+idT**2*M_tmp/2._SP
+  U2_k=U2_k+idT**2*M_tmp/2._SP
+  !
+  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M_tmp,M2_tmp)
+  !
+  U1_k=U1_k+idT**3*M2_tmp/6._SP
+  U2_k=U2_k-idT**3*M2_tmp/6._SP
+  !
+  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M2_tmp,M_tmp)
+  !
+  U1_k=U1_k+idT**4*M_tmp/24._SP
+  U2_k=U2_k+idT**4*M_tmp/24._SP
+  !
+  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M_tmp,M2_tmp)
+  !
+  U1_k=U1_k+idT**5*M2_tmp/120._SP
+  U2_k=U2_k-idT**5*M2_tmp/120._SP
+  !
+end subroutine RT_build_U1_and_U2

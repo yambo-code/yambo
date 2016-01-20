@@ -1,0 +1,14 @@
+
+How to create patches based on a branch for the trunk
+=====================================================
+
+svn diff svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/branches/devel-andrea > PATCH
+
+
+How to update the branch incorporating previous commits of the trunk
+====================================================================
+
+svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk -r xxx:HEAD 
+
+where xxx is the revision of the trunk to which the branch was previously syncronized. Note that the inital
+one, for who never updated the branch, is the 1011.

@@ -1,0 +1,15 @@
+ELPH_objects =
+#if defined _ELPH 
+ELPH_objects = ELPH_Sigma_c.o
+#endif
+#if defined _SC
+SC_objects = QP_load_SC_xc.o \
+             COLLISIONS_IO_eval.o   COLLISIONS_IO_store.o \
+             COLLISIONS_IO_compose.o
+#endif
+objs = QP_driver.o QP_newton.o QP_ppa_cohsex.o QP_ppa_EET_terminator.o \
+       QP_secant.o QP_real_axis.o QP_W2Sc.o QP_life_transitions.o secant.o bracket.o \
+       $(ELPH_objects) \
+       QP_descriptions.o QP_report_and_write.o  \
+       QP_Green_Function.o QP_of.o \
+       XCo_driver.o XCo_Hartree_Fock.o XCo_local.o $(SC_objects)

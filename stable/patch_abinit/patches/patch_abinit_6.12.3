@@ -1,0 +1,218 @@
+Index: original_files/m_commutator_vkbr.F90
+===================================================================
+--- original_files/m_commutator_vkbr.F90	(revision 2036)
++++ original_files/m_commutator_vkbr.F90	(working copy)
+@@ -1048,10 +1048,11 @@
+  ! in order to support pseudos with more than projector.
+  ! Moreover they should be calculated on-the-fly using calc_vkb
+  ! For the moment, we opt for a quick an dirty implementation.
+- ABI_ALLOCATE(vkbsign,(Psps%mpsang,Cryst%ntypat))
+- ABI_ALLOCATE(vkb ,(npwwfn,Cryst%ntypat,Psps%mpsang))
++
++ ABI_ALLOCATE(vkbsign,(Psps%lmnmax,Cryst%ntypat))
++ ABI_ALLOCATE(vkb ,(npwwfn,Cryst%ntypat,Psps%lmnmax))
+  istat = ABI_ALLOC_STAT
+- ABI_ALLOCATE(vkbd,(npwwfn,Cryst%ntypat,Psps%mpsang))
++ ABI_ALLOCATE(vkbd,(npwwfn,Cryst%ntypat,Psps%lmnmax))
+  istat = ABI_ALLOC_STAT
+ 
+  call calc_vkb(Psps,kpoint,npwwfn,gvec,Cryst%rprimd,vkbsign,vkb,vkbd)
+@@ -1390,13 +1391,13 @@
+ !arrays
+  integer,intent(in) :: kg_k(3,npw_k)
+  real(dp),intent(in) :: kpoint(3),rprimd(3,3)
+- real(dp),intent(out) :: vkb (npw_k,Psps%ntypat,Psps%mpsang)
+- real(dp),intent(out) :: vkbd(npw_k,Psps%ntypat,Psps%mpsang)
+- real(dp),intent(out) :: vkbsign(Psps%mpsang,Psps%ntypat)
+-
++ real(dp),intent(out) :: vkb (npw_k,Psps%ntypat,Psps%lmnmax)
++ real(dp),intent(out) :: vkbd(npw_k,Psps%ntypat,Psps%lmnmax)
++ real(dp),intent(out) :: vkbsign(Psps%lmnmax,Psps%ntypat)
++ 
+ !Local variables ------------------------------
+ !scalars
+- integer :: dimffnl,ider,idir,itypat,nkpg,il0,in
++ integer :: dimffnl,ider,idir,itypat,nkpg,il0,in,ispin,im,iln,ilm
+  integer :: il,ilmn,ig,is
+  real(dp) :: ucvol,effmass,ecutsm,ecut
+ !arrays
+@@ -1416,14 +1417,8 @@
+  ! === Save KB dyadic sign (integer-valued) ===
+  vkbsign=zero
+  do itypat=1,Psps%ntypat
+-   il0=0 
+    do ilmn=1,Psps%lmnmax
+-     il=1+Psps%indlmn(1,ilmn,itypat)
+-     in=Psps%indlmn(3,ilmn,itypat)
+-     if (il/=il0 .and. in==1) then
+-       il0=il
+-       vkbsign(il,itypat)=DSIGN(one,Psps%ekb(ilmn,itypat))
+-     end if
++     vkbsign(ilmn,itypat)=DSIGN(one,Psps%ekb(ilmn,itypat))
+    end do
+  end do
+ 
+@@ -1466,38 +1461,33 @@
+  vkb=zero; vkbd=zero
+ 
+  do is=1,Psps%ntypat
+-   il0=0
+    do ilmn=1,Psps%lmnmax
+      il=1+Psps%indlmn(1,ilmn,is)
+-     in=Psps%indlmn(3,ilmn,is)
+-     if ((il/=il0).and.(in==1)) then
+-       il0=il
+        if (ABS(Psps%ekb(ilmn,is))>1.0d-10) then
+          if (il==1) then
+-           vkb (1:npw_k,is,il) = ffnl(:,1,ilmn,is)
+-           vkbd(1:npw_k,is,il) = ffnl(:,2,ilmn,is)*modkplusg(:)/two_pi
++           vkb (1:npw_k,is,ilmn) = ffnl(:,1,ilmn,is)
++           vkbd(1:npw_k,is,ilmn) = ffnl(:,2,ilmn,is)*modkplusg(:)/two_pi
+          else if (il==2) then
+-           vkb(1:npw_k,is,il)  = ffnl(:,1,ilmn,is)*modkplusg(:)
++           vkb(1:npw_k,is,ilmn)  = ffnl(:,1,ilmn,is)*modkplusg(:)
+            do ig=1,npw_k
+-             vkbd(ig,is,il) = ((ffnl(ig,2,ilmn,is)*modkplusg(ig)*modkplusg(ig))+&
++             vkbd(ig,is,ilmn) = ((ffnl(ig,2,ilmn,is)*modkplusg(ig)*modkplusg(ig))+&
+ &             ffnl(ig,1,ilmn,is) )/two_pi
+            end do
+          else if (il==3) then
+-           vkb (1:npw_k,is,il) =  ffnl(:,1,ilmn,is)*modkplusg(:)**2
+-           vkbd(1:npw_k,is,il) = (ffnl(:,2,ilmn,is)*modkplusg(:)**3+&
++           vkb (1:npw_k,is,ilmn) =  ffnl(:,1,ilmn,is)*modkplusg(:)**2
++           vkbd(1:npw_k,is,ilmn) = (ffnl(:,2,ilmn,is)*modkplusg(:)**3+&
+ &           2*ffnl(:,1,ilmn,is)*modkplusg(:) )/two_pi
+          else if (il==4) then
+-           vkb (1:npw_k,is,il) =  ffnl(:,1,ilmn,is)*modkplusg(:)**3
+-           vkbd(1:npw_k,is,il) = (ffnl(:,2,ilmn,is)*modkplusg(:)**4+&
++           vkb (1:npw_k,is,ilmn) =  ffnl(:,1,ilmn,is)*modkplusg(:)**3
++           vkbd(1:npw_k,is,ilmn) = (ffnl(:,2,ilmn,is)*modkplusg(:)**4+&
+ &           3*ffnl(:,1,ilmn,is)*modkplusg(:)**2 )/two_pi
+          end if
+-         vkb (:,is,il) = SQRT(4*pi/ucvol*(2*il-1)*ABS(Psps%ekb(ilmn,is)))*vkb (:,is,il)
+-         vkbd(:,is,il) = SQRT(4*pi/ucvol*(2*il-1)*ABS(Psps%ekb(ilmn,is)))*vkbd(:,is,il)
++         vkb (:,is,ilmn) = SQRT(4*pi/ucvol*(2*il-1)*ABS(Psps%ekb(ilmn,is)))*vkb (:,is,ilmn)
++         vkbd(:,is,ilmn) = SQRT(4*pi/ucvol*(2*il-1)*ABS(Psps%ekb(ilmn,is)))*vkbd(:,is,ilmn)
+        else
+-         vkb (:,is,il)=zero
+-         vkbd(:,is,il)=zero
++         vkb (:,is,ilmn)=zero
++         vkbd(:,is,ilmn)=zero
+        end if
+-     end if
+    end do
+  end do
+ 
+Index: original_files/m_io_kss.F90
+===================================================================
+--- original_files/m_io_kss.F90	(revision 2036)
++++ original_files/m_io_kss.F90	(working copy)
+@@ -848,7 +848,12 @@
+    title='Results from ABINIT code';          write(kss_unt) title(1:80)
+    title='Ab-initio plane waves calculation'; write(kss_unt) title(1:80)
+ 
+-   write(kss_unt) nsym2,nbandksseff,kss_npw,ishm,Psps%mpsang ! To be modified to deal with more than one projector
++   write(kss_unt) nsym2,nbandksseff,kss_npw,-1  ,Psps%lmnmax
++   write(kss_unt) Psps%mpsang,MAXVAL(my_Hdr%pspso(:)),Dtset%nspden
++   write(kss_unt) ((Psps%indlmn(1,ilmn,itypat),ilmn=1,Psps%lmnmax),itypat=1,Psps%ntypat)
++   write(kss_unt) ((Psps%indlmn(3,ilmn,itypat),ilmn=1,Psps%lmnmax),itypat=1,Psps%ntypat)
++   write(kss_unt) ((Psps%indlmn(6,ilmn,itypat),ilmn=1,Psps%lmnmax),itypat=1,Psps%ntypat)
++
+    write(kss_unt) (((symrel2(ii,jj,kk),ii=1,3),jj=1,3),kk=1,nsym2)
+    write(kss_unt) ((tnons2(ii,kk),ii=1,3),kk=1,nsym2)
+    write(kss_unt) ((gbig(ii,ig),ii=1,3),ig=1,kss_npw)
+@@ -858,20 +863,14 @@
+    ! FIXME : only one projector in each angular is treated.
+    ! Moreover the allocation is done in the wrong order for dimensions...
+    if (Psps%usepaw==0) then
+-     ABI_ALLOCATE(vkbsign,(Psps%ntypat,Psps%mpsang))
++     ABI_ALLOCATE(vkbsign,(Psps%ntypat,Psps%lmnmax)); vkbsign(:,:)=zero
+      vkbsign(:,:)=zero
+      do itypat=1,Psps%ntypat
+-       il0=0
+        do ilmn=1,Psps%lmnmax
+-         il=1+Psps%indlmn(1,ilmn,itypat)
+-         in=Psps%indlmn(3,ilmn,itypat)
+-         if (il/=il0 .and. in==1) then
+-           il0=il
+-           vkbsign(itypat,il)=DSIGN(one,Psps%ekb(ilmn,itypat))
+-         end if
++         vkbsign(itypat,ilmn)=DSIGN(one,Psps%ekb(ilmn,itypat))
+        end do
+      end do
+-     write(kss_unt) ((vkbsign(itypat,il),il=1,Psps%mpsang),itypat=1,Psps%ntypat)
++     write(kss_unt) ((vkbsign(itypat,ilmn),ilmn=1,Psps%lmnmax),itypat=1,Psps%ntypat)
+      ABI_DEALLOCATE(vkbsign)
+    end if
+ 
+@@ -1242,7 +1241,7 @@
+ 
+ !Local variables-------------------------------
+ !scalars
+- integer :: istat,itypat,il,ig,mpsang,ntypat
++ integer :: istat,itypat,il,ig,mpsang,ntypat,ilmn,lmnmax
+  character(len=500) :: msg
+ !array
+  real(dp),allocatable :: vkb(:,:,:),vkbd(:,:,:)
+@@ -1258,12 +1257,13 @@
+ 
+  mpsang = Psps%mpsang
+  ntypat = Psps%ntypat
++ lmnmax = Psps%lmnmax
+ 
+- ABI_ALLOCATE(vkb ,(kss_npw,ntypat,mpsang))
++ ABI_ALLOCATE(vkb ,(kss_npw,ntypat,lmnmax))
+  istat = ABI_ALLOC_STAT
+- ABI_ALLOCATE(vkbd,(kss_npw,ntypat,mpsang))
++ ABI_ALLOCATE(vkbd,(kss_npw,ntypat,lmnmax))
+  istat = ABI_ALLOC_STAT
+- ABI_ALLOCATE(dum_vkbsign,(ntypat,mpsang))
++ ABI_ALLOCATE(dum_vkbsign,(ntypat,lmnmax))
+ 
+  call calc_vkb(Psps,kpoint,kss_npw,gbig,rprimd,dum_vkbsign,vkb,vkbd)
+  ABI_DEALLOCATE(dum_vkbsign)
+@@ -1272,11 +1272,11 @@
+ 
+  CASE (IO_MODE_FORTRAN)
+   do itypat=1,ntypat
+-    do il=1,mpsang
++    do ilmn=1,lmnmax
+       !write(kss_unt) (vkb (trsl(ig),itypat,il),ig=1,kss_npw)
+       !write(kss_unt) (vkbd(trsl(ig),itypat,il),ig=1,kss_npw)
+-      write(kss_unt) (vkb (ig,itypat,il),ig=1,kss_npw)
+-      write(kss_unt) (vkbd(ig,itypat,il),ig=1,kss_npw)
++      write(kss_unt) (vkb (ig,itypat,ilmn),ig=1,kss_npw)
++      write(kss_unt) (vkbd(ig,itypat,ilmn),ig=1,kss_npw)
+     end do
+   end do
+ 
+Index: original_files/outkss.F90
+===================================================================
+--- original_files/outkss.F90	(revision 2036)
++++ original_files/outkss.F90	(working copy)
+@@ -310,22 +310,11 @@
+    MSG_WARNING(msg)
+    ierr=ierr+1
+  end if
+-!* Check spin-orbit
+- if (Psps%mpssoang/=mpsang) then
+-   write(msg,'(3a)')&
+-&   ' Variable mpspso should be 1 !',ch10,&
+-&   ' Program does not stop but _KSS file will not be created...'
+-   MSG_WARNING(msg)
+-   ierr=ierr+1
+- end if
+-!* Check mproj
+  mproj=MAXVAL(Psps%indlmn(3,:,:))
+- if (mproj>1.and.Psps%usepaw==0) then ! TODO One has to deriver the expression for [Vnl,r], in particular HGH and GTH psps
+-   write(msg,'(8a)')ch10,&
++ if (mproj>1.and.Psps%usepaw==0) then
++   write(msg,'(4a)')ch10,&
+ &   ' outkss : COMMENT - ',ch10,&
+-&   ' At least one NC pseudopotential has more that one projector per angular channel',ch10,&
+-&   ' Note that inclvkb==0 should be used in screening, since the evaluation of the commutator',ch10,&
+-&   ' for this particular case is not implemented yet'
++&   ' At least one NC pseudopotential has more that one projector per angular channel'
+    call wrtout(std_out,msg,'COLL') ; call wrtout(ab_out,msg,'COLL')
+  end if
+ !* Check max angular momentum

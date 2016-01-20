@@ -1,0 +1,10 @@
+
+To create the Yambo databases install NETCDF on your
+computer and locate the ncgen executable.
+
+Then, simply, enter the SAVE folder and type
+
+> gunzip database_DB1_NETCDF_format.gz
+> ncgen -o ns.db1 database_DB1_NETCDF_format
+> gunzip database_WF_NETCDF_format.gz
+> ncgen -o ns.wf database_WF_NETCDF_format

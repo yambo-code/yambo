@@ -1,0 +1,9 @@
+In the "original files" repository dir there are the abinit files of the last revision which have to be patched.
+In the "patches" repository dir there are the patches for all the versions.
+
+Suppose that I have the patched files for version 6.12.3 and I want to prepare the patched file for version 7.1, then I can do the following steps:
+1) I go in the original files dir, where I have abinit 6.12.3 files (i.e. revision 9).
+   I copy the abinit 7.1 files and commit (revision 10).
+2) I do "svn up --revision=9"
+3) I copy the patched abinit 6.12.3 files and I do again svn up.
+4) Finally with svn diff I create the patch and with svn revert I restor the repository to the older version

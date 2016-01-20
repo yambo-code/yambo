@@ -24,15 +24,9 @@
 subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,cZERO,rZERO
- use units,               ONLY:SPEED_OF_LIGHT,HA2EV
+ use units,               ONLY:SPEED_OF_LIGHT
  use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr
  use electrons,           ONLY:levels,spin_occ
- !
- ! Double Grid
- !
- use electrons,           ONLY:BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
-                               BZ_DbGd_ipol_weight,BZ_DbGd_kpts
- !
  use D_lattice,           ONLY:DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
@@ -65,14 +59,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_n,i_G0,i_c,i_cp,i_g,i_m
  complex(SP)               ::P(3)
  real(SP)                  ::Photon_E,T_matrix(3,3),T_vec(3),E_diff,Photon_Gamma_E,f_k,f_k_m_q,&
-&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0_squared
+&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0_squared,q_treshold
  real(SP),    allocatable  ::q_weight_power_1(:),q_weight_power_2(:)
  type(elemental_collision) ::I,I_grad_k,I_grad_p
- logical                   ::l_zero_delta_E,l_SI_term,use_the_DbGd
+ logical                   ::l_zero_delta_E,l_SI_term
  !
  ! Prefactors
  !
- real(SP)                  ::C_G_finite,C_G_eq_0_finite_E,C_G_eq_0_null_E,FRACTION(2),C_GQ_eq_0
+ real(SP)                  ::C_G_finite,C_G_eq_0_finite_E,C_G_eq_0_null_E,FRACTION(2)
  !
  if (l_elel_corr.or.l_elph_corr) then
    call section('+','Correlation: Photon-mediated Self-energy')
@@ -97,12 +91,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
  R0_squared=(3.*RL_vol/nqbz/4./pi)**(2./3.) ! the radius for the sum at Q=0
  !
  call k_ibz2bz(q,'c',.TRUE.)
- !
- ! DbGd
- !======
- !
- use_the_DbGd=BZ_DbGd_nbands>=QP_n_G_bands(2)
- write (*,*) use_the_DbGd
  !
  ! PARALLEL distribution
  !=======================
@@ -156,10 +144,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !We distinguish 3 cases: 
  !
  ! i)   G !=0, prefactor=pi/2/DL_vol/Nq
- ! ii)  G=0 and e_{nk} - e_{mk-q} !=0, prefactor=  pi/2/c/DL_vol*RIM(q,power=1) 
+ ! ii)  G=0 and e_{nk} - e_{mk-q} !=0, prefactor= pi/2/c/DL_vol*RIM(q,power=1) 
  ! iii) G=0 and e_{nk} - e_{mk-q}  =0, prefactor= -pi/2/c^2/DL_vol*RIM(q,power=2)
  ! iV)  G=0 and q=0, prefactor= R0_square/4/pi/c
- !
  Q_loop: do i_q_bz=1,nqbz 
    !
    i_q  =q%sstar(i_q_bz,1)
@@ -180,40 +167,13 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        call SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E=E,E_diff=E_diff,N=i_n,G0=i_G0)
        !
-       ! Collisions
-       !
-       P_square_times_tau=cZERO
-       !
-       if (l_use_collisions) then
-         P_square_times_tau(:)=P_collisions(i_qp)%v3_r(:,i_m,i_q_bz)
-       else
-         call elemental_collision_copy(I,I_grad_k)
-         call elemental_collision_copy(I,I_grad_p)
-         !
-         call scatter_Bamp(I)
-         call scatter_Bamp_using_the_gradient(I_grad_k,"i")
-         call scatter_Bamp_using_the_gradient(I_grad_p,"o")
-       endif
-       !
-! do i1=1,BZ_DbGd_nkpt(ikbz)
-!   ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
-!   do i2=1,BZ_DbGd_nkpt(ikpbz)
-!     ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
-!     q_pt_shift(:)=BZ_DbGd_kpts(ikbz_rand,:)-BZ_DbGd_kpts(ikpbz_rand,:)-q_pt(iq,:)
-!     if ( iku_v_norm(q_pt_shift) > q_norm_ref ) cycle
-!     BZ_DbGd_iq_npt(i1)=BZ_DbGd_iq_npt(i1)+1
-!     use_kpt(i1,i2)=.true.
-!   enddo
-! enddo
-
+       l_SI_term     =l_zero_delta_E.and.i_q_bz==1
        !
        if (Photon_Gamma_E>1.E-5) then
          l_zero_delta_E=abs(E_diff)<Photon_Gamma_E/1000.
        else
          l_zero_delta_E=abs(E_diff)<1.E-5
        endif
-       !
-       l_SI_term       =l_zero_delta_E.and.i_q_bz==1
        !
        if (l_SI_term) then  
          call live_timing(steps=1)
@@ -238,9 +198,21 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        !zeros...
        !
+       P_square_times_tau=cZERO
        Sc_re=rZERO
        Sc_im=rZERO
        beta =rZERO
+       !
+       if (l_use_collisions) then
+         P_square_times_tau(:)=P_collisions(i_qp)%v3_r(:,i_m,i_q_bz)
+       else
+         call elemental_collision_copy(I,I_grad_k)
+         call elemental_collision_copy(I,I_grad_p)
+         !
+         call scatter_Bamp(I)
+         call scatter_Bamp_using_the_gradient(I_grad_k,"i")
+         call scatter_Bamp_using_the_gradient(I_grad_p,"o")
+       endif
        !
        !occupations...
        !

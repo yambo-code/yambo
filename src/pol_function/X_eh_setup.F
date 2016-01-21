@@ -108,6 +108,11 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          !
          if (any((/abs(E_eh)<X%ehe(1),abs(E_eh)>X%ehe(2).and.X%ehe(2)>0._SP/))) cycle
          !
+         if (abs(E_eh)<1.E-5) then
+           if(any((/ic/=Xen%bf,iv/=Xen%bf,ik/=Xen%kf,i_sp/=Xen%sf/)) ) cycle
+           if(real(X%Wd)==0..and.aimag(X%Wd)==0.) cycle
+         endif
+         !
          X_eh_setup=X_eh_setup+1
          poles(X_eh_setup)=E_eh
          i_pole=X_eh_setup

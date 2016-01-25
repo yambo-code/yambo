@@ -242,17 +242,20 @@ subroutine RT_X_LRR_real_field(en)
      Pol_proj(i_p_dir)=dot_product(E_ver(:,i_p_dir),cmplx(Pol(i_w,:),kind=SP) )
      if(Efield(i_Probe)%ef_pol=="circular") Field=dot_product(E_ver(:,i_p_dir),E_w_SP )
      !
-     if(     l_RT_induced_field) then
-       EELS(i_w,i_p_dir) = -1._SP+4._SP*pi*Pol_proj(i_p_dir)/Field
-       EPS( i_w,i_p_dir) = -1._SP/EELS(i_w,i_p_dir)
-     else
-       EPS( i_w,i_p_dir) =  1._SP+4._SP*pi*Pol_proj(i_p_dir)/Field
-       EELS(i_w,i_p_dir) = -1._SP/EPS(i_w,i_p_dir)
-     endif
+     if(     l_RT_induced_field) EELS(i_w,i_p_dir) = 4._SP*pi*Pol_proj(i_p_dir)/Field
+     if(.not.l_RT_induced_field) EPS( i_w,i_p_dir) = 4._SP*pi*Pol_proj(i_p_dir)/Field
      !
    enddo
    !
  enddo
+ !
+ if(     l_RT_induced_field) then
+   EELS(:,1) = -1._SP+EELS(:,1)
+   EPS(:,:)  = -1._SP/EELS(:,:)
+ else
+   EPS(:,1)  =  1._SP+EPS(:,1)
+   EELS(:,:) = -1._SP/EPS(:,:)
+ endif
  !
  do i_w = 1, X_rt%energy_steps
    !

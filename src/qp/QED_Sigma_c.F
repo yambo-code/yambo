@@ -30,7 +30,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use D_lattice,           ONLY:DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
-&                              QP_dSc,QP_G_damp,QP_time_order_sign
+&                              QP_dSc,QP_time_order_sign
  use IO_m,                ONLY:io_COLLs
  use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
 &                              elemental_collision_copy,P_collisions
@@ -168,8 +168,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        call SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E=E,E_diff=E_diff,N=i_n,G0=i_G0)
        !
-       !call FIND_the_q_and_G(E_diff)
-       !
        if (Photon_Gamma_E>1.E-5) then
          l_zero_delta_E=abs(E_diff)<Photon_Gamma_E/1000.
        else
@@ -202,19 +200,21 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !zeros...
        !
        P_square_times_tau=cZERO
-       Sc_re=rZERO
-       Sc_im=rZERO
-       beta =rZERO
+       Sc_re  =rZERO
+       Sc_im  =rZERO
+       beta   =rZERO
        !
        if (l_use_collisions) then
          P_square_times_tau(:)=P_collisions(i_qp)%v3_r(:,i_m,i_q_bz)
        else
+         !
          call elemental_collision_copy(I,I_grad_k)
          call elemental_collision_copy(I,I_grad_p)
          !
          call scatter_Bamp(I)
          call scatter_Bamp_using_the_gradient(I_grad_k,"i")
          call scatter_Bamp_using_the_gradient(I_grad_p,"o")
+         !
        endif
        !
        !occupations...
@@ -279,7 +279,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
          if (i_q_bz/=1.and.i_g/=1) cycle
          !
-         Sc_im=Sc_im+P_square_times_tau(1)*E_diff/3._SP/SPEED_OF_LIGHT**2*&
+         Sc_im=Sc_im+P_square_times_tau(1)*abs(E_diff)/3._SP/SPEED_OF_LIGHT**2*&
 &              (QP_time_order_sign*(1._SP-f_k_m_q)*theta_function( E_diff,0.01/HA2EV,0) +&
 &                                         f_k_m_q *theta_function(-E_diff,0.01/HA2EV,0) )
          !
@@ -325,36 +325,5 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call timing('GW (Lamb)',OPR='stop')
 #endif
  !
- contains
-   !
-   subroutine FIND_the_q_and_G(E_eh)
-     use D_lattice,           ONLY:alat
-     use R_lattice,           ONLY:g_vec
-     use vec_operate,         ONLY:v_norm
-     use units,               ONLY:HA2EV
-     !
-     integer :: iq_,ic_,ig_,i_q_g(2)
-     real(SP):: q_(3),E_,E_eh,E_diff
-     !
-     i_q_g =0
-     E_diff=10000.
-     !
-     do iq_=1,nqbz
-       do ig_=1,QP_QED_ng
-         do ic_=1,3
-           q_(ic_) = q%ptbz(iq_,ic_) + g_vec(ig_,ic_)*2._SP*pi/alat(ic_)
-         enddo
-         E_=SPEED_OF_LIGHT*v_norm(q_)
-         if (abs(E_-E_eh)<E_diff) then
-           E_diff=abs(E_-E_eh)
-           i_q_g =(/iq_,ig_/)
-         endif
-       enddo
-     enddo
-     !
-     write (*,*) i_q_g
-     !
-   end subroutine
-   !
 end subroutine QED_sigma_c
 

@@ -24,20 +24,18 @@
 subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,cZERO,rZERO
- use units,               ONLY:SPEED_OF_LIGHT,HA2EV
+ use units,               ONLY:SPEED_OF_LIGHT
  use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr
  use electrons,           ONLY:levels,spin_occ
  use D_lattice,           ONLY:DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
- use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
-&                              QP_dSc,QP_time_order_sign
+ use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,QP_dSc
  use IO_m,                ONLY:io_COLLs
  use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
 &                              elemental_collision_copy,P_collisions
  use wave_func,           ONLY:WF
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute,&
 &                              SCATTERING_GW_kinematics
- use functions,           ONLY:Fermi_fnc_derivative,theta_function
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -59,7 +57,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_n,i_G0,i_c,i_cp,i_g,i_m
  complex(SP)               ::P(3)
  real(SP)                  ::Photon_E,T_matrix(3,3),T_vec(3),E_diff,Photon_Gamma_E,f_k,f_k_m_q,&
-&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0_squared,q_treshold
+&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0_squared,RADIATIVE_pre_factor
  real(SP),    allocatable  ::q_weight_power_1(:),q_weight_power_2(:)
  type(elemental_collision) ::I,I_grad_k,I_grad_p
  logical                   ::l_zero_delta_E,l_SI_term
@@ -277,18 +275,21 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
          ! Imaginary-Part of the Self-Energy.
          !
-         if (i_q_bz/=1.and.i_g/=1) cycle
+         if (.not.(i_q_bz==1.and.i_g==1)) cycle
          !
-         Sc_im=Sc_im+P_square_times_tau(1)*abs(E_diff)/3._SP/SPEED_OF_LIGHT**2*&
-&              (QP_time_order_sign*(1._SP-f_k_m_q)*theta_function( E_diff,0.01/HA2EV,0) +&
-&                                         f_k_m_q *theta_function(-E_diff,0.01/HA2EV,0) )
+         call QED_Radiative_Lifetime_component(E,RADIATIVE_pre_factor,i_qp,i_m)
+         !
+         Sc_im=Sc_im+P_square_times_tau(1)/3._SP/SPEED_OF_LIGHT**2*RADIATIVE_pre_factor
          !
        enddo G_loop
        !
        QP_Sc(i_qp,1) =QP_Sc(i_qp,1)  +Sc_re+cI*Sc_im
+       !
+       ! Commented. Best to stick to OMS to start.
+       !
        QP_dSc(i_qp,1)=QP_dSc(i_qp,1) +beta
        !
-       if ( i_q_s == 1) call live_timing(steps=1)
+       if ( i_q_s == 1 ) call live_timing(steps=1)
        !
      enddo B_loop
      !

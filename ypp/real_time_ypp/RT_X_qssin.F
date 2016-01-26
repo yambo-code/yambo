@@ -30,7 +30,8 @@ subroutine RT_X_qssin
  use memory_m,       ONLY:mem_est
  use com,            ONLY:error
  use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
- use fields,         ONLY:Efield,small_a,theta_function
+ use fields,         ONLY:Efield,small_a
+ use functions,      ONLY:theta_function
  use LIVE_t,         ONLY:live_timing
  !
  implicit none

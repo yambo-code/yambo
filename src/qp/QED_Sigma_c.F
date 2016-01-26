@@ -24,7 +24,7 @@
 subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,cZERO,rZERO
- use units,               ONLY:SPEED_OF_LIGHT
+ use units,               ONLY:SPEED_OF_LIGHT,HA2EV
  use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr
  use electrons,           ONLY:levels,spin_occ
  use D_lattice,           ONLY:DL_vol
@@ -37,7 +37,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use wave_func,           ONLY:WF
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute,&
 &                              SCATTERING_GW_kinematics
- use functions,           ONLY:Fermi_fnc_derivative
+ use functions,           ONLY:Fermi_fnc_derivative,theta_function
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -147,6 +147,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  ! ii)  G=0 and e_{nk} - e_{mk-q} !=0, prefactor= pi/2/c/DL_vol*RIM(q,power=1) 
  ! iii) G=0 and e_{nk} - e_{mk-q}  =0, prefactor= -pi/2/c^2/DL_vol*RIM(q,power=2)
  ! iV)  G=0 and q=0, prefactor= R0_square/4/pi/c
+ !
  Q_loop: do i_q_bz=1,nqbz 
    !
    i_q  =q%sstar(i_q_bz,1)
@@ -167,13 +168,15 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        call SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E=E,E_diff=E_diff,N=i_n,G0=i_G0)
        !
-       l_SI_term     =l_zero_delta_E.and.i_q_bz==1
+       !call FIND_the_q_and_G(E_diff)
        !
        if (Photon_Gamma_E>1.E-5) then
          l_zero_delta_E=abs(E_diff)<Photon_Gamma_E/1000.
        else
          l_zero_delta_E=abs(E_diff)<1.E-5
        endif
+       !
+       l_SI_term     =l_zero_delta_E.and.i_q_bz==1
        !
        if (l_SI_term) then  
          call live_timing(steps=1)
@@ -225,6 +228,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !  ii) [<mk-q|exp(-iqr)\grad|nk>]*
        !  i) gives an i(k-q-G0) factor and ii) a -ik so we need at the end q_cc{i_cp} + G0_{i_cp}
        !
+       !
        G_loop: do i_g=1,QP_QED_ng
          !
          call SCATTERING_QED_transverse_matrix(i_q_bz,i_g,i_G0,q,T_matrix,T_vec,photon_E)
@@ -241,7 +245,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
            !
            ! COLLISION SPECIFIC SECTION
            !=============================================================================================================================
-           !
            do i_c=1,3
              P(i_c)=I_grad_k%rhotw(QP_QED_ng*(i_c-1)+i_g)-I_grad_p%rhotw(QP_QED_ng*(i_c-1)+i_g)-cI*T_vec(i_c)*I%rhotw(i_g)
            enddo
@@ -254,21 +257,31 @@ subroutine QED_Sigma_c(E,k,q,qp)
            !=============================================================================================================================
          endif
          !
-         if (i_g==1) then
-           if (l_zero_delta_E) then
-             Sc_re=Sc_re+P_square_times_tau(i_g)*C_G_eq_0_null_E*(2._SP*f_k_m_q-1)
+         ! Real-Part of the Self-Energy
+         !
+         if (.not.l_SI_term) then
+           !
+           if (i_g==1) then
+             if (l_zero_delta_E) then
+               Sc_re=Sc_re+P_square_times_tau(i_g)*C_G_eq_0_null_E*(2._SP*f_k_m_q-1)
+             else
+               Sc_re=Sc_re+P_square_times_tau(i_g)*C_G_eq_0_finite_E*FRACTION(1)
+               beta =beta -P_square_times_tau(i_g)*C_G_eq_0_finite_E*FRACTION(2)
+             endif
            else
-             Sc_re=Sc_re+P_square_times_tau(i_g)*C_G_eq_0_finite_E*FRACTION(1)
-             beta =beta -P_square_times_tau(i_g)*C_G_eq_0_finite_E*FRACTION(2)
+             Sc_re=Sc_re+P_square_times_tau(i_g)*C_G_finite/Photon_E*FRACTION(1)
+             beta =beta -P_square_times_tau(i_g)*C_G_finite/Photon_E*FRACTION(2)
            endif
-         else
-           Sc_re=Sc_re+P_square_times_tau(i_g)*C_G_finite/Photon_E*FRACTION(1)
-           beta =beta -P_square_times_tau(i_g)*C_G_finite/Photon_E*FRACTION(2)
+           !
          endif
          !
-         Sc_im=Sc_im+pi*P_square_times_tau(i_g)*C_G_eq_0_finite_E*&   
-&              (QP_time_order_sign*(1._SP-f_k_m_q)*Fermi_fnc_derivative(E_diff-Photon_E,QP_G_damp) +&
-&                                         f_k_m_q *Fermi_fnc_derivative(E_diff+Photon_E,QP_G_damp))
+         ! Imaginary-Part of the Self-Energy.
+         !
+         if (i_q_bz/=1.and.i_g/=1) cycle
+         !
+         Sc_im=Sc_im+P_square_times_tau(1)*E_diff/3._SP/SPEED_OF_LIGHT**2*&
+&              (QP_time_order_sign*(1._SP-f_k_m_q)*theta_function( E_diff,0.01/HA2EV,0) +&
+&                                         f_k_m_q *theta_function(-E_diff,0.01/HA2EV,0) )
          !
        enddo G_loop
        !
@@ -312,5 +325,36 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call timing('GW (Lamb)',OPR='stop')
 #endif
  !
+ contains
+   !
+   subroutine FIND_the_q_and_G(E_eh)
+     use D_lattice,           ONLY:alat
+     use R_lattice,           ONLY:g_vec
+     use vec_operate,         ONLY:v_norm
+     use units,               ONLY:HA2EV
+     !
+     integer :: iq_,ic_,ig_,i_q_g(2)
+     real(SP):: q_(3),E_,E_eh,E_diff
+     !
+     i_q_g =0
+     E_diff=10000.
+     !
+     do iq_=1,nqbz
+       do ig_=1,QP_QED_ng
+         do ic_=1,3
+           q_(ic_) = q%ptbz(iq_,ic_) + g_vec(ig_,ic_)*2._SP*pi/alat(ic_)
+         enddo
+         E_=SPEED_OF_LIGHT*v_norm(q_)
+         if (abs(E_-E_eh)<E_diff) then
+           E_diff=abs(E_-E_eh)
+           i_q_g =(/iq_,ig_/)
+         endif
+       enddo
+     enddo
+     !
+     write (*,*) i_q_g
+     !
+   end subroutine
+   !
 end subroutine QED_sigma_c
 

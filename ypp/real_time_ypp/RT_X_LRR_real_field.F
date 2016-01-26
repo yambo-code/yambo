@@ -37,7 +37,8 @@ subroutine RT_X_LRR_real_field(en)
  use memory_m,       ONLY:mem_est
  use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
  use real_time,      ONLY:l_RT_induced_field,NE_steps,RT_step
- use fields,         ONLY:Efield,small_a_frequency,small_a,theta_function
+ use fields,         ONLY:Efield,small_a_frequency,small_a
+ use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
  !
  implicit none

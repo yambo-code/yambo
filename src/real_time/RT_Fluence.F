@@ -27,7 +27,7 @@ subroutine RT_Fluence(i_field)
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
  use rt_ctl,         ONLY:RT_IO_output_steps
  use real_time,      ONLY:RT_step,NE_steps
- use fields,         ONLY:Efield!,small_a,theta_function
+ use fields,         ONLY:Efield
  !
  implicit none
  !

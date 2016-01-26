@@ -244,52 +244,6 @@ module fields
      !
    end function small_a_frequency
    !
-   real(SP) function theta_function(T,step,order)
-     !
-     ! This is an easy numerical implementation of the
-     ! theta function and its derivatives (the delta and the sign).
-     !
-     integer :: order
-     real(SP):: T,step
-     character(4) :: step_case
-     !
-     theta_function=0._SP
-     if (abs(T/step)>1.05_SP) then
-       if(order==0.and.T>0._SP) theta_function= 1._SP
-       return
-     endif
-     !
-     if( abs(T/step+1.0_SP)<0.1 ) step_case="-1.0"
-     if( abs(T/step+0.5_SP)<0.1 ) step_case="-0.5"
-     if( abs(T/step+0.0_SP)<0.1 ) step_case=" 0.0"
-     if( abs(T/step-0.5_SP)<0.1 ) step_case="+0.5"
-     if( abs(T/step-1.0_SP)<0.1 ) step_case="+1.0"
-     !
-     select case(step_case)
-     case("-1.0")
-       if (order==0) theta_function= 0.00_SP
-       if (order==1) theta_function= 0.00_SP
-       if (order==2) theta_function= 1.00_SP/step**2
-     case("-0.5")
-       if (order==0) theta_function= 0.25_SP
-       if (order==1) theta_function= 0.50_SP/step
-       if (order==2) theta_function= 1.00_SP/step**2
-     case(" 0.0")
-       if (order==0) theta_function= 0.5_SP
-       if (order==1) theta_function= 1.0_SP/step
-       if (order==2) theta_function= 0.0_SP
-     case("+0.5")
-       if (order==0) theta_function= 0.75_SP
-       if (order==1) theta_function= 0.50_SP/step
-       if (order==2) theta_function=-1.00_SP/step**2
-     case("+1.0")
-       if (order==0) theta_function= 1.00_SP
-       if (order==1) theta_function= 0.00_SP
-       if (order==2) theta_function=-1.00_SP/step**2
-     end select
-     !
-   end function
-   !
    subroutine Efield_duplicate(E1,E2)
      type(ext_field) :: E1,E2
      E2%t_initial=E1%t_initial  

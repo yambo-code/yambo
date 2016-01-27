@@ -39,6 +39,7 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
  !  iq_is = ik_is-ok_os-Go
  !
  use pars,           ONLY:SP
+ use electrons,      ONLY:n_spinor
  use collision,      ONLY:elemental_collision
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:g_rot
@@ -51,7 +52,7 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
  !
  ! Work Space
  !
- complex(SP) :: WF_der(3,fft_size)
+ complex(SP) :: WF_der(3,fft_size,n_spinor)
  !
  integer     :: qs,iGo,ig, ir,ic,ig_
  !
@@ -62,10 +63,16 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
  call WF_apply_symm(isc%os,isc%WF_symm_o)
  !
  ! \grad <ib ik_is i_sp|
- if (which=="i") call eval_Gradient(isc%WF_symm_i,WF_der)
+ if (which=="i") call eval_Gradient(isc%WF_symm_i(:,1),WF_der(:,:,1))
+ if (n_spinor==2) then
+   if (which=="i") call eval_Gradient(isc%WF_symm_i(:,2),WF_der(:,:,2))
+ endif
  !
  ! \grad | ob ok_os o_sp>   
- if (which=="o") call eval_Gradient(isc%WF_symm_o,WF_der)
+ if (which=="o") call eval_Gradient(isc%WF_symm_o(:,1),WF_der(:,:,1))
+ if (n_spinor==2) then
+   if (which=="o") call eval_Gradient(isc%WF_symm_o(:,2),WF_der(:,:,2))
+ endif
  !
  ! Chartesian components of the gradient loop
  !
@@ -78,13 +85,25 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
    !$omp do
 #endif
    do ir = 1, fft_size
-     if (which=="i")  isc%rho_tw_rs(ir) = conjg(WF_der(ic,ir))*isc%WF_symm_o(ir,1)
-     if (which=="o")  isc%rho_tw_rs(ir) = conjg(isc%WF_symm_i(ir,1))*WF_der(ic,ir)
+     if (which=="i")  isc%rho_tw_rs(ir) = conjg(WF_der(ic,ir,1))*isc%WF_symm_o(ir,1)
+     if (which=="o")  isc%rho_tw_rs(ir) = conjg(isc%WF_symm_i(ir,1))*WF_der(ic,ir,1)
    enddo
 #if defined _OPENMP
    !$omp end do
-   !$omp end parallel
 #endif
+   !
+   if (n_spinor==2) then
+   !$omp do
+     do ir = 1, fft_size
+       if (which=="i")  then
+         isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir) + conjg(WF_der(ic,ir,2))*isc%WF_symm_o(ir,2)
+       else if (which=="o") then
+         isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir) + conjg(isc%WF_symm_i(ir,2))*WF_der(ic,ir,2)
+       endif
+     enddo
+   !$omp end do
+   endif
+   !$omp end parallel
    !
    ! perform the actual FFT
    !

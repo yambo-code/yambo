@@ -44,8 +44,8 @@ subroutine RT_Ext_fields(A,time)
  use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:RT_step,NE_i_time
- use fields,         ONLY:n_ext_fields,Efield, &
-&                         small_a,theta_function,gauge_field
+ use fields,         ONLY:n_ext_fields,Efield,small_a,gauge_field
+ use functions,      ONLY:theta_function
  !
  implicit none
  type(gauge_field),intent(inout) :: A

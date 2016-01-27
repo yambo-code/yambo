@@ -7,8 +7,7 @@ svn diff svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk svn+ssh
 How to update the branch incorporating previous commits of the trunk
 ====================================================================
 
-svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk/stable 
-svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk/devel  
+svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk
 
 How to update the branch incorporating previous commits of another branch
 ==========================================================================
@@ -18,4 +17,4 @@ svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/branches/dev
 How to record the merging history
 =================================
 
-svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk/devel -r1:4888 --record-only
+svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk -r1:4888 --record-only

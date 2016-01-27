@@ -1,0 +1,147 @@
+! 
+!        Copyright (C) 2000-2016 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DS
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
+ !
+ use units,          ONLY:HA2EV,FS2AUT
+ use pars,           ONLY:SP,schlen
+ use stderr,         ONLY:intc
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:DL_vol
+ use electrons,      ONLY:levels,n_sp_pol
+ use YPP,            ONLY:dos_broadening,dos_E_range,dos_E_steps
+ use com,            ONLY:msg,of_open_close,error
+ use functions,      ONLY:Fermi_fnc_derivative
+ use LIVE_t,         ONLY:live_timing
+ use YPP,            ONLY:RT_IO_carriers
+ use rt_ctl,         ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
+ use real_time,      ONLY:RT_carriers
+ use SC,             ONLY:SC_bands
+ use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_indexes,PP_redux_wait
+ use parser_m,       ONLY:parser
+ !
+ implicit none
+ !
+ type(bz_samp) ::kpt
+ type(levels)  ::En
+ integer       ::n_T_steps
+ !
+ ! Work Space
+ ! 
+ real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,dos_norm,&
+&                         el_dos_max
+ real(SP)              :: io_Time
+ integer               :: i_RT,i_E,i_spin,i_T
+ logical               :: l_sum_equilibrium,l_separate_eh
+ type(PP_indexes)      :: px
+ !
+ call section('*','Electr. Time-dependent DOS')
+ !
+ if (n_T_steps==1) call error(' Only one time step. Use standard dos instead')
+ !
+ call msg('s','Energy steps   :',dos_E_steps)
+ call msg('s','Bands          :',RT_carriers%nb)
+ !
+ call parser('SeparateEH',l_separate_eh)
+ call parser('IncludeEQocc',l_sum_equilibrium)
+ !
+ el_dos_max=0._SP
+ !
+ ! Output files headers
+ !
+ call RT_output(what="initialize")
+ call RT_output("open 2D_occ_dos")
+ !
+ if (dos_E_range(1)>dos_E_range(2)) then
+   dos_E_range(1)=minval(RT_carriers%E_bare)-5._SP*dos_broadening
+   dos_E_range(2)=maxval(RT_carriers%E_bare)+5._SP*dos_broadening
+ endif
+ delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
+ !
+ dos_norm=1._SP/DL_vol
+ !
+ ! Parallel setup and live_timing
+ !================================
+ !
+ call PARALLEL_index(px,(/dos_E_steps/))
+ call live_timing('DOS',n_T_steps,SERIAL=.true.)
+ !
+ do i_T=1,n_T_steps
+   !
+   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+   !
+   call RT_apply(SC_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
+   !
+   el_dos(:,:)=0._SP
+   !
+   do i_E=1,dos_E_steps
+     !
+     if (.not.px%element_1D(i_E)) cycle
+     !
+     dos_E=dos_E_range(1)+i_E*delta_E
+     !
+     do i_RT=1,RT_carriers%nstates
+       !
+       i_spin=RT_carriers%table(i_RT,4)
+       !
+       if(.not.l_sum_equilibrium) f_occ=RT_carriers%delta_f(i_RT)
+       if(     l_sum_equilibrium) f_occ=RT_carriers%delta_f(i_RT)+RT_carriers%f_bare(i_RT)
+       el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
+&         Fermi_fnc_derivative(RT_carriers%E_bare(i_RT)-dos_E,dos_broadening)*dos_norm
+       !
+     enddo
+     !
+   enddo
+   !
+   call PP_redux_wait(el_dos)
+   !
+   el_dos_max=max(el_dos_max,maxval(abs(el_dos)))
+   !
+   call msg('o dos','')
+   !
+   ! Output file
+   !
+   do i_E=1,dos_E_steps
+     dos_E=dos_E_range(1)+real(i_E,SP)*delta_E
+     !
+     if(dos_E>En%E_VBM+dos_broadening .and. dos_E<En%E_CBm-dos_broadening) then
+       if(l_separate_eh) call RT_output("space 2D_occ_dos")
+       l_separate_eh=.false.
+       cycle
+     endif
+     call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+     !
+   enddo
+   !
+   call RT_output("space 2D_occ_dos")
+   !
+   call live_timing(steps=1)
+   !
+ enddo
+ !
+ call msg('s','DOS max value  :',el_dos_max)
+ !
+ call live_timing()
+ !
+end subroutine RT_occ_2D_dos_plot

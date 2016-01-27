@@ -35,7 +35,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
- use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
+ use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing,QP_QED_ng
  use parallel_m,    ONLY:PAR_IND_QP
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
@@ -111,6 +111,8 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    if (V_kind==SE_GW_QED) then
      call io_elemental(ID,L0=l_elphoton_scatt,&
 &         VAR=' Electron-Photon   scattering    :',WARN=.true.,OP=(/"=="/))
+     call io_elemental(ID,I0=QP_QED_ng,&
+&         VAR=' Electron-Photon   RL vectors    :',CHECK=.true.,OP=(/"=="/))
    endif
    !
    call io_elemental(ID,R0=SC_band_mixing,&

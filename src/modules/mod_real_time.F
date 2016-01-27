@@ -181,19 +181,24 @@ module real_time
  logical,     allocatable :: RT_occupations_locked(:,:) 
  logical,     allocatable :: RT_lifetimes_locked(:,:) 
  !
- ! EL-PH RD life-times
+ ! EL-PH RT life-times
  !-----------------------------------------
  real(SP),    allocatable :: E_P_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_P_Electron_lifetime(:,:)
  real(SP),    allocatable :: E_P_El_abs_lifetime(:,:)
  real(SP),    allocatable :: E_P_Ho_abs_lifetime(:,:)
  !
- ! Coulomb RD life-times
+ ! Coulomb RT life-times
  !-----------------------
  real(SP),    allocatable :: E_E_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_E_Electron_lifetime(:,:)
  !
- ! Saved RD life-times
+ ! EL-PHOT RT life-times
+ !-----------------------
+ real(SP),    allocatable :: E_PHOT_Hole_lifetime(:,:)
+ real(SP),    allocatable :: E_PHOT_Electron_lifetime(:,:)
+ !
+ ! Saved RT life-times
  !-----------------------
  real(SP),    allocatable :: SAVED_times(:)
  real(SP),    allocatable :: REF_lifetime(:,:,:)
@@ -219,7 +224,7 @@ module real_time
  ! Relaxation: Dephasing Matrix
  !------------------------------
  !
- real(SP)    :: RT_ave_dephasing
+ real(SP)                 :: RT_ave_dephasing
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
  !
  ! GFs (retarded)
@@ -314,6 +319,8 @@ module real_time
    real(SP)   ,pointer:: dGAMMA_E_P_El_abs(:)   => null() 
    real(SP)   ,pointer:: dGAMMA_E_E_Hole(:)     => null() 
    real(SP)   ,pointer:: dGAMMA_E_E_Electron(:) => null() 
+   real(SP)   ,pointer:: dGAMMA_E_PHOT_Hole(:)     => null() 
+   real(SP)   ,pointer:: dGAMMA_E_PHOT_Electron(:) => null() 
    !
  end type RT_t
  !

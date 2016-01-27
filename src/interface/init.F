@@ -860,6 +860,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime')
    call initactivate(1,'RTpumpEhEn RTpumpEhWd RTpumpNel')
    !
+   ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
+   ! or parsed from the input file in init_load.F
+   !
    do i1=1,n_ext_fields
      call Afield_activate(i1)
    enddo

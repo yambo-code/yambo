@@ -47,6 +47,8 @@ subroutine QED_Radiative_Lifetime_component(E,RADIATIVE_pre_factor,i_qp,i_m)
  E_diff =E%E(i_n,i_k,i_spin)-E%E(i_m,i_k,i_spin)
  f_m    =E%f(i_m,i_k,i_spin)/spin_occ
  !
+ ! |n k> -> |m k>
+ !
  RADIATIVE_pre_factor=abs(E_diff)*( QP_time_order_sign*(1._SP-f_m)*theta_function( E_diff,0.01/HA2EV,0) +&
 &                                                             f_m *theta_function(-E_diff,0.01/HA2EV,0) )
  !

@@ -48,7 +48,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=29
+ integer, parameter:: tpar=30
  integer       :: ntitles,titles_order(tpar)
  real(SP)      :: values(tpar)
  character(schlen) :: titles(tpar)
@@ -82,10 +82,11 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  titles(27) = 'Sc|Eo(meV)' 
  titles(28) = 'Width[ps]' 
  titles(29) = 'E-Eo(Ghz)' 
+ titles(30) = 'Width[ns]' 
  !
 #if defined _QED
- ntitles=9
- titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28/)
+ ntitles=10
+ titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30/)
 #else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
@@ -187,6 +188,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        endif
 #if defined _QED
        values(29)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ
+       values(30)=values(29)*1000._SP
        values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
        values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
        values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV

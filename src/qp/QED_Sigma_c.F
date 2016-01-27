@@ -24,7 +24,7 @@
 subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,cZERO,rZERO
- use units,               ONLY:SPEED_OF_LIGHT
+ use units,               ONLY:SPEED_OF_LIGHT,HA2EV
  use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr
  use electrons,           ONLY:levels,spin_occ
  use D_lattice,           ONLY:DL_vol
@@ -229,7 +229,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        G_loop: do i_g=1,QP_QED_ng
          !
-         call SCATTERING_QED_transverse_matrix(i_q_bz,i_g,i_G0,q,T_matrix,T_vec,photon_E)
+         call SCATTERING_QED_transverse_matrix(I%is(2),i_q_bz,i_g,i_G0,k,q,T_matrix,T_vec,photon_E)
          !
          if(i_q_bz==1.and.i_g==1) then
            FRACTION(1)=1._SP/E_diff
@@ -285,9 +285,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        QP_Sc(i_qp,1) =QP_Sc(i_qp,1)  +Sc_re+cI*Sc_im
        !
-       ! Commented. Best to stick to OMS to start.
+       ! Let's stick to the OMS for the moment
        !
-       QP_dSc(i_qp,1)=QP_dSc(i_qp,1) +beta
+       !QP_dSc(i_qp,1)=QP_dSc(i_qp,1) +beta
        !
        if ( i_q_s == 1 ) call live_timing(steps=1)
        !

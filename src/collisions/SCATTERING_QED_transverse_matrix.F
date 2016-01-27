@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SCATTERING_QED_transverse_matrix(i_q_bz,i_G,i_G0,q,T_matrix,T_vec,Photon_E)
+subroutine SCATTERING_QED_transverse_matrix(i_k,i_q_bz,i_G,i_G0,k,q,T_matrix,T_vec,Photon_E)
  !
  ! T_matrix(i,j) = \delta_{i,j} - q_photon(i)*q_photon(j)/q_photon^2
  ! when q_photon -> 0, T_matrix(i,j) = \delta_{i,j}
@@ -35,8 +35,8 @@ subroutine SCATTERING_QED_transverse_matrix(i_q_bz,i_G,i_G0,q,T_matrix,T_vec,Pho
  implicit none
  !
  real(SP)                  ::T_matrix(3,3),T_vec(3),Photon_E
- type(bz_samp), intent(in) ::q
- integer,       intent(in) ::i_q_bz,i_G,i_G0
+ type(bz_samp), intent(in) ::q,k
+ integer,       intent(in) ::i_q_bz,i_G,i_G0,i_k
  !
  ! WorkSpace
  !
@@ -44,7 +44,7 @@ subroutine SCATTERING_QED_transverse_matrix(i_q_bz,i_G,i_G0,q,T_matrix,T_vec,Pho
  real(SP) ::q_photon(3)
  !
  do i_c=1,3
-   T_vec(i_c)    = q%ptbz(i_q_bz,i_c) + g_vec(i_G0,i_c)*2._SP*pi/alat(i_c)
+   T_vec(i_c)    = (2._SP*k%pt(i_k,i_c)+g_vec(i_G0,i_c))*2._SP*pi/alat(i_c)-q%ptbz(i_q_bz,i_c) 
    q_photon(i_c) = q%ptbz(i_q_bz,i_c) + g_vec(i_g,i_c)*2._SP*pi/alat(i_c)
  enddo
  !

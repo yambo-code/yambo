@@ -1,6 +1,6 @@
 !
 !        Copyright (C) 2000-2016 the YAMBO team
-!            http://www.yambo-code.org
+!              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
 ! 

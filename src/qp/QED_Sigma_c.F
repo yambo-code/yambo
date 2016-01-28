@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QED_Sigma_c(E,k,q,qp)
+subroutine QED_Sigma_c(E,k,q,qp,X)
  !
  use pars,                ONLY:SP,pi,cI,cZERO,rZERO
  use units,               ONLY:SPEED_OF_LIGHT,HA2EV
@@ -29,7 +29,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use electrons,           ONLY:levels,spin_occ
  use D_lattice,           ONLY:DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
- use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,QP_dSc
+ use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
+&                              QP_dSc,QP_time_order_sign
  use IO_m,                ONLY:io_COLLs
  use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
 &                              elemental_collision_copy,P_collisions
@@ -42,6 +43,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                              PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_nQP,PAR_nG_bands,&
 &                              PAR_COM_QP_A2A
  use SC,                  ONLY:SC_bands
+ use functions,           ONLY:theta_function
+ use X_m,                 ONLY:X_t
 #if defined _TIMING
  use timing_m,            ONLY:timing
 #endif
@@ -51,6 +54,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  type(levels)              ::E
  type(bz_samp)             ::k,q
  type(QP_t)                ::qp
+ type(X_t)                 ::X
  !
  ! WorkSpace
  !
@@ -67,14 +71,28 @@ subroutine QED_Sigma_c(E,k,q,qp)
  real(SP)                  ::C_G_finite,C_G_eq_0_finite_E,C_G_eq_0_null_E,FRACTION(2)
  !
  if (l_elel_corr.or.l_elph_corr) then
-   call section('+','Correlation: Photon-mediated Self-energy')
+   call section('+','Correlation: Photon-mediated Self-energy and Radiative Lifetimes')
  else
-   call section('=','Correlation: Photon-mediated Self-energy')
+   call section('=','Correlation: Photon-mediated Self-energy and Radiative Lifetimes')
  endif
  !
 #if defined _TIMING
  call timing('GW (Lamb)',OPR='start')
 #endif
+ !
+ ! PARALLEL distribution
+ !=======================
+ call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+ !
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+ call PARALLEL_WF_index( )
+ !
+ ! Radiative Lifetimes (Using <p>)
+ !=================================
+ call QED_Radiative_Lifetimes(E,k,qp,X)
+ !
+ goto 1
  !
  ! RIM 
  !=====
@@ -89,14 +107,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
  R0_squared=(3.*RL_vol/nqbz/4./pi)**(2./3.) ! the radius for the sum at Q=0
  !
  call k_ibz2bz(q,'c',.TRUE.)
- !
- ! PARALLEL distribution
- !=======================
- call PARALLEL_global_indexes(E,k,q,"Self_Energy")
- !
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
- call PARALLEL_WF_index( )
  !
  ! COLLISIONS
  !============
@@ -277,9 +287,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
          if (.not.(i_q_bz==1.and.i_g==1)) cycle
          !
-         call QED_Radiative_Lifetime_component(E,RADIATIVE_pre_factor,i_qp,i_m)
-         !
-         Sc_im=Sc_im+P_square_times_tau(1)/3._SP/SPEED_OF_LIGHT**2*RADIATIVE_pre_factor
+         Sc_im=Sc_im+P_square_times_tau(1)/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)*&
+&                    ( QP_time_order_sign*(1._SP-f_k_m_q)*theta_function( E_diff,0.01/HA2EV,0) +&
+&                                                f_k_m_q *theta_function(-E_diff,0.01/HA2EV,0) )
          !
        enddo G_loop
        !
@@ -299,7 +309,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call live_timing( )
  !
- call PP_redux_wait(QP_Sc)
+1 call PP_redux_wait(QP_Sc)
  !
  ! Symmetrize
  !
@@ -308,7 +318,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Clean-UP
  !
- deallocate(q_weight_power_1,q_weight_power_2)
+ if (allocated(q_weight_power_1)) deallocate(q_weight_power_1,q_weight_power_2)
  !
  if (l_use_collisions) then
    !

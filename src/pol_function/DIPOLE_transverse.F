@@ -94,12 +94,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Eo    are always the eigenvalues consistent with the WFs
  ! E     do also include the QP corrections when Eo are associated
+ !
  if (associated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
  !
  l_eval_DIP_iR=use_g_space_approach
  l_eval_DIP_P =use_g_space_approach.or.force_v_g_space_approach
  l_eval_DIP_P2=.false.
  wf_dim=3
+ !
+ ! Parallelization Mask 
+ !======================
+ ! Depending on the environment DIPOLES are distributed in different ways
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
@@ -171,7 +176,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
          !
          ! Evaluate <ivfft|[x,Vnl]|icfft>
-         if (io_Vnl_err==0) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
+         if (io_Vnl_err==0) rho(:3) = rho(:3) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
          if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,1)
          if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,2)
          !
@@ -198,7 +203,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !             = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec) = P_vc/(Ev-Ec)
          !
          if (l_eval_DIP_iR) then
-           if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho(1:3)/Ev_m_Ec
+           if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)/Ev_m_Ec
            if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
          endif
          !

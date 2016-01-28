@@ -57,6 +57,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use drivers,        ONLY:l_real_time,l_sc_run
  use X_m,            ONLY:P_square
 #endif
+#if defined _QED
+ use drivers,        ONLY:l_elphoton_corr
+#endif
  !
  implicit none
  !
@@ -116,6 +119,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  l_evaluating_em1s=index(secnm,"Dielectric")/=0
  if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.false.
 #endif
+#if defined _QED 
+ if (l_elphoton_corr) Dipole_bands_ordered=.false.
+#endif
  !
  ! Set up band limits
  !
@@ -170,6 +176,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _SC
  if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
 #endif
+#if defined _QED
+ if (l_elphoton_corr) return
+#endif
  !
  ! Warn about missing [Vnl,r] commutator
  !
@@ -195,11 +204,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    subroutine DIPOLES_IO(read_or_write)
      !
      use com,        ONLY:msg
+     use IO_m,       ONLY:io_DIP
      !
      character(5), intent(in) :: read_or_write
      !
      integer                  :: IO_ACTION
      logical                  :: write_header,read_header,reading,writing
+     !
+     if (.not.IO_dip) return
      !
      reading=trim(read_or_write)=="read"
      writing=trim(read_or_write)=="write"

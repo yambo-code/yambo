@@ -26,7 +26,7 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  use X_m,                 ONLY:X_t
  use electrons,           ONLY:n_sp_pol
  use parallel_m,          ONLY:PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
-&                              PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz_ID,&
+&                              PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz_ID,l_par_SE,&
 &                              l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_RT
 #if defined _SC
  use parallel_m,          ONLY:PAR_IND_B_mat,l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_RT
@@ -56,6 +56,8 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
        eval_DIP(ic,iv)= PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic).and. &
 &                       PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)
      endif
+     !
+     if (l_par_SE) eval_DIP(ic,iv)=.TRUE.
      !
      if (eval_DIP(ic,iv)) n_LT_steps=n_LT_steps+1
      !

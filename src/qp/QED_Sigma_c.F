@@ -61,7 +61,7 @@ subroutine QED_Sigma_c(E,k,q,qp,X)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_n,i_G0,i_c,i_cp,i_g,i_m
  complex(SP)               ::P(3)
  real(SP)                  ::Photon_E,T_matrix(3,3),T_vec(3),E_diff,Photon_Gamma_E,f_k,f_k_m_q,&
-&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0_squared,RADIATIVE_pre_factor
+&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0_squared
  real(SP),    allocatable  ::q_weight_power_1(:),q_weight_power_2(:)
  type(elemental_collision) ::I,I_grad_k,I_grad_p
  logical                   ::l_zero_delta_E,l_SI_term
@@ -293,11 +293,11 @@ subroutine QED_Sigma_c(E,k,q,qp,X)
          !
        enddo G_loop
        !
-       QP_Sc(i_qp,1) =QP_Sc(i_qp,1)  +Sc_re+cI*Sc_im
+       QP_Sc(i_qp,1) =QP_Sc(i_qp,1)  +Sc_re+cI*abs(Sc_im)
        !
        ! Let's stick to the OMS for the moment
        !
-       !QP_dSc(i_qp,1)=QP_dSc(i_qp,1) +beta
+       QP_dSc(i_qp,1)=QP_dSc(i_qp,1) +beta
        !
        if ( i_q_s == 1 ) call live_timing(steps=1)
        !

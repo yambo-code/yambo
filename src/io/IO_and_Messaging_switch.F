@@ -59,6 +59,16 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
    !
    do ich=1,10
      !
+     ! SAVEs used later for a RESTART
+     !
+     if (trim(ch_piece(ich))=="SAVE") then
+       IO_read_now           =IO_read
+       IO_write_now          =IO_write
+       write_to_of_now       =write_to_of
+       write_to_report_now   =write_to_report
+       live_timing_is_on_now =live_timing_is_on
+     endif
+     !
      ! Restore 
      !
      if (trim(ch_piece(ich))=="RESTORE") then
@@ -107,12 +117,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="-fragments_IO_log") write_fragments_IO_log=local_FALSE
      !
    enddo
+   !
  endif
- !
- IO_read_now           =IO_read
- IO_write_now          =IO_write
- write_to_of_now       =write_to_of
- write_to_report_now   =write_to_report
- live_timing_is_on_now =live_timing_is_on
  !
 end subroutine IO_and_Messaging_switch

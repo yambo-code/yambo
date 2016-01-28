@@ -229,7 +229,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
          !
          ! COLLISIONS(n,n',qp_n_states) = \sum_{G,G',q} ( rho(m,n,G,q,k) x EM1s(G ,G') x rho*(m',n',G',q,k) /|q+G|/|q+G'| )
          !
-         if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp) ) ) cycle
+         if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,SC_bands) ) ) cycle
          !
          isc%os(1)=i_np
          !

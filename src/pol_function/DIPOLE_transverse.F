@@ -114,9 +114,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #endif
  !
  if (l_eval_DIP_P)                    live_t_string='Dipoles: P (T):'
- if (l_eval_DIP_P .and.l_eval_DIP_iR) live_t_string='Dipoles: P-iR (T):'
- if (l_eval_DIP_P2.and.l_eval_DIP_P)  live_t_string='Dipoles: P-P2 (T):'
- if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR-P-P2 (T):'
+ if (l_eval_DIP_P .and.l_eval_DIP_iR) live_t_string='Dipoles: P and iR (T):'
+ if (l_eval_DIP_P2.and.l_eval_DIP_P)  live_t_string='Dipoles: P and P2 (T):'
+ if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P and P2 (T):'
  !
  if (n_LT_steps>0) call live_timing(trim(live_t_string),n_LT_steps)
  !
@@ -175,11 +175,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! Evaluate <ivfft|   p   |icfft>
          call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
          !
-         ! Evaluate <ivfft|[x,Vnl]|icfft>
-         if (io_Vnl_err==0) rho(:3) = rho(:3) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,1)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,2)
-         !
          !=====
          ! <P>
          !=====
@@ -194,13 +189,29 @@ subroutine Dipole_transverse(Xen,Xk,X)
            endif
          endif
          !
+         !================================
+         ! Evaluate <ivfft|[x,Vnl]|icfft>
+         !================================
+         if (io_Vnl_err==0) rho(:3) = rho(:3) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,1)
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,2)
+         !
          !======
          ! <iR>
          !======
-         ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x. So from rho (that is P_vc) we can extract
+         ! as 
+         ! 
+         !  [x,p_x]=i we get [x,H] = [x,p^2/2]+[x,Vnl]
+         ! 
+         ! we gave that 
+         ! 
+         ! [x,p^2/2]= i p_x 
          !
-         ! DIP_iR(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
-         !             = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec) = P_vc/(Ev-Ec)
+         ! So from the local part of rho (that is P_vc) we can extract the corresponding local part of <x>
+         !
+         ! DIP_iR(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev)+i<v|[x,Vnl]|c> =
+         !             = - <v | -i grad |c> / (Ec-Ev) +i<v|[x,Vnl]|c> =
+         !             =   <v|-i grad|c>/(Ev-Ec) +i<v|[x,Vnl]|c> = P_vc/(Ev-Ec)+i<v|[x,Vnl]|c>
          !
          if (l_eval_DIP_iR) then
            if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)/Ev_m_Ec

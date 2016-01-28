@@ -48,16 +48,18 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  do iv=X%ib(1),X%ib_lim(1) 
    do ic=max(iv,X%ib_lim(2)),X%ib(2)
      !
-#if defined _SC
-     if (l_par_RT) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv))
+#if defined _SC 
+     if (l_par_RT) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv,X%ib))
+#endif
+#if defined _QED 
+     if (l_par_SE) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv,X%ib))
+
 #endif
      !
      if (any((/l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q/))) then
        eval_DIP(ic,iv)= PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic).and. &
 &                       PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)
      endif
-     !
-     if (l_par_SE) eval_DIP(ic,iv)=.TRUE.
      !
      if (eval_DIP(ic,iv)) n_LT_steps=n_LT_steps+1
      !

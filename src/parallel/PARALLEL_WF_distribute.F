@@ -135,7 +135,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
        !
        do i_b=SC_bands(1),SC_bands(2)
          do i_bp=SC_bands(1),SC_bands(2)
-           if (Bm_index%element_1D( B_mat_index(i_b,i_bp) ) ) then
+           if (Bm_index%element_1D( B_mat_index(i_b,i_bp,SC_bands) ) ) then
              Vl(i_b )=.TRUE.
              Vl(i_bp)=.TRUE.
            endif

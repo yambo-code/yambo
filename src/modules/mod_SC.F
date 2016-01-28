@@ -118,10 +118,10 @@ module SC
  !
  contains
    !
-   integer function B_mat_index(ib1,ib2)
-     integer :: ib1,ib2
+   integer function B_mat_index(ib1,ib2,nb)
+     integer :: ib1,ib2,nb(2)
      !
-     B_mat_index=(ib1-SC_bands(1))*(SC_bands(2)-SC_bands(1)+1)+ib2-SC_bands(1)+1
+     B_mat_index=(ib1-nb(1))*(nb(2)-nb(1)+1)+ib2-nb(1)+1
      !
    end function
    !

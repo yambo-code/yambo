@@ -21,24 +21,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QED_Radiative_Lifetimes(E,k,qp,X)
+subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  !
+ use drivers,             ONLY:l_elel_corr,l_elph_corr
  use units,               ONLY:HA2EV,SPEED_OF_LIGHT
  use pars,                ONLY:SP,rZERO,cI
- use QP_m,                ONLY:QP_time_order_sign,QP_table,QP_t,QP_n_G_bands,QP_Sc
- use IO_m,                ONLY:io_DIP,IO_write
+ use QP_m,                ONLY:QP_time_order_sign,QP_table,QP_t,QP_n_G_bands,QP_Sc,QP_states_simmetrize
+ use IO_m,                ONLY:io_DIP
  use functions,           ONLY:theta_function
  use electrons,           ONLY:levels,spin,spin_occ
  use R_lattice,           ONLY:bz_samp
- use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_Xk_ibz_index,PAR_nG_bands,PAR_nQP,myid
+ use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_IND_DIPk_ibz,PAR_nG_bands,PAR_nQP,PP_redux_wait,&
+&                              PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_DIPk_ibz_index
  use X_m,                 ONLY:DIP_P,X_t
  use wave_func,           ONLY:wf_ng
  use LIVE_t,              ONLY:live_timing
+ use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,&
+&                              PARALLEL_WF_distribute
+#if defined _TIMING
+ use timing_m,            ONLY:timing
+#endif
  !
  implicit none
  !
  type(levels)  ::E
- type(bz_samp) ::k
+ type(bz_samp) ::k,q
  type(QP_t)    ::qp
  type(X_t)     ::X
  !
@@ -47,9 +54,27 @@ subroutine QED_Radiative_Lifetimes(E,k,qp,X)
  integer     :: i_k,i_n,i_spin,i_m,i_qp,i_k_mem
  real(SP)    :: E_diff,f_k_m_q,Sc_im,P_square
  !
+ if (l_elel_corr.or.l_elph_corr) then
+   call section('+','Correlation: Radiative Lifetimes')
+ else
+   call section('=','Correlation: Radiative Lifetimes')
+ endif
+ !
+#if defined _TIMING
+ call timing('Radiative Lifetimes',OPR='start')
+#endif
+ !
+ ! PARALLEL distribution
+ !=======================
+ !
+ call PARALLEL_global_indexes(E,k,q,"Self_Energy",X=X)
+ call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
+&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
+&                            CLEAN_UP=.TRUE.)
+ !
  ! Dipoles
  !=========
- !
  X%ib  =QP_n_G_bands
  X%ng  =wf_ng
  io_DIP=.FALSE.
@@ -70,7 +95,7 @@ subroutine QED_Radiative_Lifetimes(E,k,qp,X)
    i_n    = QP_table(i_qp,1)
    i_k    = QP_table(i_qp,3)
    i_spin = spin(QP_table(i_qp,:))
-   i_k_mem=PAR_Xk_ibz_index(i_k)
+   i_k_mem=PAR_DIPk_ibz_index(i_k)
    !
    B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
      !
@@ -96,6 +121,21 @@ subroutine QED_Radiative_Lifetimes(E,k,qp,X)
  enddo QP_loop
  !
  call live_timing( )
+ !
+ call PP_redux_wait(QP_Sc)
+ !
+ ! Symmetrize
+ !
+ call QP_states_simmetrize(E,V_complex=QP_Sc(:,1))
+ !
+ ! Transfer to qp% components (assuming OMS approximation)
+ !
+ qp%E(:)=QP_sc(:,1)
+ qp%Z(:)=1._SP
+ !
+#if defined _TIMING
+ call timing('Radiative Lifetimes',OPR='stop')
+#endif
  !
 end subroutine QED_Radiative_Lifetimes
 

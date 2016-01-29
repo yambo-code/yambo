@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QED_Sigma_c(E,k,q,qp,X)
+subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,cZERO,rZERO
  use units,               ONLY:SPEED_OF_LIGHT,HA2EV
@@ -44,7 +44,6 @@ subroutine QED_Sigma_c(E,k,q,qp,X)
 &                              PAR_COM_QP_A2A
  use SC,                  ONLY:SC_bands
  use functions,           ONLY:theta_function
- use X_m,                 ONLY:X_t
 #if defined _TIMING
  use timing_m,            ONLY:timing
 #endif
@@ -54,7 +53,6 @@ subroutine QED_Sigma_c(E,k,q,qp,X)
  type(levels)              ::E
  type(bz_samp)             ::k,q
  type(QP_t)                ::qp
- type(X_t)                 ::X
  !
  ! WorkSpace
  !
@@ -87,12 +85,6 @@ subroutine QED_Sigma_c(E,k,q,qp,X)
  call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
  call PARALLEL_WF_index( )
- !
- ! Radiative Lifetimes (Using <p>)
- !=================================
- call QED_Radiative_Lifetimes(E,k,qp,X)
- !
- goto 1
  !
  ! RIM 
  !=====
@@ -309,7 +301,7 @@ subroutine QED_Sigma_c(E,k,q,qp,X)
  !
  call live_timing( )
  !
-1 call PP_redux_wait(QP_Sc)
+ call PP_redux_wait(QP_Sc)
  !
  ! Symmetrize
  !

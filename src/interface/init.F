@@ -720,12 +720,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
 #if defined _QED
    if (l_elphoton_corr) then
-     call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
-     if (trim(QP_solver)=="g") then
-       call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
-     else
-       call initactivate(1,'GWoIter')
-       if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+     if (l_gw0) then
+       call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
+       if (trim(QP_solver)=="g") then
+         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+       else
+         call initactivate(1,'GWoIter')
+         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+       endif
+     else if (l_life) then
+       call initactivate(1,'GbndRnge') 
      endif
    endif
 #endif
@@ -1529,7 +1533,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Lifetimes
          !
-         if ( trim(rstr_piece(i1)) == 'life' )  call initactivate(1,'em1d')
+         if ( i_cycle==2 .and. trim(rstr_piece(i1)) == 'life' )  then
+#if defined  _ELPH || defined _QED
+           if ( (.not.l_elel_corr.and..not.l_elphoton_corr) .or. l_elel_corr) then
+             call initactivate(1,'em1d')
+             call initactivate(1,'el_el_corr')
+           endif
+#else
+           call initactivate(1,'em1d')
+           l_elel_corr=.true.
+#endif
+         endif
          !
          ! GW approximation 
          !

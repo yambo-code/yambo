@@ -103,8 +103,13 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    titles_order(ntitles)=12
  endif
  if (l_life) then
+#if defined _QED
+   ntitles=8
+   titles_order(:ntitles)=(/9,10,4,12,13,28,30/)
+#else
    ntitles=5
    titles_order(:ntitles)=(/9,10,4,12,13/)
+#endif
  endif
  if (what=='hf') then
    ntitles=6

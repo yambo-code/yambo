@@ -114,9 +114,8 @@ subroutine RT_driver(E,X,k,q)
  !
  call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,Bm_index=PAR_IND_B_mat,CLEAN_UP=.TRUE.)
  !
- ! before loading the WF in R-space I check and/or calculate
- ! the optical collisions that are done in G-space and would
- ! force the reloading of the WFs
+ ! before loading the WF in R-space I check and/or calculatethe optical collisions that 
+ ! are done in G-space and would ! force the reloading of the WFs
  !
  call DIPOLE_driver(E,k,X(1),X(1)%q0)
  !

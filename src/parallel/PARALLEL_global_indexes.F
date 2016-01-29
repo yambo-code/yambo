@@ -898,39 +898,43 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! To eval/use the COLLISIONS I need the PAR_B_mat_index, built here.
    !
    if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
+     !
      nb_mat=(SC_bands(2)-SC_bands(1)+1)**2
      call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',SC_bands)
      call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+     !
    endif
    !
-   if (l_elphoton_corr) then
-     nb_mat=(n_bands(2)-n_bands(1)+1)**2
-     call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',n_bands)
-     call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1),&
-&                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+   if (l_elphoton_corr.and.l_life) then
+     !
+     ! Oscillators needed to evaluate the Radiative Lifetimes
+     !
+     ! Dipoles are calculated using the three user-defined COMs
+     !
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES_k_subgroup)
+     call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX(X_type))
+     call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX(X_type))
+     ! 
+     n_c_bands=QP_n_G_bands
+     n_v_bands=QP_n_G_bands
+     ! 
+     ! As there will be a mismatch between the k-distribution here and in the self-energy (qp-loop)
+     ! I cannot distribute the k-pts. Therefore the PAR_COM_DIPOLES_k_subgroup is the WORLD
+     !
+     call PARALLEL_index(PAR_IND_DIPk_ibz,(/Xk%nibz/),COMM=PAR_COM_Q_index)
+     PAR_IND_DIPk_ID=PAR_IND_Q_ID
+     allocate(PAR_DIPk_ibz_index(Xk%nibz))
+     do i_k=1,Xk%nibz
+       PAR_DIPk_ibz_index(i_k)=i_k
+     enddo
+     PAR_DIPk_nibz=Xk%nibz
+     !
    endif
    !
 #endif
-   !.........................................................................
-   ! Oscillators Radiative Lifetimes
-   !
-   ! To define proper indexes to calculate the dipoles I need to build up
-   ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
-   !
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES_k_subgroup)
-   !
-   call PARALLEL_minimal_index_from_overlaping(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz,PAR_COM_WORLD)
-   PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
-   !
-   allocate(PAR_Xk_ibz_index(Xk%nibz))
-   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
-   !
-   allocate(PAR_DIPk_ibz_index(Xk%nibz))
-   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
    ! I/O privileges
    !
@@ -968,6 +972,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
    !
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
    call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
@@ -1065,7 +1070,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  !==========================================================================================================
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.&
-&    ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_T_space") then
+&    ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_T_space".or.&
+&    (ENVIRONMENT=="Self_Energy".and.l_life.and.l_elphoton_corr) ) then
    !========================================================================================================
    !
    ! Response functions conduction bands

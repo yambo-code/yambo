@@ -321,7 +321,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (l_life) then
    !
-   call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   !
+   ! Radiative Lifetimes (Using <p>)
+   !=================================
+   !
+   if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X)
    !
    qp%Z=cONE
    !

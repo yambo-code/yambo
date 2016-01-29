@@ -122,7 +122,7 @@ subroutine init_barriers()
  ! GPL_EXCLUDE_END
  !
  if (l_life) then
-   call switch_off_runlevel('all',on_name='life em1d '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='life em1d el_el_corr el_photon_corr '//trim(always_runlevels))
    goto 1
  endif
  !

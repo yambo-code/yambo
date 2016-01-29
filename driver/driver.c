@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
  By default MPI_init is on. It is swiched off during the options scanning
 */
  int mpi_init=0;
+ int use_editor=1;
  int iv[4];
  double rv[4];
  char *cv[4]; 
@@ -186,6 +187,12 @@ int main(int argc, char *argv[])
 */
      if (opts[j].mp==0)  {mpi_init=-1;};
 /* 
+*/
+/*
+ Switch off launch editor
+*/
+     if (strcmp(opts[j].ln,"quiet")==0)  {use_editor=0;};
+/*
 */
      opts[j].st++; 
      lni=0;
@@ -369,8 +376,10 @@ int main(int argc, char *argv[])
 #if defined _YAMBO_MAIN || defined _YPP_MAIN 
  if (iif == 1 && ttd>0)
  {
-  if(strstr(editor,"none ")==0) { system(edit_line); };
-  if(strstr(editor,"none ")!=0) { 
+  if(strstr(editor,"none ")==0 && use_editor) { 
+    system(edit_line);
+  }
+  else { 
    fprintf(stderr," \n%s %s %s\n\n","yambo: input file",inf,"created");
    exit (0);
   }

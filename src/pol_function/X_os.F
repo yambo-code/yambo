@@ -35,7 +35,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_q_for_Xo,PAR_COM_Q_INDEX,myid
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,PAR_COM_Q_INDEX,myid
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,n_threads_DIP
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
@@ -67,7 +67,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  character(schlen)        :: live_t_string
  integer                  :: ig1,ig2,iw,n_poles,i_cg
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU)
+ real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU)
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),pole
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
@@ -133,11 +133,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    minmax_ehe=0._SP
    !
-   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_q_for_Xo%CPU_id+1))
+   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
    deallocate(X_poles)
    !
    if (self_detect_E_range) then
-     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_q_for_Xo%COMM)
+     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
      Xw%er(1)=minval(minmax_ehe(1,:))
      Xw%er(2)=maxval(minmax_ehe(2,:))
    endif
@@ -255,7 +255,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_q_for_Xo%COMM)
+   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
  enddo
  !
 #if defined _TIMING

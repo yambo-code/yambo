@@ -35,8 +35,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
- use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_Xk_ibz_ID,&
-&                         PAR_Xk_nbz,PAR_COM_q_for_Xo,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ID,&
+&                         PAR_Xk_nbz,PAR_COM_DIPOLES,PP_redux_wait
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use drivers,        ONLY:l_sc_run
@@ -92,7 +92,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err=io_Overlaps(X,Xen,ID)
    endif
-   call PP_redux_wait(COMM=PAR_COM_q_for_Xo%COMM)
+   call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
    if (.not.master_cpu) then
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err=io_Overlaps(X,Xen,ID)
@@ -112,7 +112,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  if(any(k_map%max_kdir(:)>=6)) &
 &   call msg('rs','Using second order approximation for covariant dipoles')
  !
- call live_timing('Covariant Dipoles:',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*n_sp_pol)
+ call live_timing('Covariant Dipoles:',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ID+1)*n_sp_pol)
  !
  ! Notice that DIP_iR/DIP_P are defined only in the IBZ
  ! while the overlaps are in the BZ 

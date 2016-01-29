@@ -46,7 +46,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_QP_INDEX,PAR_COM_Plasma_INDEX,&
 &                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
-&                        PAR_COM_q_for_Xo,PAR_COM_k_for_P,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
+&                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
 &                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
@@ -61,7 +61,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_Plasma_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
-&                        PAR_IND_Kk_ibz_ID
+&                        PAR_IND_Kk_ibz_ID,PAR_IND_DIPk_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,&
@@ -207,8 +207,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_WF_k_A2A)
    call COMM_reset(PAR_COM_WF_b_INDEX)
    call COMM_reset(PAR_COM_WF_k_INDEX)
-   call COMM_reset(PAR_COM_q_for_Xo)
-   call COMM_reset(PAR_COM_k_for_P)
+   call COMM_reset(PAR_COM_DIPOLES)
+   call COMM_reset(PAR_COM_DIPOLES_k_subgroup)
    call COMM_reset(PAR_COM_density)
    call COMM_reset(PAR_COM_eh_INDEX)
    call COMM_reset(PAR_COM_eh_A2A)
@@ -344,10 +344,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_q_for_Xo)
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_k_for_P)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
+   PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
@@ -455,12 +456,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
    ! The COMM is anyway the one for the all2all of each q.
    !
-   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_q_for_Xo)
-   call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_k_for_P)
+   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    if (ENVIRONMENT/="Response_G_space_Finite_Momentum") then
      !
      call PARALLEL_minimal_index_from_overlaping(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz,PAR_COM_Xk_bz_INDEX)
+     PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
      !
      allocate(PAR_DIPk_ibz_index(Xk%nibz))
      call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
@@ -574,9 +576,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    !.........................................................................
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',SC_bands)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_q_for_Xo)
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_k_for_P)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
+   PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    allocate(PAR_Xk_ibz_index(Xk%nibz))
@@ -917,10 +920,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! To define proper indexes to calculate the dipoles I need to build up
    ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
    !
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_q_for_Xo)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_k_for_P)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES_k_subgroup)
    !
    call PARALLEL_minimal_index_from_overlaping(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz,PAR_COM_WORLD)
+   PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
    !
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
@@ -964,7 +968,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
    !
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_k_for_P)
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
    call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
    !
@@ -983,6 +987,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
    call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_ibz)
+   PAR_IND_DIPk_ID=PAR_IND_Kk_ibz_ID
    PAR_Xk_nibz  =PAR_Kk_nibz
    PAR_DIPk_nibz=PAR_Kk_nibz
    allocate(PAR_DIPk_ibz_index(Xk%nibz))

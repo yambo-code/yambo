@@ -248,6 +248,9 @@ module parallel_m
  ! ... RL
  integer            :: PAR_IND_RL_ID
  !
+ ! ... Optical oscillators
+ integer            :: PAR_IND_DIPk_ID
+ !
  ! Specific MPI COMMUNICATORS...
  !==============================
  ! PAR_COM_*_INDEX is the interchain comunicator
@@ -293,8 +296,8 @@ module parallel_m
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_q_for_Xo
- type(MPI_comm),SAVE :: PAR_COM_k_for_P
+ type(MPI_comm),SAVE :: PAR_COM_DIPOLES
+ type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
  !
  ! ... BSK
  type(MPI_comm),SAVE :: PAR_COM_eh_A2A

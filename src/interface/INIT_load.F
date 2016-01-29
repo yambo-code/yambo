@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_load(defs,en,q,k,X,Xw)
+subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh
@@ -464,17 +464,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! QP ctl 
  !
- call init_QP_ctl_load(defs,1)
- call init_QP_ctl_load(defs,2)
- call init_QP_ctl_load(defs,3)
+ call INIT_QP_ctl_load(defs,1)
+ call INIT_QP_ctl_load(defs,2)
+ call INIT_QP_ctl_load(defs,3)
  !
 #if defined _RT
  !
  ! RT ctl 
  !
- call init_RT_ctl_load(defs,1)
- call init_RT_ctl_load(defs,2)
- call init_RT_ctl_load(defs,3)
+ call INIT_RT_ctl_load(defs,1)
+ call INIT_RT_ctl_load(defs,2)
+ call INIT_RT_ctl_load(defs,3)
  !
 #endif
  !

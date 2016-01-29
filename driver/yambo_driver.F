@@ -75,7 +75,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Local Variables
  !
  integer           ::i_err
- integer, external ::X_em1,init
+ integer, external ::X_em1,INIT
  logical           ::l_pp_em1,l_dyn_em1
  !
  ! Presets
@@ -90,7 +90,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
  call it_reset(1)
  !
- ! not resetted in init call
+ ! not resetted in INIT call
  !
  call bz_samp_reset(Xk)  
  call E_reset(Xen) 
@@ -104,7 +104,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! iinf=0 => No error message from driver.c 
  !
  iinf=0 
- iinf=init(en,q,k,X,Xw,instr,lnstr,.false.,.false.)
+ iinf=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.false.)
  !
  ! the iinf==2 (DB listing mode) stops the job so no file editing
  ! or error msg from the driver.c is possible
@@ -129,7 +129,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Update the default variables
  !
- i_err=init(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
+ i_err=INIT(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
  !
@@ -295,9 +295,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !==============
  call section('X','Game Over & Game summary')
  !
- ! Update init defs
+ ! Update INIT defs
  !
- i_err=init(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
+ i_err=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
  !
  ! Finalize
 #if defined _TIMING

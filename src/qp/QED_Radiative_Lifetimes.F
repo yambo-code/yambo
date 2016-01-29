@@ -131,7 +131,6 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  ! Transfer to qp% components (assuming OMS approximation)
  !
  qp%E(:)=QP_sc(:,1)
- qp%Z(:)=1._SP
  !
 #if defined _TIMING
  call timing('Radiative Lifetimes',OPR='stop')

@@ -179,21 +179,21 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call X_reset(Xbsk)
  !
  if (FINALIZE) then
-   call call_init_load('Game_Over')
+   call call_INIT_load('Game_Over')
    call initinfio(defs,11)
    call ofiles_append(defs=defs)
    return
  endif
  if (CLOSE_Gs) then
-   call call_init_load('Close_G_vectors')
-   call init_barriers( )
+   call call_INIT_load('Close_G_vectors')
+   call INIT_barriers( )
    call logicalson
    return
  endif
  !
  ! First vars loading
  ! 
- call call_init_load('create_shadow_vars')
+ call call_INIT_load('create_shadow_vars')
  !
  ! Command line reading
  !
@@ -467,11 +467,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !a predefined var verbosity and to force its appearance
  !in the input file.
  !
- call call_init_load('load_defaults')
+ call call_INIT_load('load_defaults')
  !
  !Input file/local cache -> local cache/Variables
  !
- call call_init_load('parser_input_file')
+ call call_INIT_load('parser_input_file')
  !
  !RUNLEVELS VARIABLES ACTIVATION (LOGICALS FROM INPUT FILE)
  !
@@ -595,9 +595,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                  'DrudeW','EhEngy','LongDr'/))
    !
    !
-   call init_QP_ctl_switch('X')
+   call INIT_QP_ctl_switch('X')
 #if defined _RT
-   call init_RT_ctl_switch('X')
+   call INIT_RT_ctl_switch('X')
 #endif
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Qdirection QShiftOrder')
    !
@@ -625,9 +625,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_optics.and.l_bse) then
    !
-   call init_QP_ctl_switch('K')
+   call INIT_QP_ctl_switch('K')
 #if defined _RT
-   call init_RT_ctl_switch('K')
+   call INIT_RT_ctl_switch('K')
 #endif
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
@@ -670,9 +670,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Static screen 
  !
  if (l_em1s) then
-   call init_QP_ctl_switch('X')
+   call INIT_QP_ctl_switch('X')
 #if defined _RT
-   call init_RT_ctl_switch('X')
+   call INIT_RT_ctl_switch('X')
 #endif
    call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','DmRnge','CGrdSp','EhEngy',&
@@ -684,9 +684,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! GW (PPA & COHSEX) 
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
-   call init_QP_ctl_switch('X')
+   call INIT_QP_ctl_switch('X')
 #if defined _RT
-   call init_RT_ctl_switch('X')
+   call INIT_RT_ctl_switch('X')
 #endif
    call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
@@ -705,9 +705,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ACFDT
  !
  if (l_acfdt) then
-   call init_QP_ctl_switch('X')
+   call INIT_QP_ctl_switch('X')
 #if defined _RT
-   call init_RT_ctl_switch('X')
+   call INIT_RT_ctl_switch('X')
 #endif
    call initactivate(1,'ShiftedPaths')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
@@ -736,11 +736,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    if (l_elel_corr) then
      !
-     call init_QP_ctl_switch('X')
-     call init_QP_ctl_switch('G')
+     call INIT_QP_ctl_switch('X')
+     call INIT_QP_ctl_switch('G')
 #if defined _RT
-     call init_RT_ctl_switch('X')
-     call init_RT_ctl_switch('G')
+     call INIT_RT_ctl_switch('X')
+     call INIT_RT_ctl_switch('G')
 #endif
      call initactivate(1,'BoseCut ShiftedPaths')
      !
@@ -853,8 +853,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
  !
  if (l_real_time) then
-   call init_QP_ctl_switch('G')
-   call init_RT_ctl_switch('G')
+   call INIT_QP_ctl_switch('G')
+   call INIT_RT_ctl_switch('G')
    call initactivate(-1,'SCmixing')
    call initactivate(1,'SCBands Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime COHsteps DipoleEtresh')
@@ -925,10 +925,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! To handle externally defined Q-points I use the init_q_pts
  !
  ! (a) first check if input file contains already a list of Q-points...
- call init_q_points(.FALSE.)
+ call INIT_q_points(.FALSE.)
  !
  ! (b) ... then (re)write the file
- if (l_setup.and.io_QINDX_err/=0.and.infile_editing) call init_q_points(.TRUE.)
+ if (l_setup.and.io_QINDX_err/=0.and.infile_editing) call INIT_q_points(.TRUE.)
  !
  !If qp limits are requested they are added at the end of the input file
  !
@@ -964,7 +964,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    endif
    !
-   call init_QP(.TRUE.,infile_verbosity==V_qp)
+   call INIT_QP(.TRUE.,infile_verbosity==V_qp)
    !
    ! I use it to propose the value in the input file ...
    !
@@ -976,7 +976,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
 #if defined _RT
- if(infile_verbosity==V_real_time.and.l_real_time) call init_DephMatrix()
+ if(infile_verbosity==V_real_time.and.l_real_time) call INIT_DephMatrix()
 #endif
  !
  if (infile_editing) return
@@ -1077,14 +1077,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      enddo
    end subroutine
    !
-   subroutine call_init_load(mode)
+   subroutine call_INIT_load(mode)
      character(*)::mode
      if (mode=='create_shadow_vars') initmode=0
      if (mode=='load_defaults') initmode=1
      if (mode=='Close_G_vectors') initmode=2
      if (mode=='Game_Over') initmode=3
      if (mode=='parser_input_file') initmode=4
-     call init_load(defs,en,q,k,X,Xw)
+     call INIT_load(defs,en,q,k,X,Xw)
    end subroutine
    !
    subroutine logicalson
@@ -1165,7 +1165,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! Check if this runlevel is allowed in the 
        ! present configuration
        !
-       if (i1==1) call init_barriers( )
+       if (i1==1) call INIT_barriers( )
        !
      enddo
      !

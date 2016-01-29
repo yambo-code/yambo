@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_RT_ctl_load(defs,i_type)
+subroutine INIT_RT_ctl_load(defs,i_type)
  !
  ! Note that this routine is called in 'load' mode BEFORE
  ! the DB1 is read, so before n_sp_pol is set to the correct value.

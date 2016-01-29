@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ypp_init(E,instr,lnstr,FINALIZE)
+subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  use YPP
  use pars,           ONLY:pi
@@ -102,7 +102,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  !
  if (FINALIZE) then
-   call call_init_load('GameOver')
+   call call_INIT_load('GameOver')
    if (master_cpu) call ofiles_append(defs=defs)
    return
  endif
@@ -335,7 +335,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! Defaults->Defs + Initialization
  !
- call call_init_load('load')
+ call call_INIT_load('load')
  !
  ! Dump internally the input file
  !
@@ -499,7 +499,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  enddo
  !
- if (.not.l_sort.and..not.l_atomic_amplitude) call call_init_load('parserload')
+ if (.not.l_sort.and..not.l_atomic_amplitude) call call_INIT_load('parserload')
  !
  l_bz_grids  = runlevel_is_on('bzgrids')
  l_k_grid    = runlevel_is_on('K_grid')
@@ -623,13 +623,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map")
  !
  if (l_electrons) then
-   if (l_dos.or.l_bands) call init_QP_ctl_switch('G')
+   if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
    if (l_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands PrtOccOnly")
  endif
 #if defined _YPP_RT
  if (l_RealTime) then
    l_flag=l_RT_occ_2D_dos.or.l_RT_occ_time.or.l_RT_occ_energy.or.l_RT_occ_Bands.or.l_RT_abs
-   if (l_flag) call init_RT_ctl_switch('G')
+   if (l_flag) call INIT_RT_ctl_switch('G')
    if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
    if (l_RT_occ_Bands.or.l_RT_life_Bands) call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_abs) call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
@@ -656,7 +656,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if (l_excitons) then
    call initactivate(1,"States")
    if (l_amplitude) then
-     call init_QP_ctl_switch('G')
+     call INIT_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")
    endif
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
@@ -723,9 +723,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  if (.not.l_init_QP) l_init_QP=l_RT_occ_time.or.l_RT_occ_energy.or.l_RT_occ_2D_dos.or.l_RT_occ_bands.or.l_RT_life_Bands
- if (l_init_QP) call init_QP(.FALSE.,infile_verbosity==V_real_time)
+ if (l_init_QP) call INIT_QP(.FALSE.,infile_verbosity==V_real_time)
 #else
- if (l_init_QP) call init_QP(.FALSE.,.FALSE.)
+ if (l_init_QP) call INIT_QP(.FALSE.,.FALSE.)
 #endif
  !
  ! Check and fill all possible vectorial USER fields
@@ -746,7 +746,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
 contains
  !
- subroutine call_init_load(mode) 
+ subroutine call_INIT_load(mode) 
    character(*)::mode
    !
    if (mode=='load') initmode=0
@@ -754,7 +754,7 @@ contains
    if (mode=='Gclose') initmode=2
    if (mode=='GameOver') initmode=3
    if (mode=='parserload') initmode=4
-   call ypp_init_load(defs)
+   call ypp_INIT_load(defs)
    !
  end subroutine
  !

@@ -41,9 +41,9 @@ if ( "$dir" == "1" ) set gpl="no"
 set dummy=`cat include/version.inc | grep 'code_version(1)'`
 set version_old=`echo $dummy | $awk '{gsub("code_version\\(1\\)=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_version(2)'`
-set patch_old=`echo $dummy | $awk '{gsub("code_version\\(2\\)=","");print $0}'`
+set subver_old=`echo $dummy | $awk '{gsub("code_version\\(2\\)=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_version(3)'`
-set sub_old=`echo $dummy | $awk '{gsub("code_version\\(3\\)=","");print $0}'`
+set patch_old=`echo $dummy | $awk '{gsub("code_version\\(3\\)=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_revision'`
 set revision_old=`echo $dummy | $awk '{gsub("code_revision=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_GPL_revision'`
@@ -52,30 +52,30 @@ set GPL_revision_old=`echo $dummy | $awk '{gsub("code_GPL_revision=","");print $
 # Increase counters
 #
 set version_new = $version_old
+set subver_new = $subver_old
 set patch_new = $patch_old
-set sub_new = $sub_old
 set revision_new = $revision_HEAD
 #
 if ( "$argv[1]" == "v" ) @ version_new ++
+if ( "$argv[1]" == "v" ) @ subver_new = 0
 if ( "$argv[1]" == "v" ) @ patch_new = 0
-if ( "$argv[1]" == "v" ) @ sub_new = 0
-if ( "$argv[1]" == "p" ) @ patch_new ++
-if ( "$argv[1]" == "p" ) @ sub_new = 0
-if ( "$argv[1]" == "s" ) @ sub_new ++
+if ( "$argv[1]" == "p" ) @ subver_new ++
+if ( "$argv[1]" == "p" ) @ patch_new = 0
+if ( "$argv[1]" == "s" ) @ patch_new ++
 #
 if ( "$argv[1]" != "save" ) then
   @ revision_new ++ 
   echo 
   if ( "$gpl" == "yes" ) then
-    echo "v."$version_old"."$patch_old"."$sub_old " r."$GPL_revision_old " => " \
-         "v."$version_new"."$patch_new"."$sub_new " r."$revision_new
+    echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " => " \
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
   else
-    echo "v."$version_old"."$patch_old"."$sub_old " r."$revision_old " => " \
-         "v."$version_new"."$patch_new"."$sub_new " r."$revision_new
+    echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " => " \
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
   endif
   echo 
 else
- set source_dir="yambo-"$version_new"."$patch_new"."$sub_new
+ set source_dir="yambo-"$version_new"."$subver_new"."$patch_new
  set file_name=$source_dir"-"$revision_new".tar"
  echo "archive of " $source_dir " is " "../"$file_name".gz"
 endif
@@ -85,8 +85,8 @@ if ($< =~ [Yy]*) then
 #
 # Version strings
 echo 'code_version(1)='$version_new  >  include/version.inc
-echo 'code_version(2)='$patch_new    >> include/version.inc
-echo 'code_version(3)='$sub_new      >> include/version.inc
+echo 'code_version(2)='$subver_new    >> include/version.inc
+echo 'code_version(3)='$patch_new      >> include/version.inc
 if ( "$gpl" == "yes" ) then
  echo 'code_revision='$revision_old >> include/version.inc
  echo 'code_GPL_revision='$revision_new >> include/version.inc
@@ -100,11 +100,11 @@ endif
 if ( "$gpl" == "yes" ) then
 cat << EOF > ss.awk
 {
- gsub("$version_old\\\.$patch_old\\\.$sub_old r\\\.$GPL_revision_old",
-      "$version_new.$patch_new.$sub_new r.$revision_new",\$0)
+ gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$GPL_revision_old",
+      "$version_new.$subver_new.$patch_new r.$revision_new",\$0)
  gsub("SVERSION=\"$version_old\"","SVERSION=\"$version_new\"",\$0)
- gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
- gsub("SSUBLEVEL=\"$sub_old\"","SSUBLEVEL=\"$sub_new\"",\$0)
+ gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
+ gsub("SSUBLEVEL=\"$patch_old\"","SSUBLEVEL=\"$patch_new\"",\$0)
  gsub("SREVISION=\"$GPL_revision_old\"","SREVISION=\"$revision_new\"",\$0)
  print \$0 > "NEW"
 }
@@ -112,11 +112,11 @@ EOF
 else
 cat << EOF > ss.awk
 {
- gsub("$version_old\\\.$patch_old\\\.$sub_old r\\\.$revision_old",
-      "$version_new.$patch_new.$sub_new r.$revision_new",\$0)
+ gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$revision_old",
+      "$version_new.$subver_new.$patch_new r.$revision_new",\$0)
  gsub("SVERSION=\"$version_old\"","SVERSION=\"$version_new\"",\$0)
- gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
- gsub("SSUBLEVEL=\"$sub_old\"","SSUBLEVEL=\"$sub_new\"",\$0)
+ gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
+ gsub("SSUBLEVEL=\"$patch_old\"","SSUBLEVEL=\"$patch_new\"",\$0)
  gsub("SREVISION=\"$revision_old\"","SREVISION=\"$revision_new\"",\$0)
  print \$0 > "NEW"
 }
@@ -152,4 +152,4 @@ endif
 exit 0
 
 HELP:
-echo "yambo_versions_update.tcsh [(save)/(r)evision/(v)ersion/(p)atchlevel/(s)ubversion]"
+echo "yambo_versions_update.tcsh [(save) / (v)ersion/(s)ubversion/(p)atchlevel/@(r)evision]"

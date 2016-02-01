@@ -133,27 +133,27 @@ subroutine K_output_file(iq,mode)
    !
    ! Headers
    !
-   call X_setup_headers('eps')
+   call X_setup_headers('EPS')
    if (mode==1) call msg("o eps",'#',headers,INDENT=0,USE_TABS=.TRUE.)
    if (mode/=1.and.mode/=4) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (mode==4) call msg("o eps",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
    if (eval_reflectivity) then 
-     call X_setup_headers('refl')
+     call X_setup_headers('REFL')
      if (mode==1) call msg("o refl",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
      if (mode/=1.and.mode/=4) call msg("o refl",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o refl",'#',headers(:2),INDENT=0,USE_TABS=.TRUE.)
    end if   
    !
    if (eval_eels) then 
-     call X_setup_headers('eel')
+     call X_setup_headers('EEL')
      if (mode==1) call msg("o eel",'#',headers,INDENT=0,USE_TABS=.TRUE.)
      if (mode/=1.and.mode/=4) call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o eel",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    end if   
    !
    if (eval_alpha) then 
-     call X_setup_headers('alpha')
+     call X_setup_headers('ALPHA')
      if (mode==1) call msg("o alpha",'#',headers,INDENT=0,USE_TABS=.TRUE.)
      if (mode/=1.and.mode/=4) call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o alpha",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
@@ -187,6 +187,7 @@ subroutine K_output_file(iq,mode)
      call msg('o off','#')
      !
      call X_setup_headers('off')
+     !
      if (mode==1) call msg("o off",'#',headers,INDENT=0,USE_TABS=.TRUE.)
      if (mode/=1.and.mode/=4) call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o off",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)

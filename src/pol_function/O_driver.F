@@ -172,7 +172,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      ! Fxc file titles
      !
-     call X_setup_headers('q2Fxc')
+     call X_setup_headers('q^2Fxc')
      call msg('o fxc','#',(/headers(1),headers(3),headers(2)/),INDENT=0,USE_TABS=.true.)    
      call msg('o fxc','#')
    endif
@@ -226,11 +226,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    n_output=5
    if(l_rpa_IP.or.l_skip_non_int_eps) n_output=3
    call msg('o eps_q eel_q fxc alpha','#')
-   call X_setup_headers('eps_q')
+   call X_setup_headers('EPS')
    call msg('o eps_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call X_setup_headers('eel_q')
+   call X_setup_headers('EEL')
    call msg('o eel_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call X_setup_headers('alpha')
+   call X_setup_headers('ALPHA')
    call msg('o alpha','#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
    call msg('o eps_q eel_q alpha','#')
    !

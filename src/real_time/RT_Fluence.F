@@ -24,10 +24,11 @@
 subroutine RT_Fluence(i_field)
  !
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
+ use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT
  use rt_ctl,         ONLY:RT_IO_output_steps
  use real_time,      ONLY:RT_step,NE_steps
- use fields,         ONLY:Efield
+ use fields,         ONLY:Efield,small_a
+ use functions,      ONLY:theta_function
  !
  implicit none
  !
@@ -35,14 +36,10 @@ subroutine RT_Fluence(i_field)
  ! 
  ! Work Space
  !
- integer      :: it,last_it_evaluated
- real(SP)     :: I(NE_steps),T(NE_steps),Fluence(NE_steps)
- complex(SP)  :: Field_time,E(NE_steps)
+ integer      :: it0,it,last_it_evaluated
+ real(SP)     :: I(NE_steps),T(NE_steps),Field_time,E_coeff
+ complex(SP)  :: E(3,NE_steps),A_of_t(2),E_of_t(2),theta,delta
  real(SP),external :: RIntegrate
- !
- ! I broke this subroutine for the moment
- !
- return
  !
  ! E(t)=-d A(t)/dt / SPEED_OF_LIGHT
  !
@@ -57,62 +54,62 @@ subroutine RT_Fluence(i_field)
  if ( Efield(i_field)%intensity<1.E-15_SP ) then
    Efield(i_field)%t_final=Efield(i_field)%t_initial
    Efield(i_field)%t_final_indx=Efield(i_field)%t_initial_indx
-   allocate(Efield(i_field)%Fluence(1) )
-   Efield(i_field)%Fluence=0._SP
+   Efield(i_field)%fluence=0._SP
    return
  endif
  !
  I=0._SP
- Fluence=0._SP
+ T=0._SP
  last_it_evaluated=0
  !
- do it=Efield(i_field)%t_initial_indx,NE_steps,RT_IO_output_steps
+ Efield(i_field)%fluence=0._SP
+ !
+ it0=Efield(i_field)%t_initial_indx
+ !
+ do it=it0,NE_steps
    !
    T(it)=it*RT_step
    !
-   Field_time=cmplx(T(it)-Efield(i_field)%t_initial,0._SP)
+   if ((it-it0)>6*nint(Efield(i_field)%damping/RT_step)) exit
    !
-   ! I(t) = \frac{c}{8\pi} E^2(t)
+   Field_time=T(it)-Efield(i_field)%t_initial
    !
-!   E(it)=Efield(i_field)%amplitude*&
-!&        small_a(Field_time,Efield(i_field),1)*theta_function(real(Field_time),RT_step,0)+&
-!&        small_a(Field_time,Efield(i_field),0)*theta_function(real(Field_time),RT_step,1)
+   A_of_t=small_a(Field_time,Efield(i_field),0)
+   E_of_t=small_a(Field_time,Efield(i_field),1)
    !
-   I(it)=SPEED_OF_LIGHT/8./pi*abs(E(it))**2.
+   theta=theta_function(Field_time,RT_step,0)
+   delta=theta_function(Field_time,RT_step,1)
    !
-   ! From au to kW/cm^2
+   select case(Efield(i_field)%ef_pol)
+   case("linear")
+     E_coeff=Efield(i_field)%amplitude
+     E(:,it)=E_coeff*Efield(i_field)%versor*( E_of_t(1)*theta+A_of_t(1)*delta )
+   case('circular')
+     E_coeff=Efield(i_field)%amplitude/sqrt(2._SP)
+     E(:,it)=E_coeff*Efield(i_field)%versor*( E_of_t(1)*theta+A_of_t(1)*delta )                 &
+&           +E_coeff*Efield(i_field)%versor_circ*( E_of_t(2)*theta+A_of_t(2)*delta )
+   end select
    !
-   I(it)=I(it)*AU2KWCMm2
-   ! 
-   ! To get the fluence in kJ/cm^2 I should translate T in secs. However to get 
-   ! the integration more stable I multiply I by 10^-15
-   !
-   T(it)=T(it)/FS2AUT ! au -> fs
-   I(it)=I(it)*1.E-15_SP
-   !
-   if (it>10*Efield(i_field)%damping/RT_step) cycle
-   !
-   !if (mod(it,RT_IO_output_steps)/=0) cycle
-   !
-   Fluence(it)=RIntegrate(I(:it),T(:it),it)
-   ! 
-   if (last_it_evaluated>0 ) Fluence(last_it_evaluated+1:it-1)= Fluence(last_it_evaluated)
+   I(it)=(abs(E(1,it))**2+abs(E(2,it))**2+abs(E(3,it))**2)
    !
    last_it_evaluated=it
    !
-   if (it<3*Efield(i_field)%damping/RT_step) cycle
-   !
-   if (abs(Fluence(it)-maxval(Fluence(:it-1)))/Fluence(it)<1.E-5) exit
-   !
  enddo
+ !
+ ! I(t) = \frac{c}{8\pi} E^2(t)
+ ! From au to kW/cm^2
+ !
+ I(:)=I(:)*SPEED_OF_LIGHT/4._SP/pi*AU2KWCMm2
+ ! 
+ ! To get the fluence in kJ/cm^2 I should translate T in sec.
+ ! Then I would have a factor 10^-12 ( 1 nJ/cm^2 = 10^-12 kJ/cm^2 )
+ ! thus I ruther convert time in ps
+ !
+ T(:)=T(:)/PS2AUT      ! au -> ps
+ !
+ Efield(i_field)%fluence=RIntegrate(I(it0:last_it_evaluated),T(it0:last_it_evaluated),last_it_evaluated-it0+1)
  !
  Efield(i_field)%t_final_indx=last_it_evaluated
  Efield(i_field)%t_final=(Efield(i_field)%t_final_indx-1)*RT_step
- !
- allocate(Efield(i_field)%Fluence( Efield(i_field)%t_final_indx ) )
- Efield(i_field)%Fluence(:Efield(i_field)%t_final_indx)=&
-&                Fluence(:Efield(i_field)%t_final_indx)
- !
- if(it<=NE_steps) Fluence(it:)=Fluence(it-1)
  !
 end subroutine RT_Fluence

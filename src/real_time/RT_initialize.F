@@ -27,7 +27,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf
  use SC,             ONLY:SC_bands
  use pars,           ONLY:SP,pi
- use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
+ use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,SPEED_OF_LIGHT
  use stderr,         ONLY:intc
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
@@ -62,9 +62,9 @@ subroutine RT_initialize(E,k,q)
  ! Work space
  !
  integer                  :: i1,rest,ik,IO_steps(3),N_T_samplings
- character(5)             :: MSG_ch
+ character(6)             :: MSG_ch
  real(SP)                 :: T_memory
- logical                  :: l_Full_RT_T_evolution,l_field_is_a_pulse,l_skip_it
+ logical                  :: l_Full_RT_T_evolution,l_skip_it
  integer,         external:: RT_k_grid,RT_Lifetimes_evaluation_plan
  !
  ! Logicals
@@ -232,13 +232,11 @@ subroutine RT_initialize(E,k,q)
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !
-     l_field_is_a_pulse= (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS')
-     !
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
        Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)       
-     !else if ( l_field_is_a_pulse ) then
-     !  call RT_Fluence(i1)
+     else if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') ) then
+       call RT_Fluence(i1)
      else
        Efield(i1)%t_final_indx=    NE_steps
        Efield(i1)%t_final=RT_step*(NE_steps-1)
@@ -396,12 +394,10 @@ subroutine RT_initialize(E,k,q)
  if (l_NE_with_fields) then
    call msg( 'nr','---Fields---')
    call msg('r','Gauge                       :',trim(global_gauge))
+   !
    !call msg('r','Pump/Probe periodicity  [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
    !call msg('r','Pump/Probe energy step  [eV]:',maxval(Efield(:)%W_step)*HA2EV)
-   !if ( l_field_is_a_pulse ) then
-   !  call msg('r','Max Fluence        [kJ/cm^2]:',Efield(1)%Fluence( Efield(1)%t_final_indx ))
-   !  call msg('r','           reached time [fs]:',Efield(1)%t_final/FS2AUT)
-   !endif
+   !
    do i1=1,n_ext_fields
      MSG_ch="Field"//trim(intc(i1))
      call msg('r', MSG_ch//' field                       :'//trim(Efield(i1)%ef_name))
@@ -412,7 +408,15 @@ subroutine RT_initialize(E,k,q)
      call msg('r', MSG_ch//' damping                 [fs]:',Efield(i1)%damping/FS2AUT)
      call msg('r', MSG_ch//' energy steps                :',Efield(i1)%n_frequencies)
      call msg('r', MSG_ch//' electric field         [V/m]:',Efield(i1)%amplitude*AU2VMm1)
+     call msg('r', MSG_ch//' max intensity      [kW/cm^2]:',Efield(i1)%intensity*AU2KWCMm2)
+     !
+     if( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='DELTA') ) then
+       call msg('r', MSG_ch//' max fluence        [nJ/cm^2]:',Efield(i1)%fluence )
+       call msg('r', MSG_ch//' final time              [fs]:',Efield(i1)%t_final/FS2AUT)
+     endif
+     !
    enddo
+   !
  endif
  !
 end subroutine RT_initialize

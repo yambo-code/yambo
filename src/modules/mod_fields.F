@@ -42,12 +42,12 @@ module fields
    integer  :: n_frequencies
    real(SP) :: frequency(2)
    real(SP) :: damping
+   real(SP) :: fluence
    real(SP) :: intensity
    real(SP) :: amplitude
    real(SP) :: W_step
    real(SP) :: versor(3)
    real(SP) :: versor_circ(3)
-   real(SP), allocatable :: Fluence(:)
  end type ext_field
  !
  integer, parameter  :: n_ext_fields_max=4
@@ -60,6 +60,8 @@ module fields
    complex(SP) :: vecpot(3)
    complex(SP) :: vecpot_vel(3)
    complex(SP) :: vecpot_acc(3)
+   real(SP)    :: fluence
+   real(SP)    :: intensity
  end type gauge_field
  !
  type(gauge_field) :: A_vecpot
@@ -382,7 +384,7 @@ module fields
        !
        ! I = 1 FREE_SPACE_PERM SPEED_OF_LIGHT |E|^2 
        !
-       Efield_strength= sqrt(I/1./FREE_SPACE_PERM/SPEED)*VMm12AU
+       Efield_strength= sqrt(I/1._SP/FREE_SPACE_PERM/SPEED)*VMm12AU
        !
      endif
      !

@@ -39,7 +39,7 @@ subroutine RT_driver(E,X,k,q)
 &                         SC_QP_setup,magn_n
  use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start,RT_carriers_object
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,&
-&                         l_NE_with_fields,RT_alloc,RT_free,&
+&                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,&
@@ -246,7 +246,10 @@ subroutine RT_driver(E,X,k,q)
  call RT_output(what="initialize")
  call RT_output(what="open dyn ene cur pol")
  !call RT_output('open BGR')
- if (l_NE_with_fields) call RT_output(what="open pot occ")
+ if (l_NE_with_fields) then
+   call RT_output(what="open ext")
+   if(l_RT_induced_field) call RT_output(what="open tot ind")
+ endif
  if (l_elph_scatt) call RT_output('open EPlife')
  if (l_elel_scatt) call RT_output('open EElife')
  if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
@@ -343,9 +346,11 @@ subroutine RT_driver(E,X,k,q)
    endif
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
    if (l_NE_with_fields) then
-     call RT_output('total_potential',TIME=NE_time/FS2AUT) 
-     call RT_output('external_potential',TIME=NE_time/FS2AUT) 
-     call RT_output('induced_potential',TIME=NE_time/FS2AUT) 
+     call RT_output('external_field',TIME=NE_time/FS2AUT) 
+     if(l_RT_induced_field) then
+       call RT_output('total_field'  ,TIME=NE_time/FS2AUT) 
+       call RT_output('induced_field',TIME=NE_time/FS2AUT) 
+     endif
    endif
    !
    ! Integration

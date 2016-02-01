@@ -46,7 +46,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,X_terminator
- use IO_m,          ONLY:IO_and_Messaging_switch
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -90,13 +89,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !=====================
  if (iq==1) then
    !
-   ! When the screened interaction is computed only the CPU assigned to q=1 enter here.
-   ! By default, in PARALLEL_global_indexes, only the head of these cpu's is allowed to do I/O.
-   ! But this means that only a fraction of the dipoles is actually written on disk.
-   ! To make all dipoles I/O possible I temporarely swicth on the IO for all q=1 cpu's.
-   !
-   if (l_em1s) call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
-   !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    !
    call DIPOLE_driver(Xen, Xk, X, X%q0)
@@ -104,8 +96,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF,X%ordering)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
-   !
-   if (l_em1s) call IO_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
    !
  endif
  !

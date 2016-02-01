@@ -59,10 +59,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
-&                         IO_and_Messaging_switch
+&                         IO_and_Messaging_switch,IO_write
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
-&                         PP_redux_wait,PAR_COM_Plasma_INDEX,PAR_COM_Q_INDEX,l_par_RT
+&                         PP_redux_wait,PAR_COM_Plasma_INDEX,PAR_COM_Q_INDEX,l_par_RT,myid
  use parser_m,       ONLY:parser
 #if defined _SC
  use com,            ONLY:secnm
@@ -163,7 +163,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! I/O privilegies: temporarly switch it on
    !
    call IO_and_Messaging_switch("SAVE")
-   call IO_and_Messaging_switch("+io_out")
+   call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !
    ! Allocation
    !

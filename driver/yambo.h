@@ -85,6 +85,9 @@
 #if defined _QED && !defined _ELPH
   {"corrtp", "c","Correlation [opt=(e)lectrons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif
+#if defined _ELPH && !defined _QED
+  {"corrtp", "c","Correlation [opt=(e)lectrons/(p)honons]",0,0,1,0,0},
+#endif
 #if defined _QED && defined _ELPH
   {"corrtp", "c","Correlation [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif

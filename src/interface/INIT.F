@@ -1139,7 +1139,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Only in this case ioELPH_err is defined
          !
-         l_elph_corr=runlevel_is_on('el_ph_corr').and.(io_ELPH_err==0.or.l_real_time)
+         if (io_ELPH_err==0.or.l_real_time) then
+           l_elph_corr=runlevel_is_on('el_ph_corr')
+         else
+           l_elph_corr=.FALSE.
+           call switch_off_runlevel('el_ph_corr',on_name=' ')
+         endif
+         !
          ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err==0
          ! GPL_EXCLUDE_END

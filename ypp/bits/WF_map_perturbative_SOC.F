@@ -51,8 +51,8 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  integer              :: first_el(En%nb),n_of_el(En%nb),n_deg_grp,mapped_in_group(2,En%nb)
  integer              :: i_k,i_b,i_b_to_map(2),i_b_limit,i_grp,i_b_SOC,i_wf,i_wf_SOC(2),i_sp_pol,n_miss
  integer              :: n_spin_save,n_spinor_save,n_sp_pol_save
- logical              :: group_already_mapped(En%nb),DB_is_ok,map_up,map_dw
- real(SP)             :: sq2,proj_up,proj_dw,mapping_tresh,min_sq
+ logical              :: group_already_mapped(En%nb),DB_is_ok,map_up,map_dw,kpoint_to_map(kpt%nibz)
+ real(SP)             :: sq2,proj_up,proj_dw,mapping_tresh,min_sq(kpt%nibz)
  !
  integer                      :: io_err,ID
  integer, external            :: io_DB1_selective_scan,io_E_SOC_map
@@ -67,7 +67,8 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  io_err=io_DB1_selective_scan(En_SOC,kpt_SOC,trim(perturbative_SOC_path),'all')
  if (io_err/=0) call msg("s",'SOC database NOT FOUND @'//trim(perturbative_SOC_path))
  !
- DB_is_ok=(En_SOC%nb==2*En%nb).and.(kpt_SOC%nibz==kpt%nibz)
+ !DB_is_ok=(En_SOC%nb==2*En%nb).and.(kpt_SOC%nibz==kpt%nibz)
+ DB_is_ok=(kpt_SOC%nibz==kpt%nibz)
  !
  if (.not.DB_is_ok) call error(' SOC DBs and without SOC DB do not match')
  !
@@ -83,14 +84,24 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  allocate(En%E_SOC(E_SOC_nbands,kpt%nibz))
  allocate(E_SOC_table(2,En%nb,kpt%nibz))
  call mem_est("E_SOC E_SOC_table",(/size(En%E_SOC),size(E_SOC_table)/),(/SP,IP/))
+ En%E_SOC=0._SP
+ E_SOC_table=0
  !
  mapping_tresh=0.95_SP
  !
-1 E_SOC_table=0
+ kpoint_to_map=.true.
  !
  min_sq=1._SP
  !
+1 continue
+ !
  do i_k=1,kpt%nibz
+   !
+   if(.not.kpoint_to_map(i_k)) cycle
+   !
+   min_sq(i_k)=1._SP
+   !
+   E_SOC_table(:,:,i_k)=0
    !
    do i_sp_pol=1,n_sp_pol
      !
@@ -157,7 +168,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
            if(all(i_b_to_map(:)<SOC_bands_to_map(1))) cycle
            if(all(i_b_to_map(:)>i_b_limit)          ) cycle
            !
-           min_sq=min(min_sq,sqrt(sq2))
+           min_sq(i_k)=min(min_sq(i_k),sqrt(sq2))
            !
            if(map_up) then
              E_SOC_table(1,i_b_to_map(1),i_k)=i_b_SOC
@@ -177,21 +188,26 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  enddo         ! i_k
  !
  if(any(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2),:)==0)) then
+   !
    n_miss=count(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2),:)==0)
    call warning(' With treshold '//trim(real2ch(mapping_tresh))//' '//trim(intc(n_miss))//' WFs non mapped. Reducing it.' )
+   !
    do i_k=1,kpt%nibz
-     do i_b=SOC_bands_to_map(1),SOC_bands_to_map(2)
-       if(all(E_SOC_table(:,i_b,i_k)/=0)) cycle
-       call warning(' State ik= '//trim(intc(i_k))//', ib= '//trim(intc(i_b))//' not mapped.' )
-     enddo
+     kpoint_to_map(i_k)=any(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2),i_k)==0)
+     !do i_b=SOC_bands_to_map(1),SOC_bands_to_map(2)
+     !  if(all(E_SOC_table(:,i_b,i_k)/=0)) cycle
+     !  call warning(' State ik= '//trim(intc(i_k))//', ib= '//trim(intc(i_b))//' not mapped.' )
+     !enddo
    enddo
+   !
    if(abs(mapping_tresh-0.05_SP)<1.E-5) call error(' Minimum treshold reached.')
    mapping_tresh=mapping_tresh-0.1_SP
    goto 1
+   !
  endif
  !
  call msg('s',' Mapping finalized with treshold '//trim(real2ch(mapping_tresh))//' ')
- call msg('s',' Minimum overlap used is         '//trim(real2ch(min_sq))//' ')
+ call msg('s',' Minimum overlap used is         '//trim(real2ch(minval(min_sq)))//' ')
  !
  call WF_free(WF)
  call WF_free(WF_soc)

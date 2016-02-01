@@ -23,7 +23,7 @@
 !
 subroutine RT_output(what,VALUES,TIME,E)
  ! 
- use units,          ONLY:HA2EV,HA2KEL
+ use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_cohsex,l_sc_hf
@@ -99,33 +99,29 @@ subroutine RT_output(what,VALUES,TIME,E)
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'total_potential'
- short_file_name(next_file)=trim(append_ch)//'total_potential'
- n_headings(next_file)=11
- headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
- headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
- headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
- headings(next_file,11)="Fluence[kJ/cm^2]"
+&   file_name(next_file)=trim(append_ch)//'total_field'
+ short_file_name(next_file)=trim(append_ch)//'total_field'
+ n_headings(next_file)=7
+ headings(next_file,2:4)=(/"E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]"/)
+ headings(next_file,5:7)=(/"E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/)
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'external_potential'
- short_file_name(next_file)=trim(append_ch)//'external_potential'
- n_headings(next_file)=11
- headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
- headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
- headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
- headings(next_file,11)="Fluence[kJ/cm^2]"
+&   file_name(next_file)=trim(append_ch)//'external_field'
+ short_file_name(next_file)=trim(append_ch)//'external_field'
+ n_headings(next_file)=9
+ headings(next_file,2:4)=(/"E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]"/)
+ headings(next_file,5:7)=(/"E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/)
+ headings(next_file,8)="Int. [kW/cm^2]"
+ headings(next_file,9)="Fluence[nJ/cm^2]"
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'induced_potential'
- short_file_name(next_file)=trim(append_ch)//'induced_potential'
- n_headings(next_file)=11
- headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
- headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
- headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
- headings(next_file,11)="Fluence[kJ/cm^2]"
+&   file_name(next_file)=trim(append_ch)//'induced_field'
+ short_file_name(next_file)=trim(append_ch)//'induced_field'
+ n_headings(next_file)=7
+ headings(next_file,2:4)=(/"E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]"/)
+ headings(next_file,5:7)=(/"E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/)
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
@@ -466,21 +462,17 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-dP_order_5','YPP-dP_order_6','YPP-dP_order_7','YPP-dP_order_8','YPP-dP_order_9',&
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
-     case('total_potential')
-       data_to_dump(2:4) =real(A_vecpot%vecpot(:))
-       data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
-       data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
-       data_to_dump(11)=0._SP
-     case('external_potential')
-       data_to_dump(2:4) =real(A_ext%vecpot(:))
-       data_to_dump(5:7) =real(A_ext%vecpot_vel(:))
-       data_to_dump(8:10)=real(A_ext%vecpot_acc(:))
-       data_to_dump(11)=0._SP
-     case('induced_potential')
-       data_to_dump(2:4) =real(A_ind%vecpot(:))
-       data_to_dump(5:7) =real(A_ind%vecpot_vel(:))
-       data_to_dump(8:10)=real(A_ind%vecpot_acc(:))
-       data_to_dump(11)=0._SP
+     case('total_field')
+       data_to_dump(2:4) = -real(A_vecpot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+       data_to_dump(5:7) =-aimag(A_vecpot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+     case('external_field')
+       data_to_dump(2:4) = -real(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+       data_to_dump(5:7) =-aimag(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+       data_to_dump(8)=A_ext%intensity*AU2KWCMm2
+       data_to_dump(9)=A_ext%fluence*AU2KWCMm2/PS2AUT
+     case('induced_field')
+       data_to_dump(2:4) = -real(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+       data_to_dump(5:7) =-aimag(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
      case('BGR')
        data_to_dump(2:3) = BGR(1:2)*HA2EV
        data_to_dump(5:7) = BGR(3:5)*HA2EV

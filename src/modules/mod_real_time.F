@@ -280,7 +280,7 @@ module real_time
  !
  ! TD-ABS and RT-BSE [yambo]
  !
- character(schlen)       :: RT_ctl_db(3)
+ character(schlen)       :: RT_ctl_db(4)
  !
  type RT_t
    !

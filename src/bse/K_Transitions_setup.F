@@ -47,15 +47,21 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  use com,          ONLY:warning,error
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BS_anti_res,&
-&                       BS_not_const_eh_f,BS_drude_f_eh,BS_Blocks_and_Transitions_alloc,&
+&                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc,&
 &                       BSE_mode,BS_T_grp,BS_nT_grps,BSS_mode
+ use X_m,          ONLY:global_gauge,Dipole_Energy_treshold
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
+#if defined _RT
+ use drivers,      ONLY:l_rt_carriers_in_use
+ use RT_CTL,       ONLY:NEQ_Residuals,NEQ_Kernel
+#endif
  !
  implicit none
+ !
  type(levels) :: Ken
  type(bz_samp):: Xk
  complex(SP)  :: Wd
@@ -66,7 +72,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  integer :: ikbz,iv,ic,iv_SOC(2),ic_SOC(2),ik,ikp,i_sp,i_star,nb(2),&
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp
- real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2),E_v_SOC(2),E_c_SOC(2),f_eh,f_e,f_h
+ real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2),E_v_SOC(2),E_c_SOC(2),f_eh,fp_eh,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
  !
  if (FILL_the_groups) call section('+','Transition Groups build-up')
@@ -112,7 +118,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    BS_K_dim=0
    i_T_group_now=0
    i_T_group_last=0
-   BS_drude_f_eh=0._SP
    !
    do ik=1,Xk%nibz
      !
@@ -179,12 +184,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
              !
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp)=E_eh
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp)=f_eh
+             BS_T_grp(i_T_group_now)%fp(i_T_in_the_grp)=fp_eh
              !
              if (associated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
              !
-             ! Note that W is negative as the linewidth is positive(negative) above(below) the Fermi level.
+             ! Note that W is negative as the linewidth is negative(positive) above(below) the Fermi level.
+             ! Presently there is the abs value here and a minus in K_IP.F
              !
-             if (associated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
+             if (associated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
              !
              ! GPL_EXCLUDE_START
              !
@@ -228,6 +235,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      if(     associated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
      if(.not.associated(Ken%Eo)) Eo_eh= E_eh
      !
+     ! Small energy transitions. Dipoles in length gauge are not defined
+     if ( abs(Eo_eh) < Dipole_Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
+     !
      ! GPL_EXCLUDE_START
      !
      if(E_SOC_nbands/=0) then
@@ -242,24 +252,39 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      !
      ! GPL_EXCLUDE_END
      !
-     f_eh=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
+     ! f_eh  enter the excitonic Hamiltonian
+     ! fp_eh enter the residual of the dielectric constant
+#if defined _RT
+     if (l_rt_carriers_in_use.and.associated(Ken%fo)) then
+       if (     NEQ_Kernel   )  f_eh =(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
+       if (.not.NEQ_Kernel   )  f_eh =(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
+       if (     NEQ_Residuals)  fp_eh=(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
+       if (.not.NEQ_Residuals)  fp_eh=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
+     else
+#endif
+       !
+       f_eh =(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
+       fp_eh=f_eh
+       !
+#if defined _RT
+     endif
+#endif
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
      !
      ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
-     if ( abs(abs(f_eh)-1._SP)> filled_tresh) BS_not_const_eh_f=.TRUE.
+     if ( abs(abs(f_eh)-1._SP)> filled_tresh .or. abs(abs(fp_eh)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.
      !
      ! f_eh<0 transitions are included in the anti-resonant part
      ! f_eh=0 transitions give no contribution to absorption and are not considered
-     if ( f_eh<=0._SP ) T_is_ok=.FALSE.
+     if ( f_eh<=0._SP .and. fp_eh<=0._SP ) T_is_ok=.FALSE.
      !
-     ! Small energy transitions
-     ! If I add a Drude term just the poles inside K_f are considered
-     ! Remember that the Drude terms wants the f_e*f_h occupation factor
-     if (abs(E_eh)<1.E-5_SP .and. all((/real(Wd)/=0._SP,aimag(Wd)/=0._SP/)) ) then
-       if(all((/ic==Ken%bf,iv==Ken%bf,ik==Ken%kf,i_sp==Ken%sf/))) BS_drude_f_eh=f_e*f_h
-     endif
+#if defined _RT
+     ! These lines may be problematic in case of population inversion if f_eh>0. and fp_eh<0.
+     if ( f_eh*fp_eh<0._SP ) call error(' I cannot split the R and K BSE contribution.'//&
+&                                       ' ACTION: Use the same ocupations in K and R.')
+#endif
      !
      ! If I've included in valence states that are almost empty
      ! or in conduction states that are almost full, those are neglected

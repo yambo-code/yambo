@@ -39,7 +39,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  integer,intent(in)    :: bands(2)
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: K
- character(3),  intent(in)    :: what ! X,K,G
+ character(3),  intent(in)    :: what ! X,K,G,R
  real(SP),      intent(in)    :: Time
  logical,       intent(in)    :: l_f,l_E,l_W
  !

@@ -21,49 +21,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
+subroutine K_multiply_by_V(Vi,Vo,iter_par)
  !
- ! Given (Coupling disabled)
+ ! Given
  !
- !      | (K_r)     (K_c)    |  
- !  K = |                    |
- !      | (-K_c^*)  (-K_r^*) |
+ !      |   (K_r)     (cI*K_c)  |  
+ !  K = |                       |
+ !      | -(cI*K_c)^*  (-K_r)^* |
  !
  ! distibuted on the processors, and Vi distributed on the processors
  !
  ! Multiply K by Vi
  ! 
- !
- use pars,           ONLY:SP,cONE,cZERO
- use com,            ONLY:error
+ use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_Haydock,PAR_COM_T_Haydock
- use BS,             ONLY:BS_nT_grps,Haydock_vector,BSS_uses_DbGd,BS_blk,n_BS_blks,BS_T_grp
+ use BS,             ONLY:BS_nT_grps,Haydock_vector,BS_blk,n_BS_blks,BS_T_grp
  use wrapper,        ONLY:M_by_V
  !
  implicit none
  !
- integer                ::iter
- type(Haydock_vector)   ::Vi(BS_nT_grps),Vo(BS_nT_grps)
  integer                ::iter_par
- character(3)           ::call_kind
+ type(Haydock_vector)   ::Vi(BS_nT_grps),Vo(BS_nT_grps)
  !
  ! Work Space
  !
- logical         ::l_inv,l_Hay
  integer         ::i_B,i_Tk,i_Tp,i_g
  complex(SP)     ::alpha
  ! 
- !
- l_Hay= (trim(call_kind)=='Hay')
- l_inv= (trim(call_kind)=='Inv')
- !
- ! Messaging
- !
- if (l_inv) call error('K_multiply_by_V: Inv temporary disabled.') 
- if (BSS_uses_DbGd)  call error('K_multiply_by_V: BSS with Double Grid temporary disabled')
- if( (.not.l_inv) .and. (.not.l_Hay) ) call error('K_multiply_by_V: not a valid call.')
- !
- alpha=real(iter_par,SP)*cONE
+ alpha=-real(iter_par,SP)*cI
  !
  forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !

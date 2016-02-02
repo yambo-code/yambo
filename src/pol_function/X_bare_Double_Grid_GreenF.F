@@ -47,21 +47,15 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  !
  !Work Space
  !
- logical      ::X_os_run,K_inv_run 
- integer      ::i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp
- real(SP)     ::ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac
- complex(SP)  ::Z_,pole
+ logical      :: X_os_run,K_inv_run 
+ integer      :: i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp
+ real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac
+ complex(SP)  :: Z_,pole
+ !
  complex(SP),external      ::X_simple_GreenF
  !
  integer, allocatable      ::BZ_DbGd_iq_npt(:)
  logical, allocatable      ::use_kpt(:,:)
- !
- ! GPL_EXCLUDE_START
-#if defined _ELPH
- complex(SP), allocatable  ::Green_F_convoluted(:)
- real(SP)                  ::W_step
-#endif
- ! GPL_EXCLUDE_END
  !
  X_os_run =trim(space)=="G"
  K_inv_run=trim(space)=="eh"
@@ -78,74 +72,26 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  ic     = transitions(3)
  i_spin = transitions(4)
  !
- allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
- allocate(use_kpt( BZ_DbGd_nkpt(ikbz), BZ_DbGd_nkpt(ikpbz) ) )
- !
- ! GPL_EXCLUDE_START
-#if defined _ELPH
- !
- ! Green Functions convolution
- !
- if (associated(Xen%GreenF)) then 
-   ! 
-   allocate(Green_F_convoluted(Xen%GreenF_n_E_steps))
-   !
-   W_step=real( Xen%GreenF_W(ic,ik,i_spin,2) - Xen%GreenF_W(ic,ik,i_spin,1))
-   !
-   call Convolve(real(Xen%GreenF(ic,ik,i_spin,:)), real(Xen%GreenF(iv,ikp,i_spin,:)),&
-&                Green_F_convoluted,Xen%GreenF_n_E_steps,W_step,real( Xen%GreenF_W(ic,ik,i_spin,1)) )
-   !
-   ! Green_F_convoluted is now integrated to Zc*Zv*pi*pi. As I want the spectral function only
-   ! to pass to the KK transformation I need to rescale by pi^2
-   !
-   Green_F_convoluted=Green_F_convoluted/pi**2
-   !
-   GreenF=cZERO
-   !
-   ! Resonant Part
-   !
-   if (trim(ordering)=='r'.or.trim(ordering)=='t'.or.trim(ordering)=='c') then
-     call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
-&                        GreenF,            Xw%p,                          Xw%n_freqs, cZERO)
-   endif
-   !
-   if (trim(ordering)=='c'.or.trim(ordering)=='ca') then
-     call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
-&                        GreenF,           -Xw%p,                          Xw%n_freqs, cZERO)
-   endif
-   !
-   if (trim(ordering)=='t'.or.trim(ordering)=='a') then
-     call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
-&                        GreenF,     -conjg(Xw%p),                         Xw%n_freqs, cZERO)
-   endif
-   !
-   deallocate(Green_F_convoluted)
-   !
-   return
-   !
- endif
- !
-#endif
- ! GPL_EXCLUDE_END
- !
  W_=0._SP
  Z_=cONE
  if (associated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
  if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
+ pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,SP)
  !
- if ((.not.use_X_DbGd.or.ic>BZ_DbGd_nbands).and.(.not.BSS_uses_DbGd)) then
-   !
-   ! Using QP corrected states
-   !
-   pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_)
-   !
+ ! Fallback to X_simple_greenF
+ !=============================
+ if (X_os_run .and.(.not.use_X_DbGd.or.ic>BZ_DbGd_nbands).or. &
+&    K_inv_run.and.(.not.BSS_uses_DbGd)                       ) then
    do iw=1,Xw%n_freqs
      GreenF(iw)=X_simple_GreenF(Xw%p(iw),pole,ordering)*Z_
    enddo
-   !
    return
-   !
  endif
+ !
+ ! DbGd is needed
+ !================
+ allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
+ allocate(use_kpt( BZ_DbGd_nkpt(ikbz), BZ_DbGd_nkpt(ikpbz) ) )
  !
  ! The GreenF is multiplied by the occupations on the coarse grid.
  ! Thus, to correctly renormalize, I have to:

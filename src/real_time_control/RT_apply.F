@@ -33,7 +33,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
  use units,          ONLY:FS2AUT,PS2AUT,HA2EV
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
- use rt_ctl,         ONLY:RT_IO_JPO_steps
+ use rt_ctl,         ONLY:RT_IO_JPO_steps,NEQ_Residuals,NEQ_Kernel
  use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth
  !
  implicit none
@@ -41,7 +41,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  integer,intent(in)    :: bands(2)
  type(levels), intent(inout) :: E
  type(bz_samp), intent(in)   :: K
- character(*),optional,intent(in) :: what ! X,K,G
+ character(*),optional,intent(in) :: what ! X,K,G,R
  integer,     optional,intent(in) :: IO_com
  logical ,    optional,intent(in) :: VERBOSE
  real(SP),    optional,intent(in) :: Time
@@ -79,6 +79,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    if (what=="X")  I_id=1
    if (what=="K")  I_id=2
    if (what=="G")  I_id=3
+   if (what=="R")  I_id=4
    !
    call parser(what//'fnRTdb',is_def)
    !
@@ -112,6 +113,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
        do i2=1,i1-1
          if (trim(db_piece(i2))=="E") l_E=.TRUE.
          if (trim(db_piece(i2))=="f") l_f=.TRUE.
+         if (trim(db_piece(i2))=="W") l_W=.TRUE.
        enddo
      endif
      if (trim(db_piece(i1))=="@") then
@@ -125,6 +127,9 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    elseif (trim(T_unit)=='ps') then
      local_Time=local_Time*PS2AUT
    endif
+   !
+   if (l_f .and. I_id==2) NEQ_Kernel   =.true.
+   if (l_f .and. I_id==4) NEQ_Residuals=.true.
    !
  else
    !

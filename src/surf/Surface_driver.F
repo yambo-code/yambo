@@ -23,7 +23,7 @@
 !
 subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
     
-  use pars,                    only : SP, PI, schlen, lchlen
+  use pars,                    only : SP, PI, schlen, lchlen, cZERO
   use units,                   only : HA2EV
   use com,                     only : msg
   use memory_m,                only : mem_est
@@ -32,7 +32,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
   use electrons,               only : levels
   use R_lattice,               only : bz_samp, bare_qpg,q_norm
   use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
-  use X_m,                     only : X_t, X_epsilon, X_mat, X_alloc
+  use X_m,                     only : X_t, Epsilon_ii, X_mat, X_alloc
   use frequency,               only : w_samp 
   use optcut,                  only : loptcut, DIP_projected_cut, setup_cutmat ! just for dealloc
   use vec_operate,             only : v_norm
@@ -128,7 +128,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
   !
   call section('=','Calculating eps cell.')
 
-  allocate( X_epsilon(2,nw) ) 
+  allocate( Epsilon_ii(nw,2) ) 
   !
   ! Main loop over polarizations
   !
@@ -155,7 +155,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
        
     call X_alloc('X',(/X%ng,X%ng,wv%n_freqs/))
 
-    X_epsilon = (0.,0.)
+    Epsilon_ii = cZERO
 
     do iw = 1, wv % n_freqs ! loop over blocks
        
@@ -163,7 +163,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
        
       if(loptcut) X_mat(1,1,:) = X_mat(1,1,:)*az/dc ! Scale if cutoff present
 
-      X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_norm(iq)**2
+      Epsilon_ii(fr(1):fr(2),1,1)=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_norm(iq)**2
        
     enddo 
     !
@@ -174,13 +174,13 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
     ! Copy to slab eps. array
     !
     do iw = 1, nw
-      eps_i(iw,ipol) = X_epsilon(1,iw)
+      eps_i(iw,ipol) = Epsilon_ii(iw,1,1)
     enddo
     call X_alloc('OptOsc')  ! DIP_iq_dot_r
     if(loptcut) deallocate(DIP_projected_cut)
      
   enddo    
-  deallocate(X_epsilon)
+  deallocate(Epsilon_ii)
   !
   ! Dump the eps_i (cell) to file for plotting
   !

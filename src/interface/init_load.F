@@ -46,7 +46,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_inversion_PERT_FULL_ratio,BSS_Wd
+&                        BSS_inversion_PERT_FULL_ratio,BSS_Wd,Inversion_treshold
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -287,7 +287,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BLongDir',  '[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
- call it(defs,'BSHayTrs',  '[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold)
+ call it(defs,'BSHayTrs',  '[BSS] Relative [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold)
+ call it(defs,'BSInvTrs',  '[BSS] Strict Inversion treshold. Relative[o/o](>0)/Absolute(<0)',Inversion_treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
@@ -295,6 +296,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
  call it('f',defs,'Reflectivity', '[BSS] Compute reflectivity at normal incidence',verb_level=V_resp)
+ call it('f',defs,'BSSPertWidth', '[BSS] Include QPs lifetime in a perturbative way',verb_level=V_resp)
+ call it('f',defs,'BSSInvKdiag','[BSS] In the inversion solver keep the diagonal kernel in place',verb_level=V_resp)
  !
  ! F_xc
  !
@@ -475,6 +478,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call init_RT_ctl_load(defs,1)
  call init_RT_ctl_load(defs,2)
  call init_RT_ctl_load(defs,3)
+ call init_RT_ctl_load(defs,4)
  !
 #endif
  !

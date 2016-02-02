@@ -32,7 +32,7 @@ module X_output
  implicit none
  !
  character(15)     :: headers(7)
- character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name
+ character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,jdos_file_name
  character(schlen) :: off_file_name,beta_file_name,moke_file_name,refl_file_name
  !
  contains
@@ -48,13 +48,13 @@ module X_output
      !
      ! T-ordering
      !
-     call msg('o eps refl eel alpha off beta moke','#')
+     call msg('o eps refl eel alpha off beta moke jdos','#')
      if (GreenF) then
        if (l_chi) call msg('o eps refl eel alpha','# ','- G. Functions  are '//trim(X_E_xc_string(4)),INDENT=0)
-       if (l_bss) call msg('o eps refl eel alpha off beta moke','# ','- G. Functions  are '//trim(K_E_xc_string),INDENT=0)
+       if (l_bss) call msg('o eps refl eel alpha off beta moke jdos','# ','- G. Functions  are '//trim(K_E_xc_string),INDENT=0)
      else
        if (l_chi) call msg('o eps refl eel alpha','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
-       if (l_bss) call msg('o eps refl eel alpha off beta moke','# ','- Energies      are '//trim(K_E_xc_string),INDENT=0)
+       if (l_bss) call msg('o eps refl eel alpha off beta moke jdos','# ','- Energies      are '//trim(K_E_xc_string),INDENT=0)
      endif
      if (l_chi) call msg('o eps refl eel alpha','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
      if (l_bss) call msg('o eps refl eel alpha off beta moke','# ','- Wavefunctions are '//trim(K_WF_xc_string),INDENT=0)
@@ -63,7 +63,7 @@ module X_output
      if (trim(ordering)=='a') message='- The Green`s function is antiresonant -'
      if (trim(ordering)=='r') message='- The Green`s function is resonant -'
      if (trim(ordering)=='c') message='- The Green`s function is causal -'
-     call msg('o eps refl eel alpha off beta moke','# ',trim(message),INDENT=0)
+     call msg('o eps refl eel alpha off beta moke jdos','# ',trim(message),INDENT=0)
      !
      ! Gauges
      !
@@ -81,11 +81,11 @@ module X_output
    subroutine X_write_descriptions(n_descs,desc)
      integer      :: n_descs,i_d
      character(*) :: desc(n_descs)
-     call msg('o eps refl eel fxc alpha off beta moke','#')    
+     call msg('o eps refl eel fxc alpha off beta moke jdos','#')    
      do i_d=1,n_descs
-       call msg('o eps refl eel fxc alpha off beta moke','#  ',trim(desc(i_d)),INDENT=0)    
+       call msg('o eps refl eel fxc alpha off beta moke jdos','#  ',trim(desc(i_d)),INDENT=0)    
      enddo
-     call msg('o eps refl eel fxc alpha off beta moke','#')    
+     call msg('o eps refl eel fxc alpha off beta moke jdos','#')    
    end subroutine
    !
    subroutine X_write_q_plus_G(iq,Q_plus_G_pt,ig)
@@ -93,7 +93,7 @@ module X_output
      integer           :: iq
      integer,optional  :: ig
      real(SP)          :: Q_plus_G_pt(3)
-     character(schlen) :: message(8)
+     character(schlen) :: message(9)
      !
      if (iq==1.and.ig==1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
@@ -104,6 +104,7 @@ module X_output
        message(6) = '# Off-diagonal Polarizability @ Q('//trim(intc(iq))//') [q->0 direction] :'
        message(7) = '# moke parameters @ Q('//trim(intc(iq))//') [q->0 direction] :'
        message(8) = '# Reflectivity @ Q('//trim(intc(iq))//') [q->0 direction] :'
+       message(9) = '# Joint density of states @ Q('//trim(intc(iq))//') [q->0 direction] :'
      else  if (iq/=1.and.ig==1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') [iku] :'
        message(2) = '# EELS @ Q('//trim(intc(iq))//')  [iku]:'
@@ -122,7 +123,8 @@ module X_output
      call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0)
      call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0)
      call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0)
-     call msg("o refl_q",trim(message(8)),Q_plus_G_pt,INDENT=0)
+     call msg("o refl",trim(message(8)),Q_plus_G_pt,INDENT=0)
+     call msg("o jdos_q",trim(message(9)),Q_plus_G_pt,INDENT=0)
      call msg('o eps refl eel fxc alpha off moke','#')    
      !
    end subroutine
@@ -144,6 +146,8 @@ module X_output
      beta_file_name ='beta_q'//trim(intc(iq))
      moke_file_name ='moke_q'//trim(intc(iq))
      !
+     jdos_file_name ='jdos_q'//trim(intc(iq))
+     !
      if (present(ig)) then
        if (ig>1) then
          eps_file_name  = trim(eps_file_name)//'_G'//trim(intc(ig))
@@ -160,6 +164,7 @@ module X_output
        off_file_name  =  trim(off_file_name)//'_'//solver
        beta_file_name =  trim(beta_file_name)//'_'//solver
        moke_file_name =  trim(moke_file_name)//'_'//solver
+       jdos_file_name =  trim(jdos_file_name)//'_'//solver
      endif
      !
      if (len_trim(approx)>0) then
@@ -169,7 +174,7 @@ module X_output
        alpha_file_name=  trim(alpha_file_name)//'_'//approx
        off_file_name  =  trim(off_file_name)//'_'//approx
        beta_file_name =  trim(beta_file_name)//'_'//approx
-       moke_file_name =  trim(moke_file_name)//'_'//approx
+       jdos_file_name =  trim(jdos_file_name)//'_'//approx
      endif
      !
      if (len_trim(equation)>0) then
@@ -179,7 +184,7 @@ module X_output
        alpha_file_name=  trim(alpha_file_name)//'_'//equation
        off_file_name  =  trim(off_file_name)//'_'//equation
        beta_file_name =  trim(beta_file_name)//'_'//equation
-       moke_file_name =  trim(moke_file_name)//'_'//equation
+       jdos_file_name =  trim(jdos_file_name)//'_'//equation
      endif
      !
      if (.not.l_kerr) then
@@ -203,6 +208,8 @@ module X_output
      headers(1) = 'E/ev[1]'
      !
      if(trim(desc)=='refl') suffix(:3)=(/' /Refl ','0/Refl ','`/Refl '/)
+     !
+     if(trim(desc)=='jdos') suffix(:2)=(/' /jdos ','0/jdos '/)
      !
      do ii = 1,6
        headers(ii+1)=trim(desc)//trim(suffix(ii))

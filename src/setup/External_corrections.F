@@ -94,6 +94,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
 #if defined _RT
  l_apply_RT_corrections=l_apply_QP_corrections.and..not.l_real_time
  if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,what="K",VERBOSE=.true.)
+ if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,what="R",VERBOSE=.true.)
 #endif
  !
  ! 3) Green's Function used to compute QP corrections

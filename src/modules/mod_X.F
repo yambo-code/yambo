@@ -42,7 +42,6 @@ module X_m
  ! Velocity gauge specific variables
  !
  logical                  :: skip_cond_sum_rule
- complex(SP)              :: A_drude(2)
  !
  ! Large Q-vector support 
  !
@@ -76,7 +75,11 @@ module X_m
  !
  ! Absorption & Polarizability
  !
- complex(SP), allocatable :: X_epsilon(:,:)
+ complex(SP), allocatable :: Epsilon_ii(:,:)
+ complex(SP), allocatable :: Epsilon_ij(:,:)
+ complex(SP), allocatable :: Joint_DOS(:,:) 
+ complex(SP), allocatable :: EEL(:,:)
+ complex(SP), allocatable :: Alpha(:,:)
  complex(SP), allocatable :: X_drude_term(:)
  complex(SP), allocatable :: X_fxc(:)
  !

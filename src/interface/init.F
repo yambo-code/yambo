@@ -628,6 +628,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call init_QP_ctl_switch('K')
 #if defined _RT
    call init_RT_ctl_switch('K')
+   call init_RT_ctl_switch('R')
 #endif
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
@@ -656,8 +657,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
    !
-   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSSInvPFratio')
-   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSInvTrs BSSInvPFratio BSSInvKdiag')
+   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
    !
    ! Special project dependent variables

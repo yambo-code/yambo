@@ -27,6 +27,7 @@ module KERR
  !
  implicit none
  !
+ complex(SP)              :: A_drude(2)
  complex(SP)              :: B_Hall(2)
  complex(SP), allocatable :: BSS_rhoq0_kerr(:)
  complex(SP), allocatable :: DIP_projected_r90(:,:,:,:)

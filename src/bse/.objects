@@ -1,8 +1,10 @@
 KERR_objects =
 #if defined _KERR
-KERR_objects = K_kerr_IP.o
+KERR_objects = K_kerr_IP.o K_diag_kerr_residual.o
 #endif
 objs =	K_blocks.o K_driver.o K_IP.o K_Transitions_setup.o K_WF_phases.o \
         K.o K_correlation_collisions.o K_exchange_collisions.o \
-        K_solvers.o K_Haydock.o K_diagonalization.o K_inversion.o K_diag_compute_epsilon.o K_eps_interpolate.o \
+        K_solvers.o K_Haydock.o K_inversion_Lo.o K_inversion.o \
+        K_diagonalization.o K_diag_non_hermitian_residuals.o K_diag_hermitian_residuals.o \
+        K_diag_perturbative.o K_diag_compute_epsilon.o K_eps_interpolate.o \
         K_output_file.o K_multiply_by_V.o K_dot_product.o K_stored_in_a_BIG_matrix.o $(KERR_objects)

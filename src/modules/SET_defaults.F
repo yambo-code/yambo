@@ -66,12 +66,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
- use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,BS_drude_f_eh,&
+ use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
-&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_DbGd,&
+&                     BSS_q0,Haydock_treshold,Inversion_treshold,BS_K_is_ALDA,BSS_uses_DbGd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BS_anti_res
+&                     BS_anti_res,BSS_perturbative_width
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal,TDDFT_mode
@@ -452,7 +452,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  BS_n_g_W=1
  BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
- BS_drude_f_eh=0._SP
  BS_identifier=0
  BS_q=1
  BS_eh_win=100._SP
@@ -475,8 +474,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
  Haydock_treshold=-0.02_SP
+ Inversion_treshold= 0.01_SP
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
+ BSS_perturbative_width=.FALSE.
  !
  ! TDDFT
  !

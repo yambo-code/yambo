@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
+integer function io_BSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
@@ -34,9 +34,8 @@ integer function io_BSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
 &                        io_header,read_is_on,write_is_on
  implicit none
  integer      :: iq,n_
- integer      :: IO_dim
  integer      :: inv_err(n_)
- real(SP)     :: eps(2,n_,IO_dim)
+ real(SP)     :: eps(2,n_)
  type(w_samp) :: W_disk
  !
  ! Work Space
@@ -105,13 +104,13 @@ integer function io_BSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
    !
    if (read_is_on(ID)) then
      allocate(W_disk%p(W_disk%n_freqs))
-     W_disk%p(:)=W(1,:)+(0.,1.)*W(2,:)
+     W_disk%p(:)=W(1,:)+cI*W(2,:)
    endif
    !
    deallocate(W)
    !
-   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,W_disk%n_freqs,IO_dim/))
-   call io_bulk(ID,R3=eps)
+   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,W_disk%n_freqs/))
+   call io_bulk(ID,R2=eps)
    !
  endif
  !

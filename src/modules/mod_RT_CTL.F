@@ -44,12 +44,16 @@ module rt_ctl
  real(SP)                 :: RT_IO_time(3)             ! Three values for J,P,OCC - OUPUT - GF's
  real(SP), allocatable    :: J_and_P_cache(:,:)
  !
- ! Transient Absorption
+ ! Transient Absorption [ypp]
  !
  real(SP)                 :: OCC_deltaT
  real(SP)                 :: OCC_T_range(2)
  real(SP),allocatable     :: delta_f(:,:,:)
  !
+ ! TD-ABS and RT-BSE [yambo]
+ !
+ logical                 :: NEQ_Kernel
+ logical                 :: NEQ_Residuals
  !
  interface
    !

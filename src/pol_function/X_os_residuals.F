@@ -32,7 +32,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp !,G_m_G
  use collision,     ONLY:elemental_collision
  !
  implicit none
@@ -84,7 +84,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !       2        1        2         1      1
    !       2        2        1         1      1
    !
-   eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/spin_occ/real(Xk%nbz)/DL_vol
+   eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/spin_occ/real(Xk%nbz,SP)/DL_vol
    !
    ! Scattering CALL
    !-----------------

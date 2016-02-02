@@ -21,14 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_eps_interpolate(nW,W,err,i_epsilon)
+subroutine K_eps_interpolate(nW,W,err)
  !
- use pars,         ONLY:SP
+ use pars,         ONLY:SP,cI
  use vec_operate,  ONLY:sort
- use X_m,          ONLY:X_epsilon
+ use X_m,          ONLY:Epsilon_ii
+ !
  implicit none
  !
- integer  :: nW,err(nW),i_epsilon
+ integer  :: nW,err(nW)
  real(SP) :: W(nW)
  !
  ! Work Space...
@@ -65,13 +66,13 @@ subroutine K_eps_interpolate(nW,W,err,i_epsilon)
        Pol_coeff=0._SP
        do iw_fit=1,n_pts
          Dx(iw_fit)=W( fit_pt(iw_fit) )-W(iw)
-         if (i1==1) Dy(iw_fit)=aimag( X_epsilon(i_epsilon,fit_pt(iw_fit)) )
-         if (i1==2) Dy(iw_fit)= real( X_epsilon(i_epsilon,fit_pt(iw_fit)) )
+         if (i1==1) Dy(iw_fit)=aimag( Epsilon_ii(fit_pt(iw_fit),1) )
+         if (i1==2) Dy(iw_fit)= real( Epsilon_ii(fit_pt(iw_fit),1) )
        enddo
-       call pol_fit(n_pts,Dx(:n_pts),Dy(:n_pts),order,Pol_coeff(:order+1),EPS,0.d0)
+       call pol_fit(n_pts,Dx(:n_pts),Dy(:n_pts),order,Pol_coeff(:order+1),EPS,0._SP)
        !
-       if (i1==1) X_epsilon(i_epsilon,iw)=(0.,1.)*pol_eval(0._SP)
-       if (i1==2) X_epsilon(i_epsilon,iw)=X_epsilon(i_epsilon,iw)+pol_eval(0._SP)
+       if (i1==1) Epsilon_ii(iw,1)=cI*pol_eval(0._SP)
+       if (i1==2) Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+pol_eval(0._SP)
        !
      enddo
      !

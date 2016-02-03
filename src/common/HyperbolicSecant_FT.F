@@ -23,9 +23,11 @@
 !
 real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  !
- ! This subrutine computes the Fourier transform of 1/2 sech^alpha(Gamma/alpha*t)
- ! evaluated at E_center, which correspond to the imaginary part of the Fourier 
- ! transform of 1/2*theta(t)*e^{-i*E_center}*sech^alpha(Gamma/alpha*t)
+ ! This subrutine returns the frequency dependent Green function
+ ! which is the imaginary part of the
+ ! Fourier transform of the hyperbolic function
+ ! 1/2*theta(t)*e^{-i*E_center}*sech^alpha(Gamma/alpha*t)
+ ! evaluated at E_center
  !
  use pars,        ONLY:SP,pi,zero_dfl
  use com,         ONLY:error

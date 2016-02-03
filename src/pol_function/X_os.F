@@ -45,7 +45,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use memory_m,      ONLY:mem_est
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,X_terminator
+&                        self_detect_E_range,half_X_mat_only,use_X_DbGd !,X_terminator
  use IO_m,          ONLY:IO_and_Messaging_switch
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
@@ -65,13 +65,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Work Space
  !
  character(schlen)        :: live_t_string
- integer                  :: ig1,ig2,iw,n_poles,i_cg
+ integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU)
- complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),pole
+ complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
- complex(SP),external     :: X_simple_GreenF
  type(elemental_collision):: Xo_scatt
  !
  ! Defaults & Setups
@@ -82,7 +81,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
- force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_DbGd.or.associated(Xen%GreenF)
+ force_bare_X_G=use_X_DbGd.or.associated(Xen%W).or.associated(Xen%GreenF)
  !
  skip_WF_load= (iq==1.and.X%ng==1)
  !
@@ -197,6 +196,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  do i_cg = 1,coarse_grid_N
    !
+   i_bg=sum(bare_grid_N(1:i_cg-1))+1
+   !
    ! 1) First compute the residuals
    !================================
    call X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
@@ -211,14 +212,25 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      cycle
    endif
    !
-   if(force_bare_X_G) then
-     call X_bare_Double_Grid_GreenF(iq,X_poles_tab(i_cg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
+   ! GPL_EXCLUDE_START
+   !
+#if defined _ELPH
+   if( associated(Xen%GreenF) ) then
+     call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
    else
-     pole=cmplx(coarse_grid_Pt(i_cg),0._SP)
-     do iw=1,Xw%n_freqs
-       GreenF(iw) = X_simple_GreenF(Xw%p(iw),pole,X%ordering)
-     enddo
+     call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
    endif
+#else
+   !
+   ! GPL_EXCLUDE_END
+   !
+   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
+   !
+   ! GPL_EXCLUDE_START
+   !
+#endif
+   !
+   ! GPL_EXCLUDE_END
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================

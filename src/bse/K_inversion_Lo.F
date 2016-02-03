@@ -31,12 +31,12 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS,             ONLY:Co_factor,BSS_rhoq0,BS_H_dim,BS_K_dim,&
-&                         BSE_mode,BSS_eh_table,BSS_eh_E,&
-&                         BSS_uses_DbGd,BSS_eh_f,BS_mat,&
+&                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
+ !
 #if defined _ELPH
  use BS,             ONLY:BSS_uses_GreenF,BS_bands
 #endif
@@ -52,9 +52,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  type(PP_indexes) :: px
  type(w_samp)     :: W_mins,W_plus
  !
- logical          :: K_diag_in_BS_mat
- integer          :: i1,i2,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,transition(4)
- complex(SP)      :: Z_times_f,E_plus_W,residual
+ logical          :: K_diag_in_BS_mat,eval_anti_resonant
+ integer          :: i1,i2,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
+ complex(SP)      :: E_plus_W,residual
  !
  complex(SP), allocatable :: BS_mat_diagonal(:)
  !
@@ -120,6 +120,8 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  !
 #endif
  !
+ eval_anti_resonant= (trim(BSE_mode)=='causal') .or. (trim(BSE_mode)=='coupling')
+ !
  if (     K_diag_in_BS_mat) n_loop=1
  if (.not.K_diag_in_BS_mat) n_loop=2
  !
@@ -157,6 +159,14 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      !
      transition=(/ik_bz,iv,ic,i_sp/)
      !
+     if ( trim(BSE_mode)=='causal') then
+       i2=i1
+       i_Lo=2
+     else if( trim(BSE_mode)=="coupling") then
+       i2=i1+BS_K_dim
+       i_Lo=1
+     endif
+     !
      if (.not.allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i1)
      if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i1)-cI*BSS_eh_W(i1)
      !
@@ -165,48 +175,30 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
      endif
      !
-     if (associated(E%GreenF).and.(.not.BSS_uses_DbGd)) then
+#if defined _ELPH
+     if ( .not.associated(E%GreenF) ) then
+#endif
        !
-       ! No Double Grid but GFs
-       !=======================
-       call X_full_GreenF(1,transition,W_mins,E,k,Lo(i1,:,1),"r","eh")
+       ! Analytical GFs
+       !================
+       call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i1,:,1),"r","eh")
+       if (eval_anti_resonant) &
+       &  call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i2,:,i_Lo),"ca","eh")
        !
-       if (trim(BSE_mode)=='causal') then
-         call X_full_GreenF(1,transition,W_plus,E,k,Lo(i1,:,2),"ca","eh")
-       else if (index(BSE_mode,'coupling')>0) then
-         call X_full_GreenF(1,transition,W_plus,E,k,Lo(i1+BS_K_dim,:,1),"ca","eh")
-       endif
+#if defined _ELPH
+     else 
        !
-     else if ((.not.associated(E%GreenF)).and.BSS_uses_DbGd) then
+       ! GPL_EXCLUDE_START
        !
-       ! Energy Double Grid 
-       !====================
-       call X_bare_Double_Grid_GreenF(1,transition,W_mins,E,k,Lo(i1,:,1),"r","eh")
-       Lo(i1,:,1)=Lo(i1,:,1)*BSS_eh_f(i1)
+       ! Convoluted GFs
+       !================
+       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i1,:,1),"r")
+       if (eval_anti_resonant) call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i2,:,i_Lo),"ca")
        !
-       if (trim(BSE_mode)=='causal') then
-         call X_bare_Double_Grid_GreenF(1,transition,W_plus,E,k,Lo(i1,:,2),"ca","eh")
-         Lo(i1,:,2)=Lo(i1,:,2)*BSS_eh_f(i1)
-       else if (index(BSE_mode,'coupling')>0) then
-         call X_bare_Double_Grid_GreenF(1,transition,W_plus,E,k,Lo(i1+BS_K_dim,:,1),"ca","eh")
-         Lo(i1+BS_K_dim,:,1)=Lo(i1+BS_K_dim,:,2)*BSS_eh_f(i1)
-       endif
-       !
-     else if ((.not.associated(E%GreenF)).and.(.not.BSS_uses_DbGd)) then
-       !
-       ! No Double Grid, No GFs
-       !=======================
-       if (.not.allocated(BSS_eh_Z)) Z_times_f=BSS_eh_f(i1)*cONE
-       if (     allocated(BSS_eh_Z)) Z_times_f=BSS_eh_f(i1)*BSS_eh_Z(i1)
-       !
-       Lo(i1,:,1)=Z_times_f/(W_mins%p(:)-E_plus_W)
-       if (trim(BSE_mode)=='causal') then
-         Lo(i1,:,2)=-Z_times_f/(W_plus%p(:)+conjg(E_plus_W))
-       else if (index(BSE_mode,'coupling')>0) then
-         Lo(i1+BS_K_dim,:,1)=-Z_times_f/(W_plus%p(:)+conjg(E_plus_W))
-       endif
+       ! GPL_EXCLUDE_END
        !
      endif
+#endif
      !
      residual=BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))
      if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
@@ -214,15 +206,11 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i1,:,1)
      Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -         Lo(i1,:,2)
      !
-     if (trim(BSE_mode)=='causal') then
-       if (trim(global_gauge)=='velocity') Lo(i1,:,2)=(Lo(i1,:,2)-Lo(i1,iw_ref,2))
-       Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i1,:,2)
-       Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -                Lo(i1,:,2)
-     else if (index(BSE_mode,'coupling')>0) then
-       residual=conjg(BSS_rhoq0(i1+BS_K_dim))*BSS_rhoq0(i1+BS_K_dim)
-       if (trim(global_gauge)=='velocity') Lo(i1+BS_K_dim,:,2)=(Lo(i1+BS_K_dim,:,2)-Lo(i1+BS_K_dim,iw_ref,2))
-       Epsilon_ii(:,i_eps)=Epsilon_ii(:,2+i_loop)-conjg(residual)*Lo(i1+BS_K_dim,:,1)
-       Joint_DOS(:,i_eps) =Joint_DOS(:,2+i_loop) -                Lo(i1+BS_K_dim,:,1)
+     if ( eval_anti_resonant ) then
+       residual=conjg(BSS_rhoq0(i2))*BSS_rhoq0(i2)
+       if (trim(global_gauge)=='velocity') Lo(i2,:,i_Lo)=(Lo(i2,:,i_Lo)-Lo(i2,iw_ref,i_Lo))
+       Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i2,:,i_Lo)
+       Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -                Lo(i2,:,i_Lo)
      endif
      !
      call live_timing(steps=1)
@@ -233,14 +221,14 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    !
    if(i_loop==n_loop) call PP_redux_wait(Lo)
    !
+   call PP_redux_wait(Epsilon_ii(:,i_eps))
+   call PP_redux_wait(Joint_DOS(:,i_eps) )
+   !
    if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/q_norm(1)**2)
    if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/  W%p(:) **2)
    Joint_DOS(:,i_eps)=Joint_DOS(:,i_eps)*Co_factor
    !
    if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/q_norm(1)**2
-   !
-   call PP_redux_wait(Epsilon_ii(:,i_eps))
-   call PP_redux_wait(Joint_DOS(:,i_eps) )
    !
    ! Do I need this ?
    ! Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)/real(ncpu,SP)

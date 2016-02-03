@@ -31,7 +31,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  !
  ! G = conjg( G_causal )
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,cZERO
  use com,           ONLY:msg
  use units,         ONLY:HA2EV
  use QP_m,          ONLY:QP_t,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
@@ -50,7 +50,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  !
  type(w_samp)     ::W
  integer          ::iqp,ib,ik,i_spin,iw,iw_start,iw_end,i_n
- real(SP)         ::Eo,Amp_Peak,old_min_max_step(2),new_min_max_step(2),W_step,Aw,Awp1
+ real(SP)         ::Eo,Amp_Peak,old_min_max_step(2),new_min_max_step(2),W_step,Aw,Awp1,A_tmp
  !
  real(SP), external :: RIntegrate
  !
@@ -96,7 +96,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    !
    do iw=1,W%n_freqs
      !
-     qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw))
+     qp%GreenF(iqp,iw)=1._SP/(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw))
      !
    enddo
    !
@@ -111,16 +111,16 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
      Amp_Peak=maxval(abs(aimag(qp%GreenF(iqp,:))))
      iw_start=0
      do iw=1,W%n_freqs
-       if (iw_start==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_start=iw
+       if (iw_start==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100._SP) iw_start=iw
        if (iw_start/=0) exit
      enddo
      iw_end=0
      do iw=W%n_freqs,1,-1
-       if (iw_end==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_end=iw
+       if (iw_end==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100._SP) iw_end=iw
        if (iw_end/=0) exit
      enddo
      QP_G_zoom_er(iqp,:)=(/real(qp%GreenF_W(iqp,iw_start)),real(qp%GreenF_W(iqp,iw_end))/)
-     qp%GreenF(iqp,:)=(0.,0.)
+     qp%GreenF(iqp,:)=cZERO
      !
      ! Zoomed Frequency step
      !
@@ -145,17 +145,18 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    !
    if (allocated(QP_G_info)) then
      Amp_Peak=maxval(abs(aimag(qp%GreenF(iqp,:))))
-     QP_G_info(iqp,:,:)=1000.
+     QP_G_info(iqp,:,:)=1000._SP
      do iw=1,W%n_freqs-1
        Aw  =abs(aimag(qp%GreenF(iqp,iw)))
        Awp1=abs(aimag(qp%GreenF(iqp,iw+1)))
        do i_n=1,3
-         if ( (Aw-Amp_Peak*.25*i_n)*(Awp1-Amp_Peak*.25*i_n)<0. ) then
-           if (abs(QP_G_info(iqp,i_n,1)-1000.)<1.E-5) then
+         A_tmp=Amp_Peak*.25_SP*real(i_n,SP)
+         if ( (Aw-A_tmp)*(Awp1-A_tmp)<0._SP ) then
+           if (abs(QP_G_info(iqp,i_n,1)-1000._SP)<1.E-5_SP) then
              QP_G_info(iqp,i_n,1)=real(qp%GreenF_W(iqp,iw))
              cycle
            endif
-           if (abs(QP_G_info(iqp,i_n,2)-1000.)<1.E-5) then
+           if (abs(QP_G_info(iqp,i_n,2)-1000._SP)<1.E-5_SP) then
              QP_G_info(iqp,i_n,2)=real(qp%GreenF_W(iqp,iw))
              cycle
            endif

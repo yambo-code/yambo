@@ -21,13 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function X_simple_GreenF(W,pole,ordering)
+function Lorentzian_FT(W,pole,ordering)
+ !
+ ! This subrutine returns the frequency dependent Green function
+ ! which is the imaginary part of the
+ ! Fourier transform of the Lorentzian function
+ ! theta(t)*e^{-i*pole*t} [this is the retarded version, other ordering are computed]
  !
  use pars, ONLY:SP
  !
  implicit none
  !
- complex(SP)  ::pole,W,X_simple_GreenF
+ complex(SP)  ::pole,W,Lorentzian_FT
  character(*) ::ordering
  !              
  logical      ::ord_t_ordered,ord_retarded_,ord_resonant_,ord_ares_tord,ord_ares_reta
@@ -38,10 +43,10 @@ function X_simple_GreenF(W,pole,ordering)
  ord_ares_tord= trim(ordering)=="a"      ! Anti-resonant part of the T-ordered
  ord_ares_reta= trim(ordering)=="ca"     ! Anti-resonant part of the Retarded
  !
- if ( ord_t_ordered ) X_simple_GreenF=1._SP/(W-pole)-1._SP/(conjg(W)+      pole )
- if ( ord_retarded_ ) X_simple_GreenF=1._SP/(W-pole)-1._SP/(      W +conjg(pole))       
- if ( ord_resonant_ ) X_simple_GreenF=1._SP/(W-pole)
- if ( ord_ares_tord ) X_simple_GreenF=              -1._SP/(conjg(W)+      pole )
- if ( ord_ares_reta ) X_simple_GreenF=              -1._SP/(      W +conjg(pole))
+ if ( ord_t_ordered ) Lorentzian_FT=1._SP/(W-pole)-1._SP/(conjg(W)+      pole )
+ if ( ord_retarded_ ) Lorentzian_FT=1._SP/(W-pole)-1._SP/(      W +conjg(pole))       
+ if ( ord_resonant_ ) Lorentzian_FT=1._SP/(W-pole)
+ if ( ord_ares_tord ) Lorentzian_FT=              -1._SP/(conjg(W)+      pole )
+ if ( ord_ares_reta ) Lorentzian_FT=              -1._SP/(      W +conjg(pole))
  !
 end function

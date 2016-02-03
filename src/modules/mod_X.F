@@ -53,7 +53,7 @@ module X_m
  logical                  :: Vnl_commutator_warning
  !
  ! Logical used to decid how to use the double grid in X_os
- ! and in particular in X_bare_Double_Grid_GreenF
+ ! and in particular in X_GreenF_analytical, when the DbGd is used
  !
  logical                  :: X_is_evaluated_for_all_Qs
  !

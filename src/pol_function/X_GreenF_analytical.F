@@ -21,7 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
+subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
+ !
+ ! Compute the GreenF in frequency space starting from it analytical
+ ! expression as the Fourier Transform of a Lorentzian
  !
  use pars,       ONLY:SP,cZERO,cONE
  use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs
@@ -31,11 +34,6 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  use R_lattice,  ONLY:qindx_X,bz_samp,q_pt,nqibz
  use frequency,  ONLY:w_samp
  use vec_operate,ONLY:iku_v_norm
- ! GPL_EXCLUDE_START
-#if defined _ELPH
- use units,      ONLY:pi
-#endif
- ! GPL_EXCLUDE_END
  !
  implicit none
  integer      :: iq,transitions(4)
@@ -52,25 +50,26 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac
  complex(SP)  :: Z_,pole
  !
- complex(SP),external      ::X_simple_GreenF
+ complex(SP),external      ::Lorentzian_FT
  !
  integer, allocatable      ::BZ_DbGd_iq_npt(:)
  logical, allocatable      ::use_kpt(:,:)
  !
+ GreenF  = cZERO
+ !
  X_os_run =trim(space)=="G"
  K_inv_run=trim(space)=="eh"
  !
- GreenF  = cZERO
- !
  ! Transitions
  !
- ikbz   = transitions(1)     
- ikpbz  = qindx_X(iq,ikbz,1) 
- ik     = Xk%sstar(ikbz,1)
- ikp    = Xk%sstar(ikpbz,1)
+ ikbz   = transitions(1)
  iv     = transitions(2)
  ic     = transitions(3)
  i_spin = transitions(4)
+ ! 
+ ikpbz  = qindx_X(iq,ikbz,1) 
+ ik     = Xk%sstar(ikbz,1)
+ ikp    = Xk%sstar(ikpbz,1)
  !
  W_=0._SP
  Z_=cONE
@@ -78,67 +77,38 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
  pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,SP)
  !
- ! Fallback to X_simple_greenF
- !=============================
+ ! Case without DbGd
+ !===================
+ !
+ ! In K_inversion_Lo the occupations and the Z_factor are not included.
+ ! Thus I have to multiply by them the Green function
+ !
+ if( K_inv_run ) ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik ,i_spin) )/spin_occ*real(Z_)
+ if( X_os_run  ) ffac = 1._SP
+ !
  if (X_os_run .and.(.not.use_X_DbGd.or.ic>BZ_DbGd_nbands).or. &
 &    K_inv_run.and.(.not.BSS_uses_DbGd)                       ) then
    do iw=1,Xw%n_freqs
-     GreenF(iw)=X_simple_GreenF(Xw%p(iw),pole,ordering)*Z_
+     GreenF(iw)=Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
    enddo
    return
  endif
  !
- ! DbGd is needed
+ ! Case with DbGd
  !================
- allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
- allocate(use_kpt( BZ_DbGd_nkpt(ikbz), BZ_DbGd_nkpt(ikpbz) ) )
  !
- ! The GreenF is multiplied by the occupations on the coarse grid.
+ ! In X_os the GreenF is multiplied by the occupations on the coarse grid.
  ! Thus, to correctly renormalize, I have to:
  ! - divide   by the occupations on the coarse grid
  ! - multiply by the occupations on the fine   grid
  !
- ! In X_os.F I need the structure
- ! f_eh= Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik ,i_spin)) (see X_eh_setup.F)
- !
+ if( K_inv_run ) cg_ffac = spin_occ/real(Z_)
  if( X_os_run  ) cg_ffac = Xen%f(iv,ikp,i_spin)*( spin_occ-Xen%f(ic,ik ,i_spin) )
  !
- ! In K_inversion.F I need the structure
- ! f_eh= Ken%f(iv,ikp,i_sp)            -Ken%f(ic,ik ,i_sp))   (see K_tranisitions_setup.F)
+ allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
+ allocate(use_kpt( BZ_DbGd_nkpt(ikbz), BZ_DbGd_nkpt(ikpbz) ) )
  !
- if( K_inv_run ) cg_ffac = Xen%f(iv,ikp,i_spin)           -Xen%f(ic,ik ,i_spin)
- !
- ! [DAVIDE]
- ! Define which kpts I will use in a consistent way between q=0 and q/=0
- ! For q/=0 this change makes the code much faster as it avoids the use of all 
- ! double-grid kpts in the two spheres (k and kp) which would smear out too much
- ! the absorption.
- ! For q==0 the approach can be used to properly describe the q->0 limit
- ! This part of the code should be moved away from this subroutine as here the 
- ! same procedure is repeated for each v -> c transition, which is a waste of CPU time.
- !
- q_norm_ref=100000._SP
- do i1=2,nqibz
-    q_norm_ref=min(q_norm_ref,iku_v_norm(q_pt(i1,:)))
- enddo
- !
- qsize_fac=2._SP
- if(.not.X_is_evaluated_for_all_Qs) qsize_fac=qsize_fac*10._SP
- !
- q_norm_ref=q_norm_ref/qsize_fac
- !
- BZ_DbGd_iq_npt=0
- use_kpt=.false.
- do i1=1,BZ_DbGd_nkpt(ikbz)
-   ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
-   do i2=1,BZ_DbGd_nkpt(ikpbz)
-     ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
-     q_pt_shift(:)=BZ_DbGd_kpts(ikbz_rand,:)-BZ_DbGd_kpts(ikpbz_rand,:)-q_pt(iq,:)
-     if ( iku_v_norm(q_pt_shift) > q_norm_ref ) cycle
-     BZ_DbGd_iq_npt(i1)=BZ_DbGd_iq_npt(i1)+1
-     use_kpt(i1,i2)=.true.
-   enddo
- enddo
+ call tmp_double_grid()
  !
  do i1=1,BZ_DbGd_nkpt(ikbz)
    !
@@ -160,11 +130,11 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
      if( X_os_run  ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)*f_h)/cg_ffac
      if( K_inv_run ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac
      !
-     ffac=ffac*weight1*weight2*real(Z_)
+     ffac=ffac*weight1*weight2
      pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_)
      !
      do iw=1,Xw%n_freqs
-       GreenF(iw)=GreenF(iw)+X_simple_GreenF(Xw%p(iw),pole,ordering)*ffac
+       GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
      enddo
      !
    enddo
@@ -173,4 +143,42 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering,sp
  !
  deallocate(use_kpt,BZ_DbGd_iq_npt)
  !
+ contains
+   !
+   subroutine tmp_double_grid()
+     !
+     ! [DAVIDE]
+     ! Define which kpts I will use in a consistent way between q=0 and q/=0
+     ! For q/=0 this change makes the code much faster as it avoids the use of all 
+     ! double-grid kpts in the two spheres (k and kp) which would smear out too much
+     ! the absorption.
+     ! For q==0 the approach can be used to properly describe the q->0 limit
+     ! This part of the code should be moved away from this subroutine as here the 
+     ! same procedure is repeated for each v -> c transition, which is a waste of CPU time.
+     !
+     q_norm_ref=100000._SP
+     do i1=2,nqibz
+       q_norm_ref=min(q_norm_ref,iku_v_norm(q_pt(i1,:)))
+     enddo
+     !
+     qsize_fac=2._SP
+     if(.not.X_is_evaluated_for_all_Qs) qsize_fac=qsize_fac*10._SP
+     !
+     q_norm_ref=q_norm_ref/qsize_fac
+     !
+     BZ_DbGd_iq_npt=0
+     use_kpt=.false.
+     do i1=1,BZ_DbGd_nkpt(ikbz)
+       ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
+       do i2=1,BZ_DbGd_nkpt(ikpbz)
+         ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
+         q_pt_shift(:)=BZ_DbGd_kpts(ikbz_rand,:)-BZ_DbGd_kpts(ikpbz_rand,:)-q_pt(iq,:)
+         if ( iku_v_norm(q_pt_shift) > q_norm_ref ) cycle
+         BZ_DbGd_iq_npt(i1)=BZ_DbGd_iq_npt(i1)+1
+         use_kpt(i1,i2)=.true.
+       enddo
+     enddo
+     !
+   end subroutine
+   !
 end subroutine

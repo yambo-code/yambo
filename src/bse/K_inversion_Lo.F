@@ -230,10 +230,6 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    !
    if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/q_norm(1)**2
    !
-   ! Do I need this ?
-   ! Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)/real(ncpu,SP)
-   ! Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) /real(ncpu,SP)
-   !
  enddo
  !
  if(.not.K_diag_in_BS_mat) deallocate(BS_mat_diagonal)

@@ -257,6 +257,9 @@ subroutine K_inversion(iq,W,E,k,q)
      if (full_inf_freqs>=nint(real(W%n_freqs)/BSS_inversion_PERT_FULL_ratio)) full_inf_freqs_found=.TRUE.
      !
    enddo
+   !
+   Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
+   !
  endif
  !
  if (full_inf_freqs>0.and.FULL) then
@@ -287,9 +290,6 @@ subroutine K_inversion(iq,W,E,k,q)
    call live_timing()
    call PP_redux_wait(inv_err,imode=2)
    call PP_redux_wait(Epsilon_ii(:,2))
-   !
-   ! Do I need this, and is this the rigth place
-   Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
    !
  endif
  !

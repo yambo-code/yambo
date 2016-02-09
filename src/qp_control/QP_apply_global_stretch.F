@@ -43,9 +43,10 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
  ! Work Space
  !
  integer  ::ib,ik,i_sp,n_of_coeff,i_spin
- real(SP) ::M_factors_base(6),M_factors_free(6)
+ real(SP) ::M_factors_DBs(6),M_factors_CTL(6)
  character(lchlen) ::ch
- logical           ::QP_check_if_corrected,do_E,do_W,do_Z
+ logical           ::QP_check_if_corrected,do_E_DBs,do_E_CTL,&
+&                    do_W_DBs,do_W_CTL,do_Z_DBs,do_Z_CTL
  !
  ! Loop on spins
  !
@@ -53,21 +54,26 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
    !
    ! Is there anything to do ?
    !
-   do_E=.false.
-   do_W=.false.
-   do_Z=.false.
+   do_E_DBs=.false.
+   do_E_CTL=.false.
+   do_W_DBs=.false.
+   do_W_CTL=.false.
+   do_Z_DBs=.false.
+   do_Z_CTL=.false.
+   M_factors_DBs=rZERO
+   M_factors_CTL=rZERO
    !
    if (any(QP_ctl_from_DB(i_sp)%E/=(/0.,1.,0.,1./)).or.any(QP_ctl_add(i_sp)%E/=(/0.,1.,0.,1./))) then
      if (.not.apply_anyway) then
-       if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'E')) return
+       do_E_DBs=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'E')
      endif
-     do_E=.true.
+     do_E_CTL=.true.
    endif
    if (any((/QP_ctl_from_DB(i_sp)%W(:)/=0/)).or.any((/QP_ctl_add(i_sp)%W(:)/=0/))) then
      if (.not.apply_anyway) then
-       if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'W')) return
+       do_W_DBs=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'W')
      endif
-     do_W=.true.
+     do_W_CTL=.true.
      if (.not.associated(E%W)) then
        allocate(E%W(E%nb,E%nk,n_sp_pol))
        call mem_est("E-W",(/size(E%W)/),(/SP/))
@@ -76,16 +82,16 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
    endif
    if (QP_ctl_from_DB(i_sp)%Z/=(1.,0.).or.QP_ctl_add(i_sp)%Z/=(1.,0.)) then
      if (.not.apply_anyway) then
-       if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')) return
+       do_Z_DBs=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')
      endif
-     do_Z=.true.
+     do_Z_CTL=.true.
      if (.not.associated(E%Z)) then
        allocate(E%Z(E%nb,E%nk,n_sp_pol))
        call mem_est("E-Z",(/size(E%Z)/))
        E%Z=1._SP
      endif
    endif
-   if (.not.any((/do_E,do_W,do_Z/))) return
+   if (.not.any((/do_E_DBs,do_E_CTL,do_W_DBs,do_W_CTL,do_Z_DBs,do_Z_CTL/))) return
    !
    if (.not.QP_ctl_applied.and..not.apply_anyway) QP_ctl_applied=.true.
    !
@@ -98,22 +104,22 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
    endif
    !
    i_spin=i_sp
-   if (do_E) then
+   if (do_E_DBs.or.do_E_CTL) then
      n_of_coeff=2
-     M_factors_base(:4)=QP_ctl_from_DB(i_sp)%E
-     M_factors_free(:4)=QP_ctl_add(i_sp)%E
+     if (do_E_DBs) M_factors_DBs(:4)=QP_ctl_from_DB(i_sp)%E
+     M_factors_CTL(:4)=QP_ctl_add(i_sp)%E
      call do_fit_operation('E')
    endif
-   if (do_W) then
+   if (do_W_DBs.or.do_W_CTL) then
      n_of_coeff=3
-     M_factors_base(:6)=QP_ctl_from_DB(i_sp)%W
-     M_factors_free(:6)=QP_ctl_add(i_sp)%W
+     if (do_W_DBs) M_factors_DBs(:6)=QP_ctl_from_DB(i_sp)%W
+     M_factors_CTL(:6)=QP_ctl_add(i_sp)%W
      call do_fit_operation('W')
    endif
-   if (do_Z) then
+   if (do_Z_DBs.or.do_Z_CTL) then
      n_of_coeff=1
-     M_factors_base(:2)=(/real(QP_ctl_from_DB(i_sp)%Z),aimag(QP_ctl_from_DB(i_sp)%Z)/)
-     M_factors_free(:2)=(/real(QP_ctl_add(i_sp)%Z),aimag(QP_ctl_add(i_sp)%Z)/)
+     if (do_Z_DBs) M_factors_DBs(:2)=(/real(QP_ctl_from_DB(i_sp)%Z),aimag(QP_ctl_from_DB(i_sp)%Z)/)
+     M_factors_CTL(:2)=(/real(QP_ctl_add(i_sp)%Z),aimag(QP_ctl_add(i_sp)%Z)/)
      call do_fit_operation('Z')
    endif
    !
@@ -143,19 +149,15 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
        !
        do ik=1,E%nk
          !
-         if (.not.apply_anyway) then
-           if (QP_check_if_corrected((/ib,ib/),(/ik,ik/),(/i_spin,i_spin/),E,what)) cycle
-         endif
-         !
          if (E%Eo(ib,ik,i_spin)> 1.E-5) iref=0
          if (E%Eo(ib,ik,i_spin)<=1.E-5) iref=n_of_coeff
          !
          if (what=='Z') then
            !
-           E%Z(ib,ik,i_spin)=M_factors_free(1)+(0.,1.)*M_factors_free(2)
+           E%Z(ib,ik,i_spin)=M_factors_CTL(1)+(0.,1.)*M_factors_CTL(2)
            if (DB_corrected(ib,ik,i_spin)/=1) then
-             if (M_factors_base(1)/=1.) E%Z(ib,ik,i_spin)=(M_factors_free(1)+M_factors_base(1))/2.+&
-&                                               (0.,1.)*(M_factors_free(2)+M_factors_base(2))/2.
+             if (M_factors_DBs(1)/=1.) E%Z(ib,ik,i_spin)=(M_factors_CTL(1)+M_factors_DBs(1))/2.+&
+&                                                 (0.,1.)*(M_factors_CTL(2)+M_factors_DBs(2))/2.
            endif
            if (.not.apply_anyway) E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+4
            cycle
@@ -163,9 +165,9 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
          endif
          !
          ! Calculates the polinomial expansion (delta)
-         ! using M_factors_free and M_factors_base coefficients
+         ! using M_factors_CTL and M_factors_DBs coefficients
          !
-         delta=M_factors_free(iref+1)
+         delta=M_factors_CTL(iref+1)
          !
          ! Free factors are given from input file. In the case of W the user-defined reference
          ! energy is given with respect to the CBM/VBM. The position of the VBM and CBM must be consistent with their
@@ -180,7 +182,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
          endif
          !
          do i1=1,n_of_coeff-1
-           M_factor_local=M_factors_free(iref+1+i1)
+           M_factor_local=M_factors_CTL(iref+1+i1)
            if (what=='E') M_factor_local=M_factor_local-1.
            if (what=='W'.and.E%Eo(ib,ik,i_spin)<rref.and.E%Eo(ib,ik,i_spin)> 1.E-5) cycle
            if (what=='W'.and.E%Eo(ib,ik,i_spin)>rref.and.E%Eo(ib,ik,i_spin)<=1.E-5) cycle
@@ -191,9 +193,9 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
          if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM
          !
          if (DB_corrected(ib,ik,i_spin)/=1.or.apply_anyway) then
-           delta=delta+M_factors_base(iref+1)
+           delta=delta+M_factors_DBs(iref+1)
            do i1=1,n_of_coeff-1
-             M_factor_local=M_factors_base(iref+1+i1)
+             M_factor_local=M_factors_DBs(iref+1+i1)
              if (what=='E') M_factor_local=M_factor_local-1.
              if (what=='W'.and.E%Eo(ib,ik,i_spin)<rref.and.E%Eo(ib,ik,i_spin)> 1.E-5) cycle
              if (what=='W'.and.E%Eo(ib,ik,i_spin)>rref.and.E%Eo(ib,ik,i_spin)<=1.E-5) cycle

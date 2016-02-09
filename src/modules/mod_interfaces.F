@@ -149,7 +149,7 @@ module interfaces
      integer , optional :: I_dir(2)
    end subroutine 
    !
-   subroutine K_diag_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr)
+   subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr)
      use BS,            ONLY:BS_H_dim
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp

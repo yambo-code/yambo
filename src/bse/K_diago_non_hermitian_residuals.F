@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diag_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right) 
+subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right) 
  !
  !  The right eigenvector v(j) of A satisfies
  !                   A * v(j) = lambda(j) * v(j)
@@ -138,4 +138,4 @@ subroutine K_diag_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS
  !
  call PP_indexes_reset(px)
  !
-end subroutine K_diag_non_hermitian_residuals
+end subroutine K_diago_non_hermitian_residuals

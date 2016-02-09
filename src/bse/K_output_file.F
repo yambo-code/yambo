@@ -27,20 +27,21 @@ subroutine K_output_file(iq,mode)
  use units,     ONLY:HA2EV
  use BS,        ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_descs,BSE_mode,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
- use X_m,       ONLY:X_epsilon,eval_alpha,eps_2_alpha,O_eels,A_drude
+ use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,O_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
- use R_lattice, ONLY:nkbz
- use electrons, ONLY:spin_occ
- use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,&
+ use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
 &                    eel_file_name,alpha_file_name,refl_file_name,X_write_descriptions,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
 #if defined _KERR
  use pars,      ONLY:cI
+ use electrons, ONLY:spin_occ
+ use R_lattice, ONLY:nkbz
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,hbar_SI
  use drivers,   ONLY:l_kerr
+ use X_m,       ONLY:Epsilon_ij
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name
- use KERR,      ONLY:B_Hall
+ use KERR,      ONLY:B_Hall,A_drude
 #endif
  !
  implicit none
@@ -52,9 +53,9 @@ subroutine K_output_file(iq,mode)
  character(2)      :: title_mode
  integer           :: iw,n_output_data
  real(SP)          :: output_data(7)
- complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs),refl(3,BSS_n_freqs)
+ complex(SP)       :: eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3)
 #if defined _KERR
- complex(SP)       :: beta(3,BSS_n_freqs)
+ complex(SP)       :: beta(BSS_n_freqs,3)
 #endif
  logical           :: eval_eels,eval_reflectivity
  !
@@ -84,7 +85,7 @@ subroutine K_output_file(iq,mode)
  ! EELS / REFLECTIVITY logicals 
  !
  call parser('Reflectivity',eval_reflectivity)
- eval_eels= O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering)
+ eval_eels= O_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
  !
  title_mode='Ot'
  if (mode<0) title_mode='ot'
@@ -101,6 +102,7 @@ subroutine K_output_file(iq,mode)
    if (eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
 #endif
+ if(abs(mode)/=1) call of_open_close(jdos_file_name,title_mode)
  !
  call X_write_q_plus_g(1,BSS_q0,ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
@@ -134,28 +136,28 @@ subroutine K_output_file(iq,mode)
    ! Headers
    !
    call X_setup_headers('EPS')
-   if (mode==1) call msg("o eps",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (mode/=1.and.mode/=4) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (mode==1.or.mode==3) call msg("o eps",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+   if (mode==2) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (mode==4) call msg("o eps",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
    if (eval_reflectivity) then 
      call X_setup_headers('REFL')
-     if (mode==1) call msg("o refl",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1.and.mode/=4) call msg("o refl",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==1.or.mode==3) call msg("o refl",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==2) call msg("o refl",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o refl",'#',headers(:2),INDENT=0,USE_TABS=.TRUE.)
    end if   
    !
    if (eval_eels) then 
      call X_setup_headers('EEL')
-     if (mode==1) call msg("o eel",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1.and.mode/=4) call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==1.or.mode==3) call msg("o eel",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (mode==2) call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o eel",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    end if   
    !
    if (eval_alpha) then 
      call X_setup_headers('ALPHA')
-     if (mode==1) call msg("o alpha",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1.and.mode/=4) call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==1.or.mode==3) call msg("o alpha",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (mode==2) call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o alpha",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
@@ -176,10 +178,10 @@ subroutine K_output_file(iq,mode)
      B_Hall(:)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
      output_data(1)=real(B_Hall(2))
      output_data(4)=real(B_Hall(1))
-     B_Hall(:)=B_Hall(:)*1.E5/(SPEED_OF_LIGHT_SI)**2/FEMTO
+     B_Hall(:)=B_Hall(:)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
      output_data(2)=real(B_Hall(2))
      output_data(5)=real(B_Hall(1))
-     B_Hall(:)=B_Hall(:)*1.E2*HBAR_SI/e_SI**2
+     B_Hall(:)=B_Hall(:)*1.E2_SP*HBAR_SI/e_SI**2
      output_data(3)=real(B_Hall(2))
      output_data(6)=real(B_Hall(1))
      if(mode==4) output_data(1:3)=output_data(4:6)
@@ -187,43 +189,49 @@ subroutine K_output_file(iq,mode)
      call msg('o off','#')
      !
      call X_setup_headers('off')
-     !
-     if (mode==1) call msg("o off",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1.and.mode/=4) call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==1.or.mode==3) call msg("o off",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (mode==2) call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o off",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      !
      if (eval_alpha) then 
        call X_setup_headers('beta')
-       if (mode==1) call msg("o beta",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-       if (mode/=1.and.mode/=4) call msg("o beta",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+       if (mode==1.or.mode==3) call msg("o beta",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+       if (mode==2) call msg("o beta",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
        if (mode==4) call msg("o beta",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      endif
      !
      call X_setup_headers('moke')
-     if (mode==1) call msg("o moke",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1.and.mode/=4) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==1.or.mode==3) call msg("o moke",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (mode==2) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o moke",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      !
    endif
 #endif
    !
-   call msg("o eps refl eel alpha off beta moke",'#')
+   if (mode/=1) then
+     call X_setup_headers('jdos')
+     if (mode==2) call msg("o jdos",'#',headers(:7),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==3) call msg("o jdos",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o jdos",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   endif
+   !
+   call msg("o eps refl eel alpha off beta moke jdos",'#')
    !
    ! ABSORPTION
    !------------
    !
    do iw=1,BSS_n_freqs
      !
-     ! X_epsilon: 2 (int) 3 (non int) 4 (n-1 Haydock)
+     ! Epsilon_ii: 2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
      !
-     output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(X_epsilon(2,iw)),real(X_epsilon(2,iw)),&
-&              aimag(X_epsilon(3,iw)),real(X_epsilon(3,iw))/)
+     output_data(1:5)=(/real(Epsilon_ii(iw,1))*HA2EV,aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
+&              aimag(Epsilon_ii(iw,3)),real(Epsilon_ii(iw,3))/)
      !
-     ! Haydock n-1 iteration
+     ! Haydock n-1 iteration / Inversion with diagonal shift from BSE matrix
      !
      n_output_data=5
-     if (mode==1) n_output_data=7
-     if (mode==1) output_data(6:7)=(/aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw))/)
+     if (mode==1.or.mode==3) n_output_data=7
+     if (mode==1.or.mode==3) output_data(6:7)=(/aimag(Epsilon_ii(iw,4)),real(Epsilon_ii(iw,4))/)
      if (mode==4) n_output_data=3
      if (mode==4) output_data(2:3)=output_data(4:5)
      !
@@ -240,19 +248,17 @@ subroutine K_output_file(iq,mode)
      ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
      ! R=|r|^2
      !
-     refl(1,:)=(sqrt(X_epsilon(2,:))-1._SP)/(sqrt(X_epsilon(2,:))+1._SP)
-     refl(2,:)=(sqrt(X_epsilon(3,:))-1._SP)/(sqrt(X_epsilon(3,:))+1._SP)
-     if (mode==1) refl(3,:)=(sqrt(X_epsilon(4,:))-1._SP)/(sqrt(X_epsilon(4,:))+1._SP)
+     refl(:,1)=(sqrt(Epsilon_ii(:,2))-1._SP)/(sqrt(Epsilon_ii(:,2))+1._SP)
+     refl(:,2)=(sqrt(Epsilon_ii(:,3))-1._SP)/(sqrt(Epsilon_ii(:,3))+1._SP)
+     if (mode==1) refl(:,3)=(sqrt(Epsilon_ii(:,4))-1._SP)/(sqrt(Epsilon_ii(:,4))+1._SP)
      !
      do iw=1,BSS_n_freqs
        !
-       output_data(1:3)=(/real(X_epsilon(1,iw))*HA2EV,real(refl(1,iw)*conjg(refl(1,iw))),real(refl(2,iw)*conjg(refl(2,iw)))/)     
-       !
-       ! Haydock n-1 iteration
+       output_data(1:3)=(/real(Epsilon_ii(iw,1))*HA2EV,real(refl(iw,1)*conjg(refl(iw,1))),real(refl(iw,2)*conjg(refl(iw,2)))/)     
        !
        n_output_data=3
-       if (mode==1) n_output_data=4
-       if (mode==1) output_data(4)=real(refl(3,iw)*conjg(refl(3,iw)))
+       if (mode==1.or.mode==3) n_output_data=4
+       if (mode==1.or.mode==3) output_data(4)=real(refl(iw,3)*conjg(refl(iw,3)))
        if (mode==4) n_output_data=2
        if (mode==4) output_data(2)=output_data(3)
        !
@@ -268,34 +274,34 @@ subroutine K_output_file(iq,mode)
    !
    if (eval_eels) then
      !
-     eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.FALSE.,ordering,X_epsilon(2,:),eels(1,:)) 
-     eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.FALSE.,ordering,X_epsilon(3,:),eels(2,:)) 
-     if (mode==1) eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.FALSE.,ordering,X_epsilon(4,:),eels(3,:)) 
+     eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),eels(:,1)) 
+     eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eels(:,2)) 
+     if (mode==1) eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eels(:,3)) 
      !
-     alpha(1,:)=(1.+eels(1,:))/4./pi*eps_2_alpha
-     alpha(2,:)=(1.+eels(2,:))/4./pi*eps_2_alpha
-     if (mode==1) alpha(3,:)=(1.+eels(3,:))/4./pi*eps_2_alpha
+     alpha(:,1)=(1._SP+eels(:,1))/4._SP/pi*eps_2_alpha
+     alpha(:,2)=(1._SP+eels(:,2))/4._SP/pi*eps_2_alpha
+     if (mode==1) alpha(:,3)=(1._SP+eels(:,3))/4._SP/pi*eps_2_alpha
      !
      do iw=1,BSS_n_freqs
        !
        ! EELS
        !
-       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(eels(1,iw)),real(eels(1,iw)),&
-&                aimag(eels(2,iw)),real(eels(2,iw))/)
+       output_data(1:5)=(/real(Epsilon_ii(iw,1))*HA2EV,aimag(eels(iw,1)),real(eels(iw,1)),&
+&                aimag(eels(iw,2)),real(eels(iw,2))/)
        n_output_data=5
-       if (mode==1) n_output_data=7
-       if (mode==1) output_data(6:7)=(/aimag(eels(3,iw)),real(eels(3,iw))/)
+       if (mode==1.or.mode==3) n_output_data=7
+       if (mode==1.or.mode==3) output_data(6:7)=(/aimag(eels(iw,3)),real(eels(iw,3))/)
        if (mode==4) n_output_data=3
        if (mode==4) output_data(2:3)=output_data(4:5)
        call msg("o eel",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
        !
        ! ALPHA
        !
-       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(alpha(1,iw)),real(alpha(1,iw)),&
-&                aimag(alpha(2,iw)),real(alpha(2,iw))/)
+       output_data(1:5)=(/real(Epsilon_ii(iw,1))*HA2EV,aimag(alpha(iw,1)),real(alpha(iw,1)),&
+&                aimag(alpha(iw,2)),real(alpha(iw,2))/)
        n_output_data=5
-       if (mode==1) n_output_data=7
-       if (mode==1) output_data(6:7)=(/aimag(alpha(3,iw)),real(alpha(3,iw))/)
+       if (mode==1.or.mode==3) n_output_data=7
+       if (mode==1.or.mode==3) output_data(6:7)=(/aimag(alpha(iw,3)),real(alpha(iw,3))/)
        if (mode==4) n_output_data=3
        if (mode==4) output_data(2:3)=output_data(4:5)
        call msg("o alpha",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
@@ -311,18 +317,18 @@ subroutine K_output_file(iq,mode)
    if(l_kerr) then
      !
      if(eval_alpha) then
-       beta(1,:)=X_epsilon(5,:)/4./pi*eps_2_alpha
-       beta(2,:)=X_epsilon(6,:)/4./pi*eps_2_alpha
+       beta(:,1)=Epsilon_ij(:,2)/4._SP/pi*eps_2_alpha
+       beta(:,2)=Epsilon_ij(:,3)/4._SP/pi*eps_2_alpha
      endif
      !
      ! eps_xy
      !
      do iw=1,BSS_n_freqs 
-       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(X_epsilon(5,iw)),real(X_epsilon(5,iw)),&
-&                    aimag(X_epsilon(6,iw)),real(X_epsilon(6,iw))/)
+       output_data(1:5)=(/real(Epsilon_ij(iw,1))*HA2EV,aimag(Epsilon_ij(iw,2)),real(Epsilon_ij(iw,2)),&
+&                    aimag(Epsilon_ij(iw,3)),real(Epsilon_ij(iw,3))/)
        n_output_data=5
-       if (mode==1) n_output_data=7
-       if (mode==1) output_data(6:7)=(/aimag(X_epsilon(7,iw)),real(X_epsilon(7,iw))/)
+       if (mode==1.or.mode==3) n_output_data=7
+       if (mode==1.or.mode==3) output_data(6:7)=(/aimag(Epsilon_ij(iw,4)),real(Epsilon_ij(iw,4))/)
        if (mode==4) n_output_data=3
        if (mode==4) output_data(2:3)=output_data(4:5)
        call msg('o off','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
@@ -331,11 +337,11 @@ subroutine K_output_file(iq,mode)
          !
          ! alpha_xy
          !
-         output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(beta(1,iw)),real(beta(1,iw)),&
-&                  aimag(beta(2,iw)),real(beta(2,iw))/)
+         output_data(1:5)=(/real(Epsilon_ij(iw,1))*HA2EV,aimag(beta(iw,1)),real(beta(iw,1)),&
+&                  aimag(beta(iw,3)),real(beta(iw,3))/)
          n_output_data=5
-         if (mode==1) n_output_data=7
-         if (mode==1) output_data(6:7)=(/aimag(beta(3,iw)),real(beta(3,iw))/)
+         if (mode==1.or.mode==3) n_output_data=7
+         if (mode==1.or.mode==3) output_data(6:7)=(/aimag(beta(iw,3)),real(beta(iw,3))/)
          if (mode==4) n_output_data=3
          if (mode==4) output_data(2:3)=output_data(4:5)
          call msg("o beta",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
@@ -347,28 +353,28 @@ subroutine K_output_file(iq,mode)
      ! Kerr parameters
      !
      do iw=1,BSS_n_freqs 
-       output_data(1)= real(X_epsilon(1,iw))*HA2EV
-       output_data(2)=-aimag(X_epsilon(5,iw)/( (X_epsilon(2,iw)-1.0_SP)*sqrt(X_epsilon(2,iw)) ) /DEG2RAD)
-       output_data(3)=-real(X_epsilon(5,iw)/( (X_epsilon(2,iw)-1.0_SP)*sqrt(X_epsilon(2,iw)) ) /DEG2RAD)
-       output_data(4)=-aimag(X_epsilon(6,iw)/( (X_epsilon(3,iw)-1.0_SP)*sqrt(X_epsilon(3,iw)) ) /DEG2RAD)
-       output_data(5)=-real(X_epsilon(6,iw)/( (X_epsilon(3,iw)-1.0_SP)*sqrt(X_epsilon(3,iw)) ) /DEG2RAD)
+       output_data(1)= real(Epsilon_ii(iw,1))*HA2EV
+       output_data(2)=-aimag(Epsilon_ij(iw,2)/( (Epsilon_ii(iw,2)-1.0_SP)*sqrt(Epsilon_ii(iw,2)) ) /DEG2RAD)
+       output_data(3)=-real(Epsilon_ij(iw,2)/( (Epsilon_ii(iw,2)-1.0_SP)*sqrt(Epsilon_ii(iw,2)) ) /DEG2RAD)
+       output_data(4)=-aimag(Epsilon_ij(iw,3)/( (Epsilon_ii(iw,3)-1.0_SP)*sqrt(Epsilon_ii(iw,3)) ) /DEG2RAD)
+       output_data(5)=-real(Epsilon_ij(iw,3)/( (Epsilon_ii(iw,3)-1.0_SP)*sqrt(Epsilon_ii(iw,3)) ) /DEG2RAD)
        !
-       if( (real(X_epsilon(2,iw))==1._SP .or. real(X_epsilon(2,iw))==0._SP ) &
-&           .and. aimag(X_epsilon(2,iw))==0._SP ) then
+       if( (real(Epsilon_ii(iw,2))==1._SP .or. real(Epsilon_ii(iw,2))==0._SP ) &
+&           .and. aimag(Epsilon_ii(iw,2))==0._SP ) then
          output_data(2)=0._SP
          output_data(3)=0._SP
        endif
-       if( (real(X_epsilon(3,iw))==1._SP .or. real(X_epsilon(3,iw))==0._SP ) &
-&           .and. aimag(X_epsilon(3,iw))==0._SP ) then
+       if( (real(Epsilon_ii(iw,3))==1._SP .or. real(Epsilon_ii(iw,3))==0._SP ) &
+&           .and. aimag(Epsilon_ii(iw,3))==0._SP ) then
          output_data(4)=0._SP
          output_data(5)=0._SP
        endif         
        !
        n_output_data=5
-       if (mode==1) n_output_data=7
-       if (mode==1) then
-         output_data(6)=-aimag(X_epsilon(7,iw)/( (X_epsilon(4,iw)-1.0_SP)*sqrt(X_epsilon(4,iw)) ) /DEG2RAD)
-         output_data(7)=-real(X_epsilon(7,iw)/( (X_epsilon(4,iw)-1.0_SP)*sqrt(X_epsilon(4,iw)) ) /DEG2RAD)
+       if (mode==1.or.mode==3) then
+         n_output_data=7
+         output_data(6)=-aimag(Epsilon_ij(iw,4)/( (Epsilon_ii(iw,4)-1.0_SP)*sqrt(Epsilon_ii(iw,4)) ) /DEG2RAD)
+         output_data(7)=-real(Epsilon_ij(iw,4)/( (Epsilon_ii(iw,4)-1.0_SP)*sqrt(Epsilon_ii(iw,4)) ) /DEG2RAD)
        endif
        if (mode==4) n_output_data=3
        if (mode==4) output_data(2:3)=output_data(4:5)
@@ -378,6 +384,30 @@ subroutine K_output_file(iq,mode)
    endif
    !
 #endif
+   !
+   ! JOINT DOS
+   !------------
+   !
+   if (mode/=1) then 
+     do iw=1,BSS_n_freqs
+       !
+       ! Joint DOS: 2 (int) 3 (non int)
+       !
+       output_data(1:5)=(/real(Joint_DOS(iw,1))*HA2EV,aimag(Joint_DOS(iw,2)),real(Joint_DOS(iw,2)),&
+    &              aimag(Joint_DOS(iw,3)),real(Joint_DOS(iw,3))/)
+       !
+       ! Haydock n-1 iteration
+       !
+       n_output_data=5
+       if (mode==3) n_output_data=7
+       if (mode==3) output_data(6:7)=(/aimag(Joint_DOS(iw,4)),real(Joint_DOS(iw,4))/)
+       if (mode==4) n_output_data=3
+       if (mode==4) output_data(2:3)=output_data(4:5)
+       !
+       call msg("o jdos",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+       !
+     enddo
+   endif
    !
  endif
  !
@@ -393,5 +423,7 @@ subroutine K_output_file(iq,mode)
    call of_open_close(moke_file_name)
  endif
 #endif
+ !
+ if(abs(mode)/=1) call of_open_close(jdos_file_name)
  !
 end subroutine

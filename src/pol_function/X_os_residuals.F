@@ -25,14 +25,14 @@
 !> @callergraph
 subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
  use X_m,           ONLY:X_t,DIP_projected,X_poles_tab
  use parallel_m,    ONLY:PAR_Xk_bz_index
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp !,G_m_G
  use collision,     ONLY:elemental_collision
  !
  implicit none
@@ -46,8 +46,8 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  ! Work sapce
  !
- complex(SP)              :: rhotw_save(X%ng) !,eet_factor(X%ng,X%ng)
- real(SP)                 :: eh_occ
+ complex(SP)              :: rhotw_save(X%ng),Z_ !,eet_factor(X%ng,X%ng)
+ real(SP)                 :: Z_eh_occ
  integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
 &                            isp,iv,ic,isave(4),n_poles,i_bg !,alloc_err
  !
@@ -56,6 +56,8 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  n_poles = sum(bare_grid_N(1:i_cg-1))
  !
  Xo_res(:,:) = cZERO
+ !
+ Z_=cONE
  !
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
    !
@@ -77,14 +79,19 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    ikp= Xk%sstar(ikpbz,1)
    isp= Xk%sstar(ikpbz,2)
    !
-   ! Note the renormalization of the eh_occ=f(1-f) factor
+   ! Note the renormalization of the Z_eh_occ=f(1-f)*Z factor
    !
-   !     n_spin n_sp_pol n_spinor  spin_occ eh_occ
-   !       1        1        1         2      2
-   !       2        1        2         1      1
-   !       2        2        1         1      1
+   if (associated(Xen%Z))      Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
    !
-   eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/spin_occ/real(Xk%nbz)/DL_vol
+   ! GPL_EXCLUDE_START
+   !
+   if (associated(Xen%GreenF)) Z_=cONE
+   !
+   ! GPL_EXCLUDE_END
+   !
+   !
+   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin)) &
+   &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
    ! Scattering CALL
    !-----------------
@@ -138,7 +145,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !-------------^^^^^---------------------------------------
    !$omp parallel do default(shared), private(ig2)
    do ig2=1,X%ng
-     call V_by_V_plus_V(ig2,eh_occ*Xo_scatt%rhotw(ig2),conjg(Xo_scatt%rhotw(:ig2)),Xo_res(:ig2,ig2))
+     call V_by_V_plus_V(ig2,Z_eh_occ*Xo_scatt%rhotw(ig2),conjg(Xo_scatt%rhotw(:ig2)),Xo_res(:ig2,ig2))
    enddo
    !$omp end parallel do
    !

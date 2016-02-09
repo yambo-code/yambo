@@ -30,17 +30,16 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:error
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use memory_m,       ONLY:mem_est
- use X_m,            ONLY:X_epsilon,X_drude_term,iw_ref,global_gauge
- use R_lattice,      ONLY:d3k_factor,q_norm
+ use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,iw_ref,global_gauge
+ use R_lattice,      ONLY:q_norm
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS,             ONLY:BSS_n_descs,Haydock_treshold,BSS_description,& 
-&                         io_BSS_Haydock, BS_K_Coupling,&
+&                         io_BSS_Haydock, BS_K_Coupling,Co_factor,&
 &                         Haydock_terminator, BSE_mode,Haydock_v0_mod,BS_Blocks_symmetrize_K,&
 &                         BS_HAYVEC_free,BS_HAYVEC_alloc, BS_T_grp,BS_nT_grps,Haydock_vector
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
- use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock
@@ -48,7 +47,7 @@ subroutine K_Haydock(iq,W)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
+ use KERR,           ONLY:B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
  !
@@ -79,7 +78,8 @@ subroutine K_Haydock(iq,W)
  !
  ! GPL_EXCLUDE_END
  !
- real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
+ real(SP)           ::reached_treshold
+ real(SP)           ::Bf(Max_iterations),Af(Max_iterations)
  integer            ::ItParity
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
@@ -108,7 +108,7 @@ subroutine K_Haydock(iq,W)
  if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
  !
  ! Which approach
- use_cpl_scheme=BS_K_Coupling
+ use_cpl_scheme=BS_K_Coupling !.or.allocated(BS_T_grp(1)%Z)
  !
  ! GPL_EXCLUDE_START
  !
@@ -273,12 +273,12 @@ subroutine K_Haydock(iq,W)
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-   V0(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_R(:)
+   V0(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_R(:)*sqrt(BS_T_grp(i_g)%fp(:))
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   if(l_kerr) V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R_kerr(:)
+   if(l_kerr) V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R_kerr(:)*sqrt(BS_T_grp(i_g)%fp(:))
 #endif
    !
    ! GPL_EXCLUDE_END
@@ -320,10 +320,10 @@ subroutine K_Haydock(iq,W)
       !
       ! GPL_EXCLUDE_END
       !
-      call K_multiply_by_V(it_on_disk,V0,Vnp1,ItParity,'Hay')
+      call K_multiply_by_V(V0,Vnp1,ItParity)
       call K_dot_product(v0_mod_,V0,Vnp1)
       Haydock_v0_mod=sqrt(2._SP*real(v0_mod_))
-      Cf(1) =  0._SP
+      Cf(1) = cZERO
       !
       ! GPL_EXCLUDE_START
       !
@@ -367,15 +367,15 @@ subroutine K_Haydock(iq,W)
  !
  do it=it_on_disk+1,Max_iterations
    !
-   reached_treshold=0.
-   !
-   ! Hermitian case: 
+   reached_treshold=0._SP
    !
    if (.not.use_cpl_scheme) then
      !
+     ! [***] Hermitian case: 
+     !
      !|Vm+1> = H |Vm>
      !
-     call  K_multiply_by_V(it,Vn,Vnp1,1,'Hay')
+     call  K_multiply_by_V(Vn,Vnp1,1)
      !
      ! A(n) = <Vm|Vm+1>
      !
@@ -410,9 +410,10 @@ subroutine K_Haydock(iq,W)
        Vn(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
      enddo
      !
+   else 
+     !
      ! [***] Non-Hermitian case: 
      !
-   else 
      !
      ! A(n) = <Vm+1|F|Vm+1> (that is <Vm|HFH|Vm>), 
      !      =  0   by symmetry 
@@ -438,7 +439,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vm+1> = H |Vm>
      !
-     call K_multiply_by_V(it-it_on_disk,Vn,Vnp1,ItParity,'Hay')
+     call K_multiply_by_V(Vn,Vnp1,ItParity)
      !
      ! B(n+1)= <Vm|F|Vm+1>^(1/2) (that is <Vm|FH|Vm>^(1/2))
      !       = (2*Re(<Vm|Vmp1>))^(1/2) by symmetry, 
@@ -475,7 +476,7 @@ subroutine K_Haydock(iq,W)
 #if defined _KERR
      if(l_kerr) then
        call K_dot_product(v0_mod_,V0_kerr,Vn) 
-       Cf_kerr(it+1)=(1._SP+real(ItParity,SP)*cI*aimag(v0_mod_))/Haydock_v0_mod
+       Cf_kerr(it+1)= ((1._SP+real(ItParity,SP))*cI*aimag(v0_mod_))/Haydock_v0_mod
      endif
 #endif
      !
@@ -486,15 +487,15 @@ subroutine K_Haydock(iq,W)
    if (it>2) then
      !
      if (use_cpl_scheme) then 
-       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf(:it),1)
+       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,1,Cf(:it))
      else
-       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it)
+       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,1)
      end if
      !
      ! GPL_EXCLUDE_START
      !
 #if defined _KERR
-     if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf_kerr(:it),2)
+     if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,2,Cf_kerr(:it))
 #endif
      !
      ! GPL_EXCLUDE_END
@@ -589,20 +590,19 @@ subroutine K_Haydock(iq,W)
  !
  contains
    !
-   subroutine build_L_and_check_convergence(Af,Bf,it,Cf,ii)
+   subroutine build_L_and_check_convergence(Af,Bf,it,ii,Cf)
      implicit none
-     integer    :: it
-     real(SP)   :: Bf(it+1),Af(it)
+     integer,    intent(in)          :: it,ii
+     real(SP),   intent(in)          :: Bf(it+1),Af(it)
      complex(SP),intent(in),optional :: Cf(it)
-     integer, intent(in),optional :: ii
      !
      ! Work Space
      !
      integer     :: i1,iw,i_eps(2)
-     real(SP)    :: Co
+     real(SP)    :: Co,tmp_tresh,den
      !
      complex(SP) :: factor_jj(2)
-     real(SP)    :: gauge_factor
+     complex(SP) :: gauge_factor
      !
      complex(SP) :: X_o(4,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
@@ -615,7 +615,7 @@ subroutine K_Haydock(iq,W)
      logical     :: UseTerminator
      logical     :: causal, coupling
      !
-     Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi*Haydock_v0_mod**2._SP
+     Co=Co_factor*Haydock_v0_mod**2._SP
      !
      X_t =cZERO
      UseTerminator = .false.  
@@ -623,8 +623,13 @@ subroutine K_Haydock(iq,W)
      causal  = (trim(BSE_mode)=='causal'.and..not.use_cpl_scheme)
      coupling= use_cpl_scheme
      !
-     if(trim(global_gauge)=='length'  ) factor_jj=0._SP
-     if(trim(global_gauge)=='length'  ) gauge_factor=Co/   q_norm(1) **2
+     i_eps(1)=2
+     i_eps(2)=4
+     !
+     if(trim(global_gauge)=='length'  ) then
+       factor_jj=0._SP
+       gauge_factor=cONE*Co/q_norm(1)**2
+     endif
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -684,28 +689,40 @@ subroutine K_Haydock(iq,W)
          end do
          X_o(:2,1) = YbyX(:)
        endif
-       i_eps(1)=2
-       i_eps(2)=4
-       if(present(ii)) then
-         i_eps(1)=3*ii-1
-         i_eps(2)=3*ii+1
-       endif
-       X_epsilon(1,iw)=W%p(iw)
+       Epsilon_ii(iw,1)=W%p(iw)
        !
        ! GPL_EXCLUDE_START
        ! 
-       if(trim(global_gauge)=='velocity' .and. iw==iw_ref) factor_jj=X_o(1:2,1)
-       if(trim(global_gauge)=='velocity') gauge_factor=Co/real(W%p(iw))**2
+       if(trim(global_gauge)=='velocity'.and.iw==iw_ref) then
+         if (.not.causal) factor_jj(:)=X_o(1:2,1)
+         if (     causal) factor_jj(:)=X_o(1:2,1)-X_o(3:4,1)
+       endif
        !
        ! GPL_EXCLUDE_END
        !
-       if (.not.causal) X_epsilon(i_eps(:),iw)=1._SP-(X_o(1:2,1)           -factor_jj)*gauge_factor
-       if (     causal) X_epsilon(i_eps(:),iw)=1._SP-(X_o(1:2,1)-X_o(3:4,1)-factor_jj)*gauge_factor
-       if (i_eps(1)==2) then
-         X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*gauge_factor
-         X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*gauge_factor
-       endif
-       if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
+       select case(ii)
+       case(1)
+         if (.not.causal) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)           )
+         if (     causal) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
+       case(2)
+         if (.not.causal) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)           )
+         if (     causal) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
+       end select
+       !
+     enddo
+     !
+     do iw=1,W%n_freqs
+       !
+       ! GPL_EXCLUDE_START
+       !
+       if (trim(global_gauge)=='velocity') gauge_factor=Co/W%p(iw)**2
+       !
+       if (ii==1) Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+factor_jj(:))*gauge_factor
+       if (ii==2) Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+factor_jj(:))*gauge_factor
+       !
+       ! GPL_EXCLUDE_END
+       !
+       if (ii==1) Epsilon_ii(iw,i_eps(:))=1._SP+Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
        !
        ! GPL_EXCLUDE_START
        !
@@ -717,7 +734,7 @@ subroutine K_Haydock(iq,W)
        if (l_anomalous_Hall) then
          if (trim(global_gauge)=='length') then
            B_Hall(2)=B_Hall(2)*Co/q_norm(1)**2
-           X_epsilon(5,iw)=X_epsilon(5,iw)+B_Hall(2)/W%p(iw)
+           Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
          else if (trim(global_gauge)=='velocity') then
            B_Hall(2)=B_Hall(2)*Co
          endif
@@ -727,14 +744,22 @@ subroutine K_Haydock(iq,W)
        !
        ! GPL_EXCLUDE_END
        !
-       if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
-&         abs(X_epsilon(i_eps(1),iw)-X_epsilon(i_eps(2),iw))/abs(X_epsilon(2,iw)))
-       if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
-&         abs(X_epsilon(i_eps(1),iw)-X_epsilon(i_eps(2),iw))/abs(X_epsilon(2,iw))/real(W%n_freqs)
+       select case(ii)
+       case(1)
+         den=abs(Epsilon_ii(iw,2)+Epsilon_ii(iw,2))/2._SP
+         tmp_tresh=abs(Epsilon_ii(iw,2)-Epsilon_ii(iw,4))/den
+       case(2)
+         den=abs(Epsilon_ij(iw,2)+Epsilon_ij(iw,2))/2._SP
+         tmp_tresh=abs(Epsilon_ij(iw,2)-Epsilon_ij(iw,4))/den
+       end select
+       !
+       if (Haydock_treshold>0._SP .and. den>0._SP ) reached_treshold=max(reached_treshold,tmp_tresh)
+       if (Haydock_treshold<0._SP .and. den>0._SP ) reached_treshold=reached_treshold+tmp_tresh/real(W%n_freqs)
        !
      enddo
      !
      if (use_cpl_scheme) deallocate(X_i)
+     !
    end subroutine
    !
    function terminator(x,c1,c2,which)

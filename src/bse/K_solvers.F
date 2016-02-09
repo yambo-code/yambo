@@ -27,11 +27,15 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:X_t,X_epsilon,X_drude_term
+ use X_m,            ONLY:X_t,Epsilon_ii,Joint_DOS,X_drude_term
  use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode,&
 &                         BS_K_has_been_calculated_loaded
  use parallel_m,     ONLY:master_cpu
  use IO_m,           ONLY:IO_and_Messaging_switch
+#if defined _KERR
+ use drivers,        ONLY:l_kerr
+ use X_m,            ONLY:Epsilon_ij
+#endif
  !
  implicit none
  type(levels) ::Ken
@@ -90,12 +94,15 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
- if (run_Diago)          call K_diagonalization(iq,W_bss)
+ if (run_Diago)          call K_diag_driver(iq,W_bss)
  !
  if (run_inversion)      call K_inversion(iq,W_bss,Ken,Xk,q)
  !
  ! CLEAN
  !
- deallocate(X_epsilon,X_drude_term)
+ deallocate(Epsilon_ii,Joint_DOS,X_drude_term)
+#if defined _KERR
+ if(l_kerr) deallocate(Epsilon_ij)
+#endif
  !
 end subroutine

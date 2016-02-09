@@ -149,6 +149,17 @@ module interfaces
      integer , optional :: I_dir(2)
    end subroutine 
    !
+   subroutine K_diag_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr)
+     use BS,            ONLY:BS_H_dim
+     use pars,          ONLY:SP
+     use frequency,     ONLY:w_samp
+     type(w_samp),intent(in)  :: W
+     integer,     intent(in)  :: iq
+     complex(SP), intent(in)  :: BS_E(BS_H_dim)
+     complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
+     complex(SP), pointer     :: BS_E_SOC_corr(:,:),BS_R_kerr(:)
+   end subroutine
+   !
    subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&
 &                                              COMM_index_4,COMM_A2A_1,COMM_A2A_2,COMM_A2A_3)
      use parallel_m,    ONLY:MPI_comm

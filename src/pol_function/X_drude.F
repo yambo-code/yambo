@@ -56,11 +56,9 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
  !  . Metallic system 
  !  . Optical response @ q = Gamma
  !
- neq_carriers   = .false.
- !
  Drude_term(1) = real(Wd)>0._SP .and. aimag(Wd)>0._SP
- Drude_term(2) = Xen%nbf/=Xen%nbm.or.neq_carriers
- Drude_term(3) = Xen%kf>0        .or.neq_carriers
+ Drude_term(2) = Xen%nbf/=Xen%nbm
+ Drude_term(3) = Xen%kf>0
  Drude_term(4) = (iq==1)
  !
  ! Checks

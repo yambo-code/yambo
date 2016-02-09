@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function MATRIX_resolvant_via_exact_inversion(N,W,C,f,V,M)
+integer function MATRIX_resolvant_via_exact_inversion(n,m,W,C,f,V,K)
  !
  ! C<W|1./(V^{-1}-M)|W>
  !
@@ -32,31 +32,36 @@ integer function MATRIX_resolvant_via_exact_inversion(N,W,C,f,V,M)
  !
  implicit none
  !
- integer      ::N
- complex(SP)  ::W(N),C,f
- complex(SP)  ::V(N),M(N,N)
+ integer,    intent(in) ::n,m
+ complex(SP),intent(in) ::C,W(n),V(n,m),K(n,n)
+ complex(SP),intent(out)::f 
  !
  ! Work Space
  !
- complex(SP), allocatable ::wk(:,:)
- integer     ::i1,i2
- complex(SP) ::A_n(N)
+ complex(SP) ::wk(n,n),A_n(n)
+ integer     ::i1,i2,i3
  !
  MATRIX_resolvant_via_exact_inversion=0
  !
- allocate(wk(N,N))
- wk=cZERO
- !
- do i1=1,N 
-   wk(i1,i1)=1._SP/V(i1)
-   do i2=1,N 
-     wk(i1,i2)=wk(i1,i2)-M(i1,i2)
+ do i3=1,m
+   A_n=cZERO
+   wk=cZERO
+   do i2=1,n
+     wk(i2,i2)=1._SP/V(i2,i3)
+     do i1=1,n 
+       if(i3==1) wk(i1,i2)=wk(i1,i2)-      K(i1,i2)
+       if(i3==2) wk(i1,i2)=wk(i1,i2)-conjg(K(i1,i2))
+     enddo
    enddo
+   call MATRIX_driver(INV,wk)
+   if(i3==1) then
+     call M_by_V('n',n,wk,W,A_n)
+     f=  C*Vstar_dot_V(n,W,A_n)
+   else if(i3==2) then
+     call M_by_V('n',n,wk,conjg(W),A_n)
+     f=f+C*Vstar_dot_V(n,conjg(W),A_n)
+   endif
  enddo
- call MATRIX_driver(INV,wk)
- call M_by_V('n',N,wk,W,A_n)
- f=C*Vstar_dot_V(N,W,A_n)
  !
- deallocate(wk)
  !
 end function

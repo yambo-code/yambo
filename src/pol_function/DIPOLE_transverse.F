@@ -25,7 +25,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! This routine returns <iR> and <P^2>.
  !
- use pars,                ONLY:SP,schlen,cZERO
+ use pars,                ONLY:SP,schlen,cZERO,cI
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
@@ -62,7 +62,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4)
- real(SP)                     :: Ev_m_Ec,Ev_m_Ec_QP
+ real(SP)                     :: Ev_m_Ec,W_
+ complex(SP)                  :: Ev_m_Ec_QP
  !
  !I/O and external functions
  !
@@ -122,6 +123,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Main loop over k in IBZ
  !
+ W_=0._SP
+ !
  do ik=1,Xk%nibz
    !
    if (n_LT_steps==0) cycle
@@ -165,12 +168,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
          enddo
          !
-         if (associated(Xen%Eo)) then 
-           Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
-           Ev_m_Ec_QP=Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
-         else
-           Ev_m_Ec   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
-         endif
+         if (associated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
+         !
+         Ev_m_Ec   =Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+         Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)+cI*W_
+         !
+         if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
          !
          ! Evaluate <ivfft|   p   |icfft>
          call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
@@ -182,8 +185,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (l_eval_DIP_P) then
            ! See for this PRB 48, 11789 (1993), definition of p_eff
-           if (.not.associated(Xen%Eo)) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
-           if (     associated(Xen%Eo)) then
+           if (.not.(associated(Xen%Eo).or.associated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
+           if (     (associated(Xen%Eo).or.associated(Xen%W))) then
              if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
              if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)*Ev_m_Ec_QP/Ev_m_Ec
            endif

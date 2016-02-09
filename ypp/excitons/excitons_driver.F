@@ -66,8 +66,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Energies and Residulas
  !
- complex(SP), allocatable ::BS_R(:)
+ complex(SP), allocatable ::BS_R_left(:)
+ complex(SP), allocatable ::BS_R_right(:)
  complex(SP), allocatable ::BS_E(:)
+ complex(SP), pointer     ::BS_R_pointer(:) => null()
  !
  integer                  ::iq,neh
  !
@@ -114,26 +116,26 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
- allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
+ allocate(BS_R_right(BS_H_dim),BS_R_left(BS_H_dim),BS_E(BS_H_dim))
  call mem_est('BS_R_E',(/2*BS_H_dim/))
  iq=BS_q(1)
  !
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
+ io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_R_pointer)
  !
  if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_R_pointer)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
  enddo
  !
  ! Sort energies and write to output
  !===================================
- if (l_sort) call excitons_sort_and_report(Xk,Xen,BS_R,BS_E)
+ if (l_sort) call excitons_sort_and_report(Xk,Xen,BS_R_right,BS_E)
  !
  if(.not.l_sort) then
    !
@@ -154,7 +156,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    call mem_est('BS_mat',(/BS_H_dim**2/))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_R_pointer)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table
@@ -174,7 +176,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Exciton's spin
  !=====================
- if (l_spin)       call exciton_spin(Xk,Xen,BS_R,BS_E,BS_E_degs,lambda_s,n_lambda)
+ if (l_spin)       call exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
  !
  ! Exciton's Amplitude
  !=====================
@@ -201,7 +203,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! OLD Transient absorption 
  !==========================
- if(l_RT_abs)      call RT_transient_absorption(Xbsk,Xen,Xk,q,BS_H_dim,BS_E,BS_R)
+ if(l_RT_abs)      call RT_transient_absorption(Xbsk,Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
  !
 #endif
  !
@@ -210,7 +212,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! CLEAN
  !
- deallocate(BS_R,BS_E,lambda_s)
+ deallocate(BS_R_left,BS_R_right,BS_E,lambda_s)
  call mem_est('BS_R_E')
  if(.not.l_sort) then
    deallocate(BSS_eh_table,BS_mat)

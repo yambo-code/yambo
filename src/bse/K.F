@@ -25,7 +25,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W>
  !
- use pars,         ONLY:SP,pi,schlen,cZERO,IP
+ use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
  use parser_m,     ONLY:parser
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
@@ -102,7 +102,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Constants & Setup
  !==================
  !
- Co=4._SP*pi/DL_vol/real(q%nbz,SP)
+ Co=4._SP*real(spin_occ)*pi/DL_vol/real(q%nbz,SP)
  io_BS_err    =-1
  io_BS_Fxc_err=-1
  call parser('ALLGexx',l_USE_all_Gexx)
@@ -400,15 +400,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
  endif
  !
- !if (BSS_uses_DbGd) then
- !  allocate(BS_mat_diagonal(BS_K_dim))
- !  call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
- !endif
  ! Timing
  !========
  !
  if (.not.l_bs_fxc) call live_timing('Kernel',BS_LiveTiming_steps)
- if (l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
+ if (     l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
  !
  do i_block=1,n_BS_blks
    !
@@ -569,9 +565,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
        endif
        !
-       BS_blk(i_block)%mat(i_Tk,i_Tp)=sqrt_f_itk*(H_x*real(spin_occ)*Co-H_c)*sqrt_f_itp
-       !
-       if (H_pos(1)==H_pos(2).and.BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=real( BS_blk(i_block)%mat(i_Tk,i_Tp) )
+       if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        !
      enddo 
      !
@@ -587,8 +582,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  enddo
  !
  call live_timing( )
- !
- !if(allocated(BS_mat_diagonal)) deallocate(BS_mat_diagonal)
  !
  BS_K_has_been_calculated_loaded=.TRUE.
  !

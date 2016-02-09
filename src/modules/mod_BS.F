@@ -64,9 +64,9 @@ module BS
  real(SP):: BS_eh_en(2)
  real(SP):: BS_eh_win(2)
  !
- ! Drude occupation
- !------------------
- real(SP):: BS_drude_f_eh
+ ! Epsilon factor
+ !==================
+ real(SP) :: Co_factor
  !
  ! PW components ...
  !==================
@@ -104,6 +104,7 @@ module BS
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
+   real(SP)   , allocatable      :: fp(:)
    real(SP)   , allocatable      :: W(:)
    real(SP)   , allocatable      :: E_SOC_corr(:,:)
    !
@@ -163,6 +164,7 @@ module BS
  real(SP) :: BSS_q0(3)
  real(SP) :: Haydock_treshold
  real(SP) :: Haydock_v0_mod
+ real(SP) :: Inversion_treshold
  real(SP) :: BSS_inversion_PERT_FULL_ratio = 1.
  logical  :: BSS_write_eig_2_db
  logical  :: Haydock_terminator
@@ -170,6 +172,7 @@ module BS
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_uses_partial_diago
+ logical  :: BSS_perturbative_width
  !
  ! Temporary (LARGE) arrays to be used in solvers ONLY
  !
@@ -178,7 +181,6 @@ module BS
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
- complex(SP), allocatable :: BS_mat_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
  complex(SP), allocatable :: BS_cpl_mat(:,:)
  complex(SP), allocatable :: BSS_rhoq0(:)
@@ -194,11 +196,11 @@ module BS
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsR,bsR_kerr)
+   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,bsR_kerr)
      use pars,          ONLY:SP
      integer             :: iq,ID,BS_H_dim
-     complex(SP)         :: bsE(BS_H_dim),bsR(BS_H_dim)
-     complex(SP),optional:: bsR_kerr(BS_H_dim)
+     complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
+     complex(SP),pointer :: bsR_kerr(:)
    end function
    !
    integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
@@ -299,7 +301,7 @@ module BS
        endif
        call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
        call mem_est("BS_T_grp_E_N",(/nT/),(/SP/))
-       call mem_est("BS_T_grp_f_N",(/nT/),(/SP/))
+       call mem_est("BS_T_grp_f_N",(/2*nT/),(/SP/))
        if (associated(E%Z)) call mem_est("BS_T_grp_Z_N",(/nT/))
        if (associated(E%W)) call mem_est("BS_T_grp_W_N",(/nT/),(/SP/))
        return
@@ -316,6 +318,7 @@ module BS
      allocate(BS_T_grp(iT)%table(nT,4))
      allocate(BS_T_grp(iT)%E(nT))
      allocate(BS_T_grp(iT)%f(nT))
+     allocate(BS_T_grp(iT)%fp(nT))
      if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
      if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
      if (E_SOC_nbands/=0) allocate(BS_T_grp(iT)%E_SOC_corr(2,nT))
@@ -329,9 +332,6 @@ module BS
      use electrons, ONLY:E_SOC_nbands
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-     allocate(BS_mat_diagonal(BS_H_dim))
-     BS_mat_diagonal = cZERO
-     call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
      allocate(BS_mat(BS_H_dim,BS_H_dim))
      call mem_est('BS_mat',(/size(BS_mat)/))
      BS_mat    = cZERO
@@ -377,9 +377,8 @@ module BS
      if (allocated(BSS_eh_Z))          deallocate(BSS_eh_Z)
      if (allocated(BSS_eh_E_SOC_corr)) deallocate(BSS_eh_E_SOC_corr)
      if (allocated(BS_mat))            deallocate(BS_mat)
-     if( allocated(BS_mat_diagonal) )  deallocate(BS_mat_diagonal)
      call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f BSS_eh_W")
-     call mem_est("BSS_eh_table BSS_eh_Z BS_mat BS_mat_diagonal")
+     call mem_est("BSS_eh_table BSS_eh_Z BS_mat")
    end subroutine
    !
    subroutine BS_Blocks_and_Transitions_free()
@@ -408,6 +407,7 @@ module BS
        deallocate(BS_T_grp(i_g)%table)
        deallocate(BS_T_grp(i_g)%E)
        deallocate(BS_T_grp(i_g)%f)
+       deallocate(BS_T_grp(i_g)%fp)
        if (allocated(BS_T_grp(i_g)%Z)) deallocate(BS_T_grp(i_g)%Z)
        if (allocated(BS_T_grp(i_g)%W)) deallocate(BS_T_grp(i_g)%W)
        if (E_SOC_nbands/=0)            deallocate(BS_T_grp(i_g)%E_SOC_corr)

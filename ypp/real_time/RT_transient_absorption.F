@@ -23,7 +23,7 @@
 !
 subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
- use pars,            ONLY:SP,pi
+ use pars,            ONLY:SP,pi,cZERO
  use units,           ONLY:FS2AUT,HA2EV,SPEED_OF_LIGHT
  use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor,q_norm,bare_qpg
  use D_lattice,       ONLY:alat
@@ -33,7 +33,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use rt_ctl,          ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
  use IO_m,            ONLY:io_DIP
  use YPP,             ONLY:X_rt
- use X_m,             ONLY:X_epsilon
+ use X_m,             ONLY:Epsilon_ii
  use BS,              ONLY:BSS_eh_table,BS_mat,BS_bands
  use frequency,       ONLY:w_samp
  use interfaces,      ONLY:PARALLEL_global_indexes
@@ -86,9 +86,9 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  deallocate(q_norm,bare_qpg)
  !
- allocate(X_epsilon(2,X_rt%energy_steps))
- if(l_TR_reflec) allocate(X_reflectance(2,X_rt%energy_steps))
- if(l_TR_transm) allocate(X_absorption_coeff(2,X_rt%energy_steps))
+ allocate(Epsilon_ii(X_rt%energy_steps,2))
+ if(l_TR_reflec) allocate(X_reflectance(X_rt%energy_steps,2))
+ if(l_TR_transm) allocate(X_absorption_coeff(X_rt%energy_steps,2))
  !
  ! Frequency setup
  !
@@ -116,12 +116,12 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
    if (i_T==1.) call live_timing('Transient Absorption',n_T_steps,SERIAL=.true.)
    !
-   X_epsilon=(0._SP,0._SP)
+   Epsilon_ii=cZERO
    !
    ! Compute the contribution due to exissting transitions
    !
-   BS_R0=(0._SP,0._SP)
-   BS_R1=(0._SP,0._SP)
+   BS_R0=cZERO
+   BS_R1=cZERO
    !
    do i_l=1,BS_H_dim
      !
@@ -143,11 +143,11 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        !
      enddo 
      !
-     X_epsilon(1,:)=X_epsilon(1,:)-     BS_R0(i_l)*conjg(BS_R0(i_l))       /(W_bss%p(:)-BS_E(i_l))
-     X_epsilon(2,:)=X_epsilon(2,:)-0.5*(BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l))/(W_bss%p(:)-BS_E(i_l))
+     Epsilon_ii(:,1)=Epsilon_ii(:,1)-     BS_R0(i_l)*conjg(BS_R0(i_l))       /(W_bss%p(:)-BS_E(i_l))
+     Epsilon_ii(:,2)=Epsilon_ii(:,2)-0.5*(BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l))/(W_bss%p(:)-BS_E(i_l))
      !
-     X_epsilon(1,:)=X_epsilon(1,:)+     BS_R0(i_l)*conjg(BS_R0(i_l))       /(W_bss%p(:)+BS_E(i_l))
-     X_epsilon(2,:)=X_epsilon(2,:)+0.5*(BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l))/(W_bss%p(:)+BS_E(i_l))
+     Epsilon_ii(:,1)=Epsilon_ii(:,1)+     BS_R0(i_l)*conjg(BS_R0(i_l))       /(W_bss%p(:)+BS_E(i_l))
+     Epsilon_ii(:,2)=Epsilon_ii(:,2)+0.5*(BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l))/(W_bss%p(:)+BS_E(i_l))
      !
      BS_R_tmp=-0.5*real((BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l)))
      !
@@ -173,8 +173,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              IP_R=-conjg(DIP_projected(i_vp,i_v,i_kbz,i_spin))*sqrt(f_vpv)
              IP_E=Xen%E(i_vp,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
              ! Photo-induced absorption and stimulated emission in v-v'
-             X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
-             X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
+             Epsilon_ii(:,2)=Epsilon_ii(:,2)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
+             Epsilon_ii(:,2)=Epsilon_ii(:,2)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
              !
            enddo
          enddo
@@ -188,8 +188,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              f_ccp= (Xen%df(i_cp,i_kibz,i_spin))*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
              IP_R=-conjg(DIP_projected(i_c,i_cp,i_kbz,i_spin))*sqrt(f_ccp)
              IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_cp,i_kibz,i_spin)
-             X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
-             X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
+             Epsilon_ii(:,2)=Epsilon_ii(:,2)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
+             Epsilon_ii(:,2)=Epsilon_ii(:,2)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
              !
            enddo
          enddo
@@ -198,40 +198,40 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
      enddo
    endif
    !
-   X_epsilon(1,:)=1._SP+X_epsilon(1,:)*Co
-   X_epsilon(2,:)=      X_epsilon(2,:)*Co
+   Epsilon_ii(:,1)=1._SP+Epsilon_ii(:,1)*Co
+   Epsilon_ii(:,2)=      Epsilon_ii(:,2)*Co
    !
    if(l_TR_reflec) then
      ! Reflectance is assumed for a 3D system
      ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
-     X_reflectance(1,:)=(sqrt(X_epsilon(1,:))-1._SP)/(sqrt(X_epsilon(1,:))+1._SP)
+     X_reflectance(:,1)=(sqrt(Epsilon_ii(:,1))-1._SP)/(sqrt(Epsilon_ii(:,1))+1._SP)
      ! der r/der eps = 1/(sqrt(eps)+1)**2/ sqrt(eps)
-     X_reflectance(2,:)=X_epsilon(2,:)/(sqrt(X_epsilon(1,:))+1._SP)**2._SP/sqrt(X_epsilon(1,:)) 
+     X_reflectance(:,2)=Epsilon_ii(:,2)/(sqrt(Epsilon_ii(:,1))+1._SP)**2._SP/sqrt(Epsilon_ii(:,1)) 
    endif
    !
    if(l_TR_transm) then
      ! 3D systems
      ! alpha= 2/c aimag(sqrt(eps))
-     !X_absorption_coeff(1,:)=1._SP-exp(-real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(sqrt(X_epsilon(1,:)))*thickness)
-     !X_absorption_coeff(2,:)=
+     !X_absorption_coeff(:,1)=1._SP-exp(-real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(sqrt(Epsilon_ii(:,1)))*thickness)
+     !X_absorption_coeff(:,2)=
      ! MAU Nano-letters: 2D systems
-     X_absorption_coeff(1,:)=real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(X_epsilon(1,:))*alat(3)
-     X_absorption_coeff(2,:)=real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(X_epsilon(2,:))*alat(3)
+     X_absorption_coeff(:,1)=real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(Epsilon_ii(:,1))*alat(3)
+     X_absorption_coeff(:,2)=real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(Epsilon_ii(:,2))*alat(3)
    endif
    !
    do i_freq=1,W_bss%n_freqs
-     output(4)=real(X_epsilon(1,i_freq))
-     output(3)=aimag(X_epsilon(1,i_freq))
-     output(2)=aimag(X_epsilon(2,i_freq))
-     output(1)=real(X_epsilon(2,i_freq))
+     output(4)=real(Epsilon_ii(i_freq,1))
+     output(3)=aimag(Epsilon_ii(i_freq,1))
+     output(2)=aimag(Epsilon_ii(i_freq,2))
+     output(1)=real(Epsilon_ii(i_freq,2))
      call RT_output("trans_eps_real",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
      call RT_output("trans_eps_imag",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
      if(i_T==1) call RT_output("eps_eq",VALUEs=(/output(3:4)/),E=real(W_bss%p(i_freq))*HA2EV)
      if(l_TR_reflec) then
        !  R=|r|^2
-       output(3)=X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))
-       !output(2)=X_reflectance(2,i_freq)*conjg(X_reflectance(2,i_freq))-output(3)
-       output(2)=X_reflectance(2,i_freq)*conjg(X_reflectance(1,i_freq))+X_reflectance(1,i_freq)*conjg(X_reflectance(2,i_freq))
+       output(3)=X_reflectance(i_freq,1)*conjg(X_reflectance(i_freq,1))
+       !output(2)=X_reflectance(i_freq,2)*conjg(X_reflectance(i_freq,2))-output(3)
+       output(2)=X_reflectance(i_freq,2)*conjg(X_reflectance(i_freq,1))+X_reflectance(i_freq,1)*conjg(X_reflectance(i_freq,2))
        output(1)=output(2)/output(3)
        call RT_output("trans_refl_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
        call RT_output("trans_refl_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
@@ -240,12 +240,12 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
      ! I need to check some factor
      if(l_TR_transm) then
        ! 3D systems
-       !output(3)=1._SP-X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))-X_absorption_coeff(1,i_freq)
-       !output(2)=-X_reflectance(1,i_freq)*conjg(X_reflectance(2,i_freq))-conjg(X_reflectance(1,i_freq))*X_reflectance(2,i_freq) &
-       !         -X_absorption_coeff(2,i_freq)
+       !output(3)=1._SP-X_reflectance(i_freq,1)*conjg(X_reflectance(i_freq,1))-X_absorption_coeff(i_freq,1)
+       !output(2)=-X_reflectance(i_freq,1)*conjg(X_reflectance(i_freq,2))-conjg(X_reflectance(i_freq,1))*X_reflectance(i_freq,2) &
+       !         -X_absorption_coeff(i_freq,2)
        ! 2D systems (reflectance is assumed to be zero)
-       output(3)=1._SP-X_absorption_coeff(1,i_freq)
-       output(2)=-X_absorption_coeff(2,i_freq)
+       output(3)=1._SP-X_absorption_coeff(i_freq,1)
+       output(2)=-X_absorption_coeff(i_freq,2)
        output(1)=output(2)/output(3)
        call RT_output("trans_transm_rel",    VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
        call RT_output("trans_transm_abs",    VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
@@ -259,7 +259,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
  enddo
  !
- deallocate(X_epsilon)
+ deallocate(Epsilon_ii)
  if(allocated(X_reflectance))       deallocate(X_reflectance)
  if(allocated(X_absorption_coeff))  deallocate(X_absorption_coeff)
  !

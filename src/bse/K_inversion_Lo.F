@@ -147,6 +147,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    call W_duplicate(W,W_plus)
    !
    do i1=1,BS_K_dim
+
      !
      if (.not.px%element_1D(i1)) cycle
      !
@@ -183,7 +184,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        !================
        call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i1,:,1),"r","eh")
        if (eval_anti_resonant) &
-       &  call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i2,:,i_Lo),"ca","eh")
+&         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i2,:,i_Lo),"ca","eh")
        !
 #if defined _ELPH
      else 
@@ -204,7 +205,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
      if (trim(global_gauge)=='velocity') Lo(i1,:,1)=(Lo(i1,:,1)-Lo(i1,iw_ref,1))
      Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i1,:,1)
-     Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -         Lo(i1,:,2)
+     Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -         Lo(i1,:,1)
      !
      if ( eval_anti_resonant ) then
        residual=conjg(BSS_rhoq0(i2))*BSS_rhoq0(i2)

@@ -412,7 +412,6 @@ module IO_m
      integer           :: ID
      logical, optional :: FORCE
      !
-
      if (present(FORCE)) then
        !
        if (.not.FORCE.and..not.close_is_on(ID).and.io_status(ID)>=0) return
@@ -422,6 +421,7 @@ module IO_m
        if (.not.close_is_on(ID).and.io_status(ID)>=0) return
        !
      endif
+     !
      !
      if ( (io_type(ID)/=-2.and.file_is_open(io_file(ID),ID)) .or.&
 &         (io_type(ID)==-2.and.file_is_open(io_file(ID)))          ) then
@@ -450,7 +450,7 @@ module IO_m
      !
      integer :: i1
      !
-     ! Assign a new unit if the unit is not alreadu open
+     ! Assign a new unit if the unit is not already open
      !
      if ( any((/ACTION==OP_RD_CL,ACTION==OP_WR_CL,&
 &               ACTION==OP_APP_WR_CL,ACTION==OP_RD,&

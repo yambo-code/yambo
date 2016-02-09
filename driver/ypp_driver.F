@@ -116,7 +116,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  ! INPUT FILE
  !
- call ypp_init(en,instr,lnstr,.false.)
+ call INIT_ypp(en,instr,lnstr,.false.)
  if (infile_editing) then
    iinf=1
    call ypp_finalize()
@@ -255,11 +255,11 @@ contains
   subroutine ypp_finalize()
     if (.not.infile_editing) then
       call section('X','Game Over')
-      call ypp_init(en,instr,lnstr,.TRUE.)
+      call INIT_ypp(en,instr,lnstr,.TRUE.)
       call msg("nl","")
       call MPI_close()
     else
-      call ypp_init(en,instr,lnstr,.TRUE.)
+      call INIT_ypp(en,instr,lnstr,.TRUE.)
     endif
   end subroutine
   !

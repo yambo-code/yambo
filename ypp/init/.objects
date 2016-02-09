@@ -1,1 +1,1 @@
-objs = ypp_init.o ypp_init_load.o QP_DBs_initialize.o
+objs = INIT_ypp.o INIT_load_ypp.o QP_DBs_initialize.o

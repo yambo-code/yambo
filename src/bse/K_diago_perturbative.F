@@ -21,56 +21,52 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diag_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr) 
+subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what) 
  !
- ! BS_R_right_kerr(i)=<q0_kerr|j><j|i_R>
- !                   =conjg(BSS_rhoq0_kerr(j))*BS_V_right(j,i)
+ ! Perturbative SOC
  !
  use pars,           ONLY:SP,pi,cZERO,cI,cONE
  use wrapper_omp,    ONLY:V_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
- use KERR,           ONLY:BSS_rhoq0_kerr
- use X_m,            ONLY:global_gauge
- use BS,             ONLY:BS_K_dim,BS_H_dim,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_eh_W
+ use BS,             ONLY:BS_H_dim,BSS_eh_E_SOC_corr,BSS_eh_W
  !
  implicit none
  !
- complex(SP),intent(in)  :: BS_E(BS_H_dim)
- complex(SP),intent(in)  :: BS_V_right(BS_H_dim,BS_H_dim)
- complex(SP),intent(out) :: BS_R_right_kerr(BS_H_dim)
+ character(3),intent(in) :: what
+ integer,     intent(in) :: pert_dim
+ complex(SP), intent(in) :: BS_mat_eigen(BS_H_dim,BS_H_dim)
+ complex(SP),intent(out) :: BS_corrections(pert_dim,BS_H_dim)
  !
  ! Workspace
  !
  type(PP_indexes)     ::px
  integer              ::i1
  !
- complex(SP) :: tmp_res(BS_H_dim)
- !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BS_H_dim/))
  !
- BS_R_right_kerr=cZERO
- !
- call live_timing('BSK R res KERR ',px%n_of_elements(myid+1))
- !
- forall(i1=1:BS_K_dim)          tmp_res(i1) =    conjg(BSS_rhoq0_kerr(i1))*sqrt(BSS_eh_f(i1)         ) 
- forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) = cI*conjg(BSS_rhoq0_kerr(i1))*sqrt(BSS_eh_f(i1-BS_K_dim))
- if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
- if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
+ call live_timing(' Perturbative '//trim(what)//' ',px%n_of_elements(myid+1))
  !
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !
-   BS_R_right_kerr(i1)=V_dot_V_omp(BS_H_dim,tmp_res,BS_V_right(:,i1))
-   if (trim(global_gauge)=="velocity") BS_R_right_kerr(i1)=BS_R_right_kerr(i1)*BS_E(i1)
+   if(trim(what)=='SOC') then
+     BS_corrections(1,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(1,:),0._SP,SP),BS_mat_eigen(:,i1))
+     BS_corrections(2,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(2,:),0._SP,SP),BS_mat_eigen(:,i1))
+   endif
+   !
+   if(trim(what)=='W') then
+     BS_corrections(1,i1)=V_dot_V_omp( BS_H_dim,cmplx(0._SP,BSS_eh_W(:),SP),BS_mat_eigen(:,i1))
+   endif
    !
    call live_timing(steps=1)
  enddo
- call PP_redux_wait(BS_R_right_kerr)
- call live_timing
+ call live_timing()
+ !
+ call PP_redux_wait(BS_corrections) 
  !
  call PP_indexes_reset(px)
  !
-end subroutine K_diag_kerr_residual
+end subroutine K_diago_perturbative

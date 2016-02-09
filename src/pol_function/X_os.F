@@ -35,7 +35,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_q_for_Xo,PAR_COM_Q_INDEX,myid
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,PAR_COM_Q_INDEX,myid
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,n_threads_DIP
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
@@ -46,7 +46,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd !,X_terminator
- use IO_m,          ONLY:IO_and_Messaging_switch
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -67,7 +66,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  character(schlen)        :: live_t_string
  integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU)
+ real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU)
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
@@ -89,13 +88,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !=====================
  if (iq==1) then
    !
-   ! When the screened interaction is computed only the CPU assigned to q=1 enter here.
-   ! By default, in PARALLEL_global_indexes, only the head of these cpu's is allowed to do I/O.
-   ! But this means that only a fraction of the dipoles is actually written on disk.
-   ! To make all dipoles I/O possible I temporarely swicth on the IO for all q=1 cpu's.
-   !
-   if (l_em1s) call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
-   !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    !
    call DIPOLE_driver(Xen, Xk, X, X%q0)
@@ -103,8 +95,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF,X%ordering)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
-   !
-   if (l_em1s) call IO_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
    !
  endif
  !
@@ -132,11 +122,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    minmax_ehe=0._SP
    !
-   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_q_for_Xo%CPU_id+1))
+   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
    deallocate(X_poles)
    !
    if (self_detect_E_range) then
-     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_q_for_Xo%COMM)
+     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
      Xw%er(1)=minval(minmax_ehe(1,:))
      Xw%er(2)=maxval(minmax_ehe(2,:))
    endif
@@ -267,7 +257,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_q_for_Xo%COMM)
+   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
  enddo
  !
 #if defined _TIMING

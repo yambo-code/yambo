@@ -52,7 +52,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  type(PP_indexes) :: px
  type(w_samp)     :: W_mins,W_plus
  !
- logical          :: K_diag_in_BS_mat,eval_anti_resonant
+ logical          :: K_diago_in_BS_mat,eval_anti_resonant
  integer          :: i1,i2,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
  complex(SP)      :: E_plus_W,residual
  !
@@ -61,9 +61,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  Epsilon_ii(:,3:4)=cZERO
  Joint_DOS(:,3:4) =cZERO
  !
- call parser('BSSInvKdiag',K_diag_in_BS_mat)
+ call parser('BSSInvKdiag',K_diago_in_BS_mat)
  !
- if (.not.K_diag_in_BS_mat) allocate(BS_mat_diagonal(BS_K_dim))
+ if (.not.K_diago_in_BS_mat) allocate(BS_mat_diagonal(BS_K_dim))
  !
  do i1=1,BS_K_dim
    i2=i1+BS_K_dim
@@ -94,7 +94,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      endif
    enddo
    !
-   if (.not.K_diag_in_BS_mat) then
+   if (.not.K_diago_in_BS_mat) then
      !
      ! I store the diagonal of the kernel only in BS_mat_diagonal,
      ! to be inserted in Lo
@@ -122,8 +122,8 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  !
  eval_anti_resonant= (trim(BSE_mode)=='causal') .or. (trim(BSE_mode)=='coupling')
  !
- if (     K_diag_in_BS_mat) n_loop=1
- if (.not.K_diag_in_BS_mat) n_loop=2
+ if (     K_diago_in_BS_mat) n_loop=1
+ if (.not.K_diago_in_BS_mat) n_loop=2
  !
  do i_loop=1,n_loop
    !
@@ -232,7 +232,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    !
  enddo
  !
- if(.not.K_diag_in_BS_mat) deallocate(BS_mat_diagonal)
+ if(.not.K_diago_in_BS_mat) deallocate(BS_mat_diagonal)
  !
  BSS_n_descs=BSS_n_descs+2
  BSS_description(BSS_n_descs-1)=' '

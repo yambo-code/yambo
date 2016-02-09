@@ -39,7 +39,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  use drivers,       ONLY:l_elph_corr
 #endif
 #if defined _QED
- use drivers,       ONLY:l_elphoton_corr
+ use drivers,       ONLY:l_elphoton_corr,l_life
 #endif
  implicit none
  type(levels) ::en,Xen
@@ -96,7 +96,13 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
 # if defined _QED 
    !
-   if (l_elphoton_corr) call QED_Sigma_c(en,k,q,qp)
+   if (l_elphoton_corr) then
+     !
+     QP_dSc=cZERO
+     !
+     call QED_Sigma_c(en,k,q,qp)
+     !
+   endif
    !
 #endif
    !

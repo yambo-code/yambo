@@ -29,7 +29,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use electrons,           ONLY:levels,spin_occ
  use D_lattice,           ONLY:DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
- use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,QP_dSc
+ use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
+&                              QP_dSc,QP_time_order_sign
  use IO_m,                ONLY:io_COLLs
  use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
 &                              elemental_collision_copy,P_collisions
@@ -42,6 +43,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                              PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_nQP,PAR_nG_bands,&
 &                              PAR_COM_QP_A2A
  use SC,                  ONLY:SC_bands
+ use functions,           ONLY:theta_function
 #if defined _TIMING
  use timing_m,            ONLY:timing
 #endif
@@ -57,7 +59,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_n,i_G0,i_c,i_cp,i_g,i_m
  complex(SP)               ::P(3)
  real(SP)                  ::Photon_E,T_matrix(3,3),T_vec(3),E_diff,Photon_Gamma_E,f_k,f_k_m_q,&
-&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0_squared,RADIATIVE_pre_factor
+&                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0_squared
  real(SP),    allocatable  ::q_weight_power_1(:),q_weight_power_2(:)
  type(elemental_collision) ::I,I_grad_k,I_grad_p
  logical                   ::l_zero_delta_E,l_SI_term
@@ -67,14 +69,22 @@ subroutine QED_Sigma_c(E,k,q,qp)
  real(SP)                  ::C_G_finite,C_G_eq_0_finite_E,C_G_eq_0_null_E,FRACTION(2)
  !
  if (l_elel_corr.or.l_elph_corr) then
-   call section('+','Correlation: Photon-mediated Self-energy')
+   call section('+','Correlation: Photon-mediated Self-energy and Radiative Lifetimes')
  else
-   call section('=','Correlation: Photon-mediated Self-energy')
+   call section('=','Correlation: Photon-mediated Self-energy and Radiative Lifetimes')
  endif
  !
 #if defined _TIMING
  call timing('GW (Lamb)',OPR='start')
 #endif
+ !
+ ! PARALLEL distribution
+ !=======================
+ call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+ !
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+ call PARALLEL_WF_index( )
  !
  ! RIM 
  !=====
@@ -89,14 +99,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
  R0_squared=(3.*RL_vol/nqbz/4./pi)**(2./3.) ! the radius for the sum at Q=0
  !
  call k_ibz2bz(q,'c',.TRUE.)
- !
- ! PARALLEL distribution
- !=======================
- call PARALLEL_global_indexes(E,k,q,"Self_Energy")
- !
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
- call PARALLEL_WF_index( )
  !
  ! COLLISIONS
  !============
@@ -277,17 +279,17 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
          if (.not.(i_q_bz==1.and.i_g==1)) cycle
          !
-         call QED_Radiative_Lifetime_component(E,RADIATIVE_pre_factor,i_qp,i_m)
-         !
-         Sc_im=Sc_im+P_square_times_tau(1)/3._SP/SPEED_OF_LIGHT**2*RADIATIVE_pre_factor
+         Sc_im=Sc_im+P_square_times_tau(1)/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)*&
+&                    ( QP_time_order_sign*(1._SP-f_k_m_q)*theta_function( E_diff,0.01/HA2EV,0) +&
+&                                                f_k_m_q *theta_function(-E_diff,0.01/HA2EV,0) )
          !
        enddo G_loop
        !
-       QP_Sc(i_qp,1) =QP_Sc(i_qp,1)  +Sc_re+cI*Sc_im
+       QP_Sc(i_qp,1) =QP_Sc(i_qp,1)  +Sc_re+cI*abs(Sc_im)
        !
        ! Let's stick to the OMS for the moment
        !
-       !QP_dSc(i_qp,1)=QP_dSc(i_qp,1) +beta
+       QP_dSc(i_qp,1)=QP_dSc(i_qp,1) +beta
        !
        if ( i_q_s == 1 ) call live_timing(steps=1)
        !
@@ -308,7 +310,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Clean-UP
  !
- deallocate(q_weight_power_1,q_weight_power_2)
+ if (allocated(q_weight_power_1)) deallocate(q_weight_power_1,q_weight_power_2)
  !
  if (l_use_collisions) then
    !

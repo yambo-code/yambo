@@ -27,9 +27,9 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  use pars,          ONLY:SP,schlen,pi,cI,cZERO,rZERO
  use IO_m,          ONLY:io_COLLs
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
- use electrons,     ONLY:levels,spin,n_spinor
+ use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_IND_Q,PAR_Q_index,PAR_QP_index,&
 &                        PAR_COM_QP_A2A,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,nP_collisions,&
@@ -56,8 +56,6 @@ subroutine COLLISIONS_momentum(E,k,q)
  complex(SP)              ::P(3)
  real(SP)                 ::ACC,T_matrix(3,3),T_vec(3),photon_E
  character(schlen)        ::ch
- !
- if (n_spinor==2) call error('Momentum collisions not implemented in the spinorial case')
  !
  ! Resets & basis setup
  !

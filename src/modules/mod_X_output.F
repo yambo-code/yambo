@@ -204,7 +204,9 @@ module X_output
      integer :: ii
      character(10) :: suffix(6)
      !
-     suffix(:6) = (/' /Im[2]',' /Re[3]','0/Im[4]','0/Re[5]','`/Im[6]','`/Re[7]'/)
+     suffix(1:2) = (/'-Im[2]',  '-Re[3]'/)
+     suffix(3:4) = (/'o-Im[4]','o-Re[5]'/)
+     suffix(5:6) = (/'`-Im[6]','`-Re[7]'/)
      headers(1) = 'E/ev[1]'
      !
      if(trim(desc)=='refl') suffix(:3)=(/' /Refl ','0/Refl ','`/Refl '/)

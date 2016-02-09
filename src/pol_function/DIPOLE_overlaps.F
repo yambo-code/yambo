@@ -33,7 +33,6 @@ subroutine DIPOLE_overlaps(Xen,Xk,X)
  use memory_m,          ONLY:mem_est
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng
- !use parallel_m,        ONLY:PAR_IND_DIPk_ibz,PAR_COM_k_for_P,PP_redux_wait,PAR_Xk_bz_index
  use IO_m,              ONLY:IO_and_Messaging_switch
  !
  implicit none

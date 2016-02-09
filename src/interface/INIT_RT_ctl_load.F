@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,28 +21,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_QP_ctl_switch(what)
+subroutine INIT_RT_ctl_load(defs,i_type)
  !
- use it_m,       ONLY:initactivate
- use electrons,  ONLY:n_sp_pol
+ ! Note that this routine is called in 'load' mode BEFORE
+ ! the DB1 is read, so before n_sp_pol is set to the correct value.
+ ! 
+ ! Thus we must call it on the no spin, spin + and spin - cases 
+ ! because the code does not know if there is
+ ! spin unless the DB1 is read. 
+ !
+ use drivers,       ONLY:l_real_time
+ use real_time,     ONLY:RT_ctl_db
+ use it_m,          ONLY:it,initmode,initdefs,V_real_time
+ !
  implicit none
- !
- character(1)::what
- !
+ integer, intent(in) :: i_type
+ type(initdefs)      :: defs
+ ! 
  ! Work Space
+ ! 
+ character(1)      ::prefix(3)
+ character(7)      ::description_ch(3)
  !
- call initactivate(1,what//'fnQPdb '//what//'fnQP_N '//what//'fnFdb')
- if (n_sp_pol==1) then
-   call initactivate(1,what//'fnQP_E '//what//'fnQP_Z')   
-   call initactivate(1,what//'fnQP_Wv_E '//what//'fnQP_Wv ')
-   call initactivate(1,what//'fnQP_Wc_E '//what//'fnQP_Wc ')
- else
-   call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_Z')   
-   call initactivate(1,what//'fnQP_up_Wv_E '//what//'fnQP_up_Wv ')
-   call initactivate(1,what//'fnQP_up_Wc_E '//what//'fnQP_up_Wc ')
-   call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_Z')   
-   call initactivate(1,what//'fnQP_dn_Wv_E '//what//'fnQP_dn_Wv ')
-   call initactivate(1,what//'fnQP_dn_Wc_E '//what//'fnQP_dn_Wc ')
- endif
+ prefix=(/'X','K','G'/)
+ description_ch(1)='Xd'
+ description_ch(2)='BSK BSS'
+ description_ch(3)='G'
  !
+ call it(defs,prefix(i_type)//'fnRTdb',&
+&        '[EXTRT '//trim(description_ch(i_type))//'] Database',&
+&        Rt_ctl_db(i_type),verb_level=V_real_time)
+ ! 
 end subroutine

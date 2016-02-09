@@ -94,7 +94,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
- if (run_Diago)          call K_diag_driver(iq,W_bss)
+ if (run_Diago)          call K_diago_driver(iq,W_bss)
  !
  if (run_inversion)      call K_inversion(iq,W_bss,Ken,Xk,q)
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_barriers()
+subroutine INIT_barriers()
  !
  use drivers
  use pars,       ONLY:lchlen
@@ -122,7 +122,7 @@ subroutine init_barriers()
  ! GPL_EXCLUDE_END
  !
  if (l_life) then
-   call switch_off_runlevel('all',on_name='life em1d '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='life em1d el_el_corr el_photon_corr '//trim(always_runlevels))
    goto 1
  endif
  !

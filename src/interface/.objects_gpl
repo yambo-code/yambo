@@ -1,2 +1,2 @@
-objs = init_load.o init.o init_QP.o  init_parse_K_list.o  \
-       init_q_points.o init_barriers.o init_QP_ctl_load.o init_QP_ctl_switch.o
+objs = INIT_load.o INIT.o INIT_QP.o  INIT_parse_K_list.o  \
+       INIT_q_points.o INIT_barriers.o INIT_QP_ctl_load.o INIT_QP_ctl_switch.o

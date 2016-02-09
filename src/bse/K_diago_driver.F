@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diag_driver(iq,W) 
+subroutine K_diago_driver(iq,W) 
  !
  ! Generic diagonalization method to solve resonant and non resonant
  ! Hamiltonians.
@@ -35,7 +35,7 @@ subroutine K_diag_driver(iq,W)
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:MATRIX_driver,K_diag_compute_epsilon
+ use interfaces,     ONLY:MATRIX_driver,K_diago_compute_epsilon
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  !
@@ -152,24 +152,24 @@ subroutine K_diag_driver(iq,W)
    !====================================
    if (K_is_not_hermitian) then
      !
-     call K_diag_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right)
+     call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right)
      !
      ! GPL_EXCLUDE_START
      !
 #if defined _KERR
-     if(l_kerr         ) call K_diag_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
+     if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
 #endif
      !
      ! GPL_EXCLUDE_END
      !
    else
      !
-     call K_diag_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
+     call K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
      !
      ! GPL_EXCLUDE_START
      !
 #if defined _KERR
-     if(l_kerr         ) call K_diag_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
+     if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
 #endif
      !
      ! GPL_EXCLUDE_END
@@ -185,13 +185,13 @@ subroutine K_diag_driver(iq,W)
  if (K_is_not_hermitian) then
    !
    ! To check if this expression is correct
-   if(E_SOC_nbands/=0)        call K_diag_perturbative(transpose(BS_V_left)*BS_V_right,BS_E_SOC_corr,2,'SOC')
-   if(BSS_perturbative_width) call K_diag_perturbative(transpose(BS_V_left)*BS_V_right,BS_W_corr    ,1,' W ')
+   if(E_SOC_nbands/=0)        call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_E_SOC_corr,2,'SOC')
+   if(BSS_perturbative_width) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_W_corr    ,1,' W ')
    !
  else
    !
-   if(E_SOC_nbands/=0)        call K_diag_perturbative(conjg(BS_mat)*BS_mat,BS_E_SOC_corr,2,'SOC')
-   if(BSS_perturbative_width) call K_diag_perturbative(conjg(BS_mat)*BS_mat,BS_W_corr    ,1,' W ')
+   if(E_SOC_nbands/=0)        call K_diago_perturbative(conjg(BS_mat)*BS_mat,BS_E_SOC_corr,2,'SOC')
+   if(BSS_perturbative_width) call K_diago_perturbative(conjg(BS_mat)*BS_mat,BS_W_corr    ,1,' W ')
    !
  endif
  !
@@ -202,7 +202,7 @@ subroutine K_diag_driver(iq,W)
  !
  ! Now I calculate epsilon
  !=========================
- call K_diag_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+ call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
  !
  ! I write the output file 
  !

@@ -21,36 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_RT_ctl_load(defs,i_type)
+subroutine INIT_RT_ctl_switch(what)
  !
- ! Note that this routine is called in 'load' mode BEFORE
- ! the DB1 is read, so before n_sp_pol is set to the correct value.
- ! 
- ! Thus we must call it on the no spin, spin + and spin - cases 
- ! because the code does not know if there is
- ! spin unless the DB1 is read. 
- !
- use drivers,       ONLY:l_real_time
- use real_time,     ONLY:RT_ctl_db
- use it_m,          ONLY:it,initmode,initdefs,V_real_time
+ use it_m,       ONLY:initactivate
  !
  implicit none
- integer, intent(in) :: i_type
- type(initdefs)      :: defs
- ! 
+ !
+ character(1), intent(in) :: what
+ !
  ! Work Space
- ! 
- character(1)      ::prefix(4)
- character(7)      ::description_ch(4)
  !
- prefix=(/'X','K','G','R'/)
- description_ch(1)='Xd'
- description_ch(2)='BSK BSS'
- description_ch(3)='G'
- description_ch(4)='R'
+ call initactivate(1,what//'fnRTdb')
  !
- call it(defs,prefix(i_type)//'fnRTdb',&
-&        '[EXTRT '//trim(description_ch(i_type))//'] Database',&
-&        Rt_ctl_db(i_type),verb_level=V_real_time)
- ! 
 end subroutine

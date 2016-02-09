@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diag_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right) 
+subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right) 
  !
  ! Resonant Residuals
  !====================
@@ -85,4 +85,4 @@ subroutine K_diag_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  !
  call PP_indexes_reset(px)
  !
-end subroutine K_diag_hermitian_residuals
+end subroutine K_diago_hermitian_residuals

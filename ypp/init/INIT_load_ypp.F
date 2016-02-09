@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ypp_init_load(defs)
+subroutine ypp_INIT_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit
@@ -88,7 +88,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'loc',     '[R] State localizer')
  call it('r',defs,'trans',   '[R] Transition analyzer')
 #endif
- call init_QP_ctl_load(defs,3)
+ call INIT_QP_ctl_load(defs,3)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
  call it('r',defs,'kpts_map',     '[R] BZ map fine grid to coarse')

@@ -38,6 +38,18 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
  !
+ ! PARALLEL structure: The dipoles are based on a "derived" structure. K-points are driven by these communicators and indexes:
+ !
+ ! PAR_IND_DIPk_ibz
+ ! PAR_DIPk_nibz
+ ! PAR_COM_DIPOLES_k_subgroup
+ !
+ ! while the general world where the calculations lives is
+ !
+ ! PAR_COM_DIPOLES
+ !
+ ! being a derived structure it must be mapped in the calling routine.
+ !
  use drivers,        ONLY:l_optics
  use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning
@@ -47,15 +59,21 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
-&                         IO_and_Messaging_switch
+&                         IO_and_Messaging_switch,IO_write
  use wave_func,      ONLY:wf_ng
- use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,&
-&                         PAR_COM_q_for_Xo,PP_redux_wait,PAR_COM_Plasma_INDEX,PAR_COM_Q_INDEX,l_par_RT
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
+&                         PP_redux_wait,PAR_COM_Plasma_INDEX,PAR_COM_Q_INDEX,l_par_RT,myid
  use parser_m,       ONLY:parser
 #if defined _SC
  use com,            ONLY:secnm
  use drivers,        ONLY:l_real_time,l_sc_run
  use X_m,            ONLY:P_square
+#endif
+#if defined _QED
+ use drivers,        ONLY:l_elphoton_corr
+#endif
+#if defined _TIMING
+ use timing_m,            ONLY:timing
 #endif
  !
  implicit none
@@ -77,6 +95,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  integer           :: ID,io_err
  integer, external :: io_DIPOLES
+ !
+#if defined _TIMING
+ call timing('Dipoles',OPR='start')
+#endif
  !
  ! Setup logicals 
  !================
@@ -116,6 +138,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  l_evaluating_em1s=index(secnm,"Dielectric")/=0
  if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.false.
 #endif
+#if defined _QED 
+ if (l_elphoton_corr) Dipole_bands_ordered=.false.
+#endif
  !
  ! Set up band limits
  !
@@ -137,7 +162,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! I/O privilegies: temporarly switch it on
    !
-   call IO_and_Messaging_switch("+io_out")
+   call IO_and_Messaging_switch("SAVE")
+   call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !
    ! Allocation
    !
@@ -167,8 +193,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  endif
  !
+#if defined _TIMING
+ call timing('Dipoles',OPR='stop')
+#endif
+ !
 #if defined _SC
  if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
+#endif
+#if defined _QED
+ if (l_elphoton_corr) return
 #endif
  !
  ! Warn about missing [Vnl,r] commutator
@@ -194,12 +227,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    subroutine DIPOLES_IO(read_or_write)
      !
+     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup
      use com,        ONLY:msg
+     use IO_m,       ONLY:io_DIP
      !
      character(5), intent(in) :: read_or_write
      !
      integer                  :: IO_ACTION
      logical                  :: write_header,read_header,reading,writing
+     !
+     if (.not.IO_dip) return
      !
      reading=trim(read_or_write)=="read"
      writing=trim(read_or_write)=="write"
@@ -214,7 +251,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        io_err=io_DIPOLES(X,Xen,ID)
      endif
      !
-     call PP_redux_wait(COMM=PAR_COM_q_for_Xo%COMM)
+     call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
      !
      if(read_header) then
        call msg('s','[DIP] Checking dipoles header ')
@@ -229,7 +266,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        !
        do ik=1,Xk%nibz
          if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
-         if (.not.PAR_COM_k_for_P%CPU_id==0 .and. writing) cycle
+         if (.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0 .and. writing) cycle
          do i_sp_pol=1,n_sp_pol
            call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
            io_err=io_DIPOLES(X,Xen,ID)
@@ -259,7 +296,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    subroutine DIPOLES_ppredux_and_symmetrize()
     !
-    use parallel_m,  ONLY:PAR_DIPk_ibz_index
+    use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
     !
     integer  :: ic,iv,i_sp_pol,ik,ik_mem
     !
@@ -271,14 +308,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
       ! 
       do i_sp_pol=1,n_sp_pol
         !
-        call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
-        call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
+        call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+        call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
         !
 #if defined _SC
         !
         if (l_sc_run.or.l_real_time) then
           !
-          call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
+          call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
           !
         endif
         !

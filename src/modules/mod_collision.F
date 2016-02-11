@@ -65,6 +65,8 @@ module collision
  integer                  :: n_COLLISIONS ! QP_n_states written on disk that may differ from the running value 
  integer                  :: V_kind 
  !
+ integer :: COLL_bands(2)
+ !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
  !
@@ -99,11 +101,11 @@ module collision
    integer               :: kind=0
    integer               :: D(3,2)=0    ! Dimension (v3)
    integer               :: N           ! Linear Dimension
-   integer(LP), pointer  :: table(:,:,:)   => null()
-   complex(SP), pointer  :: v_c(:)         => null()
-   complex(SP), pointer  :: v3_c(:,:,:)    => null()
-   real(SP)   , pointer  :: v_r(:)         => null()
-   real(SP)   , pointer  :: v3_r(:,:,:)    => null()
+   integer(LP), pointer  :: table(:,:,:)  => null()
+   complex(SP), pointer  :: v_c(:)        => null()
+   complex(SP), pointer  :: v3_c(:,:,:)   => null()
+   real(SP)   , pointer  :: v_r(:)        => null()
+   real(SP)   , pointer  :: v3_r(:,:,:)   => null()
  end type
  !
  integer :: nGW_NEQ_collisions=0
@@ -126,7 +128,6 @@ module collision
    !
    subroutine elemental_collision_free(ggw)
      type(elemental_collision)::ggw
-     logical::init_only_=.false.
      if(associated(ggw%gamp))      deallocate(ggw%gamp)
      if(associated(ggw%rhotw))     deallocate(ggw%rhotw)
      if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)

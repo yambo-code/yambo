@@ -24,13 +24,12 @@
 subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  !
  use pars,           ONLY:SP,cI
- use SC,             ONLY:SC_bands
- use real_time,      ONLY:RT_is_dephased,RT_Deph_Matrix,RT_all2ibz,l_RT_EXP
+ use real_time,      ONLY:RT_is_dephased,RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_bands
  !
  implicit none
  !
- complex(SP), intent(out) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(in)  :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)  :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  integer,     intent(in)  :: ik
  real(SP),    intent(in)  :: deltaT
  !
@@ -49,8 +48,8 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
    ! dG = dG * exp( -dT i*Sigma)
    !=============================
    !
-   do ib1=SC_bands(1),SC_bands(2)
-     do ib2=ib1+1,SC_bands(2)
+   do ib1=RT_bands(1),RT_bands(2)
+     do ib2=ib1+1,RT_bands(2)
        !
        dG_out(ib1,ib2) = dG_out(ib1,ib2)*exp(-RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*deltaT)
        dG_out(ib2,ib1) = dG_out(ib2,ib1)*exp(-RT_Deph_Matrix(ib2,ib1,RT_all2ibz(ik))*deltaT)
@@ -64,8 +63,8 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
    ! dG = dG * (1 - dT i*Sigma)
    !============================
    !
-   do ib1=SC_bands(1),SC_bands(2)
-     do ib2=ib1+1,SC_bands(2)
+   do ib1=RT_bands(1),RT_bands(2)
+     do ib2=ib1+1,RT_bands(2)
        !
        dG_out(ib1,ib2) = dG_out(ib1,ib2) * (1._SP - deltaT*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))) 
        dG_out(ib2,ib1) = dG_out(ib2,ib1) * (1._SP - deltaT*RT_Deph_Matrix(ib2,ib1,RT_all2ibz(ik)))

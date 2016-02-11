@@ -27,7 +27,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use units,          ONLY:HA2EV
  use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
-&                         l_RT_CCA_Kernel
+&                         l_RT_CCA_Kernel,RT_bands
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
@@ -38,7 +38,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye,elph_branches
  use functions,      ONLY:bose_f
  use memory_m,       ONLY:mem_est
- use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use vec_operate,    ONLY:degeneration_finder
  use parser_m,       ONLY:parser
@@ -54,7 +53,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Work Space
  !
  integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
-&                      first_el(2,SC_bands(2)),n_of_el(2,SC_bands(2)),n_deg_grp(2),i1,i2,ik_store,io_REF
+&                      first_el(2,RT_bands(2)),n_of_el(2,RT_bands(2)),n_deg_grp(2),i1,i2,ik_store,io_REF
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes),q_mod(q%nbz),q0_mod,&
 &                      q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E
  complex(SP)         ::gkkp_average
@@ -75,7 +74,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
  io_err=io_ELPH(ID,'gkkp_expanded')
  !
- SETUP_failure=io_err/=0.or.elph_nb<SC_bands(2)
+ SETUP_failure=io_err/=0.or.elph_nb<RT_bands(2)
  !
  if (SETUP_failure) then
    l_elph_scatt   =.FALSE.
@@ -98,7 +97,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  call mem_est("GKKP_expanded",(/size(elph_gkkp_expanded)/),(/2*SP/),errors=(/alloc_err/))
  !
  if (.not.l_RT_CCA_Kernel) then
-   allocate(THETA_matrix(2*q%nbz*ph_modes,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1,QP_nk))
+   allocate(THETA_matrix(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,QP_nk))
    call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
    THETA_matrix=(0._SP,0._SP)
    allocate(THETA_matrix_index(q%nbz,ph_modes,2))
@@ -131,8 +130,8 @@ subroutine RT_ELPH_initialize(E,k,q)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call degeneration_finder(E%E(:SC_bands(2),ik,1),    SC_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),0.0001/HA2EV)
-     call degeneration_finder(E%E(:SC_bands(2),ik_m_q,1),SC_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),0.0001/HA2EV)
+     call degeneration_finder(E%E(:RT_bands(2),ik,1),    RT_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),0.0001/HA2EV)
+     call degeneration_finder(E%E(:RT_bands(2),ik_m_q,1),RT_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),0.0001/HA2EV)
      !
      ik_mem  =PAR_Xk_ibz_index(ik)
      ik_store=(PAR_Q_index(iq)-1)*PAR_Xk_nibz+ik_mem
@@ -156,7 +155,7 @@ subroutine RT_ELPH_initialize(E,k,q)
      !
      do il=1,ph_modes
        do i1=1,n_deg_grp(1)
-         do i_np=SC_bands(1),SC_bands(2)
+         do i_np=RT_bands(1),RT_bands(2)
            do i2=1,2
              if (i2==1) gkkp_average=0._SP
              do i_n=first_el(1,i1),first_el(1,i1)+n_of_el(1,i1)-1
@@ -167,7 +166,7 @@ subroutine RT_ELPH_initialize(E,k,q)
          enddo
        enddo
        do i1=1,n_deg_grp(2)
-         do i_n=SC_bands(1),SC_bands(2)
+         do i_n=RT_bands(1),RT_bands(2)
            do i2=1,2
              if (i2==1) gkkp_average=0._SP
              do i_np=first_el(2,i1),first_el(2,i1)+n_of_el(2,i1)-1

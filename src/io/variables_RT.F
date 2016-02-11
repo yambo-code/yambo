@@ -29,19 +29,21 @@ integer function variables_RT(ID,local_description,what)
  use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
-&                         RT_description,n_RT_descriptions
+&                         RT_description,n_RT_descriptions,it_dyn
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,NE_steps,NE_time, &
-&                         Integrator_name,               &
+&                         Integrator_name,RT_bands,      &
 &                         RAD_LifeTime,Phase_LifeTime,   &
 &                         l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_steps,&
 &                         RT_life_interp_KIND,l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E
- use ELPH,           ONLY:ph_modes,elph_branches
+ use ELPH,           ONLY:elph_branches
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
-&                         variable_is_found,read_is_on
+&                         variable_is_found,read_is_on,io_code_revision
+ ! tmp code to be removed
+ use SC,             ONLY:it_now,SC_bands
  !
  implicit none
  !
@@ -49,8 +51,8 @@ integer function variables_RT(ID,local_description,what)
  character(lchlen)  ::local_description(100)
  character(*)       ::what
  !
- integer               :: i1,i_desc,i_dummy,RT_diagonalization_steps,SIZE_
- logical               :: l_J,l_G,l_carriers,l_NE_with_fields_disk,l_MP,l_RT_diagonalize,l_RT_diamagnetic
+ integer               :: i1,i_desc,RT_diagonalization_steps,SIZE_
+ logical               :: l_J,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diagonalize,l_RT_diamagnetic
  real(SP)              :: RT_life_interp_decay_time
  character(lchlen)     :: ch
  !
@@ -67,7 +69,17 @@ integer function variables_RT(ID,local_description,what)
  !
  ! RT_vars
  !
- call io_elemental(ID,VAR="RT_vars",VAR_SZ=1,MENU=0) 
+ SIZE_=1
+ if( ver_is_gt_or_eq(ID,revision=5380) ) SIZE_=3
+ call io_elemental(ID,VAR="RT_vars",VAR_SZ=SIZE_,MENU=0) 
+ if( ver_is_gt_or_eq(ID,revision=5380) ) then
+   i_desc=i_desc+1
+   call io_elemental(ID,I1=RT_bands,&
+&       VAR=' Number of RT bands              :',CHECK=.true.,OP=(/"==","=="/),&
+&       DESCRIPTION=local_description(i_desc))
+ else
+   if( read_is_on(ID) ) RT_bands=SC_bands
+ endif
  i_desc=i_desc+1
  call io_elemental(ID,I0=RT_nk,&
 &     VAR=' Number of RT-K points           :',CHECK=.true.,OP=(/"=="/),&
@@ -116,7 +128,9 @@ integer function variables_RT(ID,local_description,what)
    !
    ! RT_DYNAMICS
    !
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=4,MENU=0) 
+   SIZE_=4
+   if( ver_is_gt_or_eq(ID,revision=5380) ) SIZE_=5
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=SIZE_,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_NE_simulate_Irredux,&
 &    VAR=" [RT] Simulate irredux           :", CHECK=.true.,OP=(/"=="/),&
@@ -134,6 +148,15 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=" [RT] NE time       (reached)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   ! What is the difference between it_dyn and NE_i_time ?
+   if( ver_is_gt_or_eq(ID,revision=5380) ) then
+     i_desc=i_desc+1
+     call io_elemental(ID,&
+&      VAR=" [RT] Time steps    (reached)    :",I0=it_dyn,WARN=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+   else
+     if( read_is_on(ID) ) it_dyn=it_now
+   endif
    !
    !
    ! RT_life_interp_kind

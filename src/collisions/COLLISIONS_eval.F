@@ -47,18 +47,18 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use D_lattice,     ONLY:i_time_rev
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_table,QP_state
  use wave_func,     ONLY:WF
- use global_XC,     ONLY:SC_HF,SC_COHSEX,WF_kind,WF_xc_functional
- use SC,            ONLY:SC_bands,SC_potential
+ use global_XC,     ONLY:SC_HF,SC_COHSEX
+ use SC,            ONLY:SC_potential
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
  use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_IO_status,n_COLLISIONS,&
-&                        COLLISIONS_state
+&                        COLLISIONS_state,COLL_bands
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
- use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
+ use parallel_m,    ONLY:PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
  !
  implicit none
  type(levels)  :: E
@@ -82,7 +82,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! When storing all collisions on file I need all SC bands
  !
  if(allocated(QP_state)) deallocate(QP_state)
- QP_nb=SC_bands(2)
+ QP_nb=COLL_bands(2)
  call QP_state_table_setup(E)
  n_COLLISIONS=QP_n_states
  !

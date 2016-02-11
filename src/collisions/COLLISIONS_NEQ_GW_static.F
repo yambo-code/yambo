@@ -35,7 +35,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
 &                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
 &                        PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        nGW_NEQ_collisions,GW_NEQ_collisions,&
+&                        nGW_NEQ_collisions,GW_NEQ_collisions,COLL_bands,&
 &                        COLLISIONS_IO_status,elemental_collision_alloc
  use plasma,        ONLY:EH_gas
 #if defined _TIMING
@@ -50,7 +50,6 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use R_lattice,     ONLY:qindx_S,qindx_C,bz_samp
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
- use SC,            ONLY:SC_bands
  !
  implicit none
  !
@@ -88,7 +87,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! Dimensions...
  !
- QP_n_G_bands=SC_bands
+ QP_n_G_bands=COLL_bands
  !
  isc%iqref =0
  isc%ngrho =X%ng

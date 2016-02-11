@@ -25,13 +25,13 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
  !  
  use pars,           ONLY:SP,zero_dfl,rZero
  use electrons,      ONLY:levels,n_full_bands,spin_occ
- use SC,             ONLY:SC_bands,B_mat_index
+ use hamiltonian,    ONLY:B_mat_index
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_delta_occupations,l_initial_equilibrium,q_weight_RT,&
-&                         RT_eh_en,RT_scatt_tresh,RT_ibz_coo,RT_Nk_ibz
+&                         RT_eh_en,RT_scatt_tresh,RT_ibz_coo,RT_Nk_ibz,RT_bands
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
  implicit none
@@ -39,7 +39,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
  type(levels),  intent(in) :: E
  integer,       intent(in) :: ik,ik_m_q,i_q,i_l
  real(SP),      intent(in) :: ph_freq,N_q
- complex(SP),   intent(in) :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP),   intent(in) :: Gkkp(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
  logical,       intent(in) :: l_skip_ABS
  !
  ! Work Space ...
@@ -53,7 +53,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
  ! Dimensions
  !============
  !
- B_dim=SC_bands(2)-SC_bands(1)+1
+ B_dim=RT_bands(2)-RT_bands(1)+1
  ik_mem=PAR_Xk_ibz_index(ik)
  iq_mem=PAR_Q_index(i_q)
  !
@@ -62,18 +62,18 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
  !
  do i_n=1,B_dim
    !
-   i_n_shift=i_n+SC_bands(1)-1
+   i_n_shift=i_n+RT_bands(1)-1
    !
    do i_np=1,B_dim
      !
-     i_np_shift=i_np+SC_bands(1)-1
+     i_np_shift=i_np+RT_bands(1)-1
      !
      ! Extra condition: the EP scattering cannot cross the gap
      !
      if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
      if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
      !
-     if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift,SC_bands) ) ) cycle
+     if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift,RT_bands) ) ) cycle
      i_b_mat_mem=PAR_B_mat_index(i_n_shift,i_np_shift)
      !
      if (.not. l_RT_uses_E_DbGd) then

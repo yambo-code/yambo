@@ -28,9 +28,8 @@ subroutine RT_manual_excitation(E,k)
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:l_manual_excitation
- use SC,             ONLY:SC_bands
  use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
-&                         Eh_pumped_Nel,dG_lesser,RT_ibz_coo,RT_Nk_ibz
+&                         Eh_pumped_Nel,dG_lesser,RT_ibz_coo,RT_Nk_ibz,RT_bands
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
@@ -71,8 +70,8 @@ subroutine RT_manual_excitation(E,k)
      !
      i1=0
      !
-     do i2=1,SC_bands(2)
-       do ib=SC_bands(1),SC_bands(2)
+     do i2=1,RT_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
          !
          if (Pumped_state(ib,ik)) cycle
          !
@@ -94,7 +93,7 @@ subroutine RT_manual_excitation(E,k)
        enddo
      enddo
      !
-     do ib=SC_bands(1),SC_bands(2)
+     do ib=RT_bands(1),RT_bands(2)
        if(Pumped_state(ib,ik).and.Pump_level(ib,ik)==i3) coeff=coeff+spin_occ*k%weights(ik)/ &
 &                                                            sqrt(abs(real(Pump_level(ib,ik),SP)))
      enddo
@@ -103,14 +102,14 @@ subroutine RT_manual_excitation(E,k)
    !
    i3=i3+1
    local_E_window=local_E_window+Eh_pumped_pair_width/10._SP
-   if (all(Pumped_state(SC_bands(1):SC_bands(2),:))) local_E_window=Eh_pumped_pair_width*1.1_SP
+   if (all(Pumped_state(RT_bands(1):RT_bands(2),:))) local_E_window=Eh_pumped_pair_width*1.1_SP
    !
  enddo
  !
  coeff=coeff/Eh_pumped_Nel
  !
  do ik=1,E%nk
-   do ib=SC_bands(1),SC_bands(2)
+   do ib=RT_bands(1),RT_bands(2)
      !
      if (.not.Pumped_state(ib,ik)) cycle
      !

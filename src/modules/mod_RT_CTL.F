@@ -34,6 +34,7 @@ module rt_ctl
  integer,  parameter      :: J_and_P_cache_size=18
  !
  integer                  :: ID(8)
+ integer                  :: it_dyn
  integer                  :: it_start           = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point

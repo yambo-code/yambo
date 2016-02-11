@@ -28,22 +28,22 @@ subroutine COLLISIONS_compose_rt(G_input)
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx
  use QP_m,             ONLY:QP_table,QP_nk,QP_n_states
- use SC,               ONLY:SC_bands
- use collision,        ONLY:Fock_collisions,SEX_collisions,nFock_collisions,nSEX_collisions
+ use collision,        ONLY:Fock_collisions,SEX_collisions,nFock_collisions,nSEX_collisions,&
+&                           COLL_bands
  use electrons,        ONLY:spin
  use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
  use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,l_RT_uses_E_DbGd
  !
  implicit none
  !
- complex(SP), intent(in)   :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP), intent(in)   :: G_input(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),RT_nk)
  !
  ! Work Space
  !
  logical           :: l_expand
  integer           :: i_qp,ib,ibp,i_k,i_kmq,ic1,ic2,i_qp_mem,i_spin
  integer           :: i_n,i_m,i_k_RT,i_kmq_RT
- complex(SP)       :: G_avg(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP)       :: G_avg(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk)
  !
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
@@ -82,8 +82,8 @@ subroutine COLLISIONS_compose_rt(G_input)
    !
    do i_kmq=1,QP_nk
      !
-     do ibp=SC_bands(1),SC_bands(2)
-       do ib=SC_bands(1),SC_bands(2)
+     do ibp=COLL_bands(1),COLL_bands(2)
+       do ib=COLL_bands(1),COLL_bands(2)
          !
          if (nFock_collisions>0) then
            if (Fock_collisions(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then

@@ -25,32 +25,32 @@ subroutine RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat)
  !  
  use pars,           ONLY:SP,cI,pi,cZERO
  use electrons,      ONLY:levels,spin_occ
- use SC,             ONLY:SC_bands
+ use real_time,      ONLY:RT_bands
  !
  implicit none
  !
  type(levels),  intent(in)  :: E
  integer,       intent(in)  :: ik,i_map(-1:1),ik_m_q
  real(SP),      intent(in)  :: TIME,ph_freq,N_q(2)
- complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP),   intent(out) :: S_mat(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP),   intent(in)  :: Gkkp(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
+ complex(SP),   intent(out) :: S_mat(2,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
  !
  ! Work Space ...
  !
  integer  :: i_n,i_np,i_e,i_s,B_dim
  real(SP) :: DELTA,GAMMA_,OCCUPATIONS,&
-&            f_k(SC_bands(2)-SC_bands(1)+1),f_k_m_q(SC_bands(2)-SC_bands(1)+1)
+&            f_k(RT_bands(2)-RT_bands(1)+1),f_k_m_q(RT_bands(2)-RT_bands(1)+1)
  !
  S_mat=cZERO
  !
  ! Dimensions
  !============
  !
- B_dim=SC_bands(2)-SC_bands(1)+1
+ B_dim=RT_bands(2)-RT_bands(1)+1
  !
  do i_n=1,B_dim
-   f_k(i_n)    = E%f(i_n+SC_bands(1)-1,ik,1)/spin_occ
-   f_k_m_q(i_n)= E%f(i_n+SC_bands(1)-1,ik_m_q,1)/spin_occ
+   f_k(i_n)    = E%f(i_n+RT_bands(1)-1,ik,1)/spin_occ
+   f_k_m_q(i_n)= E%f(i_n+RT_bands(1)-1,ik_m_q,1)/spin_occ
  enddo
  !
  do i_s=-1,1,2
@@ -60,8 +60,8 @@ subroutine RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat)
      do i_e=1,B_dim
        !
        OCCUPATIONS = N_q(i_map(-i_s))*(1._SP-f_k_m_q(i_e))*f_k(i_np) - N_q(i_map(i_s))*(1._SP-f_k(i_np))*f_k_m_q(i_e)
-       DELTA       = E%E(i_e+SC_bands(1)-1,ik_m_q,1)-E%E(i_np+SC_bands(1)-1,ik,1)
-       GAMMA_      = abs(E%W(i_e+SC_bands(1)-1,ik_m_q,1))+abs(E%W(i_np+SC_bands(1)-1,ik,1))
+       DELTA       = E%E(i_e+RT_bands(1)-1,ik_m_q,1)-E%E(i_np+RT_bands(1)-1,ik,1)
+       GAMMA_      = abs(E%W(i_e+RT_bands(1)-1,ik_m_q,1))+abs(E%W(i_np+RT_bands(1)-1,ik,1))
        !
        do i_n=1,B_dim
          !

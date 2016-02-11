@@ -40,11 +40,12 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc,SC_nbands
+ use SC,             ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
-&                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
+&                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,&
+&                         RT_bands,RT_nbands,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
@@ -59,7 +60,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(in)    :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  type(gauge_field), intent(in):: A_input
  !
  ! Work Space
@@ -79,13 +80,13 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  if (eval_DENSITY) then
    !
-   ! Contribution only from the changed occupations about SC_bands(1)
+   ! Contribution only from the changed occupations about RT_bands(1)
    !
-   call el_density_matrix(dG_in,E,k,delta_rho,SC_bands(1))
+   call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
    !
    rho_n=rho_reference+delta_rho
    if(n_spin>1) then
-     call el_magnetization_matrix(dG_in,E,k,delta_magn,SC_bands(1))
+     call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
      magn_n=magn_reference+delta_magn
    endif
    !
@@ -140,7 +141,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      !
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-       do ib=SC_bands(1),SC_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
          if(     l_RT_uses_E_DbGd) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
          if(.not.l_RT_uses_E_DbGd) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
        enddo
@@ -174,12 +175,12 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      if (l_RT_RWA) then
-       Ho_plus_sigma(SC_bands(1):SC_bands(2),&
-&                    SC_bands(1):SC_bands(2),ik_RT,1)=H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
+       Ho_plus_sigma(RT_bands(1):RT_bands(2),&
+&                    RT_bands(1):RT_bands(2),ik_RT,1)=H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1)
      else
-       call V_by_V_plus_V_omp(SC_nbands,&
-&                             cONE,H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),&
-&                             Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
+       call V_by_V_plus_V_omp(RT_nbands,&
+&                             cONE,H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1),&
+&                             Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
      endif
      !
      if (.not.HEAD_k_cpu) cycle
@@ -187,8 +188,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      ! Non-local XC potentials (like COHSEX)
      !=======================================
      if(l_sc_hf.or.l_sc_cohsex) then
-       call V_by_V_plus_V_omp(SC_nbands,cONE,RT_Vnl_xc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1),&
-&                             Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
+       call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1),&
+&                             Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
      endif
    enddo
    !
@@ -206,7 +207,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !=================
    if (l_NE_with_fields) call RT_apply_field(ik,H_nl_sc,A_input)
    !
-   forall( ib=SC_bands(1):SC_bands(2) , ibp=SC_bands(1):SC_bands(2) , &
+   forall( ib=RT_bands(1):RT_bands(2) , ibp=RT_bands(1):RT_bands(2) , &
 &          ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2) ) &
 &            Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
    !  

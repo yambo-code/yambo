@@ -40,15 +40,15 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use LIVE_t,         ONLY:what_is_running
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
- use QP_m,           ONLY:QP_nb
 #endif
 #if defined _YPP_RT || defined _YPP_SC
+ use QP_m,           ONLY:QP_nb
  use electrons,      ONLY:levels,E_reset
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
- use rt_ctl,         ONLY:RT_IO_JPO_steps,OCC_T_range,OCC_deltaT
- use real_time,      ONLY:RT_step,NE_steps
+ use real_time,      ONLY:RT_bands
+ use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT
  use fields,         ONLY:n_ext_fields
 #endif
 #if defined _YPP_ELPH
@@ -321,9 +321,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! GF
  io_RT_G_err=io_RT_components('G' ,ID)
+ if (io_RT_G_err==0) QP_nb=RT_bands(2)
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
  io_RT_J_err=io_RT_components('J_and_P' ,ID)
+ if (io_RT_J_err==0) QP_nb=RT_bands(2)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_KB_pwscf_err=io_KB_pwscf(ID)

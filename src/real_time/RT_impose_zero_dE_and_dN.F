@@ -29,20 +29,19 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands
  use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
 &                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_impose_E,RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
-&                         l_RT_impose_N_dN
+&                         l_RT_impose_N_dN,RT_bands
  !
  implicit none
  !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k
- real(SP),      intent(inout) :: Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk)
- real(SP),      intent(inout) :: Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk)
+ real(SP),      intent(inout) :: Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk)
+ real(SP),      intent(inout) :: Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk)
  character(5),  intent(in)    :: Scatt_kind
  !
  ! Work Space
@@ -89,7 +88,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  dN_dT_e_c=0._SP
  dE_dT_e_c=0._SP
  !
- do ib=SC_bands(1),SC_bands(2)
+ do ib=RT_bands(1),RT_bands(2)
    !
    do ik=1,k%nibz
      !
@@ -190,7 +189,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    !
  enddo
  !
- do ib=SC_bands(1),SC_bands(2)
+ do ib=RT_bands(1),RT_bands(2)
    do ik=1,k%nibz
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !

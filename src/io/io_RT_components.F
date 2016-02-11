@@ -30,8 +30,7 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nkibz,nqbz
  use electrons,      ONLY:spin_occ,n_sp_pol
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,SC_nbands,&
-&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
+ use SC,             ONLY:SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,io_fragment, &
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found,&
@@ -43,7 +42,7 @@ integer function io_RT_components(what,ID)
 &                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
 &                         dG_lesser,RT_ind_J,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT,&
-&                         BGR_hartree,BGR_V_xc,BGR_Self_Energy
+&                         BGR_hartree,BGR_V_xc,BGR_Self_Energy,RT_bands,RT_nbands
  use ELPH,           ONLY:ph_modes,elph_branches
  use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO,&
 &                         RT_carriers_object
@@ -262,11 +261,11 @@ integer function io_RT_components(what,ID)
    !
    if (io_RT_components/=0) goto 1  
    !
-   allocate(TMP_matrix(2*nqbz*ph_modes,SC_bands(2)-SC_bands(1)+1,2))
+   allocate(TMP_matrix(2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2))
    !
-   do ib=1,SC_bands(2)-SC_bands(1)+1
+   do ib=1,RT_bands(2)-RT_bands(1)+1
      if (write_is_on(ID)) call mat_c2r(THETA_matrix(:,:,ib,ik),TMP_matrix)
-     call io_bulk(ID,VAR="RT_THETA_B"//trim(intc(ib))//"_K"//trim(intc(ik)),VAR_SZ=(/2*nqbz*ph_modes,SC_bands(2)-SC_bands(1)+1,2/))
+     call io_bulk(ID,VAR="RT_THETA_B"//trim(intc(ib))//"_K"//trim(intc(ik)),VAR_SZ=(/2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2/))
      call io_bulk(ID,R3=TMP_matrix)
      if (read_is_on(ID))  call mat_r2c(TMP_matrix,THETA_matrix(:,:,ib,ik))
    enddo
@@ -282,7 +281,7 @@ integer function io_RT_components(what,ID)
    !
    if (io_RT_components/=0) goto 1  
    !
-   allocate(TMP_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),2))
+   allocate(TMP_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
    !
    i_spin=1
    !
@@ -290,7 +289,7 @@ integer function io_RT_components(what,ID)
    if (i_time_range(1)<=0) i_time_range(1)=1
    do i_time=i_time_range(1),i_time_range(2)
      call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
-&         VAR_SZ=(/SC_nbands,SC_nbands,2/))
+&         VAR_SZ=(/RT_nbands,RT_nbands,2/))
      if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)),TMP_matrix)
      call io_bulk(ID,R3=TMP_matrix)
      if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)))
@@ -339,35 +338,35 @@ integer function io_RT_components(what,ID)
    !
    if (allocated(REF_lifetime)) then
      !
-     call io_bulk(ID,VAR="RT_E_E_REF_Hole_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,VAR="RT_E_E_REF_Hole_lifetime",VAR_SZ=(/RT_bands(2)-RT_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,1))
      !
-     call io_bulk(ID,VAR="RT_E_E_REF_Electron_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,VAR="RT_E_E_REF_Electron_lifetime",VAR_SZ=(/RT_bands(2)-RT_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,2))
      !
-     call io_bulk(ID,VAR="RT_E_P_REF_Hole_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,VAR="RT_E_P_REF_Hole_lifetime",VAR_SZ=(/RT_bands(2)-RT_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,3))
      !
-     call io_bulk(ID,VAR="RT_E_P_REF_Electron_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,VAR="RT_E_P_REF_Electron_lifetime",VAR_SZ=(/RT_bands(2)-RT_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,4))
      !
-     call io_bulk(ID,VAR="RT_E_P_REF_Ho_abs_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,VAR="RT_E_P_REF_Ho_abs_lifetime",VAR_SZ=(/RT_bands(2)-RT_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,5))
      !
-     call io_bulk(ID,VAR="RT_E_P_REF_El_abs_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,VAR="RT_E_P_REF_El_abs_lifetime",VAR_SZ=(/RT_bands(2)-RT_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,6))
      !
    endif
    !
    if (allocated(G_lesser_reference)) then
      !
-     allocate(TMP_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),2))
+     allocate(TMP_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
      !
      i_spin=1
      !
      do ik=1,RT_nk
        call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                      VAR_SZ=(/SC_nbands,SC_nbands,2/))
+&                      VAR_SZ=(/RT_nbands,RT_nbands,2/))
        if (write_is_on(ID)) call mat_c2r(G_lesser_reference(:,:,ik),TMP_matrix)
        call io_bulk(ID,R3=TMP_matrix)
        if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser_reference(:,:,ik))
@@ -376,7 +375,7 @@ integer function io_RT_components(what,ID)
      deallocate(TMP_matrix)
      !
      if (read_is_on(ID)) then
-       do ib=SC_bands(1),SC_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
          RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
          RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
        enddo

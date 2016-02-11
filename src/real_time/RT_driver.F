@@ -35,10 +35,11 @@ subroutine RT_driver(E,X,k,q)
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
- use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,&
+ use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,&
 &                         SC_QP_setup,magn_n
- use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start,RT_carriers_object
- use real_time,      ONLY:NE_steps,RT_step,G_lesser,&
+ use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID, &
+&                         it_start,it_dyn,RT_carriers_object
+ use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference,magn_reference, &
@@ -132,7 +133,7 @@ subroutine RT_driver(E,X,k,q)
  call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_index( )
  !
- call WF_load(WF,WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
+ call WF_load(WF,WF_G_max,WF_Go_indx,(/1,RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
  !
  ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)
  ! this means that the WF's are distributed only among few cpu's. But, as a consequence, the fft_size
@@ -143,7 +144,7 @@ subroutine RT_driver(E,X,k,q)
  ! QP-corrections 
  !================
  !
- call QP_apply(SC_bands,E,k,"G",msg_fmt='s')
+ call QP_apply(RT_bands,E,k,"G",msg_fmt='s')
  !
  ! Core initialization
  !
@@ -268,7 +269,7 @@ subroutine RT_driver(E,X,k,q)
  do while (.not.l_Dynamics_is_over)
    !
    it    =it+1
-   it_now=it
+   it_dyn=it
    !
    ! Steps & times ...
    !===================

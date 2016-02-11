@@ -37,7 +37,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use BS,              ONLY:BSS_eh_table,BS_mat,BS_bands
  use frequency,       ONLY:w_samp
  use interfaces,      ONLY:PARALLEL_global_indexes
- use SC,              ONLY:SC_bands
+ use real_time,       ONLY:RT_bands
  use parser_m,        ONLY:parser
  !
  implicit none
@@ -133,7 +133,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        i_c     = BSS_eh_table(neh,3)
        i_spin  = spin(BSS_eh_table(neh,:))
        !
-       if(i_v<SC_bands(1) .or. i_c>SC_bands(2) ) cycle
+       if(i_v<RT_bands(1) .or. i_c>RT_bands(2) ) cycle
        !
        f_cv=      ( Xen%f(i_v,i_kibz,i_spin)- Xen%f(i_c,i_kibz,i_spin))/spin_occ
        delta_f_cv=(Xen%df(i_v,i_kibz,i_spin)-Xen%df(i_c,i_kibz,i_spin))/spin_occ
@@ -164,8 +164,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        do i_spin=1,n_sp_pol
          !
          ! First valence
-         do i_v=SC_bands(1),Xen%nbf
-           do i_vp=SC_bands(1),Xen%nbf
+         do i_v=RT_bands(1),Xen%nbf
+           do i_vp=RT_bands(1),Xen%nbf
              !
              if(i_v==i_vp) cycle
              !
@@ -180,8 +180,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
          enddo
          !
          ! Then conduction
-         do i_cp=Xen%nbf+1,SC_bands(2)
-           do i_c=Xen%nbf+1,SC_bands(2)
+         do i_cp=Xen%nbf+1,RT_bands(2)
+           do i_c=Xen%nbf+1,RT_bands(2)
              !
              if(i_c==i_cp) cycle
              !

@@ -29,8 +29,8 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use electrons,       ONLY:n_spin,n_bands
  use R_lattice,       ONLY:nkibz
  use QP_m,            ONLY:QP_n_states,QP_table
-#if defined _SC
- use SC,              ONLY:SC_bands,B_mat_index
+#if defined _SC || defined _RT
+ use hamiltonian,     ONLY:B_mat_index,IP_h_bands
 #endif
 #if defined _RT
  use parallel_m,      ONLY:PAR_IND_Q,PAR_Q_index
@@ -56,8 +56,8 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
 #endif
  integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
-#if defined _SC
- logical :: Vl(SC_bands(2))
+#if defined _SC || defined _RT
+ logical :: Vl(IP_h_bands(2))
 #endif
  !
  NB=n_bands
@@ -125,7 +125,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
    enddo
  endif
  !
-#if defined _SC
+#if defined _SC || defined _RT
  if (present(K_index).and.present(Bm_index)) then
    do i_k=1,NK
      !
@@ -133,15 +133,15 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
        !
        Vl=.FALSE. 
        !
-       do i_b=SC_bands(1),SC_bands(2)
-         do i_bp=SC_bands(1),SC_bands(2)
-           if (Bm_index%element_1D( B_mat_index(i_b,i_bp,SC_bands) ) ) then
+       do i_b=IP_h_bands(1),IP_h_bands(2)
+         do i_bp=IP_h_bands(1),IP_h_bands(2)
+           if (Bm_index%element_1D( B_mat_index(i_b,i_bp,IP_h_bands) ) ) then
              Vl(i_b )=.TRUE.
              Vl(i_bp)=.TRUE.
            endif
          enddo
        enddo
-       do i_b=SC_bands(1),SC_bands(2)
+       do i_b=IP_h_bands(1),IP_h_bands(2)
          if (.not.Vl(i_b)) states_to_load(i_b,i_k,:)=.FALSE.
        enddo
      else

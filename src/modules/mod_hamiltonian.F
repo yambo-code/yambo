@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): DS AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,36 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
+module hamiltonian
  !
- use pars,           ONLY:SP
- use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
- use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk,RT_bands
+ integer           :: IP_h_bands(2)
  !
- implicit none
- !
- type(levels),  intent(in)    :: E
- type(bz_samp), intent(in)    :: k
- integer,       intent(in)    :: SAVE_index
- real(SP),      intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
- !
- ! Work Space
- !
- integer          :: ik
- !
- !===========
- ! ALL 2 ALL
- !
- do ik=1,RT_nk
+ contains
    !
-   if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
+   integer function B_mat_index(ib1,ib2,nb)
+     integer :: ib1,ib2,nb(2)
+     !
+     B_mat_index=(ib1-nb(1))*(nb(2)-nb(1)+1)+ib2-nb(1)+1
+     !
+   end function
    !
-   call PP_redux_wait(LIFE(:,ik))
-   !
- enddo
- !
- if (l_initial_equilibrium) REF_lifetime(:,:,SAVE_index)=LIFE
- !
-end subroutine RT_Lifetimes_merge
+end module

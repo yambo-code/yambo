@@ -46,7 +46,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_inversion_PERT_FULL_ratio,BSS_Wd
+&                        BSS_inversion_PERT_FULL_ratio,BSS_Wd,Inversion_treshold
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -56,17 +56,20 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
 #endif
+#if defined _SC || defined _RT
+ use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
+ use hamiltonian,   ONLY:IP_h_bands
+#endif
 #if defined _SC
  use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
- use collision,     ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT
  use rt_ctl,        ONLY:RT_IO_time
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        NE_tot_time,RT_life_interp_steps,&
+&                        NE_tot_time,RT_life_interp_steps,RT_bands,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,DbGd_EE_percent
@@ -161,7 +164,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
 #endif
-#if defined _SC 
+#if defined _SC
  call it('r',defs,'el_el_corr',    '[R] Electron-Electron Correlation') 
 #endif
 #if defined _QED
@@ -287,7 +290,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'BLongDir',  '[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
- call it(defs,'BSHayTrs',  '[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold)
+ call it(defs,'BSHayTrs',  '[BSS] Relative [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold)
+ call it(defs,'BSInvTrs',  '[BSS] Strict Inversion treshold. Relative[o/o](>0)/Absolute(<0)',Inversion_treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
@@ -295,6 +299,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
  call it('f',defs,'Reflectivity', '[BSS] Compute reflectivity at normal incidence',verb_level=V_resp)
+ call it('f',defs,'BSSPertWidth', '[BSS] Include QPs lifetime in a perturbative way',verb_level=V_resp)
+ call it('f',defs,'BSSInvKdiag','[BSS] In the inversion solver keep the diagonal kernel in place',verb_level=V_resp)
  !
  ! F_xc
  !
@@ -355,6 +361,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! Real Time dynamics
  !
 #if defined _RT
+ !
+ call it(defs,'RTBands',    '[RT] Bands',RT_bands)
+ !
+ ! Tmp code while yambo_rt is made independent of yambo_sc
+ if(RT_bands(1)>0) then
+   SC_bands  =RT_bands
+   COLL_bands=RT_bands
+   IP_h_bands=RT_bands
+ endif
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
@@ -536,9 +551,38 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif
  ! 
+ ! SC and RT common
+ !
+#if defined _SC || defined _RT
+ !
+ call it(defs,'COLL_Bands',   '[COLL] Bands for the collisions',COLL_bands)
+ !
+ ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
+ if(COLL_bands(1)>0) then
+   SC_bands  =COLL_bands
+   IP_h_bands=COLL_bands
+ endif
+ !
+#endif
+ !
+#if defined _RT
+ !
+ if(COLL_bands(1)>0) RT_bands  =COLL_bands
+ !
+#endif
+ ! 
  ! SC
  !
-#if defined _SC 
+#if defined _SC
+ !
+ call it(defs,'SCBands',   '[SC] Bands',SC_bands)
+ !
+ ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
+ if(SC_bands(1)>0) then
+   COLL_bands=SC_bands
+   IP_h_bands=SC_bands
+ endif
+ !
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
@@ -549,7 +593,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
- call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)

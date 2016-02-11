@@ -36,7 +36,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        SEX_collisions,nSEX_collisions,&
+&                        SEX_collisions,nSEX_collisions,COLL_bands,&
 &                        COLLISIONS_IO_status,elemental_collision_alloc
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -47,7 +47,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use R_lattice,     ONLY:qindx_S,bz_samp
- use SC,            ONLY:SC_bands,B_mat_index
+ use hamiltonian,   ONLY:B_mat_index
  !
  implicit none
  !
@@ -88,7 +88,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  !
  ! Dimensions
  !
- QP_n_G_bands=SC_bands
+ QP_n_G_bands=COLL_bands
  !
  n_bands   =QP_n_G_bands
  N_g_vecs  =X%ng
@@ -101,7 +101,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  !
  if (WF_buffered_IO) then
    !
-   call WF_load(WF_buffer,0,1,SC_bands,(/1,k%nibz/),space='B',title='-BUFFER')
+   call WF_load(WF_buffer,0,1,COLL_bands,(/1,k%nibz/),space='B',title='-BUFFER')
    !
  endif
  !
@@ -229,7 +229,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
          !
          ! COLLISIONS(n,n',qp_n_states) = \sum_{G,G',q} ( rho(m,n,G,q,k) x EM1s(G ,G') x rho*(m',n',G',q,k) /|q+G|/|q+G'| )
          !
-         if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,SC_bands) ) ) cycle
+         if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,COLL_bands) ) ) cycle
          !
          isc%os(1)=i_np
          !

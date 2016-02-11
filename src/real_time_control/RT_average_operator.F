@@ -25,8 +25,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
 &                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
  !
  use pars,           ONLY:SP,cI,cZERO
- use SC,             ONLY:SC_bands,SC_nbands
- use real_time,      ONLY:DbGd_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_DbGd
+ use real_time,      ONLY:DbGd_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_DbGd,&
+&                         RT_bands,RT_nbands
  use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
@@ -44,15 +44,15 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  !
  type(bz_samp), intent(in) :: k
  type(levels),  intent(in) :: en
- complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  integer,       intent(in) :: nK_mem
  complex(SP),     optional,intent(out) :: O_VALUE,V_VALUE(3)
- complex(SP),     optional, intent(in) :: PV_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
- complex(SP),     optional, intent(in) :: V_MATRIX(3,SC_bands(1):SC_bands(2),&
-&                                                    SC_bands(1):SC_bands(2),nK_mem,n_sp_pol)
- complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
- complex(SP),     optional, intent(in) :: O_MATRIX_limited(SC_bands(1):SC_bands(2),&
-&                                                          SC_bands(1):SC_bands(2),nK_mem,n_sp_pol)
+ complex(SP),     optional, intent(in) :: PV_MATRIX(3,RT_bands(2),RT_bands(2),nK_mem,n_sp_pol)
+ complex(SP),     optional, intent(in) :: V_MATRIX(3,RT_bands(1):RT_bands(2),&
+&                                                    RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
+ complex(SP),     optional, intent(in) :: O_MATRIX(RT_bands(2),RT_bands(2),nK_mem,n_sp_pol)
+ complex(SP),     optional, intent(in) :: O_MATRIX_limited(RT_bands(1):RT_bands(2),&
+&                                                          RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
  logical,         optional, intent(in) :: TRANS
@@ -60,11 +60,11 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  !
  ! Work Space
  !
- integer     :: ib,ibp,ik,SC_bands2,ik_ibz,iE_rim,OUTPUT_dim,i_dir
+ integer     :: ib,ibp,ik,RT_bands2,ik_ibz,iE_rim,OUTPUT_dim,i_dir
  real(SP)    :: deltaE,deltaE_DbGd
- complex(SP) :: Hk(3,SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),n_sp_pol),VALUE_tmp(3), &
-&               Hk_tmp(SC_bands(2),SC_bands(2),n_sp_pol),                                    &
-&               Hk_vec_tmp(3,SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),n_sp_pol)
+ complex(SP) :: Hk(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),n_sp_pol),VALUE_tmp(3), &
+&               Hk_tmp(RT_bands(2),RT_bands(2),n_sp_pol),                                    &
+&               Hk_vec_tmp(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),n_sp_pol)
  logical     :: l_rim_energy,l_rim_dipole
  !
 #if defined _TIMING
@@ -86,7 +86,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  !
  if (OUTPUT_dim==0) call error('RT_average_operator: not a valid call')
  !
- SC_bands2=SC_nbands**2
+ RT_bands2=RT_nbands**2
  if (OUTPUT_dim==1) O_VALUE=cZERO
  if (OUTPUT_dim==3) V_VALUE=cZERO
  !
@@ -105,18 +105,18 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
        !
        if(l_rim_energy) then
          iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
-         do ib=SC_bands(1),SC_bands(2)
+         do ib=RT_bands(1),RT_bands(2)
            Hk(1,ib,ib,:)=Hk_tmp(ib,ib,:)-en%E(ib,ik_ibz,:)+en%E_DbGd(ib,iE_rim,:)
-           do ibp=ib+1,SC_bands(2)
+           do ibp=ib+1,RT_bands(2)
              Hk(1,ib,ibp,:)=Hk_tmp(ib,ibp,:)
              Hk(1,ibp,ib,:)=Hk_tmp(ibp,ib,:)
            enddo
          enddo
        else if(l_rim_dipole) then
          iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
-         do ib=SC_bands(1),SC_bands(2)
+         do ib=RT_bands(1),RT_bands(2)
            Hk(i_dir,ib,ib,:)=Hk_vec_tmp(i_dir,ib,ib,:)
-           do ibp=ib+1,SC_bands(2)
+           do ibp=ib+1,RT_bands(2)
              deltaE    =en%E(ib,ik_ibz,1)    -en%E(ibp,ik_ibz,1)
              deltaE_DbGd=en%E_DbGd(ib,iE_rim,1)-en%E_DbGd(ibp,iE_rim,1)
              if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_DbGd)>Dipole_Energy_treshold) then
@@ -128,11 +128,11 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
            enddo
          enddo
        else
-         if(OUTPUT_dim==1) Hk(1,:,:,:)    =Hk_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:)
+         if(OUTPUT_dim==1) Hk(1,:,:,:)    =Hk_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:)
          if(OUTPUT_dim==3) Hk(i_dir,:,:,:)=Hk_vec_tmp(i_dir,:,:,:)
        endif 
        !
-       VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V_omp(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
+       VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
        !
      enddo
      !
@@ -202,8 +202,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
        Hk_tmp=cZERO
        !
        if (present(O_MATRIX).or.present(O_MATRIX_limited)) then
-         do ib=SC_bands(1),SC_bands(2)
-           do ibp=SC_bands(1),SC_bands(2)
+         do ib=RT_bands(1),RT_bands(2)
+           do ibp=RT_bands(1),RT_bands(2)
              !
              if (present(O_MATRIX) )then
                if (     l_transpose) Hk_tmp(ibp,ib,:)=O_MATRIX(ib,ibp,ik_mem,:) 
@@ -231,8 +231,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
        !
        Hk_vec_tmp=cZERO
        !
-       do ib=SC_bands(1),SC_bands(2)
-         do ibp=SC_bands(1),SC_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
+         do ibp=RT_bands(1),RT_bands(2)
            !
            do i_spin=1,n_sp_pol
              !

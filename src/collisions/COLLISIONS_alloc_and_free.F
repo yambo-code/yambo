@@ -25,13 +25,12 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  use pars,           ONLY:LP,cZERO,rZERO
  use memory_m,       ONLY:mem_est
- use SC,             ONLY:SC_bands
  use plasma,         ONLY:N_plasma_poles_global
  use R_lattice,      ONLY:nqbz,nkibz
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ,PAR_nQP
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,      ONLY:COLLISIONS_element,Fock_collisions,SEX_collisions,GW_NEQ_collisions,&
-&                         nFock_collisions,nSEX_collisions,nGW_NEQ_collisions
+&                         nFock_collisions,nSEX_collisions,nGW_NEQ_collisions,COLL_bands
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
  use collision,      ONLY:P_collisions,nP_collisions
@@ -79,8 +78,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_distribute=index(actions,"distribute")>0
  !
  if (l_Fock) then
-   D(1,:)=SC_bands
-   D(2,:)=SC_bands
+   D(1,:)=COLL_bands
+   D(2,:)=COLL_bands
    D(3,:)=(/1,nkibz/)
    if (l_collision.and.l_alloc) then
      allocate(Fock_collisions(size_))
@@ -99,8 +98,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  endif
  !
  if (l_SEX) then
-   D(1,:)=SC_bands
-   D(2,:)=SC_bands
+   D(1,:)=COLL_bands
+   D(2,:)=COLL_bands
    D(3,:)=(/1,nkibz/)
    if (l_collision.and.l_alloc) then
      allocate(SEX_collisions(size_))
@@ -121,7 +120,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
 #if defined _QED
  !
  if (l_Momentum) then
-    D(2,:)=SC_bands
+    D(2,:)=COLL_bands
     D(1,:)=(/1,QP_QED_ng/)
     D(3,:)=(/1,nqbz/)
     !DEBUG> TO CODE the distribute part

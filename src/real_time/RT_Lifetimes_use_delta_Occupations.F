@@ -26,12 +26,12 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
- use SC,             ONLY:SC_bands,it_now
+ use rt_ctl,         ONLY:it_dyn
  use parallel_m,     ONLY:ncpu,PAR_COM_Plasma_INDEX
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         RT_delta_occupations,l_use_updated_reference,l_initial_equilibrium,&
 &                         RT_H_occupations,RT_E_occupations,RT_TIME_status,RT_delta0_occupations,&
-&                         SAVED_lifetime,Life_MEM_steps,&
+&                         SAVED_lifetime,Life_MEM_steps,RT_bands,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
@@ -48,7 +48,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  !
  l_use_updated_reference=.not.l_initial_equilibrium
  !
- if (l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(it_now)> 1)
+ if (l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(it_dyn)> 1)
  !
  if (.not.l_eval) return
  !
@@ -57,7 +57,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
    df_max=0._SP
    !
    do ik=1,RT_nk
-     do ib=SC_bands(1),SC_bands(2)
+     do ib=RT_bands(1),RT_bands(2)
        !
        f_E_occ=RT_E_occupations(ib,ik)
        f_H_occ=RT_H_occupations(ib,ik)
@@ -75,7 +75,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  endif
  !
  do ik=1,RT_nk
-   do ib=SC_bands(1),SC_bands(2)
+   do ib=RT_bands(1),RT_bands(2)
      !
      RT_occupations_locked(ib,ik)=.FALSE. 
      !

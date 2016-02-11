@@ -29,7 +29,6 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use pars,           ONLY:SP,schlen
  use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply
- use SC,             ONLY:SC_bands
  !use QP_m,           ONLY:QP_table,QP_n_states
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:bz_samp
@@ -38,7 +37,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_fit
  use com,            ONLY:msg,of_open_close,error
  use stderr,         ONLY:intc,real2ch
- use real_time,      ONLY:RT_carriers,l_RT_CCA_Kernel
+ use real_time,      ONLY:RT_carriers,l_RT_CCA_Kernel,RT_bands
  !
  implicit none
  !
@@ -94,7 +93,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    !==============================
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   call RT_apply(SC_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
    !
    ! Fill the large arrays to be used for the fitting procedure.
    !

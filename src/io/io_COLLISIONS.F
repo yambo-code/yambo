@@ -26,7 +26,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLLISIONS_IO_status,&
-&                        n_COLLISIONS,COLLISIONS_state
+&                        n_COLLISIONS,COLLISIONS_state,COLL_bands
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
@@ -34,7 +34,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
- use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
+ use SC,            ONLY:SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing,QP_QED_ng
  use parallel_m,    ONLY:PAR_IND_QP
  use X_m,           ONLY:n_X_descs,X_description
@@ -94,7 +94,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      n_COLLISIONS=QP_n_states
    endif
    !
-   call io_elemental(ID,I1=SC_bands,&
+   call io_elemental(ID,I1=COLL_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    !
    if (V_kind==SE_GW_NEQ) then

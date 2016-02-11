@@ -27,7 +27,6 @@ module SC
  implicit none
  !
  integer           :: SC_bands(2)
- integer           :: SC_nbands
  integer           :: it_to_start
  integer           :: it_now
  integer           :: SC_iterations
@@ -118,23 +117,15 @@ module SC
  !
  contains
    !
-   integer function B_mat_index(ib1,ib2,nb)
-     integer :: ib1,ib2,nb(2)
-     !
-     B_mat_index=(ib1-nb(1))*(nb(2)-nb(1)+1)+ib2-nb(1)+1
-     !
-   end function
-   !
    subroutine SC_QP_setup(E)
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
      use memory_m,       ONLY:mem_est
+     !
      implicit none
      !
      type(levels) :: E
-     !
-     SC_nbands=SC_bands(2)-SC_bands(1)+1
      !
      ! Build-up QP table
      !

@@ -25,21 +25,21 @@ subroutine RT_EULEREXP_step(dG_out,dG_in,G_ref_k,U1_k,U2_k,I1_matrix)
  !
  use pars,           ONLY:SP,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp
- use SC,             ONLY:SC_bands,SC_nbands
+ use real_time,      ONLY:RT_bands,RT_nbands
  !
  implicit none
  !
- complex(SP), intent(in)  :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(in)  :: G_ref_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(in)  :: U1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(in)  :: U2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(in)  :: I1_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(out) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(in)  :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)  :: G_ref_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)  :: U1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)  :: U2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)  :: I1_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
- complex(SP) :: M1_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)) 
- complex(SP) :: M2_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)) 
- complex(SP) :: U1p1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP) :: U2p1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP) :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)) 
+ complex(SP) :: M2_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)) 
+ complex(SP) :: U1p1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: U2p1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  ! dG(T+dt) = U1(dt)*dG(T)*U2(dt) +               order= dG*1
  !            (U1(dt)-1)*G0 + G0*(U2(dt)-1) +     order= G0*dt
@@ -50,19 +50,19 @@ subroutine RT_EULEREXP_step(dG_out,dG_in,G_ref_k,U1_k,U2_k,I1_matrix)
  !
  dG_out=cZERO
  M1_tmp=cZERO
- call M_by_M_omp('n','n',SC_nbands,U1p1_k,dG_in,M1_tmp)
- call M_by_M_omp('n','n',SC_nbands,M1_tmp,U2p1_k,dG_out)
+ call M_by_M_omp('n','n',RT_nbands,U1p1_k,dG_in,M1_tmp)
+ call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2p1_k,dG_out)
  !
  M1_tmp=cZERO
  M2_tmp=cZERO
- call M_by_M_omp('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
- call M_by_M_omp('n','n',SC_nbands,G_ref_k,U2_k,M2_tmp)
+ call M_by_M_omp('n','n',RT_nbands,U1_k,G_ref_k,M1_tmp)
+ call M_by_M_omp('n','n',RT_nbands,G_ref_k,U2_k,M2_tmp)
  dG_out=dG_out+M1_tmp+M2_tmp
  !
  M1_tmp=cZERO
  M2_tmp=cZERO
- call M_by_M_omp('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
- call M_by_M_omp('n','n',SC_nbands,M1_tmp,U2_k,M2_tmp)
+ call M_by_M_omp('n','n',RT_nbands,U1_k,G_ref_k,M1_tmp)
+ call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k,M2_tmp)
  dG_out=dG_out+M2_tmp
  !
  dG_out=dG_out-dG_in

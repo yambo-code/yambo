@@ -657,8 +657,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
    !
-   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSSInvPFratio')
-   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSInvTrs BSSInvPFratio BSSInvKdiag')
+   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
    !
    ! Special project dependent variables
@@ -731,7 +731,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
      else if (l_life) then
        call initactivate(1,'GbndRnge') 
-     endif
    endif
 #endif
    !
@@ -838,7 +837,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_eval_collisions) then
    !
-   call initactivate( 1,'Potential FFTGvecs SCBands')
+   call initactivate( 1,'Potential FFTGvecs COLLBands')
    call initactivate(-1,'QpntsRXs')
    !
    if(trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX") then
@@ -857,7 +856,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call INIT_QP_ctl_switch('G')
    call INIT_RT_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'SCBands Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTBands Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime COHsteps DipoleEtresh')
    if (l_elel_scatt .or. l_elph_scatt) call initactivate(1,'LifeInterpKIND LifeInterpSteps LifeInterpT')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
@@ -866,7 +865,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'RTpumpEhEn RTpumpEhWd RTpumpNel')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
-   ! or parsed from the input file in init_load.F
+   ! or parsed from the input file in INIT_load.F
    !
    do i1=1,n_ext_fields
      call Afield_activate(i1)
@@ -923,7 +922,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call PP_redux_wait
  endif
  !
- ! To handle externally defined Q-points I use the init_q_pts
+ ! To handle externally defined Q-points I use the INIT_q_pts
  !
  ! (a) first check if input file contains already a list of Q-points...
  call INIT_q_points(.FALSE.)

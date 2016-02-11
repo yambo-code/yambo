@@ -111,6 +111,7 @@ subroutine G_shells_finder()
    !
    if (.not.px%element_1D(i_m)) cycle
    !
+!$omp parallel do default(shared), private(i_1,ig_1,i_s,g_rotated,i_2,ig_2)
    do i_1=first_G_in_shell(i_m),first_G_in_shell(i_m)+ng_in_shell_TMP(i_m)-1
      !
      ig_1=G_mod_indx(i_1)
@@ -138,6 +139,7 @@ subroutine G_shells_finder()
      enddo
      !
    enddo
+!$omp end parallel do
    !
    call live_timing(steps=1)
    !

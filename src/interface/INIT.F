@@ -628,6 +628,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call INIT_QP_ctl_switch('K')
 #if defined _RT
    call INIT_RT_ctl_switch('K')
+   call INIT_RT_ctl_switch('R')
 #endif
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')

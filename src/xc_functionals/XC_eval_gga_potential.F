@@ -28,7 +28,7 @@ subroutine XC_eval_gga_potential(vxc_tot,v_rho,v_drho)
   ! 1. Gv_drho(r) = -Grad \cdot v_drho(r,3)
   ! 2. vxc_tot(r) = v_rho(r) + Gv_drho(r)   
   ! 
-  use pars,          ONLY:SP,DP,cI,PI
+  use pars,          ONLY:SP,DP,cI_DP,PI_DP
   use R_lattice,     ONLY:g_vec
   use D_lattice,     ONLY:alat
   use wave_func,     ONLY:wf_ng
@@ -65,7 +65,8 @@ subroutine XC_eval_gga_potential(vxc_tot,v_rho,v_drho)
     call fft_3d(Vr,fft_dim,-1)
 #endif
     !
-    Vg(1:wf_ng)=Vg(1:wf_ng)-cI*(2._DP*PI*g_vec(1:wf_ng,ic)/alat(ic))*Vr(fft_g_table(1:wf_ng,1))/real(fft_size,DP)
+    Vg(1:wf_ng)=Vg(1:wf_ng)-cI_DP*(2._DP*PI_DP*real(g_vec(1:wf_ng,ic)/alat(ic),DP)) * &
+&                           Vr(fft_g_table(1:wf_ng,1))/real(fft_size,DP)
     !
   end do    
   !

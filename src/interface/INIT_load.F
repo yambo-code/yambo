@@ -475,6 +475,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call INIT_RT_ctl_load(defs,1)
  call INIT_RT_ctl_load(defs,2)
  call INIT_RT_ctl_load(defs,3)
+ call INIT_RT_ctl_load(defs,4)
  !
 #endif
  !

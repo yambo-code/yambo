@@ -40,13 +40,14 @@ subroutine INIT_RT_ctl_load(defs,i_type)
  ! 
  ! Work Space
  ! 
- character(1)      ::prefix(3)
- character(7)      ::description_ch(3)
+ character(1)      ::prefix(4)
+ character(7)      ::description_ch(4)
  !
- prefix=(/'X','K','G'/)
+ prefix=(/'X','K','G','R'/)
  description_ch(1)='Xd'
  description_ch(2)='BSK BSS'
  description_ch(3)='G'
+ description_ch(4)='R'
  !
  call it(defs,prefix(i_type)//'fnRTdb',&
 &        '[EXTRT '//trim(description_ch(i_type))//'] Database',&

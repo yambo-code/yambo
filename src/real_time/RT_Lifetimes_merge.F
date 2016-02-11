@@ -27,7 +27,7 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_COM_PLASMA_INDEX
  use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk
  !
  implicit none
@@ -46,7 +46,7 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  !
  do ik=1,RT_nk
    !
-   if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
+   if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_PLASMA_INDEX%n_CPU)
    !
    call PP_redux_wait(LIFE(:,ik))
    !

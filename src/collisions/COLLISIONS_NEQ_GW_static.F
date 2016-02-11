@@ -31,7 +31,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use electrons,     ONLY:levels,spin
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_Plasma_index,PAR_QP_index,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_PLASMA_index,PAR_QP_index,&
 &                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
 &                        PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
@@ -257,7 +257,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          i_J=EH_gas%tab_m1(i_qp2,i_p_s,i_q_mem)
          !
          if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
-         i_J_mem=PAR_Plasma_index(i_J)
+         i_J_mem=PAR_PLASMA_index(i_J)
          !
          iscp%is =(/i_m,i_p,i_p_s,i_p_sp/)
          iscp%os =(/i_mp,i_pmq,i_pmq_s,i_pmq_sp/)

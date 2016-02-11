@@ -205,7 +205,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call PLASMA_parallel_setup(EH_gas)
    !
    call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
-   call PARALLEL_WF_distribute(Plasma_index=PAR_IND_Plasma)
+   call PARALLEL_WF_distribute(PLASMA_index=PAR_IND_Plasma)
    call PARALLEL_WF_index( )
    !
    call CHECK_and_ALLOC(SE_GW_NEQ)

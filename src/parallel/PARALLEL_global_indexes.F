@@ -30,7 +30,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PARALLEL_cpu_mat_diagonalization,PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
-&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,&
+&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_PLASMA_index,&
 &                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,PAR_nG_bands,PAR_G_bands_index,&
 &                        PAR_Q_bz_index,PAR_nQ_bz,PAR_RL_index,&
 &                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands,EH_range
@@ -43,7 +43,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Xk_bz_INDEX,PAR_COM_INV_INDEX,PAR_COM_INV,&
 &                        PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO,&
-&                        PAR_COM_QP_INDEX,PAR_COM_Plasma_INDEX,&
+&                        PAR_COM_QP_INDEX,PAR_COM_PLASMA_INDEX,&
 &                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
@@ -58,7 +58,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
-&                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_Plasma_ID,&
+&                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_PLASMA_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
 &                        PAR_IND_Kk_ibz_ID,PAR_IND_DIPk_ID
@@ -161,7 +161,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (allocated(PAR_Bp_mat_index))   deallocate(PAR_Bp_mat_index)
    if (allocated(PAR_QP_index))       deallocate(PAR_QP_index)
    if (allocated(PAR_G_bands_index))  deallocate(PAR_G_bands_index)
-   if (allocated(PAR_Plasma_index))   deallocate(PAR_Plasma_index)
+   if (allocated(PAR_PLASMA_index))   deallocate(PAR_PLASMA_index)
    if (allocated(PAR_Q_index))        deallocate(PAR_Q_index)
    if (allocated(PAR_Q_bz_index))     deallocate(PAR_Q_bz_index)
    if (allocated(PAR_Xk_ibz_index))   deallocate(PAR_Xk_ibz_index)
@@ -179,7 +179,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_IND_INV_ID=0
    PAR_IND_DIAGO_ID=0
    PAR_IND_QP_ID=0
-   PAR_IND_Plasma_ID=0
+   PAR_IND_PLASMA_ID=0
    PAR_IND_G_b_ID=0
    PAR_IND_G_k_ID=0
    PAR_IND_WF_b_ID=0
@@ -199,7 +199,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_INV)
    call COMM_reset(PAR_COM_DIAGO_INDEX)
    call COMM_reset(PAR_COM_DIAGO)
-   call COMM_reset(PAR_COM_Plasma_INDEX)
+   call COMM_reset(PAR_COM_PLASMA_INDEX)
    call COMM_reset(PAR_COM_QP_INDEX)
    call COMM_reset(PAR_COM_QP_A2A)
    call COMM_reset(PAR_COM_G_b_INDEX)
@@ -505,7 +505,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"k ","b ","q ","qp"/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_G_b_INDEX,&
 &                                        COMM_index_3=PAR_COM_Q_INDEX,&
-&                                        COMM_index_4=PAR_COM_Plasma_INDEX,&
+&                                        COMM_index_4=PAR_COM_PLASMA_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
 &                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
 &                                        COMM_A2A_3=PAR_COM_Q_A2A)
@@ -735,15 +735,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   "qp"  -> Bp_mat (m,m')
    !.........................................................................
    !
-   call G_b_to_B_mat(PAR_COM_Plasma_INDEX,'Bp',SC_bands)
+   call G_b_to_B_mat(PAR_COM_PLASMA_INDEX,'Bp',SC_bands)
    call PARALLEL_add_Q_to_K_list('k_qp_q_bz',PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_G_k,PAR_IND_G_k_ID,&
   &                              PAR_IND_Q,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
    call PARALLEL_live_message("K-q (ibz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_G_k%n_of_elements(PAR_IND_G_k_ID+1),&
-&                             TOTAL=Xk%nibz,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
+&                             TOTAL=Xk%nibz,NCPU=PAR_COM_PLASMA_INDEX%n_CPU)
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
-&                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
+&                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_PLASMA_INDEX%n_CPU)
    !
    ! When the collisons are note evaluated the I/O is dictated by Response_G_space_Zero_Momentum
    ! and then resetted in RT_driver

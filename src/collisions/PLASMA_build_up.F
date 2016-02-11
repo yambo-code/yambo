@@ -29,7 +29,7 @@ subroutine PLASMA_build_up(E,k,q)
  use R_lattice,     ONLY:bz_samp
  use SC,            ONLY:SC_bands
  use electrons,     ONLY:levels,n_sp_pol
- use plasma,        ONLY:Plasma_alloc,Plasma_redux_percent,N_plasma_poles_global,EH_gas
+ use plasma,        ONLY:PLASMA_alloc,PLASMA_redux_percent,N_plasma_poles_global,EH_gas
  use QP_m,          ONLY:QP_n_states
  use parallel_m,    ONLY:PAR_nQ,PAR_IND_Q,PAR_Q_index,PP_redux_wait,PAR_COM_Q_index
  !
@@ -52,12 +52,12 @@ subroutine PLASMA_build_up(E,k,q)
  N_plasma_poles_global = N_poles_bare
  EH_gas%max_N_poles    = N_poles_bare
  !
- call Plasma_alloc(EH_gas,(/q%nbz,PAR_nQ,QP_n_states/))
+ call PLASMA_alloc(EH_gas,(/q%nbz,PAR_nQ,QP_n_states/))
  allocate(poles(N_poles_bare))
  poles=0._SP
  !
  ! Plasma approximation level from input
- EH_gas%redux_percent=Plasma_redux_percent
+ EH_gas%redux_percent=PLASMA_redux_percent
  !
  do iqbz=1,q%nbz
    !

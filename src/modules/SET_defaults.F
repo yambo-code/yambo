@@ -104,7 +104,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_ctl_db
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
- use plasma,     ONLY:Plasma_redux_percent
+ use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -583,7 +583,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Eh_pumped_pair_energy=-1._SP/HA2EV
  Eh_pumped_pair_width=0.1_SP/HA2EV
  Eh_pumped_Nel=1._SP
- Plasma_redux_percent=100._SP
+ PLASMA_redux_percent=100._SP
  DbGd_EE_percent=0._SP
  !
  ! Scattering

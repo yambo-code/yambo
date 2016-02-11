@@ -218,7 +218,7 @@ module parallel_m
  integer            :: PAR_IND_QP_ID
  !
  ! ... PLASMA
- integer            :: PAR_IND_Plasma_ID
+ integer            :: PAR_IND_PLASMA_ID
  !
  ! ... G bands
  integer            :: PAR_IND_G_b_ID
@@ -274,7 +274,7 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_QP_A2A
  !
  ! ... Plasma
- type(MPI_comm),SAVE :: PAR_COM_Plasma_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_PLASMA_INDEX
  !
  ! ... G bands
  type(MPI_comm),SAVE :: PAR_COM_G_b_INDEX
@@ -323,7 +323,7 @@ module parallel_m
  ! ... and derived variables
  !==========================
  integer            :: PAR_nPlasma
- integer,allocatable:: PAR_Plasma_index(:)
+ integer,allocatable:: PAR_PLASMA_index(:)
  integer            :: PAR_nQP
  integer,allocatable:: PAR_QP_index(:)
  integer            :: PAR_n_B_mat_elements

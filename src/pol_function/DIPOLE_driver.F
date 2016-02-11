@@ -62,7 +62,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         IO_and_Messaging_switch,IO_write
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
-&                         PP_redux_wait,PAR_COM_Plasma_INDEX,PAR_COM_Q_INDEX,l_par_RT,myid
+&                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT,myid
  use parser_m,       ONLY:parser
 #if defined _SC
  use com,            ONLY:secnm
@@ -321,9 +321,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
         !
         if (l_par_RT) then
           !
-          DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           !
         endif
         !

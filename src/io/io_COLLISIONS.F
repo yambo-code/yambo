@@ -33,7 +33,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &                        VERIFY,io_extension,io_raw_extension
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
  use com,           ONLY:error
- use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
+ use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing,QP_QED_ng
  use parallel_m,    ONLY:PAR_IND_QP
@@ -103,7 +103,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      if(l_elel_scatt) then
       call io_elemental(ID,I0=N_plasma_poles_global,&
 &          VAR=' Max N plasma poles (q-resolved) :',CHECK=.true.,OP=(/"=="/))
-      call io_elemental(ID,R0=Plasma_redux_percent,&
+      call io_elemental(ID,R0=PLASMA_redux_percent,&
 &          VAR=' Plasma redux percent            :',CHECK=.true.,OP=(/"=="/))
      endif
    endif

@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
-&                                 QP_index,Plasma_index,Bm_index,CLEAN_UP)
+&                                 QP_index,PLASMA_index,Bm_index,CLEAN_UP)
  !
  use parallel_m,      ONLY:PP_indexes,ncpu
  use wave_func,       ONLY:states_to_load
@@ -45,7 +45,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  type(PP_indexes), optional    :: B_and_K_index
  type(PP_indexes), optional    :: Bp_index
  type(PP_indexes), optional    :: QP_index
- type(PP_indexes), optional    :: Plasma_index
+ type(PP_indexes), optional    :: PLASMA_index
  type(PP_indexes), optional    :: Bm_index
  logical, intent(in), optional :: CLEAN_UP
  !
@@ -173,7 +173,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  !
 #if defined _RT
  !
- if (present(Plasma_index)) then
+ if (present(PLASMA_index)) then
    ! 
    do iqbz=1,nkbz
      !
@@ -182,7 +182,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
      !
      do i_J=1,EH_gas%N_poles(iqbz)
        !
-       if (.not.Plasma_index%element_1D(i_J)) cycle
+       if (.not.PLASMA_index%element_1D(i_J)) cycle
        !
        do i_J_bg=EH_gas%grid(i_J,i_q_mem,1),EH_gas%grid(i_J,i_q_mem,2)
          !

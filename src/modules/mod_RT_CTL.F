@@ -95,7 +95,7 @@ module rt_ctl
  !
  contains
    !
-   subroutine RT_alloc_ctl()
+   subroutine RT_alloc_control()
      !
      use memory_m,       ONLY:mem_est
      use real_time,      ONLY:l_NE_dynamics
@@ -105,9 +105,9 @@ module rt_ctl
        call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
      endif
      !
-   end subroutine RT_alloc_ctl
+   end subroutine RT_alloc_control
    !
-   subroutine RT_free_ctl
+   subroutine RT_free_control
      !
      use memory_m,       ONLY:mem_est
      use real_time,      ONLY:l_NE_dynamics
@@ -117,7 +117,7 @@ module rt_ctl
        call mem_est('Current_Cache')
      endif
      !
-   end subroutine RT_free_ctl
+   end subroutine RT_free_control
    !
    logical function RT_do_IO(what)
      !
@@ -129,6 +129,5 @@ module rt_ctl
      if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
      !
    end function
-   !
    !
 end module rt_ctl

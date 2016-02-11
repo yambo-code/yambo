@@ -42,7 +42,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 &                          n_COLLISIONS,COLLISIONS_state
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
  use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
-&                          PAR_nQ,PAR_Q_index,PAR_Plasma_index
+&                          PAR_nQ,PAR_Q_index,PAR_PLASMA_index
  use interfaces,      ONLY:io_COLLISIONS
  use electrons,       ONLY:spin
  use stderr,          ONLY:intc
@@ -217,7 +217,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
            do i_J=1,N_plasma_poles_global
              ic=ic+1
              if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
-             i_J_mem  =PAR_Plasma_index(i_J)
+             i_J_mem  =PAR_PLASMA_index(i_J)
              GW_NEQ_collisions(i_qp_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_collisions(1)%v_r(ic)
            enddo
          else

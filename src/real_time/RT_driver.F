@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,&
 &                         SC_QP_setup,magn_n
- use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start,RT_carriers_object
+ use rt_ctl,         ONLY:RT_output,RT_alloc_control,RT_free_control,RT_IO_G_steps,ID,it_start,RT_carriers_object
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_time,RT_carriers,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,&
 &                         dG_lesser,l_initial_equilibrium
- use plasma,          ONLY:Plasma_free,EH_gas
+ use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
@@ -152,7 +152,7 @@ subroutine RT_driver(E,X,k,q)
  ! Core allocations
  !
  call RT_alloc(E)
- call RT_alloc_ctl()
+ call RT_alloc_control()
  !
  ! Restart from a previous RT run or from a SC calculation
  ! 
@@ -214,7 +214,7 @@ subroutine RT_driver(E,X,k,q)
  if (it_start>=NE_steps) then
    !      
    call RT_free()
-   call RT_free_ctl()
+   call RT_free_control()
    !
    call WF_free(WF)
    !
@@ -368,20 +368,16 @@ subroutine RT_driver(E,X,k,q)
  !
  call live_timing()
  !
- ! Finalize
- !-----------
+ ! Finalize & Free
+ !-----------------
  call RT_free()
- call RT_free_ctl()
- !
+ call RT_free_control()
  call WF_free(WF)
- call Plasma_free(EH_gas)
- !
+ call PLASMA_free(EH_gas)
  call RT_carriers_object(RT_carriers,WHAT='free')
- !
  if (allocated(Fock_collisions))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
  if (allocated(SEX_collisions))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
  if (allocated(GW_NEQ_collisions)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
- !
  call set_real_printed_length()
  !
 end subroutine RT_driver

@@ -71,7 +71,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,DbGd_EE_percent
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
- use plasma,        ONLY:Plasma_redux_percent
+ use plasma,        ONLY:PLASMA_redux_percent
 #endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
@@ -394,7 +394,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! EE scattering
  !
- call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)
+ call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',PLASMA_redux_percent,Verb_level=V_real_time)
  call it(defs,'EERimPerc',  '[RT] EE Double Grid (0-100): % of the points used in EE scatt',DbGd_EE_percent,Verb_level=V_real_time)
  call it('f',defs,'RTskipImposeE',   '[RT] Conservation of E (e-e channel) imposed by hand on-the-fly')
  !

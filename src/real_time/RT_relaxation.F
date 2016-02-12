@@ -43,7 +43,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  use pars,           ONLY:SP,cI,cZERO
  use D_lattice,      ONLY:Bose_Temp
  use electrons,      ONLY:levels,spin_occ
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use rt_ctl,         ONLY:it_start,it_dyn
@@ -143,6 +143,22 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
    !
 #if defined _TIMING
    call timing('RT relaxation (e-p)',OPR='stop')
+#endif
+   !
+ endif
+ !
+ ! El-Photon
+ !============
+ if(l_elphoton_scatt.and.l_eval) then
+   !
+#if defined _TIMING
+   call timing('RT relaxation (e-photon)',OPR='start')
+#endif
+   !
+   !call RT_ELPH_total_Kernel(ik,E,k,q,Time) 
+   !
+#if defined _TIMING
+   call timing('RT relaxation (e-photon)',OPR='stop')
 #endif
    !
  endif

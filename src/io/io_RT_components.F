@@ -42,7 +42,8 @@ integer function io_RT_components(what,ID)
 &                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
 &                         dG_lesser,RT_ind_J,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT,&
-&                         BGR_hartree,BGR_V_xc,BGR_Self_Energy,RT_bands,RT_nbands
+&                         BGR_hartree,BGR_V_xc,BGR_Self_Energy,RT_bands,RT_nbands,&
+&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
  use ELPH,           ONLY:ph_modes,elph_branches
  use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO,&
 &                         RT_carriers_object
@@ -355,6 +356,12 @@ integer function io_RT_components(what,ID)
      !
      call io_bulk(ID,VAR="RT_E_P_REF_El_abs_lifetime",VAR_SZ=(/RT_bands(2)-RT_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,6))
+     !
+     call io_bulk(ID,VAR="RT_E_PHOT_REF_Hole_abs_lifetime",VAR_SZ=(/RT_bands(2)-RT_bands(1)+1,RT_nk/))
+     call io_bulk(ID,R2=REF_lifetime(:,:,7))
+     !
+     call io_bulk(ID,VAR="RT_E_PHOT_REF_El_abs_lifetime",VAR_SZ=(/RT_bands(2)-RT_bands(1)+1,RT_nk/))
+     call io_bulk(ID,R2=REF_lifetime(:,:,8))
      !
    endif
    !

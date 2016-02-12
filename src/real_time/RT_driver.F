@@ -23,8 +23,8 @@
 !
 subroutine RT_driver(E,X,k,q)
  !
- use pars,           ONLY:SP
- use drivers,        ONLY:l_use_collisions,l_sc_ip,l_elph_scatt,l_elel_scatt
+ use pars,           ONLY:SP,schlen
+ use drivers,        ONLY:l_use_collisions,l_sc_ip,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use LIVE_t,         ONLY:live_timing 
@@ -68,19 +68,18 @@ subroutine RT_driver(E,X,k,q)
  ! Work Space
  !
  integer           :: it,it_mem,it_mem_p1,io_REF
+ character(schlen) :: sec_title(3)
  complex(SP)       :: on_the_fly_operators(10)
  !
  integer, external :: io_RT_components
  !
- if (l_elph_scatt.and.l_elel_scatt) then
-   call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
- else if (l_elph_scatt) then
-   call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph scattering')
- else if (l_elel_scatt) then
-   call section('*',trim(SC_potential)//' Real-Time Dynamics including e-e scattering')
- else
-   call section('*',trim(SC_potential)//' Real-Time Dynamics')
- endif
+ sec_title=' '
+ if (l_elph_scatt)     sec_title(1)='el-ph'
+ if (l_elel_scatt)     sec_title(2)='e-e'
+ if (l_elphoton_scatt) sec_title(3)='el-photon'
+ !
+ call section('*',trim(SC_potential)//' Real-Time Dynamics')
+ call msg('s','Scattering(s):'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
  !
  call section('+','Initialization')
  !#################################

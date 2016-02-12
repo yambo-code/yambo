@@ -23,7 +23,7 @@
 !
 module real_time
  !
- use drivers,    ONLY:l_elel_scatt,l_elph_scatt
+ use drivers,    ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use SC,         ONLY:SC_R
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
@@ -397,8 +397,12 @@ module real_time
        if(.not.associated(RT%dGAMMA_E_P_Ho_abs))   allocate(RT%dGAMMA_E_P_Ho_abs(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_El_abs))   allocate(RT%dGAMMA_E_P_El_abs(RT%nstates))
      endif
+     if (l_elphoton_scatt) then
+       if(.not.associated(RT%dGAMMA_E_PHOT_Hole))     allocate(RT%dGAMMA_E_PHOT_Hole(RT%nstates))
+       if(.not.associated(RT%dGAMMA_E_PHOT_Electron)) allocate(RT%dGAMMA_E_PHOT_Electron(RT%nstates))
+     endif
      if (l_elel_scatt.or.l_elph_scatt) then
-       if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates,6))
+       if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates,8))
        if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
        if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
      endif
@@ -420,6 +424,8 @@ module real_time
      if(associated(RT%dGAMMA_E_P_Electron)) deallocate(RT%dGAMMA_E_P_Electron)
      if(associated(RT%dGAMMA_E_P_Ho_abs))   deallocate(RT%dGAMMA_E_P_Ho_abs)
      if(associated(RT%dGAMMA_E_P_El_abs))   deallocate(RT%dGAMMA_E_P_El_abs)
+     if(associated(RT%dGAMMA_E_PHOT_Hole))     deallocate(RT%dGAMMA_E_PHOT_Hole)
+     if(associated(RT%dGAMMA_E_PHOT_Electron)) deallocate(RT%dGAMMA_E_PHOT_Electron)
      if(associated(RT%E_bare))       deallocate(RT%E_bare)
      if(associated(RT%f_bare))       deallocate(RT%f_bare)
      if(associated(RT%GAMMA_bare))   deallocate(RT%GAMMA_bare)
@@ -494,6 +500,14 @@ module real_time
      allocate(RT_E_occupations(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_E_occupations",(/size(RT_E_occupations)/),(/SP/))
      !
+     if (l_elphoton_scatt) then
+       allocate(E_Phot_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(E_Phot_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
+       E_Phot_Hole_lifetime=0._SP
+       E_Phot_Electron_lifetime=0._SP
+     endif
+     !
      if (l_elel_scatt) then
        allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
        allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
@@ -514,10 +528,10 @@ module real_time
        E_P_Ho_abs_lifetime=0._SP
      endif
      !
-     if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
-       allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,6))
-       call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
-       allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
+     if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt.or.l_elphoton_scatt) then
+       allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,8))
+       call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs), e-g h, e-g e
+       allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,8,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs), e-g h, e-g e
        call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        allocate(SAVED_times(Life_MEM_steps)) 
        REF_lifetime=0._SP
@@ -544,7 +558,7 @@ module real_time
        call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
      endif
      !
-     if(l_elph_scatt.or.l_elel_scatt) then
+     if(l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
        allocate(I_relax_dyn(SC_bands(1):SC_bands(2),RT_nk,2,Life_MEM_steps))
        call mem_est("I_relax_dyn",(/size(I_relax_static)/),(/2*SP/))
      endif

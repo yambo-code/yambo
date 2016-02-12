@@ -731,6 +731,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
      else if (l_life) then
        call initactivate(1,'GbndRnge') 
+     endif
    endif
 #endif
    !

@@ -35,7 +35,7 @@ subroutine INIT_barriers()
  ! 
  ! Additional logicals ...
  !
- logical :: metallic_system, newton,secant,green,bss_tddft,bse_bsfxc,&
+ logical :: metallic_system, newton,QP_secant,green,bss_tddft,bse_bsfxc,&
             TR_or_SI,gw0_raxis,tddft_r_space,bss_diago,bse_sex,&
 &           bss_haydock,gw0_ppa,gw0_cohsex,gw0_el_ph,tddft_g_space,bss_inv
  character(lchlen) :: always_runlevels,on_runlevels
@@ -45,7 +45,7 @@ subroutine INIT_barriers()
  metallic_system=n_met_bands/=n_full_bands
  !
  newton=trim(QP_solver)=='n'
- secant=trim(QP_solver)=='s'
+ QP_secant=trim(QP_solver)=='s'
  green=trim(QP_solver)=='g'
  !
  TR_or_SI=i_time_rev==1.or.i_space_inv==1

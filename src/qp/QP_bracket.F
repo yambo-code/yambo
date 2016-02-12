@@ -21,35 +21,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function secant(x1,f1,x2,f2,acc,nstep)
+integer function DYSON_bracket(x1,f1,x2,f2)
  !
- use pars, ONLY:SP
+ use pars,ONLY: SP
  !
  implicit none
- real(SP)     :: f1,f2,x1,x2,acc
- integer      :: nstep
+ real(SP)    :: f1,f2,x1,x2
  !
  ! Work Space
  !
- real(SP):: Dx
+ real(SP),parameter :: precision=1.E-5,factor=1.6
  !
- secant=0
- if (abs(f1)<=acc) secant=-1
- if (abs(f2)<=acc) secant=-2
- if (abs(f1)<=acc.or.abs(f2)<=acc) return
+ DYSON_bracket=0
+ if (f1*f2<precision) return
  if (abs(f1)<abs(f2)) then
-   secant=2
-   Dx=-f2*(x1-x2)/(f1-f2)
-   Dx=Dx/(1+nstep/20)
-   x2=x2+Dx
- else if (abs(f1)>abs(f2)) then
-   secant=1
-   Dx=-f1*(x1-x2)/(f1-f2)
-   Dx=Dx/(1+nstep/20)
-   x1=x1+Dx
- else if (abs(f1)==abs(f2)) then
-   secant=2
-   x2=x2+abs(f1)/(2+nstep/20)
+   x1=x1+factor*(x1-x2)
+   DYSON_bracket=1
+ else
+   x2=x2+factor*(x2-x1)
+   DYSON_bracket=2
  endif
  !
 end function

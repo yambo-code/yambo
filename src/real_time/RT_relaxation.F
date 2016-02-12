@@ -45,10 +45,9 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
- use SC,             ONLY:SC_bands,it_now
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use rt_ctl,         ONLY:it_start
- use real_time,      ONLY:I_relax_static,RT_is_dephased,RT_Deph_Matrix,&
+ use rt_ctl,         ONLY:it_start,it_dyn
+ use real_time,      ONLY:I_relax_static,RT_is_dephased,RT_Deph_Matrix,RT_bands,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
@@ -64,7 +63,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  type(bz_samp), intent(in)    :: k,q
  logical,       intent(in)    :: l_flag
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(inout) :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),   intent(inout) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !
@@ -82,7 +81,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !==================
  if (RT_is_dephased.and. .not.l_initial_equilibrium) then
    do ik=1,RT_nk
-     do ib1=SC_bands(1),SC_bands(2)
+     do ib1=RT_bands(1),RT_bands(2)
        I_relax_static(ib1,ib1,ik)=-cI*RT_Deph_Matrix(ib1,ib1,RT_all2ibz(ik))*dG_in(ib1,ib1,ik)
      enddo
    enddo
@@ -96,8 +95,8 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  l_eval=l_initial_equilibrium 
  !
  if (.not.l_initial_equilibrium) then
-   l_eval= ( RT_TIME_status(it_now)>0 .and. &
-&            (FIRST_step( ) .or. it_now-it_start+1<=Life_MEM_steps ) ).or. &
+   l_eval= ( RT_TIME_status(it_dyn)>0 .and. &
+&            (FIRST_step( ) .or. it_dyn-it_start+1<=Life_MEM_steps ) ).or. &
 &          Life_MEM_steps==1
  endif
  !
@@ -190,7 +189,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !==========================================
  !
  do ik=1,RT_nk
-   do ib1=SC_bands(1),SC_bands(2)
+   do ib1=RT_bands(1),RT_bands(2)
      !
      f_E_k=RT_E_occupations(ib1,ik)
      f_H_k=RT_H_occupations(ib1,ik)

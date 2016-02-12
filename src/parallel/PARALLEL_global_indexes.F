@@ -73,7 +73,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
  use openmp,        ONLY:OPENMP_set_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_K
 #if defined _SC
- use SC,            ONLY:SC_bands,B_mat_index
+ use SC,            ONLY:SC_bands
+#endif
+#if defined _RT
+ use real_time,     ONLY:RT_bands
+#endif
+#if defined _SC || defined _RT
+ use hamiltonian,   ONLY:B_mat_index,IP_h_bands
+ use collision,     ONLY:COLL_bands
 #endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_index,SLK_COM_A2A
@@ -262,7 +269,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    case("Real_Time") 
      K_range=Xk%nibz
      Q_range=(/1,q%nbz/)
-     n_bands=(/1,(SC_bands(2)-SC_bands(1)+1)**2/)
+     n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
 #endif
    case("Self_Energy") 
      QP_range=QP_n_states
@@ -275,8 +282,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      if (l_HF_and_locXC)  n_bands=(/1,max(E%nbm,QP_nb)/)
      if (l_gw0.or.l_life) n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
      if (.not.l_HF_and_locXC) n_bands(1)=QP_n_G_bands(1)
+#if defined _SC || defined _RT
+     if (l_eval_collisions)  n_bands=COLL_bands
+#endif
 #if defined _SC
-     if (l_eval_collisions.or.l_sc_run)  n_bands=SC_bands
+     if (l_sc_run)           n_bands=SC_bands
 #endif
 #if defined _ELPH
      if (l_elph_corr)                    n_bands=(/1,QP_PH_n_G_bands/)
@@ -498,7 +508,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Real_Time") then
    !===============================
    !
-#if defined _SC
+#if defined _RT
    !
    CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
    !
@@ -537,26 +547,26 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
    PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
    !
-   call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,SC_bands(2)-SC_bands(1)+1)-1 /),&
+   call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1 /),&
 &                      COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.)
    !
    call PARALLEL_live_message("Bands Matrix (ordered)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_B_mat_ordered%n_of_elements(PAR_IND_WF_b_ID+1),&
-&                             TOTAL=UP_matrix_index(1,SC_bands(2)-SC_bands(1)+1)-1,&
+&                             TOTAL=UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1,&
 &                             NCPU=PAR_COM_WF_b_INDEX%n_CPU)
    !
-   allocate(PAR_IND_WF_b%n_of_elements(PAR_COM_WF_b_INDEX%n_CPU),PAR_IND_WF_b%element_1D(SC_bands(2)))
-   PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=SC_bands(1)-1
+   allocate(PAR_IND_WF_b%n_of_elements(PAR_COM_WF_b_INDEX%n_CPU),PAR_IND_WF_b%element_1D(RT_bands(2)))
+   PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=RT_bands(1)-1
    PAR_IND_WF_b%element_1D(:)=.FALSE.
-   if (SC_bands(1)>1) PAR_IND_WF_b%element_1D(1:SC_bands(1)-1)=.TRUE.
+   if (RT_bands(1)>1) PAR_IND_WF_b%element_1D(1:RT_bands(1)-1)=.TRUE.
    !
    ! Non evolved bands loaded by all
    !
-   PAR_IND_WF_b%element_1D(:max(SC_bands(1)-1,1))=.TRUE.
+   PAR_IND_WF_b%element_1D(:max(RT_bands(1)-1,1))=.TRUE.
    !
-   do ib1=SC_bands(1),SC_bands(2)
-     do ib2=ib1,SC_bands(2)
-       if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) then
+   do ib1=RT_bands(1),RT_bands(2)
+     do ib2=ib1,RT_bands(2)
+       if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) then
          if (.not.PAR_IND_WF_b%element_1D(ib1)) then
            PAR_IND_WF_b%element_1D(ib1)=.TRUE.
            PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)+1
@@ -575,7 +585,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! PAR_WF_k is like PAR_IND_Xk_ibz with WF loaded only for 1 cpu per k-block
    !
    !.........................................................................
-   call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',SC_bands)
+   call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
    call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
@@ -584,9 +594,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
-   do ib1=SC_bands(1),SC_bands(2)
-     do ib2=SC_bands(1),SC_bands(2)
-       if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,SC_bands) ) ) then
+   do ib1=RT_bands(1),RT_bands(2)
+     do ib2=RT_bands(1),RT_bands(2)
+       if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,RT_bands) ) ) then
           PAR_IND_WF_b%element_1D(ib1)=.TRUE.
           PAR_IND_WF_b%element_1D(ib2)=.TRUE.
        endif
@@ -628,7 +638,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_live_message("Bands (WF)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1),&
-&                             TOTAL=SC_bands(2),&
+&                             TOTAL=RT_bands(2),&
 &                             NCPU=PAR_COM_WF_b_INDEX%n_CPU)
    !
    ! e-e scattering
@@ -692,7 +702,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   "k.b" -> QP (k,n,n')  
    !.........................................................................
    !
-   n_bands=SC_bands
+   n_bands=RT_bands
    !
    allocate(PAR_QP_index(QP_n_states),PAR_IND_QP%n_of_elements(ncpu),PAR_IND_QP%element_1D(QP_n_states)) 
    PAR_IND_QP%element_1D=.FALSE.
@@ -704,7 +714,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      ib2 = QP_table(i_qp,2)
      i_k = QP_table(i_qp,3)
      if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
-     if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,SC_bands) ) ) cycle
+     if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,RT_bands) ) ) cycle
      PAR_nQP=PAR_nQP+1
      PAR_QP_index(i_qp)=PAR_nQP
      PAR_IND_QP%element_1D(i_qp)=.TRUE.
@@ -714,7 +724,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_live_message("Bands Matrix",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1),&
-&                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+&                             TOTAL=(RT_bands(2)-RT_bands(1)+1)**2,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
    !.........................................................................
    !   "q" -> Q-points (BZ)
@@ -735,15 +745,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   "qp"  -> Bp_mat (m,m')
    !.........................................................................
    !
-   call G_b_to_B_mat(PAR_COM_PLASMA_INDEX,'Bp',SC_bands)
+   call G_b_to_B_mat(PAR_COM_Plasma_INDEX,'Bp',RT_bands)
    call PARALLEL_add_Q_to_K_list('k_qp_q_bz',PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_G_k,PAR_IND_G_k_ID,&
   &                              PAR_IND_Q,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
    call PARALLEL_live_message("K-q (ibz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_G_k%n_of_elements(PAR_IND_G_k_ID+1),&
-&                             TOTAL=Xk%nibz,NCPU=PAR_COM_PLASMA_INDEX%n_CPU)
+&                             TOTAL=Xk%nibz,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
-&                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_PLASMA_INDEX%n_CPU)
+&                             TOTAL=(RT_bands(2)-RT_bands(1)+1)**2,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
    !
    ! When the collisons are note evaluated the I/O is dictated by Response_G_space_Zero_Momentum
    ! and then resetted in RT_driver

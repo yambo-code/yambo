@@ -27,9 +27,9 @@ subroutine PLASMA_build_up(E,k,q)
  use stderr,        ONLY:intc
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp
- use SC,            ONLY:SC_bands
  use electrons,     ONLY:levels,n_sp_pol
  use plasma,        ONLY:PLASMA_alloc,PLASMA_redux_percent,N_plasma_poles_global,EH_gas
+ use collision,     ONLY:COLL_bands
  use QP_m,          ONLY:QP_n_states
  use parallel_m,    ONLY:PAR_nQ,PAR_IND_Q,PAR_Q_index,PP_redux_wait,PAR_COM_Q_index
  !
@@ -48,7 +48,7 @@ subroutine PLASMA_build_up(E,k,q)
  call k_build_up_BZ_tables(q)
  call k_build_up_BZ_tables(k)
  !
- N_poles_bare          = k%nbz*n_sp_pol*(SC_bands(2)-SC_bands(1)+1)**2
+ N_poles_bare          = k%nbz*n_sp_pol*(COLL_bands(2)-COLL_bands(1)+1)**2
  N_plasma_poles_global = N_poles_bare
  EH_gas%max_N_poles    = N_poles_bare
  !

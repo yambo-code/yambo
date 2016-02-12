@@ -27,12 +27,12 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  use drivers,        ONLY:l_elel_scatt
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,it_now
+ use rt_ctl,         ONLY:it_dyn
  use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_nk,&
 &                         ADD_to_saved_values,RT_life_interp_KIND,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
-&                         RT_H_occupations,RT_H_occupations_reference
+&                         RT_H_occupations,RT_H_occupations_reference,RT_bands
  !
  implicit none
  !
@@ -40,7 +40,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  type(bz_samp), intent(in)    :: k
  integer,       intent(in)    :: SAVE_index
  real(SP),      intent(in)    :: Time
- real(SP),      intent(inout) :: LIFE(SC_bands(1):SC_bands(2),RT_nk)
+ real(SP),      intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
  logical                      :: EVAL
  !
  ! Work Space
@@ -57,7 +57,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    if (l_elel_scatt     .and.SAVE_index==1) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
    if (.not.l_elel_scatt.and.SAVE_index==3) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
    !
-   do ib=SC_bands(1),SC_bands(2)
+   do ib=RT_bands(1),RT_bands(2)
      do ik=1,RT_nk
        call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:),Life_MEM_steps)
      enddo
@@ -72,17 +72,17 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    !
  else
    !
-   if (RT_TIME_status(it_now)==0 .or. (RT_TIME_status(it_now)>0.and..not.FIRST_step( )) ) then
+   if (RT_TIME_status(it_dyn)==0 .or. (RT_TIME_status(it_dyn)>0.and..not.FIRST_step( )) ) then
      !==============
      ! INTERPOLATE 
      !=============
-     do ib=SC_bands(1),SC_bands(2)
+     do ib=RT_bands(1),RT_bands(2)
        do ik=1,RT_nk
          call RT_Lifetimes_Interpolation(LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
        enddo
      enddo
      !
-   else if (RT_TIME_status(it_now)<0) then
+   else if (RT_TIME_status(it_dyn)<0) then
      !===============
      ! KEEP CONSTANT 
      !===============

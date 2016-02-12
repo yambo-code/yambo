@@ -27,7 +27,7 @@ subroutine RT_BGR(dG,E,k)
  !
  use pars,           ONLY:SP,cZERO,cI
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
- use SC,             ONLY:SC_bands,V_hartree_sc,V_xc_sc,rho_n
+ use SC,             ONLY:V_hartree_sc,V_xc_sc,rho_n
  use R_lattice,      ONLY:nkibz,bz_samp
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -39,7 +39,8 @@ subroutine RT_BGR(dG,E,k)
  use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
 &                         REF_V_hartree_sc,REF_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
 &                         l_RT_uses_E_DbGd,DbGd_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
-&                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR,RT_Vnl_xc
+&                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR,RT_Vnl_xc,&
+&                         RT_bands
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait
@@ -49,11 +50,11 @@ subroutine RT_BGR(dG,E,k)
  !
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k
- complex(SP),   intent(in)    :: dG(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),   intent(in)    :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !
- complex(SP)  :: H(SC_bands(2),SC_bands(2),n_sp_pol)
+ complex(SP)  :: H(RT_bands(2),RT_bands(2),n_sp_pol)
  real(SP)     :: deltaE
  integer      :: ib,ik,ik_ref,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_DbGd,i_sp
  !
@@ -105,7 +106,7 @@ subroutine RT_BGR(dG,E,k)
      if (eval_HARTREE) then
        H=cZERO
        call V_real_space_to_H(ik,V_hartree_sc,H,WF,'def')
-       do ib=SC_bands(1),SC_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
          BGR_Hartree(ib,ik,1)=real(H(ib,ib,1),SP)
        enddo
      endif
@@ -115,7 +116,7 @@ subroutine RT_BGR(dG,E,k)
      if (eval_DFT) then
        H=cZERO
        call V_real_space_to_H(ik,V_xc_sc,H,WF,'xc ')
-       do ib=SC_bands(1),SC_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
          BGR_V_xc(ib,ik,1)=real(H(ib,ib,1),SP)
        enddo
      endif
@@ -170,7 +171,7 @@ subroutine RT_BGR(dG,E,k)
        ik_ibz=RT_all2ibz(ik)
        ik_DbGd=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
        !
-       do ib=SC_bands(1),SC_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
          !
          deltaE=BGR_Hartree(ib,ik_ibz,1)+BGR_V_xc(ib,ik_ibz,1)+BGR_Self_Energy(ib,ik_ibz,1)
          !

@@ -35,10 +35,9 @@ subroutine COLLISIONS_momentum(E,k,q)
  use collision,     ONLY:elemental_collision,elemental_collision_free,nP_collisions,&
 &                        COLLISIONS_IO_status,P_collisions,elemental_collision_alloc,&
 &                        elemental_collision_copy,nP_collisions,&
-&                        COLLISIONS_parallel_SC_structure
+&                        COLLISIONS_parallel_SC_structure,COLL_bands
  use QP_m,          ONLY:QP_n_states,QP_QED_ng,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
- use SC,            ONLY:SC_bands
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -71,11 +70,11 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  if (WF_buffered_IO) then
    !
-   call WF_load(WF_buffer,0,1,SC_bands,(/1,k%nibz/),space='B',title='-BUFFER')
+   call WF_load(WF_buffer,0,1,COLL_bands,(/1,k%nibz/),space='B',title='-BUFFER')
    !
  endif
  !
- call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),SC_bands,(/1,k%nibz/),space='R',title='-Momentum Collisions')
+ call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),COLL_bands,(/1,k%nibz/),space='R',title='-Momentum Collisions')
  !
 #if defined _TIMING
  call timing('Momentum Collisions',OPR='start')
@@ -112,7 +111,7 @@ subroutine COLLISIONS_momentum(E,k,q)
      !
      i_q_mem=PAR_Q_index(i_q_bz)
      !
-     B_loop: do i_m=SC_bands(1),SC_bands(2) 
+     B_loop: do i_m=COLL_bands(1),COLL_bands(2) 
        !
        call SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,G0=i_G0)
        !

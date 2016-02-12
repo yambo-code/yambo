@@ -44,7 +44,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use QP_m,           ONLY:QP_nk,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp
- use rt_ctl,         ONLY:ID,RT_IO_G_steps,it_start
+ use rt_ctl,         ONLY:ID,RT_IO_G_steps,it_start,it_dyn
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,&
@@ -52,9 +52,9 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,MEM_index
+&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,MEM_index,RT_bands
  use fields,         ONLY:A_vecpot,A_vecpot_previous
- use SC,             ONLY:SC_bands,H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho,it_now
+ use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF
@@ -104,7 +104,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  RT_P              =cZERO
  RT_ind_J          =cZERO
  ! 
- do ib=SC_bands(1),SC_bands(2)
+ do ib=RT_bands(1),RT_bands(2)
    do ik=1,k%nibz
      do ik_RT_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_E_rim=ik_RT_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
@@ -123,7 +123,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Reference occupations and G
  !
  G_lesser_reference=G_lesser(:,:,:,1)
- do ib=SC_bands(1),SC_bands(2)
+ do ib=RT_bands(1),RT_bands(2)
    RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
    RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
  enddo
@@ -132,9 +132,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  !====================================
  !
  if(associated(E%Eo)) then
-   E_bare=E%Eo(:SC_bands(2),:,:)
+   E_bare=E%Eo(:RT_bands(2),:,:)
  else
-   E_bare=E%E(:SC_bands(2),:,:)
+   E_bare=E%E(:RT_bands(2),:,:)
  endif
  call SC_bare_Hamiltonian(E,k,k)
  !
@@ -142,9 +142,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  !==========================
  do ik=1,QP_nk
    !
-   call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF,'def') 
+   call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:RT_bands(2),1:RT_bands(2),ik,1:n_sp_pol),WF,'def') 
    !
-   call V_real_space_to_H(ik,V_xc,        XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF,'xc ') 
+   call V_real_space_to_H(ik,V_xc,        XC0_and_HARTREE0(1:RT_bands(2),1:RT_bands(2),ik,1:n_sp_pol),WF,'xc ') 
    !
  enddo
  !
@@ -200,7 +200,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  if (RESTART) then
    !
    ! I use G_lesser(:,:,:) to reconstruct everything
-   ! and I read it_now from the databases. 
+   ! and I read it_dyn from the databases. 
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -218,8 +218,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Note that the databases must be loaded at the correct time:
    !
-   NE_i_time=((it_now-1)/RT_IO_G_steps)*RT_IO_G_steps+1
-   it_now=NE_i_time
+   NE_i_time=((it_dyn-1)/RT_IO_G_steps)*RT_IO_G_steps+1
+   it_dyn=NE_i_time
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
@@ -243,20 +243,20 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !
-   if(it_now<NE_steps) then
-     call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100._SP)
+   if(it_dyn<NE_steps) then
+     call msg('snr','[RT] Number of steps done    [o/o]:',real(it_dyn)/real(NE_steps)*100._SP)
    endif
    !
    ! [Andrea 23/9/2011] The RESTART value for it_start is tricky.
    ! The order in which DBs are written in RT_driver makes in such a way
-   ! that the latest step written i it_now-1. This is beacause RT_databases_IO is called BEFORE RT_Collision.
+   ! that the latest step written i it_dyn-1. This is beacause RT_databases_IO is called BEFORE RT_Collision.
    !
-   ! it_start is used here to call RT_Ext_fields that must evalute the vector potential@it_now-1. 
-   ! This MUST be consistent with the restart density and G_lesser that are known@it_now-1.
+   ! it_start is used here to call RT_Ext_fields that must evalute the vector potential@it_dyn-1. 
+   ! This MUST be consistent with the restart density and G_lesser that are known@it_dyn-1.
    !
-   ! This is way it_start=it_now. In RT_driver the step is done from it_now to it_now+1.
+   ! This is way it_start=it_dyn. In RT_driver the step is done from it_dyn to it_dyn+1.
    !
-   it_start=it_now
+   it_start=it_dyn
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
@@ -279,7 +279,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Update occupations after manual pump or G_lesser from DB (?)
  !==============================================================
- do ib=SC_bands(1),SC_bands(2)
+ do ib=RT_bands(1),RT_bands(2)
    do ik=1,k%nibz
      do ik_RT_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        RT_E_occupations(ib,ik_RT_rim)     =  aimag(dG_lesser(ib,ib,ik_RT_rim,1))+aimag(G_lesser_reference(ib,ib,ik_RT_rim))
@@ -302,32 +302,32 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Apply QP-corrections 
  !======================
  !
- do ib=SC_bands(1),SC_bands(2)
+ do ib=RT_bands(1),RT_bands(2)
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
 &                              -E_bare(ib,1:QP_nk,1:n_sp_pol)+E%E(ib,1:QP_nk,1:n_sp_pol)
  enddo
  !
- do ib=1,SC_bands(1)-1
+ do ib=1,RT_bands(1)-1
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
-&                              -E_bare(SC_bands(1),1:QP_nk,1:n_sp_pol)+E%E(SC_bands(1),1:QP_nk,1:n_sp_pol)
+&                              -E_bare(RT_bands(1),1:QP_nk,1:n_sp_pol)+E%E(RT_bands(1),1:QP_nk,1:n_sp_pol)
  enddo
  !
  ! Store the starting Eigenvalues in Eo
  !======================================
  !
- if (.not.associated(E%Eo)) allocate(E%Eo(SC_bands(2),QP_nk,n_sp_pol))
- E%Eo(1:SC_bands(2),1:QP_nk,1:n_sp_pol)=E%E(1:SC_bands(2),1:QP_nk,1:n_sp_pol)
+ if (.not.associated(E%Eo)) allocate(E%Eo(RT_bands(2),QP_nk,n_sp_pol))
+ E%Eo(1:RT_bands(2),1:QP_nk,1:n_sp_pol)=E%E(1:RT_bands(2),1:QP_nk,1:n_sp_pol)
  !
  ! Define RT_eh_en
  !================
  if( all(RT_eh_en(:)==0._SP) ) then
    ! Case A: was not defined in input
    if (l_RT_uses_E_DbGd) then
-     RT_eh_en(1)=minval(E%E_DbGd(SC_bands(1):SC_bands(2),:,:)) 
-     RT_eh_en(2)=maxval(E%E_DbGd(SC_bands(1):SC_bands(2),:,:)) 
+     RT_eh_en(1)=minval(E%E_DbGd(RT_bands(1):RT_bands(2),:,:)) 
+     RT_eh_en(2)=maxval(E%E_DbGd(RT_bands(1):RT_bands(2),:,:)) 
    else
-     RT_eh_en(1)=minval(E%E(SC_bands(1):SC_bands(2),:,:)) 
-     RT_eh_en(2)=maxval(E%E(SC_bands(1):SC_bands(2),:,:)) 
+     RT_eh_en(1)=minval(E%E(RT_bands(1):RT_bands(2),:,:)) 
+     RT_eh_en(2)=maxval(E%E(RT_bands(1):RT_bands(2),:,:)) 
    endif
  else
    ! Case B: was defined in input

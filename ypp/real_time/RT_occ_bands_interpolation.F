@@ -31,10 +31,9 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  use YPP,            ONLY:BANDS_steps,Nel_fac,coo_in,coo_out,k_transform,interp_grid,&
 &                         l_RT_life_bands,l_RT_occ_bands,electrons_bands_interpolate
  use stderr,         ONLY:real2ch,intc
- use SC,             ONLY:SC_bands
- use parser_m,        ONLY:parser
+ use parser_m,       ONLY:parser
  use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply,RT_carriers_object
- use real_time,      ONLY:RT_carriers
+ use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation
  !
  implicit none
@@ -75,7 +74,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  ! Perform the energies interpolation
  !======================================
- call electrons_bands_interpolate(E_bands,K_bands,ID_interp,USER_k,INTERP_k,CIRCUIT_k,SC_bands,bands_interpolated)
+ call electrons_bands_interpolate(E_bands,K_bands,ID_interp,USER_k,INTERP_k,CIRCUIT_k,RT_bands,bands_interpolated)
  !
  ! Perform the occupations interpolation
  !======================================
@@ -88,15 +87,15 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Check if Nel has to be renormalized
  call parser('NormN',l_normalize_Nel)
  !
- allocate(variable_to_fit(SC_bands(1):SC_bands(2),1:n_sp_pol,RT_carriers%nk))
+ allocate(variable_to_fit(RT_bands(1):RT_bands(2),1:n_sp_pol,RT_carriers%nk))
  !
- allocate(fit_on_circuit(SC_bands(1):SC_bands(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
+ allocate(fit_on_circuit(RT_bands(1):RT_bands(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
  !
  do i_T=1,n_T_steps
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   call RT_apply(SC_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
    !
    Real_Nhole=0._SP
    Real_Nel=0._SP
@@ -122,8 +121,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        ik      =RT_carriers%table(i_RT,3)
        i_sp_pol=RT_carriers%table(i_RT,4)
        !
-       if(l_RT_occ_Bands ) variable_to_fit(ib,i_sp_pol,ik)=    RT_carriers%delta_f(i_RT)
-       if(l_RT_life_Bands) variable_to_fit(ib,i_sp_pol,ik)=sum(RT_carriers%GAMMA_bare(i_RT,:))
+       if (l_RT_occ_Bands ) variable_to_fit(ib,i_sp_pol,ik)=    RT_carriers%delta_f(i_RT)
+       if (l_RT_life_Bands) variable_to_fit(ib,i_sp_pol,ik)=sum(RT_carriers%GAMMA_bare(i_RT,:))
        !
      enddo
      !
@@ -159,16 +158,16 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    ! Normilize the occupations
    !
    if(l_RT_occ_Bands) then
-     Nhole=-sum(fit_on_circuit(SC_bands(1):E_bands%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
-     Nel=   sum(fit_on_circuit(E_bands%nbf+1:SC_bands(2),:,:,i_T))/real(CIRCUIT_k%nibz)
+     Nhole=-sum(fit_on_circuit(RT_bands(1):E_bands%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
+     Nel=   sum(fit_on_circuit(E_bands%nbf+1:RT_bands(2),:,:,i_T))/real(CIRCUIT_k%nibz)
      !
      if(.not.l_nearest_neig_interp) then
        if(Nhole>0.and.l_normalize_Nel) &
-&          fit_on_circuit(SC_bands(1):E_bands%nbf,:,:,i_T)=&
-&            fit_on_circuit(SC_bands(1):E_bands%nbf,:,:,i_T)/Nhole*Real_Nhole
+&          fit_on_circuit(RT_bands(1):E_bands%nbf,:,:,i_T)=&
+&            fit_on_circuit(RT_bands(1):E_bands%nbf,:,:,i_T)/Nhole*Real_Nhole
        if(Nel>0  .and.l_normalize_Nel) &
-&          fit_on_circuit(E_bands%nbf+1:SC_bands(2),:,:,i_T)=&
-&            fit_on_circuit(E_bands%nbf+1:SC_bands(2),:,:,i_T)/Nel*Real_Nel
+&          fit_on_circuit(E_bands%nbf+1:RT_bands(2),:,:,i_T)=&
+&            fit_on_circuit(E_bands%nbf+1:RT_bands(2),:,:,i_T)/Nel*Real_Nel
      endif
      !
    endif
@@ -185,8 +184,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !==========================
  !
  headings(1)="Step"
- if(l_RT_occ_Bands)  headings(3)=' occ'
- if(l_RT_life_Bands) headings(3)='LIFE'
+ if (l_RT_occ_Bands ) headings(3)=' occ'
+ if (l_RT_life_Bands) headings(3)='LIFE'
  !
  coo_out=coo_in
  !
@@ -202,7 +201,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    call msg('o '//file_name_rt," "," ",INDENT=0)
    call msg('o '//file_name_rt,"#",' t= '//trim(real2ch( io_Time/FS2AUT )),INDENT=0)
    !
-   do ib=SC_bands(1),SC_bands(2)
+   do ib=RT_bands(1),RT_bands(2)
      !
      call msg('o '//file_name_rt,"#"," ",INDENT=0)
      !
@@ -215,8 +214,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        !
        values(1)=real(ik,SP)
        values(2)=bands_interpolated(ib,1,ik)*HA2EV
-       if(l_RT_occ_Bands)  values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
-       if(l_RT_life_Bands) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
+       if (l_RT_occ_Bands ) values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
+       if (l_RT_life_Bands) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
        call msg('o '//file_name_rt,' ',values,INDENT=0,USE_TABS=.true.)
        !
      enddo

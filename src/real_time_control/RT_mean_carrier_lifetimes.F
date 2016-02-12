@@ -29,8 +29,7 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
-&                         NE_i_time,REF_Lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk
- use SC,             ONLY:SC_bands
+&                         NE_i_time,REF_Lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_bands
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
  implicit none
@@ -42,9 +41,9 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  !
  integer            :: ib,ik
  real(SP)           :: n_states,pre_factor,sum_lifetimes(2)
- real(SP)           :: EE_occupations(SC_bands(1):SC_bands(2),RT_nk),&
-&                      EP_occupations(SC_bands(1):SC_bands(2),RT_nk),&
-&                      LOCAL_Lifetime(SC_bands(1):SC_bands(2),RT_nk,6)
+ real(SP)           :: EE_occupations(RT_bands(1):RT_bands(2),RT_nk),&
+&                      EP_occupations(RT_bands(1):RT_bands(2),RT_nk),&
+&                      LOCAL_Lifetime(RT_bands(1):RT_bands(2),RT_nk,6)
  !
  if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return
  !
@@ -63,7 +62,7 @@ subroutine RT_mean_carrier_lifetimes(E,k)
    !
    pre_factor=k%weights(RT_all2ibz(ik))/real(RT_Nk_ibz(RT_all2ibz(ik)))
    !
-   do ib=SC_bands(1),SC_bands(2)
+   do ib=RT_bands(1),RT_bands(2)
      !
      n_states=n_states+pre_factor
      !

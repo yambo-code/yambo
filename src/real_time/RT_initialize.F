@@ -25,7 +25,6 @@ subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
 &                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf
- use SC,             ONLY:SC_bands
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,SPEED_OF_LIGHT
  use stderr,         ONLY:intc
@@ -36,7 +35,7 @@ subroutine RT_initialize(E,k,q)
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
 &                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
- use real_time,      ONLY:RT_step,l_NE_with_fields, &
+ use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_is_dephased,RAD_LifeTime,       &
@@ -187,7 +186,7 @@ subroutine RT_initialize(E,k,q)
  !=========================
  T_memory=0._SP
  if (l_elph_scatt.and.NE_MEM_treshold>0.) then
-   T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_treshold)
+   T_memory=-1./minval( abs(E%W(RT_bands(1):RT_bands(2),:,:)))*log(NE_MEM_treshold)
    G_MEM_steps=T_memory/RT_step
  endif
  !
@@ -256,7 +255,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! RIM support
  !=============
- l_RT_uses_E_DbGd=BZ_DbGd_tot_nkpts>0.and.BZ_DbGd_nbands>=SC_bands(2).and..not.DbGd_is_symmetry_expanded
+ l_RT_uses_E_DbGd=BZ_DbGd_tot_nkpts>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
  !
  ! Number of K-points
  !====================

@@ -28,7 +28,7 @@ subroutine RT_occupations_analyze(kpt,En)
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
  use rt_ctl,         ONLY:RT_apply
- use SC,             ONLY:SC_bands
+ use real_time,      ONLY:RT_bands
  use YPP,            ONLY:l_RT_occ_time,l_RT_occ_energy,l_RT_life_bands,l_RT_occ_bands,&
 &                         l_RT_occ_2D_dos,RT_IO_time_range_setup
  !
@@ -45,7 +45,7 @@ subroutine RT_occupations_analyze(kpt,En)
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
- call RT_apply(SC_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
+ call RT_apply(RT_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
  !
  call RT_IO_time_range_setup(n_T_steps)
  !
@@ -53,7 +53,7 @@ subroutine RT_occupations_analyze(kpt,En)
  !===========================
  call QP_state_table_setup(en)
  !
- call QP_apply(SC_bands,En,kpt,'G',msg_fmt='s')
+ call QP_apply(RT_bands,En,kpt,'G',msg_fmt='s')
  !
  ! Occupations energy plot 
  !=========================

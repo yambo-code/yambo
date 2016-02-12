@@ -26,16 +26,15 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_PLASMA_INDEX
- use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk
+ use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk,RT_bands
  !
  implicit none
  !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k
  integer,       intent(in)    :: SAVE_index
- real(SP),      intent(inout) :: LIFE(SC_bands(1):SC_bands(2),RT_nk)
+ real(SP),      intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): DS AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,25 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function RIntegrate(F,W,N)
+module hamiltonian
  !
- use pars,    ONLY:SP
- implicit none
- integer,     intent(in)  :: N
- real(SP),    intent(in)  :: W(N),F(N)
- real(SP)                 :: RIntegrate
+ integer           :: IP_h_bands(2)
  !
- ! Work Space
- !
- integer      :: i_w
- real(SP)     :: M,Q
- !
- RIntegrate=0._SP
- !
- do i_w=1,N-1
-   M=(F(i_w)-F(i_w+1))/(W(i_w)-W(i_w+1))
-   Q=F(i_w)-M*W(i_w)
-   RIntegrate=RIntegrate+1._SP/2._SP*M*(W(i_w+1)**2-W(i_w)**2)+Q*(W(i_w+1)-W(i_w))
- enddo
- !
-end function
+ contains
+   !
+   integer function B_mat_index(ib1,ib2,nb)
+     integer :: ib1,ib2,nb(2)
+     !
+     B_mat_index=(ib1-nb(1))*(nb(2)-nb(1)+1)+ib2-nb(1)+1
+     !
+   end function
+   !
+end module

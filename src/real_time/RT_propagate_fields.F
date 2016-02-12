@@ -43,10 +43,10 @@ subroutine RT_propagate_fields(k,E,A_new,A_old,T,T_step)
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use SC,             ONLY:SC_bands
  use X_m,            ONLY:global_gauge
  use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,&
-&                         l_RT_induced_field,RT_nk,integrator_step
+&                         l_RT_induced_field,RT_nk,integrator_step,&
+&                         RT_bands
  use fields,         ONLY:gauge_field,A_ind,A_ind_previous,A_ext
  !
  implicit none

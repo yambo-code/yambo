@@ -35,8 +35,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  use LIVE_t,         ONLY:live_timing
  use YPP,            ONLY:RT_IO_carriers
  use rt_ctl,         ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
- use real_time,      ONLY:RT_carriers
- use SC,             ONLY:SC_bands
+ use real_time,      ONLY:RT_carriers,RT_bands
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,PP_redux_wait
  use parser_m,       ONLY:parser
@@ -91,7 +90,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   call RT_apply(SC_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
    !
    el_dos(:,:)=0._SP
    !

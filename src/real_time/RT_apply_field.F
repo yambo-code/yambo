@@ -26,17 +26,16 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  ! This subroutine add the vector potential to the Hamiltonian
  !
  use pars,           ONLY:SP,cI
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_sp_pol
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
- use electrons,      ONLY:n_sp_pol
  use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
- use SC,             ONLY:SC_bands
+ use real_time,      ONLY:RT_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
  !
  implicit none
  integer,           intent(in) :: ik
- complex(SP),    intent(inout) :: H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol)
+ complex(SP),    intent(inout) :: H_nl_sc(RT_bands(2),RT_bands(2),n_sp_pol)
  type(gauge_field), intent(in) :: A_input
  ! 
  ! Work Space
@@ -55,14 +54,14 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    ! in case of complex Efield puts the correct Hermitian matrix
    ! and the intraband optical matrix elements have been set to zero
    !
-   do i1=SC_bands(1),SC_bands(2)
+   do i1=RT_bands(1),RT_bands(2)
      CURR(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)+A_vec_pot(1:3)/2._SP
      A_dot_J=sum(A_vec_pot(1:3)*CURR(1:3)) 
      H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(A_dot_J,SP)
    enddo
    !
-   do i1=SC_bands(1),SC_bands(2)
-     do i2=i1+1,SC_bands(2)
+   do i1=RT_bands(1),RT_bands(2)
+     do i2=i1+1,RT_bands(2)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
        !     
@@ -85,14 +84,14 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    !
    ! Intraband terms
    !
-   do i1=SC_bands(1),SC_bands(2)
+   do i1=RT_bands(1),RT_bands(2)
      POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),1)
      E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
      H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(E_dot_P,SP)
    enddo
    !
-   do i1=SC_bands(1),SC_bands(2)
-     do i2=i1+1,SC_bands(2)
+   do i1=RT_bands(1),RT_bands(2)
+     do i2=i1+1,RT_bands(2)
        !
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !

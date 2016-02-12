@@ -34,13 +34,12 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
  ! --------------------------------------
  !
  use pars,           ONLY:SP,cZERO,cONE
- use SC,             ONLY:SC_bands
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_EXP,l_RT_INTERPOLATE,l_RT_RWA, &
 &                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
 &                         RT_H_occupations,RT_delta0_occupations,l_RT_HEUN,       &
-&                         integrator_step,RT_nk,l_RT_induced_field,NE_i_time
+&                         integrator_step,RT_nk,l_RT_induced_field,NE_i_time,RT_bands
  use fields,         ONLY:gauge_field,Efield,Efield
  use electrons,      ONLY:levels,spin_occ
 #if defined _TIMING
@@ -51,13 +50,13 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
  type(bz_samp),        intent(in) :: k,q
  type(levels),         intent(in) :: E
  real(SP),             intent(in) :: T_step,Time
- complex(SP),          intent(in) :: dG_old(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP),       intent(inout) :: dG_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),       intent(inout) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  type(gauge_field),    intent(in) :: A_in
  type(gauge_field), intent(inout) :: A_out
  !
- complex(SP) :: dG1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP) :: dG2(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP) :: dG1(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP) :: dG2(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !
@@ -158,18 +157,18 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      !  T0+dt = T+dt'
      !
      real(SP),       intent(in) :: dT,dTp
-     complex(SP),    intent(in) :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
-     complex(SP),   intent(out) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+     complex(SP),    intent(in) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+     complex(SP),   intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
      !
      integer                :: ik,ib
-     complex(SP)            :: G_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
-     complex(SP)            :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
-     complex(SP)            :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
-     complex(SP)            :: I1_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP)            :: G_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     complex(SP)            :: I1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     complex(SP)            :: I2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     complex(SP)            :: I1_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
      !
      if(l_RT_EXP) then
        I1_matrix=cZERO
-       do ib=SC_bands(1),SC_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
          I1_matrix(ib,ib)=cONE
        enddo
      endif
@@ -238,7 +237,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
    subroutine RT_G_symmetrization(G_inout)
      !
-     complex(SP), intent(inout) :: G_inout(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+     complex(SP), intent(inout) :: G_inout(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
      !
      integer                :: ik,ib,ibp
      real(SP)               :: E_occ_tmp,H_occ_tmp
@@ -246,7 +245,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       do ib=SC_bands(1),SC_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
          !
          G_inout(ib,ib,ik)=cmplx(0._SP,aimag(G_inout(ib,ib,ik)))
          !
@@ -256,7 +255,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
          if ( E_occ_tmp<0._SP .or. H_occ_tmp>spin_occ ) G_inout(ib,ib,ik)=                      G_lesser_reference(ib,ib,ik)
          if ( H_occ_tmp<0._SP .or. E_occ_tmp>spin_occ ) G_inout(ib,ib,ik)=cmplx(0._SP,spin_occ)-G_lesser_reference(ib,ib,ik)
          !
-         do ibp=ib+1,SC_bands(2)
+         do ibp=ib+1,RT_bands(2)
            !
            tmp=( G_inout(ib,ibp,ik)-conjg(G_inout(ibp,ib,ik)) )/2._SP
            !
@@ -274,7 +273,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
    subroutine RT_update_occ(G_inonly)
      !
-     complex(SP), intent(in) :: G_inonly(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+     complex(SP), intent(in) :: G_inonly(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
      !
      integer                 :: ik,ib,ibp
      !
@@ -285,7 +284,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       do ib=SC_bands(1),SC_bands(2)
+       do ib=RT_bands(1),RT_bands(2)
          !
          RT_E_occupations(ib,ik)= aimag(G_inonly(ib,ib,ik))+aimag(G_lesser_reference(ib,ib,ik))
          !

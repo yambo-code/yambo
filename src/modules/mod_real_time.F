@@ -59,6 +59,7 @@ module real_time
  !
  real(SP) :: NE_time ! <- incremented
  real(SP) :: NE_tot_time ! Total (fixed)
+ !
  integer  :: NE_i_time ! = (NE_time-1)/RT_step
  integer  :: NE_steps
  !
@@ -118,6 +119,8 @@ module real_time
  ! of a post-run I need to keep here the number of k-points 
  !
  integer                 :: RT_nk
+ integer                 :: RT_bands(2)
+ integer                 :: RT_nbands
  !
  ! BGR
  !----------------------------
@@ -446,6 +449,8 @@ module real_time
      type(levels), intent(in) :: en
      !
      call SC_alloc(en)
+     !
+     RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
      !DEBUG...WHY?>
      !if (l_HF_and_locXC.or.l_sc_hf.or.l_sc_cohsex) then

@@ -34,9 +34,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use plasma,          ONLY:N_plasma_poles_global
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
 #if defined _QED || defined _RT
- use SC,              ONLY:SC_bands
  use global_XC,       ONLY:SE_GW_QED
- use collision,       ONLY:P_collisions
+ use collision,       ONLY:P_collisions,COLL_bands
 #endif
  use collision,       ONLY:V_kind,GW_NEQ_collisions,SEX_collisions,Fock_collisions,&
 &                          n_COLLISIONS,COLLISIONS_state
@@ -221,7 +220,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
              GW_NEQ_collisions(i_qp_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_collisions(1)%v_r(ic)
            enddo
          else
-           do i_b=SC_bands(1),SC_bands(2)
+           do i_b=COLL_bands(1),COLL_bands(2)
              do i_g=1,QP_QED_ng
                ic=ic+1
                P_collisions(i_qp_mem)%v3_r(i_g,i_b,iqbz)=P_collisions(1)%v_r(ic)

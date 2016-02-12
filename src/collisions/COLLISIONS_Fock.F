@@ -35,10 +35,10 @@ subroutine COLLISIONS_Fock(E,k,q)
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
 &                        Fock_collisions,nFock_collisions,COLLISIONS_IO_status,&
-&                        elemental_collision_alloc
+&                        elemental_collision_alloc,COLL_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
- use SC,            ONLY:SC_bands,B_mat_index
+ use hamiltonian,   ONLY:B_mat_index
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -78,11 +78,11 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  if (WF_buffered_IO) then
    !
-   call WF_load(WF_buffer,0,1,SC_bands,(/1,k%nibz/),space='B',title='-BUFFER')
+   call WF_load(WF_buffer,0,1,COLL_bands,(/1,k%nibz/),space='B',title='-BUFFER')
    !
  endif
  !
- call WF_load(WF,N_g_vecs,maxval(qindx_S(:,:,2)),SC_bands,(/1,k%nibz/),title='-Fock Collisions')
+ call WF_load(WF,N_g_vecs,maxval(qindx_S(:,:,2)),COLL_bands,(/1,k%nibz/),title='-Fock Collisions')
  !
  isc%qs    =1
  isc%ngrho =N_g_vecs
@@ -161,17 +161,17 @@ subroutine COLLISIONS_Fock(E,k,q)
      isc%qs(1) =i_kmq_G0
      iscp%qs(1)=i_kmq_G0
      !
-     do i_mp=SC_bands(1),SC_bands(2)
+     do i_mp=COLL_bands(1),COLL_bands(2)
        !
        iscp%os(1)=i_mp
        !
        call scatter_Bamp(iscp)
        !
-       do i_np=SC_bands(1),SC_bands(2)
+       do i_np=COLL_bands(1),COLL_bands(2)
          !
          ! COLLISIONS(n,n',qp_n_states) = \sum_{G,q} ( rho(m,n,G,q,k) x rho*(m',n',G,q,k) /|q+G|^2 )
          !
-         if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,SC_bands) ) ) cycle
+         if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,COLL_bands) ) ) cycle
          !
          isc%os(1)=i_np
          !

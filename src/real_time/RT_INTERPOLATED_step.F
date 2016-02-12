@@ -24,18 +24,17 @@
 subroutine RT_INTERPOLATED_step(G_new_k,G_old_k,I1_k,I2_k,ik,Time,deltaT)
  !
  use pars,           ONLY:SP,cI,cZERO
- use SC,             ONLY:SC_bands,it_now
- use rt_ctl,         ONLY:it_start
- use real_time,      ONLY:I_MEM_steps,RT_step,MEM_index,I_coh_SAVE
+ use rt_ctl,         ONLY:it_start,it_dyn
+ use real_time,      ONLY:I_MEM_steps,RT_step,MEM_index,I_coh_SAVE,RT_bands
  !
  implicit none
  !
  integer,     intent(in)  :: ik
  real(SP),    intent(in)  :: Time,deltaT
- complex(SP), intent(in)  :: G_old_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(in)  :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(in)  :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(in)  :: G_old_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)  :: I1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)  :: I2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(out) :: G_new_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  ! Work Space
  !
@@ -44,20 +43,20 @@ subroutine RT_INTERPOLATED_step(G_new_k,G_old_k,I1_k,I2_k,ik,Time,deltaT)
 &                      P_real(I_MEM_steps),P_aimag(I_MEM_steps),T_o
  real(SP),parameter :: treshold=1.E-8
  !
- do i_n=SC_bands(1),SC_bands(2)
-   do i_np=SC_bands(1),SC_bands(2)
+ do i_n=RT_bands(1),RT_bands(2)
+   do i_np=RT_bands(1),RT_bands(2)
      !
-     i_t_mem = MEM_index(it_now,I_MEM_steps)
+     i_t_mem = MEM_index(it_dyn,I_MEM_steps)
      I_coh_SAVE(i_n,i_np,ik,i_t_mem) = I1_k(i_n,i_np)-I2_k(i_n,i_np)
      !
-     if (it_now-it_start+1<2*I_MEM_steps.or.abs(I_coh_SAVE(i_n,i_np,ik,i_t_mem))<treshold.or.i_n==i_np) then
+     if (it_dyn-it_start+1<2*I_MEM_steps.or.abs(I_coh_SAVE(i_n,i_np,ik,i_t_mem))<treshold.or.i_n==i_np) then
        !
        G_new_k(i_n,i_np)=G_old_k(i_n,i_np)-cI*deltaT*(I1_k(i_n,i_np)-I2_k(i_n,i_np))
        !
      else
        !
        do i_f=1,I_MEM_steps
-         i_t = it_now-I_MEM_steps+i_f
+         i_t = it_dyn-I_MEM_steps+i_f
          i_t_mem = MEM_index(i_t,I_MEM_steps)
          Times_SAVE(i_f)=(i_t-1)*RT_step
          I_real(i_f) =real(I_coh_SAVE(i_n,i_np,ik,i_t_mem))

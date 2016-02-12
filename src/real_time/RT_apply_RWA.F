@@ -24,10 +24,9 @@
 subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  !
  use pars,           ONLY:SP
- use SC,             ONLY:SC_bands
  use electrons,      ONLY:levels
  use real_time,      ONLY:RT_ibz_coo,DbGd_ibz_coo,l_RT_uses_E_DbGd,NE_i_Time, &
-&                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_dephased
+&                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_dephased,RT_bands
  !
  implicit none
  !
@@ -35,8 +34,8 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  type(levels), intent(in)     :: E
  real(SP),     intent(in)     :: dT,dTp
  !
- complex(SP),  intent(in)     :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP),  intent(inout)  :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP),  intent(in)     :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP),  intent(inout)  :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  ! Work space
  !
@@ -47,8 +46,8 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  ik_ibz=RT_all2ibz(ik)
  ik_DbGd=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
  !
- do i_n=SC_bands(1),SC_bands(2)
-   do i_np=i_n+1,SC_bands(2)
+ do i_n=RT_bands(1),RT_bands(2)
+   do i_np=i_n+1,RT_bands(2)
      !
      sumGAMMA=0._SP
      !

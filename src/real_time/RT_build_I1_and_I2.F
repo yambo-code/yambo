@@ -24,20 +24,19 @@
 subroutine RT_build_I1_and_I2(G_input_k,ik,I1_k,I2_k)
  !
  use pars,           ONLY:SP,cZERO
- use real_time,      ONLY:Ho_plus_Sigma
- use SC,             ONLY:SC_bands,SC_nbands
+ use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands
  use wrapper_omp,    ONLY:M_by_M_omp
  !
  implicit none
  !
  integer, intent(in)      :: ik
- complex(SP), intent(in)  :: G_input_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(out) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(out) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(in)  :: G_input_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(out) :: I1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(out) :: I2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  I1_k=cZERO
  I2_k=cZERO
- call M_by_M_omp('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),G_input_k,I1_k)
- call M_by_M_omp('n','n',SC_nbands,G_input_k,Ho_plus_Sigma(:,:,ik,1),I2_k)     
+ call M_by_M_omp('n','n',RT_nbands,Ho_plus_Sigma(:,:,ik,1),G_input_k,I1_k)
+ call M_by_M_omp('n','n',RT_nbands,G_input_k,Ho_plus_Sigma(:,:,ik,1),I2_k)     
  !
 end subroutine RT_build_I1_and_I2

@@ -53,7 +53,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
-CLEANS   = clean clean_all
+CLEANS   = clean_fast clean clean_extlibs clean_all
 PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr \
            ypp_ph ypp_sc ypp_rt ypp_magnetic 
 BROKEN   = yambo_surf ypp_surf ydb
@@ -202,22 +202,23 @@ ydb: libs
 	@LIBS2DO="$(YDBLIBS)" ; $(mksrc)
 	@X2DO="ydb" ;XPATH="ydb";XLIBS="$(YDBLIBS)";$(mkx)
 #
-clean: clean_fast
 clean_fast: 
 	@$(objects_clean)
 	@$(lib_mod_clean)
+	@$(lib_ext_clean_fast)
 	@$(xclean)
-clean_all: 
-	@$(lib_ext_distclean)
+clean:
 	@$(objects_clean)
-	@$(lib_mod_distclean)
-	@$(lib_mod_netcdf_clean)
+	@$(lib_mod_clean)
+	@$(lib_ext_clean)
 	@$(conf_clean)
 	@$(xclean)
-clean_extlibs:
-	@if test -e ./lib/archive/keep-extlibs-stamp ; then rm ./lib/archive/keep-extlibs-stamp ; fi 
-	@$(lib_ext_clean)
-	@$(lib_ext_distclean)
+clean_all:
+	@$(objects_clean)
+	@$(lib_mod_clean)
+	@$(lib_ext_clean_all)
+	@$(conf_clean)
+	@$(xclean)
 	
 # Functions
 define make_message
@@ -315,40 +316,37 @@ define objects_clean
  echo "[CLEAN] Debug locks and directories ... done" ; \
  fi
 endef
+define lib_ext_clean_fast
+ find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
+           -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
+ echo "[CLEAN] Libs EXT (clean_fast) ... done" 
+endef
 define lib_ext_clean
+ find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
+           -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
  @cd $(libdir)/libxc;   $(make) -s -f Makefile.loc clean > /dev/null ; cd ../..
  @cd $(libdir)/iotk;    $(make) -s -f Makefile.loc clean > /dev/null ; cd ../..
  @cd $(libdir)/netcdf;  $(make) -s -f Makefile.loc clean > /dev/null ; cd ../..
  @cd $(libdir)/etsf_io; $(make) -s -f Makefile.loc clean > /dev/null ; cd ../..
- echo "[CLEAN] Libs EXT ... done" 
+ echo "[CLEAN] Libs EXT (clean) ... done" 
 endef
-define lib_ext_distclean
- @cd $(libdir)/archive; $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; cd ../..
+define lib_ext_clean_all
+ find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
+           -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
  @cd $(libdir)/install; ( if test -r make_iotk.inc ; then rm -f make_iotk.inc ; fi) ; cd ../..
  find . -name 'xc*.h' -type f -print | xargs rm -f
  @cd $(libdir)/libxc;   $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
  @cd $(libdir)/iotk;    $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
  @cd $(libdir)/netcdf;  $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
  @cd $(libdir)/etsf_io; $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
- echo "[CLEAN] Libs EXT ... done" 
+ @cd $(libdir)/archive; $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; cd ../..
+ echo "[CLEAN] Libs EXT (clean_all) ... done" 
 endef
 define lib_mod_clean
- find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
-       grep -v netcdf | grep -v xc_ | grep -v iotk | grep -v typesize | grep -v libxc | xargs rm -f 
+ find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \
+       grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v etsf_io | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
-endef
-define lib_mod_distclean
- find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | xargs rm -f 
- echo "[CLEAN] Libraries  ... done" 
- echo "[CLEAN] Modules ... done" 
-endef
-define lib_mod_netcdf_clean
- find . \( -name '*.a' -o -name '*.mod' \
-           -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- echo "[CLEAN] Libraries ... done" 
- echo "[CLEAN] Modules ... done" 
- echo "[CLEAN] NetCDF files ... done" 
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done

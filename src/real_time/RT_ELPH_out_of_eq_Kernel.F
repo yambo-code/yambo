@@ -25,9 +25,9 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  !  
  use pars,           ONLY:SP,cI,pi,cZERO
  use electrons,      ONLY:levels,spin_occ
- use SC,             ONLY:SC_bands,it_now
+ use rt_ctl,         ONLY:it_dyn
  use real_time,      ONLY:RT_step,THETA_matrix,Integrator_name,G_lesser,MEM_index,&
-&                         THETA_matrix_index,G_MEM_steps
+&                         THETA_matrix_index,G_MEM_steps,RT_bands
  use wrapper,        ONLY:M_by_M
  !
  implicit none
@@ -35,8 +35,8 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  type(levels),  intent(in)  :: E
  integer,       intent(in)  :: ik,iqbz,il,i_map(-1:1),ik_m_q
  real(SP),      intent(in)  :: ph_freq,N_q(2)
- complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP),   intent(out) :: S_mat(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP),   intent(in)  :: Gkkp(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
+ complex(SP),   intent(out) :: S_mat(2,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
  !
  ! Work Space ...
  !
@@ -44,11 +44,11 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  real(SP)              :: DELTA_T
  !
  complex(SP)           :: DELTA_matrix
- complex(SP)           :: M1(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: M2(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: M3(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: G_k(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: G_kmq(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP)           :: M1(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
+ complex(SP)           :: M2(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
+ complex(SP)           :: M3(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
+ complex(SP)           :: G_k(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
+ complex(SP)           :: G_kmq(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
  complex(SP)           :: Xi_eta,Xi_np
  complex(SP), external :: RT_G_retarded_time
  !
@@ -62,12 +62,12 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  ! Dimensions
  !============
  !
- B_dim=SC_bands(2)-SC_bands(1)+1
+ B_dim=RT_bands(2)-RT_bands(1)+1
  !
- G_k(:,:)  =G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,&
-&                    MEM_index(it_now,G_MEM_steps))/spin_occ
- G_kmq(:,:)=G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),&
-&                    ik_m_q,MEM_index(it_now,G_MEM_steps))/spin_occ
+ G_k(:,:)  =G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,&
+&                    MEM_index(it_dyn,G_MEM_steps))/spin_occ
+ G_kmq(:,:)=G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),&
+&                    ik_m_q,MEM_index(it_dyn,G_MEM_steps))/spin_occ
  !
  call M_by_M('n','n',B_dim,G_kmq,Gkkp,M1)
  !
@@ -81,11 +81,11 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
    !
    do i_e=1,B_dim
      !
-     Xi_eta=RT_G_retarded_time("Lorentzian",E,i_e+SC_bands(1)-1,ik_m_q,0.,DELTA_T)
+     Xi_eta=RT_G_retarded_time("Lorentzian",E,i_e+RT_bands(1)-1,ik_m_q,0.,DELTA_T)
      !
      do i_np=1,B_dim
        !
-       Xi_np=RT_G_retarded_time("Lorentzian",E,i_np+SC_bands(1)-1,ik    ,0.,DELTA_T)
+       Xi_np=RT_G_retarded_time("Lorentzian",E,i_np+RT_bands(1)-1,ik    ,0.,DELTA_T)
        !
        DELTA_matrix=-cI*exp(cI*i_s*ph_freq*DELTA_T)*&
 &                   ( ( N_q(i_map(-i_s))-N_q(i_map(i_s)) )*cI*M3(i_e,i_np) +&

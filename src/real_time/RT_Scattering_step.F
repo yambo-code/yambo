@@ -25,17 +25,17 @@ subroutine RT_Scattering_step(dG,ik,deltaT)
  !
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:spin_occ
- use SC,             ONLY:SC_bands
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use real_time,      ONLY:I_relax_static,l_RT_CCA_Kernel,l_RT_EXP,    &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime, &
-&                         G_lesser_reference,REF_lifetime,l_RT_RWA,RT_is_dephased
+&                         G_lesser_reference,REF_lifetime,l_RT_RWA,RT_is_dephased,&
+&                         RT_bands
  !
  implicit none
  !
- complex(SP), intent(out) :: dG(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(out) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  integer,     intent(in)  :: ik
  real(SP),    intent(in)  :: deltaT
  !
@@ -48,13 +48,13 @@ subroutine RT_Scattering_step(dG,ik,deltaT)
  !
  !if (.not. (l_RT_EXP.and.l_RT_RWA) ) then
  !
- forall(ib=SC_bands(1):SC_bands(2))  dG(ib,ib) = dG(ib,ib) - cI*deltaT*I_relax_static(ib,ib,ik)
+ forall(ib=RT_bands(1):RT_bands(2))  dG(ib,ib) = dG(ib,ib) - cI*deltaT*I_relax_static(ib,ib,ik)
  !
  !endif
  !
  !if (l_RT_EXP.and.l_RT_RWA) then
  !  !
- !  do ib=SC_bands(1),SC_bands(2)
+ !  do ib=RT_bands(1),RT_bands(2)
  !    !
  !    GAMMA_h=REF_lifetime(ib,ik,1)+REF_lifetime(ib,ik,3)+REF_lifetime(ib,ik,5)
  !    GAMMA_e=REF_lifetime(ib,ik,2)+REF_lifetime(ib,ik,4)+REF_lifetime(ib,ik,6)

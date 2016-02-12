@@ -33,9 +33,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
- use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_step,&
+ use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_step,RT_bands,&
 &                         RT_average_operator,RT_P,RT_P_prev,RT_nk,integrator_step
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
@@ -44,7 +43,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  implicit none           
  type(bz_samp),     intent(in) :: k
  type(levels),      intent(in) :: E
- complex(SP),       intent(in) :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),       intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  type(gauge_field), intent(in) :: A_input
  !
  ! Work Space

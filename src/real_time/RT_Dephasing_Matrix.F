@@ -29,11 +29,10 @@ subroutine RT_Dephasing_Matrix(E)
  use memory_m,      ONLY:mem_est
  use electrons,     ONLY:levels
  use parser_m,      ONLY:parser
- use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_nk
  use R_lattice,     ONLY:nkibz
  use real_time,     ONLY:RT_Deph_Matrix,RT_is_dephased,Phase_LifeTime,&
-&                        RAD_LifeTime
+&                        RAD_LifeTime,RT_bands
  !
  implicit none
  !
@@ -63,7 +62,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  if (dm_rng_lines/=0.or.RAD_LifeTime > tresh.or.Phase_LifeTime > tresh.or.associated(E%W)) then
    !
-   allocate(RT_Deph_Matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
+   allocate(RT_Deph_Matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk))
    call mem_est("DephMatrix",(/size(RT_Deph_Matrix)/))
    !
    RT_Deph_Matrix=(0._SP,0._SP)
@@ -83,7 +82,7 @@ subroutine RT_Dephasing_Matrix(E)
    !
    call msg('rs','[RT] External scalar Radiative lifetime applied')
    !
-   do ib_1=SC_bands(1),SC_bands(2)
+   do ib_1=RT_bands(1),RT_bands(2)
      RT_Deph_Matrix(ib_1,ib_1,:)=1._SP/RAD_LifeTime
    enddo
    !
@@ -99,8 +98,8 @@ subroutine RT_Dephasing_Matrix(E)
    !
    call msg('rs','[RT] External scalar Dephasing applied')
    !
-   do ib_1=SC_bands(1),SC_bands(2)
-     do ib_2=ib_1+1,SC_bands(2)
+   do ib_1=RT_bands(1),RT_bands(2)
+     do ib_2=ib_1+1,RT_bands(2)
        RT_Deph_Matrix(ib_1,ib_2,:)=1._SP/Phase_LifeTime
        RT_Deph_Matrix(ib_2,ib_1,:)=1._SP/Phase_LifeTime
      enddo
@@ -116,7 +115,7 @@ subroutine RT_Dephasing_Matrix(E)
      ib_1=int(DephM_r_limits(i1,1))
      ib_2=int(DephM_r_limits(i1,2))
      ik=int(DephM_r_limits(i1,3))
-     if(any((/ib_1,ib_2/)>SC_bands(2)).or.any((/ib_1,ib_2/)<SC_bands(1))) &
+     if(any((/ib_1,ib_2/)>RT_bands(2)).or.any((/ib_1,ib_2/)<RT_bands(1))) &
 &                          call error("DephMatrix indexes out of the range! Wrong band assignment") 
      if(ik<=0.or.ik>QP_nk) call error("DephMatrix indexes out of the range! Wrong kpoint assignment") 
      RT_Deph_Matrix(ib_1,ib_2,ik)  =1._SP/DephM_r_limits(i1,4)/FS2AUT
@@ -132,8 +131,8 @@ subroutine RT_Dephasing_Matrix(E)
    !
    call msg('rs','[RT] Quasiparticle database Dephasing applied')
    !
-   do ib_1=SC_bands(1),SC_bands(2)
-     do ib_2=ib_1+1,SC_bands(2)
+   do ib_1=RT_bands(1),RT_bands(2)
+     do ib_2=ib_1+1,RT_bands(2)
        !
        do ik=1,nkibz
          RT_Deph_Matrix(ib_1,ib_2,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))

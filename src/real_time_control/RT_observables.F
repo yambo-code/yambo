@@ -29,13 +29,13 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
 &                         l_elel_scatt,l_elph_scatt
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:P_square
- use SC,             ONLY:V_hartree_sc,Ho,SC_bands
+ use SC,             ONLY:V_hartree_sc,Ho
  use rt_ctl,         ONLY:RT_do_IO
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
 &                         XC0_and_HARTREE0,REF_V_xc_sc,RT_average_operator,           &
 &                         DbGd_ibz_coo,l_RT_uses_E_DbGd,REF_V_hartree_sc,   &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
-&                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc
+&                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc,RT_bands
  use electrons,      ONLY:levels
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -48,14 +48,14 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: dG_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  complex(SP),   intent(out):: on_the_fly_operators(10)
  !
  ! WorkSpace
  !
  integer     :: ib,ik,ik_rim,iE_rim
  real(SP)    :: Energy
- complex(SP) :: G_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk),&
+ complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),&
 &               dE_tot,dE_kin,dE_ion,dE_h,dE_xc,N_holes,N_elecs,N_err,VALUE_tmp(2),E_xc_ref
  !
  if ( .not.RT_do_IO('OUT') ) return      
@@ -157,7 +157,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  ! Should be extended for metals...
  !
  do ik=1,en%nk
-   do ib=SC_bands(1),SC_bands(2)
+   do ib=RT_bands(1),RT_bands(2)
      VALUE_tmp=cZERO
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if (l_RT_uses_E_DbGd) then

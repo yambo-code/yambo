@@ -27,12 +27,11 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use pars,           ONLY:DP,SP,schlen
  use R_lattice,      ONLY:nkibz
  use memory_m,       ONLY:mem_est
- use SC,             ONLY:SC_bands
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
  use rt_ctl,         ONLY:RT_IO_JPO_steps,J_and_P_cache,J_and_P_cache_size,RT_IO_JPO_steps
  use real_time,      ONLY:NE_steps,NE_i_time,RT_ind_J,RT_P,&
-&                         G_lesser,G_lesser_reference
+&                         G_lesser,G_lesser_reference,RT_bands
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
  !
  implicit none
@@ -60,10 +59,10 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  if (present(G_lesser_only)) then
    if (G_lesser_only) then
      !
-     allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz,1))
+     allocate(G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nkibz,1))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz))
+     allocate(G_lesser_reference(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nkibz))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
      call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response

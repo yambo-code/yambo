@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
+subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  ! This subroutine calculate relaxation term coming from off-diagonal part
  ! of the self-energy in time, from the electron-phonon and/or electron-electron 
@@ -52,7 +52,8 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
 &                         l_initial_equilibrium,RT_delta0_occupations,l_RT_RWA,RT_is_dephased,&
-&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor
+&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
+&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -61,7 +62,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k,q
- logical,       intent(in)    :: l_flag
+ logical,       intent(in)    :: l_equilibrium
  real(SP),      intent(in)    :: Time
  complex(SP),   intent(inout) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
@@ -71,7 +72,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e
  logical          :: l_eval
  !
- l_initial_equilibrium=l_flag
+ l_initial_equilibrium=l_equilibrium
  !
  if (.not.RT_is_dephased) return
  !
@@ -155,7 +156,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
    call timing('RT relaxation (e-photon)',OPR='start')
 #endif
    !
-   !call RT_ELPH_total_Kernel(ik,E,k,q,Time) 
+   !call QED_Radiative_Lifetimes(E,k,q,qp,X)
    !
 #if defined _TIMING
    call timing('RT relaxation (e-photon)',OPR='stop')
@@ -218,6 +219,10 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
        dGAMMA_h=E_E_Hole_lifetime(ib1,ik)
        dGAMMA_e=E_E_Electron_lifetime(ib1,ik)
      endif
+     if (l_elphoton_scatt) then
+       dGAMMA_h=dGAMMA_h+E_PHOT_Hole_lifetime(ib1,ik)
+       dGAMMA_e=dGAMMA_e+E_PHOT_Electron_lifetime(ib1,ik)
+     endif
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
        dGAMMA_h=dGAMMA_h+ E_P_Hole_lifetime(ib1,ik)    +E_P_Ho_abs_lifetime(ib1,ik)
        dGAMMA_e=dGAMMA_e+ E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik)
@@ -247,11 +252,9 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
      endif
      if (l_elph_scatt) then
        call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
-       !
        if(Bose_Temp>0._SP) then
          call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
        endif
-       !
      endif
      !
    end subroutine

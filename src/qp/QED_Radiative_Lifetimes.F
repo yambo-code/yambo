@@ -23,7 +23,7 @@
 !
 subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  !
- use drivers,             ONLY:l_elel_corr,l_elph_corr
+ use drivers,             ONLY:l_elel_corr,l_elph_corr,l_real_time
  use units,               ONLY:HA2EV,SPEED_OF_LIGHT
  use pars,                ONLY:SP,rZERO,cI
  use QP_m,                ONLY:QP_time_order_sign,QP_table,QP_t,QP_n_G_bands,QP_Sc,QP_states_simmetrize
@@ -32,12 +32,15 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  use electrons,           ONLY:levels,spin,spin_occ
  use R_lattice,           ONLY:bz_samp
  use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_IND_DIPk_ibz,PAR_nG_bands,PAR_nQP,PP_redux_wait,&
-&                              PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_DIPk_ibz_index
+&                              PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_DIPk_ibz_index,&
+&                              PAR_IND_B_mat,PAR_IND_Xk_ibz
  use X_m,                 ONLY:DIP_P,X_t
  use wave_func,           ONLY:wf_ng
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,&
 &                              PARALLEL_WF_distribute
+ use real_time,           ONLY:RT_bands,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,l_initial_equilibrium
+ use hamiltonian,         ONLY:B_mat_index
 #if defined _TIMING
  use timing_m,            ONLY:timing
 #endif
@@ -51,46 +54,58 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  !
  ! Work Space
  !
- integer     :: i_k,i_n,i_spin,i_m,i_qp,i_k_mem
+ integer     :: i_k,i_n,i_spin,i_m,i_qp,i_k_mem,i_n_
  real(SP)    :: E_diff,f_k_m_q,Sc_im,P_square
  !
- if (l_elel_corr.or.l_elph_corr) then
-   call section('+','Correlation: Radiative Lifetimes')
- else
-   call section('=','Correlation: Radiative Lifetimes')
- endif
- !
+ if (.not.l_real_time) then
+   !
+   if (l_elel_corr.or.l_elph_corr) then
+     call section('+','Correlation: Radiative Lifetimes')
+   else
+     call section('=','Correlation: Radiative Lifetimes')
+   endif
+   !
 #if defined _TIMING
- call timing('Radiative Lifetimes',OPR='start')
+   call timing('Radiative Lifetimes',OPR='start')
 #endif
- !
- ! PARALLEL distribution
- !=======================
- !
- call PARALLEL_global_indexes(E,k,q,"Self_Energy",X=X)
- call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
-&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
-&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
-&                            CLEAN_UP=.TRUE.)
- !
- ! Dipoles
- !=========
- X%ib  =QP_n_G_bands
- X%ng  =wf_ng
- io_DIP=.FALSE.
- !
- call DIPOLE_driver(E,k,X,X%q0)
- !
- ! Loop
- !======
- !
- call live_timing('Radiative Lifetimes',PAR_nQP*PAR_nG_bands)
+   !
+   ! Dipoles
+   !=========
+   X%ib  =QP_n_G_bands
+   X%ng  =wf_ng
+   io_DIP=.FALSE.
+   !
+   ! PARALLEL distribution
+   !=======================
+   !
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy",X=X)
+   call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
+&                              B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+&                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
+&                              CLEAN_UP=.TRUE.)
+   !
+   call DIPOLE_driver(E,k,X,X%q0)
+   !
+   ! Loop
+   !======
+   !
+   call live_timing('Radiative Lifetimes',PAR_nQP*PAR_nG_bands)
+   !
+ else
+   !
+   QP_n_G_bands=RT_bands
+   !
+ endif
  !
  QP_loop: do i_qp=1,qp%n_states
    !
    Sc_im=rZERO
    !
-   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+   if (l_real_time) then
+     if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
+   else
+     if(.not.PAR_IND_QP%element_1D(i_qp)) cycle
+   endif
    !
    i_n    = QP_table(i_qp,1)
    i_k    = QP_table(i_qp,3)
@@ -99,7 +114,11 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
    !
    B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
      !
-     if (.not.PAR_IND_G_b%element_1D(i_m)) cycle
+     if (l_real_time) then
+       if (.not.PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_m,RT_bands) ) ) cycle
+     else
+       if (.not.PAR_IND_G_b%element_1D(i_m)) cycle
+     endif
      !
      E_diff =E%E(i_n,i_k,i_spin)-E%E(i_m,i_k,i_spin)
      f_k_m_q=E%f(i_m,i_k,i_spin)/spin_occ
@@ -112,29 +131,38 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
 &                ( QP_time_order_sign*(1._SP-f_k_m_q)*theta_function( E_diff,0.01/HA2EV,0) +&
 &                                            f_k_m_q *theta_function(-E_diff,0.01/HA2EV,0) )
      !
-     call live_timing(steps=1)
+     if (.not.l_real_time) call live_timing(steps=1)
      !
    enddo B_loop
    !
-   QP_Sc(i_qp,1)=cI*abs(Sc_im)
+   if (l_real_time) then
+     i_n_   =i_n+RT_bands(1)-1
+     E_PHOT_Hole_lifetime(i_n_,i_k)=E_PHOT_Hole_lifetime(i_n_,i_k)+abs(Sc_im)
+   else
+     QP_Sc(i_qp,1)=cI*abs(Sc_im)
+   endif
    !
  enddo QP_loop
  !
- call live_timing( )
- !
- call PP_redux_wait(QP_Sc)
- !
- ! Symmetrize
- !
- call QP_states_simmetrize(E,V_complex=QP_Sc(:,1))
- !
- ! Transfer to qp% components (assuming OMS approximation)
- !
- qp%E(:)=QP_sc(:,1)
- !
+ if (.not.l_real_time) then
+   !
+   call live_timing( )
+   !
+   call PP_redux_wait(QP_Sc)
+   !
+   ! Symmetrize
+   !
+   call QP_states_simmetrize(E,V_complex=QP_Sc(:,1))
+   !
+   ! Transfer to qp% components (assuming OMS approximation)
+   !
+   qp%E(:)=QP_sc(:,1)
+   !
 #if defined _TIMING
- call timing('Radiative Lifetimes',OPR='stop')
+   call timing('Radiative Lifetimes',OPR='stop')
 #endif
+   !
+ endif
  !
 end subroutine QED_Radiative_Lifetimes
 

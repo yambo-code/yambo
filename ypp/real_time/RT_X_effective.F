@@ -23,7 +23,7 @@
 !
 subroutine RT_X_effective(en)
  !
- use pars,           ONLY:SP,lchlen,pi,schlen
+ use pars,           ONLY:SP,lchlen,pi,schlen,cZERO
  use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_IO_J_and_P,&
 &                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,J_steps,J_time_step
@@ -89,21 +89,21 @@ subroutine RT_X_effective(en)
  if (dump_dP) allocate(RT_P_save(J_steps,N_probes,3))
  allocate(Probe_Frequency(N_probe_frequencies),Harmonic_Frequency(0:X_order,N_probe_frequencies))
  !
- X_effective=(0._SP,0._SP)
- X_eff_err  =(0._SP,0._SP)
+ X_effective=cZERO
+ X_eff_err  =cZERO
  !
  ! Pump only
  !===========
  !
- RT_P_pump     =0.
- Susceptibility=(0.,0.)
- Pump_Frequency=0.
+ RT_P_pump     =0._SP
+ Susceptibility=cZERO
+ Pump_Frequency=0._SP
  i_Pump=2
  !
  if (N_pumps>0) then
    jobstr=trim(Pump_path)
    call RT_IO_J_and_P(IO_error=IO_error,COM_=NONE,mesg=trim(Pump_path))
-   RT_P_pump=real(RT_P_t(:,1:3))
+   RT_P_pump=real(RT_P_t(:,1:3),SP)
    Pump_Frequency=Efield(i_Pump)%frequency(1)
    min_X_order=0
  endif
@@ -113,7 +113,7 @@ subroutine RT_X_effective(en)
  !
  Probe_consistency_error=.FALSE.
  !
- RT_P_probe=(0.,0.)
+ RT_P_probe=0._SP
  i_Probe=1
  !
  do i_f=1,N_probes
@@ -133,7 +133,7 @@ subroutine RT_X_effective(en)
 &                 abs(Efield_probe%intensity-Efield(i_Probe)%intensity)>1.E-5/))) Probe_consistency_error=.TRUE.
    endif
    !
-   RT_P_probe(:,i_f,:)=real(RT_P_t(:,1:3))-RT_P_pump(:,:)
+   RT_P_probe(:,i_f,:)=real(RT_P_t(:,1:3),SP)-RT_P_pump(:,:)
    !
    do i_fp=1,Efield(i_Probe)%n_frequencies
      if (N_probes==1) Probe_Frequency(i_fp)=field_frequency(Efield(i_Probe),i_fp)
@@ -312,8 +312,8 @@ subroutine RT_X_effective(en)
      !
      CONVERGENCE_is_reached=.FALSE.
      i_conv   =0
-     running_X=(0.,0.)
-     runn_err =(0.,0.)
+     running_X=cZERO
+     runn_err =cZERO
      !
      do while (.not.CONVERGENCE_is_reached)
        !

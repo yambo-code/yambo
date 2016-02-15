@@ -74,6 +74,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
      if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
      !
      if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift,RT_bands) ) ) cycle
+     !
      i_b_mat_mem=PAR_B_mat_index(i_n_shift,i_np_shift)
      !
      if (.not. l_RT_uses_E_DbGd) then

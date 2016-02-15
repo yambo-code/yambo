@@ -144,8 +144,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
            E_PHOT_Electron_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_PHOT_Electron(i_RT)
          endif
          if (allocated(E_PHOT_Hole_lifetime)) then
-           Hole_lifetime=E_PHOT_Hole_lifetime(i_b,i_k_RT)
-           Elec_lifetime=E_PHOT_Electron_lifetime(i_b,i_k_RT)
+           Hole_lifetime=Hole_lifetime+E_PHOT_Hole_lifetime(i_b,i_k_RT)
+           Elec_lifetime=Elec_lifetime+E_PHOT_Electron_lifetime(i_b,i_k_RT)
          endif
        endif
        !
@@ -158,8 +158,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
            E_E_Electron_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_E_Electron(i_RT)
          endif
          if (allocated(E_E_Hole_lifetime)) then
-           Hole_lifetime=E_E_Hole_lifetime(i_b,i_k_RT)
-           Elec_lifetime=E_E_Electron_lifetime(i_b,i_k_RT)
+           Hole_lifetime=Hole_lifetime+E_E_Hole_lifetime(i_b,i_k_RT)
+           Elec_lifetime=Elec_lifetime+E_E_Electron_lifetime(i_b,i_k_RT)
          endif
        endif
        !

@@ -111,6 +111,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      if(.not.l_cohsex) then
        !     
 # if defined _QED 
+       !
        ! In the e-gamma case the derivative is calculated analitically
        !     
        if (.not.l_elphoton_corr) then

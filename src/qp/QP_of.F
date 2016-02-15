@@ -86,7 +86,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
 #if defined _QED
  ntitles=10
- titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30/)
+ titles_order(:ntitles)=(/9,10,4,8,29,27,6,12,28,30/)
 #else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
@@ -138,6 +138,10 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  if ( trim(QP_solver)=='n'.or.trim(QP_solver)=='s'.or.l_life.or.&
 &    (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP).or.&
 &    what=='hf') then
+   !
+#if defined _QED
+   call set_real_printed_length(f_length=12,g_length=12)
+#endif
    !
    file_name=what
    call of_open_close(file_name,'ot')
@@ -219,6 +223,10 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      call msg('o '//what,'',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
+   !
+#if defined _QED
+   call set_real_printed_length( )
+#endif
    !
    call of_open_close(file_name)
    !

@@ -555,7 +555,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #if defined _SC || defined _RT
  !
- call it(defs,'COLL_Bands',   '[COLL] Bands for the collisions',COLL_bands)
+ call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
  !
  ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
  if(COLL_bands(1)>0) then

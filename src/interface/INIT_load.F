@@ -59,11 +59,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _SC || defined _RT
  use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
  use hamiltonian,   ONLY:IP_h_bands
+ ! to be moved in mod hamiltonian
+ use SC,            ONLY:SC_potential,OEP_approx
+ ! to be moved in defined _SC only
+ use SC,            ONLY:SC_bands
 #endif
-#if defined _SC
+#if defined _SC && !defined _RT
  use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
- use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
-&                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
+ use SC,            ONLY:SC_iterations,SC_up_W_iters,&
+&                        SC_rho_threshold,SC_cycle_mixing
 #endif
 #if defined _RT
  use rt_ctl,        ONLY:RT_IO_time
@@ -141,8 +145,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _SC 
+#if defined _SC && !defined _RT
  call it('r',defs,'scrun',      '[R] Self-Consistent single-particle calculation') 
+#endif
+#if defined _SC || defined _RT
  call it('r',defs,'collisions', '[R] Eval the extended Collisions')
 #endif
 #if defined _RT
@@ -551,29 +557,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif
  ! 
- ! SC and RT common
- !
-#if defined _SC || defined _RT
- !
- call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
- !
- ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
- if(COLL_bands(1)>0) then
-   SC_bands  =COLL_bands
-   IP_h_bands=COLL_bands
- endif
- !
-#endif
- !
-#if defined _RT
- !
- if(COLL_bands(1)>0) RT_bands  =COLL_bands
- !
-#endif
- ! 
  ! SC
  !
-#if defined _SC
+#if defined _SC && !defined _RT
  !
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  !
@@ -590,18 +576,39 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters) 
  call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
  call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
- ! 
- ! SC [common with RT]
  !
- call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
- call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
+ call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
+ call it('f',defs,'SCdiag','[SC] Diagonal approximation for the self-energy(WF unchaged)',verb_level=V_sc)
+ !
+#endif
+ ! 
+#if defined _SC || defined _RT
+ !
+ ! SC and RT common
+ !
+ call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
+ !
+ ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
+ if(COLL_bands(1)>0) then
+   SC_bands  =COLL_bands
+   RT_bands  =COLL_bands
+   IP_h_bands=COLL_bands
+ endif
+ !
+ call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
- call it('f',defs,'SCdiag','[SC] Diagonal approximation for the self-energy(WF unchaged)',verb_level=V_sc)
+ !
 #endif
  !
+#if defined _RT
+ !
+ ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
+ if(COLL_bands(1)>0) RT_bands  =COLL_bands
+ !
+#endif
  ! 
  contains 
    !

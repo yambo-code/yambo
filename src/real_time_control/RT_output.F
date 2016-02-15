@@ -241,6 +241,16 @@ subroutine RT_output(what,VALUES,TIME,E)
  headings(next_file,1)="E [eV]"
  next_file=next_file+1
  !
+ do i_c=1,3
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'eps'//chart_string(i_c)
+   short_file_name(next_file)=trim(append_ch)//'eps'//chart_string(i_c)
+   n_headings(next_file)=3
+   headings(next_file,2:3)=(/'eps/Im','eps/Re'/)
+   headings(next_file,1)="E [eV]"
+   next_file=next_file+1
+ enddo
+ !
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'eels_along_E'
  short_file_name(next_file)=trim(append_ch)//'eels_along_E'
@@ -484,7 +494,8 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:5) = VALUES(1:4)
        if(l_elel_scatt.or.l_elph_scatt) data_to_dump(6:7) = VALUES(5:6)
        !if(l_Debye_TBose_update) data_to_dump(8) = Bose_Temp*HA2KEL
-     case('YPP-eps_along_E','YPP-eels_along_E','YPP-E_frequency','YPP-SHG_qssin',&
+     case('YPP-eps_along_E','YPP-eels_along_E','YPP-E_frequency', &
+&         'YPP-SHG_qssin','YPP-eps_x','YPP-eps_y','YPP-eps_z',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
 &         'YPP-X_probe_order_4_x','YPP-X_probe_order_5_x','YPP-X_probe_order_6_x','YPP-X_probe_order_7_x',&
 &         'YPP-X_probe_order_8_x','YPP-X_probe_order_9_x',&

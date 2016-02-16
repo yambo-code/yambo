@@ -26,14 +26,14 @@ subroutine RT_output(what,VALUES,TIME,E)
  use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_cohsex,l_sc_hf
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_cohsex,l_sc_hf,l_elphoton_scatt
  use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot,A_ind,A_ext
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use rt_ctl,         ONLY:RT_do_IO,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes, &
-&                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR
+&                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR,RAD_prefactor
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -192,6 +192,13 @@ subroutine RT_output(what,VALUES,TIME,E)
  n_headings(next_file)=5
  headings(next_file,2:3)=(/"Hole [meV]","Elec [meV]"/)
  headings(next_file,4:5)=(/"T Hole [K]","T Elec [K]"/)
+ next_file=next_file+1
+ !
+ if (open_files.and.l_elphoton_scatt.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'mean_RADlifetimes'
+ short_file_name(next_file)=trim(append_ch)//'mean_RADlifetimes'
+ n_headings(next_file)=3
+ headings(next_file,2:3)=(/"Hole [ps]","Elec [ps]"/)
  next_file=next_file+1
  !
  if (open_files.and.(l_elph_scatt.or.l_elel_scatt).and..not.file_already_opened(next_file)) &
@@ -461,7 +468,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    ! Values
    !--------
    if (present(TIME).and..not.present(E)) data_to_dump(1)=TIME
-   if (present(E).and..not.present(TIME))    data_to_dump(1)=E
+   if (present(E).and..not.present(TIME)) data_to_dump(1)=E
    if (present(TIME)  .and.   present(E)) data_to_dump(1:2)=(/TIME,E/)
    !
    select case (trim(short_file_name(i_f)))
@@ -530,6 +537,8 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('mean_EElifetimes')
        data_to_dump(2:3) = RT_mean_lifetimes(1:2)*HA2EV*1000._SP
        data_to_dump(4:5) = RT_Tfit_lifetimes(3:4)*HA2KEL
+     case('mean_RADlifetimes')
+       data_to_dump(2:3) = RT_mean_lifetimes(1:2)*HA2EV*1000._SP
      case('N_dN_E_conservation_factors')
        n1=1
        if(l_elph_scatt) then
@@ -542,6 +551,10 @@ subroutine RT_output(what,VALUES,TIME,E)
        endif
        if(l_elel_scatt) then
          data_to_dump(n1+1:n1+2)=EE_prefactor
+         n1=n1+2
+       endif
+       if(l_elphoton_scatt) then
+         data_to_dump(n1+1:n1+2)=RAD_prefactor
          n1=n1+2
        endif
        !

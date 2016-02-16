@@ -24,7 +24,7 @@
 subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
-&                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf
+&                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf,l_elphoton_scatt
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,SPEED_OF_LIGHT
  use stderr,         ONLY:intc
@@ -358,8 +358,9 @@ subroutine RT_initialize(E,k,q)
  !
  if (l_NE_simulate_Irredux) call msg( 'r','Simulate Irredux           :',l_NE_simulate_Irredux)
  !
- if (l_elph_scatt)        call msg( 'r','El-Ph Carrier scattering   :',l_elph_scatt)
- if (l_elel_scatt)        call msg( 'r','El-El Carrier scattering   :',l_elel_scatt)
+ if (l_elph_scatt)        call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
+ if (l_elel_scatt)        call msg( 'r','El-El         scattering   :',l_elel_scatt)
+ if (l_elphoton_scatt)    call msg( 'r','El-Photon     scattering   :',l_elphoton_scatt)
  if (l_BGR)               call msg( 'r','On-the-fly BGR added       :',l_BGR)
  !
  call msg( 'nr','---I/O---')

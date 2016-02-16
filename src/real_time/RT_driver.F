@@ -249,8 +249,9 @@ subroutine RT_driver(E,X,k,q)
    call RT_output(what="open ext")
    if(l_RT_induced_field) call RT_output(what="open tot ind")
  endif
- if (l_elph_scatt) call RT_output('open EPlife')
- if (l_elel_scatt) call RT_output('open EElife')
+ if (l_elph_scatt)     call RT_output('open EPlife')
+ if (l_elel_scatt)     call RT_output('open EElife')
+ if (l_elphoton_scatt) call RT_output('open RADlife')
  if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
  !
  ! Loop on time
@@ -324,8 +325,9 @@ subroutine RT_driver(E,X,k,q)
    !=======================================
    if (l_elph_scatt.or.l_elel_scatt) then
      call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt) call RT_output('EPlife',TIME=NE_time/FS2AUT)
-     if(l_elel_scatt) call RT_output('EElife',TIME=NE_time/FS2AUT)
+     if(l_elph_scatt)      call RT_output('EPlife',TIME=NE_time/FS2AUT)
+     if(l_elel_scatt)      call RT_output('EElife',TIME=NE_time/FS2AUT)
+     if (l_elphoton_scatt) call RT_output('RADlife',TIME=NE_time/FS2AUT)
      if((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time/FS2AUT)
    endif
    !

@@ -211,11 +211,12 @@ module real_time
  !---------------------------------------------
  logical                  :: l_lftm_fit_stable(2)
  integer                  :: Nfitted_lifetimes(2)
- real(SP)                 :: RT_mean_lifetimes(6)
+ real(SP)                 :: RT_mean_lifetimes(8) ! 1-2 (e-e), 3-6 (e-p), 7-8 (e-photon)
  real(SP)                 :: RT_Tfit_lifetimes(4)
  real(SP)                 :: RT_Efit_lifetimes(4)
  !
  real(SP)                 :: EE_prefactor(2)      ! 1=valence, 2=conduction
+ real(SP)                 :: RAD_prefactor(2)
  real(SP)                 :: EP_prefactor(2)
  real(SP)                 :: EP_abs_prefactor(2) 
  !

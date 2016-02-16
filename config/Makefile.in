@@ -205,7 +205,6 @@ ydb: libs
 clean_fast: 
 	@$(objects_clean)
 	@$(lib_mod_clean)
-	@$(lib_ext_clean_fast)
 	@$(xclean)
 clean:
 	@$(objects_clean)
@@ -315,11 +314,6 @@ define objects_clean
  find . -name '.debug*' | xargs rm -fr ; \
  echo "[CLEAN] Debug locks and directories ... done" ; \
  fi
-endef
-define lib_ext_clean_fast
- find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
-           -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- echo "[CLEAN] Libs EXT (clean_fast) ... done" 
 endef
 define lib_ext_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \

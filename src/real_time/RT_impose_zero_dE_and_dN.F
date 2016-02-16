@@ -34,7 +34,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
 &                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_impose_E,RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
-&                         l_RT_impose_N_dN,RT_bands
+&                         l_RT_impose_N_dN,RT_bands,RAD_prefactor
  !
  implicit none
  !
@@ -42,7 +42,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  type(bz_samp), intent(in)    :: k
  real(SP),      intent(inout) :: Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk)
  real(SP),      intent(inout) :: Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk)
- character(5),  intent(in)    :: Scatt_kind
+ character(*),  intent(in)    :: Scatt_kind
  !
  ! Work Space
  !
@@ -61,15 +61,16 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    l_n_carriers  =.false.
  endif
  !
- if(index(Scatt_kind,'elph')/=0) then
+ if(index(Scatt_kind,'elph')/=0.or.index(Scatt_kind,'radiative')/=0) then
    l_energy      =.false.
    l_n_electrons =l_RT_impose_N_dN
    l_n_carriers  =l_RT_impose_N_dN
  endif
  !
- if (trim(Scatt_kind)=="elel" ) iref=1
- if (trim(Scatt_kind)=="elph1") iref=3
- if (trim(Scatt_kind)=="elph2") iref=5
+ if (trim(Scatt_kind)=="elel" )     iref=1
+ if (trim(Scatt_kind)=="elph1")     iref=3
+ if (trim(Scatt_kind)=="elph2")     iref=5
+ if (trim(Scatt_kind)=="radiative") iref=7
  !
  if(l_initial_equilibrium) then
    REF_lifetime(:,:,iref)  =0._SP 
@@ -217,8 +218,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  ! Save values for RT_output
  !===========================
  !
- if(trim(Scatt_kind)=="elel" ) EE_prefactor    =prefactor
- if(trim(Scatt_kind)=="elph1") EP_prefactor    =prefactor
- if(trim(Scatt_kind)=="elph2") EP_abs_prefactor=prefactor
+ if(trim(Scatt_kind)=="elel" )     EE_prefactor    =prefactor
+ if(trim(Scatt_kind)=="elph1")     EP_prefactor    =prefactor
+ if(trim(Scatt_kind)=="elph2")     EP_abs_prefactor=prefactor
+ if(trim(Scatt_kind)=="radiative") RAD_prefactor   =prefactor
  !
 end subroutine RT_impose_zero_dE_and_dN

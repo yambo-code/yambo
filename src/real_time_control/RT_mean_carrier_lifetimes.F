@@ -29,7 +29,8 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
-&                         NE_i_time,REF_Lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_bands
+&                         NE_i_time,REF_Lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_bands, &
+&                         E_PHOT_Hole_lifetime, E_PHOT_Electron_lifetime
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
  implicit none
@@ -43,7 +44,8 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  real(SP)           :: n_states,pre_factor,sum_lifetimes(2)
  real(SP)           :: EE_occupations(RT_bands(1):RT_bands(2),RT_nk),&
 &                      EP_occupations(RT_bands(1):RT_bands(2),RT_nk),&
-&                      LOCAL_Lifetime(RT_bands(1):RT_bands(2),RT_nk,6)
+&                      RAD_occupations(RT_bands(1):RT_bands(2),RT_nk),&
+&                      LOCAL_Lifetime(RT_bands(1):RT_bands(2),RT_nk,8)
  !
  if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return
  !
@@ -53,6 +55,8 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  if (allocated(E_P_Electron_lifetime)) LOCAL_Lifetime(:,:,4)=REF_Lifetime(:,:,4)+E_P_Electron_lifetime
  if (allocated(E_P_Ho_abs_lifetime))   LOCAL_Lifetime(:,:,5)=REF_Lifetime(:,:,5)+E_P_Ho_abs_lifetime
  if (allocated(E_P_El_abs_lifetime))   LOCAL_Lifetime(:,:,6)=REF_Lifetime(:,:,6)+E_P_El_abs_lifetime
+ if (allocated(E_PHOT_Hole_lifetime))     LOCAL_Lifetime(:,:,7)=REF_Lifetime(:,:,7)+E_PHOT_Hole_lifetime
+ if (allocated(E_PHOT_Electron_lifetime)) LOCAL_Lifetime(:,:,8)=REF_Lifetime(:,:,8)+E_PHOT_Electron_lifetime
  !
  n_states=0._SP
  !
@@ -75,12 +79,10 @@ subroutine RT_mean_carrier_lifetimes(E,k)
          if(ib<=E%nbf) EP_occupations(ib,ik)=spin_occ
          if(ib> E%nbf) EP_occupations(ib,ik)=0._SP
        endif
-       !
        RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+(E_P_Hole_lifetime(ib,ik)+REF_Lifetime(ib,ik,3))*pre_factor
        RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+(E_P_Electron_lifetime(ib,ik)+REF_Lifetime(ib,ik,4))*pre_factor
        RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+(E_P_Ho_abs_lifetime(ib,ik)+REF_Lifetime(ib,ik,5))*pre_factor
        RT_mean_lifetimes(6)=RT_mean_lifetimes(6)+(E_P_El_abs_lifetime(ib,ik)+REF_Lifetime(ib,ik,6))*pre_factor
-       !
      endif
      !
      if (allocated(E_E_Hole_lifetime)) then
@@ -92,10 +94,21 @@ subroutine RT_mean_carrier_lifetimes(E,k)
          if(ib<=E%nbf) EE_occupations(ib,ik)=spin_occ
          if(ib> E%nbf) EE_occupations(ib,ik)=0._SP
        endif
-       !
        RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+(E_E_Hole_lifetime(ib,ik)+REF_Lifetime(ib,ik,1))*pre_factor
        RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+(E_E_Electron_lifetime(ib,ik)+REF_Lifetime(ib,ik,2))*pre_factor
-       !
+     endif
+     !
+     if (allocated(E_PHOT_Hole_lifetime)) then
+       sum_lifetimes(1)= LOCAL_Lifetime(ib,ik,1)
+       sum_lifetimes(2)= LOCAL_Lifetime(ib,ik,1)+LOCAL_Lifetime(ib,ik,2)
+       if(sum_lifetimes(2)>0._SP) then
+         RAD_occupations(ib,ik)=sum_lifetimes(1)/sum_lifetimes(2)*spin_occ
+       else
+         if(ib<=E%nbf) RAD_occupations(ib,ik)=spin_occ
+         if(ib> E%nbf) RAD_occupations(ib,ik)=0._SP
+       endif
+       RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+(E_PHOT_Hole_lifetime(ib,ik)+REF_Lifetime(ib,ik,7))*pre_factor
+       RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+(E_PHOT_Electron_lifetime(ib,ik)+REF_Lifetime(ib,ik,8))*pre_factor
      endif
      !
    enddo

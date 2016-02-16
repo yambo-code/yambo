@@ -91,7 +91,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  ! Eval or not ?
  !===============
  !
- if (.not.l_elph_scatt.and..not.l_elel_scatt) return
+ if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) return
  !
  l_eval=l_initial_equilibrium 
  !
@@ -169,7 +169,6 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
 #endif
    !
  endif
- stop
  !
  ! PARALLEL Mergering & N/dN conservation (of the evaluated Lifetimes)
  !=====================================================================
@@ -185,6 +184,10 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
        call RT_Lifetimes_merge(E,k,E_P_Ho_abs_lifetime,5)
        call RT_Lifetimes_merge(E,k,E_P_El_abs_lifetime,6)
      endif
+   endif
+   if (l_elphoton_scatt) then
+     call RT_Lifetimes_merge(E,k,E_PHOT_Hole_lifetime,7)
+     call RT_Lifetimes_merge(E,k,E_PHOT_Electron_lifetime,8)
    endif
  endif
  !
@@ -205,6 +208,10 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
      call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
      call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
    endif
+ endif
+ if (l_elphoton_scatt) then
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_PHOT_Hole_lifetime,7)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_PHOT_Electron_lifetime,8)
  endif
  !
  if (.not.l_eval) call Impose_Conservations( )
@@ -262,6 +269,9 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
        if(Bose_Temp>0._SP) then
          call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
        endif
+     endif
+     if (l_elphoton_scatt) then
+       call RT_impose_zero_dE_and_dN(E,k,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,'radiative') 
      endif
      !
    end subroutine

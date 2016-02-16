@@ -156,13 +156,20 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
    call timing('RT relaxation (e-photon)',OPR='start')
 #endif
    !
-   !call QED_Radiative_Lifetimes(E,k,q,qp,X)
+   do ik=1,nkibz
+     !
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     !
+     call RT_Radiative_Lifetimes(ik,E,k,q)
+     !
+   enddo
    !
 #if defined _TIMING
    call timing('RT relaxation (e-photon)',OPR='stop')
 #endif
    !
  endif
+ stop
  !
  ! PARALLEL Mergering & N/dN conservation (of the evaluated Lifetimes)
  !=====================================================================

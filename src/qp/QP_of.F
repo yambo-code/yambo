@@ -23,7 +23,7 @@
 !
 subroutine QP_of(qp,en,QPdb_read_err,what)
  !
- use pars,      ONLY:SP,lchlen,schlen
+ use pars,      ONLY:SP,lchlen,schlen,rZERO
  use units,     ONLY:HA2EV,HBAR_eVfs,HA2GHZ,FS2AUT,PS2AUT
  use drivers,   ONLY:l_life,l_elph_corr
  use com,       ONLY:msg,of_open_close
@@ -50,7 +50,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  integer, parameter:: tpar=30
  integer       :: ntitles,titles_order(tpar)
- real(SP)      :: values(tpar)
+ real(SP)      :: values(tpar),Lifetime
  character(schlen) :: titles(tpar)
  !
  titles(1)  = trim(Vxc_kind) 
@@ -86,7 +86,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
 #if defined _QED
  ntitles=10
- titles_order(:ntitles)=(/9,10,4,8,29,27,6,12,28,30/)
+ titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30/)
 #else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
@@ -139,10 +139,6 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 &    (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP).or.&
 &    what=='hf') then
    !
-#if defined _QED
-   call set_real_printed_length(f_length=12,g_length=12)
-#endif
-   !
    file_name=what
    call of_open_close(file_name,'ot')
    if (trim(QP_solver)=='n') call msg('o '//what,'# GW [Newton Solver]')
@@ -170,6 +166,9 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      qp_k  =QP_table(i1,3)
      qp_isp=spin(QP_table(i1,:))
      !
+     Lifetime=rZERO
+     if (abs(aimag(qp%E(i1)))>=1.E-10) Lifetime=1._SP/abs(aimag(qp%E(i1)))
+     !
      if (what=="qp") then
        !
        if (.not.l_life) then
@@ -188,8 +187,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        !
        values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
        values(9:10) =(/real(qp_k),real(qp_b)/)
-       values(12:13)=(/aimag(qp%E(i1)*HA2EV/1.E-3),HBAR_eVfs/aimag(qp%E(i1))/HA2EV/)
-       values(28)   =(HBAR_eVfs/aimag(qp%E(i1))/HA2EV)*FS2AUT/PS2AUT
+       values(12:13)=(/Lifetime*HA2EV/1.E-3,HBAR_eVfs*Lifetime/HA2EV/)
+       values(28)   =(HBAR_eVfs*Lifetime/HA2EV)*FS2AUT/PS2AUT
        values(15:16)=(/real(qp%Z(i1)),aimag(qp%Z(i1))/)
        !
        if (allocated(QP_G_amplitude_integral)) then
@@ -197,7 +196,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        endif
 #if defined _QED
        values(29)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ
-       values(30)=values(29)*1000._SP
+       values(30)=values(28)/1000._SP
        values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
        values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
        values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV
@@ -219,14 +218,10 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      !
      if (qp_isp==1) values(14)= 1._SP
      if (qp_isp==2) values(14)=-1._SP
-     if (aimag(qp%E(i1))==0._SP) values(12:13)=0._SP
      call msg('o '//what,'',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
    !
-#if defined _QED
-   call set_real_printed_length( )
-#endif
    !
    call of_open_close(file_name)
    !

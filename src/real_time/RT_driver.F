@@ -323,12 +323,13 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
-   if (l_elph_scatt.or.l_elel_scatt) then
+   if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
      call RT_mean_carrier_lifetimes(E,k)
      if(l_elph_scatt)      call RT_output('EPlife',TIME=NE_time/FS2AUT)
      if(l_elel_scatt)      call RT_output('EElife',TIME=NE_time/FS2AUT)
-     if (l_elphoton_scatt) call RT_output('RADlife',TIME=NE_time/FS2AUT)
-     if((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time/FS2AUT)
+     if(l_elphoton_scatt)  call RT_output('RADlife',TIME=NE_time/FS2AUT)
+     if((l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt).and.&
+&       (l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time/FS2AUT)
    endif
    !
    ! Write DBs

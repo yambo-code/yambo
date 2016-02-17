@@ -667,6 +667,11 @@ module real_time
        call mem_est("SC_R")
      endif
      !
+     if(allocated(E_PHOT_Hole_lifetime)) then
+       deallocate(E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime)
+       call mem_est("RT_E_PHOT_lifetimes")
+     endif
+     !
      if(allocated(E_E_Hole_lifetime)) then
        deallocate(E_E_Hole_lifetime,E_E_Electron_lifetime)
        call mem_est("RT_E_E_lifetimes")

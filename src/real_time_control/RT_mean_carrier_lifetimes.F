@@ -107,8 +107,8 @@ subroutine RT_mean_carrier_lifetimes(E,k)
          if(ib<=E%nbf) RAD_occupations(ib,ik)=spin_occ
          if(ib> E%nbf) RAD_occupations(ib,ik)=0._SP
        endif
-       RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+(E_PHOT_Hole_lifetime(ib,ik)+REF_Lifetime(ib,ik,7))*pre_factor
-       RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+(E_PHOT_Electron_lifetime(ib,ik)+REF_Lifetime(ib,ik,8))*pre_factor
+       RT_mean_lifetimes(7)=RT_mean_lifetimes(7)+(E_PHOT_Hole_lifetime(ib,ik)+REF_Lifetime(ib,ik,7))*pre_factor
+       RT_mean_lifetimes(8)=RT_mean_lifetimes(8)+(E_PHOT_Electron_lifetime(ib,ik)+REF_Lifetime(ib,ik,8))*pre_factor
      endif
      !
    enddo

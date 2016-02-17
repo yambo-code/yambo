@@ -26,7 +26,7 @@ subroutine RT_initialize(E,k,q)
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
 &                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf,l_elphoton_scatt
  use pars,           ONLY:SP,pi
- use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,SPEED_OF_LIGHT
+ use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2
  use stderr,         ONLY:intc
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
@@ -302,8 +302,9 @@ subroutine RT_initialize(E,k,q)
      l_elph_scatt=.FALSE.
      l_elel_scatt=.FALSE.
    endif
-   N_T_samplings =RT_Lifetimes_evaluation_plan( )
  endif
+ !
+ if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) N_T_samplings =RT_Lifetimes_evaluation_plan( )
  !
  ! Checking extended COLLISIONS
  !==============================

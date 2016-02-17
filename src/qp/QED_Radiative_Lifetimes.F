@@ -51,7 +51,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  ! Work Space
  !
  integer     :: i_k,i_n,i_spin,i_m,i_qp,i_k_mem
- real(SP)    :: E_diff,f_k_m_q,Sc_im,P_square
+ real(SP)    :: E_diff,f_m,Sc_im,P_square,pre_factor
  !
  if (l_elel_corr.or.l_elph_corr) then
    call section('+','Correlation: Radiative Lifetimes')
@@ -101,15 +101,17 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
      if (.not.PAR_IND_G_b%element_1D(i_m)) cycle
      !
      E_diff =E%E(i_n,i_k,i_spin)-E%E(i_m,i_k,i_spin)
-     f_k_m_q=E%f(i_m,i_k,i_spin)/spin_occ
+     f_m    =E%f(i_m,i_k,i_spin)/spin_occ
      !
      P_square=2.*(abs(DIP_P(1,i_m,i_n,i_k_mem,i_spin))**2.+&
 &                 abs(DIP_P(2,i_m,i_n,i_k_mem,i_spin))**2.+&
 &                 abs(DIP_P(3,i_m,i_n,i_k_mem,i_spin))**2)
      !
-     Sc_im=Sc_im+P_square/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)*&
-&                ( QP_time_order_sign*(1._SP-f_k_m_q)*theta_function( E_diff,0.01/HA2EV,0) +&
-&                                            f_k_m_q *theta_function(-E_diff,0.01/HA2EV,0) )
+     pre_factor=P_square/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)
+     !
+     Sc_im=Sc_im+pre_factor*&
+&                ( QP_time_order_sign*(1._SP-f_m)*theta_function( E_diff,0.01/HA2EV,0) +&
+&                                            f_m *theta_function(-E_diff,0.01/HA2EV,0) )
      !
      call live_timing(steps=1)
      !

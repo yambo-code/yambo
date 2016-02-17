@@ -502,11 +502,11 @@ module real_time
      call mem_est("RT_E_occupations",(/size(RT_E_occupations)/),(/SP/))
      !
      if (l_elphoton_scatt) then
-       allocate(E_Phot_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-       allocate(E_Phot_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-       call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
-       E_Phot_Hole_lifetime=0._SP
-       E_Phot_Electron_lifetime=0._SP
+       allocate(E_PHOT_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(E_PHOT_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       call mem_est("RT_E_PHOT_lifetimes",(/2*size(E_PHOT_Hole_lifetime)/),(/SP/))
+       E_PHOT_Hole_lifetime=0._SP
+       E_PHOT_Electron_lifetime=0._SP
      endif
      !
      if (l_elel_scatt) then

@@ -24,7 +24,7 @@
 subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_elel_scatt
+ use drivers,        ONLY:l_elel_scatt,l_elphoton_scatt,l_elph_scatt
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use rt_ctl,         ONLY:it_dyn
@@ -46,6 +46,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  ! Work Space
  !
  integer          :: ib,ik
+ logical          :: SAVE_it
  !
  if ( trim(RT_life_interp_KIND)=="NONE" ) return
  !
@@ -54,8 +55,22 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    !======
    ! SAVE
    !======
-   if (l_elel_scatt     .and.SAVE_index==1) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
-   if (.not.l_elel_scatt.and.SAVE_index==3) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
+   !
+   ! ... the time points where the lifetimes have been saved ...
+   !
+   ! This call must be done only once. That's why it is called depending on the logicals
+   !
+   if (l_elel_scatt.and.SAVE_index==1) then
+     SAVE_it=.TRUE.
+   else if (l_elph_scatt.and.SAVE_index==3) then
+     SAVE_it=.TRUE.
+   else if (l_elphoton_scatt.and.SAVE_index==7) then
+     SAVE_it=.TRUE.
+   endif
+   !
+   if (SAVE_it) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
+   !
+   ! ... and the lifetimes themeselves ...
    !
    do ib=RT_bands(1),RT_bands(2)
      do ik=1,RT_nk

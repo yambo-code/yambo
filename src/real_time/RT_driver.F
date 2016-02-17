@@ -213,15 +213,8 @@ subroutine RT_driver(E,X,k,q)
  !
  if (it_start>=NE_steps) then
    !      
-   call RT_free()
-   call RT_free_control()
-   !
-   call WF_free(WF)
-   !
-   call X_alloc("P_square")
-   !
-   call RT_carriers_object(RT_carriers,WHAT='free')
-   !
+   call CLOSE_and_clean( )      
+   !      
    return
    !
  endif
@@ -373,14 +366,20 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Finalize & Free
  !-----------------
- call RT_free()
- call RT_free_control()
- call WF_free(WF)
- call PLASMA_free(EH_gas)
- call RT_carriers_object(RT_carriers,WHAT='free')
- if (allocated(Fock_collisions))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
- if (allocated(SEX_collisions))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
- if (allocated(GW_NEQ_collisions)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
- call set_real_printed_length()
+ call CLOSE_and_clean()
  !
+ contains
+   !
+   subroutine CLOSE_and_clean( )
+     call RT_free()
+     call RT_free_control()
+     call WF_free(WF)
+     call PLASMA_free(EH_gas)
+     call RT_carriers_object(RT_carriers,WHAT='free')
+     if (allocated(Fock_collisions))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
+     if (allocated(SEX_collisions))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
+     if (allocated(GW_NEQ_collisions)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
+     call set_real_printed_length()
+   end subroutine
+   !
 end subroutine RT_driver

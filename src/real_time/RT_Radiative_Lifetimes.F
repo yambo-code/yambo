@@ -45,7 +45,7 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
  !
  ! Work Space
  !
- integer     :: i_n,i_spin,i_m,i_k_mem,i_n_,i_m_,i_k_rim
+ integer     :: i_n,i_spin,i_m,i_k_mem,i_k_rim
  real(SP)    :: E_diff,f_m,P_square,pre_factor,Hole_f_m
  !TMP>
  real(SP)    :: Lifetime,Linewidth
@@ -57,22 +57,18 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
  !
  B_loop: do i_n=RT_bands(1),RT_bands(2)
    !
-   i_n_   =i_n+RT_bands(1)-1
-   !
    Bp_loop: do i_m=RT_bands(1),RT_bands(2)
      !
      if (.not.PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_m,RT_bands) ) ) cycle
      !
-     i_m_   =i_m+RT_bands(1)-1
-     !
      E_diff =E%E(i_n,i_k,i_spin)-E%E(i_m,i_k,i_spin)
      !
      if(l_initial_equilibrium) then
-       f_m      = RT_E_occupations_reference(i_m_,i_k_rim)/spin_occ
-       Hole_f_m = RT_H_occupations_reference(i_m_,i_k_rim)/spin_occ
+       f_m      = RT_E_occupations_reference(i_m,i_k_rim)/spin_occ
+       Hole_f_m = RT_H_occupations_reference(i_m,i_k_rim)/spin_occ
      else
-       f_m      =  RT_delta_occupations(i_m_,i_k_rim)/spin_occ
-       Hole_f_m = -RT_delta_occupations(i_m_,i_k_rim)/spin_occ
+       f_m      =  RT_delta_occupations(i_m,i_k_rim)/spin_occ
+       Hole_f_m = -RT_delta_occupations(i_m,i_k_rim)/spin_occ
      endif
      !
      P_square=2.*(abs(DIP_P(1,i_m,i_n,i_k_mem,i_spin))**2.+&
@@ -81,9 +77,9 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
      !
      pre_factor=P_square/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)
      !
-     E_PHOT_Hole_lifetime(i_n_,i_k)=E_PHOT_Hole_lifetime(i_n_,i_k)+&
+     E_PHOT_Hole_lifetime(i_n,i_k)=E_PHOT_Hole_lifetime(i_n,i_k)+&
 &                                   pre_factor*Hole_f_m*theta_function( E_diff,0.01/HA2EV,0)
-     E_PHOT_Electron_lifetime(i_n_,i_k)=E_PHOT_Electron_lifetime(i_n_,i_k)+&
+     E_PHOT_Electron_lifetime(i_n,i_k)=E_PHOT_Electron_lifetime(i_n,i_k)+&
 &                                   pre_factor*     f_m*theta_function(-E_diff,0.01/HA2EV,0)
      !
    enddo Bp_loop

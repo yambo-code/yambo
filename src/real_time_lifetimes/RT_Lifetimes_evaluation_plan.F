@@ -26,7 +26,6 @@ integer function RT_Lifetimes_evaluation_plan( )
  ! Here I define the components of an integer array RT_TIME_status(NE_steps)
  !
  use pars,           ONLY:IP2,SP
- use fields,         ONLY:Efield,ext_field,Efield_duplicate!,small_a
  use memory_m,       ONLY:mem_est
  use rt_ctl,         ONLY:it_start
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_steps,&
@@ -36,11 +35,9 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  ! Work Space
  !
- integer         :: it,N_inter_steps,N_intra_steps,it_first,it_0,it_,i1,N_blocks
+ integer         :: it,N_inter_steps,N_intra_steps,it_first,it_0,it_,i1,N_blocks,i_default
  real(SP)        :: weight(NE_steps)
  complex(SP)     :: TIME
- !
- type(ext_field) :: E_dummy
  !
  if (.not.allocated(RT_TIME_status)) then
    allocate(RT_TIME_status(NE_steps))
@@ -48,13 +45,11 @@ integer function RT_Lifetimes_evaluation_plan( )
    RT_TIME_status=1
  endif
  !
- if (RT_life_interp_steps(1)<0. .or. it_start>=NE_steps .or. .not.l_RT_lifetimes_interpolation) then
+ if (RT_life_interp_steps(1)<0. .or. it_start>=NE_steps) then
    Life_MEM_steps=1
    RT_Lifetimes_evaluation_plan=0
    return
  endif 
- !
- RT_TIME_status=0 ! Interpolate
  !
  Life_MEM_steps=nint(RT_life_interp_steps(1)/RT_life_interp_steps(2))
  if (Life_MEM_steps<3) Life_MEM_steps=3
@@ -67,7 +62,12 @@ integer function RT_Lifetimes_evaluation_plan( )
  !                  >0   EVAL and SAVE
  !                   0   INTERPOLATE  
  !
- RT_Lifetimes_evaluation_plan=0
+ ! Default action
+ !
+ i_default= -1 ! Keep constant
+ if (l_RT_lifetimes_interpolation) i_default=0 ! Interpolate
+ !
+ RT_Lifetimes_evaluation_plan=i_default
  !
  weight=1._SP
  it_0=1
@@ -115,7 +115,7 @@ integer function RT_Lifetimes_evaluation_plan( )
    !
  enddo
  !
- RT_Lifetimes_evaluation_plan = count( RT_TIME_status/=0 )
+ RT_Lifetimes_evaluation_plan = count( RT_TIME_status>0 )
  !
  contains
    !
@@ -128,7 +128,7 @@ integer function RT_Lifetimes_evaluation_plan( )
        !
        if (it_+it-1>NE_steps) cycle
        !
-       RT_TIME_status(it_+it-1)=0
+       RT_TIME_status(it_+it-1)=i_default
        !
        if (N_intra>1) then
          local_condition=mod(it_,N_intra)==1

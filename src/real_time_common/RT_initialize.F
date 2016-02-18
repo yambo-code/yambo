@@ -304,7 +304,6 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
- if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) write (*,*) 'here'
  if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) N_T_samplings =RT_Lifetimes_evaluation_plan( )
  !
  ! Checking extended COLLISIONS
@@ -345,11 +344,11 @@ subroutine RT_initialize(E,k,q)
  if (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)
  !
  if (RT_is_dephased) then
-   call msg( 'nr','---Dynamics---')
-   call msg( 'r', 'Lifetimes        (Memory steps):',Life_MEM_steps)
-   call msg( 'r', '                (Interpolation):',l_RT_lifetimes_interpolation)
-   call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_life_interp_steps/FS2AUT)
-   call msg( 'r', 'Time points                    :',N_T_samplings*Life_MEM_steps)
+   call msg( 'nr','---Lifetimes---')
+   call msg( 'r', 'Point groups (inter/intra) [fs]:',RT_life_interp_steps/FS2AUT)
+   call msg( 'r', 'Interpolation                  :',l_RT_lifetimes_interpolation)
+   call msg( 'r', 'Memory steps                   :',Life_MEM_steps)
+   call msg( 'r', 'Evaluated Time points          :',N_T_samplings)
  endif
  !
  call msg( 'nr','---Flags (if any)---')

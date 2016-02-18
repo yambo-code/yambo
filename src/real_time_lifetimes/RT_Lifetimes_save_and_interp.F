@@ -30,7 +30,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  use rt_ctl,         ONLY:it_dyn
  use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_nk,&
-&                         ADD_to_saved_values,l_RT_lifetimes_interpolation,&
+&                         ADD_to_saved_values,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
 &                         RT_H_occupations,RT_H_occupations_reference,RT_bands
  !
@@ -47,8 +47,6 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  integer          :: ib,ik
  logical          :: SAVE_it
- !
- if (.not.l_RT_lifetimes_interpolation) return
  !
  if (EVAL) then
    !
@@ -80,7 +78,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    !
    ! Store the occupations related to the last saved lifetimes
    !-----------------------------------------------------------
-   if (SAVE_index==1.or.(.not.l_elel_scatt.and.SAVE_index==3)) then
+   if (SAVE_it) then
      RT_E_occupations_reference=RT_E_occupations
      RT_H_occupations_reference=RT_H_occupations
    endif
@@ -88,9 +86,11 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  else
    !
    if (RT_TIME_status(it_dyn)==0 .or. (RT_TIME_status(it_dyn)>0.and..not.FIRST_step( )) ) then
+     !
      !==============
      ! INTERPOLATE 
      !=============
+     !
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,RT_nk
          call RT_Lifetimes_Interpolation(LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
@@ -98,6 +98,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      enddo
      !
    else if (RT_TIME_status(it_dyn)<0) then
+     !
      !===============
      ! KEEP CONSTANT 
      !===============
@@ -105,6 +106,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      LIFE=SAVED_lifetime(:,:,SAVE_index,Life_MEM_steps)
      !
    endif
+   !
  endif
  !
 end subroutine RT_Lifetimes_save_and_interp

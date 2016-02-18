@@ -161,7 +161,7 @@ integer function variables_RT(ID,local_description,what)
    ! Lifetimes Interpolation
    !
    if( ver_is_gt_or_eq(ID,revision=5416) ) then
-     call io_elemental(ID,VAR='RT_life_interpolation',CH0="",VAR_SZ=1,MENU=0)
+     call io_elemental(ID,VAR='RT_life_interpolation',VAR_SZ=1,MENU=0)
      i_desc=i_desc+1
      call io_elemental(ID,L0=l_RT_lifetimes_interpolation, &
 &          VAR=" [RT] Lifetimes Interpolation    :",WARN=.true.,OP=(/"=="/),&

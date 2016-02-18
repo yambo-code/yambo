@@ -53,11 +53,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use functions,     ONLY:bose_E_cut
  use parallel_m,    ONLY:n_log_CPUs
  use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
+ use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
 #endif
-#if defined _SC || defined _RT
- use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
+#if defined _SC || defined _RT || defined _QED
  use hamiltonian,   ONLY:IP_h_bands
  ! to be moved in mod hamiltonian
  use SC,            ONLY:SC_potential,OEP_approx
@@ -75,7 +75,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        NE_tot_time,RT_life_interp_steps,RT_bands,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,I_MEM_steps,&
 &                        Gr_kind,two_alpha,DbGd_EE_percent
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
@@ -370,12 +370,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'RTBands',    '[RT] Bands',RT_bands)
  !
- ! Tmp code while yambo_rt is made independent of yambo_sc
- if(RT_bands(1)>0) then
-   SC_bands  =RT_bands
-   COLL_bands=RT_bands
-   IP_h_bands=RT_bands
- endif
+ call TMP_MIRROR_bands( )
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
@@ -401,8 +396,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! Scattering
  !
- call it(defs,'LifeInterpKIND',    '[RT] Step interpolation mode (DEFAULT / FIELD / FLAT / NONE)',&
-&                           RT_life_interp_KIND)
+ call it('f',defs,'LifeInterpolation',    '[RT] Skipped Lifetimes are interpolated')
  call it(defs,'LifeInterpSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                           RT_life_interp_steps,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
@@ -563,11 +557,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  !
- ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
- if(SC_bands(1)>0) then
-   COLL_bands=SC_bands
-   IP_h_bands=SC_bands
- endif
+ call TMP_MIRROR_bands( )
  !
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
@@ -589,12 +579,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
  !
- ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
- if(COLL_bands(1)>0) then
-   SC_bands  =COLL_bands
-   RT_bands  =COLL_bands
-   IP_h_bands=COLL_bands
- endif
+ call TMP_MIRROR_bands( )
  !
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
@@ -605,8 +590,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #if defined _RT
  !
- ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
- if(COLL_bands(1)>0) RT_bands  =COLL_bands
+ call TMP_MIRROR_bands( )
  !
 #endif
  ! 
@@ -745,5 +729,28 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
      !
    end subroutine
+   !
+#if defined _SC || defined _RT || defined _QED
+   !TMP>
+   subroutine TMP_mirror_bands( )
+     use parser_m,       ONLY:parser
+     logical :: is_def(3)
+     integer :: bands_(2)
+     call parser('SCbands',is_def(1))
+     call parser('RTbands',is_def(2))
+     call parser('COLLbands',is_def(3))
+     if (is_def(1)) bands_=SC_bands
+#endif
+#if defined _RT 
+     if (is_def(2)) bands_=RT_bands
+#endif
+#if defined _SC || defined _RT || defined _QED
+     if (is_def(3)) bands_=COLL_bands
+     SC_bands  =bands_
+     COLL_bands=bands_
+     IP_h_bands=bands_
+   end subroutine
+   !TMP<
+#endif
    !
 end subroutine

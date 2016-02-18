@@ -92,8 +92,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _RT || defined _YPP_RT
  use rt_ctl,     ONLY:RT_IO_time
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,                           &
-&                     RT_life_interp_KIND,RT_life_interp_steps,                           &
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_steps,      &
 &                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
 &                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
 &                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
@@ -588,7 +587,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Scattering
  !
- RT_life_interp_KIND="NONE"
  RT_life_interp_steps(1)=-1._SP*FS2AUT
  RT_life_interp_steps(2)=-1._SP*FS2AUT
  !

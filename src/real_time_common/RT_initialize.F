@@ -42,7 +42,7 @@ subroutine RT_initialize(E,k,q)
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,    &
 &                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_steps,&
-&                         RT_life_interp_KIND,l_NE_dynamics,l_RT_impose_N_dN,I_MEM_steps,Integrator_name,&
+&                         l_RT_lifetimes_interpolation,l_NE_dynamics,l_RT_impose_N_dN,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,DbGd_EE_scatt_table,&
 &                         DbGd_EE_Nk_table,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,&
 &                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
@@ -304,6 +304,7 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
+ if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) write (*,*) 'here'
  if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) N_T_samplings =RT_Lifetimes_evaluation_plan( )
  !
  ! Checking extended COLLISIONS
@@ -343,10 +344,10 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
  if (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)
  !
- if (.not.trim(RT_life_interp_KIND)=="NONE") then
+ if (RT_is_dephased) then
    call msg( 'nr','---Dynamics---')
-   call msg( 'r', 'Sampling                       :',RT_life_interp_KIND)
-   call msg( 'r', 'Memory steps (Lifetimes)       :',Life_MEM_steps)
+   call msg( 'r', 'Lifetimes        (Memory steps):',Life_MEM_steps)
+   call msg( 'r', '                (Interpolation):',l_RT_lifetimes_interpolation)
    call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_life_interp_steps/FS2AUT)
    call msg( 'r', 'Time points                    :',N_T_samplings*Life_MEM_steps)
  endif

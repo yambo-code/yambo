@@ -67,7 +67,7 @@ module real_time
  ! channels. I will see later if this can be somehow extended/duplicated
  ! for the static correlations
  !
- character(schlen) :: RT_life_interp_KIND          ! NONE, FLAT or FIELD
+ logical  :: l_RT_lifetimes_interpolation = .FALSE.! If .TRUE. the lifetimes not calculated are interpolated. Otherwise are kept constant
  real(SP) :: RT_life_interp_steps(2)               ! (1) is step between groups of 3, (2) is step in the group of 3.
  ! 
  integer(2), allocatable :: RT_TIME_status(:)

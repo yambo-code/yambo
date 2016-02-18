@@ -31,12 +31,12 @@ integer function variables_RT(ID,local_description,what)
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
 &                         RT_description,n_RT_descriptions,it_dyn
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,NE_steps,NE_time, &
-&                         Integrator_name,RT_bands,      &
+&                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
 &                         RAD_LifeTime,Phase_LifeTime,   &
 &                         l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_steps,&
-&                         RT_life_interp_KIND,l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E
+&                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E
  use ELPH,           ONLY:elph_branches
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
@@ -158,15 +158,16 @@ integer function variables_RT(ID,local_description,what)
      if( read_is_on(ID) ) it_dyn=it_now
    endif
    !
+   ! Lifetimes Interpolation
    !
-   ! RT_life_interp_kind
-   !
-   call io_elemental(ID,VAR='RT_life_interp_kind',CH0="",VAR_SZ=1,MENU=0)
-   i_desc=i_desc+1
-   call io_elemental(ID,CH0=RT_life_interp_KIND, &
-&        VAR=" [RT] Sampling                   :",WARN=.true.,OP=(/"=="/),&
-&        DESCRIPTION=local_description(i_desc))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   if( ver_is_gt_or_eq(ID,revision=5416) ) then
+     call io_elemental(ID,VAR='RT_life_interpolation',CH0="",VAR_SZ=1,MENU=0)
+     i_desc=i_desc+1
+     call io_elemental(ID,L0=l_RT_lifetimes_interpolation, &
+&          VAR=" [RT] Lifetimes Interpolation    :",WARN=.true.,OP=(/"=="/),&
+&          DESCRIPTION=local_description(i_desc))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
    !
    !
    ! RT_life_interp_more

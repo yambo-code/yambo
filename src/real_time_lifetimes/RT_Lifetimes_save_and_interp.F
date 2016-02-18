@@ -30,7 +30,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  use rt_ctl,         ONLY:it_dyn
  use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_nk,&
-&                         ADD_to_saved_values,RT_life_interp_KIND,&
+&                         ADD_to_saved_values,l_RT_lifetimes_interpolation,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
 &                         RT_H_occupations,RT_H_occupations_reference,RT_bands
  !
@@ -48,7 +48,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  integer          :: ib,ik
  logical          :: SAVE_it
  !
- if ( trim(RT_life_interp_KIND)=="NONE" ) return
+ if (.not.l_RT_lifetimes_interpolation) return
  !
  if (EVAL) then
    !

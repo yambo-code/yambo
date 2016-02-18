@@ -30,13 +30,12 @@ integer function RT_Lifetimes_evaluation_plan( )
  use memory_m,       ONLY:mem_est
  use rt_ctl,         ONLY:it_start
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_steps,&
-&                         RT_step,RT_life_interp_KIND,Life_MEM_steps
+&                         RT_step,l_RT_lifetimes_interpolation,Life_MEM_steps
  !
  implicit none
  !
  ! Work Space
  !
- logical         :: l_interpolate
  integer         :: it,N_inter_steps,N_intra_steps,it_first,it_0,it_,i1,N_blocks
  real(SP)        :: weight(NE_steps)
  complex(SP)     :: TIME
@@ -49,13 +48,7 @@ integer function RT_Lifetimes_evaluation_plan( )
    RT_TIME_status=1
  endif
  !
- l_interpolate=trim(RT_life_interp_KIND)=="DEFAULT" .or. trim(RT_life_interp_KIND)=="FIELD" .or. &
-&              trim(RT_life_interp_KIND)=="FLAT"
- !
- if (.not.l_interpolate) RT_life_interp_KIND="NONE"
- !
- if (RT_life_interp_steps(1)<0. .or. it_start>=NE_steps .or. trim(RT_life_interp_KIND)=="NONE") then
-   RT_life_interp_KIND="NONE"
+ if (RT_life_interp_steps(1)<0. .or. it_start>=NE_steps .or. .not.l_RT_lifetimes_interpolation) then
    Life_MEM_steps=1
    RT_Lifetimes_evaluation_plan=0
    return
@@ -78,24 +71,6 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  weight=1._SP
  it_0=1
- !
- ! DS: Broken. It never worked anyway
- !
- !if (trim(RT_life_interp_KIND)=="FIELD") then
- !  call Efield_duplicate(Efield(1),E_dummy)
- !  if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
- !  do it=1,NE_steps
- !    TIME=cmplx(RT_step*(it-1)-Efield(1)%t_initial_indx*RT_step,0._SP)
- !    !weight(it)=abs(small_a(TIME,E_dummy,1))**2
- !    if (abs(weight(it)-1.)<1.E-7) it_0=it
- !    if (it>Efield(1)%t_final_indx) then
- !      !
- !      it_0=it
- !      weight(it+1:)=weight(it)
- !      exit
- !    endif
- !  enddo
- !endif
  !
  if (it_start> 1) then
    N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it_start+1)/RT_step)

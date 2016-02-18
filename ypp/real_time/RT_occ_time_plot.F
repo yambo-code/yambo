@@ -26,12 +26,13 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use units,          ONLY:FS2AUT,SP,HA2EV
  use pars,           ONLY:schlen
- use stderr,         ONLY:intc,set_real_printed_length
+ use stderr,         ONLY:intc,real2ch,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states
  use YPP,            ONLY:output_fname,RT_IO_time_range_setup
  use com,            ONLY:msg,of_open_close
+ use vec_operate,    ONLY:c2a
  use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply
  use real_time,      ONLY:l_RT_CCA_Kernel,RT_carriers,RT_bands
  !
@@ -44,8 +45,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  ! Work Space
  !
  integer               :: ik,ib,i_spin,i_s,i_T,n_gamma,n_output
- real(SP)              :: io_Time,data_to_plot(9)
- character(schlen)     :: titles(9),specs(9,2)
+ real(SP)              :: io_Time,data_to_plot(9),k_al(3),k_cc(3)
+ character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
  character(3)          :: ch3_dummy
  logical               :: l_ELPH_lifetimes
  real(SP)              :: RT_gamma(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol,6),&
@@ -225,6 +226,22 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      !
      ! Titles
      !========
+     call c2a(v_in=kpt%pt(ik,:),v_out=k_al,mode='ki2a')
+     call c2a(v_in=kpt%pt(ik,:),v_out=k_cc,mode='ki2c')
+     ! 
+     dumb_ch(1)='K ['//trim(intc(ik))//'] :'//trim(real2ch(k_cc(1)))//' '//&
+&              trim(real2ch(k_cc(2)))//' '//trim(real2ch(k_cc(3)))//' ( cc) '
+     dumb_ch(2)='       '//trim(real2ch(kpt%pt(ik,1)))//' '//&
+&              trim(real2ch(kpt%pt(ik,2)))//' '//trim(real2ch(kpt%pt(ik,3)))//' (rlu) '
+     !
+     if(ik>  9) dumb_ch(2)=' '//trim(dumb_ch(2))
+     if(ik> 99) dumb_ch(2)=' '//trim(dumb_ch(2))
+     if(ik>999) dumb_ch(2)=' '//trim(dumb_ch(2))
+     !
+     call msg('o '//trim(output_fname),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(output_fname),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(output_fname),"#")
+     !
      if (l_elel_scatt.or.l_ELPH_lifetimes) then
        call msg('o '//trim(output_fname),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)
        call msg('o '//trim(output_fname),'#',specs(:n_output,2),INDENT=0,USE_TABS=.TRUE.)

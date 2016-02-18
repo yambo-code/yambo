@@ -136,8 +136,8 @@ yambo_magnetic: libs
 	@LIBS2DO="$(PJ_SCLIBS)"; XPATH="src";ADF="-D_MAGNETIC -D_SC"; $(mksrc)
 	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC";$(mkx)
 yambo_kerr: libs
-	@LIBS2DO="$(MAIN_LIBS)"; XPATH="src";ADF="-D_KERR"; $(mksrc)
-	@X2DO="yambo_kerr"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_KERR";$(mkx)
+	@LIBS2DO="$(PJ_RTLIBS)"; XPATH="src";ADF="-D_RT -D_SC -D_ELPH -D_KERR"; $(mksrc)
+	@X2DO="yambo_kerr"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH -D_KERR";$(mkx)
 yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)"; XPATH="src";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)

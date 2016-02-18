@@ -50,6 +50,8 @@ subroutine K_kerr_IP(iq,w)
  complex(SP)       :: E_plus_W0,res,E_plus_W(2)
  integer           :: ik_bz,iv,ic,i_sp,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
  !
+ allocate(Epsilon_ij(BSS_n_freqs,4))
+ !
  Epsilon_ij(:,1)=w(:)
  !
  n_SOC=1

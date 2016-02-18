@@ -23,7 +23,7 @@
 !
 subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  !
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
  use rt_ctl,         ONLY:it_dyn
@@ -33,6 +33,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
 &                         RT_H_occupations,RT_E_occupations,RT_TIME_status,RT_delta0_occupations,&
 &                         SAVED_lifetime,Life_MEM_steps,RT_bands,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
+&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
 &                         G_lesser_reference,integrator_step,RT_nk
@@ -88,17 +89,27 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
        !DEBUG>
        !
        ! March 2015. AndreaM. The npcu fraction here is because the Lifetimes go trough
-       ! an ALL2ALL later. BUT the e-p lifetimes use only ncpu/PAR_COM_Plasma_INDEX%n_CPU CPU's.
+       ! an ALL2ALL later. BUT the e-p & e-g lifetimes use only ncpu/PAR_COM_Plasma_INDEX%n_CPU CPU's.
        !
+       if (l_elphoton_scatt) then
+         E_PHOT_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,7,Life_MEM_steps)/&
+&                                         real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
+         E_PHOT_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,8,Life_MEM_steps)/&
+&                                         real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
+       endif
        if (l_elel_scatt) then
          E_E_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,1,Life_MEM_steps)/real(ncpu)
          E_E_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,2,Life_MEM_steps)/real(ncpu)
        endif
        if (l_elph_scatt) then
-         E_P_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
-         E_P_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
-         E_P_Ho_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
-         E_P_El_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
+         E_P_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/&
+&                                      real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
+         E_P_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/&
+&                                      real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
+         E_P_Ho_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/&
+&                                      real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
+         E_P_El_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/&
+&                                      real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
        endif
        !
      else
@@ -107,6 +118,10 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
        RT_E_occupations_reference(ib,ik)=         aimag(G_lesser_reference(ib,ib,ik))
        RT_H_occupations_reference(ib,ik)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
        !
+       if (l_elphoton_scatt) then
+         E_PHOT_Hole_lifetime(ib,ik)=    0._SP
+         E_PHOT_Electron_lifetime(ib,ik)=0._SP
+       endif
        if (l_elel_scatt) then
          E_E_Hole_lifetime(ib,ik)=    0._SP
          E_E_Electron_lifetime(ib,ik)=0._SP

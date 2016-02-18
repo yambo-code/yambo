@@ -24,17 +24,15 @@
 subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
  !
  use units,               ONLY:HA2EV,SPEED_OF_LIGHT
- !TMP>
- use units,               ONLY:HBAR_eVfs,HA2GHZ,FS2AUT,PS2AUT
- !TMP<
- use pars,                ONLY:SP,rZERO
+ use pars,                ONLY:SP
  use functions,           ONLY:theta_function
  use electrons,           ONLY:levels,spin,spin_occ
  use R_lattice,           ONLY:bz_samp
  use parallel_m,          ONLY:PAR_DIPk_ibz_index,PAR_IND_B_mat
  use X_m,                 ONLY:DIP_P
  use real_time,           ONLY:RT_bands,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,l_initial_equilibrium,&
-&                              RT_delta_occupations,RT_ibz_coo,RT_H_occupations_reference,RT_E_occupations_reference
+&                              RT_delta_occupations,RT_ibz_coo,RT_H_occupations_reference,&
+&                              RT_E_occupations_reference
  use hamiltonian,         ONLY:B_mat_index
  !
  implicit none
@@ -47,9 +45,6 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
  !
  integer     :: i_n,i_spin,i_m,i_k_mem,i_k_rim
  real(SP)    :: E_diff,f_m,P_square,pre_factor,Hole_f_m
- !TMP>
- real(SP)    :: Lifetime,Linewidth
- !TMP<
  !
  i_k_mem=PAR_DIPk_ibz_index(i_k)
  i_k_rim=RT_ibz_coo(i_k,1)
@@ -77,18 +72,12 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
      !
      pre_factor=P_square/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)
      !
-     E_PHOT_Hole_lifetime(i_n,i_k)=E_PHOT_Hole_lifetime(i_n,i_k)+&
-&                                   pre_factor*Hole_f_m*theta_function( E_diff,0.01/HA2EV,0)
      E_PHOT_Electron_lifetime(i_n,i_k)=E_PHOT_Electron_lifetime(i_n,i_k)+&
+&                                   pre_factor*Hole_f_m*theta_function( E_diff,0.01/HA2EV,0)
+     E_PHOT_Hole_lifetime(i_n,i_k)=E_PHOT_Hole_lifetime(i_n,i_k)+&
 &                                   pre_factor*     f_m*theta_function(-E_diff,0.01/HA2EV,0)
      !
    enddo Bp_loop
-   !
-!   Linewidth=abs(E_PHOT_Hole_lifetime(i_n_,i_k)+E_PHOT_Electron_lifetime(i_n_,i_k))
-!   Lifetime=0._SP
-!   if (Linewidth>1.E-10) Lifetime=1._SP/Linewidth
-!   write (*,*) i_k,i_n,Linewidth
-!!*HBAR_eVfs*Lifetime/HA2EV*FS2AUT/PS2AUT
    !
  enddo B_loop
  !

@@ -32,14 +32,15 @@ subroutine e2y_wf_components(ncid)
   use etsf_data,             only : dims
   use pars,                  only : SP,DP
   use com,                   only : msg, error
-  use R_lattice,             only : nkibz,ng_vec
+  use mod_com2y,             only : ng_vec_abinit
+  use R_lattice,             only : nkibz
   use wave_func,             only : wf_ncx,wf_nc_k,wf_igk,wf_ng
   !
   implicit none
   !
   integer,           intent(in)  :: ncid
   !
-  real(SP)                       :: wf_disk(2,ng_vec,nkibz)
+  real(SP)                       :: wf_disk(2,ng_vec_abinit,nkibz)
   integer,          allocatable  :: wf_igk_tmp(:,:)
   real(DP),         allocatable  :: wavefunction_section_(:,:,:)
   logical                        :: lstat
@@ -63,17 +64,17 @@ subroutine e2y_wf_components(ncid)
                             & wavefunction_section_, lstat,          &
                             & error_data = error_data, start = start, count = count)
   !
-  forall( ireal=1:2, ig=1:ng_vec, ik=1:nkibz ) wf_disk(ireal,ig,ik) = wavefunction_section_(ireal,ig,ik)
+  forall( ireal=1:2, ig=1:ng_vec_abinit, ik=1:nkibz ) wf_disk(ireal,ig,ik) = wavefunction_section_(ireal,ig,ik)
   !
   deallocate(wavefunction_section_)
   !
-  allocate(wf_igk_tmp(ng_vec,nkibz),wf_nc_k(nkibz))
+  allocate(wf_igk_tmp(ng_vec_abinit,nkibz),wf_nc_k(nkibz))
   wf_igk_tmp=-1
   wf_nc_k=0
   !
   do ik=1,nkibz
     ic=0
-    do ig=1,ng_vec
+    do ig=1,ng_vec_abinit
       if(all(wf_disk(:,ig,ik)==0)) cycle
       ic=ic+1
       wf_igk_tmp(ic,ik)=ig

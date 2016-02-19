@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CH
+! Authors (see AUTHORS file for details): CH DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -282,11 +282,12 @@ contains
     implicit none
     !
     type(etsf_basisdata)          :: basisdata_group
-    integer                       :: g_lim(6), gtotmax, ig_wf, ng_vec_old, ig, ic, ik
-    real(SP)                      :: g_vec_new(3)
-    real(SP),    allocatable      :: g_vec_tmp(:,:),G_mod(:)
+    integer                       :: g_lim(6), gtotmax, ig_wf, ng_vec_old, ig, ic, ik, g_vec_new(3)
+    integer,     allocatable      :: g_vec_tmp(:,:)
+    real(SP),    allocatable      :: G_mod(:),g_vec_sort(:,:)
     integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
     logical                       :: gamma_only,l_new
+    logical,     allocatable      :: l_g_mapped(:)
     character(len=15)             :: format1
     !
     call allocate_basisdata_group
@@ -334,17 +335,21 @@ contains
       do ic=1,wf_nc_k(1)
         wf_igk(ic,1)=ic
         ig=wf_igk(ic,1)
-        g_vec_tmp(ig,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_WFK_(:,ic,1))*alat(:)/2.0_SP/pi
+        g_vec_tmp(ig,:)=reduced_coordinates_of_plane_waves_WFK_(:,ic,1)
       enddo
       !
       do ik=2,k%nibz
         ng_vec_old=ng_vec
+        allocate(l_g_mapped(ng_vec_old))
+        l_g_mapped=.false.
         do ic=1,wf_nc_k(ik)
-          g_vec_new=matmul(transpose(b),reduced_coordinates_of_plane_waves_WFK_(:,ic,ik))*alat(:)/2.0_SP/pi
+          g_vec_new=reduced_coordinates_of_plane_waves_WFK_(:,ic,ik)
           l_new=.true.
           do ig=1,ng_vec_old
-            if(all(abs(g_vec_tmp(ig,:)-g_vec_new(:))<1.E-5)) then
+            if(l_g_mapped(ig)) cycle
+            if( all(g_vec_tmp(ig,:)-g_vec_new(:)==0) ) then
               l_new=.false.
+              l_g_mapped(ig)=.true.
               wf_igk(ic,ik)=ig
               exit
             endif
@@ -354,12 +359,15 @@ contains
           g_vec_tmp(ng_vec,:)=g_vec_new
           wf_igk(ic,ik)=ng_vec
         enddo
+        deallocate(l_g_mapped)
       enddo
       !
-      wf_ng=ng_vec
+      ng_vec_abinit=ng_vec
       !
       allocate(g_vec(ng_vec,3))
-      g_vec(:ng_vec,:3)=g_vec_tmp(:ng_vec,:3)
+      do ig=1,ng_vec
+        g_vec(ig,:3)=matmul(transpose(b),g_vec_tmp(ig,:3))*alat(:)/2.0_SP/pi
+      enddo
       deallocate(g_vec_tmp)
       !
       if(nsym>1) then
@@ -382,14 +390,15 @@ contains
       call sort(G_mod,indx_m1=G_mod_indx)
       deallocate(G_mod)
       !
-      allocate(g_vec_tmp(ng_vec,3))
-      g_vec_tmp=g_vec
-      g_vec(G_mod_indx(:ng_vec),:3)=g_vec_tmp(:ng_vec,:3)
-      deallocate(g_vec_tmp)
+      allocate(g_vec_sort(ng_vec,3))
+      g_vec_sort=g_vec
+      g_vec(G_mod_indx(:ng_vec),:3)=g_vec_sort(:ng_vec,:3)
+      deallocate(g_vec_sort)
       !
       ! Sort wf_igk accordingly
       allocate( wf_igk_tmp(wf_ncx,k%nibz) )
       wf_igk_tmp=wf_igk
+      wf_igk=-1
       do ik=1,k%nibz
         wf_igk(:wf_nc_k(ik),ik)=G_mod_indx(wf_igk_tmp(:wf_nc_k(ik),ik))
       enddo

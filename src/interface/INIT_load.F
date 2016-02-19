@@ -592,7 +592,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
  if(COLL_bands(1)>0) then
    SC_bands  =COLL_bands
-   RT_bands  =COLL_bands
    IP_h_bands=COLL_bands
  endif
  !

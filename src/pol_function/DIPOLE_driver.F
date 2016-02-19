@@ -154,7 +154,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Check if Dipoles DBs exist and are ok
  !=======================================
- call Dipoles_IO('read ')
+ io_err=-1
+ call DIPOLES_IO('read ')
  !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================
@@ -236,7 +237,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      integer                  :: IO_ACTION
      logical                  :: write_header,read_header,reading,writing
      !
-     if (.not.IO_dip) return
+     if (.not.IO_dip) return 
      !
      reading=trim(read_or_write)=="read"
      writing=trim(read_or_write)=="write"

@@ -51,9 +51,9 @@ module real_time
  !
  logical           :: l_RT_induced_field
  !
- ! ... core step length ...
+ ! ... core step length and Time-points array...
  !
- real(SP) :: RT_step
+ real(SP)              :: RT_step
  ! 
  ! ... NE dynamics ...
  !
@@ -80,9 +80,9 @@ module real_time
  ! ... Memory ...
  !
  real(SP) :: NE_MEM_treshold
- integer  :: G_MEM_steps
+ integer  :: G_MEM_steps    =2  ! By default only G_lesser@t and @t+1
  integer  :: Life_MEM_steps
- integer  :: I_MEM_steps    = 0
+ integer  :: I_MEM_steps    =0
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !

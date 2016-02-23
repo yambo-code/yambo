@@ -95,7 +95,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_steps,      &
 &                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
 &                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
-&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
+&                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
 &                     RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,  &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
@@ -575,7 +575,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_is_dephased=.FALSE.
  l_RT_induced_field=.FALSE.
  NE_MEM_treshold=0.
- G_MEM_steps=2   ! By default only G_lesser@t and @t+1
  RT_nk=0
  RT_eh_en=0._SP
  RT_scatt_tresh=1._SP

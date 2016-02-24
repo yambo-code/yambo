@@ -190,11 +190,12 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Test of the effect of using a single optical mode
  !
- if (l_use_Debye_E) ph_freqs_sq=W_debye**2.
+ if (l_use_Debye_E) ph_freqs_sq=W_debye**2
  !
- ! This checks does not seem to work properly for the restart
+ ! q_weight_RT are written in section 2, thus here are not known
+ ! since only sectin 1 of the REF DB is written
  !
- if (io_REF/=0) then
+ if (.not.allocated(q_weight_RT)) then
    !
    ! RIM support
    !=============
@@ -205,7 +206,7 @@ subroutine RT_ELPH_initialize(E,k,q)
    ! 2 - optical phonons w_ph(i) ~ const(i)
    !
    allocate(q_weight_RT(q%nbz,elph_branches(1):elph_branches(2),2))
-   q0_mod=(3.*RL_vol/4./4./pi)**(1./3.)
+   q0_mod=(3._SP*RL_vol/4._SP/4._SP/pi)**(1._SP/3._SP)
    i1=0
    ph_mean_speed=0._SP
    q_mod=0._SP

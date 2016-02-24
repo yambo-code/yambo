@@ -78,7 +78,7 @@ if test "x$enable_etsf_io" = "xyes" ; then
       compile_e2y="yes"
       compile_etsf="no"
       etsf_idir="$IFLAG$try_incdir"
-      ETSF_LIBS="-letsf_io"
+      ETSF_LIBS="$try_libdir/libetsf_io.a"
       #
       for file in `find $try_incdir \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
          cp $file include/

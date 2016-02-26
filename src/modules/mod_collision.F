@@ -86,8 +86,6 @@ module collision
  !                (USE): v3_r
  !
  type COLLISIONS_element
-   character(schlen)     :: name="none"
-   integer               :: kind=0
    integer               :: D(3,2)=0    ! Dimension (v3)
    integer               :: N           ! Linear Dimension
    integer(LP), pointer  :: table(:,:,:)  => null()
@@ -119,7 +117,6 @@ module collision
  !
  ! COLLISIONS groups...
  !======================
- !
  type(COLLISIONS_group) :: GW_NEQ_collisions
  type(COLLISIONS_group) :: Fock_collisions
  type(COLLISIONS_group) :: SEX_collisions

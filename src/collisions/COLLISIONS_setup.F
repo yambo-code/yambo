@@ -35,4 +35,9 @@ subroutine COLLISIONS_setup( )
  !  integer,     pointer  :: IO_status(:) => null()
  !end type
  !
+ use collision,     ONLY:GW_NEQ_collisions,Fock_collisions,SEX_collisions,P_collisions
+ !
+ !GW_NEQ_collisions%name=
+ !GW_NEQ_collisions%kind=
+ !
 end subroutine

@@ -32,9 +32,9 @@ subroutine COLLISIONS_momentum(E,k,q)
  use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_IND_Q,PAR_Q_index,PAR_QP_index,&
 &                        PAR_COM_QP_A2A,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
- use collision,     ONLY:elemental_collision,elemental_collision_free,nP_collisions,&
-&                        COLLISIONS_IO_status,P_collisions,elemental_collision_alloc,&
-&                        elemental_collision_copy,nP_collisions,&
+ use collision,     ONLY:elemental_collision,elemental_collision_free,nP_COLL_element,&
+&                        COLLISIONS_IO_status,P_COLL_element,elemental_collision_alloc,&
+&                        elemental_collision_copy,nP_COLL_element,&
 &                        COLLISIONS_parallel_SC_structure,COLL_bands
  use QP_m,          ONLY:QP_n_states,QP_QED_ng,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
@@ -103,7 +103,7 @@ subroutine COLLISIONS_momentum(E,k,q)
    !
    i_qp_mem=PAR_QP_index(i_qp)
    !
-   P_collisions(1)%v3_r=rZERO
+   P_COLL_element(1)%v3_r=rZERO
    !
    Q_loop: do i_q_bz=1,q%nbz 
      !
@@ -140,7 +140,7 @@ subroutine COLLISIONS_momentum(E,k,q)
            enddo
          enddo
          !
-         P_collisions(1)%v3_r(i_g_mem,i_m,i_q_bz)=ACC
+         P_COLL_element(1)%v3_r(i_g_mem,i_m,i_q_bz)=ACC
          !
        enddo
        !
@@ -151,13 +151,13 @@ subroutine COLLISIONS_momentum(E,k,q)
    enddo Q_loop
    !
    if (COLLISIONS_parallel_SC_structure) then
-     call PP_redux_wait(P_collisions(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
-     call PP_redux_wait(P_collisions(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
+     call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
+     call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
    else
-     call PP_redux_wait(P_collisions(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
+     call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   call COLLISIONS_linearize_and_IO("Momentum",i_qp,P_collisions,nP_collisions)
+   call COLLISIONS_linearize_and_IO("Momentum",i_qp,P_COLL_element,nP_COLL_element)
    !
  enddo QP_loop
  !

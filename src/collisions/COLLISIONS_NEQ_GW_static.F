@@ -35,7 +35,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
 &                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
 &                        PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        nGW_NEQ_collisions,GW_NEQ_collisions,COLL_bands,&
+&                        nGW_NEQ_COLL_element,GW_NEQ_COLL_element,COLL_bands,&
 &                        COLLISIONS_IO_status,elemental_collision_alloc
  use plasma,        ONLY:EH_gas
 #if defined _TIMING
@@ -140,7 +140,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    !
    if (io_COLLs) then
      if (COLLISIONS_IO_status(i_qp1)/=-1) cycle
-     GW_NEQ_collisions(1)%v3_r=rZERO
+     GW_NEQ_COLL_element(1)%v3_r=rZERO
    endif
    !
    do iqbz=1,q%nbz 
@@ -276,13 +276,13 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          !
          if (io_COLLs) then
            !
-           GW_NEQ_collisions(1)%v3_r(i_J,1,iqbz)=GW_NEQ_collisions(1)%v3_r(i_J,1,iqbz)+&
+           GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz)=GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz)+&
 &                                                abs(pre_factor)**2._SP
            !
          else
            !
-           GW_NEQ_collisions(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)=&
-&             GW_NEQ_collisions(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
+           GW_NEQ_COLL_element(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)=&
+&             GW_NEQ_COLL_element(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
            !
          endif
          !
@@ -296,14 +296,14 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    !
    if (io_COLLs) then
      if (COLLISIONS_parallel_SC_structure) then
-       call PP_redux_wait(GW_NEQ_collisions(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(GW_NEQ_collisions(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
+       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
      else
-       call PP_redux_wait(GW_NEQ_collisions(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
+       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
      endif
    endif
    !
-   if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_qp1,GW_NEQ_collisions,nGW_NEQ_collisions)
+   if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_qp1,GW_NEQ_COLL_element,nGW_NEQ_COLL_element)
    !
  enddo
  !

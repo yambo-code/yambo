@@ -33,7 +33,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
 &                          RT_scatt_tresh,RT_ibz_coo
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
- use collision,       ONLY:GW_NEQ_collisions
+ use collision,       ONLY:GW_NEQ_COLL_element
  use parallel_m,      ONLY:PAR_QP_index,PAR_IND_QP,PAR_Q_index,PAR_IND_Q,PAR_IND_Plasma,PAR_PLASMA_index
  !
  implicit none
@@ -169,7 +169,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          !
        endif
        !
-       pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)
+       pre_factor=(4._SP*pi)**2._SP*GW_NEQ_COLL_element(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)
        !
        do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
          !

@@ -43,7 +43,7 @@ subroutine RT_Ext_fields(A,time)
  !
  use pars,           ONLY:SP,cZERO,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:RT_step,NE_i_time,integrator_step
+ use real_time,      ONLY:RT_step,RT_dyn_step,NE_i_time,integrator_step
  use fields,         ONLY:n_ext_fields,Efield,small_a,gauge_field
  use functions,      ONLY:theta_function
  !
@@ -78,7 +78,6 @@ subroutine RT_Ext_fields(A,time)
    theta=theta_function(Field_time,RT_step,0)
    delta=theta_function(Field_time,RT_step,1)
    signf=theta_function(Field_time,RT_step,2)
-   !
    !
    select case(Efield(i_f)%ef_pol)
    case("linear")

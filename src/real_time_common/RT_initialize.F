@@ -35,7 +35,7 @@ subroutine RT_initialize(E,k,q)
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
 &                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
- use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands, &
+ use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_is_dephased,RAD_LifeTime,       &
@@ -124,8 +124,14 @@ subroutine RT_initialize(E,k,q)
  endif
  !
  ! Use NE_tot_time if provided
+ !==============================
  !
  if (NE_tot_time>0._SP) NE_steps=max(NE_steps,nint(NE_tot_time/RT_step)+1)
+ !
+ ! Initialize RT_dyn_step
+ !========================
+ !
+ RT_dyn_step=RT_step
  !
  ! Set a number of steps. i1=1(J,P,CARRIERs)  i1=2(GF) i1=3(output).
  ! Negative value forces the step to be set automatically
@@ -335,10 +341,9 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 :',trim(Integrator_name))
- call msg( 'r', 'Simulation time        [fs]:',real(NE_steps-1)*RT_step/FS2AUT)
- call msg( 'r', 'Step length            [fs]:',RT_step/FS2AUT)
- call msg( 'r', 'NE Steps                   :',NE_steps)
- call msg( 'r', 'NE time                [fs]:',(NE_steps-1)*RT_step/FS2AUT)
+ call msg( 'r', 'Simulation time        [fs]:',NE_tot_time/FS2AUT)
+ call msg( 'r', 'Initial time step      [fs]:',RT_step/FS2AUT)
+ call msg( 'r', '             steps         :',NE_steps)
  call msg( 'r', 'Memory depth(G)        [fs]:',T_memory/FS2AUT)
  call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
  if (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)

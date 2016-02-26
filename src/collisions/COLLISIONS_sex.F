@@ -36,7 +36,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        SEX_collisions,nSEX_collisions,COLL_bands,&
+&                        SEX_COLL_element,nSEX_COLL_element,COLL_bands,&
 &                        COLLISIONS_IO_status,elemental_collision_alloc
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -143,13 +143,14 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
    if (io_COLLs) then
      if (COLLISIONS_IO_status(i_qp)/=-1) cycle
    endif
+ write (*,*) i_qp
    !
    i_n     = QP_table(i_qp,1)
    i_m     = QP_table(i_qp,2)
    i_k     = QP_table(i_qp,3)
    i_sp    = spin(QP_table(i_qp,:))
    !
-   SEX_collisions(1)%v3_c=cZERO
+   SEX_COLL_element(1)%v3_c=cZERO
    !
    do iqbz=1,q%nbz
      !
@@ -249,7 +250,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
          enddo
 !$omp end parallel do
          !
-         SEX_collisions(1)%v3_c(i_np,i_mp,i_kmq)=SEX_collisions(1)%v3_c(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
+         SEX_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=SEX_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
          !
          call live_timing(steps=1)
          !
@@ -260,13 +261,13 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
    enddo ! loop on iqbz
    !
    if (COLLISIONS_parallel_SC_structure) then
-     call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-     call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
+     call PP_redux_wait(SEX_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
+     call PP_redux_wait(SEX_COLL_element(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
    else
-     call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
+     call PP_redux_wait(SEX_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   call COLLISIONS_linearize_and_IO("SEX",i_qp,SEX_collisions,nSEX_collisions)
+   call COLLISIONS_linearize_and_IO("SEX",i_qp,SEX_COLL_element,nSEX_COLL_element)
    !
  enddo ! loop on i_qp
  !

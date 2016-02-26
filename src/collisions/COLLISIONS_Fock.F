@@ -34,7 +34,7 @@ subroutine COLLISIONS_Fock(E,k,q)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        Fock_collisions,nFock_collisions,COLLISIONS_IO_status,&
+&                        Fock_COLL_element,nFock_COLL_element,COLLISIONS_IO_status,&
 &                        elemental_collision_alloc,COLL_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
@@ -116,7 +116,7 @@ subroutine COLLISIONS_Fock(E,k,q)
    i_k     = QP_table(i_qp,3)
    i_sp    = spin(QP_table(i_qp,:))
    !
-   Fock_collisions(1)%v3_c=cZERO
+   Fock_COLL_element(1)%v3_c=cZERO
    !
    do iqbz=1,q%nbz
      !
@@ -191,7 +191,7 @@ subroutine COLLISIONS_Fock(E,k,q)
          enddo
 !$omp end parallel do
          !
-         Fock_collisions(1)%v3_c(i_np,i_mp,i_kmq)=Fock_collisions(1)%v3_c(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
+         Fock_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=Fock_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
          !
          call live_timing(steps=1)
          !
@@ -202,13 +202,13 @@ subroutine COLLISIONS_Fock(E,k,q)
    enddo ! loop on iqbz
    !
    if (COLLISIONS_parallel_SC_structure) then
-     call PP_redux_wait(Fock_collisions(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-     call PP_redux_wait(Fock_collisions(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
+     call PP_redux_wait(Fock_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
+     call PP_redux_wait(Fock_COLL_element(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
    else
-     call PP_redux_wait(Fock_collisions(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
+     call PP_redux_wait(Fock_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   call COLLISIONS_linearize_and_IO("Fock",i_qp,Fock_collisions,nFock_collisions)
+   call COLLISIONS_linearize_and_IO("Fock",i_qp,Fock_COLL_element,nFock_COLL_element)
    !
  enddo ! loop on i_qp
  !

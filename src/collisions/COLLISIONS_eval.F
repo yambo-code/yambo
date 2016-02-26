@@ -97,6 +97,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  call XC_switch()
  !
+ ! Initial Setup
+ !===============
+ !
+ call COLLISIONS_setup( )
+ !
  ! No DB => EVAL
  !===============
  !

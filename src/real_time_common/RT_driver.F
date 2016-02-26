@@ -43,14 +43,14 @@ subroutine RT_driver(E,X,k,q)
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference,magn_reference, &
-&                         NE_time,RT_carriers,&
+&                         NE_time,RT_carriers,RT_dyn_step,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,&
 &                         dG_lesser,l_initial_equilibrium
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
- use collision,       ONLY:Fock_collisions,SEX_collisions,GW_NEQ_collisions
+ use collision,       ONLY:Fock_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast
@@ -67,7 +67,7 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: it,it_mem,it_mem_p1,io_REF
+ integer           :: it_mem,it_mem_p1,io_REF
  character(schlen) :: sec_title(3)
  complex(SP)       :: on_the_fly_operators(10)
  !
@@ -256,7 +256,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! See [23/9/2011] comments in RT_start_and_restart regarding the value of it_start
  !
- it=it_start-1
+ it_dyn  =it_start-1
  !
  ! Start-Up & Timing
  !===================
@@ -264,22 +264,23 @@ subroutine RT_driver(E,X,k,q)
  !
  do while (.not.l_Dynamics_is_over)
    !
-   it    =it+1
-   it_dyn=it
-   !
    ! Steps & times ...
    !===================
-   ! 
-   NE_i_time  =it
-   NE_time    =(NE_i_time-1)*RT_step
-   it_mem     =MEM_index(NE_i_time,G_MEM_steps)
+   !
+   ! ... NE_time(1)=0 !
+   !
+   if (it_dyn>0) NE_time    =NE_time+RT_dyn_step
+   !
+   it_dyn     =it_dyn+RT_dyn_step/RT_step
+   NE_i_time  =it_dyn
+   it_mem     =MEM_index(NE_i_time  ,G_MEM_steps)
    it_mem_p1  =MEM_index(NE_i_time+1,G_MEM_steps)
    !
    ! Keep a copy of A_vecpot before starting the collisions
    ! ======================================================
    A_vecpot_previous=A_vecpot
    !
-   l_Dynamics_is_over=(it==NE_steps)
+   l_Dynamics_is_over=(it_dyn==NE_steps)
    !
    if (stop_now(.FALSE.)) then
      NE_steps=((NE_i_time-1)/RT_IO_G_steps)*RT_IO_G_steps+1
@@ -332,7 +333,7 @@ subroutine RT_driver(E,X,k,q)
    !===========
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E,it)
+   call RT_databases_IO(E,it_dyn)
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
@@ -357,6 +358,14 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_Integrator(dG_lesser(:,:,:,it_mem_p1),dG_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
    !
+   ! Dynamical Time-Step evaluation
+   !================================
+   !
+   !call RT_time_step_update(dG_lesser(:,:,:,it_mem_p1),dG_lesser(:,:,:,it_mem))
+   !
+   ! G_lesser update
+   !=================
+   !
    G_lesser(:,:,:,it_mem_p1)=G_lesser_reference+dG_lesser(:,:,:,it_mem_p1)
    !	
    ! Timing
@@ -379,9 +388,9 @@ subroutine RT_driver(E,X,k,q)
      call WF_free(WF)
      call PLASMA_free(EH_gas)
      call RT_carriers_object(RT_carriers,WHAT='free')
-     if (allocated(Fock_collisions))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
-     if (allocated(SEX_collisions))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
-     if (allocated(GW_NEQ_collisions)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
+     if (allocated(Fock_COLL_element))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
+     if (allocated(SEX_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
+     if (allocated(GW_NEQ_COLL_element)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
      call set_real_printed_length()
    end subroutine
    !

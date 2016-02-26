@@ -29,11 +29,11 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use R_lattice,      ONLY:nqbz,nkibz
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ,PAR_nQP
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
- use collision,      ONLY:COLLISIONS_element,Fock_collisions,SEX_collisions,GW_NEQ_collisions,&
-&                         nFock_collisions,nSEX_collisions,nGW_NEQ_collisions,COLL_bands
+ use collision,      ONLY:COLLISIONS_element,Fock_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element,&
+&                         nFock_COLL_element,nSEX_COLL_element,nGW_NEQ_COLL_element,COLL_bands
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
- use collision,      ONLY:P_collisions,nP_collisions
+ use collision,      ONLY:P_COLL_element,nP_COLL_element
  use global_XC,      ONLY:SE_GW_QED
 #endif
  !
@@ -82,18 +82,18 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    D(2,:)=COLL_bands
    D(3,:)=(/1,nkibz/)
    if (l_collision.and.l_alloc) then
-     allocate(Fock_collisions(size_))
-     nFock_collisions=size_
-     Fock_collisions(:)%kind=SC_HF
-     Fock_collisions(:)%name="Fock"
+     allocate(Fock_COLL_element(size_))
+     nFock_COLL_element=size_
+     Fock_COLL_element(:)%kind=SC_HF
+     Fock_COLL_element(:)%name="Fock"
    endif
-   call local_alloc_and_free(Fock_collisions,nFock_collisions)
+   call local_alloc_and_free(Fock_COLL_element,nFock_COLL_element)
    if (l_collision.and.l_clean) then
-     if (allocated(Fock_collisions)) then
-       call local_alloc_and_free(Fock_collisions,nFock_collisions)
-       deallocate(Fock_collisions)
+     if (allocated(Fock_COLL_element)) then
+       call local_alloc_and_free(Fock_COLL_element,nFock_COLL_element)
+       deallocate(Fock_COLL_element)
      endif
-     nFock_collisions=0
+     nFock_COLL_element=0
    endif
  endif
  !
@@ -102,18 +102,18 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    D(2,:)=COLL_bands
    D(3,:)=(/1,nkibz/)
    if (l_collision.and.l_alloc) then
-     allocate(SEX_collisions(size_))
-     nSEX_collisions=size_
-     SEX_collisions(:)%kind=SC_COHSEX
-     SEX_collisions(:)%name="SEX"
+     allocate(SEX_COLL_element(size_))
+     nSEX_COLL_element=size_
+     SEX_COLL_element(:)%kind=SC_COHSEX
+     SEX_COLL_element(:)%name="SEX"
    endif
-   call local_alloc_and_free(SEX_collisions,nSEX_collisions)
+   call local_alloc_and_free(SEX_COLL_element,nSEX_COLL_element)
    if (l_collision.and.l_clean) then
-     if (allocated(SEX_collisions)) then
-       call local_alloc_and_free(SEX_collisions,nSEX_collisions)
-       deallocate(SEX_collisions)
+     if (allocated(SEX_COLL_element)) then
+       call local_alloc_and_free(SEX_COLL_element,nSEX_COLL_element)
+       deallocate(SEX_COLL_element)
      endif
-     nSEX_collisions=0
+     nSEX_COLL_element=0
    endif
  endif
  !
@@ -129,18 +129,18 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      !D(3,:)=(/1,PAR_nQ/)
    endif
    if (l_collision.and.l_alloc) then
-     allocate(P_collisions(size_))
-     nP_collisions=size_
-     P_collisions(:)%kind=SE_GW_QED
-     P_collisions(:)%name="Momentum"
+     allocate(P_COLL_element(size_))
+     nP_COLL_element=size_
+     P_COLL_element(:)%kind=SE_GW_QED
+     P_COLL_element(:)%name="Momentum"
    endif
-   call local_alloc_and_free(P_collisions,nP_collisions)
+   call local_alloc_and_free(P_COLL_element,nP_COLL_element)
    if (l_collision.and.l_clean) then
-     if (allocated(P_collisions)) then
-       call local_alloc_and_free(P_collisions,nP_collisions)
-       deallocate(P_collisions)
+     if (allocated(P_COLL_element)) then
+       call local_alloc_and_free(P_COLL_element,nP_COLL_element)
+       deallocate(P_COLL_element)
      endif
-     nP_collisions=0
+     nP_COLL_element=0
    endif
  endif
  !
@@ -155,17 +155,17 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      D(3,:)=(/1,PAR_nQ/)
    endif
    if (l_collision.and.l_alloc) then
-     allocate(GW_NEQ_collisions(size_))
-     nGW_NEQ_collisions=size_
-     GW_NEQ_collisions(:)%kind=SE_GW_NEQ
-     GW_NEQ_collisions(:)%name="GW_NEQ"
+     allocate(GW_NEQ_COLL_element(size_))
+     nGW_NEQ_COLL_element=size_
+     GW_NEQ_COLL_element(:)%kind=SE_GW_NEQ
+     GW_NEQ_COLL_element(:)%name="GW_NEQ"
    endif
-   call local_alloc_and_free(GW_NEQ_collisions,nGW_NEQ_collisions)
+   call local_alloc_and_free(GW_NEQ_COLL_element,nGW_NEQ_COLL_element)
    if(l_collision.and.l_clean) then
-     if (allocated(GW_NEQ_collisions)) then
-       deallocate(GW_NEQ_collisions)
+     if (allocated(GW_NEQ_COLL_element)) then
+       deallocate(GW_NEQ_COLL_element)
      endif
-     nGW_NEQ_collisions=0
+     nGW_NEQ_COLL_element=0
    endif
  endif
  !

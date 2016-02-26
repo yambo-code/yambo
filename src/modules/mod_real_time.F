@@ -53,15 +53,16 @@ module real_time
  !
  ! ... core step length and Time-points array...
  !
- real(SP)              :: RT_step
+ real(SP)              :: RT_step          ! Elemental step used to define dimensions and time-points
+ real(SP)              :: RT_dyn_step      ! On-the-fly time-step
  ! 
  ! ... NE dynamics ...
  !
- real(SP) :: NE_time ! <- incremented
- real(SP) :: NE_tot_time ! Total (fixed)
+ real(SP) :: NE_time    =0._SP    ! <- incremented
+ real(SP) :: NE_tot_time=0._SP    ! Total (fixed)
  !
  integer  :: NE_i_time ! = (NE_time-1)/RT_step
- integer  :: NE_steps
+ integer  :: NE_steps  ! Still relative to RT_step
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
  ! channels. I will see later if this can be somehow extended/duplicated

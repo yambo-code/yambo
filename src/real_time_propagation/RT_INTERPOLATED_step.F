@@ -25,7 +25,7 @@ subroutine RT_INTERPOLATED_step(G_new_k,G_old_k,I1_k,I2_k,ik,Time,deltaT)
  !
  use pars,           ONLY:SP,cI,cZERO
  use rt_ctl,         ONLY:it_start,it_dyn
- use real_time,      ONLY:I_MEM_steps,RT_step,MEM_index,I_coh_SAVE,RT_bands
+ use real_time,      ONLY:I_MEM_steps,RT_dyn_step,MEM_index,I_coh_SAVE,RT_bands
  !
  implicit none
  !
@@ -58,7 +58,7 @@ subroutine RT_INTERPOLATED_step(G_new_k,G_old_k,I1_k,I2_k,ik,Time,deltaT)
        do i_f=1,I_MEM_steps
          i_t = it_dyn-I_MEM_steps+i_f
          i_t_mem = MEM_index(i_t,I_MEM_steps)
-         Times_SAVE(i_f)=(i_t-1)*RT_step
+         Times_SAVE(i_f)=(i_t-1)*RT_dyn_step
          I_real(i_f) =real(I_coh_SAVE(i_n,i_np,ik,i_t_mem))
          I_aimag(i_f)=aimag(I_coh_SAVE(i_n,i_np,ik,i_t_mem))
        enddo

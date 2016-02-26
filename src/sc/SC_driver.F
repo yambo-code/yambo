@@ -52,7 +52,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder,v_norm
  use LIVE_t,         ONLY:live_timing
- use collision,      ONLY:Fock_collisions,SEX_collisions
+ use collision,      ONLY:Fock_COLL_element,SEX_COLL_element
  use electrons,      ONLY:Total_magn
  !
  implicit none
@@ -646,8 +646,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        if (allocated(QP_Vnl_xc)) deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
        !
-       if (allocated(Fock_collisions))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
-       if (allocated(SEX_collisions))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
+       if (allocated(Fock_COLL_element))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
+       if (allocated(SEX_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
        !
      endif
      !

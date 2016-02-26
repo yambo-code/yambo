@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
+integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
- ! init =-2  : Unsupported Runlevel(s) combination
- ! init =-1  : Missing CORE DBs
- ! init = 0  : everything is OK. Job continues.
- ! init = 1  : input file editing mode
- ! init = 2  : DB listing mode
+ ! INIT =-2  : Unsupported Runlevel(s) combination
+ ! INIT =-1  : Missing CORE DBs
+ ! INIT = 0  : everything is OK. Job continues.
+ ! INIT = 1  : input file editing mode
+ ! INIT = 2  : DB listing mode
  !
  use drivers
  use pars,           ONLY:schlen,lchlen
@@ -157,7 +157,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Presets (input)
  !
- init = 0
+ INIT = 0
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    call E_reset(en)
@@ -201,13 +201,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Command line reading
  !
- call read_command_line(instr,init)
+ call read_command_line(instr,INIT)
  !
  ! DB props listing mode ?
  !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
-   init = 2
+   INIT = 2
    if (log_as_a_file) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
@@ -233,14 +233,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_WF_err=io_WF(io_ID) 
  if (io_err/=0.or.io_WF_err/=0) then
-   init =-1
+   INIT =-1
    return
  else
    call mk_dir(more_io_path)
    call mk_dir(com_path)
    call mk_dir(trim(core_io_path)//"/SAVE")
    call mk_dir(trim(more_io_path)//"/SAVE")
-   if (init==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
+   if (INIT==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
  endif
  !
  ! Exporting DB1 informations to variables to be
@@ -273,7 +273,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! force a setup run
    instr="setup"
-   call read_command_line(instr,init)
+   call read_command_line(instr,INIT)
    !
  endif
  !

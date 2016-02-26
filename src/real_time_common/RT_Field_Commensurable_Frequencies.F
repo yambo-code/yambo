@@ -28,11 +28,11 @@ subroutine RT_Field_Commensurable_Frequencies()
  ! frequency(2) must be choosed accordingly.
  ! 
  ! Moreover to extract the Fourier coefficients I need to integrate over aa Time range
- ! equal to 2*pi/deltaW. This must be not larger then NE_steps*RT_step 
+ ! equal to 2*pi/deltaW. This must be not larger then NE_tot_time 
  !
  use pars,           ONLY:SP
  use fields,         ONLY:Efield,n_ext_fields,EtoT
- use real_time,      ONLY:NE_steps,RT_step
+ use real_time,      ONLY:NE_tot_time
  !
  implicit none
  !
@@ -59,8 +59,8 @@ subroutine RT_Field_Commensurable_Frequencies()
  W_step=Efield(i_master_field)%W_step
  !
  T_step=EtoT(E=W_step)
- T_treshold=treshold*NE_steps*RT_step
- if (T_step > treshold*NE_steps*RT_step) then
+ T_treshold=treshold*NE_tot_time
+ if (T_step > treshold*NE_tot_time) then
    T_step=T_treshold
    W_step=EtoT(T=T_step)
  endif

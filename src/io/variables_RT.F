@@ -137,7 +137,7 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
+&    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
@@ -147,7 +147,7 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,&
 &    VAR=" [RT] NE time       (reached)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
-     ! What is the difference between it_dyn and NE_i_time ?
+   !
    if( ver_is_gt_or_eq(ID,revision=5380) ) then
      i_desc=i_desc+1
      call io_elemental(ID,&
@@ -156,6 +156,7 @@ integer function variables_RT(ID,local_description,what)
    else
      if( read_is_on(ID) ) it_dyn=it_now
    endif
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! Lifetimes Interpolation

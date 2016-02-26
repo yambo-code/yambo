@@ -35,9 +35,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
 #if defined _QED || defined _RT
  use global_XC,       ONLY:SE_GW_QED
- use collision,       ONLY:P_collisions,COLL_bands
+ use collision,       ONLY:P_COLL_element,COLL_bands
 #endif
- use collision,       ONLY:V_kind,GW_NEQ_collisions,SEX_collisions,Fock_collisions,&
+ use collision,       ONLY:V_kind,GW_NEQ_COLL_element,SEX_COLL_element,Fock_COLL_element,&
 &                          n_COLLISIONS,COLLISIONS_state
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
  use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
@@ -163,23 +163,23 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      call io_control(ACTION=OP_RD,SEC=(/1,2/),ID=ID)
      !
      if (V_kind==SC_HF) then
-       io_err(iv)=io_COLLISIONS(i_db,ID,Fock_collisions(i_qp_mem))
+       io_err(iv)=io_COLLISIONS(i_db,ID,Fock_COLL_element(i_qp_mem))
        call COLLISIONS_alloc_and_free("Fock","v1 table","alloc",i_qp_mem)
      endif
      if (V_kind==SC_COHSEX) then
-       io_err(iv)=io_COLLISIONS(i_db,ID,SEX_collisions(i_qp_mem))
+       io_err(iv)=io_COLLISIONS(i_db,ID,SEX_COLL_element(i_qp_mem))
        call COLLISIONS_alloc_and_free("SEX","v1 table","alloc",i_qp_mem)
      endif
      if (V_kind==SE_GW_NEQ) then
-       if(.not.associated(GW_NEQ_collisions(1)%v_r)) then
-         io_err(iv)=io_COLLISIONS(i_db,ID,GW_NEQ_collisions(1))
+       if(.not.associated(GW_NEQ_COLL_element(1)%v_r)) then
+         io_err(iv)=io_COLLISIONS(i_db,ID,GW_NEQ_COLL_element(1))
          call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
        endif
      endif
 #if defined _QED
      if (V_kind==SE_GW_QED) then
-       if(.not.associated(P_collisions(1)%v_r)) then
-         io_err(iv)=io_COLLISIONS(i_db,ID,P_collisions(1))
+       if(.not.associated(P_COLL_element(1)%v_r)) then
+         io_err(iv)=io_COLLISIONS(i_db,ID,P_COLL_element(1))
          call COLLISIONS_alloc_and_free("Momentum","v1 table","alloc",1)
        endif
      endif
@@ -187,13 +187,13 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)
      !
-     if (V_kind==SC_HF)     io_err(iv)=io_COLLISIONS(i_db,ID,Fock_collisions(i_qp_mem))
-     if (V_kind==SC_COHSEX) io_err(iv)=io_COLLISIONS(i_db,ID,SEX_collisions(i_qp_mem))
+     if (V_kind==SC_HF)     io_err(iv)=io_COLLISIONS(i_db,ID,Fock_COLL_element(i_qp_mem))
+     if (V_kind==SC_COHSEX) io_err(iv)=io_COLLISIONS(i_db,ID,SEX_COLL_element(i_qp_mem))
 #if defined _RT
-     if (V_kind==SE_GW_NEQ) io_err(iv)=io_COLLISIONS(i_db,ID,GW_NEQ_collisions(1))
+     if (V_kind==SE_GW_NEQ) io_err(iv)=io_COLLISIONS(i_db,ID,GW_NEQ_COLL_element(1))
 #endif
 #if defined _QED
-     if (V_kind==SE_GW_QED) io_err(iv)=io_COLLISIONS(i_db,ID,P_collisions(1))
+     if (V_kind==SE_GW_QED) io_err(iv)=io_COLLISIONS(i_db,ID,P_COLL_element(1))
 #endif
      !
      ! Now the transfer %v_r => %v3_r
@@ -217,13 +217,13 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
              ic=ic+1
              if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
              i_J_mem  =PAR_PLASMA_index(i_J)
-             GW_NEQ_collisions(i_qp_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_collisions(1)%v_r(ic)
+             GW_NEQ_COLL_element(i_qp_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_COLL_element(1)%v_r(ic)
            enddo
          else
            do i_b=COLL_bands(1),COLL_bands(2)
              do i_g=1,QP_QED_ng
                ic=ic+1
-               P_collisions(i_qp_mem)%v3_r(i_g,i_b,iqbz)=P_collisions(1)%v_r(ic)
+               P_COLL_element(i_qp_mem)%v3_r(i_g,i_b,iqbz)=P_COLL_element(1)%v_r(ic)
              enddo
            enddo
          endif

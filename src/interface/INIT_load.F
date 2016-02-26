@@ -381,7 +381,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
  call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(3))
- call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(2))
+ call it(defs,'NETime',     '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
  call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                           Integrator_name)
  call it(defs,'IOtime',     '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
@@ -739,16 +739,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      call parser('SCbands',is_def(1))
      call parser('RTbands',is_def(2))
      call parser('COLLbands',is_def(3))
+     !
      if (is_def(1)) bands_=SC_bands
-#endif
-#if defined _RT 
      if (is_def(2)) bands_=RT_bands
-#endif
-#if defined _SC || defined _RT || defined _QED
      if (is_def(3)) bands_=COLL_bands
+     !
+     RT_bands  =bands_
      SC_bands  =bands_
      COLL_bands=bands_
      IP_h_bands=bands_
+     !
    end subroutine
    !TMP<
 #endif

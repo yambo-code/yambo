@@ -23,6 +23,15 @@
 !
 subroutine load_cc(manage_zero,center_cc)
  !
+ ! manage_zero:
+ !  - false --> no action
+ !  - true  --> if(x<10*epsilon(1._SP)) x=sing(x)*10*epsilon(1._SP)
+ !              useful in case one needs to compute 1/x^apha
+ !
+ ! center_cc
+ !  - false --> the saw-like jump is at the border of the supercell
+ !  - true  --> the saw-like jump is at the center of the supercell
+ !
  use pars,        ONLY:SP
  use FFT_m,       ONLY:fft_size,fft_dim
  use D_lattice,   ONLY:x_cc,a,x_zero_point
@@ -35,29 +44,31 @@ subroutine load_cc(manage_zero,center_cc)
  !
  ! work space
  !
- real(SP)   :: tmp_border(3),tmp_x(3)
+ real(SP)   :: tmp_border(3),tmp_x(3),rir1,rir2,rir3
  integer    :: ir,ir1,ir2,ir3,i_dir   
  !
  call fft_setup(0,1,.true.)      ! FFT size
  !
  allocate(x_cc(fft_size,3))
  !
- ! Now x cross zero at the corner of the super-cell
- ! In case the system is oriented in a different place
- ! we can set zero in another point
+ ! Not implemented. Option to set the jump elsewhere
  x_zero_point=0._SP
  !
  do ir1 = 0, fft_dim(1)-1         ! x 
+   rir1=real(ir1,SP)/real(fft_dim(1),SP)
    do ir2 = 0, fft_dim(2)-1       ! y
+     rir2=real(ir2,SP)/real(fft_dim(2),SP)
      do ir3 = 0, fft_dim(3)-1     ! z
+       rir3=real(ir3,SP)/real(fft_dim(3),SP)
+       !
        ir = 1 + ir1 + ir2*fft_dim(1) + ir3*fft_dim(1)*fft_dim(2)
        !
        ! Definition: x_i=a1_i+a_2i+a3_i     i=x,y,z       in cartesian coordinates
-       tmp_x(:) = ir1*a(1,:)/fft_dim(1) + ir2*a(2,:)/fft_dim(2) + ir3*a(3,:)/fft_dim(3)
+       tmp_x(:) = a(1,:)*rir1 + a(2,:)*rir2 + a(3,:)*rir3
        !
-       tmp_border(1)=a(1,1)/2+a(2,1)*ir2/fft_dim(2)+a(3,1)*ir3/fft_dim(3)
-       tmp_border(2)=a(2,2)/2+a(1,2)*ir1/fft_dim(1)+a(3,2)*ir3/fft_dim(3)
-       tmp_border(3)=a(3,3)/2+a(1,3)*ir1/fft_dim(1)+a(2,3)*ir2/fft_dim(2)
+       tmp_border(1)=a(1,1)/2._SP+a(2,1)*rir2 +a(3,1)*rir3
+       tmp_border(2)=a(1,2)*rir1 +a(2,2)/2._SP+a(3,2)*rir3
+       tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +a(3,3)/2._SP
        !
        ! Correclty compute x1, x2 and x3 with respect to cartesian axis
        ! They are saw-like and the jumps are always at the axis parallel to the vectors
@@ -69,9 +80,9 @@ subroutine load_cc(manage_zero,center_cc)
        !
        if(.not.center_cc) cycle
        !
-       tmp_border(1)=a(1,1)/2+a(2,1)*ir2/fft_dim(2)+a(3,1)*ir3/fft_dim(3)
-       tmp_border(2)=a(2,2)/2+a(1,2)*ir1/fft_dim(1)+a(3,2)*ir3/fft_dim(3)
-       tmp_border(3)=a(3,3)/2+a(1,3)*ir1/fft_dim(1)+a(2,3)*ir2/fft_dim(2)
+       tmp_border(1)=a(1,1)/2._SP+a(2,1)*rir2 +a(3,1)*rir3
+       tmp_border(2)=a(1,2)*rir1 +a(2,2)/2._SP+a(3,2)*rir3
+       tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +a(3,3)/2._SP
        !
        ! Correclty compute x1, x2 and x3 with respect to cartesian axis
        ! They are saw-like and the jumps are always at the axis parallel to the vectors

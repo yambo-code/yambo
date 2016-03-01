@@ -108,7 +108,7 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  Ylm(   lindx(2),mindx(2,0))= ch*(3._SP*costh**2-1._SP)
  dYlm(1,lindx(2),mindx(2,0))=-ch*costh*sinth*6._SP
  dYlm(2,lindx(2),mindx(2,0))= cZERO
- ch=sqrt(15./(8.*pi))
+ ch=sqrt(15._SP/(8._SP*pi))
  Ylm(   lindx(2),mindx(2,1))=-ch*sinth*costh        *eiphi
  dYlm(1,lindx(2),mindx(2,1))=-ch*(costh**2-sinth**2)*eiphi
  dYlm(2,lindx(2),mindx(2,1))=-ch*sinth*costh        *eiphi*cI

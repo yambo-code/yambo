@@ -47,6 +47,7 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BS_H_dim/))
  !
+ BS_corrections=cZERO
  call live_timing(' Perturbative '//trim(what)//' ',px%n_of_elements(myid+1))
  !
  do i1=1,BS_H_dim

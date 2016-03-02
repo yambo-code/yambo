@@ -104,9 +104,7 @@ subroutine RT_driver(E,X,k,q)
  ! This is also called in SC_alloc (from RT_alloc) but I need it also here
  ! for PARALLEL_global_indexes
  !
- write (*,*) 'a'
  call SC_QP_setup(E)
- write (*,*) 'b'
  !
  ! Parallel Setups
  !=================

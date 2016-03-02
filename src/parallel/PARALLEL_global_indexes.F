@@ -642,15 +642,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             NCPU=PAR_COM_WF_b_INDEX%n_CPU)
    !
    !.........................................................................
-   !   "COLLISIONS"
-   !.........................................................................
-   !
-   call PARALLEL_collisions( P_collisions )
-   call PARALLEL_collisions( FOCK_collisions )
-   call PARALLEL_collisions( SEX_collisions )
-   call PARALLEL_collisions( GW_NEQ_collisions )
-   !
-   !.........................................................................
    !   "q" -> Q-points (BZ)
    !.........................................................................
    !
@@ -666,15 +657,28 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU)
    !
    !.........................................................................
+   !   "COLLISIONS"
+   !.........................................................................
+   !
+   call PARALLEL_collisions( Xk, P_collisions )
+   call PARALLEL_collisions( Xk, FOCK_collisions )
+   call PARALLEL_collisions( Xk, SEX_collisions )
+   call PARALLEL_collisions( Xk, GW_NEQ_collisions )
+   !
+   !.........................................................................
    !   "qp"  -> Bp_mat (m,m')
    !.........................................................................
    !
    call G_b_to_B_mat(PAR_COM_Plasma_INDEX,'Bp',RT_bands)
-   call PARALLEL_add_Q_to_K_list('k_qp_q_bz',PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_G_k,PAR_IND_G_k_ID,&
-  &                              PAR_IND_Q,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
-   call PARALLEL_live_message("K-q (ibz)",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_G_k%n_of_elements(PAR_IND_G_k_ID+1),&
-&                             TOTAL=Xk%nibz,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
+   !
+   ! Messaging...
+   !
+   if (associated( PAR_IND_G_k%element_1D)) then
+     call PARALLEL_live_message("K-q (ibz)",ENVIRONMENT=ENVIRONMENT,&
+&                               LOADED=count( PAR_IND_G_k%element_1D ),&
+&                               TOTAL=Xk%nibz)
+   endif
+   !
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                             TOTAL=(RT_bands(2)-RT_bands(1)+1)**2,NCPU=PAR_COM_Plasma_INDEX%n_CPU)

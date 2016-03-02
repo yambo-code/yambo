@@ -34,7 +34,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL_element,COLL)
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use SC,            ONLY:SC_X_size,SC_X_bands
- use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing,QP_QED_ng
+ use QP_m,          ONLY:QP_ng_Sx,SC_band_mixing,QP_QED_ng
  use parallel_m,    ONLY:PAR_IND_QP
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
@@ -80,19 +80,15 @@ integer function io_COLLISIONS(i_qp,ID,COLL_element,COLL)
    !
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
-   if (.not.ver_is_gt_or_eq(ID,revision=2800)) then
+   if (.not.ver_is_gt_or_eq(ID,revision=5453)) then
      io_COLLISIONS=IO_OUTDATED_DB
      goto 1
    endif
    !
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
    !
-   if (ver_is_gt_or_eq(ID,revision=5152)) then
-     call io_elemental(ID,I0=COLL%N,&
-&         VAR=' Total number of COLLISIONS      :',CHECK=.true.,OP=(/"=="/))
-   else
-     COLL%N=QP_n_states
-   endif
+   call io_elemental(ID,I0=COLL%N,&
+&       VAR=' Total number of COLLISIONS      :',CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,I1=COLL_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
@@ -180,13 +176,11 @@ integer function io_COLLISIONS(i_qp,ID,COLL_element,COLL)
    !
    ! States
    !
-   if (ver_is_gt_or_eq(ID,revision=5152)) then
-     if (read_is_on(ID).and..not.associated(COLL%state)) then
-       allocate(COLL%state(COLL%N,4))
-     endif
-     call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/COLL%N,4/))
-     call io_bulk(ID,I2=COLL%state)
+   if (read_is_on(ID).and..not.associated(COLL%state)) then
+     allocate(COLL%state(COLL%N,4))
    endif
+   call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/COLL%N,4/))
+   call io_bulk(ID,I2=COLL%state)
    !
    io_COLLISIONS=io_status(ID)
    if (io_COLLISIONS/=0) goto 1

@@ -23,7 +23,8 @@
 !
 module collision
  !
- use pars, ONLY :DP,SP,LP,schlen
+ use pars,       ONLY:DP,SP,LP,schlen
+ use parallel_m, ONLY:PP_indexes
  !
  implicit none
  !
@@ -86,7 +87,6 @@ module collision
  !                (USE): v3_r
  !
  type COLLISIONS_element
-   integer               :: D(3,2)=0    ! Dimension (v3)
    integer               :: N           ! Linear Dimension
    integer(LP), pointer  :: table(:,:,:)  => null()
    complex(SP), pointer  :: v_c(:)        => null()
@@ -96,36 +96,35 @@ module collision
  end type
  !
  type COLLISIONS_group
+   integer               :: D(3,2)=0    ! Dimension (v3 of corresponding COLLISIONS_element)
    character(schlen)     :: name="none"
    integer               :: kind=0
    integer               :: N           ! # of collisions (dimension of linked COLLISIONS_element)
    integer,     pointer  :: state(:,:)   => null()
-   integer,     pointer  :: table(:,:)   => null()
-   integer,     pointer  :: DB_map(:)    => null()
+   !
+   ! I/O
+   !
    integer,     pointer  :: IO_status(:) => null()
+   !
+   ! Parallel Substructure
+   !
+   type(PP_indexes)      :: PAR_IND
+   integer               :: PAR_N
+   integer,     pointer  :: PAR_index(:) => null()
+   !
  end type
- !
- ! OUT-of-DATE
- integer                  :: n_COLLISIONS ! QP_n_states written on disk that may differ from the running value 
- integer :: nGW_NEQ_COLL_element=0
- integer :: nFock_COLL_element=0
- integer :: nSEX_COLL_element=0
- integer :: nP_COLL_element=0
- integer, allocatable       :: COLLISIONS_IO_status(:)
- integer, allocatable       :: COLLISIONS_state(:,:)
- integer, allocatable       :: COLLISIONS_DB_map(:) ! COLLISIONS_DB_map(I) is the DB corresponding to the QP_state I
  !
  ! COLLISIONS groups...
  !======================
  type(COLLISIONS_group) :: GW_NEQ_collisions
- type(COLLISIONS_group) :: Fock_collisions
+ type(COLLISIONS_group) :: FOCK_collisions
  type(COLLISIONS_group) :: SEX_collisions
  type(COLLISIONS_group) :: P_collisions
  !
  ! .. and ELEMENTS
  !=================
  type(COLLISIONS_element), allocatable :: GW_NEQ_COLL_element(:)
- type(COLLISIONS_element), allocatable :: Fock_COLL_element(:)
+ type(COLLISIONS_element), allocatable :: FOCK_COLL_element(:)
  type(COLLISIONS_element), allocatable :: SEX_COLL_element(:)
  type(COLLISIONS_element), allocatable :: P_COLL_element(:)
  !

@@ -21,12 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_COLLISIONS(i_qp,ID,COLL)
+integer function io_COLLISIONS(i_qp,ID,COLL_element,COLL)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLLISIONS_IO_status,&
-&                        n_COLLISIONS,COLLISIONS_state,COLL_bands
+ use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
@@ -48,7 +47,8 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  integer, intent(inout)            ::ID
  integer, intent(in)               ::i_qp
- type(COLLISIONS_element),optional ::COLL
+ type(COLLISIONS_element),optional ::COLL_element
+ type(COLLISIONS_group),  optional ::COLL
  !
  ! Work Space
  !
@@ -88,10 +88,10 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
    !
    if (ver_is_gt_or_eq(ID,revision=5152)) then
-     call io_elemental(ID,I0=n_COLLISIONS,&
+     call io_elemental(ID,I0=COLL%N,&
 &         VAR=' Total number of COLLISIONS      :',CHECK=.true.,OP=(/"=="/))
    else
-     n_COLLISIONS=QP_n_states
+     COLL%N=QP_n_states
    endif
    !
    call io_elemental(ID,I1=COLL_bands,&
@@ -181,11 +181,11 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    ! States
    !
    if (ver_is_gt_or_eq(ID,revision=5152)) then
-     if (read_is_on(ID).and..not.allocated(COLLISIONS_state)) then
-       allocate(COLLISIONS_state(n_COLLISIONS,4))
+     if (read_is_on(ID).and..not.associated(COLL%state)) then
+       allocate(COLL%state(COLL%N,4))
      endif
-     call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/n_COLLISIONS,4/))
-     call io_bulk(ID,I2=COLLISIONS_state)
+     call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/COLL%N,4/))
+     call io_bulk(ID,I2=COLL%state)
    endif
    !
    io_COLLISIONS=io_status(ID)
@@ -195,17 +195,17 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  ! Check the restart point
  !
- if (IO_mode(ID)==VERIFY.and.allocated(COLLISIONS_IO_status)) then
+ if (IO_mode(ID)==VERIFY.and.associated(COLL%IO_status)) then
    !
-   COLLISIONS_IO_status=1
-   do i_qp_loop=1,n_COLLISIONS
+   COLL%IO_status=1
+   do i_qp_loop=1,COLL%N
      if (.not.PAR_IND_QP%element_1D(i_qp_loop)) cycle
      io_extension(ID)=io_raw_extension(ID)
      call io_fragment(ID,i_fragment=i_qp_loop,ierr=io_err)
      if (io_err==0) then
-       COLLISIONS_IO_status(i_qp_loop)=1
+       COLL%IO_status(i_qp_loop)=1
      else
-       COLLISIONS_IO_status(i_qp_loop)=-1
+       COLL%IO_status(i_qp_loop)=-1
        exit
      endif
    enddo
@@ -219,7 +219,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    call io_fragment(ID,i_fragment=i_qp)
    !
    call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
-   call io_bulk(ID,I0=COLL%N)
+   call io_bulk(ID,I0=COLL_element%N)
    !
  endif
  !
@@ -234,25 +234,25 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &                             COLL%D(2,2)-COLL%D(2,1)+1,&
 &                             COLL%D(3,2)-COLL%D(3,1)+1/))
    !
-   call io_bulk(ID,L3=COLL%table(COLL%D(1,1):COLL%D(1,2),&
-&                                COLL%D(2,1):COLL%D(2,2),&
-&                                COLL%D(3,1):COLL%D(3,2)))
+   call io_bulk(ID,L3=COLL_element%table(COLL%D(1,1):COLL%D(1,2),&
+&                                        COLL%D(2,1):COLL%D(2,2),&
+&                                        COLL%D(3,1):COLL%D(3,2)))
    !
    if(V_kind==SE_GW_NEQ.or.V_kind==SE_GW_QED) then
      ! Real collisions
-     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N/))
-     call io_bulk(ID,R1=COLL%v_r)
+     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL_element%N/))
+     call io_bulk(ID,R1=COLL_element%v_r)
    else
      ! Complex collisions
-     allocate(COLLISIONS_v_disk(COLL%N,2))
-     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N,2/))
+     allocate(COLLISIONS_v_disk(COLL_element%N,2))
+     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL_element%N,2/))
      if(write_is_on(ID)) then
-       COLLISIONS_v_disk(:,1) =real(COLL%v_c(1:COLL%N))
-       COLLISIONS_v_disk(:,2)=aimag(COLL%v_c(1:COLL%N))
+       COLLISIONS_v_disk(:,1) =real(COLL_element%v_c(1:COLL_element%N))
+       COLLISIONS_v_disk(:,2)=aimag(COLL_element%v_c(1:COLL_element%N))
        call io_bulk(ID,R2=COLLISIONS_v_disk)
      else
        call io_bulk(ID,R2=COLLISIONS_v_disk)
-       COLL%v_c(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
+       COLL_element%v_c(1:COLL_element%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
      endif
      deallocate(COLLISIONS_v_disk)
    endif

@@ -50,7 +50,7 @@ subroutine RT_driver(E,X,k,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
- use collision,       ONLY:Fock_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element
+ use collision,       ONLY:FOCK_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast
@@ -104,7 +104,9 @@ subroutine RT_driver(E,X,k,q)
  ! This is also called in SC_alloc (from RT_alloc) but I need it also here
  ! for PARALLEL_global_indexes
  !
+ write (*,*) 'a'
  call SC_QP_setup(E)
+ write (*,*) 'b'
  !
  ! Parallel Setups
  !=================
@@ -388,7 +390,7 @@ subroutine RT_driver(E,X,k,q)
      call WF_free(WF)
      call PLASMA_free(EH_gas)
      call RT_carriers_object(RT_carriers,WHAT='free')
-     if (allocated(Fock_COLL_element))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
+     if (allocated(FOCK_COLL_element))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
      if (allocated(SEX_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      if (allocated(GW_NEQ_COLL_element)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
      call set_real_printed_length()

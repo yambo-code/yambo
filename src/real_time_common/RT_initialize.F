@@ -85,6 +85,7 @@ subroutine RT_initialize(E,k,q)
  eval_DFT     =  l_sc_is_libDFT            .and..not.l_sc_ip
  eval_HARTREE = (.not.l_NE_simulate_Irredux.and..not.l_sc_ip).or.l_sc_hartree
  eval_DENSITY =  eval_HARTREE .or. eval_DFT
+ stop
  !
  ! Integrator FLAGS
  !==================

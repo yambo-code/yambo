@@ -25,25 +25,24 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! NEQ GW collisions 
  !
- use pars,          ONLY:SP,pi,rZERO
+ use pars,          ONLY:SP,rZERO
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,spin
+ use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_PLASMA_index,PAR_QP_index,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_PLASMA_index,&
 &                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
-&                        PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
+&                        PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        nGW_NEQ_COLL_element,GW_NEQ_COLL_element,COLL_bands,&
-&                        COLLISIONS_IO_status,elemental_collision_alloc
+&                        GW_NEQ_COLL_element,COLL_bands,&
+&                        elemental_collision_alloc,GW_NEQ_collisions
  use plasma,        ONLY:EH_gas
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF
@@ -61,11 +60,11 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! Work Space
  !
- integer                  ::i_qp1,i_qp2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
-&                           i_n,i_k,i_k_s,i_k_sp,i_J,i_J_mem,PAR_nQP_local,&
+ integer                  ::i_coll1,i_coll2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
+&                           i_n,i_k,i_k_s,i_k_sp,i_J,i_J_mem,PAR_NC_local,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_sp,i_kmq_G0,&
-&                           i_m,i_p,i_p_bz,i_p_s,i_p_sp,i_p_star,n_bands,&
-&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp1_mem
+&                           i_m,i_p,i_p_bz,i_p_s,i_p_sp,i_p_star,&
+&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_coll1_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(elemental_collision)::isc,iscp
  integer          ::io_err,ID
@@ -87,17 +86,13 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! Dimensions...
  !
- QP_n_G_bands=COLL_bands
- !
  isc%iqref =0
  isc%ngrho =X%ng
  iscp%ngrho=isc%ngrho
  !
  ! WFs...
  !
- n_bands=QP_nb
- !
- call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_bands/),(/1,k%nibz/),title='-SC')
+ call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),COLL_bands,(/1,k%nibz/),title='-SC')
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -126,20 +121,20 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
- PAR_nQP_local=PAR_nQP
- if (allocated(COLLISIONS_IO_status)) then
-   PAR_nQP_local=count(COLLISIONS_IO_status==-1)
+ PAR_NC_local=GW_NEQ_collisions%PAR_N
+ if (associated(GW_NEQ_collisions%IO_status)) then
+   PAR_NC_local=count(GW_NEQ_collisions%IO_status==-1)
  endif
- call live_timing("GW collisions (e-e scattering)",PAR_nQP_local*PAR_nQ)
+ call live_timing("GW collisions",PAR_NC_local*PAR_nQ)
  !
- do i_qp1=1,QP_n_states
+ do i_coll1=1,GW_NEQ_collisions%N
    !
-   if (.not.PAR_IND_QP%element_1D(i_qp1)) cycle
+   if (.not.GW_NEQ_collisions%PAR_IND%element_1D(i_coll1)) cycle
    !
-   i_qp1_mem=PAR_QP_index(i_qp1)
+   i_coll1_mem=GW_NEQ_collisions%PAR_index(i_coll1)
    !
    if (io_COLLs) then
-     if (COLLISIONS_IO_status(i_qp1)/=-1) cycle
+     if (GW_NEQ_collisions%IO_status(i_coll1)/=-1) cycle
      GW_NEQ_COLL_element(1)%v3_r=rZERO
    endif
    !
@@ -176,12 +171,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
 !$omp parallel do default(shared), private(i1,i2)
        do i1=1,X%ng
          do i2=1,X%ng
-           ! Davide: which is the reason of this if ? It seems useless ...
-           if (iqibz==1) then
-             EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
-           else
-             EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
-           endif
+           EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
          enddo
        enddo
 !$omp end parallel do
@@ -194,12 +184,11 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      !
      ! Scattering geometry (I)
      !=========================
-     i_n     = QP_table(i_qp1,1)
-     i_m     = QP_table(i_qp1,2)
-     i_k     = QP_table(i_qp1,3)
+     i_n     = GW_NEQ_collisions%state(i_coll1,1)
+     i_m     = GW_NEQ_collisions%state(i_coll1,2)
+     i_k     = GW_NEQ_collisions%state(i_coll1,3)
      !
      i_k_s   = 1
-     !i_kbz  = i_k
      !
      i_kmq_bz =qindx_S(i_k,iqbz,1)
      i_kmq_G0 =qindx_S(i_k,iqbz,2)
@@ -209,7 +198,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      !
      ! Spins
      !
-     i_k_sp  = spin(QP_table(i_qp1,:))
+     i_k_sp  = GW_NEQ_collisions%state(i_coll1,4)
      i_p_sp  = i_k_sp
      i_kmq_sp= i_k_sp
      i_pmq_sp= i_k_sp
@@ -220,16 +209,16 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      isc%qs(1)=i_kmq_G0
      !
      !
-     i_np     = QP_table(i_qp1,2)
+     i_np     = GW_NEQ_collisions%state(i_coll1,2)
      isc%os(1)= i_np
      !
      call scatter_Bamp(isc)
      !
-     do i_qp2=1,QP_n_states
+     do i_coll2=1,GW_NEQ_collisions%N
        !
-       i_m     = QP_table(i_qp2,1)
-       i_mp    = QP_table(i_qp2,2)
-       i_p     = QP_table(i_qp2,3)
+       i_m     = GW_NEQ_collisions%state(i_coll2,1)
+       i_mp    = GW_NEQ_collisions%state(i_coll2,2)
+       i_p     = GW_NEQ_collisions%state(i_coll2,3)
        !
        do i_p_star=1,k%nstar(i_p)
          !
@@ -253,7 +242,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          !
          ! W_{nn' k}{mm' p}^{q} = [W_{n'n k+q}{m'm p+q}^{-q}]^{*} = W_{mm' p}{nn' k}^{q}
          !
-         i_J=EH_gas%tab_m1(i_qp2,i_p_s,i_q_mem)
+         i_J=EH_gas%tab_m1(i_coll2,i_p_s,i_q_mem)
          !
          if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
          i_J_mem=PAR_PLASMA_index(i_J)
@@ -281,8 +270,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
            !
          else
            !
-           GW_NEQ_COLL_element(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)=&
-&             GW_NEQ_COLL_element(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
+           GW_NEQ_COLL_element(i_coll1_mem)%v3_r(i_J_mem,1,i_q_mem)=&
+&             GW_NEQ_COLL_element(i_coll1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
            !
          endif
          !
@@ -303,7 +292,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      endif
    endif
    !
-   if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_qp1,GW_NEQ_COLL_element,nGW_NEQ_COLL_element)
+   if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_coll1,GW_NEQ_collisions,GW_NEQ_COLL_element)
    !
  enddo
  !

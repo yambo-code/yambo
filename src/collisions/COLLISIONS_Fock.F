@@ -30,13 +30,13 @@ subroutine COLLISIONS_Fock(E,k,q)
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels,spin_occ,spin
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_IND_Q,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
+&                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        Fock_COLL_element,nFock_COLL_element,COLLISIONS_IO_status,&
-&                        elemental_collision_alloc,COLL_bands
- use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states
+&                        FOCK_COLL_element,&
+&                        elemental_collision_alloc,COLL_bands,FOCK_collisions
+ use QP_m,          ONLY:QP_ng_Sx
  use R_lattice,     ONLY:qindx_S,bz_samp
  use hamiltonian,   ONLY:B_mat_index
 #if defined _TIMING
@@ -52,9 +52,9 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! Work Space
  !
- integer                 :: i_qp,ig1,iqbz,iqibz,iqs,&
+ integer                 :: i_coll,ig1,iqbz,iqibz,iqs,&
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs,&
-&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_nQP_local
+&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local
  !
  type(elemental_collision):: isc,iscp
  complex(SP)              :: pre_factor
@@ -97,26 +97,26 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
- PAR_nQP_local=PAR_nQP
- if (allocated(COLLISIONS_IO_status)) then
-   PAR_nQP_local=count(COLLISIONS_IO_status==-1)
+ PAR_NC_local=FOCK_collisions%PAR_N
+ if (associated(FOCK_collisions%IO_status)) then
+   PAR_NC_local=count(FOCK_collisions%IO_status==-1)
  endif
- call live_timing("Fock collisions",PAR_nQP_local*PAR_nQ*PAR_n_Bp_mat_elements)
+ call live_timing("Fock collisions",PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements)
  !
- do i_qp=1,QP_n_states
+ do i_coll=1,FOCK_collisions%N
    !
-   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+   if (.not.FOCK_collisions%PAR_IND%element_1D(i_coll)) cycle
    !
    if (io_COLLs) then
-     if (COLLISIONS_IO_status(i_qp)/=-1) cycle
+     if (FOCK_collisions%IO_status(i_coll)/=-1) cycle
    endif
    !
-   i_n     = QP_table(i_qp,1)
-   i_m     = QP_table(i_qp,2)
-   i_k     = QP_table(i_qp,3)
-   i_sp    = spin(QP_table(i_qp,:))
+   i_n     = FOCK_collisions%state(i_coll,1)
+   i_m     = FOCK_collisions%state(i_coll,2)
+   i_k     = FOCK_collisions%state(i_coll,3)
+   i_sp    = FOCK_collisions%state(i_coll,4)
    !
-   Fock_COLL_element(1)%v3_c=cZERO
+   FOCK_COLL_element(1)%v3_c=cZERO
    !
    do iqbz=1,q%nbz
      !
@@ -139,10 +139,6 @@ subroutine COLLISIONS_Fock(E,k,q)
      !               |
      !               | m'
      !    (n',kmq,sp).     
-     !
-     ! n   =QP_table(i_qp,1)
-     ! m   =QP_table(i_qp,2)
-     ! k   =QP_table(i_qp,3)
      !
      i_k_s   = 1
      !
@@ -191,7 +187,7 @@ subroutine COLLISIONS_Fock(E,k,q)
          enddo
 !$omp end parallel do
          !
-         Fock_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=Fock_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
+         FOCK_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=FOCK_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
          !
          call live_timing(steps=1)
          !
@@ -202,15 +198,15 @@ subroutine COLLISIONS_Fock(E,k,q)
    enddo ! loop on iqbz
    !
    if (COLLISIONS_parallel_SC_structure) then
-     call PP_redux_wait(Fock_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-     call PP_redux_wait(Fock_COLL_element(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
+     call PP_redux_wait(FOCK_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
+     call PP_redux_wait(FOCK_COLL_element(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
    else
-     call PP_redux_wait(Fock_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
+     call PP_redux_wait(FOCK_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   call COLLISIONS_linearize_and_IO("Fock",i_qp,Fock_COLL_element,nFock_COLL_element)
+   call COLLISIONS_linearize_and_IO("Fock",i_coll,FOCK_collisions,FOCK_COLL_element)
    !
- enddo ! loop on i_qp
+ enddo ! loop on i_coll
  !
  call live_timing()
  !

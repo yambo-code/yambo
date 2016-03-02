@@ -37,8 +37,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use global_XC,       ONLY:SE_GW_QED
  use collision,       ONLY:P_COLL_element,COLL_bands
 #endif
- use collision,       ONLY:V_kind,GW_NEQ_COLL_element,SEX_COLL_element,Fock_COLL_element,&
-&                          n_COLLISIONS,COLLISIONS_state
+ use collision,       ONLY:V_kind,GW_NEQ_COLL_element,SEX_COLL_element,FOCK_COLL_element
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
  use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
 &                          PAR_nQ,PAR_Q_index,PAR_PLASMA_index
@@ -115,28 +114,28 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  if (.not.l_use_collisions) return
  !
- if (n_COLLISIONS/=QP_n_states) then
-   call warning('Found '//trim(intc(n_COLLISIONS))//' COLLISION components. Only '//trim(intc(QP_n_states))//' requested.')
-   if (n_COLLISIONS<QP_n_states) then
-     call error('Not enough COLLISION components')
-   endif
- endif
- !
- DB_table=0
- if(allocated(COLLISIONS_state)) then
-   do i_qp=1,QP_n_states
-     state(:3)=QP_table(i_qp,:3)
-     state( 4)=spin(QP_table(i_qp,:))
-     do i_db=1,n_COLLISIONS
-       if (all(state(:)==COLLISIONS_state(i_db,:))) DB_table(i_qp)=i_db
-     enddo
-     if (DB_table(i_qp)==0) call error('COLLISION components #'//trim(intc(i_qp))//' not found')
-   enddo
- else
-   do i_qp=1,QP_n_states
-     DB_table(i_qp)=i_qp
-   enddo
- endif
+! if (n_COLLISIONS/=QP_n_states) then
+!   call warning('Found '//trim(intc(n_COLLISIONS))//' COLLISION components. Only '//trim(intc(QP_n_states))//' requested.')
+!   if (n_COLLISIONS<QP_n_states) then
+!     call error('Not enough COLLISION components')
+!   endif
+! endif
+! !
+! DB_table=0
+! if(allocated(COLLISIONS_state)) then
+!   do i_qp=1,QP_n_states
+!     state(:3)=QP_table(i_qp,:3)
+!     state( 4)=spin(QP_table(i_qp,:))
+!     do i_db=1,n_COLLISIONS
+!       if (all(state(:)==COLLISIONS_state(i_db,:))) DB_table(i_qp)=i_db
+!     enddo
+!     if (DB_table(i_qp)==0) call error('COLLISION components #'//trim(intc(i_qp))//' not found')
+!   enddo
+! else
+!   do i_qp=1,QP_n_states
+!     DB_table(i_qp)=i_qp
+!   enddo
+! endif
  !
  call live_timing('Collisions DB I/O:',PAR_nQP*n_V_kinds)
  !
@@ -158,12 +157,13 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
      !
      i_qp_mem=PAR_QP_index(i_qp)
-     i_db    =DB_table(i_qp)
+     i_db    = i_qp
+!DB_table(i_qp)
      !
      call io_control(ACTION=OP_RD,SEC=(/1,2/),ID=ID)
      !
      if (V_kind==SC_HF) then
-       io_err(iv)=io_COLLISIONS(i_db,ID,Fock_COLL_element(i_qp_mem))
+       io_err(iv)=io_COLLISIONS(i_db,ID,FOCK_COLL_element(i_qp_mem))
        call COLLISIONS_alloc_and_free("Fock","v1 table","alloc",i_qp_mem)
      endif
      if (V_kind==SC_COHSEX) then
@@ -187,7 +187,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)
      !
-     if (V_kind==SC_HF)     io_err(iv)=io_COLLISIONS(i_db,ID,Fock_COLL_element(i_qp_mem))
+     if (V_kind==SC_HF)     io_err(iv)=io_COLLISIONS(i_db,ID,FOCK_COLL_element(i_qp_mem))
      if (V_kind==SC_COHSEX) io_err(iv)=io_COLLISIONS(i_db,ID,SEX_COLL_element(i_qp_mem))
 #if defined _RT
      if (V_kind==SE_GW_NEQ) io_err(iv)=io_COLLISIONS(i_db,ID,GW_NEQ_COLL_element(1))

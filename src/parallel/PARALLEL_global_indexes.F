@@ -80,7 +80,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
 #if defined _SC || defined _RT
  use hamiltonian,   ONLY:B_mat_index,IP_h_bands
- use collision,     ONLY:COLL_bands
+ use collision,     ONLY:COLL_bands,FOCK_collisions,GW_NEQ_collisions,P_collisions,SEX_collisions
 #endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_index,SLK_COM_A2A
@@ -641,90 +641,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             TOTAL=RT_bands(2),&
 &                             NCPU=PAR_COM_WF_b_INDEX%n_CPU)
    !
-   ! e-e scattering
-   !================
-   !
-   !      __/__ p,m'
-   !    ./  \
-   !    |\__\__ p-q,m
-   !    |   /
-   !   \|/
-   !    | q
-   !    |
-   !    | __/__ k-q,n'
-   !    ./  \
-   !     \__\__ k,n
-   !        /
-   !      
-   ! "RT"="k.b.q.qp"
-   !  
-   !   "k.b" -> QP (k,n,n')  
-   !   "q"   -> q (BZ)
-   !   "qp"  -> Plasma (J)
-   !
-   ! e-e correlation (HF and COHSEX)
-   !=================================
-   !
-   ! n,k
-   ! --<--.
-   !      | m
-   !      |
-   !      |
-   !     \|/ k-q
-   !      |
-   !      |
-   !      | m'
-   !      .-->-- n',k
-   !      
-   ! "RT"="k.b.q.qp" 
-   !  
-   !   "k.b" -> QP (k,n,n')  
-   !   "q"   -> q (BZ)
-   !   "qp"  -> Bp_mat (m,m')
-   !
-   ! e-photon correlation 
-   !======================
-   !
-   ! n,k-q   n,k
-   ! --<--.-<--
-   !      | m
-   !      |
-   !     \|/ q,G,\alpha
-   !      |
-   !      
-   ! "RT"="k.b.q.qp" 
-   !  
-   !   "k.b" -> QP (k,n,m)  
-   !   "q"   -> q (BZ)
-   !   "qp"  -> G
-   !  
    !.........................................................................
-   !   "k.b" -> QP (k,n,n')  
+   !   "COLLISIONS"
    !.........................................................................
    !
-   n_bands=RT_bands
-   !
-   allocate(PAR_QP_index(QP_n_states),PAR_IND_QP%n_of_elements(ncpu),PAR_IND_QP%element_1D(QP_n_states)) 
-   PAR_IND_QP%element_1D=.FALSE.
-   PAR_IND_QP%n_of_elements=0
-   PAR_nQP=0
-   PAR_QP_index=0
-   do i_qp=1,QP_n_states
-     ib1 = QP_table(i_qp,1)
-     ib2 = QP_table(i_qp,2)
-     i_k = QP_table(i_qp,3)
-     if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
-     if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,RT_bands) ) ) cycle
-     PAR_nQP=PAR_nQP+1
-     PAR_QP_index(i_qp)=PAR_nQP
-     PAR_IND_QP%element_1D(i_qp)=.TRUE.
-     PAR_IND_QP%n_of_elements=PAR_nQP
-   enddo
-   call PARALLEL_live_message("QPs",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nQP,TOTAL=QP_n_states)
-   !
-   call PARALLEL_live_message("Bands Matrix",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1),&
-&                             TOTAL=(RT_bands(2)-RT_bands(1)+1)**2,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+   call PARALLEL_collisions( P_collisions )
+   call PARALLEL_collisions( FOCK_collisions )
+   call PARALLEL_collisions( SEX_collisions )
+   call PARALLEL_collisions( GW_NEQ_collisions )
    !
    !.........................................................................
    !   "q" -> Q-points (BZ)

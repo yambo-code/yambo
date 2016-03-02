@@ -28,8 +28,8 @@ subroutine COLLISIONS_compose_rt(G_input)
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx
  use QP_m,             ONLY:QP_table,QP_nk,QP_n_states
- use collision,        ONLY:Fock_COLL_element,SEX_COLL_element,nFock_COLL_element,nSEX_COLL_element,&
-&                           COLL_bands
+ use collision,        ONLY:FOCK_COLL_element,SEX_COLL_element,COLL_bands,&
+&                           FOCK_collisions,SEX_collisions
  use electrons,        ONLY:spin
  use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
  use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,l_RT_uses_E_DbGd
@@ -85,14 +85,14 @@ subroutine COLLISIONS_compose_rt(G_input)
      do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
-         if (nFock_COLL_element>0) then
-           if (Fock_COLL_element(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
+         if (FOCK_collisions%N>0) then
+           if (FOCK_COLL_element(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
              RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
-&                 -cI*Fock_COLL_element(i_qp_mem)%v_c(ic1)*G_avg(ib,ibp,i_kmq)
+&                 -cI*FOCK_COLL_element(i_qp_mem)%v_c(ic1)*G_avg(ib,ibp,i_kmq)
              ic1=ic1+1
            endif
          endif
-         if (nSEX_COLL_element>0) then
+         if (SEX_collisions%n>0) then
            if (SEX_COLL_element(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
              RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
 &                 -cI*SEX_COLL_element(i_qp_mem)%v_c(ic2)*G_avg(ib,ibp,i_kmq)
@@ -108,8 +108,8 @@ subroutine COLLISIONS_compose_rt(G_input)
    if(.not.l_RT_uses_E_DbGd) cycle
    !
    l_expand=.false.
-   if(nFock_COLL_element>0) l_expand=l_expand.or.any(Fock_COLL_element(i_qp_mem)%table/=0)
-   if(nSEX_COLL_element >0) l_expand=l_expand.or.any(SEX_COLL_element(i_qp_mem)%table /=0)
+   if(FOCK_collisions%N>0) l_expand=l_expand.or.any(FOCK_COLL_element(i_qp_mem)%table/=0)
+   if(SEX_collisions%N >0) l_expand=l_expand.or.any(SEX_COLL_element(i_qp_mem)%table /=0)
    !
    if(l_expand) RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)
    !

@@ -21,15 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_COLLISIONS(i_qp,ID,COLL_element,COLL)
+integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
+ use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group,&
+&                        Fock_collisions,SEX_collisions,GW_NEQ_collisions,P_collisions
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
-&                        VERIFY,io_extension,io_raw_extension
+&                        VERIFY,io_extension,io_raw_extension,IO_unit
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
@@ -46,15 +47,15 @@ integer function io_COLLISIONS(i_qp,ID,COLL_element,COLL)
  implicit none
  !
  integer, intent(inout)            ::ID
- integer, intent(in)               ::i_qp
- type(COLLISIONS_element),optional ::COLL_element
- type(COLLISIONS_group),  optional ::COLL
+ integer, intent(in)               ::i_coll
+ type(COLLISIONS_group)            ::COLL
+ type(COLLISIONS_element),optional ::COLL_element 
  !
  ! Work Space
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_desc,i_qp_loop,io_err
+ integer               :: V_kind_disk,i_desc,i_coll_loop,io_err
  character(lchlen)     :: V_kind_string,X_string
  !
 #if defined _TIMING
@@ -192,14 +193,14 @@ integer function io_COLLISIONS(i_qp,ID,COLL_element,COLL)
  if (IO_mode(ID)==VERIFY.and.associated(COLL%IO_status)) then
    !
    COLL%IO_status=1
-   do i_qp_loop=1,COLL%N
-     if (.not.PAR_IND_QP%element_1D(i_qp_loop)) cycle
+   do i_coll_loop=1,COLL%N
+     if (.not.PAR_IND_QP%element_1D(i_coll_loop)) cycle
      io_extension(ID)=io_raw_extension(ID)
-     call io_fragment(ID,i_fragment=i_qp_loop,ierr=io_err)
+     call io_fragment(ID,i_fragment=i_coll_loop,ierr=io_err)
      if (io_err==0) then
-       COLL%IO_status(i_qp_loop)=1
+       COLL%IO_status(i_coll_loop)=1
      else
-       COLL%IO_status(i_qp_loop)=-1
+       COLL%IO_status(i_coll_loop)=-1
        exit
      endif
    enddo
@@ -210,7 +211,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL_element,COLL)
    !
    ! QP-based fragmentation
    !
-   call io_fragment(ID,i_fragment=i_qp)
+   call io_fragment(ID,i_fragment=i_coll)
    !
    call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
    call io_bulk(ID,I0=COLL_element%N)
@@ -219,9 +220,9 @@ integer function io_COLLISIONS(i_qp,ID,COLL_element,COLL)
  !
  if (any(io_sec(ID,:)==3)) then     
    !
-   ! QP-based fragmentation
+   ! Fragmentation
    !
-   if (.not.any(io_sec(ID,:)==2)) call io_fragment(ID,i_fragment=i_qp)
+   if (.not.any(io_sec(ID,:)==2)) call io_fragment(ID,i_fragment=i_coll)
    !
    call io_bulk(ID,VAR='COLLISIONS_TABLE',&
 &                    VAR_SZ=(/COLL%D(1,2)-COLL%D(1,1)+1,&

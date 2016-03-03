@@ -101,6 +101,8 @@ subroutine COLLISIONS_basic_operations( what )
         return
       endif
       !
+      if (associated(COLL%state)) return
+      !
       do i_c=1,2
         !
         COLL%N=0

@@ -237,7 +237,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        COLL%IO_status=-1
        V_kind=COLL_kind
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       IO_err=io_COLLISIONS(0,ID)
+       IO_err=io_COLLISIONS(ID,0,COLL_grp=COLL)
        if (any(COLL%IO_status/=1)) IO_err=-1
      endif
      !

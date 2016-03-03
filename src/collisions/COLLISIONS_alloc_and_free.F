@@ -27,7 +27,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use memory_m,       ONLY:mem_est
  use plasma,         ONLY:N_plasma_poles_global
  use R_lattice,      ONLY:nqbz,nkibz
- use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ,PAR_nQP
+ use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ
  use collision,      ONLY:COLLISIONS_element,FOCK_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element,&
 &                         COLL_bands,&
 &                         GW_NEQ_collisions,FOCK_collisions,SEX_collisions,P_collisions,COLLISIONS_group
@@ -47,17 +47,24 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  logical :: l_Fock,l_SEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
 &           l_clean,l_collision,l_distribute,l_Momentum,l_complex,l_real
  !
- if (I==0) COLL_range=(/1,PAR_nQP/)
- if (I==0) size_=PAR_nQP
- if (I> 0) COLL_range=(/I,I/)
- if (I> 0) size_=1
- !
  ! What
  !
  l_Fock    =index(what,"Fock")>0
  l_SEX     =index(what,"SEX")>0
  l_GW_NEQ  =index(what,"GW_NEQ")>0
  l_Momentum=index(what,"Momentum")>0
+ !
+ ! Dimension
+ !
+ if (I==0) then
+   if (l_Fock)     COLL_range=(/1,Fock_collisions%PAR_N/)
+   if (l_SEX)      COLL_range=(/1,SEX_collisions%PAR_N/)
+   if (l_GW_NEQ)   COLL_range=(/1,GW_NEQ_collisions%PAR_N/)
+   if (l_Momentum) COLL_range=(/1,P_collisions%PAR_N/)
+   size_=COLL_range(2)
+ endif
+ if (I> 0) COLL_range=(/I,I/)
+ if (I> 0) size_=1
  !
  l_complex=l_Fock.or.l_SEX
  l_real   =l_GW_NEQ.or.l_Momentum

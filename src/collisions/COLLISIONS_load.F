@@ -41,7 +41,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use collision,       ONLY:V_kind,SEX_COLL_element,FOCK_COLL_element,&
 &                          FOCK_collisions,SEX_collisions,COLLISIONS_group
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
- use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
+ use parallel_m,      ONLY:PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
 &                          PAR_nQ,PAR_Q_index,PAR_PLASMA_index
  use interfaces,      ONLY:io_COLLISIONS
  use electrons,       ONLY:spin
@@ -59,7 +59,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Work Space
  !
  integer            :: iqbz,i_J,ic,i_coll,ID,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
-&                      iv,i_coll_mem,i_q_mem,i_J_mem,i_b,i_g,state(4),i_db
+&                      iv,i_coll_mem,i_q_mem,i_J_mem,i_b,i_g,state(4),i_db,PAR_nC
  logical            :: condition
  !
  n_V_kinds   =0
@@ -147,7 +147,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 !   enddo
 ! endif
  !
- call live_timing('Collisions DB I/O:',PAR_nQP*n_V_kinds)
+ ! To be fixed!
+ call live_timing('Collisions DB I/O:',1*n_V_kinds)
  !
  do iv=1,n_V_kinds
    !

@@ -36,7 +36,6 @@ integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use SC,            ONLY:SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,SC_band_mixing,QP_QED_ng
- use parallel_m,    ONLY:PAR_IND_QP
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
@@ -194,7 +193,7 @@ integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
    !
    COLL%IO_status=1
    do i_coll_loop=1,COLL%N
-     if (.not.PAR_IND_QP%element_1D(i_coll_loop)) cycle
+     if (.not.COLL%PAR_IND%element_1D(i_coll_loop)) cycle
      io_extension(ID)=io_raw_extension(ID)
      call io_fragment(ID,i_fragment=i_coll_loop,ierr=io_err)
      if (io_err==0) then

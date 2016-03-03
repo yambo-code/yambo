@@ -178,6 +178,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! Evaluate <ivfft|   p   |icfft>
          call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
          !
+         !================================
+         ! Evaluate <ivfft|[x,Vnl]|icfft>
+         !================================
+         if (io_Vnl_err==0) rho(:3) = rho(:3) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,1)
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,2)
+         !
          !=====
          ! <P>
          !=====
@@ -191,13 +198,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
              if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)*Ev_m_Ec_QP/Ev_m_Ec
            endif
          endif
-         !
-         !================================
-         ! Evaluate <ivfft|[x,Vnl]|icfft>
-         !================================
-         if (io_Vnl_err==0) rho(:3) = rho(:3) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,1)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv,2)
          !
          !======
          ! <iR>

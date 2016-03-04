@@ -57,7 +57,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  ! Dimension
  !
  if (I==0) then
-   if (l_Fock)     COLL_range=(/1,Fock_collisions%PAR_N/)
+   if (l_Fock)     COLL_range=(/1,FOCK_collisions%PAR_N/)
    if (l_SEX)      COLL_range=(/1,SEX_collisions%PAR_N/)
    if (l_GW_NEQ)   COLL_range=(/1,GW_NEQ_collisions%PAR_N/)
    if (l_Momentum) COLL_range=(/1,P_collisions%PAR_N/)

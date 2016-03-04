@@ -46,7 +46,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  l_QED_P    =  index(what,"Momentum")>0
  !
  i_ref=1
- if (.not.io_COLLs) i_ref=COLL%PAR_index(i_coll)
+ if (.not.io_COLLs) i_ref=COLL%PAR_map(i_coll)
  !
  ! Reference value for the reduction of the tiny elements of COHSEX/HF collision
  ! integrals.

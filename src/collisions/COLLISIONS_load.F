@@ -41,12 +41,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use collision,       ONLY:V_kind,SEX_COLL_element,FOCK_COLL_element,&
 &                          FOCK_collisions,SEX_collisions,COLLISIONS_group
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
- use parallel_m,      ONLY:PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
-&                          PAR_nQ,PAR_Q_index,PAR_PLASMA_index
+ use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q,PAR_Q_index,PAR_PLASMA_index
  use interfaces,      ONLY:io_COLLISIONS
- use electrons,       ONLY:spin
- use stderr,          ONLY:intc
- use com,             ONLY:warning,error
  !
  implicit none
  !
@@ -59,7 +55,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Work Space
  !
  integer            :: iqbz,i_J,ic,i_coll,ID,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
-&                      iv,i_coll_mem,i_q_mem,i_J_mem,i_b,i_g,state(4),i_db,PAR_nC
+&                      iv,i_coll_mem,i_q_mem,i_J_mem,i_b,i_g,i_db
  logical            :: condition
  !
  n_V_kinds   =0
@@ -109,7 +105,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      V_kind=V_kinds(iv)
      !
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-     if (V_kind==SC_HF)     io_err(1)=io_COLLISIONS(ID,0,COLL_grp=Fock_collisions)
+     if (V_kind==SC_HF)     io_err(1)=io_COLLISIONS(ID,0,COLL_grp=FOCK_collisions)
      if (V_kind==SC_COHSEX) io_err(2)=io_COLLISIONS(ID,0,COLL_grp=SEX_collisions)
      if (V_kind==SE_GW_QED) io_err(3)=io_COLLISIONS(ID,0,COLL_grp=P_collisions)
      if (V_kind==SE_GW_NEQ) io_err(4)=io_COLLISIONS(ID,0,COLL_grp=GW_NEQ_collisions)
@@ -148,26 +144,25 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 ! endif
  !
  ! To be fixed!
- call live_timing('Collisions DB I/O:',1*n_V_kinds)
  !
  do iv=1,n_V_kinds
    !
    V_kind=V_kinds(iv)
    !
-   if (V_kind==SC_HF)     call local_IO(Fock_collisions)
+   if (V_kind==SC_HF)     call local_IO(FOCK_collisions)
    if (V_kind==SC_COHSEX) call local_IO(SEX_collisions)
    if (V_kind==SE_GW_QED) call local_IO(P_collisions)
    if (V_kind==SE_GW_NEQ) call local_IO(GW_NEQ_collisions)
    !
  enddo
  !
- call live_timing()
- !
  contains
    !
    subroutine local_IO( COLL )
      !
      type(COLLISIONS_group) :: COLL
+     !
+     call live_timing('Collisions '//trim(COLL%name)' I/O:',COLL%N)
      !
      if (V_kind==SC_HF.or.V_kind==SC_COHSEX) then
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
@@ -185,7 +180,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        if (.not.COLL%PAR_IND%element_1D(i_coll)) cycle
        !
-       i_coll_mem=COLL%PAR_index(i_coll)
+       i_coll_mem=COLL%PAR_map(i_coll)
        i_db      = i_coll
   !DB_table(i_coll)
        !
@@ -271,6 +266,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #if defined _QED
      if (V_kind==SE_GW_QED) call COLLISIONS_alloc_and_free("Momentum","v1 table","clean",1)
 #endif
+     !
+     call live_timing()
      ! 
    end subroutine
    !

@@ -25,12 +25,11 @@ integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group,&
-&                        Fock_collisions,SEX_collisions,GW_NEQ_collisions,P_collisions
+ use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
-&                        VERIFY,io_extension,io_raw_extension,IO_unit
+&                        VERIFY,io_extension,io_raw_extension
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
@@ -48,7 +47,7 @@ integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
  integer, intent(inout)            ::ID
  integer, intent(in)               ::i_coll
  type(COLLISIONS_group)            ::COLL
- type(COLLISIONS_element),optional ::COLL_element 
+ type(COLLISIONS_element),optional ::COLL_element
  !
  ! Work Space
  !

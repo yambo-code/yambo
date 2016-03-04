@@ -21,115 +21,110 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_compose_rt(G_input)
+subroutine COLLISIONS_compose_rt(dG_in)
  !
- ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} STATIC_collisions(n,n',q,qp_state) x G_lesser(n,n',k-q)
+ ! HF/SEX(state) = - (0.,1.) * \sum_{n,n',q} COLLISIONS(n,n',q,state) x G_lesser(n,n',k-q)
  ! 
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx
- use QP_m,             ONLY:QP_table,QP_nk,QP_n_states
  use collision,        ONLY:FOCK_COLL_element,SEX_COLL_element,COLL_bands,&
-&                           FOCK_collisions,SEX_collisions
+&                           FOCK_collisions,SEX_collisions,COLLISIONS_group,COLLISIONS_element
  use electrons,        ONLY:spin
- use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
- use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,l_RT_uses_E_DbGd
+ use R_lattice,        ONLY:nXkibz
+ use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
+ use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,l_RT_uses_E_DbGd,RT_bands
  !
  implicit none
  !
- complex(SP), intent(in)   :: G_input(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),RT_nk)
+ complex(SP), intent(in)   :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !
- logical           :: l_expand
- integer           :: i_qp,ib,ibp,i_k,i_kmq,ic1,ic2,i_qp_mem,i_spin
- integer           :: i_n,i_m,i_k_RT,i_kmq_RT
- complex(SP)       :: G_avg(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk)
+ integer           :: i_k,i_k_RT
+ complex(SP)       :: G_avg(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz)
  !
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
  G_avg=cZERO
  !
- do i_kmq=1,QP_nk
-   do i_kmq_RT=RT_ibz_coo(i_kmq,1),RT_ibz_coo(i_kmq,2)
-     G_avg(:,:,i_kmq)=G_avg(:,:,i_kmq)+G_input(:,:,i_kmq_RT)
+ do i_k=1,nXkibz
+   do i_k_RT=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2)
+     G_avg(:,:,i_k)=G_avg(:,:,i_k)+dG_in(:,:,i_k_RT)
    enddo
    !
-   ! The 1/real(RT_Nk_ibz(i_kmq),SP) factor is needed here because I'm integrating
+   ! The 1/real(RT_Nk_ibz(i_k),SP) factor is needed here because I'm integrating
    ! over kmq. With the DbGd the size of the integrating factor has to be reduced
    ! 
-   G_avg(:,:,i_kmq)=G_avg(:,:,i_kmq)/real(RT_Nk_ibz(i_kmq),SP)
+   G_avg(:,:,i_k)=G_avg(:,:,i_k)/real(RT_Nk_ibz(i_k),SP)
    !
  enddo
  !
  RT_Vnl_xc=cZERO
  !
- do i_qp=1,QP_n_states
-   !
-   if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_QP_cpu)) cycle
-   !
-   i_qp_mem=PAR_QP_index(i_qp)
-   !
-   i_k=QP_table(i_qp,3)
-   i_n=QP_table(i_qp,1)
-   i_m=QP_table(i_qp,2)
-   !
-   ic1=1
-   ic2=1
-   !
-   i_spin=spin(QP_table(i_qp,:))
-   !
-   i_k_RT=RT_ibz_coo(i_k,1)
-   !
-   do i_kmq=1,QP_nk
-     !
-     do ibp=COLL_bands(1),COLL_bands(2)
-       do ib=COLL_bands(1),COLL_bands(2)
-         !
-         if (FOCK_collisions%N>0) then
-           if (FOCK_COLL_element(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
-             RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
-&                 -cI*FOCK_COLL_element(i_qp_mem)%v_c(ic1)*G_avg(ib,ibp,i_kmq)
-             ic1=ic1+1
-           endif
-         endif
-         if (SEX_collisions%n>0) then
-           if (SEX_COLL_element(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
-             RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
-&                 -cI*SEX_COLL_element(i_qp_mem)%v_c(ic2)*G_avg(ib,ibp,i_kmq)
-             ic2=ic2+1
-           endif
-         endif
-         !
-       enddo
-     enddo
-     !
-   enddo
-   !
-   if(.not.l_RT_uses_E_DbGd) cycle
-   !
-   l_expand=.false.
-   if(FOCK_collisions%N>0) l_expand=l_expand.or.any(FOCK_COLL_element(i_qp_mem)%table/=0)
-   if(SEX_collisions%N >0) l_expand=l_expand.or.any(SEX_COLL_element(i_qp_mem)%table /=0)
-   !
-   if(l_expand) RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)
-   !
- enddo
+ call local_MASK( FOCK_collisions , FOCK_COLL_element )
  !
- ! Symmetrization
- !================
- do i_qp=1,QP_n_states
-   !
-   if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_QP_cpu)) cycle
-   !
-   i_k=QP_table(i_qp,3)
-   i_n=QP_table(i_qp,1)
-   i_m=QP_table(i_qp,2)
-   !
-   RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=real(RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
-   RT_Vnl_xc(i_m,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=conjg(RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
-   !
- enddo
+ if (l_sc_cohsex) call local_MASK( SEX_collisions , SEX_COLL_element )
  !
  call PP_redux_wait(RT_Vnl_xc)
  !
+ contains
+   !
+   subroutine local_MASK( COLL , COLL_element )
+     !
+     type(COLLISIONS_group)   :: COLL
+     type(COLLISIONS_element) :: COLL_element(COLL%PAR_N)
+     !
+     integer           :: i_coll,i_comp,i_coll_mem,i_spin,i_n,i_m,i_kmq,ib,ibp
+     !
+     do i_coll=1,COLL%N
+       !
+       if (.not.(COLL%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
+       i_k       =COLL%state(i_coll,3)
+       i_n       =COLL%state(i_coll,1)
+       i_m       =COLL%state(i_coll,2)
+       i_spin    =COLL%state(i_coll,4)
+       i_coll_mem=COLL%PAR_map(i_coll)
+       !
+       i_comp=1
+       !
+       i_k_RT=RT_ibz_coo(i_k,1)
+       !
+       do i_kmq=1,nXkibz
+         !
+         do ibp=COLL_bands(1),COLL_bands(2)
+           do ib=COLL_bands(1),COLL_bands(2)
+             !
+             if (COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
+               RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
+&                                               -cI*COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)
+               i_comp=i_comp+1
+             endif
+             !
+           enddo
+         enddo
+         !
+       enddo
+       !
+       if(.not.l_RT_uses_E_DbGd) cycle
+       !
+       RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)
+       !
+     enddo
+     !
+     ! Symmetrization
+     !================
+     do i_coll=1,COLL%N
+       !
+       if (.not.(COLL%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
+       i_k       =COLL%state(i_coll,3)
+       i_n       =COLL%state(i_coll,1)
+       i_m       =COLL%state(i_coll,2)
+       !
+       RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=real(RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
+       RT_Vnl_xc(i_m,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=conjg(RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
+       !
+     enddo
+     !
+   end subroutine
+   !
 end subroutine COLLISIONS_compose_rt

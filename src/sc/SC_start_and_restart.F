@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_start_and_restart(X,E,Xk)
+subroutine SC_start_and_restart(X,E)
  !
  use pars,           ONLY:schlen
  use electrons,      ONLY:levels,n_sp_pol,n_spin
@@ -30,11 +30,11 @@ subroutine SC_start_and_restart(X,E,Xk)
  use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
- use R_lattice,      ONLY:bz_samp,nkibz
+ use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
- use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,SC_QP_setup,&
+ use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,SC_QP_table_setup,&
 &                         SC_potential,E_bare,l_sc_pot_is_local,SC_iterations,l_TF_precond, &
-&                         l_oep_iterative,SC_up_W_iters,rho_convergence,E_convergence, &
+&                         l_oep_iterative,rho_convergence,E_convergence, &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
 &                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
 &                         l_Mean_Potential,l_SC_nl_mix,magn_convergence
@@ -44,7 +44,6 @@ subroutine SC_start_and_restart(X,E,Xk)
  use FFT_m,          ONLY:fft_size
  !
  implicit none
- type(bz_samp)::Xk
  type(levels) ::E
  type(X_t)    ::X(2)  ! Xx Em1s
  !
@@ -140,7 +139,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  ! Quasi-Particle setup
  ! ====================
- call SC_QP_setup(E)
+ call SC_QP_table_setup(E)
  !
  if (.not.l_SC_RESTART.and..not.l_NSC_shot) l_SC_cycle=SC_iterations>0
  !

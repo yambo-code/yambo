@@ -29,8 +29,7 @@ subroutine RT_Dephasing_Matrix(E)
  use memory_m,      ONLY:mem_est
  use electrons,     ONLY:levels
  use parser_m,      ONLY:parser
- use QP_m,          ONLY:QP_nk
- use R_lattice,     ONLY:nkibz
+ use R_lattice,     ONLY:nXkibz
  use real_time,     ONLY:RT_Deph_Matrix,RT_is_dephased,Phase_LifeTime,&
 &                        RAD_LifeTime,RT_bands
  !
@@ -62,7 +61,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  if (dm_rng_lines/=0.or.RAD_LifeTime > tresh.or.Phase_LifeTime > tresh.or.associated(E%W)) then
    !
-   allocate(RT_Deph_Matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk))
+   allocate(RT_Deph_Matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz))
    call mem_est("DephMatrix",(/size(RT_Deph_Matrix)/))
    !
    RT_Deph_Matrix=(0._SP,0._SP)
@@ -116,8 +115,8 @@ subroutine RT_Dephasing_Matrix(E)
      ib_2=int(DephM_r_limits(i1,2))
      ik=int(DephM_r_limits(i1,3))
      if(any((/ib_1,ib_2/)>RT_bands(2)).or.any((/ib_1,ib_2/)<RT_bands(1))) &
-&                          call error("DephMatrix indexes out of the range! Wrong band assignment") 
-     if(ik<=0.or.ik>QP_nk) call error("DephMatrix indexes out of the range! Wrong kpoint assignment") 
+&                             call error("DephMatrix indexes out of the range! Wrong band assignment") 
+     if(ik<=0.or.ik>nXkibz)   call error("DephMatrix indexes out of the range! Wrong kpoint assignment") 
      RT_Deph_Matrix(ib_1,ib_2,ik)  =1._SP/DephM_r_limits(i1,4)/FS2AUT
      RT_Deph_Matrix(ib_2,ib_1,ik)  =1._SP/DephM_r_limits(i1,4)/FS2AUT
    enddo
@@ -134,7 +133,7 @@ subroutine RT_Dephasing_Matrix(E)
    do ib_1=RT_bands(1),RT_bands(2)
      do ib_2=ib_1+1,RT_bands(2)
        !
-       do ik=1,nkibz
+       do ik=1,nXkibz
          RT_Deph_Matrix(ib_1,ib_2,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
          RT_Deph_Matrix(ib_2,ib_1,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
        enddo     

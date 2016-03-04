@@ -32,8 +32,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
 &                          l_initial_equilibrium,DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en,&
 &                          RT_scatt_tresh,RT_ibz_coo
  use plasma,          ONLY:EH_gas
- use QP_m,            ONLY:QP_n_states,QP_table
- use collision,       ONLY:GW_NEQ_COLL_element
+ use collision,       ONLY:GW_NEQ_COLL_element,GW_NEQ_collisions
  use parallel_m,      ONLY:PAR_QP_index,PAR_IND_QP,PAR_Q_index,PAR_IND_Q,PAR_IND_Plasma,PAR_PLASMA_index
  !
  implicit none
@@ -44,8 +43,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  !
  ! Work Space ...
  !
- integer               :: i_qp,i_qp1,i_p,i_p_bz,ik_m_q,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
-&                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_q_mem,i_pmq_bz,i1,i2,&
+ integer               :: i_coll,i_coll_p,i_p,i_p_bz,ik_m_q,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
+&                         iqbz,i_p_s,i_q,i_q_s,i_coll_p_mem,i_q_mem,i_pmq_bz,i1,i2,&
 &                         i_J,i_J_bg,i_J_mem,ik_m_q_rim,N_poles_grouped
  real(SP)              :: pre_factor,P_pl_abs,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
  !
@@ -91,12 +90,12 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
      !========================================
      do i_J_bg=EH_gas%grid(i_J,i_q_mem,1),EH_gas%grid(i_J,i_q_mem,2)
        !
-       i_qp=EH_gas%tab(i_J_bg,i_q_mem,1)
-       i_p_s=EH_gas%tab(i_J_bg,i_q_mem,2)
+       i_coll=EH_gas%tab(i_J_bg,i_q_mem,1)
+       i_p_s =EH_gas%tab(i_J_bg,i_q_mem,2)
        !
-       i_m  = QP_table(i_qp,1)
-       i_mp = QP_table(i_qp,2)
-       i_p  = QP_table(i_qp,3)
+       i_m  = GW_NEQ_collisions%state(i_coll,1)
+       i_mp = GW_NEQ_collisions%state(i_coll,2)
+       i_p  = GW_NEQ_collisions%state(i_coll,3)
        !
        i_p_bz=k%k_table(i_p,i_p_s)
        !
@@ -147,17 +146,17 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
      plasma_freq=real(E_plasma)
      plasma_width=aimag(E_plasma)
      !
-     do i_qp1=1,QP_n_states
+     do i_coll_p=1,GW_NEQ_collisions%N
        !
-       ! Select only the m.e. of QP_table relative to kpt ik
-       !======================================================
-       if (QP_table(i_qp1,3)/=ik) cycle
+       ! Select only the m.e. of GW_NEQ_collisions%state relative to kpt ik
+       !====================================================================
+       if (GW_NEQ_collisions%state(i_coll_p,3)/=ik) cycle
        !
-       if (.not.PAR_IND_QP%element_1D(i_qp1)) cycle
-       i_qp1_mem=PAR_QP_index(i_qp1)
+       if (.not.PAR_IND_QP%element_1D(i_coll_p)) cycle
+       i_coll_p_mem=PAR_QP_index(i_coll_p)
        !
-       i_n =QP_table(i_qp1,1)
-       i_np=QP_table(i_qp1,2)
+       i_n =GW_NEQ_collisions%state(i_coll_p,1)
+       i_np=GW_NEQ_collisions%state(i_coll_p,2)
        !
        if (.not. l_RT_uses_E_DbGd) then
          !
@@ -169,7 +168,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          !
        endif
        !
-       pre_factor=(4._SP*pi)**2._SP*GW_NEQ_COLL_element(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)
+       pre_factor=(4._SP*pi)**2._SP*GW_NEQ_COLL_element(i_coll_p_mem)%v3_r(i_J_mem,1,i_q_mem)
        !
        do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
          !

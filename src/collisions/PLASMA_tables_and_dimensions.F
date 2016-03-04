@@ -43,7 +43,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  !
  !
  logical       :: l_reallocate=.false.
- integer       :: i_qp,i_q,i_q_s,i_m,i_mp,i_p,i_p_bz,i_p_star,i_p_s,i_q_mem,i_q_mem_local,&
+ integer       :: i_coll,i_q,i_q_s,i_m,i_mp,i_p,i_p_bz,i_p_star,i_p_s,i_q_mem,i_q_mem_local,&
 &                 i_pmq,i_pmq_bz,i_pmq_G0,iqbz_local,n_poles,i_pole,i_cg
  real(SP)      :: E_center
  !
@@ -56,11 +56,11 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  i_q   = q%sstar(iabs(iqbz),1)
  i_q_s = q%sstar(iabs(iqbz),2)
  !
- do i_qp=1,GW_NEQ_collisions%N
+ do i_coll=1,GW_NEQ_collisions%N
    !
-   i_m  = GW_NEQ_collisions%state(i_qp,1)
-   i_mp = GW_NEQ_collisions%state(i_qp,2)
-   i_p  = GW_NEQ_collisions%state(i_qp,3)
+   i_m  = GW_NEQ_collisions%state(i_coll,1)
+   i_mp = GW_NEQ_collisions%state(i_coll,2)
+   i_p  = GW_NEQ_collisions%state(i_coll,3)
    !
    do i_p_star=1,k%nstar(i_p)
      !
@@ -82,11 +82,11 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
      !
      if (iqbz>0) then
        i_pole=ordered_grid_index(n_poles)
-       EH_gas%tab(i_pole,i_q_mem,:)=(/i_qp,i_p_s/)
+       EH_gas%tab(i_pole,i_q_mem,:)=(/i_coll,i_p_s/)
        poles(i_pole)=E_center       
        !
        i_pole=coarse_grid_index(n_poles)
-       EH_gas%tab_m1(i_qp,i_p_s,i_q_mem)=i_pole
+       EH_gas%tab_m1(i_coll,i_p_s,i_q_mem)=i_pole
      endif
      !
    enddo

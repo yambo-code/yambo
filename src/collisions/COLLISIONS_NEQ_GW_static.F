@@ -131,7 +131,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    !
    if (.not.GW_NEQ_collisions%PAR_IND%element_1D(i_coll1)) cycle
    !
-   i_coll1_mem=GW_NEQ_collisions%PAR_index(i_coll1)
+   i_coll1_mem=GW_NEQ_collisions%PAR_map(i_coll1)
    !
    if (io_COLLs) then
      if (GW_NEQ_collisions%IO_status(i_coll1)/=-1) cycle

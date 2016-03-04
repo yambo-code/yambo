@@ -60,7 +60,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _SC || defined _RT
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_QED
- use collision,      ONLY:V_kind,Fock_collisions,SEX_collisions,P_collisions,GW_NEQ_collisions
+ use collision,      ONLY:V_kind,FOCK_collisions,SEX_collisions,P_collisions,GW_NEQ_collisions
  use interfaces,     ONLY:io_COLLISIONS
  use SC,             ONLY:SC_potential
 #endif
@@ -432,7 +432,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  V_kind=SC_HF
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,0,COLL_grp=Fock_collisions)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,0,COLL_grp=FOCK_collisions)
  if (io_COLLISIONS_err==0) then
    V_kind=SC_COHSEX
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)

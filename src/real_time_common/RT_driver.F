@@ -29,14 +29,14 @@ subroutine RT_driver(E,X,k,q)
  use units,          ONLY:FS2AUT
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin
- use X_m,            ONLY:X_t,X_alloc
+ use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,&
-&                         SC_QP_setup,magn_n
+&                         SC_QP_table_setup,magn_n
  use rt_ctl,         ONLY:RT_output,RT_alloc_control,RT_free_control,RT_IO_G_steps,ID,&
 &                         it_start,RT_carriers_object,it_dyn
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,&
@@ -104,7 +104,7 @@ subroutine RT_driver(E,X,k,q)
  ! This is also called in SC_alloc (from RT_alloc) but I need it also here
  ! for PARALLEL_global_indexes
  !
- call SC_QP_setup(E)
+ call SC_QP_table_setup(E)
  !
  ! Parallel Setups
  !=================

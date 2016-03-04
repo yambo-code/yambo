@@ -110,7 +110,7 @@ module collision
    !
    type(PP_indexes)      :: PAR_IND
    integer               :: PAR_N
-   integer,     pointer  :: PAR_index(:) => null()
+   integer,     pointer  :: PAR_map(:) => null()
    !
  end type
  !

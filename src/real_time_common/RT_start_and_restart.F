@@ -41,9 +41,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_ip,l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
- use QP_m,           ONLY:QP_nk,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
+ use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,nXkibz
  use rt_ctl,         ONLY:ID,RT_IO_G_steps,it_start,it_dyn
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
@@ -140,7 +140,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Reference Hartree and XC
  !==========================
- do ik=1,QP_nk
+ do ik=1,nXkibz
    !
    call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:RT_bands(2),1:RT_bands(2),ik,1:n_sp_pol),WF,'def') 
    !
@@ -303,20 +303,20 @@ subroutine RT_start_and_restart(E,k,q,X)
  !======================
  !
  do ib=RT_bands(1),RT_bands(2)
-   Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
-&                              -E_bare(ib,1:QP_nk,1:n_sp_pol)+E%E(ib,1:QP_nk,1:n_sp_pol)
+   Ho(ib,ib,1:nXkibz,1:n_sp_pol)=Ho(ib,ib,1:nXkibz,1:n_sp_pol) &
+&                              -E_bare(ib,1:nXkibz,1:n_sp_pol)+E%E(ib,1:nXkibz,1:n_sp_pol)
  enddo
  !
  do ib=1,RT_bands(1)-1
-   Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
-&                              -E_bare(RT_bands(1),1:QP_nk,1:n_sp_pol)+E%E(RT_bands(1),1:QP_nk,1:n_sp_pol)
+   Ho(ib,ib,1:nXkibz,1:n_sp_pol)=Ho(ib,ib,1:nXkibz,1:n_sp_pol) &
+&                              -E_bare(RT_bands(1),1:nXkibz,1:n_sp_pol)+E%E(RT_bands(1),1:nXkibz,1:n_sp_pol)
  enddo
  !
  ! Store the starting Eigenvalues in Eo
  !======================================
  !
- if (.not.associated(E%Eo)) allocate(E%Eo(RT_bands(2),QP_nk,n_sp_pol))
- E%Eo(1:RT_bands(2),1:QP_nk,1:n_sp_pol)=E%E(1:RT_bands(2),1:QP_nk,1:n_sp_pol)
+ if (.not.associated(E%Eo)) allocate(E%Eo(RT_bands(2),nXkibz,n_sp_pol))
+ E%Eo(1:RT_bands(2),1:nXkibz,1:n_sp_pol)=E%E(1:RT_bands(2),1:nXkibz,1:n_sp_pol)
  !
  ! Define RT_eh_en
  !================

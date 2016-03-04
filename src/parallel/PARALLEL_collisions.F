@@ -100,7 +100,7 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  if ( COLL%N == 0 ) return
  !
- allocate(COLL%PAR_index(COLL%N),COLL%PAR_IND%element_1D(COLL%N)) 
+ allocate(COLL%PAR_map(COLL%N),COLL%PAR_IND%element_1D(COLL%N)) 
  !
  if (.not.associated(PAR_IND_G_k%element_1D) ) then
    allocate(PAR_IND_G_k%element_1D(k%nibz))
@@ -108,7 +108,7 @@ subroutine PARALLEL_collisions( k, COLL )
  endif
  COLL%PAR_IND%element_1D=.FALSE.
  COLL%PAR_N=0
- COLL%PAR_index=0
+ COLL%PAR_map=0
  NC_tot=0
  do i_coll=1,COLL%N
    !
@@ -121,7 +121,7 @@ subroutine PARALLEL_collisions( k, COLL )
    if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
    !
    COLL%PAR_N=COLL%PAR_N+1
-   COLL%PAR_index(i_coll)=COLL%PAR_N
+   COLL%PAR_map(i_coll)=COLL%PAR_N
    COLL%PAR_IND%element_1D(i_coll)=.TRUE.
    !
    PAR_IND_G_k%element_1D(i_k)=.TRUE.

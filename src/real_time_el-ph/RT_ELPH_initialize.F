@@ -33,12 +33,11 @@ subroutine RT_ELPH_initialize(E,k,q)
  use vec_operate,    ONLY:v_norm
  use com,            ONLY:warning
  use D_lattice,      ONLY:Bose_Temp
- use R_lattice,      ONLY:RL_vol,bz_samp,qindx_S
+ use R_lattice,      ONLY:RL_vol,bz_samp,qindx_S,nXkibz
  use IO_m,           ONLY:io_control,REP,OP_RD_CL,VERIFY,NONE
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye,elph_branches
  use functions,      ONLY:bose_f
  use memory_m,       ONLY:mem_est
- use QP_m,           ONLY:QP_nk
  use vec_operate,    ONLY:degeneration_finder
  use parser_m,       ONLY:parser
  use R_lattice,      ONLY:RIM_n_rand_pts
@@ -97,7 +96,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  call mem_est("GKKP_expanded",(/size(elph_gkkp_expanded)/),(/2*SP/),errors=(/alloc_err/))
  !
  if (.not.l_RT_CCA_Kernel) then
-   allocate(THETA_matrix(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,QP_nk))
+   allocate(THETA_matrix(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
    call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
    THETA_matrix=(0._SP,0._SP)
    allocate(THETA_matrix_index(q%nbz,ph_modes,2))

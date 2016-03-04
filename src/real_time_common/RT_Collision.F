@@ -39,9 +39,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use electrons,      ONLY:levels,n_spinor,n_spin
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,nXkibz
  use SC,             ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
- use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
 &                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,&
@@ -132,7 +131,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !=========================
  if (.not.l_RT_RWA) then
    !
-   do ik=1,QP_nk 
+   do ik=1,nXkibz 
      !
      if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu ) cycle
      !
@@ -157,7 +156,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! HXC part 
  !===========
- do ik=1,QP_nk 
+ do ik=1,nXkibz 
    !
    H_nl_sc=cZERO
    !
@@ -197,7 +196,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! The External Field
  !====================
- do ik=1,QP_nk 
+ do ik=1,nXkibz 
    !
    if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu) cycle
    !

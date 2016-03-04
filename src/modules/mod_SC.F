@@ -117,7 +117,7 @@ module SC
  !
  contains
    !
-   subroutine SC_QP_setup(E)
+   subroutine SC_QP_table_setup(E)
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
@@ -156,7 +156,7 @@ module SC
      !
      type(levels) :: E
      !
-     call SC_QP_setup(E)
+     call SC_QP_table_setup(E)
      !
      ! In the magnetic project Ho has already been allocated
      !

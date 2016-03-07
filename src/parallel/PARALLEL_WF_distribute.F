@@ -36,6 +36,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use parallel_m,      ONLY:PAR_IND_Q,PAR_Q_index
  use plasma,          ONLY:EH_gas
  use R_lattice,       ONLY:nkbz
+ use collision,       ONLY:GW_NEQ_collisions
 #endif
  !
  implicit none
@@ -52,7 +53,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  ! Work Space
  !
 #if defined _RT
- integer :: i_J,i_J_bg,iqbz,i_q_mem
+ integer :: i_J,i_J_bg,iqbz,i_q_mem,i_coll
 #endif
  integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
@@ -186,11 +187,11 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
        !
        do i_J_bg=EH_gas%grid(i_J,i_q_mem,1),EH_gas%grid(i_J,i_q_mem,2)
          !
-         i_qp=EH_gas%tab(i_J_bg,i_q_mem,1)
+         i_coll=EH_gas%tab(i_J_bg,i_q_mem,1)
          !
-         i_b  = QP_table(i_qp,1)
-         i_bp = QP_table(i_qp,2)
-         i_k  = QP_table(i_qp,3)
+         i_b  = GW_NEQ_collisions%state(i_coll,1)
+         i_bp = GW_NEQ_collisions%state(i_coll,2)
+         i_k  = GW_NEQ_collisions%state(i_coll,3)
          !
          states_to_load(i_b ,i_k,:)=.TRUE.
          states_to_load(i_bp,i_k,:)=.TRUE.

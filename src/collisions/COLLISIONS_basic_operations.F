@@ -90,7 +90,6 @@ subroutine COLLISIONS_basic_operations( what, COLL )
          i_m=i_n+i_mix
          !
          if (i_m>COLL_bands(2)) cycle
-         if (.not.trim(COLL%name)=="GW_NEQ".and.i_n>i_m) cycle
          !
          do i_sp=1,n_sp_pol
            COLL%N=COLL%N+1
@@ -98,7 +97,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
              COLL%state(COLL%N,:3)=(/i_n,i_m,i_k/)
              COLL%state(COLL%N, 4)=i_sp
            endif
-           if (i_n/=i_m) then
+           if (i_n/=i_m.and.trim(COLL%name)=="GW_NEQ") then
              COLL%N=COLL%N+1
              if (i_c==2) then
                COLL%state(COLL%N,:3)=(/i_m,i_n,i_k/)

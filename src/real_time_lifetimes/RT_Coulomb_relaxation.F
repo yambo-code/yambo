@@ -33,7 +33,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
 &                          RT_scatt_tresh,RT_ibz_coo
  use plasma,          ONLY:EH_gas
  use collision,       ONLY:GW_NEQ_COLL_element,GW_NEQ_collisions
- use parallel_m,      ONLY:PAR_QP_index,PAR_IND_QP,PAR_Q_index,PAR_IND_Q,PAR_IND_Plasma,PAR_PLASMA_index
+ use parallel_m,      ONLY:PAR_Q_index,PAR_IND_Q,PAR_IND_Plasma,PAR_PLASMA_index
  !
  implicit none
  !
@@ -152,8 +152,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !====================================================================
        if (GW_NEQ_collisions%state(i_coll_p,3)/=ik) cycle
        !
-       if (.not.PAR_IND_QP%element_1D(i_coll_p)) cycle
-       i_coll_p_mem=PAR_QP_index(i_coll_p)
+       if (.not.GW_NEQ_collisions%PAR_IND%element_1D(i_coll_p)) cycle
+       i_coll_p_mem=GW_NEQ_collisions%PAR_map(i_coll_p)
        !
        i_n =GW_NEQ_collisions%state(i_coll_p,1)
        i_np=GW_NEQ_collisions%state(i_coll_p,2)

@@ -176,7 +176,7 @@ subroutine RT_driver(E,X,k,q)
      else
        !
        if (l_elel_scatt) then
-         call warning('COLLISIONs database missing. E-E scattering switched off.')
+         call warning('COLLISIONs database missing/wrong. E-E scattering switched off.')
          l_elel_scatt=.FALSE.
        endif
        !

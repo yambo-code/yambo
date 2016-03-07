@@ -42,8 +42,6 @@ integer function variables_RT(ID,local_description,what)
  use fields,         ONLY:n_ext_fields,Efield
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
 &                         variable_is_found,read_is_on,io_code_revision
- ! tmp code to be removed
- use SC,             ONLY:it_now,SC_bands
  !
  implicit none
  !
@@ -77,8 +75,6 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,I1=RT_bands,&
 &       VAR=' Number of RT bands              :',CHECK=.true.,OP=(/"==","=="/),&
 &       DESCRIPTION=local_description(i_desc))
- else
-   if( read_is_on(ID) ) RT_bands=SC_bands
  endif
  i_desc=i_desc+1
  call io_elemental(ID,I0=RT_nk,&
@@ -148,14 +144,10 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=" [RT] NE time       (reached)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
    !
-   if( ver_is_gt_or_eq(ID,revision=5380) ) then
-     i_desc=i_desc+1
-     call io_elemental(ID,&
-&      VAR=" [RT] Time steps    (reached)    :",I0=it_dyn,WARN=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc))
-   else
-     if( read_is_on(ID) ) it_dyn=it_now
-   endif
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] Time steps    (reached)    :",I0=it_dyn,WARN=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

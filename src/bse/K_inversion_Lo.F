@@ -147,7 +147,6 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    call W_duplicate(W,W_plus)
    !
    do i1=1,BS_K_dim
-
      !
      if (.not.px%element_1D(i1)) cycle
      !
@@ -172,8 +171,8 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i1)-cI*BSS_eh_W(i1)
      !
      if(i_loop==2) then
-       forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
-       forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
+       forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_mat_diagonal(i1)*BSS_eh_f(i1)
+       forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_mat_diagonal(i1)*BSS_eh_f(i1)
      endif
      !
 #if defined _ELPH

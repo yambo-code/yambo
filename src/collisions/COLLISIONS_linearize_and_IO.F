@@ -95,7 +95,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  if (i_coll==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
  if (i_coll/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
  !
- io_err=io_COLLISIONS(ID,i_coll,COLL_grp=COLL,COLL_element=COLL_element(1))
+ io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
  !
  call COLLISIONS_alloc_and_free(what,"v1","clean",1)
  !

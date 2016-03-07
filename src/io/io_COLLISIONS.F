@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
+integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
+ use collision,     ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
@@ -45,28 +45,38 @@ integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
  implicit none
  !
  integer, intent(inout)            ::ID
- integer, intent(in)               ::i_coll
  type(COLLISIONS_group)            ::COLL
  type(COLLISIONS_element),optional ::COLL_element
+ integer, intent(in)     ,optional ::i_coll_
  !
  ! Work Space
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_desc,i_coll_loop,io_err
+ integer               :: V_kind_disk,i_desc,i_coll_loop,io_err,i_coll
  character(lchlen)     :: V_kind_string,X_string
+ !
+ ! Collision element...
+ !
+ i_coll=0
+ if (present(COLL_element)) then
+   i_coll=COLL_element%I
+ endif
+ if (present(i_coll_)) then
+   i_coll=i_coll_
+ endif
  !
 #if defined _TIMING
  call timing('io_COLLISIONS',OPR='start')
 #endif
  !
- if(V_kind==SC_HF) then
+ if(COLL%kind==SC_HF) then
    db_name                   = "COLLISIONS_FOCK"
- elseif(V_kind==SC_COHSEX) then
+ elseif(COLL%kind==SC_COHSEX) then
    db_name                   = "COLLISIONS_COHSEX"
- elseif(V_kind==SE_GW_NEQ) then
+ elseif(COLL%kind==SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"
- elseif(V_kind==SE_GW_QED) then
+ elseif(COLL%kind==SE_GW_QED) then
    db_name = "COLLISIONS_P"
  else
    call error("COLLISIONS I/O : Unknown database type ")
@@ -92,7 +102,7 @@ integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
    call io_elemental(ID,I1=COLL_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    !
-   if (V_kind==SE_GW_NEQ) then
+   if (COLL%kind==SE_GW_NEQ) then
      call io_elemental(ID,L0=l_elel_scatt,&
 &         VAR=' Electron-Electron scattering    :',WARN=.true.,OP=(/"=="/))
      if(l_elel_scatt) then
@@ -103,7 +113,7 @@ integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
      endif
    endif
    !
-   if (V_kind==SE_GW_QED) then
+   if (COLL%kind==SE_GW_QED) then
      call io_elemental(ID,L0=l_elphoton_scatt,&
 &         VAR=' Electron-Photon   scattering    :',WARN=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=QP_QED_ng,&
@@ -112,10 +122,10 @@ integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
    !
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=V_kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=COLL%kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   V_kind_string     =global_XC_string(V_kind,SE_NONE,0,EXT_NONE)
+   V_kind_string     =global_XC_string(COLL%kind,SE_NONE,0,EXT_NONE)
    !
    call io_elemental(ID,VAR='INTERACTION_KIND',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=V_kind_string,&
@@ -231,7 +241,7 @@ integer function io_COLLISIONS(ID,i_coll,COLL,COLL_element)
 &                                        COLL%D(2,1):COLL%D(2,2),&
 &                                        COLL%D(3,1):COLL%D(3,2)))
    !
-   if(V_kind==SE_GW_NEQ.or.V_kind==SE_GW_QED) then
+   if(COLL%kind==SE_GW_NEQ.or.COLL%kind==SE_GW_QED) then
      ! Real collisions
      call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL_element%N/))
      call io_bulk(ID,R1=COLL_element%v_r)

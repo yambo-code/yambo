@@ -59,13 +59,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _SC || defined _RT
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_QED
- use collision,      ONLY:V_kind,FOCK_collisions,SEX_collisions,P_collisions,GW_NEQ_collisions
+ use collision,      ONLY:FOCK_collisions,SEX_collisions,P_collisions,GW_NEQ_collisions
  use interfaces,     ONLY:io_COLLISIONS
  use SC,             ONLY:SC_potential
 #endif
 #if defined _RT
- use global_XC,      ONLY:SE_GW_NEQ
  use fields,         ONLY:n_ext_fields,n_ext_fields_max
 #endif
 #if defined _MAGNETIC
@@ -430,25 +428,20 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! COLLISIONS 
  !
- V_kind=SC_HF
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,0,COLL_grp=FOCK_collisions)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,FOCK_collisions)
  if (io_COLLISIONS_err==0) then
-   V_kind=SC_COHSEX
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   io_COLLISIONS_err=io_COLLISIONS(io_ID,0,COLL_grp=SEX_collisions)
-   if (io_COLLISIONS_err/=0) V_kind=-1
+   io_COLLISIONS_err=io_COLLISIONS(io_ID,SEX_collisions)
  endif
 #endif
 #if defined _SC && defined _RT
- V_kind=SE_GW_NEQ
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,0,COLL_grp=GW_NEQ_collisions)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,GW_NEQ_collisions)
 #endif
 #if defined _QED && defined _RT
- V_kind=SE_GW_QED
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,0,COLL_grp=P_collisions)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,P_collisions)
 #endif
  !
  if (list_dbs) then

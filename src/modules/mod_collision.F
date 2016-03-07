@@ -63,7 +63,6 @@ module collision
  ! EXTENDED COLLISION
  !====================
  !
- integer :: V_kind 
  integer :: COLL_bands(2)
  !
  ! Cut off on exchange matrix elements
@@ -87,7 +86,8 @@ module collision
  !                (USE): v3_r
  !
  type COLLISIONS_element
-   integer               :: N           ! Linear Dimension
+   integer               :: I=0         ! State Index 
+   integer               :: N=0         ! Linear Dimension
    integer(LP), pointer  :: table(:,:,:)  => null()
    complex(SP), pointer  :: v_c(:)        => null()
    complex(SP), pointer  :: v3_c(:,:,:)   => null()
@@ -99,7 +99,7 @@ module collision
    integer               :: D(3,2)=0    ! Dimension (v3 of corresponding COLLISIONS_element)
    character(schlen)     :: name="none"
    integer               :: kind=0
-   integer               :: N           ! # of collisions (dimension of linked COLLISIONS_element)
+   integer               :: N=0         ! # of collisions (dimension of linked COLLISIONS_element)
    integer,     pointer  :: state(:,:)   => null()
    !
    ! I/O
@@ -109,7 +109,7 @@ module collision
    ! Parallel Substructure
    !
    type(PP_indexes)      :: PAR_IND
-   integer               :: PAR_N
+   integer               :: PAR_N=0
    integer,     pointer  :: PAR_map(:) => null()
    !
  end type
@@ -129,6 +129,18 @@ module collision
  type(COLLISIONS_element), allocatable :: P_COLL_element(:)
  !
  contains
+   !
+   subroutine COLLISIONS_initial_naming( )
+     use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_QED,SE_GW_NEQ
+     FOCK_collisions%kind=SC_HF
+     FOCK_collisions%name="Fock"
+     SEX_collisions%kind=SC_COHSEX
+     SEX_collisions%name="SEX"
+     P_collisions%kind=SE_GW_QED
+     P_collisions%name="Momentum"
+     GW_NEQ_collisions%kind=SE_GW_NEQ
+     GW_NEQ_collisions%name="GW_NEQ"
+   end subroutine
    !
    subroutine elemental_collision_copy(I,O)
      type(elemental_collision)::I,O

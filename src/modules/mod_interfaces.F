@@ -74,12 +74,12 @@ module interfaces
      !
    end subroutine
    !
-   integer function io_COLLISIONS(ID,i_coll,COLL_grp,COLL_element)
+   integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll)
      use collision,  ONLY:COLLISIONS_element,COLLISIONS_group
      integer, intent(inout)             ::ID
-     integer, intent(in)                ::i_coll
      type(COLLISIONS_group)             ::COLL_grp
      type(COLLISIONS_element), optional ::COLL_element
+     integer, intent(in)     , optional ::i_coll
    end function
    !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&

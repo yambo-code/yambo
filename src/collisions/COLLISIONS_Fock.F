@@ -101,7 +101,7 @@ subroutine COLLISIONS_Fock(E,k,q)
  if (associated(FOCK_collisions%IO_status)) then
    PAR_NC_local=count(FOCK_collisions%IO_status==-1)
  endif
- call live_timing("Fock collisions",PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements)
+ call live_timing("Collisions",PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements)
  !
  do i_coll=1,FOCK_collisions%N
    !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_basic_operations( what )
+subroutine COLLISIONS_basic_operations( what, COLL )
  !
  ! Here I allocate and define some objects of the COLLISIONS_group kind.
  !
@@ -33,106 +33,78 @@ subroutine COLLISIONS_basic_operations( what )
  !  integer,     pointer  :: IO_status(:) => null()
  !end type
  !
- use drivers,       ONLY:l_elphoton_scatt,l_elel_scatt
-#if defined _QED
- use global_XC,     ONLY:SE_GW_QED
-#endif
- use SC,            ONLY:SC_potential
- use collision,     ONLY:GW_NEQ_collisions,FOCK_collisions,SEX_collisions,P_collisions
- use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_QED,SE_GW_NEQ
+ use pars,          ONLY:IP
+ use memory_m,      ONLY:mem_est
+ use collision,     ONLY:COLLISIONS_group,COLL_bands
+ use R_lattice,     ONLY:nXkibz
+ use electrons,     ONLY:n_sp_pol
+ use wave_func,     ONLY:states_to_load
  implicit none
  !
- character(*) :: what
+ character(*)           :: what
+ type(COLLISIONS_group) :: COLL
  !
- ! Naming...
- !===========
- FOCK_collisions%kind=SC_HF
- FOCK_collisions%name="Fock"
- SEX_collisions%kind=SC_COHSEX
- SEX_collisions%name="SEX"
- P_collisions%kind=SE_GW_QED
- P_collisions%name="Momentum"
- GW_NEQ_collisions%kind=SE_GW_NEQ
- GW_NEQ_collisions%name="GW_NEQ"
+ ! Work Space
  !
- if (trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX") call DO_it(FOCK_collisions)
- if (trim(SC_potential)=="COHSEX")                                       call DO_it(SEX_collisions)
- if (l_elphoton_scatt)                                                   call DO_it(P_collisions)
- if (l_elel_scatt)                                                       call DO_it(GW_NEQ_collisions)
+ integer :: i_n,i_m,i_sp,i_k,i_c
  !
- contains
+ if (trim(what)=="WF_distribute") then
    !
-   subroutine DO_it( COLL )
-      !
-      use pars,          ONLY:IP
-      use memory_m,      ONLY:mem_est
-      use collision,     ONLY:COLLISIONS_group,COLL_bands
-      use R_lattice,     ONLY:nXkibz
-      use electrons,     ONLY:n_sp_pol
-      use wave_func,     ONLY:states_to_load
-      !
-      type(COLLISIONS_group)::COLL
-      integer :: i_qp,i_n,i_m,i_sp,i_k,i_c
-      !
-      if (trim(what)=="WF_distribute") then
-        !
-        do i_c=1,COLL%N
-          !
-          if (.not.COLL%PAR_IND%element_1D(i_c)) cycle
-          !
-          i_n =COLL%state(i_c,1)
-          i_m =COLL%state(i_c,2)
-          i_k =COLL%state(i_c,3)
-          !
-          states_to_load(i_n,i_k,:)=.TRUE.
-          states_to_load(i_m,i_k,:)=.TRUE.
-          !
-        enddo
-        !
-        return
-        !
-      endif
-      !
-      if (trim(what)=="clean") then
-        deallocate(COLL%IO_status)
-        call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status")
-        deallocate(COLL%state)
-        call mem_est("COLLISIONS_"//trim(COLL%name)//"_state")
-        return
-      endif
-      !
-      if (associated(COLL%state)) return
-      !
-      do i_c=1,2
-        !
-        COLL%N=0
-        !
-        do i_k=1,nXkibz
-          do i_n=COLL_bands(1),COLL_bands(2)
-            do i_m=COLL_bands(1),COLL_bands(2)
-              !
-              if (.not.trim(COLL%name)=="GW_NEQ".and.i_n>i_m) cycle
-              !
-              do i_sp=1,n_sp_pol
-                COLL%N=COLL%N+1
-                if (i_c==2) then
-                  COLL%state(COLL%N,:3)=(/i_n,i_m,i_k/)
-                  COLL%state(COLL%N, 4)=i_sp
-                endif
-              enddo
-            enddo
-          enddo
-        enddo
-        !
-        if (i_c==1) then
-          allocate(COLL%IO_status(COLL%N))
-          call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
-          allocate(COLL%state(COLL%N,4))
-          call mem_est("COLLISIONS_"//trim(COLL%name)//"_state",(/COLL%N,4/),(/IP/))
-        endif
-        !
-      enddo
-      !
-   end subroutine
+   do i_c=1,COLL%N
+     !
+     if (.not.COLL%PAR_IND%element_1D(i_c)) cycle
+     !
+     i_n =COLL%state(i_c,1)
+     i_m =COLL%state(i_c,2)
+     i_k =COLL%state(i_c,3)
+     !
+     states_to_load(i_n,i_k,:)=.TRUE.
+     states_to_load(i_m,i_k,:)=.TRUE.
+     !
+   enddo
    !
+   return
+   !
+ endif
+ !
+ if (trim(what)=="clean") then
+   deallocate(COLL%IO_status)
+   call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status")
+   deallocate(COLL%state)
+   call mem_est("COLLISIONS_"//trim(COLL%name)//"_state")
+   return
+ endif
+ !
+ if (associated(COLL%state)) return
+ !
+ do i_c=1,2
+   !
+   COLL%N=0
+   !
+   do i_k=1,nXkibz
+     do i_n=COLL_bands(1),COLL_bands(2)
+       do i_m=COLL_bands(1),COLL_bands(2)
+         !
+         if (.not.trim(COLL%name)=="GW_NEQ".and.i_n>i_m) cycle
+         !
+         do i_sp=1,n_sp_pol
+           COLL%N=COLL%N+1
+           if (i_c==2) then
+             COLL%state(COLL%N,:3)=(/i_n,i_m,i_k/)
+             COLL%state(COLL%N, 4)=i_sp
+           endif
+         enddo
+       enddo
+     enddo
+   enddo
+   !
+   if (i_c==1) then
+     allocate(COLL%IO_status(COLL%N))
+     call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
+     allocate(COLL%state(COLL%N,4))
+     call mem_est("COLLISIONS_"//trim(COLL%name)//"_state",(/COLL%N,4/),(/IP/))
+   endif
+   !
+ enddo
+ !
 end subroutine

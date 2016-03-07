@@ -739,15 +739,25 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      call parser('SCbands',is_def(1))
      call parser('RTbands',is_def(2))
      call parser('COLLbands',is_def(3))
+#endif
      !
+#if defined _SC 
      if (is_def(1)) bands_=SC_bands
-     if (is_def(2)) bands_=RT_bands
      if (is_def(3)) bands_=COLL_bands
+#endif
+#if defined _RT || defined _QED
+     if (is_def(2)) bands_=RT_bands
+#endif
      !
-     RT_bands  =bands_
+#if defined _SC 
      SC_bands  =bands_
      COLL_bands=bands_
+#endif
+#if defined _RT || defined _QED
+     RT_bands  =bands_
      IP_h_bands=bands_
+#endif
+#if defined _SC || defined _RT || defined _QED
      !
    end subroutine
    !TMP<

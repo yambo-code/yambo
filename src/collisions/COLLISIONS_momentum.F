@@ -93,7 +93,7 @@ subroutine COLLISIONS_momentum(E,k,q)
    PAR_NC=count(P_collisions%IO_status==-1)
  endif
  !
- call live_timing("Momentum collisions",PAR_NC*PAR_nQ)
+ call live_timing("Collisions",PAR_NC*PAR_nQ)
  !
  QP_loop: do i_coll=1,P_collisions%N
    !

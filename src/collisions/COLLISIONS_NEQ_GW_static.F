@@ -102,7 +102,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  if (io_err<0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
 #if defined _TIMING
- call timing('NEQ GW Collisions',OPR='start')
+ call timing('NEQ GW collisions',OPR='start')
 #endif
  !
  ! Test the spatial Inversion
@@ -125,7 +125,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  if (associated(GW_NEQ_collisions%IO_status)) then
    PAR_NC_local=count(GW_NEQ_collisions%IO_status==-1)
  endif
- call live_timing("GW collisions",PAR_NC_local*PAR_nQ)
+ call live_timing("Collisions",PAR_NC_local*PAR_nQ)
  !
  do i_coll1=1,GW_NEQ_collisions%N
    !
@@ -299,7 +299,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  call live_timing()
  !
 #if defined _TIMING
- call timing('NEQ GW Collisions',OPR='stop')
+ call timing('NEQ GW collisions',OPR='stop')
 #endif
  !
  ! CLEAN

@@ -41,7 +41,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_use_collisions,&
 &                        l_elphoton_scatt
  use com,           ONLY:error
- use pars,          ONLY:schlen
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
@@ -49,7 +48,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use global_XC,     ONLY:SC_HF,SC_COHSEX
  use SC,            ONLY:SC_potential
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
- use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_group,&
+ use collision,     ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
 &                        FOCK_collisions,SEX_collisions,P_collisions,GW_NEQ_collisions
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
@@ -89,7 +88,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! Initial Setup
  !===============
  !
- call COLLISIONS_basic_operations( "alloc" )
+ call COLLISIONS_basic_operations( "alloc", FOCK_collisions )
+ call COLLISIONS_basic_operations( "alloc", SEX_collisions )
+ call COLLISIONS_basic_operations( "alloc", P_collisions )
+ call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
  !
  ! PARALLEL Setup
  !================
@@ -105,7 +107,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    COLLISIONS_parallel_SC_structure=.TRUE.
 #endif
    !
-   call COLLISIONS_basic_operations( "WF_distribute" )
+   call COLLISIONS_basic_operations( "WF_distribute", FOCK_collisions )
    !
    call PARALLEL_WF_index( )
    !
@@ -116,7 +118,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call section('+','Hartree-Fock')
    !================================
    !
-   call CHECK_and_ALLOC(FOCK_collisions,SC_HF)
+   call CHECK_and_ALLOC(FOCK_collisions)
    !
    if (IO_err/=0) then
      !
@@ -136,7 +138,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    if (.not.l_HF_and_locXC) call section('+','SEX (e-e correlation)')
    !=================================================================
    !
-   call CHECK_and_ALLOC(SEX_collisions,SC_COHSEX)
+   call CHECK_and_ALLOC(SEX_collisions)
    !
    if (IO_err/=0) then
      !
@@ -157,7 +159,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call section('+','Electron-Photon (P)')
    !=======================================
    !
-   call CHECK_and_ALLOC(P_collisions,SE_GW_QED)
+   call CHECK_and_ALLOC(P_collisions)
    !
    if (IO_err/=0) then
      !
@@ -189,7 +191,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call PARALLEL_WF_distribute(PLASMA_index=PAR_IND_Plasma)
    call PARALLEL_WF_index( )
    !
-   call CHECK_and_ALLOC(GW_NEQ_collisions,SE_GW_NEQ)
+   call CHECK_and_ALLOC(GW_NEQ_collisions)
    !
    if (IO_err/=0) then 
      !
@@ -210,7 +212,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (io_COLLs) then
    !
-   call COLLISIONS_basic_operations( "clean" )
+   call COLLISIONS_basic_operations( "clean", FOCK_collisions )
+   call COLLISIONS_basic_operations( "clean", SEX_collisions )
+   call COLLISIONS_basic_operations( "clean", P_collisions )
+   call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
    !
  else
    !
@@ -225,39 +230,31 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  contains
    !
-   subroutine CHECK_and_ALLOC(COLL,COLL_kind)
+   subroutine CHECK_and_ALLOC(COLL)
      !
-     integer                :: COLL_kind
-     character(schlen)      :: COLL_name
      type(COLLISIONS_group) :: COLL
      !
      IO_err=-1
      !
      if (io_COLLs) then
        COLL%IO_status=-1
-       V_kind=COLL_kind
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       IO_err=io_COLLISIONS(ID,0,COLL_grp=COLL)
+       IO_err=io_COLLISIONS(ID,COLL)
        if (any(COLL%IO_status/=1)) IO_err=-1
      endif
      !
      if (IO_err==0) return
      !
-     if (COLL_kind==SC_HF)     COLL_name="Fock"
-     if (COLL_kind==SC_COHSEX) COLL_name="SEX"
-     if (COLL_kind==SE_GW_NEQ) COLL_name="GW_NEQ"
-     if (COLL_kind==SE_GW_QED) COLL_name="Momentum"
-     !
      if (io_COLLs) then
-       call COLLISIONS_alloc_and_free(trim(COLL_name),"collision","alloc",1)
-       call COLLISIONS_alloc_and_free(trim(COLL_name),"v3 table","alloc",1)
+       call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",1)
+       call COLLISIONS_alloc_and_free(trim(COLL%name),"v3 table","alloc",1)
      else
-       call COLLISIONS_alloc_and_free(trim(COLL_name),"collision","alloc",0)
-       if (COLL_kind==SE_GW_NEQ.or.COLL_kind==SE_GW_QED) then
-         call COLLISIONS_alloc_and_free(trim(COLL_name),"v3","alloc distribute",0)
+       call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
+       if (COLL%kind==SE_GW_NEQ.or.COLL%kind==SE_GW_QED) then
+         call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc distribute",0)
        else
-         call COLLISIONS_alloc_and_free(trim(COLL_name),"v3","alloc",1)
-         call COLLISIONS_alloc_and_free(trim(COLL_name),"table","alloc",0)
+         call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc",1)
+         call COLLISIONS_alloc_and_free(trim(COLL%name),"table","alloc",0)
        endif
      endif
      !

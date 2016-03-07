@@ -83,12 +83,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
-#if defined _SC
+#if defined _SC 
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix,l_sc_pot_is_local
- use collision,  ONLY:COLLISIONS_cutoff
+ use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
 #endif
 #if defined _RT || defined _YPP_RT
  use rt_ctl,     ONLY:RT_IO_time
@@ -517,6 +517,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RES_tresh=0.01_SP
  DW_deltaE_treshold=1.E-6_SP/HA2EV
  FAN_deltaE_treshold=1.E-6_SP/HA2EV
+#endif
+ !
+#if defined _SC || defined _RT || defined _QED
+ !
+ call COLLISIONS_initial_naming()
+ !
 #endif
  !
 #if defined _SC

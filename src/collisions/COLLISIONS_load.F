@@ -187,7 +187,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #if defined _RT
        if (COLL%kind==SE_GW_NEQ) then
          if(.not.associated(GW_NEQ_COLL_element(1)%v_r)) then
-           io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1))
+           io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
            call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
          endif
        endif
@@ -195,7 +195,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #if defined _QED
        if (COLL%kind==SE_GW_QED) then
          if(.not.associated(P_COLL_element(1)%v_r)) then
-           io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1))
+           io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
            call COLLISIONS_alloc_and_free("Momentum","v1 table","alloc",1)
          endif
        endif
@@ -206,10 +206,10 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        if (COLL%kind==SC_HF)     io_err(1)=io_COLLISIONS(ID,COLL,FOCK_COLL_element(i_coll_mem))
        if (COLL%kind==SC_COHSEX) io_err(1)=io_COLLISIONS(ID,COLL,SEX_COLL_element(i_coll_mem))
 #if defined _RT
-       if (COLL%kind==SE_GW_NEQ) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1))
+       if (COLL%kind==SE_GW_NEQ) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
 #endif
 #if defined _QED
-       if (COLL%kind==SE_GW_QED) io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1))
+       if (COLL%kind==SE_GW_QED) io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
 #endif
        !
        ! Now the transfer %v_r => %v3_r

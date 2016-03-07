@@ -46,7 +46,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !
  ! Work Space
  !
- integer :: i_n,i_m,i_sp,i_k,i_c
+ integer :: i_n,i_m,i_sp,i_k,i_c,i_mix
  !
  if (trim(what)=="WF_distribute") then
    !
@@ -77,14 +77,19 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !
  if (associated(COLL%state)) return
  !
+ ! Here below I define the state component to be consistent with the QP_table
+ !
  do i_c=1,2
    !
    COLL%N=0
    !
    do i_k=1,nXkibz
      do i_n=COLL_bands(1),COLL_bands(2)
-       do i_m=COLL_bands(1),COLL_bands(2)
+       do i_mix=0,COLL_bands(2)-COLL_bands(1)
          !
+         i_m=i_n+i_mix
+         !
+         if (i_m>COLL_bands(2)) cycle
          if (.not.trim(COLL%name)=="GW_NEQ".and.i_n>i_m) cycle
          !
          do i_sp=1,n_sp_pol
@@ -92,6 +97,13 @@ subroutine COLLISIONS_basic_operations( what, COLL )
            if (i_c==2) then
              COLL%state(COLL%N,:3)=(/i_n,i_m,i_k/)
              COLL%state(COLL%N, 4)=i_sp
+           endif
+           if (i_n/=i_m) then
+             COLL%N=COLL%N+1
+             if (i_c==2) then
+               COLL%state(COLL%N,:3)=(/i_m,i_n,i_k/)
+               COLL%state(COLL%N, 4)=i_sp
+             endif
            endif
          enddo
        enddo

@@ -185,7 +185,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      ! Scattering geometry (I)
      !=========================
      i_n     = GW_NEQ_collisions%state(i_coll1,1)
-     i_m     = GW_NEQ_collisions%state(i_coll1,2)
+     i_np    = GW_NEQ_collisions%state(i_coll1,2)
      i_k     = GW_NEQ_collisions%state(i_coll1,3)
      !
      i_k_s   = 1
@@ -203,14 +203,10 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      i_kmq_sp= i_k_sp
      i_pmq_sp= i_k_sp
      !
-     isc%is  =(/i_n,i_k,i_k_s,i_k_sp/)
-     isc%os  =(/0  ,i_kmq,i_kmq_s,i_kmq_sp/)
+     isc%is  =(/i_n ,i_k,i_k_s,i_k_sp/)
+     isc%os  =(/i_np,i_kmq,i_kmq_s,i_kmq_sp/)
      !
      isc%qs(1)=i_kmq_G0
-     !
-     !
-     i_np     = GW_NEQ_collisions%state(i_coll1,2)
-     isc%os(1)= i_np
      !
      call scatter_Bamp(isc)
      !
@@ -245,6 +241,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          i_J=EH_gas%tab_m1(i_coll2,i_p_s,i_q_mem)
          !
          if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
+         !
          i_J_mem=PAR_PLASMA_index(i_J)
          !
          iscp%is =(/i_m,i_p,i_p_s,i_p_sp/)

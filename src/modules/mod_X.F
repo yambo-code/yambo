@@ -147,6 +147,8 @@ module X_m
      !
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
+     use pars,      ONLY:cZERO
+     !
      character(*)      :: what
      integer, optional :: d(:)
      !
@@ -160,26 +162,32 @@ module X_m
          if (allocated(X_mat)) return
          allocate(X_mat(d(1),d(2),d(3)),stat=err)
          call mem_est(what,(/size(X_mat)/),errors=(/err/))
+         X_mat=cZERO
        case('DIP_iR')
          if (allocated(DIP_iR)) return
          allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
          call mem_est(what,(/size(dip_iR)/),errors=(/err/))
+         DIP_iR=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
          allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
          call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         DIP_P=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
          allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
          call mem_est(what,(/size(dip_S)/),errors=(/err/))
+         DIP_S=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
          allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
          call mem_est(what,(/size(DIP_projected)/),errors=(/err/))
+         DIP_projected=cZERO
        case('P_square')
          if (allocated(P_square)) return
          allocate(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
          call mem_est(what,(/size(P_square)/),errors=(/err/))
+         P_square=cZERO
        end select
      else
        select case(what)

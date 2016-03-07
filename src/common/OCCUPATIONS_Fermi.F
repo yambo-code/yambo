@@ -150,15 +150,15 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    ! 2. [Finer search] by moving of 1 element
    !
    do i1=i_Ef(1),i_Ef(2),1
+     if(i1==0) cycle
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
-       if( (E%nk*E%nb*n_sp_pol)> i1 ) E%E_Fermi= E_sorted(i1)
-       if( (E%nk*E%nb*n_sp_pol)==i1 ) E%E_Fermi= E_sorted(i1)
+       if( (E%nk*E%nb*n_sp_pol)>=i1 ) E%E_Fermi= E_sorted(i1)
        Fermi_is_converged=.true.
        exit
      endif
      if (n_of_el_from_zero(1)>0) then
-       Ef(1)=E_sorted(i1-1)
+       Ef(1)=E_sorted(max(1,i1-1))
        Ef(2)=E_sorted(i1)
        exit
      endif

@@ -85,11 +85,11 @@ subroutine QP_state_table_setup(en)
    ! %QPerange fields
    !
    e_rng_lines=1
-   rcheck=1.
-   do while(rcheck>0.)
+   rcheck=1._SP
+   do while(rcheck>0._SP)
      if (allocated(QP_r_limits)) deallocate(QP_r_limits)
      allocate(QP_r_limits(e_rng_lines,4))
-     QP_r_limits(e_rng_lines,3:4)=(/0.,-1./)
+     QP_r_limits(e_rng_lines,3:4)=(/0._SP,-1._SP/)
      call parser('QPerange',QP_r_limits)
      rcheck=QP_r_limits(e_rng_lines,4)-QP_r_limits(e_rng_lines,3)
      e_rng_lines=e_rng_lines+1
@@ -186,16 +186,16 @@ subroutine QP_state_table_setup(en)
  if (Mixing) then
    !
 #if !defined _ELPH
-   if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.
+   if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0._SP
 #endif
    !
-   if (SC_band_mixing<0..or.SC_band_mixing>100.) SC_band_mixing=0.
-   if (SC_band_mixing>0.) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100.)
+   if (SC_band_mixing<0._SP.or.SC_band_mixing>100._SP) SC_band_mixing=0._SP
+   if (SC_band_mixing>0._SP) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100._SP)
    if (SC_bands_mixed==0) SC_bands_mixed=1
    !
    ! Recalculated SC_band_mixing
    !
-   SC_band_mixing=float(SC_bands_mixed)*100./float(QP_nb)
+   SC_band_mixing=float(SC_bands_mixed)*100._SP/float(QP_nb)
    bands_mixed=SC_bands_mixed
  endif
  !

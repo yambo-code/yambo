@@ -38,7 +38,7 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! Ygrad(1,i) = \partial(theta)/\partial(k_i) i=1,3
  ! Ygrad(2,i) = \partial(phi)/\partial(k_i) i=1,3
  !
- use pars, ONLY:SP,pi,cI,cZERO
+ use pars, ONLY:SP,DP,pi,cI,cZERO
  use com,  ONLY:warning
  !
  implicit none
@@ -48,7 +48,7 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! 
  ! Work Space
  !
- real(SP)    :: costh,sinth,cosphi,sinphi,ch,kmod,kxymod
+ real(SP)    :: costh,sinth,cosphi,sinphi,ch,kmod,kxymod,local_err
  complex(SP) :: eiphi
  !
  if (lang>4) call warning('Ylm with l>3 not coded. Projectors set to zero.')
@@ -57,35 +57,36 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  dYlm(:,:,:)=cZERO
  Ygrad(:,:) =0._SP
  !
+ local_err=1.E-6
+ if(SP==DP) local_err=1.E-12
+ !
  kmod=sqrt(dot_product(k,k))
+ if (kmod<local_err) return
+ !
+ ! This is a way to handle the z axis
+ ! Since phi is not defined there we use an axis which is 
+ ! almost z, just shifte by local_err
  kxymod=sqrt(k(1)**2+k(2)**2)
- costh=1._SP
- sinth=0._SP
- if (kmod.gt.1.E-5_SP) then
-  costh=k(3)/kmod
-  sinth=kxymod/kmod
+ if(kxymod<local_err) then
+   k(1)=local_err
+   k(2)=0._SP
+   kxymod=local_err
  endif
- cosphi=1._SP
- sinphi=0._SP
- if (kxymod.gt.1.E-5_SP) then
-  cosphi=k(1)/kxymod
-  sinphi=k(2)/kxymod
- endif
+ !
+ costh= k(3) /kmod
+ sinth=kxymod/kmod
+ !
+ cosphi=k(1)/kxymod
+ sinphi=k(2)/kxymod
  eiphi=cmplx(cosphi,sinphi)
  !
- if (kxymod.gt.1.E-5_SP) then
-   Ygrad(1,1:2)= k(3)/kmod**2 * (k(1:2)/kxymod)
-   Ygrad(1,3)=-kxymod/kmod**2
- else
-   Ygrad(1,1:2)= k(3)/kmod**2
-   Ygrad(1,3)= 0._SP
- endif
+ Ygrad(1,1)= k(3)*cosphi/kmod**2 
+ Ygrad(1,2)= k(3)*sinphi/kmod**2 
+ Ygrad(1,3)=  -kxymod   /kmod**2
  !
- if (kxymod.gt.1.E-5_SP) then
-   Ygrad(2,1)=-k(2)/kxymod**2
-   Ygrad(2,2)= k(1)/kxymod**2
-   Ygrad(2,3)= 0._SP
- endif
+ Ygrad(2,1)=-sinphi /kxymod
+ Ygrad(2,2)= cosphi /kxymod
+ Ygrad(2,3)= 0._SP
  !
  Ylm(lindx(0),mindx(0,0))=1._SP/sqrt(4._SP*pi)
  dYlm(:,lindx(0),mindx(0,0))=cZERO
@@ -108,7 +109,7 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  Ylm(   lindx(2),mindx(2,0))= ch*(3._SP*costh**2-1._SP)
  dYlm(1,lindx(2),mindx(2,0))=-ch*costh*sinth*6._SP
  dYlm(2,lindx(2),mindx(2,0))= cZERO
- ch=sqrt(15./(8.*pi))
+ ch=sqrt(15._SP/(8._SP*pi))
  Ylm(   lindx(2),mindx(2,1))=-ch*sinth*costh        *eiphi
  dYlm(1,lindx(2),mindx(2,1))=-ch*(costh**2-sinth**2)*eiphi
  dYlm(2,lindx(2),mindx(2,1))=-ch*sinth*costh        *eiphi*cI

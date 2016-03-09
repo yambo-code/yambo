@@ -332,13 +332,23 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          eet_factor=cZERO
          !
          if ( HEAD_QP_cpu ) then
+           if (X_is_TR_rotated) then
 !$omp parallel do default(shared), private(ig1,ig2)
-            do ig2=1,X%ng
-              do ig1=1,X%ng
-                eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
+              do ig2=1,X%ng
+                do ig1=1,X%ng
+                  eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig2,ig1))
+                enddo
               enddo
-            enddo
 !$omp end parallel do
+           else
+!$omp parallel do default(shared), private(ig1,ig2)
+              do ig2=1,X%ng
+                do ig1=1,X%ng
+                  eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
+                enddo
+              enddo
+!$omp end parallel do
+           endif
          endif
        else
          !

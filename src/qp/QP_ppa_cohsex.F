@@ -177,7 +177,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Test the spatial Inversion
  !   
- call WF_spatial_invertion(E,Xk)
+ call WF_spatial_inversion(E,Xk)
  !
  ! ALLOCATION
  !------------

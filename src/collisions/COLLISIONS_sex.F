@@ -117,7 +117,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  !
  ! Test the spatial Inversion
  !   
- call WF_spatial_invertion(E,Xk)
+ call WF_spatial_inversion(E,Xk)
  !
  ! Allocation
  !

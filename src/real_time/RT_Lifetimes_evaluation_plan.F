@@ -61,8 +61,6 @@ integer function RT_Lifetimes_evaluation_plan( )
    return
  endif 
  !
- RT_TIME_status=0 ! Interpolate
- !
  Life_MEM_steps=nint(RT_life_interp_steps(1)/RT_life_interp_steps(2))
  if (Life_MEM_steps<3) Life_MEM_steps=3
  RT_life_interp_steps(1)=RT_life_interp_steps(2)*Life_MEM_steps

@@ -284,7 +284,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! 
  ! Spatial Inversion Test
  !========================
- call WF_spatial_invertion(Ken,Xk)
+ call WF_spatial_inversion(Ken,Xk)
  !
  ! BSE-based Fxc
  !===============

@@ -23,7 +23,7 @@
 !
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
- use pars,                ONLY:SP,lchlen
+ use pars,                ONLY:SP,lchlen,cZERO
  use com,                 ONLY:msg,core_io_path,more_io_path,error
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
@@ -262,7 +262,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          !
          ib_disk=ib-nb1+1
          !
-         wf_tmp=(0._SP,0._SP)
+         wf_tmp=cZERO
          !
          do i_spin=1,n_spin
            !
@@ -355,6 +355,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  endif
  !
  core_io_path=core_io_path_save
+ !
+ call fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  !
 #if defined _YPP_SC || defined _YPP_RT
  call fix_SC_DBs(k,k_save,kpoints_map,action_kind)

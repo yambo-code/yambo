@@ -112,7 +112,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  type(X_t)     ::X(4)
  type(w_samp)  ::Xw(4)
  !
+#if defined _RT
  integer  :: i_field
+#endif
  !
  !===============
  ! GPL RUNLEVELS

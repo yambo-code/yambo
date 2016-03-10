@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_spatial_invertion(en,Xk)
+subroutine WF_spatial_inversion(en,Xk)
  !
  ! Check if the Inversion is a DL symmetry operation either
  ! using the wavefunctions or the atomic positions.

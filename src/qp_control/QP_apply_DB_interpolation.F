@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,11 +35,13 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
  !
  !
  use pars,          ONLY:SP
+ use units,         ONLY:HA2EV
  use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use vec_operate,   ONLY:sort
+ use stderr,        ONLY:real2ch
  use QP_m,          ONLY:QP_t,QP_ctl_applied
  !
  implicit none
@@ -52,8 +54,9 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
  ! Work Space
  !
  real(SP), allocatable :: Vali(:,:),Valo(:,:,:,:)
+ real(SP) :: E_diff
  integer  :: i1,ik,iband,i_spin,nk_interpolated,&
-&            nk_exact,ik_ref,ib_ref,N_val_to_int
+&            nk_exact,i_qp_ref,N_val_to_int,N_exact,N_close,N_far
  !
  logical, external :: QP_check_if_corrected
  !
@@ -89,28 +92,40 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
    ! Nearest Level interpolation
    !===============================
    !
+   E_diff=minval(En%Eo(DB_band_range(1),:,:))-minval(qp%E_bare)
+   !
+   N_exact=0
+   N_close=0
+   N_far  =0
+   !
+   if (E_diff>1.E-5_SP) &
+&    call warning(' Energy not aligned. Difference is '//trim(real2ch(E_diff))//' Ha. QP interpolation maybe wrong')
+   !
    do ik=1,k%nibz
      do iband=band_range(1),band_range(2)
        do i_spin=1,n_sp_pol
          !
-         call Nearest_level_interpolation(En%Eo(iband,ik,i_spin)-minval(En%Eo(:,:,:)),&
-&                                         qp%E_bare(:),qp%n_states,1,ib_ref,ik_ref,.TRUE.)
+         call Nearest_level_interpolation(En%Eo(iband,ik,i_spin),qp%E_bare(:),qp%n_states,E_diff,i_qp_ref)
+         !
+         if (                        E_diff<1.E-5_SP    ) N_exact=N_exact+1
+         if (E_diff>1.E-5_SP    .and.E_diff<0.1_SP/HA2EV) N_close=N_close+1
+         if (E_diff>0.1_SP/HA2EV                        ) N_far  =N_far  +1
          !
          if (do_EWZ_using_Ik_IE(1)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
-           en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+real(qp%E(ib_ref))-qp%E_bare(ib_ref)
+           en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+real(qp%E(i_qp_ref),SP)-qp%E_bare(i_qp_ref)
            DB_corrected(iband,ik,i_spin)=1
            en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+1
          endif
          !
          if (do_EWZ_using_Ik_IE(2)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
-           if (real(qp%E_bare(ib_ref))>0..and.aimag(qp%E(ib_ref))>0) then
+           if (real(qp%E_bare(i_qp_ref))>0..and.aimag(qp%E(i_qp_ref))>0) then
              if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
-             en%W(iband,ik,i_spin)=-aimag(qp%E(ib_ref))
+             en%W(iband,ik,i_spin)=-aimag(qp%E(i_qp_ref))
              wrong_width_sign_warn=.true.
            else
-             en%W(iband,ik,i_spin)=aimag(qp%E(ib_ref))
+             en%W(iband,ik,i_spin)=aimag(qp%E(i_qp_ref))
            endif
            DB_corrected(iband,ik,i_spin)=1
            en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+2
@@ -118,7 +133,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
          !
          if (do_EWZ_using_Ik_IE(3)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
-           en%Z(iband,ik,i_spin)=qp%Z(ib_ref)
+           en%Z(iband,ik,i_spin)=qp%Z(i_qp_ref)
            DB_corrected(iband,i1,i_spin)=1
            en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+4
          endif
@@ -126,6 +141,9 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
        enddo
      enddo
    enddo
+   !
+   call msg('sr','Nearest energy level interpolation.')
+   call msg('sr','Exactly mapped, closly mapped and far:',(/N_exact,N_close,N_far/))
    !
  endif
  !

@@ -57,7 +57,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  use R_lattice,    ONLY:qindx_X,bz_samp
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
- use RT_CTL,       ONLY:NEQ_Residuals,NEQ_Kernel
+ use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
  !
  implicit none

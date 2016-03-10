@@ -510,10 +510,10 @@ module parallel_m
      if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      if (present(imode)) then
-       if (imode==1) omode=mpi_sum
-       if (imode==2) omode=mpi_prod
+       if (imode==1) omode=MPI_LOR
+       if (imode==2) omode=MPI_LAND
      else
-       omode=mpi_sum
+       omode=MPI_LOR
      endif
      dimensions=shape(array)
      dimension=product(dimensions)

@@ -228,14 +228,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    subroutine DIPOLES_IO(read_or_write)
      !
-     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup
+     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
      !
      character(5), intent(in) :: read_or_write
      !
      integer                  :: IO_ACTION
-     logical                  :: write_header,read_header,reading,writing
+     logical                  :: write_header,read_header,reading,writing,l_vnl(1)
      !
      if (.not.IO_dip) return 
      !
@@ -245,6 +245,17 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      ID=0
      write_header  =(     master_cpu.and.writing)
      read_header   =(.not.master_cpu.and.writing).or.reading
+     !
+     ! AM March 2016. The next lines are in the nasty case where only a fraction of all CPU's compute the
+     ! dipoles. In this case only those cpu's know the right value of X%Vnl_included that is defined in the
+     ! calculation process. If, in the same run, all cpu's must access the dipoles the other CPU's will have
+     ! the wrong value of X%Vnl_included and the code will get stuck.
+     !
+     if (read_header.and.PAR_COM_DIPOLES%n_CPU==ncpu)then
+       l_vnl=X%Vnl_included
+       call PP_redux_wait(l_vnl)
+       X%Vnl_included=l_vnl(1)
+     endif
      !
      if(write_header) then
        call msg('s','[DIP] Writing dipoles header ')

@@ -121,7 +121,6 @@ subroutine K_blocks( )
  !====================
  !
  BS_LiveTiming_prefactor=1
- !BS_LiveTiming_prefactor=minval( BS_blk(:)%size(1) )
  !
  do i_block=1,n_BS_blks
    BS_LiveTiming_steps=BS_LiveTiming_steps+BS_Block_size(i_block)

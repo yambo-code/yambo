@@ -39,7 +39,7 @@ subroutine ypp_INIT_load(defs)
  use eels_detector,        ONLY: init_detector
 #endif
 #if defined _YPP_RT
- use rt_ctl,               ONLY: OCC_T_range,OCC_deltaT
+ use RT_control,           ONLY: OCC_T_range,OCC_deltaT
 #endif
  !
  implicit none

@@ -45,7 +45,7 @@ integer function io_RT_components(what,ID)
 &                         BGR_hartree,BGR_V_xc,BGR_Self_Energy,RT_bands,RT_nbands,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
  use ELPH,           ONLY:ph_modes,elph_branches
- use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO,&
+ use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO,&
 &                         RT_carriers_object
  use fields,         ONLY:A_ext
  use matrix_operate, ONLY:mat_c2r,mat_r2c

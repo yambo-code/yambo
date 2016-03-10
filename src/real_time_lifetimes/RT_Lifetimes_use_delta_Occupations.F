@@ -26,7 +26,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
- use rt_ctl,         ONLY:it_dyn
+ use RT_control,     ONLY:it_dyn
  use parallel_m,     ONLY:ncpu,PAR_COM_PLASMA_INDEX
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         RT_delta_occupations,l_use_updated_reference,l_initial_equilibrium,&

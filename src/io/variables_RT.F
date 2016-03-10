@@ -28,7 +28,7 @@ integer function variables_RT(ID,local_description,what)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr
  use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
- use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
+ use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
 &                         RT_description,n_RT_descriptions,it_dyn
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,NE_steps,NE_time, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &

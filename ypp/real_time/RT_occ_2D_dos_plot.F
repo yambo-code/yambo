@@ -34,7 +34,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  use functions,      ONLY:Fermi_fnc_derivative
  use LIVE_t,         ONLY:live_timing
  use YPP,            ONLY:RT_IO_carriers
- use rt_ctl,         ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
+ use RT_control,     ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
  use real_time,      ONLY:RT_carriers,RT_bands
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,PP_redux_wait

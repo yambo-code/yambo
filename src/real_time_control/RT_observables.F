@@ -30,7 +30,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:P_square
  use SC,             ONLY:V_hartree_sc,Ho
- use rt_ctl,         ONLY:RT_do_IO
+ use RT_control,     ONLY:RT_do_IO
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
 &                         XC0_and_HARTREE0,REF_V_xc_sc,           &
 &                         DbGd_ibz_coo,l_RT_uses_E_DbGd,REF_V_hartree_sc,   &
@@ -40,7 +40,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
- use interfaces,     ONLY:RT_average_operator
+ use RT_interfaces,  ONLY:RT_average_operator
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif

@@ -26,7 +26,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  use pars,           ONLY:SP,cI,schlen,DP
  use YPP,            ONLY:l_RT_X_inversion,l_skip_pol_and_curr_IO
  use units,          ONLY:HA2EV,FS2AUT
- use rt_ctl,         ONLY:RT_output
+ use RT_control,     ONLY:RT_output
  use real_time,      ONLY:RT_P,RAD_LifeTime,Phase_LifeTime
  use stderr,         ONLY:intc
  use LIVE_t,         ONLY:live_timing

@@ -33,7 +33,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
  use units,          ONLY:FS2AUT,PS2AUT,HA2EV
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
- use rt_ctl,         ONLY:RT_IO_JPO_steps,NEQ_Residuals,NEQ_Kernel
+ use RT_control,     ONLY:RT_IO_JPO_steps,NEQ_Residuals,NEQ_Kernel
  use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth
  !
  implicit none

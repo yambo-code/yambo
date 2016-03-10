@@ -28,7 +28,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  use units,          ONLY:HA2EV,HA2KEL,FS2AUT
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use pars,           ONLY:SP,schlen
- use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply
+ use RT_control,     ONLY:OCC_T_range,OCC_deltaT,RT_apply
  !use QP_m,           ONLY:QP_table,QP_n_states
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:bz_samp

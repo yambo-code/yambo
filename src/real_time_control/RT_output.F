@@ -31,7 +31,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use fields,         ONLY:A_vecpot,A_ind,A_ext
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
- use rt_ctl,         ONLY:RT_do_IO,RT_description,n_RT_descriptions
+ use RT_control,     ONLY:RT_do_IO,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes, &
 &                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR,RAD_prefactor
  use LIVE_t,         ONLY:what_is_running

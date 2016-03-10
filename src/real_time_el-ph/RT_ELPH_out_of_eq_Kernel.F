@@ -25,7 +25,7 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  !  
  use pars,           ONLY:SP,cI,pi,cZERO
  use electrons,      ONLY:levels,spin_occ
- use rt_ctl,         ONLY:it_dyn
+ use RT_control,     ONLY:it_dyn
  use real_time,      ONLY:RT_step,THETA_matrix,Integrator_name,G_lesser,MEM_index,&
 &                         THETA_matrix_index,G_MEM_steps,RT_bands
  use wrapper,        ONLY:M_by_M

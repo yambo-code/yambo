@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module rt_ctl
+module RT_control
  !
  use pars,       ONLY:SP,lchlen
  use units,      ONLY:FS2AUT
@@ -131,4 +131,4 @@ module rt_ctl
      !
    end function
    !
-end module rt_ctl
+end module RT_control

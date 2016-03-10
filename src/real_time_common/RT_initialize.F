@@ -33,7 +33,7 @@ subroutine RT_initialize(E,k,q)
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
- use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
+ use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
 &                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &

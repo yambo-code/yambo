@@ -24,7 +24,7 @@
 subroutine RT_INTERPOLATED_step(G_new_k,G_old_k,I1_k,I2_k,ik,Time,deltaT)
  !
  use pars,           ONLY:SP,cI,cZERO
- use rt_ctl,         ONLY:it_start,it_dyn
+ use RT_control,     ONLY:it_start,it_dyn
  use real_time,      ONLY:I_MEM_steps,RT_dyn_step,MEM_index,I_coh_SAVE,RT_bands
  !
  implicit none

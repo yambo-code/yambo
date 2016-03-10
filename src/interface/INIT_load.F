@@ -70,7 +70,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        SC_rho_threshold,SC_cycle_mixing
 #endif
 #if defined _RT
- use rt_ctl,        ONLY:RT_IO_time
+ use RT_control,    ONLY:RT_IO_time
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        NE_tot_time,RT_life_interp_steps,RT_bands,&

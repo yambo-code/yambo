@@ -33,7 +33,7 @@ subroutine RT_X_effective(en)
  use IO_m,           ONLY:NONE,LOG
  use fields,         ONLY:Efield,ext_field,Efield_duplicate,field_frequency,&
 &                         EtoT,Divide_by_Field
- use rt_ctl,         ONLY:RT_output
+ use RT_control,     ONLY:RT_output
  use real_time,      ONLY:RT_P
  use vec_operate,    ONLY:sort
  use LIVE_t,         ONLY:live_timing

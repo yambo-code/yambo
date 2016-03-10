@@ -23,6 +23,36 @@
 !
 module parallel_m
  !
+ ! Collective Operations (from  http://linux.die.net/man/3/mpi_lor )
+ !
+ ! The collective combination operations ( MPI_REDUCE , MPI_ALLREDUCE , MPI_REDUCE_SCATTER , and MPI_SCAN ) take a combination operation. This operation is of type
+ ! MPI_Op in C and of type INTEGER in Fortran. The predefined operations are 
+ !
+ !MPI_MAX
+ !    - return the maximum 
+ !MPI_MIN
+ !    - return the minumum 
+ !MPI_SUM
+ !    - return the sum 
+ !MPI_PROD
+ !    - return the product 
+ !MPI_LAND
+ !    - return the logical and 
+ !MPI_BAND
+ !    - return the bitwise and 
+ !MPI_LOR
+ !    - return the logical or 
+ !MPI_BOR
+ !    - return the bitwise of 
+ !MPI_LXOR
+ !    - return the logical exclusive or 
+ !MPI_BXOR
+ !    - return the bitwise exclusive or 
+ !MPI_MINLOC
+ !    - return the minimum and the location (actually, the value of the second element of the structure where the minimum of the first is found) 
+ !MPI_MAXLOC
+ !    - return the maximum and the location 
+ !
  use pars,       ONLY:SP,DP,schlen,lchlen
  !
  implicit none
@@ -510,10 +540,10 @@ module parallel_m
      if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      if (present(imode)) then
-       if (imode==1) omode=mpi_sum
-       if (imode==2) omode=mpi_prod
+       if (imode==1) omode=MPI_LOR
+       if (imode==2) omode=MPI_LAND
      else
-       omode=mpi_sum
+       omode=MPI_LOR
      endif
      dimensions=shape(array)
      dimension=product(dimensions)

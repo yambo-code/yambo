@@ -40,8 +40,7 @@ integer function variables_RT(ID,local_description,what)
  use ELPH,           ONLY:elph_branches
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
- use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
-&                         variable_is_found,read_is_on,io_code_revision
+ use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  !
  implicit none
  !
@@ -54,9 +53,10 @@ integer function variables_RT(ID,local_description,what)
  real(SP)              :: RT_life_interp_decay_time
  character(lchlen)     :: ch
  !
- RT_diagonalization_steps=0
- l_RT_diagonalize=.false.
- RT_life_interp_decay_time=0._SP
+ RT_diagonalization_steps  = 0
+ l_RT_diagonalize          = .false.
+ l_RT_diamagnetic          = .false.
+ RT_life_interp_decay_time = 0._SP
  !
  l_J           = what=="J_and_P"
  l_G           = what=="G"

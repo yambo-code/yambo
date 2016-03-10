@@ -187,7 +187,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        !
        values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
        values(9:10) =(/real(qp_k),real(qp_b)/)
-       values(12:13)=(/Lifetime*HA2EV/1.E-3,HBAR_eVfs*Lifetime/HA2EV/)
+       values(12:13)=(/aimag(qp%E(i1))*HA2EV/1.E-3,HBAR_eVfs*Lifetime/HA2EV/)
        values(28)   =(HBAR_eVfs*Lifetime/HA2EV)*FS2AUT/PS2AUT
        values(15:16)=(/real(qp%Z(i1)),aimag(qp%Z(i1))/)
        !

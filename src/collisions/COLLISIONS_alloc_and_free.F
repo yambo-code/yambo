@@ -43,7 +43,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  ! Work Space
  !
- integer :: D(3,2),COLL_range(2),J,mem_size(5),size_
+ integer :: D(3,2),COLL_range(2),J,K,mem_size(5),size_
  logical :: l_Fock,l_SEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
 &           l_clean,l_collision,l_distribute,l_Momentum,l_complex,l_real
  !
@@ -174,7 +174,14 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      type(COLLISIONS_element) :: COLL(COLL_grp%N)
      mem_size=0
      do J=COLL_range(1),COLL_range(2)
-       COLL(J)%I=J
+       !
+       ! Here I assign to each collision element an index corresponding to the REAL collision
+       ! associated. This is because J runs on the parallel components and not on the real ones.
+       !
+       do K=1,COLL_grp%N
+         if (COLL_grp%PAR_map(K)==J) COLL(J)%I=K
+       enddo
+       !
        if (l_alloc.and.(l_v3.or.l_all)) then
          if(l_real) then
            allocate(COLL(J)%v3_r(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))

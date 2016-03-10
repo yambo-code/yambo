@@ -42,7 +42,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  use pars,           ONLY:SP,cI,cZERO
  use D_lattice,      ONLY:Bose_Temp
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
@@ -51,9 +51,9 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
-&                         l_initial_equilibrium,RT_delta0_occupations,l_RT_RWA,RT_is_dephased,&
+&                         l_initial_equilibrium,RT_delta0_occupations,RT_is_dephased,&
 &                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
-&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
+&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -68,7 +68,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  ! Work Space
  !
- integer          :: ib1,ib2,ik
+ integer          :: ib1,ik
  real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e
  logical          :: l_eval
  !
@@ -197,6 +197,11 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  ! SAVE, interpolate & N/dN conservation (of the interpolated Lifetimes)
  !======================================================================
+ !
+ ! Time points saved for later interpolation
+ !
+ if (l_eval) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
+ !
  if (l_elel_scatt) then
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Hole_lifetime,1)
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Electron_lifetime,2)

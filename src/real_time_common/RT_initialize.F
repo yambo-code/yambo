@@ -73,6 +73,7 @@ subroutine RT_initialize(E,k,q)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTskipImposeN',        l_skip_it)
+ call parser('LifeInterpolation',    l_RT_lifetimes_interpolation)
  if (l_skip_it) l_RT_impose_N_dN=.FALSE.
  !
  call parser('RTskipImposeE',        l_skip_it)

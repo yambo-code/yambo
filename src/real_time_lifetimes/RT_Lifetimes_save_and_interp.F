@@ -66,8 +66,6 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      SAVE_it=.TRUE.
    endif
    !
-   if (SAVE_it) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
-   !
    ! ... and the lifetimes themeselves ...
    !
    do ib=RT_bands(1),RT_bands(2)

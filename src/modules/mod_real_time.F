@@ -331,52 +331,6 @@ module real_time
  !
  type(RT_t),save  :: RT_carriers
  !
- ! Interface
- !
- interface
-   !
-   subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_limited,&
-&                                 V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
-     use pars,       ONLY:SP
-     use SC,         ONLY:SC_bands
-     use R_lattice,  ONLY:bz_samp
-     use QP_m,       ONLY:QP_nk,QP_table,QP_n_states
-     use electrons,  ONLY:n_spin,n_sp_pol,levels
-     use FFT_m,      ONLY:fft_size
-     type(bz_samp), intent(in) :: k
-     complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
-     type(levels),  intent(in) :: en
-     integer,       intent(in) :: nK_mem
-     complex(SP),     optional,intent(out) :: O_VALUE,V_VALUE(3)
-     complex(SP),     optional, intent(in) :: V_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
-     complex(SP),     optional, intent(in) :: PV_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
-     complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
-     complex(SP),     optional, intent(in) :: O_MATRIX_limited(SC_bands(1):SC_bands(2),&
-&                                                              SC_bands(1):SC_bands(2),nK_mem,n_sp_pol)
-     complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
-     real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
-     logical,         optional, intent(in) :: TRANS
-     character(6),    optional, intent(in) :: Double_Grid
-   end subroutine RT_average_operator
-   !
-   subroutine RT_update(G_input,SC_R,it,E,k,X,up_Gref,up_DIP,an_QP)
-     use pars,       ONLY:SP
-     use SC,         ONLY:SC_bands
-     use R_lattice,  ONLY:bz_samp
-     use QP_m,       ONLY:QP_nk
-     use electrons,  ONLY:levels,n_sp_pol
-     use X_m,        ONLY:X_t
-     type(X_t),      intent(inout)        :: X
-     complex(SP),    intent(inout)        :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
-     complex(SP),    intent(in)           :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
-     type(bz_samp),  intent(in)           :: k
-     type(levels),   intent(in)           :: E
-     integer,        intent(in)           :: it
-     logical,        optional, intent(in) :: up_Gref,up_DIP,an_QP
-   end subroutine RT_update
-   !
- end interface
- !
  contains
    !
    subroutine RT_obj_alloc(RT)
@@ -446,13 +400,13 @@ module real_time
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_is_libDFT,l_elph_scatt,l_elel_scatt,&
 &                             l_sc_cohsex,l_sc_hartree
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
+     use SC,             ONLY:V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
-     use R_lattice,      ONLY:nqbz,nkibz
+     use R_lattice,      ONLY:nqbz,nXkibz
      !
      type(levels), intent(in) :: en
      !
@@ -471,58 +425,58 @@ module real_time
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
-     allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
+     allocate(G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(RT_H_occupations(SC_bands(1):SC_bands(2),RT_nk))
+     allocate(RT_H_occupations(RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("RT_H_occupations",(/size(RT_H_occupations)/),(/SP/))
      !
-     allocate(RT_delta0_occupations(SC_bands(1):SC_bands(2),RT_nk))
+     allocate(RT_delta0_occupations(RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("RT_delta0_occupations",(/size(RT_delta0_occupations)/),(/SP/))
      !
-     allocate(RT_delta_occupations(SC_bands(1):SC_bands(2),RT_nk))
+     allocate(RT_delta_occupations(RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("RT_delta_occupations",(/size(RT_delta_occupations)/),(/SP/))
      !
-     allocate(RT_E_occupations_reference(SC_bands(1):SC_bands(2),RT_nk))
+     allocate(RT_E_occupations_reference(RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("RT_E_occupations_reference",(/size(RT_E_occupations_reference)/),(/SP/))
      RT_E_occupations_reference=0._SP
      !
-     allocate(RT_H_occupations_reference(SC_bands(1):SC_bands(2),RT_nk))
+     allocate(RT_H_occupations_reference(RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("RT_H_occupations_reference",(/size(RT_H_occupations_reference)/),(/SP/))
      RT_H_occupations_reference=0._SP
      !
-     allocate(RT_occupations_locked(SC_bands(1):SC_bands(2),RT_nk))
+     allocate(RT_occupations_locked(RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("RT_occupations_locked",(/size(RT_occupations_locked)/),(/LP/))
      RT_occupations_locked=.false.
      !
-     allocate(RT_lifetimes_locked(SC_bands(1):SC_bands(2),RT_nk))
+     allocate(RT_lifetimes_locked(RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("RT_lifetimes_locked",(/size(RT_lifetimes_locked)/),(/LP/))
      RT_lifetimes_locked=.false.
      !
-     allocate(RT_E_occupations(SC_bands(1):SC_bands(2),RT_nk))
+     allocate(RT_E_occupations(RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("RT_E_occupations",(/size(RT_E_occupations)/),(/SP/))
      !
      if (l_elphoton_scatt) then
-       allocate(E_PHOT_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-       allocate(E_PHOT_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(E_PHOT_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       allocate(E_PHOT_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
        call mem_est("RT_E_PHOT_lifetimes",(/2*size(E_PHOT_Hole_lifetime)/),(/SP/))
        E_PHOT_Hole_lifetime=0._SP
        E_PHOT_Electron_lifetime=0._SP
      endif
      !
      if (l_elel_scatt) then
-       allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-       allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(E_E_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       allocate(E_E_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
        call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
        E_E_Hole_lifetime=0._SP
        E_E_Electron_lifetime=0._SP
      endif
      !
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-       allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-       allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-       allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(E_P_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       allocate(E_P_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       allocate(E_P_El_abs_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       allocate(E_P_Ho_abs_lifetime(RT_bands(1):RT_bands(2),RT_nk))
        call mem_est("RT_E_P_lifetimes",(/4*size(E_P_Hole_lifetime)/),(/SP/))
        E_P_Hole_lifetime=0._SP
        E_P_Electron_lifetime=0._SP
@@ -531,9 +485,9 @@ module real_time
      endif
      !
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt.or.l_elphoton_scatt) then
-       allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,8))
+       allocate(REF_lifetime(RT_bands(1):RT_bands(2),RT_nk,8))
        call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs), e-g h, e-g e
-       allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,8,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs), e-g h, e-g e
+       allocate(SAVED_lifetime(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs), e-g h, e-g e
        call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        allocate(SAVED_times(Life_MEM_steps)) 
        REF_lifetime=0._SP
@@ -541,41 +495,41 @@ module real_time
        SAVED_times=0._SP
      endif
      !
-     allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,n_sp_pol))
+     allocate(Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
      if(l_sc_hf.or.l_sc_cohsex) then
-       allocate(RT_Vnl_xc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,n_sp_pol))
+       allocate(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
        call mem_est("RT_Vnl_xc",(/size(RT_Vnl_xc)/),(/2*SP/))
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
      if (l_RT_INTERPOLATE) then
-       allocate(I_coh_SAVE(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,I_MEM_steps))
+       allocate(I_coh_SAVE(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,I_MEM_steps))
        call mem_est("I_coh_SAVE",(/size(I_coh_SAVE)/),(/2*SP/))
      endif
      !
      if(RT_is_dephased) then
-       allocate(I_relax_static(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
+       allocate(I_relax_static(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
        call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
      endif
      !
      if(l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
-       allocate(I_relax_dyn(SC_bands(1):SC_bands(2),RT_nk,2,Life_MEM_steps))
+       allocate(I_relax_dyn(RT_bands(1):RT_bands(2),RT_nk,2,Life_MEM_steps))
        call mem_est("I_relax_dyn",(/size(I_relax_static)/),(/2*SP/))
      endif
      !
-     allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
+     allocate(XC0_and_HARTREE0(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
      XC0_and_HARTREE0=cZERO
      !
-     allocate(SC_R(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
+     allocate(SC_R(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
      !
-     allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
+     allocate(G_lesser_reference(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
-     allocate(dG_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
+     allocate(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
      !
      allocate(REF_V_xc_sc(fft_size,n_spin))
@@ -587,11 +541,11 @@ module real_time
      allocate(REF_Vnl_xc(QP_n_states))
      call mem_est("REF_Vnl_xc",(/size(REF_Vnl_xc)/),(/2*SP/))
      !
-     allocate(BGR_hartree(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+     allocate(BGR_hartree(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
-      allocate(BGR_V_xc(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+      allocate(BGR_V_xc(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
-     allocate(BGR_Self_Energy(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+     allocate(BGR_Self_Energy(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
      !
      allocate(rho_reference(fft_size))
@@ -604,9 +558,9 @@ module real_time
      !
      ! Reference energies
      !
-     allocate(E_bare(1:SC_bands(2),QP_nk,n_sp_pol))
+     allocate(E_bare(1:RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("E_bare",(/size(E_bare)/))
-     E_bare=en%E(:SC_bands(2),:,:)
+     E_bare=en%E(:RT_bands(2),:,:)
      !
    end subroutine RT_alloc
    !   

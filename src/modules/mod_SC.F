@@ -184,15 +184,15 @@ module SC
      allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
+     if (l_real_time) return
+     !
      if (l_sc_cohsex.or.l_sc_srpa) then
        allocate(QP_Sc(QP_n_states,1))
        call mem_est("QP_Sc",(/QP_n_states/))
      endif
      !
-     if (.not.l_real_time) then
-       allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("SC_R",(/size(SC_R)/))
-     endif
+     allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("SC_R",(/size(SC_R)/))
      !
    end subroutine
    !

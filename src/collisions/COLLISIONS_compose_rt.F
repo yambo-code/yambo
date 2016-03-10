@@ -79,11 +79,17 @@ subroutine COLLISIONS_compose_rt(dG_in)
      do i_coll=1,COLL%N
        !
        if (.not.(COLL%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
+       !
        i_k       =COLL%state(i_coll,3)
        i_n       =COLL%state(i_coll,1)
        i_m       =COLL%state(i_coll,2)
        i_spin    =COLL%state(i_coll,4)
        i_coll_mem=COLL%PAR_map(i_coll)
+       !
+       ! If the COLLISIONS are read from a DB with more bands than RT_bands:
+       !
+       if (i_n<RT_bands(1).or.i_n>RT_bands(2)) cycle
+       if (i_m<RT_bands(1).or.i_m>RT_bands(2)) cycle
        !
        i_comp=1
        !

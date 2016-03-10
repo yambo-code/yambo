@@ -276,11 +276,11 @@ subroutine K_output_file(iq,mode)
      !
      eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),eels(:,1)) 
      eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eels(:,2)) 
-     if (mode==1) eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eels(:,3)) 
+     if (mode==1.or.mode==3) eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eels(:,3)) 
      !
      alpha(:,1)=(1._SP+eels(:,1))/4._SP/pi*eps_2_alpha
      alpha(:,2)=(1._SP+eels(:,2))/4._SP/pi*eps_2_alpha
-     if (mode==1) alpha(:,3)=(1._SP+eels(:,3))/4._SP/pi*eps_2_alpha
+     if (mode==1.or.mode==3) alpha(:,3)=(1._SP+eels(:,3))/4._SP/pi*eps_2_alpha
      !
      do iw=1,BSS_n_freqs
        !

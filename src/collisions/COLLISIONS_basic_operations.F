@@ -77,7 +77,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !
  if (associated(COLL%state)) return
  !
- ! Here below I define the state component to be consistent with the QP_table
+ ! Here below I define the state component to be consistent with the QP_table.
  !
  do i_c=1,2
    !

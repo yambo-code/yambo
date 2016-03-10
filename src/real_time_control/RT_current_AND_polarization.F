@@ -35,10 +35,11 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:nel,levels
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_step,RT_bands,&
-&                         RT_average_operator,RT_P,RT_P_prev,RT_nk,integrator_step
+&                         RT_P,RT_P_prev,RT_nk,integrator_step
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
+ use interfaces,     ONLY:RT_average_operator
  !
  implicit none           
  type(bz_samp),     intent(in) :: k

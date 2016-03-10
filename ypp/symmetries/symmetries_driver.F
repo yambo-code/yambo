@@ -103,8 +103,11 @@ subroutine symmetries_driver(E,Xk)
  call k_reduce(Xk,.false.)
  call msg('l'," "//trim(intc(Xk%nibz)))
  !
- allocate(kpoints_map(2,Xk%nibz))
+ deallocate(Xk%sstar,Xk%star,Xk%nstar,Xk%weights)
+ nullify(Xk%sstar,Xk%star,Xk%nstar,Xk%weights)
+ call k_expand(Xk)
  !
+ allocate(kpoints_map(2,Xk%nibz))
  call k_build_map(Xk,Xk_save,kpoints_map,action_kind)
  !
  ! Energies and Wave-functions

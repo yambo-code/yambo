@@ -796,26 +796,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! G bands
    !=========
    !
-   ! e-e correlation (HF and COHSEX)
-   !=================================
-   !
-   ! n,k
-   ! --<--.
-   !      | 
-   !      |
-   !      |
-   !     \|/ m,k-q
-   !      |
-   !      |
-   !      | 
-   !      .-->-- n',k
-   !      
-   ! "SC"="q.qp.b" 
-   !  
-   !   "q"   -> q 
-   !   "qp"  -> QP (k,n,n')  
-   !   "b"   -> m and PAR_IND_Bp_mat (this second is for the COLLISIONS case)
-   !
    ! WF bands to load
    !
    n_WF_bands_to_load=n_bands(2)
@@ -836,6 +816,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! To eval/use the COLLISIONS I need the PAR_B_mat_index, built here.
    !
    if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
+     !
+     !.........................................................................
+     !   "COLLISIONS"
+     !.........................................................................
+     !
+     call PARALLEL_collisions( Xk, P_collisions )
+     call PARALLEL_collisions( Xk, FOCK_collisions )
+     call PARALLEL_collisions( Xk, SEX_collisions )
      !
      nb_mat=(SC_bands(2)-SC_bands(1)+1)**2
      call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',SC_bands)

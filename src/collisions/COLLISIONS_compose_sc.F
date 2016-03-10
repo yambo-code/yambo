@@ -38,7 +38,7 @@ subroutine COLLISIONS_compose_sc(G_hf_input,G_xc_input)
  !
  ! Work Space
  !
- integer           :: i_qp,ib,ibp,i_kmq,ic1,ic2,i_qp_mem
+ integer           :: i_qp,ib,ibp,i_kmq,ic1,ic2,i_coll_mem
  !
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
@@ -54,7 +54,7 @@ subroutine COLLISIONS_compose_sc(G_hf_input,G_xc_input)
    !
    if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_QP_cpu)) cycle
    !
-   i_qp_mem=PAR_QP_index(i_qp)
+   i_coll_mem=FOCK_collisions%PAR_map(i_qp)
    !
    ic1=1
    ic2=1
@@ -64,15 +64,13 @@ subroutine COLLISIONS_compose_sc(G_hf_input,G_xc_input)
      do ibp=COLL_bands(1),QP_nb
        do ib=COLL_bands(1),QP_nb
          !
-         if (FOCK_collisions%N>0) then
-           if (FOCK_COLL_element(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
-             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*FOCK_COLL_element(i_qp_mem)%v_c(ic1)*G_hf_input(ib,ibp,i_kmq)
-             ic1=ic1+1
-           endif
+         if (FOCK_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
+           QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*FOCK_COLL_element(i_coll_mem)%v_c(ic1)*G_hf_input(ib,ibp,i_kmq)
+           ic1=ic1+1
          endif
-         if (SEX_collisions%N>0) then
-           if (SEX_COLL_element(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
-             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*SEX_COLL_element(i_qp_mem)%v_c(ic2)*G_xc_input(ib,ibp,i_kmq)
+         if (l_sc_cohsex) then
+           if (SEX_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
+             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*SEX_COLL_element(i_coll_mem)%v_c(ic2)*G_xc_input(ib,ibp,i_kmq)
              ic2=ic2+1
            endif
          endif

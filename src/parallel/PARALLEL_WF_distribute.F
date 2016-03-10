@@ -149,7 +149,6 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
        states_to_load(:,i_k,:)=.FALSE.
      endif
      !
-     !
    enddo
    !
  endif

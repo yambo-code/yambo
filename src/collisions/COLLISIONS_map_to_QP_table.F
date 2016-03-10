@@ -40,6 +40,7 @@ subroutine COLLISIONS_map_to_QP_table(what,COLL)
  integer :: i_coll
  !
  if (what=="fill") then
+   if (allocated(QP_table)) return
    QP_n_states=COLL%N
    allocate(QP_table(QP_n_states,3+n_sp_pol-1))
    call mem_est("QP_table",(/QP_n_states*(3+n_sp_pol-1)/),(/IP/))

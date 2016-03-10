@@ -39,6 +39,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  use R_lattice,     ONLY:nXkibz
  use electrons,     ONLY:n_sp_pol
  use wave_func,     ONLY:states_to_load
+ use IO_m,          ONLY:io_COLLs
  implicit none
  !
  character(*)           :: what
@@ -110,12 +111,20 @@ subroutine COLLISIONS_basic_operations( what, COLL )
    enddo
    !
    if (i_c==1) then
-     allocate(COLL%IO_status(COLL%N))
-     call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
+     if (io_COLLS) then
+       allocate(COLL%IO_status(COLL%N))
+       call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
+     endif
      allocate(COLL%state(COLL%N,4))
      call mem_est("COLLISIONS_"//trim(COLL%name)//"_state",(/COLL%N,4/),(/IP/))
    endif
    !
  enddo
+ !
+ ! QP_table map  (needed by SC)
+ !===============
+#if defined _SC || defined _QED
+ call COLLISIONS_map_to_QP_table("fill",COLL)
+#endif
  !
 end subroutine

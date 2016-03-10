@@ -23,6 +23,32 @@
 !
 subroutine PARALLEL_collisions( k, COLL )
  !
+ ! SC
+ !====
+ !
+ ! e-e correlation (HF and COHSEX)
+ !=================================
+ !
+ ! n,k
+ ! --<--.
+ !      | 
+ !      |
+ !      |
+ !     \|/ m,k-q
+ !      |
+ !      |
+ !      | 
+ !      .-->-- n',k
+ !      
+ ! "SC"="q.qp.b" 
+ !  
+ !   "q"   -> q 
+ !   "qp"  -> QP (k,n,n')  
+ !   "b"   -> m and PAR_IND_Bp_mat (this second is for the COLLISIONS case)
+ !
+ ! REAL-TIME
+ !===========
+ !
  ! e-e scattering
  !================
  !
@@ -86,7 +112,7 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  use interfaces,    ONLY:PARALLEL_live_message
  use collision,     ONLY:COLLISIONS_group,COLL_bands
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
  implicit none
@@ -117,8 +143,13 @@ subroutine PARALLEL_collisions( k, COLL )
    i_k = COLL%state(i_coll,3)
    NC_tot=NC_tot+1
    !
+#if defined _RT
    if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
    if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
+#endif
+#if defined _SC || defined _QED
+   if (.not.PAR_IND_QP%element_1D(i_coll)) cycle
+#endif
    !
    COLL%PAR_N=COLL%PAR_N+1
    COLL%PAR_map(i_coll)=COLL%PAR_N

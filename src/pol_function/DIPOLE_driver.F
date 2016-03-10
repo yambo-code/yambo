@@ -251,7 +251,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      ! calculation process. If, in the same run, all cpu's must access the dipoles the other CPU's will have
      ! the wrong value of X%Vnl_included and the code will get stuck.
      !
-     if (read_header.and.PAR_COM_DIPOLES%n_CPU==ncpu)then
+     if (reading.and.PAR_COM_DIPOLES%n_CPU==ncpu)then
        l_vnl=X%Vnl_included
        call PP_redux_wait(l_vnl)
        X%Vnl_included=l_vnl(1)

@@ -66,6 +66,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! WorkSpace
  !
  integer       :: ID,i_kind,IO_err
+ character(20) :: PAR_ch
  !
  call section('*','Extended collisions')
  !=======================================
@@ -96,16 +97,14 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! PARALLEL Setup
  !================
  if (trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX".or.l_elphoton_scatt) then
-#if defined _SC && defined _RT
-   call PARALLEL_global_indexes(E,k,q,"Real_Time")
-   call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
-   COLLISIONS_parallel_SC_structure=.FALSE.
-#endif
-#if defined _SC && !defined _RT
-   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
    COLLISIONS_parallel_SC_structure=.TRUE.
+   PAR_ch="Self_Energy"
+#if defined _SC && defined _RT
+   COLLISIONS_parallel_SC_structure=.FALSE.
+   PAR_ch="Real_Time"
 #endif
+   call PARALLEL_global_indexes(E,k,q,trim(PAR_ch))
+   call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
    !
    call COLLISIONS_basic_operations( "WF_distribute", FOCK_collisions )
    !

@@ -99,7 +99,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX".or.l_elphoton_scatt) then
    COLLISIONS_parallel_SC_structure=.TRUE.
    PAR_ch="Self_Energy"
-#if defined _SC && defined _RT
+#if defined _RT
    COLLISIONS_parallel_SC_structure=.FALSE.
    PAR_ch="Real_Time"
 #endif

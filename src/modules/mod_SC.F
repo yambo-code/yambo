@@ -197,7 +197,7 @@ module SC
    end subroutine
    !
    subroutine SC_free()
-     use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
+     use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
@@ -240,7 +240,7 @@ module SC
      deallocate(V_hartree_sc)
      call mem_est("Hartree_Potential")
      !
-     if (l_sc_cohsex.or.l_sc_srpa) then
+     if (allocated(QP_Sc)) then
        deallocate(QP_Sc)
        call mem_est("QP_Sc")
      endif

@@ -107,6 +107,7 @@ module real_time
  !
  real(SP)    :: Phase_LifeTime
  real(SP)    :: RAD_LifeTime
+ real(SP)    :: RAD_magnification=1._SP
  logical     :: RT_is_dephased
  !
  ! Table pointing to the position of the uniform grid points in the
@@ -509,7 +510,7 @@ module real_time
        call mem_est("I_coh_SAVE",(/size(I_coh_SAVE)/),(/2*SP/))
      endif
      !
-     if(RT_is_dephased) then
+     if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt/)) ) then
        allocate(I_relax_static(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
        call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
      endif

@@ -46,7 +46,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,DbGd_EE_scatt_table,&
 &                         DbGd_EE_Nk_table,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,&
 &                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
-&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
+&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RAD_magnification
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,&
@@ -69,6 +69,7 @@ subroutine RT_initialize(E,k,q)
  ! Logicals
  !==========
  !
+ call parser('RAD_prefactor',        RAD_magnification)
  call parser('BGR',                  l_BGR)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
@@ -187,7 +188,15 @@ subroutine RT_initialize(E,k,q)
  !
  call RT_Dephasing_Matrix(E) 
  !
- if (.not.RT_is_dephased) call warning('No Dephasing provided. Is the simulation meaningfull ?')
+ if (.not.RT_is_dephased) then
+   !
+   if (l_elph_scatt.or.l_elel_scatt) then
+     call warning('No Dephasing provided. E-E and/or E-P scatterings switched off')
+     l_elph_scatt=.FALSE.
+     l_elel_scatt=.FALSE.
+   endif
+   !
+ endif
  !
  ! Memory Depth (G_lesser)
  !=========================
@@ -214,24 +223,24 @@ subroutine RT_initialize(E,k,q)
      l_NE_with_fields=.true.
      !
      if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
-&      call error(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
+&      call error("External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
      !
      if(Efield(i1)%intensity==0._SP) &
-&      call error(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
+&      call error("External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
      !
      if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
-&      call error(" External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
+&      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
      !
      Efield(i1)%versor   =normalize_v(Efield(i1)%versor)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
      Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
      if ( mod(Efield(i1)%t_initial_indx-1,RT_IO_JPO_steps)/=0 ) then
-       call warning(' Field must start at a T-step where the current is written. Correcting T0')
+       call warning('Field starting time corrected to be a mutiple of the I/O step.')
        Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,RT_IO_JPO_steps)
      endif
      if (Efield(i1)%t_initial_indx< RT_IO_JPO_steps+1 ) then
-       call warning(' Field cannot start before dT(J) . Setting T0=dT(J)')
+       call warning('Field starting time corrected to respect the I/O times.')
        Efield(i1)%t_initial_indx=RT_IO_JPO_steps+1
      endif
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step

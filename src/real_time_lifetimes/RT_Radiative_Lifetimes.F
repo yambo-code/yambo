@@ -32,7 +32,7 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
  use X_m,                 ONLY:DIP_P
  use real_time,           ONLY:RT_bands,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,l_initial_equilibrium,&
 &                              RT_delta_occupations,RT_ibz_coo,RT_H_occupations_reference,&
-&                              RT_E_occupations_reference
+&                              RT_E_occupations_reference,RAD_magnification
  use hamiltonian,         ONLY:B_mat_index
  !
  implicit none
@@ -73,9 +73,9 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
      pre_factor=P_square/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)
      !
      E_PHOT_Electron_lifetime(i_n,i_k)=E_PHOT_Electron_lifetime(i_n,i_k)+&
-&                                   pre_factor*Hole_f_m*theta_function( E_diff,0.01/HA2EV,0)
+&                                   pre_factor*Hole_f_m*theta_function( E_diff,0.01/HA2EV,0)*RAD_magnification
      E_PHOT_Hole_lifetime(i_n,i_k)=E_PHOT_Hole_lifetime(i_n,i_k)+&
-&                                   pre_factor*     f_m*theta_function(-E_diff,0.01/HA2EV,0)
+&                                   pre_factor*     f_m*theta_function(-E_diff,0.01/HA2EV,0)*RAD_magnification
      !
    enddo Bp_loop
    !

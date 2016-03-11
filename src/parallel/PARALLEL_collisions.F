@@ -147,7 +147,7 @@ subroutine PARALLEL_collisions( k, COLL )
    if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
    if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
 #endif
-#if defined _SC || defined _QED
+#if ( defined _SC || defined _QED ) && ! defined  _RT
    if (.not.PAR_IND_QP%element_1D(i_coll)) cycle
 #endif
    !

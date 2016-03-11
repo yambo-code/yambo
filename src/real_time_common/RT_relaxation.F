@@ -74,7 +74,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  l_initial_equilibrium=l_equilibrium
  !
- if (.not.RT_is_dephased) return
+ if (.not.RT_is_dephased.and..not.l_elphoton_scatt) return
  !
  I_relax_static=cZERO
  !

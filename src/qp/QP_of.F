@@ -104,7 +104,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  endif
  if (l_life) then
 #if defined _QED
-   ntitles=8
+   ntitles=7
    titles_order(:ntitles)=(/9,10,4,12,13,28,30/)
 #else
    ntitles=5

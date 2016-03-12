@@ -133,6 +133,8 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'DOSESteps', 'Energy steps',dos_E_steps,verb_level=V_general) 
  call it('f',defs,'PrtOccOnly', 'Occupied states only') 
  !
+ call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
+ !
 #if defined _YPP_RT
  !
  ! OCCUPATIONS

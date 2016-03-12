@@ -26,7 +26,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use com,            ONLY:msg,of_open_close,error,warning
  use vec_operate,    ONLY:c2a,v_norm,iku_v_norm
@@ -42,15 +42,15 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  integer      , intent(in)  :: BANDS_range(2)
  integer      , intent(out) :: ID_interp
  type(bz_samp), intent(out) :: USER_K,CIRCUIT_K,INTERP_K
- real(SP)     , pointer     :: bands_output(:,:,:)
+ real(SP)     , pointer     :: bands_output(:,:,:,:)
  !
  ! Work space
  !
  real(SP)              :: real_ctl,max_dist,v(3)
- real(SP), allocatable :: distances(:)
+ real(SP), allocatable :: distances(:),WF_fac(:,:,:),WF_fac_tmp(:,:),WF_fac_out(:,:)
  real(SP)              :: bands_input(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Xk%nibz)
- integer               :: i1,ic,ik,i_sp_pol
- integer,  allocatable :: int_distances(:)
+ integer               :: i1,ic,ib,ik,i_sp_pol,i_sp,WF_n_states,WF_nbands
+ integer,  allocatable :: int_distances(:),WF_table(:,:)
  !
  ! Input file parsing
  !====================
@@ -158,13 +158,47 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
  if (BANDS_steps> 0) then
-   allocate(bands_output(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz))
-   call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands_output,ID=ID_interp)
+   allocate(bands_output(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz,1+2*(n_spinor-1)))
+   call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands_output(:,:,:,1),ID=ID_interp)
  endif
  !
  if(all(interp_grid>0)) then
-   allocate(bands_output(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
-   call bz_interpolation(USER_k=INTERP_k,R2D=bands_output,ID=ID_interp)
+   allocate(bands_output(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz,1))
+   call bz_interpolation(USER_k=INTERP_k,R2D=bands_output(:,:,:,1),ID=ID_interp)
+ endif
+ !
+ ! Spinorial factor to be interpolated
+ !=====================================
+ if (n_spinor==2.and.BANDS_steps> 0) then
+   !
+   WF_nbands  =BANDS_range(2)-BANDS_range(1)+1
+   WF_n_states=WF_nbands*Xk%nibz
+   allocate(WF_fac(BANDS_range(1):BANDS_range(2),Xk%nibz,n_spinor))
+   call electrons_spin_factors(Xk,BANDS_range,WF_fac)
+   !
+   allocate(WF_table(WF_n_states,3))
+   allocate(WF_fac_tmp(WF_n_states,n_spinor))
+   i1=0
+   do ik=1,Xk%nibz
+     do ib=BANDS_range(1),BANDS_range(2)
+       i1=i1+1
+       WF_table(i1,1:2)=ib
+       WF_table(i1,3)  =ik
+       WF_fac_tmp(i1,:)=WF_fac(ib,ik,:)
+     enddo
+   enddo
+   !
+   allocate(WF_fac_out(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz))
+   do i_sp=1,n_spinor
+     call Nearest_kpt_interpolation(Xk%nibz,CIRCUIT_k%nibz,BANDS_range,WF_n_states,1,1,WF_table,Xk%pt,CIRCUIT_k%pt, &
+&                                   Xk%weights,CIRCUIT_k%weights,WF_fac_tmp(:,i_sp),WF_fac_out,'BND',.false.)
+     do ik=1,CIRCUIT_k%nibz
+       bands_output(:,1,ik,1+i_sp)=WF_fac_out(:,ik)
+     enddo
+   enddo
+   !
+   deallocate(WF_table,WF_fac,WF_fac_tmp)
+   !
  endif
  !
 end subroutine electrons_bands_interpolate

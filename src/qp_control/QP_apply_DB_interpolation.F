@@ -70,9 +70,6 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
  nk_interpolated=0
  nk_exact=0
  !
- ! BUG fix by AM, 5/1/2016: as the Nearest_kpt_interpolation fills Valo in the band_range 
- ! we need to find the bands limits of the QP states in order to use only states that fall in this range.
- !
  DB_band_range=(/minval(qp%table(:,1)),maxval(qp%table(:,1))/)
  !
  if (do_EWZ_using_Ik_IE(4)) then

@@ -28,7 +28,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_spin,n_spinor
  use YPP,            ONLY:dos_broadening,dos_E_range,dos_E_steps
  use com,            ONLY:msg,of_open_close,error
  use functions,      ONLY:Fermi_fnc_derivative
@@ -48,10 +48,11 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  ! 
- real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,dos_norm,&
-&                         el_dos_max
+ real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,f_occ,dos_norm,&
+&                         el_dos_max,el_dos_spin(2)
  real(SP)              :: io_Time
- integer               :: i_RT,i_E,i_spin,i_T
+ real(SP),allocatable  :: WF_fac(:,:,:)
+ integer               :: i_RT,i_E,i_spin,i_T,i_k,i_b
  logical               :: l_sum_equilibrium,l_separate_eh
  type(PP_indexes)      :: px
  !
@@ -66,6 +67,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  call parser('IncludeEQocc',l_sum_equilibrium)
  !
  el_dos_max=0._SP
+ el_dos_spin(2)=0._SP
  !
  ! Output files headers
  !
@@ -79,6 +81,11 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
  !
  dos_norm=1._SP/DL_vol
+ !
+ if (n_spinor==2) then
+   allocate(WF_fac(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
+   call electrons_spin_factors(kpt,RT_carriers%nb,WF_fac)
+ endif 
  !
  ! Parallel setup and live_timing
  !================================
@@ -102,12 +109,19 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
      !
      do i_RT=1,RT_carriers%nstates
        !
+       i_b   =RT_carriers%table(i_RT,1)
+       i_k   =RT_carriers%table(i_RT,2)
        i_spin=RT_carriers%table(i_RT,4)
        !
        if(.not.l_sum_equilibrium) f_occ=RT_carriers%delta_f(i_RT)
        if(     l_sum_equilibrium) f_occ=RT_carriers%delta_f(i_RT)+RT_carriers%f_bare(i_RT)
-       el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
-&         Fermi_fnc_derivative(RT_carriers%E_bare(i_RT)-dos_E,dos_broadening)*dos_norm
+       if(n_spinor==2) then
+         el_dos(i_E,:)=el_dos(i_E,:)+f_occ*WF_fac(i_b,i_k,:)*&
+&           Fermi_fnc_derivative(RT_carriers%E_bare(i_RT)-dos_E,dos_broadening)*dos_norm     
+       else
+         el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
+&           Fermi_fnc_derivative(RT_carriers%E_bare(i_RT)-dos_E,dos_broadening)*dos_norm
+       endif
        !
      enddo
      !
@@ -125,11 +139,18 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
      dos_E=dos_E_range(1)+real(i_E,SP)*delta_E
      !
      if(dos_E>En%E_VBM+dos_broadening .and. dos_E<En%E_CBm-dos_broadening) then
-       if(l_separate_eh) call RT_output("space 2D_occ_dos")
+       if(l_separate_eh) then
+         call RT_output("space 2D_occ_dos")
+       endif
        l_separate_eh=.false.
        cycle
      endif
-     call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+     if(n_spin==1) then
+       call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+     else
+       call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)+el_dos(i_E,2),el_dos(i_E,1),el_dos(i_E,2)/),&
+&                                  E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+     endif
      !
    enddo
    !
@@ -142,5 +163,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  call msg('s','DOS max value  :',el_dos_max)
  !
  call live_timing()
+ !
+ if (n_spinor==2) deallocate(WF_fac)
  !
 end subroutine RT_occ_2D_dos_plot

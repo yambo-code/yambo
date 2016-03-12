@@ -28,7 +28,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use pars,           ONLY:schlen
  use stderr,         ONLY:intc,real2ch,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,spin,n_sp_pol
+ use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor
  use QP_m,           ONLY:QP_table,QP_n_states
  use YPP,            ONLY:output_fname,RT_IO_time_range_setup
  use com,            ONLY:msg,of_open_close
@@ -54,6 +54,13 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
 &                         RT_f_bare(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
 &                         RT_NEQ_Lifetime(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
 &                         RT_gamma_bare(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol)
+ !
+ real(SP),allocatable  :: WF_fac(:,:,:)
+ !
+ if (n_spinor==2) then
+   allocate(WF_fac(RT_bands(1):RT_bands(2),kpt%nibz,2))
+   call electrons_spin_factors(kpt,RT_bands,WF_fac)
+ endif
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
  !
@@ -101,6 +108,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  RT_gamma=0._SP
  !
  ch3_dummy="YPP"
+ !
+ write(*,*) n_T_steps
  !
  do i_T=1,n_T_steps
    !
@@ -194,6 +203,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
  enddo
  !
+ if (n_spinor==2) deallocate(WF_fac)
+ !
 !!
 !! Sum_{ib,ik} f_{ik,ib}(it)
 !!
@@ -240,6 +251,10 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      !
      call msg('o '//trim(output_fname),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
      call msg('o '//trim(output_fname),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(output_fname),"#")
+     !
+     if(n_spinor==2) dumb_ch(1)=" Spin factor= "//trim(real2ch(WF_fac(ib,ik,1)))//" "//trim(real2ch(WF_fac(ib,ik,2)))
+     call msg('o '//trim(output_fname),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
      call msg('o '//trim(output_fname),"#")
      !
      if (l_elel_scatt.or.l_ELPH_lifetimes) then

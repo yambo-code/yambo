@@ -48,7 +48,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  type(levels)          :: E_bands
  !
  type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
- real(SP), pointer     :: bands_interpolated(:,:,:) => null()
+ real(SP), pointer     :: bands_interpolated(:,:,:,:) => null()
  !
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:)
  real(SP)              :: io_Time,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3)
@@ -213,7 +213,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
      do ik=1,CIRCUIT_K%nibz
        !
        values(1)=real(ik,SP)
-       values(2)=bands_interpolated(ib,1,ik)*HA2EV
+       values(2)=bands_interpolated(ib,1,ik,1)*HA2EV
        if (l_RT_occ_Bands ) values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
        if (l_RT_life_Bands) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
        call msg('o '//file_name_rt,' ',values,INDENT=0,USE_TABS=.true.)

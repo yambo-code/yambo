@@ -26,8 +26,6 @@ subroutine electrons_dos(Xk,Xen)
  use units,          ONLY:HA2EV,FS2AUT
  use pars,           ONLY:SP,schlen
  use stderr,         ONLY:intc
- use wave_func,      ONLY:WF
- use FFT_m,          ONLY:fft_size
  use R_lattice,      ONLY:bz_samp,nkibz,nkbz
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor,n_spin,spin_occ, &
@@ -38,10 +36,9 @@ subroutine electrons_dos(Xk,Xen)
  use functions,      ONLY:Fermi_fnc_derivative
  use QP_CTL_m,       ONLY:QP_apply
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:PARALLEL_index,WF_load,el_density_and_current
- use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
+ use interfaces,     ONLY:PARALLEL_index,el_density_and_current
+ use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset
  use parser_m,       ONLY:parser
- use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
  implicit none
  !
@@ -51,8 +48,9 @@ subroutine electrons_dos(Xk,Xen)
  ! Work Space
  ! 
  real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,f_occ,dos_norm,&
-&                         el_dos_max,WF_fac(dos_bands(1):dos_bands(2),nkibz,n_spinor)
- integer               :: i_E,ik,ik_bz,ib,i_wf,i_spin,i_spinor,ik_rand,i1
+&                         el_dos_max,el_dos_spin(2)
+ real(SP),allocatable  :: WF_fac(:,:,:)
+ integer               :: i_E,ik,ik_bz,ib,i_spin,i_spinor,ik_rand,i1
  character(schlen)     :: titles(4)
  logical               :: l_DbGd,l_prt_occ_only,l_separate_eh
  type(PP_indexes)      :: px
@@ -70,26 +68,15 @@ subroutine electrons_dos(Xk,Xen)
    call OCCUPATIONS_Extend(Xen,Xen)
  endif
  !
- if(n_spinor==2) then
-   !
-   call live_timing('DOS-spinor-factor',nkibz*(dos_bands(2)-dos_bands(1)+1),SERIAL=.true.)
-   do ik=1,nkibz
-     call WF_load(WF,0,1,dos_bands,(/ik,ik/),title='-Projected DOS',impose_free_and_alloc=.TRUE.)
-     do ib=dos_bands(1),dos_bands(2)
-       do i_spinor=1,n_spinor
-         i_wf=WF%index(ib,ik,i_spinor)
-         WF_fac(ib,ik,i_spinor)=real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf ), WF%c(:,i_wf) ),SP)
-       enddo
-       call live_timing(steps=1)
-     enddo
-     call WF_free()
-   enddo
-   call live_timing()
+ if (n_spinor==2) then
+   allocate(WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2))
+   call electrons_spin_factors(Xk,dos_bands,WF_fac)
  endif
  !
  if (l_DbGd) dos_bands(2)=min(dos_bands(2),BZ_DbGd_nbands)
  !
- el_dos_max=0.
+ el_dos_max=0._SP
+ el_dos_spin=0._SP
  !
  call QP_state_table_setup(Xen)
  call QP_apply(dos_bands,Xen,Xk,'G',msg_fmt='s')
@@ -112,8 +99,8 @@ subroutine electrons_dos(Xk,Xen)
  call msg('o dos',"#")
  !
  if (dos_E_range(1)>dos_E_range(2)) then
-   dos_E_range(1)=minval(Xen%E(dos_bands(1):dos_bands(2),:,:))-5.*dos_broadening
-   dos_E_range(2)=maxval(Xen%E(dos_bands(1):dos_bands(2),:,:))+5.*dos_broadening
+   dos_E_range(1)=minval(Xen%E(dos_bands(1):dos_bands(2),:,:))-5._SP*dos_broadening
+   dos_E_range(2)=maxval(Xen%E(dos_bands(1):dos_bands(2),:,:))+5._SP*dos_broadening
  endif
  delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
  !
@@ -123,6 +110,7 @@ subroutine electrons_dos(Xk,Xen)
  ! Parallel setup and live_timing
  !================================
  !
+ call PP_indexes_reset(px)
  call PARALLEL_index(px,(/dos_E_steps/))
  call live_timing('DOS',px%n_of_elements(myid+1))
  !
@@ -172,6 +160,8 @@ subroutine electrons_dos(Xk,Xen)
  enddo
  !
  call PP_redux_wait(el_dos)
+ !
+ if (n_spinor==2) deallocate(WF_fac)
  !
  el_dos_max=max(el_dos_max,maxval(abs(el_dos)))
  !

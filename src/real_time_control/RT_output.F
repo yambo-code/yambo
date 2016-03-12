@@ -29,6 +29,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_cohsex,l_sc_hf
  use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot,A_ind,A_ext
+ use electrons,      ONLY:n_spin
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use rt_ctl,         ONLY:RT_do_IO,RT_description,n_RT_descriptions
@@ -315,9 +316,16 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'2D_occ_dos'
  short_file_name(next_file)=trim(append_ch)//'2D_occ_dos'
- n_headings(next_file)=3
- headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
- headings(next_file,3  )='DOS'
+ !
+ if(n_spin==1) then
+   n_headings(next_file)=3
+   headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+   headings(next_file,3  )='DOS'
+ else
+   n_headings(next_file)=5
+   headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+   headings(next_file,3:5)=(/'DOS','up ',' dw'/)
+ endif
  next_file=next_file+1
  !
  do i_f=1,3

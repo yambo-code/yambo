@@ -246,11 +246,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      write_header  =(     master_cpu.and.writing)
      read_header   =(.not.master_cpu.and.writing).or.reading
      !
-     ! AM March 2016. The next lines are in the nasty case where only a fraction of all CPU's compute the
-     ! dipoles. In this case only those cpu's know the right value of X%Vnl_included that is defined in the
-     ! calculation process. If, in the same run, all cpu's must access the dipoles the other CPU's will have
-     ! the wrong value of X%Vnl_included and the code will get stuck.
-     !
      if (reading.and.PAR_COM_DIPOLES%n_CPU==ncpu)then
        l_vnl=X%Vnl_included
        call PP_redux_wait(l_vnl)

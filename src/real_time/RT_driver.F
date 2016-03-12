@@ -228,8 +228,11 @@ subroutine RT_driver(E,X,k,q)
  endif
  !
  ! IP calculation & not BGR => No need of WFs and Density
+ ! However if n_spin>1 I want to compute the total magnetization
+ ! There is a better way to get it via G< [to be coded]
+ ! But I have to compute the spin coefficient associated to G<
  !
- if(l_sc_ip) then  
+ if(l_sc_ip.and.n_spin==1) then  
    !
    call WF_free(WF)
    !
@@ -245,7 +248,8 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  call RT_output(what="open dyn ene cur pol")
- !call RT_output('open BGR')
+ if(n_spin>1) call RT_output(what="open magn")
+ !call RT_output(what="open BGR")
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
    if(l_RT_induced_field) call RT_output(what="open tot ind")
@@ -343,6 +347,7 @@ subroutine RT_driver(E,X,k,q)
    if (NE_time>=0._SP) then
      call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
      call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
+     if(n_spin>1) call RT_output('magn',TIME=NE_time/FS2AUT)
    endif
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
    if (l_NE_with_fields) then

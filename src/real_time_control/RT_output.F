@@ -29,11 +29,11 @@ subroutine RT_output(what,VALUES,TIME,E)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_cohsex,l_sc_hf
  use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot,A_ind,A_ext
- use electrons,      ONLY:n_spin
+ use electrons,      ONLY:n_spin,Total_magn
  use D_lattice,      ONLY:Bose_Temp
- use stderr,         ONLY:set_real_printed_length,string_split,intc
+ use stderr,         ONLY:set_real_printed_length,string_split,intc,real2ch
  use rt_ctl,         ONLY:RT_do_IO,RT_description,n_RT_descriptions
- use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes, &
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn, &
 &                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
@@ -54,7 +54,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c,n1
  logical                  :: file_is_todo(n_output_files),open_files,add_space,initialize
  logical,           save  :: RT_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
- character(schlen)        :: headings(n_output_files,11),append_ch,extension_ch
+ character(schlen)        :: headings(n_output_files,11),append_ch,extension_ch,tmp_ch
  character(2)             :: chart_string(3)
  real(SP)                 :: data_to_dump(11)
  !
@@ -328,6 +328,16 @@ subroutine RT_output(what,VALUES,TIME,E)
  endif
  next_file=next_file+1
  !
+ if(n_spin>1) then
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'magnetization'
+   short_file_name(next_file)=trim(append_ch)//'magnetization'
+   n_headings(next_file)=4
+   headings(next_file,1)='T [fs]'
+   headings(next_file,2:4)=(/"M_x","M_y","M_z"/)
+   next_file=next_file+1
+ endif
+ !
  do i_f=1,3
    if (i_f==1) extension_ch='trans_eps_real'
    if (i_f==2) extension_ch='trans_eps_imag'
@@ -452,10 +462,19 @@ subroutine RT_output(what,VALUES,TIME,E)
      do i_fp=1,n_RT_descriptions
        call msg('o '//trim(short_file_name(i_f)),'#',trim(RT_description(i_fp)),INDENT=0)
      enddo
+     !
+     if (trim(short_file_name(i_f))=="magnetization") then
+       call msg('o '//trim(short_file_name(i_f)),'#')
+       tmp_ch="Equilibrium magnetization is "//trim(real2ch(Total_magn(1)))//", "&
+&             //trim(real2ch(Total_magn(2)))//", "//trim(real2ch(Total_magn(3)))//". "
+       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
+     endif
+     !
      call msg('o '//trim(short_file_name(i_f)),'#')
      call msg('o '//trim(short_file_name(i_f)),'#',headings(i_f,1:n_headings(i_f)),INDENT=0,USE_TABS=.TRUE.)
      call msg('o '//trim(short_file_name(i_f)),'#')
      RT_descriptions_dumped(i_f)=.TRUE.
+     !
    endif
    !
    ! Values
@@ -498,6 +517,8 @@ subroutine RT_output(what,VALUES,TIME,E)
        if (l_sc_cohsex.or.l_sc_hf) data_to_dump(4)   = (BGR(3)+BGR(4)+BGR(5))*HA2EV
      case('energy')
        data_to_dump(2:6) = VALUES(1:5)
+     case('magnetization')
+       data_to_dump(2:4) = RT_magn(:)
      case('dynamics')
        data_to_dump(2:5) = VALUES(1:4)
        if(l_elel_scatt.or.l_elph_scatt) data_to_dump(6:7) = VALUES(5:6)

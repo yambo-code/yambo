@@ -136,6 +136,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  else
    E_bare=E%E(:RT_bands(2),:,:)
  endif
+ !
  call SC_bare_Hamiltonian(E,k,k)
  !
  ! Reference Hartree and XC

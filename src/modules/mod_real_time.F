@@ -95,12 +95,14 @@ module real_time
  complex(SP) :: RT_ind_J(3)
  complex(SP) :: RT_ind_J_prev(3)
  !
- ! ... and polarization ...
- !
- ! the calculated one ...
- !
+ ! ... polarization ...
+ !----------------------
  complex(SP) :: RT_P(3)
  complex(SP) :: RT_P_prev(3)
+ !
+ ! ... and magnetization
+ !----------------------
+ real(SP)    :: RT_magn(3)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !

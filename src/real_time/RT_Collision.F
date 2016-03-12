@@ -75,21 +75,18 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! Contribution from \delta\Sigma_coherent
  !=========================================
  !
+ ! Magnetization  (needed by local XCs and for output)
+ !===============
+ if(n_spin>1) then
+   call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
+   magn_n=magn_reference+delta_magn
+ endif
+ !
  ! Density (needed by Hartree and local XCs)
  !=========
- !
  if (eval_DENSITY) then
-   !
-   ! Contribution only from the changed occupations about RT_bands(1)
-   !
    call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
-   !
    rho_n=rho_reference+delta_rho
-   if(n_spin>1) then
-     call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
-     magn_n=magn_reference+delta_magn
-   endif
-   !
  endif
  !
  ! All the potentials are written in terms of the variations

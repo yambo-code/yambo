@@ -55,11 +55,13 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
 &                         RT_NEQ_Lifetime(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
 &                         RT_gamma_bare(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol)
  !
- real(SP),allocatable  :: WF_fac(:,:,:)
+ real(SP),allocatable  :: spin_factors(:,:,:),magn_factors(:,:,:)
  !
  if (n_spinor==2) then
-   allocate(WF_fac(RT_bands(1):RT_bands(2),kpt%nibz,2))
-   call electrons_spin_factors(kpt,RT_bands,WF_fac)
+   allocate(spin_factors(RT_bands(1):RT_bands(2),kpt%nibz,2))
+   call electrons_spin_factors(kpt,RT_bands,spin_factors)
+   allocate(magn_factors(RT_bands(1):RT_bands(2),kpt%nibz,3))
+   call electrons_magn_factors(kpt,RT_bands,magn_factors)
  endif
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
@@ -203,7 +205,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
  enddo
  !
- if (n_spinor==2) deallocate(WF_fac)
+ if (n_spinor==2) deallocate(spin_factors,magn_factors)
  !
 !!
 !! Sum_{ib,ik} f_{ik,ib}(it)
@@ -240,9 +242,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      call c2a(v_in=kpt%pt(ik,:),v_out=k_al,mode='ki2a')
      call c2a(v_in=kpt%pt(ik,:),v_out=k_cc,mode='ki2c')
      ! 
-     dumb_ch(1)='K ['//trim(intc(ik))//'] :'//trim(real2ch(k_cc(1)))//' '//&
+     dumb_ch(1)='K ['//trim(intc(ik))//'] : '//trim(real2ch(k_cc(1)))//' '//&
 &              trim(real2ch(k_cc(2)))//' '//trim(real2ch(k_cc(3)))//' ( cc) '
-     dumb_ch(2)='       '//trim(real2ch(kpt%pt(ik,1)))//' '//&
+     dumb_ch(2)='        '//trim(real2ch(kpt%pt(ik,1)))//' '//&
 &              trim(real2ch(kpt%pt(ik,2)))//' '//trim(real2ch(kpt%pt(ik,3)))//' (rlu) '
      !
      if(ik>  9) dumb_ch(2)=' '//trim(dumb_ch(2))
@@ -253,9 +255,17 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      call msg('o '//trim(output_fname),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
      call msg('o '//trim(output_fname),"#")
      !
-     if(n_spinor==2) dumb_ch(1)=" Spin factor= "//trim(real2ch(WF_fac(ib,ik,1)))//" "//trim(real2ch(WF_fac(ib,ik,2)))
-     call msg('o '//trim(output_fname),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname),"#")
+     if(n_spinor==2) then
+       dumb_ch(1)=" Spin factors  [up,dw]   :     "//trim(real2ch(spin_factors(ib,ik,1)))//&
+&                                           "     "//trim(real2ch(spin_factors(ib,ik,2)))
+       call msg('o '//trim(output_fname),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname),"#")
+       dumb_ch(1)=" Magn factor [Mx, My, Mz]: "//trim(real2ch(magn_factors(ib,ik,1)))//&
+&                                           " "//trim(real2ch(magn_factors(ib,ik,2)))//&
+&                                           " "//trim(real2ch(magn_factors(ib,ik,3)))
+       call msg('o '//trim(output_fname),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname),"#")
+     endif
      !
      if (l_elel_scatt.or.l_ELPH_lifetimes) then
        call msg('o '//trim(output_fname),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)

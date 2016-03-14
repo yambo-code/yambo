@@ -321,7 +321,7 @@ module YPP
      integer      , intent(in)  :: BANDS_range(2)
      integer      , intent(out) :: ID_interp
      type(bz_samp), intent(out) :: USER_K,CIRCUIT_K,INTERP_K
-     real(SP)     , pointer     :: bands_output(:,:,:,:)
+     real(SP)     , pointer     :: bands_output(:,:,:)
    end subroutine electrons_bands_interpolate
    !
  end interface

@@ -51,7 +51,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,f_occ,dos_norm,&
 &                         el_dos_max,el_dos_spin(2)
  real(SP)              :: io_Time
- real(SP),allocatable  :: WF_fac(:,:,:)
+ real(SP),allocatable  :: spin_factors(:,:,:)
  integer               :: i_RT,i_E,i_spin,i_T,i_k,i_b
  logical               :: l_sum_equilibrium,l_separate_eh
  type(PP_indexes)      :: px
@@ -83,8 +83,8 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  dos_norm=1._SP/DL_vol
  !
  if (n_spinor==2) then
-   allocate(WF_fac(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
-   call electrons_spin_factors(kpt,RT_carriers%nb,WF_fac)
+   allocate(spin_factors(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
+   call electrons_spin_factors(kpt,RT_carriers%nb,spin_factors)
  endif 
  !
  ! Parallel setup and live_timing
@@ -116,7 +116,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
        if(.not.l_sum_equilibrium) f_occ=RT_carriers%delta_f(i_RT)
        if(     l_sum_equilibrium) f_occ=RT_carriers%delta_f(i_RT)+RT_carriers%f_bare(i_RT)
        if(n_spinor==2) then
-         el_dos(i_E,:)=el_dos(i_E,:)+f_occ*WF_fac(i_b,i_k,:)*&
+         el_dos(i_E,:)=el_dos(i_E,:)+f_occ*spin_factors(i_b,i_k,:)*&
 &           Fermi_fnc_derivative(RT_carriers%E_bare(i_RT)-dos_E,dos_broadening)*dos_norm     
        else
          el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
@@ -164,6 +164,6 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  call live_timing()
  !
- if (n_spinor==2) deallocate(WF_fac)
+ if (n_spinor==2) deallocate(spin_factors)
  !
 end subroutine RT_occ_2D_dos_plot

@@ -25,12 +25,13 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV,FS2AUT
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use R_lattice,      ONLY:bz_samp
  use com,            ONLY:msg,of_open_close,error
  use YPP,            ONLY:BANDS_steps,Nel_fac,coo_in,coo_out,k_transform,interp_grid,&
 &                         l_RT_life_bands,l_RT_occ_bands,electrons_bands_interpolate
  use stderr,         ONLY:real2ch,intc
+ use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
  use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
@@ -48,14 +49,15 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  type(levels)          :: E_bands
  !
  type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
- real(SP), pointer     :: bands_interpolated(:,:,:,:) => null()
+ real(SP), pointer     :: bands_interpolated(:,:,:) => null()
  !
- real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:)
- real(SP)              :: io_Time,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3)
+ real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
+&                         spin_interpolated(:,:,:),magn_interpolated(:,:,:)
+ real(SP)              :: io_Time,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
  character(3)          :: message
- character(schlen)     :: headings(3),file_name_rt
+ character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt
  logical               :: l_normalize_Nel,l_g_space_interp,l_nearest_neig_interp
- integer               :: ib,ik,i_sp_pol,i_RT,i_T,ID_interp
+ integer               :: ib,ik,i_sp_pol,i_RT,i_T,ID_interp,n_values
  !
  !
  call section('*','Interpolation tool')
@@ -75,6 +77,14 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Perform the energies interpolation
  !======================================
  call electrons_bands_interpolate(E_bands,K_bands,ID_interp,USER_k,INTERP_k,CIRCUIT_k,RT_bands,bands_interpolated)
+ !
+ ! Perform interpolation of spinorial factors and magnetization
+ !==============================================================
+ if(n_spinor>1 .and. BANDS_steps> 0) then
+   allocate(spin_interpolated(RT_BANDS(1):RT_bands(2),CIRCUIT_k%nibz,n_spinor))
+   allocate(magn_interpolated(RT_bands(1):RT_bands(2),CIRCUIT_k%nibz,3))
+   call electrons_spin_and_magn_interpolate(En,kpt,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
+ endif
  !
  ! Perform the occupations interpolation
  !======================================
@@ -183,9 +193,17 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Output: bands on circuit
  !==========================
  !
- headings(1)="Step"
- if (l_RT_occ_Bands ) headings(3)=' occ'
+ headings(1)='|k|'
  if (l_RT_life_Bands) headings(3)='LIFE'
+ if (l_RT_occ_Bands ) headings(3)='occ'
+ !
+ n_values=3
+ !
+ if (l_RT_occ_Bands .and. n_spinor==2) then
+   headings(4)='occ(up)'
+   headings(5)='occ(dw)'
+   n_values=5
+ endif
  !
  coo_out=coo_in
  !
@@ -193,8 +211,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   if (l_RT_occ_Bands ) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
    if (l_RT_life_Bands) file_name_rt="YPP-RT_REF_LIFE_bands"
+   if (l_RT_occ_Bands ) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
    !
    call of_open_close(file_name_rt,'ot')
    !
@@ -207,16 +225,22 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
      !
      headings(2)=' b'//intc(ib) 
      !
-     call msg('o '//file_name_rt,"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//file_name_rt,"#",headings(:n_values),INDENT=0,USE_TABS=.true.)
      call msg('o '//file_name_rt,"#"," ",INDENT=0)
      !
      do ik=1,CIRCUIT_K%nibz
        !
-       values(1)=real(ik,SP)
-       values(2)=bands_interpolated(ib,1,ik,1)*HA2EV
-       if (l_RT_occ_Bands ) values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
+       if (ik==1) values(1)=0._SP
+       if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_K%pt(ik,:)-CIRCUIT_K%pt(ik-1,:))
+       !
+       values(2)=bands_interpolated(ib,1,ik)*HA2EV
        if (l_RT_life_Bands) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
-       call msg('o '//file_name_rt,' ',values,INDENT=0,USE_TABS=.true.)
+       if (l_RT_occ_Bands ) values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
+       if (l_RT_occ_Bands .and. n_spinor==2) then
+         values(4)=values(3)*spin_interpolated(ib,ik,1)
+         values(5)=values(3)*spin_interpolated(ib,ik,2)
+       endif
+       call msg('o '//file_name_rt,' ',values(:n_values),INDENT=0,USE_TABS=.true.)
        !
      enddo
      !
@@ -227,5 +251,9 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  enddo
  !
  deallocate(fit_on_circuit)
+ !
+ deallocate(bands_interpolated)
+ nullify(bands_interpolated)
+ if(n_spinor==2) deallocate(spin_interpolated,magn_interpolated)
  !
 end subroutine RT_occ_bands_interpolation

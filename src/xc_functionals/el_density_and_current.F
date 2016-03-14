@@ -62,10 +62,10 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  !
  ! Work Space 
  !
- integer    :: ib,ik,i_spin_wf,i_spin_E,ifft,rho_syms,i_s,i_r
- real(SP)   :: rho_no_sym(fft_size),J_no_sym(fft_size,3)
- complex(SP):: WF_der(3,fft_size)
- logical    :: warn_done,l_si,l_rho,l_J
+ integer    :: ib,ik,i_spin_wf,i_spin_E,ifft,rho_syms,i_s !,i_r
+ real(SP)   :: rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+! complex(SP):: WF_der(3,fft_size)
+ logical    :: warn_done,l_si,l_rho !,l_J
  !
  ! Basic Setups
  !

@@ -43,11 +43,12 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  integer,       intent(inout) :: BANDS_range(2)
  !
  type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
- real(SP), pointer     :: bands_interpolated(:,:,:,:)
+ real(SP), pointer     :: bands_interpolated(:,:,:)
+ real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  !
  integer               :: is,ik,ikbz,ib,nbands,ID_interp
  real(SP)              :: v(3)
- real(SP), allocatable :: values(:),spin_values(:,:),circuit_versor(:,:)
+ real(SP), allocatable :: values(:),spin_values(:,:),magn_values(:,:),circuit_versor(:,:)
  character(8)          :: spin_ch
  character(schlen)     :: file_name_bands(2,n_sp_pol),file_name_grid(n_sp_pol),filename_spin
  character(schlen), allocatable :: headings(:)
@@ -67,6 +68,14 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !====================================
  call electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_k,BANDS_range,bands_interpolated)
  !
+ ! Perform interpolation of spinorial factors and magnetization
+ !==============================================================
+ if(n_spinor>1 .and. BANDS_steps> 0) then
+   allocate(spin_interpolated(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,n_spinor))
+   allocate(magn_interpolated(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,3))
+   call electrons_spin_and_magn_interpolate(Xen,Xk,CIRCUIT_k,BANDS_range,spin_interpolated,magn_interpolated)
+ endif
+ !
  call reset_interpolation(ID_interp)
  !
  ! Output
@@ -77,7 +86,12 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  nbands=BANDS_range(2)-BANDS_range(1)+1
  !
  allocate(values(nbands+4),headings(nbands+4))
- if(n_spinor==2) allocate(spin_values(nbands+4,2))
+ values=0._SP
+ if(n_spinor==2) then
+   allocate(spin_values(nbands+4,2),magn_values(nbands+4,3))
+   spin_values=0._SP
+   magn_values=0._SP
+ endif
  !
  headings(1)=" |k| "
  do ib=BANDS_range(1),BANDS_range(2)
@@ -108,14 +122,26 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  enddo
  !
  if(BANDS_steps> 0.and.n_spinor==2) then
-   filename_spin="spin_factors1"
+   filename_spin="spin_factors_1"
    call of_open_close(filename_spin,'ot')
-   filename_spin="spin_factors2"
+   filename_spin="spin_factors_2"
    call of_open_close(filename_spin,'ot')
-   call msg('o spin_factors1',"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o spin_factors1',"#")
-   call msg('o spin_factors2',"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o spin_factors2',"#")
+   filename_spin="magnetization_x"
+   call of_open_close(filename_spin,'ot')
+   filename_spin="magnetization_y"
+   call of_open_close(filename_spin,'ot')
+   filename_spin="magnetization_z"
+   call of_open_close(filename_spin,'ot')
+   call msg('o spin_factors_1',"#",headings,INDENT=0,USE_TABS=.true.)
+   call msg('o spin_factors_1',"#")
+   call msg('o spin_factors_2',"#",headings,INDENT=0,USE_TABS=.true.)
+   call msg('o spin_factors_2',"#")
+   call msg('o magnetization_x',"#",headings,INDENT=0,USE_TABS=.true.)
+   call msg('o magnetization_x',"#")
+   call msg('o magnetization_y',"#",headings,INDENT=0,USE_TABS=.true.)
+   call msg('o magnetization_y',"#")
+   call msg('o magnetization_z',"#",headings,INDENT=0,USE_TABS=.true.)
+   call msg('o magnetization_z',"#")
  endif
  !
  call msg('o path',"#"," ",INDENT=0)
@@ -167,18 +193,30 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      !
      call k_transform(CIRCUIT_K%pt(ik,:),"iku")
      if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_K%pt(ik,:)-CIRCUIT_K%pt(ik-1,:))
-     if(n_spinor==2) spin_values(1,:)=values(1)
+     if(n_spinor==2) then
+       spin_values(1,:)=values(1)
+       magn_values(1,:)=values(1)
+     endif
      do is=1,n_sp_pol
-       values(1+1:nbands+1)=bands_interpolated(BANDS_range(1):BANDS_range(2),is,ik,1)*HA2EV
+       values(1+1:nbands+1)=bands_interpolated(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
        values(nbands+2:nbands+4)=CIRCUIT_K%pt(ik,:)
        call msg('o '//file_name_bands(1,is),' ',values,INDENT=0,USE_TABS=.true.)
        if(n_spinor==2) then
-         spin_values(1+1:nbands+1,1)=bands_interpolated(BANDS_range(1):BANDS_range(2),is,ik,2)
-         spin_values(1+1:nbands+1,2)=bands_interpolated(BANDS_range(1):BANDS_range(2),is,ik,3)
+         spin_values(1+1:nbands+1,1)=spin_interpolated(BANDS_range(1):BANDS_range(2),ik,1)
+         spin_values(1+1:nbands+1,2)=spin_interpolated(BANDS_range(1):BANDS_range(2),ik,2)
          spin_values(nbands+2:nbands+4,1)=CIRCUIT_K%pt(ik,:)
          spin_values(nbands+2:nbands+4,2)=CIRCUIT_K%pt(ik,:)
-         call msg('o spin_factors1',' ',spin_values(:,1),INDENT=0,USE_TABS=.true.)
-         call msg('o spin_factors2',' ',spin_values(:,2),INDENT=0,USE_TABS=.true.)
+         call msg('o spin_factors_1',' ',spin_values(:,1),INDENT=0,USE_TABS=.true.)
+         call msg('o spin_factors_2',' ',spin_values(:,2),INDENT=0,USE_TABS=.true.)
+         magn_values(1+1:nbands+1,1)=magn_interpolated(BANDS_range(1):BANDS_range(2),ik,1)
+         magn_values(1+1:nbands+1,2)=magn_interpolated(BANDS_range(1):BANDS_range(2),ik,2)
+         magn_values(1+1:nbands+1,3)=magn_interpolated(BANDS_range(1):BANDS_range(2),ik,3)
+         magn_values(nbands+2:nbands+4,1)=CIRCUIT_K%pt(ik,:)
+         magn_values(nbands+2:nbands+4,2)=CIRCUIT_K%pt(ik,:)
+         magn_values(nbands+2:nbands+4,3)=CIRCUIT_K%pt(ik,:)
+         call msg('o magnetization_x',' ',magn_values(:,1),INDENT=0,USE_TABS=.true.)
+         call msg('o magnetization_y',' ',magn_values(:,2),INDENT=0,USE_TABS=.true.)
+         call msg('o magnetization_z',' ',magn_values(:,3),INDENT=0,USE_TABS=.true.)
        endif
      enddo
      !
@@ -207,7 +245,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      values(1)=real(ik,SP)
      !
      do is=1,n_sp_pol
-       values(1+4:nbands+4)=bands_interpolated(BANDS_range(1):BANDS_range(2),is,ik,1)*HA2EV
+       values(1+4:nbands+4)=bands_interpolated(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
        call msg('o '//file_name_grid(is),' ',values,INDENT=0,USE_TABS=.true.)
      enddo
      !
@@ -216,10 +254,11 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  endif
  !
  deallocate(values,headings)
- if(n_spinor==2) deallocate(spin_values)
+ if(n_spinor==2) deallocate(spin_values,magn_values)
  !
  deallocate(bands_interpolated)
  nullify(bands_interpolated)
+ if(n_spinor==2) deallocate(spin_interpolated,magn_interpolated)
  !
  do is=1,n_sp_pol
    call of_open_close(file_name_bands(1,is))

@@ -167,7 +167,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      ! Spin occupations FIT
      !
      nfound_spin(5)=Fermi_fnc_fit(RT_spin_occ(:,1,i_T),RT_carriers%nstates,&
-&                                 T_fit_spin(1:2,i_T),Ef_fit_spin(1:2,i_T),err_fit_spin(1:2,i_T), &
+&                                 T_fit_spin(1:2,i_T),Ef_fit_spin(1:2,i_T),err_fit_spin(:,i_T), &
 &                                 RT_occ_fit_out=RT_occ_spin_fit(:,:,1,i_T))
      !
      if(nfound_spin(5)==1) nfound_spin(1)  =nfound_spin(1)+1
@@ -175,7 +175,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      if(nfound_spin(5)==3) nfound_spin(1:2)=nfound_spin(1:2)+1
      !
      nfound_spin(5)=Fermi_fnc_fit(RT_spin_occ(:,2,i_T),RT_carriers%nstates,&
-&                                 T_fit_spin(3:4,i_T),Ef_fit_spin(3:4,i_T),err_fit_spin(3:4,i_T), &
+&                                 T_fit_spin(3:4,i_T),Ef_fit_spin(3:4,i_T),err_fit_spin(:,i_T), &
 &                                 RT_occ_fit_out=RT_occ_spin_fit(:,:,2,i_T))
      !
      if(nfound_spin(5)==1) nfound_spin(3)  =nfound_spin(3)+1

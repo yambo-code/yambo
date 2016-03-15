@@ -25,6 +25,11 @@
 !> @callergraph
 subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
+ ! This subroutine must be kept thread-safe, since it is used
+ ! inside an external omp loop.
+ ! This means mostly that variables from modules should be used as
+ ! intent(IN) and not modified.
+ !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
  use X_m,           ONLY:X_t,DIP_projected,X_poles_tab

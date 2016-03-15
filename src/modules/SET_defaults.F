@@ -61,7 +61,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
 &                     n_max_jobstr,grid_paths
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
-&                     string_split,log_as_a_file
+&                     string_split,string_remove,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
@@ -178,10 +178,18 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call mk_dir(core_io_path)
  !
- ! ... and Job string
+ ! ... and Job strings
  !
  call string_split(JS,string,",")
+ !
+ ! remove final /
+ do i1=1,n_max_jobstr
+   if (len_trim(string(i1))==0) cycle
+   string(i1)=string_remove(string(i1),"/")
+ enddo
+ !
  jobstr=string(1)
+ !
  alt_jobstr=" "
  do i1=2,n_max_jobstr
    if (len_trim(string(i1))==0) cycle

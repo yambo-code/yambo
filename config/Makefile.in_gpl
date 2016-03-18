@@ -53,7 +53,7 @@ CFGFILES = config/setup config/Makefile config/report  \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
-CLEANS   = clean clean_all
+CLEANS   = clean clean_all distclean
 INTERFCS = a2y p2y e2y 
 #
 # Libraries (ordered for compiling & linking)
@@ -151,6 +151,7 @@ clean_fast:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(xclean)
+distclean: clean_all
 clean_all: 
 	@$(lib_ext_distclean)
 	@$(objects_clean)

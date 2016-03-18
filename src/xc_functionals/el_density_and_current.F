@@ -115,7 +115,7 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
        !
        !if (l_J) then
        !  !
-       !  call eval_Gradient(WF%c(:,ifft),WF_der)
+       !  call eval_Gradient(WF%c(:,ifft),WF_der,"wave")
        !  !
        !  do i_r=1,fft_size
        !    J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*aimag(WF%c(i_r,ifft)*WF_der(i_r,:))

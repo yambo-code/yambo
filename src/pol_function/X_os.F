@@ -1,4 +1,3 @@
-
 !
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
@@ -181,11 +180,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #  if defined _NESTING
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.true.)
  n_threads_FFT=n_innthr
- call msg('s','[X] using NESTED openmp parallelism: n_outthr/n_innthr = ',(/n_outthr,n_innthr/))
+ call msg('s','[X] NESTED openmp parallelism on: n_outthr/n_innthr = ',(/n_outthr,n_innthr/))
 #  else
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
  n_threads_FFT=1
- call msg('s','[X] no NESTED openmp parallelism')
+ call msg('s','[X] NESTED openmp parallelism off')
 #  endif
 #endif
  call OPENMP_locks_reset(INIT=.true.,nlocks=16)

@@ -154,7 +154,13 @@ module real_time
  !
  real(SP)    :: Eh_pumped_Nel
  real(SP)    :: Eh_pumped_pair_energy(2)
- real(SP)    :: Eh_pumped_pair_width
+ !
+ real(SP)    :: Eh_pumped_pair_deltaE
+ real(SP)    :: Eh_pumped_pair_BZ_reagions(3,6)   
+ !
+ real(SP)    :: Eh_pumped_pair_width               ! energy with
+ real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
+ integer     :: n_regions
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !

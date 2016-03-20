@@ -57,6 +57,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use QP_m,          ONLY:QP_QED_ng
 #endif
 #if defined _SC || defined _RT
+ use pars,          ONLY:SP
  use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
  use hamiltonian,   ONLY:IP_h_bands
  ! to be moved in mod hamiltonian
@@ -72,10 +73,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use rt_ctl,        ONLY:RT_IO_time
  use stderr,        ONLY:intc
- use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        NE_tot_time,RT_life_interp_steps,RT_bands,&
-&                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
+ use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,Eh_pumped_pair_BZ_reagions,    &
+&                        NE_tot_time,RT_life_interp_steps,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
+&                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_deltaE,RT_scatt_tresh, &
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,   &
 &                        Gr_kind,two_alpha,DbGd_EE_percent
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:Plasma_redux_percent
@@ -113,7 +114,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  type(w_samp)  ::Xw(4)
  !
 #if defined _RT
- integer  :: i_field
+ integer  :: i_field,i_region
 #endif
  !
  !===============
@@ -430,12 +431,24 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! External fields or Manual pump
  !
- call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
-&                            Verb_level=V_real_time,unit=E_unit)
- call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
-&                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel,&
 &                            Verb_level=V_real_time)
+ call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width,&
+&                            Verb_level=V_real_time)
+ ! Method 1
+ call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ ! Method 2
+ call it(defs,'RTpumpDE',    '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ if(initmode==4) n_regions=0
+ do i_region=1,6
+   call it(defs,'RTpumpBZ'//trim(intc(i_region)),   '[RT] Reagion in K space excited',&
+&                Eh_pumped_pair_BZ_reagions(:,i_region), Verb_level=V_real_time)
+   if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
+ enddo
  !
  do i_field=1,n_ext_fields_max
    call Afield(i_field)

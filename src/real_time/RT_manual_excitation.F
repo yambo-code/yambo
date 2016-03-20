@@ -28,11 +28,15 @@ subroutine RT_manual_excitation(E,k)
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:l_manual_excitation
- use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
-&                         Eh_pumped_Nel,dG_lesser,RT_ibz_coo,RT_Nk_ibz,RT_bands
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
+ use parser_m,       ONLY:parser
+ use vec_operate,    ONLY:v_is_zero,c2a
+ use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
+&                         Eh_pumped_pair_BZ_reagions,Eh_pumped_pair_deltaE,     &
+&                         Eh_pumped_pair_BZ_width,Eh_pumped_Nel,dG_lesser,      &
+&                         RT_ibz_coo,RT_Nk_ibz,RT_bands,n_regions
  !
  implicit none
  !
@@ -41,66 +45,104 @@ subroutine RT_manual_excitation(E,k)
  !
  ! Work Space
  !
- integer :: i1,i2,i3,ib,ik,ik_rim,Pump_level(E%nb,E%nk)
- real(SP):: local_E_window,coeff,delta_Nel,occupation,local_energy(2)
- logical :: Pumped_state(E%nb,E%nk)
+ integer :: i_pump_level,i_region,ib,ibp,iv,ic,ik,ik_rim,Pump_level(E%nb,E%nk)
+ real(SP):: local_E_window,coeff,delta_Nel,occupation,local_energy(2),local_zero(3),local_k(3)
+ logical :: Pumped_state(E%nb,E%nk),l_energy_levels,l_energy_window,do_kpt(E%nk)
  !
  ! Possibility to pump by hand one or more electrons up
  !======================================================
  !
  if (.not.l_manual_excitation) return
  !
+ call parser('RTpumpEhEn',l_energy_levels)
+ call parser('RTpumpDE'  ,l_energy_window)
+ !
+ if(l_energy_levels.and.l_energy_window) l_energy_levels=.false.
+ !
  ! Shift energy with respect to VBM/CBm
  !
  local_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
  local_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
  !
- if (abs(Eh_pumped_pair_energy(2)-Eh_pumped_pair_energy(1))<1.E-5.and.Eh_pumped_pair_energy(1)<0.) return
+ if (l_energy_levels.and.abs(Eh_pumped_pair_energy(2)-Eh_pumped_pair_energy(1))<1.E-5_SP &
+&    .and.Eh_pumped_pair_energy(1)<0._SP) return
  !
  delta_Nel=0._SP
  coeff=0._SP
  Pumped_state=.FALSE.
+ do_kpt=.FALSE.
  Pump_level=0
- i3=1
- local_E_window=Eh_pumped_pair_width/10.
+ i_pump_level=1
+ local_E_window=Eh_pumped_pair_width/10._SP
+ local_zero=Eh_pumped_pair_BZ_width
  !
  do while(local_E_window<Eh_pumped_pair_width)
    !
    do ik=1,E%nk
      !
-     i1=0
+     iv=0
      !
-     do i2=1,RT_bands(2)
+     if(l_energy_window) then
+       call c2a(v_in=k%pt(ik,:),v_out=local_k,mode='ki2c')
+       do i_region=1,n_regions
+         if(.not. v_is_zero(local_k-Eh_pumped_pair_BZ_reagions(:,i_region),zero_=local_zero) ) cycle
+         do_kpt(ik)=.TRUE.
+       enddo
+       if(.not.do_kpt(ik)) cycle
+     endif
+     !
+     do ibp=1,RT_bands(2)
        do ib=RT_bands(1),RT_bands(2)
          !
          if (Pumped_state(ib,ik)) cycle
          !
-         if (i1==0) then
-           if(abs(E%E(ib,ik,1)-local_energy(1))<local_E_window) i1=ib
-         else
-           if(abs(E%E(ib,ik,1)-local_energy(2))<local_E_window) then
-             if(i1==ib) cycle
-             Pumped_state(i1,ik)=.TRUE.
-             Pumped_state(ib,ik)=.TRUE.
-             Pump_level(ib,ik)= i3
-             Pump_level(i1,ik)=-i3
-             call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
-&                 ' bands '//trim(intc(i1))//' - '//trim(intc(ib))//' (level '//trim(intc(i3))//')')
-             i1=0
+         if(ib<iv) cycle
+         !
+         if(l_energy_levels) then
+           if (iv==0) then
+             if(abs(E%E(ib,ik,1)-local_energy(1))<local_E_window) iv=ib
+           else
+             if(abs(E%E(ib,ik,1)-local_energy(2))<local_E_window) then
+               ic=ib
+               Pumped_state(ic,ik)=.TRUE.
+               Pumped_state(iv,ik)=.TRUE.
+               Pump_level(ic,ik)= i_pump_level
+               Pump_level(iv,ik)=-i_pump_level
+               call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
+&                   ' bands '//trim(intc(iv))//' - '//trim(intc(ic))//' (level '//trim(intc(i_pump_level))//')')
+               iv=0
+             endif
            endif
+           !
+         else if(l_energy_window) then
+           !
+           iv=ibp
+           ic=ib
+           !
+           if(ic<=iv) cycle
+           !
+           if(abs((E%E(ic,ik,1)-E%E(iv,ik,1))-Eh_pumped_pair_deltaE)<local_E_window) then
+             Pumped_state(ic,ik)=.TRUE.
+             Pumped_state(iv,ik)=.TRUE.
+             Pump_level(ic,ik)= i_pump_level
+             Pump_level(iv,ik)=-i_pump_level
+             call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
+&                 ' bands '//trim(intc(iv))//' - '//trim(intc(ic))//' (level '//trim(intc(i_pump_level))//')')
+           endif
+           !
          endif
          !
        enddo
      enddo
      !
      do ib=RT_bands(1),RT_bands(2)
-       if(Pumped_state(ib,ik).and.Pump_level(ib,ik)==i3) coeff=coeff+spin_occ*k%weights(ik)/ &
+       if(Pumped_state(ib,ik).and.Pump_level(ib,ik)==i_pump_level) coeff=coeff+spin_occ*k%weights(ik)/ &
 &                                                            sqrt(abs(real(Pump_level(ib,ik),SP)))
      enddo
      !
    enddo
    !
-   i3=i3+1
+   i_pump_level=i_pump_level+1
    local_E_window=local_E_window+Eh_pumped_pair_width/10._SP
    if (all(Pumped_state(RT_bands(1):RT_bands(2),:))) local_E_window=Eh_pumped_pair_width*1.1_SP
    !
@@ -118,7 +160,7 @@ subroutine RT_manual_excitation(E,k)
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if (Pump_level(ib,ik)>0) then
          dG_lesser(ib,ib,ik_rim,1)= cI*spin_occ*occupation
-         delta_Nel=delta_Nel-cI*dG_lesser(ib,ib,ik_rim,1)*k%weights(ik)*2._SP/real(RT_Nk_ibz(ik))
+         delta_Nel=delta_Nel+aimag(dG_lesser(ib,ib,ik_rim,1))*k%weights(ik)*2._SP/real(RT_Nk_ibz(ik))
        else if (Pump_level(ib,ik)<0) then
          dG_lesser(ib,ib,ik_rim,1)=-cI*spin_occ*occupation
        endif

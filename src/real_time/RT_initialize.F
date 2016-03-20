@@ -78,7 +78,7 @@ subroutine RT_initialize(E,k,q)
  call parser('RTskipImposeE',        l_skip_it)
  if (l_skip_it) l_RT_impose_E=.FALSE.
  !
- call parser('RTpumpEhEn',           l_manual_excitation)
+ call parser('RTpumpNel',            l_manual_excitation)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !

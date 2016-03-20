@@ -188,12 +188,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #  endif
 #endif
  call OPENMP_locks_reset(INIT=.true.,nlocks=16)
-
- !
- ! memory estimate
- !==================
- call mem_est("Xo_WS",(/X%ng**2 * n_outthr/))
-
  !
  ! Timing
  !========
@@ -204,8 +198,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
  !
  if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N/n_outthr)
-
-
  !
  ! OpenMP setup
  !==============
@@ -215,11 +207,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  call OPENMP_update(master_thread)
  !
- ! workspace
+ ! memory estimate and local alloc
+ !=================================
+ call mem_est("Xo_WS",(/X%ng**2 * n_outthr/))
  allocate(Xo_res(X%ng,X%ng))
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
  call elemental_collision_alloc(Xo_scatt,NG=X%ng,TITLE="Xo")
-
  !
  ! MAIN LOOP
  !===========
@@ -290,7 +283,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  enddo 
 !$omp end do
  !
- ! Cleaning workspace
+ ! CLEAN
+ !=======
+ call mem_est("Xo_WS")
  deallocate(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
@@ -343,10 +338,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !$omp end parallel
    !
  endif
- !
- ! CLEAN
- !=======
- call mem_est("Xo_WS")
  !
  current_iq=iq
  n_threads_FFT=0

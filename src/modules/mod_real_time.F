@@ -263,7 +263,6 @@ module real_time
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
  complex(SP), allocatable :: I_coh_SAVE(:,:,:,:)
  complex(SP), allocatable :: I_relax_static(:,:,:)
- complex(SP), allocatable :: I_relax_dyn(:,:,:,:)
  !
  ! Density
  !---------
@@ -518,14 +517,9 @@ module real_time
        call mem_est("I_coh_SAVE",(/size(I_coh_SAVE)/),(/2*SP/))
      endif
      !
-     if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt/)) ) then
+     if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_dephased/)) ) then
        allocate(I_relax_static(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
        call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
-     endif
-     !
-     if(l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
-       allocate(I_relax_dyn(RT_bands(1):RT_bands(2),RT_nk,2,Life_MEM_steps))
-       call mem_est("I_relax_dyn",(/size(I_relax_static)/),(/2*SP/))
      endif
      !
      allocate(XC0_and_HARTREE0(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
@@ -616,11 +610,6 @@ module real_time
        call mem_est("I_relax_static")
      endif
      !
-     if(allocated(I_relax_dyn)) then
-       deallocate(I_relax_dyn)
-       call mem_est("I_relax_dyn")
-     endif
-     !  
      if(allocated(XC0_and_HARTREE0)) then
        deallocate(XC0_and_HARTREE0)
        call mem_est("XC0_and_HARTREE0")

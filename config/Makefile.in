@@ -53,7 +53,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
-CLEANS   = clean_fast clean clean_extlibs clean_all
+CLEANS   = clean_fast clean clean_extlibs clean_all distclean
 PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr \
            ypp_ph ypp_sc ypp_rt ypp_magnetic 
 BROKEN   = yambo_surf ypp_surf ydb
@@ -212,6 +212,7 @@ clean:
 	@$(lib_ext_clean)
 	@$(conf_clean)
 	@$(xclean)
+distclean: clean_all
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)

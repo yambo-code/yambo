@@ -1,0 +1,77 @@
+!
+!        Copyright (C) 2000-2016 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details):
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine electrons_magn_factors(Xk,bands,magn_factors)
+ !
+ use pars,           ONLY:SP
+ use wave_func,      ONLY:WF
+ use R_lattice,      ONLY:bz_samp
+ use FFT_m,          ONLY:fft_size
+ use LIVE_t,         ONLY:live_timing
+ use interfaces,     ONLY:PARALLEL_index,WF_load
+ use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp
+ !
+ implicit none
+ !
+ type(bz_samp), intent(in)  :: Xk
+ integer,       intent(in)  :: bands(2)
+ real(SP),      intent(out) :: magn_factors(bands(1):bands(2),Xk%nibz,3)
+ !
+ ! Work Space
+ ! 
+ integer               :: ik,ib,i_wf(2)
+ type(PP_indexes)      :: px
+ !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/Xk%nibz,bands(2)-bands(1)+1/))
+ !
+ call live_timing('Magn-factor',px%n_of_elements(myid+1))
+ !
+ magn_factors=0._SP
+ !
+ do ik=1,Xk%nibz
+   if( .not.any(px%element_2D(ik,:)) ) cycle
+   call WF_load(WF,0,1,bands,(/ik,ik/),title='-Magn-factor',impose_free_and_alloc=.TRUE.)
+   do ib=bands(1),bands(2)
+     if( .not. px%element_2D(ik,ib-bands(1)+1) ) cycle
+     i_wf(:)=WF%index(ib,ik,:)
+     ! x
+     magn_factors(ib,ik,1)=real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(1) ), WF%c(:,i_wf(2)) ),SP) &
+&                         +real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(2) ), WF%c(:,i_wf(1)) ),SP)
+     ! y
+     magn_factors(ib,ik,2)=aimag(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(1) ), WF%c(:,i_wf(2)) )) &
+&                         -aimag(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(2) ), WF%c(:,i_wf(1)) ))
+     ! z
+     magn_factors(ib,ik,3)=real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(1) ), WF%c(:,i_wf(1)) ),SP) &
+&                         -real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(2) ), WF%c(:,i_wf(2)) ),SP)
+     !
+     call live_timing(steps=1)
+   enddo
+   call WF_free(WF)
+ enddo
+ call live_timing()
+ !
+ call PP_redux_wait(magn_factors)
+ !
+end subroutine

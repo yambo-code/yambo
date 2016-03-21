@@ -26,7 +26,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  ! Electronic density matrix (meaning including the off-diagonal elements of the
  ! lesser Green function)
  !
- use pars,          ONLY:SP,cI
+ use pars,          ONLY:SP,cI,cZERO
  use com,           ONLY:error
  use electrons,     ONLY:levels,n_spinor
  use R_lattice,     ONLY:bz_samp
@@ -85,7 +85,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
        !
        if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
        !
-       f_occ=0._SP
+       f_occ=cZERO
        do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
          if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT)
          if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT)*2._SP
@@ -114,9 +114,9 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  rho_syms=nsym/(i_time_rev+1)
  !
  do ir=1,rho_syms
-   rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(:,ir)),SP)/real(nsym,SP)
+   rho(:)=rho(:)+rho_no_sym(fft_rot_r(:,ir))/real(nsym,SP)
  enddo
  !
- rho(:)=(1+i_time_rev)*rho(:)
+ rho(:)=real(1+i_time_rev,SP)*rho(:)
  !
 end subroutine

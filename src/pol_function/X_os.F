@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM,AF,DS
+! Authors (see AUTHORS file for details): AM,DS,AF,FA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,6 +27,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Non interacting Xo
  !
+ ! OPENMP parallelism  (AF & FA)
+ !   The current implementation is based on mutexes (locks).
+ !   At the price of some replicated memory (Xo_res) it provides a much
+ !   better omp scaling.
+ !
+ !   _NESTING introduces the nesting of scatterbamp parallel regions inside the
+ !   outer region opened here (not working yet)
+ ! 
  use drivers,       ONLY:l_life,l_em1s
  use IO_m,          ONLY:io_RESPONSE
  use pars,          ONLY:SP,cZERO,schlen
@@ -37,6 +45,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,PAR_COM_Q_INDEX,myid
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,n_threads_DIP
+ use openmp,        ONLY:n_outthr,n_innthr,n_threads_fft,OPENMP_locks_reset
+#if defined _OPENMP
+ use openmp,        ONLY:OPENMP_compute_mutex,omp_locks
+#endif
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
  use D_lattice,     ONLY:i_space_inv
@@ -65,6 +77,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  character(schlen)        :: live_t_string
  integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
+ integer                  :: mutexid
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU)
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
@@ -91,7 +104,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    !
    call DIPOLE_driver(Xen, Xk, X, X%q0)
-   !
    call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF,X%ordering)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
@@ -159,31 +171,53 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  half_X_mat_only=i_space_inv==1
  if (.not.half_X_mat_only) half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
+
  !
- ! Xo_residual & elemental collision allocation 
- !----------------------------------------------
- allocate(Xo_res(X%ng,X%ng))
- call mem_est("Xo_WS",(/X%ng**2/))
+ ! omp settings and workspace
+ !=================================
  !
- call elemental_collision_free(Xo_scatt)
- call elemental_collision_alloc(Xo_scatt,NG=X%ng,TITLE="Xo")
+#if defined _OPENMP
+#  if defined _NESTING
+ call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.true.)
+ n_threads_FFT=n_innthr
+ call msg('s','[X] NESTED openmp parallelism on: n_outthr/n_innthr = ',(/n_outthr,n_innthr/))
+#  else
+ call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
+ n_threads_FFT=1
+ call msg('s','[X] NESTED openmp parallelism off')
+#  endif
+#endif
+ call OPENMP_locks_reset(INIT=.true.,nlocks=16)
  !
  ! Timing
  !========
- !
  live_t_string='Xo@q['//trim(intc(iq))//'] '
  !
 #if defined _SC 
  if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
 #endif
  !
- if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N)
+ if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N/n_outthr)
+ !
+ ! OpenMP setup
+ !==============
+ !
+!$omp parallel num_threads(n_outthr) default(shared), &
+!$omp &        private(i_cg, Drude_pole,GreenF, i_bg, Xo_res, Xo_scatt, ig2, iw, mutexid)
  !
  call OPENMP_update(master_thread)
+ !
+ ! memory estimate and local alloc
+ !=================================
+ call mem_est("Xo_WS",(/X%ng**2 * n_outthr/))
+ allocate(Xo_res(X%ng,X%ng))
+ call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
+ call elemental_collision_alloc(Xo_scatt,NG=X%ng,TITLE="Xo")
  !
  ! MAIN LOOP
  !===========
  !
+!$omp do
  do i_cg = 1,coarse_grid_N
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
@@ -191,6 +225,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    ! 1) First compute the residuals
    !================================
    call X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
+
    !
    ! 2) Then the frequency dependent term
    !=======================================
@@ -226,30 +261,41 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !===========================================================
    do iw=1,Xw%n_freqs
      !
-     !$omp parallel default(shared)
-     !$omp do private(ig2)
      do ig2=1,X%ng
+#if defined _OPENMP
+       call OPENMP_compute_mutex(ig2,mutexid)
+       call omp_set_lock(omp_locks(mutexid))
+#endif
        call V_by_V_plus_V(ig2,GreenF(iw),Xo_res(:ig2,ig2),Xo(:ig2,ig2,iw))
-     enddo
-     !$omp end do
-     if (.not.half_X_mat_only ) then 
-       !$omp do private(ig2)
-       do ig2=1,X%ng
+       !
+       if (.not.half_X_mat_only) then
          call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_res(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
-       enddo
-       !$omp end do
-     endif
-     !$omp end parallel
+       endif
+#if defined _OPENMP
+       call omp_unset_lock(omp_locks(mutexid))
+#endif
+     enddo
      !
    enddo
    !
-   call live_timing(steps=1)
+   if (master_thread) call live_timing(steps=1)
    !
  enddo 
+!$omp end do
+ !
+ ! CLEAN
+ !=======
+ call mem_est("Xo_WS")
+ deallocate(Xo_res)
+ call elemental_collision_free(Xo_scatt)
+ !
+!$omp end parallel
+ !
  !
  if(coarse_grid_N>0) call live_timing()
  !
  call OPENMP_update(master_thread) 
+ call OPENMP_locks_reset()
  !
 #if defined _TIMING
  call timing('Xo (procedure)',OPR='stop')
@@ -293,12 +339,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  endif
  !
- ! CLEAN
- !=======
- deallocate(Xo_res)
- call mem_est("Xo_WS")
- call elemental_collision_free(Xo_scatt)
- !
  current_iq=iq
+ n_threads_FFT=0
  !
 end subroutine

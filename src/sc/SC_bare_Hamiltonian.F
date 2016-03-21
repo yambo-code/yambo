@@ -79,23 +79,9 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !=======================================
  call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
  !
-#if defined _RT
- !
- ! Note that G_lesser here is the non-interacting one (occupations on the diagonal) only
- !
- if(l_real_time) then
-   call el_density_matrix(G_lesser,E,Xk,rho_n,1)
-   if(n_spin>1) call el_magnetization_matrix(G_lesser,E,Xk,magn_n,1)
- else
-#endif
-   !
-   call el_density_and_current(E,Xk,rho=rho_n)
-   if(n_spin>1) call el_magnetization(E,Xk,magn_n)
-   V_xc_sc=V_xc
-   !
-#if defined _RT
- endif
-#endif
+ call el_density_and_current(E,Xk,rho=rho_n)
+ if(n_spin>1) call el_magnetization(E,Xk,magn_n)
+ V_xc_sc=V_xc
  !
  ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
  !

@@ -117,6 +117,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  dos_bands=(/1,n_bands/)
  dos_E_range=(/1._SP,-1._SP/)/HA2EV
  dos_E_steps=500
+ WF_ref=0
  !
  !
  ! RT OCCUPATIONS
@@ -567,6 +568,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_random_grid)   call initactivate(1,"cooOut BZ_random_Nk GammaRadius")
  endif
  !
+ if ((l_dos.or.l_bands).and.n_spinor==2) call initactivate(1,'WFReference')
+ !
  if (l_bands) call initactivate(1,"cooIn BANDS_steps INTERPGrid ShellFac NormN NelFac")
  !	   
  l_map_kpts  = runlevel_is_on('kpts_map')
@@ -637,6 +640,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_RT_abs) call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
    if (l_RT_occ_time)   call initactivate(1,"OCCgroup")
    if (l_RT_occ_2D_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
+   if ((l_RT_occ_2D_dos.or.l_RT_occ_time).and.n_spinor==2) call initactivate(1,'WFReference')
  endif
 #endif
  !

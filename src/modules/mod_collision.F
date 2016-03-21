@@ -149,13 +149,19 @@ module collision
      O%qs=I%qs
    end subroutine
    !
-   subroutine elemental_collision_free(ggw)
+   subroutine elemental_collision_free(ggw,INIT_ONLY)
      type(elemental_collision)::ggw
-     if(associated(ggw%gamp))      deallocate(ggw%gamp)
-     if(associated(ggw%rhotw))     deallocate(ggw%rhotw)
-     if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
-     if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
-     if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
+     logical,optional::INIT_ONLY
+     logical::init_only_=.false.
+     !
+     if(present(INIT_ONLY)) init_only_=INIT_ONLY
+     if(.not.init_only_) then
+       if(associated(ggw%gamp))      deallocate(ggw%gamp)
+       if(associated(ggw%rhotw))     deallocate(ggw%rhotw)
+       if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
+       if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
+       if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
+     endif
      nullify(ggw%gamp,ggw%rhotw,ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
    end subroutine
    !

@@ -64,6 +64,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_potential
 #endif
 #if defined _RT
+ use real_time,      ONLY:n_regions
  use fields,         ONLY:n_ext_fields,n_ext_fields_max
 #endif
 #if defined _MAGNETIC
@@ -864,7 +865,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
    call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime')
-   call initactivate(1,'RTpumpEhEn RTpumpEhWd RTpumpNel')
+   call initactivate(1,'RTpumpNel RTpumpEhWd RTpumpBZWd RTpumpEhEn RTpumpDE')
+   do i1=1,n_regions
+     call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
+   enddo
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
    ! or parsed from the input file in INIT_load.F

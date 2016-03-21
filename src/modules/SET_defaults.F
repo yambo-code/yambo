@@ -93,10 +93,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:RT_IO_time
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_steps,      &
-&                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
+&                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
 &                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
 &                     RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,  &
+&                     Eh_pumped_pair_deltaE,Eh_pumped_pair_BZ_width,Eh_pumped_pair_BZ_reagions,&
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
@@ -177,9 +178,16 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call mk_dir(core_io_path)
  !
- ! ... and Job string
+ ! ... and Job strings
  !
  call string_split(JS,string,",")
+ !
+ ! remove final /
+ do i1=1,n_max_jobstr
+   if (len_trim(string(i1))==0) cycle
+   string(i1)=trim(string_remove(string(i1),"/"))
+ enddo
+ !
  jobstr=string(1)
  alt_jobstr=" "
  do i1=2,n_max_jobstr
@@ -584,8 +592,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_nk=0
  RT_eh_en=0._SP
  RT_scatt_tresh=1._SP
+ n_regions=1
+ Eh_pumped_pair_deltaE=-1._SP/HA2EV
  Eh_pumped_pair_energy=-1._SP/HA2EV
  Eh_pumped_pair_width=0.1_SP/HA2EV
+ Eh_pumped_pair_BZ_width=0.1_SP
+ Eh_pumped_pair_BZ_reagions=-1.0_SP
  Eh_pumped_Nel=1._SP
  PLASMA_redux_percent=100._SP
  DbGd_EE_percent=0._SP

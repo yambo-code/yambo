@@ -137,7 +137,6 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        !
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID(n_qp_db))
        !
-       if (index(trim(dummy_db_name),'.RT_carriers')/=0) return
 #if defined _ELPH
        if (index(trim(dummy_db_name),'.QP')/=0.or.index(trim(dummy_db_name),'.G')/=0) then
          io_err=io_QP_and_GF(trim(dummy_db_name) ,qp_from_dbs(n_qp_db),ID(n_qp_db))

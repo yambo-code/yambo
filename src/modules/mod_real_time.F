@@ -96,12 +96,14 @@ module real_time
  complex(SP) :: RT_ind_J(3)
  complex(SP) :: RT_ind_J_prev(3)
  !
- ! ... and polarization ...
- !
- ! the calculated one ...
- !
+ ! ... polarization ...
+ !----------------------
  complex(SP) :: RT_P(3)
  complex(SP) :: RT_P_prev(3)
+ !
+ ! ... and magnetization
+ !----------------------
+ real(SP)    :: RT_magn(3)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -154,7 +156,13 @@ module real_time
  !
  real(SP)    :: Eh_pumped_Nel
  real(SP)    :: Eh_pumped_pair_energy(2)
- real(SP)    :: Eh_pumped_pair_width
+ !
+ real(SP)    :: Eh_pumped_pair_deltaE
+ real(SP)    :: Eh_pumped_pair_BZ_reagions(3,6)   
+ !
+ real(SP)    :: Eh_pumped_pair_width               ! energy with
+ real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
+ integer     :: n_regions
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !

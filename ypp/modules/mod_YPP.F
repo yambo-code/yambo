@@ -68,6 +68,10 @@ module YPP
  integer               ::interp_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  !
+ ! SPIN and SOC
+ integer      ::WF_ref(2)
+ !
+ !
  ! REAL SPACE PLOT
  !
  logical      ::l_plot

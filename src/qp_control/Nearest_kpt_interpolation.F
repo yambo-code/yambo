@@ -34,7 +34,10 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  use com,            ONLY:msg
  use vec_operate,    ONLY:sort
  use electrons,      ONLY:n_sp_pol
- use R_lattice,      ONLY:k_the_nearest,nkibz
+ use R_lattice,      ONLY:k_the_nearest
+#if defined _RT
+ use R_lattice,      ONLY:nkibz
+#endif
  !
  implicit none
  !

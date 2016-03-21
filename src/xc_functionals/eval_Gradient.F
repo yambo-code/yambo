@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM MG
+! Authors (see AUTHORS file for details): AM MG AF
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine eval_Gradient(f,f_gradient)
+subroutine eval_Gradient(f,f_gradient,f_type)
  !
  ! The gradient of a periodic function f(r):
  ! 
@@ -32,22 +32,35 @@ subroutine eval_Gradient(f,f_gradient)
  ! \sum f'(G) exp(iGr)       => FFT^-1
  !
  use pars,          ONLY:SP,DP,cI
+ use com,           ONLY:error
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
- use R_lattice,     ONLY:g_vec
+ use R_lattice,     ONLY:g_vec,ng_vec
  use wave_func,     ONLY:wf_ng
  !
  implicit none
- complex(SP),intent(in)     ::f(fft_size)
- complex(SP),intent(out)    ::f_gradient(3,fft_size)
+ complex(SP),      intent(in) ::f(fft_size)
+ complex(SP),      intent(out)::f_gradient(3,fft_size)
+ character(len=*), intent(in) ::f_type       ! either "wave" or "density"
  !
  ! Work Space 
  !
- integer       :: ic,ig
- complex(DP)   :: Vr(fft_size), V3g(3,wf_ng)
+ integer :: ng_,ic,ig
+ complex(DP), allocatable :: Vr(:), V3g(:,:)
  !
+ !
+ select case( trim(f_type) )
+ case( "wave" )
+   ng_=wf_ng
+ case( "density")
+   ng_=ng_vec
+ case default
+   call error(' [FFT] unknown f_type when computing gradient')
+ end select
+ !
+ allocate(Vr(fft_size),V3g(3,ng_))
  V3g(:,:) = (0._SP,0._SP)
  Vr=f
  !
@@ -59,11 +72,11 @@ subroutine eval_Gradient(f,f_gradient)
  call fft_3d(Vr,fft_dim,-1)
 #endif
  !
- forall (ic=1:3,ig=1:wf_ng) V3g(ic,ig)=cI*g_vec(ig,ic)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
+ forall (ic=1:3,ig=1:ng_) V3g(ic,ig)=cI*g_vec(ig,ic)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
  !
  do ic = 1,3
    Vr = (0._SP,0._SP)
-   Vr(fft_g_table(1:wf_ng,1)) = V3g(ic,1:wf_ng)
+   Vr(fft_g_table(1:ng_,1)) = V3g(ic,1:ng_)
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
    fftw_plan = 0
@@ -73,5 +86,7 @@ subroutine eval_Gradient(f,f_gradient)
 #endif
    f_gradient(ic,:) = Vr(:)
  enddo
+ !
+ deallocate(Vr,V3g)
  !
 end subroutine eval_Gradient

@@ -62,10 +62,10 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  !
  ! Work Space 
  !
- integer    :: ib,ik,i_spin_wf,i_spin_E,ifft,rho_syms,i_s,i_r
- real(SP)   :: rho_no_sym(fft_size),J_no_sym(fft_size,3)
- complex(SP):: WF_der(3,fft_size)
- logical    :: warn_done,l_si,l_rho,l_J
+ integer    :: ib,ik,i_spin_wf,i_spin_E,ifft,rho_syms,i_s !,i_r
+ real(SP)   :: rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+! complex(SP):: WF_der(3,fft_size)
+ logical    :: warn_done,l_si,l_rho !,l_J
  !
  ! Basic Setups
  !
@@ -109,13 +109,13 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
        !
        if (l_rho) then
          !
-         rho_no_sym(:)=rho_no_sym(:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*abs(WF%c(:,ifft))**2.
+         rho_no_sym(:)=rho_no_sym(:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*abs(WF%c(:,ifft))**2
          !
        endif
        !
        !if (l_J) then
        !  !
-       !  call eval_Gradient(WF%c(:,ifft),WF_der)
+       !  call eval_Gradient(WF%c(:,ifft),WF_der,"wave")
        !  !
        !  do i_r=1,fft_size
        !    J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*aimag(WF%c(i_r,ifft)*WF_der(i_r,:))
@@ -138,11 +138,11 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  !
  if (l_rho) then
    do i_s=1,rho_syms
-     rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(:,i_s)),SP)/real(nsym,SP)
+     rho(:)=rho(:)+rho_no_sym(fft_rot_r(:,i_s))/real(nsym,SP)
    enddo
    if (mag_syms)      return
-   if (.not.l_si) rho(:)=(1+i_time_rev)*     rho(:)
-   if (     l_si) rho(:)=   i_time_rev *real(rho(fft_rot_r_inv(:)),SP)+rho(:)
+   if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
+   if (     l_si) rho(:)=real(  i_time_rev,SP)*rho(fft_rot_r_inv(:))+rho(:)
  endif
  !
  !if (l_J) then

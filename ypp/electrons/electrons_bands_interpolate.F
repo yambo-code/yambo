@@ -26,7 +26,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use com,            ONLY:msg,of_open_close,error,warning
  use vec_operate,    ONLY:c2a,v_norm,iku_v_norm
@@ -49,7 +49,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  real(SP)              :: real_ctl,max_dist,v(3)
  real(SP), allocatable :: distances(:)
  real(SP)              :: bands_input(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Xk%nibz)
- integer               :: i1,ic,ik,i_sp_pol
+ integer               :: i1,ic,ib,ik,i_sp_pol,i_sp
  integer,  allocatable :: int_distances(:)
  !
  ! Input file parsing

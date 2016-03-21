@@ -23,7 +23,7 @@
 !
 subroutine INIT_load(defs,en,q,k,X,Xw)
  !
- use pars,          ONLY:schlen
+ use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&

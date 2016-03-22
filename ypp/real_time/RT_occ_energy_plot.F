@@ -95,7 +95,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  !
  if (n_spinor==2) then
    allocate(spin_factors(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
-   call electrons_spin_factors(kpt,RT_carriers%nb,spin_factors)
+   call electrons_spin_factors(kpt,(/1,kpt%nibz/),RT_carriers%nb,spin_factors)
  endif 
  !
  do i_T=1,n_T_steps

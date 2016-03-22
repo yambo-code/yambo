@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_magn_factors(Xk,bands,magn_factors)
+subroutine electrons_magn_factors(Xk,kpts,bands,magn_factors)
  !
  use pars,           ONLY:SP
  use wave_func,      ONLY:WF
@@ -35,8 +35,8 @@ subroutine electrons_magn_factors(Xk,bands,magn_factors)
  implicit none
  !
  type(bz_samp), intent(in)  :: Xk
- integer,       intent(in)  :: bands(2)
- real(SP),      intent(out) :: magn_factors(bands(1):bands(2),Xk%nibz,3)
+ integer,       intent(in)  :: kpts(2),bands(2)
+ real(SP),      intent(out) :: magn_factors(bands(1):bands(2),kpts(1):kpts(2),3)
  !
  ! Work Space
  ! 
@@ -44,17 +44,17 @@ subroutine electrons_magn_factors(Xk,bands,magn_factors)
  type(PP_indexes)      :: px
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/Xk%nibz,bands(2)-bands(1)+1/))
+ call PARALLEL_index(px,(/kpts(2)-kpts(1)+1,bands(2)-bands(1)+1/))
  !
  call live_timing('Magn-factor',px%n_of_elements(myid+1))
  !
  magn_factors=0._SP
  !
- do ik=1,Xk%nibz
-   if( .not.any(px%element_2D(ik,:)) ) cycle
+ do ik=kpts(1),kpts(2)
+   if( .not.any(px%element_2D(ik-kpts(1)+1,:)) ) cycle
    call WF_load(WF,0,1,bands,(/ik,ik/),title='-Magn-factor',impose_free_and_alloc=.TRUE.)
    do ib=bands(1),bands(2)
-     if( .not. px%element_2D(ik,ib-bands(1)+1) ) cycle
+     if( .not. px%element_2D(ik-kpts(1)+1,ib-bands(1)+1) ) cycle
      i_wf(:)=WF%index(ib,ik,:)
      ! x
      magn_factors(ib,ik,1)=real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(1) ), WF%c(:,i_wf(2)) ),SP) &

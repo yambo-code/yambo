@@ -52,9 +52,9 @@ subroutine electrons_spin_and_magn_interpolate(Xen,Xk,CIRCUIT_k,BANDS_range,spin
 &            tmp_factor_in((BANDS_range(2)-BANDS_range(1)+1)*Xk%nibz,5),      &
 &            tmp_factor_out(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz)
  !
- call electrons_spin_factors(Xk,BANDS_range,spin_fac)
+ call electrons_spin_factors(Xk,(/1,Xk%nibz/),BANDS_range,spin_fac)
  !
- call electrons_magn_factors(Xk,BANDS_range,magn_fac)
+ call electrons_magn_factors(Xk,(/1,Xk%nibz/),BANDS_range,magn_fac)
  !
  n_states=(BANDS_range(2)-BANDS_range(1)+1)*Xk%nibz
  tmp_table=0

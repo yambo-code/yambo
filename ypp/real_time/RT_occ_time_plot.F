@@ -44,7 +44,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  !
- integer               :: ik,ib,i_spin,i_s,i_T,n_gamma,n_output
+ integer               :: ik,ib,i_spin,i_s,i_T,n_gamma,n_output,k_range(2),bands_range(2)
  real(SP)              :: io_Time,data_to_plot(9),k_al(3),k_cc(3)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
  character(3)          :: ch3_dummy
@@ -57,11 +57,15 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  real(SP),allocatable  :: spin_factors(:,:,:),magn_factors(:,:,:)
  !
+ if(all(QP_table==0)) return
+ !
  if (n_spinor==2) then
-   allocate(spin_factors(RT_bands(1):RT_bands(2),kpt%nibz,2))
-   call electrons_spin_factors(kpt,RT_bands,spin_factors)
-   allocate(magn_factors(RT_bands(1):RT_bands(2),kpt%nibz,3))
-   call electrons_magn_factors(kpt,RT_bands,magn_factors)
+   k_range    =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
+   bands_range=(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
+   allocate(spin_factors(bands_range(1):bands_range(2),k_range(1):k_range(2),2))
+   call electrons_spin_factors(kpt,k_range,bands_range,spin_factors)
+   allocate(magn_factors(bands_range(1):bands_range(2),k_range(1):k_range(2),3))
+   call electrons_magn_factors(kpt,k_range,bands_range,magn_factors)
  endif
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
@@ -110,8 +114,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  RT_gamma=0._SP
  !
  ch3_dummy="YPP"
- !
- write(*,*) n_T_steps
  !
  do i_T=1,n_T_steps
    !

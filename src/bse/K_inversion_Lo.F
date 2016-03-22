@@ -133,10 +133,10 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    i_eps=2+i_loop
    !
    if(n_loop==2) then
-     if(i_loop==1) call live_timing('Compute Eps IP',px%n_of_elements(myid+1))
-     if(i_loop==2) call live_timing('Compute Lo and Eps shifted',px%n_of_elements(myid+1))
+     if(i_loop==1) call live_timing('IP Absorption',px%n_of_elements(myid+1))
+     if(i_loop==2) call live_timing('Shifted GF and Absorption',px%n_of_elements(myid+1))
    else
-     call live_timing('Compute Eps IP and Lo',px%n_of_elements(myid+1))
+     call live_timing('IP GF and Absorptio',px%n_of_elements(myid+1))
    endif
    !
    Lo=cZERO

@@ -261,7 +261,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_QINDX_err=io_QINDX(k,q,io_ID) 
- if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
+ if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim')
  !
  ! If the GOPS/KINDX DBs are not present, reset to setup run
  !
@@ -545,7 +545,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
 #if defined  _ELPH 
- if (l_setup) call initactivate(1,'MinusQ BSEscatt')
+ if (l_setup) call initactivate(1,'BSEscatt')
 #endif
  !
  !
@@ -931,10 +931,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! To handle externally defined Q-points I use the INIT_q_pts
  !
  ! (a) first check if input file contains already a list of Q-points...
- call INIT_q_points(.FALSE.)
+ call INIT_q_points(io_QINDX_err,.FALSE.)
  !
  ! (b) ... then (re)write the file
- if (l_setup.and.io_QINDX_err/=0.and.infile_editing) call INIT_q_points(.TRUE.)
+ if (l_setup.and.infile_editing) call INIT_q_points(io_QINDX_err,.TRUE.)
  !
  !If qp limits are requested they are added at the end of the input file
  !

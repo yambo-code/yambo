@@ -58,7 +58,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  !
  ! Work Space (excitons)
  !
- integer              ::i_l,lambda,n_lambda_deg,i_lambda,neh,ikibz,iv,ic
+ integer              ::i_l,lambda,n_lambda_deg,i_lambda,neh,ikibz,iv,ic,nq_loop
  real(SP)             ::g_sq_F_exciton(elph_steps)
  !
  ! Work Space (common)
@@ -114,11 +114,15 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  if (io_err/=0) return
  !
  allocate(QP_table(QP_n_states,3+n_sp_pol-1)) ! Read from the gFsq DB 
- PAR_nQ=elph_nDBs_used
+ !
+ if (     elph_use_q_grid) nq_loop=q%nbz
+ if (.not.elph_use_q_grid) nq_loop=elph_nDBs_used
+ PAR_nQ=nq_loop
+ !
  call elph_global_alloc('gFsq')
  ! 
- do iq=1,elph_nDBs_used
-   if (iq==elph_nDBs_used) then
+ do iq=1,nq_loop
+   if (iq==nq_loop) then
      call io_control(ACTION=RD_CL,SEC=(/iq+1/),ID=ID)
    else
      call io_control(ACTION=RD,SEC=(/iq+1/),ID=ID)
@@ -162,7 +166,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  QP_n_states_2do=count(QP_table_map(:,1)>0)
  call PP_redux_wait
  !
- call live_timing('gF^2 [el]',QP_n_states_2do*elph_nDBs_used)
+ call live_timing('gF^2 [el]',QP_n_states_2do*nq_loop)
  !
  do i1=1,QP_n_states_DB
    !
@@ -170,7 +174,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
    !
    iqp=QP_table_map(i1,1)
    !
-   do iq=1,elph_nDBs_used
+   do iq=1,nq_loop
      !
      do il=1,ph_modes
        !

@@ -35,7 +35,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !   _NESTING introduces the nesting of scatterbamp parallel regions inside the
  !   outer region opened here (not working yet)
  ! 
- use drivers,       ONLY:l_life,l_em1s
+ use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
@@ -43,9 +43,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,PAR_COM_Q_INDEX,myid
- use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,n_threads_DIP
- use openmp,        ONLY:n_outthr,n_innthr,n_threads_fft,OPENMP_locks_reset
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,myid
+ use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
+&                        n_threads_DIP,n_outthr,n_innthr,OPENMP_locks_reset,n_threads_FFT
 #if defined _OPENMP
  use openmp,        ONLY:OPENMP_compute_mutex,omp_locks
 #endif
@@ -171,7 +171,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  half_X_mat_only=i_space_inv==1
  if (.not.half_X_mat_only) half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
-
  !
  ! omp settings and workspace
  !=================================

@@ -52,8 +52,8 @@ subroutine RT_ELPH_gkkp_remap(k,q)
  Q_io_map=0
  call k_ibz2bz(q,'i',.false.)
  do i1=1,q%nbz
-   do i2=1,q%nbz
-     call c2a(v_in=q%ptbz(i1,:)-ph_qpt(i2,:),v_out=v,mode="ki2a")
+   do i2=1,elph_nDBs
+     call c2a(v_in=q%ptbz(i1,:)+ph_qpt(i2,:),v_out=v,mode="ki2a")
      if (rlu_v_is_zero(v,zero_=k_rlu_zero)) Q_io_map(i1)=i2
    enddo
  enddo

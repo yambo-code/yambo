@@ -622,11 +622,14 @@ module IO_m
    !
    subroutine deliver_IO_error_message(i_err,DB)
      !
-     use com, ONLY:warning
+     use com,        ONLY:warning
      !
      integer      :: i_err
      character(*) :: DB
      !
+     if (i_err==0) return
+     !
+     if (i_err==IO_NO_DATABASE     ) call warning('Missing all or part of '//DB//' DB')
      if (i_err==IO_NO_DATABASE     ) call warning('Missing all or part of '//DB//' DB')
      if (i_err==IO_INCOMPATIBLE_VAR) call warning('Variable not compatible in '//DB//' DB')
      if (i_err==IO_OUTDATED_DB)      call warning('Too old '//DB//' DB')

@@ -82,6 +82,7 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  call live_timing()
  !
  call PP_redux_wait(BS_R_left)
+ call PP_redux_wait(BS_R_right)
  !
  call PP_indexes_reset(px)
  !

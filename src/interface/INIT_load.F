@@ -332,6 +332,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #endif
  !
+#if defined _RT
+ !
+ ! BSE: Real-Time
+ !
+ call it('f',defs,'ForceEqTrans','[RT-BSE] Use only equilibrium transitions',verb_level=V_real_time)
+ !
+#endif
+ !
  ! RIM
  !
  call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&

@@ -263,7 +263,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  io_QINDX_err=io_QINDX(k,q,io_ID) 
  if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim')
  !
- ! If the GOPS/KINDX DBs are not present, reset to setup run
+ ! If the GROT/KINDX DBs are not present, reset to setup run
  !
  if ((io_err==-1.or.io_QINDX_err==-1).and.infile_editing) then
    !

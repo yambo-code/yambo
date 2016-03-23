@@ -146,7 +146,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
      !
-     call c2a(v_in=-v1,v_out=q%ptbz(i1,:),mode='ka2i')
+     call c2a(v_in= v1,v_out=q%ptbz(i1,:),mode='ka2i')
      !
    enddo
    if (.not.allocated(q_pt)) then

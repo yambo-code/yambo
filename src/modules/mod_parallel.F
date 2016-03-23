@@ -498,6 +498,17 @@ module parallel_m
      return
    end subroutine
    !
+   subroutine MPI_shutdown
+     implicit none
+#if defined _MPI
+     if (ncpu>1) then
+       call mpi_abort(1,mpi_comm_world)
+     endif
+#endif
+     stop 
+     return
+   end subroutine
+   !
    subroutine PP_indexes_reset(ip)
      type(PP_indexes)::ip
      if(associated(ip%element_1D))    deallocate(ip%element_1D)

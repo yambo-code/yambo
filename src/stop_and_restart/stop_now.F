@@ -26,11 +26,10 @@ logical function stop_now(DO_IT_NOW)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:levels,E_reset
- use com,            ONLY:file_exists
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset
- use parallel_m,     ONLY:MPI_close,myid,ncpu,PP_redux_wait
+ use parallel_m,     ONLY:myid,MPI_shutdown
  use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
  implicit none
@@ -43,7 +42,7 @@ logical function stop_now(DO_IT_NOW)
  type(bz_samp)     ::q,k
  type(X_t)         ::X
  type(w_samp)      ::Xw
- integer           ::ierr,days,hours,minutes,i_stop_now(ncpu)
+ integer           ::ierr,days,hours,minutes
  real(SP)          ::CPU_t
  integer, external ::init
  !
@@ -58,19 +57,12 @@ logical function stop_now(DO_IT_NOW)
  call it_reset(0)
  call parser('STOP_NOW',stop_now) 
  !
- i_stop_now=0
- if (stop_now) i_stop_now(myid+1)=1
- ! 
  if (len_trim(USER_wall_time_string)>0.and.&
 &    (days>=USER_wall_time(1).or.USER_wall_time(1)==0).and.&
 &    (hours>=USER_wall_time(2).or.USER_wall_time(2)==0).and.&
 &    (minutes>=USER_wall_time(3).or.USER_wall_time(3)==0)) then
-   i_stop_now(myid+1)=1
+   stop_now=.TRUE.
  endif
- !
- call PP_redux_wait(i_stop_now)
- !
- stop_now=any(i_stop_now==1)
  !
  if (.not.stop_now) return
  if (.not.DO_IT_NOW) return
@@ -91,8 +83,6 @@ logical function stop_now(DO_IT_NOW)
  !
  call it_reset(-1)
  !
- call MPI_close
- !
- stop
+ call MPI_shutdown( ) 
  !
 end function

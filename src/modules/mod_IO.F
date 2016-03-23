@@ -630,7 +630,6 @@ module IO_m
      if (i_err==0) return
      !
      if (i_err==IO_NO_DATABASE     ) call warning('Missing all or part of '//DB//' DB')
-     if (i_err==IO_NO_DATABASE     ) call warning('Missing all or part of '//DB//' DB')
      if (i_err==IO_INCOMPATIBLE_VAR) call warning('Variable not compatible in '//DB//' DB')
      if (i_err==IO_OUTDATED_DB)      call warning('Too old '//DB//' DB')
      !

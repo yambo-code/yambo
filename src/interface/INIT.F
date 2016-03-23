@@ -641,7 +641,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
    !
 #if defined _RT
-   call initactivate(1,'RT_BSE RT_PP_time')
+   call initactivate(1,'ForceEqTrans')
 #endif
    !
  endif                    

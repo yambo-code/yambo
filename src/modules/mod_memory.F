@@ -25,6 +25,7 @@ module memory_m
  !
  use pars,       ONLY:SP,lchlen,schlen
  use stderr,     ONLY:string_split
+ use openmp,     ONLY:master_thread
  !
  implicit none
  !
@@ -62,6 +63,8 @@ module memory_m
      real(SP),parameter :: mem_tresh=0.01_SP  ! ( in Gb. CAREFUL! mem_tresh must be >0)
      character(lchlen)  ::ch(2)
      character(schlen)  ::input_name(10),action
+     !
+     if (.not.master_thread) return
      !
      mem_element_size_change=0._SP
      !

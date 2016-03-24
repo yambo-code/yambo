@@ -44,7 +44,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_control,     ONLY:ID,RT_IO_G_steps,it_start,it_dyn
+ use RT_control,     ONLY:ID,RT_IO_G_steps,it_start
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,&
@@ -52,7 +52,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,MEM_index,RT_bands
+&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,it_dyn
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
@@ -71,7 +71,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Work Space
  !
  integer :: ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,io_REF,&
-&           io_OCCUPATIONS,ID_OCCUPATIONS,nt
+&           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  real(SP):: df_H
  integer, external :: io_SC_components,io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
@@ -199,8 +199,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (RESTART) then
    !
-   ! I use G_lesser(:,:,:) to reconstruct everything
-   ! and I read it_dyn from the databases. 
+   ! I use G_lesser(:,:,:) to reconstruct everything and I read it_dyn from the databases. 
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -236,8 +235,9 @@ subroutine RT_start_and_restart(E,k,q,X)
      !
      ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
      !
-     G_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps))=&
-&            G_lesser_reference(:,:,ik)+dG_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps))
+     do i_memory=1,G_MEM_steps
+       G_lesser(:,:,ik,i_memory)=G_lesser_reference(:,:,ik)+dG_lesser(:,:,ik,i_memory)
+     enddo
      !
    enddo
    !
@@ -249,7 +249,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! [Andrea 23/9/2011] The RESTART value for it_start is tricky.
    ! The order in which DBs are written in RT_driver makes in such a way
-   ! that the latest step written i it_dyn-1. This is beacause RT_databases_IO is called BEFORE RT_Collision.
+   ! that the latest step written is it_dyn-1. This is beacause RT_databases_IO is called BEFORE RT_Collision.
    !
    ! it_start is used here to call RT_Ext_fields that must evalute the vector potential@it_dyn-1. 
    ! This MUST be consistent with the restart density and G_lesser that are known@it_dyn-1.

@@ -46,13 +46,13 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use RT_control,     ONLY:it_start,it_dyn
+ use RT_control,     ONLY:it_start
  use real_time,      ONLY:I_relax_static,RT_is_dephased,RT_Deph_Matrix,RT_bands,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
 &                         l_initial_equilibrium,RT_delta0_occupations,RT_is_dephased,&
-&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
+&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,it_dyn,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values
 #if defined _TIMING
  use timing_m,       ONLY:timing

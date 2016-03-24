@@ -37,14 +37,14 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
  use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,RT_IO_G_steps,ID,&
-&                         it_start,RT_carriers_object,it_dyn
- use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,&
+&                         it_start,RT_carriers_object
+ use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
-&                         G_lesser_reference,rho_reference,magn_reference, &
-&                         NE_time,RT_carriers,RT_dyn_step,&
-&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,&
-&                         dG_lesser,l_initial_equilibrium
+&                         G_lesser_reference,rho_reference,magn_reference,it_dyn, &
+&                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,&
+&                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
+&                         i_MEM_now,i_MEM_next
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
@@ -66,7 +66,7 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: it_mem,it_mem_p1,io_REF
+ integer           :: io_REF
  character(schlen) :: sec_title(3)
  complex(SP)       :: on_the_fly_operators(10)
  !
@@ -248,7 +248,8 @@ subroutine RT_driver(E,X,k,q)
  !
  ! See [23/9/2011] comments in RT_start_and_restart regarding the value of it_start
  !
- it_dyn  =it_start-1
+ it_dyn    = it_start
+ NE_i_time = it_dyn
  !
  ! Start-Up & Timing
  !===================
@@ -256,17 +257,18 @@ subroutine RT_driver(E,X,k,q)
  !
  do while (.not.l_Dynamics_is_over)
    !
+   l_Update_Time_Step=NE_time>=NE_initial_time_step_update
+   !
    ! Steps & times ...
    !===================
    !
-   ! ... NE_time(1)=0 !
+   ! ... Dynamical Time-Step evaluation
    !
-   if (it_dyn>0) NE_time    =NE_time+RT_dyn_step
+   if (l_Update_Time_Step) call RT_time_step_update( )
    !
-   it_dyn     =it_dyn+RT_dyn_step/RT_step
-   NE_i_time  =it_dyn
-   it_mem     =MEM_index(NE_i_time  ,G_MEM_steps)
-   it_mem_p1  =MEM_index(NE_i_time+1,G_MEM_steps)
+   ! ... Create Memory maps
+   !
+   call RT_MEMORY_index( )
    !
    ! Keep a copy of A_vecpot before starting the collisions
    ! ======================================================
@@ -275,39 +277,27 @@ subroutine RT_driver(E,X,k,q)
    l_Dynamics_is_over=(it_dyn==NE_steps)
    !
    if (stop_now(.FALSE.)) then
-     NE_steps=((NE_i_time-1)/RT_IO_G_steps)*RT_IO_G_steps+1
+     NE_steps=((it_dyn-1)/RT_IO_G_steps)*RT_IO_G_steps+1
      l_Dynamics_is_over=.TRUE.
    endif
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,it_mem),A_vecpot_previous)
+   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_now),A_vecpot_previous)
    !
    ! Now calculate Energetics, current and other observables
    !=========================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,it_mem),on_the_fly_operators)
-   !
-   ! Update Bose Temp and Phonons distribution
-   !===========================================
-   !if (l_Debye_TBose_update) then
-   !  if (it==it_start) E_previous=real(on_the_fly_operators(5))
-   !  if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
-   !  &       nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
-   !    E_now=real(on_the_fly_operators(5))
-   !    call TEMPERATURE_Debye(E_previous-E_now)
-   !    E_previous=E_now
-   !  endif
-   !endif
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_now),on_the_fly_operators)
    !
    if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_step)
    !
    ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
    !============================================================
-   call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot,E,k,q,NE_time)
+   call RT_Collision(dG_lesser(:,:,:,i_MEM_now),A_vecpot,E,k,q,NE_time)
    !
    ! BGR
    !=======================================
-   !call RT_BGR(dG_lesser(:,:,:,it_mem),E,k)
+   !call RT_BGR(dG_lesser(:,:,:,i_MEM_now),E,k)
    !call RT_output('BGR',TIME=NE_time/FS2AUT)
    !
    ! Eval and Print Mean Carrier Lifetimes
@@ -348,17 +338,19 @@ subroutine RT_driver(E,X,k,q)
    !=============
    ! T -> T+dT step 
    !
-   call RT_Integrator(dG_lesser(:,:,:,it_mem_p1),dG_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
-   !
-   ! Dynamical Time-Step evaluation
-   !================================
-   !
-   !call RT_time_step_update(dG_lesser(:,:,:,it_mem_p1),dG_lesser(:,:,:,it_mem))
+   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
    !
    ! G_lesser update
    !=================
    !
-   G_lesser(:,:,:,it_mem_p1)=G_lesser_reference+dG_lesser(:,:,:,it_mem_p1)
+   G_lesser(:,:,:,i_MEM_next)=G_lesser_reference+dG_lesser(:,:,:,i_MEM_next)
+   !
+   ! Time Update
+   !=============
+   !
+   it_dyn    = it_dyn+RT_dyn_step/RT_step
+   NE_i_time = it_dyn
+   NE_time   = NE_time+RT_dyn_step
    !	
    ! Timing
    !========

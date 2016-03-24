@@ -34,13 +34,12 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
  ! --------------------------------------
  !
  use pars,           ONLY:SP,cZERO,cONE
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_EXP,l_RT_INTERPOLATE,l_RT_RWA, &
+ use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_EXP,l_RT_RWA, &
 &                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
 &                         RT_H_occupations,RT_delta0_occupations,l_RT_HEUN,       &
-&                         integrator_step,RT_nk,l_RT_induced_field,NE_i_time,RT_bands
- use fields,         ONLY:gauge_field,Efield,Efield
+&                         integrator_step,RT_nk,RT_bands
+ use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels,spin_occ
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -196,11 +195,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
          !
          ! dG_out = G(T0+dt) -G(T0)= - i dt *(I1(T) - I2(T))
          !
-         !if (l_RT_INTERPOLATE)  then
-         !  call RT_INTERPOLATED_step(G_out(:,:,ik),dG_old(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
-         !else
-           call RT_EULER_step(dG_out(:,:,ik),I1_k,I2_k,dT)
-         !endif
+         call RT_EULER_step(dG_out(:,:,ik),I1_k,I2_k,dT)
          !
        endif
        !

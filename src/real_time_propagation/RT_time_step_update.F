@@ -21,13 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_time_step_update(dG_new,dG_old)
+subroutine RT_time_step_update( )
  !
  use pars,           ONLY:SP
- use real_time,      ONLY:RT_bands,RT_nk
+ use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,NE_i_time,MEM_pointer,it_dyn,l_Update_Time_Step
  implicit none
+ ! 
+ if (.not.l_Update_Time_Step) return
  !
- complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- complex(SP),       intent(inout) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ !complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ !complex(SP),       intent(inout) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
 end subroutine RT_time_step_update

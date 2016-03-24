@@ -40,6 +40,7 @@ module real_time
  logical           :: l_NE_with_fields
  logical           :: l_NE_simulate_Irredux
  logical           :: l_Dynamics_is_over  
+ logical           :: l_Update_Time_Step  = .FALSE.
  !
  ! Evaluation logicals
  !
@@ -58,11 +59,14 @@ module real_time
  ! 
  ! ... NE dynamics ...
  !
- real(SP) :: NE_time    =0._SP    ! <- incremented
- real(SP) :: NE_tot_time=0._SP    ! Total (fixed)
+ real(SP) :: NE_time    =0._SP                  ! <- incremented
+ real(SP) :: NE_tot_time=0._SP                  ! Total (fixed)
+ real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
  !
  integer  :: NE_i_time ! = (NE_time-1)/RT_step
  integer  :: NE_steps  ! Still relative to RT_step
+ !
+ integer  :: it_dyn=0  ! Equivalent to NE_i_time?
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
  ! channels. I will see later if this can be somehow extended/duplicated
@@ -81,9 +85,12 @@ module real_time
  ! ... Memory ...
  !
  real(SP) :: NE_MEM_treshold
- integer  :: G_MEM_steps    =2  ! By default only G_lesser@t and @t+1
  integer  :: Life_MEM_steps
- integer  :: I_MEM_steps    =0
+ integer  :: G_MEM_steps    =2  ! By default only G_lesser@t and @t+1
+ integer  :: i_MEM_now      = 1
+ integer  :: i_MEM_next     = 1
+ integer  :: i_MEM_previous = 1
+ integer, allocatable :: MEM_pointer(:) ! Iime memory pointers
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
@@ -261,7 +268,6 @@ module real_time
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
- complex(SP), allocatable :: I_coh_SAVE(:,:,:,:)
  complex(SP), allocatable :: I_relax_static(:,:,:)
  !
  ! Density
@@ -276,7 +282,6 @@ module real_time
  logical  :: l_RT_RK2
  logical  :: l_RT_HEUN
  logical  :: l_RT_EXP
- logical  :: l_RT_INTERPOLATE
  logical  :: l_RT_RWA
  !
  integer  :: integrator_step
@@ -512,11 +517,6 @@ module real_time
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
-     if (l_RT_INTERPOLATE) then
-       allocate(I_coh_SAVE(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,I_MEM_steps))
-       call mem_est("I_coh_SAVE",(/size(I_coh_SAVE)/),(/2*SP/))
-     endif
-     !
      if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_dephased/)) ) then
        allocate(I_relax_static(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
        call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
@@ -534,6 +534,11 @@ module real_time
      !
      allocate(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
+     !
+     allocate(MEM_pointer(G_MEM_steps)) ! G_MEM_steps=2 => MEM_pointers are relative to it_dyn,it_dyn_next
+                                        ! G_MEM_steps=3 => MEM_pointers are relative to it_dyn,it_dyn_next,it_dyn_previous
+     MEM_pointer    = 0
+     MEM_pointer(1) = 1
      !
      allocate(REF_V_xc_sc(fft_size,n_spin))
      call mem_est("REF_V_xc_sc",(/fft_size*n_spin/),(/SP/))
@@ -593,11 +598,6 @@ module real_time
      if(allocated(Ho_plus_sigma)) then
        deallocate(Ho_plus_Sigma)
        call mem_est("Ho_plus_Sigma")
-     endif
-     !
-     if (l_RT_INTERPOLATE) then
-       deallocate(I_coh_SAVE)
-       call mem_est("I_coh_SAVE")
      endif
      !
      if(allocated(RT_TIME_status)) then
@@ -677,6 +677,8 @@ module real_time
      deallocate(G_lesser)
      call mem_est("G_lesser")
      !
+     deallocate(MEM_pointer)
+     !
      if (allocated(q_weight_RT)) deallocate(q_weight_RT)
      !
      if (allocated(THETA_matrix)) then
@@ -722,13 +724,6 @@ module real_time
    !
    logical function FIRST_step( )
      FIRST_step=integrator_step==1
-   end function
-   !
-   integer function MEM_index(it,Nt)
-     integer :: it,Nt
-     MEM_index=mod(it,Nt)
-     if (MEM_index==0) MEM_index=Nt
-     if (it        <0) MEM_index=1
    end function
    !
    subroutine ADD_to_saved_values(VAL,ARRAY,STEPS)

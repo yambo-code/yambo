@@ -28,22 +28,19 @@ integer function io_RT_components(what,ID)
  use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nkibz,nqbz
- use electrons,      ONLY:spin_occ,n_sp_pol
+ use electrons,      ONLY:spin_occ
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,io_fragment, &
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found,&
 &                         frag_RT
- use real_time,      ONLY:NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,&
-&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,REF_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
+ use real_time,      ONLY:NE_i_time,REF_lifetime,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
 &                         dG_lesser,RT_ind_J,RT_carriers,RT_obj_alloc,&
-&                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT,&
-&                         BGR_hartree,BGR_V_xc,BGR_Self_Energy,RT_bands,RT_nbands,&
-&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
+&                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
+&                         RT_bands,RT_nbands,MEM_pointer
  use ELPH,           ONLY:ph_modes,elph_branches
  use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO,&
 &                         RT_carriers_object
@@ -60,11 +57,11 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  integer, external     :: variables_SC,variables_RT
- character(lchlen)     :: local_description(100),db_name,db_prefix
+ character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: local_what
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
- integer               :: ik,ib,i_spin,i1,file_number,i_time,i_time_range(2),db_type,i_Probe,i_Pump
+ integer               :: ik,ib,i_spin,i1,file_number,i_memory,db_type,i_Probe,i_Pump
  logical               :: l_V,l_IMPOSE_SN,CHECK_,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF,l_carriers
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
@@ -133,11 +130,7 @@ integer function io_RT_components(what,ID)
  !
  if (l_G) then
    !
-   if (.not.ver_is_gt_or_eq(ID,revision=944).or.G_MEM_steps==2.or.io_sec(ID,1)==1) then
-     io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
-   else
-     io_RT_components=io_connect(desc=trim(db_name)//"_"//trim(intc(file_number)),type=db_type,ID=ID)
-   endif
+   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
    !
  endif
  !
@@ -190,6 +183,11 @@ integer function io_RT_components(what,ID)
    if (l_THETA) then
      call io_bulk(ID,VAR="Q_weight",VAR_SZ=(/nqbz/))
      call io_bulk(ID,R1=q_weight_RT(:,1,1))
+   endif
+   !
+   if (l_G) then
+     call io_bulk(ID,VAR="TIME_POINTES",VAR_SZ=(/G_MEM_steps/))
+     call io_bulk(ID,I1=MEM_pointer)
    endif
    !
    ! Here I dump all RELEVANT RT_carriers% components that make the RT_carriers databases
@@ -286,14 +284,15 @@ integer function io_RT_components(what,ID)
    !
    i_spin=1
    !
-   i_time_range=(/NE_i_time-G_MEM_steps+1,NE_i_time/)
-   if (i_time_range(1)<=0) i_time_range(1)=1
-   do i_time=i_time_range(1),i_time_range(2)
-     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
-&         VAR_SZ=(/RT_nbands,RT_nbands,2/))
-     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)),TMP_matrix)
+   do i_memory=1,G_MEM_steps
+     !
+     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_IMEMORY"//trim(intc(i_memory)),&
+&                 VAR_SZ=(/RT_nbands,RT_nbands,2/))
+     !
+     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,i_memory),TMP_matrix)
      call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)))
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,i_memory))
+     !
    enddo
    !
    if(l_NE_with_fields.and.ik==RT_nk) then

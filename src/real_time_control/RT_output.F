@@ -139,7 +139,6 @@ subroutine RT_output(what,VALUES,TIME,E)
  short_file_name(next_file)=trim(append_ch)//'dynamics'
  n_headings(next_file)=5
  if (l_elel_scatt.or.l_elph_scatt) n_headings(next_file)=n_headings(next_file)+2
- !if (l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
  headings(next_file,2)="dE_tot[eV]"
  headings(next_file,3)="dN" 
  headings(next_file,4)="dN(Holes)"
@@ -147,7 +146,6 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (l_elel_scatt.or.l_elph_scatt) then 
    headings(next_file,6)="T(hol) [K]" 
    headings(next_file,7)="T(el)  [K]" 
-   !if (l_Debye_TBose_update) headings(next_file,8)="T(bose) [K]"
  endif
  next_file=next_file+1
  !
@@ -529,7 +527,6 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('dynamics')
        data_to_dump(2:5) = VALUES(1:4)
        if(l_elel_scatt.or.l_elph_scatt) data_to_dump(6:7) = VALUES(5:6)
-       !if(l_Debye_TBose_update) data_to_dump(8) = Bose_Temp*HA2KEL
      case('YPP-eps_along_E','YPP-eels_along_E','YPP-E_frequency', &
 &         'YPP-SHG_qssin','YPP-eps_x','YPP-eps_y','YPP-eps_z',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&

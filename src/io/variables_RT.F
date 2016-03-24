@@ -29,10 +29,10 @@ integer function variables_RT(ID,local_description,what)
  use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
  use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
-&                         RT_description,n_RT_descriptions,it_dyn
+&                         RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,NE_steps,NE_time, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
-&                         RAD_LifeTime,Phase_LifeTime,   &
+&                         RAD_LifeTime,Phase_LifeTime,it_dyn,   &
 &                         l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_steps,&
@@ -99,7 +99,7 @@ integer function variables_RT(ID,local_description,what)
 &   DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID, &
-&   VAR=" [E-P] Memory steps              :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
+&   VAR=" [E-P] GF`s Memory steps         :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

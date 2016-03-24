@@ -75,8 +75,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,Eh_pumped_pair_BZ_reagions,    &
 &                        NE_tot_time,RT_life_interp_steps,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_deltaE,RT_scatt_tresh, &
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,I_MEM_steps,&
-&                        Gr_kind,two_alpha,DbGd_EE_percent
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,&
+&                        Gr_kind,two_alpha,DbGd_EE_percent,NE_initial_time_step_update
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -390,19 +390,19 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! Dynamics
  !
  call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
- call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(3))
- call it(defs,'NETime',     '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
- call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
-&                           Integrator_name)
- call it(defs,'IOtime',     '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
- call it(defs,'RTehEny',    '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
+ call it(defs,'RTstep',      '[RT] Real Time step length',RT_step,unit=Time_unit(3))
+ call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
+ call it(defs,'dTupdateTime','[RT] Initial Time for deltaT update (active only if non-zero) ',NE_initial_time_step_update,&
+&                            unit=Time_unit(2),verb_level=V_real_time)
+ call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
+&                            Integrator_name)
+ call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
+ call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
  ! Correlation
  !
  call it('f',defs,'RTIrredux',     '[RT] Hartree not updated independently of the value of SC_potential',     &
 &                                   Verb_level=V_real_time)
- call it(defs,'COHsteps',          '[RT] Number of steps to interpolate the Coherent part of the self-energy',&
-&                                   I_MEM_steps,Verb_level=V_real_time)
  !
  ! Scattering
  !

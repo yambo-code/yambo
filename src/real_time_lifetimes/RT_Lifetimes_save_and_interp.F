@@ -27,10 +27,9 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  use drivers,        ONLY:l_elel_scatt,l_elphoton_scatt,l_elph_scatt
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use RT_control,     ONLY:it_dyn
  use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_nk,&
-&                         ADD_to_saved_values,&
+&                         ADD_to_saved_values,it_dyn,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
 &                         RT_H_occupations,RT_H_occupations_reference,RT_bands
  !

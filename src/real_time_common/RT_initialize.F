@@ -42,11 +42,11 @@ subroutine RT_initialize(E,k,q)
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,    &
 &                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_steps,&
-&                         l_RT_lifetimes_interpolation,l_NE_dynamics,l_RT_impose_N_dN,I_MEM_steps,Integrator_name,&
-&                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,DbGd_EE_scatt_table,&
+&                         l_RT_lifetimes_interpolation,l_NE_dynamics,l_RT_impose_N_dN,Integrator_name,&
+&                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_EXP,DbGd_EE_scatt_table,&
 &                         DbGd_EE_Nk_table,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,&
 &                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
-&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RAD_magnification
+&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RAD_magnification,NE_initial_time_step_update
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,&
@@ -101,12 +101,6 @@ subroutine RT_initialize(E,k,q)
  !
  l_RT_EXP  =index(Integrator_name,'EXP'  )/=0.or.index(Integrator_name,'exp'  )/=0
  !
- l_RT_INTERPOLATE=index(Integrator_name,'INTERPOLATE')/=0.or.index(Integrator_name,'interpolate')/=0
- !
- if (l_RT_EXP.and.l_RT_INTERPOLATE) l_RT_INTERPOLATE=.false.
- !
- if (l_RT_INTERPOLATE) call error(' INTERPOLATION of coherent part: status unknonw')
- !
  Integrator_name=""
  if ((     l_RT_EULER).and.(.not.l_RT_RK2).and.(.not.l_RT_HEUN)) Integrator_name = "EULER"
  if ((.not.l_RT_EULER).and.(     l_RT_RK2).and.(.not.l_RT_HEUN)) Integrator_name = "RK2"
@@ -118,7 +112,6 @@ subroutine RT_initialize(E,k,q)
  endif
  if (l_RT_RWA)         Integrator_name = trim(Integrator_name)//" + RWA"
  if (l_RT_EXP)         Integrator_name = trim(Integrator_name)//" + EXP"
- if (l_RT_INTERPOLATE) Integrator_name = trim(Integrator_name)//" + INTERPOLATE"
  !
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
    call warning(" Not a valid gauge in input. Switching to length gauge")
@@ -205,6 +198,7 @@ subroutine RT_initialize(E,k,q)
    T_memory=-1./minval( abs(E%W(RT_bands(1):RT_bands(2),:,:)))*log(NE_MEM_treshold)
    G_MEM_steps=T_memory/RT_step
  endif
+ if (NE_initial_time_step_update>0..and.G_MEM_steps<3) G_MEM_steps=3
  !
  ! External fields checks
  !========================
@@ -354,9 +348,13 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Simulation time        [fs]:',NE_tot_time/FS2AUT)
  call msg( 'r', 'Initial time step      [fs]:',RT_step/FS2AUT)
  call msg( 'r', '             steps         :',NE_steps)
+ !
+ if (NE_initial_time_step_update>0.) then
+   call msg( 'r', 'Time step update To    [fs]:',NE_initial_time_step_update/FS2AUT)
+ endif
+ !
  call msg( 'r', 'Memory depth(G)        [fs]:',T_memory/FS2AUT)
  call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
- if (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)
  !
  if (RT_is_dephased) then
    call msg( 'nr','---Lifetimes---')

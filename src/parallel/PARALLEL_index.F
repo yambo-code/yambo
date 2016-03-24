@@ -26,6 +26,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
 &                     MPI_comm,comm_default_value
  use com,        ONLY:error
+ use stderr,     ONLY:intc
  !
  implicit none
  !
@@ -195,5 +196,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  !
  deallocate(lowlim)
  if(allocated(i_done)) deallocate(i_done)
+ !
+ if (px%n_of_elements(myid_loop+1)==0) call error("Empty workload for CPU "//trim(intc(myid+1)))
  !
 end subroutine

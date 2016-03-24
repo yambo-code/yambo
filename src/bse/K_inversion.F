@@ -253,11 +253,11 @@ subroutine K_inversion(iq,W,E,k,q)
      !
    enddo
    !
-   if (full_inf_freqs_found.and.FULL) Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
+   if (full_inf_freqs>0.and.FULL) Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
    !
  endif
  !
- if (full_inf_freqs_found.and.FULL) then
+ if (full_inf_freqs>0.and.FULL) then
    !
    call msg('rs','[BSE INV] Non converged frequencies :',full_inf_freqs)
    !

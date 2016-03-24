@@ -76,7 +76,13 @@ subroutine COLLISIONS_basic_operations( what, COLL )
    return
  endif
  !
- if (associated(COLL%state)) return
+ if (associated(COLL%state)) then
+   if (io_COLLS) then
+     allocate(COLL%IO_status(COLL%N))
+     call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
+   endif
+   return
+ endif
  !
  ! Here below I define the state component to be consistent with the QP_table.
  !

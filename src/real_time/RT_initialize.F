@@ -34,7 +34,7 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
-&                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
+&                         RT_IO_G_steps,RT_IO_output_steps
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
@@ -320,12 +320,6 @@ subroutine RT_initialize(E,k,q)
    call COLLISIONS_load(.TRUE.)
    !
  endif
- !
- !
- ! Initial allocation and basic definitions of the RT_carriers object
- !====================================================================
- !
- call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
  !
  ! LOG
  ! ===

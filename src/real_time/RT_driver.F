@@ -155,6 +155,10 @@ subroutine RT_driver(E,X,k,q)
  call RT_alloc(E)
  call RT_alloc_ctl()
  !
+ ! Initial allocation and basic definitions of the RT_carriers object
+ !
+ call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
+ !
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')

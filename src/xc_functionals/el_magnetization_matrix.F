@@ -37,18 +37,17 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF
- use SC,             ONLY:SC_bands
- use real_time,      ONLY:RT_magn,RT_nk,RT_ibz_coo,RT_Nk_ibz
+ use real_time,      ONLY:RT_magn,RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_bands
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
  use matrix_operate, ONLY:UP_matrix_index,m3det
  !
  implicit none
  !
- type(bz_samp)::Xk
- complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- integer,     intent(in) :: lowest_band
- type(levels) ::en       
- real(SP)     ::magn(fft_size,3)
+ type(bz_samp), intent(in)  :: Xk
+ complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ integer,       intent(in)  :: lowest_band
+ type(levels),  intent(in)  :: en       
+ real(SP),      intent(out) :: magn(fft_size,3)
  !
  ! Work Space
  !
@@ -63,10 +62,10 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  if (n_spin==1) return
  !
- if(lowest_band<SC_bands(1)-1) then
+ if(lowest_band<RT_bands(1)-1) then
    !
    do ik=1,Xk%nibz
-     do ib1=lowest_band,SC_bands(1)-1
+     do ib1=lowest_band,RT_bands(1)-1
        !
        if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
        !
@@ -106,11 +105,11 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    !
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    !      
-   do ib1=SC_bands(1),SC_bands(2)
+   do ib1=RT_bands(1),RT_bands(2)
      !
-     do ib2=ib1,SC_bands(2)
+     do ib2=ib1,RT_bands(2)
        !
-       if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
        !
        f_occ=cZERO
        do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)

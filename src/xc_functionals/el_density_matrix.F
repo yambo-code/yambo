@@ -26,25 +26,24 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  ! Electronic density matrix (meaning including the off-diagonal elements of the
  ! lesser Green function)
  !
- use pars,          ONLY:SP,cI,cZERO
- use com,           ONLY:error
- use electrons,     ONLY:levels,n_spinor
- use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:nsym,i_time_rev
- use FFT_m,         ONLY:fft_size,fft_rot_r
- use wave_func,     ONLY:WF
- use SC,            ONLY:SC_bands
- use real_time,     ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
- use matrix_operate,ONLY:UP_matrix_index
+ use pars,           ONLY:SP,cI,cZERO
+ use com,            ONLY:error
+ use electrons,      ONLY:levels,n_spinor
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:nsym,i_time_rev
+ use FFT_m,          ONLY:fft_size,fft_rot_r
+ use wave_func,      ONLY:WF
+ use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo,RT_Nk_ibz
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
+ use matrix_operate, ONLY:UP_matrix_index
  !
  implicit none
  !
- type(bz_samp)::Xk
- complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- integer,     intent(in) :: lowest_band
- type(levels) ::en       
- real(SP)     ::rho(fft_size)
+ type(bz_samp), intent(in)  :: Xk
+ complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ integer,       intent(in)  :: lowest_band
+ type(levels),  intent(in)  :: en       
+ real(SP),      intent(out) :: rho(fft_size)
  !
  ! Work Space 
  !
@@ -55,10 +54,10 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  rho=0._SP
  rho_no_sym=0._SP
  !
- if(lowest_band<SC_bands(1)-1) then
+ if(lowest_band<RT_bands(1)-1) then
    !
    do ik=1,Xk%nibz
-     do ib1=lowest_band,SC_bands(1)-1
+     do ib1=lowest_band,RT_bands(1)-1
        !
        if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
        !
@@ -79,11 +78,11 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
    !
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    !      
-   do ib1=SC_bands(1),SC_bands(2)
+   do ib1=RT_bands(1),RT_bands(2)
      !
-     do ib2=ib1,SC_bands(2)
+     do ib2=ib1,RT_bands(2)
        !
-       if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
        !
        f_occ=cZERO
        do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)

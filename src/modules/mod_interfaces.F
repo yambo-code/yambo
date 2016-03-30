@@ -175,7 +175,7 @@ module interfaces
      type(MPI_comm),optional :: COMM_A2A_3
    end subroutine
    !
-   subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
+   subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
      use parallel_m, ONLY:PP_indexes,MPI_COMM
      type(PP_indexes)       ::px
      integer                ::uplim(:)
@@ -183,6 +183,7 @@ module interfaces
      type(MPI_COMM),optional::COMM
      logical,       optional::CONSECUTIVE
      logical,       optional::ORDERED
+     logical,       optional::NO_EMPTIES
      logical,       optional::MASK(:)
    end subroutine
    !

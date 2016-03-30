@@ -31,9 +31,10 @@ if ( $#argv > 1 ) goto HELP
 #
 # Get current version & revision
 #
-set dir=`svn info | grep 'URL'| grep 'yambo-devel' |wc -l`
-set dummy=`svn info -r HEAD | grep 'Revision'`
-set revision_HEAD=`echo $dummy | $awk '{gsub("Revision: ","");print $0}'`
+set dir=`git branch | grep 'master' |wc -l`
+set dummy=`git rev-list --count HEAD`
+set hash=`git rev-parse --short HEAD`
+set revision_HEAD=`echo $dummy`
 #
 set gpl="yes"
 if ( "$dir" == "1" ) set gpl="no"
@@ -48,6 +49,8 @@ set dummy=`cat include/version.inc | grep 'code_revision'`
 set revision_old=`echo $dummy | $awk '{gsub("code_revision=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_GPL_revision'`
 set GPL_revision_old=`echo $dummy | $awk '{gsub("code_GPL_revision=","");print $0}'`
+set dummy=`cat include/version.inc | grep 'code_hash'`
+set hash_old=`echo $dummy | $awk '{gsub("code_hash=","");print $0}'`
 #
 # Increase counters
 #
@@ -67,11 +70,11 @@ if ( "$argv[1]" != "save" ) then
   @ revision_new ++ 
   echo 
   if ( "$gpl" == "yes" ) then
-    echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
+    echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " h."$hash_old" => " \
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash
   else
-    echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
+    echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash
   endif
   echo 
 else
@@ -87,6 +90,7 @@ if ($< =~ [Yy]*) then
 echo 'code_version(1)='$version_new  >  include/version.inc
 echo 'code_version(2)='$subver_new    >> include/version.inc
 echo 'code_version(3)='$patch_new      >> include/version.inc
+echo "code_hash='"$hash"'"      >> include/version.inc
 if ( "$gpl" == "yes" ) then
  echo 'code_revision='$revision_old >> include/version.inc
  echo 'code_GPL_revision='$revision_new >> include/version.inc
@@ -94,6 +98,7 @@ else
  echo 'code_revision='$revision_new >> include/version.inc
  echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
 endif
+echo $GPL_revision_old
 #
 # Prepare new configure script
 #

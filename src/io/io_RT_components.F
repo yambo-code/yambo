@@ -216,7 +216,7 @@ integer function io_RT_components(what,ID)
  endif
  ! 
  if(l_J_and_P.or.l_carriers) then
-   call manage_RD_WR_CL_IF_END(ID,ik,NE_steps)
+   call manage_RD_WR_CL_IF_END(ID,NE_i_time,NE_steps)
  else if (l_G) then
    call manage_RD_WR_CL_IF_END(ID,ik,RT_nk)
  else

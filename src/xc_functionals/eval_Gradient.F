@@ -53,9 +53,9 @@ subroutine eval_Gradient(f,f_gradient,f_type)
  !
  select case( trim(f_type) )
  case( "wave" )
-   ng_=wf_ng
+   ng_=min(wf_ng,size(fft_g_table,1))
  case( "density")
-   ng_=ng_vec
+   ng_=min(ng_vec,size(fft_g_table,1))
  case default
    call error(' [FFT] unknown f_type when computing gradient')
  end select

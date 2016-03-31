@@ -63,7 +63,7 @@ module real_time
  real(SP) :: NE_tot_time=0._SP                  ! Total (fixed)
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
  !
- integer  :: NE_i_time ! = (NE_time-1)/RT_step
+ integer  :: NE_i_time ! = (NE_time+1)/RT_step
  integer  :: NE_steps  ! Still relative to RT_step
  !
  integer  :: it_dyn=0  ! Equivalent to NE_i_time?

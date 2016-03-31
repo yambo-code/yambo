@@ -346,11 +346,11 @@ subroutine RT_driver(E,X,k,q)
    ! Time Update
    !=============
    !
-   l_Dynamics_is_over=(it_dyn>NE_steps)
+   l_Dynamics_is_over=NE_i_time==NE_steps.or.it_dyn+nint(RT_dyn_step/RT_step)>NE_steps
    !
    it_dyn    = it_dyn+nint(RT_dyn_step/RT_step)
    NE_i_time = it_dyn
-   NE_time   = NE_time+RT_dyn_step
+   NE_time   = (NE_i_time-1)*RT_step
    !	
    ! Timing
    !========

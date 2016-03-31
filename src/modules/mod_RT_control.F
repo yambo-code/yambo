@@ -134,10 +134,15 @@ module RT_control
      if (what=="OUT") IO_steps=RT_IO_output_steps
      if (what=="G")   IO_steps=RT_IO_G_steps
      !
-     i_grp=int(real(NE_i_time-1)/real(IO_steps))
+     if (IO_steps<0) then
+       RT_do_IO=.TRUE. 
+       return
+     endif
+     !
+     i_grp=nint(real(NE_i_time-1)/real(IO_steps))
      !
      if (NE_i_time-1>=i_grp*IO_steps.and.NE_i_time-1-nint(RT_dyn_step/RT_step)<i_grp*IO_steps) RT_do_IO=.TRUE.
-     if (NE_i_time-1==0) RT_do_IO=.TRUE.
+     if (NE_i_time==0) RT_do_IO=.TRUE.
      !
    end function
    !

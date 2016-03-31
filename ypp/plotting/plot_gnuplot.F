@@ -40,6 +40,8 @@ subroutine plot_gnuplot(eval_only)
  character(schlen) :: titles(4)
  real(SP)          :: v_max
  !
+ if (plot_dim==3) return
+ !
  if (len_trim(plot_title)==0) then
    call live_timing('3D Merge',nr(1),SERIAL=.true.)
  else

@@ -354,6 +354,7 @@ subroutine RT_driver(E,X,k,q)
    !	
    ! Timing
    !========
+   !
    call live_timing(steps=1)
    !
  enddo

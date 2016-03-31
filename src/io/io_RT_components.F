@@ -435,7 +435,7 @@ integer function io_RT_components(what,ID)
        !
      endif 
      !
-     if(.not.RT_do_IO('J')) call io_reset(ID) 
+     if (.not.RT_do_IO('J')) call io_reset(ID) 
      !
    endif
    !

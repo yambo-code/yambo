@@ -44,13 +44,17 @@ subroutine plot_check_and_launch(check_only)
  dp(2)=dot_product(a(1,:),a(3,:))
  dp(3)=dot_product(a(2,:),a(3,:))
  !
- use_gnuplot=p_format=='g'
- use_xcrysden=p_format=='x'
- use_cube=p_format=='c'
- switch_to_xcrysden=.false.
- switch_to_gnuplot=.false.
+ use_gnuplot = (p_format=='g')
+ use_xcrysden= (p_format=='x')
+ use_cube    = (p_format=='c')
  !
- if (.not.use_gnuplot.and..not.use_xcrysden.and..not.use_cube) use_gnuplot=.true.
+ switch_to_xcrysden =.false.
+ switch_to_gnuplot  =.false.
+ !
+ if (.not.use_gnuplot.and..not.use_xcrysden.and..not.use_cube) then
+   p_format='g'
+   use_gnuplot=.true.
+ endif
  !
  plot_is_1D(1) =p_dir(:1)=='1'
  plot_is_1D(2) =p_dir(:1)=='2'
@@ -65,7 +69,7 @@ subroutine plot_check_and_launch(check_only)
    plot_is_1D=.false.
    plot_is_2D=.false.
    if (.not.v_is_zero(dp).and.use_gnuplot) then
-     if (check_only) call warning('Cannot average along non orthogonal directions')
+     if (check_only) call warning(' Cannot average along non orthogonal directions')
      switch_to_xcrysden=.true.
    endif
  else if (any(plot_is_2D)) then
@@ -73,15 +77,15 @@ subroutine plot_check_and_launch(check_only)
    plot_is_1D=.false.
    plot_is_3D=.false.
    if (plot_is_2D(1).and..not.v_is_zero((/0._SP,dp(2),dp(3)/)).and.use_gnuplot) then
-     call warning('Cannot average along non orthogonal direction')
+     call warning(' Cannot average along non orthogonal direction')
      switch_to_xcrysden=.true.
    endif
    if (plot_is_2D(2).and..not.v_is_zero((/dp(1),0._SP,dp(3)/)).and.use_gnuplot) then
-     call warning('Cannot average along non orthogonal direction')
+     call warning(' Cannot average along non orthogonal direction')
      switch_to_xcrysden=.true.
    endif
    if (plot_is_2D(3).and..not.v_is_zero((/dp(1),dp(2),0._SP/)).and.use_gnuplot) then
-     call warning('Cannot average along non orthogonal direction')
+     call warning(' Cannot average along non orthogonal direction')
      switch_to_xcrysden=.true.
    endif
  else if (any(plot_is_1D)) then
@@ -93,16 +97,25 @@ subroutine plot_check_and_launch(check_only)
    p_dir='123'
  endif
  !
- if (plot_dim==1.and.use_xcrysden) switch_to_gnuplot=.true.
- if (plot_dim==1.and.use_cube) switch_to_gnuplot=.true.
- if (plot_dim==2.and.use_cube) switch_to_gnuplot=.true.
+ if (plot_dim==1.and.use_xcrysden) switch_to_gnuplot =.true.
+ if (plot_dim==1.and.use_cube)     switch_to_gnuplot =.true.
+ if (plot_dim==2.and.use_cube)     switch_to_gnuplot =.true.
  if (plot_dim==3.and.use_gnuplot)  switch_to_xcrysden=.true.
  !
- if (switch_to_xcrysden.and.check_only) call warning('Switching to XCrySDen')
- if (switch_to_gnuplot.and.check_only)  call warning('Switching to GnuPlot')
- !
- if (switch_to_xcrysden) p_format='x'
- if (switch_to_gnuplot) p_format='g'
+ if (switch_to_xcrysden) then
+   if(check_only) call warning(' Switching to XCrySDen')
+   p_format='x'
+   use_xcrysden=.true.
+   use_gnuplot =.false.
+   use_cube    =.false.
+ endif
+ if (switch_to_gnuplot ) then
+   if(check_only) call warning(' Switching to GnuPlot')
+   p_format='g'
+   use_xcrysden=.false.
+   use_gnuplot =.true.
+   use_cube    =.false.
+ endif
  !
  if (check_only) return
  !

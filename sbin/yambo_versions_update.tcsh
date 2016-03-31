@@ -81,10 +81,10 @@ if ( "$argv[1]" != "save" ) then
   echo 
   if ( "$gpl" == "yes" ) then
     echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " h."$hash_old" => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h.'"$hash_new"'"
   else
     echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h.'"$hash_new"'"
   endif
   echo 
 else

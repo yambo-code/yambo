@@ -58,6 +58,7 @@ set version_new = $version_old
 set subver_new = $subver_old
 set patch_new = $patch_old
 set revision_new = $revision_HEAD
+set hash_new = $hash_old
 #
 if ( "$argv[1]" == "v" ) @ version_new ++
 if ( "$argv[1]" == "v" ) @ subver_new = 0
@@ -65,16 +66,17 @@ if ( "$argv[1]" == "v" ) @ patch_new = 0
 if ( "$argv[1]" == "p" ) @ subver_new ++
 if ( "$argv[1]" == "p" ) @ patch_new = 0
 if ( "$argv[1]" == "s" ) @ patch_new ++
+if ( "$argv[1]" == "h" ) @ hash_new = $hash
 #
 if ( "$argv[1]" != "save" ) then
   @ revision_new ++ 
   echo 
   if ( "$gpl" == "yes" ) then
     echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " h."$hash_old" => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new
   else
     echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new
   endif
   echo 
 else

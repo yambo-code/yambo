@@ -25,11 +25,12 @@
 
 # Create git hooks to update yambo version and hash
 # 1. "after-commit" --> yambo_versions_update.tcsh h
-cat <<EOF > .git/hooks/post-commit
+cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 sbin/yambo_versions_update.tcsh h
+git add include/version.inc
 EOF
-chmod +x .git/hooks/post-commit
+chmod +x .git/hooks/pre-commit
 
 # 2. "pre-push" --> yambo_versions_update.tcsh r
 cat <<EOF > .git/hooks/pre-push

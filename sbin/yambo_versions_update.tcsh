@@ -93,20 +93,44 @@ else
  echo "archive of " $source_dir " is " "../"$file_name".gz"
 endif
 #
-echo -n "Confirm ?"
-if ($< =~ [Yy]*) then
+
+set update = 0
+if ( "$argv[1]" == "v" || "$argv[1]" == "s" || "$argv[1]" == "p" ) then
+  set update = 1
+  echo -n "Confirm ?"
+  if ($< =~ [Yy]*) then
+    set update = 0
+  endif
+endif
 #
-# Version strings
-echo 'code_version(1)='$version_new  >  include/version.inc
-echo 'code_version(2)='$subver_new   >> include/version.inc
-echo 'code_version(3)='$patch_new    >> include/version.inc
-echo "code_hash='"$hash_new"'"       >> include/version.inc
-if ( "$gpl" == "yes" ) then
- echo 'code_revision='$revision_old     >> include/version.inc
- echo 'code_GPL_revision='$revision_new >> include/version.inc
+if( "$update" == "0" ) then
+  #
+  # Version strings
+  echo 'code_version(1)='$version_new  >  include/version.inc
+  echo 'code_version(2)='$subver_new   >> include/version.inc
+  echo 'code_version(3)='$patch_new    >> include/version.inc
+  echo "code_hash='"$hash_new"'"       >> include/version.inc
+  if ( "$gpl" == "yes" ) then
+    echo 'code_revision='$revision_old     >> include/version.inc
+    echo 'code_GPL_revision='$revision_new >> include/version.inc
+  else
+    echo 'code_revision='$revision_new         >> include/version.inc
+    echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
+  endif
 else
- echo 'code_revision='$revision_new         >> include/version.inc
- echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
+  #
+  # Version strings
+  echo 'code_version(1)='$version_new  >  include/version.inc
+  echo 'code_version(2)='$subver_new   >> include/version.inc
+  echo 'code_version(3)='$patch_new    >> include/version.inc
+  echo "code_hash='"$hash_new"'"       >> include/version.inc
+  if ( "$gpl" == "yes" ) then
+    echo 'code_revision='$revision_old     >> include/version.inc
+    echo 'code_GPL_revision='$revision_new >> include/version.inc
+  else
+    echo 'code_revision='$revision_new         >> include/version.inc
+    echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
+  endif
 endif
 #
 # Prepare new configure script

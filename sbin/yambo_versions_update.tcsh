@@ -33,8 +33,8 @@ if ( $#argv > 1 ) goto HELP
 #
 set dir=`git branch | grep 'master' |wc -l`
 set dummy=`git rev-list --count HEAD`
-set hash=`git rev-parse --short HEAD`
 set revision_HEAD=`echo $dummy`
+set hash_HEAD=`git rev-parse --short HEAD`
 #
 set gpl="yes"
 if ( "$dir" == "1" ) set gpl="no"
@@ -57,19 +57,27 @@ set hash_old=`echo $dummy | $awk '{gsub("code_hash=","");print $0}'`
 set version_new = $version_old
 set subver_new = $subver_old
 set patch_new = $patch_old
-set revision_new = $revision_HEAD
+set revision_new = $revision_old
 set hash_new = $hash_old
 #
-if ( "$argv[1]" == "v" ) @ version_new ++
-if ( "$argv[1]" == "v" ) @ subver_new = 0
-if ( "$argv[1]" == "v" ) @ patch_new = 0
-if ( "$argv[1]" == "p" ) @ subver_new ++
-if ( "$argv[1]" == "p" ) @ patch_new = 0
-if ( "$argv[1]" == "s" ) @ patch_new ++
-if ( "$argv[1]" == "h" ) @ hash_new = $hash
+if ( "$argv[1]" == "v" ) then
+  @ version_new ++
+  @ subver_new = 0
+  @ patch_new  = 0
+endif
+if ( "$argv[1]" == "s" ) then
+  @ subver_new ++
+  @ patch_new = 0
+endif
+if ( "$argv[1]" == "p" ) @ patch_new ++
+if ( "$argv[1]" == "r" ) then
+  @ revision_HEAD ++
+  set revision_new = $revision_HEAD
+  set hash_new     = $hash_HEAD
+endif
+if ( "$argv[1]" == "h" ) set hash_new = $hash_HEAD
 #
 if ( "$argv[1]" != "save" ) then
-  @ revision_new ++ 
   echo 
   if ( "$gpl" == "yes" ) then
     echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " h."$hash_old" => " \
@@ -90,17 +98,16 @@ if ($< =~ [Yy]*) then
 #
 # Version strings
 echo 'code_version(1)='$version_new  >  include/version.inc
-echo 'code_version(2)='$subver_new    >> include/version.inc
-echo 'code_version(3)='$patch_new      >> include/version.inc
-echo "code_hash='"$hash"'"      >> include/version.inc
+echo 'code_version(2)='$subver_new   >> include/version.inc
+echo 'code_version(3)='$patch_new    >> include/version.inc
+echo "code_hash='"$hash_new"'"       >> include/version.inc
 if ( "$gpl" == "yes" ) then
- echo 'code_revision='$revision_old >> include/version.inc
+ echo 'code_revision='$revision_old     >> include/version.inc
  echo 'code_GPL_revision='$revision_new >> include/version.inc
 else
- echo 'code_revision='$revision_new >> include/version.inc
+ echo 'code_revision='$revision_new         >> include/version.inc
  echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
 endif
-echo $GPL_revision_old
 #
 # Prepare new configure script
 #
@@ -159,4 +166,4 @@ endif
 exit 0
 
 HELP:
-echo "yambo_versions_update.tcsh [(save) / (v)ersion/(s)ubversion/(p)atchlevel/@(r)evision]"
+echo "yambo_versions_update.tcsh [(save) / (v)ersion/(s)ubversion/(p)atchlevel/@(r)evision .(h)ash]"

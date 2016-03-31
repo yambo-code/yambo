@@ -128,9 +128,12 @@ subroutine RT_initialize(E,k,q)
  !
  RT_dyn_step=RT_step
  !
- ! Set a number of steps. i1=1(J,P,CARRIERs)  i1=2(GF) i1=3(output).
+ ! Set the I/O steps:
+ !
+ !  i1=1(J,P,CARRIERs)  i1=2(GF) i1=3(output).
+ !
  ! Negative value forces the step to be set automatically
- !==================================================================
+ !========================================================
  !
  do i1=1,3
    !
@@ -314,7 +317,7 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
- if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) N_T_samplings =RT_Lifetimes_evaluation_plan( )
+ if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) N_T_samplings =RT_Lifetimes_evaluation_plan( .FALSE. )
  !
  ! Checking extended COLLISIONS
  !==============================
@@ -346,8 +349,9 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 :',trim(Integrator_name))
  call msg( 'r', 'Simulation time        [fs]:',NE_tot_time/FS2AUT)
- call msg( 'r', 'Initial time step      [fs]:',RT_step/FS2AUT)
- call msg( 'r', '             steps         :',NE_steps)
+ call msg( 'r', 'Baic time step         [fs]:',RT_step/FS2AUT)
+ call msg( 'r', '     time step    (now)[fs]:',RT_dyn_step/FS2AUT)
+ call msg( 'r', '          steps            :',NE_steps)
  !
  if (NE_initial_time_step_update>0.) then
    call msg( 'r', 'Time step update To    [fs]:',NE_initial_time_step_update/FS2AUT)

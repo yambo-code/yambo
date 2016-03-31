@@ -23,13 +23,53 @@
 !
 subroutine RT_time_step_update( )
  !
+ use units,          ONLY:FS2AUT
  use pars,           ONLY:SP
- use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,NE_i_time,MEM_pointer,it_dyn,l_Update_Time_Step
+ use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
+&                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step
+ use RT_control,     ONLY:RT_IO_time
+ use com,            ONLY:warning
+ use stderr,         ONLY:real2ch
  implicit none
  ! 
- if (.not.l_Update_Time_Step) return
+ ! Work Space 
+ ! 
+ integer           :: ib,ibp,ik,nT_updated
+ complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
+ real(SP)          :: dT_now,dT_previous
+ integer, external :: RT_Lifetimes_evaluation_plan
  !
- !complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- !complex(SP),       intent(inout) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ dG_dT_max   =0._SP
+ dT_now      =(MEM_pointer(i_MEM_next)-MEM_pointer(i_MEM_now))*RT_step
+ dT_previous =(MEM_pointer(i_MEM_now)-MEM_pointer(i_MEM_previous))*RT_step
+ !
+ do ik=1,RT_nk
+   do ib=RT_bands(1),RT_bands(2)
+     do ibp=RT_bands(1),RT_bands(2)
+       dG_dT(1)=(dG_lesser(ib,ibp,ik,i_MEM_now)-dG_lesser(ib,ibp,ik,i_MEM_previous))/dT_previous
+       dG_dT(2)=(dG_lesser(ib,ibp,ik,i_MEM_next)-dG_lesser(ib,ibp,ik,i_MEM_now))/dT_now
+       if ( abs(dG_dT(2)) >  abs(dG_dT_max(2)) ) then
+         dG(1)=dG_lesser(ib,ibp,ik,i_MEM_previous)
+         dG(2)=dG_lesser(ib,ibp,ik,i_MEM_now)
+         dG(3)=dG_lesser(ib,ibp,ik,i_MEM_next)
+         dG_dT_max=dG_dT
+         MAX_dG_dT_indexes=(/ib,ibp,ik/)
+       endif
+     enddo
+   enddo
+ enddo
+ !
+ ERROR=(dG(1)+dG_dT_max(1)*(dT_previous+dT_now)-dG(3))/dG(3)
+ if (abs(ERROR)<0.01.and.(dT_previous+dT_now)<minval(RT_IO_time)) then 
+   !
+   call warning("Time Step update. From "//trim(real2ch(dT_now/FS2AUT))//"fs => "//trim(real2ch((dT_previous+dT_now)/FS2AUT))//"fs")
+   !
+   RT_dyn_step=dT_previous+dT_now
+   !
+   ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
+   !
+   nT_updated =RT_Lifetimes_evaluation_plan( .TRUE. )
+   !
+ endif
  !
 end subroutine RT_time_step_update

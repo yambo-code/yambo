@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_Lifetimes_evaluation_plan( )
+integer function RT_Lifetimes_evaluation_plan( UPDATE )
  !
  ! Here I define the components of an integer array RT_TIME_status(NE_steps)
  !
@@ -29,9 +29,11 @@ integer function RT_Lifetimes_evaluation_plan( )
  use memory_m,       ONLY:mem_est
  use RT_control,     ONLY:it_start
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_steps,&
-&                         RT_step,l_RT_lifetimes_interpolation,Life_MEM_steps
+&                         RT_dyn_step,l_RT_lifetimes_interpolation,Life_MEM_steps,it_dyn
  !
  implicit none
+ !
+ logical :: UPDATE
  !
  ! Work Space
  !
@@ -45,7 +47,10 @@ integer function RT_Lifetimes_evaluation_plan( )
    RT_TIME_status=1
  endif
  !
+ if (UPDATE) RT_TIME_status(it_dyn:)=1
+ !
  if (RT_life_interp_steps(1)<0. .or. it_start>=NE_steps) then
+   if (UPDATE) return
    l_RT_lifetimes_interpolation=.FALSE.
    Life_MEM_steps=1
    RT_Lifetimes_evaluation_plan=0
@@ -56,8 +61,8 @@ integer function RT_Lifetimes_evaluation_plan( )
  if (Life_MEM_steps<3) Life_MEM_steps=3
  RT_life_interp_steps(1)=RT_life_interp_steps(2)*Life_MEM_steps
  !
- N_inter_steps=nint(RT_life_interp_steps(1)/RT_step)
- N_intra_steps=nint(RT_life_interp_steps(2)/RT_step)
+ N_inter_steps=nint(RT_life_interp_steps(1)/RT_dyn_step)
+ N_intra_steps=nint(RT_life_interp_steps(2)/RT_dyn_step)
  !
  ! RT_TIME_status = -1   KEEP constant 
  !                  >0   EVAL and SAVE
@@ -74,8 +79,8 @@ integer function RT_Lifetimes_evaluation_plan( )
  it_0=1
  !
  if (it_start> 1) then
-   N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it_start+1)/RT_step)
-   N_intra_steps=nint(real(RT_life_interp_steps(2))/weight(it_start+1)/RT_step)
+   N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it_start+1)/RT_dyn_step)
+   N_intra_steps=nint(real(RT_life_interp_steps(2))/weight(it_start+1)/RT_dyn_step)
  endif
  !
  it_first=it_start+1
@@ -101,7 +106,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  ! And now the groups with the full number
  !
- do while (it<NE_steps)
+ do while (it<NE_steps.and.it>=it_dyn)
    !
    if (NE_steps-it+1<N_inter_steps) then
      call BUILD_up_group(N_inter_steps/N_intra_steps,1)
@@ -109,8 +114,8 @@ integer function RT_Lifetimes_evaluation_plan( )
      call BUILD_up_group(N_inter_steps,N_intra_steps)
    endif
    !
-   N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it)/RT_step)
-   N_intra_steps=nint(real(RT_life_interp_steps(2))/weight(it)/RT_step)
+   N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it)/RT_dyn_step)
+   N_intra_steps=nint(real(RT_life_interp_steps(2))/weight(it)/RT_dyn_step)
    !
    it=it+N_inter_steps
    !

@@ -257,7 +257,7 @@ subroutine RT_driver(E,X,k,q)
  !
  do while (.not.l_Dynamics_is_over)
    !
-   l_Update_Time_Step=NE_time>=NE_initial_time_step_update
+   l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0.
    !
    ! Steps & times ...
    !===================
@@ -273,8 +273,6 @@ subroutine RT_driver(E,X,k,q)
    ! Keep a copy of A_vecpot before starting the collisions
    ! ======================================================
    A_vecpot_previous=A_vecpot
-   !
-   l_Dynamics_is_over=(it_dyn==NE_steps)
    !
    if (stop_now(.FALSE.)) then
      NE_steps=((it_dyn-1)/RT_IO_G_steps)*RT_IO_G_steps+1
@@ -338,7 +336,7 @@ subroutine RT_driver(E,X,k,q)
    !=============
    ! T -> T+dT step 
    !
-   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
+   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,A_vecpot_previous,RT_dyn_step,E,k,q,NE_time)
    !
    ! G_lesser update
    !=================
@@ -348,14 +346,16 @@ subroutine RT_driver(E,X,k,q)
    ! Time Update
    !=============
    !
-   it_dyn    = it_dyn+RT_dyn_step/RT_step
+   l_Dynamics_is_over=(it_dyn>NE_steps)
+   !
+   it_dyn    = it_dyn+nint(RT_dyn_step/RT_step)
    NE_i_time = it_dyn
    NE_time   = NE_time+RT_dyn_step
    !	
    ! Timing
    !========
    !
-   call live_timing(steps=1)
+   call live_timing(steps=nint(RT_dyn_step/RT_step))
    !
  enddo
  !

@@ -121,12 +121,23 @@ module RT_control
    !
    logical function RT_do_IO(what)
      !
-     use real_time, ONLY:NE_i_time
+     use real_time, ONLY:NE_i_time,RT_dyn_step,RT_step
      character(*) :: what
      !
-     if (what=="J".or.what=="P".or.what=="CARRIERS") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
-     if (what=="OUT") RT_do_IO=mod(NE_i_time-1,RT_IO_output_steps)==0
-     if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
+     ! Work Space
+     !
+     integer :: IO_steps,i_grp
+     !
+     RT_do_IO=.FALSE.
+     !
+     if (what=="J".or.what=="P".or.what=="CARRIERS") IO_steps=RT_IO_JPO_steps
+     if (what=="OUT") IO_steps=RT_IO_output_steps
+     if (what=="G")   IO_steps=RT_IO_G_steps
+     !
+     i_grp=int(real(NE_i_time-1)/real(IO_steps))
+     !
+     if (NE_i_time-1>=i_grp*IO_steps.and.NE_i_time-1-nint(RT_dyn_step/RT_step)<i_grp*IO_steps) RT_do_IO=.TRUE.
+     if (NE_i_time-1==0) RT_do_IO=.TRUE.
      !
    end function
    !

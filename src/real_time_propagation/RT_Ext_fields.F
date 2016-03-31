@@ -43,7 +43,7 @@ subroutine RT_Ext_fields(A,time)
  !
  use pars,           ONLY:SP,cZERO,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:RT_step,RT_dyn_step,NE_i_time,integrator_step
+ use real_time,      ONLY:RT_dyn_step,NE_i_time,integrator_step
  use fields,         ONLY:n_ext_fields,Efield,small_a,gauge_field
  use functions,      ONLY:theta_function
  !
@@ -65,9 +65,9 @@ subroutine RT_Ext_fields(A,time)
  !
  do i_f=1,n_ext_fields
    !
-   if(Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>(NE_i_time+2) .or. NE_i_time<1) cycle
+   if (Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>(NE_i_time+2) .or. NE_i_time<1) cycle
    !
-   if(Efield(i_f)%t_initial_indx==NE_i_time+2) A%fluence=0._SP
+   if (Efield(i_f)%t_initial_indx==NE_i_time+2) A%fluence=0._SP
    !
    Field_time=time-Efield(i_f)%t_initial
    !
@@ -75,9 +75,9 @@ subroutine RT_Ext_fields(A,time)
    E_of_t=small_a(Field_time,Efield(i_f),1)
    J_of_t=small_a(Field_time,Efield(i_f),2)
    !
-   theta=theta_function(Field_time,RT_step,0)
-   delta=theta_function(Field_time,RT_step,1)
-   signf=theta_function(Field_time,RT_step,2)
+   theta=theta_function(Field_time,RT_dyn_step,0)
+   delta=theta_function(Field_time,RT_dyn_step,1)
+   signf=theta_function(Field_time,RT_dyn_step,2)
    !
    select case(Efield(i_f)%ef_pol)
    case("linear")
@@ -100,7 +100,7 @@ subroutine RT_Ext_fields(A,time)
    !
    if(integrator_step==1) then
      A%intensity=(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
-     A%fluence=A%fluence+A%intensity*RT_step
+     A%fluence=A%fluence+A%intensity*RT_dyn_step
    endif
    !
  enddo

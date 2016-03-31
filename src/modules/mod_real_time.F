@@ -86,11 +86,12 @@ module real_time
  !
  real(SP) :: NE_MEM_treshold
  integer  :: Life_MEM_steps
- integer  :: G_MEM_steps    =2  ! By default only G_lesser@t and @t+1
+ integer  :: G_MEM_steps    = 2 ! By default only G_lesser@t and @t+1
  integer  :: i_MEM_now      = 1
  integer  :: i_MEM_next     = 1
  integer  :: i_MEM_previous = 1
- integer, allocatable :: MEM_pointer(:) ! Iime memory pointers
+ integer  :: MAX_dG_dT_indexes(3)
+ integer, allocatable :: MEM_pointer(:) ! Time memory pointers
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !

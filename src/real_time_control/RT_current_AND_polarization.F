@@ -34,8 +34,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:nel,levels
- use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_step,RT_bands,&
-&                         RT_P,RT_P_prev,RT_nk,integrator_step
+ use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
+&                         RT_P,RT_P_prev,RT_nk
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
@@ -79,8 +79,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! B': Polarization as an integral of the current (to be fixed, it i not stable anyway)
  !
- !if(integrator_step==1) RT_P_tmp=RT_P_prev+RT_ind_J_prev*RT_step
- !if(integrator_step==2) RT_P_tmp=RT_P_prev+RT_ind_J     *RT_step/2._SP
+ !if(integrator_step==1) RT_P_tmp=RT_P_prev+RT_ind_J_prev*RT_dyn_step
+ !if(integrator_step==2) RT_P_tmp=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
  !
  !RT_P=RT_P_tmp
  !

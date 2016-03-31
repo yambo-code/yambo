@@ -267,7 +267,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !
-   nt=RT_Lifetimes_evaluation_plan( )
+   nt=RT_Lifetimes_evaluation_plan( .FALSE. )
    !
  else
    !

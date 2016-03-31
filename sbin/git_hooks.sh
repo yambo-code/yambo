@@ -36,5 +36,9 @@ chmod +x .git/hooks/pre-commit
 cat <<EOF > .git/hooks/pre-push
 #!/bin/bash
 sbin/yambo_versions_update.tcsh r
+git add config/configure.ac
+git add configure
+git add include/version.inc
+git commit -m "revision updated" 
 EOF
 chmod +x .git/hooks/pre-push

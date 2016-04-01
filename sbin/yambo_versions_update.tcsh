@@ -39,6 +39,7 @@ endif
 set dir=`git branch | grep 'master' |wc -l`
 set dummy=`git rev-list --count HEAD`
 set revision_HEAD=`echo $dummy`
+@ revision_HEAD= $revision_HEAD + 10000 
 set hash_HEAD=`git rev-parse --short HEAD`
 #
 set gpl="yes"

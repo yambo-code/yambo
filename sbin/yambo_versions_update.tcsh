@@ -113,24 +113,14 @@ endif
 if( "$update" == "0" ) then
   #
   # Version strings
-  echo 'code_version(1)='$version_new  >  include/version.inc
-  echo 'code_version(2)='$subver_new   >> include/version.inc
-  echo 'code_version(3)='$patch_new    >> include/version.inc
-  echo "code_hash='"$hash_new"'"       >> include/version.inc
-  if ( "$gpl" == "yes" ) then
-    echo 'code_revision='$revision_old     >> include/version.inc
-    echo 'code_GPL_revision='$revision_new >> include/version.inc
-  else
-    echo 'code_revision='$revision_new         >> include/version.inc
-    echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
-  endif
-else
   #
-  # Version strings
   echo 'code_version(1)='$version_new  >  include/version.inc
   echo 'code_version(2)='$subver_new   >> include/version.inc
   echo 'code_version(3)='$patch_new    >> include/version.inc
   echo "code_hash='"$hash_new"'"       >> include/version.inc
+  #
+  # Revision strings
+  #
   if ( "$gpl" == "yes" ) then
     echo 'code_revision='$revision_old     >> include/version.inc
     echo 'code_GPL_revision='$revision_new >> include/version.inc
@@ -142,31 +132,27 @@ endif
 #
 # Prepare new configure script
 #
+set use_rev_old=$revision_old
+set use_rev_new=$revision_new
 if ( "$gpl" == "yes" ) then
-cat << EOF > ss.awk
-{
- gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$GPL_revision_old",
-      "$version_new.$subver_new.$patch_new r.$revision_new",\$0)
- gsub("SVERSION=\"$version_old\"","SVERSION=\"$version_new\"",\$0)
- gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
- gsub("SSUBLEVEL=\"$patch_old\"","SSUBLEVEL=\"$patch_new\"",\$0)
- gsub("SREVISION=\"$GPL_revision_old\"","SREVISION=\"$revision_new\"",\$0)
- print \$0 > "NEW"
-}
-EOF
-else
-cat << EOF > ss.awk
-{
- gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$revision_old",
-      "$version_new.$subver_new.$patch_new r.$revision_new",\$0)
- gsub("SVERSION=\"$version_old\"","SVERSION=\"$version_new\"",\$0)
- gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
- gsub("SSUBLEVEL=\"$patch_old\"","SSUBLEVEL=\"$patch_new\"",\$0)
- gsub("SREVISION=\"$revision_old\"","SREVISION=\"$revision_new\"",\$0)
- print \$0 > "NEW"
-}
-EOF
+  set use_rev_old=$GPL_revision_old
+  set use_rev_new=$revision_new
 endif
+#
+cat << EOF > ss.awk
+{
+ gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$use_rev_old",
+      "$version_new.$subver_new.$patch_new r.$use_rev_new h.$hash_new",\$0)
+ #version
+ gsub("SVERSION=\"$version_old\""  ,"SVERSION=\"$version_new\""  ,\$0)
+ gsub("SSUBLEVEL=\"$patch_old\""   ,"SSUBLEVEL=\"$patch_new\""   ,\$0)
+ gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
+ #revision
+ gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
+ gsub("SHASH=\"$hash_old\""        ,"SHASH=\"$hash_new\""        ,\$0)
+ print \$0 > "NEW"
+}
+EOF
 #
 #
 if ( "$argv[1]" != "save" ) then

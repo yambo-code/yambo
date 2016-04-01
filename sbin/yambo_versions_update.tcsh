@@ -29,6 +29,11 @@ set awk     = awk
 if ( $#argv < 1 ) goto HELP
 if ( $#argv > 1 ) goto HELP
 #
+if ( "$argv[1]" != "r" && "$argv[1]" != "v" && "$argv[1]" != "s" && "$argv[1]" != "p" && "$argv[1]" != "save" ) then
+  echo "Argoument '"$argv"' not recognised. Options are:"
+  goto HELP
+endif
+#
 # Get current version & revision
 #
 set dir=`git branch | grep 'master' |wc -l`
@@ -65,23 +70,25 @@ if ( "$argv[1]" == "v" ) then
   @ subver_new = 0
   @ patch_new  = 0
 endif
+#
 if ( "$argv[1]" == "s" ) then
   @ subver_new ++
   @ patch_new = 0
 endif
+#
 if ( "$argv[1]" == "p" ) @ patch_new ++
-if ( "$argv[1]" == "r" ) then
+#
+if ( "$argv[1]" == "r" || "$argv[1]" == "v" || "$argv[1]" == "s" || "$argv[1]" == "p" ) then
   @ revision_HEAD ++
   set revision_new = $revision_HEAD
   set hash_new     = $hash_HEAD
 endif
-if ( "$argv[1]" == "h" ) set hash_new = $hash_HEAD
 #
 if ( "$argv[1]" != "save" ) then
   echo 
   if ( "$gpl" == "yes" ) then
     echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " h."$hash_old" => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h.'"$hash_new"'"
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new"'"
   else
     echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
          "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h.'"$hash_new"'"
@@ -161,8 +168,6 @@ cat << EOF > ss.awk
 EOF
 endif
 #
-# Version Update
-#
 #
 if ( "$argv[1]" != "save" ) then
   $awk -f ss.awk ./config/configure.ac
@@ -185,9 +190,7 @@ if ( "$argv[1]" == "save" ) then
  rm -f $source_dir
 endif
 
-endif
-
 exit 0
 
 HELP:
-echo "yambo_versions_update.tcsh [(save) / (v)ersion/(s)ubversion/(p)atchlevel/@(r)evision .(h)ash]"
+echo "yambo_versions_update.tcsh [(save) / (v)ersion/(s)ubversion/(p)atchlevel/@(r)evision.hash]"

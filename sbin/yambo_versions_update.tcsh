@@ -87,8 +87,8 @@ endif
 if ( "$argv[1]" != "save" ) then
   echo 
   if ( "$gpl" == "yes" ) then
-    echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " h."$hash_old" => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new"'"
+    echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " => " \
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
   else
     echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
          "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h.'"$hash_new"'"
@@ -141,7 +141,7 @@ endif
 #
 cat << EOF > ss.awk
 {
- gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$use_rev_old",
+ gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$use_rev_old  h\\\.$hash_old",
       "$version_new.$subver_new.$patch_new r.$use_rev_new h.$hash_new",\$0)
  #version
  gsub("SVERSION=\"$version_old\""  ,"SVERSION=\"$version_new\""  ,\$0)

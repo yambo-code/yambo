@@ -28,14 +28,14 @@ module LOGO
  integer      :: code_version(3)
  integer      :: code_GPL_revision
  integer      :: code_revision
- character(50)               :: code_hash
+ character(50):: code_hash
  !
  integer                     :: n_logo_lines
  integer                     :: ID_logo
  integer                     :: ID_logo_stderr
  integer, parameter, private :: max_n_logo_lines=100
  character(60)               :: logo_line(max_n_logo_lines)
-!
+ !
  contains
    !
    integer function pickup_a_random(rand_range)

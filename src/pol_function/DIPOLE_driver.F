@@ -59,10 +59,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
-&                         IO_and_Messaging_switch,IO_write
+&                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
-&                         PP_redux_wait,PAR_COM_Plasma_INDEX,PAR_COM_Q_INDEX,l_par_RT,myid
+&                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT
  use parser_m,       ONLY:parser
 #if defined _SC
  use com,            ONLY:secnm
@@ -246,6 +246,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      write_header  =(     master_cpu.and.writing)
      read_header   =(.not.master_cpu.and.writing).or.reading
      !
+     ! AM March 2016. The next lines are in the nasty case where only a fraction of all CPU's compute the
+     ! dipoles. In this case only those cpu's know the right value of X%Vnl_included that is defined in the
+     ! calculation process. If, in the same run, all cpu's must access the dipoles the other CPU's will have
+     ! the wrong value of X%Vnl_included and the code will get stuck.
+     !
      if (reading.and.PAR_COM_DIPOLES%n_CPU==ncpu)then
        l_vnl=X%Vnl_included
        call PP_redux_wait(l_vnl)
@@ -328,9 +333,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
         !
         if (l_par_RT) then
           !
-          DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           !
         endif
         !

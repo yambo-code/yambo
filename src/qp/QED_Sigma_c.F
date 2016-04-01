@@ -33,7 +33,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                              QP_dSc,QP_time_order_sign
  use IO_m,                ONLY:io_COLLs
  use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
-&                              elemental_collision_copy,P_collisions
+&                              elemental_collision_copy,P_COLL_element
  use wave_func,           ONLY:WF
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute,&
 &                              SCATTERING_GW_kinematics
@@ -205,7 +205,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
        beta   =rZERO
        !
        if (l_use_collisions) then
-         P_square_times_tau(:)=P_collisions(i_qp)%v3_r(:,i_m,i_q_bz)
+         P_square_times_tau(:)=P_COLL_element(i_qp)%v3_r(:,i_m,i_q_bz)
        else
          !
          call elemental_collision_copy(I,I_grad_k)

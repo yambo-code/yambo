@@ -40,7 +40,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,2)=iGo
  !
  use pars,           ONLY:SP,lchlen,IP
- use drivers,        ONLY:l_bse,l_elel_scatt,l_setup
+ use drivers,        ONLY:l_bse,l_elel_scatt
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error,warning
@@ -49,10 +49,10 @@ subroutine bz_samp_indexes(k,Xk,q)
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
  use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,qp_states_k,&
-&                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
+&                         qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
-&                         q_sstar,coll_scattering,Xk_impose_minus_q,q_source
+&                         q_sstar,coll_scattering,q_source
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
 #if defined _ELPH
@@ -70,8 +70,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  integer :: io_db,io_err,io_QINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3)
- logical :: connected_grids,user_defined_qpts,gamma_point_only,&
-&           Xk_impose_minus_q_local
+ logical :: connected_grids,user_defined_qpts,gamma_point_only
 #if defined _ELPH
  logical :: bse_setup_scatt
 #endif
@@ -81,9 +80,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  user_defined_qpts=.false.
  gamma_point_only=.false.
- !
- call parser('MinusQ',Xk_impose_minus_q_local)
- if (Xk_impose_minus_q_local.or.l_setup) Xk_impose_minus_q=Xk_impose_minus_q_local 
  !
  if (.not.bse_scattering ) bse_scattering =l_bse
  if (.not.coll_scattering) coll_scattering=l_elel_scatt
@@ -129,8 +125,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    call m3inv(M=k_b_m1)
    !
-   if (     Xk_impose_minus_q) call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))
-   if (.not.Xk_impose_minus_q) call define_q_map( Xk%ptbz(:,:), Xk%ptbz(1,:))
+   call define_q_map( Xk%ptbz(:,:), Xk%ptbz(1,:))
    !
    ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
    !
@@ -151,8 +146,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
      !
-     if (     Xk_impose_minus_q) call c2a(v_in=-v1,v_out=q%ptbz(i1,:),mode='ka2i')
-     if (.not.Xk_impose_minus_q) call c2a(v_in= v1,v_out=q%ptbz(i1,:),mode='ka2i')
+     call c2a(v_in= v1,v_out=q%ptbz(i1,:),mode='ka2i')
      !
    enddo
    if (.not.allocated(q_pt)) then
@@ -161,7 +155,6 @@ subroutine bz_samp_indexes(k,Xk,q)
    else
      q%nibz=nqibz
      allocate(q%pt(q%nibz,3))
-     if (Xk_impose_minus_q) q_pt=-q_pt
      q%pt=q_pt(:q%nibz,:)
      call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
      user_defined_qpts=.true.

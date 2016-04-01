@@ -48,7 +48,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT 
  use real_time,      ONLY:RT_bands
- use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT
+ use RT_control,     ONLY:OCC_T_range,OCC_deltaT
  use fields,         ONLY:n_ext_fields
 #endif
 #if defined _YPP_ELPH

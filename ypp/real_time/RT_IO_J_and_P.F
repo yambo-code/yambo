@@ -29,9 +29,9 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use rt_ctl,         ONLY:RT_IO_JPO_steps,J_and_P_cache,J_and_P_cache_size,RT_IO_JPO_steps
+ use RT_control,     ONLY:RT_IO_JPO_steps,J_and_P_cache,J_and_P_cache_size,RT_IO_JPO_steps
  use real_time,      ONLY:NE_steps,NE_i_time,RT_ind_J,RT_P,&
-&                         G_lesser,G_lesser_reference,RT_bands
+&                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
  !
  implicit none
@@ -88,6 +88,10 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  endif
  !
  COM_here=NONE
+ !
+ ! Use Core value for dynamical step (needed for the correct behaviour of RT_do_IO)
+ !-----------------------------------
+ RT_dyn_step=RT_step
  !
  ! Check for saved current and polarization database
  !---------------------------------------------------

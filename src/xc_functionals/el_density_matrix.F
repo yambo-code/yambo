@@ -27,7 +27,6 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  ! lesser Green function)
  !
  use pars,           ONLY:SP,cI,cZERO
- use com,            ONLY:error
  use electrons,      ONLY:levels,n_spinor
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:nsym,i_time_rev

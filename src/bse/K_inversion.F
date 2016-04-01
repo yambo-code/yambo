@@ -23,7 +23,7 @@
 !
 subroutine K_inversion(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP,pi,cI,cONE,cZERO
+ use pars,           ONLY:SP,cZERO
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,l_drude
  use stderr,         ONLY:real2ch
  use BS,             ONLY:BS_mat,BSS_rhoq0,BS_H_dim,&
@@ -91,13 +91,9 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Full inversion ?
  !==================
- FULL         = .TRUE.
- PERTURBATIVE = .TRUE.
- !
- if (trim(BSS_inversion_mode)/="i") then
-   FULL         = index(BSS_inversion_mode,'f')/=0
-   PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
- endif
+ FULL         = index(BSS_inversion_mode,'f')/=0
+ PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
+ full_inf_freqs_found=.FALSE.
  !
  call W_reset(W_disk)
  !
@@ -226,7 +222,6 @@ subroutine K_inversion(iq,W,E,k,q)
  if (PERTURBATIVE) then
    !
    min_dist_non_conv_freqs=W%n_freqs
-   full_inf_freqs_found=.FALSE.
    !
    do while (.not.full_inf_freqs_found) 
      !
@@ -258,7 +253,7 @@ subroutine K_inversion(iq,W,E,k,q)
      !
    enddo
    !
-   Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
+   if (full_inf_freqs>0.and.FULL) Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
    !
  endif
  !
@@ -271,7 +266,9 @@ subroutine K_inversion(iq,W,E,k,q)
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/full_inf_freqs/))
    call live_timing('Exact inversion ',px%n_of_elements(myid+1))
+   !
    do_it_full=.true.
+   !
    do i1=1,full_inf_freqs
      !
      if (stop_now(.FALSE.)) then
@@ -375,10 +372,10 @@ subroutine K_inversion(iq,W,E,k,q)
          !
          if (do_it_full) then
            inv_err(iw)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,Lo_dim,BSS_rhoq0,gauge_factor,&
-&                                                                Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
+&                                                           Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
          else
            inv_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,BSS_rhoq0,gauge_factor,&
-&                                                                   Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
+&                                                                  Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
          endif
          !
        endif       

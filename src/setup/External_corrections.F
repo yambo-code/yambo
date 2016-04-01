@@ -31,7 +31,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  use QP_CTL_m,      ONLY:QP_apply
 #if defined _RT
  use drivers,       ONLY:l_cohsex,l_real_time
- use RT_CTL,        ONLY:RT_apply
+ use RT_control,    ONLY:RT_apply
 #endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr

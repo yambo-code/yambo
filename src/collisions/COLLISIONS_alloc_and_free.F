@@ -27,14 +27,13 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use memory_m,       ONLY:mem_est
  use plasma,         ONLY:N_plasma_poles_global
  use R_lattice,      ONLY:nqbz,nkibz
- use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ,PAR_nQP
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
- use collision,      ONLY:COLLISIONS_element,Fock_collisions,SEX_collisions,GW_NEQ_collisions,&
-&                         nFock_collisions,nSEX_collisions,nGW_NEQ_collisions,COLL_bands
+ use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ
+ use collision,      ONLY:COLLISIONS_element,FOCK_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element,&
+&                         COLL_bands,&
+&                         GW_NEQ_collisions,FOCK_collisions,SEX_collisions,P_collisions,COLLISIONS_group
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
- use collision,      ONLY:P_collisions,nP_collisions
- use global_XC,      ONLY:SE_GW_QED
+ use collision,      ONLY:P_COLL_element
 #endif
  !
  implicit none
@@ -44,14 +43,9 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  ! Work Space
  !
- integer :: D(3,2),COLL_range(2),J,mem_size(5),size_
+ integer :: D(3,2),COLL_range(2),J,K,mem_size(5),size_
  logical :: l_Fock,l_SEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
 &           l_clean,l_collision,l_distribute,l_Momentum,l_complex,l_real
- !
- if (I==0) COLL_range=(/1,PAR_nQP/)
- if (I==0) size_=PAR_nQP
- if (I> 0) COLL_range=(/I,I/)
- if (I> 0) size_=1
  !
  ! What
  !
@@ -59,6 +53,18 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_SEX     =index(what,"SEX")>0
  l_GW_NEQ  =index(what,"GW_NEQ")>0
  l_Momentum=index(what,"Momentum")>0
+ !
+ ! Dimension
+ !
+ if (I==0) then
+   if (l_Fock)     COLL_range=(/1,FOCK_collisions%PAR_N/)
+   if (l_SEX)      COLL_range=(/1,SEX_collisions%PAR_N/)
+   if (l_GW_NEQ)   COLL_range=(/1,GW_NEQ_collisions%PAR_N/)
+   if (l_Momentum) COLL_range=(/1,P_collisions%PAR_N/)
+   size_=COLL_range(2)
+ endif
+ if (I> 0) COLL_range=(/I,I/)
+ if (I> 0) size_=1
  !
  l_complex=l_Fock.or.l_SEX
  l_real   =l_GW_NEQ.or.l_Momentum
@@ -82,18 +88,16 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    D(2,:)=COLL_bands
    D(3,:)=(/1,nkibz/)
    if (l_collision.and.l_alloc) then
-     allocate(Fock_collisions(size_))
-     nFock_collisions=size_
-     Fock_collisions(:)%kind=SC_HF
-     Fock_collisions(:)%name="Fock"
+     allocate(FOCK_COLL_element(size_))
+     FOCK_COLL_element%N=size_
    endif
-   call local_alloc_and_free(Fock_collisions,nFock_collisions)
+   call local_alloc_and_free(FOCK_COLL_element,FOCK_collisions)
    if (l_collision.and.l_clean) then
-     if (allocated(Fock_collisions)) then
-       call local_alloc_and_free(Fock_collisions,nFock_collisions)
-       deallocate(Fock_collisions)
+     if (allocated(FOCK_COLL_element)) then
+       call local_alloc_and_free(FOCK_COLL_element,FOCK_collisions)
+       deallocate(FOCK_COLL_element)
      endif
-     nFock_collisions=0
+     FOCK_COLL_element%N=0
    endif
  endif
  !
@@ -102,18 +106,16 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    D(2,:)=COLL_bands
    D(3,:)=(/1,nkibz/)
    if (l_collision.and.l_alloc) then
-     allocate(SEX_collisions(size_))
-     nSEX_collisions=size_
-     SEX_collisions(:)%kind=SC_COHSEX
-     SEX_collisions(:)%name="SEX"
+     allocate(SEX_COLL_element(size_))
+     SEX_COLL_element%N=size_
    endif
-   call local_alloc_and_free(SEX_collisions,nSEX_collisions)
+   call local_alloc_and_free(SEX_COLL_element,SEX_collisions)
    if (l_collision.and.l_clean) then
-     if (allocated(SEX_collisions)) then
-       call local_alloc_and_free(SEX_collisions,nSEX_collisions)
-       deallocate(SEX_collisions)
+     if (allocated(SEX_COLL_element)) then
+       call local_alloc_and_free(SEX_COLL_element,SEX_collisions)
+       deallocate(SEX_COLL_element)
      endif
-     nSEX_collisions=0
+     SEX_COLL_element%N=0
    endif
  endif
  !
@@ -129,18 +131,16 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      !D(3,:)=(/1,PAR_nQ/)
    endif
    if (l_collision.and.l_alloc) then
-     allocate(P_collisions(size_))
-     nP_collisions=size_
-     P_collisions(:)%kind=SE_GW_QED
-     P_collisions(:)%name="Momentum"
+     allocate(P_COLL_element(size_))
+     P_COLL_element%N=size_
    endif
-   call local_alloc_and_free(P_collisions,nP_collisions)
+   call local_alloc_and_free(P_COLL_element,P_collisions)
    if (l_collision.and.l_clean) then
-     if (allocated(P_collisions)) then
-       call local_alloc_and_free(P_collisions,nP_collisions)
-       deallocate(P_collisions)
+     if (allocated(P_COLL_element)) then
+       call local_alloc_and_free(P_COLL_element,P_collisions)
+       deallocate(P_COLL_element)
      endif
-     nP_collisions=0
+     P_COLL_element%N=0
    endif
  endif
  !
@@ -155,27 +155,33 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      D(3,:)=(/1,PAR_nQ/)
    endif
    if (l_collision.and.l_alloc) then
-     allocate(GW_NEQ_collisions(size_))
-     nGW_NEQ_collisions=size_
-     GW_NEQ_collisions(:)%kind=SE_GW_NEQ
-     GW_NEQ_collisions(:)%name="GW_NEQ"
+     allocate(GW_NEQ_COLL_element(size_))
+     GW_NEQ_COLL_element%N=size_
    endif
-   call local_alloc_and_free(GW_NEQ_collisions,nGW_NEQ_collisions)
+   call local_alloc_and_free(GW_NEQ_COLL_element,GW_NEQ_collisions)
    if(l_collision.and.l_clean) then
-     if (allocated(GW_NEQ_collisions)) then
-       deallocate(GW_NEQ_collisions)
+     if (allocated(GW_NEQ_COLL_element)) then
+       deallocate(GW_NEQ_COLL_element)
      endif
-     nGW_NEQ_collisions=0
+     GW_NEQ_COLL_element%N=0
    endif
  endif
  !
  contains
    !
-   subroutine local_alloc_and_free(COLL,N)
-     integer                  :: N
-     type(COLLISIONS_element) :: COLL(N)
+   subroutine local_alloc_and_free(COLL,COLL_grp)
+     type(COLLISIONS_group)   :: COLL_grp
+     type(COLLISIONS_element) :: COLL(COLL_grp%N)
      mem_size=0
      do J=COLL_range(1),COLL_range(2)
+       !
+       ! Here I assign to each collision element an index corresponding to the REAL collision
+       ! associated. This is because J runs on the parallel components and not on the real ones.
+       !
+       do K=1,COLL_grp%N
+         if (COLL_grp%PAR_map(K)==J) COLL(J)%I=K
+       enddo
+       !
        if (l_alloc.and.(l_v3.or.l_all)) then
          if(l_real) then
            allocate(COLL(J)%v3_r(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
@@ -187,7 +193,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
            COLL(J)%v3_c=cZERO
            mem_size(2)=mem_size(2)+size(COLL(J)%v3_c)
          endif
-         COLL(J)%D=D
+         COLL_grp%D=D
        endif
        if (l_clean.and.(l_v3.or.l_all)) then
          if (l_real  .and.associated(COLL(J)%v3_r)) deallocate(COLL(J)%v3_r)
@@ -212,7 +218,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        if (l_alloc.and.(l_table.or.l_all)) then
          allocate(COLL(J)%table(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
          COLL(J)%table=0
-         COLL(J)%D=D
+         COLL_grp%D=D
          mem_size(5)=mem_size(5)+size(COLL(J)%table)
        endif
        if (l_clean.and.(l_table.or.l_all)) then
@@ -222,26 +228,26 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      !
      if (l_alloc) then
        if(l_v3.or.l_all) then
-         if (l_real  )  call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r",  (/mem_size(1)/))
-         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c",  (/mem_size(2)/))
+         if (l_real  )  call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_v3r",  (/mem_size(1)/))
+         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_v3c",  (/mem_size(2)/))
        endif
        if (l_v1.or.l_all) then
-         if (l_real  )  call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_vr",   (/mem_size(3)/))
-         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_vc",   (/mem_size(4)/))
+         if (l_real  )  call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_vr",   (/mem_size(3)/))
+         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_vc",   (/mem_size(4)/))
        endif
-       if (l_table.or.l_all)  call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table",(/mem_size(5)/),(/LP/))
+       if (l_table.or.l_all)  call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_table",(/mem_size(5)/),(/LP/))
      endif
      !
      if (l_clean) then
        if (l_v3.or.l_all) then
-         if (l_real   ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r")
-         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c")
+         if (l_real   ) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_v3r")
+         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_v3c")
        endif
        if (l_v1.or.l_all) then
-         if (l_real   ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_vr")
-         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_vc")
+         if (l_real   ) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_vr")
+         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_vc")
        endif
-       if (l_table.or.l_all)   call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table")
+       if (l_table.or.l_all)   call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_table")
      endif
      !
    end subroutine

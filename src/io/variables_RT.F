@@ -28,22 +28,19 @@ integer function variables_RT(ID,local_description,what)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr
  use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
- use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
-&                         RT_description,n_RT_descriptions,it_dyn
+ use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
+&                         RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,NE_steps,NE_time, &
-&                         Integrator_name,RT_bands,      &
-&                         RAD_LifeTime,Phase_LifeTime,   &
+&                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
+&                         RAD_LifeTime,Phase_LifeTime,it_dyn,   &
 &                         l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_steps,&
-&                         RT_life_interp_KIND,l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E
+&                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E
  use ELPH,           ONLY:elph_branches
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
- use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
-&                         variable_is_found,read_is_on,io_code_revision
- ! tmp code to be removed
- use SC,             ONLY:it_now,SC_bands
+ use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  !
  implicit none
  !
@@ -56,9 +53,10 @@ integer function variables_RT(ID,local_description,what)
  real(SP)              :: RT_life_interp_decay_time
  character(lchlen)     :: ch
  !
- RT_diagonalization_steps=0
- l_RT_diagonalize=.false.
- RT_life_interp_decay_time=0._SP
+ RT_diagonalization_steps  = 0
+ l_RT_diagonalize          = .false.
+ l_RT_diamagnetic          = .false.
+ RT_life_interp_decay_time = 0._SP
  !
  l_J           = what=="J_and_P"
  l_G           = what=="G"
@@ -77,8 +75,6 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,I1=RT_bands,&
 &       VAR=' Number of RT bands              :',CHECK=.true.,OP=(/"==","=="/),&
 &       DESCRIPTION=local_description(i_desc))
- else
-   if( read_is_on(ID) ) RT_bands=SC_bands
  endif
  i_desc=i_desc+1
  call io_elemental(ID,I0=RT_nk,&
@@ -103,7 +99,7 @@ integer function variables_RT(ID,local_description,what)
 &   DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID, &
-&   VAR=" [E-P] Memory steps              :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
+&   VAR=" [E-P] GF`s Memory steps         :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -137,7 +133,7 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
+&    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
@@ -147,26 +143,24 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,&
 &    VAR=" [RT] NE time       (reached)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
-     ! What is the difference between it_dyn and NE_i_time ?
-   if( ver_is_gt_or_eq(ID,revision=5380) ) then
-     i_desc=i_desc+1
-     call io_elemental(ID,&
-&      VAR=" [RT] Time steps    (reached)    :",I0=it_dyn,WARN=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc))
-   else
-     if( read_is_on(ID) ) it_dyn=it_now
-   endif
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   !
-   ! RT_life_interp_kind
-   !
-   call io_elemental(ID,VAR='RT_life_interp_kind',CH0="",VAR_SZ=1,MENU=0)
    i_desc=i_desc+1
-   call io_elemental(ID,CH0=RT_life_interp_KIND, &
-&        VAR=" [RT] Sampling                   :",WARN=.true.,OP=(/"=="/),&
-&        DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,&
+&    VAR=" [RT] Time steps    (reached)    :",I0=it_dyn,WARN=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc))
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! Lifetimes Interpolation
+   !
+   if( ver_is_gt_or_eq(ID,revision=5416) ) then
+     call io_elemental(ID,VAR='RT_life_interpolation',VAR_SZ=1,MENU=0)
+     i_desc=i_desc+1
+     call io_elemental(ID,L0=l_RT_lifetimes_interpolation, &
+&          VAR=" [RT] Lifetimes Interpolation    :",WARN=.true.,OP=(/"=="/),&
+&          DESCRIPTION=local_description(i_desc))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
    !
    !
    ! RT_life_interp_more

@@ -23,7 +23,8 @@
 !
 module collision
  !
- use pars, ONLY :DP,SP,LP,schlen
+ use pars,       ONLY:DP,SP,LP,schlen
+ use parallel_m, ONLY:PP_indexes
  !
  implicit none
  !
@@ -62,9 +63,6 @@ module collision
  ! EXTENDED COLLISION
  !====================
  !
- integer                  :: n_COLLISIONS ! QP_n_states written on disk that may differ from the running value 
- integer                  :: V_kind 
- !
  integer :: COLL_bands(2)
  !
  ! Cut off on exchange matrix elements
@@ -74,15 +72,6 @@ module collision
  real(SP)                 :: COLLISIONS_max
  !
  logical :: COLLISIONS_parallel_SC_structure=.FALSE.
- !
- ! Fragments
- !
- integer, allocatable       :: COLLISIONS_IO_status(:)
- !
- ! States
- !
- integer, allocatable       :: COLLISIONS_state(:,:)
- integer, allocatable       :: COLLISIONS_DB_map(:) ! COLLISIONS_DB_map(I) is the DB corresponding to the QP_state I
  !
  ! Elements used in the code
  !
@@ -97,10 +86,8 @@ module collision
  !                (USE): v3_r
  !
  type COLLISIONS_element
-   character(schlen)     :: name="none"
-   integer               :: kind=0
-   integer               :: D(3,2)=0    ! Dimension (v3)
-   integer               :: N           ! Linear Dimension
+   integer               :: I=0         ! State Index 
+   integer               :: N=0         ! Linear Dimension
    integer(LP), pointer  :: table(:,:,:)  => null()
    complex(SP), pointer  :: v_c(:)        => null()
    complex(SP), pointer  :: v3_c(:,:,:)   => null()
@@ -108,16 +95,52 @@ module collision
    real(SP)   , pointer  :: v3_r(:,:,:)   => null()
  end type
  !
- integer :: nGW_NEQ_collisions=0
- type(COLLISIONS_element), allocatable :: GW_NEQ_collisions(:)
- integer :: nFock_collisions=0
- type(COLLISIONS_element), allocatable :: Fock_collisions(:)
- integer :: nSEX_collisions=0
- type(COLLISIONS_element), allocatable :: SEX_collisions(:)
- integer :: nP_collisions=0
- type(COLLISIONS_element), allocatable :: P_collisions(:)
+ type COLLISIONS_group
+   integer               :: D(3,2)=0    ! Dimension (v3 of corresponding COLLISIONS_element)
+   character(schlen)     :: name="none"
+   integer               :: kind=0
+   integer               :: N=0         ! # of collisions (dimension of linked COLLISIONS_element)
+   integer,     pointer  :: state(:,:)   => null()
+   !
+   ! I/O
+   !
+   integer,     pointer  :: IO_status(:) => null()
+   !
+   ! Parallel Substructure
+   !
+   type(PP_indexes)      :: PAR_IND
+   integer               :: PAR_N=0
+   integer,     pointer  :: PAR_map(:) => null()
+   !
+ end type
+ !
+ ! COLLISIONS groups...
+ !======================
+ type(COLLISIONS_group) :: GW_NEQ_collisions
+ type(COLLISIONS_group) :: FOCK_collisions
+ type(COLLISIONS_group) :: SEX_collisions
+ type(COLLISIONS_group) :: P_collisions
+ !
+ ! .. and ELEMENTS
+ !=================
+ type(COLLISIONS_element), allocatable :: GW_NEQ_COLL_element(:)
+ type(COLLISIONS_element), allocatable :: FOCK_COLL_element(:)
+ type(COLLISIONS_element), allocatable :: SEX_COLL_element(:)
+ type(COLLISIONS_element), allocatable :: P_COLL_element(:)
  !
  contains
+   !
+   subroutine COLLISIONS_initial_naming( )
+     use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_QED,SE_GW_NEQ
+     FOCK_collisions%kind=SC_HF
+     FOCK_collisions%name="Fock"
+     SEX_collisions%kind=SC_COHSEX
+     SEX_collisions%name="SEX"
+     P_collisions%kind=SE_GW_QED
+     P_collisions%name="Momentum"
+     GW_NEQ_collisions%kind=SE_GW_NEQ
+     GW_NEQ_collisions%name="GW_NEQ"
+   end subroutine
    !
    subroutine elemental_collision_copy(I,O)
      type(elemental_collision)::I,O

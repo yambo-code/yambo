@@ -368,7 +368,7 @@ module YPP
      use units,          ONLY:FS2AUT
      use com,            ONLY:msg
      use real_time,      ONLY:RT_step,NE_time
-     use rt_ctl,         ONLY:RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
+     use RT_control,     ONLY:RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
      !
      integer :: N_times
      !

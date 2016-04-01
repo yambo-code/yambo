@@ -61,7 +61,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
 &                     n_max_jobstr,grid_paths
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
-&                     string_split,string_remove,log_as_a_file
+&                     string_split,log_as_a_file,string_remove
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
@@ -83,29 +83,28 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
-#if defined _SC
+#if defined _SC 
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix,l_sc_pot_is_local
- use collision,  ONLY:COLLISIONS_cutoff
+ use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
 #endif
 #if defined _RT || defined _YPP_RT
- use rt_ctl,     ONLY:RT_IO_time
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,                           &
-&                     RT_life_interp_KIND,RT_life_interp_steps,n_regions,                 &
-&                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
+ use RT_control, ONLY:RT_IO_time
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_steps,      &
+&                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
 &                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
-&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
+&                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
 &                     RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,  &
 &                     Eh_pumped_pair_deltaE,Eh_pumped_pair_BZ_width,Eh_pumped_pair_BZ_reagions,&
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
-&                     RT_ctl_db
+&                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
- use plasma,     ONLY:Plasma_redux_percent
+ use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -190,7 +189,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  enddo
  !
  jobstr=string(1)
- !
  alt_jobstr=" "
  do i1=2,n_max_jobstr
    if (len_trim(string(i1))==0) cycle
@@ -529,6 +527,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  FAN_deltaE_treshold=1.E-6_SP/HA2EV
 #endif
  !
+#if defined _SC || defined _RT || defined _QED
+ !
+ call COLLISIONS_initial_naming()
+ !
+#endif
+ !
 #if defined _SC
  ! SC
  !
@@ -585,7 +589,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_is_dephased=.FALSE.
  l_RT_induced_field=.FALSE.
  NE_MEM_treshold=0.
- G_MEM_steps=2   ! By default only G_lesser@t and @t+1
  RT_nk=0
  RT_eh_en=0._SP
  RT_scatt_tresh=1._SP
@@ -596,12 +599,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Eh_pumped_pair_BZ_width=0.1_SP
  Eh_pumped_pair_BZ_reagions=-1.0_SP
  Eh_pumped_Nel=1._SP
- Plasma_redux_percent=100._SP
+ PLASMA_redux_percent=100._SP
  DbGd_EE_percent=0._SP
  !
  ! Scattering
  !
- RT_life_interp_KIND="NONE"
  RT_life_interp_steps(1)=-1._SP*FS2AUT
  RT_life_interp_steps(2)=-1._SP*FS2AUT
  !
@@ -618,6 +620,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_Efit_lifetimes=0._SP
  RT_Tfit_occupations=0._SP
  RT_Efit_occupations=0._SP
+ RAD_prefactor=0._SP
  EE_prefactor=0._SP
  EP_prefactor=0._SP
  EP_abs_prefactor=0._SP

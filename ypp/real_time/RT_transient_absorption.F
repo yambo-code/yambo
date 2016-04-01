@@ -30,7 +30,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
  use X_m,             ONLY:X_t,DIP_projected
- use rt_ctl,          ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
+ use RT_control,      ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
  use IO_m,            ONLY:io_DIP
  use YPP,             ONLY:X_rt
  use X_m,             ONLY:Epsilon_ii

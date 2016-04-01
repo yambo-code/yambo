@@ -23,11 +23,11 @@
 !
 subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo) 
  !
- use pars,           ONLY:SP,cZERO,cONE,cI
+ use pars,           ONLY:SP,cZERO,cI
  use parser_m,       ONLY:parser
- use stderr,         ONLY:intc,real2ch
+ use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
- use X_m,            ONLY:Epsilon_ii,Epsilon_ij,Joint_DOS,X_drude_term,global_gauge,iw_ref,l_drude
+ use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,iw_ref,l_drude
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS,             ONLY:Co_factor,BSS_rhoq0,BS_H_dim,BS_K_dim,&
@@ -53,7 +53,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  type(w_samp)     :: W_mins,W_plus
  !
  logical          :: K_diago_in_BS_mat,eval_anti_resonant
- integer          :: i1,i2,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
+ integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
  complex(SP)      :: E_plus_W,residual
  !
  complex(SP), allocatable :: BS_mat_diagonal(:)
@@ -65,20 +65,17 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  !
  if (.not.K_diago_in_BS_mat) allocate(BS_mat_diagonal(BS_K_dim))
  !
- do i1=1,BS_K_dim
-   i2=i1+BS_K_dim
+ do i_res=1,BS_K_dim
+   i_cpl=i_res+BS_K_dim
    !
    ! I need to remove energies and width from the diagonal of the BS_mat
    ! These are now embodied in the Green's function.
    !
-   if (.not.allocated(BSS_eh_Z)) E_plus_W=BSS_eh_E(i1)
-   if (     allocated(BSS_eh_Z)) E_plus_W=BSS_eh_E(i1)-cI*BSS_eh_W(i1)
+   if (.not.allocated(BSS_eh_Z)) E_plus_W=BSS_eh_E(i_res)
+   if (     allocated(BSS_eh_Z)) E_plus_W=BSS_eh_E(i_res)-cI*BSS_eh_W(i_res)
    !
-   BS_mat(i1,i1)=BS_mat(i1,i1)-E_plus_W
-   if (index(BSE_mode,'coupling')>0) BS_mat(i2,i2)= BS_mat(i2,i2)+conjg(E_plus_W)
-   !
-   ! I need to remove the occupation factors from the kernel
-   ! These are now embodied in the Green's function
+   BS_mat(i_res,i_res)=BS_mat(i_res,i_res)-E_plus_W
+   if (index(BSE_mode,'coupling')>0) BS_mat(i_cpl,i_cpl)= BS_mat(i_cpl,i_cpl)+conjg(E_plus_W)
    !
    do i3=1,BS_K_dim
      i4=i3+BS_K_dim
@@ -86,11 +83,11 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      ! I need to remove the occupation factors from the kernel
      ! These are now embodied in the Green's function
      !
-     BS_mat(i3,i1)=BS_mat(i3,i1)/sqrt(BSS_eh_f(i3))/sqrt(BSS_eh_f(i1))
+     BS_mat(i3,i_res)=BS_mat(i3,i_res)/sqrt(BSS_eh_f(i3))/sqrt(BSS_eh_f(i_res))
      if (index(BSE_mode,'coupling')>0) then
-       BS_mat(i1,i4)= BS_mat(i1,i4)/sqrt(BSS_eh_f(i1))/sqrt(BSS_eh_f(i3))/cI
-       BS_mat(i2,i3)= BS_mat(i2,i3)/sqrt(BSS_eh_f(i1))/sqrt(BSS_eh_f(i3))/cI
-       BS_mat(i2,i4)=-BS_mat(i2,i4)/sqrt(BSS_eh_f(i1))/sqrt(BSS_eh_f(i3))
+       BS_mat(i_res,i4)= BS_mat(i_res,i4)/sqrt(BSS_eh_f(i_res))/sqrt(BSS_eh_f(i3))/cI
+       BS_mat(i_cpl,i3)= BS_mat(i_cpl,i3)/sqrt(BSS_eh_f(i_res))/sqrt(BSS_eh_f(i3))/cI
+       BS_mat(i_cpl,i4)=-BS_mat(i_cpl,i4)/sqrt(BSS_eh_f(i_res))/sqrt(BSS_eh_f(i3))
      endif
    enddo
    !
@@ -99,10 +96,10 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      ! I store the diagonal of the kernel only in BS_mat_diagonal,
      ! to be inserted in Lo
      !
-     BS_mat_diagonal(i1)=BS_mat(i1,i1)
+     BS_mat_diagonal(i_res)=BS_mat(i_res,i_res)
      !
-     BS_mat(i1,i1)=cZERO
-     if (index(BSE_mode,'coupling')>0) BS_mat(i2,i2)= cZERO
+     BS_mat(i_res,i_res)=cZERO
+     if (index(BSE_mode,'coupling')>0) BS_mat(i_cpl,i_cpl)= cZERO
      !
    endif
    !
@@ -125,18 +122,18 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2
  !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/BS_K_dim/))
+ !
  do i_loop=1,n_loop
-   !
-   call PP_indexes_reset(px)
-   call PARALLEL_index(px,(/BS_K_dim/))
    !
    i_eps=2+i_loop
    !
    if(n_loop==2) then
-     if(i_loop==1) call live_timing('Compute Eps IP',px%n_of_elements(myid+1))
-     if(i_loop==2) call live_timing('Compute Lo and Eps shifted',px%n_of_elements(myid+1))
+     if(i_loop==1) call live_timing('IP Absorption',px%n_of_elements(myid+1))
+     if(i_loop==2) call live_timing('Shifted GF and Absorption',px%n_of_elements(myid+1))
    else
-     call live_timing('Compute Eps IP and Lo',px%n_of_elements(myid+1))
+     call live_timing('IP GF and Absorptio',px%n_of_elements(myid+1))
    endif
    !
    Lo=cZERO
@@ -146,33 +143,35 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    call W_duplicate(W,W_mins)
    call W_duplicate(W,W_plus)
    !
-   do i1=1,BS_K_dim
+   do i_res=1,BS_K_dim
      !
-     if (.not.px%element_1D(i1)) cycle
+     i_cpl=i_res+BS_K_dim
      !
-     ik_bz =BSS_eh_table(i1,1)
-     iv    =BSS_eh_table(i1,2)
-     ic    =BSS_eh_table(i1,3)
-     i_sp  =spin(BSS_eh_table(i1,:))
+     if (.not.px%element_1D(i_res)) cycle
+     !
+     ik_bz =BSS_eh_table(i_res,1)
+     iv    =BSS_eh_table(i_res,2)
+     ic    =BSS_eh_table(i_res,3)
+     i_sp  =spin(BSS_eh_table(i_res,:))
      !
      ik_ibz=k%sstar(ik_bz,1)   
      !
      transition=(/ik_bz,iv,ic,i_sp/)
      !
      if ( trim(BSE_mode)=='causal') then
-       i2=i1
-       i_Lo=2
+       i_Lo_trans=i_res
+       i_Lo      =2
      else if( trim(BSE_mode)=="coupling") then
-       i2=i1+BS_K_dim
-       i_Lo=1
+       i_Lo_trans=i_cpl
+       i_Lo      =1
      endif
      !
-     if (.not.allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i1)
-     if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i1)-cI*BSS_eh_W(i1)
+     if (.not.allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)
+     if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)-cI*BSS_eh_W(i_res)
      !
      if(i_loop==2) then
-       forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_mat_diagonal(i1)*BSS_eh_f(i1)
-       forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_mat_diagonal(i1)*BSS_eh_f(i1)
+       forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_mat_diagonal(i_res)*BSS_eh_f(i_res)
+       forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_mat_diagonal(i_res)*BSS_eh_f(i_res)
      endif
      !
 #if defined _ELPH
@@ -181,9 +180,13 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        !
        ! Analytical GFs
        !================
-       call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i1,:,1),"r","eh")
-       if (eval_anti_resonant) &
-&         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i2,:,i_Lo),"ca","eh")
+       call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh")
+       !
+       if (eval_anti_resonant) then
+         !
+         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"ca","eh")
+         !
+       endif
        !
 #if defined _ELPH
      else 
@@ -192,25 +195,30 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        !
        ! Convoluted GFs
        !================
-       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i1,:,1),"r")
-       if (eval_anti_resonant) call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i2,:,i_Lo),"ca")
+       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i_res,:,1),"r")
+       !
+       if (eval_anti_resonant) then
+         !
+         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"ca")
+         !
+       endif
        !
        ! GPL_EXCLUDE_END
        !
      endif
 #endif
      !
-     residual=BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))
+     residual=BSS_rhoq0(i_res)*conjg(BSS_rhoq0(i_res))
      if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
-     if (trim(global_gauge)=='velocity') Lo(i1,:,1)=(Lo(i1,:,1)-Lo(i1,iw_ref,1))
-     Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i1,:,1)
-     Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -         Lo(i1,:,1)
+     if (trim(global_gauge)=='velocity') Lo(i_res,:,1)=(Lo(i_res,:,1)-Lo(i_res,iw_ref,1))
+     Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
+     Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -         Lo(i_res,:,1)
      !
      if ( eval_anti_resonant ) then
-       residual=conjg(BSS_rhoq0(i2))*BSS_rhoq0(i2)
-       if (trim(global_gauge)=='velocity') Lo(i2,:,i_Lo)=(Lo(i2,:,i_Lo)-Lo(i2,iw_ref,i_Lo))
-       Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i2,:,i_Lo)
-       Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -                Lo(i2,:,i_Lo)
+       residual=conjg(BSS_rhoq0(i_Lo_trans))*BSS_rhoq0(i_Lo_trans)
+       if (trim(global_gauge)=='velocity') Lo(i_Lo_trans,:,i_Lo)=(Lo(i_Lo_trans,:,i_Lo)-Lo(i_Lo_trans,iw_ref,i_Lo))
+       Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
+       Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -                Lo(i_Lo_trans,:,i_Lo)
      endif
      !
      call live_timing(steps=1)

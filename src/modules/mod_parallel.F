@@ -23,6 +23,36 @@
 !
 module parallel_m
  !
+ ! Collective Operations (from  http://linux.die.net/man/3/mpi_lor )
+ !
+ ! The collective combination operations ( MPI_REDUCE , MPI_ALLREDUCE , MPI_REDUCE_SCATTER , and MPI_SCAN ) take a combination operation. This operation is of type
+ ! MPI_Op in C and of type INTEGER in Fortran. The predefined operations are 
+ !
+ !MPI_MAX
+ !    - return the maximum 
+ !MPI_MIN
+ !    - return the minumum 
+ !MPI_SUM
+ !    - return the sum 
+ !MPI_PROD
+ !    - return the product 
+ !MPI_LAND
+ !    - return the logical and 
+ !MPI_BAND
+ !    - return the bitwise and 
+ !MPI_LOR
+ !    - return the logical or 
+ !MPI_BOR
+ !    - return the bitwise of 
+ !MPI_LXOR
+ !    - return the logical exclusive or 
+ !MPI_BXOR
+ !    - return the bitwise exclusive or 
+ !MPI_MINLOC
+ !    - return the minimum and the location (actually, the value of the second element of the structure where the minimum of the first is found) 
+ !MPI_MAXLOC
+ !    - return the maximum and the location 
+ !
  use pars,       ONLY:SP,DP,schlen,lchlen
  !
  implicit none
@@ -218,7 +248,7 @@ module parallel_m
  integer            :: PAR_IND_QP_ID
  !
  ! ... PLASMA
- integer            :: PAR_IND_Plasma_ID
+ integer            :: PAR_IND_PLASMA_ID
  !
  ! ... G bands
  integer            :: PAR_IND_G_b_ID
@@ -274,7 +304,7 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_QP_A2A
  !
  ! ... Plasma
- type(MPI_comm),SAVE :: PAR_COM_Plasma_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_PLASMA_INDEX
  !
  ! ... G bands
  type(MPI_comm),SAVE :: PAR_COM_G_b_INDEX
@@ -323,7 +353,7 @@ module parallel_m
  ! ... and derived variables
  !==========================
  integer            :: PAR_nPlasma
- integer,allocatable:: PAR_Plasma_index(:)
+ integer,allocatable:: PAR_PLASMA_index(:)
  integer            :: PAR_nQP
  integer,allocatable:: PAR_QP_index(:)
  integer            :: PAR_n_B_mat_elements
@@ -462,6 +492,17 @@ module parallel_m
 #if defined _MPI
      if (ncpu>1) then
        call mpi_finalize(i_err)
+     endif
+#endif
+     stop 
+     return
+   end subroutine
+   !
+   subroutine MPI_shutdown
+     implicit none
+#if defined _MPI
+     if (ncpu>1) then
+       call mpi_abort(1,mpi_comm_world)
      endif
 #endif
      stop 

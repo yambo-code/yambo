@@ -36,7 +36,7 @@ module plasma
  ! plasma_grid: (ipole_cg,iqbz,2)=(J,iq) --> 2=(ipole1,ipole2)=extrema on the big grid
  !
  integer   :: N_plasma_poles_global = 0
- real(SP)  :: Plasma_redux_percent
+ real(SP)  :: PLASMA_redux_percent
  !
  type plasma_gas
    integer                   ::  max_N_poles
@@ -52,7 +52,7 @@ module plasma
  !
  contains
    !
-   subroutine Plasma_alloc(Gas,DIM_)
+   subroutine PLASMA_alloc(Gas,DIM_)
      !
      use memory_m,       ONLY:mem_est
      use D_lattice,      ONLY:nsym
@@ -64,17 +64,17 @@ module plasma
      !
      if(.not.allocated(Gas%tab).and.Gas%max_N_poles>0) then       
        allocate(Gas%tab(Gas%max_N_poles,DIM_(2),2))
-       call mem_est("Plasma_tab")
+       call mem_est("PLASMA_tab")
      endif
      !
      if(.not.allocated(Gas%tab_m1)) then
        allocate(Gas%tab_m1(DIM_(3),nsym,DIM_(2)))
-       call mem_est("Plasma_tab_m1")
+       call mem_est("PLASMA_tab_m1")
      endif
      !
    end subroutine
    !
-   subroutine Plasma_free(Gas)
+   subroutine PLASMA_free(Gas)
      use memory_m,       ONLY:mem_est
      !
      type(plasma_gas) :: Gas
@@ -83,7 +83,7 @@ module plasma
      if(allocated(Gas%tab))     deallocate(Gas%tab)
      if(allocated(Gas%tab_m1))  deallocate(Gas%tab_m1)
      if(allocated(Gas%grid))    deallocate(Gas%grid)
-     call mem_est("Plasma_tab Plasma_tab_m1 Plasma_grid")
+     call mem_est("PLASMA_tab PLASMA_tab_m1 PLASMA_grid")
      !
    end subroutine
    !

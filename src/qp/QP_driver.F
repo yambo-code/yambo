@@ -104,7 +104,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    GWo_iterations=0
    !
    write (qp%description(1),'(a)') ' GW solver              : Secant'
-   call section('*','Dyson equation: non perturbative secant method')
+   call section('*','Dyson equation: non perturbative QP_secant method')
    !
  else if (trim(QP_solver)=='g') then
    write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
@@ -292,7 +292,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    ! SECANT
    !--------
-   call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
+   call QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
    !
  endif
  !

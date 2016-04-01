@@ -30,7 +30,7 @@ subroutine RT_initialize()
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HA2EV
  use stderr,         ONLY:real2ch
- use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
+ use RT_control,     ONLY:RT_output,RT_IO_JPO_steps
  use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps,NE_time
  use fields,         ONLY:Efield
  !

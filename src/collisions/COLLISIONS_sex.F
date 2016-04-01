@@ -32,17 +32,16 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  use electrons,     ONLY:levels,spin_occ,spin
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_IND_Q,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
+&                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        SEX_collisions,nSEX_collisions,COLL_bands,&
-&                        COLLISIONS_IO_status,elemental_collision_alloc
+&                        SEX_COLL_element,COLL_bands,&
+&                        elemental_collision_alloc,SEX_collisions
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -58,9 +57,9 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  !
  ! Work Space
  !
- integer                 :: i_qp,ig1,ig2,iqbz,iqibz,alloc_err,iqs,n_bands_to_load,&
-&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,n_bands(2),N_g_vecs,&
-&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_nQP_local
+ integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,&
+&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs,&
+&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local
  !
  type(elemental_collision):: isc,iscp
  complex(SP)              :: pre_factor
@@ -88,12 +87,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  !
  ! Dimensions
  !
- QP_n_G_bands=COLL_bands
- !
- n_bands   =QP_n_G_bands
  N_g_vecs  =X%ng
- !
- n_bands_to_load=max(QP_n_G_bands(2),QP_nb)
  !
  call msg('r', '[SEX] Plane waves :',N_g_vecs)
  !
@@ -105,7 +99,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
    !
  endif
  !
- call WF_load(WF,N_g_vecs,maxval(qindx_S(:,:,2)),(/1,n_bands_to_load/),(/1,k%nibz/),title='-SEX Collisions')
+ call WF_load(WF,N_g_vecs,maxval(qindx_S(:,:,2)),COLL_bands,(/1,k%nibz/),title='-SEX Collisions')
  !
  isc%iqref =0
  !
@@ -130,26 +124,26 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
- PAR_nQP_local=PAR_nQP
- if (allocated(COLLISIONS_IO_status)) then
-   PAR_nQP_local=count(COLLISIONS_IO_status==-1)
+ PAR_NC_local=SEX_collisions%PAR_N
+ if (associated(SEX_collisions%IO_status)) then
+   PAR_NC_local=count(SEX_collisions%IO_status==-1)
  endif
- call live_timing("SEX collisions (e-e correlation)",PAR_nQP_local*PAR_nQ*PAR_n_Bp_mat_elements)
+ call live_timing("Collisions",PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements)
  !
- do i_qp=1,QP_n_states
+ do i_coll=1,SEX_collisions%N
    !
-   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+   if (.not.SEX_collisions%PAR_IND%element_1D(i_coll)) cycle
    !
    if (io_COLLs) then
-     if (COLLISIONS_IO_status(i_qp)/=-1) cycle
+     if (SEX_collisions%IO_status(i_coll)/=-1) cycle
    endif
    !
-   i_n     = QP_table(i_qp,1)
-   i_m     = QP_table(i_qp,2)
-   i_k     = QP_table(i_qp,3)
-   i_sp    = spin(QP_table(i_qp,:))
+   i_n     = SEX_collisions%state(i_coll,1)
+   i_m     = SEX_collisions%state(i_coll,2)
+   i_k     = SEX_collisions%state(i_coll,3)
+   i_sp    = SEX_collisions%state(i_coll,4)
    !
-   SEX_collisions(1)%v3_c=cZERO
+   SEX_COLL_element(1)%v3_c=cZERO
    !
    do iqbz=1,q%nbz
      !
@@ -219,13 +213,13 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
      isc%qs(1) =i_kmq_G0
      iscp%qs(1)=i_kmq_G0
      !
-     do i_mp=n_bands(1),n_bands(2)
+     do i_mp=COLL_bands(1),COLL_bands(2)
        !
        iscp%os(1)=i_mp
        !
        call scatter_Bamp(iscp)
        !
-       do i_np=n_bands(1),n_bands(2)
+       do i_np=COLL_bands(1),COLL_bands(2)
          !
          ! COLLISIONS(n,n',qp_n_states) = \sum_{G,G',q} ( rho(m,n,G,q,k) x EM1s(G ,G') x rho*(m',n',G',q,k) /|q+G|/|q+G'| )
          !
@@ -249,7 +243,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
          enddo
 !$omp end parallel do
          !
-         SEX_collisions(1)%v3_c(i_np,i_mp,i_kmq)=SEX_collisions(1)%v3_c(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
+         SEX_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=SEX_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
          !
          call live_timing(steps=1)
          !
@@ -260,15 +254,15 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
    enddo ! loop on iqbz
    !
    if (COLLISIONS_parallel_SC_structure) then
-     call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-     call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
+     call PP_redux_wait(SEX_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
+     call PP_redux_wait(SEX_COLL_element(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
    else
-     call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
+     call PP_redux_wait(SEX_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   call COLLISIONS_linearize_and_IO("SEX",i_qp,SEX_collisions,nSEX_collisions)
+   call COLLISIONS_linearize_and_IO("SEX",i_coll,SEX_collisions,SEX_COLL_element)
    !
- enddo ! loop on i_qp
+ enddo ! loop on i_coll
  !
  call live_timing()
  !

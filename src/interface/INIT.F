@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
+integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
- ! init =-2  : Unsupported Runlevel(s) combination
- ! init =-1  : Missing CORE DBs
- ! init = 0  : everything is OK. Job continues.
- ! init = 1  : input file editing mode
- ! init = 2  : DB listing mode
+ ! INIT =-2  : Unsupported Runlevel(s) combination
+ ! INIT =-1  : Missing CORE DBs
+ ! INIT = 0  : everything is OK. Job continues.
+ ! INIT = 1  : input file editing mode
+ ! INIT = 2  : DB listing mode
  !
  use drivers
  use pars,           ONLY:schlen,lchlen
@@ -59,13 +59,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _SC || defined _RT
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_QED
- use collision,      ONLY:V_kind
+ use collision,      ONLY:FOCK_collisions,SEX_collisions,P_collisions,GW_NEQ_collisions
  use interfaces,     ONLY:io_COLLISIONS
  use SC,             ONLY:SC_potential
 #endif
 #if defined _RT
- use global_XC,      ONLY:SE_GW_NEQ
  use real_time,      ONLY:n_regions
  use fields,         ONLY:n_ext_fields,n_ext_fields_max
 #endif
@@ -158,7 +156,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Presets (input)
  !
- init = 0
+ INIT = 0
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    call E_reset(en)
@@ -202,13 +200,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Command line reading
  !
- call read_command_line(instr,init)
+ call read_command_line(instr,INIT)
  !
  ! DB props listing mode ?
  !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
-   init = 2
+   INIT = 2
    if (log_as_a_file) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
@@ -234,14 +232,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_WF_err=io_WF(io_ID) 
  if (io_err/=0.or.io_WF_err/=0) then
-   init =-1
+   INIT =-1
    return
  else
    call mk_dir(more_io_path)
    call mk_dir(com_path)
    call mk_dir(trim(core_io_path)//"/SAVE")
    call mk_dir(trim(more_io_path)//"/SAVE")
-   if (init==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
+   if (INIT==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
  endif
  !
  ! Exporting DB1 informations to variables to be
@@ -263,9 +261,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_QINDX_err=io_QINDX(k,q,io_ID) 
- if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
+ if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim')
  !
- ! If the GOPS/KINDX DBs are not present, reset to setup run
+ ! If the GROT/KINDX DBs are not present, reset to setup run
  !
  if ((io_err==-1.or.io_QINDX_err==-1).and.infile_editing) then
    !
@@ -274,7 +272,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! force a setup run
    instr="setup"
-   call read_command_line(instr,init)
+   call read_command_line(instr,INIT)
    !
  endif
  !
@@ -431,25 +429,20 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! COLLISIONS 
  !
- V_kind=SC_HF
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,FOCK_collisions)
  if (io_COLLISIONS_err==0) then
-   V_kind=SC_COHSEX
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
-   if (io_COLLISIONS_err/=0) V_kind=-1
+   io_COLLISIONS_err=io_COLLISIONS(io_ID,SEX_collisions)
  endif
 #endif
 #if defined _SC && defined _RT
- V_kind=SE_GW_NEQ
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,GW_NEQ_collisions)
 #endif
 #if defined _QED && defined _RT
- V_kind=SE_GW_QED
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,P_collisions)
 #endif
  !
  if (list_dbs) then
@@ -552,7 +545,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
 #if defined  _ELPH 
- if (l_setup) call initactivate(1,'MinusQ BSEscatt')
+ if (l_setup) call initactivate(1,'BSEscatt')
 #endif
  !
  !
@@ -855,7 +848,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    endif
    !
    if (l_elel_scatt)     call initactivate(1,'PlasmaPerc')
-   if (l_elphoton_scatt) call initactivate(1,'QEDRLvcs') 
    !
  endif
  !
@@ -868,8 +860,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call INIT_RT_ctl_switch('G')
    call initactivate(-1,'SCmixing')
    call initactivate(1,'RTBands Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
-   call initactivate(1,'RTstep NEsteps NETime COHsteps DipoleEtresh')
-   if (l_elel_scatt .or. l_elph_scatt) call initactivate(1,'LifeInterpKIND LifeInterpSteps LifeInterpT')
+   call initactivate(1,'RTstep dTupdateTime NEsteps NETime COHsteps DipoleEtresh')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeInterpolation LifeInterpSteps')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
    call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime')
@@ -939,10 +931,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! To handle externally defined Q-points I use the INIT_q_pts
  !
  ! (a) first check if input file contains already a list of Q-points...
- call INIT_q_points(.FALSE.)
+ call INIT_q_points(io_QINDX_err,.FALSE.)
  !
  ! (b) ... then (re)write the file
- if (l_setup.and.io_QINDX_err/=0.and.infile_editing) call INIT_q_points(.TRUE.)
+ if (l_setup.and.infile_editing) call INIT_q_points(io_QINDX_err,.TRUE.)
  !
  !If qp limits are requested they are added at the end of the input file
  !

@@ -117,7 +117,7 @@ module SC
  !
  contains
    !
-   subroutine SC_QP_setup(E)
+   subroutine SC_QP_table_setup(E)
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
@@ -156,7 +156,7 @@ module SC
      !
      type(levels) :: E
      !
-     call SC_QP_setup(E)
+     call SC_QP_table_setup(E)
      !
      ! In the magnetic project Ho has already been allocated
      !
@@ -184,20 +184,20 @@ module SC
      allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
+     if (l_real_time) return
+     !
      if (l_sc_cohsex.or.l_sc_srpa) then
        allocate(QP_Sc(QP_n_states,1))
        call mem_est("QP_Sc",(/QP_n_states/))
      endif
      !
-     if (.not.l_real_time) then
-       allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("SC_R",(/size(SC_R)/))
-     endif
+     allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("SC_R",(/size(SC_R)/))
      !
    end subroutine
    !
    subroutine SC_free()
-     use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
+     use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
@@ -240,7 +240,7 @@ module SC
      deallocate(V_hartree_sc)
      call mem_est("Hartree_Potential")
      !
-     if (l_sc_cohsex.or.l_sc_srpa) then
+     if (allocated(QP_Sc)) then
        deallocate(QP_Sc)
        call mem_est("QP_Sc")
      endif

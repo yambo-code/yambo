@@ -33,7 +33,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
- use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply,RT_carriers_object
+ use RT_control,     ONLY:OCC_T_range,OCC_deltaT,RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation
  !

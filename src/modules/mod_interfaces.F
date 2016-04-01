@@ -74,11 +74,12 @@ module interfaces
      !
    end subroutine
    !
-   integer function io_COLLISIONS(i_qp,ID,COLL)
-     use collision,  ONLY:COLLISIONS_element
+   integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll)
+     use collision,  ONLY:COLLISIONS_element,COLLISIONS_group
      integer, intent(inout)             ::ID
-     integer, intent(in)                ::i_qp
-     type(COLLISIONS_element), optional :: COLL
+     type(COLLISIONS_group)             ::COLL_grp
+     type(COLLISIONS_element), optional ::COLL_element
+     integer, intent(in)     , optional ::i_coll
    end function
    !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
@@ -121,7 +122,7 @@ module interfaces
    end subroutine
    !
    subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
-&                                    QP_index,Plasma_index,Bm_index,CLEAN_UP)
+&                                    QP_index,PLASMA_index,Bm_index,CLEAN_UP)
      !
      use parallel_m,      ONLY:PP_indexes
      !
@@ -132,7 +133,7 @@ module interfaces
      type(PP_indexes),    optional :: Bp_index
      type(PP_indexes),    optional :: B_and_K_index
      type(PP_indexes),    optional :: QP_index
-     type(PP_indexes),    optional :: Plasma_index
+     type(PP_indexes),    optional :: PLASMA_index
      type(PP_indexes),    optional :: Bm_index
      logical, intent(in), optional :: CLEAN_UP
      !
@@ -174,7 +175,7 @@ module interfaces
      type(MPI_comm),optional :: COMM_A2A_3
    end subroutine
    !
-   subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
+   subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
      use parallel_m, ONLY:PP_indexes,MPI_COMM
      type(PP_indexes)       ::px
      integer                ::uplim(:)
@@ -182,6 +183,7 @@ module interfaces
      type(MPI_COMM),optional::COMM
      logical,       optional::CONSECUTIVE
      logical,       optional::ORDERED
+     logical,       optional::NO_EMPTIES
      logical,       optional::MASK(:)
    end subroutine
    !

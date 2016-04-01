@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): DS AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,11 +26,11 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp,qindx_C
  use electrons,     ONLY:levels
- use QP_m,          ONLY:QP_n_states,QP_table
  use frequency,     ONLY:ordered_grid_index,coarse_grid_index,bare_grid_N,Coarse_grid_N,coarse_grid_Pt
  use plasma,        ONLY:EH_gas
  use parallel_m,    ONLY:PAR_nQ,PAR_Q_index,PAR_IND_Q
  use memory_m,      ONLY:mem_est
+ use collision,     ONLY:GW_NEQ_collisions
  !
  implicit none
  !
@@ -43,7 +43,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  !
  !
  logical       :: l_reallocate=.false.
- integer       :: i_qp,i_q,i_q_s,i_m,i_mp,i_p,i_p_bz,i_p_star,i_p_s,i_q_mem,i_q_mem_local,&
+ integer       :: i_coll,i_q,i_q_s,i_m,i_mp,i_p,i_p_bz,i_p_star,i_p_s,i_q_mem,i_q_mem_local,&
 &                 i_pmq,i_pmq_bz,i_pmq_G0,iqbz_local,n_poles,i_pole,i_cg
  real(SP)      :: E_center
  !
@@ -56,11 +56,11 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  i_q   = q%sstar(iabs(iqbz),1)
  i_q_s = q%sstar(iabs(iqbz),2)
  !
- do i_qp=1,QP_n_states
+ do i_coll=1,GW_NEQ_collisions%N
    !
-   i_m  = QP_table(i_qp,1)
-   i_mp = QP_table(i_qp,2)
-   i_p  = QP_table(i_qp,3)
+   i_m  = GW_NEQ_collisions%state(i_coll,1)
+   i_mp = GW_NEQ_collisions%state(i_coll,2)
+   i_p  = GW_NEQ_collisions%state(i_coll,3)
    !
    do i_p_star=1,k%nstar(i_p)
      !
@@ -82,11 +82,11 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
      !
      if (iqbz>0) then
        i_pole=ordered_grid_index(n_poles)
-       EH_gas%tab(i_pole,i_q_mem,:)=(/i_qp,i_p_s/)
+       EH_gas%tab(i_pole,i_q_mem,:)=(/i_coll,i_p_s/)
        poles(i_pole)=E_center       
        !
        i_pole=coarse_grid_index(n_poles)
-       EH_gas%tab_m1(i_qp,i_p_s,i_q_mem)=i_pole
+       EH_gas%tab_m1(i_coll,i_p_s,i_q_mem)=i_pole
      endif
      !
    enddo

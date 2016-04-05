@@ -73,7 +73,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use RT_control,    ONLY:RT_IO_time
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,Eh_pumped_pair_BZ_reagions,    &
-&                        NE_tot_time,RT_life_interp_steps,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
+&                        NE_tot_time,RT_life_interp_times,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_deltaE,RT_scatt_tresh, &
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,&
 &                        Gr_kind,two_alpha,DbGd_EE_percent,NE_initial_time_step_update
@@ -408,7 +408,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it('f',defs,'LifeInterpolation',    '[RT] Skipped Lifetimes are interpolated')
  call it(defs,'LifeInterpSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
-&                           RT_life_interp_steps,unit=Time_unit(1))
+&                           RT_life_interp_times,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
  ! 

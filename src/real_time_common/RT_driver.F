@@ -26,7 +26,7 @@ subroutine RT_driver(E,X,k,q)
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_sc_ip,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use stderr,         ONLY:set_real_printed_length
- use units,          ONLY:FS2AUT
+ use units,          ONLY:AUT2FS
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin
  use X_m,            ONLY:X_t
@@ -296,17 +296,17 @@ subroutine RT_driver(E,X,k,q)
    ! BGR
    !=======================================
    !call RT_BGR(dG_lesser(:,:,:,i_MEM_now),E,k)
-   !call RT_output('BGR',TIME=NE_time/FS2AUT)
+   !call RT_output('BGR',TIME=NE_time*AUT2FS)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
    if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
      call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)      call RT_output('EPlife',TIME=NE_time/FS2AUT)
-     if(l_elel_scatt)      call RT_output('EElife',TIME=NE_time/FS2AUT)
-     if(l_elphoton_scatt)  call RT_output('RADlife',TIME=NE_time/FS2AUT)
+     if(l_elph_scatt)      call RT_output('EPlife',TIME=NE_time*AUT2FS)
+     if(l_elel_scatt)      call RT_output('EElife',TIME=NE_time*AUT2FS)
+     if(l_elphoton_scatt)  call RT_output('RADlife',TIME=NE_time*AUT2FS)
      if((l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt).and.&
-&       (l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time/FS2AUT)
+&       (l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time*AUT2FS)
    endif
    !
    ! Write DBs
@@ -320,15 +320,15 @@ subroutine RT_driver(E,X,k,q)
    ! Print some simple observables
    !===============================
    if (NE_time>=0._SP) then
-     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
-     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
+     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
+     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
    endif
-   call RT_output('cur pol',TIME=NE_time/FS2AUT)
+   call RT_output('cur pol',TIME=NE_time*AUT2FS)
    if (l_NE_with_fields) then
-     call RT_output('external_field',TIME=NE_time/FS2AUT) 
+     call RT_output('external_field',TIME=NE_time*AUT2FS) 
      if(l_RT_induced_field) then
-       call RT_output('total_field'  ,TIME=NE_time/FS2AUT) 
-       call RT_output('induced_field',TIME=NE_time/FS2AUT) 
+       call RT_output('total_field'  ,TIME=NE_time*AUT2FS) 
+       call RT_output('induced_field',TIME=NE_time*AUT2FS) 
      endif
    endif
    !

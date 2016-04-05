@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM 
+! Authors (see AUTHORS file for details):
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,45 +21,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_MEMORY_index()
+subroutine RT_Commensurable_Time(TIME,DEFINE_TOTAL_TIME)
  !
- use real_time,      ONLY:G_MEM_steps,MEM_pointer,i_MEM_now,&
-&                         i_MEM_previous,i_MEM_next,it_dyn,RT_dyn_step,RT_step
+ ! Return TIME To be commensurable with RT_dyn_step
+ !
+ use pars,           ONLY:SP
+ use real_time,      ONLY:NE_steps,NE_tot_time,RT_step
  !
  implicit none
  !
+ real(SP) :: TIME
+ logical  :: DEFINE_TOTAL_TIME
+ !
  ! Work Space
  !
- integer :: i_min_index,i_mem
+ integer :: rest,STEPS
  !
- i_MEM_now=0
- i_MEM_next=0
- i_MEM_previous=0
+ if (TIME<0) TIME = max(NE_tot_time/1000._SP,RT_step)
  !
- ! Find a "NEW" Memory Location for  it_dyn+RT_dyn_step/RT_step
+ STEPS = nint(TIME/RT_step)
+ TIME  = STEPS*RT_step
  !
- i_min_index=minval(MEM_pointer)
+ if (STEPS == 0 ) STEPS = 1
  !
- do i_mem=1,G_MEM_steps
-   if (MEM_pointer(i_mem)==i_min_index) then
-     MEM_pointer(i_mem)=nint(it_dyn+RT_dyn_step/RT_step)
-     i_MEM_next=i_mem
-     exit
+ if (DEFINE_TOTAL_TIME) then
+   rest        = mod(NE_steps-1,STEPS)
+   if (rest>0) then
+     NE_steps    = NE_steps+STEPS-rest
+     NE_tot_time = RT_step*(NE_steps-1)
    endif
- enddo
+ endif
  !
- ! Find a "OLD" Memory Location for it_dyn and for the previous Time point
- !
- i_min_index=minval(MEM_pointer)
- !
- do i_mem=1,G_MEM_steps
-   !
-   if (MEM_pointer(i_mem)==it_dyn)      i_MEM_now=i_mem
-   !
-   if (it_dyn<G_MEM_steps.or.G_MEM_steps==2) cycle
-   !
-   if (MEM_pointer(i_mem)==i_min_index) i_MEM_previous=i_mem
-   !
- enddo
- !
-end subroutine RT_MEMORY_index
+end subroutine RT_Commensurable_Time

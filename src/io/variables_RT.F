@@ -24,7 +24,7 @@
 integer function variables_RT(ID,local_description,what)
  !
  use pars,           ONLY:lchlen,SP
- use units,          ONLY:FS2AUT,AU2KWCMm2,HA2EV
+ use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr
  use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
@@ -35,7 +35,7 @@ integer function variables_RT(ID,local_description,what)
 &                         RAD_LifeTime,Phase_LifeTime,it_dyn,   &
 &                         l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
-&                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_steps,&
+&                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_times,&
 &                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E
  use ELPH,           ONLY:elph_branches
  use X_m,            ONLY:global_gauge
@@ -133,7 +133,7 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
+&    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
@@ -141,7 +141,7 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] NE time       (reached)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
+&    VAR=" [RT] NE time       (reached)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    !
    i_desc=i_desc+1
@@ -168,12 +168,12 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,VAR="RT_life_interp_more",VAR_SZ=3,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] Inter/intra grps       [fs]:",R1=RT_life_interp_steps,WARN=.true.,OP=(/"==","=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&    VAR=" [RT] Inter/intra grps       [fs]:",R1=RT_life_interp_times,WARN=.true.,OP=(/"==","=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time decay             [fs]:",R0=RT_life_interp_decay_time,WARN=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    !
@@ -211,11 +211,11 @@ integer function variables_RT(ID,local_description,what)
    i_desc=i_desc+1
    call io_elemental(ID,R0=RAD_LifeTime,&
 &    VAR=' [RT] Radiative life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&     DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,R0=Phase_LifeTime,&
 &    VAR=' [RT] Dephasing life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&     DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_NE_with_fields,DB_L0=l_NE_with_fields_disk,&
 &    VAR=' [RT] External Field             :', CHECK=.true.,OP=(/"=="/),&
@@ -326,7 +326,7 @@ integer function variables_RT(ID,local_description,what)
        i_desc=i_desc+1
        call io_elemental(ID,&
 &        VAR=" [FIELDs] Damping            [fs]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
-&        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
        i_desc=i_desc+1
        call io_elemental(ID,&
 &        VAR=" [FIELDs] Frequency range    [eV]:",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
@@ -342,7 +342,7 @@ integer function variables_RT(ID,local_description,what)
        i_desc=i_desc+1
        call io_elemental(ID,R0=Efield(i1)%t_initial,&
 &        VAR=' [FIELDs] Initial time       [fs]:',CHECK=.true.,OP=(/"=="/),&
-&        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
        !                       
        if (i1/=n_ext_fields) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        if (i1==n_ext_fields) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

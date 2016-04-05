@@ -21,17 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
+subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  !
  use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use
  use pars,           ONLY:schlen,SP
  use stderr,         ONLY:string_split,real2ch,intc
- use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,      ONLY:bz_samp,nkibz
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
- use units,          ONLY:FS2AUT,PS2AUT,HA2EV
+ use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
  use RT_control,     ONLY:RT_IO_JPO_steps,NEQ_Residuals,NEQ_Kernel
  use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth
@@ -42,7 +41,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  type(levels), intent(inout) :: E
  type(bz_samp), intent(in)   :: K
  character(*),optional,intent(in) :: what ! X,K,G,R
- integer,     optional,intent(in) :: IO_com
+ integer,     optional,intent(in) :: IO_COM
  logical ,    optional,intent(in) :: VERBOSE
  real(SP),    optional,intent(in) :: Time
  logical ,    optional,intent(in) :: keep_RT_carriers
@@ -203,7 +202,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    if (depth==0) call section('+',trim(ch))
  endif
  !
- if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time/FS2AUT))//' fs')
+ if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time*AUT2FS))//' fs')
  !
  ! Interpolatle the RT_carriers object inside the En levels object (energy, occupations and lifetimes)
  ! Only yambo enters here. Ypp fills the RT_carriers object and directly uses it instead

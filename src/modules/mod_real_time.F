@@ -73,7 +73,7 @@ module real_time
  ! for the static correlations
  !
  logical  :: l_RT_lifetimes_interpolation = .FALSE.! If .TRUE. the lifetimes not calculated are interpolated. Otherwise are kept constant
- real(SP) :: RT_life_interp_steps(2)               ! (1) is step between groups of 3, (2) is step in the group of 3.
+ real(SP) :: RT_life_interp_times(2)               ! (1) is step between groups of 3, (2) is step in the group of 3.
  ! 
  integer(2), allocatable :: RT_TIME_status(:)
  !
@@ -543,10 +543,8 @@ module real_time
      !
      allocate(REF_V_xc_sc(fft_size,n_spin))
      call mem_est("REF_V_xc_sc",(/fft_size*n_spin/),(/SP/))
-     !
      allocate(REF_V_hartree_sc(fft_size,n_spin))
      call mem_est("REF_V_hartree_sc",(/fft_size*n_spin/),(/SP/))
-     !
      allocate(REF_Vnl_xc(QP_n_states))
      call mem_est("REF_Vnl_xc",(/size(REF_Vnl_xc)/),(/2*SP/))
      !

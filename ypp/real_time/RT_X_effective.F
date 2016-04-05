@@ -27,7 +27,7 @@ subroutine RT_X_effective(en)
  use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_IO_J_and_P,&
 &                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,J_steps,J_time_step
- use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,FS2AUT
+ use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,AUT2FS
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
  use IO_m,           ONLY:NONE,LOG
@@ -155,7 +155,7 @@ subroutine RT_X_effective(en)
    !
    do i_t=1,J_steps
      RT_P=RT_P_probe(i_t,1,1:3)
-     call RT_output('P_minus',TIME=(i_t-1)*J_time_step/FS2AUT)
+     call RT_output('P_minus',TIME=(i_t-1)*J_time_step*AUT2FS)
      call live_timing(steps=1)
    enddo
    !
@@ -290,7 +290,7 @@ subroutine RT_X_effective(en)
  X_rt%time_range(1)= X_rt%time_range(2)-N_periods*EtoT(E=Efield_Probe%W_step)
  !
  if ( X_rt%time_range(1) < 0.) call error(&
-&   'Simulation time not long enough. Period is'//trim(real2ch( EtoT(E=Efield_Probe%W_step)/FS2AUT ))//' fs')
+&   'Simulation time not long enough. Period is'//trim(real2ch( EtoT(E=Efield_Probe%W_step)*AUT2FS ))//' fs')
  !
  ! Fix the Time range. Do not write the polarization
  !

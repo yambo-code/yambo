@@ -25,11 +25,10 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  ! 
  ! FIT the occupations with a Gauss–Newton algorithm
  !
- use units,          ONLY:HA2EV,HA2KEL,FS2AUT
+ use units,          ONLY:HA2EV,HA2KEL,AUT2FS
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use pars,           ONLY:SP,schlen
  use RT_control,     ONLY:OCC_T_range,OCC_deltaT,RT_apply
- !use QP_m,           ONLY:QP_table,QP_n_states
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor
@@ -321,7 +320,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   data_fit(1,:)= io_Time/FS2AUT
+   data_fit(1,:)= io_Time*AUT2FS
    !
    do i1=1,2
      data_fit(1,i1+1)= T_fit(i1,i_T)*HA2KEL
@@ -373,8 +372,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   titles(i_T+1)=' f@'//trim(real2ch( io_Time/FS2AUT ))
-   data_ch(i_T+1,1,:)= trim(real2ch( io_Time/FS2AUT ))
+   titles(i_T+1)=' f@'//trim(real2ch( io_Time*AUT2FS ))
+   data_ch(i_T+1,1,:)= trim(real2ch( io_Time*AUT2FS ))
    do ifit=1,2
      data_ch(i_T+1,2,ifit)=   trim(real2ch( T_fit(ifit,i_T)*HA2KEL ))
      data_ch(i_T+1,3,ifit)=   trim(real2ch( Ef_fit(ifit,i_T)*HA2EV ))

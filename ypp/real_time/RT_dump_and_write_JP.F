@@ -28,7 +28,7 @@ subroutine RT_dump_and_write_JP()
 &                         N_pumps,l_skip_pol_and_curr_IO,J_steps,J_time_step
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
- use units,          ONLY:FS2AUT,HA2EV
+ use units,          ONLY:AUT2FS,HA2EV
  use stderr,         ONLY:real2ch
  use RT_control,     ONLY:RT_output,RT_IO_JPO_steps
  use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps
@@ -78,8 +78,8 @@ subroutine RT_dump_and_write_JP()
  do i_t=1,J_steps
    RT_ind_J    =RT_J_t(i_t,:)
    RT_P        =RT_P_t(i_t,1:3)
-   call RT_output('pol',TIME=(i_t-1)*J_time_step/FS2AUT)
-   if (allocated(RT_J_t)) call RT_output('cur',TIME=(i_t-1)*J_time_step/FS2AUT)
+   call RT_output('pol',TIME=(i_t-1)*J_time_step*AUT2FS)
+   if (allocated(RT_J_t)) call RT_output('cur',TIME=(i_t-1)*J_time_step*AUT2FS)
  enddo
  !
 end subroutine

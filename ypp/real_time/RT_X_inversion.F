@@ -28,7 +28,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
 &                         i_t_end,N_pumps,J_time_step,J_steps
  use fields,         ONLY:EtoT,Efield,Divide_by_Field
  use real_time,      ONLY:RT_P
- use units,          ONLY:FS2AUT
+ use units,          ONLY:AUT2FS
  use com,            ONLY:msg
  use LIVE_t,         ONLY:live_timing
  implicit none
@@ -72,7 +72,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
      !
    enddo
    !
-   call msg('s','[RT] Effective max time period [fs]:',T_period_max/FS2AUT)
+   call msg('s','[RT] Effective max time period [fs]:',T_period_max*AUT2FS)
    !
    call live_timing('X effective :',N_probes)
    !
@@ -114,7 +114,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
    !
    T_period=T_range(1,0)
    !
-   call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*J_time_step/FS2AUT)
+   call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*J_time_step*AUT2FS)
    !
    do i_c = 1,3
      !

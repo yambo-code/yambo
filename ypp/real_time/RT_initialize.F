@@ -28,7 +28,7 @@ subroutine RT_initialize()
 &                         N_pumps,l_skip_pol_and_curr_IO,J_steps,J_time_step
  use com,            ONLY:msg,warning
  use pars,           ONLY:pi,SP
- use units,          ONLY:FS2AUT,HA2EV
+ use units,          ONLY:AUT2FS,HA2EV
  use stderr,         ONLY:real2ch
  use RT_control,     ONLY:RT_output,RT_IO_JPO_steps
  use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps,NE_time
@@ -72,7 +72,7 @@ subroutine RT_initialize()
  RED_steps=i_t_end-i_t_start+1
  W_RT_induced_step=2._SP*pi/(real(RED_steps-1,SP)*J_time_step)  ! Frequency step in real-time dynamics
  !
- call msg('s','[RT] Time range [fs]:',(/real(i_t_start-1),real(i_t_end-1)/)*J_time_step/FS2AUT)
+ call msg('s','[RT] Time range [fs]:',(/real(i_t_start-1),real(i_t_end-1)/)*J_time_step*AUT2FS)
  !
  if(X_rt%damp_factor==0._SP) X_rt%damp_factor=W_RT_induced_step
  !

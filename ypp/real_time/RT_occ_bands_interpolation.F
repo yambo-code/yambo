@@ -24,7 +24,7 @@
 subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  use pars,           ONLY:SP,schlen
- use units,          ONLY:HA2EV,FS2AUT
+ use units,          ONLY:HA2EV,AUT2FS
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use R_lattice,      ONLY:bz_samp
  use com,            ONLY:msg,of_open_close,error
@@ -217,7 +217,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    call of_open_close(file_name_rt,'ot')
    !
    call msg('o '//file_name_rt," "," ",INDENT=0)
-   call msg('o '//file_name_rt,"#",' t= '//trim(real2ch( io_Time/FS2AUT )),INDENT=0)
+   call msg('o '//file_name_rt,"#",' t= '//trim(real2ch( io_Time*AUT2FS )),INDENT=0)
    !
    do ib=RT_bands(1),RT_bands(2)
      !

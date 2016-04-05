@@ -23,7 +23,7 @@
 !
 subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
- use units,          ONLY:HA2EV,FS2AUT
+ use units,          ONLY:HA2EV,AUT2FS
  use pars,           ONLY:SP,schlen
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp
@@ -146,10 +146,10 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
        cycle
      endif
      if(n_spin==1) then
-       call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+       call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=io_Time*AUT2FS)
      else
        call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)+el_dos(i_E,2),el_dos(i_E,1),el_dos(i_E,2)/),&
-&                                  E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+&                                  E=dos_E*HA2EV,TIME=io_Time*AUT2FS)
      endif
      !
    enddo

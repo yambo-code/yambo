@@ -40,7 +40,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
-&                         l_RT_CCA_Kernel,Life_MEM_steps,    &
+&                         l_RT_CCA_Kernel,Life_MEM_steps,RT_life_interp_times_SAVE,    &
 &                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_times,&
 &                         l_RT_lifetimes_interpolation,l_NE_dynamics,l_RT_impose_N_dN,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_EXP,DbGd_EE_scatt_table,&
@@ -162,9 +162,11 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
- ! Set lifetimes interpolation steps
- !===================================
+ ! Memory Depth (Lifetimes) & interpolation steps
+ !================================================
  if (RT_is_dephased) then
+   !
+   RT_life_interp_times=RT_life_interp_times_SAVE
    !
    Life_MEM_steps=nint(RT_life_interp_times(1)/RT_life_interp_times(2))
    if (Life_MEM_steps<3) Life_MEM_steps=3

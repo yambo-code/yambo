@@ -25,7 +25,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  use pars,           ONLY:SP,cI,schlen,DP
  use YPP,            ONLY:l_RT_X_inversion,l_skip_pol_and_curr_IO
- use units,          ONLY:HA2EV,FS2AUT
+ use units,          ONLY:HA2EV,AUT2FS
  use RT_control,     ONLY:RT_output
  use real_time,      ONLY:RT_P,RAD_LifeTime,Phase_LifeTime
  use stderr,         ONLY:intc
@@ -78,7 +78,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
        do i_c=1,3
          RT_P(i_c) = P(i_t,i_c)-sum( P_num(:i_n,i_t,i_c) )
        enddo
-       call RT_output(trim(p_file_name),time=(i_t-1)*J_time_step/FS2AUT)
+       call RT_output(trim(p_file_name),time=(i_t-1)*J_time_step*AUT2FS)
      endif
      !
      if (what=="subtract") P(i_t,:)=P(i_t,:)-P_num(i_n,i_t,:)

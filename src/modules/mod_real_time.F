@@ -73,7 +73,8 @@ module real_time
  ! for the static correlations
  !
  logical  :: l_RT_lifetimes_interpolation = .FALSE.! If .TRUE. the lifetimes not calculated are interpolated. Otherwise are kept constant
- real(SP) :: RT_life_interp_times(2)               ! (1) is step between groups of 3, (2) is step in the group of 3.
+ real(SP) :: RT_life_interp_times(2)               ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
+ real(SP) :: RT_life_interp_times_SAVE(2)          ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
  ! 
  integer(2), allocatable :: RT_TIME_status(:)
  !

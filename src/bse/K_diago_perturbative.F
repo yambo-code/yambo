@@ -48,17 +48,18 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
  call PARALLEL_index(px,(/BS_H_dim/))
  !
  BS_corrections=cZERO
- call live_timing(' Perturbative '//trim(what)//' ',px%n_of_elements(myid+1))
+ call live_timing('Perturb.    '//what//' ',px%n_of_elements(myid+1))
  !
  do i1=1,BS_H_dim
+   !
    if (.not.px%element_1D(i1)) cycle
    !
-   if(trim(what)=='SOC') then
+   if(what=='SOC') then
      BS_corrections(1,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(1,:),0._SP,SP),BS_mat_eigen(:,i1))
      BS_corrections(2,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(2,:),0._SP,SP),BS_mat_eigen(:,i1))
    endif
    !
-   if(trim(what)=='W') then
+   if(what=='WID') then
      BS_corrections(1,i1)=V_dot_V_omp( BS_H_dim,cmplx(0._SP,BSS_eh_W(:),SP),BS_mat_eigen(:,i1))
    endif
    !

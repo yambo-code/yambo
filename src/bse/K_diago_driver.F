@@ -186,16 +186,16 @@ subroutine K_diago_driver(iq,W)
    !
    ! To check if this expression is correct
    if(E_SOC_nbands/=0)        call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_E_SOC_corr,2,'SOC')
-   if(BSS_perturbative_width) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_W_corr    ,1,' W ')
+   if(BSS_perturbative_width) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_W_corr    ,1,'WID')
    !
  else
    !
    if(E_SOC_nbands/=0)        call K_diago_perturbative(conjg(BS_mat)*BS_mat,BS_E_SOC_corr,2,'SOC')
-   if(BSS_perturbative_width) call K_diago_perturbative(conjg(BS_mat)*BS_mat,BS_W_corr    ,1,' W ')
+   if(BSS_perturbative_width) call K_diago_perturbative(conjg(BS_mat)*BS_mat,BS_W_corr    ,1,'WID')
    !
  endif
  !
- if(BSS_perturbative_width) BS_E=BS_E+BS_W_corr
+ if(BSS_perturbative_width) BS_E=BS_E-BS_W_corr
  !
  ! GPL_EXCLUDE_END
  !

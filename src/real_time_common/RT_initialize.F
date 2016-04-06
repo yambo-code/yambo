@@ -33,7 +33,7 @@ subroutine RT_initialize(E,k,q)
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
- use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
+ use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_time_SAVE, &
 &                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &
@@ -131,14 +131,12 @@ subroutine RT_initialize(E,k,q)
  ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
  !=================================================
  !
- if (RT_IO_steps_DB>0.and.RT_IO_JPO_steps/=RT_IO_steps_DB) then
-   call warning('J/P and Observables IO steps read from the existing databases')
-   RT_IO_time(1)=RT_IO_steps_DB*RT_step
- endif
+ do i1=1,3
+   if (RT_IO_time_SAVE(i1)<=0)  RT_IO_time_SAVE(i1)= max(NE_tot_time/1000._SP,RT_dyn_step)
+   RT_IO_time_SAVE(i1)=nint(RT_IO_time_SAVE(i1)/RT_dyn_step)*RT_dyn_step
+ enddo
  !
- call RT_Commensurable_Time(RT_IO_time(1),.TRUE.)
- call RT_Commensurable_Time(RT_IO_time(2),.FALSE.)
- call RT_Commensurable_Time(RT_IO_time(3),.FALSE.)
+ RT_IO_time=RT_IO_time_SAVE
  !
  RT_IO_JPO_steps    = RT_IO_time(1)/RT_step
  RT_IO_G_steps      = RT_IO_time(2)/RT_step
@@ -170,7 +168,7 @@ subroutine RT_initialize(E,k,q)
    !
    Life_MEM_steps=nint(RT_life_interp_times(1)/RT_life_interp_times(2))
    if (Life_MEM_steps<3) Life_MEM_steps=3
-   call RT_Commensurable_Time(RT_life_interp_times(2),.FALSE.)
+   RT_life_interp_times(2)=nint(RT_life_interp_times(2)/RT_dyn_step)*RT_dyn_step
    RT_life_interp_times(1)=RT_life_interp_times(2)*Life_MEM_steps
    !
  endif

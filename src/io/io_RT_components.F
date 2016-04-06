@@ -33,7 +33,7 @@ integer function io_RT_components(what,ID)
  use SC,             ONLY:SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,io_fragment, &
-&                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found,&
+&                         manage_RD_WR_CL_IF_END,io_reset,variable_is_found,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference,&
@@ -173,7 +173,7 @@ integer function io_RT_components(what,ID)
    io_RT_components=variables_RT(ID,local_description,trim(local_what))
    if (io_RT_components/=0) goto 1
    !
-   if (l_G.or.l_carriers.or.l_THETA.and.(.not.ver_is_gt_or_eq(ID,revision=5232))) then
+   if (l_G.or.l_carriers.or.l_THETA) then
      call io_elemental(ID,VAR="Probe_and_Pump_index",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,I0=i_Probe)
      call io_elemental(ID,I0=i_Pump)

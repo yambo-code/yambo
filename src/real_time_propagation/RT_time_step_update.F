@@ -23,19 +23,20 @@
 !
 subroutine RT_time_step_update( )
  !
- use units,          ONLY:AUT2FS
  use pars,           ONLY:SP
+ use stderr,         ONLY:real2ch
+ use units,          ONLY:AUT2FS
  use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
-&                         RT_life_interp_times,Life_MEM_steps
- use RT_control,     ONLY:RT_IO_time
- use com,            ONLY:warning
- use stderr,         ONLY:real2ch
+&                         RT_life_interp_times,Life_MEM_steps,NE_time
+ use RT_control,     ONLY:RT_IO_time,RT_IO_G_steps,RT_IO_JPO_steps,RT_IO_output_steps,&
+&                         n_TIME_STEP_CONF_descriptions,TIME_STEP_CONF_description
+ use com,            ONLY:msg
  implicit none
  ! 
  ! Work Space 
  ! 
- integer           :: ib,ibp,ik,nT_updated
+ integer           :: ib,ibp,ik,nT_updated,i1
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
  real(SP)          :: dT_now,dT_previous
  integer, external :: RT_Lifetimes_evaluation_plan
@@ -64,9 +65,6 @@ subroutine RT_time_step_update( )
  !
  if (abs(ERROR)<0.01.and.(dT_previous+dT_now)<minval(RT_IO_time)) then 
    !
-   call warning("Time Step update. From "//trim(real2ch(dT_now*AUT2FS*1000.))//"as => "//&
-&                                          trim(real2ch((dT_previous+dT_now)*AUT2FS*1000.))//"as")
-   !
    RT_dyn_step=dT_previous+dT_now
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
@@ -74,7 +72,26 @@ subroutine RT_time_step_update( )
    RT_life_interp_times(2) = nint(RT_life_interp_times(2)/RT_dyn_step)*RT_dyn_step
    RT_life_interp_times(1)=RT_life_interp_times(2)*Life_MEM_steps
    !
+   ! ... and the I/O steps
+   !
+   do i1=1,3
+     RT_IO_time(i1)=nint(RT_IO_time(i1)/RT_dyn_step)*RT_dyn_step
+   enddo
+   !
+   RT_IO_JPO_steps    = RT_IO_time(1)/RT_step
+   RT_IO_G_steps      = RT_IO_time(2)/RT_step
+   RT_IO_output_steps = RT_IO_time(3)/RT_step
+   !
    nT_updated =RT_Lifetimes_evaluation_plan( )
+   !
+   ! ... create the linked descriptions
+   !
+   call RT_update_TIME_CONF_descriptions( )
+   !
+   call msg("nr","Dynamics steps update @ TIME "//trim(real2ch(NE_time*AUT2FS))//" fs")
+   do i1=n_TIME_STEP_CONF_descriptions-2,n_TIME_STEP_CONF_descriptions
+     call msg("r",trim(TIME_STEP_CONF_description(i1)))
+   enddo
    !
  endif
  !

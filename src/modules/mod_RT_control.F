@@ -31,6 +31,9 @@ module RT_control
  integer                  :: n_RT_descriptions = 0
  character(lchlen)        :: RT_description(100)
  !
+ integer                  :: n_TIME_STEP_CONF_descriptions = 0
+ character(lchlen)        :: TIME_STEP_CONF_description(100)
+ !
  integer,  parameter      :: J_and_P_cache_size=18
  !
  integer                  :: ID(8)
@@ -40,8 +43,8 @@ module RT_control
  integer                  :: RT_IO_JPO_steps    = -1
  integer                  :: RT_IO_output_steps = -1
  integer                  :: RT_IO_G_steps      = -1
- integer                  :: RT_IO_steps_DB     = -1
- real(SP)                 :: RT_IO_time(3)             ! Three values for J,P,OCC - OUPUT - GF's
+ real(SP)                 :: RT_IO_time(3)             ! Three values for J,P,OCC - OUPUT - GF's (dynamical value)
+ real(SP)                 :: RT_IO_time_SAVE(3)        ! Input and Database
  real(SP), allocatable    :: J_and_P_cache(:,:)
  !
  ! Transient Absorption [ypp]

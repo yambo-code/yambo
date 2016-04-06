@@ -100,16 +100,6 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  RT_Lifetimes_evaluation_plan = count( RT_TIME_status >0 )
  !
- ! DEBUG>
- !do it=1,NE_steps
- !  if (it_dyn+1 == it_start) write (100,'(2i5)') it,RT_TIME_status(it)
- !  if (it_dyn+1 /= it_start) write (200,'(2i5)') it,RT_TIME_status(it)
- !enddo
- !if ( it_dyn+1 /= it_start) then
- !  stop
- !endif
- ! DEBUG <
- !
  contains
    !
    subroutine BUILD_up_group(N_inter,N_intra)

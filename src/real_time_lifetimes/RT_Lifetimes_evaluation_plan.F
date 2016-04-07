@@ -44,10 +44,10 @@ integer function RT_Lifetimes_evaluation_plan( )
    RT_TIME_status=1
  endif
  !
- if (RT_life_interp_times(1)<0. .or. it_start>=NE_steps) then
+ if (RT_life_interp_times(1)<=0. .or. it_start>=NE_steps) then
    l_RT_lifetimes_interpolation=.FALSE.
    Life_MEM_steps=1
-   RT_Lifetimes_evaluation_plan=0
+   RT_Lifetimes_evaluation_plan=NE_steps
    return
  endif 
  !

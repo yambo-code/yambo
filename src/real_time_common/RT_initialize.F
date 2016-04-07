@@ -132,8 +132,9 @@ subroutine RT_initialize(E,k,q)
  !=================================================
  !
  do i1=1,3
-   if (RT_IO_time_SAVE(i1)<=0)  RT_IO_time_SAVE(i1)= max(NE_tot_time/1000._SP,RT_dyn_step)
-   RT_IO_time_SAVE(i1)=nint(RT_IO_time_SAVE(i1)/RT_dyn_step)*RT_dyn_step
+   if (RT_IO_time_SAVE(i1)<=0)      RT_IO_time_SAVE(i1)=max(NE_tot_time/1000._SP,RT_dyn_step)
+   if (RT_IO_time_SAVE(i1)<RT_step) RT_IO_time_SAVE(i1)=RT_step
+   RT_IO_time_SAVE(i1)=nint(RT_IO_time_SAVE(i1)/RT_step)*RT_step
  enddo
  !
  RT_IO_time=RT_IO_time_SAVE
@@ -166,10 +167,13 @@ subroutine RT_initialize(E,k,q)
    !
    RT_life_interp_times=RT_life_interp_times_SAVE
    !
-   Life_MEM_steps=nint(RT_life_interp_times(1)/RT_life_interp_times(2))
-   if (Life_MEM_steps<3) Life_MEM_steps=3
-   RT_life_interp_times(2)=nint(RT_life_interp_times(2)/RT_dyn_step)*RT_dyn_step
-   RT_life_interp_times(1)=RT_life_interp_times(2)*Life_MEM_steps
+   if (all(RT_life_interp_times>0)) then
+     Life_MEM_steps=nint(RT_life_interp_times(1)/RT_life_interp_times(2))
+     if (Life_MEM_steps<3) Life_MEM_steps=3
+     if (RT_life_interp_times(2)<RT_step) RT_life_interp_times(2)=RT_step
+     RT_life_interp_times(2)=nint(RT_life_interp_times(2)/RT_step)*RT_step
+     RT_life_interp_times(1)=RT_life_interp_times(2)*Life_MEM_steps
+   endif
    !
  endif
  !

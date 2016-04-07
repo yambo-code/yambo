@@ -29,8 +29,7 @@ subroutine RT_time_step_update( )
  use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
 &                         RT_life_interp_times,Life_MEM_steps,NE_time
- use RT_control,     ONLY:RT_IO_time,RT_IO_G_steps,RT_IO_JPO_steps,RT_IO_output_steps,&
-&                         n_TIME_STEP_CONF_descriptions,TIME_STEP_CONF_description
+ use RT_control,     ONLY:RT_IO_time,n_TIME_STEP_CONF_descriptions,TIME_STEP_CONF_description
  use com,            ONLY:msg
  implicit none
  ! 
@@ -74,14 +73,6 @@ subroutine RT_time_step_update( )
    !
    ! ... and the I/O steps
    !
-   do i1=1,3
-     RT_IO_time(i1)=nint(RT_IO_time(i1)/RT_dyn_step)*RT_dyn_step
-   enddo
-   !
-   RT_IO_JPO_steps    = RT_IO_time(1)/RT_step
-   RT_IO_G_steps      = RT_IO_time(2)/RT_step
-   RT_IO_output_steps = RT_IO_time(3)/RT_step
-   !
    nT_updated =RT_Lifetimes_evaluation_plan( )
    !
    ! ... create the linked descriptions
@@ -89,7 +80,7 @@ subroutine RT_time_step_update( )
    call RT_update_TIME_CONF_descriptions( )
    !
    call msg("nr","Dynamics steps update @ TIME "//trim(real2ch(NE_time*AUT2FS))//" fs")
-   do i1=n_TIME_STEP_CONF_descriptions-2,n_TIME_STEP_CONF_descriptions
+   do i1=n_TIME_STEP_CONF_descriptions-1,n_TIME_STEP_CONF_descriptions
      call msg("r",trim(TIME_STEP_CONF_description(i1)))
    enddo
    !

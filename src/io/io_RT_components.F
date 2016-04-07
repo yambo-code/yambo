@@ -42,7 +42,7 @@ integer function io_RT_components(what,ID)
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer
  use ELPH,           ONLY:ph_modes,elph_branches
- use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO,&
+ use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_it,&
 &                         RT_carriers_object
  use fields,         ONLY:A_ext
  use matrix_operate, ONLY:mat_c2r,mat_r2c
@@ -102,7 +102,7 @@ integer function io_RT_components(what,ID)
    if (io_sec(ID,1)==1) then 
      io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
    else
-     if (RT_do_IO('J')) then
+     if (RT_do_it('J')) then
        if (l_J_and_P)     io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
        if (l_carriers) then
          io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
@@ -120,7 +120,7 @@ integer function io_RT_components(what,ID)
  !
  if (l_G.or.l_THETA) then
    !
-   if(.not.RT_do_IO('G').and.write_is_on(ID)) then
+   if(.not.RT_do_it('G').and.write_is_on(ID)) then
      io_RT_components=0
      call io_reset(ID)
      goto 2
@@ -411,7 +411,7 @@ integer function io_RT_components(what,ID)
        !
      endif
      !
-     if (RT_do_IO('J')) then
+     if (RT_do_it('J')) then
        !                                
        call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
 &                      VAR_SZ=(/J_and_P_cache_size,RT_IO_JPO_steps/))
@@ -435,7 +435,7 @@ integer function io_RT_components(what,ID)
        !
      endif 
      !
-     if (.not.RT_do_IO('J')) call io_reset(ID) 
+     if (.not.RT_do_it('J')) call io_reset(ID) 
      !
    endif
    !

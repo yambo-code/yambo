@@ -28,8 +28,8 @@ subroutine RT_time_step_update( )
  use units,          ONLY:AUT2FS
  use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
-&                         RT_life_interp_times,Life_MEM_steps,NE_time
- use RT_control,     ONLY:RT_IO_time,n_TIME_STEP_CONF_descriptions,TIME_STEP_CONF_description
+&                         RT_life_interp_times,Life_MEM_steps,NE_time,NE_time_step_update_jump
+ use RT_control,     ONLY:RT_IO_time,n_TIME_STEP_CONF_descriptions,TIME_STEP_CONF_description,RT_do_it
  use com,            ONLY:msg
  implicit none
  ! 
@@ -39,6 +39,8 @@ subroutine RT_time_step_update( )
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
  real(SP)          :: dT_now,dT_previous
  integer, external :: RT_Lifetimes_evaluation_plan
+ !
+ if (.not.RT_do_it('deltaT')) return
  !
  dG_dT_max   =0._SP
  dT_now      =(MEM_pointer(i_MEM_next)-MEM_pointer(i_MEM_now))*RT_step
@@ -71,9 +73,19 @@ subroutine RT_time_step_update( )
    RT_life_interp_times(2) = nint(RT_life_interp_times(2)/RT_dyn_step)*RT_dyn_step
    RT_life_interp_times(1)=RT_life_interp_times(2)*Life_MEM_steps
    !
-   ! ... and the I/O steps
+   ! ... and the dT update steps
+   !
+   RT_life_interp_times(2) = nint(RT_life_interp_times(2)/RT_dyn_step)*RT_dyn_step
+   !
+   ! ... and Lifetimes evaluation plan update
    !
    nT_updated =RT_Lifetimes_evaluation_plan( )
+   !
+   ! ... and the Time Step update jump
+   !
+   if (NE_time_step_update_jump < RT_dyn_step) then
+     NE_time_step_update_jump = nint(NE_time_step_update_jump/RT_dyn_step)*RT_dyn_step
+   endif
    !
    ! ... create the linked descriptions
    !

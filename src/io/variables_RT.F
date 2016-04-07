@@ -29,10 +29,10 @@ integer function variables_RT(ID,local_description,what)
  use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
-&                         n_TIME_STEP_CONF_descriptions,RT_IO_time_SAVE
+&                         n_TIME_STEP_CONF_descriptions,RT_IO_time
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
-&                         RAD_LifeTime,Phase_LifeTime,   &
+&                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_times_SAVE,&
@@ -131,7 +131,7 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] I/O (JPO,G,OUT)  times [fs]:",R1=RT_IO_time_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
+&    VAR=" [RT] I/O (JPO,G,OUT)  times [fs]:",R1=RT_IO_time,CHECK=.true.,OP=(/"==","==","=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    !
    i_desc=i_desc+1
@@ -148,6 +148,17 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,L0=l_RT_lifetimes_interpolation, &
 &        VAR=" [RT] Lifetimes Interpolation    :",WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! Delta T Update
+   !   
+   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=2,MENU=0) 
+   i_desc=i_desc+1
+   call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [RT] dT Update initial time [fs]:',CHECK=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   i_desc=i_desc+1
+   call io_elemental(ID,R0=NE_time_step_update_jump,   VAR=' [RT] dT Update time step    [fs]:',CHECK=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! INTEGRATOR

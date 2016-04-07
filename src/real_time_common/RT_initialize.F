@@ -33,12 +33,12 @@ subroutine RT_initialize(E,k,q)
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
- use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_time_SAVE, &
+ use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_time, &
 &                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
-&                         RT_is_dephased,RAD_LifeTime,       &
+&                         RT_is_dephased,RAD_LifeTime,NE_time_step_update_jump,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_life_interp_times_SAVE,    &
 &                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_times,&
@@ -60,7 +60,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,ik,IO_steps(3),N_T_samplings
+ integer                  :: i1,ik,N_T_samplings
  character(6)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it
@@ -132,16 +132,19 @@ subroutine RT_initialize(E,k,q)
  !=================================================
  !
  do i1=1,3
-   if (RT_IO_time_SAVE(i1)<=0)      RT_IO_time_SAVE(i1)=max(NE_tot_time/1000._SP,RT_dyn_step)
-   if (RT_IO_time_SAVE(i1)<RT_step) RT_IO_time_SAVE(i1)=RT_step
-   RT_IO_time_SAVE(i1)=nint(RT_IO_time_SAVE(i1)/RT_step)*RT_step
+   if (RT_IO_time(i1)<=0)      RT_IO_time(i1)=max(NE_tot_time/1000._SP,RT_dyn_step)
+   if (RT_IO_time(i1)<RT_step) RT_IO_time(i1)=RT_step
+   RT_IO_time(i1)=nint(RT_IO_time(i1)/RT_step)*RT_step
  enddo
- !
- RT_IO_time=RT_IO_time_SAVE
  !
  RT_IO_JPO_steps    = RT_IO_time(1)/RT_step
  RT_IO_G_steps      = RT_IO_time(2)/RT_step
  RT_IO_output_steps = RT_IO_time(3)/RT_step
+ !
+ ! Update time Step
+ !==================
+ !
+ if (NE_time_step_update_jump < RT_step)  NE_time_step_update_jump=RT_step
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -332,14 +335,17 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 :',trim(Integrator_name))
  call msg( 'r', 'Simulation time        [fs]:',NE_tot_time*AUT2FS)
- call msg( 'r', 'Baic time step         [fs]:',RT_step*AUT2FS)
- call msg( 'r', '     time step    (now)[fs]:',RT_dyn_step*AUT2FS)
- call msg( 'r', '          steps            :',NE_steps)
+ call msg( 'r', 'Basic time step        [fs]:',RT_step*AUT2FS)
+ call msg( 'r', '      time step   (now)[fs]:',RT_dyn_step*AUT2FS)
+ call msg( 'r', '           steps           :',NE_steps)
  !
  if (NE_initial_time_step_update>0.) then
+   call msg( 'r','---Time Step Update---')
    call msg( 'r', 'Time step update To    [fs]:',NE_initial_time_step_update*AUT2FS)
+   call msg( 'r', 'Time step update Jump  [fs]:',NE_time_step_update_jump*AUT2FS)
  endif
  !
+ call msg( 'r','---Memory---')
  call msg( 'r', 'Memory depth(G)        [fs]:',T_memory*AUT2FS)
  call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
  !

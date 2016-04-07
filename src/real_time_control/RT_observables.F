@@ -30,7 +30,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:P_square
  use SC,             ONLY:V_hartree_sc,Ho
- use RT_control,     ONLY:RT_do_IO
+ use RT_control,     ONLY:RT_do_it
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
 &                         XC0_and_HARTREE0,REF_V_xc_sc,           &
 &                         DbGd_ibz_coo,l_RT_uses_E_DbGd,REF_V_hartree_sc,   &
@@ -59,7 +59,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),&
 &               dE_tot,dE_kin,dE_ion,dE_h,dE_xc,N_holes,N_elecs,N_err,VALUE_tmp(2),E_xc_ref
  !
- if ( .not.RT_do_IO('OUT') ) return      
+ if ( .not.RT_do_it('OUT') ) return      
  !
  G_full=dG_lesser+G_lesser_reference
  !

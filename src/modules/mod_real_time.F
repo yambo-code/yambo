@@ -62,6 +62,7 @@ module real_time
  real(SP) :: NE_time    =0._SP                  ! <- incremented
  real(SP) :: NE_tot_time=0._SP                  ! Total (fixed)
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
+ real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
  !
  integer  :: NE_i_time ! = (NE_time+1)/RT_step
  integer  :: NE_steps  ! Still relative to RT_step

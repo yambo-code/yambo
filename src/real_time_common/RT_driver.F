@@ -253,6 +253,10 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Start-Up & Timing
  !===================
+ !
+ call section('=','Real-Time dynamics')
+ !######################################
+ !
  call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
  !
  do while (.not.l_Dynamics_is_over)
@@ -273,11 +277,6 @@ subroutine RT_driver(E,X,k,q)
    ! Keep a copy of A_vecpot before starting the collisions
    ! ======================================================
    A_vecpot_previous=A_vecpot
-   !
-   if (stop_now(.FALSE.)) then
-     NE_steps=((it_dyn-1)/RT_IO_G_steps)*RT_IO_G_steps+1
-     l_Dynamics_is_over=.TRUE.
-   endif
    !
    ! Current and Polarization
    !==========================
@@ -342,24 +341,26 @@ subroutine RT_driver(E,X,k,q)
    !=================
    !
    G_lesser(:,:,:,i_MEM_next)=G_lesser_reference+dG_lesser(:,:,:,i_MEM_next)
-   !
-   ! Time Update
-   !=============
-   !
-   l_Dynamics_is_over=NE_i_time==NE_steps.or.it_dyn+nint(RT_dyn_step/RT_step)>NE_steps
-   !
-   it_dyn    = it_dyn+nint(RT_dyn_step/RT_step)
-   NE_i_time = it_dyn
-   NE_time   = (NE_i_time-1)*RT_step
    !	
    ! Timing
    !========
    !
    call live_timing(steps=nint(RT_dyn_step/RT_step))
    !
+   ! Time Update
+   !=============
+   !
+   l_Dynamics_is_over=NE_i_time==NE_steps.or.it_dyn+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
+   !
+   if (l_Dynamics_is_over) cycle
+   !
+   it_dyn    = it_dyn+nint(RT_dyn_step/RT_step)
+   NE_i_time = it_dyn
+   NE_time   = (NE_i_time-1)*RT_step
+   !
  enddo
  !
- call live_timing()
+ call live_timing(steps=NE_steps-NE_i_time+1)
  !
  ! Finalize & Free
  !-----------------

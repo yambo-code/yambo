@@ -44,7 +44,6 @@ module RT_control
  integer                  :: RT_IO_output_steps = -1
  integer                  :: RT_IO_G_steps      = -1
  real(SP)                 :: RT_IO_time(3)             ! Three values for J,P,OCC - OUPUT - GF's (dynamical value)
- real(SP)                 :: RT_IO_time_SAVE(3)        ! Input and Database
  real(SP), allocatable    :: J_and_P_cache(:,:)
  !
  ! Transient Absorption [ypp]
@@ -122,30 +121,31 @@ module RT_control
      !
    end subroutine RT_free_control
    !
-   logical function RT_do_IO(what)
+   logical function RT_do_it(what)
      !
-     use real_time, ONLY:NE_i_time,RT_dyn_step,RT_step
+     use real_time, ONLY:NE_i_time,RT_dyn_step,RT_step,NE_time_step_update_jump
      character(*) :: what
      !
      ! Work Space
      !
-     integer :: IO_steps,i_grp
+     integer :: DO_IT_steps,i_grp
      !
-     RT_do_IO=.FALSE.
+     RT_do_it=.FALSE.
      !
-     if (what=="J".or.what=="P".or.what=="CARRIERS") IO_steps=RT_IO_JPO_steps
-     if (what=="OUT") IO_steps=RT_IO_output_steps
-     if (what=="G")   IO_steps=RT_IO_G_steps
+     if (what=="J".or.what=="P".or.what=="CARRIERS") DO_IT_steps=RT_IO_JPO_steps
+     if (what=="OUT")      DO_IT_steps=RT_IO_output_steps
+     if (what=="G")        DO_IT_steps=RT_IO_G_steps
+     if (what=="deltaT")   DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
      !
-     if (IO_steps<0) then
-       RT_do_IO=.TRUE. 
+     if (DO_IT_steps<0) then
+       RT_do_it=.TRUE. 
        return
      endif
      !
-     i_grp=nint(real(NE_i_time-1)/real(IO_steps))
+     i_grp=nint(real(NE_i_time-1)/real(DO_IT_steps))
      !
-     if (NE_i_time-1>=i_grp*IO_steps.and.NE_i_time-1-nint(RT_dyn_step/RT_step)<i_grp*IO_steps) RT_do_IO=.TRUE.
-     if (NE_i_time==0) RT_do_IO=.TRUE.
+     if (NE_i_time-1>=i_grp*DO_IT_steps.and.NE_i_time-1-nint(RT_dyn_step/RT_step)<i_grp*DO_IT_steps) RT_do_it=.TRUE.
+     if (NE_i_time==0) RT_do_it=.TRUE.
      !
    end function
    !

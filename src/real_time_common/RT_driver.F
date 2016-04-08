@@ -232,7 +232,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  call RT_output(what="open dyn ene cur pol")
- !call RT_output('open BGR')
+ call RT_output('open BGR')
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
    if(l_RT_induced_field) call RT_output(what="open tot ind")
@@ -293,8 +293,8 @@ subroutine RT_driver(E,X,k,q)
    !
    ! BGR
    !=======================================
-   !call RT_BGR(dG_lesser(:,:,:,i_MEM_now),E,k)
-   !call RT_output('BGR',TIME=NE_time*AUT2FS)
+   call RT_BGR(dG_lesser(:,:,:,i_MEM_now),E,k)
+   call RT_output('BGR',TIME=NE_time*AUT2FS)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================

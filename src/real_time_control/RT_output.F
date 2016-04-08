@@ -62,6 +62,10 @@ subroutine RT_output(what,VALUES,TIME,E)
  add_space=index(what,'space')>0
  initialize=index(what,'initialize')>0
  !
+ ! FALL back till BGR procedure is not fixed 
+ !
+ if (index(what,'BGR')>0) return
+ !
  if ( .not.RT_do_it('OUT').and..not.open_files.and..not.initialize) return      
  !
 #if defined _TIMING

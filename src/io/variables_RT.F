@@ -178,7 +178,7 @@ integer function variables_RT(ID,local_description,what)
    !
    ! RT_OTHERS
    !
-   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=5,MENU=0) 
+   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,R0=RAD_LifeTime,&
 &    VAR=' [RT] Radiative life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
@@ -189,7 +189,11 @@ integer function variables_RT(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_NE_with_fields,DB_L0=l_NE_with_fields_disk,&
-&    VAR=' [RT] External Field             :', CHECK=.true.,OP=(/"=="/),&
+&    VAR=' [RT] External Field(s)          :', CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,I0=n_ext_fields,&
+&    VAR=' [RT] Number of Fields           :', CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_diamagnetic,&

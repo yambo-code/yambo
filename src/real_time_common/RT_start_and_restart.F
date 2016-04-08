@@ -47,12 +47,12 @@ subroutine RT_start_and_restart(E,k,q,X)
  use RT_control,     ONLY:ID,RT_IO_G_steps,it_start
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
-&                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,&
+&                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,NE_time,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,it_dyn
+&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
@@ -199,7 +199,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (RESTART) then
    !
-   ! I use G_lesser(:,:,:) to reconstruct everything and I read it_dyn from the databases. 
+   ! I use G_lesser(:,:,:) to reconstruct everything and I read NE_i_time from the databases. 
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -215,10 +215,9 @@ subroutine RT_start_and_restart(E,k,q,X)
      io_THETA=io_RT_components('THETA',ID(7))
    endif
    !
-   ! Note that the databases must be loaded at the correct time:
+   ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
-   NE_i_time=((it_dyn-1)/RT_IO_G_steps)*RT_IO_G_steps+1
-   it_dyn=NE_i_time
+   NE_i_time=NE_time/RT_step+1
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
@@ -243,20 +242,20 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !
-   if(it_dyn<NE_steps) then
-     call msg('snr','[RT] Number of steps done    [o/o]:',real(it_dyn)/real(NE_steps)*100._SP)
+   if(NE_i_time<NE_steps) then
+     call msg('snr','[RT] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    endif
    !
    ! [Andrea 23/9/2011] The RESTART value for it_start is tricky.
    ! The order in which DBs are written in RT_driver makes in such a way
-   ! that the latest step written is it_dyn-1. This is beacause RT_databases_IO is called BEFORE RT_Collision.
+   ! that the latest step written is NE_i_time-1. This is beacause RT_databases_IO is called BEFORE RT_Collision.
    !
-   ! it_start is used here to call RT_Ext_fields that must evalute the vector potential@it_dyn-1. 
-   ! This MUST be consistent with the restart density and G_lesser that are known@it_dyn-1.
+   ! it_start is used here to call RT_Ext_fields that must evalute the vector potential@NE_i_time-1. 
+   ! This MUST be consistent with the restart density and G_lesser that are known@NE_i_time-1.
    !
-   ! This is way it_start=it_dyn. In RT_driver the step is done from it_dyn to it_dyn+1.
+   ! This is way it_start=NE_i_time. In RT_driver the step is done from NE_i_time to NE_i_time+1.
    !
-   it_start=it_dyn
+   it_start=NE_i_time
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !

@@ -41,7 +41,7 @@ subroutine RT_driver(E,X,k,q)
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
-&                         G_lesser_reference,rho_reference,magn_reference,it_dyn, &
+&                         G_lesser_reference,rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
 &                         i_MEM_now,i_MEM_next
@@ -248,8 +248,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! See [23/9/2011] comments in RT_start_and_restart regarding the value of it_start
  !
- it_dyn    = it_start
- NE_i_time = it_dyn
+ NE_i_time = it_start
  !
  ! Start-Up & Timing
  !===================
@@ -312,7 +311,7 @@ subroutine RT_driver(E,X,k,q)
    !===========
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E,it_dyn)
+   call RT_databases_IO(E,NE_i_time)
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
@@ -350,12 +349,11 @@ subroutine RT_driver(E,X,k,q)
    ! Time Update
    !=============
    !
-   l_Dynamics_is_over=NE_i_time==NE_steps.or.it_dyn+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
+   l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
    !
    if (l_Dynamics_is_over) cycle
    !
-   it_dyn    = it_dyn+nint(RT_dyn_step/RT_step)
-   NE_i_time = it_dyn
+   NE_i_time = NE_i_time+nint(RT_dyn_step/RT_step)
    NE_time   = (NE_i_time-1)*RT_step
    !
  enddo

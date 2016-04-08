@@ -29,7 +29,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_nk,&
-&                         ADD_to_saved_values,it_dyn,&
+&                         ADD_to_saved_values,NE_i_time,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
 &                         RT_H_occupations,RT_H_occupations_reference,RT_bands
  !
@@ -82,7 +82,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    !
  else
    !
-   if (RT_TIME_status(it_dyn)==0 .or. (RT_TIME_status(it_dyn)>0.and..not.FIRST_step( )) ) then
+   if (RT_TIME_status(NE_i_time)==0 .or. (RT_TIME_status(NE_i_time)>0.and..not.FIRST_step( )) ) then
      !
      !==============
      ! INTERPOLATE 
@@ -94,7 +94,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
        enddo
      enddo
      !
-   else if (RT_TIME_status(it_dyn)<0) then
+   else if (RT_TIME_status(NE_i_time)<0) then
      !
      !===============
      ! KEEP CONSTANT 

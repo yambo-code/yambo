@@ -35,7 +35,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
-&                         G_lesser_reference,RT_nk,it_dyn
+&                         G_lesser_reference,RT_nk,NE_i_time
  !
  implicit none
  !
@@ -48,7 +48,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  !
  l_use_updated_reference=.not.l_initial_equilibrium
  !
- if (l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(it_dyn)> 1)
+ if (l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(NE_i_time)> 1)
  !
  if (.not.l_eval) return
  !

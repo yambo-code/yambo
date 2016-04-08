@@ -29,7 +29,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  use memory_m,       ONLY:mem_est
  use RT_control,     ONLY:it_start
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_times,&
-&                         RT_dyn_step,l_RT_lifetimes_interpolation,Life_MEM_steps,it_dyn
+&                         RT_dyn_step,l_RT_lifetimes_interpolation,Life_MEM_steps,NE_i_time
  !
  implicit none
  !
@@ -70,12 +70,12 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  ! Starting time point
  !
- it=it_dyn+1
+ it=NE_i_time+1
  !
  ! At the beginning I do not have enough points to perform the fit. I, therefore,
  ! introduce blocks with an increasing number of elements
  !
- if (it_dyn+1==it_start) then
+ if (NE_i_time+1==it_start) then
    !
    do i1=1,N_intra_steps,max(N_intra_steps/10,1)
      call BUILD_up_group(N_blocks*i1,i1)

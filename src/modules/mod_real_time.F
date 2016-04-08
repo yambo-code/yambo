@@ -64,10 +64,8 @@ module real_time
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
  !
- integer  :: NE_i_time ! = (NE_time+1)/RT_step
- integer  :: NE_steps  ! Still relative to RT_step
- !
- integer  :: it_dyn=0  ! Equivalent to NE_i_time?
+ integer  :: NE_i_time=0 ! = (NE_time+1)/RT_step
+ integer  :: NE_steps    ! Still relative to RT_step
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
  ! channels. I will see later if this can be somehow extended/duplicated
@@ -538,8 +536,7 @@ module real_time
      allocate(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
      !
-     allocate(MEM_pointer(G_MEM_steps)) ! G_MEM_steps=2 => MEM_pointers are relative to it_dyn,it_dyn_next
-                                        ! G_MEM_steps=3 => MEM_pointers are relative to it_dyn,it_dyn_next,it_dyn_previous
+     allocate(MEM_pointer(G_MEM_steps)) 
      MEM_pointer    = 0
      MEM_pointer(1) = 1
      !

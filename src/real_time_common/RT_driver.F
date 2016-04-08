@@ -36,7 +36,7 @@ subroutine RT_driver(E,X,k,q)
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
- use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,RT_IO_G_steps,ID,&
+ use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
 &                         it_start,RT_carriers_object
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
@@ -189,7 +189,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
    !
-   !call RT_BGR(G_lesser_reference,E,k)
+   call RT_BGR(G_lesser_reference,E,k)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))

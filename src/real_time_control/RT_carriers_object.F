@@ -211,8 +211,10 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call io_bulk(DB_id,R1=RT%E_bare)
      call io_bulk(DB_id,VAR="RT_carriers_f_bare",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%f_bare)
-     call io_bulk(DB_id,VAR="RT_carriers_GAMMA_bare",VAR_SZ=(/RT%nstates,8/))
-     call io_bulk(DB_id,R2=RT%GAMMA_bare)
+     if (associated(RT%GAMMA_bare)) then
+       call io_bulk(DB_id,VAR="RT_carriers_GAMMA_bare",VAR_SZ=(/RT%nstates,8/))
+       call io_bulk(DB_id,R2=RT%GAMMA_bare)
+     endif
      !
      ! Energies
      !

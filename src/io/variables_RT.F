@@ -33,7 +33,7 @@ integer function variables_RT(ID,local_description,what)
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
 &                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
-&                         l_RT_induced_field,G_MEM_steps,NE_tot_time,&
+&                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_times_SAVE,&
 &                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E
@@ -116,7 +116,7 @@ integer function variables_RT(ID,local_description,what)
    !
    ! RT_DYNAMICS
    !
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=9,MENU=0) 
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=11,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
@@ -124,6 +124,10 @@ integer function variables_RT(ID,local_description,what)
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] NE time       (planned)[fs]:",R0=NE_tot_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] NE time          (done)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
@@ -138,6 +142,8 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,L0=l_NE_simulate_Irredux,&
 &    VAR=" [RT] Simulate irredux           :", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
+   !
+   call io_elemental(ID,I0=NE_steps)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

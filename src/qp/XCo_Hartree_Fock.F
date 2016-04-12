@@ -221,13 +221,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
 #if defined _TIMING
  call timing('HF',OPR='stop')
- call timing('MPI_ALLREDUCE',OPR='start')
+ call timing('HF(REDUX)',OPR='start')
 #endif
  !
  call PP_redux_wait(QP_Vnl_xc)
  !
 #if defined _TIMING
- call timing('MPI_ALLREDUCE',OPR='stop')
+ call timing('HF(REDUX)',OPR='stop')
 #endif
  !
 end subroutine

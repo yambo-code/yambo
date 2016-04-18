@@ -83,8 +83,8 @@ PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
 #
 # Interfaces
 #
-2YLIBS       = external_c modules parallel parser communicate linear_algebra common io stop_and_restart bz_ops 
-E2YLIBS      = external_c parallel modules parser communicate linear_algebra common io stop_and_restart bz_ops 
+2YLIBS       = external_c io modules parallel parser communicate linear_algebra common io setup interface stop_and_restart bz_ops 
+E2YLIBS      = external_c io parallel modules parser communicate linear_algebra common io setup interface stop_and_restart bz_ops 
 #
 # YPP
 #

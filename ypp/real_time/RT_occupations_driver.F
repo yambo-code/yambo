@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_analyze(kpt,En)
+subroutine RT_occupations_driver(kpt,En)
  !
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
@@ -41,7 +41,7 @@ subroutine RT_occupations_analyze(kpt,En)
  !
  integer               :: n_T_steps
  !
- call section('+','Real-Time occupations')
+ call section('*','Real-Time occupations')
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
@@ -72,4 +72,4 @@ subroutine RT_occupations_analyze(kpt,En)
  if (l_RT_life_Bands) n_T_steps=1
  if (l_RT_occ_bands.or.l_RT_life_bands) call RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
-end subroutine RT_occupations_analyze
+end subroutine RT_occupations_driver

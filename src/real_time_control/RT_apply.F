@@ -184,7 +184,8 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  NE_i_time= nint(local_Time/RT_step)+1
  NE_i_time= NE_i_time-mod(NE_i_time-1,RT_IO_JPO_steps)
  !
- if(NE_i_time>0) then
+ if (NE_i_time>0) then
+   !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
    io_err=io_RT_components(trim(db_name),ID)
    !

@@ -132,16 +132,16 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  NE_steps=NE_steps_save
  !
- call live_timing('I/O'//trim(mesg_)//':',J_steps)
+ call live_timing('I/O'//trim(mesg_)//':',J_steps-1)
  !
- do NE_i_time=1,NE_steps
+ do NE_i_time=2,NE_steps
    !
    if (.not.RT_do_it('J')) cycle
    !
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
    io_J_and_P=io_RT_components('J_and_P',ID)
    !
-   i_time=(NE_i_Time-1)/RT_IO_JPO_steps+1
+   i_time=(NE_i_Time-1)/RT_IO_JPO_steps
    !
    do i_c=1,3
      RT_J_t(i_time,i_c) =cmplx(J_and_P_cache(   2*i_c-1,1),J_and_P_cache(   2*i_c,1),SP)

@@ -49,13 +49,6 @@ subroutine RT_driver(en,k,q)
  !
  call section("*",'RT Post Processing')
  !
- ! Real-Time occupations
- !=======================
- if (l_RT_occ_energy.or.l_RT_occ_time.or.l_RT_occ_2D_dos.or.l_RT_occ_bands.or.l_RT_life_bands) then
-   call RT_occupations_analyze(k,en)
-   return
- endif
- !
  ! Response Functions
  !====================
  !

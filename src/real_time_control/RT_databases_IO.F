@@ -103,6 +103,7 @@ subroutine RT_databases_IO(E,it)
    do ik = 1, RT_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
+     !
      if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
        !
        ! The I/O of the THETA matrix is tricky when the run is parallel.

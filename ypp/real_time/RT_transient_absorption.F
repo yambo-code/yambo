@@ -114,7 +114,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
    call RT_apply(Xbsk%ib,Xen,Xk,TIME=io_Time)
    !
-   if (i_T==1.) call live_timing('Transient Absorption',n_T_steps,SERIAL=.true.)
+   if (i_T==1.) call live_timing('Transient Absorption',n_T_steps)
    !
    Epsilon_ii=cZERO
    !

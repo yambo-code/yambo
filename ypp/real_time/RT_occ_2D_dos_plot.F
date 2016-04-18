@@ -91,7 +91,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !================================
  !
  call PARALLEL_index(px,(/dos_E_steps/))
- call live_timing('DOS',n_T_steps,SERIAL=.true.)
+ call live_timing('DOS',n_T_steps)
  !
  do i_T=1,n_T_steps
    !

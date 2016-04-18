@@ -188,7 +188,7 @@ integer function ELPH_databases(k,E,q)
    read(98,*)
  endif
  !
- call live_timing('ELPH databases (WRITE)',nDBs_disk,SERIAL=.true.)
+ call live_timing('ELPH databases (WRITE)',nDBs_disk)
  !
  iq_bz=0
  !

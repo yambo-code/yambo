@@ -256,7 +256,7 @@ subroutine RT_driver(E,X,k,q)
  call section('=','Real-Time dynamics')
  !######################################
  !
- call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
+ call live_timing('[RT] Dynamics :',NE_steps-it_start+1)
  !
  do while (.not.l_Dynamics_is_over)
    !
@@ -358,7 +358,7 @@ subroutine RT_driver(E,X,k,q)
    !
  enddo
  !
- call live_timing(steps=NE_steps-NE_i_time+1)
+ call live_timing( )
  !
  ! Finalize & Free
  !-----------------

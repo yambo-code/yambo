@@ -121,7 +121,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  !---------------------- SAMPLE POINTS (KNOTS) -----------------------------
  ! find kpoints of fine grid that correspond to those of coarse grid
- call live_timing('BZ Double Grid Tables',Xk%nbz*npts_around_coarse,SERIAL=.true.) 
+ call live_timing('BZ Double Grid Tables',Xk%nbz*npts_around_coarse)
  !
  do ii_c = 1,Xk%nbz !size(kpts_c,1)
    ! indices of coarse points 
@@ -182,7 +182,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  ! (ie. to coarse point around which fine points are sampled)
  ! choose intervals such that starting point is the first point on grid.  
  !
- call live_timing('BZ Double Grid ipol weights',npts_around_coarse,SERIAL=.true.) 
+ call live_timing('BZ Double Grid ipol weights',npts_around_coarse)
  pt_ipol = 1 - iintervls(1)  
  ii = 0
  do intvx = 1, nintervls 

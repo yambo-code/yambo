@@ -43,9 +43,9 @@ subroutine plot_gnuplot(eval_only)
  if (plot_dim==3) return
  !
  if (len_trim(plot_title)==0) then
-   call live_timing('3D Merge',nr(1),SERIAL=.true.)
+   call live_timing('3D Merge',nr(1))
  else
-   call live_timing('3D Merge of '//trim(plot_title),nr(1),SERIAL=.true.)
+   call live_timing('3D Merge of '//trim(plot_title),nr(1))
  endif
  !
  if (.not.eval_only) then

@@ -219,7 +219,6 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  !====================================
  do i_T=1,n_T_steps
    !
-   !RT_occ(:,i_T)=RT_occ(E_sort_index(:),i_T)
    TMP_vec=RT_occ(E_sort_index(:),i_T)
    RT_occ(:,i_T)=TMP_vec
    do i_spinor=1,2*(n_spinor-1)
@@ -302,7 +301,9 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  output_fname(2)='YPP-RT_E_Fermi'
  !
  call of_open_close(trim(output_fname(1)),'ot')
+ call RT_write_descriptions(trim(output_fname(1)))
  call of_open_close(trim(output_fname(2)),'ot')
+ call RT_write_descriptions(trim(output_fname(2)))
  !
  call msg('o '//trim(output_fname(1)),'#')
  call msg('o '//trim(output_fname(1)),'# Fitted temperatures [K]')
@@ -393,6 +394,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    !
    if (n_T_steps>nmax_file_report) output_fname(1)=trim(output_fname(1))//trim(GRP_string)
    call of_open_close(trim(output_fname(1)),'ot')
+   call RT_write_descriptions(trim(output_fname(1)))
    !
    call msg('o '//trim(output_fname(1)),'#')
    call msg('o '//trim(output_fname(1)),'# Occupations distribution at different times (f@ time)')
@@ -409,6 +411,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      !
      if (n_T_steps>nmax_file_report) output_fname(i_spinor+1)=trim(output_fname(i_spinor+1))//trim(GRP_string)
      call of_open_close(trim(output_fname(i_spinor+1)),'ot')
+     call RT_write_descriptions(trim(output_fname(i_spinor+1)))
      !
      call msg('o '//trim(output_fname(i_spinor+1)),'#')
      if(i_spinor==1) call msg('o '//trim(output_fname(i_spinor+1)),'# Spin up distribution at different times (f@ time)')
@@ -429,6 +432,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      output_fname(igamma+n3)=trim(gamma_fname(igamma))
      if (n_T_steps>nmax_file_report) output_fname(igamma+n3)=trim(gamma_fname(igamma))//trim(GRP_string)
      call of_open_close(trim(output_fname(igamma+n3)),'ot')
+     call RT_write_descriptions(trim(output_fname(igamma+n3)))
      !
      call msg('o '//trim(output_fname(igamma+n3)),'#')
      call msg('o '//trim(output_fname(igamma+n3)),'# Lifetimes distribution at different times (f@ time)')
@@ -479,6 +483,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      if (n_T_steps>nmax_file_report) output_fname(1)=trim(output_fname(1))//trim(GRP_string)
      !
      call of_open_close(trim(output_fname(1)),'ot')
+     call RT_write_descriptions(trim(output_fname(1)))
      !
      call msg('o '//trim(output_fname(1)),'#')
      call msg('o '//trim(output_fname(1)),'# Results of the FIT')

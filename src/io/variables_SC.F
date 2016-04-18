@@ -97,21 +97,21 @@ integer function variables_SC(ID,local_description,what)
  !
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_sc_pot_is_local,&
-&     VAR=' The potential is local          :',DESCRIPTION=local_description(i_desc))
+&     VAR=' [SC] Local Potential            :',DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=it_now,DB_I0=it_now,&
-&     VAR=' Iteration                       :',DESCRIPTION=local_description(i_desc))
+&     VAR=' [SC] Iteration                  :',DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I1=SC_bands,&
-&     VAR=' Bands                           :',CHECK=CHECK_,OP=(/"==","=="/),&
+&     VAR=' [SC] Bands                      :',CHECK=CHECK_,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=nkibz,&
-&     VAR=' Number of K-points              :',CHECK=CHECK_,OP=(/"=="/),&
+&     VAR=' [SC] K-points                   :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,R0=SC_band_mixing,&
-&     VAR=' Bands mixing                    :',CHECK=CHECK_,OP=(/"=="/),&
+&     VAR=' [SC] Bands mixing               :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -119,7 +119,7 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,VAR="SIGMAx_G",VAR_SZ=1,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_ng_Sx,&
-&       VAR=' Sx RL components                :',CHECK=CHECK_,OP=(/"=="/),&
+&       VAR=' [SC] Sx RL components           :',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
@@ -128,23 +128,23 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,VAR="X_bands_size",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,I1=SC_X_bands,&
-&       VAR=' Response function bands         :',CHECK=CHECK_,OP=(/"==","=="/),&
+&       VAR=' [SC] Response function bands    :',CHECK=CHECK_,OP=(/"==","=="/),&
 &       DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_X_size,&
-&       VAR=' Response function size          :',CHECK=CHECK_,OP=(/"=="/),&
+&       VAR=' [SC] Response function size     :',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=COHSEX_use_empties,&
-&     VAR=" COHSEX use empty bands          :", CHECK=.true.,OP=(/"=="/),&
+&     VAR=" [SC] COHSEX use empty bands     :", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_up_W_iters,&
-&     VAR=' Updating W every                :',CHECK=CHECK_,OP=(/"=="/),&
+&     VAR=' [SC] W update steps             :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_sc_diagonal,&
-&     VAR=' Diagonal approximation          :',CHECK=CHECK_,OP=(/"=="/),&
+&     VAR=' [SC] Diagonal approximation     :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
@@ -154,7 +154,7 @@ integer function variables_SC(ID,local_description,what)
      call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
      i_desc=i_desc+1
      call io_elemental(ID,I0=SC_fft_size,&
-&         VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/),&
+&         VAR=' [SC] FFT mesh points            :',CHECK=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
@@ -170,7 +170,7 @@ integer function variables_SC(ID,local_description,what)
      call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
      i_desc=i_desc+1
      call io_elemental(ID,I0=SC_fft_size,&
-&         VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/),&
+&         VAR=' [SC] FFT mesh points            :',CHECK=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif

@@ -187,6 +187,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  if (NE_i_time>0) then
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
+   ! 
    io_err=io_RT_components(trim(db_name),ID)
    !
    if (io_err< 0) then 

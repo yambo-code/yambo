@@ -5,6 +5,7 @@ RT_objects = RT_driver.o \
              RT_initialize.o RT_dump_and_write_JP.o RT_X_qssin.o RT_1D_Fourier_Transform.o \
              RT_damp_it.o RT_X_effective.o RT_coefficients_Fourier.o RT_coefficients_Inversion.o RT_X_inversion.o \
              RT_split_Polarization.o RT_occupations_driver.o RT_occ_energy_plot.o RT_occ_time_plot.o \
-             RT_occ_2D_dos_plot.o RT_occ_bands_kpts_and_En_map.o RT_occ_bands_interpolation.o RT_transient_absorption.o
+             RT_occ_2D_dos_plot.o RT_occ_bands_kpts_and_En_map.o RT_occ_bands_interpolation.o RT_transient_absorption.o \
+             RT_write_descriptions.o
 #endif
 objs = $(RT_objects)

@@ -30,7 +30,7 @@ integer function variables_RT(ID,local_description,what)
  use stderr,         ONLY:intc
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
 &                         n_TIME_STEP_CONF_descriptions,RT_IO_time
- use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
+ use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
 &                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
@@ -68,11 +68,11 @@ integer function variables_RT(ID,local_description,what)
  call io_elemental(ID,VAR="RT_vars",VAR_SZ=3,MENU=0) 
  i_desc=i_desc+1
  call io_elemental(ID,I1=RT_bands,&
-&     VAR=' Number of RT bands              :',CHECK=.true.,OP=(/"==","=="/),&
+&     VAR=' [RT] Bands                      :',CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=RT_nk,&
-&     VAR=' Number of RT K-points           :',CHECK=.true.,OP=(/"=="/),&
+&     VAR=' [RT] K-points                   :',CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -116,10 +116,14 @@ integer function variables_RT(ID,local_description,what)
    !
    ! RT_DYNAMICS
    !
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=11,MENU=0) 
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=12,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT]                   (now)[fs]:",R0=RT_dyn_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
@@ -160,13 +164,13 @@ integer function variables_RT(ID,local_description,what)
    !   
    call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=3,MENU=0) 
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_Update_Time_Step,VAR=' [RT] dT Update                  :',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,L0=l_Update_Time_Step,VAR=' [dT] Update                     :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [RT] dT Update initial time [fs]:',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_time_step_update_jump,   VAR=' [RT] dT Update time step    [fs]:',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,R0=NE_time_step_update_jump,   VAR=' [dT] Update interval time   [fs]:',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

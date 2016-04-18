@@ -41,7 +41,11 @@ subroutine RT_occupations_driver(kpt,En)
  !
  integer               :: n_T_steps
  !
- call section('*','Real-Time occupations')
+ call section("*",'RT Occupations Processing')
+ !
+ ! Pre-Initialization
+ !====================
+ call RT_initialize()
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
@@ -70,6 +74,7 @@ subroutine RT_occupations_driver(kpt,En)
  ! Occupations bands fit 
  !=========================
  if (l_RT_life_Bands) n_T_steps=1
+ !
  if (l_RT_occ_bands.or.l_RT_life_bands) call RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
 end subroutine RT_occupations_driver

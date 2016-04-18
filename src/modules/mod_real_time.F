@@ -371,7 +371,7 @@ module real_time
        if(.not.associated(RT%dGAMMA_E_PHOT_Hole))     allocate(RT%dGAMMA_E_PHOT_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_PHOT_Electron)) allocate(RT%dGAMMA_E_PHOT_Electron(RT%nstates))
      endif
-     if (l_elel_scatt.or.l_elph_scatt) then
+     if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
        if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates,8))
        if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
        if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 

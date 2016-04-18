@@ -47,7 +47,7 @@ subroutine RT_driver(en,k,q)
  character(lchlen) :: jobstr_save
  logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
- call section("*",'RT Post Processing')
+ call section("*",'RT Optics Processing')
  !
  ! Response Functions
  !====================

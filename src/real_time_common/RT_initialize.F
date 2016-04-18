@@ -26,22 +26,22 @@ subroutine RT_initialize(E,k,q)
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
 &                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf,l_elphoton_scatt
  use pars,           ONLY:SP,pi
- use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2
+ use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
- use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
+ use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_time, &
 &                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
-&                         RT_is_dephased,RAD_LifeTime,       &
+&                         RT_is_dephased,RAD_LifeTime,NE_time_step_update_jump,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
-&                         l_RT_CCA_Kernel,Life_MEM_steps,    &
-&                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_steps,&
+&                         l_RT_CCA_Kernel,Life_MEM_steps,RT_life_interp_times_SAVE,    &
+&                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_times,&
 &                         l_RT_lifetimes_interpolation,l_NE_dynamics,l_RT_impose_N_dN,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_EXP,DbGd_EE_scatt_table,&
 &                         DbGd_EE_Nk_table,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,&
@@ -60,7 +60,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,ik,IO_steps(3),N_T_samplings
+ integer                  :: i1,ik,N_T_samplings
  character(6)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it
@@ -128,53 +128,23 @@ subroutine RT_initialize(E,k,q)
  !
  RT_dyn_step=RT_step
  !
- ! Set the I/O steps:
- !
- !  i1=1(J,P,CARRIERs)  i1=2(GF) i1=3(output).
- !
- ! Negative value forces the step to be set automatically
- !========================================================
+ ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
+ !=================================================
  !
  do i1=1,3
-   !
-   if (RT_IO_time(i1)>0) IO_steps(i1) =nint(RT_IO_time(i1)/RT_step)
-   if (IO_steps(i1)== 0) IO_steps(i1) =1
-   !
-   if(IO_steps(i1)>0.and.mod(NE_steps-1,IO_steps(i1))/=0) then
-     !
-     if (i1>1) cycle
-     !
-     rest=mod(NE_steps-1,IO_steps(i1))
-     NE_steps = NE_steps+IO_steps(i1)-rest
-     !
-     ! Set automatically RT_IO_time and RT_IO_steps 
-     !
-   else if (RT_IO_time(i1)<0) then
-     !
-     RT_IO_time(i1) =max(NE_tot_time/1000._SP,RT_step)
-     IO_steps(i1)=nint(RT_IO_time(i1)/RT_step)
-     !
-     if (i1>1) cycle
-     !
-     rest=mod(NE_steps-1,IO_steps(i1))
-     if(rest/=0) NE_steps = NE_steps+IO_steps(i1)-rest
-     !
-     if (RT_IO_steps_DB>0.and.IO_steps(i1)/=RT_IO_steps_DB) then
-       call warning('IO steps read from the existing databases')
-       IO_steps(i1)   =RT_IO_steps_DB
-     endif
-     !
-   endif
-   !
-   RT_IO_time(i1) =IO_steps(i1)*RT_step
-   !
+   if (RT_IO_time(i1)<=0)      RT_IO_time(i1)=max(NE_tot_time/1000._SP,RT_dyn_step)
+   if (RT_IO_time(i1)<RT_step) RT_IO_time(i1)=RT_step
+   RT_IO_time(i1)=nint(RT_IO_time(i1)/RT_step)*RT_step
  enddo
  !
- NE_tot_time=RT_step*(NE_steps-1)
+ RT_IO_JPO_steps    = RT_IO_time(1)/RT_step
+ RT_IO_G_steps      = RT_IO_time(2)/RT_step
+ RT_IO_output_steps = RT_IO_time(3)/RT_step
  !
- RT_IO_JPO_steps    = IO_steps(1)
- RT_IO_G_steps      = IO_steps(2)
- RT_IO_output_steps = IO_steps(3)
+ ! Update time Step
+ !==================
+ !
+ if (NE_time_step_update_jump < RT_step)  NE_time_step_update_jump=RT_step
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -190,6 +160,22 @@ subroutine RT_initialize(E,k,q)
      call warning('No Dephasing provided. E-E and/or E-P scatterings switched off')
      l_elph_scatt=.FALSE.
      l_elel_scatt=.FALSE.
+   endif
+   !
+ endif
+ !
+ ! Memory Depth (Lifetimes) & interpolation steps
+ !================================================
+ if (RT_is_dephased) then
+   !
+   RT_life_interp_times=RT_life_interp_times_SAVE
+   !
+   if (all(RT_life_interp_times>0)) then
+     Life_MEM_steps=nint(RT_life_interp_times(1)/RT_life_interp_times(2))
+     if (Life_MEM_steps<3) Life_MEM_steps=3
+     if (RT_life_interp_times(2)<RT_step) RT_life_interp_times(2)=RT_step
+     RT_life_interp_times(2)=nint(RT_life_interp_times(2)/RT_step)*RT_step
+     RT_life_interp_times(1)=RT_life_interp_times(2)*Life_MEM_steps
    endif
    !
  endif
@@ -317,7 +303,7 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
- if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) N_T_samplings =RT_Lifetimes_evaluation_plan( .FALSE. )
+ if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) N_T_samplings =RT_Lifetimes_evaluation_plan( )
  !
  ! Checking extended COLLISIONS
  !==============================
@@ -348,21 +334,24 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 :',trim(Integrator_name))
- call msg( 'r', 'Simulation time        [fs]:',NE_tot_time/FS2AUT)
- call msg( 'r', 'Baic time step         [fs]:',RT_step/FS2AUT)
- call msg( 'r', '     time step    (now)[fs]:',RT_dyn_step/FS2AUT)
- call msg( 'r', '          steps            :',NE_steps)
+ call msg( 'r', 'Simulation time        [fs]:',NE_tot_time*AUT2FS)
+ call msg( 'r', 'Basic time step        [fs]:',RT_step*AUT2FS)
+ call msg( 'r', '      time step   (now)[fs]:',RT_dyn_step*AUT2FS)
+ call msg( 'r', '           steps           :',NE_steps)
  !
  if (NE_initial_time_step_update>0.) then
-   call msg( 'r', 'Time step update To    [fs]:',NE_initial_time_step_update/FS2AUT)
+   call msg( 'r','---Time Step Update---')
+   call msg( 'r', 'Time step update To    [fs]:',NE_initial_time_step_update*AUT2FS)
+   call msg( 'r', 'Time step update Jump  [fs]:',NE_time_step_update_jump*AUT2FS)
  endif
  !
- call msg( 'r', 'Memory depth(G)        [fs]:',T_memory/FS2AUT)
+ call msg( 'r','---Memory---')
+ call msg( 'r', 'Memory depth(G)        [fs]:',T_memory*AUT2FS)
  call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
  !
  if (RT_is_dephased) then
    call msg( 'nr','---Lifetimes---')
-   call msg( 'r', 'Point groups (inter/intra) [fs]:',RT_life_interp_steps/FS2AUT)
+   call msg( 'r', 'Point groups (inter/intra) [fs]:',RT_life_interp_times*AUT2FS)
    call msg( 'r', 'Interpolation                  :',l_RT_lifetimes_interpolation)
    call msg( 'r', 'Memory steps                   :',Life_MEM_steps)
    call msg( 'r', 'Evaluated Time points          :',N_T_samplings)
@@ -382,15 +371,15 @@ subroutine RT_initialize(E,k,q)
  if (l_BGR)               call msg( 'r','On-the-fly BGR added       :',l_BGR)
  !
  call msg( 'nr','---I/O---')
- call                          msg('r', 'T between I/O of J,P,f [fs]:',RT_IO_time(1)/FS2AUT)
- call                          msg('r', '          I/O of   GFs [fs]:',RT_IO_time(2)/FS2AUT)
- call                          msg('r', '               outputs [fs]:',RT_IO_time(3)/FS2AUT)
+ call                          msg('r', 'T between I/O of J,P,f [fs]:',RT_IO_time(1)*AUT2FS)
+ call                          msg('r', '          I/O of   GFs [fs]:',RT_IO_time(2)*AUT2FS)
+ call                          msg('r', '               outputs [fs]:',RT_IO_time(3)*AUT2FS)
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]:',io_COLLs)
  !
  call msg( 'nr','---Damping and retarded GF---')
  call msg( 'r','Retarded Green`s function   :',Gr_kind)
- call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
- call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))
+ call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime*AUT2FS,HBAR_eVfs/Phase_LifeTime*AUT2FS*1000._SP/))
+ call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime*AUT2FS,   HBAR_eVfs/RAD_LifeTime*AUT2FS*1000._SP/))
  !
  if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_impose_N_dN.or.l_RT_impose_E)) then
    call msg( 'nr','---Conservation Rules---')
@@ -413,7 +402,7 @@ subroutine RT_initialize(E,k,q)
    call msg( 'nr','---Fields---')
    call msg('r','Gauge                       :',trim(global_gauge))
    !
-   !call msg('r','Pump/Probe periodicity  [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
+   !call msg('r','Pump/Probe periodicity  [fs]:',EtoT(E=maxval(Efield(:)%W_step))*AUT2FS)
    !call msg('r','Pump/Probe energy step  [eV]:',maxval(Efield(:)%W_step)*HA2EV)
    !
    do i1=1,n_ext_fields
@@ -422,15 +411,15 @@ subroutine RT_initialize(E,k,q)
      call msg('r', MSG_ch//' polarization                :'//trim(Efield(i1)%ef_pol))
      call msg('r', MSG_ch//' energy window/period [eV/fs]:',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
-     call msg('r', MSG_ch//' elemental oscillation   [fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)
-     call msg('r', MSG_ch//' damping                 [fs]:',Efield(i1)%damping/FS2AUT)
+     call msg('r', MSG_ch//' elemental oscillation   [fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))*AUT2FS)
+     call msg('r', MSG_ch//' damping                 [fs]:',Efield(i1)%damping*AUT2FS)
      call msg('r', MSG_ch//' energy steps                :',Efield(i1)%n_frequencies)
      call msg('r', MSG_ch//' electric field         [V/m]:',Efield(i1)%amplitude*AU2VMm1)
      call msg('r', MSG_ch//' max intensity      [kW/cm^2]:',Efield(i1)%intensity*AU2KWCMm2)
      !
      if( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='DELTA') ) then
        call msg('r', MSG_ch//' max fluence        [nJ/cm^2]:',Efield(i1)%fluence )
-       call msg('r', MSG_ch//' final time              [fs]:',Efield(i1)%t_final/FS2AUT)
+       call msg('r', MSG_ch//' final time              [fs]:',Efield(i1)%t_final*AUT2FS)
      endif
      !
    enddo

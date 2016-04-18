@@ -52,7 +52,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
 &                         l_initial_equilibrium,RT_delta0_occupations,RT_is_dephased,&
-&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,it_dyn,&
+&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,NE_i_time,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -96,8 +96,8 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  l_eval=l_initial_equilibrium 
  !
  if (.not.l_initial_equilibrium) then
-   l_eval= ( RT_TIME_status(it_dyn)>0 .and. &
-&            (FIRST_step( ) .or. it_dyn-it_start+1<=Life_MEM_steps ) ).or. &
+   l_eval= ( RT_TIME_status(NE_i_time)>0 .and. &
+&            (FIRST_step( ) .or. NE_i_time-it_start+1<=Life_MEM_steps ) ).or. &
 &          Life_MEM_steps==1
  endif
  !

@@ -53,7 +53,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   !
   costakk=2.0_SP/PI/PI/costheta0
 
-  call live_timing('Energy loss:',nw, SERIAL=.true.)
+  call live_timing('Energy loss:',nw)
   do iw = 1, nw
     kpmag = kpmagf( hw(iw) )
 

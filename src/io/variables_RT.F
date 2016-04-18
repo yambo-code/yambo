@@ -24,23 +24,23 @@
 integer function variables_RT(ID,local_description,what)
  !
  use pars,           ONLY:lchlen,SP
- use units,          ONLY:FS2AUT,AU2KWCMm2,HA2EV
+ use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr
  use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
- use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
-&                         RT_description,n_RT_descriptions
- use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,NE_steps,NE_time, &
+ use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
+&                         n_TIME_STEP_CONF_descriptions,RT_IO_time
+ use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
-&                         RAD_LifeTime,Phase_LifeTime,it_dyn,   &
-&                         l_RT_induced_field,G_MEM_steps,&
+&                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
+&                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
-&                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_steps,&
-&                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E
+&                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_times_SAVE,&
+&                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step 
  use ELPH,           ONLY:elph_branches
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
- use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
+ use IO_m,           ONLY:io_elemental,io_status
  !
  implicit none
  !
@@ -48,13 +48,11 @@ integer function variables_RT(ID,local_description,what)
  character(lchlen)  ::local_description(100)
  character(*)       ::what
  !
- integer               :: i1,i_desc,RT_diagonalization_steps,SIZE_
- logical               :: l_J,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diagonalize,l_RT_diamagnetic
+ integer               :: i1,i_desc
+ logical               :: l_J,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
  real(SP)              :: RT_life_interp_decay_time
  character(lchlen)     :: ch
  !
- RT_diagonalization_steps  = 0
- l_RT_diagonalize          = .false.
  l_RT_diamagnetic          = .false.
  RT_life_interp_decay_time = 0._SP
  !
@@ -67,18 +65,14 @@ integer function variables_RT(ID,local_description,what)
  !
  ! RT_vars
  !
- SIZE_=1
- if( ver_is_gt_or_eq(ID,revision=5380) ) SIZE_=3
- call io_elemental(ID,VAR="RT_vars",VAR_SZ=SIZE_,MENU=0) 
- if( ver_is_gt_or_eq(ID,revision=5380) ) then
-   i_desc=i_desc+1
-   call io_elemental(ID,I1=RT_bands,&
-&       VAR=' Number of RT bands              :',CHECK=.true.,OP=(/"==","=="/),&
-&       DESCRIPTION=local_description(i_desc))
- endif
+ call io_elemental(ID,VAR="RT_vars",VAR_SZ=3,MENU=0) 
+ i_desc=i_desc+1
+ call io_elemental(ID,I1=RT_bands,&
+&     VAR=' [RT] Bands                      :',CHECK=.true.,OP=(/"==","=="/),&
+&     DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=RT_nk,&
-&     VAR=' Number of RT-K points           :',CHECK=.true.,OP=(/"=="/),&
+&     VAR=' [RT] K-points                   :',CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -103,7 +97,6 @@ integer function variables_RT(ID,local_description,what)
 &   DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- !
  ! E-E_vars
  !
  call io_elemental(ID,VAR="E-E_vars",VAR_SZ=2,MENU=0) 
@@ -121,61 +114,65 @@ integer function variables_RT(ID,local_description,what)
  !
  if(any((/l_J,l_G,l_carriers/))) then
    !
-   !
    ! RT_DYNAMICS
    !
-   SIZE_=4
-   if( ver_is_gt_or_eq(ID,revision=5380) ) SIZE_=5
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=SIZE_,MENU=0) 
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=12,MENU=0) 
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT]                   (now)[fs]:",R0=RT_dyn_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] NE time       (planned)[fs]:",R0=NE_tot_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] NE time          (done)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] Lifetimes Inter/Intra  [fs]:",R1=RT_life_interp_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] I/O (JPO,G,OUT)  times [fs]:",R1=RT_IO_time,CHECK=.true.,OP=(/"==","==","=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   !
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_NE_simulate_Irredux,&
 &    VAR=" [RT] Simulate irredux           :", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,&
-&    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
-&    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,&
-&    VAR=" [RT] Time steps    (planned)    :",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,&
-&    VAR=" [RT] NE time       (reached)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1._SP/FS2AUT,&
-&    DESCRIPTION=local_description(i_desc))
    !
-   i_desc=i_desc+1
-   call io_elemental(ID,&
-&    VAR=" [RT] Time steps    (reached)    :",I0=it_dyn,WARN=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,I0=NE_steps)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! Lifetimes Interpolation
    !
-   if( ver_is_gt_or_eq(ID,revision=5416) ) then
-     call io_elemental(ID,VAR='RT_life_interpolation',VAR_SZ=1,MENU=0)
-     i_desc=i_desc+1
-     call io_elemental(ID,L0=l_RT_lifetimes_interpolation, &
-&          VAR=" [RT] Lifetimes Interpolation    :",WARN=.true.,OP=(/"=="/),&
-&          DESCRIPTION=local_description(i_desc))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   endif
-   !
-   !
-   ! RT_life_interp_more
-   !   
-   call io_elemental(ID,VAR="RT_life_interp_more",VAR_SZ=3,MENU=0) 
+   call io_elemental(ID,VAR='RT_life_interpolation',VAR_SZ=1,MENU=0)
    i_desc=i_desc+1
-   call io_elemental(ID,&
-&    VAR=" [RT] Inter/intra grps       [fs]:",R1=RT_life_interp_steps,WARN=.true.,OP=(/"==","=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
-   i_desc=i_desc+1
-   call io_elemental(ID,&
-&    VAR=" [RT] Time decay             [fs]:",R0=RT_life_interp_decay_time,WARN=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+   call io_elemental(ID,L0=l_RT_lifetimes_interpolation, &
+&        VAR=" [RT] Lifetimes Interpolation    :",WARN=.true.,OP=(/"=="/),&
+&        DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+   ! Delta T Update
+   !   
+   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=3,MENU=0) 
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_Update_Time_Step,VAR=' [dT] Update                     :',CHECK=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   i_desc=i_desc+1
+   call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   i_desc=i_desc+1
+   call io_elemental(ID,R0=NE_time_step_update_jump,   VAR=' [dT] Update interval time   [fs]:',CHECK=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! INTEGRATOR
    !   
@@ -188,37 +185,22 @@ integer function variables_RT(ID,local_description,what)
    !
    ! RT_OTHERS
    !
-   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=8,MENU=0) 
-   i_desc=i_desc+1
-   call io_elemental(ID,L0=l_RT_diagonalize,&
-&    VAR=' [RT] QP analysis                :',CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,I0=RT_diagonalization_steps,&
-&    VAR=' [RT] Diagonalization steps      :',CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
-   if (l_J.or.l_carriers) then
-     i_desc=i_desc+1
-     call io_elemental(ID,DB_I0=RT_IO_steps_DB,I0=RT_IO_JPO_steps,&
-&      VAR=' [RT] IO steps                   :',CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_desc))
-   else if (l_G) then
-     i_desc=i_desc+1
-     call io_elemental(ID,I0=RT_IO_G_steps,&
-&      VAR=' [RT] IO steps                   :',CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_desc))
-   endif
+   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,R0=RAD_LifeTime,&
 &    VAR=' [RT] Radiative life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&     DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,R0=Phase_LifeTime,&
 &    VAR=' [RT] Dephasing life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&     DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_NE_with_fields,DB_L0=l_NE_with_fields_disk,&
-&    VAR=' [RT] External Field             :', CHECK=.true.,OP=(/"=="/),&
+&    VAR=' [RT] External Field(s)          :', CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,I0=n_ext_fields,&
+&    VAR=' [RT] Number of Fields           :', CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_diamagnetic,&
@@ -229,6 +211,18 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=' [RT] Induced field              :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! Time-Steps configurations
+   !===========================
+   call io_elemental(ID,VAR="N_TIME_STEP_CONFS",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,I0=n_TIME_STEP_CONF_descriptions)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   do i1=1,n_TIME_STEP_CONF_descriptions
+     call io_elemental(ID,VAR="TIME_STEP_CONF_"//trim(intc(i1)),CH0="",VAR_SZ=1,MENU=0)
+     i_desc=i_desc+1
+     call io_elemental(ID,CH0=TIME_STEP_CONF_description(i1),VAR='',DESCRIPTION=local_description(i_desc))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   enddo
    !
    ! G retarded variables
    !======================
@@ -245,11 +239,7 @@ integer function variables_RT(ID,local_description,what)
    !
    ! Double Grid
    !======================
-   if (ver_is_gt_or_eq(ID,revision=4441)) then
-     call io_elemental(ID,VAR="Double_Grid_support",VAR_SZ=3,MENU=0) 
-   else
-     call io_elemental(ID,VAR="RIM_support",VAR_SZ=3,MENU=0) 
-   endif
+   call io_elemental(ID,VAR="Double_Grid_support",VAR_SZ=3,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_uses_E_DbGd,&
 &    VAR=' [DbGd] Double Grid support      :',  CHECK=.true.,OP=(/"=="/),&
@@ -295,30 +285,22 @@ integer function variables_RT(ID,local_description,what)
 &        VAR=' [FIELDs] Type                   :',CHECK=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
        !
-       if( ver_is_gt_or_eq(ID,revision=5232) ) then
-         call io_elemental(ID,VAR="FIELD_POL"//trim(intc(i1)),CH0="",VAR_SZ=1,MENU=0)
-         i_desc=i_desc+1
-         call io_elemental(ID,CH0=Efield(i1)%ef_pol, &
-&          VAR=' [FIELDs] Polarization           :',CHECK=.true.,OP=(/"=="/),&
-&          DESCRIPTION=local_description(i_desc))
-         call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-       else if(read_is_on(ID)) then
-         Efield(i1)%ef_pol="linear"
-       endif
+       call io_elemental(ID,VAR="FIELD_POL"//trim(intc(i1)),CH0="",VAR_SZ=1,MENU=0)
+       i_desc=i_desc+1
+       call io_elemental(ID,CH0=Efield(i1)%ef_pol, &
+&        VAR=' [FIELDs] Polarization           :',CHECK=.true.,OP=(/"=="/),&
+&        DESCRIPTION=local_description(i_desc))
+       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        !
-       SIZE_=10
-       if( ver_is_gt_or_eq(ID,revision=5232) ) SIZE_=13
-       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=SIZE_,MENU=0)
+       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=13,MENU=0)
        i_desc=i_desc+1
        call io_elemental(ID,R1=Efield(i1)%versor,WARN=.true., &
 &        VAR=" [FIELDs] Versor                 :",OP=(/"==","==","=="/),&
 &        DESCRIPTION=local_description(i_desc))
-       if( ver_is_gt_or_eq(ID,revision=5232) ) then
-         i_desc=i_desc+1
-         call io_elemental(ID,R1=Efield(i1)%versor_circ,WARN=.true., &
-&          VAR=" [FIELDs] Versor_circ            :",OP=(/"==","==","=="/),&
-&          DESCRIPTION=local_description(i_desc))
-       endif
+       i_desc=i_desc+1
+       call io_elemental(ID,R1=Efield(i1)%versor_circ,WARN=.true., &
+&        VAR=" [FIELDs] Versor_circ            :",OP=(/"==","==","=="/),&
+&        DESCRIPTION=local_description(i_desc))
        i_desc=i_desc+1
        call io_elemental(ID,&
 &        VAR=" [FIELDs] Intensity      [kWCMm2]:",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
@@ -326,7 +308,7 @@ integer function variables_RT(ID,local_description,what)
        i_desc=i_desc+1
        call io_elemental(ID,&
 &        VAR=" [FIELDs] Damping            [fs]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
-&        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
        i_desc=i_desc+1
        call io_elemental(ID,&
 &        VAR=" [FIELDs] Frequency range    [eV]:",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
@@ -342,7 +324,7 @@ integer function variables_RT(ID,local_description,what)
        i_desc=i_desc+1
        call io_elemental(ID,R0=Efield(i1)%t_initial,&
 &        VAR=' [FIELDs] Initial time       [fs]:',CHECK=.true.,OP=(/"=="/),&
-&        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+&        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
        !                       
        if (i1/=n_ext_fields) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        if (i1==n_ext_fields) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

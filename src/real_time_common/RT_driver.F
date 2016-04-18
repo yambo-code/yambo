@@ -26,7 +26,7 @@ subroutine RT_driver(E,X,k,q)
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_sc_ip,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use stderr,         ONLY:set_real_printed_length
- use units,          ONLY:FS2AUT
+ use units,          ONLY:AUT2FS
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin
  use X_m,            ONLY:X_t
@@ -36,12 +36,12 @@ subroutine RT_driver(E,X,k,q)
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
- use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,RT_IO_G_steps,ID,&
+ use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
 &                         it_start,RT_carriers_object
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
-&                         G_lesser_reference,rho_reference,magn_reference,it_dyn, &
+&                         G_lesser_reference,rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
 &                         i_MEM_now,i_MEM_next
@@ -189,7 +189,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
    !
-   !call RT_BGR(G_lesser_reference,E,k)
+   call RT_BGR(G_lesser_reference,E,k)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -232,7 +232,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  call RT_output(what="open dyn ene cur pol")
- !call RT_output('open BGR')
+ call RT_output('open BGR')
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
    if(l_RT_induced_field) call RT_output(what="open tot ind")
@@ -248,12 +248,15 @@ subroutine RT_driver(E,X,k,q)
  !
  ! See [23/9/2011] comments in RT_start_and_restart regarding the value of it_start
  !
- it_dyn    = it_start
- NE_i_time = it_dyn
+ NE_i_time = it_start
  !
  ! Start-Up & Timing
  !===================
- call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
+ !
+ call section('=','Real-Time dynamics')
+ !######################################
+ !
+ call live_timing('[RT] Dynamics :',NE_steps-it_start+1)
  !
  do while (.not.l_Dynamics_is_over)
    !
@@ -274,11 +277,6 @@ subroutine RT_driver(E,X,k,q)
    ! ======================================================
    A_vecpot_previous=A_vecpot
    !
-   if (stop_now(.FALSE.)) then
-     NE_steps=((it_dyn-1)/RT_IO_G_steps)*RT_IO_G_steps+1
-     l_Dynamics_is_over=.TRUE.
-   endif
-   !
    ! Current and Polarization
    !==========================
    call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_now),A_vecpot_previous)
@@ -295,40 +293,40 @@ subroutine RT_driver(E,X,k,q)
    !
    ! BGR
    !=======================================
-   !call RT_BGR(dG_lesser(:,:,:,i_MEM_now),E,k)
-   !call RT_output('BGR',TIME=NE_time/FS2AUT)
+   call RT_BGR(dG_lesser(:,:,:,i_MEM_now),E,k)
+   call RT_output('BGR',TIME=NE_time*AUT2FS)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
    if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
      call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)      call RT_output('EPlife',TIME=NE_time/FS2AUT)
-     if(l_elel_scatt)      call RT_output('EElife',TIME=NE_time/FS2AUT)
-     if(l_elphoton_scatt)  call RT_output('RADlife',TIME=NE_time/FS2AUT)
+     if(l_elph_scatt)      call RT_output('EPlife',TIME=NE_time*AUT2FS)
+     if(l_elel_scatt)      call RT_output('EElife',TIME=NE_time*AUT2FS)
+     if(l_elphoton_scatt)  call RT_output('RADlife',TIME=NE_time*AUT2FS)
      if((l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt).and.&
-&       (l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time/FS2AUT)
+&       (l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time*AUT2FS)
    endif
    !
    ! Write DBs
    !===========
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E,it_dyn)
+   call RT_databases_IO(E,NE_i_time)
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Print some simple observables
    !===============================
    if (NE_time>=0._SP) then
-     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
-     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
+     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
+     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
    endif
-   call RT_output('cur pol',TIME=NE_time/FS2AUT)
+   call RT_output('cur pol',TIME=NE_time*AUT2FS)
    if (l_NE_with_fields) then
-     call RT_output('external_field',TIME=NE_time/FS2AUT) 
+     call RT_output('external_field',TIME=NE_time*AUT2FS) 
      if(l_RT_induced_field) then
-       call RT_output('total_field'  ,TIME=NE_time/FS2AUT) 
-       call RT_output('induced_field',TIME=NE_time/FS2AUT) 
+       call RT_output('total_field'  ,TIME=NE_time*AUT2FS) 
+       call RT_output('induced_field',TIME=NE_time*AUT2FS) 
      endif
    endif
    !
@@ -342,24 +340,25 @@ subroutine RT_driver(E,X,k,q)
    !=================
    !
    G_lesser(:,:,:,i_MEM_next)=G_lesser_reference+dG_lesser(:,:,:,i_MEM_next)
-   !
-   ! Time Update
-   !=============
-   !
-   l_Dynamics_is_over=NE_i_time==NE_steps.or.it_dyn+nint(RT_dyn_step/RT_step)>NE_steps
-   !
-   it_dyn    = it_dyn+nint(RT_dyn_step/RT_step)
-   NE_i_time = it_dyn
-   NE_time   = (NE_i_time-1)*RT_step
    !	
    ! Timing
    !========
    !
    call live_timing(steps=nint(RT_dyn_step/RT_step))
    !
+   ! Time Update
+   !=============
+   !
+   l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
+   !
+   if (l_Dynamics_is_over) cycle
+   !
+   NE_i_time = NE_i_time+nint(RT_dyn_step/RT_step)
+   NE_time   = (NE_i_time-1)*RT_step
+   !
  enddo
  !
- call live_timing()
+ call live_timing( )
  !
  ! Finalize & Free
  !-----------------

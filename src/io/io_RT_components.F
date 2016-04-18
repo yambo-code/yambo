@@ -33,16 +33,16 @@ integer function io_RT_components(what,ID)
  use SC,             ONLY:SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,io_fragment, &
-&                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found,&
+&                         manage_RD_WR_CL_IF_END,variable_is_found,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
-&                         dG_lesser,RT_ind_J,RT_carriers,RT_obj_alloc,&
+&                         l_NE_with_fields,NE_steps,RT_nk, &
+&                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer
  use ELPH,           ONLY:ph_modes,elph_branches
- use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO,&
+ use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,&
 &                         RT_carriers_object
  use fields,         ONLY:A_ext
  use matrix_operate, ONLY:mat_c2r,mat_r2c
@@ -61,7 +61,7 @@ integer function io_RT_components(what,ID)
  character(schlen)     :: local_what
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
- integer               :: ik,ib,i_spin,i1,file_number,i_memory,db_type,i_Probe,i_Pump
+ integer               :: ik,ib,i_spin,file_number,i_memory,db_type,i_Probe,i_Pump
  logical               :: l_V,l_IMPOSE_SN,CHECK_,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF,l_carriers
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
@@ -102,30 +102,14 @@ integer function io_RT_components(what,ID)
    if (io_sec(ID,1)==1) then 
      io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
    else
-     if (RT_do_IO('J')) then
-       if (l_J_and_P)     io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
-       if (l_carriers) then
-         io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
-         if (read_is_on(ID).and.io_RT_components==IO_NO_DATABASE) then
-           io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
-         endif
+     if (l_J_and_P)     io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
+     if (l_carriers) then
+       io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
+       if (read_is_on(ID).and.io_RT_components==IO_NO_DATABASE) then
+         io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
        endif
-     else
-       io_RT_components=0
-       call io_reset(ID)
-       if (.not.l_J_and_P) goto 2
      endif
    endif
- endif
- !
- if (l_G.or.l_THETA) then
-   !
-   if(.not.RT_do_IO('G').and.write_is_on(ID)) then
-     io_RT_components=0
-     call io_reset(ID)
-     goto 2
-   endif
-   !
  endif
  !
  if (l_G) then
@@ -173,7 +157,7 @@ integer function io_RT_components(what,ID)
    io_RT_components=variables_RT(ID,local_description,trim(local_what))
    if (io_RT_components/=0) goto 1
    !
-   if (l_G.or.l_carriers.or.l_THETA.and.(.not.ver_is_gt_or_eq(ID,revision=5232))) then
+   if (l_G.or.l_carriers.or.l_THETA) then
      call io_elemental(ID,VAR="Probe_and_Pump_index",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,I0=i_Probe)
      call io_elemental(ID,I0=i_Pump)
@@ -393,50 +377,18 @@ integer function io_RT_components(what,ID)
  !
  if ( l_J_and_P ) then
    !
-   ! Current and Vector Potential
-   !==============================
+   ! Current and Polarization 
+   !==========================
    !        
-   if(io_sec(ID,1)/=1) then
+   if (io_sec(ID,1)/=1) then
      !
-     if(write_is_on(ID)) then
-       !
-       do i1=1,3
-         J_and_P_cache( 2*i1-1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_ind_J(i1))
-         J_and_P_cache( 2*i1,    mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_ind_J(i1))
-         J_and_P_cache(6+2*i1-1, mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_P(i1))
-         J_and_P_cache(6+2*i1,   mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_P(i1))
-         J_and_P_cache(12+2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
-         J_and_P_cache(12+2*i1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
-       enddo
-       !
-     endif
+     call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
+&                    VAR_SZ=(/J_and_P_cache_size,RT_IO_JPO_steps/))
      !
-     if (RT_do_IO('J')) then
-       !                                
-       call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
-&                      VAR_SZ=(/J_and_P_cache_size,RT_IO_JPO_steps/))
-       !
-       call io_bulk(ID,R2=J_and_P_cache)
-       !
-       call io_disconnect(ID)
-       !                       
-     endif
+     call io_bulk(ID,R2=J_and_P_cache)
      !
-     if(read_is_on(ID)) then
-       !
-       ! Read from cache
-       !
-       do i1=1,3
-         RT_ind_J(i1) =cmplx(J_and_P_cache(   2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1), &
-&                            J_and_P_cache(   2*i1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1),SP)
-         RT_P(i1)     =cmplx(J_and_P_cache( 6+2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1), &
-&                            J_and_P_cache( 6+2*i1  ,mod(NE_i_time-1,RT_IO_JPO_steps)+1),SP)
-       enddo
-       !
-     endif 
-     !
-     if (.not.RT_do_IO('J')) call io_reset(ID) 
-     !
+     call io_disconnect(ID)
+     !                       
    endif
    !
  endif       

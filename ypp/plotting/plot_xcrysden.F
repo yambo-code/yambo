@@ -149,9 +149,9 @@ subroutine plot_xcrysden()
      if (.not.l_norm_to_one) max_=1.
      !
      if (len_trim(plot_title)==0) then
-       call live_timing('3D Plot',nr(3),SERIAL=.true.)
+       call live_timing('3D Plot',nr(3))
      else
-       call live_timing('3D Plot of '//trim(plot_title),nr(3),SERIAL=.true.)
+       call live_timing('3D Plot of '//trim(plot_title),nr(3))
      endif
      !
      allocate(v2plot_xc(nr(1)+1,nr(2)+1,nr(3)+1))

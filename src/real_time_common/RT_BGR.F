@@ -25,7 +25,7 @@ subroutine RT_BGR(dG,E,k)
  !
  ! This routine calculates the BGR
  !
- use pars,           ONLY:SP,cZERO,cI
+ use pars,           ONLY:SP,cZERO,rZERO
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use SC,             ONLY:V_hartree_sc,V_xc_sc,rho_n
  use R_lattice,      ONLY:nkibz,bz_samp
@@ -36,7 +36,7 @@ subroutine RT_BGR(dG,E,k)
  use parallel_m,     ONLY:master_cpu
  use QP_m,           ONLY:QP_table,QP_n_states
  use wave_func,      ONLY:WF
- use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
+ use real_time,      ONLY:l_initial_equilibrium,REF_V_xc_sc,BGR,&
 &                         REF_V_hartree_sc,REF_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
 &                         l_RT_uses_E_DbGd,DbGd_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
 &                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR,RT_Vnl_xc,&
@@ -56,11 +56,15 @@ subroutine RT_BGR(dG,E,k)
  !
  complex(SP)  :: H(RT_bands(2),RT_bands(2),n_sp_pol)
  real(SP)     :: deltaE
- integer      :: ib,ik,ik_ref,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_DbGd,i_sp
+ integer      :: ib,ik,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_DbGd,i_sp
  !
- BGR_Hartree    =0._SP
- BGR_V_xc       =0._SP
- BGR_Self_Energy=0._SP
+ ! SAVE fall-back. Source to be tested and re-introduced
+ !
+ BGR_Self_Energy=rZERO
+ BGR_Hartree=rZERO
+ BGR_V_xc=rZERO
+ !
+ return
  !
 #if defined _TIMING
  call timing('RT BGR',OPR='start')

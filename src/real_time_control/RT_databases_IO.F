@@ -23,10 +23,11 @@
 !                  
 subroutine RT_databases_IO(E,it)
  !
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt
- use RT_control,     ONLY:RT_do_IO,ID,it_start,RT_carriers_object
- use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk
- use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_CARRIERs,io_J
+ use drivers,        ONLY:l_elph_scatt
+ use RT_control,     ONLY:RT_do_it,ID,it_start,RT_carriers_object,J_and_P_cache,RT_IO_JPO_steps
+ use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P
+ use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,io_GF,io_CARRIERs,&
+&                         io_J
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:PP_redux_wait
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers
@@ -39,7 +40,7 @@ subroutine RT_databases_IO(E,it)
  !
  ! Work Space
  !
- integer :: ik,io_G,io_J_and_P,io_carr,COM_,io_THETA
+ integer :: ik,io_G,io_J_and_P,io_carr,io_THETA,i_c
  !
  ! When the simulation has been restarted the first step (it==it_start)
  ! corresponds to the latest of the previous simulation. Therefore
@@ -47,22 +48,33 @@ subroutine RT_databases_IO(E,it)
  !
  if (it==it_start.and.it_start>1) return
  !
- if (.not.RT_do_IO('J').and..not.RT_do_IO('G')) return
+ ! Polarization and current 
+ !==========================
  !
- ! Polarization and current are automaticaly written every RT_IO_JPO_steps
- !
- if(l_NE_dynamics.and.RT_do_IO('J')) then
+ if(l_NE_dynamics) then
    !
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-   io_J_and_P=io_RT_components('J_and_P',ID(4))
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
-   io_J_and_P=io_RT_components('J_and_P',ID(4))
+   if (RT_do_it('J').and.it>it_start) then
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
+     io_J_and_P=io_RT_components('J_and_P',ID(4))
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
+     io_J_and_P=io_RT_components('J_and_P',ID(4))
+   endif
+   !
+   do i_c=1,3
+     J_and_P_cache( 2*i_c-1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_ind_J(i_c))
+     J_and_P_cache( 2*i_c,    mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_ind_J(i_c))
+     J_and_P_cache(6+2*i_c-1, mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_P(i_c))
+     J_and_P_cache(6+2*i_c,   mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_P(i_c))
+     J_and_P_cache(12+2*i_c-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
+     J_and_P_cache(12+2*i_c,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
+   enddo
    !
  endif
  !
  ! Occupations
+ !=============
  !
- if (io_CARRIERs.and.RT_do_IO('CARRIERS')) then
+ if (io_CARRIERs.and.RT_do_it('CARRIERS')) then
    !
    call RT_carriers_object(RT_carriers,WHAT='fill')
    !
@@ -73,32 +85,25 @@ subroutine RT_databases_IO(E,it)
    !
  endif
  !
- ! Write every RT_IO_G_steps
- !
- if (.not.RT_do_IO('G')) return
- !
- if (it==it_start.and.it_start>1) return
- !
  ! Write G_lesser
  !================
  !
- if (io_GF) then
+ if (io_GF.and.RT_do_it('G')) then
    !
    io_G=0
    io_THETA=0
-   COM_=NONE
-   if (it==it_start) COM_=REP
-   call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
+   call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
-     call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
+     call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(7))
      io_THETA=io_RT_components('THETA',ID(7))
    endif
    !
    do ik = 1, RT_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
+     !
      if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
        !
        ! The I/O of the THETA matrix is tricky when the run is parallel.

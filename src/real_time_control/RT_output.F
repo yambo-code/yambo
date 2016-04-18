@@ -32,7 +32,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use electrons,      ONLY:n_spin,Total_magn
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc,real2ch
- use RT_control,     ONLY:RT_do_IO,RT_description,n_RT_descriptions
+ use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn, &
 &                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR,RAD_prefactor
  use LIVE_t,         ONLY:what_is_running
@@ -62,7 +62,11 @@ subroutine RT_output(what,VALUES,TIME,E)
  add_space=index(what,'space')>0
  initialize=index(what,'initialize')>0
  !
- if ( .not.RT_do_IO('OUT').and..not.open_files.and..not.initialize) return      
+ ! FALL back till BGR procedure is not fixed 
+ !
+ if (index(what,'BGR')>0) return
+ !
+ if ( .not.RT_do_it('OUT').and..not.open_files.and..not.initialize) return      
  !
 #if defined _TIMING
  call timing('RT output',OPR='start')

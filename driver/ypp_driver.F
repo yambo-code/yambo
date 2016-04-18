@@ -203,7 +203,10 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
 #if defined _YPP_RT
  !
- if (l_RealTime) call RT_driver(en,k,q)
+ l_flag=l_RT_occ_energy.or.l_RT_occ_time.or.l_RT_occ_2D_dos.or.l_RT_occ_bands.or.l_RT_life_bands 
+ !
+ if (l_RealTime.and.     l_flag) call RT_occupations_driver(k,en)
+ if (l_RealTime.and..not.l_flag) call RT_driver(en,k,q)
  !
 #endif
  !

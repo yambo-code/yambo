@@ -23,16 +23,13 @@
 !
 subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
- use pars,           ONLY:schlen,SP
- use stderr,         ONLY:string_split,real2ch,intc
+ use pars,           ONLY:SP
  use memory_m,       ONLY:mem_est
- use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nkpts,BZ_DbGd_kpts,BZ_DbGd_nbands
  use R_lattice,      ONLY:bz_samp
- use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
- use units,          ONLY:FS2AUT,PS2AUT,HA2EV
+ use units,          ONLY:HA2EV,AUT2FS
  use real_time,      ONLY:RT_carriers
- use com,            ONLY:warning,msg
+ use com,            ONLY:msg
  !
  implicit none
  !
@@ -45,11 +42,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  ! Work space
  !
- integer               :: i_RT,nb(2),ik
+ integer               :: nb(2),ik
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
- real(SP), allocatable :: V_in_tmp(:)
  integer,parameter     :: n_pieces=10
- integer, external     :: io_RT_components
  logical               :: l_DbGd
  !
  l_DbGd=BZ_DbGd_tot_nkpts>0
@@ -111,7 +106,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  call msg('nr',   'Updated Carrier components')
  call msg('rn',   '==========================')
- call msg('r',    '[RT] Reference Time           [fs]: ',Time/FS2AUT)
+ call msg('r',    '[RT] Reference Time           [fs]: ',Time*AUT2FS)
  call msg('r',    '[RT] Bands range                  : ', (/nb(1),nb(2)/)) 
  !
  if (l_f) then

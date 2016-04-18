@@ -23,15 +23,14 @@
 !
 subroutine RT_initialize()
  !
- use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps,l_force_min_damp,&
-&                         N_pumps,l_skip_pol_and_curr_IO,J_steps,J_time_step
+ use YPP,            ONLY:X_rt,i_t_start,i_t_end,&
+&                         W_RT_induced_step,RED_steps,&
+&                         N_pumps,J_steps,J_time_step
  use com,            ONLY:msg,warning
  use pars,           ONLY:pi,SP
- use units,          ONLY:FS2AUT,HA2EV
- use stderr,         ONLY:real2ch
- use RT_control,     ONLY:RT_output,RT_IO_JPO_steps
- use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps,NE_time
+ use units,          ONLY:AUT2FS
+ use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time
+ use real_time,      ONLY:RT_step,RT_P,NE_steps,NE_time
  use fields,         ONLY:Efield
  !
  implicit none
@@ -40,7 +39,6 @@ subroutine RT_initialize()
  !
  real(SP) :: Total_time
  integer  :: i_t,i_t_field_range(2),i_Probe
- logical  :: l_no_damping
  !
  !  Reduced Time range
  !====================
@@ -50,9 +48,10 @@ subroutine RT_initialize()
    NE_steps=nint(NE_time/RT_step)+1
  endif
  !
- J_steps    = (NE_steps-1)/RT_IO_JPO_steps+1
- J_time_step= RT_step*real(RT_IO_JPO_steps,SP)
- Total_time = real(J_steps-1,SP)*J_time_step
+ RT_IO_JPO_steps = RT_IO_time(1)/RT_step ! Not dumped. Needs to be recalculated.
+ J_steps         = (NE_steps-1)/RT_IO_JPO_steps+1
+ J_time_step     = RT_step*real(RT_IO_JPO_steps,SP)
+ Total_time      = real(J_steps-1,SP)*J_time_step
  !
  i_Probe=1
  X_rt%time_range=(/Efield(i_Probe)%t_initial,Total_time/)
@@ -72,7 +71,7 @@ subroutine RT_initialize()
  RED_steps=i_t_end-i_t_start+1
  W_RT_induced_step=2._SP*pi/(real(RED_steps-1,SP)*J_time_step)  ! Frequency step in real-time dynamics
  !
- call msg('s','[RT] Time range [fs]:',(/real(i_t_start-1),real(i_t_end-1)/)*J_time_step/FS2AUT)
+ call msg('s','[RT] Time range [fs]:',(/real(i_t_start-1),real(i_t_end-1)/)*J_time_step*AUT2FS)
  !
  if(X_rt%damp_factor==0._SP) X_rt%damp_factor=W_RT_induced_step
  !

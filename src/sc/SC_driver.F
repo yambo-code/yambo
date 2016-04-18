@@ -223,7 +223,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! SCF cycle & NSC shot
  !=====================
  ! 
- if (l_NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk,SERIAL=.true.)
+ if (l_NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk)
  !
  do it = 1, SC_iterations
    !

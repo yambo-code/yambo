@@ -62,18 +62,18 @@ module real_time
  real(SP) :: NE_time    =0._SP                  ! <- incremented
  real(SP) :: NE_tot_time=0._SP                  ! Total (fixed)
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
+ real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
  !
- integer  :: NE_i_time ! = (NE_time+1)/RT_step
- integer  :: NE_steps  ! Still relative to RT_step
- !
- integer  :: it_dyn=0  ! Equivalent to NE_i_time?
+ integer  :: NE_i_time=0 ! = (NE_time+1)/RT_step
+ integer  :: NE_steps    ! Still relative to RT_step
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
  ! channels. I will see later if this can be somehow extended/duplicated
  ! for the static correlations
  !
  logical  :: l_RT_lifetimes_interpolation = .FALSE.! If .TRUE. the lifetimes not calculated are interpolated. Otherwise are kept constant
- real(SP) :: RT_life_interp_steps(2)               ! (1) is step between groups of 3, (2) is step in the group of 3.
+ real(SP) :: RT_life_interp_times(2)               ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
+ real(SP) :: RT_life_interp_times_SAVE(2)          ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
  ! 
  integer(2), allocatable :: RT_TIME_status(:)
  !
@@ -371,7 +371,7 @@ module real_time
        if(.not.associated(RT%dGAMMA_E_PHOT_Hole))     allocate(RT%dGAMMA_E_PHOT_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_PHOT_Electron)) allocate(RT%dGAMMA_E_PHOT_Electron(RT%nstates))
      endif
-     if (l_elel_scatt.or.l_elph_scatt) then
+     if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
        if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates,8))
        if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
        if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
@@ -536,17 +536,14 @@ module real_time
      allocate(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
      !
-     allocate(MEM_pointer(G_MEM_steps)) ! G_MEM_steps=2 => MEM_pointers are relative to it_dyn,it_dyn_next
-                                        ! G_MEM_steps=3 => MEM_pointers are relative to it_dyn,it_dyn_next,it_dyn_previous
+     allocate(MEM_pointer(G_MEM_steps)) 
      MEM_pointer    = 0
      MEM_pointer(1) = 1
      !
      allocate(REF_V_xc_sc(fft_size,n_spin))
      call mem_est("REF_V_xc_sc",(/fft_size*n_spin/),(/SP/))
-     !
      allocate(REF_V_hartree_sc(fft_size,n_spin))
      call mem_est("REF_V_hartree_sc",(/fft_size*n_spin/),(/SP/))
-     !
      allocate(REF_Vnl_xc(QP_n_states))
      call mem_est("REF_Vnl_xc",(/size(REF_Vnl_xc)/),(/2*SP/))
      !

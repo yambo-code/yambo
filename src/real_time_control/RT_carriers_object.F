@@ -96,7 +96,6 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
          RT%E_bare(i_RT)=E%E(i_b,i_k,i_spin)
          RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
        endif
-       if (allocated(REF_lifetime)) RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
        !
      enddo
      !
@@ -134,6 +133,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        endif
        !
        ! Lifetimes
+       !
+       if (what=="fill".and.allocated(REF_lifetime)) RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
        !
        if(l_elphoton_scatt) then
          if (what=="fill") then
@@ -211,8 +212,10 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call io_bulk(DB_id,R1=RT%E_bare)
      call io_bulk(DB_id,VAR="RT_carriers_f_bare",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%f_bare)
-     call io_bulk(DB_id,VAR="RT_carriers_GAMMA_bare",VAR_SZ=(/RT%nstates,8/))
-     call io_bulk(DB_id,R2=RT%GAMMA_bare)
+     if (associated(RT%GAMMA_bare)) then
+       call io_bulk(DB_id,VAR="RT_carriers_GAMMA_bare",VAR_SZ=(/RT%nstates,8/))
+       call io_bulk(DB_id,R2=RT%GAMMA_bare)
+     endif
      !
      ! Energies
      !

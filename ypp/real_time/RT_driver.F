@@ -47,14 +47,7 @@ subroutine RT_driver(en,k,q)
  character(lchlen) :: jobstr_save
  logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
- call section("*",'RT Post Processing')
- !
- ! Real-Time occupations
- !=======================
- if (l_RT_occ_energy.or.l_RT_occ_time.or.l_RT_occ_2D_dos.or.l_RT_occ_bands.or.l_RT_life_bands) then
-   call RT_occupations_analyze(k,en)
-   return
- endif
+ call section("*",'RT Optics Processing')
  !
  ! Response Functions
  !====================

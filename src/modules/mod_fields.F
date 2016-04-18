@@ -51,7 +51,7 @@ module fields
  end type ext_field
  !
  integer, parameter  :: n_ext_fields_max=4
- integer             :: n_ext_fields
+ integer             :: n_ext_fields    =0
  type(ext_field)     :: Efield(n_ext_fields_max)
  !
  ! Vector potential

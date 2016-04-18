@@ -365,7 +365,7 @@ module YPP
    !
    subroutine RT_IO_time_range_setup(N_times)
      !
-     use units,          ONLY:FS2AUT
+     use units,          ONLY:AUT2FS
      use com,            ONLY:msg
      use real_time,      ONLY:RT_step,NE_time
      use RT_control,     ONLY:RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
@@ -392,8 +392,8 @@ module YPP
        N_times=nint(OCC_T_range(2)/OCC_deltaT)+1
      endif
      !
-     call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
-     call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
+     call msg('s','Time range [fs]:',OCC_T_range*AUT2FS)
+     call msg('s','Time step  [fs]:',OCC_deltaT*AUT2FS)
      call msg('s','Time steps     :',N_times)
      !
    end subroutine

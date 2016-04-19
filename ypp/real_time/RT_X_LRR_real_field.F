@@ -31,11 +31,11 @@ subroutine RT_X_LRR_real_field(en)
 &                         i_t_start,i_t_end,RED_steps,l_force_min_damp,&
 &                         J_steps,J_time_step
  use pars,           ONLY:SP,DP,pi,cI,cZERO
- use units,          ONLY:HA2EV,FS2AUT
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:v_norm
  use memory_m,       ONLY:mem_est
- use RT_control,     ONLY:RT_output,JPC_RT_IO_t
+ use RT_control,     ONLY:RT_output
  use real_time,      ONLY:l_RT_induced_field,NE_steps,RT_step
  use fields,         ONLY:Efield,small_a_frequency,small_a
  use functions,      ONLY:theta_function
@@ -47,12 +47,12 @@ subroutine RT_X_LRR_real_field(en)
  !
  ! Work Space
  !
- integer  :: i_t,i_w,i_p_dir,i_f_dir,iE_err,i_Probe,i_t_field(2),RED_steps_field,&
+ integer  :: i_t,i_w,i_p_dir,iE_err,i_Probe,i_t_field(2),RED_steps_field,&
 &            i_field,n_fields
  character(10):: FT_title
  logical      :: l_rm_asympt_limit
  real(SP)     :: W_step,W_reached,Field_time,outdata(6),E_ver(3,3)
- complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,E_ver_cmplx(3)
+ complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta
  complex(SP), allocatable :: EELS(:,:),EPS(:,:),freqs(:)
  complex(SP)  :: Field_freq
  complex(DP), allocatable :: Pol(:,:),E_w(:,:),E_t(:,:)

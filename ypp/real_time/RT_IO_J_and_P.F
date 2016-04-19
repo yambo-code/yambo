@@ -29,7 +29,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:JPC_RT_IO_t,J_and_P_cache,J_and_P_cache_size,JPC_RT_IO_t,RT_do_it
+ use RT_control,     ONLY:JPC_RT_IO_t,J_and_P_cache,J_and_P_cache_size,RT_do_it
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
@@ -134,14 +134,18 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  call live_timing('I/O'//trim(mesg_)//':',J_steps-1)
  !
+ i_time=0
+ !
  do NE_i_time=1,NE_steps
    !
    if (.not.RT_do_it('J')) cycle
    !
+   i_time=i_time+1
+   !
+   if (i_time==J_steps+1) cycle
+   !
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
    io_J_and_P=io_RT_components('J_and_P',ID)
-   !
-   i_time=(NE_i_Time-1)/JPC_RT_IO_t%INTERVAL_steps+1
    !
    do i_c=1,3
      RT_J_t(i_time,i_c) =cmplx(J_and_P_cache(   2*i_c-1,1),J_and_P_cache(   2*i_c,1),SP)

@@ -25,20 +25,18 @@ subroutine RT_dump_and_write_JP()
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
 &                         W_RT_induced_step,RED_steps,l_force_min_damp,&
-&                         N_pumps,l_skip_pol_and_curr_IO,J_steps,J_time_step
+&                         l_skip_pol_and_curr_IO,J_steps,J_time_step
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS,HA2EV
  use stderr,         ONLY:real2ch
- use RT_control,     ONLY:RT_output,JPC_RT_IO_t
- use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps
- use fields,         ONLY:Efield
+ use RT_control,     ONLY:RT_output
+ use real_time,      ONLY:RT_ind_J,RT_P
  !
  implicit none
  !
  ! Work Space
  !
- real(SP) :: Total_time
  integer  :: i_t
  logical  :: l_no_damping
  !

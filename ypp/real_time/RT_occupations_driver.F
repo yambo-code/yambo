@@ -27,10 +27,11 @@ subroutine RT_occupations_driver(kpt,En)
  use electrons,      ONLY:levels
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
- use RT_control,     ONLY:RT_apply
+ use RT_control,     ONLY:RT_apply,OCC_deltaT,OCC_T_range
+
  use real_time,      ONLY:RT_bands
  use YPP,            ONLY:l_RT_occ_time,l_RT_occ_energy,l_RT_life_bands,l_RT_occ_bands,&
-&                         l_RT_occ_2D_dos,RT_IO_time_range_setup
+&                         l_RT_occ_2D_dos
  !
  implicit none
  !
@@ -51,7 +52,7 @@ subroutine RT_occupations_driver(kpt,En)
  !===============================================================
  call RT_apply(RT_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
  !
- call RT_IO_time_range_setup(n_T_steps)
+ call RT_time_configuration_setup("CARRIERS",OCC_deltaT,OCC_T_range,n_T_steps)
  !
  ! Additional QP corrections
  !===========================

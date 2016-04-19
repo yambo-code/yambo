@@ -44,7 +44,7 @@ subroutine RT_driver(E,X,k,q)
 &                         G_lesser_reference,rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
-&                         i_MEM_now,i_MEM_next,N_EVAL_times,RT_EVAL_time
+&                         i_MEM_now,i_MEM_next
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
@@ -356,8 +356,6 @@ subroutine RT_driver(E,X,k,q)
    !
    NE_i_time                  = NE_i_time+nint(RT_dyn_step/RT_step)
    NE_time                    = (NE_i_time-1)*RT_step
-   N_EVAL_times               = N_EVAL_times +1
-   RT_EVAL_time(N_EVAL_times) = NE_time
    !
  enddo
  !

@@ -26,34 +26,25 @@ subroutine RT_initialize()
  use YPP,            ONLY:X_rt,i_t_start,i_t_end,&
 &                         W_RT_induced_step,RED_steps,&
 &                         N_pumps,J_steps,J_time_step
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
- use RT_control,     ONLY:JPC_RT_IO_t
- use real_time,      ONLY:RT_step,RT_P,NE_steps,NE_time
  use fields,         ONLY:Efield
  !
  implicit none
  !
  ! Work Space
  !
- real(SP) :: Total_time
+ real(SP) :: Total_time(2)
  integer  :: i_t,i_t_field_range(2),i_Probe
  !
- !  Reduced Time range
+ ! Time Configuration
  !====================
  !
- if (nint(NE_time/RT_step)+1/=NE_steps) then
-   call warning(" Interrupted DB found. Time steps reduced.")
-   NE_steps=nint(NE_time/RT_step)+1
- endif
- !
- J_steps         = (NE_steps-1)/JPC_RT_IO_t%INTERVAL_steps+1
- J_time_step     = RT_step*real(JPC_RT_IO_t%INTERVAL_steps,SP)
- Total_time      = real(J_steps-1,SP)*J_time_step
+ call RT_time_configuration_setup("CURRENT",J_time_step,Total_time,J_steps)
  !
  i_Probe=1
- X_rt%time_range=(/Efield(i_Probe)%t_initial,Total_time/)
+ X_rt%time_range=(/Efield(i_Probe)%t_initial,Total_time(2)/)
  !
  i_t_start=nint(X_rt%time_range(1)/J_time_step)+1
  i_t_end  =nint(X_rt%time_range(2)/J_time_step)+1

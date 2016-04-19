@@ -67,11 +67,6 @@ module real_time
  integer  :: NE_i_time=0 ! = (NE_time+1)/RT_step
  integer  :: NE_steps    ! Still relative to RT_step
  !
- ! ... TIME points ...
- !
- integer               :: N_EVAL_times  = 0
- real(SP), allocatable :: RT_EVAL_time(:)
- !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
  ! channels. I will see later if this can be somehow extended/duplicated
  ! for the static correlations
@@ -435,9 +430,6 @@ module real_time
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
-     allocate(RT_EVAL_time(NE_steps))
-     call mem_est('RT_EVAL_time',(/NE_steps/),(/SP/))
-     !
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
@@ -584,11 +576,6 @@ module real_time
      !
      deallocate(DbGd_ibz_coo,DbGd_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
      if(allocated(DbGd_EE_scatt_table)) deallocate(DbGd_EE_scatt_table)
-     !
-     if(allocated(RT_EVAL_time)) then
-       deallocate(RT_EVAL_time)
-       call mem_est('RT_EVAL_time')
-     endif
      !
      if(allocated(E_xc)) then
        deallocate(E_xc)

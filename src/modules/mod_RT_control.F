@@ -126,10 +126,6 @@ module RT_control
      call mem_est('GF_RT_IO_t_Time',(/NE_steps/),(/SP/))
      GF_RT_IO_t%Time=rZERO
      !
-     allocate(OUTPUT_RT_IO_t%Time(NE_steps))
-     call mem_est('OUPUT_RT_IO_t_Time',(/NE_steps/),(/SP/))
-     OUTPUT_RT_IO_t%Time=rZERO
-     !
    end subroutine RT_alloc_control
    !
    subroutine RT_free_control
@@ -149,11 +145,6 @@ module RT_control
      if(allocated(GF_RT_IO_t%Time)) then
        deallocate(GF_RT_IO_t%Time)
        call mem_est('GF_RT_IO_t_Time')
-     endif
-     !
-     if(allocated(OUTPUT_RT_IO_t%Time)) then
-       deallocate(OUTPUT_RT_IO_t%Time)
-       call mem_est('OUTPUT_RT_IO_t_Time')
      endif
      !
    end subroutine RT_free_control

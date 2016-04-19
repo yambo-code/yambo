@@ -303,15 +303,16 @@ subroutine RT_driver(E,X,k,q)
      if(l_elph_scatt)      call RT_output('EPlife',TIME=NE_time*AUT2FS)
      if(l_elel_scatt)      call RT_output('EElife',TIME=NE_time*AUT2FS)
      if(l_elphoton_scatt)  call RT_output('RADlife',TIME=NE_time*AUT2FS)
-     if((l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt).and.&
-&       (l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time*AUT2FS)
+     if((l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) then 
+                           call RT_output('factors',TIME=NE_time*AUT2FS)
+     endif
    endif
    !
    ! Write DBs
    !===========
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E,NE_i_time)
+   call RT_databases_IO( )
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
@@ -353,8 +354,8 @@ subroutine RT_driver(E,X,k,q)
    !
    if (l_Dynamics_is_over) cycle
    !
-   NE_i_time = NE_i_time+nint(RT_dyn_step/RT_step)
-   NE_time   = (NE_i_time-1)*RT_step
+   NE_i_time                  = NE_i_time+nint(RT_dyn_step/RT_step)
+   NE_time                    = (NE_i_time-1)*RT_step
    N_EVAL_times               = N_EVAL_times +1
    RT_EVAL_time(N_EVAL_times) = NE_time
    !

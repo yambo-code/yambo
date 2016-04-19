@@ -409,12 +409,11 @@ integer function io_RT_components(what,ID)
    !
    subroutine LOCAL_IO(TYP)
      type(RT_IO_t) :: TYP
-     if (TYP%N==0) return
      call io_elemental(ID,VAR="IO_TIME_N_points",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,I0=TYP%N)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
-     call io_bulk(ID,R1=TYP%Time(:TYP%N))
+     call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/NE_steps/))
+     call io_bulk(ID,R1=TYP%Time)
    end subroutine
    !
 end function

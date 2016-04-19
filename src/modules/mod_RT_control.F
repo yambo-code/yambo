@@ -23,7 +23,7 @@
 !
 module RT_control
  !
- use pars,       ONLY:SP,lchlen
+ use pars,       ONLY:SP,lchlen,schlen
  use units,      ONLY:FS2AUT
  !
  implicit none
@@ -40,10 +40,23 @@ module RT_control
  integer                  :: it_start           = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
- integer                  :: RT_IO_JPO_steps    = -1
- integer                  :: RT_IO_output_steps = -1
- integer                  :: RT_IO_G_steps      = -1
- real(SP)                 :: RT_IO_time(3)             ! Three values for J,P,OCC - OUPUT - GF's (dynamical value)
+ type RT_IO_t
+   !
+   character(schlen)     :: what
+   integer               :: N_IO_times    = 0
+   integer               :: N_EVAL_times  = 0
+   integer               :: IO_time_steps =-1
+   real(SP)              :: IO_time_interval
+   real(SP), allocatable :: IO_time(:)
+   !
+ end type
+ !
+ type(RT_IO_t),save  :: JPO_RT_IO_t
+ type(RT_IO_t),save  :: OUTPUT_RT_IO_t
+ type(RT_IO_t),save  :: GF_RT_IO_t
+ !
+ ! J and P cache 
+ !
  real(SP), allocatable    :: J_and_P_cache(:,:)
  !
  ! Transient Absorption [ypp]
@@ -103,7 +116,7 @@ module RT_control
      use real_time,      ONLY:l_NE_dynamics
      !
      if(l_NE_dynamics) then
-       allocate(J_and_P_cache(J_and_P_cache_size,RT_IO_JPO_steps))
+       allocate(J_and_P_cache(J_and_P_cache_size,JPO_RT_IO_t%IO_time_steps))
        call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
      endif
      !
@@ -132,9 +145,9 @@ module RT_control
      !
      RT_do_it=.FALSE.
      !
-     if (what=="J".or.what=="P".or.what=="CARRIERS") DO_IT_steps=RT_IO_JPO_steps
-     if (what=="OUT")      DO_IT_steps=RT_IO_output_steps
-     if (what=="G")        DO_IT_steps=RT_IO_G_steps
+     if (what=="J".or.what=="P".or.what=="CARRIERS") DO_IT_steps=JPO_RT_IO_t%IO_time_steps
+     if (what=="OUT")      DO_IT_steps=OUTPUT_RT_IO_t%IO_time_steps
+     if (what=="G")        DO_IT_steps=GF_RT_IO_t%IO_time_steps
      if (what=="deltaT")   DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
      !
      if (DO_IT_steps<0) then

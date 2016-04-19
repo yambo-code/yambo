@@ -33,8 +33,7 @@ subroutine RT_initialize(E,k,q)
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
- use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_time, &
-&                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
+ use RT_control,     ONLY:JPO_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
@@ -131,15 +130,9 @@ subroutine RT_initialize(E,k,q)
  ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
  !=================================================
  !
- do i1=1,3
-   if (RT_IO_time(i1)<=0)      RT_IO_time(i1)=max(NE_tot_time/1000._SP,RT_dyn_step)
-   if (RT_IO_time(i1)<RT_step) RT_IO_time(i1)=RT_step
-   RT_IO_time(i1)=nint(RT_IO_time(i1)/RT_step)*RT_step
- enddo
- !
- RT_IO_JPO_steps    = RT_IO_time(1)/RT_step
- RT_IO_G_steps      = RT_IO_time(2)/RT_step
- RT_IO_output_steps = RT_IO_time(3)/RT_step
+ call LOCAL_setup_IO_times(JPO_RT_IO_t)
+ call LOCAL_setup_IO_times(OUTPUT_RT_IO_t)
+ call LOCAL_setup_IO_times(GF_RT_IO_t)
  !
  ! Update time Step
  !==================
@@ -218,13 +211,13 @@ subroutine RT_initialize(E,k,q)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
      Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
-     if ( mod(Efield(i1)%t_initial_indx-1,RT_IO_JPO_steps)/=0 ) then
+     if ( mod(Efield(i1)%t_initial_indx-1,JPO_RT_IO_t%IO_time_steps)/=0 ) then
        call warning('Field starting time corrected to be a mutiple of the I/O step.')
-       Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,RT_IO_JPO_steps)
+       Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,JPO_RT_IO_t%IO_time_steps)
      endif
-     if (Efield(i1)%t_initial_indx< RT_IO_JPO_steps+1 ) then
+     if (Efield(i1)%t_initial_indx< JPO_RT_IO_t%IO_time_steps+1 ) then
        call warning('Field starting time corrected to respect the I/O times.')
-       Efield(i1)%t_initial_indx=RT_IO_JPO_steps+1
+       Efield(i1)%t_initial_indx=JPO_RT_IO_t%IO_time_steps+1
      endif
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
@@ -371,9 +364,9 @@ subroutine RT_initialize(E,k,q)
  if (l_BGR)               call msg( 'r','On-the-fly BGR added       :',l_BGR)
  !
  call msg( 'nr','---I/O---')
- call                          msg('r', 'T between I/O of J,P,f [fs]:',RT_IO_time(1)*AUT2FS)
- call                          msg('r', '          I/O of   GFs [fs]:',RT_IO_time(2)*AUT2FS)
- call                          msg('r', '               outputs [fs]:',RT_IO_time(3)*AUT2FS)
+ call                          msg('r', 'T between I/O of J,P,f [fs]:',JPO_RT_IO_t%IO_time_interval*AUT2FS)
+ call                          msg('r', '          I/O of   GFs [fs]:',GF_RT_IO_t%IO_time_interval*AUT2FS)
+ call                          msg('r', '               outputs [fs]:',OUTPUT_RT_IO_t%IO_time_interval*AUT2FS)
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]:',io_COLLs)
  !
  call msg( 'nr','---Damping and retarded GF---')
@@ -426,4 +419,14 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+ contains 
+   !
+   subroutine LOCAL_setup_IO_times(TYP)
+     type(RT_IO_t) :: TYP
+     if (TYP%IO_time_interval<=0)      TYP%IO_time_interval =max(NE_tot_time/1000._SP,RT_dyn_step)
+     if (TYP%IO_time_interval<RT_step) TYP%IO_time_interval=RT_step
+     TYP%IO_time_interval              =nint(TYP%IO_time_interval/RT_step)*RT_step
+     TYP%IO_time_steps                 =TYP%IO_time_interval/RT_step
+   end subroutine
+   !
 end subroutine RT_initialize

@@ -67,6 +67,10 @@ module real_time
  integer  :: NE_i_time=0 ! = (NE_time+1)/RT_step
  integer  :: NE_steps    ! Still relative to RT_step
  !
+ ! ... TIME points ...
+ !
+ real(SP), allocatable :: RT_EVAL_time(:)
+ !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
  ! channels. I will see later if this can be somehow extended/duplicated
  ! for the static correlations
@@ -74,6 +78,8 @@ module real_time
  logical  :: l_RT_lifetimes_interpolation = .FALSE.! If .TRUE. the lifetimes not calculated are interpolated. Otherwise are kept constant
  real(SP) :: RT_life_interp_times(2)               ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
  real(SP) :: RT_life_interp_times_SAVE(2)          ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
+ ! 
+ ! Lifetimes Interpolation Time status 
  ! 
  integer(2), allocatable :: RT_TIME_status(:)
  !
@@ -427,14 +433,6 @@ module real_time
      call SC_alloc(en)
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
-     !
-     !DEBUG...WHY?>
-     !if (l_HF_and_locXC.or.l_sc_hf.or.l_sc_cohsex) then
-     !  allocate(QP_Vnl_xc(QP_n_states))
-     !  call mem_est("QP_Vnl_xc",(/QP_n_states/))
-     !  QP_Vnl_xc=cZERO
-     !endif
-     !DEBUG<
      !
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))

@@ -70,7 +70,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        SC_rho_threshold,SC_cycle_mixing
 #endif
 #if defined _RT
- use RT_control,    ONLY:RT_IO_time
+ use RT_control,    ONLY:JPO_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,Eh_pumped_pair_BZ_reagions,    &
 &                        NE_tot_time,RT_life_interp_times_SAVE,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
@@ -398,7 +398,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                            unit=Time_unit(2),verb_level=V_real_time)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                            Integrator_name)
- call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
+ call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',&
+&                            (/JPO_RT_IO_t%IO_time_interval,GF_RT_IO_t%IO_time_interval,OUTPUT_RT_IO_t%IO_time_interval/),&
+&                            unit=Time_unit(1))
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
  ! Correlation

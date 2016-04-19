@@ -91,7 +91,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_control, ONLY:RT_IO_time
+ use RT_control, ONLY:JPO_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_times,      &
 &                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
 &                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
@@ -627,9 +627,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! RT_ctl
  !
- RT_IO_time(1)=2._SP*FS2AUT
- RT_IO_time(2)=5._SP*FS2AUT
- RT_IO_time(3)=1._SP*FS2AUT
+ JPO_RT_IO_t%IO_time_interval=2._SP*FS2AUT
+ OUTPUT_RT_IO_t%IO_time_interval=5._SP*FS2AUT
+ GF_RT_IO_t%IO_time_interval=1._SP*FS2AUT
  !
 #endif
  !

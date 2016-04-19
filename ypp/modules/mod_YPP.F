@@ -368,17 +368,17 @@ module YPP
      use units,          ONLY:AUT2FS
      use com,            ONLY:msg
      use real_time,      ONLY:RT_step,NE_time
-     use RT_control,     ONLY:RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
+     use RT_control,     ONLY:JPO_RT_IO_t,OCC_deltaT,OCC_T_range
      !
      integer :: N_times
      !
-     if (OCC_deltaT<RT_IO_JPO_steps*RT_step) then
+     if (OCC_deltaT<JPO_RT_IO_t%IO_time_steps*RT_step) then
        ! 
-       OCC_deltaT=RT_IO_JPO_steps*RT_step
+       OCC_deltaT=JPO_RT_IO_t%IO_time_steps*RT_step
        ! 
      else
        !
-       OCC_deltaT=nint(OCC_deltaT/RT_IO_JPO_steps/RT_step)*RT_IO_JPO_steps*RT_step
+       OCC_deltaT=nint(OCC_deltaT/JPO_RT_IO_t%IO_time_steps/RT_step)*JPO_RT_IO_t%IO_time_steps*RT_step
        !
      endif
      !

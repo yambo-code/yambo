@@ -25,7 +25,7 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  ! 
  use pars,           ONLY:SP
  use units,          ONLY:HA2KEL
- use RT_control,     ONLY:RT_IO_output_steps
+ use RT_control,     ONLY:RT_do_it
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
@@ -46,7 +46,7 @@ subroutine RT_mean_carrier_lifetimes(E,k)
 &                      EP_occupations(RT_bands(1):RT_bands(2),RT_nk),&
 &                      LOCAL_Lifetime(RT_bands(1):RT_bands(2),RT_nk,6)
  !
- if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return
+ if (.not.RT_do_it('OUTPUT')) return
  !
  if (allocated(E_E_Hole_lifetime))     LOCAL_Lifetime(:,:,1)=REF_lifetime(:,:,1)+E_E_Hole_lifetime
  if (allocated(E_E_Electron_lifetime)) LOCAL_Lifetime(:,:,2)=REF_lifetime(:,:,2)+E_E_Electron_lifetime

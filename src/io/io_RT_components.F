@@ -42,8 +42,7 @@ integer function io_RT_components(what,ID)
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer
  use ELPH,           ONLY:ph_modes,elph_branches
- use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,&
-&                         RT_carriers_object
+ use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,JPO_RT_IO_t,RT_carriers_object
  use fields,         ONLY:A_ext
  use matrix_operate, ONLY:mat_c2r,mat_r2c
 #if defined _TIMING
@@ -94,7 +93,7 @@ integer function io_RT_components(what,ID)
  !
  ! Running NE_i_time=io_sec(ID,1)-1 => NE_time=(NE_i_time-1)*RT_step      
  !      
- if (RT_IO_JPO_steps/=0) file_number=(NE_i_Time-1)/RT_IO_JPO_steps+1
+ if (JPO_RT_IO_t%IO_time_steps/=0) file_number=(NE_i_Time-1)/JPO_RT_IO_t%IO_time_steps+1
  !
  ! Write only every RT_io_steps
  !
@@ -383,7 +382,7 @@ integer function io_RT_components(what,ID)
    if (io_sec(ID,1)/=1) then
      !
      call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
-&                    VAR_SZ=(/J_and_P_cache_size,RT_IO_JPO_steps/))
+&                    VAR_SZ=(/J_and_P_cache_size,JPO_RT_IO_t%IO_time_steps/))
      !
      call io_bulk(ID,R2=J_and_P_cache)
      !

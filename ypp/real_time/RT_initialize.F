@@ -29,7 +29,7 @@ subroutine RT_initialize()
  use com,            ONLY:msg,warning
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
- use RT_control,     ONLY:RT_IO_JPO_steps,RT_IO_time
+ use RT_control,     ONLY:JPO_RT_IO_t
  use real_time,      ONLY:RT_step,RT_P,NE_steps,NE_time
  use fields,         ONLY:Efield
  !
@@ -48,9 +48,8 @@ subroutine RT_initialize()
    NE_steps=nint(NE_time/RT_step)+1
  endif
  !
- RT_IO_JPO_steps = RT_IO_time(1)/RT_step ! Not dumped. Needs to be recalculated.
- J_steps         = (NE_steps-1)/RT_IO_JPO_steps+1
- J_time_step     = RT_step*real(RT_IO_JPO_steps,SP)
+ J_steps         = (NE_steps-1)/JPO_RT_IO_t%IO_time_steps+1
+ J_time_step     = RT_step*real(JPO_RT_IO_t%IO_time_steps,SP)
  Total_time      = real(J_steps-1,SP)*J_time_step
  !
  i_Probe=1

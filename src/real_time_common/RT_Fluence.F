@@ -25,7 +25,7 @@ subroutine RT_Fluence(i_field)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT
- use RT_control,     ONLY:RT_IO_output_steps
+ use RT_control,     ONLY:OUTPUT_RT_IO_t
  use real_time,      ONLY:RT_step,NE_steps
  use fields,         ONLY:Efield,small_a
  use functions,      ONLY:theta_function

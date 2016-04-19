@@ -24,7 +24,7 @@
 subroutine RT_databases_IO(E,it)
  !
  use drivers,        ONLY:l_elph_scatt
- use RT_control,     ONLY:RT_do_it,ID,it_start,RT_carriers_object,J_and_P_cache,RT_IO_JPO_steps
+ use RT_control,     ONLY:RT_do_it,ID,it_start,RT_carriers_object,J_and_P_cache,JPO_RT_IO_t
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,io_GF,io_CARRIERs,&
 &                         io_J
@@ -61,12 +61,12 @@ subroutine RT_databases_IO(E,it)
    endif
    !
    do i_c=1,3
-     J_and_P_cache( 2*i_c-1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_ind_J(i_c))
-     J_and_P_cache( 2*i_c,    mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_ind_J(i_c))
-     J_and_P_cache(6+2*i_c-1, mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_P(i_c))
-     J_and_P_cache(6+2*i_c,   mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_P(i_c))
-     J_and_P_cache(12+2*i_c-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
-     J_and_P_cache(12+2*i_c,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
+     J_and_P_cache( 2*i_c-1,  mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)= real(RT_ind_J(i_c))
+     J_and_P_cache( 2*i_c,    mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)=aimag(RT_ind_J(i_c))
+     J_and_P_cache(6+2*i_c-1, mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)= real(RT_P(i_c))
+     J_and_P_cache(6+2*i_c,   mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)=aimag(RT_P(i_c))
+     J_and_P_cache(12+2*i_c-1,mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)= 0.
+     J_and_P_cache(12+2*i_c,  mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)= 0.
    enddo
    !
  endif

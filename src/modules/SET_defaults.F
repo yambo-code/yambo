@@ -28,7 +28,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,schlen
- use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
+ use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
@@ -91,7 +91,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_control, ONLY:JPO_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
+ use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_times,      &
 &                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
 &                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
@@ -627,9 +627,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! RT_ctl
  !
- JPO_RT_IO_t%IO_time_interval=2._SP*FS2AUT
- OUTPUT_RT_IO_t%IO_time_interval=5._SP*FS2AUT
- GF_RT_IO_t%IO_time_interval=1._SP*FS2AUT
+ JPC_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
+ GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
  !
 #endif
  !

@@ -24,13 +24,14 @@
 subroutine RT_databases_IO(E,it)
  !
  use drivers,        ONLY:l_elph_scatt
- use RT_control,     ONLY:RT_do_it,ID,it_start,RT_carriers_object,J_and_P_cache,JPO_RT_IO_t
+ use RT_control,     ONLY:RT_do_it,ID,it_start,RT_carriers_object,J_and_P_cache,JPC_RT_IO_t,&
+&                         GF_RT_IO_t
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,io_GF,io_CARRIERs,&
 &                         io_J
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:PP_redux_wait
- use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers
+ use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time
  !
  implicit none
  !
@@ -54,6 +55,12 @@ subroutine RT_databases_IO(E,it)
  if(l_NE_dynamics) then
    !
    if (RT_do_it('J').and.it>it_start) then
+     !
+     ! I/O time point
+     !
+     JPC_RT_IO_t%N=JPC_RT_IO_t%N+1
+     JPC_RT_IO_t%Time(JPC_RT_IO_t%N)=NE_time
+     !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_J_and_P=io_RT_components('J_and_P',ID(4))
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
@@ -61,12 +68,12 @@ subroutine RT_databases_IO(E,it)
    endif
    !
    do i_c=1,3
-     J_and_P_cache( 2*i_c-1,  mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)= real(RT_ind_J(i_c))
-     J_and_P_cache( 2*i_c,    mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)=aimag(RT_ind_J(i_c))
-     J_and_P_cache(6+2*i_c-1, mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)= real(RT_P(i_c))
-     J_and_P_cache(6+2*i_c,   mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)=aimag(RT_P(i_c))
-     J_and_P_cache(12+2*i_c-1,mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)= 0.
-     J_and_P_cache(12+2*i_c,  mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)+1)= 0.
+     J_and_P_cache( 2*i_c-1,  mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)+1)= real(RT_ind_J(i_c))
+     J_and_P_cache( 2*i_c,    mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)+1)=aimag(RT_ind_J(i_c))
+     J_and_P_cache(6+2*i_c-1, mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)+1)= real(RT_P(i_c))
+     J_and_P_cache(6+2*i_c,   mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)+1)=aimag(RT_P(i_c))
+     J_and_P_cache(12+2*i_c-1,mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)+1)= 0.
+     J_and_P_cache(12+2*i_c,  mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)+1)= 0.
    enddo
    !
  endif
@@ -90,8 +97,14 @@ subroutine RT_databases_IO(E,it)
  !
  if (io_GF.and.RT_do_it('G')) then
    !
+   ! I/O time point
+   !
+   GF_RT_IO_t%N=GF_RT_IO_t%N+1
+   GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
+   !
    io_G=0
    io_THETA=0
+   !
    call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !

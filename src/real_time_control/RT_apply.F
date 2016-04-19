@@ -32,7 +32,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
- use RT_control,     ONLY:JPO_RT_IO_t,NEQ_Residuals,NEQ_Kernel
+ use RT_control,     ONLY:JPC_RT_IO_t,NEQ_Residuals,NEQ_Kernel
  use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth
  !
  implicit none
@@ -182,7 +182,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
  !
  NE_i_time= nint(local_Time/RT_step)+1
- NE_i_time= NE_i_time-mod(NE_i_time-1,JPO_RT_IO_t%IO_time_steps)
+ NE_i_time= NE_i_time-mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)
  !
  if (NE_i_time>0) then
    !

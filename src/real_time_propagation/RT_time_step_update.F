@@ -29,7 +29,7 @@ subroutine RT_time_step_update( )
  use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
 &                         RT_life_interp_times,Life_MEM_steps,NE_time,NE_time_step_update_jump
- use RT_control,     ONLY:JPO_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
+ use RT_control,     ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
 &                         TIME_STEP_CONF_description,RT_do_it
  use com,            ONLY:msg
  implicit none
@@ -66,7 +66,7 @@ subroutine RT_time_step_update( )
  ERROR=(dG(1)+dG_dT_max(1)*(dT_previous+dT_now)-dG(3))/dG(3)
  !
  if (abs(ERROR)<0.01.and.(dT_previous+dT_now)<minval(&
-&    (/JPO_RT_IO_t%IO_time_interval,OUTPUT_RT_IO_t%IO_time_interval,GF_RT_IO_t%IO_time_interval/))) then 
+&    (/JPC_RT_IO_t%INTERVAL_time,OUTPUT_RT_IO_t%INTERVAL_time,GF_RT_IO_t%INTERVAL_time/))) then 
    !
    RT_dyn_step=dT_previous+dT_now
    !

@@ -25,6 +25,7 @@ module RT_control
  !
  use pars,       ONLY:SP,lchlen,schlen
  use units,      ONLY:FS2AUT
+ use real_time,  ONLY:l_NE_dynamics
  !
  implicit none
  !
@@ -41,17 +42,13 @@ module RT_control
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
  type RT_IO_t
-   !
-   character(schlen)     :: what
-   integer               :: N_IO_times    = 0
-   integer               :: N_EVAL_times  = 0
-   integer               :: IO_time_steps =-1
-   real(SP)              :: IO_time_interval
-   real(SP), allocatable :: IO_time(:)
-   !
+   integer               :: N              = 0
+   integer               :: INTERVAL_steps =-1
+   real(SP)              :: INTERVAL_time
+   real(SP), allocatable :: Time(:)
  end type
  !
- type(RT_IO_t),save  :: JPO_RT_IO_t
+ type(RT_IO_t),save  :: JPC_RT_IO_t
  type(RT_IO_t),save  :: OUTPUT_RT_IO_t
  type(RT_IO_t),save  :: GF_RT_IO_t
  !
@@ -112,24 +109,51 @@ module RT_control
    !
    subroutine RT_alloc_control()
      !
+     use pars,           ONLY:rZERO
+     use real_time,      ONLY:NE_steps
      use memory_m,       ONLY:mem_est
-     use real_time,      ONLY:l_NE_dynamics
      !
      if(l_NE_dynamics) then
-       allocate(J_and_P_cache(J_and_P_cache_size,JPO_RT_IO_t%IO_time_steps))
+       allocate(J_and_P_cache(J_and_P_cache_size,JPC_RT_IO_t%INTERVAL_steps))
        call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
      endif
+     !
+     allocate(JPC_RT_IO_t%Time(NE_steps))
+     call mem_est('JPC_RT_IO_t_Time',(/NE_steps/),(/SP/))
+     JPC_RT_IO_t%Time=rZERO
+     !
+     allocate(GF_RT_IO_t%Time(NE_steps))
+     call mem_est('GF_RT_IO_t_Time',(/NE_steps/),(/SP/))
+     GF_RT_IO_t%Time=rZERO
+     !
+     allocate(OUTPUT_RT_IO_t%Time(NE_steps))
+     call mem_est('OUPUT_RT_IO_t_Time',(/NE_steps/),(/SP/))
+     OUTPUT_RT_IO_t%Time=rZERO
      !
    end subroutine RT_alloc_control
    !
    subroutine RT_free_control
      !
      use memory_m,       ONLY:mem_est
-     use real_time,      ONLY:l_NE_dynamics
      !
-     if(l_NE_dynamics) then
+     if(allocated(J_and_P_cache)) then
        deallocate(J_and_P_cache)
        call mem_est('Current_Cache')
+     endif
+     !
+     if(allocated(JPC_RT_IO_t%Time)) then
+       deallocate(JPC_RT_IO_t%Time)
+       call mem_est('JPC_RT_IO_t_Time')
+     endif
+     !
+     if(allocated(GF_RT_IO_t%Time)) then
+       deallocate(GF_RT_IO_t%Time)
+       call mem_est('GF_RT_IO_t_Time')
+     endif
+     !
+     if(allocated(OUTPUT_RT_IO_t%Time)) then
+       deallocate(OUTPUT_RT_IO_t%Time)
+       call mem_est('OUTPUT_RT_IO_t_Time')
      endif
      !
    end subroutine RT_free_control
@@ -145,9 +169,9 @@ module RT_control
      !
      RT_do_it=.FALSE.
      !
-     if (what=="J".or.what=="P".or.what=="CARRIERS") DO_IT_steps=JPO_RT_IO_t%IO_time_steps
-     if (what=="OUT")      DO_IT_steps=OUTPUT_RT_IO_t%IO_time_steps
-     if (what=="G")        DO_IT_steps=GF_RT_IO_t%IO_time_steps
+     if (what=="J".or.what=="P".or.what=="CARRIERS") DO_IT_steps=JPC_RT_IO_t%INTERVAL_steps
+     if (what=="OUT")      DO_IT_steps=OUTPUT_RT_IO_t%INTERVAL_steps
+     if (what=="G")        DO_IT_steps=GF_RT_IO_t%INTERVAL_steps
      if (what=="deltaT")   DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
      !
      if (DO_IT_steps<0) then

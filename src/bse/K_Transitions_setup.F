@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
+subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  ! Out: 
  !
@@ -65,7 +65,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  type(levels) :: Ken
  type(bz_samp):: Xk
- complex(SP)  :: Wd
  integer      :: iq
  logical      :: FILL_the_groups,l_trans_in_group,l_grp_to_grp
  !

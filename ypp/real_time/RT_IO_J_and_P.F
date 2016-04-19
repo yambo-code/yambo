@@ -29,7 +29,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:JPO_RT_IO_t,J_and_P_cache,J_and_P_cache_size,JPO_RT_IO_t,RT_do_it
+ use RT_control,     ONLY:JPC_RT_IO_t,J_and_P_cache,J_and_P_cache_size,JPC_RT_IO_t,RT_do_it
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
@@ -124,7 +124,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
    call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
  endif
- allocate(J_and_P_cache(J_and_P_cache_size,JPO_RT_IO_t%IO_time_steps))
+ allocate(J_and_P_cache(J_and_P_cache_size,JPC_RT_IO_t%INTERVAL_steps))
  call mem_est("Current_Cache",(/size(J_and_P_cache)/),(/SP/))
  !
  RT_J_t        =(0._DP,0._DP)
@@ -141,7 +141,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
    io_J_and_P=io_RT_components('J_and_P',ID)
    !
-   i_time=(NE_i_Time-1)/JPO_RT_IO_t%IO_time_steps
+   i_time=(NE_i_Time-1)/JPC_RT_IO_t%INTERVAL_steps
    !
    do i_c=1,3
      RT_J_t(i_time,i_c) =cmplx(J_and_P_cache(   2*i_c-1,1),J_and_P_cache(   2*i_c,1),SP)

@@ -35,7 +35,7 @@ subroutine RT_X_LRR_real_field(en)
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:v_norm
  use memory_m,       ONLY:mem_est
- use RT_control,     ONLY:RT_output,JPO_RT_IO_t
+ use RT_control,     ONLY:RT_output,JPC_RT_IO_t
  use real_time,      ONLY:l_RT_induced_field,NE_steps,RT_step
  use fields,         ONLY:Efield,small_a_frequency,small_a
  use functions,      ONLY:theta_function

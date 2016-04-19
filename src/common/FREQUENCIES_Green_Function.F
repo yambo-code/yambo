@@ -24,7 +24,6 @@
 subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
  !
  use pars,       ONLY:SP,cI
- use units
  use R_lattice,  ONLY:nkibz
  use electrons,  ONLY:n_bands,spin,n_sp_pol
  use frequency,  ONLY:w_samp

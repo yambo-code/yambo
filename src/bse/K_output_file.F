@@ -37,7 +37,7 @@ subroutine K_output_file(iq,mode)
  use pars,      ONLY:cI
  use electrons, ONLY:spin_occ
  use R_lattice, ONLY:nkbz
- use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,hbar_SI
+ use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI
  use drivers,   ONLY:l_kerr
  use X_m,       ONLY:Epsilon_ij
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name

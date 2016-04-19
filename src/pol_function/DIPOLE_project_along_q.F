@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_project_along_q(Xen,Xk,X,field_dir)
+subroutine DIPOLE_project_along_q(Xk,X,field_dir)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_col_cut
@@ -44,7 +44,6 @@ subroutine DIPOLE_project_along_q(Xen,Xk,X,field_dir)
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk
- type(levels),  intent(inout) :: Xen
  type(X_t),     intent(inout) :: X
  real(SP),      intent(inout) :: field_dir(3)
  !

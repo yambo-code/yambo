@@ -42,7 +42,7 @@ integer function io_RT_components(what,ID)
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer
  use ELPH,           ONLY:ph_modes,elph_branches
- use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,JPO_RT_IO_t,RT_carriers_object
+ use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,GF_RT_IO_t
  use fields,         ONLY:A_ext
  use matrix_operate, ONLY:mat_c2r,mat_r2c
 #if defined _TIMING
@@ -93,7 +93,7 @@ integer function io_RT_components(what,ID)
  !
  ! Running NE_i_time=io_sec(ID,1)-1 => NE_time=(NE_i_time-1)*RT_step      
  !      
- if (JPO_RT_IO_t%IO_time_steps/=0) file_number=(NE_i_Time-1)/JPO_RT_IO_t%IO_time_steps+1
+ if (JPC_RT_IO_t%INTERVAL_steps/=0) file_number=(NE_i_Time-1)/JPC_RT_IO_t%INTERVAL_steps+1
  !
  ! Write only every RT_io_steps
  !
@@ -169,7 +169,7 @@ integer function io_RT_components(what,ID)
    endif
    !
    if (l_G) then
-     call io_bulk(ID,VAR="TIME_POINTES",VAR_SZ=(/G_MEM_steps/))
+     call io_bulk(ID,VAR="MEMORY_TIME_POINTS",VAR_SZ=(/G_MEM_steps/))
      call io_bulk(ID,I1=MEM_pointer)
    endif
    !
@@ -192,6 +192,11 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,VAR="RT_table",VAR_SZ=(/RT_carriers%nstates,4/))
      call io_bulk(ID,I2=RT_carriers%table)
    endif
+   !
+   ! I/O time points
+   !
+   if (l_J_and_P.or.l_carriers) call LOCAL_IO(JPC_RT_IO_t)
+   if (l_G)                     call LOCAL_IO(GF_RT_IO_t)
    !
    io_RT_components=io_status(ID)
    if (io_RT_components/=0) goto 1
@@ -382,7 +387,7 @@ integer function io_RT_components(what,ID)
    if (io_sec(ID,1)/=1) then
      !
      call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
-&                    VAR_SZ=(/J_and_P_cache_size,JPO_RT_IO_t%IO_time_steps/))
+&                    VAR_SZ=(/J_and_P_cache_size,JPC_RT_IO_t%INTERVAL_steps/))
      !
      call io_bulk(ID,R2=J_and_P_cache)
      !
@@ -400,4 +405,16 @@ integer function io_RT_components(what,ID)
  call timing('io_RT_components',OPR='stop')
 #endif
  !
+ contains
+   !
+   subroutine LOCAL_IO(TYP)
+     type(RT_IO_t) :: TYP
+     if (TYP%N==0) return
+     call io_elemental(ID,VAR="IO_TIME_N_points",VAR_SZ=1,MENU=0) 
+     call io_elemental(ID,I0=TYP%N)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
+     call io_bulk(ID,R1=TYP%Time(:TYP%N))
+   end subroutine
+   !
 end function

@@ -21,23 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt. 
 !      
-subroutine DIPOLE_overlaps(Xen,Xk,X)
+subroutine DIPOLE_overlaps(Xk,X)
  !    
- use pars,              ONLY:SP,cZERO,schlen,pi
+ use pars,              ONLY:SP,cZERO,pi
  use LIVE_t,            ONLY:live_timing
  use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,ng_closed,ng_vec
  use vec_operate,       ONLY:k_periodic_idx
- use com,               ONLY:msg,error
  use X_m,               ONLY:X_t,DIP_S
  use electrons,         ONLY:levels,n_spinor,n_sp_pol,n_spin
- use memory_m,          ONLY:mem_est
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng
  use IO_m,              ONLY:IO_and_Messaging_switch
  !
  implicit none
  !
- type(levels),  intent(in)    :: Xen
  type(bz_samp), intent(in)    :: Xk 
  type(X_t),     intent(in)    :: X
  !

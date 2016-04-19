@@ -28,8 +28,8 @@ subroutine COLLISIONS_compose_sc(G_hf_input,G_xc_input)
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Sc,QP_Vnl_xc
- use collision,        ONLY:FOCK_COLL_element,SEX_COLL_element,COLL_bands,FOCK_collisions,SEX_collisions
- use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
+ use collision,        ONLY:FOCK_COLL_element,SEX_COLL_element,COLL_bands,FOCK_collisions
+ use parallel_m,       ONLY:PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
  !
  implicit none
  !

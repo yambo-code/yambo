@@ -29,7 +29,7 @@ integer function variables_RT(ID,local_description,what)
  use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
-&                         n_TIME_STEP_CONF_descriptions,JPO_RT_IO_t,GF_RT_IO_t,RT_IO_t
+&                         n_TIME_STEP_CONF_descriptions,JPC_RT_IO_t,GF_RT_IO_t,RT_IO_t
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
 &                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
@@ -138,7 +138,7 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=" [RT] Lifetimes Inter/Intra  [fs]:",R1=RT_life_interp_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    !
-   if (l_J.or.l_carriers) call local_IO_variables(JPO_RT_IO_t)
+   if (l_J.or.l_carriers) call local_IO_variables(JPC_RT_IO_t)
    if (l_G)               call local_IO_variables(GF_RT_IO_t)
    !
    i_desc=i_desc+1
@@ -334,8 +334,8 @@ integer function variables_RT(ID,local_description,what)
    endif
  endif
  !
- variables_RT=io_status(ID)
- n_RT_descriptions=i_desc
+ variables_RT           =io_status(ID)
+ n_RT_descriptions      =i_desc
  RT_description(:i_desc)=local_description(:i_desc)
  !
  contains
@@ -346,11 +346,11 @@ integer function variables_RT(ID,local_description,what)
      !
      i_desc=i_desc+1
      call io_elemental(ID,&
-&      VAR=" [RT] I/O time               [fs]:",R0=TYP%IO_time_interval,CHECK=.true.,OP=(/"=="/),&
+&      VAR=" [RT] I/O time               [fs]:",R0=TYP%INTERVAL_time,CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
      i_desc=i_desc+1
      call io_elemental(ID,&
-&      VAR=" [RT]                     [steps]:",I0=TYP%IO_time_steps,CHECK=.true.,OP=(/"=="/),&
+&      VAR=" [RT]                     [steps]:",I0=TYP%INTERVAL_steps,CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc))
      !
    end subroutine

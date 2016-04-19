@@ -30,9 +30,8 @@ subroutine INIT_RT_ctl_load(defs,i_type)
  ! because the code does not know if there is
  ! spin unless the DB1 is read. 
  !
- use drivers,       ONLY:l_real_time
+ use it_m,          ONLY:it,initdefs,V_real_time
  use real_time,     ONLY:RT_ctl_db
- use it_m,          ONLY:it,initmode,initdefs,V_real_time
  !
  implicit none
  integer, intent(in) :: i_type
@@ -51,6 +50,6 @@ subroutine INIT_RT_ctl_load(defs,i_type)
  !
  call it(defs,prefix(i_type)//'fnRTdb',&
 &        '[EXTRT '//trim(description_ch(i_type))//'] Database',&
-&        Rt_ctl_db(i_type),verb_level=V_real_time)
+&        RT_ctl_db(i_type),verb_level=V_real_time)
  ! 
 end subroutine

@@ -27,7 +27,7 @@
 !
 subroutine Dipole_kb_sum(icfft,ivfft,rho,kbv,pp_kind)
  !
- use pars,          ONLY:SP,DP,cZERO
+ use pars,          ONLY:SP,cZERO
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp,V_by_V_plus_V_omp
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor

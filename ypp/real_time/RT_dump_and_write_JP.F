@@ -30,7 +30,7 @@ subroutine RT_dump_and_write_JP()
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS,HA2EV
  use stderr,         ONLY:real2ch
- use RT_control,     ONLY:RT_output,JPO_RT_IO_t
+ use RT_control,     ONLY:RT_output,JPC_RT_IO_t
  use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps
  use fields,         ONLY:Efield
  !

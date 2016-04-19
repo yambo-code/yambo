@@ -70,7 +70,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        SC_rho_threshold,SC_cycle_mixing
 #endif
 #if defined _RT
- use RT_control,    ONLY:JPO_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
+ use RT_control,    ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,Eh_pumped_pair_BZ_reagions,    &
 &                        NE_tot_time,RT_life_interp_times_SAVE,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
@@ -112,9 +112,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  type(X_t)     ::X(4)
  type(w_samp)  ::Xw(4)
  !
+ ! Work Space
+ !
 #if defined _RT
  integer  :: i_field,i_region
 #endif
+ real(SP) :: IO_times(3)
  !
  !===============
  ! GPL RUNLEVELS
@@ -398,9 +401,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                            unit=Time_unit(2),verb_level=V_real_time)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                            Integrator_name)
- call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',&
-&                            (/JPO_RT_IO_t%IO_time_interval,GF_RT_IO_t%IO_time_interval,OUTPUT_RT_IO_t%IO_time_interval/),&
-&                            unit=Time_unit(1))
+ !
+ IO_times=(/JPC_RT_IO_t%INTERVAL_time,GF_RT_IO_t%INTERVAL_time,OUTPUT_RT_IO_t%INTERVAL_time/)
+ call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
+ JPC_RT_IO_t%INTERVAL_time=IO_times(1)
+ GF_RT_IO_t%INTERVAL_time=IO_times(2)
+ OUTPUT_RT_IO_t%INTERVAL_time=IO_times(3)
+ !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
  ! Correlation

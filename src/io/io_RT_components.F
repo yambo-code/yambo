@@ -35,14 +35,15 @@ integer function io_RT_components(what,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,io_fragment, &
 &                         manage_RD_WR_CL_IF_END,variable_is_found,&
 &                         frag_RT
- use real_time,      ONLY:NE_i_time,REF_lifetime,&
+ use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer
  use ELPH,           ONLY:ph_modes,elph_branches
- use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,GF_RT_IO_t
+ use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
+&                         GF_RT_IO_t,TIME_string,J_and_P_cache_steps,J_and_P_cache_steps
  use fields,         ONLY:A_ext
  use matrix_operate, ONLY:mat_c2r,mat_r2c
 #if defined _TIMING
@@ -57,10 +58,10 @@ integer function io_RT_components(what,ID)
  !
  integer, external     :: variables_SC,variables_RT
  character(lchlen)     :: local_description(100),db_name
- character(schlen)     :: local_what
+ character(schlen)     :: local_what,file_extension
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
- integer               :: ik,ib,i_spin,file_number,i_memory,db_type,i_Probe,i_Pump
+ integer               :: ik,ib,i_spin,i_memory,db_type,i_Probe,i_Pump
  logical               :: l_V,l_IMPOSE_SN,CHECK_,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF,l_carriers
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
@@ -86,14 +87,12 @@ integer function io_RT_components(what,ID)
  !
  if (l_REF) db_name="RT_reference_components"
  !
+ file_extension=TIME_string( (NE_i_time-1)*RT_step )
+ !
  ! When the db.scV is used for single non-SC shot the number
  ! of bands and SC_mixing can be not respected. 
  !
  CHECK_=.TRUE.
- !
- ! Running NE_i_time=io_sec(ID,1)-1 => NE_time=(NE_i_time-1)*RT_step      
- !      
- if (JPC_RT_IO_t%INTERVAL_steps/=0) file_number=(NE_i_Time-1)/JPC_RT_IO_t%INTERVAL_steps+1
  !
  ! Write only every RT_io_steps
  !
@@ -101,9 +100,9 @@ integer function io_RT_components(what,ID)
    if (io_sec(ID,1)==1) then 
      io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
    else
-     if (l_J_and_P)     io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
+     if (l_J_and_P)     io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(file_extension),type=db_type,ID=ID)
      if (l_carriers) then
-       io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
+       io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(file_extension),type=db_type,ID=ID)
        if (read_is_on(ID).and.io_RT_components==IO_NO_DATABASE) then
          io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
        endif
@@ -386,8 +385,16 @@ integer function io_RT_components(what,ID)
    !        
    if (io_sec(ID,1)/=1) then
      !
-     call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
-&                    VAR_SZ=(/J_and_P_cache_size,JPC_RT_IO_t%INTERVAL_steps/))
+     call io_elemental(ID,VAR="J_and_P_CACHE_TIME_N_points",VAR_SZ=1,MENU=0) 
+     call io_elemental(ID,I0=J_and_P_cache_steps)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     if (.not.allocated(J_and_P_cache)) then    
+       allocate(J_and_P_cache(J_and_P_cache_size,J_and_P_cache_steps))
+     endif
+     !
+     call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(file_extension), &
+&                    VAR_SZ=(/J_and_P_cache_size,J_and_P_cache_steps/))
      !
      call io_bulk(ID,R2=J_and_P_cache)
      !
@@ -411,6 +418,9 @@ integer function io_RT_components(what,ID)
      type(RT_IO_t) :: TYP
      call io_elemental(ID,VAR="IO_TIME_N_points",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,I0=TYP%N)
+     if (.not.allocated(TYP%Time)) then    
+       allocate(TYP%Time(NE_steps))
+     endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/NE_steps/))
      call io_bulk(ID,R1=TYP%Time)

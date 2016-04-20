@@ -26,7 +26,7 @@ subroutine RT_time_configuration_setup(what,TIME_step,TIME_range,N_times)
  !
  use units,          ONLY:AUT2FS
  use pars,           ONLY:SP
- use com,            ONLY:msg
+ use com,            ONLY:msg,error
  use real_time,      ONLY:RT_step
  use RT_control,     ONLY:JPC_RT_IO_t
  implicit none
@@ -37,30 +37,41 @@ subroutine RT_time_configuration_setup(what,TIME_step,TIME_range,N_times)
  !
  ! Work Space
  ! 
- real(SP) :: STEP
+ integer  :: i_t,i_cycle
+ real(SP) :: STEP,TIME,OFF_set
+ logical  :: FOUND
  !
- STEP        =JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-JPC_RT_IO_t%Time(JPC_RT_IO_t%N-1)
+ STEP  = (JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-JPC_RT_IO_t%Time(JPC_RT_IO_t%N-1))
+ STEP  = nint(STEP/RT_step)*RT_step
+ TIME  = nint(JPC_RT_IO_t%Time(JPC_RT_IO_t%N)/RT_step)*RT_step
+ !
+ i_cycle=0
+ !
+ loop: do while (TIME>0)
+   FOUND = .FALSE.
+   do i_t=1,JPC_RT_IO_t%N
+     if (nint( (JPC_RT_IO_t%Time(i_t)-TIME)/RT_step) == 0 ) FOUND=.TRUE.
+   enddo
+   if (.not.FOUND) then
+     if (i_cycle==5) call error('Impossible to find a compatibile and constant I/O Time step')
+     STEP=STEP*2._SP
+     TIME  = nint(JPC_RT_IO_t%Time(JPC_RT_IO_t%N)/RT_step)*RT_step
+     i_cycle=i_cycle+1
+     cycle loop
+   endif
+   TIME=TIME-STEP
+ enddo loop
+ !
+ OFF_set = nint((TIME+STEP)/RT_step)*RT_step
+ TIME    = nint(JPC_RT_IO_t%Time(JPC_RT_IO_t%N)/RT_step)*RT_step
  !
  if (what=="CURRENT") then
    !
-   N_times     =JPC_RT_IO_t%N
-   !
-   TIME_range  = (/0._SP,JPC_RT_IO_t%Time(JPC_RT_IO_t%N)/)
+   TIME_range  = (/OFF_set,TIME/)
    !
    TIME_step   = STEP
    !
  endif
-!   !
-!   if (nint(NE_time/RT_step)+1/=NE_steps) then
-!     call warning(" Interrupted DB found. Time steps reduced.")
-!     NE_steps=nint(NE_time/RT_step)+1
-!   endif
-!   !
-!   N_times      = (NE_steps-1)/JPC_RT_IO_t%INTERVAL_steps+1
-!   TIME_step    = RT_step*real(JPC_RT_IO_t%INTERVAL_steps,SP)
-!   TIME_range   = (/0._SP,real(N_times-1,SP)*TIME_step/)
-!   !
-! endif
  !
  if (what=="CARRIERS") then
    !
@@ -74,19 +85,12 @@ subroutine RT_time_configuration_setup(what,TIME_step,TIME_range,N_times)
      !
    endif
    !
-   N_times=nint( (TIME_range(2)-TIME_range(1))/TIME_step )+1
-   !
-   if (N_times<0) return
-   !
-   if (JPC_RT_IO_t%Time(JPC_RT_IO_t%N)<TIME_range(2)) then
-     TIME_range(2)=JPC_RT_IO_t%Time(JPC_RT_IO_t%N)
-     if(TIME_step>JPC_RT_IO_t%Time(JPC_RT_IO_t%N)) TIME_step=JPC_RT_IO_t%Time(JPC_RT_IO_t%N)
-     N_times=nint(TIME_range(2)/TIME_step)+1
-   endif
+   TIME_range(1) = nint( (TIME_range(1)-OFF_set)/TIME_step)*TIME_step+OFF_set
+   TIME_range(2) = nint( (TIME_range(2)-OFF_set)/TIME_step)*TIME_step+OFF_set
    !
  endif
  !
- JPC_RT_IO_t%INTERVAL_steps=TIME_step/RT_step
+ N_times=nint( (TIME_range(2)-TIME_range(1))/TIME_step )+1
  !
  call msg('s','['//what//'] Time range [fs]:',TIME_range*AUT2FS)
  call msg('s','['//what//'] Time step  [fs]:',TIME_step*AUT2FS)

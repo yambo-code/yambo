@@ -24,7 +24,7 @@
 module RT_control
  !
  use pars,       ONLY:SP,lchlen,schlen
- use units,      ONLY:FS2AUT
+ use units,      ONLY:AUT2FS
  use real_time,  ONLY:l_NE_dynamics
  !
  implicit none
@@ -36,6 +36,7 @@ module RT_control
  character(lchlen)        :: TIME_STEP_CONF_description(100)
  !
  integer,  parameter      :: J_and_P_cache_size=18
+ integer                  :: J_and_P_cache_steps=1
  !
  integer                  :: ID(8)
  integer                  :: it_start           = 1   ! restart point
@@ -114,17 +115,23 @@ module RT_control
      use memory_m,       ONLY:mem_est
      !
      if(l_NE_dynamics) then
-       allocate(J_and_P_cache(J_and_P_cache_size,JPC_RT_IO_t%INTERVAL_steps))
+       !
+       allocate(J_and_P_cache(J_and_P_cache_size,J_and_P_cache_steps))
        call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
+       !
      endif
      !
-     allocate(JPC_RT_IO_t%Time(NE_steps))
-     call mem_est('JPC_RT_IO_t_Time',(/NE_steps/),(/SP/))
-     JPC_RT_IO_t%Time=rZERO
+     if(.not.allocated(JPC_RT_IO_t%Time)) then
+       allocate(JPC_RT_IO_t%Time(NE_steps))
+       call mem_est('JPC_RT_IO_t_Time',(/NE_steps/),(/SP/))
+       JPC_RT_IO_t%Time=rZERO
+     endif
      !
-     allocate(GF_RT_IO_t%Time(NE_steps))
-     call mem_est('GF_RT_IO_t_Time',(/NE_steps/),(/SP/))
-     GF_RT_IO_t%Time=rZERO
+     if(.not.allocated(GF_RT_IO_t%Time)) then
+       allocate(GF_RT_IO_t%Time(NE_steps))
+       call mem_est('GF_RT_IO_t_Time',(/NE_steps/),(/SP/))
+       GF_RT_IO_t%Time=rZERO
+     endif
      !
    end subroutine RT_alloc_control
    !
@@ -151,7 +158,7 @@ module RT_control
    !
    logical function RT_do_it(what)
      !
-     use real_time, ONLY:NE_i_time,RT_dyn_step,RT_step,NE_time_step_update_jump
+     use real_time, ONLY:NE_i_time,RT_step,NE_time_step_update_jump
      character(*) :: what
      !
      ! Work Space
@@ -172,9 +179,51 @@ module RT_control
      !
      i_grp=nint(real(NE_i_time-1)/real(DO_IT_steps))
      !
-     if (NE_i_time-1>=i_grp*DO_IT_steps.and.NE_i_time-1-nint(RT_dyn_step/RT_step)<i_grp*DO_IT_steps) RT_do_it=.TRUE.
+     RT_do_it= NE_i_time-1==i_grp*DO_IT_steps
      if (NE_i_time==0) RT_do_it=.TRUE.
      !
    end function
+   !
+   character(schlen) function TIME_string(TIME)
+     !
+     use stderr, ONLY:real2ch
+     !
+     real(SP)          :: TIME,TIME_fs
+     character(schlen) :: tmp_ch
+     !
+     TIME_fs=TIME*AUT2FS
+     tmp_ch=trim(real2ch(TIME_fs))//"_fs"
+     if (TIME_fs<1   ) tmp_ch=trim(real2ch(TIME_fs*1000.))//"_as"
+     if (TIME_fs>1000) tmp_ch=trim(real2ch(TIME_fs/1000.))//"_ps"
+     !
+     if (tmp_ch(1:1)==" ") tmp_ch(1:1)="_"
+     !
+     TIME_string=tmp_ch
+     !
+   end function
+   !
+   subroutine SETUP_RT_IO_type(TYP)
+     use real_time, ONLY:NE_tot_time,RT_dyn_step,NE_initial_time_step_update
+     type(RT_IO_t) :: TYP
+     real(SP)      :: STEP_
+     !
+     if (TYP%INTERVAL_time<=0)          TYP%INTERVAL_time =max(NE_tot_time/1000._SP,RT_dyn_step)
+     if (TYP%INTERVAL_time<RT_dyn_step) TYP%INTERVAL_time =RT_dyn_step
+     !
+     ! With ad an adaptative time step the STEP must be power of 2 of RT_dyn_step
+     !
+     if (NE_initial_time_step_update>0.) then
+       STEP_=RT_dyn_step
+       do while (STEP_<TYP%INTERVAL_time)
+         STEP_=STEP_*2._SP
+       enddo
+       TYP%INTERVAL_time=STEP_
+     endif
+     !
+     TYP%INTERVAL_time              =nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
+     !
+     TYP%INTERVAL_steps             =TYP%INTERVAL_time/RT_dyn_step
+     !
+   end subroutine
    !
 end module RT_control

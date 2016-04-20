@@ -396,9 +396,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'RTstep',      '[RT] Real Time step length',RT_step,unit=Time_unit(3))
  call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
  call it(defs,'dTupdateTime','[RT] Initial Time for deltaT update (active only if non-zero) ',NE_initial_time_step_update,&
-&                            unit=Time_unit(2),verb_level=V_real_time)
+&                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'dTupdateJump','[RT] Time betweem twp deltaT updates',  NE_time_step_update_jump,&
-&                            unit=Time_unit(2),verb_level=V_real_time)
+&                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                            Integrator_name)
  !
@@ -625,8 +625,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _RT
    !
    subroutine Afield(i_field)
-     character(10):: name
-     integer      :: i_field
+     use parser_m, ONLY  : parser
+     character(10)      :: name
+     integer            :: i_field
+     logical            :: is_def
      !
      name='Field'//trim(intc(i_field))
      !
@@ -649,7 +651,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if(trim(Efield(i_field)%ef_name)/="none".and.initmode==4) n_ext_fields=n_ext_fields+1
+     if (initmode==4) then
+       call parser(trim(name)//'_kind',is_def)
+       if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
+     endif
      !
    end subroutine
    !

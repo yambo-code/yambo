@@ -25,44 +25,41 @@ subroutine RT_initialize()
  !
  use YPP,            ONLY:X_rt,i_t_start,i_t_end,&
 &                         W_RT_induced_step,RED_steps,&
-&                         N_pumps,J_steps,J_time_step
- use com,            ONLY:msg
+&                         J_steps,J_time_step
  use pars,           ONLY:pi,SP
- use units,          ONLY:AUT2FS
- use fields,         ONLY:Efield
  !
  implicit none
  !
- ! Work Space
- !
- real(SP) :: Total_time(2)
- integer  :: i_t,i_t_field_range(2),i_Probe
- !
  ! Time Configuration
  !====================
- !
- call RT_time_configuration_setup("CURRENT",J_time_step,Total_time,J_steps)
- !
- i_Probe=1
- X_rt%time_range=(/Efield(i_Probe)%t_initial,Total_time(2)/)
+ call RT_time_configuration_setup("CURRENT",J_time_step,X_rt%time_range,J_steps)
  !
  i_t_start=nint(X_rt%time_range(1)/J_time_step)+1
  i_t_end  =nint(X_rt%time_range(2)/J_time_step)+1
  !
- i_t_field_range= (/Efield(i_Probe)%t_initial_indx,J_steps/)
+ ! DEBUG>
  !
- if (N_pumps>0.and.trim(Efield(i_Probe)%ef_name)=='DELTA') i_t_start=i_t_field_range(1)
+ !X_rt%time_range=(/Efield(1)%t_initial,Total_time(2)/)
+ !!
+ !i_t_start=nint(X_rt%time_range(1)/J_time_step)+1
+ !i_t_end  =nint(X_rt%time_range(2)/J_time_step)+1
+ !!
+ !i_t_field_range= (/Efield(1)%t_initial_indx,J_steps/)
+ !!
+ !if (N_pumps>0.and.trim(Efield(1)%ef_name)=='DELTA') i_t_start=i_t_field_range(1)
+ !!
+ !if ( i_t_start<i_t_field_range(1) ) i_t_start=i_t_field_range(1)
+ !if ( i_t_end  >i_t_field_range(2) ) i_t_end  =i_t_field_range(2)
+ !!
+ !X_rt%time_range=(/i_t_start-1,i_t_end-1/)*J_time_step
+ !J_steps        =i_t_end-i_t_start+1
+ !!
+ ! DEBUG<
  !
- if ( i_t_start<i_t_field_range(1) ) i_t_start=i_t_field_range(1)
- if ( i_t_end  >i_t_field_range(2) ) i_t_end  =i_t_field_range(2)
- !
- X_rt%time_range=(/i_t_start-1,i_t_end-1/)*J_time_step
- !
- RED_steps=i_t_end-i_t_start+1
- W_RT_induced_step=2._SP*pi/(real(RED_steps-1,SP)*J_time_step)  ! Frequency step in real-time dynamics
- !
- call msg('s','[RT] Time range [fs]:',(/real(i_t_start-1),real(i_t_end-1)/)*J_time_step*AUT2FS)
- !
+ ! Frequency step & dumping
+ !==========================
+ RED_steps=J_steps
+ W_RT_induced_step=2._SP*pi/(real(RED_steps-1,SP)*J_time_step)  
  if(X_rt%damp_factor==0._SP) X_rt%damp_factor=W_RT_induced_step
  !
 end subroutine

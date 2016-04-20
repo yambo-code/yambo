@@ -30,13 +30,13 @@ subroutine RT_time_step_update( )
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
 &                         RT_life_interp_times,Life_MEM_steps,NE_time,NE_time_step_update_jump
  use RT_control,     ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
-&                         TIME_STEP_CONF_description,RT_do_it
+&                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type
  use com,            ONLY:msg
  implicit none
  ! 
  ! Work Space 
  ! 
- integer           :: ib,ibp,ik,nT_updated,i1
+ integer           :: ib,ibp,ik,nT_updated,i1,n_mesgs
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
  real(SP)          :: dT_now,dT_previous
  integer, external :: RT_Lifetimes_evaluation_plan
@@ -65,10 +65,13 @@ subroutine RT_time_step_update( )
  !
  ERROR=(dG(1)+dG_dT_max(1)*(dT_previous+dT_now)-dG(3))/dG(3)
  !
- if (abs(ERROR)<0.01.and.(dT_previous+dT_now)<minval(&
-&    (/JPC_RT_IO_t%INTERVAL_time,OUTPUT_RT_IO_t%INTERVAL_time,GF_RT_IO_t%INTERVAL_time/))) then 
+ if (abs(ERROR)<0.01.and.dT_previous*2._SP>RT_dyn_step) then
    !
-   RT_dyn_step=dT_previous+dT_now
+   RT_dyn_step=dT_previous*2._SP
+   !
+   call SETUP_RT_IO_type(JPC_RT_IO_t)
+   call SETUP_RT_IO_type(OUTPUT_RT_IO_t)
+   call SETUP_RT_IO_type(GF_RT_IO_t)
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !
@@ -91,10 +94,12 @@ subroutine RT_time_step_update( )
    !
    ! ... create the linked descriptions
    !
+   n_mesgs=n_TIME_STEP_CONF_descriptions
+   !
    call RT_update_TIME_CONF_descriptions( )
    !
    call msg("nr","Dynamics steps update @ TIME "//trim(real2ch(NE_time*AUT2FS))//" fs")
-   do i1=n_TIME_STEP_CONF_descriptions-1,n_TIME_STEP_CONF_descriptions
+   do i1=n_mesgs+1,n_TIME_STEP_CONF_descriptions
      call msg("r",trim(TIME_STEP_CONF_description(i1)))
    enddo
    !

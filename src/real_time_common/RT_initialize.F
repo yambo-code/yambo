@@ -33,11 +33,12 @@ subroutine RT_initialize(E,k,q)
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
- use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object
+ use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,&
+&                         SETUP_RT_IO_type,J_and_P_cache_steps
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
-&                         NE_steps,NE_tot_time,RT_carriers,   &
+&                         NE_steps,NE_tot_time,RT_carriers,RT_is_dynamically_dephased,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
-&                         RT_is_dephased,RAD_LifeTime,NE_time_step_update_jump,       &
+&                         RT_is_statically_dephased,RAD_LifeTime,NE_time_step_update_jump,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_life_interp_times_SAVE,    &
 &                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_times,&
@@ -130,9 +131,9 @@ subroutine RT_initialize(E,k,q)
  ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
  !=================================================
  !
- call LOCAL_setup_IO_times(JPC_RT_IO_t)
- call LOCAL_setup_IO_times(OUTPUT_RT_IO_t)
- call LOCAL_setup_IO_times(GF_RT_IO_t)
+ call SETUP_RT_IO_type(JPC_RT_IO_t)
+ call SETUP_RT_IO_type(OUTPUT_RT_IO_t)
+ call SETUP_RT_IO_type(GF_RT_IO_t)
  !
  ! Update time Step
  !==================
@@ -147,7 +148,7 @@ subroutine RT_initialize(E,k,q)
  !
  call RT_Dephasing_Matrix(E) 
  !
- if (.not.RT_is_dephased) then
+ if (.not.RT_is_statically_dephased) then
    !
    if (l_elph_scatt.or.l_elel_scatt) then
      call warning('No Dephasing provided. E-E and/or E-P scatterings switched off')
@@ -159,7 +160,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Memory Depth (Lifetimes) & interpolation steps
  !================================================
- if (RT_is_dephased) then
+ if (RT_is_statically_dephased) then
    !
    RT_life_interp_times=RT_life_interp_times_SAVE
    !
@@ -181,6 +182,10 @@ subroutine RT_initialize(E,k,q)
    G_MEM_steps=T_memory/RT_step
  endif
  if (NE_initial_time_step_update>0..and.G_MEM_steps<3) G_MEM_steps=3
+ !
+ ! J and P cache Time size
+ !=========================
+ if (NE_initial_time_step_update>0.) J_and_P_cache_steps=JPC_RT_IO_t%INTERVAL_steps
  !
  ! External fields checks
  !========================
@@ -296,8 +301,6 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
- if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) N_T_samplings =RT_Lifetimes_evaluation_plan( )
- !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -314,6 +317,9 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+ RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
+ !
+ if (RT_is_dynamically_dephased) N_T_samplings =RT_Lifetimes_evaluation_plan( )
  !
  ! Initial allocation and basic definitions of the RT_carriers object
  !====================================================================
@@ -342,7 +348,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Memory depth(G)        [fs]:',T_memory*AUT2FS)
  call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
  !
- if (RT_is_dephased) then
+ if (RT_is_statically_dephased) then
    call msg( 'nr','---Lifetimes---')
    call msg( 'r', 'Point groups (inter/intra) [fs]:',RT_life_interp_times*AUT2FS)
    call msg( 'r', 'Interpolation                  :',l_RT_lifetimes_interpolation)
@@ -419,14 +425,4 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
- contains 
-   !
-   subroutine LOCAL_setup_IO_times(TYP)
-     type(RT_IO_t) :: TYP
-     if (TYP%INTERVAL_time<=0)      TYP%INTERVAL_time =max(NE_tot_time/1000._SP,RT_dyn_step)
-     if (TYP%INTERVAL_time<RT_step) TYP%INTERVAL_time=RT_step
-     TYP%INTERVAL_time              =nint(TYP%INTERVAL_time/RT_step)*RT_step
-     TYP%INTERVAL_steps                 =TYP%INTERVAL_time/RT_step
-   end subroutine
-   !
 end subroutine RT_initialize

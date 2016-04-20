@@ -44,7 +44,7 @@ subroutine RT_driver(E,X,k,q)
 &                         G_lesser_reference,rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
-&                         i_MEM_now,i_MEM_next
+&                         i_MEM_now,i_MEM_next,RT_is_dynamically_dephased
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
@@ -298,14 +298,12 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
-   if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
+   if (RT_is_dynamically_dephased) then
      call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)      call RT_output('EPlife',TIME=NE_time*AUT2FS)
-     if(l_elel_scatt)      call RT_output('EElife',TIME=NE_time*AUT2FS)
-     if(l_elphoton_scatt)  call RT_output('RADlife',TIME=NE_time*AUT2FS)
-     if((l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) then 
-                           call RT_output('factors',TIME=NE_time*AUT2FS)
-     endif
+     if(l_elph_scatt)                      call RT_output('EPlife',TIME=NE_time*AUT2FS)
+     if(l_elel_scatt)                      call RT_output('EElife',TIME=NE_time*AUT2FS)
+     if(l_elphoton_scatt)                  call RT_output('RADlife',TIME=NE_time*AUT2FS)
+     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('factors',TIME=NE_time*AUT2FS)
    endif
    !
    ! Write DBs
@@ -354,8 +352,8 @@ subroutine RT_driver(E,X,k,q)
    !
    if (l_Dynamics_is_over) cycle
    !
-   NE_i_time                  = NE_i_time+nint(RT_dyn_step/RT_step)
-   NE_time                    = (NE_i_time-1)*RT_step
+   NE_i_time = NE_i_time+nint(RT_dyn_step/RT_step)
+   NE_time   = (NE_i_time-1)*RT_step
    !
  enddo
  !

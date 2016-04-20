@@ -93,8 +93,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_times,      &
-&                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
-&                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
+&                     Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
+&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
 &                     RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,  &
 &                     Eh_pumped_pair_deltaE,Eh_pumped_pair_BZ_width,Eh_pumped_pair_BZ_reagions,&
@@ -290,7 +290,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  pp_n_l_times_proj_max=0
  pp_kbv_dim=0
  !
- !drivers
+ ! Drivers
  !
  list_dbs=.FALSE.
  infile_editing=.FALSE.
@@ -586,8 +586,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Integrator_name='RK2'
  RAD_LifeTime = 0._SP
  Phase_LifeTime = 0._SP
- RT_is_dephased=.FALSE.
- l_RT_induced_field=.FALSE.
  NE_MEM_treshold=0.
  RT_nk=0
  RT_eh_en=0._SP

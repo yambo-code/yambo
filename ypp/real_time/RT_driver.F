@@ -27,7 +27,6 @@ subroutine RT_driver(en,k,q)
 &                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
 &                         Probe_path,Pump_path,N_probes
- use RT_control,     ONLY:RT_alloc_control,RT_free_control
  use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
@@ -53,10 +52,6 @@ subroutine RT_driver(en,k,q)
  !====================
  call RT_IO_J_and_P_paths( )
  !
- ! RT ctl setup
- !==============
- call RT_alloc_control( )
- !
  ! LOGICALS
  !----------
  !
@@ -76,6 +71,8 @@ subroutine RT_driver(en,k,q)
  !
  if ( .not.any((/l_RT_LRR_real_field,l_RT_SHG_qssin,l_RT_X_effective/)) ) return
  !
+ ! Initialization
+ !================
  call RT_initialize()
  !
  if ( any((/l_RT_LRR_real_field,l_RT_SHG_qssin/)) ) then
@@ -134,7 +131,6 @@ subroutine RT_driver(en,k,q)
  !
  if (allocated(RT_P_t)) deallocate(RT_P_t)
  if (allocated(RT_J_t)) deallocate(RT_J_t)
- call RT_free_control( )
  call mem_est("RT_P_t RT_J_t")
  !
 end subroutine

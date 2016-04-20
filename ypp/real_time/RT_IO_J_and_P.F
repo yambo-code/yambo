@@ -23,16 +23,17 @@
 !
 subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP,            ONLY:RT_J_t,RT_P_t,J_steps
+ use YPP,            ONLY:RT_J_t,RT_P_t,J_steps,J_time_step,i_t_start,i_t_end,X_rt
  use pars,           ONLY:DP,SP,schlen
  use R_lattice,      ONLY:nkibz
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:JPC_RT_IO_t,J_and_P_cache,J_and_P_cache_size,RT_do_it
+ use RT_control,     ONLY:J_and_P_cache,J_and_P_cache_size,J_and_P_cache_steps
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
+ use units
  !
  implicit none
  !
@@ -42,6 +43,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  ! Work Space
  !
+ real(SP)           :: TIME
  integer            :: io_J_and_P,ID,i_f,io_G,COM_here,ik,NE_steps_save,i_c,i_time
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
@@ -89,7 +91,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  COM_here=NONE
  !
- ! Use Core value for dynamical step (needed for the correct behaviour of RT_do_IO)
+ ! Use Core value for dynamical step 
  !-----------------------------------
  RT_dyn_step=RT_step
  !
@@ -124,7 +126,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
    call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
  endif
- allocate(J_and_P_cache(J_and_P_cache_size,JPC_RT_IO_t%INTERVAL_steps))
+ allocate(J_and_P_cache(J_and_P_cache_size,J_and_P_cache_steps))
  call mem_est("Current_Cache",(/size(J_and_P_cache)/),(/SP/))
  !
  RT_J_t        =(0._DP,0._DP)
@@ -134,15 +136,11 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  call live_timing('I/O'//trim(mesg_)//':',J_steps-1)
  !
- i_time=0
- !
- do NE_i_time=1,NE_steps
+ do i_time=i_t_start,i_t_end-1
    !
-   if (.not.RT_do_it('J')) cycle
+   TIME=X_rt%time_range(1)+(i_time-1)*J_time_step
    !
-   i_time=i_time+1
-   !
-   if (i_time==J_steps+1) cycle
+   NE_i_time=nint( TIME/RT_step ) + 1
    !
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
    io_J_and_P=io_RT_components('J_and_P',ID)
@@ -155,6 +153,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    call live_timing(steps=1)
    !
  enddo
+ !
  call live_timing()
  !
  ! Define Efield amplitude

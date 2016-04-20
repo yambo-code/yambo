@@ -346,7 +346,7 @@ integer function variables_RT(ID,local_description,what)
      !
      i_desc=i_desc+1
      call io_elemental(ID,&
-&      VAR=" [RT] I/O time               [fs]:",R0=TYP%INTERVAL_time,CHECK=.true.,OP=(/"=="/),&
+&      VAR=" [RT] I/O time          (now)[fs]:",R0=TYP%INTERVAL_time,CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
      i_desc=i_desc+1
      call io_elemental(ID,&

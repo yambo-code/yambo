@@ -243,22 +243,24 @@ module YPP
  logical  :: l_RT_X
  logical  :: l_RT_abs
  logical  :: l_RT_X_inversion
- integer  :: i_t_start,i_t_end ! time window
- integer  :: RED_steps ! reduced number of steps
  integer  :: N_probes
  integer  :: N_pumps
  integer  :: N_probe_frequencies
  integer  :: X_order
- integer  :: J_steps
- real(SP) :: t_jump
- real(SP) :: W_RT_induced_step
- real(SP) :: J_time_step
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
  integer, parameter:: max_n_of_paths=10000
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  !
+ ! To be re-coded ...
+ !
+ integer  :: i_t_start,i_t_end ! time window
+ integer  :: RED_steps ! reduced number of steps
+ integer  :: J_steps
+ real(SP) :: t_jump
+ real(SP) :: W_RT_induced_step
+ real(SP) :: J_time_step
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
  !
@@ -271,6 +273,8 @@ module YPP
  end type Xw_rt
  !
  type(Xw_rt) :: X_rt 
+ !
+ ! ... up to here ...
  !
  interface
    !

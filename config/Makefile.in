@@ -83,8 +83,7 @@ PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
 #
 # Interfaces
 #
-2YLIBS       = external_c io modules parallel parser communicate linear_algebra common io setup interface stop_and_restart bz_ops 
-E2YLIBS      = external_c io parallel modules parser communicate linear_algebra common io setup interface stop_and_restart bz_ops 
+2YLIBS       = external_c modules parallel parser communicate linear_algebra common io setup interface stop_and_restart bz_ops 
 #
 # YPP
 #
@@ -164,7 +163,7 @@ interfaces: libs
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
-	XLIBS="$(E2YLIBS)" ; $(mkx) ; fi
+	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
 #
 # Ypp #
 #

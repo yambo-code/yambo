@@ -65,7 +65,7 @@ subroutine RT_time_step_update( )
  !
  ERROR=(dG(1)+dG_dT_max(1)*(dT_previous+dT_now)-dG(3))/dG(3)
  !
- if (abs(ERROR)<0.01.and.dT_previous*2._SP>RT_dyn_step) then
+ if (abs(ERROR)<0.02.and.dT_previous*2._SP>RT_dyn_step) then
    !
    RT_dyn_step=dT_previous*2._SP
    !

@@ -34,8 +34,11 @@ subroutine RT_initialize()
  !====================
  call RT_time_configuration_setup("CURRENT",J_time_step,X_rt%time_range,J_steps)
  !
- i_t_start=nint(X_rt%time_range(1)/J_time_step)+1
- i_t_end  =nint(X_rt%time_range(2)/J_time_step)+1
+ ! AM April 2016. I do not understand the need of introducing i_t_start,i_t_end, RED_steps. I think they were
+ ! related to some partial use of J/P. But these can be out-of-date at the moment.
+ !
+ i_t_start=1
+ i_t_end  =J_steps
  !
  ! DEBUG>
  !

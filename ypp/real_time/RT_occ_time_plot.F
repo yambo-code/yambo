@@ -33,7 +33,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use YPP,            ONLY:output_fname
  use com,            ONLY:msg,of_open_close
  use vec_operate,    ONLY:c2a
- use YPP,            ONLY:OCC_deltaT,OCC_T_range
+ use YPP,            ONLY:RT_conf
  use RT_control,     ONLY:RT_apply
  use RT_control,     ONLY:RT_apply
  use real_time,      ONLY:l_RT_CCA_Kernel,RT_carriers,RT_bands
@@ -119,7 +119,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+   io_Time=min(RT_conf%T_range(1)+(i_T-1)*RT_conf%delta_T,RT_conf%T_range(2))
    !
    call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
    !

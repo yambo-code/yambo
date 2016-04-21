@@ -27,7 +27,7 @@ subroutine RT_occupations_driver(kpt,En)
  use electrons,      ONLY:levels
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
- use YPP,            ONLY:OCC_deltaT,OCC_T_range
+ use YPP,            ONLY:RT_conf
  use RT_control,     ONLY:RT_apply
  use real_time,      ONLY:RT_bands
  use YPP,            ONLY:l_RT_occ_time,l_RT_occ_energy,l_RT_life_bands,l_RT_occ_bands,&
@@ -38,21 +38,14 @@ subroutine RT_occupations_driver(kpt,En)
  type(bz_samp) :: kpt
  type(levels)  :: En
  !
- ! Work Space
- !
- integer               :: n_T_steps
- !
  call section("*",'RT Occupations Processing')
- !
- ! Pre-Initialization
- !====================
- call RT_initialize()
+ !============================================
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
  call RT_apply(RT_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
  !
- call RT_time_configuration_setup("CARRIERS",OCC_deltaT,OCC_T_range,n_T_steps)
+ call RT_time_configuration_setup("CARRIERS")
  !
  ! Additional QP corrections
  !===========================
@@ -62,20 +55,20 @@ subroutine RT_occupations_driver(kpt,En)
  !
  ! Occupations energy plot 
  !=========================
- if (l_RT_occ_energy) call RT_occ_energy_plot(En,kpt,n_T_steps)
+ if (l_RT_occ_energy) call RT_occ_energy_plot(En,kpt,RT_conf%T_n_steps)
  !
  ! Occupations time plot 
  !=========================
- if (l_RT_occ_time)   call RT_occ_time_plot(En,kpt,n_T_steps)
+ if (l_RT_occ_time)   call RT_occ_time_plot(En,kpt,RT_conf%T_n_steps)
  !
  ! Occupations 2D dos plot 
  !=========================
- if (l_RT_occ_2D_dos) call RT_occ_2D_dos_plot(En,kpt,n_T_steps)
+ if (l_RT_occ_2D_dos) call RT_occ_2D_dos_plot(En,kpt,RT_conf%T_n_steps)
  !
  ! Occupations bands fit 
  !=========================
- if (l_RT_life_Bands) n_T_steps=1
+ if (l_RT_life_Bands) RT_conf%T_n_steps=1
  !
- if (l_RT_occ_bands.or.l_RT_life_bands) call RT_occ_bands_interpolation(En,kpt,n_T_steps)
+ if (l_RT_occ_bands.or.l_RT_life_bands) call RT_occ_bands_interpolation(En,kpt,RT_conf%T_n_steps)
  !
 end subroutine RT_occupations_driver

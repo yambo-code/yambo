@@ -21,80 +21,91 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_time_configuration_setup(what,TIME_step,TIME_range,N_times)
+subroutine RT_time_configuration_setup(what)
  !
- use units,          ONLY:AUT2FS
+ use units,          ONLY:AUT2FS,pi,HA2EV
+ use YPP,            ONLY:RT_conf,RT_time,i_t_start,i_t_end
  use pars,           ONLY:SP
- use com,            ONLY:msg,error
+ use com,            ONLY:msg
  use real_time,      ONLY:RT_step
  use RT_control,     ONLY:JPC_RT_IO_t,TIME_adjust
  implicit none
  !
  character(*) :: what 
- real(SP)     :: TIME_step,TIME_range(2)
- integer      :: N_times
  !
  ! Work Space
  ! 
- integer  :: i_t,i_cycle
- real(SP) :: STEP,TIME,OFF_set
- logical  :: FOUND
+ integer  :: i_t,i_ref(2),i_range(2),i_io(2),i_c
+ real(SP) :: STEP,TIME
  !
  STEP  = (JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-JPC_RT_IO_t%Time(JPC_RT_IO_t%N-1))
  STEP  = TIME_adjust(STEP)
  TIME  = TIME_adjust(JPC_RT_IO_t%Time(JPC_RT_IO_t%N))
  !
- i_cycle=0
- write (*,*) TIME*AUT2FS,RT_step*AUT2FS
+ if (JPC_RT_IO_t%N==nint(TIME/STEP)+1) then
+   call msg('s','['//what//'] uniform grid   : yes')
+ else
+   call msg('s','['//what//'] uniform grid   : no')
+ endif
  !
- loop: do while (TIME>0)
-   FOUND = .FALSE.
-   do i_t=1,JPC_RT_IO_t%N
-     if (nint( (JPC_RT_IO_t%Time(i_t)-TIME)/RT_step) == 0 ) FOUND=.TRUE.
+ if (any(RT_conf%T_range>0.)) then
+   !
+   RT_conf%T_range(1)=TIME_adjust( RT_conf%T_range(1) )
+   RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2) )
+   ! 
+   i_range(:) = nint( RT_conf%T_range(:)/RT_step )
+   i_ref      = 0
+   !
+   do i_t=1,JPC_RT_IO_t%N-1
+     !
+     i_io(1) = nint( JPC_RT_IO_t%Time(i_t)/RT_step )
+     i_io(2) = nint( JPC_RT_IO_t%Time(i_t+1)/RT_step )
+     !
+     do i_c=1,2
+       if (i_range(i_c)==i_io(1)) then
+         i_ref(i_c)=i_t
+       else if (i_range(i_c)==i_io(2)) then
+         i_ref(i_c)=i_t+1
+       else if (i_range(i_c)>i_io(1).and.i_range(i_c)<i_io(2)) then
+         if (i_range(i_c)-i_io(1)< i_io(2)-i_range(i_c)) i_ref(i_c)=i_t
+         if (i_range(i_c)-i_io(1)>=i_io(2)-i_range(i_c)) i_ref(i_c)=i_t+1
+       endif
+     enddo
+     !
    enddo
-   if (.not.FOUND) then
-     write (*,*) STEP*AUT2FS,TIME*AUT2FS
-     if (i_cycle==5) call error('Impossible to find a compatibile and constant I/O Time step')
-     STEP=STEP*2._SP
-     TIME  = nint(JPC_RT_IO_t%Time(JPC_RT_IO_t%N)/RT_step)*RT_step
-     i_cycle=i_cycle+1
-     cycle loop
-   endif
-   TIME=TIME_adjust(TIME-STEP)
- enddo loop
- !
- OFF_set = nint((TIME+STEP)/RT_step)*RT_step
- TIME    = nint(JPC_RT_IO_t%Time(JPC_RT_IO_t%N)/RT_step)*RT_step
- !
- if (what=="CURRENT") then
    !
-   TIME_range  = (/OFF_set,TIME/)
+   if (i_ref(1)==0) i_ref(1)=1
+   if (i_ref(2)==0) i_ref(2)=JPC_RT_IO_t%N
    !
-   TIME_step   = STEP
+   RT_conf%T_range=(/JPC_RT_IO_t%Time(i_ref(1)),JPC_RT_IO_t%Time(i_ref(2))/)
    !
+ else
+   i_ref           = (/1,JPC_RT_IO_t%N/)
+   RT_conf%T_range = (/0.,TIME/)
  endif
  !
- if (what=="CARRIERS") then
-   !
-   if (TIME_step<STEP) then
-     ! 
-     TIME_step=STEP
-     ! 
-   else
-     !
-     TIME_step=nint(TIME_step/STEP)*STEP
-     !
-   endif
-   !
-   TIME_range(1) = nint( (TIME_range(1)-OFF_set)/TIME_step)*TIME_step+OFF_set
-   TIME_range(2) = nint( (TIME_range(2)-OFF_set)/TIME_step)*TIME_step+OFF_set
-   !
- endif
+ RT_conf%delta_T   = STEP
+ RT_conf%T_n_steps = i_ref(2)-i_ref(1)+1
  !
- N_times=nint( (TIME_range(2)-TIME_range(1))/TIME_step )+1
+ allocate(RT_time(RT_conf%T_n_steps))
+ do i_t=i_ref(1),i_ref(2)
+   RT_time(i_t-i_ref(1)+1) = JPC_RT_IO_t%Time(i_t)
+ enddo
  !
- call msg('s','['//what//'] Time range [fs]:',TIME_range*AUT2FS)
- call msg('s','['//what//'] Time step  [fs]:',TIME_step*AUT2FS)
- call msg('s','['//what//'] Time steps     :',N_times)
+ i_t_start=i_ref(1)
+ i_t_end  =i_ref(2)
+ !
+ ! Field deduced dumping
+ !=======================
+ RT_conf%Field_damp_factor= 2._SP*pi/(real(RT_conf%T_n_steps-1,SP)*RT_conf%delta_T)
+ !
+ ! Messaging
+ !===========
+ !
+ call msg('s','['//what//'] Time range     [fs]:',RT_conf%T_range*AUT2FS)
+ call msg('s','['//what//'] Time step      [fs]:',RT_conf%delta_T*AUT2FS)
+ call msg('s','['//what//'] Time steps         :',RT_conf%T_n_steps)
+ call msg('s','['//what//'] Damping       [meV]:',RT_conf%damp_factor*1000.*HA2EV)
+ call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000.*HA2EV)
  !
 end subroutine RT_time_configuration_setup

@@ -23,8 +23,7 @@
 !
 subroutine RT_X_qssin
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps,J_steps,J_time_step
+ use YPP,            ONLY:RT_P_t,RT_conf,Use_FFT,i_t_start,i_t_end
  use pars,           ONLY:SP,DP,pi,schlen
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use memory_m,       ONLY:mem_est
@@ -41,10 +40,10 @@ subroutine RT_X_qssin
  integer, parameter :: nfreqs=2
  complex(DP), allocatable :: E_m(:),E_p(:),E_t(:)
  complex(SP), allocatable :: freqs(:)
- complex(SP) :: X_tot,outfreqs(nfreqs),E_of_t(2),A_of_t(2),theta,delta
- complex(DP) :: E_2plus,E_2minus,X_irrep(nfreqs,3)
- integer     :: i_w, i_t, i_c,i_Probe
- real(SP)    :: W_step,Field_time
+ complex(SP)  :: X_tot,outfreqs(nfreqs),E_of_t(2),A_of_t(2),theta,delta
+ complex(DP)  :: E_2plus,E_2minus,X_irrep(nfreqs,3)
+ integer      :: i_w, i_t, i_c,i_Probe
+ real(SP)     :: W_step,Field_time
  character(9) :: FT_title
  character(schlen) :: X_file_name
  !
@@ -57,19 +56,19 @@ subroutine RT_X_qssin
  ! Field: Definitions & Allocation
  i_Probe=1
  !
- X_rt%energy_range(1)=-4._SP*(Efield(i_Probe)%frequency(1)) ! Here I define the integration cutoff
- X_rt%energy_range(2)= 4._SP*(Efield(i_Probe)%frequency(1)) ! in Eqs 20-22 as 4 time the field freq. TEST?!?
- W_step=W_RT_induced_step
- X_rt%energy_steps= (X_rt%energy_range(2))/W_step  ! and I define the number of freq step
- X_rt%energy_steps= 2*X_rt%energy_steps            ! as a consequence
+ RT_conf%W_range(1)=-4._SP*(Efield(i_Probe)%frequency(1)) ! Here I define the integration cutoff
+ RT_conf%W_range(2)= 4._SP*(Efield(i_Probe)%frequency(1)) ! in Eqs 20-22 as 4 time the field freq. TEST?!?
+ W_step=RT_conf%Field_damp_factor
+ RT_conf%W_n_steps=(RT_conf%W_range(2))/W_step    ! and I define the number of freq step
+ RT_conf%W_n_steps= 2*RT_conf%W_n_steps           ! as a consequence
  !
- allocate(E_t(J_steps))
- do i_t=1,J_steps
-   Field_time=(i_t-1)*J_time_step-Efield(i_Probe)%t_initial
+ allocate(E_t(RT_conf%T_n_steps))
+ do i_t=1,RT_conf%T_n_steps
+   Field_time=(i_t-1)*RT_conf%delta_T-Efield(i_Probe)%t_initial
    A_of_t =small_a(Field_time,Efield(i_Probe),0)
    E_of_t =small_a(Field_time,Efield(i_Probe),1)
-   theta  =theta_function(Field_time,J_time_step,0)
-   delta  =theta_function(Field_time,J_time_step,1)
+   theta  =theta_function(Field_time,RT_conf%delta_T,0)
+   delta  =theta_function(Field_time,RT_conf%delta_T,1)
    select case(Efield(i_Probe)%ef_pol)
    case("linear")
      E_t(i_t)=Efield(i_Probe)%amplitude*(E_of_t(1)*theta+A_of_t(1)*delta)
@@ -77,8 +76,8 @@ subroutine RT_X_qssin
      call error(' Circular polarization not yet implemented')
    end select
  enddo
- allocate(freqs(X_rt%energy_steps))
- allocate(E_m(X_rt%energy_steps),E_p(X_rt%energy_steps))
+ allocate(freqs(RT_conf%W_n_steps))
+ allocate(E_m(RT_conf%W_n_steps),E_p(RT_conf%W_n_steps))
  call mem_est("E_m E_p",&
       &(/size(E_m),size(E_p)/),(/2*DP,2*DP/))
  !
@@ -86,28 +85,28 @@ subroutine RT_X_qssin
  !
  E_m=(0._DP,0._DP) ! E(Wo-W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
- do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)-((i_w-1)*W_step+X_rt%energy_range(1)),0._SP)
+ do i_w = 1, RT_conf%W_n_steps
+   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)-((i_w-1)*W_step+RT_conf%W_range(1)),0._SP)
  enddo
- call RT_1D_Fourier_Transform('T2W',' (E_m field)',freqs,E_m(:),X_rt%energy_steps,&
-&                             E_t(i_t_start:i_t_end),RED_steps,J_time_step,&
-&                             (i_t_start-1)*J_time_step,Use_FFT,1)
+ call RT_1D_Fourier_Transform('T2W',' (E_m field)',freqs,E_m(:),RT_conf%W_n_steps,&
+&                             E_t(i_t_start:i_t_end),RT_conf%T_n_steps,RT_conf%delta_T,&
+&                             (i_t_start-1)*RT_conf%delta_T,Use_FFT,1)
  !
  E_p=(0._DP,0._DP) ! E(Wo+W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
- do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)+(i_w-1)*W_step+X_rt%energy_range(1),0._SP)
+ do i_w = 1, RT_conf%W_n_steps
+   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)+(i_w-1)*W_step+RT_conf%W_range(1),0._SP)
  enddo
- call RT_1D_Fourier_Transform('T2W',' (E_p field)',freqs,E_p(:),X_rt%energy_steps,&
-&                             E_t(i_t_start:i_t_end),RED_steps,J_time_step,&
-&                             (i_t_start-1)*J_time_step,Use_FFT,1)
+ call RT_1D_Fourier_Transform('T2W',' (E_p field)',freqs,E_p(:),RT_conf%W_n_steps,&
+&                             E_t(i_t_start:i_t_end),RT_conf%T_n_steps,RT_conf%delta_T,&
+&                             (i_t_start-1)*RT_conf%delta_T,Use_FFT,1)
  !
  ! Field: Convolution
  !
  E_2plus = (0._DP,0._DP)
  E_2minus = (0._DP,0._DP)
- call live_timing('Fields Convolution:',X_rt%energy_steps)
- do i_w = 1, X_rt%energy_steps
+ call live_timing('Fields Convolution:',RT_conf%W_n_steps)
+ do i_w = 1, RT_conf%W_n_steps
    E_2plus = E_2plus + E_p(i_w)*conjg(E_p(i_w))*W_step
    E_2minus = E_2minus + E_m(i_w)*E_p(i_w)*W_step
    call live_timing(steps=1)
@@ -130,8 +129,8 @@ subroutine RT_X_qssin
    if (i_c==3) FT_title=' (Z axis)'
    !
    call RT_1D_Fourier_Transform('T2W',FT_title,outfreqs,X_irrep(:,i_c),nfreqs,&
-&                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,J_time_step,&
-&                               (i_t_start-1)*J_time_step,Use_FFT,1)
+&                               RT_P_t(i_t_start:i_t_end,i_c),RT_conf%T_n_steps,RT_conf%delta_T,&
+&                               (i_t_start-1)*RT_conf%delta_T,Use_FFT,1)
    !
  enddo
  !

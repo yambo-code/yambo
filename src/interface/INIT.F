@@ -1496,13 +1496,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            Chi_mode='Hartree'
            !
            if(l_bse)  then
-             if(trim(rstr_piece(i1+1)) == 'hartree')  BSK_mode='Hartree'
-             if(trim(rstr_piece(i1+1)) == 'hf')       BSK_mode='HF'
+             if(trim(rstr_piece(i1+1))  == 'hartree')  BSK_mode='Hartree'
+             if(trim(rstr_piece(i1+1))  == 'hf')       BSK_mode='HF'
              if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
-             if(trim(rstr_piece(i1+1)) == 'sex')      BSK_mode='SEX'
+             if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
            else if(l_chi) then
-             if(trim(rstr_piece(i1+1)) == 'hartree')  Chi_mode='Hartree'
+             if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='Hartree'
              if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
              if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'

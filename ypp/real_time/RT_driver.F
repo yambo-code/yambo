@@ -63,6 +63,7 @@ subroutine RT_driver(en,k,q)
  l_RT_LRR_real_field= all((/&
 &   .not.any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="RES",&
 &   trim(Efield(i_Probe)%ef_name)=="SIN"/)),N_pumps==0, N_probes==1, X_order==1/) )
+ !
  l_RT_SHG_qssin     = all( (/ trim(Efield(i_Probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
  !
  l_RT_X_effective   = all((/any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="SIN"/)),X_order>=0/))
@@ -71,10 +72,12 @@ subroutine RT_driver(en,k,q)
  !
  if ( .not.any((/l_RT_LRR_real_field,l_RT_SHG_qssin,l_RT_X_effective/)) ) return
  !
- ! Initialization
- !================
- call RT_initialize()
+ ! Time Initialization
+ !====================
+ call RT_time_configuration_setup('CURRENT')
  !
+ ! Field-Dependent actions
+ !=========================
  if ( any((/l_RT_LRR_real_field,l_RT_SHG_qssin/)) ) then
    !
    ! Database
@@ -117,13 +120,17 @@ subroutine RT_driver(en,k,q)
      !
    else if ( l_RT_SHG_qssin ) then
      !
-     call RT_X_QSSIN(en)
+     ! DEBUG>
+     !call RT_X_QSSIN(en)
+     ! DEBUG<
      !
    endif
    !
  else if ( l_RT_X_effective ) then
    !
-   call RT_X_effective(en)
+   ! DEBUG>
+   !call RT_X_effective(en)
+   ! DEBUG<
    !
  endif
  !

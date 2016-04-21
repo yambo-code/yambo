@@ -71,7 +71,6 @@ module YPP
  ! SPIN and SOC
  integer      ::WF_ref(2)
  !
- !
  ! REAL SPACE PLOT
  !
  logical      ::l_plot
@@ -252,35 +251,33 @@ module YPP
  integer, parameter:: max_n_of_paths=10000
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
- !
- ! To be re-coded/re-factored ...
- !
- ! Transient Absorption [ypp]
- !
- real(SP)                 :: OCC_deltaT
- real(SP)                 :: OCC_T_range(2)
- real(SP),allocatable     :: delta_f(:,:,:)
- !
- integer  :: i_t_start,i_t_end ! time window
- integer  :: RED_steps ! reduced number of steps
- integer  :: J_steps
- real(SP) :: t_jump
- real(SP) :: W_RT_induced_step
- real(SP) :: J_time_step
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
  !
- type Xw_rt
-   real(SP) :: time_range(2)       ! time windows for the transform
-   integer  :: energy_steps        ! number of steps in energy mesh
-   real(SP) :: energy_range(2)     ! energy range 
-   character(schlen) :: damp       ! Damp type (none, lorentian or gaussian)
-   real(SP) :: damp_factor         ! factor used in damping
- end type Xw_rt
+ ! (RT) carriers
  !
- type(Xw_rt) :: X_rt 
+ real(SP),allocatable     :: delta_f(:,:,:)
  !
- ! ... up to here ...
+ ! (RT) common
+ !
+ real(SP),allocatable     :: RT_time(:)
+ !
+ type RT_ctl
+   real(SP) :: delta_T           =0._SP   ! delta T
+   real(SP) :: T_range(2)        =0._SP   ! time windows for the transform
+   integer  :: T_n_steps         =0       ! number of steps in Time mesh
+   real(SP) :: W_range(2)        =0._SP   ! energy range 
+   integer  :: W_n_steps         =0       ! number of steps in energy mesh
+   real(SP) :: damp_factor       =0._SP   ! factor used in damping
+   real(SP) :: Field_damp_factor =0._SP   ! factor used deduced from the Field 
+   character(schlen) :: damping  ="NONE"  ! Damp type (none, lorentian or gaussian)
+ end type RT_ctl
+ !
+ type(RT_ctl) :: RT_conf 
+ !
+ ! Transient Absorption [ypp]
+ !
+ integer  :: i_t_start,i_t_end ! time window
  !
  interface
    !

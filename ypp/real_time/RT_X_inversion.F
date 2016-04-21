@@ -24,8 +24,8 @@
 subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effective)
  !
  use pars,           ONLY:SP,pi
- use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,X_rt,i_t_start,&
-&                         i_t_end,N_pumps,J_time_step,J_steps
+ use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,RT_conf,i_t_start,&
+&                         i_t_end,N_pumps
  use fields,         ONLY:EtoT,Efield,Divide_by_Field
  use real_time,      ONLY:RT_P
  use units,          ONLY:AUT2FS
@@ -33,7 +33,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  use LIVE_t,         ONLY:live_timing
  implicit none
  !
- real(SP)      :: RT_P_probe(J_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)
+ real(SP)      :: RT_P_probe(RT_conf%T_n_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)
  complex(SP)   :: Susceptibility(0:X_order,N_probe_frequencies),X_effective(0:X_order,N_probe_frequencies,3)
  !
  ! Work Space
@@ -54,7 +54,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  !
  allocate(X_w(X_order+1))
  !
- time_range_save=X_rt%time_range
+ time_range_save=RT_conf%T_range
  !
  if (.not.use_LRR) then
    !=======================================
@@ -100,7 +100,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
        !
        X_w(:)=Harmonic_Frequency(0:,1)
        !
-       call RT_split_Polarization(X_order+1,J_steps,X_w,X_effective(:,i_p,:),RT_P_probe(:,i_p,:),"dump")
+       call RT_split_Polarization(X_order+1,RT_conf%T_n_steps,X_w,X_effective(:,i_p,:),RT_P_probe(:,i_p,:),"dump")
        !
      enddo
      !
@@ -114,7 +114,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
    !
    T_period=T_range(1,0)
    !
-   call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*J_time_step*AUT2FS)
+   call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_conf%delta_T*AUT2FS)
    !
    do i_c = 1,3
      !
@@ -146,25 +146,25 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
      !
      integer :: i_n,i_f
      !
-     X_rt%time_range=time_range_save
+     RT_conf%T_range=time_range_save
      !
      if (i_f>  0) T_range = EtoT(E=Harmonic_Frequency(i_n,i_f))
      if (i_f== 0) T_range = EtoT(E=maxval(Harmonic_Frequency(:,:)))
      !
      if (i_f==-1) then
-       T_range = X_rt%time_range(2)- X_rt%time_range(1)
+       T_range = RT_conf%T_range(2)- RT_conf%T_range(1)
        return
      endif
      !
-     X_rt%time_range(2)  = X_rt%time_range(1)+ T_range
+     RT_conf%T_range(2)  = RT_conf%T_range(1)+ T_range
      !
-     if (X_rt%time_range(2)> J_steps*J_time_step) then
-       X_rt%time_range(2)  = J_steps*J_time_step
-       X_rt%time_range(1)  = X_rt%time_range(2)-T_range
+     if (RT_conf%T_range(2)> RT_conf%T_n_steps*RT_conf%delta_T) then
+       RT_conf%T_range(2)  = RT_conf%T_n_steps*RT_conf%delta_T
+       RT_conf%T_range(1)  = RT_conf%T_range(2)-T_range
      endif 
      !
-     i_t_start=nint(X_rt%time_range(1)/J_time_step)+1
-     i_t_end  =nint(X_rt%time_range(2)/J_time_step)
+     i_t_start=nint(RT_conf%T_range(1)/RT_conf%delta_T)+1
+     i_t_end  =nint(RT_conf%T_range(2)/RT_conf%delta_T)
      !
    end function 
    !

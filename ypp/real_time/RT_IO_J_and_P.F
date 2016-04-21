@@ -23,7 +23,7 @@
 !
 subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP,            ONLY:RT_J_t,RT_P_t,J_steps,J_time_step,i_t_start,i_t_end,X_rt
+ use YPP,            ONLY:RT_J_t,RT_P_t,RT_conf,RT_time
  use pars,           ONLY:DP,SP,schlen
  use R_lattice,      ONLY:nkibz
  use memory_m,       ONLY:mem_est
@@ -122,7 +122,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !=====================================
  !
  if (.not.allocated(RT_J_t)) then
-   allocate(RT_J_t(J_steps,3),RT_P_t(J_steps,6))
+   allocate(RT_J_t(RT_conf%T_n_steps,3),RT_P_t(RT_conf%T_n_steps,6))
    call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
    call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
  endif
@@ -134,11 +134,11 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  NE_steps=NE_steps_save
  !
- call live_timing('I/O'//trim(mesg_)//':',J_steps-1)
+ call live_timing('I/O'//trim(mesg_)//':',RT_conf%T_n_steps)
  !
- do i_time=i_t_start,i_t_end-1
+ do i_time=1,RT_conf%T_n_steps
    !
-   TIME=X_rt%time_range(1)+(i_time-1)*J_time_step
+   TIME=RT_time(i_time)
    !
    NE_i_time=nint( TIME/RT_step ) + 1
    !

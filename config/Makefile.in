@@ -93,7 +93,7 @@ YPPPH_LIBS      = modules interpolate init qp plotting electrons elph excitons s
 YPPRT_LIBS      = modules interpolate init qp plotting electrons elph real_time excitons symmetries k-points bits 
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
-YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) sc
+YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
                      pol_function bse sc 
 YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface surf tddft pol_function bse

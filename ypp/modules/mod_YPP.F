@@ -253,7 +253,13 @@ module YPP
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  !
- ! To be re-coded ...
+ ! To be re-coded/re-factored ...
+ !
+ ! Transient Absorption [ypp]
+ !
+ real(SP)                 :: OCC_deltaT
+ real(SP)                 :: OCC_T_range(2)
+ real(SP),allocatable     :: delta_f(:,:,:)
  !
  integer  :: i_t_start,i_t_end ! time window
  integer  :: RED_steps ! reduced number of steps

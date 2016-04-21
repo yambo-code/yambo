@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
  use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
-&                         it_start,RT_carriers_object
+&                         it_start,RT_carriers_object,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
@@ -353,7 +353,7 @@ subroutine RT_driver(E,X,k,q)
    if (l_Dynamics_is_over) cycle
    !
    NE_i_time = NE_i_time+nint(RT_dyn_step/RT_step)
-   NE_time   = (NE_i_time-1)*RT_step
+   NE_time   = TIME_adjust((NE_i_time-1)*RT_step)
    !
  enddo
  !

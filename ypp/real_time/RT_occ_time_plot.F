@@ -33,7 +33,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use YPP,            ONLY:output_fname
  use com,            ONLY:msg,of_open_close
  use vec_operate,    ONLY:c2a
- use RT_control,     ONLY:OCC_T_range,OCC_deltaT,RT_apply
+ use YPP,            ONLY:OCC_deltaT,OCC_T_range
+ use RT_control,     ONLY:RT_apply
+ use RT_control,     ONLY:RT_apply
  use real_time,      ONLY:l_RT_CCA_Kernel,RT_carriers,RT_bands
  !
  implicit none

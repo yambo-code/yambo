@@ -24,17 +24,16 @@
 subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  use units,          ONLY:HA2EV,AUT2FS
- use pars,           ONLY:SP,schlen
- use stderr,         ONLY:intc
+ use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,n_spin,n_spinor
  use YPP,            ONLY:dos_broadening,dos_E_range,dos_E_steps
- use com,            ONLY:msg,of_open_close,error
+ use com,            ONLY:msg,error
  use functions,      ONLY:Fermi_fnc_derivative
  use LIVE_t,         ONLY:live_timing
- use YPP,            ONLY:RT_IO_carriers
- use RT_control,     ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
+ use YPP,            ONLY:OCC_T_range,OCC_deltaT
+ use RT_control,     ONLY:RT_output,RT_apply
  use real_time,      ONLY:RT_carriers,RT_bands
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,PP_redux_wait

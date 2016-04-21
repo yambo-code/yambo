@@ -30,9 +30,9 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
  use X_m,             ONLY:X_t,DIP_projected
- use RT_control,      ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
+ use RT_control,      ONLY:RT_output,RT_apply
  use IO_m,            ONLY:io_DIP
- use YPP,             ONLY:X_rt
+ use YPP,             ONLY:X_rt,OCC_T_range,OCC_deltaT
  use X_m,             ONLY:Epsilon_ii
  use BS,              ONLY:BSS_eh_table,BS_mat,BS_bands
  use frequency,       ONLY:w_samp

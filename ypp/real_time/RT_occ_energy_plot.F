@@ -28,7 +28,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  use units,          ONLY:HA2EV,HA2KEL,AUT2FS
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use pars,           ONLY:SP,schlen
- use RT_control,     ONLY:OCC_T_range,OCC_deltaT,RT_apply
+ use YPP,            ONLY:OCC_deltaT,OCC_T_range
+ use RT_control,     ONLY:RT_apply
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor

@@ -27,7 +27,7 @@ subroutine RT_time_configuration_setup(what,TIME_step,TIME_range,N_times)
  use pars,           ONLY:SP
  use com,            ONLY:msg,error
  use real_time,      ONLY:RT_step
- use RT_control,     ONLY:JPC_RT_IO_t
+ use RT_control,     ONLY:JPC_RT_IO_t,TIME_adjust
  implicit none
  !
  character(*) :: what 
@@ -41,10 +41,11 @@ subroutine RT_time_configuration_setup(what,TIME_step,TIME_range,N_times)
  logical  :: FOUND
  !
  STEP  = (JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-JPC_RT_IO_t%Time(JPC_RT_IO_t%N-1))
- STEP  = nint(STEP/RT_step)*RT_step
- TIME  = nint(JPC_RT_IO_t%Time(JPC_RT_IO_t%N)/RT_step)*RT_step
+ STEP  = TIME_adjust(STEP)
+ TIME  = TIME_adjust(JPC_RT_IO_t%Time(JPC_RT_IO_t%N))
  !
  i_cycle=0
+ write (*,*) TIME*AUT2FS,RT_step*AUT2FS
  !
  loop: do while (TIME>0)
    FOUND = .FALSE.
@@ -52,13 +53,14 @@ subroutine RT_time_configuration_setup(what,TIME_step,TIME_range,N_times)
      if (nint( (JPC_RT_IO_t%Time(i_t)-TIME)/RT_step) == 0 ) FOUND=.TRUE.
    enddo
    if (.not.FOUND) then
+     write (*,*) STEP*AUT2FS,TIME*AUT2FS
      if (i_cycle==5) call error('Impossible to find a compatibile and constant I/O Time step')
      STEP=STEP*2._SP
      TIME  = nint(JPC_RT_IO_t%Time(JPC_RT_IO_t%N)/RT_step)*RT_step
      i_cycle=i_cycle+1
      cycle loop
    endif
-   TIME=TIME-STEP
+   TIME=TIME_adjust(TIME-STEP)
  enddo loop
  !
  OFF_set = nint((TIME+STEP)/RT_step)*RT_step

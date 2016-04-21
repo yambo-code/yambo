@@ -38,9 +38,6 @@ subroutine ypp_INIT_load(defs)
  use surface_geometry,     ONLY: init_surface
  use eels_detector,        ONLY: init_detector
 #endif
-#if defined _YPP_RT
- use RT_control,           ONLY: OCC_T_range,OCC_deltaT
-#endif
  !
  implicit none
  !

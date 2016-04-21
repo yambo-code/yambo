@@ -54,8 +54,8 @@ module real_time
  !
  ! ... core step length and Time-points array...
  !
- real(SP)              :: RT_step          ! Elemental step used to define dimensions and time-points
- real(SP)              :: RT_dyn_step      ! On-the-fly time-step
+ real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
+ real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
  ! 
  ! ... NE dynamics ...
  !
@@ -63,6 +63,7 @@ module real_time
  real(SP) :: NE_tot_time=0._SP                  ! Total (fixed)
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_step_update_treshold    = 2._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
  !
  integer  :: NE_i_time=0 ! = (NE_time+1)/RT_step
  integer  :: NE_steps    ! Still relative to RT_step

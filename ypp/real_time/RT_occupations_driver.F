@@ -27,8 +27,8 @@ subroutine RT_occupations_driver(kpt,En)
  use electrons,      ONLY:levels
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
- use RT_control,     ONLY:RT_apply,OCC_deltaT,OCC_T_range
-
+ use YPP,            ONLY:OCC_deltaT,OCC_T_range
+ use RT_control,     ONLY:RT_apply
  use real_time,      ONLY:RT_bands
  use YPP,            ONLY:l_RT_occ_time,l_RT_occ_energy,l_RT_life_bands,l_RT_occ_bands,&
 &                         l_RT_occ_2D_dos

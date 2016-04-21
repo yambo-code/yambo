@@ -57,12 +57,6 @@ module RT_control
  !
  real(SP), allocatable    :: J_and_P_cache(:,:)
  !
- ! Transient Absorption [ypp]
- !
- real(SP)                 :: OCC_deltaT
- real(SP)                 :: OCC_T_range(2)
- real(SP),allocatable     :: delta_f(:,:,:)
- !
  ! TD-ABS and RT-BSE [yambo]
  !
  logical                 :: NEQ_Kernel
@@ -184,6 +178,36 @@ module RT_control
      !
    end function
    !
+   integer function T2I(TIME,STEP)
+     !
+     use real_time, ONLY:RT_step
+     !
+     real(SP)          :: TIME
+     real(SP), optional:: STEP
+     !
+     if (present(STEP)) then
+       T2I=nint(TIME/STEP)+1
+     else
+       T2I=nint(TIME/RT_step)+1
+     endif
+     !
+   end function
+   !
+   real(SP) function TIME_adjust(TIME,STEP)
+     !
+     use real_time, ONLY:RT_step
+     !
+     real(SP)          :: TIME
+     real(SP), optional:: STEP
+     !
+     if (present(STEP)) then
+       TIME=nint(TIME/STEP)*STEP
+     else
+       TIME=nint(TIME/RT_step)*RT_step
+     endif
+     !
+   end function
+   !
    character(schlen) function TIME_string(TIME)
      !
      use stderr, ONLY:real2ch
@@ -203,22 +227,11 @@ module RT_control
    end function
    !
    subroutine SETUP_RT_IO_type(TYP)
-     use real_time, ONLY:NE_tot_time,RT_dyn_step,NE_initial_time_step_update
+     use real_time, ONLY:NE_tot_time,RT_dyn_step
      type(RT_IO_t) :: TYP
-     real(SP)      :: STEP_
      !
      if (TYP%INTERVAL_time<=0)          TYP%INTERVAL_time =max(NE_tot_time/1000._SP,RT_dyn_step)
      if (TYP%INTERVAL_time<RT_dyn_step) TYP%INTERVAL_time =RT_dyn_step
-     !
-     ! With ad an adaptative time step the STEP must be power of 2 of RT_dyn_step
-     !
-     if (NE_initial_time_step_update>0.) then
-       STEP_=RT_dyn_step
-       do while (STEP_<TYP%INTERVAL_time)
-         STEP_=STEP_*2._SP
-       enddo
-       TYP%INTERVAL_time=STEP_
-     endif
      !
      TYP%INTERVAL_time              =nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
      !

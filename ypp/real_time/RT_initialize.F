@@ -63,6 +63,6 @@ subroutine RT_initialize()
  !==========================
  RED_steps=J_steps
  W_RT_induced_step=2._SP*pi/(real(RED_steps-1,SP)*J_time_step)  
- if(X_rt%damp_factor==0._SP) X_rt%damp_factor=W_RT_induced_step
+ if (X_rt%damp_factor==0._SP) X_rt%damp_factor=W_RT_induced_step
  !
 end subroutine

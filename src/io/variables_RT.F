@@ -36,7 +36,8 @@ integer function variables_RT(ID,local_description,what)
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_times_SAVE,&
-&                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step 
+&                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
+&                         NE_step_update_treshold
  use ELPH,           ONLY:elph_branches
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
@@ -161,7 +162,7 @@ integer function variables_RT(ID,local_description,what)
    !
    ! Delta T Update
    !   
-   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=3,MENU=0) 
+   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=4,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_Update_Time_Step,VAR=' [dT] Update                     :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
@@ -169,8 +170,11 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_time_step_update_jump,   VAR=' [dT] Update interval time   [fs]:',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,R0=NE_time_step_update_jump,   VAR=' [dT] Update interval   (now)[fs]:',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   i_desc=i_desc+1
+   call io_elemental(ID,R0=NE_step_update_treshold,    VAR=' [dT] Update interval tresh [o/o]:',CHECK=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! INTEGRATOR

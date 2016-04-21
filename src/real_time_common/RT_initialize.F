@@ -34,7 +34,7 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
  use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,&
-&                         SETUP_RT_IO_type,J_and_P_cache_steps
+&                         SETUP_RT_IO_type,J_and_P_cache_steps,TIME_adjust
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
 &                         NE_steps,NE_tot_time,RT_carriers,RT_is_dynamically_dephased,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
@@ -138,7 +138,7 @@ subroutine RT_initialize(E,k,q)
  ! Update time Step
  !==================
  !
- if (NE_time_step_update_jump < RT_step)  NE_time_step_update_jump=RT_step
+ NE_time_step_update_jump = TIME_adjust(NE_time_step_update_jump,JPC_RT_IO_t%INTERVAL_time)
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -168,7 +168,7 @@ subroutine RT_initialize(E,k,q)
      Life_MEM_steps=nint(RT_life_interp_times(1)/RT_life_interp_times(2))
      if (Life_MEM_steps<3) Life_MEM_steps=3
      if (RT_life_interp_times(2)<RT_step) RT_life_interp_times(2)=RT_step
-     RT_life_interp_times(2)=nint(RT_life_interp_times(2)/RT_step)*RT_step
+     RT_life_interp_times(2)=TIME_adjust(RT_life_interp_times(2))
      RT_life_interp_times(1)=RT_life_interp_times(2)*Life_MEM_steps
    endif
    !

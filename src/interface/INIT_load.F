@@ -76,7 +76,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        NE_tot_time,RT_life_interp_times_SAVE,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_deltaE,RT_scatt_tresh, &
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,NE_time_step_update_jump,&
-&                        Gr_kind,two_alpha,DbGd_EE_percent,NE_initial_time_step_update
+&                        Gr_kind,two_alpha,DbGd_EE_percent,NE_initial_time_step_update,NE_step_update_treshold
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -397,8 +397,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
  call it(defs,'dTupdateTime','[RT] Initial Time for deltaT update (active only if non-zero) ',NE_initial_time_step_update,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
- call it(defs,'dTupdateJump','[RT] Time betweem twp deltaT updates',  NE_time_step_update_jump,&
+ call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
+ call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                            Integrator_name)
  !

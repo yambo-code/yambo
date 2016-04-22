@@ -34,10 +34,11 @@ subroutine RT_X_LRR_real_field(en)
  use vec_operate,    ONLY:v_norm
  use memory_m,       ONLY:mem_est
  use RT_control,     ONLY:RT_output
- use real_time,      ONLY:l_RT_induced_field,NE_steps,RT_step
+ use real_time,      ONLY:l_RT_induced_field,RT_step
  use fields,         ONLY:Efield,small_a_frequency,small_a
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
+ use com,            ONLY:error
  !
  implicit none
  !
@@ -105,7 +106,10 @@ subroutine RT_X_LRR_real_field(en)
    freqs(i_w)=cmplx((i_w-1)*W_step+RT_conf%W_range(1),0._SP)
  enddo
  !
- ! Electric Field
+ ! Electric Field...
+ !-------------------
+ !
+ !... Analytic contribution
  !
  iE_err=0
  do i_w = 1, RT_conf%W_n_steps
@@ -120,10 +124,12 @@ subroutine RT_X_LRR_real_field(en)
    !
  enddo 
  !
- allocate(E_t(NE_steps,n_fields))
+ !... FT
+ !
+ allocate(E_t(RT_conf%T_n_steps,n_fields))
  do i_field=1,n_fields
    do i_t=1,RT_conf%T_n_steps
-     Field_time=RT_time(i_t)
+     Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
      A_of_t =small_a(Field_time,Efield(i_Probe),0)
      E_of_t =small_a(Field_time,Efield(i_Probe),1)
      theta  =theta_function(Field_time,RT_step,0)
@@ -140,14 +146,15 @@ subroutine RT_X_LRR_real_field(en)
    if (i_field==1) FT_title=' E#1'
    if (i_field==2) FT_title=' E#2'
    !
-   ! For the field I do the FFT starting always 1 time step before to correctly describe the
-   ! theta and the delta function.
    call RT_1D_Fourier_Transform('T2W',FT_title,freqs,E_w(:,i_field),RT_conf%W_n_steps,&
 &                                E_t(:,i_field),RT_conf%T_n_steps,USE_FFT,1)
    !
  enddo
- !
  deallocate(E_t)
+ !
+ ! Check of finiteness of E field
+ !--------------------------------
+ if (maxval( abs(E_w(:,:)) )<epsilon(1._SP)) call error("Null Electric Field in this time-range. Increase it.")
  !
  if(l_rm_asympt_limit) then
    !
@@ -171,6 +178,10 @@ subroutine RT_X_LRR_real_field(en)
 &                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,USE_FFT,1)
    !
  enddo
+ !do i_t=1,RT_conf%W_n_steps
+ !  write (100,'(i4,4f20.10)') i_t,Pol(i_t,1),E_w(i_t,1)
+ !enddo
+ !stop
  !
  ! a) If the induced field is     computed: E_input=E_ext
  ! b) If the induced field is NOT computed: E_input=E_tot

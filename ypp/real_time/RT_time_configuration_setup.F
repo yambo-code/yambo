@@ -80,8 +80,10 @@ subroutine RT_time_configuration_setup(what)
    RT_conf%T_range=(/JPC_RT_IO_t%Time(i_ref(1)),JPC_RT_IO_t%Time(i_ref(2))/)
    !
  else
+   !
    i_ref           = (/1,JPC_RT_IO_t%N/)
-   RT_conf%T_range = (/0.,TIME/)
+   RT_conf%T_range = (/JPC_RT_IO_t%Time(1),TIME/)
+   !
  endif
  !
  RT_conf%delta_T   = STEP

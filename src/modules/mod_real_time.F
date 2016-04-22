@@ -91,8 +91,8 @@ module real_time
  integer  :: Life_MEM_steps
  integer  :: G_MEM_steps    = 2 ! By default only G_lesser@t and @t+1
  integer  :: i_MEM_now      = 1
- integer  :: i_MEM_next     = 1
- integer  :: i_MEM_previous = 1
+ integer  :: i_MEM_next     = 0 ! Defined in RT_driver 
+ integer  :: i_MEM_previous = 0 ! Defined in RT_driver
  integer  :: MAX_dG_dT_indexes(3)
  integer, allocatable :: MEM_pointer(:) ! Time memory pointers
  !

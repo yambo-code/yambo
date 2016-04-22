@@ -260,41 +260,54 @@ subroutine RT_driver(E,X,k,q)
  !
  do while (.not.l_Dynamics_is_over)
    !
-   l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0.
+   ! Dynamics single step is composed by few sections:
    !
-   ! Steps & times ...
-   !===================
+   ! *. Write observables related to G_lesser@NE_time
+   ! *. Eval Collisions
+   ! *. Write collisions-related stuff@NE_time
+   ! *. Write databases
+   ! *. Eval RT_dyn_step
+   ! *. If NE_time is the last point exit
+   ! *. NE_time->NE_time+RT_dyn_step
+   ! *. Update NE_time (note NE_time is always the last evoluted)
    !
-   ! ... Dynamical Time-Step evaluation
-   !
-   if (l_Update_Time_Step) call RT_time_step_update( )
-   !
-   ! ... Create Memory maps
-   !
-   call RT_MEMORY_index( )
-   !
-   ! Keep a copy of A_vecpot before starting the collisions
-   ! ======================================================
-   A_vecpot_previous=A_vecpot
+   ! G_lesser@NE_time
+   !###################
    !
    ! Current and Polarization
    !==========================
    call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_now),A_vecpot_previous)
    !
-   ! Now calculate Energetics, current and other observables
-   !=========================================================
+   ! Now calculate Energetics, current and other observables...
+   !============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_now),on_the_fly_operators)
    !
-   if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_step)
-   !
-   ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
-   !============================================================
-   call RT_Collision(dG_lesser(:,:,:,i_MEM_now),A_vecpot,E,k,q,NE_time)
+   ! ... and print them
+   !====================
+   if (NE_time>=0._SP) then
+     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
+     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
+   endif
+   call RT_output('cur pol',TIME=NE_time*AUT2FS)
+   if (l_NE_with_fields) then
+     call RT_output('external_field',TIME=NE_time*AUT2FS) 
+     if(l_RT_induced_field) then
+       call RT_output('total_field'  ,TIME=NE_time*AUT2FS) 
+       call RT_output('induced_field',TIME=NE_time*AUT2FS) 
+     endif
+   endif
    !
    ! BGR
    !=======================================
    call RT_BGR(dG_lesser(:,:,:,i_MEM_now),E,k)
    call RT_output('BGR',TIME=NE_time*AUT2FS)
+   !
+   ! COLLISIONS@NE_time
+   !####################
+   !
+   ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
+   !============================================================
+   call RT_Collision(dG_lesser(:,:,:,i_MEM_now),A_vecpot,E,k,q,NE_time)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
@@ -314,24 +327,37 @@ subroutine RT_driver(E,X,k,q)
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
-   ! Print some simple observables
-   !===============================
-   if (NE_time>=0._SP) then
-     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
-     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
-   endif
-   call RT_output('cur pol',TIME=NE_time*AUT2FS)
-   if (l_NE_with_fields) then
-     call RT_output('external_field',TIME=NE_time*AUT2FS) 
-     if(l_RT_induced_field) then
-       call RT_output('total_field'  ,TIME=NE_time*AUT2FS) 
-       call RT_output('induced_field',TIME=NE_time*AUT2FS) 
-     endif
-   endif
+   ! T -> T+dT step 
+   !################
+   !
+   ! New steps & times ...
+   !=======================
+   !
+   ! ... Dynamical Time-Step evaluation
+   !
+   l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0.
+   !
+   if (l_Update_Time_Step) call RT_time_step_update( )
+   !
+   ! Memory maps for the step (to be done before the Time update)
+   !
+   call RT_MEMORY_index( )
+   !
+   ! I (eventually) stop after all actions at the time just calculated in the previous step of the loop
+   !=======================
+   !
+   l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
+   !
+   if (l_Dynamics_is_over) cycle
    !
    ! Integration
    !=============
-   ! T -> T+dT step 
+   !
+   ! Keep a copy of A_vecpot before starting the collisions
+   !
+   A_vecpot_previous=A_vecpot
+   !
+   if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_dyn_step)
    !
    call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,A_vecpot_previous,RT_dyn_step,E,k,q,NE_time)
    !
@@ -339,21 +365,18 @@ subroutine RT_driver(E,X,k,q)
    !=================
    !
    G_lesser(:,:,:,i_MEM_next)=G_lesser_reference+dG_lesser(:,:,:,i_MEM_next)
+   !
+   ! Time Update
+   !=============
+   !
+   NE_i_time = NE_i_time+nint(RT_dyn_step/RT_step)
+   NE_time   = TIME_adjust((NE_i_time-1)*RT_step)
+   i_MEM_now = i_MEM_next	
    !	
    ! Timing
    !========
    !
    call live_timing(steps=nint(RT_dyn_step/RT_step))
-   !
-   ! Time Update
-   !=============
-   !
-   l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
-   !
-   if (l_Dynamics_is_over) cycle
-   !
-   NE_i_time = NE_i_time+nint(RT_dyn_step/RT_step)
-   NE_time   = TIME_adjust((NE_i_time-1)*RT_step)
    !
  enddo
  !

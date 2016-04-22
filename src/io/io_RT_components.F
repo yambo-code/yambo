@@ -85,6 +85,8 @@ integer function io_RT_components(what,ID)
    db_type=-3
  endif
  !
+ if (l_G) ik = maxval(io_sec(ID,:))-1
+ !
  if (l_REF) db_name="RT_reference_components"
  !
  file_extension=TIME_string( (NE_i_time-1)*RT_step )
@@ -121,8 +123,6 @@ integer function io_RT_components(what,ID)
  if (l_REF.and.io_sec(ID,1)==1) io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
  !
  if (io_RT_components/=0) goto 1
- !
- ik = maxval(io_sec(ID,:))-1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -383,7 +383,7 @@ integer function io_RT_components(what,ID)
    ! Current and Polarization 
    !==========================
    !        
-   if (io_sec(ID,1)/=1) then
+   if (io_sec(ID,1)>1) then
      !
      call io_elemental(ID,VAR="J_and_P_CACHE_TIME_N_points",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,I0=J_and_P_cache_steps)

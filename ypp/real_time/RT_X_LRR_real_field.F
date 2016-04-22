@@ -34,7 +34,7 @@ subroutine RT_X_LRR_real_field(en)
  use vec_operate,    ONLY:v_norm
  use memory_m,       ONLY:mem_est
  use RT_control,     ONLY:RT_output
- use real_time,      ONLY:l_RT_induced_field,RT_step
+ use real_time,      ONLY:l_RT_induced_field
  use fields,         ONLY:Efield,small_a_frequency,small_a
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
@@ -50,9 +50,8 @@ subroutine RT_X_LRR_real_field(en)
  character(10):: FT_title
  logical      :: l_rm_asympt_limit
  real(SP)     :: W_step,W_reached,Field_time,outdata(6),E_ver(3,3)
- complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta
+ complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
  complex(SP), allocatable :: EELS(:,:),EPS(:,:),freqs(:)
- complex(SP)  :: Field_freq
  complex(DP), allocatable :: Pol(:,:),E_w(:,:),E_t(:,:)
  !
  call section("=",'Optics')
@@ -132,8 +131,8 @@ subroutine RT_X_LRR_real_field(en)
      Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
      A_of_t =small_a(Field_time,Efield(i_Probe),0)
      E_of_t =small_a(Field_time,Efield(i_Probe),1)
-     theta  =theta_function(Field_time,RT_step,0)
-     delta  =theta_function(Field_time,RT_step,1)
+     theta  =theta_function(Field_time,RT_time(2)-RT_time(1),0)
+     delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
      E_t(i_t,i_field)=Efield(i_Probe)%amplitude*(E_of_t(i_field)*theta+A_of_t(i_field)*delta)
    enddo
    !
@@ -178,10 +177,6 @@ subroutine RT_X_LRR_real_field(en)
 &                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,USE_FFT,1)
    !
  enddo
- !do i_t=1,RT_conf%W_n_steps
- !  write (100,'(i4,4f20.10)') i_t,Pol(i_t,1),E_w(i_t,1)
- !enddo
- !stop
  !
  ! a) If the induced field is     computed: E_input=E_ext
  ! b) If the induced field is NOT computed: E_input=E_tot

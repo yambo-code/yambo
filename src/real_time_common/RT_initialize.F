@@ -183,9 +183,11 @@ subroutine RT_initialize(E,k,q)
  endif
  if (NE_initial_time_step_update>0..and.G_MEM_steps<3) G_MEM_steps=3
  !
- ! J and P cache Time size
+ ! J and P cache Time size (is switched off when an adaptative time step is used)
  !=========================
- if (NE_initial_time_step_update>0.) J_and_P_cache_steps=JPC_RT_IO_t%INTERVAL_steps
+ if (.not.NE_initial_time_step_update>0.) then
+   J_and_P_cache_steps=JPC_RT_IO_t%INTERVAL_steps
+ endif
  !
  ! External fields checks
  !========================

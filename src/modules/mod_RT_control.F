@@ -45,6 +45,7 @@ module RT_control
  type RT_IO_t
    integer               :: N              = 0
    integer               :: INTERVAL_steps =-1
+   integer               :: last_point     = 1
    real(SP)              :: INTERVAL_time
    real(SP), allocatable :: Time(:)
  end type
@@ -157,24 +158,42 @@ module RT_control
      !
      ! Work Space
      !
-     integer :: DO_IT_steps,i_grp
+     integer :: DO_IT_steps,i_grp,IT_last
      !
-     RT_do_it=.FALSE.
+     RT_do_it= .FALSE.
+     IT_last = 1
      !
-     if (what=="J".or.what=="P".or.what=="CARRIERS") DO_IT_steps=JPC_RT_IO_t%INTERVAL_steps
-     if (what=="OUT")      DO_IT_steps=OUTPUT_RT_IO_t%INTERVAL_steps
-     if (what=="G")        DO_IT_steps=GF_RT_IO_t%INTERVAL_steps
-     if (what=="deltaT")   DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
+     if (what=="J".or.what=="P".or.what=="CARRIERS") then
+       DO_IT_steps=JPC_RT_IO_t%INTERVAL_steps
+       IT_last    =JPC_RT_IO_t%last_point
+     endif
+     if (what=="OUT") then
+       DO_IT_steps=OUTPUT_RT_IO_t%INTERVAL_steps
+       IT_last    =OUTPUT_RT_IO_t%last_point
+     endif
+     if (what=="G") then
+       DO_IT_steps=GF_RT_IO_t%INTERVAL_steps
+       IT_last    =GF_RT_IO_t%last_point
+     endif
+     if (what=="deltaT") then
+       DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
+       IT_last=1
+     endif
      !
      if (DO_IT_steps<0) then
        RT_do_it=.TRUE. 
        return
      endif
      !
-     i_grp=nint(real(NE_i_time-1)/real(DO_IT_steps))
+     i_grp=nint(real(NE_i_time-IT_last)/real(DO_IT_steps))
      !
-     RT_do_it= NE_i_time-1==i_grp*DO_IT_steps
-     if (NE_i_time==0) RT_do_it=.TRUE.
+     RT_do_it= NE_i_time-IT_last==i_grp*DO_IT_steps
+     !
+     if (RT_do_it) then
+       if (what=="J".or.what=="P".or.what=="CARRIERS") JPC_RT_IO_t%last_point=NE_i_time
+       if (what=="OUT") OUTPUT_RT_IO_t%last_point=NE_i_time
+       if (what=="G")   GF_RT_IO_t%last_point=NE_i_time
+     endif
      !
    end function
    !
@@ -227,15 +246,21 @@ module RT_control
    end function
    !
    subroutine SETUP_RT_IO_type(TYP)
-     use real_time, ONLY:NE_tot_time,RT_dyn_step
+     use real_time, ONLY:NE_tot_time,RT_dyn_step,RT_step
      type(RT_IO_t) :: TYP
      !
-     if (TYP%INTERVAL_time<=0)          TYP%INTERVAL_time =max(NE_tot_time/1000._SP,RT_dyn_step)
-     if (TYP%INTERVAL_time<RT_dyn_step) TYP%INTERVAL_time =RT_dyn_step
+     ! Initialization always using RT_step
      !
-     TYP%INTERVAL_time              =nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
+     if (TYP%INTERVAL_time<=0)           TYP%INTERVAL_time =max(NE_tot_time/1000._SP,RT_step)
      !
-     TYP%INTERVAL_steps             =TYP%INTERVAL_time/RT_dyn_step
+     if (TYP%INTERVAL_time<=RT_dyn_step) TYP%INTERVAL_time = RT_dyn_step
+     !
+     TYP%INTERVAL_time  =                nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
+     !
+     !
+     ! The steps are always relative to RT_step
+     !
+     TYP%INTERVAL_steps             =TYP%INTERVAL_time/RT_step
      !
    end subroutine
    !

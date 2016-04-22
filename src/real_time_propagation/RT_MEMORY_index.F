@@ -32,8 +32,8 @@ subroutine RT_MEMORY_index()
  !
  integer :: i_min_index,i_mem
  !
- i_MEM_now=0
- i_MEM_next=0
+ i_MEM_now     =0
+ i_MEM_next    =0
  i_MEM_previous=0
  !
  ! Find a "NEW" Memory Location for  NE_i_time+RT_dyn_step/RT_step

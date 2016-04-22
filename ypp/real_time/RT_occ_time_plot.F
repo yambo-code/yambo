@@ -30,11 +30,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:output_fname
+ use YPP,            ONLY:output_fname,RT_time
  use com,            ONLY:msg,of_open_close
  use vec_operate,    ONLY:c2a
- use YPP,            ONLY:RT_conf
- use RT_control,     ONLY:RT_apply
  use RT_control,     ONLY:RT_apply
  use real_time,      ONLY:l_RT_CCA_Kernel,RT_carriers,RT_bands
  !
@@ -119,7 +117,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   io_Time=min(RT_conf%T_range(1)+(i_T-1)*RT_conf%delta_T,RT_conf%T_range(2))
+   io_Time=RT_time(i_T)
    !
    call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
    !

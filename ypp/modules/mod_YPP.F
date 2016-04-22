@@ -275,10 +275,6 @@ module YPP
  !
  type(RT_ctl) :: RT_conf 
  !
- ! Transient Absorption [ypp]
- !
- integer  :: i_t_start,i_t_end ! time window
- !
  interface
    !
    subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,S_z,S_sq)

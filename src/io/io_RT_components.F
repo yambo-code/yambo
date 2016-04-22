@@ -104,7 +104,7 @@ integer function io_RT_components(what,ID)
    else
      if (l_J_and_P)     io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(file_extension),type=db_type,ID=ID)
      if (l_carriers) then
-       io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(file_extension),type=db_type,ID=ID)
+       io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(file_extension),type=db_type,ID=ID,no_full_RESET=.TRUE.)
        if (read_is_on(ID).and.io_RT_components==IO_NO_DATABASE) then
          io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
        endif

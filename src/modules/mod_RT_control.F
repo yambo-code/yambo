@@ -221,9 +221,9 @@ module RT_control
      real(SP), optional:: STEP
      !
      if (present(STEP)) then
-       TIME=nint(TIME/STEP)*STEP
+       TIME_adjust=max(nint(TIME/STEP)*STEP,STEP)
      else
-       TIME=nint(TIME/RT_step)*RT_step
+       TIME_adjust=max(nint(TIME/RT_step)*RT_step,RT_step)
      endif
      !
    end function
@@ -232,15 +232,23 @@ module RT_control
      !
      use stderr, ONLY:real2ch
      !
-     real(SP)          :: TIME,TIME_fs
-     character(schlen) :: tmp_ch
+     real(SP)      :: TIME,TIME_fs
+     character(11) :: tmp_ch
+     integer       :: i_c
      !
      TIME_fs=TIME*AUT2FS
-     tmp_ch=trim(real2ch(TIME_fs))//"_fs"
-     if (TIME_fs<1   ) tmp_ch=trim(real2ch(TIME_fs*1000.))//"_as"
-     if (TIME_fs>1000) tmp_ch=trim(real2ch(TIME_fs/1000.))//"_ps"
+     if (TIME_fs<1.) then
+       write(tmp_ch,'(f8.4,a)') TIME_fs*1000._SP,"_as"
+     else if (TIME_fs<999.) then
+       write(tmp_ch,'(f8.4,a)') TIME_fs,"_fs"
+     else 
+       write(tmp_ch,'(f8.4,a)') TIME_fs/1000._SP,"_ps"
+     endif
      !
-     if (tmp_ch(1:1)==" ") tmp_ch(1:1)="_"
+     do i_c=1,11
+       if (tmp_ch(i_c:i_c)=="s") cycle
+       if (tmp_ch(i_c:i_c)==" ") tmp_ch(i_c:i_c)="_"
+     enddo
      !
      TIME_string=tmp_ch
      !

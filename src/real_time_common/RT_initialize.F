@@ -120,25 +120,17 @@ subroutine RT_initialize(E,k,q)
  !
  ! Use NE_tot_time if provided
  !==============================
- !
  if (NE_tot_time>0._SP) NE_steps=max(NE_steps,nint(NE_tot_time/RT_step)+1)
  !
  ! Initialize RT_dyn_step
  !========================
- !
  RT_dyn_step=RT_step
  !
  ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
  !=================================================
- !
  call SETUP_RT_IO_type(JPC_RT_IO_t)
  call SETUP_RT_IO_type(OUTPUT_RT_IO_t)
  call SETUP_RT_IO_type(GF_RT_IO_t)
- !
- ! Update time Step
- !==================
- !
- NE_time_step_update_jump = TIME_adjust(NE_time_step_update_jump,JPC_RT_IO_t%INTERVAL_time)
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -172,6 +164,8 @@ subroutine RT_initialize(E,k,q)
      RT_life_interp_times(1)=RT_life_interp_times(2)*Life_MEM_steps
    endif
    !
+   RT_life_interp_times_SAVE=RT_life_interp_times
+   !
  endif
  !
  ! Memory Depth (G_lesser)
@@ -181,12 +175,22 @@ subroutine RT_initialize(E,k,q)
    T_memory=-1./minval( abs(E%W(RT_bands(1):RT_bands(2),:,:)))*log(NE_MEM_treshold)
    G_MEM_steps=T_memory/RT_step
  endif
- if (NE_initial_time_step_update>0..and.G_MEM_steps<3) G_MEM_steps=3
  !
- ! J and P cache Time size (is switched off when an adaptative time step is used)
- !=========================
- if (.not.NE_initial_time_step_update>0.) then
+ ! Update time Step
+ !==================
+ !
+ if (NE_initial_time_step_update>0.) then
+   !
+   if (G_MEM_steps<3) G_MEM_steps=3
+   !
+   NE_time_step_update_jump = TIME_adjust(NE_time_step_update_jump,JPC_RT_IO_t%INTERVAL_time)
+   !
+ else
+   !
+   ! J and P cache Time size (is switched off when an adaptative time step is used)
+   !=========================
    J_and_P_cache_steps=JPC_RT_IO_t%INTERVAL_steps
+   !
  endif
  !
  ! External fields checks

@@ -132,7 +132,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    !
  else
    !
-   ! Ypp
+   ! YPP
    !=====
    !
    what_='YPP'
@@ -182,13 +182,17 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
  !
  NE_i_time= nint(local_Time/RT_step)+1
- NE_i_time= NE_i_time-mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)
  !
  if (NE_i_time>0) then
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
-   ! 
    io_err=io_RT_components(trim(db_name),ID)
+   !
+   if (io_err< 0) then 
+      NE_i_time= NE_i_time-mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)
+      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
+      io_err=io_RT_components(trim(db_name),ID)
+   endif
    !
    if (io_err< 0) then 
      call warning('Carriers database '//trim(db_name)//' section'//trim(intc(NE_i_time))//'not found')

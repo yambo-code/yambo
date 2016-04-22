@@ -23,6 +23,7 @@
 !
 subroutine RT_occupations_driver(kpt,En)
  !
+ use drivers,        ONLY:l_rt_carriers_in_use
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use IO_m,           ONLY:LOG
@@ -44,6 +45,8 @@ subroutine RT_occupations_driver(kpt,En)
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
  call RT_apply(RT_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
+ !
+ if (.not.l_rt_carriers_in_use) return
  !
  call RT_time_configuration_setup("CARRIERS")
  !

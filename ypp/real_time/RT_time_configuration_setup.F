@@ -24,7 +24,7 @@
 subroutine RT_time_configuration_setup(what)
  !
  use units,          ONLY:AUT2FS,pi,HA2EV
- use YPP,            ONLY:RT_conf,RT_time,i_t_start,i_t_end
+ use YPP,            ONLY:RT_conf,RT_time
  use pars,           ONLY:SP
  use com,            ONLY:msg
  use real_time,      ONLY:RT_step
@@ -35,18 +35,16 @@ subroutine RT_time_configuration_setup(what)
  !
  ! Work Space
  ! 
- integer  :: i_t,i_ref(2),i_range(2),i_io(2),i_c
- real(SP) :: STEP,TIME
+ integer  :: i_t,i_ref(2),i_range(2),i_io(2),i_c,j_ref
+ logical  :: UNIFORM
+ real(SP) :: STEP,TIME,TIME_diff
  !
  STEP  = (JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-JPC_RT_IO_t%Time(JPC_RT_IO_t%N-1))
  STEP  = TIME_adjust(STEP)
  TIME  = TIME_adjust(JPC_RT_IO_t%Time(JPC_RT_IO_t%N))
  !
- if (JPC_RT_IO_t%N==nint(TIME/STEP)+1) then
-   call msg('s','['//what//'] uniform grid   : yes')
- else
-   call msg('s','['//what//'] uniform grid   : no')
- endif
+ if (JPC_RT_IO_t%N==nint(TIME/STEP)+1) UNIFORM=.TRUE.
+ if (JPC_RT_IO_t%N/=nint(TIME/STEP)+1) UNIFORM=.FALSE.
  !
  if (any(RT_conf%T_range>0.)) then
    !
@@ -86,16 +84,43 @@ subroutine RT_time_configuration_setup(what)
    !
  endif
  !
- RT_conf%delta_T   = STEP
- RT_conf%T_n_steps = i_ref(2)-i_ref(1)+1
- !
- allocate(RT_time(RT_conf%T_n_steps))
- do i_t=i_ref(1),i_ref(2)
-   RT_time(i_t-i_ref(1)+1) = JPC_RT_IO_t%Time(i_t)
- enddo
- !
- i_t_start=i_ref(1)
- i_t_end  =i_ref(2)
+ if (RT_conf%delta_T>0..and.UNIFORM) then
+   !
+   RT_conf%delta_T=TIME_adjust(RT_conf%delta_T,STEP)
+   !
+   do i_c=1,2
+     !
+     RT_conf%T_n_steps=1
+     j_ref            =i_ref(1)
+     !
+     do i_t=i_ref(1)+1,i_ref(2)
+       TIME_diff=JPC_RT_IO_t%Time(i_t)-JPC_RT_IO_t%Time(j_ref)
+       i_range(1) = nint(TIME_diff/RT_step)
+       if (i_range(1) == nint(RT_conf%delta_T/RT_step)) then
+         RT_conf%T_n_steps=RT_conf%T_n_steps+1
+         j_ref            = i_t
+         if (i_c==2) RT_time(RT_conf%T_n_steps)=JPC_RT_IO_t%Time(i_t)
+       endif
+     enddo
+     !
+     if (i_c==1) then
+       allocate(RT_time(RT_conf%T_n_steps))
+       RT_time(1)=JPC_RT_IO_t%Time(i_ref(1))
+     endif
+     !
+   enddo
+   !
+ else
+   !
+   RT_conf%delta_T   = STEP
+   RT_conf%T_n_steps = i_ref(2)-i_ref(1)+1
+   !
+   allocate(RT_time(RT_conf%T_n_steps))
+   do i_t=i_ref(1),i_ref(2)
+     RT_time(i_t-i_ref(1)+1) = JPC_RT_IO_t%Time(i_t)
+   enddo
+   !
+ endif
  !
  ! Field deduced dumping
  !=======================
@@ -104,9 +129,13 @@ subroutine RT_time_configuration_setup(what)
  ! Messaging
  !===========
  !
+ call msg('s','['//what//'] Uniform grid       :',UNIFORM)
  call msg('s','['//what//'] Time range     [fs]:',RT_conf%T_range*AUT2FS)
  call msg('s','['//what//'] Time step      [fs]:',RT_conf%delta_T*AUT2FS)
  call msg('s','['//what//'] Time steps         :',RT_conf%T_n_steps)
+ !
+ if (what/="CURRENT") return
+ !
  call msg('s','['//what//'] Damping       [meV]:',RT_conf%damp_factor*1000.*HA2EV)
  call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000.*HA2EV)
  !

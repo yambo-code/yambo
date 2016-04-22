@@ -102,8 +102,6 @@ subroutine RT_time_step_update( )
    do i1=n_mesgs+1,n_TIME_STEP_CONF_descriptions
      call msg("r",trim(TIME_STEP_CONF_description(i1)))
    enddo
- !write (*,*) RT_dyn_step
- !stop
    !
  endif
  !

@@ -37,7 +37,7 @@ subroutine RT_initialize(E,k,q)
 &                         SETUP_RT_IO_type,J_and_P_cache_steps,TIME_adjust
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
 &                         NE_steps,NE_tot_time,RT_carriers,RT_is_dynamically_dephased,   &
-&                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
+&                         l_NE_simulate_Irredux,l_RT_induced_field,NE_step_update_treshold, &
 &                         RT_is_statically_dephased,RAD_LifeTime,NE_time_step_update_jump,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_life_interp_times_SAVE,    &
@@ -342,8 +342,9 @@ subroutine RT_initialize(E,k,q)
  !
  if (NE_initial_time_step_update>0.) then
    call msg( 'r','---Time Step Update---')
-   call msg( 'r', 'Time step update To    [fs]:',NE_initial_time_step_update*AUT2FS)
-   call msg( 'r', 'Time step update Jump  [fs]:',NE_time_step_update_jump*AUT2FS)
+   call msg( 'r', 'Initial time           [fs]:',NE_initial_time_step_update*AUT2FS)
+   call msg( 'r', 'Time Interval          [fs]:',NE_time_step_update_jump*AUT2FS)
+   call msg( 'r', 'Treshold              [o/o]:',NE_step_update_treshold/100.)
  endif
  !
  call msg( 'r','---Memory---')

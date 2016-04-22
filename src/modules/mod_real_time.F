@@ -61,6 +61,7 @@ module real_time
  !
  real(SP) :: NE_time    =0._SP                  ! <- incremented
  real(SP) :: NE_tot_time=0._SP                  ! Total (fixed)
+ integer  :: NE_time_step_update_last_point = 1 ! Last time-point of the dT update
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
  real(SP) :: NE_step_update_treshold    = 2._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
@@ -89,10 +90,11 @@ module real_time
  !
  real(SP) :: NE_MEM_treshold
  integer  :: Life_MEM_steps
- integer  :: G_MEM_steps    = 2 ! By default only G_lesser@t and @t+1
- integer  :: i_MEM_now      = 1
- integer  :: i_MEM_next     = 0 ! Defined in RT_driver 
- integer  :: i_MEM_previous = 0 ! Defined in RT_driver
+ integer  :: G_MEM_steps     = 2 ! By default only G_lesser@t and @t+1
+ integer  :: i_MEM_collision = 1
+ integer  :: i_MEM_now       = 1
+ integer  :: i_MEM_next      = 0 ! Defined in RT_driver 
+ integer  :: i_MEM_previous  = 0 ! Defined in RT_driver
  integer  :: MAX_dG_dT_indexes(3)
  integer, allocatable :: MEM_pointer(:) ! Time memory pointers
  !

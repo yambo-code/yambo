@@ -153,7 +153,7 @@ module RT_control
    !
    logical function RT_do_it(what)
      !
-     use real_time, ONLY:NE_i_time,RT_step,NE_time_step_update_jump
+     use real_time, ONLY:NE_i_time,RT_step,NE_time_step_update_jump,NE_time_step_update_last_point
      character(*) :: what
      !
      ! Work Space
@@ -177,7 +177,7 @@ module RT_control
      endif
      if (what=="deltaT") then
        DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
-       IT_last=1
+       IT_last    =NE_time_step_update_last_point
      endif
      !
      if (DO_IT_steps<0) then
@@ -191,8 +191,9 @@ module RT_control
      !
      if (RT_do_it) then
        if (what=="J".or.what=="P".or.what=="CARRIERS") JPC_RT_IO_t%last_point=NE_i_time
-       if (what=="OUT") OUTPUT_RT_IO_t%last_point=NE_i_time
-       if (what=="G")   GF_RT_IO_t%last_point=NE_i_time
+       if (what=="OUT")    OUTPUT_RT_IO_t%last_point=NE_i_time
+       if (what=="G")      GF_RT_IO_t%last_point=NE_i_time
+       if (what=="deltaT") NE_time_step_update_last_point=NE_i_time
      endif
      !
    end function

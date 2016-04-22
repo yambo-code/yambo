@@ -44,7 +44,7 @@ subroutine RT_driver(E,X,k,q)
 &                         G_lesser_reference,rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
-&                         i_MEM_now,i_MEM_next,RT_is_dynamically_dephased
+&                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
@@ -262,44 +262,28 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Dynamics single step is composed by few sections:
    !
-   ! *. Write observables related to G_lesser@NE_time
-   ! *. Eval Collisions
-   ! *. Write collisions-related stuff@NE_time
-   ! *. Write databases
-   ! *. Eval RT_dyn_step
-   ! *. If NE_time is the last point exit
-   ! *. NE_time->NE_time+RT_dyn_step
-   ! *. Update NE_time (note NE_time is always the last evoluted)
+   ! * Observables related to G_lesser@NE_time
+   ! * Collisions based on G_lesser@NE_time
+   ! * Write databases & observables
+   ! * Eval RT_dyn_step
+   ! * If NE_time is the last point exit
+   ! * NE_time->NE_time+RT_dyn_step
+   ! * Update NE_time (note NE_time is always the last evoluted)
    !
    ! G_lesser@NE_time
    !###################
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_now),A_vecpot_previous)
+   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot_previous)
    !
-   ! Now calculate Energetics, current and other observables...
-   !============================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_now),on_the_fly_operators)
-   !
-   ! ... and print them
-   !====================
-   if (NE_time>=0._SP) then
-     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
-     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
-   endif
-   call RT_output('cur pol',TIME=NE_time*AUT2FS)
-   if (l_NE_with_fields) then
-     call RT_output('external_field',TIME=NE_time*AUT2FS) 
-     if(l_RT_induced_field) then
-       call RT_output('total_field'  ,TIME=NE_time*AUT2FS) 
-       call RT_output('induced_field',TIME=NE_time*AUT2FS) 
-     endif
-   endif
+   ! Now calculate Energetics, current and other observables
+   !=========================================================
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
    !
    ! BGR
    !=======================================
-   call RT_BGR(dG_lesser(:,:,:,i_MEM_now),E,k)
+   call RT_BGR(dG_lesser(:,:,:,i_MEM_collision),E,k)
    call RT_output('BGR',TIME=NE_time*AUT2FS)
    !
    ! COLLISIONS@NE_time
@@ -307,17 +291,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
    !============================================================
-   call RT_Collision(dG_lesser(:,:,:,i_MEM_now),A_vecpot,E,k,q,NE_time)
-   !
-   ! Eval and Print Mean Carrier Lifetimes
-   !=======================================
-   if (RT_is_dynamically_dephased) then
-     call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)                      call RT_output('EPlife',TIME=NE_time*AUT2FS)
-     if(l_elel_scatt)                      call RT_output('EElife',TIME=NE_time*AUT2FS)
-     if(l_elphoton_scatt)                  call RT_output('RADlife',TIME=NE_time*AUT2FS)
-     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('factors',TIME=NE_time*AUT2FS)
-   endif
+   call RT_Collision(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
    !
    ! Write DBs
    !===========
@@ -326,6 +300,40 @@ subroutine RT_driver(E,X,k,q)
    call RT_databases_IO( )
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
+   !
+   ! Printing 
+   !###########
+   !
+   ! Observables
+   !=============
+   if (NE_time>=0._SP) then
+     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
+     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
+   endif
+   !
+   ! Mean Carrier Lifetimes
+   !========================
+   if (RT_is_dynamically_dephased) then
+     call RT_mean_carrier_lifetimes(E,k)
+     if(l_elph_scatt)                      call RT_output('EPlife',TIME=NE_time*AUT2FS)
+     if(l_elel_scatt)                      call RT_output('EElife',TIME=NE_time*AUT2FS)
+     if(l_elphoton_scatt)                  call RT_output('RADlife',TIME=NE_time*AUT2FS)
+     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('factors',TIME=NE_time*AUT2FS)
+   endif
+   !
+   ! Current and Polarization
+   !==========================
+   call RT_output('cur pol',TIME=NE_time*AUT2FS)
+   !
+   ! Field(s)
+   !==========
+   if (l_NE_with_fields) then
+     call RT_output('external_field',TIME=NE_time*AUT2FS) 
+     if(l_RT_induced_field) then
+       call RT_output('total_field'  ,TIME=NE_time*AUT2FS) 
+       call RT_output('induced_field',TIME=NE_time*AUT2FS) 
+     endif
+   endif
    !
    ! T -> T+dT step 
    !################
@@ -339,7 +347,7 @@ subroutine RT_driver(E,X,k,q)
    !
    if (l_Update_Time_Step) call RT_time_step_update( )
    !
-   ! Memory maps for the step (to be done before the Time update)
+   ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
    !
    call RT_MEMORY_index( )
    !
@@ -369,9 +377,9 @@ subroutine RT_driver(E,X,k,q)
    ! Time Update
    !=============
    !
-   NE_i_time = NE_i_time+nint(RT_dyn_step/RT_step)
-   NE_time   = TIME_adjust((NE_i_time-1)*RT_step)
-   i_MEM_now = i_MEM_next	
+   NE_i_time       = NE_i_time+nint(RT_dyn_step/RT_step)
+   NE_time         = TIME_adjust((NE_i_time-1)*RT_step)
+   i_MEM_collision = i_MEM_next
    !	
    ! Timing
    !========

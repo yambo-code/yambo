@@ -25,11 +25,11 @@ subroutine RT_time_step_update( )
  !
  use pars,           ONLY:SP
  use stderr,         ONLY:real2ch
- use units,          ONLY:AUT2FS
+ use units,          ONLY:AUT2FS,FS2AUT
  use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
 &                         RT_life_interp_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
-&                         NE_step_update_treshold
+&                         NE_step_update_treshold,NE_i_time
  use RT_control,     ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
 &                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type,TIME_adjust
  use com,            ONLY:msg
@@ -66,13 +66,18 @@ subroutine RT_time_step_update( )
  !
  ERROR=(dG(1)+dG_dT_max(1)*(dT_previous+dT_now)-dG(3))/dG(3)
  !
- if (abs(ERROR)<NE_step_update_treshold/100..and.dT_previous*2._SP>RT_dyn_step) then
+ if (abs(ERROR)<NE_step_update_treshold/100..and.dT_previous*2._SP>RT_dyn_step.and.&
+&    dT_previous*2._SP<10*FS2AUT) then
    !
    RT_dyn_step=dT_previous*2._SP
    !
    call SETUP_RT_IO_type(JPC_RT_IO_t)
    call SETUP_RT_IO_type(OUTPUT_RT_IO_t)
    call SETUP_RT_IO_type(GF_RT_IO_t)
+   !
+   JPC_RT_IO_t%last_point    = NE_i_time
+   OUTPUT_RT_IO_t%last_point = NE_i_time
+   GF_RT_IO_t%last_point     = NE_i_time
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !
@@ -97,6 +102,8 @@ subroutine RT_time_step_update( )
    do i1=n_mesgs+1,n_TIME_STEP_CONF_descriptions
      call msg("r",trim(TIME_STEP_CONF_description(i1)))
    enddo
+ !write (*,*) RT_dyn_step
+ !stop
    !
  endif
  !

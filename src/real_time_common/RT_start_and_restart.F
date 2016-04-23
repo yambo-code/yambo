@@ -44,7 +44,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_control,     ONLY:ID,GF_RT_IO_t,it_start,JPC_RT_IO_t
+ use RT_control,     ONLY:ID,NE_i_start_time
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,NE_time,&
@@ -217,7 +217,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
-   NE_i_time=NE_time/RT_step+1
+   NE_i_time=nint(NE_time/RT_step)+1
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
@@ -239,7 +239,7 @@ subroutine RT_start_and_restart(E,k,q,X)
        if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
        if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory
      enddo
-     ! 
+     !
    enddo
    !
    i_MEM_collision = i_MEM_now
@@ -248,16 +248,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call msg('snr','[RT] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    !
-   ! [Andrea 23/9/2011] The RESTART value for it_start is tricky.
-   ! The order in which DBs are written in RT_driver makes in such a way
-   ! that the latest step written is NE_i_time-1. This is beacause RT_databases_IO is called BEFORE RT_Collision.
-   !
-   ! it_start is used here to call RT_Ext_fields that must evalute the vector potential@NE_i_time-1. 
-   ! This MUST be consistent with the restart density and G_lesser that are known@NE_i_time-1.
-   !
-   ! This is way it_start=NE_i_time. In RT_driver the step is done from NE_i_time to NE_i_time+1.
-   !
-   it_start=NE_i_time
+   NE_i_start_time=NE_i_time
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
@@ -291,11 +282,11 @@ subroutine RT_start_and_restart(E,k,q,X)
    enddo
  enddo
  !
- if (l_NE_dynamics) NE_i_time=it_start
+ if (l_NE_dynamics) NE_i_time=NE_i_start_time
  !
  if (l_NE_with_fields) then
    A_vecpot_previous =A_vecpot
-   call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,(it_start-1)*RT_step,RT_step)
+   call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,(NE_i_start_time-1)*RT_step,RT_step)
  endif
  !
  call msg('r','')

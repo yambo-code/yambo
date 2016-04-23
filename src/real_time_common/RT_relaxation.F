@@ -46,7 +46,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use RT_control,     ONLY:it_start
+ use RT_control,     ONLY:NE_i_start_time
  use real_time,      ONLY:I_relax_static,RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
@@ -98,7 +98,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  if (.not.l_initial_equilibrium) then
    l_eval= ( RT_TIME_status(NE_i_time)>0 .and. &
-&            (FIRST_step( ) .or. NE_i_time-it_start+1<=Life_MEM_steps ) ).or. &
+&            (FIRST_step( ) .or. NE_i_time-NE_i_start_time+1<=Life_MEM_steps ) ).or. &
 &          Life_MEM_steps==1
  endif
  !

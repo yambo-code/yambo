@@ -39,7 +39,7 @@ module RT_control
  integer                  :: J_and_P_cache_steps=1
  !
  integer                  :: ID(8)
- integer                  :: it_start           = 1   ! restart point
+ integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
  type RT_IO_t

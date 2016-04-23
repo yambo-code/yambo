@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
  use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
-&                         it_start,RT_carriers_object,TIME_adjust,JPC_RT_IO_t
+&                         NE_i_start_time,RT_carriers_object,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
@@ -157,7 +157,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Calculation already done
  !
- if (it_start>=NE_steps) then
+ if (NE_i_start_time>=NE_steps) then
    !      
    call CLOSE_and_clean( )      
    !      
@@ -193,7 +193,7 @@ subroutine RT_driver(E,X,k,q)
  ! Reference lifetimes and/or G_lesser
  !=====================================
  !
- if (it_start==1) then
+ if (NE_i_start_time==1) then
    !
    call msg('s','Reference Lifetimes, GF, Self-Energy ...')
    !
@@ -248,7 +248,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! See [23/9/2011] comments in RT_start_and_restart regarding the value of it_start
  !
- NE_i_time = it_start
+ NE_i_time = NE_i_start_time
  !
  ! Start-Up & Timing
  !===================
@@ -256,7 +256,7 @@ subroutine RT_driver(E,X,k,q)
  call section('=','Real-Time dynamics')
  !######################################
  !
- call live_timing('[RT] Dynamics :',NE_steps-it_start+1)
+ call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1)
  !
  do while (.not.l_Dynamics_is_over)
    !

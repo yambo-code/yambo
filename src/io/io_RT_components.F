@@ -112,7 +112,7 @@ integer function io_RT_components(what,ID)
    endif
  endif
  !
- if (l_G) then
+ if (l_G.or.(l_REF.and.io_sec(ID,1)==1)) then
    !
    io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
    !
@@ -120,7 +120,6 @@ integer function io_RT_components(what,ID)
  !
  if (l_THETA) io_RT_components=io_connect(desc="RT_THETA",type=db_type,ID=ID)
  !
- if (l_REF.and.io_sec(ID,1)==1) io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
  !
  if (io_RT_components/=0) goto 1
  !
@@ -306,8 +305,8 @@ integer function io_RT_components(what,ID)
  !
  if ( l_REF ) then
    !
-   ! REFERENCE Lifetimes
-   !====================
+   ! REFERENCE Lifetimes and GF
+   !============================
    !
    if (io_RT_components/=0) goto 1  
    !

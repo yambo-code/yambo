@@ -24,7 +24,7 @@
 subroutine RT_databases_IO( )
  !
  use drivers,        ONLY:l_elph_scatt
- use RT_control,     ONLY:RT_do_it,ID,it_start,RT_carriers_object,J_and_P_cache,JPC_RT_IO_t,&
+ use RT_control,     ONLY:RT_do_it,ID,NE_i_start_time,RT_carriers_object,J_and_P_cache,JPC_RT_IO_t,&
 &                         GF_RT_IO_t,J_and_P_cache_steps
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,io_GF,io_CARRIERs,&
@@ -43,7 +43,7 @@ subroutine RT_databases_IO( )
  ! corresponds to the latest of the previous simulation. Therefore
  ! databases must not be written
  !
- if (NE_i_time==it_start.and.it_start>1) return
+ if (NE_i_time==NE_i_start_time.and.NE_i_start_time>1) return
  !
  ! Polarization and current 
  !==========================

@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
  use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
-&                         it_start,RT_carriers_object,TIME_adjust
+&                         it_start,RT_carriers_object,TIME_adjust,JPC_RT_IO_t
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
@@ -155,6 +155,16 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_start_and_restart(E,k,q,X)
  !
+ ! Calculation already done
+ !
+ if (it_start>=NE_steps) then
+   !      
+   call CLOSE_and_clean( )      
+   !      
+   return
+   !
+ endif
+ !
  ! Collisions
  !
  if((.not.l_sc_pot_is_local.and..not.l_sc_ip).or.l_elel_scatt) then
@@ -203,16 +213,6 @@ subroutine RT_driver(E,X,k,q)
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
- !
- ! Calculation already done
- !
- if (it_start>=NE_steps) then
-   !      
-   call CLOSE_and_clean( )      
-   !      
-   return
-   !
- endif
  !
  ! IP calculation & not BGR => No need of WFs and Density
  !
@@ -371,19 +371,16 @@ subroutine RT_driver(E,X,k,q)
    !
    ! G_lesser update
    !=================
-   !
    G_lesser(:,:,:,i_MEM_next)=G_lesser_reference+dG_lesser(:,:,:,i_MEM_next)
    !
    ! Time Update
    !=============
-   !
    NE_i_time       = NE_i_time+nint(RT_dyn_step/RT_step)
    NE_time         = TIME_adjust((NE_i_time-1)*RT_step)
    i_MEM_collision = i_MEM_next
    !	
    ! Timing
    !========
-   !
    call live_timing(steps=nint(RT_dyn_step/RT_step))
    !
  enddo

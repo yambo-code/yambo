@@ -44,7 +44,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_control,     ONLY:ID,GF_RT_IO_t,it_start
+ use RT_control,     ONLY:ID,GF_RT_IO_t,it_start,JPC_RT_IO_t
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,NE_time,&
@@ -52,7 +52,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_next
+&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,i_MEM_previous,MEM_pointer
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
@@ -236,19 +236,17 @@ subroutine RT_start_and_restart(E,k,q,X)
      !
      do i_memory=1,G_MEM_steps
        G_lesser(:,:,ik,i_memory)=G_lesser_reference(:,:,ik)+dG_lesser(:,:,ik,i_memory)
+       if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
+       if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory
      enddo
      ! 
    enddo
    !
-   call RT_MEMORY_index( )
-   !
-   i_MEM_collision = i_MEM_next
+   i_MEM_collision = i_MEM_now
    !
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !
-   if(NE_i_time<NE_steps) then
-     call msg('snr','[RT] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
-   endif
+   call msg('snr','[RT] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    !
    ! [Andrea 23/9/2011] The RESTART value for it_start is tricky.
    ! The order in which DBs are written in RT_driver makes in such a way

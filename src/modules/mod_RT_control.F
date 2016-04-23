@@ -116,17 +116,17 @@ module RT_control
        !
      endif
      !
-     if(.not.allocated(JPC_RT_IO_t%Time)) then
-       allocate(JPC_RT_IO_t%Time(NE_steps))
-       call mem_est('JPC_RT_IO_t_Time',(/NE_steps/),(/SP/))
-       JPC_RT_IO_t%Time=rZERO
-     endif
+     if (allocated(JPC_RT_IO_t%Time)) deallocate(JPC_RT_IO_t%Time)
      !
-     if(.not.allocated(GF_RT_IO_t%Time)) then
-       allocate(GF_RT_IO_t%Time(NE_steps))
-       call mem_est('GF_RT_IO_t_Time',(/NE_steps/),(/SP/))
-       GF_RT_IO_t%Time=rZERO
-     endif
+     allocate(JPC_RT_IO_t%Time(NE_steps))
+     call mem_est('JPC_RT_IO_t_Time',(/NE_steps/),(/SP/))
+     JPC_RT_IO_t%Time=rZERO
+     !
+     if(allocated(GF_RT_IO_t%Time)) deallocate(GF_RT_IO_t%Time)
+     !
+     allocate(GF_RT_IO_t%Time(NE_steps))
+     call mem_est('GF_RT_IO_t_Time',(/NE_steps/),(/SP/))
+     GF_RT_IO_t%Time=rZERO
      !
    end subroutine RT_alloc_control
    !
@@ -179,6 +179,10 @@ module RT_control
        DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
        IT_last    =NE_time_step_update_last_point
      endif
+     !
+     ! In RESTART mode the GF and J/P/C databases could be not time aligned
+     !
+     if (IT_last>NE_i_time) return
      !
      if (DO_IT_steps<0) then
        RT_do_it=.TRUE. 

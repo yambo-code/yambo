@@ -418,12 +418,14 @@ integer function io_RT_components(what,ID)
      type(RT_IO_t) :: TYP
      call io_elemental(ID,VAR="IO_TIME_N_points",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,I0=TYP%N)
+     call io_elemental(ID,VAR="IO_TIME_LAST_POINT",VAR_SZ=1,MENU=0) 
+     call io_elemental(ID,I0=TYP%last_point)
      if (.not.allocated(TYP%Time)) then    
        allocate(TYP%Time(NE_steps))
      endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/NE_steps/))
-     call io_bulk(ID,R1=TYP%Time)
+     call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
+     call io_bulk(ID,R1=TYP%Time(:TYP%N))
    end subroutine
    !
 end function

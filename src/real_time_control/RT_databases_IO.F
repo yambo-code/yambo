@@ -80,6 +80,15 @@ subroutine RT_databases_IO( )
  !
  if (io_CARRIERs.and.RT_do_it('CARRIERS')) then
    !
+   if (.not.RT_do_it('J')) then
+     !
+     ! I/O time point
+     !
+     JPC_RT_IO_t%N=JPC_RT_IO_t%N+1
+     JPC_RT_IO_t%Time(JPC_RT_IO_t%N)=NE_time
+     !
+   endif
+   !
    call RT_carriers_object(RT_carriers,WHAT='fill')
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 

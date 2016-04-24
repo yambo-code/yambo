@@ -76,7 +76,7 @@ integer function io_RT_components(what,ID)
  !
  db_type=2
  what_  =what
- db_name            =trim(what)
+ db_name            ="RT_"//trim(what)
  if (l_REF) db_name ="RT_reference_components"
  ik                     = 1
  if (l_G.or.l_THETA) ik = maxval(io_sec(ID,:))-1

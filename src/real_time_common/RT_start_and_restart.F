@@ -38,21 +38,22 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! [6] (Eventually) load the retarded Green Functions 
  !
  use pars,           ONLY:SP,cI,cZERO,rZERO
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_sc_ip,l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_control,     ONLY:ID,NE_i_start_time
+ use RT_control,     ONLY:ID,NE_i_start_time,JPC_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
-&                         G_lesser_reference,rho_reference,magn_reference,  &
+&                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,NE_time,&
-&                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,&
+&                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,i_MEM_previous,MEM_pointer
+&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
+&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_interp_times
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
@@ -242,11 +243,15 @@ subroutine RT_start_and_restart(E,k,q,X)
      !
    enddo
    !
+   ! Define RT_E/H_occupations_reference
+   !
+   call RT_init_occupation_reference( )
+   !
+   ! To be used in the first part of the RT_driver main loop
+   !
    i_MEM_collision = i_MEM_now
    !
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
-   !
-   call msg('snr','[RT] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    !
    NE_i_start_time=NE_i_time
    !
@@ -260,6 +265,22 @@ subroutine RT_start_and_restart(E,k,q,X)
    ! Last thing to do is to update the planned time sampling time (if needed)
    !
    nt=RT_Lifetimes_evaluation_plan( )
+   !
+   call msg( 'nr','---RESTART report---')
+   !
+   call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
+   call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
+   call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_interp_times*AUT2FS)
+   call msg('r',  'T between I/O of J,P,f        [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
+   !
+   OUTPUT_RT_IO_t%INTERVAL_time  = TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step)
+   OUTPUT_RT_IO_t%INTERVAL_steps = nint(OUTPUT_RT_IO_t%INTERVAL_time/RT_step)
+   OUTPUT_RT_IO_t%last_point     = NE_i_time
+   !
+   call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
  else
    !

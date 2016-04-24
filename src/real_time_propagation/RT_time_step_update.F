@@ -71,9 +71,9 @@ subroutine RT_time_step_update( )
    !
    RT_dyn_step=dT_previous*2._SP
    !
-   call SETUP_RT_IO_type(JPC_RT_IO_t)
-   call SETUP_RT_IO_type(OUTPUT_RT_IO_t)
-   call SETUP_RT_IO_type(GF_RT_IO_t)
+   call SETUP_RT_IO_type(JPC_RT_IO_t,.FALSE.)
+   call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.FALSE.)
+   call SETUP_RT_IO_type(GF_RT_IO_t,.FALSE.)
    !
    JPC_RT_IO_t%last_point    = NE_i_time
    OUTPUT_RT_IO_t%last_point = NE_i_time

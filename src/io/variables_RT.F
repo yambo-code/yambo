@@ -34,7 +34,7 @@ integer function variables_RT(ID,local_description,what)
 &                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
 &                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
-&                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
+&                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_times_SAVE,&
 &                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
 &                         NE_step_update_treshold
@@ -117,14 +117,14 @@ integer function variables_RT(ID,local_description,what)
    !
    ! RT_DYNAMICS
    !
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=11,MENU=0) 
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=15,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT]                   (now)[fs]:",R0=RT_dyn_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    VAR=" [RT]                   (now)[fs]:",R0=RT_dyn_step,DB_R0=RT_dyn_step,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
@@ -132,15 +132,15 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] NE time          (done)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    VAR=" [RT]                  (done)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Lifetimes Inter/Intra  [fs]:",R1=RT_life_interp_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    !
-   if (l_J.or.l_carriers) call local_IO_variables(JPC_RT_IO_t)
-   if (l_G)               call local_IO_variables(GF_RT_IO_t)
+   if (l_J.or.l_carriers) call LOCAL_IO_variables(JPC_RT_IO_t)
+   if (l_G)               call LOCAL_IO_variables(GF_RT_IO_t)
    !
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_NE_simulate_Irredux,&
@@ -162,7 +162,7 @@ integer function variables_RT(ID,local_description,what)
    !
    ! Delta T Update
    !   
-   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=4,MENU=0) 
+   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=5,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_Update_Time_Step,VAR=' [dT] Update                     :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
@@ -170,11 +170,13 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_time_step_update_jump,   VAR=' [dT] Update interval   (now)[fs]:',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,R0=NE_time_step_update_jump_SAVE, VAR=' [dT] Update interval        [fs]:',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,R0=NE_step_update_treshold,    VAR=' [dT] Update interval tresh [o/o]:',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
+   ! ... for RESTART purposes...
+   call io_elemental(ID,R0=NE_time_step_update_jump, DB_R0=NE_time_step_update_jump,CHECK=.FALSE.)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! INTEGRATOR
@@ -350,12 +352,11 @@ integer function variables_RT(ID,local_description,what)
      !
      i_desc=i_desc+1
      call io_elemental(ID,&
-&      VAR=" [RT] I/O time          (now)[fs]:",R0=TYP%INTERVAL_time,CHECK=.true.,OP=(/"=="/),&
+&      VAR=" [RT] I/O time               [fs]:",R0=TYP%INTERVAL_time_SAVE,CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-     i_desc=i_desc+1
-     call io_elemental(ID,&
-&      VAR=" [RT]                     [steps]:",I0=TYP%INTERVAL_steps,CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc))
+     ! ... for RESTART purposes...
+     call io_elemental(ID,R0=TYP%INTERVAL_time,  DB_r0=TYP%INTERVAL_time,CHECK=.FALSE.)
+     call io_elemental(ID,I0=TYP%INTERVAL_steps, DB_I0=TYP%INTERVAL_steps,CHECK=.FALSE.)
      !
    end subroutine
    !

@@ -65,6 +65,7 @@ module real_time
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
  real(SP) :: NE_step_update_treshold    = 2._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_time_step_update_jump_SAVE = 0._SP
  !
  integer  :: NE_i_time=0 ! = (NE_time+1)/RT_step
  integer  :: NE_steps    ! Still relative to RT_step
@@ -75,7 +76,7 @@ module real_time
  !
  logical  :: l_RT_lifetimes_interpolation = .FALSE.! If .TRUE. the lifetimes not calculated are interpolated. Otherwise are kept constant
  real(SP) :: RT_life_interp_times(2)               ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
- real(SP) :: RT_life_interp_times_SAVE(2)          ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
+ real(SP) :: RT_life_interp_times_SAVE(2)
  ! 
  ! Lifetimes Interpolation Time status 
  ! 
@@ -730,6 +731,15 @@ module real_time
        ARRAY(i1)=ARRAY(i1+1)
      enddo
      ARRAY(STEPS)=VAL
+   end subroutine
+   !
+   subroutine RT_init_occupation_reference( )
+     use electrons,     ONLY:spin_occ
+     integer               :: ib
+     do ib=RT_bands(1),RT_bands(2)
+       RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+       RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+     enddo
    end subroutine
    !
 end module

@@ -28,19 +28,16 @@ integer function io_RT_components(what,ID)
  use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nkibz,nqbz
- use electrons,      ONLY:spin_occ
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
-&                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,io_fragment, &
+&                         io_sec,io_bulk,read_is_on,write_is_on,io_fragment, &
 &                         manage_RD_WR_CL_IF_END,variable_is_found,&
 &                         frag_RT
- use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,&
-&                         RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         l_NE_with_fields,NE_steps,RT_nk, &
+ use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
-&                         RT_bands,RT_nbands,MEM_pointer
+&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
  use ELPH,           ONLY:ph_modes,elph_branches
  use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,J_and_P_cache_steps,J_and_P_cache_steps
@@ -57,72 +54,53 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  integer, external     :: variables_SC,variables_RT
- character(lchlen)     :: local_description(100),db_name
- character(schlen)     :: local_what,file_extension
+ character(lchlen)     :: local_description(100),db_name,td_db_name
+ character(schlen)     :: what_
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
  integer               :: ik,ib,i_spin,i_memory,db_type,i_Probe,i_Pump
- logical               :: l_V,l_IMPOSE_SN,CHECK_,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF,l_carriers
+ logical               :: l_V,l_IMPOSE_SN,l_T_EL,l_G,l_J_and_P,l_THETA,l_REF,l_carriers
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
 #if defined _TIMING
  call timing('io_RT_components',OPR='start')
 #endif
  !
+ ! DB kind and name
+ !==================
  l_carriers   =what=="carriers"
  l_THETA      =what=="THETA"
  l_J_and_P    =what=="J_and_P"
  l_G          =what=="G"
  l_REF        =what=="REF"
  !
- db_name="RT_"//trim(what)
- local_what=what
  db_type=2
+ what_  =what
+ db_name            =trim(what)
+ if (l_REF) db_name ="RT_reference_components"
+ ik                     = 1
+ if (l_G.or.l_THETA) ik = maxval(io_sec(ID,:))-1
+ !
  if (.not.any((/l_carriers,l_THETA,l_J_and_P,l_G,l_REF/))) then
    db_name=trim(what)
-   local_what='carriers'
+   what_='carriers'
    l_carriers=.TRUE.
    db_type=-3
  endif
  !
- if (l_G) ik = maxval(io_sec(ID,:))-1
- !
- if (l_REF) db_name="RT_reference_components"
- !
- file_extension=TIME_string( (NE_i_time-1)*RT_step )
- !
- ! When the db.scV is used for single non-SC shot the number
- ! of bands and SC_mixing can be not respected. 
- !
- CHECK_=.TRUE.
- !
- ! Write only every RT_io_steps
- !
- if (l_J_and_P.or.l_carriers) then
-   if (io_sec(ID,1)==1) then 
-     io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
-   else
-     if (l_J_and_P)     io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(file_extension),type=db_type,ID=ID)
-     if (l_carriers) then
-       io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(file_extension),type=db_type,ID=ID,no_full_RESET=.TRUE.)
-       if (read_is_on(ID).and.io_RT_components==IO_NO_DATABASE) then
-         io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
-       endif
-     endif
-   endif
+ ! DB connection
+ !===============
+ td_db_name=trim(db_name)
+ if ((l_J_and_P.or.l_carriers).and.io_sec(ID,1)>1) then
+   td_db_name=trim(db_name)//"_Time_"//trim(TIME_string( (NE_i_time-1)*RT_step))
  endif
  !
- if (l_G.or.(l_REF.and.io_sec(ID,1)==1)) then
-   !
-   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
-   !
- endif
- !
- if (l_THETA) io_RT_components=io_connect(desc="RT_THETA",type=db_type,ID=ID)
- !
+ io_RT_components=io_connect(desc=trim(td_db_name),type=db_type,ID=ID)
  !
  if (io_RT_components/=0) goto 1
  !
+ ! 1st SECTION
+ !=============
  if (any((/io_sec(ID,:)==1/))) then
    !
    l_IMPOSE_SN=.not.l_V
@@ -148,10 +126,10 @@ integer function io_RT_components(what,ID)
    !
    if (io_RT_components/=0) goto 1
    !
-   io_RT_components=variables_SC(ID,local_description,trim(local_what))
+   io_RT_components=variables_SC(ID,local_description,trim(what_))
    if (io_RT_components/=0) goto 1
    !
-   io_RT_components=variables_RT(ID,local_description,trim(local_what))
+   io_RT_components=variables_RT(ID,local_description,trim(what_))
    if (io_RT_components/=0) goto 1
    !
    if (l_G.or.l_carriers.or.l_THETA) then
@@ -200,115 +178,27 @@ integer function io_RT_components(what,ID)
    if (io_RT_components/=0) goto 1
    !
  endif
+ !
+ ! CLOSE IF END
+ !==============
  ! 
  if(l_J_and_P.or.l_carriers) then
    call manage_RD_WR_CL_IF_END(ID,NE_i_time,NE_steps)
  else if (l_G) then
    call manage_RD_WR_CL_IF_END(ID,ik,RT_nk)
- else
+ else if (l_THETA) then
    call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
  endif
  !
- if(any((/l_G,l_THETA/))) then
-   !
-   if (ik==0) goto 1
-   !
-   ! Fragmentation
-   !===============
-   !
-   call io_fragment(ID,i_fragment=ik)
-   !
- endif
+ if (io_RT_components/=0) goto 1  
  !
- if (l_REF .and. ik==0) goto 1
+ ! === no K no Time ===
+ !#####################
  !
- if ( l_carriers ) then
-   !
-   ! Carrier components
-   !====================
-   !
-   if (io_RT_components/=0) goto 1  
-   !
-   if (io_sec(ID,1)>1) then
-     !
-     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="input_output")
-     !
-     if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
-     !
-   endif
-   !
- endif
+ ! REFERENCE Lifetimes and GF
+ !============================
  !
- if ( l_THETA ) then
-   !
-   ! ELPH Kernel THETA Matrix 
-   !==========================
-   !
-   if (io_RT_components/=0) goto 1  
-   !
-   allocate(TMP_matrix(2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2))
-   !
-   do ib=1,RT_bands(2)-RT_bands(1)+1
-     if (write_is_on(ID)) call mat_c2r(THETA_matrix(:,:,ib,ik),TMP_matrix)
-     call io_bulk(ID,VAR="RT_THETA_B"//trim(intc(ib))//"_K"//trim(intc(ik)),VAR_SZ=(/2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2/))
-     call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,THETA_matrix(:,:,ib,ik))
-   enddo
-   !
-   deallocate(TMP_matrix)
-   !
- endif
- !
- if ( l_G ) then
-   !
-   ! lesser Green Function
-   !=======================
-   !
-   if (io_RT_components/=0) goto 1  
-   !
-   allocate(TMP_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
-   !
-   i_spin=1
-   !
-   do i_memory=1,G_MEM_steps
-     !
-     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_IMEMORY"//trim(intc(i_memory)),&
-&                 VAR_SZ=(/RT_nbands,RT_nbands,2/))
-     !
-     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,i_memory),TMP_matrix)
-     call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,i_memory))
-     !
-   enddo
-   !
-   if(l_NE_with_fields.and.ik==RT_nk) then
-     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
-     if (write_is_on(ID)) then
-       A_vecpot_disk(:,1,1)= real(A_ext%vecpot(:),SP)
-       A_vecpot_disk(:,1,2)=aimag(A_ext%vecpot(:))
-       A_vecpot_disk(:,2,1)= real(A_ext%vecpot_vel(:),SP)
-       A_vecpot_disk(:,2,2)=aimag(A_ext%vecpot_vel(:))
-       A_vecpot_disk(:,3,1)= real(A_ext%vecpot_acc(:),SP)
-       A_vecpot_disk(:,3,2)=aimag(A_ext%vecpot_acc(:))
-     endif
-     call io_bulk(ID,R3=A_vecpot_disk)
-     if (read_is_on(ID)) then 
-       A_ext%vecpot(:)    =cmplx(A_vecpot_disk(:,1,1),A_vecpot_disk(:,1,2),SP)
-       A_ext%vecpot_vel(:)=cmplx(A_vecpot_disk(:,2,1),A_vecpot_disk(:,2,2),SP)
-       A_ext%vecpot_acc(:)=cmplx(A_vecpot_disk(:,3,1),A_vecpot_disk(:,3,2),SP)
-     endif
-   endif
-   !
-   deallocate(TMP_matrix)
-   !
- endif
- !
- if ( l_REF ) then
-   !
-   ! REFERENCE Lifetimes and GF
-   !============================
-   !
-   if (io_RT_components/=0) goto 1  
+ if ( l_REF .and. any((/io_sec(ID,:)==2/)) ) then
    !
    if (l_elph_scatt) then
      !
@@ -366,41 +256,118 @@ integer function io_RT_components(what,ID)
      !
      deallocate(TMP_matrix)
      !
-     if (read_is_on(ID)) then
-       do ib=RT_bands(1),RT_bands(2)
-         RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
-         RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
-       enddo
-     endif
+     if (read_is_on(ID)) call RT_init_occupation_reference( )
      !
    endif
    !
  endif
  !
- if ( l_J_and_P ) then
+ ! === K-dependent ===
+ !####################
+ !
+ if (ik==0) goto 1  
+ !
+ ! Fragmentation
+ !===============
+ !
+ if(any((/l_G,l_THETA/))) call io_fragment(ID,i_fragment=ik)
+ !
+ ! ELPH Kernel THETA Matrix 
+ !==========================
+ !
+ if ( l_THETA ) then
    !
-   ! Current and Polarization 
-   !==========================
-   !        
-   if (io_sec(ID,1)>1) then
+   allocate(TMP_matrix(2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2))
+   !
+   do ib=1,RT_bands(2)-RT_bands(1)+1
+     if (write_is_on(ID)) call mat_c2r(THETA_matrix(:,:,ib,ik),TMP_matrix)
+     call io_bulk(ID,VAR="RT_THETA_B"//trim(intc(ib))//"_K"//trim(intc(ik)),VAR_SZ=(/2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2/))
+     call io_bulk(ID,R3=TMP_matrix)
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,THETA_matrix(:,:,ib,ik))
+   enddo
+   !
+   deallocate(TMP_matrix)
+   !
+ endif
+ !
+ ! Lesser Green Function
+ !=======================
+ !
+ if ( l_G ) then
+   !
+   allocate(TMP_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
+   !
+   i_spin=1
+   !
+   do i_memory=1,G_MEM_steps
      !
-     call io_elemental(ID,VAR="J_and_P_CACHE_TIME_N_points",VAR_SZ=1,MENU=0) 
-     call io_elemental(ID,I0=J_and_P_cache_steps)
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_IMEMORY"//trim(intc(i_memory)),&
+&                 VAR_SZ=(/RT_nbands,RT_nbands,2/))
      !
-     if (.not.allocated(J_and_P_cache)) then    
-       allocate(J_and_P_cache(J_and_P_cache_size,J_and_P_cache_steps))
+     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,i_memory),TMP_matrix)
+     call io_bulk(ID,R3=TMP_matrix)
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,i_memory))
+     !
+   enddo
+   !
+   if(l_NE_with_fields.and.ik==RT_nk) then
+     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
+     if (write_is_on(ID)) then
+       A_vecpot_disk(:,1,1)= real(A_ext%vecpot(:),SP)
+       A_vecpot_disk(:,1,2)=aimag(A_ext%vecpot(:))
+       A_vecpot_disk(:,2,1)= real(A_ext%vecpot_vel(:),SP)
+       A_vecpot_disk(:,2,2)=aimag(A_ext%vecpot_vel(:))
+       A_vecpot_disk(:,3,1)= real(A_ext%vecpot_acc(:),SP)
+       A_vecpot_disk(:,3,2)=aimag(A_ext%vecpot_acc(:))
      endif
-     !
-     call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(file_extension), &
-&                    VAR_SZ=(/J_and_P_cache_size,J_and_P_cache_steps/))
-     !
-     call io_bulk(ID,R2=J_and_P_cache)
-     !
-     call io_disconnect(ID)
-     !                       
+     call io_bulk(ID,R3=A_vecpot_disk)
+     if (read_is_on(ID)) then 
+       A_ext%vecpot(:)    =cmplx(A_vecpot_disk(:,1,1),A_vecpot_disk(:,1,2),SP)
+       A_ext%vecpot_vel(:)=cmplx(A_vecpot_disk(:,2,1),A_vecpot_disk(:,2,2),SP)
+       A_ext%vecpot_acc(:)=cmplx(A_vecpot_disk(:,3,1),A_vecpot_disk(:,3,2),SP)
+     endif
    endif
    !
+   deallocate(TMP_matrix)
+   !
+ endif
+ !
+ ! === Time-dependent ===
+ !#######################
+ !
+ if (io_sec(ID,1)==1) goto 1
+ !
+ ! Carrier components
+ !====================
+ !
+ if ( l_carriers ) then
+   !
+   call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="input_output")
+   !
+   if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
+   !
+ endif
+ !
+ ! Current and Polarization 
+ !==========================
+ !
+ if ( l_J_and_P ) then
+   !
+   call io_elemental(ID,VAR="J_and_P_CACHE_TIME_N_points",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,I0=J_and_P_cache_steps)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   if (.not.allocated(J_and_P_cache)) then    
+     allocate(J_and_P_cache(J_and_P_cache_size,J_and_P_cache_steps))
+   endif
+   !
+   call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )), &
+&                  VAR_SZ=(/J_and_P_cache_size,J_and_P_cache_steps/))
+   !
+   call io_bulk(ID,R2=J_and_P_cache)
+   !
+   call io_disconnect(ID)
+   !                       
  endif       
  !
 1 call io_disconnect(ID=ID)

@@ -66,7 +66,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
  if (index(what,'BGR')>0) return
  !
- if ( .not.RT_do_it('OUT').and..not.open_files.and..not.initialize) return      
+ if (.not.RT_do_it('OUT').and..not.open_files.and..not.initialize) return      
  !
 #if defined _TIMING
  call timing('RT output',OPR='start')

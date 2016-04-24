@@ -75,7 +75,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,Eh_pumped_pair_BZ_reagions,    &
 &                        NE_tot_time,RT_life_interp_times_SAVE,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_deltaE,RT_scatt_tresh, &
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,NE_time_step_update_jump,&
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,NE_time_step_update_jump_SAVE,&
 &                        Gr_kind,two_alpha,DbGd_EE_percent,NE_initial_time_step_update,NE_step_update_treshold
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
@@ -397,17 +397,17 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
  call it(defs,'dTupdateTime','[RT] Initial Time for deltaT update (active only if non-zero) ',NE_initial_time_step_update,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
- call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump,&
+ call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump_SAVE,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                            Integrator_name)
  !
- IO_times=(/JPC_RT_IO_t%INTERVAL_time,GF_RT_IO_t%INTERVAL_time,OUTPUT_RT_IO_t%INTERVAL_time/)
+ IO_times=(/JPC_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
  call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
- JPC_RT_IO_t%INTERVAL_time=IO_times(1)
- GF_RT_IO_t%INTERVAL_time=IO_times(2)
- OUTPUT_RT_IO_t%INTERVAL_time=IO_times(3)
+ JPC_RT_IO_t%INTERVAL_time_SAVE   =IO_times(1)
+ GF_RT_IO_t%INTERVAL_time_SAVE    =IO_times(2)
+ OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)
  !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !

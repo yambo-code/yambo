@@ -68,9 +68,12 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  RT_Lifetimes_evaluation_plan=i_default
  !
- ! Starting time point
+ ! Starting time point...
  !
- it=NE_i_time+1
+ ! ... zero point of the simulation
+ if (NE_i_time==0) it=1
+ ! ... RESTART point
+ if (NE_i_time> 0) it=NE_i_time
  !
  ! At the beginning I do not have enough points to perform the fit. I, therefore,
  ! introduce blocks with an increasing number of elements

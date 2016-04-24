@@ -47,6 +47,7 @@ module RT_control
    integer               :: INTERVAL_steps =-1
    integer               :: last_point     = 1
    real(SP)              :: INTERVAL_time
+   real(SP)              :: INTERVAL_time_SAVE
    real(SP), allocatable :: Time(:)
  end type
  !
@@ -258,9 +259,13 @@ module RT_control
      !
    end function
    !
-   subroutine SETUP_RT_IO_type(TYP)
+   subroutine SETUP_RT_IO_type(TYP,INIT)
+     !
      use real_time, ONLY:NE_tot_time,RT_dyn_step,RT_step
      type(RT_IO_t) :: TYP
+     logical       :: INIT
+     !
+     if (INIT) TYP%INTERVAL_time=TYP%INTERVAL_time_SAVE
      !
      ! Initialization always using RT_step
      !
@@ -270,10 +275,11 @@ module RT_control
      !
      TYP%INTERVAL_time  =                nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
      !
-     !
      ! The steps are always relative to RT_step
      !
      TYP%INTERVAL_steps             =TYP%INTERVAL_time/RT_step
+     !
+     if (INIT) TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
      !
    end subroutine
    !

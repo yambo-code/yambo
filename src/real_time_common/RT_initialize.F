@@ -35,10 +35,10 @@ subroutine RT_initialize(E,k,q)
  use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
  use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,&
 &                         SETUP_RT_IO_type,J_and_P_cache_steps,TIME_adjust
- use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step, &
+ use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,NE_time_step_update_jump_SAVE, &
 &                         NE_steps,NE_tot_time,RT_carriers,RT_is_dynamically_dephased,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,NE_step_update_treshold, &
-&                         RT_is_statically_dephased,RAD_LifeTime,NE_time_step_update_jump,       &
+&                         RT_is_statically_dephased,RAD_LifeTime,NE_time_step_update_jump, &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_life_interp_times_SAVE,    &
 &                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_times,&
@@ -128,9 +128,9 @@ subroutine RT_initialize(E,k,q)
  !
  ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
  !=================================================
- call SETUP_RT_IO_type(JPC_RT_IO_t)
- call SETUP_RT_IO_type(OUTPUT_RT_IO_t)
- call SETUP_RT_IO_type(GF_RT_IO_t)
+ call SETUP_RT_IO_type(JPC_RT_IO_t,.TRUE.)
+ call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.TRUE.)
+ call SETUP_RT_IO_type(GF_RT_IO_t,.TRUE.)
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -183,7 +183,9 @@ subroutine RT_initialize(E,k,q)
    !
    if (G_MEM_steps<3) G_MEM_steps=3
    !
-   NE_time_step_update_jump = TIME_adjust(NE_time_step_update_jump,JPC_RT_IO_t%INTERVAL_time)
+   NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,JPC_RT_IO_t%INTERVAL_time)
+   !
+   NE_time_step_update_jump = NE_time_step_update_jump_SAVE
    !
  else
    !

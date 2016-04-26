@@ -183,6 +183,10 @@ subroutine RT_initialize(E,k,q)
    !
    if (G_MEM_steps<3) G_MEM_steps=3
    !
+   if (all(RT_life_interp_times>0)) then
+     NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,2*RT_life_interp_times(1))
+   endif
+   !
    NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,JPC_RT_IO_t%INTERVAL_time)
    !
    NE_time_step_update_jump = NE_time_step_update_jump_SAVE

@@ -25,7 +25,7 @@ subroutine RT_time_step_update( )
  !
  use pars,           ONLY:SP
  use stderr,         ONLY:real2ch
- use units,          ONLY:AUT2FS,FS2AUT
+ use units,          ONLY:AUT2FS
  use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
 &                         RT_life_interp_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
@@ -67,7 +67,7 @@ subroutine RT_time_step_update( )
  ERROR=(dG(1)+dG_dT_max(1)*(dT_previous+dT_now)-dG(3))/dG(3)
  !
  if (abs(ERROR)<NE_step_update_treshold/100..and.dT_previous*2._SP>RT_dyn_step.and.&
-&    dT_previous*2._SP<10*FS2AUT) then
+&    dT_previous*2._SP<100*RT_step) then
    !
    RT_dyn_step=dT_previous*2._SP
    !
@@ -79,14 +79,14 @@ subroutine RT_time_step_update( )
    OUTPUT_RT_IO_t%last_point = NE_i_time
    GF_RT_IO_t%last_point     = NE_i_time
    !
+   ! ... and the dT update steps
+   !
+   NE_time_step_update_jump = TIME_adjust(NE_time_step_update_jump,JPC_RT_IO_t%INTERVAL_time)
+   !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !
    RT_life_interp_times(2) = TIME_adjust(RT_life_interp_times(2),RT_dyn_step)
    RT_life_interp_times(1) = RT_life_interp_times(2)*Life_MEM_steps
-   !
-   ! ... and the dT update steps
-   !
-   NE_time_step_update_jump = TIME_adjust(NE_time_step_update_jump,JPC_RT_IO_t%INTERVAL_time)
    !
    ! ... and Lifetimes evaluation plan update
    !

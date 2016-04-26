@@ -72,7 +72,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  ! ... zero point of the simulation
  if (NE_i_time==0) it=1
- ! ... RESTART point
+ ! ... RESTART point & dT update
  if (NE_i_time> 0) it=NE_i_time
  !
  ! At the beginning I do not have enough points to perform the fit. I, therefore,

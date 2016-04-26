@@ -37,7 +37,7 @@ integer function variables_RT(ID,local_description,what)
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_times_SAVE,&
 &                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
-&                         NE_step_update_treshold
+&                         NE_step_update_treshold,RT_life_interp_times
  use ELPH,           ONLY:elph_branches
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
@@ -117,7 +117,7 @@ integer function variables_RT(ID,local_description,what)
    !
    ! RT_DYNAMICS
    !
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=15,MENU=0) 
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=14,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
@@ -137,6 +137,10 @@ integer function variables_RT(ID,local_description,what)
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Lifetimes Inter/Intra  [fs]:",R1=RT_life_interp_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT]                   (now)[fs]:",R1=RT_life_interp_times,DB_R1=RT_life_interp_times,&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    !
    if (l_J.or.l_carriers) call LOCAL_IO_variables(JPC_RT_IO_t)
@@ -357,6 +361,8 @@ integer function variables_RT(ID,local_description,what)
      ! ... for RESTART purposes...
      call io_elemental(ID,R0=TYP%INTERVAL_time,  DB_r0=TYP%INTERVAL_time,CHECK=.FALSE.)
      call io_elemental(ID,I0=TYP%INTERVAL_steps, DB_I0=TYP%INTERVAL_steps,CHECK=.FALSE.)
+     !
+     call io_elemental(ID,I0=TYP%last_point,CHECK=.true.,OP=(/"=="/))
      !
    end subroutine
    !

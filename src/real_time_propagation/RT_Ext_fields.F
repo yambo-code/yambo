@@ -41,9 +41,9 @@ subroutine RT_Ext_fields(A,time)
  ! b. uses A" (the ext current) to evolve the Maxwell equations when
  !    the induced current is included in the dynamics ( RT_propagate_fields )
  !
- use pars,           ONLY:SP,cZERO,pi
+ use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:RT_dyn_step,NE_i_time,integrator_step
+ use real_time,      ONLY:RT_dyn_step,NE_i_time
  use fields,         ONLY:n_ext_fields,Efield,small_a,gauge_field
  use functions,      ONLY:theta_function
  !
@@ -56,8 +56,7 @@ subroutine RT_Ext_fields(A,time)
  !
  integer     :: i_f
  real(SP)    :: Field_time,A_coeff
- complex(SP) :: A_of_t(2),E_of_t(2),J_of_t(2),&
-&               theta,delta,signf
+ complex(SP) :: A_of_t(2),E_of_t(2),J_of_t(2),theta,delta,signf
  !
  A%vecpot    =cZERO
  A%vecpot_vel=cZERO
@@ -65,9 +64,7 @@ subroutine RT_Ext_fields(A,time)
  !
  do i_f=1,n_ext_fields
    !
-   if (Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>(NE_i_time+2) .or. NE_i_time<1) cycle
-   !
-   if (Efield(i_f)%t_initial_indx==NE_i_time+2) A%fluence=0._SP
+   if (Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>(NE_i_time+2) ) cycle
    !
    Field_time=time-Efield(i_f)%t_initial
    !
@@ -94,14 +91,6 @@ subroutine RT_Ext_fields(A,time)
      A%vecpot_acc(:)=A%vecpot_acc(:)-A_coeff*Efield(i_f)%versor     *( J_of_t(1)*theta+E_of_t(1)*delta+A_of_t(1)*signf)  &
 &                                   -A_coeff*Efield(i_f)%versor_circ*( J_of_t(2)*theta+E_of_t(2)*delta+A_of_t(2)*signf)
    end select
-   !
-   ! I(t) = \frac{c}{8\pi} E^2(t) and E(t)=A_vel(t)/c
-   ! F(t) = \int I(t) dt
-   !
-   if(integrator_step==1) then
-     A%intensity=(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
-     A%fluence=A%fluence+A%intensity*RT_dyn_step
-   endif
    !
  enddo
  !

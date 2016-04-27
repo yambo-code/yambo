@@ -48,7 +48,7 @@ subroutine RT_driver(E,X,k,q)
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
- use fields,          ONLY:A_vecpot,A_vecpot_previous
+ use fields,          ONLY:A_vecpot,A_vecpot_previous,A_ext
  use collision,       ONLY:FOCK_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -273,9 +273,9 @@ subroutine RT_driver(E,X,k,q)
    ! G_lesser@NE_time
    !###################
    !
-   ! Current and Polarization
+   ! Current and Polarization (evaluated also in RT_integrator when and induced field is included)
    !==========================
-   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot_previous)
+   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot)
    !
    ! Now calculate Energetics, current and other observables
    !=========================================================
@@ -361,13 +361,11 @@ subroutine RT_driver(E,X,k,q)
    ! Integration
    !=============
    !
-   ! Keep a copy of A_vecpot before starting the collisions
-   !
-   A_vecpot_previous=A_vecpot
-   !
-   if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_dyn_step)
-   !
    call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,A_vecpot_previous,RT_dyn_step,E,k,q,NE_time)
+   !
+   ! A update
+   !==========
+   A_vecpot_previous=A_vecpot
    !
    ! G_lesser update
    !=================

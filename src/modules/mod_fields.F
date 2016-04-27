@@ -42,7 +42,7 @@ module fields
    integer  :: n_frequencies
    real(SP) :: frequency(2)
    real(SP) :: damping
-   real(SP) :: fluence
+   real(SP) :: fluence = 0._SP
    real(SP) :: intensity
    real(SP) :: amplitude
    real(SP) :: W_step

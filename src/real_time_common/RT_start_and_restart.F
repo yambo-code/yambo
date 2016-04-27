@@ -54,7 +54,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_interp_times
- use fields,         ONLY:A_vecpot,A_vecpot_previous
+ use fields,         ONLY:A_vecpot,A_vecpot_previous,A_ext
  use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
@@ -305,9 +305,21 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time
  !
+ ! Initialize the Vector Potential
+ !=================================
+ !
  if (l_NE_with_fields) then
-   A_vecpot_previous =A_vecpot
-   call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,(NE_i_start_time-1)*RT_step,RT_step)
+   !
+   call RT_Ext_fields(A_ext,NE_time)
+   !
+   ! If RESTARTing A_vecpot is read from GF database
+   !
+   if (NE_i_start_time==1) A_vecpot=A_ext
+   ! 
+   ! To properly initiate the loop the A@To must be stored in A_vecpot_previous
+   ! 
+   A_vecpot_previous = A_vecpot
+   !
  endif
  !
  call msg('r','')

@@ -41,7 +41,7 @@ integer function io_RT_components(what,ID)
  use ELPH,           ONLY:ph_modes,elph_branches
  use RT_control,     ONLY:J_and_P_cache_size,J_and_P_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,J_and_P_cache_steps,J_and_P_cache_steps
- use fields,         ONLY:A_ext
+ use fields,         ONLY:A_vecpot
  use matrix_operate, ONLY:mat_c2r,mat_r2c
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -313,18 +313,18 @@ integer function io_RT_components(what,ID)
    if(l_NE_with_fields.and.ik==RT_nk) then
      call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
      if (write_is_on(ID)) then
-       A_vecpot_disk(:,1,1)= real(A_ext%vecpot(:),SP)
-       A_vecpot_disk(:,1,2)=aimag(A_ext%vecpot(:))
-       A_vecpot_disk(:,2,1)= real(A_ext%vecpot_vel(:),SP)
-       A_vecpot_disk(:,2,2)=aimag(A_ext%vecpot_vel(:))
-       A_vecpot_disk(:,3,1)= real(A_ext%vecpot_acc(:),SP)
-       A_vecpot_disk(:,3,2)=aimag(A_ext%vecpot_acc(:))
+       A_vecpot_disk(:,1,1)= real(A_vecpot%vecpot(:),SP)
+       A_vecpot_disk(:,1,2)=aimag(A_vecpot%vecpot(:))
+       A_vecpot_disk(:,2,1)= real(A_vecpot%vecpot_vel(:),SP)
+       A_vecpot_disk(:,2,2)=aimag(A_vecpot%vecpot_vel(:))
+       A_vecpot_disk(:,3,1)= real(A_vecpot%vecpot_acc(:),SP)
+       A_vecpot_disk(:,3,2)=aimag(A_vecpot%vecpot_acc(:))
      endif
      call io_bulk(ID,R3=A_vecpot_disk)
      if (read_is_on(ID)) then 
-       A_ext%vecpot(:)    =cmplx(A_vecpot_disk(:,1,1),A_vecpot_disk(:,1,2),SP)
-       A_ext%vecpot_vel(:)=cmplx(A_vecpot_disk(:,2,1),A_vecpot_disk(:,2,2),SP)
-       A_ext%vecpot_acc(:)=cmplx(A_vecpot_disk(:,3,1),A_vecpot_disk(:,3,2),SP)
+       A_vecpot%vecpot(:)    =cmplx(A_vecpot_disk(:,1,1),A_vecpot_disk(:,1,2),SP)
+       A_vecpot%vecpot_vel(:)=cmplx(A_vecpot_disk(:,2,1),A_vecpot_disk(:,2,2),SP)
+       A_vecpot%vecpot_acc(:)=cmplx(A_vecpot_disk(:,3,1),A_vecpot_disk(:,3,2),SP)
      endif
    endif
    !

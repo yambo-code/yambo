@@ -52,7 +52,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  integer,     intent(in)  :: iq
  complex(SP), intent(in)  :: BS_E(BS_H_dim)
  complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
- complex(SP), pointer     :: BS_E_SOC_corr(:,:),BS_R_right_kerr(:)
+ real(SP),    pointer     :: BS_E_SOC_corr(:,:)
+ complex(SP), pointer     :: BS_R_right_kerr(:)
  !
  ! Work space
  !

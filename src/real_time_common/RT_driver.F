@@ -216,7 +216,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! IP calculation & not BGR => No need of WFs and Density
  !
- if(l_sc_ip) then  
+ if(l_sc_ip.and.n_spin==1) then  
    !
    call WF_free(WF)
    !
@@ -232,6 +232,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  call RT_output(what="open dyn ene cur pol")
+ if(n_spin>1) call RT_output(what="open magn")
  call RT_output('open BGR')
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
@@ -324,6 +325,7 @@ subroutine RT_driver(E,X,k,q)
    ! Current and Polarization
    !==========================
    call RT_output('cur pol',TIME=NE_time*AUT2FS)
+   if(n_spin>1) call RT_output('magn',TIME=NE_time*AUT2FS)
    !
    ! Field(s)
    !==========

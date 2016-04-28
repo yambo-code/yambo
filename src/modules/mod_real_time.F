@@ -39,7 +39,7 @@ module real_time
  logical           :: l_NE_dynamics  
  logical           :: l_NE_with_fields
  logical           :: l_NE_simulate_Irredux
- logical           :: l_Dynamics_is_over  
+ logical           :: l_Dynamics_is_over   
  logical           :: l_Update_Time_Step  = .FALSE.
  !
  ! Evaluation logicals
@@ -50,19 +50,22 @@ module real_time
  !
  ! To include the induced field in the coupling and current
  !
- logical           :: l_RT_induced_field
+ logical           :: l_RT_induced_field = .FALSE.
  !
  ! ... core step length and Time-points array...
  !
- real(SP)              :: RT_step          ! Elemental step used to define dimensions and time-points
- real(SP)              :: RT_dyn_step      ! On-the-fly time-step
+ real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
+ real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
  ! 
  ! ... NE dynamics ...
  !
  real(SP) :: NE_time    =0._SP                  ! <- incremented
  real(SP) :: NE_tot_time=0._SP                  ! Total (fixed)
+ integer  :: NE_time_step_update_last_point = 1 ! Last time-point of the dT update
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_step_update_treshold    = 2._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_time_step_update_jump_SAVE = 0._SP
  !
  integer  :: NE_i_time=0 ! = (NE_time+1)/RT_step
  integer  :: NE_steps    ! Still relative to RT_step
@@ -73,7 +76,9 @@ module real_time
  !
  logical  :: l_RT_lifetimes_interpolation = .FALSE.! If .TRUE. the lifetimes not calculated are interpolated. Otherwise are kept constant
  real(SP) :: RT_life_interp_times(2)               ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
- real(SP) :: RT_life_interp_times_SAVE(2)          ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
+ real(SP) :: RT_life_interp_times_SAVE(2)
+ ! 
+ ! Lifetimes Interpolation Time status 
  ! 
  integer(2), allocatable :: RT_TIME_status(:)
  !
@@ -86,10 +91,11 @@ module real_time
  !
  real(SP) :: NE_MEM_treshold
  integer  :: Life_MEM_steps
- integer  :: G_MEM_steps    = 2 ! By default only G_lesser@t and @t+1
- integer  :: i_MEM_now      = 1
- integer  :: i_MEM_next     = 1
- integer  :: i_MEM_previous = 1
+ integer  :: G_MEM_steps     = 2 ! By default only G_lesser@t and @t+1
+ integer  :: i_MEM_collision = 1
+ integer  :: i_MEM_now       = 1
+ integer  :: i_MEM_next      = 0 ! Defined in RT_driver 
+ integer  :: i_MEM_previous  = 0 ! Defined in RT_driver
  integer  :: MAX_dG_dT_indexes(3)
  integer, allocatable :: MEM_pointer(:) ! Time memory pointers
  !
@@ -118,7 +124,8 @@ module real_time
  real(SP)    :: Phase_LifeTime
  real(SP)    :: RAD_LifeTime
  real(SP)    :: RAD_magnification=1._SP
- logical     :: RT_is_dephased
+ logical     :: RT_is_statically_dephased=.FALSE.
+ logical     :: RT_is_dynamically_dephased=.FALSE.
  !
  ! Table pointing to the position of the uniform grid points in the
  ! G_lesser structure
@@ -428,14 +435,6 @@ module real_time
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
-     !DEBUG...WHY?>
-     !if (l_HF_and_locXC.or.l_sc_hf.or.l_sc_cohsex) then
-     !  allocate(QP_Vnl_xc(QP_n_states))
-     !  call mem_est("QP_Vnl_xc",(/QP_n_states/))
-     !  QP_Vnl_xc=cZERO
-     !endif
-     !DEBUG<
-     !
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
@@ -518,7 +517,7 @@ module real_time
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
-     if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_dephased/)) ) then
+     if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
        allocate(I_relax_static(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
        call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
      endif
@@ -732,6 +731,15 @@ module real_time
        ARRAY(i1)=ARRAY(i1+1)
      enddo
      ARRAY(STEPS)=VAL
+   end subroutine
+   !
+   subroutine RT_init_occupation_reference( )
+     use electrons,     ONLY:spin_occ
+     integer               :: ib
+     do ib=RT_bands(1),RT_bands(2)
+       RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+       RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+     enddo
    end subroutine
    !
 end module

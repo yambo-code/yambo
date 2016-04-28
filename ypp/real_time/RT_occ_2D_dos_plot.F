@@ -24,17 +24,15 @@
 subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  use units,          ONLY:HA2EV,AUT2FS
- use pars,           ONLY:SP,schlen
- use stderr,         ONLY:intc
+ use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,n_spin,n_spinor
- use YPP,            ONLY:dos_broadening,dos_E_range,dos_E_steps
- use com,            ONLY:msg,of_open_close,error
+ use YPP,            ONLY:dos_broadening,dos_E_range,dos_E_steps,RT_time
+ use com,            ONLY:msg,error
  use functions,      ONLY:Fermi_fnc_derivative
  use LIVE_t,         ONLY:live_timing
- use YPP,            ONLY:RT_IO_carriers
- use RT_control,     ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
+ use RT_control,     ONLY:RT_output,RT_apply
  use real_time,      ONLY:RT_carriers,RT_bands
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,PP_redux_wait
@@ -50,7 +48,6 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  ! 
  real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,f_occ,dos_norm,&
 &                         el_dos_max,el_dos_spin(2)
- real(SP)              :: io_Time
  real(SP),allocatable  :: spin_factors(:,:,:)
  integer               :: i_RT,i_E,i_spin,i_T,i_k,i_b
  logical               :: l_sum_equilibrium,l_separate_eh
@@ -95,9 +92,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   !
-   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
    el_dos(:,:)=0._SP
    !
@@ -146,10 +141,10 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
        cycle
      endif
      if(n_spin==1) then
-       call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=io_Time*AUT2FS)
+       call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=RT_time(i_T)*AUT2FS)
      else
        call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)+el_dos(i_E,2),el_dos(i_E,1),el_dos(i_E,2)/),&
-&                                  E=dos_E*HA2EV,TIME=io_Time*AUT2FS)
+&                                  E=dos_E*HA2EV,TIME=RT_time(i_T)*AUT2FS)
      endif
      !
    enddo

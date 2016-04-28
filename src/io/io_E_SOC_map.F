@@ -24,7 +24,7 @@
 integer function io_E_SOC_map(En,kpt,ID)
  !
  use pars,           ONLY:SP,IP
- use electrons,      ONLY:levels,E_SOC_table,E_SOC_nbands,n_sp_pol
+ use electrons,      ONLY:levels,E_SOC_table,E_SOC_nbands
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&

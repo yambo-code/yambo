@@ -21,10 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_DIPOLES(X,Xen,ID)
+integer function variables_DIPOLES(X,ID)
  !
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_sc_run,l_real_time
  use X_m,           ONLY:X_t,use_shifted_grids_approach,use_real_space_approach,&
 &                        use_g_space_approach,use_covariant_approach,force_v_g_space_approach
  use electrons,     ONLY:levels
@@ -35,7 +34,6 @@ integer function variables_DIPOLES(X,Xen,ID)
  implicit none
  !
  type(X_t)   ::X
- type(levels)::Xen
  integer     ::ID
  !
  call io_elemental(ID,VAR="PARS",VAR_SZ=14,MENU=0)

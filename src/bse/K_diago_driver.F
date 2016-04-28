@@ -26,12 +26,11 @@ subroutine K_diago_driver(iq,W)
  ! Generic diagonalization method to solve resonant and non resonant
  ! Hamiltonians.
  !
- use pars,           ONLY:SP,pi,cZERO,cI,cONE
+ use pars,           ONLY:SP
  use BS,             ONLY:BS_mat,BS_K_coupling,io_BSS_diago,BSS_perturbative_width,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim
  use electrons,      ONLY:E_SOC_nbands
- use memory_m,       ONLY:mem_est
- use matrix_operate, ONLY:DIAGO,INV
+ use matrix_operate, ONLY:DIAGO
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing

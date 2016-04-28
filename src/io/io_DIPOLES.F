@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_DIPOLES(X,Xen,ID)
+integer function io_DIPOLES(X,ID)
  !
  use pars,          ONLY:SP,schlen
  use X_m,           ONLY:X_t,DIP_iR,DIP_P,X_alloc
@@ -43,7 +43,6 @@ integer function io_DIPOLES(X,Xen,ID)
  !
  implicit none
  type(X_t)   ::X
- type(levels)::Xen
  integer     ::ID
  !
  ! Work Space
@@ -76,7 +75,7 @@ integer function io_DIPOLES(X,Xen,ID)
    io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_DIPOLES/=0) goto 1
    !
-   io_DIPOLES=variables_DIPOLES(X,Xen,ID)
+   io_DIPOLES=variables_DIPOLES(X,ID)
    if (io_DIPOLES/=0) goto 1
    !
  endif

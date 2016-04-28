@@ -333,7 +333,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ostnts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_DIPOLES(X(3),en,io_ID)
+ io_err=io_DIPOLES(X(3),io_ID)
  !
  OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
  !
@@ -860,7 +860,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call INIT_RT_ctl_switch('G')
    call initactivate(-1,'SCmixing')
    call initactivate(1,'RTBands Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
-   call initactivate(1,'RTstep dTupdateTime NEsteps NETime COHsteps DipoleEtresh')
+   call initactivate(1,'RTstep dTupdateTime dTupdateJump dTupdateTresh NEsteps NETime COHsteps DipoleEtresh')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeInterpolation LifeInterpSteps')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
@@ -1496,13 +1496,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            Chi_mode='Hartree'
            !
            if(l_bse)  then
-             if(trim(rstr_piece(i1+1)) == 'hartree')  BSK_mode='Hartree'
-             if(trim(rstr_piece(i1+1)) == 'hf')       BSK_mode='HF'
+             if(trim(rstr_piece(i1+1))  == 'hartree')  BSK_mode='Hartree'
+             if(trim(rstr_piece(i1+1))  == 'hf')       BSK_mode='HF'
              if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
-             if(trim(rstr_piece(i1+1)) == 'sex')      BSK_mode='SEX'
+             if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
            else if(l_chi) then
-             if(trim(rstr_piece(i1+1)) == 'hartree')  Chi_mode='Hartree'
+             if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='Hartree'
              if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
              if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'

@@ -71,7 +71,6 @@ module YPP
  ! SPIN and SOC
  integer      ::WF_ref(2)
  !
- !
  ! REAL SPACE PLOT
  !
  logical      ::l_plot
@@ -243,34 +242,38 @@ module YPP
  logical  :: l_RT_X
  logical  :: l_RT_abs
  logical  :: l_RT_X_inversion
- integer  :: i_t_start,i_t_end ! time window
- integer  :: RED_steps ! reduced number of steps
  integer  :: N_probes
  integer  :: N_pumps
  integer  :: N_probe_frequencies
  integer  :: X_order
- integer  :: J_steps
- real(SP) :: t_jump
- real(SP) :: W_RT_induced_step
- real(SP) :: J_time_step
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
  integer, parameter:: max_n_of_paths=10000
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
- !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
  !
- type Xw_rt
-   real(SP) :: time_range(2)       ! time windows for the transform
-   integer  :: energy_steps        ! number of steps in energy mesh
-   real(SP) :: energy_range(2)     ! energy range 
-   character(schlen) :: damp       ! Damp type (none, lorentian or gaussian)
-   real(SP) :: damp_factor         ! factor used in damping
- end type Xw_rt
+ ! (RT) carriers
  !
- type(Xw_rt) :: X_rt 
+ real(SP),allocatable     :: delta_f(:,:,:)
+ !
+ ! (RT) common
+ !
+ real(SP),allocatable     :: RT_time(:)
+ !
+ type RT_ctl
+   real(SP) :: delta_T           =0._SP   ! delta T
+   real(SP) :: T_range(2)        =0._SP   ! time windows for the transform
+   integer  :: T_n_steps         =0       ! number of steps in Time mesh
+   real(SP) :: W_range(2)        =0._SP   ! energy range 
+   integer  :: W_n_steps         =0       ! number of steps in energy mesh
+   real(SP) :: damp_factor       =0._SP   ! factor used in damping
+   real(SP) :: Field_damp_factor =0._SP   ! factor used deduced from the Field 
+   character(schlen) :: damping  ="NONE"  ! Damp type (none, lorentian or gaussian)
+ end type RT_ctl
+ !
+ type(RT_ctl) :: RT_conf 
  !
  interface
    !
@@ -361,44 +364,5 @@ module YPP
      end select
      !
    end subroutine
-   !
-#if defined _YPP_RT
-   !
-   subroutine RT_IO_time_range_setup(N_times)
-     !
-     use units,          ONLY:AUT2FS
-     use com,            ONLY:msg
-     use real_time,      ONLY:RT_step,NE_time
-     use RT_control,     ONLY:RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
-     !
-     integer :: N_times
-     !
-     if (OCC_deltaT<RT_IO_JPO_steps*RT_step) then
-       ! 
-       OCC_deltaT=RT_IO_JPO_steps*RT_step
-       ! 
-     else
-       !
-       OCC_deltaT=nint(OCC_deltaT/RT_IO_JPO_steps/RT_step)*RT_IO_JPO_steps*RT_step
-       !
-     endif
-     !
-     N_times=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
-     !
-     if (N_times<0) return
-     !
-     if (NE_time<OCC_T_range(2)) then
-       OCC_T_range(2)=NE_time
-       if(OCC_deltaT>NE_time) OCC_deltaT=NE_time
-       N_times=nint(OCC_T_range(2)/OCC_deltaT)+1
-     endif
-     !
-     call msg('s','Time range [fs]:',OCC_T_range*AUT2FS)
-     call msg('s','Time step  [fs]:',OCC_deltaT*AUT2FS)
-     call msg('s','Time steps     :',N_times)
-     !
-   end subroutine
-   !
-#endif
    !
 end module YPP

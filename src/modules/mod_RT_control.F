@@ -23,8 +23,9 @@
 !
 module RT_control
  !
- use pars,       ONLY:SP,lchlen
- use units,      ONLY:FS2AUT
+ use pars,       ONLY:SP,lchlen,schlen
+ use units,      ONLY:AUT2FS
+ use real_time,  ONLY:l_NE_dynamics
  !
  implicit none
  !
@@ -35,22 +36,28 @@ module RT_control
  character(lchlen)        :: TIME_STEP_CONF_description(100)
  !
  integer,  parameter      :: J_and_P_cache_size=18
+ integer                  :: J_and_P_cache_steps=1
  !
  integer                  :: ID(8)
- integer                  :: it_start           = 1   ! restart point
+ integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
- integer                  :: RT_IO_JPO_steps    = -1
- integer                  :: RT_IO_output_steps = -1
- integer                  :: RT_IO_G_steps      = -1
- real(SP)                 :: RT_IO_time(3)             ! Three values for J,P,OCC - OUPUT - GF's (dynamical value)
+ type RT_IO_t
+   integer               :: N              = 0
+   integer               :: INTERVAL_steps =-1
+   integer               :: last_point     = 1
+   real(SP)              :: INTERVAL_time
+   real(SP)              :: INTERVAL_time_SAVE
+   real(SP), allocatable :: Time(:)
+ end type
+ !
+ type(RT_IO_t),save  :: JPC_RT_IO_t
+ type(RT_IO_t),save  :: OUTPUT_RT_IO_t
+ type(RT_IO_t),save  :: GF_RT_IO_t
+ !
+ ! J and P cache 
+ !
  real(SP), allocatable    :: J_and_P_cache(:,:)
- !
- ! Transient Absorption [ypp]
- !
- real(SP)                 :: OCC_deltaT
- real(SP)                 :: OCC_T_range(2)
- real(SP),allocatable     :: delta_f(:,:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -99,54 +106,181 @@ module RT_control
    !
    subroutine RT_alloc_control()
      !
+     use pars,           ONLY:rZERO
+     use real_time,      ONLY:NE_steps
      use memory_m,       ONLY:mem_est
-     use real_time,      ONLY:l_NE_dynamics
      !
      if(l_NE_dynamics) then
-       allocate(J_and_P_cache(J_and_P_cache_size,RT_IO_JPO_steps))
+       !
+       allocate(J_and_P_cache(J_and_P_cache_size,J_and_P_cache_steps))
        call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
+       !
      endif
+     !
+     if (allocated(JPC_RT_IO_t%Time)) deallocate(JPC_RT_IO_t%Time)
+     !
+     allocate(JPC_RT_IO_t%Time(NE_steps))
+     call mem_est('JPC_RT_IO_t_Time',(/NE_steps/),(/SP/))
+     JPC_RT_IO_t%Time=rZERO
+     !
+     if(allocated(GF_RT_IO_t%Time)) deallocate(GF_RT_IO_t%Time)
+     !
+     allocate(GF_RT_IO_t%Time(NE_steps))
+     call mem_est('GF_RT_IO_t_Time',(/NE_steps/),(/SP/))
+     GF_RT_IO_t%Time=rZERO
      !
    end subroutine RT_alloc_control
    !
    subroutine RT_free_control
      !
      use memory_m,       ONLY:mem_est
-     use real_time,      ONLY:l_NE_dynamics
      !
-     if(l_NE_dynamics) then
+     if(allocated(J_and_P_cache)) then
        deallocate(J_and_P_cache)
        call mem_est('Current_Cache')
+     endif
+     !
+     if(allocated(JPC_RT_IO_t%Time)) then
+       deallocate(JPC_RT_IO_t%Time)
+       call mem_est('JPC_RT_IO_t_Time')
+     endif
+     !
+     if(allocated(GF_RT_IO_t%Time)) then
+       deallocate(GF_RT_IO_t%Time)
+       call mem_est('GF_RT_IO_t_Time')
      endif
      !
    end subroutine RT_free_control
    !
    logical function RT_do_it(what)
      !
-     use real_time, ONLY:NE_i_time,RT_dyn_step,RT_step,NE_time_step_update_jump
+     use real_time, ONLY:NE_i_time,RT_step,NE_time_step_update_jump,NE_time_step_update_last_point
      character(*) :: what
      !
      ! Work Space
      !
-     integer :: DO_IT_steps,i_grp
+     integer :: DO_IT_steps,i_grp,IT_last
      !
-     RT_do_it=.FALSE.
+     RT_do_it= .FALSE.
+     IT_last = 1
      !
-     if (what=="J".or.what=="P".or.what=="CARRIERS") DO_IT_steps=RT_IO_JPO_steps
-     if (what=="OUT")      DO_IT_steps=RT_IO_output_steps
-     if (what=="G")        DO_IT_steps=RT_IO_G_steps
-     if (what=="deltaT")   DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
+     if (what=="J".or.what=="P".or.what=="CARRIERS") then
+       DO_IT_steps=JPC_RT_IO_t%INTERVAL_steps
+       IT_last    =JPC_RT_IO_t%last_point
+     endif
+     if (what=="OUT") then
+       DO_IT_steps=OUTPUT_RT_IO_t%INTERVAL_steps
+       IT_last    =OUTPUT_RT_IO_t%last_point
+     endif
+     if (what=="G") then
+       DO_IT_steps=GF_RT_IO_t%INTERVAL_steps
+       IT_last    =GF_RT_IO_t%last_point
+     endif
+     if (what=="deltaT") then
+       DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
+       IT_last    =NE_time_step_update_last_point
+     endif
+     !
+     ! In RESTART mode the GF and J/P/C databases could be not time aligned
+     !
+     if (IT_last>NE_i_time) return
      !
      if (DO_IT_steps<0) then
        RT_do_it=.TRUE. 
        return
      endif
      !
-     i_grp=nint(real(NE_i_time-1)/real(DO_IT_steps))
+     i_grp=nint(real(NE_i_time-IT_last)/real(DO_IT_steps))
      !
-     if (NE_i_time-1>=i_grp*DO_IT_steps.and.NE_i_time-1-nint(RT_dyn_step/RT_step)<i_grp*DO_IT_steps) RT_do_it=.TRUE.
-     if (NE_i_time==0) RT_do_it=.TRUE.
+     RT_do_it= NE_i_time-IT_last==i_grp*DO_IT_steps
+     !
+     if (RT_do_it) then
+       if (what=="J".or.what=="P".or.what=="CARRIERS") JPC_RT_IO_t%last_point=NE_i_time
+       if (what=="OUT")    OUTPUT_RT_IO_t%last_point=NE_i_time
+       if (what=="G")      GF_RT_IO_t%last_point=NE_i_time
+       if (what=="deltaT") NE_time_step_update_last_point=NE_i_time
+     endif
      !
    end function
+   !
+   integer function T2I(TIME,STEP)
+     !
+     use real_time, ONLY:RT_step
+     !
+     real(SP)          :: TIME
+     real(SP), optional:: STEP
+     !
+     if (present(STEP)) then
+       T2I=nint(TIME/STEP)+1
+     else
+       T2I=nint(TIME/RT_step)+1
+     endif
+     !
+   end function
+   !
+   real(SP) function TIME_adjust(TIME,STEP)
+     !
+     use real_time, ONLY:RT_step
+     !
+     real(SP)          :: TIME
+     real(SP), optional:: STEP
+     !
+     if (present(STEP)) then
+       TIME_adjust=max(nint(TIME/STEP)*STEP,STEP)
+     else
+       TIME_adjust=max(nint(TIME/RT_step)*RT_step,RT_step)
+     endif
+     !
+   end function
+   !
+   character(schlen) function TIME_string(TIME)
+     !
+     use stderr, ONLY:real2ch
+     !
+     real(SP)      :: TIME,TIME_fs
+     character(11) :: tmp_ch
+     integer       :: i_c
+     !
+     TIME_fs=TIME*AUT2FS
+     if (TIME_fs<1.) then
+       write(tmp_ch,'(f8.4,a)') TIME_fs*1000._SP,"_as"
+     else if (TIME_fs<999.) then
+       write(tmp_ch,'(f8.4,a)') TIME_fs,"_fs"
+     else 
+       write(tmp_ch,'(f8.4,a)') TIME_fs/1000._SP,"_ps"
+     endif
+     !
+     do i_c=1,11
+       if (tmp_ch(i_c:i_c)=="s") cycle
+       if (tmp_ch(i_c:i_c)==" ") tmp_ch(i_c:i_c)="_"
+     enddo
+     !
+     TIME_string=tmp_ch
+     !
+   end function
+   !
+   subroutine SETUP_RT_IO_type(TYP,INIT)
+     !
+     use real_time, ONLY:NE_tot_time,RT_dyn_step,RT_step
+     type(RT_IO_t) :: TYP
+     logical       :: INIT
+     !
+     if (INIT) TYP%INTERVAL_time=TYP%INTERVAL_time_SAVE
+     !
+     ! Initialization always using RT_step
+     !
+     if (TYP%INTERVAL_time<=0)           TYP%INTERVAL_time =max(NE_tot_time/1000._SP,RT_step)
+     !
+     if (TYP%INTERVAL_time<=RT_dyn_step) TYP%INTERVAL_time = RT_dyn_step
+     !
+     TYP%INTERVAL_time  =                nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
+     !
+     ! The steps are always relative to RT_step
+     !
+     TYP%INTERVAL_steps             =TYP%INTERVAL_time/RT_step
+     !
+     if (INIT) TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
+     !
+   end subroutine
    !
 end module RT_control

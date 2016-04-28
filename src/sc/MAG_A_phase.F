@@ -23,16 +23,14 @@
 !
 subroutine MAG_A_phase()
  !
- use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,AU2Tesla,BO2ANG
+ use pars,           ONLY:SP
+ use units,          ONLY:SPEED_OF_LIGHT
  use D_lattice,      ONLY:x_cc
- use R_lattice,      ONLY:nkibz
- use com,            ONLY:msg,error
+ use com,            ONLY:msg
  use stderr,         ONLY:intc
- use magnetic,       ONLY:Bz,MAG_radius,phase_radius,n_loops
+ use magnetic,       ONLY:Bz,MAG_radius,n_loops
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
- use electrons,      ONLY:default_nel,n_sp_pol
  use interfaces,     ONLY:WF_load
  use wrapper,        ONLY:Vstar_dot_V
  !
@@ -41,12 +39,6 @@ subroutine MAG_A_phase()
  real(SP)    :: r2_ref,r2_cyl(fft_size)
  complex(SP) :: wf_r2(fft_size)
  integer     :: ib_ref,ik_ref,is_ref,iwf
- !
-#if defined _DOUBLE
- complex(SP)  :: zdotc
-#else
- complex(SP)  :: cdotc
-#endif
  !
  n_loops=0
  r2_cyl(:)=x_cc(:,1)**2+x_cc(:,2)**2

@@ -23,8 +23,8 @@
 !
 subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  !
- use pars,           ONLY:SP,cI
- use real_time,      ONLY:RT_is_dephased,RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_bands
+ use pars,           ONLY:SP
+ use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_bands
  !
  implicit none
  !
@@ -41,7 +41,7 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  !
  dG_out(:,:)=dG_out(:,:)+dG_in(:,:)
  !
- if (.not.RT_is_dephased) return
+ if (.not.RT_is_statically_dephased) return
  !
  if (l_RT_EXP) then
    !

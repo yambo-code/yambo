@@ -28,12 +28,13 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use R_lattice,      ONLY:bz_samp
  use com,            ONLY:msg,of_open_close,error
- use YPP,            ONLY:BANDS_steps,Nel_fac,coo_in,coo_out,k_transform,interp_grid,&
-&                         l_RT_life_bands,l_RT_occ_bands,electrons_bands_interpolate
+ use YPP,            ONLY:BANDS_steps,Nel_fac,coo_in,coo_out,interp_grid,&
+&                         l_RT_life_bands,l_RT_occ_bands,electrons_bands_interpolate,&
+&                         RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
- use RT_control,     ONLY:OCC_T_range,OCC_deltaT,RT_apply,RT_carriers_object
+ use RT_control,     ONLY:RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation
  !
@@ -53,7 +54,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
 &                         spin_interpolated(:,:,:),magn_interpolated(:,:,:)
- real(SP)              :: io_Time,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
+ real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
  character(3)          :: message
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt
  logical               :: l_normalize_Nel,l_g_space_interp,l_nearest_neig_interp
@@ -103,9 +104,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   !
-   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
    Real_Nhole=0._SP
    Real_Nel=0._SP
@@ -209,15 +208,13 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   !
    if (l_RT_life_Bands) file_name_rt="YPP-RT_REF_LIFE_bands"
    if (l_RT_occ_Bands ) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
    !
    call of_open_close(file_name_rt,'ot')
    !
    call msg('o '//file_name_rt," "," ",INDENT=0)
-   call msg('o '//file_name_rt,"#",' t= '//trim(real2ch( io_Time*AUT2FS )),INDENT=0)
+   call msg('o '//file_name_rt,"#",' t= '//trim(real2ch( RT_time(i_T)*AUT2FS )),INDENT=0)
    !
    do ib=RT_bands(1),RT_bands(2)
      !

@@ -21,36 +21,36 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!
-subroutine RT_damp_it(damp_type,damp_factor,ft,nt,dt,lda)
+subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  !
+ use YPP,            ONLY:RT_time,RT_conf
  use pars,           ONLY:SP,DP
  use com,            ONLY:warning
  implicit none
  !
- integer,      intent(in)      :: nt,lda
- real(SP),     intent(in)      :: dt,damp_factor
- complex(DP),  intent(inout)   :: ft(nt,lda)
+ integer,      intent(in)      :: lda
+ real(SP),     intent(in)      :: damp_factor
+ complex(DP),  intent(inout)   :: ft(RT_conf%T_n_steps,lda)
  character(*), intent(in)      :: damp_type
  !                          
  ! Work Space 
  !
  integer  :: i_t
- real(SP) :: damp_function(nt)
+ real(SP) :: damp_function(RT_conf%T_n_steps)
  !
  select case ( trim(damp_type) )
    case("LORENTZIAN")  
-     forall(i_t=1:nt) damp_function(i_t) = exp(-abs((i_t-1)*dt)*damp_factor)
+     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-abs(RT_time(i_t)*damp_factor))
    case("GAUSSIAN") 
-     forall(i_t=1:nt) damp_function(i_t) = exp(-((i_t-1)*dt)**2*damp_factor**2)
+     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-RT_time(i_t)**2*damp_factor**2)
    case("NONE") 
-     forall(i_t=1:nt) damp_function(i_t) = 1._SP
+     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = 1._SP
    case default
      call warning(" Unknown damping! ")
      return
  end select
  !
- forall(i_t=1:nt)  ft(i_t,:)=ft(i_t,:)*damp_function(i_t)
+ forall(i_t=1:RT_conf%T_n_steps)  ft(i_t,:)=ft(i_t,:)*damp_function(i_t)
  !
 end subroutine RT_damp_it
 

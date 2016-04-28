@@ -25,7 +25,7 @@ subroutine MAG_initial_check()
  !
  use pars,        ONLY:SP,pi
  use electrons,   ONLY:n_sp_pol,n_spin
- use com,         ONLY:warning,error
+ use com,         ONLY:warning
  use D_lattice,   ONLY:a
  use SC,          ONLY:SC_potential
  use parser_m,    ONLY:parser
@@ -55,7 +55,6 @@ subroutine MAG_initial_check()
      call warning('Pauli magnetism switched off (spin unpolarized system).')
    endif
    if(MAG_landau) MAG_hamiltonian_type='landau'
-!     if(.not.MAG_landau) call error('You need a spin polarized system')
  endif
  if(MAG_pauli .and. MAG_theta/=0. .and. n_sp_pol==2) &
 &    call warning('The B field is not along z => the spins are assumed to be aligned to B. Please check.')

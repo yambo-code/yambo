@@ -38,7 +38,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
  use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_EXP,l_RT_RWA, &
 &                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
 &                         RT_H_occupations,RT_delta0_occupations,l_RT_HEUN,       &
-&                         integrator_step,RT_nk,RT_bands
+&                         integrator_step,RT_nk,RT_bands,l_RT_induced_field
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels,spin_occ
 #if defined _TIMING
@@ -71,21 +71,15 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
  else if (l_RT_RK2) then
    !
-   ! Evaluate @ dt/2
+   ! Evaluate @ T+dt/2
    !
    call RT_evolve(dG_old,dG1,T_step/2._SP,T_step/2._SP)
    !
    call RT_update_occ(dG1)
    !
-   ! Recalculate the field, the polarization and then the current at t+dt/2
+   ! Fields @ T+dT/2
    !
-   if (l_NE_with_fields) then
-     !
-     call RT_current_AND_polarization(k,E,dG1,A_out) 
-     !
-     call RT_propagate_fields(k,E,A_out,A_in,Time+T_step/2._SP,T_step/2._SP)
-     !
-   endif
+   call FIELD_evolve(dG1,Time,T_step/2._SP)
    !
    ! Recalculate I1(t+dt/2) and I2(t+dt/2) using  G(t+dt/2) 
    !
@@ -97,27 +91,21 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    call timing('RT integrator',OPR='start')
 #endif
    !
-   ! final step @ dt
+   ! final step @ T+dt
    !
    call RT_evolve(dG1,dG_new,T_step,T_step/2._SP)
    !
  else if (l_RT_HEUN) then
    !
-   ! Evaluate @ dt
+   ! Evaluate @ T+dt
    !
    call RT_evolve(dG_old,dG1,T_step,T_step)
    !
    call RT_update_occ(dG1)
    !
-   ! Recalculate the field, the polarization and then the current at t+dt
+   ! Fields @ T+dT
    !
-   if (l_NE_with_fields) then
-     !
-     call RT_current_AND_polarization(k,E,dG1,A_out)
-     !
-     call RT_propagate_fields(k,E,A_out,A_in,Time+T_step,T_step)
-     !
-   endif
+   call FIELD_evolve(dG1,Time,T_step)
    !
    ! Recalculate I1(t+dt) and I2(t+dt) using  G(t+dt) 
    !
@@ -129,7 +117,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    call timing('RT integrator',OPR='start')
 #endif
    !
-   ! final step @ dt again
+   ! final step @ T+dt again
    !
    call RT_evolve(dG1,dG2,T_step,0._SP)
    !
@@ -137,15 +125,37 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
  endif
  !
- integrator_step=1
+ ! Occupations @ T+dT
  !
  call RT_update_occ(dG_new)
+ !
+ ! Fields @ T+dT
+ !
+ call FIELD_evolve(dG_new,Time,T_step)
+ !
+ ! Reset integrator time-point
+ !
+ integrator_step=1
  !
 #if defined _TIMING
  call timing('RT integrator',OPR='stop')
 #endif
  !
  contains
+   !
+   subroutine FIELD_evolve(dG,T,dT)
+     complex(SP),    intent(in) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+     real(SP),       intent(in) :: T,dT
+     !
+     if (l_NE_with_fields) then
+       !
+       if (l_RT_induced_field) call RT_current_AND_polarization(E,dG,A_in) 
+       !
+       call RT_propagate_fields(E,A_out,T+dT,dT)
+       !
+     endif
+     !
+   end subroutine
    !
    subroutine RT_evolve(dG_in,dG_out,dT,dTp)
      !
@@ -229,7 +239,6 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      !
    end subroutine RT_evolve
    !
-   !
    subroutine RT_G_symmetrization(G_inout)
      !
      complex(SP), intent(inout) :: G_inout(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -265,7 +274,6 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      !
    end subroutine
    !
-   !
    subroutine RT_update_occ(G_inonly)
      !
      complex(SP), intent(in) :: G_inonly(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -286,7 +294,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
          ! AM, July 2015. Intel compilers nest in ordered way the mathematical parenthesis. By using 
          ! df_H this problem is solved.
          !
-         df_H=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
+         df_H                   =spin_occ-aimag(G_lesser_reference(ib,ib,ik))
          RT_H_occupations(ib,ik)=-aimag(G_inonly(ib,ib,ik))+ dF_H
          !
          RT_delta0_occupations(ib,ik)=aimag(G_inonly(ib,ib,ik))

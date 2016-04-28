@@ -40,7 +40,6 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use vec_operate,   ONLY:sort
  use stderr,        ONLY:real2ch
  use QP_m,          ONLY:QP_t,QP_ctl_applied
  !

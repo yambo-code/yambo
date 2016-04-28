@@ -21,53 +21,57 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_databases_IO(E,it)
+subroutine RT_databases_IO( )
  !
  use drivers,        ONLY:l_elph_scatt
- use RT_control,     ONLY:RT_do_it,ID,it_start,RT_carriers_object,J_and_P_cache,RT_IO_JPO_steps
+ use RT_control,     ONLY:RT_do_it,ID,NE_i_start_time,RT_carriers_object,J_and_P_cache,JPC_RT_IO_t,&
+&                         GF_RT_IO_t,J_and_P_cache_steps
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,io_GF,io_CARRIERs,&
 &                         io_J
- use electrons,      ONLY:levels
  use parallel_m,     ONLY:PP_redux_wait
- use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers
+ use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time
  !
  implicit none
  !
- integer, intent(in)      :: it
- integer, external        :: io_RT_components
- type(levels),intent(in)  :: E
- !
  ! Work Space
  !
- integer :: ik,io_G,io_J_and_P,io_carr,io_THETA,i_c
+ integer           :: ik,io_G,io_J_and_P,io_carr,io_THETA,i_c
+ integer, external :: io_RT_components
  !
- ! When the simulation has been restarted the first step (it==it_start)
+ ! When the simulation has been restarted the first step (NE_i_time==it_start)
  ! corresponds to the latest of the previous simulation. Therefore
  ! databases must not be written
  !
- if (it==it_start.and.it_start>1) return
+ if (NE_i_time==NE_i_start_time.and.NE_i_start_time>1) return
  !
  ! Polarization and current 
  !==========================
  !
  if(l_NE_dynamics) then
    !
-   if (RT_do_it('J').and.it>it_start) then
+   do i_c=1,3
+     J_and_P_cache( 2*i_c-1,  mod(NE_i_time-1,J_and_P_cache_steps)+1)= real(RT_ind_J(i_c))
+     J_and_P_cache( 2*i_c,    mod(NE_i_time-1,J_and_P_cache_steps)+1)=aimag(RT_ind_J(i_c))
+     J_and_P_cache(6+2*i_c-1, mod(NE_i_time-1,J_and_P_cache_steps)+1)= real(RT_P(i_c))
+     J_and_P_cache(6+2*i_c,   mod(NE_i_time-1,J_and_P_cache_steps)+1)=aimag(RT_P(i_c))
+     J_and_P_cache(12+2*i_c-1,mod(NE_i_time-1,J_and_P_cache_steps)+1)= 0.
+     J_and_P_cache(12+2*i_c,  mod(NE_i_time-1,J_and_P_cache_steps)+1)= 0.
+   enddo
+   !
+   if (RT_do_it('J')) then
+     !
+     ! I/O time point
+     !
+     JPC_RT_IO_t%N=JPC_RT_IO_t%N+1
+     JPC_RT_IO_t%Time(JPC_RT_IO_t%N)=NE_time
+     !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_J_and_P=io_RT_components('J_and_P',ID(4))
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
      io_J_and_P=io_RT_components('J_and_P',ID(4))
+     !
    endif
-   !
-   do i_c=1,3
-     J_and_P_cache( 2*i_c-1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_ind_J(i_c))
-     J_and_P_cache( 2*i_c,    mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_ind_J(i_c))
-     J_and_P_cache(6+2*i_c-1, mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_P(i_c))
-     J_and_P_cache(6+2*i_c,   mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_P(i_c))
-     J_and_P_cache(12+2*i_c-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
-     J_and_P_cache(12+2*i_c,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
-   enddo
    !
  endif
  !
@@ -75,6 +79,15 @@ subroutine RT_databases_IO(E,it)
  !=============
  !
  if (io_CARRIERs.and.RT_do_it('CARRIERS')) then
+   !
+   if (.not.RT_do_it('J')) then
+     !
+     ! I/O time point
+     !
+     JPC_RT_IO_t%N=JPC_RT_IO_t%N+1
+     JPC_RT_IO_t%Time(JPC_RT_IO_t%N)=NE_time
+     !
+   endif
    !
    call RT_carriers_object(RT_carriers,WHAT='fill')
    !
@@ -90,8 +103,14 @@ subroutine RT_databases_IO(E,it)
  !
  if (io_GF.and.RT_do_it('G')) then
    !
+   ! I/O time point
+   !
+   GF_RT_IO_t%N=GF_RT_IO_t%N+1
+   GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
+   !
    io_G=0
    io_THETA=0
+   !
    call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !

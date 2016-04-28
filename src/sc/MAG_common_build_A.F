@@ -65,7 +65,7 @@ subroutine MAG_common_build_A(build)
  !
  ! Work space
  integer   :: ir,ir1,ir2,ir3
- real(SP)  :: r_mod, B_loops
+ real(SP)  :: r_mod
  !
  !
  ! Allocation 

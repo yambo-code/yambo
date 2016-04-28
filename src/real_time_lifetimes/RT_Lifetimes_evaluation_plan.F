@@ -27,7 +27,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  use pars,           ONLY:IP2,SP
  use memory_m,       ONLY:mem_est
- use RT_control,     ONLY:it_start
+ use RT_control,     ONLY:NE_i_start_time
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_times,&
 &                         RT_dyn_step,l_RT_lifetimes_interpolation,Life_MEM_steps,NE_i_time
  !
@@ -44,7 +44,7 @@ integer function RT_Lifetimes_evaluation_plan( )
    RT_TIME_status=1
  endif
  !
- if (RT_life_interp_times(1)<=0. .or. it_start>=NE_steps) then
+ if (RT_life_interp_times(1)<=0. .or. NE_i_start_time>=NE_steps) then
    l_RT_lifetimes_interpolation=.FALSE.
    Life_MEM_steps=1
    RT_Lifetimes_evaluation_plan=NE_steps
@@ -68,14 +68,17 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  RT_Lifetimes_evaluation_plan=i_default
  !
- ! Starting time point
+ ! Starting time point...
  !
- it=NE_i_time+1
+ ! ... zero point of the simulation
+ if (NE_i_time==0) it=1
+ ! ... RESTART point & dT update
+ if (NE_i_time> 0) it=NE_i_time
  !
  ! At the beginning I do not have enough points to perform the fit. I, therefore,
  ! introduce blocks with an increasing number of elements
  !
- if (NE_i_time+1==it_start) then
+ if (NE_i_time==0.or.NE_i_time==NE_i_start_time) then
    !
    do i1=1,N_intra_steps,max(N_intra_steps/10,1)
      call BUILD_up_group(N_blocks*i1,i1)

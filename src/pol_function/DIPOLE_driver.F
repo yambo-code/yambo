@@ -214,7 +214,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Finally project the dipoles along q
  !=====================================
- call DIPOLE_project_along_q(Xen,Xk,X,field_dir)
+ call DIPOLE_project_along_q(Xk,X,field_dir)
  !
  ! Clean up
  !
@@ -260,7 +260,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if(write_header) then
        call msg('s','[DIP] Writing dipoles header ')
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       io_err=io_DIPOLES(X,Xen,ID)
+       io_err=io_DIPOLES(X,ID)
      endif
      !
      call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
@@ -268,7 +268,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if(read_header) then
        call msg('s','[DIP] Checking dipoles header ')
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       io_err=io_DIPOLES(X,Xen,ID)
+       io_err=io_DIPOLES(X,ID)
      endif
      !
      if (io_err==0) then
@@ -281,7 +281,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          if (.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0 .and. writing) cycle
          do i_sp_pol=1,n_sp_pol
            call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-           io_err=io_DIPOLES(X,Xen,ID)
+           io_err=io_DIPOLES(X,ID)
         enddo
        enddo
        !

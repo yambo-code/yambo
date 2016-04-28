@@ -37,18 +37,18 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
  use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
-&                         it_start,RT_carriers_object
+&                         NE_i_start_time,RT_carriers_object,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
-&                         i_MEM_now,i_MEM_next
+&                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
- use fields,          ONLY:A_vecpot,A_vecpot_previous
+ use fields,          ONLY:A_vecpot,A_vecpot_previous,A_ext
  use collision,       ONLY:FOCK_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -155,6 +155,16 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_start_and_restart(E,k,q,X)
  !
+ ! Calculation already done
+ !
+ if (NE_i_start_time>=NE_steps) then
+   !      
+   call CLOSE_and_clean( )      
+   !      
+   return
+   !
+ endif
+ !
  ! Collisions
  !
  if((.not.l_sc_pot_is_local.and..not.l_sc_ip).or.l_elel_scatt) then
@@ -183,7 +193,7 @@ subroutine RT_driver(E,X,k,q)
  ! Reference lifetimes and/or G_lesser
  !=====================================
  !
- if (it_start==1) then
+ if (NE_i_start_time==1) then
    !
    call msg('s','Reference Lifetimes, GF, Self-Energy ...')
    !
@@ -203,16 +213,6 @@ subroutine RT_driver(E,X,k,q)
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
- !
- ! Calculation already done
- !
- if (it_start>=NE_steps) then
-   !      
-   call CLOSE_and_clean( )      
-   !      
-   return
-   !
- endif
  !
  ! IP calculation & not BGR => No need of WFs and Density
  !
@@ -248,7 +248,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! See [23/9/2011] comments in RT_start_and_restart regarding the value of it_start
  !
- NE_i_time = it_start
+ NE_i_time = NE_i_start_time
  !
  ! Start-Up & Timing
  !===================
@@ -256,72 +256,77 @@ subroutine RT_driver(E,X,k,q)
  call section('=','Real-Time dynamics')
  !######################################
  !
- call live_timing('[RT] Dynamics :',NE_steps-it_start+1)
+ call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1)
  !
  do while (.not.l_Dynamics_is_over)
    !
-   l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0.
+   ! Dynamics single step is composed by few sections:
    !
-   ! Steps & times ...
-   !===================
+   ! * Observables related to G_lesser@NE_time
+   ! * Collisions based on G_lesser@NE_time
+   ! * Write databases & observables
+   ! * Eval RT_dyn_step
+   ! * If NE_time is the last point exit
+   ! * NE_time->NE_time+RT_dyn_step
+   ! * Update NE_time (note NE_time is always the last evoluted)
    !
-   ! ... Dynamical Time-Step evaluation
+   ! G_lesser@NE_time
+   !###################
    !
-   if (l_Update_Time_Step) call RT_time_step_update( )
-   !
-   ! ... Create Memory maps
-   !
-   call RT_MEMORY_index( )
-   !
-   ! Keep a copy of A_vecpot before starting the collisions
-   ! ======================================================
-   A_vecpot_previous=A_vecpot
-   !
-   ! Current and Polarization
+   ! Current and Polarization (evaluated also in RT_integrator when and induced field is included)
    !==========================
-   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_now),A_vecpot_previous)
+   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot)
    !
    ! Now calculate Energetics, current and other observables
    !=========================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_now),on_the_fly_operators)
-   !
-   if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_step)
-   !
-   ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
-   !============================================================
-   call RT_Collision(dG_lesser(:,:,:,i_MEM_now),A_vecpot,E,k,q,NE_time)
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
    !
    ! BGR
    !=======================================
-   call RT_BGR(dG_lesser(:,:,:,i_MEM_now),E,k)
+   call RT_BGR(dG_lesser(:,:,:,i_MEM_collision),E,k)
    call RT_output('BGR',TIME=NE_time*AUT2FS)
    !
-   ! Eval and Print Mean Carrier Lifetimes
-   !=======================================
-   if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
-     call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)      call RT_output('EPlife',TIME=NE_time*AUT2FS)
-     if(l_elel_scatt)      call RT_output('EElife',TIME=NE_time*AUT2FS)
-     if(l_elphoton_scatt)  call RT_output('RADlife',TIME=NE_time*AUT2FS)
-     if((l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt).and.&
-&       (l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time*AUT2FS)
-   endif
+   ! COLLISIONS@NE_time
+   !####################
+   !
+   ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
+   !============================================================
+   call RT_Collision(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
    !
    ! Write DBs
    !===========
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E,NE_i_time)
+   call RT_databases_IO( )
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
-   ! Print some simple observables
-   !===============================
+   ! Printing 
+   !###########
+   !
+   ! Observables
+   !=============
    if (NE_time>=0._SP) then
      call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
      call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
    endif
+   !
+   ! Mean Carrier Lifetimes
+   !========================
+   if (RT_is_dynamically_dephased) then
+     call RT_mean_carrier_lifetimes(E,k)
+     if(l_elph_scatt)                      call RT_output('EPlife',TIME=NE_time*AUT2FS)
+     if(l_elel_scatt)                      call RT_output('EElife',TIME=NE_time*AUT2FS)
+     if(l_elphoton_scatt)                  call RT_output('RADlife',TIME=NE_time*AUT2FS)
+     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('factors',TIME=NE_time*AUT2FS)
+   endif
+   !
+   ! Current and Polarization
+   !==========================
    call RT_output('cur pol',TIME=NE_time*AUT2FS)
+   !
+   ! Field(s)
+   !==========
    if (l_NE_with_fields) then
      call RT_output('external_field',TIME=NE_time*AUT2FS) 
      if(l_RT_induced_field) then
@@ -330,31 +335,51 @@ subroutine RT_driver(E,X,k,q)
      endif
    endif
    !
-   ! Integration
-   !=============
    ! T -> T+dT step 
+   !################
    !
-   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,A_vecpot_previous,RT_dyn_step,E,k,q,NE_time)
+   ! New steps & times ...
+   !=======================
    !
-   ! G_lesser update
-   !=================
+   ! ... Dynamical Time-Step evaluation
    !
-   G_lesser(:,:,:,i_MEM_next)=G_lesser_reference+dG_lesser(:,:,:,i_MEM_next)
-   !	
-   ! Timing
-   !========
+   l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0.
    !
-   call live_timing(steps=nint(RT_dyn_step/RT_step))
+   if (l_Update_Time_Step) call RT_time_step_update( )
    !
-   ! Time Update
-   !=============
+   ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
+   !
+   call RT_MEMORY_index( )
+   !
+   ! I (eventually) stop after all actions at the time just calculated in the previous step of the loop
+   !=======================
    !
    l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
    !
    if (l_Dynamics_is_over) cycle
    !
-   NE_i_time = NE_i_time+nint(RT_dyn_step/RT_step)
-   NE_time   = (NE_i_time-1)*RT_step
+   ! Integration
+   !=============
+   !
+   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,A_vecpot_previous,RT_dyn_step,E,k,q,NE_time)
+   !
+   ! A update
+   !==========
+   A_vecpot_previous=A_vecpot
+   !
+   ! G_lesser update
+   !=================
+   G_lesser(:,:,:,i_MEM_next)=G_lesser_reference+dG_lesser(:,:,:,i_MEM_next)
+   !
+   ! Time Update
+   !=============
+   NE_i_time       = NE_i_time+nint(RT_dyn_step/RT_step)
+   NE_time         = TIME_adjust((NE_i_time-1)*RT_step)
+   i_MEM_collision = i_MEM_next
+   !	
+   ! Timing
+   !========
+   call live_timing(steps=nint(RT_dyn_step/RT_step))
    !
  enddo
  !

@@ -38,9 +38,6 @@ subroutine ypp_INIT_load(defs)
  use surface_geometry,     ONLY: init_surface
  use eels_detector,        ONLY: init_detector
 #endif
-#if defined _YPP_RT
- use RT_control,           ONLY: OCC_T_range,OCC_deltaT
-#endif
  !
  implicit none
  !
@@ -139,8 +136,6 @@ subroutine ypp_INIT_load(defs)
  !
  ! OCCUPATIONS
  !
- call it(defs,'OCCdT','[NEGF] Occupations time step',OCC_deltaT,unit=Time_unit(1))
- call it(defs,'OCCTime','[NEGF] Occupations loading time',OCC_T_range,unit=Time_unit(1))
  call it('f',defs,'OCCgroup','[NEGF] Double grid states occupations are grouped')
  call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations in the dos')
  call it('f',defs,'SeparateEH','[NEGF] Separate electrons from holes in the data file') 
@@ -316,14 +311,12 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword)
  call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword)
  !
- call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
- call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
- ! DEBUG>
- !call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit(1),verb_level=V_real_time)
- ! DEBUG<
- call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit(1))
- call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp)
- call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
+ call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
+ call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
+ call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
+ call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
+ call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
+ call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
  !
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
  call it('f',defs,'SkipJP_IO','Do not write P(t) and J(t)')

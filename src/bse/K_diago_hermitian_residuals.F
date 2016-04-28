@@ -29,14 +29,14 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  !                 \sum_k BS_mat(k,i) x conjg( BSS_rhoq0(k) )
  ! BS_R_left(i)  = conjg( BS_R_right(i) )
  !
- use pars,           ONLY:SP,pi,cZERO,cI,cONE
+ use pars,           ONLY:SP,cZERO
  use wrapper_omp,    ONLY:V_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
  use BS,             ONLY:BSS_rhoq0,BS_H_dim,BS_mat,&
-&                         BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_eh_W
+&                         BSS_eh_E,BSS_eh_Z,BSS_eh_f
  !
  implicit none
  !

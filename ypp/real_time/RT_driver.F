@@ -26,14 +26,13 @@ subroutine RT_driver(en,k,q)
  use YPP,            ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
 &                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
-&                         Probe_path,Pump_path,N_probes,l_RT_occ_energy,&
-&                         l_RT_occ_time,l_RT_occ_2D_dos,l_RT_life_bands,l_RT_occ_bands
+&                         Probe_path,Pump_path,N_probes
  use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
- use fields,         ONLY:Efield,n_ext_fields
+ use fields,         ONLY:Efield
  use com,            ONLY:jobstr,error
  !
  implicit none
@@ -51,7 +50,6 @@ subroutine RT_driver(en,k,q)
  !
  ! Response Functions
  !====================
- !
  call RT_IO_J_and_P_paths( )
  !
  ! LOGICALS
@@ -65,6 +63,7 @@ subroutine RT_driver(en,k,q)
  l_RT_LRR_real_field= all((/&
 &   .not.any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="RES",&
 &   trim(Efield(i_Probe)%ef_name)=="SIN"/)),N_pumps==0, N_probes==1, X_order==1/) )
+ !
  l_RT_SHG_qssin     = all( (/ trim(Efield(i_Probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
  !
  l_RT_X_effective   = all((/any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="SIN"/)),X_order>=0/))
@@ -73,8 +72,12 @@ subroutine RT_driver(en,k,q)
  !
  if ( .not.any((/l_RT_LRR_real_field,l_RT_SHG_qssin,l_RT_X_effective/)) ) return
  !
- call RT_initialize()
+ ! Time Initialization
+ !====================
+ call RT_time_configuration_setup('CURRENT')
  !
+ ! Field-Dependent actions
+ !=========================
  if ( any((/l_RT_LRR_real_field,l_RT_SHG_qssin/)) ) then
    !
    ! Database
@@ -82,6 +85,7 @@ subroutine RT_driver(en,k,q)
    ! Search the database in JOBSTR,Pump_path and Probe_path
    !
    call RT_IO_J_and_P( )
+   !
    jobstr_save=jobstr
    if (.not.allocated(RT_J_t)) then
      jobstr=trim(Pump_path)
@@ -116,13 +120,17 @@ subroutine RT_driver(en,k,q)
      !
    else if ( l_RT_SHG_qssin ) then
      !
-     call RT_X_QSSIN(en)
+     ! DEBUG>
+     !call RT_X_QSSIN(en)
+     ! DEBUG<
      !
    endif
    !
  else if ( l_RT_X_effective ) then
    !
-   call RT_X_effective(en)
+   ! DEBUG>
+   !call RT_X_effective(en)
+   ! DEBUG<
    !
  endif
  !

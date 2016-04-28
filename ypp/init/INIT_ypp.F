@@ -48,7 +48,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT 
  use real_time,      ONLY:RT_bands
- use RT_control,     ONLY:OCC_T_range,OCC_deltaT
  use fields,         ONLY:n_ext_fields
 #endif
 #if defined _YPP_ELPH
@@ -119,13 +118,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  dos_E_steps=500
  WF_ref=0
  !
- !
- ! RT OCCUPATIONS
- !
-#if defined _YPP_RT
- OCC_T_range=0.
- OCC_deltaT=0.
-#endif
+ ! Real Time
  !
  l_RealTime=.FALSE.
  !
@@ -269,8 +262,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  !
- t_jump=0._SP
- !
  !REMOVE SYMMETRIES
  !
  E_field=0._SP
@@ -280,11 +271,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  !ANALIZE RESPONSE
  !
- X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
- X_rt%energy_steps   =200
- X_rt%energy_range(:)=(/0._SP,20./HA2EV/)
- X_rt%damp           ="NONE"
- X_rt%damp_factor    =0.
+ RT_conf%T_range(:)  =(/-FS2AUT,-FS2AUT/)
+ RT_conf%W_n_steps   =200
+ RT_conf%W_range(:)  =(/0._SP,20./HA2EV/)
  Probe_Keyword ="none"
  Pump_Keyword  ="none"
  X_order       =1
@@ -612,7 +601,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !             
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
-   call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
+   call initactivate(1,"TimeRange DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
  endif
  !
 #endif
@@ -635,7 +624,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_RealTime) then
    l_flag=l_RT_occ_2D_dos.or.l_RT_occ_time.or.l_RT_occ_energy.or.l_RT_occ_Bands.or.l_RT_abs
    if (l_flag) call INIT_RT_ctl_switch('G')
-   if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
+   if (l_flag) call initactivate(1,"TimeStep TimeRange")
    if (l_RT_occ_Bands.or.l_RT_life_Bands) call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_abs) call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
    if (l_RT_occ_time)   call initactivate(1,"OCCgroup")

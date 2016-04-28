@@ -79,7 +79,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use real_time,     ONLY:RT_bands
 #endif
 #if defined _SC || defined _RT
- use hamiltonian,   ONLY:B_mat_index,IP_h_bands
+ use hamiltonian,   ONLY:B_mat_index
  use collision,     ONLY:COLL_bands,FOCK_collisions,GW_NEQ_collisions,P_collisions,SEX_collisions
 #endif
 #if defined _SCALAPACK
@@ -89,7 +89,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use stderr,        ONLY:intc
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use IO_m,          ONLY:IO_and_Messaging_switch,io_COLLs,io_RESPONSE
- use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
+ use QP_m,          ONLY:QP_n_states,QP_nb,QP_n_G_bands
  use wave_func,     ONLY:states_to_load
  use com,           ONLY:warning
  implicit none
@@ -102,7 +102,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
- integer              :: i_k,i_k_bz,X_type,i_qp,ib1,ib2,i_field,nb_mat
+ integer              :: i_k,i_k_bz,X_type,ib1,ib2,i_field,nb_mat
  logical              :: reset_all
  character(10)        :: WHAT,WHATp
  !

@@ -22,15 +22,15 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_sign)
+subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,USE_FFT,I_sign)
  !
  ! Here I calculate:
  !
  ! mode="T2W"
  !
- ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i w t) = exp^(i w T0) * FT[ft]   (USE_FFT=.TRUE.)
+ ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i w t) =  FT[ft]   (USE_FFT=.TRUE.)
  !
- ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i I_sign w t) = exp^(i I_sign w T0) * FT[ft]   (USE_FFT=.FALSE.)
+ ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i I_sign w t) =  FT[ft]   (USE_FFT=.FALSE.)
  !
  ! This definition follows from the fact that ft(t) is defined in input only for t>0.
  !
@@ -38,13 +38,13 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_
  !
  ! ft(t) = \int fw(w) exp^(-i w t) 
  !
+ use YPP,            ONLY:RT_conf,RT_time
  use pars,           ONLY:SP,DP,cI
  use LIVE_t,         ONLY:live_timing
  implicit none
  !
  integer,     intent(in)   :: nw,nt,I_sign
  logical,     intent(in)   :: USE_FFT
- real(SP),    intent(in)   :: dt,T0
  complex(SP), intent(in)   :: freqs(nw)
  character(*),intent(in)   :: mode
  character(*),intent(in)   :: title
@@ -55,7 +55,6 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_
  !
  integer    :: i_w,i_t,fft_sign
  integer(8) :: fftw_plan
- real(SP)   :: Time_reached
  logical    :: l_live_timing
  !
  l_live_timing=len_trim(title)>0
@@ -85,19 +84,14 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_
      !
      if (l_live_timing) call live_timing('FT'//title//':',nw)
      do i_w = 1, nw
-       do i_t = 1, nt
-         Time_reached = (i_t-1)*dt
-         fw(i_w) = fw(i_w)+ft(i_t)*exp(cI*I_sign*freqs(i_w)*Time_reached)
+       do i_t = 1, RT_conf%T_n_steps-1
+         fw(i_w) = fw(i_w)+ft(i_t)*exp(cI*I_sign*freqs(i_w)*RT_time(i_t))*(RT_time(i_t+1)-RT_time(i_t))
        enddo
        if (l_live_timing) call live_timing(steps=1)
      enddo
      if (l_live_timing) call live_timing()
      !
    endif
-   !
-   do i_w = 1, nw
-     fw(i_w)=fw(i_w)*dt*exp(cI*freqs(i_w)*T0) 
-   enddo
    !
  endif
  !
@@ -109,9 +103,8 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_
    !
    if (l_live_timing) call live_timing('FT'//title//':',nt)
    do i_t = 1, nt
-     Time_reached = (i_t-1)*dt       
      do i_w = 1, nw
-       ft(i_t) = ft(i_t)+fw(i_w)*(freqs(2)-freqs(1))*exp(-cI*freqs(i_w)*Time_reached)
+       ft(i_t) = ft(i_t)+fw(i_w)*(freqs(2)-freqs(1))*exp(-cI*freqs(i_w)*RT_time(i_t))
      enddo
      if (l_live_timing) call live_timing(steps=1)
    enddo

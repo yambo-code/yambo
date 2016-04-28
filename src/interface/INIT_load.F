@@ -70,13 +70,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        SC_rho_threshold,SC_cycle_mixing
 #endif
 #if defined _RT
- use RT_control,    ONLY:RT_IO_time
+ use RT_control,    ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,Eh_pumped_pair_BZ_reagions,    &
 &                        NE_tot_time,RT_life_interp_times_SAVE,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_deltaE,RT_scatt_tresh, &
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,NE_time_step_update_jump,&
-&                        Gr_kind,two_alpha,DbGd_EE_percent,NE_initial_time_step_update
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,NE_time_step_update_jump_SAVE,&
+&                        Gr_kind,two_alpha,DbGd_EE_percent,NE_initial_time_step_update,NE_step_update_treshold
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -112,9 +112,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  type(X_t)     ::X(4)
  type(w_samp)  ::Xw(4)
  !
+ ! Work Space
+ !
 #if defined _RT
  integer  :: i_field,i_region
 #endif
+ real(SP) :: IO_times(3)
  !
  !===============
  ! GPL RUNLEVELS
@@ -393,12 +396,19 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'RTstep',      '[RT] Real Time step length',RT_step,unit=Time_unit(3))
  call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
  call it(defs,'dTupdateTime','[RT] Initial Time for deltaT update (active only if non-zero) ',NE_initial_time_step_update,&
-&                            unit=Time_unit(2),verb_level=V_real_time)
- call it(defs,'dTupdateJump','[RT] Time betweem twp deltaT updates',  NE_time_step_update_jump,&
-&                            unit=Time_unit(2),verb_level=V_real_time)
+&                            unit=Time_unit(1),verb_level=V_real_time)
+ call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump_SAVE,&
+&                            unit=Time_unit(1),verb_level=V_real_time)
+ call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                            Integrator_name)
- call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
+ !
+ IO_times=(/JPC_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
+ call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
+ JPC_RT_IO_t%INTERVAL_time_SAVE   =IO_times(1)
+ GF_RT_IO_t%INTERVAL_time_SAVE    =IO_times(2)
+ OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)
+ !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
  ! Correlation
@@ -616,8 +626,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _RT
    !
    subroutine Afield(i_field)
-     character(10):: name
-     integer      :: i_field
+     use parser_m, ONLY  : parser
+     character(10)      :: name
+     integer            :: i_field
+     logical            :: is_def
      !
      name='Field'//trim(intc(i_field))
      !
@@ -640,7 +652,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if(trim(Efield(i_field)%ef_name)/="none".and.initmode==4) n_ext_fields=n_ext_fields+1
+     if (initmode==4) then
+       call parser(trim(name)//'_kind',is_def)
+       if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
+     endif
      !
    end subroutine
    !

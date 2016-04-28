@@ -24,7 +24,7 @@
 subroutine XCo_driver(E,k,Xk,q)
  !
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time,l_gw0
- use pars,          ONLY:schlen,RZERO,SP
+ use pars,          ONLY:schlen,rZERO,SP
  use com,           ONLY:msg
  use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol,spin,E_reset,E_duplicate

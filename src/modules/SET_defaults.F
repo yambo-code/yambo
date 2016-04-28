@@ -28,7 +28,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,schlen
- use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
+ use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
@@ -91,10 +91,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_control, ONLY:RT_IO_time
+ use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_times,      &
-&                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
-&                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
+&                     Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
+&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
 &                     RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,  &
 &                     Eh_pumped_pair_deltaE,Eh_pumped_pair_BZ_width,Eh_pumped_pair_BZ_reagions,&
@@ -290,7 +290,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  pp_n_l_times_proj_max=0
  pp_kbv_dim=0
  !
- !drivers
+ ! Drivers
  !
  list_dbs=.FALSE.
  infile_editing=.FALSE.
@@ -586,8 +586,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Integrator_name='RK2'
  RAD_LifeTime = 0._SP
  Phase_LifeTime = 0._SP
- RT_is_dephased=.FALSE.
- l_RT_induced_field=.FALSE.
  NE_MEM_treshold=0.
  RT_nk=0
  RT_eh_en=0._SP
@@ -627,9 +625,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! RT_ctl
  !
- RT_IO_time(1)=2._SP*FS2AUT
- RT_IO_time(2)=5._SP*FS2AUT
- RT_IO_time(3)=1._SP*FS2AUT
+ JPC_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
+ GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
  !
 #endif
  !

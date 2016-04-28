@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,S_z,S_sq)
+subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HA2EV
- use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol
+ use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol,E_SOC_nbands
  use stderr,        ONLY:intc
  use BS,            ONLY:BSS_description,BSS_n_descs,BSS_eh_table,BS_bands,BS_H_dim
  use com,           ONLY:msg,of_open_close
@@ -35,26 +35,28 @@ subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,S_z,S_sq)
  !
  implicit none 
  !
- complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
  type(bz_samp)      :: Xk
  type(levels)       :: E
+ complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
+ real(SP),pointer   :: BS_E_SOC_corr(:,:)
  real(SP),optional  :: S_z(BS_H_dim)
  real(SP),optional  :: S_sq(BS_H_dim)
  !
  ! Work Space
  !
- integer            :: j1,j2,ia,is,i_mode,ikbz,ikibz,iv,ic,i_spin
+ integer            :: j1,j2,ia,is,i_mode,ikbz,ikibz,iv,ic,i_spin,n_elements
  integer            :: S_indx(BS_H_dim)
  real(SP)           :: Residuals(BS_H_dim),v2sort(BS_H_dim),Rmax,rv(10)
  character(schlen)  :: titles(7),ch_dummy(2)
- logical            :: write_widths,write_spin
+ logical            :: write_widths,write_spin,write_soc_corr
  !
  ! Excitonc amplitude
  !
  character(3), parameter:: R_normalize="yes"
  !
- write_spin=present(S_sq)
- write_widths=any(abs(aimag(BS_E))>1.E-5)
+ write_spin    = present(S_sq)
+ write_widths  = any(abs(aimag(BS_E))>1.E-5)
+ write_soc_corr= (E_SOC_nbands/=0)
  !
  if (     write_widths) call section('=','Reporting sorted Energies, Strengths and widths')
  if (.not.write_widths) call section('=','Reporting sorted Energies and Strengths')
@@ -83,19 +85,25 @@ subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,S_z,S_sq)
    enddo
    call msg('o sort','#','',INDENT=0) 
    !
+   n_elements=3
    titles(1)='E [ev]'
    titles(2)='Strength'
    titles(3)='Index'
    if (write_widths) then
+     n_elements=n_elements+1
      titles(4)='W [meV]'
-     call msg('o sort','#',titles(:4),INDENT=0,USE_TABS=.true.)
-   else if (write_spin) then
-     titles(4)='S_z'
-     titles(5)='S_square'
-     call msg('o sort','#',titles(:5),INDENT=0,USE_TABS=.true.)
-   else
-     call msg('o sort','#',titles(:3),INDENT=0,USE_TABS=.true.)
    endif
+   if (write_spin) then
+     n_elements=n_elements+2
+     titles(n_elements-1)='S_z'
+     titles(n_elements  )='S_square'
+   endif
+   if (write_soc_corr) then
+     n_elements=n_elements+2
+     titles(n_elements-1)='dE(1)[meV]'
+     titles(n_elements  )='dE(2)[meV]'
+   endif
+   call msg('o sort','#',titles(:n_elements),INDENT=0,USE_TABS=.true.)
    call msg('o sort','#','',INDENT=0)
    !
    Residuals(:) = BS_R(:)*conjg(BS_R(:))
@@ -118,15 +126,21 @@ subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,S_z,S_sq)
      !
      rv(:3)=(/real(BS_E(j2),SP)*HA2EV,Residuals(j2),real(j2,SP)/)
      !
+     n_elements=3
      if (write_widths) then
-       rv(4)=abs(aimag(BS_E(j2)))*HA2EV*1000._SP
-       call msg('o sort','',rv(:4),INDENT=-2,USE_TABS=.TRUE.)
-     else if (write_spin) then
-       rv(4:5)=(/S_z(j2),S_sq(j2)/)
-       call msg('o sort','',rv(:5),INDENT=-2,USE_TABS=.TRUE.)
-     else
-       call msg('o sort','',rv(:3),INDENT=-2,USE_TABS=.TRUE.)
+       n_elements=n_elements+1
+       rv(n_elements)=abs(aimag(BS_E(j2)))*HA2EV*1000._SP
      endif
+     if (write_spin) then
+       n_elements=n_elements+2
+       rv(n_elements-1:n_elements)=(/S_z(j2),S_sq(j2)/)
+     endif
+     if (write_soc_corr) then
+       n_elements=n_elements+2
+       rv(n_elements-1:n_elements)=(/BS_E_SOC_corr(1,j2),BS_E_SOC_corr(2,j2)/)*HA2EV*1000._SP
+     endif
+     !
+     call msg('o sort','',rv(:n_elements),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
    !

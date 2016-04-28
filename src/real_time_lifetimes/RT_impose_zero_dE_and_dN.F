@@ -26,7 +26,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
 #if defined _BLUEGENE || _PGI
  use ieee_arithmetic
 #endif
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,DP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
@@ -46,10 +46,10 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  ! Work Space
  !
- real(SP), parameter :: cut_off=0.1_SP  ! 1 = 100%
+ real(DP), parameter :: cut_off=0.1_SP  ! 1 = 100%
  !
  integer      :: i1,ib,ik,ik_rim,iE_rim,iref
- real(SP)     :: f_E,f_H,df,k_weight,En,Hole_fac,Elec_fac,prefactor(2),&
+ real(DP)     :: f_E,f_H,df,k_weight,En,Hole_fac,Elec_fac,prefactor(2),&
 &                dN_dT_h_v,dN_dT_h_c,dN_dT_e_v,dN_dT_e_c,dE_dT_h_v,dE_dT_h_c,dE_dT_e_v,dE_dT_e_c,&
 &                dN_v,dN_c,dE_v,dE_c,dN_e,dN_h,dE_e,dE_h,prefactor_to_use,GAMMA_h,GAMMA_e
  !
@@ -80,40 +80,40 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  ! Calculate partial contributions of dN/dT and dE/dT
  !====================================================
  !
- dN_dT_h_v=0._SP
- dE_dT_h_v=0._SP
- dN_dT_e_v=0._SP
- dE_dT_e_v=0._SP
- dN_dT_h_c=0._SP
- dE_dT_h_c=0._SP
- dN_dT_e_c=0._SP
- dE_dT_e_c=0._SP
+ dN_dT_h_v=0._DP
+ dE_dT_h_v=0._DP
+ dN_dT_e_v=0._DP
+ dE_dT_e_v=0._DP
+ dN_dT_h_c=0._DP
+ dE_dT_h_c=0._DP
+ dN_dT_e_c=0._DP
+ dE_dT_e_c=0._DP
  !
  do ib=RT_bands(1),RT_bands(2)
    !
    do ik=1,k%nibz
      !
-     k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
+     k_weight=real(k%weights(ik),DP)/real(RT_Nk_ibz(ik),DP)
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
        iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        !
        if(l_initial_equilibrium) then
-         f_E=RT_E_occupations_reference(ib,ik_rim)
-         f_H=RT_H_occupations_reference(ib,ik_rim)
+         f_E=real(RT_E_occupations_reference(ib,ik_rim),DP)
+         f_H=real(RT_H_occupations_reference(ib,ik_rim),DP)
        else
-         f_E=RT_E_occupations(ib,ik_rim)
-         f_H=RT_H_occupations(ib,ik_rim)
+         f_E=real(RT_E_occupations(ib,ik_rim),DP)
+         f_H=real(RT_H_occupations(ib,ik_rim),DP)
        endif 
        !
-       df=RT_delta0_occupations(ib,ik_rim) 
+       df=real(RT_delta0_occupations(ib,ik_rim),DP)
        !
-       Hole_fac=Hole_lifetime(ib,ik_rim)    *f_H-REF_lifetime(ib,ik_rim,iref  )*df
-       Elec_fac=Electron_lifetime(ib,ik_rim)*f_E+REF_lifetime(ib,ik_rim,iref+1)*df
+       Hole_fac=real(Hole_lifetime(ib,ik_rim)    ,DP)*f_H-real(REF_lifetime(ib,ik_rim,iref  ),DP)*df
+       Elec_fac=real(Electron_lifetime(ib,ik_rim),DP)*f_E+real(REF_lifetime(ib,ik_rim,iref+1),DP)*df
        !
-       if(.not.l_RT_uses_E_DbGd) En=E%E(ib,ik,1)
-       if(     l_RT_uses_E_DbGd) En=E%E_DbGd(ib,iE_rim,1) 
+       if(.not.l_RT_uses_E_DbGd) En=real(E%E(ib,ik,1)         ,DP)
+       if(     l_RT_uses_E_DbGd) En=real(E%E_DbGd(ib,iE_rim,1),DP) 
        !
        if (ib<=E%nbf) then
          !
@@ -177,12 +177,12 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  do i1=1,2
    !
 #if defined _BLUEGENE || _PGI
-   if( ieee_is_nan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
-     prefactor(i1)=0._SP
+   if( ieee_is_nan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._DP ) then
+     prefactor(i1)=0._DP
    endif
 #else
-   if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
-     prefactor(i1)=0._SP
+   if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._DP ) then
+     prefactor(i1)=0._DP
    endif
 #endif
    !
@@ -197,18 +197,18 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        prefactor_to_use=prefactor(1)
        if (ib>E%nbf) prefactor_to_use=prefactor(2)
        !
-       GAMMA_h=Hole_lifetime(ib,ik_rim)    +REF_lifetime(ib,ik_rim,iref)
-       GAMMA_e=Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,iref+1)
+       GAMMA_h=real(Hole_lifetime(ib,ik_rim)    ,DP)+real(REF_lifetime(ib,ik_rim,iref)  ,DP)
+       GAMMA_e=real(Electron_lifetime(ib,ik_rim),DP)+real(REF_lifetime(ib,ik_rim,iref+1),DP)
        !
-       GAMMA_h=GAMMA_h*(1._SP+prefactor_to_use)
-       GAMMA_e=GAMMA_e*(1._SP-prefactor_to_use)
+       GAMMA_h=GAMMA_h*(1._DP+prefactor_to_use)
+       GAMMA_e=GAMMA_e*(1._DP-prefactor_to_use)
        !
        if (l_initial_equilibrium) then
-         REF_lifetime(ib,ik_rim,iref  )= GAMMA_h
-         REF_lifetime(ib,ik_rim,iref+1)= GAMMA_e
+         REF_lifetime(ib,ik_rim,iref  )= real(GAMMA_h,SP)
+         REF_lifetime(ib,ik_rim,iref+1)= real(GAMMA_e,SP)
        else
-         Hole_lifetime(ib,ik_rim)    =GAMMA_h-REF_lifetime(ib,ik_rim,iref)
-         Electron_lifetime(ib,ik_rim)=GAMMA_e-REF_lifetime(ib,ik_rim,iref+1)
+         Hole_lifetime(ib,ik_rim)    =real(GAMMA_h,SP)-REF_lifetime(ib,ik_rim,iref)
+         Electron_lifetime(ib,ik_rim)=real(GAMMA_e,SP)-REF_lifetime(ib,ik_rim,iref+1)
        endif
        !
      enddo
@@ -218,9 +218,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  ! Save values for RT_output
  !===========================
  !
- if(trim(Scatt_kind)=="elel" )     EE_prefactor    =prefactor
- if(trim(Scatt_kind)=="elph1")     EP_prefactor    =prefactor
- if(trim(Scatt_kind)=="elph2")     EP_abs_prefactor=prefactor
- if(trim(Scatt_kind)=="radiative") RAD_prefactor   =prefactor
+ if(trim(Scatt_kind)=="elel" )     EE_prefactor    =real(prefactor,SP)
+ if(trim(Scatt_kind)=="elph1")     EP_prefactor    =real(prefactor,SP)
+ if(trim(Scatt_kind)=="elph2")     EP_abs_prefactor=real(prefactor,SP)
+ if(trim(Scatt_kind)=="radiative") RAD_prefactor   =real(prefactor,SP)
  !
 end subroutine RT_impose_zero_dE_and_dN

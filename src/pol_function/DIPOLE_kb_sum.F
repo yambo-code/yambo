@@ -25,7 +25,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_kb_sum(icfft,ivfft,rho,kbv,pp_kind)
+subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  !
  use pars,          ONLY:SP,cZERO
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp,V_by_V_plus_V_omp
@@ -35,7 +35,7 @@ subroutine Dipole_kb_sum(icfft,ivfft,rho,kbv,pp_kind)
  !
  implicit none
  !
- integer    :: ivfft(n_spinor),icfft(n_spinor),pp_kind
+ integer    :: ivfft(n_spinor),icfft(n_spinor)
  complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim,4,n_spinor)
  ! 
  ! Work Space
@@ -50,7 +50,6 @@ subroutine Dipole_kb_sum(icfft,ivfft,rho,kbv,pp_kind)
  do j_spinor=1,n_spinor
    do i_spinor=1,n_spinor
      !
-     !if(i_spinor/=j_spinor .and. pp_kind==1) cycle
      if(i_spinor/=j_spinor) cycle
      !
      do i1=1,pp_kbv_dim

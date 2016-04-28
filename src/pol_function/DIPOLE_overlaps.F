@@ -28,7 +28,7 @@ subroutine DIPOLE_overlaps(Xk,X)
  use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,ng_closed,ng_vec
  use vec_operate,       ONLY:k_periodic_idx
  use X_m,               ONLY:X_t,DIP_S
- use electrons,         ONLY:levels,n_spinor,n_sp_pol,n_spin
+ use electrons,         ONLY:n_spinor,n_sp_pol,n_spin
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng
  use IO_m,              ONLY:IO_and_Messaging_switch

@@ -397,9 +397,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        ! Update dipoles
        !
        ! Davide: this should be replaced by the use of covariant dipoles ...
-       call DIPOLE_rotate(SC_R,E,Xk,X(2), 1)
+       call DIPOLE_rotate(SC_R,E,X(2), 1)
        call DIPOLE_project_along_q(Xk,X(2),X(2)%q0)
-       call DIPOLE_rotate(SC_R,E,Xk,X(2),-1)
+       call DIPOLE_rotate(SC_R,E,X(2),-1)
        !
        ! Recalcolate Xo and X  
        !

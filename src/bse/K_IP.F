@@ -100,7 +100,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !...Drude
  !DEBUG>
  ! Temporarly disabled
- !call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF,'c')
+ !call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
  !DEBUG<
  !
  ! WF distribution

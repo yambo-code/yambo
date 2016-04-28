@@ -34,7 +34,7 @@ subroutine G_shells_finder()
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
- use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,IO_and_Messaging_switch
+ use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero
  use interfaces,   ONLY:PARALLEL_index
  use parallel_m,   ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset

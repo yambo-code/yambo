@@ -31,18 +31,13 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  !  v_s(r) = \sum_k \sum_n phi^*_{n,k}(r)*U_x^{n,k}(r)
  !
  ! 
- use pars,            ONLY:SP,DP,pi,schlen
- use D_lattice,       ONLY:i_time_rev,nsym
- use electrons,       ONLY:levels,n_met_bands,spin_occ
+ use pars,            ONLY:SP,DP,schlen
+ use D_lattice,       ONLY:nsym
+ use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
  use FFT_m,           ONLY:fft_size,fft_rot_r
- use collision,       ONLY:elemental_collision,elemental_collision_free 
- use memory_m,        ONLY:mem_est
- use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index
+ use collision,       ONLY:elemental_collision
  use wave_func,       ONLY:WF
- use LIVE_t,          ONLY:live_timing
- use stderr,          ONLY:intc
  use SC,              ONLY:l_oep_EWeight
  !
  ! I/O
@@ -55,16 +50,11 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  !
  ! Work space
  !
- type(elemental_collision)::isc
- type(PP_indexes)         ::px
- integer          ::iv1,iv2,ir,ig,i1,ikbz,ik,iq,ifft,offt,tr_syms,os,is,iGo,qs
+ integer          ::iv1,ig,i1,ik,ifft,os,is
  real(DP)         ::Vslt_DP(fft_size)
  complex(DP)      ::f(fft_size)
  real(SP)         ::EWeight
  character(schlen)::ch
- logical          ::lostr, listr     
- !
- !
  !
  EWeight = 1._SP 
  Vslt_DP= 0._DP

@@ -29,7 +29,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:error,msg,of_open_close,file_exists,jobstr,core_io_path
- use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S
+ use R_lattice,     ONLY:nqbz,bz_samp,qindx_S
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing

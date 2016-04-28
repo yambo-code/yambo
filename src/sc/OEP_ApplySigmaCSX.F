@@ -45,7 +45,6 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use R_lattice,       ONLY:bz_samp,g_rot,qindx_S,nkibz,G_m_G
  use frequency,       ONLY:w_samp
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
- use QP_m,            ONLY:QP_ng_Sx
  use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,elemental_collision_free
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -54,7 +53,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:it_now
- use IO_m,            ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL,IO_and_Messaging_switch
+ use IO_m,            ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
  use X_m,             ONLY:X_alloc,X_mat,X_t
  use com,             ONLY:error
  !
@@ -71,12 +70,11 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  type(elemental_collision) ::isc
  type(PP_indexes)          ::px
- integer          ::iv1,iv2,ir,ig1,ig2,i1,i2,ikbz,ik,iq,ifft,offt,os,is,iGo
+ integer          ::iv1,iv2,ir,ig1,ig2,i1,i2,ik,iq,ifft,offt,os,is,iGo
  integer          ::io_err,alloc_err,ID,iqs,iqibz
  character(schlen)::ch
- logical          ::lostr, listr, PPaR_is_TR_rotated     
- complex(DP),allocatable ::u(:),rhotw_rs(:),u_rs(:),local_u(:),Vcoh(:),Vcoh_rs(:)
- real(SP),    allocatable ::PPaP(:,:)
+ logical          ::lostr, PPaR_is_TR_rotated     
+ complex(DP),allocatable  ::u(:),rhotw_rs(:),u_rs(:),local_u(:),Vcoh(:),Vcoh_rs(:)
  complex(SP), allocatable ::PPaR(:,:),PPaR_ws(:,:)
  integer, external::io_X
  !

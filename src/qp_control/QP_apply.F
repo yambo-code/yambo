@@ -54,16 +54,16 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
-&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
+&                        QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
  use com,           ONLY:msg,depth
- use electrons,     ONLY:levels,E_reset,n_sp_pol,E_duplicate,&
-&                            BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset,&
+&                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
  use parser_m,      ONLY:parser
  use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
-&                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
-&                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
+&                        K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
+&                        X_kind,X_xc_functional,QP_DB_kind,SE_NONE
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  use QP_CTL_m,      ONLY:QP_ctl_t,reset_QP_ctl
  !
@@ -103,7 +103,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    call reset_QP_ctl(QP_ctl_from_DB(i_spin))
    call reset_QP_ctl(QP_ctl_input_or_impose(i_spin))
  enddo
- call E_Reset(Fermi_en)
+ call E_reset(Fermi_en)
  !
  ! If I'm not imposing a fit (QP_ctl_impose) of QP (qp_impose)
  ! return if the field are not present in the input file
@@ -307,7 +307,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! CLEAN
  !
  call QP_reset(qp)
- call E_Reset(Fermi_en)
+ call E_reset(Fermi_en)
  !
  if (.not.QP_ctl_applied) return
  !

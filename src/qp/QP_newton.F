@@ -39,7 +39,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  use drivers,       ONLY:l_elph_corr
 #endif
 #if defined _QED
- use drivers,       ONLY:l_elphoton_corr,l_life
+ use drivers,       ONLY:l_elphoton_corr
 #endif
  implicit none
  type(levels) ::en,Xen

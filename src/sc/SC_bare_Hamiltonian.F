@@ -23,7 +23,7 @@
 !
 subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
@@ -37,7 +37,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use wave_func,      ONLY:WF
 #if defined _RT
  use drivers,        ONLY:l_real_time
- use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,G_lesser,RT_ibz_coo
+ use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc
 #endif
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic

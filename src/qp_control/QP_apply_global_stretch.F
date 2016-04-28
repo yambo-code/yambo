@@ -27,7 +27,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
  !
  ! When apply_anyway=.TRUE. the qp_done array is not used and both corrections are applied anywhere.
  !
- use pars,          ONLY:SP,lchlen,rZero
+ use pars,          ONLY:SP,lchlen,rZERO
  use units,         ONLY:HA2EV,HBAR_eVfs
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg

@@ -32,7 +32,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use X_m,             ONLY:X_t,DIP_projected
  use RT_control,      ONLY:RT_output,RT_apply
  use IO_m,            ONLY:io_DIP
- use YPP,             ONLY:RT_conf
+ use YPP_real_time,   ONLY:RT_conf
  use X_m,             ONLY:Epsilon_ii
  use BS,              ONLY:BSS_eh_table,BS_mat,BS_bands
  use frequency,       ONLY:w_samp

@@ -28,7 +28,8 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,n_spin,n_spinor
- use YPP,            ONLY:dos_broadening,dos_E_range,dos_E_steps,RT_time
+ use YPP,            ONLY:dos_broadening,dos_E_range,dos_E_steps
+ use YPP_real_time,  ONLY:RT_time
  use com,            ONLY:msg,error
  use functions,      ONLY:Fermi_fnc_derivative
  use LIVE_t,         ONLY:live_timing

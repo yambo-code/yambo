@@ -24,7 +24,7 @@
 subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period,use_LRR)
  !
  use pars,            ONLY:SP,cI
- use YPP,             ONLY:i_t_start,X_order
+ use YPP_real_time,   ONLY:i_t_start,X_order
  use real_time,       ONLY:RT_step,NE_steps
  use interfaces,      ONLY:MATRIX_driver
  use matrix_operate,  ONLY:INV

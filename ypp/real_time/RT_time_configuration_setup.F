@@ -24,7 +24,7 @@
 subroutine RT_time_configuration_setup(what)
  !
  use units,          ONLY:AUT2FS,pi,HA2EV
- use YPP,            ONLY:RT_conf,RT_time
+ use YPP_real_time,  ONLY:RT_conf,RT_time
  use pars,           ONLY:SP
  use com,            ONLY:msg
  use real_time,      ONLY:RT_step

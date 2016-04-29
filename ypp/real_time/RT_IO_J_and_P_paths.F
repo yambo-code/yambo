@@ -24,7 +24,7 @@
 subroutine RT_IO_J_and_P_paths(en)
  !
  use pars,           ONLY:lchlen
- use YPP,            ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_IO_J_and_P,&
+ use YPP_real_time,  ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_IO_J_and_P,&
 &                         N_pumps,N_probes,N_probe_frequencies
  use com,            ONLY:core_io_path,jobstr,file_exists,msg,error,warning
  use IO_m,           ONLY:NONE

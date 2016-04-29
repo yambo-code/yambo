@@ -33,7 +33,7 @@ integer function ELPH_databases(k,E,q)
  use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
- use YPP,                 ONLY:ph_freqs_file,l_gkkp_expand,ph_modes_file
+ use YPP_ELPH,            ONLY:ph_freqs_file,l_gkkp_expand,ph_modes_file
  use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
  implicit none
@@ -283,7 +283,7 @@ integer function ELPH_databases(k,E,q)
 &                           io_disconnect,io_file
    use ELPH,           ONLY:ph_modes,elph_nb,E_k_plus_q,&
 &                           ph_freqs_sq,elph_gkkp,elph_DW,pol_vector
-   use YPP,            ONLY:elph_dbs_path
+   use YPP_ELPH,       ONLY:elph_dbs_path
    use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
    use zeros,          ONLY:k_iku_zero,k_rlu_zero
    use electrons,      ONLY:n_bands

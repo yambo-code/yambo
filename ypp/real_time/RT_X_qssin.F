@@ -23,7 +23,7 @@
 !
 subroutine RT_X_qssin
  !
- use YPP,            ONLY:RT_P_t,RT_conf,Use_FFT,i_t_start,i_t_end
+ use YPP_real_time,  ONLY:RT_P_t,RT_conf,Use_FFT,i_t_start,i_t_end
  use pars,           ONLY:SP,DP,pi,schlen
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use memory_m,       ONLY:mem_est

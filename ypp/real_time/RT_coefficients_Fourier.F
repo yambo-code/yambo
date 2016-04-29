@@ -26,7 +26,7 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,X_err,deltaW)
  ! Here I calculate the coefficients of a given Fourier series
  !
  use pars,           ONLY:SP,cI,pi
- use YPP,            ONLY:i_t_start,RT_conf
+ use YPP_real_time,  ONLY:i_t_start,RT_conf
  use fields,         ONLY:EtoT
  use real_time,      ONLY:RT_step
  implicit none

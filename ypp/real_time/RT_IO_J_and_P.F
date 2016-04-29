@@ -23,7 +23,7 @@
 !
 subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP,            ONLY:RT_J_t,RT_P_t,RT_conf,RT_time
+ use YPP_real_time,  ONLY:RT_J_t,RT_P_t,RT_conf,RT_time
  use pars,           ONLY:DP,SP,schlen
  use R_lattice,      ONLY:nkibz
  use memory_m,       ONLY:mem_est

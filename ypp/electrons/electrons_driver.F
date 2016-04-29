@@ -35,8 +35,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,l_RT_occ_Bands,l_RT_life_Bands,&
-&                         l_bands,l_current,current_dir,plot_is_1D
+&                         plot_title,l_dos,l_bands,l_current,current_dir,plot_is_1D
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -47,8 +46,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
  use R_lattice,      ONLY:qindx_S
 #endif
+#if defined _YPP_RT
+ use YPP_real_time,  ONLY:l_RT_occ_Bands,l_RT_life_Bands
+#endif
 #if defined _YPP_ELPH
- use YPP,            ONLY:elph_residual_treshold
+ use YPP_ELPH,       ONLY:elph_residual_treshold
  use ELPH,           ONLY:elph_Ham_bands
  use com,            ONLY:jobstr,file_exists
  use R_lattice,      ONLY:nkibz
@@ -114,10 +116,13 @@ subroutine electrons_driver(Xk,Xen,Xq)
  nb_to_load=(/1,Xen%nbm/)
  nkpt_to_load=(/1,Xk%nibz/)
  !
- flag=any((/l_sp_wf,l_bands,l_RT_occ_Bands,l_RT_life_Bands/))
+ flag=any((/l_sp_wf,l_bands/))
  !===
 #if defined _YPP_MAGNETIC
  if (.not.flag) flag=any((/l_angular_momentum,l_position/))
+#endif
+#if defined _YPP_RT
+ if (.not.flag) flag=l_RT_occ_Bands.or.l_RT_life_Bands
 #endif
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential

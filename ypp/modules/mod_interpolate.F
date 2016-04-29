@@ -81,6 +81,18 @@ module interpolate
      integer,       intent(in)            :: ID
    end subroutine bz_interpolation
    !
+   subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_k,BANDS_range,bands_output)
+     use pars,       ONLY:SP
+     use electrons,  ONLY:levels
+     use R_lattice,  ONLY:bz_samp
+     type(bz_samp), intent(in)  :: Xk
+     type(levels),  intent(in)  :: Xen
+     integer      , intent(in)  :: BANDS_range(2)
+     integer      , intent(out) :: ID_interp
+     type(bz_samp), intent(out) :: USER_K,CIRCUIT_K,INTERP_K
+     real(SP)     , pointer     :: bands_output(:,:,:)
+   end subroutine electrons_bands_interpolate
+   !
  end interface  
  !  
  contains

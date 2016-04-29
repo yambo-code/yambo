@@ -38,6 +38,12 @@ subroutine ypp_INIT_load(defs)
  use surface_geometry,     ONLY: init_surface
  use eels_detector,        ONLY: init_detector
 #endif
+#if defined _YPP_RT
+ use YPP_real_time
+#endif
+#if defined _YPP_ELPH
+ use YPP_ELPH
+#endif
  !
  implicit none
  !

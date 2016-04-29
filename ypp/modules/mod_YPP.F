@@ -118,23 +118,6 @@ module YPP
  real(SP)     ::WF_multiplier   
  character(schlen) ::state_ctl 
  !
- ! EL-PH
- !
- logical :: l_gkkp
- logical :: l_gkkp_expand
- logical :: l_phonons
- logical :: l_eliashberg
- logical :: l_atomic_amplitude
- integer :: elph_steps
- real(SP):: elph_gamma_broad
- real(SP):: ph_broad
- real(SP):: elph_Ef
- real(SP):: elph_E_max
- real(SP):: elph_residual_treshold = 0.
- character(schlen) :: elph_dbs_path
- character(schlen) :: ph_freqs_file
- character(schlen) :: ph_modes_file
- !
  ! Wannier interface
  !
  logical           :: l_wannier
@@ -192,22 +175,9 @@ module YPP
  real(SP)          :: qdir(3)
  integer           :: idir
  !
- ! RT, merge QP DBs
- !
- real(SP) :: Z_input
- !
  ! SC
  !
  logical  :: l_mean_potential
- !
- ! RT
- !
- logical  :: l_RealTime
- !
- ! (RT) BANDS
- !
- logical  :: l_RT_occ_Bands
- logical  :: l_RT_life_Bands
  !
  ! Wannier bands
  !
@@ -216,64 +186,11 @@ module YPP
  integer           :: wannier_bands(2)   ! Bands Range
  integer           :: ord_dgrid_ipol     ! order of interpolation using double grid
  !
- ! (RT) Occupations
- !
- logical     :: l_RT_occ_time
- logical     :: l_RT_occ_energy
- logical     :: l_RT_occ_2D_dos
- !
  ! Reduce Symmetries
  !
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
- !
- ! (RT) Retarded Green's functions
- !
- integer  :: Ret_GF_bands(2)      ! Bands Range
- real(SP) :: Gr_E_step
- real(SP) :: GF_T_step
- !
- ! (RT) optics
- !
- logical  :: Use_FFT
- logical  :: l_skip_pol_and_curr_IO
- logical  :: l_force_min_damp
- logical  :: l_RT_X
- logical  :: l_RT_abs
- logical  :: l_RT_X_inversion
- integer  :: N_probes
- integer  :: N_pumps
- integer  :: N_probe_frequencies
- integer  :: X_order
- character(schlen) :: Probe_Keyword
- character(schlen) :: Pump_Keyword
- integer, parameter:: max_n_of_paths=10000
- character(schlen) :: Pump_path
- character(schlen) :: Probe_path(max_n_of_paths)
- complex(DP),    allocatable :: RT_J_t(:,:)
- complex(DP),    allocatable :: RT_P_t(:,:)
- !
- ! (RT) carriers
- !
- real(SP),allocatable     :: delta_f(:,:,:)
- !
- ! (RT) common
- !
- real(SP),allocatable     :: RT_time(:)
- !
- type RT_ctl
-   real(SP) :: delta_T           =0._SP   ! delta T
-   real(SP) :: T_range(2)        =0._SP   ! time windows for the transform
-   integer  :: T_n_steps         =0       ! number of steps in Time mesh
-   real(SP) :: W_range(2)        =0._SP   ! energy range 
-   integer  :: W_n_steps         =0       ! number of steps in energy mesh
-   real(SP) :: damp_factor       =0._SP   ! factor used in damping
-   real(SP) :: Field_damp_factor =0._SP   ! factor used deduced from the Field 
-   character(schlen) :: damping  ="NONE"  ! Damp type (none, lorentian or gaussian)
- end type RT_ctl
- !
- type(RT_ctl) :: RT_conf 
  !
  interface
    !
@@ -290,43 +207,6 @@ module YPP
      real(SP),optional  :: S_z(BS_H_dim)
      real(SP),optional  :: S_sq(BS_H_dim)
    end subroutine
-   !
-   subroutine  ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
-     use R_lattice,     ONLY:bz_samp
-     use electrons,     ONLY:levels
-     implicit none
-     type(bz_samp)      :: k,q,Xk
-     type(levels)       :: en,Xen
-     integer, optional  :: BS_E_degs(:)
-     integer, optional  :: lambda_s(:)
-     integer, optional  :: n_lambda
-   end subroutine
-   !
-   subroutine  RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
-     use electrons,     ONLY:levels
-     implicit none
-     logical, optional  :: IO_error,first_sec_only,G_lesser_only
-     integer, optional  :: COM_
-     character(*), optional  :: mesg
-   end subroutine
-   !
-   subroutine RT_IO_carriers(Time,imposed_COM)
-     use pars,       ONLY:SP
-     real(SP), optional, intent(inout) :: Time
-     integer , optional, intent(in)    :: imposed_COM
-   end subroutine RT_IO_carriers
-   !
-   subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_k,BANDS_range,bands_output)
-     use pars,       ONLY:SP
-     use electrons,  ONLY:levels
-     use R_lattice,  ONLY:bz_samp
-     type(bz_samp), intent(in)  :: Xk
-     type(levels),  intent(in)  :: Xen
-     integer      , intent(in)  :: BANDS_range(2)
-     integer      , intent(out) :: ID_interp
-     type(bz_samp), intent(out) :: USER_K,CIRCUIT_K,INTERP_K
-     real(SP)     , pointer     :: bands_output(:,:,:)
-   end subroutine electrons_bands_interpolate
    !
  end interface
  !

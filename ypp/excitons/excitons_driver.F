@@ -39,10 +39,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
 &                        io_BSS_diago
 #if defined _YPP_ELPH
- use YPP,           ONLY:l_eliashberg,l_gkkp
+ use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
 #if defined _YPP_RT
- use YPP,           ONLY:l_RT_abs
+ use YPP_real_time, ONLY:l_RT_abs
 #endif
  !
  implicit none

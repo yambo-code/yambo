@@ -30,7 +30,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:output_fname,RT_time
+ use YPP,            ONLY:output_fname
+ use YPP_real_time,  ONLY:RT_time
  use com,            ONLY:msg,of_open_close
  use vec_operate,    ONLY:c2a
  use RT_control,     ONLY:RT_apply

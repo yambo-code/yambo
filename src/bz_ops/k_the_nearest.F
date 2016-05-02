@@ -50,9 +50,7 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
  logical :: local_flag
  !
  k_the_nearest=0
- if (present(i_err)) then
-   i_err=-1
- endif
+ if (present(i_err)) i_err=-1
  k_distance_loc=10000._SP
  !
  local_flag=.FALSE.
@@ -65,14 +63,12 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
      v=k_ref-k(i1,:)
      call k2bz(v)
      if(present(k_dist)) k_dist(i1)=iku_v_norm(v)
-     if ( iku_v_norm(v)<(k_distance_loc-iku_v_norm(k_iku_zero)) ) then
+     if ( iku_v_norm(v)<abs(k_distance_loc-iku_v_norm(k_iku_zero)) ) then
        k_distance_loc=iku_v_norm(v)
        k_the_nearest=i1
      endif
      if (k_distance_loc<zero_dfl) then
-       if (present(i_err)) then
-         i_err=0
-       endif
+       if (present(i_err)) i_err=0
        exit 
      endif
    enddo
@@ -99,7 +95,7 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
      endif
      !
      if(present(k_dist)) k_dist(i1)=min(k_dist(i1),iku_v_norm(v))
-     if ( iku_v_norm(v)<(k_distance_loc-iku_v_norm(k_iku_zero)) ) then
+     if ( iku_v_norm(v)<abs(k_distance_loc-iku_v_norm(k_iku_zero)) ) then
        k_distance_loc=iku_v_norm(v)
        k_the_nearest=i1
        if(present(k_symm)) k_symm=is

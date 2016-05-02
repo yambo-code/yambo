@@ -27,7 +27,7 @@
 !
 subroutine RT_X_LRR_real_field(en)
  !
- use YPP,            ONLY:RT_P_t,RT_conf,Use_FFT,l_force_min_damp,RT_time
+ use YPP_real_time,  ONLY:RT_P_t,RT_conf,Use_FFT,l_force_min_damp,RT_time
  use pars,           ONLY:SP,DP,pi,cI,cZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels

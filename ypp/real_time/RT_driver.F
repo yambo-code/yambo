@@ -23,7 +23,7 @@
 !
 subroutine RT_driver(en,k,q)
  !
- use YPP,            ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
+ use YPP_real_time,  ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
 &                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
 &                         Probe_path,Pump_path,N_probes

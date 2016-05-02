@@ -23,7 +23,10 @@
 !
 subroutine QP_DBs_merge(en,k)
  !
- use YPP,           ONLY:n_QP_dbs,QP_db,QP_db_what,QP_db_name,Z_input
+ use YPP,           ONLY:n_QP_dbs,QP_db,QP_db_what,QP_db_name
+#if defined _YPP_RT
+ use YPP_real_time, ONLY:Z_input
+#endif
  use pars,          ONLY:SP,cI,schlen
  use stderr,        ONLY:intc
  use com,           ONLY:msg
@@ -96,10 +99,16 @@ subroutine QP_DBs_merge(en,k)
        if (QP_db(i_qp)%table(i_sp,3)==i_k_near.and.QP_db(i_qp)%table(i_sp,1)==i_b) then
          W_to_add=aimag(QP_db(i_qp)%E(i_sp))
          dE_to_add= real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
-         COHSEX_eq= real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
-         dE_Neq   = real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
          if (index(trim(QP_db_what(i_qp)),"W")==0) W_to_add =0._SP
          if (index(trim(QP_db_what(i_qp)),"E")==0) dE_to_add=0._SP
+         QP_db(i_qp_ref)%E(i_s)=QP_db(i_qp_ref)%E(i_s)+dE_to_add+cI*W_to_add
+         !
+         ! GPL_EXCLUDE_START
+         !
+#if defined _YPP_RT
+         !
+         COHSEX_eq= real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
+         dE_Neq   = real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
          if (index(trim(QP_db_what(i_qp)),"C")==0) COHSEX_eq=0._SP
          if (index(trim(QP_db_what(i_qp)),"N")==0) dE_Neq   =0._SP
          if (Z_input<=0._SP) then
@@ -112,7 +121,12 @@ subroutine QP_DBs_merge(en,k)
          else
            Z_local=Z_input
          endif
-         QP_db(i_qp_ref)%E(i_s)=QP_db(i_qp_ref)%E(i_s)+dE_to_add+cI*W_to_add+Z_local*(dE_Neq-COHSEX_eq)
+         QP_db(i_qp_ref)%E(i_s)=QP_db(i_qp_ref)%E(i_s)+Z_local*(dE_Neq-COHSEX_eq)
+         !
+#endif
+         !
+         ! GPL_EXCLUDE_END
+         !
          cycle db_loop
        endif
      enddo

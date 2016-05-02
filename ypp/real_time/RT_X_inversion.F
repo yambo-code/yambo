@@ -24,7 +24,7 @@
 subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effective)
  !
  use pars,           ONLY:SP,pi
- use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,RT_conf,i_t_start,&
+ use YPP_real_time,  ONLY:N_probes,X_order,N_probe_frequencies,RT_conf,i_t_start,&
 &                         i_t_end,N_pumps
  use fields,         ONLY:EtoT,Efield,Divide_by_Field
  use real_time,      ONLY:RT_P

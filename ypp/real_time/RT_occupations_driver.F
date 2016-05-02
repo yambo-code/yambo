@@ -28,10 +28,10 @@ subroutine RT_occupations_driver(kpt,En)
  use electrons,      ONLY:levels
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
- use YPP,            ONLY:RT_conf
+ use YPP_real_time,  ONLY:RT_conf
  use RT_control,     ONLY:RT_apply
  use real_time,      ONLY:RT_bands
- use YPP,            ONLY:l_RT_occ_time,l_RT_occ_energy,l_RT_life_bands,l_RT_occ_bands,&
+ use YPP_real_time,  ONLY:l_RT_occ_time,l_RT_occ_energy,l_RT_life_bands,l_RT_occ_bands,&
 &                         l_RT_occ_2D_dos
  !
  implicit none

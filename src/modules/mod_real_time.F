@@ -364,27 +364,46 @@ module real_time
      if(.not.associated(RT%dE_Hartree))     allocate(RT%dE_Hartree(RT%nstates))
      if(.not.associated(RT%dE_V_xc))        allocate(RT%dE_V_xc(RT%nstates))
      if(.not.associated(RT%dE_Self_Energy)) allocate(RT%dE_Self_Energy(RT%nstates))
+     RT%table         =0
+     RT%E_bare        =0._SP
+     RT%f_bare        =0._SP
+     RT%dE_Hartree    =0._SP
+     RT%dE_V_xc       =0._SP
+     RT%dE_Self_Energy=0._SP
      if (l_elel_scatt) then
        if(.not.associated(RT%dGAMMA_E_E_Hole))     allocate(RT%dGAMMA_E_E_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_E_Electron)) allocate(RT%dGAMMA_E_E_Electron(RT%nstates))
+       RT%dGAMMA_E_E_Hole    =0._SP
+       RT%dGAMMA_E_E_Electron=0._SP
      endif
      if (l_elph_scatt) then
        if(.not.associated(RT%dGAMMA_E_P_Hole))     allocate(RT%dGAMMA_E_P_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_Electron)) allocate(RT%dGAMMA_E_P_Electron(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_Ho_abs))   allocate(RT%dGAMMA_E_P_Ho_abs(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_El_abs))   allocate(RT%dGAMMA_E_P_El_abs(RT%nstates))
+       RT%dGAMMA_E_P_Hole    =0._SP
+       RT%dGAMMA_E_P_Electron=0._SP
+       RT%dGAMMA_E_P_Ho_abs  =0._SP
+       RT%dGAMMA_E_P_El_abs  =0._SP
      endif
      if (l_elphoton_scatt) then
        if(.not.associated(RT%dGAMMA_E_PHOT_Hole))     allocate(RT%dGAMMA_E_PHOT_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_PHOT_Electron)) allocate(RT%dGAMMA_E_PHOT_Electron(RT%nstates))
+       RT%dGAMMA_E_PHOT_Hole    =0._SP
+       RT%dGAMMA_E_PHOT_Electron=0._SP
      endif
      if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
        if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates,8))
        if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
        if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
+       RT%GAMMA_bare  =0._SP
+       RT%delta_GAMMA =0._SP
+       RT%NEQ_Lifetime=0._SP
      endif
      if(.not.associated(RT%delta_E))      allocate(RT%delta_E(RT%nstates))   
      if(.not.associated(RT%delta_f))      allocate(RT%delta_f(RT%nstates))  
+     RT%delta_f=0._SP
+     RT%delta_E=0._SP
    end subroutine
    !
    subroutine RT_obj_free(RT)

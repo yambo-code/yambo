@@ -38,7 +38,7 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,USE_FFT,I_sign)
  !
  ! ft(t) = \int fw(w) exp^(-i w t) 
  !
- use YPP,            ONLY:RT_conf,RT_time
+ use YPP_real_time,  ONLY:RT_conf,RT_time
  use pars,           ONLY:SP,DP,cI
  use LIVE_t,         ONLY:live_timing
  implicit none

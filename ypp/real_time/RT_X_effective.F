@@ -24,7 +24,7 @@
 subroutine RT_X_effective(en)
  !
  use pars,           ONLY:SP,lchlen,pi,schlen,cZERO
- use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_IO_J_and_P,&
+ use YPP_real_time,  ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_IO_J_and_P,&
 &                         max_n_of_paths,Use_FFT,RT_conf,N_pumps,N_probe_frequencies,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,AUT2FS

@@ -80,7 +80,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
 #if defined _SC || defined _RT
  use hamiltonian,   ONLY:B_mat_index
- use collision,     ONLY:COLL_bands,FOCK_collisions,GW_NEQ_collisions,P_collisions,SEX_collisions
+ use collision,     ONLY:COLL_bands,COH_collisions,GW_NEQ_collisions,P_collisions,HXC_collisions
 #endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_index,SLK_COM_A2A
@@ -660,9 +660,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   "COLLISIONS"
    !.........................................................................
    !
-   call PARALLEL_collisions( Xk, P_collisions )
-   call PARALLEL_collisions( Xk, FOCK_collisions )
-   call PARALLEL_collisions( Xk, SEX_collisions )
+   call PARALLEL_collisions( Xk,      P_collisions )
+   call PARALLEL_collisions( Xk,    COH_collisions )
+   call PARALLEL_collisions( Xk,    HXC_collisions )
    call PARALLEL_collisions( Xk, GW_NEQ_collisions )
    !
    !.........................................................................
@@ -821,9 +821,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !   "COLLISIONS"
      !.........................................................................
      !
-     call PARALLEL_collisions( Xk, P_collisions )
-     call PARALLEL_collisions( Xk, FOCK_collisions )
-     call PARALLEL_collisions( Xk, SEX_collisions )
+     call PARALLEL_collisions( Xk,   P_collisions )
+     call PARALLEL_collisions( Xk, COH_collisions )
+     call PARALLEL_collisions( Xk, HXC_collisions )
      !
      nb_mat=(SC_bands(2)-SC_bands(1)+1)**2
      call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',SC_bands)

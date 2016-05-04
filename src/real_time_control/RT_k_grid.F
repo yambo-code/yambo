@@ -40,10 +40,10 @@ integer function RT_k_grid(E,k,q)
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
  use LIVE_t,         ONLY:what_is_running
- use electrons,      ONLY:levels,BZ_DbGd_nkpt
+ use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
  use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
-&                         RT_all2ibz,RT_Nk_ibz
+&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands
  use R_lattice,      ONLY:bz_samp
  !
  implicit none
@@ -57,12 +57,7 @@ integer function RT_k_grid(E,k,q)
  logical :: l_check(k%nibz,k%nibz)
  integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  !
- ! Number of K-points
- !====================
- !
- RT_k_grid=0
- !
- if (.not.allocated(BZ_DbGd_nkpt)) return
+ l_RT_uses_E_DbGd=BZ_DbGd_tot_nkpts>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
  !
  if (.not.allocated(DbGd_ibz_coo)) then
    allocate(DbGd_ibz_coo(k%nibz,2))
@@ -71,6 +66,33 @@ integer function RT_k_grid(E,k,q)
    allocate(RT_Nk_ibz(k%nibz))
  endif
  !
+ ! No DbGd, trivial definitions
+ !==============================
+ if (.not.l_RT_uses_E_DbGd) then
+   !
+   RT_k_grid=k%nibz
+   !
+   RT_Nk_ibz=1
+   DbGd_EE_percent=0._SP
+   allocate(RT_all2ibz(k%nibz))
+   if(l_elel_scatt) then
+     allocate(DbGd_EE_scatt_table(k%nibz,q%nbz))
+     allocate(DbGd_EE_Nk_table(k%nibz,k%nibz))
+     DbGd_EE_scatt_table=.true.
+     DbGd_EE_Nk_table=1
+   endif
+   do ik=1,k%nibz
+     DbGd_ibz_coo(ik,:)=ik
+     RT_ibz_coo(ik,:)=ik
+     RT_all2ibz(ik)=ik
+   enddo
+   !
+   return
+   !
+ endif
+ !
+ ! DbGd support
+ !=============
  do ik=1,k%nibz
    ik_bz=1+sum(k%nstar(:ik-1))
    DbGd_ibz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik_bz-1))+1,sum(BZ_DbGd_nkpt(:ik_bz))/)

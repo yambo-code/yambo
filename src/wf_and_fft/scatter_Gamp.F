@@ -93,7 +93,7 @@ subroutine scatter_Gamp(isc,mode)
      if (RIM_is_diagonal.and.l_RIM) l_RIM=(ig1==ig2)
      !
      if (l_RIM.and..not.l_col_cut) then
-       isc%gamp(i1,i2)=RIM_qpg(iq,ig1,ig2)/2.
+       isc%gamp(i1,i2)=RIM_qpg(iq,ig1,ig2)/2._SP
        cycle
      else
        isc%gamp(i1,i2)=q_weight/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
@@ -153,7 +153,7 @@ subroutine scatter_Gamp(isc,mode)
  ! Anisotropy correction
  !
  if (.not.l_col_cut) then
-   if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0./))) isc%gamp(1,1)=RIM_anisotropy/2._SP
+   if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) isc%gamp(1,1)=RIM_anisotropy/2._SP
  endif
  !
 end subroutine

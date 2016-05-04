@@ -36,9 +36,11 @@ integer function variables_RT(ID,local_description,what)
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_times_SAVE,&
-&                         l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
+&                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
 &                         NE_step_update_treshold,RT_life_interp_times
+#if defined _ELPH
  use ELPH,           ONLY:elph_branches
+#endif
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
  use IO_m,           ONLY:io_elemental,io_status
@@ -50,14 +52,14 @@ integer function variables_RT(ID,local_description,what)
  character(*)       ::what
  !
  integer               :: i1,i_desc
- logical               :: l_J,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
+ logical               :: l_JPSM,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
  real(SP)              :: RT_life_interp_decay_time
  character(lchlen)     :: ch
  !
  l_RT_diamagnetic          = .false.
  RT_life_interp_decay_time = 0._SP
  !
- l_J           = what=="J_and_P"
+ l_JPSM        = what=="JPSM"
  l_G           = what=="G"
  l_carriers    = what=="carriers"
  !
@@ -79,6 +81,7 @@ integer function variables_RT(ID,local_description,what)
  !
  ! ELPH_vars
  !
+#if defined _ELPH
  call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=5,MENU=0) 
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_elph_scatt,&
@@ -97,6 +100,7 @@ integer function variables_RT(ID,local_description,what)
 &   VAR=" [E-P] GF`s Memory steps         :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+#endif
  !
  ! E-E_vars
  !
@@ -111,9 +115,9 @@ integer function variables_RT(ID,local_description,what)
 &  DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if(.not.any((/l_J,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ if(.not.any((/l_JPSM,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
- if(any((/l_J,l_G,l_carriers/))) then
+ if(any((/l_JPSM,l_G,l_carriers/))) then
    !
    ! RT_DYNAMICS
    !
@@ -142,16 +146,13 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,&
 &    VAR=" [RT]                   (now)[fs]:",R1=RT_life_interp_times,DB_R1=RT_life_interp_times,&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-   !
-   if (l_J.or.l_carriers) call LOCAL_IO_variables(JPC_RT_IO_t)
-   if (l_G)               call LOCAL_IO_variables(GF_RT_IO_t)
+   if (l_JPSM.or.l_carriers) call LOCAL_IO_variables(JPC_RT_IO_t)
+   if (l_G)                  call LOCAL_IO_variables(GF_RT_IO_t)
    !
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_NE_simulate_Irredux,&
-&    VAR=" [RT] Simulate irredux           :", CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,&
+&    VAR=" [RT] NE steps         (done)[fs]:",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
-   !
-   call io_elemental(ID,I0=NE_steps)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -265,7 +266,7 @@ integer function variables_RT(ID,local_description,what)
    !
    ! CONSTRAINS
    !======================
-   call io_elemental(ID,VAR="CONSTRAINS",VAR_SZ=3,MENU=0) 
+   call io_elemental(ID,VAR="CONSTRAINS",VAR_SZ=2,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_impose_N_dN,&
 &      VAR=' [CONSTRAINS] N (ee+ep) & dN (ep):',  CHECK=.true.,OP=(/"=="/),&

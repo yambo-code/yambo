@@ -179,7 +179,7 @@ subroutine QP_state_table_setup(en)
 #if defined _SC
  Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions
  if (l_eval_collisions) then
-   Mixing=l_elel_scatt.or.trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX"
+   Mixing=l_elel_scatt.or.trim(SC_potential)=="HARTREE+FOCK".or.trim(SC_potential)=="COHSEX"
  endif
 #endif
  !

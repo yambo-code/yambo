@@ -58,7 +58,8 @@
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
 #if defined _SC | defined _MAGNETIC | defined _RT
   {"potential",  "v","Self-Consistent Potential",0,0,1,0,0}, 
-  {"DESC",       " ","opt=(hf),(c)ohsex,(exx),(exxc),(srpa),(h)artree,(d)ef,(ip)",0,0,0,0,0},
+  {"DESC",       " ","opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)",0,0,0,0,0},
+  {"DESC",       " ","(h)artree can be combined with others, i.e. hf, hsex, ... ",0,0,0,0,0},
 #endif
   {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex/bsfxc]",0,0,1,0,0},
   {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},

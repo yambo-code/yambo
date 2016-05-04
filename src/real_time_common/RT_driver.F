@@ -24,7 +24,7 @@
 subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP,schlen
- use drivers,        ONLY:l_use_collisions,l_sc_ip,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
+ use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:AUT2FS
  use LIVE_t,         ONLY:live_timing 
@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
  use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
-&                         NE_i_start_time,RT_carriers_object,TIME_adjust
+&                         NE_i_start_time,RT_carriers_object,TIME_adjust,RT_apply
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
@@ -49,7 +49,7 @@ subroutine RT_driver(E,X,k,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous,A_ext
- use collision,       ONLY:FOCK_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element
+ use collision,       ONLY:HXC_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast
@@ -74,8 +74,8 @@ subroutine RT_driver(E,X,k,q)
  !
  sec_title=' '
  if (l_elph_scatt)                  sec_title(1)='el-ph'
- if (l_elel_scatt)                  sec_title(2)='e-e'
- if (l_elph_scatt.and.l_elel_scatt) sec_title(2)='+e-e'
+ if (l_elel_scatt)                  sec_title(2)='el-el'
+ if (l_elph_scatt.and.l_elel_scatt) sec_title(2)='+el-el'
  if (l_elphoton_scatt)              sec_title(3)='el-photon'
  if (l_elphoton_scatt.and.&
 &   (l_elel_scatt.or.l_elph_scatt)) sec_title(3)='+el-photon'
@@ -135,10 +135,11 @@ subroutine RT_driver(E,X,k,q)
  !
  call PP_bcast(fft_size,0)
  !
- ! QP-corrections 
- !================
+ ! QP & carriers corrections 
+ !===========================
  !
- call QP_apply(RT_bands,E,k,"G",msg_fmt='s')
+ call QP_apply(RT_bands,E,k,     "G",msg_fmt='s')
+ call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
  !
  ! Core initialization
  !
@@ -149,11 +150,31 @@ subroutine RT_driver(E,X,k,q)
  call RT_alloc(E)
  call RT_alloc_control()
  !
+ ! Initial allocation and basic definitions of the RT_carriers object
+ !
+ call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
+ !
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')
  !
  call RT_start_and_restart(E,k,q,X)
+ !
+ ! Collisions => No need of WFs and Density
+ !
+ if(l_use_Hxc_collisions) then  
+   !
+   call WF_free(WF)
+   !
+   deallocate(rho_n,rho_reference)
+   call mem_est("rho_reference rho")
+   !
+   if(n_spin>1) then
+     deallocate(magn_n,magn_reference)
+     call mem_est("magn_reference magn")
+   endif
+   !
+ endif
  !
  ! Calculation already done
  !
@@ -167,7 +188,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if((.not.l_sc_pot_is_local.and..not.l_sc_ip).or.l_elel_scatt) then
+ if(l_use_Hxc_collisions.or.l_elel_scatt) then
    !
    if (io_COLLs) then
      !
@@ -197,7 +218,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call msg('s','Reference Lifetimes, GF, Self-Energy ...')
    !
-   call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
+   call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0._SP,.true.)
    !
    call RT_BGR(G_lesser_reference,E,k)
    !
@@ -214,26 +235,12 @@ subroutine RT_driver(E,X,k,q)
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
  !
- ! IP calculation & not BGR => No need of WFs and Density
- !
- if(l_sc_ip.and.n_spin==1) then  
-   !
-   call WF_free(WF)
-   !
-   call mem_est("rho_reference rho")
-   !
-   deallocate(rho_n,rho_reference)
-   if(n_spin>1) deallocate(magn_n,magn_reference)
-   !
- endif
- !
  ! Initialize output files
  !==========================
  !
  call RT_output(what="initialize")
- call RT_output(what="open dyn ene cur pol")
- if(n_spin>1) call RT_output(what="open magn")
- call RT_output('open BGR')
+ call RT_output(what="open dyn ene cur pol magn")
+ call RT_output(what="open BGR")
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
    if(l_RT_induced_field) call RT_output(what="open tot ind")
@@ -274,13 +281,29 @@ subroutine RT_driver(E,X,k,q)
    ! G_lesser@NE_time
    !###################
    !
-   ! Current and Polarization (evaluated also in RT_integrator when and induced field is included)
-   !==========================
+   ! Current, Polarization and Magnetization
+   !==========================================
+   ! (evaluated also in RT_integrator when and induced field is included)
    call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot)
+   call RT_output('cur pol magn',TIME=NE_time*AUT2FS)
    !
-   ! Now calculate Energetics, current and other observables
-   !=========================================================
+   ! Energy, number of carriers, fit of electronic temperatures
+   !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
+   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
+   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
+   !
+   ! Update Bose Temp and Phonons distribution
+   !===========================================
+   !if (l_Debye_TBose_update) then
+   !  if (it==it_start) E_previous=real(on_the_fly_operators(5))
+   !  if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
+   !  &       nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
+   !    E_now=real(on_the_fly_operators(5))
+   !    call TEMPERATURE_Debye(E_previous-E_now)
+   !    E_previous=E_now
+   !  endif
+   !endif
    !
    ! BGR
    !=======================================
@@ -302,16 +325,6 @@ subroutine RT_driver(E,X,k,q)
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
-   ! Printing 
-   !###########
-   !
-   ! Observables
-   !=============
-   if (NE_time>=0._SP) then
-     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
-     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
-   endif
-   !
    ! Mean Carrier Lifetimes
    !========================
    if (RT_is_dynamically_dephased) then
@@ -321,11 +334,6 @@ subroutine RT_driver(E,X,k,q)
      if(l_elphoton_scatt)                  call RT_output('RADlife',TIME=NE_time*AUT2FS)
      if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('factors',TIME=NE_time*AUT2FS)
    endif
-   !
-   ! Current and Polarization
-   !==========================
-   call RT_output('cur pol',TIME=NE_time*AUT2FS)
-   if(n_spin>1) call RT_output('magn',TIME=NE_time*AUT2FS)
    !
    ! Field(s)
    !==========
@@ -345,7 +353,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! ... Dynamical Time-Step evaluation
    !
-   l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0.
+   l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0._SP
    !
    if (l_Update_Time_Step) call RT_time_step_update( )
    !
@@ -399,8 +407,7 @@ subroutine RT_driver(E,X,k,q)
      call WF_free(WF)
      call PLASMA_free(EH_gas)
      call RT_carriers_object(RT_carriers,WHAT='free')
-     if (allocated(FOCK_COLL_element))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
-     if (allocated(SEX_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
+     if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      if (allocated(GW_NEQ_COLL_element)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
      call set_real_printed_length()
    end subroutine

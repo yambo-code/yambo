@@ -24,8 +24,8 @@
 integer function io_DIPOLES(X,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,DIP_iR,DIP_P,X_alloc
- use electrons,     ONLY:levels
+ use X_m,           ONLY:X_t,DIP_iR,DIP_P,DIP_spin,X_alloc
+ use electrons,     ONLY:levels,n_spin
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
@@ -64,7 +64,10 @@ integer function io_DIPOLES(X,ID)
  !
  io_extension(ID)='dip_iR_and_P'
 #if defined _SC
- if (l_sc_run.or.l_real_time) io_extension(ID)='dip_iR_P_and_P2'
+ if (l_sc_run)    io_extension(ID)='dip_iR_P_and_P2'
+#endif
+#if defined _RT
+ if (l_real_time) io_extension(ID)='dip_iR_P_spin_and_P2'
 #endif
  !
  io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
@@ -102,12 +105,13 @@ integer function io_DIPOLES(X,ID)
  if (read_is_on(ID)) then
    call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
    call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
- endif
- !
-#if defined _SC
- if (l_sc_run.or.l_real_time.and.read_is_on(ID)) &
-&  call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+#if defined _RT
+   if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
 #endif
+#if defined _SC
+   if (l_sc_run.or.l_real_time)  call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+#endif
+ endif
  !
  ! Fragmentation
  !
@@ -134,6 +138,20 @@ integer function io_DIPOLES(X,ID)
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
    call io_bulk(ID,R3=disk_data)
    if (read_is_on(ID)) call mat_r2c(disk_data,DIP_P(ixyz,:,:,ik_mem,i_sp_pol),shift=shift)
+   !
+#if defined _RT
+   if (l_real_time.and.n_spin>1) then
+     !
+     ! Spin
+     !
+     if (write_is_on(ID)) call mat_c2r(DIP_spin(ixyz,:,:,ik_mem,i_sp_pol),disk_data)
+     write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_xyz_',ixyz,'_spin_',i_sp_pol
+     call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
+     call io_bulk(ID,R3=disk_data)
+     if (read_is_on(ID)) call mat_r2c(disk_data,DIP_spin(ixyz,:,:,ik_mem,i_sp_pol),shift=shift)
+     !
+   endif
+#endif
    !
  enddo
  !

@@ -39,6 +39,9 @@ subroutine el_magnetization(en,Xk,magn)
  use electrons,      ONLY:Total_magn
  use matrix_operate, ONLY:m3det
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
+#if defined _RT
+ use drivers,       ONLY:l_real_time
+#endif
  !
  implicit none
  !
@@ -48,8 +51,8 @@ subroutine el_magnetization(en,Xk,magn)
  !
  ! Work Space
  !
- integer :: isym,ifft,ib,ik,ifft_up,ifft_dn
- real(SP):: cv(fft_size,3),tmp_sop(3,3)
+ integer :: isym,ifft,ib,ik,i_wf_up,i_wf_dn
+ real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ(n_sp_pol)
  !
  magn=0._SP
  cv=0._SP
@@ -68,31 +71,36 @@ subroutine el_magnetization(en,Xk,magn)
      if (size(WF%index,1)<ib)        cycle
      if (size(WF%index,2)<ik)        cycle
      !
-     ifft_up=WF%index(ib,ik,1)
-     ifft_dn=WF%index(ib,ik,2)
+     i_wf_up=WF%index(ib,ik,1)
+     i_wf_dn=WF%index(ib,ik,2)
      !
-     if (ifft_up==0 .or. ifft_dn==0) cycle
+     if (i_wf_up==0 .or. i_wf_dn==0) cycle
+     !
+     f_occ=en%f(ib,ik,:)
+#if defined _RT
+     if(l_real_time.and.associated(en%fo)) f_occ=en%fo(ib,ik,:)
+#endif
      !
      if (n_spinor==2) then
        !
        ! mx
        !
        cv(:,1)=cv(:,1)+Xk%weights(ik)*(&
-&              en%f(ib,ik,1)*real(conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn))&
-&             +en%f(ib,ik,1)*real(conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up)) )
+&              f_occ(1)*real(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_dn))&
+&             +f_occ(1)*real(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_up)) )
        !
        ! my
        !
        cv(:,2)=cv(:,2)+Xk%weights(ik)*(&
-&              en%f(ib,ik,1)*aimag(conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn))&
-&             -en%f(ib,ik,1)*aimag(conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up)) )
+&              f_occ(1)*aimag(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_dn))&
+&             -f_occ(1)*aimag(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_up)) )
      endif
      !
      ! mz
      !
      cv(:,3)=cv(:,3)+Xk%weights(ik)*(&
-&            en%f(ib,ik,1)       *real(conjg(WF%c(:,ifft_up))*WF%c(:,ifft_up))&
-&           -en%f(ib,ik,n_sp_pol)*real(conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_dn)) )
+&            f_occ(1)       *real(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_up))&
+&           -f_occ(n_sp_pol)*real(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_dn)) )
      !
    enddo
    !

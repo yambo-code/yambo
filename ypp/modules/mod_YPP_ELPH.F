@@ -23,11 +23,7 @@
 !
 module YPP_ELPH
  !
- use pars,    ONLY:SP,DP,lchlen,schlen
- use units,   ONLY:HA2EV
- use QP_m,    ONLY:QP_t
- !
- implicit none
+ use pars,     ONLY:SP,schlen
  !
  ! EL-PH
  !

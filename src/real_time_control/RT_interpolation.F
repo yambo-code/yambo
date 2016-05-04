@@ -28,6 +28,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nkpts,BZ_DbGd_kpts,BZ_DbGd_nbands
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
+ use drivers,        ONLY:l_real_time
  use real_time,      ONLY:RT_carriers
  use com,            ONLY:msg
  !
@@ -42,8 +43,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  ! Work space
  !
- integer               :: nb(2),ik
+ integer               :: nb(2),i_RT
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
+ real(SP), allocatable :: V_in_tmp(:)
  integer,parameter     :: n_pieces=10
  logical               :: l_DbGd
  !
@@ -75,6 +77,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
      call mem_est("E-df_DbGd",(/size(E%df_DbGd)/),(/SP,SP/))
      E%df_DbGd=0._SP
      call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
+     E%f_DbGd=E%f_DbGd+E%df_DbGd
    endif
    !
  endif
@@ -133,14 +136,17 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
     !
     ! ws
     !
-    integer      :: i_carr,nb_max
+    logical      :: l_renormalize
+    integer      :: ik,i_carr,nb_max
     real(SP)     :: K_weights(NK),V_out(RT_carriers%nb(1):RT_carriers%nb(2),NK,n_sp_pol)
     !
+    l_renormalize=.not.l_real_time
+    ! 
     if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nkpts,SP)
     if (NK==E%nk) K_weights(:)=K%weights(:)
     !
     call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
-&                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,what,.TRUE.)
+&                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,what,l_renormalize)
     !
     if (NK==E%nk) nb_max=    nb(2)
     if (NK/=E%nk) nb_max=min(nb(2),BZ_DbGd_nbands)

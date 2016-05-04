@@ -27,7 +27,7 @@ subroutine SC_start_and_restart(X,E)
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg,warning
- use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_collisions,&
+ use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_Hxc_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:nkibz
@@ -202,9 +202,9 @@ subroutine SC_start_and_restart(X,E)
  !
  if (io_COLLs) call COLLISIONS_load(.TRUE.)
  !
- if (l_use_collisions) then
+ if (l_use_Hxc_collisions) then
    call msg('s' ,'[SC] Extented collisions Used')
-   call msg('r' ,'[SC] Extented collisions              :',l_use_collisions)
+   call msg('r' ,'[SC] Extented collisions              :',l_use_Hxc_collisions)
    COHSEX_use_empties=.TRUE.
  endif
  !

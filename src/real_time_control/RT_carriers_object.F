@@ -27,7 +27,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  ! In the future the RT code can be based on those, at least partially
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt,l_real_time
  use electrons,      ONLY:n_sp_pol,spin_occ,levels,BZ_DbGd_kpts
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
@@ -91,10 +91,12 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if(l_RT_uses_E_DbGd) then
          RT%E_bare(i_RT)=E%E_DbGd(i_b,i_k_DbGd,i_spin)
-         RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)
+         if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)
+         if(     associated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)-E%df_DbGd(i_b,i_k_DbGd,i_spin)
        else
          RT%E_bare(i_RT)=E%E(i_b,i_k,i_spin)
-         RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
+         if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
+         if(     associated(E%fo)) RT%f_bare(i_RT)=E%fo(i_b,i_k,i_spin)
        endif
        !
      enddo
@@ -203,7 +205,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
      enddo
      !
-   case('input_output')
+   case('ref_input_output')
      !
      ! These are written in the REF DBs
      ! It is a waste to write them again at each time-step
@@ -212,10 +214,13 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call io_bulk(DB_id,R1=RT%E_bare)
      call io_bulk(DB_id,VAR="RT_carriers_f_bare",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%f_bare)
+     !
      if (associated(RT%GAMMA_bare)) then
        call io_bulk(DB_id,VAR="RT_carriers_GAMMA_bare",VAR_SZ=(/RT%nstates,8/))
        call io_bulk(DB_id,R2=RT%GAMMA_bare)
      endif
+     !
+   case('input_output')
      !
      ! Energies
      !

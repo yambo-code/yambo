@@ -34,7 +34,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
-&                        QP_n_G_bands,QP_ng_Sx,GW_terminator_E,GW_terminator_Kind,&
+&                        QP_n_G_bands,QP_ng_Sx,QP_ng_SH,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold
  use LIVE_t,        ONLY:nhash
@@ -72,11 +72,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use RT_control,    ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use stderr,        ONLY:intc
- use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,Eh_pumped_pair_BZ_reagions,    &
-&                        NE_tot_time,RT_life_interp_times_SAVE,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
-&                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_deltaE,RT_scatt_tresh, &
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,NE_time_step_update_jump_SAVE,&
-&                        Gr_kind,two_alpha,DbGd_EE_percent,NE_initial_time_step_update,NE_step_update_treshold
+ use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
+&                        NE_tot_time,RT_life_interp_times_SAVE,RT_bands,         &
+&                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
+&                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
+&                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
+&                        NE_initial_time_step_update,NE_step_update_treshold
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -241,6 +242,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! S_xc
  !
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transition reduction',QP_cg_percent)
+ call it(defs,'HARRLvcs', '[HA] Hartree  RL components',QP_ng_SH,G_unit)
  call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
 #if defined _QED
  call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)
@@ -265,8 +267,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
- call it('f',defs,'XTerm ',   '[X] Use a terminator for the response',verb_level=V_resp)
- call it(defs,'XEnComp',     '[X] If > 0 the Bruneval-Gonze terminator', &
+ call it('f',defs,'XTerm ',    '[X] Use a terminator for the response',verb_level=V_resp)
+ call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
+ call it(defs,'XEnComp',       '[X] If > 0 the Bruneval-Gonze terminator', &
 &                             X_en_comp,E_unit,verb_level=V_resp)
  !
  ! BSE/BSK
@@ -392,7 +395,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! Dynamics
  !
- call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
  call it(defs,'RTstep',      '[RT] Real Time step length',RT_step,unit=Time_unit(3))
  call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
  call it(defs,'dTupdateTime','[RT] Initial Time for deltaT update (active only if non-zero) ',NE_initial_time_step_update,&
@@ -410,11 +412,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)
  !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
- !
- ! Correlation
- !
- call it('f',defs,'RTIrredux',     '[RT] Hartree not updated independently of the value of SC_potential',     &
-&                                   Verb_level=V_real_time)
+ call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
+ call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
  !
  ! Scattering
  !
@@ -441,19 +440,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA',verb_level=V_real_time)
  !
- ! External fields or Manual pump
- !
- call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
-&                            Verb_level=V_real_time,unit=E_unit)
- ! Method 2
- call it(defs,'RTpumpDE',    '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,&
-&                            Verb_level=V_real_time,unit=E_unit)
- if(initmode==4) n_regions=0
- do i_region=1,6
-   call it(defs,'RTpumpBZ'//trim(intc(i_region)),   '[RT] Reagion in K space excited',&
-&                Eh_pumped_pair_BZ_reagions(:,i_region), Verb_level=V_real_time)
-   if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
- enddo
+ ! External fields
  !
  do i_field=1,n_ext_fields_max
    call Afield(i_field)
@@ -608,7 +595,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call TMP_MIRROR_bands( )
  !
- call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
+ call it(defs,'HXC_Potential', '[SC] SC HXC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)

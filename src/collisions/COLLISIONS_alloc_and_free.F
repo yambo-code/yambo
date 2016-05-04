@@ -28,9 +28,9 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use plasma,         ONLY:N_plasma_poles_global
  use R_lattice,      ONLY:nqbz,nkibz
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ
- use collision,      ONLY:COLLISIONS_element,FOCK_COLL_element,SEX_COLL_element,GW_NEQ_COLL_element,&
+ use collision,      ONLY:COLLISIONS_element,COH_COLL_element,HXC_COLL_element,GW_NEQ_COLL_element,&
 &                         COLL_bands,&
-&                         GW_NEQ_collisions,FOCK_collisions,SEX_collisions,P_collisions,COLLISIONS_group
+&                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
  use collision,      ONLY:P_COLL_element
@@ -44,29 +44,29 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  ! Work Space
  !
  integer :: D(3,2),COLL_range(2),J,K,mem_size(5),size_
- logical :: l_Fock,l_SEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
+ logical :: l_COH,l_HXC,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
 &           l_clean,l_collision,l_distribute,l_Momentum,l_complex,l_real
  !
  ! What
  !
- l_Fock    =index(what,"Fock")>0
- l_SEX     =index(what,"SEX")>0
- l_GW_NEQ  =index(what,"GW_NEQ")>0
+ l_COH     =index(what,"COH")     >0
+ l_HXC     =index(what,"HXC")     >0.or.index(what,"SEX")>0.or.index(what,"FOCK")>0.or.index(what,"HARTREE")>0
+ l_GW_NEQ  =index(what,"GW_NEQ")  >0
  l_Momentum=index(what,"Momentum")>0
  !
  ! Dimension
  !
  if (I==0) then
-   if (l_Fock)     COLL_range=(/1,FOCK_collisions%PAR_N/)
-   if (l_SEX)      COLL_range=(/1,SEX_collisions%PAR_N/)
+   if (l_COH)      COLL_range=(/1,   COH_collisions%PAR_N/)
+   if (l_HXC)      COLL_range=(/1,   HXC_collisions%PAR_N/)
    if (l_GW_NEQ)   COLL_range=(/1,GW_NEQ_collisions%PAR_N/)
-   if (l_Momentum) COLL_range=(/1,P_collisions%PAR_N/)
+   if (l_Momentum) COLL_range=(/1,     P_collisions%PAR_N/)
    size_=COLL_range(2)
  endif
  if (I> 0) COLL_range=(/I,I/)
  if (I> 0) size_=1
  !
- l_complex=l_Fock.or.l_SEX
+ l_complex=l_COH.or.l_HXC
  l_real   =l_GW_NEQ.or.l_Momentum
  !
  ! Elements
@@ -83,39 +83,39 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_clean     =index(actions,"clean")>0
  l_distribute=index(actions,"distribute")>0
  !
- if (l_Fock) then
+ if (l_COH) then
    D(1,:)=COLL_bands
    D(2,:)=COLL_bands
    D(3,:)=(/1,nkibz/)
    if (l_collision.and.l_alloc) then
-     allocate(FOCK_COLL_element(size_))
-     FOCK_COLL_element%N=size_
+     allocate(COH_COLL_element(size_))
+     COH_COLL_element%N=size_
    endif
-   call local_alloc_and_free(FOCK_COLL_element,FOCK_collisions)
+   call local_alloc_and_free(COH_COLL_element,COH_collisions)
    if (l_collision.and.l_clean) then
-     if (allocated(FOCK_COLL_element)) then
-       call local_alloc_and_free(FOCK_COLL_element,FOCK_collisions)
-       deallocate(FOCK_COLL_element)
+     if (allocated(COH_COLL_element)) then
+       call local_alloc_and_free(COH_COLL_element,COH_collisions)
+       deallocate(COH_COLL_element)
      endif
-     FOCK_COLL_element%N=0
+     COH_COLL_element%N=0
    endif
  endif
  !
- if (l_SEX) then
+ if (l_HXC) then
    D(1,:)=COLL_bands
    D(2,:)=COLL_bands
    D(3,:)=(/1,nkibz/)
    if (l_collision.and.l_alloc) then
-     allocate(SEX_COLL_element(size_))
-     SEX_COLL_element%N=size_
+     allocate(HXC_COLL_element(size_))
+     HXC_COLL_element%N=size_
    endif
-   call local_alloc_and_free(SEX_COLL_element,SEX_collisions)
+   call local_alloc_and_free(HXC_COLL_element,HXC_collisions)
    if (l_collision.and.l_clean) then
-     if (allocated(SEX_COLL_element)) then
-       call local_alloc_and_free(SEX_COLL_element,SEX_collisions)
-       deallocate(SEX_COLL_element)
+     if (allocated(HXC_COLL_element)) then
+       call local_alloc_and_free(HXC_COLL_element,HXC_collisions)
+       deallocate(HXC_COLL_element)
      endif
-     SEX_COLL_element%N=0
+     HXC_COLL_element%N=0
    endif
  endif
  !

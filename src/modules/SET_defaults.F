@@ -91,14 +91,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
+ use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_times,      &
-&                     Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
-&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
+&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
+&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,    &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
-&                     RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,  &
-&                     Eh_pumped_pair_deltaE,Eh_pumped_pair_BZ_width,Eh_pumped_pair_BZ_reagions,&
-&                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
+&                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RT_ctl_db,RAD_prefactor
@@ -324,13 +322,17 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elph_corr=.FALSE.
  l_elel_scatt=.FALSE.
  l_elph_scatt=.FALSE.
+ l_use_collisions=.FALSE.
+ l_use_scatt_collisions=.FALSE.
+ l_use_Hxc_collisions=.FALSE.
  !
  l_rt_carriers_in_use=.FALSE.
  l_sc_run=.FALSE.
  l_sc_ip=.FALSE.
- l_sc_hf=.FALSE.
+ l_sc_fock=.FALSE.
  l_sc_hartree=.FALSE.
- l_sc_cohsex=.FALSE.
+ l_sc_coh=.FALSE.
+ l_sc_sex=.FALSE.
  l_sc_exx=.FALSE.
  l_sc_is_libDFT=.FALSE.
  l_sc_magnetic=.FALSE.
@@ -590,13 +592,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_nk=0
  RT_eh_en=0._SP
  RT_scatt_tresh=1._SP
- n_regions=1
- Eh_pumped_pair_deltaE=-1._SP/HA2EV
- Eh_pumped_pair_energy=-1._SP/HA2EV
- Eh_pumped_pair_width=0.1_SP/HA2EV
- Eh_pumped_pair_BZ_width=0.1_SP
- Eh_pumped_pair_BZ_reagions=-1.0_SP
- Eh_pumped_Nel=1._SP
  PLASMA_redux_percent=100._SP
  DbGd_EE_percent=0._SP
  !
@@ -629,13 +624,15 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
  GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
  !
+ SAVE_G_history=.FALSE.
+ !
 #endif
  !
 #if defined _MAGNETIC
  !
  ! Magnetic
  !
- MAG_B=0.
+ MAG_B=0._SP
  MAG_radius=0._SP
  MAG_hamiltonian_type=' '
  MAG_pauli=.FALSE.

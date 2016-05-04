@@ -47,7 +47,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use R_lattice,      ONLY:qindx_S
 #endif
 #if defined _YPP_RT
- use YPP_real_time,  ONLY:l_RT_occ_Bands,l_RT_life_Bands
+ use YPP_real_time,  ONLY:l_RT_bands
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,       ONLY:elph_residual_treshold
@@ -122,7 +122,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  if (.not.flag) flag=any((/l_angular_momentum,l_position/))
 #endif
 #if defined _YPP_RT
- if (.not.flag) flag=l_RT_occ_Bands.or.l_RT_life_Bands
+ if (.not.flag) flag=l_RT_bands
 #endif
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential

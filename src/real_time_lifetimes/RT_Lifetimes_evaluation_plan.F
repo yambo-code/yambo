@@ -68,17 +68,14 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  RT_Lifetimes_evaluation_plan=i_default
  !
- ! Starting time point...
+ ! Starting time point
  !
- ! ... zero point of the simulation
- if (NE_i_time==0) it=1
- ! ... RESTART point & dT update
- if (NE_i_time> 0) it=NE_i_time
+ it=NE_i_time
  !
  ! At the beginning I do not have enough points to perform the fit. I, therefore,
  ! introduce blocks with an increasing number of elements
  !
- if (NE_i_time==0.or.NE_i_time==NE_i_start_time) then
+ if (NE_i_time==NE_i_start_time) then
    !
    do i1=1,N_intra_steps,max(N_intra_steps/10,1)
      call BUILD_up_group(N_blocks*i1,i1)

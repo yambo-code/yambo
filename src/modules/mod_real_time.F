@@ -38,13 +38,11 @@ module real_time
  !
  logical           :: l_NE_dynamics  
  logical           :: l_NE_with_fields
- logical           :: l_NE_simulate_Irredux
  logical           :: l_Dynamics_is_over   
  logical           :: l_Update_Time_Step  = .FALSE.
  !
  ! Evaluation logicals
  !
- logical          :: eval_DENSITY
  logical          :: eval_HARTREE
  logical          :: eval_DFT
  !
@@ -67,7 +65,7 @@ module real_time
  real(SP) :: NE_step_update_treshold    = 2._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
  real(SP) :: NE_time_step_update_jump_SAVE = 0._SP
  !
- integer  :: NE_i_time=0 ! = (NE_time+1)/RT_step
+ integer  :: NE_i_time=1 ! = (NE_time+1)/RT_step
  integer  :: NE_steps    ! Still relative to RT_step
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
@@ -117,7 +115,7 @@ module real_time
  !
  ! ... and magnetization
  !----------------------
- real(SP)    :: RT_magn(3)
+ complex(SP) :: RT_magn(3)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -166,18 +164,6 @@ module real_time
  !----------------
  !
  logical     :: l_RT_CCA_Kernel
- !
- ! Manual pump
- !
- real(SP)    :: Eh_pumped_Nel
- real(SP)    :: Eh_pumped_pair_energy(2)
- !
- real(SP)    :: Eh_pumped_pair_deltaE
- real(SP)    :: Eh_pumped_pair_BZ_reagions(3,6)   
- !
- real(SP)    :: Eh_pumped_pair_width               ! energy with
- real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
- integer     :: n_regions
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !
@@ -302,7 +288,8 @@ module real_time
  !
  ! Hartree term
  !
- complex(SP), allocatable :: XC0_and_HARTREE0(:,:,:,:)
+ complex(SP), allocatable :: XC0(:,:,:,:)
+ complex(SP), allocatable :: HARTREE0(:,:,:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -356,11 +343,11 @@ module real_time
    !
    subroutine RT_obj_alloc(RT)
      type(RT_t)::RT
-     if(.not.associated(RT%kpt))          allocate(RT%kpt(RT%nk,3))
-     if(.not.associated(RT%k_weight))     allocate(RT%k_weight(RT%nk))
-     if(.not.associated(RT%table))        allocate(RT%table(RT%nstates,4))
-     if(.not.associated(RT%E_bare))       allocate(RT%E_bare(RT%nstates)) 
-     if(.not.associated(RT%f_bare))       allocate(RT%f_bare(RT%nstates))
+     if(.not.associated(RT%kpt))            allocate(RT%kpt(RT%nk,3))
+     if(.not.associated(RT%k_weight))       allocate(RT%k_weight(RT%nk))
+     if(.not.associated(RT%table))          allocate(RT%table(RT%nstates,4))
+     if(.not.associated(RT%E_bare))         allocate(RT%E_bare(RT%nstates)) 
+     if(.not.associated(RT%f_bare))         allocate(RT%f_bare(RT%nstates))
      if(.not.associated(RT%dE_Hartree))     allocate(RT%dE_Hartree(RT%nstates))
      if(.not.associated(RT%dE_V_xc))        allocate(RT%dE_V_xc(RT%nstates))
      if(.not.associated(RT%dE_Self_Energy)) allocate(RT%dE_Self_Energy(RT%nstates))
@@ -437,8 +424,7 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_is_libDFT,l_elph_scatt,l_elel_scatt,&
-&                             l_sc_cohsex,l_sc_hartree
+     use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional
@@ -530,7 +516,7 @@ module real_time
      allocate(Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
-     if(l_sc_hf.or.l_sc_cohsex) then
+     if(l_use_Hxc_collisions) then
        allocate(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
        call mem_est("RT_Vnl_xc",(/size(RT_Vnl_xc)/),(/2*SP/))
        RT_Vnl_xc=(0._SP,0._SP)
@@ -541,9 +527,13 @@ module real_time
        call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
      endif
      !
-     allocate(XC0_and_HARTREE0(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
-     XC0_and_HARTREE0=cZERO
+     allocate(HARTREE0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     call mem_est("HARTREE0",(/size(HARTREE0)/),(/2*SP/))
+     HARTREE0=cZERO
+     !
+     allocate(XC0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     call mem_est("XC0",(/size(XC0)/),(/2*SP/))
+     XC0=cZERO
      !
      allocate(SC_R(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
@@ -590,10 +580,8 @@ module real_time
    !   
    subroutine RT_free
      !
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare
+     use SC,             ONLY:SC_free,E_bare
      use memory_m,       ONLY:mem_est
-     use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
      !
      call SC_free()
@@ -626,9 +614,14 @@ module real_time
        call mem_est("I_relax_static")
      endif
      !
-     if(allocated(XC0_and_HARTREE0)) then
-       deallocate(XC0_and_HARTREE0)
-       call mem_est("XC0_and_HARTREE0")
+     if(allocated(HARTREE0)) then
+       deallocate(HARTREE0)
+       call mem_est("HARTREE0")
+     endif
+     !
+     if(allocated(XC0)) then
+       deallocate(XC0)
+       call mem_est("XC0")
      endif
      !
      if(allocated(SC_R)) then

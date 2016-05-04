@@ -26,20 +26,22 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Load all collisions contribution from any kind of self-energy 
  ! exchange, COHSEX etc.. 
  !
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,&
-&                          l_elel_scatt,l_elphoton_scatt,l_elphoton_corr
+ use drivers,         ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_use_collisions,l_sc_srpa,&
+&                          l_elel_scatt,l_elphoton_scatt,l_elphoton_corr,l_sc_hartree,&
+&                          l_use_scatt_collisions,l_use_Hxc_collisions
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_QED_ng
  use R_lattice,       ONLY:nqbz
  use plasma,          ONLY:N_plasma_poles_global
- use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
+ use SC,              ONLY:SC_potential,SC_kind
+ use global_XC,       ONLY:SC_FOCK,SC_COH,SC_SEX,SE_GW_NEQ,SC_HARTREE
 #if defined _QED || defined _RT
  use global_XC,       ONLY:SE_GW_QED
  use collision,       ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
 &                          GW_NEQ_COLL_element
 #endif
- use collision,       ONLY:SEX_COLL_element,FOCK_COLL_element,&
-&                          FOCK_collisions,SEX_collisions,COLLISIONS_group
+ use collision,       ONLY:HXC_COLL_element,COH_COLL_element,&
+&                          COH_collisions,HXC_collisions,COLLISIONS_group
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
  use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q,PAR_Q_index,PAR_PLASMA_index
  use interfaces,      ONLY:io_COLLISIONS
@@ -54,59 +56,46 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  io_err      =0
  !
- if (.not.any((/l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa,l_elel_scatt,l_elphoton_scatt,l_elphoton_corr/))) return
+ if (.not.any((/l_sc_fock,l_sc_coh,l_sc_hartree,l_sc_sex,l_sc_exx,l_sc_srpa,l_elel_scatt,l_elphoton_scatt,l_elphoton_corr/))) return
  !
  ! Initial Setup & EXISTENCE
  !============================
  !
- if (l_sc_hf.or.l_sc_cohsex.or.l_sc_exx) then
-   !
-   call COLLISIONS_basic_operations( "alloc", FOCK_collisions )
-   !
+ if (l_sc_coh) then
+   call COLLISIONS_basic_operations( "alloc", COH_collisions )
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   !
-   io_err(1)=io_COLLISIONS(ID,FOCK_collisions)
-   !
+   io_err(1)=io_COLLISIONS(ID,COH_collisions)
  endif
  !
- if (l_sc_cohsex.or.l_sc_srpa) then
-   !
-   call COLLISIONS_basic_operations( "alloc", SEX_collisions )
-   !
+ if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa) then
+   HXC_collisions%name=SC_potential
+   HXC_collisions%kind=SC_kind
+   call COLLISIONS_basic_operations( "alloc", HXC_collisions )
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   !
-   io_err(2)=io_COLLISIONS(ID,SEX_collisions)
-   !
+   io_err(2)=io_COLLISIONS(ID,HXC_collisions)
  endif
  !
 #if defined _RT
  if (l_elel_scatt) then
-   !
    call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
-   !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   !
    io_err(3)=io_COLLISIONS(ID,GW_NEQ_collisions)
-   !
  endif
 #endif
  !
 #if defined _QED
  if (l_elphoton_scatt.or.l_elphoton_corr) then
-   !
    call COLLISIONS_basic_operations( "alloc", P_collisions )
-   !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   !
    io_err(4)=io_COLLISIONS(ID,P_collisions)
-   !
  endif
 #endif
  !
  if (CHECK_EXISTENCE_ONLY) then
    !
-   l_use_collisions=all(io_err==0)
-   !
+   l_use_Hxc_collisions  =all(io_err(1:2)==0).and.(l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa.or.l_sc_coh)
+   l_use_scatt_collisions=all(io_err(3:4)==0).and.(l_elphoton_scatt.or.l_elphoton_corr.or.l_elel_scatt)
+   l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions
    return
    !
  endif
@@ -116,32 +105,16 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Actual I/O
  !============
  !
- if (l_sc_hf.or.l_sc_cohsex.or.l_sc_exx) then
-   !
-   call local_IO( FOCK_collisions )
-   !
- endif
+ if (l_sc_coh)                             call local_IO( COH_collisions )
  !
- if (l_sc_cohsex.or.l_sc_srpa) then
-   !
-   call local_IO( SEX_collisions )
-   !
- endif
+ if (l_use_Hxc_collisions)                 call local_IO( HXC_collisions )
  !
 #if defined _RT
- if (l_elel_scatt) then
-   !
-   call local_IO( GW_NEQ_collisions )
-   !
- endif
+ if (l_elel_scatt)                         call local_IO( GW_NEQ_collisions )
 #endif
  !
 #if defined _QED
- if (l_elphoton_scatt.or.l_elphoton_corr) then
-   !
-   call local_IO( P_collisions )
-   !
- endif
+ if (l_elphoton_scatt.or.l_elphoton_corr)  call local_IO( P_collisions )
 #endif
  !
  contains
@@ -154,7 +127,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      call live_timing(trim(COLL%name)//' collisions I/O:',COLL%PAR_N)
      !
-     if (COLL%kind==SC_HF.or.COLL%kind==SC_COHSEX) then
+     if (COLL%kind==SC_FOCK.or.COLL%kind==SC_COH.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
      endif
 #if defined _QED
@@ -178,10 +151,13 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        call io_control(ACTION=OP_RD,SEC=(/1,2/),ID=ID)
        !
-       if (COLL%kind==SC_HF) io_err(1)=io_COLLISIONS(ID,COLL,FOCK_COLL_element(i_coll_mem))
-       if (COLL%kind==SC_COHSEX) io_err(1)=io_COLLISIONS(ID,COLL,SEX_COLL_element(i_coll_mem))
        !
-       if (COLL%kind==SC_HF.or.COLL%kind==SC_COHSEX) then
+       if (COLL%kind==SC_COH) then
+         io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
+         call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
+       endif
+       if (COLL%kind==SC_FOCK.or.COLL%kind==SC_COH.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+         io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
        endif
 #if defined _RT
@@ -203,8 +179,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)
        !
-       if (COLL%kind==SC_HF)     io_err(1)=io_COLLISIONS(ID,COLL,FOCK_COLL_element(i_coll_mem))
-       if (COLL%kind==SC_COHSEX) io_err(1)=io_COLLISIONS(ID,COLL,SEX_COLL_element(i_coll_mem))
+       if (COLL%kind==SC_COH)    io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
+       if (COLL%kind==SC_FOCK.or.COLL%kind==SC_COH.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) &
+&                                io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
 #if defined _RT
        if (COLL%kind==SE_GW_NEQ) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
 #endif

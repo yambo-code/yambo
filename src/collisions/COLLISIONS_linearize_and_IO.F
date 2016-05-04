@@ -38,12 +38,13 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  ! Work Space
  !
  integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref,ID
- logical   :: store_it,l_exchange,l_GW_NEQ,l_QED_P
+ logical   :: store_it,l_HXC,l_GW_NEQ,l_QED_P,l_COH
  real(SP)  :: COLLISIONS_max
  !
- l_exchange = (index(what,"Fock")>0).or.(index(what,"SEX")>0)
- l_GW_NEQ   =  index(what,"GW_NEQ")>0
- l_QED_P    =  index(what,"Momentum")>0
+ l_COH      = index(what,"COH")     >0 
+ l_HXC      = index(what,"HXC")     >0
+ l_GW_NEQ   = index(what,"GW_NEQ")  >0
+ l_QED_P    = index(what,"Momentum")>0
  !
  i_ref=1
  if (.not.io_COLLs) i_ref=COLL%PAR_map(i_coll)
@@ -51,7 +52,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  ! Reference value for the reduction of the tiny elements of COHSEX/HF collision
  ! integrals.
  !
- if(l_exchange   ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
+ if ( l_HXC ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
+ if ( l_COH ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
  !
  COLL_element(i_ref)%table(:,:,:)=0
  !
@@ -65,7 +67,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
          !
          ! In the COHSEX/HF case a cutoff can be applied
          !
-         if (l_exchange) store_it=abs(COLL_element(1)%v3_c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0
+         if (l_HXC.or.l_COH) store_it=&
+&          abs(COLL_element(1)%v3_c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff .or. COLLISIONS_cutoff<0.0
          !
          if (l_GW_NEQ .or. l_QED_P ) store_it=.TRUE.
          !
@@ -74,7 +77,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
            if (i_cycle==2) then
              !
              COLL_element(i_ref)%table(i1,i2,i3)=1
-             if (l_exchange          ) COLL_element(i_ref)%v_c(ic) = COLL_element(1)%v3_c(i1,i2,i3)
+             if (l_HXC   .or.l_COH   ) COLL_element(i_ref)%v_c(ic) = COLL_element(1)%v3_c(i1,i2,i3)
              if (l_GW_NEQ.or.l_QED_P ) COLL_element(i_ref)%v_r(ic) = COLL_element(1)%v3_r(i1,i2,i3)
              !
            endif

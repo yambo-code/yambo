@@ -35,8 +35,7 @@ module RT_control
  integer                  :: n_TIME_STEP_CONF_descriptions = 0
  character(lchlen)        :: TIME_STEP_CONF_description(100)
  !
- integer,  parameter      :: J_and_P_cache_size=18
- integer                  :: J_and_P_cache_steps=1
+ integer                  :: IO_JPSM_cache_steps=1
  !
  integer                  :: ID(8)
  integer                  :: NE_i_start_time    = 1   ! restart point
@@ -45,19 +44,23 @@ module RT_control
  type RT_IO_t
    integer               :: N              = 0
    integer               :: INTERVAL_steps =-1
-   integer               :: last_point     = 1
+   integer               :: last_point     = 0
    real(SP)              :: INTERVAL_time
    real(SP)              :: INTERVAL_time_SAVE
    real(SP), allocatable :: Time(:)
  end type
  !
+ logical                  :: SAVE_G_history
+ !
  type(RT_IO_t),save  :: JPC_RT_IO_t
  type(RT_IO_t),save  :: OUTPUT_RT_IO_t
  type(RT_IO_t),save  :: GF_RT_IO_t
  !
- ! J and P cache 
+ ! J, P and M (spin) cache 
  !
- real(SP), allocatable    :: J_and_P_cache(:,:)
+ real(SP), allocatable    :: J_cache(:,:)
+ real(SP), allocatable    :: P_cache(:,:)
+ real(SP), allocatable    :: M_cache(:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -109,11 +112,21 @@ module RT_control
      use pars,           ONLY:rZERO
      use real_time,      ONLY:NE_steps
      use memory_m,       ONLY:mem_est
+     use electrons,      ONLY:n_spin
      !
      if(l_NE_dynamics) then
        !
-       allocate(J_and_P_cache(J_and_P_cache_size,J_and_P_cache_steps))
-       call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
+       allocate(J_cache(6,IO_JPSM_cache_steps))
+       call mem_est('Current_Cache',(/size(J_cache)/),(/SP/))
+       J_cache=rZERO
+       allocate(P_cache(6,IO_JPSM_cache_steps))
+       call mem_est('Polarization_Cache',(/size(P_cache)/),(/SP/))
+       P_cache=rZERO
+       if(n_spin>1) then
+         allocate(M_cache(6,IO_JPSM_cache_steps))
+         call mem_est('Magnetization_Cache',(/size(M_cache)/),(/SP/))
+         M_cache=rZERO
+       endif
        !
      endif
      !
@@ -135,9 +148,19 @@ module RT_control
      !
      use memory_m,       ONLY:mem_est
      !
-     if(allocated(J_and_P_cache)) then
-       deallocate(J_and_P_cache)
+     if(allocated(J_cache)) then
+       deallocate(J_cache)
        call mem_est('Current_Cache')
+     endif
+     !
+     if(allocated(P_cache)) then
+       deallocate(P_cache)
+       call mem_est('Polarization_Cache')
+     endif
+     !
+     if(allocated(M_cache)) then
+       deallocate(M_cache)
+       call mem_est('Magnetization_Cache')
      endif
      !
      if(allocated(JPC_RT_IO_t%Time)) then
@@ -164,7 +187,7 @@ module RT_control
      RT_do_it= .FALSE.
      IT_last = 1
      !
-     if (what=="J".or.what=="P".or.what=="CARRIERS") then
+     if (what=="JPC") then
        DO_IT_steps=JPC_RT_IO_t%INTERVAL_steps
        IT_last    =JPC_RT_IO_t%last_point
      endif
@@ -183,7 +206,7 @@ module RT_control
      !
      ! In RESTART mode the GF and J/P/C databases could be not time aligned
      !
-     if (IT_last>NE_i_time) return
+     if (IT_last>=NE_i_time) return
      !
      if (DO_IT_steps<0) then
        RT_do_it=.TRUE. 
@@ -192,14 +215,7 @@ module RT_control
      !
      i_grp=nint(real(NE_i_time-IT_last)/real(DO_IT_steps))
      !
-     RT_do_it= NE_i_time-IT_last==i_grp*DO_IT_steps
-     !
-     if (RT_do_it) then
-       if (what=="J".or.what=="P".or.what=="CARRIERS") JPC_RT_IO_t%last_point=NE_i_time
-       if (what=="OUT")    OUTPUT_RT_IO_t%last_point=NE_i_time
-       if (what=="G")      GF_RT_IO_t%last_point=NE_i_time
-       if (what=="deltaT") NE_time_step_update_last_point=NE_i_time
-     endif
+     RT_do_it= (NE_i_time-IT_last)==(i_grp*DO_IT_steps)
      !
    end function
    !
@@ -273,13 +289,15 @@ module RT_control
      !
      if (TYP%INTERVAL_time<=RT_dyn_step) TYP%INTERVAL_time = RT_dyn_step
      !
-     TYP%INTERVAL_time  =                nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
+     TYP%INTERVAL_time  =            nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
      !
      ! The steps are always relative to RT_step
      !
-     TYP%INTERVAL_steps             =TYP%INTERVAL_time/RT_step
+     TYP%INTERVAL_steps             =nint(TYP%INTERVAL_time/RT_step)
      !
      if (INIT) TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
+     !
+     if (INIT.and.TYP%last_point==0) TYP%last_point=-TYP%INTERVAL_steps+1
      !
    end subroutine
    !

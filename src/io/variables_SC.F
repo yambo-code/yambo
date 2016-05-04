@@ -36,7 +36,7 @@ integer function variables_SC(ID,local_description,what)
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
+ use global_XC,      ONLY:SC_EXX,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC
  !
  implicit none
  !
@@ -114,7 +114,7 @@ integer function variables_SC(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (any((/SC_kind_disk==SC_EXX,SC_kind_disk==SC_EXXC,SC_kind_disk==SC_HF,SC_kind_disk==SC_COHSEX/))) then
+ if (any((/SC_kind_disk==SC_EXX,SC_kind_disk==SC_EXXC,SC_kind_disk==SC_FOCK,SC_kind_disk==SC_SEX,SC_kind_disk==SC_COHSEX/))) then
    call io_elemental(ID,VAR="SIGMAx_G",VAR_SZ=1,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_ng_Sx,&
@@ -123,7 +123,7 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
- if ( SC_kind_disk==SC_COHSEX   ) then
+ if ( SC_kind_disk==SC_COHSEX .or. SC_kind_disk==SC_COH .or. SC_kind_disk==SC_SEX ) then
    call io_elemental(ID,VAR="X_bands_size",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,I1=SC_X_bands,&
@@ -149,7 +149,7 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
  if (ver_is_gt_or_eq(ID,revision=2877)) then
-   if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/)).or.l_MP) then
+   if (all((/SC_kind_disk/=SC_FOCK,SC_kind_disk/=SC_COHSEX,SC_kind_disk/=SC_COH,SC_kind_disk/=SC_SEX/)).or.l_MP) then
      call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
      i_desc=i_desc+1
      call io_elemental(ID,I0=SC_fft_size,&
@@ -165,7 +165,7 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
  if (.not.ver_is_gt_or_eq(ID,revision=2877)) then
-   if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/)).or.l_MP) then
+   if (all((/SC_kind_disk/=SC_FOCK,SC_kind_disk/=SC_COHSEX,SC_kind_disk/=SC_COH,SC_kind_disk/=SC_SEX/)).or.l_MP) then
      call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
      i_desc=i_desc+1
      call io_elemental(ID,I0=SC_fft_size,&

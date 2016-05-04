@@ -88,7 +88,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  isc%iqref =0
  isc%ngrho =X%ng
- iscp%ngrho=isc%ngrho
+ iscp%ngrho=X%ng
  !
  ! WFs...
  !
@@ -154,12 +154,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
        !
        ! I/O
        !
-       if (q%nbz==1) then
-         call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,3/),ID=ID)
-       else
-         if (iqbz ==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,2*iqibz+1/),ID=ID)
-         if (iqbz>  1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-       endif
+       if (iqbz ==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,2*iqibz+1/),ID=ID)
+       if (iqbz>  1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=io_X(X,Xw,ID)
        !
        call Io_and_Messaging_switch("+fragments_IO_log")
@@ -175,7 +171,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          enddo
        enddo
 !$omp end parallel do
-       if (iqibz==1) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
+       if (iqibz==1) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/real(q%nbz,SP))
        !
      endif
      !
@@ -253,7 +249,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          !
          call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
          !
-         pre_factor=0.0_SP
+         pre_factor=0._SP
 !$omp parallel do default(shared), private(i1), reduction(+:pre_factor)
          do i1=1,X%ng
            pre_factor=pre_factor+isc%rhotw(i1)*local_rhotw(i1)
@@ -262,13 +258,13 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          !
          if (io_COLLs) then
            !
-           GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz)=GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz)+&
-&                                                abs(pre_factor)**2._SP
+           GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz)=&
+&             GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz)                 +abs(pre_factor)**2
            !
          else
            !
            GW_NEQ_COLL_element(i_coll1_mem)%v3_r(i_J_mem,1,i_q_mem)=&
-&             GW_NEQ_COLL_element(i_coll1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
+&             GW_NEQ_COLL_element(i_coll1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2
            !
          endif
          !

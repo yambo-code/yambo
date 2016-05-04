@@ -59,7 +59,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  !!
  !if(l_weight_with_dipoles) then
  !  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- !  io_err=io_DIPOLES(Xdip,Xen,io_ID)
+ !  io_err=io_DIPOLES(Xdip,io_ID)
  !  allocate(q_norm(1),bare_qpg(1,1))
  !  Wd=cZERO
  !  call K_Transitions_setup(1,Xen,Xk,Wd,.false.)

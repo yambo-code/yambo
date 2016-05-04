@@ -202,7 +202,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
    !
    ! PLOT
    !
-   if (use_cube) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
+   if (use_cube)     output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
    if (use_xcrysden) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
    if (use_gnuplot)  output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
    !

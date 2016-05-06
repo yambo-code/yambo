@@ -33,7 +33,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin
  use FFT_m,        ONLY:fft_size
- use stderr,       ONLY:intc
  use interfaces,   ONLY:WF_load
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
@@ -88,7 +87,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Oscillators
  !
- integer    :: x_fft_size,c_fft_size
  logical    :: load_O_X,l_USE_all_Gexx
  complex(SP),allocatable  ::Ovv(:),Occ(:),O_times_W(:)
  complex(SP),allocatable  ::Ovc(:),Ocv(:)
@@ -242,16 +240,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !===================
  O_ng=maxval(G_m_G)
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_USE_all_Gexx.and..not.l_bs_fxc) then
-   call fft_setup(O_ng,1,.true.)
-   c_fft_size=fft_size
-   call fft_setup(BS_n_g_exch,maxval(qindx_X(iq,:,2)),.true.)
-   x_fft_size=fft_size
-   if (x_fft_size>c_fft_size) then
-     call warning('Exchange FFT size is too big. RL vectors reduced to '//intc(O_ng))
-     BS_n_g_exch=O_ng
-   endif
- endif
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_USE_all_Gexx.and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
  !
  ! Wave Functions
  !================
@@ -275,7 +264,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Elemental collisions allocation
  !=================================
  !
- call elemental_collision_alloc(K_CORR_collision,NG=O_ng,TITLE="CORR_COLL")
+ call elemental_collision_alloc(K_CORR_collision,NG=O_ng,       TITLE="CORR_COLL")
  call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
  !
  ! Wave Functions Phases
@@ -403,7 +392,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Timing
  !========
  !
- if (.not.l_bs_fxc) call live_timing('Kernel',BS_LiveTiming_steps)
+ if (.not.l_bs_fxc) call live_timing('Kernel',     BS_LiveTiming_steps)
  if (     l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
  !
  do i_block=1,n_BS_blks

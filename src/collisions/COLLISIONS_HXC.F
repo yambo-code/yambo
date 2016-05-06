@@ -47,8 +47,10 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use R_lattice,     ONLY:qindx_S,bz_samp
+ use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G
  use hamiltonian,   ONLY:B_mat_index
+ use fft_m,         ONLY:fft_size
+! use wrapper_omp,   ONLY:Vstar_dot_V_omp
  !
  implicit none
  !
@@ -59,15 +61,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Work Space
  !
- integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,&
+ integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,&
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_XC,i_star,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps
- logical                 :: l_compute_screening,l_HXC_collisions,l_COH_collisions,l_MBPT_XC_collisions
+ logical                 :: l_compute_screening,l_HXC_collisions,l_COH_collisions,l_MBPT_XC_collisions,eval_coll
  !
  type(elemental_collision):: isc_XC,iscp_XC,isc_H,iscp_H
  complex(SP)              :: pre_factor1,pre_factor2
  !
- complex(SP), allocatable :: EM1s(:,:)
+ complex(SP), allocatable :: EM1s(:,:),rhotw_tmp(:)
  integer                  :: io_err,ID
  integer, external        :: io_X
  !
@@ -100,11 +102,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  N_g_vecs_H =0
  N_g_vecs_XC=0
+ iGo_max    =maxval(qindx_S(:,:,2))
  !
  if (l_compute_screening) QP_ng_Sx=X%ng
  !
  if(index(SC_potential,"HARTREE")>0                       ) N_g_vecs_H  = QP_ng_SH
  if(index(SC_potential,"FOCK")>0   .or.l_compute_screening) N_g_vecs_XC = QP_ng_Sx
+ !
+ call fft_check_size(iGo_max,N_g_vecs_XC,N_g_vecs_H)
+ NG_max=max(N_g_vecs_H,N_g_vecs_XC)
  !
  call msg('r', '['//trim(SC_potential)//'] Plane waves :',(/N_g_vecs_H,N_g_vecs_XC/))
  !
@@ -112,8 +118,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  if (WF_buffered_IO) call WF_load(WF_buffer,0,1,COLL_bands,(/1,k%nibz/),space='B',title='-BUFFER')
  !
- call WF_load(WF,max(N_g_vecs_H,N_g_vecs_XC),maxval(qindx_S(:,:,2)),&
-&                COLL_bands,(/1,k%nibz/),title='-'//trim(SC_potential)//' Collisions')
+ call WF_load(WF,NG_max,iGo_max,COLL_bands,(/1,k%nibz/),title='-'//trim(SC_potential)//' Collisions')
  !
  iscp_H%qs   =1
  iscp_H%iqref=0
@@ -125,6 +130,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  call elemental_collision_alloc(isc_H ,NG=N_g_vecs_H,NG_GAMP=(/N_g_vecs_H,    1   /),TITLE='HARTREE')
  call elemental_collision_alloc(iscp_H,NG=N_g_vecs_H,                                TITLE='HARTREE')
+ !
+ allocate(rhotw_tmp(N_g_vecs_H))
  !
  iscp_XC%qs   =1
  iscp_XC%iqref=0
@@ -265,6 +272,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      isc_H%qs   = 1
      iscp_H%qs  = 1
      !
+     call scatter_Gamp(isc_H,'x')
+     !
      i_k_s      = 1
      !
      isc_H%is  =(/i_n,i_k,i_k_s,i_sp/)
@@ -272,41 +281,75 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !
      call scatter_Bamp(isc_H)
      !
-     i_kmq_bz =qindx_S(i_k,1,1)
-     !
-     i_kmq   = k%sstar(i_kmq_bz,1)
-     i_kmq_s = k%sstar(i_kmq_bz,2)
-     !
-     call scatter_Gamp(isc_H,'x')
-     !
      do i_kmq=1,k%nibz
-       do i_star=1,k%nstar(i_kmq)
-         !
-         i_kmq_s =k%star(i_kmq,i_star)
-         i_kmq_bz=k%k_table(i_kmq,i_kmq_s)
-         !
-         do i_mp=COLL_bands(1),COLL_bands(2)
-           do i_np=COLL_bands(1),COLL_bands(2)
+       !
+       !i_kmq_s =k%star(i_kmq,1)
+       !i_kmq_bz=k%k_table(i_kmq,1)
+       !
+       do i_mp=COLL_bands(1),COLL_bands(2)
+         do i_np=i_mp,COLL_bands(2)
+           !
+           if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,COLL_bands) ) .and. &
+&               .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_mp,i_np,COLL_bands) )         ) cycle
+           !
+           iscp_H%is =(/i_np,i_kmq,1,i_sp/)
+           iscp_H%os =(/i_mp,i_kmq,1,i_sp/)
+           !
+           eval_coll=.not.all((/i_n==i_np,i_m==i_mp,i_k==i_kmq/))
+           if (     eval_coll) call scatter_Bamp(iscp_H)
+           if (.not.eval_coll) iscp_H%rhotw=isc_H%rhotw
+           !
+           rhotw_tmp=iscp_H%rhotw
+           !
+           do i_star=2,k%nstar(i_kmq)
              !
-             if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,COLL_bands) ) ) cycle
+             i_kmq_s =k%star(i_kmq,i_star)
+             !i_kmq_bz=k%k_table(i_kmq,i_kmq_s)
              !
-             iscp_H%is =(/i_np,i_kmq,i_kmq_s,i_sp/)
-             iscp_H%os =(/i_mp,i_kmq,i_kmq_s,i_sp/)
+!$omp parallel do default(shared), private(ig1)
+             do ig1=2,N_g_vecs_H
+               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(i_kmq_s,ig1))
+             enddo
+!$omp end parallel do
              !
-             call scatter_Bamp(iscp_H)
+           enddo
+           !
+           if ( PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,COLL_bands) ) ) then
              !
              pre_factor1=cZERO
 !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
              do ig1=2,N_g_vecs_H
-               pre_factor1=pre_factor1+conjg(iscp_H%rhotw(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
+               pre_factor1=pre_factor1+conjg(rhotw_tmp(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
              enddo
 !$omp end parallel do
              !
-             HXC_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=HXC_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)+4._SP*pi*pre_factor1
+             HXC_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=4._SP*pi*pre_factor1
              !
              call live_timing(steps=1)
              !
-           enddo
+           endif
+           !
+           if(i_np==i_mp) cycle
+           !
+           !cycle
+           !
+           if ( PAR_IND_Bp_mat%element_1D( B_mat_index(i_mp,i_np,COLL_bands) ) ) then
+             !
+             pre_factor1=cZERO
+!$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
+             do ig1=2,N_g_vecs_H
+               pre_factor1=pre_factor1+rhotw_tmp(minus_G(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
+             enddo
+!$omp end parallel do
+             !
+             HXC_COLL_element(1)%v3_c(i_mp,i_np,i_kmq)=4._SP*pi*pre_factor1
+             !
+             !HXC_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=4._SP*pi*Vstar_dot_V_omp(N_g_vecs_H,isc_H%rhotw,rhotw_tmp)
+             !
+             call live_timing(steps=1)
+             !
+           endif
+           !
          enddo
          !
        enddo

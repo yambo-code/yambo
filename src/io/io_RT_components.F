@@ -32,7 +32,7 @@ integer function io_RT_components(what,ID)
  use electrons,      ONLY:n_spin
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,write_is_on,io_fragment, &
-&                         manage_RD_WR_CL_IF_END,variable_is_found,&
+&                         manage_OP_IF_START_and_CL_IF_END,variable_is_found,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
@@ -88,9 +88,13 @@ integer function io_RT_components(what,ID)
    db_type=-3
  endif
  !
- ik                     = 1
- if (l_THETA) ik = maxval(io_sec(ID,:))-1
- if(l_G)      ik = io_sec(ID,1)-1
+ if (l_THETA.or.l_G) ik = maxval(io_sec(ID,:))-1
+ !
+ ! ACTION
+ !========
+ !
+ if (l_JPSM.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NE_i_time,NE_steps)
+ if (l_G   .or.l_THETA   ) call manage_OP_IF_START_and_CL_IF_END(ID,ik,RT_nk)
  !
  l_track_history=.false.
  if (l_JPSM)     l_track_history=io_sec(ID,1)> 1
@@ -166,31 +170,12 @@ integer function io_RT_components(what,ID)
  !
  if (.not.any((/io_sec(ID,:)>1/))) goto 1
  !
- if (l_THETA.or.l_REF.or.l_G) then
-   if(l_REF.or.l_THETA) ik = maxval(io_sec(ID,:))-1
-   if(l_G)              ik = io_sec(ID,1)-1
-   if(ik==0) goto 1
- endif
- !
- ! CLOSE IF END
- !==============
- !
- if(l_JPSM.or.l_carriers) then
-   call manage_RD_WR_CL_IF_END(ID,NE_i_time,NE_steps)
- else if (l_G) then
-   call manage_RD_WR_CL_IF_END(ID,ik,RT_nk)
- else
-   call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
- endif
- !
- if (io_RT_components/=0) goto 1  
- !
  ! === no K no Time ===
  !#####################
  !
  ! REFERENCE Lifetimes and Green function
  !========================================
- if ( l_REF .and. any((/io_sec(ID,:)==2/)) ) then
+ if ( l_REF ) then
    !
 #if defined _ELPH
    !
@@ -260,8 +245,6 @@ integer function io_RT_components(what,ID)
  !
  ! === K-dependent ===
  !####################
- !
- if (ik==0) goto 1  
  !
 #if defined _ELPH
  !
@@ -339,8 +322,6 @@ integer function io_RT_components(what,ID)
  !
  ! === Time-dependent ===
  !#######################
- !
- if (io_sec(ID,1)==1) goto 1
  !
  ! Carrier components
  !====================

@@ -65,6 +65,7 @@ subroutine fft_check_size(iGo_max,NG_xc,NG_H)
    !
    NG_H=ng_in_shell(i_shell-1)
    call warning(' Hartree Sigma/Kernel FFT size is too big. RL vectors reduced from '//intc(NG_H_save)//'to '//intc(NG_H))
+   call warning(' Keeping a bigger FFT would significantly slow done the computation of the XC Sigma/Kernel')
    !
  endif
  !

@@ -30,8 +30,8 @@ subroutine RT_density(en,kpt,qpt)
  use parser_m,       ONLY:parser
  use stderr,         ONLY:real2ch,intc
  use com,            ONLY:msg,of_open_close,warning
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_RD_CL_IF_END,NONE,io_control,LOG
- use RT_control,     ONLY:RT_do_it,RT_apply,SAVE_G_history
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
+ use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,RT_delta0_occupations
  use YPP,            ONLY:v2plot,output_fname,plot_dim,plot_title,&
@@ -109,13 +109,10 @@ subroutine RT_density(en,kpt,qpt)
    NE_time=RT_time(i_T)
    NE_i_time=nint(NE_time/RT_step)+1
    !
-   if (.not.RT_do_it( 'G' ).and.     load_G_history) cycle
-   if (.not.RT_do_it('JPC').and..not.load_G_history) cycle
-   !
    if (load_G_history) then
      !
      do ik = 1, RT_nk 
-       call io_control(ACTION=OP_RD_CL_IF_END,COM=NONE,SEC=(/ik+1,NE_i_time+1/),ID=ID)
+       call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
        io_err=io_RT_components('G',ID)
      enddo
      !
@@ -131,8 +128,7 @@ subroutine RT_density(en,kpt,qpt)
    !
    v2plot=drho
    !
-   !ch_ws(2)='RT_density_'//trim(intc(plot_dim))//'d@t'//trim(adjustl(real2ch(NE_time)))//'fs'
-   ch_ws(2)='RT_density_'//trim(intc(plot_dim))//'d_it'//trim(intc(i_T))
+   ch_ws(2)='RT_density_'//trim(intc(plot_dim))//'d@t'//trim(TIME_string( (NE_i_time-1)*RT_step ))
    if (use_cube)     output_fname=trim(ch_ws(2))//'.cube'
    if (use_xcrysden) output_fname=trim(ch_ws(2))//'.xsf'
    if (use_gnuplot)  output_fname=trim(ch_ws(2))//''
@@ -156,6 +152,6 @@ subroutine RT_density(en,kpt,qpt)
  if(.not.load_G_history) deallocate(RT_delta0_occupations)
  deallocate(drho)
  !
- call WF_free()
+ call WF_free(WF)
  !
 end subroutine RT_density

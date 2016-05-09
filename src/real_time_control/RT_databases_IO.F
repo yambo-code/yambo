@@ -28,8 +28,8 @@ subroutine RT_databases_IO( )
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,M_cache,JPC_RT_IO_t,&
 &                         GF_RT_IO_t,IO_JPSM_cache_steps,SAVE_G_history
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
- use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,OP_WR_CL_IF_END,NONE,WR,REP,OP_WR_CL, &
-&                         io_GF,io_CARRIERs,io_J
+ use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL, &
+&                         io_GF,io_CARRIERs,io_J,OP_IF_START_WR_CL_IF_END
  use parallel_m,     ONLY:PP_redux_wait
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,NE_steps
  !
@@ -37,8 +37,7 @@ subroutine RT_databases_IO( )
  !
  ! Work Space
  !
- logical           :: store_last_point=.false.
- integer           :: ik,io_G,io_JPSM,io_carr,io_THETA,i_c,ACTION_,i_time,last_point_save
+ integer           :: ik,io_G,io_JPSM,io_carr,io_THETA,i_c,i_time,last_point_save,ACTION_
  integer, external :: io_RT_components
  !
  ! Store the current and the polarization in the cache for future writing
@@ -104,15 +103,15 @@ subroutine RT_databases_IO( )
      io_THETA=io_RT_components('THETA',ID(7))
    endif
    !
-   do ik = 1, RT_nk 
+   do ik = 1, RT_nk
      !
      ACTION_=WR_CL_IF_END
      if (SAVE_G_history) then
        call PP_redux_wait()
-       ACTION_=OP_WR_CL_IF_END
+       ACTION_=OP_IF_START_WR_CL_IF_END
      endif
      !
-     call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,NE_i_time+1/),ID=ID(5))
+     call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
      !
 #if defined _ELPH

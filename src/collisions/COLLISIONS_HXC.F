@@ -29,10 +29,13 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,spin_occ,spin
+ use electrons,     ONLY:levels,spin_occ,spin,n_spin
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
  use SC,            ONLY:SC_potential
+ use D_lattice,     ONLY:DL_vol
+ use xc_functionals,ONLY:F_xc,XC_potential_driver
+ use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
@@ -63,15 +66,18 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,&
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_XC,i_star,&
-&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps
- logical                 :: l_compute_screening,l_HXC_collisions,l_COH_collisions,l_MBPT_XC_collisions,eval_coll
+&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,bands_to_load(2)
+ logical                 :: l_HXC_collisions,l_COH_collisions,l_MBPT_XC_collisions,l_loc_HXC_collisions,&
+&                           eval_coll,l_compute_screening,l_tddft
  !
  type(elemental_collision):: isc_XC,iscp_XC,isc_H,iscp_H
+ real(SP)                 :: Co
  complex(SP)              :: pre_factor1,pre_factor2
  !
  complex(SP), allocatable :: EM1s(:,:),rhotw_tmp(:)
  integer                  :: io_err,ID
  integer, external        :: io_X
+ complex(SP),   external  :: TDDFT_ALDA_R_space
  !
 #if defined _TIMING
  call timing(trim(SC_potential)//' Collisions',OPR='start')
@@ -89,10 +95,14 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Setup
  !
- l_HXC_collisions     = index(SC_potential,"HARTREE")>0 .or. index(SC_potential,"FOCK")>0 .or. index(SC_potential,"SEX")>0
+ l_loc_HXC_collisions = index(SC_potential,"HARTREE")>0 .or. index(SC_potential,"GS_xc")>0 .or. index(SC_potential,"default")>0
+ l_MBPT_XC_collisions = index(SC_potential,"FOCK")>0 .or. index(SC_potential,"SEX")>0
+ !
+ l_HXC_collisions     = l_loc_HXC_collisions .or. l_MBPT_XC_collisions 
+ !
  l_COH_collisions     = index(SC_potential,"COH")>0
- l_MBPT_XC_collisions = index(SC_potential,"FOCK")>0 .or. index(SC_potential,"SEX")>0 .or. index(SC_potential,"COH")>0
  l_compute_screening  = index(SC_potential,"COH")>0 .or. index(SC_potential,"SEX")>0
+ l_tddft              = index(SC_potential,"GS_xc")>0 .or. index(SC_potential,"default")>0 
  !
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
@@ -104,10 +114,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  N_g_vecs_XC=0
  iGo_max    =maxval(qindx_S(:,:,2))
  !
- if (l_compute_screening) QP_ng_Sx=X%ng
- !
- if(index(SC_potential,"HARTREE")>0                       ) N_g_vecs_H  = QP_ng_SH
- if(index(SC_potential,"FOCK")>0   .or.l_compute_screening) N_g_vecs_XC = QP_ng_Sx
+ if(l_loc_HXC_collisions                     ) N_g_vecs_H  = QP_ng_SH
+ if(l_MBPT_XC_collisions .or.l_COH_collisions) N_g_vecs_XC = QP_ng_Sx
  !
  call fft_check_size(iGo_max,N_g_vecs_XC,N_g_vecs_H)
  NG_max=max(N_g_vecs_H,N_g_vecs_XC)
@@ -116,9 +124,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! WFs
  !
- if (WF_buffered_IO) call WF_load(WF_buffer,0,1,COLL_bands,(/1,k%nibz/),space='B',title='-BUFFER')
+ bands_to_load=COLL_bands
+ if (l_tddft) then
+   bands_to_load(1)=1
+   bands_to_load(2)=max(COLL_bands(2),E%nbm)
+ endif
  !
- call WF_load(WF,NG_max,iGo_max,COLL_bands,(/1,k%nibz/),title='-'//trim(SC_potential)//' Collisions')
+ if (WF_buffered_IO) call WF_load(WF_buffer,0,1,bands_to_load,(/1,k%nibz/),space='B',title='-BUFFER')
+ !
+ call WF_load(WF,NG_max,iGo_max,bands_to_load,(/1,k%nibz/),title='-'//trim(SC_potential)//' Collisions')
  !
  iscp_H%qs   =1
  iscp_H%iqref=0
@@ -149,15 +163,17 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
    io_err=io_X(X,Xw,ID)
-   if (io_err<0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
+   if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
+   !
+   if (X%ng<N_g_vecs_XC) call error(' Screening size (NGsBlkXs) cannot be smaller than SEX size (EXXRLvcs)')
    !
    ! Test the spatial Inversion
    !   
    call WF_spatial_inversion(E,Xk)
    !
-   ! Allocation
+   ! Allocation (EM1S can be bigger than N_g_vecs_XC)
    !
-   call X_alloc('X',(/N_g_vecs_XC,N_g_vecs_XC,1/))
+   call X_alloc('X',(/X%ng,X%ng,1/))
    allocate(EM1s(N_g_vecs_XC,N_g_vecs_XC),stat=alloc_err)
    call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
    !
@@ -167,6 +183,12 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    call elemental_collision_alloc(isc_XC, NG=N_g_vecs_XC,                                    TITLE=trim(SC_potential))
    !
+ endif
+ !
+ if(l_tddft) then
+    Co=4._SP*pi/DL_vol/real(q%nbz,SP)
+   allocate(F_xc(fft_size,n_spin,n_spin))
+   call XC_potential_driver(E,K,WF_kind,WF_xc_functional,2)
  endif
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
@@ -206,11 +228,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    ! HARTREE collisions
    !
-   if ( index(SC_potential,"HARTREE")>0 ) call compute_Hartree_collisions()
+   if ( l_loc_HXC_collisions ) call compute_loc_HXC_collisions()
    !
    ! XC collisions within MBPT
    !
-   if ( l_MBPT_XC_collisions )            call compute_MBPT_XC_collisions()
+   if ( l_MBPT_XC_collisions ) call compute_MBPT_XC_collisions()
    !
    !
    if (COLLISIONS_parallel_SC_structure) then
@@ -252,7 +274,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  contains
    !
-   subroutine compute_Hartree_collisions()
+   subroutine compute_loc_HXC_collisions()
      !
      ! Scattering geometry
      !=====================          _ \ _
@@ -306,24 +328,36 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              i_kmq_s =k%star(i_kmq,i_star)
              !i_kmq_bz=k%k_table(i_kmq,i_kmq_s)
              !
-!$omp parallel do default(shared), private(ig1)
+             !$omp parallel do default(shared), private(ig1)
              do ig1=2,N_g_vecs_H
                rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(i_kmq_s,ig1))
              enddo
-!$omp end parallel do
+             !$omp end parallel do
              !
            enddo
            !
            if ( PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,COLL_bands) ) ) then
              !
              pre_factor1=cZERO
-!$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
-             do ig1=2,N_g_vecs_H
-               pre_factor1=pre_factor1+conjg(rhotw_tmp(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
-             enddo
-!$omp end parallel do
+             if(index(SC_potential,"HARTREE")>0) then
+               !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
+               do ig1=2,N_g_vecs_H
+                 pre_factor1=pre_factor1+conjg(rhotw_tmp(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
+               enddo
+               !$omp end parallel do
+             endif
              !
-             HXC_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=4._SP*pi*pre_factor1
+             pre_factor2=cZERO
+             if(l_tddft) then
+               do i_star=1,k%nstar(i_kmq)
+                 i_kmq_s =k%star(i_kmq,i_star)
+                 iscp_H%is(3) = i_kmq_s
+                 iscp_H%os(3) = i_kmq_s
+                 pre_factor2=pre_factor2+TDDFT_ALDA_R_space(isc_H%is,isc_H%os,iscp_H%is,iscp_H%os,'RES')
+               enddo
+             endif
+             !
+             HXC_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=4._SP*pi*pre_factor1+Co*pre_factor2
              !
              call live_timing(steps=1)
              !
@@ -336,15 +370,25 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            if ( PAR_IND_Bp_mat%element_1D( B_mat_index(i_mp,i_np,COLL_bands) ) ) then
              !
              pre_factor1=cZERO
-!$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
-             do ig1=2,N_g_vecs_H
-               pre_factor1=pre_factor1+rhotw_tmp(minus_G(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
-             enddo
-!$omp end parallel do
+             if(index(SC_potential,"HARTREE")>0) then
+               !$omp parallel do, default(shared), private(ig1), reduction(+:pre_factor1)
+               do ig1=2,N_g_vecs_H
+                 pre_factor1=pre_factor1+rhotw_tmp(minus_G(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
+               enddo
+               !$omp end parallel do
+             endif
              !
-             HXC_COLL_element(1)%v3_c(i_mp,i_np,i_kmq)=4._SP*pi*pre_factor1
+             pre_factor2=cZERO
+             if(l_tddft) then
+               do i_star=1,k%nstar(i_kmq)
+                 i_kmq_s =k%star(i_kmq,i_star)
+                 iscp_H%is(3) = i_kmq_s
+                 iscp_H%os(3) = i_kmq_s
+                 pre_factor2=pre_factor2+TDDFT_ALDA_R_space(isc_H%is,isc_H%os,iscp_H%is,iscp_H%os,'CPL')
+               enddo
+             endif
              !
-             !HXC_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=4._SP*pi*Vstar_dot_V_omp(N_g_vecs_H,isc_H%rhotw,rhotw_tmp)
+             HXC_COLL_element(1)%v3_c(i_mp,i_np,i_kmq)=4._SP*pi*pre_factor1+Co*pre_factor2
              !
              call live_timing(steps=1)
              !
@@ -356,7 +400,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        !
      enddo
      !
-   end subroutine compute_Hartree_collisions
+   end subroutine compute_loc_HXC_collisions
    !
    !
    subroutine compute_MBPT_XC_collisions()
@@ -420,13 +464,13 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
          !
          ! Poles and Residuals
          !
-!$omp parallel do default(shared), private(ig1,ig2)
-         do ig1=1,X%ng
-           do ig2=1,X%ng
+         !$omp parallel do default(shared), private(ig1,ig2)
+         do ig1=1,N_g_vecs_XC
+           do ig2=1,N_g_vecs_XC
              EM1s(ig1,ig2)=X_mat(ig1,ig2,1)*isc_XC%gamp(ig1,ig2)
            enddo
          enddo
-!$omp end parallel do
+         !$omp end parallel do
          !
        endif
        !
@@ -452,22 +496,22 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            !
            pre_factor1=cZERO
            if(index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0) then 
-!$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
+             !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
              do ig1=1,N_g_vecs_XC
                pre_factor1=pre_factor1+isc_XC%rhotw(ig1)*iscp_XC%gamp(ig1,1)*conjg(iscp_XC%rhotw(ig1))
              enddo
-!$omp end parallel do
+             !$omp end parallel do
            endif
            !
            pre_factor2=cZERO
            if(index(SC_potential,"COH")>0.or.index(SC_potential,"SEX")>0) then 
-!$omp parallel do default(shared), private(ig1), reduction(+:pre_factor2)
+             !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor2)
              do ig1=1,N_g_vecs_XC
                do ig2=1,N_g_vecs_XC
                  pre_factor2=pre_factor2+isc_XC%rhotw(ig2)*EM1s(ig2,ig1)*conjg(iscp_XC%rhotw(ig1))
                enddo
              enddo
-!$omp end parallel do
+             !$omp end parallel do
            endif
            !
            if(index(SC_potential,"SEX")>0 .or. index(SC_potential,"FOCK")>0) &

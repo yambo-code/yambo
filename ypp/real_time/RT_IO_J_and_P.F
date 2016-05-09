@@ -70,9 +70,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
      call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
      io_G=io_RT_components('G',ID)
      !
-     if (present(IO_error)) then
-       IO_error=io_G/=0
-     endif
+     if (present(IO_error)) IO_error=io_G/=0
      if (io_G/=0) return
      !
      do ik=1,nkibz

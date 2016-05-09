@@ -23,8 +23,8 @@
 !
 subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
-&                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf,l_elphoton_scatt
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,&
+&                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use
  use pars,           ONLY:SP,pi
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
@@ -32,25 +32,25 @@ subroutine RT_initialize(E,k,q)
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
- use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
- use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,&
-&                         SETUP_RT_IO_type,J_and_P_cache_steps,TIME_adjust
- use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,NE_time_step_update_jump_SAVE, &
-&                         NE_steps,NE_tot_time,RT_carriers,RT_is_dynamically_dephased,   &
-&                         l_NE_simulate_Irredux,l_RT_induced_field,NE_step_update_treshold, &
-&                         RT_is_statically_dephased,RAD_LifeTime,NE_time_step_update_jump, &
-&                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
-&                         l_RT_CCA_Kernel,Life_MEM_steps,RT_life_interp_times_SAVE,    &
-&                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_times,&
-&                         l_RT_lifetimes_interpolation,l_NE_dynamics,l_RT_impose_N_dN,Integrator_name,&
-&                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_EXP,DbGd_EE_scatt_table,&
-&                         DbGd_EE_Nk_table,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,&
-&                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
-&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RAD_magnification,NE_initial_time_step_update
+ use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
+ use SC,             ONLY:SC_potential
+ use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
+&                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
+ use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,                &
+&                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_interp_times,       &
+&                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
+&                         NE_MEM_treshold,G_MEM_steps,Gr_kind,l_RT_uses_E_DbGd,               &
+&                         RT_life_interp_times_SAVE,l_RT_lifetimes_interpolation,             &
+&                         l_RT_impose_N_dN,Integrator_name,l_RT_EULER,l_RT_RK2,l_RT_RWA,      &
+&                         l_RT_EXP,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,            &
+&                         l_BGR,l_RT_HEUN,eval_HARTREE,eval_DFT,l_NE_dynamics,                &
+&                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
+&                         RAD_magnification,NE_step_update_treshold,                          &
+&                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
+&                         RT_is_dynamically_dephased,RT_is_statically_dephased
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
- use fields,         ONLY:Efield,n_ext_fields,field_is_ok,&
-&                         l_manual_excitation,EtoT,Efield_strength
+ use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
  !
  implicit none
@@ -60,7 +60,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,ik,N_T_samplings
+ integer                  :: i1,N_T_samplings
  character(6)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it
@@ -80,13 +80,12 @@ subroutine RT_initialize(E,k,q)
  call parser('RTskipImposeE',        l_skip_it)
  if (l_skip_it) l_RT_impose_E=.FALSE.
  !
- call parser('RTpumpEhEn',           l_manual_excitation)
+ call parser('SaveGhistory',         SAVE_G_history)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
- eval_DFT     =  l_sc_is_libDFT            .and..not.l_sc_ip
- eval_HARTREE = (.not.l_NE_simulate_Irredux.and..not.l_sc_ip).or.l_sc_hartree
- eval_DENSITY =  eval_HARTREE .or. eval_DFT
+ eval_DFT     =  l_sc_is_libDFT
+ eval_HARTREE =  l_sc_hartree
  !
  ! Integrator FLAGS
  !==================
@@ -172,8 +171,8 @@ subroutine RT_initialize(E,k,q)
  !=========================
  T_memory=0._SP
  if (l_elph_scatt.and.NE_MEM_treshold>0.) then
-   T_memory=-1./minval( abs(E%W(RT_bands(1):RT_bands(2),:,:)))*log(NE_MEM_treshold)
-   G_MEM_steps=T_memory/RT_step
+   T_memory=-1._SP/minval( abs(E%W(RT_bands(1):RT_bands(2),:,:)))*log(NE_MEM_treshold)
+   G_MEM_steps=nint(T_memory/RT_step)
  endif
  !
  ! Update time Step
@@ -193,9 +192,9 @@ subroutine RT_initialize(E,k,q)
    !
  else
    !
-   ! J and P cache Time size (is switched off when an adaptative time step is used)
+   ! J, P and M (spin) cache Time size (is switched off when an adaptative time step is used)
    !=========================
-   J_and_P_cache_steps=JPC_RT_IO_t%INTERVAL_steps
+   IO_JPSM_cache_steps=JPC_RT_IO_t%INTERVAL_steps
    !
  endif
  !
@@ -254,7 +253,7 @@ subroutine RT_initialize(E,k,q)
    !
  enddo
  !
- l_NE_dynamics=l_NE_with_fields.or.l_manual_excitation
+ l_NE_dynamics= l_NE_with_fields .or. l_rt_carriers_in_use
  !
  ! Check on the PROBE/PUMP frequencies
  !====================================
@@ -262,35 +261,11 @@ subroutine RT_initialize(E,k,q)
  !
  if ( .not. l_NE_dynamics ) call error('No external fields nor manual pumping provided')
  !
- ! RIM support
- !=============
- l_RT_uses_E_DbGd=BZ_DbGd_tot_nkpts>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
- !
  ! Number of K-points
  !====================
- allocate(DbGd_ibz_coo(k%nibz,2))
- allocate(DbGd_bz_coo(k%nbz,2))
- allocate(RT_ibz_coo(k%nibz,2))
- allocate(RT_Nk_ibz(k%nibz))
- if (l_RT_uses_E_DbGd) then
-   RT_nk=RT_k_grid(E,k,q)
- else
-   RT_nk=k%nibz
-   RT_Nk_ibz=1
-   DbGd_EE_percent=0.
-   allocate(RT_all2ibz(k%nibz))
-   if(l_elel_scatt) then
-     allocate(DbGd_EE_scatt_table(k%nibz,q%nbz))
-     allocate(DbGd_EE_Nk_table(k%nibz,k%nibz))
-     DbGd_EE_scatt_table=.true.
-     DbGd_EE_Nk_table=1
-   endif
-   do ik=1,k%nibz
-     DbGd_ibz_coo(ik,:)=ik
-     RT_ibz_coo(ik,:)=ik
-     RT_all2ibz(ik)=ik
-   enddo
- endif
+ RT_nk=RT_k_grid(E,k,q)
+ !
+#if defined _ELPH
  !
  ! Electron-phonon
  ! ===============
@@ -302,6 +277,8 @@ subroutine RT_initialize(E,k,q)
    call RT_ELPH_initialize(E,k,q)
    !
  endif
+ !
+#endif
  !
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
@@ -316,7 +293,7 @@ subroutine RT_initialize(E,k,q)
  ! Checking extended COLLISIONS
  !==============================
  !
- if (l_elel_scatt.or.l_sc_cohsex.or.l_sc_hf) then
+ if (l_elel_scatt.or.l_sc_sex.or.l_sc_fock.or.l_sc_hartree) then
    !
    call section('=','Electronic Collisions loading and setup')
    !
@@ -325,7 +302,7 @@ subroutine RT_initialize(E,k,q)
      call PLASMA_parallel_setup(EH_gas)
    endif
    !
-   call COLLISIONS_load(.TRUE.)
+   if(io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
  !
@@ -370,12 +347,8 @@ subroutine RT_initialize(E,k,q)
  endif
  !
  call msg( 'nr','---Flags (if any)---')
- if (l_sc_ip)             call msg( 'r','Simulate IP                :',l_sc_ip)
- if (l_sc_hartree)        call msg( 'r','Simulate RPA               :',l_sc_hartree)
- if (l_sc_is_libDFT)      call msg( 'r','Simulate TD-DFT            :',l_sc_is_libDFT)
- if (l_sc_cohsex)         call msg( 'r','Simulate BSE               :',l_sc_cohsex)
  !
- if (l_NE_simulate_Irredux) call msg( 'r','Simulate Irredux           :',l_NE_simulate_Irredux)
+ call msg( 'r','Hxc approximation          :',trim(SC_potential))
  !
  if (l_elph_scatt)        call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El         scattering   :',l_elel_scatt)

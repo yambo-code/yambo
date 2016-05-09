@@ -274,7 +274,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        allocate(DB_corrected(elph_nb,k%nbz,1))
        DB_corrected=0
-       call QP_apply_global_stretch((/1,elph_nb/),E_k_p_q,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
+       call QP_apply_global_stretch((/1,elph_nb/),E_k_p_q,k,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
        deallocate(DB_corrected)
        !
      endif

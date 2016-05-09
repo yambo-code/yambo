@@ -39,7 +39,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use X_m,           ONLY:X_t
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
- use QP_m,          ONLY:QP_ng_Sx
+ use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
 #if defined _TIMING
@@ -138,7 +138,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! COLOUMB DRIVER
  !================
  !
- call col_driver(maxval((/wf_ng,QP_ng_Sx/)),q)
+ call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! reset the section numbering
  !

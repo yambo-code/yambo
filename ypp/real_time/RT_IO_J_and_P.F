@@ -25,11 +25,12 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  use YPP_real_time,  ONLY:RT_J_t,RT_P_t,RT_conf,RT_time
  use pars,           ONLY:DP,SP,schlen
+ use electrons,      ONLY:n_spin
  use R_lattice,      ONLY:nkibz
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:J_and_P_cache,J_and_P_cache_size,J_and_P_cache_steps
+ use RT_control,     ONLY:J_cache,P_cache,M_cache,IO_JPSM_cache_steps
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
@@ -43,7 +44,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  ! Work Space
  !
  real(SP)           :: TIME
- integer            :: io_J_and_P,ID,i_f,io_G,COM_here,ik,NE_steps_save,i_c,i_time
+ integer            :: io_JPSM,ID,i_f,io_G,COM_here,ik,NE_steps_save,i_c,i_time
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
  !
@@ -75,7 +76,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
      if (io_G/=0) return
      !
      do ik=1,nkibz
-       call io_control(ACTION=RD_CL_IF_END,COM=COM_here,SEC=(/ik+1/),MODE=DUMP,ID=ID)
+       call io_control(ACTION=RD_CL_IF_END,COM=COM_here,SEC=(/ik+1,1/),MODE=DUMP,ID=ID)
        io_G=io_RT_components('G',ID)
      enddo
      !
@@ -102,8 +103,8 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  endif
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID)
- io_J_and_P=io_RT_components('J_and_P',ID)
- if( io_J_and_P/=0 ) then
+ io_JPSM=io_RT_components('JPSM',ID)
+ if( io_JPSM/=0 ) then
    if (present(IO_error)) then
      IO_error=.TRUE.
    endif
@@ -125,8 +126,17 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
    call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
  endif
- allocate(J_and_P_cache(J_and_P_cache_size,J_and_P_cache_steps))
- call mem_est("Current_Cache",(/size(J_and_P_cache)/),(/SP/))
+ !
+ allocate(J_cache(6,IO_JPSM_cache_steps))
+ call mem_est("Current_Cache",(/size(J_cache)/),(/SP/))
+ !
+ allocate(P_cache(6,IO_JPSM_cache_steps))
+ call mem_est("Polarization_Cache",(/size(P_cache)/),(/SP/))
+ !
+ if(n_spin>1) then
+   allocate(M_cache(6,IO_JPSM_cache_steps))
+   call mem_est("Magnetization_Cache",(/size(M_cache)/),(/SP/))
+ endif
  !
  RT_J_t        =(0._DP,0._DP)
  RT_P_t        =(0._DP,0._DP)
@@ -142,11 +152,11 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    NE_i_time=nint( TIME/RT_step ) + 1
    !
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
-   io_J_and_P=io_RT_components('J_and_P',ID)
+   io_JPSM=io_RT_components('JPSM',ID)
    !
    do i_c=1,3
-     RT_J_t(i_time,i_c) =cmplx(J_and_P_cache(   2*i_c-1,1),J_and_P_cache(   2*i_c,1),SP)
-     RT_P_t(i_time,i_c) =cmplx(J_and_P_cache( 6+2*i_c-1,1),J_and_P_cache( 6+2*i_c,1),SP)
+     RT_J_t(i_time,i_c) =cmplx(J_cache(2*i_c-1,1),J_cache(2*i_c,1),SP)
+     RT_P_t(i_time,i_c) =cmplx(P_cache(2*i_c-1,1),P_cache(2*i_c,1),SP)
    enddo
    !
    call live_timing(steps=1)
@@ -161,7 +171,11 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    Efield(i_f)%amplitude=Efield_strength(Efield(i_f)%intensity,'AU')
  enddo
  !
- deallocate(J_and_P_cache)
- call mem_est("Current_Cache")
+ deallocate(J_cache,P_cache)
+ call mem_est("Current_Cache Polarization_Cache")
+ if(n_spin>1) then
+   deallocate(M_cache)
+   call mem_est("Magnetization_Cache")
+ endif
  !
 end subroutine

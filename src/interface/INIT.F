@@ -43,7 +43,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,QP_table
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
@@ -59,12 +59,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _SC || defined _RT
- use collision,      ONLY:FOCK_collisions,SEX_collisions,P_collisions,GW_NEQ_collisions
+ use collision,      ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
  use interfaces,     ONLY:io_COLLISIONS
  use SC,             ONLY:SC_potential
 #endif
 #if defined _RT
- use real_time,      ONLY:n_regions
  use fields,         ONLY:n_ext_fields,n_ext_fields_max
 #endif
 #if defined _MAGNETIC
@@ -98,7 +97,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer           :: io_COLLISIONS_err,io_SC_E_err,io_SC_V_err
 #endif
 #if defined _RT
- integer           :: io_G,io_J_and_P
+ integer           :: io_G,io_JPSM
 #endif
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
@@ -255,6 +254,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Updates RL variables
  !
  QP_ng_Sx=ng_closed
+ QP_ng_SH=ng_closed
  BS_n_g_exch=ng_closed
  !
  ! kindx
@@ -413,7 +413,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_J_and_P=io_RT_components('J_and_P',io_ID)
+ io_JPSM=io_RT_components('JPSM',io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_G=io_RT_components('G',io_ID)
 #endif
@@ -430,11 +430,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! COLLISIONS 
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,FOCK_collisions)
- if (io_COLLISIONS_err==0) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   io_COLLISIONS_err=io_COLLISIONS(io_ID,SEX_collisions)
- endif
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,COH_collisions)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,HXC_collisions)
 #endif
 #if defined _SC && defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
@@ -592,6 +590,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
+   call initactivate(1,'DrClassic')
    !
    !
    call INIT_QP_ctl_switch('X')
@@ -813,12 +812,17 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_sc_run) then
    !
-   call initactivate( 1,'Potential FFTGvecs SCBands')
+   call initactivate( 1,'HXC_Potential FFTGvecs SCBands')
    call initactivate(-1,'QpntsRXs')
    !
    select case (trim(SC_potential))
-     case('HARTREE-FOCK')
+     case('HARTREE+FOCK')
        call initactivate(1,'EXXCut EXXRLvcs')
+     case('COH')
+       call initactivate(1,'GbndRnge UseEbands SCUpWIter')
+     case('SEX')
+       call initactivate(1,'EXXCut EXXRLvcs')
+       call initactivate(1,'GbndRnge SCUpWIter')
      case('COHSEX')
        call initactivate(1,'EXXCut EXXRLvcs')
        call initactivate(1,'GbndRnge UseEbands SCUpWIter')
@@ -840,10 +844,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_eval_collisions) then
    !
-   call initactivate( 1,'Potential FFTGvecs COLLBands')
+   call initactivate( 1,'HXC_Potential FFTGvecs COLLBands')
    call initactivate(-1,'QpntsRXs')
    !
-   if(trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX") then
+   if( index(SC_potential,"HARTREE")>0) call initactivate(1,'HARRLvcs')
+   !
+   if( index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.index(SC_potential,"COH")>0 ) then
      call initactivate( 1,'EXXCut EXXRLvcs')
    endif
    !
@@ -859,16 +865,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call INIT_QP_ctl_switch('G')
    call INIT_RT_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'RTBands Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTBands HXC_Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep dTupdateTime dTupdateJump dTupdateTresh NEsteps NETime COHsteps DipoleEtresh')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeInterpolation LifeInterpSteps')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
-   call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime')
-   call initactivate(1,'RTpumpNel RTpumpEhWd RTpumpBZWd RTpumpEhEn RTpumpDE')
-   do i1=1,n_regions
-     call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
-   enddo
+   call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime SaveGhistory')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
    ! or parsed from the input file in INIT_load.F
@@ -1576,9 +1578,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            !
          endif
          !
+#if defined _SURF
+         !
          ! Surface spectroscopy
          !
-#if defined _SURF
          if ( trim(rstr_piece(i1)) == 'sursp' )  then
            if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
            if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
@@ -1586,33 +1589,82 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
 #endif
          !
-         ! Sc / NEGF
+#if defined _SC
          !
-#if defined _SC  || defined _RT
+         ! SC
+         !
          if ( trim(rstr_piece(i1)) == 'potential' )  then
            !
-           if ( trim(rstr_piece(i1+1)) == 'exx' ) then
+           SC_potential=""
+           if ( index(trim(rstr_piece(i1+1)),'exx')>0 ) then
              SC_potential='EXX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-           else if ( trim(rstr_piece(i1+1)) == 'exxc' ) then
+           else if ( index(trim(rstr_piece(i1+1)),'exxc')>0 ) then
              SC_potential='EXXC'
-           else if ( trim(rstr_piece(i1+1)) == 'srpa' ) then
+           else if ( index(trim(rstr_piece(i1+1)),'srpa')>0 ) then
              SC_potential='SRPA'
-           else if ( trim(rstr_piece(i1+1)) == 'c' ) then
+           else if ( index(trim(rstr_piece(i1+1)),'cohsex')>0 ) then
              SC_potential='COHSEX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-           else if ( trim(rstr_piece(i1+1)) == 'hf') then
-             SC_potential='HARTREE-FOCK'
-           else if ( trim(rstr_piece(i1+1)) == 'h') then
-             SC_potential='HARTREE'
-           else if ( trim(rstr_piece(i1+1)) == 'd') then
+           else if ( index(trim(rstr_piece(i1+1)),'coh')>0 ) then
+             SC_potential='COH'
+             if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+           else if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
+             SC_potential='SEX'
+             if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+           else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
+             SC_potential='FOCK'
+           endif
+           !
+           if ( index(trim(rstr_piece(i1+1)),'h')>0 ) then
+             if(trim(SC_potential)/="") SC_potential='HARTREE+'//trim(SC_potential)
+             if(trim(SC_potential)=="") SC_potential='HARTREE'
+           endif
+           !
+           if ( trim(rstr_piece(i1+1)) == 'd') then
              SC_potential='default'
+           endif
+           !
+           if ( trim(rstr_piece(i1+1)) == 'ip') then
+             SC_potential='IP'
+           endif
+           !
+           !
+         endif
+#endif
+         !
+#if defined _RT
+         !
+         ! NEGF
+         !
+         if ( trim(rstr_piece(i1)) == 'potential' )  then
+           !
+           SC_potential=""
+           if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
+             SC_potential='SEX'
+             if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+           else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
+             SC_potential='FOCK'
            else if ( trim(rstr_piece(i1+1)) == 'ip') then
+             SC_potential='IP'
+           endif
+           !
+           if ( index(trim(rstr_piece(i1+1)),'h')>0 ) then
+             if(trim(SC_potential)/="") SC_potential='HARTREE+'//trim(SC_potential)
+             if(trim(SC_potential)=="") SC_potential='HARTREE'
+           endif
+           !
+           if ( trim(rstr_piece(i1+1)) == 'd') then
+             SC_potential='default'
+           endif
+           !
+           if ( trim(rstr_piece(i1+1)) == 'ip') then
              SC_potential='IP'
            endif
            !
          endif
 #endif
+         !
 #if defined _MAGNETIC
          if ( trim(rstr_piece(i1)) == 'magnetic' )  then
            if ( trim(rstr_piece(i1+1)) == 'p' ) then
@@ -1649,9 +1701,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
 #endif
          !
+#if defined _RT 
+         !
          ! RT
          !
-#if defined _RT 
          if ( trim(rstr_piece(i1)) == 'negf' ) then
            !
            if ( trim(rstr_piece(i1+1)) == 'p'    ) n_ext_fields=1
@@ -1681,12 +1734,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
 #endif
          !
-         ! COLLISIONS
-         !
 #if defined _SC || defined _RT 
          !
+         ! COLLISIONS
+         !
          if (runlevel_is_on('collisions')) then
-           if (l_elel_scatt.or.trim(SC_potential)=='COHSEX') call initactivate(1,'em1s')
+           if ( l_elel_scatt.or.trim(SC_potential)=='COHSEX'.or.&
+&               trim(SC_potential)=='COH'.or.trim(SC_potential)=='SEX' ) call initactivate(1,'em1s')
          endif
          !
 #endif

@@ -23,7 +23,8 @@
 !
 subroutine XC_switch()
  !
- use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_is_libDFT,&
+ use pars,           ONLY:schlen
+ use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_fock,l_sc_coh,l_sc_sex,l_sc_is_libDFT,&
 &                         l_sc_srpa,l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater,l_sc_magnetic
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,l_sc_pot_is_local,SC_perturbation,&
 &                         OEP_approx,l_oep_EWeight,l_oep_iterative
@@ -33,44 +34,47 @@ subroutine XC_switch()
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
  use magnetic,       ONLY:MAG_landau,MAG_pauli
 #endif
-#if defined _RT
- use real_time,      ONLY:l_NE_simulate_Irredux
-#endif
- use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE
+ use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC,SC_SRPA,EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error
- use parser_m,       ONLY:parser
  !
  implicit none
  !
- !WorkPars:
+ ! Work
+ !
+ character(schlen)  :: SC_Hartree_potential,SC_XConly_potential
+ integer            :: index_plus
  integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20, CED_APPRX = 30, LEVY_APPRX = 40
  !
-#if defined _RT
+ index_plus = SCAN(SC_potential,'+')
+ SC_Hartree_potential=(trim(SC_potential(1:index_plus-1)))
+ SC_XConly_potential =(trim(SC_potential(index_plus+1: )))
  !
- call parser('RTIrredux',l_NE_simulate_Irredux)
- if(l_NE_simulate_Irredux.and.trim(SC_potential)=='HARTREE') then
-   SC_potential='IP'
-   l_NE_simulate_Irredux=.false.
- endif
- !
-#endif
- !
- select case (trim(SC_potential))
+ select case (trim(SC_XConly_potential))
    case('IP')
      ! This means Hartree and V_xc are frozed: IP=KS-IP
      l_sc_ip=.true.
      SC_kind=-1
      SC_xc_functional=0
-   case('HARTREE')
-     ! This means V_xc is frozen
+   case('default')
+     ! special case
      l_sc_hartree=.true.
-     SC_kind=SC_Hartree
+     l_sc_is_libDFT=.true.
+     SC_kind=GS_xc_KIND+SC_HARTREE
+     SC_xc_functional=GS_xc_FUNCTIONAL
+     SC_potential="HARTREE+GS_xc"
+   case('HARTREE')
+     l_sc_hartree=.true.
+     SC_kind=SC_HARTREE
      SC_xc_functional=0
-   case('HARTREE-FOCK')
-     l_sc_hf=.true.
+   case('GS_xc')
+     l_sc_is_libDFT=.true.
+     SC_kind=GS_xc_KIND
+     SC_xc_functional=GS_xc_FUNCTIONAL
+   case('FOCK')
+     l_sc_fock=.true.
      l_sc_pot_is_local=.false.
-     SC_kind=SC_HF
+     SC_kind=SC_FOCK
      SC_xc_functional=0
    case('LDA_X')
      l_sc_is_libDFT=.true.
@@ -80,10 +84,6 @@ subroutine XC_switch()
      l_sc_is_libDFT=.true.
      SC_kind=XC_EXCHANGE_CORRELATION
      SC_xc_functional=XC_LDA_C_PZ
-   case('default')
-     l_sc_is_libDFT=.true.
-     SC_kind=GS_xc_KIND
-     SC_xc_functional=GS_xc_FUNCTIONAL
    case('EXX')
      l_sc_exx=.true.
      SC_kind=SC_EXX
@@ -101,14 +101,30 @@ subroutine XC_switch()
      SC_kind=SC_SRPA
      SC_xc_functional=0
      if (n_full_bands/=n_met_bands) return
+   case('COH')
+     l_sc_coh=.true.
+     l_sc_pot_is_local=.false.
+     SC_kind=SC_COH
+     SC_xc_functional=0
+   case('SEX')
+     l_sc_sex=.true.
+     l_sc_pot_is_local=.false.
+     SC_kind=SC_SEX
+     SC_xc_functional=0
    case('COHSEX')
-     l_sc_cohsex=.true.
+     l_sc_coh=.true.
+     l_sc_sex=.true.
      l_sc_pot_is_local=.false.
      SC_kind=SC_COHSEX
      SC_xc_functional=0
    case default
      call error("Unknown SC potential! ")
  end select
+ !
+ if (trim(SC_Hartree_potential)=="HARTREE") then
+   l_sc_hartree=.true.
+   SC_kind=SC_kind+SC_Hartree
+ endif
  !
  ! OEP approximation
  !

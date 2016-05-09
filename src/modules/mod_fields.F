@@ -28,8 +28,6 @@ module fields
  !
  implicit none
  !
- logical           :: l_manual_excitation
- !
  ! Electric Field(s)
  ! 
  type ext_field

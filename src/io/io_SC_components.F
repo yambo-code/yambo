@@ -23,7 +23,7 @@
 !
 integer function io_SC_components(what,E_sc,ID)
  !
- ! what can be E WF V J_and_P G
+ ! what can be E WF V JPSM G
  !
  use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_sc_run
@@ -33,9 +33,9 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,&
 &                         V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
-&                         io_sec,io_bulk,read_is_on,write_is_on,close_is_on,&
+&                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
 &                         manage_RD_WR_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,&
-&                         io_fragment,ver_is_gt_or_eq,frag_SC
+&                         io_fragment,ver_is_gt_or_eq
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_c2r,mat_r2c
@@ -98,7 +98,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (any((/l_E,l_V,l_WF,l_MP/))) then
      if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")/=0) then
-       io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL,FRAG=frag_Sc)
+       io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL,FRAG=frag_SC)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,FRAG=frag_Sc)
      endif

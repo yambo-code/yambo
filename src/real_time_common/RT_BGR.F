@@ -26,7 +26,7 @@ subroutine RT_BGR(dG,E,k)
  ! This routine calculates the BGR
  !
  use pars,           ONLY:SP,cZERO,rZERO
- use drivers,        ONLY:l_sc_hf,l_sc_cohsex
+ use drivers,        ONLY:l_sc_fock,l_sc_sex
  use SC,             ONLY:V_hartree_sc,V_xc_sc,rho_n
  use R_lattice,      ONLY:nkibz,bz_samp
 #if defined _TIMING
@@ -134,13 +134,7 @@ subroutine RT_BGR(dG,E,k)
    !
  endif
  !
- if (l_sc_hf.or.l_sc_cohsex) then
-   !
-   ! Davide 20/11/2015
-   ! Here I'm computing the variation of the SEX self-energy,
-   ! not the variation of the COHSEX self-energy.
-   ! The COH part does not change during the real-time simulation.
-   ! Thus I do not see a reason for removing the diagonal from the G_lesser
+ if (l_sc_fock.or.l_sc_sex) then
    !
    call COLLISIONS_compose_rt(dG)
    !

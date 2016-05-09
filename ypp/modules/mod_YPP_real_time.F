@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,9 +23,7 @@
 !
 module YPP_real_time
  !
- use pars,    ONLY:SP,DP,lchlen,schlen
- use units,   ONLY:HA2EV
- use QP_m,    ONLY:QP_t
+ use pars,     ONLY:schlen,SP,DP
  !
  implicit none
  !
@@ -36,17 +34,28 @@ module YPP_real_time
  ! RT
  !
  logical  :: l_RealTime
+ logical  :: l_RT_DBs
  !
- ! (RT) BANDS
+ ! RT DBs (what)
  !
- logical  :: l_RT_occ_Bands
- logical  :: l_RT_life_Bands
+ logical  :: l_RTpump_energy
+ logical  :: l_RTpump_kspace
+ logical  :: l_RTpump_manual
  !
- ! (RT) Occupations
+ ! RT Post-processing (what)
  !
- logical     :: l_RT_occ_time
- logical     :: l_RT_occ_energy
- logical     :: l_RT_occ_2D_dos
+ logical  :: l_RT_occupations
+ logical  :: l_RT_lifetimes
+ logical  :: l_RT_density
+ logical  :: l_RT_X
+ logical  :: l_RT_abs
+ !
+ ! RT post-processing (kind)
+ !
+ logical  :: l_RT_bands
+ logical  :: l_RT_time
+ logical  :: l_RT_energy
+ logical  :: l_RT_2D_dos
  !
  ! (RT) Retarded Green's functions
  !
@@ -54,13 +63,23 @@ module YPP_real_time
  real(SP) :: Gr_E_step
  real(SP) :: GF_T_step
  !
+ ! Manual pump
+ !
+ real(SP)    :: Eh_pumped_Nel
+ real(SP)    :: Eh_pumped_pair_energy(2)
+ !
+ real(SP)    :: Eh_pumped_pair_deltaE
+ real(SP)    :: Eh_pumped_pair_BZ_reagions(3,6)   
+ !
+ real(SP)    :: Eh_pumped_pair_width               ! energy with
+ real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
+ integer     :: n_regions
+ !
  ! (RT) optics
  !
  logical  :: Use_FFT
  logical  :: l_skip_pol_and_curr_IO
  logical  :: l_force_min_damp
- logical  :: l_RT_X
- logical  :: l_RT_abs
  logical  :: l_RT_X_inversion
  integer  :: N_probes
  integer  :: N_pumps
@@ -71,6 +90,7 @@ module YPP_real_time
  integer, parameter:: max_n_of_paths=10000
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
+ !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
  !

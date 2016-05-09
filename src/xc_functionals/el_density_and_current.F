@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
+subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  ! Electronic density (and current).
  !
@@ -46,24 +46,35 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  !
  use pars,          ONLY:SP
  use com,           ONLY:warning
- use electrons,     ONLY:levels,n_spin,n_sp_pol
+ use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
+#if defined _RT
+ use drivers,       ONLY:l_real_time
+#endif
+#if defined _YPP_RT
+ use real_time,     ONLY:RT_delta0_occupations,RT_ibz_coo,RT_Nk_ibz
+#endif
  !
  implicit none
+ !
  type(bz_samp)::k
  type(levels) ::E       
  real(SP), optional             ::J(fft_size,3)
  real(SP), optional             ::rho(fft_size)
+ integer,  optional, intent(in) ::bands(2)
  logical,  optional, intent(in) ::force_spatial_inversion
  !
  ! Work Space 
  !
- integer    :: ib,ik,i_spin_wf,i_spin_E,ifft,rho_syms,i_s !,i_r
- real(SP)   :: rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+#if defined _YPP_RT
+ integer    :: ik_RT
+#endif
+ integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r
+ real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
 ! complex(SP):: WF_der(3,fft_size)
  logical    :: warn_done,l_si,l_rho !,l_J
  !
@@ -84,48 +95,63 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  !endif
  !
  warn_done=.false.
- i_spin_E=1
  !
- bands_loop: do ib=1,E%nbm
-   !
+ bands_range=(/1,E%nbm/)
+ if(present(bands)) bands_range=bands
+ !
+ do i_sp_pol=1,n_sp_pol
    do ik=1,k%nibz
-     !
-     if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-     !
-     do i_spin_wf=1,n_spin
+     do ib=bands_range(1),bands_range(2)
+       !
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
        !
        if (size(WF%index,1)<ib)        cycle
        if (size(WF%index,2)<ik)        cycle
-       if (size(WF%index,3)<i_spin_wf) cycle
+       if (size(WF%index,3)<i_sp_pol)  cycle
        !
-       ifft=WF%index(ib,ik,i_spin_wf)
-       if (n_sp_pol==2) i_spin_E=i_spin_wf
-       !
-       if (ifft==0) then
-         if (.not.warn_done) call warning('Not enough states to calculate rho')
-         warn_done=.true.
-         cycle
+       f_occ=E%f(ib,ik,i_sp_pol)
+#if defined _RT
+       if(l_real_time.and.associated(E%fo)) f_occ=E%fo(ib,ik,i_sp_pol) 
+#endif
+#if defined _YPP_RT
+       if(present(bands)) then
+         f_occ=0._SP
+         do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           f_occ=f_occ+RT_delta0_occupations(ib,ik_RT)
+         enddo
+         f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        endif
+#endif
        !
-       if (l_rho) then
+       do i_spinor=1,n_spinor
          !
-         rho_no_sym(:)=rho_no_sym(:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*abs(WF%c(:,ifft))**2
+         if (size(WF%index,3)<i_spinor)  cycle
          !
-       endif
-       !
-       !if (l_J) then
-       !  !
-       !  call eval_Gradient(WF%c(:,ifft),WF_der,"wave")
-       !  !
-       !  do i_r=1,fft_size
-       !    J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_spin_E)*k%weights(ik)*aimag(WF%c(i_r,ifft)*WF_der(i_r,:))
-       !  enddo
-       !  !
-       !endif
+         i_wf=WF%index(ib,ik,i_sp_pol+i_spinor-1)
+         !
+         if (i_wf==0) then
+           if (.not.warn_done) call warning('Not enough states to calculate rho')
+           warn_done=.true.
+           cycle
+         endif
+         !
+         if (l_rho) rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_wf))**2
+         !
+         !if (l_J) then
+         !  !
+         !  call eval_Gradient(WF%c(:,ifft),WF_der,"wave")
+         !  !
+         !  do i_r=1,fft_size
+         !    J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_wf)*WF_der(i_r,:))
+         !  enddo
+         !  !
+         !endif
+         !
+       enddo
        !
      enddo
    enddo
- enddo bands_loop
+ enddo
  !
  if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
  !if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)
@@ -137,8 +163,8 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  if (mag_syms) rho_syms=nsym 
  !
  if (l_rho) then
-   do i_s=1,rho_syms
-     rho(:)=rho(:)+rho_no_sym(fft_rot_r(:,i_s))/real(nsym,SP)
+   do i_symm=1,rho_syms
+     rho(:)=rho(:)+rho_no_sym(fft_rot_r(:,i_symm))/real(nsym,SP)
    enddo
    if (mag_syms)      return
    if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
@@ -146,8 +172,8 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  endif
  !
  !if (l_J) then
- !  do i_s=1,rho_syms
- !    J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(:,i_s),:),SP)/real(nsym,SP)
+ !  do i_symm=1,rho_syms
+ !    J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(:,i_symm),:),SP)/real(nsym,SP)
  !  enddo
  !endif
  ! 

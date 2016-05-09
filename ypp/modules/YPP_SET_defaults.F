@@ -2,23 +2,23 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+! Authors (see AUTHORS file for details): DS,AM
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine YPP_SET_defaults()
@@ -42,31 +42,34 @@ subroutine YPP_SET_defaults()
  ! DOS
  !
  l_dos=.false.
- dos_broadening=0.1/HA2EV
+ dos_broadening=0.1_SP/HA2EV
  dos_bands=(/1,n_bands/)
  dos_E_range=(/1._SP,-1._SP/)/HA2EV
  dos_E_steps=500
  WF_ref=0
  !
+ !
+ ! RT OCCUPATIONS
+ !
 #if defined _YPP_RT
  !
- ! Real Time
- !
  l_RealTime=.FALSE.
+ l_RT_DBs  =.FALSE.
  !
- ! Absorption
+ ! Absorption, occupations, lifetimes, density
  !
- l_RT_X  =.FALSE.
- l_RT_abs=.FALSE.
+ l_RT_X           =.FALSE.
+ l_RT_abs         =.FALSE.
+ l_RT_occupations =.FALSE.
+ l_RT_lifetimes   =.FALSE.
+ l_RT_density     =.FALSE.
  !
- ! Occupations and lifetimes
+ ! PP kind
  !
- l_RT_occ_time  =.FALSE.
- l_RT_occ_energy=.FALSE.
- l_RT_occ_2D_dos=.FALSE.
- !
- l_RT_occ_Bands =.FALSE.
- l_RT_life_Bands=.FALSE.
+ l_RT_time  =.FALSE.
+ l_RT_energy=.FALSE.
+ l_RT_2D_dos=.FALSE.
+ l_RT_bands =.FALSE.
  !
 #endif
  !
@@ -123,9 +126,9 @@ subroutine YPP_SET_defaults()
  l_eliashberg=.false.
  l_atomic_amplitude=.false.
  elph_steps=200
- ph_broad=0.01/HA2EV
- elph_gamma_broad=0.0
- elph_Ef=0.
+ ph_broad=0.01_SP/HA2EV
+ elph_gamma_broad=0._SP
+ elph_Ef=0._SP
  elph_dbs_path='.'
  ph_freqs_file='none'
  ph_modes_file='none'
@@ -156,8 +159,8 @@ subroutine YPP_SET_defaults()
  ! 
  ! Transition analysis
  ! 
- Ecv_min = 0.0
- Ecv_max = -1.0/HA2EV
+ Ecv_min = 0._SP
+ Ecv_max = -1._SP/HA2EV
  idir = 1
  !
 #endif
@@ -178,7 +181,7 @@ subroutine YPP_SET_defaults()
  !
  ! BZ RIM
  !
- gamma_radius=0.
+ gamma_radius=0._SP
  !
  ! WFs perturbative SOC
  !
@@ -199,19 +202,26 @@ subroutine YPP_SET_defaults()
  !REMOVE SYMMETRIES
  !
  E_field=0._SP
- B_field=0._SP
- B_theta=0._SP
- B_psi=0._SP
  !
  !ANALIZE RESPONSE
  !
- RT_conf%T_range(:)  =(/-FS2AUT,-FS2AUT/)
+ RT_conf%T_range(:)  =real((/-FS2AUT,-FS2AUT/),SP)
  RT_conf%W_n_steps   =200
  RT_conf%W_range(:)  =(/0._SP,20./HA2EV/)
  Probe_Keyword ="none"
  Pump_Keyword  ="none"
  X_order       =1
  n_ext_fields  =1
+ !
+ !MANUAL PUMP
+ !
+ n_regions=1
+ Eh_pumped_pair_deltaE=-1._SP/HA2EV
+ Eh_pumped_pair_energy=-1._SP/HA2EV
+ Eh_pumped_pair_width=0.1_SP/HA2EV
+ Eh_pumped_pair_BZ_width=0.1_SP
+ Eh_pumped_pair_BZ_reagions=-1.0_SP
+ Eh_pumped_Nel=1._SP
  !
 #endif
  !
@@ -222,8 +232,15 @@ subroutine YPP_SET_defaults()
  l_angular_momentum=.false.
  l_position=.false.
  !
+ !REMOVE SYMMETRIES
+ !
+ E_field=0._SP
+ B_field=0._SP
+ B_theta=0._SP
+ B_psi=0._SP
+ !
 #endif
  !
  ! GPL_EXCLUDE_END
  !
-end subroutine
+end subroutine YPP_SET_defaults

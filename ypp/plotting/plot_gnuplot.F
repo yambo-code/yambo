@@ -71,7 +71,7 @@ subroutine plot_gnuplot(eval_only)
      enddo
      call msg(output_string,'#')
      allocate(v2plot2D(nr2plot(1),1))
-     v2plot2D=0.
+     v2plot2D=0._SP
      ir=0
      do i1 = 0,nr(1)-1
        do i2 = 0,nr(2)-1

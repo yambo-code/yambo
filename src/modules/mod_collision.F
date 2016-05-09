@@ -89,9 +89,9 @@ module collision
    integer               :: I=0         ! State Index 
    integer               :: N=0         ! Linear Dimension
    integer(LP), pointer  :: table(:,:,:)  => null()
-   complex(SP), pointer  :: v_c(:)        => null()
+   complex(SP), pointer  :: v_c(:)        => null()  ! SEX and HF
    complex(SP), pointer  :: v3_c(:,:,:)   => null()
-   real(SP)   , pointer  :: v_r(:)        => null()
+   real(SP)   , pointer  :: v_r(:)        => null()  ! GW NEQ collisions
    real(SP)   , pointer  :: v3_r(:,:,:)   => null()
  end type
  !
@@ -117,25 +117,25 @@ module collision
  ! COLLISIONS groups...
  !======================
  type(COLLISIONS_group) :: GW_NEQ_collisions
- type(COLLISIONS_group) :: FOCK_collisions
- type(COLLISIONS_group) :: SEX_collisions
+ type(COLLISIONS_group) :: COH_collisions
+ type(COLLISIONS_group) :: HXC_collisions
  type(COLLISIONS_group) :: P_collisions
  !
  ! .. and ELEMENTS
  !=================
  type(COLLISIONS_element), allocatable :: GW_NEQ_COLL_element(:)
- type(COLLISIONS_element), allocatable :: FOCK_COLL_element(:)
- type(COLLISIONS_element), allocatable :: SEX_COLL_element(:)
+ type(COLLISIONS_element), allocatable :: COH_COLL_element(:)
+ type(COLLISIONS_element), allocatable :: HXC_COLL_element(:)
  type(COLLISIONS_element), allocatable :: P_COLL_element(:)
  !
  contains
    !
    subroutine COLLISIONS_initial_naming( )
-     use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_QED,SE_GW_NEQ
-     FOCK_collisions%kind=SC_HF
-     FOCK_collisions%name="Fock"
-     SEX_collisions%kind=SC_COHSEX
-     SEX_collisions%name="SEX"
+     use global_XC,     ONLY:SC_COH,SC_HARTREE,SC_SEX,SE_GW_QED,SE_GW_NEQ
+     COH_collisions%kind=SC_COH
+     COH_collisions%name="COH"
+     HXC_collisions%kind=SC_HARTREE+SC_SEX
+     HXC_collisions%name="HARTREE+SEX"
      P_collisions%kind=SE_GW_QED
      P_collisions%name="Momentum"
      GW_NEQ_collisions%kind=SE_GW_NEQ

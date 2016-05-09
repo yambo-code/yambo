@@ -29,13 +29,13 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use com,            ONLY:msg,of_open_close,error
  use YPP,            ONLY:BANDS_steps,Nel_fac,coo_in,coo_out,interp_grid
- use YPP_real_time,  ONLY:l_RT_life_bands,l_RT_occ_bands,RT_time
+ use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
  use RT_control,     ONLY:RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
- use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation,&
+ use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation, &
 &                         electrons_bands_interpolate
  !
  implicit none
@@ -130,8 +130,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        ik      =RT_carriers%table(i_RT,3)
        i_sp_pol=RT_carriers%table(i_RT,4)
        !
-       if (l_RT_occ_Bands ) variable_to_fit(ib,i_sp_pol,ik)=    RT_carriers%delta_f(i_RT)
-       if (l_RT_life_Bands) variable_to_fit(ib,i_sp_pol,ik)=sum(RT_carriers%GAMMA_bare(i_RT,:))
+       if (l_RT_occupations) variable_to_fit(ib,i_sp_pol,ik)=    RT_carriers%delta_f(i_RT)
+       if (l_RT_lifetimes  ) variable_to_fit(ib,i_sp_pol,ik)=sum(RT_carriers%GAMMA_bare(i_RT,:))
        !
      enddo
      !
@@ -149,13 +149,13 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
      message='RT '
      if(i_T==1) message='RT0'
      !
-     if(l_RT_occ_Bands)  then
+     if(l_RT_occupations)  then
        call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nibz,RT_carriers%nb,&
 &                                       RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
 &                                       CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
 &                                       RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
      endif
-     if(l_RT_life_Bands) then
+     if(l_RT_lifetimes) then
        call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nibz,&
 &                                       RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
 &                                       CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
@@ -166,7 +166,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    !
    ! Normilize the occupations
    !
-   if(l_RT_occ_Bands) then
+   if(l_RT_occupations) then
      Nhole=-sum(fit_on_circuit(RT_bands(1):E_bands%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
      Nel=   sum(fit_on_circuit(E_bands%nbf+1:RT_bands(2),:,:,i_T))/real(CIRCUIT_k%nibz)
      !
@@ -192,13 +192,12 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Output: bands on circuit
  !==========================
  !
- headings(1)='|k|'
- if (l_RT_life_Bands) headings(3)='LIFE'
- if (l_RT_occ_Bands ) headings(3)='occ'
- !
+ headings(1)="Step"
+ if (l_RT_lifetimes  ) headings(3)='LIFE'
+ if (l_RT_occupations) headings(3)=' occ'
  n_values=3
  !
- if (l_RT_occ_Bands .and. n_spinor==2) then
+ if (l_RT_occupations .and. n_spinor==2) then
    headings(4)='occ(up)'
    headings(5)='occ(dw)'
    n_values=5
@@ -208,8 +207,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   if (l_RT_life_Bands) file_name_rt="YPP-RT_REF_LIFE_bands"
-   if (l_RT_occ_Bands ) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
+   if (l_RT_lifetimes  ) file_name_rt="YPP-RT_REF_LIFE_bands"
+   if (l_RT_occupations) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
    !
    call of_open_close(file_name_rt,'ot')
    !
@@ -231,9 +230,9 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_K%pt(ik,:)-CIRCUIT_K%pt(ik-1,:))
        !
        values(2)=bands_interpolated(ib,1,ik)*HA2EV
-       if (l_RT_life_Bands) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
-       if (l_RT_occ_Bands ) values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
-       if (l_RT_occ_Bands .and. n_spinor==2) then
+       if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
+       if (l_RT_occupations) values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
+       if (l_RT_occupations .and. n_spinor==2) then
          values(4)=values(3)*spin_interpolated(ib,ik,1)
          values(5)=values(3)*spin_interpolated(ib,ik,2)
        endif

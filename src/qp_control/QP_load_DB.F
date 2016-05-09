@@ -323,9 +323,11 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  !
  ! FIT
  !
- if (do_EWZ_using_Ik_IE(1)) call QP_fit_DB_values(band_range,qp,en,QP_ctl_from_DB,'E')
- if (do_EWZ_using_Ik_IE(2)) call QP_fit_DB_values(band_range,qp,en,QP_ctl_from_DB,'W')
+ if (do_EWZ_using_Ik_IE(1)) call QP_fit_DB_energies(band_range,qp,QP_ctl_from_DB)
+ if (do_EWZ_using_Ik_IE(2)) call QP_fit_DB_widths(band_range,qp,en,k,QP_ctl_from_DB)
  if (do_EWZ_using_Ik_IE(3)) QP_ctl_from_DB%Z=sum(qp%Z(:))/qp%n_states
+ !
+ if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) do_EWZ_using_Ik_IE(:3)=.false.
  !
  contains 
    !

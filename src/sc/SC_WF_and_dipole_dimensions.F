@@ -23,7 +23,7 @@
 !
 subroutine SC_WF_and_dipole_dimensions(X)
  !
- use drivers,      ONLY:l_real_time,l_sc_hf,l_sc_exx,l_sc_cohsex,l_sc_srpa,l_use_collisions
+ use drivers,      ONLY:l_real_time,l_sc_fock,l_sc_exx,l_sc_coh,l_sc_sex,l_sc_srpa,l_use_Hxc_collisions
  use com,          ONLY:warning,msg
  use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
@@ -55,14 +55,13 @@ subroutine SC_WF_and_dipole_dimensions(X)
  WF_G_max=0
  WF_Go_indx=1
  !
- if ( l_sc_hf.or.l_sc_exx.or.l_sc_cohsex ) then
+ if ( l_sc_fock.or.l_sc_exx.or.l_sc_coh.or.l_sc_sex ) then
    WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
-   if (l_sc_cohsex.or.l_sc_srpa) then
+   if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
      if (l_real_time.and..not.(l_sc_exx.or.l_sc_srpa)) WF_G_max=wf_ng
      QP_n_G_bands(2)=SC_bands(2)
-     !
 !DEBUG>
 !     if (.not.l_real_time) COHSEX_use_empties=.TRUE. !<- DEBUG. Related to
 !                                                     !   problems in defining the COLLISIONS
@@ -71,7 +70,7 @@ subroutine SC_WF_and_dipole_dimensions(X)
      !
    else if (l_sc_exx)  then
      WF_G_max=max(QP_ng_Sx,X(1)%ng)
-   else if (l_sc_hf)  then
+   else if (l_sc_fock)  then
      WF_G_max=QP_ng_Sx
    endif
  endif
@@ -86,12 +85,12 @@ subroutine SC_WF_and_dipole_dimensions(X)
  if(SC_up_W_iters/=0) then
    call msg('nr','[SC] Updating W each                   :',SC_up_W_iters)
    !
-   if(l_use_collisions) then
+   if(l_use_Hxc_collisions) then
      SC_up_W_iters=0
      call warning(' Collisions not compatible with W updating, turned off ')
    endif
    !
-   if(.not.l_sc_cohsex) then
+   if(.not.(l_sc_coh.and.l_sc_sex)) then
      SC_up_W_iters=0
      call warning(' Dipoles update implemented only for COHSEX self-energy ')
    endif

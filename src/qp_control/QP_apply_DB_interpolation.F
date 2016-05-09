@@ -143,8 +143,6 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
    !
  endif
  !
- if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) do_EWZ_using_Ik_IE(:3)=.false.
- !
  QP_ctl_applied=.true.
  !
  ! Clean

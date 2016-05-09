@@ -23,7 +23,7 @@
 !
 subroutine RT_ELPH_initialize(E,k,q)
  ! 
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,cZERO
  use units,          ONLY:HA2EV
  use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
@@ -98,7 +98,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  if (.not.l_RT_CCA_Kernel) then
    allocate(THETA_matrix(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
    call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
-   THETA_matrix=(0._SP,0._SP)
+   THETA_matrix=cZERO
    allocate(THETA_matrix_index(q%nbz,ph_modes,2))
  endif
  !
@@ -189,11 +189,12 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Test of the effect of using a single optical mode
  !
- if (l_use_Debye_E) ph_freqs_sq=W_debye**2.
+ if (l_use_Debye_E) ph_freqs_sq=W_debye**2
  !
- ! This checks does not seem to work properly for the restart
+ ! q_weight_RT are written in section 2, thus here are not known
+ ! since only sectin 1 of the REF DB is written
  !
- if (io_REF/=0) then
+ if (.not.allocated(q_weight_RT)) then
    !
    ! RIM support
    !=============
@@ -204,7 +205,7 @@ subroutine RT_ELPH_initialize(E,k,q)
    ! 2 - optical phonons w_ph(i) ~ const(i)
    !
    allocate(q_weight_RT(q%nbz,elph_branches(1):elph_branches(2),2))
-   q0_mod=(3.*RL_vol/4./4./pi)**(1./3.)
+   q0_mod=(3._SP*RL_vol/4._SP/4._SP/pi)**(1._SP/3._SP)
    i1=0
    ph_mean_speed=0._SP
    q_mod=0._SP
@@ -234,7 +235,7 @@ subroutine RT_ELPH_initialize(E,k,q)
    !
    call k_ibz2bz(q,'i',.TRUE.)  
    !
-   RADIUS_sphere=(3.*RL_vol/q%nbz/4./pi)**(1./3.)
+   RADIUS_sphere=(3._SP*RL_vol/q%nbz/4._SP/pi)**(1._SP/3._SP)
    !
    call rim_spherical(q%nbz,q%ptbz,q_weight_tmp(:,1),RADIUS_sphere,1,.FALSE.)
    call rim_spherical(q%nbz,q%ptbz,q_weight_tmp(:,2),RADIUS_sphere,2,.FALSE.)
@@ -246,7 +247,7 @@ subroutine RT_ELPH_initialize(E,k,q)
        ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
        !
        if (ph_E>0.) then
-         q_weight_RT(iq,il,1)=1./ph_E/float(q%nbz)
+         q_weight_RT(iq,il,1)=1._SP/ph_E/float(q%nbz)
          q_weight_RT(iq,il,2)=bose_f(ph_E)/ph_E/float(q%nbz)/spin_occ
        endif
        !

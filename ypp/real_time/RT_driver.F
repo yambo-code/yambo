@@ -23,121 +23,27 @@
 !
 subroutine RT_driver(en,k,q)
  !
- use YPP_real_time,  ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
-&                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
-&                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
-&                         Probe_path,Pump_path,N_probes
- use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
- use parser_m,       ONLY:parser
- use fields,         ONLY:Efield
- use com,            ONLY:jobstr,error
+ use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density
  !
  implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: k,q
  !
- ! Work Space
- !
- integer           :: i_f,i_Probe
- character(lchlen) :: jobstr_save
- logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
- !
  call section("*",'RT Optics Processing')
+ !
+ ! Real-Time occupations and lifetimes
+ !=====================================
+ if ( l_RT_occupations.or.l_RT_lifetimes ) call RT_occupations_driver(k,en)
  !
  ! Response Functions
  !====================
- call RT_IO_J_and_P_paths( )
+ if ( l_RT_X )                             call RT_X_response(en,k,q)
  !
- ! LOGICALS
- !----------
- !
- call parser('SkipJP_IO',l_skip_pol_and_curr_IO)
- call parser('FrMinDamp',l_force_min_damp)
- !
- i_Probe=1
- !
- l_RT_LRR_real_field= all((/&
-&   .not.any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="RES",&
-&   trim(Efield(i_Probe)%ef_name)=="SIN"/)),N_pumps==0, N_probes==1, X_order==1/) )
- !
- l_RT_SHG_qssin     = all( (/ trim(Efield(i_Probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
- !
- l_RT_X_effective   = all((/any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="SIN"/)),X_order>=0/))
- !
- if (l_RT_X_effective) l_RT_X_inversion=all((/ X_order>=0, N_probe_frequencies==1, N_pumps==0/))
- !
- if ( .not.any((/l_RT_LRR_real_field,l_RT_SHG_qssin,l_RT_X_effective/)) ) return
- !
- ! Time Initialization
- !====================
- call RT_time_configuration_setup('CURRENT')
- !
- ! Field-Dependent actions
- !=========================
- if ( any((/l_RT_LRR_real_field,l_RT_SHG_qssin/)) ) then
-   !
-   ! Database
-   !
-   ! Search the database in JOBSTR,Pump_path and Probe_path
-   !
-   call RT_IO_J_and_P( )
-   !
-   jobstr_save=jobstr
-   if (.not.allocated(RT_J_t)) then
-     jobstr=trim(Pump_path)
-     call RT_IO_J_and_P(mesg=trim(Pump_path))
-   endif
-   if (.not.allocated(RT_J_t)) then
-     do i_f=1,N_probes
-       jobstr=trim(Probe_path(i_f))
-       call RT_IO_J_and_P(mesg=trim(Pump_path))
-       if (allocated(RT_J_t)) exit
-     enddo
-   endif
-   jobstr=trim(jobstr_save)
-   !
-   if (.not.allocated(RT_J_t)) call error('J and P databases not found')
-   !
-   !  Initialization 
-   !
-   if ( l_RT_LRR_real_field.or. l_RT_SHG_qssin) call RT_dump_and_write_JP()
-   !
-   if ( l_RT_LRR_real_field ) then
-     !
-     ! CORE Logicals
-     !---------------
-     ! 
-     call parser('UseFFT',Use_FFT)
-     !
-     ! OPTICS
-     !--------
-     !
-     call RT_X_LRR_real_field(en)
-     !
-   else if ( l_RT_SHG_qssin ) then
-     !
-     ! DEBUG>
-     !call RT_X_QSSIN(en)
-     ! DEBUG<
-     !
-   endif
-   !
- else if ( l_RT_X_effective ) then
-   !
-   ! DEBUG>
-   !call RT_X_effective(en)
-   ! DEBUG<
-   !
- endif
- !
- ! CLEAN
- !
- if (allocated(RT_P_t)) deallocate(RT_P_t)
- if (allocated(RT_J_t)) deallocate(RT_J_t)
- call mem_est("RT_P_t RT_J_t")
+ ! Plotting 
+ !===========
+ if (l_RT_density)                         call RT_density(en,k,q)
  !
 end subroutine

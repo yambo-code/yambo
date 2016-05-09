@@ -1,5 +1,5 @@
 objs = RT_initialize.o RT_start_and_restart.o \
-       RT_manual_excitation.o RT_driver.o RT_apply_field.o RT_Collision.o \
+       RT_driver.o RT_apply_field.o RT_Collision.o \
        RT_Field_Commensurable_Frequencies.o \
        RT_Dephasing_Matrix.o RT_relaxation.o \
        RT_Fluence.o RT_BGR.o

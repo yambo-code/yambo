@@ -115,7 +115,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        if(.not.l_RT_uses_E_DbGd) En=real(E%E(ib,ik,1)         ,DP)
        if(     l_RT_uses_E_DbGd) En=real(E%E_DbGd(ib,iE_rim,1),DP) 
        !
-       if (ib<=E%nbf) then
+       if (En<=0._DP) then
          !
          dN_dT_h_v=dN_dT_h_v+   Hole_fac*k_weight
          dE_dT_h_v=dE_dT_h_v+En*Hole_fac*k_weight
@@ -194,8 +194,13 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    do ik=1,k%nibz
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       prefactor_to_use=prefactor(1)
-       if (ib>E%nbf) prefactor_to_use=prefactor(2)
+       iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+       !
+       if(.not.l_RT_uses_E_DbGd) En=real(E%E(ib,ik,1)         ,DP)
+       if(     l_RT_uses_E_DbGd) En=real(E%E_DbGd(ib,iE_rim,1),DP)
+       !
+       if (En<=0._DP) prefactor_to_use=prefactor(1)
+       if (En> 0._DP) prefactor_to_use=prefactor(2)
        !
        GAMMA_h=real(Hole_lifetime(ib,ik_rim)    ,DP)+real(REF_lifetime(ib,ik_rim,iref)  ,DP)
        GAMMA_e=real(Electron_lifetime(ib,ik_rim),DP)+real(REF_lifetime(ib,ik_rim,iref+1),DP)

@@ -146,7 +146,7 @@ subroutine plot_xcrysden()
      !
      ir = 0
      max_=maxval(v2plot)
-     if (.not.l_norm_to_one) max_=1.
+     if (.not.l_norm_to_one) max_=1._SP
      !
      if (len_trim(plot_title)==0) then
        call live_timing('3D Plot',nr(3))

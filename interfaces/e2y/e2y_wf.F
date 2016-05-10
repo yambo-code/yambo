@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
+subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
 !==============================================
   ! Reads and returns wf_disk for both spins!
   use etsf_io
@@ -30,22 +30,22 @@ subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
   use pars,                  only : SP
   use vec_operate,           only : sort
   use com,                   only : msg, error
-  use electrons,             only : n_bands, n_spin, n_sp_pol, n_spinor
+  use electrons,             only : n_bands, n_sp_pol, n_spinor
   use R_lattice,             only : nkibz
   use wave_func,             only : wf_ncx,wf_nc_k, wf_igk,wf_nb_io,wf_nb_io_groups
   !
   implicit none
   !
-  integer,           intent(in)  :: ikibz, ncid, ib_grp
-  real(SP),          intent(out) :: wf_disk(2,n_bands,wf_ncx,n_spin)
+  integer,           intent(in)  :: i_sp_pol,ikibz, ncid, ib_grp
+  real(SP),          intent(out) :: wf_disk(2,wf_ncx,n_spinor,wf_nb_io)
   !
-  double precision, allocatable  :: wavefunction_section_(:,:,:)
+  double precision, allocatable  :: wavefunction_section_(:,:,:,:)
   logical                        :: lstat
   type(etsf_io_low_error)        :: error_data 
   ! 
   ! Work Space
   !
-  integer        :: ib, ierr, npwk, ik, ic, ispin, ireal, nb_to_read
+  integer        :: ib, ierr, npwk, ik, ic, i_spinor, ireal, nb_to_read
   integer        :: start(6), count(6), ncvarid
   integer        :: wf_igk_indx(wf_nc_k(ikibz))
   !
@@ -69,7 +69,8 @@ subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
 ! No high level option to read wavefunction spinor components: the choice
 ! was made to keep high level routines split on nkibz and n_sp_pol
   allocate(wavefunction_section_(dims%real_or_complex_coefficients, &
-&                                dims%max_number_of_coefficients,    &
+&                                dims%max_number_of_coefficients,   &
+&                                dims%number_of_spinor_components,  &
 &                                dims%max_number_of_states ) )
   !
   ! Read all bands or only the remaining in the last block
@@ -84,35 +85,26 @@ subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
   !
   ! Initialize the mapping
   !
-  start(:) = 1     ; count(:) = 0
-  start(5) = ikibz ; count(5) = 1   ! Split on k always
+  start(:) = 1        ; count(:) = 0
+  start(5) = ikibz    ; count(5) = 1   ! Split on   k    always
+  start(6) = i_sp_pol ; count(6) = 1   ! Split on sp_pol always
   !
   if(ETSF_kind=='WFK') call sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
   !
-  do ispin = 1, n_spin
-    !
-    ! Select the part of the array to split on
-    !
-    if(n_spinor==2) then
-      start(3) = ispin
-      count(3) = 1
-    else if(n_sp_pol==2) then
-      start(6) = ispin
-      count(6) = 1
-    endif
+  do i_spinor = 1, n_spinor
     !
     call etsf_io_low_read_var(ncid, "coefficients_of_wavefunctions", &
                             & wavefunction_section_, lstat,          &
                             & error_data = error_data, start = start, count = count)
     !
     if(ETSF_kind=='KSS') then
-      forall( ireal=1:2, ib=1:n_bands, ic=1:wf_nc_k(ikibz) ) &
-&          wf_disk(ireal,ib,ic,ispin) = wavefunction_section_(ireal,wf_igk(ic,ikibz),ib)
+      forall( ireal=1:2, ic=1:wf_nc_k(ikibz), i_spinor=1:n_spinor, ib=1:n_bands ) &
+&          wf_disk(ireal,ic,i_spinor,ib) = wavefunction_section_(ireal,wf_igk(ic,ikibz),i_spinor,ib)
     endif
     !
     if(ETSF_kind=='WFK') then
       forall( ireal=1:2, ib=1:n_bands, ic=1:wf_nc_k(ikibz) ) &
-&          wf_disk(ireal,ib,ic,ispin) = wavefunction_section_(ireal,wf_igk_indx(ic),ib)
+&          wf_disk(ireal,ic,i_spinor,ib) = wavefunction_section_(ireal,wf_igk_indx(ic),i_spinor,ib)
     endif
     !
   enddo

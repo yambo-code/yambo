@@ -68,7 +68,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:),el_cur(:,:)
- integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ integer               :: i_qp,ik,i_sp_pol,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
  logical               :: flag
  character(lchlen)     :: ch_ws(2)
 #if defined _YPP_ELPH
@@ -256,7 +256,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
        !
        if  (polaronic_residual(i_st)<elph_residual_treshold/100.*maxval(polaronic_residual(:n_top_residuals))) cycle
        !
-       v2plot_c=cmplx(0.,SP)
+       v2plot_c=cZERO
        !
        db_name=trim(jobstr)//'/EIGENV_I'//trim(intc(top_residual(i_st)))//'_k'//trim(intc(ik))
        open(unit=100,file=trim(db_name),form='unformatted')
@@ -268,7 +268,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
            !
            i_wf=WF%index(ib,ik,1)
            !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+WF%c(ir,i_wf)
+           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+WF%c(ir,1,i_wf)
            !
          else
            !
@@ -350,7 +350,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
      !
      ib    =QP_table(i_qp,1)
      ik    =QP_table(i_qp,3)
-     i_spin=spin(QP_table(i_qp,:))
+     i_sp_pol=spin(QP_table(i_qp,:))
      !
      i_qp=i_qp+1
      !
@@ -365,8 +365,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then
 #endif
-       i_wf=WF%index(ib,ik,i_spin)
-       if (n_spinor==2) i_wfp=WF%index(ib,ik,2)
+       i_wf=WF%index(ib,ik,i_sp_pol)
 #if defined _YPP_SC
      endif
 #endif
@@ -381,8 +380,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then 
 #endif
-       forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,i_wf)*conjg( WF%c(ir,i_wf) ) )
-       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%c(ir,i_wfp)*conjg( WF%c(ir,i_wfp) ) )
+       forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,1,i_wf)*conjg( WF%c(ir,1,i_wf) ) )
+       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%c(ir,2,i_wf)*conjg( WF%c(ir,2,i_wf) ) )
 #if defined _YPP_SC
      endif
 #endif

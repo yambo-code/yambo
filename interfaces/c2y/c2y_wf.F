@@ -21,17 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine c2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
+subroutine c2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
  !
  use pars,                  ONLY:SP,DP
- use electrons,             ONLY:n_bands,n_spin
+ use electrons,             ONLY:n_bands,n_spinor
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  implicit none
  !
- integer        :: ikibz,ib_grp
+ integer        :: i_sp_pol,ikibz,ib_grp
  character(*)   :: KSS_file_name
- real(SP)       :: wf_disk(2,wf_nb_io,wf_ncx,n_spin)
+ real(SP)       :: wf_disk(2,wf_ncx,n_spinor,wf_nb_io)
  ! 
  ! Workspace ...
  ! 
@@ -42,7 +42,7 @@ subroutine c2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  real(DP), allocatable :: wfdum(:)
  logical            :: ldum
  !
- integer            :: i_spin
+ integer            :: i_spinor
  !
  !
  if (ib_grp==1) then
@@ -68,7 +68,7 @@ subroutine c2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  wf_disk(:,:,:,:)=0.
  !
- i_spin=1
+ i_spinor=1
  ! 
  ! Read all bands or only the remaining in the last block
  !
@@ -80,13 +80,13 @@ subroutine c2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      allocate (wfdum(idum))
      read(11) wfdum
      idum2=idum/2
-       wf_disk(1,i1,1,1) = wfdum(1) 
-       wf_disk(2,i1,1,1) = wfdum(2) 
+       wf_disk(1,1,1,i1) = wfdum(1) 
+       wf_disk(2,1,1,i1) = wfdum(2) 
      do i2=2,idum2,2
-       wf_disk(1,i1,i2,1) = wfdum(i2+1) 
-       wf_disk(2,i1,i2,1) = wfdum(i2+2) 
-       wf_disk(1,i1,i2+1,1) = wf_disk(1,i1,i2,1)   
-       wf_disk(2,i1,i2+1,1) = -wf_disk(2,i1,i2,1)  
+       wf_disk(1,i2,1,i1) = wfdum(i2+1) 
+       wf_disk(2,i2,1,i1) = wfdum(i2+2) 
+       wf_disk(1,i2+1,1,i1) = wf_disk(1,i2,1,i1)   
+       wf_disk(2,i2+1,1,i1) = -wf_disk(2,i2,1,i1)  
      enddo
    deallocate(wfdum) 
    enddo

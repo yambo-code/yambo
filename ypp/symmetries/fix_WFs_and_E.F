@@ -31,7 +31,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
 &                              OP_RD_CL,RD_CL,RD,frag_WF
  use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
- use electrons,           ONLY:levels,E_reset,n_spin
+ use electrons,           ONLY:levels,E_reset,n_sp_pol,n_spinor
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz,ng_vec
@@ -72,8 +72,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  ! Dummies
  !
- integer               :: is,ik,ik_save
- integer               :: ib,ib_grp,ib_disk,i_wf,i_spin
+ integer               :: is,i_sp_pol,ik,ik_save,ifrag
+ integer               :: ib,ib_grp,ib_disk,i_wf,i_spinor
  integer               :: ic,ic_rot,ig,ig_rot
  logical               :: found
  !
@@ -143,33 +143,33 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  case(1)
    !
-   if (wf_ncx_save==wf_ncx_new) then
-     !
-     call msg('s',':: Copying existing database ...')
-     !
-     call cp_file(trim(core_io_path_save)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
-     call cp_file(trim(core_io_path_save)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
-     do ik=1,k_save%nibz
-       do ib_grp=1,wf_nb_io_groups
-         fragment_name='s.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(ib_grp))
-         call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
-         fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(ib_grp))
-         call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
-       enddo
-     enddo
-     !
-     call msg('l','done')
-     !
-   endif
+   !if (wf_ncx_save==wf_ncx_new) then
+   !  !
+   !  call msg('s',':: Copying existing database ...')
+   !  !
+   !  call cp_file(trim(core_io_path_save)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
+   !  call cp_file(trim(core_io_path_save)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
+   !  do i_sp_pol=1,n_sp_pol
+   !    do ik=1,k_save%nibz
+   !      ifrag_old=ik+(i_sp_pol-1)*k_save%nibz
+   !      ifrag_new=ik+(i_sp_pol-1)*k%nibz
+   !      do ib_grp=1,wf_nb_io_groups
+   !        fragment_name='s.wf_fragments_'//trim(intc(ifrag))//'_'//trim(intc(ib_grp))
+   !        call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+   !        fragment_name='ns.wf_fragments_'//trim(intc(ifrag))//'_'//trim(intc(ib_grp))
+   !        call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+   !      enddo
+   !    enddo
+   !  enddo
+   !  !
+   !  call msg('l','done')
+   !  !
+   !endif
    !
-   ! Rotating wavefunctions by components
-   !
-   allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
+   allocate(wf_disk(2,wf_ncx_new,n_spinor,wf_nb_io))
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
-   if(wf_ncx_save/=wf_ncx_new) then
-     !
-     call live_timing('WFs comp. reduction',k_save%nibz)
+   !if(wf_ncx_save/=wf_ncx_new) then
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
      io_err=io_WF(ID)
@@ -177,7 +177,153 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      ACTION_=OP_APP_WR_CL
      if(frag_WF) ACTION_=OP_WR_CL
      !
-     do ik=1,k_save%nibz
+   !endif
+   !
+   do i_sp_pol=1,n_sp_pol
+     !
+     !if(wf_ncx_save/=wf_ncx_new) then
+       !
+       call live_timing('WFs comp. reduction i_sp_pol= '//trim(intc(i_sp_pol)),k_save%nibz)
+       !
+       do ik=1,k_save%nibz
+         !
+         ifrag=ik+(i_sp_pol-1)*k%nibz
+         !
+         ik_save=kpoints_map(1,ik)
+         !
+         do ib_grp=1,wf_nb_io_groups
+           !
+           wf_disk=0._SP
+           !
+           nb1=wf_nb_io*(ib_grp-1)+1
+           nb2=wf_nb_io*ib_grp
+           !
+           nkibz=k_save%nibz
+           wf_ncx=wf_ncx_save
+           core_io_path=core_io_path_save
+           call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),(/i_sp_pol,i_sp_pol/),&
+&                       space='C',title='',impose_free_and_alloc=.true.)
+           !
+           do ib=nb1,nb2
+             ib_disk=ib-nb1+1
+             i_wf=WF%index(ib,ik_save,i_sp_pol)
+             wf_disk(1,:,:,ib_disk)=  real(WF%c(:,:,i_wf))
+             wf_disk(2,:,:,ib_disk)= aimag(WF%c(:,:,i_wf))
+           enddo
+           !
+           nkibz=k%nibz
+           wf_ncx=wf_ncx_new
+           core_io_path=more_io_path
+           call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+           io_err=io_WF(ID,wf=wf_disk)
+           !
+         enddo
+         !
+         call live_timing(steps=1)
+       enddo
+       !
+       call live_timing()
+       !
+     !endif
+     !
+     n_steps=(k%nibz-k_save%nibz)
+     if(n_steps>0) call live_timing('WFs rotation  i_sp_pol= '//trim(intc(i_sp_pol)),n_steps)
+     !
+     allocate(ic_rot_table(wf_ncx_new))
+     allocate(wf_tmp(wf_ncx_new,n_spinor))
+     !
+     ACTION_=OP_APP_WR_CL
+     if (frag_WF) ACTION_=OP_WR_CL
+     !
+     do ik=k_save%nibz+1,k%nibz 
+       !      
+       ik_save=kpoints_map(1,ik)
+       is=kpoints_map(2,ik)
+       !
+       ic_rot_table=-1
+       do ic=1,wf_nc_k_save(ik_save)
+         ig_rot=g_rot(is,wf_igk_save(ic,ik_save))
+         found=.false.
+         do ic_rot=1,wf_nc_k_new(ik)
+           ig=wf_igk_new(ic_rot,ik)
+           if(ig==ig_rot) then
+             found=.true.
+             exit
+           endif
+         enddo
+         if(.not.found) call error("Erro rotating an wf_igk array")
+         ic_rot_table(ic)=ic_rot
+       enddo
+       !
+       do ib_grp=1,wf_nb_io_groups
+         !
+         wf_disk=0._SP
+         !
+         nb1=wf_nb_io*(ib_grp-1)+1
+         nb2=wf_nb_io*ib_grp
+         !
+         nkibz=k_save%nibz
+         wf_ncx=wf_ncx_save
+         core_io_path=core_io_path_save
+         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),(/i_sp_pol,i_sp_pol/),&
+&                     space='C',title='',impose_free_and_alloc=.true.)
+         !
+         do ib=nb1,nb2
+           !
+           ib_disk=ib-nb1+1
+           !
+           wf_tmp=cZERO
+           !
+           i_wf=WF%index(ib,ik_save,i_sp_pol)
+           !
+           forall(ic=1:wf_nc_k_save(ik_save),i_spinor=1:n_spinor) &
+&            wf_tmp(ic_rot_table(ic),i_spinor)=WF%c(ic,i_spinor,i_wf)
+           !
+           forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
+           if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
+           !  
+           wf_disk(1,:,:,ib_disk)=  real(wf_tmp(:,:))
+           wf_disk(2,:,:,ib_disk)= aimag(wf_tmp(:,:))
+           !
+         enddo
+         !
+         nkibz=k%nibz
+         wf_ncx=wf_ncx_new
+         core_io_path=more_io_path
+         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+         io_err=io_WF(ID,wf=wf_disk)
+         !
+       enddo
+       !
+       if(n_steps>0) call live_timing(steps=1)
+       !
+     enddo
+     !
+     if(n_steps>0) call live_timing()
+     !
+     deallocate(ic_rot_table)
+     deallocate(wf_tmp)
+     !
+   enddo
+   !
+ case(2)
+   !
+   call msg('s',':: WFs reduction...')
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+   io_err=io_WF(ID)
+   !
+   allocate(wf_disk(2,wf_ncx_new,n_spinor,wf_nb_io))
+   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   !
+   ACTION_=OP_APP_WR_CL
+   if(frag_WF) ACTION_=OP_WR_CL
+   !
+   do i_sp_pol=1,n_sp_pol
+     !
+     do ik=1,k%nibz
+       !
+       ifrag=ik+(i_sp_pol-1)*k%nibz
        !
        ik_save=kpoints_map(1,ik)
        !
@@ -191,15 +337,14 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k_save%nibz
          wf_ncx=wf_ncx_save
          core_io_path=core_io_path_save
-         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),(/i_sp_pol,i_sp_pol/),&
+&                     space='C',title='',impose_free_and_alloc=.true.)
          !
          do ib=nb1,nb2
            ib_disk=ib-nb1+1
-           do i_spin=1,n_spin
-             i_wf=WF%index(ib,ik_save,i_spin)
-             wf_disk(1,ib_disk,:wf_nc_k_new(ik),i_spin)=  real(WF%c(:wf_nc_k_save(ik_save),i_wf))
-             wf_disk(2,ib_disk,:wf_nc_k_new(ik),i_spin)= aimag(WF%c(:wf_nc_k_save(ik_save),i_wf))
-           enddo
+           i_wf=WF%index(ib,ik_save,i_sp_pol)
+           wf_disk(1,:,:,ib_disk)=  real(WF%c(:,:,i_wf))
+           wf_disk(2,:,:,ib_disk)= aimag(WF%c(:,:,i_wf))
          enddo
          !
          nkibz=k%nibz
@@ -209,137 +354,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          io_err=io_WF(ID,wf=wf_disk)
          !
        enddo
-       !
-       call live_timing(steps=1)
-     enddo
-     !
-     call live_timing()
-     !
-   endif
-   !
-   n_steps=(k%nibz-k_save%nibz)
-   if(n_steps>0) call live_timing('WFs rotation',n_steps)
-   !
-   allocate(ic_rot_table(wf_ncx_new))
-   allocate(wf_tmp(wf_ncx_new,n_spin))
-   !
-   ACTION_=OP_APP_WR_CL
-   if (frag_WF) ACTION_=OP_WR_CL
-   !
-   do ik=k_save%nibz+1,k%nibz 
-     !      
-     ik_save=kpoints_map(1,ik)
-     is=kpoints_map(2,ik)
-     !
-     ic_rot_table=-1
-     do ic=1,wf_nc_k_save(ik_save)
-       ig_rot=g_rot(is,wf_igk_save(ic,ik_save))
-       found=.false.
-       do ic_rot=1,wf_nc_k_new(ik)
-         ig=wf_igk_new(ic_rot,ik)
-         if(ig==ig_rot) then
-           found=.true.
-           exit
-         endif
-       enddo
-       if(.not.found) call error("Erro rotating an wf_igk array")
-       ic_rot_table(ic)=ic_rot
-     enddo
-     !
-     do ib_grp=1,wf_nb_io_groups
-       !
-       wf_disk=0._SP
-       !
-       nb1=wf_nb_io*(ib_grp-1)+1
-       nb2=wf_nb_io*ib_grp
-       !
-       nkibz=k_save%nibz
-       wf_ncx=wf_ncx_save
-       core_io_path=core_io_path_save
-       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
-       !
-       do ib=nb1,nb2
-         !
-         ib_disk=ib-nb1+1
-         !
-         wf_tmp=cZERO
-         !
-         do i_spin=1,n_spin
-           !
-           i_wf=WF%index(ib,ik_save,i_spin)
-           !
-           forall(ic=1:wf_nc_k_save(ik_save)) wf_tmp(ic_rot_table(ic),i_spin)=WF%c(ic,i_wf)
-           !
-         enddo
-         !
-         forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
-         if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
-         !
-         wf_disk(1,ib_disk,1:wf_ncx_new,:)= real(wf_tmp(:wf_ncx_new,:))
-         wf_disk(2,ib_disk,1:wf_ncx_new,:)= aimag(wf_tmp(:wf_ncx_new,:))
-         !
-       enddo
-       !
-       nkibz=k%nibz
-       wf_ncx=wf_ncx_new
-       core_io_path=more_io_path
-       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-       io_err=io_WF(ID,wf=wf_disk)
-       !
-     enddo
-     !
-     if(n_steps>0) call live_timing(steps=1)
-     !
-   enddo
-   !
-   if(n_steps>0) call live_timing()
-   !
-   deallocate(ic_rot_table)
-   deallocate(wf_tmp)
-   !
- case(2)
-   !
-   call msg('s',':: WFs reduction...')
-   !
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-   io_err=io_WF(ID)
-   !
-   allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
-   !
-   ACTION_=OP_APP_WR_CL
-   if(frag_WF) ACTION_=OP_WR_CL
-   !
-   do ik=1,k%nibz
-     !
-     ik_save=kpoints_map(1,ik)
-     !
-     do ib_grp=1,wf_nb_io_groups
-       !
-       wf_disk=0._SP
-       !
-       nb1=wf_nb_io*(ib_grp-1)+1
-       nb2=wf_nb_io*ib_grp
-       !
-       nkibz=k_save%nibz
-       wf_ncx=wf_ncx_save
-       core_io_path=core_io_path_save
-       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
-       !
-       do ib=nb1,nb2
-         ib_disk=ib-nb1+1
-         do i_spin=1,n_spin
-           i_wf=WF%index(ib,ik_save,i_spin)
-           wf_disk(1,ib_disk,1:wf_ncx_new,i_spin)= real(WF%c(1:wf_ncx_new,i_wf))
-           wf_disk(2,ib_disk,1:wf_ncx_new,i_spin)= aimag(WF%c(1:wf_ncx_new,i_wf))
-         enddo
-       enddo
-       !
-       nkibz=k%nibz
-       wf_ncx=wf_ncx_new
-       core_io_path=more_io_path
-       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-       io_err=io_WF(ID,wf=wf_disk)
        !
      enddo
      !

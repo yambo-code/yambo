@@ -48,7 +48,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  character(lchlen)    :: core_io_path_save
  integer              :: first_el(En%nb),n_of_el(En%nb),n_deg_grp,mapped_in_group(2,En%nb)
- integer              :: i_k,i_b,i_b_to_map(2),i_b_limit,i_grp,i_b_SOC,i_wf,i_wf_SOC(2),i_sp_pol,n_miss
+ integer              :: i_k,i_b,i_b_to_map(2),i_b_limit,i_grp,i_b_SOC,i_wf,i_wf_SOC,i_sp_pol,n_miss
  integer              :: n_spin_save,n_spinor_save,n_sp_pol_save
  logical              :: group_already_mapped(En%nb),DB_is_ok,map_up,map_dw,kpoint_to_map(kpt%nibz)
  real(SP)             :: sq2,proj_up,proj_dw,mapping_tresh,min_sq(kpt%nibz)
@@ -113,10 +113,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
      !
      do i_b_SOC=1,En_SOC%nb
        !
-       i_wf_SOC=WF_SOC%index(i_b_SOC,i_k,:)
+       i_wf_SOC=WF_SOC%index(i_b_SOC,i_k,1)
        !
-       proj_up=abs(dot_product( WF_SOC%c(:, i_wf_SOC(1) ),WF_SOC%c(:, i_wf_SOC(1)) ))
-       proj_dw=abs(dot_product( WF_SOC%c(:, i_wf_SOC(2) ),WF_SOC%c(:, i_wf_SOC(2)) ))
+       proj_up=abs(dot_product( WF_SOC%c(:,1,i_wf_SOC) , WF_SOC%c(:,1,i_wf_SOC) ))
+       proj_dw=abs(dot_product( WF_SOC%c(:,2,i_wf_SOC) , WF_SOC%c(:,2,i_wf_SOC) ))
        !
        do i_grp=1,n_deg_grp
          !
@@ -135,8 +135,8 @@ subroutine WF_map_perturbative_SOC(kpt,En)
            !  
            !else
              ! Here I assume that up and down states are degenerate
-             sq2=sq2+abs(dot_product(WF_SOC%c(:, i_wf_SOC(1) ),WF%c(:, i_wf )))**2   &
-                    +abs(dot_product(WF_SOC%c(:, i_wf_SOC(2) ),WF%c(:, i_wf )))**2
+             sq2=sq2+abs(dot_product( WF_SOC%c(:,1,i_wf_SOC) , WF%c(:,1,i_wf) ))**2   &
+                    +abs(dot_product( WF_SOC%c(:,2,i_wf_SOC) , WF%c(:,1,i_wf) ))**2
              !
            !endif
            !

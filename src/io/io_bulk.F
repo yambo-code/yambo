@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C2,L1,L3,IPOS)
+subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  !
  use pars,    ONLY:SP,LP,nf90_SP
  use netcdf
@@ -33,8 +33,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C2,L1,L3,IPOS)
  integer,     optional :: VAR_SZ(:),IPOS(:)
  integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:)
  real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:)
- !complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:)
- complex(SP), optional :: C2(:,:)
+ complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:)
  !
  ! These types can be used instead of logical that 
  ! are not supported by NetCdf
@@ -207,29 +206,22 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C2,L1,L3,IPOS)
  !
  if (present(C2)) then
    if (write_is_on(ID)) then
-     write(*,*)
-     write(*,*) 'write'
      if (present(IPOS)) then
-       write(*,*) 'present'
-       call ncvpt(io_unit(ID), io_netcdf_var(ID), IPOS, shape(C2), C2, error)
+       call ncvpt(io_unit(ID), io_netcdf_var(ID), IPOS, (/size(C2,1),size(C2,2),2/), C2, error)
        call netcdf_call(error)
        !call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),C2,IPOS))
      else
-       write(*,*) 'not present'
-       write(*,*) (/io_rec_pos(ID)/), size(C2)
-       call ncvpt(io_unit(ID), io_netcdf_var(ID), 1, 1, C2, error)
+       call ncvpt(io_unit(ID), io_netcdf_var(ID), (/1,1,1/), (/size(C2,1),size(C2,2),2/), C2, error)
        call netcdf_call(error)
        !call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),C2,(/io_rec_pos(ID)/)))
      endif
    else if (read_is_on(ID)) then
-     write(*,*)
-     write(*,*) 'read'
      if (present(IPOS)) then
        call ncvgt(io_unit(ID), io_netcdf_var(ID), IPOS, shape(C2), C2, error)
        call netcdf_call(error)
        !call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),C2,IPOS))
      else
-       call ncvgt(io_unit(ID), io_netcdf_var(ID), (/io_rec_pos(ID)/), (/2/), C2, error)
+       call ncvgt(io_unit(ID), io_netcdf_var(ID), (/1,1,1/), (/size(C2,1),size(C2,2),2/), C2, error)
        call netcdf_call(error)
        !call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),C2,(/io_rec_pos(ID)/)))
      endif

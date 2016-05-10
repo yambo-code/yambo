@@ -281,7 +281,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      if (any( (/ikibz<WF%k(1), ikibz>WF%k(2)/) )) cycle
      !
-     ifrag=ikibz+1+(i_sp_pol-1)*nkibz
+     ifrag=ikibz+(i_sp_pol-1)*nkibz
      !
      do ib_grp=1,wf_nb_io_groups
        !
@@ -302,7 +302,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
            if (.not.any(states_to_load(ib1:ib2,ikibz,i_sp_pol))) cycle
          endif
          !
-         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ifrag,ib_grp/),ID=ID)
+         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf_disk)
          !
        endif
@@ -310,6 +310,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        do ib=wf_nb_io*(ib_grp-1)+1,wf_nb_io*ib_grp
          !
          if (any((/ib<WF%b(1),ib>WF%b(2)/))) cycle
+         !
+         WF%N=WF%N+1
+         WF%index(ib,ikibz,i_sp_pol)=WF%N
          !
          if(allocated(states_to_load)) then
            if(.not.states_to_load(ib,ikibz,i_sp_pol)) cycle
@@ -320,8 +323,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
          do i_spinor=1,n_spinor
            !
            wf_DP=(0._DP,0._DP)
-           WF%N=WF%N+1
-           WF%index(ib,ikibz,i_sp_pol)=WF%N
            do ic=1,wf_nc_k(ikibz)
              ig=wf_igk(ic,ikibz)
              if (ig>wf_ng) cycle

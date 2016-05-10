@@ -58,7 +58,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #endif
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
- integer                      :: ik,ic_wf(n_spinor),iv_wf(n_spinor),ic,iv,&
+ integer                      :: ik,ic_wf,iv_wf,ic,iv,&
 &                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4)
@@ -157,16 +157,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
-         do i_spinor=1,n_spinor
-           !
-           i_spin=i_sp_pol+i_spinor-1
-           iv_wf(i_spinor)=WF%index(iv,ik,i_spin)
-           ic_wf(i_spinor)=WF%index(ic,ik,i_spin)
-           !
-           if (iv_wf(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-           if (ic_wf(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
-           !
-         enddo
+         iv_wf=WF%index(iv,ik,i_sp_pol)
+         ic_wf=WF%index(ic,ik,i_sp_pol)
+         !
+         if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
+         if (ic_wf==0) call error(" Error in parallel wf distribution (Dipole ic)")
          !
          if (associated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
          !

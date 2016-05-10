@@ -52,7 +52,7 @@ subroutine el_magnetization(en,Xk,magn)
  ! Work Space
  !
  integer :: isym,ifft,ib,ik,i_sp_pol,i_wf
- real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ(n_sp_pol)
+ real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
  !
  magn=0._SP
  cv=0._SP

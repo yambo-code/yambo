@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_rotate(ik,WFo,wf_size)
+subroutine WF_rotate(i_sp_pol,ik,WFo,wf_size)
  !
  ! <r|n'>= <m|n'><r|m>
  !
@@ -41,57 +41,34 @@ subroutine WF_rotate(ik,WFo,wf_size)
  !
  implicit none
  !
- integer     :: ik,wf_size,ig
+ integer     :: i_sp_pol,ik,wf_size
  type(WAVEs) :: WFo
  !
  ! Work Space
  !
- integer     :: ib,ibp,i_wf(n_spinor),i_wfp(n_spinor),i_spin,i_sp_pol,i_spinor
- complex(SP) :: WS_wf(wf_size,n_spinor,SC_bands(2))
+ integer     :: ib,ibp,i_wf(n_spinor),i_wfp(n_spinor),i_spinor,i_g
+ complex(SP) :: WS_wf(wf_size,n_spinor)
  !
- do i_sp_pol=1,n_sp_pol
+ do ib = 1,SC_bands(2)
+   !
+   i_wf(:) = WFo%index(:,ib,ik,i_sp_pol)
+   if (any(i_wf(:)==0)) cycle
    !
    WS_wf=cZERO
    !
-   do ib = 1,SC_bands(2)
-     !
-     do i_spinor=1,n_spinor
-       i_spin=i_sp_pol+i_spinor-1
-       i_wf(i_spinor) = WFo%index(ib,ik,i_spin)
-     enddo
-     !
-     if (any(i_wf(:)==0)) cycle
-     !
-     do ibp = 1,SC_bands(2)
-       !
-       do i_spinor=1,n_spinor
-         i_spin=i_sp_pol+i_spinor-1
-         i_wfp(i_spinor) = WFo%index(ibp,ik,i_spin)
-         !
-         if (i_wfp(i_spinor)==0) cycle
-         !
-         call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,i_wfp(i_spinor)),WS_wf(:,i_spinor,ib))
-         !
-       end do
-     end do
-     !
-   enddo
+   do ibp = 1,SC_bands(2)
+     i_wfp(:) = WFo%index(:,ibp,ik,i_sp_pol)
+     if (any(i_wfp(:)==0)) cycle
+     call V_by_V_plus_V_omp(wf_size*n_spinor,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,i_wfp(:)),WS_wf(:,:,ib))
+   end do
    !
-!$omp parallel default(shared), private(ig,ib)
-   do ib=1,SC_bands(2)
-!$omp do
-     !
-     do i_spinor=1,n_spinor
-       i_spin=i_sp_pol+i_spinor-1
-       i_wf(i_spinor) = WF%index(ib,ik,i_spin)
-       !
-       do ig=1,wf_size
-         WF%c(ig,i_wf(i_spinor))=WS_wf(ig,i_spinor,ib)
-       enddo
+   !$omp parallel do default(shared), private(ig,i_spinor)
+   do i_spinor=1,n_spinor
+     do ig=1,wf_size
+       WF%c(ig,i_wf(i_spinor))=WS_wf(ig,i_spinor)
      enddo
-!$omp end do
    enddo
-!$omp end parallel
+   !$omp end parallel do
    !
  enddo
  !

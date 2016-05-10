@@ -21,9 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
-&                  spins_to_load,space,title,impose_free_and_alloc,&
-&                  force_WFo,keep_states_to_load)
+subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
+&                     space,title,impose_free_and_alloc,force_WFo,keep_states_to_load)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
@@ -54,7 +53,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs)           :: WF
- integer     ,optional :: spins_to_load(2)
+ integer     ,optional :: sp_pol_to_load(2)
  character(*),optional :: space
  character(*),optional :: title
  logical     ,optional :: impose_free_and_alloc
@@ -68,8 +67,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #if defined _SC
  integer          ::wf_size
 #endif
- integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
-&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max
+ integer          ::i_sp_pol,ikibz,ib_grp,ib_in_grp,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
+&                   iG_max,iG_bounds_loaded(2),iGo_max,sp_pol_to_load_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
@@ -94,12 +93,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (present(space)) wf_space_here=space
  !
  wf_title=""
- s_to_load=(/1,n_spin/)
  if (present(title)) wf_title=title
- if (present(spins_to_load)) s_to_load=spins_to_load
  !
  force_WFo_=.false.
  if(present(force_WFo)) force_WFo_=force_WFo
+ !
+ sp_pol_to_load_=(/i,n_sp_pol/)
+ if(present(sp_pol_to_load)) sp_pol_to_load_=sp_pol_to_load
  !
  ! [1]: check that loaded bounds are larger(equal) then bounds 
  !      asked now
@@ -184,7 +184,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  WF%b=bands_to_load
  WF%k=kpts_to_load
- WF%spin=s_to_load
+ WF%sp_pol=sp_pol_to_load_
  WF%space=wf_space_here
  !
  ! If the cpu has no WF to load %state must be set to .FALSE. before returning.
@@ -195,8 +195,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
      if (associated(WF%state)) nullify(WF%state)
-     allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
-     WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
+     allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2)))
+     WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2))=.FALSE.
      deallocate(states_to_load)
      return
    endif
@@ -263,7 +263,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (.not.buffer_is_ok) then
    !
-   allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+   allocate(wf_disk(2,wf_ncx,n_spinor,wf_nb_io))
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
@@ -272,80 +272,88 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  endif
  !
  WF%N=0
- do ikibz=1,nkibz
+ do i_sp_pol=1,n_sp_pol
    !
-   do ib_grp=1,wf_nb_io_groups
+   if (any( (/i_sp_pol<WF%sp_pol(1), i_sp_pol>WF%sp_pol(2)/) )) cycle
+   !
+   do ikibz=1,nkibz
      !
-     if (.not.buffer_is_ok) then
+     if (any( (/ikibz<WF%k(1), ikibz>WF%k(2)/) )) cycle
+     !
+     ifrag=ikibz+1+(i_sp_pol-1)*nkibz
+     !
+     do ib_grp=1,wf_nb_io_groups
        !
-       ! Use NETCDF support to reduce the I/O to the k-pts and bands needed only
-       !
-       if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
-       if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
-       !
-       ! In case the states to load are distributed in a complex way
-       ! by PARALLEL_WF_distribute I skip fragments that are not needed
-       ! 
-       if ( allocated(states_to_load) ) then
+       if (.not.buffer_is_ok) then
+         !
          ib1=wf_nb_io*(ib_grp-1)+1
          ib2=wf_nb_io*ib_grp
-         if(ib2>WF%b(2)) ib2=WF%b(2)
-         if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
+         !
+         if ( ib2<WF%b(1) ) cycle
+         if ( ib1>WF%b(2) ) cycle
+         !
+         ! In case the states to load are distributed in a complex way
+         ! by PARALLEL_WF_distribute I skip fragments that are not needed
+         ! 
+         if ( allocated(states_to_load) ) then
+           if (ib1<WF%b(1)) ib1=WF%b(1)
+           if (ib2>WF%b(2)) ib2=WF%b(2)
+           if (.not.any(states_to_load(ib1:ib2,ikibz,i_sp_pol))) cycle
+         endif
+         !
+         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/i_frag,ib_grp/),ID=ID)
+         io_err=io_WF(ID,wf_disk)
+         !
        endif
        !
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
-       !
-       io_err=io_WF(ID,wf_disk)
-       if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
-       if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
-       !
-     endif
-     !
-     do is=1,n_spin
        do ib=wf_nb_io*(ib_grp-1)+1,wf_nb_io*ib_grp
          !
-         i2=ib-wf_nb_io*(ib_grp-1)
-         !
-         if (any((/ib<WF%b(1),ib>WF%b(2),is<WF%spin(1),is>WF%spin(2)/))) cycle 
+         if (any((/ib<WF%b(1),ib>WF%b(2)/))) cycle
          !
          if(allocated(states_to_load)) then
-           if(.not.states_to_load(ib,ikibz,is)) cycle
+           if(.not.states_to_load(ib,ikibz,i_sp_pol)) cycle
          endif
          !
-         wf_DP=(0._DP,0._DP)
-         WF%N=WF%N+1
-         WF%index(ib,ikibz,is)=WF%N
-         do ic=1,wf_nc_k(ikibz)
-           ig=wf_igk(ic,ikibz)
-           if (ig>wf_ng) cycle
-           igfft=ig
-           if (WF%space=='R') igfft=fft_g_table(ig,1)
-           if (WF%space=='C'.or.WF%space=='B') igfft=ic
-           if (buffer_is_ok) then
-             wf_DP(igfft)=WF_buffer%c(ic,WF_buffer%index(ib,ikibz,is))
-           else
-             wf_DP(igfft)=cmplx(wf_disk(1,i2,ic,is),wf_disk(2,i2,ic,is),kind=DP)
+         ib_in_grp=ib-wf_nb_io*(ib_grp-1)
+         !
+         do i_spinor=1,n_spinor
+           !
+           wf_DP=(0._DP,0._DP)
+           WF%N=WF%N+1
+           WF%index(i_spinor,ib,ikibz,i_sp_pol)=WF%N
+           do ic=1,wf_nc_k(ikibz)
+             ig=wf_igk(ic,ikibz)
+             if (ig>wf_ng) cycle
+             igfft=ig
+             if (WF%space=='R') igfft=fft_g_table(ig,1)
+             if (WF%space=='C'.or.WF%space=='B') igfft=ic
+             if (buffer_is_ok) then
+               wf_DP(igfft)=WF_buffer%c(ic,WF_buffer%index(i_spinor,ib,ikibz,i_sp_pol))
+             else
+               wf_DP(igfft)=cmplx(wf_disk(1,ic,i_spinor,ib_in_grp),wf_disk(2,ic,i_spinor,ib_in_grp),kind=DP)
+             endif
+           enddo
+           !
+           if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
+             WF%c(:,WF%N)=cmplx(wf_DP(:),kind=SP)
+             cycle
            endif
-         enddo
-         if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
-           WF%c(:,WF%N)=cmplx(wf_DP(:),kind=SP)
-           cycle
-         endif
-         !
+           !
 #if defined _FFTW
-         call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
+           call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
 #else
-         !
-         ! Here we explot (+2 instead of +1) the wfc cutoff when using FFTQE
-         !
-         call fft_3d(wf_DP,fft_dim,+2)
+           !
+           ! Here we explot (+2 instead of +1) the wfc cutoff when using FFTQE
+           !
+           call fft_3d(wf_DP,fft_dim,+2)
 #endif
-         WF%c(:,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
-         !
-       enddo
-     enddo
-   enddo
- enddo
+           WF%c(:,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
+           !
+         enddo  ! i_spinor
+       enddo    ! i_b
+     enddo      ! i_b_grp
+   enddo        ! i_k
+ enddo          ! i_sp_pol
  !
  ! CLEAN
  !
@@ -372,10 +380,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
    if (associated(WF%state)) nullify(WF%state)
    !
-   allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+   allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2)))
    !
-   WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))= &
-&           states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))
+   WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2))= &
+&           states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2))
    !
    ! When using the buffer the states_to_load must not be cleaned
    !
@@ -403,10 +411,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
    if (WF%space=='R') wf_size=fft_size
    if (WF%space=='G') wf_size=wf_ng
-   do ikibz=WF%k(1),WF%k(2)
-     call WF_rotate(ikibz,wf,wf_size)
+   do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
+     do ikibz=WF%k(1),WF%k(2)
+       call WF_rotate(i_sp_pol,ikibz,wf,wf_size)
+     enddo
+     call load_SC_components('WF_clean')
    enddo
-   call load_SC_components('WF_clean')
    !
  endif
  !
@@ -417,18 +427,16 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    return
  endif
  !
- ! Check normalization @ 1st k-point only.
+ ! Check normalization @ 1st k-point, spin up only.
  !
  mndp=10._SP
  mxdp=-1._SP
- do i1=1,min(int(nel)+5,WF%b(2))
-   do i2=1,min(int(nel)+5,WF%b(2))
-     do is=1,n_sp_pol
+ do ib1=1,min(int(nel)+5,WF%b(2))
+   do ib2=1,min(int(nel)+5,WF%b(2))
+     !
+     if ( any((/WF%index(:,ib1,1,1)==0,WF%index(:,ib2,1,1)==0/)) ) cycle
        !
-       if (WF%index(i1,1,is)==0.or.WF%index(i2,1,is)==0) cycle
-       !
-       c=dot_product(WF%c(:, WF%index(i1,1,is) ),WF%c(:, WF%index(i2,1,is) ))
-       if (n_spinor==2) c=c+dot_product(WF%c(:, WF%index(i1,1,2) ),WF%c(:, WF%index(i2,1,2) ))
+       c=dot_product(WF%c(:,WF%index(:,ib1,1,1) ),WF%c(:, WF%index(:,ib2,1,1)))
        !
        if (abs(c)>mxdp) mxdp=abs(c)
        if (abs(c)<mndp) mndp=abs(c)
@@ -450,24 +458,25 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      logical      :: flag_
      flag_=all((/bands_to_load(1)>=WF_%b(1),bands_to_load(2)<=WF_%b(2),&
 &                kpts_to_load(1)>=WF_%k(1),kpts_to_load(2)<=WF_%k(2),&
-&                s_to_load(1)>=WF_%spin(1),s_to_load(2)<=WF_%spin(2)/))
+&                sp_pol_to_load_(1)>=WF_%sp_pol(1),sp_pol_to_load_(2)<=WF_%sp_pol(2)/))
    end subroutine
    !
    subroutine check_states(WF_,flag_)
      type(WAVEs)  :: WF_
      logical      :: flag_
-     ikibz=WF_%k(1)
-     do while(ikibz<=WF_%k(2).and.flag_) 
-       is   =WF_%spin(1)
-       do while(is<=WF_%spin(2).and.flag_) 
-          ib   =WF_%b(1)
-          do while(ib<=WF_%b(2).and.flag_) 
-            flag_=states_to_load(ib,ikibz,is).eqv.WF_%state(ib,ikibz,is)
-            ib=ib+1
-          enddo
-          is=is+1
+     !
+     i_sp_pol=WF_%sp_pol(1)
+     do while(i_sp_pol<=WF_%sp_pol(2).and.flag_)
+       ikibz=WF_%k(1)
+       do while(ikibz<=WF_%k(2).and.flag_) 
+         ib   =WF_%b(1)
+         do while(ib<=WF_%b(2).and.flag_) 
+           flag_=states_to_load(ib,ikibz,i_sp_pol).eqv.WF_%state(ib,ikibz,i_sp_pol)
+           ib=ib+1
+         enddo
+         ikibz=ikibz+1
        enddo
-       ikibz=ikibz+1
+       i_sp_pol=i_sp_pol+1
      enddo
    end subroutine
    !

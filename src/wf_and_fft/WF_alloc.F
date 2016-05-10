@@ -47,7 +47,7 @@ subroutine WF_alloc(WF)
    N_total=0
    do ib=WF%b(1),WF%b(2)
      do ik=WF%k(1),WF%k(2)
-       do is=WF%spin(1),WF%spin(2)
+       do is=WF%sp_pol(1),WF%sp_pol(2)
          N_total=N_total+1
          if (states_to_load(ib,ik,is)) WF%N=WF%N+1
        enddo
@@ -56,7 +56,7 @@ subroutine WF_alloc(WF)
    !
  else
    !
-   WF%N=(WF%b(2)-WF%b(1)+1)*(WF%k(2)-WF%k(1)+1)*(WF%spin(2)-WF%spin(1)+1)
+   WF%N=(WF%b(2)-WF%b(1)+1)*(WF%k(2)-WF%k(1)+1)*(WF%sp_pol(2)-WF%sp_pol(1)+1)
    N_total=WF%N
    !
  endif
@@ -65,7 +65,7 @@ subroutine WF_alloc(WF)
  if (WF%space=="G") allocate(WF%c(wf_ng,WF%N),stat=err)
  if (WF%space=="C".or.WF%space=="B") allocate(WF%c(wf_ncx,WF%N),stat=err)
  !
- if (err==0) allocate(WF%index(WF%b(2),WF%k(2),WF%spin(2)),stat=err)
+ if (err==0) allocate(WF%index(WF%b(2),WF%k(2),WF%sp_pol(2)),stat=err)
  !
  call mem_est('WF',(/size(WF%c)/),errors=(/err/))
  !

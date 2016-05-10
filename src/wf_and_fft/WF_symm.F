@@ -38,12 +38,10 @@ function WF_symm(ifft,isc)
  integer     :: ifft
  integer     :: i_wf(n_spinor)
  !
- i_wf(1)=WF%index(isc(1),isc(2),isc(4))
- if(n_spinor==2)  i_wf(2)=WF%index(isc(1),isc(2),2)
+ i_wf(:)=WF%index(:,isc(1),isc(2),isc(4))
  !
  if(isc(3)==idt_index) then
-   WF_symm(1)=WF%c(ifft,i_wf(1))
-   if(n_spinor==2) WF_symm(2)=WF%c(ifft,i_wf(2))
+   WF_symm(:)=WF%c(ifft,i_wf(:))
    return
  endif
  !

@@ -31,13 +31,13 @@ subroutine RT_databases_IO( )
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_J,OP_IF_START_WR_CL_IF_END
  use parallel_m,     ONLY:PP_redux_wait
- use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,NE_steps
+ use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time
  !
  implicit none
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_JPSM,io_carr,io_THETA,i_c,ACTION_
+ integer           :: ik,io_G,io_JPSM,io_carr,io_THETA,i_c,ACTION_,i_time
  integer, external :: io_RT_components
  !
  ! Store the current and the polarization in the cache for future writing

@@ -25,7 +25,7 @@ integer function io_DIPOLES(X,ID)
  !
  use pars,          ONLY:SP,schlen
  use X_m,           ONLY:X_t,DIP_iR,DIP_P,DIP_spin,X_alloc
- use electrons,     ONLY:levels,n_spin
+ use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&

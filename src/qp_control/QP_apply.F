@@ -64,7 +64,6 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
 &                        K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
 &                        X_kind,X_xc_functional,QP_DB_kind,SE_NONE
- use interfaces,    ONLY:OCCUPATIONS_Gaps
  use QP_CTL_m,      ONLY:QP_ctl_t,reset_QP_ctl
  !
  implicit none

@@ -25,8 +25,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  use YPP
  use pars,           ONLY:pi
- use interpolate,    ONLY:max_interpls
- use units,          ONLY:HA2EV,FS2AUT
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
@@ -50,13 +48,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use YPP_real_time
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
- use fields,         ONLY:n_ext_fields
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH
-#endif
-#if defined _YPP_SURF
- use R_lattice,      ONLY:nkibz
 #endif
  !
  implicit none
@@ -79,8 +73,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  integer          ::io_SC_err,ID
 #endif
 #if defined _YPP_RT
- integer, external::io_RT_components,io_KB_pwscf,io_kb_abinit
- integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,io_kb_abinit_err,ID
+ integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
+ integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,ID,io_KB_abinit_err
 #endif
  integer, external::parse_character_arrays
  !

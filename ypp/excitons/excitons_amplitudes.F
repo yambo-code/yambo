@@ -29,12 +29,9 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc
  use YPP,           ONLY:min_weight
- use BS,            ONLY:BS_H_dim,BS_mat,BSS_eh_table,bss_description,&
-&                        BSS_n_descs
- use X_m,           ONLY:X_t!,DIP_projected
+ use BS,            ONLY:BS_H_dim,BS_mat,BSS_eh_table,BSS_n_descs,BSS_description
  use com,           ONLY:msg,of_open_close
  use vec_operate,   ONLY:sort
- !use parser_m,      ONLY:parser
  !
  implicit none
  !
@@ -44,8 +41,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  !
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
  real(SP)         :: A_weight(BS_H_dim),K_weight(Xk%nibz),value,dip_factor,norm_
- !logical          :: l_weight_with_dipoles
- character(schlen)::titles(7),ch_dummy(2)
+ character(schlen):: titles(7),ch_dummy(2)
  !
  integer, parameter   :: amp_steps=1000
  integer              :: amp_n_trans

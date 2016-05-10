@@ -33,7 +33,6 @@ module R_lattice
  real(SP) :: k_grid_uc_vol
  real(SP) :: k_grid_b(3,3)
  logical  :: Xk_grid_is_uniform
- logical  :: Xk_impose_minus_q
  !
  ! Q/K-sampling
  !

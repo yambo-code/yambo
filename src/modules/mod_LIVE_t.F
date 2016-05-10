@@ -116,17 +116,20 @@ module LIVE_t
      if (present(dt_out)) dt_out=dz(:6)
    end function
    !
-   subroutine live_timing(message,steps,SERIAL)
+   subroutine live_timing(message,steps)
      character(*),optional :: message
      integer     ,optional :: steps
-     logical     ,optional :: SERIAL
+     !
      if (.not.master_thread) return
      if (.not.live_timing_is_on) return
-     if (present(message).and.present(steps)) then
-       if (present(SERIAL))      call live_timing_activate(message,steps)
-       if (.not.present(SERIAL)) call live_timing_activate(message,steps)
+     !
+     if (.not.present(steps)) call live_timing_close( )
+     !
+     if (present(steps)) then
+       if (present(message)    )  call live_timing_activate(message,steps)
+       if (.not.present(message)) call live_timing_add(steps)
      endif
-     if (.not.present(message).and.present(steps)) call live_timing_add(steps)
+     !
    end subroutine
    !
    subroutine ct(INIT,INIT_SEG,SEG,INIT_SEC,SEC,FIN)
@@ -314,6 +317,16 @@ module LIVE_t
      call live_timing_update("--","--")
    end subroutine
    !
+   subroutine live_timing_close( )
+     implicit none
+     ! 
+     if (steps_done==time_steps) return
+     !
+     call live_timing_add(steps=time_steps-steps_done)
+     !
+   end subroutine
+   !
+   !
    subroutine live_timing_add(steps)
      use parallel_m, ONLY : myid
      implicit none
@@ -329,7 +342,11 @@ module LIVE_t
      time_report=.false.
      !
      call ct(SEG=.true.)
-     steps_done=steps_done+steps
+     if (steps_done+steps<=time_steps) then
+       steps_done=steps_done+steps
+     else
+       steps_done=time_steps
+     endif
      hashes_now=int(real(steps_done)/real(time_steps)*real(nhash))
      if (hashes_now==hashes_done) return
      !

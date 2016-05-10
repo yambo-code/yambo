@@ -59,11 +59,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
-&                         IO_and_Messaging_switch,IO_write
+&                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
-&                         PP_redux_wait,PAR_COM_Plasma_INDEX,PAR_COM_Q_INDEX,l_par_RT,myid
+&                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT
  use parser_m,       ONLY:parser
+#if defined _RT
+ use X_m,            ONLY:DIP_spin
+ use electrons,      ONLY:n_spin
+#endif
 #if defined _SC
  use com,            ONLY:secnm
  use drivers,        ONLY:l_real_time,l_sc_run
@@ -182,6 +186,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
    !
+#if defined _RT
+   if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xen,Xk,X)
+#endif
+   !
    call DIPOLES_ppredux_and_symmetrize()
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
@@ -214,12 +222,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Finally project the dipoles along q
  !=====================================
- call DIPOLE_project_along_q(Xen,Xk,X,field_dir)
+ call DIPOLE_project_along_q(Xk,X,field_dir)
  !
  ! Clean up
  !
  call X_alloc('DIP_iR') 
  call X_alloc('DIP_P')
+#if defined _RT
+ if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin')
+#endif
 #if defined _SC
  call X_alloc('P_square') 
 #endif
@@ -246,6 +257,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      write_header  =(     master_cpu.and.writing)
      read_header   =(.not.master_cpu.and.writing).or.reading
      !
+     ! AM March 2016. The next lines are in the nasty case where only a fraction of all CPU's compute the
+     ! dipoles. In this case only those cpu's know the right value of X%Vnl_included that is defined in the
+     ! calculation process. If, in the same run, all cpu's must access the dipoles the other CPU's will have
+     ! the wrong value of X%Vnl_included and the code will get stuck.
+     !
      if (reading.and.PAR_COM_DIPOLES%n_CPU==ncpu)then
        l_vnl=X%Vnl_included
        call PP_redux_wait(l_vnl)
@@ -255,7 +271,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if(write_header) then
        call msg('s','[DIP] Writing dipoles header ')
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       io_err=io_DIPOLES(X,Xen,ID)
+       io_err=io_DIPOLES(X,ID)
      endif
      !
      call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
@@ -263,7 +279,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if(read_header) then
        call msg('s','[DIP] Checking dipoles header ')
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       io_err=io_DIPOLES(X,Xen,ID)
+       io_err=io_DIPOLES(X,ID)
      endif
      !
      if (io_err==0) then
@@ -276,7 +292,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          if (.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0 .and. writing) cycle
          do i_sp_pol=1,n_sp_pol
            call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-           io_err=io_DIPOLES(X,Xen,ID)
+           io_err=io_DIPOLES(X,ID)
         enddo
        enddo
        !
@@ -290,6 +306,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
      DIP_iR=cZERO
      DIP_P=cZERO
+     !
+#if defined _RT
+     if (l_real_time.and.n_spin>1) then
+       call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+       DIP_spin=cZERO
+     endif
+#endif
+
      !
 #if defined _SC
      if (l_sc_run.or.l_real_time) then
@@ -318,6 +342,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
         call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
         !
+#if defined _RT
+        !
+        if (l_real_time.and.n_spin>1) then
+          !
+          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+          !
+        endif
+        !
+#endif
+        !
 #if defined _SC
         !
         if (l_sc_run.or.l_real_time) then
@@ -325,15 +359,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
           call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
           !
         endif
+#endif
         !
+#if defined _RT
         if (l_par_RT) then
           !
-          DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_Plasma_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          if (l_real_time.and.n_spin>1) &
+&           DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          if (l_sc_run.or.l_real_time) &
+&           P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           !
         endif
-        !
 #endif
       enddo
       !
@@ -346,16 +384,26 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
           if(iv>=X%ib_lim(2)) then
             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+#if defined _RT
+            if (l_real_time.and.n_spin>1) &
+&             DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+#endif
 #if defined _SC
-            if (l_sc_run.or.l_real_time) P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            if (l_sc_run.or.l_real_time) &
+&             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #endif
           endif
           do ic=iv+1,X%ib(2)
             if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
+#if defined _RT
+              if (l_real_time.and.n_spin>1) &
+&               DIP_spin (:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+#endif
 #if defined _SC
-              if (l_sc_run.or.l_real_time) P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
+              if (l_sc_run.or.l_real_time) &
+&               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
 #endif
             endif
           enddo

@@ -22,35 +22,30 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
-  !
-  ! Iteratively calculate the OEP potential (or one of its approximations) 
-  ! see PRA 80, 052510 (2009)/PRB 68, 03510 (2003)
-  !
-  ! v_x = v_kli = v_hole + \sum_i^N P_{ii} D_{ii}/\rho 
-  ! v_x = v_ced = v_kli + \sum_{i,j\=i}^N P_{ij} D_{ij}/\rho 
-  ! v_x = v_wkli = v_whole + \sum_i^N \tilde P_{ii} D_{ii}/\tilde\rho 
-  ! v_x = v_wced = v_kli + \sum_{i,j\=i}^N \tilde P_{ij} D_{ij}/\tilde\rho 
-  !
-  !
-  ! P_{ij} = (\phi_i)^*\phi_j, D_{ij} = \langle \phi_i |  v_x - v_x^{NL} | \phi_j\rangle 
-  ! \tilde P_{ij} = (\phi_i)^*\phi_j
-  !
-  ! where   v_x^{NL} is the nonlocal(state-dependent) exchange potential
-  !
- use pars,            ONLY:SP,DP,LCHLEN
- use com,             ONLY:error,warning
+ !
+ ! Iteratively calculate the OEP potential (or one of its approximations) 
+ ! see PRA 80, 052510 (2009)/PRB 68, 03510 (2003)
+ !
+ ! v_x = v_kli = v_hole + \sum_i^N P_{ii} D_{ii}/\rho 
+ ! v_x = v_ced = v_kli + \sum_{i,j\=i}^N P_{ij} D_{ij}/\rho 
+ ! v_x = v_wkli = v_whole + \sum_i^N \tilde P_{ii} D_{ii}/\tilde\rho 
+ ! v_x = v_wced = v_kli + \sum_{i,j\=i}^N \tilde P_{ij} D_{ij}/\tilde\rho 
+ !
+ !
+ ! P_{ij} = (\phi_i)^*\phi_j, D_{ij} = \langle \phi_i |  v_x - v_x^{NL} | \phi_j\rangle 
+ ! \tilde P_{ij} = (\phi_i)^*\phi_j
+ !
+ ! where   v_x^{NL} is the nonlocal(state-dependent) exchange potential
+ !
+ use pars,            ONLY:SP,lchlen
+ use com,             ONLY:warning
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
- use D_lattice,       ONLY:nsym,i_time_rev
+ use D_lattice,       ONLY:nsym
  use FFT_m,           ONLY:fft_size,fft_rot_r
- use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
- use collision,       ONLY:elemental_collision_free 
- use memory_m,        ONLY:mem_est
- use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index,WF_load
  use wave_func,       ONLY:WF
- use SC,              ONLY:it_now,OEP_steps,OEP_threshold,SC_bands,l_oep_EWeight,E_bare
- use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli,l_oep_ceda
+ use SC,              ONLY:OEP_steps,OEP_threshold,SC_bands,l_oep_EWeight
+ use drivers,         ONLY:l_oep_exact,l_oep_kli,l_oep_ceda
  use LIVE_t,          ONLY:LIVE_message
  use stderr,          ONLY:intc,real2ch,log_as_a_file
  !
@@ -58,15 +53,14 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  !
  implicit none
  real(SP),  intent(inout) :: Voep(fft_size)
- real(SP),  intent(in) :: Vslt(fft_size),rho(fft_size)
- complex(SP), intent(in):: U(nkibz,n_met_bands,fft_size)
+ real(SP),  intent(in)    :: Vslt(fft_size),rho(fft_size)
+ complex(SP), intent(in)  :: U(nkibz,n_met_bands,fft_size)
  type(levels), intent(in) :: E
  type(bz_samp), intent(in):: k
  !
  ! Work space
  !
- type(PP_indexes) ::px
- integer          ::ii,iv1,iv2,ik,ir,ifft,offt,is,rho_sym,max_bands,ik_max
+ integer          ::ii,iv1,iv2,ik,ir,ifft,offt,is,max_bands,ik_max
  real(SP)         ::V_io(fft_size),V_nm1(fft_size)
  real(SP)         ::V_resp(fft_size),reached_treshold,EWeight,ev_max
  complex(SP)      ::DeltaEps

@@ -33,7 +33,6 @@ integer function eval_G_minus_G(iG,iGo)
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use vec_operate,  ONLY:iku_v_norm
- use LIVE_t,       ONLY:live_timing
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
 #if defined _TIMING
  use timing_m,     ONLY:timing

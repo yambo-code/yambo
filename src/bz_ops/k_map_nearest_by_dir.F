@@ -26,9 +26,9 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  ! Map k-points on a regular grid along the b directions
  !  
  use pars,           ONLY:SP,IP,zero_dfl,schlen
- use vec_operate,    ONLY:c2a,rlu_k2bz
+ use vec_operate,    ONLY:c2a
  use R_lattice,      ONLY:bz_samp,bz_map,WF_shifts
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg,error
  use memory_m,       ONLY:mem_est
  use pars,           ONLY:zero_dfl
  !

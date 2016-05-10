@@ -24,7 +24,7 @@
 subroutine RT_IO_J_and_P_paths(en)
  !
  use pars,           ONLY:lchlen
- use YPP,            ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_IO_J_and_P,&
+ use YPP_real_time,  ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_IO_J_and_P,&
 &                         N_pumps,N_probes,N_probe_frequencies
  use com,            ONLY:core_io_path,jobstr,file_exists,msg,error,warning
  use IO_m,           ONLY:NONE
@@ -69,18 +69,11 @@ subroutine RT_IO_J_and_P_paths(en)
    ! Remove "." and ".."
    !
    i_f=1
-   ! DEBUG <
-   !write(*,*) ' '
-   !write(*,*) 'List of paths found:'
-   ! DEBUG >
    do while (i_f<nf)
      if ( trim(Probe_path(i_f)) == "." .or. trim(Probe_path(i_f)) == ".." ) then
        forall (i_fp=i_f+1:nf) Probe_path(i_fp-1)=Probe_path(i_fp)
        nf=nf-1
      endif
-     ! DEBUG <
-     !write(*,*) 'PATH n'//trim(intc(i_f))//' = ',trim(Probe_path(i_f))
-     ! DEBUG >
      i_f=i_f+1
    enddo
    !
@@ -94,9 +87,9 @@ subroutine RT_IO_J_and_P_paths(en)
    do while (i_f<=nf)
      !
      if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_G').or.&
-&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_J_and_P').or.&
+&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_JPSM').or.&
 &        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_G').or.&
-&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_J_and_P')) then
+&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_JPSM')) then
        !
        if(index(trim(Probe_path(i_f)),trim(Probe_Keyword))>0.or.&
 &         (trim(Probe_Keyword)=="none".and.index(trim(Probe_path(i_f)),trim(jobstr))>0)) then

@@ -36,7 +36,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,use_covariant_approach,&
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_DIPOLES

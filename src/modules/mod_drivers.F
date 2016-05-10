@@ -43,6 +43,9 @@ module drivers
  logical :: l_rt_carriers_in_use
  logical :: l_sc_magnetic
  logical :: l_eval_collisions
+ logical :: l_use_Hxc_collisions
+ logical :: l_use_COH_collisions
+ logical :: l_use_scatt_collisions
  logical :: l_use_collisions
  !
  ! The self-energy correlation "kind"
@@ -101,8 +104,9 @@ module drivers
  logical :: l_sc_srpa
  logical :: l_sc_ip
  logical :: l_sc_hartree
- logical :: l_sc_hf
- logical :: l_sc_cohsex
+ logical :: l_sc_fock
+ logical :: l_sc_coh
+ logical :: l_sc_sex
  logical :: l_sc_is_libDFT
  !
  ! OEP approximations

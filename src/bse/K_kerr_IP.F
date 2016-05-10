@@ -23,9 +23,7 @@
 !
 subroutine K_kerr_IP(iq,w)
  !
- use pars,           ONLY:SP,pi,cZERO,cONE,cI
- use units,          ONLY:DEG2RAD
- use memory_m,       ONLY:mem_est
+ use pars,           ONLY:SP,cZERO,cI
  use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_rpa_IP
  use X_m,            ONLY:Epsilon_ij,global_gauge
@@ -37,7 +35,7 @@ subroutine K_kerr_IP(iq,w)
  use drivers,        ONLY:l_anomalous_Hall
  use parallel_m,     ONLY:PAR_BS_nT_col_grps,PP_redux_wait,&
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
-&                         PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_index
+&                         PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  !
  implicit none
  !

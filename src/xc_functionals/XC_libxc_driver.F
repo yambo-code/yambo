@@ -52,7 +52,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- integer  :: i1,i2,is,ic,is1,is2,ixc,ifft
+ integer  :: i1,i2,i3,is,ic,is1,is2,ixc,ifft
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
  !
@@ -65,9 +65,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  complex(SP), allocatable:: drho_cmplx(:,:)
  complex(SP), allocatable:: spin_rho_SP_cmplx(:)
  !
- ! note that multidimensional dvxc & vxc is allowed only in xcspol
+ ! note that multidimensional fxc & vxc is allowed only in xcspol
  !
- real(DP) :: tmp_dvxc(fft_size),tmp_vxc(n_spin,fft_size),tmp_exc(fft_size)
+ real(DP) :: tmp_fxc(n_spin,n_spin,fft_size),tmp_vxc(n_spin,fft_size),tmp_exc(fft_size)
  real(SP),allocatable :: vdrho(:,:)
  real(DP),allocatable :: vsigma(:,:)
  logical              :: EvaluateDGradient
@@ -82,7 +82,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  tmp_exc=0._DP
  tmp_vxc=0._DP
- tmp_dvxc=0._DP
+ tmp_fxc=0._DP
  !
  call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
  !
@@ -191,8 +191,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
          forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)         
        case(2) 
-         call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_dvxc(1))
-         F_xc = F_xc + real(tmp_dvxc,SP)
+         call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_fxc(1,1,1))
+         forall(i1=1:fft_size,i2=1:n_spin,i3=1:n_spin) F_xc(i1,i2,i3) = F_xc(i1,i2,i3) + real(tmp_fxc(i3,i2,i1),SP)
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
      select case(ORDER)

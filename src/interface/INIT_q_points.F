@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_q_points(l_WRITE)
+subroutine INIT_q_points(io_QINDX_err,l_WRITE)
  !
  ! This routine:
  !
@@ -32,16 +32,22 @@ subroutine INIT_q_points(l_WRITE)
  use memory_m,    ONLY:mem_est
  use it_m,        ONLY:nflines,flines,infile,infile_verbosity,V_kpt,V_all
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,bz_samp_reset,q_source
+#if defined _ELPH
+ use ELPH,        ONLY:ph_qpt,elph_use_q_grid,elph_nDBs
+#endif
  use vec_operate, ONLY:c2a
  implicit none
  !
  logical :: l_WRITE
+ integer :: io_QINDX_err
  !
  ! Work Space
  !
  integer       :: i1,nflines_save
  type(bz_samp) :: q
  real(DP)      :: q_pt_db(3)
+ !
+ if (io_QINDX_err==0) return
  !
  if (l_WRITE.and. (infile_verbosity==V_kpt.or.infile_verbosity==V_all)) then
    nflines_save=nflines
@@ -71,6 +77,15 @@ subroutine INIT_q_points(l_WRITE)
      endif
    enddo
    return
+#if defined _ELPH
+ else if (allocated(ph_qpt).and.elph_use_q_grid) then
+   q_source="Electron-Phonon databases"
+   nqibz=elph_nDBs
+   allocate(q_pt(nqibz,3))
+   call mem_est("q_pt",(/nqibz*3/),(/SP/))  
+   q_pt(:,:)=-real(ph_qpt(:,:),SP)
+   return
+#endif
  else
    call bz_samp_reset(q)
    call init_parse_K_list(q,'QptCoord')

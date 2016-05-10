@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
+integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
- ! init =-2  : Unsupported Runlevel(s) combination
- ! init =-1  : Missing CORE DBs
- ! init = 0  : everything is OK. Job continues.
- ! init = 1  : input file editing mode
- ! init = 2  : DB listing mode
+ ! INIT =-2  : Unsupported Runlevel(s) combination
+ ! INIT =-1  : Missing CORE DBs
+ ! INIT = 0  : everything is OK. Job continues.
+ ! INIT = 1  : input file editing mode
+ ! INIT = 2  : DB listing mode
  !
  use drivers
  use pars,           ONLY:schlen,lchlen
@@ -43,7 +43,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,QP_table
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
@@ -59,14 +59,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _SC || defined _RT
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_QED
- use collision,      ONLY:V_kind
+ use collision,      ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
  use interfaces,     ONLY:io_COLLISIONS
  use SC,             ONLY:SC_potential
 #endif
 #if defined _RT
- use global_XC,      ONLY:SE_GW_NEQ
- use real_time,      ONLY:n_regions
  use fields,         ONLY:n_ext_fields,n_ext_fields_max
 #endif
 #if defined _MAGNETIC
@@ -100,7 +97,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer           :: io_COLLISIONS_err,io_SC_E_err,io_SC_V_err
 #endif
 #if defined _RT
- integer           :: io_G,io_J_and_P
+ integer           :: io_G,io_JPSM
 #endif
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
@@ -158,7 +155,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Presets (input)
  !
- init = 0
+ INIT = 0
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    call E_reset(en)
@@ -202,13 +199,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Command line reading
  !
- call read_command_line(instr,init)
+ call read_command_line(instr,INIT)
  !
  ! DB props listing mode ?
  !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
-   init = 2
+   INIT = 2
    if (log_as_a_file) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
@@ -234,14 +231,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_WF_err=io_WF(io_ID) 
  if (io_err/=0.or.io_WF_err/=0) then
-   init =-1
+   INIT =-1
    return
  else
    call mk_dir(more_io_path)
    call mk_dir(com_path)
    call mk_dir(trim(core_io_path)//"/SAVE")
    call mk_dir(trim(more_io_path)//"/SAVE")
-   if (init==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
+   if (INIT==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
  endif
  !
  ! Exporting DB1 informations to variables to be
@@ -257,15 +254,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Updates RL variables
  !
  QP_ng_Sx=ng_closed
+ QP_ng_SH=ng_closed
  BS_n_g_exch=ng_closed
  !
  ! kindx
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_QINDX_err=io_QINDX(k,q,io_ID) 
- if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
+ if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim')
  !
- ! If the GOPS/KINDX DBs are not present, reset to setup run
+ ! If the GROT/KINDX DBs are not present, reset to setup run
  !
  if ((io_err==-1.or.io_QINDX_err==-1).and.infile_editing) then
    !
@@ -274,7 +272,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! force a setup run
    instr="setup"
-   call read_command_line(instr,init)
+   call read_command_line(instr,INIT)
    !
  endif
  !
@@ -335,7 +333,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ostnts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_DIPOLES(X(3),en,io_ID)
+ io_err=io_DIPOLES(X(3),io_ID)
  !
  OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
  !
@@ -415,7 +413,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_J_and_P=io_RT_components('J_and_P',io_ID)
+ io_JPSM=io_RT_components('JPSM',io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_G=io_RT_components('G',io_ID)
 #endif
@@ -431,25 +429,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! COLLISIONS 
  !
- V_kind=SC_HF
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
- if (io_COLLISIONS_err==0) then
-   V_kind=SC_COHSEX
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
-   if (io_COLLISIONS_err/=0) V_kind=-1
- endif
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,COH_collisions)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,HXC_collisions)
 #endif
 #if defined _SC && defined _RT
- V_kind=SE_GW_NEQ
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,GW_NEQ_collisions)
 #endif
 #if defined _QED && defined _RT
- V_kind=SE_GW_QED
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(io_ID,P_collisions)
 #endif
  !
  if (list_dbs) then
@@ -552,7 +543,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
 #if defined  _ELPH 
- if (l_setup) call initactivate(1,'MinusQ BSEscatt')
+ if (l_setup) call initactivate(1,'BSEscatt')
 #endif
  !
  !
@@ -599,6 +590,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
+   call initactivate(1,'DrClassic')
    !
    !
    call INIT_QP_ctl_switch('X')
@@ -820,12 +812,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_sc_run) then
    !
-   call initactivate( 1,'Potential FFTGvecs SCBands')
+   call initactivate( 1,'HXC_Potential FFTGvecs SCBands')
    call initactivate(-1,'QpntsRXs')
    !
    select case (trim(SC_potential))
-     case('HARTREE-FOCK')
+     case('HARTREE+FOCK')
        call initactivate(1,'EXXCut EXXRLvcs')
+     case('COH')
+       call initactivate(1,'GbndRnge UseEbands SCUpWIter')
+     case('SEX')
+       call initactivate(1,'EXXCut EXXRLvcs')
+       call initactivate(1,'GbndRnge SCUpWIter')
      case('COHSEX')
        call initactivate(1,'EXXCut EXXRLvcs')
        call initactivate(1,'GbndRnge UseEbands SCUpWIter')
@@ -847,15 +844,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_eval_collisions) then
    !
-   call initactivate( 1,'Potential FFTGvecs COLLBands')
+   call initactivate( 1,'HXC_Potential FFTGvecs COLLBands')
    call initactivate(-1,'QpntsRXs')
    !
-   if(trim(SC_potential)=="HARTREE-FOCK".or.trim(SC_potential)=="COHSEX") then
+   if( index(SC_potential,"HARTREE")>0) call initactivate(1,'HARRLvcs')
+   !
+   if( index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.index(SC_potential,"COH")>0 ) then
      call initactivate( 1,'EXXCut EXXRLvcs')
    endif
    !
    if (l_elel_scatt)     call initactivate(1,'PlasmaPerc')
-   if (l_elphoton_scatt) call initactivate(1,'QEDRLvcs') 
    !
  endif
  !
@@ -867,16 +865,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call INIT_QP_ctl_switch('G')
    call INIT_RT_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'RTBands Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
-   call initactivate(1,'RTstep NEsteps NETime COHsteps DipoleEtresh')
-   if (l_elel_scatt .or. l_elph_scatt) call initactivate(1,'LifeInterpKIND LifeInterpSteps LifeInterpT')
+   call initactivate(1,'RTBands HXC_Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTstep dTupdateTime dTupdateJump dTupdateTresh NEsteps NETime COHsteps DipoleEtresh')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeInterpolation LifeInterpSteps')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
-   call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime')
-   call initactivate(1,'RTpumpNel RTpumpEhWd RTpumpBZWd RTpumpEhEn RTpumpDE')
-   do i1=1,n_regions
-     call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
-   enddo
+   call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime SaveGhistory')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
    ! or parsed from the input file in INIT_load.F
@@ -939,10 +933,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! To handle externally defined Q-points I use the INIT_q_pts
  !
  ! (a) first check if input file contains already a list of Q-points...
- call INIT_q_points(.FALSE.)
+ call INIT_q_points(io_QINDX_err,.FALSE.)
  !
  ! (b) ... then (re)write the file
- if (l_setup.and.io_QINDX_err/=0.and.infile_editing) call INIT_q_points(.TRUE.)
+ if (l_setup.and.infile_editing) call INIT_q_points(io_QINDX_err,.TRUE.)
  !
  !If qp limits are requested they are added at the end of the input file
  !
@@ -1504,13 +1498,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            Chi_mode='Hartree'
            !
            if(l_bse)  then
-             if(trim(rstr_piece(i1+1)) == 'hartree')  BSK_mode='Hartree'
-             if(trim(rstr_piece(i1+1)) == 'hf')       BSK_mode='HF'
+             if(trim(rstr_piece(i1+1))  == 'hartree')  BSK_mode='Hartree'
+             if(trim(rstr_piece(i1+1))  == 'hf')       BSK_mode='HF'
              if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
-             if(trim(rstr_piece(i1+1)) == 'sex')      BSK_mode='SEX'
+             if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
            else if(l_chi) then
-             if(trim(rstr_piece(i1+1)) == 'hartree')  Chi_mode='Hartree'
+             if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='Hartree'
              if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
              if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'
@@ -1584,9 +1578,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            !
          endif
          !
+#if defined _SURF
+         !
          ! Surface spectroscopy
          !
-#if defined _SURF
          if ( trim(rstr_piece(i1)) == 'sursp' )  then
            if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
            if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
@@ -1594,33 +1589,82 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
 #endif
          !
-         ! Sc / NEGF
+#if defined _SC
          !
-#if defined _SC  || defined _RT
+         ! SC
+         !
          if ( trim(rstr_piece(i1)) == 'potential' )  then
            !
-           if ( trim(rstr_piece(i1+1)) == 'exx' ) then
+           SC_potential=""
+           if ( index(trim(rstr_piece(i1+1)),'exx')>0 ) then
              SC_potential='EXX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-           else if ( trim(rstr_piece(i1+1)) == 'exxc' ) then
+           else if ( index(trim(rstr_piece(i1+1)),'exxc')>0 ) then
              SC_potential='EXXC'
-           else if ( trim(rstr_piece(i1+1)) == 'srpa' ) then
+           else if ( index(trim(rstr_piece(i1+1)),'srpa')>0 ) then
              SC_potential='SRPA'
-           else if ( trim(rstr_piece(i1+1)) == 'c' ) then
+           else if ( index(trim(rstr_piece(i1+1)),'cohsex')>0 ) then
              SC_potential='COHSEX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-           else if ( trim(rstr_piece(i1+1)) == 'hf') then
-             SC_potential='HARTREE-FOCK'
-           else if ( trim(rstr_piece(i1+1)) == 'h') then
-             SC_potential='HARTREE'
-           else if ( trim(rstr_piece(i1+1)) == 'd') then
+           else if ( index(trim(rstr_piece(i1+1)),'coh')>0 ) then
+             SC_potential='COH'
+             if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+           else if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
+             SC_potential='SEX'
+             if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+           else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
+             SC_potential='FOCK'
+           endif
+           !
+           if ( index(trim(rstr_piece(i1+1)),'h')>0 ) then
+             if(trim(SC_potential)/="") SC_potential='HARTREE+'//trim(SC_potential)
+             if(trim(SC_potential)=="") SC_potential='HARTREE'
+           endif
+           !
+           if ( trim(rstr_piece(i1+1)) == 'd') then
              SC_potential='default'
+           endif
+           !
+           if ( trim(rstr_piece(i1+1)) == 'ip') then
+             SC_potential='IP'
+           endif
+           !
+           !
+         endif
+#endif
+         !
+#if defined _RT
+         !
+         ! NEGF
+         !
+         if ( trim(rstr_piece(i1)) == 'potential' )  then
+           !
+           SC_potential=""
+           if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
+             SC_potential='SEX'
+             if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+           else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
+             SC_potential='FOCK'
            else if ( trim(rstr_piece(i1+1)) == 'ip') then
+             SC_potential='IP'
+           endif
+           !
+           if ( index(trim(rstr_piece(i1+1)),'h')>0 ) then
+             if(trim(SC_potential)/="") SC_potential='HARTREE+'//trim(SC_potential)
+             if(trim(SC_potential)=="") SC_potential='HARTREE'
+           endif
+           !
+           if ( trim(rstr_piece(i1+1)) == 'd') then
+             SC_potential='default'
+           endif
+           !
+           if ( trim(rstr_piece(i1+1)) == 'ip') then
              SC_potential='IP'
            endif
            !
          endif
 #endif
+         !
 #if defined _MAGNETIC
          if ( trim(rstr_piece(i1)) == 'magnetic' )  then
            if ( trim(rstr_piece(i1+1)) == 'p' ) then
@@ -1657,9 +1701,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
 #endif
          !
+#if defined _RT 
+         !
          ! RT
          !
-#if defined _RT 
          if ( trim(rstr_piece(i1)) == 'negf' ) then
            !
            if ( trim(rstr_piece(i1+1)) == 'p'    ) n_ext_fields=1
@@ -1689,12 +1734,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
 #endif
          !
-         ! COLLISIONS
-         !
 #if defined _SC || defined _RT 
          !
+         ! COLLISIONS
+         !
          if (runlevel_is_on('collisions')) then
-           if (l_elel_scatt.or.trim(SC_potential)=='COHSEX') call initactivate(1,'em1s')
+           if ( l_elel_scatt.or.trim(SC_potential)=='COHSEX'.or.&
+&               trim(SC_potential)=='COH'.or.trim(SC_potential)=='SEX' ) call initactivate(1,'em1s')
          endif
          !
 #endif

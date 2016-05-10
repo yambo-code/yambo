@@ -23,7 +23,7 @@
 !
 subroutine ypp_INIT_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,initmode,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
@@ -39,12 +39,18 @@ subroutine ypp_INIT_load(defs)
  use eels_detector,        ONLY: init_detector
 #endif
 #if defined _YPP_RT
- use rt_ctl,               ONLY: OCC_T_range,OCC_deltaT
+ use YPP_real_time
+ use real_time,            ONLY:RT_bands
+ use stderr,               ONLY:intc
+#endif
+#if defined _YPP_ELPH
+ use YPP_ELPH
 #endif
  !
  implicit none
  !
  type(initdefs)::defs
+ integer       ::i_region
  !
  ! RunLevels
  !
@@ -103,17 +109,29 @@ subroutine ypp_INIT_load(defs)
  ! GPL_EXCLUDE_START 
  !
 #if defined _YPP_RT
- call it(defs,'Z_input','input renormalization',Z_input)
  !
+ ! runlevels
+ !
+ call it('r',defs,'RTDBs',        '[R] Real-Time databases')
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
+ !
+ call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
+ call it('r',defs,'Select_kspace','[R] NEQ DBs from input energy and kspace')
+ call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
+ !
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RTabs',        '[R] Transient absorption')
- call it('r',defs,'RToccBnd',     '[R] Analize time-dependent occupations fitted on Bands')
- call it('r',defs,'RTlifeBnd',    '[R] Analize REF lifetimes fitted on Bands')
- call it('r',defs,'RToccTime',    '[R] Plot time-dependent occupations')
- call it('r',defs,'RToccEner',    '[R] Fit occupations distribution at given time')
- call it('r',defs,'RToccDos',     '[R] Analize time-dependent DOS')
+ call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
+ call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
+ call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
+ !
+ call it('r',defs,'RTfitbands',   '[R]  pp kind: fit on bands')
+ call it('r',defs,'RTtime',       '[R]  pp kind: function of time')
+ call it('r',defs,'RTenergy',     '[R]  pp kind: function of energy')
+ call it('r',defs,'RTdos',        '[R]  pp kind: 2D DOS, function of time and energy')
+ !
 #endif
+ !
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
 #endif
@@ -137,13 +155,29 @@ subroutine ypp_INIT_load(defs)
  !
 #if defined _YPP_RT
  !
- ! OCCUPATIONS
+ ! QP DBs merge
  !
- call it(defs,'OCCdT','[NEGF] Occupations time step',OCC_deltaT,unit=Time_unit(1))
- call it(defs,'OCCTime','[NEGF] Occupations loading time',OCC_T_range,unit=Time_unit(1))
- call it('f',defs,'OCCgroup','[NEGF] Double grid states occupations are grouped')
+ call it(defs,'Z_input','input renormalization',Z_input)
+ !
+ ! RT DBs create
+ !
+ call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel)
+ call it(defs,'RTBands',    '[RT] Bands range',RT_bands)
+ call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,unit=E_unit)
+ ! Method 1
+ call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,unit=E_unit)
+ ! Method 2
+ call it(defs,'RTpumpDE',   '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,unit=E_unit)
+ call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width)
+ do i_region=1,6
+   call it(defs,'RTpumpBZ'//trim(intc(i_region)), '[RT] Reagion in K space excited',Eh_pumped_pair_BZ_reagions(:,i_region))
+   if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
+ enddo
+ !
+ call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
+ call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
  call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations in the dos')
- call it('f',defs,'SeparateEH','[NEGF] Separate electrons from holes in the data file') 
+ call it('f',defs,'SeparateEH',  '[NEGF] Separate electrons from holes in the data file') 
  !
  ! TRANSIENT ABSORPTION
  !
@@ -316,14 +350,12 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword)
  call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword)
  !
- call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
- call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
- ! DEBUG>
- !call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit(1),verb_level=V_real_time)
- ! DEBUG<
- call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit(1))
- call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp)
- call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
+ call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
+ call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
+ call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
+ call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
+ call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
+ call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
  !
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
  call it('f',defs,'SkipJP_IO','Do not write P(t) and J(t)')

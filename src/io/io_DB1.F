@@ -23,7 +23,7 @@
 !
 integer function io_DB1(E,k,ID)
  !
- use pars,             ONLY:SP,IP,schlen
+ use pars,             ONLY:SP,IP
  use units,            ONLY:HA2EV
  use com,              ONLY:error,msg
  use memory_m,         ONLY:mem_est
@@ -47,6 +47,11 @@ integer function io_DB1(E,k,ID)
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
 #if defined _SC
  use SC,               ONLY:SC_bands
+ use collision,        ONLY:COLL_bands
+ use hamiltonian,      ONLY:IP_h_bands
+#endif
+#if defined _RT
+ use real_time,        ONLY:RT_bands
 #endif
  !
  implicit none
@@ -240,6 +245,11 @@ integer function io_DB1(E,k,ID)
      if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
 #if defined _SC
      if(any(SC_bands(:)==0)) SC_bands=(/1,E%nb/)
+     if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
+     if(any(IP_h_bands(:)==0)) IP_h_bands=(/1,E%nb/)
+#endif
+#if defined _RT
+     if(any(RT_bands(:)==0)) RT_bands=(/1,E%nb/)
 #endif
      !
      Tel=input_GS_Tel

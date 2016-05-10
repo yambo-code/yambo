@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_rotate(SC_R,Xen,Xk,X,rot_direction)
+subroutine Dipole_rotate(SC_R,Xen,X,rot_direction)
  !
  ! This routine update dipoles according to eq. 13
  ! of ref. PRB 59, 7486 (1999)
@@ -40,9 +40,8 @@ subroutine Dipole_rotate(SC_R,Xen,Xk,X,rot_direction)
  implicit none
  !
  type(levels),  intent(in) :: Xen
- type(bz_samp), intent(in) :: Xk
  complex(SP),   intent(in) :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
- type(X_t),     intent(inout) :: X
+ type(X_t),  intent(inout) :: X
  !
  integer,       intent(in) :: rot_direction
  !

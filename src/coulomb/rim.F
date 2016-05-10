@@ -100,7 +100,7 @@ subroutine rim()
  rep_factor=RIM_n_rand_pts/100
  if (rep_factor==0) rep_factor=1
  !
- call live_timing('Random points',RIM_n_rand_pts/rep_factor,SERIAL=.true.)
+ call live_timing('Random points',RIM_n_rand_pts/rep_factor)
  loop: do while(.not.N_in==RIM_n_rand_pts+1)
    !
    do ic=1,3

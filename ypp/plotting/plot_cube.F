@@ -84,9 +84,9 @@ subroutine plot_cube()
  if (.not.l_norm_to_one) max_=1.
  !
  if (len_trim(plot_title)==0) then
-   call live_timing('3D Plot',nr(1),SERIAL=.true.)
+   call live_timing('3D Plot',nr(1))
  else
-   call live_timing('3D Plot of '//trim(plot_title),nr(1),SERIAL=.true.)
+   call live_timing('3D Plot of '//trim(plot_title),nr(1))
  endif
  !
  do i1 = 0, nr(1)-1

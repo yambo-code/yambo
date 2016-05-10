@@ -40,8 +40,8 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  use IO_m,          ONLY:io_elemental,io_bulk,io_code_version,io_status,&
 &                        read_is_on,write_is_on,serial_number,variable_is_found,&
 &                        io_serial_number,io_file,io_com,io_mode,&
-&                        DUMP,VERIFY,NONE,&
-&                        ver_is_gt_or_eq,db_alat,io_code_revision,read_is_on
+&                        DUMP,VERIFY,NONE,ver_is_gt_or_eq,&
+&                        db_alat,io_code_revision,read_is_on
  use zeros,         ONLY:define_zeros
  use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,loaded_WF_xc_string,&
 &                        G_WF_xc_string,X_WF_xc_string,K_WF_xc_string
@@ -55,6 +55,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  integer             :: i1,nqibz_disk,nkibz_disk,R_LATT_vec(4),p_structure,&
 &                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2)
+ integer,    external:: io_out_of_date
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
@@ -90,15 +91,21 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    io_code_revision(ID,2)=code_GPL_revision
  endif
  !
+ ! Check if the DB revision is too old and not supported anymore
+ !
+ io_header=io_out_of_date(ID)
+ if (io_header/=0) then
+   call warning(trim(io_file(ID))//' is a no longer supported database')
+   goto 1
+ endif
+ !
  call io_elemental(ID,VAR="SERIAL_NUMBER",VAR_SZ=1,MENU=0)
  call io_elemental(ID,DB_I0=io_serial_number(ID),I0=serial_number)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (ver_is_gt_or_eq(ID,(/3,0,8/))) then
-   call io_elemental(ID,VAR="SPIN_VARS",VAR_SZ=2,MENU=0)
-   call io_elemental(ID,DB_I1=SPIN_vec_disk,I1=(/n_sp_pol,n_spinor/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
- endif
+ call io_elemental(ID,VAR="SPIN_VARS",VAR_SZ=2,MENU=0)
+ call io_elemental(ID,DB_I1=SPIN_vec_disk,I1=(/n_sp_pol,n_spinor/))
+ call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  ! Serial Number
  !
@@ -118,20 +125,17 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! SPIN polarizations/spinors
  !
- if (ver_is_gt_or_eq(ID,(/3,0,8/))) then
-   if (SPIN_vec_disk(1)/=n_sp_pol.or.SPIN_vec_disk(2)/=n_spinor) then
-     io_header=-1
-     if (io_com(ID)/=NONE) &
-&      call warning('Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
-     goto 1
-   endif
+ if (SPIN_vec_disk(1)/=n_sp_pol.or.SPIN_vec_disk(2)/=n_spinor) then
+   io_header=-1
+   if (io_com(ID)/=NONE) call warning('Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
+   goto 1
  endif
  !
  ! DL lattice
  !
  db_alat=alat
  !
- if (present(D_LATT).and.ver_is_gt_or_eq(ID,(/3,0,11/))) then
+ if (present(D_LATT)) then
    D_LATT_vec=alat
    call io_elemental(ID,VAR="HEAD_D_LATT",VAR_SZ=3,MENU=MENU)
    MENU=0
@@ -199,7 +203,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! K points
  !
- if (present(KPTS).and.ver_is_gt_or_eq(ID,(/3,0,9/)) ) then
+ if (present(KPTS)) then
    !
    allocate(l_pt(nkibz_disk,3))
    !
@@ -229,7 +233,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  ! Cutoff
  !
  if (present(CUTOFF)) then
-   if (CUTOFF.and. (ver_is_gt_or_eq(ID,revision=718).or.write_is_on(ID)) ) then
+   if (CUTOFF) then
      call io_elemental(ID,VAR="CUTOFF",CH0='',VAR_SZ=1,MENU=MENU)
      MENU=0
      call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential         :",WARN=WARN,OP=(/"=="/))
@@ -279,26 +283,18 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! Temperature
  !
- if (present(T_EL).and.ver_is_gt_or_eq(ID,(/3,0,2/)) ) then
+ if (present(T_EL)) then
    !
    io_mode(ID)=MODE
    !
    save_Tel=(/Tel,Bose_Temp/)
-   if (ver_is_gt_or_eq(ID,revision=527).or.write_is_on(ID)) then
-     call io_elemental(ID,VAR="TEMPERATURES",VAR_SZ=2,MENU=MENU)
-     MENU=0
-     call io_elemental(ID,R0=Tel,&
-&         VAR=' Electronic Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
-     call io_elemental(ID,R0=Bose_Temp,&
-&         VAR=' Bosonic    Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   else
-     call io_elemental(ID,VAR="T_EL",VAR_SZ=1,MENU=MENU)
-     MENU=0
-     call io_elemental(ID,R0=Tel,&
-&         VAR=' Electronic Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   endif
+   call io_elemental(ID,VAR="TEMPERATURES",VAR_SZ=2,MENU=MENU)
+   MENU=0
+   call io_elemental(ID,R0=Tel,&
+&       VAR=' Electronic Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
+   call io_elemental(ID,R0=Bose_Temp,&
+&       VAR=' Bosonic    Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (input_Tel_is_negative) then
      Tel      =save_Tel(1)
@@ -310,7 +306,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    !
  endif
  !
- if (present(XC_KIND).and.ver_is_gt_or_eq(ID,(/3,0,15/)) ) then
+ if (present(XC_KIND)) then
    !
    call string_split(XC_KIND,xc_string_kinds)
    !
@@ -352,7 +348,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! GAUGE
  !
- if (present(GAUGE).and.ver_is_gt_or_eq(ID,revision=625) ) then
+ if (present(GAUGE)) then
    call io_elemental(ID,VAR='GAUGE',CH0="",VAR_SZ=1,MENU=MENU)
    MENU=0
    if (present(IMPOSE_GAUGE)) then

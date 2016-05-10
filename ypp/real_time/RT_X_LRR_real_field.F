@@ -27,19 +27,18 @@
 !
 subroutine RT_X_LRR_real_field(en)
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
-&                         i_t_start,i_t_end,RED_steps,l_force_min_damp,&
-&                         J_steps,J_time_step
+ use YPP_real_time,  ONLY:RT_P_t,RT_conf,Use_FFT,l_force_min_damp,RT_time
  use pars,           ONLY:SP,DP,pi,cI,cZERO
- use units,          ONLY:HA2EV,FS2AUT
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:v_norm
  use memory_m,       ONLY:mem_est
- use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
- use real_time,      ONLY:l_RT_induced_field,NE_steps,RT_step
+ use RT_control,     ONLY:RT_output
+ use real_time,      ONLY:l_RT_induced_field
  use fields,         ONLY:Efield,small_a_frequency,small_a
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
+ use com,            ONLY:error
  !
  implicit none
  !
@@ -47,14 +46,12 @@ subroutine RT_X_LRR_real_field(en)
  !
  ! Work Space
  !
- integer  :: i_t,i_w,i_p_dir,i_f_dir,iE_err,i_Probe,i_t_field(2),RED_steps_field,&
-&            i_field,n_fields
+ integer  :: i_t,i_w,i_p_dir,iE_err,i_Probe,i_field,n_fields
  character(10):: FT_title
  logical      :: l_rm_asympt_limit
  real(SP)     :: W_step,W_reached,Field_time,outdata(6),E_ver(3,3)
- complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,E_ver_cmplx(3)
+ complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
  complex(SP), allocatable :: EELS(:,:),EPS(:,:),freqs(:)
- complex(SP)  :: Field_freq
  complex(DP), allocatable :: Pol(:,:),E_w(:,:),E_t(:,:)
  !
  call section("=",'Optics')
@@ -74,17 +71,17 @@ subroutine RT_X_LRR_real_field(en)
    ! I want to print only the positive frequencies
    ! i_w > energy_steps/2 correspond to the negative ones
    !
-   X_rt%energy_steps=(RED_steps+1)/2
-   X_rt%energy_range=(/0._SP,W_RT_induced_step*real(RED_steps-1,SP)/2._SP/)
+   RT_conf%W_n_steps=(RT_conf%T_n_steps+1)/2
+   RT_conf%W_range=(/0._SP,RT_conf%Field_damp_factor*real(RT_conf%T_n_steps-1,SP)/2._SP/)
    !
-   if(mod(RED_steps,2)==0) X_rt%energy_range=X_rt%energy_range+W_RT_induced_step/2._SP
+   if(mod(RT_conf%T_n_steps,2)==0) RT_conf%W_range=RT_conf%W_range+RT_conf%Field_damp_factor/2._SP
    !
-   allocate(EELS(RED_steps,3),EPS(RED_steps,3),Pol(RED_steps,3),E_w(RED_steps,n_fields))
+   allocate(EELS(RT_conf%T_n_steps,3),EPS(RT_conf%T_n_steps,3),Pol(RT_conf%T_n_steps,3),E_w(RT_conf%T_n_steps,n_fields))
    !
  else
    !
-   allocate(EELS(X_rt%energy_steps,3),EPS(X_rt%energy_steps,3),Pol(X_rt%energy_steps,3)) 
-   allocate(E_w(X_rt%energy_steps,n_fields))
+   allocate(EELS(RT_conf%W_n_steps,3),EPS(RT_conf%W_n_steps,3),Pol(RT_conf%W_n_steps,3)) 
+   allocate(E_w(RT_conf%W_n_steps,n_fields))
    !
  endif
  !
@@ -99,90 +96,85 @@ subroutine RT_X_LRR_real_field(en)
  ! Fourier Transform 
  !====================
  !
- W_step=(X_rt%energy_range(2) - X_rt%energy_range(1))/(X_rt%energy_steps-1)
+ W_step=(RT_conf%W_range(2) - RT_conf%W_range(1))/(RT_conf%W_n_steps-1)
  !
- allocate(freqs(X_rt%energy_steps))
+ allocate(freqs(RT_conf%W_n_steps))
  freqs=cZERO
  !
- do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx((i_w-1)*W_step+X_rt%energy_range(1),0._SP)
+ do i_w = 1, RT_conf%W_n_steps
+   freqs(i_w)=cmplx((i_w-1)*W_step+RT_conf%W_range(1),0._SP)
  enddo
  !
- ! Electric Field
+ ! Electric Field...
+ !-------------------
+ !
+ !... Analytic contribution
  !
  iE_err=0
- do i_w = 1, X_rt%energy_steps
+ do i_w = 1, RT_conf%W_n_steps
    !
-   if(trim(X_rt%damp) /= "NONE")                      Field_freq=freqs(i_w)-cI*X_rt%damp_factor
-   if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-cI*W_RT_induced_step
+   if(trim(RT_conf%damping) /= "NONE")                      Field_freq=freqs(i_w)-cI*RT_conf%damp_factor
+   if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-cI*RT_conf%Field_damp_factor
    !
    E_w(i_w,1)=Efield(i_Probe)%amplitude*small_a_frequency(Field_freq,Efield(i_Probe),iE_err)
-   E_w(i_w,1)=E_w(i_w,1)*exp(cI*freqs(i_w)*(i_t_start-1)*J_time_step)  
+   E_w(i_w,1)=E_w(i_w,1)*exp(cI*freqs(i_w)*RT_time(1))  
    !
    if (iE_err/=0) exit
    !
  enddo 
  !
- iE_err=-1
- if (iE_err/=0) then
-   !
-   i_t_field(1)=(i_t_start-1)*nint(J_time_step/RT_step)+1
-   i_t_field(2)=(i_t_end  -1)*nint(J_time_step/RT_step)+1
-   RED_steps_field=NE_steps-i_t_field(1)+1
-   !
-   allocate(E_t(NE_steps,n_fields))
-   do i_field=1,n_fields
-     do i_t=1,NE_steps
-       Field_time=(i_t-1)*RT_step-Efield(i_Probe)%t_initial
-       A_of_t =small_a(Field_time,Efield(i_Probe),0)
-       E_of_t =small_a(Field_time,Efield(i_Probe),1)
-       theta  =theta_function(Field_time,RT_step,0)
-       delta  =theta_function(Field_time,RT_step,1)
-       E_t(i_t,i_field)=Efield(i_Probe)%amplitude*(E_of_t(i_field)*theta+A_of_t(i_field)*delta)
-     enddo
-     !
-     if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) then
-       call RT_damp_it("LORENTZIAN",W_RT_induced_step,E_t(i_t_field(1)-1:i_t_field(2),i_field),RED_steps_field+1,RT_step,1)
-     else
-       call RT_damp_it(X_rt%damp,X_rt%damp_factor,    E_t(i_t_field(1)-1:i_t_field(2),i_field),RED_steps_field+1,RT_step,1)
-     endif
-     !
-     if (i_field==1) FT_title='E1'
-     if (i_field==2) FT_title='E2'
-     !
-     ! For the field I do the FFT starting always 1 time step before to correctly describe the
-     ! theta and the delta function.
-     call RT_1D_Fourier_Transform('T2W',FT_title,freqs,E_w(:,i_field),X_rt%energy_steps,&
-&                               E_t(i_t_field(1):i_t_field(2),i_field),RED_steps_field,RT_step,&
-&                              (i_t_field(1)-1)*RT_step,USE_FFT,1)
-     !
+ !... FT
+ !
+ allocate(E_t(RT_conf%T_n_steps,n_fields))
+ do i_field=1,n_fields
+   do i_t=1,RT_conf%T_n_steps
+     Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
+     A_of_t =small_a(Field_time,Efield(i_Probe),0)
+     E_of_t =small_a(Field_time,Efield(i_Probe),1)
+     theta  =theta_function(Field_time,RT_time(2)-RT_time(1),0)
+     delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
+     E_t(i_t,i_field)=Efield(i_Probe)%amplitude*(E_of_t(i_field)*theta+A_of_t(i_field)*delta)
    enddo
    !
-   deallocate(E_t)
+   if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) then
+     call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,E_t(:,i_field),1)
+   else
+     call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,   E_t(:,i_field),1)
+   endif
    !
- endif
+   if (i_field==1) FT_title=' E#1'
+   if (i_field==2) FT_title=' E#2'
+   !
+   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,E_w(:,i_field),RT_conf%W_n_steps,&
+&                                E_t(:,i_field),RT_conf%T_n_steps,USE_FFT,1)
+   !
+ enddo
+ deallocate(E_t)
+ !
+ ! Check of finiteness of E field
+ !--------------------------------
+ if (maxval( abs(E_w(:,:)) )<epsilon(1._SP)) call error("Null Electric Field in this time-range. Increase it.")
  !
  if(l_rm_asympt_limit) then
    !
    ! Remove the asymptotic limit of RT_P_t
    !
    do i_p_dir=1,3
-     RT_P_t(:,i_p_dir)= RT_P_t(:,i_p_dir)-RT_P_t(J_steps,i_p_dir)
+     RT_P_t(:,i_p_dir)= RT_P_t(:,i_p_dir)-RT_P_t(RT_conf%T_n_steps,i_p_dir)
    enddo
    !
  endif
  !
  do i_p_dir=1,3
    !
-   if (i_p_dir==1) FT_title='P (X axis)'
-   if (i_p_dir==2) FT_title='P (Y axis)'
-   if (i_p_dir==3) FT_title='P (Z axis)'
+   if (i_p_dir==1) FT_title=' P (X axis)'
+   if (i_p_dir==2) FT_title=' P (Y axis)'
+   if (i_p_dir==3) FT_title=' P (Z axis)'
    !
    ! Polarization
    !
-   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,Pol(:,i_p_dir),X_rt%energy_steps,&
-&                               RT_P_t(i_t_start:i_t_end,i_p_dir),RED_steps,J_time_step,&
-&                               (i_t_start-1)*J_time_step,USE_FFT,1)
+   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,Pol(:,i_p_dir),RT_conf%W_n_steps,&
+&                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,USE_FFT,1)
    !
  enddo
  !
@@ -228,7 +220,7 @@ subroutine RT_X_LRR_real_field(en)
    E_ver(:,3) = Efield(i_Probe)%versor_circ
  endif
  !
- do i_w = 1, X_rt%energy_steps
+ do i_w = 1, RT_conf%W_n_steps
    !
    if(Efield(i_Probe)%ef_pol=="linear"  ) Field = cmplx(E_w(i_w,1),kind=SP)
    !
@@ -258,7 +250,7 @@ subroutine RT_X_LRR_real_field(en)
    EELS(:,:) = -1._SP/EPS(:,:)
  endif
  !
- do i_w = 1, X_rt%energy_steps
+ do i_w = 1, RT_conf%W_n_steps
    !
    W_reached = real(freqs(i_w))*HA2EV
    !

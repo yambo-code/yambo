@@ -34,7 +34,7 @@ subroutine gauss_leg_grid(x1,x2,x,w,n)
  !
  ! NOTE:  w(n) includes the factor 1/(2*pi)
  !-----------------------------------------------------------------
- use pars
+ use pars, ONLY:SP,DP,pi
  implicit none
  integer:: n
  real(SP):: x1,x2,x(n),w(n)

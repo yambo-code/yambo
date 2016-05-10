@@ -24,16 +24,14 @@
 subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  use pars,           ONLY:SP,cI,schlen,DP
- use YPP,            ONLY:l_RT_X_inversion,l_skip_pol_and_curr_IO
- use units,          ONLY:HA2EV,FS2AUT
- use rt_ctl,         ONLY:RT_output
+ use YPP_real_time,  ONLY:l_RT_X_inversion,l_skip_pol_and_curr_IO,RT_conf
+ use units,          ONLY:HA2EV,AUT2FS
+ use RT_control,     ONLY:RT_output
  use real_time,      ONLY:RT_P,RAD_LifeTime,Phase_LifeTime
  use stderr,         ONLY:intc
  use LIVE_t,         ONLY:live_timing
  !
  ! Fourier
- !
- use YPP,            ONLY:X_rt,J_steps,J_time_step
  !
  implicit none
  !
@@ -70,7 +68,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
    !
    do i_t=1,nt
      !
-     T_i = (i_t-1)*J_time_step
+     T_i = (i_t-1)*RT_conf%delta_T
      P_num(i_n,i_t,:)=X(i_n,:)*exp(cI*W(i_n)*T_i)+conjg(X(i_n,:))*exp(-cI*W(i_n)*T_i)
      if (W(i_n)<1.E-5) P_num(i_n,i_t,:)=real(X(i_n,:))
      !
@@ -78,7 +76,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
        do i_c=1,3
          RT_P(i_c) = P(i_t,i_c)-sum( P_num(:i_n,i_t,i_c) )
        enddo
-       call RT_output(trim(p_file_name),time=(i_t-1)*J_time_step/FS2AUT)
+       call RT_output(trim(p_file_name),time=(i_t-1)*RT_conf%delta_T*AUT2FS)
      endif
      !
      if (what=="subtract") P(i_t,:)=P(i_t,:)-P_num(i_n,i_t,:)
@@ -97,12 +95,12 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !========================
  !
  T_o=5.*max(RAD_LifeTime,Phase_LifeTime)
- iT_o=nint(T_o/J_time_step)+1
+ iT_o=nint(T_o/RT_conf%delta_T)+1
  !
- allocate(P_DP(nt,3),P_W(X_rt%energy_steps),freqs(X_rt%energy_steps))
+ allocate(P_DP(nt,3),P_W(RT_conf%W_n_steps),freqs(RT_conf%W_n_steps))
  !
- do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx((i_w-1)*(X_rt%energy_range(2)-X_rt%energy_range(1))/X_rt%energy_steps+X_rt%energy_range(1),0._SP)
+ do i_w = 1, RT_conf%W_n_steps
+   freqs(i_w)=cmplx((i_w-1)*(RT_conf%W_range(2)-RT_conf%W_range(1))/RT_conf%W_n_steps+RT_conf%W_range(1),0._SP)
  enddo
  !
  do i_n=0,nh,1
@@ -117,15 +115,15 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
        if (i_n/=0) P_DP(i_t,i_c)=P(i_t,i_c)-sum(P_num(:i_n,i_t,i_c))
      enddo
    enddo
-   call RT_damp_it("LORENTZIAN",F_damp,P_DP,nt,J_time_step,3)
+   call RT_damp_it("LORENTZIAN",F_damp,P_DP,3)
    !
    if (i_n==0) FT_title="P(t)"
    if (i_n/=0) FT_title="P(t)-Sum[P_harm^(n<"//trim(intc(i_n))//"])"
    !
-   call RT_1D_Fourier_Transform('T2W'," "//trim(FT_title),freqs,P_W,X_rt%energy_steps,P_DP(iT_o:,1),J_steps-iT_o+1,&
-&                               J_time_step,(iT_o-1)*J_time_step,.FALSE.,1)
+   call RT_1D_Fourier_Transform('T2W'," "//trim(FT_title),freqs,P_W,RT_conf%W_n_steps,P_DP(iT_o:,1),RT_conf%T_n_steps-iT_o+1,&
+&                               RT_conf%delta_T,(iT_o-1)*RT_conf%delta_T,.FALSE.,1)
    !
-   do i_w=1,X_rt%energy_steps
+   do i_w=1,RT_conf%W_n_steps
      !
      P_W(i_w)=cI*exp(-cI*(freqs(i_w)+cI*F_damp)*T_o)*P_W(i_w)
      !

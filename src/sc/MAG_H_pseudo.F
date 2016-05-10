@@ -29,15 +29,14 @@ subroutine MAG_H_pseudo(Xk,Xen)
  use X_m,           ONLY:X_t
  use wave_func,     ONLY:WF,wf_ng
  use FFT_m,         ONLY:fft_size
- use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
+ use pseudo,        ONLY:pp_kbv_dim
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
  use SC,            ONLY:SC_bands,Ho
- use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos
  use memory_m,      ONLY:mem_est
  use magnetic,      ONLY:new_pp,old_pp
- use IO_m,          ONLY:OP_RD_CL,OP_RD,RD,RD_CL,io_control,REP,VERIFY
  use interfaces,    ONLY:WF_load
+ use io_m,          ONLY:RD,RD_CL,io_control
  !
  implicit none
  !
@@ -54,10 +53,10 @@ subroutine MAG_H_pseudo(Xk,Xen)
  !
  ! Dummies
  integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf(n_spinor),&
-&                           ifft,is,ia,il,im,pp_spin,i_pp,alloc_err
+&                           im,alloc_err
  !
  ! I / O
- integer                 :: ID,io_KB_err,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err
+ integer                 :: ID,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err
  integer, external       :: io_KB_abinit,io_KB_pwscf
  !
  !

@@ -21,19 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
+subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  !
- use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use
+ use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use,l_real_time
  use pars,           ONLY:schlen,SP
  use stderr,         ONLY:string_split,real2ch,intc
- use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,      ONLY:bz_samp,nkibz
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
- use units,          ONLY:FS2AUT,PS2AUT,HA2EV
+ use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
- use rt_ctl,         ONLY:RT_IO_JPO_steps,NEQ_Residuals,NEQ_Kernel
+ use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,JPC_RT_IO_t
  use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth
  !
  implicit none
@@ -42,14 +41,14 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  type(levels), intent(inout) :: E
  type(bz_samp), intent(in)   :: K
  character(*),optional,intent(in) :: what ! X,K,G,R
- integer,     optional,intent(in) :: IO_com
+ integer,     optional,intent(in) :: IO_COM
  logical ,    optional,intent(in) :: VERBOSE
  real(SP),    optional,intent(in) :: Time
  logical ,    optional,intent(in) :: keep_RT_carriers
  !
  ! Work space
  !
- integer               :: I_id,i1,io_err,ID,i2,nkibz_save,i_j,BZ_DbGd_tot_nkpts_save
+ integer               :: I_id,i1,io_err,ID,COM_,i2,nkibz_save,i_j,BZ_DbGd_tot_nkpts_save
  real(SP)              :: local_Time
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
@@ -133,7 +132,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    !
  else
    !
-   ! Ypp
+   ! YPP
    !=====
    !
    what_='YPP'
@@ -160,11 +159,10 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  ! CARRIERS I/O (I)
  !====================
  ! 
- if (present(IO_COM)) then
-   call io_control(ACTION=OP_RD_CL,COM=IO_COM,MODE=DUMP,SEC=(/1/),ID=ID) 
- else
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) 
- endif
+ if (     present(IO_COM)) COM_=IO_COM
+ if (.not.present(IO_COM)) COM_=NONE
+ !
+ call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=DUMP,SEC=(/1/),ID=ID) 
  io_err=io_RT_components(trim(db_name),ID)
  !
  BZ_DbGd_tot_nkpts=BZ_DbGd_tot_nkpts_save
@@ -172,7 +170,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  l_elel_corr      =l_elel_corr_save
  !
  if (io_err< 0) then
-   call warning ('Carriers database '//trim(db_name)//' not found')
+   call warning (' Carriers database '//trim(db_name)//' not found')
    return
  endif
  if (io_err==0) l_rt_carriers_in_use=.TRUE.
@@ -183,19 +181,36 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
  !
  NE_i_time= nint(local_Time/RT_step)+1
- NE_i_time= NE_i_time-mod(NE_i_time-1,RT_IO_JPO_steps)
  !
- if(NE_i_time>0) then
+ if (NE_i_time<=0) then
+   call warning(' Input time is negative. Carriers not loaded')
+   NE_i_time=1
+   return
+ endif
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
+ io_err=io_RT_components(trim(db_name),ID)
+ !
+ ! Adjust NE_i_time in case needed.
+ ! Cannot do that in case l_real_time because JPC_RT_IO_t is not loaded
+ ! to avoid breaking a restart
+ !
+ if (io_err< 0 .and. .not. l_real_time) then 
+   NE_i_time= NE_i_time-mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
    io_err=io_RT_components(trim(db_name),ID)
-   !
-   if (io_err< 0) then 
-     call warning('Carriers database '//trim(db_name)//' section'//trim(intc(NE_i_time))//'not found')
-     l_rt_carriers_in_use=.FALSE.
-     return
-   endif
-   !
  endif
+ !
+ if (io_err< 0) then 
+   call warning('Carriers database '//trim(db_name)//' section'//trim(intc(NE_i_time))//'not found')
+   l_rt_carriers_in_use=.FALSE.
+   NE_i_time=1
+   return
+ endif
+ !
+ ! Reset NE_i_time for the simulation
+ !
+ if (l_real_time) NE_i_time=1
  !
  if (present(what)) then
    ch='External RT corrections ('//what//')'
@@ -203,7 +218,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    if (depth==0) call section('+',trim(ch))
  endif
  !
- if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time/FS2AUT))//' fs')
+ if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time*AUT2FS))//' fs')
  !
  ! Interpolatle the RT_carriers object inside the En levels object (energy, occupations and lifetimes)
  ! Only yambo enters here. Ypp fills the RT_carriers object and directly uses it instead

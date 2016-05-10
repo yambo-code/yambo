@@ -402,6 +402,7 @@ if test "$mpibuild" = "yes"; then
   mpi_cpp=""
   MPILIBS=""
   PF90=""
+  FC=$F77
   PF90FLAGS=""
   PCC=""
   PCCFLAGS=""

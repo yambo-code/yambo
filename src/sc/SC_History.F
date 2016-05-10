@@ -25,9 +25,9 @@ subroutine SC_History(it,E)
  !
  use pars,           ONLY:schlen,SP
  use units,          ONLY:HA2EV
- use electrons,      ONLY:n_met_bands,n_full_bands,levels,n_sp_pol
+ use electrons,      ONLY:n_full_bands,levels,n_sp_pol
  use R_lattice,      ONLY:nkibz
- use com,            ONLY:of_open_close,msg,OF_exists
+ use com,            ONLY:of_open_close,msg
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
  implicit none

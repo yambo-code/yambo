@@ -29,7 +29,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:error,msg,of_open_close,file_exists,jobstr,core_io_path
- use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S
+ use R_lattice,     ONLY:nqbz,bz_samp,qindx_S
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
@@ -141,7 +141,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  ! Hamiltonian Loop
  !==================
  !
- call live_timing('El-Ph Hamiltonian',No_PH_basis_size*(H_size-No_PH_basis_size),SERIAL=.TRUE.)
+ call live_timing('El-Ph Hamiltonian',No_PH_basis_size*(H_size-No_PH_basis_size))
  !
  iq_ibz_db=0
  !
@@ -209,7 +209,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
    read(1) elph_Mat
    close(1)
  else
-   call live_timing('Diagonalization',1,SERIAL=.TRUE.)
+   call live_timing('Diagonalization',1)
    call MATRIX_driver(DIAGO,elph_Mat,lib_in=USE_LK,E_real=elph_E)
    call live_timing(steps=1)
    call live_timing()
@@ -228,7 +228,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call set_real_printed_length(f_length=12,g_length=12)
  !
- call live_timing('Green`s Functions',elph_Ham_bands(2)-elph_Ham_bands(1)+1,SERIAL=.TRUE.)
+ call live_timing('Green`s Functions',elph_Ham_bands(2)-elph_Ham_bands(1)+1)
  !
  do ib=elph_Ham_bands(1),elph_Ham_bands(2)
    G(:)=(0.,0.)
@@ -355,7 +355,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  mean_u=0.0
  !
- call live_timing('MD evaluation',H_size,SERIAL=.TRUE.)
+ call live_timing('MD evaluation',H_size)
  !
  call msg('r','Displacements:')
  !
@@ -395,7 +395,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  mean_u_sq=0.0
  !
- call live_timing('MD square evaluation',H_size,SERIAL=.TRUE.)
+ call live_timing('MD square evaluation',H_size)
  !
  call msg('nr','sqrt(MD square):')
  !

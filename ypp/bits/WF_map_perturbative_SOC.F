@@ -26,7 +26,6 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use YPP,                 ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map
  use pars,                ONLY:lchlen,rZERO,SP,IP
  use stderr,              ONLY:real2ch,intc
- use units,               ONLY:HA2EV
  use R_lattice,           ONLY:bz_samp
  use com,                 ONLY:core_io_path,msg,warning,error
  use vec_operate,         ONLY:degeneration_finder

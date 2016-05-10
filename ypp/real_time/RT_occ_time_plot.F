@@ -30,10 +30,11 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:output_fname,RT_IO_time_range_setup
+ use YPP,            ONLY:output_fname
+ use YPP_real_time,  ONLY:RT_time
  use com,            ONLY:msg,of_open_close
  use vec_operate,    ONLY:c2a
- use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply
+ use RT_control,     ONLY:RT_apply
  use real_time,      ONLY:l_RT_CCA_Kernel,RT_carriers,RT_bands
  !
  implicit none
@@ -117,7 +118,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+   io_Time=RT_time(i_T)
    !
    call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
    !
@@ -138,6 +139,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                   RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,RT_carriers%delta_f,RT_df,&
 &                                   ch3_dummy,.TRUE.)
+   !
    call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                   RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,RT_carriers%f_bare,RT_f_bare,&
 &                                   ch3_dummy,.TRUE.)
@@ -209,25 +211,24 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  if (n_spinor==2) deallocate(spin_factors,magn_factors)
  !
-!!
-!! Sum_{ib,ik} f_{ik,ib}(it)
-!!
-!output_fname='YPP-RT_occupations_ALL'
-!call of_open_close(trim(output_fname),'ot')
-!titles(1)='T[fs]'
-!titles(2)='Elec.'
-!titles(3)='Holes'
-!titles(4)='Tot. Occ. [OMEGA^-1]'
-!call msg('o '//trim(output_fname),'#')
-!call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
-!call msg('o '//trim(output_fname),'#')
-!!
-!do i_T=1,n_T_steps
-!  io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-!  data_to_plot(:4)=(/io_TIME/FS2AUT,RT_occupations_sum(:,i_T)/)  !/(DL_vol*BO2ANG**3*1.E-24)/)
-!  call msg('o '//trim(output_fname),'',data_to_plot(:4),INDENT=-2,USE_TABS=.true.)
-!enddo
-!call of_open_close(trim(output_fname))
+ !
+ ! Sum_{ib,ik} f_{ik,ib}(it)
+ !
+ !output_fname='YPP-RT_occupations_ALL'
+ !call of_open_close(trim(output_fname),'ot')
+ !titles(1)='T[fs]'
+ !titles(2)='Elec.'
+ !titles(3)='Holes'
+ !titles(4)='Tot. Occ. [OMEGA^-1]'
+ !call msg('o '//trim(output_fname),'#')
+ !call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
+ !call msg('o '//trim(output_fname),'#')
+ !do i_T=1,n_T_steps
+ !  io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+ !  data_to_plot(:4)=(/io_TIME/FS2AUT,RT_occupations_sum(:,i_T)/)  !/(DL_vol*BO2ANG**3*1.E-24)/)
+ !  call msg('o '//trim(output_fname),'',data_to_plot(:4),INDENT=-2,USE_TABS=.true.)
+ !enddo
+ !call of_open_close(trim(output_fname))
  !
  call set_real_printed_length()
  !

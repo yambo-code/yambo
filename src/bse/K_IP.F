@@ -23,7 +23,7 @@
 !
 subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
- use pars,          ONLY:SP,IP,pi,cZERO,cONE,cI
+ use pars,          ONLY:SP,IP,pi,cZERO,cI
  use units,         ONLY:HA2EV
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
@@ -35,7 +35,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
- use BS,            ONLY:BSS_Vnl_included,BS_anti_res,BSS_Wd,&
+ use BS,            ONLY:BSS_Vnl_included,BS_anti_res,&
 &                        BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps,Co_factor
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
@@ -98,8 +98,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  Joint_DOS(:,1) =W_bss%p(:)
  !
  !...Drude
+ !DEBUG>
  ! Temporarly disabled
- !call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF,'c')
+ !call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
+ !DEBUG<
  !
  ! WF distribution
  !=================

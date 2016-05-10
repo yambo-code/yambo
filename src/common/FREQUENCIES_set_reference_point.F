@@ -29,7 +29,7 @@ subroutine FREQUENCIES_set_reference_point(omega,n_freq)
  use pars,          ONLY:SP
  use X_m,           ONLY:iw_ref,global_gauge,skip_cond_sum_rule
  use parser_m,      ONLY:parser
- use com,           ONLY:warning,error
+ use com,           ONLY:warning
  !
  implicit none
  !

@@ -25,11 +25,10 @@ integer function io_QINDX(Xk,q,io_db)
  !
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qp_states_k,nXkibz,qindx_alloc,&
-&                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt,&
-&                         Xk_impose_minus_q
+&                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on,io_header,&
-&                         ver_is_gt_or_eq,io_extension,io_fragment
+&                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB
  implicit none
  type(bz_samp)::q,Xk
  integer      ::io_db
@@ -49,8 +48,7 @@ integer function io_QINDX(Xk,q,io_db)
    ! In revision 3085 the coll indx has been ceated with two new logicals
    ! in the header
    !
-   if (.not.ver_is_gt_or_eq(io_db,(/3,0,8/)))     io_QINDX=-1
-   if (.not.ver_is_gt_or_eq(io_db,revision=3085)) io_QINDX=-1
+   if (.not.ver_is_gt_or_eq(io_db,revision=5545)) io_QINDX=IO_OUTDATED_DB
    if (io_QINDX/=0) goto 1
    !
    call io_elemental(io_db,VAR="PARS",VAR_SZ=10,MENU=0)
@@ -64,8 +62,6 @@ integer function io_QINDX(Xk,q,io_db)
    call io_elemental(io_db,I0=q%nbz)
    call io_elemental(io_db,&
 &       VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
-   call io_elemental(io_db,&
-&       VAR=" X grid impose -q      :",L0=Xk_impose_minus_q,CHECK=.true.,OP=(/"=="/))
    io_QINDX=io_status(io_db)
    !
    call io_elemental(io_db,&

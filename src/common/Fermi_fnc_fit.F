@@ -31,16 +31,12 @@ integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit
 #if defined _BLUEGENE || _PGI
  use ieee_arithmetic 
 #endif
- use pars,           ONLY:SP,lchlen
- !use QP_m,           ONLY:QP_table,QP_n_states
+ use pars,           ONLY:SP
  use vec_operate,    ONLY:sort
- use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_carriers
- use electrons,      ONLY:levels,spin,spin_occ,n_sp_pol
+ use electrons,      ONLY:spin,spin_occ,n_sp_pol
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative
- use com,            ONLY:msg,of_open_close,error
- use stderr,         ONLY:intc,real2ch
- use units
+ use com,            ONLY:error
  !
  implicit none
  !

@@ -67,7 +67,7 @@ subroutine plot_and_project_1D(V,direction)
  call msg('o '//output_fname,'#',(/"Proj.[au]","J(x) [au]","J(y) [au]","J(z) [au]"/),INDENT=0,USE_TABS=.true.)
  call msg('o '//output_fname,'#')
  !
- call live_timing('1D projection',n_r_steps,SERIAL=.true.)
+ call live_timing('1D projection',n_r_steps)
  !
  do i_r=1,n_r_steps
    !

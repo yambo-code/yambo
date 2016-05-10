@@ -25,7 +25,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen,cZERO
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
+ use drivers,        ONLY:l_sc_coh,l_sc_sex,l_use_Hxc_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
 &                         l_sc_exx
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -34,7 +34,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         rho_convergence,magn_convergence,SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,H_rotate,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
 &                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,&
-&                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_setup,it_to_start
+&                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_table_setup,it_to_start
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
@@ -52,7 +52,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder,v_norm
  use LIVE_t,         ONLY:live_timing
- use collision,      ONLY:Fock_collisions,SEX_collisions
+ use collision,      ONLY:COH_COLL_element,HXC_COLL_element
  use electrons,      ONLY:Total_magn
  !
  implicit none
@@ -94,7 +94,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  if (SC_bands(1)/= 1  ) call error(' Lower bound of band indexes must to be 1')
  if (SC_bands(2)> E%nb) call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
  !
- call SC_QP_setup(E)
+ call SC_QP_table_setup(E)
  !
  ! Parallel Setup
  !================
@@ -109,7 +109,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Initial Start & Restart 
  !==========================
  ! 
- call SC_start_and_restart(X,E,Xk)
+ call SC_start_and_restart(X,E)
  !
  ! DIPOLES
  !=========
@@ -132,7 +132,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Initialize SC_R matrix
  !========================
  !
- if(.not.l_SC_RESTART.and.l_use_collisions) then
+ if(.not.l_SC_RESTART.and.l_use_Hxc_collisions) then
    !      
    SC_R=cZERO
    forall(i1=1:SC_bands(2))
@@ -195,7 +195,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    call el_density_and_current(E,k,rho=rho_n)
    if (n_spin>1) call el_magnetization(E,k,magn_n)
-   call V_Hartree(rho_n,V_hartree_sc)
+   if(l_sc_hartree) call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_nm1 = V_xc_sc
    rho_nm1  = rho_n
@@ -223,7 +223,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! SCF cycle & NSC shot
  !=====================
  ! 
- if (l_NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk,SERIAL=.true.)
+ if (l_NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk)
  !
  do it = 1, SC_iterations
    !
@@ -239,7 +239,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    ! Hartree potential
    !===================
    !
-   if (it>1) then
+   if (it>1.and.l_sc_hartree) then
      !
      if (.not.l_TF_precond) then 
        rho_n = SC_cycle_mixing*rho_n + (1._SP-SC_cycle_mixing)*rho_nm1
@@ -294,9 +294,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
-       if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
+       if (l_sc_coh.or.l_sc_sex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
-       if (.not.l_use_collisions.and.it_now>1) then
+       if (.not.l_use_Hxc_collisions.and.it_now>1) then
          !
          ! Rotate H_nl_sc in the WFo basis.
          !
@@ -397,9 +397,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        ! Update dipoles
        !
        ! Davide: this should be replaced by the use of covariant dipoles ...
-       call DIPOLE_rotate(SC_R,E,Xk,X(2), 1)
-       call DIPOLE_project_along_q(E,Xk,X(2),X(2)%q0)
-       call DIPOLE_rotate(SC_R,E,Xk,X(2),-1)
+       call DIPOLE_rotate(SC_R,E,X(2), 1)
+       call DIPOLE_project_along_q(Xk,X(2),X(2)%q0)
+       call DIPOLE_rotate(SC_R,E,X(2),-1)
        !
        ! Recalcolate Xo and X  
        !
@@ -542,10 +542,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
    if(n_spin>1) call msg('r' ,'[SC] Accuracy on magnetization:',magn_convergence)
    call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HA2EV)
-   if (l_sc_pot_is_local)      call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1._SP,2._SP/))
-   if(.not.l_sc_pot_is_local)  call msg('r','')
-   if (l_sc_hartree.or.l_sc_is_libDFT) &
-&                         call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1._SP,2._SP/))
+   if (     l_sc_pot_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1._SP,2._SP/))
+   if (.not.l_sc_pot_is_local)  call msg('r','')
+   if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1._SP,2._SP/))
    if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1._SP,2._SP/))
    !
  else
@@ -597,7 +596,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("V_mean",(/fft_size*SC_bands(2)/))
      endif
      !
-     if(l_use_collisions) then
+     if(l_use_Hxc_collisions) then
        !
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/size(QP_Vnl_xc)/),(/2*SP/))
@@ -641,13 +640,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("V_mean")
      endif
      !
-     if(l_use_collisions) then
+     if(l_use_Hxc_collisions) then
        !
        if (allocated(QP_Vnl_xc)) deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
        !
-       if (allocated(Fock_collisions))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
-       if (allocated(SEX_collisions))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
+       if (allocated(COH_COLL_element)) call COLLISIONS_alloc_and_free("COH","v1 table","clean",0)
+       if (allocated(HXC_COLL_element)) call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
        !
      endif
      !

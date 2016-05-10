@@ -23,7 +23,7 @@
 !
 subroutine INIT_load(defs,en,q,k,X,Xw)
  !
- use pars,          ONLY:schlen
+ use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
@@ -34,7 +34,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
-&                        QP_n_G_bands,QP_ng_Sx,GW_terminator_E,GW_terminator_Kind,&
+&                        QP_n_G_bands,QP_ng_Sx,QP_ng_SH,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold
  use LIVE_t,        ONLY:nhash
@@ -53,12 +53,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use functions,     ONLY:bose_E_cut
  use parallel_m,    ONLY:n_log_CPUs
  use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
+ use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
 #endif
-#if defined _SC || defined _RT
- use pars,          ONLY:SP
- use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
+#if defined _SC || defined _RT || defined _QED
  use hamiltonian,   ONLY:IP_h_bands
  ! to be moved in mod hamiltonian
  use SC,            ONLY:SC_potential,OEP_approx
@@ -71,15 +70,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        SC_rho_threshold,SC_cycle_mixing
 #endif
 #if defined _RT
- use rt_ctl,        ONLY:RT_IO_time
+ use RT_control,    ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use stderr,        ONLY:intc
- use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,Eh_pumped_pair_BZ_reagions,    &
-&                        NE_tot_time,RT_life_interp_steps,RT_bands,Eh_pumped_pair_BZ_width,n_regions,          &
-&                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_deltaE,RT_scatt_tresh, &
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,   &
-&                        Gr_kind,two_alpha,DbGd_EE_percent
+ use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
+&                        NE_tot_time,RT_life_interp_times_SAVE,RT_bands,         &
+&                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
+&                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
+&                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
+&                        NE_initial_time_step_update,NE_step_update_treshold
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
- use plasma,        ONLY:Plasma_redux_percent
+ use plasma,        ONLY:PLASMA_redux_percent
 #endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
@@ -113,9 +113,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  type(X_t)     ::X(4)
  type(w_samp)  ::Xw(4)
  !
+ ! Work Space
+ !
 #if defined _RT
  integer  :: i_field,i_region
 #endif
+ real(SP) :: IO_times(3)
  !
  !===============
  ! GPL RUNLEVELS
@@ -159,7 +162,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
-#if defined _RT && defined _QED
+#if defined _RT || defined _QED
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _MAGNETIC
@@ -209,7 +212,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
  call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
- call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_kpt)
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
 #endif
@@ -240,6 +242,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! S_xc
  !
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transition reduction',QP_cg_percent)
+ call it(defs,'HARRLvcs', '[HA] Hartree  RL components',QP_ng_SH,G_unit)
  call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
 #if defined _QED
  call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)
@@ -264,8 +267,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
- call it('f',defs,'XTerm ',   '[X] Use a terminator for the response',verb_level=V_resp)
- call it(defs,'XEnComp',     '[X] If > 0 the Bruneval-Gonze terminator', &
+ call it('f',defs,'XTerm ',    '[X] Use a terminator for the response',verb_level=V_resp)
+ call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
+ call it(defs,'XEnComp',       '[X] If > 0 the Bruneval-Gonze terminator', &
 &                             X_en_comp,E_unit,verb_level=V_resp)
  !
  ! BSE/BSK
@@ -382,41 +386,40 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'RTBands',    '[RT] Bands',RT_bands)
  !
- ! Tmp code while yambo_rt is made independent of yambo_sc
- if(RT_bands(1)>0) then
-   SC_bands  =RT_bands
-   COLL_bands=RT_bands
-   IP_h_bands=RT_bands
- endif
+ call TMP_MIRROR_bands( )
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
- call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
+ call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  !
  ! Dynamics
  !
+ call it(defs,'RTstep',      '[RT] Real Time step length',RT_step,unit=Time_unit(3))
+ call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
+ call it(defs,'dTupdateTime','[RT] Initial Time for deltaT update (active only if non-zero) ',NE_initial_time_step_update,&
+&                            unit=Time_unit(1),verb_level=V_real_time)
+ call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump_SAVE,&
+&                            unit=Time_unit(1),verb_level=V_real_time)
+ call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
+ call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
+&                            Integrator_name)
+ !
+ IO_times=(/JPC_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
+ call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
+ JPC_RT_IO_t%INTERVAL_time_SAVE   =IO_times(1)
+ GF_RT_IO_t%INTERVAL_time_SAVE    =IO_times(2)
+ OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)
+ !
+ call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
- call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(3))
- call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(2))
- call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
-&                           Integrator_name)
- call it(defs,'IOtime',     '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
- call it(defs,'RTehEny',    '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
- !
- ! Correlation
- !
- call it('f',defs,'RTIrredux',     '[RT] Hartree not updated independently of the value of SC_potential',     &
-&                                   Verb_level=V_real_time)
- call it(defs,'COHsteps',          '[RT] Number of steps to interpolate the Coherent part of the self-energy',&
-&                                   I_MEM_steps,Verb_level=V_real_time)
+ call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
  !
  ! Scattering
  !
- call it(defs,'LifeInterpKIND',    '[RT] Step interpolation mode (DEFAULT / FIELD / FLAT / NONE)',&
-&                           RT_life_interp_KIND)
+ call it('f',defs,'LifeInterpolation',    '[RT] Skipped Lifetimes are interpolated')
  call it(defs,'LifeInterpSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
-&                           RT_life_interp_steps,unit=Time_unit(1))
+&                                  RT_life_interp_times_SAVE,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
  ! 
@@ -427,7 +430,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! EE scattering
  !
- call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)
+ call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',PLASMA_redux_percent,Verb_level=V_real_time)
  call it(defs,'EERimPerc',  '[RT] EE Double Grid (0-100): % of the points used in EE scatt',DbGd_EE_percent,Verb_level=V_real_time)
  call it('f',defs,'RTskipImposeE',   '[RT] Conservation of E (e-e channel) imposed by hand on-the-fly')
  !
@@ -437,26 +440,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA',verb_level=V_real_time)
  !
- ! External fields or Manual pump
- !
- call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel,&
-&                            Verb_level=V_real_time)
- call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
-&                            Verb_level=V_real_time,unit=E_unit)
- call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width,&
-&                            Verb_level=V_real_time)
- ! Method 1
- call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
-&                            Verb_level=V_real_time,unit=E_unit)
- ! Method 2
- call it(defs,'RTpumpDE',    '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,&
-&                            Verb_level=V_real_time,unit=E_unit)
- if(initmode==4) n_regions=0
- do i_region=1,6
-   call it(defs,'RTpumpBZ'//trim(intc(i_region)),   '[RT] Reagion in K space excited',&
-&                Eh_pumped_pair_BZ_reagions(:,i_region), Verb_level=V_real_time)
-   if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
- enddo
+ ! External fields
  !
  do i_field=1,n_ext_fields_max
    call Afield(i_field)
@@ -587,11 +571,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  !
- ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
- if(SC_bands(1)>0) then
-   COLL_bands=SC_bands
-   IP_h_bands=SC_bands
- endif
+ call TMP_MIRROR_bands( )
  !
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
@@ -613,13 +593,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
  !
- ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
- if(COLL_bands(1)>0) then
-   SC_bands  =COLL_bands
-   IP_h_bands=COLL_bands
- endif
+ call TMP_MIRROR_bands( )
  !
- call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
+ call it(defs,'HXC_Potential', '[SC] SC HXC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
@@ -628,8 +604,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #if defined _RT
  !
- ! Tmp code while yambo_rt is made independent of yambo_sc (collisions calculation)
- if(COLL_bands(1)>0) RT_bands  =COLL_bands
+ call TMP_MIRROR_bands( )
  !
 #endif
  ! 
@@ -638,8 +613,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _RT
    !
    subroutine Afield(i_field)
-     character(10):: name
-     integer      :: i_field
+     use parser_m, ONLY  : parser
+     character(10)      :: name
+     integer            :: i_field
+     logical            :: is_def
      !
      name='Field'//trim(intc(i_field))
      !
@@ -662,7 +639,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if(trim(Efield(i_field)%ef_name)/="none".and.initmode==4) n_ext_fields=n_ext_fields+1
+     if (initmode==4) then
+       call parser(trim(name)//'_kind',is_def)
+       if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
+     endif
      !
    end subroutine
    !
@@ -768,5 +748,38 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
      !
    end subroutine
+   !
+#if defined _SC || defined _RT || defined _QED
+   !TMP>
+   subroutine TMP_mirror_bands( )
+     use parser_m,       ONLY:parser
+     logical :: is_def(3)
+     integer :: bands_(2)
+     call parser('SCbands',is_def(1))
+     call parser('RTbands',is_def(2))
+     call parser('COLLbands',is_def(3))
+#endif
+     !
+#if defined _SC 
+     if (is_def(1)) bands_=SC_bands
+     if (is_def(3)) bands_=COLL_bands
+#endif
+#if defined _RT || defined _QED
+     if (is_def(2)) bands_=RT_bands
+#endif
+     !
+#if defined _SC 
+     SC_bands  =bands_
+     COLL_bands=bands_
+     IP_h_bands=bands_
+#endif
+#if defined _RT || defined _QED
+     RT_bands  =bands_
+#endif
+#if defined _SC || defined _RT || defined _QED
+     !
+   end subroutine
+   !TMP<
+#endif
    !
 end subroutine

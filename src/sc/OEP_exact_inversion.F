@@ -43,10 +43,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use interfaces,      ONLY:MATRIX_driver
  use matrix_operate,  ONLY:INV
  use collision,       ONLY:elemental_collision,elemental_collision_free
- use QP_m,            ONLY:QP_ng_Sx,QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
  use memory_m,        ONLY:mem_est
- use SC,              ONLY:SC_R,H_rotate,it_now
- use drivers,         ONLY:l_use_collisions,l_sc_srpa
  use wave_func,       ONLY:WF
  !
  ! I/O
@@ -60,9 +57,9 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! Work Space
  !
- integer                  :: i1,ik,ic,iv,is,ig1,ig2,ifft,offt,ir
+ integer                  :: i1,ik,ic,iv,is,ig1,ifft,offt
  logical                  :: l_is_TR
- complex(SP), allocatable :: Xo_inverse(:,:),rhotw_save(:,:),&
+ complex(SP), allocatable :: Xo_inverse(:,:),&
 &                            rhotw_sum(:),rhotw_sum_TR(:),rho_xc(:),Voep_RL(:)
  complex(DP), allocatable :: Vx_dp(:),rho_tw_rs(:)
  complex(SP)              :: SigmaXC

@@ -196,10 +196,11 @@ module BS
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,bsR_kerr)
+   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,BsE_corr,bsR_kerr)
      use pars,          ONLY:SP
      integer             :: iq,ID,BS_H_dim
      complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
+     real(SP),   pointer :: BsE_corr(:,:)
      complex(SP),pointer :: bsR_kerr(:)
    end function
    !

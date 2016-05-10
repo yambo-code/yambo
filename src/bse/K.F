@@ -31,12 +31,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf,l_bss
  use frequency,    ONLY:w_samp
- use electrons,    ONLY:levels,spin_occ,spin
+ use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
- use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
+ use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,minus_G,bare_qpg
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
@@ -77,7 +77,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: i_block,i_block_vv,i_block_cc,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
 &              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,alloc_err,&
-&              bands_to_load(2),iOvv,iOcc
+&              bands_to_load(2),iOvv,iOcc,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
  !
@@ -288,7 +288,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ALDA
  !======
  if (BS_K_is_ALDA) then
-   allocate(F_xc(fft_size))
+   allocate(F_xc(fft_size,n_spin,n_spin))
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
@@ -427,6 +427,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      i_k  = Xk%sstar(i_k_bz,1)
      i_k_s= Xk%sstar(i_k_bz,2)
      !
+     if (BS_K_is_ALDA) then
+       is=(/i_c_k,i_k,i_k_s,i_k_spin/)
+       os=(/i_v_k,i_k,i_k_s,i_k_spin/)
+     endif
+     !
      i_k_s_m1 = sop_inv(i_k_s)
      !
      H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
@@ -442,6 +447,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        i_p  =Xk%sstar(i_p_bz,1)
        i_p_s=Xk%sstar(i_p_bz,2)
+       !
+       if (BS_K_is_ALDA) then
+         isp=(/i_c_p,i_p,i_p_s,i_p_spin/)
+         osp=(/i_v_p,i_p,i_p_s,i_p_spin/)
+       endif
        !
        i_k_p_s  = sop_tab(i_k_s_m1,i_p_s)
        !
@@ -489,14 +499,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
            ! :::ALDA        (resonant):::
            !=============================
-           H_x=H_x+TDDFT_ALDA_R_space((/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
-&                                     (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),'RES')
+           H_x=H_x+TDDFT_ALDA_R_space(is,os,isp,osp,'RES')
+           !
          else
            !
            ! :::ALDA        (coupling):::
            !=============================
-           H_x=H_x+TDDFT_ALDA_R_space((/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
-&                                     (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),'CPL')
+           H_x=H_x+TDDFT_ALDA_R_space(is,os,isp,osp,'CPL')
+           !
          endif
          !
        endif

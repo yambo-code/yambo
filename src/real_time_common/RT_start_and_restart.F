@@ -56,7 +56,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_interp_times
  use fields,         ONLY:A_vecpot,A_vecpot_previous,A_ext
  use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
- use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
@@ -189,7 +189,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    do ik=1,RT_nk
      !
-     call io_control(ACTION=OP_RD_CL_IF_END,COM=NONE,SEC=(/ik+1,NE_i_time+1/),MODE=VERIFY,ID=ID(5))
+     call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
      !
      if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then

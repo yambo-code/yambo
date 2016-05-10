@@ -30,7 +30,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,core_io_path
  use stderr,        ONLY:intc
- use electrons,     ONLY:nel,n_spin,n_spinor,n_sp_pol
+ use electrons,     ONLY:nel,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size
 #if defined _FFTW
@@ -42,6 +42,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 &                        QUIET_free,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        DUMP,IO_and_Messaging_switch
+ use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
@@ -67,8 +68,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #if defined _SC
  integer          ::wf_size
 #endif
- integer          ::i_sp_pol,ikibz,ib_grp,ib_in_grp,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
-&                   iG_max,iG_bounds_loaded(2),iGo_max,sp_pol_to_load_
+ integer          ::i_sp_pol,ikibz,ifrag,ib_grp,ib_in_grp,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
+&                   iG_max,iG_bounds_loaded(2),iGo_max,sp_pol_to_load_(2)
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
@@ -98,7 +99,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  force_WFo_=.false.
  if(present(force_WFo)) force_WFo_=force_WFo
  !
- sp_pol_to_load_=(/i,n_sp_pol/)
+ sp_pol_to_load_=(/1,n_sp_pol/)
  if(present(sp_pol_to_load)) sp_pol_to_load_=sp_pol_to_load
  !
  ! [1]: check that loaded bounds are larger(equal) then bounds 
@@ -301,7 +302,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
            if (.not.any(states_to_load(ib1:ib2,ikibz,i_sp_pol))) cycle
          endif
          !
-         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/i_frag,ib_grp/),ID=ID)
+         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ifrag,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf_disk)
          !
        endif
@@ -320,7 +321,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
            !
            wf_DP=(0._DP,0._DP)
            WF%N=WF%N+1
-           WF%index(i_spinor,ib,ikibz,i_sp_pol)=WF%N
+           WF%index(ib,ikibz,i_sp_pol)=WF%N
            do ic=1,wf_nc_k(ikibz)
              ig=wf_igk(ic,ikibz)
              if (ig>wf_ng) cycle
@@ -328,14 +329,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
              if (WF%space=='R') igfft=fft_g_table(ig,1)
              if (WF%space=='C'.or.WF%space=='B') igfft=ic
              if (buffer_is_ok) then
-               wf_DP(igfft)=WF_buffer%c(ic,WF_buffer%index(i_spinor,ib,ikibz,i_sp_pol))
+               wf_DP(igfft)=WF_buffer%c(ic,i_spinor,WF_buffer%index(ib,ikibz,i_sp_pol))
              else
                wf_DP(igfft)=cmplx(wf_disk(1,ic,i_spinor,ib_in_grp),wf_disk(2,ic,i_spinor,ib_in_grp),kind=DP)
              endif
            enddo
            !
            if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
-             WF%c(:,WF%N)=cmplx(wf_DP(:),kind=SP)
+             WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)
              cycle
            endif
            !
@@ -347,7 +348,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
            !
            call fft_3d(wf_DP,fft_dim,+2)
 #endif
-           WF%c(:,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
+           WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
            !
          enddo  ! i_spinor
        enddo    ! i_b
@@ -434,14 +435,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  do ib1=1,min(int(nel)+5,WF%b(2))
    do ib2=1,min(int(nel)+5,WF%b(2))
      !
-     if ( any((/WF%index(:,ib1,1,1)==0,WF%index(:,ib2,1,1)==0/)) ) cycle
+     if ( WF%index(ib1,1,1)==0 .or. WF%index(ib2,1,1)==0 ) cycle
        !
-       c=dot_product(WF%c(:,WF%index(:,ib1,1,1) ),WF%c(:, WF%index(:,ib2,1,1)))
-       !
-       if (abs(c)>mxdp) mxdp=abs(c)
-       if (abs(c)<mndp) mndp=abs(c)
-       !
-     enddo
+     c=Vstar_dot_V( size(WF%c(:,:,WF%index(1,1,1))),  WF%c(:,:,WF%index(ib1,1,1) ) , WF%c(:,:,WF%index(ib2,1,1)) )
+     !
+     if (abs(c)>mxdp) mxdp=abs(c)
+     if (abs(c)<mndp) mndp=abs(c)
      !
    enddo
  enddo

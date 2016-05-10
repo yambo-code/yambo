@@ -24,7 +24,7 @@
 integer function io_WF(ID,wf)
  !
  use pars,             ONLY:SP,schlen
- use electrons,        ONLY:n_bands,n_spin
+ use electrons,        ONLY:n_sp_pol,n_spinor
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
@@ -39,7 +39,7 @@ integer function io_WF(ID,wf)
  integer,       intent(in) :: ID
  real(SP),      optional   :: wf(:,:,:,:)
  !
- integer                   :: i_sp_pol,ik,ifrag,ib_grp,head_io
+ integer                   :: i_sp_pol,ik,ifrag,ib_grp,ib,ib_in_grp,head_io
  character(schlen)         :: VAR_NAME
  !
 #if defined _TIMING
@@ -95,7 +95,7 @@ integer function io_WF(ID,wf)
  !
  ! Manage RD_CL_IF_END
  !
- manage_OP_IF_START_and_CL_IF_END(ID,ifrag,nkibz*n_sp_pol)
+ call manage_OP_IF_START_and_CL_IF_END(ID,ifrag,nkibz*n_sp_pol)
  !
  ! Fragmentation
  !

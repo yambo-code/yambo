@@ -27,6 +27,7 @@ subroutine WF_alloc(WF)
  use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
  use memory_m,      ONLY:mem_est
  use FFT_m,         ONLY:fft_size
+ use electrons,     ONLY:n_spinor
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
@@ -37,7 +38,7 @@ subroutine WF_alloc(WF)
  !
  ! Work Space
  !
- integer :: err,ik,ib,is,N_total
+ integer :: err,ik,ib,i_sp_pol,N_total
  !
  ! Distributed allocation
  !
@@ -45,11 +46,11 @@ subroutine WF_alloc(WF)
    !
    WF%N=0
    N_total=0
-   do ib=WF%b(1),WF%b(2)
-     do ik=WF%k(1),WF%k(2)
-       do is=WF%sp_pol(1),WF%sp_pol(2)
+   do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
+     do ib=WF%b(1),WF%b(2)
+       do ik=WF%k(1),WF%k(2)
          N_total=N_total+1
-         if (states_to_load(ib,ik,is)) WF%N=WF%N+1
+         if (states_to_load(ib,ik,i_sp_pol)) WF%N=WF%N+1
        enddo
      enddo
    enddo
@@ -61,9 +62,9 @@ subroutine WF_alloc(WF)
    !
  endif
  !
- if (WF%space=="R") allocate(WF%c(fft_size,WF%N),stat=err)
- if (WF%space=="G") allocate(WF%c(wf_ng,WF%N),stat=err)
- if (WF%space=="C".or.WF%space=="B") allocate(WF%c(wf_ncx,WF%N),stat=err)
+ if (WF%space=="R") allocate(WF%c(fft_size,n_spinor,WF%N),stat=err)
+ if (WF%space=="G") allocate(WF%c(wf_ng,n_spinor,WF%N),stat=err)
+ if (WF%space=="C".or.WF%space=="B") allocate(WF%c(wf_ncx,n_spinor,WF%N),stat=err)
  !
  if (err==0) allocate(WF%index(WF%b(2),WF%k(2),WF%sp_pol(2)),stat=err)
  !

@@ -51,7 +51,7 @@ subroutine el_magnetization(en,Xk,magn)
  !
  ! Work Space
  !
- integer :: isym,ifft,ib,ik,i_sp_pol,i_wf,i_wf_up,i_wf_dn
+ integer :: isym,ifft,ib,ik,i_sp_pol,i_wf
  real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ(n_sp_pol)
  !
  magn=0._SP
@@ -69,11 +69,11 @@ subroutine el_magnetization(en,Xk,magn)
          if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
        endif
        !
-       if (size(WF%index,1)<ib)        cycle
-       if (size(WF%index,2)<ik)        cycle
-       if (size(WF%index,3)<i_sp_pol)  cycle
+       if (size(WF%index)<ib)        cycle
+       if (size(WF%index)<ik)        cycle
+       if (size(WF%index)<i_sp_pol)  cycle
        !
-       i_wf =WF%index(1,ib,ik,i_sp_pol)
+       i_wf =WF%index(ib,ik,i_sp_pol)
        !
        if (i_wf==0) cycle
        !
@@ -84,38 +84,30 @@ subroutine el_magnetization(en,Xk,magn)
        !
        if (n_sp_pol==2) then
          !
-         i_wf =WF%index(1,ib,ik,i_sp_pol)
-         !
-         if (i_wf==0) cycle
-         !
          ! mz
          !
-         cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*f_occ*real(conjg(WF%c(:,i_wf))*WF%c(:,i_wf))
+         cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*f_occ*real(conjg(WF%c(:,1,i_wf))*WF%c(:,1,i_wf))
          !
        else if(n_spinor==2) then
          !
-         i_wf_up=WF%index(1,ib,ik,i_sp_pol)
-         i_wf_dn=WF%index(2,ib,ik,i_sp_pol)
-         !
-         if (i_wf_up==0 .or. i_wf_dn==0) cycle
          !
          ! mx
          !
          cv(:,1)=cv(:,1)+Xk%weights(ik)*f_occ*(&
-&                   +real(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_dn))&
-&                   +real(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_up)) )
+&                   +real(conjg(WF%c(:,1,i_wf))*WF%c(:,2,i_wf))&
+&                   +real(conjg(WF%c(:,2,i_wf))*WF%c(:,1,i_wf)) )
          !
          ! my
          !
          cv(:,2)=cv(:,2)+Xk%weights(ik)*f_occ*(&
-&                   +aimag(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_dn))&
-&                   -aimag(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_up)) )
+&                   +aimag(conjg(WF%c(:,1,i_wf))*WF%c(:,2,i_wf))&
+&                   -aimag(conjg(WF%c(:,2,i_wf))*WF%c(:,1,i_wf)) )
          !
          ! mz
          !
          cv(:,3)=cv(:,3)+Xk%weights(ik)*f_occ*(&
-&                   +real(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_up))&
-&                   -real(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_dn)) )
+&                   +real(conjg(WF%c(:,1,i_wf))*WF%c(:,1,i_wf))&
+&                   -real(conjg(WF%c(:,2,i_wf))*WF%c(:,2,i_wf)) )
          !
        endif
        !

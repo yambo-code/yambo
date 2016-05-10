@@ -32,8 +32,8 @@ module wave_func
    integer              :: sp_pol(2) ! sp_pol_range
    integer              :: N         ! states 
    character(1)         :: space
-   complex(SP), pointer :: c(:,:)        => null()
-   integer    , pointer :: index(:,:,:,:)=> null()
+   complex(SP), pointer :: c(:,:,:)      => null()
+   integer    , pointer :: index(:,:,:)  => null()
    logical    , pointer :: state(:,:,:)  => null()
    logical              :: to_load = .TRUE.
  end type WAVEs
@@ -66,9 +66,9 @@ module wave_func
  !
  ! Wave function derivatives
  !
- complex(SP), allocatable :: wf_x(:,:)
- complex(SP), allocatable :: wf_y(:,:)
- complex(SP), allocatable :: wf_z(:,:)
+ complex(SP), allocatable :: wf_x(:,:,:)
+ complex(SP), allocatable :: wf_y(:,:,:)
+ complex(SP), allocatable :: wf_z(:,:,:)
  !
  ! Parallel wave-function distribution
  !
@@ -117,10 +117,10 @@ module wave_func
      WF_out%N      = WF_in%N
      WF_out%space  = WF_in%space
      WF_out%to_load= WF_in%to_load
-     if (WF%space=="R") allocate(WF_out%c(fft_size,WF_out%N))
-     if (WF%space=="G") allocate(WF_out%c(wf_ng,WF_out%N))
-     if (WF%space=="C".or.WF%space=="B") allocate(WF%c(wf_ncx,WF%N))
-     allocate(WF_out%index(n_spinor,WF_out%b(1):WF_out%b(2),WF_out%k(1):WF_out%k(2),WF_out%sp_pol(1):WF_out%sp_pol(2)))
+     if (WF%space=="R") allocate(WF_out%c(fft_size,n_spinor,WF_out%N))
+     if (WF%space=="G") allocate(WF_out%c(wf_ng,n_spinor,WF_out%N))
+     if (WF%space=="C".or.WF%space=="B") allocate(WF%c(wf_ncx,n_spinor,WF%N))
+     allocate(WF_out%index(WF_out%b(1):WF_out%b(2),WF_out%k(1):WF_out%k(2),WF_out%sp_pol(1):WF_out%sp_pol(2)))
      WF_out%c    =WF_in%c
      WF_out%index=WF_in%index
    end subroutine
@@ -129,21 +129,22 @@ module wave_func
      use pars,     ONLY : cZERO
      use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size
+     use electrons,ONLY : n_spinor
      logical  :: cart_direction(3)
      !
      if(cart_direction(1)) then
-       allocate(wf_x(fft_size,WF%N))
-       call mem_est("WF_x",(/fft_size*WF%N/),quiet=QUIET_alloc)
+       allocate(wf_x(fft_size,n_spinor,WF%N))
+       call mem_est("WF_x",(/fft_size*n_spinor*WF%N/),quiet=QUIET_alloc)
        wf_x=cZERO
      endif
      if(cart_direction(2)) then
-       allocate(wf_y(fft_size,WF%N))
-       call mem_est("WF_y",(/fft_size*WF%N/),quiet=QUIET_alloc)
+       allocate(wf_y(fft_size,n_spinor,WF%N))
+       call mem_est("WF_y",(/fft_size*n_spinor*WF%N/),quiet=QUIET_alloc)
        wf_y=cZERO
      endif
      if(cart_direction(3)) then
-       allocate(wf_z(fft_size,WF%N))
-       call mem_est("WF_z",(/fft_size*WF%N/),quiet=QUIET_alloc)
+       allocate(wf_z(fft_size,n_spinor,WF%N))
+       call mem_est("WF_z",(/fft_size*n_spinor*WF%N/),quiet=QUIET_alloc)
        wf_z=cZERO
      endif
    end subroutine

@@ -25,7 +25,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
+subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  use pars,          ONLY:SP,cZERO
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp,V_by_V_plus_V_omp
@@ -35,7 +35,7 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  !
  implicit none
  !
- integer    :: ivfft(n_spinor),icfft(n_spinor)
+ integer    :: iv_wf,ic_wf
  complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim,4,n_spinor)
  ! 
  ! Work Space
@@ -54,8 +54,8 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
      !
      do i1=1,pp_kbv_dim
        !
-       Cv(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1,i_spinor))
-       Cc(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1,i_spinor))
+       Cv(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,i_spinor,iv_wf),kbv(:,i1,1,i_spinor))
+       Cc(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,i_spinor,ic_wf),kbv(:,i1,1,i_spinor))
        !
        if ( Cc(i_spinor)==cZERO .and. Cv(i_spinor)==cZERO ) cycle
        !
@@ -67,8 +67,8 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
      enddo
      !
      do i1=1,3
-       drho(i1)=Vstar_dot_V_omp(wf_ng,WF%c(:,ivfft(j_spinor)),Kc(:,i1,i_spinor,j_spinor))+ &
-&                            V_dot_V_omp(wf_ng,WF%c(:,icfft(j_spinor)),Kv(:,i1,i_spinor,j_spinor))
+       drho(i1)=Vstar_dot_V_omp(wf_ng,WF%c(:,j_spinor,iv_wf),Kc(:,i1,i_spinor,j_spinor))+ &
+&                            V_dot_V_omp(wf_ng,WF%c(:,j_spinor,ic_wf),Kv(:,i1,i_spinor,j_spinor))
      enddo
      !
      rho=rho+drho

@@ -58,7 +58,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #endif
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
- integer                      :: ik,icfft(n_spinor),ivfft(n_spinor),ic,iv,&
+ integer                      :: ik,ic_wf(n_spinor),iv_wf(n_spinor),ic,iv,&
 &                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4)
@@ -160,11 +160,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
          do i_spinor=1,n_spinor
            !
            i_spin=i_sp_pol+i_spinor-1
-           ivfft(i_spinor)=WF%index(iv,ik,i_spin)
-           icfft(i_spinor)=WF%index(ic,ik,i_spin)
+           iv_wf(i_spinor)=WF%index(iv,ik,i_spin)
+           ic_wf(i_spinor)=WF%index(ic,ik,i_spin)
            !
-           if (ivfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-           if (icfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
+           if (iv_wf(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
+           if (ic_wf(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
            !
          enddo
          !
@@ -175,15 +175,15 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
          !
-         ! Evaluate <ivfft|   p   |icfft>
+         ! Evaluate <iv_wf|   p   |ic_wf>
          !================================
-         call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
+         call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,wf_dim,rho)
          !
-         ! Evaluate <ivfft|[x,Vnl]|icfft>
+         ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
          if (io_Vnl_err==0) rho(:3) = rho(:3) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv)
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho(:3),kbv)
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho(:3),kbv)
          !
          !
          !=====

@@ -51,7 +51,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  ! Internal variables
  integer :: bands_to_load(2)
  logical :: use_live_timing
- complex(SP), allocatable  :: wf_der(:)
+ complex(SP), allocatable  :: wf_der(:,:)
  complex(DP), allocatable  :: wf_DP(:)
  ! Dummys
  integer :: i1,i_spin,ib,ik,ifft
@@ -88,37 +88,39 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  fftw_plan = 0
 #endif
  !
- do ik=derivative_kpt(1),derivative_kpt(2)
-   do ib=bands_to_load(1),bands_to_load(2)
-     do i_spin=1,n_sp_pol   
-       ifft=WF%index(ib,ik,i_spin)
+ do i_spin=1,n_sp_pol
+   do ik=derivative_kpt(1),derivative_kpt(2)
+     do ib=bands_to_load(1),bands_to_load(2)
+       i_wf=WF%index(ib,ik,i_spin)
        !
        ! Evaluate the wf_derivative in G space
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y
        ! wf_derivative(G,i)= (k_i+G_i) wf(:)
        ! wf_z is not needed
        !
-       do i1=1,3
-         if (.not.do_derivative(i1)) cycle
-         wf_der=cZERO
-         wf_der(:)=WF%c(:,ifft)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
-         !
-         ! Here we FFT wf_derivative to real space
-         wf_DP=(0._DP,0._DP)
-         wf_DP(fft_g_table(1:wf_ng,1))= wf_der(1:wf_ng)*fft_norm
+       do i_spinor=1,n_spinor
+         do i1=1,3
+           if (.not.do_derivative(i1)) cycle
+           wf_der=cZERO
+           wf_der(:,i_spinor)=WF%c(:,i_spinor,i_wf)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
+           !
+           ! Here we FFT wf_derivative to real space
+           wf_DP=(0._DP,0._DP)
+           wf_DP(fft_g_table(1:wf_ng,1))= wf_der(1:wf_ng,i_spinor)*fft_norm
 #if defined _FFTW
-         call fft_3d(wf_DP,fft_dim,1,fftw_plan)
+           call fft_3d(wf_DP,fft_dim,1,fftw_plan)
 #else
-         !call fft_3d(wf_DP,fft_dim,1)
-         !
-         ! here we use +2 in order to exploit the wfc cutoff 
-         ! when using FFTQE
-         call fft_3d(wf_DP,fft_dim,2)
+           !call fft_3d(wf_DP,fft_dim,1)
+           !
+           ! here we use +2 in order to exploit the wfc cutoff 
+           ! when using FFTQE
+           call fft_3d(wf_DP,fft_dim,2)
 #endif
-         if(i1==1) wf_x(:,ifft)=cmplx(wf_DP(:),kind=SP)
-         if(i1==2) wf_y(:,ifft)=cmplx(wf_DP(:),kind=SP)
-         if(i1==3) wf_z(:,ifft)=cmplx(wf_DP(:),kind=SP)
-         !
+           if(i1==1) wf_x(:,ifft,i_spinor)=cmplx(wf_DP(:),kind=SP)
+           if(i1==2) wf_y(:,ifft,i_spinor)=cmplx(wf_DP(:),kind=SP)
+           if(i1==3) wf_z(:,ifft,i_spinor)=cmplx(wf_DP(:),kind=SP)
+           !
+         enddo
        enddo
        if(use_live_timing) call live_timing(steps=1)
        !

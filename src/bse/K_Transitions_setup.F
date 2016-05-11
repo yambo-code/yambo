@@ -81,18 +81,16 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  ! 
 #endif
  !
- if (FILL_the_groups) call section('+','Transition Groups build-up')
- !
  if (FILL_the_groups) then
+   !
+   call section('+','Transition Groups build-up')
    !
    allocate(BS_T_grp(BS_nT_grps))
    do i_g=1,BS_nT_grps
      BS_T_grp(i_g)%size=0
    enddo
    n_loops=2
-   if (any(BS_nT_at_k==0)) then
-     call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
-   endif
+   if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    !
    allocate(PAR_IND_WF_b_and_k%element_2D(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
@@ -103,10 +101,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    endif
    !
  else
+   !
    allocate(BS_nT_at_k(Xk%nibz))
    call mem_est("BS_nT_at_k",(/Xk%nibz/),(/IP/))
    BS_nT_at_k=0
    n_loops=1
+   !
  endif 
  !
  allocate(i_T_at_k(Xk%nibz))
@@ -217,10 +217,17 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  BS_H_dim=BS_K_dim
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  !
- if (.not.FILL_the_groups.and..not.BS_anti_res.and.BS_not_const_eh_f) then
-   call warning('Fractional e/h occupations. Causal BSEmode forced.')
-   BSE_mode='causal'
-   BS_anti_res=.true.
+ if (.not.FILL_the_groups) then
+   !
+   if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
+   if (sum(BS_nT_at_k)==0) call   error(' The whole BSE hase zero dimension !')
+   !
+   if (.not.BS_anti_res.and.BS_not_const_eh_f) then
+     call warning('Fractional e/h occupations. Causal BSEmode forced.')
+     BSE_mode='causal'
+     BS_anti_res=.true.
+   endif
+   !
  endif
  !
  ! REPORT

@@ -31,6 +31,8 @@ use Getopt::Long;
 &GetOptions("p=s"          => \$patchname);
 #
 # Collect the files marked by git status
+# 
+# ... modified
 #
 $gitcommand = "git status | grep 'modified' | awk \'{printf\" %s \",\$2 }\' |";
 open(GIT, $gitcommand);
@@ -40,9 +42,9 @@ close(GIT);
 $changedfiles =~ s/  / /g;
 $changedfiles =~ s/src\///g;
 $changedfiles =~ s/interfaces\///g;
-print "\nIdentified MODIFIED files: $changedfiles\n\n";
+print "\nMODIFIED files: $changedfiles\n\n";
 #
-# Collect the files marked by git status
+# ... added 
 #
 $gitcommand = "git status | grep 'new' | awk \'{printf\" %s \",\$3 }\' |";
 open(GIT, $gitcommand);
@@ -52,7 +54,19 @@ close(GIT);
 $newfiles =~ s/  / /g;
 $newfiles =~ s/src\///g;
 $newfiles =~ s/interfaces\///g;
-print "Identified NEW files: $newfiles\n\n";
+print "NEW files: $newfiles\n\n";
+#
+# ... removed 
+#
+$gitcommand = "git status | grep 'deleted' | awk \'{printf\" %s \",\$2 }\' |";
+open(GIT, $gitcommand);
+$delfiles = <GIT>;
+close(GIT);
+# Strip the "src/" (add to this list if needed)
+$delfiles =~ s/  / /g;
+$delfiles =~ s/src\///g;
+$delfiles =~ s/interfaces\///g;
+print "DELETED files: $delfiles\n\n";
 #
 # Write the commit message
 #
@@ -61,6 +75,7 @@ open(MSGFILE,">","commit.msg") or die "The file commit.msg could " .
 #print MSGFILE "Version @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ \n\n";
 print MSGFILE "MODIFIED * $changedfiles\n\n";
 print MSGFILE "NEW * $newfiles\n\n";
+print MSGFILE "DELETED * $delfiles\n\n";
 print MSGFILE "Bugs:\n";
 print MSGFILE "- \n";
 print MSGFILE "Additions:\n";

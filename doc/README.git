@@ -1,20 +1,53 @@
 
-How to create patches based on a branch for the trunk
-=====================================================
+Extracted from https://docs.google.com/document/d/1JecXBxlHlEKYY86x6McfbwKcs7W-E8xoWm2PC3UJ43U/edit
 
-svn diff svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/branches/devel-andrea > PATCH
+svn status
+“git status” (show status of local branch)
+"git status -uno" to show only modified files
+“git remote show origin” (show status of all branches)
 
-How to update the branch incorporating previous commits of the trunk
-====================================================================
+svn commit: The process of committing to the $YAMBO_REPO is a 3-steps process:
+stage the changes to be commited: “git add” (“git add --u” does not add new files)
+commit to your local repo: “git commit”. In order to commit first run a
+    > ./sbin/make_message.pl -p YOU
+    and then to a 
+    > git commit -F commit.msg
+merge your local repo with the $YAMBO_REPO: “git push”
 
-svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk
+svn diff:
+“git diff” shows changes not staged (before “add”)
+“git diff HEAD” shows also changes staged but not commited (before “commit”)
+“git diff origin/master” shown also changes committed (before “push”)
+[ “-M50%” option is very useful in case of file renamed/moved ]
 
-How to update the branch incorporating previous commits of another branch
-==========================================================================
+patch -p0 < patch:
+use “git diff > patch_name” to create a patch
+use “git apply patch_name” to apply the patch
 
-svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/branches/devel-andrea 
+svn up: The process of updating to the last version in the $YAMBO_REPO is:
+get the changes from the $YAMBO_REPO to your local repo: “git fetch”
+get the changes to your working folder: “git merge origin/$branchname”
+a+b.     It also exist the combined command: “git pull”
 
-How to record the merging history
-=================================
+svn up --revision=XXXX  /  svn diff --revision=XXXX 
+with git you can ask to go back N revision: “git checkout HEAD~N”. git will enter detached HEAD mode. To move between commits “git checkout HEAD~M”, (use M=0) for the HEAD itself. To come back to normal mode “git checkout $branchname”
+shows the changes compared to N revisions back: “git diff HEAD~N”
 
-svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk -r1:4888 --record-only
+svn revert: To revert a change [everything before a push can reverted]
+To revert a change      → “git checkout -- .” (“git clean -df” also removes files not in repo)
+to revert “git add”     → “git reset”
+to revert “git commit”    → “git reset origin/master” (no history left)
+                → “git revert HEAD” (revert doing a commit)
+svn merge:
+this is now “git merge”. No options are displayed during the merge. If you want the “tc” option for all the conflicts use: “git merge -X theirs”
+After you can also use te “git mergetool” command. 
+
+Create a new branch:
+“git checkout -b new_branch”: new local branch
+(equivalent to “git branch new_branch” + “git checkout new_branch”)
+“git push origin new_branch”: if you want to make available the new branch
+“git branch -u origin/new_branch new_branch”: to set that the new branch tracks the new remote one
+
+Moving/removing files:
+$$ git mv hello.html lib/
+$$git rm hello.html

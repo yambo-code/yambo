@@ -44,7 +44,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
- use com,          ONLY:warning
+ use com,          ONLY:warning,error
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BS_anti_res,&
 &                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc,&
@@ -56,7 +56,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
 #if defined _RT
- use com,          ONLY:error
  use parser_m,     ONLY:parser
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel
@@ -221,6 +220,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  if (.not.FILL_the_groups) then
    !
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
+   if (sum(BS_nT_at_k)==0) call   error(' The whole BSE hase zero dimension !')
    !
    if (.not.BS_anti_res.and.BS_not_const_eh_f) then
      call warning('Fractional e/h occupations. Causal BSEmode forced.')

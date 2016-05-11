@@ -150,6 +150,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      !
   enddo
  enddo
+ !
  deallocate(wf_disk)
  call PP_free()
  !

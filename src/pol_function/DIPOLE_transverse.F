@@ -58,7 +58,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #endif
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
- integer                      :: ik,ic_wf,iv_wf,ic,iv,&
+ integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
 &                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4)
@@ -125,29 +125,30 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  W_=0._SP
  !
- do ik=1,Xk%nibz
-   !
-   if (n_LT_steps==0) cycle
-   ! 
-   ! [Vnl,r]
-   !
-   if (io_KB_pwscf_err==0) then
-     if (ik< Xk%nibz ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     io_KB_pwscf_err=io_KB_pwscf(ID)
-   endif
-   !
-   if (io_KB_abinit_err==0) then
-     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     io_KB_abinit_err=io_KB_abinit(ID)
-   endif
-   ! 
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
-   !
-   ik_mem=PAR_DIPk_ibz_index(ik)
-   ! 
-   do i_sp_pol=1,n_sp_pol
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,Xk%nibz
+     ifrag=ik+(i_sp_pol-1)*Xk%nibz
+     !
+     !
+     if (n_LT_steps==0) cycle
+     ! 
+     ! [Vnl,r]
+     !
+     if (io_KB_pwscf_err==0) then
+       if (ik< Xk%nibz ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+       if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+       io_KB_pwscf_err=io_KB_pwscf(ID)
+     endif
+     !
+     if (io_KB_abinit_err==0) then
+       if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
+       if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+       io_KB_abinit_err=io_KB_abinit(ID)
+     endif
+     ! 
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+     !
+     ik_mem=PAR_DIPk_ibz_index(ik)
      ! 
      if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)

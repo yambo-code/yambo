@@ -941,6 +941,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !
    enddo
    !
+ stop
+   !
    ! Now I find calculate the total (BS_nT_grps) and cpu-restricted (PAR_BS_nT_grps) number of Transition groups.
    ! In this case the PAR_BS_nT_grps groups belong only to the columns of the kernel.
    !

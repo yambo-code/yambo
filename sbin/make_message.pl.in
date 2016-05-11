@@ -58,7 +58,7 @@ print "Identified NEW files: $newfiles\n\n";
 #
 open(MSGFILE,">","commit.msg") or die "The file commit.msg could " .
    "not be opened.\n";
-print MSGFILE "Version @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ \n\n";
+#print MSGFILE "Version @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ \n\n";
 print MSGFILE "MODIFIED * $changedfiles\n\n";
 print MSGFILE "NEW * $newfiles\n\n";
 print MSGFILE "Bugs:\n";

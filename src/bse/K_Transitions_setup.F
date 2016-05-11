@@ -44,7 +44,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
- use com,          ONLY:warning,error
+ use com,          ONLY:warning
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BS_anti_res,&
 &                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc,&
@@ -56,6 +56,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
 #if defined _RT
+ use com,          ONLY:error
  use parser_m,     ONLY:parser
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel
@@ -90,9 +91,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      BS_T_grp(i_g)%size=0
    enddo
    n_loops=2
-   if (any(BS_nT_at_k==0)) then
-     call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
-   endif
+   if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    !
    allocate(PAR_IND_WF_b_and_k%element_2D(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
@@ -221,15 +220,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  if (.not.FILL_the_groups) then
    !
-   if (any(BS_nT_at_k==0)) then
-     call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
-   endif
+   if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    !
    if (.not.BS_anti_res.and.BS_not_const_eh_f) then
      call warning('Fractional e/h occupations. Causal BSEmode forced.')
      BSE_mode='causal'
      BS_anti_res=.true.
    endif
+   !
  endif
  !
  ! REPORT

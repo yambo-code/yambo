@@ -392,8 +392,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Timing
  !========
  !
- if (.not.l_bs_fxc) call live_timing('Kernel',     BS_LiveTiming_steps)
- if (     l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
+ if (BS_LiveTiming_steps>0) then
+   if (.not.l_bs_fxc) call live_timing('Kernel',     BS_LiveTiming_steps)
+   if (     l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
+ endif
  !
  do i_block=1,n_BS_blks
    !
@@ -580,7 +582,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  enddo
  !
- call live_timing( )
+ if (BS_LiveTiming_steps>0) call live_timing( )
  !
  BS_K_has_been_calculated_loaded=.TRUE.
  !

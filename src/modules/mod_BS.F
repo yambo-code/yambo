@@ -101,6 +101,8 @@ module BS
    complex(SP), allocatable      :: dipoles_A(:)
    complex(SP), allocatable      :: dipoles_R_kerr(:)
    complex(SP), allocatable      :: dipoles_A_kerr(:)
+   complex(SP), allocatable      :: dipoles_R_PL(:,:)
+   complex(SP), allocatable      :: dipoles_A_PL(:,:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
@@ -285,7 +287,7 @@ module BS
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
      use pars,       ONLY:IP
-     use drivers,    ONLY:l_kerr
+     use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
      use electrons,  ONLY:levels,E_SOC_nbands
@@ -297,8 +299,12 @@ module BS
        call mem_est("BS_T_grp_dipoles_R_N",(/nT/))
        if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N",(/nT/))
        if(l_kerr) then
-         call mem_est("BS_T_grp_dipoles_R_N",(/nT/))
-         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N",(/nT/))
+         call mem_est("BS_T_grp_dipoles_KERR_R_N",(/nT/))
+         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_KERR_A_N",(/nT/))
+       endif
+       if(l_photolum) then
+         call mem_est("BS_T_grp_dipoles_PL_R_N",(/nT/))
+         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N",(/nT/))
        endif
        call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
        call mem_est("BS_T_grp_E_N",(/nT/),(/SP/))
@@ -315,6 +321,10 @@ module BS
      if(l_kerr) then
        allocate(BS_T_grp(iT)%dipoles_R_kerr(nT))
        if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
+     endif
+     if(l_photolum) then
+       allocate(BS_T_grp(iT)%dipoles_R_PL(3,nT))
+       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(3,nT))
      endif
      allocate(BS_T_grp(iT)%table(nT,4))
      allocate(BS_T_grp(iT)%E(nT))

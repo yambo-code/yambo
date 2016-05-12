@@ -56,13 +56,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
  type(X_t)     ::X_static_pp
- type(w_samp)  ::Xw,W_bss 
+ type(w_samp)  ::Xw
  !
  ! Work Space
  !
  type(X_t)         :: X_tddft,X_oscillators
  integer           :: iq,Max_G_m_G
  integer, external :: eval_G_minus_G
+ type(w_samp)      :: W_bss 
  !
  call section('*','Response Functions in Transition space')
  !=========================================================

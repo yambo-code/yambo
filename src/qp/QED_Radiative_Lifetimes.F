@@ -103,7 +103,14 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
      E_diff =E%E(i_n,i_k,i_spin)-E%E(i_m,i_k,i_spin)
      f_m    =E%f(i_m,i_k,i_spin)/spin_occ
      !
-     P_square=2.*(abs(DIP_P(1,i_m,i_n,i_k_mem,i_spin))**2.+&
+     ! The (4) prefactor comes from the definition of the \Pi operator in PRB 93, 155109.
+     ! Indeed the e.m. interaction is written in terms of \Pi and P (that is not the m.e. of the gradient). 
+     !
+     ! P_nmk = i [p_nmk+(p_mnk)^*]
+     !
+     ! with p the quantity calculated by yambo in DIP_P
+     !
+     P_square=4.*(abs(DIP_P(1,i_m,i_n,i_k_mem,i_spin))**2.+&
 &                 abs(DIP_P(2,i_m,i_n,i_k_mem,i_spin))**2.+&
 &                 abs(DIP_P(3,i_m,i_n,i_k_mem,i_spin))**2)
      !

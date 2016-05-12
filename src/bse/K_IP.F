@@ -27,7 +27,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use units,         ONLY:HA2EV
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
- use drivers,       ONLY:l_rpa_IP,l_bs_fxc
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_photolum
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel
@@ -40,6 +40,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+#if defined _PL
+ use X_m,           ONLY:DIP_P
+#endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use X_m,           ONLY:Epsilon_ij
@@ -58,7 +61,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Work space
  !
- integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_mem,n_soc,i_pert_SOC
+ integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_mem,n_SOC,i_pert_SOC
  real(SP)          ::conjg_fac
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
  !
@@ -172,6 +175,12 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
        BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_mem,i_sp))
        if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_mem,i_sp)
+#if defined _PL
+       if (l_photolum) then
+         BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(DIP_P(:,ic,iv,ik_mem,i_sp))
+         if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_PL(i_T,:)=DIP_P(:,ic,iv,ik_mem,i_sp)
+       endif
+#endif
        !
        if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
        !
@@ -212,8 +221,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
-   call PP_redux_wait( Joint_DOS(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( Joint_DOS(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+   call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
    !
    ! Pure diamagnetic term
    diam_term0=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)

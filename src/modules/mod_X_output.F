@@ -209,10 +209,6 @@ module X_output
      suffix(5:6) = (/'`-Im[6]','`-Re[7]'/)
      headers(1) = 'E/ev[1]'
      !
-     if(trim(desc)=='refl') suffix(:3)=(/' /Refl ','0/Refl ','`/Refl '/)
-     !
-     if(trim(desc)=='jdos') suffix(:2)=(/' /jdos ','0/jdos '/)
-     !
      do ii = 1,6
        headers(ii+1)=trim(desc)//trim(suffix(ii))
      enddo

@@ -46,26 +46,32 @@ subroutine WF_rotate(i_sp_pol,ik,WFo,wf_size)
  !
  ! Work Space
  !
- integer     :: ib,ibp,i_wf(n_spinor),i_wfp(n_spinor),i_spinor,i_g
- complex(SP) :: WS_wf(wf_size,n_spinor)
+ integer     :: ib,ibp,i_wf,i_wfp,i_spinor,ig
+ complex(SP) :: WS_wf(wf_size,n_spinor,SC_bands(1):SC_bands(2))
  !
- do ib = 1,SC_bands(2)
+ WS_wf=cZERO
+ !
+ do ib = SC_bands(1),SC_bands(2)
    !
-   i_wf(:) = WFo%index(:,ib,ik,i_sp_pol)
-   if (any(i_wf(:)==0)) cycle
+   i_wf = WFo%index(ib,ik,i_sp_pol)
+   if (i_wf==0) cycle
    !
-   WS_wf=cZERO
-   !
-   do ibp = 1,SC_bands(2)
-     i_wfp(:) = WFo%index(:,ibp,ik,i_sp_pol)
-     if (any(i_wfp(:)==0)) cycle
-     call V_by_V_plus_V_omp(wf_size*n_spinor,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,i_wfp(:)),WS_wf(:,:,ib))
+   do ibp = SC_bands(1),SC_bands(2)
+     i_wfp = WFo%index(ibp,ik,i_sp_pol)
+     if (i_wfp==0) cycle
+     call V_by_V_plus_V_omp(wf_size*n_spinor,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,:,i_wfp),WS_wf(:,:,ib))
    end do
+   !
+ enddo
+ !
+ do ib = SC_bands(1),SC_bands(2) 
+   !
+   i_wf = WFo%index(ib,ik,i_sp_pol)
    !
    !$omp parallel do default(shared), private(ig,i_spinor)
    do i_spinor=1,n_spinor
      do ig=1,wf_size
-       WF%c(ig,i_wf(i_spinor))=WS_wf(ig,i_spinor)
+       WF%c(ig,i_spinor,i_wf)=WS_wf(ig,i_spinor,ib)
      enddo
    enddo
    !$omp end parallel do

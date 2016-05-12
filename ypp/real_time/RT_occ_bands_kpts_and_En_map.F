@@ -58,6 +58,7 @@ subroutine RT_occ_bands_kpts_and_En_map(En,kpt,E_bands,k_bands)
  !
  E_bands%nbf=En%nbf
  E_bands%nbm=En%nbm
+ E_bands%nbc=En%nbc
  !
  E_bands%E_Fermi  =En%E_Fermi
  E_bands%E_VBM    =En%E_VBM

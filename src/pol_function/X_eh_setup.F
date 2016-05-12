@@ -106,15 +106,10 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          !   both transitions 1->3 , 2->4 are resonant but 2->4 has negative energy
          !
          f_eh=Xen%f (iv,ikp,i_sp)*(spin_occ-Xen%f (ic,ik,i_sp))/spin_occ
+         !
          if (abs(f_eh)<local_tresh) cycle
          !
          if (any((/abs(E_eh)<X%ehe(1),abs(E_eh)>X%ehe(2).and.X%ehe(2)>0._SP/))) cycle
-         !
-         ! Skip these poles because dipoles are not defined in this case
-         if (abs(E_eh)<1.E-5 .and. abs(iq)==1) then
-           if(any((/ic/=Xen%bf,iv/=Xen%bf,ikp/=Xen%kf,ik/=Xen%kf,i_sp/=Xen%sf/)) ) cycle
-           if(real(X%Wd)==0..and.aimag(X%Wd)==0.) cycle
-         endif
          !
          X_eh_setup=X_eh_setup+1
          poles(X_eh_setup)=E_eh

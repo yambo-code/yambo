@@ -58,7 +58,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  integer :: i1,is,ib,ik,ikbz,ik_rand,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
- real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd
+ real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),nel_DbGd
  logical :: Fermi_is_converged
  real(SP),parameter :: Tel_step=0.0001/HA2EV
  real(SP),parameter :: nel_diff_zero=1.E-5
@@ -200,10 +200,9 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  if (mode==0) return
  !
- ! Build the occupations and find the nearest occupied state to the Fermi level
+ ! Build the occupations
  !
  if (.not.associated(E%f))          allocate(E%f(E%nb,E%nk,n_sp_pol))
- Efdist=1.E5_SP
  !
  do i1=1,n_total_states
    ib=index( index_E_sorted(i1) , 1)
@@ -211,15 +210,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    is=index( index_E_sorted(i1) , 3)
    !
    E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%E_Fermi,Tel)
-   !
-   if (abs(E%E(ib,ik,is)-E%E_Fermi)<Efdist) then
-     if ( E%f(ib,ik,is) < filled_tresh ) cycle
-     if ( E%f(ib,ik,is)  ==   spin_occ ) cycle
-     E%bf=ib
-     E%kf=ik
-     E%sf=is
-     Efdist=abs(E%E(ib,ik,is)-E%E_Fermi)
-   endif
    !
  enddo
  !

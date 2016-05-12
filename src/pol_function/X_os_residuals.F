@@ -32,10 +32,10 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
- use X_m,           ONLY:X_t,DIP_projected,X_poles_tab
  use parallel_m,    ONLY:PAR_Xk_bz_index
+ use X_m,           ONLY:X_t,X_poles_tab,Dipole_Energy_treshold,DIP_projected
  use electrons,     ONLY:levels,spin_occ
- use frequency,     ONLY:bare_grid_N
+ use frequency,     ONLY:bare_grid_N,coarse_grid_pt
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp !,G_m_G
  use collision,     ONLY:elemental_collision
@@ -54,11 +54,13 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  complex(SP)              :: rhotw_save(X%ng),Z_ !,eet_factor(X%ng,X%ng)
  real(SP)                 :: Z_eh_occ
  integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
-&                            isp,iv,ic,isave(4),n_poles,i_bg !,alloc_err
+&                            isp,iv,ic,isave(4),n_poles,n_drude_poles,i_bg !,alloc_err
  !
  isave=0
  !
  n_poles = sum(bare_grid_N(1:i_cg-1))
+ !
+ n_drude_poles=0
  !
  Xo_res(:,:) = cZERO
  !
@@ -94,43 +96,59 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !
    ! GPL_EXCLUDE_END
    !
+   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/spin_occ &
+&             /real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
-   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin)) &
-   &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+   if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dipole_Energy_treshold) then
+     Z_eh_occ=1._SP
+     if(ic==iv) n_drude_poles=n_drude_poles+1
+   endif
    !
    ! Scattering CALL
    !-----------------
    !
    if (iq==1) then
-     Xo_scatt%is = (/ic,ik,1,i_spin/)
-     Xo_scatt%os = (/iv,ik,1,i_spin/)
-     Xo_scatt%qs = (/1,1,1/)
-     ik_bz_mem=PAR_Xk_bz_index(ikbz)
-     if (.not. X%ng==1) then
+     !
+     ! iq=1: Symmetries are applyed later and
+     !       iG=1 case is computed separately 
+     !
+     ! iG>1 case
+     if (X%ng>1) then
+       ! without symmetries [%is(3)=%os(3)=1]
+       Xo_scatt%is = (/ic,ik,1,i_spin/)
+       Xo_scatt%os = (/iv,ik,1,i_spin/)
+       Xo_scatt%qs = (/1,1,1/)
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
          call scatter_Bamp(Xo_scatt)
          rhotw_save=Xo_scatt%rhotw
          isave=(/iv,ic,ik,i_spin/)
        endif
-       do ig1=1,X%ng
+       ! apply symmetries
+       do ig1=2,X%ng
          ig2=g_rot(sop_inv(is),ig1)
          Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
        enddo
        if (is>nsym/(i_time_rev+1)) then
-         do ig1=1,X%ng
+         do ig1=2,X%ng
            Xo_scatt%rhotw(ig1)=conjg(Xo_scatt%rhotw(ig1))
          enddo
        endif
      endif
-     Xo_scatt%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
+     ! iG=1 case
+     ik_bz_mem=PAR_Xk_bz_index(ikbz)
+     if(iv/=ic) Xo_scatt%rhotw(1)=    -conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
+     if(iv==ic) Xo_scatt%rhotw(1)=cONE-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
+     !
    else
+     !
+     ! iq>1: direct computation
+     !
      Xo_scatt%is=(/ic,ik,is,i_spin/)
      Xo_scatt%os=(/iv,ikp,isp,i_spin/)
      Xo_scatt%qs=(/qindx_X(iq,ikbz,2),iq,1/)
      call scatter_Bamp(Xo_scatt)
+     !
    endif
-   !
-   ! Davide: these lines seems useless ...
    !
    !if (X_terminator) then
    !  !
@@ -155,5 +173,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !$omp end parallel do
    !
  enddo loop_bare_grid
+ !
+ if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dipole_Energy_treshold) Xo_res=Xo_res/real(n_drude_poles,SP)
  !
 end subroutine X_os_residuals

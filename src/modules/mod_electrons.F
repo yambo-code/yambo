@@ -62,9 +62,7 @@ module electrons
    integer         :: nk
    integer         :: nbf
    integer         :: nbm
-   integer         :: bf
-   integer         :: kf
-   integer         :: sf
+   integer         :: nbc(2)       ! Number of bands with NEQ carriers for yambo_rt
    real(SP)        :: E_Fermi
    real(SP)        :: E_dir_gap(2) ! 1-2 refers to spin polarizations
    real(SP)        :: E_ind_gap(2)
@@ -135,12 +133,11 @@ module electrons
        Eo%nk=Ei%nk
        Eo%nbf=Ei%nbf
        Eo%nbm=Ei%nbm
-       Eo%bf=Ei%bf
-       Eo%kf=Ei%kf
-       Eo%sf=Ei%sf
+       Eo%nbc=Ei%nbc
        Eo%E_Fermi=Ei%E_Fermi
        Eo%E_VBM=Ei%E_VBM
        Eo%E_CBm=Ei%E_CBm
+       Eo%E_ind_gap=Ei%E_ind_gap
        Eo%E_dir_gap=Ei%E_dir_gap
      endif
      allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
@@ -228,6 +225,7 @@ module electrons
    subroutine E_reset(E)
      use memory_m, ONLY:mem_est
      type(levels)::E
+     E%E_ind_gap=0._SP
      E%E_dir_gap=0._SP
      E%E_Fermi=0._SP
      E%E_VBM=0._SP
@@ -236,8 +234,7 @@ module electrons
      E%nk=0
      E%nbf=0 
      E%nbm=0
-     E%bf=0
-     E%kf=0 
+     E%nbc=0
      E%GreenF_n_E_steps=0 
      E%GreenF_is_causal=.FALSE. 
      if(associated(E%E))              deallocate(E%E)
@@ -251,7 +248,8 @@ module electrons
      if(associated(E%GreenF))         deallocate(E%GreenF)
      if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
      nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
-     call mem_est("E-E E-Eo E-f E-fo E-df E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
+     call mem_est("E-E E-Eo E-f E-fo E-df E-W E-Z")
+     call mem_est("E-QP_corrected E-GreenF E-GreenF_W")
      !
      call E_DbGd_components_reset(E,.FALSE.)
      !

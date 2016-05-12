@@ -154,6 +154,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
       !
       ! Metallic and Insulating bands update
       !
+      E%nbc=nb
       E%nbf=nb(1)-1
       E%nbm=nb(2)
       !

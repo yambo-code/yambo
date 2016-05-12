@@ -130,14 +130,12 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
              !
              if (.not.t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( field_dir_rot, dipole )
              if (     t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, field_dir_rot ) 
-             if (  iv==ic  ) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = cONE
              !
 #if defined _KERR
              if(l_kerr) then
                dipole_dir_rot = matmul( dl_sop(:,:,is), dipole_dir )
                if (.not.t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole_dir_rot, dipole )
                if (     t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, dipole_dir_rot )
-               if (  iv==ic  ) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = cONE
              endif
 #endif
              !

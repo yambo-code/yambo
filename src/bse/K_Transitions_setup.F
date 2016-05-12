@@ -115,6 +115,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  nb(1)=Ken%nbf+1
  nb(2)=Ken%nbm
+!#if defined _RT
+! if(all(Ken%nbc/=0)) nb=Ken%nbc
+!#endif
  !
  do i_loop=1,n_loops
    !

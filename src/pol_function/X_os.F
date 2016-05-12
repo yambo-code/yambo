@@ -53,10 +53,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use interfaces,    ONLY:WF_load
  use D_lattice,     ONLY:i_space_inv
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_X,bz_samp
+ use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use memory_m,      ONLY:mem_est
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,&
+ use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,Dipole_Energy_treshold,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd !,X_terminator
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
@@ -65,7 +65,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ !
  implicit none
+ !
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
  type(X_t)            :: X
@@ -224,37 +226,35 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    ! 1) First compute the residuals
    !================================
    call X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
-
    !
    ! 2) Then the frequency dependent term
    !=======================================
-   Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
    !
-   if(Drude_pole) then
-     Xo(1,1,:)=Xo(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
-     call live_timing(steps=1)
-     cycle
-   endif
-   !
-   ! GPL_EXCLUDE_START
-   !
-#if defined _ELPH
-   if( associated(Xen%GreenF) ) then
-     call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
+   if( (iq==1) .and. abs(coarse_grid_Pt(i_cg))<Dipole_Energy_treshold ) then
+      GreenF=drude_GreenF
    else
-     call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
-   endif
+     !
+     ! GPL_EXCLUDE_START
+     !
+#if defined _ELPH
+     if( associated(Xen%GreenF) ) then 
+       call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
+     else
+       call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
+     endif
 #else
-   !
-   ! GPL_EXCLUDE_END
-   !
-   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
-   !
-   ! GPL_EXCLUDE_START
-   !
+     !
+     ! GPL_EXCLUDE_END
+     !
+     call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
+     !
+     ! GPL_EXCLUDE_START
+     !
 #endif
-   !
-   ! GPL_EXCLUDE_END
+     !
+     ! GPL_EXCLUDE_END
+     !
+   endif
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
@@ -288,8 +288,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  deallocate(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
-!$omp end parallel
  !
+!$omp end parallel
  !
  if(coarse_grid_N>0) call live_timing()
  !

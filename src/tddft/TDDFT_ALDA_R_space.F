@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function TDDFT_ALDA_R_space(ic,ik,iv,is,mode)
+function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  ! Calculates the F_xc scattering 
  !
@@ -37,25 +37,26 @@ function TDDFT_ALDA_R_space(ic,ik,iv,is,mode)
  !                              :Fxc:
  !  (iv(1),ik(3),is(3)) -->--:...:-->-- (ic(2),ik(4),is(4))
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,cZERO
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:F_xc
  use wrapper_omp,    ONLY:V_dot_V_omp
- use electrons,      ONLY:n_spinor
+ use electrons,      ONLY:n_spinor,n_sp_pol,n_spin
+ use com,            ONLY:error
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
  !
  implicit none
  !
- integer     :: ic(2),iv(2),ik(4),is(4)
+ integer     :: is(4),os(4),isp(4),osp(4)
  character(3):: mode
  complex(SP) :: TDDFT_ALDA_R_space
  ! 
  ! Work Space
  !
- complex(SP) :: rhotwr1(fft_size)
- complex(SP) :: rhotwr2(fft_size)
+ complex(SP) :: rhotwr1(fft_size,n_spinor)
+ complex(SP) :: rhotwr2(fft_size,n_spinor)
  complex(SP) :: WF_symm1(fft_size,n_spinor)
  complex(SP) :: WF_symm2(fft_size,n_spinor)
  !
@@ -63,24 +64,38 @@ function TDDFT_ALDA_R_space(ic,ik,iv,is,mode)
  call timing('T_space ALDA scatt.',OPR='start')
 #endif
  !
- ! Simplified procedure when at the Gamma point.
+ if (is(4)/=os(4).or.isp(4)/=osp(4)) call error(" TDDFT_ALDA_R_space: wrong spin index")
+ if (mode/="RES" .and. mode/="CPL" ) call error(" TDDFT_ALDA_R_space: unkown mode")
  !
- TDDFT_ALDA_R_space=cmplx(0.,0.,SP)
+ TDDFT_ALDA_R_space=cZERO
  !
- call WF_apply_symm((/ic(1),ik(1),is(1),1/),WF_symm1) 
- call WF_apply_symm((/iv(1),ik(3),is(3),1/),WF_symm2)
+ call WF_apply_symm(is,WF_symm1) 
+ call WF_apply_symm(os,WF_symm2)
  !
- rhotwr1(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
+ rhotwr1=conjg(WF_symm1)*WF_symm2
  !
- call WF_apply_symm((/ic(2),ik(2),is(2),1/),WF_symm1) 
- call WF_apply_symm((/iv(2),ik(4),is(4),1/),WF_symm2)
+ if (mode=="RES") then
+   call WF_apply_symm(isp,WF_symm1) 
+   call WF_apply_symm(osp,WF_symm2)
+ else if (mode=="CPL") then
+   call WF_apply_symm(isp,WF_symm2)
+   call WF_apply_symm(osp,WF_symm1)
+ endif
  !
- if (mode=="RES") rhotwr2(:)=F_xc(:)*WF_symm1(:,1)*conjg(WF_symm2(:,1))
- if (mode=="CPL") rhotwr2(:)=F_xc(:)*WF_symm2(:,1)*conjg(WF_symm1(:,1))
+ if( n_spin==1 ) rhotwr2(:,1)=F_xc(:,  1  ,   1  )*WF_symm1(:,1)*conjg(WF_symm2(:,1))
+ !
+ if(n_sp_pol==2) rhotwr2(:,1)=F_xc(:,is(4),isp(4))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
+ !
+ if(n_spinor==2) then
+   rhotwr2(:,1)=F_xc(:,1,1)*WF_symm1(:,1)*conjg(WF_symm2(:,1))+&
+                  F_xc(:,1,2)*WF_symm1(:,2)*conjg(WF_symm2(:,2))
+   rhotwr2(:,2)=F_xc(:,2,1)*WF_symm1(:,1)*conjg(WF_symm2(:,1))+&
+                  F_xc(:,2,2)*WF_symm1(:,2)*conjg(WF_symm2(:,2))
+ endif
  !
  ! SUM
  !=====
- TDDFT_ALDA_R_space=V_dot_V_omp(fft_size,rhotwr1,rhotwr2)
+ TDDFT_ALDA_R_space=V_dot_V_omp(fft_size*n_spinor,rhotwr1,rhotwr2)
  !
  ! tddft_alda_r_space'd be 2*cdotc/u*real(fft_size,SP)/DL_vol/Nq 
  ! but it is multiplied by Co

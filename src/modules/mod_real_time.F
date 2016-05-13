@@ -38,42 +38,45 @@ module real_time
  !
  logical           :: l_NE_dynamics  
  logical           :: l_NE_with_fields
- logical           :: l_NE_simulate_Irredux
- logical           :: l_Dynamics_is_over  
+ logical           :: l_Dynamics_is_over   
  logical           :: l_Update_Time_Step  = .FALSE.
  !
  ! Evaluation logicals
  !
- logical          :: eval_DENSITY
  logical          :: eval_HARTREE
  logical          :: eval_DFT
  !
  ! To include the induced field in the coupling and current
  !
- logical           :: l_RT_induced_field
+ logical           :: l_RT_induced_field = .FALSE.
  !
  ! ... core step length and Time-points array...
  !
- real(SP)              :: RT_step          ! Elemental step used to define dimensions and time-points
- real(SP)              :: RT_dyn_step      ! On-the-fly time-step
+ real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
+ real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
  ! 
  ! ... NE dynamics ...
  !
  real(SP) :: NE_time    =0._SP                  ! <- incremented
  real(SP) :: NE_tot_time=0._SP                  ! Total (fixed)
+ integer  :: NE_time_step_update_last_point = 1 ! Last time-point of the dT update
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
+ real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_step_update_treshold    = 2._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_time_step_update_jump_SAVE = 0._SP
  !
- integer  :: NE_i_time ! = (NE_time+1)/RT_step
- integer  :: NE_steps  ! Still relative to RT_step
- !
- integer  :: it_dyn=0  ! Equivalent to NE_i_time?
+ integer  :: NE_i_time=1 ! = (NE_time+1)/RT_step
+ integer  :: NE_steps    ! Still relative to RT_step
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
  ! channels. I will see later if this can be somehow extended/duplicated
  ! for the static correlations
  !
  logical  :: l_RT_lifetimes_interpolation = .FALSE.! If .TRUE. the lifetimes not calculated are interpolated. Otherwise are kept constant
- real(SP) :: RT_life_interp_steps(2)               ! (1) is step between groups of 3, (2) is step in the group of 3.
+ real(SP) :: RT_life_interp_times(2)               ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
+ real(SP) :: RT_life_interp_times_SAVE(2)
+ ! 
+ ! Lifetimes Interpolation Time status 
  ! 
  integer(2), allocatable :: RT_TIME_status(:)
  !
@@ -86,10 +89,11 @@ module real_time
  !
  real(SP) :: NE_MEM_treshold
  integer  :: Life_MEM_steps
- integer  :: G_MEM_steps    = 2 ! By default only G_lesser@t and @t+1
- integer  :: i_MEM_now      = 1
- integer  :: i_MEM_next     = 1
- integer  :: i_MEM_previous = 1
+ integer  :: G_MEM_steps     = 2 ! By default only G_lesser@t and @t+1
+ integer  :: i_MEM_collision = 1
+ integer  :: i_MEM_now       = 1
+ integer  :: i_MEM_next      = 0 ! Defined in RT_driver 
+ integer  :: i_MEM_previous  = 0 ! Defined in RT_driver
  integer  :: MAX_dG_dT_indexes(3)
  integer, allocatable :: MEM_pointer(:) ! Time memory pointers
  !
@@ -111,14 +115,15 @@ module real_time
  !
  ! ... and magnetization
  !----------------------
- real(SP)    :: RT_magn(3)
+ complex(SP) :: RT_magn(3)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
  real(SP)    :: Phase_LifeTime
  real(SP)    :: RAD_LifeTime
  real(SP)    :: RAD_magnification=1._SP
- logical     :: RT_is_dephased
+ logical     :: RT_is_statically_dephased=.FALSE.
+ logical     :: RT_is_dynamically_dephased=.FALSE.
  !
  ! Table pointing to the position of the uniform grid points in the
  ! G_lesser structure
@@ -159,18 +164,6 @@ module real_time
  !----------------
  !
  logical     :: l_RT_CCA_Kernel
- !
- ! Manual pump
- !
- real(SP)    :: Eh_pumped_Nel
- real(SP)    :: Eh_pumped_pair_energy(2)
- !
- real(SP)    :: Eh_pumped_pair_deltaE
- real(SP)    :: Eh_pumped_pair_BZ_reagions(3,6)   
- !
- real(SP)    :: Eh_pumped_pair_width               ! energy with
- real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
- integer     :: n_regions
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !
@@ -295,7 +288,8 @@ module real_time
  !
  ! Hartree term
  !
- complex(SP), allocatable :: XC0_and_HARTREE0(:,:,:,:)
+ complex(SP), allocatable :: XC0(:,:,:,:)
+ complex(SP), allocatable :: HARTREE0(:,:,:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -349,35 +343,54 @@ module real_time
    !
    subroutine RT_obj_alloc(RT)
      type(RT_t)::RT
-     if(.not.associated(RT%kpt))          allocate(RT%kpt(RT%nk,3))
-     if(.not.associated(RT%k_weight))     allocate(RT%k_weight(RT%nk))
-     if(.not.associated(RT%table))        allocate(RT%table(RT%nstates,4))
-     if(.not.associated(RT%E_bare))       allocate(RT%E_bare(RT%nstates)) 
-     if(.not.associated(RT%f_bare))       allocate(RT%f_bare(RT%nstates))
+     if(.not.associated(RT%kpt))            allocate(RT%kpt(RT%nk,3))
+     if(.not.associated(RT%k_weight))       allocate(RT%k_weight(RT%nk))
+     if(.not.associated(RT%table))          allocate(RT%table(RT%nstates,4))
+     if(.not.associated(RT%E_bare))         allocate(RT%E_bare(RT%nstates)) 
+     if(.not.associated(RT%f_bare))         allocate(RT%f_bare(RT%nstates))
      if(.not.associated(RT%dE_Hartree))     allocate(RT%dE_Hartree(RT%nstates))
      if(.not.associated(RT%dE_V_xc))        allocate(RT%dE_V_xc(RT%nstates))
      if(.not.associated(RT%dE_Self_Energy)) allocate(RT%dE_Self_Energy(RT%nstates))
+     RT%table         =0
+     RT%E_bare        =0._SP
+     RT%f_bare        =0._SP
+     RT%dE_Hartree    =0._SP
+     RT%dE_V_xc       =0._SP
+     RT%dE_Self_Energy=0._SP
      if (l_elel_scatt) then
        if(.not.associated(RT%dGAMMA_E_E_Hole))     allocate(RT%dGAMMA_E_E_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_E_Electron)) allocate(RT%dGAMMA_E_E_Electron(RT%nstates))
+       RT%dGAMMA_E_E_Hole    =0._SP
+       RT%dGAMMA_E_E_Electron=0._SP
      endif
      if (l_elph_scatt) then
        if(.not.associated(RT%dGAMMA_E_P_Hole))     allocate(RT%dGAMMA_E_P_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_Electron)) allocate(RT%dGAMMA_E_P_Electron(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_Ho_abs))   allocate(RT%dGAMMA_E_P_Ho_abs(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_El_abs))   allocate(RT%dGAMMA_E_P_El_abs(RT%nstates))
+       RT%dGAMMA_E_P_Hole    =0._SP
+       RT%dGAMMA_E_P_Electron=0._SP
+       RT%dGAMMA_E_P_Ho_abs  =0._SP
+       RT%dGAMMA_E_P_El_abs  =0._SP
      endif
      if (l_elphoton_scatt) then
        if(.not.associated(RT%dGAMMA_E_PHOT_Hole))     allocate(RT%dGAMMA_E_PHOT_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_PHOT_Electron)) allocate(RT%dGAMMA_E_PHOT_Electron(RT%nstates))
+       RT%dGAMMA_E_PHOT_Hole    =0._SP
+       RT%dGAMMA_E_PHOT_Electron=0._SP
      endif
-     if (l_elel_scatt.or.l_elph_scatt) then
+     if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
        if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates,8))
        if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
        if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
+       RT%GAMMA_bare  =0._SP
+       RT%delta_GAMMA =0._SP
+       RT%NEQ_Lifetime=0._SP
      endif
      if(.not.associated(RT%delta_E))      allocate(RT%delta_E(RT%nstates))   
      if(.not.associated(RT%delta_f))      allocate(RT%delta_f(RT%nstates))  
+     RT%delta_f=0._SP
+     RT%delta_E=0._SP
    end subroutine
    !
    subroutine RT_obj_free(RT)
@@ -411,8 +424,7 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_is_libDFT,l_elph_scatt,l_elel_scatt,&
-&                             l_sc_cohsex,l_sc_hartree
+     use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional
@@ -427,14 +439,6 @@ module real_time
      call SC_alloc(en)
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
-     !
-     !DEBUG...WHY?>
-     !if (l_HF_and_locXC.or.l_sc_hf.or.l_sc_cohsex) then
-     !  allocate(QP_Vnl_xc(QP_n_states))
-     !  call mem_est("QP_Vnl_xc",(/QP_n_states/))
-     !  QP_Vnl_xc=cZERO
-     !endif
-     !DEBUG<
      !
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
@@ -512,20 +516,24 @@ module real_time
      allocate(Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
-     if(l_sc_hf.or.l_sc_cohsex) then
+     if(l_use_Hxc_collisions) then
        allocate(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
        call mem_est("RT_Vnl_xc",(/size(RT_Vnl_xc)/),(/2*SP/))
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
-     if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_dephased/)) ) then
+     if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
        allocate(I_relax_static(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
        call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
      endif
      !
-     allocate(XC0_and_HARTREE0(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
-     XC0_and_HARTREE0=cZERO
+     allocate(HARTREE0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     call mem_est("HARTREE0",(/size(HARTREE0)/),(/2*SP/))
+     HARTREE0=cZERO
+     !
+     allocate(XC0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     call mem_est("XC0",(/size(XC0)/),(/2*SP/))
+     XC0=cZERO
      !
      allocate(SC_R(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
@@ -536,17 +544,14 @@ module real_time
      allocate(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
      !
-     allocate(MEM_pointer(G_MEM_steps)) ! G_MEM_steps=2 => MEM_pointers are relative to it_dyn,it_dyn_next
-                                        ! G_MEM_steps=3 => MEM_pointers are relative to it_dyn,it_dyn_next,it_dyn_previous
+     allocate(MEM_pointer(G_MEM_steps)) 
      MEM_pointer    = 0
      MEM_pointer(1) = 1
      !
      allocate(REF_V_xc_sc(fft_size,n_spin))
      call mem_est("REF_V_xc_sc",(/fft_size*n_spin/),(/SP/))
-     !
      allocate(REF_V_hartree_sc(fft_size,n_spin))
      call mem_est("REF_V_hartree_sc",(/fft_size*n_spin/),(/SP/))
-     !
      allocate(REF_Vnl_xc(QP_n_states))
      call mem_est("REF_Vnl_xc",(/size(REF_Vnl_xc)/),(/2*SP/))
      !
@@ -575,10 +580,8 @@ module real_time
    !   
    subroutine RT_free
      !
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare
+     use SC,             ONLY:SC_free,E_bare
      use memory_m,       ONLY:mem_est
-     use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
      !
      call SC_free()
@@ -611,9 +614,14 @@ module real_time
        call mem_est("I_relax_static")
      endif
      !
-     if(allocated(XC0_and_HARTREE0)) then
-       deallocate(XC0_and_HARTREE0)
-       call mem_est("XC0_and_HARTREE0")
+     if(allocated(HARTREE0)) then
+       deallocate(HARTREE0)
+       call mem_est("HARTREE0")
+     endif
+     !
+     if(allocated(XC0)) then
+       deallocate(XC0)
+       call mem_est("XC0")
      endif
      !
      if(allocated(SC_R)) then
@@ -735,6 +743,15 @@ module real_time
        ARRAY(i1)=ARRAY(i1+1)
      enddo
      ARRAY(STEPS)=VAL
+   end subroutine
+   !
+   subroutine RT_init_occupation_reference( )
+     use electrons,     ONLY:spin_occ
+     integer               :: ib
+     do ib=RT_bands(1),RT_bands(2)
+       RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+       RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+     enddo
    end subroutine
    !
 end module

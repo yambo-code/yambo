@@ -24,7 +24,7 @@
 subroutine XCo_driver(E,k,Xk,q)
  !
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time,l_gw0
- use pars,          ONLY:schlen,RZERO,SP
+ use pars,          ONLY:schlen,rZERO,SP,cZERO
  use com,           ONLY:msg
  use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol,spin,E_reset,E_duplicate
@@ -39,7 +39,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
 #if defined _SC
- use global_XC,     ONLY:WF_kind,SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,SC_SRPA
+ use global_XC,     ONLY:WF_kind,SC_FOCK,SC_HARTREE,SC_COHSEX,SC_COH,SC_SEX,SC_EXX,SC_EXXC,SC_SRPA
 #endif
  !
  implicit none
@@ -74,7 +74,7 @@ subroutine XCo_driver(E,k,Xk,q)
  if (l_acfdt)   sec_mode_and_message(1)='p'
  l_local=.true.
 #if defined _SC
- l_local=.not.l_sc_run.and.WF_kind/=SC_HF 
+ l_local=.not.l_sc_run.and.(WF_kind/=SC_FOCK.and.WF_kind/=SC_FOCK+SC_HARTREE)
 #endif
  if(l_local) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
  !
@@ -100,12 +100,12 @@ subroutine XCo_driver(E,k,Xk,q)
    allocate(QP_Vnl_sex(QP_n_states))
    call mem_est("QP_Vnl_sex",(/QP_n_states/))
  endif
- QP_Vnl_xc=(0.,0.)
- QP_Vxc=(0.,0.)
- if (l_screen_hyb) QP_Vnl_sex=(0.,0.)
+ QP_Vnl_xc=cZERO
+ QP_Vxc=cZERO
+ if (l_screen_hyb) QP_Vnl_sex=cZERO
  !
 #if defined _SC
- if (l_sc_run .and. WF_kind==SC_HF) return
+ if (l_sc_run .and. (WF_kind==SC_FOCK.or.WF_kind==SC_HARTREE+SC_FOCK)) return
 #endif
  !
  ! Main DB I/O
@@ -125,7 +125,7 @@ subroutine XCo_driver(E,k,Xk,q)
    if (l_screen_hyb) then                          ! 
      call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')    ! For screened hybrids calculate the 
      QP_Vnl_sex=QP_Vnl_xc                          ! model nonlocal screened exchange part
-     QP_Vnl_xc=(0.,0.)                             !  
+     QP_Vnl_xc=cZERO                               !  
    end if
    !
    call XCo_Hartree_Fock(E,k,xk,q)
@@ -137,13 +137,15 @@ subroutine XCo_driver(E,k,Xk,q)
    ! Eqp=Eo+QP_Sc+QP_Vnl_xc-QP_Vxc 
    !
    ! XCo=any local => QP_Vnl_xc=HF           & QP_Vxc=any local
+   ! XCo=COH       => QP_Vnl_xc=HF-QP_COH    & QP_Vxc= 0.
+   ! XCo=SEX       => QP_Vnl_xc=HF-QP_SEX    & QP_Vxc= 0.
    ! XCo=COHSEX    => QP_Vnl_xc=HF-QP_COHSEX & QP_Vxc= 0.
    ! XCo=HF        => QP_Vnl_xc=0.           & QP_Vxc= 0.
    ! XCo=EXX       => QP_Vnl_xc=HF           & QP_Vxc= EXX
    ! XCo=EXXC      => QP_Vnl_xc=HF           & QP_Vxc= EXXc
    ! XCo=SRPA      => QP_Vnl_xc=HF-QP_COHSEX & QP_Vxc= SRPA
    !
-   if (WF_kind==SC_COHSEX) call QP_load_SC_xc()
+   if (WF_kind==SC_COHSEX.or.WF_kind==SC_COH.or.WF_kind==SC_SEX) call QP_load_SC_xc()
    !
 #endif
    !
@@ -154,7 +156,7 @@ subroutine XCo_driver(E,k,Xk,q)
  if (.not.l_sc_run.and..not.l_real_time) then
    !
 #if defined _SC
-   if( WF_kind/= SC_COHSEX ) call XCo_local(E,Xk)
+   if( WF_kind/=SC_COHSEX .and. WF_kind/=SC_COH .and. WF_kind/=SC_SEX ) call XCo_local(E,Xk)
 #else
    call XCo_local(E,Xk)
    if (.not.l_screen_hyb) then
@@ -193,6 +195,10 @@ subroutine XCo_driver(E,k,Xk,q)
      
      if (WF_kind == SC_COHSEX) then 
        Vnlxc_kind='HF-QP_COHSEX'
+     else if (WF_kind == SC_COH) then 
+       Vnlxc_kind='HF-QP_COH'
+     else if (WF_kind == SC_SEX) then 
+       Vnlxc_kind='HF-QP_SEX'
      else
        Vnlxc_kind='HF'
      endif

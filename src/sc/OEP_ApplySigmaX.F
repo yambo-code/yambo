@@ -43,7 +43,6 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use QP_m,            ONLY:QP_ng_Sx
  use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:WF
@@ -62,9 +61,9 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  !
  type(elemental_collision)::isc
  type(PP_indexes)         ::px
- integer          ::iv1,iv2,ir,ig,i1,ikbz,ik,iq,ifft,offt,tr_syms,os,is,iGo,qs
+ integer          ::iv1,iv2,ig,ik,iq,ifft,offt,os,is,iGo,qs
  character(schlen)::ch
- logical          ::lostr, listr     
+ logical          ::lostr
  complex(DP),allocatable ::u(:),rhotw_rs(:),u_rs(:),local_u(:)
  !
  ! Resets

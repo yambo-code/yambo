@@ -71,7 +71,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
      !
      r_nk=sum(E%f(ib,:,i_sp_pol))
      !
-     if (n_spin==1) r_nk=r_nk/2.
+     if (n_spin==1) r_nk=r_nk/2._SP
      !
      if (r_nk<=tresh) cycle
      if (abs(r_nk-real(E%nk,SP))<=filled_tresh) then
@@ -83,8 +83,8 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
    if (Nbm_(i_sp_pol)==0) Nbm_(i_sp_pol)=Nbf_(i_sp_pol)
  enddo
  !
- E%Nbf=minval(Nbf_)
- E%Nbm=maxval(Nbm_)
+ E%nbf=minval(Nbf_)
+ E%nbm=maxval(Nbm_)
  !
  if (E%Nbm+1 > E%nb) call error(' Too few states. Include more states in the DFT run.')
  !
@@ -126,13 +126,13 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
    enddo
  endif
  !
- if(n_sp_pol==1) E%E_ind_gap(1)=E_g_ind_(1,1)
+ if(n_sp_pol==1) E%E_ind_gap(1)  =E_g_ind_(1,1)
  if(n_sp_pol==2) E%E_ind_gap(1:2)=E_g_ind_(2:3,1)
  !
  ! [2] Direct Gaps (min/max)
  !
  if(all(Nbf_==Nbm_)) then
-   E_g_dir_(1,:)=(/100.,-100./)
+   E_g_dir_(1,:)=(/100._SP,-100._SP/)
    do ik=1,E%nk
      do i_sp_pol=1,n_sp_pol
        do j_sp_pol=1,n_sp_pol
@@ -157,7 +157,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
      if (Nbf_(i_sp_pol)/=Nbm_(i_sp_pol)) cycle
      if (Nbf_(i_sp_pol)==0) cycle
      !
-     E_g_dir_(i_sp_pol+1,:)=(/100.,-100./)
+     E_g_dir_(i_sp_pol+1,:)=(/100._SP,-100._SP/)
      do ik=1,E%nk
        E_g_dir_(i_sp_pol+1,1)=min(E_g_dir_(i_sp_pol+1,1),&
 &                      E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol) )

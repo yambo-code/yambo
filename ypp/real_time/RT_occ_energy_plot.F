@@ -25,11 +25,11 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  ! 
  ! FIT the occupations with a Gauss–Newton algorithm
  !
- use units,          ONLY:HA2EV,HA2KEL,FS2AUT
+ use units,          ONLY:HA2EV,HA2KEL,AUT2FS
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use pars,           ONLY:SP,schlen
- use RT_control,     ONLY:OCC_T_range,OCC_deltaT,RT_apply
- !use QP_m,           ONLY:QP_table,QP_n_states
+ use YPP_real_time,  ONLY:RT_time
+ use RT_control,     ONLY:RT_apply
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor
@@ -55,7 +55,6 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  real(SP)              :: RT_occ_fit(fit_dim,2,n_T_steps),RT_occ_spin_fit(fit_dim,2,2,n_T_steps),RT_E_fit(fit_dim,2)
  real(SP)              :: RT_gamma_ratio(RT_carriers%nstates,2,n_T_steps)
  !
- real(SP)              :: io_Time
  real(SP)              :: TMP_vec(RT_carriers%nstates),data_fit(2,11)
  real(SP)              :: err_fit(4,n_T_steps),err_fit_gamma(4,n_T_steps),err_fit_spin(4,n_T_steps)
  real(SP)              :: T_fit(2,n_T_steps),T_fit_gamma(4,n_T_steps),T_fit_spin(4,n_T_steps)
@@ -102,9 +101,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    !
    ! Part 1: IO and store history
    !==============================
-   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   !
-   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
    ! Fill the large arrays to be used for the fitting procedure.
    !
@@ -155,7 +152,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    !
    ! Occupations FIT
    !
-   nfound(3)=Fermi_fnc_fit(RT_occ(:,i_T),RT_carriers%nstates,T_fit(:,i_T),Ef_fit(:,i_T),err_fit(:,i_T), &
+   nfound(3)=Fermi_fnc_fit(RT_occ(:,i_T),RT_carriers%nstates,T_fit(:,i_T),Ef_fit(:,i_T),err_fit(:,i_T),&
 &                            RT_occ_fit_out=RT_occ_fit(:,:,i_T),RT_E_fit_out=RT_E_fit)
    !
    if(nfound(3)==1) nfound(1)  =nfound(1)+1
@@ -220,7 +217,6 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  !====================================
  do i_T=1,n_T_steps
    !
-   !RT_occ(:,i_T)=RT_occ(E_sort_index(:),i_T)
    TMP_vec=RT_occ(E_sort_index(:),i_T)
    RT_occ(:,i_T)=TMP_vec
    do i_spinor=1,2*(n_spinor-1)
@@ -303,7 +299,9 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  output_fname(2)='YPP-RT_E_Fermi'
  !
  call of_open_close(trim(output_fname(1)),'ot')
+ call RT_write_descriptions(trim(output_fname(1)))
  call of_open_close(trim(output_fname(2)),'ot')
+ call RT_write_descriptions(trim(output_fname(2)))
  !
  call msg('o '//trim(output_fname(1)),'#')
  call msg('o '//trim(output_fname(1)),'# Fitted temperatures [K]')
@@ -319,9 +317,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   !
-   data_fit(1,:)= io_Time/FS2AUT
+   data_fit(1,:)= RT_time(i_T)*AUT2FS
    !
    do i1=1,2
      data_fit(1,i1+1)= T_fit(i1,i_T)*HA2KEL
@@ -372,9 +368,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  data_ch(1,5,:)=' Max error'
  !
  do i_T=1,n_T_steps
-   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   titles(i_T+1)=' f@'//trim(real2ch( io_Time/FS2AUT ))
-   data_ch(i_T+1,1,:)= trim(real2ch( io_Time/FS2AUT ))
+   titles(i_T+1)=' f@'//trim(real2ch( RT_time(i_T)*AUT2FS ))
+   data_ch(i_T+1,1,:)= trim(real2ch( RT_time(i_T)*AUT2FS ))
    do ifit=1,2
      data_ch(i_T+1,2,ifit)=   trim(real2ch( T_fit(ifit,i_T)*HA2KEL ))
      data_ch(i_T+1,3,ifit)=   trim(real2ch( Ef_fit(ifit,i_T)*HA2EV ))
@@ -394,6 +389,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    !
    if (n_T_steps>nmax_file_report) output_fname(1)=trim(output_fname(1))//trim(GRP_string)
    call of_open_close(trim(output_fname(1)),'ot')
+   call RT_write_descriptions(trim(output_fname(1)))
    !
    call msg('o '//trim(output_fname(1)),'#')
    call msg('o '//trim(output_fname(1)),'# Occupations distribution at different times (f@ time)')
@@ -410,6 +406,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      !
      if (n_T_steps>nmax_file_report) output_fname(i_spinor+1)=trim(output_fname(i_spinor+1))//trim(GRP_string)
      call of_open_close(trim(output_fname(i_spinor+1)),'ot')
+     call RT_write_descriptions(trim(output_fname(i_spinor+1)))
      !
      call msg('o '//trim(output_fname(i_spinor+1)),'#')
      if(i_spinor==1) call msg('o '//trim(output_fname(i_spinor+1)),'# Spin up distribution at different times (f@ time)')
@@ -430,6 +427,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      output_fname(igamma+n3)=trim(gamma_fname(igamma))
      if (n_T_steps>nmax_file_report) output_fname(igamma+n3)=trim(gamma_fname(igamma))//trim(GRP_string)
      call of_open_close(trim(output_fname(igamma+n3)),'ot')
+     call RT_write_descriptions(trim(output_fname(igamma+n3)))
      !
      call msg('o '//trim(output_fname(igamma+n3)),'#')
      call msg('o '//trim(output_fname(igamma+n3)),'# Lifetimes distribution at different times (f@ time)')
@@ -480,6 +478,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      if (n_T_steps>nmax_file_report) output_fname(1)=trim(output_fname(1))//trim(GRP_string)
      !
      call of_open_close(trim(output_fname(1)),'ot')
+     call RT_write_descriptions(trim(output_fname(1)))
      !
      call msg('o '//trim(output_fname(1)),'#')
      call msg('o '//trim(output_fname(1)),'# Results of the FIT')

@@ -230,7 +230,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_B(ikbz,okbz,1)=iqbz
  ! qindx_B(ikbz,okbz,2)=iGo
  !
- call live_timing('X indexes',Xk%nbz,SERIAL=.true.)
+ call live_timing('X indexes',Xk%nbz)
  !
  do ikbz=1,Xk%nbz
    !
@@ -261,10 +261,10 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  if(coll_scattering) then
    call msg('rn',':: Indices: Scattering and Self-Energy')
-   call live_timing('SSE indexes',k%nbz,SERIAL=.true.)
+   call live_timing('SSE indexes',k%nbz)
  else
    call msg('rn',':: Indices: Self-Energy')
-   call live_timing('SE indexes',qp_states_k(2)-qp_states_k(1)+1,SERIAL=.true.)
+   call live_timing('SE indexes',qp_states_k(2)-qp_states_k(1)+1)
  endif
  !
  call k_ibz2bz(k,'a',.false.)

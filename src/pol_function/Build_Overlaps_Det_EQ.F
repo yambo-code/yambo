@@ -26,7 +26,7 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
  ! Build inverse overlaps and overlaps determinants between valence bands at
  ! equilibrium
  !
- use pars,           ONLY:SP,cZERO,cONE
+ use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:k_map
  use matrix_operate, ONLY:hermitian,INV,USE_LK

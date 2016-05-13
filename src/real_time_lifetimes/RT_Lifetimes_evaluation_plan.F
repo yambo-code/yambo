@@ -21,24 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_Lifetimes_evaluation_plan( UPDATE )
+integer function RT_Lifetimes_evaluation_plan( )
  !
  ! Here I define the components of an integer array RT_TIME_status(NE_steps)
  !
  use pars,           ONLY:IP2,SP
  use memory_m,       ONLY:mem_est
- use RT_control,     ONLY:it_start
- use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_steps,&
-&                         RT_dyn_step,l_RT_lifetimes_interpolation,Life_MEM_steps,it_dyn
+ use RT_control,     ONLY:NE_i_start_time
+ use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_times,&
+&                         RT_dyn_step,l_RT_lifetimes_interpolation,Life_MEM_steps,NE_i_time
  !
  implicit none
  !
- logical :: UPDATE
- !
  ! Work Space
  !
- integer         :: it,N_inter_steps,N_intra_steps,it_first,it_0,it_,i1,N_blocks,i_default
- real(SP)        :: weight(NE_steps)
+ integer         :: it,N_inter_steps,N_intra_steps,it_,i1,N_blocks,i_default
  complex(SP)     :: TIME
  !
  if (.not.allocated(RT_TIME_status)) then
@@ -47,22 +44,18 @@ integer function RT_Lifetimes_evaluation_plan( UPDATE )
    RT_TIME_status=1
  endif
  !
- if (UPDATE) RT_TIME_status(it_dyn:)=1
- !
- if (RT_life_interp_steps(1)<0. .or. it_start>=NE_steps) then
-   if (UPDATE) return
+ if (RT_life_interp_times(1)<=0. .or. NE_i_start_time>=NE_steps) then
    l_RT_lifetimes_interpolation=.FALSE.
    Life_MEM_steps=1
-   RT_Lifetimes_evaluation_plan=0
+   RT_Lifetimes_evaluation_plan=NE_steps
    return
  endif 
  !
- Life_MEM_steps=nint(RT_life_interp_steps(1)/RT_life_interp_steps(2))
- if (Life_MEM_steps<3) Life_MEM_steps=3
- RT_life_interp_steps(1)=RT_life_interp_steps(2)*Life_MEM_steps
+ ! Number of steps & blocks composed by N_inter_steps elements 
  !
- N_inter_steps=nint(RT_life_interp_steps(1)/RT_dyn_step)
- N_intra_steps=nint(RT_life_interp_steps(2)/RT_dyn_step)
+ N_inter_steps=nint(RT_life_interp_times(1)/RT_dyn_step)
+ N_intra_steps=nint(RT_life_interp_times(2)/RT_dyn_step)
+ N_blocks     =N_inter_steps/N_intra_steps
  !
  ! RT_TIME_status = -1   KEEP constant 
  !                  >0   EVAL and SAVE
@@ -75,38 +68,25 @@ integer function RT_Lifetimes_evaluation_plan( UPDATE )
  !
  RT_Lifetimes_evaluation_plan=i_default
  !
- weight=1._SP
- it_0=1
+ ! Starting time point
  !
- if (it_start> 1) then
-   N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it_start+1)/RT_dyn_step)
-   N_intra_steps=nint(real(RT_life_interp_steps(2))/weight(it_start+1)/RT_dyn_step)
- endif
- !
- it_first=it_start+1
- !
- do it=it_start,NE_steps
-   if (it< it_0) weight(it)=max(weight(it),0.1)
-   if (it>=it_0) weight(it)=max(weight(it),0.01)
- enddo
- !
- ! Number of blocks composed by N_inter_steps elements 
- !
- N_blocks=N_inter_steps/N_intra_steps
- !
- it=it_start
+ it=NE_i_time
  !
  ! At the beginning I do not have enough points to perform the fit. I, therefore,
  ! introduce blocks with an increasing number of elements
  !
- do i1=1,N_intra_steps,max(N_intra_steps/10,1)
-   call BUILD_up_group(N_blocks*i1,i1)
-   it=it+N_blocks*i1
- enddo
+ if (NE_i_time==NE_i_start_time) then
+   !
+   do i1=1,N_intra_steps,max(N_intra_steps/10,1)
+     call BUILD_up_group(N_blocks*i1,i1)
+     it=it+N_blocks*i1
+   enddo
+   !
+ endif
  !
  ! And now the groups with the full number
  !
- do while (it<NE_steps.and.it>=it_dyn)
+ do while (it<NE_steps)
    !
    if (NE_steps-it+1<N_inter_steps) then
      call BUILD_up_group(N_inter_steps/N_intra_steps,1)
@@ -114,14 +94,11 @@ integer function RT_Lifetimes_evaluation_plan( UPDATE )
      call BUILD_up_group(N_inter_steps,N_intra_steps)
    endif
    !
-   N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it)/RT_dyn_step)
-   N_intra_steps=nint(real(RT_life_interp_steps(2))/weight(it)/RT_dyn_step)
-   !
    it=it+N_inter_steps
    !
  enddo
  !
- RT_Lifetimes_evaluation_plan = count( RT_TIME_status>0 )
+ RT_Lifetimes_evaluation_plan = count( RT_TIME_status >0 )
  !
  contains
    !

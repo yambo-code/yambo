@@ -25,15 +25,14 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid,&
-&                         electrons_bands_interpolate
+ use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use com,            ONLY:msg,of_open_close,error,warning
  use vec_operate,    ONLY:c2a,v_norm,iku_v_norm
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
- use interpolate,    ONLY:reset_interpolation
+ use interpolate,    ONLY:reset_interpolation,electrons_bands_interpolate
  use QP_CTL_m,       ONLY:QP_apply
  !
  implicit none

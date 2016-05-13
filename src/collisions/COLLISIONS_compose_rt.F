@@ -26,9 +26,9 @@ subroutine COLLISIONS_compose_rt(dG_in)
  ! HF/SEX(state) = - (0.,1.) * \sum_{n,n',q} COLLISIONS(n,n',q,state) x G_lesser(n,n',k-q)
  ! 
  use pars,             ONLY:SP,cZERO,cI
- use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx
- use collision,        ONLY:FOCK_COLL_element,SEX_COLL_element,COLL_bands,&
-&                           FOCK_collisions,SEX_collisions,COLLISIONS_group,COLLISIONS_element
+ use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree
+ use collision,        ONLY:HXC_COLL_element,COLL_bands,&
+&                           HXC_collisions,COLLISIONS_group,COLLISIONS_element
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
@@ -40,10 +40,10 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  ! Work Space
  !
- integer           :: i_k,i_k_RT
+ integer           :: i_coll,i_comp,i_coll_mem,i_spin,i_n,i_m,i_kmq,ib,ibp,i_k,i_k_RT
  complex(SP)       :: G_avg(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz)
  !
- if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
+ if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and..not.l_sc_hartree) return
  !
  G_avg=cZERO
  !
@@ -61,76 +61,61 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  RT_Vnl_xc=cZERO
  !
- call local_MASK( FOCK_collisions , FOCK_COLL_element )
+ do i_coll=1,HXC_collisions%N
+   !
+   if (.not.(HXC_collisions%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
+   !
+   i_k       =HXC_collisions%state(i_coll,3)
+   i_n       =HXC_collisions%state(i_coll,1)
+   i_m       =HXC_collisions%state(i_coll,2)
+   i_spin    =HXC_collisions%state(i_coll,4)
+   i_coll_mem=HXC_collisions%PAR_map(i_coll)
+   !
+   ! If the COLLISIONS are read from a DB with more bands than RT_bands:
+   !
+   if (i_n<RT_bands(1).or.i_n>RT_bands(2)) cycle
+   if (i_m<RT_bands(1).or.i_m>RT_bands(2)) cycle
+   !
+   i_comp=1
+   !
+   i_k_RT=RT_ibz_coo(i_k,1)
+   !
+   do i_kmq=1,nXkibz
+     !
+     do ibp=COLL_bands(1),COLL_bands(2)
+       do ib=COLL_bands(1),COLL_bands(2)
+         !
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
+           RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
+&                                               -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)
+           i_comp=i_comp+1
+         endif
+         !
+       enddo
+     enddo
+     !
+   enddo
+   !
+   if(.not.l_RT_uses_E_DbGd) cycle
+   !
+   RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)
+   !
+ enddo
  !
- if (l_sc_cohsex) call local_MASK( SEX_collisions , SEX_COLL_element )
+ ! Symmetrization
+ !================
+ do i_coll=1,HXC_collisions%N
+   !
+   if (.not.(HXC_collisions%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
+   i_k       =HXC_collisions%state(i_coll,3)
+   i_n       =HXC_collisions%state(i_coll,1)
+   i_m       =HXC_collisions%state(i_coll,2)
+   !
+   RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=real(RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
+   RT_Vnl_xc(i_m,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=conjg(RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
+   !
+ enddo
  !
  call PP_redux_wait(RT_Vnl_xc)
  !
- contains
-   !
-   subroutine local_MASK( COLL , COLL_element )
-     !
-     type(COLLISIONS_group)   :: COLL
-     type(COLLISIONS_element) :: COLL_element(COLL%PAR_N)
-     !
-     integer           :: i_coll,i_comp,i_coll_mem,i_spin,i_n,i_m,i_kmq,ib,ibp
-     !
-     do i_coll=1,COLL%N
-       !
-       if (.not.(COLL%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
-       !
-       i_k       =COLL%state(i_coll,3)
-       i_n       =COLL%state(i_coll,1)
-       i_m       =COLL%state(i_coll,2)
-       i_spin    =COLL%state(i_coll,4)
-       i_coll_mem=COLL%PAR_map(i_coll)
-       !
-       ! If the COLLISIONS are read from a DB with more bands than RT_bands:
-       !
-       if (i_n<RT_bands(1).or.i_n>RT_bands(2)) cycle
-       if (i_m<RT_bands(1).or.i_m>RT_bands(2)) cycle
-       !
-       i_comp=1
-       !
-       i_k_RT=RT_ibz_coo(i_k,1)
-       !
-       do i_kmq=1,nXkibz
-         !
-         do ibp=COLL_bands(1),COLL_bands(2)
-           do ib=COLL_bands(1),COLL_bands(2)
-             !
-             if (COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
-               RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
-&                                               -cI*COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)
-               i_comp=i_comp+1
-             endif
-             !
-           enddo
-         enddo
-         !
-       enddo
-       !
-       if(.not.l_RT_uses_E_DbGd) cycle
-       !
-       RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)
-       !
-     enddo
-     !
-     ! Symmetrization
-     !================
-     do i_coll=1,COLL%N
-       !
-       if (.not.(COLL%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
-       i_k       =COLL%state(i_coll,3)
-       i_n       =COLL%state(i_coll,1)
-       i_m       =COLL%state(i_coll,2)
-       !
-       RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=real(RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
-       RT_Vnl_xc(i_m,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=conjg(RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
-       !
-     enddo
-     !
-   end subroutine
-   !
 end subroutine COLLISIONS_compose_rt

@@ -30,7 +30,7 @@ subroutine section(mode,name)
  !      = #     : increase level #
  !      = r     : reset to zero level end exit
  !
- use pars,       ONLY:lchlen,schlen,SP,DP
+ use pars,       ONLY:lchlen,schlen,DP
  use it_m,       ONLY:ofiles_append
  use stderr,     ONLY:string_pack
  use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&

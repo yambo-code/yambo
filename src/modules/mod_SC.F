@@ -145,7 +145,7 @@ module SC
    !
    subroutine SC_alloc(E)
      use pars,           ONLY:SP
-     use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
+     use drivers,        ONLY:l_real_time,l_sc_sex,l_sc_coh,l_sc_srpa
      use electrons,      ONLY:n_spin,n_sp_pol,levels
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
@@ -186,7 +186,7 @@ module SC
      !
      if (l_real_time) return
      !
-     if (l_sc_cohsex.or.l_sc_srpa) then
+     if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
        allocate(QP_Sc(QP_n_states,1))
        call mem_est("QP_Sc",(/QP_n_states/))
      endif
@@ -206,6 +206,7 @@ module SC
      !
      call X_alloc('DIP_P')
      call X_alloc('DIP_iR')
+     call X_alloc('DIP_spin')
      call X_alloc('P_square')
      !
      deallocate(Ho)

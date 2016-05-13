@@ -33,7 +33,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  !  Remember: 1/(w-H)= \sum_ij |i right><i left|j right>^{-1) <j left| /(w-E_i)
  !
- use pars,           ONLY:SP,pi,cZERO,cI,cONE
+ use pars,           ONLY:SP,cZERO,cI
  use wrapper_omp,    ONLY:M_by_M_omp,Vstar_dot_V_omp,V_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index

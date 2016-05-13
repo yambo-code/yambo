@@ -43,7 +43,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  !
  integer :: nindxs,i1,i2,i3,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
 &           i_range(2),missing_cpus,par_kind_2D
- logical :: SERIAL,local_ORDERED,local_CONSECUTIVE
+ logical :: NO_EMPTIES_,SERIAL,local_ORDERED,local_CONSECUTIVE
  integer,allocatable :: i_done(:),lowlim(:)
  !
  myid_loop =myid
@@ -76,6 +76,8 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  !
  allocate(px%n_of_elements(ncpu_loop))
  px%n_of_elements=0
+ !
+ if (uplim(1)==0) goto 1
  !
  if (nindxs==1.and.local_CONSECUTIVE) then
    !
@@ -195,14 +197,16 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
    !
  endif
  !
- deallocate(lowlim)
+1 deallocate(lowlim)
  if(allocated(i_done)) deallocate(i_done)
  !
- if (present(NO_EMPTIES)) then
-   if (.not.  NO_EMPTIES ) return
-   if (px%n_of_elements(myid_loop+1)==0) call error("Empty workload for CPU "//trim(intc(myid+1)))
- else
-   if (px%n_of_elements(myid_loop+1)==0) call warning("Empty workload for CPU "//trim(intc(myid+1)))
+ NO_EMPTIES_=.false.
+ if (present(NO_EMPTIES)) NO_EMPTIES_=NO_EMPTIES
+ !
+ if (px%n_of_elements(myid_loop+1)==0) then
+   call warning(" Empty workload for CPU "//trim(intc(myid+1)))
+   !if (.not.NO_EMPTIES_) call warning(" Empty workload for CPU "//trim(intc(myid+1)))
+   !if (     NO_EMPTIES_) call   error(" Empty workload for CPU "//trim(intc(myid+1)))
  endif
  !
 end subroutine

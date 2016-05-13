@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_propagate_fields(k,E,A_new,A_old,T,T_step)
+subroutine RT_propagate_fields(E,A,T,T_step)
  !
  ! The external and total fields in Yambo are defined and organized as follow:
  !
@@ -41,24 +41,21 @@ subroutine RT_propagate_fields(k,E,A_new,A_old,T,T_step)
  ! 
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use X_m,            ONLY:global_gauge
  use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,&
-&                         l_RT_induced_field,RT_nk,integrator_step,&
-&                         RT_bands
+&                         l_RT_induced_field,integrator_step,&
+&                         RT_dyn_step,l_RT_EULER
  use fields,         ONLY:gauge_field,A_ind,A_ind_previous,A_ext
  !
  implicit none
  !
- type(bz_samp),        intent(in) :: k
  type(levels),         intent(in) :: E
  real(SP),             intent(in) :: T,T_step
- type(gauge_field),    intent(in) :: A_old
- type(gauge_field),   intent(out) :: A_new
+ type(gauge_field),   intent(out) :: A
  !
- !
- ! External field
+ ! Get the analytic form of Ext field @ T
+ !----------------------------------------
  !
  call RT_Ext_fields(A_ext,T)
  !
@@ -113,16 +110,29 @@ subroutine RT_propagate_fields(k,E,A_new,A_old,T,T_step)
      A_ind%vecpot     = A_ind_previous%vecpot + real(RT_P_prev)*4._SP*pi*SPEED_OF_LIGHT*T_step
    endif
    !
-   if(integrator_step==1) A_ind_previous  =A_ind
+   if (integrator_step==1) A_ind_previous  =A_ind
    !
-   A_new%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
-   A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
-   A_new%vecpot    =A_ext%vecpot    +A_ind%vecpot
+   A%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
+   A%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
+   A%vecpot    =A_ext%vecpot    +A_ind%vecpot
    !
  else
    !
-   A_new=A_ext
+   A=A_ext
    !
+ endif
+ !
+ ! Fluence accumulation
+ !======================
+ !
+ ! I(t) = \frac{c}{8\pi} E^2(t) and E(t)=A_vel(t)/c
+ ! F(t) = \int I(t) dt
+ !
+ if(integrator_step==3.or.l_RT_EULER) then
+   A%intensity=(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
+   A%fluence=A%fluence+A%intensity*RT_dyn_step
+   A_ext%intensity=(abs(A_ext%vecpot_vel(1))**2+abs(A_ext%vecpot_vel(2))**2+abs(A_ext%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
+   A_ext%fluence=A_ext%fluence+A_ext%intensity*RT_dyn_step
  endif
  !
 end subroutine RT_propagate_fields

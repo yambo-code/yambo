@@ -79,8 +79,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use real_time,     ONLY:RT_bands
 #endif
 #if defined _SC || defined _RT
- use hamiltonian,   ONLY:B_mat_index,IP_h_bands
- use collision,     ONLY:COLL_bands,FOCK_collisions,GW_NEQ_collisions,P_collisions,SEX_collisions
+ use hamiltonian,   ONLY:B_mat_index
+ use collision,     ONLY:COLL_bands,COH_collisions,GW_NEQ_collisions,P_collisions,HXC_collisions
 #endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_index,SLK_COM_A2A
@@ -89,7 +89,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use stderr,        ONLY:intc
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use IO_m,          ONLY:IO_and_Messaging_switch,io_COLLs,io_RESPONSE
- use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
+ use QP_m,          ONLY:QP_n_states,QP_nb,QP_n_G_bands
  use wave_func,     ONLY:states_to_load
  use com,           ONLY:warning
  implicit none
@@ -102,7 +102,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
- integer              :: i_k,i_k_bz,X_type,i_qp,ib1,ib2,i_field,nb_mat
+ integer              :: i_k,i_k_bz,X_type,ib1,ib2,i_field,nb_mat
  logical              :: reset_all
  character(10)        :: WHAT,WHATp
  !
@@ -660,9 +660,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   "COLLISIONS"
    !.........................................................................
    !
-   call PARALLEL_collisions( Xk, P_collisions )
-   call PARALLEL_collisions( Xk, FOCK_collisions )
-   call PARALLEL_collisions( Xk, SEX_collisions )
+   call PARALLEL_collisions( Xk,      P_collisions )
+   call PARALLEL_collisions( Xk,    COH_collisions )
+   call PARALLEL_collisions( Xk,    HXC_collisions )
    call PARALLEL_collisions( Xk, GW_NEQ_collisions )
    !
    !.........................................................................
@@ -821,9 +821,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !   "COLLISIONS"
      !.........................................................................
      !
-     call PARALLEL_collisions( Xk, P_collisions )
-     call PARALLEL_collisions( Xk, FOCK_collisions )
-     call PARALLEL_collisions( Xk, SEX_collisions )
+     call PARALLEL_collisions( Xk,   P_collisions )
+     call PARALLEL_collisions( Xk, COH_collisions )
+     call PARALLEL_collisions( Xk, HXC_collisions )
      !
      nb_mat=(SC_bands(2)-SC_bands(1)+1)**2
      call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',SC_bands)
@@ -937,7 +937,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    do i_k=1,Xk%nibz
      !
-     call PARALLEL_index(PAR_IND_eh(i_k),(/BS_nT_at_k(i_k)/),COMM=PAR_COM_eh_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+     call PARALLEL_index(PAR_IND_eh(i_k),(/BS_nT_at_k(i_k)/),COMM=PAR_COM_eh_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.FALSE.)
      !
    enddo
    !
@@ -957,7 +957,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    if (BS_K_coupling) then
      call PARALLEL_index(PAR_IND_T_all,    (/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
-&                        MASK=PAR_IND_T_groups%element_1D,NO_EMPTIES=.TRUE.)
+&                        MASK=PAR_IND_T_groups%element_1D,NO_EMPTIES=.FALSE.)
      !
      call PARALLEL_live_message("(e/h)->(e/h)' Transitions (all)",ENVIRONMENT=ENVIRONMENT,&
 &                               LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&
@@ -966,7 +966,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    endif
    !
    call PARALLEL_index(PAR_IND_T_ordered,(/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
-&                      MASK=PAR_IND_T_groups%element_1D,ORDERED=.TRUE.,NO_EMPTIES=.TRUE.)
+&                      MASK=PAR_IND_T_groups%element_1D,ORDERED=.TRUE.,NO_EMPTIES=.FALSE.)
    !
    call PARALLEL_live_message("(e/h)->(e/h)' Transitions (ordered)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_T_ordered%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&

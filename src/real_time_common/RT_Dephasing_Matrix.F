@@ -30,7 +30,7 @@ subroutine RT_Dephasing_Matrix(E)
  use electrons,     ONLY:levels
  use parser_m,      ONLY:parser
  use R_lattice,     ONLY:nXkibz
- use real_time,     ONLY:RT_Deph_Matrix,RT_is_dephased,Phase_LifeTime,&
+ use real_time,     ONLY:RT_Deph_Matrix,RT_is_statically_dephased,Phase_LifeTime,&
 &                        RAD_LifeTime,RT_bands
  !
  implicit none
@@ -66,7 +66,7 @@ subroutine RT_Dephasing_Matrix(E)
    !
    RT_Deph_Matrix=(0._SP,0._SP)
    !
-   RT_is_dephased=.TRUE.
+   RT_is_statically_dephased=.TRUE.
    !
  else
    !

@@ -28,7 +28,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,schlen
- use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
+ use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
@@ -91,14 +91,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_control, ONLY:RT_IO_time
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_steps,      &
-&                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel, n_regions,    &
-&                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,        &
+ use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_times,      &
+&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
+&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,    &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
-&                     RT_eh_en,Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,  &
-&                     Eh_pumped_pair_deltaE,Eh_pumped_pair_BZ_width,Eh_pumped_pair_BZ_reagions,&
-&                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
+&                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RT_ctl_db,RAD_prefactor
@@ -290,7 +288,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  pp_n_l_times_proj_max=0
  pp_kbv_dim=0
  !
- !drivers
+ ! Drivers
  !
  list_dbs=.FALSE.
  infile_editing=.FALSE.
@@ -324,13 +322,17 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elph_corr=.FALSE.
  l_elel_scatt=.FALSE.
  l_elph_scatt=.FALSE.
+ l_use_collisions=.FALSE.
+ l_use_scatt_collisions=.FALSE.
+ l_use_Hxc_collisions=.FALSE.
  !
  l_rt_carriers_in_use=.FALSE.
  l_sc_run=.FALSE.
  l_sc_ip=.FALSE.
- l_sc_hf=.FALSE.
+ l_sc_fock=.FALSE.
  l_sc_hartree=.FALSE.
- l_sc_cohsex=.FALSE.
+ l_sc_coh=.FALSE.
+ l_sc_sex=.FALSE.
  l_sc_exx=.FALSE.
  l_sc_is_libDFT=.FALSE.
  l_sc_magnetic=.FALSE.
@@ -586,26 +588,17 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Integrator_name='RK2'
  RAD_LifeTime = 0._SP
  Phase_LifeTime = 0._SP
- RT_is_dephased=.FALSE.
- l_RT_induced_field=.FALSE.
  NE_MEM_treshold=0.
  RT_nk=0
  RT_eh_en=0._SP
  RT_scatt_tresh=1._SP
- n_regions=1
- Eh_pumped_pair_deltaE=-1._SP/HA2EV
- Eh_pumped_pair_energy=-1._SP/HA2EV
- Eh_pumped_pair_width=0.1_SP/HA2EV
- Eh_pumped_pair_BZ_width=0.1_SP
- Eh_pumped_pair_BZ_reagions=-1.0_SP
- Eh_pumped_Nel=1._SP
  PLASMA_redux_percent=100._SP
  DbGd_EE_percent=0._SP
  !
  ! Scattering
  !
- RT_life_interp_steps(1)=-1._SP*FS2AUT
- RT_life_interp_steps(2)=-1._SP*FS2AUT
+ RT_life_interp_times(1)=-1._SP*FS2AUT
+ RT_life_interp_times(2)=-1._SP*FS2AUT
  !
  ! G_retarded
  !
@@ -627,9 +620,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! RT_ctl
  !
- RT_IO_time(1)=2._SP*FS2AUT
- RT_IO_time(2)=5._SP*FS2AUT
- RT_IO_time(3)=1._SP*FS2AUT
+ JPC_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
+ GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
+ !
+ SAVE_G_history=.FALSE.
  !
 #endif
  !
@@ -637,7 +632,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Magnetic
  !
- MAG_B=0.
+ MAG_B=0._SP
  MAG_radius=0._SP
  MAG_hamiltonian_type=' '
  MAG_pauli=.FALSE.

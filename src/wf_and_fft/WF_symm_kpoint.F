@@ -28,8 +28,6 @@ subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
  use wave_func,     ONLY:WF,wf_ng
  use R_lattice,     ONLY:bz_samp,g_rot
  use D_lattice,     ONLY:idt_index,spin_sop,i_time_rev,nsym
- use com,           ONLY:error
- use vec_operate,   ONLY:sort
  !
  implicit none
  !

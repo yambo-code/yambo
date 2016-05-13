@@ -32,7 +32,7 @@ integer function io_BS(iq,X,ID)
 &                        BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
 &                        read_is_on,write_is_on,io_header,io_mode,VERIFY,&
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,RD_CL,io_action,RD_CL_IF_END
+&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
@@ -98,7 +98,7 @@ integer function io_BS(iq,X,ID)
  !
  if (i_block==0) goto 1
  !
- if (io_action(ID)==RD_CL_IF_END.and.i_block==n_BS_blks) io_action(ID)=RD_CL
+ call manage_OP_IF_START_and_CL_IF_END(ID,i_block,n_BS_blks)
  !
  call io_fragment(ID,i_fragment=i_block)
  !

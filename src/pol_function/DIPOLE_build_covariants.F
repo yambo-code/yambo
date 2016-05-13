@@ -86,7 +86,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
    call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,PAR_Xk_nbz/))
    DIP_S=cZERO
    !
-   call DIPOLE_overlaps(Xen,Xk,X)
+   call DIPOLE_overlaps(Xk,X)
    !
    if (     master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)

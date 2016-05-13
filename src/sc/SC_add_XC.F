@@ -28,8 +28,8 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  ! _RT works in the LDa basis.
  !
  use pars,           ONLY:SP,cZERO,cI
- use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_is_libDFT,&
-&                         l_use_collisions,l_sc_hartree
+ use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_coh,l_sc_sex,l_sc_is_libDFT,&
+&                         l_use_Hxc_collisions,l_sc_hartree
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_reset
  use parallel_m,     ONLY:master_cpu
@@ -56,7 +56,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  integer      :: ib,ik
  logical      :: l_call_pot_driver
- complex(SP)  :: G_collisions(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk,2)
+ complex(SP)  :: G_collisions(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
  !
  type(QP_t)   :: qp_dummy
  !
@@ -64,24 +64,22 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  if (.not.l_sc_pot_is_local) then
    !
-   ! Hartee-Fock & COHSEX
-   !======================
+   ! Fock/SEX + COH
+   !================
    !
-   if(l_use_collisions) then
+   if(l_use_Hxc_collisions) then
      !     
      G_collisions=cZERO
-     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,1)=cI* E%f(ib,ik,1)
-     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,2)=cI*(E%f(ib,ik,1)-1._SP)
+     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik)=cI* E%f(ib,ik,1)
      !
      ! Now I build the G_collisions rotating the non interaction one
      ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)
      !
      do ik=1,E%nk
-       call H_rotate(SC_R(:,:,ik,1),G_collisions(:,:,ik,1),SC_bands(2),-1)
-       call H_rotate(SC_R(:,:,ik,1),G_collisions(:,:,ik,2),SC_bands(2),-1)
+       call H_rotate(SC_R(:,:,ik,1),G_collisions(:,:,ik),SC_bands(2),-1)
      enddo
      !
-     call COLLISIONS_compose_SC(G_collisions(:,:,:,1),G_collisions(:,:,:,2))
+     call COLLISIONS_compose_sc(G_collisions)
      !    ==========
    else
      !
@@ -95,7 +93,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      call IO_and_Messaging_switch("+io_in")
      !
-     if (l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
+     if (l_sc_coh.or.l_sc_sex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
      call IO_and_Messaging_switch("+report +io_out",CONDITION=master_cpu)
      !

@@ -30,7 +30,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t
  use QP_CTL_m,      ONLY:QP_apply
- use electrons,     ONLY:levels,n_sp_pol,spin
+ use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,&
 &                        excitons_sort_and_report
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
@@ -39,10 +39,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
 &                        io_BSS_diago
 #if defined _YPP_ELPH
- use YPP,           ONLY:l_eliashberg,l_gkkp
+ use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
 #if defined _YPP_RT
- use YPP,           ONLY:l_RT_abs
+ use YPP_real_time, ONLY:l_RT_abs
 #endif
  !
  implicit none
@@ -61,7 +61,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  !
  integer           ::io_err,io_ID,i_sec
- integer, external ::io_BS
+ integer, external ::io_BS,io_E_SOC_map
  type(X_t)         ::Xbsk
  !
  !... Energies and Residulas
@@ -69,11 +69,25 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  complex(SP), allocatable ::BS_R_left(:)
  complex(SP), allocatable ::BS_R_right(:)
  complex(SP), allocatable ::BS_E(:)
+ !
+ real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
  complex(SP), pointer     ::BS_R_pointer(:) => null()
  !
  integer                  ::iq,neh
  !
  call section('*','Excitonic Properties')
+ !
+ ! GPL_EXCLUDE_START
+ !
+ ! E SOC perturbative
+ ! 
+ if(n_spin==1) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+   io_err=io_E_SOC_map(en,k,io_ID)
+ endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  !
  ! Here I read information from the BS database
  !
@@ -120,22 +134,24 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call mem_est('BS_R_E',(/2*BS_H_dim/))
  iq=BS_q(1)
  !
+ if(E_SOC_nbands/=0) allocate(BS_E_SOC_corr(2,BS_H_dim))
+ !
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_R_pointer)
+ io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_pointer)
  !
  if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_R_pointer)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_pointer)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
  enddo
  !
  ! Sort energies and write to output
  !===================================
- if (l_sort) call excitons_sort_and_report(Xk,Xen,BS_R_right,BS_E)
+ if (l_sort) call excitons_sort_and_report(Xk,Xen,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
  if(.not.l_sort) then
    !
@@ -156,7 +172,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    call mem_est('BS_mat',(/BS_H_dim**2/))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_R_pointer)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_pointer)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table
@@ -203,7 +219,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! OLD Transient absorption 
  !==========================
- if(l_RT_abs)      call RT_transient_absorption(Xbsk,Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
+ !DEBUG>
+ !if(l_RT_abs)      call RT_transient_absorption(Xbsk,Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
+ !DEBUG<
  !
 #endif
  !
@@ -217,6 +235,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  if(.not.l_sort) then
    deallocate(BSS_eh_table,BS_mat)
    call mem_est('BSS_eh_table BS_mat')
+ endif
+ if(associated(BS_E_SOC_corr)) then
+   deallocate(BS_E_SOC_corr)
+   nullify(BS_E_SOC_corr)
  endif
  !
  contains

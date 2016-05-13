@@ -21,16 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
+subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
- use pars,          ONLY:SP,cZERO,schlen
+ use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:bz_samp,q_norm
  use D_lattice,     ONLY:DL_vol
- use X_m,           ONLY:X_t,iw_ref,use_X_DbGd
+ use X_m,           ONLY:use_X_DbGd
  use com,           ONLY:warning
  !
  implicit none
@@ -42,10 +42,9 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
  integer      ,intent(in)   :: iq
  complex(SP)  ,intent(inout):: Wd
  complex(SP)  ,intent(out)  :: drude_GreenF(Xw%n_freqs)
- character(1) ,intent(in)   :: drude_ordering
  !
  real(SP)             :: drude_factor,f_e,f_h
- logical              :: Drude_term(4),neq_carriers
+ logical              :: Drude_term(4)
  integer              :: iw
  !
  drude_GreenF = cZERO

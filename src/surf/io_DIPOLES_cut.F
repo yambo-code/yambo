@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): CH AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,7 +22,6 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function io_DIPOLES_cut(X,Xen,io_db)
-!======================================
  use pars
  use units,            ONLY : HA2EV
  use X_m,              ONLY : X_t

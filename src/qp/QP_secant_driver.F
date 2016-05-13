@@ -114,7 +114,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  QP_solver_state=2
  call W2Sc_local_call()
  !
- call live_timing('[SECANT] Brackets',QP_n_states,SERIAL=.true.)
+ call live_timing('[SECANT] Brackets',QP_n_states)
  !
  do while(any(QP_solver_state/=0))
    do i1=1,qp%n_states
@@ -133,7 +133,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  nstep=0
  nconv=0
  QP_solver_state=1
- call live_timing('[SECANT]  Root(s)',QP_n_states,SERIAL=.true.)
+ call live_timing('[SECANT]  Root(s)',QP_n_states)
  do while(any(QP_solver_state>=0))
    nstep=nstep+1
    do i1=1,qp%n_states
@@ -166,7 +166,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! Analytic continuation 
  !
- call live_timing('[SECANT] Analytic continuation',q%nbz,SERIAL=.true.)
+ call live_timing('[SECANT] Analytic continuation',q%nbz)
  do i1=1,qp%n_states
    Eqp_raxis(i1,1)=Eqp_raxis(i1,iabs(QP_solver_state(i1)))
    call W_reset(Sc_W(i1))

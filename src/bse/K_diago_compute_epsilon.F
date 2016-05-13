@@ -32,14 +32,13 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use R_lattice,      ONLY:q_norm
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_H_dim,BSS_eh_W,BS_anti_res,Co_factor
+ use BS,             ONLY:BS_H_dim,BS_anti_res,Co_factor
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nkbz
  !
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use parallel_m,     ONLY:ncpu
  use KERR,           ONLY:B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
@@ -52,7 +51,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  integer,     intent(in)  :: iq
  complex(SP), intent(in)  :: BS_E(BS_H_dim)
  complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
- complex(SP), pointer     :: BS_E_SOC_corr(:,:),BS_R_right_kerr(:)
+ real(SP),    pointer     :: BS_E_SOC_corr(:,:)
+ complex(SP), pointer     :: BS_R_right_kerr(:)
  !
  ! Work space
  !

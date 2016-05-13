@@ -30,11 +30,12 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
- use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ,SE_GW_QED
+ use global_XC,     ONLY:SC_FOCK,global_XC_string,EXT_NONE,SE_NONE,SC_COH,SC_SEX,&
+&                        SE_GW_NEQ,SE_GW_QED,SC_HARTREE
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use SC,            ONLY:SC_X_size,SC_X_bands
- use QP_m,          ONLY:QP_ng_Sx,SC_band_mixing,QP_QED_ng
+ use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH,SC_band_mixing,QP_QED_ng
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
@@ -53,7 +54,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_desc,i_coll_loop,io_err,i_coll
+ integer               :: V_kind_disk,i_desc,i_coll_loop,io_err,i_coll,SIZE_
  character(lchlen)     :: V_kind_string,X_string
  !
  ! Collision element...
@@ -70,10 +71,10 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  call timing('io_COLLISIONS',OPR='start')
 #endif
  !
- if(COLL%kind==SC_HF) then
-   db_name                   = "COLLISIONS_FOCK"
- elseif(COLL%kind==SC_COHSEX) then
-   db_name                   = "COLLISIONS_COHSEX"
+ if(COLL%kind==SC_COH) then
+   db_name = "COLLISIONS_COH"
+ elseif(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+   db_name = "COLLISIONS_HXC"
  elseif(COLL%kind==SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"
  elseif(COLL%kind==SE_GW_QED) then
@@ -94,10 +95,19 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      goto 1
    endif
    !
-   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
+   call io_elemental(ID,VAR="COLLISION DESCRIPTION",VAR_SZ=1,CH0="",MENU=0)
+   call io_elemental(ID,CH0=COLL%name,VAR=' COLLISIONS name                 :')
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   SIZE_=6
+   if (COLL%kind==SE_GW_NEQ) SIZE_=SIZE_+3
+   if (COLL%kind==SE_GW_QED) SIZE_=SIZE_+2
+   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=SIZE_,MENU=0)
    !
    call io_elemental(ID,I0=COLL%N,&
 &       VAR=' Total number of COLLISIONS      :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=COLL%kind,&
+&       VAR=' COLLISIONS kind                 :',CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,I1=COLL_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
@@ -132,17 +142,28 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &       VAR=' Interaction Kind                :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   if (V_kind_disk==SC_HF) then
-     !
-     call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=4,MENU=0)
-     call io_elemental(ID,I0=QP_ng_Sx,&
-&         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
+   if(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+     SIZE_=1
+     if (V_kind_disk>=SC_HARTREE) SIZE_=SIZE_+1
+     if (V_kind_disk==           SC_FOCK.or.V_kind_disk==           SC_SEX.or.&
+&        V_kind_disk==SC_HARTREE+SC_FOCK.or.V_kind_disk==SC_HARTREE+SC_SEX     ) SIZE_=SIZE_+1
+     call io_elemental(ID,VAR="HXC_PARAMETERS",VAR_SZ=SIZE_,MENU=0)
      call io_elemental(ID,R0=COLLISIONS_cutoff,&
 &         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
      !
-     call io_elemental(ID,VAR="",VAR_SZ=0)
-     !
-   else if (V_kind_disk==SE_GW_NEQ.or.V_kind_disk==SC_COHSEX) then
+     if (V_kind_disk>=SC_HARTREE) then
+       call io_elemental(ID,I0=QP_ng_SH,&
+&         VAR=' Hartree  RL vectors             :',CHECK=.true.,OP=(/"=="/))
+     endif
+     if (V_kind_disk==SC_FOCK.or.V_kind_disk==SC_SEX.or.V_kind_disk==SC_HARTREE+SC_FOCK.or.V_kind_disk==SC_HARTREE+SC_SEX) then
+       call io_elemental(ID,I0=QP_ng_Sx,&
+&         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
+     endif
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
+   !
+   if (V_kind_disk==SE_GW_NEQ .or.V_kind_disk==SC_COH.or.V_kind_disk==SC_SEX.or.&
+&           V_kind_disk==SC_HARTREE.or.V_kind_disk==SC_FOCK .or.V_kind_disk>=SC_HARTREE) then
      !
      ! Global Response Descriptions
      !==============================
@@ -172,13 +193,9 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
        endif
      enddo
      !
-     call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=2,MENU=0)
+     call io_elemental(ID,VAR="RIM_PARAMETERS",VAR_SZ=2,MENU=0)
      call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      :',WARN=.true.)
      call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      :',WARN=.true.)
-     call io_elemental(ID,VAR="",VAR_SZ=0)
-     !
-   else
-     !
      call io_elemental(ID,VAR="",VAR_SZ=0)
      !
    endif

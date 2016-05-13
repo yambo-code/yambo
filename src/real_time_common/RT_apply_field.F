@@ -26,7 +26,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  ! This subroutine add the vector potential to the Hamiltonian
  !
  use pars,           ONLY:SP,cI
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:n_sp_pol
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,global_gauge

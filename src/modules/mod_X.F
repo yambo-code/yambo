@@ -71,6 +71,7 @@ module X_m
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
@@ -178,6 +179,11 @@ module X_m
          allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
          call mem_est(what,(/size(dip_S)/),errors=(/err/))
          DIP_S=cZERO
+       case('DIP_spin')
+         if (allocated(DIP_spin)) return
+         allocate(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
+         call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         DIP_spin=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
          allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
@@ -211,6 +217,9 @@ module X_m
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
          deallocate(DIP_S)
+       case('DIP_spin')
+         if (.not.allocated(DIP_spin)) return
+         deallocate(DIP_spin)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
          deallocate(DIP_projected)

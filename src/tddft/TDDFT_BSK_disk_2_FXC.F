@@ -98,9 +98,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! Memory usage estimation  in BS K 2 Fxc procedure
  !
- call mem_est("BS_K_2_FXC",&
-&             (/2*6*FXC_n_g_corr*O_x_dim+2*FXC_n_g_corr**2+2*O_x_dim/),&
-&             (/SP/))
+ call mem_est("BS_K_2_FXC",(/2*6*FXC_n_g_corr*O_x_dim+2*FXC_n_g_corr**2+2*O_x_dim/),(/SP/))
  call mem_est('BS_mat',(/O_x_dim**2/))
  !
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
@@ -133,7 +131,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
 #else
            Hrx=cdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
 #endif
-           BS_mat(icv1,icv2)=BS_mat(icv1,icv2)-Hrx*2.*Co
+           BS_mat(icv1,icv2)=BS_mat(icv1,icv2)-Hrx*2._SP*Co
            !
          enddo
        enddo

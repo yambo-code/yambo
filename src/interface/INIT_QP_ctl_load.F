@@ -81,7 +81,7 @@ subroutine INIT_QP_ctl_load(defs,i_type)
    call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wv',&
 &          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
-&          trim(spin_description_ch(i1))//' (valence) eV|adim|eV^-1',&
+&          trim(spin_description_ch(i1))//' (valence) eV| eV|eV^-1',&
 &          QP_ctl_Wv(i_type,:,i_spin),verb_level=verbosity_here)
    !
    call it(defs,&
@@ -93,7 +93,7 @@ subroutine INIT_QP_ctl_load(defs,i_type)
    call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wc',&
 &          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
-&          trim(spin_description_ch(i1))//' (conduction) eV|adim|eV^-1',&
+&          trim(spin_description_ch(i1))//' (conduction) eV| eV|eV^-1',&
 &          QP_ctl_Wc(i_type,:,i_spin),verb_level=verbosity_here)
    !
    call it(defs,&

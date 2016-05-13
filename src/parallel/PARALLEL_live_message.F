@@ -23,7 +23,7 @@
 !
 subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,NC)
  !
- use pars,       ONLY:lchlen,SP,DP
+ use pars,       ONLY:lchlen,SP
  use parallel_m, ONLY:ncpu
  use LIVE_t,     ONLY:LIVE_message
  use stderr,     ONLY:intc,real2ch

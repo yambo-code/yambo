@@ -67,7 +67,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  integer,allocatable   :: wf_igk_save(:,:),wf_igk_new(:,:)
  !
  integer,     allocatable :: ic_rot_table(:) 
- real(SP),    allocatable :: wf_disk(:,:,:,:)
+ complex(SP), allocatable :: wf_disk(:,:,:)
  complex(SP), allocatable :: wf_tmp(:,:)
  !
  ! Dummies
@@ -166,8 +166,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !  !
    !endif
    !
-   allocate(wf_disk(2,wf_ncx_new,n_spinor,wf_nb_io))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   allocate(wf_disk(wf_ncx_new,n_spinor,wf_nb_io))
+   call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/))
    !
    !if(wf_ncx_save/=wf_ncx_new) then
      !
@@ -193,7 +193,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          !
          do ib_grp=1,wf_nb_io_groups
            !
-           wf_disk=0._SP
+           wf_disk=cZERO
            !
            nb1=wf_nb_io*(ib_grp-1)+1
            nb2=wf_nb_io*ib_grp
@@ -207,15 +207,14 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
            do ib=nb1,nb2
              ib_disk=ib-nb1+1
              i_wf=WF%index(ib,ik_save,i_sp_pol)
-             wf_disk(1,:,:,ib_disk)=  real(WF%c(:,:,i_wf))
-             wf_disk(2,:,:,ib_disk)= aimag(WF%c(:,:,i_wf))
+             wf_disk(:,:,ib_disk)= WF%c(:,:,i_wf)
            enddo
            !
            nkibz=k%nibz
            wf_ncx=wf_ncx_new
            core_io_path=more_io_path
            call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
-           io_err=io_WF(ID,wf=wf_disk)
+           io_err=io_WF(ID,wf_disk)
            !
          enddo
          !
@@ -257,7 +256,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        !
        do ib_grp=1,wf_nb_io_groups
          !
-         wf_disk=0._SP
+         wf_disk=cZERO
          !
          nb1=wf_nb_io*(ib_grp-1)+1
          nb2=wf_nb_io*ib_grp
@@ -282,8 +281,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
            forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
            if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
            !  
-           wf_disk(1,:,:,ib_disk)=  real(wf_tmp(:,:))
-           wf_disk(2,:,:,ib_disk)= aimag(wf_tmp(:,:))
+           wf_disk(:,:,ib_disk)= wf_tmp(:,:)
            !
          enddo
          !
@@ -291,7 +289,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
          call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
-         io_err=io_WF(ID,wf=wf_disk)
+         io_err=io_WF(ID,wf_disk)
          !
        enddo
        !
@@ -313,8 +311,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)
    !
-   allocate(wf_disk(2,wf_ncx_new,n_spinor,wf_nb_io))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   allocate(wf_disk(wf_ncx_new,n_spinor,wf_nb_io))
+   call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/))
    !
    ACTION_=OP_APP_WR_CL
    if(frag_WF) ACTION_=OP_WR_CL
@@ -329,7 +327,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        !
        do ib_grp=1,wf_nb_io_groups
          !
-         wf_disk=0._SP
+         wf_disk=cZERO
          !
          nb1=wf_nb_io*(ib_grp-1)+1
          nb2=wf_nb_io*ib_grp
@@ -343,15 +341,14 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          do ib=nb1,nb2
            ib_disk=ib-nb1+1
            i_wf=WF%index(ib,ik_save,i_sp_pol)
-           wf_disk(1,:,:,ib_disk)=  real(WF%c(:,:,i_wf))
-           wf_disk(2,:,:,ib_disk)= aimag(WF%c(:,:,i_wf))
+           wf_disk(:,:,ib_disk)=  WF%c(:,:,i_wf)
          enddo
          !
          nkibz=k%nibz
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
          call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-         io_err=io_WF(ID,wf=wf_disk)
+         io_err=io_WF(ID,wf_disk)
          !
        enddo
        !

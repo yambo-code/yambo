@@ -37,7 +37,7 @@ integer function io_WF(ID,wf)
 #endif
  implicit none
  integer,       intent(in) :: ID
- real(SP),      optional   :: wf(:,:,:,:)
+ complex(SP),   optional   :: wf(:,:,:)
  !
  integer                   :: i_sp_pol,ik,ifrag,ib_grp,ib,ib_in_grp,head_io
  character(schlen)         :: VAR_NAME
@@ -101,15 +101,9 @@ integer function io_WF(ID,wf)
  !
  call io_fragment(ID,i_fragment=ifrag,j_fragment=ib_grp)
  !
- do ib_in_grp=1,wf_nb_io
-   !
-   ib=ib_in_grp+wf_nb_io*(ib_grp-1)
-   !
-   VAR_NAME="WF_COMPONENTS_@_SP_POL"//trim(intc(i_sp_pol))//"_K"//trim(intc(ik))//"_BAND_"//trim(intc(ib))
-   call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor/))
-   call io_bulk(ID,R3=wf(:,:,:,ib_in_grp))
-   !
- enddo
+ VAR_NAME="WF_COMPONENTS_@_SP_POL"//trim(intc(i_sp_pol))//"_K"//trim(intc(ik))//"_BAND_GRP_"//trim(intc(ib_grp))
+ call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor,wf_nb_io/))
+ call io_bulk(ID,C3=wf)
  !
 1 call io_disconnect(ID=ID)
  !

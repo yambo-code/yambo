@@ -51,7 +51,7 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
  ! end do ! spin
  ! close(unit=ntkss)
  !
- use pars,                  ONLY:SP,DP
+ use pars,                  ONLY:SP,DP,cZERO
  use electrons,             ONLY:n_bands,n_spin,n_spinor,n_sp_pol
  use D_lattice,             ONLY:n_atomic_species
  use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc_abinit,pp_kbs,  &
@@ -65,7 +65,7 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
  !
  integer        :: ikibz,i_sp_pol,ib_grp
  character(*)   :: KSS_file_name
- real(SP)       :: wf_disk(2,wf_ncx,n_spinor,wf_nb_io)
+ complex(SP)    :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
  ! 
  ! Workspace ...
  ! 
@@ -111,7 +111,7 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
    !
  endif
  !
- wf_disk=0._SP
+ wf_disk=cZERO
  pp_kb=0._SP
  pp_kbd=0._SP
  !
@@ -136,8 +136,7 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
    !
    read(11) wf_disk_DP(:,:)
    !
-   wf_disk(1,:,:,i1)= real(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),:))
-   wf_disk(2,:,:,i1)=aimag(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),:))
+   wf_disk(:,:,i1)= cmplx(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),:),kind=SP)
    !
  enddo
  ! 

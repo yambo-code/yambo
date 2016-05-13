@@ -52,7 +52,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(lchlen) :: KSS_file_name
  integer           :: ID,io_err,ik,ib_grp,i_sp_pol,ifrag
  integer,     external :: a2y_KSS_file_name,io_DB1,io_KB_abinit
- real(SP), allocatable :: wf_disk(:,:,:,:)
+ complex(SP), allocatable :: wf_disk(:,:,:)
  !
  ! Presets
  !
@@ -125,7 +125,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s','Writing WFs and (eventually) nlPP ...')
  !
- allocate(wf_disk(2,wf_ncx,n_spinor,wf_nb_io))
+ allocate(wf_disk(wf_ncx,n_spinor,wf_nb_io))
  !
  do i_sp_pol=1,n_sp_pol
    do ik=1,nkibz
@@ -144,7 +144,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
        !
        if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
        if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
-       io_err=io_WF(ID,wf=wf_disk)
+       io_err=io_WF(ID,wf_disk)
        !
      enddo
      !

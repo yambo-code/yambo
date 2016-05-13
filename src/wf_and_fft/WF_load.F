@@ -73,7 +73,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
- real(SP),    allocatable :: wf_disk(:,:,:,:)
+ complex(SP), allocatable :: wf_disk(:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
  ! I/O
@@ -264,8 +264,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  if (.not.buffer_is_ok) then
    !
-   allocate(wf_disk(2,wf_ncx,n_spinor,wf_nb_io))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   allocate(wf_disk(wf_ncx,n_spinor,wf_nb_io))
+   call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/))
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err=io_WF(ID,wf_disk)
@@ -332,7 +332,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
              if (buffer_is_ok) then
                wf_DP(igfft)=WF_buffer%c(ic,i_spinor,WF_buffer%index(ib,ikibz,i_sp_pol))
              else
-               wf_DP(igfft)=cmplx(wf_disk(1,ic,i_spinor,ib_in_grp),wf_disk(2,ic,i_spinor,ib_in_grp),kind=DP)
+               wf_DP(igfft)=cmplx(wf_disk(ic,i_spinor,ib_in_grp),kind=DP)
              endif
            enddo
            !

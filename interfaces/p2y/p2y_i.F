@@ -56,7 +56,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(lchlen)     :: lch
  integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  integer, external     :: io_DB1
- real(SP), allocatable :: wf_disk(:,:,:,:)
+ complex(SP), allocatable :: wf_disk(:,:,:)
  !
  ! Presets
  !
@@ -144,8 +144,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !             
  call msg('s','== DB2 (wavefunctions)  ... ')
  !
- allocate(wf_disk(2,wf_ncx,n_spinor,wf_nb_io))
- call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+ allocate(wf_disk(wf_ncx,n_spinor,wf_nb_io))
+ call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/))
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -170,7 +170,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
         !
         if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
         if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
-        io_err=io_WF(ID,wf=wf_disk)
+        io_err=io_WF(ID,wf_disk)
         !
      enddo
      !

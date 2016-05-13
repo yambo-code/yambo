@@ -23,7 +23,7 @@
 !
 subroutine c2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
  !
- use pars,                  ONLY:SP,DP
+ use pars,                  ONLY:SP,DP,cZERO
  use electrons,             ONLY:n_bands,n_spinor
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
@@ -31,7 +31,7 @@ subroutine c2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
  !
  integer        :: i_sp_pol,ikibz,ib_grp
  character(*)   :: KSS_file_name
- real(SP)       :: wf_disk(2,wf_ncx,n_spinor,wf_nb_io)
+ complex(SP)    :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
  ! 
  ! Workspace ...
  ! 
@@ -66,7 +66,7 @@ subroutine c2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
  !
  endif
  !
- wf_disk(:,:,:,:)=0.
+ wf_disk=cZERO
  !
  i_spinor=1
  ! 
@@ -80,13 +80,10 @@ subroutine c2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
      allocate (wfdum(idum))
      read(11) wfdum
      idum2=idum/2
-       wf_disk(1,1,1,i1) = wfdum(1) 
-       wf_disk(2,1,1,i1) = wfdum(2) 
+     wf_disk(1,1,i1) = cmplx(wfdum(1),wfdum(2),kind=SP)
      do i2=2,idum2,2
-       wf_disk(1,i2,1,i1) = wfdum(i2+1) 
-       wf_disk(2,i2,1,i1) = wfdum(i2+2) 
-       wf_disk(1,i2+1,1,i1) = wf_disk(1,i2,1,i1)   
-       wf_disk(2,i2+1,1,i1) = -wf_disk(2,i2,1,i1)  
+       wf_disk(i2  ,1,i1) = cmplx(wfdum(i2+1),wfdum(i2+2),kind=SP) 
+       wf_disk(i2+1,1,i1) = conjg(wf_disk(i2,1,i1))   
      enddo
    deallocate(wfdum) 
    enddo

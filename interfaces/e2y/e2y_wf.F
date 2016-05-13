@@ -27,7 +27,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   use etsf_io
   use etsf_io_low_level
   use etsf_data,             only : dims,ETSF_kind
-  use pars,                  only : SP
+  use pars,                  only : SP,cZERO
   use vec_operate,           only : sort
   use com,                   only : msg, error
   use electrons,             only : n_bands, n_sp_pol, n_spinor
@@ -37,7 +37,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   implicit none
   !
   integer,           intent(in)  :: i_sp_pol,ikibz, ncid, ib_grp
-  real(SP),          intent(out) :: wf_disk(2,wf_ncx,n_spinor,wf_nb_io)
+  complex(SP),       intent(out) :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
   !
   double precision, allocatable  :: wavefunction_section_(:,:,:,:)
   logical                        :: lstat
@@ -45,7 +45,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   ! 
   ! Work Space
   !
-  integer        :: ib, ierr, npwk, ik, ic, i_spinor, ireal, nb_to_read
+  integer        :: ib, ierr, npwk, ik, ig, ic, i_spinor, ireal, nb_to_read
   integer        :: start(6), count(6), ncvarid
   integer        :: wf_igk_indx(wf_nc_k(ikibz))
   !
@@ -91,22 +91,18 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   !
   if(ETSF_kind=='WFK') call sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
   !
-  do i_spinor = 1, n_spinor
-    !
-    call etsf_io_low_read_var(ncid, "coefficients_of_wavefunctions", &
-                            & wavefunction_section_, lstat,          &
-                            & error_data = error_data, start = start, count = count)
-    !
-    if(ETSF_kind=='KSS') then
-      forall( ireal=1:2, ic=1:wf_nc_k(ikibz), i_spinor=1:n_spinor, ib=1:n_bands ) &
-&          wf_disk(ireal,ic,i_spinor,ib) = wavefunction_section_(ireal,wf_igk(ic,ikibz),i_spinor,ib)
-    endif
-    !
-    if(ETSF_kind=='WFK') then
-      forall( ireal=1:2, ib=1:n_bands, ic=1:wf_nc_k(ikibz) ) &
-&          wf_disk(ireal,ic,i_spinor,ib) = wavefunction_section_(ireal,wf_igk_indx(ic),i_spinor,ib)
-    endif
-    !
+  call etsf_io_low_read_var(ncid, "coefficients_of_wavefunctions", &
+                          & wavefunction_section_, lstat,          &
+                          & error_data = error_data, start = start, count = count)
+  !
+  do ib=1,n_bands
+    do i_spinor=1,n_spinor
+      do ic=1,wf_nc_k(ikibz)
+        if(ETSF_kind=='KSS') ig=wf_igk(ic,ikibz)
+        if(ETSF_kind=='WFK') ig=wf_igk_indx(ic)
+        wf_disk(ic,i_spinor,ib) = cmplx(wavefunction_section_(1,ig,i_spinor,ib),wavefunction_section_(2,ig,i_spinor,ib),SP)
+      enddo
+    enddo
   enddo
   !
   deallocate(wavefunction_section_)

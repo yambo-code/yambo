@@ -26,7 +26,7 @@
  ! Reads the WFs for single k-point ikibz and group of bands
  ! associated with group ib_grp
  !
- use pars,                  ONLY:SP,DP
+ use pars,                  ONLY:SP,DP,cZERO
  use electrons,             ONLY:n_bands,n_spinor
  use wave_func,             ONLY:wf_ncx,wf_nc_k, wf_igk, wf_nb_io
  use mod_com2y,             ONLY:verboseIO
@@ -36,8 +36,8 @@
  !
  implicit none
  !
- integer,  intent(in)   :: i_sp_pol,ikibz, ib_grp
- real(SP), intent(out)  :: wf_disk(2,wf_ncx,n_spinor,wf_nb_io)
+ integer,     intent(in)   :: i_sp_pol,ikibz, ib_grp
+ complex(SP), intent(out)  :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
  !
  ! Work Space
  !
@@ -54,7 +54,7 @@
 
  npwk = wf_nc_k(ikibz)
  if(gamma_only_) npwk=(npwk-1)/2+1 ! PWs actually read from file
- wf_disk=0._SP
+ wf_disk=cZERO
  !
  ! Set the range of bands to be read from disk (ib1, ib2, n_b)
  !
@@ -127,21 +127,17 @@
      if(gamma_only_) then
 
        do ib=1, n_b
-         wf_disk(1,1,i_spinor,ib) = real(      wf_disk_DP(1,ib) , SP )
-         wf_disk(2,1,i_spinor,ib) = real(aimag(wf_disk_DP(1,ib)), SP )
+         wf_disk(1,i_spinor,ib) = cmplx(wf_disk_DP(1,ib) ,kind=SP)
          do ic=2,npwk
-           wf_disk(1,2*ic-2,i_spinor,ib) = real(      wf_disk_DP(ic,ib) , SP)
-           wf_disk(2,2*ic-2,i_spinor,ib) = real(aimag(wf_disk_DP(ic,ib)), SP)
-           wf_disk(1,2*ic-1,i_spinor,ib) = real(      wf_disk_DP(ic,ib) , SP)
-           wf_disk(2,2*ic-1,i_spinor,ib) =-real(aimag(wf_disk_DP(ic,ib)), SP)
+           wf_disk(2*ic-2,i_spinor,ib) = cmplx(      wf_disk_DP(ic,ib) , kind=SP)
+           wf_disk(2*ic-1,i_spinor,ib) = cmplx(conjg(wf_disk_DP(ic,ib)), kind=SP)
          enddo
        enddo
 
      else
 
        do ib=1,n_b
-         forall(ic=1:npwk) wf_disk(1,ic,i_spinor,ib) = real(      wf_disk_DP(ic,ib) , SP)
-         forall(ic=1:npwk) wf_disk(2,ic,i_spinor,ib) = real(aimag(wf_disk_DP(ic,ib)), SP)
+         forall(ic=1:npwk) wf_disk(ic,i_spinor,ib) = cmplx( wf_disk_DP(ic,ib) , kind=SP)
        enddo
 
      endif

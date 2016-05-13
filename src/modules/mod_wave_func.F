@@ -93,7 +93,7 @@ module wave_func
    integer function io_WF(ID,wf)
      use pars,       ONLY: SP
      integer            :: ID
-     real(SP), optional :: wf(:,:,:,:)
+     complex(SP), optional :: wf(:,:,:)
    end function
    !
    function WF_symm(ifft,isc)

@@ -98,7 +98,7 @@ subroutine K_kerr_IP(iq,w)
      if ( (abs(real(E_plus_W(1)))<1.E-5 .or. (abs(real(E_plus_W(2)))<1.E-5.and.E_SOC_nbands/=0))) cycle
      !
      ! Residuals
-     res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_kerr(i_T))*BS_T_grp(i_T_g)%fp(i_T)
+     res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_kerr(i_T))*BS_T_grp(i_T_g)%f_RES(i_T)
      if (allocated(BS_T_grp(i_T_g)%Z)                                     ) res=res*BS_T_grp(i_T_g)%Z(i_T)
      if (allocated(BS_T_grp(i_T_g)%W) .and. trim(global_gauge)=="velocity") res=res*E_plus_W0/conjg(E_plus_W0)
      !

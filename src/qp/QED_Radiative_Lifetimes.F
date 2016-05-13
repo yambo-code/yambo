@@ -91,10 +91,10 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
    !
    if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
    !
-   i_n    = QP_table(i_qp,1)
-   i_k    = QP_table(i_qp,3)
-   i_spin = spin(QP_table(i_qp,:))
-   i_k_mem=PAR_DIPk_ibz_index(i_k)
+   i_n     = QP_table(i_qp,1)
+   i_k     = QP_table(i_qp,3)
+   i_spin  = spin(QP_table(i_qp,:))
+   i_k_mem = PAR_DIPk_ibz_index(i_k)
    !
    B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
      !

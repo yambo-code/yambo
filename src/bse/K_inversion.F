@@ -43,6 +43,9 @@ subroutine K_inversion(iq,W,E,k,q)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
+#if defined _RT
+ use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
+#endif
  !
  implicit none
  !
@@ -56,7 +59,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! ... dummies
  !
  type(PP_indexes) ::px
- integer          ::i1,i2,iw,of_mode
+ integer          ::i1,i2,iw
  logical, external::stop_now
  complex(SP)      ::gauge_factor
  complex(SP), allocatable  ::Lo(:,:,:)
@@ -96,6 +99,12 @@ subroutine K_inversion(iq,W,E,k,q)
  full_inf_freqs_found=.FALSE.
  !
  call W_reset(W_disk)
+ !
+#if defined _RT
+ if (NEQ_Residuals.neqv.NEQ_Kernel) then
+   call warning("[INV] Different occupation configurations for Kernel and Residuals not supported")
+ endif
+#endif
  !
  ! I/O of the restart database
  !=============================
@@ -170,8 +179,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Initialize the output file 
  !============================
- of_mode=3
- call K_output_file(iq,-of_mode)
+ call K_output_file(iq,"open Inversion")
  !
  allocate(eps_disk(W%n_freqs))
  eps_disk=cZERO
@@ -325,7 +333,7 @@ subroutine K_inversion(iq,W,E,k,q)
  BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//&
 &                             trim(real2ch(real(nw_conv)/real(W%n_freqs)*100._SP))
  !
- call K_output_file(iq,of_mode)
+ call K_output_file(iq,"Inversion")
  !
  ! CLEAN
  !

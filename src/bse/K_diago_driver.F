@@ -122,7 +122,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Initialize the output file 
  !============================
- call K_output_file(iq,-2)
+ call K_output_file(iq,"open Diago")
  !
  if(io_err<0) then
    !
@@ -208,7 +208,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! I write the output file 
  !
- call K_output_file(iq,2)
+ call K_output_file(iq,"Diago")
  !
  ! Diagonalization DB (OUT)
  !==========================

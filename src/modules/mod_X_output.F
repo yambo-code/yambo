@@ -32,7 +32,7 @@ module X_output
  implicit none
  !
  character(15)     :: headers(7)
- character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,jdos_file_name
+ character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,jdos_file_name,pl_file_name
  character(schlen) :: off_file_name,beta_file_name,moke_file_name,refl_file_name
  !
  contains
@@ -137,6 +137,7 @@ module X_output
      !
      fxc_file_name=  'fxc_q'//trim(intc(iq))
      ! 
+     pl_file_name   ='pl_q'//trim(intc(iq))
      eps_file_name  ='eps_q'//trim(intc(iq))
      refl_file_name ='refl_q'//trim(intc(iq))
      eel_file_name  ='eel_q'//trim(intc(iq))
@@ -157,6 +158,7 @@ module X_output
      endif
      !
      if (len_trim(solver)>0) then
+       pl_file_name   =  trim(pl_file_name)//'_'//solver
        eps_file_name  =  trim(eps_file_name)//'_'//solver
        refl_file_name =  trim(refl_file_name)//'_'//solver
        eel_file_name  =  trim(eel_file_name)//'_'//solver
@@ -168,6 +170,7 @@ module X_output
      endif
      !
      if (len_trim(approx)>0) then
+       pl_file_name   =  trim(pl_file_name)//'_'//approx
        eps_file_name  =  trim(eps_file_name)//'_'//approx
        refl_file_name =  trim(refl_file_name)//'_'//approx
        eel_file_name  =  trim(eel_file_name)//'_'//approx
@@ -178,6 +181,7 @@ module X_output
      endif
      !
      if (len_trim(equation)>0) then
+       pl_file_name   =  trim(pl_file_name)//'_'//equation
        eps_file_name  =  trim(eps_file_name)//'_'//equation
        refl_file_name =  trim(refl_file_name)//'_'//equation
        eel_file_name  =  trim(eel_file_name)//'_'//equation
@@ -204,9 +208,19 @@ module X_output
      integer :: ii
      character(10) :: suffix(6)
      !
-     suffix(1:2) = (/'-Im[2]',  '-Re[3]'/)
-     suffix(3:4) = (/'o-Im[4]','o-Re[5]'/)
-     suffix(5:6) = (/'`-Im[6]','`-Re[7]'/)
+     if (desc=="PL") then
+       !
+       suffix(1:3) = (/'o|X[2]','o|Y[3]','o|Z[4]'/)
+       suffix(4:6) = (/'|X[2]','|Y[3]','|Z[4]'/)
+       !
+     else
+       !
+       suffix(1:2) = (/'-Im[2]',  '-Re[3]'/)
+       suffix(3:4) = (/'o-Im[4]','o-Re[5]'/)
+       suffix(5:6) = (/'`-Im[6]','`-Re[7]'/)
+       !
+     endif
+     !
      headers(1) = 'E/ev[1]'
      !
      do ii = 1,6

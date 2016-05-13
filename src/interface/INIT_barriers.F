@@ -23,7 +23,7 @@
 !
 subroutine INIT_barriers()
  !
- use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,&
+ use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,l_kerr,&
 &                     l_photolum,l_eval_collisions,l_life,l_ppa,l_real_time,l_sc_run,l_tddft
  use pars,       ONLY:lchlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv

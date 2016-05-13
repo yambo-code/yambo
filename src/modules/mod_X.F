@@ -76,7 +76,7 @@ module X_m
  !
  ! Photo Luminescence
  !
- complex(SP), allocatable :: PL(:,:)
+ real(SP),    allocatable :: PL(:,:,:)
  !
  ! Absorption & Polarizability
  !

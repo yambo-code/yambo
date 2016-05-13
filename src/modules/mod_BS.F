@@ -106,7 +106,8 @@ module BS
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
-   real(SP)   , allocatable      :: fp(:)
+   real(SP)   , allocatable      :: f_RES(:)
+   real(SP)   , allocatable      :: f_PL(:)
    real(SP)   , allocatable      :: W(:)
    real(SP)   , allocatable      :: E_SOC_corr(:,:)
    !
@@ -305,6 +306,7 @@ module BS
        if(l_photolum) then
          call mem_est("BS_T_grp_dipoles_PL_R_N",(/nT/))
          if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N",(/nT/))
+         call mem_est("BS_T_grp_f_PL_N",(/nT/),(/SP/))
        endif
        call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
        call mem_est("BS_T_grp_E_N",(/nT/),(/SP/))
@@ -323,13 +325,14 @@ module BS
        if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
      endif
      if(l_photolum) then
-       allocate(BS_T_grp(iT)%dipoles_R_PL(3,nT))
-       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(3,nT))
+       allocate(BS_T_grp(iT)%dipoles_R_PL(nT,3))
+       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(nT,3))
      endif
      allocate(BS_T_grp(iT)%table(nT,4))
      allocate(BS_T_grp(iT)%E(nT))
      allocate(BS_T_grp(iT)%f(nT))
-     allocate(BS_T_grp(iT)%fp(nT))
+     allocate(BS_T_grp(iT)%f_RES(nT))
+     if(l_photolum) allocate(BS_T_grp(iT)%f_PL(nT))
      if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
      if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
      if (E_SOC_nbands/=0) allocate(BS_T_grp(iT)%E_SOC_corr(2,nT))
@@ -418,10 +421,11 @@ module BS
        deallocate(BS_T_grp(i_g)%table)
        deallocate(BS_T_grp(i_g)%E)
        deallocate(BS_T_grp(i_g)%f)
-       deallocate(BS_T_grp(i_g)%fp)
-       if (allocated(BS_T_grp(i_g)%Z)) deallocate(BS_T_grp(i_g)%Z)
-       if (allocated(BS_T_grp(i_g)%W)) deallocate(BS_T_grp(i_g)%W)
-       if (E_SOC_nbands/=0)            deallocate(BS_T_grp(i_g)%E_SOC_corr)
+       deallocate(BS_T_grp(i_g)%f_RES)
+       if (allocated(BS_T_grp(i_g)%f_PL)) deallocate(BS_T_grp(i_g)%f_PL)
+       if (allocated(BS_T_grp(i_g)%Z))    deallocate(BS_T_grp(i_g)%Z)
+       if (allocated(BS_T_grp(i_g)%W))    deallocate(BS_T_grp(i_g)%W)
+       if (E_SOC_nbands/=0)               deallocate(BS_T_grp(i_g)%E_SOC_corr)
        !
      enddo
      !

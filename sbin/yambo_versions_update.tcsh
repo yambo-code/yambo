@@ -57,6 +57,10 @@ set dummy=`cat include/version.inc | grep 'code_GPL_revision'`
 set GPL_revision_old=`echo $dummy | $awk '{gsub("code_GPL_revision=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_hash'`
 set hash_old=`echo $dummy | $awk '{gsub("code_hash=","");print $0}'`
+echo $hash_old
+set dummy=$hash_old
+set hash_old=`echo $dummy | sed -e "s/'//g" `
+echo $hash_old
 #
 # Increase counters
 #
@@ -92,7 +96,7 @@ if ( "$argv[1]" != "save" ) then
          "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
   else
     echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h.'"$hash_new"'"
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new""
   endif
   echo 
 else
@@ -142,12 +146,12 @@ endif
 #
 cat << EOF > ss.awk
 {
- gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$use_rev_old  h\\\.$hash_old",
+ gsub("$version_old.$subver_old.$patch_old r.$use_rev_old h.$hash_old",
       "$version_new.$subver_new.$patch_new r.$use_rev_new h.$hash_new",\$0)
  #version
  gsub("SVERSION=\"$version_old\""  ,"SVERSION=\"$version_new\""  ,\$0)
- gsub("SSUBLEVEL=\"$patch_old\""   ,"SSUBLEVEL=\"$patch_new\""   ,\$0)
- gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
+ gsub("SSUBLEVEL=\"$subver_old\""   ,"SSUBLEVEL=\"$subver_new\""   ,\$0)
+ gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
  #revision
  gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
  gsub("SHASH=\"$hash_old\""        ,"SHASH=\"$hash_new\""        ,\$0)

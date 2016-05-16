@@ -92,7 +92,7 @@ if ( "$argv[1]" != "save" ) then
          "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
   else
     echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h.'"$hash_new"'"
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new""
   endif
   echo 
 else
@@ -118,7 +118,7 @@ if( "$update" == "0" ) then
   echo 'code_version(1)='$version_new  >  include/version.inc
   echo 'code_version(2)='$subver_new   >> include/version.inc
   echo 'code_version(3)='$patch_new    >> include/version.inc
-  echo "code_hash='"$hash_new"'"       >> include/version.inc
+  echo "code_hash="$hash_new           >> include/version.inc
   #
   # Revision strings
   #
@@ -142,12 +142,12 @@ endif
 #
 cat << EOF > ss.awk
 {
- gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$use_rev_old  h\\\.$hash_old",
+ gsub("$version_old.$subver_old.$patch_old r.$use_rev_old h.$hash_old",
       "$version_new.$subver_new.$patch_new r.$use_rev_new h.$hash_new",\$0)
  #version
  gsub("SVERSION=\"$version_old\""  ,"SVERSION=\"$version_new\""  ,\$0)
- gsub("SSUBLEVEL=\"$patch_old\""   ,"SSUBLEVEL=\"$patch_new\""   ,\$0)
- gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
+ gsub("SSUBLEVEL=\"$subver_old\""   ,"SSUBLEVEL=\"$subver_new\""   ,\$0)
+ gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
  #revision
  gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
  gsub("SHASH=\"$hash_old\""        ,"SHASH=\"$hash_new\""        ,\$0)

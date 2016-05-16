@@ -57,6 +57,10 @@ set dummy=`cat include/version.inc | grep 'code_GPL_revision'`
 set GPL_revision_old=`echo $dummy | $awk '{gsub("code_GPL_revision=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_hash'`
 set hash_old=`echo $dummy | $awk '{gsub("code_hash=","");print $0}'`
+echo $hash_old
+set dummy=$hash_old
+set hash_old=`echo $dummy | sed -e "s/'//g" `
+echo $hash_old
 #
 # Increase counters
 #
@@ -118,7 +122,7 @@ if( "$update" == "0" ) then
   echo 'code_version(1)='$version_new  >  include/version.inc
   echo 'code_version(2)='$subver_new   >> include/version.inc
   echo 'code_version(3)='$patch_new    >> include/version.inc
-  echo "code_hash="$hash_new           >> include/version.inc
+  echo "code_hash='"$hash_new"'"       >> include/version.inc
   #
   # Revision strings
   #

@@ -751,8 +751,8 @@ CFLAGS
 CC
 SHASH
 SREVISION
-SPATCHLEVEL
 SSUBLEVEL
+SPATCHLEVEL
 SVERSION
 target_alias
 host_alias
@@ -2546,8 +2546,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="13584"
+SREVISION="13585"
 SHASH="3bfefb5"
+
+
 
 
 
@@ -9972,7 +9974,6 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT" >&5
 $as_echo_n "checking for FFT... " >&6; }
 fi
-
 #
 # check for FFTW
 #
@@ -10500,8 +10501,6 @@ fi
 
 
 
-
-ac_config_files="$ac_config_files lib/install/make_iotk.inc"
 
 
 
@@ -11319,7 +11318,7 @@ if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
 
 
 # ============================================================================
-ac_config_files="$ac_config_files config/setup config/Makefile config/report src/wf_and_fft/sgfft.F lib/local/.objects sbin/make_makefile.sh sbin/make_message.pl sbin/objects_debug.sh driver/codever.h driver/editor.h src/external_c/.objects"
+ac_config_files="$ac_config_files config/setup config/Makefile config/report src/wf_and_fft/sgfft.F lib/local/.objects sbin/make_makefile.sh sbin/make_message.pl sbin/objects_debug.sh driver/codever.h driver/editor.h src/external_c/.objects lib/install/make_iotk.inc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -12012,7 +12011,6 @@ do
   case $ac_config_target in
     "lib/fftqe/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS lib/fftqe/c_defs.h:lib/fftqe/c_defs.h.in" ;;
     "lib/fftqe/fftqe_defs.h") CONFIG_FILES="$CONFIG_FILES lib/fftqe/fftqe_defs.h:lib/fftqe/fftqe_defs.h.in" ;;
-    "lib/install/make_iotk.inc") CONFIG_FILES="$CONFIG_FILES lib/install/make_iotk.inc" ;;
     "config/setup") CONFIG_FILES="$CONFIG_FILES config/setup" ;;
     "config/Makefile") CONFIG_FILES="$CONFIG_FILES config/Makefile" ;;
     "config/report") CONFIG_FILES="$CONFIG_FILES config/report" ;;
@@ -12024,6 +12022,7 @@ do
     "driver/codever.h") CONFIG_FILES="$CONFIG_FILES driver/codever.h" ;;
     "driver/editor.h") CONFIG_FILES="$CONFIG_FILES driver/editor.h" ;;
     "src/external_c/.objects") CONFIG_FILES="$CONFIG_FILES src/external_c/.objects" ;;
+    "lib/install/make_iotk.inc") CONFIG_FILES="$CONFIG_FILES lib/install/make_iotk.inc" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

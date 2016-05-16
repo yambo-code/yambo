@@ -21,12 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.2 r.13588 h.3f2b3ba , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.2 r.13589 h.8ffb801 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="13588"
-SHASH="3f2b3ba"
+SREVISION="13589"
+SHASH="8ffb801"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)

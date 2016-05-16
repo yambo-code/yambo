@@ -55,6 +55,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
+#if defined _PL
+ use drivers,      ONLY:l_photolum
+#endif
 #if defined _RT
  use parser_m,     ONLY:parser
  use drivers,      ONLY:l_rt_carriers_in_use
@@ -121,7 +124,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  do i_loop=1,n_loops
    !
-   if(i_loop==2) call BS_Blocks_and_Transitions_alloc(Ken,0)
+   if (i_loop==2) call BS_Blocks_and_Transitions_alloc(Ken,0)
    !
    i_T_at_k=0
    BS_K_dim=0
@@ -194,7 +197,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
 #if defined _PL
-             BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp) =f_eh_PL
+             if (l_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp) =f_eh_PL
 #endif
              BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
              !

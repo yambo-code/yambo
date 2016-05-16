@@ -26,7 +26,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use pars,           ONLY:SP,cZERO
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,l_drude
  use stderr,         ONLY:real2ch
- use BS,             ONLY:BS_mat,BSS_rhoq0,BS_H_dim,&
+ use BS,             ONLY:BS_mat,BSS_dipoles,BS_H_dim,&
 &                         BSE_mode,BSS_inversion_mode,&
 &                         BSS_er,BSS_dr,BSS_n_freqs,&
 &                         BSS_n_descs,BSS_description,Co_factor,&
@@ -379,10 +379,10 @@ subroutine K_inversion(iq,W,E,k,q)
        if (perform_inv) then
          !
          if (do_it_full) then
-           inv_err(iw)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,Lo_dim,BSS_rhoq0,gauge_factor,&
+           inv_err(iw)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
 &                                                           Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
          else
-           inv_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,BSS_rhoq0,gauge_factor,&
+           inv_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
 &                                                                  Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
          endif
          !

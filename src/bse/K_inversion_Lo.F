@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -30,7 +30,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,iw_ref,l_drude
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
- use BS,             ONLY:Co_factor,BSS_rhoq0,BS_H_dim,BS_K_dim,&
+ use BS,             ONLY:Co_factor,BSS_dipoles,BS_H_dim,BS_K_dim,&
 &                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -208,14 +208,14 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      endif
 #endif
      !
-     residual=BSS_rhoq0(i_res)*conjg(BSS_rhoq0(i_res))
+     residual=BSS_dipoles(i_res)*conjg(BSS_dipoles(i_res))
      if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
      if (trim(global_gauge)=='velocity') Lo(i_res,:,1)=(Lo(i_res,:,1)-Lo(i_res,iw_ref,1))
      Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
      Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -         Lo(i_res,:,1)
      !
      if ( eval_anti_resonant ) then
-       residual=conjg(BSS_rhoq0(i_Lo_trans))*BSS_rhoq0(i_Lo_trans)
+       residual=conjg(BSS_dipoles(i_Lo_trans))*BSS_dipoles(i_Lo_trans)
        if (trim(global_gauge)=='velocity') Lo(i_Lo_trans,:,i_Lo)=(Lo(i_Lo_trans,:,i_Lo)-Lo(i_Lo_trans,iw_ref,i_Lo))
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
        Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -                Lo(i_Lo_trans,:,i_Lo)

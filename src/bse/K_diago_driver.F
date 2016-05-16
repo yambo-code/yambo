@@ -43,6 +43,9 @@ subroutine K_diago_driver(iq,W)
 #if defined _KERR
  use drivers,        ONLY:l_kerr
 #endif
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+#endif
  !
  ! GPL_EXCLUDE_END
  !
@@ -64,6 +67,9 @@ subroutine K_diago_driver(iq,W)
  complex(SP),allocatable :: BS_E(:)
  complex(SP),allocatable :: BS_R_left(:)       
  complex(SP),allocatable :: BS_R_right(:)      
+#if defined _PL
+ real(SP),   allocatable :: BS_R_PL(:)      
+#endif
  !
  real(SP)   ,pointer  :: BS_E_SOC_corr(:,:) => null()
  complex(SP),pointer  :: BS_R_right_kerr(:) => null()
@@ -167,6 +173,10 @@ subroutine K_diago_driver(iq,W)
      !
      ! GPL_EXCLUDE_START
      !
+#if defined _PL
+     if(l_photolum     ) call PL_diago_residual(BS_E,BS_mat,BS_mat,BS_R_PL)
+#endif
+     !
 #if defined _KERR
      if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
 #endif
@@ -200,7 +210,6 @@ subroutine K_diago_driver(iq,W)
  endif
  !
  ! GPL_EXCLUDE_END
- !
  !
  ! Now I calculate epsilon
  !=========================
@@ -244,7 +253,10 @@ subroutine K_diago_driver(iq,W)
        allocate(BS_R_left(BS_H_dim))
        allocate(BS_R_right(BS_H_dim))
 #if defined _KERR
-       if(l_kerr) allocate(BS_R_right_kerr(BS_H_dim))
+       if (l_kerr)     allocate(BS_R_right_kerr(BS_H_dim))
+#endif
+#if defined _PL
+       if (l_photolum) allocate(BS_R_PL(BS_H_dim))
 #endif
        !
      case(2)
@@ -280,6 +292,9 @@ subroutine K_diago_driver(iq,W)
        deallocate(BS_R_right_kerr)
        nullify(BS_R_right_kerr)
      endif
+#endif
+#if defined _PL
+     if(allocated(BS_R_PL))         deallocate(BS_R_PL)
 #endif
      !
    end subroutine local_free

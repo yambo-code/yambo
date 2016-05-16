@@ -464,7 +464,7 @@ subroutine K_Haydock(iq,W)
      enddo
      !
      ! Using symmetry arguments
-     ! Cf=(1-ItParity)Re(<rhoq0|Vm>) + i*(1+ItParity)Im(<rhoq0|Vm>) 
+     ! Cf=(1-ItParity)Re(<dipoles|Vm>) + i*(1+ItParity)Im(<dipoles|Vm>) 
      ! with all product evaluated just in the eh pairs subspace 
      !
      call K_dot_product(v0_mod_,V0,Vn) 

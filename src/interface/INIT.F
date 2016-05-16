@@ -1271,7 +1271,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
 #if defined _PL
      if (l_photolum) call initactivate(1,'bse optics')
-     if (l_photolum) BSK_mode='IP'
 #endif
      !
 #if defined _SC && !defined _RT

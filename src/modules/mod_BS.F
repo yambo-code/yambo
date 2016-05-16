@@ -186,7 +186,7 @@ module BS
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
  complex(SP), allocatable :: BS_mat(:,:)
  complex(SP), allocatable :: BS_cpl_mat(:,:)
- complex(SP), allocatable :: BSS_rhoq0(:)
+ complex(SP), allocatable :: BSS_dipoles(:)
  complex(SP), allocatable :: BSS_eh_Z(:)
  !
  interface 
@@ -349,9 +349,9 @@ module BS
      allocate(BS_mat(BS_H_dim,BS_H_dim))
      call mem_est('BS_mat',(/size(BS_mat)/))
      BS_mat    = cZERO
-     allocate(BSS_rhoq0(BS_H_dim))
-     call mem_est('BSS_rhoq0',(/size(BSS_rhoq0)/))
-     BSS_rhoq0 = cZERO
+     allocate(BSS_dipoles(BS_H_dim))
+     call mem_est('BSS_dipoles',(/size(BSS_dipoles)/))
+     BSS_dipoles = cZERO
      allocate(BSS_eh_table(BS_K_dim,3+n_sp_pol-1),BSS_eh_E(BS_K_dim),BSS_eh_f(BS_K_dim))
      call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f",&
 &                 (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
@@ -384,7 +384,7 @@ module BS
    subroutine BS_mat_free()
      use memory_m,   ONLY:mem_est
      if (allocated(BSS_eh_table))      deallocate(BSS_eh_table)
-     if (allocated(BSS_rhoq0))         deallocate(BSS_rhoq0)
+     if (allocated(BSS_dipoles))       deallocate(BSS_dipoles)
      if (allocated(BSS_eh_E))          deallocate(BSS_eh_E)
      if (allocated(BSS_eh_W))          deallocate(BSS_eh_W)
      if (allocated(BSS_eh_f))          deallocate(BSS_eh_f)

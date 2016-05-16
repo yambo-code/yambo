@@ -40,8 +40,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
-&                        BZ_DbGd_nbands,BZ_DbGd_nkpts,BZ_DbGd_nkpt,n_spinor,n_spin,&
-&                        E_DbGd_components_reset,BZ_DbGd_table
+&                        BZ_DbGd_nbands,BZ_DbGd_nkpt,n_spinor,n_spin,&
+&                        BZ_DbGd_table
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:msg,error,warning
  use stderr,        ONLY:real2ch

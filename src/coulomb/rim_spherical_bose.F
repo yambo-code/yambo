@@ -45,9 +45,6 @@ subroutine rim_spherical_bose(Np,points,p_weight,radius,power,il,MULTIPLY_BY_Q)
  !   with Wi = 1/vol*\int_Si d3q/q^power
  !
  use pars,          ONLY:SP,pi,DP
- use drivers,       ONLY:l_real_time
- use com,           ONLY:msg
- use LIVE_t,        ONLY:live_timing
  use ELPH,          ONLY:elph_acustic_velocity,ph_freqs_sq
  use electrons,     ONLY:spin_occ
  use vec_operate,   ONLY:v_norm

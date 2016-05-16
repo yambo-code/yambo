@@ -23,9 +23,9 @@
 !
 subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
- ! The BKE is coded in terms of Ho + V + Sigma
+ ! The KBE is coded in terms of Ho + V + Sigma
  ! This subroutine construct Ho + V plus the time-diagonal part of Sigma(T=(t1 + t2)/2)
- ! In the TD-COHSEX we have that
+ ! In the TD-SEX we have that
  !
  !   H_k=Ho_k+U_k+ V_k^H-V_k^H[G_ref]+\Sigma_k^{SEX}-\Sigma_k^{SEX}[G_ref]
  !                 ----- A --------- -------- B -------------------------
@@ -38,12 +38,12 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use electrons,      ONLY:levels,n_spinor,n_spin
  use FFT_m,          ONLY:fft_size
- use drivers,        ONLY:l_sc_hf,l_sc_cohsex
+ use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
  use SC,             ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
-&                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,&
+&                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,&
 &                         RT_bands,RT_nbands,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -74,64 +74,30 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! Contribution from \delta\Sigma_coherent
  !=========================================
  !
- ! Density (needed by Hartree and local XCs)
- !=========
- !
- if (eval_DENSITY) then
-   !
-   ! Contribution only from the changed occupations about RT_bands(1)
-   !
-   call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
-   !
-   rho_n=rho_reference+delta_rho
-   if(n_spin>1) then
-     call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
-     magn_n=magn_reference+delta_magn
-   endif
-   !
- endif
- !
  ! All the potentials are written in terms of the variations
  ! * The Hartree term: V_hartree(rho) = V_hartree(rho_reference) + V_hartree(delta_rho)
  ! * The V_xc    term: V_xc(rho)      = V_xc(rho_reference)      + {V_xc(rho) - V_xc(rho_reference)} 
  ! * Sigma_xc    term: S_xc(G)        ~ S_xc(G_reference)        + S_xc(delta_G)
  !   For Sigma_xc this is in general an approximation. It is exact only for self-energies 
- !                linear in G_lesser as exchange and COHSEX[W_eq] 
+ !                linear in G_lesser as exchange and SEX[W_eq] 
  !
  !  V_hartree(rho_reference) is in REF_V_hartree_sc
  !  V_xc(rho_reference)      is in REF_V_xc_sc
  !  S_xc(G_reference)        is introduced in the QP corrections to the eigenvalues
  !
- if (eval_HARTREE) call V_Hartree(delta_rho,V_hartree_sc)
- !
- ! The xc-part
- !-------------
- !
- ! The DFT-like
- !-------------
- if (eval_DFT) then
-   !
-   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
-&                           MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
-   !
-   V_xc_sc=V_xc-REF_V_xc_sc
-   !
- endif
- !
- ! Filling the BKE Kernel with the HXC part
- !==========================================
- Ho_plus_Sigma=cZERO
  !
  ! In the following loop there are operations spread among bands that 
  ! can be done by all cpu's that have PAR_IND_WF_k%element_1D(ik)=T.
  ! Some operations, instead, must be carried on only by the head CPU in this group
  ! identified by PAR_COM_Xk_ibz_A2A%CPU_id==0
  !
+ Ho_plus_Sigma=cZERO
+ !
  ! The bare Hamiltonian
  !=========================
  if (.not.l_RT_RWA) then
    !
-   do ik=1,nXkibz 
+   do ik=1,nXkibz
      !
      if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu ) cycle
      !
@@ -150,67 +116,109 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
  endif
  !
- ! The MB self-energy (compute RT_Vnl_xc)
- !========================================
- if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose_rt(dG_in)
  !
- ! HXC part 
- !===========
- do ik=1,nXkibz 
+ ! Local part computed in real space (V_xc_sc and V_Hartree_sc)
+ !=============================================================
+ !
+ if (.not.l_use_Hxc_collisions) then
    !
-   H_nl_sc=cZERO
-   !
-   ! Hartree and local XC potentials 
-   !=================================
-   !
-   if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-   !
-   if (n_spinor==2) then
-     if(eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
-     if(eval_DFT)     call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WF,'xc ')
+   ! Density & Magnetization (needed by Hartree and local XCs)
+   !--------------------------
+   if (eval_HARTREE .or. eval_DFT) then
+     call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
+     rho_n=rho_reference+delta_rho
    endif
    !
-   if (.not.PAR_IND_WF_k%element_1D(ik).or. .not.HEAD_QP_cpu) cycle
+   if(n_spin>1 .and. eval_DFT) then
+     call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
+     magn_n=magn_reference+delta_magn
+   endif
    !
-   do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     if (l_RT_RWA) then
-       Ho_plus_sigma(RT_bands(1):RT_bands(2),&
-&                    RT_bands(1):RT_bands(2),ik_RT,1)=H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1)
-     else
-       call V_by_V_plus_V_omp(RT_nbands,&
-&                             cONE,H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1),&
-&                             Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
+   ! The Hartree term
+   !-------------------
+   if (eval_HARTREE) call V_Hartree(delta_rho,V_hartree_sc)
+   !
+   ! The DFT-like
+   !-------------
+   if (eval_DFT) then
+     !
+     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
+&                              MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
+     !
+     V_xc_sc=V_xc-REF_V_xc_sc
+     ! 
+   endif
+   !
+   ! Add H_nl_sc to Ho_plus_sigma 
+   !---------------------------------
+   do ik=1,nXkibz 
+     !
+     H_nl_sc=cZERO
+     !
+     if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+     !
+     if (n_spinor==2) then
+       if(eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
+       if(eval_DFT)     call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WF,'xc ')
      endif
      !
-     if (.not.HEAD_k_cpu) cycle
+     if (.not.PAR_IND_WF_k%element_1D(ik).or. .not.HEAD_QP_cpu) cycle
      !
-     ! Non-local XC potentials (like COHSEX)
-     !=======================================
-     if(l_sc_hf.or.l_sc_cohsex) then
-       call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1),&
-&                             Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
-     endif
+     do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       if (l_RT_RWA) then
+         Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)=&
+&                                              H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1)
+       else
+         call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1),&
+&                               Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
+       endif
+     enddo
+     !
    enddo
    !
- enddo
+ endif
+ !
+ ! Non local part computed with collisions (RT_Vnl_xc)
+ !======================================================
+ if (l_use_Hxc_collisions) then
+   !
+   call COLLISIONS_compose_rt(dG_in)
+   !
+   ! Add RT_Vnl_xc to Ho_plus_sigma 
+   !---------------------------------
+   if(HEAD_QP_cpu.and.HEAD_k_cpu) then
+     do ik=1,nXkibz 
+       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+       do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+         if (l_RT_RWA) then
+           Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)=&
+&                                                RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)
+         else
+           call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1),&
+&                               Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
+         endif
+       enddo
+     enddo
+   endif
+   !
+ endif
  !
  ! The External Field
  !====================
- do ik=1,nXkibz 
-   !
-   if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu) cycle
-   !
-   H_nl_sc=cZERO
-   !
-   ! The gauge field
-   !=================
-   if (l_NE_with_fields) call RT_apply_field(ik,H_nl_sc,A_input)
-   !
-   forall( ib=RT_bands(1):RT_bands(2) , ibp=RT_bands(1):RT_bands(2) , &
-&          ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2) ) &
-&            Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
-   !  
- enddo
+ if (l_NE_with_fields.and.HEAD_k_cpu) then
+   do ik=1,nXkibz 
+     !
+     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+     !
+     H_nl_sc=cZERO
+     !
+     call RT_apply_field(ik,H_nl_sc,A_input)
+     !
+     forall( ib=RT_bands(1):RT_bands(2) , ibp=RT_bands(1):RT_bands(2) , ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2) ) &
+&      Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
+     !  
+   enddo
+ endif
  !
  ! All2All
  !=========

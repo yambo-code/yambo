@@ -24,20 +24,19 @@
 integer function variables_SC(ID,local_description,what)
  !
  use pars,           ONLY:lchlen
- use units,          ONLY:AU2Tesla,DEG2RAD,FS2AUT,AU2KWCMm2,HA2EV
+ use units,          ONLY:AU2Tesla,DEG2RAD
  use D_lattice,      ONLY:atoms_string
  use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
 &                         SC_xc_functional,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,l_sc_pot_is_local
- use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
-&                         variable_is_found
+ use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
+ use global_XC,      ONLY:SC_EXX,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC
  !
  implicit none
  !
@@ -97,64 +96,64 @@ integer function variables_SC(ID,local_description,what)
  !
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_sc_pot_is_local,&
-&     VAR=' The potential is local          :',DESCRIPTION=local_description(i_desc))
+&     VAR=' [SC] Local Potential            :',DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=it_now,DB_I0=it_now,&
-&     VAR=' Iteration                       :',DESCRIPTION=local_description(i_desc))
+&     VAR=' [SC] Iteration                  :',DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I1=SC_bands,&
-&     VAR=' Bands                           :',CHECK=CHECK_,OP=(/"==","=="/),&
+&     VAR=' [SC] Bands                      :',CHECK=CHECK_,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=nkibz,&
-&     VAR=' Number of K-points              :',CHECK=CHECK_,OP=(/"=="/),&
+&     VAR=' [SC] K-points                   :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,R0=SC_band_mixing,&
-&     VAR=' Bands mixing                    :',CHECK=CHECK_,OP=(/"=="/),&
+&     VAR=' [SC] Bands mixing               :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (any((/SC_kind_disk==SC_EXX,SC_kind_disk==SC_EXXC,SC_kind_disk==SC_HF,SC_kind_disk==SC_COHSEX/))) then
+ if (any((/SC_kind_disk==SC_EXX,SC_kind_disk==SC_EXXC,SC_kind_disk==SC_FOCK,SC_kind_disk==SC_SEX,SC_kind_disk==SC_COHSEX/))) then
    call io_elemental(ID,VAR="SIGMAx_G",VAR_SZ=1,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_ng_Sx,&
-&       VAR=' Sx RL components                :',CHECK=CHECK_,OP=(/"=="/),&
+&       VAR=' [SC] Sx RL components           :',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
- if ( SC_kind_disk==SC_COHSEX   ) then
+ if ( SC_kind_disk==SC_COHSEX .or. SC_kind_disk==SC_COH .or. SC_kind_disk==SC_SEX ) then
    call io_elemental(ID,VAR="X_bands_size",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,I1=SC_X_bands,&
-&       VAR=' Response function bands         :',CHECK=CHECK_,OP=(/"==","=="/),&
+&       VAR=' [SC] Response function bands    :',CHECK=CHECK_,OP=(/"==","=="/),&
 &       DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_X_size,&
-&       VAR=' Response function size          :',CHECK=CHECK_,OP=(/"=="/),&
+&       VAR=' [SC] Response function size     :',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=COHSEX_use_empties,&
-&     VAR=" COHSEX use empty bands          :", CHECK=.true.,OP=(/"=="/),&
+&     VAR=" [SC] COHSEX use empty bands     :", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_up_W_iters,&
-&     VAR=' Updating W every                :',CHECK=CHECK_,OP=(/"=="/),&
+&     VAR=' [SC] W update steps             :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_sc_diagonal,&
-&     VAR=' Diagonal approximation          :',CHECK=CHECK_,OP=(/"=="/),&
+&     VAR=' [SC] Diagonal approximation     :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
  if (ver_is_gt_or_eq(ID,revision=2877)) then
-   if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/)).or.l_MP) then
+   if (all((/SC_kind_disk/=SC_FOCK,SC_kind_disk/=SC_COHSEX,SC_kind_disk/=SC_COH,SC_kind_disk/=SC_SEX/)).or.l_MP) then
      call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
      i_desc=i_desc+1
      call io_elemental(ID,I0=SC_fft_size,&
-&         VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/),&
+&         VAR=' [SC] FFT mesh points            :',CHECK=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
@@ -166,11 +165,11 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
  if (.not.ver_is_gt_or_eq(ID,revision=2877)) then
-   if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/)).or.l_MP) then
+   if (all((/SC_kind_disk/=SC_FOCK,SC_kind_disk/=SC_COHSEX,SC_kind_disk/=SC_COH,SC_kind_disk/=SC_SEX/)).or.l_MP) then
      call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
      i_desc=i_desc+1
      call io_elemental(ID,I0=SC_fft_size,&
-&         VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/),&
+&         VAR=' [SC] FFT mesh points            :',CHECK=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif

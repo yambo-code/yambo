@@ -24,20 +24,16 @@
 subroutine MAG_pseudo_nl(kbv)
  !
  use pars,          ONLY:SP,DP
- use units,         ONLY:SPEED_OF_LIGHT,Au2Tesla
+ use units,         ONLY:SPEED_OF_LIGHT
  use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
- use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc
- use memory_m,      ONLY:mem_est
  use com,           ONLY:warning
  use magnetic,      ONLY:Bz,new_pp,old_pp,phase_trick,MAG_radius,n_loops
  !
  implicit none
- !
- type(bz_samp) :: Xk
  !
  ! Work Space
  !

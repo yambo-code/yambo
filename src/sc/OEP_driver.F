@@ -40,13 +40,13 @@ subroutine OEP_driver(X,Xw,E,k,q,V_oep)
  ! In the future we might choose just the iterative option. Now both for testing purpose. 
  ! Later should also distiguish in case of real time evolution between memory/not memory 
  !
- use pars,            ONLY:SP,DP
+ use pars,            ONLY:SP
  use X_m,             ONLY:X_t
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
  use interfaces,      ONLY:el_density_and_current
  use FFT_m,           ONLY:fft_size
- use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli,l_oep_ceda,l_sc_srpa
+ use drivers,         ONLY:l_oep_exact,l_oep_slater,l_sc_srpa
  use SC,              ONLY:it_now,l_oep_iterative,l_oep_EWeight 
  use frequency,       ONLY:w_samp
  !

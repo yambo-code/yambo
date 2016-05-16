@@ -28,8 +28,6 @@ module fields
  !
  implicit none
  !
- logical           :: l_manual_excitation
- !
  ! Electric Field(s)
  ! 
  type ext_field
@@ -42,7 +40,7 @@ module fields
    integer  :: n_frequencies
    real(SP) :: frequency(2)
    real(SP) :: damping
-   real(SP) :: fluence
+   real(SP) :: fluence = 0._SP
    real(SP) :: intensity
    real(SP) :: amplitude
    real(SP) :: W_step
@@ -51,7 +49,7 @@ module fields
  end type ext_field
  !
  integer, parameter  :: n_ext_fields_max=4
- integer             :: n_ext_fields
+ integer             :: n_ext_fields    =0
  type(ext_field)     :: Efield(n_ext_fields_max)
  !
  ! Vector potential
@@ -81,8 +79,8 @@ module fields
 &                        trim(E_field%ef_name) == 'GAUSS' ,& 
 &                        trim(E_field%ef_name) == 'PULSE' ,& 
 &                        trim(E_field%ef_name) == 'QSSIN' /)) .and. &
-&                 any((/ trim(E_field%ef_pol) == 'linear' ,&
-&                        trim(E_field%ef_pol) == 'circular' /))
+&                 any((/ trim(E_field%ef_pol)  == 'linear' ,&
+&                        trim(E_field%ef_pol)  == 'circular' /))
    end function
    !
    real(SP) function EtoT(E,T)

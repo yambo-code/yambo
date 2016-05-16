@@ -31,7 +31,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  use D_lattice,     ONLY:a,alat
  use FFT_m,         ONLY:fft_dim
  use com,           ONLY:msg,warning,of_open_close
- use electrons,     ONLY:levels,spin,n_spinor
+ use electrons,     ONLY:spin,n_spinor
  use YPP,           ONLY:v2plot,ncell,r_hole,l_free_hole,&
 &                        nr,nr_tot,output_fname,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim
@@ -202,7 +202,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
    !
    ! PLOT
    !
-   if (use_cube) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
+   if (use_cube)     output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
    if (use_xcrysden) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
    if (use_gnuplot)  output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
    !

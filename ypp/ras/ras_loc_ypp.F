@@ -75,7 +75,7 @@
    do ik=loc_kpts(1),loc_kpts(2)
      call WF_load(WF,ngloc,1,loc_bands,(/ik,ik/),space='G',impose_free_and_alloc=.TRUE.,title='-LOC')
  
-     call live_timing('Localization k('//trim(intc(ik))//')',loc_bands(2)-loc_bands(1)+1,SERIAL=.true.)
+     call live_timing('Localization k('//trim(intc(ik))//')',loc_bands(2)-loc_bands(1)+1)
      do ib=loc_bands(1),loc_bands(2)
        ibfft=WF%index(ib,ik,1)
        rhoint = 0.0_SP

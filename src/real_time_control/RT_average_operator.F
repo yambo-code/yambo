@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_limited,&
+subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
 &                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
  !
  use pars,           ONLY:SP,cI,cZERO
@@ -46,13 +46,13 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  type(levels),  intent(in) :: en
  complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  integer,       intent(in) :: nK_mem
- complex(SP),     optional,intent(out) :: O_VALUE,V_VALUE(3)
- complex(SP),     optional, intent(in) :: PV_MATRIX(3,RT_bands(2),RT_bands(2),nK_mem,n_sp_pol)
- complex(SP),     optional, intent(in) :: V_MATRIX(3,RT_bands(1):RT_bands(2),&
-&                                                    RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
- complex(SP),     optional, intent(in) :: O_MATRIX(RT_bands(2),RT_bands(2),nK_mem,n_sp_pol)
- complex(SP),     optional, intent(in) :: O_MATRIX_limited(RT_bands(1):RT_bands(2),&
-&                                                          RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
+ !
+ ! Optionals
+ !
+ complex(SP),     optional, intent(out):: O_VALUE,V_VALUE(3)
+ complex(SP),     optional, intent(in) :: PV_MATRIX(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
+ complex(SP),     optional, intent(in) ::  V_MATRIX(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
+ complex(SP),     optional, intent(in) ::  O_MATRIX(  RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
  logical,         optional, intent(in) :: TRANS
@@ -79,8 +79,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  endif
  !
  OUTPUT_dim=0
- if(present(O_MATRIX).or.present(O_real).or.&
-&   present(O_QP).or.present(O_MATRIX_limited)) OUTPUT_dim=1
+ if(present(O_MATRIX).or.present(O_real).or.present(O_QP)) OUTPUT_dim=1
  !
  if(present(V_MATRIX).or.present(PV_MATRIX))    OUTPUT_dim=3
  !
@@ -201,17 +200,12 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
        !
        Hk_tmp=cZERO
        !
-       if (present(O_MATRIX).or.present(O_MATRIX_limited)) then
+       if (present(O_MATRIX)) then
          do ib=RT_bands(1),RT_bands(2)
            do ibp=RT_bands(1),RT_bands(2)
              !
-             if (present(O_MATRIX) )then
-               if (     l_transpose) Hk_tmp(ibp,ib,:)=O_MATRIX(ib,ibp,ik_mem,:) 
-               if (.not.l_transpose) Hk_tmp(ib,ibp,:)=O_MATRIX(ib,ibp,ik_mem,:) 
-             else
-               if (     l_transpose) Hk_tmp(ibp,ib,:)=O_MATRIX_limited(ib,ibp,ik_mem,:) 
-               if (.not.l_transpose) Hk_tmp(ib,ibp,:)=O_MATRIX_limited(ib,ibp,ik_mem,:) 
-             endif
+             if (     l_transpose) Hk_tmp(ibp,ib,:)=O_MATRIX(ib,ibp,ik_mem,:) 
+             if (.not.l_transpose) Hk_tmp(ib,ibp,:)=O_MATRIX(ib,ibp,ik_mem,:) 
              !
            enddo
          enddo

@@ -113,7 +113,7 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  N_in=1
  N_out=0
  !
- call live_timing('Random points',RIM_n_rand_pts,SERIAL=.true.)
+ call live_timing('Random points',RIM_n_rand_pts)
  loop: do while(.not.N_in==RIM_n_rand_pts+1)
    !
    do ic=1,3
@@ -138,7 +138,7 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  call msg('r', 'Sphere volume       [au]:',sphere_vol)
  call msg('rn','Integrated volume   [au]:',box_vol*real(RIM_n_rand_pts)/real(N_out))
  !
- call live_timing('Integrals',Np,SERIAL=.true.)
+ call live_timing('Integrals',Np)
  !
  do ip=1,Np
    p_weight(ip)=0.

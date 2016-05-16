@@ -25,7 +25,7 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
  !
  ! Perturbative SOC
  !
- use pars,           ONLY:SP,pi,cZERO,cI,cONE
+ use pars,           ONLY:SP,cZERO
  use wrapper_omp,    ONLY:V_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index

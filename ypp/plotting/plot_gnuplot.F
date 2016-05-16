@@ -43,9 +43,9 @@ subroutine plot_gnuplot(eval_only)
  if (plot_dim==3) return
  !
  if (len_trim(plot_title)==0) then
-   call live_timing('3D Merge',nr(1),SERIAL=.true.)
+   call live_timing('3D Merge',nr(1))
  else
-   call live_timing('3D Merge of '//trim(plot_title),nr(1),SERIAL=.true.)
+   call live_timing('3D Merge of '//trim(plot_title),nr(1))
  endif
  !
  if (.not.eval_only) then
@@ -71,7 +71,7 @@ subroutine plot_gnuplot(eval_only)
      enddo
      call msg(output_string,'#')
      allocate(v2plot2D(nr2plot(1),1))
-     v2plot2D=0.
+     v2plot2D=0._SP
      ir=0
      do i1 = 0,nr(1)-1
        do i2 = 0,nr(2)-1

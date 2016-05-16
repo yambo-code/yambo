@@ -23,36 +23,33 @@
 !
 subroutine RT_dump_and_write_JP()
  !
- use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps,l_force_min_damp,&
-&                         N_pumps,l_skip_pol_and_curr_IO,J_steps,J_time_step
+ use YPP_real_time,  ONLY:RT_P_t,RT_conf,RT_J_t,l_force_min_damp,l_skip_pol_and_curr_IO,RT_time
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
- use units,          ONLY:FS2AUT,HA2EV
- use stderr,         ONLY:real2ch
- use RT_control,     ONLY:RT_output,RT_IO_JPO_steps
- use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps
- use fields,         ONLY:Efield
+ use units,          ONLY:AUT2FS
+ use RT_control,     ONLY:RT_output
+ use real_time,      ONLY:RT_ind_J,RT_P
  !
  implicit none
  !
  ! Work Space
  !
- real(SP) :: Total_time
  integer  :: i_t
  logical  :: l_no_damping
  !
- l_no_damping= trim(X_rt%damp) == "NONE"
+ l_no_damping= trim(RT_conf%damping) == "NONE"
  !
- if(l_no_damping) then
+ if (l_no_damping) then
    !
-   X_rt%damp_factor=0._SP
+   RT_conf%damp_factor=0._SP
+   !
+   call msg('s','[RT] Applied Field derived damping')
    !
    ! Force the minimal damping to make finite the Fourier Transform
    !
    if(l_force_min_damp) then
-     call RT_damp_it("LORENTZIAN",W_RT_induced_step,RT_J_t(i_t_start:i_t_end,:),RED_steps,J_time_step,3)
-     call RT_damp_it("LORENTZIAN",W_RT_induced_step,RT_P_t(i_t_start:i_t_end,:),RED_steps,J_time_step,6)
+     call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,RT_J_t,3)
+     call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,RT_P_t,6)
    endif
    !
  else
@@ -61,10 +58,8 @@ subroutine RT_dump_and_write_JP()
    ! has be applied also the initial part otherwise 
    ! there will problems doing FFT for the non-zero starting point 
    !
-   call msg('s','[RT] Optimal damping factor: '//trim(real2ch(W_RT_induced_step*HA2EV))//' eV')
-   !
-   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,J_time_step,3)
-   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,J_time_step,6)
+   call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_J_t,3)
+   call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_P_t,6)
    !
  endif
  !
@@ -75,11 +70,11 @@ subroutine RT_dump_and_write_JP()
  call RT_output(what="initialize")
  call RT_output(what="open cur pol")
  !
- do i_t=1,J_steps
+ do i_t=1,RT_conf%T_n_steps
    RT_ind_J    =RT_J_t(i_t,:)
    RT_P        =RT_P_t(i_t,1:3)
-   call RT_output('pol',TIME=(i_t-1)*J_time_step/FS2AUT)
-   if (allocated(RT_J_t)) call RT_output('cur',TIME=(i_t-1)*J_time_step/FS2AUT)
+   call RT_output('pol',TIME=RT_time(i_t)*AUT2FS)
+   if (allocated(RT_J_t)) call RT_output('cur',TIME=RT_time(i_t)*AUT2FS)
  enddo
  !
 end subroutine

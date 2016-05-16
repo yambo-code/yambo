@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_Overlaps(X,Xen,ID)
+integer function io_Overlaps(X,ID)
 
  !
  use pars,          ONLY:SP,schlen
@@ -36,7 +36,6 @@ integer function io_Overlaps(X,Xen,ID)
  !
  implicit none
  type(X_t)   ::X
- type(levels)::Xen
  integer     ::ID
  !
  ! Work Space
@@ -59,7 +58,7 @@ integer function io_Overlaps(X,Xen,ID)
    io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_Overlaps/=0) goto 1
    !
-   io_Overlaps=variables_DIPOLES(X,Xen,ID)
+   io_Overlaps=variables_DIPOLES(X,ID)
    if (io_Overlaps/=0) goto 1
    !
  endif

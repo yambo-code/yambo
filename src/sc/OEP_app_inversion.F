@@ -35,19 +35,18 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !  rho_{xc}(G)= W(G) - 2*int_k sum_{v} rho_{v,v}(k,G) [SigmaXC_{v,v}(k)]^* +c.c.  
  !  where W(G) is the Hole/Slater part of the potential multiplied by the density
  !
- use pars,            ONLY:SP,DP,SCHLEN,cZERO
- use D_lattice,       ONLY:DL_vol,i_time_rev,nsym
+ use pars,            ONLY:SP,DP,schlen,cZERO
+ use D_lattice,       ONLY:i_time_rev,nsym
  use electrons,       ONLY:levels,n_met_bands
- use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
+ use R_lattice,       ONLY:bz_samp,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
- use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
  use interfaces,      ONLY:MATRIX_driver
  use matrix_operate,  ONLY:INV
  use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
+ use QP_m,            ONLY:QP_ng_Sx
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:it_now,l_oep_EWeight
- use drivers,         ONLY:l_use_collisions,l_oep_kli,l_oep_ceda
+ use drivers,         ONLY:l_oep_kli,l_oep_ceda
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
@@ -66,7 +65,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
  ! Work Space
  !
- integer                  :: i1,ik,iv1,iv2,is,ig1,ig2,ifft,offt,ir
+ integer                  :: i1,ik,iv1,iv2,is,ig1,ig2,ifft,offt
  real(SP)                 :: EWeight, Prefactor
  complex(SP), allocatable :: rhotw_sum(:),rhotw_sum_TR(:),rho_xc(:),&
 &                            Vkli_RL(:),Ko(:,:),rhotw_prd(:,:),rhotw_rs(:)

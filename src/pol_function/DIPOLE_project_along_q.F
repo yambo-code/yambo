@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_project_along_q(Xen,Xk,X,field_dir)
+subroutine DIPOLE_project_along_q(Xk,X,field_dir)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_col_cut
  use parallel_m,     ONLY:PAR_Xk_nbz,PAR_Xk_bz_index,PAR_DIPk_ibz_index,PAR_IND_Xk_bz,&
 &                         PAR_IND_DIPk_ibz,PP_redux_wait,PAR_COM_Xk_bz_INDEX,&
 &                         l_par_X_G_all_q
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use X_m,            ONLY:DIP_projected,X_alloc,X_t,DIP_iR,DIP_P,global_gauge
@@ -44,7 +44,6 @@ subroutine DIPOLE_project_along_q(Xen,Xk,X,field_dir)
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk
- type(levels),  intent(inout) :: Xen
  type(X_t),     intent(inout) :: X
  real(SP),      intent(inout) :: field_dir(3)
  !

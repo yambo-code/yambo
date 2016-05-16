@@ -29,11 +29,18 @@ set awk     = awk
 if ( $#argv < 1 ) goto HELP
 if ( $#argv > 1 ) goto HELP
 #
+if ( "$argv[1]" != "r" && "$argv[1]" != "v" && "$argv[1]" != "s" && "$argv[1]" != "p" && "$argv[1]" != "save" ) then
+  echo "Argoument '"$argv"' not recognised. Options are:"
+  goto HELP
+endif
+#
 # Get current version & revision
 #
-set dir=`svn info | grep 'URL'| grep 'yambo-devel' |wc -l`
-set dummy=`svn info -r HEAD | grep 'Revision'`
-set revision_HEAD=`echo $dummy | $awk '{gsub("Revision: ","");print $0}'`
+set dir=`git branch | grep 'master' |wc -l`
+set dummy=`git rev-list --count HEAD`
+set revision_HEAD=`echo $dummy`
+@ revision_HEAD= $revision_HEAD + 10000 
+set hash_HEAD=`git rev-parse --short HEAD`
 #
 set gpl="yes"
 if ( "$dir" == "1" ) set gpl="no"
@@ -48,30 +55,44 @@ set dummy=`cat include/version.inc | grep 'code_revision'`
 set revision_old=`echo $dummy | $awk '{gsub("code_revision=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_GPL_revision'`
 set GPL_revision_old=`echo $dummy | $awk '{gsub("code_GPL_revision=","");print $0}'`
+set dummy=`cat include/version.inc | grep 'code_hash'`
+set hash_old=`echo $dummy | $awk '{gsub("code_hash=","");print $0}'`
 #
 # Increase counters
 #
 set version_new = $version_old
 set subver_new = $subver_old
 set patch_new = $patch_old
-set revision_new = $revision_HEAD
+set revision_new = $revision_old
+set hash_new = $hash_old
 #
-if ( "$argv[1]" == "v" ) @ version_new ++
-if ( "$argv[1]" == "v" ) @ subver_new = 0
-if ( "$argv[1]" == "v" ) @ patch_new = 0
-if ( "$argv[1]" == "p" ) @ subver_new ++
-if ( "$argv[1]" == "p" ) @ patch_new = 0
-if ( "$argv[1]" == "s" ) @ patch_new ++
+if ( "$argv[1]" == "v" ) then
+  @ version_new ++
+  @ subver_new = 0
+  @ patch_new  = 0
+endif
+#
+if ( "$argv[1]" == "s" ) then
+  @ subver_new ++
+  @ patch_new = 0
+endif
+#
+if ( "$argv[1]" == "p" ) @ patch_new ++
+#
+if ( "$argv[1]" == "r" || "$argv[1]" == "v" || "$argv[1]" == "s" || "$argv[1]" == "p" ) then
+  @ revision_HEAD ++
+  set revision_new = $revision_HEAD
+  set hash_new     = $hash_HEAD
+endif
 #
 if ( "$argv[1]" != "save" ) then
-  @ revision_new ++ 
   echo 
   if ( "$gpl" == "yes" ) then
     echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " => " \
          "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
   else
-    echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
+    echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
+         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h.'"$hash_new"'"
   endif
   echo 
 else
@@ -80,50 +101,59 @@ else
  echo "archive of " $source_dir " is " "../"$file_name".gz"
 endif
 #
-echo -n "Confirm ?"
-if ($< =~ [Yy]*) then
+
+set update = 0
+if ( "$argv[1]" == "v" || "$argv[1]" == "s" || "$argv[1]" == "p" ) then
+  set update = 1
+  echo -n "Confirm ?"
+  if ($< =~ [Yy]*) then
+    set update = 0
+  endif
+endif
 #
-# Version strings
-echo 'code_version(1)='$version_new  >  include/version.inc
-echo 'code_version(2)='$subver_new    >> include/version.inc
-echo 'code_version(3)='$patch_new      >> include/version.inc
-if ( "$gpl" == "yes" ) then
- echo 'code_revision='$revision_old >> include/version.inc
- echo 'code_GPL_revision='$revision_new >> include/version.inc
-else
- echo 'code_revision='$revision_new >> include/version.inc
- echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
+if( "$update" == "0" ) then
+  #
+  # Version strings
+  #
+  echo 'code_version(1)='$version_new  >  include/version.inc
+  echo 'code_version(2)='$subver_new   >> include/version.inc
+  echo 'code_version(3)='$patch_new    >> include/version.inc
+  echo "code_hash='"$hash_new"'"       >> include/version.inc
+  #
+  # Revision strings
+  #
+  if ( "$gpl" == "yes" ) then
+    echo 'code_revision='$revision_old     >> include/version.inc
+    echo 'code_GPL_revision='$revision_new >> include/version.inc
+  else
+    echo 'code_revision='$revision_new         >> include/version.inc
+    echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
+  endif
 endif
 #
 # Prepare new configure script
 #
+set use_rev_old=$revision_old
+set use_rev_new=$revision_new
 if ( "$gpl" == "yes" ) then
-cat << EOF > ss.awk
-{
- gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$GPL_revision_old",
-      "$version_new.$subver_new.$patch_new r.$revision_new",\$0)
- gsub("SVERSION=\"$version_old\"","SVERSION=\"$version_new\"",\$0)
- gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
- gsub("SSUBLEVEL=\"$patch_old\"","SSUBLEVEL=\"$patch_new\"",\$0)
- gsub("SREVISION=\"$GPL_revision_old\"","SREVISION=\"$revision_new\"",\$0)
- print \$0 > "NEW"
-}
-EOF
-else
-cat << EOF > ss.awk
-{
- gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$revision_old",
-      "$version_new.$subver_new.$patch_new r.$revision_new",\$0)
- gsub("SVERSION=\"$version_old\"","SVERSION=\"$version_new\"",\$0)
- gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
- gsub("SSUBLEVEL=\"$patch_old\"","SSUBLEVEL=\"$patch_new\"",\$0)
- gsub("SREVISION=\"$revision_old\"","SREVISION=\"$revision_new\"",\$0)
- print \$0 > "NEW"
-}
-EOF
+  set use_rev_old=$GPL_revision_old
+  set use_rev_new=$revision_new
 endif
 #
-# Version Update
+cat << EOF > ss.awk
+{
+ gsub("$version_old\\\.$subver_old\\\.$patch_old r\\\.$use_rev_old  h\\\.$hash_old",
+      "$version_new.$subver_new.$patch_new r.$use_rev_new h.$hash_new",\$0)
+ #version
+ gsub("SVERSION=\"$version_old\""  ,"SVERSION=\"$version_new\""  ,\$0)
+ gsub("SSUBLEVEL=\"$patch_old\""   ,"SSUBLEVEL=\"$patch_new\""   ,\$0)
+ gsub("SPATCHLEVEL=\"$subver_old\"","SPATCHLEVEL=\"$subver_new\"",\$0)
+ #revision
+ gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
+ gsub("SHASH=\"$hash_old\""        ,"SHASH=\"$hash_new\""        ,\$0)
+ print \$0 > "NEW"
+}
+EOF
 #
 #
 if ( "$argv[1]" != "save" ) then
@@ -147,9 +177,7 @@ if ( "$argv[1]" == "save" ) then
  rm -f $source_dir
 endif
 
-endif
-
 exit 0
 
 HELP:
-echo "yambo_versions_update.tcsh [(save) / (v)ersion/(s)ubversion/(p)atchlevel/@(r)evision]"
+echo "yambo_versions_update.tcsh [(save) / (v)ersion/(s)ubversion/(p)atchlevel/@(r)evision.hash]"

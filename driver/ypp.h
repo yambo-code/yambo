@@ -57,11 +57,9 @@
 #endif
 #if defined _YPP_ELPH  
   {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,(e)lias]",0,0,1,0,0}, 
-#endif
-#if defined _YPP_MAGNETIC 
+#elif defined _YPP_MAGNETIC 
   {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,angu(l)ar,(p)osition]",0,0,1,0,0}, 
-#endif
-#if ! defined  _YPP_ELPH && ! defined _YPP_MAGNETIC 
+#else
   {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent]",0,0,1,0,0}, 
 #endif
 #if defined _YPP_ELPH  && ! defined _YPP_RT
@@ -72,9 +70,14 @@
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 
   {"kpts_map","m","BZ map fine grid to coarse",0,0,0,0,0}, 
   {"WFs_map", "p","WF perturbative SOC mapping",0,0,0,0,0},
-  {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
+  {"fixsyms", "y","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
 #if defined _YPP_RT
-  {"RealTime","t","Real Time [(X)response,Tr(a)bs,(lb)LifeBands,(ob)OccBands,(ot)OccTime,(oe)OccEnergy,(od)OccDos]",0,0,1,0,0}, 
+  {"RTDBs",   "c","carriers [(e)nergy,(k)-space,(m)anual]",0,0,1,0,0}, 
+  {"RealTime","t","td-sex   [(X)response,Tr(a)bs]",0,0,1,0,0}, 
+  {"RealTime","n","NEQ opt1 [(o)ccupations,(l)ifetimes,(d)ensity]",0,0,2,0,0}, 
+  {"DESC",    " ","      opt2 occ. [(b)ands,(t)ime,(e)nergy,(d)os]",0,0,0,0,0},
+  {"DESC",    " ","      opt2 life [(b)ands]",0,0,0,0,0}, 
+  {"DESC",    " ","      opt2 den. [(t)ime]",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH && ! defined _YPP_RT
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 

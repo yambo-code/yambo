@@ -45,8 +45,8 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Etresh,Skind)
  !
  W_center=WmWp+Wbose
  !
- if (skind=='EP') local_alpha=  two_alpha  ! El-Ph, 2 GFs
- if (skind=='EE') local_alpha=2*two_alpha  ! El-El, 4 GFs
+ if (Skind=='EP') local_alpha=  two_alpha  ! El-Ph, 2 GFs
+ if (Skind=='EE') local_alpha=2*two_alpha  ! El-El, 4 GFs
  !
  if (trim(Gr_kind)=='QP') RT_G_retarded_convolution=W_center/(E_center**2+W_center**2)
  !

@@ -221,7 +221,7 @@ subroutine bxsf_read(Xk,Xen)
    !
    call section('*','Find nearest K-points in BZ')
    ! 
-   call live_timing('BZ DbGd_k Tables',DbGd_k%nbz*2,SERIAL=.true.)  
+   call live_timing('BZ DbGd_k Tables',DbGd_k%nbz*2)
    ! 
    ! have to go twice through all elements as BZ_DbGd_k cannot be
    ! allocated without knowing the number of maximum elements. 

@@ -28,6 +28,7 @@ module LOGO
  integer      :: code_version(3)
  integer      :: code_GPL_revision
  integer      :: code_revision
+ character(50):: code_hash
  !
  integer                     :: n_logo_lines
  integer                     :: ID_logo
@@ -76,7 +77,7 @@ module LOGO
      !
      comment(1)='Version '//&
 &                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
-&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))
+&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))//' Hash '//trim(code_hash)
      !
      ! GPL_EXCLUDE_END
      !

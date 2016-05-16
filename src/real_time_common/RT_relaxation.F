@@ -46,14 +46,15 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use RT_control,     ONLY:it_start
- use real_time,      ONLY:I_relax_static,RT_is_dephased,RT_Deph_Matrix,RT_bands,&
+ use RT_control,     ONLY:NE_i_start_time
+ use real_time,      ONLY:I_relax_static,RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
-&                         l_initial_equilibrium,RT_delta0_occupations,RT_is_dephased,&
-&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,it_dyn,&
-&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values
+&                         l_initial_equilibrium,RT_delta0_occupations,RT_is_statically_dephased,&
+&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,NE_i_time,&
+&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values,&
+&                         RT_is_dynamically_dephased
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -74,13 +75,13 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  l_initial_equilibrium=l_equilibrium
  !
- if (.not.RT_is_dephased.and..not.l_elphoton_scatt) return
+ if (.not.RT_is_statically_dephased.and..not.l_elphoton_scatt) return
  !
  I_relax_static=cZERO
  !
  ! Dephasing matrix
  !==================
- if (RT_is_dephased.and. .not.l_initial_equilibrium) then
+ if (RT_is_statically_dephased.and. .not.l_initial_equilibrium) then
    do ik=1,RT_nk
      do ib1=RT_bands(1),RT_bands(2)
        I_relax_static(ib1,ib1,ik)=-cI*RT_Deph_Matrix(ib1,ib1,RT_all2ibz(ik))*dG_in(ib1,ib1,ik)
@@ -91,13 +92,13 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  ! Eval or not ?
  !===============
  !
- if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) return
+ if (.not.RT_is_dynamically_dephased ) return
  !
  l_eval=l_initial_equilibrium 
  !
  if (.not.l_initial_equilibrium) then
-   l_eval= ( RT_TIME_status(it_dyn)>0 .and. &
-&            (FIRST_step( ) .or. it_dyn-it_start+1<=Life_MEM_steps ) ).or. &
+   l_eval= ( RT_TIME_status(NE_i_time)>0 .and. &
+&            (FIRST_step( ) .or. NE_i_time-NE_i_start_time+1<=Life_MEM_steps ) ).or. &
 &          Life_MEM_steps==1
  endif
  !

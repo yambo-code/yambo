@@ -26,12 +26,11 @@ subroutine K_diago_driver(iq,W)
  ! Generic diagonalization method to solve resonant and non resonant
  ! Hamiltonians.
  !
- use pars,           ONLY:SP,pi,cZERO,cI,cONE
+ use pars,           ONLY:SP
  use BS,             ONLY:BS_mat,BS_K_coupling,io_BSS_diago,BSS_perturbative_width,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim
  use electrons,      ONLY:E_SOC_nbands
- use memory_m,       ONLY:mem_est
- use matrix_operate, ONLY:DIAGO,INV
+ use matrix_operate, ONLY:DIAGO
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
@@ -66,7 +65,7 @@ subroutine K_diago_driver(iq,W)
  complex(SP),allocatable :: BS_R_left(:)       
  complex(SP),allocatable :: BS_R_right(:)      
  !
- complex(SP),pointer  :: BS_E_SOC_corr(:,:) => null()
+ real(SP)   ,pointer  :: BS_E_SOC_corr(:,:) => null()
  complex(SP),pointer  :: BS_R_right_kerr(:) => null()
  !
  ! Resonant K
@@ -74,7 +73,7 @@ subroutine K_diago_driver(iq,W)
  real(SP),allocatable    :: BS_E_real(:)
  !
  ! Perturbative BSE
- complex(SP),allocatable :: BS_W_corr(:)
+ complex(SP),allocatable :: BS_corrections(:,:)
  !
  ! Coupling
  !
@@ -109,7 +108,7 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_R_right_kerr)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
  !
  ! Kernel loading
  !================
@@ -182,20 +181,23 @@ subroutine K_diago_driver(iq,W)
  !
  ! Define perturbative corrections
  !=================================
- if (K_is_not_hermitian) then
+ if(E_SOC_nbands/=0) then
    !
-   ! To check if this expression is correct
-   if(E_SOC_nbands/=0)        call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_E_SOC_corr,2,'SOC')
-   if(BSS_perturbative_width) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_W_corr    ,1,'WID')
+   ! To check if the expression for the non hermitian case is correct
+   if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2,'SOC')
+   if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2,'SOC')
+   BS_E_SOC_corr=real(BS_corrections)
    !
- else
-   !
-   if(E_SOC_nbands/=0)        call K_diago_perturbative(conjg(BS_mat)*BS_mat,BS_E_SOC_corr,2,'SOC')
-   if(BSS_perturbative_width) call K_diago_perturbative(conjg(BS_mat)*BS_mat,BS_W_corr    ,1,'WID')
    !
  endif
  !
- if(BSS_perturbative_width) BS_E=BS_E-BS_W_corr
+ if(BSS_perturbative_width) then
+   !
+   if(     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections(1,:),1,'WID')
+   if(.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections(1,:),1,'WID')
+   BS_E=BS_E-aimag(BS_corrections(1,:))
+   !
+ endif
  !
  ! GPL_EXCLUDE_END
  !
@@ -212,7 +214,7 @@ subroutine K_diago_driver(iq,W)
  !==========================
  if (io_err/=0) then
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_R_right_kerr)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
  endif
  !
  ! CLEAN
@@ -235,7 +237,10 @@ subroutine K_diago_driver(iq,W)
      case(1)
        !
        allocate(BS_E(BS_H_dim))
-       if(E_SOC_nbands/=0) allocate(BS_E_SOC_corr(2,BS_H_dim))
+       if(E_SOC_nbands/=0) then
+         allocate(BS_corrections(2,BS_H_dim))
+         allocate(BS_E_SOC_corr(2,BS_H_dim))
+       endif
        allocate(BS_R_left(BS_H_dim))
        allocate(BS_R_right(BS_H_dim))
 #if defined _KERR
@@ -249,7 +254,8 @@ subroutine K_diago_driver(iq,W)
          allocate(BS_V_right(BS_H_dim,BS_H_dim))
        else
          allocate(BS_E_real(BS_H_dim))
-         if(BSS_perturbative_width) allocate(BS_W_corr(BS_H_dim))
+         if(BSS_perturbative_width.and..not.allocated(BS_corrections)) &
+&          allocate(BS_corrections(1,BS_H_dim))
        endif
        !
      end select
@@ -260,7 +266,7 @@ subroutine K_diago_driver(iq,W)
      !
      if(allocated(BS_E))            deallocate(BS_E)
      if(allocated(BS_E_real))       deallocate(BS_E_real)
-     if(allocated(BS_W_corr))       deallocate(BS_W_corr)
+     if(allocated(BS_corrections))  deallocate(BS_corrections)
      if(allocated(BS_R_right))      deallocate(BS_R_right)
      if(allocated(BS_R_left))       deallocate(BS_R_left)
      if(allocated(BS_V_right))      deallocate(BS_V_right)

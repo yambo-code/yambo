@@ -26,10 +26,9 @@ subroutine K_Haydock(iq,W)
 #if defined _BLUEGENE || _PGI
  use ieee_arithmetic
 #endif
- use pars,           ONLY:SP,pi,schlen,cI,cZERO,cONE
+ use pars,           ONLY:SP,schlen,cI,cZERO,cONE
  use com,            ONLY:error
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
- use memory_m,       ONLY:mem_est
  use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,iw_ref,global_gauge
  use R_lattice,      ONLY:q_norm
  use frequency,      ONLY:w_samp

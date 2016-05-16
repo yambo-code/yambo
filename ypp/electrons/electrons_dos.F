@@ -23,9 +23,8 @@
 !
 subroutine electrons_dos(Xk,Xen)
  !
- use units,          ONLY:HA2EV,FS2AUT
+ use units,          ONLY:HA2EV
  use pars,           ONLY:SP,schlen
- use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands
  use YPP,            ONLY:output_fname,dos_broadening,dos_bands,&

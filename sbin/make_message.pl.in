@@ -30,24 +30,52 @@
 use Getopt::Long;
 &GetOptions("p=s"          => \$patchname);
 #
-# Collect the files marked by svn status
+# Collect the files marked by git status
+# 
+# ... modified
 #
-$svncommand = "svn status | grep -v \"?\" | awk \'{printf\" %s \",\$2 }\' |";
-open(SVN, $svncommand);
-$changedfiles = <SVN>;
-close(SVN);
+$gitcommand = "git status | grep 'modified' | awk \'{printf\" %s \",\$2 }\' |";
+open(GIT, $gitcommand);
+$changedfiles = <GIT>;
+close(GIT);
 # Strip the "src/" (add to this list if needed)
 $changedfiles =~ s/  / /g;
 $changedfiles =~ s/src\///g;
 $changedfiles =~ s/interfaces\///g;
-print "Identified modified files: $changedfiles\n";
+print "\nMODIFIED files: $changedfiles\n\n";
+#
+# ... added 
+#
+$gitcommand = "git status | grep 'new' | awk \'{printf\" %s \",\$3 }\' |";
+open(GIT, $gitcommand);
+$newfiles = <GIT>;
+close(GIT);
+# Strip the "src/" (add to this list if needed)
+$newfiles =~ s/  / /g;
+$newfiles =~ s/src\///g;
+$newfiles =~ s/interfaces\///g;
+print "NEW files: $newfiles\n\n";
+#
+# ... removed 
+#
+$gitcommand = "git status | grep 'deleted' | awk \'{printf\" %s \",\$2 }\' |";
+open(GIT, $gitcommand);
+$delfiles = <GIT>;
+close(GIT);
+# Strip the "src/" (add to this list if needed)
+$delfiles =~ s/  / /g;
+$delfiles =~ s/src\///g;
+$delfiles =~ s/interfaces\///g;
+print "DELETED files: $delfiles\n\n";
 #
 # Write the commit message
 #
 open(MSGFILE,">","commit.msg") or die "The file commit.msg could " .
    "not be opened.\n";
-print MSGFILE "Version @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ \n\n";
-print MSGFILE "* $changedfiles\n\n";
+#print MSGFILE "Version @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ \n\n";
+print MSGFILE "MODIFIED * $changedfiles\n\n";
+print MSGFILE "NEW * $newfiles\n\n";
+print MSGFILE "DELETED * $delfiles\n\n";
 print MSGFILE "Bugs:\n";
 print MSGFILE "- \n";
 print MSGFILE "Additions:\n";

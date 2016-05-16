@@ -116,10 +116,10 @@ module collision
  !
  ! COLLISIONS groups...
  !======================
- type(COLLISIONS_group) :: GW_NEQ_collisions
- type(COLLISIONS_group) :: COH_collisions
- type(COLLISIONS_group) :: HXC_collisions
- type(COLLISIONS_group) :: P_collisions
+ type(COLLISIONS_group), save :: GW_NEQ_collisions
+ type(COLLISIONS_group), save :: COH_collisions
+ type(COLLISIONS_group), save :: HXC_collisions
+ type(COLLISIONS_group), save :: P_collisions
  !
  ! .. and ELEMENTS
  !=================

@@ -38,8 +38,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
- use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_use_collisions,&
-&                        l_elphoton_scatt,l_real_time,l_use_Hxc_collisions,    &
+ use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_elphoton_scatt,l_use_Hxc_collisions,&
 &                        l_use_COH_collisions,l_use_scatt_collisions
  use com,           ONLY:error
  use electrons,     ONLY:levels

@@ -116,7 +116,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! Work Space
  !
 #if defined _RT
- integer  :: i_field,i_region
+ integer  :: i_field
 #endif
  real(SP) :: IO_times(3)
  !

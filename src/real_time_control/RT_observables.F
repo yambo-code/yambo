@@ -25,8 +25,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  use pars,           ONLY:SP,cZERO
  use units,          ONLY:HA2EV,HA2KEL
- use drivers,        ONLY:l_sc_hartree,l_sc_is_libDFT,&
-&                         l_elel_scatt,l_elph_scatt,l_use_Hxc_collisions
+ use drivers,        ONLY:l_sc_is_libDFT,l_elel_scatt,l_elph_scatt,l_use_Hxc_collisions,l_sc_hartree
  use QP_m,           ONLY:QP_nk
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:P_square
@@ -96,11 +95,11 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  if (.not.l_use_Hxc_collisions) then
    !
-   if (.not.l_sc_Hartree)   call RT_average_operator(O_VALUE=dE_h ,O_MATRIX=HARTREE0,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+   if (.not.l_sc_hartree)   call RT_average_operator(O_VALUE=dE_h ,O_MATRIX=HARTREE0,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    !
    if (.not.l_sc_is_libDFT) call RT_average_operator(O_VALUE=dE_xc,O_MATRIX=XC0     ,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    !
-   if (l_sc_Hartree) then
+   if (l_sc_hartree) then
      !
      ! Hartree potential Energy:
      !

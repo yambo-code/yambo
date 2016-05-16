@@ -1,0 +1,2 @@
+configure merge=keepMine
+include/version.inc merge=keepMine

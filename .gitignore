@@ -1,0 +1,61 @@
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.o
+*.a
+*.so
+*.mod
+*.f90
+*.s
+config.status
+config/report
+config/setup
+driver/codever.h
+driver/editor.h
+include/netcdf.h
+include/netcdf.inc
+lib/archive/keep-extlibs-stamp
+lib/install/make_iotk.inc
+sbin/make_makefile.sh
+sbin/make_message.pl
+sbin/objects_debug.sh
+src/wf_and_fft/sgfft.F
+
+# source #
+##########
+*.objects*
+*__lock*
+bin/*
+Makefile
+commit.msg
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

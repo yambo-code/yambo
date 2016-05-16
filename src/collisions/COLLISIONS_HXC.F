@@ -118,6 +118,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if(l_MBPT_XC_collisions .or.l_COH_collisions) N_g_vecs_XC = QP_ng_Sx
  !
  call fft_check_size(iGo_max,N_g_vecs_XC,N_g_vecs_H)
+ !
+ if(l_loc_HXC_collisions) QP_ng_SH=N_g_vecs_H
+ !
  NG_max=max(N_g_vecs_H,N_g_vecs_XC)
  !
  call msg('r', '['//trim(SC_potential)//'] Plane waves :',(/N_g_vecs_H,N_g_vecs_XC/))

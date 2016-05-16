@@ -188,28 +188,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if(l_use_Hxc_collisions.or.l_elel_scatt) then
-   !
-   if (io_COLLs) then
-     !
-     if (l_use_collisions) then
-       !
-       call COLLISIONS_load(.FALSE.)
-       !
-     else
-       !
-       if (l_elel_scatt) then
-         call warning('COLLISIONs database missing/wrong. E-E scattering switched off.')
-         l_elel_scatt=.FALSE.
-       endif
-       !
-       if (.not.l_sc_pot_is_local) call error('COLLISIONs database missing.')
-       !
-     endif
-     !
-   endif
-   !
- endif
+ if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
  !
  ! Reference lifetimes and/or G_lesser
  !=====================================

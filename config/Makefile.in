@@ -50,7 +50,8 @@ includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/local/.objects
+           sbin/objects_debug.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
+           lib/install/make_iotk.inc
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
 CLEANS   = clean_fast clean clean_extlibs clean_all distclean

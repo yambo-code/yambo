@@ -7,6 +7,8 @@
 *.a
 *.so
 *.mod
+*.f90
+*.s
 config.status
 config/report
 config/setup

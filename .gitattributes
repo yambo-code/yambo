@@ -1,2 +1,3 @@
-configure merge=keepMine
-include/version.inc merge=keepMine
+configure           merge=keepTheirs
+include/version.inc merge=keepTheirs
+config/configure.ac merge=keepTheirs

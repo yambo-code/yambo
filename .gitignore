@@ -27,6 +27,7 @@ src/wf_and_fft/sgfft.F
 *__lock*
 bin/*
 Makefile
+commit.msg
 
 # Packages #
 ############

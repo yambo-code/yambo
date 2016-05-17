@@ -23,7 +23,8 @@
 !
 module KERR
  !
- use pars,  ONLY:SP
+ use drivers, ONLY:l_kerr
+ use pars,    ONLY:SP
  !
  implicit none
  !
@@ -65,15 +66,23 @@ module KERR
    !
    ! GPL_EXCLUDE_START
    !
-   subroutine BS_mat_kerr_alloc( )
-     !
+   subroutine BS_KERR_alloc( )
      use pars,       ONLY:cZERO
      use memory_m,   ONLY:mem_est
      use BS,         ONLY:BS_H_dim,BS_K_dim
-     !
+     if (.not.l_kerr) return
      allocate(BSS_dipoles_kerr(BS_H_dim))
      call mem_est('BSS_dipoles_kerr',(/size(BSS_dipoles_kerr)/))
      BSS_dipoles_kerr = cZERO
+   end subroutine
+   !
+   subroutine BS_KERR_free( )
+     use memory_m,   ONLY:mem_est
+     if (.not.l_kerr) return
+     if (allocated(BSS_dipoles_kerr)) then
+       deallocate(BSS_dipoles_kerr)
+       call mem_est('BSS_dipoles_kerr',(/size(BSS_dipoles_kerr)/))
+     endif
    end subroutine
    !
    ! GPL_EXCLUDE_END

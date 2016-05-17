@@ -210,8 +210,8 @@ module X_output
      !
      if (desc=="PL") then
        !
-       suffix(1:3) = (/'o|X[2]','o|Y[3]','o|Z[4]'/)
-       suffix(4:6) = (/'|X[2]','|Y[3]','|Z[4]'/)
+       suffix(1:3) = (/ '|X[2]', '|Y[3]', '|Z[4]'/)
+       suffix(4:6) = (/'o|X[2]','o|Y[3]','o|Z[4]'/)
        !
      else
        !

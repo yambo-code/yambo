@@ -21,71 +21,94 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PL_diago_residual(BS_E_real,BS_V_left,BS_V_right,BS_R_PL) 
+subroutine PL_diago_residual(BS_E_real,BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian) 
  !
- ! Resonant Residuals
- !====================
- ! BS_R_right(i) = \sum_k <q0|k><k|i> =
- !                 \sum_k BS_mat(k,i) x conjg( BSS_rhoq0(k) )
- ! BS_R_left(i)  = conjg( BS_R_right(i) )
+ ! PL Residuals
  !
- use pars,           ONLY:SP
-!,cZERO
-! use wrapper_omp,    ONLY:V_dot_V_omp
+ use pars,           ONLY:SP,rZERO,cZERO
+ use wrapper_omp,    ONLY:V_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
-! use X_m,            ONLY:global_gauge
- use BS,             ONLY:BSS_dipoles,BS_H_dim,BS_mat,&
-&                         BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use BS,             ONLY:BS_H_dim,BS_mat,BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_f
  !
  implicit none
  !
- complex(SP),intent(in)  :: BS_E_real(BS_H_dim),BS_V_left(BS_H_dim),BS_V_right(BS_H_dim)
- complex(SP),intent(out) :: BS_R_PL(BS_H_dim)
+ logical,    intent(in)  :: K_is_not_hermitian
+ complex(SP),intent(in)  :: BS_E_real(BS_H_dim),BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim)
+ real(SP)   ,intent(out) :: BS_R_PL(BS_H_dim,3)
  !
  ! Workspace
  !
  type(PP_indexes)     ::px
- integer              ::i1
- !!
- !complex(SP) :: tmp_res(BS_H_dim)
- !!
- !!
+ integer              ::i_l,i_c,i_eh
+ real(SP)             ::Z_
+ complex(SP)          ::left_dipole(BS_H_dim,3),right_dipole(BS_H_dim,3),R1,R2,R3,middle_R(BS_H_dim)
+ !
+ ! Parallel indexes
+ !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BS_H_dim/))
- !!
- !BS_R_left =cZERO
- !BS_R_right=cZERO
- call live_timing('BSK PL residual',px%n_of_elements(myid+1))
- !!
- !tmp_res = BSS_rhoq0*sqrt(BSS_eh_f)
- !if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
- !!
- do i1=1,BS_H_dim
-   if (.not.px%element_1D(i1)) cycle
- !  !
- !  if(.not.allocated(BSS_eh_Z)) then
- !    BS_R_left(i1) =V_dot_V_omp(BS_H_dim,tmp_res,conjg(BS_mat(:,i1)))
- !    BS_R_right(i1)=conjg(BS_R_left(i1))
- !  else
- !    BS_R_left(i1) =V_dot_V_omp(BS_H_dim,      tmp_res *sqrt(BSS_eh_Z),conjg(BS_mat(:,i1)))
- !    BS_R_right(i1)=V_dot_V_omp(BS_H_dim,conjg(tmp_res)*sqrt(BSS_eh_Z),      BS_mat(:,i1) )
- !  endif
- !  !
- !  if (trim(global_gauge)=="velocity") then
- !    BS_R_left(i1) =BS_R_left(i1) *BS_E_real(i1)
- !    BS_R_right(i1)=BS_R_right(i1)*BS_E_real(i1)
- !  endif
- !  !
+ !
+ ! Zeroing
+ !
+ BS_R_PL     =rZERO
+ left_dipole =cZERO
+ right_dipole=cZERO
+ middle_R    =cZERO
+ !
+ ! Left/Right residuals
+ !
+ do i_eh=1,BS_H_dim
+   !
+   if (.not.px%element_1D(i_eh)) cycle
+   !
+   Z_=1._SP
+   if (allocated(BSS_eh_Z)) Z_=BSS_eh_Z(i_l)
+   !
+   left_dipole(i_eh,1)=(BSS_dipoles_PL(i_eh,2)+BSS_dipoles_PL(i_eh,3))*sqrt(BSS_eh_f(i_eh)*Z_)
+   left_dipole(i_eh,2)=(BSS_dipoles_PL(i_eh,1)+BSS_dipoles_PL(i_eh,3))*sqrt(BSS_eh_f(i_eh)*Z_)
+   left_dipole(i_eh,3)=(BSS_dipoles_PL(i_eh,1)+BSS_dipoles_PL(i_eh,2))*sqrt(BSS_eh_f(i_eh)*Z_)
+   !
+   right_dipole(i_eh,:)=BSS_dipoles_PL(i_eh,:)*sqrt(BSS_eh_f(i_eh)*Z_)
+   !
+ enddo
+ !
+ call PP_redux_wait(right_dipole)
+ call PP_redux_wait(left_dipole)
+ !
+ ! Live-Timing
+ !
+ call live_timing('PL    residuals',px%n_of_elements(myid+1))
+ !
+ ! Main residual
+ !
+ do i_l=1,BS_H_dim
+   !
+   if (.not.px%element_1D(i_l)) cycle
+   !
+   middle_R(:)=BSS_PL_f(:)*BS_V_right(:,i_l)
+   !
+   do i_c=1,3
+     !
+     if (K_is_not_hermitian) then
+     else
+       R1=V_dot_V_omp(BS_H_dim,left_dipole(:,i_c),BS_mat(:,i_l))
+       R2=V_dot_V_omp(BS_H_dim,conjg(BS_mat(:,i_l)),middle_R)
+       R3=V_dot_V_omp(BS_H_dim,BS_mat(:,i_l),right_dipole(:,i_c))
+       R3=conjg(R3)
+       BS_R_PL(i_l,i_c)=real(R1*R2*R3)
+     endif
+     !
+   enddo
+   !
    call live_timing(steps=1)
  enddo
  call live_timing()
- !!
- !call PP_redux_wait(BS_R_left)
- !call PP_redux_wait(BS_R_right)
+ !
+ call PP_redux_wait(BS_R_PL)
  !
  call PP_indexes_reset(px)
- stop
  !
 end subroutine PL_diago_residual

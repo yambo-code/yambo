@@ -42,9 +42,11 @@ subroutine K_diago_driver(iq,W)
  !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
+ use KERR,           ONLY:BS_KERR_free
 #endif
 #if defined _PL
  use drivers,        ONLY:l_photolum
+ use PHOTOLUM,       ONLY:BS_PL_free
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -68,7 +70,7 @@ subroutine K_diago_driver(iq,W)
  complex(SP),allocatable :: BS_R_left(:)       
  complex(SP),allocatable :: BS_R_right(:)      
 #if defined _PL
- real(SP),   allocatable :: BS_R_PL(:)      
+ real(SP),   pointer     :: BS_R_PL(:,:)
 #endif
  !
  real(SP)   ,pointer  :: BS_E_SOC_corr(:,:) => null()
@@ -165,6 +167,10 @@ subroutine K_diago_driver(iq,W)
      if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
 #endif
      !
+#if defined _PL
+     if(l_photolum     ) call PL_diago_residual(BS_E,BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
+#endif
+     !
      ! GPL_EXCLUDE_END
      !
    else
@@ -174,7 +180,7 @@ subroutine K_diago_driver(iq,W)
      ! GPL_EXCLUDE_START
      !
 #if defined _PL
-     if(l_photolum     ) call PL_diago_residual(BS_E,BS_mat,BS_mat,BS_R_PL)
+     if(l_photolum     ) call PL_diago_residual(BS_E,BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
 #endif
      !
 #if defined _KERR
@@ -213,7 +219,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Now I calculate epsilon
  !=========================
- call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+ call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! I write the output file 
  !
@@ -229,8 +235,13 @@ subroutine K_diago_driver(iq,W)
  ! CLEAN
  !=======
  call BS_mat_free( )
- !
  call local_free( )
+#if defined _PL
+ call BS_PL_free( )
+#endif
+#if defined _KERR
+ call BS_KERR_free( )
+#endif
  !
 #if defined _TIMING
  call timing('Diagonalization Solver',OPR='stop')
@@ -256,7 +267,7 @@ subroutine K_diago_driver(iq,W)
        if (l_kerr)     allocate(BS_R_right_kerr(BS_H_dim))
 #endif
 #if defined _PL
-       if (l_photolum) allocate(BS_R_PL(BS_H_dim))
+       if (l_photolum) allocate(BS_R_PL(BS_H_dim,3))
 #endif
        !
      case(2)
@@ -294,7 +305,10 @@ subroutine K_diago_driver(iq,W)
      endif
 #endif
 #if defined _PL
-     if(allocated(BS_R_PL))         deallocate(BS_R_PL)
+     if(associated(BS_R_PL)) then
+       deallocate(BS_R_PL)
+       nullify(BS_R_PL)
+     endif
 #endif
      !
    end subroutine local_free

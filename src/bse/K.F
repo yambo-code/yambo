@@ -61,6 +61,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use timing_m,      ONLY:timing
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _KERR
+ use KERR,           ONLY:BS_KERR_free
+#endif
+#if defined _PL
+ use PHOTOLUM,       ONLY:BS_PL_free
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ !
  implicit none
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -210,6 +222,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
      n_BS_blks=0
      call BS_mat_free()
+#if defined _PL
+     call BS_PL_free( )
+#endif
+#if defined _KERR
+     call BS_KERR_free( )
+#endif
    endif
    !
    ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.

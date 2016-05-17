@@ -60,17 +60,15 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  !
  tmp_res = BSS_dipoles*sqrt(BSS_eh_f)
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
+ if (allocated(BSS_eh_Z)) then
+   tmp_res=tmp_res*sqrt(BSS_eh_Z)
+ endif
  !
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !
-   if(.not.allocated(BSS_eh_Z)) then
-     BS_R_left(i1) =V_dot_V_omp(BS_H_dim,tmp_res,conjg(BS_mat(:,i1)))
-     BS_R_right(i1)=conjg(BS_R_left(i1))
-   else
-     BS_R_left(i1) =V_dot_V_omp(BS_H_dim,      tmp_res *sqrt(BSS_eh_Z),conjg(BS_mat(:,i1)))
-     BS_R_right(i1)=V_dot_V_omp(BS_H_dim,conjg(tmp_res)*sqrt(BSS_eh_Z),      BS_mat(:,i1) )
-   endif
+   BS_R_left(i1) =V_dot_V_omp(BS_H_dim,tmp_res,conjg(BS_mat(:,i1)))
+   BS_R_right(i1)=conjg(BS_R_left(i1))
    !
    if (trim(global_gauge)=="velocity") then
      BS_R_left(i1) =BS_R_left(i1) *BS_E_real(i1)

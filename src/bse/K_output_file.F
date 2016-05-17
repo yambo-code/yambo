@@ -45,7 +45,7 @@ subroutine K_output_file(iq,mode)
 #endif
 #if defined _PL
  use X_output,  ONLY:pl_file_name
- use X_m,       ONLY:PL
+ use PHOTOLUM,  ONLY:PL
  use drivers,   ONLY:l_photolum
 #endif
  !
@@ -158,8 +158,8 @@ subroutine K_output_file(iq,mode)
 #if defined _PL
  if (l_photolum) then
    call X_setup_headers('PL')
-   if (l_Haydock.or.l_Inversion.or.l_Diago) call msg("o pl",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_IP) call msg("o pl",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
+   if (l_Haydock.or.l_Inversion.or.l_Diago) call msg("o pl_",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+   if (l_IP) call msg("o pl_",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
  endif
 #endif
  !
@@ -238,7 +238,7 @@ subroutine K_output_file(iq,mode)
    if (l_IP) call msg("o jdos",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
- call msg("o eps refl eel alpha off beta moke jdos pl",'#')
+ call msg("o eps refl eel alpha off beta moke jdos pl_",'#')
  !
 #if defined _PL
  !
@@ -257,7 +257,7 @@ subroutine K_output_file(iq,mode)
      if (l_IP) n_output_data=4
      if (l_IP) output_data(2:4)=output_data(5:7)
      !
-     call msg("o pl",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+     call msg("o pl_",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
    !

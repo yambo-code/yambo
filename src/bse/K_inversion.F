@@ -47,6 +47,17 @@ subroutine K_inversion(iq,W,E,k,q)
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _KERR
+ use KERR,           ONLY:BS_KERR_free
+#endif
+#if defined _PL
+ use PHOTOLUM,       ONLY:BS_PL_free
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  implicit none
  !
  type(w_samp) :: W
@@ -343,6 +354,12 @@ subroutine K_inversion(iq,W,E,k,q)
  call mem_est("Lo")
  !
  call BS_mat_free( )
+#if defined _PL
+ call BS_PL_free( )
+#endif
+#if defined _KERR
+ call BS_KERR_free( )
+#endif
  !
 #if defined _TIMING
  call timing('Invertion Solver',OPR='stop')

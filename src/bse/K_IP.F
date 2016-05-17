@@ -41,7 +41,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _PL
- use X_m,           ONLY:DIP_P,PL
+ use X_m,           ONLY:DIP_P
+ use PHOTOLUM,      ONLY:PL
 #endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr

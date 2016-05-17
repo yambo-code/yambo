@@ -74,10 +74,6 @@ module X_m
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
- ! Photo Luminescence
- !
- real(SP),    allocatable :: PL(:,:,:)
- !
  ! Absorption & Polarizability
  !
  complex(SP), allocatable :: Epsilon_ii(:,:)

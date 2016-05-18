@@ -84,6 +84,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
+#if defined _PL
+ use PHOTOLUM,      ONLY:PL_q0
+#endif
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
@@ -329,6 +332,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
  call it(defs,'QShiftOrder','[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
+ !
+#if defined _PL
+ !
+ ! BSE: PL
+ !
+ call it(defs,'PhotonDir',  '[BSS] [cc] Photon direction',PL_q0)
+ !
+#endif
  !
 #if defined _KERR
  !

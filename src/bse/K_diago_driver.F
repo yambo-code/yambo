@@ -69,12 +69,9 @@ subroutine K_diago_driver(iq,W)
  complex(SP),allocatable :: BS_E(:)
  complex(SP),allocatable :: BS_R_left(:)       
  complex(SP),allocatable :: BS_R_right(:)      
-#if defined _PL
- real(SP),   pointer     :: BS_R_PL(:,:)
-#endif
- !
- real(SP)   ,pointer  :: BS_E_SOC_corr(:,:) => null()
- complex(SP),pointer  :: BS_R_right_kerr(:) => null()
+ real(SP),   pointer     :: BS_R_PL(:) => null()
+ real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
+ complex(SP),pointer     :: BS_R_right_kerr(:) => null()
  !
  ! Resonant K
  !
@@ -168,7 +165,7 @@ subroutine K_diago_driver(iq,W)
 #endif
      !
 #if defined _PL
-     if(l_photolum     ) call PL_diago_residual(BS_E,BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
+     if(l_photolum     ) call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
 #endif
      !
      ! GPL_EXCLUDE_END
@@ -180,7 +177,7 @@ subroutine K_diago_driver(iq,W)
      ! GPL_EXCLUDE_START
      !
 #if defined _PL
-     if(l_photolum     ) call PL_diago_residual(BS_E,BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
+     if(l_photolum     ) call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
 #endif
      !
 #if defined _KERR
@@ -267,7 +264,7 @@ subroutine K_diago_driver(iq,W)
        if (l_kerr)     allocate(BS_R_right_kerr(BS_H_dim))
 #endif
 #if defined _PL
-       if (l_photolum) allocate(BS_R_PL(BS_H_dim,3))
+       if (l_photolum) allocate(BS_R_PL(BS_H_dim))
 #endif
        !
      case(2)

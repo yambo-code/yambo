@@ -304,8 +304,8 @@ module BS
          if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_KERR_A_N",(/nT/))
        endif
        if(l_photolum) then
-         call mem_est("BS_T_grp_dipoles_PL_R_N",(/nT/))
-         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N",(/nT/))
+         call mem_est("BS_T_grp_dipoles_PL_R_N",(/4*nT/))
+         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N",(/4*nT/))
          call mem_est("BS_T_grp_f_PL_N",(/nT/),(/SP/))
        endif
        call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
@@ -325,8 +325,8 @@ module BS
        if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
      endif
      if(l_photolum) then
-       allocate(BS_T_grp(iT)%dipoles_R_PL(nT,3))
-       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(nT,3))
+       allocate(BS_T_grp(iT)%dipoles_R_PL(nT,4))
+       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(nT,4))
      endif
      allocate(BS_T_grp(iT)%table(nT,4))
      allocate(BS_T_grp(iT)%E(nT))

@@ -44,7 +44,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
 #endif
  !
 #if defined _PL
- use PHOTOLUM,       ONLY:PL
+ use PHOTOLUM,       ONLY:PL,PL_q0,PL_prefactor
  use drivers,        ONLY:l_photolum
 #endif
  !
@@ -58,7 +58,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
  real(SP),    pointer     :: BS_E_SOC_corr(:,:)
  complex(SP), pointer     :: BS_R_right_kerr(:)
- real(SP),    pointer     :: BS_R_PL(:,:)
+ real(SP),    pointer     :: BS_R_PL(:)
  !
  ! Work space
  !
@@ -160,8 +160,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
 #if defined _PL
      if(l_photolum) then
        do i_c=1,3
-         PL(:,2,i_c)=PL(:,2,i_c)-BS_R_PL(i1,i_c)*aimag(1._SP/(W%p(:)-EXC_E(i_pert_SOC)))
-         if (BS_anti_res) PL(:,2,i_c)=PL(:,2,i_c)+BS_R_PL(i1,i_c)*aimag(1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))
+         PL(:,2,i_c)=PL(:,2,i_c)+PL_prefactor*PL_q0(i_c)*BS_R_PL(i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))
+         if (BS_anti_res) PL(:,2,i_c)=PL(:,2,i_c)+PL_prefactor*PL_q0(i_c)*BS_R_PL(i1)*aimag(1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))
        enddo
      endif
 #endif

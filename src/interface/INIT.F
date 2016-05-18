@@ -76,6 +76,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
  use ras_module,     ONLY:lras, lreels
 #endif
+#if defined _PL
+ use PHOTOLUM,       ONLY:PL_q0
+#endif
 #if defined _OPENMP
  use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
 #endif
@@ -636,6 +639,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
 #if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
+#endif
+#if defined _PL
+   if(l_photolum) call initactivate(1,'PhotonDir')
 #endif
    !
    call initactivate(1,'DrudeWBS Reflectivity')
@@ -1304,6 +1310,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! q0 renormalization
      !
      BSS_q0(:) = BSS_q0(:)*q0_def_norm/v_norm( BSS_q0)
+#if defined _PL
+     PL_q0(:)  = PL_q0(:)*q0_def_norm/v_norm( PL_q0)
+#endif
      X(1)%q0(:)=X(1)%q0(:)*q0_def_norm/v_norm(X(1)%q0)
      X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)

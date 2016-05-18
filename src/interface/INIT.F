@@ -847,7 +847,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate( 1,'HXC_Potential FFTGvecs COLLBands')
    call initactivate(-1,'QpntsRXs')
    !
-   if( index(SC_potential,"HARTREE")>0) call initactivate(1,'HARRLvcs')
+   if( index(SC_potential,"HARTREE")>0) call initactivate(1,'HARRLvcs ALLGHAR')
    !
    if( index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.index(SC_potential,"COH")>0 ) then
      call initactivate( 1,'EXXCut EXXRLvcs')

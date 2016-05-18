@@ -24,6 +24,7 @@
 subroutine fft_check_size(iGo_max,NG_xc,NG_H)
  !
  use fft_m,             ONLY:fft_size
+ use parser_m,          ONLY:parser
  use R_lattice,         ONLY:ng_in_shell,n_g_shells
  use com,               ONLY:warning
  use stderr,            ONLY:intc
@@ -35,15 +36,20 @@ subroutine fft_check_size(iGo_max,NG_xc,NG_H)
  !
  ! Workspace
  !
- integer :: xc_fft_size,i_shell,NG_H_save,lower_shell,i_exp,n
+ logical :: l_USE_all_Gexx,l_USE_all_GHAR
+ integer :: H_fft_size,xc_fft_size,i_shell,NG_H_save,lower_shell,i_exp,n
  !
  !
- if( (NG_xc>=NG_H) .or. NG_xc==0 .or. NG_H==0  ) return
+ if ( (NG_xc>=NG_H) .or. NG_xc==0 .or. NG_H==0  ) return
+ !
+ call parser('ALLGexx',l_USE_all_Gexx)
+ call parser('ALLGHAR',l_USE_all_GHAR)
  !
  call fft_setup(NG_xc,iGo_max,.true.)
  xc_fft_size=fft_size
  !
  call fft_setup(NG_H,iGo_max,.true.)
+ H_fft_size=fft_size
  if (fft_size>xc_fft_size) then
    !
    NG_H_save=NG_H
@@ -63,9 +69,16 @@ subroutine fft_check_size(iGo_max,NG_xc,NG_H)
      enddo
    enddo
    !
-   NG_H=ng_in_shell(i_shell-1)
-   call warning(' Hartree Sigma/Kernel FFT size is too big. RL vectors reduced from '//intc(NG_H_save)//'to '//intc(NG_H))
-   call warning(' Keeping a bigger FFT would significantly slow done the computation of the XC Sigma/Kernel')
+   if(l_USE_all_Gexx .or. l_USE_all_GHAR) then
+     call warning(' S/K NG_H= '//trim(intc(NG_H))//' imposes FFT size= '//trim(intc(H_fft_size)))
+     call warning(' S/K NG_xc= '//trim(intc(NG_xc))//' needs FFT size= '//trim(intc(xc_fft_size))//&
+&                 ', suggested NG_H= '//trim(intc(ng_in_shell(i_shell-1))))
+     call warning(' Bigger FFT kept due to ALLG input. Slow XC S/K computation.')
+   else
+     NG_H=ng_in_shell(i_shell-1)
+     call warning(' Hartree S/K FFT size is too big. NG_H reduced: '//trim(intc(NG_H_save))//' --> '//trim(intc(NG_H)))
+     call warning(' Bigger FFT discarded to avid slow XC S/K computation.')
+   endif
    !
  endif
  !

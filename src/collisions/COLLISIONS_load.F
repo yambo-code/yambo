@@ -46,6 +46,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q,PAR_Q_index,PAR_PLASMA_index
  use interfaces,      ONLY:io_COLLISIONS
  use com,             ONLY:warning
+ use stderr,          ONLY:string_remove
  !
  implicit none
  !
@@ -72,8 +73,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  endif
  !
  if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa) then
-   HXC_collisions%name=SC_potential
-   HXC_collisions%kind=SC_kind
+   if (l_sc_coh     ) call COLLISIONS_naming( SC_kind-SC_COH )
+   if (.not.l_sc_coh) call COLLISIONS_naming( SC_kind )
    call COLLISIONS_basic_operations( "alloc", HXC_collisions )
    call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err(2)=io_COLLISIONS(ID,HXC_collisions)

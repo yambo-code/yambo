@@ -81,7 +81,6 @@ module global_XC
    SC_Hartree       =1000, &  ! Hartree
    SC_EXX           = 301, &  ! OEP-EXX
    SC_Fock          = 302, &  ! Fock
-   SC_COHSEX        = 303, &  ! Coulomb-Hole Screened-eXchange
    SC_EXXC          = 304, &  ! OEP-EXX + LDA correlation
    SC_SRPA          = 305, &  ! OEP-COHSEX (static RPA)
    SC_EXX_KLI       = 311, &  ! OEP-EXX (KLI apprx)
@@ -91,7 +90,8 @@ module global_XC
    SC_EXXC_SLT      = 324, &  ! OEP-EXX (SLT apprx) + LDA correlation
    SC_SRPA_SLT      = 325, &  ! OEP-COHSEX (SLT apprx)
    SC_COH           = 326, &  ! Coulomb-Hole 
-   SC_SEX           = 327     !              Screened-eXchange
+   SC_SEX           = 327, &  ! Screened-eXchange
+   SC_COHSEX        = SC_SEX+SC_COH  ! Coulomb-Hole + Screened-eXchange
  !
  ! Self Energies
  integer, public, parameter :: &

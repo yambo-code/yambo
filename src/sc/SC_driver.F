@@ -52,7 +52,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder,v_norm
  use LIVE_t,         ONLY:live_timing
- use collision,      ONLY:COH_COLL_element,HXC_COLL_element
+ use collision,      ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
  use electrons,      ONLY:Total_magn
  !
  implicit none
@@ -195,7 +195,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    call el_density_and_current(E,k,rho=rho_n)
    if (n_spin>1) call el_magnetization(E,k,magn_n)
-   if(l_sc_hartree) call V_Hartree(rho_n,V_hartree_sc)
+   if (l_sc_hartree) call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_nm1 = V_xc_sc
    rho_nm1  = rho_n
@@ -239,12 +239,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    ! Hartree potential
    !===================
    !
-   if (it>1.and.l_sc_hartree) then
+   if (it>1.and.(l_sc_hartree.and..not.COLLISIONS_have_HARTREE)) then
      !
      if (.not.l_TF_precond) then 
+       !
        rho_n = SC_cycle_mixing*rho_n + (1._SP-SC_cycle_mixing)*rho_nm1
        if(n_spin>1) magn_n= SC_cycle_mixing*magn_n+ (1._SP-SC_cycle_mixing)*magn_nm1
+       !
      else
+       !
        delta_rho =rho_n -rho_nm1
        call SC_precondition(delta_rho)
        rho_n =rho_nm1 +SC_cycle_mixing*delta_rho
@@ -258,6 +261,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          call SC_precondition(delta_magn(i1,3))
          magn_n=magn_nm1+SC_cycle_mixing*delta_magn
        endif
+       !
      endif
      !
      call V_Hartree(rho_n,V_hartree_sc)
@@ -328,7 +332,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Add V_Hartree
        !
-       call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
+       if  (.not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
        !
      endif
      !
@@ -451,16 +455,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        enddo
      endif
      !
-     if(it_now==it_to_start) dumb_ch ='[SC] Iteration;'
-     dumb_ch2='            '//trim(intc(it_now))//' ;'
+     if(it_now==it_to_start) dumb_ch ='[SC] Iteration:'
+     dumb_ch2='            '//trim(intc(it_now))//' :'
      if (l_sc_pot_is_local) then
-       if(it==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) ;'
-       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(E_total))//' ; '
+       if(it==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) :'
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(E_total))//' : '
      endif
      if (n_spin==2) then
-       if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] ;'
-       if(n_spinor==2) dumb_ch=trim(dumb_ch)//'  |M| [muB] ;'
-       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Total_magn(:))))//' ;'
+       if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] :'
+       if(n_spinor==2) dumb_ch=trim(dumb_ch)//'  |M| [muB] :'
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Total_magn(:))))//' :'
      endif
      if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//' Acc.  E(ev)  -  rho(%)'
      dumb_ch2=trim(dumb_ch2)//'    '//trim(real2ch(E_convergence*HA2EV)) &

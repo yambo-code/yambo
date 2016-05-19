@@ -48,7 +48,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use SC,            ONLY:SC_potential,SC_kind
  use global_XC,     ONLY:SE_GW_NEQ,SE_GW_QED
  use collision,     ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
-&                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
+&                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
@@ -91,10 +91,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !========
  call XC_switch()
  !
- if(l_use_Hxc_collisions) then
-   HXC_collisions%name=SC_potential
-   HXC_collisions%kind=SC_kind
- endif
+ ! Naming 
+ !========
+ call COLLISIONS_naming( SC_kind )
  !
  ! Initial Setup
  !===============

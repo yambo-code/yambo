@@ -72,6 +72,7 @@ module collision
  real(SP)                 :: COLLISIONS_max
  !
  logical :: COLLISIONS_parallel_SC_structure=.FALSE.
+ logical :: COLLISIONS_have_HARTREE=.FALSE.
  !
  ! Elements used in the code
  !
@@ -130,16 +131,32 @@ module collision
  !
  contains
    !
-   subroutine COLLISIONS_initial_naming( )
-     use global_XC,     ONLY:SC_COH,SC_HARTREE,SC_SEX,SE_GW_QED,SE_GW_NEQ
-     COH_collisions%kind=SC_COH
-     COH_collisions%name="COH"
-     HXC_collisions%kind=SC_HARTREE+SC_SEX
-     HXC_collisions%name="HARTREE+SEX"
-     P_collisions%kind=SE_GW_QED
-     P_collisions%name="Momentum"
-     GW_NEQ_collisions%kind=SE_GW_NEQ
-     GW_NEQ_collisions%name="GW_NEQ"
+   subroutine COLLISIONS_naming( SC_kind )
+     use global_XC,     ONLY:SC_COH,SC_HARTREE,SC_SEX,SE_GW_QED,SE_GW_NEQ,SC_FOCK,SC_COHSEX
+     integer :: SC_kind
+     if (SC_kind==0) then
+       COH_collisions%kind=SC_COH
+       COH_collisions%name="COH"
+       HXC_collisions%kind=SC_HARTREE+SC_SEX
+       HXC_collisions%name="HARTREE+SEX"
+       P_collisions%kind=SE_GW_QED
+       P_collisions%name="Momentum"
+       GW_NEQ_collisions%kind=SE_GW_NEQ
+       GW_NEQ_collisions%name="GW_NEQ"
+     else
+       if (SC_kind==SC_COHSEX) then
+         HXC_collisions%kind=SC_SEX
+         HXC_collisions%name="SEX"
+       endif
+       if (SC_kind==SC_FOCK) then
+         HXC_collisions%kind=SC_FOCK
+         HXC_collisions%name="FOCK"
+       endif
+       if (SC_kind==SC_FOCK+SC_HARTREE) then
+         HXC_collisions%kind=SC_FOCK+SC_HARTREE
+         HXC_collisions%name="HARTREE+FOCK"
+       endif
+     endif
    end subroutine
    !
    subroutine elemental_collision_copy(I,O)

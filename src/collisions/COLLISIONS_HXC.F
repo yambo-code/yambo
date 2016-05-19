@@ -31,7 +31,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:error
+ use com,           ONLY:error,warning
  use SC,            ONLY:SC_potential
  use D_lattice,     ONLY:DL_vol
  use xc_functionals,ONLY:F_xc,XC_potential_driver
@@ -101,8 +101,16 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  l_HXC_collisions     = l_loc_HXC_collisions .or. l_MBPT_XC_collisions 
  !
  l_COH_collisions     = index(SC_potential,"COH")>0
- l_compute_screening  = index(SC_potential,"COH")>0 .or. index(SC_potential,"SEX")>0
+ l_compute_screening  = index(SC_potential,"COH")>0   .or. index(SC_potential,"SEX")>0
  l_tddft              = index(SC_potential,"GS_xc")>0 .or. index(SC_potential,"default")>0 
+ !
+ if (l_MBPT_XC_collisions.and.l_compute_screening) then
+   !
+   if (X%ng<N_g_vecs_XC) call warning(' Screening size (NGsBlkXs) cannot be smaller than SEX size (EXXRLvcs). Reduced.')
+   !
+   QP_ng_Sx=X%ng
+   !
+ endif
  !
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
@@ -160,15 +168,14 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  call elemental_collision_alloc(iscp_XC,NG=N_g_vecs_XC,NG_GAMP=(/N_g_vecs_XC,  1  /),TITLE=trim(SC_potential))
  !
- if(l_compute_screening) then
+ if (l_compute_screening) then
    !
    ! Plasmon-Pole/Static interaction DB I/O
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
    io_err=io_X(X,Xw,ID)
-   if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
    !
-   if (X%ng<N_g_vecs_XC) call error(' Screening size (NGsBlkXs) cannot be smaller than SEX size (EXXRLvcs)')
+   if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
    !
    ! Test the spatial Inversion
    !   
@@ -308,8 +315,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !
      do i_kmq=1,k%nibz
        !
-       !i_kmq_s =k%star(i_kmq,1)
-       !i_kmq_bz=k%k_table(i_kmq,1)
        !
        do i_mp=COLL_bands(1),COLL_bands(2)
          do i_np=i_mp,COLL_bands(2)
@@ -329,7 +334,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            do i_star=2,k%nstar(i_kmq)
              !
              i_kmq_s =k%star(i_kmq,i_star)
-             !i_kmq_bz=k%k_table(i_kmq,i_kmq_s)
              !
              !$omp parallel do default(shared), private(ig1)
              do ig1=2,N_g_vecs_H
@@ -404,7 +408,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      enddo
      !
    end subroutine compute_loc_HXC_collisions
-   !
    !
    subroutine compute_MBPT_XC_collisions()
      !

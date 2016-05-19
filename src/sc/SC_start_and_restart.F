@@ -37,11 +37,12 @@ subroutine SC_start_and_restart(X,E)
 &                         l_oep_iterative,rho_convergence,E_convergence, &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
 &                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
-&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence
+&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,SC_kind
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
+ use collision,      ONLY:COLLISIONS_naming
  !
  implicit none
  type(levels) ::E
@@ -199,6 +200,8 @@ subroutine SC_start_and_restart(X,E)
  !
  ! Checking extended COLLISIONS
  !==============================
+ !
+ call COLLISIONS_naming( SC_kind )
  !
  if (io_COLLs) call COLLISIONS_load(.TRUE.)
  !

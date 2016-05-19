@@ -37,96 +37,38 @@ subroutine XC_switch()
  use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC,SC_SRPA,EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error
+ use stderr,         ONLY:string_split
  !
  implicit none
  !
  ! Work
  !
- character(schlen)  :: SC_Hartree_potential,SC_XConly_potential
- integer            :: index_plus
+ character(schlen)  :: SC_Hartree_potential,SC_XConly_potential,potentials(10),potential
+ integer            :: i_c
  integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20, CED_APPRX = 30, LEVY_APPRX = 40
  !
- index_plus = SCAN(SC_potential,'+')
- SC_Hartree_potential=(trim(SC_potential(1:index_plus-1)))
- SC_XConly_potential =(trim(SC_potential(index_plus+1: )))
+ ! POTENTIAL selector
+ !===================
  !
- select case (trim(SC_XConly_potential))
-   case('IP')
-     ! This means Hartree and V_xc are frozed: IP=KS-IP
-     l_sc_ip=.true.
-     SC_kind=-1
-     SC_xc_functional=0
-   case('default')
-     ! special case
+ potential=trim(SC_potential)
+ do i_c=1,len_trim(SC_potential)
+   if (potential(i_c:i_c)=="+") potential(i_c:i_c)=" "
+ enddo
+ SC_kind=0
+ call string_split(potential,potentials)
+ do i_c=1,10
+   if (len_trim(potentials(i_c))==0) then
+     cycle
+   else if (trim(potentials(i_c))/="HARTREE") then
+     call POTENTIALS_scan(potentials(i_c))
+   else
      l_sc_hartree=.true.
-     l_sc_is_libDFT=.true.
-     SC_kind=GS_xc_KIND+SC_HARTREE
-     SC_xc_functional=GS_xc_FUNCTIONAL
-     SC_potential="HARTREE+GS_xc"
-   case('HARTREE')
-     l_sc_hartree=.true.
-     SC_kind=SC_HARTREE
-     SC_xc_functional=0
-   case('GS_xc')
-     l_sc_is_libDFT=.true.
-     SC_kind=GS_xc_KIND
-     SC_xc_functional=GS_xc_FUNCTIONAL
-   case('FOCK')
-     l_sc_fock=.true.
-     l_sc_pot_is_local=.false.
-     SC_kind=SC_FOCK
-     SC_xc_functional=0
-   case('LDA_X')
-     l_sc_is_libDFT=.true.
-     SC_kind=XC_EXCHANGE
-     SC_xc_functional=XC_LDA_X
-   case('PZ')
-     l_sc_is_libDFT=.true.
-     SC_kind=XC_EXCHANGE_CORRELATION
-     SC_xc_functional=XC_LDA_C_PZ
-   case('EXX')
-     l_sc_exx=.true.
-     SC_kind=SC_EXX
-     SC_xc_functional=0
-     if (n_full_bands/=n_met_bands) return
-   case('EXXC')
-     l_sc_exx=.true.
-     l_sc_is_libDFT=.true.
-     SC_kind=SC_EXXC
-     SC_xc_functional=XC_LDA_C_PZ
-     if (n_full_bands/=n_met_bands) return
-   case('SRPA')
-     l_sc_exx=.true.
-     l_sc_srpa=.true.
-     SC_kind=SC_SRPA
-     SC_xc_functional=0
-     if (n_full_bands/=n_met_bands) return
-   case('COH')
-     l_sc_coh=.true.
-     l_sc_pot_is_local=.false.
-     SC_kind=SC_COH
-     SC_xc_functional=0
-   case('SEX')
-     l_sc_sex=.true.
-     l_sc_pot_is_local=.false.
-     SC_kind=SC_SEX
-     SC_xc_functional=0
-   case('COHSEX')
-     l_sc_coh=.true.
-     l_sc_sex=.true.
-     l_sc_pot_is_local=.false.
-     SC_kind=SC_COHSEX
-     SC_xc_functional=0
-   case default
-     call error("Unknown SC potential! ")
- end select
- !
- if (trim(SC_Hartree_potential)=="HARTREE") then
-   l_sc_hartree=.true.
-   SC_kind=SC_kind+SC_Hartree
- endif
+     SC_kind=SC_kind+SC_Hartree
+   endif
+ enddo
  !
  ! OEP approximation
+ !===================
  !
  if (l_sc_exx) then
    select case (trim(OEP_approx))
@@ -172,4 +114,70 @@ subroutine XC_switch()
  endif
 #endif
  !
+ contains
+   !
+   subroutine POTENTIALS_scan(POT)
+     character(schlen) :: POT
+     select case (trim(POT))
+       case('IP')
+         ! This means Hartree and V_xc are frozed: IP=KS-IP
+         l_sc_ip=.true.
+         SC_kind=-1
+         SC_xc_functional=0
+       case('default')
+         ! special case
+         l_sc_hartree=.true.
+         l_sc_is_libDFT=.true.
+         SC_kind=GS_xc_KIND+SC_HARTREE
+         SC_xc_functional=GS_xc_FUNCTIONAL
+         SC_potential="HARTREE+GS_xc"
+       case('GS_xc')
+         l_sc_is_libDFT=.true.
+         SC_kind=GS_xc_KIND
+         SC_xc_functional=GS_xc_FUNCTIONAL
+       case('FOCK')
+         l_sc_fock=.true.
+         l_sc_pot_is_local=.false.
+         SC_kind=SC_FOCK
+         SC_xc_functional=0
+       case('LDA_X')
+         l_sc_is_libDFT=.true.
+         SC_kind=SC_kind+XC_EXCHANGE
+         SC_xc_functional=XC_LDA_X
+       case('PZ')
+         l_sc_is_libDFT=.true.
+         SC_kind=XC_EXCHANGE_CORRELATION
+         SC_xc_functional=XC_LDA_C_PZ
+       case('EXX')
+         l_sc_exx=.true.
+         SC_kind=SC_EXX
+         SC_xc_functional=0
+         if (n_full_bands/=n_met_bands) return
+       case('EXXC')
+         l_sc_exx=.true.
+         l_sc_is_libDFT=.true.
+         SC_kind=SC_EXXC
+         SC_xc_functional=XC_LDA_C_PZ
+         if (n_full_bands/=n_met_bands) return
+       case('SRPA')
+         l_sc_exx=.true.
+         l_sc_srpa=.true.
+         SC_kind=SC_SRPA
+         SC_xc_functional=0
+         if (n_full_bands/=n_met_bands) return
+       case('COH')
+         l_sc_coh=.true.
+         l_sc_pot_is_local=.false.
+         SC_kind=SC_kind+SC_COH
+         SC_xc_functional=0
+       case('SEX')
+         l_sc_sex=.true.
+         l_sc_pot_is_local=.false.
+         SC_kind=SC_kind+SC_SEX
+         SC_xc_functional=0
+       case default
+         call error("Unknown SC potential! ")
+     end select
+   end subroutine
+   !
 end subroutine XC_switch

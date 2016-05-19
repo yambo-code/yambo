@@ -121,24 +121,28 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
-   do iq=X%iq(1),X%iq(2)
+   if (i_err==0) then
      !
-     ! In the next lines Yambo will VERIFY the em1d database
-     ! to check if this iq has been already done. 
-     ! When self_detect_E_range=.TRUE. however the Xw%er setup is
-     ! done only in X_os and the VERIFY fails. This is why the procedure
-     ! must be repeated here:
+     do iq=X%iq(1),X%iq(2)
+       !
+       ! In the next lines Yambo will VERIFY the em1d database
+       ! to check if this iq has been already done. 
+       ! When self_detect_E_range=.TRUE. however the Xw%er setup is
+       ! done only in X_os and the VERIFY fails. This is why the procedure
+       ! must be repeated here:
+       !
+       if (self_detect_E_range) then
+         call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+         deallocate(X_poles)
+         Xw%er=minmax_ehe
+       endif
+       !
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
+       io_X_done(iq)=io_X(X,Xw,Xdb)
+       !
+     enddo
      !
-     if (self_detect_E_range) then
-       call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
-       deallocate(X_poles)
-       Xw%er=minmax_ehe
-     endif
-     !
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
-     io_X_done(iq)=io_X(X,Xw,Xdb)
-     !
-   enddo
+   endif
    !
    ! All q databases done
    !

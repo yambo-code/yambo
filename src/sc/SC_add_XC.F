@@ -64,10 +64,10 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  if (.not.l_sc_pot_is_local) then
    !
-   ! Fock/SEX + COH
-   !================
+   ! Fock/SEX/Hartree + COH
+   !=======================
    !
-   if(l_use_Hxc_collisions) then
+   if (l_use_Hxc_collisions) then
      !     
      G_collisions=cZERO
      forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik)=cI* E%f(ib,ik,1)

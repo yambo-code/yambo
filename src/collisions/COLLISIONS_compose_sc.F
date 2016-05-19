@@ -26,9 +26,9 @@ subroutine COLLISIONS_compose_sc(G_input)
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} STATIC_collisions(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
  use pars,             ONLY:SP,cZERO,cI
- use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_srpa
+ use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_srpa,l_sc_hartree
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Sc,QP_Vnl_xc
- use collision,        ONLY:COH_COLL_element,HXC_COLL_element,COLL_bands,HXC_collisions
+ use collision,        ONLY:COH_COLL_element,HXC_COLL_element,COLL_bands,HXC_collisions,COLLISIONS_have_HARTREE
  use parallel_m,       ONLY:PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
  !
  implicit none
@@ -39,7 +39,8 @@ subroutine COLLISIONS_compose_sc(G_input)
  !
  integer           :: i_qp,ib,ibp,i_kmq,ic1,ic2,i_coll_mem
  !
- if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx) return
+ if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and.&
+&   .not.(l_sc_hartree.and.COLLISIONS_have_HARTREE)) return
  !
  if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
  QP_Vnl_xc=cZERO
@@ -72,9 +73,9 @@ subroutine COLLISIONS_compose_sc(G_input)
            endif
          endif
          !
-         ! SEX part
+         ! SEX/HF part
          !
-         if (l_sc_sex) then
+         if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree) then
            if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
              QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*HXC_COLL_element(i_coll_mem)%v_c(ic2)*G_input(ib,ibp,i_kmq)
              ic2=ic2+1

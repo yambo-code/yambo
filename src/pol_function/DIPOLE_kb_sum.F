@@ -41,34 +41,22 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,j_spinor
- complex(SP) :: Cv(n_spinor),Cc(n_spinor),drho(3),&
-&               Kc(wf_ng,3,n_spinor,n_spinor),Kv(wf_ng,3,n_spinor,n_spinor)
+ complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3)
  !
- Kc=cZERO
- Kv=cZERO
- !
- do j_spinor=1,n_spinor
-   do i_spinor=1,n_spinor
+ do i_spinor=1,n_spinor
+   !
+   do i1=1,pp_kbv_dim
      !
-     if(i_spinor/=j_spinor) cycle
+     Cv(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1,i_spinor))
+     Cc(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1,i_spinor))
      !
-     do i1=1,pp_kbv_dim
+     do i2=1,3
        !
-       Cv(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1,i_spinor))
-       Cc(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1,i_spinor))
+       Vv(i2,i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1+i2,i_spinor))
+       Vc(i2,i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1+i2,i_spinor))
        !
-       if ( Cc(i_spinor)==cZERO .and. Cv(i_spinor)==cZERO ) cycle
+       drho(i2)=conjg(Cv(i_spinor))*Vc(i2,i_spinor)+conjg(Vv(i2,i_spinor))*Cc(i_spinor)
        !
-       do i2=1,3
-         call V_by_V_plus_V_omp(wf_ng,Cc(i_spinor),conjg(kbv(:,i1,1+i2,j_spinor)),Kc(:,i2,i_spinor,j_spinor))
-         call V_by_V_plus_V_omp(wf_ng,conjg(Cv(i_spinor)),kbv(:,i1,1+i2,j_spinor),Kv(:,i2,i_spinor,j_spinor))
-       enddo
-       !
-     enddo
-     !
-     do i1=1,3
-       drho(i1)=Vstar_dot_V_omp(wf_ng,WF%c(:,ivfft(j_spinor)),Kc(:,i1,i_spinor,j_spinor))+ &
-&                            V_dot_V_omp(wf_ng,WF%c(:,icfft(j_spinor)),Kv(:,i1,i_spinor,j_spinor))
      enddo
      !
      rho=rho+drho

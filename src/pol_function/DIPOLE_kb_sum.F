@@ -41,7 +41,7 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,j_spinor
- complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3)
+ complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3,pp_kbv_dim,n_spinor)
  !
  do i_spinor=1,n_spinor
    !
@@ -55,13 +55,13 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
        Vv(i2,i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1+i2,i_spinor))
        Vc(i2,i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1+i2,i_spinor))
        !
-       drho(i2)=conjg(Cv(i_spinor))*Vc(i2,i_spinor)+conjg(Vv(i2,i_spinor))*Cc(i_spinor)
+       drho(i2,i1,i_spinor)=conjg(Cv(i_spinor))*Vc(i2,i_spinor)+conjg(Vv(i2,i_spinor))*Cc(i_spinor)
        !
      enddo
      !
-     rho=rho+drho
-     !
    enddo
  enddo
+ !
+ forall(i2=1:3) rho(i2)=rho(i2)+sum(drho(i2,:,:))
  !
 end subroutine

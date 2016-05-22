@@ -292,9 +292,13 @@ subroutine RT_driver(E,X,k,q)
    ! COLLISIONS@NE_time
    !####################
    !
-   ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
-   !============================================================
-   call RT_Collision(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
+   ! Calculate the RT Hamiltonian Ho_plus_Sigma
+   !============================================
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
+   !
+   ! Calculate all relaxation and dissipation terms
+   !===============================================
+   call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time,.false.)
    !
    ! Write DBs
    !===========

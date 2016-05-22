@@ -46,7 +46,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Work Space
  !
- logical           ::run_Haydock,run_Diago,run_inversion
+ logical           ::run_Haydock,run_Diago,run_inversion,run_Slepc
  logical           ::stop_Haydock
  !
  ! Check first if the BS database has been calculated/loaded in K.F
@@ -70,6 +70,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  run_Diago     = index(BSS_mode,'d')/=0
  run_Haydock   = index(BSS_mode,'h')/=0
+ run_Slepc     = index(BSS_mode,'s')/=0
  run_inversion = index(BSS_mode,'i')/=0
  !
  ! I/O. All read. Only master writes.
@@ -95,6 +96,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  endif
  !
  if (run_Diago)          call K_diago_driver(iq,W_bss)
+ !
+ if (run_Slepc)          call K_slepc(iq,W_bss)
  !
  if (run_inversion)      call K_inversion(iq,W_bss,Ken,Xk,q)
  !

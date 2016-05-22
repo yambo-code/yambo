@@ -1523,7 +1523,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if ( trim(rstr_piece(i1)) == 'bss' )  then
            BSS_mode=trim(rstr_piece(i1+1))
            if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
-&              index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
+&              index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0.and.&
+&              index(BSS_mode,'s')==0) BSS_mode='h'
            !
            ! With and ALDA Fxc the t solver is not permitted
            !

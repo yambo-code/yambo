@@ -28,7 +28,7 @@ subroutine RT_time_step_update( )
  use units,          ONLY:AUT2FS
  use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
-&                         RT_life_interp_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
+&                         RT_life_extrap_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point
  use RT_control,     ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
 &                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type,TIME_adjust
@@ -87,8 +87,8 @@ subroutine RT_time_step_update( )
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !
-   RT_life_interp_times(2) = TIME_adjust(RT_life_interp_times(2),RT_dyn_step)
-   RT_life_interp_times(1) = RT_life_interp_times(2)*Life_MEM_steps
+   RT_life_extrap_times(2) = TIME_adjust(RT_life_extrap_times(2),RT_dyn_step)
+   RT_life_extrap_times(1) = RT_life_extrap_times(2)*Life_MEM_steps
    !
    ! ... and Lifetimes evaluation plan update
    !

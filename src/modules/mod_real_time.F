@@ -72,11 +72,11 @@ module real_time
  ! channels. I will see later if this can be somehow extended/duplicated
  ! for the static correlations
  !
- logical  :: l_RT_lifetimes_interpolation = .FALSE.! If .TRUE. the lifetimes not calculated are interpolated. Otherwise are kept constant
- real(SP) :: RT_life_interp_times(2)               ! Lifetimes are evaluated at distance RT_life_interp_times(2) and in groups long RT_life_interp_times(1)
- real(SP) :: RT_life_interp_times_SAVE(2)
+ logical  :: l_RT_lifetimes_extrapolation = .FALSE.! If .TRUE. the lifetimes not calculated are extrapolated. Otherwise are kept constant
+ real(SP) :: RT_life_extrap_times(2)               ! Lifetimes are evaluated at distance RT_life_extrap_times(2) and in groups long RT_life_extrap_times(1)
+ real(SP) :: RT_life_extrap_times_SAVE(2)
  ! 
- ! Lifetimes Interpolation Time status 
+ ! Lifetimes Extrapolation Time status 
  ! 
  integer(2), allocatable :: RT_TIME_status(:)
  !

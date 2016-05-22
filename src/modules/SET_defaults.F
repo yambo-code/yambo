@@ -92,7 +92,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_times,      &
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,    &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
@@ -597,8 +597,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Scattering
  !
- RT_life_interp_times(1)=-1._SP*FS2AUT
- RT_life_interp_times(2)=-1._SP*FS2AUT
+ RT_life_extrap_times(1)=-1._SP*FS2AUT
+ RT_life_extrap_times(2)=-1._SP*FS2AUT
  !
  ! G_retarded
  !

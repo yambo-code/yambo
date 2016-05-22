@@ -37,10 +37,10 @@ subroutine RT_initialize(E,k,q)
  use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
 &                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,                &
-&                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_interp_times,       &
+&                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,Gr_kind,l_RT_uses_E_DbGd,               &
-&                         RT_life_interp_times_SAVE,l_RT_lifetimes_interpolation,             &
+&                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,             &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_EULER,l_RT_RK2,l_RT_RWA,      &
 &                         l_RT_EXP,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,            &
 &                         l_BGR,l_RT_HEUN,eval_HARTREE,eval_DFT,l_NE_dynamics,                &
@@ -74,7 +74,7 @@ subroutine RT_initialize(E,k,q)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTskipImposeN',        l_skip_it)
- call parser('LifeInterpolation',    l_RT_lifetimes_interpolation)
+ call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
  if (l_skip_it) l_RT_impose_N_dN=.FALSE.
  !
  call parser('RTskipImposeE',        l_skip_it)
@@ -149,21 +149,21 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
- ! Memory Depth (Lifetimes) & interpolation steps
+ ! Memory Depth (Lifetimes) & extrapolation steps
  !================================================
  if (RT_is_statically_dephased) then
    !
-   RT_life_interp_times=RT_life_interp_times_SAVE
+   RT_life_extrap_times=RT_life_extrap_times_SAVE
    !
-   if (all(RT_life_interp_times>0)) then
-     Life_MEM_steps=nint(RT_life_interp_times(1)/RT_life_interp_times(2))
+   if (all(RT_life_extrap_times>0)) then
+     Life_MEM_steps=nint(RT_life_extrap_times(1)/RT_life_extrap_times(2))
      if (Life_MEM_steps<3) Life_MEM_steps=3
-     if (RT_life_interp_times(2)<RT_step) RT_life_interp_times(2)=RT_step
-     RT_life_interp_times(2)=TIME_adjust(RT_life_interp_times(2))
-     RT_life_interp_times(1)=RT_life_interp_times(2)*Life_MEM_steps
+     if (RT_life_extrap_times(2)<RT_step) RT_life_extrap_times(2)=RT_step
+     RT_life_extrap_times(2)=TIME_adjust(RT_life_extrap_times(2))
+     RT_life_extrap_times(1)=RT_life_extrap_times(2)*Life_MEM_steps
    endif
    !
-   RT_life_interp_times_SAVE=RT_life_interp_times
+   RT_life_extrap_times_SAVE=RT_life_extrap_times
    !
  endif
  !
@@ -182,8 +182,8 @@ subroutine RT_initialize(E,k,q)
    !
    if (G_MEM_steps<3) G_MEM_steps=3
    !
-   if (all(RT_life_interp_times>0)) then
-     NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,2*RT_life_interp_times(1))
+   if (all(RT_life_extrap_times>0)) then
+     NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,2*RT_life_extrap_times(1))
    endif
    !
    NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,JPC_RT_IO_t%INTERVAL_time)
@@ -340,8 +340,8 @@ subroutine RT_initialize(E,k,q)
  !
  if (RT_is_statically_dephased) then
    call msg( 'nr','---Lifetimes---')
-   call msg( 'r', 'Point groups (inter/intra) [fs]:',RT_life_interp_times*AUT2FS)
-   call msg( 'r', 'Interpolation                  :',l_RT_lifetimes_interpolation)
+   call msg( 'r', 'Point groups (inter/intra) [fs]:',RT_life_extrap_times*AUT2FS)
+   call msg( 'r', 'Extrapolation                  :',l_RT_lifetimes_extrapolation)
    call msg( 'r', 'Memory steps                   :',Life_MEM_steps)
    call msg( 'r', 'Evaluated Time points          :',N_T_samplings)
  endif

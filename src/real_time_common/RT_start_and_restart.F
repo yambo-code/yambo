@@ -53,7 +53,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
-&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_interp_times
+&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
  use fields,         ONLY:A_vecpot,A_vecpot_previous,A_ext
  use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
@@ -240,7 +240,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    call msg('r',  'Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
    call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
-   call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_interp_times*AUT2FS)
+   call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
    call msg('r',  'T between I/O of J,P,f        [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
    call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
    !

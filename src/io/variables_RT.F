@@ -31,13 +31,13 @@ integer function variables_RT(ID,local_description,what)
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
 &                         n_TIME_STEP_CONF_descriptions,JPC_RT_IO_t,GF_RT_IO_t,RT_IO_t
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
-&                         Integrator_name,RT_bands,l_RT_lifetimes_interpolation, &
+&                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
 &                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
-&                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_times_SAVE,&
+&                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_extrap_times_SAVE,&
 &                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
-&                         NE_step_update_treshold,RT_life_interp_times
+&                         NE_step_update_treshold,RT_life_extrap_times
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
@@ -53,11 +53,11 @@ integer function variables_RT(ID,local_description,what)
  !
  integer               :: i1,i_desc
  logical               :: l_JPSM,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
- real(SP)              :: RT_life_interp_decay_time
+ real(SP)              :: RT_life_extrap_decay_time
  character(lchlen)     :: ch
  !
  l_RT_diamagnetic          = .false.
- RT_life_interp_decay_time = 0._SP
+ RT_life_extrap_decay_time = 0._SP
  !
  l_JPSM        = what=="JPSM"
  l_G           = what=="G"
@@ -140,11 +140,11 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] Lifetimes Inter/Intra  [fs]:",R1=RT_life_interp_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
+&    VAR=" [RT] Lifetimes Inter/Intra  [fs]:",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT]                   (now)[fs]:",R1=RT_life_interp_times,DB_R1=RT_life_interp_times,&
+&    VAR=" [RT]                   (now)[fs]:",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    if (l_JPSM.or.l_carriers) call LOCAL_IO_variables(JPC_RT_IO_t)
    if (l_G)                  call LOCAL_IO_variables(GF_RT_IO_t)
@@ -156,12 +156,12 @@ integer function variables_RT(ID,local_description,what)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   ! Lifetimes Interpolation
+   ! Lifetimes Extrapolation
    !
-   call io_elemental(ID,VAR='RT_life_interpolation',VAR_SZ=1,MENU=0)
+   call io_elemental(ID,VAR='RT_life_extrapolation',VAR_SZ=1,MENU=0)
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_RT_lifetimes_interpolation, &
-&        VAR=" [RT] Lifetimes Interpolation    :",WARN=.true.,OP=(/"=="/),&
+   call io_elemental(ID,L0=l_RT_lifetimes_extrapolation, &
+&        VAR=" [RT] Lifetimes extrapolation    :",WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

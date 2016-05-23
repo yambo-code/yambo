@@ -57,10 +57,8 @@ set dummy=`cat include/version.inc | grep 'code_GPL_revision'`
 set GPL_revision_old=`echo $dummy | $awk '{gsub("code_GPL_revision=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_hash'`
 set hash_old=`echo $dummy | $awk '{gsub("code_hash=","");print $0}'`
-echo $hash_old
 set dummy=$hash_old
 set hash_old=`echo $dummy | sed -e "s/'//g" `
-echo $hash_old
 #
 # Increase counters
 #

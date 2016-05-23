@@ -83,11 +83,11 @@ subroutine RT_time_step_update( )
    !
    ! ... and the dT update steps
    !
-   NE_time_step_update_jump = TIME_adjust(NE_time_step_update_jump,JPC_RT_IO_t%INTERVAL_time)
+   NE_time_step_update_jump = max(TIME_adjust(NE_time_step_update_jump,JPC_RT_IO_t%INTERVAL_time),JPC_RT_IO_t%INTERVAL_time)
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !
-   RT_life_extrap_times(2) = TIME_adjust(RT_life_extrap_times(2),RT_dyn_step)
+   RT_life_extrap_times(2) = max(TIME_adjust(RT_life_extrap_times(2),RT_dyn_step),RT_dyn_step)
    RT_life_extrap_times(1) = RT_life_extrap_times(2)*Life_MEM_steps
    !
    ! ... and Lifetimes evaluation plan update

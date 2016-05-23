@@ -159,7 +159,7 @@ subroutine RT_initialize(E,k,q)
      Life_MEM_steps=nint(RT_life_extrap_times(1)/RT_life_extrap_times(2))
      if (Life_MEM_steps<3) Life_MEM_steps=3
      if (RT_life_extrap_times(2)<RT_step) RT_life_extrap_times(2)=RT_step
-     RT_life_extrap_times(2)=TIME_adjust(RT_life_extrap_times(2))
+     RT_life_extrap_times(2)=max(TIME_adjust(RT_life_extrap_times(2)),RT_step)
      RT_life_extrap_times(1)=RT_life_extrap_times(2)*Life_MEM_steps
    endif
    !
@@ -170,7 +170,7 @@ subroutine RT_initialize(E,k,q)
  ! Memory Depth (G_lesser)
  !=========================
  T_memory=0._SP
- if (l_elph_scatt.and.NE_MEM_treshold>0.) then
+ if (l_elph_scatt.and.NE_MEM_treshold>0._SP) then
    T_memory=-1._SP/minval( abs(E%W(RT_bands(1):RT_bands(2),:,:)))*log(NE_MEM_treshold)
    G_MEM_steps=nint(T_memory/RT_step)
  endif
@@ -178,15 +178,17 @@ subroutine RT_initialize(E,k,q)
  ! Update time Step
  !==================
  !
- if (NE_initial_time_step_update>0.) then
+ if (NE_initial_time_step_update>0._SP) then
    !
    if (G_MEM_steps<3) G_MEM_steps=3
    !
    if (all(RT_life_extrap_times>0)) then
-     NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,2*RT_life_extrap_times(1))
+     NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,2._SP*RT_life_extrap_times(1))
+     if(NE_time_step_update_jump_SAVE<2._SP*RT_life_extrap_times(1)) NE_time_step_update_jump_SAVE=2._SP*RT_life_extrap_times(1) 
    endif
    !
    NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,JPC_RT_IO_t%INTERVAL_time)
+   if(NE_time_step_update_jump_SAVE<JPC_RT_IO_t%INTERVAL_time) NE_time_step_update_jump_SAVE=JPC_RT_IO_t%INTERVAL_time
    !
    NE_time_step_update_jump = NE_time_step_update_jump_SAVE
    !

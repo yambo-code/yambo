@@ -181,6 +181,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      !
    endif
    !
+   n_ratio=0
+   !
    if(n_gamma<2) cycle
    n_ratio=1
    !
@@ -548,7 +550,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      n_fits_done=1
      if(n_spinor==2) then
        output_fname(2)='YPP-RT_occupations_up_FIT'
-       output_fname(3)='YPP-RT_occupations_up_FIT'
+       output_fname(3)='YPP-RT_occupations_dw_FIT'
        n_fits_done=n_fits_done+2
      endif
      do i_ratio=1,n_ratio

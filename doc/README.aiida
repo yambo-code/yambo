@@ -47,6 +47,10 @@ setenv PYTHONPATH /home/marini/Yambo/sources/git/aiida/
 #
 # Computer setup
 #
+ssh-keygen -t rsa
 ssh-copy-id YOURUSERNAME@YOURCLUSTERADDRESS
+verdi install
+verdi daemon configureuser
+verdi daemon start
 verdi computer setup
 

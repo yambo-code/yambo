@@ -31,11 +31,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
-&                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
-&                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
-&                      X_terminator,X_en_comp,global_gauge,use_covariant_approach,X_is_evaluated_for_all_Qs,&
-&                      force_v_g_space_approach,use_real_space_approach,Dipole_approach
+&                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
+&                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
+&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
+&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,X_is_evaluated_for_all_Qs,&
+&                     force_v_g_space_approach,use_real_space_approach,Dipole_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,&
@@ -411,8 +411,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
- X_terminator=.FALSE.
- X_en_comp=2._SP
+ l_X_terminator=.FALSE.
+ X_terminator_E=1.5_SP
  !
  !QPm
  !

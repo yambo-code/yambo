@@ -144,25 +144,21 @@ module collision
        GW_NEQ_collisions%kind=SE_GW_NEQ
        GW_NEQ_collisions%name="GW_NEQ"
      else
-       if (SC_kind==SC_COHSEX) then
-         HXC_collisions%kind=SC_SEX
-         HXC_collisions%name="SEX"
-       endif
        if (SC_kind==SC_FOCK) then
          HXC_collisions%kind=SC_FOCK
          HXC_collisions%name="FOCK"
        endif
-       if (SC_kind==SC_SEX) then
-         HXC_collisions%kind=SC_SEX
-         HXC_collisions%name="SEX"
-       endif
-       if (SC_kind==SC_SEX+SC_HARTREE) then
-         HXC_collisions%kind=SC_SEX+SC_HARTREE
-         HXC_collisions%name="HARTREE+SEX"
-       endif
        if (SC_kind==SC_FOCK+SC_HARTREE) then
          HXC_collisions%kind=SC_FOCK+SC_HARTREE
          HXC_collisions%name="HARTREE+FOCK"
+       endif
+       if (SC_kind==SC_SEX .or. SC_kind==SC_COHSEX) then
+         HXC_collisions%kind=SC_SEX
+         HXC_collisions%name="SEX"
+       endif
+       if (SC_kind==SC_SEX+SC_HARTREE .or. SC_kind==SC_COHSEX+SC_HARTREE) then
+         HXC_collisions%kind=SC_SEX+SC_HARTREE
+         HXC_collisions%name="HARTREE+SEX"
        endif
      endif
    end subroutine

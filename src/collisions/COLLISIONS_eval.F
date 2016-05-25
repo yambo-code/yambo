@@ -47,7 +47,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use wave_func,     ONLY:WF
  use SC,            ONLY:SC_potential,SC_kind
  use global_XC,     ONLY:SE_GW_NEQ,SE_GW_QED
- use collision,     ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
+ use collision,     ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,COLLISIONS_have_HARTREE,&
 &                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
@@ -74,6 +74,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! If I am calculating the collisions then I can use them
  !
  l_use_collisions=.TRUE.
+ !
+ COLLISIONS_have_HARTREE=index(SC_potential,"HARTREE")>0
  !
  l_use_Hxc_collisions  =index(SC_potential,"HARTREE")>0.or.index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.&
 &                       trim(SC_potential)=="default"

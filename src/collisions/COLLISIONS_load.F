@@ -73,8 +73,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  endif
  !
  if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa) then
-   if (l_sc_coh     ) call COLLISIONS_naming( SC_kind-SC_COH )
-   if (.not.l_sc_coh) call COLLISIONS_naming( SC_kind )
+   call COLLISIONS_naming( SC_kind )
    call COLLISIONS_basic_operations( "alloc", HXC_collisions )
    call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err(2)=io_COLLISIONS(ID,HXC_collisions)

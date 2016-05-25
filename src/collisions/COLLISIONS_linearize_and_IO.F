@@ -52,8 +52,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  ! Reference value for the reduction of the tiny elements of COHSEX/HF collision
  ! integrals.
  !
- if ( l_HXC ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
- if ( l_COH ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
+ if ( l_HXC .or. l_COH ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
  !
  COLL_element(i_ref)%table(:,:,:)=0
  !

@@ -39,10 +39,12 @@ open(GIT, $gitcommand);
 $changedfiles = <GIT>;
 close(GIT);
 # Strip the "src/" (add to this list if needed)
+if ($changedfiles) {
 $changedfiles =~ s/  / /g;
 $changedfiles =~ s/src\///g;
 $changedfiles =~ s/interfaces\///g;
 print "\nMODIFIED files: $changedfiles\n\n";
+}
 #
 # ... added 
 #
@@ -51,10 +53,12 @@ open(GIT, $gitcommand);
 $newfiles = <GIT>;
 close(GIT);
 # Strip the "src/" (add to this list if needed)
+if ($newfiles) {
 $newfiles =~ s/  / /g;
 $newfiles =~ s/src\///g;
 $newfiles =~ s/interfaces\///g;
 print "NEW files: $newfiles\n\n";
+}
 #
 # ... removed 
 #
@@ -63,25 +67,45 @@ open(GIT, $gitcommand);
 $delfiles = <GIT>;
 close(GIT);
 # Strip the "src/" (add to this list if needed)
+if ($delfiles) {
 $delfiles =~ s/  / /g;
 $delfiles =~ s/src\///g;
 $delfiles =~ s/interfaces\///g;
 print "DELETED files: $delfiles\n\n";
+};
+#
+# Versions
+#
+open(VER,"<","include/version.inc");
+while($line = <VER>) {
+  chomp $line;
+  $ID  = substr $line, 13, 1;
+  if ( "$ID" =~ "1" ) {$SV = substr $line, 16, 1};
+  if ( "$ID" =~ "2" ) {$SP = substr $line, 16, 1};
+  if ( "$ID" =~ "3" ) {$SS = substr $line, 16, 1};
+}
+close(VER);
+$HASH=`git rev-list --count HEAD`;
 #
 # Write the commit message
 #
-open(MSGFILE,">","commit.msg") or die "The file commit.msg could " .
-   "not be opened.\n";
-#print MSGFILE "Version @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ \n\n";
-print MSGFILE "MODIFIED * $changedfiles\n\n";
-print MSGFILE "NEW * $newfiles\n\n";
-print MSGFILE "DELETED * $delfiles\n\n";
+open(MSGFILE,">","commit.msg") or die "The file commit.msg could " . "not be opened.\n";
+print MSGFILE "Version $SV.$SP.$SS  Hash $HASH \n";
+if ($changedfiles) {
+  print MSGFILE "MODIFIED * $changedfiles\n\n";
+};
+if ($newfiles) {
+  print MSGFILE "NEW * $newfiles\n\n";
+};
+if ($delfiles) {
+ print MSGFILE "DELETED * $delfiles\n\n";
+};
 print MSGFILE "Bugs:\n";
-print MSGFILE "- \n";
+print MSGFILE "- \n\n";
 print MSGFILE "Additions:\n";
-print MSGFILE "- \n";
+print MSGFILE "- \n\n";
 print MSGFILE "Changes:\n";
-print MSGFILE "- \n";
+print MSGFILE "- \n\n";
 if($patchname) {print MSGFILE "Patch sent by: $patchname\n"};
 close(MSGFILE);
 print "Edit the commit.msg file and commit/patch with -F commit.msg \n";

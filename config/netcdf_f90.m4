@@ -106,13 +106,19 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
   #
   FCFLAGS="$IFLAG$try_incdir $save_fcflags"
   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [use netcdf]),
-     [netcdf=yes 
+     [netcdf=yes
+      if test ! -d include ; then 
+        mkdir include
+      fi
       for file in `find "$try_incdir" \( -name '*netcdf*' -o -name '*typesizes*' \) `; do
         cp $file include/ 
       done
       for file in `find "$try_incdir" \( -name '*NETCDF*' -o -name '*TYPESIZES*' \) `; do
         cp $file include/ 
       done
+      if test ! -d lib ; then
+         mkdir lib
+      fi
       for file in `find $try_libdir -name '*netcdf*.a'`; do
         cp $file lib/ 
       done

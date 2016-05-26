@@ -1,8 +1,28 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2016 A. Marini
+#        Copyright (C) 2000-2016 the YAMBO team
+#              http://www.yambo-code.org
 #
-# based on the driver.pl written by Conor and (only partially) me
+# Authors (see AUTHORS file for details): AM
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+# Based on the driver.pl written by Conor and (only partially) me
 #
 use Getopt::Long;
 use File::Find;
@@ -20,6 +40,7 @@ use load_db;
 use objects_add_and_remove;
 use create_new_run;
 use functions;
+use remove_run;
 #
 # Initialize
 $version="1.0";
@@ -79,7 +100,7 @@ $HOME="$ENV{HOME}";
 @days = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
 $year=$year+1900;
-my $date="$mday-$mon-$year:$hour-$min";
+$date="$mday-$mon-$year:$hour-$min";
 #
 # Help
 if($help){ usage };
@@ -139,11 +160,17 @@ if ($material) { print   " Material\t:$material \n" }
 # ADD
 if ($add and $ID_in) { &add_command_line_object } ;
 #
+# ADD
+if ($del and $ID_in) { &remove_run } ;
+#
 # CREATE
-if ($create) { &create_new_run() };
+if ($create) { 
+ print   " Description\t:$create \n";
+ &create_new_run();
+};
 #
 # SYNC
-if ($create or ($add and $ID_in))
+if ($create or ($add and $ID_in) or ($del and $ID_in))
 {
  &remote_cmd("put $DB_file $path/database");
  close(DB);
@@ -156,11 +183,10 @@ if ($create or ($add and $ID_in))
 # End
 close(DB);
 #
-# Delete
+# Delete Files
 for($ik = 1; $ik <= $n_to_remove; $ik++) {
-  unlink $FILE_to_remove[$ik] if exists($FILE_to_remove[$ik]);
+#  unlink $FILE_to_remove[$ik] if exists($FILE_to_remove[$ik]);
 };
-unlink $ACTIONS_file;
 #
 print "\n\n";
 #

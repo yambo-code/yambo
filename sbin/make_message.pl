@@ -24,8 +24,9 @@
 #
 # Wonderful script to generate a commit message template (CDH)
 # Usage: In the YAMBO root directory
-# sbin/makemsg    or
-# sbin/makemsg -p="Myrta"   if a patch was supplied by e.g. Myrta
+#
+# sbin/make_message.pl    or
+# sbin/make_message.pl -p="Myrta"   if a patch was supplied by e.g. Myrta
 #
 use Getopt::Long;
 &GetOptions("p=s"          => \$patchname);

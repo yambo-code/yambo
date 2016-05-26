@@ -1,31 +1,55 @@
+#
+#        Copyright (C) 2000-2016 the YAMBO team
+#              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
 sub print_the_run
 #=================
 {
- if ($material and $material ne $RUN_material[@_]){exit};
- if ($key_words and $keys[0] ne $RUN_key[@_,1]){exit};
- if ($ID_in and $ID_in ne @_){exit};
- print "\n ID\t\t:@_\n";
- print " Material\t:$RUN_material[@_]\n";
- print " Description\t:$RUN_description[@_]\n";
- print " Date\t\t:$RUN_date[@_]\n";
+ my $local_id="@_";
+ if ($material and $material ne $RUN_material[$local_id]){return};
+ if ($key_words and $keys[0] ne $RUN_key[$local_id,1]){return};
+ if ($ID_in and $ID_in ne $local_id){return};
+ print "\n ID\t\t:$local_id\n";
+ print " Material\t:$RUN_material[$local_id]\n";
+ print " Description\t:$RUN_description[$local_id]\n";
+ print " Date\t\t:$RUN_date[$local_id]\n";
  print " Keys\t\t:";
  for($ik = 1; $ik < 100; $ik++) {
-   print " $RUN_key[@_,$ik]" if exists($RUN_key[@_,$ik]);
+   print " $RUN_key[$local_id][$ik]" if exists($RUN_key[$local_id][$ik]);
  };
  print "\n";
  print " Input\t\t:";
  for($ik = 1; $ik < 100; $ik++) {
-   print " $RUN_in[@_,$ik]" if exists($RUN_in[@_,$ik]);
+   print " $RUN_in[$local_id][$ik]" if exists($RUN_in[$local_id][$ik]);
  };
  print "\n";
  print " Outputs\t:";
  for($ik = 1; $ik < 100; $ik++) {
-   print " $RUN_out[@_,$ik]" if exists($RUN_out[@_,$ik]);
+   print " $RUN_out[$local_id][$ik]" if exists($RUN_out[$local_id][$ik]);
  };
  print "\n";
  print " Databases\t:";
  for($ik = 1; $ik < 100; $ik++) {
-   print " $RUN_db[@_,$ik]" if exists($RUN_db[@_,$ik]);
+   print " $RUN_db[$local_id][$ik]" if exists($RUN_db[$local_id][$ik]);
  };
  print "\n";
 }

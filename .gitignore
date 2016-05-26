@@ -9,6 +9,7 @@
 *.mod
 *.f90
 *.s
+*.sw*
 config.status
 config/report
 config/setup

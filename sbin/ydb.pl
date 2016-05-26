@@ -35,7 +35,7 @@ use Net::Domain qw(hostname hostfqdn hostdomain domainname);
 # LIBS 
 use lib "/home/marini/Yambo/sources/git/yambo/branches/devel-daddy/lib/perl/ydb";
 use print_the_run;
-use add_a_database_line;
+use database;
 use load_db;
 use objects_add_and_remove;
 use create_new_run;
@@ -185,7 +185,7 @@ close(DB);
 #
 # Delete Files
 for($ik = 1; $ik <= $n_to_remove; $ik++) {
-#  unlink $FILE_to_remove[$ik] if exists($FILE_to_remove[$ik]);
+  unlink $FILE_to_remove[$ik] if exists($FILE_to_remove[$ik]);
 };
 #
 print "\n\n";

@@ -41,5 +41,6 @@ sub remove_run{
  &remote_cmd("rmdir $path/$RUN_material[$ID_in]/$ID_in/output");
  &remote_cmd("rmdir $path/$RUN_material[$ID_in]/$ID_in/databases");
  &remote_cmd("rmdir $path/$RUN_material[$ID_in]/$ID_in");
+ &delete_database_entry($ID_in);
 }
 1;

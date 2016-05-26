@@ -33,23 +33,31 @@ sub print_the_run
  print " Description\t:$RUN_description[$local_id]\n";
  print " Date\t\t:$RUN_date[$local_id]\n";
  print " Keys\t\t:";
+ $start=" ";
  for($ik = 1; $ik < 100; $ik++) {
-   print " $RUN_key[$local_id][$ik]" if exists($RUN_key[$local_id][$ik]);
+   if ($ik >1 ) { $start="\n\t\t  " };
+   print "$start$RUN_key[$local_id][$ik]" if exists($RUN_key[$local_id][$ik]);
  };
  print "\n";
  print " Input\t\t:";
+ $start=" ";
  for($ik = 1; $ik < 100; $ik++) {
-   print " $RUN_in[$local_id][$ik]" if exists($RUN_in[$local_id][$ik]);
+   if ($ik >1 ) { $start="\n\t\t  " };
+   print "$start$RUN_in[$local_id][$ik]" if exists($RUN_in[$local_id][$ik]);
  };
  print "\n";
  print " Outputs\t:";
+ $start=" ";
  for($ik = 1; $ik < 100; $ik++) {
-   print " $RUN_out[$local_id][$ik]" if exists($RUN_out[$local_id][$ik]);
+   if ($ik >1 ) { $start="\n\t\t  " };
+   print "$start$RUN_out[$local_id][$ik]" if exists($RUN_out[$local_id][$ik]);
  };
  print "\n";
  print " Databases\t:";
+ $start=" ";
  for($ik = 1; $ik < 100; $ik++) {
-   print " $RUN_db[$local_id][$ik]" if exists($RUN_db[$local_id][$ik]);
+   if ($ik >1 ) { $start="\n\t\t  " };
+   print "$start$RUN_db[$local_id][$ik]" if exists($RUN_db[$local_id][$ik]);
  };
  print "\n";
 }

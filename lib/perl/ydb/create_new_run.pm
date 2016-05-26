@@ -28,6 +28,7 @@ sub create_new_run{
  #
  $test=&have_run();
  if ($test ne 0 ) {
+  &add_a_database_line($test,"description","$create");
   die "\n Found matching run with ID $test\n\n";
   return;
  };

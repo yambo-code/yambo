@@ -30,6 +30,7 @@ while(<DB>) {
   $n_keys=0;
   $n_outs=0;
   $n_dbs=0;
+  $n_ins=0;
   $runs=$element[0];
   $RUN_material[$runs]=$element[2];
  }

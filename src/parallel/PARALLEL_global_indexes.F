@@ -245,53 +245,74 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Dimensions
  !============
  !
- select case(ENVIRONMENT)
-   case("Response_G_space_Zero_Momentum")
-     K_range=Xk%nibz
-     n_c_bands= (/E%nbf+1,X%ib(2)/)
-     n_v_bands= (/X%ib(1),E%nbm/)
-   case("Response_G_space") 
-     K_range=Xk%nbz
-     Q_range=(/1,nqibz/)
-     n_c_bands= (/E%nbf+1,X%ib(2)/)
-     n_v_bands= (/X%ib(1),E%nbm/)
-   case("Response_G_space_Finite_Momentum")
-     K_range=Xk%nbz
-     Q_range=(/max(X%iq(1),2),X%iq(2)/)
-     n_c_bands= (/E%nbf+1,X%ib(2)/)
-     n_v_bands= (/X%ib(1),E%nbm/)
-   case("Response_T_space") 
-     K_range=Xk%nibz
-     EH_range=minval( BS_nT_at_k )
-     n_c_bands= (/E%nbf+1,BS_bands(2)/)
-     n_v_bands= (/BS_bands(1),E%nbm/)
-#if defined _RT
-   case("Real_Time") 
-     K_range=Xk%nibz
-     Q_range=(/1,q%nbz/)
-     n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
+ ! K-pts
+ !-------
+ K_range=Xk%nibz
+ if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) K_range=Xk%nibz
+ if (ENVIRONMENT=="Response_T_space"                ) K_range=Xk%nibz
+ if (ENVIRONMENT=="Real_Time"                       ) K_range=Xk%nibz
+ if (ENVIRONMENT=="Response_G_space"                ) K_range=Xk%nbz
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum") K_range=Xk%nbz
+ !
+ ! COND bands
+ !------------
+ if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) n_c_bands= (/E%nbf+1,X%ib(2)/)
+ if (ENVIRONMENT=="Response_G_space"                ) n_c_bands= (/E%nbf+1,X%ib(2)/)
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum") n_c_bands= (/E%nbf+1,X%ib(2)/)
+ if (ENVIRONMENT=="Response_T_space"                ) n_c_bands= (/E%nbf+1,BS_bands(2)/)
+ !
+ ! VAL bands
+ !-----------
+ if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) n_v_bands= (/X%ib(1),E%nbm/)
+ if (ENVIRONMENT=="Response_G_space"                ) n_v_bands= (/X%ib(1),E%nbm/)
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum") n_v_bands= (/X%ib(1),E%nbm/)
+ if (ENVIRONMENT=="Response_T_space"                ) n_v_bands= (/BS_bands(1),E%nbm/)
+ !
+ ! Q-pts
+ !-------
+ Q_range=(/1,nqibz/)
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum") Q_range=(/max(X%iq(1),2),X%iq(2)/)
+ if (ENVIRONMENT=="Real_Time"                       ) Q_range=(/1,nqbz/)
+ if (ENVIRONMENT=="Self_Energy"                     ) then
+#if defined _SC
+   if (l_sc_run.and.&
+&      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
+&                                               Q_range=(/1,nqbz/)
+   if (l_eval_collisions)                       Q_range=(/1,nqbz/)
 #endif
-   case("Self_Energy") 
-     QP_range=QP_n_states
-     Q_range=(/1,q%nibz/)
-     if (l_eval_collisions)  Q_range=(/1,q%nbz/)
 #if defined _ELPH
-     if (l_elph_corr.and.elph_use_q_grid)         Q_range=(/1,q%nbz/)
-     if (l_elph_corr.and..not.elph_use_q_grid)    Q_range=(/1,elph_nDBs_used/)
+   if (l_elph_corr.and.elph_use_q_grid)         Q_range=(/1,nqbz/)
+   if (l_elph_corr.and..not.elph_use_q_grid)    Q_range=(/1,elph_nDBs_used/)
 #endif
-     if (l_HF_and_locXC)  n_bands=(/1,max(E%nbm,QP_nb)/)
-     if (l_gw0.or.l_life) n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
-     if (.not.l_HF_and_locXC) n_bands(1)=QP_n_G_bands(1)
+ endif
+ !
+ ! EH-range
+ !----------
+ if (ENVIRONMENT=="Response_T_space"                ) EH_range=minval( BS_nT_at_k )
+ !
+ ! Generic Bands
+ !---------------
+ if (ENVIRONMENT=="Self_Energy"                     ) then
+   if (l_HF_and_locXC)     n_bands=(/1,max(E%nbm,QP_nb)/)
+   if (l_gw0.or.l_life)    n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
+   if (.not.l_HF_and_locXC) n_bands(1)=QP_n_G_bands(1)
 #if defined _SC || defined _RT
-     if (l_eval_collisions)  n_bands=COLL_bands
+   if (l_eval_collisions)  n_bands=COLL_bands
 #endif
 #if defined _SC
-     if (l_sc_run)           n_bands=SC_bands
+   if (l_sc_run)           n_bands=SC_bands
 #endif
 #if defined _ELPH
-     if (l_elph_corr)                    n_bands=(/1,QP_PH_n_G_bands/)
+   if (l_elph_corr)        n_bands=(/1,QP_PH_n_G_bands/)
 #endif
- end select
+ endif
+#if defined _RT
+ if (ENVIRONMENT=="Real_Time"                       ) n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
+#endif
+ !
+ ! QP states
+ !-----------
+ if (ENVIRONMENT=="Self_Energy"                     ) QP_range=QP_n_states
  !
  !==========
  ! DEFAULTS
@@ -644,6 +665,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !.........................................................................
    !   "q" -> Q-points (BZ)
    !.........................................................................
+
    !
    call PARALLEL_index(PAR_IND_Q,(/q%nbz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id

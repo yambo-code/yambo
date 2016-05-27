@@ -142,22 +142,6 @@ WRITE(200,"(a,4i5,3f12.6)") "ik ic, ikp iv, E1, E2, T", ik, ic, ikp, iv, &
      call scatter_Bamp(Xo_scatt)
    endif
    !
-   ! Davide: these lines seems useless ...
-   !
-   !if (X_terminator) then
-   !  !
-   !  if ( HEAD_QP_cpu ) then
-   !    !$omp parallel do default(shared), private(ig1,ig2)
-   !    do ig1=1,X%ng
-   !      do ig2=1,X%ng
-   !          eet_factor(ig1,ig2)=Xo_scatt%rhotw(G_m_G(ig1,ig2))
-   !      enddo
-   !    enddo
-   !    !$omp end parallel do
-   !  endif
-   !  ! 
-   !endif
-   !
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
    !$omp parallel do default(shared), private(ig2)

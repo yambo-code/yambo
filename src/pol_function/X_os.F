@@ -34,13 +34,16 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  !   _NESTING introduces the nesting of scatterbamp parallel regions inside the
  !   outer region opened here (not working yet)
+ !
+ ! X terminator (BG kind) implemented (IM, AF)
+ !
  ! 
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg,warning,error
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,myid
@@ -56,8 +59,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use R_lattice,     ONLY:qindx_X,bz_samp
  use memory_m,      ONLY:mem_est
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_DbGd !,X_terminator
+ use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
+&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
+&                        l_X_terminator,X_terminator_Kind,X_terminator_E,offset_E_Term
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -79,7 +83,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
  integer                  :: mutexid
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU)
+ real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
@@ -90,6 +94,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  Xo             = cZERO
  GreenF         = cZERO
  drude_GreenF   = cZERO
+ l_X_terminator = X_terminator_Kind/='none'
+ !
+ if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
+&   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
+
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
@@ -129,13 +138,16 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
-   if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual)
-   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP)
+! XXXX
+WRITE(300,*) "DEBUG T_term", l_X_terminator
+! XXXX
+   if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
+   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
    !
    minmax_ehe=0._SP
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
-   deallocate(X_poles)
+   deallocate(X_poles,X_Ein_poles)
    !
    if (self_detect_E_range) then
      call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
@@ -150,6 +162,17 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (io_RESPONSE.or.(.not.io_RESPONSE.and..not.l_life)) call FREQUENCIES_setup(Xw)
    !
  endif 
+ !
+ ! further terminator setup
+ !
+ if(l_X_terminator) then
+   cutoff=minval(Xen%E(X%ib(2),:,:))
+   offset_E_Term = cutoff + X_terminator_E
+   WRITE(300, "(a, i5, 3f12.6)") "X%ib(2),  X_terminator_E ,  cutoff, offset_E_Term ", &
+        X%ib(2), X_terminator_E, cutoff,  offset_E_Term
+   ! XXX
+ endif
+
  !
  ! GPL_EXCLUDE_START
  !
@@ -218,6 +241,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
 !$omp do
  do i_cg = 1,coarse_grid_N
+   ! XXXX
+   if(master_thread) WRITE(300, "(a, i5)")  "i_cg=", i_cg
+   ! XXXX
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
    !

@@ -27,7 +27,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  ! expression as the Fourier Transform of a Lorentzian
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs
+ use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs,&
+&                     l_X_terminator,X_terminator_E,offset_E_Term
  use BS,         ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
                       BZ_DbGd_ipol_weight,BZ_DbGd_kpts
@@ -48,7 +49,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  logical      :: X_os_run,K_inv_run 
  integer      :: i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp
  real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac
- complex(SP)  :: Z_,pole
+ complex(SP)  :: Z_,pole,pole_X_term
  !
  complex(SP),external      ::Lorentzian_FT
  !
@@ -75,7 +76,14 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  Z_=cONE
  if (associated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
  if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
- pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,SP)
+ pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,KIND=SP)
+ !
+ pole_X_term=0.0_SP
+ if(l_X_terminator) then 
+   pole_X_term= cmplx(offset_E_Term-Xen%E(iv,ikp,i_spin),-W_,KIND=SP) 
+   WRITE(300, "(a, f12.6)") "Energia assunta per ogni icg",Xen%E(iv,ikp,i_spin)  
+   ! XXX 
+ endif
  !
  ! Case without DbGd
  !===================
@@ -90,6 +98,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
 &    K_inv_run.and.(.not.BSS_uses_DbGd)                       ) then
    do iw=1,Xw%n_freqs
      GreenF(iw)=Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
+     if (l_X_terminator) GreenF(iw)= GreenF(iw) +Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
    enddo
    return
  endif
@@ -131,10 +140,15 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
      if( K_inv_run ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac
      !
      ffac=ffac*weight1*weight2
-     pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_)
+     pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP)
+     !
+     if(l_X_terminator) then 
+       pole_X_term=cmplx(offset_E_Term-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP) 
+     endif
      !
      do iw=1,Xw%n_freqs
        GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
+       if (l_X_terminator) GreenF(iw)= GreenF(iw) +Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
      enddo
      !
    enddo

@@ -64,6 +64,11 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  Z_=cONE
  !
+! XXXX
+WRITE(200,"()")
+WRITE(200,"(a,i5)") "DEBUG: i_cg = ", i_cg 
+! XXXX
+
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
    !
    n_poles=n_poles+1
@@ -83,6 +88,13 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !
    ikp= Xk%sstar(ikpbz,1)
    isp= Xk%sstar(ikpbz,2)
+
+! XXXX
+WRITE(200,"(a,4i5,3f12.6)") "ik ic, ikp iv, E1, E2, T", ik, ic, ikp, iv, &
+         Xen%E(ic,ik,i_spin), Xen%E(iv,ikp,i_spin), &
+         Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)
+! XXXX
+
    !
    ! Note the renormalization of the Z_eh_occ=f(1-f)*Z factor
    !

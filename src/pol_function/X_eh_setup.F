@@ -24,7 +24,7 @@
 integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:X_t,X_poles,X_poles_tab
+ use X_m,           ONLY:X_t,X_poles,X_Ein_poles,X_poles_tab
  use R_lattice,     ONLY:qindx_X,bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin_occ
  use frequency,     ONLY:ordered_grid_index
@@ -42,19 +42,21 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  integer :: i1,i2,ik,ikp,iv,ic,Nv,Nc,i_sp,i_pole
  logical :: MPI_logicals_on
- real(SP):: E_eh,f_eh,local_tresh
- real(SP), allocatable :: poles(:)
+ real(SP):: E_eh,E_in,f_eh,local_tresh
+ real(SP), allocatable :: poles(:),Ein_poles(:)
  !
  Nv=Xen%nbm-X%ib(1)+1
  Nc=X%ib(2)-Xen%nbf
  !
  allocate(poles(Xk%nbz*Nv*Nc*n_sp_pol))
+ allocate(Ein_poles(Xk%nbz*Nv*Nc*n_sp_pol))
  !
  MPI_logicals_on=associated(PAR_IND_Xk_bz%element_1D)
  !
  ! Note that in metals not all the elements are defined
  !
  poles=0._SP 
+ Ein_poles=0._SP
  !
  !
  X_eh_setup=0
@@ -84,6 +86,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          ikp=Xk%sstar(i2,1)
          !
          E_eh=Xen%E(ic,ik,i_sp)-Xen%E(iv,ikp,i_sp)
+         E_in=Xen%E(iv,ikp,i_sp)
          !
          ! Note that all possible E_eh signs are accepted. Negative
          ! transitions energies appear at finite temperature.
@@ -118,6 +121,8 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          !
          X_eh_setup=X_eh_setup+1
          poles(X_eh_setup)=E_eh
+         Ein_poles(X_eh_setup)=E_in
+         !
          i_pole=X_eh_setup
          if (allocated(ordered_grid_index)) i_pole=ordered_grid_index(X_eh_setup)
          if (iq>0) X_poles_tab(i_pole,:)=(/i1,iv,ic,i_sp/)
@@ -135,8 +140,14 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
      X_poles=0._SP
    endif
    X_poles=X_poles+poles(:X_eh_setup)
+   !
+   if (.not.allocated(X_Ein_poles)) then
+     allocate(X_Ein_poles(X_eh_setup))
+     X_Ein_poles=0._SP
+   endif
+   X_Ein_poles=X_Ein_poles+Ein_poles(:X_eh_setup)
  endif
  !
- deallocate(poles)
+ deallocate(poles,Ein_poles)
  !
 end function

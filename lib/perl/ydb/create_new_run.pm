@@ -23,12 +23,22 @@
 #
 sub create_new_run{
  #
+ if ($ID_in and &have_ID($ID_in) == 1)
+ {
+  if ($description) {&add_a_database_line($ID_in,"description","$description")};
+  if ($keys) {
+   foreach $key (@keys) {
+     &add_a_database_line($ID_in,"key","$key")
+   }
+  };
+  return
+ }
+ #
  # New ID
  $ID = $runs+1;
  #
  $test=&have_run();
  if ($test ne 0 ) {
-  &add_a_database_line($test,"description","$create");
   die "\n Found matching run with ID $test\n\n";
   return;
  };
@@ -39,27 +49,30 @@ sub create_new_run{
  print "\n ID\t\t:$ID\n";
  if (&have_material() eq 0) {&remote_cmd("mkdir $path/$material")};
  &remote_cmd("mkdir $path/$material/$ID");
- &remote_cmd("mkdir $path/$material/$ID/input");
- &remote_cmd("mkdir $path/$material/$ID/output");
+ &remote_cmd("mkdir $path/$material/$ID/inputs");
+ &remote_cmd("mkdir $path/$material/$ID/outputs");
  &remote_cmd("mkdir $path/$material/$ID/databases");
  $RUN_dir="$path/$material/$ID";
  $database_line[0]="$ID material $material";
  $database_line[1]="$ID date $date";
- $database_line[2]="$ID description $create";
+ $database_line[2]="$ID description";
+ if ($description) {$database_line[2]="$ID description $description"};
  $ic=2;
  foreach $key (@keys) {
   $ic++;
   $database_line[$ic]="$ID key $key";
  };
- $local_description_file="$HOME/.ydb/${ID}_description";
- open(LOCAL_DESC,'>',$local_description_file) or die;
  foreach $line (@database_line) {
   print DB "$line\n";
  }
- print LOCAL_DESC "$create";
- close(LOCAL_DESC);
- &remote_cmd("put $local_description_file $RUN_dir/description");
- $n_to_remove++;
- $FILE_to_remove[$n_to_remove]="$local_description_file";
+ if ($description) {
+  $local_description_file="$HOME/.ydb/${ID}_description";
+  open(LOCAL_DESC,'>',$local_description_file) or die;
+  print LOCAL_DESC "$description";
+  close(LOCAL_DESC);
+  &remote_cmd("put $local_description_file $RUN_dir/description");
+  $n_to_remove++;
+  $FILE_to_remove[$n_to_remove]="$local_description_file";
+ }
 }
 1;

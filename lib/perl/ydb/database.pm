@@ -42,6 +42,9 @@ sub add_a_database_line
   } elsif ( $line[0] =~ "$local_id" and "$line[1]" =~ "description" and "@_[1]" =~ "description"){
    print NEW "$new_line\n";
    $added++;
+  } elsif ( $line[0] =~ "$local_id" and "$line[1]" =~ "key" and "@_[1]" =~ "key"){
+   print NEW "$new_line\n";
+   $added++;
   } elsif ( $added == 0 and $line[0] =~ "$local_id_p_1") {
    print NEW "$new_line\n";
    print NEW $_;

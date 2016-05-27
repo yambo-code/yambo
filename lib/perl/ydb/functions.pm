@@ -21,6 +21,17 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
+no warnings 'experimental::smartmatch';
+#
+sub have_ID
+#===========
+{
+ if (exists($RUN_description[@_]))
+ {
+   return @_
+ }
+ return 0;
+}
 sub have_material
 #=================
 {
@@ -41,8 +52,8 @@ sub have_run{
   $irun++;
   for($ik = 1; $ik < 100; $ik++) {
     if (exists($RUN_key[$irun][$ik])){
-      $n_keys++;
-      $matches++ if "$RUN_key[$irun][$ik]" ~~ @keys;
+     $n_keys++;
+     if ("$RUN_key[$irun][$ik]" ~~ @keys) {$matches++};
     }
   };
   if ("$RUN_material[$irun]" =~ "$material" and $n_keys eq  $matches){ 

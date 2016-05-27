@@ -27,18 +27,18 @@ sub remove_run{
  #
  for($if = 1; $if < 100; $if++) {
    if (exists($RUN_out[$ID_in][$if])){
-    &remote_cmd("rm $path/$RUN_material[$ID_in]/$ID_in/output/$RUN_out[$ID_in][$if].gz");
+    &remote_cmd("rm $path/$RUN_material[$ID_in]/$ID_in/outputs/$RUN_out[$ID_in][$if].gz");
    }
    if (exists($RUN_in[$ID_in][$if])){
-    &remote_cmd("rm $path/$RUN_material[$ID_in]/$ID_in/input/$RUN_in[$ID_in][$if]");
+    &remote_cmd("rm $path/$RUN_material[$ID_in]/$ID_in/inputs/$RUN_in[$ID_in][$if]");
    }
    if (exists($RUN_db[$ID_in][$if])){
-    &remote_cmd("rm $path/$RUN_material[$ID_in]/$ID_in/database/$RUN_db[$ID_in][$if].nc.gz");
+    &remote_cmd("rm $path/$RUN_material[$ID_in]/$ID_in/databases/$RUN_db[$ID_in][$if].nc.gz");
    }
  };
  &remote_cmd("rm $path/$RUN_material[$ID_in]/$ID_in/description");
- &remote_cmd("rmdir $path/$RUN_material[$ID_in]/$ID_in/input");
- &remote_cmd("rmdir $path/$RUN_material[$ID_in]/$ID_in/output");
+ &remote_cmd("rmdir $path/$RUN_material[$ID_in]/$ID_in/inputs");
+ &remote_cmd("rmdir $path/$RUN_material[$ID_in]/$ID_in/outputs");
  &remote_cmd("rmdir $path/$RUN_material[$ID_in]/$ID_in/databases");
  &remote_cmd("rmdir $path/$RUN_material[$ID_in]/$ID_in");
  &delete_database_entry($ID_in);

@@ -50,12 +50,13 @@ $awk=gawk;
 &GetOptions("help"           => \$help,
             "m=s"            => \$material,
             "k=s"            => \$key_words,
-            "c=s"            => \$create,
+            "desc=s"         => \$description,
             "id=i"           => \$ID_in,
-            "i=s"            => \$input,
-            "o=s"            => \$output,
-            "d=s"            => \$database,
+            "i:s"            => \$input,
+            "o:s"            => \$output,
+            "d:s"            => \$database,
             "a"              => \$add,
+            "c"              => \$create,
             "g"              => \$get,
             "del"            => \$del,
             "move"           => \$move,
@@ -71,12 +72,13 @@ sub usage {
                    -h                      This help
                    -m      [STRING]        Material definition
                    -k      [Key1,Key2,...] List of keywords
-                   -c      [DESC]          Create it using the given DESCRIPTION
+                   -desc   [DESC]          Run description
                    -id     [ID]            Run ID 
                    -i      <FILE>          Input (not needed with -g)
-                   -o      <FILE,DIR>      Output file or entire directory (not needed with -g)
-                   -d      <FILE,DIR>      Database file or entire directory (not needed with -g)
+                   -o      <FILE or DIR>   Output file or entire directory (not needed with -g)
+                   -d      <FILE or DIR>   Database file or entire directory (not needed with -g)
                    -a                      Add to run ID (to be used together with -i/-o/-d)
+                   -c                      Create the RUN
                    -g                      Get the run ID (to be used together with -i/-o/-d)
                    -del                    Delete the run ID
                    -move   [OD]            Move the components of run ID to OD
@@ -160,28 +162,41 @@ if ($material) { print   " Material\t:$material \n" }
 # ADD
 if ($add and $ID_in) { &add_command_line_object } ;
 #
-# ADD
+# Remove
 if ($del and $ID_in) { &remove_run } ;
+#
+# Get it
+if ($get and $ID_in and &have_ID($ID_in)==1) { 
+ $local_dir="$cwd/$RUN_material[$ID_in]_ID_$ID_in";
+ &local_cmd("mkdir -p $local_dir");
+ if ($input)    {&local_cmd("mkdir -p $local_dir/inputs")};
+ if ($output)   {&local_cmd("mkdir -p $local_dir/outputs")};
+ if ($database) {&local_cmd("mkdir -p $local_dir/databases")};
+ &get_the_run;
+} ;
 #
 # CREATE
 if ($create) { 
- print   " Description\t:$create \n";
+ if ($description) {print   " Description\t:$description \n"};
  &create_new_run();
 };
 #
 # SYNC
-if ($create or ($add and $ID_in) or ($del and $ID_in))
+if ($create or ($add and $ID_in) or ($del and $ID_in) or ($get and $ID_in) )
 {
- &remote_cmd("put $DB_file $path/database");
+ if (!$get) {&remote_cmd("put $DB_file $path/database")};
  close(DB);
  close(ACTIONS);
- #$sftp = Net::SFTP::Foreign->new($server, timeout => 240) or $newerr = 1;
  print "\n\n Running SFTP...\n\n";
  &local_cmd("sftp -q -b $ACTIONS_file $server");
 }
 #
 # End
 close(DB);
+#
+# Unzip/Dump local files
+#
+if ($get) {&local_uncompress};
 #
 # Delete Files
 for($ik = 1; $ik <= $n_to_remove; $ik++) {

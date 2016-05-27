@@ -25,9 +25,11 @@ sub print_the_run
 #=================
 {
  my $local_id="@_";
- if ($material and $material ne $RUN_material[$local_id]){return};
- if ($key_words and $keys[0] ne $RUN_key[$local_id,1]){return};
- if ($ID_in and $ID_in ne $local_id){return};
+ if ($list) {
+  if ($material and $material ne $RUN_material[$local_id]){return};
+  if ($key_words and $keys[0] ne $RUN_key[$local_id,1]){return};
+  if ($ID_in and $ID_in ne $local_id){return};
+ }
  print "\n ID\t\t:$local_id\n";
  print " Material\t:$RUN_material[$local_id]\n";
  print " Description\t:$RUN_description[$local_id]\n";
@@ -39,21 +41,21 @@ sub print_the_run
    print "$start$RUN_key[$local_id][$ik]" if exists($RUN_key[$local_id][$ik]);
  };
  print "\n";
- print " Input\t\t:";
+ print " Input(s)\t:";
  $start=" ";
  for($ik = 1; $ik < 100; $ik++) {
    if ($ik >1 ) { $start="\n\t\t  " };
    print "$start$RUN_in[$local_id][$ik]" if exists($RUN_in[$local_id][$ik]);
  };
  print "\n";
- print " Outputs\t:";
+ print " Output(s)\t:";
  $start=" ";
  for($ik = 1; $ik < 100; $ik++) {
    if ($ik >1 ) { $start="\n\t\t  " };
    print "$start$RUN_out[$local_id][$ik]" if exists($RUN_out[$local_id][$ik]);
  };
  print "\n";
- print " Databases\t:";
+ print " Database(s)\t:";
  $start=" ";
  for($ik = 1; $ik < 100; $ik++) {
    if ($ik >1 ) { $start="\n\t\t  " };

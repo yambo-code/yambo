@@ -221,6 +221,7 @@ module real_time
  ! Ouput Lifetimes, ratio fit and temperatures
  !---------------------------------------------
  logical                  :: l_lftm_fit_stable(2)
+ logical                  :: l_lftm_fit_temperatures
  integer                  :: Nfitted_lifetimes(2)
  real(SP)                 :: RT_mean_lifetimes(8) ! 1-2 (e-e), 3-6 (e-p), 7-8 (e-photon)
  real(SP)                 :: RT_Tfit_lifetimes(4)

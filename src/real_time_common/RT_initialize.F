@@ -45,7 +45,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_EXP,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,            &
 &                         l_BGR,l_RT_HEUN,eval_HARTREE,eval_DFT,l_NE_dynamics,                &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
-&                         RAD_magnification,NE_step_update_treshold,                          &
+&                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased
  use IO_m,           ONLY:io_COLLs
@@ -75,6 +75,7 @@ subroutine RT_initialize(E,k,q)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTskipImposeN',        l_skip_it)
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
+ call parser('LifeFitTemp',          l_lftm_fit_temperatures)
  if (l_skip_it) l_RT_impose_N_dN=.FALSE.
  !
  call parser('RTskipImposeE',        l_skip_it)

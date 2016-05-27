@@ -457,6 +457,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
 &                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))
+ call it('f',defs,'LifeFitTemp','[RT] Fit on the fly  lifetimes ratio to a Fermi distribution',verb_level=V_real_time)
  !
 #endif
  !

@@ -200,7 +200,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if (associated(HXC_collisions%IO_status)) PAR_NC_local=count(HXC_collisions%IO_status==-1)
  !
  n_steps=0
- if(index(SC_potential,"HARTREE")>0) n_steps=n_steps+PAR_NC_local*K%nbz *PAR_n_Bp_mat_elements
+ if(index(SC_potential,"HARTREE")>0) n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
  if(l_MBPT_XC_collisions           ) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
  !
  call live_timing("Collisions",n_steps)
@@ -367,8 +367,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            endif
            !
            if(i_np==i_mp) cycle
-           !
-           !cycle
            !
            if ( PAR_IND_Bp_mat%element_1D( B_mat_index(i_mp,i_np,COLL_bands) ) ) then
              !

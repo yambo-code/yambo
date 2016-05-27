@@ -30,8 +30,10 @@ subroutine RT_mean_carrier_lifetimes(E,k)
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
 &                         REF_lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_bands, &
 &                         E_PHOT_Hole_lifetime, E_PHOT_Electron_lifetime
+ use RT_control,     ONLY:RT_do_it
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
+ !
  implicit none
  !
  type(levels)           :: E
@@ -44,6 +46,8 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  real(SP)           :: EE_occupations(RT_bands(1):RT_bands(2),RT_nk),&
 &                      EP_occupations(RT_bands(1):RT_bands(2),RT_nk),&
 &                      LOCAL_Lifetime(RT_bands(1):RT_bands(2),RT_nk,6)
+ !
+ if (.not.RT_do_it('OUT')) return
  !
  if (allocated(E_E_Hole_lifetime))     LOCAL_Lifetime(:,:,1)=REF_lifetime(:,:,1)+E_E_Hole_lifetime
  if (allocated(E_E_Electron_lifetime)) LOCAL_Lifetime(:,:,2)=REF_lifetime(:,:,2)+E_E_Electron_lifetime

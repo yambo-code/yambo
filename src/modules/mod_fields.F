@@ -50,7 +50,7 @@ module fields
  !
  integer, parameter  :: n_ext_fields_max=4
  integer             :: n_ext_fields    =0
- type(ext_field)     :: Efield(n_ext_fields_max)
+ type(ext_field), save :: Efield(n_ext_fields_max)
  !
  ! Vector potential
  ! 

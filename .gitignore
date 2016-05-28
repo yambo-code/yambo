@@ -25,6 +25,7 @@ lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/*/*stamp
 lib/*/lib
+lib/*/bin
 lib/*/tmp
 lib/*/etsf_io*
 lib/*/netcdf-*

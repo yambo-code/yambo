@@ -45,6 +45,7 @@ package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
 bindir      = @bindir@
+topdir      = @abs_top_srcdir@
 libdir      = @srcdir_path@/lib
 includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
@@ -109,29 +110,30 @@ changelog:
 all: $(PROJECTS) $(TARGETS) $(DEBUG)
 libs:
 	@if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
-	DIR2GO="lib" ; $(mklib_ext) fi
-	@LIBS2DO="slatec";  DIR2GO="lib" ; $(mklib)
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	@LIBS2DO="slatec";  DIR2GO="lib"; VPATH="$(topdir)/lib" ; $(mklib)
 	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
-	DIR2GO="lib" ; $(mklib); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib); fi
 	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
-	DIR2GO="lib" ; $(mklib); fi
-	@LIBS2DO="local" ; DIR2GO="lib" ; $(mklib) 
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib); fi
+	@LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib) 
 	@if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
-	DIR2GO="lib" ; $(mklib); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib); fi
 	@if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
-	DIR2GO="lib" ; $(mklib_ext); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf" ; \
-	DIR2GO="lib" ; $(mklib_ext); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
-	DIR2GO="lib" ; $(mklib_ext); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 get_extlibs:
-	@cd lib/archive; $(make) -f Makefile.loc all;
+	@mkdir lib/archive; cp $(topdir)/lib/archive/* lib/archive; \
+	cp $(topdir)/config/missing config/ ; cd lib/archive; $(make) -f Makefile.loc all;
 #
 # Yambo #
 # 
 yambo: libs
-	@LIBS2DO="$(MAIN_LIBS)"; XPATH="src" ; $(mksrc)
-	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
+	@LIBS2DO="$(MAIN_LIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
+	@X2DO="yambo"; XPATH="driver" ; VPATH="$(topdir)/driver" ; XLIBS="$(MAIN_LIBS)" ; $(mkx)
 #
 # Yambo PROJECTS #
 # 
@@ -163,21 +165,23 @@ yambo_qed: libs
 # Interfaces #
 #
 interfaces: libs
-	@LIBS2DO="$(2YLIBS)"; XPATH="src" ; $(mksrc)
-	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
-	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";$(mkx)
-	@X2DO="c2y" ;XPATH="interfaces/c2y";XLIBS="$(2YLIBS)";$(mkx)
-	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
-	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
-	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
-	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
+	@LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
+	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib)
+	@X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS)"; $(mkx)
+	@X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS)"; $(mkx)
+	@if test "$(do_p2y)" = yes ; then
+	X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; \
+	fi
+	@if test "$(do_e2y)" = yes ; then
+	X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS)"; $(mkx) ; \
+	fi
 #
 # Ypp #
 #
 ypp: libs
-	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; $(mksrc)
-	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; $(mk_ypp_src)
-	@X2DO="ypp" ;XPATH="driver";XLIBS="$(YPP_MAIN_LIBS)";X_ypp_LIBS="$(YPP_LIBS)";$(mk_ypp_x)
+	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
+	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; VPATH="$(topdir)/ypp" ; $(mk_ypp_src)
+	@X2DO="ypp" ;XPATH="driver"; VPATH="$(topdir)/driver" ; XLIBS="$(YPP_MAIN_LIBS)"; X_ypp_LIBS="$(YPP_LIBS)"; $(mk_ypp_x)
 #
 # Ypp projects #
 #
@@ -238,30 +242,38 @@ define make_message
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
 define mksrc
+ cp -r $(topdir)/include/* include/ ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; \
   then rm -f "$(libdir)/lib$$ldir.a" ; \
   echo " " ; \
   echo ">>>[Making $$ldir]<<<" ; \
+  if test ! -d "$$XPATH/$$ldir" ; then mkdir "$$XPATH/$$ldir" ; fi ; \
+  cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
   ./sbin/make_makefile.sh $$XPATH/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
-  cd $$XPATH/$$ldir ; $(make) VPATH=$$XPATH/$$ldir || exit "$$?" ; cd ../../; fi \
+  cd $$XPATH/$$ldir ; $(make) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
 define mk_ypp_src
+ cp -r $(topdir)/include/* include/ ; \
+ if test ! -d ypp ; then mkdir ypp ; fi ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(debug)" = yes  ; \
   then rm -f "$(libdir)/lib_ypp_$$ldir.a" ; \
   echo " " ; \
   echo ">>>[Making $$ldir]<<<" ; \
+  if test ! -d "$$XPATH/$$ldir" ; then mkdir "$$XPATH/$$ldir" ; fi ; \
+  cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
   ./sbin/make_makefile.sh $$XPATH/$$ldir lib_ypp_$$ldir.a .objects l $(xcpp) $$ADF ; \
-  cd $$XPATH/$$ldir ; $(make) VPATH=$$XPATH/$$ldir || exit "$$?" ; cd ../../; fi \
+  cd $$XPATH/$$ldir ; $(make) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
 define mklibxc
   if test ! -f "$(libdir)/libxc.a" ; then \
   echo " " ; \
   echo ">>>[Making libxc]<<<" ; \
-  cd $(libdir)/libxc ; $(make) -s VPATH=$(libdir)/libxc  || exit "$$?" ; \
+  if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
+  cd $$DIR2GO/libxc ; $(make) -s VPATH=$$VPATH/libxc  || exit "$$?" ; \
   echo ">>>[Installing libxc]<<<" ; \
   $(make) -s install ; \
   cd ../../; \
@@ -269,19 +281,28 @@ define mklibxc
 endef
 define mklib
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib$$ldir.a" ; \
-  echo " " ; \
-  echo ">>>[Making $$ldir]<<<" ; \
-  then ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $(xcpp) $$ADF ; \
-  cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
+  if test ! -f "$(libdir)/lib$$ldir.a" ; then \
+   echo " " ; \
+   echo ">>>[Making $$ldir]<<<" ; \
+   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
+   cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
+   ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $(xcpp) $$ADF ; \
+   cd $$DIR2GO/$$ldir ; $(make) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; \
+  fi \
  done
 endef
 define mklib_ext
+ if test ! -d "lib/archive" ; then mkdir "lib/archive" ; fi ; \
+ cp $(topdir)/lib/archive/* lib/archive; \
+ cp $(topdir)/config/missing config/ ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
-  echo " " ; \
-  echo ">>>[Making $$ldir]<<<" ; \
-  cd $$DIR2GO/$$ldir ; cp Makefile.loc Makefile ; $(make) || exit "$$?" ; cd ../../; fi \
+   echo " " ; \
+   echo ">>>[Making $$ldir]<<<" ; \
+   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
+   cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/Makefile ; \
+   cd $$DIR2GO/$$ldir ; $(make) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../ ; \
+  fi \
  done
 endef
 define mkx
@@ -289,9 +310,13 @@ define mkx
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; \
-  then ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
-  cd $$XPATH ; $(make) VPATH=$$XPATH || exit "$$?" ; fi ; \
+  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
+   if test ! -d bin ; then mkdir bin ; fi ;\
+   cp $$VPATH/.objects $$XPATH ; \
+   cp $$VPATH/*.h $$XPATH ; cp $$VPATH/*.c $$XPATH ; \
+   ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
+   cd $$XPATH ; $(make) VPATH=$$VPATH || exit "$$?" ; \
+  fi ; \
   echo " " ; \
  done
 endef
@@ -301,9 +326,13 @@ define mk_ypp_x
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; \
-  then ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
-  cd $$XPATH ; $(make) VPATH=$$XPATH || exit "$$?" ; fi ; \
+  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
+   if test ! -d bin ; then mkdir bin ; fi ;\
+   cp $$VPATH/.objects $$XPATH ; \
+   cp $$VPATH/*.h $$XPATH ; cp $$VPATH/*.c $$XPATH ; \
+   ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
+   cd $$XPATH ; $(make) VPATH=$$VPATH || exit "$$?" ; \
+  fi ; \
   echo " " ; \
  done
 endef

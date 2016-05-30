@@ -21,12 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.2 r.13617 h.b8495db , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.2 r.13618 h.d599423 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="13617"
-SHASH="b8495db"
+SREVISION="13618"
+SHASH="d599423"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -450,15 +450,17 @@ chmod u+x sbin/*
 cp config/Makefile .
 if test ! -d bin ; then mkdir bin ; fi ;
 if [[ "$prefix" != "$srcdir" ]] ; then
- mkdir "$prefix/driver" ;
- cd $srcdir/driver/ ;
+ if test ! -d "$prefix/dirver"     ; then mkdir "$prefix/driver"     ; fi
+ if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
+ if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi
+ cd "$srcdir/driver/" ;
  for file in `ls *.h` ; do
   cp "$srcdir/driver/$file" "$prefix/driver" ;
  done ;
  for file in `ls *.c` ; do
   cp "$srcdir/driver/$file" "$prefix/driver" ;
  done ;
- cd $prefix ;
+ cd "$prefix" ;
 fi
 if test "$mpibuild" = "no" ; then
  cat config/report | grep -v 'Parallel'

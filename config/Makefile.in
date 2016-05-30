@@ -126,8 +126,12 @@ libs:
 	@if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 get_extlibs:
-	@mkdir lib/archive; cp $(topdir)/lib/archive/* lib/archive; \
-	cp $(topdir)/config/missing config/ ; cd lib/archive; $(make) -f Makefile.loc all;
+	@mkdir lib/archive; \
+	if [ $(topdir) != $(prefix) ] ; then \
+	cp $(topdir)/lib/archive/* lib/archive; \
+	cp $(topdir)/config/missing config/ ; \
+	fi ; \
+	cd lib/archive; $(make) -f Makefile.loc all;
 #
 # Yambo #
 # 
@@ -248,7 +252,6 @@ define make_message
 endef
 define mksrc
  if [ "$(topdir)" != "$(prefix)" ] ; then cp -r $(topdir)/include/* include/ ; fi ; \
- if test ! -d interfaces ; then mkdir interfaces ; fi ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; then \
    rm -f "$(libdir)/lib$$ldir.a" ; \
@@ -265,7 +268,6 @@ define mksrc
 endef
 define mk_ypp_src
  if test "$(topdir)" != "$(prefix)" ; then cp -r $(topdir)/include/* include/ ; fi ; \
- if test ! -d ypp ; then mkdir ypp ; fi ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(debug)" = yes  ; then \
    rm -f "$(libdir)/lib_ypp_$$ldir.a" ; \
@@ -316,7 +318,7 @@ define mklib_ext
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
-   if [ "$(topdir)" != "$(prefix)" ] ; then cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/Makefile ; fi ; \
+   cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/Makefile ; \
    cd $$DIR2GO/$$ldir ; $(make) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../ ; \
   fi \
  done
@@ -327,7 +329,6 @@ define mkx
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
   if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
-   if test ! -d bin ; then mkdir bin ; fi ; \
    if test ! -d $$XPATH ; then mkdir $$XPATH ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
@@ -345,7 +346,6 @@ define mk_ypp_x
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
   if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
-   if test ! -d bin ; then mkdir bin ; fi ;\
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \

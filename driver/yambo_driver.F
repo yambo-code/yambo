@@ -265,8 +265,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
  ! Electron-Phonon Hamiltonian
  !=============================
 #if defined _ELPH

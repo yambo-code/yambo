@@ -187,7 +187,7 @@ FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
 \$(FC_NOOPT_SRC):
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
 	@rm -f \$*\$(f90suffix)
@@ -203,7 +203,7 @@ if [ "$KEEPSRC" == "yes" ]; then
 cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$*".F "
 EOF
@@ -211,7 +211,7 @@ else
 cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	@rm -f \$*\$(f90suffix)
 	@echo $ECHO_N \$*".F "
@@ -219,7 +219,7 @@ EOF
 fi
 cat << EOF >> $cdir/Makefile
 .f.o:
-	${PREFIX}(eval \$(f77) -c \$(f77flags) \$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(f77flags) \$(topdir)/$cdir/\$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "
 .c.o:
 	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<) > /dev/null

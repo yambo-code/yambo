@@ -29,7 +29,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! INIT = 1  : input file editing mode
  ! INIT = 2  : DB listing mode
  !
- use drivers
+ use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bsk,l_bss,&
+&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
+&                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
+&                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
+&                         l_photolum,l_sc_magnetic,l_kerr
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset,n_spin
@@ -71,6 +75,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _SURF
  use ras_module,     ONLY:lras, lreels
+#endif
+#if defined _PL
+ use PHOTOLUM,       ONLY:PL_q0
 #endif
 #if defined _OPENMP
  use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
@@ -633,6 +640,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
+#if defined _PL
+   if(l_photolum) call initactivate(1,'PhotonDir')
+#endif
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
@@ -1106,6 +1116,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bse=runlevel_is_on('bse')
        l_bsk=runlevel_is_on('bsk')
        l_bss=runlevel_is_on('bss')
+       l_photolum=runlevel_is_on('photolum')
        l_tddft=runlevel_is_on('tddft')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
@@ -1264,6 +1275,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
      endif
      !
+#if defined _PL
+     if (l_photolum) call initactivate(1,'bse optics')
+#endif
+     !
 #if defined _SC && !defined _RT
      if (l_sc_magnetic) call initactivate(1,'potential')
      if (l_sc_run.and.io_SC_E_err==0) then
@@ -1295,6 +1310,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! q0 renormalization
      !
      BSS_q0(:) = BSS_q0(:)*q0_def_norm/v_norm( BSS_q0)
+#if defined _PL
+     PL_q0(:)  = PL_q0(:)*q0_def_norm/v_norm( PL_q0)
+#endif
      X(1)%q0(:)=X(1)%q0(:)*q0_def_norm/v_norm(X(1)%q0)
      X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
@@ -1500,14 +1518,14 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if(l_bse)  then
              if(trim(rstr_piece(i1+1))  == 'hartree')  BSK_mode='Hartree'
              if(trim(rstr_piece(i1+1))  == 'hf')       BSK_mode='HF'
-             if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
+             if( trim(rstr_piece(i1+1)) == 'alda')     BSK_mode='ALDA'
              if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'
-             if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
+             if( trim(rstr_piece(i1+1)) == 'bsfxc')    BSK_mode='BSfxc'
            else if(l_chi) then
              if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='Hartree'
-             if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
-             if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
-             if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'
+             if( trim(rstr_piece(i1+1)) == 'alda')     Chi_mode='ALDA'
+             if( trim(rstr_piece(i1+1)) == 'lrc')      Chi_mode='LRC'
+             if( trim(rstr_piece(i1+1)) == 'bsfxc')    Chi_mode='BSfxc'
            endif
            !
            if((trim(rstr_piece(i1+1)) == 'alda').or.&

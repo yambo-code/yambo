@@ -38,6 +38,7 @@ module drivers
  !
  ! Real Time & SC
  !
+ logical :: l_photolum 
  logical :: l_real_time 
  logical :: l_sc_run
  logical :: l_rt_carriers_in_use

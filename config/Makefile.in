@@ -377,9 +377,9 @@ endef
 define lib_ext_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
-   @cd $(libdir)/$$libtoclean ; $(make) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
+   cd $(libdir)/$$libtoclean ; $(make) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
@@ -394,9 +394,9 @@ define lib_ext_clean_all
   cd ../.. ; \
  fi
  find . -name 'xc*.h' -type f -print | xargs rm -f
- for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
-   @cd $(libdir)/$$libtoclean ; $(make) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
+   cd $(libdir)/$$libtoclean ; $(make) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done

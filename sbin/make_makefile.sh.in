@@ -185,7 +185,7 @@ endef
 F77_NOOPT_SRC= xerbla.o slamch.o
 #
 \$(F77_NOOPT_SRC):
-	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$(topdir)/$cdir/\$*.f) > /dev/null
 #
 FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
@@ -195,6 +195,16 @@ FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
 	@rm -f \$*\$(f90suffix)
+#
+# Special sources
+#
+FC_LOCAL_SRC= sgfft.o
+\$(FC_LOCAL_SRC):
+	@rm -f \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	@echo $ECHO_N \$*".F "
+
 #
 # Suffixes
 #

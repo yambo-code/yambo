@@ -21,12 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.2 r.13620 h.15a46ed , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.2 r.13621 h.dfad584 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="13620"
-SHASH="15a46ed"
+SREVISION="13621"
+SHASH="dfad584"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -448,7 +448,11 @@ AC_CONFIG_FILES([config/setup config/Makefile config/report
 AC_OUTPUT
 chmod u+x sbin/*
 cp config/Makefile .
+#
 if test ! -d bin ; then mkdir bin ; fi ;
+if test ! -d include ; then mkdir include ; fi
+if test ! -d lib ; then mkdir lib ; fi
+#
 if [[ "$prefix" != "$srcdir" ]] ; then
  if test ! -d "$prefix/dirver"     ; then mkdir "$prefix/driver"     ; fi
  if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
@@ -462,6 +466,7 @@ if [[ "$prefix" != "$srcdir" ]] ; then
  done ;
  cd "$prefix" ;
 fi
+#
 if test "$mpibuild" = "no" ; then
  cat config/report | grep -v 'Parallel'
 else

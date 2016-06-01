@@ -93,8 +93,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    !
    if (.not.K_diago_in_BS_mat) then
      !
-     ! I store the diagonal of the kernel only in BS_mat_diagonal,
-     ! to be inserted in Lo
+     ! I store the diagonal of the kernel only in BS_mat_diagonal to be inserted in Lo
      !
      BS_mat_diagonal(i_res)=BS_mat(i_res,i_res)
      !

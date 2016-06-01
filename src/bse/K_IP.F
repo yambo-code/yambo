@@ -43,7 +43,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _PL
  use units,         ONLY:SPEED_OF_LIGHT
  use X_m,           ONLY:DIP_P
- use PHOTOLUM,      ONLY:PL,PL_q0,PL_prefactor
+ use PHOTOLUM,      ONLY:PL,PL_prefactor
+ use R_lattice,     ONLY:RL_vol,nqbz
 #endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr
@@ -68,7 +69,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
 #if defined _PL
  integer           ::i_c
- complex(SP)       ::res_PL,rotated_P(3)
+ complex(SP)       ::rotated_P(3)
+ real(SP)          ::res_PL
 #endif
  !
  call section('=','Independent Particles absorption') 
@@ -110,12 +112,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! PL_0
  !=======
- allocate(PL(BSS_n_freqs,3,3)) !  2 (int) 3 (non int) 
+ allocate(PL(BSS_n_freqs,4)) !  2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
  PL           =rZERO
- PL_prefactor =4._SP*pi**2*SPEED_OF_LIGHT**2/(2._SP*pi)**3*d3k_factor
+ PL_prefactor =32._SP*pi**3*SPEED_OF_LIGHT*2._SP/3._SP*RL_vol/nqbz
  do i_c=1,3
-   PL(:,1,i_c)=W_bss%p(:)  
+   PL(:,1)=W_bss%p(:)  
  enddo
+ !
 #endif
  !
  !...Drude
@@ -199,10 +202,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
          call GET_the_rotated_P( )
          !
          BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(rotated_P(:))
-         BS_T_grp(i_T_g)%dipoles_R_PL(i_T,4)=dot_product(rotated_P(:),cmplx(PL_q0))
          if (BS_K_coupling) then
            BS_T_grp(i_T_g)%dipoles_A_PL(i_T,:)=rotated_P(:)
-           BS_T_grp(i_T_g)%dipoles_A_PL(i_T,4)=dot_product(cmplx(PL_q0),rotated_P(:))
          endif
          !
        endif
@@ -221,9 +222,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _PL
        if (l_photolum) then
          res_PL=BS_T_grp(i_T_g)%f_PL(i_T)*Z_*( &
-&               dot_product(BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:),BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:))-&
-&                           BS_T_grp(i_T_g)%dipoles_R_PL(i_T,4)*conjg(BS_T_grp(i_T_g)%dipoles_R_PL(i_T,4))&
-&                                            )
+&               dot_product(BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:),BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)))
        endif
 #endif
        !
@@ -245,7 +244,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _PL
          if (l_photolum) then
            do i_c=1,3
-             PL(:,3,i_c)=PL(:,3,i_c)+PL_prefactor*PL_q0(i_c)*real(res_PL)*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))
+             PL(:,3)=PL(:,3)+PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))
            enddo
          endif
 #endif
@@ -270,8 +269,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
 #if defined _PL
    if (l_photolum) then
-     call PP_redux_wait(PL(:,3,:)      ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-     call PP_redux_wait(PL(:,3,:)      ,COMM=PAR_COM_eh_INDEX%COMM )
+     call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_eh_INDEX%COMM )
    endif
 #endif
    !

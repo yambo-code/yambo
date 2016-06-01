@@ -30,7 +30,7 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_H_dim,BS_mat,BSS_eh_Z,BSS_eh_f
+ use BS,             ONLY:BS_H_dim,BSS_eh_Z,BSS_eh_f
  use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_f
  !
  implicit none
@@ -43,7 +43,7 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
  !
  type(PP_indexes)     ::px
  integer              ::i_l,i_c
- complex(SP)          ::dipole_times_fZ(BS_H_dim,4),R1(4),R2,middle_R(BS_H_dim)
+ complex(SP)          ::dipole_times_fZ(BS_H_dim,3),R1(4),R2,middle_R(BS_H_dim)
  !
  ! Parallel indexes
  !
@@ -58,7 +58,7 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
  !
  ! Left/Right residuals
  !
- do i_c=1,4
+ do i_c=1,3
    dipole_times_fZ(:,i_c) = BSS_dipoles_PL(:,i_c)*sqrt(BSS_eh_f)
    if (allocated(BSS_eh_Z)) then
      dipole_times_fZ(:,i_c)=dipole_times_fZ(:,i_c)*sqrt(BSS_eh_Z)
@@ -75,19 +75,20 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
    !
    if (.not.px%element_1D(i_l)) cycle
    !
-   middle_R(:)=BSS_PL_f(:)*BS_V_right(:,i_l)
+   middle_R(:)=BSS_PL_f(:)*BS_V_right(:,i_l)/BSS_eh_f(:)
    !
-   R2=V_dot_V_omp(BS_H_dim,conjg(BS_mat(:,i_l)),middle_R)
+   R2=V_dot_V_omp(BS_H_dim,conjg(BS_V_left(:,i_l)),middle_R)
    !
-   do i_c=1,4
+   do i_c=1,2
      !
-!     if (K_is_not_hermitian) then
+     if (K_is_not_hermitian) then
+     endif
      !
-     R1(i_c)=V_dot_V_omp(BS_H_dim,dipole_times_fZ(:,i_c),BS_mat(:,i_l))
+     R1(i_c)=V_dot_V_omp(BS_H_dim,dipole_times_fZ(:,i_c),conjg(BS_V_left(:,i_l)))
      !
    enddo
    !
-   BS_R_PL(i_l)=dot_product(R1(:3),R1(:3))-R1(4)*conjg(R1(4))*R2
+   BS_R_PL(i_l)=dot_product(R1,R1)
    !
    call live_timing(steps=1)
    !

@@ -29,12 +29,11 @@ module PHOTOLUM
  !
  implicit none
  !
- real(SP) :: PL_q0(3)=(/1.,0.,0./)
  real(SP) :: PL_prefactor
  !
  ! Photo Luminescence Spectrum
  !
- real(SP),    allocatable :: PL(:,:,:)
+ real(SP),    allocatable :: PL(:,:)
  !
  ! BS dipoles
  !
@@ -50,7 +49,7 @@ module PHOTOLUM
      !
      if (.not.l_photolum) return
      !
-     allocate(BSS_dipoles_PL(BS_H_dim,4))
+     allocate(BSS_dipoles_PL(BS_H_dim,3))
      call mem_est('BSS_dipoles_PL',(/size(BSS_dipoles_PL)/))
      BSS_dipoles_PL = cZERO
      !

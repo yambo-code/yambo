@@ -44,7 +44,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
 #endif
  !
 #if defined _PL
- use PHOTOLUM,       ONLY:PL,PL_q0,PL_prefactor
+ use PHOTOLUM,       ONLY:PL,PL_prefactor
  use drivers,        ONLY:l_photolum
 #endif
  !
@@ -68,10 +68,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  complex(SP)          :: factor_jj,EXC_E(2)
  !
  ! GPL_EXCLUDE_START
- !
-#if defined _PL
- integer              :: i_c
-#endif
  !
 #if defined _KERR
  complex(SP)          :: gauge_factor
@@ -100,7 +96,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
 #endif
  !
 #if defined _PL
- if (l_photolum) PL(:,2,:) = rZERO
+ if (l_photolum) PL(:,2) = rZERO
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -159,10 +155,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      !
 #if defined _PL
      if(l_photolum) then
-       do i_c=1,3
-         PL(:,2,i_c)=PL(:,2,i_c)+PL_prefactor*PL_q0(i_c)*BS_R_PL(i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))
-         if (BS_anti_res) PL(:,2,i_c)=PL(:,2,i_c)+PL_prefactor*PL_q0(i_c)*BS_R_PL(i1)*aimag(1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))
-       enddo
+       PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))
+       if (BS_anti_res) PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(i1)*aimag(1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))
      endif
 #endif
      !

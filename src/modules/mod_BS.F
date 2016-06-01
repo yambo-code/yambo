@@ -199,11 +199,11 @@ module BS
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,BsE_corr,bsR_kerr)
+   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
      use pars,          ONLY:SP
      integer             :: iq,ID,BS_H_dim
      complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
-     real(SP),   pointer :: BsE_corr(:,:)
+     real(SP),   pointer :: BsE_corr(:,:),bsR_pl(:)
      complex(SP),pointer :: bsR_kerr(:)
    end function
    !
@@ -325,8 +325,8 @@ module BS
        if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
      endif
      if(l_photolum) then
-       allocate(BS_T_grp(iT)%dipoles_R_PL(nT,4))
-       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(nT,4))
+       allocate(BS_T_grp(iT)%dipoles_R_PL(nT,3))
+       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(nT,3))
      endif
      allocate(BS_T_grp(iT)%table(nT,4))
      allocate(BS_T_grp(iT)%E(nT))

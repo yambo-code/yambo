@@ -113,7 +113,7 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! Kernel loading
  !================
@@ -225,8 +225,10 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (OUT)
  !==========================
  if (io_err/=0) then
+   !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+   !
  endif
  !
  ! CLEAN

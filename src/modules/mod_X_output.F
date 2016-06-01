@@ -205,13 +205,16 @@ module X_output
      ! 
      ! Work space
      ! 
-     integer :: ii
+     integer :: ii,n_s
      character(10) :: suffix(6)
      !
      if (desc=="PL") then
        !
-       suffix(1:3) = (/ '|X[2]', '|Y[3]', '|Z[4]'/)
-       suffix(4:6) = (/'o|X[2]','o|Y[3]','o|Z[4]'/)
+       suffix(1) = "[2]"
+       suffix(2) = "o[3]"
+       suffix(3) = "'[4]"
+       !
+       n_s = 3
        !
      else
        !
@@ -219,11 +222,13 @@ module X_output
        suffix(3:4) = (/'o-Im[4]','o-Re[5]'/)
        suffix(5:6) = (/'`-Im[6]','`-Re[7]'/)
        !
+       n_s = 6
+       !
      endif
      !
      headers(1) = 'E/ev[1]'
      !
-     do ii = 1,6
+     do ii = 1,n_s
        headers(ii+1)=trim(desc)//trim(suffix(ii))
      enddo
      !

@@ -57,20 +57,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  deallocate(wf_nc_k,wf_igk)
  call mem_est("wf_nc_k wf_igk")
  !
- ! Check which of the wfc components can be rotated
- ! and discard the ones above ng_closed
- ! This could be removed by increasing the total number of g_vectors
- do ik=1,k_save%nibz
-   do ic=1,wf_nc_k_save(ik)
-     if( wf_igk_save(ic,ik)<=ng_closed ) cycle
-     wf_igk_save(ic:wf_nc_k_save(ik),ik)=-1
-     wf_nc_k_save(ik)=ic-1
-     exit
-   enddo
- enddo
- !
- wf_ncx=maxval(wf_nc_k_save)
- !
  allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
  !
  select case(action_kind)

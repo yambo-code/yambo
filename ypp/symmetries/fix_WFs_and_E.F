@@ -34,9 +34,10 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use electrons,           ONLY:levels,E_reset,n_spin
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz,ng_vec
+ use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz
  use D_lattice,           ONLY:spin_sop
  use interfaces,          ONLY:WF_load
+ use YPP_symm
  !
  implicit none
  !
@@ -60,11 +61,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  integer               :: ACTION_,ID
  integer               :: ierr,io_err
  !
- integer               :: ng_vec_save,ng_vec_new,wf_nb_io_save
- integer               :: wf_ng_save,wf_ng_new
- integer               :: wf_ncx_save,wf_ncx_new
- integer               :: wf_nc_k_save(k_save%nibz),wf_nc_k_reduced(k_save%nibz),wf_nc_k_new(k%nibz)
- integer,allocatable   :: wf_igk_save(:,:),wf_igk_reduced(:,:),wf_igk_new(:,:)
+ integer               :: wf_nb_io_save
  !
  integer,     allocatable :: ic_rot_table(:) 
  real(SP),    allocatable :: wf_disk(:,:,:,:)
@@ -75,7 +72,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  integer               :: is,ik,ik_save
  integer               :: ib,ib_grp,ib_disk,i_wf,i_spin
  integer               :: ic,ic_rot,ig,ig_rot
- logical               :: l_found,l_wf_nc_k_red
+ logical               :: l_found
  !
  ! External functions
  !
@@ -91,54 +88,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  call section('=',"Energies and WFs shells")
  !===========================================
  !
- ! The old SAVE tables
- !
- allocate(wf_igk_save(wf_ncx,k_save%nibz))
- wf_nc_k_save=wf_nc_k
- wf_igk_save =wf_igk
- wf_ncx_save =wf_ncx
- wf_ng_save  =wf_ng
- ng_vec_save =ng_vec
- !
- ! Check which of the wfc components can be rotated
- ! and discard the ones above ng_closed
- ! This could be removed by increasing the total number of g_vectors
- !
- l_wf_nc_k_red=.false.
- do ik=1,k_save%nibz
-   do ic=1,wf_nc_k(ik)
-     if( wf_igk(ic,ik)<=ng_closed ) cycle
-     l_wf_nc_k_red=.true.
-     wf_igk(ic:wf_nc_k(ik),ik)=-1
-     wf_nc_k(ik)=ic-1
-     exit
-   enddo
- enddo
- !
- wf_ncx=maxval(wf_nc_k)
- !
- if(l_wf_nc_k_red) call warning(' cut-off reduced on some WFs')
- !
- ! The old SAVE tables reduced
- !
- allocate(wf_igk_reduced(wf_ncx,k_save%nibz))
- wf_nc_k_reduced=wf_nc_k
- wf_igk_reduced =wf_igk(:wf_ncx,:)
- !
  ! Rotate spheres of G-vectors centered on kpts
  call fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
- !
- ! The new SAVE table
- !
- allocate(wf_igk_new(wf_ncx,k%nibz))
- wf_nc_k_new=wf_nc_k
- wf_igk_new =wf_igk
- wf_ncx_new =wf_ncx
- wf_ng_new  =wf_ng
- ng_vec_new =ng_vec
- !
- if(wf_ncx_save/=wf_ncx_new) call msg('s',':: wf_ncx was reduced to avoid components in open shells')
- if(ng_vec_save/=ng_vec_new) call msg('s',':: ng_vec was increased to close the G-shell')
  !
  call map_energies(E,E_new,k,kpoints_map)
  !
@@ -232,6 +183,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
            enddo
          enddo
          !
+         call WF_free(WF)
+         !
          nkibz=k%nibz
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
@@ -241,6 +194,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        enddo
        !
        call live_timing(steps=1)
+       !
      enddo
      !
      call live_timing()
@@ -310,6 +264,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          !
        enddo
        !
+       call WF_free(WF)
+       !
        nkibz=k%nibz
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
@@ -365,6 +321,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          enddo
        enddo
        !
+       call WF_free(WF)
+       !
        nkibz=k%nibz
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
@@ -404,7 +362,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ! CLEAN
  !=======
  call E_reset(E_new)
- call WF_free(WF)
  deallocate(wf_disk)
  call mem_est("wf_disk")
  !

@@ -1111,7 +1111,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bse=runlevel_is_on('bse')
        l_bsk=runlevel_is_on('bsk')
        l_bss=runlevel_is_on('bss')
+#if defined _PL
        l_photolum=runlevel_is_on('photolum')
+#endif
        l_tddft=runlevel_is_on('tddft')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')

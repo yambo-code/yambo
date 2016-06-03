@@ -41,7 +41,7 @@ subroutine INIT_barriers()
  !
  logical :: metallic_system, newton,QP_secant,green,bss_tddft,bse_bsfxc,&
             TR_or_SI,gw0_raxis,tddft_r_space,bss_diago,bse_sex,&
-&           bss_haydock,gw0_ppa,gw0_cohsex,gw0_el_ph,tddft_g_space,bss_inv
+&           bss_haydock,gw0_ppa,gw0_cohsex,gw0_el_ph,tddft_g_space,bss_inv,l_flag
  character(lchlen) :: always_runlevels,on_runlevels
  !
  ! ...
@@ -154,7 +154,12 @@ subroutine INIT_barriers()
    call switch_off_runlevel('all',on_name='optics bse bsk bss tddft '//trim(always_runlevels))
    goto 1
  endif
- if (l_bss.or.l_bse.or.l_photolum) then
+ !
+ l_flag=l_bss.or.l_bse
+#if defined _PL
+ l_flag=l_bss.or.l_bse.or.l_photolum
+#endif
+ if (l_flag) then
    on_runlevels='optics bse bsk bss tddft em1s em1d ppa photolum'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1

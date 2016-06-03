@@ -184,8 +184,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Initialize the output file 
  !============================
- of_mode=3
- call K_output_file(iq,-of_mode)
+ call K_output_file(iq,"open Inversion")
  !
  allocate(eps_disk(W%n_freqs))
  eps_disk=cZERO

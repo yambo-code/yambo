@@ -274,6 +274,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    endif
 #endif
    !
+   ! DOS
+   !=====
    Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor
    !
    ! Pure diamagnetic term

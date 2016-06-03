@@ -263,7 +263,7 @@ subroutine K_diago_driver(iq,W)
        allocate(BS_R_left(BS_H_dim))
        allocate(BS_R_right(BS_H_dim))
 #if defined _KERR
-       if (l_kerr)     allocate(BS_R_right_kerr(BS_H_dim))
+       if (l_kerr) allocate(BS_R_right_kerr(BS_H_dim))
 #endif
 #if defined _PL
        if (l_photolum) allocate(BS_R_PL(BS_H_dim))

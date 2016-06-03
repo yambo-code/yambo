@@ -83,7 +83,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  ! GPL_EXCLUDE_END
  !
  ! FILLING BSS_eh_* and BSS_dipoles
- !================================
+ !==================================
  !
  do i_g=1,BS_nT_grps
    !

@@ -111,12 +111,6 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call W_reset(W_disk)
  !
-#if defined _RT
- if (NEQ_Residuals.neqv.NEQ_Kernel) then
-   call warning("[INV] Different occupation configurations for Kernel and Residuals not supported")
- endif
-#endif
- !
  ! I/O of the restart database
  !=============================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
@@ -190,7 +184,8 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Initialize the output file 
  !============================
- call K_output_file(iq,"open Inversion")
+ of_mode=3
+ call K_output_file(iq,-of_mode)
  !
  allocate(eps_disk(W%n_freqs))
  eps_disk=cZERO

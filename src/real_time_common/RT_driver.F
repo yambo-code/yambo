@@ -264,13 +264,10 @@ subroutine RT_driver(E,X,k,q)
    !==========================================
    ! (evaluated also in RT_integrator when and induced field is included)
    call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot)
-   call RT_output('cur pol magn',TIME=NE_time*AUT2FS)
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
-   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
-   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================
@@ -287,7 +284,6 @@ subroutine RT_driver(E,X,k,q)
    ! BGR
    !=======================================
    call RT_BGR(dG_lesser(:,:,:,i_MEM_collision),E,k)
-   call RT_output('BGR',TIME=NE_time*AUT2FS)
    !
    ! COLLISIONS@NE_time
    !####################
@@ -307,6 +303,13 @@ subroutine RT_driver(E,X,k,q)
    call RT_databases_IO( )
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
+   !
+   ! OUTPUT(s)
+   !###########
+   call RT_output('BGR',TIME=NE_time*AUT2FS)
+   call RT_output('cur pol magn',TIME=NE_time*AUT2FS)
+   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
+   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
    !
    ! Mean Carrier Lifetimes
    !========================

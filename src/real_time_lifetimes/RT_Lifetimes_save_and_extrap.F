@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
+subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt,l_elphoton_scatt,l_elph_scatt
@@ -85,12 +85,12 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    if (RT_TIME_status(NE_i_time)==0 .or. (RT_TIME_status(NE_i_time)>0.and..not.FIRST_step( )) ) then
      !
      !==============
-     ! INTERPOLATE 
+     ! EXTRAPOLATE 
      !=============
      !
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,RT_nk
-         call RT_Lifetimes_Interpolation(LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
+         call RT_Lifetimes_Extrapolation(LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
        enddo
      enddo
      !
@@ -106,5 +106,5 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    !
  endif
  !
-end subroutine RT_Lifetimes_save_and_interp
+end subroutine RT_Lifetimes_save_and_extrap
 

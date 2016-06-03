@@ -594,8 +594,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
-   call initactivate(1,'DrClassic')
-   !
    !
    call INIT_QP_ctl_switch('X')
 #if defined _RT
@@ -851,7 +849,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate( 1,'HXC_Potential FFTGvecs COLLBands')
    call initactivate(-1,'QpntsRXs')
    !
-   if( index(SC_potential,"HARTREE")>0) call initactivate(1,'HARRLvcs')
+   if( index(SC_potential,"HARTREE")>0) call initactivate(1,'HARRLvcs ALLGHAR')
    !
    if( index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.index(SC_potential,"COH")>0 ) then
      call initactivate( 1,'EXXCut EXXRLvcs')
@@ -871,7 +869,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'SCmixing')
    call initactivate(1,'RTBands HXC_Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep dTupdateTime dTupdateJump dTupdateTresh NEsteps NETime COHsteps DipoleEtresh')
-   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeInterpolation LifeInterpSteps')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
    call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime SaveGhistory')

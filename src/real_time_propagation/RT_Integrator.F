@@ -86,7 +86,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
 #if defined _TIMING
    call timing('RT integrator',OPR='stop')
 #endif
-   call RT_Collision(dG1,A_out,E,k,q,Time+T_step/2._SP)
+   call RT_Hamiltonian(dG1,A_out,E,k,q,Time+T_step/2._SP)
+   call RT_relaxation(dG1,E,k,q,Time+T_step/2._SP,.false.)
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
 #endif
@@ -112,7 +113,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
 #if defined _TIMING
    call timing('RT integrator',OPR='stop')
 #endif
-   call RT_Collision(dG1,A_out,E,k,q,Time+T_step)
+   call RT_Hamiltonian(dG1,A_out,E,k,q,Time+T_step)
+   call RT_relaxation(dG1,E,k,q,Time+T_step,.false.)
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
 #endif

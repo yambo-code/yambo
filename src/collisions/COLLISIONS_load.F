@@ -33,7 +33,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use QP_m,            ONLY:QP_QED_ng
  use R_lattice,       ONLY:nqbz
  use plasma,          ONLY:N_plasma_poles_global
- use SC,              ONLY:SC_potential,SC_kind
+ use SC,              ONLY:SC_kind,l_sc_pot_is_local
  use global_XC,       ONLY:SC_FOCK,SC_COH,SC_SEX,SE_GW_NEQ,SC_HARTREE
 #if defined _QED || defined _RT
  use global_XC,       ONLY:SE_GW_QED
@@ -45,8 +45,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP,NONE
  use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q,PAR_Q_index,PAR_PLASMA_index
  use interfaces,      ONLY:io_COLLISIONS
- use com,             ONLY:warning
- use stderr,          ONLY:string_remove
+ use com,             ONLY:warning,error
  !
  implicit none
  !
@@ -104,7 +103,15 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  if (CHECK_EXISTENCE_ONLY) then
    !
    l_use_Hxc_collisions  =all(io_err(1:2)==0).and.(l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa.or.l_sc_coh)
+   if ( any((/io_err(1:2)/=0/)) ) then
+     if (.not.l_sc_pot_is_local) call error(' HXC collisions not found / not compatible')
+     if (     l_sc_pot_is_local) call warning(' HXC collisions not found. Potential is computed on the fly.')
+   endif
+   !
    l_use_scatt_collisions=all(io_err(3:4)==0).and.(l_elphoton_scatt.or.l_elphoton_corr.or.l_elel_scatt)
+   if (io_err(3)/=0) call error(' el-el scatt collisions not found / not compatible') 
+   if (io_err(4)/=0) call error(' el-photon   collisions not found / not compatible')
+   !
    l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions
    COLLISIONS_have_HARTREE=HXC_collisions%kind>=SC_HARTREE
    return

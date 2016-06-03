@@ -21,12 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.2 r.13653 h.624546c , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.2 r.13654 h.19fa5e5 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="13653"
-SHASH="624546c"
+SREVISION="13654"
+SHASH="19fa5e5"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -443,7 +443,7 @@ ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F lib/local/.objects
-                 sbin/make_makefile.sh sbin/make_message.pl sbin/objects_debug.sh
+                 sbin/make_makefile.sh sbin/objects_debug.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 AC_OUTPUT
 chmod u+x sbin/*

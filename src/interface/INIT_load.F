@@ -73,7 +73,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use RT_control,    ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_life_interp_times_SAVE,RT_bands,         &
+&                        NE_tot_time,RT_life_extrap_times_SAVE,RT_bands,         &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
 &                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
@@ -260,6 +260,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
  call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
+ call it('f',defs,'ALLGHAR', '[HA] Force the use use all RL vectors for the Hartree potential',verb_level=V_qp)
  !
  ! Xs Xd Xp
  !
@@ -402,7 +403,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump_SAVE,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
- call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
+ call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA") ',&
 &                            Integrator_name)
  !
  IO_times=(/JPC_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
@@ -417,9 +418,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! Scattering
  !
- call it('f',defs,'LifeInterpolation',    '[RT] Skipped Lifetimes are interpolated')
- call it(defs,'LifeInterpSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
-&                                  RT_life_interp_times_SAVE,unit=Time_unit(1))
+ call it('f',defs,'LifeExtrapolation',    '[RT] Skipped Lifetimes are extrapolated')
+ call it(defs,'LifeExtrapSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
+&                                  RT_life_extrap_times_SAVE,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
  ! 
@@ -456,6 +457,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
 &                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))
+ call it('f',defs,'LifeFitTemp','[RT] Fit on the fly  lifetimes ratio to a Fermi distribution',verb_level=V_real_time)
  !
 #endif
  !

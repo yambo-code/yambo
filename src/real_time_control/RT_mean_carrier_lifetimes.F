@@ -28,10 +28,13 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
-&                         REF_lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_bands, &
-&                         E_PHOT_Hole_lifetime, E_PHOT_Electron_lifetime
+&                         REF_lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_bands,           &
+&                         E_PHOT_Hole_lifetime, E_PHOT_Electron_lifetime,             &
+&                         l_lftm_fit_temperatures
+ use RT_control,     ONLY:RT_do_it
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
+ !
  implicit none
  !
  type(levels)           :: E
@@ -44,6 +47,8 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  real(SP)           :: EE_occupations(RT_bands(1):RT_bands(2),RT_nk),&
 &                      EP_occupations(RT_bands(1):RT_bands(2),RT_nk),&
 &                      LOCAL_Lifetime(RT_bands(1):RT_bands(2),RT_nk,6)
+ !
+ if (.not.RT_do_it('OUT')) return
  !
  if (allocated(E_E_Hole_lifetime))     LOCAL_Lifetime(:,:,1)=REF_lifetime(:,:,1)+E_E_Hole_lifetime
  if (allocated(E_E_Electron_lifetime)) LOCAL_Lifetime(:,:,2)=REF_lifetime(:,:,2)+E_E_Electron_lifetime
@@ -101,13 +106,14 @@ subroutine RT_mean_carrier_lifetimes(E,k)
    !
  enddo
  !
- if(allocated(E_P_Hole_lifetime)) then
+ RT_Tfit_lifetimes=0._SP
+ if(allocated(E_P_Hole_lifetime).and.l_lftm_fit_temperatures) then
    call RT_occupations_FIT(RT_Tfit_lifetimes(1:2),RT_Efit_lifetimes(1:2),EP_occupations)
    if (RT_Tfit_lifetimes(1)>50000/HA2KEL.or.RT_Tfit_lifetimes(1)<0._SP) RT_Tfit_lifetimes(1)=0._SP
    if (RT_Tfit_lifetimes(2)>50000/HA2KEL.or.RT_Tfit_lifetimes(2)<0._SP) RT_Tfit_lifetimes(2)=0._SP
  endif
  !
- if(allocated(E_E_Hole_lifetime)) then
+ if(allocated(E_E_Hole_lifetime).and.l_lftm_fit_temperatures) then
    call RT_occupations_FIT(RT_Tfit_lifetimes(3:4),RT_Efit_lifetimes(3:4),EE_occupations)
    if (RT_Tfit_lifetimes(3)>50000/HA2KEL.or.RT_Tfit_lifetimes(3)<0._SP) RT_Tfit_lifetimes(3)=0._SP
    if (RT_Tfit_lifetimes(4)>50000/HA2KEL.or.RT_Tfit_lifetimes(4)<0._SP) RT_Tfit_lifetimes(4)=0._SP

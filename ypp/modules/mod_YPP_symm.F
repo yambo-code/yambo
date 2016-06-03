@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,41 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_free(WF)
+module YPP_symm
  !
- use wave_func,ONLY:WAVEs,QUIET_free
- use memory_m, ONLY:mem_est
- use FFT_m,    ONLY:fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-&                    fft_rot_r,fft_rot_r_inv,fft_multiplier
-#if defined _FFTW
- use FFT_m,    ONLY:fftw_plan
-#endif
- type(WAVEs)      ::WF
+ implicit none
  !
- if (.not.associated(WF%c)) return
+ logical               :: l_wf_nc_k_red
  !
- call mem_est('WF',quiet=QUIET_free)
+ integer               :: ng_vec_save,ng_vec_new
+ integer               :: wf_ng_save,wf_ng_new
+ integer               :: wf_ncx_save,wf_ncx_new
  !
- if (associated(WF%c)    ) deallocate(WF%c)
- if (associated(WF%state)) deallocate(WF%state)
- if (WF%space=="R") then
-   fft_size=0
-   fft_dim=0
-   fft_dim_loaded=0
-   fft_multiplier=1
-   if (allocated(fft_g_table)) then
-     deallocate(fft_g_table,fft_rot_r,fft_rot_r_inv)
-     call mem_est('FFT_g_tab FFT_rot')
-   endif
-#if defined _FFTW
-   call dfftw_destroy_plan(fftw_plan)
-   fftw_plan=0
-#endif
- endif
- WF%k=0
- WF%b=0
- WF%spin=0
- WF%space=' '
- WF%to_load=.TRUE.
+ integer,allocatable   :: wf_nc_k_save(:),wf_nc_k_reduced(:),wf_nc_k_new(:)
+ integer,allocatable   :: wf_igk_save(:,:),wf_igk_reduced(:,:),wf_igk_new(:,:)
  !
-end subroutine
+end module YPP_symm

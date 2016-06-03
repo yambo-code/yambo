@@ -171,7 +171,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    QUIET_free     =kpts_to_load(2)<nkibz
    if (present(impose_free_and_alloc)) then
      free_and_alloc=impose_free_and_alloc
-     if (free_and_alloc) QUIET_alloc=.FALSE.
+     !if (free_and_alloc) QUIET_alloc=.FALSE.
    endif
    if (QUIET_alloc) call IO_and_Messaging_switch("-report -log")
  endif
@@ -194,7 +194,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
-     if (associated(WF%state)) nullify(WF%state)
+     if (associated(WF%state)) deallocate(WF%state)
      allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
      WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
      deallocate(states_to_load)
@@ -264,7 +264,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (.not.buffer_is_ok) then
    !
    allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/),quiet=QUIET_alloc)
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err=io_WF(ID,wf_disk)
@@ -351,7 +351,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (.not.buffer_is_ok) then
    deallocate(wf_disk)
-   call mem_est("wf_disk")
+   call mem_est("wf_disk",quiet=QUIET_free)
  endif
  !
  deallocate(wf_DP)
@@ -370,7 +370,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if(allocated(states_to_load)) then
    !
-   if (associated(WF%state)) nullify(WF%state)
+   if (associated(WF%state)) deallocate(WF%state)
    !
    allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
    !

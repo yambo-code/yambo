@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -41,7 +41,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  use X_m,            ONLY:global_gauge
  use matrix_operate, ONLY:INV
  use interfaces,     ONLY:MATRIX_driver
- use BS,             ONLY:BS_K_dim,BSS_rhoq0,BS_H_dim,&
+ use BS,             ONLY:BS_K_dim,BSS_dipoles,BS_H_dim,&
 &                         BSS_eh_E,BSS_eh_Z,BSS_eh_f
  !
  implicit none
@@ -63,14 +63,14 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  call PARALLEL_index(px,(/BS_H_dim/))
  !
  ! [1] BS_R_right(i)=<q0|j><j|i_R>
- !                  =conjg(BSS_rhoq0(j))*BS_V_right(j,i)
+ !                  =conjg(BSS_dipoles(j))*BS_V_right(j,i)
  !
  BS_R_right=cZERO
  !
  call live_timing('BSK R residuals',px%n_of_elements(myid+1))
  !
- forall(i1=1:BS_K_dim)          tmp_res(i1) =   conjg(BSS_rhoq0(i1))*sqrt(BSS_eh_f(i1)         ) 
- forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) =cI*conjg(BSS_rhoq0(i1))*sqrt(BSS_eh_f(i1-BS_K_dim))
+ forall(i1=1:BS_K_dim)          tmp_res(i1) =   conjg(BSS_dipoles(i1))*sqrt(BSS_eh_f(i1)         ) 
+ forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) =cI*conjg(BSS_dipoles(i1))*sqrt(BSS_eh_f(i1-BS_K_dim))
  if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
  !
@@ -86,14 +86,14 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  call live_timing
  !
  ! [2] BS_R_tmp(i)= <i_K|j><j|q0> 
- !                = conjg( BS_V_left(k,i))*BSS_rhoq0(k)*R_k
+ !                = conjg( BS_V_left(k,i))*BSS_dipoles(k)*R_k
  !
  BS_R_tmp=cZERO
  !
  call live_timing('BSK L residuals',px%n_of_elements(myid+1))
  !
- forall(i1=1:BS_K_dim)          tmp_res(i1) =   BSS_rhoq0(i1)*sqrt(BSS_eh_f(i1)         ) 
- forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) =cI*BSS_rhoq0(i1)*sqrt(BSS_eh_f(i1-BS_K_dim))
+ forall(i1=1:BS_K_dim)          tmp_res(i1) =   BSS_dipoles(i1)*sqrt(BSS_eh_f(i1)         ) 
+ forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) =cI*BSS_dipoles(i1)*sqrt(BSS_eh_f(i1-BS_K_dim))
  if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
  !

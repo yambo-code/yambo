@@ -26,7 +26,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use pars,           ONLY:SP,cZERO
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,l_drude
  use stderr,         ONLY:real2ch
- use BS,             ONLY:BS_mat,BSS_rhoq0,BS_H_dim,&
+ use BS,             ONLY:BS_mat,BSS_dipoles,BS_H_dim,&
 &                         BSE_mode,BSS_inversion_mode,&
 &                         BSS_er,BSS_dr,BSS_n_freqs,&
 &                         BSS_n_descs,BSS_description,Co_factor,&
@@ -56,7 +56,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! ... dummies
  !
  type(PP_indexes) ::px
- integer          ::i1,i2,iw,of_mode
+ integer          ::i1,i2,iw
  logical, external::stop_now
  complex(SP)      ::gauge_factor
  complex(SP), allocatable  ::Lo(:,:,:)
@@ -96,6 +96,12 @@ subroutine K_inversion(iq,W,E,k,q)
  full_inf_freqs_found=.FALSE.
  !
  call W_reset(W_disk)
+ !
+#if defined _RT
+ if (NEQ_Residuals.neqv.NEQ_Kernel) then
+   call warning("[INV] Different occupation configurations for Kernel and Residuals not supported")
+ endif
+#endif
  !
  ! I/O of the restart database
  !=============================
@@ -170,8 +176,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Initialize the output file 
  !============================
- of_mode=3
- call K_output_file(iq,-of_mode)
+ call K_output_file(iq,-3)
  !
  allocate(eps_disk(W%n_freqs))
  eps_disk=cZERO
@@ -325,7 +330,7 @@ subroutine K_inversion(iq,W,E,k,q)
  BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//&
 &                             trim(real2ch(real(nw_conv)/real(W%n_freqs)*100._SP))
  !
- call K_output_file(iq,of_mode)
+ call K_output_file(iq,3)
  !
  ! CLEAN
  !
@@ -371,10 +376,10 @@ subroutine K_inversion(iq,W,E,k,q)
        if (perform_inv) then
          !
          if (do_it_full) then
-           inv_err(iw)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,Lo_dim,BSS_rhoq0,gauge_factor,&
+           inv_err(iw)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
 &                                                           Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
          else
-           inv_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,BSS_rhoq0,gauge_factor,&
+           inv_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
 &                                                                  Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
          endif
          !

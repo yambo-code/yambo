@@ -188,28 +188,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if(l_use_Hxc_collisions.or.l_elel_scatt) then
-   !
-   if (io_COLLs) then
-     !
-     if (l_use_collisions) then
-       !
-       call COLLISIONS_load(.FALSE.)
-       !
-     else
-       !
-       if (l_elel_scatt) then
-         call warning('COLLISIONs database missing/wrong. E-E scattering switched off.')
-         l_elel_scatt=.FALSE.
-       endif
-       !
-       if (.not.l_sc_pot_is_local) call error('COLLISIONs database missing.')
-       !
-     endif
-     !
-   endif
-   !
- endif
+ if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
  !
  ! Reference lifetimes and/or G_lesser
  !=====================================
@@ -313,9 +292,13 @@ subroutine RT_driver(E,X,k,q)
    ! COLLISIONS@NE_time
    !####################
    !
-   ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
-   !============================================================
-   call RT_Collision(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
+   ! Calculate the RT Hamiltonian Ho_plus_Sigma
+   !============================================
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
+   !
+   ! Calculate all relaxation and dissipation terms
+   !===============================================
+   call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time,.false.)
    !
    ! Write DBs
    !===========

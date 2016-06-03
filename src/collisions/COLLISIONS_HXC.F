@@ -207,7 +207,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if (associated(HXC_collisions%IO_status)) PAR_NC_local=count(HXC_collisions%IO_status==-1)
  !
  n_steps=0
- if(index(SC_potential,"HARTREE")>0) n_steps=n_steps+PAR_NC_local*K%nbz *PAR_n_Bp_mat_elements
+ if(index(SC_potential,"HARTREE")>0) n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
  if(l_MBPT_XC_collisions           ) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
  !
  call live_timing("Collisions",n_steps)
@@ -372,13 +372,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            !
            if(i_np==i_mp) cycle
            !
-           !cycle
-           !
            if ( PAR_IND_Bp_mat%element_1D( B_mat_index(i_mp,i_np,COLL_bands) ) ) then
              !
              pre_factor1=cZERO
              if(index(SC_potential,"HARTREE")>0) then
-               !$omp parallel do, default(shared), private(ig1), reduction(+:pre_factor1)
+               !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
                do ig1=2,N_g_vecs_H
                  pre_factor1=pre_factor1+rhotw_tmp(minus_G(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
                enddo
@@ -511,7 +509,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            !
            pre_factor2=cZERO
            if(index(SC_potential,"COH")>0.or.index(SC_potential,"SEX")>0) then 
-             !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor2)
+             !$omp parallel do default(shared), private(ig1,ig2), reduction(+:pre_factor2)
              do ig1=1,N_g_vecs_XC
                do ig2=1,N_g_vecs_XC
                  pre_factor2=pre_factor2+isc_XC%rhotw(ig2)*EM1s(ig2,ig1)*conjg(iscp_XC%rhotw(ig1))

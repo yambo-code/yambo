@@ -104,6 +104,8 @@ subroutine RT_density(en,kpt,qpt)
  !
  l_norm_to_one=.false.
  !
+ call plot_check_and_launch(.true.)
+ !
  do i_T=1,RT_conf%T_n_steps
    !
    NE_time=RT_time(i_T)

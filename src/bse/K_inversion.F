@@ -43,6 +43,9 @@ subroutine K_inversion(iq,W,E,k,q)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
+#if defined _RT
+ use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
+#endif
  !
  implicit none
  !

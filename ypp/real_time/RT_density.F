@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,7 +28,7 @@ subroutine RT_density(en,kpt,qpt)
  use FFT_m,          ONLY:fft_size,fft_dim
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
- use stderr,         ONLY:real2ch,intc
+ use stderr,         ONLY:intc
  use com,            ONLY:msg,of_open_close,warning
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history
@@ -103,6 +103,8 @@ subroutine RT_density(en,kpt,qpt)
  allocate(v2plot(nr_tot))
  !
  l_norm_to_one=.false.
+ !
+ call plot_check_and_launch(.true.)
  !
  do i_T=1,RT_conf%T_n_steps
    !

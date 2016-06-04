@@ -29,7 +29,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! INIT = 1  : input file editing mode
  ! INIT = 2  : DB listing mode
  !
- use drivers
+ use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bsk,l_bss,&
+&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
+&                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
+&                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
+&                         l_sc_magnetic,l_kerr
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset,n_spin
@@ -590,8 +594,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
-   call initactivate(1,'DrClassic')
-   !
    !
    call INIT_QP_ctl_switch('X')
 #if defined _RT
@@ -847,7 +849,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate( 1,'HXC_Potential FFTGvecs COLLBands')
    call initactivate(-1,'QpntsRXs')
    !
-   if( index(SC_potential,"HARTREE")>0) call initactivate(1,'HARRLvcs')
+   if( index(SC_potential,"HARTREE")>0) call initactivate(1,'HARRLvcs ALLGHAR')
    !
    if( index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.index(SC_potential,"COH")>0 ) then
      call initactivate( 1,'EXXCut EXXRLvcs')
@@ -867,7 +869,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'SCmixing')
    call initactivate(1,'RTBands HXC_Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep dTupdateTime dTupdateJump dTupdateTresh NEsteps NETime COHsteps DipoleEtresh')
-   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeInterpolation LifeInterpSteps')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
    call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime SaveGhistory')
@@ -1500,14 +1502,14 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if(l_bse)  then
              if(trim(rstr_piece(i1+1))  == 'hartree')  BSK_mode='Hartree'
              if(trim(rstr_piece(i1+1))  == 'hf')       BSK_mode='HF'
-             if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
+             if( trim(rstr_piece(i1+1)) == 'alda')     BSK_mode='ALDA'
              if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'
-             if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
+             if( trim(rstr_piece(i1+1)) == 'bsfxc')    BSK_mode='BSfxc'
            else if(l_chi) then
              if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='Hartree'
-             if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
-             if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
-             if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'
+             if( trim(rstr_piece(i1+1)) == 'alda')     Chi_mode='ALDA'
+             if( trim(rstr_piece(i1+1)) == 'lrc')      Chi_mode='LRC'
+             if( trim(rstr_piece(i1+1)) == 'bsfxc')    Chi_mode='BSfxc'
            endif
            !
            if((trim(rstr_piece(i1+1)) == 'alda').or.&

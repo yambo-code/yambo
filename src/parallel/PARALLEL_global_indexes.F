@@ -843,7 +843,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !   "COLLISIONS"
      !.........................................................................
      !
- write (*,*) P_collisions%N,COH_collisions%N,HXC_collisions%N
      call PARALLEL_collisions( Xk,   P_collisions )
      call PARALLEL_collisions( Xk, COH_collisions )
      call PARALLEL_collisions( Xk, HXC_collisions )

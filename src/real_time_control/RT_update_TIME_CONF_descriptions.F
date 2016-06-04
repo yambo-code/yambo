@@ -24,7 +24,7 @@
 subroutine RT_update_TIME_CONF_descriptions( )
  ! 
  use units,          ONLY:AUT2FS
- use real_time,      ONLY:NE_time,RT_life_interp_times,RT_dyn_step,RT_is_dynamically_dephased,&
+ use real_time,      ONLY:NE_time,RT_life_extrap_times,RT_dyn_step,RT_is_dynamically_dephased,&
 &                         NE_time_step_update_jump
  use RT_control,     ONLY:n_TIME_STEP_CONF_descriptions,TIME_STEP_CONF_description,&
 &                         JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
@@ -63,8 +63,8 @@ subroutine RT_update_TIME_CONF_descriptions( )
    !
    n_TIME_STEP_CONF_descriptions=n_TIME_STEP_CONF_descriptions+1
    TIME_STEP_CONF_description(n_TIME_STEP_CONF_descriptions)=ch//"] Life Inter-Intra[fs]:"//&
-&                                                            trim(real2ch(RT_life_interp_times(1)*AUT2FS))//" - "//&
-&                                                            trim(real2ch(RT_life_interp_times(2)*AUT2FS))
+&                                                            trim(real2ch(RT_life_extrap_times(1)*AUT2FS))//" - "//&
+&                                                            trim(real2ch(RT_life_extrap_times(2)*AUT2FS))
    !
  endif
  !

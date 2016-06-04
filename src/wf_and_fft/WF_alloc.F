@@ -24,7 +24,7 @@
 subroutine WF_alloc(WF)
  !
  use pars,          ONLY:cZERO
- use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
+ use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx,QUIET_alloc
  use memory_m,      ONLY:mem_est
  use FFT_m,         ONLY:fft_size
 #if defined _FFTW
@@ -67,7 +67,7 @@ subroutine WF_alloc(WF)
  !
  if (err==0) allocate(WF%index(WF%b(2),WF%k(2),WF%spin(2)),stat=err)
  !
- call mem_est('WF',(/size(WF%c)/),errors=(/err/))
+ call mem_est('WF',(/size(WF%c)/),errors=(/err/),quiet=QUIET_alloc)
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr)
+integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
@@ -35,7 +35,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr)
  !
  integer              :: iq,ID,BS_H_dim
  complex(SP)          :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
- real(SP)   ,pointer  :: BsE_corr(:,:)
+ real(SP)   ,pointer  :: BsE_corr(:,:),bsR_pl(:)
  complex(SP),pointer  :: bsR_kerr(:)
  !
  ! Work Space
@@ -108,6 +108,11 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr)
      if (write_is_on(ID)) V_disk(2,:)=aimag(bsR_kerr(:))
      call io_bulk(ID,R2=V_disk(:2,:))
      if (read_is_on(ID)) bsR_kerr(:)=cmplx(V_disk(1,:),V_disk(2,:),SP)
+   endif
+   !
+   if(associated(bsR_pl)) then
+     call io_bulk(ID,'BS_PL_Residuals',VAR_SZ=(/BS_H_dim/))
+     call io_bulk(ID,R1=bsR_pl)
    endif
    !
    ! GPL_EXCLUDE_END

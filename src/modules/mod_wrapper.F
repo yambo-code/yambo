@@ -62,7 +62,6 @@ module wrapper
  !
  contains
    !
-   !
    !===================
    ! interface M_by_M 
    !===================
@@ -91,7 +90,6 @@ module wrapper
      call CGEMM(TRANSA,TRANSB,msize,msize,msize,(1._SP,0._SP),A,msize,B,msize,(0._SP,0._SP),C,msize)
 #endif
    end subroutine mm_c
-   !
    !
    !===================
    ! interface M_by_V 
@@ -147,7 +145,6 @@ module wrapper
 #endif
    end subroutine mv_r
    !
-   !
    !=========================
    ! interface V_by_V_plus_V 
    !=========================
@@ -188,7 +185,6 @@ module wrapper
 #endif
    end subroutine vv_saxpy   
    !
-   !
    !======
    ! COPY 
    !======
@@ -203,7 +199,6 @@ module wrapper
      call ccopy(N,CX,1,CY,1)
 #endif
    end subroutine V_copy   
-   !
    !
    !==============
    ! DOT PRODUCTS

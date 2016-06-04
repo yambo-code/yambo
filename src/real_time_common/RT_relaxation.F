@@ -23,22 +23,43 @@
 !
 subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
- ! This subroutine calculate relaxation term coming from off-diagonal part
- ! of the self-energy in time, from the electron-phonon and/or electron-electron 
- ! coupling or simple radiative and dephasing term in the kinetic equation 
+ ! 1) The KBE is coded in terms of :
  !
- ! Output: Sigma_relax
+ !    i d_t G(t) - [ H^RT_s , G(t) ]  =  S^xc(t)
  !
- ! Complicate scheme of INTERPOLATION + dF use
+ !   - G(t) is the time diagonal G_lesser
+ !   - H^RT_s contains the equilibrium hamiltonian H^EQ
+ !     plus the variation of the static Hxc self-energy
+ !     plus the external field(s)
+ !   - S_xc contains instead the dynamical part of the self-energy
+ !     which describes relaxation and dissipation
  !
- ! i:  1 1      2  2        3 3 4 4 5 5 6 6 7 7 ...
- ! T:  T T+dT/2 T' T'+dT/2  ....
+ ! 2) This subroutine calculates S^xc
+ !    S^xc is here divided in two terms
+ !    a) (S^xc)_ij with i/=j describes de-phasing and is approximated as C_ij * G_ij(t)
+ !       with C_ij a constant term. C_ij is here called RT_Deph_Matrix
+ !    b) (S^xc)_ii  describes scattering processes between electrons and holes
+ !       It is computing starting from the full functional S^xc[G(t)].
+ !       However only the terms G_ii(t) are used in the functional, discarding
+ !       G_ij(t) with i\=j
+ !
+ ! 3) Available approximations for S^xc_ii are
+ !    - The FAN Self-energy which describes the electron--phonon scattering
+ !    - The NEQ-GW self-energy constructed with a static retarded and advanced screened interaction
+ !      which describes electron--electron scattering
+ !    -  ... electron-photon scattering
+ !
+ ! 4) S^xc_ii is not computed at each time step.
+ !    Here a scheme of the EXTRAPOLATION scheme used
+ !
+ !    i:  1 1      2  2        3 3 4 4 5 5 6 6 7 7 ...
+ !    T:  T T+dT/2 T' T'+dT/2  ....
  ! 
- ! After Life_MEM_steps steps... I(interpolation) E(valuation) dF
+ !    After Life_MEM_steps steps... I(extrapolation) E(valuation) dF
  ! 
- ! I     X      X  X          X X X  
- ! E  X                     X       X
- ! dF                       X       X
+ !    I     X      X  X          X X X  
+ !    E  X                     X       X
+ !    dF                       X       X
  !
  use pars,           ONLY:SP,cI,cZERO
  use D_lattice,      ONLY:Bose_Temp
@@ -196,28 +217,28 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  if (l_initial_equilibrium) return
  !
- ! SAVE, interpolate & N/dN conservation (of the interpolated Lifetimes)
+ ! SAVE, extrapolate & N/dN conservation (of the extrapolated Lifetimes)
  !======================================================================
  !
- ! Time points saved for later interpolation
+ ! Time points saved for later extrapolation
  !
  if (l_eval) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
  !
  if (l_elel_scatt) then
-   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Hole_lifetime,1)
-   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Electron_lifetime,2)
+   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_E_Hole_lifetime,1)
+   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_E_Electron_lifetime,2)
  endif
  if (l_elph_scatt) then
-   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Hole_lifetime,3)
-   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Electron_lifetime,4)
+   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_P_Hole_lifetime,3)
+   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_P_Electron_lifetime,4)
    if(Bose_Temp>0._SP) then
-     call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
-     call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
+     call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
+     call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
    endif
  endif
  if (l_elphoton_scatt) then
-   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_PHOT_Hole_lifetime,7)
-   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_PHOT_Electron_lifetime,8)
+   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_PHOT_Hole_lifetime,7)
+   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_PHOT_Electron_lifetime,8)
  endif
  !
  if (.not.l_eval) call Impose_Conservations( )

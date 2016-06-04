@@ -165,7 +165,7 @@ module interfaces
      integer , optional :: I_dir(2)
    end subroutine 
    !
-   subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr)
+   subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
      use BS,            ONLY:BS_H_dim
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
@@ -175,6 +175,7 @@ module interfaces
      complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
      real(SP),    pointer     :: BS_E_SOC_corr(:,:)
      complex(SP), pointer     :: BS_R_kerr(:)
+     real(SP),    pointer     :: BS_R_PL(:)
    end subroutine
    !
    subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&

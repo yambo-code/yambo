@@ -42,7 +42,8 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  ! 
  ! Work Space
  !
- integer :: var_dim(10),j1
+ integer, allocatable :: var_dim(:)
+ integer              :: j1
  !
  !====================
  !== NETCDF I/O ======
@@ -50,17 +51,19 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  !
  if (present(VAR).and.present(VAR_SZ)) then
    if (write_is_on(ID)) then
+     allocate(var_dim(size(VAR_SZ)))
      call netcdf_call(nf90_redef(io_unit(ID)))
      do j1=1,size(VAR_SZ)
        var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1))
      enddo
      io_rec_pos(ID)=1
      if (ver_is_gt_or_eq(ID,revision=723)) then
-       call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim(:size(VAR_SZ)),io_netcdf_var(ID)))
+       call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID)))
      else
-       call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_real,var_dim(:size(VAR_SZ)),io_netcdf_var(ID)))
+       call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_real,var_dim,io_netcdf_var(ID)))
      endif
      call netcdf_call(nf90_enddef(io_unit(ID))) 
+     deallocate(var_dim)
    else if (read_is_on(ID)) then
      call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)))
    endif
@@ -69,54 +72,44 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  !
  if (present(I0)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     I0,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),I0,(/io_rec_pos(ID)/)))
    else if (read_is_on(ID)) then
-   call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                   I0,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),I0,(/io_rec_pos(ID)/)))
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+1
  endif
  !
  if (present(I1)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     I1,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),I1,(/io_rec_pos(ID)/)))
    else if (read_is_on(ID)) then
-   call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                   I1,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),I1,(/io_rec_pos(ID)/)))
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(I1)
  endif
  !
  if (present(I2)) then
    if (write_is_on(ID)) then
-   call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                   I2,(/io_rec_pos(ID)/)))
+   call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),I2,(/io_rec_pos(ID)/)))
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     I2,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),I2,(/io_rec_pos(ID)/)))
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(I2)
  endif
  if (present(I3)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     I3,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),I3,(/io_rec_pos(ID)/)))
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     I3,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),I3,(/io_rec_pos(ID)/)))
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(I3)
  endif
  !
  if (present(L1)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     L1,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),L1,(/io_rec_pos(ID)/)))
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                       L1,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),L1,(/io_rec_pos(ID)/)))
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(L1)
  endif
@@ -126,15 +119,13 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
      if (present(IPOS)) then
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),L3,IPOS))
      else
-       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                       L3,(/io_rec_pos(ID)/)))
+       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),L3,(/io_rec_pos(ID)/)))
      endif
    else if (read_is_on(ID)) then
      if (present(IPOS)) then
        call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),L3,IPOS))
      else
-       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                       L3,(/io_rec_pos(ID)/)))
+       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),L3,(/io_rec_pos(ID)/)))
      endif
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(L3)
@@ -142,22 +133,18 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  !
  if (present(R0)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     R0,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),R0,(/io_rec_pos(ID)/)))
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     R0,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),R0,(/io_rec_pos(ID)/)))
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+1
  endif
  !
  if (present(R1)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     R1,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),R1,(/io_rec_pos(ID)/)))
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                       R1,(/io_rec_pos(ID)/)))
+     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),R1,(/io_rec_pos(ID)/)))
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
@@ -167,15 +154,13 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
      if (present(IPOS)) then
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),R2,IPOS))
      else
-       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                       R2,(/io_rec_pos(ID)/)))
+       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),R2,(/io_rec_pos(ID)/)))
      endif
    else if (read_is_on(ID)) then
      if (present(IPOS)) then
        call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),R2,IPOS))
      else
-       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                       R2,(/io_rec_pos(ID)/)))
+       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),R2,(/io_rec_pos(ID)/)))
      endif
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(R2)
@@ -186,15 +171,13 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
      if (present(IPOS)) then
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),R3,IPOS))
      else
-       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                       R3,(/io_rec_pos(ID)/)))
+       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),R3,(/io_rec_pos(ID)/)))
      endif
    else if (read_is_on(ID)) then
      if (present(IPOS)) then
        call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),R3,IPOS))
      else
-       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                       R3,(/io_rec_pos(ID)/)))
+       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),R3,(/io_rec_pos(ID)/)))
      endif
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(R3)
@@ -204,26 +187,64 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  ! Here we call the C functions directly to circumvent the fortran type check
  ! and write complex numbers as real
  !
+ if (present(C0)) then
+   if (write_is_on(ID)) then
+     if (present(IPOS)) then
+       call ncvpt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2/), C0, error)
+       call netcdf_call(error)
+     else
+       call ncvpt(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), C0, error)
+       call netcdf_call(error)
+     endif
+   else if (read_is_on(ID)) then
+     if (present(IPOS)) then
+       call ncvgt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2/), C0, error)
+       call netcdf_call(error)
+     else
+       call ncvgt(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), C0, error)
+       call netcdf_call(error)
+     endif
+   endif
+   io_rec_pos(ID)=io_rec_pos(ID)+1
+ endif
+ !
+ if (present(C1)) then
+   if (write_is_on(ID)) then
+     if (present(IPOS)) then
+       call ncvpt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2,size(C1)/), C1, error)
+       call netcdf_call(error)
+     else
+       call ncvpt(io_unit(ID), io_netcdf_var(ID), (/1,1/), (/2,size(C1)/), C1, error)
+       call netcdf_call(error)
+     endif
+   else if (read_is_on(ID)) then
+     if (present(IPOS)) then
+       call ncvgt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2,size(C1)/), C1, error)
+       call netcdf_call(error)
+     else
+       call ncvgt(io_unit(ID), io_netcdf_var(ID), (/1,1/), (/2,size(C1)/), C1, error)
+       call netcdf_call(error)
+     endif
+   endif
+   io_rec_pos(ID)=io_rec_pos(ID)+size(C1)
+ endif
+ !
  if (present(C2)) then
    if (write_is_on(ID)) then
      if (present(IPOS)) then
        call ncvpt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2,size(C2,1),size(C2,2)/), C2, error)
        call netcdf_call(error)
-       !call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),C2,IPOS))
      else
        call ncvpt(io_unit(ID), io_netcdf_var(ID), (/1,1,1/), (/2,size(C2,1),size(C2,2)/), C2, error)
        call netcdf_call(error)
-       !call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),C2,(/io_rec_pos(ID)/)))
      endif
    else if (read_is_on(ID)) then
      if (present(IPOS)) then
        call ncvgt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2,size(C2,1),size(C2,2)/), C2, error)
        call netcdf_call(error)
-       !call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),C2,IPOS))
      else
        call ncvgt(io_unit(ID), io_netcdf_var(ID), (/1,1,1/), (/2,size(C2,1),size(C2,2)/), C2, error)
        call netcdf_call(error)
-       !call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),C2,(/io_rec_pos(ID)/)))
      endif
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(C2)
@@ -234,21 +255,17 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
      if (present(IPOS)) then
        call ncvpt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2,size(C3,1),size(C3,2),size(C3,3)/), C3, error)
        call netcdf_call(error)
-       !call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),C3,IPOS))
      else
        call ncvpt(io_unit(ID), io_netcdf_var(ID), (/1,1,1,1/), (/2,size(C3,1),size(C3,2),size(C3,3)/), C3, error)
        call netcdf_call(error)
-       !call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),C3,(/io_rec_pos(ID)/)))
      endif
    else if (read_is_on(ID)) then
      if (present(IPOS)) then
        call ncvgt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2,size(C3,1),size(C3,2),size(C3,3)/), C3, error)
        call netcdf_call(error)
-       !call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),C3,IPOS))
      else
        call ncvgt(io_unit(ID), io_netcdf_var(ID), (/1,1,1,1/), (/2,size(C3,1),size(C3,2),size(C3,3)/), C3, error)
        call netcdf_call(error)
-       !call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),C3,(/io_rec_pos(ID)/)))
      endif
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(C3)

@@ -47,6 +47,14 @@ subroutine K_inversion(iq,W,E,k,q)
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _KERR
+ use KERR,           ONLY:BS_KERR_free
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  implicit none
  !
  type(w_samp) :: W
@@ -179,7 +187,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Initialize the output file 
  !============================
- call K_output_file(iq,-3)
+ call K_output_file(iq,"open Inversion")
  !
  allocate(eps_disk(W%n_freqs))
  eps_disk=cZERO
@@ -333,7 +341,7 @@ subroutine K_inversion(iq,W,E,k,q)
  BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//&
 &                             trim(real2ch(real(nw_conv)/real(W%n_freqs)*100._SP))
  !
- call K_output_file(iq,3)
+ call K_output_file(iq,"Inversion")
  !
  ! CLEAN
  !
@@ -343,6 +351,9 @@ subroutine K_inversion(iq,W,E,k,q)
  call mem_est("Lo")
  !
  call BS_mat_free( )
+#if defined _KERR
+ call BS_KERR_free( )
+#endif
  !
 #if defined _TIMING
  call timing('Invertion Solver',OPR='stop')

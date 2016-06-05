@@ -23,11 +23,11 @@
 !
 subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
- use pars,          ONLY:SP,IP,pi,cZERO,cI,rZERO
+ use pars,          ONLY:SP,IP,pi,cZERO,cI
  use units,         ONLY:HA2EV
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
- use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_photolum
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel
@@ -41,6 +41,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _PL
+ use pars,          ONLY:rZERO
+ use drivers,       ONLY:l_photolum
  use units,         ONLY:SPEED_OF_LIGHT
  use X_m,           ONLY:DIP_P
  use PHOTOLUM,      ONLY:PL,PL_prefactor

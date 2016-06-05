@@ -283,6 +283,7 @@ define mkx
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
+  if test ! -d "$(bindir)"; then mkdir  "$(bindir)"; fi;\
   if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; \
   then ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
   cd $$XPATH ; $(make) VPATH=$$XPATH || exit "$$?" ; fi ; \

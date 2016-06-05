@@ -313,7 +313,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      !
 #if defined _RT
      !
-     ! In case of population inversion, it may be problematic if f_eh>0. and fp_eh<0.
+     ! In case of population inversion, it may be problematic if f_eh>0. and f_eh_RES<0.
      if ( f_eh_REF*f_eh<0._SP .or. f_eh_REF*f_eh_RES<0._SP ) &
 &      call error(' I cannot split the R and K BSE contribution.'//&
 &                 ' ACTION: Use the same occupations in K and R.')

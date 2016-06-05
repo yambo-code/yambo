@@ -71,7 +71,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! GPL_EXCLUDE_END
  !
- !
  implicit none
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q

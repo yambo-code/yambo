@@ -46,7 +46,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_inversion_PERT_FULL_ratio,BSS_Wd,Inversion_treshold
+&                        BSS_inversion_PERT_FULL_ratio,BSS_Wd,Inversion_treshold,BSS_n_eig
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -312,6 +312,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'BSHayTrs',  '[BSS] Relative [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold)
  call it(defs,'BSInvTrs',  '[BSS] Strict Inversion treshold. Relative[o/o](>0)/Absolute(<0)',Inversion_treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
+ call it(defs,'BSSNEig',   '[BSS] Number of eigenvalues to compute',BSS_n_eig)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')

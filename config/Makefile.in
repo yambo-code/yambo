@@ -26,6 +26,7 @@ os          = @build_os@
 mpi         = @mpi_cpp@
 netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
+slepc       = @dslepc@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
 xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@

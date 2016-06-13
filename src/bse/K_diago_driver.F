@@ -28,7 +28,7 @@ subroutine K_diago_driver(iq,W)
  !
  use pars,           ONLY:SP
  use BS,             ONLY:BS_mat,BS_K_coupling,io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim,BSS_n_eig
  use electrons,      ONLY:E_SOC_nbands
  use matrix_operate, ONLY:DIAGO
  use frequency,      ONLY:w_samp
@@ -92,6 +92,7 @@ subroutine K_diago_driver(iq,W)
 #if defined _TIMING
  call timing('Diagonalization Solver',OPR='start')
 #endif
+ BS_H_dim = BSS_n_eig
  !  
  ! Sectioning
  !============
@@ -113,7 +114,7 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
  !
  ! Kernel loading
  !================
@@ -226,7 +227,7 @@ subroutine K_diago_driver(iq,W)
  !==========================
  if (io_err/=0) then
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
  endif
  !
  ! CLEAN

@@ -50,7 +50,6 @@ module BS
  !=============
  integer :: BS_K_dim
  integer :: BS_H_dim
- integer :: BS_H_eig
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
@@ -162,6 +161,7 @@ module BS
  complex(SP) :: BSS_Wd
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
+ integer  :: BSS_n_eig       !number of eigenvalues to be found in partial diagonalization using slepc
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
@@ -200,9 +200,9 @@ module BS
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,BsE_corr,bsR_kerr)
+   integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,BsRr,BsE_corr,bsR_kerr)
      use pars,          ONLY:SP
-     integer             :: iq,ID,BS_H_dim
+     integer             :: iq,ID,BS_H_dim,BSS_n_eig
      complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
      real(SP),   pointer :: BsE_corr(:,:)
      complex(SP),pointer :: bsR_kerr(:)

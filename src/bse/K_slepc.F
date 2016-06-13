@@ -23,12 +23,12 @@
 !
 subroutine K_slepc(iq,W) 
  !
- ! Generic diagonalization method to solve resonant and non resonant
- ! Hamiltonians. Theay can be both hermitian and non hermitian.
+ ! 10/06/2015 Added by HM
+ ! Generic diagonalization method to solve hermitian hamiltonians.
  !
  ! Based on the routine K_diago_driver.F modified to use Slepc
  !
- ! The implementation can be done in two steps:
+ ! The implementation can be done in three different ways:
  ! 1. Generate the hamiltonian as for diagonalization with lapack/scalapack and 
  ! call the slepc routine
  ! 2. The relevant parts of the matrix are generated among the different mpi
@@ -40,11 +40,11 @@ subroutine K_slepc(iq,W)
  !
  use pars,           ONLY:SP
  use BS,             ONLY:BS_mat,BS_K_coupling,io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim,BS_H_eig
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim,BSS_n_eig
  use electrons,      ONLY:E_SOC_nbands
  use matrix_operate, ONLY:DIAGO
  use frequency,      ONLY:w_samp
- use com,            ONLY:isec
+ use com,            ONLY:isec,warning
  use LIVE_t,         ONLY:live_timing
  use interfaces,     ONLY:MATRIX_slepc,K_diago_compute_epsilon
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
@@ -76,9 +76,9 @@ subroutine K_slepc(iq,W)
  complex(SP),allocatable :: BS_E(:)
  complex(SP),allocatable :: BS_R_left(:)       
  complex(SP),allocatable :: BS_R_right(:)      
- !
- real(SP)   ,pointer  :: BS_E_SOC_corr(:,:) => null()
- complex(SP),pointer  :: BS_R_right_kerr(:) => null()
+ real(SP),   pointer     :: BS_R_PL(:) => null()
+ real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
+ complex(SP),pointer     :: BS_R_right_kerr(:) => null()
  !
  ! Resonant K
  !
@@ -108,11 +108,26 @@ subroutine K_slepc(iq,W)
    call section('+','Slepc solver')
  endif
  !
+ ! Number of stated for partial Diagonalization
+ !=================================
+ if (BSS_n_eig==0) then
+   BSS_n_eig = BS_H_dim*.01
+   call warning(' Calculating only 1% of the eigenvalues.')
+ endif
+ ! if the number of eigenvalued to calculate is larger than matrix dimensions
+ if (BSS_n_eig>BS_H_dim) then
+   call warning(' Number of eigenvalues is larger than hamiltonian. Calculating only 1% of the eigenvalues.')
+   BSS_n_eig = BS_H_dim*.01
+ endif
+ ! if the number of eigenvalued to calculate is smaller than 1
+ if (BSS_n_eig<1) then
+   call warning(' Number of eigenvalues is smaller than hamiltonian. Calculating 1 eigenvalue.')
+   BSS_n_eig = 1
+ endif
+ !
  ! Eigenstates 2 DB ?
  !====================
- BS_H_eig = 10
  if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
- call parser('BSSPertWidth',BSS_perturbative_width)
  !
  ! Allocation (BS_R and BS_E)
  !===========================
@@ -121,7 +136,7 @@ subroutine K_slepc(iq,W)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
  !
  ! Kernel loading
  !================
@@ -135,7 +150,7 @@ subroutine K_slepc(iq,W)
  !
  ! Initialize the output file 
  !============================
- call K_output_file(iq,-2)
+ call K_output_file(iq,"open Diago")
  !
  if(io_err<0) then
    !
@@ -145,13 +160,13 @@ subroutine K_slepc(iq,W)
    !
    if (K_is_not_hermitian) then
      !
-     call MATRIX_slepc(BS_mat,BS_H_eig,E_cmpl=BS_E,V_right=BS_V_right)
+     call MATRIX_slepc(BS_mat,BSS_n_eig,E_cmpl=BS_E,V_right=BS_V_right)
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
      !
-     call MATRIX_slepc(BS_mat,BS_H_eig,E_real=BS_E_real)
+     call MATRIX_slepc(BS_mat,BSS_n_eig,E_real=BS_E_real)
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
      !
@@ -190,44 +205,19 @@ subroutine K_slepc(iq,W)
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
- ! Define perturbative corrections
- !=================================
- if(E_SOC_nbands/=0) then
-   !
-   ! To check if the expression for the non hermitian case is correct
-   if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2,'SOC')
-   if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2,'SOC')
-   BS_E_SOC_corr=real(BS_corrections)
-   !
-   !
- endif
- !
- if(BSS_perturbative_width) then
-   !
-   if(     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections(1,:),1,'WID')
-   if(.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections(1,:),1,'WID')
-   BS_E=BS_E-aimag(BS_corrections(1,:))
-   !
- endif
- !
- ! GPL_EXCLUDE_END
- !
- !
  ! Now I calculate epsilon
  !=========================
- call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+ call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! I write the output file 
  !
- call K_output_file(iq,2)
+ call K_output_file(iq,"Diago")
  !
  ! Diagonalization DB (OUT)
  !==========================
  if (io_err/=0) then
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
  endif
  !
  ! CLEAN
@@ -266,7 +256,7 @@ subroutine K_slepc(iq,W)
          allocate(BS_V_left(BS_H_dim,BS_H_dim))
          allocate(BS_V_right(BS_H_dim,BS_H_dim))
        else
-         allocate(BS_E_real(BS_H_dim))
+         allocate(BS_E_real(BSS_n_eig))
          if(BSS_perturbative_width.and..not.allocated(BS_corrections)) &
 &          allocate(BS_corrections(1,BS_H_dim))
        endif

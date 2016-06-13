@@ -1,6 +1,8 @@
-PETSC_DIR=/Users/henrique.pereira/software/petsc-3.6.4/
-SLEPC_DIR=/Users/henrique.pereira/software/slepc-3.6.3/
-./configure \
+#configure PETSC
+#configure SLEPC
+PETSC_DIR=/Users/henrique.pereira/software/petsc-3.6.4
+SLEPC_DIR=/Users/henrique.pereira/software/slepc-3.6.3
+../configure \
  --enable-keep-src \
  --enable-debug \
  --enable-msgs-comps \
@@ -9,7 +11,9 @@ SLEPC_DIR=/Users/henrique.pereira/software/slepc-3.6.3/
  --with-netcdf-libs="-L/opt/local/lib -lnetcdff -L/opt/local/lib -Wl,-headerpad_max_install_names -lnetcdf -lnetcdf -I/opt/local/include -pipe -Os -L/opt/local/lib /opt/local/lib/libhdf5_hl.a /opt/local/lib/libhdf5.a -L/opt/local/lib -Wl,-headerpad_max_install_names -lz -ldl -lm -lcurl"\
  --with-netcdf-includedir="/opt/local/include"\
  --with-blas-libs="-L/opt/local/lib -lopenblas"\
- --with-lapack-libs="-L/opt/local/lib -lopenblas -L/Users/henrique.pereira/software/petsc-3.6.4/arch-darwin-c-debug/lib -L/Users/henrique.pereira/software/slepc-3.6.3/arch-darwin-c-debug/lib -lpetsc -lslepc"\
+ --with-lapack-libs="-L/opt/local/lib -lopenblas"\
+ --with-slepc-libs="-L${SLEPC_DIR}/arch-darwin-c-debug/lib -lslepc"\
+ --with-petsc-libs="-L${PETSC_DIR}/arch-darwin-c-debug/lib -lpetsc"\
  --with-iotk-path="/Users/henrique.pereira/software/espresso-5.2.1/iotk"\
  --with-libxc-libs="-L/usr/local/lib -lxc"\
  --with-libxc-includedir="/usr/local/include"\

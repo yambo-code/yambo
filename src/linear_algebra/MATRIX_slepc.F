@@ -21,8 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
+subroutine MATRIX_slepc(M,BSS_n_eig,E_real,E_cmpl,V_right,V_left)
   !
+  ! 10/06/2016 HM
   ! Use slepc to obtain the first few eigenpairs of a large matrix
   ! This routine can be called from within Matrix_driver.F but should be kept in
   ! a separate souce file for clarity.
@@ -42,7 +43,7 @@ subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
   ! arguments
   !
   complex(SP)            :: M(:,:)       ! matrix to diagonalize
-  integer                :: BS_H_eig     ! number of eigenvalues to compute
+  integer                :: BSS_n_eig    ! number of eigenvalues to compute
   complex(SP),  optional :: V_right(:,:) ! right eigenvalues
   complex(SP),  optional :: V_left(:,:)  ! left eigenvalues
   complex(SP),  optional :: E_cmpl(:)    ! complex eigenvalues
@@ -59,7 +60,7 @@ subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
   EPSType        tname
   PetscReal      tol, error
   PetscErrorCode ierr
-  PetscInt       nev, ncv, mpd, maxit, its, nconv, n, i, j, one
+  PetscInt       nev, ncv, mpd, maxit, its, nconv, n, i, j
   PetscInt       idx(2)
   PetscScalar    kr, ki
   PetscScalar, pointer :: xsr(:), xsi(:)
@@ -70,11 +71,10 @@ subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
   !
   ! Non hermitian not implemented yet!
   if (present(V_right) .or. present(V_left)) then
-    write(*,*) 'non-hermitian matrices with slepc is not implemented'
+    write(*,*) 'Diagonalisation of non-hermitian matrices with SLEPC is not implemented in yambo yet'
     call exit(0)
   endif
   !
-  one = 1
   write(*,*)
   write(*,*) 'We will use the SLEPC driver'
   n = size(M,1)
@@ -84,41 +84,22 @@ subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
   call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
   !
   ! write the matrix if wanted
-  if (.false.) then
-    write(rowfmt,'(A,I4,A)') '(',n,'(1X,E12.4,E12.4))'
-    do, i=1,n
-      write(*,rowfmt) (real(M(i,j)),aimag(M(i,j)),j=1,n)
-    enddo
-  endif
-
+  !write(rowfmt,'(A,I4,A)') '(',n,'(1X,I3,E12.4,E12.4))'
+  !do, i=1,n
+  !  write(*,rowfmt) (rank,real(M(i,j)),aimag(M(i,j)),j=1,n)
+  !enddo
+  
   write(*,*) 'creating dense matrix...'
-  call MatCreateDense(PETSC_COMM_WORLD,n,n,PETSC_DECIDE,PETSC_DECIDE,M,A,ierr)
-  call MatSetOption(A,MAT_HERMITIAN,PETSC_TRUE)
-  write(*,*) 'done!'
+  !call MatCreateDense(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,n,n,M,A,ierr)
+  call MatCreateSeqDense(PETSC_COMM_SELF,n,n,M,A,ierr)
+  !call MatSetup(PETSC_COMM_WORLD,A,ierr)
   !
   !
   write(*,*) 'filling up elements...'
-  if (.false.) then
-    do i=1,n
-     do j=1,n
-      !if (abs(M(i,j)) > 1e-8) then
-        call MatSetValue(A,i-1,j-1,M(j,i),INSERT_VALUES,ierr)
-      !endif
-    enddo
-    enddo
-  endif
-  one = 1
-  !call MatSetValues(A,one,n,one,n,M,INSERT_VALUES,ierr)
-  write(*,*) 'done...'
-
   call MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
   call MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
-  
-  if (.false.) then
-    !call MatView(A,PETSC_VIEWER_DRAW_WORLD)
-    !call MatView(A,PETSC_VIEWER_STDOUT_SELF)
-  end if
-
+  write(*,*) 'done!'
+  !
   write(*,*) 'creating vecs...'
   call MatCreateVecs(A,xr,xi,ierr)
   write(*,*) 'done!'
@@ -127,10 +108,11 @@ subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
   !     Create the eigensolver and display info
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  !     ** Create eigensolver context
+  !Create eigensolver context
   call EPSCreate(PETSC_COMM_WORLD,eps,ierr)
+  write(*,*) 'error', ierr
   
-  !     ** Set operators. In this case, it is a standard eigenvalue problem
+  !Set operators. In this case, it is a standard eigenvalue problem
   call EPSSetOperators(eps,A,PETSC_NULL_OBJECT,ierr)
   call EPSSetProblemType(eps,EPS_HEP,ierr)
   call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
@@ -138,8 +120,8 @@ subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
   !set type of problem
   !call EPSSetType(eps,EPSLAPACK,ierr)
 
-  !     ** Set solver parameters at runtime
-  nev = BS_H_eig
+  !Set solver parameters at runtime
+  nev = BSS_n_eig
   ncv = 2*nev
   mpd = 2*nev
   call EPSSetDimensions(eps,nev,ncv,mpd,ierr)
@@ -147,44 +129,60 @@ subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   call EPSSolve(eps,ierr)
   call EPSGetIterationNumber(eps,its,ierr)
-  write(*,110) its
+  if (rank .eq. 0) then
+    write(*,110) its
+  end if  
   110  format (/' Number of iterations of the method:',I4)
 
-  !     ** Optional: Get some information from the solver and display it
+  !Optional: Get some information from the solver and display it
   call EPSGetType(eps,tname,ierr)
-  write(*,120) tname
+  if (rank .eq. 0) then
+    write(*,120) tname
+  end if
   120  format (' Solution method: ',A)
   call EPSGetDimensions(eps,nev,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,ierr)
-  write(*,130) nev
-  130  format (' Number of requested eigenvalues:',I2)
+  if (rank .eq. 0) then
+    write(*,130) nev
+  end if
+  130  format (' Number of requested eigenvalues:',I4)
   call EPSGetTolerances(eps,tol,maxit,ierr)
-  write(*,140) tol, maxit
+  if (rank .eq. 0) then
+    write(*,140) tol, maxit
+  end if 
   140  format (' Stopping condition: tol=',1P,E10.4,', maxit=',I4)
 
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Display solution and clean up
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  !     ** Get number of converged eigenpairs
+  !Get number of converged eigenpairs
   call EPSGetConverged(eps,nconv,ierr)
-  write(*,150) nconv
-  150  format (' Number of converged eigenpairs:',I2/)
+  if (rank .eq. 0) then
+    write(*,150) nconv
+  end if
+  150  format (' Number of converged eigenpairs:',I4/)
 
-  !     ** Display eigenvalues and relative errors
+  !free the A matrix
+  call MatDestroy(A,ierr)
+  
+  !Display eigenvalues and relative errors
   if (nconv.gt.0) then
-     write(*,*) '         k          ||Ax-kx||/||kx||'
-     write(*,*) ' ----------------- ------------------'
-     do i=0,nconv-1
-         !         ** Get converged eigenpairs: i-th eigenvalue is stored in kr
-         !         ** (real part) and ki (imaginary part)
+    if (rank .eq. 0) then
+       write(*,*) '         k          ||Ax-kx||/||kx||'
+       write(*,*) ' ----------------- ------------------'
+    end if
+    do i=0,nconv-1
+         !Get converged eigenpairs: i-th eigenvalue is stored in kr
+         !(real part) and ki (imaginary part)
          call EPSGetEigenpair(eps,i,kr,PETSC_NULL_OBJECT,xr,PETSC_NULL_OBJECT,ierr)
 
-         !         ** Compute the relative error associated to each eigenpair
+         !Compute the relative error associated to each eigenpair
          call EPSComputeError(eps,i,EPS_ERROR_RELATIVE,error,ierr)
-         write(*,160) PetscRealPart(kr), error
+         if (rank .eq. 0) then
+           write(*,160) PetscRealPart(kr), error
+         end if
          160      format (1P,'   ',E12.4,'       ',E12.4)
          
          !save the eigenvalues and eigenvectors in the matrix of the hamiltonian\
@@ -192,20 +190,15 @@ subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
          E_real(i+1) = kr
          
          call VecGetArrayF90(xr,xsr,ierr)
-         M(i+1,:) = xsr
+         M(:,i+1) = xsr
+         !M(i+1,:) = xsr
          call VecRestoreArrayF90(xr,xsr,ierr)
          
      enddo
   endif
   
-  write(*,*) 'freeing memory...'
-  call MatDestroy(A,ierr)
-  write(*,*) 'matrix done'
   call EPSDestroy(eps,ierr)
-  write(*,*) 'eps done'
   call VecDestroy(xr,ierr)
   call VecDestroy(xi,ierr)
-  write(*,*) 'vec done'
   call SlepcFinalize(ierr)
-  write(*,*) 'slepc done'
 end subroutine

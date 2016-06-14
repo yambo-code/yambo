@@ -38,7 +38,7 @@ subroutine K_blocks( )
  use pars,         ONLY:cZERO,SP
  use memory_m,     ONLY:mem_est
  use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered,PP_redux_wait
- use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
+ use BS,           ONLY:BS_blk,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,&
 &                       BS_LiveTiming_prefactor
  use com,          ONLY:msg

@@ -44,6 +44,7 @@ llapack     = @LAPACK_LIBS@
 lblacs      = @BLACS_LIBS@
 lscalapack  = @SCALAPACK_LIBS@
 lslepc      = @SLEPC_LIBS@
+lpetsc      = @PETSC_LIBS@
 lmpi        = @MPILIBS@
 lopenmp     = @OPENMPLIBS@
 lnetcdf     = @NCLIBS@

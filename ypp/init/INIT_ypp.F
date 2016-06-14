@@ -31,7 +31,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         nrnlvls,rnlvls,runlevel_is_on,&
 &                         infile_verbosity,V_general,V_qp,V_all,V_real_time
  use drivers,        ONLY:infile_editing
- use com,            ONLY:file_exists
+ use com,            ONLY:file_exists,repfile,com_path,write_to_report
  use stderr,         ONLY:string_split
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
@@ -147,6 +147,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    call infile_dump()
    !
  endif
+ !
+ write_to_report=master_cpu
+ write (repfile,'(2a)') trim(com_path),'/r_stderr'
  !
  ! RunLevels on
  !

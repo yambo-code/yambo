@@ -4,9 +4,21 @@
 AC_DEFUN([SLEPC_SETUP],[
 
 AC_ARG_WITH(slepc_libs,
-        [AC_HELP_STRING([--with-slepc-libs=<libs>], [Use SLEPC libraries <libs>],[32])])
+        [AC_HELP_STRING([--with-slepc-libs=<libs>], [Use SLEPc libraries <libs>],[32])])
 AC_ARG_WITH(petsc_libs,
-        [AC_HELP_STRING([--with-petsc-libs=<libs>], [Use PETSC libraries <libs>],[32])])
+        [AC_HELP_STRING([--with-petsc-libs=<libs>], [Use PETSc libraries <libs>],[32])])
+AC_ARG_WITH(slepc_include,
+        [AC_HELP_STRING([--with-slepc-include=<incs>], [Use SLEPc includes <incs>],[33])])
+AC_ARG_WITH(petsc_include,
+        [AC_HELP_STRING([--with-petsc-include=<incs>], [Use PETSc includes <incs>],[32])])
+
+if test -d "$with_petsc_include"; then petsc_include="$with_petsc_include" ; fi
+if test -d "$with_slepc_include"; then slepc_include="$with_slepc_include" ; fi
+
+petsc_include="$with_petsc_include"
+slepc_include="$with_slepc_include"
+slepc_idir="$petsc_include $slepc_include"
+C_AS_CPP_FLAGS="$C_AS_CPP_FLAGS $slepc_idir"
 
 SLEPC_LIBS=""
 PETSC_LIBS=""
@@ -70,8 +82,10 @@ else
   SLEPC_LIBS=""
 fi
 
+AC_SUBST(C_AS_CPP_FLAGS)
 AC_SUBST(PETSC_LIBS)
 AC_SUBST(SLEPC_LIBS)
+AC_SUBST(slepc_idir)
 AC_SUBST(enable_slepc)
 AC_SUBST(dslepc)
 

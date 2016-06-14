@@ -49,6 +49,7 @@ lopenmp     = @OPENMPLIBS@
 lnetcdf     = @NCLIBS@
 netcdf_aux  = @NCFLAGS@ 
 netcdf_idir = @netcdf_idir@
+slepc_idir  = @slepc_idir@
 llibxc      = @LIBS_LIBXC@
 lfftqe      = @FFTQELIBS@
 lfft	    = @FFT_LIBS@

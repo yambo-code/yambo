@@ -34,7 +34,7 @@ subroutine c2y_db1(en,k,file_name_)
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY: cross_product
  use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL
- use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_LDA_C_PW
+ use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_LDA_C_PW,XC_LDA_X,XC_FACTOR
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor
  implicit none
@@ -50,8 +50,8 @@ subroutine c2y_db1(en,k,file_name_)
  REAL(DP)                       :: rdum,adum(3,3)
  REAL(DP), allocatable          :: atom_pos_dp(:,:,:)
  real(SP)                       :: cp(3)
- integer                        :: i1, ik, i2, i3, inel,i_spin,ig
- logical                        :: ldum
+ integer                        :: i1, ik, i2, i3, inel,i_spin,ig,ngm
+ logical                        :: ldum,l_exist
  integer                        :: int_sop(3,3,1) ! Symmetries in RLU
  !
  !
@@ -280,13 +280,14 @@ subroutine c2y_db1(en,k,file_name_)
  !===================
  !
  call warning ('GGA not supported: switching to LDA PW')
- GS_xc_FUNCTIONAL=XC_LDA_C_PW
+ GS_xc_FUNCTIONAL=XC_LDA_X*XC_FACTOR+XC_LDA_C_PW
  GS_xc_KIND=XC_EXCHANGE_CORRELATION
  !
  ! Spin assignement, for the moment only spin-unpolarized
  !
  n_spinor=1
  n_sp_pol=1
+ call warning ('ONLY NON SPIN RESOLVED supported')
  !
  n_spin=max(n_sp_pol,n_spinor)
  !
@@ -309,29 +310,28 @@ subroutine c2y_db1(en,k,file_name_)
  ! Here for the moment I read Gvec from external file (fort.40), next decide if 
  ! is better to rebuild the Gvec table from scratch. Anyway the time-reversal is not
  ! included. I re-build it here below.  
- open (unit=40,file='fort.40', status='old')
- read (40,*) ng_vec
+ inquire(file='gvec.dat',exist=l_exist)
+ if (.not.l_exist)  call error(' [CPMD] gvec.dat not found: write it from SUBROUTINE GVECTOR in rggen.F (IRI1,IRI2,IRI3)')
+ open (unit=40,file='gvec.dat', status='old')
+ read (40,*) ngm
  !
- ! ng_vec = wf_ng
  !
  ! time-reversal
  !
  ! ALLOCATION
  !
+ ng_vec      = 2*(ngm -1) + 1
  allocate(wf_nc_k(k%nibz),g_vec(ng_vec,3))
- allocate(rel_gvec(3,wf_ng))
+ allocate(rel_gvec(3,ngm))
  ig=1
  read(40,*) (rel_gvec(i2,ig),i2=1,3)
- do i1= 1,(wf_ng-1)/2
-   ig=2*i1
+ do ig=2,ngm
    read(40,*) (rel_gvec(i2,ig),i2=1,3)
-   ig=ig+1
-   rel_gvec(:,ig)=-rel_gvec(:,ig-1)
+   g_vec(2*ig-2,:)=matmul(transpose(b),rel_gvec(:,ig))*alat(:)/2./pi
+   g_vec(2*ig-1,:)=-matmul(transpose(b),rel_gvec(:,ig))*alat(:)/2./pi
  enddo
  close(40)
- do i1=1,wf_ng
-   g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
- enddo
+ !
  wf_nc_k=wf_ng
  wf_ncx=maxval(wf_nc_k)
  wf_ng=wf_ncx

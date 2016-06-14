@@ -189,6 +189,11 @@ subroutine cutoff_box(q,is_cut)
 #else
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(vol_factor/V_cut(iq,ig))
 #endif
+!DV
+ do iq=1,q%nibz
+   write(70,*) iq, bare_qpg(iq,1)
+ enddo
+!
  !
  call k_ibz2bz(q,'d',.true.)
  !

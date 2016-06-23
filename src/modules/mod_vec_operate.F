@@ -268,7 +268,7 @@ module vec_operate
     !
    end function
    !
-   integer function get_neighboar(step,ik,k_map)
+   integer function get_neighbor(step,ik,k_map)
      use R_lattice,      ONLY:bz_map
      implicit none
      !
@@ -281,16 +281,16 @@ module vec_operate
      integer :: idx(3)
      !
      if(all(step(:)==0)) then
-       get_neighboar=ik
+       get_neighbor=ik
        return 
      endif
      !
      idx=k_map%k_map_inv(ik,:)
      idx(:)=idx(:)+step(:)
      idx=k_periodic_idx(idx,k_map)
-     get_neighboar=k_map%k_map_dir(idx(1),idx(2),idx(3))
+     get_neighbor=k_map%k_map_dir(idx(1),idx(2),idx(3))
      !
-   end function get_neighboar
+   end function get_neighbor
    !
    subroutine get_id_perpendicular(id1,id2,id3)
      implicit none
@@ -309,7 +309,6 @@ module vec_operate
      endif
      !
    end subroutine get_id_perpendicular
-   !
    !
    subroutine r_sort(arrin,arrout,indx,indx_m1)                             
      !

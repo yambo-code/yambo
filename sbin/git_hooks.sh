@@ -22,7 +22,6 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-
 # Create git hooks to update yambo version and hash
 # 1. "pre-commit" --> yambo_versions_update.tcsh h
 cat <<EOF > .git/hooks/pre-commit

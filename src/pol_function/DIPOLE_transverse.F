@@ -192,12 +192,15 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! P_vc=rho(:3)
          !
          if (l_eval_DIP_P) then
+           !
            ! See for this PRB 48, 11789 (1993), definition of p_eff
+           !
            if (.not.(associated(Xen%Eo).or.associated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
            if (     (associated(Xen%Eo).or.associated(Xen%W))) then
              if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
              if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)*Ev_m_Ec_QP/Ev_m_Ec
            endif
+           !
          endif
          !
          !======

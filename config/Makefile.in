@@ -47,7 +47,7 @@ exec_prefix = @exec_prefix@
 bindir      = @bindir@
 libdir      = @srcdir_path@/lib
 includedir  = @srcdir_path@/include
-CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
+CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
@@ -56,8 +56,8 @@ TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
 CLEANS   = clean_fast clean clean_extlibs clean_all distclean
 PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr \
-           ypp_ph ypp_sc ypp_rt ypp_magnetic yambo_pl
-BROKEN   = yambo_surf ypp_surf ydb
+           ypp_ph ypp_sc ypp_rt ypp_magnetic 
+BROKEN   = yambo_surf ypp_surf 
 DEBUG    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
@@ -144,9 +144,6 @@ yambo_kerr: libs
 yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)"; XPATH="src";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
-yambo_pl: libs
-	@LIBS2DO="$(PJ_PLLIBS)"; XPATH="src";ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mksrc)
-	@X2DO="yambo_pl"; XPATH="driver";XLIBS="$(PJ_PLLIBS)";ADF="-D_RT -D_SC -D_ELPH -D_PL";$(mkx)
 yambo_rt: libs
 	@LIBS2DO="$(PJ_RTLIBS)"; XPATH="src";ADF="-D_RT -D_SC -D_ELPH"; $(mksrc)
 	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH";$(mkx)
@@ -201,12 +198,6 @@ ypp_magnetic: libs
 	@LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src" ; ADF="-D_SC -D_MAGNETIC";$(mksrc)
 	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; $(mk_ypp_src)
 	@X2DO="ypp_magnetic" ;XPATH="driver";XLIBS="$(YPPSC_MAIN_LIBS)";X_ypp_LIBS="$(YPP_LIBS)"; ADF="-D_YPP_MAGNETIC";$(mk_ypp_x)
-#
-# ydb
-#
-ydb: libs
-	@LIBS2DO="$(YDBLIBS)" ; $(mksrc)
-	@X2DO="ydb" ;XPATH="ydb";XLIBS="$(YDBLIBS)";$(mkx)
 #
 clean_fast: 
 	@$(objects_clean)
@@ -289,6 +280,7 @@ define mkx
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
+  if test ! -d "$(bindir)"; then mkdir  "$(bindir)"; fi;\
   if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; \
   then ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
   cd $$XPATH ; $(make) VPATH=$$XPATH || exit "$$?" ; fi ; \

@@ -76,6 +76,15 @@ module KERR
      BSS_dipoles_kerr = cZERO
    end subroutine
    !
+   subroutine BS_KERR_free( )
+     use memory_m,   ONLY:mem_est
+     if (.not.l_kerr) return
+     if (allocated(BSS_dipoles_kerr)) then
+       deallocate(BSS_dipoles_kerr)
+       call mem_est('BSS_dipoles_kerr',(/size(BSS_dipoles_kerr)/))
+     endif
+   end subroutine
+   !
    ! GPL_EXCLUDE_END
    !
 end module

@@ -42,6 +42,7 @@ subroutine K_diago_driver(iq,W)
  !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
+ use KERR,           ONLY:BS_KERR_free
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -122,7 +123,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Initialize the output file 
  !============================
- call K_output_file(iq,-2)
+ call K_output_file(iq,"open Diago")
  !
  if(io_err<0) then
    !
@@ -201,14 +202,13 @@ subroutine K_diago_driver(iq,W)
  !
  ! GPL_EXCLUDE_END
  !
- !
  ! Now I calculate epsilon
  !=========================
  call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! I write the output file 
  !
- call K_output_file(iq,2)
+ call K_output_file(iq,"Diago")
  !
  ! Diagonalization DB (OUT)
  !==========================
@@ -222,8 +222,10 @@ subroutine K_diago_driver(iq,W)
  ! CLEAN
  !=======
  call BS_mat_free( )
- !
  call local_free( )
+#if defined _KERR
+ call BS_KERR_free( )
+#endif
  !
 #if defined _TIMING
  call timing('Diagonalization Solver',OPR='stop')

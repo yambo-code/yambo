@@ -286,8 +286,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    ! Initialize & write the output file
    !
-   call K_output_file(iq,-4)
-   call K_output_file(iq, 4)
+   call K_output_file(iq,"open IP")
+   call K_output_file(iq,"IP")
    !
    deallocate(Epsilon_ii,Joint_DOS,X_drude_term)
 #if defined _KERR

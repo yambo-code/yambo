@@ -26,7 +26,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K = <2V-W>
  !
  use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
- use parser_m,     ONLY:parser
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf,l_bss
@@ -66,12 +65,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _KERR
  use KERR,           ONLY:BS_KERR_free
 #endif
-#if defined _PL
- use PHOTOLUM,       ONLY:BS_PL_free
-#endif
  !
  ! GPL_EXCLUDE_END
- !
  !
  implicit none
  type(levels)  ::Ken 
@@ -99,7 +94,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Oscillators
  !
- logical    :: load_O_X,l_USE_all_Gexx
+ logical    :: load_O_X
  complex(SP),allocatable  ::Ovv(:),Occ(:),O_times_W(:)
  complex(SP),allocatable  ::Ovc(:),Ocv(:)
  type(elemental_collision)::isc
@@ -115,7 +110,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  Co=4._SP*real(spin_occ)*pi/DL_vol/real(q%nbz,SP)
  io_BS_err    =-1
  io_BS_Fxc_err=-1
- call parser('ALLGexx',l_USE_all_Gexx)
  !
  call elemental_collision_free(K_CORR_collision)
  call elemental_collision_free(K_EXCH_collision)
@@ -222,9 +216,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
      n_BS_blks=0
      call BS_mat_free()
-#if defined _PL
-     call BS_PL_free( )
-#endif
 #if defined _KERR
      call BS_KERR_free( )
 #endif
@@ -258,7 +249,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !===================
  O_ng=maxval(G_m_G)
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_USE_all_Gexx.and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
  !
  ! Wave Functions
  !================

@@ -39,7 +39,6 @@ integer function io_COL_CUT(ID)
  real(SP),allocatable::bare_qpg_disk(:,:,:)
  integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ncx
  !
- ! type=2: job-dependent database
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)
  !
  if (io_COL_CUT/=0) goto 1

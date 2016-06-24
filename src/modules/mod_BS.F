@@ -101,13 +101,10 @@ module BS
    complex(SP), allocatable      :: dipoles_A(:)
    complex(SP), allocatable      :: dipoles_R_kerr(:)
    complex(SP), allocatable      :: dipoles_A_kerr(:)
-   complex(SP), allocatable      :: dipoles_R_PL(:,:)
-   complex(SP), allocatable      :: dipoles_A_PL(:,:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
-   real(SP)   , allocatable      :: f_PL(:)
    real(SP)   , allocatable      :: W(:)
    real(SP)   , allocatable      :: E_SOC_corr(:,:)
    !
@@ -199,11 +196,11 @@ module BS
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,BsE_corr,bsR_kerr)
+   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
      use pars,          ONLY:SP
      integer             :: iq,ID,BS_H_dim
      complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
-     real(SP),   pointer :: BsE_corr(:,:)
+     real(SP),   pointer :: BsE_corr(:,:),bsR_pl(:)
      complex(SP),pointer :: bsR_kerr(:)
    end function
    !
@@ -288,7 +285,7 @@ module BS
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
      use pars,       ONLY:IP
-     use drivers,    ONLY:l_kerr,l_photolum
+     use drivers,    ONLY:l_kerr
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
      use electrons,  ONLY:levels,E_SOC_nbands
@@ -302,11 +299,6 @@ module BS
        if(l_kerr) then
          call mem_est("BS_T_grp_dipoles_KERR_R_N",(/nT/))
          if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_KERR_A_N",(/nT/))
-       endif
-       if(l_photolum) then
-         call mem_est("BS_T_grp_dipoles_PL_R_N",(/4*nT/))
-         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N",(/4*nT/))
-         call mem_est("BS_T_grp_f_PL_N",(/nT/),(/SP/))
        endif
        call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
        call mem_est("BS_T_grp_E_N",(/nT/),(/SP/))
@@ -324,15 +316,10 @@ module BS
        allocate(BS_T_grp(iT)%dipoles_R_kerr(nT))
        if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
      endif
-     if(l_photolum) then
-       allocate(BS_T_grp(iT)%dipoles_R_PL(nT,4))
-       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(nT,4))
-     endif
      allocate(BS_T_grp(iT)%table(nT,4))
      allocate(BS_T_grp(iT)%E(nT))
      allocate(BS_T_grp(iT)%f(nT))
      allocate(BS_T_grp(iT)%f_RES(nT))
-     if(l_photolum) allocate(BS_T_grp(iT)%f_PL(nT))
      if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
      if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
      if (E_SOC_nbands/=0) allocate(BS_T_grp(iT)%E_SOC_corr(2,nT))
@@ -422,10 +409,9 @@ module BS
        deallocate(BS_T_grp(i_g)%E)
        deallocate(BS_T_grp(i_g)%f)
        deallocate(BS_T_grp(i_g)%f_RES)
-       if (allocated(BS_T_grp(i_g)%f_PL)) deallocate(BS_T_grp(i_g)%f_PL)
-       if (allocated(BS_T_grp(i_g)%Z))    deallocate(BS_T_grp(i_g)%Z)
-       if (allocated(BS_T_grp(i_g)%W))    deallocate(BS_T_grp(i_g)%W)
-       if (E_SOC_nbands/=0)               deallocate(BS_T_grp(i_g)%E_SOC_corr)
+       if (allocated(BS_T_grp(i_g)%Z)) deallocate(BS_T_grp(i_g)%Z)
+       if (allocated(BS_T_grp(i_g)%W)) deallocate(BS_T_grp(i_g)%W)
+       if (E_SOC_nbands/=0)            deallocate(BS_T_grp(i_g)%E_SOC_corr)
        !
      enddo
      !

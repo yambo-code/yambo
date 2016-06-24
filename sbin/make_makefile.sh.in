@@ -127,7 +127,7 @@ rm -f $cdir/$ofile.c
 
 if [ "$mode" = "x" ] ; then 
 cat << EOF >> $cdir/Makefile
-\$(target): locks \$(objs) 
+\$(target): \$(lock_file) \$(objs)
 	\$(driver)\$
 	\$(link)\$
 	\$(modmove)\$ 
@@ -137,13 +137,14 @@ EOF
 else 
 rm -f ./lib/$target
 cat << EOF >> $cdir/Makefile
-\$(target): locks \$(objs) arcreate
+\$(target): \$(lock_file) \$(objs) arcreate
 	\$(modmove)\$ 
 EOF
 fi
 
 cat << EOF >> $cdir/Makefile
-locks:
+\$(objs): \$(lock_file)
+\$(lock_file):
 	${PREFIX}if test ! -f \$(lock_file) && test "\$(debug)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); fi

@@ -64,9 +64,9 @@ subroutine K_diago_driver(iq,W)
  complex(SP),allocatable :: BS_E(:)
  complex(SP),allocatable :: BS_R_left(:)       
  complex(SP),allocatable :: BS_R_right(:)      
- !
- real(SP)   ,pointer  :: BS_E_SOC_corr(:,:) => null()
- complex(SP),pointer  :: BS_R_right_kerr(:) => null()
+ real(SP),   pointer     :: BS_R_PL(:) => null()
+ real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
+ complex(SP),pointer     :: BS_R_right_kerr(:) => null()
  !
  ! Resonant K
  !
@@ -108,7 +108,7 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! Kernel loading
  !================
@@ -204,7 +204,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Now I calculate epsilon
  !=========================
- call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+ call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! I write the output file 
  !
@@ -213,8 +213,10 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (OUT)
  !==========================
  if (io_err/=0) then
+   !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+   !
  endif
  !
  ! CLEAN
@@ -244,7 +246,7 @@ subroutine K_diago_driver(iq,W)
        allocate(BS_R_left(BS_H_dim))
        allocate(BS_R_right(BS_H_dim))
 #if defined _KERR
-       if(l_kerr) allocate(BS_R_right_kerr(BS_H_dim))
+       if (l_kerr) allocate(BS_R_right_kerr(BS_H_dim))
 #endif
        !
      case(2)

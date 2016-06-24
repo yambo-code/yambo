@@ -324,7 +324,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
    end subroutine DIPOLES_alloc
    !
-   !
    subroutine DIPOLES_ppredux_and_symmetrize()
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup

@@ -36,14 +36,14 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
  use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
-&                         BSS_rhoq0,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc,&
+&                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc,&
 &                         BSS_eh_E_SOC_corr,BSS_perturbative_width
  !
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
- use KERR,           ONLY:BSS_rhoq0_kerr,BS_mat_kerr_alloc
+ use KERR,           ONLY:BSS_dipoles_kerr,BS_KERR_alloc
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -68,14 +68,13 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- call BS_mat_kerr_alloc( )
+ call BS_KERR_alloc( )
 #endif
  !
  ! GPL_EXCLUDE_END
  !
- !
- ! FILLING BSS_eh_* and BSS_rhoq0
- !================================
+ ! FILLING BSS_eh_* and BSS_dipoles
+ !==================================
  !
  do i_g=1,BS_nT_grps
    !
@@ -98,8 +97,8 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos(1))=BS_T_grp(i_g)%Z(i_c)
      if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos(1))=BS_T_grp(i_g)%W(i_c)
      !
-     BSS_rhoq0(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
-     if (BS_K_coupling) BSS_rhoq0(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(i_c)
+     BSS_dipoles(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
+     if (BS_K_coupling) BSS_dipoles(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(i_c)
      !
      ! GPL_EXCLUDE_START
      !
@@ -107,8 +106,8 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      !
 #if defined _KERR
      if  (l_kerr) then
-       BSS_rhoq0_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R_kerr(i_c)
-       if (BS_K_coupling) BSS_rhoq0_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_kerr(i_c)
+       BSS_dipoles_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R_kerr(i_c)
+       if (BS_K_coupling) BSS_dipoles_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_kerr(i_c)
      endif
 #endif
      !
@@ -120,7 +119,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  ! ALL 2 ALL
  !===========
  !
- ! BSS_eh_* and BSS_rhoq0 are distributed ONLY among k-points and eh transitions.
+ ! BSS_eh_* and BSS_dipoles are distributed ONLY among k-points and eh transitions.
  !
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_eh_INDEX%COMM)
@@ -137,14 +136,14 @@ subroutine K_stored_in_a_BIG_matrix(iq)
    call PP_redux_wait(BSS_eh_Z,COMM=PAR_COM_eh_INDEX%COMM)
  endif
  !
- call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
- call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_eh_INDEX%COMM)
+ call PP_redux_wait(BSS_dipoles,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(BSS_dipoles,COMM=PAR_COM_eh_INDEX%COMM)
  !
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- call PP_redux_wait(BSS_rhoq0_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
- call PP_redux_wait(BSS_rhoq0_kerr,COMM=PAR_COM_eh_INDEX%COMM)
+ call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_eh_INDEX%COMM)
 #endif
  if (E_SOC_nbands/=0) then
    call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

@@ -163,14 +163,15 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel)
  call it(defs,'RTBands',    '[RT] Bands range',RT_bands)
- call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,unit=E_unit)
+ call it(defs,'RTpumpEhWd', '[RT] Max Energy window used in the levels pick-up',Eh_pumped_pair_width,unit=E_unit)
  ! Method 1
- call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,unit=E_unit)
+ call it(defs,'RTpumpEhEn', '[RT] Energy (relative to VBM/CBM) of the levels to be inverted by hand',&
+&                            Eh_pumped_pair_energy,unit=E_unit)
  ! Method 2
  call it(defs,'RTpumpDE',   '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,unit=E_unit)
  call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width)
  do i_region=1,6
-   call it(defs,'RTpumpBZ'//trim(intc(i_region)), '[RT] Reagion in K space excited',Eh_pumped_pair_BZ_reagions(:,i_region))
+   call it(defs,'RTpumpBZ'//trim(intc(i_region)), '[RT] Region in K space excited',Eh_pumped_pair_BZ_reagions(:,i_region))
    if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
  enddo
  !

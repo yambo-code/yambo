@@ -58,8 +58,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Work space
  !
- integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_mem,n_soc,i_pert_SOC
- real(SP)          ::conjg_fac
+ integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
+ real(SP)          ::conjg_fac,Z_
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
  !
  call section('=','Independent Particles absorption') 
@@ -88,7 +88,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Eps_0
  !=======
- allocate(Epsilon_ii(BSS_n_freqs,4),Joint_DOS(BSS_n_freqs,4))
+ allocate(Epsilon_ii(BSS_n_freqs,4),Joint_DOS(BSS_n_freqs,4)) ! 2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
  allocate(X_drude_term(BSS_n_freqs))
  Epsilon_ii  =cZERO
  Joint_DOS   =cZERO
@@ -153,7 +153,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ic    = BS_T_grp(i_T_g)%table(i_T,3)
        i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
        !
-       ik_mem= PAR_Xk_bz_index(ik_bz)
+       ik_bz_mem= PAR_Xk_bz_index(ik_bz)
        !
        if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
        if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
@@ -170,14 +170,17 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
        !              see definition of conjg_fac few lines before for the -1
        !
-       BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_mem,i_sp))
-       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_mem,i_sp)
+       BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_bz_mem,i_sp))
+       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_bz_mem,i_sp)
        !
        if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
        !
        ! Residuals DIP_cv * DIP_vc
-       res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%fp(i_T)
-       if (allocated(BS_T_grp(i_T_g)%Z)                                     ) res=res*BS_T_grp(i_T_g)%Z(i_T)
+       !
+       Z_=1._SP
+       if (allocated(BS_T_grp(i_T_g)%Z)) Z_=BS_T_grp(i_T_g)%Z(i_T)
+       !
+       res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%f_RES(i_T)*Z_
        if (allocated(BS_T_grp(i_T_g)%W) .and. trim(global_gauge)=="velocity") res=res*E_plus_W0/conjg(E_plus_W0)
        !
        do i_pert_SOC=1,n_SOC
@@ -212,14 +215,23 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
-   call PP_redux_wait( Joint_DOS(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( Joint_DOS(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+   call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
+   !
+   ! DOS
+   !=====
+   Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor
    !
    ! Pure diamagnetic term
+   !=======================
    diam_term0=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
    !
-   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=1._SP+Epsilon_ii(:,3)*Co_factor/q_norm(1)**2
-   if (trim(global_gauge)=='velocity') then
+   if (trim(global_gauge)=='length'  ) then
+     !
+     Epsilon_ii(:,3)=1._SP+Epsilon_ii(:,3)*Co_factor/q_norm(1)**2
+     !
+   else if (trim(global_gauge)=='velocity') then
+     !
      if (.not.skip_cond_sum_rule) then
        ! Here I impose the conductivity sum rule for the velocity gauge
        call msg('nsr','Gauge velocity: reference freq. for w=0 is [eV]:',real(W_bss%p(iw_ref))*HA2EV )
@@ -227,9 +239,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      else
        diam_term=diam_term0
      endif
+     !
      Epsilon_ii(:,3)=1._SP+(Epsilon_ii(:,3)-diam_term)*Co_factor/W_bss%p(:)**2
+     !
    endif
-   Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor
+   !
+   ! Drude
+   !=======
    !
    if (l_drude.and..not.skip_cond_sum_rule) then
      X_drude_term(:)=-drude_GreenF(:)

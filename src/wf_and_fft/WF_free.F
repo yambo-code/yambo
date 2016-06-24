@@ -36,8 +36,15 @@ subroutine WF_free(WF)
  !
  call mem_est('WF',quiet=QUIET_free)
  !
- nullify(WF%c)
- nullify(WF%state)
+ if (associated(WF%c)) then
+    deallocate(WF%c)
+    nullify(WF%c)
+ endif
+ if (associated(WF%state)) then
+    deallocate(WF%state)
+    nullify(WF%state)
+ endif 
+ !
  if (WF%space=="R") then
    fft_size=0
    fft_dim=0

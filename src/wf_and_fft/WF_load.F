@@ -172,7 +172,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    QUIET_free     =kpts_to_load(2)<nkibz
    if (present(impose_free_and_alloc)) then
      free_and_alloc=impose_free_and_alloc
-     if (free_and_alloc) QUIET_alloc=.FALSE.
+     !if (free_and_alloc) QUIET_alloc=.FALSE.
    endif
    if (QUIET_alloc) call IO_and_Messaging_switch("-report -log")
  endif
@@ -195,7 +195,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
-     if (associated(WF%state)) nullify(WF%state)
+     if (associated(WF%state)) deallocate(WF%state)
      allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2)))
      WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2))=.FALSE.
      deallocate(states_to_load)
@@ -253,19 +253,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
- ! Bug-fix (noticed by AF) fixed by AM 26/8/2013
- !
- ! The wf_disk is written on disk in blocks dimensioned by wf_nb_io. 
- ! A smaller I/O is possible ONLY with NETCDF while in plain Fortran 
- ! it produces and erroneous loading of WFs
- !
- ! Update of 21/10/2013. This reduced I/O leads to problems and the Al111 test is not 
- ! passed when using few bands. I switch it off.
- !
  if (.not.buffer_is_ok) then
    !
    allocate(wf_disk(wf_ncx,n_spinor,wf_nb_io))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/))
+   call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/),quiet=QUIET_alloc)
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err=io_WF(ID,wf_disk)
@@ -361,7 +352,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  if (.not.buffer_is_ok) then
    deallocate(wf_disk)
-   call mem_est("wf_disk")
+   call mem_est("wf_disk",quiet=QUIET_free)
  endif
  !
  deallocate(wf_DP)
@@ -380,7 +371,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  if(allocated(states_to_load)) then
    !
-   if (associated(WF%state)) nullify(WF%state)
+   if (associated(WF%state)) deallocate(WF%state)
    !
    allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2)))
    !

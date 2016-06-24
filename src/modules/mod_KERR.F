@@ -23,13 +23,14 @@
 !
 module KERR
  !
- use pars,  ONLY:SP
+ use drivers, ONLY:l_kerr
+ use pars,    ONLY:SP
  !
  implicit none
  !
  complex(SP)              :: A_drude(2)
  complex(SP)              :: B_Hall(2)
- complex(SP), allocatable :: BSS_rhoq0_kerr(:)
+ complex(SP), allocatable :: BSS_dipoles_kerr(:)
  complex(SP), allocatable :: DIP_projected_r90(:,:,:,:)
  !
  contains
@@ -65,15 +66,14 @@ module KERR
    !
    ! GPL_EXCLUDE_START
    !
-   subroutine BS_mat_kerr_alloc( )
-     !
+   subroutine BS_KERR_alloc( )
      use pars,       ONLY:cZERO
      use memory_m,   ONLY:mem_est
      use BS,         ONLY:BS_H_dim,BS_K_dim
-     !
-     allocate(BSS_rhoq0_kerr(BS_H_dim))
-     call mem_est('BSS_rhoq0_kerr',(/size(BSS_rhoq0_kerr)/))
-     BSS_rhoq0_kerr = cZERO
+     if (.not.l_kerr) return
+     allocate(BSS_dipoles_kerr(BS_H_dim))
+     call mem_est('BSS_dipoles_kerr',(/size(BSS_dipoles_kerr)/))
+     BSS_dipoles_kerr = cZERO
    end subroutine
    !
    ! GPL_EXCLUDE_END

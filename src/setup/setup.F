@@ -251,8 +251,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('rn','K-points             :',BZ_DbGd_tot_nkpts)
-   call msg('rn','Bands                :',BZ_DbGd_nbands)
+   call msg('r', 'K-points             :',BZ_DbGd_tot_nkpts)
+   call msg('r', 'Bands                :',BZ_DbGd_nbands)
    call msg('rn','Is the grid expanded :',DbGd_is_symmetry_expanded)
    !
  endif

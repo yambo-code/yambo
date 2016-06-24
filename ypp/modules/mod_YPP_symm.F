@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,11 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module YDB
+module YPP_symm
  !
- use pars,    ONLY:lchlen
- use pars,    ONLY:schlen
+ implicit none
  !
- integer, parameter :: max_n_file_lines=10000
+ logical               :: l_wf_nc_k_red
  !
-end module
+ integer               :: ng_vec_save,ng_vec_new
+ integer               :: wf_ng_save,wf_ng_new
+ integer               :: wf_ncx_save,wf_ncx_new
+ !
+ integer,allocatable   :: wf_nc_k_save(:),wf_nc_k_reduced(:),wf_nc_k_new(:)
+ integer,allocatable   :: wf_igk_save(:,:),wf_igk_reduced(:,:),wf_igk_new(:,:)
+ !
+end module YPP_symm

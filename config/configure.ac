@@ -21,12 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.2 r.13629 h.8a9ad9a , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.2 r.13630 h.d251ae3 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="13629"
-SHASH="8a9ad9a"
+SREVISION="13630"
+SHASH="d251ae3"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -45,7 +45,6 @@ m4_include([config/fft.m4])
 m4_include([config/iotk.m4])
 m4_include([config/etsf_io.m4])
 m4_include([config/scalapack.m4])
-m4_include([config/slepc.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
@@ -427,9 +426,6 @@ AC_HAVE_FFT
 # SCALAPACK/BLACS
 SLK_SETUP
 # ============================================================================
-# SLEPC
-SLEPC_SETUP
-# ============================================================================
 # IOTK library 
 AC_HAVE_IOTK
 # ============================================================================
@@ -447,30 +443,11 @@ ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F lib/local/.objects
-                 sbin/make_makefile.sh sbin/make_message.pl sbin/objects_debug.sh
+                 sbin/make_makefile.sh sbin/objects_debug.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 AC_OUTPUT
 chmod u+x sbin/*
 cp config/Makefile .
-#
-if test ! -d bin ; then mkdir bin ; fi ;
-if test ! -d include ; then mkdir include ; fi
-if test ! -d lib ; then mkdir lib ; fi
-#
-if [[ "$prefix" != "$srcdir" ]] ; then
- if test ! -d "$prefix/dirver"     ; then mkdir "$prefix/driver"     ; fi
- if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
- if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi
- cd "$srcdir/driver/" ;
- for file in `ls *.h` ; do
-  cp "$srcdir/driver/$file" "$prefix/driver" ;
- done ;
- for file in `ls *.c` ; do
-  cp "$srcdir/driver/$file" "$prefix/driver" ;
- done ;
- cd "$prefix" ;
-fi
-#
 if test "$mpibuild" = "no" ; then
  cat config/report | grep -v 'Parallel'
 else

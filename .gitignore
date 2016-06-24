@@ -9,6 +9,7 @@
 *.mod
 *.f90
 *.s
+*.sw*
 config.status
 config/report
 config/setup
@@ -33,15 +34,14 @@ lib/*/iotk*
 lib/*/libxc-*
 #
 sbin/make_makefile.sh
-sbin/make_message.pl
 sbin/objects_debug.sh
 src/wf_and_fft/sgfft.F
+bin/*
 
 # source #
 ##########
 *.objects*
 *__lock*
-bin/*
 Makefile
 commit.msg
 

@@ -41,7 +41,6 @@ do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
 do_libxc    = @compile_libxc@
 shell       = @SHELL@
-#make        = @MAKE@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
@@ -49,7 +48,7 @@ bindir      = @bindir@
 topdir      = @abs_top_srcdir@
 libdir      = @srcdir_path@/lib
 includedir  = @srcdir_path@/include
-CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
+CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
@@ -58,8 +57,8 @@ TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
 CLEANS   = clean_fast clean clean_extlibs clean_all distclean
 PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr \
-           ypp_ph ypp_sc ypp_rt ypp_magnetic yambo_pl
-BROKEN   = yambo_surf ypp_surf ydb
+           ypp_ph ypp_sc ypp_rt ypp_magnetic 
+BROKEN   = yambo_surf ypp_surf 
 DEBUG    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
@@ -108,7 +107,10 @@ nothing:
 	@$(make_message)
 changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
-all: $(PROJECTS) $(TARGETS) $(DEBUG)
+all:
+	for target in $(PROJECTS); do $(MAKE) $$target ; done
+	for target in $(TARGETS); do $(MAKE) $$target ; done
+	for target in $(DEBUG); do $(MAKE) $$target ; done
 libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
@@ -170,23 +172,23 @@ yambo_qed: libs
 # Interfaces #
 #
 interfaces: libs
-	@LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
-	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib)
-	@X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS)"; $(mkx)
-	@X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS)"; $(mkx)
-	@if test "$(do_p2y)" = yes ; then \
+	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
+	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib)
+	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS)"; $(mkx)
+	@+X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS)"; $(mkx)
+	@+if test "$(do_p2y)" = yes ; then \
 	X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; \
 	fi
-	@if test "$(do_e2y)" = yes ; then \
+	@+if test "$(do_e2y)" = yes ; then \
 	X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS)"; $(mkx) ; \
 	fi
 #
 # Ypp #
 #
 ypp: libs
-	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
-	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; VPATH="$(topdir)/ypp" ; $(mk_ypp_src)
-	@X2DO="ypp" ;XPATH="driver"; VPATH="$(topdir)/driver" ; XLIBS="$(YPP_MAIN_LIBS)"; X_ypp_LIBS="$(YPP_LIBS)"; $(mk_ypp_x)
+	@+LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
+	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; VPATH="$(topdir)/ypp" ; $(mk_ypp_src)
+	@+X2DO="ypp" ;XPATH="driver"; VPATH="$(topdir)/driver" ; XLIBS="$(YPP_MAIN_LIBS)"; X_ypp_LIBS="$(YPP_LIBS)"; $(mk_ypp_x)
 #
 # Ypp projects #
 #
@@ -215,12 +217,6 @@ ypp_magnetic: libs
 	@LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; $(mk_ypp_src)
 	@X2DO="ypp_magnetic"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPSC_MAIN_LIBS)"; \
 	X_ypp_LIBS="$(YPP_LIBS)"; ADF="-D_YPP_MAGNETIC"; $(mk_ypp_x)
-#
-# ydb
-#
-ydb: libs
-	@LIBS2DO="$(YDBLIBS)"; $(mksrc)
-	@X2DO="ydb"; XPATH="ydb"; VPATH="$(topdir)/ydb"; XLIBS="$(YDBLIBS)"; $(mkx)
 #
 clean_fast: 
 	@$(objects_clean)
@@ -397,13 +393,15 @@ define lib_ext_clean_all
  find . -name 'xc*.h' -type f -print | xargs rm -f
  @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
-   cd $(libdir)/$$libtoclean ; $(MAKE) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
+   cd $(libdir)/$$libtoclean ; \
+   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; \
+   cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
  @if test -d $(libdir)/archive ; then \
   cd $(libdir)/archive; \
-  $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; \
+  $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; \
   cd ../.. ; \
  fi
  echo "[CLEAN] Libs EXT (clean_all) ... done" 

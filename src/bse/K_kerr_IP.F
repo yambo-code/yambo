@@ -88,7 +88,10 @@ subroutine K_kerr_IP(iq,w)
      !
      ! GPL_EXCLUDE_START
      !
-     if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+     if (E_SOC_nbands/=0) then
+       E_plus_W(2)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(2,i_T)
+       E_plus_W(1)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(1,i_T)
+     endif
      !
      ! GPL_EXCLUDE_END
      !

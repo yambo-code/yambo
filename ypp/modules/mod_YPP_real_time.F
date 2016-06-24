@@ -113,7 +113,7 @@ module YPP_real_time
    character(schlen) :: damping  ="NONE"  ! Damp type (none, lorentian or gaussian)
  end type RT_ctl
  !
- type(RT_ctl) :: RT_conf 
+ type(RT_ctl), save :: RT_conf 
  !
  interface
    !

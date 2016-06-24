@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # moduledep.sh -- script that computes dependencies on Fortran 90 modules
 
 # make sure there is no locale setting creating unneeded differences.
@@ -6,9 +6,25 @@ LC_ALL=C
 export LC_ALL
 
 # files whose dependencies must be computed
-sources=`echo *.F |
-sed 's/\*\.F//g'`   # remove the "*.F" that remains
-#                     # when there are no such files
+sources=`echo *.F | 
+sed 's/\*\.F//g'|
+sed 's/\.F//g'`        # remove the "*.F" that remains
+
+objs=` echo $@ | 
+sed 's/\.o//g '`
+
+sources_new=" "
+#iterate over the list of objects
+for i in $objs
+do
+    # in the source is to be compiled i.e. it is in the objects list then we
+    # will keep it to the next step. Otherwise we disregard it
+    if [[ $sources =~ (^|[[:space:]])"$i"($|[[:space:]]) ]]; then
+        sources_new+=" ${i}.F"
+    fi
+done
+
+sources=`echo $sources_new`
 if test "$sources" = "" ; then exit ; fi
 
 # files that may contain modules

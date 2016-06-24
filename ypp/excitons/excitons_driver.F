@@ -71,7 +71,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  complex(SP), allocatable ::BS_E(:)
  !
  real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
- complex(SP), pointer     ::BS_R_pointer(:) => null()
+ real(SP),    pointer     ::BS_R_PL(:)         => null()
+ complex(SP), pointer     ::BS_R_kerr(:)       => null()
  !
  integer                  ::iq,neh
  !
@@ -139,13 +140,13 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_pointer)
+ io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
  !
  if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_pointer)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
  enddo
  !
@@ -172,7 +173,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    call mem_est('BS_mat',(/BS_H_dim**2/))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_pointer)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table

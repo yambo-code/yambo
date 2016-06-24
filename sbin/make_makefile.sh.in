@@ -151,7 +151,7 @@ cat << EOF >> $cdir/Makefile
 	${PREFIX}if test "\$(debug)" = "yes"; \
 	then "\$(srcdir)"/sbin/objects_debug.sh \$(lock_file); fi
 \$(dep_file):
-	cd \$(topdir)/$cdir; \$(topdir)/sbin/moduledep.sh \$(objs) > \$(srcdir)/$cdir/\$(dep_file)
+	@cd \$(topdir)/$cdir; \$(topdir)/sbin/moduledep.sh \$(objs) > \$(srcdir)/$cdir/\$(dep_file)
 arcreate: \$(objs)
 	${PREFIX}(eval \$(ar) \$(arflags) \$(target) \$(objs)) > /dev/null
 	${PREFIX}mv \$(target) \$(libdir) ; chmod u+x \$(libdir)/\$(target)
@@ -213,7 +213,7 @@ FC_LOCAL_SRC= sgfft.o
 #
 # Includes
 #
-include \$(dep_file)
+-include \$(dep_file)
 #
 # Rules
 #

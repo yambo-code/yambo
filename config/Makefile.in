@@ -106,7 +106,10 @@ nothing:
 	@$(make_message)
 changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
-all: $(PROJECTS) $(TARGETS) $(DEBUG)
+all:
+	for target in $(PROJECTS); do $(MAKE) $$target ; done
+	for target in $(TARGETS); do $(MAKE) $$target ; done
+	for target in $(DEBUG); do $(MAKE) $$target ; done
 libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi

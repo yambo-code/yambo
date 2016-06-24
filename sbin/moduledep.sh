@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # moduledep.sh -- script that computes dependencies on Fortran 90 modules
 
 # make sure there is no locale setting creating unneeded differences.

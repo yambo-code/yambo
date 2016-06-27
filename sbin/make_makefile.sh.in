@@ -47,6 +47,7 @@ fcuflags="\$(f90uflags)"
 lib_path="\$(libpath)"
 llibs=""
 lock_file="__lock"
+dep_file="make.dep"
 for arg in $@; do
  case $arg in
   -D_MPI)
@@ -119,13 +120,14 @@ echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile
 echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
 echo "lock_file=$lock_file" >> $cdir/Makefile
+echo "dep_file=$dep_file" >> $cdir/Makefile
 cp $cdir/$ofile $cdir/$ofile.c
 $cpp $cppflags $dopts -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile
 rm -f $cdir/$ofile.c
 
 if [ "$mode" = "x" ] ; then 
 cat << EOF >> $cdir/Makefile
-\$(target): locks \$(objs) 
+\$(target): \$(lock_file) \$(objs)
 	\$(driver)\$
 	\$(link)\$
 	\$(modmove)\$ 
@@ -135,19 +137,22 @@ EOF
 else 
 rm -f ./lib/$target
 cat << EOF >> $cdir/Makefile
-\$(target): locks \$(objs) arcreate  
+\$(target): \$(lock_file) \$(objs) arcreate
 	\$(modmove)\$ 
 EOF
 fi
 
 cat << EOF >> $cdir/Makefile
-locks:
+\$(objs): \$(lock_file)
+\$(lock_file):
 	${PREFIX}if test ! -f \$(lock_file) && test "\$(debug)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); fi
 	${PREFIX}if test "\$(debug)" = "yes"; \
 	then "\$(srcdir)"/sbin/objects_debug.sh \$(lock_file); fi
-arcreate:
+\$(dep_file):
+	@cd \$(topdir)/$cdir; \$(topdir)/sbin/moduledep.sh \$(objs) > \$(srcdir)/$cdir/\$(dep_file)
+arcreate: \$(objs)
 	${PREFIX}(eval \$(ar) \$(arflags) \$(target) \$(objs)) > /dev/null
 	${PREFIX}mv \$(target) \$(libdir) ; chmod u+x \$(libdir)/\$(target)
 #
@@ -181,45 +186,51 @@ endef
 F77_NOOPT_SRC= xerbla.o slamch.o
 #
 \$(F77_NOOPT_SRC):
-	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$(topdir)/$cdir/\$*.f) > /dev/null
 #
 FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
 \$(FC_NOOPT_SRC):
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
 	@rm -f \$*\$(f90suffix)
+#
+# Special sources
+#
+FC_LOCAL_SRC= sgfft.o
+\$(FC_LOCAL_SRC):
+	@rm -f \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	@echo $ECHO_N \$*".F "
+
 #
 # Suffixes
 #
 .SUFFIXES: .F .f90 .c .f .o .a
 #
+# Includes
+#
+-include \$(dep_file)
+#
 # Rules
 #
 EOF
-if [ "$KEEPSRC" == "yes" ]; then
+rm_command="@rm -f \$*\$(f90suffix)"
+if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	${rm_command}
 	@echo $ECHO_N \$*".F "
 EOF
-else
-cat << EOF >> $cdir/Makefile
-.F.o:
-	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
-	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
-	@rm -f \$*\$(f90suffix)
-	@echo $ECHO_N \$*".F "
-EOF
-fi
 cat << EOF >> $cdir/Makefile
 .f.o:
-	${PREFIX}(eval \$(f77) -c \$(f77flags) \$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(f77flags) \$(topdir)/$cdir/\$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "
 .c.o:
 	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<) > /dev/null

@@ -448,6 +448,25 @@ AC_CONFIG_FILES([config/setup config/Makefile config/report
 AC_OUTPUT
 chmod u+x sbin/*
 cp config/Makefile .
+#
+if test ! -d bin ; then mkdir bin ; fi ;
+if test ! -d include ; then mkdir include ; fi
+if test ! -d lib ; then mkdir lib ; fi
+#
+if [[ "$prefix" != "$srcdir" ]] ; then
+ if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi
+ if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
+ if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi
+ cd "$srcdir/driver/" ;
+ for file in `ls *.h` ; do
+  cp "$file" "$prefix/driver" ;
+ done ;
+ for file in `ls *.c` ; do
+  cp "$file" "$prefix/driver" ;
+ done ;
+ cd "$prefix" ;
+fi
+#
 if test "$mpibuild" = "no" ; then
  cat config/report | grep -v 'Parallel'
 else

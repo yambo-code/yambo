@@ -89,11 +89,13 @@ module interfaces
      !
    end subroutine
    !
-   subroutine MATRIX_slepc(M,BS_H_eig,E_real,E_cmpl,V_right,V_left)
+   subroutine MATRIX_slepc(A,BS_H_eig,E_real,E_cmpl,V_right,V_left)
      !
      use pars,           ONLY:SP
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscmat.h>
      !
-     complex(SP)            :: M(:,:)       ! matrix to diagonalize
+     type(Mat)              :: A            ! matrix to diagonalize of stype from slepc
      integer                :: BS_H_eig     ! number of eigenvalues to compute
      complex(SP),  optional :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional :: V_left(:,:)  ! left eigenvalues

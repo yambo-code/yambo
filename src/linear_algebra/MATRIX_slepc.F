@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_slepc(M,BSS_n_eig,E_real,E_cmpl,V_right,V_left)
+subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   !
   ! 10/06/2016 HM
   ! Use slepc to obtain the first few eigenpairs of a large matrix
@@ -42,18 +42,19 @@ subroutine MATRIX_slepc(M,BSS_n_eig,E_real,E_cmpl,V_right,V_left)
   !
   ! arguments
   !
-  complex(SP)            :: M(:,:)       ! matrix to diagonalize
-  integer                :: BSS_n_eig    ! number of eigenvalues to compute
+  integer                :: n_eig        ! number of eigenvalues to compute
   complex(SP),  optional :: V_right(:,:) ! right eigenvalues
   complex(SP),  optional :: V_left(:,:)  ! left eigenvalues
   complex(SP),  optional :: E_cmpl(:)    ! complex eigenvalues
   real(SP),     optional :: E_real(:)    ! real eigenvalues
+  ! 
+  ! internal variables
   !
-  ! other variables
+  integer                :: n_mat        !size of the matrix
   !
-  integer :: M_size    ! size of the matrix
+  ! slepc
   !
-  ! ...slepc
+  external MyEPSMonitor !function to monitor the convergence
   !
   type(Mat)      A
   type(EPS)      eps
@@ -64,53 +65,45 @@ subroutine MATRIX_slepc(M,BSS_n_eig,E_real,E_cmpl,V_right,V_left)
   PetscInt       idx(2)
   PetscScalar    kr, ki
   PetscScalar, pointer :: xsr(:), xsi(:)
+  PetscScalar, pointer :: M(:,:)          !pointer to matrix
   Vec            xr, xi
   PetscViewer    viewer
   PetscMPIInt    rank
   character(len=30) :: rowfmt
   !
   ! Non hermitian not implemented yet!
-  if (present(V_right) .or. present(V_left)) then
+  !
+  if (present(V_left)) then
     write(*,*) 'Diagonalisation of non-hermitian matrices with SLEPC is not implemented in yambo yet'
     call exit(0)
   endif
   !
   write(*,*)
   write(*,*) 'We will use the SLEPC driver'
-  n = size(M,1)
-  write(*,*) 'The matrix size is', n
+  call MatGetSize(A,n,j,ierr)
+  write(*,*) 'the matrix dimensions are:', n
   write(*,*) 'initializing slepc...'
   call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
   call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
   !
   ! write the matrix if wanted
-  !write(rowfmt,'(A,I4,A)') '(',n,'(1X,I3,E12.4,E12.4))'
-  !do, i=1,n
-  !  write(*,rowfmt) (rank,real(M(i,j)),aimag(M(i,j)),j=1,n)
-  !enddo
-  
-  write(*,*) 'creating dense matrix...'
-  !call MatCreateDense(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,n,n,M,A,ierr)
-  call MatCreateSeqDense(PETSC_COMM_SELF,n,n,M,A,ierr)
-  !call MatSetup(PETSC_COMM_WORLD,A,ierr)
+  if (.true.) then
+    !call PetscViewerCreate(PETSC_COMM_WORLD,viewer,ierr)
+    !call PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_DENSE,ierr)
+    call MatView(A,PETSC_VIEWER_STDOUT_WORLD,ierr)
+  endif
   !
-  !
-  write(*,*) 'filling up elements...'
-  call MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
-  call MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
-  write(*,*) 'done!'
-  !
-  write(*,*) 'creating vecs...'
   call MatCreateVecs(A,xr,xi,ierr)
-  write(*,*) 'done!'
-
+  
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Create the eigensolver and display info
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   !Create eigensolver context
   call EPSCreate(PETSC_COMM_WORLD,eps,ierr)
-  write(*,*) 'error', ierr
+  
+  !Set monitor
+  call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
   
   !Set operators. In this case, it is a standard eigenvalue problem
   call EPSSetOperators(eps,A,PETSC_NULL_OBJECT,ierr)
@@ -121,7 +114,7 @@ subroutine MATRIX_slepc(M,BSS_n_eig,E_real,E_cmpl,V_right,V_left)
   !call EPSSetType(eps,EPSLAPACK,ierr)
 
   !Set solver parameters at runtime
-  nev = BSS_n_eig
+  nev = n_eig
   ncv = 2*nev
   mpd = 2*nev
   call EPSSetDimensions(eps,nev,ncv,mpd,ierr)
@@ -190,7 +183,7 @@ subroutine MATRIX_slepc(M,BSS_n_eig,E_real,E_cmpl,V_right,V_left)
          E_real(i+1) = kr
          
          call VecGetArrayF90(xr,xsr,ierr)
-         M(:,i+1) = xsr
+         V_right(i+1,:) = xsr
          !M(i+1,:) = xsr
          call VecRestoreArrayF90(xr,xsr,ierr)
          
@@ -201,4 +194,32 @@ subroutine MATRIX_slepc(M,BSS_n_eig,E_real,E_cmpl,V_right,V_left)
   call VecDestroy(xr,ierr)
   call VecDestroy(xi,ierr)
   call SlepcFinalize(ierr)
+end subroutine
+
+subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
+  implicit none
+
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+
+  EPS            eps
+  Vec            x
+  PetscErrorCode ierr
+  PetscInt       its,nconv,nest,dummy
+  PetscScalar    eigr(*),eigi(*)
+  PetscReal      re,errest(*)
+  PetscMPIInt    rank
+
+  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
+  if (its .gt. 0 .and. rank .eq. 0) then
+   re = PetscRealPart(eigr(nconv+1))
+   write(6,140) its,nconv,re,errest(nconv+1)
+  endif
+
+  140  format(i3,' EPS nconv=',i2,' first unconverged value (error) ', f6.4,' (',g9.3,')')
+  ierr = 0
 end subroutine

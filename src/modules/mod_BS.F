@@ -328,18 +328,28 @@ module BS
    end subroutine
    !
    subroutine BS_mat_alloc( )
+     use pars,      ONLY:cZERO
+     use memory_m,  ONLY:mem_est
+     
+     allocate(BS_mat(BS_H_dim,BS_H_dim))
+     call mem_est('BS_mat',(/size(BS_mat)/))
+     BS_mat    = cZERO
+
+     call BS_mat_alloc_BSS() 
+   end subroutine
+   !
+   subroutine BS_mat_alloc_BSS( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
      use electrons, ONLY:E_SOC_nbands
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-     allocate(BS_mat(BS_H_dim,BS_H_dim))
-     call mem_est('BS_mat',(/size(BS_mat)/))
-     BS_mat    = cZERO
+
      allocate(BSS_dipoles(BS_H_dim))
      call mem_est('BSS_dipoles',(/size(BSS_dipoles)/))
      BSS_dipoles = cZERO
+
      allocate(BSS_eh_table(BS_K_dim,3+n_sp_pol-1),BSS_eh_E(BS_K_dim),BSS_eh_f(BS_K_dim))
      call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f",&
 &                 (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
@@ -352,16 +362,19 @@ module BS
        if (.not.W_is_allocated) W_is_allocated=allocated(BS_T_grp(i_g)%W)
        if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
      enddo
+
      if (W_is_allocated) then
        allocate(BSS_eh_W(BS_K_dim))
        call mem_est("BSS_eh_W",(/BS_K_dim/),(/SP/))
        BSS_eh_W = rZERO
      endif
+
      if (Z_is_allocated) then
        allocate(BSS_eh_Z(BS_K_dim))
        call mem_est("BSS_eh_Z",(/BS_K_dim/))
        BSS_eh_Z = cZERO
      endif
+
      if (E_SOC_nbands/=0) then
        allocate(BSS_eh_E_SOC_corr(2,BS_H_dim))
        call mem_est("BSS_eh_E_SOC_corr",(/2*BS_H_dim/),(/SP/))

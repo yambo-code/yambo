@@ -28,7 +28,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  use drivers,         ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_use_collisions,l_sc_srpa,&
 &                          l_elel_scatt,l_elphoton_scatt,l_elphoton_corr,l_sc_hartree,&
-&                          l_use_scatt_collisions,l_use_Hxc_collisions,l_sc_is_libDFT
+&                          l_use_scatt_collisions,l_use_Hxc_collisions,l_sc_is_libDFT,l_real_time
  use com,             ONLY:error,warning
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_QED_ng
@@ -102,7 +102,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    l_use_scatt_collisions=all(io_err(3:4)==0).and.(l_elphoton_scatt.or.l_elphoton_corr.or.l_elel_scatt)
    if (io_err(3)/=0) call error(' el-el scatt collisions not found / not compatible') 
-   if (io_err(4)/=0) call error(' el-photon   collisions not found / not compatible')
+   if (io_err(4)/=0.and.l_real_time) call error(' el-photon   collisions not found / not compatible')
    !
    l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions
    !
@@ -238,6 +238,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        call live_timing(steps=1)
        !
      end do
+
      !
      ! CLEAN
      !

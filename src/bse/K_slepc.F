@@ -149,10 +149,10 @@ subroutine K_slepc(iq,W)
  ! Allocation (BS_E_real or BS_V)
  !===============================
  if(K_is_not_hermitian) then
-   YAMBO_ALLOCATE( BS_V_left(BSS_n_eig,BS_H_dim) )
-   YAMBO_ALLOCATE( BS_V_right(BSS_n_eig,BS_H_dim) )
+   YAMBO_ALLOCATE( BS_V_left(BS_H_dim,BSS_n_eig) )
+   YAMBO_ALLOCATE( BS_V_right(BS_H_dim,BSS_n_eig) )
  else
-   YAMBO_ALLOCATE( BS_V_right(BSS_n_eig,BS_H_dim) )
+   YAMBO_ALLOCATE( BS_V_right(BS_H_dim,BSS_n_eig) )
    YAMBO_ALLOCATE( BS_E_real(BSS_n_eig) )
    if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
      YAMBO_ALLOCATE( BS_corrections(1,BS_H_dim) )
@@ -176,6 +176,8 @@ subroutine K_slepc(iq,W)
    else
      !
      call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real, V_right=BS_V_right)
+     write(*,*)
+     write(*,*) 'done!'
      BS_mat = BS_V_right
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
@@ -193,7 +195,9 @@ subroutine K_slepc(iq,W)
      !
    else
      !
+     write(*,*)
      call K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
+     !write(*,*) BS_R_left(1)
      !
    endif
    !
@@ -364,17 +368,20 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
      !
      ! First the diagonal
      !
+     !val = 123
+     !call MatSetValue( slepc_mat, 0, 0, val, INSERT_VALUES, ierr )
      if (i_Tk==i_Tp) then
        if (BS_blk(i_B)%mode=="R") then
-         E_plus_W=BSS_eh_E(H_pos(1))*cONE
+         E_plus_W=BSS_eh_E(H_pos(1)+1)*cONE
          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
-            E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1))
+            E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1)+1)
          endif
          val = E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP)
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(1),          val, INSERT_VALUES, ierr )
+         write(*,*) H_pos(1), val
+         call MatSetValue( slepc_mat, H_pos(1),          H_pos(1), val, INSERT_VALUES, ierr )
        else
          val = BS_blk(i_B)%mat(i_r,i_r)
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(1)+BS_K_dim, val, INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(1)+BS_K_dim, H_pos(1), val, INSERT_VALUES, ierr )
        endif
        !
      endif
@@ -389,13 +396,13 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
        !
        val = BS_blk(i_B)%mat(i_r,i_c)
        if (BS_blk(i_B)%mode=="R") then
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(2), val,        INSERT_VALUES, ierr )
-         call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(val), INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(2), H_pos(1), val,        INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(1), H_pos(2), conjg(val), INSERT_VALUES, ierr )
        endif
        !
        if (BS_blk(i_B)%mode=="A") then
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+BS_K_dim, val,        INSERT_VALUES, ierr )
-         call MatSetValue( slepc_mat, H_pos(2)+BS_K_dim, H_pos(1), conjg(val), INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(2)+BS_K_dim, H_pos(1), val,        INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+BS_K_dim, conjg(val), INSERT_VALUES, ierr )
        endif
        !
      enddo

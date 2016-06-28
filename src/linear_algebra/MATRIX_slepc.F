@@ -87,9 +87,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
   !
   ! write the matrix if wanted
-  if (.true.) then
-    !call PetscViewerCreate(PETSC_COMM_WORLD,viewer,ierr)
-    !call PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_DENSE,ierr)
+  if (.false.) then
     call MatView(A,PETSC_VIEWER_STDOUT_WORLD,ierr)
   endif
   !
@@ -166,7 +164,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
        write(*,*) '         k          ||Ax-kx||/||kx||'
        write(*,*) ' ----------------- ------------------'
     end if
-    do i=0,nconv-1
+    do i=0,nev-1
          !Get converged eigenpairs: i-th eigenvalue is stored in kr
          !(real part) and ki (imaginary part)
          call EPSGetEigenpair(eps,i,kr,PETSC_NULL_OBJECT,xr,PETSC_NULL_OBJECT,ierr)
@@ -183,8 +181,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
          E_real(i+1) = kr
          
          call VecGetArrayF90(xr,xsr,ierr)
-         V_right(i+1,:) = xsr
-         !M(i+1,:) = xsr
+         V_right(:, i+1) = xsr
          call VecRestoreArrayF90(xr,xsr,ierr)
          
      enddo

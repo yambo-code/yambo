@@ -84,6 +84,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   write(*,*) 'the matrix dimensions are:', n
   write(*,*) 'initializing slepc...'
   call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
+  write(*,*) 'done!'
   call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
   !
   ! write the matrix if wanted
@@ -91,7 +92,9 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
     call MatView(A,PETSC_VIEWER_STDOUT_WORLD,ierr)
   endif
   !
+  write(*,*) 'creating vecs...'
   call MatCreateVecs(A,xr,xi,ierr)
+  write(*,*) 'done!'
   
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Create the eigensolver and display info
@@ -120,6 +123,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  write(*,*) 'solving...'
   call EPSSolve(eps,ierr)
   call EPSGetIterationNumber(eps,its,ierr)
   if (rank .eq. 0) then
@@ -186,6 +190,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
          
      enddo
   endif
+  write(*,*) 'done!'
   
   call EPSDestroy(eps,ierr)
   call VecDestroy(xr,ierr)
@@ -217,6 +222,6 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
    write(6,140) its,nconv,re,errest(nconv+1)
   endif
 
-  140  format(i3,' EPS nconv=',i2,' first unconverged value (error) ', f6.4,' (',g9.3,')')
+  140  format(i3,' EPS nconv=',i4,' first unconverged value (error) ', f6.4,' (',g9.3,')')
   ierr = 0
 end subroutine

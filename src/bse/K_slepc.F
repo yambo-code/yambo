@@ -176,8 +176,6 @@ subroutine K_slepc(iq,W)
    else
      !
      call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real, V_right=BS_V_right)
-     write(*,*)
-     write(*,*) 'done!'
      BS_mat = BS_V_right
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
@@ -195,7 +193,6 @@ subroutine K_slepc(iq,W)
      !
    else
      !
-     write(*,*)
      call K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
      !write(*,*) BS_R_left(1)
      !
@@ -356,7 +353,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  ! FILLING the slepc_mat
  !====================
  !
- call msg('s','FILLING the slepc_mat')
+ call msg('s','Filling the slepc_mat')
  do i_B=1,n_BS_blks
    !
    i_Tk  =BS_blk(i_B)%iT_k
@@ -377,7 +374,6 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
             E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1)+1)
          endif
          val = E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP)
-         write(*,*) H_pos(1), val
          call MatSetValue( slepc_mat, H_pos(1),          H_pos(1), val, INSERT_VALUES, ierr )
        else
          val = BS_blk(i_B)%mat(i_r,i_r)
@@ -436,5 +432,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ !
+ call msg('s','done!')
  !
 end subroutine K_stored_in_a_slepc_matrix

@@ -186,9 +186,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
        ! Zeros ...
        !
        P_square_times_tau=cZERO
-       Sc_re  =rZERO
-       Sc_im  =rZERO
-       beta   =rZERO
        !
        ! Collisions ...
        !
@@ -212,13 +209,13 @@ subroutine QED_Sigma_c(E,k,q,qp)
        f_k    =E%f(I%is(1),I%is(2),I%is(4))/spin_occ
        f_k_m_q=E%f(I%os(1),I%os(2),I%os(4))/spin_occ
        !
-       ! Q=0 
+       ! G=0 
        !=====
        !
        call EVAL_pre_factors(.TRUE.)
        call EVAL_the_G_loop(1,1)
        !
-       ! Q/=0 
+       ! G/=0 
        !======
        !
        if (f_k_m_q>1.E-5_SP) then
@@ -272,6 +269,10 @@ subroutine QED_Sigma_c(E,k,q,qp)
    subroutine EVAL_the_G_loop(iG_start,iG_end)
      !
      integer :: iG_start,iG_end
+     !
+     Sc_re  =rZERO
+     Sc_im  =rZERO
+     beta   =rZERO
      !
      ! We need the objects
      !

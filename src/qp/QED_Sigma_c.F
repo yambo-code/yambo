@@ -26,7 +26,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use pars,                ONLY:SP,pi,cI,cZERO,rZERO
  use units,               ONLY:SPEED_OF_LIGHT,HA2EV
  use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr
- use electrons,           ONLY:levels,spin_occ
+ use electrons,           ONLY:levels,spin_occ,n_met_bands
  use D_lattice,           ONLY:DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
@@ -56,7 +56,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! WorkSpace
  !
- integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_n,i_G0,i_c,i_cp,i_g,i_m
+ integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_n,i_G0,i_c,i_cp,i_g,i_m,i_m_wf_load
  complex(SP)               ::P(3)
  real(SP)                  ::Photon_E,T_matrix(3,3),T_vec(3),E_diff,Photon_Gamma_E,f_k,f_k_m_q,&
 &                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0
@@ -108,34 +108,15 @@ subroutine QED_Sigma_c(E,k,q,qp)
  if (io_COLLs)                       call COLLISIONS_load(.TRUE.)
  if (io_COLLs.and.l_use_collisions)  call COLLISIONS_load(.FALSE.)
  !
- if (.not.l_use_collisions) then
-   !
-   ! Elemental scattering allocation
-   !=================================
-   !
-   call elemental_collision_free(I)
-   call elemental_collision_free(I_grad_k) 
-   call elemental_collision_free(I_grad_p) 
-   !
-   ! WF loading and further allocation
-   !===================================
-   !
-   call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),(/1,max(QP_nb,QP_n_G_bands(2))/),&
-&               (/1,k%nibz/),space='R',title='-[Photon-El]Sigma_c/R space')
-   !
-   ! I_grad_k and I_grad_p need not to be scatterBamp-allocated
-   ! since scatterBamp_using_the_gradient allocates its own workspace
-   !
-   call elemental_collision_alloc(I,NG=QP_QED_ng,TITLE="GW_QED")
-   call elemental_collision_alloc(I_grad_k,NG=QP_QED_ng,TITLE="GW_QED",GRADIENT=.TRUE.)
-   call elemental_collision_alloc(I_grad_p,NG=QP_QED_ng,TITLE="GW_QED",GRADIENT=.TRUE.)
-   !
- endif
+ ! BASIC WF allocation (FILLED bands)
+ !====================================
+ !
+ call LOCAL_WF_and_COLLISIONS_allocation( QP_QED_ng , n_met_bands )
  !
  ! Loop
  !======
  !
- call live_timing('Sigma_c',PAR_nQP*PAR_nG_bands*PAR_nQ)
+ call live_timing('Sigma_c [FILLED bands]',PAR_nQP*n_met_bands*PAR_nQ)
  !
  !The correction is evaluated through
  !
@@ -148,23 +129,44 @@ subroutine QED_Sigma_c(E,k,q,qp)
  ! iii) G=0 and e_{nk} - e_{mk-q}  =0, prefactor= -pi/2/c^2/DL_vol*RIM(q,power=2)
  ! iv)  G=0 and q=0, prefactor= R0^2/12/pi/c
  !
- Q_loop: do i_q_bz=1,nqbz 
+ ! Band index for Empty bands allocation 
+ !=======================================
+ i_m_wf_load=-1
+ if (PAR_IND_G_b%element_1D(n_met_bands+1)) i_m_wf_load=n_met_bands+1
+ do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
+   if (PAR_IND_G_b%element_1D(i_m).and.i_m_wf_load<0) i_m_wf_load=i_m
+ enddo
+ !
+ B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
    !
-   i_q  =q%sstar(i_q_bz,1)
-   i_q_s=q%sstar(i_q_bz,2)
+   if (.not.PAR_IND_G_b%element_1D(i_m)) cycle
    !
-   if (.not.PAR_IND_Q%element_1D(i_q)) cycle
-   !
-   Photon_E      =0._SP
-   Photon_Gamma_E=SPEED_OF_LIGHT*v_norm(q%ptbz(i_q_bz,:))
-   !
-   QP_loop: do i_qp=1,qp%n_states
+   if (i_m==i_m_wf_load) then
      !
-     if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+     ! BASIC WF allocation (FILLED bands)
+     !====================================
      !
-     B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
+     QP_QED_ng=1
+     !
+     call LOCAL_WF_and_COLLISIONS_allocation( 1 , QP_n_G_bands(2))
+     !
+     call live_timing('Sigma_c  [EMPTY bands]',PAR_nQP*(QP_n_G_bands(2)-n_met_bands+1)*PAR_nQ)
+     !
+   endif
+   !
+   Q_loop: do i_q_bz=1,nqbz 
+     !
+     i_q  =q%sstar(i_q_bz,1)
+     i_q_s=q%sstar(i_q_bz,2)
+     !
+     if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+     !
+     Photon_E      =0._SP
+     Photon_Gamma_E=SPEED_OF_LIGHT*v_norm(q%ptbz(i_q_bz,:))
+     !
+     QP_loop: do i_qp=1,qp%n_states
        !
-       if (.not.PAR_IND_G_b%element_1D(i_m)) cycle
+       if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
        !
        call SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E=E,E_diff=E_diff,N=i_n,G0=i_G0)
        !
@@ -219,7 +221,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
        ! Q/=0 
        !======
        !
-       if (f_k_m_q/=0._SP) then
+       if (f_k_m_q>1.E-5_SP) then
          !
          call EVAL_pre_factors(.FALSE.)
          call EVAL_the_G_loop(2,QP_QED_ng)
@@ -228,11 +230,11 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        if ( i_q_s == 1 ) call live_timing(steps=1)
        !
-     enddo B_loop
+     enddo QP_loop
      !
-   enddo QP_loop
+   enddo Q_loop
    !
- enddo Q_loop
+ enddo B_loop
  !
  call live_timing( )
  !
@@ -252,6 +254,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
    call COLLISIONS_alloc_and_free("Momentum","v3","clean",0)
    !
  else
+   !
+   call WF_free(WF)
    !
    call elemental_collision_free(I)
    call elemental_collision_free(I_grad_k) 
@@ -350,6 +354,35 @@ subroutine QED_Sigma_c(E,k,q,qp)
      QP_dSc(i_qp,1)=QP_dSc(i_qp,1) +beta
      !
    end subroutine EVAL_the_G_loop
+   !
+   subroutine LOCAL_WF_and_COLLISIONS_allocation( NG , NB )
+     !
+     integer :: NG,NB
+     !
+     if (l_use_collisions) return
+     !
+     ! Elemental scattering allocation
+     !=================================
+     !
+     call elemental_collision_free(I)
+     call elemental_collision_free(I_grad_k) 
+     call elemental_collision_free(I_grad_p) 
+     !
+     ! WF loading and further allocation
+     !===================================
+     !
+     call WF_load(WF,NG,maxval(qindx_S(:,:,2)),(/1,max(QP_nb,NB)/),&
+&                 (/1,k%nibz/),space='R',title='-[Photon-El]Sigma_c/R space',&
+&                 impose_free_and_alloc=.TRUE.)
+     !
+     ! I_grad_k and I_grad_p need not to be scatterBamp-allocated
+     ! since scatterBamp_using_the_gradient allocates its own workspace
+     !
+     call elemental_collision_alloc(I,NG=NG,TITLE="GW_QED")
+     call elemental_collision_alloc(I_grad_k,NG=NG,TITLE="GW_QED",GRADIENT=.TRUE.)
+     call elemental_collision_alloc(I_grad_p,NG=NG,TITLE="GW_QED",GRADIENT=.TRUE.)
+     !
+   end subroutine
    !
    subroutine EVAL_pre_factors( NULL_G )
      logical :: NULL_G

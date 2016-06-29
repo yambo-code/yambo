@@ -139,19 +139,19 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !=======================================
  i_m_wf_load=-1
  if (PAR_IND_G_b%element_1D(n_met_bands+1)) i_m_wf_load=n_met_bands+1
- do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
+ do i_m=n_met_bands+1,QP_n_G_bands(2)
    if (PAR_IND_G_b%element_1D(i_m).and.i_m_wf_load<0) i_m_wf_load=i_m
  enddo
  PAR_bands(1)=count(PAR_IND_G_b%element_1D(:n_met_bands  ))
  PAR_bands(2)=count(PAR_IND_G_b%element_1D(n_met_bands+1:))
  !
- call live_timing('Sigma_c [FILLED bands]',PAR_nQP*PAR_bands(1)*PAR_nQ)
+ if (PAR_bands(1)>0) call live_timing('Sigma_c [FILLED bands]',PAR_nQP*PAR_bands(1)*PAR_nQ)
  !
  B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
    !
    if (.not.PAR_IND_G_b%element_1D(i_m)) cycle
    !
-   if (i_m==i_m_wf_load) then
+   if (i_m==i_m_wf_load.and.PAR_bands(2)>0) then
      !
      ! BASIC WF allocation (FILLED bands)
      !====================================

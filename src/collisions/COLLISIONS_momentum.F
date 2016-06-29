@@ -30,7 +30,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_COM_Q_index
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_COM_Q_index,PAR_COM_G_b_INDEX
  use collision,     ONLY:elemental_collision,elemental_collision_free,&
 &                        P_COLL_element,elemental_collision_alloc,&
 &                        elemental_collision_copy,COLL_bands,P_collisions
@@ -134,7 +134,7 @@ subroutine COLLISIONS_momentum(E,k,q)
            enddo
          enddo
          !
-         P_COLL_element(1)%v3_r(i_g_mem,i_m,i_q_bz)=ACC
+         P_COLL_element(1)%v3_r(i_g_mem,i_m,i_q_bz)=ACC/PAR_COM_G_b_INDEX%n_CPU
          !
        enddo
        !

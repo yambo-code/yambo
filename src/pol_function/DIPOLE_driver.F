@@ -312,7 +312,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RT
      if (l_real_time.and.n_spin>1) then
        call X_alloc('ETA_circ',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-       ETA_circ=0._SP
+       ETA_circ=cZERO
        call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
      endif
@@ -391,7 +391,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RT
             if (l_real_time.and.n_spin>1) then
               DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
-              ETA_circ  (iv,iv,ik_mem,i_sp_pol)=0._SP
+              ETA_circ  (iv,iv,ik_mem,i_sp_pol)=cmplx( real(ETA_circ  (iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             endif
 #endif
 #if defined _SC

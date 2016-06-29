@@ -403,7 +403,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !
    end subroutine compute_loc_HXC_collisions
    !
-   !
    subroutine compute_MBPT_XC_collisions()
      !
      ! Scattering geometry

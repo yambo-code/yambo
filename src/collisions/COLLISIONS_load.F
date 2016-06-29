@@ -28,7 +28,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  use drivers,         ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_use_collisions,l_sc_srpa,&
 &                          l_elel_scatt,l_elphoton_scatt,l_elphoton_corr,l_sc_hartree,&
-&                          l_use_scatt_collisions,l_use_Hxc_collisions,l_sc_is_libDFT,l_real_time
+&                          l_use_Hxc_collisions,l_sc_is_libDFT,l_real_time
  use com,             ONLY:error,warning
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_QED_ng
@@ -54,6 +54,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Work Space
  !
  integer            :: ID,io_err(4)
+ logical            :: l_use_scatt_collisions
  !
  io_err      =0
  !
@@ -161,7 +162,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        call io_control(ACTION=OP_RD,SEC=(/1,2/),ID=ID)
        !
-       !
        if (COLL%kind==SC_COH) then
          io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
@@ -238,7 +238,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        call live_timing(steps=1)
        !
      end do
-
      !
      ! CLEAN
      !

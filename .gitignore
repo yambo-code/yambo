@@ -44,6 +44,7 @@ bin/*
 *.objects*
 *__lock*
 Makefile
+make.dep
 commit.msg
 
 # Packages #

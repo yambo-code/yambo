@@ -115,6 +115,7 @@ module real_time
  !
  ! ... and magnetization
  !----------------------
+ complex(SP) :: RT_ETA
  complex(SP) :: RT_magn(3)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time

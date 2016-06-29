@@ -33,7 +33,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc,real2ch
  use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
- use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,RT_ETA,l_lftm_fit_temperatures, &
 &                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR,RAD_prefactor
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
@@ -350,9 +350,9 @@ subroutine RT_output(what,VALUES,TIME,E)
    if (open_files.and..not.file_already_opened(next_file)) &
 &     file_name(next_file)=trim(append_ch)//'magnetization'
    short_file_name(next_file)=trim(append_ch)//'magnetization'
-   n_headings(next_file)=4
+   n_headings(next_file)=5
    headings(next_file,1)='T [fs]'
-   headings(next_file,2:4)=(/"M_x","M_y","M_z"/)
+   headings(next_file,2:5)=(/"M_x","M_y","M_z","ETA"/)
    next_file=next_file+1
  endif
  !
@@ -521,6 +521,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:4) =real(RT_P)
      case('magnetization')
        data_to_dump(2:4) = real(RT_magn(:))
+       data_to_dump(5)   = real(RT_ETA)
      case('total_field')
        data_to_dump(2:4) = -real(A_vecpot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_vecpot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

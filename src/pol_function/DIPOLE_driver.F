@@ -51,12 +51,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! being a derived structure it must be mapped in the calling routine.
  !
  use drivers,        ONLY:l_optics
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP,cZERO,cI
  use com,            ONLY:warning
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
-&                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
+&                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,ETA_circ,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
@@ -188,6 +188,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
 #if defined _RT
    if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xen,Xk,X)
+   !
+   if (l_real_time.and.n_spin>1)   call DIPOLES_circular()
 #endif
    !
    call DIPOLES_ppredux_and_symmetrize()
@@ -309,6 +311,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
 #if defined _RT
      if (l_real_time.and.n_spin>1) then
+       call X_alloc('ETA_circ',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+       ETA_circ=0._SP
        call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
      endif
@@ -346,6 +350,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
         if (l_real_time.and.n_spin>1) then
           !
           call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+          !call PP_redux_wait(  ETA_circ(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
           !
         endif
         !
@@ -384,8 +389,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #if defined _RT
-            if (l_real_time.and.n_spin>1) &
-&             DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            if (l_real_time.and.n_spin>1) then
+              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+              ETA_circ  (iv,iv,ik_mem,i_sp_pol)=0._SP
+            endif
 #endif
 #if defined _SC
             if (l_sc_run.or.l_real_time) &
@@ -397,8 +404,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
 #if defined _RT
-              if (l_real_time.and.n_spin>1) &
-&               DIP_spin (:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+              if (l_real_time.and.n_spin>1) then
+                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+                ETA_circ  (iv,ic,ik_mem,i_sp_pol)=       ETA_circ  (ic,iv,ik_mem,i_sp_pol)
+              endif
 #endif
 #if defined _SC
               if (l_sc_run.or.l_real_time) &
@@ -412,5 +421,46 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
     enddo
     !
    end subroutine DIPOLES_ppredux_and_symmetrize
+   !
+   !
+   subroutine DIPOLES_circular()
+    !
+    use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz
+    !
+    complex(SP) :: DIP_plus   , DIP_minus
+    real(SP)    :: DIP_plus_sq, DIP_minus_sq
+    !
+    integer     :: ik,ik_mem,i_sp_pol,iv,ic
+    !
+    ! PRB 77, 235406 (2008)
+    ! Equation (4)
+    !
+    do ik=1,Xk%nibz
+      !
+      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+      !
+      ik_mem=PAR_DIPk_ibz_index(ik)
+      ! 
+      do i_sp_pol=1,n_sp_pol
+        !
+        do iv=X%ib(1),X%ib_lim(1)
+          do ic=max(iv,X%ib_lim(2)),X%ib(2)
+            !
+            DIP_plus  = sqrt(0.5_SP)*( DIP_P(1,ic,iv,ik_mem,i_sp_pol) + cI*DIP_P(2,ic,iv,ik_mem,i_sp_pol) )
+            DIP_minus = sqrt(0.5_SP)*( DIP_P(1,ic,iv,ik_mem,i_sp_pol) - cI*DIP_P(2,ic,iv,ik_mem,i_sp_pol) )
+            !
+            DIP_plus_sq  = real( DIP_plus *conjg(DIP_plus)  , SP )
+            DIP_minus_sq = real( DIP_minus*conjg(DIP_minus) , SP )
+            !
+            if( .not. (DIP_plus_sq+DIP_minus_sq)>0._SP ) cycle
+            !
+            ETA_circ(ic,iv,ik_mem,i_sp_pol) = cmplx( (DIP_plus_sq-DIP_minus_sq)/(DIP_plus_sq+DIP_minus_sq) , 0. , SP )
+            !
+          enddo
+        enddo
+      enddo
+    enddo
+    !
+   end subroutine DIPOLES_circular
    !
 end subroutine

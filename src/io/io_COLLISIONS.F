@@ -73,7 +73,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  if(COLL%kind==SC_COH) then
    db_name = "COLLISIONS_COH"
- elseif(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind==SC_COHSEX.or.COLL%kind>=SC_HARTREE) then
+ elseif(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
    db_name = "COLLISIONS_HXC"
  elseif(COLL%kind==SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"

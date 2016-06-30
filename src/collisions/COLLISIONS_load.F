@@ -53,7 +53,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  ! Work Space
  !
- integer            :: ID,io_err(4),COM_
+ integer            :: COLL_kind(4),ID,io_err(4),COM_,i1
  logical            :: l_use_scatt_collisions
  !
  io_err      =0
@@ -73,16 +73,17 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  endif
  !
  if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa) then
-   call COLLISIONS_naming( SC_kind )
-   call COLLISIONS_basic_operations( "alloc", HXC_collisions )
-   call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=VERIFY,SEC=(/1/),ID=ID)
-   io_err(2)=io_COLLISIONS(ID,HXC_collisions)
-   if (io_err(2)/=0) then 
-     call COLLISIONS_naming( SC_kind - SC_HARTREE )
+   COLL_kind=(/SC_kind,SC_kind-SC_COH,SC_kind-SC_HARTREE,SC_kind-SC_COH-SC_HARTREE/)
+   i1=1
+   io_err(2)=1
+   do while(io_err(2)/=0.and.i1<=4)
+     call COLLISIONS_naming( COLL_kind(i1) )
+     call COLLISIONS_basic_operations( "alloc", HXC_collisions )
      call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=VERIFY,SEC=(/1/),ID=ID)
      io_err(2)=io_COLLISIONS(ID,HXC_collisions)
-     if (COM_==REP.and.io_err(2)==0) call warning("[COLLISIONS] Using an Hartree-free collisions database")
-   endif
+     i1=i1+1
+   enddo
+   if (COM_==REP.and.i1>2.and.io_err(2)==0) call warning("[COLLISIONS] Using an Hartree-free collisions database")
  endif
  !
 #if defined _RT
@@ -105,7 +106,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    l_use_Hxc_collisions  =all(io_err(1:2)==0).and.(l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa.or.l_sc_coh)
    if ( any((/io_err(1:2)/=0/)) ) then
+#if defined _RT
      if (.not.l_sc_pot_is_local) call error(' HXC collisions not found / not compatible')
+#endif
      if (     l_sc_pot_is_local) call warning(' HXC collisions not found. Potential is computed on the fly.')
    endif
    !
@@ -174,7 +177,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
          io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
        endif
-       if (COLL%kind==SC_FOCK.or.COLL%kind==SC_COH.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+       if (COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
          io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
        endif
@@ -198,7 +201,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)
        !
        if (COLL%kind==SC_COH)    io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
-       if (COLL%kind==SC_FOCK.or.COLL%kind==SC_COH.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) &
+       if (COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) &
 &                                io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
 #if defined _RT
        if (COLL%kind==SE_GW_NEQ) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)

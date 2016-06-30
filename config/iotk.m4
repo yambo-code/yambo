@@ -107,6 +107,6 @@ AC_SUBST(compile_p2y)
 AC_SUBST(compile_iotk)
 AC_SUBST(iotk_idir)
 AC_SUBST(IOTK_LIBS)
-AC_CONFIG_FILES([lib/install/make_iotk.inc])
+#AC_CONFIG_FILES([lib/install/make_iotk.inc])
 
 ])

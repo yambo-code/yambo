@@ -36,7 +36,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands,EH_range
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
-&                        HEAD_QP_cpu,HEAD_k_cpu,l_par_SC
+&                        HEAD_QP_cpu,HEAD_k_cpu
  use parallel_m,    ONLY:& ! COMMUNICATORS
 &                        COMM_reset,PAR_COM_WORLD,&  
 &                        PAR_COM_VAL_INDEX,PAR_COM_CON_INDEX,PAR_COM_Q_A2A,&
@@ -121,9 +121,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  l_par_X_G_all_q    =ENVIRONMENT=="Response_G_space"
  l_par_SE           =ENVIRONMENT=="Self_Energy"
  l_par_RT           =ENVIRONMENT=="Real_Time"
-#if defined _QED
- l_par_SC           =ENVIRONMENT=="Self_Energy"
-#endif
  !
  X_type=1
  if (present(X)) then
@@ -685,6 +682,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   "COLLISIONS"
    !.........................................................................
    !
+   call PARALLEL_collisions( Xk,      P_collisions )
    call PARALLEL_collisions( Xk,    COH_collisions )
    call PARALLEL_collisions( Xk,    HXC_collisions )
    call PARALLEL_collisions( Xk, GW_NEQ_collisions )
@@ -837,13 +835,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
 #if defined _SC || defined _QED
    !
-   ! Lamb is a special case. Collisions can be used also in simple Self-Energy mode.
-   !
-   if (l_elphoton_corr.or.l_eval_collisions) then
-     call PARALLEL_collisions( Xk,   P_collisions )
-   endif
-   !
-   ! To eval/use the COLLISIONS  in RT (and SC?) I need the PAR_Bp_mat_index, built here.
+   ! To eval/use the COLLISIONS I need the PAR_B_mat_index, built here.
    !
    if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
      !
@@ -851,6 +843,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !   "COLLISIONS"
      !.........................................................................
      !
+     call PARALLEL_collisions( Xk,   P_collisions )
      call PARALLEL_collisions( Xk, COH_collisions )
      call PARALLEL_collisions( Xk, HXC_collisions )
      !

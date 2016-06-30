@@ -46,6 +46,7 @@ module drivers
  logical :: l_eval_collisions
  logical :: l_use_Hxc_collisions
  logical :: l_use_COH_collisions
+ logical :: l_use_scatt_collisions
  logical :: l_use_collisions
  !
  ! The self-energy correlation "kind"

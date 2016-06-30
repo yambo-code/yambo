@@ -196,16 +196,14 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
          values(23)=QP_G_amplitude_integral(i1)
        endif
 #if defined _QED
+       values(29)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ
        values(30)=values(28)/1000._SP
-       if (.not.l_life) then
-         values(29)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ
-         values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
-         values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
-         values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV
-         values(31)=real(QP_dSC(i1,1))*100
-       endif
+       values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
+       values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
+       values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV
+       values(31)=real(QP_dSC(i1,1))*100
 #endif
-       if (allocated(QP_G_info)) then
+        if (allocated(QP_G_info)) then
          values(17:18)=QP_G_info(i1,1,:)*HA2EV
          values(19:20)=QP_G_info(i1,2,:)*HA2EV
          values(21:22)=QP_G_info(i1,3,:)*HA2EV

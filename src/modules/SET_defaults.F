@@ -323,6 +323,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elel_scatt=.FALSE.
  l_elph_scatt=.FALSE.
  l_use_collisions=.FALSE.
+ l_use_scatt_collisions=.FALSE.
  l_use_Hxc_collisions=.FALSE.
  !
  l_rt_carriers_in_use=.FALSE.

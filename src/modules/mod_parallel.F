@@ -78,7 +78,7 @@ module parallel_m
  ! Logicals
  !
  logical            :: l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,&
-&                      l_par_X_G_finite_q,l_par_SE,l_par_RT,l_par_SC
+&                      l_par_X_G_finite_q,l_par_SE,l_par_RT
  !
  ! In a parallel run only the head CPU in the q and b chains can do 
  ! (b,k) loops

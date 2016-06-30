@@ -116,10 +116,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !=======
  allocate(PL(BSS_n_freqs,4)) !  2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
  PL           =rZERO
- PL_prefactor =32._SP*pi**3*SPEED_OF_LIGHT*2._SP/3._SP*RL_vol/nqbz/(2._SP*pi)**3
-! do i_c=1,3
-  PL(:,1)=W_bss%p(:)  
-! enddo
+ PL_prefactor =32._SP*pi**3*SPEED_OF_LIGHT*2._SP/3._SP*RL_vol/nqbz
+ do i_c=1,3
+   PL(:,1)=W_bss%p(:)  
+ enddo
  !
 #endif
  !
@@ -245,9 +245,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #endif
 #if defined _PL
          if (l_photolum) then
-!           do i_c=1,3
-           PL(:,3)=PL(:,3)+PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))
-!           enddo
+           do i_c=1,3
+             PL(:,3)=PL(:,3)+PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))
+           enddo
          endif
 #endif
          !

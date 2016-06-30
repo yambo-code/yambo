@@ -27,14 +27,13 @@ module interfaces
  !
  interface
    !
-   subroutine SCATTERING_GW_kinematics(i_q_bz,i_m,I,k,q,TABLE,E,N,G0,Ek,Ekmq,E_diff)
+   subroutine SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E,N,G0,Ek,Ekmq,E_diff)
      use pars,                ONLY:SP
      use electrons,           ONLY:levels
      use R_lattice,           ONLY:bz_samp
      use QP_m,                ONLY:QP_table
      use collision,           ONLY:elemental_collision
-     integer,       intent(in) ::i_q_bz,i_m
-     integer,       intent(in) ::TABLE(:)
+     integer,       intent(in) ::i_qp,i_q_bz,i_m
      type(elemental_collision) ::I
      type(bz_samp)             ::k,q
      type(levels),  OPTIONAL   ::E

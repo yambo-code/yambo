@@ -88,7 +88,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix,l_sc_pot_is_local
- use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_naming
+ use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
@@ -323,7 +323,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elel_scatt=.FALSE.
  l_elph_scatt=.FALSE.
  l_use_collisions=.FALSE.
- l_use_scatt_collisions=.FALSE.
  l_use_Hxc_collisions=.FALSE.
  !
  l_rt_carriers_in_use=.FALSE.
@@ -531,7 +530,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
 #if defined _SC || defined _RT || defined _QED
  !
- call COLLISIONS_naming( 0 )
+ call COLLISIONS_initial_naming()
  !
 #endif
  !

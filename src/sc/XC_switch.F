@@ -174,6 +174,8 @@ subroutine XC_switch()
          l_sc_sex=.true.
          l_sc_pot_is_local=.false.
          SC_kind=SC_kind+SC_SEX
+       case ('none')
+         call warning("NULL SC potential! ")
        case default
          call error("Unknown SC potential! ")
      end select

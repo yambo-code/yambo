@@ -104,14 +104,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  l_compute_screening  = index(SC_potential,"COH")>0   .or. index(SC_potential,"SEX")>0
  l_tddft              = index(SC_potential,"GS_xc")>0 .or. index(SC_potential,"default")>0 
  !
- if (l_MBPT_XC_collisions.and.l_compute_screening) then
-   !
-   if (X%ng<N_g_vecs_XC) call warning(' Screening size (NGsBlkXs) cannot be smaller than SEX size (EXXRLvcs). Reduced.')
-   !
-   QP_ng_Sx=X%ng
-   !
- endif
- !
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
  call k_expand(k)
@@ -176,6 +168,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    io_err=io_X(X,Xw,ID)
    !
    if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
+   !
+   if (X%ng<N_g_vecs_XC) call error(' Screening size (NGsBlkXs) cannot be smaller than SEX size (EXXRLvcs)')
    !
    ! Test the spatial Inversion
    !   

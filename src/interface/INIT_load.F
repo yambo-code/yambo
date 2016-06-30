@@ -157,6 +157,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _SC || defined _RT
  call it('r',defs,'collisions', '[R] Eval the extended Collisions')
 #endif
+#if defined _PL
+ call it('r',defs,'photolum',   '[R] Photo-Luminescence') 
+#endif
 #if defined _RT
  call it('r',defs,'negf',       '[R] Real-Time dynamics') 
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   

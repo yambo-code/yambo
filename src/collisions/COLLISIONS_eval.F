@@ -38,8 +38,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
- use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_elphoton_scatt,l_use_Hxc_collisions,&
-&                        l_use_COH_collisions,l_use_scatt_collisions
+ use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
+&                        l_use_COH_collisions,l_elphoton_scatt
  use com,           ONLY:error
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -77,11 +77,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  COLLISIONS_have_HARTREE=index(SC_potential,"HARTREE")>0
  !
- l_use_Hxc_collisions  =index(SC_potential,"HARTREE")>0.or.index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.&
-&                       trim(SC_potential)=="default"
+l_use_Hxc_collisions  =(index(SC_potential,"HARTREE")>0.or.index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.&
+&                        trim(SC_potential)=="default")
  l_use_COH_collisions  =index(SC_potential,"COH")>0
- !
- l_use_scatt_collisions=l_elel_scatt.or.l_elphoton_scatt
  !
  ! Check for the Time Reversal Symmetry
  !
@@ -100,10 +98,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! Initial Setup
  !===============
  !
- call COLLISIONS_basic_operations( "alloc",    COH_collisions )
- call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
- call COLLISIONS_basic_operations( "alloc",      P_collisions )
- call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
+ if (l_use_COH_collisions) call COLLISIONS_basic_operations( "alloc",    COH_collisions )
+ if (l_use_Hxc_collisions) call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
+ if (l_elphoton_scatt)     call COLLISIONS_basic_operations( "alloc",      P_collisions )
+ if (l_elel_scatt)         call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
  !
  ! PARALLEL Setup
  !================
@@ -112,14 +110,22 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    COLLISIONS_parallel_SC_structure=.TRUE.
    PAR_ch="Self_Energy"
 #if defined _RT
-   COLLISIONS_parallel_SC_structure=.FALSE.
-   PAR_ch="Real_Time"
+   if (.not.l_elphoton_scatt) then
+     COLLISIONS_parallel_SC_structure=.FALSE.
+     PAR_ch="Real_Time"
+   endif
 #endif
+   !
+   ! PARALLEL indexes ...
    call PARALLEL_global_indexes(E,k,q,trim(PAR_ch))
+   !
+   ! PARALLEL WF distribution ...
    call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
-   !
-   call COLLISIONS_basic_operations( "WF_distribute", HXC_collisions )
-   !
+   if (l_use_COH_collisions) then
+     call COLLISIONS_basic_operations( "WF_distribute",    COH_collisions )
+   else if (l_use_Hxc_collisions) then
+     call COLLISIONS_basic_operations( "WF_distribute",    HXC_collisions )
+   endif
    call PARALLEL_WF_index( )
    !
  endif
@@ -127,7 +133,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_use_Hxc_collisions) then
    !
    call section('+',trim(SC_potential)//' (e-e correlation)')
-   !=======================================================
+   !=========================================================
    !
    if(l_use_Hxc_collisions) call CHECK_and_ALLOC(HXC_collisions)
    if(l_use_COH_collisions) call CHECK_and_ALLOC(COH_collisions)
@@ -148,8 +154,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (l_elphoton_scatt) then
    !
-   call section('+','Electron-Photon (P)')
-   !=======================================
+   if (     l_use_Hxc_collisions) call section('=','Electron-Photon (P)') 
+   if (.not.l_use_Hxc_collisions) call section('+','Electron-Photon (P)')
+   !=====================================================================
    !
    call CHECK_and_ALLOC(P_collisions)
    !
@@ -171,7 +178,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    if (     l_use_Hxc_collisions) call section('=','NEQ GW (e-e scattering)')
    if (.not.l_use_Hxc_collisions) call section('+','NEQ GW (e-e scattering)')
-   !=================================================================
+   !=========================================================================
    !
    call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
    call PARALLEL_global_indexes(E,k,q,"Real_Time")

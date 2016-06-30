@@ -30,12 +30,10 @@ subroutine COLLISIONS_momentum(E,k,q)
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,&
-&                        PAR_COM_G_b_A2A,PAR_COM_Q_index
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_COM_Q_index,PAR_COM_G_b_INDEX
  use collision,     ONLY:elemental_collision,elemental_collision_free,&
 &                        P_COLL_element,elemental_collision_alloc,&
-&                        elemental_collision_copy,&
-&                        COLLISIONS_parallel_SC_structure,COLL_bands,P_collisions
+&                        elemental_collision_copy,COLL_bands,P_collisions
  use R_lattice,     ONLY:qindx_S,bz_samp
  use QP_m,          ONLY:QP_QED_ng
 #if defined _TIMING
@@ -63,8 +61,6 @@ subroutine COLLISIONS_momentum(E,k,q)
  call elemental_collision_free(I_grad_p) 
  !
  call k_ibz2bz(q,'c',.TRUE.)
- !
- call COLLISIONS_map_to_QP_table("fill",P_collisions)
  !
  ! COLLISIONS 
  !
@@ -111,7 +107,7 @@ subroutine COLLISIONS_momentum(E,k,q)
      !
      B_loop: do i_m=COLL_bands(1),COLL_bands(2) 
        !
-       call SCATTERING_GW_kinematics(i_coll,i_q_bz,i_m,I,k,q,G0=i_G0)
+       call SCATTERING_GW_kinematics(i_q_bz,i_m,I,k,q,P_collisions%state(i_coll,:),G0=i_G0)
        !
        call elemental_collision_copy(I,I_grad_k)
        call elemental_collision_copy(I,I_grad_p)
@@ -138,7 +134,7 @@ subroutine COLLISIONS_momentum(E,k,q)
            enddo
          enddo
          !
-         P_COLL_element(1)%v3_r(i_g_mem,i_m,i_q_bz)=ACC
+         P_COLL_element(1)%v3_r(i_g_mem,i_m,i_q_bz)=ACC/PAR_COM_G_b_INDEX%n_CPU
          !
        enddo
        !
@@ -148,12 +144,8 @@ subroutine COLLISIONS_momentum(E,k,q)
      !
    enddo Q_loop
    !
-   if (COLLISIONS_parallel_SC_structure) then
-     call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
-     call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
-   else
-     call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
-   endif
+   call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
+   call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
    !
    call COLLISIONS_linearize_and_IO("Momentum",i_coll,P_collisions,P_COLL_element)
    !
@@ -166,7 +158,6 @@ subroutine COLLISIONS_momentum(E,k,q)
  call elemental_collision_free(I)
  call elemental_collision_free(I_grad_k) 
  call elemental_collision_free(I_grad_p) 
- call COLLISIONS_map_to_QP_table("free",P_collisions)
  !
 #if defined _TIMING
  call timing('Momentum Collisions',OPR='stop')

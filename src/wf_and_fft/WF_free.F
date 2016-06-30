@@ -34,14 +34,15 @@ subroutine WF_free(WF)
  !
  if (.not.associated(WF%c)) return
  !
- deallocate(WF%c)
- if (WF%space/="B") call mem_est('WF'       ,quiet=QUIET_free)
- if (WF%space=="B") call mem_est('WF_buffer',quiet=QUIET_free)
- nullify(WF%c)
+ call mem_est('WF',quiet=QUIET_free)
  !
+ if (associated(WF%c)) then
+    deallocate(WF%c)
+    nullify(WF%c)
+ endif
  if (associated(WF%state)) then
-   deallocate(WF%state)
-   nullify(WF%state)
+    deallocate(WF%state)
+    nullify(WF%state)
  endif 
  !
  if (WF%space=="R") then

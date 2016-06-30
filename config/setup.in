@@ -34,7 +34,6 @@ package_bugreport = @PACKAGE_BUGREPORT@
 #
 prefix      = @prefix@
 exec_prefix = @exec_prefix@/bin
-topdir      = @abs_top_srcdir@
 srcdir      = @srcdir_path@
 libdir      = @srcdir_path@/lib
 libpath     = -L@srcdir_path@/lib @LDFLAGS@
@@ -55,10 +54,3 @@ liotk	    = @IOTK_LIBS@
 iotk_idir   = @iotk_idir@
 letsf	    = @ETSF_LIBS@
 etsf_idir   = @etsf_idir@
-#
-# VPATH
-#
-VPATH = $$topdir
-#
-#
-#

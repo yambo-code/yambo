@@ -158,10 +158,7 @@ fi
 dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_libxc_ok" = xyes; then
   compile_libxc=no
-  #
-  if test ! -d include ; then
-     mkdir include
-  fi
+  #	 
   for file in `find $libxc_incdir \( -name 'libxc*mod' -o -name 'xc_*mod' \)`;do	
     cp $file include/ 
   done

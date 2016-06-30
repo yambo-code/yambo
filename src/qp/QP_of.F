@@ -48,7 +48,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=31
+ integer, parameter:: tpar=30
  integer       :: ntitles,titles_order(tpar)
  real(SP)      :: values(tpar),Lifetime
  character(schlen) :: titles(tpar)
@@ -82,12 +82,11 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  titles(27) = 'Sc|Eo(meV)' 
  titles(28) = 'Width[ps]' 
  titles(29) = 'E-Eo(Ghz)' 
- titles(30) = 'Width[ns]'
- titles(31) = 'dV/V[%]' 
+ titles(30) = 'Width[ns]' 
  !
 #if defined _QED
- ntitles=11
- titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30,31/)
+ ntitles=10
+ titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30/)
 #else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
@@ -201,7 +200,6 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
        values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
        values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV
-       values(31)=real(QP_dSC(i1,1))*100
 #endif
         if (allocated(QP_G_info)) then
          values(17:18)=QP_G_info(i1,1,:)*HA2EV

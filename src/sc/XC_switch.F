@@ -37,7 +37,7 @@ subroutine XC_switch()
 #endif
  use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC,SC_SRPA,EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
- use com,            ONLY:error
+ use com,            ONLY:error,warning
  use stderr,         ONLY:string_split
  !
  implicit none

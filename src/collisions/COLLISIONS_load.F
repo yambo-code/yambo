@@ -54,7 +54,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Work Space
  !
  integer            :: COLL_kind(4),ID,io_err(4),COM_,i1
- logical            :: l_use_scatt_collisions
+ logical            :: l_use_scatt_collisions,l_warning,l_error
  !
  io_err      =0
  !
@@ -104,13 +104,13 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  if (CHECK_EXISTENCE_ONLY) then
    !
-   l_use_Hxc_collisions  =all(io_err(1:2)==0).and.(l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa.or.l_sc_coh)
-   if ( any((/io_err(1:2)/=0/)) ) then
-#if defined _RT
-     if (.not.l_sc_pot_is_local) call error(' HXC collisions not found / not compatible')
-#endif
-     if (     l_sc_pot_is_local) call warning(' HXC collisions not found. Potential is computed on the fly.')
-   endif
+   l_use_Hxc_collisions  =all(io_err(1:2)==0)
+   !
+   l_error  =.not.l_use_Hxc_collisions.and..not.l_sc_pot_is_local.and.l_real_time
+   l_warning=.not.l_use_Hxc_collisions.and..not.l_error
+   !
+   if (l_error)   call error(  ' HXC collisions not found / not compatible')
+   if (l_warning) call warning(' HXC collisions not found. Potential is computed on the fly.')
    !
    l_use_scatt_collisions=all(io_err(3:4)==0).and.(l_elphoton_scatt.or.l_elphoton_corr.or.l_elel_scatt)
    if (io_err(3)/=0) call error(' el-el scatt collisions not found / not compatible') 

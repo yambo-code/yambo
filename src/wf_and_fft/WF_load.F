@@ -103,7 +103,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Imposed Freeing and Allocating of WF's
  !
- free_and_alloc=.TRUE.
+ free_and_alloc=.FALSE.
  if (kpts_to_load(1)==kpts_to_load(2)) free_and_alloc =kpts_to_load(1)==1.or.nkibz==1
  if (present(impose_free_and_alloc)) then
    free_and_alloc=impose_free_and_alloc
@@ -180,7 +180,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! First WF_free then fft_setup.
  !
- if (free_and_alloc) call WF_free(WF)
+ call WF_free(WF)
  !
  ! Save dimensions
  !
@@ -235,7 +235,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (WF%space=='R') call fft_setup(iG_max,iGo_max,.false.)
  if (WF%space=="R") fft_dim_loaded=fft_dim
  !
- if (free_and_alloc) call WF_alloc(WF)
+ call WF_alloc(WF)
  !
  if (WF%space=='R') allocate(wf_DP(fft_size))
  if (WF%space=='G') allocate(wf_DP(wf_ng))

@@ -53,7 +53,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G
  use hamiltonian,   ONLY:B_mat_index
  use fft_m,         ONLY:fft_size
-! use wrapper_omp,   ONLY:Vstar_dot_V_omp
  !
  implicit none
  !

@@ -66,9 +66,10 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   PetscScalar    kr, ki
   PetscScalar, pointer :: xsr(:), xsi(:)
   PetscScalar, pointer :: M(:,:)          !pointer to matrix
-  Vec            xr, xi
-  PetscViewer    viewer
+  Vec            xr, xi, vout
+  PetscViewer    viewer, hdf5v
   PetscMPIInt    rank
+  VecScatter     ctx
   character(len=30) :: rowfmt
   !
   ! Non hermitian not implemented yet!
@@ -78,13 +79,10 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
     call exit(0)
   endif
   !
-  write(*,*)
-  write(*,*) 'We will use the SLEPC driver'
   call MatGetSize(A,n,j,ierr)
-  write(*,*) 'the matrix dimensions are:', n
-  write(*,*) 'initializing slepc...'
+  if (rank .eq. 0) write(*,*) 'initializing slepc...'
   call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
-  write(*,*) 'done!'
+  if (rank .eq. 0) write(*,*) 'done!'
   call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
   !
   ! write the matrix if wanted
@@ -92,9 +90,9 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
     call MatView(A,PETSC_VIEWER_STDOUT_WORLD,ierr)
   endif
   !
-  write(*,*) 'creating vecs...'
+  if (rank .eq. 0) write(*,*) 'creating vecs...'
   call MatCreateVecs(A,xr,xi,ierr)
-  write(*,*) 'done!'
+  if (rank .eq. 0) write(*,*) 'done!'
   
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Create the eigensolver and display info
@@ -123,7 +121,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  write(*,*) 'solving...'
+  if (rank .eq. 0) write(*,*) 'solving...'
   call EPSSolve(eps,ierr)
   call EPSGetIterationNumber(eps,its,ierr)
   if (rank .eq. 0) then
@@ -162,6 +160,9 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   !free the A matrix
   call MatDestroy(A,ierr)
   
+  !open file for output
+  !call PetscViewerHDF5Open(PETSC_COMM_WORLD, 'hdb.BS_slepc', FILE_MODE_WRITE, hdf5v, ierr)
+  
   !Display eigenvalues and relative errors
   if (nconv.gt.0) then
     if (rank .eq. 0) then
@@ -184,13 +185,26 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
          !E_real(i+1) = PetscRealPart(kr)
          E_real(i+1) = kr
          
-         call VecGetArrayF90(xr,xsr,ierr)
-         V_right(:, i+1) = xsr
-         call VecRestoreArrayF90(xr,xsr,ierr)
+         ! this is to write the vector to hdf5 directly
+         !call VecView(xr,hdf5v,ierr)
          
+         call VecScatterCreateToAll(xr,ctx,vout,ierr);
+         ! scatter as many times as you need
+         call VecScatterBegin(ctx,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr);
+         call VecScatterEnd(ctx,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr);
+         
+         call VecGetArrayReadF90(vout,xsr,ierr)
+         V_right(:, i+1) = xsr
+         call VecRestoreArrayReadF90(vout,xsr,ierr)
+         
+         ! destroy scatter context and local vector when no longer needed
+         call VecScatterDestroy(ctx,ierr);
+         call VecDestroy(vout,ierr);
+      
      enddo
   endif
-  write(*,*) 'done!'
+  !call PetscViewerDestroy(hdf5v,ierr)
+  if (rank .eq. 0) write(*,*) 'done!'
   
   call EPSDestroy(eps,ierr)
   call VecDestroy(xr,ierr)

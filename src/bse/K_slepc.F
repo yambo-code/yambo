@@ -112,7 +112,6 @@ subroutine K_slepc(iq,W)
    call warning(' Number of eigenvalues is larger than hamiltonian. Calculating only 1% of the eigenvalues.')
    BSS_n_eig = BS_H_dim*.01
  endif
- !
  ! if the number of eigenvalued to calculate is smaller than 1
  if (BSS_n_eig<1) then
    call warning(' Number of eigenvalues is smaller than hamiltonian. Calculating 1 eigenvalue.')
@@ -194,7 +193,6 @@ subroutine K_slepc(iq,W)
    else
      !
      call K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
-     !write(*,*) BS_R_left(1)
      !
    endif
    !

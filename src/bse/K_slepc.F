@@ -126,7 +126,7 @@ subroutine K_slepc(iq,W)
  ! Allocation (BS_R and BS_E)
  !===========================
  call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
- YAMBO_ALLOCATE( BS_E(BS_H_dim) )
+ YAMBO_ALLOCATE( BS_E(BSS_n_eig) )
  if(E_SOC_nbands/=0) then
    YAMBO_ALLOCATE( BS_corrections(2,BS_H_dim) )
    YAMBO_ALLOCATE( BS_E_SOC_corr(2,BS_H_dim) )

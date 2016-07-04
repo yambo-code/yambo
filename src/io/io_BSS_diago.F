@@ -34,7 +34,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
  implicit none
  !
  integer              :: iq,ID,BS_H_dim,BSS_n_eig
- complex(SP)          :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
+ complex(SP)          :: bsE(BSS_n_eig),bsRl(BS_H_dim),bsRr(BS_H_dim)
  real(SP)   ,pointer  :: BsE_corr(:,:),bsR_pl(:)
  complex(SP),pointer  :: bsR_kerr(:)
  !
@@ -83,8 +83,8 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
  if (any((/io_sec(ID,:)==2/))) then
    !
    call io_bulk(ID,'BS_Energies',VAR_SZ=(/2,BSS_n_eig/))
-   if (write_is_on(ID)) V_disk(1,:)=real(bsE(:))
-   if (write_is_on(ID)) V_disk(2,:)=aimag(bsE(:))
+   if (write_is_on(ID)) V_disk(1,:BSS_n_eig)=real(bsE(:))
+   if (write_is_on(ID)) V_disk(2,:BSS_n_eig)=aimag(bsE(:))
    call io_bulk(ID,R2=V_disk(:2,:BSS_n_eig))
    if (read_is_on(ID)) bsE(:)=cmplx(V_disk(1,:BSS_n_eig),V_disk(2,:BSS_n_eig),SP)
    !

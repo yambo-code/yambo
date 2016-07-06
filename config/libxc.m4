@@ -171,7 +171,10 @@ fi
 
 if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
-  LIBS_LIBXC="-lxc"
+  # version y2.0.3
+  #LIBS_LIBXC="-lxc"
+  # version 2.2.3 is used
+  LIBS_LIBXC="-lxcf90 -lxc"
   AC_MSG_RESULT([Compatible external LibXC not found/specified. Internal used.])
 fi 
 

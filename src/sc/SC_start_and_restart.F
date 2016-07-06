@@ -33,7 +33,7 @@ subroutine SC_start_and_restart(X,E)
  use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,SC_QP_table_setup,&
-&                         SC_potential,E_bare,l_sc_pot_is_local,SC_iterations,l_TF_precond, &
+&                         SC_potential,E_bare,l_sc_V_is_local,SC_iterations,l_TF_precond, &
 &                         l_oep_iterative,rho_convergence,E_convergence, &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
 &                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
@@ -64,7 +64,7 @@ subroutine SC_start_and_restart(X,E)
  call parser('SCdiag',         l_SC_diagonal)
  call parser('SCnlMix',        l_SC_nl_mix)
  !
- if (l_sc_pot_is_local) l_SC_nl_mix=.FALSE.
+ if (l_sc_V_is_local) l_SC_nl_mix=.FALSE.
  !
  ! Magnetic logical setup
  !========================
@@ -134,7 +134,7 @@ subroutine SC_start_and_restart(X,E)
    !
  else
    !
-   l_NSC_shot=SC_iterations==1.and.(io_V==0.or.io_V==-2).and.l_sc_pot_is_local.and..not.l_SC_cycle
+   l_NSC_shot=SC_iterations==1.and.(io_V==0.or.io_V==-2).and.l_sc_V_is_local.and..not.l_SC_cycle
    !
  endif
  !

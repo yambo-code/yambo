@@ -28,13 +28,13 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  use drivers,         ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_use_collisions,l_sc_srpa,&
 &                          l_elel_scatt,l_elphoton_scatt,l_elphoton_corr,l_sc_hartree,&
-&                          l_use_Hxc_collisions,l_sc_is_libDFT,l_real_time
+&                          l_use_Hxc_collisions,l_real_time,l_use_COH_collisions
  use com,             ONLY:error,warning
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_QED_ng
  use R_lattice,       ONLY:nqbz
  use plasma,          ONLY:N_plasma_poles_global
- use SC,              ONLY:SC_kind,l_sc_pot_is_local
+ use SC,              ONLY:SC_kind
  use global_XC,       ONLY:SC_FOCK,SC_COH,SC_SEX,SE_GW_NEQ,SC_HARTREE
 #if defined _QED || defined _RT
  use global_XC,       ONLY:SE_GW_QED
@@ -104,10 +104,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  if (CHECK_EXISTENCE_ONLY) then
    !
-   l_use_Hxc_collisions  =all(io_err(1:2)==0)
+   l_use_COH_collisions  =io_err(1)==0.and.l_sc_coh
+   l_use_Hxc_collisions  =io_err(2)==0.and.(l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa)
    !
-   l_error  =.not.l_use_Hxc_collisions.and..not.l_sc_pot_is_local.and.l_real_time
-   l_warning=.not.l_use_Hxc_collisions.and..not.l_error
+   l_warning=.not.l_use_Hxc_collisions.and..not.l_use_COH_collisions
+   l_error  =l_warning.and.l_real_time
    !
    if (l_error)   call error(  ' HXC collisions not found / not compatible')
    if (l_warning) call warning(' HXC collisions not found. Potential is computed on the fly.')
@@ -116,7 +117,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    if (io_err(3)/=0) call error(' el-el scatt collisions not found / not compatible') 
    if (io_err(4)/=0) call error(' el-photon   collisions not found / not compatible')
    !
-   l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions
+   l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions.or.l_use_COH_collisions
    COLLISIONS_have_HARTREE=HXC_collisions%kind>=SC_HARTREE
    return
    !
@@ -127,7 +128,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Actual I/O
  !============
  !
- if (l_sc_coh)                             call local_IO( COH_collisions )
+ if (l_use_COH_collisions)                 call local_IO( COH_collisions )
  !
  if (l_use_Hxc_collisions)                 call local_IO( HXC_collisions )
  !

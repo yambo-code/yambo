@@ -77,7 +77,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  COLLISIONS_have_HARTREE=index(SC_potential,"HARTREE")>0
  !
-l_use_Hxc_collisions  =(index(SC_potential,"HARTREE")>0.or.index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.&
+ l_use_Hxc_collisions  =(index(SC_potential,"HARTREE")>0.or.index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.&
 &                        trim(SC_potential)=="default")
  l_use_COH_collisions  =index(SC_potential,"COH")>0
  !
@@ -130,7 +130,7 @@ l_use_Hxc_collisions  =(index(SC_potential,"HARTREE")>0.or.index(SC_potential,"F
    !
  endif
  !
- if (l_use_Hxc_collisions) then
+ if (l_use_Hxc_collisions.or.l_use_COH_collisions) then
    !
    call section('+',trim(SC_potential)//' (e-e correlation)')
    !=========================================================
@@ -144,7 +144,8 @@ l_use_Hxc_collisions  =(index(SC_potential,"HARTREE")>0.or.index(SC_potential,"F
      !
      ! COHSEX clean
      !--------------
-     if (io_COLLs) call COLLISIONS_alloc_and_free("HXC","v3 table","clean",1)
+     if (io_COLLs.and.l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC","v3 table","clean",1)
+     if (io_COLLs.and.l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH","v3 table","clean",1)
      !
    endif
    !

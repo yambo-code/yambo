@@ -30,7 +30,7 @@ integer function variables_SC(ID,local_description,what)
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
 &                         SC_xc_functional,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,l_sc_pot_is_local
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,l_sc_V_is_local
  use IO_m,           ONLY:io_elemental,io_status,IO_INCOMPATIBLE_VAR
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
@@ -94,7 +94,7 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=6,MENU=0) 
  !
  i_desc=i_desc+1
- call io_elemental(ID,L0=l_sc_pot_is_local,&
+ call io_elemental(ID,L0=l_sc_V_is_local,&
 &     VAR=' [SC] Local Potential            :',DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=it_now,DB_I0=it_now,&

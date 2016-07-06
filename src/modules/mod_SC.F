@@ -47,7 +47,9 @@ module SC
  character(lchlen) :: SC_description(100)
  logical           :: compatible_SC_DB
  logical           :: found_SC_DB
- logical           :: l_sc_pot_is_local
+ !
+ logical           :: l_sc_V_is_local=.TRUE.
+ logical           :: l_sc_XC_is_local=.TRUE.
  !
  ! General flags
  !

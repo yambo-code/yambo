@@ -101,10 +101,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  force_WFo_=.false.
  if(present(force_WFo)) force_WFo_=force_WFo
  !
- ! Imposed Freeing and Allocating of WF's
+ ! Imposed Freeing and Allocating of WF's...
  !
  free_and_alloc=.FALSE.
- if (kpts_to_load(1)==kpts_to_load(2)) free_and_alloc =kpts_to_load(1)==1.or.nkibz==1
+ !... when a single k-point is loaded each time... (no _SC)
+#if !defined _SC
+ if (kpts_to_load(1)==kpts_to_load(2)) free_and_alloc =kpts_to_load(1)==1
+#endif
+ !... or when it is externally imposed
  if (present(impose_free_and_alloc)) then
    free_and_alloc=impose_free_and_alloc
  endif

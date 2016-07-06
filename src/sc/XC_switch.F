@@ -26,8 +26,8 @@ subroutine XC_switch()
  use pars,           ONLY:schlen
  use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_fock,l_sc_coh,l_sc_sex,l_sc_is_libDFT,&
 &                         l_sc_srpa,l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater
- use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,l_sc_pot_is_local,SC_perturbation,&
-&                         OEP_approx,l_oep_EWeight,l_oep_iterative
+ use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,l_sc_V_is_local,SC_perturbation,&
+&                         OEP_approx,l_oep_EWeight,l_oep_iterative,l_sc_XC_is_local
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
 #if defined _MAGNETIC
@@ -138,7 +138,7 @@ subroutine XC_switch()
          SC_xc_functional=GS_xc_FUNCTIONAL
        case('FOCK')
          l_sc_fock=.true.
-         l_sc_pot_is_local=.false.
+         l_sc_V_is_local=.false.
          SC_kind=SC_kind+SC_FOCK
        case('LDA_X')
          l_sc_is_libDFT=.true.
@@ -168,11 +168,13 @@ subroutine XC_switch()
          if (n_full_bands/=n_met_bands) return
        case('COH')
          l_sc_coh=.true.
-         l_sc_pot_is_local=.false.
+         l_sc_XC_is_local=.false.
+         l_sc_V_is_local=.false.
          SC_kind=SC_kind+SC_COH
        case('SEX')
          l_sc_sex=.true.
-         l_sc_pot_is_local=.false.
+         l_sc_V_is_local=.false.
+         l_sc_XC_is_local=.false.
          SC_kind=SC_kind+SC_SEX
        case ('none')
          call warning("NULL SC potential! ")

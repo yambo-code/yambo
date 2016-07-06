@@ -814,54 +814,41 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC 
  !
- ! Self-Consistency
+ ! Self-Consistency & Collisions (for REAL-TIME and SC calculations)
  !
- if (l_sc_run) then
+ if (l_sc_run.or.l_eval_collisions) then
    !
-   call initactivate( 1,'HXC_Potential FFTGvecs SCBands')
+   call                        initactivate( 1,'HXC_Potential FFTGvecs')
+   if (l_sc_run)          call initactivate( 1,'SCBands')
+   if (l_eval_collisions) call initactivate( 1,'COLLBands')
+   !
    call initactivate(-1,'QpntsRXs')
-   !
-   select case (trim(SC_potential))
-     case('HARTREE+FOCK')
-       call initactivate(1,'EXXCut EXXRLvcs')
-     case('COH')
-       call initactivate(1,'GbndRnge UseEbands SCUpWIter')
-     case('SEX')
-       call initactivate(1,'EXXCut EXXRLvcs')
-       call initactivate(1,'GbndRnge SCUpWIter')
-     case('COHSEX')
-       call initactivate(1,'EXXCut EXXRLvcs')
-       call initactivate(1,'GbndRnge UseEbands SCUpWIter')
-     case('EXX','SRPA','EXXC')
-       call initactivate(1,'OEPapprox OEPItSolver') 
-   end select
-   !
-   call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
-   call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
-   call initactivate(1,'SCdiag Mean_Potential')
-   !
- endif
- !
-#endif
- !
-#if defined _SC  || defined _RT
- !
- ! Collisions (for REAL-TIME and SC calculations)
- !
- if (l_eval_collisions) then
-   !
-   call initactivate( 1,'HXC_Potential FFTGvecs COLLBands')
-   call initactivate(-1,'QpntsRXs')
-   !
-   if( index(SC_potential,"HARTREE")>0) call initactivate(1,'HARRLvcs ALLGHAR')
    !
    if( index(SC_potential,"FOCK")>0   ) call initactivate( 1,'EXXCut EXXRLvcs')
    !
    if( index(SC_potential,"SEX")>0.or.index(SC_potential,"COH")>0 ) then
-                                        call initactivate( 1,'CORRLvcs')
+     if (l_sc_run) then
+       call                                  initactivate(1,'GbndRnge UseEbands SCUpWIter')                      
+     else
+       call                                  initactivate(1,'CORRLvcs')
    endif
    !
-   if (l_elel_scatt)     call initactivate(1,'PlasmaPerc')
+   if( index(SC_potential,"HARTREE")>0.and.l_eval_collisions) call initactivate(1,'HARRLvcs ALLGHAR')
+   !
+   if( index(SC_potential,"EXX")>0.or.index(SC_potential,"SRPA")>0 ) then
+     call initactivate(1,'OEPapprox OEPItSolver') 
+   endif
+   !
+   if (l_sc_run) then
+     call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
+     call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
+     call initactivate(1,'SCdiag Mean_Potential')
+   else
+     if (l_elel_scatt) call initactivate(1,'PlasmaPerc')
+   endif
+   !
+ endif
+   call initactivate(-1,'QpntsRXs')
    !
  endif
  !
@@ -1382,6 +1369,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      strings_to_not_use_as_runlevels(4)="cdir"
      strings_to_not_use_as_runlevels(5)="odir"
      strings_to_not_use_as_runlevels(6)="cdir"
+     strings_to_not_use_as_runlevels(7)="cohsex"
+     strings_to_not_use_as_runlevels(8)="hcohsex"
      !
      ! Split the string in pieces
      !
@@ -1413,7 +1402,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (i1>1) then
            do i2=1,nrnlvls
              if (trim(rstr_piece(i1  )) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
-             if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
            enddo
          endif
          !
@@ -1619,7 +1607,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            else if ( index(trim(rstr_piece(i1+1)),'srpa')>0 ) then
              SC_potential='SRPA'
            else if ( index(trim(rstr_piece(i1+1)),'cohsex')>0 ) then
-             SC_potential='COHSEX'
+             SC_potential='COH+SEX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
            else if ( index(trim(rstr_piece(i1+1)),'coh')>0 ) then
              SC_potential='COH'
@@ -1631,7 +1619,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              SC_potential='FOCK'
            endif
            !
-           if ( index(trim(rstr_piece(i1+1)),'h')>0 ) then
+           if ( index(trim(rstr_piece(i1+1)),'h')==1 ) then
              if(trim(SC_potential)/="") SC_potential='HARTREE+'//trim(SC_potential)
              if(trim(SC_potential)=="") SC_potential='HARTREE'
            endif
@@ -1664,7 +1652,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              SC_potential='IP'
            endif
            !
-           if ( index(trim(rstr_piece(i1+1)),'h')>0 ) then
+           if ( index(trim(rstr_piece(i1+1)),'h')==1 ) then
              if(trim(SC_potential)/="") SC_potential='HARTREE+'//trim(SC_potential)
              if(trim(SC_potential)=="") SC_potential='HARTREE'
            endif
@@ -1754,7 +1742,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          ! COLLISIONS
          !
          if (runlevel_is_on('collisions')) then
-           if ( l_elel_scatt.or.trim(SC_potential)=='COHSEX'.or.&
+           if ( l_elel_scatt.or.trim(SC_potential)=='COH+SEX'.or.&
 &               trim(SC_potential)=='COH'.or.trim(SC_potential)=='SEX' ) call initactivate(1,'em1s')
          endif
          !

@@ -65,7 +65,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,&
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,&
-&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,bands_to_load(2)
+&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,bands_to_load(2),n_colls
  logical                 :: l_HXC_collisions,l_COH_collisions,l_MBPT_XC_collisions,l_loc_HXC_collisions,&
 &                           eval_coll,l_compute_screening,l_tddft
  !
@@ -95,13 +95,12 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! Setup
  !
  l_loc_HXC_collisions = index(SC_potential,"HARTREE")>0 .or. index(SC_potential,"GS_xc")>0 .or. index(SC_potential,"default")>0
- l_MBPT_XC_collisions = index(SC_potential,"FOCK")>0 .or. index(SC_potential,"SEX")>0
+ l_MBPT_XC_collisions = index(SC_potential,"FOCK")>0    .or. index(SC_potential,"SEX")>0
+ l_COH_collisions     = index(SC_potential,"COH")>0
+ l_compute_screening  = index(SC_potential,"COH")>0   .or. index(SC_potential,"SEX")>0
+ l_tddft              = index(SC_potential,"GS_xc")>0 .or. index(SC_potential,"default")>0 
  !
  l_HXC_collisions     = l_loc_HXC_collisions .or. l_MBPT_XC_collisions 
- !
- l_COH_collisions     = index(SC_potential,"COH")>0
- l_compute_screening  = index(SC_potential,"COH")>0 .or. index(SC_potential,"SEX")>0
- l_tddft              = index(SC_potential,"GS_xc")>0 .or. index(SC_potential,"default")>0 
  !
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
@@ -205,17 +204,27 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  PAR_NC_local=HXC_collisions%PAR_N
- if (associated(HXC_collisions%IO_status)) PAR_NC_local=count(HXC_collisions%IO_status==-1)
+ if (associated(HXC_collisions%IO_status)) then
+   PAR_NC_local=count(HXC_collisions%IO_status==-1)
+ else if (associated(COH_collisions%IO_status)) then
+   PAR_NC_local=count(COH_collisions%IO_status==-1)
+ endif
  !
  n_steps=0
- if (l_loc_HXC_collisions) n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
- if (l_MBPT_XC_collisions) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
+ if (l_loc_HXC_collisions)                     n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
+ if (l_MBPT_XC_collisions.or.l_COH_collisions) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
+ !
+ n_colls=max(HXC_collisions%N,COH_collisions%N)
  !
  call live_timing("Collisions",n_steps)
  !
- do i_coll=1,HXC_collisions%N
+ do i_coll=1,n_colls
    !
-   if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
+   if (l_HXC_collisions) then
+     if(.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
+   else if (l_COH_collisions) then
+     if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
+   endif
    !
    if (io_COLLs .and. l_HXC_collisions) then
      if ( HXC_collisions%IO_status(i_coll)/=-1) cycle
@@ -241,12 +250,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    ! HARTREE collisions
    !
-   if ( l_loc_HXC_collisions ) call compute_loc_HXC_collisions()
+   if ( l_loc_HXC_collisions )                     call compute_loc_HXC_collisions()
    !
    ! XC collisions within MBPT
    !
-   if ( l_MBPT_XC_collisions ) call compute_MBPT_XC_collisions()
-   !
+   if ( l_MBPT_XC_collisions.or.l_COH_collisions ) call compute_MBPT_XC_collisions()
    !
    if (COLLISIONS_parallel_SC_structure) then
      if(l_HXC_collisions) then
@@ -525,7 +533,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
 &                                                      -4._SP/spin_occ*pi*(pre_factor1+pre_factor2)
            if(index(SC_potential,"COH")>0 ) &
 &            COH_COLL_element(1)%v3_c(i_np,i_mp,i_kmq)=COH_COLL_element(1)%v3_c(i_np,i_mp,i_kmq) &
-&                                                      -4._SP/spin_occ*pi*             pre_factor2
+&                                                      +2._SP         *pi*             pre_factor2
            !
            call live_timing(steps=1)
            !

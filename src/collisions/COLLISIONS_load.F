@@ -74,16 +74,26 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa) then
    COLL_kind=(/SC_kind,SC_kind-SC_COH,SC_kind-SC_HARTREE,SC_kind-SC_COH-SC_HARTREE/)
-   i1=1
    io_err(2)=1
-   do while(io_err(2)/=0.and.i1<=4)
-     call COLLISIONS_naming( COLL_kind(i1) )
+   do i1=1,4
+     !
+     call COLLISIONS_naming( COLL_kind(i1) , "HXC" )
+     !
+     if (HXC_collisions%kind==0) cycle
+     !
      call COLLISIONS_basic_operations( "alloc", HXC_collisions )
+     if (i1>1) COM_=NONE 
      call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=VERIFY,SEC=(/1/),ID=ID)
      io_err(2)=io_COLLISIONS(ID,HXC_collisions)
-     i1=i1+1
+     !
+     if (io_err(2)==0) exit
+     !
    enddo
-   if (COM_==REP.and.i1>2.and.io_err(2)==0) call warning("[COLLISIONS] Using an Hartree-free collisions database")
+   !
+   if (CHECK_EXISTENCE_ONLY.and.io_err(2)==0.and.HXC_collisions%kind<SC_Hartree) then
+     call warning("[COLLISIONS] Found (and using) an Hartree-free collisions database")
+   endif
+   !
  endif
  !
 #if defined _RT
@@ -118,7 +128,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    if (io_err(4)/=0) call error(' el-photon   collisions not found / not compatible')
    !
    l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions.or.l_use_COH_collisions
-   COLLISIONS_have_HARTREE=HXC_collisions%kind>=SC_HARTREE
+   COLLISIONS_have_HARTREE=io_err(2)>0.and.HXC_collisions%kind>=SC_HARTREE
    return
    !
  endif
@@ -153,12 +163,14 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      if (COLL%kind==SC_FOCK.or.COLL%kind==SC_COH.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
      endif
+     !
 #if defined _QED
      if (COLL%kind==SE_GW_QED) then
        call COLLISIONS_alloc_and_free("Momentum","collision","alloc",0)
        call COLLISIONS_alloc_and_free("Momentum","v3","alloc ",0)
      endif
 #endif
+     !
 #if defined _RT
      if (COLL%kind==SE_GW_NEQ) then
        call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)

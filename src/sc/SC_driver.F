@@ -34,7 +34,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         rho_convergence,magn_convergence,SC_R,V_xc_sc,l_sc_V_is_local,H_nl_sc,H_rotate,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
 &                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,&
-&                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_table_setup,it_to_start
+&                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_table_setup,it_to_start
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
@@ -241,12 +241,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if (it>1.and.l_sc_hartree.and..not.COLLISIONS_have_HARTREE) then
      !
-     if (.not.l_TF_precond) then 
+     if (trim(SC_preconditioning)=="simple") then 
        !
        rho_n = SC_cycle_mixing*rho_n + (1._SP-SC_cycle_mixing)*rho_nm1
        if(n_spin>1) magn_n= SC_cycle_mixing*magn_n+ (1._SP-SC_cycle_mixing)*magn_nm1
        !
-     else
+     else if (trim(SC_preconditioning)=="thomas-fermi") then 
        !
        delta_rho =rho_n -rho_nm1
        call SC_precondition(delta_rho)
@@ -587,7 +587,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(V_xc_nm1(fft_size,n_spin))
      call mem_est("V_xc_nm1",(/size(V_xc_nm1)/))
      !
-     if (l_TF_precond) then
+     if (trim(SC_preconditioning)/="none") then
        allocate(delta_rho(fft_size))
        call mem_est("delta_rho",(/fft_size/),(/SP/))
        if(n_spin>1) then
@@ -631,7 +631,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      deallocate(V_xc_nm1)
      call mem_est("V_xc_nm1")
      !
-     if (l_TF_precond) then
+     if (trim(SC_preconditioning)/="none") then
        deallocate(delta_rho)
        call mem_est("delta_rho")
        if(n_spin>1) then

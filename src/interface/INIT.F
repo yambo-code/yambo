@@ -824,13 +824,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(-1,'QpntsRXs')
    !
-   if( index(SC_potential,"FOCK")>0   ) call initactivate( 1,'EXXCut EXXRLvcs')
+   if( index(SC_potential,"FOCK")>0   ) call initactivate( 1,'EXXCut EXXRLvcs ALLGexx')
    !
    if( index(SC_potential,"SEX")>0.or.index(SC_potential,"COH")>0 ) then
-     if (l_sc_run) then
-       call                                  initactivate(1,'GbndRnge UseEbands SCUpWIter')                      
-     else
-       call                                  initactivate(1,'CORRLvcs')
+     if (l_sc_run)          call initactivate(1,'UseEbands SCUpWIter')
+     if (l_eval_collisions) call initactivate(1,'CORRLvcs ALLGexx')
    endif
    !
    if( index(SC_potential,"HARTREE")>0.and.l_eval_collisions) call initactivate(1,'HARRLvcs ALLGHAR')
@@ -840,14 +838,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    endif
    !
    if (l_sc_run) then
-     call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
+     call initactivate(1,'SCIter SCEtresh SCRhoTresh SC_precondition')
      call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
      call initactivate(1,'SCdiag Mean_Potential')
-   else
-     if (l_elel_scatt) call initactivate(1,'PlasmaPerc')
    endif
    !
- endif
+   if (l_eval_collisions.and.l_elel_scatt) call initactivate(1,'PlasmaPerc')
+   !
    call initactivate(-1,'QpntsRXs')
    !
  endif

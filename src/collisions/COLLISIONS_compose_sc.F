@@ -52,15 +52,15 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  QP_Vnl_xc=cZERO
  !
  if (allocated(QP_Sc)) then 
-   QP_Sc    =cZERO
+   QP_Sc  =cZERO
  endif
  !
  do i_qp=1,QP_n_states
    !
    if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_QP_cpu)) cycle
    !
-   if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree) i_coll_mem=HXC_collisions%PAR_map(i_qp)
-   if (l_sc_coh)                              i_coll_mem=COH_collisions%PAR_map(i_qp)
+   if (l_sc_sex.or.l_sc_fock.or.(l_sc_hartree.and.COLLISIONS_have_HARTREE)) i_coll_mem=HXC_collisions%PAR_map(i_qp)
+   if (l_sc_coh)                                                            i_coll_mem=COH_collisions%PAR_map(i_qp)
    !
    ic1=1
    ic2=1
@@ -81,7 +81,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
          !
          ! SEX/HF/HARTREE parts
          !
-         if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree) then
+         if (l_sc_sex.or.l_sc_fock.or.(l_sc_hartree.and.COLLISIONS_have_HARTREE)) then
            if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
              QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*HXC_COLL_element(i_coll_mem)%v_c(ic2)*G_sex(ib,ibp,i_kmq)
              ic2=ic2+1

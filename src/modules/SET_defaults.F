@@ -530,7 +530,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
 #if defined _SC || defined _RT || defined _QED
  !
- call COLLISIONS_naming( 0 )
+ call COLLISIONS_naming( 0 , "all" )
  !
 #endif
  !

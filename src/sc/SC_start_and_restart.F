@@ -33,7 +33,7 @@ subroutine SC_start_and_restart(X,E)
  use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,SC_QP_table_setup,&
-&                         SC_potential,E_bare,l_sc_V_is_local,SC_iterations,l_TF_precond, &
+&                         SC_potential,E_bare,l_sc_V_is_local,SC_iterations,SC_preconditioning, &
 &                         l_oep_iterative,rho_convergence,E_convergence, &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
 &                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
@@ -57,7 +57,6 @@ subroutine SC_start_and_restart(X,E)
  ! Parsering
  !============
  !
- call parser('TF_precondition',l_TF_precond) 
  call parser('OEPItSolver',    l_oep_iterative) 
  call parser('UseEbands',      COHSEX_use_empties)
  call parser('Mean_Potential', l_Mean_Potential)
@@ -65,6 +64,12 @@ subroutine SC_start_and_restart(X,E)
  call parser('SCnlMix',        l_SC_nl_mix)
  !
  if (l_sc_V_is_local) l_SC_nl_mix=.FALSE.
+ !
+ ! Preconditioning
+ !=================
+ if (trim(SC_preconditioning)/="simple".and. &
+&    trim(SC_preconditioning)/="none".and. &
+&    trim(SC_preconditioning)/="thomas-fermi") SC_preconditioning="none"
  !
  ! Magnetic logical setup
  !========================
@@ -156,7 +161,7 @@ subroutine SC_start_and_restart(X,E)
  call msg('r' ,'[SC] Bands                            :',SC_bands)
  call msg('r' ,'[SC] Bands mixing                     :',SC_band_mixing)
  call msg('r' ,'[SC] Use non-local mixing             :',l_SC_nl_mix)
- call msg('r' ,'[SC] Use Thomas-Fermi precondition    :',l_TF_precond) 
+ call msg('r' ,'[SC] Preconditioning                  :',SC_preconditioning) 
  call msg('r' ,'[SC] Diagonal approximation           :',l_SC_diagonal)
  if (l_SC_cycle) then
    call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
@@ -201,7 +206,7 @@ subroutine SC_start_and_restart(X,E)
  ! Checking extended COLLISIONS
  !==============================
  !
- call COLLISIONS_naming( SC_kind )
+ call COLLISIONS_naming( SC_kind , "HXC" )
  !
  if (io_COLLs) call COLLISIONS_load(.TRUE.)
  !

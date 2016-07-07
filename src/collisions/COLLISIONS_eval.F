@@ -66,7 +66,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! WorkSpace
  !
  integer       :: ID,i_kind,IO_err
- character(20) :: PAR_ch
+ character(20) :: PAR_ch,FREE_ch
  !
  call section('*','Extended collisions')
  !=======================================
@@ -93,11 +93,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! Naming 
  !========
- call COLLISIONS_naming( SC_kind )
+ call COLLISIONS_naming( SC_kind , "HXC" )
  !
  ! Initial Setup
  !===============
- !
  if (l_use_COH_collisions) call COLLISIONS_basic_operations( "alloc",    COH_collisions )
  if (l_use_Hxc_collisions) call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
  if (l_elphoton_scatt)     call COLLISIONS_basic_operations( "alloc",      P_collisions )
@@ -217,15 +216,20 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call COLLISIONS_basic_operations( "clean",      P_collisions )
    call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
    !
+   if (IO_err==0) return
+   !
+   FREE_ch="all"
+   !
  else
    !
-   if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,"v3","clean",1)
-   if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,"v3","clean",1)
-#if defined _QED
-   if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,"v3","clean",1)
-#endif
+   FREE_ch="v3"
    !
  endif
+ !
+ if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
+ if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
+ if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
+ if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
  !
  contains
    !

@@ -131,10 +131,19 @@ module collision
  !
  contains
    !
-   subroutine COLLISIONS_naming( SC_kind )
-     use global_XC,     ONLY:SC_COH,SC_HARTREE,SC_SEX,SE_GW_QED,SE_GW_NEQ,SC_FOCK,SC_COHSEX
-     integer :: SC_kind
+   subroutine COLLISIONS_naming( SC_kind , what )
+     !
+     use global_XC,     ONLY:SC_COH,SC_HARTREE,SC_SEX,SE_GW_QED,SE_GW_NEQ,SC_FOCK
+     !
+     integer            :: SC_kind
+     character(*)       :: what
+     !
+     integer, parameter :: nc=5
+     integer            :: i_c,local_kind(nc)
+     character(schlen)  :: local_name(nc)
+     !
      if (SC_kind==0) then
+       !
        COH_collisions%kind=SC_COH
        COH_collisions%name="COH"
        HXC_collisions%kind=SC_HARTREE+SC_SEX
@@ -143,23 +152,27 @@ module collision
        P_collisions%name="Momentum"
        GW_NEQ_collisions%kind=SE_GW_NEQ
        GW_NEQ_collisions%name="GW_NEQ"
-     else
-       if (SC_kind==SC_FOCK) then
-         HXC_collisions%kind=SC_FOCK
-         HXC_collisions%name="FOCK"
-       endif
-       if (SC_kind==SC_FOCK+SC_HARTREE) then
-         HXC_collisions%kind=SC_FOCK+SC_HARTREE
-         HXC_collisions%name="HARTREE+FOCK"
-       endif
-       if (SC_kind==SC_SEX .or. SC_kind==SC_COHSEX) then
-         HXC_collisions%kind=SC_SEX
-         HXC_collisions%name="SEX"
-       endif
-       if (SC_kind==SC_SEX+SC_HARTREE .or. SC_kind==SC_COHSEX+SC_HARTREE) then
-         HXC_collisions%kind=SC_SEX+SC_HARTREE
-         HXC_collisions%name="HARTREE+SEX"
-       endif
+       !
+     else if (what=="HXC") then
+       !
+       HXC_collisions%kind=0
+       HXC_collisions%name=" "
+       !
+       local_kind=(/SC_FOCK,SC_SEX,SC_Hartree,SC_FOCK+SC_Hartree,SC_SEX+SC_Hartree/)
+       local_name(1)="FOCK"
+       local_name(2)="SEX"
+       local_name(3)="HARTREE"
+       local_name(4)="HARTREE+FOCK"
+       local_name(5)="HARTREE+SEX"
+       !
+       do i_c=1,nc
+         if (SC_kind==local_kind(i_c).or.SC_kind==local_kind(i_c)+SC_COH) then
+           HXC_collisions%kind=local_kind(i_c)
+           HXC_collisions%name=local_name(i_c)
+           return
+         endif
+       enddo
+       !
      endif
    end subroutine
    !

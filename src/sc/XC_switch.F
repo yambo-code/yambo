@@ -176,6 +176,12 @@ subroutine XC_switch()
          l_sc_V_is_local=.false.
          l_sc_XC_is_local=.false.
          SC_kind=SC_kind+SC_SEX
+       case('COHSEX')
+         l_sc_coh=.true.
+         l_sc_sex=.true.
+         l_sc_V_is_local=.false.
+         l_sc_XC_is_local=.false.
+         SC_kind=SC_kind+SC_SEX+SC_COH
        case ('none')
          call warning("NULL SC potential! ")
        case default

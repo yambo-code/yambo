@@ -42,7 +42,7 @@ subroutine SC_start_and_restart(X,E)
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
- use collision,      ONLY:COLLISIONS_naming
+ use collision,      ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  !
  implicit none
  type(levels) ::E
@@ -214,6 +214,10 @@ subroutine SC_start_and_restart(X,E)
    call msg('s' ,'[SC] Extented collisions Used')
    call msg('r' ,'[SC] Extented collisions              :',l_use_Hxc_collisions)
    COHSEX_use_empties=.TRUE.
+   if (COLLISIONS_have_HARTREE) then
+     call warning(" [COLLISIONS] Found Hartree collisions. Preconditioning switched-off")
+     SC_preconditioning="none"
+   endif
  endif
  !
 end subroutine SC_start_and_restart

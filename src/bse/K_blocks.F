@@ -46,6 +46,8 @@ subroutine K_blocks( )
  !
  implicit none
  !
+#include <yambo_common.h>
+ !
  ! Work Space
  !
  integer    :: i_T,j_T,i_loop,tot_size,i_block
@@ -57,7 +59,7 @@ subroutine K_blocks( )
  do i_loop=1,2
    !
    if (i_loop==2) then
-     allocate(BS_blk(n_BS_blks))
+     YAMBO_ALLOCATE(BS_blk(n_BS_blks))
    endif
    !
    N_Ts_total  =0
@@ -73,7 +75,7 @@ subroutine K_blocks( )
          n_BS_blks=n_BS_blks+1
          !
          if (i_loop==2) then
-           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           YAMBO_ALLOCATE(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
            BS_blk(n_BS_blks)%mat=cZERO
            tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
            BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
@@ -93,7 +95,7 @@ subroutine K_blocks( )
          n_BS_blks=n_BS_blks+1
          !
          if (i_loop==2) then
-           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           YAMBO_ALLOCATE(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
            tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
            BS_blk(n_BS_blks)%mat=cZERO
            BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)

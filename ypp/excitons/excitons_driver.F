@@ -168,9 +168,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    ! Loading tables and eigenvectors
    !
-   allocate(BSS_eh_table(BS_H_dim,3+n_sp_pol-1),BS_mat(BS_H_dim,BS_H_dim))
+   allocate(BSS_eh_table(BS_H_dim,3+n_sp_pol-1),BS_mat(BS_H_dim,BSS_n_eig))
    call mem_est("BSS_eh_table",(/(3+n_sp_pol-1)*BS_H_dim/),(/IP/))
-   call mem_est('BS_mat',(/BS_H_dim**2/))
+   call mem_est('BS_mat',(/BS_H_dim,BSS_n_eig/))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
    io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)

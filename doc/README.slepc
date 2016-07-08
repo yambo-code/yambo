@@ -1,0 +1,55 @@
+#############################################################
+#
+# SLEPC for diagonalization of the BSE Hamiltonian in yambo
+# by Henrique Miranda 8/06/2016
+#
+#############################################################
+
+1. Introduction
+
+SLEPc is a software library for the solution of large scale sparse eigenvalue problems on parallel computers.
+http://slepc.upv.es/
+
+To run it use -y s instead of -y h or -y d as argument to yambo.
+For the moment there is only one option to change the number of eigenvalues to compute: BSSNEig.
+The default is to calculate 1% of the states of the hamiltonian.
+We can add some other variables for better control.
+After getting the eigenvalues and eigenstates you can use ypp normally (of course less states are present).
+
+2. Installation
+
+To install SLEPC you need to install PETSC.
+Here are the commands I used to configure.
+
+./configure \
+ --with-blas-lapack-lib='-L/opt/local/lib/ -lopenblas'\
+ --with-scalar-type="complex" --with-precision="single"
+
+Follow the instructions after the compilation and save the PETSC_DIR and PETSC_ARCH variables
+
+Then you can install SLEPC specifying the PETSC_DIR and PETSC_ARCH variables:
+
+PETSC_DIR=/Users/henrique.pereira/software/petsc-3.6.4 PETSC_ARCH=arch-darwin-c-debug ./configure
+
+The final step is to configure yambo. In my case I used:
+
+PETSC_DIR=/Users/henrique.pereira/software/petsc-3.6.4
+SLEPC_DIR=/Users/henrique.pereira/software/slepc-3.6.3
+../configure \
+ --enable-keep-src \
+ --enable-debug \
+ --enable-msgs-comps \
+ --without-editor \
+ --with-fft-libs="-L/opt/local/lib -lfftw3 -lfftw3f"\
+ --with-netcdf-libs="-L/opt/local/lib -lnetcdff -L/opt/local/lib -Wl,-headerpad_max_install_names -lnetcdf -lnetcdf -I/opt/local/include -pipe -Os -L/opt/local/lib /opt/local/lib/libhdf5_hl.a /opt/local/lib/libhdf5.a -L/opt/local/lib -Wl,-headerpad_max_install_names -lz -ldl -lm -lcurl"\
+ --with-netcdf-includedir="/opt/local/include"\
+ --with-blas-libs="-L/opt/local/lib -lopenblas"\
+ --with-lapack-libs="-L/opt/local/lib -lopenblas"\
+ --with-slepc-libs="-L${SLEPC_DIR}/arch-darwin-c-debug/lib -lslepc"\
+ --with-petsc-libs="-L${PETSC_DIR}/arch-darwin-c-debug/lib -lpetsc"\
+ --with-slepc-include="-I$SLEPC_DIR/include -I$SLEPC_DIR/arch-darwin-c-debug/include -I/opt/local/include/mpich-gcc47"\
+ --with-petsc-include="-I$PETSC_DIR/include -I$PETSC_DIR/arch-darwin-c-debug/include"\
+ --with-iotk-path="/Users/henrique.pereira/software/espresso-5.2.1/iotk"\
+ --with-libxc-libs="-L/usr/local/lib -lxc"\
+ --with-libxc-includedir="/usr/local/include"\
+ --with-mpi-libs="-L/opt/local/lib/mpich-gcc47/ -lmpi"

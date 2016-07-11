@@ -32,3 +32,27 @@ git add configure
 git add include/version.inc
 EOF
 chmod +x .git/hooks/pre-commit
+<<<<<<< HEAD:sbin/git_hooks.sh
+=======
+#
+# 2. "Prepare commit msg"
+#
+cat <<EOF > .git/hooks/prepare-commit-msg
+#!/bin/bash
+SOB=\$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/ \1/p')
+./sbin/make_message.pl -p "\$SOB"
+echo " " >> \$1
+cat commit.msg >> \$1
+rm commit.msg
+EOF
+chmod +x .git/hooks/prepare-commit-msg
+#
+# 3. git config
+#
+git config merge.keepTheirs.driver "cp -f %B %A"
+git config merge.commit no
+git config core.editor "vim"
+git config pull.rebase true
+
+
+>>>>>>> master:sbin/git_configure_and_hooks.sh

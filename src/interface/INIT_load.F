@@ -34,7 +34,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
-&                        QP_n_G_bands,QP_ng_Sx,QP_ng_SH,GW_terminator_E,GW_terminator_Kind,&
+&                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold
  use LIVE_t,        ONLY:nhash
@@ -62,7 +62,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! to be moved in mod hamiltonian
  use SC,            ONLY:SC_potential,OEP_approx
  ! to be moved in defined _SC only
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands,SC_preconditioning
 #endif
 #if defined _SC && !defined _RT
  use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
@@ -247,10 +247,19 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transition reduction',QP_cg_percent)
  call it(defs,'HARRLvcs', '[HA] Hartree  RL components',QP_ng_SH,G_unit)
  call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
+ call it(defs,'CORRLvcs', '[GW] Correlat RL components',QP_ng_Sc,G_unit)
 #if defined _QED
  call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)
 #endif
+#if defined _SC
+ call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands,verb_level=V_sc)
+ call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_sc)
+ call it('f',defs,'ALLGexx', '[XX] Force the use use all RL vectors for the exchange part',verb_level=V_sc)
+ call it('f',defs,'ALLGHAR', '[HA] Force the use use all RL vectors for the Hartree potential',verb_level=V_sc)
+#else
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
+ call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
+#endif
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit)
@@ -262,8 +271,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")',GW_terminator_E,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
- call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
- call it('f',defs,'ALLGHAR', '[HA] Force the use use all RL vectors for the Hartree potential',verb_level=V_qp)
  !
  ! Xs Xd Xp
  !
@@ -314,7 +321,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
+#if !defined _SC
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
+#endif
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
  call it('f',defs,'Reflectivity', '[BSS] Compute reflectivity at normal incidence',verb_level=V_resp)
  call it('f',defs,'BSSPertWidth', '[BSS] Include QPs lifetime in a perturbative way',verb_level=V_resp)
@@ -390,7 +399,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'RTBands',    '[RT] Bands',RT_bands)
  !
- call TMP_MIRROR_bands( )
+ call TMP_mirror_bands( )
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
@@ -576,13 +585,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  !
- call TMP_MIRROR_bands( )
+ call TMP_mirror_bands( )
  !
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
- call it('f',defs,'TF_precondition','[SC] Thomas Fermi precondition in density',verb_level=V_sc)
- call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters) 
+ call it(defs,'SC_precondition','[SC] Kind of preconditionin: thomas-fermi, simple, none',SC_preconditioning,verb_level=V_sc)
+ call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters,verb_level=V_qp) 
  call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
  call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
  !
@@ -598,7 +607,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
  !
- call TMP_MIRROR_bands( )
+ call TMP_mirror_bands( )
  !
  call it(defs,'HXC_Potential', '[SC] SC HXC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
@@ -609,7 +618,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #if defined _RT
  !
- call TMP_MIRROR_bands( )
+ call TMP_mirror_bands( )
  !
 #endif
  ! 

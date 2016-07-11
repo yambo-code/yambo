@@ -31,7 +31,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
  use global_XC,     ONLY:SC_FOCK,global_XC_string,EXT_NONE,SE_NONE,SC_COH,SC_SEX,&
-&                        SE_GW_NEQ,SE_GW_QED,SC_HARTREE
+&                        SE_GW_NEQ,SE_GW_QED,SC_HARTREE,SC_COHSEX
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use SC,            ONLY:SC_X_size,SC_X_bands

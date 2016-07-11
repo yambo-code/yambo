@@ -427,7 +427,7 @@ module real_time
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
+     use SC,             ONLY:V_hartree_sc,l_sc_V_is_local,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol

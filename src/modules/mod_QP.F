@@ -41,6 +41,7 @@ module QP_m
  integer           :: QP_nb
  integer           :: QP_nk
  integer           :: QP_n_states
+ integer           :: QP_ng_Sc
  integer           :: QP_ng_Sx
  integer           :: QP_ng_SH
  integer           :: QP_n_G_bands(2)

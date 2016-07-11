@@ -40,8 +40,7 @@ subroutine RT_time_configuration_setup(what)
  logical  :: UNIFORM
  real(SP) :: STEP,TIME,TIME_diff
  !
- if(JPC_RT_IO_t%N> 1) STEP  = (JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-JPC_RT_IO_t%Time(JPC_RT_IO_t%N-1))
- if(JPC_RT_IO_t%N==1) STEP  = 1._SP
+ STEP  = (JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-JPC_RT_IO_t%Time(JPC_RT_IO_t%N-1))
  STEP  = max(TIME_adjust(STEP),STEP)
  TIME  = TIME_adjust(JPC_RT_IO_t%Time(JPC_RT_IO_t%N))
  !

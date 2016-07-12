@@ -51,12 +51,6 @@ subroutine ps_convert(rvar,ivar,v_name)
  enddo
  if (len_trim(v_line)==0) return
  !
- ! Then the Unit is read and value scaled.
- ! At the same time I have to redefine the variable Unit
- !
- ipos=index(trim(v_line),trim(v_name))+len_trim(v_name)+1
- v_line=trim(v_line(ipos:))
- !
  ! Get the standard unit (if any)
  !
  call set_itp_unit(v_s_unit,-1)

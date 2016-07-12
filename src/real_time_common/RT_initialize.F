@@ -305,7 +305,7 @@ subroutine RT_initialize(E,k,q)
      call PLASMA_parallel_setup(EH_gas)
    endif
    !
-   if(io_COLLs) call COLLISIONS_load(.TRUE.)
+   if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
  !

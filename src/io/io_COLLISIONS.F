@@ -30,8 +30,9 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
+ use xc_functionals,ONLY:GS_xc_kind
  use global_XC,     ONLY:SC_FOCK,global_XC_string,EXT_NONE,SE_NONE,SC_COH,SC_SEX,&
-&                        SE_GW_NEQ,SE_GW_QED,SC_HARTREE,SC_COHSEX
+&                        SE_GW_NEQ,SE_GW_QED,SC_HARTREE
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use SC,            ONLY:SC_X_size,SC_X_bands
@@ -73,7 +74,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  if(COLL%kind==SC_COH) then
    db_name = "COLLISIONS_COH"
- elseif(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+ elseif(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind==GS_xc_kind.or.&
+&       COLL%kind>=SC_HARTREE) then
    db_name = "COLLISIONS_HXC"
  elseif(COLL%kind==SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"

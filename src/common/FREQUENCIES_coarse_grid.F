@@ -60,7 +60,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  ! DEFAULT TRESHOLD
  !
  real(SP), parameter :: default_treshold=1.E-5
- real(SP), parameter :: default_treshold_ini=3.E-4
+ real(SP), parameter :: default_treshold_ini=1.E-5
  !
  ! Work Space
  ! 
@@ -128,8 +128,11 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    ipos(1,1)=i_cg
    ipos(bg_sorted_x(1),2)=1
    do i_bg=2,npts
+     !XXXXXXXXXX
+     ! I have defined df adding the abs. The transition energy for v--<v
+     ! transitions can be negative 
      df=bg_sorted(i_bg)-bg_sorted(i_bg_ref)
-     if (df>tresh .or. (lterm.and.abs(in_sorted(i_bg)-in_sorted(i_bg_ref))>tresh_ini) ) then
+     if (abs(df)>tresh .or. (lterm.and.abs(in_sorted(i_bg)-in_sorted(i_bg_ref))>tresh_ini) ) then
        i_cg=i_cg+1
        i_bg_ref=i_bg
      endif

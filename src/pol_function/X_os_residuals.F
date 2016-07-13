@@ -32,12 +32,12 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
- use X_m,           ONLY:X_t,DIP_projected,X_poles_tab
- use parallel_m,    ONLY:PAR_Xk_bz_index
+ use X_m,           ONLY:X_t,DIP_projected,X_poles_tab,  l_X_terminator 
+ use parallel_m,    ONLY:PAR_Xk_bz_index,myid
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp !,G_m_G
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
  use collision,     ONLY:elemental_collision
  !
  implicit none
@@ -51,11 +51,19 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  ! Work sapce
  !
- complex(SP)              :: rhotw_save(X%ng),Z_ !,eet_factor(X%ng,X%ng)
+ ! AF: rhotw_save defined as automatic goes to stack and can harm 
+ !     (stack overflow, causing random crashes of the code)
+ !     it would be best to define it as allocatable (less efficient if too
+ !     many calls are done, though)
+ complex(SP)              :: rhotw_save(Xo_scatt%ngrho),Z_
  real(SP)                 :: Z_eh_occ
+ logical                  :: l_X_term_vv, on_off_term1, on_off_term2, on_off_term3
  integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
-&                            isp,iv,ic,isave(4),n_poles,i_bg !,alloc_err
+&                            isp,iv,ic,isave(4),n_poles,i_bg
  !
+! XXX
+ real(SP)                 :: norm
+! XXXX
  isave=0
  !
  n_poles = sum(bare_grid_N(1:i_cg-1))
@@ -65,8 +73,8 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  Z_=cONE
  !
 ! XXXX
-WRITE(200,"()")
-WRITE(200,"(a,i5)") "DEBUG: i_cg = ", i_cg 
+WRITE(200+myid,"()")
+WRITE(200+myid,"(a,i5)") "DEBUG: i_cg = ", i_cg 
 ! XXXX
 
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
@@ -90,10 +98,13 @@ WRITE(200,"(a,i5)") "DEBUG: i_cg = ", i_cg
    isp= Xk%sstar(ikpbz,2)
 
 ! XXXX
-WRITE(200,"(a,4i5,3f12.6)") "ik ic, ikp iv, E1, E2, T", ik, ic, ikp, iv, &
-         Xen%E(ic,ik,i_spin), Xen%E(iv,ikp,i_spin), &
-         Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)
+   WRITE(200+myid,"(a,4i5,3f12.6)") "icg, ik, ic, ikp iv, E1, E2, T", i_cg, ik, ic, ikp, iv, &
+&           Xen%E(ic,ik,i_spin), Xen%E(iv,ikp,i_spin), &
+&          Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)
 ! XXXX
+   !
+   l_X_term_vv=(ic>=X%ib(1) .and. ic<=Xen%nbm)
+   
 
    !
    ! Note the renormalization of the Z_eh_occ=f(1-f)*Z factor
@@ -110,6 +121,14 @@ WRITE(200,"(a,4i5,3f12.6)") "ik ic, ikp iv, E1, E2, T", ik, ic, ikp, iv, &
    Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin)) &
    &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
+   !XXXXXXXXXXX
+   if (l_X_terminator.and.l_X_term_vv) then
+     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin) &
+   &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+   endif  
+   WRITE(700+myid, "(a, i5, i5, 3f12.6)") "iv, ic, Xen%f(iv,ikp,i_spin), Xen%f(ic,ik,i_spin),  Z_eh_occ ", iv,ic, Xen%f(iv,ikp,i_spin), & 
+   &                                                     Xen%f(ic,ik,i_spin),  Z_eh_occ 
+   !XXXXXXXXXX
    ! Scattering CALL
    !-----------------
    !
@@ -120,6 +139,9 @@ WRITE(200,"(a,4i5,3f12.6)") "ik ic, ikp iv, E1, E2, T", ik, ic, ikp, iv, &
      ik_bz_mem=PAR_Xk_bz_index(ikbz)
      if (.not. X%ng==1) then
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
+         !XXXXX
+         WRITE(650+myid, "(a, i5, i5, i5)") "iq, Xo_scatt%is_iv , Xo_scatt%os_ic", iq, iv, ic  
+         !XXXXX
          call scatter_Bamp(Xo_scatt)
          rhotw_save=Xo_scatt%rhotw
          isave=(/iv,ic,ik,i_spin/)
@@ -134,11 +156,19 @@ WRITE(200,"(a,4i5,3f12.6)") "ik ic, ikp iv, E1, E2, T", ik, ic, ikp, iv, &
          enddo
        endif
      endif
-     Xo_scatt%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
+     !
+     Xo_scatt%rhotw(1)=cZERO
+     ! only when ic is in conduction (as it should, except
+     ! special cases when dealing with the X_terminator)
+     if (.not.l_X_term_vv) &
+&       Xo_scatt%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
    else
      Xo_scatt%is=(/ic,ik,is,i_spin/)
      Xo_scatt%os=(/iv,ikp,isp,i_spin/)
      Xo_scatt%qs=(/qindx_X(iq,ikbz,2),iq,1/)
+     !XXXXXXX
+   !  WRITE(660, "(a, i5, i5, i5, i5, i5, i5)") "iq, , X%ng, Xo_scatt%i_ivs , Xo_scatt%os_ic, X%ib(1), Xen%nbm", iq, X%ng,  iv,ic, X%ib(1), Xen%nbm 
+     !XXXXXX 
      call scatter_Bamp(Xo_scatt)
    endif
    !
@@ -149,6 +179,58 @@ WRITE(200,"(a,4i5,3f12.6)") "ik ic, ikp iv, E1, E2, T", ik, ic, ikp, iv, &
      call V_by_V_plus_V(ig2,Z_eh_occ*Xo_scatt%rhotw(ig2),conjg(Xo_scatt%rhotw(:ig2)),Xo_res(:ig2,ig2))
    enddo
    !$omp end parallel do
+
+   !
+   ! add terminator specific corrections
+   ! (ic is running in valence)
+   !
+   if (l_X_terminator.and.l_X_term_vv.and.iv==ic) then
+     !
+     ! XXXXX
+ !    WRITE(1000+myid, "(a, 5i5 )") "iq, iv, ic, ik, i_spin", iq, ic, iv, ik, i_spin
+     !
+     Xo_scatt%is = (/iv,ik,1,i_spin/)
+     Xo_scatt%os = (/iv,ik,1,i_spin/)
+     Xo_scatt%qs = (/1,1,1/)
+     !
+     if (X%ng==1) then
+       Xo_scatt%rhotw(1)=cONE 
+     else
+       call scatter_Bamp(Xo_scatt)
+     endif
+     !
+     ! symm
+     rhotw_save=Xo_scatt%rhotw
+     !
+     !$omp parallel do default(shared), private(ig1,ig2)
+     do ig1=1,X%ng
+       ig2=g_rot(sop_inv(is),ig1)
+       Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
+     enddo
+     !$omp end parallel do
+     if (is>nsym/(i_time_rev+1)) then
+       do ig1=1,X%ng
+         Xo_scatt%rhotw(ig1)=conjg(Xo_scatt%rhotw(ig1))
+       enddo
+     endif
+     !
+     on_off_term1=.true.
+     norm=0.0
+     if (on_off_term1) then             ! 
+       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:norm)
+       do ig2=1,X%ng
+       do ig1=1,ig2
+         norm=norm+real(Xo_scatt%rhotw(G_m_G(ig2,ig1))*conjg(Xo_scatt%rhotw(G_m_G(ig2,ig1))))
+         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
+        WRITE(3000+myid, "(a)") "sono qua" 
+       enddo
+       enddo
+       !$omp end parallel do 
+       !
+       WRITE(2000+myid, "(a, 2i5, 2f15.9 )") "iv, ik, norm", iv, ik, norm
+     endif
+     !
+   endif
    !
  enddo loop_bare_grid
  !

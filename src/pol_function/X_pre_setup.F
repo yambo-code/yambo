@@ -23,7 +23,7 @@
 !
 subroutine X_pre_setup(Xen,X)
  !
- use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,  l_X_terminator
  use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
  use com,           ONLY:error
@@ -65,7 +65,7 @@ subroutine X_pre_setup(Xen,X)
  !
  ! CHO checks
  !
- if (l_gw0.and.l_cohsex) X%ng=eval_G_minus_G(X%ng,0)
+ if ((l_gw0.and.l_cohsex).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0)
  !
  ! Fxc Checks
  !

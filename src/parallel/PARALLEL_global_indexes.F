@@ -63,7 +63,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
 &                        PAR_IND_Kk_ibz_ID,PAR_IND_DIPk_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use X_m,           ONLY:X_t
+ use X_m,           ONLY:X_t,l_X_terminator, X_terminator_Kind
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,&
 &                        l_real_time,l_elphoton_corr
  use matrix_operate,ONLY:UP_matrix_index
@@ -105,6 +105,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  integer              :: i_k,i_k_bz,X_type,ib1,ib2,i_field,nb_mat
  logical              :: reset_all
  character(10)        :: WHAT,WHATp
+ !
+ !
+ !XXXXXXXX
+ !l_X_terminator = X_terminator_Kind/='none'
+ !XXXXXXXX
+ !
  !
  ! Resets...
  !
@@ -1024,8 +1030,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Response functions conduction bands
    !
-   call PARALLEL_index(PAR_IND_CON_BANDS_X(X_type),(/n_c_bands(2)/),low_range=(/n_c_bands(1)/),&
-&                      COMM=PAR_COM_CON_INDEX(X_type),CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+! XXXXX
+   if (l_X_terminator) then
+       call PARALLEL_index(PAR_IND_CON_BANDS_X(X_type),(/n_c_bands(2)/),low_range=(/n_v_bands(1)/),&
+&                          COMM=PAR_COM_CON_INDEX(X_type),CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   else
+       call PARALLEL_index(PAR_IND_CON_BANDS_X(X_type),(/n_c_bands(2)/),low_range=(/n_c_bands(1)/),&
+&                          COMM=PAR_COM_CON_INDEX(X_type),CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   endif
+   !
    PAR_IND_CON_BANDS_X_ID(X_type)=PAR_COM_CON_INDEX(X_type)%CPU_id
    !
    call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&

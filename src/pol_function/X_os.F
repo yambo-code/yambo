@@ -56,7 +56,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use interfaces,    ONLY:WF_load
  use D_lattice,     ONLY:i_space_inv
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_X,bz_samp
+ use R_lattice,     ONLY:qindx_X,bz_samp, G_m_G
  use memory_m,      ONLY:mem_est
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
@@ -81,7 +81,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  character(schlen)        :: live_t_string
  integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
- integer                  :: mutexid
+ integer                  :: mutexid,ngrho
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
@@ -94,10 +94,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  Xo             = cZERO
  GreenF         = cZERO
  drude_GreenF   = cZERO
- l_X_terminator = X_terminator_Kind/='none'
+! l_X_terminator = X_terminator_Kind/='none'
  !
- if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
-&   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
+! if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
+!&   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
 
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
@@ -121,7 +121,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! WF load
  !=========
- if(.not.skip_WF_load) call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+ ngrho=X%ng
+ if (l_X_terminator) ngrho=maxval(G_m_G)
+ !
+ if(.not.skip_WF_load) call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
 #if defined _TIMING
  call timing('Xo (procedure)',OPR='start')
@@ -129,6 +132,15 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Poles tabulation
  !==================
+ ! 
+ !XXXXXX
+ if(l_X_terminator) then
+   cutoff=minval(Xen%E(X%ib(2),:,:))
+   X_term_E_offset=cutoff+X_terminator_E
+   WRITE(300, "(a, i5, 3f12.6)") "X%ib(2),  X_terminator_E ,  cutoff,X_term_E_offset", &
+        X%ib(2), X_terminator_E, cutoff,  X_term_E_offset
+ endif
+ !XXXXX
  if (iq/=current_iq) then
    !
    n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
@@ -138,9 +150,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
-! XXXX
-WRITE(300,*) "DEBUG T_term", l_X_terminator
-! XXXX
+   ! XXXX
+   WRITE(300,*) "DEBUG T_term", l_X_terminator
+   ! XXXX
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
    if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
    !
@@ -149,10 +161,13 @@ WRITE(300,*) "DEBUG T_term", l_X_terminator
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
    deallocate(X_poles,X_Ein_poles)
    !
+    WRITE(300, "(a, i8)") "sono qui, n_poles=", n_poles 
+   !
    if (self_detect_E_range) then
      call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
      Xw%er(1)=minval(minmax_ehe(1,:))
      Xw%er(2)=maxval(minmax_ehe(2,:))
+   WRITE(300, "(a, 2f12.6)") "Xw%er(1), Xw%er(2)",  Xw%er(1),  Xw%er(2)
    endif
    !
    ! This call is needed as Xw%p is deallocated inside
@@ -165,14 +180,6 @@ WRITE(300,*) "DEBUG T_term", l_X_terminator
  !
  ! further terminator setup
  !
- if(l_X_terminator) then
-   cutoff=minval(Xen%E(X%ib(2),:,:))
-   X_term_E_offset=cutoff+X_terminator_E
-   WRITE(300, "(a, i5, 3f12.6)") "X%ib(2),  X_terminator_E ,  cutoff, X_term_E_offset", &
-        X%ib(2), X_terminator_E, cutoff,  X_term_E_offset
-   ! XXX
- endif
-
  !
  ! GPL_EXCLUDE_START
  !
@@ -234,7 +241,7 @@ WRITE(300,*) "DEBUG T_term", l_X_terminator
  call mem_est("Xo_WS",(/X%ng**2 * n_outthr/))
  allocate(Xo_res(X%ng,X%ng))
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
- call elemental_collision_alloc(Xo_scatt,NG=X%ng,TITLE="Xo")
+ call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo")
  !
  ! MAIN LOOP
  !===========

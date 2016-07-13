@@ -31,7 +31,7 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
  use electrons,      ONLY:n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:DIP_projected,X_alloc,X_t,DIP_iR,DIP_P,global_gauge
+ use X_m,            ONLY:DIP_projected,X_alloc,X_t,DIP_iR,DIP_P,global_gauge, l_X_terminator
  use vec_operate,    ONLY:v_norm
  use com,            ONLY:secnm
 #if defined _KERR
@@ -49,7 +49,7 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
  !
  ! Work Space
  !
- integer                   :: ik,ik_bz,ic,iv,is,i_sp_pol,ik_mem,ik_bz_mem,i_star
+ integer                   :: ik,ik_bz,ic,iv,is,i_sp_pol,ik_mem,ik_bz_mem,i_star, ic_min
  real(SP)                  :: field_dir_rot(3)
  complex(SP)               :: dipole(3)
  logical                   :: t_rev,use_dip_iR,use_dip_P
@@ -80,12 +80,18 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
  ! This is q       *iR in the length gauge
  !         q_versor*P  in the velocity
  !
+ !XXXXXXX
+ !ic_min=X%ib_lim(2)
+ !if (l_X_terminator) ic_min=X%ib(1)
+ !
  call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
+ !call X_alloc('DIP_projected',(/ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
  DIP_projected = cZERO
  !
 #if defined _KERR
  if(l_kerr) then
    call KERR_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
+   !call KERR_alloc('DIP_projected',(/ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
    DIP_projected_r90 = cZERO
  endif
 #endif

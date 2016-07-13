@@ -268,7 +268,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
  call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
- call it(defs,'XEnComp',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
+ call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
  !
  ! BSE/BSK

@@ -453,7 +453,7 @@ if test ! -d bin ; then mkdir bin ; fi ;
 if test ! -d include ; then mkdir include ; fi
 if test ! -d lib ; then mkdir lib ; fi
 #
-if [[ "$prefix" != "$srcdir" ]] ; then
+if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi
  if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
  if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi

@@ -45,7 +45,7 @@ echo " " >> \$1
 cat commit.msg >> \$1
 rm commit.msg
 EOF
-chmod +x .git/hooks/pre-commit
+chmod +x .git/hooks/prepare-commit-msg
 #
 # 3. git config
 #

@@ -53,6 +53,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G
  use hamiltonian,   ONLY:B_mat_index
  use fft_m,         ONLY:fft_size
+ use xc_functionals,ONLY:magn
  !
  implicit none
  !
@@ -195,9 +196,10 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
  endif
  !
- if(l_tddft) then
-    Co=4._SP*pi/DL_vol/real(q%nbz,SP)
+ if (l_tddft) then
+   Co=4._SP*pi/DL_vol/real(q%nbz,SP)
    allocate(F_xc(fft_size,n_spin,n_spin))
+   if (n_spin>1) allocate(magn(fft_size,3))
    call XC_potential_driver(E,K,WF_kind,WF_xc_functional,2)
  endif
  !
@@ -287,6 +289,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    call elemental_collision_free(iscp_H)
    call elemental_collision_free(isc_XC)
    call elemental_collision_free(iscp_XC)
+ endif
+ !
+ if (l_tddft) then
+   deallocate(F_xc)
+   if (n_spin>1) deallocate(magn)
  endif
  !
 #if defined _TIMING

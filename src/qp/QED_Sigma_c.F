@@ -242,6 +242,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call live_timing( )
  !
  call PP_redux_wait(QP_Sc)
+ call PP_redux_wait(QP_dSc)
  !
  ! Symmetrize
  !

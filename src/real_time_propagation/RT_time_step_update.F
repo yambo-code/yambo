@@ -29,7 +29,7 @@ subroutine RT_time_step_update( )
  use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
-&                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point
+&                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step
  use RT_control,     ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
 &                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type,TIME_adjust
  use com,            ONLY:msg
@@ -39,7 +39,7 @@ subroutine RT_time_step_update( )
  ! 
  integer           :: ib,ibp,ik,nT_updated,i1,n_mesgs
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
- real(SP)          :: dT_now,dT_previous
+ real(SP)          :: dT_now,dT_previous,dT_next
  integer, external :: RT_Lifetimes_evaluation_plan
  !
  if (.not.RT_do_it('deltaT')) return
@@ -68,10 +68,11 @@ subroutine RT_time_step_update( )
  !
  ERROR=(dG(1)+dG_dT_max(1)*(dT_previous+dT_now)-dG(3))/dG(3)
  !
- if (abs(ERROR)<NE_step_update_treshold/100..and.dT_previous*2._SP>RT_dyn_step.and.&
-&    dT_previous*2._SP<100*RT_step) then
+ dT_next=dT_previous*2._SP
+ !
+ if (all((/abs(ERROR)<NE_step_update_treshold/100,dT_next>RT_dyn_step,dT_next<RT_MAX_step/))) then
    !
-   RT_dyn_step=dT_previous*2._SP
+   RT_dyn_step=dT_next
    !
    call SETUP_RT_IO_type(JPC_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.FALSE.)

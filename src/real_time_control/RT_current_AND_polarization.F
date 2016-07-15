@@ -35,14 +35,14 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:nel,levels,n_spin
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
-&                         RT_P,RT_magn,RT_P_prev,RT_nk
+&                         RT_P,RT_ETA,RT_magn,RT_P_prev,RT_nk
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_P,DIP_spin,global_gauge
+ use X_m,            ONLY:DIP_iR,DIP_P,ETA_circ,DIP_spin,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  !
- implicit none          
- ! 
+ implicit none
+ !
  type(bz_samp),     intent(in) :: k
  type(levels),      intent(in) :: E
  complex(SP),       intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -50,7 +50,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! Work Space
  !
- complex(SP)   :: RT_P_tmp(3)
+ !complex(SP)   :: RT_P_tmp(3)
  !
  if ( .not. l_NE_dynamics ) return
  !
@@ -74,9 +74,9 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! B : Polarization
  !
- call RT_average_operator(V_VALUE=RT_P_tmp, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
- RT_P    =RT_P_tmp/DL_vol
+ RT_P    =RT_P/DL_vol
  !
  ! B': Polarization as an integral of the current (to be fixed, it i not stable anyway)
  !
@@ -92,5 +92,11 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! D : Orbital magentization (to be coded)
  !
  !call RT_average_operator(V_VALUE=RT_magn,PV_MATRIX=DIP_L,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ !
+ ! E : Circular polarization factor
+ !     PRB 77, 235406 (2008)
+ !     Equation (4)
+ !
+ if(n_spin>1) call RT_average_operator(O_VALUE=RT_ETA,O_MATRIX=ETA_circ,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
 end subroutine RT_current_AND_polarization

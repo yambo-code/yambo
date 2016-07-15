@@ -54,7 +54,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
 &                         RT_df(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
 &                         RT_f_bare(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
 &                         RT_NEQ_Lifetime(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
-&                         RT_gamma_bare(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol)
+&                         RT_gamma_bare(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol,6)
  !
  real(SP),allocatable  :: spin_factors(:,:,:),magn_factors(:,:,:)
  !
@@ -150,16 +150,30 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      n_gamma=4
      call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
-&                                     RT_carriers%dGAMMA_E_P_Hole,RT_gamma(:,:,:,3),ch3_dummy,.TRUE.)
+&                                     RT_carriers%dGAMMA_E_P_Hole,RT_gamma(:,:,:,1),ch3_dummy,.TRUE.)
      call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
-&                                     RT_carriers%dGAMMA_E_P_Electron,RT_gamma(:,:,:,4),ch3_dummy,.TRUE.)
+&                                     RT_carriers%dGAMMA_E_P_Electron,RT_gamma(:,:,:,2),ch3_dummy,.TRUE.)
      call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
-&                                     RT_carriers%dGAMMA_E_P_Ho_abs,RT_gamma(:,:,:,5),ch3_dummy,.TRUE.)
+&                                     RT_carriers%dGAMMA_E_P_Ho_abs,RT_gamma(:,:,:,3),ch3_dummy,.TRUE.)
      call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
-&                                     RT_carriers%dGAMMA_E_P_El_abs,RT_gamma(:,:,:,6),ch3_dummy,.TRUE.)
+&                                     RT_carriers%dGAMMA_E_P_El_abs,RT_gamma(:,:,:,4),ch3_dummy,.TRUE.)
+     if(i_T==1) then
+       call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                       RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
+&                                       RT_carriers%GAMMA_bare(:,3),RT_gamma_bare(:,:,:,1),ch3_dummy,.TRUE.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                       RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
+&                                       RT_carriers%GAMMA_bare(:,4),RT_gamma_bare(:,:,:,2),ch3_dummy,.TRUE.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                       RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
+&                                       RT_carriers%GAMMA_bare(:,5),RT_gamma_bare(:,:,:,3),ch3_dummy,.TRUE.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                       RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
+&                                       RT_carriers%GAMMA_bare(:,6),RT_gamma_bare(:,:,:,4),ch3_dummy,.TRUE.)
+     endif
    endif
    !
    if (l_elel_scatt) then
@@ -170,15 +184,20 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
 &                                     RT_carriers%dGAMMA_E_E_Electron,RT_gamma(:,:,:,n_gamma),ch3_dummy,.TRUE.)
+     if(i_T==1) then
+       call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                       RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
+&                                       RT_carriers%GAMMA_bare(:,1),RT_gamma_bare(:,:,:,n_gamma-1),ch3_dummy,.TRUE.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                       RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
+&                                       RT_carriers%GAMMA_bare(:,2),RT_gamma_bare(:,:,:,n_gamma-1),ch3_dummy,.TRUE.)
+     endif
    endif
    !
    if (l_ELPH_lifetimes.or.l_elel_scatt) then
      call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
 &                                     RT_carriers%NEQ_Lifetime,RT_NEQ_Lifetime(:,:,:),ch3_dummy,.TRUE.)
-     call Nearest_kpt_interpolation(RT_carriers%nk,kpt%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
-&                                     RT_carriers%kpt,kpt%pt,RT_carriers%k_weight,kpt%weights,&
-&                                     RT_carriers%GAMMA_bare,RT_gamma_bare(:,:,:),ch3_dummy,.TRUE.)
    endif
    !
    do i_s=1,QP_n_states
@@ -197,8 +216,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      data_to_plot(2)=RT_df(ib,ik,i_spin)
      !
      if (n_gamma>0) then
-       data_to_plot(2+1:2+n_gamma)=(RT_gamma_bare(ib,ik,i_spin)+RT_gamma(ib,ik,i_spin,:n_gamma))*HA2EV*1000._SP
-       data_to_plot(2+n_gamma+1)  =RT_NEQ_lifetime(ib,ik,i_spin)*HA2EV*1000._SP
+       data_to_plot(3:n_gamma+2)=(RT_gamma_bare(ib,ik,i_spin,:n_gamma)+RT_gamma(ib,ik,i_spin,:n_gamma))*HA2EV*1000._SP
+       data_to_plot(  n_gamma+3)= RT_NEQ_lifetime(ib,ik,i_spin)                                        *HA2EV*1000._SP
      endif
      !
      call msg('o '//trim(output_fname),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)

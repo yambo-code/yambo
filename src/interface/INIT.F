@@ -37,6 +37,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
+#if defined _SCALAPACK
+ use drivers,        ONLY:l_slk_test
+#endif
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset,n_spin

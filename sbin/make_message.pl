@@ -103,6 +103,7 @@ while($line = <VER>) {
 close(VER);
 $Revision=`git rev-list  --count HEAD`;
 $Hash    =`git rev-parse --short HEAD`;
+$Revision+=1000 ;
 #
 # Write the commit message
 #

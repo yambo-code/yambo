@@ -1,5 +1,5 @@
 FFT_more =
-#if defined _YPP_RT
+#if defined _YPP_RT || defined _YPP_NL
 FFT_more = fft_1d.o
 #endif
 #if defined _YPP_RT && !defined _FFTW

@@ -28,7 +28,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
-&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
+&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
 &                        X_en_comp,global_gauge,Dipole_approach
  use com,           ONLY:grid_paths
@@ -48,7 +48,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_inversion_PERT_FULL_ratio,BSS_Wd,Inversion_treshold
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
-&                        FXC_SVD_digits
+&                        FXC_SVD_digits,FXC_PF_alpha
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use functions,     ONLY:bose_E_cut
  use parallel_m,    ONLY:n_log_CPUs
@@ -81,6 +81,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
+#if defined _NL
+ use nl_optics,     ONLY:NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha
+#endif 
+#if defined _NL | defined _ELECTRIC
+ use fields,        ONLY:Efield
+#endif 
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
@@ -89,7 +95,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
 #if defined _OPENMP
- use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
+ use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL
 #endif
 #if defined _SURF
  use bulkeps,              ONLY:init_bulk
@@ -165,11 +171,17 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
+#if defined _NL
+ call it('r',defs,'nloptics',   '[R NL] Non-linear optics') 
+#endif
 #if defined _RT || defined _QED
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _MAGNETIC
  call it('r',defs,'magnetic','[R] Magnetic fields')
+#endif
+#if defined _ELECTRIC
+ call it('r',defs,'electric','[R] Static Electric Field')
 #endif
 #if defined _SURF
  call it('r',defs,'sursp',  '[R] Surface Spectroscopy ')
@@ -228,6 +240,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'DIP_Threads',     '[OPENMP/X] Number of threads for dipoles',n_threads_DIP)
  call it(defs,'SE_Threads',      '[OPENMP/GW] Number of threads for self-energy',n_threads_SE)
  call it(defs,'RT_Threads',      '[OPENMP/RT] Number of threads for real-time',n_threads_RT)
+ call it(defs,'NL_Threads',      '[OPENMP/NL] Number of threads for nl-optics',n_threads_NL)
 #endif
 #if defined _MPI 
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)
@@ -267,7 +280,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! Xs Xd Xp
  !
- call it(defs,'Chimod', '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
+ call it(defs,'Chimod', '[X] IP/Hartree/ALDA/LRC/PF/BSfxc',Chi_mode,protect=.FALSE.)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
@@ -324,6 +337,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'FxcGRLc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr,G_unit)
  call it(defs,'LRC_alpha','[TDDFT] LRC alpha factor',FXC_LRC_alpha)
+ call it(defs,'PF_alpha','[TDDFT] PF alpha factor approximation: CUR/EMP/RBO/JGM',FXC_PF_alpha)
  call it(defs,'LRC_beta', '[TDDFT] LRC beta factor',FXC_LRC_beta,verb_level=V_resp)
  !
  ! Optics: large Q momenta
@@ -464,6 +478,39 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #endif
  !
+ ! Non-linear Optics
+ !
+#if defined _NL
+ !
+ call it(defs,'NLstep',       '[NL] Real Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
+ call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1),Verb_level=V_nl_optics)
+ call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name,&
+&     Verb_level=V_nl_optics)
+ call it(defs,'NLCorrelation','[NL] Correlation ("IPA/RPA/TDDFT/LRC/LRW/JGM/SEX") ',NL_correlation)
+ call it(defs,'NLLrcAlpha',   '[NL] Long Range Correction',NL_LRC_alpha)
+ call it(defs,'NLDamping',    '[NL] Damping',NL_damping,unit=E_unit)
+ call it(defs,'NLEnRange',    '[NL] Energy range',NL_er,E_unit)
+ call it(defs,'NLEnSteps',    '[NL] Energy steps',n_frequencies)
+ call it('f',defs,'UseDipoles','[NL] Use Covariant Dipoles (just for test purpose)',verb_level=V_nl_optics)
+ call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
+ !
+ call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
+ call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
+ call it(defs,'ExtF_FrStep',          '[NL ExtF] Frequency step',Efield(1)%W_step,unit=E_unit,verb_level=V_nl_optics)
+ call it(defs,'ExtF_Damp',            '[NL ExtF] Damping',Efield(1)%damping,unit=Time_unit(1),verb_level=V_nl_optics)
+ call it(defs,'ExtF_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(1)%ef_name,& 
+&    verb_level=V_nl_optics)
+ call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1),               &
+&    verb_level=V_nl_optics)
+ !
+#endif
+ !
+#if defined _ELECTRIC
+ call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
+ call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit)
+ call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_sc)
+#endif
+ !
  ! SLK test
  !
 #if defined _SCALAPACK
@@ -545,7 +592,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
+#if defined _NL
  call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Covariant/Shifted grids]',Dipole_approach,verb_level=V_resp)
+ call it('f',defs,'EvPolarization',    '[Xd] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
+#else
+ call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Shifted grids]',Dipole_approach,verb_level=V_resp)
+#endif
  call it(defs,'ShiftedPaths',   '[Xd] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[Xd] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  !
@@ -585,6 +637,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters) 
  call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
  call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
+ call it('f',defs,'FrozeDensity','[NL] Do not update density (for testing purposes)',verb_level=V_sc)
+ ! 
+ ! SC [common with RT]
  !
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)

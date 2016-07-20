@@ -23,15 +23,16 @@
 !      
 subroutine DIPOLE_overlaps(Xk,X)
  !    
- use pars,              ONLY:SP,cZERO,pi
- use LIVE_t,            ONLY:live_timing
- use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,ng_closed,ng_vec
- use vec_operate,       ONLY:k_periodic_idx
- use X_m,               ONLY:X_t,DIP_S
- use electrons,         ONLY:n_spinor,n_sp_pol,n_spin
- use wrapper_omp,       ONLY:Vstar_dot_V_omp
- use wave_func,         ONLY:wf_ng
- use IO_m,              ONLY:IO_and_Messaging_switch
+ use pars,         ONLY:SP,cZERO,pi
+ use LIVE_t,       ONLY:live_timing
+ use R_lattice,    ONLY:k_map,bz_samp,WF_shifts,ng_closed,ng_vec
+ use vec_operate,  ONLY:k_periodic_idx
+ use X_m,          ONLY:X_t,DIP_S
+ use electrons,    ONLY:levels,n_spinor,n_sp_pol,n_spin
+ use wrapper_omp,  ONLY:Vstar_dot_V_omp
+ use wave_func,    ONLY:wf_ng
+ use parallel_m,   ONLY:PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID
+ use IO_m,         ONLY:IO_and_Messaging_switch
  !
  implicit none
  !
@@ -53,12 +54,14 @@ subroutine DIPOLE_overlaps(Xk,X)
  ng_closed=ng_vec
  call G_shells_finder()
  call IO_and_messaging_switch("+io_out")
- !  
+ !
  DIP_S=cZERO
  !
- call live_timing("Overlaps:",Xk%nbz)
+ call live_timing("Overlaps:",PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1))
  !
  do ikbz=1,Xk%nbz
+   !
+   if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
    !
    idx_k=k_map%k_map_inv(ikbz,:)
    !
@@ -113,7 +116,7 @@ subroutine DIPOLE_overlaps(Xk,X)
              do i_spinor=1,n_spinor
                i_spin=i_sp_pol+i_spinor-1
                DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)=DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)+ &
-                       &  Vstar_dot_V_omp(wf_ng,WF_shifted(:wf_ng,ibp,i_spin),WF_ik(:wf_ng,ib,i_spin)) 
+                       &  Vstar_dot_V_omp(wf_ng,WF_ik(:wf_ng,ib,i_spin),WF_shifted(:wf_ng,ibp,i_spin)) 
              enddo
            enddo ! ibp
          enddo ! ib
@@ -128,5 +131,9 @@ subroutine DIPOLE_overlaps(Xk,X)
  enddo ! ikbz
  !
  call live_timing()
+ !
+ do i_sp_pol=1,n_sp_pol
+   call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ enddo
  !
 end subroutine Dipole_Overlaps

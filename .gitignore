@@ -11,6 +11,7 @@
 *.f90
 *.s
 *.sw*
+*bk
 config.status
 config/report
 config/setup

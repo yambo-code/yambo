@@ -25,8 +25,9 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  !
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
 &                        PARALLEL_CPU_role,ncpu,QP_range,n_bands,n_c_bands,n_v_bands,Q_range,&
-&                        EH_range,K_range,CPU_structure,i_PAR_structure
+&                        EH_range,K_range,CPU_structure,i_PAR_structure,n_freqs
  use interfaces,    ONLY:PARALLEL_live_message
+ use vec_operate,   ONLY:GreatestCommonDivisor
  use com,           ONLY:error
  use stderr,        ONLY:intc
  !
@@ -101,6 +102,14 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
            endif
+#if defined _NL
+         case("Non_Linear") 
+           if (trim(PARALLEL_CPU_role(i_c))=="w".or.trim(PARALLEL_CPU_role(i_c))=="k".or.&
+&              trim(PARALLEL_CPU_role(i_c))=="b") then
+             N_fields=N_fields+1
+             CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
+           endif
+#endif
 #if defined _SCALAPACK
          case("ScaLapacK") 
            if (trim(PARALLEL_CPU_role(i_c))=="p".or.trim(PARALLEL_CPU_role(i_c))=="d") then
@@ -141,6 +150,10 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
            CPU_structure(i_PAR_structure)%ROLE(3)="q"
            CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(Q_range(2))
            CPU_structure(i_PAR_structure)%N_chains=3
+#endif
+#if defined _NL
+         case("Non_Linear") 
+           call default_Non_Linear()
 #endif
 #if defined _SCALAPACK
          case("ScaLapacK") 
@@ -207,5 +220,39 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
      enddo
      NC=NC/assign_cpu
    end function
+   !
+#if defined _NL
+   subroutine default_Non_linear
+    implicit none
+    integer :: ncpu_f,ncpu_k,ncpu_b,ncpu_sndchain
+    !
+    if(n_freqs>ncpu) then
+      ncpu_f=ncpu
+      ncpu_k=1
+      ncpu_b=1
+    else
+      ncpu_f       =GreatestCommonDivisor(ncpu,n_freqs)
+      ncpu_sndchain=ncpu/ncpu_f
+      !
+      if(ncpu_sndchain>K_range) then
+        ncpu_k=GreatestCommonDivisor(ncpu_sndchain,K_range)
+        ncpu_b=ncpu_sndchain/ncpu_k
+      else
+        ncpu_k=ncpu_sndchain
+        ncpu_b=1
+      endif
+      !
+    endif
+    !
+    CPU_structure(i_PAR_structure)%ROLE(1)="w"
+    CPU_structure(i_PAR_structure)%CPU(1)=ncpu_f
+    CPU_structure(i_PAR_structure)%ROLE(2)="k"
+    CPU_structure(i_PAR_structure)%CPU(2)=ncpu_k
+    CPU_structure(i_PAR_structure)%ROLE(3)="b"
+    CPU_structure(i_PAR_structure)%CPU(3)=ncpu_b
+    CPU_structure(i_PAR_structure)%N_chains=3
+    !
+   end subroutine
+#endif
    !
 end subroutine

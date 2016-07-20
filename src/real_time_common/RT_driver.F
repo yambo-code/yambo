@@ -264,10 +264,25 @@ subroutine RT_driver(E,X,k,q)
    !==========================================
    ! (evaluated also in RT_integrator when and induced field is included)
    call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot)
+   call RT_output('cur pol magn',TIME=NE_time*AUT2FS)
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
+   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
+   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
+   !
+   ! Update Bose Temp and Phonons distribution
+   !===========================================
+   !if (l_Debye_TBose_update) then
+   !  if (it==it_start) E_previous=real(on_the_fly_operators(5))
+   !  if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
+   !  &       nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
+   !    E_now=real(on_the_fly_operators(5))
+   !    call TEMPERATURE_Debye(E_previous-E_now)
+   !    E_previous=E_now
+   !  endif
+   !endif
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================

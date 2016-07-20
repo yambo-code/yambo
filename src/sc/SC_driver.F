@@ -26,14 +26,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use pars,           ONLY:SP,schlen,cZERO
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_coh,l_sc_sex,l_use_Hxc_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
-&                         l_sc_exx
+&                         l_sc_exx,l_sc_electric
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,magn_n,SC_rho_threshold,it_now,E_convergence, &
 &                         rho_convergence,magn_convergence,SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,H_rotate,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,&
+&                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,l_froze_density,&
 &                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_table_setup,it_to_start
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
@@ -54,6 +54,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use LIVE_t,         ONLY:live_timing
  use collision,      ONLY:COH_COLL_element,HXC_COLL_element
  use electrons,      ONLY:Total_magn
+#if defined _ELECTRIC
+ use fields,         ONLY:A_vecpot,Efield
+ use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
+#endif
  !
  implicit none
  !
@@ -71,6 +75,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),magn_nm1(:,:)
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: H_nl_nm1(:,:,:,:)
+#if defined _ELECTRIC
+ complex(SP), allocatable :: SC_R0(:,:,:,:)
+#endif
  !
  type(WAVEs)              :: WFo
  ! 
@@ -81,6 +88,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_em1
  logical, external        :: stop_now
+ !
+#if defined _ELECTRIC
+ complex(SP) :: Initial_Pol(3),Pol(3)
+#endif
  !
  ! ws for states spread evaluation
  !
@@ -95,6 +106,28 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  if (SC_bands(2)> E%nb) call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
  !
  call SC_QP_table_setup(E)
+ !
+ ! Initial Start & Restart 
+ !==========================
+ ! 
+ call SC_start_and_restart(X,E,Xk)
+ !
+ ! Parallelization for DIPOLES
+ ! ======================================
+ !
+ if(l_sc_electric.or.SC_up_W_iters>0.or.l_sc_exx) then
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   if (SC_up_W_iters>0) then 
+     call PARALLEL_global_indexes(E,Xk,q,"Response_G_space_Zero_Momentum",X=X(2))
+   else
+     call PARALLEL_global_indexes(E,Xk,q,"Response_G_space_Zero_Momentum",X=X(1))
+   endif
+ endif
+ !
+ ! DIPOLES
+ !=========
+ if ((l_sc_exx.and.l_SC_cycle).or.l_sc_electric) call DIPOLE_driver(E, Xk, X(1), X(1)%q0)
+ if (SC_up_W_iters>0)                            call DIPOLE_driver(E, Xk, X(2), X(2)%q0)
  !
  ! Parallel Setup
  !================
@@ -220,6 +253,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  endif
  !
+#if defined _ELECTRIC
+ ! Initial Polarization
+ ! ====================
+ if(l_sc_electric)  call Berry_polarization_NEQ(E,Xk,SC_R(:,1:E%nbf,:,:),Initial_Pol)
+#endif
+ !
  ! SCF cycle & NSC shot
  !=====================
  ! 
@@ -264,6 +303,20 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
    endif
    !
+#if defined _ELECTRIC
+   !
+   ! Static Electric Field
+   ! ========================
+   !
+   if(l_sc_electric) then
+     !      
+     call SC_add_efield(SC_R(:,1:E%nbf,:,:),E,Xk,Pol)
+     Pol=Pol-Initial_Pol
+     !
+   endif
+   !
+#endif
+   ! 
    ! IO [V_xc]: this is the only DB that must be written on-fly
    !            Both WFs and Energies are written ay the end of the loop
    !===========
@@ -332,6 +385,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
      endif
      !
+#if defined _ELECTRIC
+     if(l_sc_electric) H_nl_sc=H_nl_sc+W_electric(:,:,ik,:)
+#endif
+     !
      call PP_redux_wait(H_nl_sc)
      !
      ! Diagonalize H_nl_sc 
@@ -372,11 +429,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! bands could interfere with the SC_bands(2) yielding non physical
      ! occupations.
      !
-     forall (ib=SC_bands(2)+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(2),:,:)-E_previous(SC_bands(2),:,:)
-     !
-     ! The same for the bands below SC_bands(1)
-     !
-     forall (ib=1:SC_bands(1)-1) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
+     if(.not.l_sc_electric) then
+       !
+       forall (ib=SC_bands(2)+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(2),:,:)-E_previous(SC_bands(2),:,:)
+       !
+       ! The same for the bands below SC_bands(1)
+       !
+       forall (ib=1:SC_bands(1)-1) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
+       !
+     endif
      !
      call OCCUPATIONS_Fermi(E,k,1) 
      !
@@ -386,7 +447,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      rho_nm1 = rho_n 
      if(n_spin>1) magn_nm1 = magn_n 
      !
-     call el_density_and_current(E,k,rho=rho_n)
+     if(.not.l_froze_density) call el_density_and_current(E,k,rho=rho_n)
      if(n_spin>1) call el_magnetization(E,k,magn_n)
      !
      ! Update dipoles and recalcolate the dielectric constant
@@ -470,6 +531,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(magn_convergence))//'%'
      endif
      !
+#if defined _ELECTRIC
+     if(l_sc_electric) then
+       if(it==1) then
+         dumb_ch= trim(dumb_ch) //'  Initial Pol;'
+         dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(sqrt(sum(real(Initial_Pol(:))**2))))
+       else
+          dumb_ch= trim(dumb_ch) //'  Polarization;'
+          dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(sqrt(sum(real(Pol(:))**2))))
+       endif
+     endif
+#endif
+     !
      if (.not.log_as_a_file.or.it_now==1) then
        if(it_now==it_to_start) call LIVE_message(dumb_ch ,"n","","%s")
        call LIVE_message(dumb_ch2,"n","","%s")
@@ -532,7 +605,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Hartree and xc Energy 
  !=======================
  !
- call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n,magn_n)
+ call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n)
  !
  if (l_SC_cycle) then
    !
@@ -608,6 +681,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("H_nl_nm1",(/size(QP_Vnl_xc)/),(/2*SP/))
      endif
      !
+#if defined _ELECTRIC
+     if(l_SC_electric) then
+       call ELECTRIC_alloc(E)
+       allocate(W_electric(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("W_electric",(/size(W_electric)/),(/2*SP/))
+     endif
+     allocate(SC_R0(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("SC_R0",(/size(QP_Vnl_xc)/),(/2*SP/))
+#endif
+     !
    end subroutine
    !
    subroutine SC_local_free()
@@ -656,6 +739,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      endif
      !
      if (.not.io_RESPONSE) call X_alloc('X')
+     !
+#if defined _ELECTRIC
+     if(l_SC_electric) then
+       call ELECTRIC_free()
+       deallocate(W_electric)
+       call mem_est("W_electric")
+     endif
+#endif
      !
    end subroutine
    !

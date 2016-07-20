@@ -106,6 +106,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  call k_ibz2bz(Xk,'a',.false.)  
  !
  allocate(q_map(k_grid(1),k_grid(2),k_grid(3)),q_iptbz(Xk%nbz,3))
+ call mem_est("q_map",(/size(q_map)/),(/IP/))
+ call mem_est("q_iptbz",(/size(q_iptbz)/),(/IP/))
  !
  ! k_b_m1=transpose(k_grid_b) in rlu
  !
@@ -142,6 +144,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    ! q_ptbz in iku for k_reduce
    !
    allocate(q%ptbz(q%nbz,3))
+   call mem_est("qptbz",(/size(q%ptbz)/),(/SP/))
    do i1=1,q%nbz
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
@@ -152,6 +155,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    if (.not.allocated(q_pt)) then
      call k_reduce(q,.TRUE.)
      deallocate(q%ptbz)
+     call mem_est("qptbz")
    else
      q%nibz=nqibz
      allocate(q%pt(q%nibz,3))
@@ -326,7 +330,11 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
- if (Xk_grid_is_uniform) deallocate(q%ptbz)
+ call mem_est("q_map q_iptbz")
+ if (Xk_grid_is_uniform) then
+   deallocate(q%ptbz)
+   call mem_est("qptbz")
+ endif
  call PP_redux_wait()
  !
  contains 

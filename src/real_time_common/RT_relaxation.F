@@ -63,7 +63,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  use pars,           ONLY:SP,cI,cZERO
  use D_lattice,      ONLY:Bose_Temp
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz

@@ -28,7 +28,7 @@ subroutine V_real_space_to_H(ik,V,H,WF,V_kind)
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use wave_func,      ONLY:WAVEs
- use wrapper,        ONLY:Vstar_dot_V
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp
  use matrix_operate, ONLY:UP_matrix_index
  use SC,             ONLY:SC_bands
 #if defined _SC || !defined _RT
@@ -39,7 +39,7 @@ subroutine V_real_space_to_H(ik,V,H,WF,V_kind)
 #endif
  implicit none
  !
- integer     :: ik,i_spin
+ integer     :: ik,ir,i_spin
  real(SP)    :: V(fft_size,n_spin)
  complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  complex(SP) :: H(QP_nb,QP_nb,n_sp_pol)
@@ -83,9 +83,13 @@ subroutine V_real_space_to_H(ik,V,H,WF,V_kind)
      !
      ifft   =WF%index(ib,ik,i_spin)
      ifftp  =WF%index(ibp,ik,i_spin)
-     c_ws(:,1)=V(:,i_spin)*WF%c(:,ifftp)
+!$omp parallel do default(shared), private(ir)
+     do ir=1,fft_size
+       c_ws(ir,1)=V(ir,i_spin)*WF%c(ir,ifftp)
+     enddo
+!$omp end parallel do
      !
-     H(ib,ibp,i_spin) = H(ib,ibp,i_spin)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))
+     H(ib,ibp,i_spin) = H(ib,ibp,i_spin)+Vstar_dot_V_omp(fft_size,WF%c(:,ifft),c_ws(:,1))
      !
    elseif (n_spinor==2) then
      !
@@ -93,32 +97,56 @@ subroutine V_real_space_to_H(ik,V,H,WF,V_kind)
        !
        ifft   =WF%index(ib,ik,1)
        ifftp  =WF%index(ibp,ik,1)
-       c_ws(:,1)=V(:,1)*WF%c(:,ifftp)
-       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))
+!$omp parallel do default(shared), private(ir)
+       do ir=1,fft_size
+         c_ws(ir,1)=V(ir,1)*WF%c(ir,ifftp)
+       enddo
+!$omp end parallel do
+       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V_omp(fft_size,WF%c(:,ifft),c_ws(:,1))
        ifft   =WF%index(ib,ik,2)
        ifftp  =WF%index(ibp,ik,2)
-       c_ws(:,2)=V(:,2)*WF%c(:,ifftp)
-       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,2))
+!$omp parallel do default(shared), private(ir)
+       do ir=1,fft_size
+         c_ws(ir,2)=V(ir,2)*WF%c(ir,ifftp)
+       enddo
+!$omp end parallel do
+       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V_omp(fft_size,WF%c(:,ifft),c_ws(:,2))
        !
      elseif(V_kind=='xc ') then
        !
        ifft   =WF%index(ib,ik,1)
        !
        ifftp  =WF%index(ibp,ik,1)
-       c_ws(:,1)=V_mat(:,1,1)*WF%c(:,ifftp)
+!$omp parallel do default(shared), private(ir)
+       do ir=1,fft_size
+         c_ws(ir,1)=V_mat(ir,1,1)*WF%c(ir,ifftp)
+       enddo
+!$omp end parallel do
        ifftp  =WF%index(ibp,ik,2)
-       c_ws(:,2)=V_mat(:,1,2)*WF%c(:,ifftp)
-       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))+&
-&                                Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,2))
+!$omp parallel do default(shared), private(ir)
+       do ir=1,fft_size
+         c_ws(ir,2)=V_mat(ir,1,2)*WF%c(ir,ifftp)
+       enddo
+!$omp end parallel do
+       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V_omp(fft_size,WF%c(:,ifft),c_ws(:,1))+&
+&                                Vstar_dot_V_omp(fft_size,WF%c(:,ifft),c_ws(:,2))
        !
        ifft   =WF%index(ib,ik,2)
        !
        ifftp  =WF%index(ibp,ik,1)
-       c_ws(:,1)=V_mat(:,2,1)*WF%c(:,ifftp)
+!$omp parallel do default(shared), private(ir)
+       do ir=1,fft_size
+         c_ws(ir,1)=V_mat(ir,2,1)*WF%c(ir,ifftp)
+       enddo
+!$omp end parallel do
        ifftp  =WF%index(ibp,ik,2)
-       c_ws(:,2)=V_mat(:,2,2)*WF%c(:,ifftp)
-       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))+&
-&                                Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,2))
+!$omp parallel do default(shared), private(ir)
+       do ir=1,fft_size
+         c_ws(ir,2)=V_mat(ir,2,2)*WF%c(ir,ifftp)
+       enddo
+!$omp end parallel do
+       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V_omp(fft_size,WF%c(:,ifft),c_ws(:,1))+&
+&                                Vstar_dot_V_omp(fft_size,WF%c(:,ifft),c_ws(:,2))
        !
      endif
      !

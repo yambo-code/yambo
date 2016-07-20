@@ -25,6 +25,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  use YPP
  use pars,           ONLY:pi
+ use interpolate,    ONLY:max_interpls
+ use units,          ONLY:HA2EV,FS2AUT
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
@@ -48,6 +50,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use YPP_real_time
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
+ use fields,         ONLY:n_ext_fields
+#endif
+#if defined _YPP_NL
+ use nl_optics,      ONLY:NL_damping
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH
@@ -74,7 +80,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
- integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,ID,io_KB_abinit_err
+ integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,io_KB_abinit_err,ID
+#endif
+#if defined _YPP_NL
+ integer, external::io_NL
+ integer          ::io_NonLinear
 #endif
  integer, external::parse_character_arrays
  !
@@ -95,6 +105,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  what_is_running='YPP_RT'
+#endif
+#if defined _YPP_NL
+ what_is_running='YPP_NL'
 #endif
  !
  if (FINALIZE) then
@@ -133,6 +146,17 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_KB_abinit_err=io_KB_abinit(ID)
+ !
+#endif        
+ !
+#if defined _YPP_NL
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_Nonlinear=io_NL(ID)
+ !
+ if(io_Nonlinear==0) then
+   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-FS2AUT/)
+ endif
  !
 #endif
  !
@@ -365,6 +389,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_RT_2D_dos        = runlevel_is_on('RTdos')
  !
 #endif
+#if defined _YPP_NL
+ l_NL_X  =runlevel_is_on('nonlinear')
+#endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
  l_position         = runlevel_is_on('position').and.runlevel_is_on('electrons')
@@ -491,6 +518,12 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
    !
+ endif
+#endif
+ !
+#if defined _YPP_NL
+ if(l_NL_X) then
+   call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor")
  endif
 #endif
  !

@@ -27,7 +27,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  ! In the future the RT code can be based on those, at least partially
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt,l_real_time
  use electrons,      ONLY:n_sp_pol,spin_occ,levels,BZ_DbGd_kpts
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &

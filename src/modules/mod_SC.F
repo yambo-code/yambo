@@ -60,7 +60,7 @@ module SC
  logical           :: l_SC_update_W
  logical           :: l_SC_diagonal
  logical           :: l_SC_nl_mix
-
+ logical           :: l_froze_density
  !
  ! Possible Kinds, functionals and external perturbations
  !
@@ -145,7 +145,7 @@ module SC
    !
    subroutine SC_alloc(E)
      use pars,           ONLY:SP
-     use drivers,        ONLY:l_real_time,l_sc_sex,l_sc_coh,l_sc_srpa
+     use drivers,        ONLY:l_real_time,l_sc_sex,l_sc_coh,l_sc_srpa,l_nl_optics
      use electrons,      ONLY:n_spin,n_sp_pol,levels
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
@@ -160,8 +160,10 @@ module SC
      !
      ! In the magnetic project Ho has already been allocated
      !
-     allocate(Ho(SC_bands(2),SC_bands(2),E%nk,n_sp_pol))
-     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+     if (.not.l_nl_optics) then
+       allocate(Ho(SC_bands(2),SC_bands(2),E%nk,n_sp_pol))
+       call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+     endif
      !
      allocate(rho_n(fft_size))
      call mem_est("rho",(/fft_size/),(/SP/))
@@ -191,13 +193,15 @@ module SC
        call mem_est("QP_Sc",(/QP_n_states/))
      endif
      !
-     allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-     call mem_est("SC_R",(/size(SC_R)/))
+     if (.not.l_nl_optics) then
+       allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("SC_R",(/size(SC_R)/))
+     endif
      !
    end subroutine
    !
    subroutine SC_free()
-     use drivers,        ONLY:l_real_time
+     use drivers,        ONLY:l_real_time,l_nl_optics
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
@@ -209,8 +213,10 @@ module SC
      call X_alloc('DIP_spin')
      call X_alloc('P_square')
      !
-     deallocate(Ho)
-     call mem_est("Ho")
+     if (.not.l_nl_optics) then
+       deallocate(Ho)
+       call mem_est("Ho")
+     endif
      !
      deallocate(H_nl_sc)
      call mem_est("H_nl_sc")
@@ -246,7 +252,7 @@ module SC
        call mem_est("QP_Sc")
      endif
      !
-     if (.not.l_real_time) then
+     if (.not.l_real_time.and..not.l_nl_optics) then
        deallocate(SC_R)
        call mem_est("SC_R")
      endif

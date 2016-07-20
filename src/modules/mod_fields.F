@@ -73,10 +73,12 @@ module fields
    logical function field_is_ok(E_field)
      type(ext_field)   ::E_field
      field_is_ok= any((/ trim(E_field%ef_name) == 'SIN' ,&
+&                        trim(E_field%ef_name) == 'SOFTSIN' ,& 
 &                        trim(E_field%ef_name) == 'ANTIRES' ,& 
 &                        trim(E_field%ef_name) == 'RES' ,& 
 &                        trim(E_field%ef_name) == 'DELTA' ,& 
 &                        trim(E_field%ef_name) == 'GAUSS' ,& 
+&                        trim(E_field%ef_name) == 'THETA' ,& 
 &                        trim(E_field%ef_name) == 'PULSE' ,& 
 &                        trim(E_field%ef_name) == 'QSSIN' /)) .and. &
 &                 any((/ trim(E_field%ef_pol)  == 'linear' ,&
@@ -117,6 +119,7 @@ module fields
      real(SP)          ::T_i
      integer           ::order
      !
+     real(SP)          ::damp_func,a,b,c
      complex(SP), dimension(2) :: small_a
      !
      integer           ::i_fr,i_field,n_fields
@@ -138,6 +141,10 @@ module fields
      do i_field=1,n_fields
        !
        select case( trim(E_field%ef_name) )
+       case('STATIC')
+         if (order==0 ) f_t(i_field)=T_i
+         if (order==1 ) f_t(i_field)=1._SP
+         if (order==2 ) f_t(i_field)=0._SP
        case('SIN')
          do i_fr=1,E_field%n_frequencies     
            W_i=field_frequency(E_field,i_fr)
@@ -146,6 +153,42 @@ module fields
            if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WT_i)
            if (order==2 ) f_t(i_field)=f_t(i_field)+W_0* cos(WT_i)
          enddo 
+       case('SOFTSIN')
+         T_0=sigma
+         !
+         a =  3._SP/T_0**4 
+         b = -8._SP/T_0**3
+         c =  6._SP/T_0**2
+         !
+         damp_func=1._SP
+         if(real(T_i)<T_0.and.T_0>0._SP) damp_func=(a*T_i**4 + b*T_i**3 + c*T_i**2)       
+         !
+         do i_fr=1,E_field%n_frequencies     
+           !
+           W_i=field_frequency(E_field,i_fr)
+           WT_i=W_i*T_i+fr_shift(i_field)
+           !
+           if (order==0 ) f_t(i_field)=f_t(i_field)- damp_func*(cos(WT_i)-1._SP)/W_i
+           if (order==1 ) f_t(i_field)=f_t(i_field)+ damp_func*sin(WT_i)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_0*cos(WT_i)
+           if (order==-1) f_t(i_field)=-2
+           !
+         enddo 
+         !
+       case('THETA')
+         !  
+         T_0=sigma
+         !
+         a =  3._SP/T_0**4 
+         b = -8._SP/T_0**3
+         c =  6._SP/T_0**2
+         !
+         damp_func=1._SP
+         if(real(T_i)<T_0.and.T_0>0._SP) damp_func=(a*T_i**4 + b*T_i**3 + c*T_i**2)       
+         !
+         if (order==0 ) f_t(i_field)=damp_func*T_i
+         if (order==1 ) f_t(i_field)=damp_func
+         if (order==2 ) f_t(i_field)=0._SP
          !
        case('ANTIRES')
          do i_fr=1,E_field%n_frequencies
@@ -188,7 +231,7 @@ module fields
            WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
            if (order==0 ) f_t(i_field)= 0._SP
            if (order==1 ) f_t(i_field)=       (T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)**2/sigma**4      *cos(WT_i)
-           if (order==2 ) f_t(i_field)=(2._SP*(T_i-T_0 + sigma)    *(T_i-T_0 -sigma)**2/sigma**4+                &
+           if (order==2 ) f_t(i_field)=(2._SP*(T_i-T_0 + sigma)    *(T_i-T_0 -sigma)**2/sigma**4                 &
 &                                      +2._SP*(T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)   /sigma**4 )    *cos(WT_i) &
 &                                      -      (T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)**2/sigma**4  *W_0*sin(WT_i)
          endif
@@ -321,8 +364,8 @@ module fields
        case('ANTIRES')
          if (order/=0) Divide_by_Field =(1._SP,0._SP)/Field%amplitude**order
          if (order==0) Divide_by_Field =(1._SP,0._SP)/Field%amplitude**2
-       case('SIN')
-         if (order/=0) Divide_by_Field =      (2._SP*cI/Field%amplitude)**order
+       case('SIN','SOFTSIN')
+         Divide_by_Field =  (-2._SP*cI/Field%amplitude)**order
          if (order==0) Divide_by_Field =  (4._SP,0._SP)/Field%amplitude**2
        case('QSSIN') !Approximate relations/does not work yet
          sigma=Field%damping

@@ -73,8 +73,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
 #if defined _SC
  use com,            ONLY:secnm
- use drivers,        ONLY:l_real_time,l_sc_run
+ use drivers,        ONLY:l_real_time,l_sc_run,l_nl_optics
  use X_m,            ONLY:P_square
+#endif
+#if defined _NL | defined _ELECTRIC
+ use X_m,            ONLY:DIP_S
 #endif
 #if defined _QED
  use drivers,        ONLY:l_elphoton_corr
@@ -100,8 +103,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! I/O
  !
- integer           :: ID,io_err
+ integer           :: ID,ID_S,io_err
  integer, external :: io_DIPOLES
+#if defined _NL | defined _ELECTRIC
+ integer, external :: io_Overlaps
+#endif
  !
 #if defined _TIMING
  call timing('Dipoles',OPR='start')
@@ -143,7 +149,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #if defined _SC 
  l_evaluating_em1s=index(secnm,"Dielectric")/=0
- if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.false.
+ if ((l_sc_run.or.l_real_time.or.l_nl_optics).and..not.l_evaluating_em1s) &
+&   Dipole_bands_ordered=.false.
 #endif
 #if defined _QED 
  if (l_elphoton_corr) Dipole_bands_ordered=.false.
@@ -181,7 +188,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,X)
    !
+#if defined _NL | defined _ELECTRIC
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
+#endif
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
    !
@@ -210,7 +219,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
  !
 #if defined _SC
- if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
+ if ((l_sc_run.or.l_real_time.or.l_nl_optics).and..not.l_evaluating_em1s) return
 #endif
 #if defined _QED
  if (l_elphoton_corr) return
@@ -241,6 +250,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _SC
  call X_alloc('P_square') 
 #endif
+#if defined _NL | defined _ELECTRIC
+ call X_alloc('DIP_S')
+#endif
  !
  contains
    !
@@ -261,6 +273,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      writing=trim(read_or_write)=="write"
      !
      ID=0
+#if defined _NL | defined _ELECTRIC
+     ID_S=0
+#endif
      write_header  =(     master_cpu.and.writing)
      read_header   =(.not.master_cpu.and.writing).or.reading
      !
@@ -279,6 +294,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call msg('s','[DIP] Writing dipoles header ')
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        io_err=io_DIPOLES(X,ID)
+#if defined _NL | defined _ELECTRIC
+       if(use_covariant_approach) then
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+         io_err=io_Overlaps(X,ID_S)
+       endif
+#endif
      endif
      !
      call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
@@ -287,6 +308,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call msg('s','[DIP] Checking dipoles header ')
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        io_err=io_DIPOLES(X,ID)
+#if defined _NL | defined _ELECTRIC
+       if(use_covariant_approach) then
+         call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+         io_err=io_err+io_Overlaps(X,ID_S)
+       endif
+#endif
      endif
      !
      if (io_err==0) then
@@ -302,6 +329,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
            io_err=io_DIPOLES(X,ID)
         enddo
        enddo
+#if defined _NL | defined _ELECTRIC
+       if(use_covariant_approach.and.(write_header.or.reading)) then
+         do ik=1,Xk%nbz
+           do i_sp_pol=1,n_sp_pol
+             call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nbz/),ID=ID_S)
+             io_err=io_err+io_Overlaps(X,ID_S)
+           enddo
+         enddo
+       endif
+#endif
        !
      endif
      !
@@ -323,9 +360,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 
      !
 #if defined _SC
-     if (l_sc_run.or.l_real_time) then
+     if (l_sc_run.or.l_real_time.or.l_nl_optics) then
        call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        P_square=cZERO
+     endif
+#endif
+     !
+#if defined _NL | defined _ELECTRIC
+     if(use_covariant_approach) then
+       call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
+       DIP_S=cZERO
      endif
 #endif
      !

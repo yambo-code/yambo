@@ -24,7 +24,7 @@
 integer function variables_SC(ID,local_description,what)
  !
  use pars,           ONLY:lchlen
- use units,          ONLY:AU2Tesla,DEG2RAD
+ use units,          ONLY:AU2Tesla,DEG2RAD,AU2VMm1
  use D_lattice,      ONLY:atoms_string
  use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
@@ -216,6 +216,23 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+ endif
+ !
+#endif
+ !
+#if defined _ELECTRIC
+ !
+ if(l_sc_electric) then
+   call io_elemental(ID,VAR="ELECTRIC_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,VAR='E_FIELD_parameters',VAR_SZ=4,MENU=0) 
+   i_desc=i_desc+1
+   call io_elemental(ID,UNIT=AU2VMm1,R0=Efield(1)%amplitude,&
+&     VAR=' [ELECTRIC] E intensity           [v/m]:',CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,VAR="[ELECTRIC] E Versor            :",R1=Efield(1)%versor, &
+&     WARN=.true.,OP=(/"==","==","=="/),DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  endif
  !
 #endif

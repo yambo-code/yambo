@@ -51,6 +51,7 @@ module it_m
  integer, parameter :: V_resp=7
  integer, parameter :: V_real_time=8
  integer, parameter :: V_parallel=9
+ integer, parameter :: V_nl_optics=10
  integer, parameter :: V_all=99
  !
  integer, parameter :: maxrnlvls=50

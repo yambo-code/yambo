@@ -79,6 +79,9 @@
   {"DESC",    " ","    opt2 life [(b)ands]",0,0,0,0,0}, 
   {"DESC",    " ","    opt2 den. [(t)ime]",0,0,0,0,0}, 
 #endif
+#if defined _YPP_NL
+  {"nonlinear","u","Non-linear response analysis",0,0,0,0,0}, 
+#endif
 #if defined _YPP_ELPH && ! defined _YPP_RT
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 
   {"gkkp"  , "g","gkkp databases",0,0,0,0,0}, 

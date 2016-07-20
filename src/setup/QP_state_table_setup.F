@@ -37,7 +37,7 @@ subroutine QP_state_table_setup(en)
  !
  use pars,          ONLY:SP,IP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions
+ use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions,l_nl_optics
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
@@ -177,7 +177,7 @@ subroutine QP_state_table_setup(en)
  !
  Mixing=.FALSE.
 #if defined _SC
- Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions
+ Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions.or.l_nl_optics
  if (l_eval_collisions) then
    Mixing=l_elel_scatt.or.trim(SC_potential)=="HARTREE+FOCK".or.trim(SC_potential)=="COHSEX"
  endif

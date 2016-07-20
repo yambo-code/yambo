@@ -43,10 +43,12 @@ module drivers
  logical :: l_sc_run
  logical :: l_rt_carriers_in_use
  logical :: l_sc_magnetic
+ logical :: l_sc_electric
  logical :: l_eval_collisions
  logical :: l_use_Hxc_collisions
  logical :: l_use_COH_collisions
  logical :: l_use_collisions
+ logical :: l_nl_optics
  !
  ! The self-energy correlation "kind"
  !
@@ -93,6 +95,7 @@ module drivers
  logical :: l_alda_fxc
  logical :: l_bs_fxc
  logical :: l_lrc_fxc
+ logical :: l_pf_fxc
  logical :: l_td_hf
  logical :: l_W_eh
  logical :: l_W_eh_diag

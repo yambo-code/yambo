@@ -215,6 +215,12 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
 #endif
  !
+#if defined _YPP_NL
+ !
+ if (l_NL_X) call NL_driver(en,k)
+ !   ======
+#endif
+ !
  ! GPL_EXCLUDE_END
  !
  l_flag=l_excitons

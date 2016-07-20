@@ -48,6 +48,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
+ use global_XC,     ONLY:WF_exx_screening
  !
  implicit none
  type(levels) ::E       

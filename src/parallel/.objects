@@ -1,3 +1,7 @@
+NL_objs =
+#if defined _NL | defined _ELECTRIC
+NL_objs = k_map_nearest_by_dir.o
+#endif
 #if defined _RT || defined _SC || defined _QED
 RT_objs =  PARALLEL_collisions.o
 #endif
@@ -8,4 +12,5 @@ objs =  check_for_a_redundant_IO.o  PARALLEL_defaults.o PARALLEL_live_message.o 
         PARALLEL_structure.o PARALLEL_build_up_child_chains.o \
         PARALLEL_Transitions_grouping.o \
         PARALLEL_global_indexes.o PARALLEL_index.o PARALLEL_WF_distribute.o \
-        PARALLEL_Haydock_VEC_COMMs.o 
+        PARALLEL_Haydock_VEC_COMMs.o $(NL_objs) 
+

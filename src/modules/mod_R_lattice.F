@@ -179,8 +179,10 @@ module R_lattice
    !
    subroutine qindx_free()
      use memory_m, ONLY:mem_est
-     deallocate(qindx_X)
-     call mem_est("qindx_X")
+     if (allocated(qindx_X)) then
+       deallocate(qindx_X)
+       call mem_est("qindx_X")
+     endif
      if (allocated(qindx_B)) then
        deallocate(qindx_B)
        call mem_est("qindx_B")

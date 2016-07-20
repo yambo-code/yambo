@@ -64,6 +64,7 @@ subroutine eval_Gradient(f,f_gradient,f_type)
  V3g(:,:) = (0._SP,0._SP)
  Vr=f
  !
+ if (all(fft_dim == 0)) call fft_setup(0,1,.false.)
 #if defined _FFTW
  call dfftw_destroy_plan(fftw_plan)
  fftw_plan = 0
@@ -75,7 +76,7 @@ subroutine eval_Gradient(f,f_gradient,f_type)
  forall (ic=1:3,ig=1:ng_) V3g(ic,ig)=cI*g_vec(ig,ic)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
  !
  do ic = 1,3
-   Vr = (0._SP,0._SP)
+   Vr = (0._DP,0._DP)
    Vr(fft_g_table(1:ng_,1)) = V3g(ic,1:ng_)
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
@@ -83,8 +84,9 @@ subroutine eval_Gradient(f,f_gradient,f_type)
    call fft_3d(Vr,fft_dim,1,fftw_plan)
 #else
    call fft_3d(Vr,fft_dim,1)
+!   call fft_3d(Vr,fft_dim,2) ???
 #endif
-   f_gradient(ic,:) = Vr(:)
+   f_gradient(ic,:) = cmplx(Vr(:),kind=SP)
  enddo
  !
  deallocate(Vr,V3g)

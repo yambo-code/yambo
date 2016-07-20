@@ -37,7 +37,7 @@ subroutine SC_start_and_restart(X,E)
 &                         l_oep_iterative,rho_convergence,E_convergence, &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
 &                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
-&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence
+&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,l_froze_density
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
@@ -62,6 +62,7 @@ subroutine SC_start_and_restart(X,E)
  call parser('Mean_Potential', l_Mean_Potential)
  call parser('SCdiag',         l_SC_diagonal)
  call parser('SCnlMix',        l_SC_nl_mix)
+ call parser('FrozeDensity',   l_froze_density)
  !
  if (l_sc_pot_is_local) l_SC_nl_mix=.FALSE.
  !
@@ -71,6 +72,14 @@ subroutine SC_start_and_restart(X,E)
 #if defined _MAGNETIC
  !
  if (l_sc_magnetic) call MAG_initial_check()
+ !
+#endif
+ !
+#if defined _ELECTRIC
+ !
+ call ELECTR_initial_check(Xk)
+ !
+ if(.not.associated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
  !
 #endif
  !

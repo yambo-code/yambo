@@ -28,7 +28,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,schlen
- use units,      ONLY:HA2EV,FS2AUT
+ use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
@@ -73,7 +73,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BS_anti_res,BSS_perturbative_width
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
-&                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
+&                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
@@ -335,6 +335,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_sc_exx=.FALSE.
  l_sc_is_libDFT=.FALSE.
  l_sc_magnetic=.FALSE.
+ l_sc_electric=.FALSE.
  l_eval_collisions=.FALSE.
  l_elph_Hamiltonian=.FALSE.
  !
@@ -495,6 +496,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  FXC_n_g_corr=1
  FXC_per_memstps=100._SP
  FXC_LRC_alpha=0._SP
+ FXC_PF_alpha="CUR"
  FXC_LRC_beta=0._SP
  FXC_SVD_digits=0
  FXC_is_causal=.FALSE.

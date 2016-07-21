@@ -23,27 +23,26 @@
 !
 subroutine QED_Sigma_c(E,k,q,qp)
  !
- use pars,                ONLY:SP,pi,cI,cZERO,rZERO
+ use pars,                ONLY:SP,pi,cI,rZERO
  use units,               ONLY:SPEED_OF_LIGHT,HA2EV
- use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr
+ use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr,l_elphoton_scatt
  use electrons,           ONLY:levels,spin_occ,n_met_bands
  use D_lattice,           ONLY:DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
-&                              QP_dSc,QP_time_order_sign
+&                              QP_dSc,QP_time_order_sign,QP_table,QP_n_states
  use IO_m,                ONLY:io_COLLs
  use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
-&                              elemental_collision_copy,P_COLL_element
+&                              elemental_collision_copy,P_COLL_element,COLL_bands,P_collisions
  use wave_func,           ONLY:WF
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute,&
 &                              SCATTERING_GW_kinematics
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                              PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_nQP,PAR_nG_bands,&
-&                              PAR_COM_QP_A2A
- use SC,                  ONLY:SC_bands
+&                              PAR_IND_Q,PAR_nQ,PAR_nQP
  use functions,           ONLY:theta_function
+ use com,                 ONLY:warning
 #if defined _TIMING
  use timing_m,            ONLY:timing
 #endif
@@ -56,7 +55,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! WorkSpace
  !
- integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_n,i_G0,i_c,i_cp,i_g,i_m,i_m_wf_load
+ integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_G0,i_c,i_cp,i_g,i_m,i_m_wf_load,PAR_bands(2)
  complex(SP)               ::P(3)
  real(SP)                  ::Photon_E,T_matrix(3,3),T_vec(3),E_diff,Photon_Gamma_E,f_k,f_k_m_q,&
 &                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0
@@ -103,10 +102,19 @@ subroutine QED_Sigma_c(E,k,q,qp)
  ! COLLISIONS
  !============
  !
- SC_bands=QP_n_G_bands
+ COLL_bands      =QP_n_G_bands
+ l_elphoton_scatt=.TRUE.
  !
- if (io_COLLs)                       call COLLISIONS_load(.TRUE.)
- if (io_COLLs.and.l_use_collisions)  call COLLISIONS_load(.FALSE.)
+ if (io_COLLs) then
+   call COLLISIONS_load(.TRUE.)
+   if (l_use_collisions) then
+     call COLLISIONS_load(.FALSE.)
+     if (QP_n_states/=P_collisions%N) then
+       call warning("COLLISIONS do not fit the QP states. Switched off")
+       l_use_collisions=.FALSE.
+     endif
+   endif
+ endif
  !
  ! BASIC WF allocation (FILLED bands)
  !====================================
@@ -115,8 +123,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Loop
  !======
- !
- call live_timing('Sigma_c [FILLED bands]',PAR_nQP*n_met_bands*PAR_nQ)
  !
  !The correction is evaluated through
  !
@@ -133,15 +139,19 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !=======================================
  i_m_wf_load=-1
  if (PAR_IND_G_b%element_1D(n_met_bands+1)) i_m_wf_load=n_met_bands+1
- do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
+ do i_m=n_met_bands+1,QP_n_G_bands(2)
    if (PAR_IND_G_b%element_1D(i_m).and.i_m_wf_load<0) i_m_wf_load=i_m
  enddo
+ PAR_bands(1)=count(PAR_IND_G_b%element_1D(:n_met_bands  ))
+ PAR_bands(2)=count(PAR_IND_G_b%element_1D(n_met_bands+1:))
+ !
+ if (PAR_bands(1)>0) call live_timing('Sigma_c [FILLED bands]',PAR_nQP*PAR_bands(1)*PAR_nQ)
  !
  B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
    !
    if (.not.PAR_IND_G_b%element_1D(i_m)) cycle
    !
-   if (i_m==i_m_wf_load) then
+   if (i_m==i_m_wf_load.and.PAR_bands(2)>0) then
      !
      ! BASIC WF allocation (FILLED bands)
      !====================================
@@ -150,7 +160,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
      !
      call LOCAL_WF_and_COLLISIONS_allocation( 1 , QP_n_G_bands(2))
      !
-     call live_timing('Sigma_c  [EMPTY bands]',PAR_nQP*(QP_n_G_bands(2)-n_met_bands+1)*PAR_nQ)
+     call live_timing('Sigma_c  [EMPTY bands]',PAR_nQP*PAR_bands(2)*PAR_nQ)
      !
    endif
    !
@@ -168,7 +178,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
        !
-       call SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E=E,E_diff=E_diff,N=i_n,G0=i_G0)
+       call SCATTERING_GW_kinematics(i_q_bz,i_m,I,k,q,QP_table(i_qp,:),E=E,E_diff=E_diff,G0=i_G0)
        !
        if (Photon_Gamma_E>1.E-5) then
          l_zero_delta_E=abs(E_diff)<Photon_Gamma_E/1000.
@@ -182,13 +192,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
          call live_timing(steps=1)
          cycle
        endif
-       !
-       ! Zeros ...
-       !
-       P_square_times_tau=cZERO
-       Sc_re  =rZERO
-       Sc_im  =rZERO
-       beta   =rZERO
        !
        ! Collisions ...
        !
@@ -212,16 +215,16 @@ subroutine QED_Sigma_c(E,k,q,qp)
        f_k    =E%f(I%is(1),I%is(2),I%is(4))/spin_occ
        f_k_m_q=E%f(I%os(1),I%os(2),I%os(4))/spin_occ
        !
-       ! Q=0 
+       ! G=0 
        !=====
        !
        call EVAL_pre_factors(.TRUE.)
        call EVAL_the_G_loop(1,1)
        !
-       ! Q/=0 
+       ! G/=0 
        !======
        !
-       if (f_k_m_q>1.E-5_SP) then
+       if (f_k_m_q>1.E-5_SP.and.QP_QED_ng>1) then
          !
          call EVAL_pre_factors(.FALSE.)
          call EVAL_the_G_loop(2,QP_QED_ng)
@@ -273,6 +276,11 @@ subroutine QED_Sigma_c(E,k,q,qp)
      !
      integer :: iG_start,iG_end
      !
+     if (.not.l_use_collisions) P_square_times_tau=rZERO
+     Sc_re             =rZERO
+     Sc_im             =rZERO
+     beta              =rZERO
+     !
      ! We need the objects
      !
      !  i) <nk|exp(iqr)\grad|mk-q>
@@ -295,7 +303,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
        else
          !
-         call SCATTERING_QED_transverse_matrix(I%is(2),0,i_g,i_G0,k,q,T_matrix,T_vec,photon_E)
+         call SCATTERING_QED_transverse_matrix(I%is(2),i_q_bz,i_g,i_G0,k,q,T_matrix,T_vec,photon_E)
          !
          FRACTION(1)=f_k_m_q/Photon_E*2._SP
          FRACTION(2)=f_k_m_q/Photon_E**2*2._SP

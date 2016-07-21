@@ -291,7 +291,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! EH-range
  !----------
- if (ENVIRONMENT=="Response_T_space"                ) EH_range=minval( BS_nT_at_k )
+ if (ENVIRONMENT=="Response_T_space"                ) then
+   EH_range=maxval( BS_nT_at_k )
+   do i_k=1,Xk%nibz
+     if (BS_nT_at_k(i_k)<EH_range.and.BS_nT_at_k(i_k)>0) EH_range=BS_nT_at_k(i_k)
+   enddo
+ endif
  !
  ! Generic Bands
  !---------------

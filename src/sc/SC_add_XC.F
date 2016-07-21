@@ -29,7 +29,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  use pars,           ONLY:SP,cZERO,cI
  use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_coh,l_sc_sex,l_sc_is_libDFT,&
-&                         l_use_Hxc_collisions,l_sc_hartree
+&                         l_use_Hxc_collisions,l_sc_fock,l_use_COH_collisions
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_reset
  use parallel_m,     ONLY:master_cpu
@@ -37,8 +37,8 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
- use SC,             ONLY:V_xc_sc,l_sc_pot_is_local,SC_kind,SC_xc_functional,SC_cycle_mixing,&
-&                         SC_bands,SC_R,H_rotate,l_oep_iterative
+ use SC,             ONLY:V_xc_sc,l_sc_V_is_local,SC_kind,SC_xc_functional,SC_cycle_mixing,&
+&                         SC_bands,SC_R,H_rotate,l_oep_iterative,l_sc_XC_is_local
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
@@ -55,31 +55,32 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  ! Work Space
  !
  integer      :: ib,ik
- logical      :: l_call_pot_driver
- complex(SP)  :: G_collisions(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
+ complex(SP)  :: G_sex(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
+ complex(SP)  :: G_coh(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
  !
  type(QP_t)   :: qp_dummy
  !
- l_call_pot_driver=l_sc_is_libDFT .or. l_sc_hartree
- !
- if (.not.l_sc_pot_is_local) then
+ if (.not.l_sc_V_is_local) then
    !
-   ! Fock/SEX + COH
-   !================
+   ! Fock/SEX/Hartree + COH
+   !=======================
    !
-   if(l_use_Hxc_collisions) then
+   if (l_use_Hxc_collisions.or.l_use_COH_collisions) then
      !     
-     G_collisions=cZERO
-     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik)=cI* E%f(ib,ik,1)
+     G_sex=cZERO
+     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_sex(ib,ib,ik)=cI*E%f(ib,ik,1)
+     G_coh=cZERO
+     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_coh(ib,ib,ik)=cI
      !
      ! Now I build the G_collisions rotating the non interaction one
      ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)
      !
      do ik=1,E%nk
-       call H_rotate(SC_R(:,:,ik,1),G_collisions(:,:,ik),SC_bands(2),-1)
+       call H_rotate(SC_R(:,:,ik,1),G_sex(:,:,ik),SC_bands(2),-1)
+       call H_rotate(SC_R(:,:,ik,1),G_coh(:,:,ik),SC_bands(2),-1)
      enddo
      !
-     call COLLISIONS_compose_sc(G_collisions)
+     call COLLISIONS_compose_sc(G_sex,G_coh)
      !    ==========
    else
      !
@@ -89,32 +90,37 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      call IO_and_Messaging_switch("-report -io_in -io_out")
      !
-     call XCo_driver(E,k,k,q)
+     if (l_sc_sex.or.l_sc_fock) call XCo_driver(E,k,k,q)
      !
      call IO_and_Messaging_switch("+io_in")
      !
-     if (l_sc_coh.or.l_sc_sex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
+     if (l_sc_sex.or.l_sc_coh)  call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
      call IO_and_Messaging_switch("+report +io_out",CONDITION=master_cpu)
      !
    endif
    !
- endif
- !
- if (l_sc_pot_is_local) then
+ else if (l_sc_XC_is_local) then
    !
    if (.not.l_oep_iterative) V_xc_sc=0._SP
    !
    ! GPL_EXCLUDE_START
    !
+   ! OEP's
+   !=======
+   !
    if (l_sc_exx.or.l_sc_srpa) call OEP_driver(X,Xw(2),E,k,q,V_xc_sc)
    !
    ! GPL_EXCLUDE_END
    !
-   if (l_call_pot_driver) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1,&
+   ! DFT-like 
+   !==========
+   !
+   if (l_sc_is_libDFT) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1,&
 &                                                  MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)
-   if (l_call_pot_driver.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
-   if (l_call_pot_driver.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
+   !
+   if (l_sc_is_libDFT.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
+   if (l_sc_is_libDFT.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
    !
    ! Mixing 
    !========

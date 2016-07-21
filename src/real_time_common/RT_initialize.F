@@ -47,7 +47,7 @@ subroutine RT_initialize(E,k,q)
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
-&                         RT_is_dynamically_dephased,RT_is_statically_dephased
+&                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -193,6 +193,8 @@ subroutine RT_initialize(E,k,q)
    !
    NE_time_step_update_jump = NE_time_step_update_jump_SAVE
    !
+   if (RT_MAX_step<1.E-5) RT_MAX_step=100.*RT_step
+   !
  else
    !
    ! J, P and M (spin) cache Time size (is switched off when an adaptative time step is used)
@@ -305,7 +307,7 @@ subroutine RT_initialize(E,k,q)
      call PLASMA_parallel_setup(EH_gas)
    endif
    !
-   if(io_COLLs) call COLLISIONS_load(.TRUE.)
+   if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
  !
@@ -335,6 +337,7 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r', 'Initial time           [fs]:',NE_initial_time_step_update*AUT2FS)
    call msg( 'r', 'Time Interval          [fs]:',NE_time_step_update_jump*AUT2FS)
    call msg( 'r', 'Treshold              [o/o]:',NE_step_update_treshold/100.)
+   call msg( 'r',  'dT maximum value      [fs]:',RT_MAX_step*AUT2FS)
  endif
  !
  call msg( 'r','---Memory---')

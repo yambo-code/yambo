@@ -35,7 +35,7 @@ subroutine RT_driver(E,X,k,q)
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
- use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
+ use SC,             ONLY:SC_potential,WF_G_max,WF_Go_indx,rho_n,magn_n
  use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
 &                         NE_i_start_time,RT_carriers_object,TIME_adjust,RT_apply
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&

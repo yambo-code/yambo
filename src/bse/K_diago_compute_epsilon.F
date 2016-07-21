@@ -170,6 +170,9 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  call PP_redux_wait(Epsilon_ii(:,2))
  call PP_redux_wait(Joint_DOS(:,2) )
+#if defined _PL
+ call PP_redux_wait(PL(:,2))
+#endif
  !
  ! GPL_EXCLUDE_START
  !

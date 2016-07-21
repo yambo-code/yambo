@@ -65,6 +65,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _KERR
  use KERR,           ONLY:BS_KERR_free
 #endif
+#if defined _PL
+ use PHOTOLUM,       ONLY:BS_PL_free
+#endif
  !
  ! GPL_EXCLUDE_END
  !
@@ -216,6 +219,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
      n_BS_blks=0
      call BS_mat_free()
+#if defined _PL
+     call BS_PL_free( )
+#endif
 #if defined _KERR
      call BS_KERR_free( )
 #endif

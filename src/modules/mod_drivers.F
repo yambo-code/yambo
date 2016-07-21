@@ -38,6 +38,7 @@ module drivers
  !
  ! Real Time & SC
  !
+ logical :: l_photolum 
  logical :: l_real_time 
  logical :: l_sc_run
  logical :: l_rt_carriers_in_use
@@ -45,7 +46,6 @@ module drivers
  logical :: l_eval_collisions
  logical :: l_use_Hxc_collisions
  logical :: l_use_COH_collisions
- logical :: l_use_scatt_collisions
  logical :: l_use_collisions
  !
  ! The self-energy correlation "kind"

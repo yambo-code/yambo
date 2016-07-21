@@ -35,7 +35,7 @@ use Getopt::Long;
 # 
 # ... modified
 #
-$gitcommand = "git status | grep 'modified' | awk \'{printf\" %s \",\$2 }\' |";
+$gitcommand = "git status | sed -n '/not staged/q;p' | grep 'modified' | awk \'{printf\" %s \",\$2 }\' |";
 open(GIT, $gitcommand);
 $changedfiles = <GIT>;
 close(GIT);
@@ -61,7 +61,7 @@ $newfiles =~ s/interfaces\///g;
 print "NEW files: $newfiles\n\n";
 }
 #
-# ... removed 
+# ... deleted 
 #
 $gitcommand = "git status | grep 'deleted' | awk \'{printf\" %s \",\$2 }\' |";
 open(GIT, $gitcommand);
@@ -75,6 +75,21 @@ $delfiles =~ s/interfaces\///g;
 print "DELETED files: $delfiles\n\n";
 };
 #
+# ... renamed
+#
+$gitcommand = "git status | grep 'renamed' | awk \'{printf\" %s \",\$2\" \"\$3\" \"\$4 }\' |";
+open(GIT, $gitcommand);
+$rinamefiles = <GIT>;
+close(GIT);
+# Strip the "src/" (add to this list if needed)
+if ($rinamefiles) {
+print "$rinamefiles\n\n";
+$rinamefiles =~ s/  / /g;
+$rinamefiles =~ s/src\///g;
+$rinamefiles =~ s/interfaces\///g;
+print "RENAMED files: $rinamefiles\n\n";
+};
+#
 # Versions
 #
 open(VER,"<","include/version.inc");
@@ -82,16 +97,18 @@ while($line = <VER>) {
   chomp $line;
   $ID  = substr $line, 13, 1;
   if ( "$ID" =~ "1" ) {$SV = substr $line, 16, 1};
-  if ( "$ID" =~ "2" ) {$SP = substr $line, 16, 1};
-  if ( "$ID" =~ "3" ) {$SS = substr $line, 16, 1};
+  if ( "$ID" =~ "2" ) {$SS = substr $line, 16, 1};
+  if ( "$ID" =~ "3" ) {$SP = substr $line, 16, 1};
 }
 close(VER);
-$HASH=`git rev-list --count HEAD`;
+$Revision=`git rev-list  --count HEAD`;
+$Hash    =`git rev-parse --short HEAD`;
+$Revision+=10000 ;
 #
 # Write the commit message
 #
 open(MSGFILE,">","commit.msg") or die "The file commit.msg could " . "not be opened.\n";
-print MSGFILE "Version $SV.$SP.$SS  Hash $HASH \n";
+print MSGFILE "Version $SV.$SS.$SP,  Revision ${Revision},  Hash ${Hash} \n";
 if ($changedfiles) {
   print MSGFILE "MODIFIED * $changedfiles\n\n";
 };
@@ -100,6 +117,9 @@ if ($newfiles) {
 };
 if ($delfiles) {
  print MSGFILE "DELETED * $delfiles\n\n";
+};
+if ($rinamefiles) {
+ print MSGFILE "RENAMED * $rinamefiles\n\n";
 };
 print MSGFILE "Bugs:\n";
 print MSGFILE "- \n\n";

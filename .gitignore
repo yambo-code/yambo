@@ -7,6 +7,7 @@
 *.a
 *.so
 *.mod
+*.dep
 *.f90
 *.s
 *.sw*
@@ -43,6 +44,7 @@ bin/*
 *.objects*
 *__lock*
 Makefile
+make.dep
 commit.msg
 
 # Packages #
@@ -73,3 +75,4 @@ commit.msg
 .Trashes
 ehthumbs.db
 Thumbs.db
+myconfig*

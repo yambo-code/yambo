@@ -74,6 +74,9 @@
   {"DESC",   " ","[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0,0},
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
+#if defined _PL
+  {"photolum", "u","Photo-Luminescence",0,0,0,0,0}, 
+#endif
 #if defined _RT
   {"negf",   "q","Real-time dynamic [opt=(p)robe or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
 #endif

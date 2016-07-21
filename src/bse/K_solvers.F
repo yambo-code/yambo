@@ -32,6 +32,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 &                         BS_K_has_been_calculated_loaded
  use parallel_m,     ONLY:master_cpu
  use IO_m,           ONLY:IO_and_Messaging_switch
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+#endif
 #if defined _KERR
  use drivers,        ONLY:l_kerr
  use X_m,            ONLY:Epsilon_ij
@@ -72,6 +75,15 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  run_Haydock   = index(BSS_mode,'h')/=0
  run_Slepc     = index(BSS_mode,'s')/=0
  run_inversion = index(BSS_mode,'i')/=0
+ !
+#if defined _PL
+ !
+ if (l_photolum) then
+   call warning('PL currently implemented only using the diagonalization solver')
+   run_Haydock  =.false.
+   run_inversion=.false.
+ endif
+#endif
  !
  ! I/O. All read. Only master writes.
  !

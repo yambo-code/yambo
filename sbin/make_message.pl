@@ -103,11 +103,12 @@ while($line = <VER>) {
 close(VER);
 $Revision=`git rev-list  --count HEAD`;
 $Hash    =`git rev-parse --short HEAD`;
+$Revision+=10000 ;
 #
 # Write the commit message
 #
 open(MSGFILE,">","commit.msg") or die "The file commit.msg could " . "not be opened.\n";
-print MSGFILE "Version $SV.$SS.$SP  Revision ${Revision}Hash ${Hash} \n";
+print MSGFILE "Version $SV.$SS.$SP,  Revision ${Revision},  Hash ${Hash} \n";
 if ($changedfiles) {
   print MSGFILE "MODIFIED * $changedfiles\n\n";
 };

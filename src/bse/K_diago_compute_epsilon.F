@@ -43,6 +43,11 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
  !
+#if defined _PL
+ use PHOTOLUM,       ONLY:PL,PL_prefactor
+ use drivers,        ONLY:l_photolum
+#endif
+ !
  ! GPL_EXCLUDE_END
  !
  implicit none
@@ -90,6 +95,10 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  endif
 #endif
  !
+#if defined _PL
+ if (l_photolum) PL(:,2) = rZERO
+#endif
+ !
  ! GPL_EXCLUDE_END
  !
  !
@@ -98,7 +107,11 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BS_H_dim/))
  !
+#if defined _PL
+ call live_timing('BSK  EPS and PL',px%n_of_elements(myid+1))
+#else
  call live_timing('BSK     epsilon',px%n_of_elements(myid+1))
+#endif
  !
  do i1=1,BS_H_dim
    !
@@ -137,6 +150,13 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      if(l_kerr) then
        Epsilon_ij(:,2)=Epsilon_ij(:,2)-BS_R_left(i1)*BS_R_right_kerr(i1)/(W%p(:)-EXC_E(i_pert_SOC))
        if (BS_anti_res) Epsilon_ij(:,2)=Epsilon_ij(:,2)+conjg(BS_R_left(i1)*BS_R_right_kerr(i1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+     endif
+#endif
+     !
+#if defined _PL
+     if(l_photolum) then
+       PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))
+       if (BS_anti_res) PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(i1)*aimag(1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))
      endif
 #endif
      !

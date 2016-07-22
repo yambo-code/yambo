@@ -55,6 +55,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
+#if defined _PL
+ use drivers,      ONLY:l_photolum
+#endif
 #if defined _RT
  use parser_m,     ONLY:parser
  use drivers,      ONLY:l_rt_carriers_in_use
@@ -74,6 +77,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp
  real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2),E_v_SOC(2),E_c_SOC(2),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
+#if defined _PL
+ real(SP):: f_eh_PL
+#endif
 #if defined _RT
  logical :: FORCE_EQ_trans
  !
@@ -190,6 +196,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              !
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
+#if defined _PL
+             if (l_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp) =f_eh_PL
+#endif
              BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
              !
              if (associated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
@@ -288,6 +297,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
+     !
+#if defined _PL
+     !
+     f_eh_PL = Ken%f(ic,ikp,i_sp)*(spin_occ-Ken%f(iv,ik ,i_sp))/spin_occ/spin_occ
+     !
+#endif
      !
      ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
      if ( abs(abs(f_eh_REF)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.

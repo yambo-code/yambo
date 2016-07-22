@@ -27,6 +27,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  use pars,                ONLY:SP,schlen,cZERO,cI
  use drivers,             ONLY:l_sc_run
+#if defined _PL
+ use drivers,             ONLY:l_photolum
+#endif
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
@@ -99,7 +102,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
  if (associated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
  !
  l_eval_DIP_iR=use_g_space_approach
+#if defined _PL
+ l_eval_DIP_P =use_g_space_approach.or.force_v_g_space_approach.or.l_photolum
+#else
  l_eval_DIP_P =use_g_space_approach.or.force_v_g_space_approach
+#endif
  l_eval_DIP_P2=.false.
  wf_dim=3
  !

@@ -31,7 +31,7 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_H_dim,BSS_eh_Z,BSS_eh_f
- use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_f
+ use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_f,PL_weights
  !
  implicit none
  !
@@ -59,7 +59,7 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
  ! Left/Right residuals
  !
  do i_c=1,3
-   dipole_times_fZ(:,i_c) = BSS_dipoles_PL(:,i_c)*sqrt(BSS_eh_f)
+   dipole_times_fZ(:,i_c) = BSS_dipoles_PL(:,i_c)*sqrt(BSS_eh_f)*PL_weights(i_c)
    if (allocated(BSS_eh_Z)) then
      dipole_times_fZ(:,i_c)=dipole_times_fZ(:,i_c)*sqrt(BSS_eh_Z)
    endif

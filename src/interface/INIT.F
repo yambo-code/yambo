@@ -631,6 +631,14 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
+#if defined _PL
+ !
+ ! PL
+ !
+ if (l_photolum) call initactivate(1,'PL_weights')
+ !
+#endif
+ !
  ! BSE
  !
  if (l_optics.and.l_bse) then

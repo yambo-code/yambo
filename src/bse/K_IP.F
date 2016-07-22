@@ -45,7 +45,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use drivers,       ONLY:l_photolum
  use units,         ONLY:SPEED_OF_LIGHT
  use X_m,           ONLY:DIP_P
- use PHOTOLUM,      ONLY:PL,PL_prefactor
+ use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use R_lattice,     ONLY:RL_vol,nqbz
 #endif
 #if defined _KERR
@@ -71,7 +71,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
 #if defined _PL
  integer           ::i_c
- complex(SP)       ::rotated_P(3)
+ complex(SP)       ::rotated_P(3),P_weighted(3)
  real(SP)          ::res_PL
 #endif
  !
@@ -117,7 +117,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  allocate(PL(BSS_n_freqs,4)) !  2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
  PL           =rZERO
  PL_prefactor =32._SP*pi**3*SPEED_OF_LIGHT*2._SP/3._SP*RL_vol/nqbz/(2._SP*pi)**3
- PL(:,1)=W_bss%p(:)  
+ PL(:,1)      =W_bss%p(:)  
+ do ic=1,3
+   PL_weights(ic) = PL_weights(ic)/(sqrt(PL_weights(ic)))
+ enddo
  !
 #endif
  !
@@ -221,8 +224,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
 #if defined _PL
        if (l_photolum) then
-         res_PL=BS_T_grp(i_T_g)%f_PL(i_T)*Z_*( &
-&               dot_product(BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:),BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)))
+         do ic=1,3
+           P_weighted(ic)=BS_T_grp(i_T_g)%dipoles_R_PL(i_T,ic)*PL_weights(ic)
+         enddo
+         res_PL=BS_T_grp(i_T_g)%f_PL(i_T)*Z_*dot_product(P_weighted,P_weighted)
        endif
 #endif
        !

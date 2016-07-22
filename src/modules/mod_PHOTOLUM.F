@@ -31,9 +31,13 @@ module PHOTOLUM
  !
  real(SP) :: PL_prefactor
  !
- ! Photo Luminescence Spectrum
+ ! PL Spectrum
  !
  real(SP),    allocatable :: PL(:,:)
+ !
+ ! PL direction
+ !
+ real(SP)                 :: PL_weights(3)=(/1.,1.,1./)
  !
  ! BS dipoles
  !

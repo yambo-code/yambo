@@ -21,27 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_invert(iq,n_,inv_err,eps,W_disk,ID)
+integer function io_BSS_invert(iq,W,ID)
  !
  use pars,          ONLY:SP,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_DbGd,BSS_dr,&
-&                        BSS_damp_reference,BSS_inversion_PERT_FULL_ratio
+&                        BSS_damp_reference,BSS_inversion_PERT_FULL_ratio,&
+&                        K_INV_err,K_INV_eps_pl
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on,write_is_on
  implicit none
- integer      :: iq,n_
- integer      :: inv_err(n_)
- real(SP)     :: eps(2,n_)
- type(w_samp) :: W_disk
+ integer      :: iq
+ type(w_samp) :: W
  !
  ! Work Space
  !
  integer     :: ID
- real(SP), allocatable :: W(:,:)
+ real(SP)    :: EPS(W%n_freqs,4),Wp(W%n_freqs,2)
  !
  io_BSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
  !
@@ -62,11 +61,11 @@ integer function io_BSS_invert(iq,n_,inv_err,eps,W_disk,ID)
    call io_elemental(ID,VAR=&
 &       " Using energy Double Grid        :",L0=BSS_uses_DbGd,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
-&       " Number of frequencies           :",I0=W_disk%n_freqs)
+&       " Number of frequencies           :",I0=W%n_freqs)
    call io_elemental(ID,VAR=&
 &       " Perturbative to full ration     :",R0=BSS_inversion_PERT_FULL_ratio)
    call io_elemental(ID,UNIT=HA2EV,VAR=&
-&       " Energy range                [ev]:",R1=W_disk%er)
+&       " Energy range                [ev]:",R1=W%er)
    call io_elemental(ID,UNIT=HA2EV,VAR=&
 &       " Damping range               [ev]:",R1=BSS_dr,CHECK=.true.,OP=(/"==","=="/))
    call io_elemental(ID,UNIT=HA2EV,VAR=&
@@ -74,10 +73,10 @@ integer function io_BSS_invert(iq,n_,inv_err,eps,W_disk,ID)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    call io_bulk(ID,'N_of_FREQs',VAR_SZ=(/1/))
-   call io_bulk(ID,I0=W_disk%n_freqs)
+   call io_bulk(ID,I0=W%n_freqs)
    !
    call io_bulk(ID,'FREQs_RANGE',VAR_SZ=(/2/))
-   call io_bulk(ID,R1=W_disk%er)
+   call io_bulk(ID,R1=W%er)
    !
    ! header return
    !
@@ -89,28 +88,36 @@ integer function io_BSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call io_bulk(ID,'INV_ERRs',VAR_SZ=(/W_disk%n_freqs/))
-   call io_bulk(ID,I1=inv_err)
-   !
-   allocate(W(2,W_disk%n_freqs))
-   !
-   if (write_is_on(ID)) then
-     W(1,:)=real(W_disk%p)
-     W(2,:)=aimag(W_disk%p)
-   endif
-   !
-   call io_bulk(ID,'FREQs',VAR_SZ=(/2,W_disk%n_freqs/))
-   call io_bulk(ID,R2=W)
+   call io_bulk(ID,'INV_ERRs',VAR_SZ=(/W%n_freqs/))
+   call io_bulk(ID,I1=K_INV_err)
    !
    if (read_is_on(ID)) then
-     allocate(W_disk%p(W_disk%n_freqs))
-     W_disk%p(:)=W(1,:)+cI*W(2,:)
+     allocate(W%p(W%n_freqs))
+   endif
+   if (write_is_on(ID)) then
+     EPS(:,1)=real (K_INV_eps_pl(:,1))
+     EPS(:,2)=aimag(K_INV_eps_pl(:,1))
+     EPS(:,3)=real (K_INV_eps_pl(:,2))
+     EPS(:,4)=aimag(K_INV_eps_pl(:,2))
+     Wp(:,1) =real (W%p(:))
+     Wp(:,2) =aimag(W%p(:))
    endif
    !
-   deallocate(W)
+   call io_bulk(ID,'FREQs',VAR_SZ=(/W%n_freqs,2/))
+   call io_bulk(ID,R2=Wp(:,:))
+   !call io_bulk(ID,'FREQs',VAR_SZ=(/W%n_freqs/))
+   !call io_bulk(ID,C1=W%p(:))
    !
-   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,W_disk%n_freqs/))
-   call io_bulk(ID,R2=eps)
+   call io_bulk(ID,'EPSILON_or_PL',VAR_SZ=(/W%n_freqs,4/))
+   call io_bulk(ID,R2=EPS(:,:))
+   !call io_bulk(ID,'EPSILON_or_PL',VAR_SZ=(/W%n_freqs/))
+   !call io_bulk(ID,C1=K_INV_eps_pl(:))
+   !
+   if (read_is_on(ID)) then
+     W%p(:)           =Wp(:,1)+cI*Wp(:,2)
+     K_INV_eps_pl(:,1)=EPS(:,1)+cI*EPS(:,2)
+     K_INV_eps_pl(:,2)=EPS(:,3)+cI*EPS(:,4)
+   endif
    !
  endif
  !

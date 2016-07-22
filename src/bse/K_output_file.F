@@ -441,7 +441,7 @@ subroutine K_output_file(iq,mode)
  ! JOINT DOS
  !------------
  !
- if (.not.l_Haydock) then 
+ if (.not.l_Haydock.and..not.l_Inversion) then 
    do iw=1,BSS_n_freqs
      !
      ! Joint DOS: 2 (int) 3 (non int)

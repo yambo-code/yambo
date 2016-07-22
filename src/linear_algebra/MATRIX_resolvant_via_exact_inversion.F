@@ -63,5 +63,4 @@ integer function MATRIX_resolvant_via_exact_inversion(n,m,W,C,f,V,K)
    endif
  enddo
  !
- !
 end function

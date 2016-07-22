@@ -21,19 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion(iq,W,E,k,q) 
+subroutine K_inversion_driver(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP,cZERO
- use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,l_drude
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use stderr,         ONLY:real2ch
- use BS,             ONLY:BS_mat,BSS_dipoles,BS_H_dim,&
-&                         BSE_mode,BSS_inversion_mode,&
-&                         BSS_er,BSS_dr,BSS_n_freqs,&
-&                         BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,BSS_inversion_PERT_FULL_ratio
+ use BS,             ONLY:BS_mat,BS_H_dim,BSE_mode,BSS_inversion_mode,&
+&                         K_INV_err,BSS_n_descs,BSS_description,Co_factor,&
+&                         BS_mat_free,BSS_inversion_PERT_FULL_ratio,K_INV_eps_pl,K_INV_iw_full
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
- use frequency,      ONLY:w_samp,W_reset,W_merge
+ use frequency,      ONLY:w_samp,W_reset
  use R_lattice,      ONLY:q_norm,bz_samp
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
@@ -72,15 +70,13 @@ subroutine K_inversion(iq,W,E,k,q)
  type(PP_indexes) ::px
  integer          ::i1,i2,iw
  logical, external::stop_now
- complex(SP)      ::gauge_factor
  complex(SP), allocatable  ::Lo(:,:,:)
  !
  ! ... frequencies
  !
- integer,allocatable :: inv_err(:),iw_full(:)
- integer             :: full_inf_freqs,nw,nw_conv,&
-&                       min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
-                                                ! I perform a full inversion
+ integer     :: full_inf_freqs,nw,nw_conv,&
+&               min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
+                                        ! I perform a full inversion
  logical    ::do_it_full,full_inf_freqs_found,FULL,PERTURBATIVE
  !
  ! I/O
@@ -88,8 +84,6 @@ subroutine K_inversion(iq,W,E,k,q)
  integer           :: i_err,ID,Lo_dim
  type(w_samp)      :: W_disk
  integer, external :: io_BSS_invert
- integer,     allocatable :: inv_err_disk(:),disk_freq_table(:)
- complex(SP), allocatable :: eps_disk(:)
  !
 #if defined _TIMING
  call timing('Invertion Solver',OPR='start')
@@ -119,8 +113,9 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! I/O of the restart database
  !=============================
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- i_err=io_BSS_invert(iq,1,(/0/),(/cZERO/),W_disk,ID)
+ i_err=io_BSS_invert(iq,W_disk,ID)
  !
  ! When the damping range is not uniform then changing
  ! the energy borders
@@ -129,50 +124,7 @@ subroutine K_inversion(iq,W,E,k,q)
    if (W%er(1)/=W_disk%er(1).or.W%er(2)/=W_disk%er(2)) i_err=-1
  endif
  !
- if (i_err==0) then
-   allocate(inv_err_disk(W_disk%n_freqs),disk_freq_table(W_disk%n_freqs+W%n_freqs))
-   allocate(eps_disk(W_disk%n_freqs))
-   eps_disk=cZERO
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   i_err=io_BSS_invert(iq,W_disk%n_freqs,inv_err_disk,eps_disk,W_disk,ID)
-   !
-   ! Here I create a new energy array that merges the disk 
-   ! and present energies. In addition the corresponding inv_err
-   ! and eps2 are alligned to the disk values.
-   !
-   call W_merge(W_disk,W,disk_freq_table)
-   !
-   BSS_n_freqs=W%n_freqs
-   BSS_er=W%er
-   BSS_dr=W%dr
-   !
-   allocate(inv_err(W%n_freqs),iw_full(W%n_freqs))
-   Epsilon_ii(:,2)=cZERO
-   Joint_DOS(:,2) =cZERO
-   inv_err=-1
-   !
-   nw_conv=0
-   do iw=1,W%n_freqs
-     !
-     ! Load eps only for converged frequencies
-     !
-     if (disk_freq_table(iw)>0) then
-       inv_err(iw)=inv_err_disk(disk_freq_table(iw))
-       if (inv_err(iw)==0) then
-         Epsilon_ii(iw,2)=eps_disk(disk_freq_table(iw))/real(ncpu,SP)
-         nw_conv=nw_conv+1
-       endif
-     endif
-   enddo
-   call msg('rs','[BSE INV] Frequencies read    [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
-   deallocate(inv_err_disk,eps_disk,disk_freq_table)
- else
-   allocate(inv_err(W%n_freqs),iw_full(W%n_freqs))
-   inv_err=-1
-   Epsilon_ii(:,2)=cZERO
-   Joint_DOS(:,2) =cZERO
- endif
+ call K_inversion_restart(iq,i_err,nw_conv,W,W_disk)
  !
  ! Kernel Loading 
  !================
@@ -192,8 +144,9 @@ subroutine K_inversion(iq,W,E,k,q)
  !============================
  call K_output_file(iq,"open Inversion")
  !
- allocate(eps_disk(W%n_freqs))
- eps_disk=cZERO
+ allocate(K_INV_eps_pl(W%n_freqs,2)) ! int no-int
+ K_INV_eps_pl     =cZERO
+ K_INV_eps_pl(:,2)=Epsilon_ii(:,3)
  !
  ! Perturbative Invertion
  !========================
@@ -204,20 +157,22 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    do_it_full=.FALSE.
    call live_timing('Perturbative inversion ',px%n_of_elements(myid+1))
-   call perform_inversion(1,W%n_freqs)
+   !
+   call K_inversion_engine(1,W%n_freqs,px,W,Lo,Lo_dim,do_it_full)
+   !
    do i1=1,W%n_freqs
-     if (inv_err(i1)<0) inv_err(i1)=0
+     if (K_INV_err(i1)<0) K_INV_err(i1)=0
    enddo 
-   call PP_redux_wait(inv_err)
+   call PP_redux_wait(K_INV_err)
    !
    ! I/O [after pert inversion]
    !
    call PP_redux_wait(Epsilon_ii(:,2))
    !
-   eps_disk(:)=Epsilon_ii(:,2)
+   K_INV_eps_pl(:,1)=Epsilon_ii(:,2)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   i_err=io_BSS_invert(iq,W%n_freqs,inv_err,eps_disk,W,ID)
+   i_err=io_BSS_invert(iq,W,ID)
    !
  endif
  !
@@ -230,9 +185,9 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    full_inf_freqs=0
    do i1=1,W%n_freqs
-     if (inv_err(i1)/=0) then
+     if (K_INV_err(i1)/=0) then
        full_inf_freqs=full_inf_freqs+1
-       iw_full(full_inf_freqs)=i1
+       K_INV_iw_full(full_inf_freqs)=i1
      endif
    enddo
    !
@@ -249,15 +204,15 @@ subroutine K_inversion(iq,W,E,k,q)
      iw=-1
      nw=0
      do i1=1,W%n_freqs
-       if (inv_err(i1)/= 0.and.iw<0) iw=i1
-       if (inv_err(i1)/= 0.and.iw>0) nw=nw+1
-       if ((inv_err(i1)== 0.or.(inv_err(i1)==1.and.i1==W%n_freqs)).and.iw>0) then
+       if (K_INV_err(i1)/= 0.and.iw<0) iw=i1
+       if (K_INV_err(i1)/= 0.and.iw>0) nw=nw+1
+       if ((K_INV_err(i1)== 0.or.(K_INV_err(i1)==1.and.i1==W%n_freqs)).and.iw>0) then
          !
          if (nw>=min_dist_non_conv_freqs) then
            !
            do i2=iw,iw+nw-1,min_dist_non_conv_freqs
              full_inf_freqs=full_inf_freqs+1
-             iw_full(full_inf_freqs)=i2
+             K_INV_iw_full(full_inf_freqs)=i2
            enddo
            !
          endif
@@ -297,21 +252,23 @@ subroutine K_inversion(iq,W,E,k,q)
      !
      if (.not.px%element_1D(i1)) cycle
      !
-     iw=iw_full(i1)
+     iw=K_INV_iw_full(i1)
      !
-     call perform_inversion(iw,1)
+     call K_inversion_engine(iw,1,px,W,Lo,Lo_dim,do_it_full)
+     !
      call live_timing(steps=1)
      !
    enddo
+   !
    call live_timing()
-   call PP_redux_wait(inv_err,imode=2)
+   call PP_redux_wait(K_INV_err,imode=2)
    call PP_redux_wait(Epsilon_ii(:,2))
    !
  endif
  !
  nw_conv=0
  do iw=1,W%n_freqs
-   if (inv_err(iw)==0) nw_conv=nw_conv+1
+   if (K_INV_err(iw)==0) nw_conv=nw_conv+1
  enddo
  call msg('rs','[BSE INV] Converged frequencies [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
  !
@@ -319,14 +276,14 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    ! I/O [after full inversion]
    !
-   eps_disk(:)=Epsilon_ii(:,2)
+   K_INV_eps_pl(:,1)=Epsilon_ii(:,2)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   i_err=io_BSS_invert(iq,W%n_freqs,inv_err,eps_disk,W,ID)
+   i_err=io_BSS_invert(iq,W,ID)
    !
    ! Try a polinomial interpolation on the null values
    !===================================================
-   call K_eps_interpolate(W%n_freqs,real(W%p),inv_err)
+   call K_eps_interpolate(W%n_freqs,real(W%p),K_INV_err)
    !
  else
    !
@@ -348,9 +305,9 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! CLEAN
  !
- deallocate(inv_err,eps_disk)
+ deallocate(K_INV_err,K_INV_eps_pl)
  call PP_indexes_reset(px)
- deallocate(iw_full,Lo)
+ deallocate(K_INV_iw_full,Lo)
  call mem_est("Lo")
  !
  call BS_mat_free( )
@@ -365,52 +322,4 @@ subroutine K_inversion(iq,W,E,k,q)
  call timing('Invertion Solver',OPR='stop')
 #endif
  !
- contains
-   !
-   subroutine perform_inversion(iw_2start,iw_2do)
-     integer     :: iw_2start,iw_2do
-     !
-     integer :: i2,iw
-     logical :: perform_inv
-     !
-     integer, external::MATRIX_resolvant_via_perturbative_inversion
-     integer, external::MATRIX_resolvant_via_exact_inversion
-     !
-     do i2=1,iw_2do
-       !
-       iw=i2+iw_2start-1
-       !
-       ! The parallel loop is controlled in the manin body loop 
-       ! when a full inversion is performed
-       !
-       if (.not.do_it_full) then
-         if(.not.px%element_1D(iw)) cycle
-       endif
-       !
-       if (     do_it_full) perform_inv= inv_err(iw)/= 0
-       if (.not.do_it_full) perform_inv= inv_err(iw)==-1
-       !
-       if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/q_norm(1)**2
-       if (trim(global_gauge)=='velocity') gauge_factor=-Co_factor/ W%p(iw) **2
-       !       
-       if (perform_inv) then
-         !
-         if (do_it_full) then
-           inv_err(iw)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
-&                                                           Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
-         else
-           inv_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
-&                                                                  Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
-         endif
-         !
-       endif       
-       !
-       if (.not.do_it_full) call live_timing(steps=1)
-       !
-     enddo
-     !
-     if (.not.do_it_full) call live_timing()
-     !
-   end subroutine
-   !
 end subroutine

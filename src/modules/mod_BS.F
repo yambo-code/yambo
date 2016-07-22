@@ -153,11 +153,10 @@ module BS
  !===========
  complex(SP),allocatable :: WF_phase(:,:,:,:)
  !
- ! Solvers
- !
+ ! Solvers (General)
+ !=========
  character(lchlen):: BSS_description(100)
  character(schlen):: BSS_mode
- character(schlen):: BSS_inversion_mode
  complex(SP) :: BSS_Wd
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
@@ -165,20 +164,33 @@ module BS
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
  real(SP) :: BSS_q0(3)
- real(SP) :: Haydock_treshold
- real(SP) :: Haydock_v0_mod
- real(SP) :: Inversion_treshold
- real(SP) :: BSS_inversion_PERT_FULL_ratio = 1.
- logical  :: BSS_write_eig_2_db
- logical  :: Haydock_terminator
  logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
- logical  :: BSS_uses_partial_diago
  logical  :: BSS_perturbative_width
  !
- ! Temporary (LARGE) arrays to be used in solvers ONLY
+ ! Solvers (Diago)
+ !=========
+ logical  :: BSS_write_eig_2_db
  !
+ ! Solvers (Haydock)
+ !=========
+ logical  :: Haydock_terminator
+ real(SP) :: Haydock_treshold
+ real(SP) :: Haydock_v0_mod
+ !
+ ! Solvers (Invertion)
+ !=========
+ character(schlen):: BSS_inversion_mode
+ real(SP) :: Inversion_treshold
+ real(SP) :: BSS_inversion_PERT_FULL_ratio = 1.
+ logical  :: BSS_uses_partial_diago
+ integer    , allocatable :: K_INV_err(:)
+ integer    , allocatable :: K_INV_iw_full(:)
+ complex(SP), allocatable :: K_INV_eps_pl(:,:)
+ !
+ ! Solvers (Temporary (LARGE) arrays to be used in solvers ONLY)
+ !=========
  integer    , allocatable :: BSS_eh_table(:,:)
  real(SP)   , allocatable :: BSS_eh_E(:)
  real(SP)   , allocatable :: BSS_eh_f(:)

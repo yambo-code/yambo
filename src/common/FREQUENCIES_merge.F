@@ -23,71 +23,99 @@
 !
 subroutine FREQUENCIES_merge(W1,W2,table)
  !
- ! Merge W1 and W2 in a new W2
+ ! Merge W1 into W2 and create a table of the W1 points in the new merged type
  !
- use pars,           ONLY:SP
- use frequency,      ONLY:w_samp,W_reset,W_duplicate
+ ! W2 is overwritten
+ !
+ use pars,           ONLY:SP,cZERO
+ use frequency,      ONLY:w_samp,W_reset
  use memory_m,       ONLY:mem_est
  !
  implicit none
  !
- type(w_samp):: W1,W2
- integer     :: table(W1%n_freqs+W2%n_freqs)
+ type(w_samp), intent(in)   :: W1
+ type(w_samp), intent(inout):: W2
+ integer     , intent(inout):: table(W1%n_freqs+W2%n_freqs)
  ! 
  ! Work Space
  !
- integer     :: nw,iw1,iw2,i1
- type(w_samp):: Wbase
+ integer     :: iw1,iw2,i1
+ type(w_samp):: W_new
  real(SP)    :: r(3)
  !
- call W_reset(Wbase)
- call W_duplicate(W2,Wbase)
- call W_reset(W2)
- !
- nw=Wbase%n_freqs
- table=0
- do i1=1,Wbase%n_freqs
-   table(i1)=-i1
+ call W_reset(W_new)
+ allocate(W_new%p(W1%n_freqs+W2%n_freqs))
+ W_new%p            =cZERO
+ W_new%n_freqs      =W2%n_freqs
+ do iw2=1,W2%n_freqs
+   W_new%p(iw2) = W2%p(iw2)
+   table(iw2)   = -iw2
  enddo
  !
- W1_loop: do iw1=W1%n_freqs,1,-1
+ W1_loop: do iw1=1,W1%n_freqs
    !
-   do iw2=1,Wbase%n_freqs
+   ! N(ew)
+   !
+   ! N < first
+   !
+   if (real(W1%p(iw1))<minval(real(W_new%p(:W_new%n_freqs)))) then
+     call ADD_it(W1%p(iw1),1,iw1)
+     cycle W1_loop
+   endif
+   !
+   ! N > latest
+   !
+   if (real(W1%p(iw1))>maxval(real(W_new%p(:W_new%n_freqs)))) then
+     call ADD_it(W1%p(iw1),W_new%n_freqs+1,iw1)
+     cycle W1_loop
+   endif
+   !
+   W2_loop: do iw2=1,W_new%n_freqs-1
      !
-     r=(/real(Wbase%p(iw2)),real(W1%p(iw1)),0._SP/)
-     if (iw2<Wbase%n_freqs) r(3)=real(Wbase%p(iw2+1))
+     r=(/real(W_new%p(iw2)),real(W1%p(iw1)),real(W_new%p(iw2+1))/)
+     !
+     ! o=N  
      !
      if (abs(r(1)-r(2))<1.E-5) then
        table(iw2)=iw1
-       cycle W1_loop 
+       exit W2_loop 
      endif
      !
-     if ((iw2< Wbase%n_freqs.and.r(1)<r(2).and.r(2)<r(3)).or.&
-&        (iw2==Wbase%n_freqs.and.r(1)<r(2)) ) then
-       do i1=W1%n_freqs+Wbase%n_freqs-1,iw2+1,-1
-         table(i1+1)=table(i1)
-       enddo
-       table(iw2+1)=iw1
-       nw=nw+1
-       cycle W1_loop
+     ! o N o
+     !
+     if (r(1)<r(2).and.r(2)<r(3)) then
+       call ADD_it(W1%p(iw1),iw2+1,iw1)
+       cycle W2_loop
      endif
      !
-   enddo
+   enddo W2_loop
    !
  enddo W1_loop
  !
- W2%n_freqs=nw
- W2%damp_reference=Wbase%damp_reference
- W2%per_memstps=Wbase%per_memstps
- allocate(W2%p(nw))
+ call W_reset(W2)
+ W2%n_freqs=W_new%n_freqs
+ W2%damp_reference=W_new%damp_reference
+ W2%per_memstps=W_new%per_memstps
+ allocate(W2%p(W2%n_freqs))
  call mem_est("W-p",(/W2%n_freqs/))
- do iw1=1,nw
-   if (table(iw1)>0) W2%p(iw1)=W1%p(table(iw1))
-   if (table(iw1)<0) W2%p(iw1)=Wbase%p(-table(iw1))
- enddo
- W2%er=(/real(W2%p(1)) ,real(W2%p(nw))/)
- W2%dr=(/aimag(W2%p(1)),aimag(W2%p(nw))/)
+ W2%p=W_new%p(:W_new%n_freqs)
+ W2%er=(/real(W2%p(1)) ,real(W2%p(W2%n_freqs))/)
+ W2%dr=(/aimag(W2%p(1)),aimag(W2%p(W2%n_freqs))/)
  !
- call W_reset(Wbase)
+ call W_reset(W_new)
  !
+ contains
+   !
+   subroutine ADD_it(E,i_POS,i_REF)
+     complex(SP) :: E 
+     integer     :: i_POS,i_REF
+     do i1=W1%n_freqs+W2%n_freqs-1,i_POS,-1
+       table(i1+1)  =table(i1)
+       W_new%p(i1+1)=W_new%p(i1)
+     enddo
+     W_new%p(i_POS)=E
+     table(i_POS)=i_REF
+     W_new%n_freqs=W_new%n_freqs+1
+   end subroutine
+   !
 end subroutine FREQUENCIES_merge

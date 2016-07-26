@@ -38,7 +38,7 @@ subroutine K_inversion_restart(iq,W)
  !
  ! Work Space
  !
- integer                  :: ID,iw,i_err
+ integer                  :: ID,iw,i_err,iw_tab
  integer,        external :: io_BSS_invert
  integer,     allocatable :: inv_err_db(:)
  integer,     allocatable :: freq_table(:)
@@ -53,8 +53,7 @@ subroutine K_inversion_restart(iq,W)
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  i_err=io_BSS_invert(iq,W_db,ID)
  !
- ! When the damping range is not uniform then changing
- ! the energy borders
+ ! When the damping range is not uniform then changing energy borders means changing damping :(
  !
  if (W_db%dr(1)/=W_db%dr(2).or.W%dr(1)/=W%dr(2)) then
    if (W%er(1)/=W_db%er(1).or.W%er(2)/=W_db%er(2)) i_err=-1
@@ -78,9 +77,7 @@ subroutine K_inversion_restart(iq,W)
    !
    deallocate(BSS_INV_err,BSS_INV_eps_pl)
    !
-   ! Here I create a new energy array that merges the db 
-   ! and present energies. In addition the corresponding K_INV_err
-   ! and eps_pl_db are alligned to the db values.
+   ! Here I create a new energy array that merges the db to the current energies. 
    !
    call FREQUENCIES_merge(W_db,W,freq_table)
    !
@@ -96,34 +93,46 @@ subroutine K_inversion_restart(iq,W)
      !
      ! Load eps/pl only for converged frequencies
      !
-     if (freq_table(iw)>0) then
-       BSS_INV_eps_pl(iw,2)=DB_eps_pl(freq_table(iw),2)/real(ncpu,SP)
-       BSS_INV_err(iw)=inv_err_db(freq_table(iw))
+     iw_tab=freq_table(iw)
+     !
+     if (iw_tab>0) then
+       BSS_INV_eps_pl(iw,2)=DB_eps_pl(iw_tab,2)
+       BSS_INV_err(iw)=inv_err_db(iw_tab)
        if (BSS_INV_err(iw)==0) then
-         BSS_INV_eps_pl(iw,1)=DB_eps_pl(freq_table(iw),1)/real(ncpu,SP)
+         BSS_INV_eps_pl(iw,1)=DB_eps_pl(iw_tab,1)
        endif
+     else
+       BSS_INV_eps_pl(iw,1)=cZERO
+       BSS_INV_eps_pl(iw,2)=Epsilon_ii(iabs(iw_tab),3)
+       BSS_INV_err(iw)=-1
      endif
    enddo
    !
-   call msg('rs','[BSE INV] Frequencies read    [o/o]:',real(count(inv_err_db==0))/real(W%n_freqs)*100._SP)
- stop
+   call msg('rs','[BSE INV] Frequencies read         :',count(inv_err_db==0))
+   call msg('rs','[BSE INV]                     [o/o]:',real(count(inv_err_db==0))/real(W%n_freqs)*100._SP)
+   call msg('rs','[BSE INV] Frequencies used         :',W%n_freqs)
    !
    ! De/Allocate Epsilon_ii
    !
    deallocate(Epsilon_ii)
    allocate(Epsilon_ii(BSS_n_freqs,4))
-   Epsilon_ii(:,1)=W%p(:)/real(ncpu,SP)
-   Epsilon_ii(:,2)=DB_eps_pl(:,1)/real(ncpu,SP)
-   Epsilon_ii(:,3)=DB_eps_pl(:,2)/real(ncpu,SP)
+   Epsilon_ii(:,1)=W%p(:)
+   Epsilon_ii(:,2)=BSS_INV_eps_pl(:,1)/real(ncpu,SP)
+   Epsilon_ii(:,3)=BSS_INV_eps_pl(:,2)
    !
    deallocate(inv_err_db,BSS_INV_eps_pl,freq_table,DB_eps_pl)
    !
  else
    !
-   allocate(BSS_INV_err(W%n_freqs),BSS_INV_iw_full(W%n_freqs))
+   allocate(BSS_INV_err(W%n_freqs))
    BSS_INV_err=-1
    Epsilon_ii(:,2)=cZERO
    !
  endif
+ !
+ allocate(BSS_INV_iw_full(W%n_freqs))
+ allocate(BSS_INV_eps_pl(W%n_freqs,2)) ! int no-int
+ BSS_INV_eps_pl     =cZERO
+ BSS_INV_eps_pl(:,2)=Epsilon_ii(:,3)
  !
 end subroutine K_inversion_restart

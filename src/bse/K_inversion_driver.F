@@ -23,7 +23,7 @@
 !
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS,             ONLY:BS_mat,BS_H_dim,BSE_mode,BSS_inversion_mode,&
@@ -110,8 +110,11 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Restart database
  !==================
- !
  call K_inversion_restart(iq,W)
+ if (count(BSS_INV_err/=0)==0) then
+   call LOCAL_clean()
+   return
+ endif
  !
  ! Kernel Loading 
  !================
@@ -131,10 +134,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !============================
  call K_output_file(iq,"open Inversion")
  !
- allocate(BSS_INV_eps_pl(W%n_freqs,2)) ! int no-int
- BSS_INV_eps_pl     =cZERO
- BSS_INV_eps_pl(:,2)=Epsilon_ii(:,3)
- !
  ! Perturbative Invertion
  !========================
  call PP_indexes_reset(px)
@@ -147,14 +146,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    call K_inversion_engine(1,W%n_freqs,px,W,Lo,Lo_dim,do_it_full)
    !
-   do i1=1,W%n_freqs
-     if (BSS_INV_err(i1)<0) BSS_INV_err(i1)=0
-   enddo 
    call PP_redux_wait(BSS_INV_err)
+   call PP_redux_wait(Epsilon_ii(:,2))
    !
    ! I/O [after pert inversion]
-   !
-   call PP_redux_wait(Epsilon_ii(:,2))
    !
    BSS_INV_eps_pl(:,1)=Epsilon_ii(:,2)
    !
@@ -193,7 +188,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      do i1=1,W%n_freqs
        if (BSS_INV_err(i1)/= 0.and.iw<0) iw=i1
        if (BSS_INV_err(i1)/= 0.and.iw>0) nw=nw+1
-       if ((BSS_INV_err(i1)== 0.or.(BSS_INV_err(i1)==1.and.i1==W%n_freqs)).and.iw>0) then
+       if ((BSS_INV_err(i1)== 0.or.(BSS_INV_err(i1)/=0.and.i1==W%n_freqs)).and.iw>0) then
          !
          if (nw>=min_dist_non_conv_freqs) then
            !
@@ -220,7 +215,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  if (full_inf_freqs>0.and.FULL) then
    !
-   call msg('rs','[BSE INV] Non converged frequencies :',full_inf_freqs)
+   call msg('rs','[BSE INV (before full INV)] Non converged frequencies :',full_inf_freqs)
    !
    ! Then loop on the groups performing full inversion
    !
@@ -257,7 +252,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  do iw=1,W%n_freqs
    if (BSS_INV_err(iw)==0) nw_conv=nw_conv+1
  enddo
- call msg('rs','[BSE INV] Converged frequencies [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
+ call msg('rs','[BSE INV  (after full INV)] Converged frequencies [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
  !
  if (nw_conv>0) then
    !
@@ -297,16 +292,21 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  deallocate(Lo)
  call mem_est("Lo")
  !
- call BS_mat_free( )
-#if defined _PL
- call BS_PL_free( )
-#endif
-#if defined _KERR
- call BS_KERR_free( )
-#endif
  !
 #if defined _TIMING
  call timing('Invertion Solver',OPR='stop')
 #endif
  !
+ contains 
+   !
+   subroutine LOCAL_clean
+     call BS_mat_free( )
+#if defined _PL
+     call BS_PL_free( )
+#endif
+#if defined _KERR
+     call BS_KERR_free( )
+#endif
+   end subroutine
+   !
 end subroutine

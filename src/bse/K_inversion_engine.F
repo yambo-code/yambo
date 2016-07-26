@@ -55,7 +55,10 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,do_it_full)
    ! when a full inversion is performed
    !
    if (.not.do_it_full) then
-     if(.not.px%element_1D(iw)) cycle
+     if(.not.px%element_1D(iw)) then
+       BSS_inv_err(iw)=0
+       cycle
+     endif
    endif
    !
    if (     do_it_full) perform_inv= BSS_INV_err(iw)/= 0

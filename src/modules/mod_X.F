@@ -67,7 +67,6 @@ module X_m
  logical                  :: force_v_g_space_approach
  integer                  :: num_shifted_grids
  real(SP)                 :: Dipole_Energy_treshold
- complex(SP), allocatable :: ETA_circ(:,:,:,:)
  complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
@@ -170,11 +169,6 @@ module X_m
          allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
          call mem_est(what,(/size(dip_iR)/),errors=(/err/))
          DIP_iR=cZERO
-       case('ETA_circ')
-         if (allocated(ETA_circ)) return
-         allocate(ETA_circ(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/size(ETA_circ)/),errors=(/err/))
-         ETA_circ=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
          allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
@@ -217,9 +211,6 @@ module X_m
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
          deallocate(DIP_iR)
-       case('ETA_circ')
-         if (.not.allocated(ETA_circ)) return
-         deallocate(ETA_circ)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
          deallocate(DIP_P)

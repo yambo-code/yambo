@@ -97,16 +97,18 @@ while($line = <VER>) {
   chomp $line;
   $ID  = substr $line, 13, 1;
   if ( "$ID" =~ "1" ) {$SV = substr $line, 16, 1};
-  if ( "$ID" =~ "2" ) {$SP = substr $line, 16, 1};
-  if ( "$ID" =~ "3" ) {$SS = substr $line, 16, 1};
+  if ( "$ID" =~ "2" ) {$SS = substr $line, 16, 1};
+  if ( "$ID" =~ "3" ) {$SP = substr $line, 16, 1};
 }
 close(VER);
-$HASH=`git rev-list --count HEAD`;
+$Revision=`git rev-list  --count HEAD`;
+$Hash    =`git rev-parse --short HEAD`;
+$Revision+=10000 ;
 #
 # Write the commit message
 #
 open(MSGFILE,">","commit.msg") or die "The file commit.msg could " . "not be opened.\n";
-print MSGFILE "Version $SV.$SP.$SS  Hash $HASH \n";
+print MSGFILE "Version $SV.$SS.$SP,  Revision ${Revision},  Hash ${Hash} \n";
 if ($changedfiles) {
   print MSGFILE "MODIFIED * $changedfiles\n\n";
 };

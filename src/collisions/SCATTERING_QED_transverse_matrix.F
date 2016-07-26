@@ -61,6 +61,7 @@ subroutine SCATTERING_QED_transverse_matrix(i_k,i_q_bz,i_G,i_G0,k,q,T_matrix,T_v
  do i_c=1,3
    do i_cp=i_c,3           
      T_matrix(i_c,i_cp)= T_matrix(i_c,i_cp)-q_photon(i_c)*q_photon(i_cp)/v_norm(q_photon)**2
+     T_matrix(i_cp,i_c)= T_matrix(i_c,i_cp)
    enddo
  enddo
  !

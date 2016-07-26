@@ -96,6 +96,7 @@ if test "x$enable_iotk" = "xyes" ; then
     compile_p2y="yes"
     iotk_idir=" "
     IOTK_LIBS="-liotk"
+    if test ! -d lib ; then mkdir lib ; fi
     AC_MSG_RESULT(Internal)
     AC_CONFIG_FILES([lib/install/make_iotk.inc])
   fi
@@ -108,5 +109,6 @@ AC_SUBST(compile_p2y)
 AC_SUBST(compile_iotk)
 AC_SUBST(iotk_idir)
 AC_SUBST(IOTK_LIBS)
+#AC_CONFIG_FILES([lib/install/make_iotk.inc])
 
 ])

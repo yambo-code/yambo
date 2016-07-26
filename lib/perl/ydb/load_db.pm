@@ -1,9 +1,8 @@
-#! /bin/sh
 #
 #        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): HM, DS
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -22,36 +21,38 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-# Create git hooks to update yambo version and hash
-#
-# 1. "pre-commit" --> yambo_versions_update.tcsh h
-#
-cat <<EOF > .git/hooks/pre-commit
-#!/bin/bash
-sbin/yambo_versions_update.tcsh r
-git add config/configure.ac
-git add configure
-git add include/version.inc
-EOF
-chmod +x .git/hooks/pre-commit
-#
-# 2. "Prepare commit msg"
-#
-cat <<EOF > .git/hooks/prepare-commit-msg
-#!/bin/bash
-SOB=\$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/ \1/p')
-./sbin/make_message.pl -p "\$SOB"
-echo " " >> \$1
-cat commit.msg >> \$1
-rm commit.msg
-EOF
-chmod +x .git/hooks/prepare-commit-msg
-#
-# 3. git config
-#
-git config merge.keepTheirs.driver "cp -f %B %A"
-git config merge.commit no
-git config core.editor "vim"
-git config pull.rebase true
-
-
+sub load_db
+{
+open(DB,"<","$DB_file");
+while(<DB>) { 
+ @element = split(' ',$_);
+ if ($element[1] eq "material")    { 
+  $n_keys=0;
+  $n_outs=0;
+  $n_dbs=0;
+  $n_ins=0;
+  $runs=$element[0];
+  $RUN_material[$runs]=$element[2];
+ }
+ if ($element[1] eq "date")        { $RUN_date[$runs]=$element[2] } ;
+ if ($element[1] eq "description") { $RUN_description[$runs]=$element[2] } ;
+ if ($element[1] eq "key")         { 
+   $n_keys++;
+   $RUN_key[$runs][$n_keys]=$element[2];
+ } ;
+ if ($element[1] eq "output")         { 
+   $n_outs++;
+   $RUN_out[$runs][$n_outs]=$element[2];
+ } ;
+ if ($element[1] eq "input")         { 
+   $n_ins++;
+   $RUN_in[$runs][$n_ins]=$element[2];
+ } ;
+ if ($element[1] eq "database")         { 
+   $n_dbs++;
+   $RUN_db[$runs][$n_dbs]=$element[2];
+ } ;
+};
+close(DB);
+}
+1;

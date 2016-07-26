@@ -69,10 +69,12 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  endif
  !
  if (trim(what)=="clean") then
-   deallocate(COLL%IO_status)
-   call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status")
-   deallocate(COLL%state)
-   call mem_est("COLLISIONS_"//trim(COLL%name)//"_state")
+   if (associated(COLL%IO_status)) then
+     deallocate(COLL%IO_status)
+     call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status")
+     deallocate(COLL%state)
+     call mem_est("COLLISIONS_"//trim(COLL%name)//"_state")
+   endif
    return
  endif
  !
@@ -95,6 +97,10 @@ subroutine COLLISIONS_basic_operations( what, COLL )
        do i_mix=0,COLL_bands(2)-COLL_bands(1)
          !
          i_m=i_n+i_mix
+         !
+         ! No Off-diagonal elements in the case of P collisions
+         !
+         if (trim(COLL%name)=="Momentum".and.i_mix>0)  cycle
          !
          if (i_m>COLL_bands(2)) cycle
          !
@@ -127,10 +133,8 @@ subroutine COLLISIONS_basic_operations( what, COLL )
    !
  enddo
  !
- ! QP_table map  (needed by SC)
+ ! QP_table map  (needed by SC & PARALLEL distribution of worload based on QP_n_states)
  !===============
-#if defined _SC || defined _QED
  call COLLISIONS_map_to_QP_table("fill",COLL)
-#endif
  !
 end subroutine

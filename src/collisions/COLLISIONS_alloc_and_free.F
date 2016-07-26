@@ -122,8 +122,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
 #if defined _QED
  !
  if (l_Momentum) then
-    D(2,:)=COLL_bands
     D(1,:)=(/1,QP_QED_ng/)
+    D(2,:)=COLL_bands
     D(3,:)=(/1,nqbz/)
     !DEBUG> TO CODE the distribute part
     if (l_distribute) then

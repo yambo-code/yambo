@@ -21,12 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.3 r.13680 h.ff0676f , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.2 r.13680 h.5e27d3d , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="13680"
-SHASH="ff0676f"
+SREVISION="13730"
+SHASH="5e27d3d"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -45,6 +45,7 @@ m4_include([config/fft.m4])
 m4_include([config/iotk.m4])
 m4_include([config/etsf_io.m4])
 m4_include([config/scalapack.m4])
+m4_include([config/slepc.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
@@ -425,6 +426,9 @@ AC_HAVE_FFT
 # ============================================================================
 # SCALAPACK/BLACS
 SLK_SETUP
+# ============================================================================
+# SLEPC
+SLEPC_SETUP
 # ============================================================================
 # IOTK library 
 AC_HAVE_IOTK

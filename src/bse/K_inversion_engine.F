@@ -29,7 +29,7 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,do_it_full)
  use X_m,            ONLY:Epsilon_ii,global_gauge
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:q_norm
- use BS,             ONLY:BS_mat,BS_H_dim,Co_factor,K_INV_err,BSS_dipoles
+ use BS,             ONLY:BS_mat,BS_H_dim,Co_factor,BSS_INV_err,BSS_dipoles
  !
  implicit none
  !
@@ -58,8 +58,8 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,do_it_full)
      if(.not.px%element_1D(iw)) cycle
    endif
    !
-   if (     do_it_full) perform_inv= K_INV_err(iw)/= 0
-   if (.not.do_it_full) perform_inv= K_INV_err(iw)==-1
+   if (     do_it_full) perform_inv= BSS_INV_err(iw)/= 0
+   if (.not.do_it_full) perform_inv= BSS_INV_err(iw)==-1
    !
    if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/q_norm(1)**2
    if (trim(global_gauge)=='velocity') gauge_factor=-Co_factor/ W%p(iw) **2
@@ -67,10 +67,10 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,do_it_full)
    if (perform_inv) then
      !
      if (do_it_full) then
-       K_INV_err(iw)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
+       BSS_INV_err(iw)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
 &                                                         Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
      else
-       K_INV_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
+       BSS_INV_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
 &                                                                Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
      endif
      !

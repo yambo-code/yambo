@@ -51,6 +51,7 @@ subroutine FREQUENCIES_merge(W1,W2,table)
  enddo
  !
  W1_loop: do iw1=W1%n_freqs,1,-1
+   !
    do iw2=1,Wbase%n_freqs
      !
      r=(/real(Wbase%p(iw2)),real(W1%p(iw1)),0._SP/)
@@ -72,17 +73,20 @@ subroutine FREQUENCIES_merge(W1,W2,table)
      endif
      !
    enddo
+   !
  enddo W1_loop
  !
  W2%n_freqs=nw
+ W2%damp_reference=Wbase%damp_reference
+ W2%per_memstps=Wbase%per_memstps
  allocate(W2%p(nw))
  call mem_est("W-p",(/W2%n_freqs/))
  do iw1=1,nw
    if (table(iw1)>0) W2%p(iw1)=W1%p(table(iw1))
    if (table(iw1)<0) W2%p(iw1)=Wbase%p(-table(iw1))
  enddo
- W2%er=(/ minval(real(W2%p)), maxval(real(W2%p)) /)
- W2%dr=(/ minval(aimag(W2%p)), maxval(aimag(W2%p)) /)
+ W2%er=(/real(W2%p(1)) ,real(W2%p(nw))/)
+ W2%dr=(/aimag(W2%p(1)),aimag(W2%p(nw))/)
  !
  call W_reset(Wbase)
  !

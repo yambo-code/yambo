@@ -24,12 +24,13 @@
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  use com,            ONLY:warning
+ use drivers,        ONLY:l_rpa_IP
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t,Epsilon_ii,Joint_DOS,X_drude_term
  use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode,&
-&                         BS_K_has_been_calculated_loaded
+&                         BS_K_has_been_calculated_loaded,BSS_eval_JDOS
  use parallel_m,     ONLY:master_cpu
  use IO_m,           ONLY:IO_and_Messaging_switch
 #if defined _PL
@@ -75,6 +76,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  run_Haydock   = index(BSS_mode,'h')/=0
  run_inversion = index(BSS_mode,'i')/=0
  !
+ BSS_eval_JDOS = run_Diago.or.l_rpa_IP
+ !
 #if defined _PL
  !
  if (l_photolum) then
@@ -112,7 +115,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! CLEAN
  !
- deallocate(Epsilon_ii,Joint_DOS,X_drude_term)
+ deallocate(X_drude_term,Epsilon_ii)
+ if (BSS_eval_JDOS) deallocate(Joint_DOS)
 #if defined _KERR
  if(l_kerr) deallocate(Epsilon_ij)
 #endif

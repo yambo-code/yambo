@@ -32,7 +32,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS,             ONLY:Co_factor,BSS_dipoles,BS_H_dim,BS_K_dim,&
 &                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
-&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z
+&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,BSS_eval_JDOS
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
@@ -59,7 +59,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  complex(SP), allocatable :: BS_mat_diagonal(:)
  !
  Epsilon_ii(:,3:4)=cZERO
- Joint_DOS(:,3:4) =cZERO
+ if (BSS_eval_JDOS) Joint_DOS(:,3:4) =cZERO
  !
  call parser('BSSInvKdiag',K_diago_in_BS_mat)
  !
@@ -132,7 +132,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      if(i_loop==1) call live_timing('IP Absorption',px%n_of_elements(myid+1))
      if(i_loop==2) call live_timing('Shifted GF and Absorption',px%n_of_elements(myid+1))
    else
-     call live_timing('IP GF and Absorptio',px%n_of_elements(myid+1))
+     call live_timing('IP GF and Absorption',px%n_of_elements(myid+1))
    endif
    !
    Lo=cZERO
@@ -211,13 +211,13 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
      if (trim(global_gauge)=='velocity') Lo(i_res,:,1)=(Lo(i_res,:,1)-Lo(i_res,iw_ref,1))
      Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
-     Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -         Lo(i_res,:,1)
+     if (BSS_eval_JDOS) Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) - Lo(i_res,:,1)
      !
      if ( eval_anti_resonant ) then
        residual=conjg(BSS_dipoles(i_Lo_trans))*BSS_dipoles(i_Lo_trans)
        if (trim(global_gauge)=='velocity') Lo(i_Lo_trans,:,i_Lo)=(Lo(i_Lo_trans,:,i_Lo)-Lo(i_Lo_trans,iw_ref,i_Lo))
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
-       Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -                Lo(i_Lo_trans,:,i_Lo)
+       if (BSS_eval_JDOS) Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) - Lo(i_Lo_trans,:,i_Lo)
      endif
      !
      call live_timing(steps=1)
@@ -229,11 +229,11 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    if(i_loop==n_loop) call PP_redux_wait(Lo)
    !
    call PP_redux_wait(Epsilon_ii(:,i_eps))
-   call PP_redux_wait(Joint_DOS(:,i_eps) )
+   if (BSS_eval_JDOS) call PP_redux_wait(Joint_DOS(:,i_eps) )
    !
    if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/q_norm(1)**2)
    if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/  W%p(:) **2)
-   Joint_DOS(:,i_eps)=Joint_DOS(:,i_eps)*Co_factor
+   if (BSS_eval_JDOS) Joint_DOS(:,i_eps)=Joint_DOS(:,i_eps)*Co_factor
    !
    if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/q_norm(1)**2
    !

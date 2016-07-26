@@ -168,6 +168,7 @@ module BS
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_perturbative_width
+ logical  :: BSS_eval_JDOS
  !
  ! Solvers (Diago)
  !=========
@@ -185,9 +186,10 @@ module BS
  real(SP) :: Inversion_treshold
  real(SP) :: BSS_inversion_PERT_FULL_ratio = 1.
  logical  :: BSS_uses_partial_diago
- integer    , allocatable :: K_INV_err(:)
- integer    , allocatable :: K_INV_iw_full(:)
- complex(SP), allocatable :: K_INV_eps_pl(:,:)
+ integer  :: BSS_INV_n_freqs = 0
+ integer    , allocatable :: BSS_INV_err(:)
+ integer    , allocatable :: BSS_INV_iw_full(:)
+ complex(SP), allocatable :: BSS_INV_eps_pl(:,:)
  !
  ! Solvers (Temporary (LARGE) arrays to be used in solvers ONLY)
  !=========

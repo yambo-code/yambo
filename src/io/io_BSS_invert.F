@@ -103,13 +103,13 @@ integer function io_BSS_invert(iq,W,ID)
    !
    call io_bulk(ID,'FREQs',VAR_SZ=(/BSS_INV_n_freqs,2/))
    call io_bulk(ID,R2=Wp(:BSS_INV_n_freqs,:))
-   !call io_bulk(ID,'FREQs',VAR_SZ=(/W%n_freqs/))
-   !call io_bulk(ID,C1=W%p(:))
+   !call io_bulk(ID,'FREQs',VAR_SZ=(/BSS_INV_n_freqs/))
+   !call io_bulk(ID,C1=W%p(:BSS_INV_n_freqs))
    !
-   call io_bulk(ID,'EPSILON_or_PL',VAR_SZ=(/BSS_INV_n_freqs,4/))
+   call io_bulk(ID,'EPSILON',VAR_SZ=(/BSS_INV_n_freqs,4/))
    call io_bulk(ID,R2=EPS(:BSS_INV_n_freqs,:))
-   !call io_bulk(ID,'EPSILON_or_PL',VAR_SZ=(/W%n_freqs/))
-   !call io_bulk(ID,C1=BSS_INV_eps_pl(:))
+   !call io_bulk(ID,'EPSILON',VAR_SZ=(/BSS_INV_n_freqs,2/))
+   !call io_bulk(ID,C2=BSS_INV_eps_pl(:BSS_INV_n_freqs,:))
    !
    if (read_is_on(ID)) then
      W%p(:BSS_INV_n_freqs)             =Wp(:BSS_INV_n_freqs,1)+cI*Wp(:BSS_INV_n_freqs,2)

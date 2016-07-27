@@ -114,7 +114,7 @@ subroutine K_output_file(iq,mode)
    if (eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
 #endif
- if(.not.l_Haydock) call of_open_close(jdos_file_name,title_mode)
+ if(.not.l_Haydock.and..not.l_Inversion) call of_open_close(jdos_file_name,title_mode)
  !
  call X_write_q_plus_g(1,BSS_q0,ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)

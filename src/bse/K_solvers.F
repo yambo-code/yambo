@@ -24,7 +24,6 @@
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  use com,            ONLY:warning
- use drivers,        ONLY:l_rpa_IP
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
@@ -76,8 +75,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  run_Haydock   = index(BSS_mode,'h')/=0
  run_inversion = index(BSS_mode,'i')/=0
  !
- BSS_eval_JDOS = run_Diago.or.l_rpa_IP
- !
 #if defined _PL
  !
  if (l_photolum) then
@@ -96,6 +93,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    run_Haydock=.false.
  endif
  !
+ if (run_Diago)           call K_diago_driver(iq,W_bss)
+ !
+ if (BSS_eval_JDOS) deallocate(Joint_DOS)
+ BSS_eval_JDOS=.FALSE.
+ !
  if (run_Haydock) then
    !
    stop_Haydock = (BS_not_const_eh_f.and.index(BSE_mode,'coupling')>0)
@@ -109,14 +111,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
- if (run_Diago)          call K_diago_driver(iq,W_bss)
- !
- if (run_inversion)      call K_inversion_driver(iq,W_bss,Ken,Xk,q)
+ if (run_inversion)       call K_inversion_driver(iq,W_bss,Ken,Xk,q)
  !
  ! CLEAN
  !
  deallocate(X_drude_term,Epsilon_ii)
- if (BSS_eval_JDOS) deallocate(Joint_DOS)
 #if defined _KERR
  if(l_kerr) deallocate(Epsilon_ij)
 #endif

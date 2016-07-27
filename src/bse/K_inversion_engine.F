@@ -71,10 +71,10 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,do_it_full)
      !
      if (do_it_full) then
        BSS_INV_err(iw)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
-&                                                         Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
+&                                                           Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
      else
        BSS_INV_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,BSS_dipoles,gauge_factor,&
-&                                                                Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
+&                                                                  Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
      endif
      !
    endif       

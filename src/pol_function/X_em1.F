@@ -215,6 +215,14 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
    !
+   ! 
+!   X%ib_lim(2)=Xen%nbf+1 
+   ! XXXXXXX
+!   l_X_terminator=.false.  
+   !
+   !
+   WRITE(34,*) "X%ib_lim(2)", X%ib_lim(2)
+   !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
    if (X%whoami/=1) call X_s(iq,X,Xw,X_range)

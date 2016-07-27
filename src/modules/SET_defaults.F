@@ -33,7 +33,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
-&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
+&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
 &                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,X_is_evaluated_for_all_Qs,&
 &                     force_v_g_space_approach,use_real_space_approach,Dipole_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
@@ -393,6 +393,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  self_detect_E_range=.FALSE.
  half_X_mat_only=.FALSE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
+ Dipole_Energy_treshold_vv=1.E+3_SP/HA2EV
  Dipole_approach="G-space v"
  use_shifted_grids_approach = .FALSE.
  use_covariant_approach     = .FALSE.

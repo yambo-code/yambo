@@ -64,6 +64,7 @@ subroutine X_pre_setup(Xen,X)
  if (use_X_DbGd) X_DbGd_nkpts=BZ_DbGd_tot_nkpts
  !
  ! CHO checks
+ WRITE(33,*) "X_pre_setup", l_X_terminator
  !
  if ((l_gw0.and.l_cohsex).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0)
  !

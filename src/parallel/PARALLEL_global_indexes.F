@@ -107,9 +107,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  character(10)        :: WHAT,WHATp
  !
  !
- !XXXXXXXX
- !l_X_terminator = X_terminator_Kind/='none'
- !XXXXXXXX
+ WRITE(33,*) "PARALLEL_global_indexes", l_X_terminator
  !
  !
  ! Resets...
@@ -1041,10 +1039,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    PAR_IND_CON_BANDS_X_ID(X_type)=PAR_COM_CON_INDEX(X_type)%CPU_id
    !
-   call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&
+   if (l_X_terminator) then
+       call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX(X_type)%CPU_id+1),&
+&                             TOTAL=n_c_bands(2)-n_v_bands(1)+1,&
+&                             NCPU=PAR_COM_CON_INDEX(X_type)%n_CPU)
+   else
+       call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX(X_type)%CPU_id+1),&
 &                             TOTAL=n_c_bands(2)-n_c_bands(1)+1,&
 &                             NCPU=PAR_COM_CON_INDEX(X_type)%n_CPU)
+   endif
+   !XXXXXXXXXXXXXXXXXXXXXXX
    !
    ! Response functions valence bands
    !

@@ -48,7 +48,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  !
  logical      :: X_os_run,K_inv_run 
  integer      :: i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp, Nv
- real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac, norm
+ real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac, norm, norm_1, factor_1
  complex(SP)  :: Z_,pole,pole_X_term
  !
  complex(SP),external      ::Lorentzian_FT
@@ -81,7 +81,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  pole_X_term=0.0_SP
  if(l_X_terminator) then 
    pole_X_term= cmplx(X_term_E_offset-Xen%E(iv,ikp,i_spin),-W_,KIND=SP) 
-   WRITE(300, "(a, f12.6)") "Energia assunta per ogni icg",Xen%E(iv,ikp,i_spin)  
+   WRITE(300, "(a, f12.6, a)") "Energia assunta per ogni icg, l_X_terminator)",Xen%E(iv,ikp,i_spin), l_X_terminator  
    ! XXX 
  endif
  !
@@ -89,6 +89,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  !===================
  !XXXXXX
  norm=0.0 
+ norm_1=0.0
+ !factor_1=0.0000001_SP
  ! 
  !
  ! In K_inversion_Lo the occupations and the Z_factor are not included.
@@ -104,13 +106,16 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
     do iw=1,Xw%n_freqs
       GreenF(iw)= GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
       if (l_X_terminator .and. ic > X%ib(1)+Nv-1 ) then
-        GreenF(iw)= GreenF(iw) - Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac  
-        WRITE(800, "(a)") "GreenF iv--> ic"
+        GreenF(iw)= GreenF(iw) -  Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac  
+       norm=real(GreenF(iw))*conjg(GreenF(iw)) 
+       WRITE(800, "(a, 2i5,  2f15.10, a)") "iv, ic, GreenF iv--> ic, norm, ffac, ordering", iv, ic, norm, ffac, ordering
       endif
       if (l_X_terminator .and. ic>=X%ib(1) .and. ic<=X%ib(1)+Nv-1) then
         GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac 
-        norm=real(GreenF(iw))*conjg(GreenF(iw))
-        WRITE(800, "(a, f12.6)") "GreenF iv--> iv, norm", norm
+!       GreenF(iw)= -factor_1*Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac 
+!       GreenF(iw)=cZERO
+        norm_1=real(GreenF(iw))*conjg(GreenF(iw))
+        WRITE(800, "(a, 2i5,  2f15.10, a)") " iv, ic, GreenF iv--> iv, norm_1, ffac",iv, ic,  norm_1, ffac, ordering
       endif
     enddo
     !

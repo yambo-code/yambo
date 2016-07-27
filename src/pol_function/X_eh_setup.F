@@ -50,6 +50,8 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  real(SP):: E_eh,E_in,f_eh,local_tresh
  real(SP), allocatable :: poles(:),Ein_poles(:)
  !
+ WRITE(33, *)  "X_eh_setup", l_X_terminator
+ !
  Nv=Xen%nbm-X%ib(1)+1
  Nc=X%ib(2)-Xen%nbf
  !XXXXXXXX
@@ -69,9 +71,12 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
 !XXXX         
  WRITE(500+myid,*) "SHAPE WF%index", SHAPE(WF%index)
  DO i_sp = lbound(WF%index,3), ubound(WF%index,3)
+ WRITE(500+myid,"(a)") "sono qui i_sp "
  DO ik   = lbound(WF%index,2), ubound(WF%index,2)
+ WRITE(500+myid,"(a)") "sono qui ik"
  DO ic   = lbound(WF%index,1), ubound(WF%index,1)
-    WRITE(500+myid,"(a,3i5,i5,l)") "ic,ik,isp, ind", ic, ik, i_sp, WF%index(ic,ik,i_sp), WF%state(ic,ik,i_sp)
+ WRITE(500+myid,"(a)") "sono qui i_c "
+    WRITE(500+myid,"(a,3i5,i5,l)") "ic,ik,isp, WF%index(ic,ik,i_sp), WF%state(ic,ik,i_sp) ", ic, ik, i_sp, WF%index(ic,ik,i_sp), WF%state(ic,ik,i_sp)
  ENDDO
  ENDDO
  ENDDO

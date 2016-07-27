@@ -31,7 +31,7 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
  use electrons,      ONLY:n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:DIP_projected,X_alloc,X_t,DIP_iR,DIP_P,global_gauge, l_X_terminator
+ use X_m,            ONLY:DIP_projected,X_alloc,X_t,DIP_iR,DIP_P,global_gauge,l_X_terminator,  X_terminator_Kind
  use vec_operate,    ONLY:v_norm
  use com,            ONLY:secnm
 #if defined _KERR
@@ -57,6 +57,9 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
  real(SP)                  :: dipole_dir(3),dipole_dir_rot(3)
 #endif
  !
+ !XXXXXXXXXXXXXXXXXXXXXX
+  WRITE(33,*) "DIPOLE_project_along_q", l_X_terminator 
+ !
  ! The field direction and the gamma-point norm must be renormalized here in case the
  ! oscillator strengths have been calculated using the shifted grids.
  ! In this case q0_def_norm is not the default one but corresponds
@@ -81,20 +84,22 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
  !         q_versor*P  in the velocity
  !
  !XXXXXXX
- !ic_min=X%ib_lim(2)
- !if (l_X_terminator) ic_min=X%ib(1)
+! ic_min=X%ib_lim(2)
+! if (l_X_terminator) ic_min=X%ib(1)
  !
- call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
- !call X_alloc('DIP_projected',(/ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
+  call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
+! call X_alloc('DIP_projected',(/ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
  DIP_projected = cZERO
  !
 #if defined _KERR
  if(l_kerr) then
-   call KERR_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
-   !call KERR_alloc('DIP_projected',(/ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
+    call KERR_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
+!    call KERR_alloc('DIP_projected',(/ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
    DIP_projected_r90 = cZERO
  endif
 #endif
+ !
+ WRITE(30,*) "DEBUG T_term, ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz", l_X_terminator, ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -102,7 +107,9 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
      !
      do iv=X%ib(1),X%ib_lim(1) 
        !
-       do ic=X%ib_lim(2),X%ib(2)
+       ! XXXXXXXX 
+         do ic=X%ib_lim(2),X%ib(2)
+!          do ic=ic_min,X%ib(2)
          !
          dipole = cZERO
          !
@@ -111,6 +118,11 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
            ik_mem = PAR_DIPk_ibz_index(ik)
            if(use_dip_iR) dipole = DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
            if(use_dip_P ) dipole = DIP_P (:,ic,iv,ik_mem,i_sp_pol)
+           !
+           !XXXXXXXXX
+          ! WRITE(40, "(a)") "sono qui 4" 
+          ! WRITE(40, *) "use_dip_iR=",  use_dip_iR
+          ! WRITE(40, *) "use_dip_P=",  use_dip_P    
            !
          endif
          !

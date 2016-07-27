@@ -67,6 +67,7 @@ module X_m
  logical                  :: force_v_g_space_approach
  integer                  :: num_shifted_grids
  real(SP)                 :: Dipole_Energy_treshold
+ real(SP)                 :: Dipole_Energy_treshold_vv
  complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)

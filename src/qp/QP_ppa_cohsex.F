@@ -534,6 +534,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call live_timing()
  !
+   do i2=1,X%ng
+     do i1= 1, X%ng
+      WRITE(900, "(a, 2i5, x, a, 2f13.10, x, a, x, 2f13.10)") " ig1, ig2",  i1, i2, &
+&           "Xo(ig1,ig2, X_range1)=", X_mat(i1,i2,X_range(1)), "Xo(ig1,ig2, X_range2)=", X_mat(i1,i2,X_range(2))
+     enddo
+   enddo
+ ! 
  ! CLEAN
  !
  deallocate(dc)

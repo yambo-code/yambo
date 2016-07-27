@@ -83,7 +83,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
  integer                  :: mutexid,ngrho
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU),cutoff
+ real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU),cutoff, norm, norm_Xo1, norm_Xo2, norm_Xo1_final, norm_Xo2_final 
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
@@ -161,7 +161,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
    deallocate(X_poles,X_Ein_poles)
    !
-    WRITE(300, "(a, i8)") "sono qui, n_poles=", n_poles 
+   WRITE(300, "(a, i8)") "sono qui, n_poles=", n_poles 
    !
    if (self_detect_E_range) then
      call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
@@ -281,6 +281,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    ! GPL_EXCLUDE_END
    !
+   WRITE(800, "(a,  2i5, a)") " Before GF i_cg, i_bg ordering,", i_cg, i_bg, X%ordering
    call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
    !
    ! GPL_EXCLUDE_START
@@ -291,13 +292,16 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
-   do iw=1,Xw%n_freqs
+    norm=0.0
+    do iw=1,Xw%n_freqs
      !
      do ig2=1,X%ng
 #if defined _OPENMP
        call OPENMP_compute_mutex(ig2,mutexid)
        call omp_set_lock(omp_locks(mutexid))
 #endif
+       norm=real(GreenF(iw))*conjg(GreenF(iw))
+       WRITE(8300, "(a, 3i5, f12.6)") "i_cg, ib_g, iq,  norm", i_cg, i_bg, iq,  norm
        call V_by_V_plus_V(ig2,GreenF(iw),Xo_res(:ig2,ig2),Xo(:ig2,ig2,iw))
        !
        if (.not.half_X_mat_only) then
@@ -314,6 +318,18 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  enddo 
 !$omp end do
+ !
+ !
+ !XXXXXXXXX
+ !XXXXXXXXXXXXXXXX 
+!     do ig2=1,X%ng
+!      do ig1= 1,ig2 
+!      norm_Xo1=real(Xo(ig1,ig2,1))*conjg(Xo(ig1,ig2,1))
+!      norm_Xo2=real(Xo(ig1,ig2,2))*conjg(Xo(ig1,ig2,2))
+!      WRITE(10, "(a, 3i5, 2f16.10)") "ig1, ig2, iq, norm_Xo1, norm_Xo2", ig1, ig2, iq,  norm_Xo1, norm_Xo2
+!      enddo
+!     enddo
+ !XXXXXXXXXXXXXXXX  
  !
  ! CLEAN
  !=======
@@ -353,6 +369,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
+         norm_Xo1=real(Xo(ig1,ig2,1))*conjg(Xo(ig1,ig2,1)) 
+         norm_Xo2=real(Xo(ig1,ig2,2))*conjg(Xo(ig1,ig2,2)) 
+!         WRITE(10, "(a, 3i5, 2f16.10)") "ispace_inv==0, ig1, ig2, iq,  norm_Xo1, norm_Xo2", ig1, ig2,iq,  norm_Xo1, norm_Xo2 
        enddo
      enddo
      !$omp end do
@@ -363,6 +382,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
+         norm_Xo1=real(Xo(ig1,ig2,1))*conjg(Xo(ig1,ig2,1))
+         norm_Xo2=real(Xo(ig1,ig2,2))*conjg(Xo(ig1,ig2,2))
+ !   WRITE(10, "(a, 3i5, 2f16.10)") "ispace_inv==1, ig1, ig2, iq, norm_Xo1, norm_Xo2", ig1, ig2, iq, norm_Xo1, norm_Xo2 
        enddo
      enddo
      !$omp end do
@@ -370,6 +392,42 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !$omp end parallel
    !
  endif
+ !
+!if (iq==1) then
+!Xo(1,1,1)=(-0.00000000005207573262_SP,-0.00000000000000000020_SP)
+!Xo(1,1,2)=( -0.00000000000417890418_SP,-0.00000000000000000001_SP)
+!Xo(1,12,1)=(-0.00000000000033404166_SP, -0.00000000000000256941_SP) 
+!Xo(1,12,2)=(-0.00000000000024803778_SP, 0.00000000000000258609_SP)
+!Xo(12,1,1)=(-0.00000000000033404166_SP, -0.00000000000000256941_SP)
+!Xo(12,1,2)=(-0.00000000000024803778_SP, 0.00000000000000258609_SP)
+!Xo(1,13,1)=(-0.00000000000028091949_SP, 0.00000000000000703278_SP)  
+!Xo(1,13,2)=(-0.00000000000024621085_SP, 0.00000000000000111615_SP)
+!Xo(13,1,1)=(-0.00000000000028091949_SP, 0.00000000000000703278_SP) 
+!Xo(13,1,2)=(-0.00000000000024621085_SP, 0.00000000000000111615_SP)
+!Xo(1,14,1)=(0.00000000000028873426_SP,-0.00000000000001177863_SP)
+!Xo(1,14,2)=( 0.00000000000024650269_SP, -0.00000000000000272147_SP)
+!Xo(14,1,1)=(0.00000000000028873426_SP,-0.00000000000001177863_SP)
+!Xo(14,1,2)=( 0.00000000000024650269_SP, -0.00000000000000272147_SP)
+!Xo(1,15,1)=( 0.00000000000033100131_SP, 0.00000000000000420013_SP) 
+!Xo(1,15,2)= (0.00000000000024797569_SP, -0.00000000000000048792_SP)
+!Xo(15,1,1)=( 0.00000000000033100131_SP, 0.00000000000000420013_SP)
+!Xo(15,1,2)=(0.00000000000024797569_SP, -0.00000000000000048792_SP)
+!ndif 
+
+
+
+  !XXXXXXXXX
+ !XXXXXXXXXXXXXXXX 
+     do ig2=1,X%ng
+      do ig1= 1, X%ng
+      norm_Xo1_final=real(Xo(ig1,ig2,1))*conjg(Xo(ig1,ig2,1))
+      norm_Xo2_final=real(Xo(ig1,ig2,2))*conjg(Xo(ig1,ig2,2))
+      WRITE(10+iq, "(a, 3i5, 2x, a, 2f22.19, 2x, a, 2x,2f22.19)") "iq, ig1, ig2", iq, ig1, ig2, "Xo(ig1,ig2,1)=", Xo(ig1,ig2,1), "Xo(ig1,ig2,2)=",  Xo(ig1,ig2,2)
+      WRITE(20+iq, "(a, 3i5, 2f22.19)") "iq, ig1, ig2, norm_Xo1, norm_Xo2", iq,  ig1, ig2,   norm_Xo1_final, norm_Xo2_final
+      enddo
+     enddo
+ !XXXXXXXXXXXXXXXX  
+ !
  !
  current_iq=iq
  n_threads_FFT=0

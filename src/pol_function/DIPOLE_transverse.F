@@ -33,8 +33,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,P_square,DIP_P,Dipole_Energy_treshold, &
-&                              use_g_space_approach,force_v_g_space_approach
+ use X_m,                 ONLY:X_t,DIP_iR,P_square,DIP_P,&
+&                              Dipole_Energy_treshold,Dipole_Energy_treshold_vv, &
+&                              use_g_space_approach,force_v_g_space_approach, &
+&                              l_X_terminator,  X_terminator_Kind 
  use IO_m,                ONLY:io_control,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf_ng,WF
@@ -59,16 +61,22 @@ subroutine Dipole_transverse(Xen,Xk,X)
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,icfft(n_spinor),ivfft(n_spinor),ic,iv,&
-&                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem
+&                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem, ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4)
- real(SP)                     :: Ev_m_Ec,W_
+ real(SP)                     :: Ev_m_Ec,W_,Dipole_Energy_treshold_
  complex(SP)                  :: Ev_m_Ec_QP
  !
  !I/O and external functions
  !
  integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
+ !
+ !XXXXXXXXXXX
+ WRITE(33,*) "Dipole_transverse", l_X_terminator 
+ !XXXXXXXXX
+ !
+ !
  !
 #if defined _SC 
  l_evaluating_em1s=index(secnm,"Dielectric")/=0
@@ -153,7 +161,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      !
      do iv=X%ib(1),X%ib_lim(1) 
-       do ic=max(iv,X%ib_lim(2)),X%ib(2)
+       !
+       ic_min=max(iv,X%ib_lim(2))
+       if (l_X_terminator) ic_min=X%ib(1) 
+       !
+       do ic=ic_min, X%ib(2)
          !
          if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
@@ -186,6 +198,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv)
          !
          !
+         ! define a different thr for val-val transitions
+         ! used for XTerm (here Ev_m_Ec may become very large)
+         Dipole_Energy_treshold_=Dipole_Energy_treshold 
+         if(l_X_terminator.and.ic<=X%ib_lim(1)) Dipole_Energy_treshold_=Dipole_Energy_treshold_vv
+         !
          !=====
          ! <P>
          !=====
@@ -195,8 +212,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
            ! See for this PRB 48, 11789 (1993), definition of p_eff
            if (.not.(associated(Xen%Eo).or.associated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
            if (     (associated(Xen%Eo).or.associated(Xen%W))) then
-             if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-             if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)*Ev_m_Ec_QP/Ev_m_Ec
+             if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+             if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)*Ev_m_Ec_QP/Ev_m_Ec
            endif
          endif
          !
@@ -218,8 +235,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !             =   <v|-i grad|c>/(Ev-Ec) +i<v|[x,Vnl]|c> = P_vc/(Ev-Ec)+i<v|[x,Vnl]|c>
          !
          if (l_eval_DIP_iR) then
-           if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)/Ev_m_Ec
-           if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+           if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)/Ev_m_Ec
+           if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+           !XXXXXXXXX 
+           WRITE(113,"(a,3i4,f15.9,6f20.14)" ) "ic, iv, ik, EmE, DIP", ic, iv, ik, abs(Ev_m_Ec), DIP_iR(:,ic,iv,ik_mem,i_sp_pol) 
          endif
          !
          !======
@@ -230,8 +249,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
            ! See for this PRB 48, 11789 (1993), definition of p_eff
            if(.not.associated(Xen%Eo)) P_square(ic,iv,ik_mem,i_sp_pol)= rho(4)
            if(     associated(Xen%Eo)) then
-             if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=cZERO
-             if (abs(Ev_m_Ec)> Dipole_Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=rho(4)*(Ev_m_Ec_QP/Ev_m_Ec)**2
+             if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) P_square(ic,iv,ik_mem,i_sp_pol)=cZERO
+             if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) P_square(ic,iv,ik_mem,i_sp_pol)=rho(4)*(Ev_m_Ec_QP/Ev_m_Ec)**2
            endif
          endif
          !

@@ -28,7 +28,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  !
  use pars,       ONLY:SP,cZERO,cONE
  use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs,&
-&                     X_t, l_X_terminator,X_terminator_E,X_term_E_offset
+&                     X_t,l_X_terminator,X_terminator_E,X_term_E_offset
  use BS,         ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
                       BZ_DbGd_ipol_weight,BZ_DbGd_kpts
@@ -39,7 +39,6 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  integer      :: iq,transitions(4)
  type(w_samp) :: Xw
  type(levels) :: Xen
- type(X_t)     ::X
  type(bz_samp):: Xk
  complex(SP)  :: GreenF(Xw%n_freqs)
  character(*) :: ordering,space
@@ -47,8 +46,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  !Work Space
  !
  logical      :: X_os_run,K_inv_run 
- integer      :: i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp, Nv
- real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac, norm, norm_1, factor_1
+ integer      :: i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp
+ real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac
  complex(SP)  :: Z_,pole,pole_X_term
  !
  complex(SP),external      ::Lorentzian_FT
@@ -81,42 +80,35 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  pole_X_term=0.0_SP
  if(l_X_terminator) then 
    pole_X_term= cmplx(X_term_E_offset-Xen%E(iv,ikp,i_spin),-W_,KIND=SP) 
-   WRITE(300, "(a, f12.6, a)") "Energia assunta per ogni icg, l_X_terminator)",Xen%E(iv,ikp,i_spin), l_X_terminator  
-   ! XXX 
  endif
  !
  ! Case without DbGd
  !===================
- !XXXXXX
- norm=0.0 
- norm_1=0.0
- !factor_1=0.0000001_SP
- ! 
  !
  ! In K_inversion_Lo the occupations and the Z_factor are not included.
  ! Thus I have to multiply by them the Green function
  !
- if( K_inv_run ) ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik,i_spin) )/spin_occ*real(Z_)
+ if( K_inv_run ) ffac = ( Xen%f(iv,ikp,i_spin) -Xen%f(ic,ik,i_spin) )/spin_occ*real(Z_)
  if( X_os_run  ) ffac = 1._SP
  !
  if (X_os_run .and.(.not.use_X_DbGd.or.ic>BZ_DbGd_nbands).or. &
 &    K_inv_run.and.(.not.BSS_uses_DbGd)                       ) then
-    Nv=Xen%nbm-X%ib(1)+1 
+    !
+    !Nv=Xen%nbm-X%ib(1)+1 
     !
     do iw=1,Xw%n_freqs
+      !
       GreenF(iw)= GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
-      if (l_X_terminator .and. ic > X%ib(1)+Nv-1 ) then
-        GreenF(iw)= GreenF(iw) -  Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac  
-       norm=real(GreenF(iw))*conjg(GreenF(iw)) 
-       WRITE(800, "(a, 2i5,  2f15.10, a)") "iv, ic, GreenF iv--> ic, norm, ffac, ordering", iv, ic, norm, ffac, ordering
+      !
+      !if (l_X_terminator.and.ic>X%ib(1)+Nv-1) then
+      if (l_X_terminator.and.ic>Xen%nbm) then
+        GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac  
       endif
-      if (l_X_terminator .and. ic>=X%ib(1) .and. ic<=X%ib(1)+Nv-1) then
+      !
+      if (l_X_terminator.and.ic<=Xen%nbm) then
         GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac 
-!       GreenF(iw)= -factor_1*Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac 
-!       GreenF(iw)=cZERO
-        norm_1=real(GreenF(iw))*conjg(GreenF(iw))
-        WRITE(800, "(a, 2i5,  2f15.10, a)") " iv, ic, GreenF iv--> iv, norm_1, ffac",iv, ic,  norm_1, ffac, ordering
       endif
+      !
     enddo
     !
     return
@@ -162,20 +154,22 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
      ffac=ffac*weight1*weight2
      pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP)
      !
-     if( l_X_terminator) then 
+     if(l_X_terminator) then 
        pole_X_term=cmplx(X_term_E_offset-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP) 
      endif
      !
      do iw=1,Xw%n_freqs
+       !
        GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
        !
-       if (l_X_terminator .and. ic>X%ib(1)+Nv-1 ) then 
+       if (l_X_terminator.and.ic>Xen%nbm) then 
          GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
        endif
        !
-       if (l_X_terminator .and. ic>=X%ib(1) .and. ic<=X%ib(1)+Nv-1) then
+       if (l_X_terminator.and.ic<=Xen%nbm) then
          GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
        endif      
+       !
      enddo
      !
    enddo

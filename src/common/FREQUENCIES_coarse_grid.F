@@ -128,9 +128,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    ipos(1,1)=i_cg
    ipos(bg_sorted_x(1),2)=1
    do i_bg=2,npts
-     !XXXXXXXXXX
-     ! I have defined df adding the abs. The transition energy for v--<v
-     ! transitions can be negative 
+     !
+     ! df redefined using abs(), since the v-->v transition energies
+     ! can be negative (when the terminator is used)
+     !
      df=bg_sorted(i_bg)-bg_sorted(i_bg_ref)
      if (abs(df)>tresh .or. (lterm.and.abs(in_sorted(i_bg)-in_sorted(i_bg_ref))>tresh_ini) ) then
        i_cg=i_cg+1

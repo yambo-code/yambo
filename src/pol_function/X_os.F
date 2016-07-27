@@ -35,7 +35,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !   _NESTING introduces the nesting of scatterbamp parallel regions inside the
  !   outer region opened here (not working yet)
  !
- ! X terminator (BG kind) implemented (IM, AF)
+ ! X terminator (BG kind) implemented (IM,AF)
  !
  ! 
  use drivers,       ONLY:l_life
@@ -56,12 +56,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use interfaces,    ONLY:WF_load
  use D_lattice,     ONLY:i_space_inv
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_X,bz_samp, G_m_G
+ use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use memory_m,      ONLY:mem_est
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
-&                        l_X_terminator,X_terminator_Kind,X_terminator_E,X_term_E_offset
+&                        l_X_terminator,X_terminator_E,X_term_E_offset
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -83,22 +83,18 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
  integer                  :: mutexid,ngrho
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU),cutoff, norm, norm_Xo1, norm_Xo2, norm_Xo1_final, norm_Xo2_final 
+ real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
  type(elemental_collision):: Xo_scatt
+
  !
  ! Defaults & Setups
  !===================
  Xo             = cZERO
  GreenF         = cZERO
  drude_GreenF   = cZERO
-! l_X_terminator = X_terminator_Kind/='none'
- !
-! if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
-!&   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
-
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
@@ -133,14 +129,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Poles tabulation
  !==================
  ! 
- !XXXXXX
  if(l_X_terminator) then
    cutoff=minval(Xen%E(X%ib(2),:,:))
    X_term_E_offset=cutoff+X_terminator_E
-   WRITE(300, "(a, i5, 3f12.6)") "X%ib(2),  X_terminator_E ,  cutoff,X_term_E_offset", &
-        X%ib(2), X_terminator_E, cutoff,  X_term_E_offset
  endif
- !XXXXX
+ !
  if (iq/=current_iq) then
    !
    n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
@@ -150,9 +143,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
-   ! XXXX
-   WRITE(300,*) "DEBUG T_term", l_X_terminator
-   ! XXXX
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
    if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
    !
@@ -161,13 +151,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
    deallocate(X_poles,X_Ein_poles)
    !
-   WRITE(300, "(a, i8)") "sono qui, n_poles=", n_poles 
-   !
    if (self_detect_E_range) then
      call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
      Xw%er(1)=minval(minmax_ehe(1,:))
      Xw%er(2)=maxval(minmax_ehe(2,:))
-   WRITE(300, "(a, 2f12.6)") "Xw%er(1), Xw%er(2)",  Xw%er(1),  Xw%er(2)
    endif
    !
    ! This call is needed as Xw%p is deallocated inside
@@ -177,9 +164,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (io_RESPONSE.or.(.not.io_RESPONSE.and..not.l_life)) call FREQUENCIES_setup(Xw)
    !
  endif 
- !
- ! further terminator setup
- !
  !
  ! GPL_EXCLUDE_START
  !
@@ -213,7 +197,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #  else
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
  n_threads_FFT=1
- call msg('s','[X] NESTED openmp parallelism off')
+ !call msg('s','[X] NESTED openmp parallelism off')
 #  endif
 #endif
  call OPENMP_locks_reset(INIT=.true.,nlocks=16)
@@ -248,9 +232,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
 !$omp do
  do i_cg = 1,coarse_grid_N
-   ! XXXX
-   if(master_thread) WRITE(300, "(a, i5)")  "i_cg=", i_cg
-   ! XXXX
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
    !
@@ -281,7 +262,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    ! GPL_EXCLUDE_END
    !
-   WRITE(800, "(a,  2i5, a)") " Before GF i_cg, i_bg ordering,", i_cg, i_bg, X%ordering
    call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
    !
    ! GPL_EXCLUDE_START
@@ -292,16 +272,13 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
-    norm=0.0
-    do iw=1,Xw%n_freqs
+   do iw=1,Xw%n_freqs
      !
      do ig2=1,X%ng
 #if defined _OPENMP
        call OPENMP_compute_mutex(ig2,mutexid)
        call omp_set_lock(omp_locks(mutexid))
 #endif
-       norm=real(GreenF(iw))*conjg(GreenF(iw))
-       WRITE(8300, "(a, 3i5, f12.6)") "i_cg, ib_g, iq,  norm", i_cg, i_bg, iq,  norm
        call V_by_V_plus_V(ig2,GreenF(iw),Xo_res(:ig2,ig2),Xo(:ig2,ig2,iw))
        !
        if (.not.half_X_mat_only) then
@@ -318,18 +295,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  enddo 
 !$omp end do
- !
- !
- !XXXXXXXXX
- !XXXXXXXXXXXXXXXX 
-!     do ig2=1,X%ng
-!      do ig1= 1,ig2 
-!      norm_Xo1=real(Xo(ig1,ig2,1))*conjg(Xo(ig1,ig2,1))
-!      norm_Xo2=real(Xo(ig1,ig2,2))*conjg(Xo(ig1,ig2,2))
-!      WRITE(10, "(a, 3i5, 2f16.10)") "ig1, ig2, iq, norm_Xo1, norm_Xo2", ig1, ig2, iq,  norm_Xo1, norm_Xo2
-!      enddo
-!     enddo
- !XXXXXXXXXXXXXXXX  
  !
  ! CLEAN
  !=======
@@ -369,9 +334,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
-         norm_Xo1=real(Xo(ig1,ig2,1))*conjg(Xo(ig1,ig2,1)) 
-         norm_Xo2=real(Xo(ig1,ig2,2))*conjg(Xo(ig1,ig2,2)) 
-!         WRITE(10, "(a, 3i5, 2f16.10)") "ispace_inv==0, ig1, ig2, iq,  norm_Xo1, norm_Xo2", ig1, ig2,iq,  norm_Xo1, norm_Xo2 
        enddo
      enddo
      !$omp end do
@@ -382,9 +344,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
-         norm_Xo1=real(Xo(ig1,ig2,1))*conjg(Xo(ig1,ig2,1))
-         norm_Xo2=real(Xo(ig1,ig2,2))*conjg(Xo(ig1,ig2,2))
- !   WRITE(10, "(a, 3i5, 2f16.10)") "ispace_inv==1, ig1, ig2, iq, norm_Xo1, norm_Xo2", ig1, ig2, iq, norm_Xo1, norm_Xo2 
        enddo
      enddo
      !$omp end do
@@ -392,42 +351,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !$omp end parallel
    !
  endif
- !
-!if (iq==1) then
-!Xo(1,1,1)=(-0.00000000005207573262_SP,-0.00000000000000000020_SP)
-!Xo(1,1,2)=( -0.00000000000417890418_SP,-0.00000000000000000001_SP)
-!Xo(1,12,1)=(-0.00000000000033404166_SP, -0.00000000000000256941_SP) 
-!Xo(1,12,2)=(-0.00000000000024803778_SP, 0.00000000000000258609_SP)
-!Xo(12,1,1)=(-0.00000000000033404166_SP, -0.00000000000000256941_SP)
-!Xo(12,1,2)=(-0.00000000000024803778_SP, 0.00000000000000258609_SP)
-!Xo(1,13,1)=(-0.00000000000028091949_SP, 0.00000000000000703278_SP)  
-!Xo(1,13,2)=(-0.00000000000024621085_SP, 0.00000000000000111615_SP)
-!Xo(13,1,1)=(-0.00000000000028091949_SP, 0.00000000000000703278_SP) 
-!Xo(13,1,2)=(-0.00000000000024621085_SP, 0.00000000000000111615_SP)
-!Xo(1,14,1)=(0.00000000000028873426_SP,-0.00000000000001177863_SP)
-!Xo(1,14,2)=( 0.00000000000024650269_SP, -0.00000000000000272147_SP)
-!Xo(14,1,1)=(0.00000000000028873426_SP,-0.00000000000001177863_SP)
-!Xo(14,1,2)=( 0.00000000000024650269_SP, -0.00000000000000272147_SP)
-!Xo(1,15,1)=( 0.00000000000033100131_SP, 0.00000000000000420013_SP) 
-!Xo(1,15,2)= (0.00000000000024797569_SP, -0.00000000000000048792_SP)
-!Xo(15,1,1)=( 0.00000000000033100131_SP, 0.00000000000000420013_SP)
-!Xo(15,1,2)=(0.00000000000024797569_SP, -0.00000000000000048792_SP)
-!ndif 
-
-
-
-  !XXXXXXXXX
- !XXXXXXXXXXXXXXXX 
-     do ig2=1,X%ng
-      do ig1= 1, X%ng
-      norm_Xo1_final=real(Xo(ig1,ig2,1))*conjg(Xo(ig1,ig2,1))
-      norm_Xo2_final=real(Xo(ig1,ig2,2))*conjg(Xo(ig1,ig2,2))
-      WRITE(10+iq, "(a, 3i5, 2x, a, 2f22.19, 2x, a, 2x,2f22.19)") "iq, ig1, ig2", iq, ig1, ig2, "Xo(ig1,ig2,1)=", Xo(ig1,ig2,1), "Xo(ig1,ig2,2)=",  Xo(ig1,ig2,2)
-      WRITE(20+iq, "(a, 3i5, 2f22.19)") "iq, ig1, ig2, norm_Xo1, norm_Xo2", iq,  ig1, ig2,   norm_Xo1_final, norm_Xo2_final
-      enddo
-     enddo
- !XXXXXXXXXXXXXXXX  
- !
  !
  current_iq=iq
  n_threads_FFT=0

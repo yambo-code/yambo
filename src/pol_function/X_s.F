@@ -212,13 +212,6 @@ subroutine X_s(iq,X,Xw,W_range)
  call timing('X (REDUX)',OPR='stop')
 #endif
  !
- !XXXXXXX
-   do i2=1,X%ng
-     do i1= 1, X%ng
-      WRITE(100+iq, "(a, 3i5, 2x, a, 2f16.12, 2x, a, 2x,2f16.12)") "iq, ig1, ig2", iq, i1, i2, "Xo(ig1,ig2,1)=", X_mat(i1,i2,1), "Xo(ig1,ig2,2)=", X_mat(i1,i2,2)
-     enddo
-   enddo
- !
  ! CLEAN
  !
  call PP_indexes_reset(PAR_IND_freqs)

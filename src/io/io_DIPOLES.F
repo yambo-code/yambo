@@ -51,7 +51,7 @@ integer function io_DIPOLES(X,ID)
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  real(SP),allocatable :: disk_data(:,:,:)
- ! 
+ !
  if (.not.io_DIP) then
    io_DIPOLES=IO_NOT_ALLOWED
    call io_disconnect(ID,FORCE=.TRUE.)
@@ -86,8 +86,6 @@ integer function io_DIPOLES(X,ID)
  sec_size=3*(X%db_ib(2)-X%db_ib_lim(2)+1)*(X%db_ib_lim(1)-X%db_ib(1)+1)
  shift(1)=X%ib_lim(2)-X%db_ib_lim(2)
  shift(2)=X%ib(1)-X%db_ib(1)
- !
- WRITE(77, "(a,i5)") "sono qui, DIPOLE_IO, X%ib_lim(2)=", X%ib_lim(2)  
  !
  i_fragment=maxval(io_sec(ID,:))-1
  if(i_fragment<=nXkibz) then

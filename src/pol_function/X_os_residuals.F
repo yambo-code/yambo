@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS,AM,AF
+! Authors (see AUTHORS file for details): DS,AM,AF,IM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,7 +32,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
- use X_m,           ONLY:X_t,DIP_projected,X_poles_tab,  l_X_terminator 
+ use X_m,           ONLY:X_t,DIP_projected,X_poles_tab,l_X_terminator 
  use parallel_m,    ONLY:PAR_Xk_bz_index,myid
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
@@ -56,15 +56,10 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !     it would be best to define it as allocatable (less efficient if too
  !     many calls are done, though)
  complex(SP)              :: rhotw_save(Xo_scatt%ngrho),rhotw_save2(Xo_scatt%ngrho),Z_
- real(SP)                 :: Z_eh_occ, factor_1
- logical                  :: l_X_term_vv, on_off_term1, on_off_term2, on_off_term3
+ real(SP)                 :: Z_eh_occ
+ logical                  :: l_X_term_vv
  integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
 &                            isp,iv,ic,isave(4),n_poles,i_bg,ig_start
- !
-! XXX
- real(SP)                 :: norm, norm_1, norm_2, norm_4
-! XXXX
- WRITE(33,*) "X_os_residual", l_X_terminator
  !
  isave=0
  !
@@ -74,12 +69,6 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  Z_=cONE
  !
-! XXXX
-WRITE(200+myid,"()")
-WRITE(200+myid,"(a,i5)") "DEBUG: i_cg = ", i_cg
-WRITE(200+myid,"(a,i5)") "DEBUG: iq = ", iq 
-! XXXX
-
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
    !
    n_poles=n_poles+1
@@ -99,14 +88,8 @@ WRITE(200+myid,"(a,i5)") "DEBUG: iq = ", iq
    !
    ikp= Xk%sstar(ikpbz,1)
    isp= Xk%sstar(ikpbz,2)
-
-! XXXX
-   WRITE(200+myid,"(a,6i5,3f12.6)") "icg, i_bg,  ik, ikp, ic,  iv, E1, E2, T", i_cg, i_bg,  ik, ikp,ic, iv, &
-&           Xen%E(ic,ik,i_spin), Xen%E(iv,ikp,i_spin), &
-&          Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)
-! XXXX
    !
-   l_X_term_vv=(ic>=X%ib(1) .and. ic<=Xen%nbm)
+   l_X_term_vv = (ic>=X%ib(1).and.ic<=Xen%nbm)
    ! 
    !
    ! Note the renormalization of the Z_eh_occ=f(1-f)*Z factor
@@ -123,16 +106,11 @@ WRITE(200+myid,"(a,i5)") "DEBUG: iq = ", iq
    Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin)) &
    &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
-   ! Xo_scatt%rhotw=cZERO! pexxo nuovo  
-   !
-   !XXXXXXXXXXX
    if (l_X_terminator.and.l_X_term_vv) then
      Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin) &
    &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    endif  
-   WRITE(700+myid, "(a, i5, i5, 3f12.6)") "iv, ic, Xen%f(iv,ikp,i_spin), Xen%f(ic,ik,i_spin),  Z_eh_occ ", iv,ic, Xen%f(iv,ikp,i_spin), & 
-   &                                                     Xen%f(ic,ik,i_spin),  Z_eh_occ 
-   !XXXXXXXXXX
+   !
    ! Scattering CALL
    !-----------------
    !
@@ -143,9 +121,6 @@ WRITE(200+myid,"(a,i5)") "DEBUG: iq = ", iq
      ik_bz_mem=PAR_Xk_bz_index(ikbz)
      if (.not. X%ng==1) then
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
-         !XXXXX
-         WRITE(650+myid, "(a, i5, i5, i5)") "iq, Xo_scatt%is_iv , Xo_scatt%os_ic", iq, iv, ic  
-         !XXXXX
          call scatter_Bamp(Xo_scatt)
          rhotw_save=Xo_scatt%rhotw
          isave=(/iv,ic,ik,i_spin/)
@@ -161,22 +136,17 @@ WRITE(200+myid,"(a,i5)") "DEBUG: iq = ", iq
        endif
      endif
      !
-     ! only when ic is in conduction (as it should, except
-     ! special cases when dealing with the X_terminator)
+     ! the iv==ic case (XTerm) is dropped because of a
+     ! cancellation with another XTerm contribution to wings and head
+     ! (that, in fact, is not included below, see ig_start=2)
      !
      Xo_scatt%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
      if (l_X_term_vv.and.iv==ic) Xo_scatt%rhotw(1)=0.0_SP
-     ! XXX
-     norm_4=real(Xo_scatt%rhotw(1))*conjg(Xo_scatt%rhotw(1))
-     WRITE(40, "(a, i5, i5, i5,  f20.15)") "iq, iv, ic, norm_4",  iq, iv, ic, norm_4   
      !
    else
      Xo_scatt%is=(/ic,ik,is,i_spin/)
      Xo_scatt%os=(/iv,ikp,isp,i_spin/)
      Xo_scatt%qs=(/qindx_X(iq,ikbz,2),iq,1/)
-     !XXXXXXX
-     WRITE(660, "(a, i5, i5, i5, i5, i5, i5)") "iq, , X%ng, Xo_scatt%i_ivs , Xo_scatt%os_ic, X%ib(1), Xen%nbm", iq, X%ng,  iv,ic, X%ib(1), Xen%nbm 
-     !XXXXXX 
      call scatter_Bamp(Xo_scatt)
    endif
    !
@@ -193,9 +163,6 @@ WRITE(200+myid,"(a,i5)") "DEBUG: iq = ", iq
    ! (ic is running in valence)
    !
    if (l_X_terminator.and.l_X_term_vv.and.iv==ic) then 
-     !
-     ! XXXXX
-     WRITE(1000+myid, "(a, 8i5 )") "iq, iv, ic, ik, ikp,  i_spin , i_cg, i_bg", iq, ic, iv, ik, ikp, i_spin,  i_cg, i_bg
      !
      Xo_scatt%is = (/iv,ik,1,i_spin/)
      Xo_scatt%os = (/iv,ik,1,i_spin/)
@@ -217,6 +184,7 @@ WRITE(200+myid,"(a,i5)") "DEBUG: iq = ", iq
        Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
      enddo
      !$omp end parallel do
+     !
      if (is>nsym/(i_time_rev+1)) then
        do ig1=1,X%ng
          Xo_scatt%rhotw(ig1)=conjg(Xo_scatt%rhotw(ig1))

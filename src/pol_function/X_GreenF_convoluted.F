@@ -38,7 +38,7 @@ subroutine X_GreenF_convoluted(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  complex(SP)  :: GreenF(Xw%n_freqs)
  character(*) :: ordering
  !
- !Work Space
+ ! Work Space
  !
  logical      :: X_os_run,K_inv_run 
  integer      :: ikbz,ikpbz,iv,ic,i_spin,ik,ikp

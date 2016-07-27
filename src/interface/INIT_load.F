@@ -30,8 +30,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        X_terminator_E,X_terminator_Kind,global_gauge,Dipole_approach, &
-&                         l_X_terminator,X_terminator_Kind
+&                        global_gauge,Dipole_approach, &
+&                        l_X_terminator,X_terminator_Kind,X_terminator_E
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&

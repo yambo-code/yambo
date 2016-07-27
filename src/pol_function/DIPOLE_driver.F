@@ -38,7 +38,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
  !
- ! PARALLEL structure: The dipoles are based on a "derived" structure. K-points are driven by these communicators and indexes:
+ ! PARALLEL structure: The dipoles are based on a "derived" structure. 
+ !                     K-points are driven by these communicators and indexes:
  !
  ! PAR_IND_DIPk_ibz
  ! PAR_DIPk_nibz
@@ -57,8 +58,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
-&                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold, &
-&                         l_X_terminator,  X_terminator_Kind
+&                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
+&                         l_X_terminator,X_terminator_Kind
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
@@ -78,7 +79,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use drivers,        ONLY:l_elphoton_corr
 #endif
 #if defined _TIMING
- use timing_m,            ONLY:timing
+ use timing_m,       ONLY:timing
 #endif
  !
  implicit none
@@ -90,7 +91,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer           :: ik,i_sp_pol, ic_min
+ integer           :: ik,i_sp_pol,ic_min
  logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3)
 #if defined _SC
  logical           :: l_evaluating_em1s
@@ -137,10 +138,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !           in the new basis. So all transitions are needed.
  !       3 - In real-time simulations P and P^2 are ALWAYS calculated => no band ordering
  !
- !XXXXXXXXX
- WRITE(33, *) "Dipole_driver", l_X_terminator
- !
- !
  Dipole_bands_ordered=.true.
  !
 #if defined _SC 
@@ -156,19 +153,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  if (Dipole_bands_ordered.or.Dipole_Energy_treshold<0._SP) then
    X%ib_lim(1)=Xen%nbm
    X%ib_lim(2)=Xen%nbf+1
-   ic_min=X%ib_lim(2)
-!   XXXXXXX
-   if (l_X_terminator) then
-!    ic_min=X%ib(1)   
-      X%ib_lim(2)=X%ib(1)
-   endif
    !
-   WRITE(30, "(a, i5)") "sono qua 1, X%ib_lim(2)",  X%ib_lim(2)
+   ic_min=X%ib_lim(2)
+   if (l_X_terminator) X%ib_lim(2)=X%ib(1)
    ! 
  else
    X%ib_lim(1)=X%ib(2)
    X%ib_lim(2)=X%ib(1)
-   WRITE(30, "(a)") "sono qua 2"
  endif
  !
  ! Check if Dipoles DBs exist and are ok
@@ -192,23 +183,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! GPL_EXCLUDE_START 
    !
    if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,X)
-   ! XXXX
-   WRITE(40, *) "use_shifted_grids_approach", use_shifted_grids_approach    
    !
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
-   !XXXXXX
-   WRITE(40, *) "use_covariant_approach", use_covariant_approach 
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
-   !XXXXX
-   WRITE(40, *) "use_real_space_approach", use_real_space_approach
-   !
    !
    ! GPL_EXCLUDE_END 
    !
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
-   !XXXXX
-   WRITE(40, *) "use_dipole_transverse", use_dipole_transverse 
    !
 #if defined _RT
    if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xen,Xk,X)
@@ -328,17 +310,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
      call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-!     call X_alloc('DIP_iR',(/3,ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-!    call X_alloc('DIP_P',(/3, ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-
-
      DIP_iR=cZERO
      DIP_P=cZERO
      !
 #if defined _RT
      if (l_real_time.and.n_spin>1) then
        call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-!        call X_alloc('DIP_spin',(/3,ic_min,X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
      endif
 #endif
@@ -347,7 +324,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _SC
      if (l_sc_run.or.l_real_time) then
        call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-!        call X_alloc('P_square',(/ic_min ,X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        P_square=cZERO
      endif
 #endif
@@ -409,8 +385,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
       !================
       ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
       !
-      WRITE(75,*) "dipole_driver simmetrization"
-      !
       do i_sp_pol=1,n_sp_pol
         do iv=X%ib(1),X%ib_lim(1)
           if(iv>=X%ib_lim(2)) then
@@ -426,7 +400,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
           endif
           do ic=iv+1,X%ib(2)
-             if( ( iv>=X%ib_lim(2))  .and. ic<=X%ib_lim(1) ) then
+            if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
 #if defined _RT

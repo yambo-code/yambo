@@ -47,7 +47,6 @@ integer function io_QP_and_GF(what,qp,ID)
 &                       QP_DB_kind_disk 
  character(schlen)    ::ch
  integer ,    allocatable ::qp_table_disk(:,:)
- real(SP),    allocatable ::qp_DATA_disk(:,:,:)
  !
  if (what=="QP".or.what=="G") then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
@@ -226,6 +225,11 @@ integer function io_QP_and_GF(what,qp,ID)
      !
      ! QP corrections 
      !
+     if (read_is_on(ID)) then
+       allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
+       call mem_est("qp_Z qp_E qp_E_bare",(/2*qp%n_states,2*qp%n_states,qp%n_states/),(/SP/))
+     endif
+     !
      call io_bulk(ID,VAR="QP_E",VAR_SZ=(/2,qp%n_states/))
      call io_bulk(ID,C1=qp%E)
      !
@@ -241,6 +245,14 @@ integer function io_QP_and_GF(what,qp,ID)
      !
      ! Real axis Self Energy & Green Function 
      !=========================================
+     if (read_is_on(ID)) then
+       allocate(qp%S_total(qp%n_states,qp%GreenF_n_steps))
+       call mem_est("qp_S_total",(/size(qp%S_total)/))
+       allocate(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
+       call mem_est("qp_GreenF",(/size(qp%GreenF)/))
+       allocate(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
+       call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
+     endif
      !
      call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
      call io_bulk(ID,C2=qp%S_total)

@@ -41,7 +41,7 @@ integer function io_HF_and_locXC(ID)
  !
  integer           :: QP_table_disk(2+n_sp_pol),&
 &                     QP_n_states_disk,bands(2),i1,i2,i_found,var_sz
- real(SP)          :: Sx(2),Vxc(2)
+ complex(SP)       :: Sx,Vxc
  character(schlen) :: QP_xc_FUNCTIONAL
  !
  if (.not.io_HF) then
@@ -122,20 +122,20 @@ integer function io_HF_and_locXC(ID)
    do i1=1,QP_n_states_disk
      if (write_is_on(ID)) then
        QP_table_disk=QP_table(i1,:)
-       Sx=(/real(QP_Vnl_xc(i1)),aimag(QP_Vnl_xc(i1))/)
-       Vxc=(/real(QP_Vxc(i1)),aimag(QP_Vxc(i1))/)
+       Sx=QP_Vnl_xc(i1)
+       Vxc=QP_Vxc(i1)
      endif
      call io_bulk(ID,I1=QP_table_disk)
-     call io_bulk(ID,R1=Sx)
-     call io_bulk(ID,R1=Vxc)
+     call io_bulk(ID,C0=Sx)
+     call io_bulk(ID,C0=Vxc)
      if (read_is_on(ID)) then
        if (io_mode(ID)==DUMP) then
          QP_state(QP_table_disk(1),QP_table_disk(3))=.true. 
        else
          do i2=1,QP_n_states
            if (all((/QP_table_disk==QP_table(i2,:)/))) then
-             QP_Vnl_xc(i2)=cmplx(Sx(1),Sx(2),SP)
-             QP_Vxc(i2)=cmplx(Vxc(1),Vxc(2),SP)
+             QP_Vnl_xc(i2)=Sx
+             QP_Vxc(i2)=Vxc
              i_found=i_found+1
            endif
          enddo

@@ -25,7 +25,6 @@ integer function io_COL_CUT(ID)
  !
  use pars,           ONLY:SP
  use wave_func,      ONLY:wf_ng
- use matrix_operate, ONLY:mat_c2r,mat_r2c
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,CUTOFF_plus_RIM,&
 &                         cyl_ph_radius,box_length,cyl_length,cut_geometry,&
 &                         ng_closed,nqibz,bare_qpg,cut_description
@@ -36,7 +35,6 @@ integer function io_COL_CUT(ID)
  ! 
  ! Work Space
  !
- real(SP),allocatable::bare_qpg_disk(:,:,:)
  integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ncx
  !
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)
@@ -89,16 +87,8 @@ integer function io_COL_CUT(ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    ! 
-   allocate(bare_qpg_disk(nqibz,wf_ncx,2))
-   ! 
-   if (write_is_on(ID)) call mat_c2r(bare_qpg,bare_qpg_disk)
-   !
-   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=shape(bare_qpg_disk))
-   call io_bulk(ID,R3=bare_qpg_disk)
-   !   
-   if (read_is_on(ID)) call mat_r2c(bare_qpg_disk,bare_qpg)
-   !
-   deallocate(bare_qpg_disk)
+   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,wf_ncx/))
+   call io_bulk(ID,C2=bare_qpg)
    !
  endif
  !

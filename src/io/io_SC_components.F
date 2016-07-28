@@ -38,7 +38,6 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_fragment,ver_is_gt_or_eq
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
- use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -54,7 +53,7 @@ integer function io_SC_components(what,E_sc,ID)
  integer, external     :: variables_SC
  character(lchlen)     :: local_description(100)
  !
- real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
+ real(SP), allocatable :: E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin,VAR_SIZE
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
  !
@@ -199,20 +198,13 @@ integer function io_SC_components(what,E_sc,ID)
    ! H_sc
    !======
    !
-   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
-   !
    do i_spin=1,n_sp_pol
      !
      call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                 VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
-     !
-     if (write_is_on(ID)) call mat_c2r(H_nl_sc(:,:,i_spin),TMP_matrix)
-     call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,H_nl_sc(:,:,i_spin))
+&                 VAR_SZ=(/2,SC_bands(2),SC_bands(2)/))
+     call io_bulk(ID,C2=H_nl_sc(:,:,i_spin))
      !
    enddo
-   !
-   deallocate(TMP_matrix)
    !
  endif
  !
@@ -221,18 +213,13 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
-   !
    do i_spin=1,n_sp_pol
-     call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                 VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
      !
-     if (write_is_on(ID)) call mat_c2r(SC_R(:,:,ik,i_spin),TMP_matrix)
-     call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,SC_R(:,:,ik,i_spin))
+     call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
+&                 VAR_SZ=(/2,SC_bands(2),SC_bands(2)/))
+     call io_bulk(ID,C2=SC_R(:,:,ik,i_spin))
      !
    enddo
-   deallocate(TMP_matrix)
  endif
  !
  if ( l_MP ) then
@@ -240,18 +227,12 @@ integer function io_SC_components(what,E_sc,ID)
    ! Mean Field Potential 
    !======================
    !
-   allocate(TMP_matrix(fft_size,SC_bands(2),2))
-   !
    do i_spin=1,n_sp_pol
      call io_bulk(ID,VAR="Mean_Field_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                 VAR_SZ=(/fft_size,SC_bands(2),2/))
-     !
-     if (write_is_on(ID)) call mat_c2r(V_mean(:,:),TMP_matrix)
-     call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,V_mean)
+&                 VAR_SZ=(/2,fft_size,SC_bands(2)/))
+     call io_bulk(ID,C2=V_mean)
      !
    enddo
-   deallocate(TMP_matrix)
  endif
  !
 1 call io_disconnect(ID=ID)

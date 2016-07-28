@@ -92,10 +92,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_times,      &
-&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
-&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,    &
-&                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
+&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
+&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
+&                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,              &
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
@@ -323,7 +323,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elel_scatt=.FALSE.
  l_elph_scatt=.FALSE.
  l_use_collisions=.FALSE.
- l_use_scatt_collisions=.FALSE.
  l_use_Hxc_collisions=.FALSE.
  !
  l_rt_carriers_in_use=.FALSE.
@@ -597,8 +596,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Scattering
  !
- RT_life_interp_times(1)=-1._SP*FS2AUT
- RT_life_interp_times(2)=-1._SP*FS2AUT
+ RT_life_extrap_times(1)=-1._SP*FS2AUT
+ RT_life_extrap_times(2)=-1._SP*FS2AUT
  !
  ! G_retarded
  !
@@ -608,6 +607,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! FITs
  !
  l_lftm_fit_stable=.FALSE.
+ l_lftm_fit_temperatures=.FALSE.
  Nfitted_lifetimes=0
  RT_Tfit_lifetimes=0._SP
  RT_Efit_lifetimes=0._SP

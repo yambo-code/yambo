@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
+subroutine RT_Lifetimes_Extrapolation(Life,Time,Life_SAVED,Times_SAVED)
  !
  use pars,           ONLY:SP
- use real_time,      ONLY:Life_MEM_steps,l_RT_lifetimes_interpolation
+ use real_time,      ONLY:Life_MEM_steps,l_RT_lifetimes_extrapolation
  !
  implicit none
  !
@@ -35,7 +35,7 @@ subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
  real(SP)  :: M,Q,dT(Life_MEM_steps),dG(Life_MEM_steps),P(Life_MEM_steps),EPS,Life_SUM
  integer   :: POL_order,i_o
  !
- if (.not.l_RT_lifetimes_interpolation) return
+ if (.not.l_RT_lifetimes_extrapolation) return
  !
  Life_SUM=sum(abs(Life_SAVED))
  !
@@ -57,4 +57,4 @@ subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
    enddo
  endif
  !
-end subroutine RT_Lifetimes_Interpolation
+end subroutine RT_Lifetimes_Extrapolation

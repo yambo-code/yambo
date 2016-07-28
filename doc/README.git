@@ -54,6 +54,10 @@ svn merge:
 this is now “git merge”. No options are displayed during the merge. If you want the “tc” option for all the conflicts use: “git merge -X theirs”
 After you can also use te “git mergetool” command. 
 
+Checkout a branch:
+===================
+>git worktree add ~/Yambo/yambo/branches/BRANCH BRANCH
+
 Create a new branch:
 ===================
 “git checkout -b new_branch”: new local branch
@@ -61,6 +65,8 @@ Create a new branch:
 “git push origin new_branch”: if you want to make available the new branch
 “git branch -u origin/new_branch new_branch”: to set that the new branch tracks the new remote one
 
-Moving/removing files:
+Moving/removing files branches:
+===============================
 $$ git mv hello.html lib/
 $$git rm hello.html
+$git branch -d the_local_branch

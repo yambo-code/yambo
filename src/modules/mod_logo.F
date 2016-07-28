@@ -295,11 +295,14 @@ module LOGO
      !
      n_logo_lines=n_logo_lines+1
      logo_line(n_logo_lines)=' '
+     !
      do ic=1,3
        n_logo_lines=n_logo_lines+1
+       logo_line(n_logo_lines)=trim(comment(ic))
        left_space=(max_length-len_trim(comment(ic)))/2+1
-       if (left_space<=0) cycle
-       write (logo_line(n_logo_lines),'(t'//trim(intc(left_space))//',a)') trim(comment(ic))
+       if (left_space>0) then
+         write (logo_line(n_logo_lines),'(t'//trim(intc(left_space))//',a)') trim(comment(ic))
+       endif
      enddo
      !
    end subroutine

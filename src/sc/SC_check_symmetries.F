@@ -71,7 +71,7 @@ subroutine SC_check_symmetries(field_dir)
   !
   if(nsym_wrong/=0) then
     call msg('s','Detected '//intc(nsym_wrong)//' wrong symmetries (out of '//intc(nsym)//' )')
-    call error(' Use ypp_rt -n to remove fix the symmetry group and restart Yambo ')
+    call error(' Use ypp -y to repair the symmetry group and restart Yambo ')
     stop '  '
   endif
   !

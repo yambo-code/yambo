@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -23,7 +23,7 @@
 !
 subroutine X_GreenF_convoluted(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  !
- use pars,       ONLY:SP,cZERO,cONE
+ use pars,       ONLY:SP,cZERO
  use electrons,  ONLY:levels
  use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
@@ -38,9 +38,8 @@ subroutine X_GreenF_convoluted(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  complex(SP)  :: GreenF(Xw%n_freqs)
  character(*) :: ordering
  !
- !Work Space
+ ! Work Space
  !
- logical      :: X_os_run,K_inv_run 
  integer      :: ikbz,ikpbz,iv,ic,i_spin,ik,ikp
  !
  complex(SP), allocatable  :: Green_F_convoluted(:)

@@ -374,7 +374,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !
              pre_factor1=cZERO
              if(index(SC_potential,"HARTREE")>0) then
-               !$omp parallel do, default(shared), private(ig1), reduction(+:pre_factor1)
+               !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
                do ig1=2,N_g_vecs_H
                  pre_factor1=pre_factor1+rhotw_tmp(minus_G(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
                enddo

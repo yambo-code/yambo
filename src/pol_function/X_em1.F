@@ -89,7 +89,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      X_n_freqs =2
      Xw%er=(/epsilon(1._SP),0._SP/)
      Xw%dr=(/0._SP,X%ppaE/)
-     X%ordering='c'
+     X%ordering='R'
    endif
  endif
  !

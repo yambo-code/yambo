@@ -189,7 +189,8 @@ module BS
  integer  :: BSS_INV_n_freqs = 0
  integer    , allocatable :: BSS_INV_err(:)
  integer    , allocatable :: BSS_INV_iw_full(:)
- complex(SP), allocatable :: BSS_INV_eps_pl(:,:)
+ complex(SP), allocatable :: BSS_INV_eps(:,:)
+ complex(SP), allocatable :: BSS_INV_pl(:,:)
  !
  ! Solvers (Temporary (LARGE) arrays to be used in solvers ONLY)
  !=========

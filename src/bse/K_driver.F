@@ -38,7 +38,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BSE_mode,BSS_eval_JDOS,&
 &                         BSS_uses_DbGd,BSS_q0,BS_Blocks_and_Transitions_free
- use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
+ use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -135,7 +135,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
      !
      if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
      BSE_mode='causal'
-     call parser('FxcCausal',FXC_is_causal)
+     call parser('FxcCausal',FXC_is_retarded)
      !
    endif
    !
@@ -242,8 +242,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
    call X_duplicate(X_static_pp,X_tddft) ! initialize X_tddft to X_static_pp
    !
-   X_tddft%ordering='r'
-   if (FXC_is_causal) X_tddft%ordering='c'
+   X_tddft%ordering='Tr'
+   if (FXC_is_retarded) X_tddft%ordering='R'
    !
    ! If the kernel contains QP corrections I have to equally correct Xen
    !

@@ -720,13 +720,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      integer           ::i1,V_iq
      integer,parameter ::n_des=14
      character(8)      ::nms(n_des),sfx
-     character(40)     ::des(n_des)
+     character(100)    ::des(n_des)
      character(schlen) ::lch1,lch2
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
 &          'NGsBlk','QpntsR','BndsRn','DmERef'/)
-     des(1) ='Green`s function t/c/r/a'
+     des(1) ='Green`s function (T)ordered,(R)etarded,(r)senant,(a)ntiresonant [T, R, r, Ta, Ra]'
      des(2) ='Energy range'
      des(3) ='Damping range'
      des(4) ='[o/o] Coarse grid controller'

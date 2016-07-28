@@ -55,7 +55,7 @@ subroutine K_output_file(iq,mode)
  !
  ! Work Space
  !
- character(1)      :: ordering
+ character(2)      :: ordering
  character(2)      :: title_mode
  character(10)     :: name_
  integer           :: iw,n_output_data
@@ -89,7 +89,7 @@ subroutine K_output_file(iq,mode)
  endif
  !
  if (     trim(BSE_mode)=='resonant' ) ordering='r'
- if (.not.trim(BSE_mode)=='resonant' ) ordering='c'
+ if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
  !
  ! EELS / REFLECTIVITY logicals 
  !

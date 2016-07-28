@@ -1238,7 +1238,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
 #if defined _SURF
      X(3)%iq = 1  ! 2 components
-     X(3)%ordering = 'c'
+     X(3)%ordering = 'R'
      Xw(3)%n_freqs = 101 
 #endif 
      if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) l_elel_corr=.true.

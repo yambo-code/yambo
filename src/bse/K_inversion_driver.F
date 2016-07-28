@@ -28,7 +28,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS,             ONLY:BS_mat,BS_H_dim,BSE_mode,BSS_inversion_mode,&
 &                         BSS_INV_err,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,BSS_inversion_PERT_FULL_ratio,BSS_INV_eps_pl,BSS_INV_iw_full
+&                         BS_mat_free,BSS_inversion_PERT_FULL_ratio,BSS_INV_eps,BSS_INV_iw_full
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
@@ -151,7 +151,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    ! I/O [after pert inversion]
    !
-   BSS_INV_eps_pl(:,1)=Epsilon_ii(:,2)
+   BSS_INV_eps(:,1)=Epsilon_ii(:,2)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
@@ -258,7 +258,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    ! I/O [after full inversion]
    !
-   BSS_INV_eps_pl(:,1)=Epsilon_ii(:,2)
+   BSS_INV_eps(:,1)=Epsilon_ii(:,2)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
@@ -287,7 +287,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! CLEAN
  !
- deallocate(BSS_INV_err,BSS_INV_eps_pl,BSS_INV_iw_full)
+ deallocate(BSS_INV_err,BSS_INV_eps,BSS_INV_iw_full)
  call PP_indexes_reset(px)
  deallocate(Lo)
  call mem_est("Lo")

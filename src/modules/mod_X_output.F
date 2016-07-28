@@ -42,7 +42,7 @@ module X_output
      use global_XC, ONLY:X_E_xc_string,X_WF_xc_string,K_E_xc_string,K_WF_xc_string
      integer      :: iq
      logical      :: Vnl_included,GreenF
-     character(1) :: ordering
+     character(2) :: ordering
      ! WS
      character(schlen) :: message
      !
@@ -60,9 +60,10 @@ module X_output
      if (l_bss) call msg('o eps refl eel alpha off beta moke','# ','- Wavefunctions are '//trim(K_WF_xc_string),INDENT=0)
      call msg('o eps refl eel alpha off beta moke','# ')
      message='- The Green`s function is T-ordered -'
-     if (trim(ordering)=='a') message='- The Green`s function is antiresonant -'
-     if (trim(ordering)=='r') message='- The Green`s function is resonant -'
-     if (trim(ordering)=='c') message='- The Green`s function is causal -'
+     if (trim(ordering)=='Ra') message='- The Green`s function is Retarded-antiresonant -'
+     if (trim(ordering)=='Ta') message='- The Green`s function is T-ordered-antiresonant -'
+     if (trim(ordering)=='r')  message='- The Green`s function is Resonant -'
+     if (trim(ordering)=='R')  message='- The Green`s function is Retarded -'
      call msg('o eps refl eel alpha off beta moke jdos','# ',trim(message),INDENT=0)
      !
      ! Gauges

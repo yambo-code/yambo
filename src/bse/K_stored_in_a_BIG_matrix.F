@@ -251,7 +251,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  ! ALL 2 ALL
  !===========
  !
- ! BS_mat lives in the enitre world.
+ ! BS_mat lives in the entire world.
  !
  call PP_redux_wait(BS_mat)
  !

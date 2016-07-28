@@ -25,7 +25,7 @@ subroutine K_inversion_restart(iq,W)
  !
  use pars,           ONLY:SP,cZERO
  use X_m,            ONLY:Epsilon_ii
- use BS,             ONLY:BSS_dr,BSS_er,BSS_n_freqs,BSS_INV_eps_pl,BSS_INV_err,BSS_INV_iw_full,BSS_INV_n_freqs
+ use BS,             ONLY:BSS_dr,BSS_er,BSS_n_freqs,BSS_INV_eps,BSS_INV_err,BSS_INV_iw_full,BSS_INV_n_freqs
  use IO_m,           ONLY:io_control,NONE,OP_RD_CL,REP,VERIFY
  use parallel_m,     ONLY:ncpu
  use com,            ONLY:msg
@@ -63,7 +63,7 @@ subroutine K_inversion_restart(iq,W)
    !
    W_db%n_freqs=BSS_INV_n_freqs
    !
-   allocate(BSS_INV_err(W_db%n_freqs),BSS_INV_eps_pl(W_db%n_freqs,2))
+   allocate(BSS_INV_err(W_db%n_freqs),BSS_INV_eps(W_db%n_freqs,2))
    allocate(freq_table(W_db%n_freqs+W%n_freqs),inv_err_db(W_db%n_freqs),&
 &           DB_eps_pl(W_db%n_freqs,2))
    !
@@ -73,9 +73,9 @@ subroutine K_inversion_restart(iq,W)
    ! Shadows and re-allocation
    !
    inv_err_db=BSS_INV_err
-   DB_eps_pl =BSS_INV_eps_pl
+   DB_eps_pl =BSS_INV_eps
    !
-   deallocate(BSS_INV_err,BSS_INV_eps_pl)
+   deallocate(BSS_INV_err,BSS_INV_eps)
    !
    ! Here I create a new energy array that merges the db to the current energies. 
    !
@@ -85,8 +85,8 @@ subroutine K_inversion_restart(iq,W)
    BSS_er=W%er
    BSS_dr=W%dr
    !
-   allocate(BSS_INV_err(W%n_freqs),BSS_INV_eps_pl(W%n_freqs,2))
-   BSS_INV_eps_pl=cZERO
+   allocate(BSS_INV_err(W%n_freqs),BSS_INV_eps(W%n_freqs,2))
+   BSS_INV_eps=cZERO
    BSS_INV_err   =-1
    !
    do iw=1,W%n_freqs
@@ -96,14 +96,14 @@ subroutine K_inversion_restart(iq,W)
      iw_tab=freq_table(iw)
      !
      if (iw_tab>0) then
-       BSS_INV_eps_pl(iw,2)=DB_eps_pl(iw_tab,2)
+       BSS_INV_eps(iw,2)=DB_eps_pl(iw_tab,2)
        BSS_INV_err(iw)=inv_err_db(iw_tab)
        if (BSS_INV_err(iw)==0) then
-         BSS_INV_eps_pl(iw,1)=DB_eps_pl(iw_tab,1)
+         BSS_INV_eps(iw,1)=DB_eps_pl(iw_tab,1)
        endif
      else
-       BSS_INV_eps_pl(iw,1)=cZERO
-       BSS_INV_eps_pl(iw,2)=Epsilon_ii(iabs(iw_tab),3)
+       BSS_INV_eps(iw,1)=cZERO
+       BSS_INV_eps(iw,2)=Epsilon_ii(iabs(iw_tab),3)
        BSS_INV_err(iw)=-1
      endif
    enddo
@@ -117,10 +117,10 @@ subroutine K_inversion_restart(iq,W)
    deallocate(Epsilon_ii)
    allocate(Epsilon_ii(BSS_n_freqs,4))
    Epsilon_ii(:,1)=W%p(:)
-   Epsilon_ii(:,2)=BSS_INV_eps_pl(:,1)/real(ncpu,SP)
-   Epsilon_ii(:,3)=BSS_INV_eps_pl(:,2)
+   Epsilon_ii(:,2)=BSS_INV_eps(:,1)/real(ncpu,SP)
+   Epsilon_ii(:,3)=BSS_INV_eps(:,2)
    !
-   deallocate(inv_err_db,BSS_INV_eps_pl,freq_table,DB_eps_pl)
+   deallocate(inv_err_db,BSS_INV_eps,freq_table,DB_eps_pl)
    !
  else
    !
@@ -131,8 +131,8 @@ subroutine K_inversion_restart(iq,W)
  endif
  !
  allocate(BSS_INV_iw_full(W%n_freqs))
- allocate(BSS_INV_eps_pl(W%n_freqs,2)) ! int no-int
- BSS_INV_eps_pl     =cZERO
- BSS_INV_eps_pl(:,2)=Epsilon_ii(:,3)
+ allocate(BSS_INV_eps(W%n_freqs,2)) ! int no-int
+ BSS_INV_eps     =cZERO
+ BSS_INV_eps(:,2)=Epsilon_ii(:,3)
  !
 end subroutine K_inversion_restart

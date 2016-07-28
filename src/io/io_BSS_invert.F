@@ -29,7 +29,7 @@ integer function io_BSS_invert(iq,W,ID)
  use frequency,     ONLY:w_samp
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_DbGd,BSS_dr,&
 &                        BSS_damp_reference,BSS_inversion_PERT_FULL_ratio,&
-&                        BSS_INV_err,BSS_INV_eps_pl,BSS_INV_n_freqs
+&                        BSS_INV_err,BSS_INV_eps,BSS_INV_n_freqs
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on,write_is_on
@@ -93,10 +93,10 @@ integer function io_BSS_invert(iq,W,ID)
      allocate(W%p(W%n_freqs))
    endif
    if (write_is_on(ID)) then
-     EPS(:BSS_INV_n_freqs,1)=real (BSS_INV_eps_pl(:BSS_INV_n_freqs,1))
-     EPS(:BSS_INV_n_freqs,2)=aimag(BSS_INV_eps_pl(:BSS_INV_n_freqs,1))
-     EPS(:BSS_INV_n_freqs,3)=real (BSS_INV_eps_pl(:BSS_INV_n_freqs,2))
-     EPS(:BSS_INV_n_freqs,4)=aimag(BSS_INV_eps_pl(:BSS_INV_n_freqs,2))
+     EPS(:BSS_INV_n_freqs,1)=real (BSS_INV_eps(:BSS_INV_n_freqs,1))
+     EPS(:BSS_INV_n_freqs,2)=aimag(BSS_INV_eps(:BSS_INV_n_freqs,1))
+     EPS(:BSS_INV_n_freqs,3)=real (BSS_INV_eps(:BSS_INV_n_freqs,2))
+     EPS(:BSS_INV_n_freqs,4)=aimag(BSS_INV_eps(:BSS_INV_n_freqs,2))
      Wp(:BSS_INV_n_freqs,1) =real (W%p(:BSS_INV_n_freqs))
      Wp(:BSS_INV_n_freqs,2) =aimag(W%p(:BSS_INV_n_freqs))
    endif
@@ -113,8 +113,8 @@ integer function io_BSS_invert(iq,W,ID)
    !
    if (read_is_on(ID)) then
      W%p(:BSS_INV_n_freqs)             =Wp(:BSS_INV_n_freqs,1)+cI*Wp(:BSS_INV_n_freqs,2)
-     BSS_INV_eps_pl(:BSS_INV_n_freqs,1)=EPS(:BSS_INV_n_freqs,1)+cI*EPS(:BSS_INV_n_freqs,2)
-     BSS_INV_eps_pl(:BSS_INV_n_freqs,2)=EPS(:BSS_INV_n_freqs,3)+cI*EPS(:BSS_INV_n_freqs,4)
+     BSS_INV_eps(:BSS_INV_n_freqs,1)=EPS(:BSS_INV_n_freqs,1)+cI*EPS(:BSS_INV_n_freqs,2)
+     BSS_INV_eps(:BSS_INV_n_freqs,2)=EPS(:BSS_INV_n_freqs,3)+cI*EPS(:BSS_INV_n_freqs,4)
    endif
    !
  endif

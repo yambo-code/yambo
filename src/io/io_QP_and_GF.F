@@ -226,77 +226,30 @@ integer function io_QP_and_GF(what,qp,ID)
      !
      ! QP corrections 
      !
-     allocate(qp_DATA_disk(3,qp%n_states,2))
-     !  
-     if (write_is_on(ID)) then
-       do i1=1,qp%n_states
-         qp_DATA_disk(1,i1,1)=real(qp%E(i1))
-         qp_DATA_disk(1,i1,2)=aimag(qp%E(i1))
-         qp_DATA_disk(2,i1,1)=qp%E_bare(i1)
-         qp_DATA_disk(2,i1,2)=0._SP
-         qp_DATA_disk(3,i1,1)=real(qp%Z(i1))
-         qp_DATA_disk(3,i1,2)=aimag(qp%Z(i1))
-       enddo
-     endif
+     call io_bulk(ID,VAR="QP_E",VAR_SZ=(/2,qp%n_states/))
+     call io_bulk(ID,C1=qp%E)
      !
-     call io_bulk(ID,VAR="QP_E_Eo_Z",VAR_SZ=(/3,qp%n_states,2/))
+     call io_bulk(ID,VAR="QP_Eo",VAR_SZ=(/qp%n_states/))
+     call io_bulk(ID,R1=qp%E_bare)
      !
-     call io_bulk(ID,R3=qp_DATA_disk)
-     !
-     if (read_is_on(ID)) then
-       allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
-       call mem_est("qp_Z qp_E qp_E_bare",(/qp%n_states,qp%n_states,qp%n_states/))
-       do i1=1,qp%n_states
-         qp%E(i1) =cmplx(qp_DATA_disk(1,i1,1),qp_DATA_disk(1,i1,2),SP)
-         qp%E_bare(i1)=qp_DATA_disk(2,i1,1)
-         qp%Z(i1) =cmplx(qp_DATA_disk(3,i1,1),qp_DATA_disk(3,i1,2),SP)
-       enddo
-     endif
-     !
-     deallocate(qp_DATA_disk)
+     call io_bulk(ID,VAR="QP_Z",VAR_SZ=(/2,qp%n_states/))
+     call io_bulk(ID,C1=qp%Z)
      !
    endif
    !
    if (index(what,".G")/=0.or.what=="G") then
      !
-     allocate(qp_DATA_disk(qp%n_states,qp%GreenF_n_steps,6))
-     !
      ! Real axis Self Energy & Green Function 
      !=========================================
      !
-     if (write_is_on(ID)) then
-       do i1=1,qp%n_states
-         qp_DATA_disk(i1,:,1)=real(qp%S_total(i1,:))
-         qp_DATA_disk(i1,:,2)=aimag(qp%S_total(i1,:))
-         qp_DATA_disk(i1,:,3)=real(qp%GreenF(i1,:))
-         qp_DATA_disk(i1,:,4)=aimag(qp%GreenF(i1,:))
-         qp_DATA_disk(i1,:,5)=real(qp%GreenF_W(i1,:))
-         qp_DATA_disk(i1,:,6)=aimag(qp%GreenF_W(i1,:))
-       enddo
-     endif
+     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
+     call io_bulk(ID,C2=qp%S_total)
      !
-     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
-     call io_bulk(ID,R3=qp_DATA_disk(:,:,1:2))
-     call io_bulk(ID,VAR="Green_Functions",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
-     call io_bulk(ID,R3=qp_DATA_disk(:,:,3:4))
-     call io_bulk(ID,VAR="Green_Functions_Energies",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
-     call io_bulk(ID,R3=qp_DATA_disk(:,:,5:6))
+     call io_bulk(ID,VAR="Green_Functions",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
+     call io_bulk(ID,C2=qp%GreenF)
      !
-     if (read_is_on(ID)) then
-       allocate(qp%S_total(qp%n_states,qp%GreenF_n_steps))
-       call mem_est("qp_S_total",(/size(qp%S_total)/))
-       allocate(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
-       call mem_est("qp_GreenF",(/size(qp%GreenF)/))
-       allocate(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
-       call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
-       do i1=1,qp%n_states
-         qp%S_total(i1,:) =cmplx(qp_DATA_disk(i1,:,1),qp_DATA_disk(i1,:,2),SP)
-         qp%GreenF(i1,:)  =cmplx(qp_DATA_disk(i1,:,3),qp_DATA_disk(i1,:,4),SP)
-         qp%GreenF_W(i1,:)=cmplx(qp_DATA_disk(i1,:,5),qp_DATA_disk(i1,:,6),SP)
-       enddo
-     endif
-     !
-     deallocate(qp_DATA_disk)
+     call io_bulk(ID,VAR="Green_Functions_Energies",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
+     call io_bulk(ID,C2=qp%GreenF_W)
      !
    endif
    !

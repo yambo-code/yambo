@@ -7,6 +7,7 @@
 *.a
 *.so
 *.mod
+*.dep
 *.f90
 *.s
 *.sw*
@@ -36,13 +37,14 @@ lib/*/libxc-*
 sbin/make_makefile.sh
 sbin/objects_debug.sh
 src/wf_and_fft/sgfft.F
+bin/*
 
 # source #
 ##########
 *.objects*
 *__lock*
-bin/*
 Makefile
+make.dep
 commit.msg
 
 # Packages #
@@ -73,3 +75,4 @@ commit.msg
 .Trashes
 ehthumbs.db
 Thumbs.db
+myconfig*

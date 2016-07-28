@@ -158,7 +158,8 @@ fi
 dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_libxc_ok" = xyes; then
   compile_libxc=no
-  #	 
+  #
+  if test ! -d include ; then mkdir include ; fi
   for file in `find $libxc_incdir \( -name 'libxc*mod' -o -name 'xc_*mod' \)`;do	
     cp $file include/ 
   done
@@ -168,7 +169,10 @@ fi
 
 if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
-  LIBS_LIBXC="-lxc"
+  # version y2.0.3
+  #LIBS_LIBXC="-lxc"
+  # version 2.2.3 is used
+  LIBS_LIBXC="-lxcf90 -lxc"
   AC_MSG_RESULT([Compatible external LibXC not found/specified. Internal used.])
 fi 
 

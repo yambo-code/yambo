@@ -40,6 +40,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+#if defined _PL
+ use pars,          ONLY:rZERO
+ use drivers,       ONLY:l_photolum
+ use units,         ONLY:SPEED_OF_LIGHT
+ use X_m,           ONLY:DIP_P
+ use PHOTOLUM,      ONLY:PL,PL_prefactor
+ use R_lattice,     ONLY:RL_vol,nqbz
+#endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use X_m,           ONLY:Epsilon_ij
@@ -61,6 +69,11 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
  real(SP)          ::conjg_fac,Z_
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
+#if defined _PL
+ integer           ::i_c
+ complex(SP)       ::rotated_P(3)
+ real(SP)          ::res_PL
+#endif
  !
  call section('=','Independent Particles absorption') 
  !===================================================
@@ -96,6 +109,19 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  Epsilon_ii(:,1)=W_bss%p(:)  
  Joint_DOS(:,1) =W_bss%p(:)
+ !
+#if defined _PL
+ !
+ ! PL_0
+ !=======
+ allocate(PL(BSS_n_freqs,4)) !  2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
+ PL           =rZERO
+ PL_prefactor =32._SP*pi**3*SPEED_OF_LIGHT*2._SP/3._SP*RL_vol/nqbz
+ do i_c=1,3
+   PL(:,1)=W_bss%p(:)  
+ enddo
+ !
+#endif
  !
  !...Drude
  !DEBUG>
@@ -172,6 +198,18 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
        BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_bz_mem,i_sp))
        if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_bz_mem,i_sp)
+#if defined _PL
+       if (l_photolum) then
+         !
+         call GET_the_rotated_P( )
+         !
+         BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(rotated_P(:))
+         if (BS_K_coupling) then
+           BS_T_grp(i_T_g)%dipoles_A_PL(i_T,:)=rotated_P(:)
+         endif
+         !
+       endif
+#endif
        !
        if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
        !
@@ -182,6 +220,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
        res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%f_RES(i_T)*Z_
        if (allocated(BS_T_grp(i_T_g)%W) .and. trim(global_gauge)=="velocity") res=res*E_plus_W0/conjg(E_plus_W0)
+       !
+#if defined _PL
+       if (l_photolum) then
+         res_PL=BS_T_grp(i_T_g)%f_PL(i_T)*Z_*( &
+&               dot_product(BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:),BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)))
+       endif
+#endif
        !
        do i_pert_SOC=1,n_SOC
          !
@@ -197,6 +242,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _KERR
          if(trim(global_gauge)=='length')   A_drude(1)=A_drude(1)+res*E_plus_W(i_pert_SOC)
          if(trim(global_gauge)=='velocity') A_drude(1)=A_drude(1)+res/E_plus_W(i_pert_SOC)
+#endif
+#if defined _PL
+         if (l_photolum) then
+           do i_c=1,3
+             PL(:,3)=PL(:,3)+PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))
+           enddo
+         endif
 #endif
          !
          ! GPL_EXCLUDE_END
@@ -217,6 +269,12 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
    call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
+#if defined _PL
+   if (l_photolum) then
+     call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_eh_INDEX%COMM )
+   endif
+#endif
    !
    ! DOS
    !=====
@@ -286,12 +344,15 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    ! Initialize & write the output file
    !
-   call K_output_file(iq,-4)
-   call K_output_file(iq, 4)
+   call K_output_file(iq,"open IP")
+   call K_output_file(iq,"IP")
    !
    deallocate(Epsilon_ii,Joint_DOS,X_drude_term)
 #if defined _KERR
    if(l_kerr) deallocate(Epsilon_ij)
+#endif
+#if defined _PL
+   if(l_photolum) deallocate(PL)
 #endif
    !
  endif
@@ -302,4 +363,34 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  call timing('T_space IP',OPR='stop')
 #endif
  !
+ contains
+   !
+#if defined _PL
+   !
+   subroutine GET_the_rotated_P( )
+     !
+     use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
+     use parallel_m,     ONLY:PAR_DIPk_ibz_index
+     !
+     integer :: ik,is,ik_mem
+     logical :: t_rev
+     !
+     ik=Xk%sstar(ik_bz,1)
+     is=Xk%sstar(ik_bz,2)
+     !
+     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+     !
+     is = sop_inv( is )
+     !      
+     ik_mem    = PAR_DIPk_ibz_index(ik)
+     rotated_P = matmul( dl_sop(:,:,is) , DIP_P(:,ic,iv,ik_mem,i_sp) )
+     !
+     if (t_rev) rotated_P = conjg( rotated_P )
+     !
+   end subroutine
+   !
+#endif
+   !
+   !
 end subroutine

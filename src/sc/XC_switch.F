@@ -36,7 +36,7 @@ subroutine XC_switch()
 #endif
  use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC,SC_SRPA,EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
- use com,            ONLY:error
+ use com,            ONLY:error,warning
  !
  implicit none
  !
@@ -117,6 +117,8 @@ subroutine XC_switch()
      l_sc_pot_is_local=.false.
      SC_kind=SC_COHSEX
      SC_xc_functional=0
+   case ('none')
+     call warning("NULL SC potential! ")
    case default
      call error("Unknown SC potential! ")
  end select

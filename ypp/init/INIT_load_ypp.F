@@ -147,8 +147,8 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'DOS_broad', 'Broadening of the DOS',dos_broadening,E_unit) 
  call it(defs,'DOS_bands', 'DOS bands',dos_bands) 
- call it(defs,'DOSERange', 'Energy range',dos_E_range,unit=E_unit,verb_level=V_general) 
- call it(defs,'DOSESteps', 'Energy steps',dos_E_steps,verb_level=V_general) 
+ call it(defs,'DOSERange', 'Energy range',dos_E_range,unit=E_unit) 
+ call it(defs,'DOSESteps', 'Energy steps',dos_E_steps) 
  call it('f',defs,'PrtOccOnly', 'Occupied states only') 
  !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)

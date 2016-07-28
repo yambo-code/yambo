@@ -47,9 +47,9 @@ subroutine COLLISIONS_map_to_QP_table(what,COLL)
    QP_table=0
    QP_nb=COLL_bands(2)
    QP_nk=nXkibz
-   QP_table(:,:3)=COLL%state(:,:3)
    do i_coll=1,COLL%N
-      if (n_sp_pol==2) QP_table(i_coll,4)=COLL%state(i_coll,4)
+     QP_table(i_coll,:3)=COLL%state(i_coll,:3)
+     if (n_sp_pol==2) QP_table(i_coll,4)=COLL%state(i_coll,4)
    enddo
  endif
  !

@@ -101,6 +101,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  force_WFo_=.false.
  if(present(force_WFo)) force_WFo_=force_WFo
  !
+ ! Imposed Freeing and Allocating of WF's
+ !
+ free_and_alloc=.TRUE.
+ if (kpts_to_load(1)==kpts_to_load(2)) free_and_alloc =kpts_to_load(1)==1.or.nkibz==1
+ if (present(impose_free_and_alloc)) then
+   free_and_alloc=impose_free_and_alloc
+ endif
+ !
  ! [1]: check that loaded bounds are larger(equal) then bounds 
  !      asked now
  !
@@ -139,7 +147,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! [2]: Check FFT size
  !
- if (loaded_bounds_ok) then
+ if (loaded_bounds_ok.and..not.free_and_alloc) then
    !
    if (WF%space=="G".or.WF%space=="C".or.WF%space=="B") return
    !
@@ -162,17 +170,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! In case of k by k I/O prevent multiple free/alloc
  !
- free_and_alloc=.TRUE.
  QUIET_alloc   =.FALSE.
  QUIET_free    =.FALSE.
  if (kpts_to_load(1)==kpts_to_load(2)) then
-   free_and_alloc =kpts_to_load(1)==1.or.nkibz==1
    QUIET_alloc    =kpts_to_load(1)>1
    QUIET_free     =kpts_to_load(2)<nkibz
-   if (present(impose_free_and_alloc)) then
-     free_and_alloc=impose_free_and_alloc
-     !if (free_and_alloc) QUIET_alloc=.FALSE.
-   endif
    if (QUIET_alloc) call IO_and_Messaging_switch("-report -log")
  endif
  !

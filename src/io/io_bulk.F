@@ -205,7 +205,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
        call netcdf_call(error)
      endif
    endif
-   io_rec_pos(ID)=io_rec_pos(ID)+1
+   io_rec_pos(ID)=io_rec_pos(ID)+2
  endif
  !
  if (present(C1)) then
@@ -226,7 +226,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
        call netcdf_call(error)
      endif
    endif
-   io_rec_pos(ID)=io_rec_pos(ID)+size(C1)
+   io_rec_pos(ID)=io_rec_pos(ID)+2*size(C1)
  endif
  !
  if (present(C2)) then
@@ -247,7 +247,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
        call netcdf_call(error)
      endif
    endif
-   io_rec_pos(ID)=io_rec_pos(ID)+size(C2)
+   io_rec_pos(ID)=io_rec_pos(ID)+2*size(C2)
  endif
  !
  if (present(C3)) then
@@ -261,6 +261,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
      endif
    else if (read_is_on(ID)) then
      if (present(IPOS)) then
+       write(*,*) 'shape= ',shape(C3)
        call ncvgt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2,size(C3,1),size(C3,2),size(C3,3)/), C3, error)
        call netcdf_call(error)
      else
@@ -268,7 +269,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
        call netcdf_call(error)
      endif
    endif
-   io_rec_pos(ID)=io_rec_pos(ID)+size(C3)
+   io_rec_pos(ID)=io_rec_pos(ID)+2*size(C3)
  endif
  !
 end subroutine

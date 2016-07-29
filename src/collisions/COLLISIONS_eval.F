@@ -211,12 +211,18 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (io_COLLs) then
    !
-   if (l_real_time.or.l_sc_run) return
-   !
-   call COLLISIONS_basic_operations( "clean",    HXC_collisions )
-   call COLLISIONS_basic_operations( "clean",    COH_collisions )
-   call COLLISIONS_basic_operations( "clean",      P_collisions )
-   call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
+   if (.not.l_real_time.and..not.l_sc_run) then
+     !
+     ! %state and %N are needed in RT_driver and SC_driver to distribute the collisions.
+     ! This distribution is done BEFORE the call to COLLLISIONS_load. Therefore %state and %N
+     ! must not be cleared here.
+     !
+     call COLLISIONS_basic_operations( "clean",    HXC_collisions )
+     call COLLISIONS_basic_operations( "clean",    COH_collisions )
+     call COLLISIONS_basic_operations( "clean",      P_collisions )
+     call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
+     !
+   endif
    !
    if (IO_err==0) return
    !

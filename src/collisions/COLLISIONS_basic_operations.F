@@ -75,6 +75,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
      call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status")
      deallocate(COLL%state)
      call mem_est("COLLISIONS_"//trim(COLL%name)//"_state")
+     COLL%N=0
    endif
    !
    return

@@ -183,7 +183,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        !
        if (eval_anti_resonant) then
          !
-         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"ca","eh")
+         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh")
          !
        endif
        !
@@ -198,7 +198,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        !
        if (eval_anti_resonant) then
          !
-         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"ca")
+         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
          !
        endif
        !

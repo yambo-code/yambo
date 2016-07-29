@@ -39,7 +39,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
  use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
-&                        l_use_COH_collisions,l_elphoton_scatt
+&                        l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
  use com,           ONLY:error
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -210,6 +210,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  call WF_free(WF)
  !
  if (io_COLLs) then
+   !
+   if (l_real_time.or.l_sc_run) return
    !
    call COLLISIONS_basic_operations( "clean",    HXC_collisions )
    call COLLISIONS_basic_operations( "clean",    COH_collisions )

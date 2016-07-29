@@ -257,7 +257,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      integer                  :: IO_ACTION
      logical                  :: write_header,read_header,reading,writing,l_vnl(1)
      !
-     if (.not.IO_dip) return 
+     if (.not.io_DIP) return 
      !
      reading=trim(read_or_write)=="read"
      writing=trim(read_or_write)=="write"

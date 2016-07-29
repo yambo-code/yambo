@@ -24,15 +24,17 @@
 integer function io_DIPOLES(X,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,DIP_iR,DIP_P,DIP_spin,X_alloc
+ use X_m,           ONLY:X_t,DIP_iR,DIP_P,X_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
- use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
+#if defined _RT
+ use X_m,           ONLY:ETA_circ,DIP_spin
+#endif
 #if defined _SC
  use X_m,           ONLY:P_square
  use drivers,       ONLY:l_real_time,l_sc_run
@@ -104,7 +106,10 @@ integer function io_DIPOLES(X,ID)
    call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
    call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
 #if defined _RT
-   if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   if (l_real_time.and.n_spin>1) then
+     call X_alloc('ETA_circ',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+     call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   endif
 #endif
 #if defined _SC
    if (l_sc_run.or.l_real_time)  call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))

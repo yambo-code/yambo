@@ -120,10 +120,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !================
  call K_stored_in_a_BIG_matrix(iq)
  !
- ! IP-part Lo [also recompute Epsilon_xx(:,3)]
- !===========================================
- if (.not.trim(BSE_mode)=="causal") Lo_dim=1
- if (     trim(BSE_mode)=="causal") Lo_dim=2
+ ! IP-part Lo [also recompute Epsilon_xx(:,3) OR PL (needed in case of DbG)]
+ !===========================================================================
+ Lo_dim=1
+ if (trim(BSE_mode)=="causal") Lo_dim=2
+#if defined _PL
+ Lo_dim=2
+#endif
  !
  allocate(Lo(BS_H_dim,W%n_freqs,Lo_dim))
  call mem_est("Lo",(/size(Lo)/))

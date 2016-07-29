@@ -208,9 +208,6 @@ integer function io_X(X,Xw,ID)
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
    call io_bulk(ID,C3=X_mat,IPOS=(/1,1,1,1/))
    !
-   do i1=1,10
-     write(*,*) X_mat(:,i1,1)
-   enddo
    if (read_is_on(ID) .and. different_db_RL_order) then 
      allocate(X_on_disk(X%ng,X%ng))
      do i1=1,Xw%n_freqs

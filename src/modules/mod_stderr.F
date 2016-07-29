@@ -260,6 +260,21 @@ module stderr
      !
    end function real2ch
    !
+   character(schlen) function complex2ch(c)
+     !
+     complex(SP), intent(in) :: c
+     real(SP)                :: r(2)
+     character(schlen)       :: fmt_(2)
+     !
+     r(1)=real(c)
+     r(2)=aimag(c)
+     fmt_(1)=gen_fmt(r_v=(/r(1)/))
+     fmt_(2)=gen_fmt(r_v=(/r(2)/))
+     write(*,*) trim(fmt_(1)),trim(fmt_(2))
+     write(complex2ch,'('//trim(fmt_(1))//','//trim(fmt_(2))//')') r
+     !
+   end function complex2ch
+   !
    character(schlen) function gen_fmt(i_v,r_v)
      integer ,optional :: i_v(:)
      real(SP),optional :: r_v(:)

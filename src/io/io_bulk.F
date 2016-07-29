@@ -261,7 +261,6 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
      endif
    else if (read_is_on(ID)) then
      if (present(IPOS)) then
-       write(*,*) 'shape= ',shape(C3)
        call ncvgt(io_unit(ID), io_netcdf_var(ID), IPOS, (/2,size(C3,1),size(C3,2),size(C3,3)/), C3, error)
        call netcdf_call(error)
      else

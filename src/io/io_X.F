@@ -48,12 +48,12 @@ integer function io_X(X,Xw,ID)
  !
  !Work Space
  !
- integer             ::sec_size,i1,ig,iq,i_err,io_com_save,io_err
+ integer             ::sec_size,i1,iq,i_err,io_com_save,io_err
  logical             ::different_db_RL_order
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
- complex(SP),allocatable :: X_mat_disk(:,:,:)
+ complex(SP),allocatable :: X_on_disk(:,:)
  !
 #if defined _TIMING
  if (io_RESPONSE) call timing('io_X',OPR='start')
@@ -117,10 +117,6 @@ integer function io_X(X,Xw,ID)
      if ( i_err > 0 ) different_db_RL_order=.true.
    endif
    deallocate(RL_vecs_disk)
-   if (.not.allocated(X_RLcomp_ig)) then
-     allocate(X_RLcomp_ig(X%ng_db))
-     forall(ig=1:X%ng_db) X_RLcomp_ig(ig)=ig
-   endif
    !
    ! Close & Menu lower line
    !
@@ -208,16 +204,21 @@ integer function io_X(X,Xw,ID)
    ch="X_Q_"//trim(intc(iq))
    !
    if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
-   allocate(X_mat_disk(X%ng_db,X%ng_db,1))
    !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
-   do i1=1,Xw%n_freqs
-     if (write_is_on(ID)) X_mat_disk(:,:,1)=X_mat(:,:,i1)
-     call io_bulk(ID,C3=X_mat_disk,IPOS=(/1,1,1,i1/))
-     if (read_is_on(ID)) X_mat(X_RLcomp_ig(:X%ng),X_RLcomp_ig(:X%ng),i1)=X_mat_disk(X_RLcomp_ig(:X%ng),X_RLcomp_ig(:X%ng),1)
-   enddo
+   call io_bulk(ID,C3=X_mat,IPOS=(/1,1,1,1/))
    !
-   deallocate(X_mat_disk)
+   do i1=1,10
+     write(*,*) X_mat(:,i1,1)
+   enddo
+   if (read_is_on(ID) .and. different_db_RL_order) then 
+     allocate(X_on_disk(X%ng,X%ng))
+     do i1=1,Xw%n_freqs
+       X_on_disk=X_mat(:,:,i1)
+       X_mat(X_RLcomp_ig(:),X_RLcomp_ig(:),i1)=X_on_disk
+     enddo
+     deallocate(X_on_disk)
+   endif
    !
  endif
  !

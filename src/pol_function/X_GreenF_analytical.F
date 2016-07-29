@@ -94,13 +94,10 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  if (X_os_run .and.(.not.use_X_DbGd.or.ic>BZ_DbGd_nbands).or. &
 &    K_inv_run.and.(.not.BSS_uses_DbGd)                       ) then
     !
-    !Nv=Xen%nbm-X%ib(1)+1 
-    !
     do iw=1,Xw%n_freqs
       !
-      GreenF(iw)= GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
+      GreenF(iw)= Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
       !
-      !if (l_X_terminator.and.ic>X%ib(1)+Nv-1) then
       if (l_X_terminator.and.ic>Xen%nbm) then
         GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac  
       endif

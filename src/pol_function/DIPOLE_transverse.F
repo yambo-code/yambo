@@ -30,7 +30,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
- use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,myid
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,P_square,DIP_P,l_X_terminator,&
@@ -224,15 +224,18 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! So from the local part of rho (that is P_vc) we can extract the corresponding local part of <x>
          !
-         ! DIP_iR(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev)+i<v|[x,Vnl]|c> =
-         !             = - <v | -i grad |c> / (Ec-Ev) +i<v|[x,Vnl]|c> =
-         !             =   <v|-i grad|c>/(Ev-Ec) +i<v|[x,Vnl]|c> = P_vc/(Ev-Ec)+i<v|[x,Vnl]|c>
+         ! DIP_iR(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = 
+         !             = i <v|i p|c>/(Ec-Ev) + i<v|[x,Vnl]|c>/(Ec-Ev) =
+         !             = - <v|-i grad|c>/(Ec-Ev) +i<v|[x,Vnl]|c>/(Ec-Ev) =
+         !             =   <v|-i grad|c>/(Ev-Ec) -i<v|[x,Vnl]|c>/(Ev-Ec) = 
+         !             =   P_vc/(Ev-Ec) -i<v|[x,Vnl]|c>/(Ev-Ec)
          !
          if (l_eval_DIP_iR) then
            if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)/Ev_m_Ec
            if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
            !XXXXXXXXX 
-           !WRITE(113,"(a,3i4,f15.9,6f20.14)" ) "ic, iv, ik, EmE, DIP", ic, iv, ik, abs(Ev_m_Ec), DIP_iR(:,ic,iv,ik_mem,i_sp_pol) 
+           WRITE(100+myid,"(a,3i4,f15.9,6f20.14)" ) "ic, iv, ik, EmE, DIP", &
+                 ic, iv, ik, abs(Ev_m_Ec), DIP_iR(:,ic,iv,ik_mem,i_sp_pol) 
          endif
          !
          !======

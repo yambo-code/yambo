@@ -393,7 +393,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  self_detect_E_range=.FALSE.
  half_X_mat_only=.FALSE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
- Dipole_Energy_treshold_vv=1.E+3_SP/HA2EV
+ Dipole_Energy_treshold_vv=1.E-5_SP/HA2EV
  Dipole_approach="G-space v"
  use_shifted_grids_approach = .FALSE.
  use_covariant_approach     = .FALSE.

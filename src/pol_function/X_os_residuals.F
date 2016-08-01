@@ -191,6 +191,8 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
        enddo
      endif
      !
+     ! take into account the cancellation of terms
+     ! occurring when dealing with the wings
      ig_start=1
      if(iq==1) ig_start=2
      !

@@ -270,7 +270,6 @@ module stderr
      r(2)=aimag(c)
      fmt_(1)=gen_fmt(r_v=(/r(1)/))
      fmt_(2)=gen_fmt(r_v=(/r(2)/))
-     write(*,*) trim(fmt_(1)),trim(fmt_(2))
      write(complex2ch,'('//trim(fmt_(1))//','//trim(fmt_(2))//')') r
      !
    end function complex2ch

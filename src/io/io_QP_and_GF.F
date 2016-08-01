@@ -227,7 +227,7 @@ integer function io_QP_and_GF(what,qp,ID)
      !
      if (read_is_on(ID)) then
        allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
-       call mem_est("qp_Z qp_E qp_E_bare",(/2*qp%n_states,2*qp%n_states,qp%n_states/),(/SP/))
+       call mem_est("qp_Z qp_E qp_E_bare",(/qp%n_states,qp%n_states,qp%n_states/),(/2*SP,2*SP,SP/))
      endif
      !
      call io_bulk(ID,VAR="QP_E",VAR_SZ=(/2,qp%n_states/))

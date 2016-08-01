@@ -76,7 +76,7 @@ integer function io_RIM(ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call io_bulk(ID,VAR="RIM_qpg",VAR_SZ=shape(RIM_qpg))
+   call io_bulk(ID,VAR="RIM_qpg",VAR_SZ=(/shape(RIM_qpg)/))
    call io_bulk(ID,R3=RIM_qpg)
    !
  endif

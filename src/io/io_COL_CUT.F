@@ -35,7 +35,7 @@ integer function io_COL_CUT(ID)
  ! 
  ! Work Space
  !
- integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ncx
+ integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ng_db
  !
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)
  !
@@ -63,7 +63,7 @@ integer function io_COL_CUT(ID)
 &       VAR=' Sphere/Cylinder radius      [au]:',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=cyl_length,&
 &       VAR=' Cylinder length             [au]:',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=wf_ng,DB_I0=wf_ncx,&
+   call io_elemental(ID,I0=wf_ng,DB_I0=wf_ng_db,&
 &       VAR=' RL components                   :',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=ng_closed,&
 &       VAR=' RL components used in the sum   :',CHECK=.true.,OP=(/"=="/))
@@ -86,9 +86,9 @@ integer function io_COL_CUT(ID)
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then
-   ! 
-   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,wf_ncx/))
-   call io_bulk(ID,C2=bare_qpg)
+   !
+   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,wf_ng_db/))
+   call io_bulk(ID,C2=bare_qpg(:,:wf_ng))
    !
  endif
  !

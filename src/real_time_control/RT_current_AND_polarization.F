@@ -41,8 +41,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use parallel_m,     ONLY:PAR_Xk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  !
- implicit none          
- ! 
+ implicit none
+ !
  type(bz_samp),     intent(in) :: k
  type(levels),      intent(in) :: E
  complex(SP),       intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -50,7 +50,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! Work Space
  !
- complex(SP)   :: RT_P_tmp(3)
+ !complex(SP)   :: RT_P_tmp(3)
  !
  if ( .not. l_NE_dynamics ) return
  !
@@ -74,9 +74,9 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! B : Polarization
  !
- call RT_average_operator(V_VALUE=RT_P_tmp, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
- RT_P    =RT_P_tmp/DL_vol
+ RT_P    =RT_P/DL_vol
  !
  ! B': Polarization as an integral of the current (to be fixed, it i not stable anyway)
  !

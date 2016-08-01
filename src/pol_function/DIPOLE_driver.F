@@ -351,9 +351,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RT
         !
         if (l_real_time.and.n_spin>1) then
-          !
           call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-          !
         endif
         !
 #endif
@@ -391,8 +389,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #if defined _RT
-            if (l_real_time.and.n_spin>1) &
-&             DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            if (l_real_time.and.n_spin>1) then
+              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            endif
 #endif
 #if defined _SC
             if (l_sc_run.or.l_real_time) &
@@ -404,8 +403,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
 #if defined _RT
-              if (l_real_time.and.n_spin>1) &
-&               DIP_spin (:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+              if (l_real_time.and.n_spin>1) then
+                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+              endif
 #endif
 #if defined _SC
               if (l_sc_run.or.l_real_time) &

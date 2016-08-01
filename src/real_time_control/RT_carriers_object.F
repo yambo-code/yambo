@@ -103,10 +103,10 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
    case('fill','dump')
      !
-     Hole_lifetime=0._SP
-     Elec_lifetime=0._SP
-     !
      do i_RT=1,RT%nstates
+       !
+       Hole_lifetime=0._SP
+       Elec_lifetime=0._SP
        !
        i_b    =RT%table(i_RT,1)
        i_k    =RT%table(i_RT,2)

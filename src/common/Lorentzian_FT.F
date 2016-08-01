@@ -28,6 +28,8 @@ function Lorentzian_FT(W,pole,ordering)
  ! Fourier transform of the Lorentzian function
  ! theta(t)*e^{-i*pole*t} [this is the retarded version, other ordering are computed]
  !
+ ! AM, 1/8/16. Note that aimag(pole) is always negative while aimag(W)>0
+ !
  use pars, ONLY:SP
  !
  implicit none

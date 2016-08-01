@@ -39,28 +39,32 @@ integer function MATRIX_resolvant_via_exact_inversion(n,m,W,C,f,V,K)
  ! Work Space
  !
  complex(SP) ::wk(n,n),A_n(n)
- integer     ::i1,i2,i3
+ integer     ::i1,i2,i_L
  !
  MATRIX_resolvant_via_exact_inversion=0
  !
- do i3=1,m
+ do i_L=1,m
    A_n=cZERO
    wk=cZERO
    do i2=1,n
-     wk(i2,i2)=1._SP/V(i2,i3)
+     wk(i2,i2)=1._SP/V(i2,i_L)
      do i1=1,n 
-       if(i3==1) wk(i1,i2)=wk(i1,i2)-      K(i1,i2)
-       if(i3==2) wk(i1,i2)=wk(i1,i2)-conjg(K(i1,i2))
+       if(i_L==1) wk(i1,i2)=wk(i1,i2)-      K(i1,i2)
+       if(i_L==2) wk(i1,i2)=wk(i1,i2)-conjg(K(i1,i2))
      enddo
    enddo
    call MATRIX_driver(INV,wk)
-   if(i3==1) then
+   !
+   ! Absorption
+   !
+   if(i_L==1) then
      call M_by_V('n',n,wk,W,A_n)
      f=  C*Vstar_dot_V(n,W,A_n)
-   else if(i3==2) then
+   else if(i_L==2) then
      call M_by_V('n',n,wk,conjg(W),A_n)
      f=f+C*Vstar_dot_V(n,conjg(W),A_n)
    endif
+   !
  enddo
  !
 end function

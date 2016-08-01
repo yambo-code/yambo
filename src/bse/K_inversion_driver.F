@@ -124,8 +124,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !===========================================================================
  Lo_dim=1
  if (trim(BSE_mode)=="causal") Lo_dim=2
+ !
 #if defined _PL
- Lo_dim=2
+ !
+ ! The two GF are R and A. In the resonant case one is enough
+ !
+ if (trim(BSE_mode)=="causal".or.trim(BSE_mode)=="coupling") Lo_dim=2
+ !
 #endif
  !
  allocate(Lo(BS_H_dim,W%n_freqs,Lo_dim))

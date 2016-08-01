@@ -41,12 +41,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _PL
- use pars,          ONLY:rZERO
  use drivers,       ONLY:l_photolum
- use units,         ONLY:SPEED_OF_LIGHT
  use X_m,           ONLY:DIP_P
- use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
- use R_lattice,     ONLY:RL_vol,nqbz
+ use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights,PL_init
 #endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr
@@ -116,13 +113,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! PL_0
  !=======
- allocate(PL(BSS_n_freqs,4)) !  2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
- PL           =rZERO
- PL_prefactor =32._SP*pi**3*SPEED_OF_LIGHT*2._SP/3._SP*RL_vol/nqbz/(2._SP*pi)**3
- PL(:,1)      =W_bss%p(:)  
- do ic=1,3
-   PL_weights(ic) = PL_weights(ic)/(sqrt(PL_weights(ic)))
- enddo
+ call PL_init( )
+ !
+ PL(:,1) = W_bss%p(:)  
  !
 #endif
  !
@@ -235,7 +228,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
        do i_pert_SOC=1,n_SOC
          !
-         Epsilon_ii(:,3)=Epsilon_ii(:,3)-  res/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+         Epsilon_ii(:,3)=Epsilon_ii(:,3)-res/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if (BS_anti_res.or.BS_K_coupling) then
            Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))

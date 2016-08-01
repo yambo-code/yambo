@@ -158,9 +158,9 @@ subroutine K_output_file(iq,mode)
 #if defined _PL
  if (l_photolum) then
    call X_setup_headers('PL')
-   if (l_Inversion.or.l_Diago) call msg("o pl_",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
-   if (l_Haydock)              call msg("o pl_",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_IP)                   call msg("o pl_",'#',headers(:2),INDENT=0,USE_TABS=.TRUE.)
+   if (l_Inversion) call msg("o pl_",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago)     call msg("o pl_",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   if (l_IP)        call msg("o pl_",'#',headers(:2),INDENT=0,USE_TABS=.TRUE.)
  endif
 #endif
  !
@@ -255,7 +255,7 @@ subroutine K_output_file(iq,mode)
      if (l_IP) then
        n_output_data=2
        output_data(1:2)=(/real(PL(iw,1))*HA2EV,PL(iw,3)/)
-     else if (l_Haydock) then
+     else if (l_Inversion) then
        n_output_data=4
        output_data(1:4)=(/real(PL(iw,1))*HA2EV,PL(iw,2),PL(iw,3),PL(iw,4)/)
      else 

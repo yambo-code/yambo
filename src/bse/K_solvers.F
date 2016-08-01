@@ -78,9 +78,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _PL
  !
  if (l_photolum) then
-   call warning('PL currently implemented only using the diagonalization solver')
+   call warning('PL currently implemented only using the diagonalization/inversion solver')
    run_Haydock  =.false.
-   run_inversion=.false.
  endif
 #endif
  !

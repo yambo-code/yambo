@@ -23,7 +23,6 @@
 !
 integer function io_BSS_invert(iq,W,ID)
  !
- use pars,          ONLY:SP,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
@@ -32,7 +31,7 @@ integer function io_BSS_invert(iq,W,ID)
 &                        BSS_INV_err,BSS_INV_eps,BSS_INV_n_freqs
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
-&                        io_header,read_is_on,write_is_on
+&                        io_header,read_is_on
  implicit none
  integer      :: iq
  type(w_samp) :: W
@@ -40,7 +39,6 @@ integer function io_BSS_invert(iq,W,ID)
  ! Work Space
  !
  integer     :: ID
- real(SP)    :: EPS(W%n_freqs,4),Wp(W%n_freqs,2)
  !
  io_BSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
  !
@@ -92,30 +90,12 @@ integer function io_BSS_invert(iq,W,ID)
    if (read_is_on(ID).and..not.associated(W%p)) then
      allocate(W%p(W%n_freqs))
    endif
-   if (write_is_on(ID)) then
-     EPS(:BSS_INV_n_freqs,1)=real (BSS_INV_eps(:BSS_INV_n_freqs,1))
-     EPS(:BSS_INV_n_freqs,2)=aimag(BSS_INV_eps(:BSS_INV_n_freqs,1))
-     EPS(:BSS_INV_n_freqs,3)=real (BSS_INV_eps(:BSS_INV_n_freqs,2))
-     EPS(:BSS_INV_n_freqs,4)=aimag(BSS_INV_eps(:BSS_INV_n_freqs,2))
-     Wp(:BSS_INV_n_freqs,1) =real (W%p(:BSS_INV_n_freqs))
-     Wp(:BSS_INV_n_freqs,2) =aimag(W%p(:BSS_INV_n_freqs))
-   endif
    !
-   call io_bulk(ID,'FREQs',VAR_SZ=(/BSS_INV_n_freqs,2/))
-   call io_bulk(ID,R2=Wp(:BSS_INV_n_freqs,:))
-   !call io_bulk(ID,'FREQs',VAR_SZ=(/BSS_INV_n_freqs/))
-   !call io_bulk(ID,C1=W%p(:BSS_INV_n_freqs))
+   call io_bulk(ID,'FREQs',VAR_SZ=(/2,BSS_INV_n_freqs/))
+   call io_bulk(ID,C1=W%p(:BSS_INV_n_freqs))
    !
-   call io_bulk(ID,'EPSILON',VAR_SZ=(/BSS_INV_n_freqs,4/))
-   call io_bulk(ID,R2=EPS(:BSS_INV_n_freqs,:))
-   !call io_bulk(ID,'EPSILON',VAR_SZ=(/BSS_INV_n_freqs,2/))
-   !call io_bulk(ID,C2=BSS_INV_eps_pl(:BSS_INV_n_freqs,:))
-   !
-   if (read_is_on(ID)) then
-     W%p(:BSS_INV_n_freqs)             =Wp(:BSS_INV_n_freqs,1)+cI*Wp(:BSS_INV_n_freqs,2)
-     BSS_INV_eps(:BSS_INV_n_freqs,1)=EPS(:BSS_INV_n_freqs,1)+cI*EPS(:BSS_INV_n_freqs,2)
-     BSS_INV_eps(:BSS_INV_n_freqs,2)=EPS(:BSS_INV_n_freqs,3)+cI*EPS(:BSS_INV_n_freqs,4)
-   endif
+   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,BSS_INV_n_freqs,2/))
+   call io_bulk(ID,C2=BSS_INV_eps(:BSS_INV_n_freqs,:))
    !
  endif
  !

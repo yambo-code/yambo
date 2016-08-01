@@ -40,6 +40,11 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
 #if defined _ELPH
  use BS,             ONLY:BSS_uses_GreenF,BS_bands
 #endif
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+ use PHOTOLUM,       ONLY:PL_weights,BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
+#endif
+ use units, ONLY:HA2EV
  !
  implicit none
  !
@@ -53,13 +58,23 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  type(w_samp)     :: W_mins,W_plus
  !
  logical          :: K_diago_in_BS_mat,eval_anti_resonant
- integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
- complex(SP)      :: E_plus_W,residual
+ integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
+ complex(SP)      :: E_plus_W,residual,PL_residual(3)
  !
  complex(SP), allocatable :: BS_mat_diagonal(:)
  !
  Epsilon_ii(:,3:4)=cZERO
  if (BSS_eval_JDOS) Joint_DOS(:,3:4) =cZERO
+ !
+#if defined _PL
+ !
+ ! PL_0
+ !=======
+ call PL_init( )
+ PL      = cZERO
+ PL(:,1) = W%p(:)  
+ !
+#endif
  !
  call parser('BSSInvKdiag',K_diago_in_BS_mat)
  !
@@ -129,8 +144,13 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    i_eps=2+i_loop
    !
    if(n_loop==2) then
+#if defined _PL
+     if(i_loop==1) call live_timing('IP PL',px%n_of_elements(myid+1))
+     if(i_loop==2) call live_timing('Shifted GF and PL',px%n_of_elements(myid+1))
+#else
      if(i_loop==1) call live_timing('IP Absorption',px%n_of_elements(myid+1))
      if(i_loop==2) call live_timing('Shifted GF and Absorption',px%n_of_elements(myid+1))
+#endif
    else
      call live_timing('IP GF and Absorption',px%n_of_elements(myid+1))
    endif
@@ -219,6 +239,18 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
        if (BSS_eval_JDOS) Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) - Lo(i_Lo_trans,:,i_Lo)
      endif
+     !
+#if defined _PL
+     if (l_photolum) then
+       do i_c=1,3
+         PL_residual(i_c)=BSS_dipoles_PL(i_res,i_c)*PL_weights(i_c)
+       enddo
+       residual=dot_product(PL_residual,PL_residual)*BSS_PL_f(i_res)
+       PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(Lo(i_res,:,1))
+       if ( eval_anti_resonant ) then
+       endif
+     endif
+#endif
      !
      call live_timing(steps=1)
      !

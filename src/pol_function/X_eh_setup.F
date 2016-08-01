@@ -24,7 +24,7 @@
 integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:X_t,X_poles,X_Ein_poles,X_poles_tab,l_X_terminator,X_term_E_offset
+ use X_m,           ONLY:X_t,X_poles,X_Ein_poles,X_poles_tab,l_X_terminator,X_term_E
  use R_lattice,     ONLY:qindx_X,bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin_occ
  use frequency,     ONLY:ordered_grid_index
@@ -95,7 +95,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          ! terminator handling
          if (ic>=X%ib(1).and.ic<=Xen%nbm.and.l_X_terminator) then
            l_XTerm_vv=.TRUE.
-           E_eh=X_term_E_offset-Xen%E(iv,ikp,i_sp)       
+           E_eh=X_term_E-Xen%E(iv,ikp,i_sp)       
          else
            l_XTerm_vv=.FALSE.
            E_eh=Xen%E(ic,ik,i_sp)-Xen%E(iv,ikp,i_sp)

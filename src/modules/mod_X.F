@@ -100,7 +100,7 @@ module X_m
  logical :: self_detect_E_range
  logical :: use_X_DbGd
  real(SP):: X_terminator_E
- real(SP):: X_term_E_offset
+ real(SP):: X_term_E
  logical :: l_X_terminator=.false.
  character(schlen) :: X_terminator_Kind="none"
  !

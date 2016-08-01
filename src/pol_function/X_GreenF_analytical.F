@@ -28,7 +28,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  !
  use pars,       ONLY:SP,cZERO,cONE
  use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs,&
-&                     X_t,l_X_terminator,X_terminator_E,X_term_E_offset
+&                     X_t,l_X_terminator,X_terminator_E,X_term_E
  use BS,         ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
                       BZ_DbGd_ipol_weight,BZ_DbGd_kpts
@@ -79,7 +79,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  !
  pole_X_term=0.0_SP
  if(l_X_terminator) then 
-   pole_X_term= cmplx(X_term_E_offset-Xen%E(iv,ikp,i_spin),-W_,KIND=SP) 
+   pole_X_term= cmplx(X_term_E-Xen%E(iv,ikp,i_spin),-W_,KIND=SP) 
  endif
  !
  ! Case without DbGd
@@ -152,7 +152,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
      pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP)
      !
      if(l_X_terminator) then 
-       pole_X_term=cmplx(X_term_E_offset-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP) 
+       pole_X_term=cmplx(X_term_E-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP) 
      endif
      !
      do iw=1,Xw%n_freqs

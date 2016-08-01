@@ -102,20 +102,11 @@ integer function io_BS(iq,X,ID)
  !
  call io_fragment(ID,i_fragment=i_block)
  !
- allocate(BS_mat_disk(BS_blk(i_block)%size(1),BS_blk(i_block)%size(2),2))
- !
  if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
  if (BS_blk(i_block)%mode=="A") ch="BSE_ANTIRESONANT_BLOCK_"//trim(intc(i_block))
  !
- call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk(i_block)%size(1),BS_blk(i_block)%size(2),2/))
- !
- if (write_is_on(ID)) call mat_c2r(BS_blk(i_block)%mat,BS_mat_disk)
- !
- call io_bulk(ID,R3=BS_mat_disk)
- !
- if (read_is_on(ID)) call mat_r2c(BS_mat_disk,BS_blk(i_block)%mat)
- !
- deallocate(BS_mat_disk)
+ call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/))
+ call io_bulk(ID,C2=BS_blk(i_block)%mat)
  !
 1 continue
  !

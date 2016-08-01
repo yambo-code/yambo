@@ -41,7 +41,6 @@ integer function io_BSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  ! Work Space
  !
  integer     :: ID
- real(SP), allocatable :: W(:,:)
  !
  io_BSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
  !
@@ -92,22 +91,8 @@ integer function io_BSS_invert(iq,n_,inv_err,eps,W_disk,ID)
    call io_bulk(ID,'INV_ERRs',VAR_SZ=(/W_disk%n_freqs/))
    call io_bulk(ID,I1=inv_err)
    !
-   allocate(W(2,W_disk%n_freqs))
-   !
-   if (write_is_on(ID)) then
-     W(1,:)=real(W_disk%p)
-     W(2,:)=aimag(W_disk%p)
-   endif
-   !
    call io_bulk(ID,'FREQs',VAR_SZ=(/2,W_disk%n_freqs/))
-   call io_bulk(ID,R2=W)
-   !
-   if (read_is_on(ID)) then
-     allocate(W_disk%p(W_disk%n_freqs))
-     W_disk%p(:)=W(1,:)+cI*W(2,:)
-   endif
-   !
-   deallocate(W)
+   call io_bulk(ID,C1=W_disk%p)
    !
    call io_bulk(ID,'EPSILON',VAR_SZ=(/2,W_disk%n_freqs/))
    call io_bulk(ID,R2=eps)

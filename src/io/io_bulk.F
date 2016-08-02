@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
+subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L0,L1,L2,L3,IPOS)
  !
  use pars,    ONLY:SP,LP,nf90_SP
  use netcdf
@@ -38,7 +38,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  ! These types can be used instead of logical that 
  ! are not supported by NetCdf
  !
- integer(LP), optional :: L1(:),L3(:,:,:)
+ integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:)
  ! 
  ! Work Space
  !
@@ -75,7 +75,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
    ipos_loc=IPOS
  else
    if (present(L1).or.present(I1).or.present(R1)               ) dims=1
-   if (               present(I2).or.present(R2).or.present(C1)) dims=2
+   if (present(L2).or.present(I2).or.present(R2).or.present(C1)) dims=2
    if (present(L3).or.present(I3).or.present(R3).or.present(C2)) dims=3
    if (                              present(C3)) dims=4
    allocate(ipos_loc(dims))
@@ -84,10 +84,10 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  !
  ! Logical numbers / vectors / matricies
  !
- !if (present(L0)) then
- !  if (write_is_on(ID)) error=nf90_put_var(io_unir(ID), io_netcdf_var(ID), 1, 1, L0)
- !  if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), 1, 1, L0)
- !endif
+ if (present(L0)) then
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), L0, (/1/))
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), L0, (/1/))
+ endif
  !
  if (present(L1)) then
    allocate(isize_loc(1))
@@ -96,12 +96,12 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
    if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), L1, ipos_loc, isize_loc)
  endif
  !
- !if (present(L2)) then
- !  allocate(isize_loc(2))
- !  isize_loc=(/size(L2,1),size(L2,2)/)
- !  if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), L2, ipos_loc, isize_loc)
- !  if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), L2, ipos_loc, isize_loc)
- !endif
+ if (present(L2)) then
+   allocate(isize_loc(2))
+   isize_loc=(/size(L2,1),size(L2,2)/)
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), L2, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), L2, ipos_loc, isize_loc)
+ endif
  !
  if (present(L3)) then
    allocate(isize_loc(3))

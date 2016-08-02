@@ -24,10 +24,11 @@
 subroutine ps_convert(rvar,ivar,v_name)
  !
  use pars,  ONLY:SP,lchlen,schlen
- use units
- use it_m,  ONLY: nflines,flines,ni1v,ni2v,ni3v,nr1v,nr2v,nc1v,&
-&                 nr3v,i1vars,i2vars,i3vars,r1vars,r2vars,r3vars,c1vars,&
-&                 Bfield_unit,Efield_unit,Time_unit,I_unit,Angle_unit
+ use units, ONLY:AS2AUT,AU2VMm1,FS2AUT,HA2GHZ,HA2THZ,kWCMm22AU,&
+&                Tesla2AU,DEG2RAD,HA2EV,PS2AUT
+ use it_m,  ONLY:nflines,flines,ni1v,ni2v,ni3v,nr1v,nr2v,nc1v,&
+&                nr3v,i1vars,i2vars,i3vars,r1vars,r2vars,r3vars,c1vars,&
+&                Bfield_unit,Efield_unit,Time_unit,I_unit,Angle_unit
  implicit none
  !
  real(SP):: rvar
@@ -39,23 +40,29 @@ subroutine ps_convert(rvar,ivar,v_name)
  integer :: i1,ipos           
  character(lchlen) :: v_line  
  character(schlen) :: v_s_unit
- logical :: var_is_time,var_is_B,var_is_E,var_is_intensity,var_is_angle
+ logical :: var_is_time,var_is_B,var_is_E,var_is_intensity,var_is_angle,is_multi_line
  !
  ! First I search for the variable name in the input file 
  !
- v_line=' '
- v_s_unit=' '
+ v_line       =' '
+ v_s_unit     =' '
+ is_multi_line=.FALSE.
  do i1=1,nflines
    if (index(trim(flines(i1)),trim(v_name))/=0) v_line=flines(i1)
+   if (index(v_line,'%')/=0) is_multi_line=.TRUE.
    if (index(v_line,'%')/=0) v_line=flines(i1+1)
  enddo
  if (len_trim(v_line)==0) return
  !
- ! Then the Unit is read and value scaled.
- ! At the same time I have to redefine the variable Unit
+ ! [12/7/2016] Bug-Fix by AM.
  !
- ipos=index(trim(v_line),trim(v_name))+len_trim(v_name)+1
- v_line=trim(v_line(ipos:))
+ ! For scalar variables the variable name is removed so to avoid 
+ ! wrong matches with unit strings.
+ !
+ if (.not.is_multi_line) then
+   ipos=index(trim(v_line),trim(v_name))+len_trim(v_name)+1
+   v_line=trim(v_line(ipos:))
+ endif
  !
  ! Get the standard unit (if any)
  !

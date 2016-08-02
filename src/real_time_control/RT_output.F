@@ -431,8 +431,10 @@ subroutine RT_output(what,VALUES,TIME,E)
  file_is_todo=.FALSE.
  do i_f=1,n_output_files
    do i_fp=1,n_output_files
-     if (len_trim(orders(i_fp))==0) cycle
-     if (.not.file_is_todo(i_f)) file_is_todo(i_f) = index(file_name(i_f),trim(orders(i_fp)))>0
+     if ( len_trim(orders(i_fp))==0 ) cycle
+     if (.not.file_is_todo(i_f)) &
+       file_is_todo(i_f) = index(      file_name(i_f),trim(orders(i_fp)))>0 &
+&                    .and. index(short_file_name(i_f),trim(orders(i_fp)))>0
    enddo
  enddo
  !

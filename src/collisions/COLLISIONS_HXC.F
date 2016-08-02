@@ -209,9 +209,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
    !
-   if (io_COLLs) then
-     if (l_HXC_collisions .and. HXC_collisions%IO_status(i_coll)/=-1) cycle
-     if (l_COH_collisions .and. COH_collisions%IO_status(i_coll)/=-1) cycle
+   if (io_COLLs.and.l_HXC_collisions) then
+     if (HXC_collisions%IO_status(i_coll)/=-1) cycle
+   endif
+   if (io_COLLs.and.l_COH_collisions) then
+     if (COH_collisions%IO_status(i_coll)/=-1) cycle
    endif
    !
    if( l_HXC_collisions ) then

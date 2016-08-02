@@ -251,16 +251,16 @@ module RT_control
      use stderr, ONLY:real2ch
      !
      real(SP)      :: TIME,TIME_fs
-     character(11) :: tmp_ch
+     character(14) :: tmp_ch
      integer       :: i_c
      !
      TIME_fs=TIME*AUT2FS
-     if (TIME_fs<1.) then
-       write(tmp_ch,'(f8.4,a)') TIME_fs*1000._SP,"_as"
-     else if (TIME_fs<999.) then
+     if (TIME_fs<1._SP) then
+       write(tmp_ch,'(f5.1,a)') TIME_fs*1000._SP,"_as"
+     else if (TIME_fs<999._SP) then
        write(tmp_ch,'(f8.4,a)') TIME_fs,"_fs"
      else 
-       write(tmp_ch,'(f8.4,a)') TIME_fs/1000._SP,"_ps"
+       write(tmp_ch,'(f11.7,a)') TIME_fs/1000._SP,"_ps"
      endif
      !
      do i_c=1,11

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
+subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no_occupations)
  !
  ! Compute the GreenF in frequency space starting from it analytical
  ! expression as the Fourier Transform of a Lorentzian
@@ -42,6 +42,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  type(bz_samp):: Xk
  complex(SP)  :: GreenF(Xw%n_freqs)
  character(*) :: ordering,space
+ logical      :: no_occupations
  !
  !Work Space
  !
@@ -83,8 +84,9 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  ! In K_inversion_Lo the occupations and the Z_factor are not included.
  ! Thus I have to multiply by them the Green function
  !
- if( K_inv_run ) ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik ,i_spin) )/spin_occ*real(Z_)
- if( X_os_run  ) ffac = 1._SP
+ if( K_inv_run      ) ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik ,i_spin) )/spin_occ*real(Z_)
+ if( X_os_run       ) ffac = 1._SP
+ if( no_occupations ) ffac = 1._SP
  !
  if (X_os_run .and.(.not.use_X_DbGd.or.ic>BZ_DbGd_nbands).or. &
 &    K_inv_run.and.(.not.BSS_uses_DbGd)                       ) then
@@ -127,8 +129,9 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
      ikp_rand   = BZ_DbGd_table(ikpbz,i2,1)
      ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
      !
-     if( X_os_run  ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)*f_h)/cg_ffac
-     if( K_inv_run ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac
+     if( X_os_run       ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)*f_h)/cg_ffac
+     if( K_inv_run      ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac
+     if( no_occupations ) ffac = 1._SP
      !
      ffac=ffac*weight1*weight2
      pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_)

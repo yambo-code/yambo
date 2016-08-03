@@ -47,6 +47,7 @@ module PHOTOLUM
  contains
    !
    subroutine PL_init( )
+     !
      use pars,       ONLY:pi,rZERO
      use units,      ONLY:SPEED_OF_LIGHT
      use R_lattice,  ONLY:RL_vol,nqbz

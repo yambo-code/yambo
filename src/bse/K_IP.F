@@ -222,7 +222,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
          do ic=1,3
            P_weighted(ic)=BS_T_grp(i_T_g)%dipoles_R_PL(i_T,ic)*PL_weights(ic)
          enddo
-         res_PL=BS_T_grp(i_T_g)%f_PL(i_T)*Z_*dot_product(P_weighted,P_weighted)
+         res_PL=Z_*dot_product(P_weighted,P_weighted)*BS_T_grp(i_T_g)%f_PL(i_T)
        endif
 #endif
        !
@@ -243,7 +243,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #endif
 #if defined _PL
          if (l_photolum) then
-           PL(:,3)=PL(:,3)+PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))
+           PL(:,3)=PL(:,3)+  PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
+           if (BS_anti_res.or.BS_K_coupling) then
+             PL(:,3)=PL(:,3)-PL_prefactor*res_PL*aimag( 1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
+           endif
          endif
 #endif
          !

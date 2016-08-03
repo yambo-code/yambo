@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function MATRIX_resolvant_via_perturbative_inversion(n,m,W,C,f,V,K)
+integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,W,C,f,V,K)
  !
  ! C<W|1./(V^{-1}-K)|W> = \sum_n C<W| (1-VK)^{-1} V |W> = \sum_n C<W| ( VK )^n V |W>
  !
@@ -31,7 +31,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,W,C,f,V,K)
  !
  implicit none
  !
- integer,    intent(in)  ::n,m
+ integer,    intent(in)  ::n,m,n_loop
  complex(SP),intent(in)  ::C,W(n),V(n,m),K(n,n)
  complex(SP),intent(out) ::f
  !
@@ -45,7 +45,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,W,C,f,V,K)
  !
  A_nm1(:,1)=V(:,1)*W(:)
  fo=C*Vstar_dot_V_omp(N,W,A_nm1(:,1))
- if(m==2) then
+ if(n_loop==2) then
    A_nm1(:,2)=V(:,2)*conjg(W(:))
    fo=fo+C*Vstar_dot_V_omp(N,conjg(W),A_nm1(:,2))
  endif
@@ -60,11 +60,11 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,W,C,f,V,K)
  do while (it<=BSS_inv_iter_max) 
    !
    call M_by_V_omp('n',N,K,A_nm1(:,1),A_n(:,1))
-   if(m==2) call M_by_V_omp('n',N,conjg(K),A_nm1(:,2),A_n(:,2))
+   if(n_loop==2) call M_by_V_omp('n',N,conjg(K),A_nm1(:,2),A_n(:,2))
    !
    A_n(:,1)=V(:,1)*A_n(:,1)
    delta_f=C*Vstar_dot_V_omp(N,W,A_n(:,1))
-   if(m==2) then 
+   if(n_loop==2) then 
      A_n(:,2)=V(:,2)*A_n(:,2)
      delta_f=delta_f+C*Vstar_dot_V_omp(N,conjg(W),A_n(:,2))
    endif

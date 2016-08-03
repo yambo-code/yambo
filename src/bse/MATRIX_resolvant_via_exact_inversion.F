@@ -21,41 +21,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function MATRIX_resolvant_via_exact_inversion(n,m,W,C,f,V,K)
+integer function MATRIX_resolvant_via_exact_inversion(n,m,n_loop,W,C,f,V,K)
  !
  ! C<W|1./(V^{-1}-M)|W>
  !
  use pars,           ONLY:SP,cZERO
- use interfaces,     ONLY:MATRIX_driver
- use matrix_operate, ONLY:INV
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  !
  implicit none
  !
- integer,    intent(in) ::n,m
+ integer,    intent(in) ::n,m,n_loop
  complex(SP),intent(in) ::C,W(n),V(n,m),K(n,n)
  complex(SP),intent(out)::f 
  !
  ! Work Space
  !
  complex(SP) ::wk(n,n),A_n(n)
- integer     ::i1,i2,i_L
+ integer     ::i_L
  !
  MATRIX_resolvant_via_exact_inversion=0
  !
- do i_L=1,m
-   A_n=cZERO
-   wk=cZERO
-   do i2=1,n
-     wk(i2,i2)=1._SP/V(i2,i_L)
-     do i1=1,n 
-       if(i_L==1) wk(i1,i2)=wk(i1,i2)-      K(i1,i2)
-       if(i_L==2) wk(i1,i2)=wk(i1,i2)-conjg(K(i1,i2))
-     enddo
-   enddo
-   call MATRIX_driver(INV,wk)
+ do i_L=1,n_loop
    !
-   ! Absorption
+   if (i_L==1) call K_invertion_do_it_full(V(:,i_L),wk,"r")
+   if (i_L==2) call K_invertion_do_it_full(V(:,i_L),wk,"a")
+   !
+   A_n=cZERO
    !
    if(i_L==1) then
      call M_by_V('n',n,wk,W,A_n)

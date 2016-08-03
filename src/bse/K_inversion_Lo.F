@@ -23,7 +23,7 @@
 !
 subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo) 
  !
- use pars,           ONLY:SP,cZERO,cI
+ use pars,           ONLY:SP,cZERO,cI,pi
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
@@ -44,7 +44,6 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  use drivers,        ONLY:l_photolum
  use PHOTOLUM,       ONLY:PL_weights,BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
 #endif
- use units, ONLY:HA2EV
  !
  implicit none
  !
@@ -60,6 +59,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  logical          :: K_diago_in_BS_mat,eval_anti_resonant
  integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
  complex(SP)      :: E_plus_W,residual,PL_residual(3)
+#if defined _PL
+ complex(SP)      :: SF(W%n_freqs,2)
+#endif
  !
  complex(SP), allocatable :: BS_mat_diagonal(:)
  !
@@ -193,39 +195,43 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_mat_diagonal(i_res)*BSS_eh_f(i_res)
      endif
      !
-#if defined _ELPH
      if ( .not.associated(E%GreenF) ) then
-#endif
        !
        ! Analytical GFs
        !================
-       call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh")
+       call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh",.FALSE.)
+#if defined _PL
+       call X_GreenF_analytical(1,transition,W_mins,E,k,SF(:,1),"r","eh",.TRUE.)
+       Lo(i_res,:,1+Lo_dim)=-aimag(SF(:,1))/pi/abs(Lo(i_res,:,1))**2.
+#endif
        !
        if (eval_anti_resonant) then
          !
-         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh")
+         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.)
+#if defined _PL
+         call X_GreenF_analytical(1,transition,W_mins,E,k,SF(:,1),"Ra","eh",.TRUE.)
+         Lo(i_Lo_trans,:,i_Lo+Lo_dim)=-aimag(SF(:,1))/pi/abs(Lo(i_Lo_trans,:,i_Lo))**2.
+#endif
          !
        endif
        !
-#if defined _ELPH
      else 
        !
        ! GPL_EXCLUDE_START
        !
        ! Convoluted GFs
        !================
-       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i_res,:,1),"r")
+       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i_res,:,1),"r",.FALSE.)
        !
        if (eval_anti_resonant) then
          !
-         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
+         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra",.FALSE.)
          !
        endif
        !
        ! GPL_EXCLUDE_END
        !
      endif
-#endif
      !
      residual=BSS_dipoles(i_res)*conjg(BSS_dipoles(i_res))
      if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
@@ -242,13 +248,18 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      !
 #if defined _PL
      if (l_photolum) then
+       !
        do i_c=1,3
          PL_residual(i_c)=BSS_dipoles_PL(i_res,i_c)*PL_weights(i_c)
        enddo
+       !
        residual=dot_product(PL_residual,PL_residual)*BSS_PL_f(i_res)
-       PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(Lo(i_res,:,1))
+       !
+       PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi
        if ( eval_anti_resonant ) then
+         PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*conjg(residual)*aimag(SF(:,2))/pi
        endif
+       !
      endif
 #endif
      !

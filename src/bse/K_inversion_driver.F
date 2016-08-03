@@ -67,10 +67,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! ... dummies
  !
- type(PP_indexes) ::px
- integer          ::i1,i2,iw
- logical, external::stop_now
- complex(SP), allocatable  ::Lo(:,:,:)
+ type(PP_indexes)  :: px
+ integer           :: i1,i2,iw
+ logical, external :: stop_now
+ complex(SP), allocatable :: Lo(:,:,:)
  !
  ! ... frequencies
  !
@@ -81,7 +81,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! I/O
  !
- integer           :: i_err,ID,Lo_dim
+ integer           :: i_err,ID,Lo_dim,Lo_n_loop
  integer, external :: io_BSS_invert
  !
 #if defined _TIMING
@@ -124,12 +124,15 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !===========================================================================
  Lo_dim=1
  if (trim(BSE_mode)=="causal") Lo_dim=2
+ Lo_n_loop=Lo_dim
  !
 #if defined _PL
  !
- ! The two GF are R and A. In the resonant case one is enough
+ ! In the PL case we need, in addition to the standard GF, also some additional L_k^(r)(w) A_k(w) L_k^(a)(w), where
+ ! L^(a/r) are deduced from the standard components.
  !
- if (trim(BSE_mode)=="causal".or.trim(BSE_mode)=="coupling") Lo_dim=2
+ Lo_dim=2
+ if (trim(BSE_mode)=="causal") Lo_dim=4
  !
 #endif
  !
@@ -152,7 +155,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    do_it_full=.FALSE.
    call live_timing('Perturbative inversion ',px%n_of_elements(myid+1))
    !
-   call K_inversion_engine(1,W%n_freqs,px,W,Lo,Lo_dim,do_it_full)
+   call K_inversion_engine(1,W%n_freqs,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
    !
    call PP_redux_wait(BSS_INV_err)
    call PP_redux_wait(Epsilon_ii(:,2))
@@ -244,7 +247,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
      iw=BSS_INV_iw_full(i1)
      !
-     call K_inversion_engine(iw,1,px,W,Lo,Lo_dim,do_it_full)
+     call K_inversion_engine(iw,1,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
      !
      call live_timing(steps=1)
      !
@@ -299,7 +302,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  call PP_indexes_reset(px)
  deallocate(Lo)
  call mem_est("Lo")
- !
  !
 #if defined _TIMING
  call timing('Invertion Solver',OPR='stop')

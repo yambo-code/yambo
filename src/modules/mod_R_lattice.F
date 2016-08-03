@@ -236,6 +236,27 @@ module R_lattice
      if(associated(k%weights))  deallocate(k%weights)
      nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights,k%s_table,k%k_table)
      !
+     ! Double Grid
+     !
+     k%n_spheres_ibz=0
+     !
+     k%nbz_DbGd=0
+     k%nibz_DbGd=0
+     k%ik_ref=0
+     k%ikbz_ref=0
+     !
+     if(associated(k%bz_to_ibz_DbGd))   deallocate(k%bz_to_ibz_DbGd)
+     if(associated(k%pt_DbGd))          deallocate(k%pt_DbGd)
+     if(associated(k%pt_DbGd))          deallocate(k%ptbz_DbGd)
+     nullify(k%bz_to_ibz_DbGd,k%pt_DbGd,k%pt_DbGd)
+     !
+     if(associated(k%ibz_sp_n_ass))     deallocate(k%ibz_sp_n_ass)
+     if(associated(k%bz_sp_n_ass))      deallocate(k%bz_sp_n_ass)
+     if(associated(k%ibz_sp_map))       deallocate(k%ibz_sp_map)
+     if(associated(k%bz_sp_map))        deallocate(k%bz_sp_map)
+     if(associated(k%weights_sphere))   deallocate(k%weights_sphere)
+     if(associated(k%weights_ipol))     deallocate(k%weights_ipol)
+     !
    end subroutine bz_samp_reset
    !
    subroutine bz_samp_duplicate(BZi, BZo)
@@ -267,7 +288,21 @@ module R_lattice
        allocate( BZo%ptbz(BZo%nbz,3) ) 
        BZo%ptbz=BZi%ptbz
      endif
-   return
+     !
+     BZo%n_spheres_ibz=0
+     !
+     BZo%nbz_DbGd =BZi%nbz_DbGd
+     BZo%nibz_DbGd=BZi%nibz_DbGd
+     BZo%ik_ref   =BZi%ik_ref
+     BZo%ikbz_ref =BZi%ikbz_ref
+     !
+     if (associated( BZi%bz_to_ibz_DbGd )) then
+       allocate(BZo%bz_to_ibz_DbGd(BZo%nbz_DbGd))
+       BZo%bz_to_ibz_DbGd=BZi%bz_to_ibz_DbGd
+     endif
+     !
+     return
+     !
    end subroutine bz_samp_duplicate
    !
    subroutine cutoff_presets()

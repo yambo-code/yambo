@@ -112,8 +112,8 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  ! prepare Double Grid quantities
  !
- allocate(Xk%bz_map(Xk%nbz, npts_around_coarse))
- Xk%bz_map = 0
+ allocate(Xk%bz_sp_map(Xk%nbz, npts_around_coarse))
+ Xk%bz_sp_map = 0
  allocate(Xk%weights_ipol(npts_around_coarse))
  Xk%weights_ipol = 0.0_SP
  !
@@ -160,7 +160,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
                nz_period = (modulo(intvz-1, nkpoint_c(3)))* nstep_f(3) + nz
                ! 
                ii = ii + 1
-               Xk%bz_map(ii_c,ii) = sub2ind(nkpoint_f, nx_period, ny_period, nz_period)
+               Xk%bz_sp_map(ii_c,ii) = sub2ind(nkpoint_f, nx_period, ny_period, nz_period)
                call live_timing(steps=1)
              end do
            end do
@@ -169,7 +169,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
      end do
    end do
    
-   Xk%nbz_ass(ii_c)=ii
+   Xk%bz_sp_n_ass(ii_c)=ii
  end do
  !
  call live_timing()  

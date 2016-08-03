@@ -29,7 +29,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest,bz_samp_reset,rl_sop
  use parser_m,            ONLY:parser
- use vec_operate,         ONLY:v_norm,v_is_zero,iku_v_norm
+ use vec_operate,         ONLY:v_norm,v_is_zero,iku_v_norm,k2bz
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg,error,warning
  use YPP,                 ONLY:BZ_DbGd_nkpts_to_use,DbGd_DB1_paths,MAX_DbGd_DBs,n_DbGd_DBs
@@ -47,7 +47,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! Work Space
  !
  real(SP)     ::rand_k(BZ_DbGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),&
-&               gap(2),tmp_zero(3),kpt_tmp(3),dist_bz,dist_ibz
+&               gap(2),tmp_zero(3),kpt_tmp(3),kpt_tmp2(3),dist_bz,dist_ibz
  integer      ::i1,i2,ik_near,is_near,ik_ibz,ik_bz,ik_DbGd,i_sphere,n_new_sphere,n_remove,&
 &               is_near_ibz,ik_near_ibz,i1_sym_ibz,i1_kpt_ibz
  logical      ::l_skip_check,l_flag,l_new_sphere
@@ -137,7 +137,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    dl_sop=dl_sop_SAVE(:,:,:nsym)
  endif
  !
- if(nsym_DbGd_DB/=nsym) call error(' Coarse grid and fine grid have different symmetries')
+ if(nsym_DbGd_DB/=nsym) call error(' Coarse grid and fine grid have different symmetries: '&
+&                                    //trim(intc(nsym))//' / '//trim(intc(nsym_DbGd_DB)))
  !
  call parser('SkipCheck',l_skip_check)
  !
@@ -234,19 +235,15 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  allocate(Xen%E_DbGd(Xen%nb_DbGd,Xen%nk_DbGd,n_sp_pol))
  Xen%E_DbGd =DbGd_E(i_db_merge)%E
  !
- deallocate(DbGd_E(i_db_merge)%E)
- !
  ! Skipe these for the moment
  !  real(SP),   pointer :: W_DbGd(:,:,:)        => null()
  !  real(SP),   pointer :: f_DbGd(:,:,:)        => null()
  !  real(SP),   pointer :: df_DbGd(:,:,:)       => null()
  !
- ! Define Xk_DbGd dimensions
- Xk%nibz_DbGd    =DbGd_k(i_db_merge)%nibz
- Xk%nbz_DbGd     =DbGd_k(i_db_merge)%nbz
- !
  ! First map IBZ to IBZ
  !=======================
+ !
+ Xk%nibz_DbGd    =DbGd_k(i_db_merge)%nibz
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/Xk%nibz_DbGd/))
@@ -281,7 +278,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Number of points in each zone in the IBZ
  !
- allocate(Nibz_ass(DbGd_k(i_db_merge)%nibz))
+ allocate(Nibz_ass(Xk%nibz))
  Nibz_ass=1
  do i1=1,DbGd_k(i_db_merge)%nibz
    if (i1==Xk%ik_ref) cycle
@@ -300,32 +297,36 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  call k_build_up_BZ_tables(Xk)
  call k_ibz2bz(Xk,'i',.true.)
+ ! 
+ ! k_DbGd (tables)
+  call k_build_up_BZ_tables(DbGd_k(i_db_merge))
+ Xk%ikbz_ref=DbGd_k(i_db_merge)%k_table(Xk%ik_ref,1)
+ deallocate(DbGd_k(i_db_merge)%k_table,DbGd_k(i_db_merge)%s_table)
  !
  ! k_DbGd (IBZ->BZ)
  !
  call k_ibz2bz(DbGd_k(i_db_merge),'i',.true.)
- !
- call k_build_up_BZ_tables(DbGd_k(i_db_merge))
- Xk%ikbz_ref=DbGd_k(i_db_merge)%k_table(Xk%ik_ref,1)
- deallocate(DbGd_k(i_db_merge)%k_table,DbGd_k(i_db_merge)%s_table)
- !
+ call k_expand(DbGd_k(i_db_merge))
  call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
  !
  !
  ! Now map BZ to BZ
  !===================
  !
- !call PP_indexes_reset(px)
- !call PARALLEL_index(px,(/Xk%nbz_DbGd/))
+ Xk%nbz_DbGd     =DbGd_k(i_db_merge)%nbz
+ !
+ call PP_indexes_reset(px)
+ !call PARALLEL_index(px,(/DbGd_k(i_db_merge)%nbz/))
  !call PP_redux_wait
  !
- call live_timing('BZ Double Grid Map',Xk%nbz_DbGd) !px%n_of_elements(myid+1))
+ call live_timing('BZ Double Grid Map',DbGd_k(i_db_merge)%nbz) !px%n_of_elements(myid+1))
  !
  allocate(TMP_map_bz(DbGd_k(i_db_merge)%nbz))
  TMP_map_bz=0
 
  allocate(TMP_map_sp(DbGd_k(i_db_merge)%nbz))
  TMP_map_sp=0
+ TMP_map_sp(:DbGd_k(i_db_merge)%nibz)=TMP_map_ibz
  !
  Xk%n_spheres_ibz=Xk%nibz
  n_remove=0
@@ -340,11 +341,12 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
      cycle
    endif
    !
+   !
    ik_near=k_the_nearest(DbGd_k(i_db_merge)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
    TMP_map_bz(i1)=ik_near
    !
-   ik_near_ibz=Xk%sstar(i1,2)
-   is_near_ibz=DbGd_k(i_db_merge)%sstar(i1,2)
+   ik_near_ibz=Xk%sstar(ik_near,2)
+   is_near_ibz=Xk%sstar(ik_near,2)
    !
    i1_kpt_ibz=DbGd_k(i_db_merge)%sstar(i1,1)
    i1_sym_ibz=DbGd_k(i_db_merge)%sstar(i1,2)
@@ -352,8 +354,14 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    ! Check if the mapping in the BZ is consistent with the mapping in the IBZ
    !
    if(i1_sym_ibz==1) then
-     dist_bz =iku_v_norm(DbGd_k(i_db_merge)%ptbz(i1,:)      -Xk%ptbz(ik_near,:))
-     dist_ibz=iku_v_norm(DbGd_k(i_db_merge)%pt(i1_kpt_ibz,:)-Xk%pt(TMP_map_ibz(i1_kpt_ibz),:))
+     !
+     kpt_tmp =DbGd_k(i_db_merge)%ptbz(i1,:)      -Xk%ptbz(ik_near,:)
+     kpt_tmp2=DbGd_k(i_db_merge)%pt(i1_kpt_ibz,:)-Xk%pt(TMP_map_ibz(i1_kpt_ibz),:)
+     call k2bz(kpt_tmp)
+     call k2bz(kpt_tmp2)
+     dist_bz =iku_v_norm(kpt_tmp)
+     dist_ibz=iku_v_norm(kpt_tmp2)
+     !
      if (dist_bz-dist_ibz<-1.E-5) then
        !
        n_remove=n_remove+1
@@ -389,8 +397,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !call PP_redux_wait(n_new_sphere)
  Xk%n_spheres_ibz=Xk%nibz+n_new_sphere
  !
- TMP_map_sp(:DbGd_k(i_db_merge)%nibz)=TMP_map_ibz
- !
  ! Number of points in each sphere in the IBZ
  !
  allocate(Xk%ibz_sp_n_ass(Xk%n_spheres_ibz))
@@ -418,7 +424,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  allocate(Xk%ibz_sp_map(Xk%n_spheres_ibz,maxval(Xk%ibz_sp_n_ass)))
  Xk%ibz_sp_map=0
- do i1=1,Xk%nbz
+ do i1=1,Xk%nibz
    Xk%ibz_sp_map(i1,1)=i1
  enddo
  !
@@ -428,7 +434,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    ik_near=TMP_map_sp(i1)
    Xk%ibz_sp_n_ass(ik_near)=Xk%ibz_sp_n_ass(ik_near)+1
    !
-   Xk%ibz_sp_map(ik_near,Xk%ibz_sp_n_ass(ik_near))=i1+1
+   Xk%ibz_sp_map(ik_near,Xk%ibz_sp_n_ass(ik_near))=i1
    !
  enddo
  !
@@ -446,7 +452,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    ik_near=TMP_map_bz(i1)
    Xk%bz_sp_n_ass(ik_near)=Xk%bz_sp_n_ass(ik_near)+1
    !
-   Xk%bz_sp_map(ik_near,Xk%bz_sp_n_ass(ik_near))=i1+1
+   Xk%bz_sp_map(ik_near,Xk%bz_sp_n_ass(ik_near))=i1
    !
  enddo
  !
@@ -456,7 +462,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Weight of the sphere in the IBZ
  !
- allocate(Xk%weights_sphere(Xk%nibz))
+ allocate(Xk%weights_sphere(Xk%n_spheres_ibz))
  do ik_ibz=1,Xk%n_spheres_ibz
    if(Xk%n_spheres_ibz<=Xk%nibz) &
 &    Xk%weights_sphere(ik_ibz)=Xk%weights(ik_ibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
@@ -477,8 +483,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  allocate(Xk%bz_to_ibz_DbGd(DbGd_k(i_db_merge)%nbz))
  Xk%bz_to_ibz_DbGd=DbGd_k(i_db_merge)%sstar(:,1)
  !
- deallocate(DbGd_k(i_db_merge)%pt,DbGd_k(i_db_merge)%ptbz)
- !
  ! Final I/O
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
@@ -486,10 +490,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! CLEAN
  !
+ deallocate(DbGd_E(i_db_merge)%E)
+ deallocate(DbGd_k(i_db_merge)%pt,DbGd_k(i_db_merge)%ptbz)
  deallocate(Xen%E_DbGd)
  deallocate(Xk%pt,Xk%ptbz,Xk%ibz_sp_map,Xk%bz_sp_map,Xk%weights_sphere,Xk%ibz_sp_n_ass,Xk%bz_sp_n_ass)
- call k_ibz2bz(Xk,'d',.false.) 
- call k_ibz2bz(DbGd_k(i_db_merge),'d',.false.) 
- !
  !
 end subroutine

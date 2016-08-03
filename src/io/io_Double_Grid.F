@@ -43,7 +43,6 @@ integer function io_Double_Grid(E,Xk,ID)
  io_Double_Grid=-1
  !
  io_Double_Grid=io_connect(desc='Double_Grid',type=2,ID=ID)
- DG_format=3
  !
  if (io_Double_Grid/=0) goto 1
  !
@@ -56,10 +55,10 @@ integer function io_Double_Grid(E,Xk,ID)
  call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
  !
  call io_elemental(ID,I0=E%nb_DbGd,        VAR=' Bands                           :')
- call io_elemental(ID,I0=E%nk_DbGd,        VAR=' Number of points in the IBZ (E) :')
  call io_elemental(ID,I0=Xk%n_spheres_ibz, VAR=' Number of spheres in the IBZ (k):')
- call io_elemental(ID,I0=Xk%nibz_DbGd,     VAR=' Number of points in the IBZ (k) :')
- call io_elemental(ID,I0=Xk%nbz_DbGd,      VAR=' Number of points in the  BZ (k) :')
+ call io_elemental(ID,I0=E%nk_DbGd,        VAR=' Number of points  in the IBZ (E):')
+ call io_elemental(ID,I0=Xk%nibz_DbGd,     VAR=' Number of points  in the IBZ (k):')
+ call io_elemental(ID,I0=Xk%nbz_DbGd,      VAR=' Number of points  in the  BZ (k):')
  ! 
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
@@ -84,13 +83,13 @@ integer function io_Double_Grid(E,Xk,ID)
    allocate(Xk%bz_to_ibz_DbGd(Xk%nbz_DbGd))
  endif
  !
- call io_bulk(ID, VAR="KPTS (IBZ)", VAR_SZ=shape(Xk%pt_DbGd) ) 
+ call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%pt_DbGd) ) 
  call io_bulk(ID, R2=Xk%pt_DbGd )
  !
- call io_bulk(ID, VAR="KPTS  (BZ)", VAR_SZ=shape(Xk%ptbz_DbGd) ) 
+ call io_bulk(ID, VAR="KPTS_BZ", VAR_SZ=shape(Xk%ptbz_DbGd) ) 
  call io_bulk(ID, R2=Xk%ptbz_DbGd )
  !
- call io_bulk(ID, VAR="KPTS  (BZ)", VAR_SZ=(/Xk%nbz_DbGd/) )
+ call io_bulk(ID, VAR="IBZ_TO_BZ_MAP", VAR_SZ=(/Xk%nbz_DbGd/) )
  call io_bulk(ID, I1=Xk%bz_to_ibz_DbGd )
  !
  !
@@ -98,10 +97,10 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (read_is_on(ID)) allocate(Xk%ibz_sp_n_ass(Xk%n_spheres_ibz),Xk%bz_sp_n_ass(Xk%nbz))
  !
- call io_bulk(ID, VAR="BLOCK_FILLING (IBZ)", VAR_SZ=(/Xk%n_spheres_ibz/) ) 
+ call io_bulk(ID, VAR="BLOCK_FILLING_IBZ", VAR_SZ=(/Xk%n_spheres_ibz/) ) 
  call io_bulk(ID, I1=Xk%ibz_sp_n_ass )
  !
- call io_bulk(ID, VAR="BLOCK_FILLING ( BZ)", VAR_SZ=(/Xk%nbz/) ) 
+ call io_bulk(ID, VAR="BLOCK_FILLING_BZ", VAR_SZ=(/Xk%nbz/) ) 
  call io_bulk(ID, I1=Xk%bz_sp_n_ass )
  !
  ! Block table

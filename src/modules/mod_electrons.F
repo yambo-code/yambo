@@ -99,8 +99,8 @@ module electrons
    ! Perturbative SOC
    !
    integer              :: nb_SOC
-   integer, allocatable :: table_SOC(:,:,:)
-   real(SP),   pointer  :: E_SOC(:,:)           => null()
+   integer,    pointer  :: table_SOC(:,:,:)    => null()
+   real(SP),   pointer  :: E_SOC(:,:)          => null()
    !
  end type levels
  !
@@ -116,6 +116,7 @@ module electrons
      naive=Eo%nk==0
      Eo%nb=Ei%nb
      Eo%nb_SOC=Ei%nb_SOC
+     Eo%nb_DbGd=Ei%nb_DbGd
      if (naive) then
        Eo%nk=Ei%nk
        Eo%nbf=Ei%nbf
@@ -186,6 +187,7 @@ module electrons
      ! E Double Grid
      !
      if (Eo%nb_DbGd/=0.and.Ei%nk==Eo%nk) then
+       Eo%nk_DbGd=Ei%nk_DbGd
        allocate(Eo%E_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
        allocate(Eo%W_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
        allocate(Eo%f_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
@@ -245,7 +247,9 @@ module electrons
      !
      call E_DbGd_components_reset(E,.FALSE.)
      !
+     E%nb_SOC=0
      if(associated(E%E_SOC))          deallocate(E%E_SOC)
+     if(associated(E%table_SOC))      deallocate(E%table_SOC)
      !
    end subroutine
    !
@@ -255,6 +259,9 @@ module electrons
      !
      type(levels)::E
      logical     ::FULL_RESET
+     !
+     E%nb_DbGd=0
+     E%nk_DbGd=0
      !
      if(associated(E%E_DbGd) )      deallocate(E%E_DbGd )
      if(associated(E%W_DbGd) )      deallocate(E%W_DbGd )

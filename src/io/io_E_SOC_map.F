@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_E_SOC_map(En,ID)
+integer function io_E_SOC_map(En,kpt,ID)
  !
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels
@@ -32,6 +32,7 @@ integer function io_E_SOC_map(En,ID)
  implicit none
  !
  type(levels) :: En
+ type(bz_samp):: kpt
  integer      :: ID 
  !
  ! Work Space

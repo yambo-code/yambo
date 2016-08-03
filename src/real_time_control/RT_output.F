@@ -33,7 +33,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc,real2ch
  use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
- use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn, &
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
 &                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR,RAD_prefactor
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
@@ -181,22 +181,29 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (open_files.and.l_elph_scatt.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'mean_EPlifetimes'
  short_file_name(next_file)=trim(append_ch)//'mean_EPlifetimes'
+ n1=2
  headings(next_file,2:3)=(/"Ho.(em) [meV]","El.(em) [meV]"/)
- n1=4
- if(Bose_Temp>0. ) then
-   headings(next_file,4:5)=(/"Ho.(abs)[meV]","El.(abs)[meV]"/)
+ if(Bose_Temp>0._SP ) then
    n1=n1+2
+   headings(next_file,n1:n1+1)=(/"Ho.(abs)[meV]","El.(abs)[meV]"/)
  endif
- headings(next_file,n1:n1+1)=(/" T Hole  [K] "," T Elec  [K] "/)
+ if(l_lftm_fit_temperatures) then
+   n1=n1+2
+   headings(next_file,n1:n1+1)=(/" T Hole  [K] "," T Elec  [K] "/)
+ endif
  n_headings(next_file)=n1+1
  next_file=next_file+1
  !
  if (open_files.and.l_elel_scatt.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'mean_EElifetimes'
  short_file_name(next_file)=trim(append_ch)//'mean_EElifetimes'
- n_headings(next_file)=5
+ n1=2
  headings(next_file,2:3)=(/"Hole [meV]","Elec [meV]"/)
- headings(next_file,4:5)=(/"T Hole [K]","T Elec [K]"/)
+ if(l_lftm_fit_temperatures) then
+   n1=n1+2
+   headings(next_file,n1:n1+1)=(/" T Hole  [K] "," T Elec  [K] "/)
+ endif
+ n_headings(next_file)=n1+1
  next_file=next_file+1
  !
  if (open_files.and.l_elphoton_scatt.and..not.file_already_opened(next_file)) &
@@ -424,8 +431,10 @@ subroutine RT_output(what,VALUES,TIME,E)
  file_is_todo=.FALSE.
  do i_f=1,n_output_files
    do i_fp=1,n_output_files
-     if (len_trim(orders(i_fp))==0) cycle
-     if (.not.file_is_todo(i_f)) file_is_todo(i_f) = index(file_name(i_f),trim(orders(i_fp)))>0
+     if ( len_trim(orders(i_fp))==0 ) cycle
+     if (.not.file_is_todo(i_f)) &
+       file_is_todo(i_f) = index(      file_name(i_f),trim(orders(i_fp)))>0 &
+&                    .and. index(short_file_name(i_f),trim(orders(i_fp)))>0
    enddo
  enddo
  !
@@ -560,16 +569,23 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-trans_residual')
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('mean_EPlifetimes')
-       n1=3
+       n1=2
        data_to_dump(2:3) = RT_mean_lifetimes(3:4)*HA2EV*1000._SP
-       if(Bose_Temp>0. ) then
-         data_to_dump(4:5)=RT_mean_lifetimes(5:6)*HA2EV*1000._SP
+       if(Bose_Temp>0._SP) then
          n1=n1+2
+         data_to_dump(n1:n1+1)=RT_mean_lifetimes(5:6)*HA2EV*1000._SP
        endif
-       data_to_dump(n1+1:n1+2) = RT_Tfit_lifetimes(1:2)*HA2KEL
+       if(l_lftm_fit_temperatures) then
+         n1=n1+2
+         data_to_dump(n1:n1+1) = RT_Tfit_lifetimes(1:2)*HA2KEL
+       endif
      case('mean_EElifetimes')
+       n1=2
        data_to_dump(2:3) = RT_mean_lifetimes(1:2)*HA2EV*1000._SP
-       data_to_dump(4:5) = RT_Tfit_lifetimes(3:4)*HA2KEL
+       if(l_lftm_fit_temperatures) then
+         n1=n1+2
+         data_to_dump(n1:n1+1) = RT_Tfit_lifetimes(3:4)*HA2KEL
+       endif
      case('mean_RADlifetimes')
        Linewidth=RT_mean_lifetimes(7:8)
        Lifetime=0._SP

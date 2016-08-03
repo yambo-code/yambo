@@ -142,6 +142,7 @@ subroutine section(mode,name)
    !
    ch=date_and_time_string(dt_in=date_time_at_start)
    chp= string_pack(trim(ch),' [start]')
+   !
    if (write_to_report) then
      open(unit=11,file=trim(repfile),position='append')
      write (11,'(1x,a)') chp(:len_trim(chp))

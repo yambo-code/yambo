@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E,N,G0,Ek,Ekmq,E_diff)
+subroutine SCATTERING_GW_kinematics(i_q_bz,i_m,I,k,q,TABLE,E,N,G0,Ek,Ekmq,E_diff)
  !
  ! m,k-q   n,k
  ! --<--.-<--
@@ -30,18 +30,18 @@ subroutine SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E,N,G0,Ek,Ekmq,E_diff)
  !     \|/ q,G,\alpha,...
  !      |
  !      
- ! n   =QP_table(i_qp,1)
- ! k   =QP_table(i_qp,3)
+ ! n   =TABLE(1)
+ ! k   =TABLE(3)
  !
  use pars,                ONLY:SP
  use electrons,           ONLY:spin,levels
  use R_lattice,           ONLY:qindx_S,bz_samp
- use QP_m,                ONLY:QP_table
  use collision,           ONLY:elemental_collision
  !
  implicit none
  !
- integer,       intent(in) ::i_qp,i_q_bz,i_m
+ integer,       intent(in) ::i_q_bz,i_m
+ integer,       intent(in) ::TABLE(:)
  type(elemental_collision) ::I
  type(bz_samp)             ::k,q
  type(levels),  OPTIONAL   ::E
@@ -52,9 +52,10 @@ subroutine SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E,N,G0,Ek,Ekmq,E_diff)
  !
  integer  ::i_n,i_k,i_G0,i_k_m_q,i_k_m_q_bz,i_spin,i_k_m_q_s,i_q,i_q_s
  !
- i_n    = QP_table(i_qp,1)
- i_k    = QP_table(i_qp,3)
- i_spin = spin(QP_table(i_qp,:))
+ i_n    = table(1)
+ i_k    = table(3)
+ i_spin = spin(TABLE)
+ !
  i_G0       = qindx_S(i_k,i_q_bz,2)
  i_k_m_q_bz = qindx_S(i_k,i_q_bz,1) 
  i_k_m_q    = k%sstar(i_k_m_q_bz,1)

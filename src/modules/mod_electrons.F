@@ -139,6 +139,7 @@ module electrons
        Eo%E_CBm=Ei%E_CBm
        Eo%E_ind_gap=Ei%E_ind_gap
        Eo%E_dir_gap=Ei%E_dir_gap
+       Eo%E_ind_gap=Ei%E_ind_gap
      endif
      allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
      call mem_est("E-E E-f",(/size(Eo%E),size(Eo%f)/),(/SP,SP/))
@@ -227,6 +228,7 @@ module electrons
      type(levels)::E
      E%E_ind_gap=0._SP
      E%E_dir_gap=0._SP
+     E%E_ind_gap=0._SP
      E%E_Fermi=0._SP
      E%E_VBM=0._SP
      E%E_CBm=0._SP

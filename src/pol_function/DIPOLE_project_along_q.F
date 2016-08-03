@@ -103,8 +103,8 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
          if (PAR_IND_DIPk_ibz%element_1D(ik)) then
            !      
            ik_mem = PAR_DIPk_ibz_index(ik)
-           if(use_dip_iR) dipole = DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
-           if(use_dip_P ) dipole = DIP_P (:,ic,iv,ik_mem,i_sp_pol)
+           if (use_dip_iR) dipole = DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
+           if (use_dip_P ) dipole = DIP_P (:,ic,iv,ik_mem,i_sp_pol)
            !
          endif
          !

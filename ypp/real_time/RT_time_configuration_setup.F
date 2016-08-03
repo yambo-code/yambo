@@ -29,6 +29,7 @@ subroutine RT_time_configuration_setup(what)
  use com,            ONLY:msg
  use real_time,      ONLY:RT_step
  use RT_control,     ONLY:JPC_RT_IO_t,TIME_adjust
+ !
  implicit none
  !
  character(*) :: what 
@@ -39,14 +40,15 @@ subroutine RT_time_configuration_setup(what)
  logical  :: UNIFORM
  real(SP) :: STEP,TIME,TIME_diff
  !
- STEP  = (JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-JPC_RT_IO_t%Time(JPC_RT_IO_t%N-1))
- STEP  = TIME_adjust(STEP)
+ if(JPC_RT_IO_t%N> 1) STEP  = (JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-JPC_RT_IO_t%Time(JPC_RT_IO_t%N-1))
+ if(JPC_RT_IO_t%N==1) STEP  = 1._SP
+ STEP  = max(TIME_adjust(STEP),STEP)
  TIME  = TIME_adjust(JPC_RT_IO_t%Time(JPC_RT_IO_t%N))
  !
  if (JPC_RT_IO_t%N==nint(TIME/STEP)+1) UNIFORM=.TRUE.
  if (JPC_RT_IO_t%N/=nint(TIME/STEP)+1) UNIFORM=.FALSE.
  !
- if (any(RT_conf%T_range>0.)) then
+ if (any(RT_conf%T_range>0._SP)) then
    !
    RT_conf%T_range(1)=TIME_adjust( RT_conf%T_range(1) )
    RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2) )
@@ -84,9 +86,9 @@ subroutine RT_time_configuration_setup(what)
    !
  endif
  !
- if (RT_conf%delta_T>0..and.UNIFORM) then
+ if (RT_conf%delta_T>0._SP.and.UNIFORM) then
    !
-   RT_conf%delta_T=TIME_adjust(RT_conf%delta_T,STEP)
+   RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
    !
    do i_c=1,2
      !
@@ -136,7 +138,7 @@ subroutine RT_time_configuration_setup(what)
  !
  if (what/="CURRENT") return
  !
- call msg('s','['//what//'] Damping       [meV]:',RT_conf%damp_factor*1000.*HA2EV)
- call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000.*HA2EV)
+ call msg('s','['//what//'] Damping       [meV]:',RT_conf%damp_factor*1000._SP*HA2EV)
+ call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000._SP*HA2EV)
  !
 end subroutine RT_time_configuration_setup

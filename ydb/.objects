@@ -1,1 +1,0 @@
-objs = ydb_i.o YDB_scan_file.o io_YDB.o

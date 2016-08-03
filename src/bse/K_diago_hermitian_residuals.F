@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -26,7 +26,7 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  ! Resonant Residuals
  !====================
  ! BS_R_right(i) = \sum_k <q0|k><k|i> =
- !                 \sum_k BS_mat(k,i) x conjg( BSS_rhoq0(k) )
+ !                 \sum_k BS_mat(k,i) x conjg( BSS_dipoles(k) )
  ! BS_R_left(i)  = conjg( BS_R_right(i) )
  !
  use pars,           ONLY:SP,cZERO
@@ -35,7 +35,7 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use BS,             ONLY:BSS_rhoq0,BS_H_dim,BS_mat,&
+ use BS,             ONLY:BSS_dipoles,BS_H_dim,BS_mat,&
 &                         BSS_eh_E,BSS_eh_Z,BSS_eh_f
  !
  implicit none
@@ -46,9 +46,8 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  ! Workspace
  !
  type(PP_indexes)     ::px
- integer              ::i1
- !
- complex(SP) :: tmp_res(BS_H_dim)
+ integer              ::i_eh
+ complex(SP)          ::tmp_res(BS_H_dim)
  !
  !
  call PP_indexes_reset(px)
@@ -58,26 +57,25 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  BS_R_right=cZERO
  call live_timing('BSK   residuals',px%n_of_elements(myid+1))
  !
- tmp_res = BSS_rhoq0*sqrt(BSS_eh_f)
- if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
+ tmp_res = BSS_dipoles*sqrt(BSS_eh_f)
  !
- do i1=1,BS_H_dim
-   if (.not.px%element_1D(i1)) cycle
+ if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
+ if (allocated(BSS_eh_Z))            tmp_res=tmp_res*sqrt(BSS_eh_Z)
+ !
+ do i_eh=1,BS_H_dim
    !
-   if(.not.allocated(BSS_eh_Z)) then
-     BS_R_left(i1) =V_dot_V_omp(BS_H_dim,tmp_res,conjg(BS_mat(:,i1)))
-     BS_R_right(i1)=conjg(BS_R_left(i1))
-   else
-     BS_R_left(i1) =V_dot_V_omp(BS_H_dim,      tmp_res *sqrt(BSS_eh_Z),conjg(BS_mat(:,i1)))
-     BS_R_right(i1)=V_dot_V_omp(BS_H_dim,conjg(tmp_res)*sqrt(BSS_eh_Z),      BS_mat(:,i1) )
-   endif
+   if (.not.px%element_1D(i_eh)) cycle
+   !
+   BS_R_left(i_eh) =V_dot_V_omp(BS_H_dim,tmp_res,conjg(BS_mat(:,i_eh)))
+   BS_R_right(i_eh)=conjg(BS_R_left(i_eh))
    !
    if (trim(global_gauge)=="velocity") then
-     BS_R_left(i1) =BS_R_left(i1) *BS_E_real(i1)
-     BS_R_right(i1)=BS_R_right(i1)*BS_E_real(i1)
+     BS_R_left(i_eh) = BS_R_left(i_eh) *BS_E_real(i_eh)
+     BS_R_right(i_eh)= BS_R_right(i_eh)*BS_E_real(i_eh)
    endif
    !
    call live_timing(steps=1)
+   !
  enddo
  call live_timing()
  !

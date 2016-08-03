@@ -28,8 +28,9 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  use com,            ONLY:write_to_report,write_to_of
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:string_split,write_to_log
- use LIVE_t,         ONLY:live_timing_is_on
+ use LIVE_t,         ONLY:live_timing_is_on,what_is_running
  use stderr,         ONLY:write_fragments_IO_log,write_to_log_default
+ !
  implicit none
  !
  character(*)      :: what
@@ -39,13 +40,14 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  integer          ::ich
  character(schlen)::ch_piece(10)
- logical          ::local_TRUE,local_FALSE,local_master
+ logical          ::local_TRUE,local_FALSE,local_master,local_write_to_report
  !
  logical,    SAVE ::IO_read_now,IO_write_now,write_to_of_now,write_to_report_now,live_timing_is_on_now
  !
- local_TRUE  =.TRUE.
- local_FALSE =.FALSE.
- local_master=master_cpu
+ local_TRUE            = .TRUE.
+ local_FALSE           = .FALSE.
+ local_master          = master_cpu
+ local_write_to_report = write_to_report
  !
  if (present(CONDITION)) then
    local_TRUE  =CONDITION
@@ -112,12 +114,15 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="-io_out") IO_write=local_FALSE
      if (trim(ch_piece(ich))=="+io_in" ) IO_read=local_TRUE
      if (trim(ch_piece(ich))=="+io_out") IO_write=local_TRUE
-     !
      if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=local_TRUE
      if (trim(ch_piece(ich))=="-fragments_IO_log") write_fragments_IO_log=local_FALSE
      !
    enddo
    !
  endif
+ !
+ ! YPP cannot set to .TRUE. the write_to_report
+ !
+ if (index(what_is_running,'YPP')>0) write_to_report = local_write_to_report
  !
 end subroutine IO_and_Messaging_switch

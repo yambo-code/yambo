@@ -46,6 +46,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+#endif
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
  use com,            ONLY:error
@@ -56,13 +59,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
  type(X_t)     ::X_static_pp
- type(w_samp)  ::Xw,W_bss 
+ type(w_samp)  ::Xw
  !
  ! Work Space
  !
  type(X_t)         :: X_tddft,X_oscillators
  integer           :: iq,Max_G_m_G
  integer, external :: eval_G_minus_G
+ type(w_samp)      :: W_bss 
  !
  call section('*','Response Functions in Transition space')
  !=========================================================
@@ -132,6 +136,25 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    endif
    !
  endif
+ !
+ ! The PL signal has no induced part => No local fields
+ !======================================================
+#if defined _PL
+ !
+ if (l_photolum) then
+   !
+   if (index(BS_res_mode,'x')>0.or.index(BS_cpl_mode,'x')>0) then
+     !
+     call warning('PL has no induced fields. Exchange swithced off')
+     !
+     BS_res_mode=trim( string_remove(BS_res_mode,'x') )
+     BS_cpl_mode=trim( string_remove(BS_cpl_mode,'x') )
+     !
+   endif
+   !
+ endif
+ !
+#endif
  !
  ! GPL_EXCLUDE_END
  !

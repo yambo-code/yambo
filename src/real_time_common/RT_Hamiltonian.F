@@ -21,18 +21,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
+subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
- ! The KBE is coded in terms of Ho + V + Sigma
- ! This subroutine construct Ho + V plus the time-diagonal part of Sigma(T=(t1 + t2)/2)
- ! In the TD-SEX we have that
+ ! 1) The KBE is coded in terms of :
  !
- !   H_k=Ho_k+U_k+ V_k^H-V_k^H[G_ref]+\Sigma_k^{SEX}-\Sigma_k^{SEX}[G_ref]
- !                 ----- A --------- -------- B -------------------------
+ !    i d_t G(t) - [ H^RT_s , G(t) ]  =  S^xc(t)
  !
- ! Note that IP\equiv A=0 & B=0
- ! Note that TDLDA\equiv A=0 &  \Sigma=V_xc
- ! Note that TDH\equiv B=0
+ !   - G(t) is the time diagonal G_lesser
+ !   - H^RT_s contains the equilibrium hamiltonian H^EQ
+ !     plus the variation of the static Hxc self-energy
+ !     plus the external field(s)
+ !   - S_xc contains instead the dynamical part of the self-energy
+ !     which describes relaxation and dissipation
+ !
+ ! 2) This subroutine computes the RT Hamiltonian H^RT
+ !
+ !     H^RT= H^EQ + ( \Sigma^Hxc[G(t)] - \Sigma^Hxc[G_ref] ) + U^ext
+ !
+ !    The term A+B can be computed with two different strategies:
+ !    a) computing the equilibrium kernel K (named here collisions) and then 
+ !      \Sigma_Hxc = K*(G(t)-G_ref) 
+ !      This approach is exact only for linear self-energies
+ !    b) directly computing the \Sigma_Hxc[G(t)] functional
+ !
+ ! 3) Available approximations for H^RT
+ !    IP          ==>  \Sigma^Hxc = 0
+ !    TD-HARTREE  ==>  \Sigma^Hxc=V^H
+ !    TD-LDA      ==>  \Sigma^Hxc=V^H+V^xc
+ !    TD-SEX      ==>  \Sigma^Hxc=V^H+\Simga^{SEX} (only strategy 2a available)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
@@ -68,7 +84,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3)
  !
 #if defined _TIMING
- call timing('RT Collision',OPR='start')
+ call timing('RT Hamiltonian',OPR='start')
 #endif
  !
  ! Contribution from \delta\Sigma_coherent
@@ -107,8 +123,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        do ib=RT_bands(1),RT_bands(2)
-         if(     l_RT_uses_E_DbGd) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
-         if(.not.l_RT_uses_E_DbGd) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
+         if(     l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
+         if(.not.l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
        enddo
      enddo
      !
@@ -149,7 +165,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      ! 
    endif
    !
-   ! Add H_nl_sc to Ho_plus_sigma 
+   ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
    do ik=1,nXkibz 
      !
@@ -166,11 +182,11 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      !
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if (l_RT_RWA) then
-         Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)=&
+         Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)=&
 &                                              H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1)
        else
          call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1),&
-&                               Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
+&                               Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
        endif
      enddo
      !
@@ -184,18 +200,18 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    call COLLISIONS_compose_rt(dG_in)
    !
-   ! Add RT_Vnl_xc to Ho_plus_sigma 
+   ! Add RT_Vnl_xc to Ho_plus_Sigma 
    !---------------------------------
    if(HEAD_QP_cpu.and.HEAD_k_cpu) then
      do ik=1,nXkibz 
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
          if (l_RT_RWA) then
-           Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)=&
+           Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)=&
 &                                                RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)
          else
            call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1),&
-&                               Ho_plus_sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
+&                               Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
          endif
        enddo
      enddo
@@ -225,11 +241,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  call PP_redux_wait(Ho_plus_Sigma)
  !
 #if defined _TIMING
- call timing('RT Collision',OPR='stop')
+ call timing('RT Hamiltonian',OPR='stop')
 #endif
  !
- ! Calculate all relaxation terms
- !================================
- call RT_relaxation(dG_in,E,k,q,Time,.false.)
- !
-end subroutine RT_Collision
+end subroutine RT_Hamiltonian

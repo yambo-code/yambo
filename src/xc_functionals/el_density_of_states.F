@@ -29,8 +29,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
  use D_lattice,      ONLY:DL_vol
  use functions,      ONLY:Fermi_fnc_derivative
  use parser_m,       ONLY:parser
- use electrons,      ONLY:spin,n_sp_pol,n_spinor,n_spin,spin_occ, &
-&                         BZ_DbGd_nkpt,BZ_DbGd_table
+ use electrons,      ONLY:spin,n_sp_pol,n_spinor,n_spin,spin_occ
  !
  implicit none
  !
@@ -47,7 +46,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
  ! Work space
  !
  integer   :: i_sp_pol,ik_bz,ik,ik_rand,i1,ib
- real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,dos_norm
+ real(SP)  :: el_dos_tmp(n_sp_pol),weight,f_occ,dos_norm
  logical   :: ik_ibz_done(Xk%nibz),l_prt_occ_only
  !
  call parser('PrtOccOnly',l_prt_occ_only)
@@ -58,37 +57,31 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
    !
    ik_ibz_done=.false.
    !
-   do ik_bz=1,nkbz
-     !
-     ik=Xk%sstar(ik_bz,1)
-     if (.not.l_DbGd) then
-       if(ik_ibz_done(ik)) cycle
-       ik_ibz_done(ik)=.true.
-     endif
+   do ik=1,Xk%nibz
      !
      do ib=dos_bands(1),dos_bands(2)
        !
        el_dos_tmp=0._SP
        f_occ=spin_occ
        !
+       if (.not.l_DbGd) weight=Xk%weights(ik)
+       if (     l_DbGd) weight=Xk%weights_cloud(ik)
+       !
+       if ( abs(Xen%E(ib,ik,i_sp_pol)-dos_E)>20._SP*dos_broadening ) cycle
+       if (l_prt_occ_only ) f_occ=Xen%f(ib,ik,i_sp_pol)
+       el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*weight*&
+&                      Fermi_fnc_derivative(Xen%E(ib,ik,i_sp_pol)          -dos_E,dos_broadening)
+       !
        if (l_DbGd) then
          !
-         do i1=1,BZ_DbGd_nkpt(ik_bz)
-           ik_rand=BZ_DbGd_table(ik_bz,i1,1)
+         do i1=2,Xk%nibz_ass(ik)
+           ik_rand=Xk%ibz_map(ik_bz,i1)
            if ( abs(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E)>20._SP*dos_broadening ) cycle
            if (l_prt_occ_only) f_occ=Xen%f_DbGd(ib,ik_rand,i_sp_pol)
-           el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*&
+           el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*weight*&
 &                      Fermi_fnc_derivative(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E,dos_broadening)
          enddo
          ! 
-       else
-         !
-         if ( abs(Xen%E(ib,ik,i_sp_pol)-dos_E)>20._SP*dos_broadening ) cycle
-         if (l_prt_occ_only ) f_occ=Xen%f(ib,ik,i_sp_pol)
-         el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*Xk%weights(ik)*&
-&                      Fermi_fnc_derivative(Xen%E(ib,ik,i_sp_pol)          -dos_E,dos_broadening)
-
-         !
        endif
        !
        ! Project on SOC coefficients
@@ -108,9 +101,6 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
    enddo    ! ik
  enddo      ! i_sp_pol
  !
- dos_norm=1._SP/DL_vol
- if (l_DbGd) dos_norm=dos_norm/real(sum(BZ_DbGd_nkpt))
- !
- dos_value=dos_value*dos_norm
+ dos_value=dos_value/DL_vol
  !
 end subroutine el_density_of_states

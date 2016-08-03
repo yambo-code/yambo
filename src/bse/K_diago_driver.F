@@ -28,8 +28,7 @@ subroutine K_diago_driver(iq,W)
  !
  use pars,           ONLY:SP
  use BS,             ONLY:BS_mat,BS_K_coupling,io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim
- use electrons,      ONLY:E_SOC_nbands
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim,BS_pert_soc
  use matrix_operate, ONLY:DIAGO
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
@@ -194,7 +193,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Define perturbative corrections
  !=================================
- if(E_SOC_nbands/=0) then
+ if( BS_pert_soc ) then
    !
    ! To check if the expression for the non hermitian case is correct
    if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2,'SOC')
@@ -256,7 +255,7 @@ subroutine K_diago_driver(iq,W)
      case(1)
        !
        allocate(BS_E(BS_H_dim))
-       if(E_SOC_nbands/=0) then
+       if( BS_pert_soc ) then
          allocate(BS_corrections(2,BS_H_dim))
          allocate(BS_E_SOC_corr(2,BS_H_dim))
        endif

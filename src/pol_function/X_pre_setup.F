@@ -21,19 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_pre_setup(Xen,X)
+subroutine X_pre_setup(Xen,Xk,X)
  !
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts
- use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:levels
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
  use com,           ONLY:error
- use R_lattice,     ONLY:nqibz
+ use R_lattice,     ONLY:nqibz,bz_samp
  use TDDFT,         ONLY:FXC_n_g_corr
  !
  implicit none
  !
  type(X_t)    :: X 
- type(levels) ::Xen
+ type(bz_samp):: Xk
+ type(levels) :: Xen
  ! 
  ! Work Space
  !
@@ -59,9 +60,9 @@ subroutine X_pre_setup(Xen,X)
  ! Here I set up the Double Grid flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation
  !
- use_X_DbGd=BZ_DbGd_nbands/=0.and.X%ib(1)<BZ_DbGd_nbands.and.(.not.l_bs_fxc)
+ use_X_DbGd=Xen%nb_DbGd/=0.and.X%ib(1)<Xen%nb_DbGd.and.(.not.l_bs_fxc)
  !
- if (use_X_DbGd) X_DbGd_nkpts=BZ_DbGd_tot_nkpts
+ if (use_X_DbGd) X_DbGd_nkpts=Xk%nbz+Xk%nbz_DbGd
  !
  ! CHO checks
  !

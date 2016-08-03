@@ -33,7 +33,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,&
@@ -67,7 +67,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  ! Basical Checks
  !
- call X_pre_setup(Xen,X)
+ call X_pre_setup(Xen,Xk,X)
  !
  call set_real_printed_length(f_length=10,g_length=10)
  !
@@ -184,7 +184,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    if (use_X_DbGd) then
      call msg('o eps_q eel_q fxc alpha','#')
-     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nkpts,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','# IBZ Energy DbGd points:',Xk%nibz+Xk%nibz_DbGd,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','#  BZ Energy DbGd points:',Xk%nbz+Xk%nbz_DbGd,INDENT=0)
    endif
    !
    if (iq==1) call PP_redux_wait

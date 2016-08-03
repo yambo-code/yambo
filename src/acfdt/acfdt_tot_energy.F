@@ -170,7 +170,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    call section('=','Non-interacting Response Function [Xo]')
    !
-   call X_pre_setup(Xen,X)
+   call X_pre_setup(Xen,Xk,X)
    !
    do iqibz=1,nqibz
      X%iq=iqibz

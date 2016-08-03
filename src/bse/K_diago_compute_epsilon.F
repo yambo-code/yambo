@@ -27,12 +27,12 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  use pars,           ONLY:cZERO,cONE,SP,pi,rZERO
  use X_m,            ONLY:Epsilon_ii,Epsilon_ij,Joint_DOS,X_drude_term,global_gauge,iw_ref,skip_cond_sum_rule
- use electrons,      ONLY:spin_occ,E_SOC_nbands,nel
+ use electrons,      ONLY:spin_occ,nel
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:q_norm
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_H_dim,BS_anti_res,Co_factor
+ use BS,             ONLY:BS_H_dim,BS_anti_res,Co_factor,BS_pert_soc
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nkbz
  !
@@ -79,7 +79,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  ! GPL_EXCLUDE_START
  !
- if(E_SOC_nbands/=0) n_SOC=2
+ if( BS_pert_soc ) n_SOC=2
  !
  ! GPL_EXCLUDE_END
  !
@@ -127,11 +127,11 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
    endif
 #endif
    !
-   if (E_SOC_nbands/=0) EXC_E(:)=BS_E(i1)+BS_E_SOC_corr(:,i1)
+   if (     BS_pert_soc) EXC_E(:)=BS_E(i1)+BS_E_SOC_corr(:,i1)
    !
    ! GPL_EXCLUDE_END
    !
-   if (E_SOC_nbands==0) EXC_E(1)=BS_E(i1)
+   if (.not.BS_pert_soc) EXC_E(1)=BS_E(i1)
    !
    do i_pert_SOC=1,n_SOC
      !

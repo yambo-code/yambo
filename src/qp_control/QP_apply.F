@@ -56,8 +56,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
 &                        QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
  use com,           ONLY:msg,depth
- use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset,&
-&                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
  use parser_m,      ONLY:parser
@@ -81,7 +80,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  type(levels)     ::Fermi_en
  type(QP_t)       ::qp
  type(QP_ctl_t)   ::QP_ctl_from_DB(n_sp_pol),QP_ctl_input_or_impose(n_sp_pol)
- integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_bz,ik_ibz,ib,i1,&
+ integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_ibz,ib,i1,&
 &                       ik_r,SE_MORE,i_spin,QP_load_DB_err,nbf_m_SAVE(2)
  character(schlen)::ch
  character(1)     ::what
@@ -240,19 +239,17 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  if (associated(en%E_DbGd).and.associated(en%Eo)) then
    !
-   allocate(DbGd_k_done(BZ_DbGd_tot_nkpts))
+   allocate(DbGd_k_done(k%nibz_DbGd))
    DbGd_k_done=0
    !
-   do ik_bz=1,k%nbz
+   do ik_ibz=1,k%nibz
      !
-     ik_ibz=k%sstar(ik_bz,1)
-     !
-     do i1=1,BZ_DbGd_nkpt(ik_bz)
-       ik_r=BZ_DbGd_table(ik_bz,i1,1)
+     do i1=1,k%nibz_ass(ik_ibz)
+       ik_r=k%ibz_map(ik_ibz,i1)
        !
        if (DbGd_k_done(ik_r)==1) cycle
        !
-       forall (ib=1:BZ_DbGd_nbands,i_spin=1:n_sp_pol) &
+       forall (ib=1:en%nb_DbGd,i_spin=1:n_sp_pol) &
 &                                        en%E_DbGd(ib,ik_r,i_spin)=en%E_DbGd(ib,ik_r,i_spin)+&
 &                                        en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin)
        DbGd_k_done(ik_r)=1

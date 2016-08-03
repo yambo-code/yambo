@@ -25,11 +25,11 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
-&                        BSS_eh_table,BS_mat,BS_K_dim
+&                        BSS_eh_table,BS_mat,BS_K_dim,BS_pert_soc
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on,ver_is_gt_or_eq
- use electrons,     ONLY:n_sp_pol,E_SOC_nbands
+ use electrons,     ONLY:n_sp_pol
  !
  implicit none
  !
@@ -86,7 +86,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    call io_bulk(ID,R2=V_disk(:2,:))
    if (read_is_on(ID)) bsE(:)=cmplx(V_disk(1,:),V_disk(2,:),SP)
    !
-   if(E_SOC_nbands/=0) then
+   if(BS_pert_soc) then
      call io_bulk(ID,'BS_Energies_SOC_corr',VAR_SZ=(/2,BS_H_dim/))
      call io_bulk(ID,R2=BsE_corr)
    endif

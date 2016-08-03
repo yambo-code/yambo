@@ -32,12 +32,12 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !
  !
  use pars,           ONLY:SP,cI,cONE
- use electrons,      ONLY:n_sp_pol,E_SOC_nbands
+ use electrons,      ONLY:n_sp_pol
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
  use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc,&
-&                         BSS_eh_E_SOC_corr,BSS_perturbative_width
+&                         BSS_eh_E_SOC_corr,BSS_perturbative_width,BS_pert_soc
  !
  ! GPL_EXCLUDE_START
  !
@@ -111,7 +111,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      !
      ! GPL_EXCLUDE_START
      !
-     if (E_SOC_nbands/=0) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
+     if ( BS_pert_soc ) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
      !
 #if defined _KERR
      if  (l_kerr) then
@@ -166,7 +166,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_eh_INDEX%COMM)
 #endif
- if (E_SOC_nbands/=0) then
+ if ( BS_pert_soc ) then
    call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
  endif

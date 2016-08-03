@@ -107,7 +107,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
   ! Energy grids and energy dependent arrays
   !
   call FREQUENCIES_setup(wv) 
-  call X_pre_setup(Xen,X)
+  call X_pre_setup(Xen,Xk,X)
   nw = wv%n_freqs ! Have to use freqs_setup in case wv%n(1) is lowered (%)
 
   allocate( eps_i(nw, npol) )  

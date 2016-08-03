@@ -32,10 +32,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg,error,warning
  use YPP,                 ONLY:BZ_DbGd_nkpts_to_use,DbGd_DB1_paths,MAX_DbGd_DBs,n_DbGd_DBs
- use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
-&                              BZ_DbGd_nbands,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_kpts,&
-&                              BZ_DbGd_tot_nkpts,BZ_DbGd_nkpts,n_sp_pol,BZ_DbGd_max_filling,&
-&                              BZ_DbGd_ipol_weight,E_reset,DbGd_is_symmetry_expanded
+ use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,          ONLY:PARALLEL_index
  use LIVE_t,              ONLY:live_timing
@@ -60,7 +57,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  type(levels)         :: DbGd_E(MAX_DbGd_DBs)
  type(bz_samp)        :: DbGd_k(MAX_DbGd_DBs)
  integer              :: ID,i_err(MAX_DbGd_DBs),nsym_save,nsym_DbGd_DB,i_time_rev_save,&
-&                        i_time_rev_DB,i_db,i_db_merge,ik_ref(2)
+&                        i_time_rev_DB,i_db,i_db_merge,ik_now
  real(SP)             :: dl_sop_save(3,3,48)
  integer, allocatable :: TMP_map(:,:)
  type(PP_indexes)     :: px
@@ -138,9 +135,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  endif
  !
  call parser('SkipCheck',l_skip_check)
- call parser('noBZExpand',l_flag)
- !
- DbGd_is_symmetry_expanded=.not.l_flag
  !
  call section('*','BZ Double Grid DB(s)')
  !
@@ -166,11 +160,11 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    allocate(DbGd_E(i_db_merge)%E(DbGd_E(i_db_merge)%nb,DbGd_E(i_db_merge)%nk,n_sp_pol))
    allocate(DbGd_k(i_db_merge)%pt(DbGd_E(i_db_merge)%nk,3))
    do i_db=1,n_DbGd_DBs
-     if (i_db==1) ik_ref(1)=0
-     if (i_db> 1) ik_ref(1)=sum(DbGd_E(1:i_db-1)%nk)
+     if (i_db==1) ik_now=0
+     if (i_db> 1) ik_now=sum(DbGd_E(1:i_db-1)%nk)
      do i1=1,DbGd_E(i_db)%nk
-       DbGd_E(i_db_merge)%E(:,i1+ik_ref(1),:)= DbGd_E(i_db)%E(:,i1,:)
-       DbGd_k(i_db_merge)%pt(i1+ik_ref(1),:)= DbGd_k(i_db)%pt(i1,:)
+       DbGd_E(i_db_merge)%E(:,i1+ik_now,:)= DbGd_E(i_db)%E(:,i1,:)
+       DbGd_k(i_db_merge)%pt(i1+ik_now,:)= DbGd_k(i_db)%pt(i1,:)
      enddo
    enddo
  endif
@@ -215,10 +209,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! k-points
  !
  call section('+','Internal consistency check ...')
- ik_ref(2)=k_DbGd_grid_consistency_check(Xk,Xen,DbGd_k(i_db_merge),DbGd_E(i_db_merge))
+ Xk%ik_ref=k_DbGd_grid_consistency_check(Xk,Xen,DbGd_k(i_db_merge),DbGd_E(i_db_merge))
  !
- if (ik_ref(2)>0) then
-   call msg('l','passed @ Double Grid k-point #'//trim(intc(ik_ref(2)))) 
+ if (Xk%ik_ref>0) then
+   call msg('l','passed @ Double Grid k-point #'//trim(intc(Xk%ik_ref))) 
  else 
    call msg('l','failed') 
    if (l_skip_check) then
@@ -228,72 +222,72 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    endif
  endif
  !
- BZ_DbGd_nbands=DbGd_E(i_db_merge)%nb
- !
- BZ_ASSOCIATED_nkpts=Xk%nbz
- !
- if (DbGd_is_symmetry_expanded) then
-   !
-   call section('+','BZ Double Grid K-points expansion ...')
-   !
-   ! DbGd_k (IBZ->BZ)
-   !
-   call k_ibz2bz(DbGd_k(i_db_merge),'i',.true.)
-   !
-   call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
-   !
-   BZ_DbGd_nkpts    =DbGd_k(i_db_merge)%nbz
-   BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz
-   !
- else
-   !
-   call section('+','BZ Double Grid K-points summary ...')
-   !
-   BZ_DbGd_nkpts    =DbGd_k(i_db_merge)%nibz
-   BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz+Xk%nbz
-   !
-   ! The -1 is for the reference k that should not be added
-   if(ik_ref(2)>0) BZ_DbGd_tot_nkpts=BZ_DbGd_tot_nkpts-1
-   !
-   call msg('l','using '//trim(intc(BZ_DbGd_nkpts))//' k-points for a total of '//trim(intc(BZ_DbGd_tot_nkpts))//' k-points')
-   !
- endif
+ call section('+','BZ Double Grid K-points expansion ...')
  !
  ! Xk (IBZ->BZ)
  !
  call k_build_up_BZ_tables(Xk)
  call k_ibz2bz(Xk,'i',.true.)
  !
+ ! k_DbGd (IBZ->BZ)
  !
- allocate(BZ_DbGd_nkpt(Xk%nbz),TMP_map(BZ_DbGd_nkpts,2))
- BZ_DbGd_nkpt=1
- TMP_map=0
+ call k_ibz2bz(DbGd_k(i_db_merge),'i',.true.)
  !
- ! Par Proc
+ call k_build_up_BZ_tables(DbGd_k(i_db_merge))
+ Xk%ikbz_ref=DbGd_k(i_db_merge)%k_table(ik_ref,1)
+ deallocate(DbGd_k(i_db_merge)%k_table,DbGd_k(i_db_merge)%s_table)
+ !
+ call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
+ !
+ ! Transfer E_DbGd(i_db_merge) to Xen%*_DbGd
+ !
+ Xen%nb_DbGd=DbGd_E(i_db_merge)%nb
+ Xen%nk_DbGd=DbGd_E(i_db_merge)%nk
+ allocate(Xen%E_DbGd(Xen%nb_DbGd,Xen%nk_DbGd,n_sp_pol))
+ Xen%E_DbGd =DbGd_E(i_db_merge)%E
+ !
+ ! Skipe these for the moment
+ !  real(SP),   pointer :: W_DbGd(:,:,:)        => null()
+ !  real(SP),   pointer :: f_DbGd(:,:,:)        => null()
+ !  real(SP),   pointer :: df_DbGd(:,:,:)       => null()
+ !
+ ! Transfer k_DbGd(i_db_merge) to Xk%*_DbGd
+ !
+ Xk%nibz_DbGd=DbGd_k(i_db_merge)%nibz
+ Xk%nbz_DbGd =DbGd_k(i_db_merge)%nbz
+ allocate(Xk%pt_DbGd(shape(DbGd_k(i_db_merge)%pt)))
+ Xk%pt_DbGd  =DbGd_k(i_db_merge)%pt
+ allocate(Xk%ptbz_DbGd(shape(DbGd_k(i_db_merge)%ptbz)))
+ Xk%ptbz_DbGd  =DbGd_k(i_db_merge)%ptbz
+ allocate(Xk%bz_to_ibz_DbGd(DbGd_k(i_db_merge)%nbz))
+ Xk%bz_to_ibz_DbGd=DbGd_k(i_db_merge)%sstar(:,1)
+
+ !
+ deallocate(DbGd_k(i_db_merge)%pt,DbGd_k(i_db_merge)%ptbz)
+ !
+ !
+ ! First map IBZ to IBZ
+ !=======================
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BZ_DbGd_nkpts/))
+ call PARALLEL_index(px,(/Xk%nibz_DbGd/))
  call PP_redux_wait
  !
- call live_timing('BZ Double Grid Map',px%n_of_elements(myid+1))
- !                ============
- do i1=1,BZ_DbGd_nkpts
+ call live_timing('IBZ Double Grid Map',px%n_of_elements(myid+1))
+ !
+ allocate(TMP_map(Xk%nibz_DbGd))
+ TMP_map=0
+ !
+ do i1=1,Xk%nibz_DbGd
    !
    if (.not.px%element_1D(i1)) cycle
    !
-   if (i1==ik_ref(2)) then
+   if (i1==Xk%ik_ref) then
      call live_timing(steps=1)
      cycle
    endif
-   !
-   if (DbGd_is_symmetry_expanded) then
-     ik_near=k_the_nearest(DbGd_k(i_db_merge)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
-     TMP_map(i1,1)=ik_near
-   else
-     ik_near_ibz = k_the_nearest(DbGd_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near)
-     TMP_map(i1,1)=ik_near_ibz
-     TMP_map(i1,2)=is_near
-   endif
+   ik_near = k_the_nearest(DbGd_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near)
+   TMP_map(i1)=ik_near
    !
    call live_timing(steps=1)
    !
@@ -301,100 +295,112 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  call PP_redux_wait(TMP_map)
  !
- ! Number of points in each zone
+ ! Number of points in each zone in the IBZ
  !
- BZ_DbGd_nkpt=1
- do i1=1,BZ_DbGd_nkpts
-   if (i1==ik_ref(2)) cycle
-   ik_near=TMP_map(i1,1)
-   if (.not.DbGd_is_symmetry_expanded) then
-     ik_near_ibz = TMP_map(i1,1)
-     ik_near     = Xk%k_table(ik_near_ibz,1)
-   endif
-   BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1
+ allocate(Xk%nibz_ass(Xk%nk))
+ Xk%nibz_ass=1
+ do i1=1,Xk%nibz_DbGd
+   if (i1==Xk%ik_ref) cycle
+   ik_near=TMP_map(i1)
+   Xk%nibz_ass(ik_near)=Xk%nibz_ass(ik_near)+1
  enddo
  !
  ! Tables
  !
- allocate(BZ_DbGd_table(Xk%nbz,maxval(BZ_DbGd_nkpt),2))
- BZ_DbGd_table=0
- do i1=1,Xk%nbz
-   BZ_DbGd_table(i1,1,1)=Xk%sstar(i1,1)
-   BZ_DbGd_table(i1,1,2)=i1
+ allocate(Xk%ibz_map(Xk%nibz,maxval(Xk%nibz_ass)))
+ Xk%ibz_map=0
+ do i1=1,Xk%nibz
+   Xk%ibz_map(i1,1)=i1
  enddo
- if (.not.DbGd_is_symmetry_expanded) then
-   allocate(BZ_SYM_table(Xk%nbz,maxval(BZ_DbGd_nkpt)))
-   BZ_SYM_table=0
-   BZ_SYM_table(1:Xk%nbz,1)=1
- endif
  !
- BZ_DbGd_nkpt=1
- do i1=1,BZ_DbGd_nkpts
-   if (i1==ik_ref(2)) cycle
-   ik_near=TMP_map(i1,1)
-   if (.not.DbGd_is_symmetry_expanded) then
-     ik_near_ibz = TMP_map(i1,1)
-     ik_near     = Xk%k_table(ik_near_ibz,1)
-   endif
-   BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1
+ Xk%nibz_ass=1
+ do i1=1,Xk%nibz_DbGd
+   if (i1==Xk%ik_ref) cycle
+   ik_near=TMP_map(i1)
+   Xk%nibz_ass(ik_near)=Xk%nibz_ass(ik_near)+1
    !
-   if (DbGd_is_symmetry_expanded) then
-     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),1)=DbGd_k(i_db_merge)%sstar(i1,1)
-     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),2)=i1
-   else
-     BZ_SYM_table(ik_near,BZ_DbGd_nkpt(ik_near))=TMP_map(i1,2)
-     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),1)=i1+1
-   endif
+   Xk%ibz_map(ik_near,Xk%nibz_ass(ik_near))=i1
    !
  enddo
  !
  deallocate(TMP_map)
  !
- BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
- call msg('s',':: Blocks filling range  :',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
+ call msg('s',':: BZ Blocks filling range  :',(/minval(Xk%nibz_ass),maxval(Xk%nibz_ass)/))
  !
- ! DbGd double grid interpolation weights, not used here, but must be defined.
+ ! Weight of the cloud in the IBZ
  !
- allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
- BZ_DbGd_ipol_weight = 1.0_SP
- !
- allocate(Xen%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
- !
- if (DbGd_is_symmetry_expanded) then
-   !
-   allocate(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
-   BZ_DbGd_kpts=0._SP
-   !
-   Xen%E_DbGd(:,:,:)=DbGd_E(i_db_merge)%E(:,:,:)
-   BZ_DbGd_kpts(:,:)=DbGd_k(i_db_merge)%ptbz(:,:)
-   !
- else
-   !
-   allocate(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
-   BZ_DbGd_kpts=0._SP
-   !
-   call live_timing('DbGd re-ordering and distribution',Xk%nbz)
-   !                ===============
-   i1=0
-   do ik_bz=1,Xk%nbz
-     do ik_DbGd=1,BZ_DbGd_nkpt(ik_bz)
-       i1=i1+1
-       if (ik_DbGd==1) then
-         Xen%E_DbGd(:,i1,:)=Xen%E(:BZ_DbGd_nbands,BZ_DbGd_table(ik_bz,1,1),:)+Xen%E_fermi
-         BZ_DbGd_kpts(i1,:)=Xk%ptbz(ik_bz,:)
-       else
-         Xen%E_DbGd(:,i1,:)=DbGd_E(i_db_merge)%E(:,BZ_DbGd_table(ik_bz,ik_DbGd,1)-1,:)
-         BZ_DbGd_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_DbGd) ), &
-&                                  DbGd_k(i_db_merge)%pt(BZ_DbGd_table(ik_bz,ik_DbGd,1)-1,:) )
-       endif
-       BZ_DbGd_table(ik_bz,ik_DbGd,1)=ik_DbGd+sum(BZ_DbGd_nkpt(:ik_bz-1))
-     enddo
-     call live_timing(steps=1)
+ allocate(weights_map(Xk%nk))
+ do i1=1,Xk%nibz
+   Xk%weights_cloud(i1)=Xk%weights(ik)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
+   do i2=2,Xk%nibz_ass(i1)
+     ik_DbGd=Xk%ibz_map(i1,i2)
+     Xk%weights_cloud(i1)=Xk%weights_cloud(i1)+DbGd_k(i_db_merge)%weights(ik_DbGd)* &
+&                                              real(Xk%nbz_DbGd,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
    enddo
+ enddo
+ !
+ !
+ ! Now map BZ to BZ
+ !===================
+ !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/Xk%nbz_DbGd/))
+ call PP_redux_wait
+ !
+ call live_timing('BZ Double Grid Map',px%n_of_elements(myid+1))
+ !
+ allocate(TMP_map(Xk%nbz_DbGd))
+ TMP_map=0
+ !
+ do i1=1,Xk%nbz_DbGd
    !
-   call live_timing()
+   if (.not.px%element_1D(i1)) cycle
    !
- endif
+   if (i1==Xk%ikbz_ref) then
+     call live_timing(steps=1)
+     cycle
+   endif
+   !
+   ik_near=k_the_nearest(Xk%ptbz_DbGd(i1,:),Xk%ptbz(:,:),Xk%nbz)
+   TMP_map(i1)=ik_near
+   !
+   call live_timing(steps=1)
+   !
+ enddo
+ !
+ call PP_redux_wait(TMP_map)
+ !
+ ! Number of points in each zone in the IBZ
+ !
+ allocate(Xk%nbz_ass(Xk%nk))
+ Xk%nbz_ass=1
+ do i1=1,Xk%nbz_DbGd
+   if (i1==Xk%ikbz_ref) cycle
+   ik_near=TMP_map(i1)
+   Xk%nbz_ass(ik_near)=Xk%nbz_ass(ik_near)+1
+ enddo
+ !
+ ! Tables
+ !
+ allocate(Xk%bz_map(Xk%nbz,maxval(Xk%nbz_ass)))
+ Xk%bz_map=0
+ do i1=1,Xk%nbz
+   Xk%bz_map(i1,1)=i1
+ enddo
+ !
+ Xk%nbz_ass=1
+ do i1=1,Xk%nbz_DbGd
+   if (i1==Xk%ikbz_ref) cycle
+   ik_near=TMP_map(i1)
+   Xk%nbz_ass(ik_near)=Xk%nbz_ass(ik_near)+1
+   !
+   Xk%bz_map(ik_near,Xk%nbz_ass(ik_near))=i1+1
+   !
+ enddo
+ !
+ deallocate(TMP_map)
+ !
+ call msg('s',':: BZ Blocks filling range  :',(/minval(Xk%nbz_ass),maxval(Xk%nbz_ass)/))
  !
  ! Final I/O
  !
@@ -403,9 +409,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! CLEAN
  !
- deallocate(BZ_DbGd_nkpt,BZ_DbGd_table,Xen%E_DbGd,BZ_DbGd_ipol_weight)
- if(allocated(BZ_SYM_table)) deallocate(BZ_SYM_table)
- if(allocated(BZ_DbGd_kpts))  deallocate(BZ_DbGd_kpts)
+ deallocate(Xen%E_DbGd)
+ deallocate(Xk%pt,Xk%ptbz,Xk%ibz_map,Xk%bz_map,Xk%weights_cloud,Xk%nibz_ass,Xk%nbz_ass)
  call k_ibz2bz(Xk,'d',.false.) 
  call k_ibz2bz(DbGd_k(i_db_merge),'d',.false.) 
  !

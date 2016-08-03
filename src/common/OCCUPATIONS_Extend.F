@@ -36,8 +36,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  !
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
- use electrons,  ONLY:levels,n_sp_pol,spin_occ,BZ_DbGd_nbands,&
-&                     BZ_DbGd_tot_nkpts
+ use electrons,  ONLY:levels,n_sp_pol,spin_occ
  use com,        ONLY:warning
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
@@ -111,8 +110,8 @@ subroutine OCCUPATIONS_Extend(Xe,E)
        enddo 
      enddo
      if (associated(E%E_DbGd)) then
-       do i1=1,BZ_DbGd_nbands
-         do i2=1,BZ_DbGd_tot_nkpts
+       do i1=1,E%nb_DbGd
+         do i2=1,E%nk_DbGd
            do is=1,n_sp_pol
              E%f_DbGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_DbGd(i1,i2,is)-Ef,Tel)
              Xe%f_DbGd(i1,i2,is)=E%f_DbGd(i1,i2,is)

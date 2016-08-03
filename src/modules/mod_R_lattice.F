@@ -50,7 +50,8 @@ module R_lattice
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
  type bz_samp
-   integer           :: nibz,nbz
+   integer           :: nibz
+   integer           :: nbz
    integer,  pointer :: nstar(:)     => null()  ! n° of points in the star
    integer,  pointer :: star(:,:)    => null()  ! ik,ikstar --> is     is sends ik in ikstar
    integer,  pointer :: sstar(:,:)   => null()  ! ik_bz     --> ik,is  is sends ik in ikbz
@@ -61,6 +62,26 @@ module R_lattice
    real(SP), pointer :: weights(:)   => null()
    character(6)      :: description
    character(1)      :: units
+   !
+   ! Fine grid
+   !
+   integer           :: nibz_DbGd
+   integer           :: nbz_DbGd
+   integer,  pointer :: bz_to_ibz_DbGd(:) => null()
+   real(SP), pointer :: pt_DbGd(:,:)      => null()
+   real(SP), pointer :: ptbz_DbGd(:,:)    => null()
+   
+   !
+   ! Mapping fine to coarse grid
+   !
+   integer           :: ik_ref
+   integer           :: ikbz_ref
+   integer,  pointer :: nibz_ass(:)       => null()  ! n° of kpt_DbGd in the IBZ associated to IBZ kpt
+   integer,  pointer :: nbz_ass(:)        => null()  ! n° of kpt_DbGd in the  BZ associated to  BZ kpt
+   integer,  pointer :: ibz_map(:,:)      => null()  ! map kpt_DbGd in the IBZ --> kpt in the IBZ
+   integer,  pointer :: bz_map(:,:)       => null()  ! map kpt_DbGd in the  BZ --> kpt in the  BZ
+   real(SP), pointer :: weights_cloud(:)  => null()  ! given a point in the IBZ, gives its weight 
+   !                                                 ! when such point is considered with its cloud associated
  end type bz_samp
  !
  type bz_map

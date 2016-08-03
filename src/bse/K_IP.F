@@ -30,12 +30,12 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
- use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel
+ use electrons,     ONLY:levels,spin_occ,spin,nel
  use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
- use BS,            ONLY:BSS_Vnl_included,BS_anti_res,&
+ use BS,            ONLY:BSS_Vnl_included,BS_anti_res,BS_pert_soc,&
 &                        BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps,Co_factor
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
@@ -141,14 +141,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  if (iq==1) then
    !
-   if( E_SOC_nbands==0) then
+   if( BS_pert_soc ) then
      n_SOC=1
      Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
    !
    ! GPL_EXCLUDE_START 
    !
-   if( E_SOC_nbands/=0) then
+   if( BS_pert_soc ) then
      n_SOC=2
      Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
@@ -184,11 +184,11 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
        if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
        !
-       if (E_SOC_nbands==0) E_plus_W=E_plus_W0
+       if (.not.BS_pert_soc) E_plus_W=E_plus_W0
        !
        ! GPL_EXCLUDE_START
        !
-       if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+       if (     BS_pert_soc) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
        !
        ! GPL_EXCLUDE_END
        !

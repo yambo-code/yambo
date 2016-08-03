@@ -41,6 +41,7 @@ module BS
  logical :: BS_K_is_ALDA
  logical :: BS_not_const_eh_f
  logical :: BS_K_has_been_calculated_loaded=.FALSE.
+ logical :: BS_pert_soc
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode
@@ -291,7 +292,7 @@ module BS
      use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     use electrons,  ONLY:levels,E_SOC_nbands
+     use electrons,  ONLY:levels
      integer      :: iT,nT
      type(levels) :: E
      !
@@ -335,7 +336,7 @@ module BS
      if(l_photolum) allocate(BS_T_grp(iT)%f_PL(nT))
      if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
      if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
-     if (E_SOC_nbands/=0) allocate(BS_T_grp(iT)%E_SOC_corr(2,nT))
+     if (associated(E%E_SOC)) allocate(BS_T_grp(iT)%E_SOC_corr(2,nT))
      !
    end subroutine
    !
@@ -343,9 +344,8 @@ module BS
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
-     use electrons, ONLY:E_SOC_nbands
      integer :: i_g
-     logical :: W_is_allocated,Z_is_allocated
+     logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
      allocate(BS_mat(BS_H_dim,BS_H_dim))
      call mem_est('BS_mat',(/size(BS_mat)/))
      BS_mat    = cZERO
@@ -360,9 +360,11 @@ module BS
      BSS_eh_f     = rZERO
      W_is_allocated=.FALSE.
      Z_is_allocated=.FALSE.
+     E_SOC_is_allocated=.FALSE.
      do i_g=1,BS_nT_grps
        if (.not.W_is_allocated) W_is_allocated=allocated(BS_T_grp(i_g)%W)
        if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
+       if (.not.E_SOC_is_allocated) E_SOC_is_allocated=allocated(BS_T_grp(i_g)%E_SOC_corr)
      enddo
      if (W_is_allocated) then
        allocate(BSS_eh_W(BS_K_dim))
@@ -374,7 +376,7 @@ module BS
        call mem_est("BSS_eh_Z",(/BS_K_dim/))
        BSS_eh_Z = cZERO
      endif
-     if (E_SOC_nbands/=0) then
+     if (E_SOC_is_allocated) then
        allocate(BSS_eh_E_SOC_corr(2,BS_H_dim))
        call mem_est("BSS_eh_E_SOC_corr",(/2*BS_H_dim/),(/SP/))
        BSS_eh_E_SOC_corr = rZERO
@@ -400,7 +402,6 @@ module BS
      use memory_m,   ONLY:mem_est
      use drivers,    ONLY:l_kerr
      use parallel_m, ONLY:PAR_BS_T_grps_index
-     use electrons,  ONLY:E_SOC_nbands
      integer :: i_g
      !
      if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
@@ -425,7 +426,7 @@ module BS
        if (allocated(BS_T_grp(i_g)%f_PL)) deallocate(BS_T_grp(i_g)%f_PL)
        if (allocated(BS_T_grp(i_g)%Z))    deallocate(BS_T_grp(i_g)%Z)
        if (allocated(BS_T_grp(i_g)%W))    deallocate(BS_T_grp(i_g)%W)
-       if (E_SOC_nbands/=0)               deallocate(BS_T_grp(i_g)%E_SOC_corr)
+       if (allocated(BS_T_grp(i_g)%E_SOC_corr)) deallocate(BS_T_grp(i_g)%E_SOC_corr)
        !
      enddo
      !

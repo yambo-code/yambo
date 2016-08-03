@@ -86,9 +86,11 @@ module electrons
    integer             :: GreenF_n_E_steps
    complex(SP),pointer :: GreenF_W(:,:,:,:)   => null()
    complex(SP),pointer :: GreenF(:,:,:,:)     => null()
-   ! 
+   !
    ! Double energy and k-points grid
-   !   
+   !
+   integer             :: nb_DbGd
+   integer             :: nk_DbGd
    real(SP),   pointer :: E_DbGd(:,:,:)        => null()
    real(SP),   pointer :: W_DbGd(:,:,:)        => null()
    real(SP),   pointer :: f_DbGd(:,:,:)        => null()
@@ -96,27 +98,11 @@ module electrons
    !
    ! Perturbative SOC
    !
-   real(SP),   pointer :: E_SOC(:,:)           => null()
+   integer              :: nb_SOC
+   integer, allocatable :: table_SOC(:,:,:)
+   real(SP),   pointer  :: E_SOC(:,:)           => null()
    !
  end type levels
- ! 
- ! Fine energy grid Tables
- !   
- integer  :: BZ_DbGd_max_filling = 1
- integer  :: BZ_DbGd_nkpts
- integer  :: BZ_DbGd_tot_nkpts
- integer  :: BZ_ASSOCIATED_nkpts
- integer  :: BZ_DbGd_nbands
- logical  :: DbGd_is_symmetry_expanded=.FALSE.
- integer ,allocatable :: BZ_DbGd_nkpt(:)
- integer ,allocatable :: BZ_DbGd_table(:,:,:)
- real(SP),allocatable :: BZ_DbGd_ipol_weight(:)
- real(SP),allocatable :: BZ_DbGd_kpts(:,:)
- !
- ! Perturbative SOC table
- !
- integer :: E_SOC_nbands
- integer, allocatable :: E_SOC_table(:,:,:)
  !
  contains
    !
@@ -129,6 +115,7 @@ module electrons
      !
      naive=Eo%nk==0
      Eo%nb=Ei%nb
+     Eo%nb_SOC=Ei%nb_SOC
      if (naive) then
        Eo%nk=Ei%nk
        Eo%nbf=Ei%nbf
@@ -198,16 +185,16 @@ module electrons
      !
      ! E Double Grid
      !
-     if (BZ_DbGd_nbands/=0.and.Ei%nk==Eo%nk) then
-       allocate(Eo%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       allocate(Eo%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       allocate(Eo%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+     if (Eo%nb_DbGd/=0.and.Ei%nk==Eo%nk) then
+       allocate(Eo%E_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
+       allocate(Eo%W_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
+       allocate(Eo%f_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
        call mem_est("E_DbGd W_DbGd f_DbGd",(/size(Eo%E_DbGd),size(Eo%W_DbGd),size(Eo%f_DbGd)/),(/SP,SP,SP/))
        Eo%E_DbGd=Ei%E_DbGd
        Eo%W_DbGd=Ei%W_DbGd
        Eo%f_DbGd=Ei%f_DbGd
        if(associated(Ei%df_DbGd)) then
-         allocate(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+         allocate(Eo%df_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
          call mem_est("df_DbGd",(/size(Eo%df_DbGd)/),(/SP/))
          Eo%df_DbGd=Ei%df_DbGd
        endif
@@ -215,10 +202,13 @@ module electrons
      !
      ! E_SOC
      !
-     if (E_SOC_nbands/=0.and.Ei%nk==Eo%nk) then
-       allocate(Eo%E_SOC(E_SOC_nbands,Eo%nk))
+     if (Eo%nb_SOC/=0.and.Ei%nk==Eo%nk) then
+       allocate(Eo%E_SOC(Eo%nb_SOC,Eo%nk))
        call mem_est("E_SOC",(/size(Eo%E_SOC)/),(/SP/))
        Eo%E_SOC=Ei%E_SOC
+       allocate(Eo%table_SOC(2,Eo%nb,Eo%nk))
+       call mem_est("table_SOC",(/size(Eo%table_SOC)/),(/IP/))
+       Eo%table_SOC=Ei%table_SOC
      endif
      !
    end subroutine
@@ -273,18 +263,6 @@ module electrons
      !
      nullify(E%E_DbGd,E%W_DbGd,E%f_DbGd,E%df_DbGd)
      call mem_est("E_DbGd W_DbGd f_DbGd df_DbGd")
-     !
-     if (.not.FULL_RESET) return
-     !
-     BZ_DbGd_nkpts=0
-     BZ_DbGd_tot_nkpts=0
-     BZ_ASSOCIATED_nkpts=0
-     BZ_DbGd_nbands=0
-     !
-     if(allocated(BZ_DbGd_nkpt))        deallocate(BZ_DbGd_nkpt)
-     if(allocated(BZ_DbGd_table))       deallocate(BZ_DbGd_table)
-     if(allocated(BZ_DbGd_ipol_weight)) deallocate(BZ_DbGd_ipol_weight)
-     if(allocated(BZ_DbGd_kpts))        deallocate(BZ_DbGd_kpts)
      !
    end subroutine
    !

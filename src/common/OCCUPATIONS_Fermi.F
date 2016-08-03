@@ -40,8 +40,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
-&                        BZ_DbGd_nbands,BZ_DbGd_nkpt,n_spinor,n_spin,&
-&                        BZ_DbGd_table
+&                        n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:msg,error,warning
  use stderr,        ONLY:real2ch
@@ -126,7 +125,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! a very small temperature is imposed forcing the Fermi level to fall within the
  ! gap.
  !
- if (BZ_DbGd_nbands>0) Tel=Tel_step
+ if (E%nb_DbGd>0) Tel=Tel_step
  !
  do while (.not.Fermi_is_converged)
    !
@@ -217,23 +216,23 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! If %E_DbGd is associated I simply extend the %E occupations to %E_DbGd
  !
- if (BZ_DbGd_nbands>0.and.associated(E%E_DbGd)) then
+ if (E%nb_DbGd>0.and.associated(E%E_DbGd)) then
    ! 
    nel_DbGd=0._SP 
    !
    E%E_DbGd(:,:,:)=E%E_DbGd(:,:,:)-E%E_Fermi
    do is=1,n_sp_pol
-     do ikbz=1,K%nbz
-       do i1=1,BZ_DbGd_nkpt(ikbz)
-         ik_rand   = BZ_DbGd_table(ikbz,i1,1)
-         do ib=1,BZ_DbGd_nbands
-           E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
-           nel_DbGd=nel_DbGd+E%f_DbGd(ib,ik_rand,is)
-         enddo
+     do ik=1,K%nibz
+       nel=nel+sum(E%f(:E%nb_DbGd,ik,is))*K%weights_cloud(ik)
+     enddo
+     do ik_rand=1,K%nibz_DbGd
+       do ib=1,E%nb_DbGd
+         E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
        enddo
+       nel_DbGd=nel_DbGd+sum(E%f_DbGd(:,ik_rand,is))*K%weights_cloud(ik)
      enddo
    enddo
-   nel_DbGd=nel_DbGd/real(sum(BZ_DbGd_nkpt),SP)
+   nel_DbGd=nel_DbGd
    !
    if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
    if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')

@@ -46,13 +46,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  use memory_m,     ONLY:mem_est
  use com,          ONLY:warning,error
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
-&                       BS_bands,BS_nT_at_k,BS_anti_res,&
+&                       BS_bands,BS_nT_at_k,BS_anti_res,BS_pert_soc,&
 &                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc,&
 &                       BSE_mode,BS_T_grp,BS_nT_grps,BSS_mode
  use X_m,          ONLY:global_gauge,Dipole_Energy_treshold
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock
- use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
+ use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
 #if defined _PL
@@ -213,7 +213,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              !
              ! GPL_EXCLUDE_START
              !
-             if (E_SOC_nbands/=0) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
+             if ( BS_pert_soc ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
              !
              ! GPL_EXCLUDE_END
              !
@@ -265,9 +265,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      !
      ! GPL_EXCLUDE_START
      !
-     if(E_SOC_nbands/=0) then
-       iv_SOC(:)=E_SOC_table(:,iv,ikp)
-       ic_SOC(:)=E_SOC_table(:,ic,ik )
+     if( BS_pert_soc ) then
+       iv_SOC(:)=Ken%table_SOC(:,iv,ikp)
+       ic_SOC(:)=Ken%table_SOC(:,ic,ik )
        if(     all(iv_SOC/=0)) E_v_SOC(:)=Ken%E_SOC(iv_SOC(:),ikp)
        if(     all(ic_SOC/=0)) E_c_SOC(:)=Ken%E_SOC(ic_SOC(:),ik )
        if(.not.all(iv_SOC/=0)) E_v_SOC(:)=Ken%E(iv,ikp,i_sp)

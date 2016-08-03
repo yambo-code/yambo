@@ -28,9 +28,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,iw_ref,l_drude
- use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts,spin
+ use electrons,      ONLY:levels,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
- use BS,             ONLY:Co_factor,BSS_dipoles,BS_H_dim,BS_K_dim,&
+ use BS,             ONLY:Co_factor,BSS_dipoles,BS_H_dim,BS_K_dim,BS_pert_soc,&
 &                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -241,8 +241,10 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  !
  if(.not.K_diago_in_BS_mat) deallocate(BS_mat_diagonal)
  !
- BSS_n_descs=BSS_n_descs+2
- BSS_description(BSS_n_descs-1)=' '
- BSS_description(BSS_n_descs)=' BSS|BZ Double Grid points      :'//intc(BZ_DbGd_tot_nkpts)
+ if( BS_pert_soc) then
+   BSS_n_descs=BSS_n_descs+2
+   BSS_description(BSS_n_descs-1)=' '
+   BSS_description(BSS_n_descs)=' BSS|BZ Double Grid points      :'//intc(k%nibz+k%nibz_DbGd)
+ endif
  !
 end subroutine K_inversion_Lo

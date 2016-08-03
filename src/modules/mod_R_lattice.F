@@ -65,23 +65,24 @@ module R_lattice
    !
    ! Fine grid
    !
+   integer           :: n_spheres_ibz                ! n_spheres_ibz >= nibz
+                                                     ! n_spheres_bz   = nb
+   !
    integer           :: nibz_DbGd
-   integer           :: nbz_DbGd
+   integer           :: nbz_DbGd                     
    integer,  pointer :: bz_to_ibz_DbGd(:) => null()
    real(SP), pointer :: pt_DbGd(:,:)      => null()
-   real(SP), pointer :: ptbz_DbGd(:,:)    => null()
-   
+   real(SP), pointer :: ptbz_DbGd(:,:)    => null() 
    !
    ! Mapping fine to coarse grid
    !
    integer           :: ik_ref
    integer           :: ikbz_ref
-   integer,  pointer :: nibz_ass(:)       => null()  ! n° of kpt_DbGd in the IBZ associated to IBZ kpt
-   integer,  pointer :: nbz_ass(:)        => null()  ! n° of kpt_DbGd in the  BZ associated to  BZ kpt
-   integer,  pointer :: ibz_map(:,:)      => null()  ! map kpt_DbGd in the IBZ --> kpt in the IBZ
-   integer,  pointer :: bz_map(:,:)       => null()  ! map kpt_DbGd in the  BZ --> kpt in the  BZ
-   real(SP), pointer :: weights_cloud(:)  => null()  ! given a point in the IBZ, gives its weight 
-   !                                                 ! when such point is considered with its cloud associated
+   integer,  pointer :: ibz_sp_n_ass(:)   => null()  ! n° of kpt_DbGd in the IBZ associated to IBZ sphere
+   integer,  pointer :: bz_sp_n_ass(:)    => null()  ! n° of kpt_DbGd in the  BZ associated to  BZ sphere
+   integer,  pointer :: ibz_sp_map(:,:)   => null()  ! map kpt_DbGd in the IBZ --> sphere in the IBZ
+   integer,  pointer :: bz_sp_map(:,:)    => null()  ! map kpt_DbGd in the  BZ --> sphere in the  BZ
+   real(SP), pointer :: weights_sphere(:) => null()  ! given a shere in the IBZ, gives its weight 
    real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
    !                                               
  end type bz_samp

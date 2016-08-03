@@ -222,14 +222,15 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    !
    E%E_DbGd(:,:,:)=E%E_DbGd(:,:,:)-E%E_Fermi
    do is=1,n_sp_pol
-     do ik=1,K%nibz
-       nel=nel+sum(E%f(:E%nb_DbGd,ik,is))*K%weights_cloud(ik)
-     enddo
-     do ik_rand=1,K%nibz_DbGd
-       do ib=1,E%nb_DbGd
-         E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
+     do ik=1,K%n_spheres_ibz
+       if(ik<=K%nibz) nel=nel+sum(E%f(:E%nb_DbGd,ik,is))*K%weights_sphere(ik)
+       do i1=1,K%ibz_sp_n_ass(ik)
+         ik_rand=K%ibz_sp_map(ik,i1)
+         do ib=1,E%nb_DbGd
+           E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
+         enddo
+         nel_DbGd=nel_DbGd+sum(E%f_DbGd(:,ik_rand,is))*K%weights_sphere(ik)
        enddo
-       nel_DbGd=nel_DbGd+sum(E%f_DbGd(:,ik_rand,is))*K%weights_cloud(ik)
      enddo
    enddo
    nel_DbGd=nel_DbGd

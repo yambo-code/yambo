@@ -47,7 +47,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  real(SP)     ::rand_k(BZ_DbGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),&
 &               gap(2),tmp_zero(3)
- integer      ::i1,ik_near,ik_near_ibz,is_near,ik_bz,ik_DbGd
+ integer      ::i1,ik_near,ik_near_ibz,is_near,ik_ibz,ik_bz,ik_DbGd
  logical      ::l_skip_check,l_flag
  integer,  allocatable :: BZ_SYM_table(:,:)
  real(SP), allocatable :: rand_E(:,:,:)
@@ -59,7 +59,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  integer              :: ID,i_err(MAX_DbGd_DBs),nsym_save,nsym_DbGd_DB,i_time_rev_save,&
 &                        i_time_rev_DB,i_db,i_db_merge,ik_now
  real(SP)             :: dl_sop_save(3,3,48)
- integer, allocatable :: TMP_map(:,:)
+ integer, allocatable :: TMP_map(:)
  type(PP_indexes)     :: px
  !
  ! Functions
@@ -72,7 +72,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    return
  endif
  !
- if (allocated(BZ_DbGd_nkpt)) then
+ if (Xk%nbz_DbGd>0) then
    call msg("s",'DbGd: database components already allocated. Nothing to do.')
    return
  endif
@@ -234,7 +234,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  call k_ibz2bz(DbGd_k(i_db_merge),'i',.true.)
  !
  call k_build_up_BZ_tables(DbGd_k(i_db_merge))
- Xk%ikbz_ref=DbGd_k(i_db_merge)%k_table(ik_ref,1)
+ Xk%ikbz_ref=DbGd_k(i_db_merge)%k_table(Xk%ik_ref,1)
  deallocate(DbGd_k(i_db_merge)%k_table,DbGd_k(i_db_merge)%s_table)
  !
  call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
@@ -255,9 +255,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  Xk%nibz_DbGd=DbGd_k(i_db_merge)%nibz
  Xk%nbz_DbGd =DbGd_k(i_db_merge)%nbz
- allocate(Xk%pt_DbGd(shape(DbGd_k(i_db_merge)%pt)))
+ allocate(Xk%pt_DbGd(Xk%nibz_DbGd,3))
  Xk%pt_DbGd  =DbGd_k(i_db_merge)%pt
- allocate(Xk%ptbz_DbGd(shape(DbGd_k(i_db_merge)%ptbz)))
+ allocate(Xk%ptbz_DbGd(Xk%nbz_DbGd,3))
  Xk%ptbz_DbGd  =DbGd_k(i_db_merge)%ptbz
  allocate(Xk%bz_to_ibz_DbGd(DbGd_k(i_db_merge)%nbz))
  Xk%bz_to_ibz_DbGd=DbGd_k(i_db_merge)%sstar(:,1)
@@ -297,7 +297,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Number of points in each zone in the IBZ
  !
- allocate(Xk%nibz_ass(Xk%nk))
+ allocate(Xk%nibz_ass(Xk%nibz))
  Xk%nibz_ass=1
  do i1=1,Xk%nibz_DbGd
    if (i1==Xk%ik_ref) cycle
@@ -329,12 +329,12 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Weight of the cloud in the IBZ
  !
- allocate(weights_map(Xk%nk))
- do i1=1,Xk%nibz
-   Xk%weights_cloud(i1)=Xk%weights(ik)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
-   do i2=2,Xk%nibz_ass(i1)
-     ik_DbGd=Xk%ibz_map(i1,i2)
-     Xk%weights_cloud(i1)=Xk%weights_cloud(i1)+DbGd_k(i_db_merge)%weights(ik_DbGd)* &
+ allocate(Xk%weights_cloud(Xk%nibz))
+ do ik_ibz=1,Xk%nibz
+   Xk%weights_cloud(ik_ibz)=Xk%weights(ik_ibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
+   do i1=2,Xk%nibz_ass(ik_ibz)
+     ik_DbGd=Xk%ibz_map(ik_ibz,i1)
+     Xk%weights_cloud(ik_ibz)=Xk%weights_cloud(ik_ibz)+DbGd_k(i_db_merge)%weights(ik_DbGd)* &
 &                                              real(Xk%nbz_DbGd,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
    enddo
  enddo
@@ -372,7 +372,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Number of points in each zone in the IBZ
  !
- allocate(Xk%nbz_ass(Xk%nk))
+ allocate(Xk%nbz_ass(Xk%nbz))
  Xk%nbz_ass=1
  do i1=1,Xk%nbz_DbGd
    if (i1==Xk%ikbz_ref) cycle

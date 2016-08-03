@@ -30,7 +30,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t
  use QP_CTL_m,      ONLY:QP_apply
- use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
+ use electrons,     ONLY:levels,n_spin,n_sp_pol,spin
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,&
 &                        excitons_sort_and_report
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
@@ -135,7 +135,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call mem_est('BS_R_E',(/2*BS_H_dim/))
  iq=BS_q(1)
  !
- if(E_SOC_nbands/=0) allocate(BS_E_SOC_corr(2,BS_H_dim))
+ if(en%nb_SOC/=0) allocate(BS_E_SOC_corr(2,BS_H_dim))
  !
  ! Here I read energies and residuum
  !

@@ -28,9 +28,7 @@ subroutine bxsf_read(Xk,Xen)
  use R_lattice,           ONLY:bz_samp,b,k_grid,k_the_nearest
  use parser_m,            ONLY:parser
  use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
- use electrons,           ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,&
-                               BZ_DbGd_max_filling,BZ_DbGd_nbands, &
-                               BZ_DbGd_tot_nkpts,BZ_DbGd_ipol_weight,n_spin
+ use electrons,           ONLY:levels,n_spin
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
@@ -212,10 +210,10 @@ subroutine bxsf_read(Xk,Xen)
    call k2bz(v_in=DbGd_k%ptbz(ii,:))
  enddo
  !
- allocate(BZ_DbGd_nkpt(Xk%nbz))
- BZ_DbGd_nkpt = 0
- BZ_DbGd_nbands=nbands
- BZ_DbGd_tot_nkpts=DbGd_k%nbz
+ allocate(Xk%nbz_ass(Xk%nbz))
+ Xk%nbz_ass = 0
+ Xen%nb_DbGd=nbands
+ Xk%nbz_DbGd=DbGd_k%nbz
  !
  if (ord_dgrid_ipol .eq. 0) then
    !
@@ -226,19 +224,18 @@ subroutine bxsf_read(Xk,Xen)
    ! have to go twice through all elements as BZ_DbGd_k cannot be
    ! allocated without knowing the number of maximum elements. 
    !
-   do while(.not.allocated(BZ_DbGd_table)) 
-     if (maxval(BZ_DbGd_nkpt)>0) then
-       allocate(BZ_DbGd_table(Xk%nbz,maxval(BZ_DbGd_nkpt),2))
-       BZ_DbGd_table=0
+   do while(.not.associated(Xk%bz_map)) 
+     if (maxval(Xk%nbz_ass)>0) then
+       allocate(Xk%bz_map(Xk%nbz,maxval(Xk%nbz_ass)))
+       Xk%bz_map=0
      endif
-     BZ_DbGd_nkpt=0
+     Xk%nbz_ass=0
      do ii=1,DbGd_k%nbz
        !
        ikbz=k_the_nearest(DbGd_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
-       BZ_DbGd_nkpt(ikbz)=BZ_DbGd_nkpt(ikbz)+1
+       Xk%nbz_ass(ikbz)=Xk%nbz_ass(ikbz)+1
        !
-       if (allocated(BZ_DbGd_table)) BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz),1)= ii !DbGd_k%sstar(i1,1)
-       !if (allocated(BZ_DbGd_table)) BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz),2)= ?? !i1
+       if (associated(Xk%bz_map)) Xk%bz_map(ikbz,Xk%nbz_ass(ikbz))= ii
        !   
        call live_timing(steps=1)
        !
@@ -246,9 +243,8 @@ subroutine bxsf_read(Xk,Xen)
    enddo
    call live_timing()
    ! 
-   BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
-   allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
-   BZ_DbGd_ipol_weight = 1.0_SP
+   allocate(Xk%weights_ipol(maxval(Xk%nbz_ass)))
+   Xk%weights_ipol = 1.0_SP
  else
    call section('*','Employ double grid method' )
    call msg('s',':: Perform polynomial interpolation of order :',ord_dgrid_ipol)
@@ -258,12 +254,11 @@ subroutine bxsf_read(Xk,Xen)
      call msg("s",':: ERROR while preparing double grid. Error:',err_dgrid) 
      return
    endif
-   BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
  endif
  !
  !     
- call msg('s',':: Blocks filling range :',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
- if(minval(BZ_DbGd_nkpt) .ne. BZ_DbGd_max_filling) then
+ call msg('s',':: Blocks filling range :',(/minval(Xk%nbz_ass),maxval(Xk%nbz_ass)/))
+ if(minval(Xk%nbz_ass) .ne. maxval(Xk%nbz_ass)) then
    call msg('s',':: DbGd_k blocks are not filled uniformly.')
    if(ord_dgrid_ipol.gt.0)then
      call msg('s',':: Error: For double grid must be filled uniformely.')
@@ -273,8 +268,8 @@ subroutine bxsf_read(Xk,Xen)
  !
  call section('*','Create & write BZ_DbGd')
  !
- allocate(Xen%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_spin))
- Xen%E_DbGd(:,:DbGd_k%nbz,1)=ene(:,:DbGd_k%nbz)/HA2EV+Xen%E_Fermi
+ allocate(Xen%E_DbGd(Xen%nb_DbGd,Xen%nk,n_spin))
+ Xen%E_DbGd(:,:,1)=ene/HA2EV+Xen%E_Fermi
  ! align last (partly) filled band at gamma.
  nearest_to_g=k_the_nearest(DbGd_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
  if(sum((DbGd_k%ptbz(1,:)-Xk%ptbz(nearest_to_g,:))**2).gt. epsilon(1._SP)) then
@@ -301,6 +296,6 @@ subroutine bxsf_read(Xk,Xen)
  deallocate(nkpoints_gengrid)
  deallocate(startkpoint)
  deallocate(recip_lattice)
- deallocate(BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_ipol_weight)
+ deallocate(Xk%nbz_ass,Xk%bz_map,Xk%weights_ipol)
  !
 end subroutine

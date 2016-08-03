@@ -25,7 +25,7 @@ subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HA2EV
- use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol,E_SOC_nbands
+ use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol
  use stderr,        ONLY:intc
  use BS,            ONLY:BSS_description,BSS_n_descs,BSS_eh_table,BS_bands,BS_H_dim
  use com,           ONLY:msg,of_open_close
@@ -56,7 +56,7 @@ subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  !
  write_spin    = present(S_sq)
  write_widths  = any(abs(aimag(BS_E))>1.E-5)
- write_soc_corr= (E_SOC_nbands/=0)
+ write_soc_corr= (E%nb_SOC/=0)
  !
  if (     write_widths) call section('=','Reporting sorted Energies, Strengths and widths')
  if (.not.write_widths) call section('=','Reporting sorted Energies and Strengths')

@@ -82,6 +82,8 @@ module R_lattice
    integer,  pointer :: bz_map(:,:)       => null()  ! map kpt_DbGd in the  BZ --> kpt in the  BZ
    real(SP), pointer :: weights_cloud(:)  => null()  ! given a point in the IBZ, gives its weight 
    !                                                 ! when such point is considered with its cloud associated
+   real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
+   !                                               
  end type bz_samp
  !
  type bz_map

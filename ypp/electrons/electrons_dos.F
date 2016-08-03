@@ -26,7 +26,7 @@ subroutine electrons_dos(Xk,Xen)
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands
+ use electrons,      ONLY:levels,spin,n_spinor,n_spin
  use YPP,            ONLY:output_fname,dos_broadening,dos_bands,&
 &                         dos_E_range,dos_E_steps
  use com,            ONLY:msg,of_open_close
@@ -55,7 +55,7 @@ subroutine electrons_dos(Xk,Xen)
  !===============
  !
  l_DbGd=.FALSE.
- if (BZ_DbGd_nbands>0) then
+ if ( Xen%nb_DbGd>0 ) then
    l_DbGd=.TRUE.
    call OCCUPATIONS_Extend(Xen,Xen)
  endif
@@ -65,7 +65,7 @@ subroutine electrons_dos(Xk,Xen)
    call electrons_spin_factors(Xk,(/1,Xk%nibz/),dos_bands,WF_fac)
  endif
  !
- if (l_DbGd) dos_bands(2)=min(dos_bands(2),BZ_DbGd_nbands)
+ if (l_DbGd) dos_bands(2)=min(dos_bands(2),Xen%nb_DbGd)
  !
  el_dos_max=0._SP
  !

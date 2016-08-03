@@ -33,7 +33,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use interfaces,          ONLY:WF_load
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
- use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin,E_SOC_table,E_SOC_nbands
+ use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin
  !
  implicit none
  !
@@ -79,12 +79,12 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  n_spinor=n_spinor_save
  n_sp_pol=n_sp_pol_save
  !
- E_SOC_nbands=En_SOC%nb
- allocate(En%E_SOC(E_SOC_nbands,kpt%nibz))
- allocate(E_SOC_table(2,En%nb,kpt%nibz))
- call mem_est("E_SOC E_SOC_table",(/size(En%E_SOC),size(E_SOC_table)/),(/SP,IP/))
+ En%nb_SOC=En_SOC%nb
+ allocate(En%E_SOC(En%nb_SOC,kpt%nibz))
+ allocate(En%table_SOC(2,En%nb,kpt%nibz))
+ call mem_est("E_SOC E_SOC_table",(/size(En%E_SOC),size(En%table_SOC)/),(/SP,IP/))
  En%E_SOC=0._SP
- E_SOC_table=0
+ En%table_SOC=0
  !
  mapping_tresh=0.95_SP
  !
@@ -100,7 +100,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
    !
    min_sq(i_k)=1._SP
    !
-   E_SOC_table(:,:,i_k)=0
+   En%table_SOC(:,:,i_k)=0
    !
    do i_sp_pol=1,n_sp_pol
      !
@@ -170,10 +170,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
            min_sq(i_k)=min(min_sq(i_k),sqrt(sq2))
            !
            if(map_up) then
-             E_SOC_table(1,i_b_to_map(1),i_k)=i_b_SOC
+             En%table_SOC(1,i_b_to_map(1),i_k)=i_b_SOC
              mapped_in_group(1,i_grp)=mapped_in_group(1,i_grp)+1
            else if(map_dw) then
-             E_SOC_table(2,i_b_to_map(2),i_k)=i_b_SOC
+             En%table_SOC(2,i_b_to_map(2),i_k)=i_b_SOC
              mapped_in_group(2,i_grp)=mapped_in_group(2,i_grp)+1
            endif
            En%E_SOC(i_b_SOC,i_k)=En_SOC%E(i_b_SOC,i_k,1)
@@ -186,15 +186,15 @@ subroutine WF_map_perturbative_SOC(kpt,En)
    enddo       ! i_sp_pol
  enddo         ! i_k
  !
- if(any(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2),:)==0)) then
+ if(any(En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2),:)==0)) then
    !
-   n_miss=count(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2),:)==0)
+   n_miss=count(En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2),:)==0)
    call warning(' With treshold '//trim(real2ch(mapping_tresh))//' '//trim(intc(n_miss))//' WFs non mapped. Reducing it.' )
    !
    do i_k=1,kpt%nibz
-     kpoint_to_map(i_k)=any(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2),i_k)==0)
+     kpoint_to_map(i_k)=any(En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2),i_k)==0)
      !do i_b=SOC_bands_to_map(1),SOC_bands_to_map(2)
-     !  if(all(E_SOC_table(:,i_b,i_k)/=0)) cycle
+     !  if(all(En%table_SOC(:,i_b,i_k)/=0)) cycle
      !  call warning(' State ik= '//trim(intc(i_k))//', ib= '//trim(intc(i_b))//' not mapped.' )
      !enddo
    enddo

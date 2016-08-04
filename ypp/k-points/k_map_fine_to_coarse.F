@@ -62,7 +62,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
 &                        i_time_rev_DB,i_db,i_db_merge,ik_now
  real(SP)             :: dl_sop_save(3,3,48)
  real(SP)             :: K_ref(Xk%nbz-Xk%nibz+1,3)
- integer, allocatable :: TMP_map_ibz(:),TMP_map_bz(:),TMP_map_sp(:)
+ integer, allocatable :: TMP_map_ibz(:),TMP_map_bz(:)
  type(PP_indexes)     :: px
  !
  ! Functions
@@ -256,6 +256,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  do i1=1,DbGd_k(i_db_merge)%nibz
    !
+   call k2bz(DbGd_k(i_db_merge)%pt(i1,:))
+   !
    if (.not.px%element_1D(i1)) cycle
    !
    if (i1==Xk%ik_ref) then
@@ -278,15 +280,33 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Number of points in each zone in the IBZ
  !
- allocate(Nibz_ass(Xk%nibz))
- Nibz_ass=1
- do i1=1,DbGd_k(i_db_merge)%nibz
+ allocate(Xk%nibz_mapped(Xk%nibz))
+ Xk%nibz_mapped=1
+ do i1=1,Xk%nibz_DbGd
    if (i1==Xk%ik_ref) cycle
    ik_near=TMP_map_ibz(i1)
-   Nibz_ass(ik_near)=Nibz_ass(ik_near)+1
+   Xk%nibz_mapped(ik_near)=Xk%nibz_mapped(ik_near)+1
  enddo
  !
- call msg('s',':: IBZ Blocks filling range  :',(/minval(Nibz_ass),maxval(Nibz_ass)/))
+ call msg('s',':: IBZ Blocks filling range  :',(/minval(Xk%nibz_mapped),maxval(Xk%nibz_mapped)/))
+ !
+ ! IBZ table
+ !
+ allocate(Xk%ibz_DbGd_map(Xk%nibz,maxval(Xk%nibz_mapped)))
+ Xk%ibz_DbGd_map=0
+ do i1=1,Xk%nibz
+   Xk%ibz_DbGd_map(i1,1)=i1
+ enddo
+ !
+ Xk%nibz_mapped=1
+ do i1=1,Xk%nibz_DbGd
+   if (i1==Xk%ik_ref) cycle
+   ik_near=TMP_map_ibz(i1)
+   Xk%nibz_mapped(ik_near)=Xk%nibz_mapped(ik_near)+1
+   !
+   Xk%ibz_DbGd_map(ik_near,Xk%nibz_mapped(ik_near))=i1
+   !
+ enddo
  !
  ! Now expand to the BZ 
  !======================
@@ -299,8 +319,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  call k_ibz2bz(Xk,'i',.true.)
  ! 
  ! k_DbGd (tables)
-  call k_build_up_BZ_tables(DbGd_k(i_db_merge))
- Xk%ikbz_ref=DbGd_k(i_db_merge)%k_table(Xk%ik_ref,1)
+ call k_build_up_BZ_tables(DbGd_k(i_db_merge))
+ if(Xk%ik_ref>0) Xk%ikbz_ref=DbGd_k(i_db_merge)%k_table(Xk%ik_ref,1)
  deallocate(DbGd_k(i_db_merge)%k_table,DbGd_k(i_db_merge)%s_table)
  !
  ! k_DbGd (IBZ->BZ)
@@ -323,14 +343,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  allocate(TMP_map_bz(DbGd_k(i_db_merge)%nbz))
  TMP_map_bz=0
-
- allocate(TMP_map_sp(DbGd_k(i_db_merge)%nbz))
- TMP_map_sp=0
- TMP_map_sp(:DbGd_k(i_db_merge)%nibz)=TMP_map_ibz
- !
- Xk%n_spheres_ibz=Xk%nibz
- n_remove=0
- n_new_sphere=0
  !
  do i1=1,DbGd_k(i_db_merge)%nbz
    !
@@ -341,134 +353,70 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
      cycle
    endif
    !
-   !
    ik_near=k_the_nearest(DbGd_k(i_db_merge)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
    TMP_map_bz(i1)=ik_near
-   !
-   ik_near_ibz=Xk%sstar(ik_near,2)
-   is_near_ibz=Xk%sstar(ik_near,2)
-   !
-   i1_kpt_ibz=DbGd_k(i_db_merge)%sstar(i1,1)
-   i1_sym_ibz=DbGd_k(i_db_merge)%sstar(i1,2)
-   !
-   ! Check if the mapping in the BZ is consistent with the mapping in the IBZ
-   !
-   if(i1_sym_ibz==1) then
-     !
-     kpt_tmp =DbGd_k(i_db_merge)%ptbz(i1,:)      -Xk%ptbz(ik_near,:)
-     kpt_tmp2=DbGd_k(i_db_merge)%pt(i1_kpt_ibz,:)-Xk%pt(TMP_map_ibz(i1_kpt_ibz),:)
-     call k2bz(kpt_tmp)
-     call k2bz(kpt_tmp2)
-     dist_bz =iku_v_norm(kpt_tmp)
-     dist_ibz=iku_v_norm(kpt_tmp2)
-     !
-     if (dist_bz-dist_ibz<-1.E-5) then
-       !
-       n_remove=n_remove+1
-       !
-       l_new_sphere= (n_remove==1)
-       do i2=1,n_new_sphere
-         if (.not.v_is_zero(K_ref(i2,:)-Xk%ptbz(ik_near,:))) cycle 
-         l_new_sphere=.false.
-         i_sphere=i2
-         exit
-       enddo
-       !
-       if(l_new_sphere) then
-         n_new_sphere=n_new_sphere+1
-         K_ref(n_new_sphere,:)=Xk%ptbz(ik_near,:)
-         i_sphere=n_new_sphere
-       endif
-       !
-       ! If it is the first kpt define a new sphere
-       !
-       TMP_map_ibz(i1_kpt_ibz)=0
-       TMP_map_sp(i1_kpt_ibz)=Xk%nibz+i_sphere
-       !
-     endif
-   endif
    !
    call live_timing(steps=1)
    !
  enddo
  !
- !call PP_redux_wait(TMP_map_bz)
- !call PP_redux_wait(TMP_map_sp)
- !call PP_redux_wait(n_new_sphere)
- Xk%n_spheres_ibz=Xk%nibz+n_new_sphere
- !
- ! Number of points in each sphere in the IBZ
- !
- allocate(Xk%ibz_sp_n_ass(Xk%n_spheres_ibz))
- Xk%ibz_sp_n_ass=1
- do i1=1,Xk%nibz_DbGd
-   if (i1==Xk%ik_ref) cycle
-   ik_near=TMP_map_sp(i1)
-   Xk%ibz_sp_n_ass(ik_near)=Xk%ibz_sp_n_ass(ik_near)+1
- enddo
+ call PP_redux_wait(TMP_map_bz)
  !
  ! Number of points in each sphere in the BZ
  !
- allocate(Xk%bz_sp_n_ass(Xk%nbz))
- Xk%bz_sp_n_ass=1
+ allocate(Xk%nbz_mapped(Xk%nbz))
+ Xk%nbz_mapped=1
  do i1=1,Xk%nbz_DbGd
    if (i1==Xk%ikbz_ref) cycle
    ik_near=TMP_map_bz(i1)
-   Xk%bz_sp_n_ass(ik_near)=Xk%bz_sp_n_ass(ik_near)+1
- enddo
- !
- ! Tables
- !=======
- !
- ! IBZ table
- !
- allocate(Xk%ibz_sp_map(Xk%n_spheres_ibz,maxval(Xk%ibz_sp_n_ass)))
- Xk%ibz_sp_map=0
- do i1=1,Xk%nibz
-   Xk%ibz_sp_map(i1,1)=i1
- enddo
- !
- Xk%ibz_sp_n_ass=1
- do i1=1,Xk%nibz_DbGd
-   if (i1==Xk%ik_ref) cycle
-   ik_near=TMP_map_sp(i1)
-   Xk%ibz_sp_n_ass(ik_near)=Xk%ibz_sp_n_ass(ik_near)+1
-   !
-   Xk%ibz_sp_map(ik_near,Xk%ibz_sp_n_ass(ik_near))=i1
-   !
+   Xk%nbz_mapped(ik_near)=Xk%nbz_mapped(ik_near)+1
  enddo
  !
  ! BZ table
  !
- allocate(Xk%bz_sp_map(Xk%nbz,maxval(Xk%bz_sp_n_ass)))
- Xk%bz_sp_map=0
+ allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
+ Xk%bz_DbGd_map=0
  do i1=1,Xk%nbz
-   Xk%bz_sp_map(i1,1)=i1
+   Xk%bz_DbGd_map(i1,1)=i1
  enddo
  !
- Xk%bz_sp_n_ass=1
+ Xk%nbz_mapped=1
  do i1=1,Xk%nbz_DbGd
    if (i1==Xk%ikbz_ref) cycle
    ik_near=TMP_map_bz(i1)
-   Xk%bz_sp_n_ass(ik_near)=Xk%bz_sp_n_ass(ik_near)+1
+   Xk%nbz_mapped(ik_near)=Xk%nbz_mapped(ik_near)+1
    !
-   Xk%bz_sp_map(ik_near,Xk%bz_sp_n_ass(ik_near))=i1
+   Xk%bz_DbGd_map(ik_near,Xk%nbz_mapped(ik_near))=i1
    !
  enddo
  !
- call msg('s',':: IBZ Blocks filling range  :',(/minval(Xk%ibz_sp_n_ass),maxval(Xk%ibz_sp_n_ass)/))
- call msg('s','::  BZ Blocks filling range  :',(/minval( Xk%bz_sp_n_ass),maxval( Xk%bz_sp_n_ass)/))
+ ! DEBUG <
+ !do ik_ibz=1,Xk%nibz
+ !  write(100,*) Xk%pt(ik_ibz,:)
+ !  do i1=2,Xk%nibz_mapped(ik_ibz)
+ !    write(100+ik_ibz,*) DbGd_k(i_db_merge)%pt(Xk%ibz_DbGd_map(ik_ibz,i1),:)
+ !  enddo
+ !enddo
+ !
+ !do ik_bz=1,Xk%nbz
+ !  write(1100,*) Xk%ptbz(ik_bz,:)
+ !  do i1=2,Xk%nbz_mapped(ik_bz)
+ !    write(1100+ik_bz,*) DbGd_k(i_db_merge)%ptbz(Xk%bz_DbGd_map(ik_bz,i1),:)
+ !  enddo
+ !enddo
+ ! DEBUG >
+ !
+ call msg('s','::  BZ Blocks filling range  :',(/minval( Xk%nbz_mapped),maxval( Xk%nbz_mapped)/))
  !
  !
  ! Weight of the sphere in the IBZ
  !
- allocate(Xk%weights_sphere(Xk%n_spheres_ibz))
- do ik_ibz=1,Xk%n_spheres_ibz
-   if(Xk%n_spheres_ibz<=Xk%nibz) &
-&    Xk%weights_sphere(ik_ibz)=Xk%weights(ik_ibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
-   do i1=2,Xk%ibz_sp_n_ass(ik_ibz)
-     ik_DbGd=Xk%ibz_sp_map(ik_ibz,i1)
-     Xk%weights_sphere(ik_ibz)=Xk%weights_sphere(ik_ibz)+DbGd_k(i_db_merge)%weights(ik_DbGd)* &
+ allocate(Xk%weights_DbGd(Xk%nibz))
+ do ik_ibz=1,Xk%nibz
+   Xk%weights_DbGd(ik_ibz)=Xk%weights(ik_ibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
+   do i1=2,Xk%nibz_mapped(ik_ibz)
+     ik_DbGd=Xk%ibz_DbGd_map(ik_ibz,i1)
+     Xk%weights_DbGd(ik_ibz)=Xk%weights_DbGd(ik_ibz)+DbGd_k(i_db_merge)%weights(ik_DbGd)* &
 &                                              real(Xk%nbz_DbGd,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
    enddo
  enddo
@@ -493,6 +441,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  deallocate(DbGd_E(i_db_merge)%E)
  deallocate(DbGd_k(i_db_merge)%pt,DbGd_k(i_db_merge)%ptbz)
  deallocate(Xen%E_DbGd)
- deallocate(Xk%pt,Xk%ptbz,Xk%ibz_sp_map,Xk%bz_sp_map,Xk%weights_sphere,Xk%ibz_sp_n_ass,Xk%bz_sp_n_ass)
+ deallocate(Xk%pt,Xk%ptbz,Xk%ibz_DbGd_map,Xk%bz_DbGd_map,Xk%weights_DbGd,Xk%nibz_mapped,Xk%nbz_mapped)
  !
 end subroutine

@@ -242,10 +242,10 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    allocate(DbGd_k_done(k%nibz_DbGd))
    DbGd_k_done=0
    !
-   do ik_ibz=1,k%n_spheres_ibz
+   do ik_ibz=1,k%nibz
      !
-     do i1=1,k%ibz_sp_n_ass(ik_ibz)
-       ik_r=k%ibz_sp_map(ik_ibz,i1)
+     do i1=1,k%nibz_mapped(ik_ibz)
+       ik_r=k%ibz_DbGd_map(ik_ibz,i1)
        !
        if (DbGd_k_done(ik_r)==1) cycle
        !

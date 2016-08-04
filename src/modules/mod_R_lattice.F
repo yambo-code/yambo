@@ -65,24 +65,21 @@ module R_lattice
    !
    ! Fine grid
    !
-   integer           :: n_spheres_ibz                ! n_spheres_ibz >= nibz
-                                                     ! n_spheres_bz   = nb
-   !
    integer           :: nibz_DbGd
    integer           :: nbz_DbGd                     
    integer,  pointer :: bz_to_ibz_DbGd(:) => null()
    real(SP), pointer :: pt_DbGd(:,:)      => null()
    real(SP), pointer :: ptbz_DbGd(:,:)    => null() 
+   real(SP), pointer :: weights_DbGd(:)   => null()  
    !
    ! Mapping fine to coarse grid
    !
    integer           :: ik_ref
    integer           :: ikbz_ref
-   integer,  pointer :: ibz_sp_n_ass(:)   => null()  ! n° of kpt_DbGd in the IBZ associated to IBZ sphere
-   integer,  pointer :: bz_sp_n_ass(:)    => null()  ! n° of kpt_DbGd in the  BZ associated to  BZ sphere
-   integer,  pointer :: ibz_sp_map(:,:)   => null()  ! map kpt_DbGd in the IBZ --> sphere in the IBZ
-   integer,  pointer :: bz_sp_map(:,:)    => null()  ! map kpt_DbGd in the  BZ --> sphere in the  BZ
-   real(SP), pointer :: weights_sphere(:) => null()  ! given a shere in the IBZ, gives its weight 
+   integer,  pointer :: nibz_mapped(:)    => null()  ! n° of kpt_DbGd in the IBZ associated to IBZ kpts
+   integer,  pointer :: nbz_mapped(:)     => null()  ! n° of kpt_DbGd in the  BZ associated to  BZ kpts
+   integer,  pointer :: ibz_DbGd_map(:,:)   => null()  ! map kpt_DbGd in the IBZ --> kpts in the IBZ
+   integer,  pointer :: bz_DbGd_map(:,:)    => null()  ! map kpt_DbGd in the  BZ --> kpts in the  BZ
    real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
    !                                               
  end type bz_samp
@@ -238,8 +235,6 @@ module R_lattice
      !
      ! Double Grid
      !
-     k%n_spheres_ibz=0
-     !
      k%nbz_DbGd=0
      k%nibz_DbGd=0
      k%ik_ref=0
@@ -248,14 +243,14 @@ module R_lattice
      if(associated(k%bz_to_ibz_DbGd))   deallocate(k%bz_to_ibz_DbGd)
      if(associated(k%pt_DbGd))          deallocate(k%pt_DbGd)
      if(associated(k%pt_DbGd))          deallocate(k%ptbz_DbGd)
-     nullify(k%bz_to_ibz_DbGd,k%pt_DbGd,k%pt_DbGd)
+     if(associated(k%weights_DbGd))     deallocate(k%weights_DbGd)
+     nullify(k%bz_to_ibz_DbGd,k%pt_DbGd,k%pt_DbGd,k%weights_DbGd)
      !
-     if(associated(k%ibz_sp_n_ass))     deallocate(k%ibz_sp_n_ass)
-     if(associated(k%bz_sp_n_ass))      deallocate(k%bz_sp_n_ass)
-     if(associated(k%ibz_sp_map))       deallocate(k%ibz_sp_map)
-     if(associated(k%bz_sp_map))        deallocate(k%bz_sp_map)
-     if(associated(k%weights_sphere))   deallocate(k%weights_sphere)
-     if(associated(k%weights_ipol))     deallocate(k%weights_ipol)
+     if(associated(k%nibz_mapped))     deallocate(k%nibz_mapped)
+     if(associated(k%nbz_mapped))      deallocate(k%nbz_mapped)
+     if(associated(k%ibz_DbGd_map))    deallocate(k%ibz_DbGd_map)
+     if(associated(k%bz_DbGd_map))     deallocate(k%bz_DbGd_map)
+     if(associated(k%weights_ipol))    deallocate(k%weights_ipol)
      !
    end subroutine bz_samp_reset
    !
@@ -288,8 +283,6 @@ module R_lattice
        allocate( BZo%ptbz(BZo%nbz,3) ) 
        BZo%ptbz=BZi%ptbz
      endif
-     !
-     BZo%n_spheres_ibz=0
      !
      BZo%nbz_DbGd =BZi%nbz_DbGd
      BZo%nibz_DbGd=BZi%nibz_DbGd

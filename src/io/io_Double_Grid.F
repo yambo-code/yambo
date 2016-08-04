@@ -55,7 +55,6 @@ integer function io_Double_Grid(E,Xk,ID)
  call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
  !
  call io_elemental(ID,I0=E%nb_DbGd,        VAR=' Bands                           :')
- call io_elemental(ID,I0=Xk%n_spheres_ibz, VAR=' Number of spheres in the IBZ (k):')
  call io_elemental(ID,I0=E%nk_DbGd,        VAR=' Number of points  in the IBZ (E):')
  call io_elemental(ID,I0=Xk%nibz_DbGd,     VAR=' Number of points  in the IBZ (k):')
  call io_elemental(ID,I0=Xk%nbz_DbGd,      VAR=' Number of points  in the  BZ (k):')
@@ -95,35 +94,35 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Block filling
  !
- if (read_is_on(ID)) allocate(Xk%ibz_sp_n_ass(Xk%n_spheres_ibz),Xk%bz_sp_n_ass(Xk%nbz))
+ if (read_is_on(ID)) allocate(Xk%nibz_mapped(Xk%nibz),Xk%nbz_mapped(Xk%nbz))
  !
- call io_bulk(ID, VAR="BLOCK_FILLING_IBZ", VAR_SZ=(/Xk%n_spheres_ibz/) ) 
- call io_bulk(ID, I1=Xk%ibz_sp_n_ass )
+ call io_bulk(ID, VAR="BLOCK_FILLING_IBZ", VAR_SZ=(/Xk%nibz/) ) 
+ call io_bulk(ID, I1=Xk%nibz_mapped )
  !
  call io_bulk(ID, VAR="BLOCK_FILLING_BZ", VAR_SZ=(/Xk%nbz/) ) 
- call io_bulk(ID, I1=Xk%bz_sp_n_ass )
+ call io_bulk(ID, I1=Xk%nbz_mapped )
  !
  ! Block table
  !
  if (read_is_on(ID)) then
-   allocate(Xk%ibz_sp_map(Xk%n_spheres_ibz,maxval(Xk%ibz_sp_n_ass)))
-   allocate(Xk%bz_sp_map(Xk%nbz,maxval(Xk%bz_sp_n_ass)))
-   Xk%ibz_sp_map=0
-   Xk%bz_sp_map=0
+   allocate(Xk%ibz_DbGd_map(Xk%nibz,maxval(Xk%nibz_mapped)))
+   allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
+   Xk%ibz_DbGd_map=0
+   Xk%bz_DbGd_map=0
  endif
  !
- call io_bulk(ID, VAR="BLOCK_TABLE (IBZ)", VAR_SZ=shape(Xk%ibz_sp_map) ) 
- call io_bulk(ID, I2=Xk%ibz_sp_map )
+ call io_bulk(ID, VAR="BLOCK_TABLE (IBZ)", VAR_SZ=shape(Xk%ibz_DbGd_map) ) 
+ call io_bulk(ID, I2=Xk%ibz_DbGd_map )
  !
- call io_bulk(ID, VAR="BLOCK_TABLE ( BZ)", VAR_SZ=shape(Xk%bz_sp_map) ) 
- call io_bulk(ID, I2=Xk%bz_sp_map )
+ call io_bulk(ID, VAR="BLOCK_TABLE ( BZ)", VAR_SZ=shape(Xk%bz_DbGd_map) ) 
+ call io_bulk(ID, I2=Xk%bz_DbGd_map )
  !
  ! Double grid weights
  !
- if (read_is_on(ID)) allocate(Xk%weights_sphere(Xk%n_spheres_ibz))
+ if (read_is_on(ID)) allocate(Xk%weights_DbGd(Xk%nibz))
  !
- call io_bulk(ID, VAR="KPTS_WEIGHT", VAR_SZ=(/Xk%n_spheres_ibz/) ) 
- call io_bulk(ID, R1=Xk%weights_sphere)
+ call io_bulk(ID, VAR="KPTS_WEIGHT", VAR_SZ=(/Xk%nibz/) ) 
+ call io_bulk(ID, R1=Xk%weights_DbGd)
  !
  ! REMOVED INTERPOLATION WEIGHTS (to check)
  !

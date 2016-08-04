@@ -210,8 +210,8 @@ subroutine bxsf_read(Xk,Xen)
    call k2bz(v_in=DbGd_k%ptbz(ii,:))
  enddo
  !
- allocate(Xk%bz_sp_n_ass(Xk%nbz))
- Xk%bz_sp_n_ass = 0
+ allocate(Xk%nbz_mapped(Xk%nbz))
+ Xk%nbz_mapped = 0
  Xen%nb_DbGd=nbands
  Xk%nbz_DbGd=DbGd_k%nbz
  !
@@ -224,18 +224,18 @@ subroutine bxsf_read(Xk,Xen)
    ! have to go twice through all elements as BZ_DbGd_k cannot be
    ! allocated without knowing the number of maximum elements. 
    !
-   do while(.not.associated(Xk%bz_sp_map)) 
-     if (maxval(Xk%bz_sp_n_ass)>0) then
-       allocate(Xk%bz_sp_map(Xk%nbz,maxval(Xk%bz_sp_n_ass)))
-       Xk%bz_sp_map=0
+   do while(.not.associated(Xk%bz_DbGd_map)) 
+     if (maxval(Xk%nbz_mapped)>0) then
+       allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
+       Xk%bz_DbGd_map=0
      endif
-     Xk%bz_sp_n_ass=0
+     Xk%nbz_mapped=0
      do ii=1,DbGd_k%nbz
        !
        ikbz=k_the_nearest(DbGd_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
-       Xk%bz_sp_n_ass(ikbz)=Xk%bz_sp_n_ass(ikbz)+1
+       Xk%nbz_mapped(ikbz)=Xk%nbz_mapped(ikbz)+1
        !
-       if (associated(Xk%bz_sp_map)) Xk%bz_sp_map(ikbz,Xk%bz_sp_n_ass(ikbz))= ii
+       if (associated(Xk%bz_DbGd_map)) Xk%bz_DbGd_map(ikbz,Xk%nbz_mapped(ikbz))= ii
        !   
        call live_timing(steps=1)
        !
@@ -243,7 +243,7 @@ subroutine bxsf_read(Xk,Xen)
    enddo
    call live_timing()
    ! 
-   allocate(Xk%weights_ipol(maxval(Xk%bz_sp_n_ass)))
+   allocate(Xk%weights_ipol(maxval(Xk%nbz_mapped)))
    Xk%weights_ipol = 1.0_SP
  else
    call section('*','Employ double grid method' )
@@ -257,8 +257,8 @@ subroutine bxsf_read(Xk,Xen)
  endif
  !
  !     
- call msg('s',':: Blocks filling range :',(/minval(Xk%bz_sp_n_ass),maxval(Xk%bz_sp_n_ass)/))
- if(minval(Xk%bz_sp_n_ass) .ne. maxval(Xk%bz_sp_n_ass)) then
+ call msg('s',':: Blocks filling range :',(/minval(Xk%nbz_mapped),maxval(Xk%nbz_mapped)/))
+ if(minval(Xk%nbz_mapped) .ne. maxval(Xk%nbz_mapped)) then
    call msg('s',':: DbGd_k blocks are not filled uniformly.')
    if(ord_dgrid_ipol.gt.0)then
      call msg('s',':: Error: For double grid must be filled uniformely.')
@@ -296,6 +296,6 @@ subroutine bxsf_read(Xk,Xen)
  deallocate(nkpoints_gengrid)
  deallocate(startkpoint)
  deallocate(recip_lattice)
- deallocate(Xk%bz_sp_n_ass,Xk%bz_sp_map,Xk%weights_ipol)
+ deallocate(Xk%nbz_mapped,Xk%bz_DbGd_map,Xk%weights_ipol)
  !
 end subroutine

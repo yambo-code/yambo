@@ -47,8 +47,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! Work Space
  !
  real(SP)     ::rand_k(BZ_DbGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),&
-&               gap(2),tmp_zero(3),kpt_tmp(3),kpt_tmp2(3),dist_bz,dist_ibz
- integer      ::i1,i2,ik_near,is_near,ik_ibz,ik_bz,ik_DbGd,i_sphere,n_new_sphere,n_remove,&
+&               gap(2),tmp_zero(3),kpt_tmp(3),kpt_tmp2(3)
+ integer      ::i1,i2,ik_near,ik_ref,is_near,ik_ibz,ik_bz,ik_DbGd,&
 &               is_near_ibz,ik_near_ibz,i1_sym_ibz,i1_kpt_ibz
  logical      ::l_skip_check,l_flag,l_new_sphere
  integer,  allocatable :: BZ_SYM_table(:,:),Nibz_ass(:)
@@ -61,7 +61,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  integer              :: ID,i_err(MAX_DbGd_DBs),nsym_save,nsym_DbGd_DB,i_time_rev_save,&
 &                        i_time_rev_DB,i_db,i_db_merge,ik_now
  real(SP)             :: dl_sop_save(3,3,48)
- real(SP)             :: K_ref(Xk%nbz-Xk%nibz+1,3)
  integer, allocatable :: TMP_map_ibz(:),TMP_map_bz(:)
  type(PP_indexes)     :: px
  !
@@ -75,7 +74,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    return
  endif
  !
- if (Xk%nbz_DbGd>0) then
+ if (Xk%nbz_FineGd>0) then
    call msg("s",'DbGd: database components already allocated. Nothing to do.')
    return
  endif
@@ -215,10 +214,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! k-points
  !
  call section('+','Internal consistency check ...')
- Xk%ik_ref=k_DbGd_grid_consistency_check(Xk,Xen,DbGd_k(i_db_merge),DbGd_E(i_db_merge))
+ ik_ref=k_DbGd_grid_consistency_check(Xk,Xen,DbGd_k(i_db_merge),DbGd_E(i_db_merge))
  !
- if (Xk%ik_ref>0) then
-   call msg('l','passed @ Double Grid k-point #'//trim(intc(Xk%ik_ref))) 
+ if (ik_ref>0) then
+   call msg('l','passed @ Double Grid k-point #'//trim(intc(ik_ref))) 
  else 
    call msg('l','failed') 
    if (l_skip_check) then
@@ -228,25 +227,25 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    endif
  endif
  !
- ! Transfer E_DbGd(i_db_merge) to Xen%*_DbGd
+ ! Transfer E_FineGd(i_db_merge) to Xen%*_DbGd
  !
- Xen%nb_DbGd=DbGd_E(i_db_merge)%nb
- Xen%nk_DbGd=DbGd_E(i_db_merge)%nk
- allocate(Xen%E_DbGd(Xen%nb_DbGd,Xen%nk_DbGd,n_sp_pol))
- Xen%E_DbGd =DbGd_E(i_db_merge)%E
+ Xen%nb_FineGd=DbGd_E(i_db_merge)%nb
+ Xen%nk_FineGd=DbGd_E(i_db_merge)%nk
+ allocate(Xen%E_FineGd(Xen%nb_FineGd,Xen%nk_FineGd,n_sp_pol))
+ Xen%E_FineGd =DbGd_E(i_db_merge)%E
  !
  ! Skipe these for the moment
- !  real(SP),   pointer :: W_DbGd(:,:,:)        => null()
- !  real(SP),   pointer :: f_DbGd(:,:,:)        => null()
- !  real(SP),   pointer :: df_DbGd(:,:,:)       => null()
+ !  real(SP),   pointer :: W_FineGd(:,:,:)        => null()
+ !  real(SP),   pointer :: f_FineGd(:,:,:)        => null()
+ !  real(SP),   pointer :: df_FineGd(:,:,:)       => null()
  !
  ! First map IBZ to IBZ
  !=======================
  !
- Xk%nibz_DbGd    =DbGd_k(i_db_merge)%nibz
+ Xk%nibz_FineGd    =DbGd_k(i_db_merge)%nibz
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/Xk%nibz_DbGd/))
+ call PARALLEL_index(px,(/Xk%nibz_FineGd/))
  call PP_redux_wait
  !
  call live_timing('IBZ Double Grid Map',px%n_of_elements(myid+1))
@@ -254,16 +253,18 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  allocate(TMP_map_ibz(DbGd_k(i_db_merge)%nibz))
  TMP_map_ibz=0
  !
+ ! TO DO : reorder in the IBZ DbGd_k(i_db_merge) according to the mapping !!
+ !==========================================================================
+ !
  do i1=1,DbGd_k(i_db_merge)%nibz
    !
    call k2bz(DbGd_k(i_db_merge)%pt(i1,:))
    !
-   if (.not.px%element_1D(i1)) cycle
-   !
-   if (i1==Xk%ik_ref) then
-     call live_timing(steps=1)
+   if (.not.px%element_1D(i1)) then
+     DbGd_k(i_db_merge)%pt(i1,:)=0._SP
      cycle
    endif
+   !
    ik_near = k_the_nearest(DbGd_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near)
    TMP_map_ibz(i1)=ik_near
    !
@@ -277,13 +278,13 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  enddo
  !
  call PP_redux_wait(TMP_map_ibz)
+ call PP_redux_wait(DbGd_k(i_db_merge)%pt)
  !
  ! Number of points in each zone in the IBZ
  !
  allocate(Xk%nibz_mapped(Xk%nibz))
- Xk%nibz_mapped=1
- do i1=1,Xk%nibz_DbGd
-   if (i1==Xk%ik_ref) cycle
+ Xk%nibz_mapped=0
+ do i1=1,Xk%nibz_FineGd
    ik_near=TMP_map_ibz(i1)
    Xk%nibz_mapped(ik_near)=Xk%nibz_mapped(ik_near)+1
  enddo
@@ -294,13 +295,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  allocate(Xk%ibz_DbGd_map(Xk%nibz,maxval(Xk%nibz_mapped)))
  Xk%ibz_DbGd_map=0
- do i1=1,Xk%nibz
-   Xk%ibz_DbGd_map(i1,1)=i1
- enddo
  !
- Xk%nibz_mapped=1
- do i1=1,Xk%nibz_DbGd
-   if (i1==Xk%ik_ref) cycle
+ Xk%nibz_mapped=0
+ do i1=1,Xk%nibz_FineGd
    ik_near=TMP_map_ibz(i1)
    Xk%nibz_mapped(ik_near)=Xk%nibz_mapped(ik_near)+1
    !
@@ -318,11 +315,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  call k_build_up_BZ_tables(Xk)
  call k_ibz2bz(Xk,'i',.true.)
  ! 
- ! k_DbGd (tables)
- call k_build_up_BZ_tables(DbGd_k(i_db_merge))
- if(Xk%ik_ref>0) Xk%ikbz_ref=DbGd_k(i_db_merge)%k_table(Xk%ik_ref,1)
- deallocate(DbGd_k(i_db_merge)%k_table,DbGd_k(i_db_merge)%s_table)
- !
  ! k_DbGd (IBZ->BZ)
  !
  call k_ibz2bz(DbGd_k(i_db_merge),'i',.true.)
@@ -333,25 +325,20 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! Now map BZ to BZ
  !===================
  !
- Xk%nbz_DbGd     =DbGd_k(i_db_merge)%nbz
+ Xk%nbz_FineGd     =DbGd_k(i_db_merge)%nbz
  !
  call PP_indexes_reset(px)
- !call PARALLEL_index(px,(/DbGd_k(i_db_merge)%nbz/))
- !call PP_redux_wait
+ call PARALLEL_index(px,(/DbGd_k(i_db_merge)%nbz/))
+ call PP_redux_wait
  !
- call live_timing('BZ Double Grid Map',DbGd_k(i_db_merge)%nbz) !px%n_of_elements(myid+1))
+ call live_timing('BZ Double Grid Map',px%n_of_elements(myid+1))
  !
  allocate(TMP_map_bz(DbGd_k(i_db_merge)%nbz))
  TMP_map_bz=0
  !
  do i1=1,DbGd_k(i_db_merge)%nbz
    !
-   !if (.not.px%element_1D(i1)) cycle
-   !
-   if (i1==Xk%ikbz_ref) then
-     call live_timing(steps=1)
-     cycle
-   endif
+   if (.not.px%element_1D(i1)) cycle
    !
    ik_near=k_the_nearest(DbGd_k(i_db_merge)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
    TMP_map_bz(i1)=ik_near
@@ -365,9 +352,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! Number of points in each sphere in the BZ
  !
  allocate(Xk%nbz_mapped(Xk%nbz))
- Xk%nbz_mapped=1
- do i1=1,Xk%nbz_DbGd
-   if (i1==Xk%ikbz_ref) cycle
+ Xk%nbz_mapped=0
+ do i1=1,Xk%nbz_FineGd
    ik_near=TMP_map_bz(i1)
    Xk%nbz_mapped(ik_near)=Xk%nbz_mapped(ik_near)+1
  enddo
@@ -376,13 +362,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
  Xk%bz_DbGd_map=0
- do i1=1,Xk%nbz
-   Xk%bz_DbGd_map(i1,1)=i1
- enddo
  !
- Xk%nbz_mapped=1
- do i1=1,Xk%nbz_DbGd
-   if (i1==Xk%ikbz_ref) cycle
+ Xk%nbz_mapped=0
+ do i1=1,Xk%nbz_FineGd
    ik_near=TMP_map_bz(i1)
    Xk%nbz_mapped(ik_near)=Xk%nbz_mapped(ik_near)+1
    !
@@ -393,14 +375,14 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! DEBUG <
  !do ik_ibz=1,Xk%nibz
  !  write(100,*) Xk%pt(ik_ibz,:)
- !  do i1=2,Xk%nibz_mapped(ik_ibz)
+ !  do i1=1,Xk%nibz_mapped(ik_ibz)
  !    write(100+ik_ibz,*) DbGd_k(i_db_merge)%pt(Xk%ibz_DbGd_map(ik_ibz,i1),:)
  !  enddo
  !enddo
  !
  !do ik_bz=1,Xk%nbz
  !  write(1100,*) Xk%ptbz(ik_bz,:)
- !  do i1=2,Xk%nbz_mapped(ik_bz)
+ !  do i1=1,Xk%nbz_mapped(ik_bz)
  !    write(1100+ik_bz,*) DbGd_k(i_db_merge)%ptbz(Xk%bz_DbGd_map(ik_bz,i1),:)
  !  enddo
  !enddo
@@ -413,23 +395,23 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  allocate(Xk%weights_DbGd(Xk%nibz))
  do ik_ibz=1,Xk%nibz
-   Xk%weights_DbGd(ik_ibz)=Xk%weights(ik_ibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
-   do i1=2,Xk%nibz_mapped(ik_ibz)
+   Xk%weights_DbGd(ik_ibz)=Xk%weights(ik_ibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_FineGd,SP)
+   do i1=1,Xk%nibz_mapped(ik_ibz)
      ik_DbGd=Xk%ibz_DbGd_map(ik_ibz,i1)
      Xk%weights_DbGd(ik_ibz)=Xk%weights_DbGd(ik_ibz)+DbGd_k(i_db_merge)%weights(ik_DbGd)* &
-&                                              real(Xk%nbz_DbGd,SP)/real(Xk%nbz+Xk%nbz_DbGd,SP)
+&                                              real(Xk%nbz_FineGd,SP)/real(Xk%nbz+Xk%nbz_FineGd,SP)
    enddo
  enddo
  !
  !
  ! Transfer k_DbGd(i_db_merge) to Xk%*_DbGd
  !
- allocate(Xk%pt_DbGd(Xk%nibz_DbGd,3))
- Xk%pt_DbGd  =DbGd_k(i_db_merge)%pt
- allocate(Xk%ptbz_DbGd(Xk%nbz_DbGd,3))
- Xk%ptbz_DbGd  =DbGd_k(i_db_merge)%ptbz
- allocate(Xk%bz_to_ibz_DbGd(DbGd_k(i_db_merge)%nbz))
- Xk%bz_to_ibz_DbGd=DbGd_k(i_db_merge)%sstar(:,1)
+ allocate(Xk%pt_FineGd(Xk%nibz_FineGd,3))
+ Xk%pt_FineGd  =DbGd_k(i_db_merge)%pt
+ allocate(Xk%ptbz_FineGd(Xk%nbz_FineGd,3))
+ Xk%ptbz_FineGd  =DbGd_k(i_db_merge)%ptbz
+ allocate(Xk%sstar_FineGd(DbGd_k(i_db_merge)%nbz))
+ Xk%sstar_FineGd=DbGd_k(i_db_merge)%sstar(:,1)
  !
  ! Final I/O
  !
@@ -440,7 +422,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  deallocate(DbGd_E(i_db_merge)%E)
  deallocate(DbGd_k(i_db_merge)%pt,DbGd_k(i_db_merge)%ptbz)
- deallocate(Xen%E_DbGd)
+ deallocate(Xen%E_FineGd)
  deallocate(Xk%pt,Xk%ptbz,Xk%ibz_DbGd_map,Xk%bz_DbGd_map,Xk%weights_DbGd,Xk%nibz_mapped,Xk%nbz_mapped)
  !
 end subroutine

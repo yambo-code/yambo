@@ -89,12 +89,12 @@ module electrons
    !
    ! Double energy and k-points grid
    !
-   integer             :: nb_DbGd
-   integer             :: nk_DbGd
-   real(SP),   pointer :: E_DbGd(:,:,:)        => null()
-   real(SP),   pointer :: W_DbGd(:,:,:)        => null()
-   real(SP),   pointer :: f_DbGd(:,:,:)        => null()
-   real(SP),   pointer :: df_DbGd(:,:,:)       => null()
+   integer             :: nb_FineGd
+   integer             :: nk_FineGd
+   real(SP),   pointer :: E_FineGd(:,:,:)        => null()
+   real(SP),   pointer :: W_FineGd(:,:,:)        => null()
+   real(SP),   pointer :: f_FineGd(:,:,:)        => null()
+   real(SP),   pointer :: df_FineGd(:,:,:)       => null()
    !
    ! Perturbative SOC
    !
@@ -116,7 +116,7 @@ module electrons
      naive=Eo%nk==0
      Eo%nb=Ei%nb
      Eo%nb_SOC=Ei%nb_SOC
-     Eo%nb_DbGd=Ei%nb_DbGd
+     Eo%nb_FineGd=Ei%nb_FineGd
      if (naive) then
        Eo%nk=Ei%nk
        Eo%nbf=Ei%nbf
@@ -186,19 +186,19 @@ module electrons
      !
      ! E Double Grid
      !
-     if (Eo%nb_DbGd/=0.and.Ei%nk==Eo%nk) then
-       Eo%nk_DbGd=Ei%nk_DbGd
-       allocate(Eo%E_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
-       allocate(Eo%W_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
-       allocate(Eo%f_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
-       call mem_est("E_DbGd W_DbGd f_DbGd",(/size(Eo%E_DbGd),size(Eo%W_DbGd),size(Eo%f_DbGd)/),(/SP,SP,SP/))
-       Eo%E_DbGd=Ei%E_DbGd
-       Eo%W_DbGd=Ei%W_DbGd
-       Eo%f_DbGd=Ei%f_DbGd
-       if(associated(Ei%df_DbGd)) then
-         allocate(Eo%df_DbGd(Eo%nb_DbGd,Eo%nk_DbGd,n_sp_pol))
-         call mem_est("df_DbGd",(/size(Eo%df_DbGd)/),(/SP/))
-         Eo%df_DbGd=Ei%df_DbGd
+     if (Eo%nb_FineGd/=0.and.Ei%nk==Eo%nk) then
+       Eo%nk_FineGd=Ei%nk_FineGd
+       allocate(Eo%E_FineGd(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+       allocate(Eo%W_FineGd(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+       allocate(Eo%f_FineGd(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+       call mem_est("E_FineGd W_FineGd f_FineGd",(/size(Eo%E_FineGd),size(Eo%W_FineGd),size(Eo%f_FineGd)/),(/SP,SP,SP/))
+       Eo%E_FineGd=Ei%E_FineGd
+       Eo%W_FineGd=Ei%W_FineGd
+       Eo%f_FineGd=Ei%f_FineGd
+       if(associated(Ei%df_FineGd)) then
+         allocate(Eo%df_FineGd(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+         call mem_est("df_FineGd",(/size(Eo%df_FineGd)/),(/SP/))
+         Eo%df_FineGd=Ei%df_FineGd
        endif
      endif
      !
@@ -245,7 +245,7 @@ module electrons
      call mem_est("E-E E-Eo E-f E-fo E-df E-W E-Z")
      call mem_est("E-QP_corrected E-GreenF E-GreenF_W")
      !
-     call E_DbGd_components_reset(E,.FALSE.)
+     call E_FineGd_components_reset(E,.FALSE.)
      !
      E%nb_SOC=0
      if(associated(E%E_SOC))          deallocate(E%E_SOC)
@@ -253,23 +253,23 @@ module electrons
      !
    end subroutine
    !
-   subroutine E_DbGd_components_reset(E,FULL_RESET)
+   subroutine E_FineGd_components_reset(E,FULL_RESET)
      !
      use memory_m, ONLY:mem_est
      !
      type(levels)::E
      logical     ::FULL_RESET
      !
-     E%nb_DbGd=0
-     E%nk_DbGd=0
+     E%nb_FineGd=0
+     E%nk_FineGd=0
      !
-     if(associated(E%E_DbGd) )      deallocate(E%E_DbGd )
-     if(associated(E%W_DbGd) )      deallocate(E%W_DbGd )
-     if(associated(E%f_DbGd) )      deallocate(E%f_DbGd )
-     if(associated(E%df_DbGd))      deallocate(E%df_DbGd)
+     if(associated(E%E_FineGd) )      deallocate(E%E_FineGd )
+     if(associated(E%W_FineGd) )      deallocate(E%W_FineGd )
+     if(associated(E%f_FineGd) )      deallocate(E%f_FineGd )
+     if(associated(E%df_FineGd))      deallocate(E%df_FineGd)
      !
-     nullify(E%E_DbGd,E%W_DbGd,E%f_DbGd,E%df_DbGd)
-     call mem_est("E_DbGd W_DbGd f_DbGd df_DbGd")
+     nullify(E%E_FineGd,E%W_FineGd,E%f_FineGd,E%df_FineGd)
+     call mem_est("E_FineGd W_FineGd f_FineGd df_FineGd")
      !
    end subroutine
    !

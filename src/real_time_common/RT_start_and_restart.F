@@ -49,10 +49,10 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
+&                         Gr_kind,Gr_description,l_RT_uses_E_FineGd,N_Gr_descs,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
+&                         RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
  use fields,         ONLY:A_vecpot,A_vecpot_previous,A_ext
  use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
@@ -296,9 +296,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  !================
  if( all(RT_eh_en(:)==0._SP) ) then
    ! Case A: was not defined in input
-   if (l_RT_uses_E_DbGd) then
-     RT_eh_en(1)=minval(E%E_DbGd(RT_bands(1):RT_bands(2),:,:)) 
-     RT_eh_en(2)=maxval(E%E_DbGd(RT_bands(1):RT_bands(2),:,:)) 
+   if (l_RT_uses_E_FineGd) then
+     RT_eh_en(1)=minval(E%E_FineGd(RT_bands(1):RT_bands(2),:,:)) 
+     RT_eh_en(2)=maxval(E%E_FineGd(RT_bands(1):RT_bands(2),:,:)) 
    else
      RT_eh_en(1)=minval(E%E(RT_bands(1):RT_bands(2),:,:)) 
      RT_eh_en(2)=maxval(E%E(RT_bands(1):RT_bands(2),:,:)) 
@@ -377,15 +377,15 @@ subroutine RT_start_and_restart(E,k,q,X)
      !
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
-         do ik_RT_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           ik_E_rim=ik_RT_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-           if (l_RT_uses_E_DbGd) then
-             G_lesser(ib,ib,ik_RT_rim,1) =cI*E%f_DbGd(ib,ik_E_rim,1)
-             if (associated(E%W))  E%W_DbGd(ib,ik_E_rim,1)=E%W(ib,ik,1)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik_RT_rim) =cI*(E%f_DbGd(ib,ik_E_rim,1)-E%df_DbGd(ib,ik_E_rim,1))
-           else
+         do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           ik_FineGd=ik_RT_rim-ik
+           if (ik_RT_DbGd==RT_ibz_coo(ik,1)) then
              G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
              if (associated(E%fo)) G_lesser_reference(ib,ib,ik) =cI*E%fo(ib,ik,1)
+           else
+             G_lesser(ib,ib,ik_RT_DbGd,1) =cI*E%f_FineGd(ib,ik_FineGd,1)
+             if (associated(E%W))  E%W_FineGd(ib,ik_FineGd,1)=E%W(ib,ik,1)
+             if (associated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*(E%f_FineGd(ib,ik_FineGd,1)-E%df_FineGd(ib,ik_FineGd,1))
            endif
          enddo
        enddo

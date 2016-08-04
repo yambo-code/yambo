@@ -54,10 +54,10 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
  !
- call io_elemental(ID,I0=E%nb_DbGd,        VAR=' Bands                           :')
- call io_elemental(ID,I0=E%nk_DbGd,        VAR=' Number of points  in the IBZ (E):')
- call io_elemental(ID,I0=Xk%nibz_DbGd,     VAR=' Number of points  in the IBZ (k):')
- call io_elemental(ID,I0=Xk%nbz_DbGd,      VAR=' Number of points  in the  BZ (k):')
+ call io_elemental(ID,I0=E%nb_FineGd,        VAR=' Bands                           :')
+ call io_elemental(ID,I0=E%nk_FineGd,        VAR=' Number of points  in the IBZ (E):')
+ call io_elemental(ID,I0=Xk%nibz_FineGd,     VAR=' Number of points  in the IBZ (k):')
+ call io_elemental(ID,I0=Xk%nbz_FineGd,      VAR=' Number of points  in the  BZ (k):')
  ! 
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
@@ -65,31 +65,31 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Eigenvalues
  !
  if (read_is_on(ID)) then
-   allocate(E%E_DbGd(E%nb_DbGd,E%nk_DbGd,n_sp_pol))
-   allocate(E%W_DbGd(E%nb_DbGd,E%nk_DbGd,n_sp_pol))
-   allocate(E%f_DbGd(E%nb_DbGd,E%nk_DbGd,n_sp_pol))
+   allocate(E%E_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   allocate(E%W_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   allocate(E%f_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
  endif
  !
- call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_DbGd) ) 
- call io_bulk(ID, R3=E%E_DbGd )
+ call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_FineGd) ) 
+ call io_bulk(ID, R3=E%E_FineGd )
  !
  !
  ! Kpts
  !
  if (read_is_on(ID)) then
-   allocate(Xk%pt_DbGd(Xk%nibz_DbGd,3))
-   allocate(Xk%ptbz_DbGd(Xk%nbz_DbGd,3))
-   allocate(Xk%bz_to_ibz_DbGd(Xk%nbz_DbGd))
+   allocate(Xk%pt_FineGd(Xk%nibz_FineGd,3))
+   allocate(Xk%ptbz_FineGd(Xk%nbz_FineGd,3))
+   allocate(Xk%sstar_FineGd(Xk%nbz_FineGd))
  endif
  !
- call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%pt_DbGd) ) 
- call io_bulk(ID, R2=Xk%pt_DbGd )
+ call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%pt_FineGd) ) 
+ call io_bulk(ID, R2=Xk%pt_FineGd )
  !
- call io_bulk(ID, VAR="KPTS_BZ", VAR_SZ=shape(Xk%ptbz_DbGd) ) 
- call io_bulk(ID, R2=Xk%ptbz_DbGd )
+ call io_bulk(ID, VAR="KPTS_BZ", VAR_SZ=shape(Xk%ptbz_FineGd) ) 
+ call io_bulk(ID, R2=Xk%ptbz_FineGd )
  !
- call io_bulk(ID, VAR="IBZ_TO_BZ_MAP", VAR_SZ=(/Xk%nbz_DbGd/) )
- call io_bulk(ID, I1=Xk%bz_to_ibz_DbGd )
+ call io_bulk(ID, VAR="IBZ_TO_BZ_MAP", VAR_SZ=(/Xk%nbz_FineGd/) )
+ call io_bulk(ID, I1=Xk%sstar_FineGd )
  !
  !
  ! Block filling

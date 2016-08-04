@@ -82,11 +82,11 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
     allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
     allocate(RDATA(interpls(ID)%ndim,Nk_local))
 #if defined _RT
-    if(associated(E%E_DbGd)) then
+    if(associated(E%E_FineGd)) then
       do i1=1,inpdim(2)
         do ik=1,k%nibz
           RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) =&
-          &             E%E_DbGd(1:inpdim(1),DbGd_ibz_coo(ik,1):DbGd_ibz_coo(ik,2),i1)
+          &             E%E_FineGd(1:inpdim(1),DbGd_ibz_coo(ik,1):DbGd_ibz_coo(ik,2),i1)
         enddo
       enddo 
     else

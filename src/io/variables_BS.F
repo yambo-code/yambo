@@ -208,7 +208,7 @@ integer function variables_BS(ID,local_description,X)
    !
    ! W_RIM
    !
-   call io_elemental(ID,VAR="W_DbGd",VAR_SZ=2,MENU=0)
+   call io_elemental(ID,VAR="W_FineGd",VAR_SZ=2,MENU=0)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,I0=RIM_ng,&
 &     VAR=' RIM|RL components      [col]:',CHECK=.true.,OP=(/"=="/),&

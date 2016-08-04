@@ -125,7 +125,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! a very small temperature is imposed forcing the Fermi level to fall within the
  ! gap.
  !
- if (E%nb_DbGd>0) Tel=Tel_step
+ if (E%nb_FineGd>0) Tel=Tel_step
  !
  do while (.not.Fermi_is_converged)
    !
@@ -214,22 +214,22 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !
- ! If %E_DbGd is associated I simply extend the %E occupations to %E_DbGd
+ ! If %E_FineGd is associated I simply extend the %E occupations to %E_FineGd
  !
- if (E%nb_DbGd>0.and.associated(E%E_DbGd)) then
+ if (E%nb_FineGd>0.and.associated(E%E_FineGd)) then
    ! 
    nel_DbGd=0._SP 
    !
-   E%E_DbGd(:,:,:)=E%E_DbGd(:,:,:)-E%E_Fermi
+   E%E_FineGd(:,:,:)=E%E_FineGd(:,:,:)-E%E_Fermi
    do is=1,n_sp_pol
      do ik=1,K%nibz
-       nel=nel+sum(E%f(:E%nb_DbGd,ik,is))*K%weights_DbGd(ik)
+       nel=nel+sum(E%f(:E%nb_FineGd,ik,is))*K%weights_DbGd(ik)
        do i1=1,K%nibz_mapped(ik)
          ik_rand=K%ibz_DbGd_map(ik,i1)
-         do ib=1,E%nb_DbGd
-           E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
+         do ib=1,E%nb_FineGd
+           E%f_FineGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_FineGd(ib,ik_rand,is),Tel)
          enddo
-         nel_DbGd=nel_DbGd+sum(E%f_DbGd(:,ik_rand,is))*K%weights_DbGd(ik)
+         nel_DbGd=nel_DbGd+sum(E%f_FineGd(:,ik_rand,is))*K%weights_DbGd(ik)
        enddo
      enddo
    enddo

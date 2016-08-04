@@ -244,7 +244,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  if( BS_pert_soc) then
    BSS_n_descs=BSS_n_descs+2
    BSS_description(BSS_n_descs-1)=' '
-   BSS_description(BSS_n_descs)=' BSS|BZ Double Grid points      :'//intc(k%nibz+k%nibz_DbGd)
+   BSS_description(BSS_n_descs)=' BSS|BZ Double Grid points      :'//intc(k%nibz+k%nibz_FineGd)
  endif
  !
 end subroutine K_inversion_Lo

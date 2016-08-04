@@ -32,7 +32,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
- use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,l_RT_uses_E_DbGd,RT_bands
+ use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,l_RT_uses_E_FineGd,RT_bands
  !
  implicit none
  !
@@ -96,7 +96,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
      !
    enddo
    !
-   if(.not.l_RT_uses_E_DbGd) cycle
+   if(.not.l_RT_uses_E_FineGd) cycle
    !
    RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)
    !

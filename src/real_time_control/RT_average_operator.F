@@ -25,7 +25,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
 &                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
  !
  use pars,           ONLY:SP,cI,cZERO
- use real_time,      ONLY:DbGd_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_DbGd,&
+ use real_time,      ONLY:RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_FineGd,&
 &                         RT_bands,RT_nbands
  use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp 
@@ -61,7 +61,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  ! Work Space
  !
  integer     :: ib,ibp,ik,RT_bands2,ik_ibz,iE_rim,OUTPUT_dim,i_dir
- real(SP)    :: deltaE,deltaE_DbGd
+ real(SP)    :: deltaE,deltaE_FineGd
  complex(SP) :: Hk(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),n_sp_pol),VALUE_tmp(3), &
 &               Hk_tmp(RT_bands(2),RT_bands(2),n_sp_pol),                                    &
 &               Hk_vec_tmp(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),n_sp_pol)
@@ -73,7 +73,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  !
  l_rim_energy=.false.
  l_rim_dipole=.false.
- if(present(Double_Grid).and.l_RT_uses_E_DbGd) then
+ if(present(Double_Grid).and.l_RT_uses_E_FineGd) then
    if(trim(Double_Grid)=='ENERGY') l_rim_energy=.true.
    if(trim(Double_Grid)=='DIPOLE') l_rim_dipole=.true.
  endif
@@ -100,27 +100,27 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
    !
    do i_dir=1,OUTPUT_dim
      !
-     do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
+     do ik=RT_ibz_coo(ik_ibz,1)+1,RT_ibz_coo(ik_ibz,2)
        !
        if(l_rim_energy) then
-         iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
+         ik_FineGd=ik-ik_ibz
          do ib=RT_bands(1),RT_bands(2)
-           Hk(1,ib,ib,:)=Hk_tmp(ib,ib,:)-en%E(ib,ik_ibz,:)+en%E_DbGd(ib,iE_rim,:)
+           Hk(1,ib,ib,:)=Hk_tmp(ib,ib,:)-en%E(ib,ik_ibz,:)+en%E_FineGd(ib,ik_FineGd,:)
            do ibp=ib+1,RT_bands(2)
              Hk(1,ib,ibp,:)=Hk_tmp(ib,ibp,:)
              Hk(1,ibp,ib,:)=Hk_tmp(ibp,ib,:)
            enddo
          enddo
        else if(l_rim_dipole) then
-         iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
+         ik_FineGd=ik-ik_ibz
          do ib=RT_bands(1),RT_bands(2)
            Hk(i_dir,ib,ib,:)=Hk_vec_tmp(i_dir,ib,ib,:)
            do ibp=ib+1,RT_bands(2)
              deltaE    =en%E(ib,ik_ibz,1)    -en%E(ibp,ik_ibz,1)
-             deltaE_DbGd=en%E_DbGd(ib,iE_rim,1)-en%E_DbGd(ibp,iE_rim,1)
-             if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_DbGd)>Dipole_Energy_treshold) then
-               Hk(i_dir,ib,ibp,:)=Hk_vec_tmp(i_dir,ib,ibp,:)*deltaE/deltaE_DbGd
-               Hk(i_dir,ibp,ib,:)=Hk_vec_tmp(i_dir,ibp,ib,:)*deltaE/deltaE_DbGd
+             deltaE_FineGd=en%E_FineGd(ib,ik_FineGd,1)-en%E_FineGd(ibp,ik_FineGd,1)
+             if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_FineGd)>Dipole_Energy_treshold) then
+               Hk(i_dir,ib,ibp,:)=Hk_vec_tmp(i_dir,ib,ibp,:)*deltaE/deltaE_FineGd
+               Hk(i_dir,ibp,ib,:)=Hk_vec_tmp(i_dir,ibp,ib,:)*deltaE/deltaE_FineGd
              else
                Hk(i_dir,ibp,ib,:)=Hk_vec_tmp(i_dir,ibp,ib,:)
              endif

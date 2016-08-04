@@ -35,7 +35,7 @@ integer function variables_RT(ID,local_description,what)
 &                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
-&                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_extrap_times_SAVE,&
+&                         l_RT_uses_E_FineGd,N_Gr_descs,RT_life_extrap_times_SAVE,&
 &                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
 &                         NE_step_update_treshold,RT_life_extrap_times
 #if defined _ELPH
@@ -251,7 +251,7 @@ integer function variables_RT(ID,local_description,what)
    !======================
    call io_elemental(ID,VAR="Double_Grid_support",VAR_SZ=3,MENU=0) 
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_RT_uses_E_DbGd,&
+   call io_elemental(ID,L0=l_RT_uses_E_FineGd,&
 &    VAR=' [DbGd] Double Grid support      :',  CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1

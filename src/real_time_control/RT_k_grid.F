@@ -23,27 +23,14 @@
 !
 integer function RT_k_grid(E,k,q)
  !
- !       K(BZ)                                                    K(IBZ)
- !               E_DbGd(DbGd_bz_coo(ikbz,:)=DbGd_ibz_coo(ik,:))
- !        ____                                                       ____
- !ikbz1  | 1  | DbGd_bz_coo(ikbz1,:) = DbGd_ibz_coo(ik1,:)      ik1 | 1  | RT_ibz_coo(ik1,:)     
- !       |____|                       <----------------------       |____|   
- !        ____                                                       ____
- !ikbz2  | 2  | DbGd_bz_coo(ikbz2,:) = 1                        ik2 | 2  | RT_ibz_coo(ik2,:)     
- !       |____|                                               /     |____|   
- !        ____                                               /
- !ikbz3  | 3  | DbGd_bz_coo(ikbz3,:) = DbGd_ibz_coo(ik2,:)  /            
- !       |____|                        <-------------------/        
- ! 
- !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
  use LIVE_t,         ONLY:what_is_running
- use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
- use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
+ use electrons,      ONLY:levels
+ use real_time,      ONLY:DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
-&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands
+&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_FineGd,RT_bands
  use R_lattice,      ONLY:bz_samp
  !
  implicit none
@@ -57,18 +44,16 @@ integer function RT_k_grid(E,k,q)
  logical :: l_check(k%nibz,k%nibz)
  integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  !
- l_RT_uses_E_DbGd=BZ_DbGd_tot_nkpts>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
+ l_RT_uses_E_FineGd=k%nibz_FineGd>0.and.E%nb_FineGd>=RT_bands(2)
  !
- if (.not.allocated(DbGd_ibz_coo)) then
-   allocate(DbGd_ibz_coo(k%nibz,2))
-   allocate(DbGd_bz_coo(k%nbz,2))
+ if (.not.allocated(RT_ibz_coo)) then
    allocate(RT_ibz_coo(k%nibz,2))
    allocate(RT_Nk_ibz(k%nibz))
  endif
  !
  ! No DbGd, trivial definitions
  !==============================
- if (.not.l_RT_uses_E_DbGd) then
+ if (.not.l_RT_uses_E_FineGd) then
    !
    RT_k_grid=k%nibz
    !
@@ -82,7 +67,6 @@ integer function RT_k_grid(E,k,q)
      DbGd_EE_Nk_table=1
    endif
    do ik=1,k%nibz
-     DbGd_ibz_coo(ik,:)=ik
      RT_ibz_coo(ik,:)=ik
      RT_all2ibz(ik)=ik
    enddo
@@ -98,13 +82,9 @@ integer function RT_k_grid(E,k,q)
  !
  do ik=1,k%nibz
    ik_bz=1+sum(k%nstar(:ik-1))
-   DbGd_ibz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik_bz-1))+1,sum(BZ_DbGd_nkpt(:ik_bz))/)
-   RT_ibz_coo(ik,:)=(/RT_k_grid+1,RT_k_grid+BZ_DbGd_nkpt(ik_bz)/)
-   RT_k_grid=RT_k_grid+BZ_DbGd_nkpt(ik_bz)
-   RT_Nk_ibz(ik)=BZ_DbGd_nkpt(ik_bz)
- enddo
- do ik=1,k%nbz
-   DbGd_bz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik-1))+1,sum(BZ_DbGd_nkpt(:ik))/)
+   RT_ibz_coo(ik,:)=(/RT_k_grid+1,RT_k_grid+1+k%nibz_FineGd(ik)/)
+   RT_k_grid=RT_k_grid+1+k%nibz_FineGd(ik)
+   RT_Nk_ibz(ik)=k%nibz_DbGd(ik)+1
  enddo
  allocate(RT_all2ibz(RT_k_grid))
  do ik=1,k%nibz

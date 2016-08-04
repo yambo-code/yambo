@@ -33,7 +33,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use RT_control,     ONLY:RT_do_it
  use rt_interfaces,  ONLY:RT_average_operator
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
-&                         XC0,HARTREE0,DbGd_ibz_coo,l_RT_uses_E_DbGd,REF_V_hartree_sc,   &
+&                         XC0,HARTREE0,DbGd_ibz_coo,l_RT_uses_E_FineGd,REF_V_hartree_sc,   &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
 &                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc,RT_bands
  use electrons,      ONLY:levels,n_sp_pol
@@ -164,9 +164,9 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    do ib=RT_bands(1),RT_bands(2)
      VALUE_tmp=cZERO
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       if (l_RT_uses_E_DbGd) then
+       if (l_RT_uses_E_FineGd) then
          iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-         Energy=en%E_DbGd(ib,iE_rim,1)
+         Energy=en%E_FineGd(ib,iE_rim,1)
        else
          Energy=en%E(ib,ik,1)
        endif

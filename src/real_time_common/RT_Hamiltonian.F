@@ -57,8 +57,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
  use SC,             ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
-&                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_FineGd,REF_V_xc_sc,&
+&                         rho_reference,magn_reference,RT_Vnl_xc,&
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,&
 &                         RT_bands,RT_nbands,RT_nk
  use fields,         ONLY:gauge_field
@@ -121,10 +121,10 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      ! Ho+Sigma[eq]= E^{QP} 
      !
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+       ik_FineGd=ik_RT-ik
        do ib=RT_bands(1),RT_bands(2)
-         if(     l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
-         if(.not.l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
+         if(ik_RT==RT_ibz_coo(ik,1)) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E_FineGd(ib,ik,1)
+         if(ik_RT> RT_ibz_coo(ik,1)) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E_FineGd(ib,ik_FineGd,1)
        enddo
      enddo
      !

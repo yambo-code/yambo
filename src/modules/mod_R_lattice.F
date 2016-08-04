@@ -49,7 +49,11 @@ module R_lattice
  real(SP) :: q0_def_norm, q0_shift_norm
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
+ !
  type bz_samp
+   !
+   ! Coarse grid
+   !
    integer           :: nibz
    integer           :: nbz
    integer,  pointer :: nstar(:)     => null()  ! n° of points in the star
@@ -65,21 +69,19 @@ module R_lattice
    !
    ! Fine grid
    !
-   integer           :: nibz_DbGd
-   integer           :: nbz_DbGd                     
-   integer,  pointer :: bz_to_ibz_DbGd(:) => null()
-   real(SP), pointer :: pt_DbGd(:,:)      => null()
-   real(SP), pointer :: ptbz_DbGd(:,:)    => null() 
+   integer           :: nibz_FineGd
+   integer           :: nbz_FineGd                     
+   integer,  pointer :: sstar_FineGd(:)   => null()
+   real(SP), pointer :: pt_FineGd(:,:)    => null()
+   real(SP), pointer :: ptbz_FineGd(:,:)  => null() 
+   !
+   ! Double grid: Mapping Fine to Coarse grid
+   !
+   integer,  pointer :: nibz_mapped(:)    => null()  ! For each IBZ kpt in the Fg, n° of IBZ kpt_FineGd associated
+   integer,  pointer :: nbz_mapped(:)     => null()  ! For each IBZ kpt in the Fg, n° of IBZ kpt_FineGd associated
+   integer,  pointer :: ibz_DbGd_map(:,:) => null()  ! map kpt_FineGd in the IBZ --> kpts in the IBZ
+   integer,  pointer :: bz_DbGd_map(:,:)  => null()  ! map kpt_FineGd in the  BZ --> kpts in the  BZ
    real(SP), pointer :: weights_DbGd(:)   => null()  
-   !
-   ! Mapping fine to coarse grid
-   !
-   integer           :: ik_ref
-   integer           :: ikbz_ref
-   integer,  pointer :: nibz_mapped(:)    => null()  ! n° of kpt_DbGd in the IBZ associated to IBZ kpts
-   integer,  pointer :: nbz_mapped(:)     => null()  ! n° of kpt_DbGd in the  BZ associated to  BZ kpts
-   integer,  pointer :: ibz_DbGd_map(:,:)   => null()  ! map kpt_DbGd in the IBZ --> kpts in the IBZ
-   integer,  pointer :: bz_DbGd_map(:,:)    => null()  ! map kpt_DbGd in the  BZ --> kpts in the  BZ
    real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
    !                                               
  end type bz_samp
@@ -235,16 +237,14 @@ module R_lattice
      !
      ! Double Grid
      !
-     k%nbz_DbGd=0
-     k%nibz_DbGd=0
-     k%ik_ref=0
-     k%ikbz_ref=0
+     k%nbz_FineGd=0
+     k%nibz_FineGd=0
      !
-     if(associated(k%bz_to_ibz_DbGd))   deallocate(k%bz_to_ibz_DbGd)
-     if(associated(k%pt_DbGd))          deallocate(k%pt_DbGd)
-     if(associated(k%pt_DbGd))          deallocate(k%ptbz_DbGd)
+     if(associated(k%sstar_FineGd))   deallocate(k%sstar_FineGd)
+     if(associated(k%pt_FineGd))          deallocate(k%pt_FineGd)
+     if(associated(k%pt_FineGd))          deallocate(k%ptbz_FineGd)
      if(associated(k%weights_DbGd))     deallocate(k%weights_DbGd)
-     nullify(k%bz_to_ibz_DbGd,k%pt_DbGd,k%pt_DbGd,k%weights_DbGd)
+     nullify(k%sstar_FineGd,k%pt_FineGd,k%pt_FineGd,k%weights_DbGd)
      !
      if(associated(k%nibz_mapped))     deallocate(k%nibz_mapped)
      if(associated(k%nbz_mapped))      deallocate(k%nbz_mapped)
@@ -284,14 +284,12 @@ module R_lattice
        BZo%ptbz=BZi%ptbz
      endif
      !
-     BZo%nbz_DbGd =BZi%nbz_DbGd
-     BZo%nibz_DbGd=BZi%nibz_DbGd
-     BZo%ik_ref   =BZi%ik_ref
-     BZo%ikbz_ref =BZi%ikbz_ref
+     BZo%nbz_FineGd =BZi%nbz_FineGd
+     BZo%nibz_FineGd=BZi%nibz_FineGd
      !
-     if (associated( BZi%bz_to_ibz_DbGd )) then
-       allocate(BZo%bz_to_ibz_DbGd(BZo%nbz_DbGd))
-       BZo%bz_to_ibz_DbGd=BZi%bz_to_ibz_DbGd
+     if (associated( BZi%sstar_FineGd )) then
+       allocate(BZo%sstar_FineGd(BZo%nbz_FineGd))
+       BZo%sstar_FineGd=BZi%sstar_FineGd
      endif
      !
      return

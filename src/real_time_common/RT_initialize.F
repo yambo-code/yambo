@@ -39,7 +39,7 @@ subroutine RT_initialize(E,k,q)
  use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,                &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
-&                         NE_MEM_treshold,G_MEM_steps,Gr_kind,l_RT_uses_E_DbGd,               &
+&                         NE_MEM_treshold,G_MEM_steps,Gr_kind,l_RT_uses_E_FineGd,               &
 &                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,             &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_EULER,l_RT_RK2,l_RT_RWA,      &
 &                         l_RT_EXP,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,            &
@@ -376,8 +376,8 @@ subroutine RT_initialize(E,k,q)
  endif
  !
  call msg( 'nr','---RIM---')
- call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_DbGd)
- if (l_RT_uses_E_DbGd) then
+ call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_FineGd)
+ if (l_RT_uses_E_FineGd) then
    call msg( 'r', 'K-points            (TOTAL):',BZ_DbGd_tot_nkpts)
    call msg( 'r', '                     (USED):',RT_nk)
    if (l_elel_scatt) then

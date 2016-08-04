@@ -153,7 +153,7 @@ module real_time
  !
  ! Relaxation and Dissipation 
  !----------------------------
- logical                  :: l_RT_uses_E_DbGd
+ logical                  :: l_RT_uses_E_FineGd
  logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
  integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
  integer,     allocatable :: DbGd_ibz_coo(:,:)

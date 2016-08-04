@@ -245,14 +245,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
  endif
  !
- if (En%nb_DbGd>0.and.associated(en%E_DbGd)) then
+ if (En%nb_FineGd>0.and.associated(en%E_FineGd)) then
    !
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'K-points (IBZ)       :',k%nibz_DbGd)
-   call msg('r', 'K-points ( BZ)       :',k%nbz_DbGd)
-   call msg('r', 'Bands                :',en%nb_DbGd)
+   call msg('r', 'K-points (IBZ)       :',k%nibz_FineGd)
+   call msg('r', 'K-points ( BZ)       :',k%nbz_FineGd)
+   call msg('r', 'Bands                :',en%nb_FineGd)
    !
  endif
  !

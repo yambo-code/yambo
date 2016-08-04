@@ -38,7 +38,7 @@ subroutine RT_BGR(dG,E,k)
  use wave_func,      ONLY:WF
  use real_time,      ONLY:l_initial_equilibrium,REF_V_xc_sc,BGR,&
 &                         REF_V_hartree_sc,REF_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
-&                         l_RT_uses_E_DbGd,DbGd_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
+&                         l_RT_uses_E_FineGd,DbGd_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
 &                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR,RT_Vnl_xc,&
 &                         RT_bands
  use xc_functionals, ONLY:V_xc,XC_potential_driver
@@ -173,8 +173,8 @@ subroutine RT_BGR(dG,E,k)
          !
          deltaE=BGR_Hartree(ib,ik_ibz,1)+BGR_V_xc(ib,ik_ibz,1)+BGR_Self_Energy(ib,ik_ibz,1)
          !
-         if (     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)=E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
-         if (.not.l_RT_uses_E_DbGd) E%E(ib,ik_ibz,1)      =E_reference%E(ib,ik_ibz,1)      +deltaE
+         if (     l_RT_uses_E_FineGd) E%E_FineGd(ib,ik_DbGd,1)=E_reference%E_FineGd(ib,ik_DbGd,1)+deltaE
+         if (.not.l_RT_uses_E_FineGd) E%E(ib,ik_ibz,1)      =E_reference%E(ib,ik_ibz,1)      +deltaE
          !
        enddo
        !

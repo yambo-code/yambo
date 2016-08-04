@@ -55,7 +55,7 @@ subroutine electrons_dos(Xk,Xen)
  !===============
  !
  l_DbGd=.FALSE.
- if ( Xen%nb_DbGd>0 ) then
+ if ( Xen%nb_FineGd>0 ) then
    l_DbGd=.TRUE.
    call OCCUPATIONS_Extend(Xen,Xen)
  endif
@@ -65,7 +65,7 @@ subroutine electrons_dos(Xk,Xen)
    call electrons_spin_factors(Xk,(/1,Xk%nibz/),dos_bands,WF_fac)
  endif
  !
- if (l_DbGd) dos_bands(2)=min(dos_bands(2),Xen%nb_DbGd)
+ if (l_DbGd) dos_bands(2)=min(dos_bands(2),Xen%nb_FineGd)
  !
  el_dos_max=0._SP
  !

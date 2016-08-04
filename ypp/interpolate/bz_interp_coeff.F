@@ -95,7 +95,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
       if(Nk==Xk%nibz) call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
       ! Implementation to be finished. Here I canno use BZ_DbGd_kpts
       ! bacuse also extra points in the BZ are included ...
-      !if(Nk> Xk%nibz) call c2a(v_in=Xk%pt_DbGd(ik,:),v_out=v,mode='ki2a')
+      !if(Nk> Xk%nibz) call c2a(v_in=Xk%pt_FineGd(ik,:),v_out=v,mode='ki2a')
       do i2=1,nstar
         star_1(i1,ik)=star_1(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i2)))
       enddo

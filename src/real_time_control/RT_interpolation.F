@@ -72,11 +72,11 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    E%f=E%fo+E%df
    !
    if (l_DbGd) then
-     allocate(E%df_DbGd(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
-     call mem_est("E-df_DbGd",(/size(E%df_DbGd)/),(/SP,SP/))
-     E%df_DbGd=0._SP
+     allocate(E%df_FineGd(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
+     call mem_est("E-df_FineGd",(/size(E%df_FineGd)/),(/SP,SP/))
+     E%df_FineGd=0._SP
      call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
-     E%f_DbGd=E%f_DbGd+E%df_DbGd
+     E%f_FineGd=E%f_FineGd+E%df_FineGd
    endif
    !
  endif
@@ -163,7 +163,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
         df_Max=maxval(abs(V_out(nb(1):nb(2),:,:)))
         i_carr=1
       else if (NK/=E%nk) then
-        E%df_DbGd( nb(1):nb_max,:,:)=V_out(nb(1):nb_max,:,:)
+        E%df_FineGd( nb(1):nb_max,:,:)=V_out(nb(1):nb_max,:,:)
         i_carr=2
       endif
       !
@@ -177,7 +177,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
         E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+V_out(nb(1):nb(2),:,:)
         dE_Max=maxval(abs(V_out(nb(1):nb(2),:,:)))
       else if (NK/=E%nk) then
-        E%E_DbGd( nb(1):nb_max,:,:)=E%E_DbGd(nb(1):nb_max,:,:)+V_out(nb(1):nb_max,:,:)
+        E%E_FineGd( nb(1):nb_max,:,:)=E%E_FineGd(nb(1):nb_max,:,:)+V_out(nb(1):nb_max,:,:)
       endif
       !
     endif

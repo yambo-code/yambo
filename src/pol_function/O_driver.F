@@ -184,8 +184,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    if (use_X_DbGd) then
      call msg('o eps_q eel_q fxc alpha','#')
-     call msg('o eps_q eel_q fxc alpha','# IBZ Energy DbGd points:',Xk%nibz+Xk%nibz_DbGd,INDENT=0)
-     call msg('o eps_q eel_q fxc alpha','#  BZ Energy DbGd points:',Xk%nbz+Xk%nbz_DbGd,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','# IBZ Energy DbGd points:',Xk%nibz+Xk%nibz_FineGd,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','#  BZ Energy DbGd points:',Xk%nbz+Xk%nbz_FineGd,INDENT=0)
    endif
    !
    if (iq==1) call PP_redux_wait

@@ -55,7 +55,7 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  !
  BS_R_left =cZERO
  BS_R_right=cZERO
- call live_timing('BSK   residuals',px%n_of_elements(myid+1))
+ call live_timing('EPS   residuals',px%n_of_elements(myid+1))
  !
  tmp_res = BSS_dipoles*sqrt(BSS_eh_f)
  !

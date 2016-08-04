@@ -33,7 +33,6 @@ module BS
  !====================
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
- logical :: BS_anti_res
  logical :: BS_res_K_exchange
  logical :: BS_res_K_corr
  logical :: BS_cpl_K_exchange
@@ -169,6 +168,7 @@ module BS
  logical  :: BSS_uses_GreenF
  logical  :: BSS_perturbative_width
  logical  :: BSS_eval_JDOS
+ logical  :: BSS_add_antiresonant
  !
  ! Solvers (Diago)
  !=========

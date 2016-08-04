@@ -588,7 +588,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_START
    !
    ! BS based TDDFT (BS fxc is only of q=0 0 0). BS_fxc db exist
-   if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
+   if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded')
    !
    ! GPL_EXCLUDE_END
    !
@@ -625,7 +625,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
    if (l_bs_fxc) then
-     call initactivate(1,'FxcGRLc FxcSVdig FxcCausal FxcMEStps')
+     call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded FxcMEStps')
      call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
    endif
    !
@@ -1313,7 +1313,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      !
-     if (len_trim(BSE_mode)==0) BSE_mode="causal"
+     if (len_trim(BSE_mode)==0) BSE_mode="retarded"
      !
      if (l_bse) then
        if (l_rpa_IP)                   BS_res_mode='none'

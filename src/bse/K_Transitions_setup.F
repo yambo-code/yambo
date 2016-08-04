@@ -46,7 +46,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  use memory_m,     ONLY:mem_est
  use com,          ONLY:warning,error
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
-&                       BS_bands,BS_nT_at_k,BS_anti_res,&
+&                       BS_bands,BS_nT_at_k,BSS_add_antiresonant,&
 &                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc,&
 &                       BSE_mode,BS_T_grp,BS_nT_grps,BSS_mode
  use X_m,          ONLY:global_gauge,Dipole_Energy_treshold
@@ -231,10 +231,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    if (sum(BS_nT_at_k)==0) call   error(' The whole BSE hase zero dimension !')
    !
-   if (.not.BS_anti_res.and.BS_not_const_eh_f) then
-     call warning('Fractional e/h occupations. Causal BSEmode forced.')
-     BSE_mode='causal'
-     BS_anti_res=.true.
+   if (.not.BSS_add_antiresonant.and.BS_not_const_eh_f) then
+     call warning('Fractional e/h occupations. Retarded BSEmode forced.')
+     BSE_mode='retarded'
+     BSS_add_antiresonant=.true.
    endif
    !
  endif

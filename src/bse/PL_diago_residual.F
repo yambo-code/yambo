@@ -43,25 +43,29 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
  !
  type(PP_indexes)     ::px
  integer              ::i_l,i_c
- complex(SP)          ::dipole_times_fZ(BS_H_dim,3),R1(4),R2,middle_R(BS_H_dim)
+ complex(SP)          ::P_x_fZ(BS_H_dim,3),Pi_x_R_x_adA(3),adA_x_R_over_R_x_A,R_over_R_x_A(BS_H_dim)
  !
  ! Parallel indexes
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BS_H_dim/))
  !
+ ! sqrt(R_i) Re[ (Pi_i)* A^l_i (A^l_j)* R<_j/R_j A^l_j (A^l_k)* Pi_k ] sqrt(R_k)
+ !
  ! Zeroing
  !
- BS_R_PL         =rZERO
- dipole_times_fZ =cZERO
- middle_R        =cZERO
+ BS_R_PL       =rZERO
+ P_x_fZ        =cZERO
+ R_over_R_x_A  =cZERO
  !
  ! Left/Right residuals
  !
+ ! P_x_fZ =  Pi x sqrt(R)
+ !
  do i_c=1,3
-   dipole_times_fZ(:,i_c) = BSS_dipoles_PL(:,i_c)*sqrt(BSS_eh_f)*PL_weights(i_c)
+   P_x_fZ(:,i_c) = BSS_dipoles_PL(:,i_c)*sqrt(BSS_eh_f)*PL_weights(i_c)
    if (allocated(BSS_eh_Z)) then
-     dipole_times_fZ(:,i_c)=dipole_times_fZ(:,i_c)*sqrt(BSS_eh_Z)
+     P_x_fZ(:,i_c)=P_x_fZ(:,i_c)*sqrt(BSS_eh_Z)
    endif
  enddo
  !
@@ -75,20 +79,26 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
    !
    if (.not.px%element_1D(i_l)) cycle
    !
-   middle_R(:)=BSS_PL_f(:)*BS_V_right(:,i_l)/BSS_eh_f(:)
+   ! R_over_R_x_A = R<_j/R_j A^l_j
    !
-   R2=V_dot_V_omp(BS_H_dim,conjg(BS_V_left(:,i_l)),middle_R)
+   R_over_R_x_A(:)=BSS_PL_f(:)*BS_V_right(:,i_l)/BSS_eh_f(:)
    !
-   do i_c=1,2
+   ! adA_x_R_over_R_x_A = (A^l_j)* R<_j/R_j A^l_j
+   !
+   adA_x_R_over_R_x_A=V_dot_V_omp(BS_H_dim,conjg(BS_V_left(:,i_l)),R_over_R_x_A)
+   !
+   do i_c=1,3
      !
      if (K_is_not_hermitian) then
      endif
      !
-     R1(i_c)=V_dot_V_omp(BS_H_dim,dipole_times_fZ(:,i_c),conjg(BS_V_left(:,i_l)))
+     ! Pi_x_R_x_adA =   Pi* sqrt(R)  (A^l_i)*
+     ! 
+     Pi_x_R_x_adA(i_c)=V_dot_V_omp(BS_H_dim,P_x_fZ(:,i_c),conjg(BS_V_left(:,i_l)))
      !
    enddo
    !
-   BS_R_PL(i_l)=dot_product(R1,R1)
+   BS_R_PL(i_l)=dot_product(Pi_x_R_x_adA,Pi_x_R_x_adA)*adA_x_R_over_R_x_A
    !
    call live_timing(steps=1)
    !

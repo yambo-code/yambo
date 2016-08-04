@@ -28,7 +28,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS,             ONLY:BS_mat,BS_H_dim,BSE_mode,BSS_inversion_mode,&
 &                         BSS_INV_err,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,BSS_inversion_PERT_FULL_ratio,BSS_INV_eps,BSS_INV_iw_full
+&                         BS_mat_free,BSS_inversion_PERT_FULL_ratio,BSS_INV_eps,&
+&                         BSS_INV_iw_full,BSS_add_antiresonant
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
@@ -123,7 +124,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! IP-part Lo [also recompute Epsilon_xx(:,3) OR PL (needed in case of DbG)]
  !===========================================================================
  Lo_dim=1
- if (trim(BSE_mode)=="causal") Lo_dim=2
+ if (BSS_add_antiresonant) Lo_dim=2
  Lo_n_loop=Lo_dim
  !
 #if defined _PL
@@ -132,7 +133,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! L^(a/r) are deduced from the standard components.
  !
  Lo_dim=2
- if (trim(BSE_mode)=="causal") Lo_dim=4
+ if (BSS_add_antiresonant) Lo_dim=4
  !
 #endif
  !

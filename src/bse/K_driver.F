@@ -34,7 +34,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use BS,             ONLY:BS_bands,BS_q,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
-&                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
+&                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BSS_add_antiresonant,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BSE_mode,BSS_eval_JDOS,&
 &                         BSS_uses_DbGd,BSS_q0,BS_Blocks_and_Transitions_free
@@ -131,8 +131,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
      ! if TDDFT Fxc is obtained from K
      !
      if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
-     BSE_mode='causal'
-     call parser('FxcCausal',FXC_is_retarded)
+     BSE_mode='retarded'
+     call parser('FxcRetarded',FXC_is_retarded)
      !
    endif
    !
@@ -142,14 +142,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Logicals (Drivers)
  !====================
- if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='causal'
+ if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='retarded'
  !
  BS_res_K_corr=index(BS_res_mode,'c')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BS_anti_res=index(BSE_mode,'causal')/=0
+ BSS_add_antiresonant=index(BSE_mode,'retarded')/=0.or.index(BSE_mode,'causal')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  BS_K_is_ALDA=l_alda_fxc.and.n_spin==1
  if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')

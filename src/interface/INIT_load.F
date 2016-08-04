@@ -289,7 +289,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! BSE/BSK
  !
- call it(defs,'BSEmod',  '[BSE] resonant/causal/coupling',BSE_mode)
+ call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -539,7 +539,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                         FXC_per_memstps,verb_level=V_resp)
  call it(defs,'FxcSVdig','[TDDFT] Keep SV that are within FxcSVdig digits',&
 &                         FXC_SVD_digits,verb_level=V_resp)
- call it('f',defs,'FxcCausal', '[TDDFT] Causal TDDFT kernel',verb_level=V_resp)
+ call it('f',defs,'FxcRetarded', '[TDDFT] Retarded TDDFT kernel',verb_level=V_resp)
  !
  ! BSE
  !

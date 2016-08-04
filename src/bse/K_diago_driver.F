@@ -201,7 +201,6 @@ subroutine K_diago_driver(iq,W)
    if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2,'SOC')
    BS_E_SOC_corr=real(BS_corrections)
    !
-   !
  endif
  !
  if(BSS_perturbative_width) then

@@ -62,6 +62,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  complex(SP) :: E_plus_W
  integer     :: i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,&
 &               i_k_bz,i_v,i_cond,i_spin
+ logical     ::l_IP
  ! 
  if (allocated(BS_mat)) return
  !
@@ -175,6 +176,8 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !
  ! FILLING the BS_mat
  !====================
+ l_IP=.false.
+ if (l_IP) BS_mat=cmplx(0.,0.)
  !
  do i_B=1,n_BS_blks
    !
@@ -190,11 +193,14 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      if (i_Tk==i_Tp) then
        if (BS_blk(i_B)%mode=="R") then
          E_plus_W=BSS_eh_E(H_pos(1))*cONE
-         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) &
-&          E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1))
+         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
+           E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1))
+         endif
+         BS_mat(H_pos(1),H_pos(1))=E_plus_W
+         if (l_IP)  cycle
          BS_mat(H_pos(1),H_pos(1))=E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP)
        else
-         BS_mat(H_pos(1),H_pos(1)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_r)
+         if (.not.l_IP) BS_mat(H_pos(1),H_pos(1)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_r)
        endif
        !
      endif
@@ -206,6 +212,8 @@ subroutine K_stored_in_a_BIG_matrix(iq)
        H_pos(2)=sum(BS_T_grp(:I_Tp-1)%size)+i_c
        !
        if (H_pos(1)>=H_pos(2)) cycle
+       !
+       if (l_IP) cycle
        !
        if (BS_blk(i_B)%mode=="R") BS_mat(H_pos(1),H_pos(2))         =BS_blk(i_B)%mat(i_r,i_c)
        !
@@ -224,7 +232,6 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      BS_mat(i_c,i_r)=conjg( BS_mat(i_r,i_c) )
    enddo
  enddo
- !
  !
  if (BS_K_coupling) then
    !

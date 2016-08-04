@@ -107,6 +107,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  if( K_inv_run ) cg_ffac = spin_occ/real(Z_)
  if( X_os_run  ) cg_ffac = Xen%f(iv,ikp,i_spin)*( spin_occ-Xen%f(ic,ik ,i_spin) )
  !
+ ! 4/8/2016. AM. Note that, in the K case, the anti-res part of Lo uses a w+\Omega (and not -\Omega) simply
+ ! because this routine is always called using the i_res \Omega. Indeed 
+ !
+ !  \Omega_{anti-res} = -\Omega_{res}
+ !
  allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
  allocate(use_kpt( BZ_DbGd_nkpt(ikbz), BZ_DbGd_nkpt(ikpbz) ) )
  !

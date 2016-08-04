@@ -29,7 +29,7 @@ module PHOTOLUM
  !
  implicit none
  !
- real(SP) :: PL_prefactor
+ real(SP)                 :: PL_prefactor
  !
  ! PL Spectrum
  !

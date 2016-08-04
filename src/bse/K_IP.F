@@ -35,7 +35,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
- use BS,            ONLY:BSS_Vnl_included,BS_anti_res,BSS_eval_JDOS,&
+ use BS,            ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps,Co_factor
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
@@ -230,7 +230,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
          !
          Epsilon_ii(:,3)=Epsilon_ii(:,3)-res/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         if (BS_anti_res.or.BS_K_coupling) then
+         if (BSS_add_antiresonant.or.BS_K_coupling) then
            Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
            if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif
@@ -243,9 +243,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #endif
 #if defined _PL
          if (l_photolum) then
-           PL(:,3)=PL(:,3)+  PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
-           if (BS_anti_res.or.BS_K_coupling) then
-             PL(:,3)=PL(:,3)-PL_prefactor*res_PL*aimag( 1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
+           PL(:,3)=PL(:,3)  +PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
+           if (BSS_add_antiresonant.or.BS_K_coupling) then
+             PL(:,3)=PL(:,3)+PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
            endif
          endif
 #endif
@@ -314,7 +314,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _KERR
    !
    ! Drude term, Eq.(1.12) PRB 48, 11705 (1993)
-   if (BS_anti_res.or.BS_K_coupling) A_drude(1)=A_drude(1)+conjg(A_drude(1))
+   if (BSS_add_antiresonant.or.BS_K_coupling) A_drude(1)=A_drude(1)+conjg(A_drude(1))
    !
    if (trim(global_gauge)=='length'  ) then
      A_drude(1)=A_drude(1)/q_norm(1)**2-diam_term0

@@ -612,14 +612,14 @@ subroutine K_Haydock(iq,W)
      real(SP)    :: Av1, Av2
      integer, parameter :: RES = 3, ARES = 2, COUPL = 1, MIN_ITER = 10
      logical     :: UseTerminator
-     logical     :: causal, coupling
+     logical     :: retarded, coupling
      !
      Co=Co_factor*Haydock_v0_mod**2._SP
      !
      X_t =cZERO
      UseTerminator = .false.  
      !
-     causal  = (trim(BSE_mode)=='causal'.and..not.use_cpl_scheme)
+     retarded  = (trim(BSE_mode)=='retarded'.and..not.use_cpl_scheme)
      coupling= use_cpl_scheme
      !
      i_eps(1)=2
@@ -659,20 +659,20 @@ subroutine K_Haydock(iq,W)
        if (UseTerminator) then 
          if (.not.coupling) then
            X_t(1) = terminator(W%p(iw), Av1,Av2, RES)
-           if (causal) X_t(2) = terminator(W%p(iw),-Av1,Av2,ARES)
+           if (retarded) X_t(2) = terminator(W%p(iw),-Av1,Av2,ARES)
          endif
          if (coupling.and.(mod(it,2)==0)) X_t(1) = terminator(W%p(iw),Av1,Av2,COUPL)
          if (coupling.and.(mod(it,2)==1)) X_t(1) = terminator(W%p(iw),Av2,Av1,COUPL)
        endif
        X_o(1:2,it) = 1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t(1))
-       if (causal) X_o(3:4,it)= 1._SP/(W%p(iw)+Af(it)-Bf(it+1)**2*X_t(2))
+       if (retarded) X_o(3:4,it)= 1._SP/(W%p(iw)+Af(it)-Bf(it+1)**2*X_t(2))
        do i1=it-1,1,-1
          X_o(1,i1) = 1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1) )
-         if (causal) X_o(3,i1)= 1._SP/(W%p(iw)+Af(i1)-Bf(i1+1)**2*X_o(3,i1+1))
+         if (retarded) X_o(3,i1)= 1._SP/(W%p(iw)+Af(i1)-Bf(i1+1)**2*X_o(3,i1+1))
        enddo
        do i1=it-2,1,-1
          X_o(2,i1) = 1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1) )
-         if (causal) X_o(4,i1)= 1._SP/(W%p(iw)+Af(i1)-Bf(i1+1)**2*X_o(4,i1+1))
+         if (retarded) X_o(4,i1)= 1._SP/(W%p(iw)+Af(i1)-Bf(i1+1)**2*X_o(4,i1+1))
        enddo
        if (coupling) then
          X_i(:,1) = -X_o(:2,1)
@@ -693,19 +693,19 @@ subroutine K_Haydock(iq,W)
        ! GPL_EXCLUDE_START
        ! 
        if(trim(global_gauge)=='velocity'.and.iw==iw_ref) then
-         if (.not.causal) factor_jj(:)=X_o(1:2,1)
-         if (     causal) factor_jj(:)=X_o(1:2,1)-X_o(3:4,1)
+         if (.not.retarded) factor_jj(:)=X_o(1:2,1)
+         if (     retarded) factor_jj(:)=X_o(1:2,1)-X_o(3:4,1)
        endif
        !
        ! GPL_EXCLUDE_END
        !
        select case(ii)
        case(1)
-         if (.not.causal) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)           )
-         if (     causal) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
+         if (.not.retarded) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)           )
+         if (     retarded) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
        case(2)
-         if (.not.causal) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)           )
-         if (     causal) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
+         if (.not.retarded) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)           )
+         if (     retarded) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
        end select
        !
      enddo

@@ -75,7 +75,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,Inversion_treshold,BS_K_is_ALDA,BSS_uses_DbGd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BS_anti_res,BSS_perturbative_width
+&                     BSS_add_antiresonant,BSS_perturbative_width
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
@@ -469,10 +469,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_eh_win=100._SP
  BS_res_mode='xc'
  BS_cpl_mode='none'
- BSE_mode='causal'
+ BSE_mode='retarded'
  BSK_mode=' '
  TDDFT_mode=' '
- BS_anti_res=.FALSE.
+ BSS_add_antiresonant=.FALSE.
  BS_K_dim=0
  BSS_mode=' '
  BSS_inversion_mode='pf'

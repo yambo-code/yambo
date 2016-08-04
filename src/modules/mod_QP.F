@@ -171,7 +171,7 @@ module QP_m
    subroutine QP_SET_temperature_pre_factor( )
      use drivers,  ONLY:Finite_Tel
      QP_time_order_sign=-1                ! T-order
-     if (Finite_Tel) QP_time_order_sign=1 ! Causal
+     if (Finite_Tel) QP_time_order_sign=1 ! Retared
    end subroutine
    !
    subroutine QP_reset(qp)

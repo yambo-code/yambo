@@ -67,7 +67,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  BS_R_right=cZERO
  !
- call live_timing('BSK R residuals',px%n_of_elements(myid+1))
+ call live_timing('EPS R residuals',px%n_of_elements(myid+1))
  !
  forall(i1=1:BS_K_dim)          tmp_res(i1) =   conjg(BSS_dipoles(i1))*sqrt(BSS_eh_f(i1)         ) 
  forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) =cI*conjg(BSS_dipoles(i1))*sqrt(BSS_eh_f(i1-BS_K_dim))
@@ -90,7 +90,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  BS_R_tmp=cZERO
  !
- call live_timing('BSK L residuals',px%n_of_elements(myid+1))
+ call live_timing('EPS L residuals',px%n_of_elements(myid+1))
  !
  forall(i1=1:BS_K_dim)          tmp_res(i1) =   BSS_dipoles(i1)*sqrt(BSS_eh_f(i1)         ) 
  forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) =cI*BSS_dipoles(i1)*sqrt(BSS_eh_f(i1-BS_K_dim))
@@ -113,7 +113,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  BS_overlap=cZERO
  !
- call live_timing('BSK overlap mat',1)
+ call live_timing('EPS overlap mat',1)
  !
  call M_by_M_omp('c','n',BS_H_dim,BS_V_left,BS_V_right,BS_overlap)
  !
@@ -125,7 +125,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  BS_R_left=cZERO
  !
- call live_timing('BSK L x overlap',px%n_of_elements(myid+1))
+ call live_timing('EPS L x overlap',px%n_of_elements(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !

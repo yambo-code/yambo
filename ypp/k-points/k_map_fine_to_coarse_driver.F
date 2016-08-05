@@ -54,17 +54,21 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
    return
  endif
  !
+ call section('*','Double Grid DB(s)')
+ !
  ! Initial checks
  !================
+ call section('+','Double Grid DB(s)')
  call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  !
  ! First map IBZ to IBZ
  !=======================
+ call section('=','Double Grid IBZ mapping')
  call k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
  !
  ! Expand to the BZ 
  !==================
- call section('+','BZ Double Grid K-points expansion ...')
+ call section('=','Double Grid K-points expansion ...')
  !
  ! Xk (IBZ->BZ)
  !
@@ -78,6 +82,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  ! Then map BZ to BZ
  !===================
+ call section('=','Double Grid BZ mapping')
  call k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
  !
  ! Final I/O

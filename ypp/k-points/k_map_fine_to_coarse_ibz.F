@@ -57,10 +57,10 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
  !
  call live_timing('IBZ Double Grid Map',px%n_of_elements(myid+1))
  !
- allocate(TMP_map_ibz(FineGd_k%nibz))
+ allocate(TMP_map_ibz(Xk%nibz_FineGd))
  TMP_map_ibz=0
  !
- do i1=1,FineGd_k%nibz
+ do i1=1,Xk%nibz_FineGd
    !
    call k2bz(FineGd_k%pt(i1,:))
    !
@@ -109,6 +109,8 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
    !
  enddo
  !
+ deallocate(TMP_map_ibz)
+ !
  ! Reordering and transfer Xen%E_FineGd and Xk%k_FineGd
  !======================================================
  Xen%nb_FineGd=FineGd_E%nb
@@ -127,6 +129,8 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
  !
  allocate(Xk%weights_DbGd(Xk%nibz))
  !
+ call live_timing('IBZ Double Grid Reordering',Xk%nibz_FineGd)
+ !
  ikibz_FineGd=0
  do ikibz=1,Xk%nibz
    Xk%weights_DbGd(ikibz)=Xk%weights(ikibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_FineGd,SP)
@@ -140,9 +144,13 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
 &                                             real(Xk%nbz_FineGd,SP)/real(Xk%nbz+Xk%nbz_FineGd,SP)
      !
      Xk%ibz_DbGd_map(ikibz,i1)=ikibz_FineGd
+     !
+     call live_timing(steps=1)
+     !
    enddo
  enddo
  !
+ call live_timing()
  !
  ! DEBUG <
  do ikibz=1,Xk%nibz

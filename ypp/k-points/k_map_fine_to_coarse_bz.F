@@ -47,19 +47,18 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
  !
  ! Initial mapping
  !=================
- !
  Xk%nbz_FineGd = FineGd_k%nbz
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/FineGd_k%nbz/))
+ call PARALLEL_index(px,(/Xk%nbz_FineGd/))
  call PP_redux_wait
  !
  call live_timing('BZ Double Grid Map',px%n_of_elements(myid+1))
  !
- allocate(TMP_map_bz(FineGd_k%nbz))
+ allocate(TMP_map_bz(Xk%nbz_FineGd))
  TMP_map_bz=0
  !
- do i1=1,FineGd_k%nbz
+ do i1=1,Xk%nbz_FineGd
    if (.not.px%element_1D(i1)) cycle
    ik_near=k_the_nearest(FineGd_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
    TMP_map_bz(i1)=ik_near
@@ -77,6 +76,8 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
    Xk%nbz_mapped(ik_near)=Xk%nbz_mapped(ik_near)+1
  enddo
  !
+ call msg('s','::  BZ Blocks filling range  :',(/minval( Xk%nbz_mapped),maxval( Xk%nbz_mapped)/))
+ !
  ! BZ table
  !==========
  allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
@@ -89,11 +90,15 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
    Xk%bz_DbGd_map(ik_near,Xk%nbz_mapped(ik_near))=i1
  enddo
  !
+ deallocate(TMP_map_bz)
+ !
  ! Reordering and transfer Xk%ptbz_FineGd and Xk%sstar_FineGd
  !=============================================================
  allocate(Xk%ptbz_FineGd(Xk%nbz_FineGd,3))
  allocate(Xk%sstar_FineGd(FineGd_k%nbz))
  Xk%sstar_FineGd=FineGd_k%sstar(:,1)
+ !
+ call live_timing('BZ Double Grid Reordering',Xk%nbz_FineGd)
  !
  ikbz_FineGd=0
  do ikbz=1,Xk%nbz
@@ -103,10 +108,13 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
      Xk%sstar_FineGd(ikbz_FineGd) =FineGd_k%sstar(Xk%bz_DbGd_map(ikbz,i1),1)
      !
      Xk%bz_DbGd_map(ikbz,i1)=i1+sum(Xk%nbz_mapped(:ikbz-1))
+     !
+     call live_timing(steps=1)
+     !
    enddo
  enddo
  !
- call msg('s','::  BZ Blocks filling range  :',(/minval( Xk%nbz_mapped),maxval( Xk%nbz_mapped)/))
+ call live_timing()
  !
  ! DEBUG <
  do ikbz=1,Xk%nbz

@@ -123,14 +123,12 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  !
  call parser('SkipCheck',l_skip_check)
  !
- call section('*','BZ Double Grid DB(s)')
- !
- call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',input_GS_Tel)
- call msg('s',':: Lattice factors [a.u.]:',alat)
+ call msg('s',':: Electrons                 :',default_nel)
+ call msg('s',':: Temperature       [ev]    :',input_GS_Tel)
+ call msg('s',':: Lattice factors [a.u.]    :',alat)
  do i_db=1,n_FineGd_DBs
-   if (i_db==1) call msg('s',':: K points        [DB #'//trim(intc(i_db))//']:',FineGd_io_E(i_db)%nk)
-   if (i_db> 1) call msg('s','::                 [DB #'//trim(intc(i_db))//']:',FineGd_io_E(i_db)%nk)
+   if (i_db==1) call msg('s',':: K points       [DB #'//trim(intc(i_db))//']    :',FineGd_io_E(i_db)%nk)
+   if (i_db> 1) call msg('s','::                [DB #'//trim(intc(i_db))//']    :',FineGd_io_E(i_db)%nk)
  enddo
  !
  ! Merge of ALL FineGd_io_E(:) and FineGd_io_k(:) into FineGd_E and FineGd_k
@@ -177,22 +175,22 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
    endif
  enddo
  !
- call msg('s','::              [imposed]:',BZ_FineGd_nkpts_to_use)
- call msg('s',':: Bands                 :',n_bands)
- call msg('s',':: Symmetries            :',nsym_FineGd_DB)
+ call msg('s','::               [imposed]   :',BZ_FineGd_nkpts_to_use)
+ call msg('s',':: Bands                     :',n_bands)
+ call msg('s',':: Symmetries                :',nsym_FineGd_DB)
  if(i_time_rev_DB==1)&
 &   call msg('s',':: Time reversal included ')
  if(i_time_rev_DB==0)&
 &   call msg('s',':: Time reversal not included')
  if (Xen%nbf==Xen%nbm) then
-   call msg('s',':: Gap indirect      [ev]:',gap(1)*HA2EV)
-   call msg('s','::     direct        [ev]:',gap(2)*HA2EV)
+   call msg('s',':: Gap indirect      [ev]    :',gap(1)*HA2EV)
+   call msg('s','::     direct        [ev]    :',gap(2)*HA2EV)
  endif
  !
  ! See if there is correspondance between the random and the built-in
  ! k-points
  !
- call section('+','Internal consistency check ...')
+ call msg('s','Internal consistency check ...')
  ik_ref=k_FineGd_grid_consistency_check(Xk,Xen,FineGd_k,FineGd_E)
  !
  if (ik_ref>0) then
@@ -200,9 +198,9 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  else 
    call msg('l','failed') 
    if (l_skip_check) then
-     call warning(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
+     call warning(" A consistent X grid k-point was not found among the Double Grid list")
    else
-     call error(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
+     call error(" A consistent X grid k-point was not found among the Double Grid list")
    endif
  endif
  !

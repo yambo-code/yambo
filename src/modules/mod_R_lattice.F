@@ -74,6 +74,7 @@ module R_lattice
    integer,  pointer :: sstar_FineGd(:)   => null()
    real(SP), pointer :: pt_FineGd(:,:)    => null()
    real(SP), pointer :: ptbz_FineGd(:,:)  => null() 
+   real(SP), pointer :: weights_FineGd(:) => null()
    !
    ! Double grid: Mapping Fine to Coarse grid
    !
@@ -240,17 +241,19 @@ module R_lattice
      k%nbz_FineGd=0
      k%nibz_FineGd=0
      !
-     if(associated(k%sstar_FineGd))   deallocate(k%sstar_FineGd)
-     if(associated(k%pt_FineGd))          deallocate(k%pt_FineGd)
-     if(associated(k%pt_FineGd))          deallocate(k%ptbz_FineGd)
-     if(associated(k%weights_DbGd))     deallocate(k%weights_DbGd)
-     nullify(k%sstar_FineGd,k%pt_FineGd,k%pt_FineGd,k%weights_DbGd)
+     if(associated(k%sstar_FineGd))    deallocate(k%sstar_FineGd)
+     if(associated(k%pt_FineGd))       deallocate(k%pt_FineGd)
+     if(associated(k%pt_FineGd))       deallocate(k%ptbz_FineGd)
+     if(associated(k%weights_FineGd))  deallocate(k%weights_FineGd)
+     nullify(k%sstar_FineGd,k%pt_FineGd,k%pt_FineGd,k%weights_FineGd)
      !
      if(associated(k%nibz_mapped))     deallocate(k%nibz_mapped)
      if(associated(k%nbz_mapped))      deallocate(k%nbz_mapped)
      if(associated(k%ibz_DbGd_map))    deallocate(k%ibz_DbGd_map)
      if(associated(k%bz_DbGd_map))     deallocate(k%bz_DbGd_map)
+     if(associated(k%weights_DbGd))    deallocate(k%weights_DbGd)
      if(associated(k%weights_ipol))    deallocate(k%weights_ipol)
+     nullify(k%nibz_mapped,k%nbz_mapped,k%ibz_DbGd_map,k%bz_DbGd_map,k%weights_DbGd,k%weights_ipol)
      !
    end subroutine bz_samp_reset
    !
@@ -291,6 +294,8 @@ module R_lattice
        allocate(BZo%sstar_FineGd(BZo%nbz_FineGd))
        BZo%sstar_FineGd=BZi%sstar_FineGd
      endif
+     !
+     ! To code the duplication of the Fine grid and DbGd structure
      !
      return
      !

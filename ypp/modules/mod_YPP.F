@@ -39,6 +39,7 @@ module YPP
  logical  :: l_high_sym_pts
  integer  :: n_path_pts
  integer  :: BZ_random_nkpts
+ real(SP) :: gamma_radius
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
@@ -129,16 +130,15 @@ module YPP
  !
  ! BZ Double Grid
  !
- integer, parameter :: MAX_DbGd_DBs=20
- integer  :: n_DbGd_DBs
- integer  :: BZ_DbGd_nkpts_to_use
- logical  :: l_map_kpts
- logical  :: l_map_WFs
- real(SP) :: Gamma_radius
- character(lchlen) :: DbGd_DB1_paths(MAX_DbGd_DBs,1)
+ logical           :: l_map_kpts
+ integer, parameter :: MAX_FineGd_DBs=20
+ integer            :: n_FineGd_DBs
+ integer            :: BZ_FineGd_nkpts_to_use
+ character(lchlen)  :: FineGd_DB1_paths(MAX_FineGd_DBs,1)
  !
  ! Perturbative SOC
  !
+ logical           :: l_map_WFs
  integer           :: SOC_bands_to_map(2)
  character(lchlen) :: perturbative_SOC_path
  real(SP)          :: SOC_split

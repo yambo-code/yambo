@@ -161,7 +161,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !    enddo
    !    !$omp end parallel do
    !  endif
-   !  ! 
+   !  !
    !endif
    !
    ! Filling the upper triangular part of the residual here ! 

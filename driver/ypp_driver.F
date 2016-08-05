@@ -185,7 +185,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !   =========
  !
- if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
+ if (l_map_kpts) call k_map_fine_to_coarse_driver(Xk,Xen)
  !
  ! GPL_EXCLUDE_START
  !

@@ -458,7 +458,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_map_kpts) call initactivate(1,"BZ_DbGd_nkpts SkipCheck noBZExpand NoWeights")
+ if (l_map_kpts) call initactivate(1,"BZ_FineGd_nkpts SkipCheck noBZExpand NoWeights")
  !
  if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map")
  !
@@ -603,9 +603,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
  if (l_map_kpts) then
-   n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
-   if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,&
-&              "DbGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
+   n_FineGd_DBs=parse_character_arrays(FineGd_DB1_paths,MAX_FineGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
+   if (infile_editing) i1=parse_character_arrays(FineGd_DB1_paths,n_FineGd_DBs,&
+&              "FineGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
  endif
  !
 contains

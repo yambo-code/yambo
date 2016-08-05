@@ -106,7 +106,7 @@ module BS
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
-   real(SP)   , allocatable      :: f_PL(:)
+   real(SP)   , allocatable      :: f_PL(:,:)
    real(SP)   , allocatable      :: W(:)
    real(SP)   , allocatable      :: E_SOC_corr(:,:)
    !
@@ -218,7 +218,7 @@ module BS
      use pars,          ONLY:SP
      integer             :: iq,ID,BS_H_dim
      complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
-     real(SP),   pointer :: BsE_corr(:,:),bsR_pl(:)
+     real(SP),   pointer :: BsE_corr(:,:),bsR_pl(:,:)
      complex(SP),pointer :: bsR_kerr(:)
    end function
    !
@@ -321,7 +321,7 @@ module BS
        if(l_photolum) then
          call mem_est("BS_T_grp_dipoles_PL_R_N",(/4*nT/))
          if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N",(/4*nT/))
-         call mem_est("BS_T_grp_f_PL_N",(/nT/),(/SP/))
+         call mem_est("BS_T_grp_f_PL",(/2*nT/),(/SP/))
        endif
        call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
        call mem_est("BS_T_grp_E_N",(/nT/),(/SP/))
@@ -347,7 +347,7 @@ module BS
      allocate(BS_T_grp(iT)%E(nT))
      allocate(BS_T_grp(iT)%f(nT))
      allocate(BS_T_grp(iT)%f_RES(nT))
-     if(l_photolum) allocate(BS_T_grp(iT)%f_PL(nT))
+     if(l_photolum) allocate(BS_T_grp(iT)%f_PL(2,nT))
      if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
      if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
      if (E_SOC_nbands/=0) allocate(BS_T_grp(iT)%E_SOC_corr(2,nT))
@@ -413,7 +413,7 @@ module BS
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     use drivers,    ONLY:l_kerr
+     use drivers,    ONLY:l_kerr,l_photolum
      use parallel_m, ONLY:PAR_BS_T_grps_index
      use electrons,  ONLY:E_SOC_nbands
      integer :: i_g
@@ -446,6 +446,10 @@ module BS
      !
      call mem_est("BS_T_grp_dipoles_R_N")
      call mem_est("BS_T_grp_dipoles_A_N")
+     if(l_photolum) then
+       call mem_est("BS_T_grp_dipoles_PL_R_N BS_T_grp_f_PL")
+       if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N")
+     endif
      if(l_kerr) then
        call mem_est("BS_T_grp_dipoles_R_N")
        if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N")

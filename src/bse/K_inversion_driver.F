@@ -26,7 +26,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use pars,           ONLY:SP
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
- use BS,             ONLY:BS_mat,BS_H_dim,BSE_mode,BSS_inversion_mode,&
+ use BS,             ONLY:BS_mat,BS_H_dim,BSS_inversion_mode,&
 &                         BSS_INV_err,BSS_n_descs,BSS_description,Co_factor,&
 &                         BS_mat_free,BSS_inversion_PERT_FULL_ratio,BSS_INV_eps,&
 &                         BSS_INV_iw_full,BSS_add_antiresonant
@@ -140,7 +140,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  allocate(Lo(BS_H_dim,W%n_freqs,Lo_dim))
  call mem_est("Lo",(/size(Lo)/))
  !
- call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
+ call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
  ! Initialize the output file 
  !============================

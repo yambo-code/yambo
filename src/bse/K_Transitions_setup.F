@@ -78,7 +78,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2),E_v_SOC(2),E_c_SOC(2),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
 #if defined _PL
- real(SP):: f_eh_PL
+ real(SP):: f_eh_PL(2)
 #endif
 #if defined _RT
  logical :: FORCE_EQ_trans
@@ -197,7 +197,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
 #if defined _PL
-             if (l_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp) =f_eh_PL
+             if (l_photolum) BS_T_grp(i_T_group_now)%f_PL(:,i_T_in_the_grp) =f_eh_PL
 #endif
              BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
              !
@@ -231,7 +231,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    if (sum(BS_nT_at_k)==0) call   error(' The whole BSE hase zero dimension !')
    !
-   if (.not.BSS_add_antiresonant.and.BS_not_const_eh_f) then
+   if (.not.BSS_add_antiresonant.and.BS_not_const_eh_f.and..not.BS_K_coupling) then
      call warning('Fractional e/h occupations. Retarded BSEmode forced.')
      BSE_mode='retarded'
      BSS_add_antiresonant=.true.
@@ -300,7 +300,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      !
 #if defined _PL
      !
-     f_eh_PL = Ken%f(ic,ikp,i_sp)*(spin_occ-Ken%f(iv,ik ,i_sp))/spin_occ/spin_occ
+     ! Resonant
+     f_eh_PL(1) = Ken%f(ic,ikp,i_sp)*(spin_occ-Ken%f(iv,ik ,i_sp))/spin_occ/spin_occ
+     !
+     ! Anti-Resonant
+     f_eh_PL(2) = Ken%f(iv,ik ,i_sp)*(spin_occ-Ken%f(ic,ikp,i_sp))/spin_occ/spin_occ
      !
 #endif
      !

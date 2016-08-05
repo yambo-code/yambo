@@ -58,7 +58,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
  real(SP),    pointer     :: BS_E_SOC_corr(:,:)
  complex(SP), pointer     :: BS_R_right_kerr(:)
- real(SP),    pointer     :: BS_R_PL(:)
+ real(SP),    pointer     :: BS_R_PL(:,:)
  !
  ! Work space
  !
@@ -155,8 +155,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      !
 #if defined _PL
      if(l_photolum) then
-       !PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))/pi
-       if (BSS_add_antiresonant) PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(i1)*aimag(-1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))/pi
+       PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(1,i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))/pi
+       if (BSS_add_antiresonant) PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(2,i1)*aimag(-1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))/pi
      endif
 #endif
      !

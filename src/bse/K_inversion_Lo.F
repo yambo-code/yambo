@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo) 
+subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo) 
  !
  use pars,           ONLY:SP,cZERO,cI,pi
  use parser_m,       ONLY:parser
@@ -32,7 +32,8 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS,             ONLY:Co_factor,BSS_dipoles,BS_H_dim,BS_K_dim,&
 &                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
-&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,BSS_eval_JDOS,BSS_add_antiresonant
+&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,&
+&                         BSS_eval_JDOS,BSS_add_antiresonant,BS_K_coupling
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
@@ -50,7 +51,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  type(w_samp),  intent(in)  :: W
  type(levels),  intent(in)  :: E
  type(bz_samp), intent(in)  :: k,q
- integer,       intent(in)  :: iq,Lo_dim
+ integer,       intent(in)  :: iq,Lo_dim,Lo_n_loop
  complex(SP),   intent(out) :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
  !
  type(PP_indexes) :: px
@@ -200,15 +201,18 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh",.FALSE.)
 #if defined _PL
        call X_GreenF_analytical(1,transition,W_mins,E,k,SF(:,1),"r","eh",.TRUE.)
-       Lo(i_res,:,1+n_loop)=-BSS_PL_f(i_res)*aimag(SF(:,1))/pi/abs(Lo(i_res,:,1))**2.
+       Lo(i_res,:,1+Lo_n_loop)=-BSS_PL_f(1,i_res)*aimag(SF(:,1))/pi/abs(Lo(i_res,:,1))**2.
 #endif
        !
-       if (BSS_add_antiresonant) then
+       if (BSS_add_antiresonant.or.BS_K_coupling) then
          !
          call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.)
 #if defined _PL
+         !
+         ! The -1 coming from SF(:,2) and -abs(Lo)...compensate each other
+         !
          call X_GreenF_analytical(1,transition,W_mins,E,k,SF(:,2),"Ra","eh",.TRUE.)
-         Lo(i_Lo_trans,:,i_Lo+n_loop)=BSS_PL_f(i_Lo_trans)*aimag(SF(:,2))/pi/abs(Lo(i_Lo_trans,:,i_Lo))**2.
+         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)*aimag(SF(:,2))/pi/abs(Lo(i_Lo_trans,:,i_Lo))**2.
 #endif
          !
        endif
@@ -221,7 +225,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        !================
        call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i_res,:,1),"r",.FALSE.)
        !
-       if (BSS_add_antiresonant) then
+       if (BSS_add_antiresonant.or.BS_K_coupling) then
          !
          call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra",.FALSE.)
          !
@@ -237,7 +241,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
      if (BSS_eval_JDOS) Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) - Lo(i_res,:,1)
      !
-     if ( BSS_add_antiresonant ) then
+     if (BSS_add_antiresonant.or.BS_K_coupling) then
        residual=conjg(BSS_dipoles(i_Lo_trans))*BSS_dipoles(i_Lo_trans)
        if (trim(global_gauge)=='velocity') Lo(i_Lo_trans,:,i_Lo)=(Lo(i_Lo_trans,:,i_Lo)-Lo(i_Lo_trans,iw_ref,i_Lo))
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
@@ -253,10 +257,10 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        !
        residual=dot_product(PL_residual,PL_residual)
        !
-       PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*Lo(i_res,:,1+n_loop)*abs(Lo(i_res,:,1))**2
+       PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*Lo(i_res,:,1+Lo_n_loop)*abs(Lo(i_res,:,1))**2
        !PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
-       if ( BSS_add_antiresonant ) then
-         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*Lo(i_Lo_trans,:,i_Lo+n_loop)*abs(Lo(i_Lo_trans,:,i_Lo))**2
+       if (BSS_add_antiresonant.or.BS_K_coupling) then
+         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)*abs(Lo(i_Lo_trans,:,i_Lo))**2
          !PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_Lo_trans)
        endif
        !

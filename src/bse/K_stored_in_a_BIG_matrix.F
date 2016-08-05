@@ -115,15 +115,15 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      if (E_SOC_nbands/=0) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
      !
 #if defined _KERR
-     if  (l_kerr) then
+     if (l_kerr) then
        BSS_dipoles_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R_kerr(i_c)
        if (BS_K_coupling) BSS_dipoles_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_kerr(i_c)
      endif
 #endif
      !
 #if defined _PL
-     if  (l_photolum) then
-       BSS_PL_f(H_pos(1))=BS_T_grp(i_g)%f_PL(i_c)
+     if (l_photolum) then
+       BSS_PL_f(:,H_pos(1))=BS_T_grp(i_g)%f_PL(:,i_c)
        BSS_dipoles_PL(H_pos(1),:)=BS_T_grp(i_g)%dipoles_R_PL(i_c,:)
        if (BS_K_coupling) BSS_dipoles_PL(H_pos(1)+BS_K_dim,:)=BS_T_grp(i_g)%dipoles_A_PL(i_c,:)
      endif
@@ -176,7 +176,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !
  ! FILLING the BS_mat
  !====================
- l_IP=.false.
+ l_IP=.FALSE.
  if (l_IP) BS_mat=cmplx(0.,0.)
  !
  do i_B=1,n_BS_blks

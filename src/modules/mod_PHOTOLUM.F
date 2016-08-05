@@ -42,7 +42,7 @@ module PHOTOLUM
  ! BS dipoles
  !
  complex(SP), allocatable :: BSS_dipoles_PL(:,:)
- complex(SP), allocatable :: BSS_PL_f(:)
+ complex(SP), allocatable :: BSS_PL_f(:,:)
  !
  contains
    !
@@ -70,7 +70,7 @@ module PHOTOLUM
    subroutine BS_PL_alloc( )
      !
      use pars,       ONLY:cZERO,rZERO
-     use BS,         ONLY:BS_H_dim
+     use BS,         ONLY:BS_H_dim,BS_K_dim
      !
      if (.not.l_photolum) return
      !
@@ -78,8 +78,8 @@ module PHOTOLUM
      call mem_est('BSS_dipoles_PL',(/size(BSS_dipoles_PL)/))
      BSS_dipoles_PL = cZERO
      !
-     allocate(BSS_PL_f(BS_H_dim))
-     call mem_est('BSS_PL_f',(/BS_H_dim/))
+     allocate(BSS_PL_f(2,BS_K_dim))
+     call mem_est('BSS_PL_f',(/2,BS_K_dim/))
      BSS_PL_f = rZERO
      !
    end subroutine

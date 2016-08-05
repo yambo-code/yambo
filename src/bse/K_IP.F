@@ -68,7 +68,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
 #if defined _PL
  complex(SP)       ::rotated_P(3),P_weighted(3)
- real(SP)          ::res_PL
+ real(SP)          ::res_PL(2)
 #endif
  !
  call section('=','Independent Particles absorption') 
@@ -222,7 +222,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
          do ic=1,3
            P_weighted(ic)=BS_T_grp(i_T_g)%dipoles_R_PL(i_T,ic)*PL_weights(ic)
          enddo
-         res_PL=Z_*dot_product(P_weighted,P_weighted)*BS_T_grp(i_T_g)%f_PL(i_T)
+         !
+         ! Note that res_PL is always positive as f_PL>0
+         !
+         res_PL=Z_*dot_product(P_weighted,P_weighted)*BS_T_grp(i_T_g)%f_PL(:,i_T)
        endif
 #endif
        !
@@ -243,9 +246,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #endif
 #if defined _PL
          if (l_photolum) then
-           PL(:,3)=PL(:,3)  +PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
+           PL(:,3)=PL(:,3)  +PL_prefactor*res_PL(1)*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
            if (BSS_add_antiresonant.or.BS_K_coupling) then
-             PL(:,3)=PL(:,3)+PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
+             PL(:,3)=PL(:,3)+PL_prefactor*res_PL(2)*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
            endif
          endif
 #endif

@@ -69,9 +69,10 @@ subroutine K_diago_driver(iq,W)
  complex(SP),allocatable :: BS_E(:)
  complex(SP),allocatable :: BS_R_left(:)       
  complex(SP),allocatable :: BS_R_right(:)      
- real(SP),   pointer     :: BS_R_PL(:) => null()
+ real(SP),   pointer     :: BS_R_PL(:,:) => null()
  real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
  complex(SP),pointer     :: BS_R_right_kerr(:) => null()
+ complex(SP),pointer     :: BS_overlap(:,:) => null()
  !
  ! Resonant K
  !
@@ -156,7 +157,7 @@ subroutine K_diago_driver(iq,W)
    !====================================
    if (K_is_not_hermitian) then
      !
-     call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right)
+     call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
      !
      ! GPL_EXCLUDE_START
      !
@@ -165,7 +166,7 @@ subroutine K_diago_driver(iq,W)
 #endif
      !
 #if defined _PL
-     if(l_photolum     ) call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian)
+     if(l_photolum     ) call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
 #endif
      !
      ! GPL_EXCLUDE_END
@@ -265,7 +266,7 @@ subroutine K_diago_driver(iq,W)
        if (l_kerr) allocate(BS_R_right_kerr(BS_H_dim))
 #endif
 #if defined _PL
-       if (l_photolum) allocate(BS_R_PL(BS_H_dim))
+       if (l_photolum) allocate(BS_R_PL(2,BS_H_dim))
 #endif
        !
      case(2)
@@ -273,6 +274,7 @@ subroutine K_diago_driver(iq,W)
        if(K_is_not_hermitian) then
          allocate(BS_V_left(BS_H_dim,BS_H_dim))
          allocate(BS_V_right(BS_H_dim,BS_H_dim))
+         allocate(BS_overlap(BS_H_dim,BS_H_dim))
        else
          allocate(BS_E_real(BS_H_dim))
          if(BSS_perturbative_width.and..not.allocated(BS_corrections)) &
@@ -292,6 +294,10 @@ subroutine K_diago_driver(iq,W)
      if(allocated(BS_R_left))       deallocate(BS_R_left)
      if(allocated(BS_V_right))      deallocate(BS_V_right)
      if(allocated(BS_V_left))       deallocate(BS_V_left)
+     if(associated(BS_overlap)) then
+       deallocate(BS_overlap)
+       nullify(BS_overlap)
+     endif
      if(associated(BS_E_SOC_corr)) then
        deallocate(BS_E_SOC_corr)
        nullify(BS_E_SOC_corr)

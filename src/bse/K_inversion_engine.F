@@ -97,7 +97,7 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
          !
          if (i_L==1) Gr="r"
          if (i_L==2) Gr="a"
-         call K_invertion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
+         call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
          !
          call EPS_compose(i_L)
          !

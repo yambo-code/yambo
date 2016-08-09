@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_invertion_do_it_full(Lo,KERNEL,what)
+subroutine K_inversion_do_it_full(Lo,KERNEL,what)
  !
  ! 1./(Lo^{-1}-M)
  !

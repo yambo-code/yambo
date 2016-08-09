@@ -7,7 +7,7 @@ PL_objects = PL_diago_residual.o
 objs =	K_blocks.o K_driver.o K_IP.o K_Transitions_setup.o K_WF_phases.o \
         K.o K_correlation_collisions.o K_exchange_collisions.o \
         K_solvers.o K_Haydock.o \
-        K_invertion_do_it_full.o MATRIX_resolvant_via_perturbative_inversion.o \
+        K_inversion_do_it_full.o MATRIX_resolvant_via_perturbative_inversion.o \
         K_inversion_driver.o K_inversion_Lo.o K_inversion_restart.o K_inversion_engine.o \
         K_diago_driver.o K_diago_non_hermitian_residuals.o K_diago_hermitian_residuals.o \
         K_diago_perturbative.o K_diago_compute_epsilon.o K_eps_interpolate.o \

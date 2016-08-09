@@ -211,7 +211,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
          !
          ! The -1 coming from SF(:,2) and -abs(Lo)...compensate each other
          !
-         call X_GreenF_analytical(1,transition,W_mins,E,k,SF(:,2),"Ra","eh",.TRUE.)
+         call X_GreenF_analytical(1,transition,W_plus,E,k,SF(:,2),"Ra","eh",.TRUE.)
          Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)*aimag(SF(:,2))/pi/abs(Lo(i_Lo_trans,:,i_Lo))**2.
 #endif
          !

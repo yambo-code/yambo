@@ -42,7 +42,7 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
  ! Workspace
  !
  type(PP_indexes)     ::px
- integer              ::i_l,i_c,i_K,i_lp
+ integer              ::i_l,i_c,i_K,i_lr,i_ll
  complex(SP)          ::P_x_fZ(2,BS_H_dim,3),Pi_x_R_x_adA_left(3),Pi_x_R_x_adA_right(3),adA_x_R_over_R_x_A(2),&
 &                       R_over_R_x_A(2,BS_H_dim),adB(BS_H_dim)
  !
@@ -64,8 +64,8 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
  !
  call live_timing('PL    residuals',px%n_of_elements(myid+1))
  !
- ! Hermitian residual
- !====================
+ ! Non-Hermitian residual
+ !========================
  !
  if (K_is_not_hermitian) then
    !
@@ -83,22 +83,21 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
      enddo
    enddo
    !
-   do i_l=1,BS_H_dim
+   do i_lr=1,BS_H_dim
      !
-     if (.not.px%element_1D(i_l)) cycle
+     if (.not.px%element_1D(i_lr)) cycle
      !
      adB=cZERO
-     do i_lp=1,BS_H_dim
-       adB(:)=adB(:)+BS_overlap(i_lp,i_l)*conjg(BS_V_left(:,i_l))
+     do i_ll=1,BS_H_dim
+       adB(:)=adB(:)+BS_overlap(i_ll,i_lr)*conjg(BS_V_left(:,i_ll))
      enddo
-     !
      !                        (right)
      ! R_over_R_x_A = R<_j/R_j A^l_j
      !
      do i_K=1,BS_H_dim
        !
-       if (i_K<=BS_K_dim) R_over_R_x_A(1,i_K) = BSS_PL_f(1,i_K)*BS_V_right(i_K ,i_l)/BSS_eh_f(i_K)
-       if (i_K> BS_K_dim) R_over_R_x_A(1,i_K) = BSS_PL_f(2,i_K-BS_K_dim)*BS_V_right(i_K ,i_l)/(-BSS_eh_f(i_K-BS_K_dim))
+       if (i_K<=BS_K_dim) R_over_R_x_A(1,i_K) = BSS_PL_f(1,i_K)*         BS_V_right(i_K ,i_lr)/BSS_eh_f(i_K)
+       if (i_K> BS_K_dim) R_over_R_x_A(1,i_K) = BSS_PL_f(2,i_K-BS_K_dim)*BS_V_right(i_K ,i_lr)/(-BSS_eh_f(i_K-BS_K_dim))
        !
      enddo
      !                      (left rotated) (right)
@@ -110,22 +109,25 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
        !                         (left A rotated)
        ! Pi_x_R_x_adA_right=   Pi B_i               sqrt(R)  
        !                         (right)
-       ! Pi_x_R_x_adA_left =   Pi* A^l_i             sqrt(R)  
+       ! Pi_x_R_x_adA_left =   Pi* A^l_i            sqrt(R)  
        !
-       Pi_x_R_x_adA_left(i_c) =V_dot_V_omp(BS_H_dim,P_x_fZ(1,:,i_c),BS_V_right(:,i_l))
-       Pi_x_R_x_adA_right(i_c)=V_dot_V_omp(BS_H_dim,P_x_fZ(2,:,i_c),adB)
+       Pi_x_R_x_adA_left(i_c) =V_dot_V_omp(BS_H_dim,P_x_fZ(1,:,i_c),BS_V_right(:,i_lr))
+       Pi_x_R_x_adA_right(i_c)=V_dot_V_omp(BS_H_dim,adB,P_x_fZ(2,:,i_c))
        !
      enddo
      !
-     BS_R_PL(1,i_l)=(Pi_x_R_x_adA_left(1)*Pi_x_R_x_adA_right(1)+&
-&                    Pi_x_R_x_adA_left(2)*Pi_x_R_x_adA_right(2)+&
-&                    Pi_x_R_x_adA_left(3)*Pi_x_R_x_adA_right(3))*adA_x_R_over_R_x_A(1)
+     BS_R_PL(1,i_lr)=(Pi_x_R_x_adA_left(1)*Pi_x_R_x_adA_right(1)+&
+&                     Pi_x_R_x_adA_left(2)*Pi_x_R_x_adA_right(2)+&
+&                     Pi_x_R_x_adA_left(3)*Pi_x_R_x_adA_right(3))*adA_x_R_over_R_x_A(1)
      !
      call live_timing(steps=1)
      !
    enddo
    !
  else
+   !
+   ! Hermitian residual
+   !====================
    !
    do i_c=1,3
      P_x_fZ(1,:,i_c)=BSS_dipoles_PL(:,i_c)*sqrt(BSS_eh_f(:))*PL_weights(i_c)

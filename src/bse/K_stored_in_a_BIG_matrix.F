@@ -48,7 +48,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !
 #if defined _PL
  use drivers,        ONLY:l_photolum
- use PHOTOLUM,       ONLY:BSS_dipoles_PL,BS_PL_alloc,BSS_PL_f
+ use PHOTOLUM,       ONLY:BSS_dipoles_PL,BS_PL_alloc,BSS_PL_f,PL_weights
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -123,8 +123,8 @@ subroutine K_stored_in_a_BIG_matrix(iq)
 #if defined _PL
      if (l_photolum) then
        BSS_PL_f(:,H_pos(1))=BS_T_grp(i_g)%f_PL(:,i_c)
-       BSS_dipoles_PL(H_pos(1),:)=BS_T_grp(i_g)%dipoles_R_PL(i_c,:)
-       if (BS_K_coupling) BSS_dipoles_PL(H_pos(1)+BS_K_dim,:)=BS_T_grp(i_g)%dipoles_A_PL(i_c,:)
+       BSS_dipoles_PL(H_pos(1),:)=BS_T_grp(i_g)%dipoles_R_PL(i_c,:)*PL_weights(:)
+       if (BS_K_coupling) BSS_dipoles_PL(H_pos(1)+BS_K_dim,:)=BS_T_grp(i_g)%dipoles_A_PL(i_c,:)*PL_weights(:)
      endif
 #endif
      !

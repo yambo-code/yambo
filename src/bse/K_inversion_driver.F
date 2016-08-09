@@ -52,7 +52,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use KERR,           ONLY:BS_KERR_free
 #endif
 #if defined _PL
- use PHOTOLUM,       ONLY:BS_PL_free
+ use PHOTOLUM,       ONLY:BS_PL_free,PL
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -160,6 +160,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    call PP_redux_wait(BSS_INV_err)
    call PP_redux_wait(Epsilon_ii(:,2))
+#if defined _PL
+   call PP_redux_wait(PL(:,2))
+#endif
    !
    ! I/O [after pert inversion]
    !
@@ -221,7 +224,12 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
    enddo
    !
-   if (full_inf_freqs>0.and.FULL) Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
+   if (full_inf_freqs>0.and.FULL) then 
+     Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
+#if defined _PL
+     PL(:,2)=PL(:,2)/real(ncpu,SP)
+#endif
+   endif
    !
  endif
  !
@@ -257,6 +265,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    call live_timing()
    call PP_redux_wait(BSS_INV_err,imode=2)
    call PP_redux_wait(Epsilon_ii(:,2))
+#if defined _PL
+   call PP_redux_wait(PL(:,2))
+#endif
    !
  endif
  !

@@ -43,7 +43,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
 #endif
 #if defined _PL
  use drivers,        ONLY:l_photolum
- use PHOTOLUM,       ONLY:PL_weights,BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
+ use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
 #endif
  !
  implicit none
@@ -59,9 +59,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
  logical          :: K_diago_in_BS_mat
  integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
- complex(SP)      :: E_plus_W,residual,PL_residual(3)
+ complex(SP)      :: E_plus_W,residual
 #if defined _PL
- complex(SP)      :: SF(W%n_freqs,2)
+ complex(SP)      :: SF(W%n_freqs,2),Lo_no_shift(W%n_freqs)
 #endif
  !
  complex(SP), allocatable :: BS_mat_diagonal(:)
@@ -200,8 +200,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
        !================
        call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh",.FALSE.)
 #if defined _PL
-       call X_GreenF_analytical(1,transition,W_mins,E,k,SF(:,1),"r","eh",.TRUE.)
-       Lo(i_res,:,1+Lo_n_loop)=-BSS_PL_f(1,i_res)*aimag(SF(:,1))/pi/abs(Lo(i_res,:,1))**2.
+       call X_GreenF_analytical(1,transition,W,E,k,SF(:,1),"r","eh",.TRUE.)
+       call X_GreenF_analytical(1,transition,W,E,k,Lo_no_shift,"r","eh",.FALSE.)
+       Lo(i_res,:,1+Lo_n_loop)=-BSS_PL_f(1,i_res)*aimag(SF(:,1))/pi/abs(Lo_no_shift(:))**2.
 #endif
        !
        if (BSS_add_antiresonant.or.BS_K_coupling) then
@@ -211,8 +212,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
          !
          ! The -1 coming from SF(:,2) and -abs(Lo)...compensate each other
          !
-         call X_GreenF_analytical(1,transition,W_plus,E,k,SF(:,2),"Ra","eh",.TRUE.)
-         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)*aimag(SF(:,2))/pi/abs(Lo(i_Lo_trans,:,i_Lo))**2.
+         call X_GreenF_analytical(1,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.)
+         call X_GreenF_analytical(1,transition,W,E,k,Lo_no_shift,"Ra","eh",.FALSE.)
+         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)*aimag(SF(:,2))/pi/abs(Lo_no_shift(:))**2.
 #endif
          !
        endif
@@ -251,17 +253,11 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
 #if defined _PL
      if (l_photolum) then
        !
-       do i_c=1,3
-         PL_residual(i_c)=BSS_dipoles_PL(i_res,i_c)*PL_weights(i_c)
-       enddo
+       residual=dot_product(BSS_dipoles_PL(i_res,:),BSS_dipoles_PL(i_res,:))
        !
-       residual=dot_product(PL_residual,PL_residual)
-       !
-       PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*Lo(i_res,:,1+Lo_n_loop)*abs(Lo(i_res,:,1))**2
-       !PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
+       PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(1,i_res)
        if (BSS_add_antiresonant.or.BS_K_coupling) then
-         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)*abs(Lo(i_Lo_trans,:,i_Lo))**2
-         !PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_Lo_trans)
+         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(2,i_Lo_trans)
        endif
        !
      endif

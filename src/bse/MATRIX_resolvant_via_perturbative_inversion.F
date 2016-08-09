@@ -21,9 +21,27 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,W,C,f,V,K)
+integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo,K)
  !
- ! C<W|1./(V^{-1}-K)|W> = \sum_n C<W| (1-VK)^{-1} V |W> = \sum_n C<W| ( VK )^n V |W>
+ ! Here I  wante to calculate
+ !
+ ! f = C<D|1./(Lo^{-1}-K)|D> = C <D|R|D>
+ !
+ ! with
+ !
+ ! R = 1./(Lo^{-1}-K) = \sum_n (1-Lo K)^{-1} = \sum_n  ( Lo K )^n Lo 
+ !
+ ! Thus:
+ !
+ ! R = \sum_n ( Lo K )^n Lo = \sum_n R_n
+ !
+ ! R_n satisfies a recursive rule
+ !
+ ! R_n = ( Lo K ) R_nm1
+ !
+ ! As R_n appears always multplied by |D> I define
+ !
+ ! R_x_D_n = R_n |D>
  !
  use BS,             ONLY:Inversion_treshold
  use pars,           ONLY:SP,cZERO,cONE
@@ -32,23 +50,27 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,W,C,f,V,
  implicit none
  !
  integer,    intent(in)  ::n,m,n_loop
- complex(SP),intent(in)  ::C,W(n),V(n,m),K(n,n)
+ complex(SP),intent(in)  ::C,D(n),Lo(n,m),K(n,n)
  complex(SP),intent(out) ::f
  !
  ! Work Space
  !
  integer     ::BSS_inv_iter_max=51
  integer     ::it
- complex(SP) ::A_nm1(n,m),A_n(n,m),delta_f,fo
+ complex(SP) ::R_x_D_nm1(n,m),R_x_D_n(n,m),delta_f,fo
  !
  MATRIX_resolvant_via_perturbative_inversion=0
  !
- A_nm1(:,1)=V(:,1)*W(:)
- fo=C*Vstar_dot_V_omp(N,W,A_nm1(:,1))
+ ! IP part
+ !
+ R_x_D_nm1(:,1)=Lo(:,1)*D(:)
+ fo=C*Vstar_dot_V_omp(n,D,R_x_D_nm1(:,1))
  if(n_loop==2) then
-   A_nm1(:,2)=V(:,2)*conjg(W(:))
-   fo=fo+C*Vstar_dot_V_omp(N,conjg(W),A_nm1(:,2))
+   R_x_D_nm1(:,2)=Lo(:,2)*conjg(D(:))
+   fo=fo+C*Vstar_dot_V_omp(n,conjg(D),R_x_D_nm1(:,2))
  endif
+ !
+ ! Iterative Cycle 
  !
  it=1
  !
@@ -59,23 +81,23 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,W,C,f,V,
  !
  do while (it<=BSS_inv_iter_max) 
    !
-   call M_by_V_omp('n',N,K,A_nm1(:,1),A_n(:,1))
-   if(n_loop==2) call M_by_V_omp('n',N,conjg(K),A_nm1(:,2),A_n(:,2))
+   call M_by_V_omp('n',n,K,R_x_D_nm1(:,1),R_x_D_n(:,1))
+   if (n_loop==2) call M_by_V_omp('n',n,conjg(K),R_x_D_nm1(:,2),R_x_D_n(:,2))
    !
-   A_n(:,1)=V(:,1)*A_n(:,1)
-   delta_f=C*Vstar_dot_V_omp(N,W,A_n(:,1))
-   if(n_loop==2) then 
-     A_n(:,2)=V(:,2)*A_n(:,2)
-     delta_f=delta_f+C*Vstar_dot_V_omp(N,conjg(W),A_n(:,2))
+   R_x_D_n(:,1)=Lo(:,1)*R_x_D_n(:,1)
+   delta_f=C*Vstar_dot_V_omp(n,D,R_x_D_n(:,1))
+   if (n_loop==2) then 
+     R_x_D_n(:,2)=Lo(:,2)*R_x_D_n(:,2)
+     delta_f=delta_f+C*Vstar_dot_V_omp(n,conjg(D),R_x_D_n(:,2))
    endif
    !
    f=f+delta_f
    !
    if (abs(delta_f)/abs(fo)<abs(Inversion_treshold)) return
    !
-   if( abs(delta_f)>40._SP) exit
+   if (abs(delta_f)>40._SP) exit
    !
-   A_nm1=A_n
+   R_x_D_nm1=R_x_D_n
    !
    it=it+1
    !

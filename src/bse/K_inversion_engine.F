@@ -29,7 +29,7 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
  use X_m,            ONLY:Epsilon_ii,global_gauge
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:q_norm
- use wrapper,        ONLY:Vstar_dot_V,M_by_V,V_dot_V
+ use wrapper,        ONLY:Vstar_dot_V,M_by_V
  use BS,             ONLY:BS_mat,BS_H_dim,Co_factor,BSS_INV_err,BSS_dipoles
 #if defined _PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
@@ -52,8 +52,9 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
  complex(SP), allocatable :: Mm1(:,:),V(:)
 #if defined _PL
  complex(SP), allocatable :: Vp(:)
+ integer,        external :: PL_via_perturbative_inversion
 #endif
- integer, external::MATRIX_resolvant_via_perturbative_inversion
+ integer,        external :: MATRIX_resolvant_via_perturbative_inversion
  !
  if (do_it_full) then
    allocate(Mm1(BS_H_dim,BS_H_dim),V(BS_H_dim))
@@ -112,7 +113,19 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
      else
        !
        BSS_INV_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles,gauge_factor,&
-&                                                                  Epsilon_ii(iw,2),Lo(:,iw,:Lo_dim),BS_mat)
+&                                                                  Epsilon_ii(iw,2),Lo(:,iw,:),BS_mat)
+       !
+#if defined _PL
+       !
+       if (BSS_INV_err(iw)==0) then
+         BSS_INV_err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
+&                                                      PL(iw,2),Lo(:,iw,:),BS_mat)
+         if (BSS_INV_err(iw)>0) then
+           Epsilon_ii(iw,2)=cZERO
+         endif
+       endif
+       !
+#endif
        !
      endif
      !
@@ -141,19 +154,17 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
          !
          call M_by_V('c',BS_H_dim,Mm1,BSS_dipoles_PL(:,i_c),V)
          do i_cv=1,BS_H_dim
-           V(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
+           Vp(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
          enddo
-         call M_by_V('n',BS_H_dim,Mm1,V,Vp)
-         PL(iw,2)=PL(iw,2)+PL_prefactor*Vstar_dot_V(BS_H_dim,BSS_dipoles_PL(:,i_c),Vp)
+         PL(iw,2)=PL(iw,2)+PL_prefactor*Vstar_dot_V(BS_H_dim,V,Vp)
          !
        else if(i_L_==2) then
          !
          call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_PL(:,i_c)),V)
          do i_cv=1,BS_H_dim
-           V(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
+           Vp(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
          enddo
-         call M_by_V('c',BS_H_dim,Mm1,V,Vp)
-         PL(iw,2)=PL(iw,2)+PL_prefactor*V_dot_V(BS_H_dim,BSS_dipoles_PL(:,i_c),Vp)
+         PL(iw,2)=PL(iw,2)+PL_prefactor*Vstar_dot_V(BS_H_dim,V,Vp)
          !
        endif
     enddo

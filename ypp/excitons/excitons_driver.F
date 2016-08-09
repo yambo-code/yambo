@@ -71,7 +71,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  complex(SP), allocatable ::BS_E(:)
  !
  real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
- real(SP),    pointer     ::BS_R_PL(:)         => null()
+ real(SP),    pointer     ::BS_R_PL(:,:)       => null()
  complex(SP), pointer     ::BS_R_kerr(:)       => null()
  !
  integer                  ::iq,neh

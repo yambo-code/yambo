@@ -23,7 +23,7 @@
 !
 subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
  !
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP,cZERO,rZERO
  use parallel_m,     ONLY:PP_indexes
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:Epsilon_ii,global_gauge
@@ -52,21 +52,15 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  integer      :: i2,iw,i_L
  character(1) :: Gr
  complex(SP)              :: gauge_factor
- complex(SP), allocatable :: Mm1(:,:),V(:)
+ complex(SP), allocatable :: Mm1(:,:)
 #if defined _PL
- complex(SP), allocatable :: Vp(:)
  integer,        external :: PL_via_perturbative_inversion
 #endif
  integer,        external :: EPS_via_perturbative_inversion
  !
  if (do_it_full) then
-   allocate(Mm1(BS_H_dim,BS_H_dim),V(BS_H_dim))
+   allocate(Mm1(BS_H_dim,BS_H_dim))
    Mm1=cZERO
-   V  =cZERO
-#if defined _PL
-   allocate(Vp(BS_H_dim))
-   Vp =cZERO
-#endif
  endif
  !
  do i2=1,iw_2do
@@ -134,10 +128,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  enddo
  !
  if (do_it_full) then
-   deallocate(Mm1,V)
-#if defined _PL
-   deallocate(Vp)
-#endif
+   deallocate(Mm1)
  else
    call live_timing()
  endif
@@ -146,11 +137,12 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
    !
 #if defined _PL
    subroutine PL_compose(i_L_)
-     integer :: i_L_,i_c,i_cv,i1,i2
+     complex(SP) :: Vp(BS_H_dim),V(BS_H_dim)
+     integer     :: i_L_,i_c,i_cv,i1,i2
      do i_c=1,3
        if(i_L_==1) call M_by_V('c',BS_H_dim,Mm1,BSS_dipoles_PL(:,i_c),V)
        if(i_L_==2) call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_PL(:,i_c)),V)
-       do i_cv=1,BS_K_dim
+       do i_cv=1,BS_H_dim
          Vp(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
        enddo
        PL(iw,2)=PL(iw,2)+PL_prefactor*Vstar_dot_V(BS_H_dim,V,Vp)
@@ -159,7 +151,8 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
 #endif
    !
    subroutine EPS_compose(i_L_)
-     integer :: i_L_
+     integer     :: i_L_
+     complex(SP) :: V(BS_H_dim)
      if(i_L_==1) then
        call M_by_V('n',BS_H_dim,Mm1,BSS_dipoles,V)
        Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V(BS_H_dim,BSS_dipoles,V)

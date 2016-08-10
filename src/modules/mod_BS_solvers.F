@@ -75,14 +75,12 @@ module BS_solvers
  !=========
  character(schlen):: BSS_inversion_mode
  logical  :: BSS_uses_partial_diago
-! integer    , allocatable :: BSS_INV_err(:)
-! integer    , allocatable :: BSS_INV_iw_full(:)
-! complex(SP), allocatable :: BSS_INV_eps(:,:)
-! complex(SP), allocatable :: BSS_INV_pl(:,:)
  !
  type K_Inversion_data
    !
+   character(3)             :: what
    integer                  :: n_freqs = 0
+   integer                  :: n_full_inv_freqs = 0
    real(SP)                 :: treshold 
    real(SP)                 :: PERT_FULL_ratio = 1. 
    integer    , allocatable :: err(:)

@@ -34,6 +34,7 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
  use BS_solvers,     ONLY:BS_mat,Co_factor,K_INV_EPS,BSS_dipoles,Co_factor
 #if defined _PL
  use BS,             ONLY:BS_K_dim
+ use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
 #endif
  !
@@ -79,6 +80,9 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
      !
      if(.not.px%element_1D(iw)) then
        K_INV_EPS%err(iw)=0
+#if defined _PL
+       K_INV_PL%err(iw)=0
+#endif
        cycle
      endif
      !
@@ -95,6 +99,9 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
      if (do_it_full) then
        !
        K_INV_EPS%err(iw)=0
+#if defined _PL
+       K_INV_PL%err(iw)=0
+#endif
        !
        do i_L=1,Lo_n_loop
          !
@@ -119,13 +126,8 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
        !
 #if defined _PL
        !
-       if (K_INV_EPS%err(iw)==0) then
-         K_INV_EPS%err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
-&                                                      PL(iw,2),Lo(:,iw,:),BS_mat)
-         if (K_INV_EPS%err(iw)>0) then
-           Epsilon_ii(iw,2)=cZERO
-         endif
-       endif
+       K_INV_PL%err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
+&                                                     PL(iw,2),Lo(:,iw,:),BS_mat)
        !
 #endif
        !

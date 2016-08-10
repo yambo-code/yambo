@@ -490,7 +490,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  BSS_perturbative_width=.FALSE.
+ K_INV_PL%what     = "PLS"
  K_INV_PL%treshold =0.5_SP
+ K_INV_EPS%what    = "EPS"
  K_INV_EPS%treshold=0.01_SP
  !
  ! TDDFT

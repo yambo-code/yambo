@@ -27,7 +27,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BS_mat,BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,K_INV_EPS,K_INV_PL,BSS_add_antiresonant
+&                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data
  use BS,             ONLY:BS_H_dim
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
@@ -51,6 +51,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use KERR,           ONLY:BS_KERR_free
 #endif
 #if defined _PL
+ use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:BS_PL_free,PL
 #endif
  !
@@ -70,14 +71,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  type(PP_indexes)  :: px
  integer           :: i1,i2,iw
  logical, external :: stop_now
+ real(SP)          :: ratio
  complex(SP), allocatable :: Lo(:,:,:)
  !
  ! ... frequencies
  !
- integer     :: full_inf_freqs,nw,nw_conv,&
-&               min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
-                                        ! I perform a full inversion
- logical    ::do_it_full,full_inf_freqs_found,FULL,PERTURBATIVE
+ integer    ::nw,nw_conv
+ logical    ::FULL,PERTURBATIVE,completed
  !
  ! I/O
  !
@@ -100,7 +100,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !==================
  FULL         = index(BSS_inversion_mode,'f')/=0
  PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
- full_inf_freqs_found=.FALSE.
  !
 #if defined _RT
  if (NEQ_Residuals.neqv.NEQ_Kernel) then
@@ -110,8 +109,12 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Restart database
  !==================
- call K_inversion_restart(iq,W,K_INV_EPS)
- if (count(K_INV_EPS%err/=0)==0) then
+ call K_inversion_restart(iq,W)
+ completed=count(K_INV_EPS%err/=0)==0
+#if defined _PL
+ completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
+#endif
+ if (completed) then
    call LOCAL_clean()
    return
  endif
@@ -152,23 +155,33 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  if (PERTURBATIVE) then
    !
-   do_it_full=.FALSE.
    call live_timing('Perturbative inversion ',px%n_of_elements(myid+1))
    !
-   call K_inversion_engine(1,W%n_freqs,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
+   call K_inversion_engine(1,W%n_freqs,px,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
    call PP_redux_wait(K_INV_EPS%err)
    call PP_redux_wait(Epsilon_ii(:,2))
 #if defined _PL
+   call PP_redux_wait(K_INV_PL%err)
    call PP_redux_wait(PL(:,2))
 #endif
    !
    ! I/O [after pert inversion]
    !
    K_INV_EPS%spectra(:,1)=Epsilon_ii(:,2)
+#if defined PL
+   K_INV_PL%spectra(:,1)=PL(:,2)
+#endif
    !
+#if defined PL
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
+   i_err=io_BSS_invert(iq,W,ID)
+   call msg('rs','[PERTURBATIVE INV@PL ] Converged frequencies :',count(K_INV_PL%err==0))
+#else
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
+#endif
+   call msg('rs','[PERTURBATIVE INV@EPS] Converged frequencies :',count(K_INV_EPS%err==0))
    !
  endif
  !
@@ -178,140 +191,70 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! First I define the group of frequencies not converged
  !
  if (FULL) then
-   !
-   full_inf_freqs=0
-   do i1=1,W%n_freqs
-     if (K_INV_EPS%err(i1)/=0) then
-       full_inf_freqs=full_inf_freqs+1
-       K_INV_EPS%iw_full(full_inf_freqs)=i1
-     endif
-   enddo
+   !======
+   call FULL_INF_freqs(K_INV_EPS)
+#if defined _PL
+   call FULL_INF_freqs(K_INV_PL)
+#endif
    !
  endif
  !
  if (PERTURBATIVE) then
+   !==============
    !
-   min_dist_non_conv_freqs=W%n_freqs
-   !
-   do while (.not.full_inf_freqs_found) 
-     !
-     full_inf_freqs=0
-     !
-     iw=-1
-     nw=0
-     do i1=1,W%n_freqs
-       if (K_INV_EPS%err(i1)/= 0.and.iw<0) iw=i1
-       if (K_INV_EPS%err(i1)/= 0.and.iw>0) nw=nw+1
-       if ((K_INV_EPS%err(i1)== 0.or.(K_INV_EPS%err(i1)/=0.and.i1==W%n_freqs)).and.iw>0) then
-         !
-         if (nw>=min_dist_non_conv_freqs) then
-           !
-           do i2=iw,iw+nw-1,min_dist_non_conv_freqs
-             full_inf_freqs=full_inf_freqs+1
-             K_INV_EPS%iw_full(full_inf_freqs)=i2
-           enddo
-           !
-         endif
-         iw=-1
-         nw=0
-       endif
-     enddo
-     min_dist_non_conv_freqs=min_dist_non_conv_freqs-1
-     if (min_dist_non_conv_freqs==0) full_inf_freqs_found=.TRUE.
-     !
-     if (full_inf_freqs>=nint(real(W%n_freqs)/K_INV_EPS%PERT_FULL_ratio)) full_inf_freqs_found=.TRUE.
-     !
-   enddo
-   !
-   if (full_inf_freqs>0.and.FULL) then 
-     Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
+   call FULL_INF_pre_setup(K_INV_EPS)
 #if defined _PL
-     PL(:,2)=PL(:,2)/real(ncpu,SP)
+   call FULL_INF_pre_setup(K_INV_PL)
 #endif
-   endif
    !
  endif
  !
  call K_output_file(iq,"Inversion")
  !
- if (full_inf_freqs>0.and.FULL) then
-   !
-   call msg('rs','[BSE INV (before full INV)] Non converged frequencies :',full_inf_freqs)
-   !
-   ! Then loop on the groups performing full inversion
-   !
-   call PP_indexes_reset(px)
-   call PARALLEL_index(px,(/full_inf_freqs/))
-   call live_timing('Exact inversion ',px%n_of_elements(myid+1))
-   !
-   do_it_full=.true.
-   !
-   do i1=1,full_inf_freqs
-     !
-     if (.not.px%element_1D(i1)) cycle
-     !
-     iw=K_INV_EPS%iw_full(i1)
-     !
-     call K_inversion_engine(iw,1,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
-     !
-     call live_timing(steps=1)
-     !
-     if (stop_now(.FALSE.)) then
-       exit
-     endif
-     !
-   enddo
-   !
-   call live_timing()
-   call PP_redux_wait(K_INV_EPS%err,imode=2)
-   call PP_redux_wait(Epsilon_ii(:,2))
+ ! FULL INVERSION
+ !================
+ !
+ if (K_INV_EPS%n_full_inv_freqs>0.and.FULL) call do_it_FULL(K_INV_EPS)
 #if defined _PL
-   call PP_redux_wait(PL(:,2))
+ if (K_INV_PL%n_full_inv_freqs>0.and.FULL) call do_it_FULL(K_INV_PL)
 #endif
-   !
- endif
  !
- nw_conv=0
- do iw=1,W%n_freqs
-   if (K_INV_EPS%err(iw)==0) nw_conv=nw_conv+1
- enddo
- call msg('rs','[BSE INV  (after full INV)] Converged frequencies      :',nw_conv)
- call msg('rs','[BSE INV  (after full INV)]                       [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
- !
- if (nw_conv>0) then
-   !
-   ! I/O [after full inversion]
-   !
-   K_INV_EPS%spectra(:,1)=Epsilon_ii(:,2)
-   !
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   i_err=io_BSS_invert(iq,W,ID)
-   !
-   ! Try a polinomial interpolation on the null values
-   !===================================================
-   call K_eps_interpolate(W%n_freqs,real(W%p),K_INV_EPS%err)
-   !
- else
-   !
-   call warning('[BSE INV] Zero converged frequencies')
-   !
- endif
+ ! Try a polinomial interpolation on the null values (only for EPS)
+ !==================================================================
+ call K_eps_interpolate(W%n_freqs,real(W%p),K_INV_EPS%err)
  !
  call PP_redux_wait()
  !
  Epsilon_ii(:,2)=1._SP+Epsilon_ii(:,2)
- !
  if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(1)**2
  !
  BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//&
-&                             trim(real2ch(real(nw_conv)/real(W%n_freqs)*100._SP))
+ ratio=real(nw_conv)/real(W%n_freqs)*100._SP
+ BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//trim(real2ch(ratio))
  !
  call K_output_file(iq,"Inversion")
  !
+ ! I/O [after full inversion]
+ !=====
+ K_INV_EPS%spectra(:,1)=Epsilon_ii(:,2)
+#if defined _PL
+ K_INV_PL%spectra(:,1)=PL(:,2)
+#endif
+ !
+#if defined _PL
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
+ i_err=io_BSS_invert(iq,W,ID)
+#else
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+ i_err=io_BSS_invert(iq,W,ID)
+#endif
+ !
  ! CLEAN
  !
- deallocate(K_INV_EPS%err,K_INV_EPS%spectra,K_INV_EPS%iw_full)
+ call LOCAL_TYP_clean(K_INV_EPS)
+#if defined _PL
+ call LOCAL_TYP_clean(K_INV_PL)
+#endif
  call PP_indexes_reset(px)
  deallocate(Lo)
  call mem_est("Lo")
@@ -321,6 +264,109 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
  !
  contains 
+   !
+   subroutine do_it_FULL(TYP)
+     type(K_Inversion_data) :: TYP
+     !
+     ! Then loop on the groups performing full inversion
+     !
+     call PP_indexes_reset(px)
+     call PARALLEL_index(px,(/TYP%n_full_inv_freqs/))
+     call live_timing('['//TYP%what//'] Exact inversion ',px%n_of_elements(myid+1))
+     !
+     do i1=1,TYP%n_full_inv_freqs
+       !
+       if (.not.px%element_1D(i1)) cycle
+       !
+       iw=TYP%iw_full(i1)
+       !
+       call K_inversion_engine(iw,1,px,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
+       !
+       call live_timing(steps=1)
+       !
+       if (stop_now(.FALSE.)) then
+         exit
+       endif
+       !
+     enddo
+     !
+     call live_timing()
+     call PP_redux_wait(TYP%err,imode=2)
+     call PP_redux_wait(Epsilon_ii(:,2))
+#if defined _PL
+     call PP_redux_wait(PL(:,2))
+#endif
+     !
+     nw_conv=count(TYP%err==0)
+     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies DONE      :',nw_conv)
+     call msg('rs','[FULL INV@'//TYP%what//']                  [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
+     !
+   end subroutine
+   !
+   subroutine FULL_INF_freqs(TYP)
+     type(K_Inversion_data) :: TYP
+     TYP%n_full_inv_freqs=0
+     do i1=1,W%n_freqs
+       if (TYP%err(i1)/=0) then
+         TYP%n_full_inv_freqs=TYP%n_full_inv_freqs+1
+         TYP%iw_full(TYP%n_full_inv_freqs)=i1
+       endif
+     enddo
+   end subroutine
+   !
+   subroutine FULL_INF_pre_setup(TYP)
+     type(K_Inversion_data) :: TYP
+     integer :: min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
+     logical :: found
+     !
+     min_dist_non_conv_freqs=W%n_freqs
+     found = .FALSE.
+     !
+     do while (.not.found) 
+       !
+       TYP%n_full_inv_freqs=0
+       !
+       iw=-1
+       nw=0
+       do i1=1,W%n_freqs
+         if (TYP%err(i1)/= 0.and.iw<0) iw=i1
+         if (TYP%err(i1)/= 0.and.iw>0) nw=nw+1
+         if ((TYP%err(i1)== 0.or.(TYP%err(i1)/=0.and.i1==W%n_freqs)).and.iw>0) then
+           !
+           if (nw>=min_dist_non_conv_freqs) then
+             !
+             do i2=iw,iw+nw-1,min_dist_non_conv_freqs
+               TYP%n_full_inv_freqs=TYP%n_full_inv_freqs+1
+               TYP%iw_full(TYP%n_full_inv_freqs)=i2
+             enddo
+             !
+           endif
+           iw=-1
+           nw=0
+         endif
+       enddo
+       min_dist_non_conv_freqs=min_dist_non_conv_freqs-1
+       if (min_dist_non_conv_freqs==0) found=.TRUE.
+       !
+       if (TYP%n_full_inv_freqs>=nint(real(W%n_freqs)/TYP%PERT_FULL_ratio)) found=.TRUE.
+       !
+     enddo
+     !
+     if (TYP%n_full_inv_freqs>0.and.FULL) then 
+       if (TYP%what=="EPS") Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
+#if defined _PL
+       if (TYP%what=="PLS") PL(:,2)=PL(:,2)/real(ncpu,SP)
+#endif
+     endif
+     !
+     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies TODO :',TYP%n_full_inv_freqs)
+     !
+   end subroutine
+   !
+   subroutine LOCAL_TYP_clean(TYP)
+     type(K_Inversion_data) :: TYP
+     deallocate(TYP%err,TYP%spectra,TYP%iw_full)
+   end subroutine
    !
    subroutine LOCAL_clean
      call BS_mat_free( )

@@ -213,9 +213,8 @@ module X_output
        !
        suffix(1) = "[2]"
        suffix(2) = "o[3]"
-       suffix(3) = "'[4]"
        !
-       n_s = 3
+       n_s = 2
        !
      else
        !

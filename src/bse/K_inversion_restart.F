@@ -89,22 +89,24 @@ subroutine K_inversion_restart(iq,W)
    K_INV_EPS%err    =-1
    K_INV_EPS%spectra=cZERO
    K_INV_EPS%spectra(:,2:3)=Epsilon_ii(:,3:4)
+   Epsilon_ii     =cZERO
+   Epsilon_ii(:,1)=W%p(:)
 #if defined _PL
    allocate(K_INV_PL%err(W%n_freqs),K_INV_PL%spectra(W%n_freqs,2))
    K_INV_PL%err    =-1
    K_INV_PL%spectra=cZERO
    K_INV_PL%spectra(:,2)=PL(:,3)
+   PL     =rZERO
+   PL(:,1)=W%p(:)
 #endif
    !
  endif
  !
  allocate(K_INV_EPS%iw_full(W%n_freqs))
  K_INV_EPS%iw_full=0
- Epsilon_ii(:,1)=W%p(:)
 #if defined _PL
  allocate(K_INV_PL%iw_full(W%n_freqs))
  K_INV_PL%iw_full=0
- PL(:,1)=W%p(:)
 #endif
  !
  contains

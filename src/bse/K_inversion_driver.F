@@ -96,6 +96,18 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    call section('+','Inversion solver')
  endif
  !
+ ! Restart database
+ !==================
+ call K_inversion_restart(iq,W)
+ completed=count(K_INV_EPS%err/=0)==0
+#if defined _PL
+ completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
+#endif
+ if (completed) then
+   call LOCAL_clean()
+   return
+ endif
+ !
  ! Full inversion ?
  !==================
  FULL         = index(BSS_inversion_mode,'f')/=0
@@ -131,18 +143,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  call mem_est("Lo",(/size(Lo)/))
  !
  call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
- !
- ! Restart database
- !==================
- call K_inversion_restart(iq,W)
- completed=count(K_INV_EPS%err/=0)==0
-#if defined _PL
- completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
-#endif
- if (completed) then
-   call LOCAL_clean()
-   return
- endif
  !
  ! Initialize the output file 
  !============================

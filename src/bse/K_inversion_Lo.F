@@ -73,11 +73,11 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  ! PL_0
  !=======
  call PL_init( )
- PL        = rZERO
+ PL(:,3) = rZERO
  !
 #endif
  !
- Epsilon_ii=cZERO
+ Epsilon_ii(:,3:4) = cZERO
  !
  call parser('BSSInvKdiag',K_diago_in_BS_mat)
  !

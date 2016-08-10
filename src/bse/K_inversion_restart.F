@@ -45,18 +45,15 @@ subroutine K_inversion_restart(iq,W)
  !
  integer                  :: ID,iw,i_err,iw_tab
  integer,        external :: io_BSS_invert
- integer,     allocatable :: inv_err_db(:)
  integer,     allocatable :: freq_table(:)
- complex(SP), allocatable :: DB_eps_pl(:,:)
  type(w_samp)             :: W_db
- logical, SAVE            :: am_i_first=.TRUE.
  !
  ! Restart DB I/O
  !================
  !
  call W_reset(W_db)
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  i_err=io_BSS_invert(iq,W_db,ID)
  !
  ! When the damping range is not uniform then changing energy borders means changing damping :(
@@ -67,10 +64,24 @@ subroutine K_inversion_restart(iq,W)
  !
  if (i_err==0) then
    !
+   W_db%n_freqs=K_INV_EPS%n_freqs
+   !
+   allocate(freq_table(W_db%n_freqs+W%n_freqs))
+   !
+   ! Here I create a new energy array that merges the db to the current energies. 
+   !
+   call FREQUENCIES_merge(W_db,W,freq_table)
+   !
+   BSS_n_freqs=W%n_freqs
+   BSS_er=W%er
+   BSS_dr=W%dr
+   !
    call elemental_restart(K_INV_EPS)
 #if defined _PL
    call elemental_restart(K_INV_PL)
 #endif
+   !
+   deallocate(freq_table)
    !
  else
    !
@@ -112,30 +123,22 @@ subroutine K_inversion_restart(iq,W)
      !
      type(K_Inversion_data) :: TYP
      !
-     W_db%n_freqs=TYP%n_freqs
+     integer,     allocatable :: inv_err_db(:)
+     complex(SP), allocatable :: DB_spectra(:,:)
      !
      allocate(TYP%err(W_db%n_freqs),TYP%spectra(W_db%n_freqs,2))
-     allocate(freq_table(W_db%n_freqs+W%n_freqs),inv_err_db(W_db%n_freqs),&
-&             DB_eps_pl(W_db%n_freqs,2))
+     allocate(inv_err_db(W_db%n_freqs),DB_spectra(W_db%n_freqs,2))
      !
-     if (TYP%what=="EPS") call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-     if (TYP%what=="PLS") call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,3/),ID=ID)
+     if (TYP%what=="EPS") call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,3/),ID=ID)
+     if (TYP%what=="PLS") call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,4/),ID=ID)
      i_err=io_BSS_invert(iq,W_db,ID)
      !
      ! Shadows and re-allocation
      !
      inv_err_db=TYP%err
-     DB_eps_pl =TYP%spectra
+     DB_spectra=TYP%spectra
      !
      deallocate(TYP%err,TYP%spectra)
-     !
-     ! Here I create a new energy array that merges the db to the current energies. 
-     !
-     call FREQUENCIES_merge(W_db,W,freq_table)
-     !
-     BSS_n_freqs=W%n_freqs
-     BSS_er=W%er
-     BSS_dr=W%dr
      !
      allocate(TYP%err(W%n_freqs),TYP%spectra(W%n_freqs,2))
      TYP%spectra=cZERO
@@ -148,10 +151,10 @@ subroutine K_inversion_restart(iq,W)
        iw_tab=freq_table(iw)
        !
        if (iw_tab>0) then
-         TYP%spectra(iw,2)=DB_eps_pl(iw_tab,2)
+         TYP%spectra(iw,2)=DB_spectra(iw_tab,2)
          TYP%err(iw)=inv_err_db(iw_tab)
          if (TYP%err(iw)==0) then
-           TYP%spectra(iw,1)=DB_eps_pl(iw_tab,1)
+           TYP%spectra(iw,1)=DB_spectra(iw_tab,1)
          endif
        else
          TYP%spectra(iw,1)=cZERO
@@ -186,7 +189,7 @@ subroutine K_inversion_restart(iq,W)
      endif
 #endif
      !
-     deallocate(inv_err_db,TYP%spectra,freq_table,DB_eps_pl)
+     deallocate(inv_err_db,TYP%spectra,DB_spectra)
      !
   end subroutine
   !

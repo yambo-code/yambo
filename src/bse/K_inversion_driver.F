@@ -174,11 +174,11 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
    !
 #if defined _PL
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3,4/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
    call msg('rs','[PERTURBATIVE INV@PL ] Converged frequencies :',count(K_INV_PL%err==0))
 #else
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
 #endif
    call msg('rs','[PERTURBATIVE INV@EPS] Converged frequencies :',count(K_INV_EPS%err==0))
@@ -242,10 +242,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
  !
 #if defined _PL
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3,4/),ID=ID)
  i_err=io_BSS_invert(iq,W,ID)
 #else
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
  i_err=io_BSS_invert(iq,W,ID)
 #endif
  !

@@ -59,7 +59,7 @@ module PHOTOLUM
      !
      if (allocated(PL))  return
      !
-     allocate(PL(BSS_n_freqs,4)) !  2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
+     allocate(PL(BSS_n_freqs,3)) !  2 (int) 3 (non int) 
      PL = rZERO
      do ic=1,3
        PL_weights(ic) = PL_weights(ic)/(sqrt(PL_weights(ic)))

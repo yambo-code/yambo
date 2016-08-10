@@ -248,7 +248,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
      endif
      !
 #if defined _PL
-     if (l_photolum) then
+     if (l_photolum.and.i_loop==1) then
        !
        residual=dot_product(BSS_dipoles_PL(i_res,:),BSS_dipoles_PL(i_res,:))
        !

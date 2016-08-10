@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
+subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
  !
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PP_indexes
@@ -40,6 +40,7 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
  !
  implicit none
  !
+ character(3)     :: what
  integer          :: iw_2start,iw_2do,Lo_dim,Lo_n_loop
  type(PP_indexes) :: px
  type(w_samp)     :: W
@@ -49,7 +50,6 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
  ! Work Space
  !
  integer      :: i2,iw,i_L
- logical      :: perform_inv
  character(1) :: Gr
  complex(SP)              :: gauge_factor
  complex(SP), allocatable :: Mm1(:,:),V(:)
@@ -73,6 +73,9 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
    !
    iw=i2+iw_2start-1
    !
+   if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/q_norm(1)**2
+   if (trim(global_gauge)=='velocity') gauge_factor=-Co_factor/ W%p(iw) **2
+   !
    ! The parallel loop is controlled in the manin body loop 
    ! when a full inversion is performed
    !
@@ -86,55 +89,46 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
        cycle
      endif
      !
-   endif
-   !
-   if (     do_it_full) perform_inv= K_INV_EPS%err(iw)/= 0
-   if (.not.do_it_full) perform_inv= K_INV_EPS%err(iw)==-1
-   !
-   if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/q_norm(1)**2
-   if (trim(global_gauge)=='velocity') gauge_factor=-Co_factor/ W%p(iw) **2
-   !       
-   if (perform_inv) then
-     !
-     if (do_it_full) then
-       !
-       K_INV_EPS%err(iw)=0
-#if defined _PL
-       K_INV_PL%err(iw)=0
-#endif
-       !
-       do i_L=1,Lo_n_loop
-         !
-         if (i_L==1) Gr="r"
-         if (i_L==2) Gr="a"
-         call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
-         !
-         call EPS_compose(i_L)
-         !
-#if defined _PL
-         !
-         call PL_compose(i_L)
-         !
-#endif
-         !
-       enddo
-       !
-     else
-       !
+     if (K_INV_EPS%err(iw)/=0) then
        K_INV_EPS%err(iw)=EPS_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles,gauge_factor,&
-&                                                                  Epsilon_ii(iw,2),Lo(:,iw,:),BS_mat)
-       !
-#if defined _PL
-       !
-       K_INV_PL%err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
-&                                                     PL(iw,2),Lo(:,iw,:),BS_mat)
-       !
-#endif
-       !
+&                                                       Epsilon_ii(iw,2),Lo(:,iw,:),BS_mat)
      endif
      !
-   endif       
-   !
+#if defined _PL
+     !
+     if (K_INV_PL%err(iw)/=0) then
+       K_INV_PL%err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
+&                                                     PL(iw,2),Lo(:,iw,:),BS_mat)
+     endif
+     !
+#endif
+   else
+     !
+     do i_L=1,Lo_n_loop
+       !
+       if (i_L==1) Gr="r"
+       if (i_L==2) Gr="a"
+       !
+       call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
+       !
+       if (what=="EPS") then
+         call EPS_compose(i_L)
+         K_INV_EPS%err(iw)=0
+       endif
+       !
+#if defined _PL
+       !
+       if (what=="PLS") then
+         call PL_compose(i_L)
+         K_INV_PL%err(iw)=0
+       endif
+       !
+#endif
+       !
+     enddo
+     !
+   endif
+   !       
    if (.not.do_it_full) call live_timing(steps=1)
    !
  enddo

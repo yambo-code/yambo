@@ -102,7 +102,9 @@ subroutine K_inversion_restart(iq,W)
      allocate(TYP%spectra(W%n_freqs,2)) ! int no-int
      TYP%spectra     =cZERO
      if (TYP%what=="EPS") TYP%spectra(:,2)=Epsilon_ii(:,3)
+#if defined _PL
      if (TYP%what=="PLS") TYP%spectra(:,2)=PL(:,3)
+#endif
      !
    end subroutine
    !
@@ -154,7 +156,9 @@ subroutine K_inversion_restart(iq,W)
        else
          TYP%spectra(iw,1)=cZERO
          if (TYP%what=="EPS") TYP%spectra(iw,2)=Epsilon_ii(iabs(iw_tab),3)
+#if defined _PL
          if (TYP%what=="PLS") TYP%spectra(iw,2)=PL(iabs(iw_tab),3)
+#endif
          TYP%err(iw)=-1
        endif
      enddo
@@ -172,6 +176,7 @@ subroutine K_inversion_restart(iq,W)
        Epsilon_ii(:,2)=TYP%spectra(:,1)/real(ncpu,SP)
        Epsilon_ii(:,3)=TYP%spectra(:,2)
      endif
+#if defined _PL
      if (TYP%what=="PLS") then
        deallocate(PL)
        allocate(PL(BSS_n_freqs,3))
@@ -179,6 +184,7 @@ subroutine K_inversion_restart(iq,W)
        PL(:,2)=TYP%spectra(:,1)/real(ncpu,SP)
        PL(:,3)=TYP%spectra(:,2)
      endif
+#endif
      !
      deallocate(inv_err_db,TYP%spectra,freq_table,DB_eps_pl)
      !

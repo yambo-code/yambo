@@ -157,7 +157,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    call live_timing('Perturbative inversion ',px%n_of_elements(myid+1))
    !
-   call K_inversion_engine(1,W%n_freqs,px,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
+   call K_inversion_engine("any",1,W%n_freqs,px,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
    call PP_redux_wait(K_INV_EPS%err)
    call PP_redux_wait(Epsilon_ii(:,2))
@@ -169,11 +169,11 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    ! I/O [after pert inversion]
    !
    K_INV_EPS%spectra(:,1)=Epsilon_ii(:,2)
-#if defined PL
+#if defined _PL
    K_INV_PL%spectra(:,1)=PL(:,2)
 #endif
    !
-#if defined PL
+#if defined _PL
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
    call msg('rs','[PERTURBATIVE INV@PL ] Converged frequencies :',count(K_INV_PL%err==0))
@@ -199,7 +199,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  endif
  !
- if (PERTURBATIVE) then
+ if (FULL.and.PERTURBATIVE) then
    !==============
    !
    call FULL_INF_pre_setup(K_INV_EPS)
@@ -266,6 +266,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  contains 
    !
    subroutine do_it_FULL(TYP)
+     !
      type(K_Inversion_data) :: TYP
      !
      ! Then loop on the groups performing full inversion
@@ -280,7 +281,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
        !
        iw=TYP%iw_full(i1)
        !
-       call K_inversion_engine(iw,1,px,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
+       call K_inversion_engine(TYP%what,iw,1,px,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
        !
        call live_timing(steps=1)
        !
@@ -292,9 +293,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
      call live_timing()
      call PP_redux_wait(TYP%err,imode=2)
-     call PP_redux_wait(Epsilon_ii(:,2))
+     if (TYP%what=="EPS") call PP_redux_wait(Epsilon_ii(:,2))
 #if defined _PL
-     call PP_redux_wait(PL(:,2))
+     if (TYP%what=="PLS") call PP_redux_wait(PL(:,2))
 #endif
      !
      nw_conv=count(TYP%err==0)

@@ -85,39 +85,29 @@ subroutine K_inversion_restart(iq,W)
    !
  else
    !
-   allocate(K_INV_EPS%err(W%n_freqs))
-   K_INV_EPS%err=-1
-   Epsilon_ii=cZERO
+   allocate(K_INV_EPS%err(W%n_freqs),K_INV_EPS%spectra(W%n_freqs,3))
+   K_INV_EPS%err    =-1
+   K_INV_EPS%spectra=cZERO
+   K_INV_EPS%spectra(:,2:3)=Epsilon_ii(:,3:4)
 #if defined _PL
-   allocate(K_INV_PL%err(W%n_freqs))
-   K_INV_PL%err=-1
-   PL=rZERO
+   allocate(K_INV_PL%err(W%n_freqs),K_INV_PL%spectra(W%n_freqs,2))
+   K_INV_PL%err    =-1
+   K_INV_PL%spectra=cZERO
+   K_INV_PL%spectra(:,2)=PL(:,3)
 #endif
    !
  endif
  !
- call elemental_alloc(K_INV_EPS)
+ allocate(K_INV_EPS%iw_full(W%n_freqs))
+ K_INV_EPS%iw_full=0
  Epsilon_ii(:,1)=W%p(:)
 #if defined _PL
- call elemental_alloc(K_INV_PL)
+ allocate(K_INV_PL%iw_full(W%n_freqs))
+ K_INV_PL%iw_full=0
  PL(:,1)=W%p(:)
 #endif
  !
  contains
-   !
-   subroutine elemental_alloc(TYP)
-     !
-     type(K_Inversion_data) :: TYP
-     !
-     allocate(TYP%iw_full(W%n_freqs))
-     allocate(TYP%spectra(W%n_freqs,2)) ! int no-int
-     TYP%spectra     =cZERO
-     if (TYP%what=="EPS") TYP%spectra(:,2)=Epsilon_ii(:,3)
-#if defined _PL
-     if (TYP%what=="PLS") TYP%spectra(:,2)=PL(:,3)
-#endif
-     !
-   end subroutine
    !
    subroutine elemental_restart(TYP)
      !
@@ -126,8 +116,13 @@ subroutine K_inversion_restart(iq,W)
      integer,     allocatable :: inv_err_db(:)
      complex(SP), allocatable :: DB_spectra(:,:)
      !
-     allocate(TYP%err(W_db%n_freqs),TYP%spectra(W_db%n_freqs,2))
-     allocate(inv_err_db(W_db%n_freqs),DB_spectra(W_db%n_freqs,2))
+     allocate(TYP%err(W_db%n_freqs))
+     allocate(inv_err_db(W_db%n_freqs))
+     if (TYP%what=="PLS") then
+       allocate(DB_spectra(W_db%n_freqs,2),TYP%spectra(W_db%n_freqs,2))
+     else
+       allocate(DB_spectra(W_db%n_freqs,3),TYP%spectra(W_db%n_freqs,3))
+     endif
      !
      if (TYP%what=="EPS") call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,3/),ID=ID)
      if (TYP%what=="PLS") call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,4/),ID=ID)
@@ -140,7 +135,9 @@ subroutine K_inversion_restart(iq,W)
      !
      deallocate(TYP%err,TYP%spectra)
      !
-     allocate(TYP%err(W%n_freqs),TYP%spectra(W%n_freqs,2))
+     allocate(TYP%err(W%n_freqs))
+     if (TYP%what=="EPS") allocate(TYP%spectra(W%n_freqs,3))
+     if (TYP%what=="PLS") allocate(TYP%spectra(W%n_freqs,2))
      TYP%spectra=cZERO
      TYP%err    =-1
      !
@@ -152,13 +149,16 @@ subroutine K_inversion_restart(iq,W)
        !
        if (iw_tab>0) then
          TYP%spectra(iw,2)=DB_spectra(iw_tab,2)
+         if (TYP%what=="EPS") TYP%spectra(iw,3)=DB_spectra(iw_tab,3)
          TYP%err(iw)=inv_err_db(iw_tab)
          if (TYP%err(iw)==0) then
            TYP%spectra(iw,1)=DB_spectra(iw_tab,1)
          endif
        else
          TYP%spectra(iw,1)=cZERO
-         if (TYP%what=="EPS") TYP%spectra(iw,2)=Epsilon_ii(iabs(iw_tab),3)
+         if (TYP%what=="EPS") then
+           TYP%spectra(iw,2:3)=Epsilon_ii(iabs(iw_tab),3:4)
+         endif
 #if defined _PL
          if (TYP%what=="PLS") TYP%spectra(iw,2)=PL(iabs(iw_tab),3)
 #endif
@@ -178,6 +178,7 @@ subroutine K_inversion_restart(iq,W)
        Epsilon_ii(:,1)=W%p(:)
        Epsilon_ii(:,2)=TYP%spectra(:,1)/real(ncpu,SP)
        Epsilon_ii(:,3)=TYP%spectra(:,2)
+       Epsilon_ii(:,4)=TYP%spectra(:,3)
      endif
 #if defined _PL
      if (TYP%what=="PLS") then
@@ -189,7 +190,7 @@ subroutine K_inversion_restart(iq,W)
      endif
 #endif
      !
-     deallocate(inv_err_db,TYP%spectra,DB_spectra)
+     deallocate(inv_err_db,DB_spectra)
      !
   end subroutine
   !

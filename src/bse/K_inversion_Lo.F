@@ -23,7 +23,7 @@
 !
 subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo) 
  !
- use pars,           ONLY:SP,cZERO,cI,pi
+ use pars,           ONLY:SP,cZERO,cI,pi,rZERO
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
@@ -73,8 +73,11 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  ! PL_0
  !=======
  call PL_init( )
+ PL        = rZERO
  !
 #endif
+ !
+ Epsilon_ii=cZERO
  !
  call parser('BSSInvKdiag',K_diago_in_BS_mat)
  !

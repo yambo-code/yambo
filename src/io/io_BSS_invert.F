@@ -99,7 +99,8 @@ integer function io_BSS_invert(iq,W,ID)
  if (any((/io_sec(ID,:)==2/))) then
    !
    if (read_is_on(ID).and..not.associated(W%p)) then
-     allocate(W%p(W%n_freqs))
+     allocate(W%p(K_INV_EPS%n_freqs))
+     W%n_freqs=K_INV_EPS%n_freqs
    endif
    !
    call io_bulk(ID,'FREQs',VAR_SZ=(/2,K_INV_EPS%n_freqs/))
@@ -112,7 +113,7 @@ integer function io_BSS_invert(iq,W,ID)
    call io_bulk(ID,'EPS_INV_ERRs',VAR_SZ=(/K_INV_EPS%n_freqs/))
    call io_bulk(ID,I1=K_INV_EPS%err(:K_INV_EPS%n_freqs))
    !
-   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,K_INV_EPS%n_freqs,2/))
+   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,K_INV_EPS%n_freqs,3/))
    call io_bulk(ID,C2=K_INV_EPS%spectra(:K_INV_EPS%n_freqs,:))
    !
  endif

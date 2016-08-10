@@ -107,18 +107,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  endif
 #endif
  !
- ! Restart database
- !==================
- call K_inversion_restart(iq,W)
- completed=count(K_INV_EPS%err/=0)==0
-#if defined _PL
- completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
-#endif
- if (completed) then
-   call LOCAL_clean()
-   return
- endif
- !
  ! Kernel Loading 
  !================
  call K_stored_in_a_BIG_matrix(iq)
@@ -143,6 +131,18 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  call mem_est("Lo",(/size(Lo)/))
  !
  call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
+ !
+ ! Restart database
+ !==================
+ call K_inversion_restart(iq,W)
+ completed=count(K_INV_EPS%err/=0)==0
+#if defined _PL
+ completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
+#endif
+ if (completed) then
+   call LOCAL_clean()
+   return
+ endif
  !
  ! Initialize the output file 
  !============================
@@ -185,6 +185,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  endif
  !
+ call K_output_file(iq,"Inversion")
+ !
  ! Full Invertion
  !=================
  !
@@ -209,8 +211,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  endif
  !
- call K_output_file(iq,"Inversion")
- !
  ! FULL INVERSION
  !================
  !
@@ -224,15 +224,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  call K_eps_interpolate(W%n_freqs,real(W%p),K_INV_EPS%err)
  !
  call PP_redux_wait()
- !
- Epsilon_ii(:,2)=1._SP+Epsilon_ii(:,2)
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(1)**2
- !
- BSS_n_descs=BSS_n_descs+1
- ratio=real(nw_conv)/real(W%n_freqs)*100._SP
- BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//trim(real2ch(ratio))
- !
- call K_output_file(iq,"Inversion")
  !
  ! I/O [after full inversion]
  !=====
@@ -249,19 +240,20 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  i_err=io_BSS_invert(iq,W,ID)
 #endif
  !
+ ! Final Output
+ !==============
+ !
+ Epsilon_ii(:,2)=1._SP+Epsilon_ii(:,2)
+ if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(1)**2
+ !
+ BSS_n_descs=BSS_n_descs+1
+ ratio=real(nw_conv)/real(W%n_freqs)*100._SP
+ BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//trim(real2ch(ratio))
+ !
+ call K_output_file(iq,"Inversion")
+ !
  ! CLEAN
  !
- call LOCAL_TYP_clean(K_INV_EPS)
-#if defined _PL
- call LOCAL_TYP_clean(K_INV_PL)
-#endif
- call PP_indexes_reset(px)
- deallocate(Lo)
- call mem_est("Lo")
- !
-#if defined _TIMING
- call timing('Invertion Solver',OPR='stop')
-#endif
  !
  contains 
    !
@@ -364,11 +356,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
    end subroutine
    !
-   subroutine LOCAL_TYP_clean(TYP)
-     type(K_Inversion_data) :: TYP
-     deallocate(TYP%err,TYP%spectra,TYP%iw_full)
-   end subroutine
-   !
    subroutine LOCAL_clean
      call BS_mat_free( )
 #if defined _PL
@@ -377,6 +364,22 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _KERR
      call BS_KERR_free( )
 #endif
+     call LOCAL_TYP_clean(K_INV_EPS)
+#if defined _PL
+     call LOCAL_TYP_clean(K_INV_PL)
+#endif
+     call PP_indexes_reset(px)
+     deallocate(Lo)
+     call mem_est("Lo")
+     !
+#if defined _TIMING
+     call timing('Invertion Solver',OPR='stop')
+#endif
+   end subroutine
+   !
+   subroutine LOCAL_TYP_clean(TYP)
+     type(K_Inversion_data) :: TYP
+     deallocate(TYP%err,TYP%spectra,TYP%iw_full)
    end subroutine
    !
 end subroutine

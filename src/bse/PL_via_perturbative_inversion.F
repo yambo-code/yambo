@@ -25,6 +25,7 @@ integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo,K)
  !
  use pars,           ONLY:SP,rZERO
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
+ use BS_solvers,     ONLY:K_INV_PL
  !
  implicit none
  !
@@ -86,7 +87,9 @@ integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo,K)
    !
    delta_f=f-f_previous
    !
-   if (abs(delta_f)/abs(fo)>1.) then
+   if (abs(delta_f)/abs(fo)<0.001) return
+   !
+   if (abs(delta_f)/abs(fo)>abs(K_INV_PL%treshold)) then
      PL_via_perturbative_inversion=1
      f=rZERO
      return

@@ -26,10 +26,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use pars,           ONLY:SP
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
- use BS,             ONLY:BS_mat,BS_H_dim,BSS_inversion_mode,&
-&                         BSS_INV_err,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,BSS_inversion_PERT_FULL_ratio,BSS_INV_eps,&
-&                         BSS_INV_iw_full,BSS_add_antiresonant
+ use BS_solvers,     ONLY:BS_mat,BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
+&                         BS_mat_free,K_INV_EPS,K_INV_PL,BSS_add_antiresonant
+ use BS,             ONLY:BS_H_dim
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
@@ -111,8 +110,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Restart database
  !==================
- call K_inversion_restart(iq,W)
- if (count(BSS_INV_err/=0)==0) then
+ call K_inversion_restart(iq,W,K_INV_EPS)
+ if (count(K_INV_EPS%err/=0)==0) then
    call LOCAL_clean()
    return
  endif
@@ -158,7 +157,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    call K_inversion_engine(1,W%n_freqs,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
    !
-   call PP_redux_wait(BSS_INV_err)
+   call PP_redux_wait(K_INV_EPS%err)
    call PP_redux_wait(Epsilon_ii(:,2))
 #if defined _PL
    call PP_redux_wait(PL(:,2))
@@ -166,7 +165,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    ! I/O [after pert inversion]
    !
-   BSS_INV_eps(:,1)=Epsilon_ii(:,2)
+   K_INV_EPS%spectra(:,1)=Epsilon_ii(:,2)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
@@ -182,9 +181,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    full_inf_freqs=0
    do i1=1,W%n_freqs
-     if (BSS_INV_err(i1)/=0) then
+     if (K_INV_EPS%err(i1)/=0) then
        full_inf_freqs=full_inf_freqs+1
-       BSS_INV_iw_full(full_inf_freqs)=i1
+       K_INV_EPS%iw_full(full_inf_freqs)=i1
      endif
    enddo
    !
@@ -201,15 +200,15 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      iw=-1
      nw=0
      do i1=1,W%n_freqs
-       if (BSS_INV_err(i1)/= 0.and.iw<0) iw=i1
-       if (BSS_INV_err(i1)/= 0.and.iw>0) nw=nw+1
-       if ((BSS_INV_err(i1)== 0.or.(BSS_INV_err(i1)/=0.and.i1==W%n_freqs)).and.iw>0) then
+       if (K_INV_EPS%err(i1)/= 0.and.iw<0) iw=i1
+       if (K_INV_EPS%err(i1)/= 0.and.iw>0) nw=nw+1
+       if ((K_INV_EPS%err(i1)== 0.or.(K_INV_EPS%err(i1)/=0.and.i1==W%n_freqs)).and.iw>0) then
          !
          if (nw>=min_dist_non_conv_freqs) then
            !
            do i2=iw,iw+nw-1,min_dist_non_conv_freqs
              full_inf_freqs=full_inf_freqs+1
-             BSS_INV_iw_full(full_inf_freqs)=i2
+             K_INV_EPS%iw_full(full_inf_freqs)=i2
            enddo
            !
          endif
@@ -220,7 +219,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      min_dist_non_conv_freqs=min_dist_non_conv_freqs-1
      if (min_dist_non_conv_freqs==0) full_inf_freqs_found=.TRUE.
      !
-     if (full_inf_freqs>=nint(real(W%n_freqs)/BSS_inversion_PERT_FULL_ratio)) full_inf_freqs_found=.TRUE.
+     if (full_inf_freqs>=nint(real(W%n_freqs)/K_INV_EPS%PERT_FULL_ratio)) full_inf_freqs_found=.TRUE.
      !
    enddo
    !
@@ -232,6 +231,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    endif
    !
  endif
+ !
+ call K_output_file(iq,"Inversion")
  !
  if (full_inf_freqs>0.and.FULL) then
    !
@@ -247,23 +248,22 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    do i1=1,full_inf_freqs
      !
-     if (stop_now(.FALSE.)) then
-       call live_timing()
-       exit
-     endif
-     !
      if (.not.px%element_1D(i1)) cycle
      !
-     iw=BSS_INV_iw_full(i1)
+     iw=K_INV_EPS%iw_full(i1)
      !
      call K_inversion_engine(iw,1,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
      !
      call live_timing(steps=1)
      !
+     if (stop_now(.FALSE.)) then
+       exit
+     endif
+     !
    enddo
    !
    call live_timing()
-   call PP_redux_wait(BSS_INV_err,imode=2)
+   call PP_redux_wait(K_INV_EPS%err,imode=2)
    call PP_redux_wait(Epsilon_ii(:,2))
 #if defined _PL
    call PP_redux_wait(PL(:,2))
@@ -273,22 +273,23 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  nw_conv=0
  do iw=1,W%n_freqs
-   if (BSS_INV_err(iw)==0) nw_conv=nw_conv+1
+   if (K_INV_EPS%err(iw)==0) nw_conv=nw_conv+1
  enddo
- call msg('rs','[BSE INV  (after full INV)] Converged frequencies [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
+ call msg('rs','[BSE INV  (after full INV)] Converged frequencies      :',nw_conv)
+ call msg('rs','[BSE INV  (after full INV)]                       [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
  !
  if (nw_conv>0) then
    !
    ! I/O [after full inversion]
    !
-   BSS_INV_eps(:,1)=Epsilon_ii(:,2)
+   K_INV_EPS%spectra(:,1)=Epsilon_ii(:,2)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
    !
    ! Try a polinomial interpolation on the null values
    !===================================================
-   call K_eps_interpolate(W%n_freqs,real(W%p),BSS_INV_err)
+   call K_eps_interpolate(W%n_freqs,real(W%p),K_INV_EPS%err)
    !
  else
    !
@@ -310,7 +311,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! CLEAN
  !
- deallocate(BSS_INV_err,BSS_INV_eps,BSS_INV_iw_full)
+ deallocate(K_INV_EPS%err,K_INV_EPS%spectra,K_INV_EPS%iw_full)
  call PP_indexes_reset(px)
  deallocate(Lo)
  call mem_est("Lo")

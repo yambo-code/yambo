@@ -28,8 +28,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t,Epsilon_ii,Joint_DOS,X_drude_term
- use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode,&
-&                         BS_K_has_been_calculated_loaded,BSS_eval_JDOS
+ use BS_solvers,     ONLY:BSS_mode,BSS_n_descs,BSS_eval_JDOS
+ use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded
  use parallel_m,     ONLY:master_cpu
  use IO_m,           ONLY:IO_and_Messaging_switch
 #if defined _PL

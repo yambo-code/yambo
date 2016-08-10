@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo,K)
+integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo,K)
  !
  ! Here I  wante to calculate
  !
@@ -43,7 +43,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo
  !
  ! R_x_D_n = R_n |D>
  !
- use BS,             ONLY:Inversion_treshold
+ use BS_solvers,     ONLY:K_INV_EPS
  use pars,           ONLY:SP,cZERO,cONE
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
  !
@@ -59,7 +59,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo
  integer     ::it
  complex(SP) ::R_x_D_nm1(n,m),R_x_D_n(n,m),delta_f,fo
  !
- MATRIX_resolvant_via_perturbative_inversion=0
+ EPS_via_perturbative_inversion=0
  !
  ! IP part
  !
@@ -77,7 +77,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo
  f=fo
  delta_f=0._SP
  !
- if(Inversion_treshold<0) fo=cONE
+ if(K_INV_EPS%treshold<0) fo=cONE
  !
  do while (it<=BSS_inv_iter_max) 
    !
@@ -93,7 +93,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo
    !
    f=f+delta_f
    !
-   if (abs(delta_f)/abs(fo)<abs(Inversion_treshold)) return
+   if (abs(delta_f)/abs(fo)<abs(K_INV_EPS%treshold)) return
    !
    if (abs(delta_f)>40._SP) exit
    !
@@ -103,7 +103,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo
    !
  enddo
  !
- MATRIX_resolvant_via_perturbative_inversion=1
+ EPS_via_perturbative_inversion=1
  f=cZERO
  !
 end function

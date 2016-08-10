@@ -31,7 +31,8 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  use stderr,        ONLY:real2ch,intc
  use frequency,     ONLY:w_samp
  use X_m,           ONLY:X_t,X_poles
- use BS,            ONLY:BS_bands,BS_eh_en,BSS_q0,BS_K_dim
+ use BS,            ONLY:BS_bands,BS_eh_en,BS_K_dim
+ use BS_solvers,    ONLY:BSS_q0
  use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,FXC,FXC_n_g_corr,&
 &                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,io_BS_Fxc

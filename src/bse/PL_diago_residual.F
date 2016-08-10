@@ -30,7 +30,8 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_H_dim,BSS_eh_f,BS_K_dim
+ use BS,             ONLY:BS_H_dim,BS_K_dim
+ use BS_solvers,     ONLY:BSS_eh_f
  use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_f
  !
  implicit none

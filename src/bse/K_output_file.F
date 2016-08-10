@@ -25,8 +25,9 @@ subroutine K_output_file(iq,mode)
  !
  use pars,      ONLY:pi,SP
  use units,     ONLY:HA2EV
- use BS,        ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
-&                    BSS_n_descs,BSE_mode,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
+ use BS_solvers,ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
+&                    BSS_n_descs,BSS_n_freqs,BSS_q0
+ use BS,        ONLY:BSE_mode,BS_K_is_ALDA
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,O_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser

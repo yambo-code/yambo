@@ -26,11 +26,9 @@ integer function io_BSS_invert(iq,W,ID)
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
- use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_DbGd,BSS_dr,&
-&                        BSS_damp_reference,BSS_inversion_PERT_FULL_ratio,&
-&                        BSS_INV_err,BSS_INV_eps,BSS_INV_n_freqs
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_elemental,io_status,io_bulk,&
+ use BS,            ONLY:BS_identifier
+ use BS_solvers,    ONLY:BSS_q0,BSS_uses_DbGd,BSS_dr,BSS_damp_reference,K_INV_EPS,K_INV_PL
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on
  implicit none
  integer      :: iq
@@ -55,7 +53,7 @@ integer function io_BSS_invert(iq,W,ID)
    !
    if (io_BSS_invert/=0) goto 1
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=12,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=14,MENU=0)
    call io_elemental(ID,VAR=&
 &       " BSK Identifier                  :",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
@@ -63,9 +61,13 @@ integer function io_BSS_invert(iq,W,ID)
    call io_elemental(ID,VAR=&
 &       " Using energy Double Grid        :",L0=BSS_uses_DbGd,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
-&       " Number of frequencies           :",DB_I0=BSS_INV_n_freqs,I0=W%n_freqs)
+&       " Number of frequencies      [EPS]:",DB_I0=K_INV_EPS%n_freqs,I0=W%n_freqs)
    call io_elemental(ID,VAR=&
-&       " Perturbative to full ration     :",R0=BSS_inversion_PERT_FULL_ratio)
+&       "                             [PL]:",DB_I0=K_INV_PL%n_freqs,I0=W%n_freqs)
+   call io_elemental(ID,VAR=&
+&       " Perturbative to full ratio [EPS]:",R0=K_INV_EPS%PERT_FULL_ratio)
+   call io_elemental(ID,VAR=&
+&       "                             [PL]:",R0=K_INV_PL%PERT_FULL_ratio)
    call io_elemental(ID,UNIT=HA2EV,VAR=&
 &       " Energy range                [ev]:",R1=W%er)
    call io_elemental(ID,UNIT=HA2EV,VAR=&
@@ -84,18 +86,35 @@ integer function io_BSS_invert(iq,W,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call io_bulk(ID,'INV_ERRs',VAR_SZ=(/BSS_INV_n_freqs/))
-   call io_bulk(ID,I1=BSS_INV_err(:BSS_INV_n_freqs))
+   call io_bulk(ID,'EPS_INV_ERRs',VAR_SZ=(/K_INV_EPS%n_freqs/))
+   call io_bulk(ID,I1=K_INV_EPS%err(:K_INV_EPS%n_freqs))
    !
    if (read_is_on(ID).and..not.associated(W%p)) then
      allocate(W%p(W%n_freqs))
    endif
    !
-   call io_bulk(ID,'FREQs',VAR_SZ=(/2,BSS_INV_n_freqs/))
-   call io_bulk(ID,C1=W%p(:BSS_INV_n_freqs))
+   call io_bulk(ID,'EPS_FREQs',VAR_SZ=(/2,K_INV_EPS%n_freqs/))
+   call io_bulk(ID,C1=W%p(:K_INV_EPS%n_freqs))
    !
-   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,BSS_INV_n_freqs,2/))
-   call io_bulk(ID,C2=BSS_INV_eps(:BSS_INV_n_freqs,:))
+   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,K_INV_EPS%n_freqs,2/))
+   call io_bulk(ID,C2=K_INV_EPS%spectra(:K_INV_EPS%n_freqs,:))
+   !
+ endif
+ !
+ if (any((/io_sec(ID,:)==3/))) then
+   !
+   call io_bulk(ID,'PL_INV_ERRs',VAR_SZ=(/K_INV_PL%n_freqs/))
+   call io_bulk(ID,I1=K_INV_PL%err(:K_INV_PL%n_freqs))
+   !
+   if (read_is_on(ID).and..not.associated(W%p)) then
+     allocate(W%p(W%n_freqs))
+   endif
+   !
+   call io_bulk(ID,'PL_FREQs',VAR_SZ=(/2,K_INV_PL%n_freqs/))
+   call io_bulk(ID,C1=W%p(:K_INV_PL%n_freqs))
+   !
+   call io_bulk(ID,'PL',VAR_SZ=(/2,K_INV_PL%n_freqs,2/))
+   call io_bulk(ID,C2=K_INV_PL%spectra(:K_INV_PL%n_freqs,:))
    !
  endif
  !

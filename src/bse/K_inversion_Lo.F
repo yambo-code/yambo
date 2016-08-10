@@ -30,16 +30,18 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,iw_ref,l_drude
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
- use BS,             ONLY:Co_factor,BSS_dipoles,BS_H_dim,BS_K_dim,&
-&                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
+ use BS_solvers,     ONLY:Co_factor,BSS_dipoles,&
+&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,&
-&                         BSS_eval_JDOS,BSS_add_antiresonant,BS_K_coupling
+&                         BSS_eval_JDOS,BSS_add_antiresonant
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  !
 #if defined _ELPH
- use BS,             ONLY:BSS_uses_GreenF,BS_bands
+ use BS_solvers,     ONLY:BSS_uses_GreenF
+ use BS,             ONLY:BS_bands
 #endif
 #if defined _PL
  use drivers,        ONLY:l_photolum
@@ -61,7 +63,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
  complex(SP)      :: E_plus_W,residual
 #if defined _PL
- complex(SP)      :: SF(W%n_freqs,2),Lo_no_shift(W%n_freqs)
+ complex(SP)      :: SF(W%n_freqs,2)
 #endif
  !
  complex(SP), allocatable :: BS_mat_diagonal(:)
@@ -201,8 +203,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
        call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh",.FALSE.)
 #if defined _PL
        call X_GreenF_analytical(1,transition,W,E,k,SF(:,1),"r","eh",.TRUE.)
-       call X_GreenF_analytical(1,transition,W,E,k,Lo_no_shift,"r","eh",.FALSE.)
-       Lo(i_res,:,1+Lo_n_loop)=-BSS_PL_f(1,i_res)*aimag(SF(:,1))/pi/abs(Lo_no_shift(:))**2.
+       !call X_GreenF_analytical(1,transition,W,E,k,Lo_no_shift,"r","eh",.FALSE.)
+       Lo(i_res,:,1+Lo_n_loop)=BSS_PL_f(1,i_res)/BSS_eh_f(i_res)**2.*aimag(W%p(1))/pi
+                              !-BSS_PL_f(1,i_res)*aimag(SF(:,1))/pi/abs(Lo_no_shift(:))**2.
 #endif
        !
        if (BSS_add_antiresonant.or.BS_K_coupling) then
@@ -213,8 +216,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
          ! The -1 coming from SF(:,2) and -abs(Lo)...compensate each other
          !
          call X_GreenF_analytical(1,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.)
-         call X_GreenF_analytical(1,transition,W,E,k,Lo_no_shift,"Ra","eh",.FALSE.)
-         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)*aimag(SF(:,2))/pi/abs(Lo_no_shift(:))**2.
+         !call X_GreenF_analytical(1,transition,W,E,k,Lo_no_shift,"Ra","eh",.FALSE.)
+         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)/BSS_eh_f(i_res)**2.*aimag(W%p(1))/pi
+                                        !BSS_PL_f(2,i_res)*aimag(SF(:,2))/pi/abs(Lo_no_shift(:))**2.
 #endif
          !
        endif
@@ -257,7 +261,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
        !
        PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(1,i_res)
        if (BSS_add_antiresonant.or.BS_K_coupling) then
-         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(2,i_Lo_trans)
+         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(2,i_res)
        endif
        !
      endif

@@ -26,7 +26,8 @@ subroutine K_inversion_do_it_full(Lo,KERNEL,what)
  ! 1./(Lo^{-1}-M)
  !
  use pars,           ONLY:SP,cZERO
- use BS,             ONLY:BS_H_dim,BS_mat
+ use BS_solvers,     ONLY:BS_mat
+ use BS,             ONLY:BS_H_dim
  use interfaces,     ONLY:MATRIX_driver
  use matrix_operate, ONLY:INV
  !

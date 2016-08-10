@@ -51,7 +51,7 @@ module PHOTOLUM
      use pars,       ONLY:pi,rZERO
      use units,      ONLY:SPEED_OF_LIGHT
      use R_lattice,  ONLY:RL_vol,nqbz
-     use BS,         ONLY:BSS_n_freqs
+     use BS_solvers, ONLY:BSS_n_freqs
      !
      integer :: ic
      !

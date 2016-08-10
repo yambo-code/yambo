@@ -27,8 +27,9 @@ subroutine K_diago_driver(iq,W)
  ! Hamiltonians.
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_mat,BS_K_coupling,io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_H_dim
+ use BS,             ONLY:BS_K_coupling,BS_H_dim
+ use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_mat
  use electrons,      ONLY:E_SOC_nbands
  use matrix_operate, ONLY:DIAGO
  use frequency,      ONLY:w_samp

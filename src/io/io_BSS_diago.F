@@ -24,8 +24,8 @@
 integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
- use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
-&                        BSS_eh_table,BS_mat,BS_K_dim
+ use BS,            ONLY:BS_identifier,BS_K_dim
+ use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on,ver_is_gt_or_eq

@@ -45,10 +45,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use com,          ONLY:warning,error
+ use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_mode
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
-&                       BS_bands,BS_nT_at_k,BSS_add_antiresonant,&
-&                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc,&
-&                       BSE_mode,BS_T_grp,BS_nT_grps,BSS_mode
+&                       BS_bands,BS_nT_at_k,BSE_mode,BS_T_grp,BS_nT_grps,&
+&                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc
  use X_m,          ONLY:global_gauge,Dipole_Energy_treshold
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock

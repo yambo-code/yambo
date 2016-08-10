@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_restart(iq,W)
+subroutine K_inversion_restart(iq,W,TYP)
  !
  use pars,           ONLY:SP,cZERO
  use X_m,            ONLY:Epsilon_ii
- use BS,             ONLY:BSS_dr,BSS_er,BSS_n_freqs,BSS_INV_eps,BSS_INV_err,BSS_INV_iw_full,BSS_INV_n_freqs
+ use BS_solvers,     ONLY:BSS_dr,BSS_er,BSS_n_freqs,K_Inversion_data
  use IO_m,           ONLY:io_control,NONE,OP_RD_CL,REP,VERIFY
  use parallel_m,     ONLY:ncpu
  use com,            ONLY:msg
@@ -35,6 +35,7 @@ subroutine K_inversion_restart(iq,W)
  !
  integer,             intent(inout) :: iq
  type(w_samp)        ,intent(inout) :: W
+ type(K_Inversion_data)             :: TYP
  !
  ! Work Space
  !
@@ -61,9 +62,9 @@ subroutine K_inversion_restart(iq,W)
  !
  if (i_err==0) then
    !
-   W_db%n_freqs=BSS_INV_n_freqs
+   W_db%n_freqs=TYP%n_freqs
    !
-   allocate(BSS_INV_err(W_db%n_freqs),BSS_INV_eps(W_db%n_freqs,2))
+   allocate(TYP%err(W_db%n_freqs),TYP%spectra(W_db%n_freqs,2))
    allocate(freq_table(W_db%n_freqs+W%n_freqs),inv_err_db(W_db%n_freqs),&
 &           DB_eps_pl(W_db%n_freqs,2))
    !
@@ -72,10 +73,10 @@ subroutine K_inversion_restart(iq,W)
    !
    ! Shadows and re-allocation
    !
-   inv_err_db=BSS_INV_err
-   DB_eps_pl =BSS_INV_eps
+   inv_err_db=TYP%err
+   DB_eps_pl =TYP%spectra
    !
-   deallocate(BSS_INV_err,BSS_INV_eps)
+   deallocate(TYP%err,TYP%spectra)
    !
    ! Here I create a new energy array that merges the db to the current energies. 
    !
@@ -85,9 +86,9 @@ subroutine K_inversion_restart(iq,W)
    BSS_er=W%er
    BSS_dr=W%dr
    !
-   allocate(BSS_INV_err(W%n_freqs),BSS_INV_eps(W%n_freqs,2))
-   BSS_INV_eps=cZERO
-   BSS_INV_err   =-1
+   allocate(TYP%err(W%n_freqs),TYP%spectra(W%n_freqs,2))
+   TYP%spectra=cZERO
+   TYP%err    =-1
    !
    do iw=1,W%n_freqs
      !
@@ -96,15 +97,15 @@ subroutine K_inversion_restart(iq,W)
      iw_tab=freq_table(iw)
      !
      if (iw_tab>0) then
-       BSS_INV_eps(iw,2)=DB_eps_pl(iw_tab,2)
-       BSS_INV_err(iw)=inv_err_db(iw_tab)
-       if (BSS_INV_err(iw)==0) then
-         BSS_INV_eps(iw,1)=DB_eps_pl(iw_tab,1)
+       TYP%spectra(iw,2)=DB_eps_pl(iw_tab,2)
+       TYP%err(iw)=inv_err_db(iw_tab)
+       if (TYP%err(iw)==0) then
+         TYP%spectra(iw,1)=DB_eps_pl(iw_tab,1)
        endif
      else
-       BSS_INV_eps(iw,1)=cZERO
-       BSS_INV_eps(iw,2)=Epsilon_ii(iabs(iw_tab),3)
-       BSS_INV_err(iw)=-1
+       TYP%spectra(iw,1)=cZERO
+       TYP%spectra(iw,2)=Epsilon_ii(iabs(iw_tab),3)
+       TYP%err(iw)=-1
      endif
    enddo
    !
@@ -117,22 +118,22 @@ subroutine K_inversion_restart(iq,W)
    deallocate(Epsilon_ii)
    allocate(Epsilon_ii(BSS_n_freqs,4))
    Epsilon_ii(:,1)=W%p(:)
-   Epsilon_ii(:,2)=BSS_INV_eps(:,1)/real(ncpu,SP)
-   Epsilon_ii(:,3)=BSS_INV_eps(:,2)
+   Epsilon_ii(:,2)=TYP%spectra(:,1)/real(ncpu,SP)
+   Epsilon_ii(:,3)=TYP%spectra(:,2)
    !
-   deallocate(inv_err_db,BSS_INV_eps,freq_table,DB_eps_pl)
+   deallocate(inv_err_db,TYP%spectra,freq_table,DB_eps_pl)
    !
  else
    !
-   allocate(BSS_INV_err(W%n_freqs))
-   BSS_INV_err=-1
+   allocate(TYP%err(W%n_freqs))
+   TYP%err=-1
    Epsilon_ii(:,2)=cZERO
    !
  endif
  !
- allocate(BSS_INV_iw_full(W%n_freqs))
- allocate(BSS_INV_eps(W%n_freqs,2)) ! int no-int
- BSS_INV_eps     =cZERO
- BSS_INV_eps(:,2)=Epsilon_ii(:,3)
+ allocate(TYP%iw_full(W%n_freqs))
+ allocate(TYP%spectra(W%n_freqs,2)) ! int no-int
+ TYP%spectra     =cZERO
+ TYP%spectra(:,2)=Epsilon_ii(:,3)
  !
 end subroutine K_inversion_restart

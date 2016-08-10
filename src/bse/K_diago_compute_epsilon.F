@@ -32,7 +32,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use R_lattice,      ONLY:q_norm
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_H_dim,BSS_add_antiresonant,Co_factor
+ use BS,             ONLY:BS_H_dim
+ use BS_solvers,     ONLY:BSS_add_antiresonant,Co_factor
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nkbz
  !

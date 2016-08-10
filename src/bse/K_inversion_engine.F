@@ -30,8 +30,10 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:q_norm
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
- use BS,             ONLY:BS_mat,BS_H_dim,Co_factor,BSS_INV_err,BSS_dipoles
+ use BS,             ONLY:BS_H_dim
+ use BS_solvers,     ONLY:BS_mat,Co_factor,K_INV_EPS,BSS_dipoles,Co_factor
 #if defined _PL
+ use BS,             ONLY:BS_K_dim
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
 #endif
  !
@@ -54,7 +56,7 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
  complex(SP), allocatable :: Vp(:)
  integer,        external :: PL_via_perturbative_inversion
 #endif
- integer,        external :: MATRIX_resolvant_via_perturbative_inversion
+ integer,        external :: EPS_via_perturbative_inversion
  !
  if (do_it_full) then
    allocate(Mm1(BS_H_dim,BS_H_dim),V(BS_H_dim))
@@ -76,14 +78,14 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
    if (.not.do_it_full) then
      !
      if(.not.px%element_1D(iw)) then
-       BSS_inv_err(iw)=0
+       K_INV_EPS%err(iw)=0
        cycle
      endif
      !
    endif
    !
-   if (     do_it_full) perform_inv= BSS_INV_err(iw)/= 0
-   if (.not.do_it_full) perform_inv= BSS_INV_err(iw)==-1
+   if (     do_it_full) perform_inv= K_INV_EPS%err(iw)/= 0
+   if (.not.do_it_full) perform_inv= K_INV_EPS%err(iw)==-1
    !
    if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/q_norm(1)**2
    if (trim(global_gauge)=='velocity') gauge_factor=-Co_factor/ W%p(iw) **2
@@ -92,7 +94,7 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
      !
      if (do_it_full) then
        !
-       BSS_INV_err(iw)=0
+       K_INV_EPS%err(iw)=0
        !
        do i_L=1,Lo_n_loop
          !
@@ -112,15 +114,15 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
        !
      else
        !
-       BSS_INV_err(iw)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles,gauge_factor,&
+       K_INV_EPS%err(iw)=EPS_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles,gauge_factor,&
 &                                                                  Epsilon_ii(iw,2),Lo(:,iw,:),BS_mat)
        !
 #if defined _PL
        !
-       if (BSS_INV_err(iw)==0) then
-         BSS_INV_err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
+       if (K_INV_EPS%err(iw)==0) then
+         K_INV_EPS%err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
 &                                                      PL(iw,2),Lo(:,iw,:),BS_mat)
-         if (BSS_INV_err(iw)>0) then
+         if (K_INV_EPS%err(iw)>0) then
            Epsilon_ii(iw,2)=cZERO
          endif
        endif
@@ -150,23 +152,12 @@ subroutine K_inversion_engine(iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_fu
    subroutine PL_compose(i_L_)
      integer :: i_L_,i_c,i_cv,i1,i2
      do i_c=1,3
-       if(i_L_==1) then
-         !
-         call M_by_V('c',BS_H_dim,Mm1,BSS_dipoles_PL(:,i_c),V)
-         do i_cv=1,BS_H_dim
-           Vp(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
-         enddo
-         PL(iw,2)=PL(iw,2)+PL_prefactor*Vstar_dot_V(BS_H_dim,V,Vp)
-         !
-       else if(i_L_==2) then
-         !
-         call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_PL(:,i_c)),V)
-         do i_cv=1,BS_H_dim
-           Vp(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
-         enddo
-         PL(iw,2)=PL(iw,2)+PL_prefactor*Vstar_dot_V(BS_H_dim,V,Vp)
-         !
-       endif
+       if(i_L_==1) call M_by_V('c',BS_H_dim,Mm1,BSS_dipoles_PL(:,i_c),V)
+       if(i_L_==2) call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_PL(:,i_c)),V)
+       do i_cv=1,BS_K_dim
+         Vp(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
+       enddo
+       PL(iw,2)=PL(iw,2)+PL_prefactor*Vstar_dot_V(BS_H_dim,V,Vp)
     enddo
    end subroutine
 #endif

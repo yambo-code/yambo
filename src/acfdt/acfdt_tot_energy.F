@@ -32,7 +32,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index,WF_load,MATRIX_driver,el_density_and_current
+ use linear_algebra, ONLY:MATRIX_driver
+ use interfaces,     ONLY:PARALLEL_index,WF_load,el_density_and_current
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol

@@ -3233,7 +3233,7 @@ end subroutine
 subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
 &                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
   use pars,    ONLY:SP
-  use interfaces,     ONLY:MATRIX_driver
+  use linear_algebra, ONLY:MATRIX_driver
   use matrix_operate, ONLY:DIAGO
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile

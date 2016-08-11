@@ -40,7 +40,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
  use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
- use interfaces,      ONLY:MATRIX_driver
+ use linear_algebra,  ONLY:MATRIX_driver
  use matrix_operate,  ONLY:INV
  use collision,       ONLY:elemental_collision,elemental_collision_free
  use memory_m,        ONLY:mem_est

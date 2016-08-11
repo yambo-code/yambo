@@ -21,36 +21,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_do_it_full(Lo,KERNEL,what)
- !
- ! 1./(Lo^{-1}-M)
- !
- use pars,           ONLY:SP,cZERO
- use BS_solvers,     ONLY:BS_mat
- use BS,             ONLY:BS_H_dim
- use linear_algebra, ONLY:MATRIX_driver
- use matrix_operate, ONLY:INV
+module linear_algebra
  !
  implicit none
  !
- character  ,intent(in) ::what ! "r","a"
- complex(SP),intent(in) ::Lo(BS_H_dim)
- complex(SP),intent(out)::KERNEL(BS_H_dim,BS_H_dim) 
+ integer, parameter :: USE_LK=1
+ integer, parameter :: USE_SLK=2
+ integer, parameter :: ALREADY_FILLED=3
+ integer, parameter :: DIAGO=4
+ integer, parameter :: INV=5
+ integer, parameter :: PARTIAL_DIAGO=6
+ integer, parameter :: USE_SVD=7
+ integer, parameter :: min_cpu_block_size=100
  !
- ! Work Space
+ interface 
+   !
+   subroutine MATRIX_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
+     !
+     use pars,           ONLY:SP
+     !
+     integer                :: idriver
+     complex(SP)            :: M(:,:)
+     integer,      optional :: lib_in
+     complex(SP),  optional :: V_left(:,:)
+     complex(SP),  optional :: V_right(:,:)
+     real(SP),     optional :: E_real(:)
+     complex(SP),  optional :: E_cmpl(:)
+     integer,      optional :: SVD_digits 
+     complex(SP),  optional :: det
+     !
+   end subroutine
+   !
+ end interface
  !
- integer     ::i1,i2
- !
- KERNEL=cZERO
- !
- do i2=1,BS_H_dim
-   KERNEL(i2,i2)=1._SP/Lo(i2)
-   do i1=1,BS_H_dim 
-     if (what=="r") KERNEL(i1,i2)=KERNEL(i1,i2)-      BS_mat(i1,i2)
-     if (what=="a") KERNEL(i1,i2)=KERNEL(i1,i2)-conjg(BS_mat(i1,i2))
-   enddo
- enddo
- !
- call MATRIX_driver(INV,KERNEL)
- !
-end subroutine
+end module linear_algebra

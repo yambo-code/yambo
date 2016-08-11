@@ -34,7 +34,7 @@ subroutine ELPH_atomic_amplitude(q)
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
- use interfaces,          ONLY:MATRIX_driver
+ use linear_algebra,      ONLY:MATRIX_driver
  use matrix_operate,      ONLY:DIAGO,USE_LK
  implicit none
  type(bz_samp)::q

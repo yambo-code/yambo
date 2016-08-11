@@ -35,7 +35,8 @@ subroutine K_diago_driver(iq,W)
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:MATRIX_driver,K_diago_compute_epsilon
+ use linear_algebra, ONLY:MATRIX_driver
+ use interfaces,     ONLY:K_diago_compute_epsilon
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  !

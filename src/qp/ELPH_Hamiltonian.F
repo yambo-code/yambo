@@ -33,7 +33,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
- use interfaces,    ONLY:MATRIX_driver
+ use linear_algebra,ONLY:MATRIX_driver
  use matrix_operate,ONLY:DIAGO,USE_LK
  use stderr,        ONLY:intc,set_real_printed_length
  use QP_m,          ONLY:QP_G_damp

@@ -31,7 +31,7 @@ subroutine QP_load_SC_xc()
  use R_lattice,       ONLY:nkibz
  use SC,              ONLY:SC_bands,H_nl_sc,load_SC_components,SC_R,H_rotate,compatible_SC_DB,&
 &                          found_SC_DB
- use interfaces,      ONLY:MATRIX_driver
+ use linear_algebra,  ONLY:MATRIX_driver
  use matrix_operate,  ONLY:INV
  !
  implicit none

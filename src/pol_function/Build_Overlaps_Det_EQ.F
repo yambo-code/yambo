@@ -30,7 +30,7 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:k_map
  use matrix_operate, ONLY:hermitian,INV,USE_LK
- use interfaces,     ONLY:MATRIX_driver
+ use linear_algebra, ONLY:MATRIX_driver
  use vec_operate,    ONLY:k_periodic_idx
  use X_m,            ONLY:X_t,DIP_S
  implicit none

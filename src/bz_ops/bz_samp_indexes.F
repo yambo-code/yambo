@@ -52,7 +52,7 @@ subroutine bz_samp_indexes(k,Xk,q)
 &                         qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
-&                         q_sstar,coll_scattering,q_source
+&                         q_sstar,coll_scattering,q_source,smallest_q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
 #if defined _ELPH
@@ -446,6 +446,7 @@ subroutine bz_samp_indexes(k,Xk,q)
          q_norm(i1)=iku_v_norm(q_pt(i1,:))
        enddo
        q_norm(1)=q0_def_norm
+       smallest_q_norm=minval(q_norm(2:))
        call mem_est("q_norm",(/q%nibz/),(/SP/))
      endif
      !
@@ -456,6 +457,7 @@ subroutine bz_samp_indexes(k,Xk,q)
        q_sstar=q%sstar
        call mem_est("q_sstar",(/q%nbz*2/),(/IP/))
      endif
+     !
    end subroutine
    !
 end subroutine

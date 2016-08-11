@@ -52,7 +52,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- call io_elemental(ID,VAR="PARS",VAR_SZ=7,MENU=1)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=1)
  !
  call io_elemental(ID,I0=E%nb_FineGd,        VAR=' Bands                           :')
  call io_elemental(ID,I0=E%nk_FineGd,        VAR=' Number of points  in the IBZ (E):')
@@ -107,8 +107,8 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Block table
  !
  if (read_is_on(ID)) then
-   allocate(Xk%ibz_DbGd_map(Xk%nibz,2))
-   allocate(Xk%bz_DbGd_map(Xk%nbz,2))
+   allocate(Xk%ibz_DbGd_map(2,Xk%nibz))
+   allocate(Xk%bz_DbGd_map(2,Xk%nbz))
  endif
  !
  call io_bulk(ID, VAR="BLOCK_TABLE_IBZ", VAR_SZ=shape(Xk%ibz_DbGd_map) ) 

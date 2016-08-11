@@ -55,7 +55,7 @@ module X_m
  ! Logical used to decid how to use the double grid in X_os
  ! and in particular in X_GreenF_analytical, when the DbGd is used
  !
- logical                  :: X_is_evaluated_for_all_Qs
+ logical                  :: Integrating_over_Qs
  !
  ! Dipole M.E.
  !

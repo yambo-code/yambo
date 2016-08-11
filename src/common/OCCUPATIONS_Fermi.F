@@ -55,7 +55,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! Work Space
  !
- integer :: i1,is,ib,ik,ikbz,ik_rand,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
+ integer :: i1,is,ib,ik,ikbz,ik_FineGd,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),nel_DbGd
  logical :: Fermi_is_converged
@@ -218,25 +218,21 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  if (E%nb_FineGd>0.and.associated(E%E_FineGd)) then
    ! 
-   nel_DbGd=0._SP 
+   !nel_DbGd=0._SP 
    !
    E%E_FineGd(:,:,:)=E%E_FineGd(:,:,:)-E%E_Fermi
    do is=1,n_sp_pol
-     do ik=1,K%nibz
-       nel=nel+sum(E%f(:E%nb_FineGd,ik,is))*K%weights_DbGd(ik)
-       do i1=1,K%nibz_mapped(ik)
-         ik_rand=K%ibz_DbGd_map(ik,i1)
-         do ib=1,E%nb_FineGd
-           E%f_FineGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_FineGd(ib,ik_rand,is),Tel)
-         enddo
-         nel_DbGd=nel_DbGd+sum(E%f_FineGd(:,ik_rand,is))*K%weights_DbGd(ik)
+     do ik_FineGd=1,K%nibz_FineGd
+       do ib=1,E%nb_FineGd
+         E%f_FineGd(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%E_FineGd(ib,ik_FineGd,is),Tel)
        enddo
+       !nel_DbGd=nel_DbGd+sum(E%f_FineGd(:,ik_FineGd,is))*K%weights_FineGd(ik_FineGd)
      enddo
    enddo
-   nel_DbGd=nel_DbGd
+   !nel_DbGd=nel_DbGd
    !
-   if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
-   if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   !if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   !if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
    !
  endif
  !

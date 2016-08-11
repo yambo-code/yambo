@@ -27,10 +27,10 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  ! expression as the Fourier Transform of a Lorentzian
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs
+ use X_m,        ONLY:use_X_DbGd,Integrating_over_Qs
  use BS,         ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,spin_occ
- use R_lattice,  ONLY:qindx_X,bz_samp,q_pt,nqibz
+ use R_lattice,  ONLY:qindx_X,bz_samp,nqibz,smallest_q_norm
  use frequency,  ONLY:w_samp
  use vec_operate,ONLY:iku_v_norm
  !
@@ -42,18 +42,17 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  complex(SP)  :: GreenF(Xw%n_freqs)
  character(*) :: ordering,space
  !
- !Work Space
+ ! Work Space
  !
  logical      :: X_os_run,K_inv_run,use_DbGd
- integer      :: i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp
- real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac,&
-&                kpt_i1(3),kpt_i2(3)
+ integer      :: ikbz_FineGd,ikpbz_FineGd,iw,ikbz,ikpbz,iv,ic,i_spin,ik_FineGd,ikp_FineGd,ik,ikp
+ real(SP)     :: ffac,cg_ffac,f_e,f_h,weight,W_,q_pt_shift(3),q_norm_ref,qsize_fac,k_pt_loc(3),kp_pt_loc(3),En1,En2
  complex(SP)  :: Z_,pole
  !
  complex(SP),external      ::Lorentzian_FT
  !
- integer, allocatable      ::BZ_DbGd_iq_npt(:)
- logical, allocatable      ::use_kpt(:,:)
+ integer, allocatable      ::nkpt_DbGd_scatt(:)
+ logical, allocatable      ::use_kpt_DbGd(:,:)
  !
  GreenF  = cZERO
  !
@@ -76,7 +75,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  if (associated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
  if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
  !
- use_DbGd= (X_os_run .and.use_X_DbGd.and.ic>Xen%nb_FineGd) .or. &
+ use_DbGd= (X_os_run .and.use_X_DbGd.and.ic<=Xen%nb_FineGd) .or. &
 &          (K_inv_run.and.BSS_uses_DbGd)
  !
  ! Case without DbGd
@@ -85,12 +84,12 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  ! In K_inversion_Lo the occupations and the Z_factor are not included.
  ! Thus I have to multiply by them the Green function
  !
- if ( use_DbGd ) then
+ if ( .not.use_DbGd ) then
     !
     pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,SP)
     !
-    if( K_inv_run ) ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik ,i_spin) )/spin_occ*real(Z_)
     if( X_os_run  ) ffac = 1._SP
+    if( K_inv_run ) ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik ,i_spin) )/spin_occ*real(Z_)
     !
     do iw=1,Xw%n_freqs
       GreenF(iw)=Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
@@ -108,45 +107,50 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  ! - divide   by the occupations on the coarse grid
  ! - multiply by the occupations on the fine   grid
  !
- if( K_inv_run ) cg_ffac = spin_occ/real(Z_)
  if( X_os_run  ) cg_ffac = Xen%f(iv,ikp,i_spin)*( spin_occ-Xen%f(ic,ik ,i_spin) )
+ if( K_inv_run ) cg_ffac = spin_occ/real(Z_)
  !
- allocate(BZ_DbGd_iq_npt( Xk%nbz_mapped(ikbz) ) )
- allocate(use_kpt( 0:Xk%nbz_mapped(ikbz), 0:Xk%nbz_mapped(ikpbz) ) )
+ allocate(nkpt_DbGd_scatt( Xk%bz_DbGd_map(1,ikbz)-1:Xk%bz_DbGd_map(2,ikbz) ) )
+ allocate(use_kpt_DbGd( Xk%bz_DbGd_map(1,ikpbz)-1:Xk%bz_DbGd_map(2,ikpbz), Xk%bz_DbGd_map(1,ikbz)-1:Xk%bz_DbGd_map(2,ikbz) ) )
  !
- call tmp_double_grid()
+ call define_use_kpt()
  !
- ! Coarse grid points are included for i1 and i2 =0
- ! Fine   grid points are included for i1 and i2 >0
+ ! Coarse grid points are included for ikbz_FineGd= Xk%bz_DbGd_map(1,ikbz)-1
+ ! Fine   grid points are included for ikbz_FineGd>=Xk%bz_DbGd_map(1,ikbz)
  !
- do i1=0,Xk%nbz_mapped(ikbz)
+ do ikbz_FineGd=Xk%bz_DbGd_map(1,ikbz)-1,Xk%bz_DbGd_map(2,ikbz)
    !
-   if(i1==0) then
-     weight1   = 1._SP/real(Xk%nbz_mapped(ikbz)+1,SP)
-     ffac      = Xen%f_FineGd(ic,ik,i_spin)
+   weight = 1._SP/real(Xk%nbz_mapped(ikbz)+1,SP)/real(nkpt_DbGd_scatt(ikbz_FineGd),SP)
+   !
+   if(ikbz_FineGd<Xk%bz_DbGd_map(1,ikbz)) then
+     En1       = Xen%E(ic,ik,i_spin)
+     ffac      = Xen%f(ic,ik,i_spin)
    else
-     weight1   = 1._SP/real(Xk%nbz_mapped(ikbz)+1,SP)
-     ikbz_rand = Xk%bz_DbGd_map(ikbz,i1)
-     ik_rand   = Xk%sstar_FineGd(ikbz_rand)
-     ffac      = Xen%f_FineGd(ic,ik_rand,i_spin)
+     ik_FineGd = Xk%sstar_FineGd(ikbz_FineGd)
+     En1       = Xen%E_FineGd(ic,ik_FineGd,i_spin)
+     ffac      = Xen%f_FineGd(ic,ik_FineGd,i_spin)
    endif
    !
    if( X_os_run  ) f_h = spin_occ-ffac
    if( K_inv_run ) f_h =          ffac
    !
-   do i2=0,Xk%nbz_mapped(ikpbz)
+   do ikpbz_FineGd=Xk%bz_DbGd_map(1,ikpbz)-1,Xk%bz_DbGd_map(2,ikpbz)
      !
-     if(.not.use_kpt(i1,i2)) cycle
+     if(.not.use_kpt_DbGd(ikpbz_FineGd,ikbz_FineGd)) cycle
      !
-     weight2    = 1._SP/real(BZ_DbGd_iq_npt(i1),SP)
-     ikpbz_rand = Xk%bz_DbGd_map(ikpbz,i2)
-     ikp_rand   = Xk%sstar_FineGd(ikpbz_rand)
+     if(ikpbz_FineGd<Xk%bz_DbGd_map(1,ikpbz)) then
+       En2       = Xen%E(iv,ikp,i_spin)
+       f_e       = Xen%f(iv,ikp,i_spin)
+     else
+       ikp_FineGd= Xk%sstar_FineGd(ikpbz_FineGd)
+       En2       = Xen%E_FineGd(iv,ikp_FineGd,i_spin)
+       f_e       = Xen%f_FineGd(iv,ikp_FineGd,i_spin)
+     endif
      !
-     if( X_os_run  ) ffac=(Xen%f_FineGd(iv,ikp_rand,i_spin)*f_h)/cg_ffac
-     if( K_inv_run ) ffac=(Xen%f_FineGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac
+     pole=cmplx(En1-En2,-W_)
      !
-     ffac=ffac*weight1*weight2
-     pole=cmplx(Xen%E_FineGd(ic,ik_rand,i_spin)-Xen%E_FineGd(iv,ikp_rand,i_spin),-W_)
+     if( X_os_run  ) ffac=(f_e*f_h)/cg_ffac*weight
+     if( K_inv_run ) ffac=(f_e-f_h)/cg_ffac*weight
      !
      do iw=1,Xw%n_freqs
        GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
@@ -156,11 +160,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
    !
  enddo
  !
- deallocate(use_kpt,BZ_DbGd_iq_npt)
+ deallocate(use_kpt_DbGd,nkpt_DbGd_scatt)
  !
  contains
    !
-   subroutine tmp_double_grid()
+   subroutine define_use_kpt()
      !
      ! [DAVIDE]
      ! Define which kpts I will use in a consistent way between q=0 and q/=0
@@ -171,28 +175,24 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
      ! This part of the code should be moved away from this subroutine as here the 
      ! same procedure is repeated for each v -> c transition, which is a waste of CPU time.
      !
-     q_norm_ref=100000._SP
-     do i1=2,nqibz
-       q_norm_ref=min(q_norm_ref,iku_v_norm(q_pt(i1,:)))
-     enddo
      !
      qsize_fac=2._SP
-     if(.not.X_is_evaluated_for_all_Qs) qsize_fac=qsize_fac*10._SP
+     if(.not.Integrating_over_Qs) qsize_fac=qsize_fac*10._SP
      !
-     q_norm_ref=q_norm_ref/qsize_fac
+     q_norm_ref=smallest_q_norm/qsize_fac
      !
-     BZ_DbGd_iq_npt=0
-     use_kpt=.false.
-     do i1=0,Xk%nbz_mapped(ikbz)
-       if(i1==0) kpt_i1=Xk%ptbz(ikbz,:)
-       if(i1> 0) kpt_i1=Xk%ptbz_FineGd(Xk%bz_DbGd_map(ikbz,i1),:)
-       do i2=1,Xk%nbz_mapped(ikpbz)
-         if(i2==0) kpt_i2=Xk%ptbz(ikpbz,:)
-         if(i2>0 ) kpt_i2=Xk%ptbz_FineGd(Xk%bz_DbGd_map(ikpbz,i2),:)
-         q_pt_shift(:)=kpt_i1-kpt_i2-q_pt(iq,:)
+     nkpt_DbGd_scatt=0
+     use_kpt_DbGd=.false.
+     do ikbz_FineGd=Xk%bz_DbGd_map(1,ikbz)-1,Xk%bz_DbGd_map(2,ikbz)
+       if(ikbz_FineGd< Xk%bz_DbGd_map(1,ikbz)) k_pt_loc=Xk%ptbz(ikbz,:)
+       if(ikbz_FineGd>=Xk%bz_DbGd_map(1,ikbz)) k_pt_loc=Xk%ptbz_FineGd(ikbz_FineGd,:)
+       do ikpbz_FineGd=Xk%bz_DbGd_map(1,ikpbz)-1,Xk%bz_DbGd_map(2,ikpbz)
+         if(ikpbz_FineGd< Xk%bz_DbGd_map(1,ikpbz)) kp_pt_loc=Xk%ptbz(ikpbz,:)
+         if(ikpbz_FineGd>=Xk%bz_DbGd_map(1,ikpbz)) kp_pt_loc=Xk%ptbz_FineGd(ikpbz_FineGd,:)
+         q_pt_shift(:)=(k_pt_loc-kp_pt_loc)-(Xk%ptbz(ikbz,:)-Xk%ptbz(ikpbz,:))
          if ( iku_v_norm(q_pt_shift) > q_norm_ref ) cycle
-         BZ_DbGd_iq_npt(i1)=BZ_DbGd_iq_npt(i1)+1
-         use_kpt(i1,i2)=.true.
+         nkpt_DbGd_scatt(ikbz_FineGd)=nkpt_DbGd_scatt(ikbz_FineGd)+1
+         use_kpt_DbGd(ikpbz_FineGd,ikbz_FineGd)=.true.
        enddo
      enddo
      !

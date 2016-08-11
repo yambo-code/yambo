@@ -46,7 +46,7 @@ module R_lattice
  real(SP) :: d3k_factor
  real(SP) :: d3q_factor
  real(SP) :: b(3,3)
- real(SP) :: q0_def_norm, q0_shift_norm
+ real(SP) :: q0_def_norm, q0_shift_norm, smallest_q_norm
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
  !
@@ -296,8 +296,40 @@ module R_lattice
        allocate(BZo%sstar_FineGd(BZo%nbz_FineGd))
        BZo%sstar_FineGd=BZi%sstar_FineGd
      endif
+     if (associated( BZi%pt_FineGd )) then
+       allocate(BZo%pt_FineGd(BZo%nibz_FineGd,3))
+       BZo%pt_FineGd=BZi%pt_FineGd
+     endif
+     if (associated( BZi%ptbz_FineGd )) then
+       allocate(BZo%ptbz_FineGd(BZo%nbz_FineGd,3))
+       BZo%ptbz_FineGd=BZi%ptbz_FineGd
+     endif
+     !
+     BZo%nbz_duplicate =BZi%nbz_duplicate
+     BZo%nibz_duplicate=BZi%nibz_duplicate
+     !
+     if (associated( BZi%nibz_mapped )) then
+       allocate(BZo%nibz_mapped(BZo%nibz))
+       BZo%nibz_mapped=BZi%nibz_mapped
+     endif
+     if (associated( BZi%nbz_mapped )) then
+       allocate(BZo%nbz_mapped(BZo%nbz))
+       BZo%nbz_mapped=BZi%nbz_mapped
+     endif
+     write(*,*) associated( BZi%ibz_DbGd_map ),BZo%nibz
+     if (associated( BZi%ibz_DbGd_map )) then
+       allocate(BZo%ibz_DbGd_map(2,BZo%nibz))
+       BZo%ibz_DbGd_map=BZi%ibz_DbGd_map
+     endif
+     if (associated( BZi%bz_DbGd_map )) then
+       allocate(BZo%bz_DbGd_map(2,BZo%nbz))
+       BZo%ibz_DbGd_map=BZi%bz_DbGd_map
+     endif
      !
      ! To code the duplication of the Fine grid and DbGd structure
+     !
+     !real(SP), pointer :: weights_DbGd(:)   => null()
+     !real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
      !
      return
      !

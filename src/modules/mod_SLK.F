@@ -67,14 +67,15 @@ module SLK_m
  ! Common Work Space
  !
  integer :: descA(desc_len)
+ integer :: descZ(desc_len)
  integer :: lwork    = 0
+ integer :: lrwork   = 0
  integer :: liwork   = 0
- integer :: ndim_blc = 0
  integer :: info     = 0
- integer :: nprow    = 0
- integer :: npcol    = 0
- integer :: myrow    = 0
- integer :: mycol    = 0
+ integer :: ils      = 0
+ integer :: ile      = 0
+ integer :: jls      = 0
+ integer :: jle      = 0
  !
  ! Specific SLK worlds ...
  !========================

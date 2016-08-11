@@ -79,13 +79,17 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
      !
      call SLK_setup( idriver,ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
      !
-     !call SLK_startup( )
+     call PARALLEL_startup( idriver, ORTHO, POOL, M_size, M )
      !
-     call PARALLEL_inversion( POOL, ORTHO, M_size, M )
+     call PARALLEL_inversion( ORTHO, POOL, M_size, M )
      !
    else if (idriver==DIAGO) then
      !
      call SLK_setup( idriver,ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
+     !
+     call PARALLEL_startup( idriver, ORTHO, POOL, M_size, M )
+     !
+     call PARALLEL_diagonalization( ORTHO, POOL, M_size, M ,E_real )
      !
    endif
    !

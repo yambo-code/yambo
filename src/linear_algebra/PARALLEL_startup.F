@@ -28,23 +28,22 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-integer function PARALLEL_startup(POOL, ORTHO, ndim, Amat )
+subroutine PARALLEL_startup(idriver, ORTHO, POOL, ndim, Amat )
  !
  use pars,           ONLY:SP
- use SLK_m,          ONLY:POOL_group,ORTHO_group,ndim_blc,info,nprow,npcol,myrow,&
-&                         mycol,descA,liwork,lwork
- use linear_algebra, ONLY:WS
+ use SLK_m,          ONLY:POOL_group,ORTHO_group,info,descA,liwork,lwork,ils, ile, jls, jle
+ use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error
  !
  implicit none
  !
- integer           :: ndim
+ integer           :: ndim,idriver
  type(POOL_group)  :: POOL
  type(ORTHO_group) :: ORTHO
  complex(SP)       :: Amat(ndim,ndim)
  !
  ! Work Space
  !
- integer   :: lld, ils, ile, jls, jle
+ integer   :: lld,ndim_blc, nprow,npcol,myrow,mycol
  !
  ! init global blacs grid
  !
@@ -56,46 +55,39 @@ integer function PARALLEL_startup(POOL, ORTHO, ndim, Amat )
  mycol=ORTHO%coordinate(2)
  !
  ! spectator tasks
- if (ORTHO%coordinate(1) /= -1) PARALLEL_startup=1
  !
- if (PARALLEL_startup==1) then
-   !
-   ! distribute the matrix on the process grid
-   ! Initialize the array descriptors for the matrices A and B
-   !
-   ndim_blc = int(ndim/nprow)
-   if (ndim_blc*nprow < ndim ) ndim_blc=ndim_blc+1
-   !
-   lld = ndim_blc
-   !
-   call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ORTHO%ortho_cntx, lld, info )
-   !
-   allocate( WS%m1_cmplx(ndim_blc,ndim_blc) )
-   allocate( WS%v_int(ndim+ndim_blc) )
-   !
-   ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
-   ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
-   !
-   lwork  = ndim_blc*ndim_blc
-   liwork = ndim_blc+ndim_blc
-   !
-   allocate( WS%v_cmplx(lwork) )
-   allocate( WS%vp_int(liwork) )
-   !
-   ! distribute the matrix A
-   !
-   ils=myrow*ndim_blc+1
-   ile=min(myrow*ndim_blc+ndim_blc,ndim)
-   jls=mycol*ndim_blc+1
-   jle=min(mycol*ndim_blc+ndim_blc,ndim)
-   !
-   WS%m1_cmplx=0.0_SP
-   WS%m1_cmplx=Amat(ils:ile,jls:jle)
-   !
-   return
-   !
- endif
+ if (ORTHO%coordinate(1) == -1) call LINEAR_ALGEBRA_error("PARALLEL_startup"," ")
  !
- PARALLEL_startup=-1
+ ! distribute the matrix on the process grid
+ ! Initialize the array descriptors for the matrices A and B
  !
-end function PARALLEL_startup
+ ndim_blc = int(ndim/nprow)
+ if (ndim_blc*nprow < ndim ) ndim_blc=ndim_blc+1
+ !
+ lld = ndim_blc
+ !
+ call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ORTHO%ortho_cntx, lld, info )
+ !
+ allocate( WS%m1_cmplx(ndim_blc,ndim_blc) )
+ allocate( WS%v_int(ndim+ndim_blc) )
+ !
+ ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
+ ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
+ !
+ lwork  = ndim_blc*ndim_blc
+ liwork = ndim_blc+ndim_blc
+ !
+ allocate( WS%v_cmplx(lwork) )
+ allocate( WS%vp_int(liwork) )
+ !
+ ! distribute the matrix A
+ !
+ ils=myrow*ndim_blc+1
+ ile=min(myrow*ndim_blc+ndim_blc,ndim)
+ jls=mycol*ndim_blc+1
+ jle=min(mycol*ndim_blc+ndim_blc,ndim)
+ !
+ WS%m1_cmplx=0.0_SP
+ WS%m1_cmplx=Amat(ils:ile,jls:jle)
+ !
+end subroutine 

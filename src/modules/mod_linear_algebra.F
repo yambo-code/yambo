@@ -43,6 +43,7 @@ module linear_algebra
    real(SP),    allocatable :: v_real(:)
    real(SP),    allocatable :: vp_real(:)
    complex(SP), allocatable :: v_cmplx(:)
+   complex(SP), allocatable :: vp_cmplx(:)
    complex(SP), allocatable :: m1_cmplx(:,:)
    complex(SP), allocatable :: m2_cmplx(:,:)
    integer    , allocatable :: v_int(:)
@@ -89,9 +90,11 @@ module linear_algebra
      if (allocated(WS%v_real))   deallocate(WS%v_real)
      if (allocated(WS%vp_real))  deallocate(WS%vp_real)
      if (allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
+     if (allocated(WS%v_cmplx))  deallocate(WS%vp_cmplx)
      if (allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
      if (allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
      if (allocated(WS%v_int))    deallocate(WS%v_int)
+     if (allocated(WS%vp_int))   deallocate(WS%vp_int)
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_error(calling_subr,message_)
@@ -184,11 +187,9 @@ module linear_algebra
      complex(SP),intent(inout) :: M(msize,*)
      !
 #if defined _DOUBLE
-   call ZGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,&
-&             V_right,msize,work,lwork,rwk,ifail)
+   call ZGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
 #else
-   call CGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,&
-&             V_right,msize,work,lwork,rwk,ifail)
+   call CGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
 #endif
      !
    end subroutine geev

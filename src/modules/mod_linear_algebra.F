@@ -73,6 +73,15 @@ module linear_algebra
  !
  contains
    !
+   subroutine LINEAR_ALGEBRA_WS_clean_up( )
+     if (allocated(WS%v_real))   deallocate(WS%v_real)
+     if (allocated(WS%vp_real))  deallocate(WS%vp_real)
+     if (allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
+     if (allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
+     if (allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
+     if (allocated(WS%v_int))    deallocate(WS%v_int)
+   end subroutine
+   !
    subroutine LINEAR_ALGEBRA_error(calling_subr,message_)
      use stderr,  ONLY:string_pack
      use com,     ONLY:error

@@ -60,6 +60,4 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
  !
- deallocate(WS%v_int,WS%v_cmplx)
- !
 end subroutine

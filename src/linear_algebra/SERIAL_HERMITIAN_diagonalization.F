@@ -45,6 +45,4 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues Hermitian (SD)','failed')
  !
- deallocate(WS%v_cmplx,WS%v_real)
- !
 end subroutine

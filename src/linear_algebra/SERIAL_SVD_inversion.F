@@ -60,6 +60,4 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  !
  call M_by_M('c','c',n,WS%m1_cmplx,WS%m2_cmplx,M)
  !
- deallocate(WS%v_real,WS%vp_real,WS%m2_cmplx,WS%m1_cmplx,WS%v_cmplx)
- !
 end subroutine

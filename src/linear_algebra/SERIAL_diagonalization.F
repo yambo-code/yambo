@@ -52,6 +52,4 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues (SD)','failed')
  !
- deallocate(WS%v_cmplx,WS%v_real)
- !
 end subroutine

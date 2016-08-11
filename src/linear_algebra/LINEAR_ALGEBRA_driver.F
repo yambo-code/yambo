@@ -24,7 +24,7 @@
 subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
  !
  use pars,          ONLY:SP
- use linear_algebra,ONLY:INV,DIAGO,USE_LK,USE_SVD,USE_SLK,min_cpu_block_size
+ use linear_algebra,ONLY:INV,DIAGO,USE_LK,USE_SVD,USE_SLK,min_cpu_block_size,LINEAR_ALGEBRA_WS_clean_up
  use parallel_m,    ONLY:PAR_COM_INV,PAR_COM_DIAGO
  !
  implicit none
@@ -106,6 +106,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
      endif
      !
    endif
+   !
+   call LINEAR_ALGEBRA_WS_clean_up( ) 
    !
  endif
  !

@@ -58,7 +58,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  ! Initial checks
  !================
- call section('+','Double Grid DB(s)')
+ call section('+','Double Grid initialization')
  call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  !
  ! First map IBZ to IBZ

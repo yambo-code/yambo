@@ -78,6 +78,8 @@ module R_lattice
    !
    ! Double grid: Mapping Fine to Coarse grid
    !
+   integer           :: nibz_duplicate
+   integer           :: nbz_duplicate
    integer,  pointer :: nibz_mapped(:)    => null()  ! For each IBZ kpt in the Fg, n° of IBZ kpt_FineGd associated
    integer,  pointer :: nbz_mapped(:)     => null()  ! For each IBZ kpt in the Fg, n° of IBZ kpt_FineGd associated
    integer,  pointer :: ibz_DbGd_map(:,:) => null()  ! map kpt_FineGd in the IBZ --> kpts in the IBZ

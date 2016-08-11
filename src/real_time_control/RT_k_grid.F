@@ -82,8 +82,8 @@ integer function RT_k_grid(E,k,q)
  !
  do ik=1,k%nibz
    ik_bz=1+sum(k%nstar(:ik-1))
-   RT_ibz_coo(ik,:)=(/RT_k_grid+1,RT_k_grid+1+k%nibz_FineGd(ik)/)
-   RT_k_grid=RT_k_grid+1+k%nibz_FineGd(ik)
+   RT_ibz_coo(ik,:)=(/RT_k_grid+1,RT_k_grid+1+k%nibz_mapped(ik)/)
+   RT_k_grid=RT_k_grid+1+k%nibz_mapped(ik)
    RT_Nk_ibz(ik)=k%nibz_DbGd(ik)+1
  enddo
  allocate(RT_all2ibz(RT_k_grid))

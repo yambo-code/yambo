@@ -41,8 +41,8 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
  !
  ! Work Space
  !
- integer              :: i1,ik_near,ikbz,ikbz_FineGd
- integer, allocatable :: TMP_map_bz(:)
+ integer              :: i1,ik_near,ikbz,ikbz_FineGd,i_err
+ integer, allocatable :: TMP_map_bz(:),TMP_table_bz(:,:)
  type(PP_indexes)     :: px
  !
  ! Initial mapping
@@ -60,8 +60,9 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
  !
  do i1=1,Xk%nbz_FineGd
    if (.not.px%element_1D(i1)) cycle
-   ik_near=k_the_nearest(FineGd_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
-   TMP_map_bz(i1)=ik_near
+   ik_near=k_the_nearest(FineGd_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz,i_err=i_err)
+   if(i_err==0) TMP_map_bz(i1)=-1
+   if(i_err/=0) TMP_map_bz(i1)=ik_near
    call live_timing(steps=1)
  enddo
  !
@@ -71,23 +72,27 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
  !===========================================
  allocate(Xk%nbz_mapped(Xk%nbz))
  Xk%nbz_mapped=0
+ Xk%nbz_duplicate=0
  do i1=1,Xk%nbz_FineGd
    ik_near=TMP_map_bz(i1)
-   Xk%nbz_mapped(ik_near)=Xk%nbz_mapped(ik_near)+1
+   if(ik_near>0) Xk%nbz_mapped(ik_near)=Xk%nbz_mapped(ik_near)+1
+   if(ik_near<0) Xk%nbz_duplicate      =Xk%nbz_duplicate+1
  enddo
  !
+ call msg('s','::  BZ Blocks dupicate       :',Xk%nbz_duplicate)
  call msg('s','::  BZ Blocks filling range  :',(/minval( Xk%nbz_mapped),maxval( Xk%nbz_mapped)/))
  !
  ! BZ table
  !==========
- allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
- Xk%bz_DbGd_map=0
+ allocate(TMP_table_bz(Xk%nbz,maxval(Xk%nbz_mapped)))
+ TMP_table_bz=0
  !
  Xk%nbz_mapped=0
  do i1=1,Xk%nbz_FineGd
    ik_near=TMP_map_bz(i1)
+   if(ik_near<0) cycle
    Xk%nbz_mapped(ik_near)=Xk%nbz_mapped(ik_near)+1
-   Xk%bz_DbGd_map(ik_near,Xk%nbz_mapped(ik_near))=i1
+   TMP_table_bz(ik_near,Xk%nbz_mapped(ik_near))=i1
  enddo
  !
  deallocate(TMP_map_bz)
@@ -98,29 +103,33 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
  allocate(Xk%sstar_FineGd(FineGd_k%nbz))
  Xk%sstar_FineGd=FineGd_k%sstar(:,1)
  !
- call live_timing('BZ Double Grid Reordering',Xk%nbz_FineGd)
+ allocate(Xk%bz_DbGd_map(Xk%nbz,2))
+ !
+ call live_timing('BZ Double Grid Reordering',Xk%nbz_FineGd-Xk%nbz_duplicate)
  !
  ikbz_FineGd=0
  do ikbz=1,Xk%nbz
+   Xk%bz_DbGd_map(ikbz,1)=ikbz_FineGd+1
    do i1=1,Xk%nbz_mapped(ikbz)
      ikbz_FineGd=ikbz_FineGd+1
-     Xk%ptbz_FineGd(ikbz_FineGd,:)=FineGd_k%ptbz(Xk%bz_DbGd_map(ikbz,i1),:)
-     Xk%sstar_FineGd(ikbz_FineGd) =FineGd_k%sstar(Xk%bz_DbGd_map(ikbz,i1),1)
-     !
-     Xk%bz_DbGd_map(ikbz,i1)=i1+sum(Xk%nbz_mapped(:ikbz-1))
+     Xk%ptbz_FineGd(ikbz_FineGd,:)=FineGd_k%ptbz(TMP_table_bz(ikbz,i1),:)
+     Xk%sstar_FineGd(ikbz_FineGd) =FineGd_k%sstar(TMP_table_bz(ikbz,i1),1)
      !
      call live_timing(steps=1)
      !
    enddo
+   Xk%bz_DbGd_map(ikbz,2)=ikbz_FineGd
  enddo
  !
  call live_timing()
  !
+ deallocate(TMP_table_bz)
+ !
  ! DEBUG <
  do ikbz=1,Xk%nbz
    write(1100,*) Xk%ptbz(ikbz,:)
-   do i1=1,Xk%nbz_mapped(ikbz)
-     write(1100+ikbz,*) Xk%ptbz_fineGd(Xk%bz_DbGd_map(ikbz,i1),:)
+   do ikbz_FineGd=Xk%bz_DbGd_map(ikbz,1),Xk%bz_DbGd_map(ikbz,2)
+     write(1100+ikbz,*) Xk%ptbz_fineGd(ikbz_FineGd,:)
    enddo
  enddo
  ! DEBUG >

@@ -25,7 +25,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,n_sp_pol
- use R_lattice,      ONLY:nXkbz,bz_samp
+ use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
@@ -52,12 +52,14 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=7,MENU=1)
  !
  call io_elemental(ID,I0=E%nb_FineGd,        VAR=' Bands                           :')
  call io_elemental(ID,I0=E%nk_FineGd,        VAR=' Number of points  in the IBZ (E):')
  call io_elemental(ID,I0=Xk%nibz_FineGd,     VAR=' Number of points  in the IBZ (k):')
  call io_elemental(ID,I0=Xk%nbz_FineGd,      VAR=' Number of points  in the  BZ (k):')
+ call io_elemental(ID,I0=Xk%nibz_duplicate,  VAR=' Number of duplic. pts in the IBZ:')
+ call io_elemental(ID,I0=Xk%nbz_duplicate,   VAR=' Number of duplic. pts in the  BZ:')
  ! 
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
@@ -105,16 +107,14 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Block table
  !
  if (read_is_on(ID)) then
-   allocate(Xk%ibz_DbGd_map(Xk%nibz,maxval(Xk%nibz_mapped)))
-   allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
-   Xk%ibz_DbGd_map=0
-   Xk%bz_DbGd_map=0
+   allocate(Xk%ibz_DbGd_map(Xk%nibz,2))
+   allocate(Xk%bz_DbGd_map(Xk%nbz,2))
  endif
  !
- call io_bulk(ID, VAR="BLOCK_TABLE (IBZ)", VAR_SZ=shape(Xk%ibz_DbGd_map) ) 
+ call io_bulk(ID, VAR="BLOCK_TABLE_IBZ", VAR_SZ=shape(Xk%ibz_DbGd_map) ) 
  call io_bulk(ID, I2=Xk%ibz_DbGd_map )
  !
- call io_bulk(ID, VAR="BLOCK_TABLE ( BZ)", VAR_SZ=shape(Xk%bz_DbGd_map) ) 
+ call io_bulk(ID, VAR="BLOCK_TABLE_BZ", VAR_SZ=shape(Xk%bz_DbGd_map) ) 
  call io_bulk(ID, I2=Xk%bz_DbGd_map )
  !
  ! Double grid weights

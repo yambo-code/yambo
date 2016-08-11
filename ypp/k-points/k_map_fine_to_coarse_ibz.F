@@ -42,8 +42,8 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
  !
  ! Work Space
  !
- integer              :: i1,ik_near,is_near,ikibz,ikibz_FineGd
- integer, allocatable :: TMP_map_ibz(:)
+ integer              :: i1,ik_near,is_near,ikibz,ikibz_FineGd,i_err
+ integer, allocatable :: TMP_map_ibz(:),TMP_table_ibz(:,:)
  real(SP)             :: kpt_tmp(3)
  type(PP_indexes)     :: px
  !
@@ -69,8 +69,9 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
      cycle
    endif
    !
-   ik_near = k_the_nearest(FineGd_k%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near)
-   TMP_map_ibz(i1)=ik_near
+   ik_near = k_the_nearest(FineGd_k%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near,i_err=i_err)
+   if(i_err==0) TMP_map_ibz(i1)=-1
+   if(i_err/=0) TMP_map_ibz(i1)=ik_near
    !
    ! Rotate the points in the IBZ of DbGd_k
    !
@@ -88,25 +89,27 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
  !=========================================
  allocate(Xk%nibz_mapped(Xk%nibz))
  Xk%nibz_mapped=0
+ Xk%nibz_duplicate=0
  do i1=1,Xk%nibz_FineGd
    ik_near=TMP_map_ibz(i1)
-   Xk%nibz_mapped(ik_near)=Xk%nibz_mapped(ik_near)+1
+   if(ik_near>0) Xk%nibz_mapped(ik_near)=Xk%nibz_mapped(ik_near)+1
+   if(ik_near<0) Xk%nibz_duplicate=Xk%nibz_duplicate+1
  enddo
  !
+ call msg('s',':: IBZ Blocks dupicate       :',Xk%nibz_duplicate)
  call msg('s',':: IBZ Blocks filling range  :',(/minval(Xk%nibz_mapped),maxval(Xk%nibz_mapped)/))
  !
  ! IBZ table
  !===========
- allocate(Xk%ibz_DbGd_map(Xk%nibz,maxval(Xk%nibz_mapped)))
- Xk%ibz_DbGd_map=0
+ allocate(TMP_table_ibz(Xk%nibz,maxval(Xk%nibz_mapped)))
+ TMP_table_ibz=0
  !
  Xk%nibz_mapped=0
  do i1=1,Xk%nibz_FineGd
    ik_near=TMP_map_ibz(i1)
+   if(ik_near<0) cycle
    Xk%nibz_mapped(ik_near)=Xk%nibz_mapped(ik_near)+1
-   !
-   Xk%ibz_DbGd_map(ik_near,Xk%nibz_mapped(ik_near))=i1
-   !
+   TMP_table_ibz(ik_near,Xk%nibz_mapped(ik_near))=i1
  enddo
  !
  deallocate(TMP_map_ibz)
@@ -128,26 +131,27 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
  call k_expand(FineGd_k)
  !
  allocate(Xk%weights_DbGd(Xk%nibz))
+ allocate(Xk%ibz_DbGd_map(Xk%nibz,2))
  !
- call live_timing('IBZ Double Grid Reordering',Xk%nibz_FineGd)
+ call live_timing('IBZ Double Grid Reordering',Xk%nibz_FineGd-Xk%nibz_duplicate)
  !
  ikibz_FineGd=0
  do ikibz=1,Xk%nibz
-   Xk%weights_DbGd(ikibz)=Xk%weights(ikibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_FineGd,SP)
+   !Xk%weights_DbGd(ikibz)=Xk%weights(ikibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_FineGd-Xk%nbz_duplicate,SP)
+   Xk%ibz_DbGd_map(ikibz,1)=ikibz_FineGd+1
    do i1=1,Xk%nibz_mapped(ikibz)
      ikibz_FineGd=ikibz_FineGd+1
-     Xen%E_FineGd(:,ikibz_FineGd,:) =FineGd_E%E(:,Xk%ibz_DbGd_map(ikibz,i1),:)
-     Xk%pt_FineGd(ikibz_FineGd,:)   =FineGd_k%pt(Xk%ibz_DbGd_map(ikibz,i1),:)
-     Xk%weights_FineGd(ikibz_FineGd)=FineGd_k%weights(Xk%ibz_DbGd_map(ikibz,i1))
+     Xen%E_FineGd(:,ikibz_FineGd,:) =FineGd_E%E(:,TMP_table_ibz(ikibz,i1),:)
+     Xk%pt_FineGd(ikibz_FineGd,:)   =FineGd_k%pt(TMP_table_ibz(ikibz,i1),:)
+     Xk%weights_FineGd(ikibz_FineGd)=FineGd_k%weights(TMP_table_ibz(ikibz,i1))
      !
-     Xk%weights_DbGd(ikibz)=Xk%weights_DbGd(ikibz)+Xk%weights_FineGd(ikibz_FineGd)* &
-&                                             real(Xk%nbz_FineGd,SP)/real(Xk%nbz+Xk%nbz_FineGd,SP)
-     !
-     Xk%ibz_DbGd_map(ikibz,i1)=ikibz_FineGd
+!     Xk%weights_DbGd(ikibz)=Xk%weights_DbGd(ikibz)+Xk%weights_FineGd(ikibz_FineGd)* &
+!&                                             real(Xk%nbz_FineGd,SP)/real(Xk%nbz+Xk%nbz_FineGd-Xk%nbz_duplicate,SP)
      !
      call live_timing(steps=1)
      !
    enddo
+   Xk%ibz_DbGd_map(ikibz,2)=ikibz_FineGd
  enddo
  !
  call live_timing()
@@ -155,8 +159,8 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
  ! DEBUG <
  do ikibz=1,Xk%nibz
    write(100,*) Xk%pt(ikibz,:)
-   do i1=1,Xk%nibz_mapped(ikibz)
-     write(100+ikibz,*) Xk%pt_FineGd(Xk%ibz_DbGd_map(ikibz,i1),:)
+   do ikibz_FineGd=Xk%ibz_DbGd_map(ikibz,1),Xk%ibz_DbGd_map(ikibz,2)
+     write(100+ikibz,*) Xk%pt_FineGd(ikibz_FineGd,:)
    enddo
  enddo
  ! DEBUG >

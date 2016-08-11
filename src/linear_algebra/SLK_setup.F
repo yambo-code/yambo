@@ -21,17 +21,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE SLK_setup( ORTHO, POOL, INDEX_comm, A2A_comm )
+SUBROUTINE SLK_setup( idriver, ORTHO, POOL, INDEX_comm, A2A_comm )
  !
- use SLK_m,       ONLY:n_pools,ORTHO_group,POOL_group
- use parallel_m,  ONLY:MPI_comm,ncpu,myid
+ use SLK_m,          ONLY:n_pools,ORTHO_group,POOL_group
+ use parallel_m,     ONLY:MPI_comm,ncpu,myid
+ use linear_algebra, ONLY:INV,DIAGO
+ use com,            ONLY:msg
  !
  IMPLICIT NONE
  !
+ integer,           intent(in)    :: idriver
  type(MPI_comm),    intent(in)    :: INDEX_comm 
  type(MPI_comm),    intent(in)    :: A2A_comm 
  type(ORTHO_group), intent(inout) :: ORTHO 
  type(POOL_group) , intent(inout) :: POOL 
+ !
+ ! Work Space
+ !
+ character(20) :: ch
  !
  ! # of POOLS
  !
@@ -52,5 +59,11 @@ SUBROUTINE SLK_setup( ORTHO, POOL, INDEX_comm, A2A_comm )
  ! Init the scalapack grid
  !
  call SLK_ORTHO_init( ORTHO, POOL, product(ORTHO%grid), POOL%INTRA_comm )
+ !
+ if (idriver==INV)   ch="Invertion"
+ if (idriver==DIAGO) ch="Digonalization"
+ !
+ call msg("lr",'[SLK-'//trim(ch)//']  Pools        :',n_pools)
+ call msg("lr",'[SLK-'//trim(ch)//']  BLACS grid   :',ORTHO%grid)
  !
 END SUBROUTINE SLK_setup

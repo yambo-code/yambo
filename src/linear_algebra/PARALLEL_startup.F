@@ -28,37 +28,23 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
- !
- ! perform the inversion by using scalapack
+integer function PARALLEL_startup(POOL, ORTHO, ndim, Amat )
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait
- use SLK_m,          ONLY:POOL_group,ORTHO_group
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error
+ use SLK_m,          ONLY:POOL_group,ORTHO_group,ndim_blc,info,nprow,npcol,myrow,&
+&                         mycol,descA,liwork,lwork
+ use linear_algebra, ONLY:WS
  !
  implicit none
- !
- integer, parameter :: dlen_ = 9
  !
  integer           :: ndim
  type(POOL_group)  :: POOL
  type(ORTHO_group) :: ORTHO
- complex(SP) :: Amat(ndim,ndim)
+ complex(SP)       :: Amat(ndim,ndim)
  !
- integer   :: descA(dlen_)
+ ! Work Space
  !
- integer   :: nprow, npcol, myrow, mycol
- integer   :: ndim_blc, lld
- integer   :: info
- integer   :: lwork, liwork
- integer   :: ils, ile, jls, jle
- logical   :: do_SLK_job
- !
- complex(SP), allocatable :: Amat_loc(:,:)
- integer,  allocatable :: ipiv(:)
- integer,  allocatable :: iwork(:)
- complex(SP), allocatable :: work(:)
+ integer   :: lld, ils, ile, jls, jle
  !
  ! init global blacs grid
  !
@@ -70,9 +56,9 @@ subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
  mycol=ORTHO%coordinate(2)
  !
  ! spectator tasks
- do_SLK_job = (ORTHO%coordinate(1) /= -1)
+ if (ORTHO%coordinate(1) /= -1) PARALLEL_startup=1
  !
- if (do_SLK_job) then
+ if (PARALLEL_startup==1) then
    !
    ! distribute the matrix on the process grid
    ! Initialize the array descriptors for the matrices A and B
@@ -84,8 +70,8 @@ subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
    !
    call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ORTHO%ortho_cntx, lld, info )
    !
-   allocate( Amat_loc(ndim_blc,ndim_blc) )
-   allocate( ipiv(ndim+ndim_blc) )
+   allocate( WS%m1_cmplx(ndim_blc,ndim_blc) )
+   allocate( WS%v_int(ndim+ndim_blc) )
    !
    ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
    ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
@@ -93,8 +79,8 @@ subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
    lwork  = ndim_blc*ndim_blc
    liwork = ndim_blc+ndim_blc
    !
-   allocate( work(lwork) )
-   allocate( iwork(liwork) )
+   allocate( WS%v_cmplx(lwork) )
+   allocate( WS%vp_int(liwork) )
    !
    ! distribute the matrix A
    !
@@ -103,41 +89,13 @@ subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
    jls=mycol*ndim_blc+1
    jle=min(mycol*ndim_blc+ndim_blc,ndim)
    !
-   Amat_loc=0.0_SP
-   Amat_loc=Amat(ils:ile,jls:jle)
+   WS%m1_cmplx=0.0_SP
+   WS%m1_cmplx=Amat(ils:ile,jls:jle)
    !
-   ! perform the inversion
-   !
-#if defined _DOUBLE
-   CALL PZGETRF( ndim, ndim, Amat_loc, 1, 1, descA, ipiv, info )
-   if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRF',' ')
-   !
-   CALL PZGETRI( ndim, Amat_loc, 1, 1, descA,ipiv, work, lwork, iwork, liwork, info )
-   if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRI',' ')
-#else
-   CALL PCGETRF( ndim, ndim, Amat_loc, 1, 1, descA, ipiv, info )
-   if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRF',' ')
-   !
-   CALL PCGETRI( ndim, Amat_loc, 1, 1, descA,ipiv, work, lwork, iwork, liwork, info )
-   if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRI',' ')
-#endif
+   return
    !
  endif
  !
- ! gather the inverse matrix
+ PARALLEL_startup=-1
  !
- Amat=0.0_SP
- if ( do_SLK_job ) then
-   Amat(ils:ile,jls:jle)=Amat_loc(:,:)
- endif
- !
- call PP_redux_wait(Amat,COMM=POOL%INTRA_comm)
- ! 
- ! local cleanup 
- ! 
- if ( do_SLK_job ) then
-   deallocate( Amat_loc )
-   deallocate( ipiv, work, iwork )
- endif
- !
-end subroutine PARALLEL_inversion
+end function PARALLEL_startup

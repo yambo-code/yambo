@@ -24,8 +24,7 @@
 subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  use pars,          ONLY:SP
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS
- use wrapper,       ONLY:M_eigenvalues
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,M_eigenvalues
  !
  implicit none
  !

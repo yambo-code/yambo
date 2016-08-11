@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, AF
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,21 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-! Copyright (C) 2004 WanT Group
-!
-! This file is distributed under the terms of the
-! GNU General Public License. See the file `License'
-! in the root directory of the present distribution,
-! or http://www.gnu.org/copyleft/gpl.txt .
-!
-subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
+subroutine PARALLEL_diagonalization(POOL, ORTHO, ndim, Amat )
  !
- ! perform the inversion by using scalapack
+ ! perform the diagonalization by using scalapack
  !
+ use com,            ONLY:error
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:POOL_group,ORTHO_group
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error
+ use linear_algebra, ONLY:WS
  !
  implicit none
  !
@@ -55,7 +49,7 @@ subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
  integer   :: ils, ile, jls, jle
  logical   :: do_SLK_job
  !
- complex(SP), allocatable :: Amat_loc(:,:)
+ complex(SP), allocatable :: Amat_loc(:,:), Ainv_loc(:,:)
  integer,  allocatable :: ipiv(:)
  integer,  allocatable :: iwork(:)
  complex(SP), allocatable :: work(:)
@@ -85,6 +79,7 @@ subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
    call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ORTHO%ortho_cntx, lld, info )
    !
    allocate( Amat_loc(ndim_blc,ndim_blc) )
+   allocate( Ainv_loc(ndim_blc,ndim_blc) )
    allocate( ipiv(ndim+ndim_blc) )
    !
    ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
@@ -106,25 +101,25 @@ subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
    Amat_loc=0.0_SP
    Amat_loc=Amat(ils:ile,jls:jle)
    !
-   ! perform the inversion
+   ! perform the diagonalization
    !
 #if defined _DOUBLE
    CALL PZGETRF( ndim, ndim, Amat_loc, 1, 1, descA, ipiv, info )
-   if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRF',' ')
+   if ( info /= 0 ) call error('para_diagonalization performing PZGETRF')
    !
    CALL PZGETRI( ndim, Amat_loc, 1, 1, descA,ipiv, work, lwork, iwork, liwork, info )
-   if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRI',' ')
+   if ( info /= 0 ) call error('para_diagonalization performing PZGETRI')
 #else
    CALL PCGETRF( ndim, ndim, Amat_loc, 1, 1, descA, ipiv, info )
-   if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRF',' ')
+   if ( info /= 0 ) call error('para_diagonalization performing PCGETRF')
    !
    CALL PCGETRI( ndim, Amat_loc, 1, 1, descA,ipiv, work, lwork, iwork, liwork, info )
-   if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRI',' ')
+   if ( info /= 0 ) call error('para_diagonalization performing PCGETRI')
 #endif
    !
  endif
  !
- ! gather the inverse matrix
+ ! gather the diagonalization matrix
  !
  Amat=0.0_SP
  if ( do_SLK_job ) then
@@ -136,8 +131,8 @@ subroutine PARALLEL_inversion(POOL, ORTHO, ndim, Amat )
  ! local cleanup 
  ! 
  if ( do_SLK_job ) then
-   deallocate( Amat_loc )
+   deallocate( Amat_loc, Ainv_loc )
    deallocate( ipiv, work, iwork )
  endif
  !
-end subroutine PARALLEL_inversion
+end subroutine PARALLEL_diagonalization

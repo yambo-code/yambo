@@ -28,6 +28,7 @@ module SLK_m
  implicit none
  !
  integer              :: n_pools = 1 ! number of pools
+ integer, parameter   :: desc_len= 9
  !
  ! SLK test
  !
@@ -62,6 +63,18 @@ module SLK_m
    INTEGER :: world_cntx = -1    ! BLACS context of all processor 
    INTEGER :: ortho_cntx = -1    ! BLACS context for ortho_comm
  end type ORTHO_group
+ !
+ ! Common Work Space
+ !
+ integer :: descA(desc_len)
+ integer :: lwork    = 0
+ integer :: liwork   = 0
+ integer :: ndim_blc = 0
+ integer :: info     = 0
+ integer :: nprow    = 0
+ integer :: npcol    = 0
+ integer :: myrow    = 0
+ integer :: mycol    = 0
  !
  ! Specific SLK worlds ...
  !========================

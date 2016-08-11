@@ -24,8 +24,8 @@
 subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  !
  use pars,          ONLY:SP,cZERO
- use wrapper,       ONLY:M_by_M,SV_decomposition
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS
+ use wrapper,       ONLY:M_by_M
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,SV_decomposition
  !
  implicit none
  !

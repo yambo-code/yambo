@@ -77,16 +77,21 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
    !
    if (idriver==INV) then
      !
-     call SLK_setup( ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
+     call SLK_setup( idriver,ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
+     !
+     !call SLK_startup( )
+     !
+     call PARALLEL_inversion( POOL, ORTHO, M_size, M )
      !
    else if (idriver==DIAGO) then
      !
-     call SLK_setup( ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
+     call SLK_setup( idriver,ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
      !
    endif
    !
    call SLK_POOL_clean_up(POOL)
    call SLK_ORTHO_GROUP_clean_up(ORTHO)
+   call LINEAR_ALGEBRA_WS_clean_up( ) 
    !
  endif
  !

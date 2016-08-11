@@ -24,8 +24,7 @@
 subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  use pars,          ONLY:SP,cONE
- use wrapper,       ONLY:LU_factorization,LU_inversion
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,LU_factorization,LU_inversion
  !
  implicit none
  !

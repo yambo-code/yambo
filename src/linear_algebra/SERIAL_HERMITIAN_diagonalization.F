@@ -21,35 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_do_it_full(Lo,KERNEL,what)
+subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
- ! 1./(Lo^{-1}-M)
- !
- use pars,           ONLY:SP,cZERO
- use BS_solvers,     ONLY:BS_mat
- use BS,             ONLY:BS_H_dim
- use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV
+ use pars,          ONLY:SP
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS
+ use wrapper,       ONLY:M_eigenvalues
  !
  implicit none
  !
- character  ,intent(in) ::what ! "r","a"
- complex(SP),intent(in) ::Lo(BS_H_dim)
- complex(SP),intent(out)::KERNEL(BS_H_dim,BS_H_dim) 
+ integer     :: n
+ complex(SP) :: M(n,n)
+ real(SP)    :: E(n)
  !
- ! Work Space
+ allocate(WS%v_cmplx(1),WS%v_real(max(1,3*n-2)))
+ call M_eigenvalues(n,M,E,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
  !
- integer     ::i1,i2
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues Hermitian (SD)','WS%v_cmplxspace failed')
  !
- KERNEL=cZERO
+ WS%dim=int(real(WS%v_cmplx(1)))
+ deallocate(WS%v_cmplx)
+ allocate(WS%v_cmplx(WS%dim))
+ call M_eigenvalues(n,M,E,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !
- do i2=1,BS_H_dim
-   KERNEL(i2,i2)=1._SP/Lo(i2)
-   do i1=1,BS_H_dim 
-     if (what=="r") KERNEL(i1,i2)=KERNEL(i1,i2)-      BS_mat(i1,i2)
-     if (what=="a") KERNEL(i1,i2)=KERNEL(i1,i2)-conjg(BS_mat(i1,i2))
-   enddo
- enddo
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues Hermitian (SD)','failed')
  !
- call LINEAR_ALGEBRA_driver(INV,KERNEL)
+ deallocate(WS%v_cmplx,WS%v_real)
  !
 end subroutine

@@ -21,35 +21,45 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_do_it_full(Lo,KERNEL,what)
+subroutine SERIAL_inversion(n,M,det,eval_det)
  !
- ! 1./(Lo^{-1}-M)
- !
- use pars,           ONLY:SP,cZERO
- use BS_solvers,     ONLY:BS_mat
- use BS,             ONLY:BS_H_dim
- use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV
+ use pars,          ONLY:SP,cONE
+ use wrapper,       ONLY:LU_factorization,LU_inversion
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS
  !
  implicit none
  !
- character  ,intent(in) ::what ! "r","a"
- complex(SP),intent(in) ::Lo(BS_H_dim)
- complex(SP),intent(out)::KERNEL(BS_H_dim,BS_H_dim) 
+ integer     :: n
+ complex(SP) :: M(n,n),det
+ logical     :: eval_det
+ integer     :: i_loop !ws
  !
- ! Work Space
+ allocate(WS%v_int(n))
  !
- integer     ::i1,i2
+ call LU_factorization(n,M,WS%v_int,WS%i_fail)
  !
- KERNEL=cZERO
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRF (SI)','WS%v_cmplxspace failed')
  !
- do i2=1,BS_H_dim
-   KERNEL(i2,i2)=1._SP/Lo(i2)
-   do i1=1,BS_H_dim 
-     if (what=="r") KERNEL(i1,i2)=KERNEL(i1,i2)-      BS_mat(i1,i2)
-     if (what=="a") KERNEL(i1,i2)=KERNEL(i1,i2)-conjg(BS_mat(i1,i2))
+ ! Evaluate determinant if required
+ !
+ det=cONE
+ !
+ if(eval_det) then
+   do i_loop=1,n
+     det=det*M(i_loop,i_loop)
+     if(WS%v_int(i_loop).ne.i_loop) det=-det
    enddo
- enddo
+ endif
  !
- call LINEAR_ALGEBRA_driver(INV,KERNEL)
+ allocate(WS%v_cmplx(1))
+ call LU_inversion(n,M,WS%v_int,WS%v_cmplx,-1,WS%i_fail)
+ WS%dim=int(real(WS%v_cmplx(1)))
+ deallocate(WS%v_cmplx)
+ allocate(WS%v_cmplx(WS%dim))
+ call LU_inversion(n,M,WS%v_int,WS%v_cmplx,WS%dim,WS%i_fail)
+ !
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
+ !
+ deallocate(WS%v_int,WS%v_cmplx)
  !
 end subroutine

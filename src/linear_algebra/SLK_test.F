@@ -18,7 +18,7 @@ subroutine SLK_test(E,k,q)
  ! Work Space
  !
  integer                 :: ndim,ierr,ncpu_each_pool
- real(DP),   allocatable :: Amat(:,:), Ainv(:,:)
+ real(DP),   allocatable :: Amat(:,:), Ainv(:,:),Adiago(:,:)
  type (POOL_group)       :: POOL
  type (ORTHO_group)      :: ORTHO
  !
@@ -28,33 +28,13 @@ subroutine SLK_test(E,k,q)
  !
  ndim    = SLK_test_H_dim
  !
- n_pools = SLK_COM_INDEX(1)%n_CPU
- !
- ncpu_each_pool = ncpu/n_pools
- !
- ! BLACS grid
- !
- ORTHO%grid=nint(sqrt(real(ncpu_each_pool)))
- !
- ! Init pools
- !
- POOL%CPU_id      = SLK_COM_A2A(1)%CPU_id
- POOL%n_CPU       = SLK_COM_A2A(1)%n_CPU
- POOL%ID          = myid/POOL%n_CPU
- POOL%INTER_comm  = SLK_COM_INDEX(1)%COMM
- POOL%INTRA_comm  = SLK_COM_A2A(1)%COMM
- !
- ! Init the scalapack grid
- !
- call SLK_ORTHO_init( ORTHO, POOL, product(ORTHO%grid), POOL%INTRA_comm )
- !
  ! workspace
  !
  allocate( Amat(ndim,ndim) )
  allocate( Ainv(ndim,ndim) )
+ allocate( Adiago(ndim,ndim) )
  !
- ! report
- !
+ call SLK_setup(ORTHO, POOL,SLK_COM_INDEX(1),SLK_COM_A2A(1))
  call msg("r",'  Pools        :',n_pools)
  call msg("r",'  BLACS grid   :',ORTHO%grid)
  call msg("r",'  Matrix Size  :',ndim)
@@ -62,15 +42,15 @@ subroutine SLK_test(E,k,q)
  ! init
  !
  call section("+",'Matrix Building')
- call build_matrix( POOL, ndim, Amat )
+ call build_matrix( ndim, Amat )
  !
  ! serial inversion
  !
  call section("=",'Serial Inversion')
- call serial_inverse( POOL, ndim, Amat, Ainv )
+ call serial_inverse( ndim, Amat, Ainv )
  !
  call section("=",'Check A*Ainv=Id')
- call inverse_check( POOL, ndim, Amat, Ainv )
+ call inverse_check( ndim, Amat, Ainv )
  !
  ! parallel inversion
  !
@@ -78,7 +58,7 @@ subroutine SLK_test(E,k,q)
  call para_inverse( POOL, ORTHO, ndim, Amat, Ainv )
  !
  call section("=",'Check A*Ainv=Id')
- call inverse_check( POOL, ndim, Amat, Ainv )
+ call inverse_check( ndim, Amat, Ainv )
  !
  ! cleanup
  !
@@ -87,7 +67,7 @@ subroutine SLK_test(E,k,q)
 end subroutine SLK_test 
 !
 !===========================================
- subroutine build_matrix(POOL, ndim, Amat )
+ subroutine build_matrix(ndim, Amat )
  !===========================================
  !
  ! build A = I + scal * randmat
@@ -96,13 +76,12 @@ end subroutine SLK_test
  use pars
  use util_module
  use parallel_m, ONLY:MPI_DOUBLE_PRECISION,mpi_comm_world
- use SLK_m,      ONLY:POOL_group
+ use SLK_m,      ONLY:SLK_COM_A2A
  use com,        ONLY:msg
  !
  implicit none
  !
  integer           :: ndim,iseed(8)
- type(POOL_group)  :: POOL
  real(DP)          :: Amat(ndim,ndim)
  character(12)     :: ch(3)
  real(DP),external :: dlaran
@@ -111,7 +90,7 @@ end subroutine SLK_test
  real(DP) :: scal=0.2d0 
  real(DP), allocatable :: w(:), zmat(:,:)
  !
- if ( POOL%CPU_id == 0 ) then
+ if ( SLK_COM_A2A(1)%CPU_id == 0 ) then
    !
    Amat = 0.0d0
    do i = 1, ndim
@@ -128,15 +107,12 @@ end subroutine SLK_test
    !
  endif
  !
- call MPI_bcast(Amat,ndim*ndim,MPI_DOUBLE_PRECISION,0,POOL%INTRA_comm,ierr)
+ call MPI_bcast(Amat,ndim*ndim,MPI_DOUBLE_PRECISION,0,SLK_COM_A2A(1)%COMM,ierr)
  !
  ! compute and report eigenvalues
  !
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Amat, ndim )
- !
- !call msg("s",'  Amat Inv Eigenvalue@POOL:',POOL%id)
- !call msg("s",' ',real(1.0d0/w(1:ndim),SP))
  !
  deallocate( w, zmat )
  !
@@ -146,17 +122,15 @@ end subroutine SLK_test
 end subroutine build_matrix
 !
 !===================================================
- subroutine serial_inverse( POOL, ndim, Amat, Ainv )
+ subroutine serial_inverse( ndim, Amat, Ainv )
  !===================================================
  !
  use util_module
  use com,          ONLY:error,msg
  use pars,         ONLY:DP,SP
  use parallel_m,   ONLY:mpi_comm_world
- use SLK_m,        ONLY:POOL_group
  implicit none
  !
- type(POOL_group) :: POOL
  real(DP)         :: Amat(ndim,ndim)
  real(DP)         :: Ainv(ndim,ndim)
  integer          :: ierr,ndim
@@ -170,9 +144,6 @@ end subroutine build_matrix
  !
  allocate( w(ndim), zmat(ndim,ndim) )
  call mat_hdiag( zmat, w, Ainv, ndim )
- !
- !call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
- !call msg("s",' ',real(w(ndim:1:-1),SP))
  !
  deallocate( w, zmat )
  !
@@ -315,17 +286,15 @@ end subroutine serial_inverse
 end subroutine para_inverse
 !
 !==================================================
- subroutine inverse_check( POOL, ndim, Amat, Ainv )
+ subroutine inverse_check( ndim, Amat, Ainv )
  !==================================================
  use pars,       ONLY:DP
  use util_module
  use com,        ONLY:error,msg
- use SLK_m,      ONLY:POOL_group
  use parallel_m, ONLY:mpi_comm_world
  implicit none
  !
  integer            :: ndim
- type (POOL_group)  :: POOL
  real(DP) :: Amat(ndim,ndim)
  real(DP) :: Ainv(ndim,ndim)
  !

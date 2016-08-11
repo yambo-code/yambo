@@ -31,7 +31,7 @@ subroutine X_s(iq,X,Xw,W_range)
 &                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_DIPOLES
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
- use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,USE_SVD
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_mat
@@ -103,7 +103,7 @@ subroutine X_s(iq,X,Xw,W_range)
    ! If the freqs remaining are not enough for all the cpu's or
    ! Fxc needs the SVD procedure use the SLK
    !
-   if (FXC_SVD_digits>0) INV_MODE=USE_SVD
+   if (FXC_SVD_digits>0) INV_MODE=SVD_INV
    !
    ! TDDFT Kernel. Different procedure depending on the kernel 
    !

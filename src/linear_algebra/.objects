@@ -1,6 +1,6 @@
 SLK_objs = 
 #if defined _SCALAPACK
-SLK_objs = SLK_test_util.o SLK_test.o SLK_ORTHO_group.o SLK_ORTHO_init.o SLK_tools.o
+SLK_objs = SLK_test_util.o SLK_test.o SLK_ORTHO_group.o SLK_ORTHO_init.o SLK_setup.o SLK_tools.o
 #endif
 objs = LINEAR_ALGEBRA_driver.o SERIAL_SVD_inversion.o SERIAL_inversion.o SERIAL_diagonalization.o \
        SERIAL_HERMITIAN_diagonalization.o $(SLK_objs)

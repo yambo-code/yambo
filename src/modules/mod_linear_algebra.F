@@ -33,7 +33,7 @@ module linear_algebra
  integer, parameter :: DIAGO=4
  integer, parameter :: INV=5
  integer, parameter :: PARTIAL_DIAGO=6
- integer, parameter :: USE_SVD=7
+ integer, parameter :: SVD_INV=7
  integer, parameter :: min_cpu_block_size=100
  !
  type LLAGEBRA_WS

@@ -66,8 +66,8 @@ module SLK_m
  ! Specific SLK worlds ...
  !========================
  !
- type(POOL_group ),SAVE :: SLBSS_INV_pool
- type(ORTHO_group),SAVE :: SLBSS_INV_ortho
+ type(POOL_group ),SAVE :: SLK_INV_pool
+ type(ORTHO_group),SAVE :: SLK_INV_ortho
  !
  type(POOL_group ),SAVE :: SLK_DIAGO_pool
  type(ORTHO_group),SAVE :: SLK_DIAGO_ortho
@@ -75,4 +75,32 @@ module SLK_m
  type(MPI_comm),SAVE    :: SLK_COM_INDEX(2)
  type(MPI_comm),SAVE    :: SLK_COM_A2A(2)
  !
+ contains
+   !
+   subroutine SLK_POOL_clean_up(POOL)
+     type(POOL_group) :: POOL
+     POOL%CPU_id      = 0
+     POOL%ID          = 0
+     POOL%n_CPU       = 1
+     POOL%INTER_comm  = 0
+     POOL%INTRA_comm  = 0
+   end subroutine
+   !
+   subroutine SLK_ORTHO_GROUP_clean_up(ORTHO)
+     type(ORTHO_group) :: ORTHO
+     ORTHO%grid(2)       = 1        
+     ORTHO%coordinate(2) = 0  
+     ORTHO%task          = 0         
+     ORTHO%n_CPU         = 1          
+     ORTHO%leg           = 1          
+     ORTHO%COMM          = 0          
+     ORTHO%ROW_comm      = 0      
+     ORTHO%COL_comm      = 0      
+     ORTHO%COMM_id       = 0      
+     ORTHO%BLACS_id      = 0    
+     ORTHO%BLACS_np      = 1    
+     ORTHO%world_cntx    = -1    
+     ORTHO%ortho_cntx    = -1    
+   end subroutine
+   !
 end module SLK_m

@@ -24,8 +24,12 @@
 subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
  !
  use pars,          ONLY:SP
- use linear_algebra,ONLY:INV,DIAGO,USE_LK,USE_SVD,USE_SLK,min_cpu_block_size,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra,ONLY:INV,DIAGO,USE_LK,SVD_INV,USE_SLK,min_cpu_block_size,LINEAR_ALGEBRA_WS_clean_up
+#if defined _SCALAPACK
  use parallel_m,    ONLY:PAR_COM_INV,PAR_COM_DIAGO
+ use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,ORTHO_group,POOL_group,SLK_POOL_clean_up,&
+&                        SLK_ORTHO_GROUP_clean_up
+#endif
  !
  implicit none
  !
@@ -41,15 +45,16 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  !
  !Work Spaces ...
  !
- complex(SP) :: det_
- integer     :: M_size,lib_in_use,Ncpu_in_use,myID_in_use
+ complex(SP)         :: det_
+ integer             :: M_size,lib_in_use
+#if defined _SCALAPACK
+ type (POOL_group)   :: POOL
+ type (ORTHO_group)  :: ORTHO
+#endif
  !
- ! M dimensions and initialization
+ ! M dimension
  !
  M_size=size(M,2)
- !
- Ncpu_in_use=1
- myID_in_use=0
  !
  ! Decide which to use among LK or SLK
  !
@@ -58,23 +63,31 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  lib_in_use=USE_SLK
 #endif
  if (present(lib_in)) then
-    lib_in_use=lib_in
+   lib_in_use=lib_in
  endif
+ if (idriver==SVD_INV) lib_in_use=USE_LK 
  !
- if (Ncpu_in_use==1.or.M_size/Ncpu_in_use<min_cpu_block_size.or.idriver==USE_SVD) lib_in_use=USE_LK 
+ !if (Ncpu_in_use==1.or.M_size/Ncpu_in_use<min_cpu_block_size.or.idriver==SVD_INV) lib_in_use=USE_LK 
  !
-#if defined _MPI
+#if defined _SCALAPACK
  !
- ! CPUs (number and ID) 
+ ! =============== PARALLEL SECTION ==========================================================
  !
  if (lib_in_use==USE_SLK) then
+   !
    if (idriver==INV) then
-     Ncpu_in_use=PAR_COM_INV%n_CPU
-     myID_in_use=PAR_COM_INV%CPU_id
+     !
+     call SLK_setup( ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
+     !
    else if (idriver==DIAGO) then
-     Ncpu_in_use=PAR_COM_DIAGO%n_CPU
-     myID_in_use=PAR_COM_DIAGO%CPU_id
-   endif 
+     !
+     call SLK_setup( ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
+     !
+   endif
+   !
+   call SLK_POOL_clean_up(POOL)
+   call SLK_ORTHO_GROUP_clean_up(ORTHO)
+   !
  endif
  !
 #endif
@@ -85,7 +98,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
    !
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
-   if (idriver==USE_SVD) call SERIAL_SVD_inversion(M_size,M,SVD_digits)
+   if (idriver==SVD_INV) call SERIAL_SVD_inversion(M_size,M,SVD_digits)
    !
    ! ###> SERIAL INVERSION 
    !
@@ -111,16 +124,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
    !
  endif
  !
- ! =============== PARALLEL SECTION ==========================================================
- !
  ! ===========================================================================================
- !
-#if defined _SCALAPACK
- !
- if (lib_in_use==USE_SLK) then
-   !
- endif
- !
-#endif
  !
 end subroutine

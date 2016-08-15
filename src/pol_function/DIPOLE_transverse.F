@@ -62,7 +62,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
-&                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem
+&                                i_sp_pol,alloc_err,wf_dim,n_LT_steps,ik_mem
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4)
  real(SP)                     :: Ev_m_Ec,W_

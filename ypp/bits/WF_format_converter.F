@@ -26,12 +26,14 @@ subroutine WF_format_converter(E,Xk)
  use pars,                ONLY:SP,lchlen
  use R_lattice,           ONLY:bz_samp
  use memory_m,            ONLY:mem_est
+ use pseudo,              ONLY:PP_free
  use LIVE_t,              ONLY:live_timing
+ use D_lattice,           ONLY:n_atoms_species_max
  use IO_m,                ONLY:mk_dir,rm_file,cp_file
  use com,                 ONLY:msg,core_io_path,more_io_path
  use electrons,           ONLY:levels,n_spin,n_sp_pol,n_spinor
  use wave_func,           ONLY:wf_ncx,io_WF,io_WF_old,wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_RD_CL
+ use IO_m,                ONLY:io_control,NONE,DUMP,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD_CL
  !
  implicit none
  !
@@ -40,12 +42,13 @@ subroutine WF_format_converter(E,Xk)
  !
  ! Work Space
  !
- character(lchlen)  :: core_io_path_save
+ character(lchlen)  :: core_io_path_save,section_name
  integer  :: ik,i_sp_pol,i_spinor,i_spin,ib_io,ib_grp,ifrag
  real(SP),    allocatable :: wf_disk_old(:,:,:,:)
  complex(SP), allocatable :: wf_disk_new(:,:,:)
  !
- integer           :: i_err,io_err,ID_old,ID_new
+ integer           :: i_err,io_err,io_KB_abinit_err,ID_old,ID_new
+ integer, external :: io_KB_abinit,io_KB_abinit_old
  !
  if (core_io_path==more_io_path) then
    more_io_path=trim(core_io_path)//"/FixSAVE"
@@ -57,12 +60,26 @@ subroutine WF_format_converter(E,Xk)
  call mk_dir(more_io_path)
  call mk_dir(trim(more_io_path)//"/SAVE")
  call cp_file(trim(core_io_path_save)//"/SAVE/ns.db1",trim(more_io_path)//"/SAVE",i_err)
- call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb*",trim(more_io_path)//"/SAVE",i_err)
  call rm_file((trim(more_io_path))//"/SAVE/ndb.gops")
  call rm_file((trim(more_io_path))//"/SAVE/ndb.kindx")
  !
- call section('=',"Converting wave--functions to new format.")
- !==============================================================
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID_old)
+ io_KB_abinit_err=io_KB_abinit_old(ID_old)
+ !
+ if (io_KB_abinit_err==0) then
+   !
+   section_name="Converting WFs and abinit KB to new format."
+   !
+ else
+   !
+   call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb*",trim(more_io_path)//"/SAVE",i_err)
+   section_name="Converting WFs to new format."
+   !
+ endif
+ !
+ !
+ call section('=',trim(section_name))
+ !====================================
  !
  allocate(wf_disk_new(wf_ncx,n_spinor,wf_nb_io))
  call mem_est("wf_disk_new",(/size(wf_disk_new)/),(/2*SP/))
@@ -70,13 +87,19 @@ subroutine WF_format_converter(E,Xk)
  allocate(wf_disk_old(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk_old",(/size(wf_disk_old)/),(/SP/))
  !
- call live_timing('WFs conversion',E%nk*wf_nb_io_groups)
+ call live_timing('Conversion',E%nk*wf_nb_io_groups)
  !
  do ik=1,E%nk
    !
    do ib_grp=1,wf_nb_io_groups
      !
      core_io_path=core_io_path_save
+     !
+     if (n_atoms_species_max>0.and.ib_grp==1.and.io_KB_abinit_err==0) then
+       if (ik==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID_old)
+       if (ik> 1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/ik+1/),ID=ID_old)
+       io_KB_abinit_err=io_KB_abinit_old(ID_old)
+     endif
      !
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,1/),ID=ID_old)
      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID_old)
@@ -95,6 +118,12 @@ subroutine WF_format_converter(E,Xk)
        !
        core_io_path=more_io_path
        !
+       if (n_atoms_species_max>0.and.ib_grp==1.and.io_KB_abinit_err==0) then
+         if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID_new)
+         if (ifrag> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID_new)
+         io_KB_abinit_err=io_KB_abinit(ID_new)
+       endif
+       !
        if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID_new)
        if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID_new)
        io_err=io_WF(ID_new,wf_disk_new)
@@ -112,5 +141,7 @@ subroutine WF_format_converter(E,Xk)
  !
  deallocate(wf_disk_new,wf_disk_old)
  call mem_est("wf_disk_new wf_disk_old")
+ !
+ if (io_KB_abinit_err==0) call PP_free()
  !
 end subroutine

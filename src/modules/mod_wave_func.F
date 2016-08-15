@@ -90,6 +90,12 @@ module wave_func
  !
  interface
    !
+   integer function io_WF_old(ID,wf_old)
+     use pars,       ONLY: SP
+     integer            :: ID
+     real(SP), optional :: wf_old(:,:,:,:)
+   end function
+   !
    integer function io_WF(ID,wf)
      use pars,       ONLY: SP
      integer            :: ID

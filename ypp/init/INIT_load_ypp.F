@@ -106,6 +106,8 @@ subroutine ypp_INIT_load(defs)
  !
  call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
  !
+ call it('r',defs,'fixsave', '[R] Convert WFs to new format')
+ !
  ! GPL_EXCLUDE_START 
  !
 #if defined _YPP_RT

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -78,14 +78,12 @@ integer function io_WF(ID,wf)
    !
    io_WF=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    !
-   if (ver_is_gt_or_eq(ID,(/3,1,1/))) then
-     call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2,MENU=0)
-     call io_elemental(ID,VAR=&
-&         ' Bands in each block             :',I0=wf_nb_io)
-     call io_elemental(ID,VAR=&
-&         ' Blocks                          :',I0=wf_nb_io_groups)
-     call io_elemental(ID,VAR="",VAR_SZ=0)
-   endif
+   call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2,MENU=0)
+   call io_elemental(ID,VAR=&
+&       ' Bands in each block             :',I0=wf_nb_io)
+   call io_elemental(ID,VAR=&
+&       ' Blocks                          :',I0=wf_nb_io_groups)
+   call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    if (io_WF/=0) goto 1
    !

@@ -320,7 +320,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
  enddo
  !
- l_flag=.not.l_sort
+ l_flag=.not.(l_sort.or.l_fix_save)
 #if defined _YPP_ELPH
  l_flag=.not.l_sort.and..not.l_atomic_amplitude
 #endif
@@ -441,6 +441,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! GPL_EXCLUDE_START
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ if (l_fix_save) infile_editing=.false.
  !
 #if defined _YPP_RT
  !

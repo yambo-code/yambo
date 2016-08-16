@@ -24,6 +24,7 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
+ use linear_algebra,ONLY:DIAGO,INV
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,&
 &                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,&
@@ -343,7 +344,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Linear Algebra (using Inversion only)
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(7)%nCPU_inversion
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV)
    PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
    !
  endif
@@ -377,7 +378,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Inversion
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(1)%nCPU_inversion
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV)
    PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
@@ -480,7 +481,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Inversion
    !
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV)
    PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
    !
    ! I/O privileges
@@ -1009,13 +1010,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Inversion
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(4)%nCPU_inversion
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV)
    PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
    !
    ! Diagonalization
    !
    PARALLEL_cpu_mat_diagonalization=CPU_structure(4)%nCPU_diagonalization
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'DIAGO',PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO)
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,DIAGO)
    PAR_IND_DIAGO_ID=PAR_COM_DIAGO_INDEX%CPU_id
    !
    ! I/O privileges

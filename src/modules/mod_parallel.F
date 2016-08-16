@@ -144,8 +144,8 @@ module parallel_m
  integer          :: PARALLEL_CPU_used(MAX_N_OF_CHAINS) = 1
  character(4)     :: PARALLEL_CPU_role(MAX_N_OF_CHAINS) = " "
  integer          :: PARALLEL_n_structures_active = 0
- integer          :: PARALLEL_cpu_mat_inversion = 1
- integer          :: PARALLEL_cpu_mat_diagonalization = 1
+ integer          :: PARALLEL_cpu_mat_inversion 
+ integer          :: PARALLEL_cpu_mat_diagonalization 
  !
  !... Logging CPUs ...
  !
@@ -288,6 +288,8 @@ module parallel_m
  !
  ! ... World
  type(MPI_comm),SAVE :: PAR_COM_WORLD
+ ! ... Serial
+ type(MPI_comm),SAVE :: PAR_COM_NULL
  !
  ! ... linear algebra
  type(MPI_comm),SAVE :: PAR_COM_INV_INDEX

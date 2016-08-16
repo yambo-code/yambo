@@ -25,10 +25,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  !
  use pars,          ONLY:SP
  use linear_algebra,ONLY:INV,DIAGO,USE_LK,SVD_INV,USE_SLK,min_cpu_block_size,LINEAR_ALGEBRA_WS_clean_up
+ use com,           ONLY:warning
 #if defined _SCALAPACK
- use parallel_m,    ONLY:PAR_COM_INV,PAR_COM_DIAGO
- use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,ORTHO_group,POOL_group,SLK_POOL_clean_up,&
-&                        SLK_ORTHO_GROUP_clean_up
+ use parallel_m,    ONLY:PAR_COM_INV,PAR_COM_DIAGO,PAR_COM_INV_INDEX,PAR_COM_DIAGO_INDEX
+ use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_POOL_clean_up,&
+&                        SLK_ORTHO_GROUP_clean_up,SLK_matrix
 #endif
  !
  implicit none
@@ -43,13 +44,14 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  integer,      optional :: SVD_digits 
  complex(SP),  optional :: det
  !
- !Work Spaces ...
+ ! Work Spaces ...
  !
  complex(SP)         :: det_
- integer             :: M_size,lib_in_use
+ integer             :: M_size,lib_in_use,slk_error
 #if defined _SCALAPACK
  type (POOL_group)   :: POOL
  type (ORTHO_group)  :: ORTHO
+ type (SLK_matrix)   :: M_slk,EIGEN_slk
 #endif
  !
  ! M dimension
@@ -65,7 +67,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  if (present(lib_in)) then
    lib_in_use=lib_in
  endif
- if (idriver==SVD_INV) lib_in_use=USE_LK 
+ if (idriver==SVD_INV.or.idriver==DIAGO) lib_in_use=USE_LK 
  !
  !if (Ncpu_in_use==1.or.M_size/Ncpu_in_use<min_cpu_block_size.or.idriver==SVD_INV) lib_in_use=USE_LK 
  !
@@ -75,21 +77,30 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  !
  if (lib_in_use==USE_SLK) then
    !
+   if (idriver==INV)   call SLK_setup( idriver,ORTHO, POOL, PAR_COM_INV,   PAR_COM_INV_INDEX,   slk_error)
+   if (idriver==DIAGO) call SLK_setup( idriver,ORTHO, POOL, PAR_COM_DIAGO, PAR_COM_DIAGO_INDEX, slk_error)
+   ! 
+   if (slk_error<0) then 
+     lib_in_use=USE_LK
+     call warning("SLK setup failed. Too many n_pools. Switching to standard LK")
+   endif
+   !
+ endif
+ !
+ if (lib_in_use==USE_SLK) then
+   !
    if (idriver==INV) then
      !
-     call SLK_setup( idriver,ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
+     call PARALLEL_startup( ORTHO, POOL, M_slk, M_size, M )
      !
-     call PARALLEL_startup( idriver, ORTHO, POOL, M_size, M )
-     !
-     call PARALLEL_inversion( ORTHO, POOL, M_size, M )
+     call PARALLEL_inversion( ORTHO, POOL, M_slk, M_size, M )
      !
    else if (idriver==DIAGO) then
      !
-     call SLK_setup( idriver,ORTHO, POOL, SLK_COM_INDEX(1), SLK_COM_A2A(1) )
+     call PARALLEL_startup(  ORTHO, POOL, M_slk, M_size, M )
+     call PARALLEL_startup( idriver, ORTHO, POOL, EIGEN_slk, M_size, M )
      !
-     call PARALLEL_startup( idriver, ORTHO, POOL, M_size, M )
-     !
-     call PARALLEL_diagonalization( ORTHO, POOL, M_size, M ,E_real )
+     call PARALLEL_diagonalization( ORTHO, POOL, M_slk, EIGEN_slk, M_size, M ,E_real )
      !
    endif
    !

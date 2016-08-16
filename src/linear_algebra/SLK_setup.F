@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE SLK_setup( idriver, ORTHO, POOL, INDEX_comm, A2A_comm )
+SUBROUTINE SLK_setup( idriver, ORTHO, POOL, COMM, INDEX_comm, slk_error)
  !
  use SLK_m,          ONLY:n_pools,ORTHO_group,POOL_group
  use parallel_m,     ONLY:MPI_comm,ncpu,myid
@@ -31,14 +31,16 @@ SUBROUTINE SLK_setup( idriver, ORTHO, POOL, INDEX_comm, A2A_comm )
  IMPLICIT NONE
  !
  integer,           intent(in)    :: idriver
- type(MPI_comm),    intent(in)    :: INDEX_comm 
- type(MPI_comm),    intent(in)    :: A2A_comm 
+ type(MPI_comm),    intent(in)    :: COMM , INDEX_comm
  type(ORTHO_group), intent(inout) :: ORTHO 
  type(POOL_group) , intent(inout) :: POOL 
+ integer,           intent(inout) :: slk_error 
  !
  ! Work Space
  !
  character(20) :: ch
+ !
+ slk_error=0
  !
  ! # of POOLS
  !
@@ -47,14 +49,18 @@ SUBROUTINE SLK_setup( idriver, ORTHO, POOL, INDEX_comm, A2A_comm )
  ! BLACS grid
  !
  ORTHO%grid=nint(sqrt(real(ncpu/n_pools)))
+ ! 
+ if (ORTHO%grid(1)<=1) then 
+   slk_error=-1
+   return
+ endif
  !
  ! Init pools
  !
- POOL%CPU_id      = A2A_comm%CPU_id
- POOL%n_CPU       = A2A_comm%n_CPU
+ POOL%CPU_id      = COMM%CPU_id
+ POOL%n_CPU       = COMM%n_CPU
  POOL%ID          = myid/POOL%n_CPU
- POOL%INTER_comm  = INDEX_comm%COMM
- POOL%INTRA_comm  = A2A_comm%COMM
+ POOL%INTRA_comm  = COMM%COMM
  !
  ! Init the scalapack grid
  !

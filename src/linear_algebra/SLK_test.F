@@ -4,7 +4,7 @@ subroutine SLK_test(E,k,q)
  !
  use pars,          ONLY:SP
  use com,           ONLY:msg
- use SLK_m,         ONLY:POOL_group,ORTHO_group,SLK_test_H_dim,SLK_COM_A2A
+ use SLK_m,         ONLY:POOL_group,ORTHO_group,SLK_test_H_dim,SLK_COM_A2A,SLK_COM_INDEX
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use interfaces,    ONLY:PARALLEL_global_indexes
@@ -53,6 +53,7 @@ subroutine SLK_test(E,k,q)
  call section("=",'Parallel Inversion')
  Ainv  =Amat
  Adiago=Amat
+ call SLK_communicators_init(INV,SLK_COM_A2A(1),SLK_COM_INDEX(1),0)
  call LINEAR_ALGEBRA_driver(INV,Ainv,lib_in=USE_SLK)
  call section("=",'Check A*Ainv=Id')
  call inverse_check( ndim, Amat, Ainv )

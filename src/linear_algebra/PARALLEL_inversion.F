@@ -28,41 +28,42 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_inversion(ORTHO, POOL, ndim, Amat )
+subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N,M)
  !
  ! perform the inversion by using scalapack
  !
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
- use SLK_m,          ONLY:POOL_group,ORTHO_group,info,lwork,liwork,descA,ils,ile,jls,jle
+ use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS
  !
  implicit none
  !
- integer           :: ndim
+ integer           :: N
  type(POOL_group)  :: POOL
  type(ORTHO_group) :: ORTHO
- complex(SP) :: Amat(ndim,ndim)
+ type(SLK_matrix)  :: M_slk
+ complex(SP)       :: M(N,N)
  !
 #if defined _DOUBLE
- CALL PZGETRF( ndim, ndim, WS%m1_cmplx, 1, 1, descA, WS%v_int, info )
- if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRF',' ')
+ CALL PZGETRF( N, N, WS%m1_cmplx, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
+ if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRF',' ')
  !
- CALL PZGETRI( ndim, WS%m1_cmplx, 1, 1, descA,WS%v_int, WS%v_cmplx, lwork, WS%vp_int, liwork, info )
- if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRI',' ')
+ CALL PZGETRI( N, WS%m1_cmplx, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
+ if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRI',' ')
 #else
- CALL PCGETRF( ndim, ndim, WS%m1_cmplx, 1, 1, descA, WS%v_int, info )
- if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRF',' ')
+ CALL PCGETRF( N, N, WS%m1_cmplx, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
+ if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRF',' ')
  !
- CALL PCGETRI( ndim, WS%m1_cmplx, 1, 1, descA,WS%v_int, WS%v_cmplx, lwork, WS%vp_int, liwork, info )
- if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRI',' ')
+ CALL PCGETRI( N, WS%m1_cmplx, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
+ if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRI',' ')
 #endif
  !
  ! gather the inverse matrix
  !
- Amat=0.0_SP
- Amat(ils:ile,jls:jle)=WS%m1_cmplx(:,:)
+ M=0.0_SP
+ M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=WS%m1_cmplx(:,:)
  !
- call PP_redux_wait(Amat,COMM=POOL%INTRA_comm)
+ call PP_redux_wait(M,COMM=POOL%INTRA_comm)
  ! 
 end subroutine PARALLEL_inversion

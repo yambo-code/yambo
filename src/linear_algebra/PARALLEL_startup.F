@@ -28,22 +28,23 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_startup(idriver, ORTHO, POOL, ndim, Amat )
+subroutine PARALLEL_startup(ORTHO, POOL, M_slk, N, M )
  !
  use pars,           ONLY:SP
- use SLK_m,          ONLY:POOL_group,ORTHO_group,info,descA,liwork,lwork,ils, ile, jls, jle
+ use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error
  !
  implicit none
  !
- integer           :: ndim,idriver
- type(POOL_group)  :: POOL
+ integer           :: N
  type(ORTHO_group) :: ORTHO
- complex(SP)       :: Amat(ndim,ndim)
+ type(POOL_group)  :: POOL
+ type(SLK_matrix)  :: M_slk
+ complex(SP)       :: M(N,N)
  !
  ! Work Space
  !
- integer   :: lld,ndim_blc, nprow,npcol,myrow,mycol
+ integer   :: lld,N_blc,nprow,npcol,myrow,mycol
  !
  ! init global blacs grid
  !
@@ -61,33 +62,31 @@ subroutine PARALLEL_startup(idriver, ORTHO, POOL, ndim, Amat )
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B
  !
- ndim_blc = int(ndim/nprow)
- if (ndim_blc*nprow < ndim ) ndim_blc=ndim_blc+1
+ N_blc = int(N/nprow)
+ if (N_blc*nprow < N ) N_blc=N_blc+1
  !
- lld = ndim_blc
+ lld = N_blc
  !
- call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ORTHO%ortho_cntx, lld, info )
+ call DESCINIT( M_slk%desc, N, N, N_blc, N_blc, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
  !
- allocate( WS%m1_cmplx(ndim_blc,ndim_blc) )
- allocate( WS%v_int(ndim+ndim_blc) )
+ allocate( WS%m1_cmplx(N_blc,N_blc) )
+ allocate( WS%v_int(N+N_blc) )
  !
  ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
  ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
  !
- lwork  = ndim_blc*ndim_blc
- liwork = ndim_blc+ndim_blc
+ M_slk%lwork  = N_blc*N_blc
+ M_slk%liwork = N_blc+N_blc
  !
- allocate( WS%v_cmplx(lwork) )
- allocate( WS%vp_int(liwork) )
+ allocate( WS%v_cmplx(M_slk%lwork) )
+ allocate( WS%vp_int(M_slk%liwork) )
  !
  ! distribute the matrix A
  !
- ils=myrow*ndim_blc+1
- ile=min(myrow*ndim_blc+ndim_blc,ndim)
- jls=mycol*ndim_blc+1
- jle=min(mycol*ndim_blc+ndim_blc,ndim)
+ M_slk%rows=(/myrow*N_blc+1,min(myrow*N_blc+N_blc,N)/)
+ M_slk%cols=(/mycol*N_blc+1,min(mycol*N_blc+N_blc,N)/)
  !
  WS%m1_cmplx=0.0_SP
- WS%m1_cmplx=Amat(ils:ile,jls:jle)
+ WS%m1_cmplx=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
  !
 end subroutine 

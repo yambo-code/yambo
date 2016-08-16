@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, AF
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,13 +28,13 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_diagonalization(ORTHO, POOL, n, M, E )
+subroutine PARALLEL_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, n, M, E )
  !
  ! perform the diagonalization by using scalapack
  !
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
- use SLK_m,          ONLY:POOL_group,ORTHO_group,info,lwork,liwork,descA,ils,ile,jls,jle,lrwork,descZ
+ use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS
  !
  implicit none
@@ -42,6 +42,7 @@ subroutine PARALLEL_diagonalization(ORTHO, POOL, n, M, E )
  integer           :: n
  type(POOL_group)  :: POOL
  type(ORTHO_group) :: ORTHO
+ type(SLK_matrix)  :: M_slk,EIGEN_slk
  complex(SP)       :: M(n,n)
  real(SP)          :: E(n)
  !
@@ -49,7 +50,7 @@ subroutine PARALLEL_diagonalization(ORTHO, POOL, n, M, E )
  !if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRF',' ')
  !
 #else
- call PCHEEV('V','U',n,WS%m1_cmplx,1,1,descA,E,WS%m2_cmplx,1,1,descZ,WS%v_cmplx,lwork,WS%vp_cmplx,lrwork,info)
+ !call PCHEEV('V','U',n,WS%m1_cmplx,1,1,descA,E,WS%m2_cmplx,1,1,descZ,WS%v_cmplx,lwork,WS%vp_cmplx,lrwork,info)
  !if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRF',' ')
  !
 #endif
@@ -57,7 +58,7 @@ subroutine PARALLEL_diagonalization(ORTHO, POOL, n, M, E )
  ! gather the eigenvectors ...
  !
  M=0.0_SP
- M(ils:ile,jls:jle)=WS%m1_cmplx(:,:)
+ M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=WS%m1_cmplx(:,:)
  !
  ! gather the eigenvectors ...
  !

@@ -63,28 +63,30 @@ module SLK_m
    INTEGER :: world_cntx = -1    ! BLACS context of all processor 
    INTEGER :: ortho_cntx = -1    ! BLACS context for ortho_comm
  end type ORTHO_group
- !
+ !_
  ! Common Work Space
  !
- integer :: descA(desc_len)
- integer :: descZ(desc_len)
- integer :: lwork    = 0
- integer :: lrwork   = 0
- integer :: liwork   = 0
- integer :: info     = 0
- integer :: ils      = 0
- integer :: ile      = 0
- integer :: jls      = 0
- integer :: jle      = 0
+ type SLK_matrix 
+   integer :: desc(desc_len)
+   integer :: lwork    = 0
+   integer :: lrwork   = 0
+   integer :: liwork   = 0
+   integer :: info     = 0
+   integer :: rows(2)  = 0
+   integer :: cols(2)  = 0
+ end type SLK_matrix 
  !
  ! Specific SLK worlds ...
  !========================
  !
  type(POOL_group ),SAVE :: SLK_INV_pool
  type(ORTHO_group),SAVE :: SLK_INV_ortho
+ type(SLK_matrix), SAVE :: SLK_INV_mat
  !
  type(POOL_group ),SAVE :: SLK_DIAGO_pool
  type(ORTHO_group),SAVE :: SLK_DIAGO_ortho
+ type(SLK_matrix), SAVE :: SLK_DIAGO_mat
+ type(SLK_matrix), SAVE :: SLK_DIAGO_eigenv
  !
  type(MPI_comm),SAVE    :: SLK_COM_INDEX(2)
  type(MPI_comm),SAVE    :: SLK_COM_A2A(2)
@@ -96,7 +98,6 @@ module SLK_m
      POOL%CPU_id      = 0
      POOL%ID          = 0
      POOL%n_CPU       = 1
-     POOL%INTER_comm  = 0
      POOL%INTRA_comm  = 0
    end subroutine
    !

@@ -42,6 +42,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
+ use BS,            ONLY:BS_bands,BSS_q0,BSS_Vnl_included
 #if defined _TIMING
  use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
 #endif
@@ -149,6 +150,31 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  call External_corrections(en,Xen,Ken,Xk,k,X)
  !
+ ! DIPOLES
+ !=========
+ !
+ if (l_em1s)                          call DIPOLE_driver(Xen, Xk, q, X(2))
+ !
+ if (l_dyn_em1.or.l_optics.and.l_chi) call DIPOLE_driver(Xen, Xk, q, X(3))
+ !
+ if (l_pp_em1)                        call DIPOLE_driver(Xen, Xk, q, X(4))
+ !
+ if ((l_optics.and.l_bse).or.l_bss) then
+   if (     l_ppa) then
+     X(4)%whoami=5
+     X(4)%ib(1:2)=BS_bands(1:2)
+     X(4)%q0=BSS_q0
+     call DIPOLE_driver(Xen, Xk, q, X(4))
+     BSS_Vnl_included=X(4)%Vnl_included
+   else if (.not.l_ppa) then
+     X(2)%whoami=5
+     X(2)%ib(1:2)=BS_bands(1:2)
+     X(2)%q0=BSS_q0
+     call DIPOLE_driver(Xen, Xk, q, X(2))
+     BSS_Vnl_included=X(2)%Vnl_included
+   endif
+ endif
+ !
  ! OPTICS
  !========
  !
@@ -230,7 +256,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !================
  !
  if ((l_optics.and.l_bse).or.l_bss) then
-   if (l_ppa)      call K_driver(Xen,Ken,Xk,q,X(4),Xw(4))
+   if (     l_ppa) call K_driver(Xen,Ken,Xk,q,X(4),Xw(4))
    if (.not.l_ppa) call K_driver(Xen,Ken,Xk,q,X(2),Xw(2))
  endif
  !

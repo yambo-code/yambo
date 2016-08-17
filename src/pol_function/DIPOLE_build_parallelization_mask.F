@@ -25,9 +25,9 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  !
  use X_m,                 ONLY:X_t
  use electrons,           ONLY:n_sp_pol
- use parallel_m,          ONLY:PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
-&                              PAR_IND_DIPk_ibz,PAR_IND_DIPk_ID,l_par_SE,&
-&                              l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q
+ use parallel_m,          ONLY:PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,&
+&                              PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,l_par_SE,&
+&                              l_par_X_T,l_par_X_G
 #if defined _RT
  use parallel_m,          ONLY:PAR_IND_B_mat,l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_RT
  use hamiltonian,         ONLY:B_mat_index
@@ -52,9 +52,9 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
      if (l_par_RT) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv,X%ib))
 #endif
      !
-     if (any((/l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_SE/))) then
-       eval_DIP(ic,iv)= PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic).and. &
-&                       PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)
+     if (any((/l_par_X_T,l_par_X_G,l_par_SE/))) then
+       eval_DIP(ic,iv)= PAR_IND_CON_BANDS_DIP%element_1D(ic).and. &
+&                       PAR_IND_VAL_BANDS_DIP%element_1D(iv)
      endif
      !
      if (eval_DIP(ic,iv)) n_LT_steps=n_LT_steps+1
@@ -62,6 +62,6 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
    enddo
  enddo
  !
- n_LT_steps=n_LT_steps*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ID+1)*n_sp_pol
+ n_LT_steps=n_LT_steps*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*n_sp_pol
  !
 end subroutine

@@ -63,7 +63,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Work Space
  !
- type(X_t)         :: X_tddft,X_oscillators
+ type(X_t)         :: X_tddft
  integer           :: iq,Max_G_m_G
  integer, external :: eval_G_minus_G
  type(w_samp)      :: W_bss 
@@ -193,18 +193,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
  !
- ! PARALLEL SETUP
- !================
- call X_duplicate(X_static_pp,X_oscillators) 
- X_oscillators%whoami=5
- X_oscillators%ib(1:2)=BS_bands(1:2)
- X_oscillators%q0=BSS_q0
- !
  ! ... EH space (no parallelization)
  call K_Transitions_setup(iq,Ken,Xk,.FALSE.)
  !
  !... Parallel distribution
- call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+ call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space")
  !
  ! ... EH space (with parallelization) and Transition groups build-up
  call K_Transitions_setup(iq,Ken,Xk,.TRUE.)
@@ -212,12 +205,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !... Blocks build-up
  if (.not.l_rpa_IP) call K_blocks( )
  !
- ! 1. The IP Part (Dipoles included) ...
- ! ======================================
- call K_IP(iq,Ken,Xk,X_oscillators,W_bss)
+ ! 1. The IP Part
+ ! ===============
+ call K_IP(iq,Ken,Xk,W_bss)
  !
- ! Wave Functions distribution (overwrites the one done in K_IP to calculate the oscillators)
- !=============================---------------------------------------------------------------
+ ! Wave Functions distribution 
+ !=============================
  call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
  !
  call PARALLEL_WF_index( )

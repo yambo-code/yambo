@@ -82,7 +82,9 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call PARALLEL_global_indexes(Xen,Xk,Xq,"Response_G_space_Zero_Momentum",X=Xbsk)
  !
  io_DIP=.FALSE.
- call DIPOLE_driver(Xen,Xk,Xbsk,Xbsk%q0)
+ !call DIPOLE_driver(Xen,Xk,Xbsk,Xbsk%q0)
+ ! put dipoles I/O here, there was call with 
+ stop
  !
  deallocate(q_norm,bare_qpg)
  !

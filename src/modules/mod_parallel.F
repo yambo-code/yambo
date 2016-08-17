@@ -77,8 +77,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,&
-&                      l_par_X_G_finite_q,l_par_SE,l_par_RT,l_par_SC
+ logical            :: l_par_X_T,l_par_X_G,l_par_DIP,l_par_SE,l_par_RT,l_par_SC
  !
  ! In a parallel run only the head CPU in the q and b chains can do 
  ! (b,k) loops
@@ -204,10 +203,15 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
  !
- ! ... linear response
+ ! ... DIPOLES
+ type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
+ type(PP_indexes),SAVE :: PAR_IND_DIPk_bz
+ type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_DIP
+ type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_DIP
+ !
+ ! ... linear response & BSK
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(n_parallel_X_types)
  type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_X(n_parallel_X_types)
- type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
  !
  ! ... QP
  type(PP_indexes),SAVE :: PAR_IND_QP
@@ -264,6 +268,12 @@ module parallel_m
  integer            :: PAR_IND_Xk_bz_ID
  integer            :: PAR_IND_G_k_ID
  !
+ ! ... DIPOLES
+ integer            :: PAR_IND_DIPk_bz_ID
+ integer            :: PAR_IND_DIPk_ibz_ID
+ integer            :: PAR_IND_VAL_BANDS_DIP_ID
+ integer            :: PAR_IND_CON_BANDS_DIP_ID
+ !
  ! ... linear response & BSK
  integer            :: PAR_IND_VAL_BANDS_X_ID(n_parallel_X_types)
  integer            :: PAR_IND_CON_BANDS_X_ID(n_parallel_X_types)
@@ -277,9 +287,6 @@ module parallel_m
  !
  ! ... RL
  integer            :: PAR_IND_RL_ID
- !
- ! ... Optical oscillators
- integer            :: PAR_IND_DIPk_ID
  !
  ! Specific MPI COMMUNICATORS...
  !==============================
@@ -323,15 +330,21 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
  !
+ ! ... DIPOLES
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_A2A
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_A2A
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_DIP
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_DIP
+ !
  ! ... linear response & BSK
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_DIPOLES
- type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_X(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_X(n_parallel_X_types)
  !
  ! ... BSK
- type(MPI_comm),SAVE :: PAR_COM_eh_A2A
  type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_eh_A2A
  type(MPI_comm),SAVE :: PAR_COM_T_INDEX
  !
  ! ... Haydock solver
@@ -367,10 +380,12 @@ module parallel_m
  integer            :: PAR_Kk_nibz
  integer            :: PAR_Xk_nibz
  integer,allocatable:: PAR_Xk_ibz_index(:)
- integer            :: PAR_DIPk_nibz
- integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
+ integer            :: PAR_DIPk_nibz
+ integer,allocatable:: PAR_DIPk_ibz_index(:)
+ integer            :: PAR_DIPk_nbz
+ integer,allocatable:: PAR_DIPk_bz_index(:)
  integer            :: PAR_BS_nT_col_grps 
  integer,allocatable:: PAR_BS_T_grps_index(:)
  integer            :: PAR_nG_bands 

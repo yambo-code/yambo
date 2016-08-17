@@ -28,7 +28,7 @@ subroutine X_s(iq,X,Xw,W_range)
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV_INDEX,&
-&                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_DIPOLES
+&                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_Q_A2A
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_driver
@@ -79,7 +79,7 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_INV_INDEX)
  !
- call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
+ call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
  !
  call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1),TOTAL=Xw%n_freqs)
  !

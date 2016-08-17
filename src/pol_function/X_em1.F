@@ -112,13 +112,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
- ! X%ngostnts is defined in DIPOLE_driver. WhenIt may happen that this is called only for the group of CPU's that eval q=1. 
- ! To avoid erroneous errors in the VERIFY mode this value must be spread to all CPUs before doing the IO of the header
- !
- if (l_life.and.X%iq(1)>1) then
-   call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
- endif
- !
  if (io_RESPONSE) then
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)

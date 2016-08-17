@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_driver(Xen,Xk,X,field_dir)
+subroutine Dipole_driver(Xen,Xk,Xq,X)
  !
  ! Presently there exist two gauges: (i ) the length   which uses <r>            
  !                                   (ii) the velocity which uses <v>=<p-[x,Vnl]> 
@@ -42,11 +42,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! PAR_IND_DIPk_ibz
  ! PAR_DIPk_nibz
- ! PAR_COM_DIPOLES_k_subgroup
+ ! PAR_COM_DIPk_ibz_A2A
  !
  ! while the general world where the calculations lives is
  !
- ! PAR_COM_DIPOLES
+ ! PAR_COM_DIPk_ibz_INDEX
  !
  ! being a derived structure it must be mapped in the calling routine.
  !
@@ -58,14 +58,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use com,            ONLY:warning
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
+ use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
- use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
-&                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
+&                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parser_m,       ONLY:parser
 #if defined _RT
  use X_m,            ONLY:DIP_spin
@@ -85,10 +86,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  implicit none
  !
- type(bz_samp), intent(inout) :: Xk
+ type(bz_samp), intent(inout) :: Xk,Xq
  type(levels),  intent(inout) :: Xen
  type(X_t),     intent(inout) :: X
- real(SP),      intent(inout) :: field_dir(3)
  !
  ! Work Space
  !
@@ -173,6 +173,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    call IO_and_Messaging_switch("SAVE")
    call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !
+   ! Parallelization
+   !==================
+   call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",X=X)
+   !
+   ! WF distribution
+   !=================
+   call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
+&                              B_index=PAR_IND_CON_BANDS_DIP,&
+&                              Bp_index=PAR_IND_VAL_BANDS_DIP,&
+&                              CLEAN_UP=.TRUE.)
+   !
+   call PARALLEL_WF_index(COMM=PAR_COM_DIPk_ibz_INDEX)
+   !
    ! Allocation
    !
    call DIPOLES_alloc()
@@ -225,7 +238,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Finally project the dipoles along q
  !=====================================
- call DIPOLE_project_along_q(Xk,X,field_dir)
+ call DIPOLE_project_along_q(Xk,X)
  !
  ! Clean up
  !
@@ -246,7 +259,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    subroutine DIPOLES_IO(read_or_write)
      !
-     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu
+     use parallel_m, ONLY:master_cpu,PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,ncpu
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
      !
@@ -269,7 +282,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      ! calculation process. If, in the same run, all cpu's must access the dipoles the other CPU's will have
      ! the wrong value of X%Vnl_included and the code will get stuck.
      !
-     if (reading.and.PAR_COM_DIPOLES%n_CPU==ncpu)then
+     if (reading.and.PAR_COM_DIPk_ibz_INDEX%n_CPU==ncpu)then
        l_vnl=X%Vnl_included
        call PP_redux_wait(l_vnl)
        X%Vnl_included=l_vnl(1)
@@ -281,7 +294,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        io_err=io_DIPOLES(X,ID)
      endif
      !
-     call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
+     call PP_redux_wait(COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
      !
      if(read_header) then
        call msg('s','[DIP] Checking dipoles header ')
@@ -296,7 +309,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        !
        do ik=1,Xk%nibz
          if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
-         if (.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0 .and. writing) cycle
+         if (.not.PAR_COM_DIPk_ibz_A2A%CPU_id==0 .and. writing) cycle
          do i_sp_pol=1,n_sp_pol
            call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
            io_err=io_DIPOLES(X,ID)
@@ -333,7 +346,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    subroutine DIPOLES_ppredux_and_symmetrize()
     !
-    use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
+    use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
     !
     integer  :: ic,iv,i_sp_pol,ik,ik_mem
     !
@@ -345,13 +358,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
       ! 
       do i_sp_pol=1,n_sp_pol
         !
-        call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+        call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         !
 #if defined _RT
         !
         if (l_real_time.and.n_spin>1) then
-          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         endif
         !
 #endif
@@ -360,23 +373,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
         !
         if (l_sc_run.or.l_real_time) then
           !
-          call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+          call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           !
         endif
 #endif
         !
-#if defined _RT
-        if (l_par_RT) then
-          !
-          DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          if (l_real_time.and.n_spin>1) &
-&           DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          if (l_sc_run.or.l_real_time) &
-&           P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          !
-        endif
-#endif
       enddo
       !
       ! Symmetrization 

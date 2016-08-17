@@ -78,7 +78,9 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  X%ng  =wf_ng
  io_DIP=.FALSE.
  !
- call DIPOLE_driver(E,k,X,X%q0)
+ !call DIPOLE_driver(E,k,X,X%q0)
+ ! put dipoles IO here
+ stop
  !
  ! Loop
  !======

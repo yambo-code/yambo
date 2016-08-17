@@ -39,7 +39,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_DIPOLES
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
@@ -76,12 +76,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! PARALLEL indexes
    !==================
    !
-   if (X%iq(1)==1) then
-     if (iq==1) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Zero_Momentum",X=X) 
-     if (iq==2) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
-   else 
-     if (iq==X%iq(1)) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
-   endif
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
    !
    ! WF distribution 
    !=================
@@ -91,8 +86,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
 &                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                              CLEAN_UP=.TRUE.)
    !
-   if (iq==1) call PARALLEL_WF_index(COMM=PAR_COM_DIPOLES)
-   if (iq> 1) call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
+   call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
    !
    if (WF_buffered_IO) call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
    !

@@ -43,9 +43,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,myid
- use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
-&                        n_threads_DIP,n_outthr,n_innthr,OPENMP_locks_reset,n_threads_FFT
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_A2A,myid
+ use openmp,        ONLY:OPENMP_update,master_thread,OPENMP_set_threads,n_threads_X,&
+&                        n_outthr,n_innthr,OPENMP_locks_reset,n_threads_FFT
 #if defined _OPENMP
  use openmp,        ONLY:OPENMP_compute_mutex,omp_locks
 #endif
@@ -79,7 +79,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
  integer                  :: mutexid
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU)
+ real(SP)                 :: minmax_ehe(2,PAR_COM_Q_A2A%n_CPU)
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
@@ -97,18 +97,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  skip_WF_load= (iq==1.and.X%ng==1)
  !
- !  Optical strengths
- !=====================
- if (iq==1) then
-   !
-   call OPENMP_set_threads(n_threads_in=n_threads_DIP)
-   !
-   call DIPOLE_driver(Xen, Xk, X, X%q0)
-   call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
-   !
-   call OPENMP_set_threads(n_threads_in=n_threads_X)
-   !
- endif
+ ! Drude term
+ !============
+ if (iq==1) call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
+ !
+ ! Dipoles
+ !=========
+ !if (iq==1) here put dipoles I/O
+ if (iq==1) stop
  !
  ! WF load
  !=========
@@ -134,11 +130,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    minmax_ehe=0._SP
    !
-   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
+   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_Q_A2A%CPU_id+1))
    deallocate(X_poles)
    !
    if (self_detect_E_range) then
-     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
+     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_Q_A2A%COMM)
      Xw%er(1)=minval(minmax_ehe(1,:))
      Xw%er(2)=maxval(minmax_ehe(2,:))
    endif
@@ -302,7 +298,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
+   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_Q_A2A%COMM)
  enddo
  !
 #if defined _TIMING

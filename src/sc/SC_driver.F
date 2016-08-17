@@ -113,8 +113,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! DIPOLES
  !=========
- if (l_sc_exx.and.l_SC_cycle) call DIPOLE_driver(E, Xk, X(1), X(1)%q0)
- if (SC_up_W_iters>0)         call DIPOLE_driver(E, Xk, X(2), X(2)%q0)
+ ! put dipoles I/O here
+ !if (l_sc_exx.and.l_SC_cycle) call DIPOLE_driver(E, Xk, X(1), X(1)%q0)
+ !if (SC_up_W_iters>0)         call DIPOLE_driver(E, Xk, X(2), X(2)%q0)
+ if ((l_sc_exx.and.l_SC_cycle) .or. (SC_up_W_iters>0) ) stop
  !
  if (.not.any((/l_SC_RESTART,l_SC_cycle,l_NSC_shot/))) return
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
+subroutine K_IP(iq,Ken,Xk,W_bss)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
  use units,         ONLY:HA2EV
@@ -31,7 +31,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel
- use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
@@ -60,7 +59,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  implicit none
  type(levels) ::Ken
  type(bz_samp)::Xk
- type(X_t)    ::X_oscillators
  type(w_samp) ::W_bss
  integer      ::iq
  !
@@ -129,13 +127,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
  !DEBUG<
  !
- ! WF distribution
- !=================
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
-&                            B_index=PAR_IND_CON_BANDS_X(X_oscillators%whoami),&
-&                            Bp_index=PAR_IND_VAL_BANDS_X(X_oscillators%whoami),&
-&                            CLEAN_UP=.TRUE.)
- !
  ! Oscillators I/O & Eps0
  !========================
  !
@@ -159,9 +150,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    ! GPL_EXCLUDE_END 
    !
-   call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
-   !
-   BSS_Vnl_included=X_oscillators%Vnl_included
    !
    if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
    if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
@@ -180,6 +168,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
        !
        ik_bz_mem= PAR_Xk_bz_index(ik_bz)
+       ! here put dipoles I/O
+       stop
        !
        if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
        if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)

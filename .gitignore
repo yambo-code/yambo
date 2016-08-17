@@ -41,7 +41,8 @@ bin/*
 
 # source #
 ##########
-*.objects*
+lib/local/.objects
+src/external_c/.objects
 *__lock*
 Makefile
 make.dep

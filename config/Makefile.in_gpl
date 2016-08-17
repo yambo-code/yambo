@@ -123,8 +123,8 @@ yambo: libs
 # Yambo PROJECTS #
 # 
 yambo_kerr: libs
-	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_KERR"; $(mksrc)
-	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS)";ADF="-D_KERR";$(mkx)
+	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_KERR"; $(mksrc)
+	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS)"; ADF="-D_KERR"; $(mkx)
 yambo_ph: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
 	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS)"; ADF="-D_ELPH"; $(mkx)

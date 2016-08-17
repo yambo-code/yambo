@@ -354,12 +354,17 @@ subroutine K_inversion(iq,W,E,k,q)
  call mem_est("Lo")
  !
  call BS_mat_free( )
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _PL
  call BS_PL_free( )
 #endif
 #if defined _KERR
  call BS_KERR_free( )
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _TIMING
  call timing('Invertion Solver',OPR='stop')

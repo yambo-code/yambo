@@ -235,12 +235,17 @@ subroutine K_diago_driver(iq,W)
  !=======
  call BS_mat_free( )
  call local_free( )
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _PL
  call BS_PL_free( )
 #endif
 #if defined _KERR
  call BS_KERR_free( )
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _TIMING
  call timing('Diagonalization Solver',OPR='stop')
@@ -262,12 +267,17 @@ subroutine K_diago_driver(iq,W)
        endif
        allocate(BS_R_left(BS_H_dim))
        allocate(BS_R_right(BS_H_dim))
+       !
+       ! GPL_EXCLUDE_START
+       !
 #if defined _KERR
        if (l_kerr) allocate(BS_R_right_kerr(BS_H_dim))
 #endif
 #if defined _PL
        if (l_photolum) allocate(BS_R_PL(BS_H_dim))
 #endif
+       !
+       ! GPL_EXCLUDE_END
        !
      case(2)
        !

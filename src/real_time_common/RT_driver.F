@@ -107,9 +107,7 @@ subroutine RT_driver(E,X,k,q)
  ! Dipoles
  !=========
  !
- !call DIPOLE_driver(E,k,X(1),X(1)%q0)
- ! put dipoles IO here
- stop
+ call DIPOLE_IO(k,X(1),'read ',io_err)
  !
  ! IO 
  !====

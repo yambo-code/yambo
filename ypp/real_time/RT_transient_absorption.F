@@ -51,7 +51,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  type(w_samp)      :: W_bss
  !
- integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_spin,i_freq,i_l,i_vp,i_cp
+ integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_spin,i_freq,i_l,i_vp,i_cp,io_err
  real(SP)             :: io_Time,Co,f_cv,f_vpv,f_ccp,delta_f_cv,output(4),BS_R_tmp
  complex(SP)          :: IP_E,IP_R,BS_R1(BS_H_dim)
  logical              :: l_TR_transm,l_TR_reflec,l_include_IP
@@ -73,10 +73,12 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  Xbsk%ib=BS_bands
  !
- io_DIP=.FALSE.
- !call DIPOLE_driver(Xen,Xk,Xbsk,Xbsk%q0)
- ! put dipoles I/O here, there was call with 
- stop
+ call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
+ call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES")
+ !
+ io_DIP=.TRUE.
+ call DIPOLE_IO(Xk,Xbsk,'read',io_err)
+ call DIPOLE_expand_and_project(Xk,X_oscillators,BSS_q0)
  !
  allocate(Epsilon_ii(RT_conf%W_n_steps,2))
  if(l_TR_reflec) allocate(X_reflectance(RT_conf%W_n_steps,2))

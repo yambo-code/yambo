@@ -76,7 +76,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Work Space
  !
  character(schlen)        :: live_t_string
- integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
+ integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg,io_err
  integer                  :: mutexid
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_Q_A2A%n_CPU)
@@ -103,8 +103,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Dipoles
  !=========
- !if (iq==1) here put dipoles I/O
- if (iq==1) stop
+ if (iq==1) then
+   call DIPOLE_IO(Xk,X,'read ',io_err)
+   call DIPOLE_expand_and_project(Xk,X,X%q0)   
+ endif
  !
  ! WF load
  !=========

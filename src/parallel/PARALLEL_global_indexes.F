@@ -276,7 +276,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Q-pts
  !-------
  Q_range=(/1,nqibz/)
- if (ENVIRONMENT=="Response_G_space") Q_range=(/max(X%iq(1),2),X%iq(2)/)
+ if (ENVIRONMENT=="Response_G_space") Q_range=(/X%iq(1),X%iq(2)/)
  if (ENVIRONMENT=="Real_Time"       ) Q_range=(/1,nqbz/)
  if (ENVIRONMENT=="Self_Energy"     ) then
 #if defined _SC
@@ -466,6 +466,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
    PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
+   !
+   ! DIPOLES
+   !
+   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPk_bz_index)
+   call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPk_bz_A2A)
+   !
+   call PARALLEL_minimal_index_from_overlaping(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz,PAR_COM_Xk_bz_INDEX)
+   PAR_IND_DIPk_ibz_ID=PAR_IND_Xk_ibz_ID
+   !
+   allocate(PAR_DIPk_ibz_index(Xk%nibz))
+   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
    ! I/O privileges
    !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_project_along_q(Xk,X)
+subroutine DIPOLE_expand_and_project(Xk,X,field_dir)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_col_cut
@@ -44,11 +44,12 @@ subroutine DIPOLE_project_along_q(Xk,X)
  !
  type(bz_samp), intent(inout) :: Xk
  type(X_t),     intent(inout) :: X
+ real(SP),      intent(inout) :: field_dir(3)
  !
  ! Work Space
  !
  integer                   :: ik,ik_bz,ic,iv,is,i_sp_pol,ik_mem,ik_bz_mem,i_star
- real(SP)                  :: field_dir(3),field_dir_rot(3)
+ real(SP)                  :: field_dir_rot(3)
  complex(SP)               :: dipole(3)
  logical                   :: t_rev,use_dip_iR,use_dip_P
 #if defined _KERR
@@ -63,8 +64,8 @@ subroutine DIPOLE_project_along_q(Xk,X)
  use_dip_iR=trim(global_gauge)=='length'   .or. .not.(index(secnm,"absorption")/=0)
  use_dip_P =trim(global_gauge)=='velocity'.and.      (index(secnm,"absorption")/=0)
  !
- if(use_dip_iR) field_dir=X%q0/v_norm(X%q0)*q0_def_norm
- if(use_dip_P ) field_dir=X%q0/v_norm(X%q0)
+ if(use_dip_iR) field_dir=field_dir/v_norm(field_dir)*q0_def_norm
+ if(use_dip_P ) field_dir=field_dir/v_norm(field_dir)
  !
 #if defined _KERR
  if(l_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir,dipole_dir)
@@ -106,35 +107,38 @@ subroutine DIPOLE_project_along_q(Xk,X)
            !
          endif
          !
+         ! Here I use PAR_COM_Xk_bz_INDEX as it connects two CPUS belonging to different
+         ! k_bz points but with the same k_ibz. Those two CPUS belong to the q communicator
+         !
+         call PP_redux_wait(dipole,COMM=PAR_COM_DIPk_bz_INDEX%COMM)
+         !
          do i_star=1,Xk%nstar(ik)
            !
            is                = sop_inv(Xk%star(ik,i_star))
            ik_bz             = i_star
            if ( ik>1 ) ik_bz = sum(Xk%nstar(1:ik-1))+i_star
            !
-           if (PAR_IND_DIPk_bz%element_1D(ik_bz)) then
-             !
-             ik_bz_mem=PAR_DIPk_bz_index(ik_bz)
-             !
-             if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
-             if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
-             !
-             field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
-             !
-             if (.not.t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( field_dir_rot, dipole )
-             if (     t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, field_dir_rot ) 
-             if (  iv==ic  ) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = cONE
-             !
+           if (.not.PAR_IND_DIPk_bz%element_1D(ik_bz)) cycle
+           !
+           ik_bz_mem=PAR_DIPk_bz_index(ik_bz)
+           !
+           if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+           if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+           !
+           field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
+           !
+           if (.not.t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( field_dir_rot, dipole )
+           if (     t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, field_dir_rot ) 
+           if (  iv==ic  ) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = cONE
+           !
 #if defined _KERR
-             if(l_kerr) then
-               dipole_dir_rot = matmul( dl_sop(:,:,is), dipole_dir )
-               if (.not.t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole_dir_rot, dipole )
-               if (     t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, dipole_dir_rot )
-               if (  iv==ic  ) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = cONE
-             endif
-#endif
-             !
+           if(l_kerr) then
+             dipole_dir_rot = matmul( dl_sop(:,:,is), dipole_dir )
+             if (.not.t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole_dir_rot, dipole )
+             if (     t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, dipole_dir_rot )
+             if (  iv==ic  ) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = cONE
            endif
+#endif
            !
          enddo ! ic
          !
@@ -146,4 +150,4 @@ subroutine DIPOLE_project_along_q(Xk,X)
    !
  enddo
  !
-end subroutine DIPOLE_project_along_q
+end subroutine DIPOLE_expand_and_project

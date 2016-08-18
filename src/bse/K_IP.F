@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_IP(iq,Ken,Xk,W_bss)
+subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
  use units,         ONLY:HA2EV
@@ -59,12 +59,13 @@ subroutine K_IP(iq,Ken,Xk,W_bss)
  implicit none
  type(levels) ::Ken
  type(bz_samp)::Xk
+ type(X_t)    ::X_oscillators
  type(w_samp) ::W_bss
  integer      ::iq
  !
  ! Work space
  !
- integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
+ integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC,io_err
  real(SP)          ::conjg_fac,Z_
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
 #if defined _PL
@@ -151,6 +152,11 @@ subroutine K_IP(iq,Ken,Xk,W_bss)
    ! GPL_EXCLUDE_END 
    !
    !
+   call DIPOLE_IO(Xk,X_oscillators,'read ',io_err)
+   call DIPOLE_expand_and_project(Xk,X_oscillators,BSS_q0)
+   !
+   BSS_Vnl_included=X_oscillators%Vnl_included
+   !
    if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
    if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
    !
@@ -168,8 +174,6 @@ subroutine K_IP(iq,Ken,Xk,W_bss)
        i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
        !
        ik_bz_mem= PAR_Xk_bz_index(ik_bz)
-       ! here put dipoles I/O
-       stop
        !
        if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
        if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)

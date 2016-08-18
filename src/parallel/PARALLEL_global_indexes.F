@@ -873,6 +873,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_eh_A2A)
    endif
    !
+   ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
+   !
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPk_ibz_INDEX)
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPk_ibz_A2A)
+   call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX_DIP)
+   call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX_DIP)
+   !
    ! K-points (IBZ)
    !
    call PARALLEL_index(PAR_IND_Kk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
@@ -884,6 +891,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &           LOADED=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Kk_ibz_ID+1),TOTAL=Xk%nibz,&
 &           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    ! 
+   ! Dipoles k-points uses same distribution of K k-points
+   !
+   call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
+   call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_ibz)
+   PAR_IND_DIPk_ibz_ID=PAR_IND_Kk_ibz_ID
+   PAR_Xk_nibz  =PAR_Kk_nibz
+   PAR_DIPk_nibz=PAR_Kk_nibz
+   allocate(PAR_DIPk_ibz_index(Xk%nibz))
+   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    allocate(PAR_Xk_bz_index(Xk%nbz))

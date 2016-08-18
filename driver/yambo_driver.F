@@ -163,15 +163,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    if (     l_ppa) then
      X(4)%whoami=5
      X(4)%ib(1:2)=BS_bands(1:2)
-     X(4)%q0=BSS_q0
      call DIPOLE_driver(Xen, Xk, q, X(4))
-     BSS_Vnl_included=X(4)%Vnl_included
    else if (.not.l_ppa) then
      X(2)%whoami=5
      X(2)%ib(1:2)=BS_bands(1:2)
-     X(2)%q0=BSS_q0
      call DIPOLE_driver(Xen, Xk, q, X(2))
-     BSS_Vnl_included=X(2)%Vnl_included
    endif
  endif
  !

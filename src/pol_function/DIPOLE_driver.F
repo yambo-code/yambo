@@ -62,8 +62,7 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
-&                         IO_and_Messaging_switch
+ use IO_m,           ONLY:IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
@@ -92,16 +91,11 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  !
  ! Work Space
  !
- integer           :: ik,i_sp_pol
+ integer           :: ik,i_sp_pol,io_err
  logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3)
 #if defined _SC
  logical           :: l_evaluating_em1s
 #endif
- !
- ! I/O
- !
- integer           :: ID,io_err
- integer, external :: io_DIPOLES
  !
 #if defined _TIMING
  call timing('Dipoles',OPR='start')
@@ -162,7 +156,7 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  ! Check if Dipoles DBs exist and are ok
  !=======================================
  io_err=-1
- call DIPOLES_IO('read ')
+ call DIPOLE_IO(Xk,X,'check',io_err)
  !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================
@@ -210,7 +204,7 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
-   call DIPOLES_IO('write')
+   call DIPOLE_IO(Xk,X,'write',io_err)
    !
    ! I/O privilegies: RESTORE to previous values
    !
@@ -222,13 +216,6 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  call timing('Dipoles',OPR='stop')
 #endif
  !
-#if defined _SC
- if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
-#endif
-#if defined _QED
- if (l_elphoton_corr) return
-#endif
- !
  ! Warn about missing [Vnl,r] commutator
  !
  if (.not.X%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics.and.use_dipole_transverse) then
@@ -236,89 +223,14 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
    Vnl_commutator_warning=.TRUE.
  endif
  !
- ! Finally project the dipoles along q
- !=====================================
- call DIPOLE_project_along_q(Xk,X)
- !
  ! Clean up
  !
- call X_alloc('DIP_iR') 
-#if defined _PL
- if (.not.l_photolum) call X_alloc('DIP_P')
-#else
+ call X_alloc('DIP_iR')
  call X_alloc('DIP_P')
-#endif
-#if defined _RT
- if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin')
-#endif
-#if defined _SC
+ call X_alloc('DIP_spin')
  call X_alloc('P_square') 
-#endif
  !
  contains
-   !
-   subroutine DIPOLES_IO(read_or_write)
-     !
-     use parallel_m, ONLY:master_cpu,PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,ncpu
-     use com,        ONLY:msg
-     use IO_m,       ONLY:io_DIP
-     !
-     character(5), intent(in) :: read_or_write
-     !
-     integer                  :: IO_ACTION
-     logical                  :: write_header,read_header,reading,writing,l_vnl(1)
-     !
-     if (.not.IO_dip) return 
-     !
-     reading=trim(read_or_write)=="read"
-     writing=trim(read_or_write)=="write"
-     !
-     ID=0
-     write_header  =(     master_cpu.and.writing)
-     read_header   =(.not.master_cpu.and.writing).or.reading
-     !
-     ! AM March 2016. The next lines are in the nasty case where only a fraction of all CPU's compute the
-     ! dipoles. In this case only those cpu's know the right value of X%Vnl_included that is defined in the
-     ! calculation process. If, in the same run, all cpu's must access the dipoles the other CPU's will have
-     ! the wrong value of X%Vnl_included and the code will get stuck.
-     !
-     if (reading.and.PAR_COM_DIPk_ibz_INDEX%n_CPU==ncpu)then
-       l_vnl=X%Vnl_included
-       call PP_redux_wait(l_vnl)
-       X%Vnl_included=l_vnl(1)
-     endif
-     !
-     if(write_header) then
-       call msg('s','[DIP] Writing dipoles header ')
-       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       io_err=io_DIPOLES(X,ID)
-     endif
-     !
-     call PP_redux_wait(COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
-     !
-     if(read_header) then
-       call msg('s','[DIP] Checking dipoles header ')
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       io_err=io_DIPOLES(X,ID)
-     endif
-     !
-     if (io_err==0) then
-       !
-       if(reading) IO_ACTION=OP_RD_CL
-       if(writing) IO_ACTION=OP_APP_WR_CL
-       !
-       do ik=1,Xk%nibz
-         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
-         if (.not.PAR_COM_DIPk_ibz_A2A%CPU_id==0 .and. writing) cycle
-         do i_sp_pol=1,n_sp_pol
-           call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-           io_err=io_DIPOLES(X,ID)
-        enddo
-       enddo
-       !
-     endif
-     !
-   end subroutine DIPOLES_IO
    !
    subroutine DIPOLES_alloc()
      !

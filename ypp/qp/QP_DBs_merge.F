@@ -40,7 +40,7 @@ subroutine QP_DBs_merge(en,k)
  !
  ! Work Space
  !
- integer :: i_qp,i_d,i_qp_ref,nk_max,nb_to_merge,i_s,i_b,i_k,i_k_near,&
+ integer :: i_qp,i_d,i_qp_ref,QP_lim(3),QP_lim_max(3),i_s,i_b,i_k,i_k_near,&
 &           i_err,i_sp,i1,ID
  real(SP):: k_qp(3),W_to_add,dE_to_add,COHSEX_eq,dE_Neq,Z_local
  character(schlen) :: new_descriptions(max_qp_descs)
@@ -52,8 +52,9 @@ subroutine QP_DBs_merge(en,k)
  call msg('s','Files & Actions ...')
  !
  i_qp_ref=-1
- nk_max=-1
- nb_to_merge=1000
+ QP_lim_max(1)=-1
+ QP_lim_max(2)=en%nb
+ QP_lim_max(3)=-1
  !
  do i_qp=1,n_QP_dbs
    !
@@ -65,18 +66,23 @@ subroutine QP_DBs_merge(en,k)
      call msg('s','[DB #'//trim(intc(i_qp))//']'//trim(QP_db(i_qp)%description(i_d)))
    enddo
    !
-   nk_max=max(nk_max,QP_db(i_qp)%nk)
+   QP_lim(1)=    QP_db(i_qp)%nk
+   QP_lim(2)=minval(QP_db(i_qp)%table(:,1))
+   QP_lim(3)=maxval(QP_db(i_qp)%table(:,1))
    !
-   if (nk_max==QP_db(i_qp)%nk) i_qp_ref=i_qp
+   QP_lim_max(1)=max(QP_lim_max(1),QP_lim(1))
+   QP_lim_max(2)=min(QP_lim_max(2),QP_lim(2))
+   QP_lim_max(3)=max(QP_lim_max(3),QP_lim(3))
+   !
+   if (all(QP_lim_max==QP_lim)) i_qp_ref=i_qp
    !
    if (i_qp==n_QP_dbs) call msg('s',repeat("-",len_trim(QP_db_name(i_qp))+13))
-   !
-   nb_to_merge=min(nb_to_merge,QP_db(i_qp)%nb)
    !
  enddo
  !
  call msg('s','Reference Database is: '//trim(QP_db_name(i_qp_ref)))
- call msg('s','Bands mergered       : ',nb_to_merge)
+ call msg('s','Kpts  mergered       : ',QP_lim(1))
+ call msg('s','Bands mergered       : ',QP_lim_max(2:3))
  !
  call msg('s','Building up new QP properties... ')
  !================================================
@@ -86,8 +92,6 @@ subroutine QP_DBs_merge(en,k)
    i_b    =QP_db(i_qp_ref)%table(i_s,1)
    i_k    =QP_db(i_qp_ref)%table(i_s,3)
    k_qp(:)=QP_db(i_qp_ref)%k(i_k,:)
-   !
-   if (i_b>nb_to_merge) cycle
    !
    db_loop: do i_qp=1,n_QP_dbs
      !
@@ -167,3 +171,4 @@ subroutine QP_DBs_merge(en,k)
  call msg('l','done')
  !
 end subroutine
+

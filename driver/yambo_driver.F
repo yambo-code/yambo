@@ -150,6 +150,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  call External_corrections(en,Xen,Ken,Xk,k,X)
  !
+ ! Logicals for \eps^-1
+ !======================
+ !
+ l_pp_em1=l_ppa.and.((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr).or.l_bse )
+ !
+ l_dyn_em1= (.not.l_ppa.and..not.l_cohsex.and..not.l_elphoton_corr).and. &
+&           ((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr))
+ !
  ! DIPOLES
  !=========
  !
@@ -199,15 +207,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Plasmon Pole 
  !--------------
  !
- l_pp_em1=l_ppa.and.((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr).or.l_bse )
- !
  if (l_pp_em1)     i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
  !
  ! Dynamical 
  !-----------
- !
- l_dyn_em1= (.not.l_ppa.and..not.l_cohsex.and..not.l_elphoton_corr).and. &
-&           ((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr))
  !
  if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
  !

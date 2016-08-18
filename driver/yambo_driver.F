@@ -36,7 +36,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
- use X_m,           ONLY:X_t
+ use X_m,           ONLY:X_t,X_duplicate
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
@@ -61,7 +61,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! 
  ! 4 response function & energies types: x s d p
  !
- type(X_t)    ::X(4) 
+ type(X_t)    ::X(4),X_dipoles 
  type(w_samp) ::Xw(4)
  !
  integer,          intent(in)    :: lnstr,iind,iod,ijs,np,pid,icd
@@ -161,13 +161,17 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  if ((l_optics.and.l_bse).or.l_bss) then
    if (     l_ppa) then
-     X(4)%whoami=5
-     X(4)%ib(1:2)=BS_bands(1:2)
-     call DIPOLE_driver(Xen, Xk, q, X(4))
+     call X_duplicate(X(4),X_dipoles)
+     X_dipoles%ib(1:2)=BS_bands(1:2)
+     X_dipoles%whoami=5 
+     call DIPOLE_driver(Xen, Xk, q, X_dipoles)
+     X(4)%ib_lim=X_dipoles%ib_lim
    else if (.not.l_ppa) then
-     X(2)%whoami=5
-     X(2)%ib(1:2)=BS_bands(1:2)
-     call DIPOLE_driver(Xen, Xk, q, X(2))
+     call X_duplicate(X(2),X_dipoles)
+     X_dipoles%ib(1:2)=BS_bands(1:2)
+     X_dipoles%whoami=5
+     call DIPOLE_driver(Xen, Xk, q, X_dipoles)
+     X(2)%ib_lim=X_dipoles%ib_lim
    endif
  endif
  !

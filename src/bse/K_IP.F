@@ -37,7 +37,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use BS,            ONLY:BSS_Vnl_included,BS_anti_res,&
 &                        BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps,Co_factor
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _PL
  use pars,          ONLY:rZERO

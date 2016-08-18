@@ -127,9 +127,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
  !
  X_type=1
- if (present(X)) then
-   X_type=X%whoami
- endif
+ if (present(X)) X_type=X%whoami
  !
  if (ENVIRONMENT=="Response_T_space") X_type=5
  !
@@ -477,6 +475,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   !
+   if(.not.allocated(PAR_DIPk_bz_index)) then
+     allocate(PAR_DIPk_bz_index(Xk%nbz))
+     call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
+&                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
+&                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
+   endif
    !
    ! I/O privileges
    !
@@ -911,6 +916,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_DIPk_nibz=PAR_Kk_nibz
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   !
+   if(.not.allocated(PAR_DIPk_bz_index)) then
+     allocate(PAR_DIPk_bz_index(Xk%nbz))
+     call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
+&                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
+&                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
+   endif
+   !
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    allocate(PAR_Xk_bz_index(Xk%nbz))

@@ -43,7 +43,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver)
  !
  if (N_cpu_lin_algebra==1) then         ! This means LK (serial)
    !
-   call SLK_communicators_init( idriver, PAR_COM_NULL, PAR_COM_WORLD, 0)
+   call SLK_communicators_init( PAR_COM_NULL, PAR_COM_WORLD)
    !
    return
    !
@@ -53,18 +53,38 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver)
  !
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
    !
-   call SLK_communicators_init( idriver, PAR_COM_Q_A2A , PAR_COM_Q_INDEX, N_cpu_lin_algebra)
+   call SLK_communicators_init(  PAR_COM_Q_A2A , PAR_COM_Q_INDEX )
    !
  else if (ENVIRONMENT=="ScaLapacK") then
    !
-   call SLK_communicators_init( idriver,SLK_COM_A2A(1),SLK_COM_INDEX(1),N_cpu_lin_algebra)
+   call SLK_communicators_init( SLK_COM_A2A(1),SLK_COM_INDEX(1))
    !
  else
    !
-   call SLK_communicators_init( idriver, PAR_COM_WORLD , PAR_COM_NULL, N_cpu_lin_algebra)
+   call SLK_communicators_init( PAR_COM_WORLD , PAR_COM_NULL )
    !
  endif
  !
 #endif
  !
+ contains
+   !
+   subroutine SLK_communicators_init(COMM, INDEX_comm)
+   !
+   use parallel_m,     ONLY:MPI_comm,PAR_COM_INV_INDEX,PAR_COM_INV,PAR_COM_DIAGO,PAR_COM_DIAGO_INDEX,COMM_copy
+   !
+   IMPLICIT NONE
+   !
+   type(MPI_comm),    intent(in)    :: COMM , INDEX_comm
+   !
+   if (idriver==INV) then
+     call COMM_copy(INDEX_comm,PAR_COM_INV_INDEX)
+     call COMM_copy(COMM,      PAR_COM_INV)
+   else if (idriver==DIAGO) then
+     call COMM_copy(INDEX_comm,PAR_COM_DIAGO_INDEX)
+     call COMM_copy(COMM      ,PAR_COM_DIAGO)
+   endif
+   !
+  end subroutine SLK_communicators_init
+  !
 end subroutine

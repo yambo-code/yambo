@@ -24,7 +24,7 @@
 SUBROUTINE SLK_setup( idriver, ORTHO, POOL, COMM, INDEX_comm, slk_error)
  !
  use SLK_m,          ONLY:n_pools,ORTHO_group,POOL_group
- use parallel_m,     ONLY:MPI_comm,ncpu,myid
+ use parallel_m,     ONLY:MPI_comm,myid
  use linear_algebra, ONLY:INV,DIAGO
  use com,            ONLY:msg
  !
@@ -46,15 +46,6 @@ SUBROUTINE SLK_setup( idriver, ORTHO, POOL, COMM, INDEX_comm, slk_error)
  !
  n_pools = INDEX_comm%n_CPU
  !
- ! BLACS grid
- !
- ORTHO%grid=nint(sqrt(real(ncpu/n_pools)))
- ! 
- if (ORTHO%grid(1)<=1) then 
-   slk_error=-1
-   return
- endif
- !
  ! Init pools
  !
  POOL%CPU_id      = COMM%CPU_id
@@ -64,7 +55,12 @@ SUBROUTINE SLK_setup( idriver, ORTHO, POOL, COMM, INDEX_comm, slk_error)
  !
  ! Init the scalapack grid
  !
- call SLK_ORTHO_init( ORTHO, POOL, product(ORTHO%grid), POOL%INTRA_comm )
+ call SLK_ORTHO_init( ORTHO, POOL, POOL%n_CPU, POOL%INTRA_comm )
+ ! 
+ if (ORTHO%grid(1)<=1) then 
+   slk_error=-1
+   return
+ endif
  !
  if (idriver==INV)   ch="Invertion"
  if (idriver==DIAGO) ch="Digonalization"

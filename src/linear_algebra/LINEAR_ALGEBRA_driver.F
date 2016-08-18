@@ -47,7 +47,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  ! Work Spaces ...
  !
  complex(SP)         :: det_
- integer             :: M_size,lib_in_use,slk_error
+ integer             :: N,lib_in_use,slk_error
 #if defined _SCALAPACK
  type (POOL_group)   :: POOL
  type (ORTHO_group)  :: ORTHO
@@ -56,7 +56,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  !
  ! M dimension
  !
- M_size=size(M,2)
+ N=size(M,2)
  !
  ! Decide which to use among LK or SLK
  !
@@ -69,7 +69,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  endif
  if (idriver==SVD_INV.or.idriver==DIAGO) lib_in_use=USE_LK 
  !
- !if (Ncpu_in_use==1.or.M_size/Ncpu_in_use<min_cpu_block_size.or.idriver==SVD_INV) lib_in_use=USE_LK 
+ !if (Ncpu_in_use==1.or.N/Ncpu_in_use<min_cpu_block_size.or.idriver==SVD_INV) lib_in_use=USE_LK 
  !
 #if defined _SCALAPACK
  !
@@ -82,7 +82,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
    ! 
    if (slk_error<0) then 
      lib_in_use=USE_LK
-     call warning("SLK setup failed. Too many n_pools. Switching to standard LK")
+     call warning("SLK setup failed. Cannot build a proper BLACS grid. Switching to standard LK")
    endif
    !
  endif
@@ -91,16 +91,16 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
    !
    if (idriver==INV) then
      !
-     call PARALLEL_startup( ORTHO, POOL, M_slk, M_size, M )
+     call PARALLEL_startup( ORTHO, POOL, M_slk, N, M )
      !
-     call PARALLEL_inversion( ORTHO, POOL, M_slk, M_size, M )
+     call PARALLEL_inversion( ORTHO, POOL, M_slk, N, M )
      !
    else if (idriver==DIAGO) then
      !
-     call PARALLEL_startup(  ORTHO, POOL, M_slk, M_size, M )
-     call PARALLEL_startup( idriver, ORTHO, POOL, EIGEN_slk, M_size, M )
+     call PARALLEL_startup(  ORTHO, POOL, M_slk    , N, M )
+     call PARALLEL_startup(  ORTHO, POOL, EIGEN_slk, N, M )
      !
-     call PARALLEL_diagonalization( ORTHO, POOL, M_slk, EIGEN_slk, M_size, M ,E_real )
+     call PARALLEL_diagonalization( ORTHO, POOL, M_slk, EIGEN_slk, N, M ,E_real )
      !
    endif
    !
@@ -118,11 +118,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
    !
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
-   if (idriver==SVD_INV) call SERIAL_SVD_inversion(M_size,M,SVD_digits)
+   if (idriver==SVD_INV) call SERIAL_SVD_inversion(N,M,SVD_digits)
    !
    ! ###> SERIAL INVERSION 
    !
-   if (idriver==INV)  call SERIAL_inversion(M_size,M,det_,present(det))
+   if (idriver==INV)  call SERIAL_inversion(N,M,det_,present(det))
    !
    ! ###> SERIAL DIAGONALIZATION
    !
@@ -131,11 +131,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
      if (present(E_cmpl)) then
        !
        !... non-Hermitian case
-       call SERIAL_diagonalization(M_size,M,E_cmpl,V_left,V_right)
+       call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
      else
        !
        !... Hermitian case
-       call SERIAL_HERMITIAN_diagonalization(M_size,M,E_real)
+       call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
      endif
      !
    endif

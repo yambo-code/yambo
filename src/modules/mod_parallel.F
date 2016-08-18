@@ -443,12 +443,12 @@ module parallel_m
    end function
    !
    subroutine CPU_str_reset()
-     CPU_structure(1)%Long_Description="Response_G_space_Zero_Momentum"
-     CPU_structure(1)%Short_Description="X_q_0"
-     CPU_structure(2)%Long_Description="Response_G_space_Finite_Momentum"
-     CPU_structure(2)%Short_Description="X_finite_q"
+     CPU_structure(1)%Long_Description=" "
+     CPU_structure(1)%Short_Description=" "
+     CPU_structure(2)%Long_Description="DIPOLES"
+     CPU_structure(2)%Short_Description="DIP"
      CPU_structure(3)%Long_Description="Response_G_space"
-     CPU_structure(3)%Short_Description="X_all_q"
+     CPU_structure(3)%Short_Description="X"
      CPU_structure(4)%Long_Description="Response_T_space"
      CPU_structure(4)%Short_Description="BS"
      CPU_structure(5)%Long_Description="Self_Energy"

@@ -73,12 +73,12 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
        if (what/="check") cycle
        !
        select case(ENVIRONMENT)
-         case("Response_G_space_Zero_Momentum")
+         case("DIPOLES")
            if (any(trim(PARALLEL_CPU_role(i_c))==(/"k","c","v"/))) then
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
            endif
-         case("Response_G_space_Finite_Momentum","Response_G_space") 
+         case("Response_G_space") 
            if (any(trim(PARALLEL_CPU_role(i_c))==(/"q","k","c","v"/))) then
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
@@ -114,7 +114,7 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
      !
      if (what=="define") then
        select case(ENVIRONMENT)
-         case("Response_G_space_Zero_Momentum")
+         case("DIPOLES")
            CPU_structure(i_PAR_structure)%ROLE(1)="c"
            CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(n_c_bands(2)-n_c_bands(1)+1)
            CPU_structure(i_PAR_structure)%ROLE(2)="v"
@@ -122,7 +122,7 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
            CPU_structure(i_PAR_structure)%ROLE(3)="k"
            CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(K_range)
            CPU_structure(i_PAR_structure)%N_chains=3
-         case("Response_G_space_Finite_Momentum","Response_G_space") 
+         case("Response_G_space") 
            CPU_structure(i_PAR_structure)%ROLE(1)="c"
            CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(n_c_bands(2)-n_c_bands(1)+1)
            CPU_structure(i_PAR_structure)%ROLE(2)="v"

@@ -62,7 +62,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_PLASMA_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
-&                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
+&                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID,&
 &                        PAR_IND_Kk_ibz_ID,PAR_IND_DIPk_ibz_ID,PAR_IND_DIPk_bz_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
@@ -256,17 +256,20 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! K-pts
  !-------
  K_range=Xk%nibz
+ if (ENVIRONMENT=="DIPOLES")          K_range=Xk%nibz
  if (ENVIRONMENT=="Response_G_space") K_range=Xk%nibz
  if (ENVIRONMENT=="Response_T_space") K_range=Xk%nibz
  if (ENVIRONMENT=="Real_Time"       ) K_range=Xk%nibz
  !
  ! COND bands
  !------------
+ if (ENVIRONMENT=="DIPOLES")          n_c_bands= (/E%nbf+1,X%ib(2)/)
  if (ENVIRONMENT=="Response_G_space") n_c_bands= (/E%nbf+1,X%ib(2)/)
  if (ENVIRONMENT=="Response_T_space") n_c_bands= (/E%nbf+1,BS_bands(2)/)
  !
  ! VAL bands
  !-----------
+ if (ENVIRONMENT=="DIPOLES")          n_v_bands= (/X%ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_G_space") n_v_bands= (/X%ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_T_space") n_v_bands= (/BS_bands(1),E%nbm/)
  !
@@ -953,8 +956,35 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  endif
  !
  !==========================================================================================================
+ if (ENVIRONMENT=="DIPOLES") then
+   !========================================================================================================
+   !
+   ! Dipoles conduction bands
+   !
+   call PARALLEL_index(PAR_IND_CON_BANDS_DIP,(/n_c_bands(2)/),low_range=(/n_c_bands(1)/),&
+&                      COMM=PAR_COM_CON_INDEX_DIP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   PAR_IND_CON_BANDS_DIP_ID=PAR_COM_CON_INDEX_DIP%CPU_id
+   !
+   call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_COM_CON_INDEX_DIP%CPU_id+1),&
+&                             TOTAL=n_c_bands(2)-n_c_bands(1)+1,&
+&                             NCPU=PAR_COM_CON_INDEX_DIP%n_CPU)
+   !
+   ! Dipoles valence bands
+   !
+   call PARALLEL_index(PAR_IND_VAL_BANDS_DIP,(/n_v_bands(2)/),low_range=(/n_v_bands(1)/),&
+&                      COMM=PAR_COM_VAL_INDEX_DIP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   PAR_IND_VAL_BANDS_DIP_ID=PAR_COM_VAL_INDEX_DIP%CPU_id
+   !
+   call PARALLEL_live_message("VAL bands",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_COM_VAL_INDEX_DIP%CPU_id+1),&
+&                             TOTAL=n_v_bands(2)-n_v_bands(1)+1,&
+&                             NCPU=PAR_COM_VAL_INDEX_DIP%n_CPU)
+   !
+ endif
+ !
+ !==========================================================================================================
  if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_T_space".or.&
-&    ENVIRONMENT=="DIPOLES"         .or.                                   &
 &    (ENVIRONMENT=="Self_Energy".and.l_life.and.l_elphoton_corr) ) then
    !========================================================================================================
    !

@@ -35,7 +35,9 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  use X_m,                ONLY:X_t,DIP_iR,DIP_P,force_v_g_space_approach
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
- use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
+&                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  !
  implicit none
  !
@@ -48,7 +50,6 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  !
  integer                      :: ik,ik_mem,i_sp_pol,i_spinor,i_spin,ic,iv,&
 &                                icfft(n_spinor),ivfft(n_spinor),idir,n_LT_steps
- logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  real(SP)                     :: Ev_m_Ec
  complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  !
@@ -61,7 +62,9 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps) 
+ n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
+&                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
+&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
  if (n_LT_steps>0) call live_timing('Dipoles in real space',n_LT_steps)
  !
@@ -76,9 +79,12 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
      DIP_tmp=cZERO
      !
      do iv=X%ib(1),X%ib_lim(1) 
+       !
+       if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+       !
        do ic=max(iv,X%ib_lim(2)),X%ib(2)
          !
-         if (.not.l_mat_eval_DIP(ic,iv)) cycle
+         if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
          do i_spinor=1,n_spinor
            !
@@ -122,8 +128,9 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
      !=====
      if(.not.force_v_g_space_approach) then
        do iv=X%ib(1),X%ib_lim(1) 
+         if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          do ic=max(iv,X%ib_lim(2)),X%ib(2)
-           if (.not.l_mat_eval_DIP(ic,iv)) cycle
+           if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
            ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
            Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
            do idir=1,3

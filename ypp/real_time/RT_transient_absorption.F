@@ -36,7 +36,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use X_m,             ONLY:Epsilon_ii
  use BS,              ONLY:BSS_eh_table,BS_mat,BS_bands
  use frequency,       ONLY:w_samp
- use interfaces,      ONLY:PARALLEL_global_indexes
  use real_time,       ONLY:RT_bands
  use parser_m,        ONLY:parser
  !
@@ -68,25 +67,16 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  !call RT_IO_carriers_setup(Xen,Xk,"TIME_RANGE REPORT",n_T_steps) 
  !
- ! I need to compute the dipoles, however they rely on the parallel structure
- ! I would need a structure defined for ypp 
- !
  call parser('Transmission',l_TR_transm)
  call parser('Reflectivity',l_TR_reflec)
  call parser('IncludeIP'   ,l_include_IP)
  !
  Xbsk%ib=BS_bands
- allocate(q_norm(1),bare_qpg(1,1))
- !
- call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(Xen,Xk,Xq,"Response_G_space_Zero_Momentum",X=Xbsk)
  !
  io_DIP=.FALSE.
  !call DIPOLE_driver(Xen,Xk,Xbsk,Xbsk%q0)
  ! put dipoles I/O here, there was call with 
  stop
- !
- deallocate(q_norm,bare_qpg)
  !
  allocate(Epsilon_ii(RT_conf%W_n_steps,2))
  if(l_TR_reflec) allocate(X_reflectance(RT_conf%W_n_steps,2))
@@ -108,7 +98,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
  if (l_TR_transm) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")
  !
- Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q0_def_norm**2
+ Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi/q0_def_norm**2
  !
  do i_T=1,n_T_steps
    !

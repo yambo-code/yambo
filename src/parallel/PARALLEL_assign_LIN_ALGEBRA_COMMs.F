@@ -83,7 +83,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
  ! Up to today I could not still use SLK with subgroups of CPU. So I switch SLK off
  ! when Q's are distributed.
  !
- if ((ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space").and.PAR_COM_Q_INDEX%n_CPU/=1) then
+ if ((ENVIRONMENT=="Response_G_space").and.PAR_COM_Q_INDEX%n_CPU/=1) then
    !
    COMM_operation%COMM  =comm_default_value
    COMM_operation%CPU_id=0

@@ -498,12 +498,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! CPU structure
  !
  if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa) then
-   if (l_optics.and..not.l_bse) then
-     call CPU_activate("X_q_0")
-     call CPU_activate("X_finite_q")
-   else
-     call CPU_activate("X_all_q")
-   endif
+   call CPU_activate("X")
+   call CPU_activate("DIP")
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
@@ -546,6 +542,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bse) then
    call CPU_activate("BS")
+   call CPU_activate("DIP")
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
@@ -1067,12 +1064,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MPI
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") then
-       call initactivate(1,what//"_nCPU_invert")
-     endif
-     if (what=="BS") then
-       call initactivate(1,what//"_nCPU_diago")
-     endif
+     if (what=="X".or.what=="BS") call initactivate(1,what//"_nCPU_invert")
+     if (what=="BS")              call initactivate(1,what//"_nCPU_diago")
 #endif
 #if defined _SCALAPACK &&  defined _MPI
      if (what=="SLK") then

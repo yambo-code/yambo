@@ -33,7 +33,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  use stderr,              ONLY: intc,string_split
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol
- use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                               PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
+&                               PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  use interfaces,          ONLY: WF_load
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR,DIP_P,&
@@ -63,8 +65,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  ! Work Space
  !
  character(schlen)            :: grid_paths_vector(3)
- logical                      :: idir_not_done(3)=.true.,&
-&                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+ logical                      :: idir_not_done(3)
  integer                      :: ik,ik_mem,icfft(n_spinor),ivfft(n_spinor),ic,iv,iq,n_LT_steps,&
 &                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3)
  complex(SP)                  :: rho
@@ -81,7 +82,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  integer                      :: io_err(3)
  integer, external            :: io_DB1_selective_scan
  !
- ! saves...
+ !
  !
  call set_parms(grid='  local', command=' define')
  !
@@ -101,6 +102,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  ! Check grids and determine grid displacement
  !
  grid_order=0
+ !
+ idir_not_done=.true.
  !
  do iq =1,num_shifted_grids
    !
@@ -131,9 +134,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
- ! Main loop over cartesian directions
- !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
+ n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
+&                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
+&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
  do iq = 1, num_shifted_grids
    !
@@ -159,9 +162,12 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
        ik_mem=PAR_DIPk_ibz_index(ik)
        !
        do iv=X%ib(1),X%ib_lim(1) 
+         !
+         if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+         !
          do ic=max(iv,X%ib_lim(2)),X%ib(2)
            !
-           if (.not.l_mat_eval_DIP(ic,iv)) cycle
+           if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
            !
            rho=cZERO
            !

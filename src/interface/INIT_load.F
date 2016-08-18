@@ -662,9 +662,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      do i_s=1,n_CPU_str_max 
        !
-       if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
-       if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
-       if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
+       !if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
+       if (i_s==2) possible_fields='(k,c,v)'   ! DIP
+       if (i_s==3) possible_fields='(q,k,c,v)' ! X
        if (i_s==4) possible_fields='(k,eh,t)'  ! BS
        if (i_s==5) possible_fields='(q,qp,b)'  ! SE
        if (i_s==6) possible_fields='(k,b,q,qp)'! RT

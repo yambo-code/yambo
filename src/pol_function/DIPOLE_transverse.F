@@ -33,7 +33,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
- use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
+&                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,P_square,DIP_P,Dipole_Energy_treshold, &
@@ -59,8 +61,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _SC
  logical                      :: l_evaluating_em1s 
 #endif
- logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
-&                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+ logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2
  integer                      :: ik,icfft(n_spinor),ivfft(n_spinor),ic,iv,&
 &                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem
  complex(SP), allocatable     :: kbv(:,:,:,:)
@@ -110,12 +111,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
  l_eval_DIP_P2=.false.
  wf_dim=3
  !
- ! Parallelization Mask 
- !======================
- ! Depending on the environment DIPOLES are distributed in different ways
- !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
- !
 #if defined _SC
  l_eval_DIP_P2=l_sc_run.or.l_real_time
  if(l_eval_DIP_P2) wf_dim=4
@@ -125,6 +120,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
  if (l_eval_DIP_P .and.l_eval_DIP_iR) live_t_string='Dipoles: P and iR (T):'
  if (l_eval_DIP_P2.and.l_eval_DIP_P)  live_t_string='Dipoles: P and P2 (T):'
  if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P and P2 (T):'
+ !
+ n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
+&                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
+&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
  if (n_LT_steps>0) call live_timing(trim(live_t_string),n_LT_steps)
  !
@@ -160,9 +159,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      !
      do iv=X%ib(1),X%ib_lim(1) 
+       !
+       if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+       !
        do ic=max(iv,X%ib_lim(2)),X%ib(2)
          !
-         if (.not.l_mat_eval_DIP(ic,iv)) cycle
+         if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
          do i_spinor=1,n_spinor
            !

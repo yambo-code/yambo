@@ -30,7 +30,6 @@ subroutine Dipole_magnetization(Xen,Xk,X)
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
- use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_spin
  use memory_m,            ONLY:mem_est
@@ -38,6 +37,9 @@ subroutine Dipole_magnetization(Xen,Xk,X)
  use wave_func,           ONLY:WF
  use com,                 ONLY:error,msg
  use wrapper,             ONLY:Vstar_dot_V
+ use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
+&                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  !
  implicit none
  !
@@ -47,7 +49,6 @@ subroutine Dipole_magnetization(Xen,Xk,X)
  !
  ! Work Space
  !
- logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,ic_wf(n_spinor),iv_wf(n_spinor),ic,iv,&
 &                                i_sp_pol,i_spinor,i_spin,n_LT_steps,ik_mem
  !
@@ -63,7 +64,9 @@ subroutine Dipole_magnetization(Xen,Xk,X)
  !======================
  ! Depending on the environment DIPOLES are distributed in different ways
  !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
+ n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
+&                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
+&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
  if (n_LT_steps>0) call live_timing('Dipoles spin',n_LT_steps)
  !
@@ -79,9 +82,12 @@ subroutine Dipole_magnetization(Xen,Xk,X)
    ! 
    do i_sp_pol=1,n_sp_pol
      do iv=X%ib(1),X%ib_lim(1) 
+       !
+       if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+       !
        do ic=max(iv,X%ib_lim(2)),X%ib(2)
          !
-         if (.not.l_mat_eval_DIP(ic,iv)) cycle
+         if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
          do i_spinor=1,n_spinor
            !

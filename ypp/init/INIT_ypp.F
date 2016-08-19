@@ -265,8 +265,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RT_X           =trim(rstr_piece(i1+1))=='X'
      l_RT_abs         =trim(rstr_piece(i1+1))=='a'
      !
-     l_RT_occupations =trim(rstr_piece(i1+1))=='o'
-     l_RT_lifetimes   =trim(rstr_piece(i1+1))=='l'
+     l_RT_occupations =index(rstr_piece(i1+1),'o')>0
+     l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
      l_RT_density     =trim(rstr_piece(i1+1))=='d'
      !
      l_RT_bands       =trim(rstr_piece(i1+2))=='b'
@@ -482,7 +482,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    l_flag=l_RT_occupations.or.l_RT_abs
    if (l_flag)      call init_RT_ctl_switch('G')
-   l_flag=l_RT_occupations.or.l_RT_density
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations

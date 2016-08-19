@@ -720,6 +720,13 @@ subroutine K_Haydock(iq,W)
        !
        ! GPL_EXCLUDE_END
        !
+       ! GPL_INCLUDE_START
+       !
+       !if (ii==1) Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))*gauge_factor
+       !if (ii==2) Epsilon_ij(iw,i_eps(:))=Epsilon_ij(iw,i_eps(:))*gauge_factor
+       !
+       ! GPL_INCLUDE_END
+       !
        if (ii==1) Epsilon_ii(iw,i_eps(:))=1._SP+Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
        !
        ! GPL_EXCLUDE_START

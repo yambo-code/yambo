@@ -361,9 +361,15 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _PL
      call BS_PL_free( )
 #endif
+     !
+     ! GPL_EXCLUDE_START
+     !
 #if defined _KERR
      call BS_KERR_free( )
 #endif
+     !
+     ! GPL_EXCLUDE_END
+     !
      call LOCAL_TYP_clean(K_INV_EPS)
 #if defined _PL
      call LOCAL_TYP_clean(K_INV_PL)

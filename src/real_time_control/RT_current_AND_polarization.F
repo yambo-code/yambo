@@ -35,9 +35,9 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:nel,levels,n_spin
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
-&                         RT_P,RT_ETA,RT_magn,RT_P_prev,RT_nk
+&                         RT_P,RT_magn,RT_P_prev,RT_nk
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_P,ETA_circ,DIP_spin,global_gauge
+ use X_m,            ONLY:DIP_iR,DIP_P,DIP_spin,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  !
@@ -92,11 +92,5 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! D : Orbital magentization (to be coded)
  !
  !call RT_average_operator(V_VALUE=RT_magn,PV_MATRIX=DIP_L,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
- !
- ! E : Circular polarization factor
- !     PRB 77, 235406 (2008)
- !     Equation (4)
- !
- if(n_spin>1) call RT_average_operator(O_VALUE=RT_ETA,O_MATRIX=ETA_circ,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
 end subroutine RT_current_AND_polarization

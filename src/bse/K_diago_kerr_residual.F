@@ -33,7 +33,8 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  use LIVE_t,         ONLY:live_timing
  use KERR,           ONLY:BSS_dipoles_kerr
  use X_m,            ONLY:global_gauge
- use BS,             ONLY:BS_K_dim,BS_H_dim,BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use BS,             ONLY:BS_K_dim,BS_H_dim
  !
  implicit none
  !

@@ -156,7 +156,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
      do iv=X%ib(1),X%ib_lim(1) 
        !
        ic_min=max(iv,X%ib_lim(2))
-       if (l_X_terminator) ic_min=X%ib(1) 
+       if (l_X_terminator) ic_min=iv
        !
        do ic=ic_min,X%ib(2)
          !
@@ -233,9 +233,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if (l_eval_DIP_iR) then
            if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)/Ev_m_Ec
            if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-           !XXXXXXXXX 
-           WRITE(100+myid,"(a,3i4,f15.9,6f20.14)" ) "ic, iv, ik, EmE, DIP", &
-                 ic, iv, ik, abs(Ev_m_Ec), DIP_iR(:,ic,iv,ik_mem,i_sp_pol) 
          endif
          !
          !======

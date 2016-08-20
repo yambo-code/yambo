@@ -59,7 +59,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,wf_dim,rho)
    do i1=1,3
 !$omp do
      do ig=1,wf_ng
-       wf_xyz(ig,i1)=WF%c(ig,ispinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
+       wf_xyz(ig,i1)=WF%c(ig,i_spinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
      enddo
 !$omp end do
    enddo

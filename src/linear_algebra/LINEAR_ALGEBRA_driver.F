@@ -31,6 +31,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_POOL_clean_up,&
 &                        SLK_ORTHO_GROUP_clean_up,SLK_matrix
 #endif
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  implicit none
  !
@@ -52,6 +55,10 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  type (POOL_group)   :: POOL
  type (ORTHO_group)  :: ORTHO
  type (SLK_matrix)   :: M_slk,EIGEN_slk
+#endif
+
+#if defined _TIMING
+ call timing("LINEAR ALGEBRA",OPR="start")
 #endif
  !
  ! M dimension
@@ -145,5 +152,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  endif
  !
  ! ===========================================================================================
+ !
+#if defined _TIMING
+ call timing("LINEAR ALGEBRA",OPR="stop")
+#endif
  !
 end subroutine

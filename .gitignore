@@ -7,8 +7,10 @@
 *.a
 *.so
 *.mod
+*.dep
 *.f90
 *.s
+*.sw*
 config.status
 config/report
 config/setup
@@ -25,23 +27,26 @@ lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/*/*stamp
 lib/*/lib
+lib/*/bin
 lib/*/tmp
 lib/*/etsf_io*
 lib/*/netcdf-*
 lib/*/iotk*
 lib/*/libxc-*
 #
+compile.sh
 sbin/make_makefile.sh
-sbin/make_message.pl
 sbin/objects_debug.sh
 src/wf_and_fft/sgfft.F
+bin/*
 
 # source #
 ##########
-*.objects*
+lib/local/.objects
+src/external_c/.objects
 *__lock*
-bin/*
 Makefile
+make.dep
 commit.msg
 
 # Packages #
@@ -72,3 +77,5 @@ commit.msg
 .Trashes
 ehthumbs.db
 Thumbs.db
+myconfig*
+nohup.out

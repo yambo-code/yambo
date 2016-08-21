@@ -25,7 +25,8 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  !
  use pars,                ONLY:SP,schlen,cZERO
  use units,               ONLY:HA2EV,HA2FSm1
- use BS,                  ONLY:BS_mat,BS_K_dim,BSS_eh_table,BS_nT_at_k
+ use BS_solvers,          ONLY:BS_mat,BSS_eh_table
+ use BS,                  ONLY:BS_K_dim,BS_nT_at_k
  use R_lattice,           ONLY:bz_samp
  use IO_m,                ONLY:io_control,OP_RD,DUMP,RD_CL_IF_END
  use ELPH,                ONLY:elph_nDBS_used,ph_modes,elph_global_free,&

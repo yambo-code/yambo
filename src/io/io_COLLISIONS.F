@@ -30,6 +30,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
+ use xc_functionals,ONLY:GS_xc_kind
  use global_XC,     ONLY:SC_FOCK,global_XC_string,EXT_NONE,SE_NONE,SC_COH,SC_SEX,&
 &                        SE_GW_NEQ,SE_GW_QED,SC_HARTREE
  use com,           ONLY:error
@@ -73,7 +74,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  if(COLL%kind==SC_COH) then
    db_name = "COLLISIONS_COH"
- elseif(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+ elseif(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind==GS_xc_kind.or.&
+&       COLL%kind>=SC_HARTREE) then
    db_name = "COLLISIONS_HXC"
  elseif(COLL%kind==SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"
@@ -140,9 +142,11 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    call io_elemental(ID,VAR='INTERACTION_KIND',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=V_kind_string,&
 &       VAR=' Interaction Kind                :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+     !
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
      SIZE_=1
      if (V_kind_disk>=SC_HARTREE) SIZE_=SIZE_+1
      if (V_kind_disk==           SC_FOCK.or.V_kind_disk==           SC_SEX.or.&
@@ -159,11 +163,12 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
        call io_elemental(ID,I0=QP_ng_Sx,&
 &         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
      endif
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
    if (V_kind_disk==SE_GW_NEQ .or.V_kind_disk==SC_COH.or.V_kind_disk==SC_SEX.or.&
-&           V_kind_disk==SC_HARTREE.or.V_kind_disk==SC_FOCK .or.V_kind_disk>=SC_HARTREE) then
+&      V_kind_disk==SC_HARTREE.or.V_kind_disk==SC_FOCK .or.V_kind_disk>=SC_HARTREE) then
+     !
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      ! Global Response Descriptions
      !==============================
@@ -196,9 +201,10 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      call io_elemental(ID,VAR="RIM_PARAMETERS",VAR_SZ=2,MENU=0)
      call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      :',WARN=.true.)
      call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      :',WARN=.true.)
-     call io_elemental(ID,VAR="",VAR_SZ=0)
      !
    endif
+   !
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! States
    !

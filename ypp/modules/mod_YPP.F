@@ -194,13 +194,11 @@ module YPP
  !
  interface
    !
-   subroutine excitons_sort_and_report(Xk,E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
+   subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
      use pars,          ONLY:SP
      use BS,            ONLY:BS_H_dim
-     use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
      implicit none
-     type(bz_samp)      :: Xk
      type(levels)       :: E
      complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
      real(SP),optional,pointer :: BS_E_SOC_corr(:,:)

@@ -25,13 +25,13 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !
  ! Here I allocate and define some objects of the COLLISIONS_group kind.
  !
- !type COLLISIONS_group
+ ! type COLLISIONS_group
  !  character(schlen)     :: name="none"
  !  integer               :: kind=0
  !  integer               :: N           ! # of collisions (dimension of linked COLLISIONS_element)
  !  integer,     pointer  :: state(:,:)   => null()
  !  integer,     pointer  :: IO_status(:) => null()
- !end type
+ ! end type
  !
  use pars,          ONLY:IP
  use memory_m,      ONLY:mem_est
@@ -69,68 +69,79 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  endif
  !
  if (trim(what)=="clean") then
-   deallocate(COLL%IO_status)
-   call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status")
-   deallocate(COLL%state)
-   call mem_est("COLLISIONS_"//trim(COLL%name)//"_state")
+   !
+   if (associated(COLL%IO_status)) then
+     deallocate(COLL%IO_status)
+     call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status")
+     deallocate(COLL%state)
+     call mem_est("COLLISIONS_"//trim(COLL%name)//"_state")
+     COLL%N=0
+   endif
+   !
    return
+   !
  endif
  !
  if (associated(COLL%state)) then
-   if (io_COLLS) then
+   !
+   if (io_COLLs) then
      allocate(COLL%IO_status(COLL%N))
      call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
    endif
-   return
- endif
- !
- ! Here below I define the state component to be consistent with the QP_table.
- !
- do i_c=1,2
    !
-   COLL%N=0
+ else
    !
-   do i_k=1,nXkibz
-     do i_n=COLL_bands(1),COLL_bands(2)
-       do i_mix=0,COLL_bands(2)-COLL_bands(1)
-         !
-         i_m=i_n+i_mix
-         !
-         if (i_m>COLL_bands(2)) cycle
-         !
-         do i_sp=1,n_sp_pol
-           COLL%N=COLL%N+1
-           if (i_c==2) then
-             COLL%state(COLL%N,:3)=(/i_n,i_m,i_k/)
-             COLL%state(COLL%N, 4)=i_sp
-           endif
-           if (i_n/=i_m.and.trim(COLL%name)=="GW_NEQ") then
+   ! Here below I define the state component to be consistent with the QP_table.
+   !
+   do i_c=1,2
+     !
+     COLL%N=0
+     !
+     do i_k=1,nXkibz
+       do i_n=COLL_bands(1),COLL_bands(2)
+         do i_mix=0,COLL_bands(2)-COLL_bands(1)
+           !
+           i_m=i_n+i_mix
+           !
+           ! No Off-diagonal elements in the case of P collisions
+           !
+           if (trim(COLL%name)=="Momentum".and.i_mix>0)  cycle
+           !
+           if (i_m>COLL_bands(2)) cycle
+           !
+           do i_sp=1,n_sp_pol
              COLL%N=COLL%N+1
              if (i_c==2) then
-               COLL%state(COLL%N,:3)=(/i_m,i_n,i_k/)
+               COLL%state(COLL%N,:3)=(/i_n,i_m,i_k/)
                COLL%state(COLL%N, 4)=i_sp
              endif
-           endif
+             if (i_n/=i_m.and.trim(COLL%name)=="GW_NEQ") then
+               COLL%N=COLL%N+1
+               if (i_c==2) then
+                 COLL%state(COLL%N,:3)=(/i_m,i_n,i_k/)
+                 COLL%state(COLL%N, 4)=i_sp
+               endif
+             endif
+           enddo
          enddo
        enddo
      enddo
+     !
+     if (i_c==1) then
+       if (io_COLLs) then
+         allocate(COLL%IO_status(COLL%N))
+         call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
+       endif
+       allocate(COLL%state(COLL%N,4))
+       call mem_est("COLLISIONS_"//trim(COLL%name)//"_state",(/COLL%N,4/),(/IP/))
+     endif
+     !
    enddo
    !
-   if (i_c==1) then
-     if (io_COLLS) then
-       allocate(COLL%IO_status(COLL%N))
-       call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
-     endif
-     allocate(COLL%state(COLL%N,4))
-     call mem_est("COLLISIONS_"//trim(COLL%name)//"_state",(/COLL%N,4/),(/IP/))
-   endif
-   !
- enddo
+ endif
  !
- ! QP_table map  (needed by SC)
+ ! QP_table map  (needed by SC & PARALLEL distribution of worload based on QP_n_states)
  !===============
-#if defined _SC || defined _QED
  call COLLISIONS_map_to_QP_table("fill",COLL)
-#endif
  !
 end subroutine

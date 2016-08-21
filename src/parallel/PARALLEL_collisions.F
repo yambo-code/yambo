@@ -112,7 +112,7 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  use interfaces,    ONLY:PARALLEL_live_message
  use collision,     ONLY:COLLISIONS_group,COLL_bands
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,l_par_RT,l_par_SE,l_par_SC
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
  implicit none
@@ -143,13 +143,15 @@ subroutine PARALLEL_collisions( k, COLL )
    i_k = COLL%state(i_coll,3)
    NC_tot=NC_tot+1
    !
-#if defined _RT
-   if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
-   if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
-#endif
-#if ( defined _SC || defined _QED ) && ! defined  _RT
-   if (.not.PAR_IND_QP%element_1D(i_coll)) cycle
-#endif
+   if (l_par_RT) then
+     if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
+     if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
+   endif
+   !
+   ! l_par_SE is for LAMB
+   if (l_par_SE.or.l_par_SC) then
+     if (.not.PAR_IND_QP%element_1D(i_coll)) cycle
+   endif
    !
    COLL%PAR_N=COLL%PAR_N+1
    COLL%PAR_map(i_coll)=COLL%PAR_N
@@ -157,16 +159,20 @@ subroutine PARALLEL_collisions( k, COLL )
    !
    PAR_IND_G_k%element_1D(i_k)=.TRUE.
    !
-   do i_q=1,nqbz
+   if (.not.l_par_SE) then
      !
-     if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+     do i_q=1,nqbz
+       !
+       if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+       !
+       i_p_bz=qindx_S(i_k,i_q,1)
+       i_p   =k%sstar(i_p_bz,1)
+       !
+       PAR_IND_G_k%element_1D(i_p)=.TRUE.
+       !
+     enddo
      !
-     i_p_bz=qindx_S(i_k,i_q,1)
-     i_p   =k%sstar(i_p_bz,1)
-     !
-     PAR_IND_G_k%element_1D(i_p)=.TRUE.
-     !
-   enddo
+   endif
    !
  enddo
  !

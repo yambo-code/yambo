@@ -35,11 +35,17 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
- use BS,            ONLY:BSS_Vnl_included,BS_anti_res,&
-&                        BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps,Co_factor
+ use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
+&                        BSS_n_freqs,BSS_q0,Co_factor
+ use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+#if defined _PL
+ use drivers,       ONLY:l_photolum
+ use X_m,           ONLY:DIP_P
+ use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights,PL_init
+#endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use X_m,           ONLY:Epsilon_ij
@@ -58,9 +64,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Work space
  !
- integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_mem,n_soc,i_pert_SOC
- real(SP)          ::conjg_fac
+ integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
+ real(SP)          ::conjg_fac,Z_
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
+#if defined _PL
+ complex(SP)       ::rotated_P(3),P_weighted(3)
+ real(SP)          ::res_PL(2)
+#endif
  !
  call section('=','Independent Particles absorption') 
  !===================================================
@@ -88,14 +98,27 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Eps_0
  !=======
- allocate(Epsilon_ii(BSS_n_freqs,4),Joint_DOS(BSS_n_freqs,4))
+ allocate(Epsilon_ii(BSS_n_freqs,4)) ! 2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
  allocate(X_drude_term(BSS_n_freqs))
- Epsilon_ii  =cZERO
- Joint_DOS   =cZERO
- X_drude_term=cZERO
+ Epsilon_ii   = cZERO
+ X_drude_term = cZERO
  !
  Epsilon_ii(:,1)=W_bss%p(:)  
- Joint_DOS(:,1) =W_bss%p(:)
+ if (BSS_eval_JDOS) then
+   allocate(Joint_DOS(BSS_n_freqs,4))
+   Joint_DOS=cZERO
+   Joint_DOS(:,1) =W_bss%p(:)
+ endif
+ !
+#if defined _PL
+ !
+ ! PL_0
+ !=======
+ call PL_init( )
+ !
+ PL(:,1) = W_bss%p(:)  
+ !
+#endif
  !
  !...Drude
  !DEBUG>
@@ -153,7 +176,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ic    = BS_T_grp(i_T_g)%table(i_T,3)
        i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
        !
-       ik_mem= PAR_Xk_bz_index(ik_bz)
+       ik_bz_mem= PAR_Xk_bz_index(ik_bz)
        !
        if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
        if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
@@ -170,23 +193,50 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
        !              see definition of conjg_fac few lines before for the -1
        !
-       BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_mem,i_sp))
-       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_mem,i_sp)
+       BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_bz_mem,i_sp))
+       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_bz_mem,i_sp)
+#if defined _PL
+       if (l_photolum) then
+         !
+         call GET_the_rotated_P( )
+         !
+         BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(rotated_P(:))
+         if (BS_K_coupling) then
+           BS_T_grp(i_T_g)%dipoles_A_PL(i_T,:)=rotated_P(:)
+         endif
+         !
+       endif
+#endif
        !
        if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
        !
        ! Residuals DIP_cv * DIP_vc
-       res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%fp(i_T)
-       if (allocated(BS_T_grp(i_T_g)%Z)                                     ) res=res*BS_T_grp(i_T_g)%Z(i_T)
+       !
+       Z_=1._SP
+       if (allocated(BS_T_grp(i_T_g)%Z)) Z_=BS_T_grp(i_T_g)%Z(i_T)
+       !
+       res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%f_RES(i_T)*Z_
        if (allocated(BS_T_grp(i_T_g)%W) .and. trim(global_gauge)=="velocity") res=res*E_plus_W0/conjg(E_plus_W0)
+       !
+#if defined _PL
+       if (l_photolum) then
+         do ic=1,3
+           P_weighted(ic)=BS_T_grp(i_T_g)%dipoles_R_PL(i_T,ic)*PL_weights(ic)
+         enddo
+         !
+         ! Note that res_PL is always positive as f_PL>0
+         !
+         res_PL=Z_*dot_product(P_weighted,P_weighted)*BS_T_grp(i_T_g)%f_PL(:,i_T)
+       endif
+#endif
        !
        do i_pert_SOC=1,n_SOC
          !
-         Epsilon_ii(:,3)=Epsilon_ii(:,3)-  res/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         if (BS_anti_res.or.BS_K_coupling) then
+         Epsilon_ii(:,3)=Epsilon_ii(:,3)-res/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+         if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+         if (BSS_add_antiresonant.or.BS_K_coupling) then
            Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
-           Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+           if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif
          !
          ! GPL_EXCLUDE_START 
@@ -194,6 +244,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _KERR
          if(trim(global_gauge)=='length')   A_drude(1)=A_drude(1)+res*E_plus_W(i_pert_SOC)
          if(trim(global_gauge)=='velocity') A_drude(1)=A_drude(1)+res/E_plus_W(i_pert_SOC)
+#endif
+#if defined _PL
+         if (l_photolum) then
+           PL(:,3)=PL(:,3)  +PL_prefactor*res_PL(1)*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
+           if (BSS_add_antiresonant.or.BS_K_coupling) then
+             PL(:,3)=PL(:,3)+PL_prefactor*res_PL(2)*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
+           endif
+         endif
 #endif
          !
          ! GPL_EXCLUDE_END
@@ -212,14 +270,29 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
-   call PP_redux_wait( Joint_DOS(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( Joint_DOS(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+   if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
+#if defined _PL
+   if (l_photolum) then
+     call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_eh_INDEX%COMM )
+   endif
+#endif
+   !
+   ! DOS
+   !=====
+   if (BSS_eval_JDOS) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor
    !
    ! Pure diamagnetic term
+   !=======================
    diam_term0=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
    !
-   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=1._SP+Epsilon_ii(:,3)*Co_factor/q_norm(1)**2
-   if (trim(global_gauge)=='velocity') then
+   if (trim(global_gauge)=='length'  ) then
+     !
+     Epsilon_ii(:,3)=1._SP+Epsilon_ii(:,3)*Co_factor/q_norm(1)**2
+     !
+   else if (trim(global_gauge)=='velocity') then
+     !
      if (.not.skip_cond_sum_rule) then
        ! Here I impose the conductivity sum rule for the velocity gauge
        call msg('nsr','Gauge velocity: reference freq. for w=0 is [eV]:',real(W_bss%p(iw_ref))*HA2EV )
@@ -227,9 +300,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      else
        diam_term=diam_term0
      endif
+     !
      Epsilon_ii(:,3)=1._SP+(Epsilon_ii(:,3)-diam_term)*Co_factor/W_bss%p(:)**2
+     !
    endif
-   Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor
+   !
+   ! Drude
+   !=======
    !
    if (l_drude.and..not.skip_cond_sum_rule) then
      X_drude_term(:)=-drude_GreenF(:)
@@ -241,7 +318,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _KERR
    !
    ! Drude term, Eq.(1.12) PRB 48, 11705 (1993)
-   if (BS_anti_res.or.BS_K_coupling) A_drude(1)=A_drude(1)+conjg(A_drude(1))
+   if (BSS_add_antiresonant.or.BS_K_coupling) A_drude(1)=A_drude(1)+conjg(A_drude(1))
    !
    if (trim(global_gauge)=='length'  ) then
      A_drude(1)=A_drude(1)/q_norm(1)**2-diam_term0
@@ -270,12 +347,16 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    ! Initialize & write the output file
    !
-   call K_output_file(iq,-4)
-   call K_output_file(iq, 4)
+   call K_output_file(iq,"open IP")
+   call K_output_file(iq,"IP")
    !
-   deallocate(Epsilon_ii,Joint_DOS,X_drude_term)
+   deallocate(Epsilon_ii,X_drude_term)
+   if (BSS_eval_JDOS) deallocate(Joint_DOS)
 #if defined _KERR
    if(l_kerr) deallocate(Epsilon_ij)
+#endif
+#if defined _PL
+   if(l_photolum) deallocate(PL)
 #endif
    !
  endif
@@ -286,4 +367,34 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  call timing('T_space IP',OPR='stop')
 #endif
  !
+ contains
+   !
+#if defined _PL
+   !
+   subroutine GET_the_rotated_P( )
+     !
+     use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
+     use parallel_m,     ONLY:PAR_DIPk_ibz_index
+     !
+     integer :: ik,is,ik_mem
+     logical :: t_rev
+     !
+     ik=Xk%sstar(ik_bz,1)
+     is=Xk%sstar(ik_bz,2)
+     !
+     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+     !
+     is = sop_inv( is )
+     !      
+     ik_mem    = PAR_DIPk_ibz_index(ik)
+     rotated_P = matmul( dl_sop(:,:,is) , DIP_P(:,ic,iv,ik_mem,i_sp) )
+     !
+     if (t_rev) rotated_P = conjg( rotated_P )
+     !
+   end subroutine
+   !
+#endif
+   !
+   !
 end subroutine

@@ -28,8 +28,8 @@ integer function RT_Lifetimes_evaluation_plan( )
  use pars,           ONLY:IP2,SP
  use memory_m,       ONLY:mem_est
  use RT_control,     ONLY:NE_i_start_time
- use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_times,&
-&                         RT_dyn_step,l_RT_lifetimes_interpolation,Life_MEM_steps,NE_i_time
+ use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_extrap_times,&
+&                         RT_dyn_step,l_RT_lifetimes_extrapolation,Life_MEM_steps,NE_i_time
  !
  implicit none
  !
@@ -44,8 +44,8 @@ integer function RT_Lifetimes_evaluation_plan( )
    RT_TIME_status=1
  endif
  !
- if (RT_life_interp_times(1)<=0. .or. NE_i_start_time>=NE_steps) then
-   l_RT_lifetimes_interpolation=.FALSE.
+ if (RT_life_extrap_times(1)<=0. .or. NE_i_start_time>=NE_steps) then
+   l_RT_lifetimes_extrapolation=.FALSE.
    Life_MEM_steps=1
    RT_Lifetimes_evaluation_plan=NE_steps
    return
@@ -53,18 +53,18 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  ! Number of steps & blocks composed by N_inter_steps elements 
  !
- N_inter_steps=nint(RT_life_interp_times(1)/RT_dyn_step)
- N_intra_steps=nint(RT_life_interp_times(2)/RT_dyn_step)
+ N_inter_steps=nint(RT_life_extrap_times(1)/RT_dyn_step)
+ N_intra_steps=nint(RT_life_extrap_times(2)/RT_dyn_step)
  N_blocks     =N_inter_steps/N_intra_steps
  !
  ! RT_TIME_status = -1   KEEP constant 
  !                  >0   EVAL and SAVE
- !                   0   INTERPOLATE  
+ !                   0   EXTRAPOLATE  
  !
  ! Default action
  !
  i_default= -1 ! Keep constant
- if (l_RT_lifetimes_interpolation) i_default=0 ! Interpolate
+ if (l_RT_lifetimes_extrapolation) i_default=0 ! Extrapolate
  !
  RT_Lifetimes_evaluation_plan=i_default
  !

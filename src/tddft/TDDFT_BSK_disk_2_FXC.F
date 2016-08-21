@@ -27,8 +27,9 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:nqbz,bz_samp,nXkibz
- use BS,            ONLY:BS_mat,BS_res_K_exchange,BS_n_g_exch,&
+ use BS,            ONLY:BS_res_K_exchange,BS_n_g_exch,&
 &                        BS_bands,BS_nT_at_k,BS_K_dim
+ use BS_solvers,    ONLY:BS_mat
  use matrix_operate,ONLY:UP_matrix_index
  use com,           ONLY:isec
  use LIVE_t,        ONLY:live_timing

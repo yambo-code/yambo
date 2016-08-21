@@ -45,16 +45,19 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use com,          ONLY:warning,error
+ use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_mode
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
-&                       BS_bands,BS_nT_at_k,BS_anti_res,&
-&                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc,&
-&                       BSE_mode,BS_T_grp,BS_nT_grps,BSS_mode
+&                       BS_bands,BS_nT_at_k,BSE_mode,BS_T_grp,BS_nT_grps,&
+&                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc
  use X_m,          ONLY:global_gauge,Dipole_Energy_treshold
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
+#if defined _PL
+ use drivers,      ONLY:l_photolum
+#endif
 #if defined _RT
  use parser_m,     ONLY:parser
  use drivers,      ONLY:l_rt_carriers_in_use
@@ -72,8 +75,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  integer :: ikbz,iv,ic,iv_SOC(2),ic_SOC(2),ik,ikp,i_sp,i_star,nb(2),&
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp
- real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2),E_v_SOC(2),E_c_SOC(2),f_eh,fp_eh,f_eh_REF,f_e,f_h
+ real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2),E_v_SOC(2),E_c_SOC(2),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
+#if defined _PL
+ real(SP):: f_eh_PL(2)
+#endif
 #if defined _RT
  logical :: FORCE_EQ_trans
  !
@@ -118,7 +124,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  do i_loop=1,n_loops
    !
-   if(i_loop==2) call BS_Blocks_and_Transitions_alloc(Ken,0)
+   if (i_loop==2) call BS_Blocks_and_Transitions_alloc(Ken,0)
    !
    i_T_at_k=0
    BS_K_dim=0
@@ -188,9 +194,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              !
              if (index(BSS_mode,'h')/=0) PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
              !
-             BS_T_grp(i_T_group_now)%E(i_T_in_the_grp)=E_eh
-             BS_T_grp(i_T_group_now)%f(i_T_in_the_grp)=f_eh
-             BS_T_grp(i_T_group_now)%fp(i_T_in_the_grp)=fp_eh
+             BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
+             BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
+#if defined _PL
+             if (l_photolum) BS_T_grp(i_T_group_now)%f_PL(:,i_T_in_the_grp) =f_eh_PL
+#endif
+             BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
              !
              if (associated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
              !
@@ -222,10 +231,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    if (sum(BS_nT_at_k)==0) call   error(' The whole BSE hase zero dimension !')
    !
-   if (.not.BS_anti_res.and.BS_not_const_eh_f) then
-     call warning('Fractional e/h occupations. Causal BSEmode forced.')
-     BSE_mode='causal'
-     BS_anti_res=.true.
+   if (.not.BSS_add_antiresonant.and.BS_not_const_eh_f.and..not.BS_K_coupling) then
+     call warning('Fractional e/h occupations. Retarded BSEmode forced.')
+     BSE_mode='retarded'
+     BSS_add_antiresonant=.true.
    endif
    !
  endif
@@ -265,29 +274,39 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      !
      ! GPL_EXCLUDE_END
      !
+     ! Occupations Factors
+     !=====================
+     !
+     f_eh_REF =(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
+     f_eh     =f_eh_REF
+     f_eh_RES =f_eh_REF
+     !
      ! f_eh  enter the excitonic Hamiltonian
-     ! fp_eh enter the residual of the dielectric constant
+     ! f_eh_RES enter the residual of the dielectric constant
+     !
 #if defined _RT
      if (l_rt_carriers_in_use.and.associated(Ken%fo)) then
        if (     FORCE_EQ_trans) f_eh_REF=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
        if (.not.FORCE_EQ_trans) f_eh_REF=(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
        if (     NEQ_Kernel    ) f_eh =(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
        if (.not.NEQ_Kernel    ) f_eh =(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
-       if (     NEQ_Residuals ) fp_eh=(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
-       if (.not.NEQ_Residuals ) fp_eh=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
-     else
-#endif
-       !
-       f_eh_REF =(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
-       f_eh =f_eh_REF
-       fp_eh=f_eh_REF
-       !
-#if defined _RT
+       if (     NEQ_Residuals ) f_eh_RES=(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
+       if (.not.NEQ_Residuals ) f_eh_RES=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
      endif
 #endif
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
+     !
+#if defined _PL
+     !
+     ! Resonant
+     f_eh_PL(1) = Ken%f(ic,ikp,i_sp)*(spin_occ-Ken%f(iv,ik ,i_sp))/spin_occ/spin_occ
+     !
+     ! Anti-Resonant
+     f_eh_PL(2) = Ken%f(iv,ik ,i_sp)*(spin_occ-Ken%f(ic,ikp,i_sp))/spin_occ/spin_occ
+     !
+#endif
      !
      ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
      if ( abs(abs(f_eh_REF)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.
@@ -298,8 +317,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      !
 #if defined _RT
      !
-     ! In case of population inversion, it may be problematic if f_eh>0. and fp_eh<0.
-     if ( f_eh_REF*f_eh<0._SP .or. f_eh_REF*fp_eh<0._SP ) &
+     ! In case of population inversion, it may be problematic if f_eh>0. and f_eh_RES<0.
+     if ( f_eh_REF*f_eh<0._SP .or. f_eh_REF*f_eh_RES<0._SP ) &
 &      call error(' I cannot split the R and K BSE contribution.'//&
 &                 ' ACTION: Use the same occupations in K and R.')
      !

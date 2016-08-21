@@ -5,7 +5,7 @@ SC_objects = DIPOLE_rotate.o
 RT_objects = DIPOLE_magnetization.o
 #endif
 #if defined _ELPH
-ELPH_objects = X_GreenF_remap.o X_GreenF_convoluted.o
+ELPH_objects = X_GreenF_remap.o
 #endif
 objs = O_driver.o O_eels.o DIPOLE_build_parallelization_mask.o \
        DIPOLE_project_along_q.o DIPOLE_driver.o DIPOLE_build_covariants.o DIPOLE_x_real_space.o \
@@ -13,5 +13,5 @@ objs = O_driver.o O_eels.o DIPOLE_build_parallelization_mask.o \
        DIPOLE_kb_pwscf_comp.o DIPOLE_kb_init.o DIPOLE_p_matrix_elements.o DIPOLE_overlaps.o \
        DIPOLE_transverse.o DIPOLE_shifted_grids.o DIPOLE_check_shifted_grids.o  \
        X_drude.o X_pre_setup.o X_eh_setup.o X_em1.o X_os.o X_os_residuals.o X_s.o \
-       $(ELPH_objects) $(SC_objects) $(RT_objects) Build_Overlaps_Det_EQ.o \
+       $(ELPH_objects) X_GreenF_convoluted.o $(SC_objects) $(RT_objects) Build_Overlaps_Det_EQ.o \
        X_delta_part.o X_GreenF_analytical.o O_select_q_and_G.o

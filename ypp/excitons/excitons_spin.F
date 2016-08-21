@@ -46,6 +46,6 @@ subroutine exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
  !
  if (n_spinor==2) call excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
  !
- call excitons_sort_and_report(Xk,Xen,BS_R_right,BS_E,S_z=S_z,S_sq=S_sq)
+ call excitons_sort_and_report(Xen,BS_R_right,BS_E,S_z=S_z,S_sq=S_sq)
  !
 end subroutine exciton_spin   

@@ -31,14 +31,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
- use BS,             ONLY:BS_bands,BS_q,&
-&                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
-&                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
-&                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
-&                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BSE_mode,&
-&                         BSS_uses_DbGd,BSS_q0,BS_Blocks_and_Transitions_free
- use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
+&                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS
+ use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
+&                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
+&                         BSE_mode,BS_Blocks_and_Transitions_free
+ use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -56,13 +54,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
  type(X_t)     ::X_static_pp
- type(w_samp)  ::Xw,W_bss 
+ type(w_samp)  ::Xw
  !
  ! Work Space
  !
  type(X_t)         :: X_tddft,X_oscillators
  integer           :: iq,Max_G_m_G
  integer, external :: eval_G_minus_G
+ type(w_samp)      :: W_bss 
  !
  call section('*','Response Functions in Transition space')
  !=========================================================
@@ -70,6 +69,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #if defined _RT 
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
+ !
+ ! Joint DOS
+ !===========
+ BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.l_rpa_IP
+ !
+ ! Copatibility with old inputs
+ !==============================
+ if (index(BSE_mode,'causal')/=0) BSE_mode='retarded'
  !
  ! Tranferred momentum. Only Gamma now
  !=====================================
@@ -126,8 +133,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
      ! if TDDFT Fxc is obtained from K
      !
      if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
-     BSE_mode='causal'
-     call parser('FxcCausal',FXC_is_causal)
+     BSE_mode='retarded'
+     call parser('FxcRetarded',FXC_is_retarded)
      !
    endif
    !
@@ -137,14 +144,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Logicals (Drivers)
  !====================
- if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='causal'
+ if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='retarded'
  !
  BS_res_K_corr=index(BS_res_mode,'c')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BS_anti_res=index(BSE_mode,'causal')/=0
+ BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  BS_K_is_ALDA=l_alda_fxc.and.n_spin==1
  if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')
@@ -215,8 +222,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
    call X_duplicate(X_static_pp,X_tddft) ! initialize X_tddft to X_static_pp
    !
-   X_tddft%ordering='r'
-   if (FXC_is_causal) X_tddft%ordering='c'
+   X_tddft%ordering='Tr'
+   if (FXC_is_retarded) X_tddft%ordering='R'
    !
    ! If the kernel contains QP corrections I have to equally correct Xen
    !

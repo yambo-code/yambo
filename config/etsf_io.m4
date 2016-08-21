@@ -80,9 +80,11 @@ if test "x$enable_etsf_io" = "xyes" ; then
       etsf_idir="$IFLAG$try_incdir"
       ETSF_LIBS="$try_libdir/libetsf_io.a"
       #
+      if test ! -d include ; then mkdir include ; fi
       for file in `find $try_incdir \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
          cp $file include/
       done
+      if test ! -d lib ; then mkdir lib ; fi
       for file in `find $try_libdir -name '*etsf_io*.a'`; do
          cp $file lib/
       done

@@ -93,6 +93,9 @@ integer function RT_k_grid(E,k,q)
  !
  ! DbGd support
  !=============
+ !
+ RT_k_grid=0
+ !
  do ik=1,k%nibz
    ik_bz=1+sum(k%nstar(:ik-1))
    DbGd_ibz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik_bz-1))+1,sum(BZ_DbGd_nkpt(:ik_bz))/)

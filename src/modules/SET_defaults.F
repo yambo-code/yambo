@@ -23,7 +23,11 @@
 !
 subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
- use drivers
+ use drivers,    ONLY:infile_editing,l_acfdt,l_alda_fxc,l_bs_fxc,l_bse,l_bsk,l_bss,l_chi,l_cohsex,l_col_cut,l_elel_corr,&
+&                     l_elel_scatt,l_elph_corr,l_elph_Hamiltonian,l_elph_scatt,l_em1d,l_em1s,l_eval_collisions,l_gw0,&
+&                     l_HF_and_locXC,l_life,l_lrc_fxc,l_optics,l_ppa,l_rim,l_rpa_IP,l_rt_carriers_in_use,l_sc_coh,l_sc_exx,&
+&                     l_sc_fock,l_sc_hartree,l_sc_ip,l_sc_is_libDFT,l_sc_magnetic,l_sc_run,l_sc_sex,l_setup,l_td_hartree,&
+&                     l_td_hf,l_tddft,l_use_collisions,l_use_Hxc_collisions,l_W_eh,l_W_eh_cpl,l_W_eh_diag,list_dbs
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
@@ -66,15 +70,16 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
+&                     BSS_q0,Haydock_treshold,BSS_uses_DbGd,&
+&                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
+&                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
-&                     BSS_q0,Haydock_treshold,Inversion_treshold,BS_K_is_ALDA,BSS_uses_DbGd,&
-&                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BS_anti_res,BSS_perturbative_width
+&                     BS_K_is_ALDA,BSE_mode
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
-&                     FXC_is_causal,TDDFT_mode
+&                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
@@ -87,15 +92,15 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
-&                     l_SC_nl_mix,l_sc_pot_is_local
- use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
+&                     l_SC_nl_mix
+ use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_naming
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_interp_times,      &
-&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
-&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,    &
-&                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,  &
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
+&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
+&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
+&                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,              &
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
@@ -323,7 +328,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elel_scatt=.FALSE.
  l_elph_scatt=.FALSE.
  l_use_collisions=.FALSE.
- l_use_scatt_collisions=.FALSE.
  l_use_Hxc_collisions=.FALSE.
  !
  l_rt_carriers_in_use=.FALSE.
@@ -467,10 +471,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_eh_win=100._SP
  BS_res_mode='xc'
  BS_cpl_mode='none'
- BSE_mode='causal'
+ BSE_mode='retarded'
  BSK_mode=' '
  TDDFT_mode=' '
- BS_anti_res=.FALSE.
+ BSS_add_antiresonant=.FALSE.
  BS_K_dim=0
  BSS_mode=' '
  BSS_inversion_mode='pf'
@@ -484,10 +488,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
  Haydock_treshold=-0.02_SP
- Inversion_treshold= 0.01_SP
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  BSS_perturbative_width=.FALSE.
+ K_INV_PL%what     = "PLS"
+ K_INV_PL%treshold =0.5_SP
+ K_INV_EPS%what    = "EPS"
+ K_INV_EPS%treshold=0.01_SP
  !
  ! TDDFT
  !
@@ -499,7 +506,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  FXC_LRC_alpha=0._SP
  FXC_LRC_beta=0._SP
  FXC_SVD_digits=0
- FXC_is_causal=.FALSE.
+ FXC_is_retarded=.FALSE.
  !
  ! ACFDT
  !
@@ -532,7 +539,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
 #if defined _SC || defined _RT || defined _QED
  !
- call COLLISIONS_initial_naming()
+ call COLLISIONS_naming( 0 , "all" )
  !
 #endif
  !
@@ -552,7 +559,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
- l_sc_pot_is_local=.TRUE.
  !
  ! COLLISIONS I/O
  !
@@ -598,8 +604,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Scattering
  !
- RT_life_interp_times(1)=-1._SP*FS2AUT
- RT_life_interp_times(2)=-1._SP*FS2AUT
+ RT_life_extrap_times(1)=-1._SP*FS2AUT
+ RT_life_extrap_times(2)=-1._SP*FS2AUT
  !
  ! G_retarded
  !
@@ -609,6 +615,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! FITs
  !
  l_lftm_fit_stable=.FALSE.
+ l_lftm_fit_temperatures=.FALSE.
  Nfitted_lifetimes=0
  RT_Tfit_lifetimes=0._SP
  RT_Efit_lifetimes=0._SP

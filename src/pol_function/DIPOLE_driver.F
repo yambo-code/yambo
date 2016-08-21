@@ -52,6 +52,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! being a derived structure it must be mapped in the calling routine.
  !
  use drivers,        ONLY:l_optics
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+#endif
  use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning
  use electrons,      ONLY:levels,n_sp_pol
@@ -233,7 +236,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Clean up
  !
  call X_alloc('DIP_iR') 
+#if defined _PL
+ if (.not.l_photolum) call X_alloc('DIP_P')
+#else
  call X_alloc('DIP_P')
+#endif
 #if defined _RT
  if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin')
 #endif
@@ -254,7 +261,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      integer                  :: IO_ACTION
      logical                  :: write_header,read_header,reading,writing,l_vnl(1)
      !
-     if (.not.IO_dip) return 
+     if (.not.io_DIP) return 
      !
      reading=trim(read_or_write)=="read"
      writing=trim(read_or_write)=="write"
@@ -330,7 +337,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
    end subroutine DIPOLES_alloc
    !
-   !
    subroutine DIPOLES_ppredux_and_symmetrize()
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
@@ -351,9 +357,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RT
         !
         if (l_real_time.and.n_spin>1) then
-          !
           call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-          !
         endif
         !
 #endif
@@ -391,8 +395,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #if defined _RT
-            if (l_real_time.and.n_spin>1) &
-&             DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            if (l_real_time.and.n_spin>1) then
+              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            endif
 #endif
 #if defined _SC
             if (l_sc_run.or.l_real_time) &
@@ -404,8 +409,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
 #if defined _RT
-              if (l_real_time.and.n_spin>1) &
-&               DIP_spin (:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+              if (l_real_time.and.n_spin>1) then
+                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+              endif
 #endif
 #if defined _SC
               if (l_sc_run.or.l_real_time) &

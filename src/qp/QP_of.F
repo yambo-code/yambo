@@ -48,7 +48,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=30
+ integer, parameter:: tpar=31
  integer       :: ntitles,titles_order(tpar)
  real(SP)      :: values(tpar),Lifetime
  character(schlen) :: titles(tpar)
@@ -82,11 +82,12 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  titles(27) = 'Sc|Eo(meV)' 
  titles(28) = 'Width[ps]' 
  titles(29) = 'E-Eo(Ghz)' 
- titles(30) = 'Width[ns]' 
+ titles(30) = 'Width[ns]'
+ titles(31) = 'dV/V[%]' 
  !
 #if defined _QED
- ntitles=10
- titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30/)
+ ntitles=11
+ titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30,31/)
 #else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
@@ -146,7 +147,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    if (trim(QP_solver)=='g') call msg('o '//what,'# GW [Green`s Function Solver]')
    if (what==          'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
-   if (what=="qp") call msg('o '//what,'#')
+   if (what=="qp".or.what=="hf") call msg('o '//what,'#')
    do i1=2,qp%n_descs
      call msg('o '//what,'# ',trim(qp%description(i1)),INDENT=0)
    enddo
@@ -195,13 +196,16 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
          values(23)=QP_G_amplitude_integral(i1)
        endif
 #if defined _QED
-       values(29)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ
        values(30)=values(28)/1000._SP
-       values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
-       values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
-       values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV
+       if (.not.l_life) then
+         values(29)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ
+         values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
+         values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
+         values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV
+         values(31)=real(QP_dSC(i1,1))*100
+       endif
 #endif
-        if (allocated(QP_G_info)) then
+       if (allocated(QP_G_info)) then
          values(17:18)=QP_G_info(i1,1,:)*HA2EV
          values(19:20)=QP_G_info(i1,2,:)*HA2EV
          values(21:22)=QP_G_info(i1,3,:)*HA2EV

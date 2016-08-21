@@ -76,20 +76,20 @@ subroutine X_pre_setup(Xen,X)
  ! of the alpha from X
  !
  if (l_col_cut) then
-   if ( trim(X%ordering) == 'a' .or. trim(X%ordering) == 'r' )  X%ordering='t'
+   if ( trim(X%ordering) == 'a' .or. trim(X%ordering) == 'r' )  X%ordering='T'
  endif
  !
  ! Finite temperature X MUST be causal. This is because in X_eh_setup the
  ! "resonant" or "antiresonant" par of X (in the many body language) include
  ! negative poles as well. Only the sum of the two is meaningful, then.
  !
- if (Finite_Tel .or. l_rt_carriers_in_use) X%ordering="c"
+ if (Finite_Tel .or. l_rt_carriers_in_use) X%ordering="R"
  !
  ! Transfer the GF's ordering 
  !
- if ( associated(Xen%GreenF).and.     Xen%GreenF_is_causal ) X%ordering='c'
+ if ( associated(Xen%GreenF).and.     Xen%GreenF_is_causal ) X%ordering='R'
  if ( associated(Xen%GreenF).and..not.Xen%GreenF_is_causal ) then
-   if ( .not.(Finite_Tel.or.l_rt_carriers_in_use) ) X%ordering='t'
+   if ( .not.(Finite_Tel.or.l_rt_carriers_in_use) ) X%ordering='T'
    if (      (Finite_Tel.or.l_rt_carriers_in_use) ) then
      call error('Fractional occupations but GF is not retarded (causal in yambo language)')
    endif 

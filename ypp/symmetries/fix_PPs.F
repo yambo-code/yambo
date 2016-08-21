@@ -34,10 +34,11 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use LIVE_t,              ONLY:live_timing
  use X_m,                 ONLY:X_t
  use stderr,              ONLY:intc
- use wave_func,           ONLY:wf_ng,wf_igk,wf_nc_k,wf_ncx
+ use wave_func,           ONLY:wf_ng,wf_ncx
  use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nXkibz,ng_vec
  use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
+ use YPP_symm
  !
  implicit none
  !
@@ -61,7 +62,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  character(lchlen)     :: core_io_path_save,fragment_name
  integer               :: n_steps,ID
  integer               :: ierr,io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
- integer               :: ng_vec_save
+ integer               :: ng_vec_tmp
  !
  real(SP),allocatable     :: pp_kb_store(:,:,:,:,:)
  real(SP),allocatable     :: pp_kbd_store(:,:,:,:,:)
@@ -111,13 +112,13 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  if(io_KB_abinit_err==0)   call section('=',"PseudoPotentials KB (Abinit)")
  if(io_KB_pwscf_err ==0)   call section('=',"PseudoPotentials KB (PWscf) ")
- if(io_Vnl_err==0)        call section('=',"PseudoPotentials old (PWscf)")
+ if(io_Vnl_err==0)         call section('=',"PseudoPotentials old (PWscf)")
  !
  ! Read PP DBs
  !
  if(io_KB_abinit_err==0) then
    !
-   ng_vec_save=ng_vec
+   ng_vec_tmp=ng_vec
    ng_vec=ng_closed
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
@@ -141,14 +142,13 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
    pp_kbs_store=pp_kbs
    !
-   ng_vec=ng_vec_save
+   ng_vec=ng_vec_tmp
    !
  endif
  !
  if(io_KB_pwscf_err==0) then
    !
-   !ng_vec_save=ng_vec
-   !ng_vec=ng_closed
+   wf_ncx=wf_ncx_save
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    io_KB_pwscf_err=io_KB_pwscf(ID) 
@@ -214,18 +214,22 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
    if(io_KB_pwscf_err==0) then
      !
-     call msg('s',':: Copying existing database ...')
-     !
-     call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp_pwscf",trim(more_io_path)//"/SAVE",ierr)
-     call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp_pwscf",trim(more_io_path)//"/SAVE",ierr)
-     do ik=1,k_save%nibz
-       fragment_name='ns.kb_pp_pwscf_fragment_'//trim(intc(ik))
-       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
-       fragment_name='s.kb_pp_pwscf_fragment_'//trim(intc(ik))
-       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
-     enddo
-     !
-     call msg('l','done')
+     if (wf_ncx_save==wf_ncx_new) then
+       !
+       call msg('s',':: Copying existing database ...')
+       !
+       call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp_pwscf",trim(more_io_path)//"/SAVE",ierr)
+       call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp_pwscf",trim(more_io_path)//"/SAVE",ierr)
+       do ik=1,k_save%nibz
+         fragment_name='ns.kb_pp_pwscf_fragment_'//trim(intc(ik))
+         call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
+         fragment_name='s.kb_pp_pwscf_fragment_'//trim(intc(ik))
+         call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
+       enddo
+       !
+       call msg('l','done')
+       !
+     endif
      !
    endif
    !
@@ -267,6 +271,38 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      pp_kb=0._SP
      pp_kbd=0._SP
      !
+     if (wf_ncx_new/=wf_ncx_save) then
+       !
+       wf_ncx=wf_ncx_new
+       !
+       call PP_free()
+       call PP_alloc_pwscf()
+       !
+       pp_kbs=pp_kbs_store
+       !
+       call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+       io_KB_pwscf_err=io_KB_pwscf(ID)
+       !
+       call live_timing('PPs comp. reduction.',k_save%nibz)
+       !
+       do ik=1,k_save%nibz
+         !
+         ik_save=kpoints_map(1,ik)
+         !
+         pp_kb(:,:,:,:) =pp_kb_store(:wf_ncx_new,:,:,:,ik_save)
+         pp_kbd(:,:,:,:)=pp_kbd_store(:wf_ncx_new,:,:,:,ik_save)
+         !
+         call io_control(ACTION=OP_APP_WR_CL,SEC=(/ik+1/),ID=ID)
+         io_KB_pwscf_err=io_KB_pwscf(ID)
+         !
+         call live_timing(steps=1)
+         !
+       enddo
+       !
+       call live_timing()
+       !
+     endif
+     !
      if(n_steps>0) call live_timing('PPs rotation',n_steps)
      !
      do ik=k_save%nibz+1,k%nibz
@@ -274,10 +310,10 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        ik_save=kpoints_map(1,ik)
        is=kpoints_map(2,ik)
        !
-       do ic=1,wf_nc_k(ik_save)
-         ig_rot=g_rot(is,wf_igk(ic,ik_save))
-         do ic_rot=1,wf_nc_k(ik)
-           ig=wf_igk(ic_rot,ik)
+       do ic=1,wf_nc_k_reduced(ik_save)
+         ig_rot=g_rot(is,wf_igk_reduced(ic,ik_save))
+         do ic_rot=1,wf_nc_k_new(ik)
+           ig=wf_igk_new(ic_rot,ik)
            if(ig==ig_rot) exit
          enddo
          !
@@ -345,8 +381,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      call PP_free()
      call PP_alloc_abinit()
-     pp_kb=0.
-     pp_kbd=0.
+     pp_kb=0._SP
+     pp_kbd=0._SP
      pp_kbs=pp_kbs_store
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
@@ -372,8 +408,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      call PP_free()
      call PP_alloc_pwscf()
-     pp_kb=0.
-     pp_kbd=0.
+     pp_kb=0._SP
+     pp_kbd=0._SP
      pp_kbs=pp_kbs_store
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
@@ -414,6 +450,10 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    call msg('l','done')
    !
  end select
+ !
+ deallocate(wf_nc_k_reduced,wf_igk_reduced)
+ deallocate(wf_nc_k_save,   wf_igk_save   )
+ deallocate(wf_nc_k_new,    wf_igk_new    )
  !
  core_io_path=core_io_path_save
  !

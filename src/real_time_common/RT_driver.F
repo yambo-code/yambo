@@ -35,7 +35,7 @@ subroutine RT_driver(E,X,k,q)
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
- use SC,             ONLY:SC_potential,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,magn_n
+ use SC,             ONLY:SC_potential,WF_G_max,WF_Go_indx,rho_n,magn_n
  use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
 &                         NE_i_start_time,RT_carriers_object,TIME_adjust,RT_apply
  use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
@@ -188,28 +188,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if(l_use_Hxc_collisions.or.l_elel_scatt) then
-   !
-   if (io_COLLs) then
-     !
-     if (l_use_collisions) then
-       !
-       call COLLISIONS_load(.FALSE.)
-       !
-     else
-       !
-       if (l_elel_scatt) then
-         call warning('COLLISIONs database missing/wrong. E-E scattering switched off.')
-         l_elel_scatt=.FALSE.
-       endif
-       !
-       if (.not.l_sc_pot_is_local) call error('COLLISIONs database missing.')
-       !
-     endif
-     !
-   endif
-   !
- endif
+ if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
  !
  ! Reference lifetimes and/or G_lesser
  !=====================================
@@ -285,13 +264,10 @@ subroutine RT_driver(E,X,k,q)
    !==========================================
    ! (evaluated also in RT_integrator when and induced field is included)
    call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot)
-   call RT_output('cur pol magn',TIME=NE_time*AUT2FS)
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
-   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
-   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================
@@ -308,14 +284,17 @@ subroutine RT_driver(E,X,k,q)
    ! BGR
    !=======================================
    call RT_BGR(dG_lesser(:,:,:,i_MEM_collision),E,k)
-   call RT_output('BGR',TIME=NE_time*AUT2FS)
    !
    ! COLLISIONS@NE_time
    !####################
    !
-   ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
-   !============================================================
-   call RT_Collision(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
+   ! Calculate the RT Hamiltonian Ho_plus_Sigma
+   !============================================
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
+   !
+   ! Calculate all relaxation and dissipation terms
+   !===============================================
+   call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time,.false.)
    !
    ! Write DBs
    !===========
@@ -324,6 +303,13 @@ subroutine RT_driver(E,X,k,q)
    call RT_databases_IO( )
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
+   !
+   ! OUTPUT(s)
+   !###########
+   call RT_output('BGR',TIME=NE_time*AUT2FS)
+   call RT_output('cur pol magn',TIME=NE_time*AUT2FS)
+   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
+   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
    !
    ! Mean Carrier Lifetimes
    !========================

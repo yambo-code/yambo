@@ -94,7 +94,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer           :: ik,i_sp_pol,ic_min
+ integer           :: ik,i_sp_pol
  logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3)
 #if defined _SC
  logical           :: l_evaluating_em1s
@@ -156,10 +156,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  if (Dipole_bands_ordered.or.Dipole_Energy_treshold<0._SP) then
    X%ib_lim(1)=Xen%nbm
    X%ib_lim(2)=Xen%nbf+1
-   !
-   ic_min=X%ib_lim(2)
    if (l_X_terminator) X%ib_lim(2)=X%ib(1)
-   ! 
  else
    X%ib_lim(1)=X%ib(2)
    X%ib_lim(2)=X%ib(1)

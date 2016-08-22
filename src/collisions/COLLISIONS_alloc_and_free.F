@@ -169,6 +169,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    subroutine local_alloc_and_free(COLL,COLL_grp)
      type(COLLISIONS_group)   :: COLL_grp
      type(COLLISIONS_element) :: COLL(COLL_grp%N)
+     if(COLL_grp%N==0) return
      mem_size=0
      do J=COLL_range(1),COLL_range(2)
        !

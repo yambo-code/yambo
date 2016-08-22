@@ -25,7 +25,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  !
  use pars,          ONLY:SP
  use linear_algebra,ONLY:INV,DIAGO,USE_LK,SVD_INV,USE_SLK,min_cpu_block_size,LINEAR_ALGEBRA_WS_clean_up
- use com,           ONLY:warning
+ use com,           ONLY:msg,warning
 #if defined _SCALAPACK
  use parallel_m,    ONLY:PAR_COM_INV,PAR_COM_DIAGO,PAR_COM_INV_INDEX,PAR_COM_DIAGO_INDEX
  use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_POOL_clean_up,&
@@ -100,6 +100,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
      !
      call PARALLEL_startup( ORTHO, POOL, M_slk, N, M )
      !
+     call msg('s','[LA] PARALLEL inversion (SLK) using grid: ',ORTHO%grid(1:2))
      call PARALLEL_inversion( ORTHO, POOL, M_slk, N, M )
      !
    else if (idriver==DIAGO) then
@@ -107,6 +108,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
      call PARALLEL_startup(  ORTHO, POOL, M_slk    , N, M )
      call PARALLEL_startup(  ORTHO, POOL, EIGEN_slk, N, M )
      !
+     call msg('s','[LA] PARALLEL diag (SLK) using grid: ',ORTHO%grid(1:2))
      call PARALLEL_diagonalization( ORTHO, POOL, M_slk, EIGEN_slk, N, M ,E_real )
      !
    endif
@@ -125,11 +127,17 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
    !
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
-   if (idriver==SVD_INV) call SERIAL_SVD_inversion(N,M,SVD_digits)
+   if (idriver==SVD_INV) then
+     call msg('s','[LA] SERIAL SVD inversion (LK)')
+     call SERIAL_SVD_inversion(N,M,SVD_digits)
+   endif
    !
    ! ###> SERIAL INVERSION 
    !
-   if (idriver==INV)  call SERIAL_inversion(N,M,det_,present(det))
+   if (idriver==INV) then
+     call msg('s','[LA] SERIAL inversion (LK)')
+     call SERIAL_inversion(N,M,det_,present(det))
+   endif
    !
    ! ###> SERIAL DIAGONALIZATION
    !
@@ -138,10 +146,12 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
      if (present(E_cmpl)) then
        !
        !... non-Hermitian case
+       call msg('s','[LA] SERIAL diagonalization (LK)')
        call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
      else
        !
        !... Hermitian case
+       call msg('s','[LA] SERIAL Herm. diagonalization (LK)')
        call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
      endif
      !

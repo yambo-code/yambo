@@ -62,7 +62,7 @@ SUBROUTINE SLK_setup( idriver, ORTHO, POOL, COMM, INDEX_comm, slk_error)
    return
  endif
  !
- if (idriver==INV)   ch="Invertion"
+ if (idriver==INV)   ch="Inversion"
  if (idriver==DIAGO) ch="Digonalization"
  !
  call msg("lr",'[SLK-'//trim(ch)//']  Pools        :',n_pools)

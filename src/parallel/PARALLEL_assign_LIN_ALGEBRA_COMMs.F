@@ -26,7 +26,9 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver)
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,&
 &                        PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization,&
 &                        PAR_COM_Q_A2A,PAR_COM_Q_INDEX
+#if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX
+#endif
  use linear_algebra,ONLY:INV,DIAGO
  !
  implicit none

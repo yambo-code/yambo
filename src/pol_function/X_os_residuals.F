@@ -89,7 +89,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    ikp= Xk%sstar(ikpbz,1)
    isp= Xk%sstar(ikpbz,2)
    !
-   l_X_term_vv = (ic>=X%ib(1).and.ic<=Xen%nbm)
+   l_X_term_vv = (l_X_terminator.and.ic>=X%ib(1).and.ic<=Xen%nbm)
    ! 
    !
    ! Note the renormalization of the Z_eh_occ=f(1-f)*Z factor
@@ -106,7 +106,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin)) &
    &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
-   if (l_X_terminator.and.l_X_term_vv) then
+   if (l_X_term_vv) then
      Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin) &
    &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    endif  
@@ -162,7 +162,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    ! add terminator specific corrections
    ! (ic is running in valence)
    !
-   if (l_X_terminator.and.l_X_term_vv.and.iv==ic) then 
+   if (l_X_term_vv.and.iv==ic) then 
      !
      Xo_scatt%is = (/iv,ik,1,i_spin/)
      Xo_scatt%os = (/iv,ik,1,i_spin/)

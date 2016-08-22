@@ -231,7 +231,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
    !
    if(Drude_pole) then
+     !$omp critical
      Xo(1,1,:)=Xo(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
+     !$omp end critical
      call live_timing(steps=1)
      cycle
    endif

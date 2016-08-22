@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
+subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no_occupations)
  !
  ! Compute the GreenF in frequency space starting from it analytical
  ! expression as the Fourier Transform of a Lorentzian
  !
  use pars,       ONLY:SP,cZERO,cONE
  use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs
- use BS,         ONLY:BSS_uses_DbGd
+ use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
                       BZ_DbGd_ipol_weight,BZ_DbGd_kpts
  use R_lattice,  ONLY:qindx_X,bz_samp,q_pt,nqibz
@@ -42,6 +42,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  type(bz_samp):: Xk
  complex(SP)  :: GreenF(Xw%n_freqs)
  character(*) :: ordering,space
+ logical      :: no_occupations
  !
  !Work Space
  !
@@ -83,8 +84,9 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  ! In K_inversion_Lo the occupations and the Z_factor are not included.
  ! Thus I have to multiply by them the Green function
  !
- if( K_inv_run ) ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik ,i_spin) )/spin_occ*real(Z_)
- if( X_os_run  ) ffac = 1._SP
+ if( K_inv_run      ) ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik ,i_spin) )/spin_occ*real(Z_)
+ if( X_os_run       ) ffac = 1._SP
+ if( no_occupations ) ffac = 1._SP
  !
  if (X_os_run .and.(.not.use_X_DbGd.or.ic>BZ_DbGd_nbands).or. &
 &    K_inv_run.and.(.not.BSS_uses_DbGd)                       ) then
@@ -104,6 +106,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  !
  if( K_inv_run ) cg_ffac = spin_occ/real(Z_)
  if( X_os_run  ) cg_ffac = Xen%f(iv,ikp,i_spin)*( spin_occ-Xen%f(ic,ik ,i_spin) )
+ !
+ ! 4/8/2016. AM. Note that, in the K case, the anti-res part of Lo uses a w+\Omega (and not -\Omega) simply
+ ! because this routine is always called using the i_res \Omega. Indeed 
+ !
+ !  \Omega_{anti-res} = -\Omega_{res}
  !
  allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
  allocate(use_kpt( BZ_DbGd_nkpt(ikbz), BZ_DbGd_nkpt(ikpbz) ) )
@@ -127,8 +134,9 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
      ikp_rand   = BZ_DbGd_table(ikpbz,i2,1)
      ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
      !
-     if( X_os_run  ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)*f_h)/cg_ffac
-     if( K_inv_run ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac
+     if( X_os_run       ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)*f_h)/cg_ffac
+     if( K_inv_run      ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac
+     if( no_occupations ) ffac = 1._SP
      !
      ffac=ffac*weight1*weight2
      pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_)

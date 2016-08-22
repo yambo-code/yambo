@@ -28,8 +28,8 @@ subroutine K_kerr_IP(iq,w)
  use drivers,        ONLY:l_rpa_IP
  use X_m,            ONLY:Epsilon_ij,global_gauge
  use KERR,           ONLY:DIP_projected_r90,KERR_alloc,B_Hall
- use BS,             ONLY:BSS_n_freqs,BS_T_grp,BS_nT_grps,&
-&                         BS_K_coupling,BS_anti_res,Co_factor
+ use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
+ use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
  use electrons,      ONLY:E_SOC_nbands
  use R_lattice,      ONLY:q_norm
  use drivers,        ONLY:l_anomalous_Hall
@@ -107,7 +107,7 @@ subroutine K_kerr_IP(iq,w)
      !
      do i_pert_SOC=1,n_SOC
        Epsilon_ij(:,3)=Epsilon_ij(:,3)-  res/(w(:)-E_plus_W(i_pert_SOC))
-       if (BS_anti_res.or.BS_K_coupling) then
+       if (BSS_add_antiresonant.or.BS_K_coupling) then
          Epsilon_ij(:,3)=Epsilon_ij(:,3)+conjg(res)/(w(:)+conjg(E_plus_W(i_pert_SOC)))
        endif
        !
@@ -130,7 +130,7 @@ subroutine K_kerr_IP(iq,w)
  call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  !
- if (BS_anti_res.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
+ if (BSS_add_antiresonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
  if(trim(global_gauge)=='length'   ) then
    B_Hall(1)=B_Hall(1)*Co_factor/q_norm(1)**2

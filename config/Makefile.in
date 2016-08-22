@@ -237,7 +237,7 @@ clean_all:
 	
 # Functions
 define make_message
- echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
+ echo;echo "YAMBO" @SVERSION@.@SSUBLEVEL@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
  echo  " [stable] all";\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\

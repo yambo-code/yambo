@@ -242,13 +242,13 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if( associated(Xen%GreenF) ) then
      call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
    else
-     call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
+     call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
    endif
 #else
    !
    ! GPL_EXCLUDE_END
    !
-   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
+   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
    !
    ! GPL_EXCLUDE_START
    !

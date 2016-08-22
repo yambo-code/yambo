@@ -24,7 +24,8 @@
 integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)  
  !
  use pars,          ONLY:SP
- use BS,            ONLY:BS_identifier,BSS_q0
+ use BS,            ONLY:BS_identifier
+ use BS_solvers,    ONLY:BSS_q0
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
 &                        io_bulk,io_status,io_sec,io_header,&
 &                        read_is_on,write_is_on

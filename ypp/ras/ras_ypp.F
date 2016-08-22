@@ -86,7 +86,7 @@
  case(1) ! Resonant, anti resonant, default BSE
    call msg('rs','Processing alpha data for resonant case: scaling by 4*pi/d_cell')
    forall(i=1:nw) eps_x(i) = eps_x(i)*sscale
- case(2) ! Causal, time-ordered, default RPA, RAS
+ case(2) ! Retarded, time-ordered, default RPA, RAS
    sscale = 4.0_SP*PI/d_cellin
    forall(i=1:nw) eps_x(i) = 1.0_SP/( 1.0_SP - eps_x(i)*sscale )
    call msg('rs','Processing alpha data for causal: scaling by 4*pi/d_cell and inverting')

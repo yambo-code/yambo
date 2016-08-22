@@ -30,13 +30,13 @@ integer function variables_SC(ID,local_description,what)
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
 &                         SC_xc_functional,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,l_sc_pot_is_local
- use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,l_sc_V_is_local
+ use IO_m,           ONLY:io_elemental,io_status,IO_INCOMPATIBLE_VAR
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
- use global_XC,      ONLY:SC_EXX,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC
+ use global_XC,      ONLY:SC_EXX,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC,SC_HARTREE
  !
  implicit none
  !
@@ -46,8 +46,7 @@ integer function variables_SC(ID,local_description,what)
  !
  ! Work Space
  !
- integer               :: SC_kind_disk,SC_perturbation_disk,&
-&                         io_status_save,i_desc
+ integer               :: SC_kind_disk,SC_perturbation_disk,io_status_save,i_desc,MENU_
  logical               :: CHECK_,l_MP
  !
  l_MP =what=="MP"
@@ -56,6 +55,7 @@ integer function variables_SC(ID,local_description,what)
  local_description=' '
  !
  CHECK_=.TRUE.
+ MENU_ =0
  if (l_NSC_shot) CHECK_=.FALSE.
  !
  !
@@ -89,13 +89,12 @@ integer function variables_SC(ID,local_description,what)
  !
  io_status_save=io_status(ID)
  !
- !
  ! LOCAL_ITER_BANDS_MIX
  !
  call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=6,MENU=0) 
  !
  i_desc=i_desc+1
- call io_elemental(ID,L0=l_sc_pot_is_local,&
+ call io_elemental(ID,L0=l_sc_V_is_local,&
 &     VAR=' [SC] Local Potential            :',DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=it_now,DB_I0=it_now,&
@@ -112,18 +111,20 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,R0=SC_band_mixing,&
 &     VAR=' [SC] Bands mixing               :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (any((/SC_kind_disk==SC_EXX,SC_kind_disk==SC_EXXC,SC_kind_disk==SC_FOCK,SC_kind_disk==SC_SEX,SC_kind_disk==SC_COHSEX/))) then
+ if (any(SC_kind_disk==(/SC_EXX,SC_EXXC,SC_FOCK,SC_SEX,SC_COHSEX/)).or.&
+&    any(SC_kind_disk-SC_Hartree==(/SC_EXX,SC_EXXC,SC_FOCK,SC_SEX,SC_COHSEX/))) then
    call io_elemental(ID,VAR="SIGMAx_G",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_ng_Sx,&
 &       VAR=' [SC] Sx RL components           :',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
- if ( SC_kind_disk==SC_COHSEX .or. SC_kind_disk==SC_COH .or. SC_kind_disk==SC_SEX ) then
+ if (any(SC_kind_disk==(/SC_COH,SC_SEX,SC_COHSEX/)).or.&
+&    any(SC_kind_disk-SC_Hartree==(/SC_COH,SC_SEX,SC_COHSEX/))) then
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    call io_elemental(ID,VAR="X_bands_size",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,I1=SC_X_bands,&
@@ -145,18 +146,16 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,L0=l_sc_diagonal,&
 &     VAR=' [SC] Diagonal approximation     :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
- if (ver_is_gt_or_eq(ID,revision=2877)) then
-   if (all((/SC_kind_disk/=SC_FOCK,SC_kind_disk/=SC_COHSEX,SC_kind_disk/=SC_COH,SC_kind_disk/=SC_SEX/)).or.l_MP) then
-     call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
-     i_desc=i_desc+1
-     call io_elemental(ID,I0=SC_fft_size,&
-&         VAR=' [SC] FFT mesh points            :',CHECK=.true.,OP=(/"=="/),&
-&         DESCRIPTION=local_description(i_desc))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   endif
+ if (all(SC_kind_disk/=(/SC_FOCK,SC_COHSEX,SC_COH,SC_SEX/)).or.&
+&    all(SC_kind_disk-SC_HARTREE/=(/SC_FOCK,SC_COHSEX,SC_COH,SC_SEX/)).or.l_MP) then
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
+   i_desc=i_desc+1
+   call io_elemental(ID,I0=SC_fft_size,&
+&       VAR=' [SC] FFT mesh points            :',CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
  endif
  !
  if (io_status_save==0.and.io_status(ID)<0) then
@@ -164,21 +163,11 @@ integer function variables_SC(ID,local_description,what)
    if (l_NSC_shot) io_status(ID)=0
  endif
  !
- if (.not.ver_is_gt_or_eq(ID,revision=2877)) then
-   if (all((/SC_kind_disk/=SC_FOCK,SC_kind_disk/=SC_COHSEX,SC_kind_disk/=SC_COH,SC_kind_disk/=SC_SEX/)).or.l_MP) then
-     call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
-     i_desc=i_desc+1
-     call io_elemental(ID,I0=SC_fft_size,&
-&         VAR=' [SC] FFT mesh points            :',CHECK=.true.,OP=(/"=="/),&
-&         DESCRIPTION=local_description(i_desc))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   endif
- endif
- !
 #if defined _MAGNETIC
  if (any((/SC_perturbation_disk==EXT_B_LANDAU,SC_perturbation_disk==EXT_B_PAULI,&
 &          SC_perturbation_disk==EXT_B_MAGNETISM/))) then
    !
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    call io_elemental(ID,VAR="MAG_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,CH0=MAG_hamiltonian_type, &
@@ -214,11 +203,11 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,CH0=MAG_gauge,&
 &       VAR=' [MAG] Gauge                     :',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
  endif
  !
 #endif
+ call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  variables_SC=io_status(ID)
  n_SC_descriptions=i_desc

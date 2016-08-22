@@ -127,7 +127,7 @@ module X_m
    real(SP)   :: ppaE
    complex(SP):: Wd
    logical          :: Vnl_included
-   character(1)     :: ordering
+   character(2)     :: ordering
    character(schlen):: f_xc
  end type
  !
@@ -137,7 +137,7 @@ module X_m
      integer              :: nw 
      complex(SP)          :: wv(nw)
      logical              :: be_verbose
-     character(1)         :: ordering
+     character(2)         :: ordering
      complex(SP) ,optional:: eps(nw),eel(nw)
    end function
  end interface
@@ -267,7 +267,7 @@ module X_m
      X%Wd=cZERO
      X%cg_percentual=100._SP
      X%ppaE=1._SP
-     X%ordering="t"       
+     X%ordering="T"
      X%f_xc="none"       
    end subroutine
    !

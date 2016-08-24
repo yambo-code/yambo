@@ -45,6 +45,7 @@ subroutine PARALLEL_startup(ORTHO, POOL, M_slk, N, M )
  ! Work Space
  !
  integer   :: lld,N_blc,nprow,npcol,myrow,mycol
+ integer   :: i,j
  !
  ! init global blacs grid
  !
@@ -87,6 +88,14 @@ subroutine PARALLEL_startup(ORTHO, POOL, M_slk, N, M )
  M_slk%cols=(/mycol*N_blc+1,min(mycol*N_blc+N_blc,N)/)
  !
  WS%m1_cmplx=0.0_SP
- WS%m1_cmplx=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
+ !WS%m1_cmplx=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
+ !
+!$omp parallel do default(shared), private(i,j), collapse(2)
+ do j=M_slk%cols(1),M_slk%cols(2)
+ do i=M_slk%rows(1),M_slk%rows(2)
+   WS%m1_cmplx(i-M_slk%rows(1)+1,j-M_slk%cols(1)+1)=M(i,j)
+ enddo
+ enddo
+!$omp end parallel do
  !
 end subroutine 

@@ -38,7 +38,7 @@ module linear_algebra
  !
  ! Common Work Space
  !
- type LLAGEBRA_WS
+ type LALGEBRA_WS
    !
    real(SP),    allocatable :: v_real(:)
    real(SP),    allocatable :: vp_real(:)
@@ -51,9 +51,9 @@ module linear_algebra
    integer                  :: i_fail
    integer                  :: dim
    !
- end type LLAGEBRA_WS
+ end type LALGEBRA_WS
  !
- type(LLAGEBRA_WS) :: WS
+ type(LALGEBRA_WS) :: WS
  !
  public :: LU_factorization
  public :: LU_inversion

@@ -27,24 +27,27 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !                   A X = B
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
- use pars,          ONLY:SP
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS
+ use pars,           ONLY:SP
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
  !
  implicit none
  !
  integer     :: n,nrhs
  complex(SP) :: A(n,n),B(n,nrhs)
  !
+ character(64) :: subname="SERIAL_lin_system"
+ !
  WS%dim=n
  if (allocated(WS%v_int)) deallocate(WS%v_int)
  allocate(WS%v_int(WS%dim))
  !
 #if defined _DOUBLE
- CALL DGESV(n,nrhs,A,n,WS%v_int,B,n,WS%i_fail)
+ CALL ZGESV(n,nrhs,A,n,WS%v_int,B,n,WS%i_fail)
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'ZGESV failed')
 #else
- CALL SGESV(n,nrhs,A,n,WS%v_int,B,n,WS%i_fail)
+ CALL CGESV(n,nrhs,A,n,WS%v_int,B,n,WS%i_fail)
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'CGESV failed')
 #endif
  !
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues (SD)','failed')
  !
 end subroutine

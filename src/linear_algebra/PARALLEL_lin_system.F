@@ -55,11 +55,11 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
    allocate(WS%v_int(WS%dim))
    !
 #if defined _DOUBLE
-   CALL PDGESV( n, nrhs, WS%m1_cmplx, 1, 1, A_slk%desc, WS%v_int, WS%m2_cmplx, 1, 1, B_slk%desc, WS%i_fail)
-   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PDGESV')
+   CALL PZGESV( n, nrhs, WS%m1_cmplx, 1, 1, A_slk%desc, WS%v_int, WS%m2_cmplx, 1, 1, B_slk%desc, WS%i_fail)
+   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZGESV')
 #else
-   CALL PSGESV( n, nrhs, WS%m1_cmplx, 1, 1, A_slk%desc, WS%v_int, WS%m2_cmplx, 1, 1, B_slk%desc, WS%i_fail)
-   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PSGESV')
+   CALL PCGESV( n, nrhs, WS%m1_cmplx, 1, 1, A_slk%desc, WS%v_int, WS%m2_cmplx, 1, 1, B_slk%desc, WS%i_fail)
+   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCGESV')
 #endif
    !
    ! gather the solution

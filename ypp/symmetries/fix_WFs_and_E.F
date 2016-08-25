@@ -31,7 +31,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
 &                              OP_RD_CL,RD_CL,RD,frag_WF
  use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
- use electrons,           ONLY:levels,E_reset,n_spin
+ use electrons,           ONLY:levels,E_reset,n_spin,n_spinor
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz
@@ -256,7 +256,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
            !
          enddo
          !
-         forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
+         if(n_spinor==2) then
+           forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
+         endif
          if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
          !
          wf_disk(1,ib_disk,1:wf_ncx_new,:)= real(wf_tmp(:wf_ncx_new,:))

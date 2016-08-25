@@ -23,8 +23,9 @@
 !
 subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
- use pars,          ONLY:SP
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,M_eigenvalues
+ use pars,           ONLY:SP
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,M_eigenvalues, &
+&                         LINEAR_ALGEBRA_WS_clean_up
  !
  implicit none
  !
@@ -43,5 +44,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  call M_eigenvalues(n,M,E,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues Hermitian (SD)','failed')
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
 end subroutine

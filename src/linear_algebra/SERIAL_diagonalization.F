@@ -32,7 +32,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !  where V_left(j)**H denotes the conjugate transpose of V_left(j).
  !
  use pars,          ONLY:SP
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,M_eigenvalues
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,M_eigenvalues,LINEAR_ALGEBRA_WS_clean_up
  !
  implicit none
  !
@@ -50,5 +50,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  call M_eigenvalues(n,M,E,V_left,V_right,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues (SD)','failed')
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
 end subroutine

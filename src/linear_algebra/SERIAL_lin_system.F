@@ -28,7 +28,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
  use pars,           ONLY:SP
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
  !
  implicit none
  !
@@ -49,5 +49,6 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'CGESV failed')
 #endif
  !
+ call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
 end subroutine

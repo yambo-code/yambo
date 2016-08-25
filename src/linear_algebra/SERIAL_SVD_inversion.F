@@ -23,9 +23,10 @@
 !
 subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  !
- use pars,          ONLY:SP,cZERO
- use wrapper,       ONLY:M_by_M
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,SV_decomposition
+ use pars,           ONLY:SP,cZERO
+ use wrapper,        ONLY:M_by_M
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,SV_decomposition,&
+&                         LINEAR_ALGEBRA_WS_clean_up
  !
  implicit none
  !
@@ -59,5 +60,7 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  enddo
  !
  call M_by_M('c','c',n,WS%m1_cmplx,WS%m2_cmplx,M)
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
 end subroutine

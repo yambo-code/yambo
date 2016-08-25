@@ -25,13 +25,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl
  !
  use pars,          ONLY:SP
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,USE_LK,USE_SLK,min_cpu_block_size,&
-&                        LINEAR_ALGEBRA_WS_clean_up
+&                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error
  use com,           ONLY:msg,warning
 #if defined _SCALAPACK
  use parallel_m,    ONLY:PAR_COM_INV,PAR_COM_DIAGO,PAR_COM_INV_INDEX,PAR_COM_DIAGO_INDEX,&
 &                        PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization
  use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_POOL_clean_up,&
-&                        SLK_ORTHO_GROUP_clean_up,SLK_matrix
+&                        SLK_ORTHO_GROUP_clean_up,SLK_matrix,SLK_matrix_reset
 #endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -74,7 +74,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl
  !
 #if defined _SCALAPACK 
  lib_in_use=USE_SLK
- if (idriver==INV) then
+ if (idriver==INV.or.idriver==LIN_SYS) then
    Ncpu_in_use=PAR_COM_INV%n_CPU
    if (PARALLEL_cpu_mat_inversion>0) Ncpu_in_use=min(Ncpu_in_use,PARALLEL_cpu_mat_inversion)
  endif
@@ -89,10 +89,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl
  if (present(lib_in)) then
    lib_in_use=lib_in
  endif
- if (idriver==SVD_INV.or.idriver==DIAGO.or.idriver==LIN_SYS) lib_in_use=USE_LK 
+ if (idriver==SVD_INV.or.idriver==DIAGO) lib_in_use=USE_LK 
  !
  if (Ncpu_in_use==1) lib_in_use=USE_LK 
  if (N/sqrt(real(Ncpu_in_use))<min_cpu_block_size) lib_in_use=USE_LK 
+ !
+ if (idriver==LIN_SYS.and..not.present(B)) &
+&   call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','B must be present')
  !
 #if defined _SCALAPACK
  !
@@ -100,8 +103,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl
  !
  if (lib_in_use==USE_SLK) then
    !
-   if (idriver==INV)   call SLK_setup( idriver, Ncpu_in_use, ORTHO, POOL, PAR_COM_INV,   PAR_COM_INV_INDEX,   slk_error)
-   if (idriver==DIAGO) call SLK_setup( idriver, Ncpu_in_use, ORTHO, POOL, PAR_COM_DIAGO, PAR_COM_DIAGO_INDEX, slk_error)
+   if (idriver==INV)     call SLK_setup( idriver, Ncpu_in_use, ORTHO, POOL, PAR_COM_INV,   PAR_COM_INV_INDEX,   slk_error)
+   if (idriver==LIN_SYS) call SLK_setup( idriver, Ncpu_in_use, ORTHO, POOL, PAR_COM_INV,   PAR_COM_INV_INDEX,   slk_error)
+   if (idriver==DIAGO)   call SLK_setup( idriver, Ncpu_in_use, ORTHO, POOL, PAR_COM_DIAGO, PAR_COM_DIAGO_INDEX, slk_error)
    ! 
    if (slk_error<0) then 
      lib_in_use=USE_LK
@@ -121,15 +125,16 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl
      !
    else if (idriver==DIAGO) then
      !
-     call PARALLEL_distribute( ORTHO, POOL, M_slk    , N, M )
+     call PARALLEL_distribute( ORTHO, POOL, M_slk,     N, M )
      call PARALLEL_distribute( ORTHO, POOL, EIGEN_slk, N, M )
      !
      call msg('s','[LA] PARALLEL diag (SLK) using grid: ',ORTHO%grid(1:2))
-     call PARALLEL_diagonalization( ORTHO, POOL, M_slk, EIGEN_slk, N, M ,E_real )
+     call PARALLEL_diagonalization( ORTHO, POOL, M_slk, EIGEN_slk, N, M, E_real )
      !
    else if (idriver==LIN_SYS) then
      !
      call PARALLEL_distribute( ORTHO, POOL, M_slk, N, M )
+     call PARALLEL_distribute( ORTHO, POOL, B_slk, N, B )
      !
      call msg('s','[LA] PARALLEL linear system solution (SLK) using grid: ',ORTHO%grid(1:2))
      call PARALLEL_lin_system( ORTHO, POOL, M_slk, B_slk, N, SIZE(B,2), B )
@@ -138,7 +143,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl
    !
    call SLK_POOL_clean_up(POOL)
    call SLK_ORTHO_GROUP_clean_up(ORTHO)
-   call LINEAR_ALGEBRA_WS_clean_up( ) 
+   call LINEAR_ALGEBRA_WS_clean_up(WS) 
+   !
+   call SLK_matrix_reset(M_slk)
+   call SLK_matrix_reset(B_slk)
+   call SLK_matrix_reset(EIGEN_slk)
    !
  endif
  !
@@ -187,7 +196,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl
      call SERIAL_lin_system(N,SIZE(B,2),M,B)
    endif
    !
-   call LINEAR_ALGEBRA_WS_clean_up( ) 
+   call LINEAR_ALGEBRA_WS_clean_up(WS) 
    !
  endif
  !

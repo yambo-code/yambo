@@ -23,7 +23,8 @@
 !
 module SLK_m
  !
- use parallel_m, ONLY  : MPI_comm
+ use pars,       ONLY: SP
+ use parallel_m, ONLY: MPI_comm
  !
  implicit none
  !
@@ -74,6 +75,9 @@ module SLK_m
    integer :: info     = 0
    integer :: rows(2)  = 0
    integer :: cols(2)  = 0
+   integer :: nrows    = 0
+   integer :: ncols    = 0
+   complex(SP), allocatable :: blc(:,:)
  end type SLK_matrix 
  !
  ! Specific SLK worlds ...
@@ -92,6 +96,28 @@ module SLK_m
  type(MPI_comm),SAVE    :: SLK_COM_A2A(2)
  !
  contains
+   !
+   subroutine SLK_matrix_reset(M_slk,nrows,ncols)
+     type(SLK_matrix)  :: M_slk
+     integer, optional :: nrows, ncols 
+     !
+     if (allocated(M_slk%blc)) deallocate(M_slk%blc)
+     if (present(nrows).and.present(ncols)) then
+       M_slk%nrows    = nrows
+       M_slk%ncols    = ncols
+       allocate(M_slk%blc(nrows,ncols))
+     else
+       M_slk%desc     = 0
+       M_slk%lwork    = 0
+       M_slk%lrwork   = 0
+       M_slk%liwork   = 0
+       M_slk%info     = 0
+       M_slk%rows(2)  = 0
+       M_slk%cols(2)  = 0
+       M_slk%nrows    = 0
+       M_slk%ncols    = 0
+     endif
+   end subroutine
    !
    subroutine SLK_POOL_clean_up(POOL)
      type(POOL_group) :: POOL

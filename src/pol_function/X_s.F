@@ -52,6 +52,7 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  type(PP_indexes) ::PAR_IND_freqs
  integer          ::i1,i2,iw,iw_mat,INV_MODE
+ logical          ::l_use_lin_sys
  complex(SP), allocatable :: Xom1(:,:),tddftk(:,:),Xo(:,:)
  !
  ! Fxc I/O (for the BS based kernel)
@@ -180,19 +181,25 @@ subroutine X_s(iq,X,Xw,W_range)
      tddftk(i1,i1)=tddftk(i1,i1)+cONE
    enddo
    !$omp end parallel do
-   !
-   ! actual matrix inversion
-   !
-   call LINEAR_ALGEBRA_driver(INV,tddftk)
+
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !
-   call M_by_M('N','N',X%ng,tddftk,Xo,X_mat(:,:,iw_mat))
+   l_use_lin_sys=.FALSE.
+   if (l_use_lin_sys) then
+     !
+     ! matrix inversion + matmul according to:
+     !
+     call LINEAR_ALGEBRA_driver(INV,tddftk)
+     call M_by_M('N','N',X%ng,tddftk,Xo,X_mat(:,:,iw_mat))
+  else
+     !
+     ! alternative formulation as a linear system
+     !
+     X_mat(:,:,iw_mat)=Xo
+     call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,B=X_mat(:,:,iw_mat))
+   endif
    !
-   ! 
-   !!X_mat(:,:,iw_mat)=Xo
-   !!call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,X_mat(:,:,iw_mat))
-   !!
 #if defined _OPENMP
    !$omp parallel do default(shared), private(i1,i2)
    do i2=1,X%ng

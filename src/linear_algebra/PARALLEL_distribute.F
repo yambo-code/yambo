@@ -31,7 +31,7 @@
 subroutine PARALLEL_distribute(ORTHO, POOL, M_slk, N, M )
  !
  use pars,           ONLY:SP
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
+ use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error
  !
  implicit none
@@ -72,32 +72,20 @@ subroutine PARALLEL_distribute(ORTHO, POOL, M_slk, N, M )
  !
  call DESCINIT( M_slk%desc, N, N, N_blc, N_blc, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
  !
- allocate( WS%m1_cmplx(N_blc,N_blc) )
- allocate( WS%v_int(N+N_blc) )
+ call SLK_matrix_reset(M_slk,N_blc,N_blc)
  !
- ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
- ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
- !
- M_slk%lwork  = N_blc*N_blc
- M_slk%liwork = N_blc+N_blc
- !
- allocate( WS%v_cmplx(M_slk%lwork) )
- allocate( WS%vp_int(M_slk%liwork) )
- !
- ! distribute the matrix A
+ ! distribute the matrix M
  !
  M_slk%rows=(/myrow*N_blc+1,min(myrow*N_blc+N_blc,N)/)
  M_slk%cols=(/mycol*N_blc+1,min(mycol*N_blc+N_blc,N)/)
  !
- WS%m1_cmplx=0.0_SP
- !WS%m1_cmplx=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
+ M_slk%blc=0.0_SP
+ !M_slk%blc=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
  !
- !!!!!!!$ompa parallel do default(shared), private(i,j), collapse(2)
  do j=M_slk%cols(1),M_slk%cols(2)
  do i=M_slk%rows(1),M_slk%rows(2)
-   WS%m1_cmplx(i-M_slk%rows(1)+1,j-M_slk%cols(1)+1)=M(i,j)
+   M_slk%blc(i-M_slk%rows(1)+1,j-M_slk%cols(1)+1)=M(i,j)
  enddo
  enddo
- !!!!!!!$ompa end parallel do
  !
 end subroutine 

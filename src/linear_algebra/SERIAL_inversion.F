@@ -24,7 +24,8 @@
 subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  use pars,          ONLY:SP,cONE
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,LU_factorization,LU_inversion
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,LU_factorization,LU_inversion,&
+&                        LINEAR_ALGEBRA_WS_clean_up
  !
  implicit none
  !
@@ -58,5 +59,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  call LU_inversion(n,M,WS%v_int,WS%v_cmplx,WS%dim,WS%i_fail)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
 end subroutine

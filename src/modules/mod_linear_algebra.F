@@ -88,7 +88,8 @@ module linear_algebra
  !
  contains
    !
-   subroutine LINEAR_ALGEBRA_WS_clean_up( )
+   subroutine LINEAR_ALGEBRA_WS_clean_up(WS)
+     type(LALGEBRA_WS) :: WS
      if (allocated(WS%v_real))   deallocate(WS%v_real)
      if (allocated(WS%vp_real))  deallocate(WS%vp_real)
      if (allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)

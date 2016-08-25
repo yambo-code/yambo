@@ -30,7 +30,7 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
  !
  implicit none
  !
@@ -49,25 +49,26 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  if (ORTHO%coordinate(1)==-1) do_SLK=.FALSE.
  !
  if ( do_SLK ) then
-   !
-   WS%dim=n
+   ! better estimate of the dimensions to be included
    if (allocated(WS%v_int)) deallocate(WS%v_int)
-   allocate(WS%v_int(WS%dim))
+   allocate(WS%v_int(n+A_slk%nrows))
    !
 #if defined _DOUBLE
-   CALL PZGESV( n, nrhs, WS%m1_cmplx, 1, 1, A_slk%desc, WS%v_int, WS%m2_cmplx, 1, 1, B_slk%desc, WS%i_fail)
+   CALL PZGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
    if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZGESV')
 #else
-   CALL PCGESV( n, nrhs, WS%m1_cmplx, 1, 1, A_slk%desc, WS%v_int, WS%m2_cmplx, 1, 1, B_slk%desc, WS%i_fail)
+   CALL PCGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
    if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCGESV')
 #endif
    !
    ! gather the solution
    !
-   B(B_slk%rows(1):B_slk%rows(2),B_slk%cols(1):B_slk%cols(2))=WS%m2_cmplx(:,:)
+   B(B_slk%rows(1):B_slk%rows(2),B_slk%cols(1):B_slk%cols(2))=B_slk%blc(:,:)
    !
  endif
  !
  call PP_redux_wait(B,COMM=POOL%INTRA_comm)
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS)
  ! 
 end subroutine

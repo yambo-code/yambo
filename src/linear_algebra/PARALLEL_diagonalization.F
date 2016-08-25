@@ -35,7 +35,7 @@ subroutine PARALLEL_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, n, M, E )
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS
+ use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
  !
  implicit none
  !
@@ -63,5 +63,7 @@ subroutine PARALLEL_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, n, M, E )
  ! gather the eigenvectors ...
  !
  call PP_redux_wait(M,COMM=POOL%INTRA_comm)
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS)
  ! 
 end subroutine PARALLEL_diagonalization

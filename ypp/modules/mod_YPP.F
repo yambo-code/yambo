@@ -141,6 +141,7 @@ module YPP
  !
  integer           :: SOC_bands_to_map(2)
  character(lchlen) :: perturbative_SOC_path
+ real(SP)          :: SOC_E_range_to_map(2)
  real(SP)          :: SOC_split
  !
  ! QP databases

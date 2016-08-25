@@ -21,13 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
+subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
  !
  use pars,          ONLY:SP
- use linear_algebra,ONLY:INV,DIAGO,USE_LK,SVD_INV,USE_SLK,min_cpu_block_size,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,USE_LK,USE_SLK,min_cpu_block_size,&
+&                        LINEAR_ALGEBRA_WS_clean_up
  use com,           ONLY:msg,warning
 #if defined _SCALAPACK
- use parallel_m,    ONLY:PAR_COM_INV,PAR_COM_DIAGO,PAR_COM_INV_INDEX,PAR_COM_DIAGO_INDEX
+ use parallel_m,    ONLY:PAR_COM_INV,PAR_COM_DIAGO,PAR_COM_INV_INDEX,PAR_COM_DIAGO_INDEX,&
+&                        PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization
  use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_POOL_clean_up,&
 &                        SLK_ORTHO_GROUP_clean_up,SLK_matrix
 #endif
@@ -40,6 +42,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  integer                :: idriver
  integer,      optional :: lib_in
  complex(SP)            :: M(:,:)
+ complex(SP),  optional :: B(:,:)
  complex(SP),  optional :: V_left(:,:)
  complex(SP),  optional :: V_right(:,:)
  real(SP),     optional :: E_real(:)
@@ -50,11 +53,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  ! Work Spaces ...
  !
  complex(SP)         :: det_
- integer             :: N,lib_in_use,slk_error
+ integer             :: N,lib_in_use,Ncpu_in_use,slk_error
 #if defined _SCALAPACK
  type (POOL_group)   :: POOL
  type (ORTHO_group)  :: ORTHO
- type (SLK_matrix)   :: M_slk,EIGEN_slk
+ type (SLK_matrix)   :: M_slk,B_slk,EIGEN_slk
 #endif
 
 #if defined _TIMING
@@ -68,15 +71,28 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  ! Decide which to use among LK or SLK
  !
  lib_in_use=USE_LK
+ !
 #if defined _SCALAPACK 
  lib_in_use=USE_SLK
+ if (idriver==INV) then
+   Ncpu_in_use=PAR_COM_INV%n_CPU
+   if (PARALLEL_cpu_mat_inversion>0) Ncpu_in_use=min(Ncpu_in_use,PARALLEL_cpu_mat_inversion)
+ endif
+ if (idriver==DIAGO) then 
+   Ncpu_in_use=PAR_COM_DIAGO%n_CPU
+   if (PARALLEL_cpu_mat_diagonalization>0) Ncpu_in_use=min(Ncpu_in_use,PARALLEL_cpu_mat_diagonalization)
+ endif
+#else
+ Ncpu_in_use=1
 #endif
+ !
  if (present(lib_in)) then
    lib_in_use=lib_in
  endif
- if (idriver==SVD_INV.or.idriver==DIAGO) lib_in_use=USE_LK 
+ if (idriver==SVD_INV.or.idriver==DIAGO.or.idriver==LIN_SYS) lib_in_use=USE_LK 
  !
- !if (Ncpu_in_use==1.or.N/Ncpu_in_use<min_cpu_block_size.or.idriver==SVD_INV) lib_in_use=USE_LK 
+ if (Ncpu_in_use==1) lib_in_use=USE_LK 
+ if (N/sqrt(real(Ncpu_in_use))<min_cpu_block_size) lib_in_use=USE_LK 
  !
 #if defined _SCALAPACK
  !
@@ -84,8 +100,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
  !
  if (lib_in_use==USE_SLK) then
    !
-   if (idriver==INV)   call SLK_setup( idriver,ORTHO, POOL, PAR_COM_INV,   PAR_COM_INV_INDEX,   slk_error)
-   if (idriver==DIAGO) call SLK_setup( idriver,ORTHO, POOL, PAR_COM_DIAGO, PAR_COM_DIAGO_INDEX, slk_error)
+   if (idriver==INV)   call SLK_setup( idriver, Ncpu_in_use, ORTHO, POOL, PAR_COM_INV,   PAR_COM_INV_INDEX,   slk_error)
+   if (idriver==DIAGO) call SLK_setup( idriver, Ncpu_in_use, ORTHO, POOL, PAR_COM_DIAGO, PAR_COM_DIAGO_INDEX, slk_error)
    ! 
    if (slk_error<0) then 
      lib_in_use=USE_LK
@@ -98,18 +114,25 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
    !
    if (idriver==INV) then
      !
-     call PARALLEL_startup( ORTHO, POOL, M_slk, N, M )
+     call PARALLEL_distribute( ORTHO, POOL, M_slk, N, M )
      !
      call msg('s','[LA] PARALLEL inversion (SLK) using grid: ',ORTHO%grid(1:2))
      call PARALLEL_inversion( ORTHO, POOL, M_slk, N, M )
      !
    else if (idriver==DIAGO) then
      !
-     call PARALLEL_startup(  ORTHO, POOL, M_slk    , N, M )
-     call PARALLEL_startup(  ORTHO, POOL, EIGEN_slk, N, M )
+     call PARALLEL_distribute( ORTHO, POOL, M_slk    , N, M )
+     call PARALLEL_distribute( ORTHO, POOL, EIGEN_slk, N, M )
      !
      call msg('s','[LA] PARALLEL diag (SLK) using grid: ',ORTHO%grid(1:2))
      call PARALLEL_diagonalization( ORTHO, POOL, M_slk, EIGEN_slk, N, M ,E_real )
+     !
+   else if (idriver==LIN_SYS) then
+     !
+     call PARALLEL_distribute( ORTHO, POOL, M_slk, N, M )
+     !
+     call msg('s','[LA] PARALLEL linear system solution (SLK) using grid: ',ORTHO%grid(1:2))
+     call PARALLEL_lin_system( ORTHO, POOL, M_slk, B_slk, N, SIZE(B,2), B )
      !
    endif
    !
@@ -155,6 +178,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,S
        call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
      endif
      !
+   endif
+   !
+   ! ####> LINEAR SYSTEM SOLUTION
+   !
+   if (idriver==LIN_SYS) then
+     call msg('s','[LA] SERIAL linear system solution (LK)')
+     call SERIAL_lin_system(N,SIZE(B,2),M,B)
    endif
    !
    call LINEAR_ALGEBRA_WS_clean_up( ) 

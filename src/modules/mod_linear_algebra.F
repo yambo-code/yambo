@@ -34,7 +34,8 @@ module linear_algebra
  integer, parameter :: INV=5
  integer, parameter :: PARTIAL_DIAGO=6
  integer, parameter :: SVD_INV=7
- integer, parameter :: min_cpu_block_size=100
+ integer, parameter :: LIN_SYS=8
+ integer, parameter :: min_cpu_block_size=50
  !
  ! Common Work Space
  !
@@ -66,12 +67,13 @@ module linear_algebra
  !
  interface 
    !
-   subroutine LINEAR_ALGEBRA_driver(idriver,M,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
+   subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
      !
      use pars,           ONLY:SP
      !
      integer                :: idriver
      complex(SP)            :: M(:,:)
+     complex(SP),  optional :: B(:,:)
      integer,      optional :: lib_in
      complex(SP),  optional :: V_left(:,:)
      complex(SP),  optional :: V_right(:,:)
@@ -101,7 +103,7 @@ module linear_algebra
      use stderr,  ONLY:string_pack
      use com,     ONLY:error
      character(*) calling_subr,message_
-     call error( trim( string_pack('LINEAR ALGEBRA driver [',calling_subr,']:',message_) ))
+     call error( trim( string_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']:',trim(message_)) ))
    end subroutine
    !
    !============================

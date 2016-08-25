@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE SLK_setup( idriver, ORTHO, POOL, COMM, INDEX_comm, slk_error)
+SUBROUTINE SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_error)
  !
  use SLK_m,          ONLY:n_pools,ORTHO_group,POOL_group
  use parallel_m,     ONLY:MPI_comm,myid
@@ -31,6 +31,7 @@ SUBROUTINE SLK_setup( idriver, ORTHO, POOL, COMM, INDEX_comm, slk_error)
  IMPLICIT NONE
  !
  integer,           intent(in)    :: idriver
+ integer,           intent(in)    :: ncpu_in_use
  type(MPI_comm),    intent(in)    :: COMM , INDEX_comm
  type(ORTHO_group), intent(inout) :: ORTHO 
  type(POOL_group) , intent(inout) :: POOL 
@@ -55,7 +56,7 @@ SUBROUTINE SLK_setup( idriver, ORTHO, POOL, COMM, INDEX_comm, slk_error)
  !
  ! Init the scalapack grid
  !
- call SLK_ORTHO_init( ORTHO, POOL, POOL%n_CPU, POOL%INTRA_comm )
+ call SLK_ORTHO_init( ORTHO, POOL, min(POOL%n_CPU,ncpu_in_use), POOL%INTRA_comm )
  ! 
  if (ORTHO%grid(1)<=1) then 
    slk_error=-1

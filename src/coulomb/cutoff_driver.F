@@ -75,9 +75,6 @@ subroutine cutoff_driver(q)
  integer ::ID,io_err
  integer, external :: io_COL_CUT
 
-#if defined _TIMING
- call timing('Coulomb Cutoff',OPR='start')
-#endif
  !
  ! First check if the cutoff written on disk is consistent
  !
@@ -216,6 +213,16 @@ subroutine cutoff_driver(q)
  endif
  call msg('rn','Symmetry test passed :',geometry_sym_is_ok())
  if (.not.geometry_sym_is_ok()) return
+
+ !
+ ! timing is started here after all the return conditions
+ ! since it should be both started and stopped in order not
+ ! to break the clock
+ !
+#if defined _TIMING
+ call timing('Coulomb Cutoff',OPR='start')
+#endif
+
  !
  ! I/O + Specific geometry calls
  !

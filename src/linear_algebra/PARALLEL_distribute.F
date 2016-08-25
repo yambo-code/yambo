@@ -28,7 +28,7 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_startup(ORTHO, POOL, M_slk, N, M )
+subroutine PARALLEL_distribute(ORTHO, POOL, M_slk, N, M )
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
@@ -57,8 +57,10 @@ subroutine PARALLEL_startup(ORTHO, POOL, M_slk, N, M )
  mycol=ORTHO%coordinate(2)
  !
  ! spectator tasks
+ ! only MPI tasks in the grid need to go ahead
  !
- if (ORTHO%coordinate(1) == -1) call LINEAR_ALGEBRA_error("PARALLEL_startup"," ")
+ if (ORTHO%coordinate(1) == -1) return
+
  !
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B
@@ -90,12 +92,12 @@ subroutine PARALLEL_startup(ORTHO, POOL, M_slk, N, M )
  WS%m1_cmplx=0.0_SP
  !WS%m1_cmplx=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
  !
-!$omp parallel do default(shared), private(i,j), collapse(2)
+ !!!!!!!$ompa parallel do default(shared), private(i,j), collapse(2)
  do j=M_slk%cols(1),M_slk%cols(2)
  do i=M_slk%rows(1),M_slk%rows(2)
    WS%m1_cmplx(i-M_slk%rows(1)+1,j-M_slk%cols(1)+1)=M(i,j)
  enddo
  enddo
-!$omp end parallel do
+ !!!!!!!$ompa end parallel do
  !
 end subroutine 

@@ -31,7 +31,8 @@ subroutine X_s(iq,X,Xw,W_range)
 &                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_DIPOLES
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
- use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV,LIN_SYS
+ use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_mat
@@ -162,33 +163,44 @@ subroutine X_s(iq,X,Xw,W_range)
      !
      ! ALDA Fxc
      !
-     tddftk(:,:FXC_n_g_corr)=-matmul(Xo(:,:FXC_n_g_corr),FXC(:,:,1))
+     call M_by_M('N','N', X%ng, -Xo(:,:FXC_n_g_corr), FXC(:,:,1), tddftk(:,:FXC_n_g_corr))
      !
    endif
    !
    ! I must cycle here to allow the FXC I/O properly
    !
    !if (.not.PAR_IND_freqs%element_1D(iw)) cycle
+
    !
-   do i1=1,X%ng ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
+   ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
+   !
+   !$omp parallel do default(shared), private(i1)
+   do i1=1,X%ng
      tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4._SP*pi/bare_qpg(iq,i1)**2
      tddftk(i1,i1)=tddftk(i1,i1)+cONE
    enddo
+   !$omp end parallel do
+   !
+   ! actual matrix inversion
    !
    call LINEAR_ALGEBRA_driver(INV,tddftk)
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !
-   X_mat(:,:,iw_mat)=matmul(tddftk,Xo)
+   call M_by_M('N','N',X%ng,tddftk,Xo,X_mat(:,:,iw_mat))
    !
+   ! 
+   !!X_mat(:,:,iw_mat)=Xo
+   !!call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,X_mat(:,:,iw_mat))
+   !!
 #if defined _OPENMP
-!$omp parallel do default(shared), private(i1,i2)
+   !$omp parallel do default(shared), private(i1,i2)
    do i2=1,X%ng
      do i1=1,X%ng
        X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4._SP*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
      enddo
    enddo
-!$omp end parallel do
+   !$omp end parallel do
 #else
    forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4._SP*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
 #endif

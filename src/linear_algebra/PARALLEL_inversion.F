@@ -45,24 +45,36 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N,M)
  type(SLK_matrix)  :: M_slk
  complex(SP)       :: M(N,N)
  !
-#if defined _DOUBLE
- CALL PZGETRF( N, N, WS%m1_cmplx, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
- if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRF',' ')
+ character(64) :: subname="PARALLEL_inversion"
+ logical :: do_SLK
  !
- CALL PZGETRI( N, WS%m1_cmplx, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
- if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRI',' ')
-#else
- CALL PCGETRF( N, N, WS%m1_cmplx, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
- if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRF',' ')
- !
- CALL PCGETRI( N, WS%m1_cmplx, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
- if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRI',' ')
-#endif
- !
- ! gather the inverse matrix
+ ! spectator tasks
  !
  M=0.0_SP
- M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=WS%m1_cmplx(:,:)
+ !
+ do_SLK=.TRUE.
+ if (ORTHO%coordinate(1)==-1) do_SLK=.FALSE.
+ !
+ if ( do_SLK ) then
+#if defined _DOUBLE
+   CALL PZGETRF( N, N, WS%m1_cmplx, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
+   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PZGETRF')
+   !
+   CALL PZGETRI( N, WS%m1_cmplx, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
+   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(isubname,'performing PZGETRI')
+#else
+   CALL PCGETRF( N, N, WS%m1_cmplx, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
+   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PCGETRF')
+   !
+   CALL PCGETRI( N, WS%m1_cmplx, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
+   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PCGETRI')
+#endif
+   !
+   ! gather the inverse matrix
+   !
+   M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=WS%m1_cmplx(:,:)
+   !
+ endif
  !
  call PP_redux_wait(M,COMM=POOL%INTRA_comm)
  ! 

@@ -52,7 +52,6 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  type(PP_indexes) ::PAR_IND_freqs
  integer          ::i1,i2,iw,iw_mat,INV_MODE
- logical          ::l_use_lin_sys
  complex(SP), allocatable :: Xom1(:,:),tddftk(:,:),Xo(:,:)
  !
  ! Fxc I/O (for the BS based kernel)

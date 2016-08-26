@@ -157,7 +157,19 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
+ !
+ ! GPL_EXLUDE_START
+ !
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !
+ !l_anomalous_Hall=l_kerr
+ !
+ ! GPL_INCLUDE_END
+ !
 #endif
  !
  ! Energy points

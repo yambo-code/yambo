@@ -30,7 +30,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        X_en_comp,global_gauge,Dipole_approach
+&                        global_gauge,Dipole_approach, &
+&                        l_X_terminator,X_terminator_Kind,X_terminator_E
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
@@ -272,21 +273,22 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
  call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', &
-&                          GW_terminator_Kind)
+&                          GW_terminator_Kind,verb_level=V_qp)
  call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")',GW_terminator_E,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
  !
  ! Xs Xd Xp
  !
- call it(defs,'Chimod', '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
+ call it(defs,'Chimod',   '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
- call it('f',defs,'XTerm ',    '[X] Use a terminator for the response',verb_level=V_resp)
+ call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
+ call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
- call it(defs,'XEnComp',       '[X] If > 0 the Bruneval-Gonze terminator', &
-&                             X_en_comp,E_unit,verb_level=V_resp)
+ ! 
+ !
  !
  ! BSE/BSK
  !
@@ -355,7 +357,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! BSE: Kerr
  !
  call it('f',defs,'EvalKerr', '[BSE] Compute the Kerr effect')
+ !
+ ! GPL_EXCLUDE_START
+ !
  call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge')
+ !
+ ! GPL_EXCLUDE_END
  !
 #endif
  !

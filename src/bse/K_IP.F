@@ -36,7 +36,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
-&                        BSS_n_freqs,BSS_q0,Co_factor
+&                        BSS_n_freqs,BSS_q0,Co_factor,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
@@ -121,10 +121,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #endif
  !
  !...Drude
- !DEBUG>
- ! Temporarly disabled
- !call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
- !DEBUG<
+ call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
+ if (l_drude) drude_GreenF=drude_GreenF*(Ken%f(Ken%bf,Ken%kf,Ken%sf)*(spin_occ-Ken%f(Ken%bf,Ken%kf,Ken%sf)))
  !
  ! WF distribution
  !=================

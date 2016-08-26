@@ -67,6 +67,7 @@ module X_m
  logical                  :: force_v_g_space_approach
  integer                  :: num_shifted_grids
  real(SP)                 :: Dipole_Energy_treshold
+ real(SP)                 :: Dipole_Energy_treshold_vv
  complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
@@ -88,6 +89,7 @@ module X_m
  !
  character(schlen)        :: Chi_mode
  real(SP),    allocatable :: X_poles(:)
+ real(SP),    allocatable :: X_Ein_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
  complex(SP), allocatable :: X_mat(:,:,:)
@@ -97,8 +99,10 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
- real(SP):: X_en_comp
- logical :: X_terminator
+ real(SP):: X_terminator_E
+ real(SP):: X_term_E
+ logical :: l_X_terminator=.false.
+ character(schlen) :: X_terminator_Kind="none"
  !
  ! I/O parameters
  !

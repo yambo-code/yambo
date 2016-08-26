@@ -30,7 +30,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs
+ use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
+&                        Chi_inversion_mode,X_use_lin_sys
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -60,6 +61,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  character(1)         :: sec_mode
  !
  self_detect_E_range=.false.
+ !
+ X_use_lin_sys=.false.
+ if (trim(Chi_inversion_mode)=="lin_sys") X_use_lin_sys=.true.
  !
  ! TDDFT SETUP (-1 argument)
  !

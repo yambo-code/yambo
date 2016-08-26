@@ -25,7 +25,7 @@ SUBROUTINE SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_e
  !
  use SLK_m,          ONLY:n_pools,ORTHO_group,POOL_group
  use parallel_m,     ONLY:MPI_comm,myid
- use linear_algebra, ONLY:INV,DIAGO
+ use linear_algebra, ONLY:INV,DIAGO,LIN_SYS
  use com,            ONLY:msg
  !
  IMPLICIT NONE
@@ -63,8 +63,9 @@ SUBROUTINE SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_e
    return
  endif
  !
- if (idriver==INV)   ch="Inversion"
- if (idriver==DIAGO) ch="Digonalization"
+ if (idriver==INV)     ch="Inversion"
+ if (idriver==DIAGO)   ch="Digonalization"
+ if (idriver==LIN_SYS) ch="LinearSystem"
  !
  call msg("lr",'[SLK-'//trim(ch)//']  Pools        :',n_pools)
  call msg("lr",'[SLK-'//trim(ch)//']  BLACS grid   :',ORTHO%grid)

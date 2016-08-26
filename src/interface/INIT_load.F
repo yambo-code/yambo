@@ -30,7 +30,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        X_en_comp,global_gauge,Dipole_approach
+&                        X_en_comp,global_gauge,Dipole_approach,Chi_inversion_mode
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
@@ -280,7 +280,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! Xs Xd Xp
  !
- call it(defs,'Chimod', '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
+ call it(defs,'Chimod',    '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
+ call it(defs,'ChiInvmod', '[X] inversion/lin_sys',Chi_inversion_mode,verb_level=V_resp)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))

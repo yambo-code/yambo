@@ -87,6 +87,8 @@ module X_m
  ! Response function
  !
  character(schlen)        :: Chi_mode
+ character(schlen)        :: Chi_inversion_mode
+ logical                  :: X_use_lin_sys=.false.
  real(SP),    allocatable :: X_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)

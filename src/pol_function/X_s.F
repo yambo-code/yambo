@@ -35,7 +35,7 @@ subroutine X_s(iq,X,Xw,W_range)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_mat
+ use X_m,           ONLY:X_t,X_mat,X_use_lin_sys
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,io_BS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
@@ -185,19 +185,18 @@ subroutine X_s(iq,X,Xw,W_range)
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !
-   l_use_lin_sys=.FALSE.
-   if (l_use_lin_sys) then
+   if (X_use_lin_sys) then
      !
-     ! matrix inversion + matmul according to:
-     !
-     call LINEAR_ALGEBRA_driver(INV,tddftk)
-     call M_by_M('N','N',X%ng,tddftk,Xo,X_mat(:,:,iw_mat))
-  else
-     !
-     ! alternative formulation as a linear system
+     ! formulation as a linear system
      !
      X_mat(:,:,iw_mat)=Xo
      call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,B=X_mat(:,:,iw_mat))
+  else
+     !
+     ! formulation matrix inversion + matmul
+     !
+     call LINEAR_ALGEBRA_driver(INV,tddftk)
+     call M_by_M('N','N',X%ng,tddftk,Xo,X_mat(:,:,iw_mat))
    endif
    !
 #if defined _OPENMP

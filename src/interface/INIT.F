@@ -700,8 +700,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','DmRnge','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
-   call initactivate(1,'XTermKind'//'Xs')
-   call initactivate(1,'XTermEn'//'Xs')
+   call initactivate(1,'XTermKind')
+   call initactivate(1,'XTermEn')
  endif
  !
  ! GW (PPA & COHSEX) 
@@ -715,14 +715,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_ppa) then
      call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                           'EhEngy','LongDr','PPAPnt'/))
-     call initactivate(1,'XTermKind'//'Xp')
-     call initactivate(1,'XTermEn'//'Xp')
    endif
    if (l_cohsex) then
      call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','EhEngy','LongDr'/))
-     call initactivate(1,'XTermKind'//'Xs')
-     call initactivate(1,'XTermEn'//'Xs')
    endif
+   call initactivate(1,'XTermKind')
+   call initactivate(1,'XTermEn')
  endif
  !
  ! ACFDT

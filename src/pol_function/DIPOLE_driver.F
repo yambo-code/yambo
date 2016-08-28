@@ -38,7 +38,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
  !
- ! PARALLEL structure: The dipoles are based on a "derived" structure. K-points are driven by these communicators and indexes:
+ ! PARALLEL structure: The dipoles are based on a "derived" structure. 
+ !                     K-points are driven by these communicators and indexes:
  !
  ! PAR_IND_DIPk_ibz
  ! PAR_DIPk_nibz
@@ -60,7 +61,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
-&                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold
+&                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
+&                         l_X_terminator,X_terminator_Kind
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
@@ -80,7 +82,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use drivers,        ONLY:l_elphoton_corr
 #endif
 #if defined _TIMING
- use timing_m,            ONLY:timing
+ use timing_m,       ONLY:timing
 #endif
  !
  implicit none
@@ -154,6 +156,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  if (Dipole_bands_ordered.or.Dipole_Energy_treshold<0._SP) then
    X%ib_lim(1)=Xen%nbm
    X%ib_lim(2)=Xen%nbf+1
+   if (l_X_terminator) X%ib_lim(2)=X%ib(1)
  else
    X%ib_lim(1)=X%ib(2)
    X%ib_lim(2)=X%ib(1)

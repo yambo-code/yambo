@@ -38,6 +38,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin,E_SOC_table,E_SOC_nbands
+ use LIVE_t,              ONLY:live_timing
  !
  implicit none
  !
@@ -54,7 +55,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  integer              :: n_deg_grp,mapped_in_group(2,En%nb*n_sp_pol),kpts_map(2,kpt%nibz)
  integer              :: i_k,i_b,i_b_to_map(2),i_b_low_lim(2),i_b_upp_lim(2),i_grp,i_b_SOC,i_wf,i_wf_SOC(2),&
 &                        i_sp_pol,n_miss,n_tot,i_sorted,i_deg,i_fft,i_fft_rot,i_k_SOC,i_k_SOC_bz,i_symm,i_star
- integer              :: n_spin_save,n_spinor_save,n_sp_pol_save,fft_size_save,NB_to_map,NB_up
+ integer              :: n_spin_save,n_spinor_save,n_sp_pol_save,fft_size_save,NB_to_map,NK_to_map,NB_up
  logical              :: group_already_mapped(En%nb*n_sp_pol),DB_is_ok,map_up,map_dw,kpoint_to_map(kpt%nibz)
  real(SP)             :: sq2,proj_up,proj_dw,mapping_tresh,min_sq(kpt%nibz),max_overlap,&
 &                        kpt_diff(3),a_save(3,3),alat_save(3)
@@ -91,6 +92,8 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  call k_ibz2bz(kpt_SOC,'i',.false.)
  call k_expand(kpt_SOC)
  !
+ call live_timing('K mapping',kpt%nibz)
+ !
  do i_k=1,kpt%nibz
    !
    ik_SOC_loop: do i_k_SOC=1,kpt_SOC%nibz
@@ -107,7 +110,11 @@ subroutine WF_map_perturbative_SOC(kpt,En)
    !
    if(i_k_SOC>kpt_SOC%nibz) call error(' Kpt #'//trim(intc(i_k))//' in the IBZ is not mapped')
    !
+   call live_timing(steps=1)
+   !
  enddo
+ !
+ call live_timing()
  !
  call build_spin_sop()
  !
@@ -134,12 +141,15 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  min_sq=1._SP
  !
+ NK_to_map=count(kpoint_to_map)
  NB_to_map=SOC_bands_to_map(2)-SOC_bands_to_map(1)+1
  allocate(E_vec(NB_to_map*n_sp_pol))
  !
  call load_cc(.false.,.false.)
  !
 1 continue
+ !
+ call live_timing('WFs mapping @ tresh='//trim(real2ch(mapping_tresh)),NK_to_map*NB_to_map*2)
  !
  do i_k=1,kpt%nibz
    !
@@ -292,12 +302,16 @@ subroutine WF_map_perturbative_SOC(kpt,En)
        !
      enddo   ! i_grp
      !
+     call live_timing(steps=1)
+     !
    enddo     ! i_b_SOC
    !
    deallocate(E_sorted,E_sort_map)
    deallocate(first_el,n_of_el)
    !
  enddo       ! i_k
+ !
+ call live_timing()
  !
  if(any(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)==0)) then
    !

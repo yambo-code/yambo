@@ -27,7 +27,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
 &                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nkpts
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
-&                         atoms_spatial_invertion,i_space_inv,input_Tel_is_negative,&
+&                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index
@@ -181,7 +181,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Space inversion
  !
- call atoms_spatial_invertion()
+ call atoms_spatial_inversion()
  if (inv_index>0) then
    if (i_space_inv==1) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
    if (i_space_inv==0) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')

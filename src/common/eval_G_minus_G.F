@@ -71,13 +71,12 @@ integer function eval_G_minus_G(iG,iGo)
  !
 !$omp parallel do default(shared), private(i2,i1,v1)
  do i2=1,iGo_
- do i1=1,iG_
+   do i1=1,iG_
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
      E_G_m_G(i1,i2)=0.5_SP*iku_v_norm(v1)**2
- enddo
+   enddo
  enddo
 !$omp end parallel do
-
  !
  ! Find the shell corresponding to iGo
  !
@@ -90,7 +89,6 @@ integer function eval_G_minus_G(iG,iGo)
  !
  iG_shell_max=iG_shell
  E_max=(1+1.E-5_SP)*E_of_shell(n_g_shells)
-
  !
  ! define the a lower bound of the G shell
  !
@@ -111,7 +109,6 @@ integer function eval_G_minus_G(iG,iGo)
    endif
    !
  enddo shell1_loop
-
  !
  ! search for a larger shell (if any)
  !
@@ -133,7 +130,6 @@ integer function eval_G_minus_G(iG,iGo)
  iG_= ng_in_shell(iG_shell)
  eval_G_minus_G=iG_
  if (iGo==0) iGo_=iG_
-
  !
  ! Fill the actual G_m_G matrix
  !
@@ -144,12 +140,12 @@ integer function eval_G_minus_G(iG,iGo)
  !
 !$omp parallel do default(shared), private(i2,i1,v1)
  do i2=1,iGo_
- do i1=1,iG_
+   do i1=1,iG_
      !
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
      G_m_G(i1,i2)=G_index(v1)
      !
- enddo
+   enddo
  enddo
 !$omp end parallel do
  ! 

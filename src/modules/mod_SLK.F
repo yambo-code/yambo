@@ -66,8 +66,8 @@ module SLK_m
  ! Specific SLK worlds ...
  !========================
  !
- type(POOL_group ),SAVE :: SLK_INV_pool
- type(ORTHO_group),SAVE :: SLK_INV_ortho
+ type(POOL_group ),SAVE :: SLBSS_INV_pool
+ type(ORTHO_group),SAVE :: SLBSS_INV_ortho
  !
  type(POOL_group ),SAVE :: SLK_DIAGO_pool
  type(ORTHO_group),SAVE :: SLK_DIAGO_ortho

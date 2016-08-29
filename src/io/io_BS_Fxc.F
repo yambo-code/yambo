@@ -27,9 +27,10 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  use units,          ONLY:HA2EV
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:intc
- use BS,             ONLY:BSS_q0,BS_K_dim,variables_BS
+ use BS,             ONLY:BS_K_dim
+ use BS_solvers,     ONLY:BSS_q0,variables_BS
  use TDDFT,          ONLY:FXC_n_g_corr,FXC_n_descs,FXC_description,&
-&                         FXC_K_diagonal,FXC_n_mem_freqs,FXC,FXC_is_causal
+&                         FXC_K_diagonal,FXC_n_mem_freqs,FXC,FXC_is_retarded
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
@@ -78,7 +79,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
 &       VAR=" FXC|Matrix size             :",I0=FXC_n_g_corr,CHECK=.true.,OP=(/"<="/),&
 &       DESCRIPTION=FXC_description(1))
    call io_elemental(ID,&
-&       VAR="    |Kernel is causal        :",L0=FXC_is_causal,CHECK=.true.,OP=(/"=="/),&
+&       VAR="    |Kernel is causal        :",L0=FXC_is_retarded,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=FXC_description(2))
    call io_elemental(ID,UNIT=HA2EV,&
 &       VAR="    |Energy range        [ev]:",R1=FXC_W%er,CHECK=.true.,OP=(/"==","=="/),&

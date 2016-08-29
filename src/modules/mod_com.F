@@ -625,13 +625,14 @@ module com
      ! s(tderr)
      ! oN=msgunits(N) 
      !
-     use stderr,  ONLY:string_split
+     use stderr,  ONLY:string_split,string_remove
      character(*) how
      ! 
      ! Work Space
      !
      integer          ::i1,i2
      character(schlen)::ch_piece(10)
+     character(lchlen)::stripped_file_name
      !
      terminator(1)='('
      terminator(2)=')'
@@ -644,7 +645,8 @@ module com
          if (len_trim(ch_piece(i2))==0) cycle
          do i1=1,max_open_ofs-1
            if (len_trim(opened_of(i1))==0) cycle
-           if (index( opened_of(i1),trim(ch_piece(i2)) )/=0) then
+           stripped_file_name=string_remove(opened_of(i1),trim(jobstr))
+           if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
              of_unit(i1) =-of_unit(i1)
            endif
          enddo

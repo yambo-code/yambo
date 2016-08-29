@@ -40,10 +40,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
- use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,BS_mat_free,&
+ use BS_solvers,   ONLY:BSS_q0,BS_mat_free
+ use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
-&                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,BSS_q0,&
+&                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps

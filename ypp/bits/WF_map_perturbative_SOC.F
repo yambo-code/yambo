@@ -130,7 +130,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  E_SOC_nbands=En_SOC%nb
  allocate(En%E_SOC(E_SOC_nbands,kpt%nibz))
- allocate(E_SOC_table(2,SOC_bands_to_map(1):SOC_bands_to_map(2),kpt%nibz))
+ allocate(E_SOC_table(2,En%nb,kpt%nibz))
  call mem_est("E_SOC E_SOC_table",(/size(En%E_SOC),size(E_SOC_table)/),(/SP,IP/))
  En%E_SOC=0._SP
  E_SOC_table=0

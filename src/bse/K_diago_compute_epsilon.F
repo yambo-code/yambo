@@ -66,7 +66,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  type(PP_indexes)     ::px
  !
  integer              :: i1,i_pert_SOC,n_SOC
- complex(SP)          :: factor_jj,EXC_E(2)
+ complex(SP)          :: factor_jj,EXC_E(2/n_sp_pol)
  !
  ! GPL_EXCLUDE_START
  !
@@ -80,7 +80,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  ! GPL_EXCLUDE_START
  !
- if(E_SOC_nbands/=0) n_SOC=2
+ if(E_SOC_nbands/=0.and.n_sp_pol==1) n_SOC=2
  !
  ! GPL_EXCLUDE_END
  !

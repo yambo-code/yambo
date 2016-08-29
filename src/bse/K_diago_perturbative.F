@@ -56,8 +56,12 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
    if (.not.px%element_1D(i1)) cycle
    !
    if(what=='SOC') then
-     BS_corrections(1,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(1,:),0._SP,SP),BS_mat_eigen(:,i1))
-     BS_corrections(2,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(2,:),0._SP,SP),BS_mat_eigen(:,i1))
+     if(n_sp_pol==1) then
+       BS_corrections(1,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(1,:),0._SP,SP),BS_mat_eigen(:,i1))
+       BS_corrections(2,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(2,:),0._SP,SP),BS_mat_eigen(:,i1))
+     else if (n_sp_pol==2) then
+       BS_corrections(1,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(1,:),0._SP,SP),BS_mat_eigen(:,i1))
+     endif
    endif
    !
    if(what=='WID') then

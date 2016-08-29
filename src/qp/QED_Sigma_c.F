@@ -137,6 +137,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Band index for Empty bands allocation 
  !=======================================
+ !
  i_m_wf_load=-1
  if (PAR_IND_G_b%element_1D(n_met_bands+1)) i_m_wf_load=n_met_bands+1
  do i_m=n_met_bands+1,QP_n_G_bands(2)
@@ -242,6 +243,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call live_timing( )
  !
  call PP_redux_wait(QP_Sc)
+ call PP_redux_wait(QP_dSc)
  !
  ! Symmetrize
  !

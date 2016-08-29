@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS,AM,AF
+! Authors (see AUTHORS file for details): DS,AM,AF,IM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -33,11 +33,11 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
  use parallel_m,    ONLY:PAR_Xk_bz_index
- use X_m,           ONLY:X_t,X_poles_tab,Dipole_Energy_treshold,DIP_projected
+ use X_m,           ONLY:X_t,X_poles_tab,Dipole_Energy_treshold,DIP_projected,l_X_terminator
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N,coarse_grid_pt
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp !,G_m_G
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
  use collision,     ONLY:elemental_collision
  !
  implicit none
@@ -51,10 +51,15 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  ! Work sapce
  !
- complex(SP)              :: rhotw_save(X%ng),Z_ !,eet_factor(X%ng,X%ng)
+ ! AF: rhotw_save defined as automatic goes to stack and can harm 
+ !     (stack overflow, causing random crashes of the code)
+ !     it would be best to define it as allocatable (less efficient if too
+ !     many calls are done, though)
+ complex(SP)              :: rhotw_save(Xo_scatt%ngrho),rhotw_save2(Xo_scatt%ngrho),Z_
  real(SP)                 :: Z_eh_occ
+ logical                  :: l_X_term_vv
  integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
-&                            isp,iv,ic,isave(4),n_poles,n_drude_poles,i_bg !,alloc_err
+&                            isp,iv,ic,isave(4),n_poles,n_drude_poles,i_bg,ig_start
  !
  isave=0
  !
@@ -86,6 +91,9 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    ikp= Xk%sstar(ikpbz,1)
    isp= Xk%sstar(ikpbz,2)
    !
+   l_X_term_vv = (l_X_terminator.and.ic>=X%ib(1).and.ic<=Xen%nbm)
+   ! 
+   !
    ! Note the renormalization of the Z_eh_occ=f(1-f)*Z factor
    !
    if (associated(Xen%Z))      Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
@@ -103,6 +111,11 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      Z_eh_occ=1._SP
      if(ic==iv) n_drude_poles=n_drude_poles+1
    endif
+   !
+   if (l_X_term_vv) then
+     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin) &
+   &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+   endif  
    !
    ! Scattering CALL
    !-----------------
@@ -134,10 +147,13 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
          enddo
        endif
      endif
+     !
      ! iG=1 case
      ik_bz_mem=PAR_Xk_bz_index(ikbz)
      if(iv/=ic) Xo_scatt%rhotw(1)=    -conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
      if(iv==ic) Xo_scatt%rhotw(1)=cONE-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
+     !
+     if (l_X_term_vv.and.iv==ic) Xo_scatt%rhotw(1)=0.0_SP
      !
    else
      !
@@ -150,20 +166,6 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      !
    endif
    !
-   !if (X_terminator) then
-   !  !
-   !  if ( HEAD_QP_cpu ) then
-   !    !$omp parallel do default(shared), private(ig1,ig2)
-   !    do ig1=1,X%ng
-   !      do ig2=1,X%ng
-   !          eet_factor(ig1,ig2)=Xo_scatt%rhotw(G_m_G(ig1,ig2))
-   !      enddo
-   !    enddo
-   !    !$omp end parallel do
-   !  endif
-   !  !
-   !endif
-   !
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
    !$omp parallel do default(shared), private(ig2)
@@ -171,6 +173,56 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      call V_by_V_plus_V(ig2,Z_eh_occ*Xo_scatt%rhotw(ig2),conjg(Xo_scatt%rhotw(:ig2)),Xo_res(:ig2,ig2))
    enddo
    !$omp end parallel do
+
+   !
+   ! add terminator specific corrections
+   ! (ic is running in valence)
+   !
+   if (l_X_term_vv.and.iv==ic) then 
+     !
+     Xo_scatt%is = (/iv,ik,1,i_spin/)
+     Xo_scatt%os = (/iv,ik,1,i_spin/)
+     Xo_scatt%qs = (/1,1,1/)
+     rhotw_save2 = Xo_scatt%rhotw
+     !
+     if (X%ng==1) then
+       Xo_scatt%rhotw(1)=cONE 
+     else
+       call scatter_Bamp(Xo_scatt)
+     endif
+     !
+     ! symm
+     rhotw_save=Xo_scatt%rhotw
+     !
+     !$omp parallel do default(shared), private(ig1,ig2)
+     do ig1=1,X%ng
+       ig2=g_rot(sop_inv(is),ig1)
+       Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
+     enddo
+     !$omp end parallel do
+     !
+     if (is>nsym/(i_time_rev+1)) then
+       do ig1=1,X%ng
+         Xo_scatt%rhotw(ig1)=conjg(Xo_scatt%rhotw(ig1))
+       enddo
+     endif
+     !
+     ! take into account the cancellation of terms
+     ! occurring when dealing with the wings
+     ig_start=1
+     if(iq==1) ig_start=2
+     !
+     !$omp parallel do default(shared), private(ig1,ig2)
+     do ig2=1,X%ng
+     do ig1=ig_start,ig2
+       Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
+     enddo
+     enddo
+     !$omp end parallel do 
+     !
+     Xo_scatt%rhotw = rhotw_save2
+     !
+   endif
    !
  enddo loop_bare_grid
  !

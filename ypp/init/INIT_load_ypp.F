@@ -337,6 +337,7 @@ subroutine ypp_INIT_load(defs)
  !
  ! GPL_EXCLUDE_START
  !
+ call it('f',defs,'RmSpaceInv' , 'Remove Spatial Inversion')
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
  call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)

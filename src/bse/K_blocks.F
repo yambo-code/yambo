@@ -40,7 +40,7 @@ subroutine K_blocks( )
  use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered,PP_redux_wait
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,&
-&                       BS_LiveTiming_prefactor
+&                       BS_LiveTiming_prefactor,BS_H_dim
  use com,          ONLY:msg
  use interfaces,   ONLY:PARALLEL_live_message
  !
@@ -134,7 +134,8 @@ subroutine K_blocks( )
  ! REPORT
  !========
  !
- call msg('rsn','[BSK] Size   (total)',BS_K_dim)
+ call msg('rsn','[BSK] Size (resonant)',BS_K_dim)
+ call msg('rsn','[BSK]         (total)',BS_H_dim)
  !
  call PARALLEL_live_message("Kernel matrix elements",ENVIRONMENT="Response_T_space",LOADED_r=N_Ts_local,TOTAL_r=N_Ts_total)
  !

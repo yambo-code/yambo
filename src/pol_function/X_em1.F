@@ -30,15 +30,16 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,Integrating_over_Qs
+ use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,Integrating_over_Qs,&
+&                        l_X_terminator,X_terminator_Kind 
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index, &
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE
- use com,           ONLY:depth
+ use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
+ use com,           ONLY:depth,error
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load
@@ -60,6 +61,12 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  character(1)         :: sec_mode
  !
  self_detect_E_range=.false.
+ !
+ ! XTerminator SETUP
+ !
+ l_X_terminator = X_terminator_Kind/='none'
+ if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
+&   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
  !
  ! TDDFT SETUP (-1 argument)
  !
@@ -89,7 +96,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      X_n_freqs =2
      Xw%er=(/epsilon(1._SP),0._SP/)
      Xw%dr=(/0._SP,X%ppaE/)
-     X%ordering='c'
+     X%ordering='R'
    endif
  endif
  !
@@ -112,7 +119,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
- ! X%ngostnts is defined in DIPOLE_driver. WhenIt may happen that this is called only for the group of CPU's that eval q=1. 
+ ! X%ngostnts is defined in DIPOLE_driver. It may happen that this is called only for the group of CPU's that eval q=1. 
  ! To avoid erroneous errors in the VERIFY mode this value must be spread to all CPUs before doing the IO of the header
  !
  if (l_life.and.X%iq(1)>1) then
@@ -226,7 +233,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    X%ng_db=X%ng
    !
-   if (iq==1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
+   if (iq==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
    if (iq> 1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
@@ -243,6 +250,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  enddo
  !
  Integrating_over_Qs=.false.
+ l_X_terminator=.false.
  !
  ! CLEAN (2)
  !

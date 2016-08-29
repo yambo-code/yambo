@@ -21,33 +21,42 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
+subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no_occupations)
  !
  ! Compute the GreenF in frequency space starting from it analytical
  ! expression as the Fourier Transform of a Lorentzian
  !
+ ! In the K case, the anti-res part of Lo uses a w+\Omega (and not -\Omega) simply
+ ! because this routine is always called using the i_res \Omega. Indeed 
+ !
+ !  \Omega_{anti-res} = -\Omega_{res}
+
+ !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,Integrating_over_Qs
- use BS,         ONLY:BSS_uses_DbGd
+ use X_m,        ONLY:use_X_DbGd,Integrating_over_Qs,&
+&                     X_t,l_X_terminator,X_terminator_E,X_term_E
+ use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,spin_occ
  use R_lattice,  ONLY:qindx_X,bz_samp,nqibz,smallest_q_norm
  use frequency,  ONLY:w_samp
  use vec_operate,ONLY:iku_v_norm
  !
  implicit none
+ !
  integer      :: iq,transitions(4)
  type(w_samp) :: Xw
  type(levels) :: Xen
  type(bz_samp):: Xk
  complex(SP)  :: GreenF(Xw%n_freqs)
  character(*) :: ordering,space
+ logical      :: no_occupations
  !
  ! Work Space
  !
  logical      :: X_os_run,K_inv_run,use_DbGd
  integer      :: ikbz_FineGd,ikpbz_FineGd,iw,ikbz,ikpbz,iv,ic,i_spin,ik_FineGd,ikp_FineGd,ik,ikp
  real(SP)     :: ffac,cg_ffac,f_e,f_h,weight,W_,q_pt_shift(3),q_norm_ref,qsize_fac,k_pt_loc(3),kp_pt_loc(3),En1,En2
- complex(SP)  :: Z_,pole
+ complex(SP)  :: Z_,pole,pole_X_term
  !
  complex(SP),external      ::Lorentzian_FT
  !
@@ -78,6 +87,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  use_DbGd= (X_os_run .and.use_X_DbGd.and.ic<=Xen%nb_FineGd) .or. &
 &          (K_inv_run.and.BSS_uses_DbGd)
  !
+ !
  ! Case without DbGd
  !===================
  !
@@ -85,18 +95,32 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  ! Thus I have to multiply by them the Green function
  !
  if ( .not.use_DbGd ) then
-    !
-    pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,SP)
-    !
-    if( X_os_run  ) ffac = 1._SP
-    if( K_inv_run ) ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik ,i_spin) )/spin_occ*real(Z_)
-    !
-    do iw=1,Xw%n_freqs
-      GreenF(iw)=Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
-    enddo
-    !
-    return
-    !
+   !
+   pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,SP)
+   !
+   pole_X_term=0.0_SP
+   if(l_X_terminator) pole_X_term= cmplx(X_term_E-Xen%E(iv,ikp,i_spin),-W_,KIND=SP)
+   !
+   if( X_os_run  )      ffac = 1._SP
+   if( K_inv_run )      ffac = ( Xen%f(iv,ikp,i_spin) - Xen%f(ic,ik ,i_spin) )/spin_occ*real(Z_)
+   if( no_occupations ) ffac = 1._SP
+   !
+   do iw=1,Xw%n_freqs
+     !
+     GreenF(iw)= Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
+     !
+     if (l_X_terminator.and.ic>Xen%nbm) then
+       GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac  
+     endif
+     !
+     if (l_X_terminator.and.ic<=Xen%nbm) then
+       GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac 
+     endif
+     !
+   enddo
+   !
+   return
+   !
  endif
  !
  ! Case with DbGd
@@ -114,6 +138,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
  allocate(use_kpt_DbGd( Xk%bz_DbGd_map(1,ikpbz)-1:Xk%bz_DbGd_map(2,ikpbz), Xk%bz_DbGd_map(1,ikbz)-1:Xk%bz_DbGd_map(2,ikbz) ) )
  !
  call define_use_kpt()
+ !
+ ! In the K case, the anti-res part of Lo uses a w+\Omega (and not -\Omega) simply
+ ! because this routine is always called using the i_res \Omega. Indeed 
+ !
+ !  \Omega_{anti-res} = -\Omega_{res}
  !
  ! Coarse grid points are included for ikbz_FineGd= Xk%bz_DbGd_map(1,ikbz)-1
  ! Fine   grid points are included for ikbz_FineGd>=Xk%bz_DbGd_map(1,ikbz)
@@ -149,11 +178,24 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space)
      !
      pole=cmplx(En1-En2,-W_)
      !
-     if( X_os_run  ) ffac=(f_e*f_h)/cg_ffac*weight
-     if( K_inv_run ) ffac=(f_e-f_h)/cg_ffac*weight
+     if(l_X_terminator) pole_X_term=cmplx(X_term_E-En2,-W_,KIND=SP)
+     !
+     if( X_os_run       ) ffac=(f_e*f_h)/cg_ffac*weight
+     if( K_inv_run      ) ffac=(f_e-f_h)/cg_ffac*weight
+     if( no_occupations ) ffac = 1._SP
      !
      do iw=1,Xw%n_freqs
+       !
        GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
+       !
+       if (l_X_terminator.and.ic>Xen%nbm) then 
+         GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
+       endif
+       !
+       if (l_X_terminator.and.ic<=Xen%nbm) then
+         GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
+       endif      
+       !
      enddo
      !
    enddo

@@ -54,6 +54,7 @@ module real_time
  !
  real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
  real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
+ real(SP)              :: RT_MAX_step = 0._SP ! MAX value of the dynamical RT step value
  ! 
  ! ... NE dynamics ...
  !
@@ -62,7 +63,7 @@ module real_time
  integer  :: NE_time_step_update_last_point = 1 ! Last time-point of the dT update
  real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
- real(SP) :: NE_step_update_treshold    = 2._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_step_update_treshold    = 2._SP ! Time-step update treshold
  real(SP) :: NE_time_step_update_jump_SAVE = 0._SP
  !
  integer  :: NE_i_time=1 ! = (NE_time+1)/RT_step
@@ -427,7 +428,7 @@ module real_time
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
+     use SC,             ONLY:V_hartree_sc,l_sc_V_is_local,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol

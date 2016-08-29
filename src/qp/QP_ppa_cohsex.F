@@ -33,7 +33,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:l_ppa,l_cohsex,l_sc_run,l_sc_srpa
+ use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
 &                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
@@ -43,7 +43,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        io_RESPONSE
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        COHSEX_use_empties,l_GW_terminator
+&                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
@@ -76,14 +76,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),iv4(4),io_err,ID,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision)::isc,iscp
- character(schlen)::ch,Sc_name
+ character(schlen)::ch,SECTION_name
  logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
  !
  integer, external::io_X,QP_state_extract
  !
- ! Reset
+ ! Reset & checks
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
@@ -91,19 +91,28 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  iq_to_start  =1
  QP_Sc        =cZERO
  !
+ if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
+&    trim(GW_terminator_Kind)/='BRS') &
+&    call error(' [GW/PPA] unknown GW_terminator_Kind = '//trim(GW_terminator_Kind))
+ 
+ !
  ! COHSEX: bands setup
  !
- if ((l_sc_srpa.or.l_cohsex  ).and.(.not.COHSEX_use_empties)) then
+ if ((l_sc_srpa.or.l_cohsex.or.l_sc_coh.or.l_sc_sex  ).and.(.not.COHSEX_use_empties)) then
    QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
  endif
  !
  ! Section
  !
- Sc_name='G'//trim(intc(GW_iter))
- if (l_sc_run) Sc_name='COHSEX'
- !
- ch=trim(Sc_name)//'W0 : the P(lasmon) P(ole) A(pproximation)'
- if (l_cohsex)  ch=trim(Sc_name)//'W0 : COHSEX'
+ SECTION_name='G'//trim(intc(GW_iter))
+#if defined _SC
+ if (l_sc_coh)              SECTION_name='COH'
+ if (l_sc_sex)              SECTION_name='SEX'
+ if (l_sc_coh.and.l_sc_sex) SECTION_name='COH+SEX'
+#else
+ ch=trim(SECTION_name)//'W0 : the P(lasmon) P(ole) A(pproximation)'
+ if (l_cohsex)  ch=trim(SECTION_name)//'W0 : COHSEX'
+#endif
  !
  if (GW_iter==0) then
    call section('+',trim(ch))
@@ -155,7 +164,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! wf and collisions dimension
  !-----------------------------
  isc%ngrho=X%ng
- if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) isc%ngrho=maxval(G_m_G)
+ if (((l_sc_srpa.or.l_cohsex.or.l_sc_coh).and..not.COHSEX_use_empties).or.l_GW_terminator) isc%ngrho=maxval(G_m_G)
  !
  call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),title=trim(ch))
  !
@@ -182,7 +191,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! ALLOCATION
  !------------
  !
- if (l_cohsex.or.l_sc_srpa) then
+ if (l_sc_coh.or.l_sc_sex.or.l_cohsex.or.l_sc_srpa) then
    if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,1/))
    allocate(dc(2))
  else
@@ -201,10 +210,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
 &             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
  !
- if (l_ppa)    ch=trim(Sc_name)//'W0 PPA'
- if (l_cohsex) ch=trim(Sc_name)//'W0 COHSEX'
+ if (l_ppa)    ch=trim(SECTION_name)//'W0 PPA'
+ if (l_cohsex) ch=trim(SECTION_name)//'W0 COHSEX'
 #if defined _SC
- if (l_sc_run) ch=trim(Sc_name)//'@it'//trim(intc(it_now))
+ if (l_sc_run) ch=trim(SECTION_name)//'@it'//trim(intc(it_now))
 #endif
  call live_timing(trim(ch),timing_steps)
  !
@@ -314,7 +323,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! COH (using completeness relation)
      !
-     if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
+     if (((l_sc_srpa.or.l_sc_coh.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
        !
        iscs_save(1,: )=isc%os
        iscs_save(2,:3)=isc%qs
@@ -322,7 +331,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%qs=(/1,1,1/)
        call scatter_Bamp(isc)
        !
-       if(l_GW_terminator) then
+       if (l_GW_terminator) then
          do is=1,n_sp_pol
            eet_cutoff0(is)=minval(E%E(E%nbf+1,:,is))
            eet_cutoff1(is)=minval(E%E(QP_n_G_bands(2),:,is))
@@ -350,6 +359,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 !$omp end parallel do
            endif
          endif
+         !
        else
          !
          sp_dummy = 0.0_SP
@@ -464,7 +474,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
          !
-       else
+       else if (l_sc_sex.or.l_cohsex.or.(l_sc_coh.and.COHSEX_use_empties)) then
          !
          call M_by_V('N', X%ng, X_mat(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
          !
@@ -481,13 +491,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          ! SEX
          !
-         dc(1)=-4._SP/spin_occ*pi*pre_factor
-         !
-         dc(1)=dc(1)*e%f(isc%os(1),isc%os(2),isc%os(4))
+         if (l_sc_sex.or.l_cohsex) dc(1)=-4._SP/spin_occ*pi*pre_factor*e%f(isc%os(1),isc%os(2),isc%os(4))
          !
          ! COH (when no empties are used the COH part is indeed calculated above)
          !
-         if (COHSEX_use_empties) dc(2)=2._SP*pi*pre_factor
+         if (COHSEX_use_empties) then
+           if (l_sc_coh.or.l_cohsex) dc(2)=2._SP*pi*pre_factor
+         endif
          !
          QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)+dc(2)
          !
@@ -496,6 +506,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      enddo ! loop on scattering states
      !
      if(l_GW_terminator) then
+       !
        forall (i4=1:QP_dSc_steps) W_(i4)=qp%E_bare(i_qp)+real(i4-1,SP)*QP_dSc_delta+cI*QP_G_damp
        !
        do i4=1,QP_dSc_steps

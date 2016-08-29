@@ -23,19 +23,23 @@
 !
 subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
- use drivers
+ use drivers,    ONLY:infile_editing,l_acfdt,l_alda_fxc,l_bs_fxc,l_bse,l_bsk,l_bss,l_chi,l_cohsex,l_col_cut,l_elel_corr,&
+&                     l_elel_scatt,l_elph_corr,l_elph_Hamiltonian,l_elph_scatt,l_em1d,l_em1s,l_eval_collisions,l_gw0,&
+&                     l_HF_and_locXC,l_life,l_lrc_fxc,l_optics,l_ppa,l_rim,l_rpa_IP,l_rt_carriers_in_use,l_sc_coh,l_sc_exx,&
+&                     l_sc_fock,l_sc_hartree,l_sc_ip,l_sc_is_libDFT,l_sc_magnetic,l_sc_run,l_sc_sex,l_setup,l_td_hartree,&
+&                     l_td_hf,l_tddft,l_use_collisions,l_use_Hxc_collisions,l_W_eh,l_W_eh_cpl,l_W_eh_diag,list_dbs
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
- use pars,       ONLY:SP,schlen
+ use pars,       ONLY:SP,cZERO,schlen
  use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
- use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
-&                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
-&                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
-&                      X_terminator,X_en_comp,global_gauge,use_covariant_approach,Integrating_over_Qs,&
-&                      force_v_g_space_approach,use_real_space_approach,Dipole_approach
+ use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,l_drude,&
+&                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
+&                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
+&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
+&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,Integrating_over_Qs,&
+&                     force_v_g_space_approach,use_real_space_approach,Dipole_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,&
@@ -64,15 +68,16 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
+&                     BSS_q0,Haydock_treshold,BSS_uses_DbGd,BSS_Wd,&
+&                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
+&                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
-&                     BSS_q0,Haydock_treshold,Inversion_treshold,BS_K_is_ALDA,BSS_uses_DbGd,&
-&                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BS_anti_res,BSS_perturbative_width
+&                     BS_K_is_ALDA,BSE_mode
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
-&                     FXC_is_causal,TDDFT_mode
+&                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
@@ -85,8 +90,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
-&                     l_SC_nl_mix,l_sc_pot_is_local
- use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_initial_naming
+&                     l_SC_nl_mix
+ use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_naming
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
@@ -386,6 +391,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  self_detect_E_range=.FALSE.
  half_X_mat_only=.FALSE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
+ Dipole_Energy_treshold_vv=1.E+5_SP/HA2EV
  Dipole_approach="G-space v"
  use_shifted_grids_approach = .FALSE.
  use_covariant_approach     = .FALSE.
@@ -404,8 +410,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
- X_terminator=.FALSE.
- X_en_comp=2._SP
+ l_X_terminator=.FALSE.
+ X_terminator_E=1.5_SP
  !
  !QPm
  !
@@ -459,10 +465,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_eh_win=100._SP
  BS_res_mode='xc'
  BS_cpl_mode='none'
- BSE_mode='causal'
+ BSE_mode='retarded'
  BSK_mode=' '
  TDDFT_mode=' '
- BS_anti_res=.FALSE.
+ BSS_add_antiresonant=.FALSE.
+ BSS_Wd=cZERO
+ l_drude=.false.
  BS_K_dim=0
  BSS_mode=' '
  BSS_inversion_mode='pf'
@@ -476,10 +484,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
  Haydock_treshold=-0.02_SP
- Inversion_treshold= 0.01_SP
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  BSS_perturbative_width=.FALSE.
+ K_INV_PL%what     = "PLS"
+ K_INV_PL%treshold =0.5_SP
+ K_INV_EPS%what    = "EPS"
+ K_INV_EPS%treshold=0.01_SP
  !
  ! TDDFT
  !
@@ -491,7 +502,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  FXC_LRC_alpha=0._SP
  FXC_LRC_beta=0._SP
  FXC_SVD_digits=0
- FXC_is_causal=.FALSE.
+ FXC_is_retarded=.FALSE.
  !
  ! ACFDT
  !
@@ -524,7 +535,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
 #if defined _SC || defined _RT || defined _QED
  !
- call COLLISIONS_initial_naming()
+ call COLLISIONS_naming( 0 , "all" )
  !
 #endif
  !
@@ -544,7 +555,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
- l_sc_pot_is_local=.TRUE.
  !
  ! COLLISIONS I/O
  !

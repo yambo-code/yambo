@@ -31,9 +31,10 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  use stderr,        ONLY:real2ch,intc
  use frequency,     ONLY:w_samp
  use X_m,           ONLY:X_t,X_poles
- use BS,            ONLY:BS_bands,BS_eh_en,BSS_q0,BS_K_dim
+ use BS,            ONLY:BS_bands,BS_eh_en,BS_K_dim
+ use BS_solvers,    ONLY:BSS_q0
  use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,FXC,FXC_n_g_corr,&
-&                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,&
+&                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,io_BS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  implicit none
@@ -109,8 +110,8 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  X%ib= BS_bands
  X%ehe=BS_eh_en
  X%q0= BSS_q0
- X%ordering="c"
- if (.not.FXC_is_causal) X%ordering="r"
+ X%ordering="R"
+ if (.not.FXC_is_retarded) X%ordering="r"
  !
  allocate(X_poles(BS_K_dim))
  X_poles=FXC_K_diagonal

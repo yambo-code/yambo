@@ -174,7 +174,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    do iqibz=1,nqibz
      X%iq=iqibz
-     X%ordering='c'
+     X%ordering='R'
      call W_reset(Xw)
      Xw%n_freqs=ACFDT_n_freqs
      Xw%er=0.

@@ -34,6 +34,7 @@ lib/*/netcdf-*
 lib/*/iotk*
 lib/*/libxc-*
 #
+compile.sh
 sbin/make_makefile.sh
 sbin/objects_debug.sh
 src/wf_and_fft/sgfft.F
@@ -41,7 +42,8 @@ bin/*
 
 # source #
 ##########
-*.objects*
+lib/local/.objects
+src/external_c/.objects
 *__lock*
 Makefile
 make.dep
@@ -76,3 +78,4 @@ commit.msg
 ehthumbs.db
 Thumbs.db
 myconfig*
+nohup.out

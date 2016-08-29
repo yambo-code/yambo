@@ -30,7 +30,8 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_H_dim,BSS_eh_E_SOC_corr,BSS_eh_W
+ use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,BSS_eh_W
+ use BS,             ONLY:BS_H_dim
  !
  implicit none
  !

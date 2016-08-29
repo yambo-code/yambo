@@ -187,7 +187,7 @@ subroutine YPP_SET_defaults()
  !
  perturbative_SOC_path=""
  SOC_bands_to_map=(/ 1, n_bands /)
- SOC_E_range_to_map=(/-1._SP,-1._SP/)
+ SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
  !
  ! BXSF interpolation

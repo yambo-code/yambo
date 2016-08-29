@@ -314,7 +314,7 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'SOC_DBs',"Path to the folder containing the DB with SOC",perturbative_SOC_path)
  call it(defs,'bands_to_map',"Number of bands to map",SOC_bands_to_map)
- call it(defs,'bands_E_range',"Energy range to map",SOC_E_range_to_map,E_unit)
+ call it(defs,'bands_buffer',"Bands to be used only as a buffer",SOC_bands_buffer)
  call it(defs,'SOC_splitting',"SOC splitting between the levels",SOC_split,E_unit) 
  !
  ! Wannier bands

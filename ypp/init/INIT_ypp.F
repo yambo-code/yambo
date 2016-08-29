@@ -460,7 +460,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_map_kpts) call initactivate(1,"BZ_DbGd_nkpts SkipCheck noBZExpand NoWeights")
  !
- if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_E_range")
+ if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')

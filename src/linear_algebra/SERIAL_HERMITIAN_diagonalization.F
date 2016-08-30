@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM,AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,7 +24,7 @@
 subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  use pars,           ONLY:SP
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,M_eigenvalues, &
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,&
 &                         LINEAR_ALGEBRA_WS_clean_up
  !
  implicit none
@@ -33,17 +33,31 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  complex(SP) :: M(n,n)
  real(SP)    :: E(n)
  !
+ character(64) :: subname="SERIAL_HERMITIAN_diagonalization"
+ integer :: lwork
+
+ lwork=-1
  allocate(WS%v_cmplx(1),WS%v_real(max(1,3*n-2)))
- call M_eigenvalues(n,M,E,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
  !
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues Hermitian (SD)','WS%v_cmplxspace failed')
+#if defined _DOUBLE
+ call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+#else
+ call CHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+#endif
  !
- WS%dim=int(real(WS%v_cmplx(1)))
+ lwork=nint(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
- allocate(WS%v_cmplx(WS%dim))
- call M_eigenvalues(n,M,E,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
+ allocate(WS%v_cmplx(lwork))
  !
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues Hermitian (SD)','failed')
+#if defined _DOUBLE
+ call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing ZHEEV')
+#else
+ call CHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing CHEEV')
+#endif
+ !
+ ! eigenvectors are stored in M
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  !

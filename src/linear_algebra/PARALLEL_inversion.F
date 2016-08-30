@@ -72,7 +72,7 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N,M)
    if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PZGETRF')
    !
    CALL PZGETRI( N, M_slk%blc, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
-   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(isubname,'performing PZGETRI')
+   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PZGETRI')
 #else
    CALL PCGETRF( N, N, M_slk%blc, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
    if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PCGETRF')

@@ -80,7 +80,6 @@ subroutine PARALLEL_distribute(ORTHO, POOL, M_slk, N, M )
  M_slk%cols=(/mycol*N_blc+1,min(mycol*N_blc+N_blc,N)/)
  !
  M_slk%blc=0.0_SP
- !M_slk%blc=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
  !
  do j=M_slk%cols(1),M_slk%cols(2)
  do i=M_slk%rows(1),M_slk%rows(2)

@@ -46,6 +46,11 @@ subroutine PARALLEL_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, n, M, E )
  complex(SP)       :: M(n,n)
  real(SP)          :: E(n)
  !
+ character(64) :: subname="PARALLEL_diagonalization"
+ logical :: do_SLK
+
+ call LINEAR_ALGEBRA_error(subname,'PARALLEL diagonalization not implemented')
+ !
 #if defined _DOUBLE
  !if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PZGETRF',' ')
  !

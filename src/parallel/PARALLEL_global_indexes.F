@@ -341,11 +341,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                        COMM_index_1=SLK_COM_INDEX(1),COMM_index_2=SLK_COM_INDEX(2),&
 &                                        COMM_A2A_1=SLK_COM_A2A(1),    COMM_A2A_2=SLK_COM_A2A(2))
    !
-   ! Linear Algebra (using Inversion only)
+   ! Linear Algebra (all drivers)
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(7)%nCPU_inversion
    call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV)
    PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
+   !
+   PARALLEL_cpu_mat_diagonalization=CPU_structure(7)%nCPU_diagonalization
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,DIAGO)
+   PAR_IND_DIAGO_ID=PAR_COM_DIAGO_INDEX%CPU_id
    !
  endif
  !

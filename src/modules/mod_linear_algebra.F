@@ -35,6 +35,7 @@ module linear_algebra
  integer, parameter :: PARTIAL_DIAGO=6
  integer, parameter :: SVD_INV=7
  integer, parameter :: LIN_SYS=8
+ integer, parameter :: MAT_MUL=9
  integer, parameter :: min_cpu_block_size=50
  !
  ! Common Work Space
@@ -67,13 +68,14 @@ module linear_algebra
  !
  interface 
    !
-   subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
+   subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
      !
      use pars,           ONLY:SP
      !
      integer                :: idriver
      complex(SP)            :: M(:,:)
      complex(SP),  optional :: B(:,:)
+     complex(SP),  optional :: C(:,:)
      integer,      optional :: lib_in
      complex(SP),  optional :: V_left(:,:)
      complex(SP),  optional :: V_right(:,:)

@@ -27,8 +27,8 @@ subroutine X_s(iq,X,Xw,W_range)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV_INDEX,&
-&                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_DIPOLES
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Q_A2A,PARALLEL_cpu_mat_inversion,PAR_COM_WORLD,&
+&                        PAR_COM_NULL,PP_indexes,PP_indexes_reset,PAR_COM_DIPOLES,myid
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV,LIN_SYS
@@ -51,7 +51,7 @@ subroutine X_s(iq,X,Xw,W_range)
  ! Work Space
  !
  type(PP_indexes) ::PAR_IND_freqs
- integer          ::i1,i2,iw,iw_mat,INV_MODE
+ integer          ::i1,i2,iw,iw_mat,INV_MODE,PAR_IND_FREQ_ID
  complex(SP), allocatable :: Xom1(:,:),tddftk(:,:),Xo(:,:)
  !
  ! Fxc I/O (for the BS based kernel)
@@ -78,15 +78,36 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  ! Frequencies distribution
  !
- call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_INV_INDEX)
+ !write(*,*) myid,PAR_COM_INV%CPU_id,PAR_COM_INV%n_cpu,PAR_COM_INV_INDEX%CPU_id,PAR_COM_INV_INDEX%n_cpu
  !
  call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
  !
- call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1),TOTAL=Xw%n_freqs)
+ !write(*,*) 'WORLD',PAR_COM_WORLD%n_cpu,  PAR_COM_WORLD%cpu_id,  PAR_COM_WORLD%COMM,  myid
+ !write(*,*) 'NULL', PAR_COM_NULL%n_cpu,   PAR_COM_NULL%cpu_id,   PAR_COM_NULL%COMM,   myid
+ !write(*,*) 'Q_IND',PAR_COM_Q_INDEX%n_cpu,PAR_COM_Q_INDEX%cpu_id,PAR_COM_Q_INDEX%COMM,myid
+ !write(*,*) 'Q_A2A',PAR_COM_Q_A2A%n_cpu,  PAR_COM_Q_A2A%cpu_id,  PAR_COM_Q_A2A%COMM,  myid
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1)>0) then
-   call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1))
+ if(PARALLEL_cpu_mat_inversion==1) then
+   !
+   if (PAR_COM_Q_INDEX%n_CPU>1) then
+     call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_Q_A2A)
+     PAR_IND_FREQ_ID=PAR_COM_Q_A2A%cpu_id
+   else
+     call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_WORLD)
+     PAR_IND_FREQ_ID=PAR_COM_WORLD%cpu_id
+   endif
+   !
+ else
+   !
+   call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_NULL)
+   PAR_IND_FREQ_ID=PAR_COM_NULL%cpu_id
+   !
  endif
+ !
+ call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1),TOTAL=Xw%n_freqs)
+ !
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) &
+&  call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1))
  !
  do iw=1,Xw%n_freqs
    !
@@ -210,20 +231,23 @@ subroutine X_s(iq,X,Xw,W_range)
    forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4._SP*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
 #endif
    !
-   call live_timing(steps=1)
+   if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) call live_timing(steps=1)
    !
  enddo
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1)>0) call live_timing()
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) call live_timing()
  !
 #if defined _TIMING
  call timing('X (procedure)',OPR='stop')
  call timing('X (REDUX)',OPR='start')
 #endif
  !
- do iw=W_range(1),W_range(2)
-   call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_INV_index%COMM)
- enddo
+ if(PARALLEL_cpu_mat_inversion==1) then
+   do iw=W_range(1),W_range(2)
+     if (PAR_COM_Q_INDEX%n_CPU> 1) call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_Q_A2A%COMM)
+     if (PAR_COM_Q_INDEX%n_CPU==1) call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_WORLD%COMM)
+   enddo
+ endif
  !
 #if defined _TIMING
  call timing('X (REDUX)',OPR='stop')

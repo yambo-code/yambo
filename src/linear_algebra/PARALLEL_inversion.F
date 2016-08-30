@@ -33,7 +33,7 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N,M)
  ! perform the inversion by using scalapack
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait,myid
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
  !
@@ -83,7 +83,7 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N,M)
    !
    ! gather the inverse matrix
    !
-   M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=M_slk%blc(:,:)
+   M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=M_slk%blc(:M_SLK%nrows_used,:M_SLK%ncols_used)
    !
  endif
  !

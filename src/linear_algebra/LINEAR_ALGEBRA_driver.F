@@ -93,7 +93,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,lib_in,V_left,V_right,E_real,E_cmpl
  endif
  if (idriver==SVD_INV.or.idriver==DIAGO) lib_in_use=USE_LK 
  !
- if (Ncpu_in_use==1) lib_in_use=USE_LK 
+ if (Ncpu_in_use<=3) lib_in_use=USE_LK
  if (N/sqrt(real(Ncpu_in_use))<min_cpu_block_size) lib_in_use=USE_LK 
  !
  if (idriver==LIN_SYS.and..not.present(B)) &

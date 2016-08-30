@@ -77,6 +77,8 @@ module SLK_m
    integer :: cols(2)  = 0
    integer :: nrows    = 0
    integer :: ncols    = 0
+   integer :: nrows_used = 0
+   integer :: ncols_used = 0
    complex(SP), allocatable :: blc(:,:)
  end type SLK_matrix 
  !

@@ -28,8 +28,8 @@ subroutine K_kerr_IP(iq,w)
  use drivers,        ONLY:l_rpa_IP
  use X_m,            ONLY:Epsilon_ij,global_gauge
  use KERR,           ONLY:DIP_projected_r90,KERR_alloc,B_Hall
- use BS,             ONLY:BSS_n_freqs,BS_T_grp,BS_nT_grps,&
-&                         BS_K_coupling,BSS_add_antiresonant,Co_factor
+ use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
+ use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
  use electrons,      ONLY:E_SOC_nbands
  use R_lattice,      ONLY:q_norm
  use drivers,        ONLY:l_anomalous_Hall

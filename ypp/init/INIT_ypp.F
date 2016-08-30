@@ -439,7 +439,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_START
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
  !
 #if defined _YPP_RT
  !

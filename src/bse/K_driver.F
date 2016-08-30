@@ -74,6 +74,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !===========
  BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.l_rpa_IP
  !
+ ! Copatibility with old inputs
+ !==============================
+ if (index(BSE_mode,'causal')/=0) BSE_mode='retarded'
+ !
  ! Tranferred momentum. Only Gamma now
  !=====================================
  !
@@ -147,13 +151,25 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BSS_add_antiresonant=index(BSE_mode,'retarded')/=0.or.index(BSE_mode,'causal')/=0
+ BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  BS_K_is_ALDA=l_alda_fxc.and.n_spin==1
  if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
+ !
+ ! GPL_EXLUDE_START
+ !
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !
+ !l_anomalous_Hall=l_kerr
+ !
+ ! GPL_INCLUDE_END
+ !
 #endif
  !
  ! Energy points

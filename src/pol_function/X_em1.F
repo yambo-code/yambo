@@ -31,7 +31,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use drivers,       ONLY:l_photolum
 #endif
  use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
-&                        Chi_inversion_mode,X_use_lin_sys
+&                        l_X_terminator,X_terminator_Kind,Chi_inversion_mode,X_use_lin_sys
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -39,7 +39,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
- use com,           ONLY:depth
+ use com,           ONLY:depth,error
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load
@@ -59,11 +59,18 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
+
+ !
+ ! logicals and control
  !
  self_detect_E_range=.false.
  !
  X_use_lin_sys=.false.
  if (trim(Chi_inversion_mode)=="lin_sys") X_use_lin_sys=.true.
+ !
+ l_X_terminator = X_terminator_Kind/='none'
+ if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
+&   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
  !
  ! TDDFT SETUP (-1 argument)
  !
@@ -247,6 +254,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  enddo
  !
  X_is_evaluated_for_all_Qs=.false.
+ l_X_terminator=.false.
  !
  ! CLEAN (2)
  !

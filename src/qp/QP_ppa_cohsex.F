@@ -43,7 +43,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        io_RESPONSE
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        COHSEX_use_empties,l_GW_terminator
+&                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
@@ -83,13 +83,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  integer, external::io_X,QP_state_extract
  !
- ! Reset
+ ! Reset & checks
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
+ !
+ if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
+&    trim(GW_terminator_Kind)/='BRS') &
+&    call error(' [GW/PPA] unknown GW_terminator_Kind = '//trim(GW_terminator_Kind))
+ 
  !
  ! COHSEX: bands setup
  !

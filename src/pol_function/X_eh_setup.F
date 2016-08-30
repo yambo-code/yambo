@@ -24,7 +24,7 @@
 integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:X_t,X_poles,X_poles_tab
+ use X_m,           ONLY:X_t,X_poles,X_Ein_poles,X_poles_tab,l_X_terminator,X_term_E
  use R_lattice,     ONLY:qindx_X,bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin_occ
  use frequency,     ONLY:ordered_grid_index
@@ -40,21 +40,26 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  ! Work Space
  !
- integer :: i1,i2,ik,ikp,iv,ic,Nv,Nc,i_sp,i_pole
- logical :: MPI_logicals_on
- real(SP):: E_eh,f_eh,local_tresh
- real(SP), allocatable :: poles(:)
+ integer :: i1,i2,ik,ikp,iv,ic,Nv,Nc,i_sp,i_pole,ic_min,Nc_XTerm
+ logical :: MPI_logicals_on,l_XTerm_vv
+ real(SP):: E_eh,E_in,f_eh,local_tresh
+ real(SP), allocatable :: poles(:),Ein_poles(:)
  !
  Nv=Xen%nbm-X%ib(1)+1
  Nc=X%ib(2)-Xen%nbf
  !
- allocate(poles(Xk%nbz*Nv*Nc*n_sp_pol))
+ Nc_XTerm=0
+ if (l_X_terminator) Nc_XTerm=Nv
+ !
+ allocate(poles(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
+ allocate(Ein_poles(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
  !
  MPI_logicals_on=associated(PAR_IND_Xk_bz%element_1D)
  !
  ! Note that in metals not all the elements are defined
  !
  poles=0._SP 
+ Ein_poles=0._SP
  !
  !
  X_eh_setup=0
@@ -72,7 +77,11 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
        if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
      endif
      !
-     do ic=X%ib(2)-Nc+1,X%ib(2)
+     ! setting terminator bnd range
+     ic_min = X%ib(2)-Nc+1
+     if (l_X_terminator) ic_min=X%ib(1) 
+     !
+     do  ic=ic_min,X%ib(2)
        do i_sp=1,n_sp_pol
          !
          if (MPI_logicals_on) then
@@ -83,7 +92,16 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          ik=Xk%sstar(i1,1) 
          ikp=Xk%sstar(i2,1)
          !
-         E_eh=Xen%E(ic,ik,i_sp)-Xen%E(iv,ikp,i_sp)
+         ! terminator handling
+         if (ic>=X%ib(1).and.ic<=Xen%nbm.and.l_X_terminator) then
+           l_XTerm_vv=.TRUE.
+           E_eh=X_term_E-Xen%E(iv,ikp,i_sp)       
+         else
+           l_XTerm_vv=.FALSE.
+           E_eh=Xen%E(ic,ik,i_sp)-Xen%E(iv,ikp,i_sp)
+         endif 
+         !
+         E_in=Xen%E(iv,ikp,i_sp)
          !
          ! Note that all possible E_eh signs are accepted. Negative
          ! transitions energies appear at finite temperature.
@@ -105,9 +123,17 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          !
          !   both transitions 1->3 , 2->4 are resonant but 2->4 has negative energy
          !
-         f_eh=Xen%f (iv,ikp,i_sp)*(spin_occ-Xen%f (ic,ik,i_sp))/spin_occ
-         if (abs(f_eh)<local_tresh) cycle
+         if (.not.l_XTerm_vv) then
+           f_eh=Xen%f(iv,ikp,i_sp)*(spin_occ-Xen%f(ic,ik,i_sp))/spin_occ
+         else
+           f_eh=Xen%f(iv,ikp,i_sp)*Xen%f(ic,ik,i_sp)/spin_occ
+         endif
          !
+         if (abs(f_eh)<local_tresh)  cycle  
+         ! When iv--> iv transitions are counted, f_eh=0. 
+         ! Therefore  if (abs(f_eh)<local_tresh) cycle hold only 
+         ! when the terminator  is off 
+         !                                                              
          if (any((/abs(E_eh)<X%ehe(1),abs(E_eh)>X%ehe(2).and.X%ehe(2)>0._SP/))) cycle
          !
          ! Skip these poles because dipoles are not defined in this case
@@ -118,6 +144,8 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          !
          X_eh_setup=X_eh_setup+1
          poles(X_eh_setup)=E_eh
+         Ein_poles(X_eh_setup)=E_in
+         !
          i_pole=X_eh_setup
          if (allocated(ordered_grid_index)) i_pole=ordered_grid_index(X_eh_setup)
          if (iq>0) X_poles_tab(i_pole,:)=(/i1,iv,ic,i_sp/)
@@ -135,8 +163,14 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
      X_poles=0._SP
    endif
    X_poles=X_poles+poles(:X_eh_setup)
+   !
+   if (.not.allocated(X_Ein_poles)) then
+     allocate(X_Ein_poles(X_eh_setup))
+     X_Ein_poles=0._SP
+   endif
+   X_Ein_poles=X_Ein_poles+Ein_poles(:X_eh_setup)
  endif
  !
- deallocate(poles)
+ deallocate(poles,Ein_poles)
  !
 end function

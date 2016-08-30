@@ -34,6 +34,7 @@ lib/*/netcdf-*
 lib/*/iotk*
 lib/*/libxc-*
 #
+compile.sh
 sbin/make_makefile.sh
 sbin/objects_debug.sh
 src/wf_and_fft/sgfft.F
@@ -77,3 +78,4 @@ commit.msg
 ehthumbs.db
 Thumbs.db
 myconfig*
+nohup.out

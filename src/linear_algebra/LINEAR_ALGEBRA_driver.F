@@ -78,11 +78,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  lib_in_use=USE_SLK
  if (idriver==INV.or.idriver==LIN_SYS.or.idriver==MAT_MUL) then
    Ncpu_in_use=PAR_COM_INV%n_CPU
-   if (PARALLEL_cpu_mat_inversion>0) Ncpu_in_use=min(Ncpu_in_use,PARALLEL_cpu_mat_inversion)
+   if (PARALLEL_cpu_mat_inversion>0)  Ncpu_in_use=min(Ncpu_in_use,PARALLEL_cpu_mat_inversion)
+   if (PARALLEL_cpu_mat_inversion==0) Ncpu_in_use=1   ! safe default
  endif
  if (idriver==DIAGO) then 
    Ncpu_in_use=PAR_COM_DIAGO%n_CPU
-   if (PARALLEL_cpu_mat_diagonalization>0) Ncpu_in_use=min(Ncpu_in_use,PARALLEL_cpu_mat_diagonalization)
+   if (PARALLEL_cpu_mat_diagonalization>0)  Ncpu_in_use=min(Ncpu_in_use,PARALLEL_cpu_mat_diagonalization)
+   if (PARALLEL_cpu_mat_diagonalization==0) Ncpu_in_use=1   ! safe default
  endif
 #else
  Ncpu_in_use=1

@@ -63,7 +63,7 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
    !
    ! gather the solution
    !
-   B(B_slk%rows(1):B_slk%rows(2),B_slk%cols(1):B_slk%cols(2))=B_slk%blc(:,:)
+   B(B_slk%rows(1):B_slk%rows(2),B_slk%cols(1):B_slk%cols(2))=B_slk%blc(:B_SLK%nrows_used,:B_SLK%ncols_used)
    !
  endif
  !

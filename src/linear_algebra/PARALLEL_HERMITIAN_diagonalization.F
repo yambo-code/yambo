@@ -95,7 +95,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, n, 
    ! gather eigenvalues and eigenvectors
    !
    if (ORTHO%task/=0) E=0.0_SP
-   M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=EIGEN_slk%blc(:,:)
+   M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=EIGEN_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)
    !
  endif
  !

@@ -61,7 +61,7 @@ subroutine PARALLEL_mat_mul(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
    !
    ! gather the solution
    !
-   C(C_slk%rows(1):C_slk%rows(2),C_slk%cols(1):C_slk%cols(2))=C_slk%blc(:,:)
+   C(C_slk%rows(1):C_slk%rows(2),C_slk%cols(1):C_slk%cols(2))=C_slk%blc(:C_slk%nrows_used,:C_slk%ncols_used)
    !
  endif
  !

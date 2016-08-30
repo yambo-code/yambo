@@ -483,6 +483,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !
    endif
    !
+   if ( (Q_range(2)-Q_range(1)+1)/PAR_COM_Q_INDEX%n_CPU*PAR_COM_Q_INDEX%n_CPU /= (Q_range(2)-Q_range(1)+1) ) then
+     call warning(' Linear algebra switched off since pools are not uniform')
+     PARALLEL_cpu_mat_inversion=1
+   endif
+   !
    ! Inversion
    !
    call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV)

@@ -78,14 +78,7 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  ! Frequencies distribution
  !
- !write(*,*) myid,PAR_COM_INV%CPU_id,PAR_COM_INV%n_cpu,PAR_COM_INV_INDEX%CPU_id,PAR_COM_INV_INDEX%n_cpu
- !
  call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
- !
- !write(*,*) 'WORLD',PAR_COM_WORLD%n_cpu,  PAR_COM_WORLD%cpu_id,  PAR_COM_WORLD%COMM,  myid
- !write(*,*) 'NULL', PAR_COM_NULL%n_cpu,   PAR_COM_NULL%cpu_id,   PAR_COM_NULL%COMM,   myid
- !write(*,*) 'Q_IND',PAR_COM_Q_INDEX%n_cpu,PAR_COM_Q_INDEX%cpu_id,PAR_COM_Q_INDEX%COMM,myid
- !write(*,*) 'Q_A2A',PAR_COM_Q_A2A%n_cpu,  PAR_COM_Q_A2A%cpu_id,  PAR_COM_Q_A2A%COMM,  myid
  !
  if(PARALLEL_cpu_mat_inversion==1) then
    !

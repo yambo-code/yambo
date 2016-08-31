@@ -158,7 +158,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
  !
- ! GPL_EXLUDE_START
+ ! GPL_EXCLUDE_START
  !
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
  !

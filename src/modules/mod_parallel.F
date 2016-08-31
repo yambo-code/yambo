@@ -559,6 +559,7 @@ module parallel_m
        omode=MPI_LOR
      endif
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=.FALSE.
@@ -592,6 +593,7 @@ module parallel_m
        omode=mpi_sum
      endif
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0
@@ -625,6 +627,7 @@ module parallel_m
        omode=mpi_sum
      endif
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0
@@ -651,6 +654,7 @@ module parallel_m
      if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0
@@ -677,6 +681,7 @@ module parallel_m
      if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0
@@ -762,6 +767,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -792,6 +798,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -822,6 +829,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -882,6 +890,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -911,6 +920,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -957,7 +967,7 @@ module parallel_m
      complex(SP):: array(:)
      integer, optional :: COMM
 #if defined _MPI
-     integer  :: LOCAL_COMM
+     integer::dimensions(1),dimension,LOCAL_COMM  ! Work Space
      complex(SP),allocatable::larray(:)  ! Work Space
      if (ncpu==1) return
      !
@@ -972,9 +982,12 @@ module parallel_m
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
      !
      call mpi_barrier(LOCAL_COMM,i_err)
-     allocate(larray(size(array)))
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
      larray=(0.,0.)
-     call mpi_allreduce(array(1),larray,size(array),local_type,mpi_sum,LOCAL_COMM,i_err)
+     call mpi_allreduce(array(1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
      array=larray
      deallocate(larray)
      call mpi_barrier(LOCAL_COMM,i_err)
@@ -1001,6 +1014,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=(0.,0.)
@@ -1031,6 +1045,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -1061,6 +1076,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.

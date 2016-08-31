@@ -26,7 +26,7 @@ module QP_m
  use pars,      ONLY:SP,schlen
  implicit none
  !
- integer, parameter:: max_qp_descs=200
+ integer, parameter:: max_qp_descs=300
  !
  ! Mixing for non perturbative calculations
  !

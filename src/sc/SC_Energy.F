@@ -33,7 +33,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  use parallel_m,     ONLY:master_cpu
  use xc_functionals, ONLY:V_xc,E_xc,XC_potential_driver,magn
  use FFT_m,          ONLY:fft_size
- use SC,             ONLY:l_sc_pot_is_local,V_hartree_sc,SC_kind,SC_xc_functional,E_bare_Ef
+ use SC,             ONLY:l_sc_V_is_local,V_hartree_sc,SC_kind,SC_xc_functional,E_bare_Ef
  !
  implicit none
  !
@@ -50,7 +50,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  E_Hartree=0._SP
  E_xc_=    0._SP
  !
- if (.not.l_sc_is_libDFT .and. .not.l_sc_hartree .and. .not.l_sc_pot_is_local) return
+ if (.not.l_sc_is_libDFT .and. .not.l_sc_hartree .and. .not.l_sc_V_is_local) return
  !
  call V_Hartree(rho,V_hartree_sc)                           ! V_Hartree
  call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1,&

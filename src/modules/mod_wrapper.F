@@ -281,7 +281,6 @@ module wrapper
      !
    end subroutine LU_factorization
    !
-   !
    subroutine LU_inversion(msize,M,ipvt,work,lwork,ifail)
      !
      integer,     intent(in)   :: msize, lwork, ipvt(*)
@@ -334,6 +333,5 @@ module wrapper
 #endif
      !
    end subroutine geev
-   !
    !
 end module

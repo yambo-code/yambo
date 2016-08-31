@@ -21,12 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
+subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  !
  ! Input
  !-------
  ! integer     :: npts
  ! real(SP)    :: bg_pt(npts),cg_percentual
+ ! real(SP)    :: in_pt(npts)   energies of the initial states (if lterm)
+ ! logical     :: lterm         whether terminator techniques are used
  !
  ! Output
  !--------
@@ -52,19 +54,23 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  character(*),intent(in) :: title
  integer,intent(in)      :: npts
  real(SP),intent(in)     :: bg_pt(npts),cg_percentual
+ real(SP),intent(in)     :: in_pt(*)
+ logical,intent(in)      :: lterm
  !
  ! DEFAULT TRESHOLD
  !
  real(SP), parameter :: default_treshold=1.E-5
+ real(SP), parameter :: default_treshold_ini=1.E-5
  !
  ! Work Space
  ! 
  integer ::i_cg,i_bg,i_bg_loc,i_bg_ref,dncg,ipos(npts,2),icycle,itresh
- real(SP)::tresh,df
+ real(SP)::tresh,tresh_ini,df
  logical ::lcycle
  character(schlen)   :: ch
  integer ,allocatable:: bg_sorted_x(:),i_vec(:)
  real(SP),allocatable:: bg_diffs(:),bg_sorted(:)
+ real(SP),allocatable:: in_sorted(:)
  !
  if(npts==0) then
    allocate(ordered_grid_index(npts),coarse_grid_index(npts),bare_grid_N(npts),coarse_grid_Pt(npts))
@@ -91,14 +97,25 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  allocate(bg_diffs(npts-1),bg_sorted(npts),bg_sorted_x(npts))
  bg_sorted=bg_pt
  !
+ allocate(in_sorted(npts))
+ in_sorted=0.0_SP
+ !
  call sort(bg_sorted,indx=bg_sorted_x)
  do i_bg=1,npts-1
    bg_diffs(i_bg)=bg_sorted(i_bg+1)-bg_sorted(i_bg)
  enddo
  !
+ if (lterm) then
+   do i_bg=1,npts
+     in_sorted(i_bg)=in_pt(bg_sorted_x(i_bg))
+   enddo
+ endif
+ !
  if(npts>2) call sort(bg_diffs)
  !
  tresh=default_treshold
+ tresh_ini=default_treshold_ini
+ !
  if (cg_percentual<0.) tresh=minval(bg_diffs)+&
 &                      abs(cg_percentual)/100._SP*(maxval(bg_diffs)-minval(bg_diffs))
  icycle=0
@@ -111,8 +128,12 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
    ipos(1,1)=i_cg
    ipos(bg_sorted_x(1),2)=1
    do i_bg=2,npts
+     !
+     ! df redefined using abs(), since the v-->v transition energies
+     ! can be negative (when the terminator is used)
+     !
      df=bg_sorted(i_bg)-bg_sorted(i_bg_ref)
-     if (df>tresh) then
+     if (abs(df)>tresh .or. (lterm.and.abs(in_sorted(i_bg)-in_sorted(i_bg_ref))>tresh_ini) ) then
        i_cg=i_cg+1
        i_bg_ref=i_bg
      endif
@@ -167,5 +188,6 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  endif
  !
  deallocate(bg_diffs,bg_sorted,bg_sorted_x)
+ deallocate(in_sorted)
  !
 end subroutine

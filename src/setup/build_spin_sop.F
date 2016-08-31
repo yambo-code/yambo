@@ -35,7 +35,9 @@ subroutine build_spin_sop()
  real(SP)       ::alpha,beta,delta,tmp_sop(3,3)
  integer        ::is,i1,i2
  !
- if(.not.allocated(spin_sop)) allocate(spin_sop(n_spinor,n_spinor,nsym))
+ if(allocated(spin_sop)) deallocate(spin_sop)
+ !
+ allocate(spin_sop(n_spinor,n_spinor,nsym))
  !
  if(n_spinor==1) then
    spin_sop(1,1,:)=cONE

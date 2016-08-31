@@ -124,7 +124,7 @@ module D_lattice
    end subroutine
    !
    !
-   subroutine atoms_spatial_invertion()
+   subroutine atoms_spatial_inversion()
      use pars,           ONLY:zero_dfl
      use matrix_operate, ONLY:m3inv
      !

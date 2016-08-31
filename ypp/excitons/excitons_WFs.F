@@ -35,8 +35,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  use YPP,           ONLY:v2plot,ncell,r_hole,l_free_hole,&
 &                        nr,nr_tot,output_fname,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim
- use BS,            ONLY:BS_H_dim,BSS_eh_table,BS_mat,BS_bands,&
-&                        BSS_n_descs,BSS_description
+ use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description
+ use BS,            ONLY:BS_H_dim,BS_bands
  use interfaces,    ONLY:PARALLEL_index,WF_load
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function eval_G_minus_G(iG,iGo)
+integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! Evaluates the  G-G' table :
  !
@@ -33,6 +33,7 @@ integer function eval_G_minus_G(iG,iGo)
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use vec_operate,  ONLY:iku_v_norm
+ use parallel_m,   ONLY:MPI_comm
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
 #if defined _TIMING
  use timing_m,     ONLY:timing
@@ -40,6 +41,7 @@ integer function eval_G_minus_G(iG,iGo)
  !
  implicit none
  integer :: iG,iGo
+ type(MPI_comm), optional :: COMM
  !
  ! Work Space
  !

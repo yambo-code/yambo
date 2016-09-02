@@ -33,8 +33,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use vec_operate,  ONLY:iku_v_norm
- use parallel_m,   ONLY:MPI_comm
+ use parallel_m,   ONLY:MPI_comm,PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
+ use interfaces,   ONLY:PARALLEL_index,PARALLEL_live_message
 #if defined _TIMING
  use timing_m,     ONLY:timing
 #endif
@@ -50,6 +51,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3)
  real(SP), allocatable :: E_G_m_G(:,:)
+ type(PP_indexes) :: PAR_IND_G
  !
  integer, external :: G_index
  !
@@ -70,15 +72,36 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! aux data
  allocate(E_G_m_G(iG_,iGo_))
+
  !
-!$omp parallel do default(shared), private(i2,i1,v1)
+ ! setup MPI parallelism if required
+ !
+ call PP_indexes_reset(PAR_IND_G)
+ if (present(COMM)) then
+   !
+   call PARALLEL_index(PAR_IND_G,(/iGo_/),COMM=COMM)
+   !
+   call PARALLEL_live_message("[G_m_G] G-vectors",LOADED=PAR_IND_G%n_of_elements(myid+1),TOTAL=iGo_)
+   !
+ endif
+ !
+!$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
+   !
+   if(present(COMM)) then
+     E_G_m_G(:,i2)=0.0_SP
+     if (.not.PAR_IND_G%element_1D(i2)) cycle
+   endif
+   !
    do i1=1,iG_
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
      E_G_m_G(i1,i2)=0.5_SP*iku_v_norm(v1)**2
    enddo
  enddo
 !$omp end parallel do
+ !
+ if (present(COMM)) call PP_redux_wait(E_G_m_G,COMM=COMM%COMM)
+
  !
  ! Find the shell corresponding to iGo
  !
@@ -140,8 +163,14 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
  !
-!$omp parallel do default(shared), private(i2,i1,v1)
+!$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
+   !
+   if(present(COMM)) then
+     G_m_G(:,i2)=0
+     if (.not.PAR_IND_G%element_1D(i2)) cycle
+   endif
+   !
    do i1=1,iG_
      !
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
@@ -151,6 +180,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  enddo
 !$omp end parallel do
  ! 
+ if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
+ !
+ call PP_indexes_reset(PAR_IND_G)
  deallocate(E_G_m_G)
  !
 #if defined _TIMING

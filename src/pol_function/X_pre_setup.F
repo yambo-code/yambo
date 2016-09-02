@@ -30,6 +30,7 @@ subroutine X_pre_setup(Xen,X)
  use R_lattice,     ONLY:nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
  use interfaces,    ONLY:eval_G_minus_G
+ use parallel_m,    ONLY:PAR_COM_WORLD
  !
  implicit none
  !
@@ -64,7 +65,7 @@ subroutine X_pre_setup(Xen,X)
  !
  ! CHO checks
  !
- if ((l_gw0.and.l_cohsex).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0)
+ if ((l_gw0.and.l_cohsex).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
  !
  ! Fxc Checks
  !

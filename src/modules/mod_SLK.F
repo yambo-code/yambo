@@ -85,14 +85,10 @@ module SLK_m
  ! Specific SLK worlds ...
  !========================
  !
- type(POOL_group ),SAVE :: SLK_INV_pool
- type(ORTHO_group),SAVE :: SLK_INV_ortho
- type(SLK_matrix), SAVE :: SLK_INV_mat
- !
- type(POOL_group ),SAVE :: SLK_DIAGO_pool
- type(ORTHO_group),SAVE :: SLK_DIAGO_ortho
- type(SLK_matrix), SAVE :: SLK_DIAGO_mat
- type(SLK_matrix), SAVE :: SLK_DIAGO_eigenv
+ type(POOL_group ),SAVE :: SLK_POOL_INV
+ type(POOL_group ),SAVE :: SLK_POOL_DIAGO
+ type(ORTHO_group),SAVE :: SLK_ORTHO_INV
+ type(ORTHO_group),SAVE :: SLK_ORTHO_DIAGO
  !
  type(MPI_comm),SAVE    :: SLK_COM_INDEX(2)
  type(MPI_comm),SAVE    :: SLK_COM_A2A(2)

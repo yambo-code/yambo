@@ -146,6 +146,7 @@ module parallel_m
  integer          :: PARALLEL_n_structures_active = 0
  integer          :: PARALLEL_cpu_mat_inversion 
  integer          :: PARALLEL_cpu_mat_diagonalization 
+ logical          :: linear_algebra_is_parallel = .false.
  !
  !... Logging CPUs ...
  !

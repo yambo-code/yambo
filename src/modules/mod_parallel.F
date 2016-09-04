@@ -122,8 +122,7 @@ module parallel_m
    character(schlen)    :: ROLE_string = " "
    character(schlen)    :: Long_Description  = " "
    character(schlen)    :: Short_Description = " "
-   integer              :: nCPU_diagonalization =0
-   integer              :: nCPU_inversion       =0
+   integer              :: nCPU_lin_algebra =0
  end type CPU_stru
  !
  !      if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
@@ -144,8 +143,7 @@ module parallel_m
  integer          :: PARALLEL_CPU_used(MAX_N_OF_CHAINS) = 1
  character(4)     :: PARALLEL_CPU_role(MAX_N_OF_CHAINS) = " "
  integer          :: PARALLEL_n_structures_active = 0
- integer          :: PARALLEL_cpu_mat_inversion 
- integer          :: PARALLEL_cpu_mat_diagonalization 
+ integer          :: PARALLEL_cpu_linear_algebra
  logical          :: linear_algebra_is_parallel = .false.
  !
  !... Logging CPUs ...
@@ -194,8 +192,7 @@ module parallel_m
  !========================
  !
  ! ... linear algebra
- type(PP_indexes),SAVE :: PAR_IND_INV
- type(PP_indexes),SAVE :: PAR_IND_DIAGO
+ type(PP_indexes),SAVE :: PAR_IND_SLK
  !
  ! ... BZ sampling
  type(PP_indexes),SAVE :: PAR_IND_Q
@@ -242,8 +239,7 @@ module parallel_m
  !======================
  !
  ! ... linear algebra
- integer            :: PAR_IND_INV_ID
- integer            :: PAR_IND_DIAGO_ID
+ integer            :: PAR_IND_SLK_ID
  !
  ! ... QP
  integer            :: PAR_IND_QP_ID
@@ -293,10 +289,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_NULL
  !
  ! ... linear algebra
- type(MPI_comm),SAVE :: PAR_COM_INV_INDEX
- type(MPI_comm),SAVE :: PAR_COM_INV
- type(MPI_comm),SAVE :: PAR_COM_DIAGO_INDEX
- type(MPI_comm),SAVE :: PAR_COM_DIAGO
+ type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_SLK
  !
  ! ... RL vectors
  integer             :: PAR_nRL

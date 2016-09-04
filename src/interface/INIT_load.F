@@ -30,7 +30,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        global_gauge,Dipole_approach,Chi_inversion_mode, &
+&                        global_gauge,Dipole_approach,Chi_linalg_mode, &
 &                        l_X_terminator,X_terminator_Kind,X_terminator_E
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
@@ -282,7 +282,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! Xs Xd Xp
  !
  call it(defs,'Chimod',    '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
- call it(defs,'ChiInvmod', '[X] inversion/lin_sys',Chi_inversion_mode,verb_level=V_resp)
+ call it(defs,'ChiLinAlgMod', '[X] inversion/lin_sys',Chi_linalg_mode,verb_level=V_resp)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
@@ -706,12 +706,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
        name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
        call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
 &              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
-       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_diago"
-       call it(defs,trim(name),'[PARALLEL] CPUs for matrix diagonalization',&
-&              CPU_structure(i_s)%nCPU_diagonalization,verb_level=V_parallel)
-       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_invert"
-       call it(defs,trim(name),'[PARALLEL] CPUs for matrix inversion',&
-&              CPU_structure(i_s)%nCPU_inversion,verb_level=V_parallel)
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg"
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+&              CPU_structure(i_s)%nCPU_lin_algebra,verb_level=V_parallel)
      enddo
      !
    end subroutine

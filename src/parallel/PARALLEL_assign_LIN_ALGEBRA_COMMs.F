@@ -21,22 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver)
+subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,MPI_comm,COMM_copy,&
-&                        PAR_COM_INV,PAR_COM_DIAGO,PAR_COM_INV_INDEX,PAR_COM_DIAGO_INDEX,&
-&                        PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization,&
-&                        linear_algebra_is_parallel,PAR_COM_Q_A2A,PAR_COM_Q_INDEX
+&                        PAR_COM_SLK,PAR_COM_SLK_INDEX,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,&
+&                        linear_algebra_is_parallel
 #if defined _SCALAPACK
- use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO_INV,SLK_POOL_INV,SLK_ORTHO_DIAGO,SLK_POOL_DIAGO
+ use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
 #endif
- use linear_algebra,ONLY:INV,DIAGO,MAT_MUL,LIN_SYS
  use com,           ONLY:warning
  !
  implicit none
  !
  character(*)            :: ENVIRONMENT
  integer                 :: idriver
+ integer                 :: Ncpu_in
  !
  ! Work Space
  !
@@ -45,19 +44,10 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver)
  !  LK -> Lapack,     serial linear algebra
  ! SLK -> Scalapack, parallel linear algebra
  !
-#if defined _SCALAPACK 
- if (idriver==INV.or.idriver==LIN_SYS.or.idriver==MAT_MUL) then
-   Ncpu_lin_algebra=PAR_COM_INV%n_CPU
-   if (PARALLEL_cpu_mat_inversion>0)  Ncpu_lin_algebra=PARALLEL_cpu_mat_inversion
-   if (PARALLEL_cpu_mat_inversion==0) Ncpu_lin_algebra=1         ! safe default
- endif
- if (idriver==DIAGO) then
-   Ncpu_lin_algebra=PAR_COM_DIAGO%n_CPU
-   if (PARALLEL_cpu_mat_diagonalization>0)  Ncpu_lin_algebra=PARALLEL_cpu_mat_diagonalization
-   if (PARALLEL_cpu_mat_diagonalization==0) Ncpu_lin_algebra=1   ! safe default
- endif
-#else
  Ncpu_lin_algebra=1
+#if defined _SCALAPACK 
+ if (Ncpu_in==0) Ncpu_lin_algebra=1         ! safe default
+ if (Ncpu_in>0)  Ncpu_lin_algebra=Ncpu_in
 #endif
  !
  ! smallest SLK grid is 2x2
@@ -79,15 +69,15 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver)
  !
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
    !
-   call SLK_communicators_init(  PAR_COM_Q_A2A , PAR_COM_Q_INDEX )
+   call SLK_communicators_init( PAR_COM_Q_A2A, PAR_COM_Q_INDEX ) 
    !
  else if (ENVIRONMENT=="ScaLapacK") then
    !
-   call SLK_communicators_init( SLK_COM_A2A(1),SLK_COM_INDEX(1))
+   call SLK_communicators_init( SLK_COM_A2A(1), SLK_COM_INDEX(1) )
    !
  else
    !
-   call SLK_communicators_init( PAR_COM_WORLD , PAR_COM_NULL )
+   call SLK_communicators_init( PAR_COM_WORLD, PAR_COM_NULL )
    !
  endif
  !
@@ -95,22 +85,15 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver)
  !
  linear_algebra_is_parallel=.TRUE.
  !
- if (idriver==INV.or.idriver==LIN_SYS.or.idriver==MAT_MUL) then
-   Ncpu_lin_algebra=min(Ncpu_lin_algebra,PAR_COM_INV%n_CPU)
- endif
- if (idriver==DIAGO) then
-   Ncpu_lin_algebra=min(Ncpu_lin_algebra,PAR_COM_DIAGO%n_CPU)
- endif
+ Ncpu_lin_algebra=min(Ncpu_lin_algebra,PAR_COM_SLK%n_CPU)
  ! 
  if (Ncpu_lin_algebra<=3) linear_algebra_is_parallel=.FALSE.
  if (.not.linear_algebra_is_parallel) return
  !
- if (idriver==INV.or.idriver==LIN_SYS.or.idriver==MAT_MUL) then
-   call SLK_setup( idriver, Ncpu_lin_algebra, SLK_ORTHO_INV, SLK_POOL_INV, PAR_COM_INV, PAR_COM_INV_INDEX, slk_error)
- endif
- if (idriver==DIAGO) then
-   call SLK_setup( idriver, Ncpu_lin_algebra, SLK_ORTHO_DIAGO, SLK_POOL_DIAGO, PAR_COM_DIAGO, PAR_COM_DIAGO_INDEX, slk_error)
- endif
+ ! init SLK
+ !
+ call SLK_setup( idriver, Ncpu_lin_algebra, SLK_ORTHO, SLK_POOL, PAR_COM_SLK, PAR_COM_SLK_INDEX, slk_error)
+ !
  if (slk_error/=0) then
     linear_algebra_is_parallel=.FALSE.
     call warning("SLK setup failed. Cannot build a proper BLACS grid. Switching to standard LK")
@@ -121,18 +104,12 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver)
  contains
    !
    subroutine SLK_communicators_init(COMM, INDEX_comm)
+   implicit none
    !
-   IMPLICIT NONE
+   type(MPI_comm), intent(in) :: COMM, INDEX_comm
    !
-   type(MPI_comm),    intent(in)    :: COMM , INDEX_comm
-   !
-   if (idriver==INV) then
-     call COMM_copy(INDEX_comm,PAR_COM_INV_INDEX)
-     call COMM_copy(COMM,      PAR_COM_INV)
-   else if (idriver==DIAGO) then
-     call COMM_copy(INDEX_comm,PAR_COM_DIAGO_INDEX)
-     call COMM_copy(COMM      ,PAR_COM_DIAGO)
-   endif
+   call COMM_copy(INDEX_comm,PAR_COM_SLK_INDEX)
+   call COMM_copy(COMM,      PAR_COM_SLK)
    !
   end subroutine SLK_communicators_init
   !

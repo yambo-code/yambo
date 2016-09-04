@@ -30,8 +30,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  use com,           ONLY:msg
 #if defined _SCALAPACK
  use parallel_m,    ONLY:linear_algebra_is_parallel,myid
- use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_POOL_clean_up,SLK_ORTHO_INV,SLK_POOL_INV,SLK_ORTHO_DIAGO,SLK_POOL_DIAGO,&
-&                        SLK_ORTHO_GROUP_clean_up,SLK_matrix,SLK_matrix_reset
+ use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_ORTHO,SLK_POOL,&
+&                        SLK_matrix,SLK_matrix_reset
 #endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -56,8 +56,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  complex(SP)         :: det_
  integer             :: N,lib_in_use,Ncpu_in_use,slk_error
 #if defined _SCALAPACK
- type (POOL_group)   :: POOL
- type (ORTHO_group)  :: ORTHO
  type (SLK_matrix)   :: M_slk,B_slk,C_slk,EIGEN_slk
 #endif
 
@@ -71,10 +69,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  ! Decide which to use among LK or SLK
  !
+ lib_in_use=USE_LK
 #if defined _SCALAPACK 
  lib_in_use=USE_SLK
-#else
- lib_in_use=USE_LK
 #endif
  !
  if (present(lib_in)) then
@@ -95,68 +92,54 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
- if (lib_in_use==USE_SLK) then
-   !
-   if (idriver==INV.or.idriver==LIN_SYS.or.idriver==MAT_MUL) then
-     ORTHO=SLK_ORTHO_INV
-     POOL=SLK_POOL_INV
-   endif
-   if (idriver==DIAGO) then
-     ORTHO=SLK_ORTHO_DIAGO
-     POOL=SLK_POOL_DIAGO
-   endif
-   !
- endif
  !
  if (lib_in_use==USE_SLK) then
    !
    if (idriver==INV) then
      !
-     call PARALLEL_distribute( ORTHO, POOL, M_slk, N, M )
+     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk, N, M )
      !
-     call msg('s','[LA] PARALLEL inversion (SLK) using grid: ',ORTHO%grid(1:2))
-     call PARALLEL_inversion( ORTHO, POOL, M_slk, N, M )
+     call msg('s','[LA] PARALLEL inversion (SLK) using grid: ',SLK_ORTHO%grid(1:2))
+     call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, M_slk, N, M )
      !
    else if (idriver==DIAGO) then
      !
-     call PARALLEL_distribute( ORTHO, POOL, M_slk,     N, M )
-     call PARALLEL_distribute( ORTHO, POOL, EIGEN_slk, N, M )
+     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk,     N, M )
+     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, EIGEN_slk, N, M )
      !
      if (present(E_cmpl)) then
        !
        call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','parallel non-herm diag not yet implemented')
        !
-       !call msg('s','[LA] PARALLEL diag (SLK) using grid: ',ORTHO%grid(1:2))
-       !call PARALLEL_diagonalization( ORTHO, POOL, M_slk, EIGEN_slk, N, M, E_cmpl )
+       !call msg('s','[LA] PARALLEL diag (SLK) using grid: ',SLK_ORTHO%grid(1:2))
+       !call PARALLEL_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, N, M, E_cmpl )
        !
      else
        !
-       call msg('s','[LA] PARALLEL Herm. diag (SLK) using grid: ',ORTHO%grid(1:2))
-       call PARALLEL_HERMITIAN_diagonalization( ORTHO, POOL, M_slk, EIGEN_slk, N, M, E_real )
+       call msg('s','[LA] PARALLEL Herm. diag (SLK) using grid: ',SLK_ORTHO%grid(1:2))
+       call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, N, M, E_real )
        !
      endif
      !
    else if (idriver==LIN_SYS) then
      !
-     call PARALLEL_distribute( ORTHO, POOL, M_slk, N, M )
-     call PARALLEL_distribute( ORTHO, POOL, B_slk, N, B )
+     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk, N, M )
+     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, B_slk, N, B )
      !
-     call msg('s','[LA] PARALLEL linear system solution (SLK) using grid: ',ORTHO%grid(1:2))
-     call PARALLEL_lin_system( ORTHO, POOL, M_slk, B_slk, N, size(B,2), B )
+     call msg('s','[LA] PARALLEL linear system solution (SLK) using grid: ',SLK_ORTHO%grid(1:2))
+     call PARALLEL_lin_system( SLK_ORTHO, SLK_POOL, M_slk, B_slk, N, size(B,2), B )
      !
    else if (idriver==MAT_MUL) then
      ! working for square matrices 
-     call PARALLEL_distribute( ORTHO, POOL, M_slk, N, M )
-     call PARALLEL_distribute( ORTHO, POOL, B_slk, N, B )
-     call PARALLEL_distribute( ORTHO, POOL, C_slk, N, C )
+     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk, N, M )
+     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, B_slk, N, B )
+     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, C_slk, N, C )
      !
-     call msg('s','[LA] PARALLEL matrix multiplication (SLK) using grid: ',ORTHO%grid(1:2))
-     call PARALLEL_mat_mul( ORTHO, POOL, M_slk, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), size(M,2), C )
+     call msg('s','[LA] PARALLEL matrix multiplication (SLK) using grid: ',SLK_ORTHO%grid(1:2))
+     call PARALLEL_mat_mul( SLK_ORTHO, SLK_POOL, M_slk, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), size(M,2), C )
      !
    endif
    !
-   call SLK_POOL_clean_up(POOL)
-   call SLK_ORTHO_GROUP_clean_up(ORTHO)
    call LINEAR_ALGEBRA_WS_clean_up(WS) 
    !
    call SLK_matrix_reset(M_slk)
@@ -232,9 +215,3 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
 end subroutine
 
-
-#if defined _SCALAPACK
-subroutine linear_algebra_fake()
-  call SLK_setup()
-end subroutine
-#endif

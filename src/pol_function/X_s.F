@@ -31,7 +31,7 @@ subroutine X_s(iq,X,Xw,W_range)
 &                        PAR_COM_NULL,PP_indexes,PP_indexes_reset,PAR_COM_DIPOLES
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
- use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV,LIN_SYS
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV,LIN_SYS,MAT_MUL
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use stderr,        ONLY:intc
@@ -209,7 +209,8 @@ subroutine X_s(iq,X,Xw,W_range)
      ! formulation matrix inversion + matmul
      !
      call LINEAR_ALGEBRA_driver(INV,tddftk)
-     call M_by_M('N','N',X%ng,tddftk,Xo,X_mat(:,:,iw_mat))
+     call LINEAR_ALGEBRA_driver(MAT_MUL,tddftk,B=Xo,C=X_mat(:,:,iw_mat))
+     !
    endif
    !
 #if defined _OPENMP

@@ -28,8 +28,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
 &                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error
  use wrapper,       ONLY:M_by_M
  use com,           ONLY:msg
+ use parallel_m,    ONLY:linear_algebra_is_parallel
 #if defined _SCALAPACK
- use parallel_m,    ONLY:linear_algebra_is_parallel,myid
  use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_ORTHO,SLK_POOL,&
 &                        SLK_matrix,SLK_matrix_reset
 #endif

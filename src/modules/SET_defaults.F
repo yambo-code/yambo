@@ -393,7 +393,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !X
  !
  Chi_mode=' '
- Chi_linalg_mode="inversion"
+ Chi_linalg_mode="lin_sys"
  X_use_lin_sys=.FALSE.
  current_iq=0
  X_DbGd_nkpts=0

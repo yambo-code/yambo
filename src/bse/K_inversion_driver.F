@@ -85,7 +85,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  integer, external :: io_BSS_invert
  !
 #if defined _TIMING
- call timing('Invertion Solver',OPR='start')
+ call timing('Inversion Solver',OPR='start')
 #endif
  !
  ! Sectioning
@@ -148,7 +148,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !============================
  call K_output_file(iq,"open Inversion")
  !
- ! Perturbative Invertion
+ ! Perturbative Inversion
  !========================
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/W%n_freqs/))
@@ -187,7 +187,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  call K_output_file(iq,"Inversion")
  !
- ! Full Invertion
+ ! Full Inversion
  !=================
  !
  ! First I define the group of frequencies not converged
@@ -379,7 +379,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      call mem_est("Lo")
      !
 #if defined _TIMING
-     call timing('Invertion Solver',OPR='stop')
+     call timing('Inversion Solver',OPR='stop')
 #endif
    end subroutine
    !

@@ -71,31 +71,19 @@ module interfaces
      real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
    end subroutine el_density_of_states
    !
-   subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill,det)
-     !
-     use matrix_operate, ONLY:blacs_t
-     use pars,           ONLY:SP
-     !
-     integer                :: idriver
-     complex(SP)            :: M(:,:)
-     complex(SP),  optional :: V_left(:,:)
-     complex(SP),  optional :: V_right(:,:)
-     complex(SP),  optional :: E_cmpl(:)
-     type(blacs_t),optional :: blt
-     real(SP),     optional :: E_real(:)
-     integer,      optional :: lib_in
-     integer,      optional :: fill
-     complex(SP),  optional :: det
-     integer,      optional :: SVD_digits 
-     !
-   end subroutine
-   !
    integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll)
      use collision,  ONLY:COLLISIONS_element,COLLISIONS_group
      integer, intent(inout)             ::ID
      type(COLLISIONS_group)             ::COLL_grp
      type(COLLISIONS_element), optional ::COLL_element
      integer, intent(in)     , optional ::i_coll
+   end function
+   !
+   integer function eval_G_minus_G(iG,iGo,COMM)
+     use parallel_m,      ONLY:MPI_comm
+     implicit none
+     integer :: iG,iGo
+     type(MPI_comm), optional :: COMM
    end function
    !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&

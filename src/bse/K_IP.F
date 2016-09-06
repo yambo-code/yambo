@@ -270,6 +270,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
+#if defined _KERR
+   call PP_redux_wait( A_drude(1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( A_drude(1) ,COMM=PAR_COM_eh_INDEX%COMM )
+#endif
 #if defined _PL
    if (l_photolum) then
      call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

@@ -127,6 +127,9 @@ subroutine K_kerr_IP(iq,w)
  call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  !
+ call PP_redux_wait( B_Hall(1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait( B_Hall(1) ,COMM=PAR_COM_eh_INDEX%COMM )
+ !
  if (BSS_add_antiresonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
  if(trim(global_gauge)=='length'   ) then

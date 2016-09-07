@@ -38,9 +38,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
 &                               PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  use interfaces,          ONLY: WF_load
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
- use X_m,                 ONLY: X_t,DIP_iR,DIP_P,&
+ use X_m,                 ONLY: X_t,DIP_iR,DIP_P,l_X_terminator,&
 &                               force_v_g_space_approach,num_shifted_grids,Dipole_Energy_treshold
- use wrapper_omp,         ONLY: Vstar_dot_V_omp
+ use wrapper,             ONLY: Vstar_dot_V
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,WAVEs
 #if defined _SC           
  use SC,                  ONLY: SC_bands
@@ -67,7 +67,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  character(schlen)            :: grid_paths_vector(3)
  logical                      :: idir_not_done(3)
  integer                      :: ik,ik_mem,icfft(n_spinor),ivfft(n_spinor),ic,iv,iq,n_LT_steps,&
-&                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3)
+&                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3),ic_min
  complex(SP)                  :: rho
  real(SP)                     :: Ev_m_Ec,Ev_m_Ec_QP,q_mod(3)
  !
@@ -165,7 +165,10 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
          !
          if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          !
-         do ic=max(iv,X%ib_lim(2)),X%ib(2)
+         ic_min=max(iv,X%ib_lim(2))
+         if (l_X_terminator) ic_min=iv
+         !
+         do ic=ic_min,X%ib(2)
            !
            if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
            !
@@ -194,7 +197,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
              !
              ! rho = < v,k+q | c,k >
              !
-             rho = rho + Vstar_dot_V_omp(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,ivfft(i_spinor)), &
+             !
+             rho = rho + Vstar_dot_V(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,ivfft(i_spinor)), &
 &                                                  WF%c(1:wf_ng_eff,icfft(i_spinor)))
              !
            enddo

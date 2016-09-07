@@ -29,8 +29,8 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:k_map
- use matrix_operate, ONLY:hermitian,INV,USE_LK
- use interfaces,     ONLY:MATRIX_driver
+ use matrix_operate, ONLY:hermitian
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV,USE_LK
  use vec_operate,    ONLY:k_periodic_idx
  use X_m,            ONLY:X_t,DIP_S
  implicit none
@@ -67,13 +67,13 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
        ! Overlap S(k, k-dk)
        !
        S_val=hermitian(DIP_S(1:Xen%nbm,1:Xen%nbm,id+(istep-1)*3,ikm,i_sp_pol))
-       call MATRIX_driver(INV,S_val,lib_in=USE_LK)
+       call LINEAR_ALGEBRA_driver(INV,S_val,lib_in=USE_LK)
        Sm1_minus(:,:,id+(istep-1)*3)=S_val
        !
        ! Overlap S(k, k+dk)
        !
        S_val=DIP_S(1:Xen%nbm,1:Xen%nbm,id+(istep-1)*3,ikbz,i_sp_pol)
-       call MATRIX_driver(INV,S_val,lib_in=USE_LK,det=S_det(id+(istep-1)*3))
+       call LINEAR_ALGEBRA_driver(INV,S_val,lib_in=USE_LK,det=S_det(id+(istep-1)*3))
        Sm1_plus(:,:,id+(istep-1)*3)=S_val
        !
      enddo

@@ -74,7 +74,7 @@ module mod_com2y
      use com,       ONLY:msg,error
      use electrons, ONLY:l_spin_orbit,n_spin_den
      use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,inv_index,&
-&                        atoms_spatial_invertion,i_space_inv,alat
+&                        atoms_spatial_inversion,i_space_inv,alat
      use R_lattice, ONLY:b,rl_sop
      !
      implicit none
@@ -107,7 +107,7 @@ module mod_com2y
      !
      ! Space Invertion (possible only for v >= 3.0.4)
      !
-     call atoms_spatial_invertion()
+     call atoms_spatial_inversion()
      !
      if (i_space_inv==0) call msg("l","[SI no]...")
      if (i_space_inv==1) call msg("l","[SI yes]...")

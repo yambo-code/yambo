@@ -45,8 +45,11 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  NC      =ncpu
  !
  N_basis=1
- do i1=1,13
-   if (mod(NC,i1)==0) N_basis=i1
+ do i1=2,13
+   if (mod(NC,i1)==0) then
+     N_basis=i1
+     exit
+   endif
  enddo
  !
  call DEFAULT_action("check")

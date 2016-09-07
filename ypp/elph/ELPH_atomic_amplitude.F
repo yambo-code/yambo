@@ -34,8 +34,7 @@ subroutine ELPH_atomic_amplitude(q)
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
- use interfaces,          ONLY:MATRIX_driver
- use matrix_operate,      ONLY:DIAGO,USE_LK
+ use linear_algebra,      ONLY:LINEAR_ALGEBRA_driver,DIAGO,USE_LK
  implicit none
  type(bz_samp)::q
  !
@@ -125,7 +124,7 @@ subroutine ELPH_atomic_amplitude(q)
  !
  do is=1,n_atoms
    !
-   call MATRIX_driver(DIAGO,mean_ui_uj(is,:,:),lib_in=USE_LK,E_real=U_eigenvalues)
+   call LINEAR_ALGEBRA_driver(DIAGO,mean_ui_uj(is,:,:),lib_in=USE_LK,E_real=U_eigenvalues)
    !
    call msg('s','Atom '//trim(atom_name(is)))
    call msg('s','Displacement  [a.u.]/A #1: ',sqrt(U_eigenvalues(1))*(/1._SP,BO2ANG/) )

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM,AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,76 +21,96 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_operation)
+subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
- use parallel_m,    ONLY:MPI_comm,MAX_N_OF_CHAINS,&
-&                        PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization,&
-&                        INTER_CHAIN,INTRA_CHAIN,ncpu,myid,mpi_comm_world,ncpu_chain,&
-&                        COMM_copy,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,comm_default_value
+ use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,MPI_comm,COMM_copy,&
+&                        PAR_COM_SLK,PAR_COM_SLK_INDEX,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,&
+&                        linear_algebra_is_parallel
+#if defined _SCALAPACK
+ use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
+#endif
+ use com,           ONLY:warning
  !
  implicit none
  !
  character(*)            :: ENVIRONMENT
- character(*)            :: WHAT
- type(MPI_comm)          :: COMM_index
- type(MPI_comm)          :: COMM_operation
+ integer                 :: idriver
+ integer                 :: Ncpu_in
  !
  ! Work Space
  !
- integer :: i_lin_algebra_chain,i_chain,i_father_chain,N_cpu_lin_algebra
+ integer :: Ncpu_lin_algebra, slk_error
  !
- if (WHAT=="INV")   N_cpu_lin_algebra=PARALLEL_cpu_mat_inversion
- if (WHAT=="DIAGO") N_cpu_lin_algebra=PARALLEL_cpu_mat_diagonalization
+ !  LK -> Lapack,     serial linear algebra
+ ! SLK -> Scalapack, parallel linear algebra
  !
- i_father_chain=0
- i_lin_algebra_chain=0
+ Ncpu_lin_algebra=1
+#if defined _SCALAPACK 
+ if (Ncpu_in==0) Ncpu_lin_algebra=1         ! safe default
+ if (Ncpu_in>0)  Ncpu_lin_algebra=Ncpu_in
+#endif
  !
- ! For the moment I assume that here ncpu_lin_alg is always equal to one of the roles present in the input
+ ! smallest SLK grid is 2x2
+ if (Ncpu_lin_algebra<=3) Ncpu_lin_algebra=1
  !
- do i_chain=1,MAX_N_OF_CHAINS
-   if(N_cpu_lin_algebra/=ncpu_chain(i_chain)) cycle
-   i_lin_algebra_chain=i_chain
-   exit
- enddo
+ ! Serial (LK) case
+ if (Ncpu_lin_algebra==1) then  
+   !
+   call SLK_communicators_init( PAR_COM_NULL, PAR_COM_WORLD)
+   !
+   linear_algebra_is_parallel=.FALSE.
+   return
+   !
+ endif
  !
- if (N_cpu_lin_algebra==1) then         ! This means LK (serial)
+#if defined _SCALAPACK
+ !
+ ! environment-dependent definitions
+ !
+ if (ENVIRONMENT=="Response_G_space") then
    !
-   COMM_operation%COMM  =comm_default_value
-   COMM_operation%CPU_id=0
-   COMM_operation%n_CPU =1
+   call SLK_communicators_init( PAR_COM_Q_A2A, PAR_COM_Q_INDEX ) 
    !
-   COMM_index%COMM  =mpi_comm_world
-   COMM_index%CPU_id=myid
-   COMM_index%n_CPU =ncpu
+ else if (ENVIRONMENT=="ScaLapacK") then
    !
- else if (N_cpu_lin_algebra==ncpu) then ! This means SLK using all WORLD
-   !
-   COMM_operation%COMM  =mpi_comm_world
-   COMM_operation%CPU_id=myid
-   COMM_operation%n_CPU =ncpu
-   !
-   COMM_index%COMM  =comm_default_value
-   COMM_index%CPU_id=0
-   COMM_index%n_CPU =1
+   call SLK_communicators_init( SLK_COM_A2A(1), SLK_COM_INDEX(1) )
    !
  else
    !
-   call COMM_copy(INTER_CHAIN(i_lin_algebra_chain),COMM_index)
-   call COMM_copy(INTRA_CHAIN(i_lin_algebra_chain),COMM_operation)
+   call SLK_communicators_init( PAR_COM_WORLD, PAR_COM_NULL )
    !
  endif
  !
- ! Up to today I could not still use SLK with subgroups of CPU. So I switch SLK off
- ! when Q's are distributed.
+ ! redef of Ncpu and SLK init
  !
- if ((ENVIRONMENT=="Response_G_space").and.PAR_COM_Q_INDEX%n_CPU/=1) then
-   !
-   COMM_operation%COMM  =comm_default_value
-   COMM_operation%CPU_id=0
-   COMM_operation%n_CPU =1
-   !
-   call COMM_copy(PAR_COM_Q_A2A,COMM_index)
-   !
+ linear_algebra_is_parallel=.TRUE.
+ !
+ Ncpu_lin_algebra=min(Ncpu_lin_algebra,PAR_COM_SLK%n_CPU)
+ ! 
+ if (Ncpu_lin_algebra<=3) linear_algebra_is_parallel=.FALSE.
+ if (.not.linear_algebra_is_parallel) return
+ !
+ ! init SLK
+ !
+ call SLK_setup( idriver, Ncpu_lin_algebra, SLK_ORTHO, SLK_POOL, PAR_COM_SLK, PAR_COM_SLK_INDEX, slk_error)
+ !
+ if (slk_error/=0) then
+    linear_algebra_is_parallel=.FALSE.
+    call warning("SLK setup failed. Cannot build a proper BLACS grid. Switching to standard LK")
  endif
  !
+#endif
+ !
+ contains
+   !
+   subroutine SLK_communicators_init(COMM, INDEX_comm)
+   implicit none
+   !
+   type(MPI_comm), intent(in) :: COMM, INDEX_comm
+   !
+   call COMM_copy(INDEX_comm,PAR_COM_SLK_INDEX)
+   call COMM_copy(COMM,      PAR_COM_SLK)
+   !
+  end subroutine SLK_communicators_init
+  !
 end subroutine

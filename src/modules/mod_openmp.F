@@ -193,20 +193,22 @@ module openmp
    !
    subroutine OPENMP_update(master_)
      !
-     logical :: master_
+     logical, optional :: master_
+     logical :: master__
      !
      if (omp_is_off) then
-       master_=.TRUE.
+       master__=.TRUE.
        n_threads_now=1
      else
 #if defined _OPENMP
-       master_= ( omp_get_thread_num() == 0)
+       master__= ( omp_get_thread_num() == 0)
        n_threads_now= omp_get_num_threads()
 #else
-       master_=.TRUE.
+       master__=.TRUE.
        n_threads_now=1       
 #endif
      endif
+     if (present(master_)) master_=master__
      !
    end subroutine
    !

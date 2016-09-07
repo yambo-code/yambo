@@ -24,7 +24,8 @@
 subroutine excitons_collinear(deg_list,S_z,S_sq)
  !
  use pars,          ONLY:SP
- use BS,            ONLY:BS_mat,BS_H_dim
+ use BS_solvers,    ONLY:BS_mat
+ use BS,            ONLY:BS_H_dim
  !
  implicit none
  !

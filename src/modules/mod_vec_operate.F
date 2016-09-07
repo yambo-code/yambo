@@ -472,6 +472,8 @@ module vec_operate
    subroutine degeneration_finder(E,n,first_deg_el,deg_elmnts,deg_grps,&
 &                                 deg_accuracy,Include_single_values)
      !
+     ! Assumes energy are sorted
+     !
      ! E = ( 0 1 1 2 3 3 3 ) , n = 7
      !
      ! first_deg_el = ( 2 5 0 0 0 0 0 )

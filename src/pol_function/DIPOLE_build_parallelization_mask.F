@@ -23,7 +23,7 @@
 !
 subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  !
- use X_m,                 ONLY:X_t
+ use X_m,                 ONLY:X_t,l_X_terminator
  use electrons,           ONLY:n_sp_pol
  use parallel_m,          ONLY:PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                              PAR_IND_DIPk_ibz,PAR_IND_DIPk_ID,l_par_SE,&
@@ -41,12 +41,18 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  !
  ! Work space
  !
- integer      :: iv,ic
+ integer      :: iv,ic,ic_min
  !
  n_LT_steps=0
  !
+ eval_DIP=.false.
+ !
  do iv=X%ib(1),X%ib_lim(1) 
-   do ic=max(iv,X%ib_lim(2)),X%ib(2)
+   !
+   ic_min=max(iv,X%ib_lim(2))
+   if (l_X_terminator) ic_min=iv
+   !
+   do ic=ic_min,X%ib(2)
      !
 #if defined _RT
      if (l_par_RT) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv,X%ib))

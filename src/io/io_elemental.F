@@ -290,15 +290,13 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  !
  if (present(C0)) then
    if (write_is_on(ID)) then
-     call ncvpt(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), C0, error)
-     call netcdf_call(error)
+     call nf_put_vara(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), C0)
      r_from_c(1,1)=real(C0)
      r_from_c(2,1)=aimag(C0)
      if (present(DB_C0)) DB_C0=C0
      if (present(VAR)) call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
    else if (read_is_on(ID)) then
-     call ncvgt(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), c_db(1), error)
-     call netcdf_call(error)
+     call nf_get_vara(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), c_db(1))
      r_from_c(1,1)=real(C0)
      r_from_c(2,1)=aimag(C0)
      if (DUMP_)          C0=c_db(1)

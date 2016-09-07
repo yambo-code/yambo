@@ -316,6 +316,7 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'SOC_DBs',"Path to the folder containing the DB with SOC",perturbative_SOC_path)
  call it(defs,'bands_to_map',"Number of bands to map",SOC_bands_to_map)
+ call it(defs,'bands_buffer',"Bands to be used only as a buffer",SOC_bands_buffer)
  call it(defs,'SOC_splitting',"SOC splitting between the levels",SOC_split,E_unit) 
  !
  ! Wannier bands
@@ -339,6 +340,7 @@ subroutine ypp_INIT_load(defs)
  !
  ! GPL_EXCLUDE_START
  !
+ call it('f',defs,'RmSpaceInv' , 'Remove Spatial Inversion')
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
  call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)

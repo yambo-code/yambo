@@ -231,7 +231,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
            forall(ic=1:wf_nc_k_reduced(ik_save),i_spinor=1:n_spinor) &
 &            wf_tmp(ic_rot_table(ic),i_spinor)=WF%c(ic,i_spinor,i_wf)
            !
-           forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
+           if(n_spinor==2) then
+             forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
+           endif
            if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
            !  
            wf_disk(:,:,ib_disk)= wf_tmp(:,:)

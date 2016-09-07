@@ -30,7 +30,8 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_H_dim,BSS_eh_E_SOC_corr,BSS_eh_W
+ use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,BSS_eh_W,BSS_eh_E
+ use BS,             ONLY:BS_H_dim
  !
  implicit none
  !
@@ -42,7 +43,7 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
  ! Workspace
  !
  type(PP_indexes)     ::px
- integer              ::i1
+ integer              ::i1,i2
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BS_H_dim/))
@@ -55,8 +56,9 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
    if (.not.px%element_1D(i1)) cycle
    !
    if(what=='SOC') then
-     BS_corrections(1,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(1,:),0._SP,SP),BS_mat_eigen(:,i1))
-     BS_corrections(2,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(2,:),0._SP,SP),BS_mat_eigen(:,i1))
+     do i2=1,pert_dim
+       BS_corrections(i2,i1)=V_dot_V_omp( BS_H_dim,cmplx(BSS_eh_E_SOC_corr(i2,:),0._SP,SP),BS_mat_eigen(:,i1))
+     enddo
    endif
    !
    if(what=='WID') then
@@ -64,7 +66,9 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
    endif
    !
    call live_timing(steps=1)
+   !
  enddo
+ !
  call live_timing()
  !
  call PP_redux_wait(BS_corrections) 

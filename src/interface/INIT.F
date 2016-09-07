@@ -42,7 +42,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
- use electrons,      ONLY:levels,E_reset,n_spin
+ use electrons,      ONLY:levels,E_reset,n_spinor
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -310,7 +310,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! E SOC perturbative
  ! 
- if(n_spin==1) then
+ if(n_spinor==1) then
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
    io_err=io_E_SOC_map(en,k,io_ID)
  endif
@@ -1315,7 +1315,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      !
-     if (len_trim(BSE_mode)==0) BSE_mode="retarded"
+     if (len_trim(BSE_mode)==0   ) BSE_mode="retarded"
+     if (trim(BSE_mode)=="causal") BSE_mode="retarded"
      !
      if (l_bse) then
        if (l_rpa_IP)                   BS_res_mode='none'

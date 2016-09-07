@@ -178,6 +178,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
      !
      transition=(/ik_bz,iv,ic,i_sp/)
      !
+     i_Lo_trans=i_res
+     i_Lo      =1
+     !
      if ( trim(BSE_mode)=='retarded') then
        i_Lo_trans=i_res
        i_Lo      =2
@@ -201,9 +204,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
        call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh",.FALSE.)
 #if defined _PL
        call X_GreenF_analytical(1,transition,W,E,k,SF(:,1),"r","eh",.TRUE.)
-       !call X_GreenF_analytical(1,transition,W,E,k,Lo_no_shift,"r","eh",.FALSE.)
        Lo(i_res,:,1+Lo_n_loop)=BSS_PL_f(1,i_res)/BSS_eh_f(i_res)**2.*aimag(W%p(1))/pi
-                              !-BSS_PL_f(1,i_res)*aimag(SF(:,1))/pi/abs(Lo_no_shift(:))**2.
 #endif
        !
        if (BSS_add_antiresonant.or.BS_K_coupling) then
@@ -214,9 +215,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
          ! The -1 coming from SF(:,2) and -abs(Lo)...compensate each other
          !
          call X_GreenF_analytical(1,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.)
-         !call X_GreenF_analytical(1,transition,W,E,k,Lo_no_shift,"Ra","eh",.FALSE.)
          Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)/BSS_eh_f(i_res)**2.*aimag(W%p(1))/pi
-                                        !BSS_PL_f(2,i_res)*aimag(SF(:,2))/pi/abs(Lo_no_shift(:))**2.
 #endif
          !
        endif

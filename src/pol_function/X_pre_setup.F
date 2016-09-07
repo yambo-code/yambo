@@ -29,6 +29,8 @@ subroutine X_pre_setup(Xen,X)
  use com,           ONLY:error
  use R_lattice,     ONLY:nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
+ use interfaces,    ONLY:eval_G_minus_G
+ use parallel_m,    ONLY:PAR_COM_WORLD
  !
  implicit none
  !
@@ -36,8 +38,6 @@ subroutine X_pre_setup(Xen,X)
  type(levels) ::Xen
  ! 
  ! Work Space
- !
- integer, external :: eval_G_minus_G
  !
  if (X%ib(1)<0) X%ib(1)=1
  if (X%ib(2)<0) X%ib(2)=1
@@ -65,7 +65,7 @@ subroutine X_pre_setup(Xen,X)
  !
  ! CHO checks
  !
- if ((l_gw0.and.l_cohsex).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0)
+ if ((l_gw0.and.l_cohsex).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
  !
  ! Fxc Checks
  !

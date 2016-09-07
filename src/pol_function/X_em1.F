@@ -31,7 +31,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use drivers,       ONLY:l_photolum
 #endif
  use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
-&                        l_X_terminator,X_terminator_Kind 
+&                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -59,10 +59,14 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
+
+ !
+ ! logicals and control
  !
  self_detect_E_range=.false.
  !
- ! XTerminator SETUP
+ X_use_lin_sys=.false.
+ if (trim(Chi_linalg_mode)=="lin_sys") X_use_lin_sys=.true.
  !
  l_X_terminator = X_terminator_Kind/='none'
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &

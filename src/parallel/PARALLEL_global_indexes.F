@@ -367,15 +367,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
 &                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
 &                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
-   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
-&                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
-   !
-   call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
-   PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
-   !
+   allocate(PAR_DIPk_ibz_index(Xk%nibz))
+   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_DIPk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_DIPk_ibz_INDEX%n_CPU)
@@ -1031,28 +1025,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX_X(X_type)%CPU_id+1),&
 &                             TOTAL=n_c_bands(2)-n_c_bands(1)+1,&
 &                             NCPU=PAR_COM_CON_INDEX_X(X_type)%n_CPU)
-   !
-   if (l_X_terminator) then
-       call PARALLEL_index(PAR_IND_CON_BANDS_X(X_type),(/n_c_bands(2)/),low_range=(/n_v_bands(1)/),&
-&                          COMM=PAR_COM_CON_INDEX(X_type),CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
-   else
-       call PARALLEL_index(PAR_IND_CON_BANDS_X(X_type),(/n_c_bands(2)/),low_range=(/n_c_bands(1)/),&
-&                          COMM=PAR_COM_CON_INDEX(X_type),CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
-   endif
-   !
-   PAR_IND_CON_BANDS_X_ID(X_type)=PAR_COM_CON_INDEX(X_type)%CPU_id
-   !
-   if (l_X_terminator) then
-       call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX(X_type)%CPU_id+1),&
-&                             TOTAL=n_c_bands(2)-n_v_bands(1)+1,&
-&                             NCPU=PAR_COM_CON_INDEX(X_type)%n_CPU)
-   else
-       call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX(X_type)%CPU_id+1),&
-&                             TOTAL=n_c_bands(2)-n_c_bands(1)+1,&
-&                             NCPU=PAR_COM_CON_INDEX(X_type)%n_CPU)
-   endif
    !
    ! Response functions valence bands
    !

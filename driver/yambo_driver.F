@@ -42,7 +42,8 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
- use BS,            ONLY:BS_bands,BSS_q0,BSS_Vnl_included
+ use BS,            ONLY:BS_bands
+ use BS_solvers,    ONLY:BSS_q0,BSS_Vnl_included
 #if defined _TIMING
  use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
 #endif

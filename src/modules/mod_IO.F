@@ -148,16 +148,16 @@ module IO_m
      !
    end subroutine
    !
-   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L0,L1,L2,L3,IPOS)
+   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1,L2,L3,L4,IPOS)
      !
      use pars
      integer      :: ID, error
      character(*),optional :: VAR
      integer,     optional :: VAR_SZ(:),IPOS(:)
-     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:)
-     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:)
+     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:)
+     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:)
      complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:)
-     integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:)
+     integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
      !
    end subroutine
    !

@@ -119,18 +119,23 @@ END SUBROUTINE vcut_init
      call msg('r','Cutoff:',dummy)
      call msg('r','n grid:',n)
      call msg('nr','WS Direct Lattice(DL) unit cell [iru  /  cc(a.u.)]')
-     dumb_ch1='A1 ='//trim(real2ch(real(vcut%a(1,1),SP)/alat(1)))//' '//trim(real2ch(real(vcut%a(2,1),SP)/alat(2)))//' '//&
+     dumb_ch1='A1 ='//trim(real2ch(real(vcut%a(1,1),SP)/alat(1)))//' '//&
+&                 trim(real2ch(real(vcut%a(2,1),SP)/alat(2)))//' '//&
 &                 trim(real2ch(real(vcut%a(3,1),SP)/alat(3)))//'     '//&
-&                 trim(real2ch(real(vcut%a(1,1),SP)))//' '//trim(real2ch(real(vcut%a(2,1),SP)))//' '//trim(real2ch(real(vcut%a(3,1),SP)))
+&                 trim(real2ch(real(vcut%a(1,1),SP)))//' '//& 
+&                 trim(real2ch(real(vcut%a(2,1),SP)))//' '//trim(real2ch(real(vcut%a(3,1),SP)))
      call msg('r',dumb_ch1) 
-     dumb_ch1='A2 ='//trim(real2ch(real(vcut%a(1,2),SP)/alat(1)))//' '//trim(real2ch(real(vcut%a(2,2),SP)/alat(2)))//' '//&
-
+     dumb_ch1='A2 ='//trim(real2ch(real(vcut%a(1,2),SP)/alat(1)))//' '//&
+&                 trim(real2ch(real(vcut%a(2,2),SP)/alat(2)))//' '//&
 &                 trim(real2ch(real(vcut%a(3,2),SP)/alat(3)))//'     '//&
-&                 trim(real2ch(real(vcut%a(1,2),SP)))//' '//trim(real2ch(real(vcut%a(2,2),SP)))//' '//trim(real2ch(real(vcut%a(3,2),SP)))
+&                 trim(real2ch(real(vcut%a(1,2),SP)))//' '//&
+&                 trim(real2ch(real(vcut%a(2,2),SP)))//' '//trim(real2ch(real(vcut%a(3,2),SP)))
      call msg('r',dumb_ch1) 
-     dumb_ch1='A3 ='//trim(real2ch(real(vcut%a(1,3),SP)/alat(1)))//' '//trim(real2ch(real(vcut%a(2,3),SP)/alat(2)))//' '//&
+     dumb_ch1='A3 ='//trim(real2ch(real(vcut%a(1,3),SP)/alat(1)))//' '//&
+&                 trim(real2ch(real(vcut%a(2,3),SP)/alat(2)))//' '//&
 &                 trim(real2ch(real(vcut%a(3,3),SP)/alat(3)))//'     '//&
-&                 trim(real2ch(real(vcut%a(1,3),SP)))//' '//trim(real2ch(real(vcut%a(2,3),SP)))//' '//trim(real2ch(real(vcut%a(3,3),SP)))
+&                 trim(real2ch(real(vcut%a(1,3),SP)))//' '//trim(real2ch(real(vcut%a(2,3),SP)))//' '//&
+&                 trim(real2ch(real(vcut%a(3,3),SP)))
      call msg('rn',dumb_ch1)
 !
      call msg('nr','See if it works, next some info has to be dumped to the database')     

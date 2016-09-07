@@ -266,8 +266,6 @@ subroutine WF_map_perturbative_SOC(kpt,En)
        !
        if ( sqrt(sq2)>mapping_tresh) then
          !
-         if(i_b_SOC<=SOC_bands_to_map(2)-SOC_bands_buffer) min_sq=min(min_sq,sqrt(sq2))
-         !
          map_up=((abs(proj_up-proj_dw)> 1.E-3_SP).and.(proj_up>proj_dw)).or. &
          &      ((abs(proj_up-proj_dw)<=1.E-3_SP).and.mapped_in_group(1,i_grp)<=mapped_in_group(2,i_grp))
          map_dw=((abs(proj_up-proj_dw)> 1.E-3_SP).and.(proj_up<proj_dw)).or. &
@@ -287,6 +285,8 @@ subroutine WF_map_perturbative_SOC(kpt,En)
          !
          if ( all(i_b_to_map(:)<SOC_bands_to_map(1)) ) cycle
          if ( all(i_b_to_map(:)>i_b_upp_lim(:))      ) cycle
+         !
+         min_sq=min(min_sq,sqrt(sq2))
          !
          if(map_up) then
            E_SOC_table(1,i_b_to_map(1),i_k)=i_b_SOC

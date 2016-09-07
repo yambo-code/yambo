@@ -29,12 +29,12 @@ subroutine SC_WF_and_dipole_dimensions(X)
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_n_G_bands,COHSEX_use_empties
  use R_lattice,    ONLY:qindx_S,G_m_G
+ use interfaces,   ONLY:eval_G_minus_G
  use SC,           ONLY:SC_bands,WF_Go_indx,WF_G_max,SC_X_bands,SC_ng_Sx,SC_X_size, &
 &                       SC_up_W_iters
  implicit none
  !
  type(X_t)         :: X(2)
- integer, external :: eval_G_minus_G
  !
  ! Dipoles dimensions
  !===================
@@ -56,16 +56,21 @@ subroutine SC_WF_and_dipole_dimensions(X)
  WF_Go_indx=1
  !
  if ( l_sc_fock.or.l_sc_exx.or.l_sc_coh.or.l_sc_sex ) then
+   !
    WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
+   !
    if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
+     !
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
      if (l_real_time.and..not.(l_sc_exx.or.l_sc_srpa)) WF_G_max=wf_ng
+     !
+     ! [07/07/2016] Modified these two lines to avoid the annoying QP_n_G_bands in the input.
+     ! At the moment I do not see any reason to use the same bands of the density here.
+     !
+     QP_n_G_bands(1)=SC_bands(1)
      QP_n_G_bands(2)=SC_bands(2)
-!DEBUG>
-!     if (.not.l_real_time) COHSEX_use_empties=.TRUE. !<- DEBUG. Related to
-!                                                     !   problems in defining the COLLISIONS
-!DEBUG<
+     !
      if (     l_real_time) COHSEX_use_empties=.TRUE.
      !
    else if (l_sc_exx)  then
@@ -73,6 +78,7 @@ subroutine SC_WF_and_dipole_dimensions(X)
    else if (l_sc_fock)  then
      WF_G_max=QP_ng_Sx
    endif
+   !
  endif
  !
  ! SC shadow variables

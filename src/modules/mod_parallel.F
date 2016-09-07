@@ -78,7 +78,7 @@ module parallel_m
  ! Logicals
  !
  logical            :: l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,&
-&                      l_par_X_G_finite_q,l_par_SE,l_par_RT
+&                      l_par_X_G_finite_q,l_par_SE,l_par_RT,l_par_SC
  !
  ! In a parallel run only the head CPU in the q and b chains can do 
  ! (b,k) loops
@@ -122,8 +122,7 @@ module parallel_m
    character(schlen)    :: ROLE_string = " "
    character(schlen)    :: Long_Description  = " "
    character(schlen)    :: Short_Description = " "
-   integer              :: nCPU_diagonalization =0
-   integer              :: nCPU_inversion       =0
+   integer              :: nCPU_lin_algebra =0
  end type CPU_stru
  !
  !      if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
@@ -144,8 +143,8 @@ module parallel_m
  integer          :: PARALLEL_CPU_used(MAX_N_OF_CHAINS) = 1
  character(4)     :: PARALLEL_CPU_role(MAX_N_OF_CHAINS) = " "
  integer          :: PARALLEL_n_structures_active = 0
- integer          :: PARALLEL_cpu_mat_inversion = 1
- integer          :: PARALLEL_cpu_mat_diagonalization = 1
+ integer          :: PARALLEL_cpu_linear_algebra
+ logical          :: linear_algebra_is_parallel = .false.
  !
  !... Logging CPUs ...
  !
@@ -193,8 +192,7 @@ module parallel_m
  !========================
  !
  ! ... linear algebra
- type(PP_indexes),SAVE :: PAR_IND_INV
- type(PP_indexes),SAVE :: PAR_IND_DIAGO
+ type(PP_indexes),SAVE :: PAR_IND_SLK
  !
  ! ... BZ sampling
  type(PP_indexes),SAVE :: PAR_IND_Q
@@ -241,8 +239,7 @@ module parallel_m
  !======================
  !
  ! ... linear algebra
- integer            :: PAR_IND_INV_ID
- integer            :: PAR_IND_DIAGO_ID
+ integer            :: PAR_IND_SLK_ID
  !
  ! ... QP
  integer            :: PAR_IND_QP_ID
@@ -288,12 +285,12 @@ module parallel_m
  !
  ! ... World
  type(MPI_comm),SAVE :: PAR_COM_WORLD
+ ! ... Serial
+ type(MPI_comm),SAVE :: PAR_COM_NULL
  !
  ! ... linear algebra
- type(MPI_comm),SAVE :: PAR_COM_INV_INDEX
- type(MPI_comm),SAVE :: PAR_COM_INV
- type(MPI_comm),SAVE :: PAR_COM_DIAGO_INDEX
- type(MPI_comm),SAVE :: PAR_COM_DIAGO
+ type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_SLK
  !
  ! ... RL vectors
  integer             :: PAR_nRL
@@ -413,12 +410,12 @@ module parallel_m
      !
      if (i_s==0) then
        PARALLEL_message=trim(intc(ncpu))//"(CPU)"
-       if (n_threads>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads))//"(threads)"
-       if (n_threads_X>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_X))//"(threads@X)"
+       if (n_threads    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads))//"(threads)"
+       if (n_threads_X  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_X))//"(threads@X)"
        if (n_threads_DIP>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
-       if (n_threads_SE>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
-       if (n_threads_RT>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
-       if (n_threads_K>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
+       if (n_threads_SE >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
+       if (n_threads_RT >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
+       if (n_threads_K  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
      else
        PARALLEL_message=trim(CPU_structure(i_s)%Short_Description)//"(environment)-"//&
 &                       trim(CPU_structure(i_s)%CPU_string)//"(CPUs)-"//&
@@ -557,6 +554,7 @@ module parallel_m
        omode=MPI_LOR
      endif
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=.FALSE.
@@ -590,6 +588,7 @@ module parallel_m
        omode=mpi_sum
      endif
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0
@@ -623,6 +622,7 @@ module parallel_m
        omode=mpi_sum
      endif
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0
@@ -649,6 +649,7 @@ module parallel_m
      if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0
@@ -675,6 +676,7 @@ module parallel_m
      if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0
@@ -760,6 +762,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -790,6 +793,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -820,6 +824,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -880,6 +885,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -909,6 +915,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -955,7 +962,7 @@ module parallel_m
      complex(SP):: array(:)
      integer, optional :: COMM
 #if defined _MPI
-     integer  :: LOCAL_COMM
+     integer::dimensions(1),dimension,LOCAL_COMM  ! Work Space
      complex(SP),allocatable::larray(:)  ! Work Space
      if (ncpu==1) return
      !
@@ -970,9 +977,12 @@ module parallel_m
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
      !
      call mpi_barrier(LOCAL_COMM,i_err)
-     allocate(larray(size(array)))
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
      larray=(0.,0.)
-     call mpi_allreduce(array(1),larray,size(array),local_type,mpi_sum,LOCAL_COMM,i_err)
+     call mpi_allreduce(array(1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
      array=larray
      deallocate(larray)
      call mpi_barrier(LOCAL_COMM,i_err)
@@ -999,6 +1009,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=(0.,0.)
@@ -1029,6 +1040,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.
@@ -1059,6 +1071,7 @@ module parallel_m
      !
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
+     if( any(dimensions<1) ) return
      dimension=product(dimensions)
      allocate(larray(dimension))
      larray=0.

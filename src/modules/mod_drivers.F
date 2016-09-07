@@ -36,16 +36,14 @@ module drivers
  logical :: l_col_cut   ! Coloumb potential cutoff
  logical :: l_acfdt     ! Total Energy
  !
- ! Real Time & SC
+ ! Real Time 
  !
+ logical :: l_photolum 
  logical :: l_real_time 
  logical :: l_sc_run
  logical :: l_rt_carriers_in_use
  logical :: l_sc_magnetic
  logical :: l_eval_collisions
- logical :: l_use_Hxc_collisions
- logical :: l_use_COH_collisions
- logical :: l_use_scatt_collisions
  logical :: l_use_collisions
  !
  ! The self-energy correlation "kind"
@@ -98,7 +96,7 @@ module drivers
  logical :: l_W_eh_diag
  logical :: l_W_eh_cpl
  !
- ! The XC types (Vxc)
+ ! XC kinds (Potential)
  !
  logical :: l_sc_exx
  logical :: l_sc_srpa
@@ -115,6 +113,11 @@ module drivers
  logical :: l_oep_kli
  logical :: l_oep_ceda
  logical :: l_oep_slater
+ !
+ ! Collisions
+ !
+ logical :: l_use_Hxc_collisions
+ logical :: l_use_COH_collisions
  !
  ! TESTING
  !

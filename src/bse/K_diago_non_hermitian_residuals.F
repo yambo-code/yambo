@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right) 
+subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap) 
  !
  !  The right eigenvector v(j) of A satisfies
  !                   A * v(j) = lambda(j) * v(j)
@@ -39,15 +39,15 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use matrix_operate, ONLY:INV
- use interfaces,     ONLY:MATRIX_driver
- use BS,             ONLY:BS_K_dim,BSS_dipoles,BS_H_dim,&
-&                         BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV
+ use BS,             ONLY:BS_K_dim,BS_H_dim
+ use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_E,BSS_eh_Z,BSS_eh_f
  !
  implicit none
  !
  complex(SP),intent(in)  :: BS_E(BS_H_dim)
  complex(SP),intent(out) :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
+ complex(SP),intent(out) :: BS_overlap(BS_H_dim,BS_H_dim)
  complex(SP),intent(in)  :: BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim)
  !
  ! Workspace
@@ -57,7 +57,6 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  complex(SP) :: tmp_res(BS_H_dim)
  complex(SP) :: BS_R_tmp(BS_H_dim)       
- complex(SP) :: BS_overlap(BS_H_dim,BS_H_dim)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BS_H_dim/))
@@ -67,7 +66,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  BS_R_right=cZERO
  !
- call live_timing('BSK R residuals',px%n_of_elements(myid+1))
+ call live_timing('EPS R residuals',px%n_of_elements(myid+1))
  !
  forall(i1=1:BS_K_dim)          tmp_res(i1) =   conjg(BSS_dipoles(i1))*sqrt(BSS_eh_f(i1)         ) 
  forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) =cI*conjg(BSS_dipoles(i1))*sqrt(BSS_eh_f(i1-BS_K_dim))
@@ -90,20 +89,30 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  BS_R_tmp=cZERO
  !
- call live_timing('BSK L residuals',px%n_of_elements(myid+1))
+ call live_timing('EPS L residuals',px%n_of_elements(myid+1))
  !
- forall(i1=1:BS_K_dim)          tmp_res(i1) =   BSS_dipoles(i1)*sqrt(BSS_eh_f(i1)         ) 
- forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) =cI*BSS_dipoles(i1)*sqrt(BSS_eh_f(i1-BS_K_dim))
- if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
- if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
+ do i1=1,BS_K_dim
+   !
+   tmp_res(i1)          =   BSS_dipoles(i1)         *sqrt(BSS_eh_f(i1)) 
+   tmp_res(i1+BS_K_dim) =cI*BSS_dipoles(i1+BS_K_dim)*sqrt(BSS_eh_f(i1))
+   !
+   if (allocated(BSS_eh_Z)           ) tmp_res(i1)         =tmp_res(i1)*sqrt(BSS_eh_Z(i1))
+   if (allocated(BSS_eh_Z)           ) tmp_res(i1+BS_K_dim)=tmp_res(i1+BS_K_dim)*sqrt(BSS_eh_Z(i1))
+   !
+   if (trim(global_gauge)=="velocity") tmp_res(i1)         =tmp_res(i1)/BSS_eh_E(i1)
+   if (trim(global_gauge)=="velocity") tmp_res(i1+BS_K_dim)=tmp_res(i1+BS_K_dim)/BSS_eh_E(i1)
+   !
+ enddo
  !
  do i1=1,BS_H_dim
+   !
    if (.not.px%element_1D(i1)) cycle
    !
    BS_R_tmp(i1)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i1),tmp_res)
    if (trim(global_gauge)=="velocity") BS_R_tmp(i1)=BS_R_tmp(i1)*BS_E(i1)
    !
    call live_timing(steps=1)
+   !
  enddo
  call PP_redux_wait(BS_R_tmp)
  !
@@ -117,7 +126,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  call M_by_M_omp('c','n',BS_H_dim,BS_V_left,BS_V_right,BS_overlap)
  !
- call MATRIX_driver(INV,BS_overlap)
+ call LINEAR_ALGEBRA_driver(INV,BS_overlap)
  call live_timing(steps=1)
  call live_timing()
  !
@@ -125,7 +134,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  BS_R_left=cZERO
  !
- call live_timing('BSK L x overlap',px%n_of_elements(myid+1))
+ call live_timing('EPS L x overlap',px%n_of_elements(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !

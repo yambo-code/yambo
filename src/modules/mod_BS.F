@@ -33,7 +33,6 @@ module BS
  !====================
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
- logical :: BS_anti_res
  logical :: BS_res_K_exchange
  logical :: BS_res_K_corr
  logical :: BS_cpl_K_exchange
@@ -64,10 +63,6 @@ module BS
  real(SP):: BS_eh_en(2)
  real(SP):: BS_eh_win(2)
  !
- ! Epsilon factor
- !==================
- real(SP) :: Co_factor
- !
  ! PW components ...
  !==================
  integer :: O_ng
@@ -78,16 +73,6 @@ module BS
  !===========
  type(elemental_collision), save :: K_EXCH_collision
  type(elemental_collision), save :: K_CORR_collision
- !
- ! Haydock
- !========== 
- type Haydock_vector
-   !
-   complex(SP), allocatable :: fragment(:)
-   !
- end type Haydock_vector
- !
- integer, allocatable :: Haydock_parallel_group_comm(:)
  !
  ! CV transitions space ...
  !=========================
@@ -101,10 +86,13 @@ module BS
    complex(SP), allocatable      :: dipoles_A(:)
    complex(SP), allocatable      :: dipoles_R_kerr(:)
    complex(SP), allocatable      :: dipoles_A_kerr(:)
+   complex(SP), allocatable      :: dipoles_R_PL(:,:)
+   complex(SP), allocatable      :: dipoles_A_PL(:,:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
+   real(SP)   , allocatable      :: f_PL(:,:)
    real(SP)   , allocatable      :: W(:)
    real(SP)   , allocatable      :: E_SOC_corr(:,:)
    !
@@ -149,71 +137,6 @@ module BS
  ! WF phases
  !===========
  complex(SP),allocatable :: WF_phase(:,:,:,:)
- !
- ! Solvers
- !
- character(lchlen):: BSS_description(100)
- character(schlen):: BSS_mode
- character(schlen):: BSS_inversion_mode
- complex(SP) :: BSS_Wd
- integer  :: BSS_n_descs
- integer  :: BSS_n_freqs
- real(SP) :: BSS_er(2)
- real(SP) :: BSS_dr(2)
- real(SP) :: BSS_damp_reference
- real(SP) :: BSS_q0(3)
- real(SP) :: Haydock_treshold
- real(SP) :: Haydock_v0_mod
- real(SP) :: Inversion_treshold
- real(SP) :: BSS_inversion_PERT_FULL_ratio = 1.
- logical  :: BSS_write_eig_2_db
- logical  :: Haydock_terminator
- logical  :: BSS_uses_DbGd
- logical  :: BSS_Vnl_included
- logical  :: BSS_uses_GreenF
- logical  :: BSS_uses_partial_diago
- logical  :: BSS_perturbative_width
- !
- ! Temporary (LARGE) arrays to be used in solvers ONLY
- !
- integer    , allocatable :: BSS_eh_table(:,:)
- real(SP)   , allocatable :: BSS_eh_E(:)
- real(SP)   , allocatable :: BSS_eh_f(:)
- real(SP)   , allocatable :: BSS_eh_W(:)
- real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
- complex(SP), allocatable :: BS_mat(:,:)
- complex(SP), allocatable :: BS_cpl_mat(:,:)
- complex(SP), allocatable :: BSS_dipoles(:)
- complex(SP), allocatable :: BSS_eh_Z(:)
- !
- interface 
-   !
-   integer function variables_BS(ID,local_description,X)
-     use pars,       ONLY:lchlen
-     use X_m,        ONLY:X_t
-     integer            ::ID
-     character(lchlen)  ::local_description(100)
-     type(X_t), optional::X
-   end function
-   !
-   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
-     use pars,          ONLY:SP
-     integer             :: iq,ID,BS_H_dim
-     complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
-     real(SP),   pointer :: BsE_corr(:,:),bsR_pl(:)
-     complex(SP),pointer :: bsR_kerr(:)
-   end function
-   !
-   integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
-     use pars,          ONLY:SP
-     integer             :: ID,it,BS_H_dim
-     real(SP)            :: reached_treshold,Bf(it+1),Af(it)
-     complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
-     complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
-     complex(SP),optional:: Cf_kerr(it+1)
-   end function
-   !
- end interface
  !
  contains
    !
@@ -285,10 +208,10 @@ module BS
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
      use pars,       ONLY:IP
-     use drivers,    ONLY:l_kerr
+     use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     use electrons,  ONLY:levels,E_SOC_nbands
+     use electrons,  ONLY:levels,E_SOC_nbands,n_sp_pol
      integer      :: iT,nT
      type(levels) :: E
      !
@@ -299,6 +222,11 @@ module BS
        if(l_kerr) then
          call mem_est("BS_T_grp_dipoles_KERR_R_N",(/nT/))
          if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_KERR_A_N",(/nT/))
+       endif
+       if(l_photolum) then
+         call mem_est("BS_T_grp_dipoles_PL_R_N",(/4*nT/))
+         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N",(/4*nT/))
+         call mem_est("BS_T_grp_f_PL",(/2*nT/),(/SP/))
        endif
        call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
        call mem_est("BS_T_grp_E_N",(/nT/),(/SP/))
@@ -316,76 +244,25 @@ module BS
        allocate(BS_T_grp(iT)%dipoles_R_kerr(nT))
        if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
      endif
+     if(l_photolum) then
+       allocate(BS_T_grp(iT)%dipoles_R_PL(nT,3))
+       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(nT,3))
+     endif
      allocate(BS_T_grp(iT)%table(nT,4))
      allocate(BS_T_grp(iT)%E(nT))
      allocate(BS_T_grp(iT)%f(nT))
      allocate(BS_T_grp(iT)%f_RES(nT))
+     if(l_photolum) allocate(BS_T_grp(iT)%f_PL(2,nT))
      if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
      if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
-     if (E_SOC_nbands/=0) allocate(BS_T_grp(iT)%E_SOC_corr(2,nT))
+     if (E_SOC_nbands/=0) allocate(BS_T_grp(iT)%E_SOC_corr(2/n_sp_pol,nT))
      !
-   end subroutine
-   !
-   subroutine BS_mat_alloc( )
-     use pars,      ONLY:IP,cZERO,rZERO
-     use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
-     use electrons, ONLY:E_SOC_nbands
-     integer :: i_g
-     logical :: W_is_allocated,Z_is_allocated
-     allocate(BS_mat(BS_H_dim,BS_H_dim))
-     call mem_est('BS_mat',(/size(BS_mat)/))
-     BS_mat    = cZERO
-     allocate(BSS_dipoles(BS_H_dim))
-     call mem_est('BSS_dipoles',(/size(BSS_dipoles)/))
-     BSS_dipoles = cZERO
-     allocate(BSS_eh_table(BS_K_dim,3+n_sp_pol-1),BSS_eh_E(BS_K_dim),BSS_eh_f(BS_K_dim))
-     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f",&
-&                 (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
-     BSS_eh_table = 0
-     BSS_eh_E     = rZERO
-     BSS_eh_f     = rZERO
-     W_is_allocated=.FALSE.
-     Z_is_allocated=.FALSE.
-     do i_g=1,BS_nT_grps
-       if (.not.W_is_allocated) W_is_allocated=allocated(BS_T_grp(i_g)%W)
-       if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
-     enddo
-     if (W_is_allocated) then
-       allocate(BSS_eh_W(BS_K_dim))
-       call mem_est("BSS_eh_W",(/BS_K_dim/),(/SP/))
-       BSS_eh_W = rZERO
-     endif
-     if (Z_is_allocated) then
-       allocate(BSS_eh_Z(BS_K_dim))
-       call mem_est("BSS_eh_Z",(/BS_K_dim/))
-       BSS_eh_Z = cZERO
-     endif
-     if (E_SOC_nbands/=0) then
-       allocate(BSS_eh_E_SOC_corr(2,BS_H_dim))
-       call mem_est("BSS_eh_E_SOC_corr",(/2*BS_H_dim/),(/SP/))
-       BSS_eh_E_SOC_corr = rZERO
-     endif
-   end subroutine
-   !
-   subroutine BS_mat_free()
-     use memory_m,   ONLY:mem_est
-     if (allocated(BSS_eh_table))      deallocate(BSS_eh_table)
-     if (allocated(BSS_dipoles))       deallocate(BSS_dipoles)
-     if (allocated(BSS_eh_E))          deallocate(BSS_eh_E)
-     if (allocated(BSS_eh_W))          deallocate(BSS_eh_W)
-     if (allocated(BSS_eh_f))          deallocate(BSS_eh_f)
-     if (allocated(BSS_eh_Z))          deallocate(BSS_eh_Z)
-     if (allocated(BSS_eh_E_SOC_corr)) deallocate(BSS_eh_E_SOC_corr)
-     if (allocated(BS_mat))            deallocate(BS_mat)
-     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f BSS_eh_W")
-     call mem_est("BSS_eh_table BSS_eh_Z BS_mat")
    end subroutine
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     use drivers,    ONLY:l_kerr
+     use drivers,    ONLY:l_kerr,l_photolum
      use parallel_m, ONLY:PAR_BS_T_grps_index
      use electrons,  ONLY:E_SOC_nbands
      integer :: i_g
@@ -409,14 +286,19 @@ module BS
        deallocate(BS_T_grp(i_g)%E)
        deallocate(BS_T_grp(i_g)%f)
        deallocate(BS_T_grp(i_g)%f_RES)
-       if (allocated(BS_T_grp(i_g)%Z)) deallocate(BS_T_grp(i_g)%Z)
-       if (allocated(BS_T_grp(i_g)%W)) deallocate(BS_T_grp(i_g)%W)
-       if (E_SOC_nbands/=0)            deallocate(BS_T_grp(i_g)%E_SOC_corr)
+       if (allocated(BS_T_grp(i_g)%f_PL)) deallocate(BS_T_grp(i_g)%f_PL)
+       if (allocated(BS_T_grp(i_g)%Z))    deallocate(BS_T_grp(i_g)%Z)
+       if (allocated(BS_T_grp(i_g)%W))    deallocate(BS_T_grp(i_g)%W)
+       if (E_SOC_nbands/=0)               deallocate(BS_T_grp(i_g)%E_SOC_corr)
        !
      enddo
      !
      call mem_est("BS_T_grp_dipoles_R_N")
      call mem_est("BS_T_grp_dipoles_A_N")
+     if(l_photolum) then
+       call mem_est("BS_T_grp_dipoles_PL_R_N BS_T_grp_f_PL")
+       if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N")
+     endif
      if(l_kerr) then
        call mem_est("BS_T_grp_dipoles_R_N")
        if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N")
@@ -464,28 +346,5 @@ module BS
      end do
      !
    end subroutine BS_Blocks_symmetrize_K
-   !
-   subroutine BS_HAYVEC_alloc(V)
-     use parallel_m,    ONLY:PAR_IND_T_Haydock
-     type(Haydock_vector) :: V(BS_nT_grps)
-     ! ws:
-     integer :: i_g
-     !
-     do i_g=1,BS_nT_grps
-       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
-     enddo
-   end subroutine BS_HAYVEC_alloc
-   !
-   subroutine BS_HAYVEC_free(V)
-     use stderr,     ONLY:intc 
-     type(Haydock_vector) :: V(:)
-     ! ws:
-     integer :: i_g
-     !
-     do i_g=1,BS_nT_grps
-       if (allocated(V(i_g)%fragment)) deallocate(V(i_g)%fragment)
-     end do
-   end subroutine BS_HAYVEC_free
    !
 end module BS

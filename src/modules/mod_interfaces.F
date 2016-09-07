@@ -27,13 +27,14 @@ module interfaces
  !
  interface
    !
-   subroutine SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E,N,G0,Ek,Ekmq,E_diff)
+   subroutine SCATTERING_GW_kinematics(i_q_bz,i_m,I,k,q,TABLE,E,N,G0,Ek,Ekmq,E_diff)
      use pars,                ONLY:SP
      use electrons,           ONLY:levels
      use R_lattice,           ONLY:bz_samp
      use QP_m,                ONLY:QP_table
      use collision,           ONLY:elemental_collision
-     integer,       intent(in) ::i_qp,i_q_bz,i_m
+     integer,       intent(in) ::i_q_bz,i_m
+     integer,       intent(in) ::TABLE(:)
      type(elemental_collision) ::I
      type(bz_samp)             ::k,q
      type(levels),  OPTIONAL   ::E
@@ -70,31 +71,19 @@ module interfaces
      real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
    end subroutine el_density_of_states
    !
-   subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill,det)
-     !
-     use matrix_operate, ONLY:blacs_t
-     use pars,           ONLY:SP
-     !
-     integer                :: idriver
-     complex(SP)            :: M(:,:)
-     complex(SP),  optional :: V_left(:,:)
-     complex(SP),  optional :: V_right(:,:)
-     complex(SP),  optional :: E_cmpl(:)
-     type(blacs_t),optional :: blt
-     real(SP),     optional :: E_real(:)
-     integer,      optional :: lib_in
-     integer,      optional :: fill
-     complex(SP),  optional :: det
-     integer,      optional :: SVD_digits 
-     !
-   end subroutine
-   !
    integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll)
      use collision,  ONLY:COLLISIONS_element,COLLISIONS_group
      integer, intent(inout)             ::ID
      type(COLLISIONS_group)             ::COLL_grp
      type(COLLISIONS_element), optional ::COLL_element
      integer, intent(in)     , optional ::i_coll
+   end function
+   !
+   integer function eval_G_minus_G(iG,iGo,COMM)
+     use parallel_m,      ONLY:MPI_comm
+     implicit none
+     integer :: iG,iGo
+     type(MPI_comm), optional :: COMM
    end function
    !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
@@ -175,7 +164,7 @@ module interfaces
      complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
      real(SP),    pointer     :: BS_E_SOC_corr(:,:)
      complex(SP), pointer     :: BS_R_kerr(:)
-     real(SP),    pointer     :: BS_R_PL(:)
+     real(SP),    pointer     :: BS_R_PL(:,:)
    end subroutine
    !
    subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&

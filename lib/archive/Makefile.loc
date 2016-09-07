@@ -1,10 +1,4 @@
 #
-#===============================
-# WanT package
-#===============================
-#
-
-#
 # Package List
 #
 include ./package.list
@@ -12,9 +6,10 @@ include ./package.list
 all: $(tarball_libxc) $(tarball_iotk) $(tarball_netcdf) $(tarball_etsf_io)
 
 $(tarball_libxc):
-	wget -O $(tarball_libxc) $(url_libxc) > /dev/null 2>&1
-	@if test "`echo $$?`" -ne "0" ; then \
-		curl -o $(tarball_libxc) $(url_libxc) > /dev/null 2>&1 ; \
+	@if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
+		wget -O $(tarball_libxc) $(url_libxc) ; \
+	elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
+		curl --progress-bar -o $(tarball_libxc) $(url_libxc) ; \
 	fi
 	@if test ! -s $(tarball_libxc) ; then \
 		echo "*** Unable to download LIBXC. Test whether curl or wget is installed and working," ; \
@@ -23,9 +18,10 @@ $(tarball_libxc):
 	exit 1 ; fi
 
 $(tarball_iotk):
-	wget -O $(tarball_iotk) $(url_iotk) > /dev/null 2>&1
-	@if test "`echo $$?`" -ne "0" ; then \
-		curl -o $(tarball_iotk) $(url_iotk) > /dev/null 2>&1 ; \
+	@if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
+		wget -O $(tarball_iotk) $(url_iotk) ; \
+	elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
+		curl --progress-bar -o $(tarball_iotk) $(url_iotk) ; \
 	fi
 	@if test ! -s $(tarball_iotk) ; then \
 		echo "*** Unable to download IOTK. Test whether curl or wget is installed and working," ; \
@@ -34,9 +30,10 @@ $(tarball_iotk):
 	exit 1 ; fi
 
 $(tarball_netcdf):
-	wget -O $(tarball_netcdf) $(url_netcdf) > /dev/null 2>&1
-	@if test "`echo $$?`" -ne "0" ; then \
-		curl -o $(tarball_netcdf) $(url_netcdf) > /dev/null 2>&1 ; \
+	@if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
+		wget -O $(tarball_netcdf) $(url_netcdf) ; \
+	elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
+		curl --progress-bar -o $(tarball_netcdf) $(url_netcdf) ; \
 	fi
 	@if test ! -s $(tarball_netcdf) ; then \
 		echo "*** Unable to download NETCDF. Test whether curl or wget is installed and working," ; \
@@ -45,9 +42,10 @@ $(tarball_netcdf):
 	exit 1 ; fi
 
 $(tarball_etsf_io):
-	wget -O $(tarball_etsf_io) $(url_etsf_io) > /dev/null 2>&1
-	@if test "`echo $$?`" -ne "0" ; then \
-		curl -o $(tarball_etsf_io) $(url_etsf_io) > /dev/null 2>&1 ; \
+	@if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
+		wget -O $(tarball_etsf_io) $(url_etsf_io) ; \
+	elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
+		curl --progress-bar -o $(tarball_etsf_io) $(url_etsf_io) ; \
 	fi
 	@if test ! -s $(tarball_etsf_io) ; then \
 		echo "*** Unable to download ETSF-IO. Test whether curl or wget is installed and working," ; \

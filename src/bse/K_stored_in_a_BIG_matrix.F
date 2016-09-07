@@ -35,15 +35,20 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
- use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
-&                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc,&
-&                         BSS_eh_E_SOC_corr,BSS_perturbative_width
+ use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,&
+&                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc
+ use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
  !
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
  use KERR,           ONLY:BSS_dipoles_kerr,BS_KERR_alloc
+#endif
+ !
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+ use PHOTOLUM,       ONLY:BSS_dipoles_PL,BS_PL_alloc,BSS_PL_f,PL_weights
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -69,6 +74,10 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !
 #if defined _KERR
  call BS_KERR_alloc( )
+#endif
+ !
+#if defined _PL
+ call BS_PL_alloc( )
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -105,9 +114,17 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      if (E_SOC_nbands/=0) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
      !
 #if defined _KERR
-     if  (l_kerr) then
+     if (l_kerr) then
        BSS_dipoles_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R_kerr(i_c)
        if (BS_K_coupling) BSS_dipoles_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_kerr(i_c)
+     endif
+#endif
+     !
+#if defined _PL
+     if (l_photolum) then
+       BSS_PL_f(:,H_pos(1))=BS_T_grp(i_g)%f_PL(:,i_c)
+       BSS_dipoles_PL(H_pos(1),:)=BS_T_grp(i_g)%dipoles_R_PL(i_c,:)*PL_weights(:)
+       if (BS_K_coupling) BSS_dipoles_PL(H_pos(1)+BS_K_dim,:)=BS_T_grp(i_g)%dipoles_A_PL(i_c,:)*PL_weights(:)
      endif
 #endif
      !
@@ -145,6 +162,12 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_eh_INDEX%COMM)
 #endif
+#if defined _PL
+ call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_eh_INDEX%COMM)
+ call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_eh_INDEX%COMM)
+#endif
  if (E_SOC_nbands/=0) then
    call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
@@ -169,8 +192,9 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      if (i_Tk==i_Tp) then
        if (BS_blk(i_B)%mode=="R") then
          E_plus_W=BSS_eh_E(H_pos(1))*cONE
-         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) &
-&          E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1))
+         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
+           E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1))
+         endif
          BS_mat(H_pos(1),H_pos(1))=E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP)
        else
          BS_mat(H_pos(1),H_pos(1)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_r)
@@ -204,7 +228,6 @@ subroutine K_stored_in_a_BIG_matrix(iq)
    enddo
  enddo
  !
- !
  if (BS_K_coupling) then
    !
    ! Symmetrization: Coupling part is symmetric
@@ -230,7 +253,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  ! ALL 2 ALL
  !===========
  !
- ! BS_mat lives in the enitre world.
+ ! BS_mat lives in the entire world.
  !
  call PP_redux_wait(BS_mat)
  !

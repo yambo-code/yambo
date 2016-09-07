@@ -78,7 +78,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  ! In the covariat approach I do need the overlap. 
  ! So as a first thing I check if they exist
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=io_Overlaps(X,Xen,ID)
+ io_err=io_Overlaps(X,ID)
  !
  ! If they do not I have to compute them
  if(io_err/=0) then
@@ -90,16 +90,16 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
    !
    if (     master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(X,Xen,ID)
+     io_err=io_Overlaps(X,ID)
    endif
    call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
    if (.not.master_cpu) then
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(X,Xen,ID)
+     io_err=io_Overlaps(X,ID)
    endif
    !
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
-   io_err=io_Overlaps(X,Xen,ID)
+   io_err=io_Overlaps(X,ID)
    !
  endif
  !

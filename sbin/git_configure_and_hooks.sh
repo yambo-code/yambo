@@ -3,7 +3,7 @@
 #        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): HM
+# Authors (see AUTHORS file for details): HM, DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -23,7 +23,9 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 # Create git hooks to update yambo version and hash
+#
 # 1. "pre-commit" --> yambo_versions_update.tcsh h
+#
 cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 sbin/yambo_versions_update.tcsh r
@@ -32,3 +34,24 @@ git add configure
 git add include/version.inc
 EOF
 chmod +x .git/hooks/pre-commit
+#
+# 2. "Prepare commit msg"
+#
+cat <<EOF > .git/hooks/prepare-commit-msg
+#!/bin/bash
+SOB=\$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/ \1/p')
+./sbin/make_message.pl -p "\$SOB"
+echo " " >> \$1
+cat commit.msg >> \$1
+rm commit.msg
+EOF
+chmod +x .git/hooks/prepare-commit-msg
+#
+# 3. git config
+#
+git config merge.keepTheirs.driver "cp -f %B %A"
+git config merge.commit no
+git config core.editor "vim"
+git config pull.rebase true
+
+

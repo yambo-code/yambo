@@ -50,7 +50,7 @@ $manual_preprocess_files = " ";
 $exclude_files = "yamboo.pl";
 $exclude_dirs = "sbin bin doc";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
-@user_projects = ('ELPH', 'YPP_ELPH', 'KERR', 'SURF', 'YPP_SURF', 
+@user_projects = ('ELPH', 'YPP_ELPH', 'KERR', 'SURF', 'YPP_SURF','PL',
                   'QED','MAGNETIC','SC','RT','YPP_RT','YPP_SC','YPP_MAGNETIC');
 #
 # ============= END OF USER DEFINED FLAGS  ==============

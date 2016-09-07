@@ -25,8 +25,9 @@ subroutine K_output_file(iq,mode)
  !
  use pars,      ONLY:pi,SP
  use units,     ONLY:HA2EV
- use BS,        ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
-&                    BSS_n_descs,BSE_mode,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
+ use BS_solvers,ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
+&                    BSS_n_descs,BSS_n_freqs,BSS_q0
+ use BS,        ONLY:BSE_mode,BS_K_is_ALDA
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,O_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
@@ -43,6 +44,11 @@ subroutine K_output_file(iq,mode)
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name
  use KERR,      ONLY:B_Hall,A_drude
 #endif
+#if defined _PL
+ use X_output,  ONLY:pl_file_name
+ use PHOTOLUM,  ONLY:PL
+ use drivers,   ONLY:l_photolum
+#endif
  !
  implicit none
  integer      :: iq
@@ -50,7 +56,7 @@ subroutine K_output_file(iq,mode)
  !
  ! Work Space
  !
- character(1)      :: ordering
+ character(2)      :: ordering
  character(2)      :: title_mode
  character(10)     :: name_
  integer           :: iw,n_output_data
@@ -84,7 +90,7 @@ subroutine K_output_file(iq,mode)
  endif
  !
  if (     trim(BSE_mode)=='resonant' ) ordering='r'
- if (.not.trim(BSE_mode)=='resonant' ) ordering='c'
+ if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
  !
  ! EELS / REFLECTIVITY logicals 
  !
@@ -95,6 +101,9 @@ subroutine K_output_file(iq,mode)
  if (l_INIT) title_mode='ot'
  !
  call of_open_close(eps_file_name,title_mode)
+#if defined _PL
+ call of_open_close(pl_file_name,title_mode)
+#endif
  if (eval_reflectivity) call of_open_close(refl_file_name,title_mode)
  if (eval_eels)         call of_open_close(eel_file_name,title_mode)
  if (eval_alpha)        call of_open_close(alpha_file_name,title_mode)
@@ -106,7 +115,7 @@ subroutine K_output_file(iq,mode)
    if (eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
 #endif
- if(.not.l_Haydock) call of_open_close(jdos_file_name,title_mode)
+ if(.not.l_Haydock.and..not.l_Inversion) call of_open_close(jdos_file_name,title_mode)
  !
  call X_write_q_plus_g(1,BSS_q0,ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
@@ -146,6 +155,17 @@ subroutine K_output_file(iq,mode)
  if (l_Haydock.or.l_Inversion) call msg("o eps",'#',headers,INDENT=0,USE_TABS=.TRUE.)
  if (l_Diago) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
  if (l_IP) call msg("o eps",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+ !
+#if defined _PL
+ if (l_photolum) then
+   call X_setup_headers('PL')
+   if (l_IP) then
+     call msg("o pl_",'#',headers(:2),INDENT=0,USE_TABS=.TRUE.)
+   else
+     call msg("o pl_",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   endif
+ endif
+#endif
  !
  if (eval_reflectivity) then 
    call X_setup_headers('REFL')
@@ -223,6 +243,33 @@ subroutine K_output_file(iq,mode)
  endif
  !
  call msg("o eps refl eel alpha off beta moke jdos pl_",'#')
+ !
+#if defined _PL
+ !
+ if (l_photolum) then
+   !
+   ! PHOTOLUMINESCENCE
+   !--------------------
+   !
+   do iw=1,BSS_n_freqs
+     !
+     ! PL: 2 (int) 3 (non int) 
+     !
+     if (l_IP) then
+       n_output_data=2
+       output_data(1:2)=(/real(PL(iw,1))*HA2EV,PL(iw,3)/)
+     else 
+       n_output_data=3
+       output_data(1:3)=(/real(PL(iw,1))*HA2EV,PL(iw,2),PL(iw,3)/)
+     endif
+     !
+     call msg("o pl_",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+     !
+   enddo
+   !
+ endif
+ !
+#endif
  !
  ! ABSORPTION
  !------------
@@ -394,7 +441,7 @@ subroutine K_output_file(iq,mode)
  ! JOINT DOS
  !------------
  !
- if (.not.l_Haydock) then 
+ if (.not.l_Haydock.and..not.l_Inversion) then 
    do iw=1,BSS_n_freqs
      !
      ! Joint DOS: 2 (int) 3 (non int)
@@ -422,6 +469,9 @@ subroutine K_output_file(iq,mode)
    !
    subroutine CLOSE_the_files( )
      !
+#if defined _PL
+     call of_open_close(pl_file_name)
+#endif
      call of_open_close(eps_file_name)
      call of_open_close(refl_file_name)
      call of_open_close(eel_file_name)

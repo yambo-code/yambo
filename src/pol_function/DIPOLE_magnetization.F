@@ -52,14 +52,6 @@ subroutine Dipole_magnetization(Xen,Xk,X)
  integer                      :: ik,ic_wf(n_spinor),iv_wf(n_spinor),ic,iv,&
 &                                i_sp_pol,i_spinor,i_spin,n_LT_steps,ik_mem
  !
- ! WF load
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
- ! This is the case, for example, of the response function calculation.
- !
- call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='R',title='-Spin oscillators/R space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
- !
  ! Parallelization Mask 
  !======================
  ! Depending on the environment DIPOLES are distributed in different ways
@@ -79,6 +71,9 @@ subroutine Dipole_magnetization(Xen,Xk,X)
    if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
    !
    ik_mem=PAR_DIPk_ibz_index(ik)
+   !
+   call WF_load(WF,0,1,X%ib,(/ik,ik/),space='R',title='-Spin oscillators/R space',&
+&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
    ! 
    do i_sp_pol=1,n_sp_pol
      do iv=X%ib(1),X%ib_lim(1) 
@@ -125,15 +120,13 @@ subroutine Dipole_magnetization(Xen,Xk,X)
          !
        enddo    ! conduction band loop
      enddo      ! valence    band loop
+     !
+     call WF_free(WF)
      ! 
-   enddo        ! sp_pol loop
+   enddo        ! k-points loop
    !
- enddo          ! k-points
+ enddo          ! sp_pol   loop
  !
  call live_timing()
- !
- ! CLEAN
- !
- call WF_free(WF)
  !
 end subroutine Dipole_magnetization

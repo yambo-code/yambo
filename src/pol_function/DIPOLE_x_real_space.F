@@ -55,13 +55,6 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  !
  call load_cc(.false.,.true.)
  !
- ! WF load
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
- !
- call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
- !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
@@ -73,6 +66,9 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
    do ik=1,Xk%nibz 
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+     !
+     call WF_load(WF,0,1,(/1,X%ib(2)/),(/ik,ik/),space='R',title='-Oscillators/R space',&
+&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
      !
@@ -144,6 +140,8 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
        enddo
      endif
      !
+     call WF_free(WF)
+     !
    enddo 
    !
  enddo
@@ -151,7 +149,5 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  call live_timing()
  !
  deallocate(x_cc)
- !
- call WF_free(WF)
  !
 end subroutine Dipole_x_real_space

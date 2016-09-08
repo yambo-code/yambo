@@ -90,14 +90,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  endif
  !
- ! WF load
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
- ! This is the case, for example, of the response function calculation.
- !
- call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
- !
  ! Eo    are always the eigenvalues consistent with the WFs
  ! E     do also include the QP corrections when Eo are associated
  !
@@ -135,7 +127,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  do ik=1,Xk%nibz
    !
    if (n_LT_steps==0) cycle
-   ! 
+   !
    ! [Vnl,r]
    !
    if (io_KB_pwscf_err==0) then
@@ -149,10 +141,15 @@ subroutine Dipole_transverse(Xen,Xk,X)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      io_KB_abinit_err=io_KB_abinit(ID)
    endif
-   ! 
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+   !
+   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
    !
    ik_mem=PAR_DIPk_ibz_index(ik)
+   !
+   ! WF load
+   !
+   call WF_load(WF,0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space',&
+&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
    ! 
    do i_sp_pol=1,n_sp_pol
      ! 
@@ -265,6 +262,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
      enddo      ! valence    band loop
      ! 
    enddo        ! sp_pol loop
+   !
+   call WF_free(WF)
    ! 
  enddo          ! k-points
  !
@@ -282,7 +281,5 @@ subroutine Dipole_transverse(Xen,Xk,X)
  else if (io_Vnl_err==0) then
    if (allocated(Vnl)) deallocate(Vnl)
  endif 
- !
- call WF_free(WF)
  !
 end subroutine Dipole_transverse

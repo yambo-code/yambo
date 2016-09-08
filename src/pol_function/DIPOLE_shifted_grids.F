@@ -127,39 +127,35 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  !
  if(num_shifted_grids<3) call warning(' Shifted grids are '//trim(intc(num_shifted_grids))//'. Assuming non periodic system.')
  !
- ! Load unshifted WFs
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
- !
- call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
- !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
-&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
+&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)*num_shifted_grids
  !
- do iq = 1, num_shifted_grids
+ call live_timing('Dipoles shifted grids   :',n_LT_steps)
+ !
+ do i_sp_pol = 1,n_sp_pol
    !
-   core_io_path = trim(grid_paths_vector(iq))
-   !
-   ! Load WFs {k + q_iq}
-   !
-   call WF_load(WF_shifted,0,1,X%ib,(/1,Xk%nibz/),space='G',&
-   &  title='-Oscillators/G space (shifted grid)',keep_states_to_load=.TRUE.) 
-   !
-   wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
-   !
-   ir = grid_order(iq)
-   !
-   call live_timing('Dipole @ grid '//trim(intc(iq))//':',n_LT_steps)
-   !
-   do i_sp_pol = 1,n_sp_pol
+   do ik = 1, Xk%nibz
      !
-     do ik = 1, Xk%nibz
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+     !
+     ik_mem=PAR_DIPk_ibz_index(ik)
+     !
+     ! Load WFs first at k and then at k+q_iq
+     ! 
+     call WF_load(WF,0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space',&
+&           force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+     !
+     do iq = 1, num_shifted_grids
        !
-       if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+       ir = grid_order(iq)
        !
-       ik_mem=PAR_DIPk_ibz_index(ik)
+       core_io_path = trim(grid_paths_vector(iq))
+       !
+       call WF_load(WF_shifted,0,1,X%ib,(/1,Xk%nibz/),space='G',&
+&      title='-Oscillators/G space (shifted grid)',keep_states_to_load=.TRUE.)
+       !
+       wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
        !
        do iv=X%ib(1),X%ib_lim(1) 
          !
@@ -218,19 +214,21 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
          enddo  ! ic
        enddo    ! iv
        !
-     enddo      ! i_sp_pol
+       call WF_free(WF_shifted)
+       !
+     enddo      ! iq
+     !
+     core_io_path = trim(core_io_path_save)
+     !
+     call WF_free(WF)
      !
    enddo        ! ik
    !
-   call WF_free(WF_shifted)
-   !
-   call live_timing()
-   !
- enddo          ! iq
+ enddo          ! i_sp_pol
+ !
+ call live_timing()
  !
  ! CLEAN
- !
- call WF_free(WF)
  !
  call DB1_reset()
  !

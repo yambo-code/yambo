@@ -240,6 +240,7 @@ module parallel_m
  !
  ! ... linear algebra
  integer            :: PAR_IND_SLK_ID
+ integer            :: PAR_IND_intra_SLK_ID
  !
  ! ... QP
  integer            :: PAR_IND_QP_ID
@@ -291,6 +292,7 @@ module parallel_m
  ! ... linear algebra
  type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX
  type(MPI_comm),SAVE :: PAR_COM_SLK
+ type(MPI_comm),SAVE :: PAR_COM_intra_SLK
  !
  ! ... RL vectors
  integer             :: PAR_nRL

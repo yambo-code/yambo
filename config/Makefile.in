@@ -54,7 +54,7 @@ CFGFILES = config/setup config/Makefile config/report  \
            lib/install/make_iotk.inc
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
-CLEANS   = clean_fast clean clean_extlibs clean_all distclean
+CLEANS   = clean_fast clean clean_all distclean
 PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl \
            ypp_ph ypp_sc ypp_rt ypp_magnetic 
 BROKEN   = yambo_surf ypp_surf 

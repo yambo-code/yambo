@@ -28,7 +28,7 @@ subroutine X_s(iq,X,Xw,W_range)
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Q_A2A,linear_algebra_is_parallel,PAR_COM_WORLD,&
-&                        PAR_COM_NULL,PP_indexes,PP_indexes_reset,PAR_COM_DIPOLES
+&                        PP_indexes,PP_indexes_reset,PAR_COM_DIPOLES,PAR_IND_intra_SLK_ID,PAR_COM_intra_SLK
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV,LIN_SYS,MAT_MUL
@@ -76,27 +76,14 @@ subroutine X_s(iq,X,Xw,W_range)
    call mem_est("Xo_m1",(/size(Xom1)/))
  endif
  !
- ! Frequencies distribution
+ ! Stop... 
  !
  call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
  !
- if(.not.linear_algebra_is_parallel) then
-   !
-   if (PAR_COM_Q_INDEX%n_CPU>1) then
-     call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_Q_A2A)
-     PAR_IND_FREQ_ID=PAR_COM_Q_A2A%cpu_id
-   else
-     call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_WORLD)
-     PAR_IND_FREQ_ID=PAR_COM_WORLD%cpu_id
-   endif
-   !
- else
-   !
-   call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_NULL)
-   PAR_IND_FREQ_ID=PAR_COM_NULL%cpu_id
-   !
- endif
+ ! ... and frequencies distribution
  !
+ call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_intra_SLK)
+ PAR_IND_FREQ_ID=PAR_IND_intra_SLK_ID
  call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1),TOTAL=Xw%n_freqs)
  !
  if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) &
@@ -184,7 +171,6 @@ subroutine X_s(iq,X,Xw,W_range)
    ! I must cycle here to allow the FXC I/O properly
    !
    !if (.not.PAR_IND_freqs%element_1D(iw)) cycle
-
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
@@ -194,7 +180,6 @@ subroutine X_s(iq,X,Xw,W_range)
      tddftk(i1,i1)=tddftk(i1,i1)+cONE
    enddo
    !$omp end parallel do
-
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -203,13 +188,14 @@ subroutine X_s(iq,X,Xw,W_range)
      ! formulation as a linear system
      !
      X_mat(:,:,iw_mat)=Xo
-     call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,B=X_mat(:,:,iw_mat))
+     call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,B=X_mat(:,:,iw_mat),FIRST_call=iw==1)
+     !
   else
      !
      ! formulation matrix inversion + matmul
      !
-     call LINEAR_ALGEBRA_driver(INV,tddftk)
-     call LINEAR_ALGEBRA_driver(MAT_MUL,tddftk,B=Xo,C=X_mat(:,:,iw_mat))
+     call LINEAR_ALGEBRA_driver(INV,tddftk,FIRST_call=iw==1)
+     call LINEAR_ALGEBRA_driver(MAT_MUL,tddftk,B=Xo,C=X_mat(:,:,iw_mat),FIRST_call=iw==1)
      !
    endif
    !

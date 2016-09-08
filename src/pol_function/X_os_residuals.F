@@ -33,7 +33,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
  use X_m,           ONLY:X_t,DIP_projected,X_poles_tab,l_X_terminator 
- use parallel_m,    ONLY:PAR_Xk_bz_index,myid
+ use parallel_m,    ONLY:PAR_Xk_bz_index
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
@@ -103,12 +103,12 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    ! GPL_EXCLUDE_END
    !
    !
-   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin)) &
-   &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
+&             spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
    if (l_X_term_vv) then
-     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin) &
-   &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin)/ &
+&               spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    endif  
    !
    ! Scattering CALL
@@ -157,7 +157,6 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      call V_by_V_plus_V(ig2,Z_eh_occ*Xo_scatt%rhotw(ig2),conjg(Xo_scatt%rhotw(:ig2)),Xo_res(:ig2,ig2))
    enddo
    !$omp end parallel do
-
    !
    ! add terminator specific corrections
    ! (ic is running in valence)

@@ -31,7 +31,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
 &                        global_gauge,Dipole_approach,Chi_linalg_mode, &
-&                        l_X_terminator,X_terminator_Kind,X_terminator_E
+&                        X_terminator_Kind,X_terminator_E
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
@@ -286,8 +286,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
- ! 
- !
  !
  ! BSE/BSK
  !
@@ -302,7 +300,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)
  !
  ! GPL_INCLUDE_END
- !
  !
  ! GPL_EXCLUDE_START
  !

@@ -208,7 +208,7 @@ module LIVE_t
      !
      character(lchlen):: lch,fmt_here,message_composed,time_is_now_string 
      character(schlen):: lfmt_,rfmt_,sfmt_
-     logical          :: add_cput,add_cpu_id
+     logical          :: add_cput,add_CPU_id
      !
      if (.not.write_to_log) return
      !
@@ -229,12 +229,12 @@ module LIVE_t
      !
      ! Update the reference CPUT
      !
-     add_cpu_id=.true.
+     add_CPU_id=.true.
      if (present(CPU_ID)) then
-       add_cpu_id=CPU_ID
+       add_CPU_id=CPU_ID
      endif
      message_composed=trim(message)
-     if (ncpu/=1.and.add_cpu_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
+     if (ncpu/=1.and.add_CPU_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
        write (message_composed,'(a,i4.4,2a)') 'P',myid+1,': ',trim(message)
      endif
      add_cput=live_timing_is_on.and.master_thread

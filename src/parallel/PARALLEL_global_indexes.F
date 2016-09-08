@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
- use linear_algebra,ONLY:DIAGO,INV
+ use linear_algebra,ONLY:INV
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,&
 &                        PARALLEL_cpu_linear_algebra,CPU_structure,master_cpu,&
@@ -47,7 +47,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
-&                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX
+&                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX,PAR_COM_intra_SLK
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_SLK,&
@@ -61,7 +61,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_PLASMA_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
-&                        PAR_IND_Kk_ibz_ID,PAR_IND_DIPk_ID
+&                        PAR_IND_Kk_ibz_ID,PAR_IND_DIPk_ID,PAR_IND_intra_SLK_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t,l_X_terminator
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,&
@@ -83,7 +83,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use collision_ext, ONLY:COLL_bands,COH_collisions,GW_NEQ_collisions,P_collisions,HXC_collisions
 #endif
 #if defined _SCALAPACK
- use SLK_m,         ONLY:SLK_COM_index,SLK_COM_A2A
+ use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
 #endif
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
@@ -194,6 +194,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_IND_WF_k_ID=0
    PAR_IND_B_mat_ID=0
    PAR_IND_Bp_mat_ID=0
+   PAR_IND_intra_SLK_ID=0
    !
    call COMM_reset(PAR_COM_VAL_INDEX(X_type))
    call COMM_reset(PAR_COM_CON_INDEX(X_type))
@@ -219,9 +220,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_eh_INDEX)
    call COMM_reset(PAR_COM_eh_A2A)
    call COMM_reset(PAR_COM_T_INDEX)
+   call COMM_reset(PAR_COM_intra_SLK)
 #if defined _SCALAPACK
-   call COMM_reset(SLK_COM_index(1))
-   call COMM_reset(SLK_COM_index(2))
+   call COMM_reset(PAR_COM_SLK)
+   call COMM_reset(PAR_COM_SLK_INDEX)
+   call COMM_reset(SLK_COM_INDEX(1))
+   call COMM_reset(SLK_COM_INDEX(2))
    call COMM_reset(SLK_COM_A2A(1))
    call COMM_reset(SLK_COM_A2A(2))
 #endif
@@ -339,7 +343,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Linear Algebra (all drivers)
    !
    PARALLEL_cpu_linear_algebra=CPU_structure(7)%nCPU_lin_algebra
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
+   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
    PAR_IND_SLK_ID=PAR_COM_SLK_INDEX%CPU_id
    !
  endif
@@ -373,7 +377,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Inversion
    !
    PARALLEL_cpu_linear_algebra=CPU_structure(1)%nCPU_lin_algebra
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
+   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
    PAR_IND_SLK_ID=PAR_COM_SLK_INDEX%CPU_id
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
@@ -476,7 +480,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Inversion
    !
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
+   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
    PAR_IND_SLK_ID=PAR_COM_SLK_INDEX%CPU_id
    !
    ! I/O privileges
@@ -1005,7 +1009,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Linear Algebra
    !
    PARALLEL_cpu_linear_algebra=CPU_structure(4)%nCPU_lin_algebra
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
+   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
    PAR_IND_SLK_ID=PAR_COM_SLK_INDEX%CPU_id
    !
    ! I/O privileges

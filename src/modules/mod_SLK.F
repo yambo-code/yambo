@@ -64,9 +64,9 @@ module SLK_m
    INTEGER :: world_cntx = -1    ! BLACS context of all processor 
    INTEGER :: ortho_cntx = -1    ! BLACS context for ortho_comm
  end type ORTHO_group
- !_
- ! Common Work Space
  !
+ ! SLK matrix distributed block and informations
+ !===============================================
  type SLK_matrix 
    integer :: desc(desc_len)
    integer :: lwork    = 0

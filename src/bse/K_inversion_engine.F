@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
+subroutine K_inversion_engine(what,i_counter,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
  !
- use pars,           ONLY:SP,cZERO,rZERO
+ use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PP_indexes
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:Epsilon_ii,global_gauge
@@ -33,7 +33,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  use BS,             ONLY:BS_H_dim
  use BS_solvers,     ONLY:BS_mat,Co_factor,K_INV_EPS,BSS_dipoles,Co_factor
 #if defined _PL
- use BS,             ONLY:BS_K_dim
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
 #endif
@@ -41,7 +40,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  implicit none
  !
  character(3)     :: what
- integer          :: iw_2start,iw_2do,Lo_dim,Lo_n_loop
+ integer          :: iw_2start,iw_2do,Lo_dim,Lo_n_loop,i_counter
  type(PP_indexes) :: px
  type(w_samp)     :: W
  complex(SP)      :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
@@ -103,7 +102,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
        if (i_L==1) Gr="r"
        if (i_L==2) Gr="a"
        !
-       call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
+       call K_inversion_do_it_full(i_counter+i_L-1,Lo(:,iw,i_L),Mm1,Gr)
        !
        if (what=="EPS") then
          call EPS_compose(i_L)

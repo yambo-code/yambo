@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
+subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,MPI_comm,COMM_copy,&
 &                        PAR_COM_SLK,PAR_COM_SLK_INDEX,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,&
-&                        linear_algebra_is_parallel
+&                        linear_algebra_is_parallel,PAR_COM_intra_SLK,PAR_IND_intra_SLK_ID
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
 #endif
@@ -95,11 +95,30 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  call SLK_setup( idriver, Ncpu_lin_algebra, SLK_ORTHO, SLK_POOL, PAR_COM_SLK, PAR_COM_SLK_INDEX, slk_error)
  !
  if (slk_error/=0) then
-    linear_algebra_is_parallel=.FALSE.
-    call warning("SLK setup failed. Cannot build a proper BLACS grid. Switching to standard LK")
+   linear_algebra_is_parallel=.FALSE.
+   call warning("SLK setup failed. Cannot build a proper BLACS grid. Switching to standard LK")
  endif
  !
 #endif
+ !
+ ! Frequency Parallel COMM. Used in X_s and BSK inversion.
+ !
+ if (linear_algebra_is_parallel) then
+   !
+   call COMM_copy(PAR_COM_NULL,PAR_COM_intra_SLK)
+   PAR_IND_intra_SLK_ID=PAR_COM_NULL%CPU_id
+   !
+ else
+   !
+   if (PAR_COM_SLK_INDEX%n_CPU>1) then
+     call COMM_copy(PAR_COM_SLK,PAR_COM_intra_SLK)
+     PAR_IND_intra_SLK_ID=PAR_COM_SLK%cpu_id
+   else
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_intra_SLK)
+     PAR_IND_intra_SLK_ID=PAR_COM_WORLD%cpu_id
+   endif
+   !
+ endif
  !
  contains
    !
@@ -108,8 +127,8 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
    !
    type(MPI_comm), intent(in) :: COMM, INDEX_comm
    !
-   call COMM_copy(INDEX_comm,PAR_COM_SLK_INDEX)
    call COMM_copy(COMM,      PAR_COM_SLK)
+   call COMM_copy(INDEX_comm,PAR_COM_SLK_INDEX)
    !
   end subroutine SLK_communicators_init
   !

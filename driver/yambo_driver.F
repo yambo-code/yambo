@@ -38,6 +38,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
  use X_m,           ONLY:X_t,X_duplicate
  use DIPOLES,       ONLY:DIPOLE_t
+ use BS,            ONLY:BS_bands
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
@@ -78,7 +79,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Local Variables
  !
  integer           ::i_err,i_X_kind
- logical           ::l_sta_X,l_dyn_X,l_em1
+ logical           ::l_sta_X,l_dyn_X
  !
  ! Externals
  !
@@ -162,11 +163,17 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  l_dyn_X = (l_optics.and.l_chi) .or. l_em1d .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex)
  l_sta_X = l_em1s
- l_em1   = l_dyn_X .or. l_sta_X
  !
  if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
  if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
  if (                    l_ppa ) i_X_kind=4
+ !
+ if (l_sta_X.or.l_dyn_X) Dip%ib=X(i_X_kind)%ib
+ !
+ if((l_optics.and.l_bse).or.l_bss) then
+   Dip%ib(1)=min(Dip%ib(1),BS_bands(1))
+   Dip%ib(2)=max(Dip%ib(2),BS_bands(2))
+ endif
  !
  ! DIPOLES
  !=========
@@ -191,11 +198,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !
- if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
- if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
- if (                    l_ppa ) i_X_kind=4
- !
- if (l_em1) i_err=X_em1(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
+ if (l_em1s.or.l_em1d.or.l_ppa) i_err=X_em1(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
  !
  ! HARTREE-FOCK AND VXC
  !======================

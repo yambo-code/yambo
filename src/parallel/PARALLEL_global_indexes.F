@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
+subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  use pars,          ONLY:IP
  use linear_algebra,ONLY:DIAGO,INV
@@ -65,8 +65,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID,&
 &                        PAR_IND_Kk_ibz_ID,PAR_IND_DIPk_ibz_ID,PAR_IND_DIPk_bz_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use X_m,           ONLY:X_t,l_X_terminator
  use DIPOLES,       ONLY:DIPOLE_t
+ use X_m,           ONLY:X_t,l_X_terminator
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,&
 &                        l_real_time,l_elphoton_corr
  use matrix_operate,ONLY:UP_matrix_index
@@ -101,6 +101,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  type(bz_samp)              ::Xk,q
  character(*)               ::ENVIRONMENT
  type(X_t), optional        ::X
+ type(DIPOLE_t),optional    ::Dip
  logical,   optional        ::RESET
  !
  ! Work Space
@@ -256,13 +257,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! COND bands
  !------------
- if (ENVIRONMENT=="DIPOLES")          n_c_bands= (/E%nbf+1,X%ib(2)/)
+ if (ENVIRONMENT=="DIPOLES")          n_c_bands= (/E%nbf+1,Dip%ib(2)/)
  if (ENVIRONMENT=="Response_G_space") n_c_bands= (/E%nbf+1,X%ib(2)/)
  if (ENVIRONMENT=="Response_T_space") n_c_bands= (/E%nbf+1,BS_bands(2)/)
  !
  ! VAL bands
  !-----------
- if (ENVIRONMENT=="DIPOLES")          n_v_bands= (/X%ib(1),E%nbm/)
+ if (ENVIRONMENT=="DIPOLES")          n_v_bands= (/Dip%ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_G_space") n_v_bands= (/X%ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_T_space") n_v_bands= (/BS_bands(1),E%nbm/)
  !
@@ -283,6 +284,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (l_elph_corr.and..not.elph_use_q_grid)    Q_range=(/1,elph_nDBs_used/)
 #endif
  endif
+ !
  !
  ! EH-range
  !----------

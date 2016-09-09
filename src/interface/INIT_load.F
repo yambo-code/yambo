@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_load(defs,en,q,k,X,Dip,Xw)
+subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
@@ -643,7 +643,7 @@ subroutine INIT_load(defs,en,q,k,X,Dip,Xw)
  call TMP_mirror_bands( )
  !
 #endif
- ! 
+ !
  contains 
    !
 #if defined _RT

@@ -172,7 +172,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    ! Parallelization
    !==================
-   call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES")
+   call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=Dip)
    !
    ! WF distribution
    !=================

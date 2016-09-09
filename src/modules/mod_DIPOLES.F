@@ -24,6 +24,9 @@
 module DIPOLES
  !
  use pars,  ONLY:SP,lchlen,schlen
+ use units, ONLY:HA2EV
+ !
+ implicit none
  !
  ! Logicals
  !
@@ -133,6 +136,24 @@ module DIPOLES
        end select
        call mem_est(what)
      endif
+   end subroutine
+   !
+   subroutine DIPOLES_reset(Dip,nb)
+     use pars,  ONLY:czero
+     type(DIPOLE_t)::Dip
+     integer       ::nb
+     Dip%iq=(/1,1/)
+     Dip%ib=(/nb,-1/)
+     Dip%ib_lim=(/0,0/)
+     Dip%db_ib=(/0,0/)
+     Dip%db_ib_lim=(/0,0/)
+     Dip%ngostnts=0
+     Dip%ehe=(/-1._SP,-1._SP/)/HA2EV
+     Dip%q0=(/1._SP,0._SP,0._SP/)
+     Dip%Energy_treshold=1.E-5_SP/HA2EV
+     Dip%Energy_treshold_vv=1.E+5_SP/HA2EV
+     Dip%Vnl_included=.false.
+     Dip%approach="G-space v"
    end subroutine
    !
 end module

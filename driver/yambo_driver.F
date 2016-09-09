@@ -37,13 +37,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use drivers,       ONLY:l_slk_test
 #endif
  use X_m,           ONLY:X_t,X_duplicate
+ use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
- use BS,            ONLY:BS_bands
- use BS_solvers,    ONLY:BSS_q0,BSS_Vnl_included
 #if defined _TIMING
  use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
 #endif
@@ -62,8 +61,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! 
  ! 4 response function & energies types: x s d p
  !
- type(X_t)    ::X(4),X_dipoles 
+ type(X_t)    ::X(4) 
  type(w_samp) ::Xw(4)
+ !
+ type(DIPOLE_t) :: Dip
  !
  integer,          intent(in)    :: lnstr,iind,iod,ijs,np,pid,icd
  integer,          intent(inout) :: iinf
@@ -76,9 +77,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Local Variables
  !
- integer           ::i_err
+ integer           ::i_err,i_X_kind
+ logical           ::l_sta_X,l_dyn_X,l_em1
+ !
+ ! Externals
+ !
  integer, external ::X_em1,INIT
- logical           ::l_pp_em1,l_dyn_em1
  !
  ! Presets
  !
@@ -106,7 +110,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! iinf=0 => No error message from driver.c 
  !
  iinf=0 
- iinf=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.false.)
+ iinf=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.false.)
  !
  ! the iinf==2 (DB listing mode) stops the job so no file editing
  ! or error msg from the driver.c is possible
@@ -131,7 +135,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Update the default variables
  !
- i_err=INIT(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
+ i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
  !
@@ -154,66 +158,44 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Logicals for \eps^-1
  !======================
  !
- l_pp_em1=l_ppa.and.((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr).or.l_bse )
+ ! Logicals to be fixed
  !
- l_dyn_em1= (.not.l_ppa.and..not.l_cohsex.and..not.l_elphoton_corr).and. &
-&           ((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr))
+ l_dyn_X = (l_optics.and.l_chi) .or. l_em1d .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex)
+ l_sta_X = l_em1s
+ l_em1   = l_dyn_X .or. l_sta_X
+ !
+ if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
+ if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
+ if (                    l_ppa ) i_X_kind=4
  !
  ! DIPOLES
  !=========
  !
- if (l_em1s)                          call DIPOLE_driver(Xen, Xk, q, X(2))
+ if (l_sta_X.or.l_dyn_X) call DIPOLE_driver(Xen, Xk, q, Dip)
  !
- if (l_dyn_em1.or.l_optics.and.l_chi) call DIPOLE_driver(Xen, Xk, q, X(3))
- !
- if (l_pp_em1)                        call DIPOLE_driver(Xen, Xk, q, X(4))
- !
- if ((l_optics.and.l_bse).or.l_bss) then
-   if (     l_ppa) then
-     call X_duplicate(X(4),X_dipoles)
-     X_dipoles%ib(1:2)=BS_bands(1:2)
-     X_dipoles%whoami=5 
-     call DIPOLE_driver(Xen, Xk, q, X_dipoles)
-     X(4)%ib_lim=X_dipoles%ib_lim
-   else if (.not.l_ppa) then
-     call X_duplicate(X(2),X_dipoles)
-     X_dipoles%ib(1:2)=BS_bands(1:2)
-     X_dipoles%whoami=5
-     call DIPOLE_driver(Xen, Xk, q, X_dipoles)
-     X(2)%ib_lim=X_dipoles%ib_lim
-   endif
- endif
  !
  ! OPTICS
  !========
  !
- if (l_optics.and.l_chi) call O_driver(Xen,Xk,q,Xw(3),X(3))
+ if (l_optics.and.l_chi) call O_driver(Xen,Xk,q,Xw(3),X(3),Dip)
  !
 #if defined _SURF
  !
  ! SURFACE SPECTROSCOPY
  !=======================
  !
- if (lras.or.lreels) call surfdriver(Xen,Xk,q,Xw(3),X(3))
+ if (lras.or.lreels)     call surfdriver(Xen,Xk,q,Xw(3),X(3))
+ !
 #endif
  ! 
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !
- ! Static
- !--------
+ if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
+ if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
+ if (                    l_ppa ) i_X_kind=4
  !
- if (l_em1s)       i_err=X_em1(Xen,Xk,q,X(2),Xw(2),.false.)
- !
- ! Plasmon Pole 
- !--------------
- !
- if (l_pp_em1)     i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
- !
- ! Dynamical 
- !-----------
- !
- if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
+ if (l_em1) i_err=X_em1(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
  !
  ! HARTREE-FOCK AND VXC
  !======================
@@ -229,40 +211,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! SELF-ENERGIES
  !===============
  !
- if (l_gw0.or.l_life) then
-   !
-   if (l_cohsex) then
-     !
-     ! COHSEX 
-     !========
-     !
-     call QP_driver(X(2),Xen,Xk,en,k,q,Xw(2))
-     !
-   else if (l_ppa) then
-     !
-     ! PPA 
-     !=====
-     !
-     call QP_driver(X(4),Xen,Xk,en,k,q,Xw(4))
-     !
-   else 
-     !
-     ! Real Axis 
-     !============
-     !
-     call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
-     !
-   endif
-   !
- endif
+ if (l_gw0.or.l_life)   call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind))
  !
  ! BETHE-SALPETER
  !================
  !
- if ((l_optics.and.l_bse).or.l_bss) then
-   if (     l_ppa) call K_driver(Xen,Ken,Xk,q,X(4),Xw(4))
-   if (.not.l_ppa) call K_driver(Xen,Ken,Xk,q,X(2),Xw(2))
- endif
+ if ((l_optics.and.l_bse).or.l_bss) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
  !
  ! GPL_EXCLUDE_START
  !
@@ -279,7 +233,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !====
    !
 #if defined _SC
-   call SC_driver(X(:2),Xw(:2),Xk,en,k,q)
+   call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
 #endif
    !
  endif
@@ -290,7 +244,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !==========
    !
 #if defined _RT
-   call RT_driver(en,X(:2),k,q)
+   call RT_driver(en,X(:2),k,q,Dip)
 #endif
    !
  endif
@@ -327,7 +281,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Update INIT defs
  !
- i_err=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
+ i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.true.)
  !
  ! Finalize
 #if defined _TIMING

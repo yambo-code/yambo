@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_driver(Xen,Xk,Xq,X)
+subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  ! Presently there exist two gauges: (i ) the length   which uses <r>            
  !                                   (ii) the velocity which uses <v>=<p-[x,Vnl]> 
@@ -60,23 +60,23 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
-&                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
-&                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
-&                         l_X_terminator,X_terminator_Kind
+ use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
+&                         Vnl_commutator_warning,use_g_space_approach,&
+&                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach
+ use X_m,            ONLY:l_X_terminator,X_terminator_Kind
  use IO_m,           ONLY:IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parser_m,       ONLY:parser
 #if defined _RT
- use X_m,            ONLY:DIP_spin
+ use DIPOLES,        ONLY:DIP_spin
  use electrons,      ONLY:n_spin
 #endif
 #if defined _SC
  use com,            ONLY:secnm
  use drivers,        ONLY:l_real_time,l_sc_run
- use X_m,            ONLY:P_square
+ use DIPOLES,        ONLY:P_square
 #endif
 #if defined _QED
  use drivers,        ONLY:l_elphoton_corr
@@ -89,7 +89,7 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  !
  type(bz_samp), intent(inout) :: Xk,Xq
  type(levels),  intent(inout) :: Xen
- type(X_t),     intent(inout) :: X
+ type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Work Space
  !
@@ -106,17 +106,17 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  ! Setup logicals 
  !================
  !
- use_g_space_approach        = trim(Dipole_approach)=='G-space v'
- use_real_space_approach     = trim(Dipole_approach)=='R-space x'
- use_covariant_approach      = trim(Dipole_approach)=='Covariant'
- use_shifted_grids_approach  = trim(Dipole_approach)=='Shifted grids'
+ use_g_space_approach        = trim(Dip%approach)=='G-space v'
+ use_real_space_approach     = trim(Dip%approach)=='R-space x'
+ use_covariant_approach      = trim(Dip%approach)=='Covariant'
+ use_shifted_grids_approach  = trim(Dip%approach)=='Shifted grids'
  !
  call parser('PDirect'  ,force_v_g_space_approach)
  !
  if(.not.any((/use_g_space_approach,use_real_space_approach,use_covariant_approach,use_shifted_grids_approach/))) then
    call warning(' Dipoles approach defined in input not recognised. Reverting to G-space v')
    use_g_space_approach = .true.
-   Dipole_approach='G-space v'
+   Dip%approach='G-space v'
  endif
  !
 #if defined _SC
@@ -126,7 +126,7 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  use_dipole_transverse   =force_v_g_space_approach.or.       use_g_space_approach
  idir_not_done           =.true.
  !
- X%ngostnts=wf_ng
+ DIP%ngostnts=wf_ng
  !
  !
  ! NOTE: 1 - that in case we will enter here during a SC run to update the
@@ -147,19 +147,19 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  !
  ! Set up band limits
  !
- if (Dipole_bands_ordered.or.Dipole_Energy_treshold<0._SP) then
-   X%ib_lim(1)=Xen%nbm
-   X%ib_lim(2)=Xen%nbf+1
-   if (l_X_terminator) X%ib_lim(2)=X%ib(1)
+ if (Dipole_bands_ordered.or.Dip%Energy_treshold<0._SP) then
+   Dip%ib_lim(1)=Xen%nbm
+   Dip%ib_lim(2)=Xen%nbf+1
+   if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)
  else
-   X%ib_lim(1)=X%ib(2)
-   X%ib_lim(2)=X%ib(1)
+   Dip%ib_lim(1)=Dip%ib(2)
+   Dip%ib_lim(2)=Dip%ib(1)
  endif
  !
  ! Check if Dipoles DBs exist and are ok
  !=======================================
  io_err=-1
- call DIPOLE_IO(Xk,X,'check',io_err)
+ call DIPOLE_IO(Xk,Dip,'check',io_err)
  !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================
@@ -172,7 +172,7 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
    !
    ! Parallelization
    !==================
-   call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",X=X)
+   call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES")
    !
    ! WF distribution
    !=================
@@ -189,25 +189,25 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
    !
    ! GPL_EXCLUDE_START 
    !
-   if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,X)
+   if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
-   if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
+   if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,Dip)
    !
-   if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
+   if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
    !
    ! GPL_EXCLUDE_END 
    !
-   if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
+   if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,Dip)
    !
 #if defined _RT
-   if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xen,Xk,X)
+   if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xen,Xk,Dip)
 #endif
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
-   call DIPOLE_IO(Xk,X,'write',io_err)
+   call DIPOLE_IO(Xk,Dip,'write',io_err)
    !
    ! I/O privilegies: RESTORE to previous values
    !
@@ -221,30 +221,30 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
  !
  ! Warn about missing [Vnl,r] commutator
  !
- if (.not.X%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics.and.use_dipole_transverse) then
+ if (.not.Dip%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics.and.use_dipole_transverse) then
    call warning(' Missing non-local pseudopotential contribution')
    Vnl_commutator_warning=.TRUE.
  endif
  !
  ! Clean up
  !
- call X_alloc('DIP_iR')
- call X_alloc('DIP_P')
- call X_alloc('DIP_spin')
- call X_alloc('P_square') 
+ call DIP_alloc('DIP_iR')
+ call DIP_alloc('DIP_P')
+ call DIP_alloc('DIP_spin')
+ call DIP_alloc('P_square') 
  !
  contains
    !
    subroutine DIPOLES_alloc()
      !
-     call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-     call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+     call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+     call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
      DIP_iR=cZERO
      DIP_P=cZERO
      !
 #if defined _RT
      if (l_real_time.and.n_spin>1) then
-       call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+       call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
      endif
 #endif
@@ -252,7 +252,7 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
      !
 #if defined _SC
      if (l_sc_run.or.l_real_time) then
-       call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+       call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
        P_square=cZERO
      endif
 #endif
@@ -300,8 +300,8 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
       ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
       !
       do i_sp_pol=1,n_sp_pol
-        do iv=X%ib(1),X%ib_lim(1)
-          if(iv>=X%ib_lim(2)) then
+        do iv=Dip%ib(1),Dip%ib_lim(1)
+          if(iv>=Dip%ib_lim(2)) then
             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #if defined _RT
@@ -314,8 +314,8 @@ subroutine Dipole_driver(Xen,Xk,Xq,X)
 &             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #endif
           endif
-          do ic=iv+1,X%ib(2)
-            if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
+          do ic=iv+1,Dip%ib(2)
+            if( iv>=Dip%ib_lim(2) .and. ic<=Dip%ib_lim(1) ) then
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
 #if defined _RT

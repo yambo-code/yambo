@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_Vnl(X,Xen,ID)
+integer function io_Vnl(Dip,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t
+ use DIPOLES,       ONLY:DIPOLE_t
  use electrons,     ONLY:levels,n_sp_pol
  use pseudo,        ONLY:Vnl
  use R_lattice,     ONLY:nXkibz
@@ -37,7 +37,7 @@ integer function io_Vnl(X,Xen,ID)
  use memory_m,      ONLY:mem_est
  !
  implicit none
- type(X_t)   ::X
+ type(DIPOLE_t)::Dip
  type(levels)::Xen
  integer     ::ID
  !
@@ -61,13 +61,13 @@ integer function io_Vnl(X,Xen,ID)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=sec_size,MENU=0)
    call io_elemental(ID,DB_I1=db_nb,&
-&       VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/">=","<="/))
+&       VAR=" Dip band range         :",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(ID,DB_I0=db_nbm,&
 &       VAR=" Metallic bands         :",I0=Xen%nbm,CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,DB_I0=db_nbf,&
 &       VAR=" Filled bands           :",I0=Xen%nbf,CHECK=.true.,OP=(/">="/))
    call io_elemental(ID,&
-&       VAR=" RL vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
+&       VAR=" RL vectors in the sum  :",I0=Dip%ngostnts,WARN=.true.,OP=(/"<="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -97,7 +97,7 @@ integer function io_Vnl(X,Xen,ID)
       !
       ! Fill an array Vnl to size required by yambo, ignore extra elements
       !
-      allocate(Vnl(3,X%ib(2),db_nbm,nXkibz,n_sp_pol))
+      allocate(Vnl(3,Dip%ib(2),db_nbm,nXkibz,n_sp_pol))
       call mem_est("Vnl",(/size(Vnl)/))
    endif
    !

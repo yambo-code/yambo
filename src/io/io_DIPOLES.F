@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_DIPOLES(X,ID)
+integer function io_DIPOLES(Dip,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,DIP_iR,DIP_P,X_alloc
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
@@ -33,10 +33,10 @@ integer function io_DIPOLES(X,ID)
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
 #if defined _RT
- use X_m,           ONLY:DIP_spin
+ use DIPOLES,       ONLY:DIP_spin
 #endif
 #if defined _SC
- use X_m,           ONLY:P_square
+ use DIPOLES,       ONLY:P_square
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
 #if defined _TIMING
@@ -44,8 +44,8 @@ integer function io_DIPOLES(X,ID)
 #endif
  !
  implicit none
- type(X_t)   ::X
- integer     ::ID
+ type(DIPOLE_t)::Dip
+ integer       ::ID
  !
  ! Work Space
  !
@@ -80,7 +80,7 @@ integer function io_DIPOLES(X,ID)
    io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_DIPOLES/=0) goto 1
    !
-   io_DIPOLES=variables_DIPOLES(X,ID)
+   io_DIPOLES=variables_DIPOLES(Dip,ID)
    if (io_DIPOLES/=0) goto 1
    !
  endif
@@ -103,20 +103,20 @@ integer function io_DIPOLES(X,ID)
  P2_size(1)=2
  P2_ipos(1)=1
  !
- DIP_size=(/2,3,X%db_ib(2)-X%db_ib_lim(2)+1,X%db_ib_lim(1)-X%db_ib(1)+1/)
- DIP_ipos=(/1,1,X%ib_lim(2)-X%db_ib_lim(2)+1,X%ib(1)-X%db_ib(1)+1/)
+ DIP_size=(/2,3,Dip%db_ib(2)-Dip%db_ib_lim(2)+1,Dip%db_ib_lim(1)-Dip%db_ib(1)+1/)
+ DIP_ipos=(/1,1,Dip%ib_lim(2)-Dip%db_ib_lim(2)+1,Dip%ib(1)-Dip%db_ib(1)+1/)
  !
  P2_size(2:3)=DIP_size(3:4)
  P2_ipos(2:3)=DIP_ipos(3:4)
  !
  if (read_is_on(ID)) then
-   call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-   call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-#if defined _RT
-   if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+   call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+#if defined _RD
+   if (l_real_time.and.n_spin>1) call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
 #endif
 #if defined _SC
-   if (l_sc_run.or.l_real_time)  call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   if (l_sc_run.or.l_real_time)  call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
 #endif
  endif
  !

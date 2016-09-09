@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_shifted_grids(Xen,Xk,X)
+subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  ! Using the wfc at the k,k-q points to construct <r>
  !
@@ -38,8 +38,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
 &                               PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  use interfaces,          ONLY: WF_load
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
- use X_m,                 ONLY: X_t,DIP_iR,DIP_P,l_X_terminator,&
-&                               force_v_g_space_approach,num_shifted_grids,Dipole_Energy_treshold
+ use X_m,                 ONLY: l_X_terminator
+ use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_P,&
+&                               force_v_g_space_approach,num_shifted_grids
  use wrapper,             ONLY: Vstar_dot_V
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,WAVEs
 #if defined _SC           
@@ -50,7 +51,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
- type(X_t),     intent(inout) :: X
+ type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Saves
  !
@@ -143,7 +144,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
      !
      ! Load WFs first at k and then at k+q_iq
      ! 
-     call WF_load(WF,0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space',&
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),space='G',title='-Oscillators/G space',&
 &           force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      do iq = 1, num_shifted_grids
@@ -152,19 +153,19 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
        !
        core_io_path = trim(grid_paths_vector(iq))
        !
-       call WF_load(WF_shifted,0,1,X%ib,(/1,Xk%nibz/),space='G',&
+       call WF_load(WF_shifted,0,1,Dip%ib,(/1,Xk%nibz/),space='G',&
 &      title='-Oscillators/G space (shifted grid)',keep_states_to_load=.TRUE.)
        !
        wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
        !
-       do iv=X%ib(1),X%ib_lim(1) 
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
          !
          if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          !
-         ic_min=max(iv,X%ib_lim(2))
+         ic_min=max(iv,Dip%ib_lim(2))
          if (l_X_terminator) ic_min=iv
          !
-         do ic=ic_min,X%ib(2)
+         do ic=ic_min,Dip%ib(2)
            !
            if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
            !
@@ -177,7 +178,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
              Ev_m_Ec   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
            endif
            !
-           if (abs(Ev_m_Ec)<=Dipole_Energy_treshold .or. iv==ic) then
+           if (abs(Ev_m_Ec)<=Dip%Energy_treshold .or. iv==ic) then
              call live_timing(steps=1)
              cycle
            endif
@@ -232,7 +233,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  !
  call DB1_reset()
  !
- if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
+ if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  !
  contains
    !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
+integer function X_em1(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
@@ -30,6 +30,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
 &                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys
  use frequency,     ONLY:w_samp
@@ -50,6 +51,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
  type(X_t)    ::X
+ type(DIPOLE_t)::Dip
  type(w_samp) ::Xw
  logical      ::APPEND_NO_VERIFY
  !
@@ -217,7 +219,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    X_range               =(/1,Xw%n_freqs/)
    if (.not.io_RESPONSE) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
    !
-   call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
+   call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X,Dip)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !

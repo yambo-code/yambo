@@ -56,13 +56,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  !!
  !if(l_weight_with_dipoles) then
  !  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- !  io_err=io_DIPOLES(Xdip,io_ID)
- !  allocate(q_norm(1),bare_qpg(1,1))
- !  Wd=cZERO
- !  call K_Transitions_setup(1,Xen,Xk,Wd,.false.)
- !  call PARALLEL_global_indexes(Xen,Xk,q,"Response_T_space",X=Xdip)
- !  call Dipole_driver(Xen,Xk,Xdip,BSS_q0)
- !  deallocate(q_norm,bare_qpg)
+ !  io_err=io_DIPOLES(Dip,io_ID)
  !endif
  !
  call msg('s','Processing '//trim(intc(n_lambda))//' states')

@@ -72,15 +72,15 @@ subroutine Dipole_magnetization(Xen,Xk,X)
    !
    ik_mem=PAR_DIPk_ibz_index(ik)
    !
-   call WF_load(WF,0,1,X%ib,(/ik,ik/),space='R',title='-Spin oscillators/R space',&
+   call WF_load(WF,0,1,Dip%ib,(/ik,ik/),space='R',title='-Spin oscillators/R space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
    ! 
    do i_sp_pol=1,n_sp_pol
-     do iv=X%ib(1),X%ib_lim(1) 
+     do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
        if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
        !
-       do ic=max(iv,X%ib_lim(2)),X%ib(2)
+       do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
          !
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !

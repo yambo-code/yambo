@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
+subroutine X_os(Xo,iq,Xen,Xk,Xw,X,Dip)
  !
  ! Non interacting Xo
  !
@@ -59,6 +59,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use memory_m,      ONLY:mem_est
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E
@@ -73,6 +74,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
  type(X_t)            :: X
+ type(DIPOLE_t)       :: Dip
  type(w_samp)         :: Xw
  integer              :: iq
  complex(SP)          :: Xo(X%ng,X%ng,Xw%n_freqs)
@@ -109,8 +111,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Dipoles
  !=========
  if (iq==1) then
-   call DIPOLE_IO(Xk,X,'read ',io_err)
-   call DIPOLE_expand_and_project(Xk,X,X%q0)   
+   call DIPOLE_IO(Xk,Dip,'read ',io_err)
+   call DIPOLE_expand_and_project(Xk,Dip)   
  endif
  !
  ! WF load
@@ -235,7 +237,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    ! 1) First compute the residuals
    !================================
-   call X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
+   call X_os_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !
    ! 2) Then the frequency dependent term
    !=======================================

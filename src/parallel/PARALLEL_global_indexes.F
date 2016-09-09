@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -66,6 +66,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_Kk_ibz_ID,PAR_IND_DIPk_ibz_ID,PAR_IND_DIPk_bz_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t,l_X_terminator
+ use DIPOLES,       ONLY:DIPOLE_t
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,&
 &                        l_real_time,l_elphoton_corr
  use matrix_operate,ONLY:UP_matrix_index
@@ -128,8 +129,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  X_type=1
  if (present(X)) X_type=X%whoami
- !
- if (ENVIRONMENT=="Response_T_space") X_type=5
  !
  if (reset_all) then
    !

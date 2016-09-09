@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_build_covariants(Xen,Xk,X)
+subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  ! Build the covariant dipole operator at zero field
  ! in PRB 69, 085106 (2004)
@@ -31,7 +31,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  use interfaces,     ONLY:WF_load
  use wave_func,      ONLY:WF
  use electrons,      ONLY:levels,n_sp_pol
- use X_m,            ONLY:X_t,DIP_S,DIP_iR,DIP_P,X_alloc,force_v_g_space_approach
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S,DIP_iR,DIP_P,force_v_g_space_approach
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
@@ -47,7 +47,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  type(levels),           intent(in)     :: Xen
  type(bz_samp),          intent(in)     :: Xk
- type(X_t),              intent(in)     :: X      
+ type(DIPOLE_t),         intent(in)     :: Dip
  !
  ! Work Space
  !
@@ -58,8 +58,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
  complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
  complex(SP) :: S_det(6)
- complex(SP) :: Wop(1:X%ib(2),1:X%ib(2),2),DIP_tmp(6,1:X%ib(2),1:X%ib(2))
- complex(SP) :: S_tmp(X%ib(2),X%ib(2),2)
+ complex(SP) :: Wop(1:Dip%ib(2),1:Dip%ib(2),2),DIP_tmp(6,1:Dip%ib(2),1:Dip%ib(2))
+ complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
  integer           :: io_err,ID
  integer, external :: io_Overlaps
@@ -71,35 +71,35 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
  ! there will be other WF_load calls using the present WF distribution. 
  !
- call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
+ call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
  call k_map_nearest_by_dir(Xk,k_map)
  ! In the covariat approach I do need the overlap. 
  ! So as a first thing I check if they exist
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=io_Overlaps(X,ID)
+ io_err=io_Overlaps(Dip,ID)
  !
  ! If they do not I have to compute them
  if(io_err/=0) then
    ! Notice that DIP_S is defined in the BZ       
-   call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,PAR_Xk_nbz/))
+   call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_Xk_nbz/))
    DIP_S=cZERO
    !
-   call DIPOLE_overlaps(Xk,X)
+   call DIPOLE_overlaps(Xk,Dip)
    !
    if (     master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(X,ID)
+     io_err=io_Overlaps(Dip,ID)
    endif
    call PP_redux_wait()
    if (.not.master_cpu) then
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(X,ID)
+     io_err=io_Overlaps(Dip,ID)
    endif
    !
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
-   io_err=io_Overlaps(X,ID)
+   io_err=io_Overlaps(Dip,ID)
    !
  endif
  !
@@ -128,7 +128,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
      !
      ikbz=Xk%k_table(ik,1)
      !
-     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
+     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Dip,Sm1_plus,Sm1_minus,S_det)
      !
      DIP_tmp=cZERO
      !
@@ -151,7 +151,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
          !
          Wop(:,:,istep)=cZERO
          !
-         forall(i1=Xen%nbm+1:X%ib(2),i2=1:Xen%nbf) 
+         forall(i1=Xen%nbm+1:Dip%ib(2),i2=1:Xen%nbf) 
            Wop(i1,i2,istep)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red + (istep-1)*3))- &
 &                     sum(S_tmp(i1,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,i2,id_red + (istep-1)*3))
          end forall
@@ -185,8 +185,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
      !======
      ! <iR>
      !======
-     do iv=X%ib(1),X%ib_lim(1)
-       do ic=X%ib_lim(2),X%ib(2)
+     do iv=Dip%ib(1),Dip%ib_lim(1)
+       do ic=Dip%ib_lim(2),Dip%ib(2)
          do idir=1,3
            DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))/cI
          enddo
@@ -197,8 +197,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
      ! <P>
      !=====
      if(.not.force_v_g_space_approach) then
-       do iv=X%ib(1),X%ib_lim(1) 
-         do ic=max(iv,X%ib_lim(2)),X%ib(2)
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
+         do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
            ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
            Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
            do idir=1,3
@@ -215,11 +215,11 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  call live_timing()
  !
- call X_alloc('DIP_S')
+ call DIP_alloc('DIP_S')
  !
  call WF_free(WF)
  !
- if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
+ if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  !
  return
  !

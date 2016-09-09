@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
+subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  use drivers,            ONLY:l_sc_run
  use pars,               ONLY:SP,cI,cZERO
@@ -32,7 +32,8 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:bz_samp
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
- use X_m,                ONLY:X_t,DIP_iR,DIP_P,force_v_g_space_approach,l_X_terminator
+ use DIPOLES,            ONLY:DIPOLE_t,DIP_iR,DIP_P,force_v_g_space_approach
+ use X_m,                ONLY:l_X_terminator
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
@@ -43,7 +44,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
- type(X_t),     intent(in)    :: X
+ type(DIPOLE_t),intent(in)    :: Dip
  logical,       intent(in)    :: idir_todo(3)
  !
  ! Work space
@@ -51,7 +52,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  integer                      :: ik,ik_mem,i_sp_pol,i_spinor,i_spin,ic,iv,ic_min,&
 &                                icfft(n_spinor),ivfft(n_spinor),idir,n_LT_steps
  real(SP)                     :: Ev_m_Ec
- complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+ complex(SP)                  :: DIP_tmp(3,Dip%ib_lim(2):Dip%ib(2),Dip%ib(1):Dip%ib_lim(1))
  !
  call load_cc(.false.,.true.)
  !
@@ -67,21 +68,21 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
      !
-     call WF_load(WF,0,1,(/1,X%ib(2)/),(/ik,ik/),space='R',title='-Oscillators/R space',&
+     call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ik,ik/),space='R',title='-Oscillators/R space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
      !
      DIP_tmp=cZERO
      !
-     do iv=X%ib(1),X%ib_lim(1) 
+     do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
        if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
        !
-       ic_min=max(iv,X%ib_lim(2))
+       ic_min=max(iv,Dip%ib_lim(2))
        if (l_X_terminator) ic_min=iv
        !
-       do ic=ic_min,X%ib(2)
+       do ic=ic_min,Dip%ib(2)
          !
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
@@ -126,9 +127,9 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
      ! <P>
      !=====
      if(.not.force_v_g_space_approach) then
-       do iv=X%ib(1),X%ib_lim(1) 
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
          if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
-         do ic=max(iv,X%ib_lim(2)),X%ib(2)
+         do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
            if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
            ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
            Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)

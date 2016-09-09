@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_DIPOLES(X,ID)
+integer function variables_DIPOLES(Dip,ID)
  !
  use units,         ONLY:HA2EV
- use X_m,           ONLY:X_t,use_shifted_grids_approach,use_real_space_approach,&
+ use DIPOLES,       ONLY:DIPOLE_t,use_shifted_grids_approach,use_real_space_approach,&
 &                        use_g_space_approach,use_covariant_approach,force_v_g_space_approach
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:q0_def_norm
@@ -33,21 +33,21 @@ integer function variables_DIPOLES(X,ID)
  !
  implicit none
  !
- type(X_t)   ::X
- integer     ::ID
+ type(DIPOLE_t) :: Dip
+ integer        :: ID
  !
  call io_elemental(ID,VAR="PARS",VAR_SZ=14,MENU=0)
  !
- call io_elemental(ID,DB_I1=X%db_ib,&
-&     VAR=" X band range           :",I1=X%ib    ,CHECK=.true.,OP=(/">=","<="/))
- call io_elemental(ID,DB_I1=X%db_ib_lim,&
-&     VAR=" X band range limits    :",I1=X%ib_lim,CHECK=.true.,OP=(/"<=",">="/))
+ call io_elemental(ID,DB_I1=Dip%db_ib,&
+&     VAR=" X band range           :",I1=Dip%ib    ,CHECK=.true.,OP=(/">=","<="/))
+ call io_elemental(ID,DB_I1=Dip%db_ib_lim,&
+&     VAR=" X band range limits    :",I1=Dip%ib_lim,CHECK=.true.,OP=(/"<=",">="/))
  call io_elemental(ID,UNIT=HA2EV,&
-&     VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
+&     VAR=" X e/h energy range [ev]:",R1=Dip%ehe,CHECK=.true.,OP=(/">=","<="/))
  call io_elemental(ID,&
-&     VAR=" RL vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
+&     VAR=" RL vectors in the sum  :",I0=Dip%ngostnts,WARN=.true.,OP=(/"<="/))
  call io_elemental(ID,&
-&     VAR=" [r,Vnl] included       :",L0=X%Vnl_included,CHECK=.true.,OP=(/"=="/))
+&     VAR=" [r,Vnl] included       :",L0=Dip%Vnl_included,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
 &     VAR=" Using shifted grids    :",L0=use_shifted_grids_approach,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&

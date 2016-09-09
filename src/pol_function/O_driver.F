@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine O_driver(Xen,Xk,q,wv,X)
+subroutine O_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Optics driver
  !
@@ -36,6 +36,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
@@ -53,6 +54,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  type(levels)  :: Xen
  type(bz_samp) :: Xk,q
  type(X_t)     :: X
+ type(DIPOLE_T):: Dip
  type(w_samp)  :: wv 
  ! 
  ! Work Space
@@ -198,7 +200,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    EEL       =cZERO
    Alpha     =cZERO
    !
-   call X_os(X_mat,iq,Xen,Xk,wv,X)     
+   call X_os(X_mat,iq,Xen,Xk,wv,X,Dip)     
    !
    ! Without LF eps
    !

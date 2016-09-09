@@ -21,11 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_Overlaps(X,ID)
-
+integer function io_Overlaps(Dip,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,X_alloc,DIP_S
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,nXkbz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
@@ -35,8 +34,8 @@ integer function io_Overlaps(X,ID)
  use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_nbz,PAR_IND_Xk_bz
  !
  implicit none
- type(X_t)   ::X
- integer     ::ID
+ type(DIPOLE_t) :: Dip
+ integer        :: ID
  !
  ! Work Space
  !
@@ -58,7 +57,7 @@ integer function io_Overlaps(X,ID)
    io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_Overlaps/=0) goto 1
    !
-   io_Overlaps=variables_DIPOLES(X,ID)
+   io_Overlaps=variables_DIPOLES(Dip,ID)
    if (io_Overlaps/=0) goto 1
    !
  endif
@@ -74,9 +73,9 @@ integer function io_Overlaps(X,ID)
      ik=i_fragment-nXkibz
    endif
    !
-   allocate(disk_data(X%ib(2),X%ib(2),2))
+   allocate(disk_data(Dip%ib(2),Dip%ib(2),2))
    !
-   if (read_is_on(ID)) call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,PAR_Xk_nbz/))
+   if (read_is_on(ID)) call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_Xk_nbz/))
    !
    do i_sp_pol=1,n_sp_pol
      !

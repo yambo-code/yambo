@@ -48,32 +48,10 @@ module X_m
  real(SP)                 :: q_plus_G_direction(3)
  integer                  :: Q_Shift_Order
  !
- ! Warning about non-local commutator
- !
- logical                  :: Vnl_commutator_warning
- !
  ! Logical used to decid how to use the double grid in X_os
  ! and in particular in X_GreenF_analytical, when the DbGd is used
  !
  logical                  :: X_is_evaluated_for_all_Qs
- !
- ! Dipole M.E.
- !
- character(schlen)        :: Dipole_approach
- logical                  :: use_covariant_approach
- logical                  :: use_shifted_grids_approach
- logical                  :: use_g_space_approach
- logical                  :: use_real_space_approach
- logical                  :: force_v_g_space_approach
- integer                  :: num_shifted_grids
- real(SP)                 :: Dipole_Energy_treshold
- real(SP)                 :: Dipole_Energy_treshold_vv
- complex(SP), allocatable :: DIP_projected(:,:,:,:)
- complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
- complex(SP), allocatable :: DIP_P(:,:,:,:,:)
- complex(SP), allocatable :: DIP_S(:,:,:,:,:)
- complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
- complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
  !
@@ -164,77 +142,20 @@ module X_m
      integer :: err
      !
      if (present(d)) then
-       select case(what)
-       case('X')
-         if (allocated(X_mat)) return
-         allocate(X_mat(d(1),d(2),d(3)),stat=err)
-         call mem_est(what,(/size(X_mat)/),errors=(/err/))
-         X_mat=cZERO
-       case('DIP_iR')
-         if (allocated(DIP_iR)) return
-         allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_iR)/),errors=(/err/))
-         DIP_iR=cZERO
-       case('DIP_P')
-         if (allocated(DIP_P)) return
-         allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_P)/),errors=(/err/))
-         DIP_P=cZERO
-       case('DIP_S')
-         if (allocated(DIP_S)) return
-         allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_S)/),errors=(/err/))
-         DIP_S=cZERO
-       case('DIP_spin')
-         if (allocated(DIP_spin)) return
-         allocate(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_P)/),errors=(/err/))
-         DIP_spin=cZERO
-       case('DIP_projected')
-         if (allocated(DIP_projected)) return
-         allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/size(DIP_projected)/),errors=(/err/))
-         DIP_projected=cZERO
-       case('P_square')
-         if (allocated(P_square)) return
-         allocate(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/size(P_square)/),errors=(/err/))
-         P_square=cZERO
-       end select
+       if (allocated(X_mat)) return
+       allocate(X_mat(d(1),d(2),d(3)),stat=err)
+       call mem_est("X_mat",(/size(X_mat)/),errors=(/err/))
+       X_mat=cZERO
      else
-       select case(what)
-       case('X')
-         !
-         ! I clean the RL components mapping
-         !
-         if (allocated(X_RLcomp_ig)) deallocate(X_RLcomp_ig)
-         !
-         ! and the matrix itself
-         !
-         if (.not.allocated(X_mat)) return
-         deallocate(X_mat)
-         !
-       case('DIP_iR')
-         if (.not.allocated(DIP_iR)) return
-         deallocate(DIP_iR)
-       case('DIP_P')
-         if (.not.allocated(DIP_P)) return
-         deallocate(DIP_P)
-       case('DIP_S')
-         if (.not.allocated(DIP_S)) return
-         deallocate(DIP_S)
-       case('DIP_spin')
-         if (.not.allocated(DIP_spin)) return
-         deallocate(DIP_spin)
-       case('DIP_projected')
-         if (.not.allocated(DIP_projected)) return
-         deallocate(DIP_projected)
-       case('P_square')
-         if (.not.allocated(P_square)) return
-         deallocate(P_square)
-       end select
-       call mem_est(what)
+       !
+       ! I clean the RL components mapping
+       !
+       if (allocated(X_RLcomp_ig)) deallocate(X_RLcomp_ig)
+       if (.not.allocated(X_mat)) return
+       deallocate(X_mat)
+       call mem_est("X_mat")
      endif
+     !
    end subroutine
    !
    subroutine X_duplicate(Xi,Xo)

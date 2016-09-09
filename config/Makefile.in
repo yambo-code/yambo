@@ -70,20 +70,20 @@ BASIC_SURF_LIBS   = external_c modules surf_modules parallel parser xc_functiona
                     interface stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
-               collisions tddft pol_function qp acfdt bse
+               collisions tddft dipoles pol_function qp acfdt bse
 
 PJ_SURFLIBS  = $(BASIC_SURF_LIBS) surf_modules coulomb bz_ops qp_control surf \
-               setup collisions tddft pol_function qp acfdt bse
+               setup collisions tddft dipoles pol_function qp acfdt bse
 
 PJ_QEDLIBS   = $(MAIN_LIBS) 
 
 PJ_SCLIBS    = $(MAIN_LIBS) sc
 
 PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
-               collisions tddft pol_function qp acfdt bse sc real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
+               collisions tddft dipoles pol_function qp acfdt bse sc real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
 
 PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
-               collisions tddft pol_function qp acfdt bse sc real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
+               collisions tddft dipoles pol_function qp acfdt bse sc real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
 #
 # Interfaces
 #
@@ -95,11 +95,11 @@ YPP_LIBS        = modules interpolate init qp plotting electrons excitons symmet
 YPPPH_LIBS      = modules interpolate init qp plotting electrons elph excitons symmetries k-points bits 
 YPPRT_LIBS      = modules interpolate init qp plotting electrons elph real_time excitons symmetries k-points bits 
 #
-YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
+YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft dipoles bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
-                     pol_function bse sc 
-YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface surf tddft pol_function bse
+                     dipoles bse sc 
+YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface surf tddft dipoles bse
 YDBLIBS            = $(BASIC_LIBS) 
 
 nothing: 

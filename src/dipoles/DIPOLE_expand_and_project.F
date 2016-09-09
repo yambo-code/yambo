@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_expand_and_project(Xk,X,field_dir)
+subroutine DIPOLE_expand_and_project(Xk,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_col_cut
@@ -30,7 +30,8 @@ subroutine DIPOLE_expand_and_project(Xk,X,field_dir)
  use electrons,      ONLY:n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:DIP_projected,X_alloc,X_t,DIP_iR,DIP_P,global_gauge
+ use DIPOLES,        ONLY:DIP_projected,DIP_alloc,DIPOLE_t,DIP_iR,DIP_P
+ use X_m,            ONLY:global_gauge
  use vec_operate,    ONLY:v_norm
  use com,            ONLY:secnm
 #if defined _KERR
@@ -43,13 +44,12 @@ subroutine DIPOLE_expand_and_project(Xk,X,field_dir)
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk
- type(X_t),     intent(inout) :: X
- real(SP),      intent(inout) :: field_dir(3)
+ type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Work Space
  !
  integer                   :: ik,ik_bz,ic,iv,is,i_sp_pol,ik_mem,ik_bz_mem,i_star
- real(SP)                  :: field_dir_rot(3)
+ real(SP)                  :: field_dir(3),field_dir_rot(3)
  complex(SP)               :: dipole(3)
  logical                   :: t_rev,use_dip_iR,use_dip_P
 #if defined _KERR
@@ -64,8 +64,8 @@ subroutine DIPOLE_expand_and_project(Xk,X,field_dir)
  use_dip_iR=trim(global_gauge)=='length'   .or. .not.(index(secnm,"absorption")/=0)
  use_dip_P =trim(global_gauge)=='velocity'.and.      (index(secnm,"absorption")/=0)
  !
- if(use_dip_iR) field_dir=field_dir/v_norm(field_dir)*q0_def_norm
- if(use_dip_P ) field_dir=field_dir/v_norm(field_dir)
+ if(use_dip_iR) field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
+ if(use_dip_P ) field_dir=Dip%q0/v_norm(Dip%q0)
  !
 #if defined _KERR
  if(l_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir,dipole_dir)
@@ -79,12 +79,12 @@ subroutine DIPOLE_expand_and_project(Xk,X,field_dir)
  ! This is q       *iR in the length gauge
  !         q_versor*P  in the velocity
  !
- call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nbz/))
+ call DIP_alloc('DIP_projected',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nbz/))
  DIP_projected = cZERO
  !
 #if defined _KERR
  if(l_kerr) then
-   call KERR_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nbz/))
+   call KERR_alloc('DIP_projected',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nbz/))
    DIP_projected_r90 = cZERO
  endif
 #endif
@@ -93,9 +93,9 @@ subroutine DIPOLE_expand_and_project(Xk,X,field_dir)
    !
    do ik=1,Xk%nibz
      !
-     do iv=X%ib(1),X%ib_lim(1) 
+     do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
-       do ic=X%ib_lim(2),X%ib(2)
+       do ic=Dip%ib_lim(2),Dip%ib(2)
          !
          dipole = cZERO
          !

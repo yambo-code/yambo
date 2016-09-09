@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt. 
 !      
-subroutine DIPOLE_overlaps(Xk,X)
+subroutine DIPOLE_overlaps(Xk,Dip)
  !    
  use pars,              ONLY:SP,cZERO,pi
  use LIVE_t,            ONLY:live_timing
  use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,ng_closed,ng_vec
  use vec_operate,       ONLY:k_periodic_idx
- use X_m,               ONLY:X_t,DIP_S
+ use DIPOLES,           ONLY:DIPOLE_t,DIP_S
  use electrons,         ONLY:n_spinor,n_sp_pol,n_spin
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng
@@ -36,15 +36,15 @@ subroutine DIPOLE_overlaps(Xk,X)
  implicit none
  !
  type(bz_samp), intent(in)    :: Xk 
- type(X_t),     intent(in)    :: X
+ type(DIPOLE_t),intent(in)    :: Dip
  !
  ! Work Space
  !
  integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_spin,i_spinor,i_sp_pol,ik,ikp
  integer           :: idx_kp(3),idx_k(3),shift(3),max_step,istep
- complex(SP)       :: WF_symm(wf_ng,X%ib(2),n_spin)
- complex(SP)       :: WF_shifted(wf_ng,X%ib(2),n_spin)
- complex(SP)       :: WF_ik(wf_ng,X%ib(2),n_spin),WF_ikp(wf_ng,X%ib(2),n_spin)
+ complex(SP)       :: WF_symm(wf_ng,Dip%ib(2),n_spin)
+ complex(SP)       :: WF_shifted(wf_ng,Dip%ib(2),n_spin)
+ complex(SP)       :: WF_ik(wf_ng,Dip%ib(2),n_spin),WF_ikp(wf_ng,Dip%ib(2),n_spin)
  logical           :: USE_shifted_wf
  !
  ! This is needed to construct grot for all wf_ngs.
@@ -65,9 +65,9 @@ subroutine DIPOLE_overlaps(Xk,X)
    ik = Xk%sstar(ikbz,1)
    is = Xk%sstar(ikbz,2)
    !
-   call WF_symm_kpoint((/1,X%ib(2)/),ikbz,Xk,WF_symm)
+   call WF_symm_kpoint((/1,Dip%ib(2)/),ikbz,Xk,WF_symm)
    !  
-   call WF_shift_kpoint((/1,X%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
+   call WF_shift_kpoint((/1,Dip%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
    !
    do id=1,3
      !
@@ -90,9 +90,9 @@ subroutine DIPOLE_overlaps(Xk,X)
        ikp = Xk%sstar(ikbzp,1)
        isp = Xk%sstar(ikbzp,2)
        !
-       call WF_symm_kpoint((/1,X%ib(2)/),ikbzp,Xk,WF_symm)
+       call WF_symm_kpoint((/1,Dip%ib(2)/),ikbzp,Xk,WF_symm)
        !
-       call WF_shift_kpoint((/1,X%ib(2)/),ikbzp,WF_shifts(ikbzp,:),Xk,WF_symm,WF_ikp)
+       call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,WF_shifts(ikbzp,:),Xk,WF_symm,WF_ikp)
        !
        if(USE_shifted_wf) then
          !  
@@ -100,7 +100,7 @@ subroutine DIPOLE_overlaps(Xk,X)
          !
          shift=0
          shift(id)=1
-         call WF_shift_kpoint((/1,X%ib(2)/),ikbzp,shift,Xk,WF_ikp,WF_shifted)
+         call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_ikp,WF_shifted)
          !
        else
          WF_shifted=WF_ikp
@@ -108,8 +108,8 @@ subroutine DIPOLE_overlaps(Xk,X)
        !
        do i_sp_pol=1,n_sp_pol
          !
-         do ib=1,X%ib(2)
-           do ibp=1,X%ib(2)
+         do ib=1,Dip%ib(2)
+           do ibp=1,Dip%ib(2)
              do i_spinor=1,n_spinor
                i_spin=i_sp_pol+i_spinor-1
                DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)=DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)+ &

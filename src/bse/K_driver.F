@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
+subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  use pars,           ONLY:SP,IP
  use parser_m,       ONLY:parser
@@ -31,6 +31,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
+ use DIPOLES,        ONLY:DIPOLE_t
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
 &                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
@@ -54,6 +55,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
  type(X_t)     ::X_static_pp
+ type(DIPOLE_t)::Dip
  type(w_samp)  ::Xw
  !
  ! Work Space
@@ -191,25 +193,24 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! PARALLEL SETUP
  !================
  call X_duplicate(X_static_pp,X_oscillators) 
- X_oscillators%whoami=5
  X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
  !
  ! ... EH space (no parallelization)
- call K_Transitions_setup(iq,Ken,Xk,.FALSE.)
+ call K_Transitions_setup(iq,Ken,Xk,Dip,.FALSE.)
  !
  !... Parallel distribution
  call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
  !
  ! ... EH space (with parallelization) and Transition groups build-up
- call K_Transitions_setup(iq,Ken,Xk,.TRUE.)
+ call K_Transitions_setup(iq,Ken,Xk,Dip,.TRUE.)
  !
  !... Blocks build-up
  if (.not.l_rpa_IP) call K_blocks( )
  !
  ! 1. The IP Part
  ! ===============
- call K_IP(iq,Ken,Xk,X_oscillators,W_bss)
+ call K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Wave Functions distribution 
  !=============================

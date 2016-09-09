@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_driver(X,Xw,Xk,E,k,q)
+subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen,cZERO
  use units,          ONLY:HA2EV
@@ -43,6 +43,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use interfaces,     ONLY:PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index
  use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc
+ use DIPOLES,        ONLY:DIPOLE_t
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:intc,real2ch,log_as_a_file
  use xc_functionals, ONLY:E_xc
@@ -60,6 +61,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  type(levels) ::E
  type(bz_samp)::k,q,Xk
  type(X_t)    ::X(2)  ! Xx Em1s
+ type(DIPOLE_t)::Dip
  type(w_samp) ::Xw(2)
  !
  ! Iterations
@@ -404,9 +406,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        ! Update dipoles
        !
        ! Davide: this should be replaced by the use of covariant dipoles ...
-       call DIPOLE_rotate(SC_R,E,X(2), 1)
-       call DIPOLE_project_along_q(Xk,X(2),X(2)%q0)
-       call DIPOLE_rotate(SC_R,E,X(2),-1)
+       call DIPOLE_rotate(SC_R,E,Dip, 1)
+       call DIPOLE_expand_and_project(Xk,Dip)
+       call DIPOLE_rotate(SC_R,E,Dip,-1)
        !
        ! Recalcolate Xo and X  
        !

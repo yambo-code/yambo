@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_load(defs,en,q,k,X,Xw)
+subroutine INIT_load(defs,en,q,k,X,Dip,Xw)
  !
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
@@ -29,9 +29,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
- use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        global_gauge,Dipole_approach,Chi_linalg_mode, &
+ use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
+&                        global_gauge,Chi_linalg_mode, &
 &                        l_X_terminator,X_terminator_Kind,X_terminator_E
+ use DIPOLES,       ONLY:DIPOLE_t
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
@@ -117,6 +118,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  type(levels)  ::en          
  type(bz_samp) ::q,k
  type(X_t)     ::X(4)
+ type(DIPOLE_t)::Dip
  type(w_samp)  ::Xw(4)
  !
  ! Work Space
@@ -572,9 +574,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! DIPOLES
  !
- call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
+ call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dip%Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
- call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Covariant/Shifted grids]',Dipole_approach,verb_level=V_resp)
+ call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Covariant/Shifted grids]',Dip%approach,verb_level=V_resp)
  call it(defs,'ShiftedPaths',   '[Xd] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[Xd] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  !

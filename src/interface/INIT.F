@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
+integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! INIT =-2  : Unsupported Runlevel(s) combination
  ! INIT =-1  : Missing CORE DBs
@@ -55,6 +55,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
+ use DIPOLES,        ONLY:DIPOLE_t
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:io_WF
@@ -93,9 +94,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  type(levels) ::en_sc
 #endif
- type(bz_samp)::q,k   
- type(X_t)    ::X(4)
- type(w_samp) ::Xw(4)
+ type(bz_samp) ::q,k   
+ type(X_t)     ::X(4)
+ type(DIPOLE_t)::Dip
+ type(w_samp)  ::Xw(4)
  integer         ::lnstr
  character(lnstr)::instr
  logical         ::CLOSE_Gs,FINALIZE,QP_field
@@ -345,24 +347,23 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
  io_err=io_QP_and_GF('W',qp,io_ID) 
  !
- ! ostnts
+ ! Vnl PWscf old format
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_DIPOLES(X(3),io_ID)
+ io_err=io_DIPOLES(Dip,io_ID)
  !
- OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
- !
- ! PP_PWscf
+ ! KB PWscf
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_KB_pwscf_err=io_KB_pwscf(io_ID)
  !
- ! kb_pp
+ ! KB abinit
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_KB_abinit_err=io_KB_abinit(io_ID)
  !
- if (io_err/=0) OSTNTS_Vnl_included=(io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
+ if (io_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
+ if (io_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
  ! I transfer to all X types the X(3) used in the previous io's 
  !
@@ -1093,7 +1094,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (mode=='Close_G_vectors') initmode=2
      if (mode=='Game_Over') initmode=3
      if (mode=='parser_input_file') initmode=4
-     call INIT_load(defs,en,q,k,X,Xw)
+     call INIT_load(defs,en,q,k,X,Xw,Dip)
    end subroutine
    !
    subroutine logicalson

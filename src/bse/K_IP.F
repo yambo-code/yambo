@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
+subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
  use units,         ONLY:HA2EV
@@ -32,8 +32,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
-&                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
-&                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
+&                        X_drude_term,iw_ref,global_gauge,   &
+&                        skip_cond_sum_rule,l_drude
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_projected
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        BSS_n_freqs,BSS_q0,Co_factor,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps
@@ -57,7 +58,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  implicit none
  type(levels) ::Ken
  type(bz_samp)::Xk
- type(X_t)    ::X_oscillators
+ type(DIPOLE_t)::Dip
  type(w_samp) ::W_bss
  integer      ::iq
  !
@@ -147,10 +148,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    ! GPL_EXCLUDE_END 
    !
    !
-   call DIPOLE_IO(Xk,X_oscillators,'read ',io_err)
-   call DIPOLE_expand_and_project(Xk,X_oscillators,BSS_q0)
+   call DIPOLE_IO(Xk,Dip,'read ',io_err)
+   call DIPOLE_expand_and_project(Xk,Dip)
    !
-   BSS_Vnl_included=X_oscillators%Vnl_included
+   BSS_Vnl_included=Dip%Vnl_included
    !
    if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
    if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
@@ -200,7 +201,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        endif
 #endif
        !
-       if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
+       if ( abs(real(E_plus_W0)) < Dip%Energy_treshold ) cycle
        !
        ! Residuals DIP_cv * DIP_vc
        !
@@ -337,7 +338,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! CLEAN
  !
- if (iq==1) call X_alloc('DIP_projected')
+ if (iq==1) call DIP_alloc('DIP_projected')
  !
  if (l_rpa_IP) then
    !

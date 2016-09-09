@@ -29,7 +29,7 @@ subroutine cutoff_ws(q)
  use D_lattice,     ONLY:a,alat
  use cutoff_ws_m,   ONLY:vcut_type,e2
  use LIVE_t,        ONLY:live_timing
- use openmp,        ONLY:OPENMP_update,n_threads,master_thread 
+ use openmp,        ONLY:OPENMP_update,n_threads,master_thread,n_threads_now
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  implicit none
@@ -50,56 +50,73 @@ subroutine cutoff_ws(q)
  !
  ! build the superperiodicity direct lattice
  !
-!CONVERTI PIRMA IN RLU!!!!
-  nq=1
-  rdum=1000
-  do iq=1,nqibz
-    if(abs(q%pt(iq,1))/=0..and.(abs(q%pt(iq,1))<rdum(1))) rdum(1)=q%pt(iq,1)
-    if(abs(q%pt(iq,2))/=0..and.(abs(q%pt(iq,2))<rdum(2))) rdum(2)=q%pt(iq,2)
-    if(abs(q%pt(iq,3))/=0..and.(abs(q%pt(iq,3))<rdum(3))) rdum(3)=q%pt(iq,3)
-  enddo
-  nq=nint(1./rdum)
-  do i1=1,3
-    if (nq(i1)==0) nq(i1)=1
-  enddo
-  write(*,*) nq
-!  write nq on the report
-  do i1=1,3
-    atws(:,i1)=a(i1,:)
-    atws(:,i1) = atws(:,i1) * nq(i1)
-  enddo
+!CONVERTI PRIMA IN RLU!!!!
+ nq=1
+ rdum=1000
+ do iq=1,nqibz
+   if(abs(q%pt(iq,1))/=0..and.(abs(q%pt(iq,1))<rdum(1))) rdum(1)=q%pt(iq,1)
+   if(abs(q%pt(iq,2))/=0..and.(abs(q%pt(iq,2))<rdum(2))) rdum(2)=q%pt(iq,2)
+   if(abs(q%pt(iq,3))/=0..and.(abs(q%pt(iq,3))<rdum(3))) rdum(3)=q%pt(iq,3)
+ enddo
+ nq=nint(1./rdum)
+ do i1=1,3
+   if (nq(i1)==0) nq(i1)=1
+ enddo
+ ! debug XXXX
+ write(*,*) nq
+ !
+ ! write nq on the report
+ do i1=1,3
+   atws(:,i1) = a(i1,:)
+   atws(:,i1) = atws(:,i1) * nq(i1)
+ enddo
  !
  call vcut_init(vcut,atws,real(ws_cutoff,DP))
  !
  call vcut_info(vcut)
  !
- V_cut=cmplx(0.)
+ V_cut=0.0_SP
  !
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
  call live_timing('WS components',px%n_of_elements(myid+1)/n_threads)
  !
 !$omp parallel default(shared), private(ig,iq,v1,dummy)
+ !
  call OPENMP_update(master_thread)
+ !
+ call live_timing('WS-cutoff',px%n_of_elements(myid+1)/n_threads_now)
+ !
 !$omp do
  do ig=1,wf_ng
    do iq=1,nqibz
+     !
+     if (.not.px%element_2D(iq,ig)) cycle 
+     !
      v1=( q%pt(iq,:)+g_vec(ig,:) )*2.*pi/alat(:)
+     !
+     ! XXXX
      if (ig==1) write(*,*) v1
      dummy=vcut_get(vcut,real(v1,DP))
      V_cut(iq,ig)=real(dummy/(4.d0*PI*e2))
+     !
      call live_timing(steps=1)
+     !
    enddo
  enddo
 !$omp end do
 !$omp end parallel
+ !
+ call OPENMP_update(master_thread)
+ !
+ call live_timing()
+ !
+ ! XXXX
  write(*,*) V_cut(1,1)
  !
  ! MPI 2 all
  !
  call PP_redux_wait(V_cut)
- !
- call live_timing()
  !
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1./V_cut(iq,ig))
 !

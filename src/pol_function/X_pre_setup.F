@@ -23,12 +23,14 @@
 !
 subroutine X_pre_setup(Xen,X)
  !
- use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator
  use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
  use com,           ONLY:error
  use R_lattice,     ONLY:nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
+ use interfaces,    ONLY:eval_G_minus_G
+ use parallel_m,    ONLY:PAR_COM_WORLD
  !
  implicit none
  !
@@ -36,8 +38,6 @@ subroutine X_pre_setup(Xen,X)
  type(levels) ::Xen
  ! 
  ! Work Space
- !
- integer, external :: eval_G_minus_G
  !
  if (X%ib(1)<0) X%ib(1)=1
  if (X%ib(2)<0) X%ib(2)=1
@@ -65,7 +65,7 @@ subroutine X_pre_setup(Xen,X)
  !
  ! CHO checks
  !
- if (l_gw0.and.l_cohsex) X%ng=eval_G_minus_G(X%ng,0)
+ if ((l_gw0.and.l_cohsex).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
  !
  ! Fxc Checks
  !
@@ -76,20 +76,20 @@ subroutine X_pre_setup(Xen,X)
  ! of the alpha from X
  !
  if (l_col_cut) then
-   if ( trim(X%ordering) == 'a' .or. trim(X%ordering) == 'r' )  X%ordering='t'
+   if ( trim(X%ordering) == 'a' .or. trim(X%ordering) == 'r' )  X%ordering='T'
  endif
  !
  ! Finite temperature X MUST be causal. This is because in X_eh_setup the
  ! "resonant" or "antiresonant" par of X (in the many body language) include
  ! negative poles as well. Only the sum of the two is meaningful, then.
  !
- if (Finite_Tel .or. l_rt_carriers_in_use) X%ordering="c"
+ if (Finite_Tel .or. l_rt_carriers_in_use) X%ordering="R"
  !
  ! Transfer the GF's ordering 
  !
- if ( associated(Xen%GreenF).and.     Xen%GreenF_is_causal ) X%ordering='c'
+ if ( associated(Xen%GreenF).and.     Xen%GreenF_is_causal ) X%ordering='R'
  if ( associated(Xen%GreenF).and..not.Xen%GreenF_is_causal ) then
-   if ( .not.(Finite_Tel.or.l_rt_carriers_in_use) ) X%ordering='t'
+   if ( .not.(Finite_Tel.or.l_rt_carriers_in_use) ) X%ordering='T'
    if (      (Finite_Tel.or.l_rt_carriers_in_use) ) then
      call error('Fractional occupations but GF is not retarded (causal in yambo language)')
    endif 

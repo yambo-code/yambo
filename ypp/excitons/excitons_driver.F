@@ -31,13 +31,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use X_m,           ONLY:X_t
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
- use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,&
-&                        excitons_sort_and_report
+ use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,excitons_sort_and_report
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,&
-&                        BSS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
-&                        io_BSS_diago,BSS_n_eig
+ use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat
+ use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,BS_K_coupling,BS_cpl_mode,&
+&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_n_eig
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
@@ -71,7 +69,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  complex(SP), allocatable ::BS_E(:)
  !
  real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
- real(SP),    pointer     ::BS_R_PL(:)         => null()
+ real(SP),    pointer     ::BS_R_PL(:,:)       => null()
  complex(SP), pointer     ::BS_R_kerr(:)       => null()
  !
  integer                  ::iq,neh
@@ -135,7 +133,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call mem_est('BS_R_E',(/2*BS_H_dim/))
  iq=BS_q(1)
  !
- if(E_SOC_nbands/=0) allocate(BS_E_SOC_corr(2,BS_H_dim))
+ if(E_SOC_nbands/=0) allocate(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
  !
  ! Here I read energies and residuum
  !
@@ -152,7 +150,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Sort energies and write to output
  !===================================
- if (l_sort) call excitons_sort_and_report(Xk,Xen,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
+ if (l_sort) call excitons_sort_and_report(Xen,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
  if(.not.l_sort) then
    !

@@ -21,12 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.2 r.13680 h.5e27d3d , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.1.0 r.13731 h.aec178d , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="2"
-SREVISION="13730"
-SHASH="5e27d3d"
+SREVISION="13731"
+SHASH="aec178d"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -424,11 +424,11 @@ fi
 AC_LANG_PUSH(Fortran)
 AC_HAVE_FFT
 # ============================================================================
-# SCALAPACK/BLACS
-SLK_SETUP
-# ============================================================================
 # SLEPC
 SLEPC_SETUP
+# ============================================================================
+# SCALAPACK/BLACS
+SLK_SETUP
 # ============================================================================
 # IOTK library 
 AC_HAVE_IOTK

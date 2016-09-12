@@ -28,6 +28,8 @@ function Lorentzian_FT(W,pole,ordering)
  ! Fourier transform of the Lorentzian function
  ! theta(t)*e^{-i*pole*t} [this is the retarded version, other ordering are computed]
  !
+ ! AM, 1/8/16. Note that aimag(pole) is always negative while aimag(W)>0
+ !
  use pars, ONLY:SP
  !
  implicit none
@@ -37,11 +39,13 @@ function Lorentzian_FT(W,pole,ordering)
  !              
  logical      ::ord_t_ordered,ord_retarded_,ord_resonant_,ord_ares_tord,ord_ares_reta
  !
- ord_t_ordered= trim(ordering)=="t"      ! T-ordered
- ord_retarded_= trim(ordering)=="c"      ! Retarded   (in yambo it is called "c"=causal)
- ord_resonant_= trim(ordering)=="r"      ! Resonant      part of the T-ordered
- ord_ares_tord= trim(ordering)=="a"      ! Anti-resonant part of the T-ordered
- ord_ares_reta= trim(ordering)=="ca"     ! Anti-resonant part of the Retarded
+ ord_t_ordered= trim(ordering)=="T"      ! T-ordered
+ ord_retarded_= trim(ordering)=="R"      ! Retarded 
+ ord_resonant_= trim(ordering)=="r"      ! Resonant      part of the T-ordered/Retarded
+ ord_ares_tord= trim(ordering)=="Ta"     ! Anti-resonant part of the T-ordered
+ ord_ares_reta= trim(ordering)=="Ra"     ! Anti-resonant part of the Retarded
+ !
+ !                                  RESONANT       ANTIRESONANT
  !
  if ( ord_t_ordered ) Lorentzian_FT=1._SP/(W-pole)-1._SP/(conjg(W)+      pole )
  if ( ord_retarded_ ) Lorentzian_FT=1._SP/(W-pole)-1._SP/(      W +conjg(pole))       

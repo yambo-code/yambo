@@ -159,16 +159,20 @@ subroutine PARALLEL_collisions( k, COLL )
    !
    PAR_IND_G_k%element_1D(i_k)=.TRUE.
    !
-   do i_q=1,nqbz
+   if (.not.l_par_SE) then
      !
-     if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+     do i_q=1,nqbz
+       !
+       if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+       !
+       i_p_bz=qindx_S(i_k,i_q,1)
+       i_p   =k%sstar(i_p_bz,1)
+       !
+       PAR_IND_G_k%element_1D(i_p)=.TRUE.
+       !
+     enddo
      !
-     i_p_bz=qindx_S(i_k,i_q,1)
-     i_p   =k%sstar(i_p_bz,1)
-     !
-     PAR_IND_G_k%element_1D(i_p)=.TRUE.
-     !
-   enddo
+   endif
    !
  enddo
  !

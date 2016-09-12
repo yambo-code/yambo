@@ -72,6 +72,7 @@ module collision
  real(SP)                 :: COLLISIONS_max
  !
  logical :: COLLISIONS_parallel_SC_structure=.FALSE.
+ logical :: COLLISIONS_have_HARTREE=.FALSE.
  !
  ! Elements used in the code
  !
@@ -130,16 +131,54 @@ module collision
  !
  contains
    !
-   subroutine COLLISIONS_initial_naming( )
-     use global_XC,     ONLY:SC_COH,SC_HARTREE,SC_SEX,SE_GW_QED,SE_GW_NEQ
-     COH_collisions%kind=SC_COH
-     COH_collisions%name="COH"
-     HXC_collisions%kind=SC_HARTREE+SC_SEX
-     HXC_collisions%name="HARTREE+SEX"
-     P_collisions%kind=SE_GW_QED
-     P_collisions%name="Momentum"
-     GW_NEQ_collisions%kind=SE_GW_NEQ
-     GW_NEQ_collisions%name="GW_NEQ"
+   subroutine COLLISIONS_naming( SC_kind , what )
+     !
+     use global_XC,      ONLY:SC_COH,SC_HARTREE,SC_SEX,SE_GW_QED,SE_GW_NEQ,&
+&                             SC_FOCK
+     use xc_functionals, ONLY:GS_xc_KIND
+     !
+     integer            :: SC_kind
+     character(*)       :: what
+     !
+     integer, parameter :: nc=7
+     integer            :: i_c,local_kind(nc)
+     character(schlen)  :: local_name(nc)
+     !
+     if (SC_kind==0) then
+       !
+       COH_collisions%kind=SC_COH
+       COH_collisions%name="COH"
+       HXC_collisions%kind=SC_HARTREE+SC_SEX
+       HXC_collisions%name="HARTREE+SEX"
+       P_collisions%kind=SE_GW_QED
+       P_collisions%name="Momentum"
+       GW_NEQ_collisions%kind=SE_GW_NEQ
+       GW_NEQ_collisions%name="GW_NEQ"
+       !
+     else if (what=="HXC") then
+       !
+       HXC_collisions%kind=0
+       HXC_collisions%name=" "
+       !
+       local_kind=(/SC_FOCK,SC_SEX,SC_Hartree,SC_FOCK+SC_Hartree,SC_SEX+SC_Hartree,&
+&                   GS_xc_KIND,GS_xc_KIND+SC_Hartree/)
+       local_name(1)="FOCK"
+       local_name(2)="SEX"
+       local_name(3)="HARTREE"
+       local_name(4)="HARTREE+FOCK"
+       local_name(5)="HARTREE+SEX"
+       local_name(6)="GS_xc"
+       local_name(7)="HARTREE+GS_xc"
+       !
+       do i_c=1,nc
+         if (SC_kind==local_kind(i_c).or.SC_kind==local_kind(i_c)+SC_COH) then
+           HXC_collisions%kind=local_kind(i_c)
+           HXC_collisions%name=local_name(i_c)
+           return
+         endif
+       enddo
+       !
+     endif
    end subroutine
    !
    subroutine elemental_collision_copy(I,O)

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_slepc(iq,W) 
+subroutine K_slepc_driver(iq,W) 
  !
  ! 10/06/2015 Added by HM
  ! Generic diagonalization method to solve hermitian hamiltonians.
@@ -39,11 +39,11 @@ subroutine K_slepc(iq,W)
  ! 3 of the implementation
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_K_coupling,io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_H_dim,BSS_n_eig,&
-&                         BS_mat_free,BS_mat
+ use BS,             ONLY:BS_K_coupling,BS_H_dim
+ use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
+&                         BS_mat_free,BS_mat,BSS_n_eig,&
+&                         BSS_write_eig_2_db,BSS_eh_W
  use electrons,      ONLY:E_SOC_nbands
- use matrix_operate, ONLY:DIAGO
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec,warning
  use LIVE_t,         ONLY:live_timing
@@ -77,7 +77,7 @@ subroutine K_slepc(iq,W)
  complex(SP),allocatable :: BS_E(:)          !Eigenvalues
  complex(SP),allocatable :: BS_R_left(:)     !Left eigenvectors
  complex(SP),allocatable :: BS_R_right(:)    !Right eigenvectors
- real(SP),   pointer     :: BS_R_PL(:)         => null()
+ real(SP),   pointer     :: BS_R_PL(:,:)       => null()
  real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
  complex(SP),pointer     :: BS_R_right_kerr(:) => null()
  !
@@ -251,8 +251,8 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
- use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
-&                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
+ use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
+ use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
 &                         BSS_eh_E_SOC_corr,BSS_perturbative_width,BS_mat_alloc_BSS
  use com,            ONLY:error,msg
  !

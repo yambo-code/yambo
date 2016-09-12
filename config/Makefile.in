@@ -65,7 +65,7 @@ INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules parallel parser xc_functionals communicate linear_algebra common io \
+BASIC_LIBS   = external_c modules linear_algebra parallel parser xc_functionals communicate linear_algebra common io \
                interface stop_and_restart wf_and_fft 
 BASIC_SURF_LIBS   = external_c modules surf_modules parallel parser xc_functionals communicate linear_algebra common io \
                     interface stop_and_restart wf_and_fft 
@@ -238,7 +238,7 @@ clean_all:
 	
 # Functions
 define make_message
- echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
+ echo;echo "YAMBO" @SVERSION@.@SSUBLEVEL@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
  echo  " [stable] all";\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\

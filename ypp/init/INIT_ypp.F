@@ -31,7 +31,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         nrnlvls,rnlvls,runlevel_is_on,&
 &                         infile_verbosity,V_general,V_qp,V_all,V_real_time
  use drivers,        ONLY:infile_editing
- use com,            ONLY:file_exists
+ use com,            ONLY:file_exists,repfile,com_path,write_to_report
  use stderr,         ONLY:string_split
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
@@ -148,6 +148,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
  endif
  !
+ write_to_report=master_cpu
+ write (repfile,'(2a)') trim(com_path),'/r_stderr'
+ !
  ! RunLevels on
  !
  call string_split(instr,rstr_piece)
@@ -262,8 +265,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RT_X           =trim(rstr_piece(i1+1))=='X'
      l_RT_abs         =trim(rstr_piece(i1+1))=='a'
      !
-     l_RT_occupations =trim(rstr_piece(i1+1))=='o'
-     l_RT_lifetimes   =trim(rstr_piece(i1+1))=='l'
+     l_RT_occupations =index(rstr_piece(i1+1),'o')>0
+     l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
      l_RT_density     =trim(rstr_piece(i1+1))=='d'
      !
      l_RT_bands       =trim(rstr_piece(i1+2))=='b'
@@ -436,7 +439,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_START
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
  !
 #if defined _YPP_RT
  !
@@ -457,7 +460,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_map_kpts) call initactivate(1,"BZ_DbGd_nkpts SkipCheck noBZExpand NoWeights")
  !
- if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map")
+ if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
@@ -479,7 +482,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    l_flag=l_RT_occupations.or.l_RT_abs
    if (l_flag)      call init_RT_ctl_switch('G')
-   l_flag=l_RT_occupations.or.l_RT_density
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations

@@ -51,9 +51,8 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  real(SP), allocatable  :: dl_sop_tmp(:,:,:)
  real(SP)               :: B_cart(3)
  logical                :: Expand_syms,Reduce_syms
- logical                :: Rm_all_syms,Rm_TR
+ logical                :: Rm_all_syms,Rm_TR,Rm_INV
  logical                :: use_E_field,use_B_field,has_magnetization
- logical                :: Trev_2_spatial=.false.
  !
  ! Dummies
  !
@@ -76,6 +75,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  !
  call parser('RmTimeRev',Rm_TR)
  if (i_time_rev==0) Rm_TR=.false.
+ !
+ call parser('RmSpaceInv',Rm_INV)
+ if (i_space_inv==0) Rm_INV=.false.
  !
  Reduce_syms=any((/use_B_field,use_E_field,has_magnetization,Rm_all_syms,Rm_TR/))
  !
@@ -116,7 +118,11 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  !
  if (has_magnetization.and.n_spinor==2) call section('*',"== Magnetic system: BZ sampling remapping ==")
  !
- if (Rm_TR) call section('*',"== Remove Time Reversal ==")
+ if (     Rm_TR.and..not.RM_INV) call section('*',"== Remove Time Reversal ==")
+ !
+ if (.not.Rm_TR.and.     RM_INV) call section('*',"== Remove Spatial Inversion ==")
+ !
+ if (     Rm_TR.and.     RM_INV) call section('*',"== Remove Time Reversal and Spatial Inversion ==")
  !
  if (use_B_field.and.has_magnetization) call warning('Magnetic field in magnetic system')
  !
@@ -160,12 +166,17 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
        call msg('s',trim(intc(spatial_nsym))//' T-rev are now spatial symm')
        spatial_nsym=2*spatial_nsym
        nsym=spatial_nsym
-       Trev_2_spatial=.true.
      else
        nsym=nsym/(1+i_time_rev)
      endif
      i_time_rev=0
      mag_syms=.false.
+   endif
+   !
+   if(Rm_inv.and..not.(inv_index>spatial_nsym)) then
+     nsym=nsym/2
+     spatial_nsym=spatial_nsym/2
+     call msg('s','Removed inversion. Symmetries are now: '//trim(intc(spatial_nsym)))
    endif
    !
    ! Then remove other symmetries according to input

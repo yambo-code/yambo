@@ -44,9 +44,8 @@ SUBROUTINE SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
  !
  IF( .NOT. first ) THEN
    !  
-   !  free resources associated to the communicator
-   !
-   CALL MPI_comm_free( ORTHO%COMM, ierr )
+   ! AF: call not safe
+   !CALL MPI_comm_free( ORTHO%COMM, ierr )
    !
    IF(  ORTHO%COMM_id > 0  ) THEN
       CALL BLACS_GRIDEXIT( ORTHO%ortho_cntx )
@@ -102,13 +101,13 @@ SUBROUTINE SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
  !
  CALL MPI_COMM_SPLIT( comm_all, color, key, ORTHO%COMM, ierr )
  !
- IF( ierr /= 0 ) CALL error("SLK_ORTHO_group initializing ortho group communicator ")!, ierr )
+ IF( ierr /= 0 ) CALL error("[SLK_ORTHO_group] initializing ortho group communicator ")
  !
  !  Computes coordinates of the processors, in row maior order
  !
  CALL MPI_COMM_RANK( ORTHO%COMM, ORTHO%task, ierr)
  !
- IF( me_all == 0 .AND. ORTHO%task /= 0 ) CALL error("SLK_ORTHO_group wrong root task in ortho group ")!, ierr )
+ IF( me_all == 0 .AND. ORTHO%task /= 0 ) CALL error("[SLK_ORTHO_group] wrong root task in ortho group ")
  !
  if( color == 1 ) then
    !
@@ -117,9 +116,9 @@ SUBROUTINE SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
    CALL GRID2D_COORDS( 'R', ORTHO%task, ORTHO%grid(1), ORTHO%grid(2), ORTHO%coordinate(1), ORTHO%coordinate(2) )
    CALL GRID2D_RANK( 'R', ORTHO%grid(1), ORTHO%grid(2), ORTHO%coordinate(1), ORTHO%coordinate(2), ierr )
    !
-   IF( ierr /= ORTHO%task ) CALL error("SLK_ORTHO_group wrong task coordinates in ortho group")!, ierr )
+   IF( ierr /= ORTHO%task ) CALL error("[SLK_ORTHO_group] wrong task coordinates in ortho group")
    !
-   IF( ORTHO%task*ORTHO%leg /= me_all ) CALL error( "SLK_ORTHO_group wrong rank assignment in ortho group")!, ierr )
+   IF( ORTHO%task*ORTHO%leg /= me_all ) CALL error("[SLK_ORTHO_group] wrong rank assignment in ortho group")
    !
    CALL MPI_COMM_SPLIT( ORTHO%COMM, ORTHO%coordinate(2), ORTHO%coordinate(1), ORTHO%COL_comm, ierr )
    CALL MPI_COMM_SPLIT( ORTHO%COMM, ORTHO%coordinate(1), ORTHO%coordinate(2), ORTHO%ROW_comm, ierr )
@@ -177,10 +176,10 @@ SUBROUTINE SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
      IF( ( j == ( my_parent_id + 1 ) ) .and. &
          ( i == ( POOL%id  + 1 ) ) .and. ( ORTHO%COMM_id > 0 ) ) THEN
        !
-       IF(  ORTHO%grid(1) /= nprow ) CALL error('SLK_ORTHO_group problem with SCALAPACK, wrong no. of task rows')!, 1 )
-       IF(  ORTHO%grid(2) /= npcol ) CALL error('SLK_ORTHO_group problem with SCALAPACK, wrong no. of task columns')!, 1 )
-       IF(  ORTHO%coordinate(1) /= myrow ) CALL error('SLK_ORTHO_group problem with SCALAPACK, wrong task row ID')!, 1 )
-       IF(  ORTHO%coordinate(2) /= mycol ) CALL error('SLK_ORTHO_group problem with SCALAPACK, wrong task columns ID')!, 1 )
+       IF(  ORTHO%grid(1) /= nprow ) CALL error('[SLK_ORTHO_group] problem with SCALAPACK, wrong no. of task rows')
+       IF(  ORTHO%grid(2) /= npcol ) CALL error('[SLK_ORTHO_group] problem with SCALAPACK, wrong no. of task columns')
+       IF(  ORTHO%coordinate(1) /= myrow ) CALL error('[SLK_ORTHO_group] problem with SCALAPACK, wrong task row ID')
+       IF(  ORTHO%coordinate(2) /= mycol ) CALL error('[SLK_ORTHO_group] problem with SCALAPACK, wrong task columns ID')
        !
        ORTHO%ortho_cntx = ortho_cntx_pe(i,j)
        !

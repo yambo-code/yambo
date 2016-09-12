@@ -21,47 +21,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function MATRIX_resolvant_via_exact_inversion(n,m,W,C,f,V,K)
+subroutine K_inversion_do_it_full(Lo,KERNEL,what)
  !
- ! C<W|1./(V^{-1}-M)|W>
+ ! 1./(Lo^{-1}-M)
  !
  use pars,           ONLY:SP,cZERO
- use interfaces,     ONLY:MATRIX_driver
- use matrix_operate, ONLY:INV
- use wrapper,        ONLY:Vstar_dot_V,M_by_V
+ use BS_solvers,     ONLY:BS_mat
+ use BS,             ONLY:BS_H_dim
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV
  !
  implicit none
  !
- integer,    intent(in) ::n,m
- complex(SP),intent(in) ::C,W(n),V(n,m),K(n,n)
- complex(SP),intent(out)::f 
+ character  ,intent(in) ::what ! "r","a"
+ complex(SP),intent(in) ::Lo(BS_H_dim)
+ complex(SP),intent(out)::KERNEL(BS_H_dim,BS_H_dim) 
  !
  ! Work Space
  !
- complex(SP) ::wk(n,n),A_n(n)
- integer     ::i1,i2,i3
+ integer     ::i1,i2
  !
- MATRIX_resolvant_via_exact_inversion=0
+ KERNEL=cZERO
  !
- do i3=1,m
-   A_n=cZERO
-   wk=cZERO
-   do i2=1,n
-     wk(i2,i2)=1._SP/V(i2,i3)
-     do i1=1,n 
-       if(i3==1) wk(i1,i2)=wk(i1,i2)-      K(i1,i2)
-       if(i3==2) wk(i1,i2)=wk(i1,i2)-conjg(K(i1,i2))
-     enddo
+ do i2=1,BS_H_dim
+   KERNEL(i2,i2)=1._SP/Lo(i2)
+   do i1=1,BS_H_dim 
+     if (what=="r") KERNEL(i1,i2)=KERNEL(i1,i2)-      BS_mat(i1,i2)
+     if (what=="a") KERNEL(i1,i2)=KERNEL(i1,i2)-conjg(BS_mat(i1,i2))
    enddo
-   call MATRIX_driver(INV,wk)
-   if(i3==1) then
-     call M_by_V('n',n,wk,W,A_n)
-     f=  C*Vstar_dot_V(n,W,A_n)
-   else if(i3==2) then
-     call M_by_V('n',n,wk,conjg(W),A_n)
-     f=f+C*Vstar_dot_V(n,conjg(W),A_n)
-   endif
  enddo
  !
+ call LINEAR_ALGEBRA_driver(INV,KERNEL)
  !
-end function
+end subroutine

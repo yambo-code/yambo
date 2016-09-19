@@ -88,6 +88,7 @@ subroutine K_slepc_driver(iq,W)
  complex(SP),allocatable :: BS_V_right(:,:)     ! Coupling
  !
  integer              ::io_err,ID  ! I/O
+ integer              ::test(4)
  !
 #if defined _TIMING
  call timing('Slepc Solver',OPR='start')
@@ -187,7 +188,8 @@ subroutine K_slepc_driver(iq,W)
      call VecSetType(vout, VECMPI, ierr)
      !
      write(*,*) "Setting the values", BS_H_dim
-     call VecSetValues(vin,4,(/0,1,2,3/),(/complex(0.0,0.0),complex(0.0,0.0),complex(1.0,0.0),complex(0.0,0.0)/),ierr)
+     test = (/0,1,2,3/)
+     call VecSetValues(vin,4,test,(/complex(0.0,0.0),complex(0.0,0.0),complex(1.0,0.0),complex(0.0,0.0)/),ierr)
      !
      write(*,*) "Assembly"
      call VecAssemblyBegin(vin,ierr)
@@ -583,7 +585,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  PetscScalar, pointer :: xx(:)
  Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
- integer              :: n, i_g, rank, i_c, ierr, H_pos, start_index
+ integer              :: n, i_g, rank, i_c, ierr, H_pos(1), start_index
  !
  call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
  !

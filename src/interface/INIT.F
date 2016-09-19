@@ -1067,18 +1067,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MPI
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") then
-       call initactivate(1,what//"_nCPU_invert")
-     endif
-     if (what=="BS") then
-       call initactivate(1,what//"_nCPU_diago")
-     endif
+     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") &
+&      call initactivate(1,what//"_nCPU_LinAlg")
 #endif
 #if defined _SCALAPACK &&  defined _MPI
-     if (what=="SLK") then
-       call initactivate(1,what//"_nCPU_diago")
-       call initactivate(1,what//"_nCPU_invert")
-     endif
+     if (what=="SLK") call initactivate(1,what//"_nCPU_LinAlg")
 #endif
      !
    end subroutine

@@ -41,6 +41,17 @@ module BS_solvers
    !
  end type Haydock_vector
  !
+ ! Slepc
+ !==========
+ type Slepc_vector
+   !
+   type(Haydock_vector), allocatable :: Vi(:)
+   type(Haydock_vector), allocatable :: Vo(:)
+   !
+ end type Slepc_vector
+ !
+ type(Slepc_vector) :: Slepc_v
+ !
  integer, allocatable :: Haydock_parallel_group_comm(:)
  !
  ! Solvers (General)

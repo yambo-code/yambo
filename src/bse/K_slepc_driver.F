@@ -67,6 +67,7 @@ subroutine K_slepc_driver(iq,W)
 #include <slepc/finclude/slepceps.h>
  !
  type(Mat)      slepc_mat ! Slepc matrix where the hamiltonian will be stored
+ type(Vec)      vin,vout
  type(w_samp)  :: W
  integer       :: iq
  logical       :: K_is_not_hermitian
@@ -141,7 +142,20 @@ subroutine K_slepc_driver(iq,W)
  !
  ! Kernel loading
  !================
- if(io_err<0) call K_stored_in_a_slepc_matrix(iq,slepc_mat)
+ !
+ ! Here we will have two options to initialize the slepc matrix:
+ !
+ ! 1. In the first option we create a distributed PETSC matrix from the BS blocks
+ if(io_err<0) then
+    if (.true.) then
+        call K_stored_in_a_slepc_matrix(iq,slepc_mat)
+ !
+ ! 2. Here we will define a PetscShell matrix and define the matrix-vector multiplication
+ ! using the K_multiply_by_V function used in the Haydock method
+    else
+        call K_shell_matrix(iq,slepc_mat)
+    endif
+ endif
  !
  K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
  !
@@ -157,6 +171,37 @@ subroutine K_slepc_driver(iq,W)
      YAMBO_ALLOCATE( BS_corrections(1,BS_H_dim) )
    endif
  endif
+ !
+ ! Test (TO BE ROMVED)
+ !
+ if (.false.) then
+     write(*,*) 'create unitary vector vin'
+     call VecCreate(PETSC_COMM_WORLD,vin,ierr)
+     call VecSetSizes(vin,PETSC_DECIDE,BS_H_dim,ierr)
+     call VecSetType(vin, VECMPI, ierr)
+     !
+     call VecCreate(PETSC_COMM_WORLD,vout,ierr)
+     call VecSetSizes(vout,PETSC_DECIDE,BS_H_dim,ierr)
+     call VecSetType(vout, VECMPI, ierr)
+     !
+     write(*,*) "Setting the values", BS_H_dim
+     call VecSetValues(vin,4,(/0,1,2,3/),(/complex(0.0,0.0),complex(0.0,0.0),complex(1.0,0.0),complex(0.0,0.0)/),ierr)
+     !
+     write(*,*) "Assembly"
+     call VecAssemblyBegin(vin,ierr)
+     call VecAssemblyEnd(vin,ierr)
+     !
+     write(*,*) 'print vector vin'
+     call VecView(vin,PETSC_VIEWER_STDOUT_WORLD,ierr)
+     !
+     write(*,*) 'Matmul'
+     call MatMult(slepc_mat,vin,vout,ierr)
+     !
+     write(*,*) 'print vector vout'
+     call VecView(vout,PETSC_VIEWER_STDOUT_WORLD,ierr)
+ !
+ endif
+ !
  !
  ! Initialize the output file 
  !============================
@@ -180,6 +225,10 @@ subroutine K_slepc_driver(iq,W)
      BS_E=cmplx(BS_E_real,0._SP,SP)
      !
    endif
+   !
+   ! Destroy the matrix
+   !============================
+   call MatDestroy(slepc_mat,ierr)
    !
    call live_timing(steps=1)
    call live_timing
@@ -236,21 +285,15 @@ subroutine K_slepc_driver(iq,W)
 #endif
  !
 end subroutine
-  
-subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
+ 
+subroutine fill_eh_dipoles()
  !
- ! Here I fill the kernel (coupling included) in a slepc matrix to be
- ! used for diagonalization and/or invertion
- !
- !      | (K_r)     (K_c)    |  
- !  K = |                    |
- !      | (-K_c^*)  (-K_r^*) |
- !
+ ! Fill dipoles and eh matrices
  !
  use pars,           ONLY:SP,cI,cONE
- use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
+ use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
  use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
 &                         BSS_eh_E_SOC_corr,BSS_perturbative_width,BS_mat_alloc_BSS
@@ -258,28 +301,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
  implicit none
  !
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
- !
- complex(SP) :: E_plus_W
- integer     :: iq,i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,i_k_bz,i_v,i_cond,i_spin
- type(Mat)   :: slepc_mat
- complex     :: val
- !
- integer     :: ierr
- !
- ! ALLOCATE SLEPC MATRIX
- !==================================
- call MatCreate(PETSC_COMM_WORLD,slepc_mat,ierr)
- call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,BS_H_dim,BS_H_dim,ierr)
- call MatSetType(slepc_mat, MATMPIDENSE,ierr)
- call MatSetUp(slepc_mat,ierr)
- 
- call BS_mat_alloc_BSS()
+ integer :: H_pos(2), i_c, i_v, i_spin, i_k_bz, i_g, i_cond
  ! 
  ! FILLING BSS_eh_* and BSS_dipoles
  !==================================
@@ -348,6 +370,52 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
  ! GPL_EXCLUDE_END
  !
+end subroutine
+ 
+subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
+ !
+ ! Here I fill the kernel (coupling included) in a slepc matrix to be
+ ! used for diagonalization and/or invertion
+ !
+ !      | (K_r)     (K_c)    |  
+ !  K = |                    |
+ !      | (-K_c^*)  (-K_r^*) |
+ !
+ !
+ use pars,           ONLY:SP,cI,cONE
+ use electrons,      ONLY:n_sp_pol,E_SOC_nbands
+ use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
+ use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
+&                         BSS_eh_E_SOC_corr,BSS_perturbative_width,BS_mat_alloc_BSS
+ use com,            ONLY:error,msg
+ !
+ implicit none
+ !
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+ !
+ complex(SP) :: E_plus_W
+ integer     :: iq,i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,i_k_bz,i_v,i_cond,i_spin
+ type(Mat)   :: slepc_mat
+ complex     :: val
+ !
+ integer     :: ierr
+ !
+ ! ALLOCATE SLEPC MATRIX
+ !==================================
+ call MatCreate(PETSC_COMM_WORLD,slepc_mat,ierr)
+ call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,BS_H_dim,BS_H_dim,ierr)
+ call MatSetType(slepc_mat, MATMPIDENSE,ierr)
+ call MatSetUp(slepc_mat,ierr)
+ ! 
+ call BS_mat_alloc_BSS()
+ !
+ call fill_eh_dipoles()
+ ! 
  ! FILLING the slepc_mat
  !====================
  !
@@ -434,3 +502,141 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  call msg('s','done!')
  !
 end subroutine K_stored_in_a_slepc_matrix
+
+
+
+
+subroutine K_shell_matrix(iq,slepc_mat)
+ !
+ ! Create a PETSC ShellMatrix and define the matrix-vector product
+ ! function using the routine K_multiply_by_V 
+ !
+ use BS,             ONLY:BS_H_dim, BS_nT_grps
+ use BS_solvers,     ONLY:BS_mat_alloc_BSS,Slepc_v,BS_HAYVEC_alloc
+ !
+ implicit none
+ !
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+ ! 
+ integer        iq
+ Mat            slepc_mat
+ PetscErrorCode ierr
+ external K_multiply_by_V_slepc
+ !
+ ! ALLOCATE HAYDOCK VECTORS
+ !==================================
+ ! 
+ call PARALLEL_Haydock_VEC_COMMs('assign')
+ YAMBO_ALLOCATE(Slepc_v%Vi(BS_nT_grps))
+ YAMBO_ALLOCATE(Slepc_v%Vo(BS_nT_grps))
+ call BS_HAYVEC_alloc(Slepc_v%Vi)
+ call BS_HAYVEC_alloc(Slepc_v%Vo) 
+ !
+ ! ALLOCATE SLEPC SHELL MATRIX
+ !==================================
+ !
+ ! We let petsc decide which part of the matrix in each core.
+ ! In the future it should be done acording to the BS parallelization
+ !
+ call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,BS_H_dim,BS_H_dim,0,slepc_mat,ierr)
+ call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
+ call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
+ call MatSetUp(slepc_mat,ierr)
+ !
+ ! ALLOCATE BS STUFF
+ !==================================
+ !
+ call BS_mat_alloc_BSS()
+ !
+ call fill_eh_dipoles()
+ ! 
+end subroutine K_shell_matrix
+
+
+
+
+subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
+ !
+ ! Interface with the K_multiply_by_V from the Haydock method
+ ! This function has to take the same arguments as MatMult from PETSC
+ !
+ use BS_solvers,    ONLY : Slepc_v
+ use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_blk,n_BS_blks,BS_H_dim
+ use parallel_m,    ONLY : PAR_IND_T_Haydock
+ !
+ implicit none
+ !
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+ !
+ VecScatter           :: ctx
+ PetscScalar, pointer :: xx(:)
+ Vec                  :: vi,vo,x
+ Mat                  :: slepc_mat
+ integer              :: n, i_g, rank, i_c, ierr, H_pos, start_index
+ !
+ call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+ !
+ ! copy input vector vi -> Vi
+ !============================
+ !
+ call VecScatterCreateToAll(vi,ctx,x,ierr);
+ !
+ ! scatter as many times as you need
+ !
+ call VecScatterBegin(ctx,vi,x,INSERT_VALUES,SCATTER_FORWARD,ierr);
+ call VecScatterEnd(ctx,vi,x,INSERT_VALUES,SCATTER_FORWARD,ierr);
+ !
+ !call VecGetArrayReadF90(x,xx,ierr)
+ !write(*,*) xx
+ !call VecRestoreArrayReadF90(x,xx,ierr)
+ !
+ do i_g=1,BS_nT_grps
+   start_index = sum(BS_T_grp(:i_g-1)%size)-1
+   do i_c=1,BS_T_grp(i_g)%size
+     H_pos=start_index+i_c
+     !SLEPC funcitons expect C indexes both in Fortran and C
+     call VecGetValues( x, 1, H_pos, Slepc_v%Vi(i_g)%fragment(i_c), ierr )
+   enddo
+ enddo
+ !
+ ! destroy scatter context and local vector when no longer needed
+ !
+ call VecScatterDestroy(ctx,ierr);
+ call VecDestroy(x,ierr);
+ !
+ !use the haydock routine to calculate the matrix-vector product
+ !
+ call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo, 1 )
+ !
+ !copy output vector Vo -> vo
+ !
+ do i_g=1,BS_nT_grps
+   start_index = sum(BS_T_grp(:i_g-1)%size)-1
+   do i_c=1,BS_T_grp(i_g)%size
+     H_pos=start_index+i_c
+     !SLEPC funcitons expect C indexes both in Fortran and C
+     call VecSetValues( vo, 1, H_pos, Slepc_v%Vo(i_g)%fragment(i_c), INSERT_VALUES, ierr )
+   enddo
+ enddo
+ !
+ !call exit()
+ call VecAssemblyBegin(vo,ierr)
+ call VecAssemblyEnd(vo,ierr)
+ !
+ !call VecGetArrayReadF90(vo,xx,ierr)
+ !write(*,*) xx
+ !call VecRestoreArrayReadF90(vo,xx,ierr)
+end subroutine
+

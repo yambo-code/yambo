@@ -57,9 +57,9 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
    io_BSS_diago=io_header(ID,XC_KIND="K_E force")
    !
    if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
-     call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+     call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    else
-     call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
+     call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=1)
    endif
    !
    call io_elemental(ID,VAR=&
@@ -68,6 +68,8 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
 &       " Excitonic eigenstates included  :",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
 &       " Field direction                 :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
+   call io_elemental(ID,VAR=&
+&       " Number of eigenstates included  :",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! header return

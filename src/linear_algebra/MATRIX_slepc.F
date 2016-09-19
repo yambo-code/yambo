@@ -28,7 +28,8 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   ! This routine can be called from within Matrix_driver.F but should be kept in
   ! a separate souce file for clarity.
   !
-  use pars,          ONLY:SP,cONE,cZERO
+  use pars,          ONLY : SP,cONE,cZERO
+  use com,           ONLY : msg
   implicit none
   !
   ! headers
@@ -90,9 +91,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
     call MatView(A,PETSC_VIEWER_STDOUT_WORLD,ierr)
   endif
   !
-  if (rank .eq. 0) write(*,*) 'creating vecs...'
   call MatCreateVecs(A,xr,xi,ierr)
-  if (rank .eq. 0) write(*,*) 'done!'
   
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Create the eigensolver and display info
@@ -121,7 +120,8 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (rank .eq. 0) write(*,*) 'solving...'
+  call msg('s', 'Solving...')
+  write(*,*)
   call EPSSolve(eps,ierr)
   call EPSGetIterationNumber(eps,its,ierr)
   if (rank .eq. 0) then
@@ -204,7 +204,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
      enddo
   endif
   !call PetscViewerDestroy(hdf5v,ierr)
-  if (rank .eq. 0) write(*,*) 'done!'
+  call msg('s','done!')
   
   call EPSDestroy(eps,ierr)
   call VecDestroy(xr,ierr)

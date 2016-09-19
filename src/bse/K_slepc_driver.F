@@ -42,7 +42,7 @@ subroutine K_slepc_driver(iq,W)
  use BS,             ONLY:BS_K_coupling,BS_H_dim
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BS_mat_free,BS_mat,BSS_n_eig,&
-&                         BSS_write_eig_2_db,BSS_eh_W
+&                         BSS_write_eig_2_db,BSS_eh_W, Slepc_shell
  use electrons,      ONLY:E_SOC_nbands
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec,warning
@@ -143,17 +143,19 @@ subroutine K_slepc_driver(iq,W)
  ! Kernel loading
  !================
  !
- ! Here we will have two options to initialize the slepc matrix:
- !
- ! 1. In the first option we create a distributed PETSC matrix from the BS blocks
  if(io_err<0) then
-    if (.true.) then
-        call K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
- ! 2. Here we will define a PetscShell matrix and define the matrix-vector multiplication
+ ! Here we will have two options to initialize the slepc matrix:
+    call parser('BSSSlepcShell',Slepc_shell)
+ !
+ ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
  ! using the K_multiply_by_V function used in the Haydock method
-    else
+    if (Slepc_shell) then
         call K_shell_matrix(iq,slepc_mat)
+ !
+ ! 2. Here we create a distributed PETSC matrix from the BS_blks
+    else
+        call K_stored_in_a_slepc_matrix(iq,slepc_mat)
     endif
  endif
  !
@@ -419,7 +421,6 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  ! FILLING the slepc_mat
  !====================
  !
- call msg('s','Filling the slepc_mat')
  do i_B=1,n_BS_blks
    !
    i_Tk  =BS_blk(i_B)%iT_k
@@ -498,8 +499,6 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
- !
- call msg('s','done!')
  !
 end subroutine K_stored_in_a_slepc_matrix
 

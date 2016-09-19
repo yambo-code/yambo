@@ -83,6 +83,10 @@ module BS_solvers
  real(SP) :: Haydock_treshold
  real(SP) :: Haydock_v0_mod
  !
+ ! Solvers (Slepc)
+ !=========
+ logical  :: Slepc_shell
+ !
  ! Solvers (Inversion)
  !=========
  character(schlen):: BSS_inversion_mode

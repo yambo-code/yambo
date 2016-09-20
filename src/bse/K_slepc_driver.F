@@ -179,7 +179,7 @@ subroutine K_slepc_driver(iq,W)
  !
  ! Test (TO BE ROMVED)
  !
- if (.false.) then
+ if (.true.) then
      write(*,*) 'create unitary vector vin'
      call VecCreate(PETSC_COMM_WORLD,vin,ierr)
      call VecSetSizes(vin,PETSC_DECIDE,BS_H_dim,ierr)
@@ -200,6 +200,9 @@ subroutine K_slepc_driver(iq,W)
      !
      write(*,*) 'print vector vin'
      call VecView(vin,PETSC_VIEWER_STDOUT_WORLD,ierr)
+     !
+     write(*,*) 'print slepc_mat'
+     call MatView(slepc_mat,PETSC_VIEWER_STDOUT_WORLD,ierr)
      !
      write(*,*) 'Matmul'
      call MatMult(slepc_mat,vin,vout,ierr)
@@ -389,7 +392,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !      | (-K_c^*)  (-K_r^*) |
  !
  !
- use pars,           ONLY:SP,cI,cONE
+ use pars,           ONLY:SP,DP,cI,cONE
  use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
  use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
@@ -408,7 +411,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  complex(SP) :: E_plus_W
  integer     :: iq,i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,i_k_bz,i_v,i_cond,i_spin
  type(Mat)   :: slepc_mat
- complex     :: val
+ complex(DP) :: val
  !
  integer     :: ierr
  !
@@ -464,12 +467,12 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
        !
        val = BS_blk(i_B)%mat(i_r,i_c)
        if (BS_blk(i_B)%mode=="R") then
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(2), val,        INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       val , INSERT_VALUES, ierr )
          call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(val), INSERT_VALUES, ierr )
        endif
        !
        if (BS_blk(i_B)%mode=="A") then
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+BS_K_dim, val,        INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+BS_K_dim,       val , INSERT_VALUES, ierr )
          call MatSetValue( slepc_mat, H_pos(2)+BS_K_dim, H_pos(1), conjg(val), INSERT_VALUES, ierr )
        endif
        !

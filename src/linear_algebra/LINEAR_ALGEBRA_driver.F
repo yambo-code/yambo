@@ -29,6 +29,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
 &                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error
  use wrapper,       ONLY:M_by_M
  use com,           ONLY:msg
+ use stderr,        ONLY:log_as_a_file
  use parallel_m,    ONLY:linear_algebra_is_parallel
 #if defined _SCALAPACK
  use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_ORTHO,SLK_POOL,&
@@ -203,7 +204,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    ! ####> MAT_MUL
    ! C = M * B
    if (idriver==MAT_MUL) then
-     if (l_comment) call msg('s','[LA] SERIAL matrix multiplication (LK)')
+     if (l_comment) call msg('sn','[LA] SERIAL matrix multiplication (LK)')
      call M_by_M('N','N',size(C,1),size(C,2),size(M,2),cONE,M,size(M,1),&
 &                        B,size(B,1),cZERO,C,size(C,1))
    endif
@@ -211,6 +212,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    call LINEAR_ALGEBRA_WS_clean_up(WS) 
    !
  endif
+ !
+ if (l_comment.and..not.log_as_a_file) call msg('s',' ')
  !
  ! ===========================================================================================
  !

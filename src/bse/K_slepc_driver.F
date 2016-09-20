@@ -38,7 +38,7 @@ subroutine K_slepc_driver(iq,W)
  ! The moficiations in this file only become relevant once we start steps 2 and
  ! 3 of the implementation
  !
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP,cZERO_DP,cONE_DP,DP
  use BS,             ONLY:BS_K_coupling,BS_H_dim
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BS_mat_free,BS_mat,BSS_n_eig,&
@@ -89,6 +89,9 @@ subroutine K_slepc_driver(iq,W)
  !
  integer              ::io_err,ID  ! I/O
  !
+ integer      :: vec_index(4)
+ complex(DP)  :: vec_value(4)
+ !
 #if defined _TIMING
  call timing('Slepc Solver',OPR='start')
 #endif
@@ -104,14 +107,14 @@ subroutine K_slepc_driver(iq,W)
  ! Number of states for partial diagonalization
  !================================================
  if (BSS_n_eig==0) then
-   BSS_n_eig = BS_H_dim*.01
+   BSS_n_eig = nint(BS_H_dim*.01)
    call warning(' Calculating only 1% of the eigenvalues.')
  endif
  !
  ! if the number of eigenvalues to calculate is larger than matrix dimensions
  if (BSS_n_eig>BS_H_dim) then
    call warning(' Number of eigenvalues is larger than hamiltonian. Calculating only 1% of the eigenvalues.')
-   BSS_n_eig = BS_H_dim*.01
+   BSS_n_eig = nint(BS_H_dim*.01)
  endif
  ! if the number of eigenvalued to calculate is smaller than 1
  if (BSS_n_eig<1) then
@@ -187,7 +190,9 @@ subroutine K_slepc_driver(iq,W)
      call VecSetType(vout, VECMPI, ierr)
      !
      write(*,*) "Setting the values", BS_H_dim
-     call VecSetValues(vin,4,(/0,1,2,3/),(/cmplx(0.,0.,DP),cmplx(0.,0.,DP),cmplx(1.,0.,DP),cmplx(0.,0.,DP)/),INSERT_VALUES,ierr)
+     vec_index=(/0,1,2,3/)
+     vec_value=(/cZERO_DP,cZERO_DP,cONE_DP,cZERO_DP/)
+     call VecSetValues(vin,4,vec_index,vec_value,INSERT_VALUES,ierr)
      !
      write(*,*) "Assembly"
      call VecAssemblyBegin(vin,ierr)
@@ -566,12 +571,14 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  ! Interface with the K_multiply_by_V from the Haydock method
  ! This function has to take the same arguments as MatMult from PETSC
  !
- use pars,          ONLY : DP
+ use pars,          ONLY : SP,DP
  use BS_solvers,    ONLY : Slepc_v
  use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_blk,n_BS_blks,BS_H_dim
  use parallel_m,    ONLY : PAR_IND_T_Haydock
  !
  implicit none
+ !
+ complex(DP)   :: tmp_value(1)
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -607,7 +614,8 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
      !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecGetValues( x, 1, H_pos, (/cmplx(Slepc_v%Vi(i_g)%fragment(i_c),kind=DP)/), ierr )
+     call VecGetValues( x, 1, H_pos, tmp_value, ierr )
+     Slepc_v%Vi(i_g)%fragment(i_c)=cmplx(tmp_value(1),kind=SP)
    enddo
  enddo
  !
@@ -626,8 +634,9 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
+     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c),kind=DP)
      !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecSetValues( vo, 1, H_pos, (/cmplx(Slepc_v%Vo(i_g)%fragment(i_c),kind=DP)/), INSERT_VALUES, ierr )
+     call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
    enddo
  enddo
  !

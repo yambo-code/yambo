@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_engine(what,i_counter,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
+subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
  !
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PP_indexes
@@ -40,7 +40,7 @@ subroutine K_inversion_engine(what,i_counter,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_
  implicit none
  !
  character(3)     :: what
- integer          :: iw_2start,iw_2do,Lo_dim,Lo_n_loop,i_counter
+ integer          :: iw_2start,iw_2do,Lo_dim,Lo_n_loop
  type(PP_indexes) :: px
  type(w_samp)     :: W
  complex(SP)      :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
@@ -102,16 +102,16 @@ subroutine K_inversion_engine(what,i_counter,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_
        if (i_L==1) Gr="r"
        if (i_L==2) Gr="a"
        !
-       call K_inversion_do_it_full(i_counter+i_L-1,Lo(:,iw,i_L),Mm1,Gr)
+       call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
        !
-       if (what=="EPS") then
+       if (what=="EPS".or.what=="any") then
          call EPS_compose(i_L)
          K_INV_EPS%err(iw)=0
        endif
        !
 #if defined _PL
        !
-       if (what=="PLS") then
+       if (what=="PLS".or.what=="any") then
          call PL_compose(i_L)
          K_INV_PL%err(iw)=0
        endif

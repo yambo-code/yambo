@@ -89,8 +89,8 @@ subroutine K_slepc_driver(iq,W)
  !
  integer              ::io_err,ID  ! I/O
  !
- integer                      :: vec_index(4)
- complex(SlepcFortranComplex) :: vec_value(4)
+ type(PetscFortranInt)     :: vec_index(4)
+ type(PetscFortranComplex) :: vec_value(4)
  !
 #if defined _TIMING
  call timing('Slepc Solver',OPR='start')
@@ -415,7 +415,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  integer     :: iq,i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,i_k_bz,i_v,i_cond,i_spin
  integer     :: ierr
  type(Mat)   :: slepc_mat
- complex(SlepcFortranComplex) :: val
+ type(PetscFortranComplex) :: val
  !
  !
  ! ALLOCATE SLEPC MATRIX
@@ -602,7 +602,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  implicit none
  !
- complex(SlepcFortranComplex)   :: tmp_value(1)
+ type(PetscFortranComplex)   :: tmp_value(1)
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -657,7 +657,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
-     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c),kind=SP)
+     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c))
      !SLEPC funcitons expect C indexes both in Fortran and C
      call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
    enddo

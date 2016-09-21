@@ -38,7 +38,7 @@ subroutine K_slepc_driver(iq,W)
  ! The moficiations in this file only become relevant once we start steps 2 and
  ! 3 of the implementation
  !
- use pars,           ONLY:SP,cZERO_DP,cONE_DP,DP
+ use pars,           ONLY:SP,cZERO,cONE,DP
  use BS,             ONLY:BS_K_coupling,BS_H_dim
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BS_mat_free,BS_mat,BSS_n_eig,&
@@ -89,8 +89,8 @@ subroutine K_slepc_driver(iq,W)
  !
  integer              ::io_err,ID  ! I/O
  !
- integer      :: vec_index(4)
- complex(DP)  :: vec_value(4)
+ integer                      :: vec_index(4)
+ complex(SlepcFortranComplex) :: vec_value(4)
  !
 #if defined _TIMING
  call timing('Slepc Solver',OPR='start')
@@ -177,38 +177,41 @@ subroutine K_slepc_driver(iq,W)
    endif
  endif
  !
- ! Test (TO BE ROMVED)
+ ! Test (TO BE REMVED)
  !
- if (.true.) then
-     write(*,*) 'create unitary vector vin'
-     call VecCreate(PETSC_COMM_WORLD,vin,ierr)
-     call VecSetSizes(vin,PETSC_DECIDE,BS_H_dim,ierr)
-     call VecSetType(vin, VECMPI, ierr)
-     !
-     call VecCreate(PETSC_COMM_WORLD,vout,ierr)
-     call VecSetSizes(vout,PETSC_DECIDE,BS_H_dim,ierr)
-     call VecSetType(vout, VECMPI, ierr)
-     !
-     write(*,*) "Setting the values", BS_H_dim
-     vec_index=(/0,1,2,3/)
-     vec_value=(/cZERO_DP,cZERO_DP,cONE_DP,cZERO_DP/)
-     call VecSetValues(vin,4,vec_index,vec_value,INSERT_VALUES,ierr)
-     !
-     write(*,*) "Assembly"
-     call VecAssemblyBegin(vin,ierr)
-     call VecAssemblyEnd(vin,ierr)
-     !
-     write(*,*) 'print vector vin'
-     call VecView(vin,PETSC_VIEWER_STDOUT_WORLD,ierr)
-     !
-     write(*,*) 'print slepc_mat'
-     call MatView(slepc_mat,PETSC_VIEWER_STDOUT_WORLD,ierr)
-     !
-     write(*,*) 'Matmul'
-     call MatMult(slepc_mat,vin,vout,ierr)
-     !
-     write(*,*) 'print vector vout'
-     call VecView(vout,PETSC_VIEWER_STDOUT_WORLD,ierr)
+ if (.false.) then
+   !
+   write(*,*) 'create unitary vector vin'
+   call VecCreate(PETSC_COMM_WORLD,vin,ierr)
+   call VecSetSizes(vin,PETSC_DECIDE,BS_H_dim,ierr)
+   call VecSetType(vin, VECMPI, ierr)
+   !
+   call VecCreate(PETSC_COMM_WORLD,vout,ierr)
+   call VecSetSizes(vout,PETSC_DECIDE,BS_H_dim,ierr)
+   call VecSetType(vout, VECMPI, ierr)
+   !
+   write(*,*) "Setting the values", BS_H_dim
+   vec_index=(/0,1,2,3/)
+   vec_value=(/cZERO,cZERO,cONE,cZERO/)
+   call VecSetValues(vin,4,vec_index,vec_value,INSERT_VALUES,ierr)
+   !
+   write(*,*) "Assembly"
+   call VecAssemblyBegin(vin,ierr)
+   call VecAssemblyEnd(vin,ierr)
+   !
+   write(*,*) 'print vector vin'
+   call VecView(vin,PETSC_VIEWER_STDOUT_WORLD,ierr)
+   !
+   write(*,*) 'print slepc_mat'
+   call MatView(slepc_mat,PETSC_VIEWER_STDOUT_WORLD,ierr)
+   !
+   write(*,*) 'Matmul'
+   call MatMult(slepc_mat,vin,vout,ierr)
+   !
+   write(*,*) 'print vector vout'
+   call VecView(vout,PETSC_VIEWER_STDOUT_WORLD,ierr)
+   !
+   call exit()
  !
  endif
  !
@@ -410,10 +413,10 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
  complex(SP) :: E_plus_W
  integer     :: iq,i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,i_k_bz,i_v,i_cond,i_spin
- type(Mat)   :: slepc_mat
- complex(DP) :: val
- !
  integer     :: ierr
+ type(Mat)   :: slepc_mat
+ complex(SlepcFortranComplex) :: val
+ !
  !
  ! ALLOCATE SLEPC MATRIX
  !==================================
@@ -440,8 +443,6 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
      !
      ! First the diagonal
      !
-     !val = 123
-     !call MatSetValue( slepc_mat, 0, 0, val, INSERT_VALUES, ierr )
      if (i_Tk==i_Tp) then
        if (BS_blk(i_B)%mode=="R") then
          E_plus_W=BSS_eh_E(H_pos(1)+1)*cONE
@@ -518,7 +519,8 @@ subroutine K_shell_matrix(iq,slepc_mat)
  ! Create a PETSC ShellMatrix and define the matrix-vector product
  ! function using the routine K_multiply_by_V 
  !
- use BS,             ONLY:BS_H_dim, BS_nT_grps
+ use pars,           ONLY:SP
+ use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
  use BS_solvers,     ONLY:BS_mat_alloc_BSS,Slepc_v,BS_HAYVEC_alloc
  !
  implicit none
@@ -530,7 +532,7 @@ subroutine K_shell_matrix(iq,slepc_mat)
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  ! 
- integer        iq
+ integer        iq, i_B, i_r, i_c, i_Tk, i_Tp
  Mat            slepc_mat
  PetscErrorCode ierr
  external K_multiply_by_V_slepc
@@ -563,7 +565,26 @@ subroutine K_shell_matrix(iq,slepc_mat)
  call BS_mat_alloc_BSS()
  !
  call fill_eh_dipoles()
+ !
+ ! MAKE THE DIAGONAL OF THE MATRIX REAL
+ !=====================================
  ! 
+ do i_B=1,n_BS_blks
+   !
+   i_Tk  =BS_blk(i_B)%iT_k
+   i_Tp  =BS_blk(i_B)%iT_p
+   !
+   if (i_Tk==i_Tp) then
+     do i_r=1,BS_blk(i_B)%size(1)
+       BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
+       do i_c=i_r,BS_blk(i_B)%size(2)
+         BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+       enddo
+     enddo
+     !
+   endif
+   !
+ enddo
 end subroutine K_shell_matrix
 
 
@@ -581,7 +602,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  implicit none
  !
- complex(DP)   :: tmp_value(1)
+ complex(SlepcFortranComplex)   :: tmp_value(1)
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -596,7 +617,6 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  Mat                  :: slepc_mat
  integer              :: n, i_g, rank, i_c, ierr, H_pos(1), start_index
  !
- call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
  !
  ! copy input vector vi -> Vi
  !============================
@@ -637,7 +657,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
-     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c),kind=DP)
+     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c),kind=SP)
      !SLEPC funcitons expect C indexes both in Fortran and C
      call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
    enddo

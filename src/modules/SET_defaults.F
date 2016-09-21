@@ -61,7 +61,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
- use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_cpu_linear_algebra
+ use parallel_m, ONLY:ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
 &                     n_max_jobstr,grid_paths
@@ -657,13 +657,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  MAG_theta=0._SP
  phase_trick=.FALSE.
  !
-#endif
- !
- ! Parallel
- !
- PARALLEL_cpu_linear_algebra     =1
-#if defined _SCALAPACK
- PARALLEL_cpu_linear_algebra     =0
 #endif
  !
 end subroutine

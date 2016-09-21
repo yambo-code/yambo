@@ -29,7 +29,8 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
 #endif
- use com,           ONLY:warning
+ use com,           ONLY:warning,msg
+ use stderr,        ONLY:intc
  !
  implicit none
  !
@@ -59,6 +60,9 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
    call SLK_communicators_init( PAR_COM_NULL, PAR_COM_WORLD)
    !
    linear_algebra_is_parallel=.FALSE.
+   !
+   call msg('s','[LA] SERIAL linear algebra')
+   !
    return
    !
  endif
@@ -75,7 +79,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
    !
    call SLK_communicators_init( SLK_COM_A2A(1), SLK_COM_INDEX(1) )
    !
- else
+ else if (ENVIRONMENT=="Response_T_space") then
    !
    call SLK_communicators_init( PAR_COM_WORLD, PAR_COM_NULL )
    !
@@ -118,6 +122,16 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
      PAR_IND_intra_SLK_ID=PAR_COM_WORLD%cpu_id
    endif
    !
+ endif
+ !
+ ! Messaging
+ !
+ if (linear_algebra_is_parallel) then
+   call msg('s','[LA] PARALLEL linear algebra uses a '//trim(intc(SLK_ORTHO%grid(1)))//&
+&               "x"//trim(intc(SLK_ORTHO%grid(2)))//" SLK grid ("//&
+&               trim(intc(product(SLK_ORTHO%grid)))//" cpu)")
+ else
+   call msg('s','[LA] SERIAL linear algebra')
  endif
  !
  contains

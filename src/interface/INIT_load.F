@@ -702,9 +702,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
        name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
        call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
 &              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
-       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg"
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_INV"
        call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
-&              CPU_structure(i_s)%nCPU_lin_algebra,verb_level=V_parallel)
+&              CPU_structure(i_s)%nCPU_lin_algebra_INV,verb_level=V_parallel)
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_DIAGO"
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+&              CPU_structure(i_s)%nCPU_lin_algebra_DIAGO,verb_level=V_parallel)
      enddo
      !
    end subroutine

@@ -26,8 +26,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use pars,          ONLY:IP
  use linear_algebra,ONLY:INV
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
-&                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,&
-&                        PARALLEL_cpu_linear_algebra,CPU_structure,master_cpu,&
+&                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,CPU_structure,master_cpu,&
 &                        PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
@@ -57,7 +56,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered,PAR_IND_Q_bz
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
-&                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_SLK_ID,&
+&                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,&
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_PLASMA_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
@@ -185,7 +184,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_IND_Xk_bz_ID=0
    PAR_IND_CON_BANDS_X_ID(X_type)=0
    PAR_IND_VAL_BANDS_X_ID(X_type)=0
-   PAR_IND_SLK_ID=0
    PAR_IND_QP_ID=0
    PAR_IND_PLASMA_ID=0
    PAR_IND_G_b_ID=0
@@ -342,9 +340,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Linear Algebra (all drivers)
    !
-   PARALLEL_cpu_linear_algebra=CPU_structure(7)%nCPU_lin_algebra
-   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
-   PAR_IND_SLK_ID=PAR_COM_SLK_INDEX%CPU_id
+   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(7)%nCPU_lin_algebra_INV)
    !
  endif
  !
@@ -376,9 +372,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Inversion
    !
-   PARALLEL_cpu_linear_algebra=CPU_structure(1)%nCPU_lin_algebra
-   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
-   PAR_IND_SLK_ID=PAR_COM_SLK_INDEX%CPU_id
+   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(1)%nCPU_lin_algebra_INV)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
@@ -468,20 +462,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
+   ! Inversion
+   !
    if (ENVIRONMENT=="Response_G_space_Finite_Momentum") then
      !
-     PARALLEL_cpu_linear_algebra=CPU_structure(2)%nCPU_lin_algebra
+     call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(2)%nCPU_lin_algebra_INV)
      !
    else if (ENVIRONMENT=="Response_G_space") then
      !
-     PARALLEL_cpu_linear_algebra=CPU_structure(3)%nCPU_lin_algebra
+     call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(3)%nCPU_lin_algebra_INV)
      !
    endif
-   !
-   ! Inversion
-   !
-   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
-   PAR_IND_SLK_ID=PAR_COM_SLK_INDEX%CPU_id
    !
    ! I/O privileges
    !
@@ -1006,11 +997,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_T_ordered%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&
 &                             TOTAL=BS_nT_grps*(BS_nT_grps+1)/2,NCPU=PAR_COM_T_INDEX%n_CPU)
    !
-   ! Linear Algebra
-   !
-   PARALLEL_cpu_linear_algebra=CPU_structure(4)%nCPU_lin_algebra
-   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
-   PAR_IND_SLK_ID=PAR_COM_SLK_INDEX%CPU_id
+   ! Linear Algebra setup moved in the solver_driver...
    !
    ! I/O privileges
    !

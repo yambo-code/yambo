@@ -188,14 +188,14 @@ subroutine X_s(iq,X,Xw,W_range)
      ! formulation as a linear system
      !
      X_mat(:,:,iw_mat)=Xo
-     call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,B=X_mat(:,:,iw_mat),FIRST_call=iw==1)
+     call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,B=X_mat(:,:,iw_mat))
      !
   else
      !
      ! formulation matrix inversion + matmul
      !
-     call LINEAR_ALGEBRA_driver(INV,tddftk,FIRST_call=iw==1)
-     call LINEAR_ALGEBRA_driver(MAT_MUL,tddftk,B=Xo,C=X_mat(:,:,iw_mat),FIRST_call=iw==1)
+     call LINEAR_ALGEBRA_driver(INV,tddftk)
+     call LINEAR_ALGEBRA_driver(MAT_MUL,tddftk,B=Xo,C=X_mat(:,:,iw_mat))
      !
    endif
    !

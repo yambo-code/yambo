@@ -68,7 +68,7 @@ module linear_algebra
  !
  interface 
    !
-   subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det,FIRST_call)
+   subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
      !
      use pars,           ONLY:SP
      !
@@ -83,7 +83,6 @@ module linear_algebra
      complex(SP),  optional :: E_cmpl(:)
      integer,      optional :: SVD_digits 
      complex(SP),  optional :: det
-     logical,      optional :: FIRST_call
      !
    end subroutine
    !

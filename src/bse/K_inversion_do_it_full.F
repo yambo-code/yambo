@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_do_it_full(i_counter,Lo,KERNEL,what)
+subroutine K_inversion_do_it_full(Lo,KERNEL,what)
  !
  ! 1./(Lo^{-1}-M)
  !
@@ -32,7 +32,6 @@ subroutine K_inversion_do_it_full(i_counter,Lo,KERNEL,what)
  !
  implicit none
  !
- integer                ::i_counter
  character  ,intent(in) ::what ! "r","a"
  complex(SP),intent(in) ::Lo(BS_H_dim)
  complex(SP),intent(out)::KERNEL(BS_H_dim,BS_H_dim) 
@@ -51,6 +50,6 @@ subroutine K_inversion_do_it_full(i_counter,Lo,KERNEL,what)
    enddo
  enddo
  !
- call LINEAR_ALGEBRA_driver(INV,KERNEL,FIRST_call=i_counter==1)
+ call LINEAR_ALGEBRA_driver(INV,KERNEL)
  !
 end subroutine

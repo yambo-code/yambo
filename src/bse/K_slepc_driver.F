@@ -633,6 +633,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !call VecRestoreArrayReadF90(x,xx,ierr)
  !
  do i_g=1,BS_nT_grps
+   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
@@ -654,6 +655,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !copy output vector Vo -> vo
  !
  do i_g=1,BS_nT_grps
+   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c

@@ -57,7 +57,11 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  ! Serial (LK) case (altough this does not mean serial job)
  if (Ncpu_lin_algebra==1) then  
    !
-   call SLK_communicators( PAR_COM_NULL, PAR_COM_WORLD, 1)
+   if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
+     call SLK_communicators( PAR_COM_NULL, PAR_COM_Q_A2A, 1)
+   else if (ENVIRONMENT=="Response_T_space") then
+     call SLK_communicators( PAR_COM_NULL, PAR_COM_WORLD, 1)
+   endif
    !
    linear_algebra_is_parallel=.FALSE.
    !

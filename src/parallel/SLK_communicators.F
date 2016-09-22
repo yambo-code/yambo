@@ -70,7 +70,7 @@ subroutine SLK_communicators(INTRA_world,INTER_world,N)
    call COMM_copy(PAR_COM_NULL,PAR_COM_SLK_INDEX_local)
    ! 
    ! If Linear Algebra is serail all cpus can be used for further parallelization
-   if (N==1) call COMM_copy(INTRA_world,PAR_COM_SLK_INDEX_local)
+   if (N==1) call COMM_copy(INTER_world,PAR_COM_SLK_INDEX_local)
    !
    return
  endif

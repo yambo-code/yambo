@@ -28,7 +28,7 @@ subroutine X_s(iq,X,Xw,W_range)
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Q_A2A,linear_algebra_is_parallel,PAR_COM_WORLD,&
-&                        PP_indexes,PP_indexes_reset,PAR_COM_DIPOLES,PAR_IND_intra_SLK_ID,PAR_COM_intra_SLK
+&                        PP_indexes,PP_indexes_reset,PAR_COM_DIPOLES,PAR_COM_SLK_INDEX_local
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV,LIN_SYS,MAT_MUL
@@ -82,12 +82,13 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  ! ... and frequencies distribution
  !
- call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_intra_SLK)
- PAR_IND_FREQ_ID=PAR_IND_intra_SLK_ID
- call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1),TOTAL=Xw%n_freqs)
+ call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_SLK_INDEX_local)
+ PAR_IND_FREQ_ID=PAR_COM_SLK_INDEX_local%CPU_id+1
+ call PARALLEL_live_message("X Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),TOTAL=Xw%n_freqs,&
+&                           NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) &
-&  call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1))
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) &
+&  call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
  !
  do iw=1,Xw%n_freqs
    !
@@ -211,11 +212,11 @@ subroutine X_s(iq,X,Xw,W_range)
    forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4._SP*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
 #endif
    !
-   if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) call live_timing(steps=1)
+   if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) call live_timing(steps=1)
    !
  enddo
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) call live_timing()
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) call live_timing()
  !
 #if defined _TIMING
  call timing('X (procedure)',OPR='stop')

@@ -35,9 +35,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use R_lattice,      ONLY:q_norm,bz_samp
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_intra_SLK,&
-&                         PAR_IND_intra_SLK_ID,PAR_COM_intra_SLK,myid
- use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
+&                         PAR_COM_SLK_INDEX_local,myid
+ use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -255,18 +255,21 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! CLEAN
  !
- !
  contains 
    !
    subroutine do_it_FULL(TYP)
      !
      type(K_Inversion_data) :: TYP
+     integer                :: PAR_IND_FREQ_ID
      !
      ! Then loop on the groups performing full inversion
      !
      call PP_indexes_reset(PAR_IND_freqs)
-     call PARALLEL_index(PAR_IND_freqs,(/TYP%n_full_inv_freqs/),COMM=PAR_COM_intra_SLK)
-     call live_timing('['//TYP%what//'] Exact inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_intra_SLK_ID+1))
+     PAR_IND_FREQ_ID=PAR_COM_SLK_INDEX_local%CPU_id+1
+     call PARALLEL_index(PAR_IND_freqs,(/TYP%n_full_inv_freqs/),COMM=PAR_COM_SLK_INDEX_local)
+     call PARALLEL_live_message('['//TYP%what//'] Frequencies',LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),&
+&                               TOTAL=TYP%n_full_inv_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
+     call live_timing('['//TYP%what//'] Exact inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
      !
      do i1=1,TYP%n_full_inv_freqs
        !
@@ -286,9 +289,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
      call live_timing()
      call PP_redux_wait(TYP%err,imode=2)
-     if (TYP%what=="EPS") call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_intra_SLK%COMM)
+     if (TYP%what=="EPS") call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #if defined _PL
-     if (TYP%what=="PLS") call PP_redux_wait(PL(:,2),COMM=PAR_COM_intra_SLK%COMM)
+     if (TYP%what=="PLS") call PP_redux_wait(PL(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #endif
      !
      nw_conv=count(TYP%err==0)
@@ -347,9 +350,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      enddo
      !
      if (TYP%n_full_inv_freqs>0.and.FULL) then 
-       if (TYP%what=="EPS") Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(PAR_COM_intra_SLK%n_CPU,SP)
+       if (TYP%what=="EPS") Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
 #if defined _PL
-       if (TYP%what=="PLS") PL(:,2)=PL(:,2)/real(PAR_COM_intra_SLK%n_CPU,SP)
+       if (TYP%what=="PLS") PL(:,2)=PL(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
 #endif
      endif
      !

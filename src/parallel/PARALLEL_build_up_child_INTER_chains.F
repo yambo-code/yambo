@@ -21,30 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_build_up_child_chains(i_child,COMM_child,i_father)
+subroutine PARALLEL_build_up_child_INTER_chains(i_child,COMM_child,i_father)
  !
- ! Create hierarchy-based communicators
+ ! Create hierarchy-based INTER (=non countiguous) communicators
  !
 #if defined _MPI
  !
- use parallel_m,    ONLY:MPI_comm,myid,mpi_comm_world,ncpu_chain,nchains_group,n_groups,ncpu
+ use parallel_m,    ONLY:MPI_comm,myid,PAR_COM_WORLD,ncpu_chain,nchains_group,&
+&                        n_groups,ncpu,i_INTER_CHAIN,CREATE_the_COMM
  !
  implicit none
  !
  type(MPI_comm) :: COMM_child
- integer        :: i_err,i_child,i_father,n_father,n_child
+ integer        :: i_child,i_father,n_father,n_child
  !
- n_father=ncpu/product(ncpu_chain(nchains_group(n_groups*2-1):i_father))
- n_child =             ncpu_chain(i_child)
+ n_father = ncpu/product(ncpu_chain(nchains_group(n_groups*2-1):i_father))
+ n_child  = ncpu_chain(i_child)
  !
- ! Warning, doing like that CPUs with the same my_chain are not countiguous
+ COMM_child%my_CHAIN=i_INTER_CHAIN(n_father,n_child)
+ call CREATE_the_COMM(PAR_COM_WORLD%COMM,COMM_child,myid)
  !
- COMM_child%my_CHAIN=(myid/n_father)*(n_father/n_child)+mod(myid,n_father/n_child)
- !
- call MPI_COMM_SPLIT(mpi_comm_world,COMM_child%my_CHAIN,myid,COMM_child%COMM,i_err)
- call MPI_COMM_RANK(COMM_child%COMM,COMM_child%CPU_id,i_err)
- !
- COMM_child%n_CPU=n_child
  COMM_child%chain_order=i_child-nchains_group(n_groups*2-1)+1
  !
 #endif

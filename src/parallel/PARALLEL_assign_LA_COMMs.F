@@ -23,9 +23,9 @@
 !
 subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
- use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,MPI_comm,COMM_copy,&
-&                        PAR_COM_SLK,PAR_COM_SLK_INDEX,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,&
-&                        linear_algebra_is_parallel,PAR_COM_intra_SLK,PAR_IND_intra_SLK_ID
+ use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,&
+&                        PAR_COM_SLK,PAR_COM_SLK_INDEX_global,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,&
+&                        linear_algebra_is_parallel
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
 #endif
@@ -48,7 +48,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  Ncpu_lin_algebra=1
 #if defined _SCALAPACK 
  if (Ncpu_in==0) Ncpu_lin_algebra=1         ! safe default
- if (Ncpu_in>0)  Ncpu_lin_algebra=Ncpu_in
+ if (Ncpu_in>0 ) Ncpu_lin_algebra=Ncpu_in
 #endif
  !
  ! smallest SLK grid is 2x2
@@ -57,9 +57,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  ! Serial (LK) case (altough this does not mean serial job)
  if (Ncpu_lin_algebra==1) then  
    !
-   call SLK_communicators_init( PAR_COM_NULL, PAR_COM_WORLD)
-   !
-   call SLK_FREQ_communicator(PAR_COM_WORLD)
+   call SLK_communicators( PAR_COM_NULL, PAR_COM_WORLD, 1)
    !
    linear_algebra_is_parallel=.FALSE.
    !
@@ -75,19 +73,19 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
    !
-   call SLK_communicators_init( PAR_COM_Q_A2A, PAR_COM_Q_INDEX ) 
+   call SLK_communicators( PAR_COM_Q_A2A, PAR_COM_Q_INDEX, Ncpu_in ) 
    !
  else if (ENVIRONMENT=="ScaLapacK") then
    !
-   call SLK_communicators_init( SLK_COM_A2A(1), SLK_COM_INDEX(1) )
+   call SLK_communicators( SLK_COM_A2A(1), SLK_COM_INDEX(1), Ncpu_in )
    !
  else if (ENVIRONMENT=="Response_T_space") then
    !
-   call SLK_communicators_init( PAR_COM_WORLD, PAR_COM_NULL )
+   call SLK_communicators( PAR_COM_WORLD, PAR_COM_NULL, Ncpu_in )
    !
  endif
  !
- ! redef of Ncpu and SLK init
+ ! redef of input Ncpu and SLK init
  !
  linear_algebra_is_parallel=.TRUE.
  !
@@ -98,56 +96,24 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
  ! init SLK
  !
- call SLK_setup( idriver, Ncpu_lin_algebra, SLK_ORTHO, SLK_POOL, PAR_COM_SLK, PAR_COM_SLK_INDEX, slk_error)
+ call SLK_setup( idriver, Ncpu_lin_algebra, SLK_ORTHO, SLK_POOL, PAR_COM_SLK, PAR_COM_SLK_INDEX_global, slk_error)
  !
  if (slk_error/=0) then
    linear_algebra_is_parallel=.FALSE.
    call warning("SLK setup failed. Cannot build a proper BLACS grid. Switching to standard LK")
+   call SLK_communicators( PAR_COM_NULL, PAR_COM_WORLD, 1)
  endif
  !
 #endif
  !
- ! Frequency Parallel COMM. Used in X_s and BSK inversion.
- !
- if (linear_algebra_is_parallel) then
-   if (PAR_COM_SLK_INDEX%n_CPU==1) call SLK_FREQ_communicator(PAR_COM_NULL)
- else
-   if (PAR_COM_SLK_INDEX%n_CPU==1) call SLK_FREQ_communicator(PAR_COM_WORLD)
-   if (PAR_COM_SLK_INDEX%n_CPU>1 ) call SLK_FREQ_communicator(PAR_COM_SLK)
- endif
- !
  ! Messaging
  !
  if (linear_algebra_is_parallel) then
-   call msg('s','[LA] PARALLEL linear algebra uses a '//trim(intc(SLK_ORTHO%grid(1)))//&
+   call msg('s','[LA@'//ENVIRONMENT//'] PARALLEL linear algebra uses a '//trim(intc(SLK_ORTHO%grid(1)))//&
 &               "x"//trim(intc(SLK_ORTHO%grid(2)))//" SLK grid ("//&
 &               trim(intc(product(SLK_ORTHO%grid)))//" cpu)")
  else
    call msg('s','[LA] SERIAL linear algebra')
  endif
  !
- contains
-   !
-   subroutine SLK_FREQ_communicator(COMM)
-     !
-     implicit none
-     !
-     type(MPI_comm), intent(in) :: COMM
-     !
-     call COMM_copy(COMM,PAR_COM_intra_SLK)
-     PAR_IND_intra_SLK_ID=COMM%cpu_id
-     !
-  end subroutine SLK_FREQ_communicator
-   !
-   subroutine SLK_communicators_init(COMM, INDEX_comm)
-     !
-     implicit none
-     !
-     type(MPI_comm), intent(in) :: COMM, INDEX_comm
-     !
-     call COMM_copy(COMM,      PAR_COM_SLK)
-     call COMM_copy(INDEX_comm,PAR_COM_SLK_INDEX)
-     !
-  end subroutine SLK_communicators_init
-  !
 end subroutine

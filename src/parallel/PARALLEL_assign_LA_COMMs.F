@@ -52,12 +52,14 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
 #endif
  !
  ! smallest SLK grid is 2x2
- if (Ncpu_lin_algebra<=3) Ncpu_lin_algebra=1
+ if (Ncpu_lin_algebra<4) Ncpu_lin_algebra=1
  !
- ! Serial (LK) case
+ ! Serial (LK) case (altough this does not mean serial job)
  if (Ncpu_lin_algebra==1) then  
    !
    call SLK_communicators_init( PAR_COM_NULL, PAR_COM_WORLD)
+   !
+   call SLK_FREQ_communicator(PAR_COM_WORLD)
    !
    linear_algebra_is_parallel=.FALSE.
    !
@@ -108,20 +110,10 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  ! Frequency Parallel COMM. Used in X_s and BSK inversion.
  !
  if (linear_algebra_is_parallel) then
-   !
-   call COMM_copy(PAR_COM_NULL,PAR_COM_intra_SLK)
-   PAR_IND_intra_SLK_ID=PAR_COM_NULL%CPU_id
-   !
+   if (PAR_COM_SLK_INDEX%n_CPU==1) call SLK_FREQ_communicator(PAR_COM_NULL)
  else
-   !
-   if (PAR_COM_SLK_INDEX%n_CPU>1) then
-     call COMM_copy(PAR_COM_SLK,PAR_COM_intra_SLK)
-     PAR_IND_intra_SLK_ID=PAR_COM_SLK%cpu_id
-   else
-     call COMM_copy(PAR_COM_WORLD,PAR_COM_intra_SLK)
-     PAR_IND_intra_SLK_ID=PAR_COM_WORLD%cpu_id
-   endif
-   !
+   if (PAR_COM_SLK_INDEX%n_CPU==1) call SLK_FREQ_communicator(PAR_COM_WORLD)
+   if (PAR_COM_SLK_INDEX%n_CPU>1 ) call SLK_FREQ_communicator(PAR_COM_SLK)
  endif
  !
  ! Messaging
@@ -136,14 +128,26 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
  contains
    !
+   subroutine SLK_FREQ_communicator(COMM)
+     !
+     implicit none
+     !
+     type(MPI_comm), intent(in) :: COMM
+     !
+     call COMM_copy(COMM,PAR_COM_intra_SLK)
+     PAR_IND_intra_SLK_ID=COMM%cpu_id
+     !
+  end subroutine SLK_FREQ_communicator
+   !
    subroutine SLK_communicators_init(COMM, INDEX_comm)
-   implicit none
-   !
-   type(MPI_comm), intent(in) :: COMM, INDEX_comm
-   !
-   call COMM_copy(COMM,      PAR_COM_SLK)
-   call COMM_copy(INDEX_comm,PAR_COM_SLK_INDEX)
-   !
+     !
+     implicit none
+     !
+     type(MPI_comm), intent(in) :: COMM, INDEX_comm
+     !
+     call COMM_copy(COMM,      PAR_COM_SLK)
+     call COMM_copy(INDEX_comm,PAR_COM_SLK_INDEX)
+     !
   end subroutine SLK_communicators_init
   !
 end subroutine

@@ -160,7 +160,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  !  Ho (kinetic + potential)
  !===========================
- call SC_bare_Hamiltonian(E,Xk,k)
+ call Bare_Hamiltonian(E,Xk,k)
  !
  ! Reference wavefunctions
  !

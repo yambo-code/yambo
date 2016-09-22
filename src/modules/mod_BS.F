@@ -23,9 +23,9 @@
 !
 module BS
  !
- use pars,       ONLY:IP,SP,schlen,lchlen
- use collision,  ONLY:elemental_collision
- use memory_m,   ONLY:mem_est
+ use pars,         ONLY:IP,SP,schlen,lchlen
+ use collision_el, ONLY:elemental_collision
+ use memory_m,     ONLY:mem_est
  !
  implicit none
  !

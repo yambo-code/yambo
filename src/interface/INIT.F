@@ -66,7 +66,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
-#if defined _SC && !defined _RT
+#if defined _SC
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _SC || defined _RT
@@ -1279,7 +1279,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_photolum) call initactivate(1,'bse optics')
 #endif
      !
-#if defined _SC && !defined _RT
+#if defined _SC
      if (l_sc_magnetic) call initactivate(1,'potential')
      if (l_sc_run.and.io_SC_E_err==0) then
        QP_ng_Sx=SC_ng_Sx

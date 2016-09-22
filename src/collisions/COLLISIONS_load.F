@@ -34,8 +34,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use QP_m,            ONLY:QP_QED_ng
  use R_lattice,       ONLY:nqbz
  use plasma,          ONLY:N_plasma_poles_global
- use SC,              ONLY:SC_kind
- use global_XC,       ONLY:SC_FOCK,SC_COH,SC_SEX,SE_GW_NEQ,SC_HARTREE
+ use hamiltonian,     ONLY:H_kind,H_SE_FOCK,H_SE_COH,H_SE_SEX,SE_GW_NEQ,H_SE_HARTREE
 #if defined _QED || defined _RT
  use global_XC,       ONLY:SE_GW_QED
  use collision,       ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
@@ -73,7 +72,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  endif
  !
  if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa) then
-   COLL_kind=(/SC_kind,SC_kind-SC_COH,SC_kind-SC_HARTREE,SC_kind-SC_COH-SC_HARTREE/)
+   COLL_kind=(/H_SE_kind,H_SE_kind-H_SE_COH,H_SE_kind-H_SE_HARTREE,H_SE_kind-H_SE_COH-H_SE_HARTREE/)
    io_err(2)=1
    do i1=1,4
      !
@@ -90,7 +89,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
    enddo
    !
-   if (CHECK_EXISTENCE_ONLY.and.io_err(2)==0.and.HXC_collisions%kind<SC_Hartree) then
+   if (CHECK_EXISTENCE_ONLY.and.io_err(2)==0.and.HXC_collisions%kind<H_SE_Hartree) then
      call warning("[COLLISIONS] Found (and using) an Hartree-free collisions database")
    endif
    !
@@ -128,7 +127,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    if (io_err(4)/=0.and.l_real_time) call error(' el-photon   collisions not found / not compatible')
    !
    l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions.or.l_use_COH_collisions
-   COLLISIONS_have_HARTREE=io_err(2)>0.and.HXC_collisions%kind>=SC_HARTREE
+   COLLISIONS_have_HARTREE=io_err(2)>0.and.HXC_collisions%kind>=H_SE_HARTREE
    return
    !
  endif
@@ -160,7 +159,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      call live_timing(trim(COLL%name)//' collisions I/O:',COLL%PAR_N)
      !
-     if (COLL%kind==SC_FOCK.or.COLL%kind==SC_COH.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+     if (COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_COH.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) then
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
      endif
      !
@@ -186,11 +185,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        call io_control(ACTION=OP_RD,SEC=(/1,2/),ID=ID)
        !
-       if (COLL%kind==SC_COH) then
+       if (COLL%kind==H_SE_COH) then
          io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
        endif
-       if (COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+       if (COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) then
          io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
        endif
@@ -213,8 +212,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)
        !
-       if (COLL%kind==SC_COH)    io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
-       if (COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) &
+       if (COLL%kind==H_SE_COH)  io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
+       if (COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) &
 &                                io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
 #if defined _RT
        if (COLL%kind==SE_GW_NEQ) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)

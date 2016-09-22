@@ -77,13 +77,15 @@ PJ_SURFLIBS  = $(BASIC_SURF_LIBS) surf_modules coulomb bz_ops qp_control surf \
 
 PJ_QEDLIBS   = $(MAIN_LIBS) 
 
-PJ_SCLIBS    = $(MAIN_LIBS) sc
+PJ_SCLIBS    = $(MAIN_LIBS) hamiltonian sc
 
 PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
-               collisions tddft pol_function qp acfdt bse sc real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
+               collisions tddft pol_function qp acfdt bse hamiltonian \
+               real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
 
 PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
-               collisions tddft pol_function qp acfdt bse sc real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
+               collisions tddft pol_function qp acfdt bse hamiltonian sc \
+               real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
 #
 # Interfaces
 #
@@ -96,9 +98,9 @@ YPPPH_LIBS      = modules interpolate init qp plotting electrons elph excitons s
 YPPRT_LIBS      = modules interpolate init qp plotting electrons elph real_time excitons symmetries k-points bits 
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
-YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions sc
+YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
-                     pol_function bse sc 
+                     pol_function bse hamiltonian 
 YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface surf tddft pol_function bse
 YDBLIBS            = $(BASIC_LIBS) 
 
@@ -156,8 +158,8 @@ yambo_pl: libs
 	@+LIBS2DO="$(PJ_PLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mksrc)
 	@+X2DO="yambo_pl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_PLLIBS)"; ADF="-D_RT -D_SC -D_ELPH -D_PL";$(mkx)
 yambo_rt: libs
-	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_SC -D_ELPH"; $(mksrc)
-	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS)"; ADF="-D_RT -D_SC -D_ELPH"; $(mkx)
+	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH"; $(mksrc)
+	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS)"; ADF="-D_RT -D_ELPH"; $(mkx)
 yambo_ph: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
 	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS)"; ADF="-D_ELPH"; $(mkx)
@@ -202,7 +204,7 @@ ypp_surf: libs
 	@X2DO="ypp_surf"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPSURF_MAIN_LIBS)"; \
 	X_ypp_LIBS="$(YPP_LIBS) ras"; ADF="-D_YPP_SURF"; $(mk_ypp_x)
 ypp_rt: libs
-	@LIBS2DO="$(YPPRT_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC -D_RT -D_ELPH -D_YPP_RT"; $(mksrc)
+	@LIBS2DO="$(YPPRT_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_YPP_RT"; $(mksrc)
 	@LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_src)
 	@X2DO="ypp_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS)"; \
 	X_ypp_LIBS="$(YPPRT_LIBS)"; ADF="-D_YPP_RT"; $(mk_ypp_x)

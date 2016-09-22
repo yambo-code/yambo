@@ -21,12 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_bare_Hamiltonian(E,Xk,k)
+subroutine Bare_Hamiltonian(E,Xk,k)
  !
  use pars,           ONLY:cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
- use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
+ use hamiltonian,    ONLY:Ho
+ use SC,             ONLY:E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         WF_G_max,WF_Go_indx,SC_bands
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
@@ -151,4 +152,4 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  call PP_redux_wait(Ho)
  !
-end subroutine SC_bare_Hamiltonian
+end subroutine Bare_Hamiltonian

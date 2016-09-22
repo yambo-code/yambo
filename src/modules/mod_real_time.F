@@ -41,6 +41,14 @@ module real_time
  logical           :: l_Dynamics_is_over   
  logical           :: l_Update_Time_Step  = .FALSE.
  !
+ character(schlen) :: RT_potential
+ !
+ ! Possible Kinds, functionals and external perturbations
+ !
+ integer           :: RT_kind
+ integer           :: RT_xc_functional
+ integer           :: RT_perturbation
+ !
  ! Evaluation logicals
  !
  logical          :: eval_HARTREE

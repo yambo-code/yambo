@@ -74,7 +74,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  integer :: ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  complex(SP):: M_tmp(RT_bands(2),RT_bands(2),n_sp_pol)
- integer, external :: io_SC_components,io_RT_components,RT_Lifetimes_evaluation_plan
+ integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
  !
  ! Initialize the Gf and potentials
@@ -95,7 +95,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    E_bare=E%E(:RT_bands(2),:,:)
  endif
  !
- call SC_bare_Hamiltonian(E,k,k)
+ call Bare_Hamiltonian(E,k,k)
  !
  ! Reference Hartree and XC
  !==========================
@@ -128,13 +128,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
- io_E=io_SC_components('E' ,E,ID(1))
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2)) ! WFs
- io_WF=io_SC_components('WF',E,ID(2))
- call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
- io_V=io_SC_components('V' ,E,ID(3))
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response

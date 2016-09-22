@@ -55,7 +55,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
  use fields,         ONLY:A_vecpot,A_vecpot_previous,A_ext
- use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
+ use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF

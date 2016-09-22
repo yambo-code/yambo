@@ -26,9 +26,11 @@ subroutine XC_switch()
  use pars,           ONLY:schlen
  use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_fock,l_sc_coh,l_sc_sex,l_sc_is_libDFT,&
 &                         l_sc_srpa,l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater
- use hamiltonian,    ONLY:H_SE_EXX,H_SE_Hartree,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_SRPA,&
-&                         H_kind,H_xc_functional,H_potential,H_perturbation
- use SC,             ONLY:OEP_approx,l_oep_EWeight,l_oep_iterative,l_sc_XC_is_local,l_sc_V_is_local
+ use global_XC,      ONLY:H_SE_EXX,H_SE_Hartree,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_SRPA
+ use hamiltonian,    ONLY:H_kind,H_xc_functional,H_potential,H_perturbation,l_sc_XC_is_local,l_sc_V_is_local
+#if defined _SC
+ use SC,             ONLY:OEP_approx,l_oep_EWeight,l_oep_iterative
+#endif
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
 #if defined _MAGNETIC
@@ -67,6 +69,7 @@ subroutine XC_switch()
  ! OEP approximation
  !===================
  !
+#if defined _SC
  if (l_sc_exx) then
    select case (trim(OEP_approx))
      case('n')
@@ -99,6 +102,7 @@ subroutine XC_switch()
        call error("Unknown EXX approximation! ")
    end select
  end if
+#endif
  !
  H_perturbation=EXT_NONE
  !

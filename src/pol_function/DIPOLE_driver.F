@@ -72,6 +72,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RT
  use X_m,            ONLY:DIP_spin
  use electrons,      ONLY:n_spin
+ use drivers,        ONLY:l_real_time
 #endif
 #if defined _SC
  use com,            ONLY:secnm
@@ -368,18 +369,21 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
         endif
 #endif
         !
-#if defined _RT
         if (l_par_RT) then
           !
+#if defined _RT
           DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           if (l_real_time.and.n_spin>1) &
 &           DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+#endif
+#if defined _SC
           if (l_sc_run.or.l_real_time) &
 &           P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+#endif
           !
         endif
-#endif
+        !
       enddo
       !
       ! Symmetrization 

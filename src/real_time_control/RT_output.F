@@ -27,7 +27,6 @@ subroutine RT_output(what,VALUES,TIME,E)
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_use_Hxc_collisions
- use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Total_magn
  use D_lattice,      ONLY:Bose_Temp
@@ -476,9 +475,6 @@ subroutine RT_output(what,VALUES,TIME,E)
    !---------------------------
    !
    if (.not.RT_descriptions_dumped(i_f)) then
-     do i_fp=1,n_SC_descriptions
-       call msg('o '//trim(short_file_name(i_f)),'#',trim(SC_description(i_fp)),INDENT=0)
-     enddo
      do i_fp=1,n_RT_descriptions
        call msg('o '//trim(short_file_name(i_f)),'#',trim(RT_description(i_fp)),INDENT=0)
      enddo

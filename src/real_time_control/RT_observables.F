@@ -29,7 +29,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use QP_m,           ONLY:QP_nk
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:P_square
- use SC,             ONLY:V_hartree_sc,Ho
+ use hamiltonian,    ONLY:V_hartree_sc,Ho
  use RT_control,     ONLY:RT_do_it
  use rt_interfaces,  ONLY:RT_average_operator
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&

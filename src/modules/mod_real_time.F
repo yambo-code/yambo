@@ -24,10 +24,9 @@
 module real_time
  !
  use drivers,    ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
- use SC,         ONLY:SC_R
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
- use global_XC,  ONLY:SE_NONE
+ use global_XC,  ONLY:QP_SE_NONE
  use electrons,  ONLY:levels
  !
  implicit none
@@ -91,8 +90,8 @@ module real_time
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
  !
- integer           :: RT_EE_CORR_kind=SE_NONE
- integer           :: RT_EE_SCATT_kind=SE_NONE
+ integer           :: RT_EE_CORR_kind=QP_SE_NONE
+ integer           :: RT_EE_SCATT_kind=QP_SE_NONE
  !
  ! ... Memory ...
  !
@@ -436,8 +435,7 @@ module real_time
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:V_hartree_sc,l_sc_V_is_local,SC_alloc,E_bare, &
-&                             SC_xc_functional,SC_xc_functional
+     use hamiltonian,    ONLY:V_hartree_sc,H_alloc,E_bare,H_xc_functional
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -446,7 +444,7 @@ module real_time
      !
      type(levels), intent(in) :: en
      !
-     call SC_alloc(en)
+     call H_alloc(en)
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
@@ -545,9 +543,6 @@ module real_time
      call mem_est("XC0",(/size(XC0)/),(/2*SP/))
      XC0=cZERO
      !
-     allocate(SC_R(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
-     !
      allocate(G_lesser_reference(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
@@ -590,11 +585,11 @@ module real_time
    !   
    subroutine RT_free
      !
-     use SC,             ONLY:SC_free,E_bare
+     use hamiltonian,    ONLY:H_free,E_bare
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      !
-     call SC_free()
+     call H_free()
      !
      deallocate(DbGd_ibz_coo,DbGd_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
      if(allocated(DbGd_EE_scatt_table)) deallocate(DbGd_EE_scatt_table)
@@ -632,11 +627,6 @@ module real_time
      if(allocated(XC0)) then
        deallocate(XC0)
        call mem_est("XC0")
-     endif
-     !
-     if(allocated(SC_R)) then
-       deallocate(SC_R)
-       call mem_est("SC_R")
      endif
      !
      if(allocated(E_PHOT_Hole_lifetime)) then

@@ -80,7 +80,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
 #if defined _SC || defined _RT
  use hamiltonian,   ONLY:B_mat_index
- use collision,     ONLY:COLL_bands,COH_collisions,GW_NEQ_collisions,P_collisions,HXC_collisions
+ use collision_ext, ONLY:COLL_bands,COH_collisions,GW_NEQ_collisions,P_collisions,HXC_collisions
 #endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_index,SLK_COM_A2A
@@ -1065,7 +1065,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  contains
    !
-#if defined _SC
+#if defined _SC || defined _RT
    !
    subroutine G_b_to_B_mat(pCOMM,what,nb)
      !

@@ -34,9 +34,9 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use parallel_m,    ONLY:PP_redux_wait,PAR_PLASMA_index,&
 &                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
 &                        PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
- use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        GW_NEQ_COLL_element,COLL_bands,&
-&                        elemental_collision_alloc,GW_NEQ_collisions
+ use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
+&                        GW_NEQ_COLL_element,COLL_bands,GW_NEQ_collisions
  use plasma,        ONLY:EH_gas
 #if defined _TIMING
  use timing_m,      ONLY:timing

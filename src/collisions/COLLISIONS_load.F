@@ -34,17 +34,18 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use QP_m,            ONLY:QP_QED_ng
  use R_lattice,       ONLY:nqbz
  use plasma,          ONLY:N_plasma_poles_global
- use hamiltonian,     ONLY:H_kind,H_SE_FOCK,H_SE_COH,H_SE_SEX,SE_GW_NEQ,H_SE_HARTREE
-#if defined _QED || defined _RT
- use global_XC,       ONLY:SE_GW_QED
- use collision,       ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
-&                          GW_NEQ_COLL_element
-#endif
- use collision,       ONLY:HXC_COLL_element,COH_COLL_element,COLLISIONS_have_HARTREE,&
+ use hamiltonian,     ONLY:H_kind
+ use global_XC,       ONLY:H_SE_FOCK,H_SE_COH,H_SE_SEX,QP_SE_GW_NEQ,H_SE_HARTREE
+ use collision_ext,   ONLY:HXC_COLL_element,COH_COLL_element,COLLISIONS_have_HARTREE,&
 &                          COH_collisions,HXC_collisions,COLLISIONS_group,COLLISIONS_naming
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP,NONE
  use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q,PAR_Q_index,PAR_PLASMA_index
- use interfaces,      ONLY:io_COLLISIONS
+ use COLL_interfaces, ONLY:io_COLLISIONS
+#if defined _QED || defined _RT
+ use global_XC,       ONLY:QP_SE_GW_QED
+ use collision_ext,   ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
+&                          GW_NEQ_COLL_element
+#endif
  !
  implicit none
  !
@@ -72,7 +73,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  endif
  !
  if (l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa) then
-   COLL_kind=(/H_SE_kind,H_SE_kind-H_SE_COH,H_SE_kind-H_SE_HARTREE,H_SE_kind-H_SE_COH-H_SE_HARTREE/)
+   COLL_kind=(/H_kind,H_kind-H_SE_COH,H_kind-H_SE_HARTREE,H_kind-H_SE_COH-H_SE_HARTREE/)
    io_err(2)=1
    do i1=1,4
      !
@@ -153,6 +154,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    subroutine local_IO( COLL )
      !
+     implicit none
+     !
      type(COLLISIONS_group) :: COLL
      integer :: iqbz,i_J,ic,i_coll,&
 &               i_coll_mem,i_q_mem,i_J_mem,i_b,i_g
@@ -164,14 +167,14 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      endif
      !
 #if defined _QED
-     if (COLL%kind==SE_GW_QED) then
+     if (COLL%kind==QP_SE_GW_QED) then
        call COLLISIONS_alloc_and_free("Momentum","collision","alloc",0)
        call COLLISIONS_alloc_and_free("Momentum","v3","alloc ",0)
      endif
 #endif
      !
 #if defined _RT
-     if (COLL%kind==SE_GW_NEQ) then
+     if (COLL%kind==QP_SE_GW_NEQ) then
        call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
        call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc distribute",0)
      endif
@@ -194,7 +197,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
        endif
 #if defined _RT
-       if (COLL%kind==SE_GW_NEQ) then
+       if (COLL%kind==QP_SE_GW_NEQ) then
          if(.not.associated(GW_NEQ_COLL_element(1)%v_r)) then
            io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
            call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
@@ -202,7 +205,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        endif
 #endif
 #if defined _QED
-       if (COLL%kind==SE_GW_QED) then
+       if (COLL%kind==QP_SE_GW_QED) then
          if(.not.associated(P_COLL_element(1)%v_r)) then
            io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
            call COLLISIONS_alloc_and_free("Momentum","v1 table","alloc",1)
@@ -216,22 +219,22 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        if (COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) &
 &                                io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
 #if defined _RT
-       if (COLL%kind==SE_GW_NEQ) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
+       if (COLL%kind==QP_SE_GW_NEQ) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
 #endif
 #if defined _QED
-       if (COLL%kind==SE_GW_QED) io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
+       if (COLL%kind==QP_SE_GW_QED) io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
 #endif
        !
        ! Now the transfer %v_r => %v3_r
        !
 #if defined _RT || defined _QED
-       if (COLL%kind==SE_GW_NEQ.or.COLL%kind==SE_GW_QED) then
+       if (COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
          !
          ic=0
          !
          do iqbz=1,nqbz
            !
-           if (COLL%kind==SE_GW_NEQ) then
+           if (COLL%kind==QP_SE_GW_NEQ) then
              !
              i_q_mem=PAR_Q_index(iqbz)
              !
@@ -265,10 +268,10 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      ! CLEAN
      !
 #if defined _RT
-     if (COLL%kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","clean",1)
+     if (COLL%kind==QP_SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","clean",1)
 #endif
 #if defined _QED
-     if (COLL%kind==SE_GW_QED) call COLLISIONS_alloc_and_free("Momentum","v1 table","clean",1)
+     if (COLL%kind==QP_SE_GW_QED) call COLLISIONS_alloc_and_free("Momentum","v1 table","clean",1)
 #endif
      !
      call live_timing()

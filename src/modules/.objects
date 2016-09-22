@@ -1,8 +1,8 @@
 #if defined _SC || defined _RT || defined _QED
-COMMON_objects = mod_hamiltonian.o mod_collision_ext.o mod_COLL_interfaces
+COMMON_objects = mod_hamiltonian.o mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o
 #endif
-#if defined _SC || defined _QED
-SC_objects       = mod_plasma.o mod_SC.o
+#if defined _SC
+SC_objects       = mod_SC.o
 #endif
 #if defined _RT
 RT_objects       = mod_real_time.o mod_fields.o mod_RT_control.o mod_RT_interfaces.o

@@ -70,9 +70,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _SC || defined _RT
- use collision,      ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
- use interfaces,     ONLY:io_COLLISIONS
- use SC,             ONLY:SC_potential
+ use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
+ use COLL_interfaces,ONLY:io_COLLISIONS
+ use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT
  use fields,         ONLY:n_ext_fields,n_ext_fields_max
@@ -840,16 +840,16 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(-1,'QpntsRXs')
    !
-   if( index(SC_potential,"FOCK")>0   ) call initactivate( 1,'EXXCut EXXRLvcs ALLGexx')
+   if( index(H_potential,"FOCK")>0   ) call initactivate( 1,'EXXCut EXXRLvcs ALLGexx')
    !
-   if( index(SC_potential,"SEX")>0.or.index(SC_potential,"COH")>0 ) then
+   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) then
      if (l_sc_run)          call initactivate(1,'UseEbands SCUpWIter')
      if (l_eval_collisions) call initactivate(1,'CORRLvcs ALLGexx')
    endif
    !
-   if( index(SC_potential,"HARTREE")>0.and.l_eval_collisions) call initactivate(1,'HARRLvcs ALLGHAR')
+   if( index(H_potential,"HARTREE")>0.and.l_eval_collisions) call initactivate(1,'HARRLvcs ALLGHAR')
    !
-   if( index(SC_potential,"EXX")>0.or.index(SC_potential,"SRPA")>0 ) then
+   if( index(H_potential,"EXX")>0.or.index(H_potential,"SRPA")>0 ) then
      call initactivate(1,'OEPapprox OEPItSolver') 
    endif
    !
@@ -1147,7 +1147,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_sc_run=runlevel_is_on('scrun')
        l_sc_magnetic=runlevel_is_on('magnetic')
        ! Davide: Why this ? Can't I do SC-IP calculation with v_HXC=0 ?
-       if (trim(SC_potential)=="IP") SC_potential="default"
+       if (trim(H_potential)=="IP") H_potential="default"
 #endif
 #if defined _SC || defined _RT
        l_eval_collisions=runlevel_is_on('collisions')
@@ -1612,38 +1612,38 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if ( trim(rstr_piece(i1)) == 'potential' )  then
            !
-           SC_potential=""
+           H_potential=""
            if ( index(trim(rstr_piece(i1+1)),'exx')>0 ) then
-             SC_potential='EXX'
+             H_potential='EXX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
            else if ( index(trim(rstr_piece(i1+1)),'exxc')>0 ) then
-             SC_potential='EXXC'
+             H_potential='EXXC'
            else if ( index(trim(rstr_piece(i1+1)),'srpa')>0 ) then
-             SC_potential='SRPA'
+             H_potential='SRPA'
            else if ( index(trim(rstr_piece(i1+1)),'cohsex')>0 ) then
-             SC_potential='COH+SEX'
+             H_potential='COH+SEX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
            else if ( index(trim(rstr_piece(i1+1)),'coh')>0 ) then
-             SC_potential='COH'
+             H_potential='COH'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
            else if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
-             SC_potential='SEX'
+             H_potential='SEX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
            else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
-             SC_potential='FOCK'
+             H_potential='FOCK'
            endif
            !
            if ( index(trim(rstr_piece(i1+1)),'h')==1 ) then
-             if(trim(SC_potential)/="") SC_potential='HARTREE+'//trim(SC_potential)
-             if(trim(SC_potential)=="") SC_potential='HARTREE'
+             if(trim(H_potential)/="") H_potential='HARTREE+'//trim(H_potential)
+             if(trim(H_potential)=="") H_potential='HARTREE'
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'd') then
-             SC_potential='default'
+             H_potential='default'
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'ip') then
-             SC_potential='IP'
+             H_potential='IP'
            endif
            !
            !
@@ -1656,27 +1656,27 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if ( trim(rstr_piece(i1)) == 'potential' )  then
            !
-           SC_potential=""
+           H_potential=""
            if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
-             SC_potential='SEX'
+             H_potential='SEX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
            else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
-             SC_potential='FOCK'
+             H_potential='FOCK'
            else if ( trim(rstr_piece(i1+1)) == 'ip') then
-             SC_potential='IP'
+             H_potential='IP'
            endif
            !
            if ( index(trim(rstr_piece(i1+1)),'h')==1 ) then
-             if(trim(SC_potential)/="") SC_potential='HARTREE+'//trim(SC_potential)
-             if(trim(SC_potential)=="") SC_potential='HARTREE'
+             if(trim(H_potential)/="") H_potential='HARTREE+'//trim(H_potential)
+             if(trim(H_potential)=="") H_potential='HARTREE'
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'd') then
-             SC_potential='default'
+             H_potential='default'
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'ip') then
-             SC_potential='IP'
+             H_potential='IP'
            endif
            !
          endif
@@ -1756,8 +1756,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          ! COLLISIONS
          !
          if (runlevel_is_on('collisions')) then
-           if ( l_elel_scatt.or.trim(SC_potential)=='COH+SEX'.or.&
-&               trim(SC_potential)=='COH'.or.trim(SC_potential)=='SEX' ) call initactivate(1,'em1s')
+           if ( l_elel_scatt.or.trim(H_potential)=='COH+SEX'.or.&
+&               trim(H_potential)=='COH'.or.trim(H_potential)=='SEX' ) call initactivate(1,'em1s')
          endif
          !
 #endif

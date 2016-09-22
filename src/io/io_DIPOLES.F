@@ -37,6 +37,9 @@ integer function io_DIPOLES(X,ID)
 #endif
 #if defined _SC
  use X_m,           ONLY:P_square
+ use drivers,       ONLY:l_sc_run
+#endif
+#if defined _RT || defined _SC
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
 #if defined _TIMING

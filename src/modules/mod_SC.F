@@ -49,9 +49,6 @@ module SC
  logical           :: compatible_SC_DB
  logical           :: found_SC_DB
  !
- logical           :: l_sc_V_is_local=.TRUE.
- logical           :: l_sc_XC_is_local=.TRUE.
- !
  ! General flags
  !
  logical           :: l_NSC_shot
@@ -81,22 +78,6 @@ module SC
  !
  complex(SP), allocatable :: SC_R(:,:,:,:)
  complex(SP), allocatable :: V_mean(:,:)
- real(SP),    allocatable :: V_xc_sc(:,:)
- real(SP),    allocatable :: V_hartree_sc(:,:)
- real(SP),    allocatable :: rho_n(:)
- real(SP),    allocatable :: magn_n(:,:)
- !
- ! Kinetic Energy and Ionic potential energy
- !
- real(SP),    allocatable :: E_bare(:,:,:)
- !
- ! Non-Local part (sigma_x, sigma_cohsex)
- !
- complex(SP), allocatable :: H_nl_sc(:,:,:)
- !
- ! Wavefunction indexes
- !
- integer :: WF_G_max,WF_Go_indx
  !
  interface
    !
@@ -159,34 +140,6 @@ module SC
      !
      call SC_QP_table_setup(E)
      !
-     ! In the magnetic project Ho has already been allocated
-     !
-     allocate(Ho(SC_bands(2),SC_bands(2),E%nk,n_sp_pol))
-     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
-     !
-     allocate(rho_n(fft_size))
-     call mem_est("rho",(/fft_size/),(/SP/))
-     !
-     if(n_spin>1) then
-       allocate(magn(fft_size,3))
-       allocate(magn_n(fft_size,3))
-       call mem_est("magn",(/2*fft_size*3/),(/SP/))
-     endif
-     !
-     allocate(V_xc_sc(fft_size,n_spin))
-     call mem_est('V_xc_sc',(/size(V_xc_sc)/),(/SP/))
-     !
-     allocate(V_xc(fft_size,n_spin))
-     call mem_est('V_xc',(/size(V_xc)/),(/SP/))
-     !
-     allocate(V_hartree_sc(fft_size,n_spin))
-     call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
-     !
-     allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
-     call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
-     !
-     if (l_real_time) return
-     !
      if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
        allocate(QP_Sc(QP_n_states,1))
        call mem_est("QP_Sc",(/QP_n_states/))
@@ -210,47 +163,13 @@ module SC
      call X_alloc('DIP_spin')
      call X_alloc('P_square')
      !
-     deallocate(Ho)
-     call mem_est("Ho")
-     !
-     deallocate(H_nl_sc)
-     call mem_est("H_nl_sc")
-     !
-     if(allocated(rho_n)) then
-       deallocate(rho_n)
-       call mem_est("rho")
-     endif
-     !
-     if(allocated(magn_n)) then
-       deallocate(magn,magn_n)
-       call mem_est("magn")
-     endif
-     !
-     if(allocated(magn)) then
-       deallocate(magn)
-       call mem_est("magn")
-     endif
-     !
-     if(allocated(V_xc)) then 
-       deallocate(V_xc)
-       call mem_est('V_xc')
-     endif
-     !
-     deallocate(V_xc_sc)
-     call mem_est('V_xc_sc')
-     !
-     deallocate(V_hartree_sc)
-     call mem_est("Hartree_Potential")
-     !
      if (allocated(QP_Sc)) then
        deallocate(QP_Sc)
        call mem_est("QP_Sc")
      endif
      !
-     if (.not.l_real_time) then
-       deallocate(SC_R)
-       call mem_est("SC_R")
-     endif
+     deallocate(SC_R)
+     call mem_est("SC_R")
      !
    end subroutine
    !

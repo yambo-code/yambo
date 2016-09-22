@@ -60,7 +60,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _SC || defined _RT || defined _QED
  use hamiltonian,   ONLY:H_ref_bands,H_potential
- use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
 #endif
 #if defined _SC
  use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
@@ -628,16 +628,18 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
- call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
- call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
  !
 #endif
  !
 #if defined _RT
- !
  call TMP_mirror_bands( )
- !
 #endif
+ !
+#if defined _SC
+ call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
+ call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
+#endif
+
  ! 
  contains 
    !

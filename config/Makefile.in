@@ -80,11 +80,11 @@ PJ_QEDLIBS   = $(MAIN_LIBS)
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 
 PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
-               collisions tddft pol_function qp acfdt bse hamiltonian \
+               tddft pol_function qp acfdt bse collisions hamiltonian \
                real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
 
 PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
-               collisions tddft pol_function qp acfdt bse hamiltonian sc \
+               tddft pol_function qp acfdt bse collisions hamiltonian sc \
                real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
 #
 # Interfaces

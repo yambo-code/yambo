@@ -102,7 +102,7 @@ module collision_ext
    !
    subroutine COLLISIONS_naming( H_SE_kind , what )
      !
-     use hamiltoniana,   ONLY:H_SE_COH,H_SE_HARTREE,H_SE_SEX,SE_GW_QED,SE_GW_NEQ,H_SE_FOCK
+     use global_XC,      ONLY:H_SE_COH,H_SE_HARTREE,H_SE_SEX,QP_SE_GW_QED,QP_SE_GW_NEQ,H_SE_FOCK
      use xc_functionals, ONLY:GS_xc_KIND
      !
      integer            :: H_SE_kind
@@ -118,9 +118,9 @@ module collision_ext
        COH_collisions%name="COH"
        HXC_collisions%kind=H_SE_HARTREE+H_SE_SEX
        HXC_collisions%name="HARTREE+SEX"
-       P_collisions%kind=SE_GW_QED
+       P_collisions%kind=QP_SE_GW_QED
        P_collisions%name="Momentum"
-       GW_NEQ_collisions%kind=SE_GW_NEQ
+       GW_NEQ_collisions%kind=QP_SE_GW_NEQ
        GW_NEQ_collisions%name="GW_NEQ"
        !
      else if (what=="HXC") then

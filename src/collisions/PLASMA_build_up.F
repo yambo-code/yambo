@@ -29,7 +29,7 @@ subroutine PLASMA_build_up(E,k,q)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol
  use plasma,        ONLY:PLASMA_alloc,PLASMA_redux_percent,N_plasma_poles_global,EH_gas
- use collision,     ONLY:COLL_bands,GW_NEQ_collisions
+ use collision_ext, ONLY:COLL_bands,GW_NEQ_collisions
  use parallel_m,    ONLY:PAR_nQ,PAR_IND_Q,PAR_Q_index,PP_redux_wait,PAR_COM_Q_index
  !
  implicit none

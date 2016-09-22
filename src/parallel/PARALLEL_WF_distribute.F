@@ -36,7 +36,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use parallel_m,      ONLY:PAR_IND_Q,PAR_Q_index
  use plasma,          ONLY:EH_gas
  use R_lattice,       ONLY:nkbz
- use collision,       ONLY:GW_NEQ_collisions
+ use collision_ext,   ONLY:GW_NEQ_collisions
 #endif
  !
  implicit none

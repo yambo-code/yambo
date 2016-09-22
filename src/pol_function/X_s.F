@@ -27,8 +27,8 @@ subroutine X_s(iq,X,Xw,W_range)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Q_A2A,linear_algebra_is_parallel,PAR_COM_WORLD,&
-&                        PP_indexes,PP_indexes_reset,PAR_COM_DIPOLES,PAR_COM_SLK_INDEX_local
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
+&                        PAR_COM_DIPOLES,PAR_COM_SLK_INDEX_local
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV,LIN_SYS,MAT_MUL
@@ -223,12 +223,9 @@ subroutine X_s(iq,X,Xw,W_range)
  call timing('X (REDUX)',OPR='start')
 #endif
  !
- if(.not.linear_algebra_is_parallel) then
-   do iw=W_range(1),W_range(2)
-     if (PAR_COM_Q_INDEX%n_CPU> 1) call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_Q_A2A%COMM)
-     if (PAR_COM_Q_INDEX%n_CPU==1) call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_WORLD%COMM)
-   enddo
- endif
+ do iw=W_range(1),W_range(2)
+   call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_SLK_INDEX_local%COMM)
+ enddo
  !
 #if defined _TIMING
  call timing('X (REDUX)',OPR='stop')

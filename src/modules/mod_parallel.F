@@ -238,9 +238,6 @@ module parallel_m
  ! Specific MPI ID's ...
  !======================
  !
- ! ... linear algebra
- integer            :: PAR_IND_intra_SLK_ID
- !
  ! ... QP
  integer            :: PAR_IND_QP_ID
  !
@@ -289,9 +286,9 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_NULL
  !
  ! ... linear algebra
- type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX
  type(MPI_comm),SAVE :: PAR_COM_SLK
- type(MPI_comm),SAVE :: PAR_COM_intra_SLK
+ type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_global
+ type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
  !
  ! ... RL vectors
  integer             :: PAR_nRL
@@ -394,6 +391,20 @@ module parallel_m
  end interface PP_bcast
  !
  contains
+   !
+   subroutine CREATE_the_COMM(WORLD, COMM, ID )
+     integer       :: WORLD,ID,i_err
+     type(MPI_comm):: COMM
+     call MPI_COMM_SPLIT(WORLD,COMM%my_CHAIN,ID,COMM%COMM,i_err)
+     call MPI_COMM_RANK(COMM%COMM,COMM%CPU_id,i_err)
+     call MPI_COMM_SIZE(COMM%COMM,COMM%n_CPU ,i_err)
+   end subroutine
+   !
+   integer function i_INTER_CHAIN(N_father,N_child)
+     ! Note that N_child/_father art the #cpu's in the two chains
+     integer :: N_father,N_child
+     i_INTER_CHAIN=(myid/N_father)*(N_father/N_child)+mod(myid,N_father/N_child)
+   end function
    !
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc

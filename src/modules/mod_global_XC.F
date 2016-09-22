@@ -108,7 +108,23 @@ module global_XC
  integer, public, parameter :: &
    QP_SE_GW_NEQ        = 407, &
    QP_SE_GW_QED        = 408
-
+ !
+ ! Full matrix in the hamiltonian basis-set (SC or RT)
+ integer, public, parameter :: &
+   H_SE_Hartree       =1000, &  ! Hartree
+   H_SE_EXX           = 301, &  ! OEP-EXX
+   H_SE_Fock          = 302, &  ! Fock
+   H_SE_EXXC          = 304, &  ! OEP-EXX + LDA correlation
+   H_SE_SRPA          = 305, &  ! OEP-COHSEX (static RPA)
+   H_SE_EXX_KLI       = 311, &  ! OEP-EXX (KLI apprx)
+   H_SE_EXXC_KLI      = 314, &  ! OEP-EXX (KLI apprx) + LDA correlation
+   H_SE_SRPA_KLI      = 315, &  ! OEP-COHSEX (KLI apprx)
+   H_SE_EXX_SLT       = 321, &  ! OEP-EXX (SLT apprx)
+   H_SE_EXXC_SLT      = 324, &  ! OEP-EXX (SLT apprx) + LDA correlation
+   H_SE_SRPA_SLT      = 325, &  ! OEP-COHSEX (SLT apprx)
+   H_SE_COH           = 326, &  ! Coulomb-Hole 
+   H_SE_SEX           = 327, &  ! Screened-eXchange
+   H_SE_COHSEX        = H_SE_SEX+H_SE_COH  ! Coulomb-Hole + Screened-eXchange
    !
  contains
    !
@@ -125,8 +141,6 @@ module global_XC
      !
      integer :: local_se_more,local_xc_functional,local_perturbation
      real(SP):: local_exx_fraction, local_exx_screening
-     !
-     character(lchlen), external :: global_XC_string
      !
      local_se_more=QP_MORE_NONE
      local_xc_functional=0
@@ -183,5 +197,94 @@ module global_XC
      if (what=='preset') QP_DB_kind=QP_SE_none
      !
    end subroutine
+   !
+   character(lchlen) function global_XC_string(kind,se_more,xc_functional,perturbation)
+    !
+    use xc_functionals,  ONLY:xc_string,XC_CORRELATION
+    !
+    integer           :: kind          ! <300 (LDA's GGA's ...) >300 See above
+    integer           :: se_more       ! scissor's and more
+    integer           :: xc_functional ! In case kind < 300 gives DFT functional
+    integer           :: perturbation
+    ! 
+    integer           :: local_kind
+    character(1)      :: ch_plus
+    character(lchlen) :: ch
+    global_XC_string=' '
+    do local_kind=kind-1000,kind,1000
+      select case (local_kind)
+        case(-1)
+          global_XC_string='IP'
+        case(H_SE_Hartree) !=1000
+          global_XC_string='Hartree'
+        case(1:300)
+          global_XC_string=trim(xc_string(xc_functional))
+        case(H_SE_EXX)
+          global_XC_string='SC Exact Exchange'
+        case(H_SE_EXXC)
+          global_XC_string='SC Exact Exchange +'//trim(xc_string(xc_functional))
+        case(H_SE_FOCK)
+          global_XC_string='SC Fock'
+        case(H_SE_COH)
+          global_XC_string='SC COH'
+        case(H_SE_SEX)
+          global_XC_string='SC SEX'
+        case(H_SE_COHSEX)
+          global_XC_string='SC COHSEX'
+        case(QP_SE_COH)
+          global_XC_string='COH'
+        case(QP_SE_SEX)
+          global_XC_string='SEX'
+        case(QP_SE_COHSEX)
+          global_XC_string='COHSEX'
+        case(QP_SE_GoWo_PPA)
+          global_XC_string='GoWo Plasmon Pole appox.'
+        case(QP_SE_GoWo)
+          global_XC_string='GoWo on real axis'
+        case(QP_SE_GWo_PPA)
+          global_XC_string='GWo Plasmon Pole appox.'
+        case(QP_SE_GWo)
+          global_XC_string='GWo on real axis'
+        case(QP_SE_POLARON)
+          global_XC_string='Polarons'
+        case(QP_SE_GW_NEQ)
+          global_XC_string='OUT-of-EQ GW'
+        case(QP_SE_GW_QED)
+          global_XC_string='QED-based GW'
+        case default
+          if(trim(global_XC_string)/="".and.local_kind>1000) global_XC_string='SC HARTREE +'//trim(global_XC_string)
+      end select
+    enddo
+    !
+    ch_plus='+'
+    if (kind==0) ch_plus=' '
+    !
+    if (se_more/=QP_MORE_NONE) then
+      ch=global_XC_string
+      select case (se_more)
+        case(QP_MORE_SCISSOR)
+          global_XC_string=trim(ch)//trim(ch_plus)//'Scissor'
+        case(QP_MORE_STRETCH)
+          global_XC_string=trim(ch)//trim(ch_plus)//'Stretching'
+        case(QP_MORE_SCIS_AND_STRE)
+          global_XC_string=trim(ch)//trim(ch_plus)//'Scissor & Stretching'
+        case(QP_MORE_INTERPOLATION)
+          global_XC_string=trim(ch)//trim(ch_plus)//'Interpolation'
+      end select
+    endif
+    !
+    if (perturbation/=EXT_NONE) then
+      ch=global_XC_string
+      select case (perturbation)
+        case(EXT_B_PAULI)
+          global_XC_string=trim(ch)//trim(ch_plus)//'Pauli Magnetism'
+        case(EXT_B_LANDAU)
+          global_XC_string=trim(ch)//trim(ch_plus)//'Landau Magnetism'
+        case(EXT_B_MAGNETISM)
+          global_XC_string=trim(ch)//trim(ch_plus)//'Magnetism'
+      end select
+    endif
+    !
+   end function
    !
 end module 

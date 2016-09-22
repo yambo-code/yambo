@@ -55,12 +55,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use functions,     ONLY:bose_E_cut
  use parallel_m,    ONLY:n_log_CPUs
  use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
- use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
 #endif
 #if defined _SC || defined _RT || defined _QED
  use hamiltonian,   ONLY:H_ref_bands,H_potential
+ use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
 #endif
 #if defined _SC
  use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
@@ -618,7 +618,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #endif
  ! 
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _QED
  !
  ! SC and RT common
  !

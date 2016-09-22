@@ -70,14 +70,14 @@ BASIC_SURF_LIBS   = external_c modules surf_modules parallel parser xc_functiona
                     interface stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
-               collisions tddft pol_function qp acfdt bse
+               tddft pol_function qp acfdt bse
 
 PJ_SURFLIBS  = $(BASIC_SURF_LIBS) surf_modules coulomb bz_ops qp_control surf \
-               setup collisions tddft pol_function qp acfdt bse
+               setup tddft pol_function qp acfdt bse
 
 PJ_QEDLIBS   = $(MAIN_LIBS) 
 
-PJ_SCLIBS    = $(MAIN_LIBS) hamiltonian sc
+PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 
 PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
                collisions tddft pol_function qp acfdt bse hamiltonian \
@@ -100,7 +100,7 @@ YPPRT_LIBS      = modules interpolate init qp plotting electrons elph real_time 
 YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
-                     pol_function bse hamiltonian 
+                     pol_function bse collisions hamiltonian 
 YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface surf tddft pol_function bse
 YDBLIBS            = $(BASIC_LIBS) 
 

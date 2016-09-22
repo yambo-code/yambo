@@ -37,25 +37,6 @@ module hamiltonian
  !
  complex(SP), allocatable :: Ho(:,:,:,:)
  !
- ! Self Energies KINDS
- !
- ! Full matrix in the hamiltonian basis-set (SC or RT)
- integer, public, parameter :: &
-   H_SE_Hartree       =1000, &  ! Hartree
-   H_SE_EXX           = 301, &  ! OEP-EXX
-   H_SE_Fock          = 302, &  ! Fock
-   H_SE_EXXC          = 304, &  ! OEP-EXX + LDA correlation
-   H_SE_SRPA          = 305, &  ! OEP-COHSEX (static RPA)
-   H_SE_EXX_KLI       = 311, &  ! OEP-EXX (KLI apprx)
-   H_SE_EXXC_KLI      = 314, &  ! OEP-EXX (KLI apprx) + LDA correlation
-   H_SE_SRPA_KLI      = 315, &  ! OEP-COHSEX (KLI apprx)
-   H_SE_EXX_SLT       = 321, &  ! OEP-EXX (SLT apprx)
-   H_SE_EXXC_SLT      = 324, &  ! OEP-EXX (SLT apprx) + LDA correlation
-   H_SE_SRPA_SLT      = 325, &  ! OEP-COHSEX (SLT apprx)
-   H_SE_COH           = 326, &  ! Coulomb-Hole 
-   H_SE_SEX           = 327, &  ! Screened-eXchange
-   H_SE_COHSEX        = H_SE_SEX+H_SE_COH  ! Coulomb-Hole + Screened-eXchange
- !
  contains
    !
    integer function B_mat_index(ib1,ib2,nb)

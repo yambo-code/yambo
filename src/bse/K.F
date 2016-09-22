@@ -48,7 +48,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps
- use collision,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
 &                       deliver_IO_error_message

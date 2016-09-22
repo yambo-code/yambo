@@ -40,7 +40,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use com,            ONLY:msg
  use X_m,            ONLY:X_t,X_alloc,X_mat
  use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Vnl_xc,QP_Vxc
- use collision,      ONLY:elemental_collision,elemental_collision_free
+ use collision_el,   ONLY:elemental_collision,elemental_collision_free
  use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver

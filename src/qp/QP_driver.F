@@ -45,7 +45,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
- use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_QED
+ use global_XC,     ONLY:QP_DB_kind,QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GoWo,QP_SE_GWo_PPA,&
+&                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD
  implicit none
@@ -126,11 +127,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  if (l_ppa) then
    qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
    !
-   QP_DB_kind=SE_GoWo_PPA
+   QP_DB_kind=QP_SE_GoWo_PPA
    !
    ! GPL_EXCLUDE_START
    !
-   if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
+   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
    !
    ! GPL_EXCLUDE_END
    !
@@ -142,7 +143,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    qp%description(2)=' == COHSEX GW =='
    !
-   QP_DB_kind=SE_COHSEX
+   QP_DB_kind=QP_SE_COHSEX
    !
  else
    !
@@ -153,15 +154,15 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.
    !
-   QP_DB_kind=SE_GoWo
+   QP_DB_kind=QP_SE_GoWo
    !
-   if (l_elph_corr) QP_DB_kind=SE_POLARON 
+   if (l_elph_corr) QP_DB_kind=QP_SE_POLARON 
    !
-   if (l_elphoton_corr) QP_DB_kind=SE_GW_QED
+   if (l_elphoton_corr) QP_DB_kind=QP_SE_GW_QED
    !
    ! GPL_EXCLUDE_START
    !
-   if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
+   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
    !
    ! GPL_EXCLUDE_END
    !

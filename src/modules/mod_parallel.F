@@ -122,8 +122,8 @@ module parallel_m
    character(schlen)    :: ROLE_string = " "
    character(schlen)    :: Long_Description  = " "
    character(schlen)    :: Short_Description = " "
-   integer              :: nCPU_lin_algebra_INV   =0
-   integer              :: nCPU_lin_algebra_DIAGO =0
+   integer              :: nCPU_lin_algebra_INV   =1
+   integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
  !      if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0

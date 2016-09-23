@@ -94,10 +94,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix
- use collision_ext,  ONLY:COLLISIONS_cutoff
 #endif
 #if defined _SC || defined _RT || defined _QED
- use collision_ext,  ONLY:COLLISIONS_naming
+ use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
@@ -549,6 +548,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call COLLISIONS_naming( 0 , "all" )
  !
+ ! COLLISIONS I/O
+ !
+ COLLISIONS_cutoff=0.0005_SP
+ !
 #endif
  !
 #if defined _SC
@@ -567,10 +570,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
- !
- ! COLLISIONS I/O
- !
- COLLISIONS_cutoff=0.0005_SP
  !
 #endif
  !

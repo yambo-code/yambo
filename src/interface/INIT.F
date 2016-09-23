@@ -529,28 +529,17 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
 #endif
  !
- if (l_eval_collisions) then
-#if defined _SC && !defined _RT 
+#if defined _SC
+ if (l_eval_collisions .or. l_sc_run) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
-#endif
-#if defined _SC && defined _RT
-   call CPU_activate("RT")
-   call initactivate(1,'RT_Threads')
-#endif
  endif
+#endif
  !
 #if defined _RT 
- if (l_real_time) then
+ if (l_eval_collisions .or. l_real_time) then
    call CPU_activate("RT")
    call initactivate(1,'RT_Threads')
- endif
-#endif
- !
-#if defined _SC && !defined _RT 
- if (l_sc_run) then
-   call CPU_activate("SE")
-   call initactivate(1,'SE_Threads')
  endif
 #endif
  !

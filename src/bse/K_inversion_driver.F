@@ -312,6 +312,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    end subroutine
    !
    subroutine FULL_INF_pre_setup(TYP)
+     !
      type(K_Inversion_data) :: TYP
      integer :: min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
      logical :: found

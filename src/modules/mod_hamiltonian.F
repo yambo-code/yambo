@@ -67,6 +67,32 @@ module hamiltonian
      !
    end function
    !
+   subroutine H_QP_table_setup(E)
+     use R_lattice,      ONLY:nkibz
+     use electrons,      ONLY:levels
+     use QP_m,           ONLY:QP_nk,QP_state,QP_nb
+     use memory_m,       ONLY:mem_est
+     !
+     implicit none
+     !
+     type(levels) :: E
+     !
+     ! Build-up QP table
+     !
+     QP_nb=H_ref_bands(2)
+     QP_nk=nkibz
+     ! 
+     ! QP_state my be read from DBs at start-up
+     !
+     if (allocated(QP_state)) deallocate(QP_state)
+     !
+     allocate(QP_state(QP_nb,QP_nk))
+     call mem_est("QP_state",(/QP_nb*QP_nk/))
+     QP_state=.TRUE.
+     call QP_state_table_setup(E)
+     !
+   end subroutine
+   !
    subroutine H_alloc(E)
      use pars,           ONLY:SP
      use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa

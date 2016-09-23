@@ -42,9 +42,12 @@ subroutine QP_state_table_setup(en)
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
-#if defined _SC
- use SC,            ONLY:SC_bands,l_SC_diagonal,SC_potential
+#if defined _SC || defined _RT
+ use hamiltonian,   ONLY:H_ref_bands,H_potential
  use drivers,       ONLY:l_elel_scatt
+#endif
+#if defined _SC
+ use SC,            ONLY:l_SC_diagonal
 #endif
  !
  implicit none
@@ -176,11 +179,9 @@ subroutine QP_state_table_setup(en)
  SC_bands_mixed=1
  !
  Mixing=.FALSE.
-#if defined _SC
+#if defined _SC || defined _RT
  Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions
- if (l_eval_collisions) then
-   Mixing=l_elel_scatt.or.trim(SC_potential)=="HARTREE+FOCK".or.trim(SC_potential)=="COHSEX"
- endif
+ if (l_eval_collisions) Mixing=l_elel_scatt.or.trim(H_potential)=="HARTREE+FOCK".or.trim(H_potential)=="COHSEX"
 #endif
  !
  if (Mixing) then
@@ -227,11 +228,11 @@ subroutine QP_state_table_setup(en)
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !
+#if defined _SC || defined _RT
+         if (l_sc_run.or.l_real_time .and. (i2<H_ref_bands(1)) ) cycle
+#endif
 #if defined _SC
-         if (l_sc_run.or.l_real_time) then
-           if (i2<SC_bands(1)) cycle
-           if (l_SC_diagonal.and.i3/=0) cycle
-         endif
+         if (l_sc_run .and. (l_SC_diagonal.and.i3/=0) ) cycle
 #endif
          !
          QP_n_states=QP_n_states+1

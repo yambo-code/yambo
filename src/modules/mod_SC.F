@@ -99,36 +99,11 @@ module SC
  !
  contains
    !
-   subroutine SC_QP_table_setup(E)
-     use R_lattice,      ONLY:nkibz
-     use electrons,      ONLY:levels
-     use QP_m,           ONLY:QP_nk,QP_state,QP_nb
-     use memory_m,       ONLY:mem_est
-     !
-     implicit none
-     !
-     type(levels) :: E
-     !
-     ! Build-up QP table
-     !
-     QP_nb=SC_bands(2)
-     QP_nk=nkibz
-     ! 
-     ! QP_state my be read from DBs at start-up
-     !
-     if (allocated(QP_state)) deallocate(QP_state)
-     !
-     allocate(QP_state(QP_nb,QP_nk))
-     call mem_est("QP_state",(/QP_nb*QP_nk/))
-     QP_state=.TRUE.
-     call QP_state_table_setup(E)
-     !
-   end subroutine
-   !
    subroutine SC_alloc(E)
      use pars,           ONLY:SP
      use drivers,        ONLY:l_real_time,l_sc_sex,l_sc_coh,l_sc_srpa
      use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
      use memory_m,       ONLY:mem_est
@@ -138,7 +113,9 @@ module SC
      !
      type(levels) :: E
      !
-     call SC_QP_table_setup(E)
+     call H_alloc(E)
+     !
+     call H_QP_table_setup(E)
      !
      if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
        allocate(QP_Sc(QP_n_states,1))
@@ -153,10 +130,14 @@ module SC
    subroutine SC_free()
      use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
+     use hamiltonian,    ONLY:H_free
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
+     !
      implicit none
+     !
+     call H_free()
      !
      call X_alloc('DIP_P')
      call X_alloc('DIP_iR')

@@ -435,7 +435,7 @@ module real_time
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
-     use hamiltonian,    ONLY:V_hartree_sc,H_alloc,E_bare,H_xc_functional
+     use hamiltonian,    ONLY:H_alloc,H_QP_table_setup,E_bare
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -445,6 +445,8 @@ module real_time
      type(levels), intent(in) :: en
      !
      call H_alloc(en)
+     !
+     call H_QP_table_setup(en)
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !

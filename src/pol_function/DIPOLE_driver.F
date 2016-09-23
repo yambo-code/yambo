@@ -69,14 +69,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
 &                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT
  use parser_m,       ONLY:parser
+#if defined _RT || defined _SC
+ use drivers,        ONLY:l_real_time,l_sc_run
+ use com,            ONLY:secnm
+#endif
 #if defined _RT
  use X_m,            ONLY:DIP_spin
  use electrons,      ONLY:n_spin
- use drivers,        ONLY:l_real_time
 #endif
-#if defined _SC
- use com,            ONLY:secnm
- use drivers,        ONLY:l_real_time,l_sc_run
+#if defined _SC || defined _RT
  use X_m,            ONLY:P_square
 #endif
 #if defined _QED
@@ -97,7 +98,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  integer           :: ik,i_sp_pol
  logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3)
-#if defined _SC
+#if defined _SC || defined  _RT
  logical           :: l_evaluating_em1s
 #endif
  !
@@ -126,7 +127,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    Dipole_approach='G-space v'
  endif
  !
-#if defined _SC
+#if defined _SC || defined _RT
  force_v_g_space_approach=force_v_g_space_approach.or.l_sc_run.or.l_real_time
 #endif
  force_v_g_space_approach=force_v_g_space_approach.and.(.not.use_g_space_approach)
@@ -144,7 +145,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  Dipole_bands_ordered=.true.
  !
-#if defined _SC 
+#if defined _SC  || defined _RT
  l_evaluating_em1s=index(secnm,"Dielectric")/=0
  if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.false.
 #endif
@@ -213,7 +214,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call timing('Dipoles',OPR='stop')
 #endif
  !
-#if defined _SC
+#if defined _SC || defined _RT
  if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
 #endif
 #if defined _QED
@@ -242,7 +243,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RT
  if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin')
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
  call X_alloc('P_square') 
 #endif
  !
@@ -326,7 +327,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
 
      !
-#if defined _SC
+#if defined _SC || defined _RT
      if (l_sc_run.or.l_real_time) then
        call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        P_square=cZERO
@@ -360,7 +361,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
         !
 #endif
         !
-#if defined _SC
+#if defined _SC || defined _RT
         !
         if (l_sc_run.or.l_real_time) then
           !
@@ -377,7 +378,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
           if (l_real_time.and.n_spin>1) &
 &           DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
           if (l_sc_run.or.l_real_time) &
 &           P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
 #endif
@@ -400,7 +401,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
               DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             endif
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
             if (l_sc_run.or.l_real_time) &
 &             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #endif
@@ -414,7 +415,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
                 DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
               endif
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
               if (l_sc_run.or.l_real_time) &
 &               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
 #endif

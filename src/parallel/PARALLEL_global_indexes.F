@@ -782,7 +782,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call Build_up_index(PAR_IND_Q_bz,nqbz,PAR_Q_bz_index,PAR_nQ_bz)
    endif
    !
-#if defined _SC
+#if defined _SC || defined _RT
    !
    if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
      !
@@ -809,7 +809,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    HEAD_QP_cpu=PAR_COM_QP_A2A%CPU_id==0
    !
-#if defined _SC
+#if defined _SC || defined _RT
    endif
 #endif
    !
@@ -836,7 +836,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                             TOTAL=n_bands(2)-n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
-#if defined _SC || defined _QED
+#if defined _SC || defined _RT || defined _QED
    !
    ! Lamb is a special case. Collisions can be used also in simple Self-Energy mode.
    !
@@ -855,8 +855,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call PARALLEL_collisions( Xk, COH_collisions )
      call PARALLEL_collisions( Xk, HXC_collisions )
      !
-     nb_mat=(SC_bands(2)-SC_bands(1)+1)**2
-     call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',SC_bands)
+     nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
+     call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',COLL_bands)
      call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)

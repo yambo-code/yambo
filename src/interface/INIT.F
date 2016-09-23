@@ -105,10 +105,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
 &                     io_BS_Fxc_err,io_QINDX_err
 #if defined _SC
- integer           :: io_COLLISIONS_err,io_SC_E_err,io_SC_V_err
+ integer           :: io_SC_E_err,io_SC_V_err
 #endif
 #if defined _RT
  integer           :: io_G,io_JPSM
+#endif
+#if defined _SC || defined _RT
+ integer           :: io_COLLISIONS_err
 #endif
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
@@ -441,15 +444,17 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_SC_E_err=io_SC_components('E',en_sc,io_ID)
  if (io_SC_E_err==0.and.io_SC_V_err/=0) io_SC_E_err=-1
+#endif
  !
  ! COLLISIONS 
  !
+#if defined _SC || defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLISIONS(io_ID,COH_collisions)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLISIONS(io_ID,HXC_collisions)
 #endif
-#if defined _SC && defined _RT
+#if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLISIONS(io_ID,GW_NEQ_collisions)
 #endif

@@ -24,14 +24,16 @@
 subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
 &                             xc_functional,perturbation)
  !
- use drivers,   ONLY:l_sc_run
- use SC,        ONLY:compatible_SC_DB,SC_R,SC_bands,H_nl_sc,SC_kind,&
-&                    SC_xc_functional,SC_perturbation,found_SC_DB
- use electrons, ONLY:levels,E_reset,n_sp_pol
- use R_lattice, ONLY:nkibz
- use memory_m,  ONLY:mem_est
- use IO_m,      ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
-&                    DUMP,OP_RD_CL,NONE,IO_NO_DATABASE
+ use drivers,     ONLY:l_sc_run
+ use SC,          ONLY:compatible_SC_DB,SC_R,SC_bands,SC_kind,&
+&                      SC_xc_functional,SC_perturbation,found_SC_DB
+ use hamiltonian, ONLY:H_nl_sc
+ use electrons,   ONLY:levels,E_reset,n_sp_pol
+ use R_lattice,   ONLY:nkibz
+ use memory_m,    ONLY:mem_est
+ use IO_m,        ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
+&                      DUMP,OP_RD_CL,NONE,IO_NO_DATABASE
+ !
  implicit none
  !
  character(*)           :: what

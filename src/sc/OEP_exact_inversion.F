@@ -41,7 +41,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
  use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
  use linear_algebra,  ONLY:LINEAR_ALGEBRA_driver,INV
- use collision,       ONLY:elemental_collision,elemental_collision_free
+ use collision_el,    ONLY:elemental_collision,elemental_collision_free
  use memory_m,        ONLY:mem_est
  use wave_func,       ONLY:WF
  !

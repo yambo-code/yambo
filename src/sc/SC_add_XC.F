@@ -37,8 +37,9 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
- use SC,             ONLY:V_xc_sc,l_sc_V_is_local,SC_kind,SC_xc_functional,SC_cycle_mixing,&
-&                         SC_bands,SC_R,H_rotate,l_oep_iterative,l_sc_XC_is_local
+ use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc
+ use SC,             ONLY:SC_kind,SC_xc_functional,SC_cycle_mixing,&
+&                         SC_bands,SC_R,H_rotate,l_oep_iterative
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
  !

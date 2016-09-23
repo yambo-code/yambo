@@ -30,11 +30,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
- use SC,             ONLY:SC_bands,SC_iterations,rho_n,magn_n,SC_rho_threshold,it_now,E_convergence, &
-&                         rho_convergence,magn_convergence,SC_R,V_xc_sc,l_sc_V_is_local,H_nl_sc,H_rotate,&
-&                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,&
-&                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_table_setup,it_to_start
+ use SC,             ONLY:SC_bands,SC_iterations,SC_rho_threshold,E_convergence,      &
+&                         rho_convergence,magn_convergence,SC_R,H_rotate,it_now,      &
+&                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
+&                         l_SC_RESTART,l_Mean_Potential,SC_QP_table_setup,it_to_start,&
+&                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters
+ use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
+&                         V_hartree_sc,Ho,V_xc_sc,E_bare
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
@@ -52,7 +54,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder,v_norm
  use LIVE_t,         ONLY:live_timing
- use collision,      ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
+ use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
  use electrons,      ONLY:Total_magn
  !
  implicit none

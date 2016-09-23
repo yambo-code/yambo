@@ -34,7 +34,8 @@ subroutine V_mean_potential(ik,WFo)
  use pars,           ONLY:SP
  use wave_func,      ONLY:WAVEs
  use FFT_m,          ONLY:fft_size
- use SC,             ONLY:SC_R,SC_bands,H_nl_sc,V_mean
+ use hamiltonian,    ONLY:H_nl_sc
+ use SC,             ONLY:SC_R,SC_bands,V_mean
  use wrapper,        ONLY:M_by_M
  implicit none
  !

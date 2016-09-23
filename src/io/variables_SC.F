@@ -30,13 +30,14 @@ integer function variables_SC(ID,local_description,what)
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
 &                         SC_xc_functional,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,l_sc_V_is_local
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions
+ use hamiltonian,    ONLY:l_sc_V_is_local
  use IO_m,           ONLY:io_elemental,io_status,IO_INCOMPATIBLE_VAR
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
- use hamiltonian,    ONLY:H_SE_EXX,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_HARTREE
+ use global_XC,      ONLY:H_SE_EXX,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_HARTREE
  !
  implicit none
  !

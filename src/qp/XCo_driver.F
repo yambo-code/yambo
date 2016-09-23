@@ -39,8 +39,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
 #if defined _SC
- use global_XC,     ONLY:WF_kind
- use hamiltonian,   ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXX,H_SE_EXXC,H_SE_SRPA
+ use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_HARTREE,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXX,H_SE_EXXC,H_SE_SRPA
 #endif
  !
  implicit none
@@ -166,7 +165,7 @@ subroutine XCo_driver(E,k,Xk,q)
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
      deallocate(QP_Vnl_sex)
    endif
-# endif
+#endif
    !
  endif
  !

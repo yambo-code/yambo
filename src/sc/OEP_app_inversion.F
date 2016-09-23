@@ -41,7 +41,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use R_lattice,       ONLY:bz_samp,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use linear_algebra,  ONLY:LINEAR_ALGEBRA_driver,INV
- use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,            ONLY:QP_ng_Sx
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:it_now,l_oep_EWeight

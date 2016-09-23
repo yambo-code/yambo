@@ -47,7 +47,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
-&                        WF_perturbation,global_XC_string,SE_NONE
+&                        WF_perturbation,global_XC_string,QP_SE_NONE
 #endif
  !
  implicit none
@@ -404,7 +404,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)
    !
-   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,SE_NONE,WF_xc_functional,WF_perturbation))//&
+   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,QP_SE_NONE,WF_xc_functional,WF_perturbation))//&
 &                             ' wavefunctions loaded')
    !
    if (WF%space=='R') wf_size=fft_size

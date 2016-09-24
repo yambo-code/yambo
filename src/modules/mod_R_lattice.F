@@ -252,7 +252,7 @@ module R_lattice
      cyl_ph_radius=0.
      box_length=0.
      cyl_length=0.
-     ws_cutoff=0.
+     ws_cutoff=0.7
      cut_geometry='none'
      cut_description='none'
      CUTOFF_plus_RIM=.false.

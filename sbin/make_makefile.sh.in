@@ -101,10 +101,6 @@ case $target in
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir)"
     ;;
-  ydb*)
-   llibs="$llibs \$(lfftqe) \$(llapack) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal"
-   linclude="$linclude \$(netcdf_idir)"
-    ;;
 esac
 
 cat config/setup >>$cdir/Makefile

@@ -89,8 +89,5 @@ subroutine SLK_communicators(INTRA_world,INTER_world,N)
    call CREATE_the_COMM(PAR_COM_WORLD%COMM,PAR_COM_SLK_INDEX_local,myid)
    !
  endif
- !write (*,*) myid,PAR_COM_SLK%CPU_id,PAR_COM_SLK_INDEX_global%CPU_id,PAR_COM_SLK_INDEX_local%CPU_id
- !do while (.true.)
- !enddo
  !
 end subroutine

@@ -552,6 +552,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            !
            pre_factor2=cZERO
            if(index(H_potential,"COH")>0.or.index(H_potential,"SEX")>0) then 
+           if(index(SC_potential,"COH")>0.or.index(SC_potential,"SEX")>0) then 
 #if defined _OPENMP
              !$omp parallel do default(shared), private(ig1,ig2), reduction(+:pre_factor2)
 #endif

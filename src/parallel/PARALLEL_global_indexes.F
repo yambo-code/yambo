@@ -414,10 +414,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    if (PAR_COM_Xk_bz_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A)
    !
-   ! Q-points 
-   !
-   WHAT="ibz"
-   !
    ! K-points 
    !
    call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
@@ -431,6 +427,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call Build_up_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
    !
    ! Q-points 
+   !
+   WHAT="ibz"
    !
    call PARALLEL_index(PAR_IND_Q,(/Q_range(2)/),low_range=(/Q_range(1)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
@@ -452,13 +450,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                PAR_IND_Q,PAR_COM_Xk_bz_INDEX,Q_range,Xk,q)
    PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
    !
-   !
    ! ... indexes
    !
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    !
-   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
+   call PARALLEL_live_message("K-q(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
    ! Inversion
@@ -1049,8 +1046,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             NCPU=PAR_COM_VAL_INDEX(X_type)%n_CPU)
    !
  endif
- !
- call PARALLEL_live_message("Linear Algebra uses "//trim(intc(PAR_COM_SLK%n_CPU))//" CPU(s)")
  !
  contains
    !

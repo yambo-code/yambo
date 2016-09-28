@@ -55,7 +55,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  !
  local_exx_fraction = rZERO
  local_exx_screening= rZERO
- if (present(EXX_FRACTION)) local_exx_fraction = EXX_FRACTION
+ if (present(EXX_FRACTION))  local_exx_fraction  = EXX_FRACTION
  if (present(EXX_SCREENING)) local_exx_screening = EXX_SCREENING
  !
  ! COM

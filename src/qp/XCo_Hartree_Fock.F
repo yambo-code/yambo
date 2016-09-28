@@ -57,7 +57,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !Work Space
  !
  type(elemental_collision)::isc,iscp
- integer                  ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands
+ integer                  ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
  complex(DP)              ::DP_Sx
  complex(SP),allocatable  ::local_rhotw(:)
  character(schlen)        ::ch
@@ -135,8 +135,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 ! endif
 !
  n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
- if (n_lt_bands>0) call live_timing(trim(ch),PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&                                   PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands)
+ n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands
+ if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps)
  !
  do i_qp=1,QP_n_states
    !

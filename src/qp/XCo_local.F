@@ -93,7 +93,6 @@ subroutine XCo_local(E,Xk)
    endif
 #endif
    !
-   !
 #if defined _SC
  else
    !

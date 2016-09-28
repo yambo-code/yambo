@@ -79,7 +79,9 @@ subroutine scatter_Gamp(isc,mode)
  !
  ng=shape(isc%gamp)
  !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM)
+#endif
  do i1=1,ng(1)
    do i2=1,ng(2)
      ig1=i1
@@ -148,7 +150,9 @@ subroutine scatter_Gamp(isc,mode)
      !
    enddo
  enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
  !
  ! Anisotropy correction
  !

@@ -164,13 +164,17 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
        !
        forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1._SP
        !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(i1,i2)
+#endif
        do i1=1,X%ng
          do i2=1,X%ng
            EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
          enddo
        enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
        if (iqibz==1) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/real(q%nbz,SP))
        !
      endif
@@ -250,11 +254,15 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
          !
          pre_factor=0._SP
+#if defined _OPENMP
 !$omp parallel do default(shared), private(i1), reduction(+:pre_factor)
+#endif
          do i1=1,X%ng
            pre_factor=pre_factor+isc%rhotw(i1)*local_rhotw(i1)
          enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
          !
          if (io_COLLs) then
            !

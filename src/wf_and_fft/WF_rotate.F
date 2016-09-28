@@ -77,9 +77,13 @@ subroutine WF_rotate(ik,WFo,wf_size)
      !
    enddo
    !
+#if defined _OPENMP
 !$omp parallel default(shared), private(ig,ib)
+#endif
    do ib=1,SC_bands(2)
+#if defined _OPENMP
 !$omp do
+#endif
      !
      do i_spinor=1,n_spinor
        i_spin=i_sp_pol+i_spinor-1
@@ -89,9 +93,13 @@ subroutine WF_rotate(ik,WFo,wf_size)
          WF%c(ig,i_wf(i_spinor))=WS_wf(ig,i_spinor,ib)
        enddo
      enddo
+#if defined _OPENMP
 !$omp end do
+#endif
    enddo
+#if defined _OPENMP
 !$omp end parallel
+#endif
    !
  enddo
  !

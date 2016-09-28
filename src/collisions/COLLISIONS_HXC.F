@@ -352,11 +352,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !
              i_kmq_s =k%star(i_kmq,i_star)
              !
+#if defined _OPENMP
              !$omp parallel do default(shared), private(ig1)
+#endif
              do ig1=2,N_g_vecs_H
                rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(i_kmq_s,ig1))
              enddo
+#if defined _OPENMP
              !$omp end parallel do
+#endif
              !
            enddo
            !
@@ -364,11 +368,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !
              pre_factor1=cZERO
              if(index(H_potential,"HARTREE")>0) then
+#if defined _OPENMP
                !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
+#endif
                do ig1=2,N_g_vecs_H
                  pre_factor1=pre_factor1+conjg(rhotw_tmp(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
                enddo
+#if defined _OPENMP
                !$omp end parallel do
+#endif
              endif
              !
              pre_factor2=cZERO
@@ -393,11 +401,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !
              pre_factor1=cZERO
              if(index(H_potential,"HARTREE")>0) then
+#if defined _OPENMP
                !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
+#endif
                do ig1=2,N_g_vecs_H
                  pre_factor1=pre_factor1+rhotw_tmp(minus_G(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
                enddo
+#if defined _OPENMP
                !$omp end parallel do
+#endif
              endif
              !
              pre_factor2=cZERO
@@ -485,13 +497,17 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
          !
          ! Poles and Residuals
          !
+#if defined _OPENMP
          !$omp parallel do default(shared), private(ig1,ig2)
+#endif
          do ig1=1,N_g_vecs_C
            do ig2=1,N_g_vecs_C
              EM1s(ig1,ig2)=X_mat(ig1,ig2,1)*isc_XC%gamp(ig1,ig2)
            enddo
          enddo
+#if defined _OPENMP
          !$omp end parallel do
+#endif
          !
        endif
        !
@@ -517,22 +533,30 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            !
            pre_factor1=cZERO
            if(index(H_potential,"FOCK")>0.or.index(H_potential,"SEX")>0) then 
+#if defined _OPENMP
              !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
+#endif
              do ig1=1,N_g_vecs_X
                pre_factor1=pre_factor1+isc_XC%rhotw(ig1)*iscp_XC%gamp(ig1,1)*conjg(iscp_XC%rhotw(ig1))
              enddo
+#if defined _OPENMP
              !$omp end parallel do
+#endif
            endif
            !
            pre_factor2=cZERO
            if(index(H_potential,"COH")>0.or.index(H_potential,"SEX")>0) then 
+#if defined _OPENMP
              !$omp parallel do default(shared), private(ig1,ig2), reduction(+:pre_factor2)
+#endif
              do ig1=1,N_g_vecs_C
                do ig2=1,N_g_vecs_C
                  pre_factor2=pre_factor2+isc_XC%rhotw(ig2)*EM1s(ig2,ig1)*conjg(iscp_XC%rhotw(ig1))
                enddo
              enddo
+#if defined _OPENMP
              !$omp end parallel do
+#endif
            endif
            !
            if(index(H_potential,"SEX")>0 .or. index(H_potential,"FOCK")>0) &

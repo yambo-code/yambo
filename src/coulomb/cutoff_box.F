@@ -59,14 +59,18 @@ subroutine cutoff_box(q,is_cut)
  !
  ! AF: iku_v_norm is thread safe
  !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig,iq)
+#endif
  do ig=1,ng_closed
    do iq=1,q%nibz
      if (iq==1.and.ig==1) cycle
      V_bare(iq,ig)=1./iku_v_norm(q%pt(iq,:)+g_vec(ig,:))**2
    enddo
  enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
  V_bare(1,1)=7.7956*(RL_vol/real(q%nbz))**(-2._SP/3._SP)
  !
  ! RIM contribution
@@ -74,13 +78,17 @@ subroutine cutoff_box(q,is_cut)
  if (allocated(RIM_qpg).and.RIM_anisotropy==0.) then
    CUTOFF_plus_RIM=.true.
    !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig,iq)
+#endif
    do ig=1,RIM_ng
      do iq=1,q%nibz
        V_bare(iq,ig)=RIM_qpg(iq,ig,ig)*DL_vol*real(q%nbz,SP)/2._SP
      enddo
    enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
    !
  endif
  !
@@ -92,9 +100,11 @@ subroutine cutoff_box(q,is_cut)
  !
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
+#if defined _OPENMP
 !$omp parallel default(shared), &
 !$omp &    private(ig,iq, v1,nq_looped, iqbz,iqibz,is,i1,V_cut_tmp, &
 !$omp &            ig_p,ig_r,v2)
+#endif
  ! 
  ! Local Threads involved
  !
@@ -102,7 +112,9 @@ subroutine cutoff_box(q,is_cut)
  !
  call live_timing('Box',px%n_of_elements(myid+1)/n_threads_now)
  !
+#if defined _OPENMP
 !$omp do
+#endif
  do ig=1,wf_ng
    do iq=1,q%nibz
      !
@@ -149,8 +161,10 @@ subroutine cutoff_box(q,is_cut)
      !
    enddo
  enddo
+#if defined _OPENMP
 !$omp end do
 !$omp end parallel
+#endif
  !
  call OPENMP_update(master_thread)
  !

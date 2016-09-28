@@ -188,13 +188,16 @@ subroutine X_s(iq,X,Xw,W_range)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
+#if defined _OPENMP
    !$omp parallel do default(shared), private(i1)
+#endif
    do i1=1,X%ng
      tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4._SP*pi/bare_qpg(iq,i1)**2
      tddftk(i1,i1)=tddftk(i1,i1)+cONE
    enddo
+#if defined _OPENMP
    !$omp end parallel do
-
+#endif
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !

@@ -140,6 +140,7 @@ module YPP
  ! Perturbative SOC
  !
  integer           :: SOC_bands_to_map(2)
+ integer           :: SOC_bands_buffer
  character(lchlen) :: perturbative_SOC_path
  real(SP)          :: SOC_split
  !

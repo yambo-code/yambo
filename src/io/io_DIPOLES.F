@@ -35,7 +35,7 @@ integer function io_DIPOLES(X,ID)
 #if defined _RT
  use X_m,           ONLY:DIP_spin
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
  use X_m,           ONLY:P_square
  use drivers,       ONLY:l_sc_run
 #endif
@@ -111,7 +111,7 @@ integer function io_DIPOLES(X,ID)
 #if defined _RT
    if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
    if (l_sc_run.or.l_real_time)  call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
 #endif
  endif
@@ -154,7 +154,7 @@ integer function io_DIPOLES(X,ID)
  endif
 #endif
  !
-#if defined _SC
+#if defined _SC || defined _RT
  if (l_sc_run.or.l_real_time) then
    !
    ! P2

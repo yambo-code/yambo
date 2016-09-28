@@ -104,8 +104,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  QP_Vxc=cZERO
  call XCo_local(E,k)
  !
- write(*,*) QP_nb,H_ref_bands
- !
  do ik=1,QP_nk
    !
    ! Add bare energies ... 

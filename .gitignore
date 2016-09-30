@@ -19,6 +19,7 @@ driver/codever.h
 driver/editor.h
 #
 include/netcdf.h
+include/netcdf_*.h
 include/netcdf.inc
 include/xc*.h
 #

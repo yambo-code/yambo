@@ -33,8 +33,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
- use interfaces,    ONLY:MATRIX_driver
- use matrix_operate,ONLY:DIAGO,USE_LK
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,DIAGO,USE_LK
  use stderr,        ONLY:intc,set_real_printed_length
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
@@ -210,7 +209,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
    close(1)
  else
    call live_timing('Diagonalization',1)
-   call MATRIX_driver(DIAGO,elph_Mat,lib_in=USE_LK,E_real=elph_E)
+   call LINEAR_ALGEBRA_driver(DIAGO,elph_Mat,lib_in=USE_LK,E_real=elph_E)
    call live_timing(steps=1)
    call live_timing()
    open(unit=100,file=trim(db_name),status='new',form='unformatted')

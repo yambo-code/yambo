@@ -195,11 +195,15 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        iscp%rhotw=isc%rhotw
        if (isc%is(1)/=iscp%is(1)) call scatter_Bamp(iscp)
        !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig)
+#endif
        do ig = 1, isc%ngrho
          local_rhotw(ig) = -4._SP/spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))*E%f(jb,isc%os(2),isc%os(4))
        enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
        !
        DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
        !

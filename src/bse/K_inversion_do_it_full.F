@@ -28,8 +28,7 @@ subroutine K_inversion_do_it_full(Lo,KERNEL,what)
  use pars,           ONLY:SP,cZERO
  use BS_solvers,     ONLY:BS_mat
  use BS,             ONLY:BS_H_dim
- use interfaces,     ONLY:MATRIX_driver
- use matrix_operate, ONLY:INV
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV
  !
  implicit none
  !
@@ -51,6 +50,6 @@ subroutine K_inversion_do_it_full(Lo,KERNEL,what)
    enddo
  enddo
  !
- call MATRIX_driver(INV,KERNEL)
+ call LINEAR_ALGEBRA_driver(INV,KERNEL)
  !
 end subroutine

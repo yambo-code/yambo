@@ -43,7 +43,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        io_RESPONSE
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        COHSEX_use_empties,l_GW_terminator
+&                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
@@ -83,13 +83,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  integer, external::io_X,QP_state_extract
  !
- ! Reset
+ ! Reset & checks
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
+ !
+ if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
+&    trim(GW_terminator_Kind)/='BRS') &
+&    call error(' [GW/PPA] unknown GW_terminator_Kind = '//trim(GW_terminator_Kind))
+ 
  !
  ! COHSEX: bands setup
  !
@@ -249,7 +254,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _SC
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
+#if defined _OPENMP
 !$omp parallel do default(shared), private(i1,i2)
+#endif
        do i2=1,X%ng
          do i1=1,X%ng
            if (l_ppa) then
@@ -263,7 +270,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            endif
          enddo
        enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
 #if defined _SC
      endif
 #endif
@@ -337,21 +346,29 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if ( HEAD_QP_cpu ) then
            if (X_is_TR_rotated) then
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2)
+#endif
               do ig2=1,X%ng
                 do ig1=1,X%ng
                   eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig2,ig1))
                 enddo
               enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
            else
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2)
+#endif
               do ig2=1,X%ng
                 do ig1=1,X%ng
                   eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
                 enddo
               enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
            endif
          endif
          !
@@ -360,21 +377,29 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          sp_dummy = 0.0_SP
          !
          if (X_is_TR_rotated) then
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
+#endif
            do ig2=1,X%ng
              do ig1=1,X%ng
                sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1))
              enddo
            enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
          else
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
+#endif
            do ig2=1,X%ng
              do ig1=1,X%ng
                sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
              enddo
            enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
          endif
          !
          dc(1) = sp_dummy
@@ -446,7 +471,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            sp_dummy = 0.0_SP
            !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
+#endif
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
@@ -461,7 +488,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
              enddo
            enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
            !
            dc(i4) = sp_dummy
            !
@@ -508,7 +537,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          sp_dummy=0.0_SP
          !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:sp_dummy)
+#endif
          do ig2=1,X%ng
            do ig1=1,X%ng
              !
@@ -521,7 +552,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              !
            enddo
          enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
          !
          QP_Sc(i_qp,i4)=QP_Sc(i_qp,i4)+sp_dummy
          !

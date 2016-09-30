@@ -33,7 +33,8 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  use LIVE_t,         ONLY:live_timing
  use KERR,           ONLY:BSS_dipoles_kerr
  use X_m,            ONLY:global_gauge
- use BS,             ONLY:BS_K_dim,BS_H_dim,BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use BS,             ONLY:BS_K_dim,BS_H_dim
  !
  implicit none
  !
@@ -53,7 +54,7 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  !
  BS_R_right_kerr=cZERO
  !
- call live_timing('BSK R res KERR ',px%n_of_elements(myid+1))
+ call live_timing('KERR residuals ',px%n_of_elements(myid+1))
  !
  forall(i1=1:BS_K_dim)          tmp_res(i1) =    conjg(BSS_dipoles_kerr(i1))*sqrt(BSS_eh_f(i1)         ) 
  forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) = cI*conjg(BSS_dipoles_kerr(i1))*sqrt(BSS_eh_f(i1-BS_K_dim))

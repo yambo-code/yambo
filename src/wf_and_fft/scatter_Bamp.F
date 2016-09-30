@@ -114,12 +114,11 @@ subroutine scatter_Bamp(isc)
 #elif defined _FFTSG || (defined _USE_3D_FFT && defined _FFTQE)
  call fft_3d(isc%rho_tw_rs,fft_dim,+1)
 #elif defined _FFTQE
- ! call fft_3d(rho_tw_rs,fft_dim,+1)
  !
  ! the QE fft must be performed in the right
  ! direction. conjg is taken care separately
- ! AF: please note the redefinition of rho_tw_rs above
- !     (one extra conjg has been acted on rho_tw_rs)
+ ! AF: please note the different definition of isc%rho_tw_rs above
+ !     (one extra conjg has been added)
  !
  call fft_3d(isc%rho_tw_rs,fft_dim,-1)
  !

@@ -73,7 +73,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
  !
- RT_E_sorted=RT_carriers%E_bare
+ RT_E_sorted=RT_carriers%E_bare*HA2EV
  call sort(RT_E_sorted,indx=E_sort_index)
  !
  RT_gamma=0._SP
@@ -253,6 +253,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    enddo
    !
  enddo
+ !
+ RT_gamma=RT_gamma*HA2EV*1000._SP
  !
  !
  ! Write to output fitted temperatures
@@ -475,7 +477,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      call RT_write_descriptions(trim(output_fname(igamma+n3)))
      !
      call msg('o '//trim(output_fname(igamma+n3)),'#')
-     call msg('o '//trim(output_fname(igamma+n3)),'# Lifetimes distribution at different times (Gamma@ time)')
+     call msg('o '//trim(output_fname(igamma+n3)),'# Lifetimes distribution [meV] at different times (Gamma@ time)')
      call msg('o '//trim(output_fname(igamma+n3)),'#')
      call msg('o '//trim(output_fname(igamma+n3)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(igamma+n3)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
@@ -509,21 +511,21 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      !ik_RT =RT_carriers%table(i_RT,3)
      !i_spin=RT_carriers%table(i_RT,4)
      !
-     call msg('o '//trim(output_fname(1)),'',(/RT_E_sorted(i_RT)*HA2EV,RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(1)),'',(/RT_E_sorted(i_RT),RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
      !
      do i_spinor=1,2*(n_spinor-1)
-       call msg('o '//trim(output_fname(i_spinor+1)),'',(/RT_E_sorted(i_RT)*HA2EV,RT_spin_occ(i_RT,i_spinor,n1:n2)/),&
+       call msg('o '//trim(output_fname(i_spinor+1)),'',(/RT_E_sorted(i_RT),RT_spin_occ(i_RT,i_spinor,n1:n2)/),&
 &                                                       INDENT=-2,USE_TABS=.true.)
      enddo
      !
      do igamma=1,n_gamma
        if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle
-       call msg('o '//trim(output_fname(igamma+n3)),'',(/RT_E_sorted(i_RT)*HA2EV,RT_gamma(i_RT,igamma,n1:n2)/),&
+       call msg('o '//trim(output_fname(igamma+n3)),'',(/RT_E_sorted(i_RT),RT_gamma(i_RT,igamma,n1:n2)/),&
 &                                                       INDENT=-2,USE_TABS=.true.)
      enddo
      !
      do i_ratio=1,n_ratio
-       call msg('o '//trim(output_fname(n_gamma+n3+i_ratio)),'',(/RT_E_sorted(i_RT)*HA2EV,RT_gamma_ratio(i_RT,i_ratio,n1:n2)/),&
+       call msg('o '//trim(output_fname(n_gamma+n3+i_ratio)),'',(/RT_E_sorted(i_RT),RT_gamma_ratio(i_RT,i_ratio,n1:n2)/),&
 &                                                       INDENT=-2,USE_TABS=.true.)
      enddo
      !

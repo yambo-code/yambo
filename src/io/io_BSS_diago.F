@@ -24,8 +24,8 @@
 integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
- use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
-&                        BSS_eh_table,BS_mat,BS_K_dim
+ use BS,            ONLY:BS_identifier,BS_K_dim
+ use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on,ver_is_gt_or_eq
@@ -35,7 +35,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  !
  integer              :: iq,ID,BS_H_dim
  complex(SP)          :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
- real(SP)   ,pointer  :: BsE_corr(:,:),bsR_pl(:)
+ real(SP)   ,pointer  :: BsE_corr(:,:),bsR_pl(:,:)
  complex(SP),pointer  :: bsR_kerr(:)
  !
  ! Work Space
@@ -87,7 +87,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    if (read_is_on(ID)) bsE(:)=cmplx(V_disk(1,:),V_disk(2,:),SP)
    !
    if(E_SOC_nbands/=0) then
-     call io_bulk(ID,'BS_Energies_SOC_corr',VAR_SZ=(/2,BS_H_dim/))
+     call io_bulk(ID,'BS_Energies_SOC_corr',VAR_SZ=(/2/n_sp_pol,BS_H_dim/))
      call io_bulk(ID,R2=BsE_corr)
    endif
    !
@@ -111,8 +111,8 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    endif
    !
    if(associated(bsR_pl)) then
-     call io_bulk(ID,'BS_PL_Residuals',VAR_SZ=(/BS_H_dim/))
-     call io_bulk(ID,R1=bsR_pl)
+     call io_bulk(ID,'BS_PL_Residuals',VAR_SZ=(/2,BS_H_dim/))
+     call io_bulk(ID,R2=bsR_pl)
    endif
    !
    ! GPL_EXCLUDE_END

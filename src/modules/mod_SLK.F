@@ -23,11 +23,13 @@
 !
 module SLK_m
  !
- use parallel_m, ONLY  : MPI_comm
+ use pars,       ONLY: SP
+ use parallel_m, ONLY: MPI_comm
  !
  implicit none
  !
  integer              :: n_pools = 1 ! number of pools
+ integer, parameter   :: desc_len= 9
  !
  ! SLK test
  !
@@ -51,7 +53,7 @@ module SLK_m
    INTEGER :: task   = 0         ! task id for the ortho group
    INTEGER :: n_CPU = 1          ! size of the ortho group:
    INTEGER :: leg   = 1          ! the distance in the father communicator
-                                 ! of two neighbour processors in ortho_comm
+   !                             ! of two neighbour processors in ortho_comm
    INTEGER :: COMM  = 0          ! communicator for the ortho group
    INTEGER :: ROW_comm  = 0      ! communicator for the ortho row group
    INTEGER :: COL_comm  = 0      ! communicator for the ortho col group
@@ -63,16 +65,79 @@ module SLK_m
    INTEGER :: ortho_cntx = -1    ! BLACS context for ortho_comm
  end type ORTHO_group
  !
+ ! SLK matrix distributed block and informations
+ !===============================================
+ type SLK_matrix 
+   integer :: desc(desc_len)
+   integer :: lwork    = 0
+   integer :: lrwork   = 0
+   integer :: liwork   = 0
+   integer :: info     = 0
+   integer :: rows(2)  = 0
+   integer :: cols(2)  = 0
+   integer :: nrows    = 0
+   integer :: ncols    = 0
+   integer :: nrows_used = 0
+   integer :: ncols_used = 0
+   complex(SP), allocatable :: blc(:,:)
+ end type SLK_matrix 
+ !
  ! Specific SLK worlds ...
  !========================
  !
- type(POOL_group ),SAVE :: SLK_INV_pool
- type(ORTHO_group),SAVE :: SLK_INV_ortho
- !
- type(POOL_group ),SAVE :: SLK_DIAGO_pool
- type(ORTHO_group),SAVE :: SLK_DIAGO_ortho
+ type(POOL_group ),SAVE :: SLK_POOL
+ type(ORTHO_group),SAVE :: SLK_ORTHO
  !
  type(MPI_comm),SAVE    :: SLK_COM_INDEX(2)
  type(MPI_comm),SAVE    :: SLK_COM_A2A(2)
  !
+ contains
+   !
+   subroutine SLK_matrix_reset(M_slk,nrows,ncols)
+     type(SLK_matrix)  :: M_slk
+     integer, optional :: nrows, ncols 
+     !
+     if (allocated(M_slk%blc)) deallocate(M_slk%blc)
+     if (present(nrows).and.present(ncols)) then
+       M_slk%nrows    = nrows
+       M_slk%ncols    = ncols
+       allocate(M_slk%blc(nrows,ncols))
+     else
+       M_slk%desc     = 0
+       M_slk%lwork    = 0
+       M_slk%lrwork   = 0
+       M_slk%liwork   = 0
+       M_slk%info     = 0
+       M_slk%rows(2)  = 0
+       M_slk%cols(2)  = 0
+       M_slk%nrows    = 0
+       M_slk%ncols    = 0
+     endif
+   end subroutine
+   !
+   subroutine SLK_POOL_clean_up(POOL)
+     type(POOL_group) :: POOL
+     POOL%CPU_id      = 0
+     POOL%ID          = 0
+     POOL%n_CPU       = 1
+     POOL%INTRA_comm  = 0
+   end subroutine
+   !
+   subroutine SLK_ORTHO_GROUP_clean_up(ORTHO)
+     type(ORTHO_group) :: ORTHO
+     ORTHO%grid(2)       = 1        
+     ORTHO%coordinate(2) = 0  
+     ORTHO%task          = 0         
+     ORTHO%n_CPU         = 1          
+     ORTHO%leg           = 1          
+     ORTHO%COMM          = 0          
+     ORTHO%ROW_comm      = 0      
+     ORTHO%COL_comm      = 0      
+     ORTHO%COMM_id       = 0      
+     ORTHO%BLACS_id      = 0    
+     ORTHO%BLACS_np      = 1    
+     ORTHO%world_cntx    = -1    
+     ORTHO%ortho_cntx    = -1    
+   end subroutine
+   !
 end module SLK_m

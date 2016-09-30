@@ -28,8 +28,8 @@ integer function io_BS(iq,X,ID)
  use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use parallel_m,    ONLY:myid
- use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded,&
-&                        BSS_description,BSS_n_descs,variables_BS
+ use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
+ use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
 &                        read_is_on,write_is_on,io_header,io_mode,VERIFY,&
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
@@ -79,6 +79,7 @@ integer function io_BS(iq,X,ID)
      BSS_n_descs=0
      !
      goto 1
+     !
    endif
    !
    ! Descriptions transfer

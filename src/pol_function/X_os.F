@@ -34,13 +34,16 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  !   _NESTING introduces the nesting of scatterbamp parallel regions inside the
  !   outer region opened here (not working yet)
+ !
+ ! X terminator (BG kind) implemented (IM,AF)
+ !
  ! 
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg,warning,error
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,myid
@@ -53,11 +56,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use interfaces,    ONLY:WF_load
  use D_lattice,     ONLY:i_space_inv
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_X,bz_samp
+ use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use memory_m,      ONLY:mem_est
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use X_m,           ONLY:X_t,X_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_DbGd !,X_terminator
+ use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
+&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
+&                        l_X_terminator,X_terminator_E,X_term_E
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -77,13 +81,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  character(schlen)        :: live_t_string
  integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
- integer                  :: mutexid
+ integer                  :: mutexid,ngrho
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU)
+ real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
  type(elemental_collision):: Xo_scatt
+
  !
  ! Defaults & Setups
  !===================
@@ -112,7 +117,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! WF load
  !=========
- if(.not.skip_WF_load) call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+ ngrho=X%ng
+ if (l_X_terminator) ngrho=maxval(G_m_G)
+ !
+ if(.not.skip_WF_load) call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
 #if defined _TIMING
  call timing('Xo (procedure)',OPR='start')
@@ -120,6 +128,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Poles tabulation
  !==================
+ ! 
+ if(l_X_terminator) then
+   cutoff=minval(Xen%E(X%ib(2),:,:))
+   X_term_E=cutoff+X_terminator_E
+ endif
+ !
  if (iq/=current_iq) then
    !
    n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
@@ -129,13 +143,13 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
-   if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual)
-   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP)
+   if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
+   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
    !
    minmax_ehe=0._SP
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
-   deallocate(X_poles)
+   deallocate(X_poles,X_Ein_poles)
    !
    if (self_detect_E_range) then
      call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
@@ -183,7 +197,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #  else
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
  n_threads_FFT=1
- call msg('s','[X] NESTED openmp parallelism off')
+ !call msg('s','[X] NESTED openmp parallelism off')
 #  endif
 #endif
  call OPENMP_locks_reset(INIT=.true.,nlocks=16)
@@ -201,8 +215,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! OpenMP setup
  !==============
  !
+#if defined _OPENMP
 !$omp parallel num_threads(n_outthr) default(shared), &
 !$omp &        private(i_cg, Drude_pole,GreenF, i_bg, Xo_res, Xo_scatt, ig2, iw, mutexid)
+#endif
  !
  call OPENMP_update(master_thread)
  !
@@ -211,12 +227,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  call mem_est("Xo_WS",(/X%ng**2 * n_outthr/))
  allocate(Xo_res(X%ng,X%ng))
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
- call elemental_collision_alloc(Xo_scatt,NG=X%ng,TITLE="Xo")
+ call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo")
  !
  ! MAIN LOOP
  !===========
  !
+#if defined _OPENMP
 !$omp do
+#endif
  do i_cg = 1,coarse_grid_N
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
@@ -224,14 +242,19 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    ! 1) First compute the residuals
    !================================
    call X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
-
    !
    ! 2) Then the frequency dependent term
    !=======================================
    Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
    !
    if(Drude_pole) then
+#if defined _OPENMP
+     !$omp critical
+#endif
      Xo(1,1,:)=Xo(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
+#if defined _OPENMP
+     !$omp end critical
+#endif
      call live_timing(steps=1)
      cycle
    endif
@@ -242,13 +265,13 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if( associated(Xen%GreenF) ) then
      call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
    else
-     call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
+     call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
    endif
 #else
    !
    ! GPL_EXCLUDE_END
    !
-   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G')
+   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
    !
    ! GPL_EXCLUDE_START
    !
@@ -280,7 +303,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (master_thread) call live_timing(steps=1)
    !
  enddo 
+#if defined _OPENMP
 !$omp end do
+#endif
  !
  ! CLEAN
  !=======
@@ -288,7 +313,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  deallocate(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
+#if defined _OPENMP
 !$omp end parallel
+#endif
  !
  !
  if(coarse_grid_N>0) call live_timing()
@@ -314,27 +341,39 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  if (half_X_mat_only) then
    !
+#if defined _OPENMP
    !$omp parallel default(shared), private(ig2,ig1)
+#endif
    if (i_space_inv==0) then
+#if defined _OPENMP
      !$omp do
+#endif
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
        enddo
      enddo
+#if defined _OPENMP
      !$omp end do
+#endif
    endif
    !
    if (i_space_inv==1) then
+#if defined _OPENMP
      !$omp do
+#endif
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
        enddo
      enddo
+#if defined _OPENMP
      !$omp end do
+#endif
    endif
+#if defined _OPENMP
    !$omp end parallel
+#endif
    !
  endif
  !

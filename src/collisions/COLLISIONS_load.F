@@ -118,14 +118,14 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    l_use_Hxc_collisions  =io_err(2)==0.and.(l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa)
    !
    l_warning=.not.l_use_Hxc_collisions.and..not.l_use_COH_collisions
-   l_error  =l_warning.and.l_real_time
+   l_error  =l_warning.and.l_real_time.and.(l_sc_sex.or.l_sc_fock)
    !
    if (l_error)   call error(  ' HXC collisions not found / not compatible')
    if (l_warning) call warning(' HXC collisions not found. Potential is computed on the fly.')
    !
    l_use_scatt_collisions=all(io_err(3:4)==0).and.(l_elphoton_scatt.or.l_elphoton_corr.or.l_elel_scatt)
-   if (io_err(3)/=0) call error(' el-el scatt collisions not found / not compatible') 
-   if (io_err(4)/=0) call error(' el-photon   collisions not found / not compatible')
+   if (io_err(3)/=0)                 call error(' el-el scatt collisions not found / not compatible') 
+   if (io_err(4)/=0.and.l_real_time) call error(' el-photon   collisions not found / not compatible')
    !
    l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions.or.l_use_COH_collisions
    COLLISIONS_have_HARTREE=io_err(2)>0.and.HXC_collisions%kind>=SC_HARTREE

@@ -39,7 +39,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
  use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
-&                        l_use_COH_collisions,l_elphoton_scatt
+&                        l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
  use com,           ONLY:error
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -211,10 +211,18 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (io_COLLs) then
    !
-   call COLLISIONS_basic_operations( "clean",    HXC_collisions )
-   call COLLISIONS_basic_operations( "clean",    COH_collisions )
-   call COLLISIONS_basic_operations( "clean",      P_collisions )
-   call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
+   if (.not.l_real_time.and..not.l_sc_run) then
+     !
+     ! %state and %N are needed in RT_driver and SC_driver to distribute the collisions.
+     ! This distribution is done BEFORE the call to COLLLISIONS_load. Therefore %state and %N
+     ! must not be cleared here.
+     !
+     call COLLISIONS_basic_operations( "clean",    HXC_collisions )
+     call COLLISIONS_basic_operations( "clean",    COH_collisions )
+     call COLLISIONS_basic_operations( "clean",      P_collisions )
+     call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
+     !
+   endif
    !
    if (IO_err==0) return
    !

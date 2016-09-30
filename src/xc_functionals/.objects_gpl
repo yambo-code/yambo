@@ -1,3 +1,3 @@
 objs =  xc_rpa_kp.o \
-        el_magnetization.o el_density_and_current.o eval_Gradient.o XC_potential_driver.o\
+        el_magnetization.o el_density_and_current.o el_density_of_states.o eval_Gradient.o XC_potential_driver.o \
         XC_libxc_driver.o XC_eval_gga_potential.o Build_V_xc_mat.o

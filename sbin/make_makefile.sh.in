@@ -101,10 +101,6 @@ case $target in
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir)"
     ;;
-  ydb*)
-   llibs="$llibs \$(lfftqe) \$(llapack) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal"
-   linclude="$linclude \$(netcdf_idir)"
-    ;;
 esac
 
 cat config/setup >>$cdir/Makefile
@@ -127,7 +123,7 @@ rm -f $cdir/$ofile.c
 
 if [ "$mode" = "x" ] ; then 
 cat << EOF >> $cdir/Makefile
-\$(target): \$(lock_file) \$(objs)
+\$(target): locks \$(objs)
 	\$(driver)\$
 	\$(link)\$
 	\$(modmove)\$ 
@@ -137,21 +133,24 @@ EOF
 else 
 rm -f ./lib/$target
 cat << EOF >> $cdir/Makefile
-\$(target): \$(lock_file) \$(objs) arcreate
+\$(target): locks arcreate
 	\$(modmove)\$ 
 EOF
 fi
 
 cat << EOF >> $cdir/Makefile
-\$(objs): \$(lock_file)
-\$(lock_file):
+locks:
 	${PREFIX}if test ! -f \$(lock_file) && test "\$(debug)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
-	touch \$(lock_file); fi
+	touch \$(lock_file); rm -f \$(dep_file); fi
 	${PREFIX}if test "\$(debug)" = "yes"; \
-	then \$(srcdir)/sbin/objects_debug.sh \$(lock_file); fi
+	then \$(srcdir)/sbin/objects_debug.sh \$(lock_file); rm -f \$(dep_file); fi
+
+\$(objs): locks
+
 \$(dep_file):
-	@cd \$(topdir)/$cdir; \$(topdir)/sbin/moduledep.sh \$(objs) > \$(srcdir)/$cdir/\$(dep_file)
+	cd \$(topdir)/$cdir; \$(topdir)/sbin/moduledep.sh \$(objs) > \$(srcdir)/$cdir/\$(dep_file)
+
 arcreate: \$(objs)
 	${PREFIX}(eval \$(ar) \$(arflags) \$(target) \$(objs)) > /dev/null
 	${PREFIX}mv \$(target) \$(libdir) ; chmod u+x \$(libdir)/\$(target)

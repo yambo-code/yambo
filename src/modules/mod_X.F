@@ -67,6 +67,7 @@ module X_m
  logical                  :: force_v_g_space_approach
  integer                  :: num_shifted_grids
  real(SP)                 :: Dipole_Energy_treshold
+ real(SP)                 :: Dipole_Energy_treshold_vv
  complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
@@ -87,7 +88,10 @@ module X_m
  ! Response function
  !
  character(schlen)        :: Chi_mode
+ character(schlen)        :: Chi_linalg_mode
+ logical                  :: X_use_lin_sys=.false.
  real(SP),    allocatable :: X_poles(:)
+ real(SP),    allocatable :: X_Ein_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
  complex(SP), allocatable :: X_mat(:,:,:)
@@ -97,8 +101,10 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
- real(SP):: X_en_comp
- logical :: X_terminator
+ real(SP):: X_terminator_E
+ real(SP):: X_term_E
+ logical :: l_X_terminator=.false.
+ character(schlen) :: X_terminator_Kind="none"
  !
  ! I/O parameters
  !
@@ -127,7 +133,7 @@ module X_m
    real(SP)   :: ppaE
    complex(SP):: Wd
    logical          :: Vnl_included
-   character(1)     :: ordering
+   character(2)     :: ordering
    character(schlen):: f_xc
  end type
  !
@@ -137,7 +143,7 @@ module X_m
      integer              :: nw 
      complex(SP)          :: wv(nw)
      logical              :: be_verbose
-     character(1)         :: ordering
+     character(2)         :: ordering
      complex(SP) ,optional:: eps(nw),eel(nw)
    end function
  end interface
@@ -267,7 +273,7 @@ module X_m
      X%Wd=cZERO
      X%cg_percentual=100._SP
      X%ppaE=1._SP
-     X%ordering="t"       
+     X%ordering="T"
      X%f_xc="none"       
    end subroutine
    !

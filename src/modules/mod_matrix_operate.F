@@ -27,28 +27,6 @@ module matrix_operate
  !
  implicit none
  !
- integer, parameter :: USE_LK=1
- integer, parameter :: USE_SLK=2
- integer, parameter :: ALREADY_FILLED=3
- integer, parameter :: DIAGO=4
- integer, parameter :: INV=5
- integer, parameter :: PARTIAL_DIAGO=6
- integer, parameter :: USE_SVD=7
- !
- integer, parameter :: min_cpu_block_size=100
- !
- type blacs_t
-   !
-   ! variables for blacs initialization and processor grid creation
-   !
-   integer :: ictxt, nprow, npcol, myrow, mycol
-   !
-   ! variables needed to distribute the global array across the grid
-   !
-   integer :: descM(9), descV(9), ldrow, ldcol, blocking_factor 
-   !
- end type blacs_t 
- !
  contains
    !
    integer function matrix_index(i1,i2,n)
@@ -109,17 +87,25 @@ module matrix_operate
      integer     :: D,i1
      complex, allocatable :: V(:)
      D=size(M,1)
+#if defined _OPENMP
 !$omp parallel default(shared), private(V,i1)
+#endif
      allocate(V(D))
+#if defined _OPENMP
 !$omp do 
+#endif
      do i1=1,D
        V(i1:D)=M(i1,i1:D)
        M(i1,i1:D)=M(i1:D,i1)
        M(i1:D,i1)=V(i1:D)
      enddo
+#if defined _OPENMP
 !$omp end do
+#endif
      deallocate(V)
+#if defined _OPENMP
 !$omp end parallel
+#endif
    end subroutine
    !
    subroutine mat_r2c_ordered(mr,mc,m_order) 

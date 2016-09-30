@@ -108,8 +108,6 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
    call SLK_communicators( PAR_COM_NULL, PAR_COM_WORLD, 1)
  endif
  !
-#endif
- !
  ! Messaging
  !
  if (linear_algebra_is_parallel) then
@@ -117,7 +115,10 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
 &               "x"//trim(intc(SLK_ORTHO%grid(2)))//" SLK grid ("//&
 &               trim(intc(product(SLK_ORTHO%grid)))//" cpu)")
  else
+#endif
    call msg('s','[LA] SERIAL linear algebra')
+#if defined _SCALAPACK
  endif
+#endif
  !
 end subroutine

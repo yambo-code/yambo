@@ -66,8 +66,6 @@ subroutine SC_start_and_restart(X,E)
  call parser('SCdiag',         l_SC_diagonal)
  call parser('SCnlMix',        l_SC_nl_mix)
  !
- if (l_sc_V_is_local) l_SC_nl_mix=.FALSE.
- !
  ! Preconditioning
  !=================
  if (trim(SC_preconditioning)/="simple".and. &
@@ -222,9 +220,9 @@ subroutine SC_start_and_restart(X,E)
    call msg('s' ,'[SC] Extented collisions Used')
    call msg('r' ,'[SC] Extented collisions              :',l_use_Hxc_collisions)
    COHSEX_use_empties=.TRUE.
-   if (COLLISIONS_have_HARTREE) then
-     call warning(" [COLLISIONS] Found Hartree collisions. Preconditioning switched-off")
-     SC_preconditioning="none"
+   if (COLLISIONS_have_HARTREE.and.SC_preconditioning=="thomas-fermi") then
+     call warning(" [COLLISIONS] Found Hartree collisions. Switched to simple")
+     SC_preconditioning="simple"
    endif
  endif
  !

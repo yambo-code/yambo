@@ -128,7 +128,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    if (io_err(4)/=0.and.l_real_time) call error(' el-photon   collisions not found / not compatible')
    !
    l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions.or.l_use_COH_collisions
-   COLLISIONS_have_HARTREE=io_err(2)>0.and.HXC_collisions%kind>=H_SE_HARTREE
+   COLLISIONS_have_HARTREE=io_err(2)==0.and.HXC_collisions%kind>=H_SE_HARTREE
+   !
    return
    !
  endif

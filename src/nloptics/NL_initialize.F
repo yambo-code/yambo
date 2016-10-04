@@ -27,7 +27,7 @@ subroutine NL_initialize(E,k,q)
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v
  use SC,             ONLY:SC_potential
- use units,          ONLY:AU2VMm1,FS2AUT,HA2EV
+ use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use com,            ONLY:msg,warning,error
  use memory_m,       ONLY:mem_est
@@ -121,9 +121,9 @@ subroutine NL_initialize(E,k,q)
    call msg('s',' Total simulation time read from input') 
  endif
  !
- call msg('sr','Dephasing Time          [fs]:',5._SP*Phase_LifeTime/FS2AUT)
- call msg('sr','Sampling  Time          [fs]:',(EtoT(E=NL_er(1))+5._SP*RT_step)/FS2AUT)
- call msg('sr','Total simulation time   [fs]:',NE_tot_time/FS2AUT)
+ call msg('sr','Dephasing Time          [fs]:',5._SP*Phase_LifeTime*AUT2FS)
+ call msg('sr','Sampling  Time          [fs]:',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
+ call msg('sr','Total simulation time   [fs]:',NE_tot_time*AUT2FS)
  !
  NE_steps=int(NE_tot_time/RT_step)+1
  !
@@ -245,14 +245,14 @@ subroutine NL_initialize(E,k,q)
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 :',trim(Integrator_name))
- call msg( 'r', 'Simulation time        [fs]:',real(NE_steps-1)*RT_step/FS2AUT)
- call msg( 'r', 'Step length            [fs]:',RT_step/FS2AUT)
+ call msg( 'r', 'Simulation time        [fs]:',real(NE_steps-1)*RT_step*AUT2FS)
+ call msg( 'r', 'Step length            [fs]:',RT_step*AUT2FS)
  call msg( 'r', 'NE Steps                   :',NE_steps)
  call msg( 'r', 'Correlation                :'//trim(NL_correlation))
  call msg( 'r', 'Damping                [eV]:',NL_damping*HA2EV)
- call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime/FS2AUT)
+ call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime*AUT2FS)
  call msg( 'r', 'Efield                     :'//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield damping         [fs]:',Efield(1)%damping/FS2AUT)
+ call msg( 'r', 'Efield damping         [fs]:',Efield(1)%damping*AUT2FS)
  call msg( 'r', 'Efield Amplitude      [V/m]:',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          :',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          :',n_frequencies)

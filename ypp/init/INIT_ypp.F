@@ -155,7 +155,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  io_Nonlinear=io_NL(ID)
  !
  if(io_Nonlinear==0) then
-   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-FS2AUT/)
+   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-real(FS2AUT,SP)/)
  endif
  !
 #endif
@@ -709,7 +709,7 @@ contains
    !
    nflines=nflines+1
    do i_p=1,n_points
-     write (flines(nflines+1),'(4(f7.5,1x,a))') real_v(i_p,1),'|', real_v(i_p,2),'|', real_v(i_p,3),'|'
+     write (flines(nflines+1),'(4(f8.5,1x,a))') real_v(i_p,1),'|', real_v(i_p,2),'|', real_v(i_p,3),'|'
      nflines=nflines+1
    enddo
    write (flines(nflines+1),'(a)') '%'

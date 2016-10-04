@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM CA MG
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,7 +24,7 @@
 integer function io_Overlaps(X,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,X_alloc
+ use X_m,           ONLY:X_t,X_alloc,DIP_S
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:nXkbz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
@@ -32,7 +32,6 @@ integer function io_Overlaps(X,ID)
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
- use X_m,           ONLY:DIP_S
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif

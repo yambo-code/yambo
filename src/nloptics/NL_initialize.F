@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !            http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG AC
+! Authors (see AUTHORS file for details): MG CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 

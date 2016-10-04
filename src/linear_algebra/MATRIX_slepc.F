@@ -113,10 +113,11 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
 
   !Set solver parameters at runtime
   nev = n_eig
-  ncv = 2*nev
-  mpd = 2*nev
-  call EPSSetDimensions(eps,nev,ncv,mpd,ierr)
-
+  !ncv = 2*nev
+  !mpd = 2*nev
+  !call EPSSetDimensions(eps,nev,ncv,mpd,ierr)
+  call EPSSetDimensions(eps,nev,PETSC_DEFAULT_INTEGER,PETSC_DEFAULT_INTEGER,ierr)
+  call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

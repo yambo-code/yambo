@@ -33,7 +33,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,magn_n,SC_rho_threshold,it_now,E_convergence, &
 &                         rho_convergence,magn_convergence,SC_R,V_xc_sc,l_sc_V_is_local,H_nl_sc,H_rotate,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,&
+&                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,l_sc_XC_is_local,&
 &                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_table_setup,it_to_start
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
@@ -278,21 +278,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    do ik = 1, QP_nk 
      !
+     H_nl_sc=cZERO
+     !
      ! Build H_nl_sc
      !===============
      !
-     if (l_sc_V_is_local) then
-       !
-       H_nl_sc(:,:,:) = Ho(:,:,ik,:)/real(ncpu)
-       if(n_spinor==1) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo,'def')
-       if(n_spinor==2) then
-         call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
-         call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WFo,'xc ')
-       endif
-       !
-     else
-       !
-       H_nl_sc=cZERO
+     if (l_use_collisions .or. (.not.l_sc_V_is_local) ) then
        !
        ! Without collisions FOCK goes in QP_Vnl_xc and CORR in QP_Sc.
        ! With    collisions FOCK and CORR go in QP_Vnl_xc
@@ -317,8 +308,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(3))
        io_V=io_SC_components('V',E,ID(3))
        !
-       H_nl_sc = H_nl_sc + Ho(:,:,ik,:)/real(ncpu)
-       !
        ! Mixing for non-local self-energies
        !====================================
        !
@@ -331,11 +320,19 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
           !
        endif
        !
-       ! Add V_Hartree
-       !
-       if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
-       !
      endif
+     !
+     ! Add local V_xc
+     !
+     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,V_xc_sc,H_nl_sc,WFo,'xc ')
+     !
+     ! Add V_Hartree
+     !
+     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
+     !
+     ! Add Ho
+     !
+     H_nl_sc = H_nl_sc + Ho(:,:,ik,:)/real(ncpu)
      !
      call PP_redux_wait(H_nl_sc)
      !

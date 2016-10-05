@@ -42,15 +42,15 @@ subroutine cutoff_ws(q)
  real(DP)           ::atws(3,3)
  real(DP)           ::dummy,rdum(3)
  real(SP)           ::v1(3)
- complex(SP)        ::V_cut(q%nibz,wf_ng)
- real(dp), external ::vcut_get
  type(PP_indexes)   ::px
+ complex(SP), allocatable :: V_cut(:,:)
  !
- call PP_indexes_reset(px)
+ real(dp), external ::vcut_get
+ 
  !
  ! build the superperiodicity direct lattice
+ ! CONVERTI PRIMA IN RLU!!!!
  !
-!CONVERTI PRIMA IN RLU!!!!
  nq=1
  rdum=1000
  do iq=1,nqibz
@@ -62,8 +62,6 @@ subroutine cutoff_ws(q)
  do i1=1,3
    if (nq(i1)==0) nq(i1)=1
  enddo
- ! debug XXXX
- write(*,*) nq
  !
  ! write nq on the report
  do i1=1,3
@@ -72,11 +70,15 @@ subroutine cutoff_ws(q)
  enddo
  !
  call vcut_init(vcut,atws,real(ws_cutoff,DP))
- !
  call vcut_info(vcut)
+ 
  !
+ ! workspace and further init
+ !
+ allocate(V_cut(q%nibz,wf_ng))
  V_cut=0.0_SP
  !
+ call PP_indexes_reset(px)
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
  call live_timing('WS components',px%n_of_elements(myid+1)/n_threads)
@@ -93,12 +95,12 @@ subroutine cutoff_ws(q)
      !
      if (.not.px%element_2D(iq,ig)) cycle 
      !
-     v1=( q%pt(iq,:)+g_vec(ig,:) )*2.*pi/alat(:)
+     v1=( q%pt(iq,:)+g_vec(ig,:) )*2.0_SP*pi/alat(:)
      !
      ! XXXX
-     if (ig==1) write(*,*) v1
+     !if (ig==1) write(*,*) v1
      dummy=vcut_get(vcut,real(v1,DP))
-     V_cut(iq,ig)=real(dummy/(4.d0*PI*e2))
+     V_cut(iq,ig)=real(dummy/(4.0_SP*PI*e2))
      !
      call live_timing(steps=1)
      !
@@ -112,13 +114,19 @@ subroutine cutoff_ws(q)
  call live_timing()
  !
  ! XXXX
- write(*,*) V_cut(1,1)
+ !write(*,*) V_cut(1,1)
  !
  ! MPI 2 all
  !
  call PP_redux_wait(V_cut)
  !
- forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1./V_cut(iq,ig))
+ forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1.0_SP/V_cut(iq,ig))
+
+ !
+ ! cleanup
+ !
+ deallocate(V_cut)
+
 !
 !
 ! do ig=1,wf_ng

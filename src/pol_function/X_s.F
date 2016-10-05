@@ -224,15 +224,6 @@ subroutine X_s(iq,X,Xw,W_range)
 #else
    forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4._SP*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
 #endif
-!DV
-  if (iq.eq.1) then
-  do i1=1,10
-      do i2=1,10
-        write(20,*) i1,i2,X_mat(i1,i2,1)
-      enddo
-  enddo
- endif
-!
    !
    if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) call live_timing(steps=1)
    !

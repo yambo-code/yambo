@@ -42,19 +42,19 @@
   ! automatically finds whether the cell is orthorombic or not
   vcut%orthorombic=.false.
   mod2a=sqrt(sum(vcut%a**2,1))
-  write(*,*) "CHECK OPRTJO"
-  write(*,*) vcut%a(:,1) 
-  write(*,*) vcut%a(:,2) 
-  write(*,*) vcut%a(:,3) 
- write(*,*) "****"
- write(*,*) mod2a 
+  !write(*,*) "CHECK OPRTJO"
+  !write(*,*) vcut%a(:,1) 
+  !write(*,*) vcut%a(:,2) 
+  !write(*,*) vcut%a(:,3) 
+  !write(*,*) "****"
+  !write(*,*) mod2a 
   if(abs(sum(vcut%a(:,1)*vcut%a(:,2)))/(mod2a(1)*mod2a(2))<toll .and. &
      abs(sum(vcut%a(:,2)*vcut%a(:,3)))/(mod2a(2)*mod2a(3))<toll .and. &
      abs(sum(vcut%a(:,3)*vcut%a(:,1)))/(mod2a(3)*mod2a(1))<toll) vcut%orthorombic=.true.
-  write(*,*) sum(vcut%a(:,1)*vcut%a(:,2))/(mod2a(1)*mod2a(2))
-  write(*,*) sum(vcut%a(:,2)*vcut%a(:,3))/(mod2a(2)*mod2a(3))
-  write(*,*) sum(vcut%a(:,3)*vcut%a(:,1))/(mod2a(3)*mod2a(1))
-  write(*,*) "orthorombic",vcut%orthorombic
+  !write(*,*) sum(vcut%a(:,1)*vcut%a(:,2))/(mod2a(1)*mod2a(2))
+  !write(*,*) sum(vcut%a(:,2)*vcut%a(:,3))/(mod2a(2)*mod2a(3))
+  !write(*,*) sum(vcut%a(:,3)*vcut%a(:,1))/(mod2a(3)*mod2a(1))
+  !write(*,*) "orthorombic",vcut%orthorombic
   n1=ceiling(vcut%cutoff*sqrt(sum(vcut%a(1,:)**2))/(2.0*pi))
   n2=ceiling(vcut%cutoff*sqrt(sum(vcut%a(2,:)**2))/(2.0*pi))
   n3=ceiling(vcut%cutoff*sqrt(sum(vcut%a(3,:)**2))/(2.0*pi))
@@ -195,12 +195,12 @@ END SUBROUTINE vcut_destroy
      IF( i(1)>ubound(vcut%corrected,1) .OR. i(1)<lbound(vcut%corrected,1) .OR. &
          i(2)>ubound(vcut%corrected,2) .OR. i(2)<lbound(vcut%corrected,2) .OR. &
          i(3)>ubound(vcut%corrected,3) .OR. i(3)<lbound(vcut%corrected,3)) THEN
-   write(*,*) i(1),i(2),i(3)
-   write(*,*) "bounds"
-   write(*,*) ubound(vcut%corrected,1),lbound(vcut%corrected,1)
-   write(*,*) ubound(vcut%corrected,2),lbound(vcut%corrected,2)
-   write(*,*) ubound(vcut%corrected,3),lbound(vcut%corrected,3)
-   STOP "culo"
+   !write(*,*) i(1),i(2),i(3)
+   !write(*,*) "bounds"
+   !write(*,*) ubound(vcut%corrected,1),lbound(vcut%corrected,1)
+   !write(*,*) ubound(vcut%corrected,2),lbound(vcut%corrected,2)
+   !write(*,*) ubound(vcut%corrected,3),lbound(vcut%corrected,3)
+   !STOP 
          CALL error('index out of bound') 
      ENDIF
      !
@@ -450,10 +450,10 @@ function num_inverse(a) result(inv)
   det = num_determinant(a)
   inv = transpose(tmp) / det
   if(sum((matmul(inv,a))**2-eye3) > 1d-5) then
-    write(0,*) "AHIA",sum((matmul(inv,a)-eye3)**2)
-    write(0,*) "A",a
-    write(0,*) "inv",inv
-    write(0,*)">>", matmul(inv,a)
+    !write(0,*) "AHIA",sum((matmul(inv,a)-eye3)**2)
+    !write(0,*) "A",a
+    !write(0,*) "inv",inv
+    !write(0,*)">>", matmul(inv,a)
     stop
   end if
 end function num_inverse
@@ -464,7 +464,7 @@ function num_determinant(a) result(det)
   real(DP), intent(in) :: a(3,3)
   real(DP)             :: det
   det = a(1,1)*a(2,2)*a(3,3) + a(1,2)*a(2,3)*a(3,1) + a(1,3)*a(2,1)*a(3,2) &
-    - a(1,1)*a(2,3)*a(3,2) - a(1,2)*a(2,1)*a(3,3) - a(1,3)*a(2,2)*a(3,1)
+      - a(1,1)*a(2,3)*a(3,2) - a(1,2)*a(2,1)*a(3,3) - a(1,3)*a(2,2)*a(3,1)
 end function num_determinant
 
 

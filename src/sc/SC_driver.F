@@ -289,7 +289,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (l_use_collisions .or. (.not.l_sc_V_is_local) ) then
        !
        ! Without collisions FOCK goes in QP_Vnl_xc and CORR in QP_Sc.
-       ! With    collisions FOCK and CORR go in QP_Vnl_xc
+       ! With    collisions FOCK and CORR (with also Hartree) go in QP_Vnl_xc
        !
        if (l_sc_fock.or.l_sc_sex.or.l_use_collisions) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
@@ -333,11 +333,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
      !
+     call PP_redux_wait(H_nl_sc)
+     !
      ! Add Ho
      !
-     H_nl_sc = H_nl_sc + Ho(:,:,ik,:)/real(ncpu)
-     !
-     call PP_redux_wait(H_nl_sc)
+     H_nl_sc = H_nl_sc + Ho(:,:,ik,:)
      !
      ! Diagonalize H_nl_sc 
      !=====================

@@ -33,10 +33,11 @@ subroutine SC_start_and_restart(X,E)
  use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use hamiltonian,    ONLY:H_potential,H_kind,H_xc_functional,H_perturbation,    &
-&                         WF_G_max,WF_Go_indx,E_bare,l_sc_V_is_local
+&                         WF_G_max,WF_Go_indx,E_bare,l_sc_V_is_local,           &
+&                         H_QP_table_setup
  use SC,             ONLY:SC_potential,SC_kind,SC_xc_functional,SC_perturbation,&
 &                         l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,       &
-&                         SC_iterations,SC_preconditioning,SC_QP_table_setup,   &
+&                         SC_iterations,SC_preconditioning,                     &
 &                         l_oep_iterative,rho_convergence,E_convergence,        &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,            &
 &                         SC_fft_size,E_bare_Ef,l_oep_EWeight,SC_cycle_mixing,  &
@@ -151,7 +152,7 @@ subroutine SC_start_and_restart(X,E)
  !
  ! Quasi-Particle setup
  ! ====================
- call SC_QP_table_setup(E)
+ call H_QP_table_setup(E)
  !
  if (.not.l_SC_RESTART.and..not.l_NSC_shot) l_SC_cycle=SC_iterations>0
  !

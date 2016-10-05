@@ -33,11 +33,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use SC,             ONLY:SC_bands,SC_iterations,SC_rho_threshold,E_convergence,      &
 &                         rho_convergence,magn_convergence,SC_R,H_rotate,it_now,      &
 &                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
-&                         l_SC_RESTART,l_Mean_Potential,SC_QP_table_setup,it_to_start,&
-&                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,         &
-&                         l_sc_XC_is_local
+&                         l_SC_RESTART,l_Mean_Potential,it_to_start,                  &
+&                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
-&                         V_hartree_sc,Ho,V_xc_sc,E_bare
+&                         V_hartree_sc,Ho,V_xc_sc,E_bare,l_sc_XC_is_local,            &
+&                         H_QP_table_setup
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
@@ -97,7 +97,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  if (SC_bands(1)/= 1  ) call error(' Lower bound of band indexes must to be 1')
  if (SC_bands(2)> E%nb) call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
  !
- call SC_QP_table_setup(E)
+ call H_QP_table_setup(E)
  !
  ! Parallel Setup
  !================

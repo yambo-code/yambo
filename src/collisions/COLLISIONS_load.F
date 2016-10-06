@@ -54,7 +54,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Work Space
  !
  integer            :: COLL_kind(4),ID,io_err(4),COM_,i1
- logical            :: l_use_scatt_collisions,l_warning,l_error
+ logical            :: l_use_scatt_collisions,l_warning,l_error,l_use_P_collisions
  !
  io_err      =0
  !
@@ -116,8 +116,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    l_use_COH_collisions  =io_err(1)==0.and.l_sc_coh
    l_use_Hxc_collisions  =io_err(2)==0.and.(l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_exx.or.l_sc_srpa)
+   l_use_P_collisions    =io_err(4)==0.and.(l_elphoton_scatt.or.l_elphoton_corr)
    !
-   l_warning=.not.l_use_Hxc_collisions.and..not.l_use_COH_collisions
+   l_warning=.not.l_use_Hxc_collisions.and..not.l_use_COH_collisions.and..not.l_use_P_collisions
    l_error  =l_warning.and.l_real_time.and.(l_sc_sex.or.l_sc_fock)
    !
    if (l_error)   call error(  ' HXC collisions not found / not compatible')
@@ -233,9 +234,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
          !
          do iqbz=1,nqbz
            !
+           i_q_mem=PAR_Q_index(iqbz)
+           !
            if (COLL%kind==SE_GW_NEQ) then
-             !
-             i_q_mem=PAR_Q_index(iqbz)
              !
              if (.not.PAR_IND_Q%element_1D(iqbz)) then
                ic=ic+N_plasma_poles_global

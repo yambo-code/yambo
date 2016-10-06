@@ -31,9 +31,9 @@ subroutine X_s(iq,X,Xw,W_range)
 &                        PAR_COM_DIPOLES,PAR_COM_SLK_INDEX_local
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
- use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV,LIN_SYS,MAT_MUL
+ use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL
  use wrapper,       ONLY:M_by_M
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
+ use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,LINEAR_ALGEBRA_driver 
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_mat,X_use_lin_sys
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,&
@@ -189,14 +189,14 @@ subroutine X_s(iq,X,Xw,W_range)
      ! formulation as a linear system
      !
      X_mat(:,:,iw_mat)=Xo
-     call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,B=X_mat(:,:,iw_mat))
+     call LINEAR_ALGEBRA_driver(LIN_SYS,M=tddftk,B=X_mat(:,:,iw_mat))
      !
   else
      !
      ! formulation matrix inversion + matmul
      !
-     call LINEAR_ALGEBRA_driver(INV,tddftk)
-     call LINEAR_ALGEBRA_driver(MAT_MUL,tddftk,B=Xo,C=X_mat(:,:,iw_mat))
+     call LINEAR_ALGEBRA_driver(INV,M=tddftk)
+     call LINEAR_ALGEBRA_driver(MAT_MUL,M=tddftk,B=Xo,C=X_mat(:,:,iw_mat))
      !
    endif
    !

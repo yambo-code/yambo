@@ -26,6 +26,9 @@ module BS_solvers
  use pars,       ONLY:SP,schlen,lchlen
  use memory_m,   ONLY:mem_est
  use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim
+#if defined _SCALAPACK
+ use SLK_m,      ONLY:SLK_matrix
+#endif
  !
  implicit none
  !
@@ -64,6 +67,9 @@ module BS_solvers
  ! Solvers (Diago)
  !=========
  logical  :: BSS_write_eig_2_db
+#if defined _SCALAPACK
+ type(SLK_matrix):: BSS_diago_slk
+#endif
  !
  ! Solvers (Haydock)
  !=========
@@ -75,6 +81,9 @@ module BS_solvers
  !=========
  character(schlen):: BSS_inversion_mode
  logical  :: BSS_uses_partial_diago
+#if defined _SCALAPACK
+ type(SLK_matrix):: BSS_inv_slk
+#endif
  !
  type K_Inversion_data
    !

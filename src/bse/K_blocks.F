@@ -82,6 +82,7 @@ subroutine K_blocks( )
            BS_blk(n_BS_blks)%iT_p=j_T
            BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
            BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+           BS_blk(n_BS_blks)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
          endif
          !
        endif
@@ -102,6 +103,7 @@ subroutine K_blocks( )
            BS_blk(n_BS_blks)%iT_p=j_T
            BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
            BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+           BS_blk(n_BS_blks)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
          endif
          !
        endif

@@ -185,7 +185,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
    !
    do i_r=1,BS_blk(i_B)%size(1)
      !
-     H_pos(1)=sum(BS_T_grp(:I_Tk-1)%size)+i_r
+     H_pos(1)=BS_blk(i_B)%coordinate(1)+i_r-1
      !
      ! First the diagonal
      !
@@ -206,7 +206,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      !
      do i_c=1,BS_blk(i_B)%size(2)
        !
-       H_pos(2)=sum(BS_T_grp(:I_Tp-1)%size)+i_c
+       H_pos(2)=BS_blk(i_B)%coordinate(2)+i_c-1
        !
        if (H_pos(1)>=H_pos(2)) cycle
        !

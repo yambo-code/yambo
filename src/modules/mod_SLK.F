@@ -30,6 +30,7 @@ module SLK_m
  !
  integer              :: n_pools = 1 ! number of pools
  integer, parameter   :: desc_len= 9
+ logical              :: MATRIX_is_already_distributed
  !
  ! SLK test
  !
@@ -68,18 +69,21 @@ module SLK_m
  ! SLK matrix distributed block and informations
  !===============================================
  type SLK_matrix 
+   !
    integer :: desc(desc_len)
-   integer :: lwork    = 0
-   integer :: lrwork   = 0
-   integer :: liwork   = 0
-   integer :: info     = 0
-   integer :: rows(2)  = 0
-   integer :: cols(2)  = 0
-   integer :: nrows    = 0
-   integer :: ncols    = 0
+   integer :: lwork      = 0
+   integer :: lrwork     = 0
+   integer :: liwork     = 0
+   integer :: info       = 0
+   integer :: rows(2)    = 0
+   integer :: cols(2)    = 0
+   integer :: nrows      = 0
+   integer :: ncols      = 0
    integer :: nrows_used = 0
    integer :: ncols_used = 0
+   !
    complex(SP), allocatable :: blc(:,:)
+   !
  end type SLK_matrix 
  !
  ! Specific SLK worlds ...

@@ -66,28 +66,6 @@ module linear_algebra
    module procedure heev,geev
  end interface
  !
- interface 
-   !
-   subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
-     !
-     use pars,           ONLY:SP
-     !
-     integer                :: idriver
-     complex(SP)            :: M(:,:)
-     complex(SP),  optional :: B(:,:)
-     complex(SP),  optional :: C(:,:)
-     integer,      optional :: lib_in
-     complex(SP),  optional :: V_left(:,:)
-     complex(SP),  optional :: V_right(:,:)
-     real(SP),     optional :: E_real(:)
-     complex(SP),  optional :: E_cmpl(:)
-     integer,      optional :: SVD_digits 
-     complex(SP),  optional :: det
-     !
-   end subroutine
-   !
- end interface
- !
  contains
    !
    subroutine LINEAR_ALGEBRA_WS_clean_up(WS)

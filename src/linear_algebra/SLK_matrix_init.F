@@ -28,7 +28,7 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_distribute(ORTHO, POOL, M_slk, N, M )
+subroutine SLK_matrix_init(ORTHO, POOL, M_slk, Nr, Nc )
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset
@@ -36,15 +36,14 @@ subroutine PARALLEL_distribute(ORTHO, POOL, M_slk, N, M )
  !
  implicit none
  !
- integer           :: N
+ integer           :: Nr,Nc
  type(ORTHO_group) :: ORTHO
  type(POOL_group)  :: POOL
  type(SLK_matrix)  :: M_slk
- complex(SP)       :: M(N,N)
  !
  ! Work Space
  !
- integer   :: lld,N_blc,nprow,npcol,myrow,mycol
+ integer   :: lld,Nr_blc,Nc_blc,nprow,npcol,myrow,mycol
  integer   :: i,j
  !
  ! init global blacs grid
@@ -60,30 +59,27 @@ subroutine PARALLEL_distribute(ORTHO, POOL, M_slk, N, M )
  ! only MPI tasks in the grid need to go ahead
  !
  if (ORTHO%coordinate(1) == -1) return
-
  !
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B
  !
- N_blc = int(N/nprow)
- if (N_blc*nprow < N ) N_blc=N_blc+1
+ Nr_blc = int(Nr/nprow)
+ if (Nr_blc*nprow < Nr ) Nr_blc=Nr_blc+1
+ Nc_blc = int(Nc/npcol)
+ if (Nc_blc*npcol < Nc ) Nc_blc=Nc_blc+1
  !
- lld = N_blc
+ lld = Nr_blc
  !
- call DESCINIT( M_slk%desc, N, N, N_blc, N_blc, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
+ call DESCINIT( M_slk%desc, Nr, Nc, Nr_blc, Nc_blc, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
  !
- call SLK_matrix_reset(M_slk,N_blc,N_blc)
+ call SLK_matrix_reset(M_slk,Nr_blc,Nc_blc)
  !
- ! distribute the matrix M
- !
- M_slk%rows=(/myrow*N_blc+1,min(myrow*N_blc+N_blc,N)/)
- M_slk%cols=(/mycol*N_blc+1,min(mycol*N_blc+N_blc,N)/)
+ M_slk%rows=(/myrow*Nr_blc+1,min(myrow*Nr_blc+Nr_blc,Nr)/)
+ M_slk%cols=(/mycol*Nc_blc+1,min(mycol*Nc_blc+Nc_blc,Nc)/)
  !
  M_slk%nrows_used=M_slk%rows(2)-M_slk%rows(1)+1
  M_slk%ncols_used=M_slk%cols(2)-M_slk%cols(1)+1
  !
  M_slk%blc=0.0_SP
- !
- M_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
  !
 end subroutine 

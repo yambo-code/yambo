@@ -34,8 +34,8 @@ subroutine K_diago_driver(iq,W)
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
- use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,DIAGO
- use interfaces,     ONLY:K_diago_compute_epsilon
+ use linear_algebra, ONLY:DIAGO
+ use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver 
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  !
@@ -139,13 +139,13 @@ subroutine K_diago_driver(iq,W)
    !
    if (K_is_not_hermitian) then
      !
-     call LINEAR_ALGEBRA_driver(DIAGO,BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+     call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
      !
-     call LINEAR_ALGEBRA_driver(DIAGO,BS_mat,E_real=BS_E_real)
+     call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
      !

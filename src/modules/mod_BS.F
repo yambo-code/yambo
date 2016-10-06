@@ -110,12 +110,13 @@ module BS
  ! Blocks ...
  !============
  type BS_block
-   integer                       :: ik         ! ik index (IBZ)
-   integer                       :: ip         ! ip index (ik -> ip transition) (IBZ)
-   integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
-   integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
-   integer                       :: size(2)    ! rows x columns
-   character(1)                  :: mode       ! "R"esonant/"A"ntiresonant
+   integer                       :: ik            ! ik index (IBZ)
+   integer                       :: ip            ! ip index (ik -> ip transition) (IBZ)
+   integer                       :: iT_k          ! Index (among n_BS_T_grps) of the cv transitions @ k
+   integer                       :: iT_p          ! Index (among n_BS_T_grps) of the cv transitions @ p
+   integer                       :: size(2)       ! rows x columns
+   integer                       :: coordinate(2) ! Position of the left-bottom corner in the whole matrix
+   character(1)                  :: mode          ! "R"esonant/"A"ntiresonant
    !
    ! Matrix Block
    !--------------

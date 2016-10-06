@@ -27,6 +27,42 @@ module interfaces
  !
  interface
    !
+   subroutine SLK_matrix_transfer( mode, M_slk, M_bse, M )
+     !
+     use SLK_m, ONLY:SLK_matrix
+     use pars,  ONLY:SP
+     use BS,    ONLY:BS_block
+     !
+     character(*)     :: mode
+     type(SLK_matrix) :: M_slk
+     type(BS_block), optional :: M_bse(:)
+     complex(SP),    optional :: M(:,:)
+     !
+   end subroutine
+   !
+   subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det,&
+&                                   M_bse,V_left_slk,V_right_slk)
+     !
+     use SLK_m,          ONLY:SLK_matrix
+     use pars,           ONLY:SP
+     use BS,             ONLY:BS_block
+     !
+     integer                :: idriver
+     complex(SP),  optional :: M(:,:)
+     complex(SP),  optional :: B(:,:)
+     complex(SP),  optional :: C(:,:)
+     integer,      optional :: lib_in
+     complex(SP),  optional :: V_left(:,:)
+     complex(SP),  optional :: V_right(:,:)
+     real(SP),     optional :: E_real(:)
+     complex(SP),  optional :: E_cmpl(:)
+     integer,      optional :: SVD_digits 
+     complex(SP),  optional :: det
+     type(SLK_matrix), optional :: V_left_slk,V_right_slk
+     type(BS_block),   optional :: M_bse(:)
+     !
+   end subroutine
+   !
    subroutine SCATTERING_GW_kinematics(i_q_bz,i_m,I,k,q,TABLE,E,N,G0,Ek,Ekmq,E_diff)
      use pars,                ONLY:SP
      use electrons,           ONLY:levels

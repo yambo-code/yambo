@@ -33,7 +33,6 @@ subroutine PARALLEL_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, n, M, E )
  ! perform the diagonalization by using scalapack
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
  !
@@ -47,8 +46,7 @@ subroutine PARALLEL_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, n, M, E )
  real(SP)          :: E(n)
  !
  character(64) :: subname="PARALLEL_diagonalization"
- logical :: do_SLK
-
+ !
  call LINEAR_ALGEBRA_error(subname,'PARALLEL diagonalization not implemented')
  !
 #if defined _DOUBLE
@@ -59,15 +57,6 @@ subroutine PARALLEL_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, n, M, E )
  !if ( info /= 0 ) call LINEAR_ALGEBRA_error('performing PCGETRF',' ')
  !
 #endif
- !
- ! gather the eigenvectors ...
- !
- M=0.0_SP
- M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=WS%m1_cmplx(:,:)
- !
- ! gather the eigenvectors ...
- !
- call PP_redux_wait(M,COMM=POOL%INTRA_comm)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  ! 

@@ -25,9 +25,10 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  !
  ! mode can be "fill_the_SLK" "transfer_from_the_SLK"
  !
- use pars,  ONLY:SP
- use SLK_m, ONLY:SLK_matrix
- use BS,    ONLY:BS_block
+ use pars,           ONLY:SP,cZERO
+ use SLK_m,          ONLY:SLK_matrix,SLK_POOL
+ use BS,             ONLY:BS_block
+ use parallel_m,     ONLY:PP_redux_wait
  !
  implicit none
  !
@@ -36,6 +37,32 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  type(BS_block), optional :: M_bse(:)
  complex(SP),    optional :: M(:,:)
  !
- M_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
+ if (mode=="fill_the_SLK") then
+   !
+   if (present(M)) then
+     !
+     M_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
+     !
+     return
+     !
+   endif
+   !
+ endif
+ !
+ if (mode=="transfer_from_the_SLK") then
+   !
+   if (present(M)) then
+     !
+     M=cZERO
+     !
+     M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=M_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)
+     !
+     call PP_redux_wait(M,COMM=SLK_POOL%INTRA_comm)
+     !
+     return
+     !
+   endif
+   !
+ endif
  ! 
 end SUBROUTINE

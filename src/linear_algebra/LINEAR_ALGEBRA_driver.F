@@ -58,7 +58,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  ! Work Spaces ...
  !
  complex(SP)         :: det_
- integer             :: Nr,Nc,lib_in_use
+ integer             :: N,lib_in_use
  type (SLK_matrix)   :: M_slk,B_slk,C_slk,EIGEN_slk
  !
 #if defined _TIMING
@@ -67,8 +67,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  ! M dimension
  !
- Nr=size(M,1)
- Nc=size(M,2)
+ if (present(M)) then
+   N=size(M,1)
+ endif
  !
  ! Decide which to use among LK or SLK
  !
@@ -98,18 +99,18 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  if (lib_in_use==USE_SLK) then
    !
+   call SLK_matrix_init( SLK_ORTHO, SLK_POOL, M_slk, N )
+   call SLK_matrix_transfer( "fill_the_SLK",  M_slk, M=M )
+   !
    if (idriver==INV) then
      !
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, M_slk, Nr, Nc )
-     call SLK_matrix_transfer( "fill_the_SLK", M_slk, M=M )
+     call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, M_slk, N ) 
      !
-     call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, M_slk, Nr, M ) 
+     call SLK_matrix_transfer( "transfer_from_the_SLK",  M_slk, M=M )
      !
    else if (idriver==DIAGO) then
      !
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, M_slk,     Nr, Nc )
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, EIGEN_slk, Nr, Nc )
-     call SLK_matrix_transfer( "fill_the_SLK", M_slk, M=M )
+     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, EIGEN_slk, N )
      !
      if (present(E_cmpl)) then
        !
@@ -119,29 +120,29 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
        !
      else
        !
-       call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, Nr, M, E_real )
+       call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, N, E_real )
        !
      endif
      !
+     call SLK_matrix_transfer( "transfer_from_the_SLK",  EIGEN_slk, M=M )
+     !
    else if (idriver==LIN_SYS) then
      !
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, M_slk, Nr, Nc )
-     call SLK_matrix_transfer( "fill_the_SLK", M_slk, M=M )
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, Nr, Nc )
+     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
      call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
      !
-     call PARALLEL_lin_system( SLK_ORTHO, SLK_POOL, M_slk, B_slk, Nr, size(B,2), B )
+     call PARALLEL_lin_system( SLK_ORTHO, SLK_POOL, M_slk, B_slk, N, size(B,2), B )
+     call SLK_matrix_transfer( "transfer_from_the_SLK",  B_slk, M=B )
      !
    else if (idriver==MAT_MUL) then
      ! 
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, M_slk, Nr, Nc )
-     call SLK_matrix_transfer( "fill_the_SLK", M_slk, M=M )
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, Nr, Nc )
+     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
+     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, C_slk, N )
      call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, C_slk, Nr, Nc )
      call SLK_matrix_transfer( "fill_the_SLK", C_slk, M=C )
      !
      call PARALLEL_mat_mul( SLK_ORTHO, SLK_POOL, M_slk, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), size(M,2), C )
+     call SLK_matrix_transfer( "transfer_from_the_SLK",  C_slk, M=C )
      !
    endif
    !
@@ -163,13 +164,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
    if (idriver==SVD_INV) then
-     call SERIAL_SVD_inversion(Nr,M,SVD_digits)
+     call SERIAL_SVD_inversion(N,M,SVD_digits)
    endif
    !
    ! ###> SERIAL INVERSION 
    !
    if (idriver==INV) then
-     call SERIAL_inversion(Nr,M,det_,present(det))
+     call SERIAL_inversion(N,M,det_,present(det))
    endif
    !
    ! ###> SERIAL DIAGONALIZATION
@@ -179,11 +180,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
      if (present(E_cmpl)) then
        !
        !... non-Hermitian case
-       call SERIAL_diagonalization(Nr,M,E_cmpl,V_left,V_right)
+       call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
      else
        !
        !... Hermitian case
-       call SERIAL_HERMITIAN_diagonalization(Nr,M,E_real)
+       call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
      endif
      !
    endif
@@ -191,7 +192,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    ! ####> LINEAR SYSTEM SOLUTION
    !
    if (idriver==LIN_SYS) then
-     call SERIAL_lin_system(Nr,size(B,2),M,B)
+     call SERIAL_lin_system(N,size(B,2),M,B)
    endif
    !
    ! ####> MAT_MUL

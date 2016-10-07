@@ -28,7 +28,7 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine SLK_matrix_init(ORTHO, POOL, M_slk, Nr, Nc )
+subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset
@@ -36,14 +36,14 @@ subroutine SLK_matrix_init(ORTHO, POOL, M_slk, Nr, Nc )
  !
  implicit none
  !
- integer           :: Nr,Nc
+ integer           :: N
  type(ORTHO_group) :: ORTHO
  type(POOL_group)  :: POOL
  type(SLK_matrix)  :: M_slk
  !
  ! Work Space
  !
- integer   :: lld,Nr_blc,Nc_blc,nprow,npcol,myrow,mycol
+ integer   :: lld,N_blcs,nprow,npcol,myrow,mycol
  integer   :: i,j
  !
  ! init global blacs grid
@@ -63,19 +63,17 @@ subroutine SLK_matrix_init(ORTHO, POOL, M_slk, Nr, Nc )
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B
  !
- Nr_blc = int(Nr/nprow)
- if (Nr_blc*nprow < Nr ) Nr_blc=Nr_blc+1
- Nc_blc = int(Nc/npcol)
- if (Nc_blc*npcol < Nc ) Nc_blc=Nc_blc+1
+ N_blcs = int(N/nprow)
+ if (N_blcs*nprow < N ) N_blcs=N_blcs+1
  !
- lld = Nr_blc
+ lld = N_blcs
  !
- call DESCINIT( M_slk%desc, Nr, Nc, Nr_blc, Nc_blc, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
+ call DESCINIT( M_slk%desc, N, N, N_blcs, N_blcs, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
  !
- call SLK_matrix_reset(M_slk,Nr_blc,Nc_blc)
+ call SLK_matrix_reset(M_slk,N_blcs,N_blcs)
  !
- M_slk%rows=(/myrow*Nr_blc+1,min(myrow*Nr_blc+Nr_blc,Nr)/)
- M_slk%cols=(/mycol*Nc_blc+1,min(mycol*Nc_blc+Nc_blc,Nc)/)
+ M_slk%rows=(/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
+ M_slk%cols=(/myrow*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
  !
  M_slk%nrows_used=M_slk%rows(2)-M_slk%rows(1)+1
  M_slk%ncols_used=M_slk%cols(2)-M_slk%cols(1)+1

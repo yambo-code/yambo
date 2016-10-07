@@ -28,9 +28,8 @@ subroutine PARALLEL_mat_mul(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
  !  where A(mk), B(kn), C(mn)
  !
  use pars,           ONLY:SP,cONE,cZERO
- use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_WS_clean_up
  !
  implicit none
  !
@@ -42,30 +41,18 @@ subroutine PARALLEL_mat_mul(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
  complex(SP)       :: C(n,m)
  !
  character(64) :: subname="PARALLEL_mat_mul"
- logical :: do_SLK
  !
  C=0.0_SP
  !
- do_SLK=.TRUE.
- if (ORTHO%coordinate(1)==-1) do_SLK=.FALSE.
+ if (ORTHO%coordinate(1)==-1) return
  !
- if ( do_SLK ) then
-   !
 #if defined _DOUBLE
-   CALL PZGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
-                B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
+ CALL PZGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
+              B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
 #else
-   CALL PCGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
-                B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
+ CALL PCGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
+              B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
 #endif
-   !
-   ! gather the solution
-   !
-   C(C_slk%rows(1):C_slk%rows(2),C_slk%cols(1):C_slk%cols(2))=C_slk%blc(:C_slk%nrows_used,:C_slk%ncols_used)
-   !
- endif
- !
- call PP_redux_wait(C,COMM=POOL%INTRA_comm)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  ! 

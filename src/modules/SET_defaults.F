@@ -104,6 +104,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
+#if defined _NL
+ use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha
+#endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
@@ -627,6 +630,23 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
  !
  SAVE_G_history=.FALSE.
+ !
+#endif
+ !
+#if defined _NL
+ !
+ NE_tot_time   =  -1._SP*FS2AUT 
+ Integrator_name='INVINT'
+ NL_correlation="IPA"
+ NL_er         =(/0.3_SP,8._SP/)/HA2EV
+ n_frequencies =80
+ NL_damping    =0.2_SP/HA2EV
+ NL_LRC_alpha  =0._SP
+ call Efield_reset(Efield(1))
+ Efield(1)%frequency=0.1_SP/HA2EV
+ Efield(1)%intensity=1000._SP*kWCMm22AU
+ Efield(1)%damping=2._SP*FS2AUT
+ Efield(1)%ef_name="SOFTSIN"
  !
 #endif
  !

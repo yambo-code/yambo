@@ -178,6 +178,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    io_V=io_SC_components('V' ,E,ID(3))
  endif
  !
+ !
  if (l_SC_RESTART) then
    !
    if ((1._SP-SC_cycle_mixing)>1.E-5) call &
@@ -315,7 +316,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
           !
           if (it==1) H_nl_nm1(:,:,ik,:) = H_nl_sc
           !
-          H_nl_sc = H_nl_nm1(:,:,ik,:) + SC_cycle_mixing*(H_nl_sc - H_nl_nm1(:,:,ik,:))
+          H_nl_sc = SC_cycle_mixing*H_nl_sc + (1._SP-SC_cycle_mixing)*H_nl_nm1(:,:,ik,:)
           H_nl_nm1(:,:,ik,:)= H_nl_sc
           !
        endif
@@ -572,10 +573,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      allocate(rho_nm1(fft_size))
      call mem_est("rho_nm1",(/fft_size/),(/SP/))
+     rho_nm1=0._SP
      !
      if(n_spin>1) then
        allocate(magn_nm1(fft_size,3))
        call mem_est("magn_nm1",(/fft_size*3/),(/SP/))
+       magn_nm1=0._SP
      endif
      !
      allocate(E_xc(fft_size))
@@ -584,7 +587,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(V_xc_nm1(fft_size,n_spin))
      call mem_est("V_xc_nm1",(/size(V_xc_nm1)/))
      !
-     if (trim(SC_preconditioning)/="none") then
+     if (trim(SC_preconditioning)=="thomas-fermi") then
        allocate(delta_rho(fft_size))
        call mem_est("delta_rho",(/fft_size/),(/SP/))
        if(n_spin>1) then
@@ -608,6 +611,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (l_SC_nl_mix) then
        allocate(H_nl_nm1(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("H_nl_nm1",(/size(QP_Vnl_xc)/),(/2*SP/))
+       H_nl_nm1=cZERO
      endif
      !
    end subroutine
@@ -628,7 +632,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      deallocate(V_xc_nm1)
      call mem_est("V_xc_nm1")
      !
-     if (trim(SC_preconditioning)/="none") then
+     if (trim(SC_preconditioning)=="thomas-fermi") then
        deallocate(delta_rho)
        call mem_est("delta_rho")
        if(n_spin>1) then

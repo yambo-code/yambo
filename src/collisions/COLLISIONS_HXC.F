@@ -33,7 +33,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
  use SC,            ONLY:SC_potential
- use D_lattice,     ONLY:DL_vol
+ use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,&
@@ -65,7 +65,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! Work Space
  !
  integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,&
-&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,&
+&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,i_p_s_m1,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,bands_to_load(2),n_colls
  logical                 :: l_HXC_collisions,l_COH_collisions,l_MBPT_XC_collisions,l_loc_HXC_collisions,&
 &                           eval_coll,l_compute_screening,l_tddft
@@ -357,12 +357,13 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            do i_star=2,k%nstar(i_p)
              !
              i_p_s =k%star(i_p,i_star)
+             i_p_s_m1 = sop_inv(i_p_s)
              !
 #if defined _OPENMP
              !$omp parallel do default(shared), private(ig1)
 #endif
              do ig1=2,N_g_vecs_H
-               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(i_p_s,ig1))
+               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(i_p_s_m1,ig1))
              enddo
 #if defined _OPENMP
              !$omp end parallel do

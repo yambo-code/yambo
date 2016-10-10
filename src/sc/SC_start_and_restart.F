@@ -213,7 +213,7 @@ subroutine SC_start_and_restart(X,E)
    call msg('r' ,'[SC] Extented collisions              :',l_use_Hxc_collisions)
    COHSEX_use_empties=.TRUE.
    if (COLLISIONS_have_HARTREE.and.SC_preconditioning=="thomas-fermi") then
-     call warning(" [COLLISIONS] Found Hartree collisions. Switched to simple")
+     call warning(" [COLLISIONS] Found Hartree collisions. Switched to simple preconditioning")
      SC_preconditioning="simple"
    endif
  endif

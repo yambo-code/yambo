@@ -49,7 +49,7 @@ subroutine NL_driver(en,k)
  !
  integer, external::io_NL
  integer  :: io_NonLinear,ID,i_Probe
- integer  :: i_f,i_d,i_order,i_t_field_range(2),i_t_start,i_t_end,it
+ integer  :: i_f,i_d,i_order,i_t_field_range(2)!,i_t_start,i_t_end,it
  real(SP) :: W_step,T_period,time_range_save(2)
  real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:)
  complex(SP), allocatable  :: X_effective(:,:,:),Susceptibility(:,:,:)
@@ -64,10 +64,6 @@ subroutine NL_driver(en,k)
  io_Nonlinear=io_NL(ID)
  if(io_Nonlinear/=0) call error("Error reading NonLinear database")
  l_skip_pol_and_curr_IO=.false.
- !
- ! Time Initialization
- !
- call RT_time_configuration_setup('POLARIZATION')
  !
  allocate(RT_P_probe(NE_steps,n_frequencies,3),Probe_frequency(n_frequencies))
  !
@@ -101,20 +97,19 @@ subroutine NL_driver(en,k)
  !
  if (Probe_consistency_error) call error('Not all probes have consistent parameters')
  !
- ! can these lines here below just be absorbed into T range ???
- !
- i_t_start=nint(RT_conf%T_range(1)/RT_step)+1
- i_t_end  =nint(RT_conf%T_range(2)/RT_step)
- !
- !i_t_field_range= (/Efield(1)%t_initial_indx,RT_conf%T_n_steps/)
- !
- !if (i_t_start<=0.or.i_t_start< i_t_field_range(1)) i_t_start=i_t_field_range(1)
- !if (i_t_end<=0  .or.i_t_end>   i_t_field_range(2)) i_t_end  =i_t_field_range(2)
- !
- ! Check if total simulation time is long enough for analysis  
+ ! Time Initialization
  !
  W_step   =minval(Probe_frequency) ! smaller frequency
  T_period =EtoT(W_step)            ! largest period
+ !
+ ! Special case for monochromatic source and no user input set:
+ !
+ if (any((/trim(Efield_probe%ef_name) == 'SIN', trim(Efield_probe%ef_name) == 'SOFTSIN',trim(Efield_probe%ef_name) == 'ANTIRES'/)).and.RT_conf%T_range(1)<0._SP)&
+&  RT_conf%T_range(1) = JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-T_period
+ !
+ call RT_time_configuration_setup('POLARIZATION')
+ !
+ ! Check if total simulation time is long enough for analysis  
  !
  if((RT_conf%T_range(2) - RT_conf%T_range(1))<T_period) &
 &   call warning('Simulation time not long enough. Period is'//trim(real2ch(T_period*AUT2FS))//' fs')
@@ -184,11 +179,11 @@ subroutine NL_driver(en,k)
      deallocate(X_effective,Susceptibility,Harmonic_Frequency)
      !
   case ('DELTA')
-     !
+    !
     allocate(RT_P_t(RT_conf%T_n_steps,3))
     RT_P_t(:,:) =RT_P_probe(:,i_Probe,:)
     if(trim(RT_conf%damping) /= "NONE") &
-&     call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_P_t(i_t_start:i_t_end,:),3)
+&     call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_P_t,3)
     call RT_X_LRR_real_field(en)
     deallocate(RT_P_t)
      !
@@ -300,9 +295,6 @@ contains
        RT_conf%T_range(2)  = NE_steps*RT_step
        RT_conf%T_range(1)  = RT_conf%T_range(2)-T_range
      endif 
-     !
-     i_t_start=nint(RT_conf%T_range(1)/RT_step)+1
-     i_t_end  =nint(RT_conf%T_range(2)/RT_step)
      !
    end function 
    !

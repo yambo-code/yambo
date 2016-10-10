@@ -21,6 +21,8 @@ svn diff:
 “git diff” shows changes not staged (before “add”)
 “git diff HEAD” shows also changes staged but not commited (before “commit”)
 “git diff origin/master” shown also changes committed (before “push”)
+"git diff branchname" shows difference compared to other branches
+"git diff  branchname...HEAD" show differences from branch point
 [ “-M50%” option is very useful in case of file renamed/moved ]
 
 patch -p0 < patch:

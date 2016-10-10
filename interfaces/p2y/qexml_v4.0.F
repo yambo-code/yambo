@@ -3233,7 +3233,8 @@ end subroutine
 subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
 &                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
   use pars,    ONLY:SP
-  use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,DIAGO
+  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
+  use linear_algebra, ONLY:DIAGO
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
@@ -3322,7 +3323,8 @@ end subroutine
 subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
-  use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,DIAGO
+  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
+  use linear_algebra, ONLY:DIAGO
   use pars,           ONLY:SP
   use stderr,         ONLY:intc
   !

@@ -71,9 +71,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
- complex(SP):: M_tmp(RT_bands(2),RT_bands(2),n_sp_pol)
+ complex(SP):: M_tmp(RT_bands(2),RT_bands(2))
  integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
  !
@@ -99,16 +99,18 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Reference Hartree and XC
  !==========================
+ do i_sp_pol=1,n_sp_pol
  do ik=1,nXkibz
    !
    M_tmp=cZERO
-   call V_real_space_to_H(ik,V_hartree_sc,M_tmp,WF,'def') 
-   HARTREE0(:,:,ik,:)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1:n_sp_pol)
+   call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
+   HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
    !
    M_tmp=cZERO
-   call V_real_space_to_H(ik,V_xc,        M_tmp,WF,'xc ') 
-   XC0(:,:,ik,:)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1:n_sp_pol)
+   call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
+   XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
    !
+ enddo
  enddo
  !
  ! In the driver loop both V_hartree_sc and V_xc corresponds to the [delta_rho] value. As here

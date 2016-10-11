@@ -70,7 +70,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: it
  real(SP)                 :: spread(SC_bands(2),k%nibz,n_sp_pol),&
 &                            E_previous(SC_bands(2),k%nibz,n_sp_pol),dE(SC_bands(2),k%nibz,n_sp_pol),&
-&                            E_conv(n_sp_pol),E_total,E_tot_Hartree,E_tot_xc,max_overlap(SC_bands(2),k%nibz,n_sp_pol)
+&                            E_total,E_tot_Hartree,E_tot_xc,max_overlap(SC_bands(2),k%nibz,n_sp_pol)
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),magn_nm1(:,:)
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: H_nl_nm1(:,:,:,:)
@@ -79,7 +79,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin,i_io,io_X_err
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_em1
@@ -279,6 +279,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    if (.not.l_sc_V_is_local) call io_control(ACTION=OP_WR,   COM=NONE,SEC=(/1/),ID=ID(3))
    io_V=io_SC_components('V' ,E,ID(3))
    !
+   do i_sp_pol=1,n_sp_pol
+   !
    do ik = 1, QP_nk 
      !
      H_nl_sc=cZERO
@@ -291,22 +293,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        ! Without collisions FOCK goes in QP_Vnl_xc and CORR in QP_Sc.
        ! With    collisions FOCK and CORR (with also Hartree) go in QP_Vnl_xc
        !
-       if (l_sc_fock.or.l_sc_sex.or.l_use_collisions) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
+       if (l_sc_fock.or.l_sc_sex.or.l_use_collisions) call V_qp_basis_to_H(ik,i_sp_pol,QP_Vnl_xc,H_nl_sc)
        !
-       if (l_sc_coh.or.l_sc_sex)                      call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
+       if (l_sc_coh.or.l_sc_sex)                      call V_qp_basis_to_H(ik,i_sp_pol,QP_Sc,    H_nl_sc)
        !
-       if (.not.l_use_collisions.and.it_now>1) then
-         !
-         ! Rotate H_nl_sc in the WFo basis.
-         !
-         do i_spin=1,n_sp_pol
-           call H_rotate(SC_R(:,:,ik,i_spin),H_nl_sc(:,:,i_spin),SC_bands(2),-1)
-         end do
-         !
-       endif
+       ! Rotate H_nl_sc in the WFo basis.
+       !
+       if (.not.l_use_collisions.and.it_now>1) call H_rotate(SC_R(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2),-1)
        ! 
-       ! IO [H_nl_sc]
-       !==============
+       ! I/O [H_nl_sc]
        !
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(3))
        io_V=io_SC_components('V',E,ID(3))
@@ -316,10 +311,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        if (l_SC_nl_mix) then
           !
-          if (it==1) H_nl_nm1(:,:,ik,:) = H_nl_sc
+          if(it>1) H_nl_sc = H_nl_nm1(:,:,ik,i_sp_pol) + SC_cycle_mixing*(H_nl_sc - H_nl_nm1(:,:,ik,i_sp_pol))
           !
-          H_nl_sc = H_nl_nm1(:,:,ik,:) + SC_cycle_mixing*(H_nl_sc - H_nl_nm1(:,:,ik,:))
-          H_nl_nm1(:,:,ik,:)= H_nl_sc
+          H_nl_nm1(:,:,ik,i_sp_pol)= H_nl_sc
           !
        endif
        !
@@ -327,29 +321,26 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      ! Add local V_xc
      !
-     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,V_xc_sc,H_nl_sc,WFo,'xc ')
+     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WFo,'xc ')
      !
      ! Add V_Hartree
      !
-     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
+     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WFo,'def')
      !
      call PP_redux_wait(H_nl_sc)
      !
      ! Add Ho
      !
-     H_nl_sc = H_nl_sc + Ho(:,:,ik,:)
+     H_nl_sc = H_nl_sc + Ho(:,:,ik,i_sp_pol)
      !
      ! Diagonalize H_nl_sc 
      !=====================
-     do i_spin=1,n_sp_pol
-       !
-       call LINEAR_ALGEBRA_driver(DIAGO,H_nl_sc(:,:,i_spin),E_real=E%E(:SC_bands(2),ik,i_spin))
-       !
-       ! Rotation (WFo->WF) matrix
-       !
-       SC_R(:,:,ik,i_spin)=H_nl_sc(:,:,i_spin) 
-       !
-     enddo
+     !
+     call LINEAR_ALGEBRA_driver(DIAGO,H_nl_sc,E_real=E%E(:SC_bands(2),ik,i_sp_pol))
+     !
+     ! Rotation (WFo->WF) matrix
+     !
+     SC_R(:,:,ik,i_sp_pol)=H_nl_sc(:,:) 
      !
      ! New wave functions 
      !====================
@@ -361,9 +352,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! Mean Potential 
      !================
      !
-     if (l_Mean_Potential) call V_Mean_Potential(ik,WFo)
+     if (l_Mean_Potential) call V_Mean_Potential(ik,i_sp_pol,WFo)
      !
-   end do
+   enddo ! ik
+   !
+   enddo ! i_sp_pol
    !
    if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,1) 
    !
@@ -433,14 +426,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !==============
      !
      E_convergence=0.
-     E_conv=0.
-     do ik=1,k%nibz
-       do i_spin=1,n_sp_pol
-         E_conv(i_spin) = max( E_conv(i_spin),&
-&                         maxval(abs(E%E(:SC_bands(2),ik,i_spin)-E_previous(:,ik,i_spin)-&
-&                                    E%E(1,ik,i_spin)+E_previous(1,ik,i_spin)       )))
+     do i_sp_pol=1,n_sp_pol
+       do ik=1,k%nibz
+         E_convergence = max( E_convergence,&
+&                         maxval(abs(E%E(:SC_bands(2),ik,i_sp_pol)-E_previous(:,ik,i_sp_pol)-&
+&                                    E%E(1,ik,i_sp_pol)+E_previous(1,ik,i_sp_pol)       )))
        enddo
-       E_convergence=max(E_convergence,maxval(E_conv))
      enddo
      !
      rho_convergence = 0._SP
@@ -520,9 +511,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (it==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(2))
      if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(2))
      io_WF=io_SC_components(trim(dumb_ch),E,ID(2))
+     do i_sp_pol = 1, n_sp_pol 
      do ik = 1, QP_nk 
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(2))
        io_WF=io_SC_components(trim(dumb_ch),E,ID(2))
+     enddo
      enddo
      !
    enddo
@@ -671,52 +664,52 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! for more details see A. Fleszar PRB 64, 245204
      !
      if (l_SC_cycle) then
-       do i_spin=1,n_sp_pol
-         V_xc_sc_shift(i_spin )= maxval(E_bare(:n_met_bands,:,i_spin))-maxval(E%E(:n_met_bands,:,i_spin)) 
+       do i_sp_pol=1,n_sp_pol
+         V_xc_sc_shift(i_sp_pol )= maxval(E_bare(:n_met_bands,:,i_sp_pol))-maxval(E%E(:n_met_bands,:,i_sp_pol)) 
          if (l_sc_V_is_local) then
-           V_xc_sc(:,i_spin)=V_xc_sc(:,i_spin)+V_xc_sc_shift(i_spin)
+           V_xc_sc(:,i_sp_pol)=V_xc_sc(:,i_sp_pol)+V_xc_sc_shift(i_sp_pol)
            call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
            io_V=io_SC_components('V' ,E,ID(3))
          endif
        enddo
      endif
      !
-     do i_spin=1,n_sp_pol
+     do i_sp_pol=1,n_sp_pol
        do ik=1,k%nibz
          !
          ! Check for degenrate bands in the bare energies
          !
-         call degeneration_finder(E_bare(:,ik,i_spin),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+         call degeneration_finder(E_bare(:,ik,i_sp_pol),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
          !
          do ib=1,SC_bands(2)
            !
            ! Then search for the max projection   
            ! 
-           max_proj=-1.
+           max_proj=-1._SP
            do i1=1,SC_bands(2)
-             if (abs(SC_R(i1,ib,ik,i_spin))**2.>max_proj) then
-               b_of_max_proj(ib,ik,i_spin)=i1
-               max_proj=abs(SC_R(i1,ib,ik,i_spin))**2.
+             if (abs(SC_R(i1,ib,ik,i_sp_pol))**2>max_proj) then
+               b_of_max_proj(ib,ik,i_sp_pol)=i1
+               max_proj=abs(SC_R(i1,ib,ik,i_sp_pol))**2
              endif
            enddo
            !
            ! Max Overlap
            !
-           max_overlap(ib,ik,i_spin)=maxloc(abs(SC_R(ib,1:SC_bands(2),ik,i_spin)),1)
+           max_overlap(ib,ik,i_sp_pol)=maxloc(abs(SC_R(ib,1:SC_bands(2),ik,i_sp_pol)),1)
            ! 
            ! simmetrize the spreads summing over all possible degenerate
            ! bands
            !
-           forall (ibp=1:SC_bands(2)) WS_spread(ibp)=abs(SC_R(ibp,ib,ik,i_spin))**2.*100./HA2EV
+           forall (ibp=1:SC_bands(2)) WS_spread(ibp)=abs(SC_R(ibp,ib,ik,i_sp_pol))**2*100._SP/HA2EV
            !
-           ibp=b_of_max_proj(ib,ik,i_spin)
-           spread(ib,ik,i_spin)=WS_spread( ibp )
+           ibp=b_of_max_proj(ib,ik,i_sp_pol)
+           spread(ib,ik,i_sp_pol)=WS_spread( ibp )
            !
            do i1=1,n_deg_grp
              if (ibp>=first_el(i1).and.ibp<=first_el(i1)+n_of_el(i1)-1) then
-               spread(ib,ik,i_spin)=0.
+               spread(ib,ik,i_sp_pol)=0._SP
                do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
-                 spread(ib,ik,i_spin)=spread(ib,ik,i_spin)+WS_spread(i2)
+                 spread(ib,ik,i_sp_pol)=spread(ib,ik,i_sp_pol)+WS_spread(i2)
                enddo
              endif
            enddo
@@ -724,7 +717,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          !
          ! end do SC_bands(2)
          !
-         dE(:,ik,i_spin)=E%E(:SC_bands(2),ik,i_spin)-E_bare(:,ik,i_spin)
+         dE(:,ik,i_sp_pol)=E%E(:SC_bands(2),ik,i_sp_pol)-E_bare(:,ik,i_sp_pol)
          !
        enddo
        !

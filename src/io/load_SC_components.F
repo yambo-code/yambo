@@ -87,7 +87,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
      io_err=io_SC_components('V',E_dummy,ID)
      if (io_err==0.and.ik>0) then
        if (ik==1) then
-         allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
+         allocate(H_nl_sc(SC_bands(2),SC_bands(2)))
          call mem_est("H_nl_sc",(/size(H_nl_sc)/))
        endif
        do ip=1,ik

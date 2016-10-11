@@ -171,11 +171,11 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      !
      H_nl_sc=cZERO
      !
-     if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+     if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
      !
      if (n_spinor==2) then
-       if(eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
-       if(eval_DFT)     call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WF,'xc ')
+       if(eval_HARTREE) call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
+       if(eval_DFT)     call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
      endif
      !
      if (.not.PAR_IND_WF_k%element_1D(ik).or. .not.HEAD_QP_cpu) cycle
@@ -183,9 +183,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if (l_RT_RWA) then
          Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)=&
-&                                              H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1)
+&                                              H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
        else
-         call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1),&
+         call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)),&
 &                               Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
        endif
      enddo
@@ -231,7 +231,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      call RT_apply_field(ik,H_nl_sc,A_input)
      !
      forall( ib=RT_bands(1):RT_bands(2) , ibp=RT_bands(1):RT_bands(2) , ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2) ) &
-&      Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
+&      Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp)
      !  
    enddo
  endif

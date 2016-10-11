@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine V_qp_basis_to_H(ik,V,H)
+subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
  !
  use electrons,      ONLY:n_sp_pol,spin
  use pars,           ONLY:SP
@@ -36,13 +36,13 @@ subroutine V_qp_basis_to_H(ik,V,H)
 #endif
  implicit none
  !
- integer     :: ik
+ integer                 :: ik,i_sp_pol
  complex(SP),intent(in)  :: V(QP_n_states)
- complex(SP),intent(out) :: H(QP_nb,QP_nb,n_sp_pol)
+ complex(SP),intent(out) :: H(QP_nb,QP_nb)
  !
  ! Work Space
  !
- integer    :: i1,ib,ibp,i_spin
+ integer    :: i1,ib,ibp
  !
  ! Fill ...
  !
@@ -52,10 +52,11 @@ subroutine V_qp_basis_to_H(ik,V,H)
  !
  do i1=1,QP_n_states
    !
-   if (QP_table(i1,3)/=ik) cycle
+   if (     QP_table(i1,3) /=ik      ) cycle
+   if (spin(QP_table(i1,:))/=i_sp_pol) cycle
+   !
    ib =QP_table(i1,1)
    ibp=QP_table(i1,2)
-   i_spin = spin(QP_table(i1,:))
    !
    if(ib>ibp) cycle
    !
@@ -72,11 +73,11 @@ subroutine V_qp_basis_to_H(ik,V,H)
    ! As a consequence the H matrix is not correctly imposed to be Hermitian
    ! and the dynamics does not work.
    !
-   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + V(i1)
+   H(ib,ibp) = H(ib,ibp) + V(i1)
    !
    ! Force to be Hermitian
    !
-   if (ib/=ibp) H(ibp,ib,i_spin) = conjg(H(ib,ibp,i_spin))
+   if (ib/=ibp) H(ibp,ib) = conjg(H(ib,ibp))
    !
  end do
  !

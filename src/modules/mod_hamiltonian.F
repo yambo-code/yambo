@@ -39,7 +39,7 @@ module hamiltonian
  !
  ! Non-Local part (sigma_x, sigma_cohsex)
  !
- complex(SP), allocatable :: H_nl_sc(:,:,:)
+ complex(SP), allocatable :: H_nl_sc(:,:)
  !
  real(SP),    allocatable :: V_xc_sc(:,:)
  real(SP),    allocatable :: V_hartree_sc(:,:)
@@ -127,7 +127,7 @@ module hamiltonian
      allocate(V_hartree_sc(fft_size,n_spin))
      call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
      !
-     allocate(H_nl_sc(H_ref_bands(2),H_ref_bands(2),n_sp_pol))
+     allocate(H_nl_sc(H_ref_bands(2),H_ref_bands(2)))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
    end subroutine

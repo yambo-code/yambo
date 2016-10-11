@@ -50,7 +50,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_spin
+ integer     :: ik,ib,i_sp_pol
  !
  Ho=cZERO
  !
@@ -104,6 +104,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  QP_Vxc=cZERO
  call XCo_local(E,k)
  !
+ do i_sp_pol=1,n_sp_pol
+ !
  do ik=1,QP_nk
    !
    ! Add bare energies ... 
@@ -111,9 +113,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    do ib=1,QP_nb
      if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-     do i_spin=1,n_sp_pol
-       Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
-     enddo
+     Ho(ib,ib,ik,i_sp_pol) = Ho(ib,ib,ik,i_sp_pol) + E_bare(ib,ik,i_sp_pol)  
    enddo
    !
 #if defined _RT
@@ -125,13 +125,15 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    ! ... then remove Vh[rho_0] 
    !===========================
    !
-   call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),WF,'def')
+   call V_real_space_to_H(ik,i_sp_pol,-V_hartree_sc,Ho(:,:,ik,i_sp_pol),WF,'def')
    !
    ! ... then remove Vxc[rho_0] also
    !=================================
    !
-   call V_qp_basis_to_H(ik,-QP_Vxc,Ho(:,:,ik,:))
+   call V_qp_basis_to_H(ik,i_sp_pol,-QP_Vxc,Ho(:,:,ik,i_sp_pol))
    !
+ enddo
+ !
  enddo
  !
 #if defined _RT

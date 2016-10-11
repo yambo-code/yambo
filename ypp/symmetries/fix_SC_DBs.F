@@ -111,7 +111,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  !
  do ik=1,k_save%nibz
-   call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+   call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1+(i_sp_pol-1)*k_save%nibz/),ID=ID)
    io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  enddo
  !
@@ -122,13 +122,13 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  !
  do ik=1,k_save%nibz
-   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
    io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  enddo
  !
  do ik=k_save%nibz+1,k%nibz
    SC_R(:,:,ik,:)=SC_R(:,:,kpoints_map(1,ik),:)
-   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
    io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  enddo
  !
@@ -154,7 +154,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    !
    do i_sp_pol=1,n_sp_pol
    do ik=1,k_save%nibz
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID)
+     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k_save%nibz/),ID=ID)
      io_SC_V_err=io_SC_components('V',en_sc,ID)
      full_H(:,:,ik,i_sp_pol)=H_nl_sc(:,:)
    enddo
@@ -169,7 +169,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    do i_sp_pol=1,n_sp_pol
    do ik=1,k_save%nibz
      H_nl_sc(:,:)=full_H(:,:,ik,i_sp_pol)
-     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
      io_SC_V_err=io_SC_components('V',en_sc,ID)
    enddo
    enddo
@@ -177,7 +177,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    do i_sp_pol=1,n_sp_pol
    do ik=k_save%nibz+1,k%nibz
      H_nl_sc(:,:)=full_H(:,:,kpoints_map(1,ik),i_sp_pol)
-     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
      io_SC_V_err=io_SC_components('V',en_sc,ID)
    enddo    
    enddo    

@@ -33,7 +33,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
  use hamiltonian,   ONLY:H_potential
- use D_lattice,     ONLY:DL_vol
+ use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,&
@@ -362,7 +362,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !$omp parallel do default(shared), private(ig1)
 #endif
              do ig1=2,N_g_vecs_H
-               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(i_p_s,ig1))
+               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(sop_inv(i_p_s),ig1))
              enddo
 #if defined _OPENMP
              !$omp end parallel do

@@ -42,8 +42,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,DIAGO
- use interfaces,     ONLY:el_density_and_current
- use interfaces,     ONLY:PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index
  use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc
  use LIVE_t,         ONLY:LIVE_message
@@ -148,9 +147,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !=============================
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
    io_WF=io_SC_components('WF',E,ID(2))
-   do ik=1,QP_nk
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
-     io_WF=io_SC_components('WF',E,ID(2))
+   do i_sp_pol=1,n_sp_pol
+     do ik=1,QP_nk
+       call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID(2))
+       io_WF=io_SC_components('WF',E,ID(2))
+     enddo
    enddo
    call msg('r',' ')
    !
@@ -181,6 +182,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    io_V=io_SC_components('V' ,E,ID(3))
  endif
  !
+ !
  if (l_SC_RESTART) then
    !
    if ((1._SP-SC_cycle_mixing)>1.E-5) call &
@@ -188,10 +190,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    ! RESTART
    !
-   do ik=1,QP_nk
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
-     io_WF=io_SC_components('WF',E,ID(2))
-     call WF_rotate(ik,WFo,fft_size)
+   do i_sp_pol=1,n_sp_pol
+     do ik=1,QP_nk
+       call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID(2))
+       io_WF=io_SC_components('WF',E,ID(2))
+       call WF_rotate(ik,i_sp_pol,WFo,fft_size)
+     enddo
    enddo
    !
    ! ... rho_n and V_hartree_sc
@@ -311,7 +315,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        if (l_SC_nl_mix) then
           !
-          if(it>1) H_nl_sc = H_nl_nm1(:,:,ik,i_sp_pol) + SC_cycle_mixing*(H_nl_sc - H_nl_nm1(:,:,ik,i_sp_pol))
+          if(it>1) H_nl_sc = SC_cycle_mixing*H_nl_sc + (1._SP-SC_cycle_mixing)*H_nl_nm1(:,:,ik,i_sp_pol)
           !
           H_nl_nm1(:,:,ik,i_sp_pol)= H_nl_sc
           !
@@ -345,7 +349,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! New wave functions 
      !====================
      !
-     call WF_rotate(ik,WFo,fft_size)
+     call WF_rotate(ik,i_sp_pol,WFo,fft_size)
      !
      if (l_NSC_shot) call live_timing(steps=1)
      ! 
@@ -412,7 +416,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC',force_WFo=.true.)
        !
        do ik=1,QP_nk
-         call WF_rotate(ik,WFo,fft_size)
+         call WF_rotate(ik,i_sp_pol,WFo,fft_size)
        enddo
        !  
      endif
@@ -568,10 +572,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      allocate(rho_nm1(fft_size))
      call mem_est("rho_nm1",(/fft_size/),(/SP/))
+     rho_nm1=0._SP
      !
      if(n_spin>1) then
        allocate(magn_nm1(fft_size,3))
        call mem_est("magn_nm1",(/fft_size*3/),(/SP/))
+       magn_nm1=0._SP
      endif
      !
      allocate(E_xc(fft_size))
@@ -580,7 +586,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(V_xc_nm1(fft_size,n_spin))
      call mem_est("V_xc_nm1",(/size(V_xc_nm1)/))
      !
-     if (trim(SC_preconditioning)/="none") then
+     if (trim(SC_preconditioning)=="thomas-fermi") then
        allocate(delta_rho(fft_size))
        call mem_est("delta_rho",(/fft_size/),(/SP/))
        if(n_spin>1) then
@@ -604,6 +610,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (l_SC_nl_mix) then
        allocate(H_nl_nm1(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("H_nl_nm1",(/size(QP_Vnl_xc)/),(/2*SP/))
+       H_nl_nm1=cZERO
      endif
      !
    end subroutine
@@ -624,7 +631,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      deallocate(V_xc_nm1)
      call mem_est("V_xc_nm1")
      !
-     if (trim(SC_preconditioning)/="none") then
+     if (trim(SC_preconditioning)=="thomas-fermi") then
        deallocate(delta_rho)
        call mem_est("delta_rho")
        if(n_spin>1) then

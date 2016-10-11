@@ -104,27 +104,6 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  call PARALLEL_clean_up_the_structure( n_structures )
  !
- if (ncpu==1) then
-   CPU_structure(i_PAR_structure)%nCPU_diagonalization=1
-   CPU_structure(i_PAR_structure)%nCPU_inversion=1
- endif
- !
- if (CPU_structure(i_PAR_structure)%nCPU_diagonalization/=1.and.CPU_structure(i_PAR_structure)%nCPU_diagonalization/=ncpu) then
-#if defined _SCALAPACK 
-   CPU_structure(i_PAR_structure)%nCPU_diagonalization=1
-#else
-   CPU_structure(i_PAR_structure)%nCPU_diagonalization=ncpu
-#endif
- endif
- !
- if (CPU_structure(i_PAR_structure)%nCPU_inversion/=1.and.CPU_structure(i_PAR_structure)%nCPU_inversion/=ncpu) then
-#if defined _SCALAPACK 
-   CPU_structure(i_PAR_structure)%nCPU_inversion=1
-#else
-   CPU_structure(i_PAR_structure)%nCPU_inversion=ncpu
-#endif
- endif
- !
  ! The two top fields ("q" and "k") must be defined anyway. But only these two!
  !
  if (.not.q_found.or.ncpu==1) then

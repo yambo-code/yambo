@@ -95,9 +95,9 @@ SUBROUTINE GRID2D_COORDS( order, rank, nprow, npcol, row, col )
  IMPLICIT NONE
  !
  CHARACTER, INTENT(IN) :: order
- INTEGER, INTENT(IN)  ::  rank          ! process index starting from 0
- INTEGER, INTENT(IN)  ::  nprow, npcol  ! dimensions of the processor grid
- INTEGER, INTENT(OUT) ::  row, col
+ INTEGER, INTENT(IN)   ::  rank          ! process index starting from 0
+ INTEGER, INTENT(IN)   ::  nprow, npcol  ! dimensions of the processor grid
+ INTEGER, INTENT(OUT)  ::  row, col
  !
  IF( rank >= 0 .AND. rank < nprow * npcol ) THEN
    IF( order == 'C' .OR. order == 'c' ) THEN

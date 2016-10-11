@@ -30,8 +30,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        global_gauge,Dipole_approach, &
-&                        l_X_terminator,X_terminator_Kind,X_terminator_E
+&                        global_gauge,Dipole_approach,Chi_linalg_mode, &
+&                        X_terminator_Kind,X_terminator_E
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
@@ -272,7 +272,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g")',QP_solver,protect=.FALSE.)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
- call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', &
+! call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', &
+ call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', &
 &                          GW_terminator_Kind,verb_level=V_qp)
  call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")',GW_terminator_E,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
@@ -280,15 +281,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! Xs Xd Xp
  !
- call it(defs,'Chimod',   '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
+ call it(defs,'Chimod',    '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
+ call it(defs,'ChiLinAlgMod', '[X] inversion/lin_sys',Chi_linalg_mode,verb_level=V_resp)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
  call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
- ! 
- !
  !
  ! BSE/BSK
  !
@@ -303,7 +303,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)
  !
  ! GPL_INCLUDE_END
- !
  !
  ! GPL_EXCLUDE_START
  !
@@ -704,12 +703,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
        name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
        call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
 &              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
-       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_diago"
-       call it(defs,trim(name),'[PARALLEL] CPUs for matrix diagonalization',&
-&              CPU_structure(i_s)%nCPU_diagonalization,verb_level=V_parallel)
-       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_invert"
-       call it(defs,trim(name),'[PARALLEL] CPUs for matrix inversion',&
-&              CPU_structure(i_s)%nCPU_inversion,verb_level=V_parallel)
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_INV"
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+&              CPU_structure(i_s)%nCPU_lin_algebra_INV,verb_level=V_parallel)
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_DIAGO"
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+&              CPU_structure(i_s)%nCPU_lin_algebra_DIAGO,verb_level=V_parallel)
      enddo
      !
    end subroutine

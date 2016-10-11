@@ -35,8 +35,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use R_lattice,      ONLY:q_norm,bz_samp
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu
- use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
+&                         PAR_COM_SLK_INDEX_local,myid
+ use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -68,7 +69,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! ... dummies
  !
- type(PP_indexes)  :: px
+ type(PP_indexes)  :: PAR_IND_freqs
  integer           :: i1,i2,iw
  logical, external :: stop_now
  real(SP)          :: ratio
@@ -85,7 +86,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  integer, external :: io_BSS_invert
  !
 #if defined _TIMING
- call timing('Invertion Solver',OPR='start')
+ call timing('Inversion Solver',OPR='start')
 #endif
  !
  ! Sectioning
@@ -148,16 +149,16 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !============================
  call K_output_file(iq,"open Inversion")
  !
- ! Perturbative Invertion
+ ! Perturbative Inversion
  !========================
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/W%n_freqs/))
+ call PP_indexes_reset(PAR_IND_freqs)
+ call PARALLEL_index(PAR_IND_freqs,(/W%n_freqs/))
  !
  if (PERTURBATIVE) then
    !
-   call live_timing('Perturbative inversion ',px%n_of_elements(myid+1))
+   call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(myid+1))
    !
-   call K_inversion_engine("any",1,W%n_freqs,px,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
+   call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
    call PP_redux_wait(K_INV_EPS%err)
    call PP_redux_wait(Epsilon_ii(:,2))
@@ -187,7 +188,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  call K_output_file(iq,"Inversion")
  !
- ! Full Invertion
+ ! Full Inversion
  !=================
  !
  ! First I define the group of frequencies not converged
@@ -254,26 +255,29 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! CLEAN
  !
- !
  contains 
    !
    subroutine do_it_FULL(TYP)
      !
      type(K_Inversion_data) :: TYP
+     integer                :: PAR_IND_FREQ_ID
      !
      ! Then loop on the groups performing full inversion
      !
-     call PP_indexes_reset(px)
-     call PARALLEL_index(px,(/TYP%n_full_inv_freqs/))
-     call live_timing('['//TYP%what//'] Exact inversion ',px%n_of_elements(myid+1))
+     call PP_indexes_reset(PAR_IND_freqs)
+     PAR_IND_FREQ_ID=PAR_COM_SLK_INDEX_local%CPU_id+1
+     call PARALLEL_index(PAR_IND_freqs,(/TYP%n_full_inv_freqs/),COMM=PAR_COM_SLK_INDEX_local)
+     call PARALLEL_live_message('['//TYP%what//'] Frequencies',LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),&
+&                               TOTAL=TYP%n_full_inv_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
+     call live_timing('['//TYP%what//'] Exact inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
      !
      do i1=1,TYP%n_full_inv_freqs
        !
-       if (.not.px%element_1D(i1)) cycle
+       if (.not.PAR_IND_freqs%element_1D(i1)) cycle
        !
        iw=TYP%iw_full(i1)
        !
-       call K_inversion_engine(TYP%what,iw,1,px,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
+       call K_inversion_engine(TYP%what,iw,1,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
        !
        call live_timing(steps=1)
        !
@@ -285,9 +289,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
      call live_timing()
      call PP_redux_wait(TYP%err,imode=2)
-     if (TYP%what=="EPS") call PP_redux_wait(Epsilon_ii(:,2))
+     if (TYP%what=="EPS") call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #if defined _PL
-     if (TYP%what=="PLS") call PP_redux_wait(PL(:,2))
+     if (TYP%what=="PLS") call PP_redux_wait(PL(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #endif
      !
      nw_conv=count(TYP%err==0)
@@ -308,6 +312,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    end subroutine
    !
    subroutine FULL_INF_pre_setup(TYP)
+     !
      type(K_Inversion_data) :: TYP
      integer :: min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
      logical :: found
@@ -346,9 +351,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      enddo
      !
      if (TYP%n_full_inv_freqs>0.and.FULL) then 
-       if (TYP%what=="EPS") Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(ncpu,SP)
+       if (TYP%what=="EPS") Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
 #if defined _PL
-       if (TYP%what=="PLS") PL(:,2)=PL(:,2)/real(ncpu,SP)
+       if (TYP%what=="PLS") PL(:,2)=PL(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
 #endif
      endif
      !
@@ -374,12 +379,12 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _PL
      call LOCAL_TYP_clean(K_INV_PL)
 #endif
-     call PP_indexes_reset(px)
+     call PP_indexes_reset(PAR_IND_freqs)
      deallocate(Lo)
      call mem_est("Lo")
      !
 #if defined _TIMING
-     call timing('Invertion Solver',OPR='stop')
+     call timing('Inversion Solver',OPR='stop')
 #endif
    end subroutine
    !

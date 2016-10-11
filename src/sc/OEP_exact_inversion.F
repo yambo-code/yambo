@@ -40,8 +40,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
  use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
- use interfaces,      ONLY:MATRIX_driver
- use matrix_operate,  ONLY:INV
+ use linear_algebra,  ONLY:LINEAR_ALGEBRA_driver,INV
  use collision,       ONLY:elemental_collision,elemental_collision_free
  use memory_m,        ONLY:mem_est
  use wave_func,       ONLY:WF
@@ -88,7 +87,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  Xo_inverse(:X%ng-1,:X%ng-1) =  X_mat(2:X%ng,2:X%ng,1) 
  call X_alloc('X')
  ! 4:
- call MATRIX_driver(INV,Xo_inverse)
+ call LINEAR_ALGEBRA_driver(INV,Xo_inverse)
  !
  !
  ! Calculate rho_xc(G) =>  1 - initialize vars/dim

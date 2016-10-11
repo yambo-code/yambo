@@ -1,14 +1,15 @@
 subroutine SLK_test(E,k,q) 
  ! 
- ! simple program to invert a NxN matrix using scalapack 
+ ! simple program to check parallel linear algebra
  !
- use pars,          ONLY:DP
- use com,           ONLY:msg
- use parallel_m,    ONLY:ncpu,myid
- use SLK_m,         ONLY:POOL_group,ORTHO_group,n_pools,SLK_test_H_dim,SLK_COM_A2A,SLK_COM_INDEX
- use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp
- use interfaces,    ONLY:PARALLEL_global_indexes
+ use pars,           ONLY:SP
+ use com,            ONLY:msg
+ use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_test_H_dim,SLK_COM_A2A
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp
+ use interfaces,     ONLY:PARALLEL_global_indexes
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV,DIAGO,LIN_SYS,MAT_MUL,USE_LK,USE_SLK
+ use matrix_operate, ONLY:hermitian
  !
  implicit none
  !
@@ -17,10 +18,12 @@ subroutine SLK_test(E,k,q)
  !
  ! Work Space
  !
- integer                 :: ndim,ierr,ncpu_each_pool
- real(DP),   allocatable :: Amat(:,:), Ainv(:,:)
- type (POOL_group)       :: POOL
- type (ORTHO_group)      :: ORTHO
+ integer                    :: ndim,ierr
+ complex(SP),   allocatable :: A_in(:,:),A_out(:,:),A_out_par(:,:)
+ complex(SP),   allocatable :: B_in(:,:),M_mat(:,:)
+ real(SP),      allocatable :: W(:), W_par(:)
+ type (POOL_group)          :: POOL
+ type (ORTHO_group)         :: ORTHO
  !
  call section("*","ScaLapacK test")
  !
@@ -28,317 +31,166 @@ subroutine SLK_test(E,k,q)
  !
  ndim    = SLK_test_H_dim
  !
- n_pools = SLK_COM_INDEX(1)%n_CPU
- !
- ncpu_each_pool = ncpu/n_pools
- !
- ! BLACS grid
- !
- ORTHO%grid=nint(sqrt(real(ncpu_each_pool)))
- !
- ! Init pools
- !
- POOL%CPU_id      = SLK_COM_A2A(1)%CPU_id
- POOL%n_CPU       = SLK_COM_A2A(1)%n_CPU
- POOL%ID          = myid/POOL%n_CPU
- POOL%INTER_comm  = SLK_COM_INDEX(1)%COMM
- POOL%INTRA_comm  = SLK_COM_A2A(1)%COMM
- !
- ! Init the scalapack grid
- !
- call SLK_ORTHO_init( ORTHO, POOL, product(ORTHO%grid), POOL%INTRA_comm )
- !
  ! workspace
  !
- allocate( Amat(ndim,ndim) )
- allocate( Ainv(ndim,ndim) )
+ allocate( A_in(ndim,ndim) )
+ allocate( A_out(ndim,ndim) )
+ allocate( A_out_par(ndim,ndim) )
+ 
  !
- ! report
+ ! matrix inversion
  !
- call msg("r",'  Pools        :',n_pools)
- call msg("r",'  BLACS grid   :',ORTHO%grid)
- call msg("r",'  Matrix Size  :',ndim)
+ call section("=",'Matrix Inversion')
+ call build_matrix( ndim, A_in )
  !
- ! init
+ A_out  =A_in
+ call LINEAR_ALGEBRA_driver(INV,A_out,lib_in=USE_LK)
  !
- call section("+",'Matrix Building')
- call build_matrix( POOL, ndim, Amat )
+ A_out_par =A_in
+ call LINEAR_ALGEBRA_driver(INV,A_out_par,lib_in=USE_SLK)
  !
- ! serial inversion
+ call matrix_check( "InvMat", ndim, ndim, A_out, A_out_par )
+ call inverse_check( ndim, A_in, A_out_par )
+
  !
- call section("=",'Serial Inversion')
- call serial_inverse( POOL, ndim, Amat, Ainv )
+ ! Linear system solving
  !
- call section("=",'Check A*Ainv=Id')
- call inverse_check( POOL, ndim, Amat, Ainv )
+ call section("=",'Linear system solution')
  !
- ! parallel inversion
+ allocate(B_in(ndim,ndim),M_mat(ndim,ndim))
+ call build_matrix( ndim, A_in )
+ call build_matrix( ndim, B_in )
  !
- call section("=",'Parallel Inversion')
- call para_inverse( POOL, ORTHO, ndim, Amat, Ainv )
+ M_mat = A_in
+ A_out = B_in
+ call LINEAR_ALGEBRA_driver(LIN_SYS,M_mat,B=A_out,lib_in=USE_LK)
  !
- call section("=",'Check A*Ainv=Id')
- call inverse_check( POOL, ndim, Amat, Ainv )
+ M_mat     = A_in
+ A_out_par = B_in
+ call LINEAR_ALGEBRA_driver(LIN_SYS,M_mat,B=A_out_par,lib_in=USE_SLK)
+ !
+ call matrix_check( "LinSys X", ndim, ndim, A_out, A_out_par )
+ deallocate(B_in,M_mat)
+
+ !
+ ! matrix multiplication
+ !
+ call section("=",'Matrix multiplication')
+ !
+ call build_matrix( ndim, A_in )
+ !
+ call LINEAR_ALGEBRA_driver(MAT_MUL,A_in,A_in,A_out,lib_in=USE_LK)
+ !
+ call LINEAR_ALGEBRA_driver(MAT_MUL,A_in,A_in,A_out_par,lib_in=USE_SLK)
+ !
+ call matrix_check( "Mat Mult", ndim, ndim, A_out, A_out_par )
+
+ !
+ ! diagonalization
+ !
+ call section("=",'Matrix Hermitean Diagonalization')
+ !
+ call build_matrix( ndim, A_in )
+ A_in=hermitian(A_in)
+ !
+ allocate(W(ndim),W_par(ndim))
+ !
+ A_out  =A_in
+ call LINEAR_ALGEBRA_driver(DIAGO,A_out,lib_in=USE_LK,e_real=W)
+ !
+ A_out_par =A_in
+ call LINEAR_ALGEBRA_driver(DIAGO,A_out_par,lib_in=USE_SLK,e_real=W_par)
+ !
+ call matrix_check( " Eigenval", ndim, 1, cmplx(W,KIND=SP), cmplx(W_par,KIND=SP))
+ !
+ ! in order to check the eigenvectors
+ ! an overall phase must be aligned.
+ ! At least we can check their moduli
+ !
+ !call matrix_check( "EigenVect", ndim, ndim, A_out, A_out_par )
+ call matrix_check( "EigenVect", ndim, ndim, cmplx(abs(A_out),KIND=SP), cmplx(abs(A_out_par),KIND=SP) )
+ !
+ deallocate(W,W_par)
+
+ !
  !
  ! cleanup
  !
- deallocate( Amat, Ainv )
+ deallocate(A_in,A_out,A_out_par)
  !
 end subroutine SLK_test 
 !
 !===========================================
- subroutine build_matrix(POOL, ndim, Amat )
+ subroutine build_matrix(ndim, Amat )
  !===========================================
  !
  ! build A = I + scal * randmat
  ! a small value of scal ensures A is invertible
  !
- use pars
- use util_module
- use parallel_m, ONLY:MPI_DOUBLE_PRECISION,mpi_comm_world
- use SLK_m,      ONLY:POOL_group
+ use pars,       ONLY:SP,DP
+ use parallel_m, ONLY:PP_redux_wait
+ use SLK_m,      ONLY:SLK_COM_A2A
  use com,        ONLY:msg
  !
  implicit none
  !
  integer           :: ndim,iseed(8)
- type(POOL_group)  :: POOL
- real(DP)          :: Amat(ndim,ndim)
+ complex(SP)       :: Amat(ndim,ndim)
  character(12)     :: ch(3)
  real(DP),external :: dlaran
  !
  integer   :: i, j, ierr
- real(DP) :: scal=0.2d0 
- real(DP), allocatable :: w(:), zmat(:,:)
+ real(SP) :: scal=0.2_SP 
  !
- if ( POOL%CPU_id == 0 ) then
+ call date_and_time(ch(1),ch(2),ch(3),iseed)
+ iseed=iabs(iseed)
+ !
+ iseed(4)=2*(iseed(4)/2)+1
+ !
+ Amat = 0.0_SP
+ !
+ if ( SLK_COM_A2A(1)%CPU_id == 0 ) then
    !
-   Amat = 0.0d0
    do i = 1, ndim
-     Amat(i,i) = 1.0d0
+     Amat(i,i) = 1.0_SP
    enddo
    !
    do j = 1, ndim
      do i = j, ndim
-       ! 192 is just a random number
-       Amat(i,j) = Amat(i,j) + scal * dlaran(iseed(4:))
-       Amat(j,i) = Amat(i,j)
+       Amat(i,j) = Amat(i,j) + scal * dlaran(iseed(4:))+(0,1.)*dlaran(iseed(4:))
+       Amat(j,i) = conjg(Amat(i,j))
      enddo
    enddo
    !
  endif
  !
- call MPI_bcast(Amat,ndim*ndim,MPI_DOUBLE_PRECISION,0,POOL%INTRA_comm,ierr)
- !
- ! compute and report eigenvalues
- !
- allocate( w(ndim), zmat(ndim,ndim) )
- call mat_hdiag( zmat, w, Amat, ndim )
- !
- !call msg("s",'  Amat Inv Eigenvalue@POOL:',POOL%id)
- !call msg("s",' ',real(1.0d0/w(1:ndim),SP))
- !
- deallocate( w, zmat )
- !
- call MPI_barrier( mpi_comm_world, ierr)
- return
+ call PP_redux_wait(Amat,COMM=SLK_COM_A2A(1)%COMM)
  !
 end subroutine build_matrix
 !
-!===================================================
- subroutine serial_inverse( POOL, ndim, Amat, Ainv )
- !===================================================
- !
- use util_module
- use com,          ONLY:error,msg
- use pars,         ONLY:DP,SP
- use parallel_m,   ONLY:mpi_comm_world
- use SLK_m,        ONLY:POOL_group
- implicit none
- !
- type(POOL_group) :: POOL
- real(DP)         :: Amat(ndim,ndim)
- real(DP)         :: Ainv(ndim,ndim)
- integer          :: ierr,ndim
- !
- real(DP), allocatable :: w(:), zmat(:,:)
- !
- call mat_inv( ndim, Amat, Ainv, IERR=ierr )
- if (ierr/=0 ) call error('serial_inverse inverting Amat')
- !
- ! compute and report eigenvalues of Ainv
- !
- allocate( w(ndim), zmat(ndim,ndim) )
- call mat_hdiag( zmat, w, Ainv, ndim )
- !
- !call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
- !call msg("s",' ',real(w(ndim:1:-1),SP))
- !
- deallocate( w, zmat )
- !
- call MPI_barrier( mpi_comm_world, ierr)
- return
- !
-end subroutine serial_inverse
-!
-!========================================================
- subroutine para_inverse( POOL, ORTHO, ndim, Amat, Ainv )
- !========================================================
- !
- ! perform the inversion by using scalapack
- !
- !
- use util_module
- use com,        ONLY:error,msg
- use pars,       ONLY:DP,SP
- use parallel_m, ONLY:mpi_comm_world,MPI_DOUBLE_PRECISION, MPI_SUM
- use SLK_m,      ONLY:POOL_group,ORTHO_group
- !
- implicit none
- !
- integer, parameter :: dlen_ = 9
- !
- integer           :: ndim
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
- real(DP) :: Amat(ndim,ndim)
- real(DP) :: Ainv(ndim,ndim)
- !
- integer   :: descA(dlen_), descAinv(dlen_)
- !
- integer   :: nprow, npcol, myrow, mycol
- integer   :: ndim_blc, lld
- integer   :: info, ierr
- integer   :: lwork, liwork
- integer   :: ils, ile, jls, jle
- logical   :: do_SLK_job
- !
- real(DP), allocatable :: Amat_loc(:,:), Ainv_loc(:,:)
- real(DP), allocatable :: buff(:,:)
- integer,  allocatable :: ipiv(:)
- integer,  allocatable :: iwork(:)
- real(DP), allocatable :: work(:)
- real(DP), allocatable :: w(:), zmat(:,:)
- !
- ! init global blacs grid
- !
- call BLACS_GRIDINFO( ORTHO%ortho_cntx, ORTHO%grid(1), ORTHO%grid(2), ORTHO%coordinate(1), ORTHO%coordinate(2) )
- !
- nprow=ORTHO%grid(1)
- npcol=ORTHO%grid(2)
- myrow=ORTHO%coordinate(1)
- mycol=ORTHO%coordinate(2)
- !
- ! spectator tasks
- do_SLK_job = (ORTHO%coordinate(1) /= -1)
- !
- if (do_SLK_job) then
-   !
-   ! distribute the matrix on the process grid
-   ! Initialize the array descriptors for the matrices A and B
-   !
-   ndim_blc = int(ndim/nprow)
-   if (ndim_blc*nprow < ndim ) ndim_blc=ndim_blc+1
-   !
-   lld = ndim_blc
-   !
-   call DESCINIT( descA, ndim, ndim, ndim_blc, ndim_blc, 0, 0, ORTHO%ortho_cntx, lld, info )
-   !
-   allocate( Amat_loc(ndim_blc,ndim_blc) )
-   allocate( Ainv_loc(ndim_blc,ndim_blc) )
-   allocate( ipiv(ndim+ndim_blc) )
-   !
-   ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
-   ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
-   lwork  = ndim_blc*ndim_blc
-   liwork = ndim_blc+ndim_blc
-   !
-   allocate( work(lwork) )
-   allocate( iwork(liwork) )
-   !
-   ! distribute the matrix A
-   !
-   ils=myrow*ndim_blc+1
-   ile=min(myrow*ndim_blc+ndim_blc,ndim)
-   jls=mycol*ndim_blc+1
-   jle=min(mycol*ndim_blc+ndim_blc,ndim)
-   !
-   Amat_loc=0.0d0
-   Amat_loc=Amat(ils:ile,jls:jle)
-   !
-   ! perform the inversion
-   !
-   CALL PDGETRF( ndim, ndim, Amat_loc, 1, 1, descA, ipiv, info )
-   if ( info /= 0 ) call error('para_inverse performing PDGETRF')
-   !
-   CALL PDGETRI( ndim, Amat_loc, 1, 1, descA, &
-                 ipiv, work, lwork, iwork, liwork, info )
-   if ( info /= 0 ) call error('para_inverse performing PDGETRI')
-   !
- endif
- !
- ! gather the inverse matrix
- !
- Ainv=0.0d0
- if ( do_SLK_job ) then
-   Ainv(ils:ile,jls:jle)=Amat_loc(:,:)
- endif
- !
- allocate( buff(ndim,ndim) )
- !
- buff = Ainv
- call MPI_ALLREDUCE( buff, Ainv, ndim*ndim, MPI_DOUBLE_PRECISION, MPI_SUM, POOL%INTRA_comm, info)
- if ( info /= 0 ) call error('para_inverse performing MPIALLGATHER')
- !
- deallocate(buff)
- ! 
- ! local cleanup 
- ! 
- if ( do_SLK_job ) then
-   deallocate( Amat_loc, Ainv_loc )
-   deallocate( ipiv, work, iwork )
- endif
- !
- ! compute and report eigenvalues of Ainv
- !
- allocate( w(ndim), zmat(ndim,ndim) )
- call mat_hdiag( zmat, w, Ainv, ndim )
- !
- !call msg("s",'  Ainv Inv Eigenvalue@POOL:',POOL%id)
- !call msg("s",' ',real(w(ndim:1:-1),SP))
- !
- deallocate( w, zmat )
- !
- call MPI_barrier( mpi_comm_world, ierr)
- return
- !
-end subroutine para_inverse
-!
 !==================================================
- subroutine inverse_check( POOL, ndim, Amat, Ainv )
+ subroutine inverse_check( ndim, Amat, Ainv )
  !==================================================
- use pars,       ONLY:DP
- use util_module
+ use pars,       ONLY:SP
  use com,        ONLY:error,msg
- use SLK_m,      ONLY:POOL_group
  use parallel_m, ONLY:mpi_comm_world
+ use wrapper,    ONLY:M_by_M
  implicit none
  !
  integer            :: ndim
- type (POOL_group)  :: POOL
- real(DP) :: Amat(ndim,ndim)
- real(DP) :: Ainv(ndim,ndim)
+ complex(SP) :: Amat(ndim,ndim)
+ complex(SP) :: Ainv(ndim,ndim)
  !
  integer   :: i, j, ierr
  logical   :: lerror
- real(DP) :: toll=1.0d-10
- real(DP), allocatable :: zmat(:,:)
+ real(SP)  :: toll=1._SP
+ complex(SP), allocatable :: zmat(:,:)
  !
  allocate( zmat(ndim,ndim) )
  !
- zmat=0._DP
+ zmat=0._SP
  !
- call mat_mul( zmat, Amat, 'N', Ainv, 'N', ndim,ndim,ndim)
+ call M_by_M( 'n','n', ndim,  Amat, Ainv, zmat)
  !
  lerror = .false.
  outer_loop:&
@@ -350,15 +202,13 @@ end subroutine para_inverse
    endif
  enddo
  enddo outer_loop
- if ( lerror ) call error('inverse_check   A * Ainv /= Id')
  !
  do i = 1, ndim
-   if ( abs( zmat(i,i)-1.0d0 ) > toll ) then 
+   if ( abs( zmat(i,i)-1.0_SP ) > toll ) then 
      lerror = .true.
      exit
    endif
  enddo
- if ( lerror ) call error('inverse_check   A * Ainv /= Id')
  !
  if ( .not. lerror ) call msg("sr",'  Inverse_check:   passed')
  if (       lerror ) call msg("sr",'  Inverse_check:   failed')
@@ -369,3 +219,63 @@ end subroutine para_inverse
  return
  !
 end subroutine inverse_check
+!
+!==================================================
+ subroutine matrix_check( label, ndim1, ndim2, Amat, Bmat)
+ !==================================================
+ use pars,       ONLY:SP
+ use com,        ONLY:error,msg
+ use parallel_m, ONLY:mpi_comm_world
+ implicit none
+ !
+ integer     :: ndim1,ndim2
+ character(*):: label
+ complex(SP) :: Amat(ndim1,ndim2)
+ complex(SP) :: Bmat(ndim1,ndim2)
+ !
+ integer   :: i, j
+ logical   :: lerror=.false.
+ real(SP)  :: toll=1.0E-4
+ 
+ outer_loop:&
+ do j = 1, ndim2
+ do i = 1, ndim1
+   if ( abs( Amat(i,j)-Bmat(i,j) ) > toll ) then 
+     lerror = .true.
+     exit outer_loop
+   endif
+ enddo
+ enddo outer_loop
+ !
+ if ( .not. lerror ) call msg("sr",'  matrix_check on  '//trim(label)//' :   passed')
+ if (       lerror ) call msg("sr",'  matrix_check on  '//trim(label)//' :   failed')
+ !
+end subroutine matrix_check
+
+!==================================================
+ subroutine matrix_write( filename, ndim1, ndim2, Amat)
+ !==================================================
+ use pars,       ONLY:SP
+ use parallel_m, ONLY:myid
+ implicit none
+ !
+ integer     :: ndim1,ndim2
+ character(*):: filename
+ complex(SP) :: Amat(ndim1,ndim2)
+ !
+ integer :: i,j
+ !
+ if (myid/=0) return
+ if (ndim1>100) return
+ open(10,file=filename)
+   do j = 1, ndim2
+   do i = 1, ndim1
+      write(10,"(2i5,2f20.12)") i,j, Amat(i,j)
+   enddo
+   enddo
+ close(10)
+ !
+end subroutine matrix_write
+ 
+
+

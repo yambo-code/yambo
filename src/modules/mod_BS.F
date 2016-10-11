@@ -212,7 +212,7 @@ module BS
      use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     use electrons,  ONLY:levels
+     use electrons,  ONLY:levels,n_sp_pol
      integer      :: iT,nT
      type(levels) :: E
      !
@@ -256,7 +256,7 @@ module BS
      if(l_photolum) allocate(BS_T_grp(iT)%f_PL(2,nT))
      if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
      if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
-     if (associated(E%E_SOC)) allocate(BS_T_grp(iT)%E_SOC_corr(2,nT))
+     if (associated(E%E_SOC)) allocate(BS_T_grp(iT)%E_SOC_corr(2/n_sp_pol,nT))
      !
    end subroutine
    !

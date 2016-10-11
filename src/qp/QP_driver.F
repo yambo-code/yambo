@@ -46,7 +46,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_QED
+ use interfaces,    ONLY:eval_G_minus_G
+ use parallel_m,    ONLY:PAR_COM_WORLD
  implicit none
+ !
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
@@ -56,7 +59,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  type(QP_t)        ::qp
  integer           ::i1,io_QP_and_GF_err,io_G_err,ID_QP,ID_G,i_spin
- integer, external ::io_QP_and_GF,eval_G_minus_G
+ integer, external ::io_QP_and_GF
  !
  ! Driver Logicals
  !=================
@@ -186,7 +189,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
  !
- if (l_ppa.and.l_GW_terminator) X%ng=eval_G_minus_G(X%ng,0)
+ if (l_ppa.and.l_GW_terminator) X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
  !
  ! Local Allocations
  !===================

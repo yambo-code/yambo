@@ -30,7 +30,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
- use electrons,     ONLY:levels,spin_occ,spin,nel
+ use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol
  use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
@@ -64,9 +64,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Work space
  !
- integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
+ integer           ::ik_bz,iv,ic,i_sp_pol,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
  real(SP)          ::conjg_fac,Z_
- complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
+ complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),diam_term,diam_term0
 #if defined _PL
  complex(SP)       ::rotated_P(3),P_weighted(3)
  real(SP)          ::res_PL(2)
@@ -135,14 +135,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  if (iq==1) then
    !
-   if( BS_pert_soc ) then
+   if( .not.BS_pert_soc.or.n_sp_pol==2) then
      n_SOC=1
      Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
    !
    ! GPL_EXCLUDE_START 
    !
-   if( BS_pert_soc ) then
+   if( BS_pert_soc.and.n_sp_pol==1) then
      n_SOC=2
      Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
@@ -171,7 +171,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ik_bz = BS_T_grp(i_T_g)%table(i_T,1)
        iv    = BS_T_grp(i_T_g)%table(i_T,2)
        ic    = BS_T_grp(i_T_g)%table(i_T,3)
-       i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
+       i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)
        !
        ik_bz_mem= PAR_Xk_bz_index(ik_bz)
        !
@@ -190,8 +190,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
        !              see definition of conjg_fac few lines before for the -1
        !
-       BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_bz_mem,i_sp))
-       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_bz_mem,i_sp)
+       BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_bz_mem,i_sp_pol))
+       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_bz_mem,i_sp_pol)
 #if defined _PL
        if (l_photolum) then
          !
@@ -269,6 +269,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
+#if defined _KERR
+   call PP_redux_wait( A_drude(1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( A_drude(1) ,COMM=PAR_COM_eh_INDEX%COMM )
+#endif
 #if defined _PL
    if (l_photolum) then
      call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
@@ -385,7 +389,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      is = sop_inv( is )
      !      
      ik_mem    = PAR_DIPk_ibz_index(ik)
-     rotated_P = matmul( dl_sop(:,:,is) , DIP_P(:,ic,iv,ik_mem,i_sp) )
+     rotated_P = matmul( dl_sop(:,:,is) , DIP_P(:,ic,iv,ik_mem,i_sp_pol) )
      !
      if (t_rev) rotated_P = conjg( rotated_P )
      !

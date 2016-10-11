@@ -217,8 +217,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! OpenMP setup
  !==============
  !
+#if defined _OPENMP
 !$omp parallel num_threads(n_outthr) default(shared), &
 !$omp &        private(i_cg, Drude_pole,GreenF, i_bg, Xo_res, Xo_scatt, ig2, iw, mutexid)
+#endif
  !
  call OPENMP_update(master_thread)
  !
@@ -232,7 +234,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! MAIN LOOP
  !===========
  !
+#if defined _OPENMP
 !$omp do
+#endif
  do i_cg = 1,coarse_grid_N
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
@@ -294,7 +298,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (master_thread) call live_timing(steps=1)
    !
  enddo 
+#if defined _OPENMP
 !$omp end do
+#endif
  !
  ! CLEAN
  !=======
@@ -302,8 +308,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  deallocate(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
- !
+#if defined _OPENMP
 !$omp end parallel
+#endif
  !
  if(coarse_grid_N>0) call live_timing()
  !
@@ -328,27 +335,39 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  if (half_X_mat_only) then
    !
+#if defined _OPENMP
    !$omp parallel default(shared), private(ig2,ig1)
+#endif
    if (i_space_inv==0) then
+#if defined _OPENMP
      !$omp do
+#endif
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
        enddo
      enddo
+#if defined _OPENMP
      !$omp end do
+#endif
    endif
    !
    if (i_space_inv==1) then
+#if defined _OPENMP
      !$omp do
+#endif
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
        enddo
      enddo
+#if defined _OPENMP
      !$omp end do
+#endif
    endif
+#if defined _OPENMP
    !$omp end parallel
+#endif
    !
  endif
  !

@@ -39,7 +39,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
 &                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,Integrating_over_Qs,&
-&                     force_v_g_space_approach,use_real_space_approach,Dipole_approach
+&                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_linalg_mode,&
+&                     X_use_lin_sys
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,&
@@ -386,6 +387,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !X
  !
  Chi_mode=' '
+ Chi_linalg_mode="lin_sys"
+ X_use_lin_sys=.FALSE.
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.

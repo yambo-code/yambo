@@ -30,11 +30,12 @@ subroutine K_diago_driver(iq,W)
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_pert_soc
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_mat
- use matrix_operate, ONLY:DIAGO
+ use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:MATRIX_driver,K_diago_compute_epsilon
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,DIAGO
+ use interfaces,     ONLY:K_diago_compute_epsilon
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  !
@@ -138,13 +139,13 @@ subroutine K_diago_driver(iq,W)
    !
    if (K_is_not_hermitian) then
      !
-     call MATRIX_driver(DIAGO,BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+     call LINEAR_ALGEBRA_driver(DIAGO,BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
      !
-     call MATRIX_driver(DIAGO,BS_mat,E_real=BS_E_real)
+     call LINEAR_ALGEBRA_driver(DIAGO,BS_mat,E_real=BS_E_real)
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
      !
@@ -198,8 +199,8 @@ subroutine K_diago_driver(iq,W)
  if( BS_pert_soc ) then
    !
    ! To check if the expression for the non hermitian case is correct
-   if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2,'SOC')
-   if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2,'SOC')
+   if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2/n_sp_pol,'SOC')
+   if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2/n_sp_pol,'SOC')
    BS_E_SOC_corr=real(BS_corrections)
    !
  endif
@@ -264,6 +265,8 @@ subroutine K_diago_driver(iq,W)
        if( BS_pert_soc ) then
          allocate(BS_corrections(2,BS_H_dim))
          allocate(BS_E_SOC_corr(2,BS_H_dim))
+         allocate(BS_corrections(2/n_sp_pol,BS_H_dim))
+         allocate(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
        endif
        allocate(BS_R_left(BS_H_dim))
        allocate(BS_R_right(BS_H_dim))

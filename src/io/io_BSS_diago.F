@@ -87,7 +87,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    if (read_is_on(ID)) bsE(:)=cmplx(V_disk(1,:),V_disk(2,:),SP)
    !
    if(BS_pert_soc) then
-     call io_bulk(ID,'BS_Energies_SOC_corr',VAR_SZ=(/2,BS_H_dim/))
+     call io_bulk(ID,'BS_Energies_SOC_corr',VAR_SZ=(/2/n_sp_pol,BS_H_dim/))
      call io_bulk(ID,R2=BsE_corr)
    endif
    !

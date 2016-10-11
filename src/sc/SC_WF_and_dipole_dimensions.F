@@ -29,12 +29,12 @@ subroutine SC_WF_and_dipole_dimensions(X)
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_n_G_bands,COHSEX_use_empties
  use R_lattice,    ONLY:qindx_S,G_m_G
+ use interfaces,   ONLY:eval_G_minus_G
  use SC,           ONLY:SC_bands,WF_Go_indx,WF_G_max,SC_X_bands,SC_ng_Sx,SC_X_size, &
 &                       SC_up_W_iters
  implicit none
  !
  type(X_t)         :: X(2)
- integer, external :: eval_G_minus_G
  !
  ! Dipoles dimensions
  !===================

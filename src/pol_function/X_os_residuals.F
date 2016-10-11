@@ -104,8 +104,8 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !
    ! GPL_EXCLUDE_END
    !
-   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/spin_occ &
-&             /real(Xk%nbz,SP)/DL_vol*real(Z_)
+   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
+&             spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
    if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dipole_Energy_treshold) then
      Z_eh_occ=1._SP
@@ -113,8 +113,8 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    endif
    !
    if (l_X_term_vv) then
-     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin) &
-   &                      /spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin)/ &
+&               spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    endif  
    !
    ! Scattering CALL
@@ -168,12 +168,15 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
+#if defined _OPENMP
    !$omp parallel do default(shared), private(ig2)
+#endif
    do ig2=1,X%ng
      call V_by_V_plus_V(ig2,Z_eh_occ*Xo_scatt%rhotw(ig2),conjg(Xo_scatt%rhotw(:ig2)),Xo_res(:ig2,ig2))
    enddo
+#if defined _OPENMP
    !$omp end parallel do
-
+#endif
    !
    ! add terminator specific corrections
    ! (ic is running in valence)
@@ -194,12 +197,16 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      ! symm
      rhotw_save=Xo_scatt%rhotw
      !
+#if defined _OPENMP
      !$omp parallel do default(shared), private(ig1,ig2)
+#endif
      do ig1=1,X%ng
        ig2=g_rot(sop_inv(is),ig1)
        Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
      enddo
+#if defined _OPENMP
      !$omp end parallel do
+#endif
      !
      if (is>nsym/(i_time_rev+1)) then
        do ig1=1,X%ng
@@ -212,13 +219,17 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      ig_start=1
      if(iq==1) ig_start=2
      !
+#if defined _OPENMP
      !$omp parallel do default(shared), private(ig1,ig2)
+#endif
      do ig2=1,X%ng
      do ig1=ig_start,ig2
        Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
      enddo
      enddo
+#if defined _OPENMP
      !$omp end parallel do 
+#endif
      !
      Xo_scatt%rhotw = rhotw_save2
      !

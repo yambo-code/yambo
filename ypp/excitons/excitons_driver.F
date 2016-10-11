@@ -133,7 +133,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call mem_est('BS_R_E',(/2*BS_H_dim/))
  iq=BS_q(1)
  !
- if(en%nb_SOC/=0) allocate(BS_E_SOC_corr(2,BS_H_dim))
+ if(en%nb_SOC/=0) allocate(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
  !
  ! Here I read energies and residuum
  !

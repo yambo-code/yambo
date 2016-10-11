@@ -74,9 +74,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  ! Work Space
  !
- integer :: ikbz,iv,ic,iv_SOC(2),ic_SOC(2),ik,ikp,i_sp,i_star,nb(2),&
-&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp
- real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2),E_v_SOC(2),E_c_SOC(2),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
+ integer :: ikbz,iv,ic,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),ik,ikp,i_sp,i_star,nb(2),&
+&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,pert_range(2/n_sp_pol,2)
+ real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
 #if defined _PL
  real(SP):: f_eh_PL(2)
@@ -267,8 +267,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      ! GPL_EXCLUDE_START
      !
      if( BS_pert_soc ) then
-       iv_SOC(:)=Ken%table_SOC(:,iv,ikp)
-       ic_SOC(:)=Ken%table_SOC(:,ic,ik )
+       if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
+       if(n_sp_pol==2) pert_range=reshape((/i_sp,1 /),(/1,2/))
+       iv_SOC(pert_range(:,2))=Ken%table_SOC(pert_range(:,1),iv,ikp)
+       ic_SOC(pert_range(:,2))=Ken%table_SOC(pert_range(:,1),ic,ik )
        if(     all(iv_SOC/=0)) E_v_SOC(:)=Ken%E_SOC(iv_SOC(:),ikp)
        if(     all(ic_SOC/=0)) E_c_SOC(:)=Ken%E_SOC(ic_SOC(:),ik )
        if(.not.all(iv_SOC/=0)) E_v_SOC(:)=Ken%E(iv,ikp,i_sp)

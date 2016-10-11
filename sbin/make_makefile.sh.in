@@ -38,8 +38,9 @@ target=$2
 ofile=$3
 mode=$4
 libs=$5
-if [ ! -f $cdir/$ofile ]; then exit 0; fi
-if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
+if [ ! -f $cdir/$ofile         ] ; then exit 0; fi
+if [   -f $cdir/Makefile       ] ; then rm -f $cdir/Makefile ;  fi
+if [   -f $cdir/Makefile.locks ] ; then rm -f $cdir/Makefile.locks ;  fi
 #
 fc="\$(f90)"
 fcflags="\$(f90flags)"
@@ -103,26 +104,27 @@ case $target in
     ;;
 esac
 
-cat config/setup >>$cdir/Makefile
-echo "fc=$fc" >> $cdir/Makefile
-echo "fcflags=$fcflags" >> $cdir/Makefile
-echo "fcuflags=$fcuflags" >> $cdir/Makefile
-echo "llibs=$llibs" >> $cdir/Makefile
-echo "linclude=$linclude" >> $cdir/Makefile
-echo "llibinclude=$llibinclude" >> $cdir/Makefile
-echo "lf90include=$lf90include $llibinclude" >> $cdir/Makefile
-echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
-echo "target=$target" >> $cdir/Makefile
-echo "dmpi=$dmpi" >> $cdir/Makefile
-echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
-echo "lock_file=$lock_file" >> $cdir/Makefile
-echo "dep_file=$dep_file" >> $cdir/Makefile
+cat config/setup >$cdir/Makefile.HEAD
+echo "fc=$fc" >> $cdir/Makefile.HEAD
+echo "fcflags=$fcflags" >> $cdir/Makefile.HEAD
+echo "fcuflags=$fcuflags" >> $cdir/Makefile.HEAD
+echo "llibs=$llibs" >> $cdir/Makefile.HEAD
+echo "linclude=$linclude" >> $cdir/Makefile.HEAD
+echo "llibinclude=$llibinclude" >> $cdir/Makefile.HEAD
+echo "lf90include=$lf90include $llibinclude" >> $cdir/Makefile.HEAD
+echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile.HEAD
+echo "target=$target" >> $cdir/Makefile.HEAD
+echo "dmpi=$dmpi" >> $cdir/Makefile.HEAD
+echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile.HEAD
+echo "lock_file=$lock_file" >> $cdir/Makefile.HEAD
+echo "dep_file=$dep_file" >> $cdir/Makefile.HEAD
 cp $cdir/$ofile $cdir/$ofile.c
-$cpp $cppflags $dopts -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile
+$cpp $cppflags $dopts -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile.HEAD
 rm -f $cdir/$ofile.c
 
 if [ "$mode" = "x" ] ; then 
-cat << EOF >> $cdir/Makefile
+cat << EOF > $cdir/Makefile.x
+.NOTPARALLEL:
 \$(target): locks \$(objs)
 	\$(driver)\$
 	\$(link)\$
@@ -132,21 +134,23 @@ cat << EOF >> $cdir/Makefile
 EOF
 else 
 rm -f ./lib/$target
-cat << EOF >> $cdir/Makefile
-\$(target): locks arcreate
+cat << EOF > $cdir/Makefile.lock
+\$(target): locks 
+EOF
+cat << EOF > $cdir/Makefile.ar
+
+\$(target): arcreate
 	\$(modmove)\$ 
 EOF
 fi
 
-cat << EOF >> $cdir/Makefile
+cat << EOF > $cdir/Makefile.BOTTOM
 locks:
 	${PREFIX}if test ! -f \$(lock_file) && test "\$(debug)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); rm -f \$(dep_file); fi
 	${PREFIX}if test "\$(debug)" = "yes"; \
 	then \$(srcdir)/sbin/objects_debug.sh \$(lock_file); rm -f \$(dep_file); fi
-
-\$(objs): locks
 
 \$(dep_file):
 	cd \$(topdir)/$cdir; \$(topdir)/sbin/moduledep.sh \$(objs) > \$(srcdir)/$cdir/\$(dep_file)
@@ -219,7 +223,7 @@ FC_LOCAL_SRC= sgfft.o
 EOF
 rm_command="@rm -f \$*\$(f90suffix)"
 if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
-cat << EOF >> $cdir/Makefile
+cat << EOF >> $cdir/Makefile.BOTTOM
 .F.o:
 	@rm -f \$*\$(f90suffix)
 	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
@@ -227,7 +231,7 @@ cat << EOF >> $cdir/Makefile
 	${rm_command}
 	@echo $ECHO_N \$*".F "
 EOF
-cat << EOF >> $cdir/Makefile
+cat << EOF >> $cdir/Makefile.BOTTOM
 .f.o:
 	${PREFIX}(eval \$(f77) -c \$(f77flags) \$(topdir)/$cdir/\$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "
@@ -235,3 +239,13 @@ cat << EOF >> $cdir/Makefile
 	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<) > /dev/null
 	@echo $ECHO_N \$< " "
 EOF
+#
+# Final Sandwiching
+#
+if [ -f $cdir/Makefile.x ]; then  
+ cat $cdir/Makefile.HEAD $cdir/Makefile.x $cdir/Makefile.BOTTOM >  $cdir/Makefile
+else
+ cat $cdir/Makefile.HEAD $cdir/Makefile.lock $cdir/Makefile.BOTTOM >  $cdir/Makefile.locks
+ cat $cdir/Makefile.HEAD $cdir/Makefile.ar $cdir/Makefile.BOTTOM >  $cdir/Makefile.archive
+fi
+rm -f $cdir/Makefile.HEAD $cdir/Makefile.x $cdir/Makefile.BOTTOM $cdir/Makefile.lock $cdir/Makefile.ar

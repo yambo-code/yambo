@@ -152,6 +152,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    call SLK_matrix_reset(B_slk)
    call SLK_matrix_reset(C_slk)
    call SLK_matrix_reset(EIGEN_slk)
+ write (*,*) 'here'
    !
  endif
  !

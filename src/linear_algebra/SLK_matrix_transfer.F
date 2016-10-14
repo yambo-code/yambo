@@ -49,9 +49,9 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
    !
    if (present(M)) then
      !
-     !M_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
+     M_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
      !
-     !return
+     return
      !
    endif
    !
@@ -124,12 +124,6 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
        !
      enddo
      !
-!     do i_r=1,M_slk%rows(2)-M_slk%rows(1)+1
-!       do i_c=1,M_slk%cols(2)-M_slk%cols(1)+1
-!         write (100+myid,*) i_r+M_slk%rows(1)-1,i_c+M_slk%cols(1)-1,M_slk%blc(i_r,i_c)-M(i_r+M_slk%rows(1)-1,i_c+M_slk%cols(1)-1)
-!       enddo
-!     enddo
-     !
      return
      !
    endif
@@ -188,13 +182,6 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
      SLK_blk_coo(3:4) = K_coo(3:4)-M_slk%cols(1)+1
      !
      BUFF_size    = (SLK_blk_coo(2)-SLK_blk_coo(1)+1)*(SLK_blk_coo(4)-SLK_blk_coo(3)+1)
-     !
-!     if (i_c1==1.and.SLK_POOL%CPU_id==i_c2-1) then
-!       write (*,*) i_c2,'K rows',K_coo(1:2),' cols',K_coo(3:4)
-!       write (*,*) i_c2,'SLK rows',M_slk%rows(1:2),' cols',M_slk%cols(1:2)
-!       write (*,*) i_c2,'K blk ',i_B,' rows',K_coo(1:2)-BSE_coordinates(i_c2,i_B,1)+1,' cols',K_coo(3:4)-BSE_coordinates(i_c2,i_B,2)+1
-!       write (*,*) i_c2,'SLK blk rows',SLK_blk_coo(1:2),' cols',SLK_blk_coo(3:4)
-!     endif
      !
      if (i_c1==i_c2) then
        !

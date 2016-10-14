@@ -195,15 +195,18 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        iscp%rhotw=isc%rhotw
        if (isc%is(1)/=iscp%is(1)) call scatter_Bamp(iscp)
        !
+       !
 !$omp parallel do default(shared), private(ig)
        do ig = 1, isc%ngrho
          local_rhotw(ig) = -4._SP/spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))*E%f(jb,isc%os(2),isc%os(4))
        enddo
 !$omp end parallel do
+!       if (iq==1) local_rhotw(1)=0.0
        !
        DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
        !
        QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+cmplx(DP_Sx,KIND=SP)
+!       write(30,*) iq,i_qp, QP_Vnl_xc(i_qp)
        !
        if (q%sstar(iq,2)==1) call live_timing(steps=1)
        !

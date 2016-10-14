@@ -109,6 +109,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (l_sc_coh)              SECTION_name='COH'
  if (l_sc_sex)              SECTION_name='SEX'
  if (l_sc_coh.and.l_sc_sex) SECTION_name='COH+SEX'
+ if (.not.l_sc_coh.and..not.l_sc_sex) SECTION_name=trim(SECTION_name)//'W0 : the P(lasmon) P(ole) A(pproximation)'
+ ch=trim(SECTION_name)
+
 #else
  ch=trim(SECTION_name)//'W0 : the P(lasmon) P(ole) A(pproximation)'
  if (l_cohsex)  ch=trim(SECTION_name)//'W0 : COHSEX'

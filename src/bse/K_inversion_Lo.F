@@ -33,7 +33,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  use BS_solvers,     ONLY:Co_factor,BSS_dipoles,&
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,&
-&                         BSS_add_antiresonant
+&                         BSS_add_antiresonant,K_diago_in_BS_mat
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
@@ -59,7 +59,6 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  type(PP_indexes) :: px
  type(w_samp)     :: W_mins,W_plus
  !
- logical          :: K_diago_in_BS_mat
  integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
  complex(SP)      :: E_plus_W,residual
 #if defined _PL

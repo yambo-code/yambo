@@ -25,7 +25,7 @@ module BS_solvers
  !
  use pars,       ONLY:SP,schlen,lchlen
  use memory_m,   ONLY:mem_est
- use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim
+ use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block
 #if defined _SCALAPACK
  use SLK_m,      ONLY:SLK_matrix
 #endif
@@ -80,9 +80,10 @@ module BS_solvers
  ! Solvers (Inversion)
  !=========
  character(schlen):: BSS_inversion_mode
- logical  :: BSS_uses_partial_diago
+ logical  :: BSS_uses_partial_diago,K_diago_in_BS_mat
 #if defined _SCALAPACK
- type(SLK_matrix):: BSS_inv_slk
+ type(SLK_matrix)            :: BSS_inv_slk
+ type(BS_block), allocatable :: BSS_inv_blk(:)
 #endif
  !
  type K_Inversion_data
@@ -143,6 +144,36 @@ module BS_solvers
  end interface
  !
  contains
+   !
+   subroutine BS_duplicate_K_structure(label,BLKs_in,BLKs_out)
+     !
+     use BS,        ONLY:n_BS_blks
+     use memory_m,  ONLY:mem_est
+     character(*)   :: label
+     type(BS_block) :: BLKs_in(:),BLKs_out(:)
+     integer        :: i_B,tot_size
+     !
+     tot_size=0
+     !
+     do i_B=1,n_BS_blks
+       !
+       allocate(BLKs_out(i_B)%mat( BLKS_in(i_B)%size(1) , BLKS_in(i_B)%size(2) ))
+       !
+       tot_size=tot_size+BLKS_in(i_B)%size(1)*BLKS_in(i_B)%size(2)
+       !
+       BLKs_out(i_B)%ik         =BLKS_in(i_B)%ik
+       BLKs_out(i_B)%ip         =BLKS_in(i_B)%ip
+       BLKs_out(i_B)%iT_k       =BLKS_in(i_B)%iT_k
+       BLKs_out(i_B)%iT_p       =BLKS_in(i_B)%iT_p
+       BLKs_out(i_B)%size       =BLKS_in(i_B)%size
+       BLKs_out(i_B)%mode       =BLKS_in(i_B)%mode
+       BLKs_out(i_B)%coordinate =BLKS_in(i_B)%coordinate
+       !
+     enddo
+     !
+     call mem_est(label,(/tot_size/))
+     !
+   end subroutine
    !
    subroutine BS_mat_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO

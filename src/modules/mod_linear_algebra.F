@@ -87,6 +87,23 @@ module linear_algebra
      call error( trim( string_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']:',trim(message_)) ))
    end subroutine
    !
+   subroutine SLK_matrix_transfer_side_crop(I,J,O)
+     !
+     integer :: I(2),J(2),O(2)
+     !
+     O=0
+     !
+     if (I(2)<J(1)) return
+     if (I(1)>J(2)) return
+     !
+     O(1)=I(1)
+     if (I(1)<=J(1)) O(1)=J(1)
+     !
+     O(2)=J(2)
+     if (I(2)<J(2)) O(2)=I(2)
+     !
+   end subroutine
+   !
    !============================
    ! SINGLE VALUE DECOMPOSITION
    !============================
@@ -176,6 +193,5 @@ module linear_algebra
 #endif
      !
    end subroutine geev
-
    !
 end module linear_algebra

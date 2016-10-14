@@ -27,8 +27,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BS_mat,BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data
- use BS,             ONLY:BS_H_dim
+&                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
+&                         BS_duplicate_K_structure,BSS_inv_blk
+ use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,n_BS_blks
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
@@ -96,6 +97,19 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  else if (isec(2)==0) then
    call section('+','Inversion solver')
  endif
+ !
+#if defined _SCALAPACK
+ !
+ ! Symmetrize the K blocks (to be eventually sent to the BLACS)
+ !=========================
+ call BS_Blocks_symmetrize_K()
+ !
+ ! And allocate the shadow K structure
+ !=====================================
+ allocate(BSS_inv_blk(n_BS_blks))
+ call BS_duplicate_K_structure("BSS_K_duplicate",BS_blk,BSS_inv_blk)
+ !
+#endif
  !
  ! Restart database
  !==================

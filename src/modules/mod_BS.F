@@ -55,7 +55,6 @@ module BS
  !
  ! Live Timing
  !=============
- integer     :: BS_LiveTiming_prefactor = 1
  integer(IP) :: BS_LiveTiming_steps     = 0
  !
  ! Transition Controls
@@ -313,6 +312,7 @@ module BS
    end subroutine
    !
    function BS_Block_size(i_block)
+     !
      integer              :: i_block
      integer(IP)          :: BS_Block_size
      !
@@ -322,12 +322,12 @@ module BS
        BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)
      endif
      !
-     BS_Block_size=BS_Block_size/BS_LiveTiming_prefactor
-     !
    end function BS_Block_size
    !
    subroutine BS_Blocks_symmetrize_K()
+     !
      integer :: i_B,i_Tk,i_Tp,i_r,i_c
+     !
      do i_B=1,n_BS_blks
        !
        i_Tk  =BS_blk(i_B)%iT_k

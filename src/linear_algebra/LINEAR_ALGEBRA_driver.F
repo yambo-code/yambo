@@ -31,7 +31,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  use parallel_m,    ONLY:linear_algebra_is_parallel
  use SLK_m,         ONLY:SLK_matrix
  use interfaces,    ONLY:SLK_matrix_transfer
- use BS,            ONLY:BS_block
+ use BS,            ONLY:BS_block,BS_H_dim
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
 #endif
@@ -67,6 +67,10 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  ! M dimension
  !
+ if (present(M_bse)) then
+   N=BS_H_dim
+ endif
+ !
  if (present(M)) then
    N=size(M,1)
  endif
@@ -100,13 +104,22 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  if (lib_in_use==USE_SLK) then
    !
    call SLK_matrix_init( SLK_ORTHO, SLK_POOL, M_slk, N )
-   call SLK_matrix_transfer( "fill_the_SLK",  M_slk, M=M )
+   !
+   if (present(M_bse)) then
+     call SLK_matrix_transfer( "fill_the_SLK",  M_slk, M_bse=M_bse, M=M )
+   else if (present(M)) then
+     call SLK_matrix_transfer( "fill_the_SLK",  M_slk, M=M )
+   endif
    !
    if (idriver==INV) then
      !
      call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, M_slk, N ) 
      !
-     call SLK_matrix_transfer( "transfer_from_the_SLK",  M_slk, M=M )
+     if (present(M)) then
+       call SLK_matrix_transfer( "transfer_from_the_SLK",  M_slk, M=M )
+     else if (present(M_bse)) then
+       call SLK_matrix_transfer( "transfer_from_the_SLK",  M_slk, M_bse=M_bse )
+     endif
      !
    else if (idriver==DIAGO) then
      !

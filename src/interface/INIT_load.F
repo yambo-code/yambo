@@ -327,7 +327,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
- call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
+ call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs',verb_level=V_resp)
 #if !defined _SC
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
 #endif

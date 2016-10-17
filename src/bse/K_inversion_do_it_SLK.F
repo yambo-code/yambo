@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_do_it_full(Lo,KERNEL,what)
+subroutine K_inversion_do_it_SLK(Lo,KERNEL,what)
  !
- ! 1./(Lo^{-1}-M)
+ ! 1./(Lo^{-1}-M) (using SLK procedures)
  !
  use pars,           ONLY:SP,cZERO
- use BS_solvers,     ONLY:BS_mat
  use BS,             ONLY:BS_H_dim
+ use BS_solvers,     ONLY:K_diago_in_BS_mat,K_slk,K_inv_slk,BS_mat
  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra, ONLY:INV
  !
@@ -39,18 +39,26 @@ subroutine K_inversion_do_it_full(Lo,KERNEL,what)
  !
  ! Work Space
  !
- integer     ::i1,i2
+ integer     ::i_r,i_r_,borders(2)
  !
  KERNEL=cZERO
  !
- do i2=1,BS_H_dim
-   KERNEL(i2,i2)=1._SP/Lo(i2)
-   do i1=1,BS_H_dim 
-     if (what=="r") KERNEL(i1,i2)=KERNEL(i1,i2)-      BS_mat(i1,i2)
-     if (what=="a") KERNEL(i1,i2)=KERNEL(i1,i2)-conjg(BS_mat(i1,i2))
-   enddo
- enddo
+ if (what=="r") K_inv_slk%blc=-K_slk%blc
+ if (what=="a") K_inv_slk%blc=-conjg(K_slk%blc)
+ ! 
+ borders=(/max(K_slk%rows(1),K_slk%cols(1)),min(K_slk%rows(2),K_slk%cols(2))/)
  !
- call LINEAR_ALGEBRA_driver(INV,M=KERNEL)
+ if (borders(1)<borders(2)) then
+   do i_r=borders(1),borders(2)
+     !
+     i_r_=i_r-K_slk%rows(1)+1
+     !
+     if (.not.K_diago_in_BS_mat) K_inv_slk%blc(i_r_,i_r_)=cZERO
+     K_inv_slk%blc(i_r_,i_r_)=K_inv_slk%blc(i_r_,i_r_)+1._SP/Lo(i_r)
+     !
+   enddo
+ endif
+ !
+ call LINEAR_ALGEBRA_driver(INV,M=KERNEL,M_slk=K_inv_slk)
  !
 end subroutine

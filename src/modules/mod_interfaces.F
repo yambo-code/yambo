@@ -40,26 +40,28 @@ module interfaces
      !
    end subroutine
    !
-   subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det,&
-&                                   M_bse,V_left_slk,V_right_slk)
+   subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right,E_real,&
+&                                   E_cmpl,SVD_digits,det,V_left_slk,V_right_slk)
      !
      use SLK_m,          ONLY:SLK_matrix
      use pars,           ONLY:SP
      use BS,             ONLY:BS_block
      !
-     integer                :: idriver
-     complex(SP),  optional :: M(:,:)
-     complex(SP),  optional :: B(:,:)
-     complex(SP),  optional :: C(:,:)
-     integer,      optional :: lib_in
-     complex(SP),  optional :: V_left(:,:)
-     complex(SP),  optional :: V_right(:,:)
-     real(SP),     optional :: E_real(:)
-     complex(SP),  optional :: E_cmpl(:)
-     integer,      optional :: SVD_digits 
-     complex(SP),  optional :: det
-     type(SLK_matrix), optional :: V_left_slk,V_right_slk
+     integer                    :: idriver
+     integer,          optional :: lib_in
+     complex(SP),      optional :: M(:,:)
+     type(SLK_matrix), optional :: M_slk
      type(BS_block),   optional :: M_bse(:)
+     complex(SP),      optional :: B(:,:)
+     complex(SP),      optional :: C(:,:)
+     complex(SP),      optional :: V_left(:,:)
+     complex(SP),      optional :: V_right(:,:)
+     real(SP),         optional :: E_real(:)
+     complex(SP),      optional :: E_cmpl(:)
+     integer,          optional :: SVD_digits 
+     complex(SP),      optional :: det
+     type(SLK_matrix), optional :: V_left_slk
+     type(SLK_matrix), optional :: V_right_slk
      !
    end subroutine
    !

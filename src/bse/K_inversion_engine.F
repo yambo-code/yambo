@@ -24,7 +24,7 @@
 subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
  !
  use pars,           ONLY:SP,cZERO
- use parallel_m,     ONLY:PP_indexes,myid
+ use parallel_m,     ONLY:PP_indexes,ncpu
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:Epsilon_ii,global_gauge
  use LIVE_t,         ONLY:live_timing
@@ -102,7 +102,16 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
        if (i_L==1) Gr="r"
        if (i_L==2) Gr="a"
        !
+#if defined _SCALAPACK
+       !
+       if (ncpu> 1) call K_inversion_do_it_SLK (Lo(:,iw,i_L),Mm1,Gr)
+       if (ncpu==1) call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
+       !
+#else
+       !
        call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
+       !
+#endif
        !
        if (what=="EPS".or.what=="any") then
          call EPS_compose(i_L)

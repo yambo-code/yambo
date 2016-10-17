@@ -71,6 +71,7 @@ module SLK_m
  type SLK_matrix 
    !
    integer :: desc(desc_len)
+   integer :: N          = 0
    integer :: lwork      = 0
    integer :: lrwork     = 0
    integer :: liwork     = 0
@@ -107,6 +108,7 @@ module SLK_m
        M_slk%ncols    = ncols
        allocate(M_slk%blc(nrows,ncols))
      else
+       M_slk%N        = 0
        M_slk%desc     = 0
        M_slk%lwork    = 0
        M_slk%lrwork   = 0
@@ -115,6 +117,8 @@ module SLK_m
        M_slk%rows(2)  = 0
        M_slk%cols(2)  = 0
        M_slk%nrows    = 0
+       M_slk%ncols_used = 0
+       M_slk%nrows_used = 0
        M_slk%ncols    = 0
      endif
    end subroutine

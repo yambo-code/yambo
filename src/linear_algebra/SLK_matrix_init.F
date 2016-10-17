@@ -32,7 +32,6 @@ subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error
  !
  implicit none
  !
@@ -44,7 +43,6 @@ subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  ! Work Space
  !
  integer   :: lld,N_blcs,nprow,npcol,myrow,mycol
- integer   :: i,j
  !
  ! init global blacs grid
  !
@@ -72,12 +70,11 @@ subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  !
  call SLK_matrix_reset(M_slk,N_blcs,N_blcs)
  !
- M_slk%rows=(/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
- M_slk%cols=(/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
- !
- M_slk%nrows_used=M_slk%rows(2)-M_slk%rows(1)+1
- M_slk%ncols_used=M_slk%cols(2)-M_slk%cols(1)+1
- !
- M_slk%blc=0.0_SP
+ M_slk%rows       = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
+ M_slk%cols       = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
+ M_slk%nrows_used = M_slk%rows(2)-M_slk%rows(1)+1
+ M_slk%ncols_used = M_slk%cols(2)-M_slk%cols(1)+1
+ M_slk%N          = N
+ M_slk%blc        = 0.0_SP
  !
 end subroutine 

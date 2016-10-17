@@ -46,6 +46,12 @@ module BS_solvers
  !
  integer, allocatable :: Haydock_parallel_group_comm(:)
  !
+ ! SCALAPACK shadow matrix
+ !=========================
+#if defined _SCALAPACK
+ type(SLK_matrix):: K_slk
+#endif
+ !
  ! Solvers (General)
  !=========
  character(lchlen):: BSS_description(100)
@@ -67,9 +73,6 @@ module BS_solvers
  ! Solvers (Diago)
  !=========
  logical  :: BSS_write_eig_2_db
-#if defined _SCALAPACK
- type(SLK_matrix):: BSS_diago_slk
-#endif
  !
  ! Solvers (Haydock)
  !=========
@@ -80,10 +83,9 @@ module BS_solvers
  ! Solvers (Inversion)
  !=========
  character(schlen):: BSS_inversion_mode
- logical  :: BSS_uses_partial_diago,K_diago_in_BS_mat
+ logical          :: BSS_uses_partial_diago,K_diago_in_BS_mat
 #if defined _SCALAPACK
- type(SLK_matrix)            :: BSS_inv_slk
- type(BS_block), allocatable :: BSS_inv_blk(:)
+ type(SLK_matrix) :: K_inv_slk
 #endif
  !
  type K_Inversion_data

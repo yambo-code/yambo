@@ -28,8 +28,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BS_mat,BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
 &                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
-&                         BS_duplicate_K_structure,BSS_inv_blk
- use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,n_BS_blks
+&                         K_slk,K_inv_slk
+ use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
@@ -37,9 +37,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
-&                         PAR_COM_SLK_INDEX_local,myid
+&                         PAR_COM_SLK_INDEX_local,myid,ncpu
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
+#if defined _SCALAPACK
+ use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
+ use interfaces,     ONLY:SLK_matrix_transfer
+#endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -104,11 +108,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !=========================
  call BS_Blocks_symmetrize_K()
  !
- ! And allocate the shadow K structure
- !=====================================
- allocate(BSS_inv_blk(n_BS_blks))
- call BS_duplicate_K_structure("BSS_K_duplicate",BS_blk,BSS_inv_blk)
- !
 #endif
  !
  ! Restart database
@@ -137,6 +136,22 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! Kernel Loading 
  !================
  call K_stored_in_a_BIG_matrix(iq)
+ !
+#if defined _SCALAPACK
+ !
+ if (ncpu>1) then
+   !
+   ! Prepare the BLACS matricex (reference, K_slk and local, K_inv_slk)
+   !============================
+   call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
+   !
+   call SLK_matrix_transfer("fill_the_SLK", K_slk, BS_blk )
+   !
+   call SLK_matrix_duplicate( "none", K_slk, K_inv_slk )
+   !
+ endif
+ !
+#endif
  !
  ! IP-part Lo [also recompute Epsilon_xx(:,3) OR PL (needed in case of DbG)]
  !===========================================================================
@@ -393,9 +408,15 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _PL
      call LOCAL_TYP_clean(K_INV_PL)
 #endif
+     !
      call PP_indexes_reset(PAR_IND_freqs)
      deallocate(Lo)
      call mem_est("Lo")
+     !
+#if defined _SCALAPACK
+     call SLK_matrix_reset(K_slk)
+     call SLK_matrix_reset(K_inv_slk)
+#endif
      !
 #if defined _TIMING
      call timing('Inversion Solver',OPR='stop')

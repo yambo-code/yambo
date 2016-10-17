@@ -28,7 +28,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  use pars,           ONLY:SP,cZERO
  use SLK_m,          ONLY:SLK_matrix,SLK_POOL
  use BS,             ONLY:BS_block,n_BS_blks
- use parallel_m,     ONLY:PP_redux_wait,MPI_COMPLEX,MPI_STATUS_SIZE
+ use parallel_m,     ONLY:PP_redux_wait,MPI_COMPLEX,MPI_STATUS_SIZE,ncpu,myid
  use linear_algebra, ONLY:SLK_matrix_transfer_side_crop
  !
  implicit none
@@ -41,7 +41,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  ! Work Space
  !
  integer :: i_B,i_c1,i_c2,GLOBAL_n_BS_blks(SLK_POOL%n_CPU),i_err,BUFF_size,&
-&           SLK_coordinates(SLK_POOL%n_CPU,4),K_coo(4),MAX_n_BS_blks,i_r,i_c,A_RES_coo(4)
+&           SLK_coordinates(SLK_POOL%n_CPU,4),K_coo(4),MAX_n_BS_blks,i_r,i_c,i_r_,i_c_
  integer, dimension(MPI_STATUS_SIZE) :: MPI_status
  integer, allocatable :: BSE_coordinates(:,:,:),BSE_iTs(:,:,:)
  !
@@ -60,27 +60,27 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
      SLK_coordinates =0
      GLOBAL_n_BS_blks=0
      SLK_coordinates(SLK_POOL%CPU_id+1,:)=(/M_slk%rows(1),M_slk%rows(2),M_slk%cols(1),M_slk%cols(2)/)
-     GLOBAL_n_BS_blks(SLK_POOL%CPU_id+1 )=n_BS_blks
-     call PP_redux_wait(GLOBAL_n_BS_blks,COMM=SLK_POOL%INTRA_comm)
+     GLOBAL_n_BS_blks(myid+1)=n_BS_blks
+     call PP_redux_wait(GLOBAL_n_BS_blks)
      call PP_redux_wait(SLK_coordinates ,COMM=SLK_POOL%INTRA_comm)
      !
      MAX_n_BS_blks=maxval(GLOBAL_n_BS_blks)
-     allocate(BSE_coordinates(SLK_POOL%n_CPU,MAX_n_BS_blks,4))
-     allocate(BSE_iTs(SLK_POOL%n_CPU,MAX_n_BS_blks,2))
+     allocate(BSE_coordinates(ncpu,MAX_n_BS_blks,4))
+     allocate(BSE_iTs(ncpu,MAX_n_BS_blks,2))
      BSE_coordinates =0
      BSE_iTs         =0
      !
      do i_B=1,n_BS_blks
        !
-       BSE_iTs        (SLK_POOL%CPU_id+1,i_B,:)=(/M_bse(i_B)%iT_k,M_bse(i_B)%iT_p/)
+       BSE_iTs        (myid+1,i_B,:)=(/M_bse(i_B)%iT_k,M_bse(i_B)%iT_p/)
        !
-       BSE_coordinates(SLK_POOL%CPU_id+1,i_B,:)=(/M_bse(i_B)%coordinate(1),M_bse(i_B)%coordinate(1)+M_bse(i_B)%size(1)-1,&
-&                                                 M_bse(i_B)%coordinate(2),M_bse(i_B)%coordinate(2)+M_bse(i_B)%size(2)-1/)
+       BSE_coordinates(myid+1,i_B,:)  =(/M_bse(i_B)%coordinate(1),M_bse(i_B)%coordinate(1)+M_bse(i_B)%size(1)-1,&
+&                                        M_bse(i_B)%coordinate(2),M_bse(i_B)%coordinate(2)+M_bse(i_B)%size(2)-1/)
        !
      enddo
      !  
-     call PP_redux_wait(BSE_iTs         ,COMM=SLK_POOL%INTRA_comm)
-     call PP_redux_wait(BSE_coordinates ,COMM=SLK_POOL%INTRA_comm)
+     call PP_redux_wait(BSE_iTs         )
+     call PP_redux_wait(BSE_coordinates )
      !
      ! Here I define the list of "local buffers" to exchange. They are the minimal overlaps of the
      ! SLK and BSE sub-matrices.
@@ -89,7 +89,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
        !
        ! i_c1 is the BLACS cpu
        !
-       do i_c2=1,SLK_POOL%n_CPU
+       do i_c2=1,ncpu
          !
          ! i_c1 is the BS cpu
          !
@@ -106,11 +106,6 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
            !
            if (BSE_iTs(i_c2,i_B,1)/=BSE_iTs(i_c2,i_B,2)) then
              !
-             A_RES_coo(1)=BSE_coordinates(i_c2,i_B,3)
-             A_RES_coo(2)=BSE_coordinates(i_c2,i_B,4)
-             A_RES_coo(3)=BSE_coordinates(i_c2,i_B,1)
-             A_RES_coo(4)=BSE_coordinates(i_c2,i_B,2)
-             !
              ! Symmetric block of the resonant
              !
              call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_coordinates(i_c2,i_B,3:4), K_coo(1:2) )
@@ -124,6 +119,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
        !
      enddo
      !
+     deallocate(BSE_coordinates,BSE_iTs)
      return
      !
    endif

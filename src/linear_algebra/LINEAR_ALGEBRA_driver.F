@@ -21,8 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,&
-&                                SVD_digits,det,M_bse,V_left_slk,V_right_slk)
+subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right,E_real,E_cmpl,&
+&                                SVD_digits,det,V_left_slk,V_right_slk)
  !
  use pars,          ONLY:SP,cONE,cZERO
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
@@ -41,25 +41,27 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  implicit none
  !
- integer                :: idriver
- integer,      optional :: lib_in
- complex(SP),  optional :: M(:,:)
- complex(SP),  optional :: B(:,:)
- complex(SP),  optional :: C(:,:)
- complex(SP),  optional :: V_left(:,:)
- complex(SP),  optional :: V_right(:,:)
- real(SP),     optional :: E_real(:)
- complex(SP),  optional :: E_cmpl(:)
- integer,      optional :: SVD_digits 
- complex(SP),  optional :: det
- type(SLK_matrix), optional :: V_left_slk,V_right_slk
+ integer                    :: idriver
+ integer,          optional :: lib_in
+ complex(SP),      optional :: M(:,:)
+ type(SLK_matrix), optional :: M_slk
  type(BS_block),   optional :: M_bse(:)
+ complex(SP),      optional :: B(:,:)
+ complex(SP),      optional :: C(:,:)
+ complex(SP),      optional :: V_left(:,:)
+ complex(SP),      optional :: V_right(:,:)
+ real(SP),         optional :: E_real(:)
+ complex(SP),      optional :: E_cmpl(:)
+ integer,          optional :: SVD_digits 
+ complex(SP),      optional :: det
+ type(SLK_matrix), optional :: V_left_slk
+ type(SLK_matrix), optional :: V_right_slk
  !
  ! Work Spaces ...
  !
  complex(SP)         :: det_
  integer             :: N,lib_in_use
- type (SLK_matrix)   :: M_slk,B_slk,C_slk,EIGEN_slk
+ type (SLK_matrix)   :: M_loc_slk,B_slk,C_slk,EIGEN_slk
  !
 #if defined _TIMING
  call timing("LINEAR ALGEBRA",OPR="start")
@@ -67,11 +69,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  ! M dimension
  !
- if (present(M_bse)) then
+ if (present(M_slk)) then
+   N=M_slk%N
+ else if (present(M_bse)) then
    N=BS_H_dim
- endif
- !
- if (present(M)) then
+ else if (present(M)) then
    N=size(M,1)
  endif
  !
@@ -101,71 +103,12 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
- if (lib_in_use==USE_SLK) then
-   !
-   call SLK_matrix_init( SLK_ORTHO, SLK_POOL, M_slk, N )
-   !
-   if (present(M_bse)) then
-     call SLK_matrix_transfer( "fill_the_SLK",  M_slk, M_bse=M_bse, M=M )
-   else if (present(M)) then
-     call SLK_matrix_transfer( "fill_the_SLK",  M_slk, M=M )
+ if (lib_in_use==USE_SLK) then 
+   if (present(M_slk)) then
+     call SCALAPACK_section(M_slk,.FALSE.)
+   else
+     call SCALAPACK_section(M_loc_slk,.TRUE.)
    endif
-   !
-   if (idriver==INV) then
-     !
-     call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, M_slk, N ) 
-     !
-     if (present(M)) then
-       call SLK_matrix_transfer( "transfer_from_the_SLK",  M_slk, M=M )
-     else if (present(M_bse)) then
-       call SLK_matrix_transfer( "transfer_from_the_SLK",  M_slk, M_bse=M_bse )
-     endif
-     !
-   else if (idriver==DIAGO) then
-     !
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, EIGEN_slk, N )
-     !
-     if (present(E_cmpl)) then
-       !
-       call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','parallel non-herm diag not yet implemented')
-       !
-       !call PARALLEL_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, N, M, E_cmpl )
-       !
-     else
-       !
-       call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, N, E_real )
-       !
-     endif
-     !
-     call SLK_matrix_transfer( "transfer_from_the_SLK",  EIGEN_slk, M=M )
-     !
-   else if (idriver==LIN_SYS) then
-     !
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
-     call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
-     !
-     call PARALLEL_lin_system( SLK_ORTHO, SLK_POOL, M_slk, B_slk, N, size(B,2), B )
-     call SLK_matrix_transfer( "transfer_from_the_SLK",  B_slk, M=B )
-     !
-   else if (idriver==MAT_MUL) then
-     ! 
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
-     call SLK_matrix_init( SLK_ORTHO, SLK_POOL, C_slk, N )
-     call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
-     call SLK_matrix_transfer( "fill_the_SLK", C_slk, M=C )
-     !
-     call PARALLEL_mat_mul( SLK_ORTHO, SLK_POOL, M_slk, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), size(M,2), C )
-     call SLK_matrix_transfer( "transfer_from_the_SLK",  C_slk, M=C )
-     !
-   endif
-   !
-   call LINEAR_ALGEBRA_WS_clean_up(WS) 
-   !
-   call SLK_matrix_reset(M_slk)
-   call SLK_matrix_reset(B_slk)
-   call SLK_matrix_reset(C_slk)
-   call SLK_matrix_reset(EIGEN_slk)
-   !
  endif
  !
 #endif
@@ -225,5 +168,84 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  call timing("LINEAR ALGEBRA",OPR="stop")
 #endif
  !
+ contains
+   !
+#if defined _SCALAPACK
+   !
+   subroutine SCALAPACK_section(MAT,INIT)  
+     !
+     type (SLK_matrix)   :: MAT
+     logical             :: INIT
+     !
+     if (INIT) then
+       !
+       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, MAT, N )
+       !
+       if (present(M_bse)) then
+         call SLK_matrix_transfer( "fill_the_SLK",  MAT, M_bse=M_bse, M=M )
+       else if (present(M)) then
+         call SLK_matrix_transfer( "fill_the_SLK",  MAT, M=M )
+       endif
+       !
+     endif
+     !
+     if (idriver==INV) then
+       !
+       call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, MAT, N ) 
+       !
+       if (present(M)) then
+         call SLK_matrix_transfer( "transfer_from_the_SLK",  MAT, M=M )
+       else if (present(M_bse)) then
+         call SLK_matrix_transfer( "transfer_from_the_SLK",  MAT, M_bse=M_bse )
+       endif
+       !
+     else if (idriver==DIAGO) then
+       !
+       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, EIGEN_slk, N )
+       !
+       if (present(E_cmpl)) then
+         !
+         call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','parallel non-herm diag not yet implemented')
+         !
+         !call PARALLEL_diagonalization( SLK_ORTHO, SLK_POOL, MAT, EIGEN_slk, N, M, E_cmpl )
+         !
+       else
+         !
+         call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, MAT, EIGEN_slk, N, E_real )
+         !
+       endif
+       !
+       call SLK_matrix_transfer( "transfer_from_the_SLK",  EIGEN_slk, M=M )
+       !
+     else if (idriver==LIN_SYS) then
+       !
+       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
+       call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
+       !
+       call PARALLEL_lin_system( SLK_ORTHO, SLK_POOL, MAT, B_slk, N, size(B,2), B )
+       call SLK_matrix_transfer( "transfer_from_the_SLK",  B_slk, M=B )
+       !
+     else if (idriver==MAT_MUL) then
+       ! 
+       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
+       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, C_slk, N )
+       call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
+       call SLK_matrix_transfer( "fill_the_SLK", C_slk, M=C )
+       !
+       call PARALLEL_mat_mul( SLK_ORTHO, SLK_POOL, MAT, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), size(M,2), C )
+       call SLK_matrix_transfer( "transfer_from_the_SLK",  C_slk, M=C )
+       !
+     endif
+     !
+     call LINEAR_ALGEBRA_WS_clean_up(WS) 
+     !
+     if (INIT) call SLK_matrix_reset(M_loc_slk)
+     call SLK_matrix_reset(B_slk)
+     call SLK_matrix_reset(C_slk)
+     call SLK_matrix_reset(EIGEN_slk)
+     !
+   end subroutine
+   !
+#endif
+ !
 end subroutine
-

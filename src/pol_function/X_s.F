@@ -187,6 +187,7 @@ subroutine X_s(iq,X,Xw,W_range)
 #endif
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
+write (*,*) X_use_lin_sys
    !
    if (X_use_lin_sys) then
      !

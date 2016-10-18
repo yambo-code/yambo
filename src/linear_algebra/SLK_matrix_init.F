@@ -32,6 +32,7 @@ subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset,SLK_is_running
+ use parallel_m,     ONLY:ncpu
  !
  implicit none
  !
@@ -45,6 +46,8 @@ subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  integer   :: lld,N_blcs,nprow,npcol,myrow,mycol
  !
  ! init global blacs grid
+ !
+ if (ncpu==1) return
  !
  call BLACS_GRIDINFO( ORTHO%ortho_cntx, ORTHO%grid(1), ORTHO%grid(2), ORTHO%coordinate(1), ORTHO%coordinate(2) )
  !

@@ -195,6 +195,8 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
              M_tmp(i_r,i_c)=conjg(M_bse(i_B)%mat(i_r_in_BLK,i_c_in_BLK))
            endif
            !
+           if (i_r==i_c) M_tmp(i_r,i_c)=real( M_tmp(i_r,i_c) )
+           !
          enddo
        enddo
        !

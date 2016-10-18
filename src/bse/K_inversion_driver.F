@@ -26,7 +26,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use pars,           ONLY:SP
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
- use BS_solvers,     ONLY:BS_mat,BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
+ use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
 &                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
@@ -37,9 +37,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
-&                         PAR_COM_SLK_INDEX_local,myid,ncpu
+&                         PAR_COM_SLK_INDEX_local,myid
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
+ use SLK_m,          ONLY:SLK_is_running
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
  use interfaces,     ONLY:SLK_matrix_transfer
@@ -133,27 +134,39 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  endif
 #endif
  !
+#if defined _SCALAPACK
+ ! 
+ ! SLK matrix initialization before the Kernel loading
+ !
+ call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
+#endif
+ !
  ! Kernel Loading 
  !================
  call K_stored_in_a_BIG_matrix(iq)
  !
-#if defined _SCALAPACK
- !
- if (ncpu>1) then
+ if (SLK_is_running) then
    !
    call msg('rs','[LA] BLACS matrix filling')
    !
-   ! Prepare the BLACS matricex (reference, K_slk and local, K_inv_slk)
+   ! Prepare the BLACS matrices (reference, K_slk and local, K_inv_slk)
    !============================
-   call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
    !
    call SLK_matrix_transfer("fill_the_SLK", K_slk, BS_blk )
    !
+   ! Diagonal removal
+   !==================
+   call K_diagonal(iq,"rm_E rm_OCC DIAG")
+   !
    call SLK_matrix_duplicate( "none", K_slk, K_inv_slk )
    !
+ else
+   !
+   ! Diagonal removal
+   !==================
+   call K_diagonal(iq,"rm_E rm_OCC DIAG")
+   !
  endif
- !
-#endif
  !
  ! IP-part Lo [also recompute Epsilon_xx(:,3) OR PL (needed in case of DbG)]
  !===========================================================================

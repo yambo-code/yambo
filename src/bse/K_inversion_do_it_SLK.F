@@ -25,9 +25,9 @@ subroutine K_inversion_do_it_SLK(Lo,what)
  !
  ! 1./(Lo^{-1}-M) (using SLK procedures)
  !
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP
  use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:K_diago_in_BS_mat,K_slk,K_inv_slk,BS_mat
+ use BS_solvers,     ONLY:K_slk,K_inv_slk
  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra, ONLY:INV
  !
@@ -38,7 +38,7 @@ subroutine K_inversion_do_it_SLK(Lo,what)
  !
  ! Work Space
  !
- integer     ::i_r,i_r_,borders(2)
+ integer     ::i_r,i_r_,i_c_,borders(2)
  !
  if (what=="r") K_inv_slk%blc=-K_slk%blc
  if (what=="a") K_inv_slk%blc=-conjg(K_slk%blc)
@@ -49,9 +49,9 @@ subroutine K_inversion_do_it_SLK(Lo,what)
    do i_r=borders(1),borders(2)
      !
      i_r_=i_r-K_slk%rows(1)+1
+     i_c_=i_r-K_slk%cols(1)+1
      !
-     if (.not.K_diago_in_BS_mat) K_inv_slk%blc(i_r_,i_r_)=cZERO
-     K_inv_slk%blc(i_r_,i_r_)=K_inv_slk%blc(i_r_,i_r_)+1._SP/Lo(i_r)
+     K_inv_slk%blc(i_r_,i_c_)=K_inv_slk%blc(i_r_,i_c_)+1._SP/Lo(i_r)
      !
    enddo
  endif

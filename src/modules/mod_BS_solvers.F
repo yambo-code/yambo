@@ -79,7 +79,8 @@ module BS_solvers
  ! Solvers (Inversion)
  !=========
  character(schlen):: BSS_inversion_mode
- logical          :: BSS_uses_partial_diago,K_diago_in_BS_mat
+ logical          :: BSS_uses_partial_diago
+ logical          :: K_diago_in_BS_mat
  type(SLK_matrix) :: K_inv_slk
  !
  type K_Inversion_data
@@ -105,8 +106,8 @@ module BS_solvers
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
+ complex(SP), allocatable :: BS_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
- complex(SP), allocatable :: BS_cpl_mat(:,:)
  complex(SP), allocatable :: BSS_dipoles(:)
  complex(SP), allocatable :: BSS_eh_Z(:)
  !
@@ -176,11 +177,14 @@ module BS_solvers
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
      use electrons, ONLY:E_SOC_nbands
+     use SLK_m,     ONLY:SLK_is_running
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-     allocate(BS_mat(BS_H_dim,BS_H_dim))
-     call mem_est('BS_mat',(/size(BS_mat)/))
-     BS_mat    = cZERO
+     if (.not.SLK_is_running) then
+       allocate(BS_mat(BS_H_dim,BS_H_dim))
+       call mem_est('BS_mat',(/size(BS_mat)/))
+       BS_mat    = cZERO
+     endif
      allocate(BSS_dipoles(BS_H_dim))
      call mem_est('BSS_dipoles',(/size(BSS_dipoles)/))
      BSS_dipoles = cZERO

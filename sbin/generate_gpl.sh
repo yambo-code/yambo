@@ -5,22 +5,20 @@ if [ $1 = "-h" ] ; then
  exit 0
 fi
 
-WHAT="GPL"
+BASE="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project/branches/4.1"
+PREV="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project_gpl/public_branches/4.1"
+TARGET="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project_gpl/trunk"
 ACTION="update"
 if [ $# = 1 ] ; then  ACTION=$1 ; fi
-BASE="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project/branches/4.1"
-PREV="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project_gpl/branches/4.1"
-TARGET="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project_gpl/trunk"
 #
 #PJ="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI" 
 PJ="KERR ELPH YPP_ELPH FFTW FFTSG OPENMP MPI" 
 
 echo 
-echo  "BASE   : $BASE"
-echo  "ACTION : $ACTION"
-echo  "WHAT   : $WHAT"
-echo  "REF    : $REF"
-echo  "TARGET : $TARGET"
+echo  "FROM DEV: $BASE"
+echo  "PREV GPL: $PREV"
+echo  "TARGET  : $TARGET"
+echo  "ACTION  : $ACTION"
 #sleep 3s
 
 cd $TARGET
@@ -37,7 +35,7 @@ if [ $ACTION = "update" ] ; then
  ./delete.batch
  rm -f delete.batch 
  find . -name svn | xargs rm -fr
- diff -r . $WD | \
+ diff -r . $PREV | \
    grep "Only in" | \
    grep -v branches | \
    grep -v svn | \
@@ -52,7 +50,7 @@ if [ $ACTION = "update" ] ; then
    grep -v ONLY | \
    grep -v Write | \
    gawk '{gsub(": ","/",$0) ;na=split($0,a);print a[3]}'  > ONLY_in_trunk
- diff -r . $WD | \
+ diff -r . $PREV | \
    grep "Only in" | \
    grep -v branches | \
    grep -v svn | \
@@ -67,7 +65,7 @@ if [ $ACTION = "update" ] ; then
    grep -v Write | \
    grep -v ONLY | \
    gawk '{gsub(": ","/",$0) ;na=split($0,a);print "svn add " a[3]}'  > svn_add_in_branch.batch
- diff -r . $WD | \
+ diff -r . $PREV | \
    grep "Only in" | \
    grep branches | \
    grep -v svn | \
@@ -82,7 +80,7 @@ if [ $ACTION = "update" ] ; then
    grep -v Write | \
    grep -v ONLY | \
    gawk '{gsub(": ","/",$0) ;na=split($0,a);print a[3]}'  > ONLY_in_branch
- diff -r . $WD | \
+ diff -r . $PREV | \
    grep "Only in" | \
    grep branches | \
    grep -v svn | \
@@ -98,7 +96,7 @@ if [ $ACTION = "update" ] ; then
    grep -v ONLY | \
    gawk '{gsub(": ","/",$0) ;na=split($0,a);print " svn delete --force " a[3]}'  > svndelete_in_branch.batch
  chmod u+x  *.batch
- diff -r . $WD | grep "diff -r" | grep -v svn > DIFF
+ diff -r . $PREV | grep "diff -r" | grep -v svn > DIFF
  cat DIFF | gawk '{na=split($0,a); gsub("\\./","",a[3]) ;print a[3]}' > FILE_LIST
  echo 
  echo "===ONLY_in_trunk files in 1 sec==="
@@ -132,10 +130,10 @@ if [ $ACTION = "tar" ] ; then
  gzip  ${SRC_NAME}.tar
 fi
 
-echo $WD
+echo $PREV
 if [ $ACTION = "diff" ] ; then
  FILES=`cat DIFF | gawk '{na=split($0,a);print a[3]}' `
- for file in $FILES; do meld $file $WD/$file ; done
+ for file in $FILES; do meld $file $PREV/$file ; done
 fi
 
 if [ $ACTION = "zip" ] ; then

@@ -79,8 +79,6 @@ subroutine FREQUENCIES_setup(W)
    W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cI
  enddo
  !
- ! GPL_EXCLUDE_START
- !
  call parser('MetDamp',metallic_damping)
  !
  if(.not.metallic_damping) return
@@ -103,7 +101,5 @@ subroutine FREQUENCIES_setup(W)
    if ( real(W%p(i1))>=0._SP ) W%p(i1)= sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
    if ( real(W%p(i1))< 0._SP ) W%p(i1)=-sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
  enddo
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine

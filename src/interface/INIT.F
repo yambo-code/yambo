@@ -692,8 +692,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call INIT_RT_ctl_switch('X')
 #endif
    call initactivate(1,'ShiftedPaths')
-   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','DmRnge','CGrdSp','EhEngy',&
-&                  'LongDr','DrudeW'/))
+   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
    call initactivate(1,'XTermKind')
    call initactivate(1,'XTermEn')
  endif

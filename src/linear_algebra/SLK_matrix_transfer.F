@@ -26,9 +26,9 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  ! mode can be "fill_the_SLK" "transfer_from_the_SLK"
  !
  use pars,           ONLY:SP,cZERO
- use SLK_m,          ONLY:SLK_matrix,SLK_POOL
+ use SLK_m,          ONLY:SLK_matrix,SLK_POOL,n_pools
  use BS,             ONLY:BS_block,n_BS_blks
- use parallel_m,     ONLY:PP_redux_wait,MPI_COMPLEX,MPI_STATUS_SIZE,ncpu,myid
+ use parallel_m,     ONLY:PP_redux_wait,MPI_COMPLEX,MPI_STATUS_SIZE,ncpu,myid,mpi_comm_world
  use linear_algebra, ONLY:SLK_matrix_transfer_side_crop
  !
  implicit none
@@ -40,10 +40,11 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  !
  ! Work Space
  !
- integer :: i_B,i_c1,i_c2,GLOBAL_n_BS_blks(SLK_POOL%n_CPU),i_err,BUFF_size,&
-&           SLK_coordinates(SLK_POOL%n_CPU,4),K_coo(4),MAX_n_BS_blks,i_r,i_c,i_r_,i_c_
+ integer :: i_B,i_c1,i_c2,GLOBAL_n_BS_blks(ncpu),i_err,BUFF_size,&
+&           SLK_coordinates(SLK_POOL%n_CPU,4),K_coo(4),MAX_n_BS_blks,i_r,i_c,&
+&           i_r_,i_c_,SLK_cpu_id_in_the_world(SLK_POOL%n_CPU),i_pool
  integer, dimension(MPI_STATUS_SIZE) :: MPI_status
- integer, allocatable :: BSE_coordinates(:,:,:),BSE_iTs(:,:,:)
+ integer, allocatable                :: BSE_coordinates(:,:,:),BSE_iTs(:,:,:)
  !
  if (mode=="fill_the_SLK") then
    !
@@ -57,13 +58,17 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
    !
    if (present(M_bse)) then
      !
-     SLK_coordinates =0
-     GLOBAL_n_BS_blks=0
-     SLK_coordinates(SLK_POOL%CPU_id+1,:)=(/M_slk%rows(1),M_slk%rows(2),M_slk%cols(1),M_slk%cols(2)/)
-     GLOBAL_n_BS_blks(myid+1)=n_BS_blks
-     call PP_redux_wait(GLOBAL_n_BS_blks)
+     ! SLK
+     !
+     SLK_coordinates                      =0
+     SLK_coordinates(SLK_POOL%CPU_id+1,:) =(/M_slk%rows(1),M_slk%rows(2),M_slk%cols(1),M_slk%cols(2)/)
      call PP_redux_wait(SLK_coordinates ,COMM=SLK_POOL%INTRA_comm)
      !
+     ! BSE
+     !
+     GLOBAL_n_BS_blks         =0
+     GLOBAL_n_BS_blks(myid+1) =n_BS_blks
+     call PP_redux_wait(GLOBAL_n_BS_blks)
      MAX_n_BS_blks=maxval(GLOBAL_n_BS_blks)
      allocate(BSE_coordinates(ncpu,MAX_n_BS_blks,4))
      allocate(BSE_iTs(ncpu,MAX_n_BS_blks,2))
@@ -82,39 +87,51 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
      call PP_redux_wait(BSE_iTs         )
      call PP_redux_wait(BSE_coordinates )
      !
-     ! Here I define the list of "local buffers" to exchange. They are the minimal overlaps of the
-     ! SLK and BSE sub-matrices.
-     !
-     do i_c1=1,SLK_POOL%n_CPU
+     do i_pool=1,n_pools
        !
-       ! i_c1 is the BLACS cpu
+       SLK_cpu_id_in_the_world  =0
+       if (SLK_POOL%ID==i_pool-1) SLK_cpu_id_in_the_world(SLK_POOL%CPU_id+1)=myid+1
        !
-       do i_c2=1,ncpu
+       call PP_redux_wait(SLK_cpu_id_in_the_world)
+       !
+       ! Here I define the list of "local buffers" to exchange. They are the minimal overlaps of the
+       ! SLK and BSE sub-matrices.
+       !
+       do i_c1=1,SLK_POOL%n_CPU
          !
-         ! i_c1 is the BS cpu
+         ! i_c1 is the BLACS cpu
          !
-         do i_B=1,GLOBAL_n_BS_blks(i_c2)
+         do i_c2=1,ncpu
            !
-           ! Here I crop the part of the BS block that fits into the BLACS structure. I crop the two sides of the
-           ! K block
+           ! i_c1 is the BS cpu
            !
-           ! Resonant block 
-           !
-           call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_coordinates(i_c2,i_B,1:2), K_coo(1:2) )
-           call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_coordinates(i_c2,i_B,3:4), K_coo(3:4) )
-           if (.not.any(K_coo==0)) call elemental_transfer('N')
-           !
-           if (BSE_iTs(i_c2,i_B,1)/=BSE_iTs(i_c2,i_B,2)) then
+           do i_B=1,GLOBAL_n_BS_blks(i_c2)
              !
-             ! Symmetric block of the resonant
+             ! Here I crop the part of the BS block that fits into the BLACS structure. I crop the two sides of the
+             ! K block
              !
-             call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_coordinates(i_c2,i_B,3:4), K_coo(1:2) )
-             call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_coordinates(i_c2,i_B,1:2), K_coo(3:4) )
-             if (.not.any(K_coo==0)) call elemental_transfer('C')
+             ! Resonant block 
              !
-           endif
+             call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_coordinates(i_c2,i_B,1:2), K_coo(1:2) )
+             call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_coordinates(i_c2,i_B,3:4), K_coo(3:4) )
+             if (.not.any(K_coo==0)) call elemental_transfer('N')
+             call PP_redux_wait( )
+             !
+             !
+             if (BSE_iTs(i_c2,i_B,1)/=BSE_iTs(i_c2,i_B,2)) then
+               !
+               ! Symmetric block of the resonant
+               !
+               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_coordinates(i_c2,i_B,3:4), K_coo(1:2) )
+               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_coordinates(i_c2,i_B,1:2), K_coo(3:4) )
+               if (.not.any(K_coo==0)) call elemental_transfer('C')
+               !
+             endif
+             !
+           enddo
            !
          enddo
+         !
        enddo
        !
      enddo
@@ -152,7 +169,15 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
      integer      :: SLK_blk_coo(4)
      integer      :: i_r_in_BLK,i_c_in_BLK
      !
-     if (SLK_POOL%CPU_id==i_c2-1) then
+     if (myid/=i_c2-1.and.myid/=SLK_cpu_id_in_the_world(i_c1)-1) return
+     !
+     SLK_blk_coo(1:2) = K_coo(1:2)-M_slk%rows(1)+1
+     SLK_blk_coo(3:4) = K_coo(3:4)-M_slk%cols(1)+1
+     !
+     BUFF_size    = (SLK_blk_coo(2)-SLK_blk_coo(1)+1)*(SLK_blk_coo(4)-SLK_blk_coo(3)+1)
+     !
+     if (myid==i_c2-1) then
+       !
        do i_r=K_coo(1),K_coo(2)
          do i_c=K_coo(3),K_coo(4)
            !
@@ -172,25 +197,21 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
            !
          enddo
        enddo
+       !
+       if (i_c2==SLK_cpu_id_in_the_world(i_c1)) then
+         M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4))=M_tmp
+       else
+         call MPI_SEND(M_tmp,BUFF_size, MPI_COMPLEX, SLK_cpu_id_in_the_world(i_c1)-1, 1, mpi_comm_world,i_err)
+       endif
+       !
+       return
+       !
      endif
      !
-     SLK_blk_coo(1:2) = K_coo(1:2)-M_slk%rows(1)+1
-     SLK_blk_coo(3:4) = K_coo(3:4)-M_slk%cols(1)+1
-     !
-     BUFF_size    = (SLK_blk_coo(2)-SLK_blk_coo(1)+1)*(SLK_blk_coo(4)-SLK_blk_coo(3)+1)
-     !
-     if (i_c1==i_c2) then
+     if (myid==SLK_cpu_id_in_the_world(i_c1)-1) then
        !
-       if (SLK_POOL%CPU_id==i_c1-1) M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4))=M_tmp
-       !
-     else
-       !
-       if (SLK_POOL%CPU_id==i_c2-1) then
-         call MPI_SEND(M_tmp,BUFF_size, MPI_COMPLEX, i_c1-1, 1, SLK_POOL%INTRA_comm,i_err)
-       else if (SLK_POOL%CPU_id==i_c1-1) then
-         call MPI_RECV(M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4)),BUFF_size,MPI_COMPLEX,&
-&                      i_c2-1, 1, SLK_POOL%INTRA_comm,MPI_status,i_err)
-       endif
+       call MPI_RECV(M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4)),BUFF_size,MPI_COMPLEX,&
+&                    i_c2-1, 1, mpi_comm_world,MPI_status,i_err)
        !
      endif
      !

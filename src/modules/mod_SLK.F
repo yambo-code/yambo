@@ -30,7 +30,6 @@ module SLK_m
  !
  integer              :: n_pools = 1 ! number of pools
  integer, parameter   :: desc_len= 9
- logical              :: MATRIX_is_already_distributed
  !
  ! SLK test
  !

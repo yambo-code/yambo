@@ -8,27 +8,22 @@ fi
 WHAT="GPL"
 ACTION="update"
 if [ $# = 1 ] ; then  ACTION=$1 ; fi
-BASE=$PWD
-PJ="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI" 
-WD="$PWD/../gpl/devel/"
-if [ ! -f '$WD/include/version.inc' ] ; then
-  WD="$PWD/../../branches/gpl/devel/"
-fi
-
-#if [ $ACTION = "tar" ] ; then
-# BASE=`find /home/marini -maxdepth 2 -type d | grep GPL | grep yambo-`
-# WD="$BASE"
-#fi
+BASE="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project/branches/4.1"
+PREV="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project_gpl/branches/4.1"
+TARGET="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project_gpl/trunk"
+#
+#PJ="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI" 
+PJ="KERR ELPH YPP_ELPH FFTW FFTSG OPENMP MPI" 
 
 echo 
 echo  "BASE   : $BASE"
 echo  "ACTION : $ACTION"
 echo  "WHAT   : $WHAT"
-echo  "REF    : $WD"
+echo  "REF    : $REF"
+echo  "TARGET : $TARGET"
 #sleep 3s
 
-mkdir -p /tmp/Yambo
-cd /tmp/Yambo
+cd $TARGET
 
 if [ $ACTION = "update" ] ; then
  rm -fr *
@@ -36,7 +31,8 @@ if [ $ACTION = "update" ] ; then
  #find . -name .objects_gpl | grep -v svn | gawk '{print "cpp -P " $0 " > A ; mv A " $0 }' > CPP.batch
  #chmod u+x CPP.batch
  #rm -f CPP.batch 
- ./sbin/yamboo.pl -p="KERR SURF YPP_SURF ELPH YPP_ELPH"
+ #./sbin/yamboo.pl -p="KERR SURF YPP_SURF ELPH YPP_ELPH"
+ ./sbin/yamboo.pl -p="$PJ"
  chmod u+x delete.batch
  ./delete.batch
  rm -f delete.batch 

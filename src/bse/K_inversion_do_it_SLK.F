@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_do_it_SLK(Lo,KERNEL,what)
+subroutine K_inversion_do_it_SLK(Lo,what)
  !
  ! 1./(Lo^{-1}-M) (using SLK procedures)
  !
@@ -35,13 +35,10 @@ subroutine K_inversion_do_it_SLK(Lo,KERNEL,what)
  !
  character  ,intent(in) ::what ! "r","a"
  complex(SP),intent(in) ::Lo(BS_H_dim)
- complex(SP),intent(out)::KERNEL(BS_H_dim,BS_H_dim) 
  !
  ! Work Space
  !
  integer     ::i_r,i_r_,borders(2)
- !
- KERNEL=cZERO
  !
  if (what=="r") K_inv_slk%blc=-K_slk%blc
  if (what=="a") K_inv_slk%blc=-conjg(K_slk%blc)
@@ -59,6 +56,6 @@ subroutine K_inversion_do_it_SLK(Lo,KERNEL,what)
    enddo
  endif
  !
- call LINEAR_ALGEBRA_driver(INV,M=KERNEL,M_slk=K_inv_slk)
+ call LINEAR_ALGEBRA_driver(INV,M_slk=K_inv_slk)
  !
 end subroutine

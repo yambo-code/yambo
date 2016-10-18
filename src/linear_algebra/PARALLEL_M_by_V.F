@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AF
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,39 +21,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_mat_mul(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
+subroutine PARALLEL_M_by_V(transa,N,A_slk,X,Y)
  !
  !  Perform the parallel matrix multiplication
- !                   C = A B 
- !  where A(mk), B(kn), C(mn)
+ !
+ !          Y = A X 
+ !
+ !  where A(n,m), X(i:i+m-1), Y(j:j+n-1)
  !
  use pars,           ONLY:SP,cONE,cZERO
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_WS_clean_up
+ use wrapper,        ONLY:M_by_V
+ use parallel_m,     ONLY:PP_redux_wait
+ use SLK_m,          ONLY:SLK_matrix,SLK_POOL,SLK_ORTHO
  !
  implicit none
  !
- integer           :: n,m,k
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: A_slk, B_slk, C_slk
- character         :: transa,transb
- complex(SP)       :: C(n,m)
+ integer           :: N
+ type(SLK_matrix)  :: A_slk
+ character         :: transa
+ complex(SP)       :: X(N)
+ complex(SP)       :: Y(N)
  !
- character(64) :: subname="PARALLEL_mat_mul"
+ Y=cZERO
  !
- C=0.0_SP
+ if (SLK_ORTHO%coordinate(1)==-1) return
  !
- if (ORTHO%coordinate(1)==-1) return
+ call M_by_V(transa,A_slk%nrows_used,A_slk%ncols_used,cONE,A_slk%blc,&
+&            A_slk%nrows_used,X(A_slk%cols(1):A_slk%cols(2)),1,cZERO,&
+&            Y(A_slk%rows(1):A_slk%rows(2)),1)
  !
-#if defined _DOUBLE
- CALL PZGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
-              B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
-#else
- CALL PCGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
-              B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
-#endif
- !
- call LINEAR_ALGEBRA_WS_clean_up(WS)
+ call PP_redux_wait(Y,COMM=SLK_POOL%INTRA_comm)
  ! 
 end subroutine

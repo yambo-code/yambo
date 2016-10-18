@@ -232,7 +232,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
        call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
        call SLK_matrix_transfer( "fill_the_SLK", C_slk, M=C )
        !
-       call PARALLEL_mat_mul( SLK_ORTHO, SLK_POOL, MAT, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), size(M,2), C )
+       call PARALLEL_M_by_M( SLK_ORTHO, SLK_POOL, MAT, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), N , C )
        call SLK_matrix_transfer( "transfer_from_the_SLK",  C_slk, M=C )
        !
      endif

@@ -141,6 +141,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  if (ncpu>1) then
    !
+   call msg('rs','[LA] BLACS matrix filling')
+   !
    ! Prepare the BLACS matricex (reference, K_slk and local, K_inv_slk)
    !============================
    call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )

@@ -31,7 +31,8 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  use R_lattice,      ONLY:q_norm
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:BS_mat,Co_factor,K_INV_EPS,BSS_dipoles,Co_factor
+ use BS_solvers,     ONLY:BS_mat,Co_factor,K_INV_EPS,BSS_dipoles,Co_factor,K_inv_slk
+ use SLK_m,          ONLY:SLK_is_running
 #if defined _PL
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
@@ -57,7 +58,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
 #endif
  integer,        external :: EPS_via_perturbative_inversion
  !
- if (do_it_full) then
+ if (do_it_full.and..not.SLK_is_running) then
    allocate(Mm1(BS_H_dim,BS_H_dim))
    Mm1=cZERO
  endif
@@ -104,7 +105,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
        !
 #if defined _SCALAPACK
        !
-       if (ncpu> 1) call K_inversion_do_it_SLK (Lo(:,iw,i_L),Mm1,Gr)
+       if (ncpu> 1) call K_inversion_do_it_SLK (Lo(:,iw,i_L),Gr)
        if (ncpu==1) call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
        !
 #else
@@ -136,7 +137,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  enddo
  !
  if (do_it_full) then
-   deallocate(Mm1)
+   if (.not.SLK_is_running) deallocate(Mm1)
  else
    call live_timing()
  endif
@@ -148,8 +149,13 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
      complex(SP) :: Vp(BS_H_dim),V(BS_H_dim)
      integer     :: i_L_,i_c,i_cv,i1,i2
      do i_c=1,3
-       if(i_L_==1) call M_by_V('c',BS_H_dim,Mm1,BSS_dipoles_PL(:,i_c),V)
-       if(i_L_==2) call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_PL(:,i_c)),V)
+       if (SLK_is_running) then
+         if(i_L_==1) call PARALLEL_M_by_V('c',BS_H_dim,K_inv_slk,BSS_dipoles_PL(:,i_c),V)
+         if(i_L_==2) call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles_PL(:,i_c)),V)
+       else
+         if(i_L_==1) call M_by_V('c',BS_H_dim,Mm1,BSS_dipoles_PL(:,i_c),V)
+         if(i_L_==2) call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_PL(:,i_c)),V)
+       endif
        do i_cv=1,BS_H_dim
          Vp(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
        enddo
@@ -162,10 +168,18 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
      integer     :: i_L_
      complex(SP) :: V(BS_H_dim)
      if(i_L_==1) then
-       call M_by_V('n',BS_H_dim,Mm1,BSS_dipoles,V)
+       if (SLK_is_running) then
+         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,BSS_dipoles,V)
+       else
+         call M_by_V('n',BS_H_dim,Mm1,BSS_dipoles,V)
+       endif
        Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V(BS_H_dim,BSS_dipoles,V)
      else if(i_L_==2) then
-       call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles),V)
+       if (SLK_is_running) then
+         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles),V)
+       else
+         call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles),V)
+       endif
        Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+gauge_factor*Vstar_dot_V(BS_H_dim,conjg(BSS_dipoles),V)
      endif
    end subroutine

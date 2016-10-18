@@ -143,7 +143,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Kernel Loading 
  !================
- call K_stored_in_a_BIG_matrix(iq)
+ call K_components_folded_in_serial_arrays(iq)
  !
  if (SLK_is_running) then
    !

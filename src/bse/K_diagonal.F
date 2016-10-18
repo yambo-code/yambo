@@ -27,7 +27,7 @@ subroutine K_diagonal(iq,what)
  use parser_m,       ONLY:parser
  use BS_solvers,     ONLY:BS_mat,BSS_eh_f,BSS_eh_E,K_diago_in_BS_mat,BSS_eh_W,BS_diagonal,K_slk
  use BS,             ONLY:BS_K_dim,BSE_mode,BS_H_dim
- use SLK_m,          ONLY:SLK_is_running
+ use SLK_m,          ONLY:SLK_is_running,SLK_POOL
  use parallel_m,     ONLY:PP_redux_wait
  !
  implicit none
@@ -145,7 +145,7 @@ subroutine K_diagonal(iq,what)
          i_c_slk=i_r-K_slk%cols(1)+1
          !
          if (SLK_is_running) then
-           if (.not.cpl(i_r)) BS_diagonal(i_r)=K_slk%blc(i_r_slk,i_c_slk)
+           if (.not.cpl(i_r).and.SLK_POOL%ID==0) BS_diagonal(i_r)=K_slk%blc(i_r_slk,i_c_slk)
            K_slk%blc(i_r_slk,i_c_slk)=cZERO
          else
            if (.not.cpl(i_r)) BS_diagonal(i_r)=BS_mat(i_r,i_r)

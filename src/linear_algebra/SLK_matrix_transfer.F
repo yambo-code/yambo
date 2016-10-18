@@ -28,7 +28,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  use pars,           ONLY:SP,cZERO
  use SLK_m,          ONLY:SLK_matrix,SLK_POOL,n_pools
  use BS,             ONLY:BS_block,n_BS_blks
- use parallel_m,     ONLY:PP_redux_wait,MPI_COMPLEX,MPI_STATUS_SIZE,ncpu,myid,mpi_comm_world
+ use parallel_m,     ONLY:PP_redux_wait,ncpu,myid
  use linear_algebra, ONLY:SLK_matrix_transfer_side_crop
  !
  implicit none
@@ -40,10 +40,9 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  !
  ! Work Space
  !
- integer :: i_B,i_c1,i_c2,GLOBAL_n_BS_blks(ncpu),i_err,BUFF_size,&
+ integer :: i_B,i_c1,i_c2,GLOBAL_n_BS_blks(ncpu),BUFF_size,&
 &           SLK_coordinates(SLK_POOL%n_CPU,4),K_coo(4),MAX_n_BS_blks,i_r,i_c,&
 &           i_r_,i_c_,SLK_cpu_id_in_the_world(SLK_POOL%n_CPU),i_pool
- integer, dimension(MPI_STATUS_SIZE) :: MPI_status
  integer, allocatable                :: BSE_coordinates(:,:,:),BSE_iTs(:,:,:)
  !
  if (mode=="fill_the_SLK") then
@@ -163,6 +162,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
    !
    subroutine elemental_transfer(mode)
      !
+     use parallel_m, ONLY:PP_send_and_receive
      character(1) :: mode
      complex(SP)  :: M_tmp(K_coo(1):K_coo(2),K_coo(3):K_coo(4))
      !
@@ -203,7 +203,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
        if (i_c2==SLK_cpu_id_in_the_world(i_c1)) then
          M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4))=M_tmp
        else
-         call MPI_SEND(M_tmp,BUFF_size, MPI_COMPLEX, SLK_cpu_id_in_the_world(i_c1)-1, 1, mpi_comm_world,i_err)
+         call PP_send_and_receive("send",M_tmp,SLK_cpu_id_in_the_world(i_c1)-1)
        endif
        !
        return
@@ -211,10 +211,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
      endif
      !
      if (myid==SLK_cpu_id_in_the_world(i_c1)-1) then
-       !
-       call MPI_RECV(M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4)),BUFF_size,MPI_COMPLEX,&
-&                    i_c2-1, 1, mpi_comm_world,MPI_status,i_err)
-       !
+       call PP_send_and_receive("receive",M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4)),i_c2-1)
      endif
      !
    end subroutine

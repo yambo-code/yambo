@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_stored_in_a_BIG_matrix(iq)
+subroutine K_components_folded_in_serial_arrays(iq)
  !
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
@@ -260,4 +260,4 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !
  call PP_redux_wait(BS_mat)
  !
-end subroutine K_stored_in_a_BIG_matrix
+end subroutine K_components_folded_in_serial_arrays

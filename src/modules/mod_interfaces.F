@@ -41,7 +41,7 @@ module interfaces
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right,E_real,&
-&                                   E_cmpl,SVD_digits,det,V_left_slk,V_right_slk)
+&                                   E_cmpl,SVD_digits,det,V_slk)
      !
      use SLK_m,          ONLY:SLK_matrix
      use pars,           ONLY:SP
@@ -60,8 +60,7 @@ module interfaces
      complex(SP),      optional :: E_cmpl(:)
      integer,          optional :: SVD_digits 
      complex(SP),      optional :: det
-     type(SLK_matrix), optional :: V_left_slk
-     type(SLK_matrix), optional :: V_right_slk
+     type(SLK_matrix), optional :: V_slk
      !
    end subroutine
    !

@@ -86,8 +86,6 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  if (ORTHO%task/=0) E=0.0_SP
  !
  call PP_redux_wait(E,COMM=POOL%INTRA_comm)
- !
- call LINEAR_ALGEBRA_WS_clean_up(WS)
  ! 
 end subroutine PARALLEL_HERMITIAN_diagonalization
 

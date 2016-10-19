@@ -43,8 +43,8 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  !
  ! R_x_D_n = R_n |D>
  !
- use BS_solvers,     ONLY:K_INV_EPS,BS_mat,K_inv_slk
- use SLK_m,          ONLY:SLK_is_running
+ use BS_solvers,     ONLY:K_INV_EPS,BS_mat,K_slk
+ use SLK_m,          ONLY:BLACS_structure_in_use
  use pars,           ONLY:SP,cZERO,cONE
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
  !
@@ -78,16 +78,16 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  f=fo
  delta_f=0._SP
  !
- if(K_INV_EPS%treshold<0) fo=cONE
+ if (K_INV_EPS%treshold<0) fo=cONE
  !
  do while (it<=BSS_inv_iter_max) 
    !
-   if (.not.SLK_is_running) then
+   if (.not.BLACS_structure_in_use) then
      call M_by_V_omp('n',n,BS_mat,R_x_D_nm1(:,1),R_x_D_n(:,1))
      if (n_loop==2) call M_by_V_omp('n',n,conjg(BS_mat),R_x_D_nm1(:,2),R_x_D_n(:,2))
    else
-     call PARALLEL_M_by_V('n',n,K_inv_slk,R_x_D_nm1(:,1),R_x_D_n(:,1))
-     if (n_loop==2) call PARALLEL_M_by_V('conj',n,K_inv_slk,R_x_D_nm1(:,2),R_x_D_n(:,2))
+     call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,1),R_x_D_n(:,1))
+     if (n_loop==2) call PARALLEL_M_by_V('conj',n,K_slk,R_x_D_nm1(:,2),R_x_D_n(:,2))
    endif
    !
    R_x_D_n(:,1)=Lo(:,1)*R_x_D_n(:,1)

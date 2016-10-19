@@ -23,11 +23,15 @@
 !
 SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  !
- ! mode can be "fill_the_SLK" "transfer_from_the_SLK"
+ ! mode can be:
+ !
+ ! "fill_the_SLK": M_bse->M_slk, M->M_slk
+ !
+ ! "transfer_from_the_SLK": M_slk->M
  !
  use pars,           ONLY:SP,cZERO
  use SLK_m,          ONLY:SLK_matrix,SLK_POOL,n_pools
- use BS,             ONLY:BS_block,n_BS_blks
+ use BS,             ONLY:BS_block,n_BS_blks,BS_K_dim,BS_K_coupling
  use parallel_m,     ONLY:PP_redux_wait,ncpu,myid
  use linear_algebra, ONLY:SLK_matrix_transfer_side_crop
  !
@@ -43,7 +47,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  integer :: i_B,i_c1,i_c2,GLOBAL_n_BS_blks(ncpu),BUFF_size,&
 &           SLK_coordinates(SLK_POOL%n_CPU,4),K_coo(4),MAX_n_BS_blks,i_r,i_c,&
 &           i_r_,i_c_,SLK_cpu_id_in_the_world(SLK_POOL%n_CPU),i_pool
- integer, allocatable                :: BSE_coordinates(:,:,:),BSE_iTs(:,:,:)
+ integer, allocatable  :: BSE_components(:,:,:)
  !
  if (mode=="fill_the_SLK") then
    !
@@ -68,23 +72,23 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
      GLOBAL_n_BS_blks         =0
      GLOBAL_n_BS_blks(myid+1) =n_BS_blks
      call PP_redux_wait(GLOBAL_n_BS_blks)
-     MAX_n_BS_blks=maxval(GLOBAL_n_BS_blks)
-     allocate(BSE_coordinates(ncpu,MAX_n_BS_blks,4))
-     allocate(BSE_iTs(ncpu,MAX_n_BS_blks,2))
-     BSE_coordinates =0
-     BSE_iTs         =0
+     MAX_n_BS_blks  =maxval(GLOBAL_n_BS_blks)
+     allocate(BSE_components(ncpu,MAX_n_BS_blks,7)) ! 1-4 rows,cols / 5-6 iTs / 7 Mode
+     BSE_components =0
      !
      do i_B=1,n_BS_blks
        !
-       BSE_iTs        (myid+1,i_B,:)=(/M_bse(i_B)%iT_k,M_bse(i_B)%iT_p/)
+       if (M_bse(i_B)%mode=="R") BSE_components(myid+1,i_B,7)=1
+       if (M_bse(i_B)%mode=="A") BSE_components(myid+1,i_B,7)=2
        !
-       BSE_coordinates(myid+1,i_B,:)  =(/M_bse(i_B)%coordinate(1),M_bse(i_B)%coordinate(1)+M_bse(i_B)%size(1)-1,&
-&                                        M_bse(i_B)%coordinate(2),M_bse(i_B)%coordinate(2)+M_bse(i_B)%size(2)-1/)
+       BSE_components(myid+1,i_B,5:6)=(/M_bse(i_B)%iT_k,M_bse(i_B)%iT_p/)
+       !
+       BSE_components(myid+1,i_B,:4)=(/M_bse(i_B)%coordinate(1),M_bse(i_B)%coordinate(1)+M_bse(i_B)%size(1)-1,&
+&                                      M_bse(i_B)%coordinate(2),M_bse(i_B)%coordinate(2)+M_bse(i_B)%size(2)-1/)
        !
      enddo
      !  
-     call PP_redux_wait(BSE_iTs         )
-     call PP_redux_wait(BSE_coordinates )
+     call PP_redux_wait(BSE_components)
      !
      do i_pool=1,n_pools
        !
@@ -107,23 +111,141 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
            do i_B=1,GLOBAL_n_BS_blks(i_c2)
              !
              ! Here I crop the part of the BS block that fits into the BLACS structure. I crop the two sides of the
-             ! K block
+             ! specific K block.
              !
-             ! Resonant block 
-             !
-             call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_coordinates(i_c2,i_B,1:2), K_coo(1:2) )
-             call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_coordinates(i_c2,i_B,3:4), K_coo(3:4) )
-             if (.not.any(K_coo==0)) call elemental_transfer('N')
-             call PP_redux_wait( )
-             !
-             !
-             if (BSE_iTs(i_c2,i_B,1)/=BSE_iTs(i_c2,i_B,2)) then
+             if (BSE_components(i_c2,i_B,7)==1) then
                !
-               ! Symmetric block of the resonant
+               !  Res.   Cpl.
                !
-               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_coordinates(i_c2,i_B,3:4), K_coo(1:2) )
-               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_coordinates(i_c2,i_B,1:2), K_coo(3:4) )
-               if (.not.any(K_coo==0)) call elemental_transfer('C')
+               !  - X -  - - -  
+               !  - - -  - - - Res
+               !  - - -  - - -  
+               !  - - -  - - -  
+               !  - - -  - - - Cpl
+               !  - - -  - - -  
+               !
+               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2), K_coo(1:2) )
+               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4), K_coo(3:4) )
+               if (.not.any(K_coo==0)) call elemental_transfer('N')
+               call PP_redux_wait( )
+               !
+               if (BS_K_coupling) then
+                 !
+                 !  Res.   Cpl.
+                 !
+                 !  - - -  - - -  
+                 !  - - -  - - - Res
+                 !  - - -  - - -  
+                 !  - - -  - X -  
+                 !  - - -  - - - Cpl
+                 !  - - -  - - -  
+                 !
+                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(1:2) )
+                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(3:4) )
+                 if (.not.any(K_coo==0)) call elemental_transfer('-C')
+                 call PP_redux_wait( )
+                 !
+               endif
+               !
+               if (BSE_components(i_c2,i_B,5)/=BSE_components(i_c2,i_B,6)) then
+                 !
+                 !  Res.   Cpl.
+                 !
+                 !  - - -  - - -  
+                 !  X - -  - - - Res
+                 !  - - -  - - -  
+                 !  - - -  - - -  
+                 !  - - -  - - - Cpl
+                 !  - - -  - - -  
+                 !
+                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4), K_coo(1:2) )
+                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2), K_coo(3:4) )
+                 if (.not.any(K_coo==0)) call elemental_transfer('C')
+                 call PP_redux_wait( )
+                 !
+                 if (BS_K_coupling) then
+                   !
+                   !  Res.   Cpl.
+                   !
+                   !  - - -  - - -  
+                   !  - - -  - - - Res
+                   !  - - -  - - -  
+                   !  - - -  - - -  
+                   !  - - -  X - - Cpl
+                   !  - - -  - - -  
+                   !
+                   call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), &
+&                                                     BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(1:2) )
+                   call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), &
+&                                                     BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(3:4) )
+                   if (.not.any(K_coo==0)) call elemental_transfer('-C')
+                   call PP_redux_wait( )
+                   !
+                 endif
+                 !
+               endif
+               !
+             else if (BSE_components(i_c2,i_B,7)==2) then
+               !
+               !  Res.   Cpl.
+               !
+               !  - - -  - X -  
+               !  - - -  - - - Res
+               !  - - -  - - -  
+               !  - - -  - - -  
+               !  - - -  - - - Cpl
+               !  - - -  - - -  
+               !
+               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2), K_coo(1:2) )
+               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(3:4) )
+               if (.not.any(K_coo==0)) call elemental_transfer('N')
+               !
+               !
+               !  Res.   Cpl.
+               !
+               !  - - -  - - -  
+               !  - - -  X - - Res
+               !  - - -  - - -  
+               !  - - -  - - -  
+               !  - - -  - - - Cpl
+               !  - - -  - - -  
+               !
+               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4), K_coo(1:2) )
+               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(3:4) )
+               if (.not.any(K_coo==0)) call elemental_transfer('N')
+               !
+               if (BS_K_coupling) then
+                 !
+                 !  Res.   Cpl.
+                 !
+                 !  - - -  - - -  
+                 !  - - -  - - - Res
+                 !  - - -  - - -  
+                 !  - X -  - - -  
+                 !  - - -  - - - Cpl
+                 !  - - -  - - -  
+                 !
+                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(1:2) )
+                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4), K_coo(3:4) )
+                 if (.not.any(K_coo==0)) call elemental_transfer('-C')
+                 !
+                 !
+                 !  Res.   Cpl.
+                 !
+                 !  - - -  - - -  
+                 !  - - -  - - - Res
+                 !  - - -  - - -  
+                 !  - - -  - - -  
+                 !  X - -  - - - Cpl
+                 !  - - -  - - -  
+                 !
+                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(1:2) )
+                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2), K_coo(3:4) )
+                 if (.not.any(K_coo==0)) call elemental_transfer('-C')
+                 !
+               endif
+               !
+               call PP_redux_wait( )
                !
              endif
              !
@@ -135,7 +257,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
        !
      enddo
      !
-     deallocate(BSE_coordinates,BSE_iTs)
+     deallocate(BSE_components)
      return
      !
    endif
@@ -181,18 +303,20 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
        do i_r=K_coo(1),K_coo(2)
          do i_c=K_coo(3),K_coo(4)
            !
-           i_r_in_BLK=i_r-BSE_coordinates(i_c2,i_B,1)+1
-           i_c_in_BLK=i_c-BSE_coordinates(i_c2,i_B,3)+1
+           i_r_in_BLK=i_r-BSE_components(i_c2,i_B,1)+1
+           i_c_in_BLK=i_c-BSE_components(i_c2,i_B,3)+1
            !
            if (mode=="C") then
-             i_r_in_BLK=i_c-BSE_coordinates(i_c2,i_B,1)+1
-             i_c_in_BLK=i_r-BSE_coordinates(i_c2,i_B,3)+1
+             i_r_in_BLK=i_c-BSE_components(i_c2,i_B,1)+1
+             i_c_in_BLK=i_r-BSE_components(i_c2,i_B,3)+1
            endif
            !
            if (mode=="N") then
              M_tmp(i_r,i_c)=M_bse(i_B)%mat(i_r_in_BLK,i_c_in_BLK)
            else if (mode=="C") then
              M_tmp(i_r,i_c)=conjg(M_bse(i_B)%mat(i_r_in_BLK,i_c_in_BLK))
+           else if (mode=="-C") then
+             M_tmp(i_r,i_c)=-conjg(M_bse(i_B)%mat(i_r_in_BLK,i_c_in_BLK))
            endif
            !
            if (i_r==i_c) M_tmp(i_r,i_c)=real( M_tmp(i_r,i_c) )

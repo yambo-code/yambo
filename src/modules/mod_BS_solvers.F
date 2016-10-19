@@ -177,10 +177,10 @@ module BS_solvers
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
      use electrons, ONLY:E_SOC_nbands
-     use SLK_m,     ONLY:SLK_is_running
+     use SLK_m,     ONLY:BLACS_structure_in_use
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-     if (.not.SLK_is_running) then
+     if (.not.BLACS_structure_in_use) then
        allocate(BS_mat(BS_H_dim,BS_H_dim))
        call mem_est('BS_mat',(/size(BS_mat)/))
        BS_mat    = cZERO

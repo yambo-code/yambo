@@ -38,7 +38,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,&
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
- use SLK_m,          ONLY:SLK_is_running
+ use SLK_m,          ONLY:BLACS_structure_in_use
  !
  ! GPL_EXCLUDE_START
  !
@@ -176,7 +176,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !
  ! GPL_EXCLUDE_END
  !
- if (SLK_is_running) return
+ if (BLACS_structure_in_use) return
  !
  ! FILLING the BS_mat
  !====================

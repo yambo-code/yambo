@@ -27,7 +27,7 @@ subroutine K_diago_driver(iq,W)
  ! Hamiltonians.
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_K_coupling,BS_H_dim
+ use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_mat
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
@@ -132,6 +132,14 @@ subroutine K_diago_driver(iq,W)
  call K_output_file(iq,"open Diago")
  !
  if(io_err<0) then
+   !
+#if defined _SCALAPACK
+   !
+   ! Symmetrize the K blocks (to be eventually sent to the BLACS)
+   !=========================
+   call BS_Blocks_symmetrize_K()
+   !
+#endif
    !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================

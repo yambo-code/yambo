@@ -30,7 +30,7 @@ module SLK_m
  !
  integer              :: n_pools = 1 ! number of pools
  integer, parameter   :: desc_len= 9
- logical              :: SLK_is_running=.FALSE.
+ logical              :: BLACS_structure_in_use=.FALSE.
  !
  ! SLK test
  !

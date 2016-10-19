@@ -31,7 +31,7 @@
 subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  !
  use pars,           ONLY:SP
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset,SLK_is_running
+ use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset
  use parallel_m,     ONLY:ncpu
  !
  implicit none
@@ -47,7 +47,10 @@ subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  !
  ! init global blacs grid
  !
- if (ncpu==1) return
+ if (ncpu==1) then
+   ORTHO%coordinate(1)=-1
+   return
+ endif
  !
  call BLACS_GRIDINFO( ORTHO%ortho_cntx, ORTHO%grid(1), ORTHO%grid(2), ORTHO%coordinate(1), ORTHO%coordinate(2) )
  !
@@ -60,8 +63,6 @@ subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  ! only MPI tasks in the grid need to go ahead
  !
  if (ORTHO%coordinate(1) == -1) return
- !
- SLK_is_running=.TRUE.
  !
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B

@@ -40,7 +40,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 &                         PAR_COM_SLK_INDEX_local,myid
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
- use SLK_m,          ONLY:SLK_is_running
+ use SLK_m,          ONLY:BLACS_structure_in_use
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
  use interfaces,     ONLY:SLK_matrix_transfer
@@ -76,7 +76,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! ... dummies
  !
  type(PP_indexes)  :: PAR_IND_freqs
- integer           :: i1,i2,iw
+ integer           :: i1,i2,iw,PAR_IND_FREQ_ID
  logical, external :: stop_now
  real(SP)          :: ratio
  complex(SP), allocatable :: Lo(:,:,:)
@@ -139,13 +139,16 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! SLK matrix initialization before the Kernel loading
  !
  call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
+ !
+ if ( SLK_ORTHO%coordinate(1) /= -1 )BLACS_structure_in_use=.TRUE.
+ !
 #endif
  !
  ! Kernel Loading 
  !================
  call K_components_folded_in_serial_arrays(iq)
  !
- if (SLK_is_running) then
+ if (BLACS_structure_in_use) then
    !
    call msg('rs','[LA] BLACS matrix filling')
    !
@@ -156,9 +159,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    ! Diagonal removal
    !==================
-   call K_diagonal(iq,"rm_E rm_OCC DIAG")
+   call K_diagonal(iq,"rm_OCC DIAG")
    !
-   call SLK_matrix_duplicate( "none", K_slk, K_inv_slk )
+   if (FULL) call SLK_matrix_duplicate( "none", K_slk, K_inv_slk )
    !
  else
    !
@@ -196,19 +199,22 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! Perturbative Inversion
  !========================
  call PP_indexes_reset(PAR_IND_freqs)
- call PARALLEL_index(PAR_IND_freqs,(/W%n_freqs/))
+ PAR_IND_FREQ_ID=PAR_COM_SLK_INDEX_local%CPU_id+1
  !
  if (PERTURBATIVE) then
    !
-   call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(myid+1))
+   call PARALLEL_index(PAR_IND_freqs,(/W%n_freqs/),COMM=PAR_COM_SLK_INDEX_local)
+   call PARALLEL_live_message('Perturbative Inversion Frequencies',LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),&
+&                              TOTAL=W%n_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
+   call live_timing(' Perturbative inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
    !
    call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
-   call PP_redux_wait(K_INV_EPS%err)
-   call PP_redux_wait(Epsilon_ii(:,2))
+   call PP_redux_wait(K_INV_EPS%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
+   call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #if defined _PL
-   call PP_redux_wait(K_INV_PL%err)
-   call PP_redux_wait(PL(:,2))
+   call PP_redux_wait(K_INV_PL%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
+   call PP_redux_wait(PL(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #endif
    !
    ! I/O [after pert inversion]
@@ -292,7 +298,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(1)**2
  !
  BSS_n_descs=BSS_n_descs+1
- ratio=real(nw_conv)/real(W%n_freqs)*100._SP
+ ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
  BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//trim(real2ch(ratio))
  !
  call K_output_file(iq,"Inversion")
@@ -304,14 +310,12 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    subroutine do_it_FULL(TYP)
      !
      type(K_Inversion_data) :: TYP
-     integer                :: PAR_IND_FREQ_ID
      !
      ! Then loop on the groups performing full inversion
      !
      call PP_indexes_reset(PAR_IND_freqs)
-     PAR_IND_FREQ_ID=PAR_COM_SLK_INDEX_local%CPU_id+1
      call PARALLEL_index(PAR_IND_freqs,(/TYP%n_full_inv_freqs/),COMM=PAR_COM_SLK_INDEX_local)
-     call PARALLEL_live_message('['//TYP%what//'] Frequencies',LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),&
+     call PARALLEL_live_message('['//TYP%what//'] Exact Inversion Frequencies',LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),&
 &                               TOTAL=TYP%n_full_inv_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
      call live_timing('['//TYP%what//'] Exact inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
      !
@@ -431,6 +435,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _SCALAPACK
      call SLK_matrix_reset(K_slk)
      call SLK_matrix_reset(K_inv_slk)
+     BLACS_structure_in_use=.FALSE.    
 #endif
      !
 #if defined _TIMING

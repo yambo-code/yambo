@@ -26,7 +26,7 @@ subroutine K_output_file(iq,mode)
  use pars,      ONLY:pi,SP
  use units,     ONLY:HA2EV
  use BS_solvers,ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
-&                    BSS_n_descs,BSS_n_freqs,BSS_q0
+&                    BSS_n_descs,BSS_n_freqs,BSS_q0,K_diago_in_BS_mat
  use BS,        ONLY:BSE_mode,BS_K_is_ALDA
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,O_eels
  use com,       ONLY:msg,of_open_close
@@ -284,8 +284,10 @@ subroutine K_output_file(iq,mode)
    ! Haydock n-1 iteration / Inversion with diagonal shift from BSE matrix
    !
    n_output_data=5
-   if (l_Haydock.or.l_Inversion) n_output_data=7
-   if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(Epsilon_ii(iw,4)),real(Epsilon_ii(iw,4))/)
+   if (l_Haydock.or.(l_Inversion.and..not.K_diago_in_BS_mat)) then
+     n_output_data=7
+     output_data(6:7)=(/aimag(Epsilon_ii(iw,4)),real(Epsilon_ii(iw,4))/)
+   endif
    if (l_IP) n_output_data=3
    if (l_IP) output_data(2:3)=output_data(4:5)
    !

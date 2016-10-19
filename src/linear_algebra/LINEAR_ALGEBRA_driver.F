@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right,E_real,E_cmpl,&
-&                                SVD_digits,det,V_left_slk,V_right_slk)
+&                                SVD_digits,det,V_slk)
  !
  use pars,          ONLY:SP,cONE,cZERO
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
@@ -32,6 +32,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  use SLK_m,         ONLY:SLK_matrix
  use interfaces,    ONLY:SLK_matrix_transfer
  use BS,            ONLY:BS_block,BS_H_dim
+ use com,           ONLY:warning
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
 #endif
@@ -54,8 +55,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  complex(SP),      optional :: E_cmpl(:)
  integer,          optional :: SVD_digits 
  complex(SP),      optional :: det
- type(SLK_matrix), optional :: V_left_slk
- type(SLK_matrix), optional :: V_right_slk
+ type(SLK_matrix), optional :: V_slk
  !
  ! Work Spaces ...
  !
@@ -92,14 +92,20 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  if (.not.linear_algebra_is_parallel) lib_in_use=USE_LK
  !
  if (idriver==LIN_SYS.and..not.present(B)) then
-   call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','B must be present for LIN_SYS')
+   call LINEAR_ALGEBRA_error(" ",'B must be present for LIN_SYS')
  endif
  !
  if (idriver==MAT_MUL.and.(.not.present(B).or..not.present(C))) then
-   call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','B,C must be present for MAT_MUL')
+   call LINEAR_ALGEBRA_error(" ",'B,C must be present for MAT_MUL')
  endif
  !
 #if defined _SCALAPACK
+ if (idriver==DIAGO.and.present(E_cmpl)) then
+   !
+   call warning('Parallel non-herm diag not yet implemented. Switching to LK')
+   lib_in_use=USE_LK
+   !
+ endif
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
@@ -195,27 +201,17 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
        !
        if (present(M)) then
          call SLK_matrix_transfer( "transfer_from_the_SLK",  MAT, M=M )
-       else if (present(M_bse)) then
-         call SLK_matrix_transfer( "transfer_from_the_SLK",  MAT, M_bse=M_bse )
        endif
        !
      else if (idriver==DIAGO) then
        !
        call SLK_matrix_init( SLK_ORTHO, SLK_POOL, EIGEN_slk, N )
        !
-       if (present(E_cmpl)) then
-         !
-         call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','parallel non-herm diag not yet implemented')
-         !
-         !call PARALLEL_diagonalization( SLK_ORTHO, SLK_POOL, MAT, EIGEN_slk, N, M, E_cmpl )
-         !
-       else
-         !
-         call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, MAT, EIGEN_slk, N, E_real )
-         !
-       endif
+       call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, MAT, EIGEN_slk, N, E_real )
        !
-       call SLK_matrix_transfer( "transfer_from_the_SLK",  EIGEN_slk, M=M )
+       if (present(M)) then
+         call SLK_matrix_transfer( "transfer_from_the_SLK", EIGEN_slk , M=M )
+       endif
        !
      else if (idriver==LIN_SYS) then
        !
@@ -239,10 +235,12 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
      !
      call LINEAR_ALGEBRA_WS_clean_up(WS) 
      !
-     if (INIT) call SLK_matrix_reset(M_loc_slk)
+     if (INIT) then
+       if (.not.present(M_slk)) call SLK_matrix_reset(M_loc_slk)
+       if (.not.present(V_slk)) call SLK_matrix_reset(EIGEN_slk)
+     endif
      call SLK_matrix_reset(B_slk)
      call SLK_matrix_reset(C_slk)
-     call SLK_matrix_reset(EIGEN_slk)
      !
    end subroutine
    !

@@ -78,8 +78,8 @@ subroutine K_blocks( )
            BS_blk(i_block)%mat=cZERO
            tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
            BS_blk(i_block)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-           if (i_block==1) BS_blk(i_block)%mode="R"
-           if (i_block==2) BS_blk(i_block)%mode="A"
+           if (i_block-n_BS_blks==1) BS_blk(i_block)%mode="R"
+           if (i_block-n_BS_blks==2) BS_blk(i_block)%mode="A"
            BS_blk(i_block)%iT_k=i_T
            BS_blk(i_block)%iT_p=j_T
            BS_blk(i_block)%ik=BS_T_grp(i_T)%ik

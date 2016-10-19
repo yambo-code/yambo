@@ -3302,7 +3302,7 @@ subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
   !
   if(nbeta>1) then
     cd_tmp=cmplx(d_tmp,0._SP)
-    call LINEAR_ALGEBRA_driver(DIAGO,cd_tmp,E_real=d)
+    call LINEAR_ALGEBRA_driver(DIAGO,M=cd_tmp,E_real=d)
     d_tmp=real(cd_tmp)
   else
     d=d_tmp(1,1)
@@ -3384,7 +3384,7 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
     !
     if(nbeta>1) then
       cd_tmp=cmplx(d_tmp,0._SP)
-      call LINEAR_ALGEBRA_driver(DIAGO,cd_tmp,E_real=d)
+      call LINEAR_ALGEBRA_driver(DIAGO,M=cd_tmp,E_real=d)
       d_tmp=real(cd_tmp)
     else
       d=d_tmp(1,1)

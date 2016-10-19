@@ -67,7 +67,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
 &               G_full_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),      &
 &               dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),   &
 &               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),   &
-&               dE_tot(3),dE_kin(3),dE_ion(3),dE_h(3),dE_xc(3),dE_hxc(3),E_xc_ref(3), &
+&               dE_tot(3),dE_kin(3),dE_ion(3),dE_h(3),dE_xc(3),dE_hxc(3),             &
+&               dE_h_sc(3),E_xc_sc(3),E_xc_ref(3),dE_Hxc_sc(3),                       &
 &               Ho_limited(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol)
  !
  if ( .not.RT_do_it('OUT') ) return      
@@ -106,43 +107,54 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  dE_tot    =cZERO
  dE_kin    =cZERO
  dE_ion    =cZERO
+ !
  dE_h      =cZERO
  dE_xc     =cZERO
  dE_hxc    =cZERO
  !
+ E_xc_ref  =cZERO
+ E_xc_sc   =cZERO
+ dE_h_sc   =cZERO
+ dE_hxc_sc =cZERO
  !
- ! Non-interaction kinetc energy
+ ! Non-interacting total energy variation
+ !
+ ! dE_tot(IP) = - i Tr {Ho dG^<} - dEkin - dE_h - dE_xc
+ !
+ Ho_limited=Ho(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:,:)
+ call RT_average_operator(O_VALUE=dE_tot(1),O_MATRIX=Ho_limited,G=dG_lesser,  en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_tot(2),O_MATRIX=Ho_limited,G=dG_lesser_h,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_tot(3),O_MATRIX=Ho_limited,G=dG_lesser_e,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
+ !
+ ! Non-interacting kinetc energy variation
  !
  ! dE_Kin = - i Tr { P^2 dG^<}/2  
  !
- call RT_average_operator(O_VALUE=dE_kin(1),O_MATRIX=P_square,G=dG_lesser,  en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
- call RT_average_operator(O_VALUE=dE_kin(2),O_MATRIX=P_square,G=dG_lesser_h,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
- call RT_average_operator(O_VALUE=dE_kin(3),O_MATRIX=P_square,G=dG_lesser_e,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(O_VALUE=dE_kin(1),O_MATRIX=P_square/2._SP,G=dG_lesser,  en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(O_VALUE=dE_kin(2),O_MATRIX=P_square/2._SP,G=dG_lesser_h,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(O_VALUE=dE_kin(3),O_MATRIX=P_square/2._SP,G=dG_lesser_e,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
- dE_kin=dE_kin/2._SP
+ ! Non-interacting Hartree energy variation
  !
- ! dE_ion = - i Tr {Ho dG^<} - dEkin
+ call RT_average_operator(O_VALUE=dE_h(1),O_MATRIX=HARTREE0,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_h(2),O_MATRIX=HARTREE0,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_h(3),O_MATRIX=HARTREE0,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
  !
- Ho_limited=Ho(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:,:)
- call RT_average_operator(O_VALUE=dE_ion(1),O_MATRIX=Ho_limited,G=dG_lesser,  en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_ion(2),O_MATRIX=Ho_limited,G=dG_lesser_h,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_ion(3),O_MATRIX=Ho_limited,G=dG_lesser_e,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
+ ! Non-interacting xc energy variation
  !
- dE_ion = dE_ion - dE_kin
+ call RT_average_operator(O_VALUE=dE_xc(1),O_MATRIX=XC0,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_xc(2),O_MATRIX=XC0,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_xc(3),O_MATRIX=XC0,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
+ !
+ ! Sum of Hartree plus xc energy
+ !
+ dE_Hxc=dE_h+dE_xc
+ !
+ ! dE_ion = dE_tot(IP) - dEkin - dE_h - dE_xc
+ !
+ dE_ion = dE_tot - dE_kin - dE_h - dE_xc
  !
  if (.not.l_use_Hxc_collisions) then
-   !
-   if (.not.l_sc_hartree)   then
-     call RT_average_operator(O_VALUE=dE_h(1),O_MATRIX=HARTREE0,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_h(2),O_MATRIX=HARTREE0,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_h(3),O_MATRIX=HARTREE0,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
-   endif
-   !
-   if (.not.l_sc_is_libDFT) then
-     call RT_average_operator(O_VALUE=dE_xc(1),O_MATRIX=XC0     ,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_xc(2),O_MATRIX=XC0     ,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_xc(3),O_MATRIX=XC0     ,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
-   endif
    !
    if (l_sc_hartree) then
      !
@@ -152,11 +164,15 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
      !
      ! dE_h[rho]=E_h[rho]-E_h[rho0]
      !          =<V_h[rho0]delta_rho> + <V_h[delta_rho]delta_rho>
-     !          =<(V_h[rho0]+V_h[delta_rho])delta_rho>
+     ! 
+     ! Vrho0 is already computed at the IP level. Thus it only remains
+     ! dE_h = <V_h[delta_rho]delta_rho>
      !
-     call RT_average_operator(O_VALUE=dE_h(1),O_REAL=REF_V_hartree_sc+V_hartree_sc,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_h(2),O_REAL=REF_V_hartree_sc+V_hartree_sc,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_h(3),O_REAL=REF_V_hartree_sc+V_hartree_sc,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(O_VALUE=dE_h_sc(1),O_REAL=V_hartree_sc,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(O_VALUE=dE_h_sc(2),O_REAL=V_hartree_sc,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(O_VALUE=dE_h_sc(3),O_REAL=V_hartree_sc,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
+     !
+     dE_tot = dE_tot + dE_h_sc
      !
    endif
    !
@@ -167,13 +183,11 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
      call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0,MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)
      !
      call RT_average_operator(O_VALUE=E_xc_ref(1),O_REAL=E_xc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_xc(1)   ,O_REAL=E_xc,G=G_full            ,en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(O_VALUE=E_xc_sc(1), O_REAL=E_xc,G=G_full            ,en=en,k=k,nK_mem=k%nibz)
      !
-     dE_xc=dE_xc-E_xc_ref
+     dE_tot = dE_tot + (E_xc_sc-E_xc_ref)
      !
    endif
-   !
-   dE_tot = dE_ion + dE_kin + dE_h + dE_xc
    !
  else
    !
@@ -185,9 +199,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    call RT_average_operator(O_VALUE=dE_hxc(2),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
    call RT_average_operator(O_VALUE=dE_hxc(3),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
    !
-   !dE_hxc=dE_hxc+dE_h-dE_xc
-   !
-   dE_tot = dE_ion + dE_kin + dE_hxc
+   dE_tot = dE_tot + dE_hxc
    !
  endif
  !

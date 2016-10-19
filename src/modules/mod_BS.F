@@ -326,6 +326,8 @@ module BS
    !
    subroutine BS_Blocks_symmetrize_K()
      !
+     ! Symmetrize the DIAGONAL blocks only (i_Tk=i_Tp)
+     !
      integer :: i_B,i_Tk,i_Tp,i_r,i_c
      !
      do i_B=1,n_BS_blks
@@ -337,6 +339,7 @@ module BS
        ! Coupling part (mode ==A) is symmetric
        !
        if (.not.(i_Tk.eq.i_Tp)) cycle
+       !
        if (BS_blk(i_B)%mode=="R") then
          forall(i_r=1:BS_blk(i_B)%size(1),&
 &             i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c) BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))

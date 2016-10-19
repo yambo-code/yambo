@@ -232,7 +232,6 @@ module parallel_m
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
  type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
  type(PP_indexes)            ,SAVE :: PAR_IND_T_Haydock
- type(PP_indexes)            ,SAVE :: PAR_IND_T_all
  type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
  !
  ! Specific MPI ID's ...

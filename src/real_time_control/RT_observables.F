@@ -42,7 +42,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,          &
 &                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc,RT_bands,            &
 &                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,spin_occ
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
@@ -64,8 +64,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  real(SP)    :: Energy(2),dS_tot(3),S_e,S_h,N_carriers(2),N_err,VALUE_tmp(5)
  complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),        &
 &               G_full_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),      &
-&               dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),   &
 &               G_full_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),      &
+&               dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),   &
 &               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),   &
 &               dE_tot(3),dE_kin(3),dE_ion(3),dE_h(3),dE_xc(3),dE_hxc(3),E_xc_ref(3), &
 &               Ho_limited(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol)
@@ -120,7 +120,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  call RT_average_operator(O_VALUE=dE_kin(3),O_MATRIX=P_square,G=dG_lesser_e,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
  dE_kin=dE_kin/2._SP
- !  
+ !
  ! dE_ion = - i Tr {Ho dG^<} - dEkin
  !
  Ho_limited=Ho(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:,:)
@@ -219,15 +219,17 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
        else
          Energy(1)=en%E(ib1,ik,1)
        endif
-       S_h=RT_H_occupations(ib1,ik_RT)*log(RT_H_occupations(ib1,ik_RT))
-       S_e=RT_E_occupations(ib1,ik_RT)*log(RT_E_occupations(ib1,ik_RT))
-       VALUE_tmp(1)=VALUE_tmp(1)+S_e+S_h
+       S_h=0._SP
+       S_e=0._SP
+       if(RT_H_occupations(ib1,ik_RT)>0._SP) S_h=-RT_H_occupations(ib1,ik_RT)*log(RT_H_occupations(ib1,ik_RT)/spin_occ)
+       if(RT_E_occupations(ib1,ik_RT)>0._SP) S_e=-RT_E_occupations(ib1,ik_RT)*log(RT_E_occupations(ib1,ik_RT)/spin_occ)
+       VALUE_tmp(3)=VALUE_tmp(3)+S_e+S_h
        if ( Energy(1)<=0._SP ) then
-         VALUE_tmp(2)=VALUE_tmp(2)+RT_H_occupations(ib1,ik_RT)
-         VALUE_tmp(3)=VALUE_tmp(3)+S_h
+         VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib1,ik_RT)
+         VALUE_tmp(4)=VALUE_tmp(4)+S_h
        endif
        if ( Energy(1)> 0._SP ) then
-         VALUE_tmp(4)=VALUE_tmp(4)+RT_E_occupations(ib1,ik_RT)
+         VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib1,ik_RT)
          VALUE_tmp(5)=VALUE_tmp(5)+S_e
        endif
      enddo

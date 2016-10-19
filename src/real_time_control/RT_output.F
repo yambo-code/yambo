@@ -146,7 +146,6 @@ subroutine RT_output(what,VALUES,TIME,E)
 &   file_name(next_file)=trim(append_ch)//'populations'
  short_file_name(next_file)=trim(append_ch)//'populations'
  n_headings(next_file)=4
- if (l_elel_scatt.or.l_elph_scatt) n_headings(next_file)=n_headings(next_file)+2
  headings(next_file,2)="dN"
  headings(next_file,3)="dN(Holes)"
  headings(next_file,4)="dN(Elecs)"
@@ -158,8 +157,8 @@ subroutine RT_output(what,VALUES,TIME,E)
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'thermodynamcs'
- short_file_name(next_file)=trim(append_ch)//'thermodynamcs'
+&   file_name(next_file)=trim(append_ch)//'thermodynamics'
+ short_file_name(next_file)=trim(append_ch)//'thermodynamics'
  n_headings(next_file)=10
  headings(next_file, 2)="dE   [eV]"
  headings(next_file, 3)="dE(h)[eV]"

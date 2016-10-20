@@ -104,28 +104,28 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Section
  !
- SECTION_name='G'//trim(intc(GW_iter))
+ SECTION_name=''
 #if defined _SC
- if (l_sc_coh)              SECTION_name='COH'
- if (l_sc_sex)              SECTION_name='SEX'
- if (l_sc_coh.and.l_sc_sex) SECTION_name='COH+SEX'
-#else
- ch=trim(SECTION_name)//'W0 : the P(lasmon) P(ole) A(pproximation)'
- if (l_cohsex)  ch=trim(SECTION_name)//'W0 : COHSEX'
+ if (l_sc_coh) SECTION_name=trim(SECTION_name)//'COH'
+ if (l_sc_sex) SECTION_name=trim(SECTION_name)//'SEX'
 #endif
- !
- if (GW_iter==0) then
-   call section('+',trim(ch))
- else if (GW_iter>0) then
-   call section('=',trim(ch))
+ if (.not.l_sc_run) then
+   SECTION_name='G'//trim(intc(GW_iter))
+   if (                    l_cohsex) SECTION_name=trim(SECTION_name)//'W0 (COHSEX)'
+   if (     l_ppa                  ) SECTION_name=trim(SECTION_name)//'W0 (W PPA)'
+   if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//'W0 (W real-axis)'
  endif
  !
+ if (GW_iter==0) call section('+',trim(SECTION_name))
+ if (GW_iter> 0) call section('=',trim(SECTION_name))
+ !
  if (GW_iter==0) then
-   call msg('r', '[GW/PPA] Bands range     :',QP_n_G_bands)
+   call msg('r', '[  GW  ] Bands range     :',QP_n_G_bands)
    if (l_ppa) then
      call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HA2EV)
      call msg('r','')
    endif
+   ch=trim(SECTION_name)
    iv4=(/1,1,0,0/)
    do while(QP_state_extract(iv4)>0)
      write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
@@ -210,8 +210,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
 &             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
  !
- if (l_ppa)    ch=trim(SECTION_name)//'W0 PPA'
- if (l_cohsex) ch=trim(SECTION_name)//'W0 COHSEX'
+ ch=trim(SECTION_name)
 #if defined _SC
  if (l_sc_run) ch=trim(SECTION_name)//'@it'//trim(intc(it_now))
 #endif

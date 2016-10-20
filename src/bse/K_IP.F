@@ -79,13 +79,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  call timing('T_space IP',OPR='start')
 #endif
  !
- ! GPL_EXCLUDE_START 
- !
  ! Look for the W(iw_ref) closest 0
  !==================================
  call FREQUENCIES_set_reference_point(W_bss%p,BSS_n_freqs)
- !
- ! GPL_EXCLUDE_END
  !
  if (l_bs_fxc) goto 1
  !
@@ -147,11 +143,11 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
 #if defined _KERR
    if (trim(global_gauge)=='velocity') A_drude(1)=cZERO
 #endif
-   !
-   ! GPL_EXCLUDE_END 
    !
    call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
    !
@@ -236,7 +232,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
            if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif
          !
-         ! GPL_EXCLUDE_START 
+         ! GPL_EXCLUDE_START
          !
 #if defined _KERR
          if(trim(global_gauge)=='length')   A_drude(1)=A_drude(1)+res*E_plus_W(i_pert_SOC)

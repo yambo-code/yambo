@@ -313,6 +313,8 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  call live_timing()
  !
+ if(any(En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)==0)) then
+   !
    n_tot =size (En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)   )
    n_miss=count(En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)==0)
    call warning(' With treshold '//trim(real2ch(mapping_tresh))//' '//trim(intc(n_miss))//'/'&

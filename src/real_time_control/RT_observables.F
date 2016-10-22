@@ -266,8 +266,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    n_thermo_steps(i1)=n_thermo_steps(i1)+1
  enddo
  !
- RT_E_thermodynamics=RT_E_thermodynamics(1:3)+real(dE_tot,SP)
- RT_S_thermodynamics=RT_S_thermodynamics(1:3)+dS_tot
+ RT_E_thermodynamics=real(dE_tot,SP)
+ RT_S_thermodynamics=dS_tot
  !
 #if defined _TIMING
  call timing('RT observables',OPR='stop')

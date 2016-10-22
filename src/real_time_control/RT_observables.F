@@ -41,7 +41,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
 &                         XC0,HARTREE0,DbGd_ibz_coo,l_RT_uses_E_DbGd,REF_V_hartree_sc,       &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,          &
 &                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc,RT_bands,            &
-&                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics
+&                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,       &
+&                         n_thermo_steps
  use electrons,      ONLY:levels,n_sp_pol,spin_occ
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -61,7 +62,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  ! WorkSpace
  !
  integer     :: ib1,ib2,ik,ik_RT,ik_E,i1
- real(SP)    :: Energy(2),dS_tot(3),S_e,S_h,N_carriers(2),N_err,VALUE_tmp(5)
+ real(SP)    :: Energy(2),dS_tot(3),S_e,S_h,N_carriers(2),N_err,VALUE_tmp(5),         &
+&               one_over_T(3)
  complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),        &
 &               G_full_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),      &
 &               G_full_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),      &
@@ -71,7 +73,10 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
 &               dE_h_sc(3),E_xc_sc(3),E_xc_ref(3),dE_Hxc_sc(3),                       &
 &               Ho_limited(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol)
  !
- if ( .not.RT_do_it('OUT') ) return      
+#if defined _TIMING
+ call timing('RT observables',OPR='start')
+#endif
+ !
  !
  dG_lesser_h=cZERO
  dG_lesser_e=cZERO
@@ -100,10 +105,6 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  G_full_h=dG_lesser_h+G_lesser_reference
  G_full_e=dG_lesser_e
  !
-#if defined _TIMING
- call timing('RT observables',OPR='start')
-#endif
- !
  dE_tot    =cZERO
  dE_kin    =cZERO
  dE_ion    =cZERO
@@ -117,14 +118,14 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  dE_h_sc   =cZERO
  dE_hxc_sc =cZERO
  !
- ! Non-interacting total energy variation
+ ! Non-interacting energy variation
  !
- ! dE_tot(IP) = - i Tr {Ho dG^<} - dEkin - dE_h - dE_xc
+ ! d_Ho = \delta\eps_{nmk} - V_Hxc[\rho_eq]
  !
  Ho_limited=Ho(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:,:)
- call RT_average_operator(O_VALUE=dE_tot(1),O_MATRIX=Ho_limited,G=dG_lesser,  en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_tot(2),O_MATRIX=Ho_limited,G=dG_lesser_h,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_tot(3),O_MATRIX=Ho_limited,G=dG_lesser_e,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_ion(1),O_MATRIX=Ho_limited,G=dG_lesser,  en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_ion(2),O_MATRIX=Ho_limited,G=dG_lesser_h,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_ion(3),O_MATRIX=Ho_limited,G=dG_lesser_e,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
  !
  ! Non-interacting kinetc energy variation
  !
@@ -133,6 +134,10 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  call RT_average_operator(O_VALUE=dE_kin(1),O_MATRIX=P_square/2._SP,G=dG_lesser,  en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  call RT_average_operator(O_VALUE=dE_kin(2),O_MATRIX=P_square/2._SP,G=dG_lesser_h,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  call RT_average_operator(O_VALUE=dE_kin(3),O_MATRIX=P_square/2._SP,G=dG_lesser_e,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ !
+ ! dE_ion = dE_tot(IP) - dEkin
+ !
+ dE_ion = dE_ion - dE_kin
  !
  ! Non-interacting Hartree energy variation
  !
@@ -150,9 +155,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  dE_Hxc=dE_h+dE_xc
  !
- ! dE_ion = dE_tot(IP) - dEkin - dE_h - dE_xc
- !
- dE_ion = dE_tot - dE_kin - dE_h - dE_xc
+ dE_tot=dE_kin+dE_ion+dE_Hxc
  !
  if (.not.l_use_Hxc_collisions) then
    !
@@ -205,7 +208,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  ! Electrons and holes temperatures
  !
- if (l_elel_scatt.or.l_elph_scatt) then
+ if ( (l_elel_scatt.or.l_elph_scatt) .and. RT_do_it('OUT') ) then
    !
    call RT_occupations_FIT(RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations)
    !
@@ -220,6 +223,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  dS_tot     = 0._SP
  N_carriers = 0._SP
+ !
+ if(all(n_thermo_steps==0)) RT_T_thermodynamics=0._SP
  !
  do ik=1,en%nk
    do ib1=RT_bands(1),RT_bands(2)
@@ -255,13 +260,27 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  ! Temperature derived from Entropy
  !
  do i1=1,3
-   if(abs(dS_tot(i1)-RT_S_thermodynamics(i1))>0._SP) &
-&    RT_T_thermodynamics(i1)=(real(dE_tot(i1))-RT_E_thermodynamics(i1))/(dS_tot(i1)-RT_S_thermodynamics(i1))
+   if(.not.abs(dE_tot(i1)-RT_E_thermodynamics(i1))>0._SP) cycle
+   one_over_T(i1)=(real(dS_tot(i1))-RT_S_thermodynamics(i1))/(dE_tot(i1)-RT_E_thermodynamics(i1))
+   RT_T_thermodynamics(i1)=RT_T_thermodynamics(i1)+one_over_T(i1)
+   n_thermo_steps(i1)=n_thermo_steps(i1)+1
  enddo
  !
- RT_E_thermodynamics=real(dE_tot,SP)
- RT_S_thermodynamics=dS_tot
+ RT_E_thermodynamics=RT_E_thermodynamics(1:3)+real(dE_tot,SP)
+ RT_S_thermodynamics=RT_S_thermodynamics(1:3)+dS_tot
  !
+#if defined _TIMING
+ call timing('RT observables',OPR='stop')
+#endif
+ !
+ if (.not. RT_do_it('OUT') ) return
+ !
+ do i1=1,3
+   if(n_thermo_steps(i1)==0) cycle
+   RT_T_thermodynamics(i1)=1._SP/(RT_T_thermodynamics(i1)/real(n_thermo_steps(i1),SP))
+ enddo
+ !
+ n_thermo_steps=0
  !
  ! Transfer the shadow variables
  !
@@ -269,9 +288,5 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  if(     l_use_Hxc_collisions) on_the_fly_operators(1:4)=real((/dE_kin(1),dE_ion(1),    dE_hxc(1),     dE_tot(1)/))*HA2EV
  on_the_fly_operators(6:8)=(/N_err,N_carriers(1),N_carriers(2)/)
  on_the_fly_operators(9:10)=RT_Tfit_occupations(:)*HA2KEL
- !
-#if defined _TIMING
- call timing('RT observables',OPR='stop')
-#endif
  !
 end subroutine RT_Observables

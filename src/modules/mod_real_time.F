@@ -240,6 +240,7 @@ module real_time
  !
  ! Thermodynamics
  !-----------------
+ integer                  :: n_thermo_steps(3)
  real(SP)                 :: RT_T_thermodynamics(3)
  real(SP)                 :: RT_E_thermodynamics(3)
  real(SP)                 :: RT_S_thermodynamics(3)

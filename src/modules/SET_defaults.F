@@ -106,7 +106,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,        &
-&                     RT_ctl_db,RAD_prefactor,n_thermo_steps
+&                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
@@ -627,7 +627,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_Efit_lifetimes=0._SP
  RT_Tfit_occupations=0._SP
  RT_Efit_occupations=0._SP
- n_thermo_steps=0
  RT_T_thermodynamics=0._SP
  RT_E_thermodynamics=0._SP
  RT_S_thermodynamics=0._SP

@@ -70,7 +70,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: io_REF
  character(schlen) :: sec_title(3)
- complex(SP)       :: on_the_fly_operators(10)
+ real(SP)          :: on_the_fly_operators(10)
  !
  integer, external :: io_RT_components
  !
@@ -226,7 +226,7 @@ subroutine RT_driver(E,X,k,q)
  !==========================
  !
  call RT_output(what="initialize")
- call RT_output(what="open dyn ene cur pol magn")
+ call RT_output(what="open carr therm energy curr pol magn")
  call RT_output(what="open BGR")
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
@@ -315,9 +315,9 @@ subroutine RT_driver(E,X,k,q)
    ! OUTPUT(s)
    !###########
    call RT_output('BGR',TIME=NE_time*AUT2FS)
-   call RT_output('cur pol magn',TIME=NE_time*AUT2FS)
-   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
-   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
+   call RT_output('curr pol magn therm',TIME=NE_time*AUT2FS)
+   call RT_output('energy',VALUES=on_the_fly_operators(1:5 ),TIME=NE_time*AUT2FS)
+   call RT_output('carr',VALUES=on_the_fly_operators(6:10),TIME=NE_time*AUT2FS)
    !
    ! Mean Carrier Lifetimes
    !========================

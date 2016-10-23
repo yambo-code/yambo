@@ -69,7 +69,6 @@ subroutine RT_occupations_driver(kpt,En)
  !
  ! Occupations bands fit 
  !=========================
- if (l_RT_lifetimes) RT_conf%T_n_steps=1
  if (l_RT_bands) call RT_occ_bands_interpolation(En,kpt,RT_conf%T_n_steps)
  !
 end subroutine RT_occupations_driver

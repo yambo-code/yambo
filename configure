@@ -7599,22 +7599,27 @@ case "${CPP}" in
 esac
 #
 case "${FC}" in
+  #
   #  does not work properly
+  #
   #*ifort*)
   #   if test -z "$FCCPP";    then FCCPP="${FC} -E -P"; fi
   #   ;;
   *gfortran | *g95)
      if test -z "$FCCPP";    then FCCPP="${FC} -E -P -cpp"; fi
      ;;
-  *sunf95)
-     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -fpp"; fi
-     ;;
-  *openf95)
-     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -ftpp"; fi
-     ;;
-  *pathf*)
-     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -cpp"; fi
-     ;;
+  #
+  # some of the following could be uncommented once explicitly checked
+  #
+  #*sunf95)
+  #   if test -z "$FCCPP";    then FCCPP="${FC} -E -P -fpp"; fi
+  #   ;;
+  #*openf95)
+  #   if test -z "$FCCPP";    then FCCPP="${FC} -E -P -ftpp"; fi
+  #   ;;
+  #*pathf*)
+  #   if test -z "$FCCPP";    then FCCPP="${FC} -E -P -cpp"; fi
+  #   ;;
 esac
 #
 if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi

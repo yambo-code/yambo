@@ -23,7 +23,7 @@
 #
 AC_DEFUN([ACX_CPP],
 [
-AC_ARG_VAR(FPP,Fortran preprocessor)
+AC_ARG_VAR(FCCPP,Fortran preprocessor)
 #
 case "${CPP}" in
  *icc* )
@@ -71,55 +71,33 @@ case "${CPP}" in
 esac
 #
 case "${FC}" in
-<<<<<<< 2407b5f9506b12f0c630fa7c2cf428951bc50818
   #
   #  does not work properly
   #
-  #*ifort*)
-  #   if test -z "$FPP";    then FPP="${FC} -E -P"; fi
-  #   ;;
-  *gfortran | *g95)
-     if test -z "$FPP";    then FPP="${FC} -E -P -cpp"; fi
-     ;;
-  #
-  # some of the following could be uncommented once explicitly checked
-  #
-  #*sunf95)
-  #   if test -z "$FPP";    then FPP="${FC} -E -P -fpp"; fi
-  #   ;;
-  #*openf95)
-  #   if test -z "$FPP";    then FPP="${FC} -E -P -ftpp"; fi
-  #   ;;
-  #*pathf*)
-  #   if test -z "$FPP";    then FPP="${FC} -E -P -cpp"; fi
-  #   ;;
-esac 
-#
-if test -z "$FPP" ; then FPP="cpp -E -P -ansi"; fi
-=======
-  #  does not work properly
   #*ifort*)
   #   if test -z "$FCCPP";    then FCCPP="${FC} -E -P"; fi
   #   ;;
   *gfortran | *g95)
      if test -z "$FCCPP";    then FCCPP="${FC} -E -P -cpp"; fi
      ;;
-  *sunf95)
-     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -fpp"; fi
-     ;;
-  *openf95)
-     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -ftpp"; fi
-     ;;
-  *pathf*)
-     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -cpp"; fi
-     ;;
+  #
+  # some of the following could be uncommented once explicitly checked
+  #
+  #*sunf95)
+  #   if test -z "$FCCPP";    then FCCPP="${FC} -E -P -fpp"; fi
+  #   ;;
+  #*openf95)
+  #   if test -z "$FCCPP";    then FCCPP="${FC} -E -P -ftpp"; fi
+  #   ;;
+  #*pathf*)
+  #   if test -z "$FCCPP";    then FCCPP="${FC} -E -P -cpp"; fi
+  #   ;;
 esac 
 #
 if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi
->>>>>>> cpp compilation problem further sorted out
 #
 AC_MSG_NOTICE([testing C-preprocessor $CPP $CPPFLAGS])
-AC_MSG_NOTICE([testing F90-preprocessor $FPP])
+AC_MSG_NOTICE([testing F90-preprocessor $FCCPP])
 #
 # TESTS
 #=======
@@ -146,7 +124,7 @@ AC_MSG_RESULT([$acx_C_ok])
 # Fortran Source
 #
 acx_F90_ok=yes
-FPP_TESTS_PASSED=yes
+FCCPP_TESTS_PASSED=yes
 AC_MSG_CHECKING([if FC precompiler works on F90 source])
 cat > conftest.F << EOF_
  program conftest
@@ -156,13 +134,6 @@ cat > conftest.F << EOF_
  end program
 EOF_
 # ! Replace "S" with "\" and find the max length of
-<<<<<<< 2407b5f9506b12f0c630fa7c2cf428951bc50818
-(eval $FPP conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
-if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`" ||
-                             test -n "`grep "warning" conftest.er1`" ||
-                             test -n "`grep "command line remark" conftest.er1`" ; then 
- eval $FPP conftest.F > conftest.${F90SUFFIX} 
-=======
 (eval $FCCPP conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
 #
 # XXXX
@@ -172,7 +143,6 @@ if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`" ||
                              test -n "`grep "warning" conftest.er1`" ||
                              test -n "`grep "command line remark" conftest.er1`" ; then 
  eval $FCCPP conftest.F > conftest.${F90SUFFIX} 
->>>>>>> cpp compilation problem further sorted out
  eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2 >&5
 
 # XXXX
@@ -183,19 +153,19 @@ cat conftest.er2
          test -n "`grep "warning" conftest.er2`" || 
          test -n "`grep "command line remark" conftest.er2`" ) ; then 
    acx_F90_ok=no ; 
-   FPP_TESTS_PASSED=no;
+   FCCPP_TESTS_PASSED=no;
   fi
  fi 
 else
  acx_F90_ok=no ; 
- FPP_TESTS_PASSED=no
+ FCCPP_TESTS_PASSED=no
 fi 
 AC_MSG_RESULT([$acx_F90_ok])
 #
 if test "x$CPP_TESTS_PASSED" = xno ; then
   AC_MSG_ERROR(Found C precompiler problems in processing C source.);
 fi
-if test "x$FPP_TESTS_PASSED" = xno ; then
+if test "x$FCCPP_TESTS_PASSED" = xno ; then
   AC_MSG_ERROR(Found FC precompiler problems in processing F90 source.);
 fi
 #
@@ -206,5 +176,5 @@ C_AS_CPP_FLAGS=$CPPFLAGS
 CPPFLAGS=""
 AC_SUBST(C_AS_CPP)
 AC_SUBST(C_AS_CPP_FLAGS)
-AC_SUBST(FPP)
+AC_SUBST(FCCPP)
 ])

@@ -24,6 +24,7 @@
 AC_DEFUN([ACX_CPP],
 [
 AC_ARG_VAR(FCCPP,Fortran preprocessor)
+if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi
 #
 case "${CPP}" in
  *icc* )
@@ -70,10 +71,7 @@ case "${CPP}" in
     ;;
 esac
 #
-if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi
-#
-AC_MSG_NOTICE([testing C-preprocessor $CPP $CPPFLAGS])
-AC_MSG_NOTICE([testing F90-preprocessor $FCCPP])
+AC_MSG_NOTICE([testing preprocessor $CPP $CPPFLAGS])
 #
 # TESTS
 #=======
@@ -85,7 +83,7 @@ CPP_TESTS_PASSED=yes
 AC_LANG(C)
 #
 acx_C_ok=no
-AC_MSG_CHECKING([if C precompiler works on C source])
+AC_MSG_CHECKING([if precompiler works on C source])
 AC_PREPROC_IFELSE([
  AC_LANG_SOURCE([
  #if defined _C_US
@@ -100,8 +98,7 @@ AC_MSG_RESULT([$acx_C_ok])
 # Fortran Source
 #
 acx_F90_ok=yes
-FCCPP_TESTS_PASSED=yes
-AC_MSG_CHECKING([if FC precompiler works on F90 source])
+AC_MSG_CHECKING([if precompiler works on F90 source])
 cat > conftest.F << EOF_
  program conftest
  character (1) :: a
@@ -110,28 +107,25 @@ cat > conftest.F << EOF_
  end program
 EOF_
 # ! Replace "S" with "\" and find the max length of
-(eval $FCCPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
+(eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
 
 if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`"  ; then 
- eval $FCCPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
+ eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
  eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2 >&5
  if test -s conftest.er2 ; then 
   if ! test -n "`grep successful conftest.er2`"  ; then 
    acx_F90_ok=no ; 
-   FCCPP_TESTS_PASSED=no;
+   CPP_TESTS_PASSED=no;
   fi
  fi 
 else
  acx_F90_ok=no ; 
- FCCPP_TESTS_PASSED=no
+ CPP_TESTS_PASSED=no
 fi 
 AC_MSG_RESULT([$acx_F90_ok])
 #
 if test "x$CPP_TESTS_PASSED" = xno ; then
-  AC_MSG_ERROR(Found C precompiler problems in processing C source.);
-fi
-if test "x$FCCPP_TESTS_PASSED" = xno ; then
-  AC_MSG_ERROR(Found FC precompiler problems in processing F90 source.);
+  AC_MSG_ERROR(Found precompiler problems in processing the F90/C source.);
 fi
 #
 # AS CPPFLAGS are used (dunno why) in the MPI check of MPICC

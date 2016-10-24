@@ -24,7 +24,6 @@
 #
 os="@build_os@"
 cpp="@CPP@"
-fccpp="@FCCPP@"
 cppflags="@C_AS_CPP_FLAGS@"
 ECHO_N="@ECHO_N@"
 PREFIX="@MKMF_PREFIX@"
@@ -190,7 +189,7 @@ FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
 \$(FC_NOOPT_SRC):
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fccpp) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
 	@rm -f \$*\$(f90suffix)
@@ -200,7 +199,7 @@ FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 FC_LOCAL_SRC= sgfft.o
 \$(FC_LOCAL_SRC):
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fccpp) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$*".F "
 
@@ -221,7 +220,7 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fccpp) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	${rm_command}
 	@echo $ECHO_N \$*".F "

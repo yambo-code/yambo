@@ -7544,6 +7544,7 @@ F90_MODULE_FLAG="$ax_cv_f90_modflag"
 # CPP check & flags
 
 
+if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi
 #
 case "${CPP}" in
  *icc* )
@@ -7590,12 +7591,8 @@ case "${CPP}" in
     ;;
 esac
 #
-if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi
-#
-{ $as_echo "$as_me:${as_lineno-$LINENO}: testing C-preprocessor $CPP $CPPFLAGS" >&5
-$as_echo "$as_me: testing C-preprocessor $CPP $CPPFLAGS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: testing F90-preprocessor $FCCPP" >&5
-$as_echo "$as_me: testing F90-preprocessor $FCCPP" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: testing preprocessor $CPP $CPPFLAGS" >&5
+$as_echo "$as_me: testing preprocessor $CPP $CPPFLAGS" >&6;}
 #
 # TESTS
 #=======
@@ -7612,8 +7609,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 #
 acx_C_ok=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if C precompiler works on C source" >&5
-$as_echo_n "checking if C precompiler works on C source... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if precompiler works on C source" >&5
+$as_echo_n "checking if precompiler works on C source... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -7637,9 +7634,8 @@ $as_echo "$acx_C_ok" >&6; }
 # Fortran Source
 #
 acx_F90_ok=yes
-FCCPP_TESTS_PASSED=yes
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if FC precompiler works on F90 source" >&5
-$as_echo_n "checking if FC precompiler works on F90 source... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if precompiler works on F90 source" >&5
+$as_echo_n "checking if precompiler works on F90 source... " >&6; }
 cat > conftest.F << EOF_
  program conftest
  character (1) :: a
@@ -7648,29 +7644,26 @@ cat > conftest.F << EOF_
  end program
 EOF_
 # ! Replace "S" with "\" and find the max length of
-(eval $FCCPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
+(eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
 
 if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`"  ; then
- eval $FCCPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}
+ eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}
  eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2 >&5
  if test -s conftest.er2 ; then
   if ! test -n "`grep successful conftest.er2`"  ; then
    acx_F90_ok=no ;
-   FCCPP_TESTS_PASSED=no;
+   CPP_TESTS_PASSED=no;
   fi
  fi
 else
  acx_F90_ok=no ;
- FCCPP_TESTS_PASSED=no
+ CPP_TESTS_PASSED=no
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_F90_ok" >&5
 $as_echo "$acx_F90_ok" >&6; }
 #
 if test "x$CPP_TESTS_PASSED" = xno ; then
-  as_fn_error $? "Found C precompiler problems in processing C source." "$LINENO" 5;
-fi
-if test "x$FCCPP_TESTS_PASSED" = xno ; then
-  as_fn_error $? "Found FC precompiler problems in processing F90 source." "$LINENO" 5;
+  as_fn_error $? "Found precompiler problems in processing the F90/C source." "$LINENO" 5;
 fi
 #
 # AS CPPFLAGS are used (dunno why) in the MPI check of MPICC

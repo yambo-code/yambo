@@ -63,23 +63,27 @@ i?86*linux*)
     OMPFLAGS="-fopenmp"
     ;;
   *ifort*)
+    OMPFLAGS="-openmp"
     CPU_FLAG=""
     case "${FCVERSION}" in
       *11* | *12* | *13* |*14* | *15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
+      *17* | *18* | *19*)
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       ;;
       *10*)
        CPU_FLAG="-xW"
        ;;
       *)
-       CPU_FLAG="-tpp7"
+       CPU_FLAG=" "
        ;;
     esac
     SYSFLAGS="-assume bscc -g -O3 -ip $CPU_FLAG"
     UFFLAGS="-assume bscc -g -O0 $CPU_FLAG"
     FCMFLAG="-nofor_main"
-    OMPFLAGS="-openmp"
   ;;
   *pathf9*)
     SYSFLAGS="-g -O2 -fno-second-underscore"
@@ -220,23 +224,27 @@ ia64*linux* )
     OMPFLAGS="-openmp"
     ;;
   *ifort*)
+    OMPFLAGS="-openmp"
     CPU_FLAG=""
     case "${FCVERSION}" in
       *11* | *12* | *13* |*14* |*15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
+      *17* | *18* | *19*)
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       ;;
       *10*)
        CPU_FLAG="-xW"
        ;;
       *)
-       CPU_FLAG="-tpp7"
+       CPU_FLAG=" "
        ;;
     esac
     SYSFLAGS="-assume bscc -g -O3 -ip ${CPU_FLAG}"
     UFFLAGS="-assume bscc -g -O0 ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
-    OMPFLAGS="-openmp"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"

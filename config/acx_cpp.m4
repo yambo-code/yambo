@@ -70,6 +70,25 @@ case "${CPP}" in
     ;;
 esac
 #
+case "${FC}" in
+  #  does not work properly
+  #*ifort*)
+  #   if test -z "$FCCPP";    then FCCPP="${FC} -E -P"; fi
+  #   ;;
+  *gfortran | *g95)
+     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -cpp"; fi
+     ;;
+  *sunf95)
+     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -fpp"; fi
+     ;;
+  *openf95)
+     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -ftpp"; fi
+     ;;
+  *pathf*)
+     if test -z "$FCCPP";    then FCCPP="${FC} -E -P -cpp"; fi
+     ;;
+esac 
+#
 if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi
 #
 AC_MSG_NOTICE([testing C-preprocessor $CPP $CPPFLAGS])
@@ -110,13 +129,24 @@ cat > conftest.F << EOF_
  end program
 EOF_
 # ! Replace "S" with "\" and find the max length of
-(eval $FCCPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
+(eval $FCCPP conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
+#
+# XXXX
+cat conftest.er1
 
-if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`"  ; then 
- eval $FCCPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
+if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`" ||
+                             test -n "`grep "warning" conftest.er1`" ||
+                             test -n "`grep "command line remark" conftest.er1`" ; then 
+ eval $FCCPP conftest.F > conftest.${F90SUFFIX} 
  eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2 >&5
+
+# XXXX
+cat conftest.er2
+
  if test -s conftest.er2 ; then 
-  if ! test -n "`grep successful conftest.er2`"  ; then 
+  if ! ( test -n "`grep successful conftest.er2`" ||
+         test -n "`grep "warning" conftest.er2`" || 
+         test -n "`grep "command line remark" conftest.er2`" ) ; then 
    acx_F90_ok=no ; 
    FCCPP_TESTS_PASSED=no;
   fi

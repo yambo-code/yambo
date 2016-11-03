@@ -1,0 +1,36 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libslatec.a
+PACKAGE=$(pkgname_slatec)
+TARBALL=$(tarball_slatec)
+#
+# MAIN target
+#
+all: package-ready-stamp
+#
+uncompress-stamp:
+	( cd ../archive ; if ! test -e $(TARBALL) ; then \
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
+	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
+	test -d $(INSTALL_DIR) || mkdir $(INSTALL_DIR)
+	touch uncompress-stamp
+
+package-ready-stamp: uncompress-stamp 
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  $(make)  ) ; fi
+	touch package-ready-stamp
+#
+# cleaning
+#
+clean:
+	@- rm -rf *.o package-ready-stamp 
+
+clean_all: 
+	@- rm -rf uncompress-stamp
+	@- rm -rf *.o *.f

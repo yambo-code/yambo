@@ -21,12 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.1.1 r.13965 h.a8e641a , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.1.1 r.13966 h.e5ba013 , yambo@yambo-code.org)
 SVERSION="4"
 SSUBVERSION="1"
 SPATCHLEVEL="1"
-SREVISION="13965"
-SHASH="a8e641a"
+SREVISION="13966"
+SHASH="e5ba013"
 AC_SUBST(SVERSION)
 AC_SUBST(SSUBVERSION)
 AC_SUBST(SPATCHLEVEL)
@@ -352,14 +352,6 @@ AC_SUBST(BLAS_LIBS)
 AC_SUBST(LAPACK_LIBS)
 AC_SUBST(compile_blas)
 AC_SUBST(compile_lapack)
-# ============================================================================
-# check for local libs needed
-# 
-DLARAN=""
-if test x"$acx_dlaran_ok" = xno; then
- DLARAN="dlaran.o"
-fi
-AC_SUBST(DLARAN)
 #
 # ============================================================================
 # MPI
@@ -442,7 +434,7 @@ ACX_LIBXC
 ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
-                 src/wf_and_fft/sgfft.F lib/local/.objects
+                 src/wf_and_fft/sgfft.F 
                  sbin/make_makefile.sh sbin/objects_debug.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 AC_OUTPUT

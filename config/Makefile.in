@@ -30,7 +30,6 @@ precision   = @dp_cpp@
 fft         = @FFT_CPP@
 xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
 debug       = @enable_debug@
-do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
 do_fftqe    = @compile_fftqe@
 do_iotk     = @compile_iotk@
@@ -50,7 +49,7 @@ includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
+           sbin/objects_debug.sh driver/editor.h lib/archive/keep-extlibs-stamp \
            lib/install/make_iotk.inc
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
@@ -112,11 +111,9 @@ all:
 libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
-	@+LIBS2DO="slatec";  DIR2GO="lib"; VPATH="$(topdir)/lib" ; $(mklib)
-	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib); fi
+	@+LIBS2DO="slatec";  DIR2GO="lib"; VPATH="$(topdir)/lib" ; $(mklib_ext); $(mklib);
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib) 
 	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib); fi
@@ -221,16 +218,16 @@ clean_fast:
 	@$(lib_mod_clean)
 	@$(xclean)
 clean:
+	@$(lib_ext_clean)
 	@$(objects_clean)
 	@$(lib_mod_clean)
-	@$(lib_ext_clean)
 	@$(conf_clean)
 	@$(xclean)
 distclean: clean_all
 clean_all:
+	@$(lib_ext_clean_all)
 	@$(objects_clean)
 	@$(lib_mod_clean)
-	@$(lib_ext_clean_all)
 	@$(conf_clean)
 	@$(xclean)
 	
@@ -360,7 +357,10 @@ define objects_clean
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
-        grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | xargs rm -f
+        grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
+        grep -v '.*lapack*' | grep -v '.*blacs*' |  \
+        grep -v '.*scalapack*' | grep -v '.*slepc*' | \
+        grep -v '.*petsc*'  | xargs rm -f
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
@@ -372,7 +372,7 @@ endef
 define lib_ext_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; $(MAKE) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
@@ -389,7 +389,7 @@ define lib_ext_clean_all
   cd ../.. ; \
  fi
  find . -name 'xc*.h' -type f -print | xargs rm -f
- @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; \

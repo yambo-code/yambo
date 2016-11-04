@@ -30,6 +30,8 @@ precision   = @dp_cpp@
 fft         = @FFT_CPP@
 xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
 debug       = @enable_debug@
+do_blacs    = @compile_blacs@
+do_slk      = @compile_slk@
 do_lapack   = @compile_lapack@
 do_fftqe    = @compile_fftqe@
 do_iotk     = @compile_iotk@
@@ -123,6 +125,10 @@ libs:
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
 get_extlibs:
 	@+mkdir lib/archive; \
 	if [ $(topdir) != $(prefix) ] ; then \

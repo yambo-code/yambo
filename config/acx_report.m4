@@ -86,6 +86,11 @@ if test "$compile_blas" = "yes" ; then BLAS_str="I"; fi
 
 SLK_str="-"
 if test "$enable_scalapack" = "yes" ; then SLK_str="E"; fi
+if test "$compile_slk" = "yes" ; then SLK_str="I"; fi
+
+BLACS_str="-"
+if test "$enable_scalapack" = "yes" ; then BLACS_str="E"; fi
+if test "$compile_blacs" = "yes" ; then BLACS_str="I"; fi
 
 BGQ_str="-"
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
@@ -111,6 +116,7 @@ AC_SUBST(PW_str)
 AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
 AC_SUBST(SLK_str)
+AC_SUBST(BLACS_str)
 AC_SUBST(OPENMP_str)
 AC_SUBST(BGQ_str)
 AC_SUBST(TIME_profile_str)

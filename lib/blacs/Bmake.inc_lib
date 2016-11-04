@@ -38,11 +38,14 @@
 #  Name and location of the BLACS library.  See section 2 for 
 #  details on BLACS debug level (BLACSDBGLVL).
 #  ----------------------------------------------------------
-   BLACSdir    = $(BTOPdir)/LIB
+   BLACSdir    = $(BTOPdir)/../../
    BLACSDBGLVL = 0
-   BLACSFINIT  = $(BLACSdir)/blacsF77init_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
-   BLACSCINIT  = $(BLACSdir)/blacsCinit_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
-   BLACSLIB    = $(BLACSdir)/blacs_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
+   BLACSFINIT  = $(BLACSdir)/libblacs_init.a
+   BLACSCINIT  = $(BLACSdir)/libblacs_C_init.a
+   BLACSLIB    = $(BLACSdir)/libblacs.a
+#   BLACSFINIT  = $(BLACSdir)/blacsF77init_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
+#   BLACSCINIT  = $(BLACSdir)/blacsCinit_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
+#   BLACSLIB    = $(BLACSdir)/blacs_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
 
 #  -------------------------------------
 #  Name and location of the MPI library.

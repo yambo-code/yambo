@@ -74,7 +74,7 @@ fi
 compile_blacs="no"
 if test "$mpibuild"  = "yes" && test "$with_blacs_libs" = "yes"; then
 compile_blacs="yes"
-BLACS_LIBS="-lblacs_init -lblacs"
+BLACS_LIBS="-lblacs -lblacs_init"
 fi
 compile_slk="no"
 if test "$mpibuild"  = "yes" && test "$with_scalapack_libs" = "yes"; then

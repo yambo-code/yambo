@@ -30,7 +30,6 @@ configure-stamp: uncompress-stamp
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) mpi  ;\
-	cp LIB/*  ../../; \
 	) ; fi
 	touch package-ready-stamp
 #

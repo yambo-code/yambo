@@ -211,7 +211,7 @@
 #  Also the ranlib routine.  If your system has no ranlib, set RANLIB = echo.
 #  --------------------------------------------------------------------------
    ARCH      = $(ar)
-   ARCHFLAGS = r
+   ARCHFLAGS = $(arflags)
    RANLIB    = ranlib
 
 #=============================================================================

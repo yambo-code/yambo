@@ -58,7 +58,7 @@ CFLAGS = $(cflags)
 #  If you system has no ranlib, set RANLIB = echo.
 #
 ARCH     = $(ar)
-ARCHFLAGS= cr
+ARCHFLAGS= $(arflags)
 RANLIB   = ranlib
 #
 #  Location of the extended-precision BLAS (XBLAS) Fortran library

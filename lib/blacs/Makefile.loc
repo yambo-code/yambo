@@ -22,13 +22,16 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	cat ../../../config/setup Bmake.inc_BASE > Bmake.inc ); \
+	cat ../../../config/setup ../Bmake.inc_lib > Bmake.inc ; \
+	cp ../Makefile.lib  Makefile );  \
 	fi
 	touch configure-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) mpi  ) ; fi
+	( cd $(PACKAGE);  $(make) mpi  ;\
+	cp LIB/*  ../../; \
+	) ; fi
 	touch package-ready-stamp
 #
 # cleaning

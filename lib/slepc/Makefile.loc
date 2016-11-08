@@ -22,13 +22,17 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	cp ../Makefile.lib  Makefile ); \
+	  PETSC_DIR=$(PWD)/../petsc/$(pkgname_petsc) \
+	  PETSC_ARCH=yambo \
+	  SLEPC_DIR=$(PWD)/$(PACKAGE) ./configure ); \
 	fi
 	touch configure-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make)  ) ; fi
+	( cd $(PACKAGE);  $(make) SLEPC_DIR=$(PWD)/$(PACKAGE) \
+	  PETSC_DIR=$(PWD)/../petsc/$(pkgname_petsc) \
+	  PETSC_ARCH=yambo ) ; fi
 	touch package-ready-stamp
 #
 # cleaning

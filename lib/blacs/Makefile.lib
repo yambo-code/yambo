@@ -10,7 +10,6 @@ help :
 	@ echo
 
 all : mpi 
-#all : mpi cmmd mpl nx pvm tester
 
 clean: cleanall
 

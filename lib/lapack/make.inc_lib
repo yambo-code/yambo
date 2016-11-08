@@ -4,6 +4,8 @@
 #  June 2016                                                       #
 ####################################################################
 #
+PRECISIONS = single complex
+#
 SHELL = $(shell)
 #  
 #  Modify the FORTRAN and OPTS definitions to refer to the

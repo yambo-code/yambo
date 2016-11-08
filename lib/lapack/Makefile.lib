@@ -15,13 +15,13 @@ lapack_install:
 	./testsecond; ./testdsecnd; ./testieee; ./testversion )
 
 blaslib:
-	( cd BLAS/SRC; $(MAKE) )
+	( cd BLAS/SRC; $(MAKE) $(PRECISIONS) )
 
 cblaslib:
 	( cd CBLAS; $(MAKE) )
 
 lapacklib:	lapack_install
-	( cd SRC; $(MAKE) single complex )
+	( cd SRC; $(MAKE) $(PRECISIONS) )
 
 lapackelib: lapacklib
 	( cd LAPACKE; $(MAKE) )

@@ -29,7 +29,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   ! a separate souce file for clarity.
   !
   use pars,          ONLY : SP,cONE,cZERO
-  use com,           ONLY : msg
+  use com,           ONLY : error,msg
   implicit none
   !
   ! headers
@@ -60,7 +60,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   type(Mat)      A
   type(EPS)      eps
   EPSType        tname
-  PetscReal      tol, error
+  PetscReal      tol, ferror
   PetscErrorCode ierr
   PetscInt       nev, ncv, mpd, maxit, its, nconv, n, i, j
   PetscInt       idx(2)
@@ -76,20 +76,13 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   ! Non hermitian not implemented yet!
   !
   if (present(V_left)) then
-    write(*,*) 'Diagonalisation of non-hermitian matrices with SLEPC is not implemented in yambo yet'
+    call error( 'Diagonalisation of non-hermitian matrices with SLEPC is not implemented in yambo yet' )
     call exit(0)
   endif
   !
   call MatGetSize(A,n,j,ierr)
-  if (rank .eq. 0) write(*,*) 'initializing slepc...'
   call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
-  if (rank .eq. 0) write(*,*) 'done!'
   call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
-  !
-  ! write the matrix if wanted
-  if (.false.) then
-    call MatView(A,PETSC_VIEWER_STDOUT_WORLD,ierr)
-  endif
   !
   call MatCreateVecs(A,xr,xi,ierr)
   
@@ -121,31 +114,19 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  call msg('s', 'Solving...')
-  write(*,*)
   call EPSSolve(eps,ierr)
   call EPSGetIterationNumber(eps,its,ierr)
-  if (rank .eq. 0) then
-    write(*,110) its
-  end if  
-  110  format (/' Number of iterations of the method:',I4)
+  call msg( 'rs', 'Number of iterations of the method:', its )
 
   !Optional: Get some information from the solver and display it
   call EPSGetType(eps,tname,ierr)
-  if (rank .eq. 0) then
-    write(*,120) tname
-  end if
-  120  format (' Solution method: ',A)
   call EPSGetDimensions(eps,nev,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,ierr)
-  if (rank .eq. 0) then
-    write(*,130) nev
-  end if
-  130  format (' Number of requested eigenvalues:',I4)
   call EPSGetTolerances(eps,tol,maxit,ierr)
-  if (rank .eq. 0) then
-    write(*,140) tol, maxit
-  end if 
-  140  format (' Stopping condition: tol=',1P,E10.4,', maxit=',I4)
+
+  call msg( 'rs', 'Solution method: ', tname )
+  call msg( 'rs', 'Number of requested eigenvalues:', nev )
+  call msg( 'rs', 'Stopping condition Tolerance:', tol)
+  call msg( 'rs', 'Stopping contition Max iterations:', maxit )
 
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Display solution and clean up
@@ -153,10 +134,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
 
   !Get number of converged eigenpairs
   call EPSGetConverged(eps,nconv,ierr)
-  if (rank .eq. 0) then
-    write(*,150) nconv
-  end if
-  150  format (' Number of converged eigenpairs:',I4/)
+  call msg( 'rs', 'Number of converged eigenpairs:', nconv)
 
   !free the A matrix
   call MatDestroy(A,ierr)
@@ -164,24 +142,13 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   !open file for output
   !call PetscViewerHDF5Open(PETSC_COMM_WORLD, 'hdb.BS_slepc', FILE_MODE_WRITE, hdf5v, ierr)
   
-  !Display eigenvalues and relative errors
+  !calculate eigenvalues and relative errors
   if (nconv.gt.0) then
-    if (rank .eq. 0) then
-       write(*,*) '         k          ||Ax-kx||/||kx||'
-       write(*,*) ' ----------------- ------------------'
-    end if
     do i=0,nev-1
          !Get converged eigenpairs: i-th eigenvalue is stored in kr
          !(real part) and ki (imaginary part)
          call EPSGetEigenpair(eps,i,kr,PETSC_NULL_OBJECT,xr,PETSC_NULL_OBJECT,ierr)
 
-         !Compute the relative error associated to each eigenpair
-         call EPSComputeError(eps,i,EPS_ERROR_RELATIVE,error,ierr)
-         if (rank .eq. 0) then
-           write(*,160) PetscRealPart(kr), error
-         end if
-         160      format (1P,'   ',E12.4,'       ',E12.4)
-         
          !save the eigenvalues and eigenvectors in the matrix of the hamiltonian\
          !E_real(i+1) = PetscRealPart(kr)
          E_real(i+1) = kr
@@ -204,9 +171,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
       
      enddo
   endif
-  !call PetscViewerDestroy(hdf5v,ierr)
-  call msg('s','done!')
-  
+  !
   call EPSDestroy(eps,ierr)
   call VecDestroy(xr,ierr)
   call VecDestroy(xi,ierr)
@@ -214,6 +179,10 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
 end subroutine
 
 subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
+  ! 
+  ! Monitor the convergence of the iterative diagonalization
+  ! 
+  use com,           ONLY : error,msg
   implicit none
 
 #include <petsc/finclude/petscsys.h>
@@ -231,12 +200,9 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
   PetscReal      re,errest(*)
   PetscMPIInt    rank
 
-  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
-  if (its .gt. 0 .and. rank .eq. 0) then
-   re = PetscRealPart(eigr(nconv+1))
-   write(6,140) its,nconv,re,errest(nconv+1)
-  endif
+  ! write the number of converged eigenvalues
+  call msg('s', '[SLEPC] converged eigenpairs: ', its)
 
-  140  format(i3,' EPS nconv=',i4,' first unconverged value (error) ', f6.4,' (',g9.3,')')
   ierr = 0
+  !
 end subroutine

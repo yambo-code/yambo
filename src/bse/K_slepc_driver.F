@@ -98,6 +98,7 @@ subroutine K_slepc_driver(iq,W)
  !  
  ! Sectioning
  !============
+ !
  if (isec(2)/=0) then
    call section('=','Slepc solver')
  else if (isec(2)==0) then
@@ -106,17 +107,21 @@ subroutine K_slepc_driver(iq,W)
  !
  ! Number of states for partial diagonalization
  !================================================
+ !
  if (BSS_n_eig==0) then
    BSS_n_eig = nint(BS_H_dim*.01)
    call warning(' Calculating only 1% of the eigenvalues.')
  endif
  !
  ! if the number of eigenvalues to calculate is larger than matrix dimensions
+ !
  if (BSS_n_eig>BS_H_dim) then
    call warning(' Number of eigenvalues is larger than hamiltonian. Calculating only 1% of the eigenvalues.')
    BSS_n_eig = nint(BS_H_dim*.01)
  endif
+ !
  ! if the number of eigenvalued to calculate is smaller than 1
+ !
  if (BSS_n_eig<1) then
    call warning(' Number of eigenvalues is smaller than hamiltonian. Calculating 1 eigenvalue.')
    BSS_n_eig = 1
@@ -175,44 +180,6 @@ subroutine K_slepc_driver(iq,W)
    if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
      YAMBO_ALLOCATE( BS_corrections(1,BS_H_dim) )
    endif
- endif
- !
- ! Test (TO BE REMVED)
- !
- if (.false.) then
-   !
-   write(*,*) 'create unitary vector vin'
-   call VecCreate(PETSC_COMM_WORLD,vin,ierr)
-   call VecSetSizes(vin,PETSC_DECIDE,BS_H_dim,ierr)
-   call VecSetType(vin, VECMPI, ierr)
-   !
-   call VecCreate(PETSC_COMM_WORLD,vout,ierr)
-   call VecSetSizes(vout,PETSC_DECIDE,BS_H_dim,ierr)
-   call VecSetType(vout, VECMPI, ierr)
-   !
-   write(*,*) "Setting the values", BS_H_dim
-   vec_index=(/0,1,2,3/)
-   vec_value=(/cZERO,cZERO,cONE,cZERO/)
-   call VecSetValues(vin,4,vec_index,vec_value,INSERT_VALUES,ierr)
-   !
-   write(*,*) "Assembly"
-   call VecAssemblyBegin(vin,ierr)
-   call VecAssemblyEnd(vin,ierr)
-   !
-   write(*,*) 'print vector vin'
-   call VecView(vin,PETSC_VIEWER_STDOUT_WORLD,ierr)
-   !
-   write(*,*) 'print slepc_mat'
-   call MatView(slepc_mat,PETSC_VIEWER_STDOUT_WORLD,ierr)
-   !
-   write(*,*) 'Matmul'
-   call MatMult(slepc_mat,vin,vout,ierr)
-   !
-   write(*,*) 'print vector vout'
-   call VecView(vout,PETSC_VIEWER_STDOUT_WORLD,ierr)
-   !
-   call exit()
- !
  endif
  !
  !
@@ -387,7 +354,7 @@ end subroutine
  
 subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
- ! Here I fill the kernel (coupling included) in a slepc matrix to be
+ ! Here I fill the kernel (coupling not yet included) in a slepc matrix to be
  ! used for diagonalization and/or invertion
  !
  !      | (K_r)     (K_c)    |  
@@ -417,9 +384,8 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  type(Mat)   :: slepc_mat
  type(PetscFortranComplex) :: val
  !
+ ! Allocate the slepc Matrix
  !
- ! ALLOCATE SLEPC MATRIX
- !==================================
  call MatCreate(PETSC_COMM_WORLD,slepc_mat,ierr)
  call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,BS_H_dim,BS_H_dim,ierr)
  call MatSetType(slepc_mat, MATMPIDENSE,ierr)
@@ -429,8 +395,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
  call fill_eh_dipoles()
  ! 
- ! FILLING the slepc_mat
- !====================
+ ! filling of the slepc_mat
  !
  do i_B=1,n_BS_blks
    !
@@ -485,34 +450,12 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
  if (BS_K_coupling) then
    call error('BSE coupling with slepc not implemented')
-   !
-   ! Symmetrization: Coupling part is symmetric
-   !
-   !do i_r=1,BS_K_dim
-   !  do i_c=i_r+1,BS_K_dim
-   !    slepc_mat(i_c,i_r+BS_K_dim)=slepc_mat(i_r,i_c+BS_K_dim)
-   !  enddo
-   !enddo
-   !
-   ! If Coupling the half lower part of K is empty
-   ! Filling the anti-resonant and anti-coupling parts
-   !
-   !forall(i_r=1:BS_K_dim,i_c=1:BS_K_dim)
-     ! Anti-Coupling
-     !slepc_mat(i_r+BS_K_dim,i_c)=-conjg(slepc_mat(i_r,i_c+BS_K_dim))
-     ! Anti-resonant
-     !slepc_mat(i_r+BS_K_dim,i_c+BS_K_dim)=-conjg(slepc_mat(i_r,i_c))
-   !end forall
-   !
  endif
  !
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  !
 end subroutine K_stored_in_a_slepc_matrix
-
-
-
 
 subroutine K_shell_matrix(iq,slepc_mat)
  !
@@ -537,8 +480,7 @@ subroutine K_shell_matrix(iq,slepc_mat)
  PetscErrorCode ierr
  external K_multiply_by_V_slepc
  !
- ! ALLOCATE HAYDOCK VECTORS
- !==================================
+ ! Allocate haydock vectors
  ! 
  call PARALLEL_Haydock_VEC_COMMs('assign')
  YAMBO_ALLOCATE(Slepc_v%Vi(BS_nT_grps))
@@ -546,11 +488,11 @@ subroutine K_shell_matrix(iq,slepc_mat)
  call BS_HAYVEC_alloc(Slepc_v%Vi)
  call BS_HAYVEC_alloc(Slepc_v%Vo) 
  !
- ! ALLOCATE SLEPC SHELL MATRIX
- !==================================
+ ! Allocate slepc shell matrix
  !
  ! We let petsc decide which part of the matrix in each core.
- ! In the future it should be done acording to the BS parallelization
+ ! TODO: In the future it should be done acording to the BS parallelization
+ ! to avoid the scattering vi (distributed) -> x (local) in K_multiply_by_V_slepc
  !
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,BS_H_dim,BS_H_dim,0,slepc_mat,ierr)
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
@@ -559,15 +501,12 @@ subroutine K_shell_matrix(iq,slepc_mat)
  call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
  call MatSetUp(slepc_mat,ierr)
  !
- ! ALLOCATE BS STUFF
- !==================================
+ ! Allocate BS stuff
  !
  call BS_mat_alloc_BSS()
- !
  call fill_eh_dipoles()
  !
- ! MAKE THE DIAGONAL OF THE MATRIX REAL
- !=====================================
+ ! make the diagonal of the matrix real
  ! 
  do i_B=1,n_BS_blks
    !
@@ -585,10 +524,8 @@ subroutine K_shell_matrix(iq,slepc_mat)
    endif
    !
  enddo
+ !
 end subroutine K_shell_matrix
-
-
-
 
 subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
@@ -617,21 +554,17 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  Mat                  :: slepc_mat
  integer              :: n, i_g, rank, i_c, ierr, H_pos(1), start_index
  !
- !
- ! copy input vector vi -> Vi
- !============================
+ ! create scattering context vi (distributed) -> x (local)
  !
  call VecScatterCreateToAll(vi,ctx,x,ierr);
  !
- ! scatter as many times as you need
- !
+ ! scatter from vi (distributed) -> x (local)
+ ! 
  call VecScatterBegin(ctx,vi,x,INSERT_VALUES,SCATTER_FORWARD,ierr);
  call VecScatterEnd(ctx,vi,x,INSERT_VALUES,SCATTER_FORWARD,ierr);
  !
- !call VecGetArrayReadF90(x,xx,ierr)
- !write(*,*) xx
- !call VecRestoreArrayReadF90(x,xx,ierr)
- !
+ ! from x (local) build Slepc%Vi
+ ! 
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
@@ -648,11 +581,12 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  call VecScatterDestroy(ctx,ierr);
  call VecDestroy(x,ierr);
  !
- !use the haydock routine to calculate the matrix-vector product
+ ! use the haydock routine to calculate the BSE auxiliaxy hamiltonian matrix-vector product
+ ! Slepc_v%Vo = H Slepc_v%Vi
  !
  call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo, 1 )
  !
- !copy output vector Vo -> vo
+ ! copy output vector Vo -> vo (distributed)
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -665,12 +599,8 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
    enddo
  enddo
  !
- !call exit()
  call VecAssemblyBegin(vo,ierr)
  call VecAssemblyEnd(vo,ierr)
  !
- !call VecGetArrayReadF90(vo,xx,ierr)
- !write(*,*) xx
- !call VecRestoreArrayReadF90(vo,xx,ierr)
 end subroutine
 

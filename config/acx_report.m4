@@ -84,6 +84,14 @@ if test "$compile_lapack" = "yes" ; then LAPACK_str="I"; fi
 BLAS_str="E"
 if test "$compile_blas" = "yes" ; then BLAS_str="I"; fi
 
+PET_str="-"
+if test "$enable_petsc"  = "yes" ; then PET_str="E"; fi
+if test "$compile_petsc" = "yes" ; then PET_str="I"; fi
+
+SLE_str="-"
+if test "$enable_slepc"  = "yes" ; then SLE_str="E"; fi
+if test "$compile_slepc" = "yes" ; then SLE_str="I"; fi
+
 SLK_str="-"
 if test "$enable_scalapack" = "yes" ; then SLK_str="E"; fi
 if test "$compile_slk" = "yes" ; then SLK_str="I"; fi
@@ -116,6 +124,8 @@ AC_SUBST(PW_str)
 AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
 AC_SUBST(SLK_str)
+AC_SUBST(PET_str)
+AC_SUBST(SLE_str)
 AC_SUBST(BLACS_str)
 AC_SUBST(OPENMP_str)
 AC_SUBST(BGQ_str)

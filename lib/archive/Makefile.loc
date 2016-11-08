@@ -3,8 +3,8 @@
 #
 include ./package.list
 #
-all: $(tarball_iotk) $(tarball_netcdf) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) $(tarball_slatec) $(tarball_blacs) $(tarball_scalapack)
-# $(tarball_petsc) $(tarball_slepc)
+all: $(tarball_iotk) $(tarball_netcdf) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) $(tarball_slatec) \
+     $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_slepc)
 #
 $(tarball_iotk): 
 	@+TARBALL="$(tarball_iotk)"     ; URL="$(url_iotk)"     ; LIB="IOTK"; $(getsrc)
@@ -22,10 +22,10 @@ $(tarball_blacs):
 	@+TARBALL="$(tarball_blacs)"    ; URL="$(url_blacs)"    ; LIB="BLACS"; $(getsrc)
 $(tarball_scalapack):
 	@+TARBALL="$(tarball_scalapack)"; URL="$(url_scalapack)"; LIB="SCALAPACK"; $(getsrc)
-#$(tarball_petsc):
-#	@+TARBALL="$(tarball_petsc)"    ; URL="$(url_petsc)"    ; LIB="PETSC"; $(getsrc)
-#$(tarball_slepc):
-#	@+TARBALL="$(tarball_slepc)"    ; URL="$(url_slepc)"    ; LIB="SLEPC"; $(getsrc)
+$(tarball_petsc):
+	@+TARBALL="$(tarball_petsc)"    ; URL="$(url_petsc)"    ; LIB="PETSC"; $(getsrc)
+$(tarball_slepc):
+	@+TARBALL="$(tarball_slepc)"    ; URL="$(url_slepc)"    ; LIB="SLEPC"; $(getsrc)
 #
 # cleaning
 #

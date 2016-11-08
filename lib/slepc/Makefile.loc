@@ -1,0 +1,43 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libslepc.a
+PACKAGE=$(pkgname_slepc)
+TARBALL=$(tarball_slepc)
+#
+# MAIN target
+#
+all: package-ready-stamp
+#
+uncompress-stamp:
+	( cd ../archive ; if ! test -e $(TARBALL) ; then \
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
+	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
+	touch uncompress-stamp
+
+configure-stamp: uncompress-stamp
+	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
+	cp ../Makefile.lib  Makefile ); \
+	fi
+	touch configure-stamp
+	
+package-ready-stamp: uncompress-stamp configure-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  $(make)  ) ; fi
+	touch package-ready-stamp
+#
+# cleaning
+#
+clean:
+	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@- rm -rf ./bin ./lib ./include package-ready-stamp configure-stamp
+
+clean_all: 
+	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
+	@- rm -rf uncompress-stamp
+

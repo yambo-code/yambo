@@ -48,6 +48,6 @@ url_lapack=http://qe-forge.org/gf/download/frsrelease/232/1054/$(tarball_lapack)
 url_blacs=http://qe-forge.org/gf/download/frsrelease/233/1058/$(tarball_blacs)
 url_scalapack=http://qe-forge.org/gf/download/frsrelease/234/1056/$(tarball_scalapack)
 url_slatec=http://qe-forge.org/gf/download/frsrelease/235/1057/$(tarball_slatec)
-url_petsc=$(tarball_petsc)
-url_slepc=$(tarball_slepc)
+url_petsc=http://qe-forge.org/gf/download/frsrelease/236/1059/$(tarball_petsc)
+url_slepc=http://qe-forge.org/gf/download/frsrelease/237/1060/$(tarball_slepc)
 

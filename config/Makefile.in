@@ -40,6 +40,8 @@ do_etsf     = @compile_etsf@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
 do_libxc    = @compile_libxc@
+do_petsc    = @compile_petsc@
+do_slepc    = @compile_slepc@
 shell       = @SHELL@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
@@ -128,6 +130,10 @@ libs:
 	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
 	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	@+if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	@+if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
 get_extlibs:
 	@+mkdir lib/archive; \

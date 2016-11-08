@@ -30,6 +30,8 @@
 # [ @LAPACK_str@ ] LAPACK   : @LAPACK_LIBS@
 # [ @BLACS_str@ ] BLACS    : @BLACS_LIBS@
 # [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@ 
+# [ @PET_str@ ] PETSC    : @PETSC_LIBS@ 
+# [ @SLE_str@ ] SLEPC    : @SLEPC_LIBS@ 
 #
 #  OTHER
 # [ @LIBXC_str@ ] LibXC      : @LIBS_LIBXC@

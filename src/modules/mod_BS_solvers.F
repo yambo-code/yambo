@@ -96,8 +96,8 @@ module BS_solvers
    !
  end type K_Inversion_data
  !
- type(K_Inversion_data) :: K_INV_EPS
- type(K_Inversion_data) :: K_INV_PL
+ type(K_Inversion_data), save :: K_INV_EPS
+ type(K_Inversion_data), save :: K_INV_PL
  !
  ! Solvers (Temporary (LARGE) arrays to be used in solvers ONLY)
  !=========

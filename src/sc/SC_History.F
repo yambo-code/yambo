@@ -44,28 +44,6 @@ subroutine SC_History(it,E)
  character(schlen), SAVE :: E_file_name(2)
  character(schlen)       :: headers(SC_bands(2)*nkibz)
  !
- ! First I fix the degenerations
- !
- do i_spin=1,n_sp_pol
-   !
-   do ik=1,nkibz
-     !
-     ! Check for degenerate bands in the bare energies
-     !
-     call degeneration_finder(E_bare(:,ik,i_spin),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
-     !
-     do i_deg_grp=1,n_deg_grp
-       E_average=rZERO
-       do ib=first_el(i_deg_grp),first_el(i_deg_grp)+n_of_el(i_deg_grp)-1
-         E_average=E_average+E%E(ib,ik,i_spin)/real(n_of_el(i_deg_grp))
-       enddo
-       E%E(first_el(i_deg_grp):first_el(i_deg_grp)+n_of_el(i_deg_grp)-1,ik,i_spin)=E_average
-     enddo
-     !
-   enddo
-   !
- enddo
- !
  b_range(1)=max(n_full_bands-1,1)
  b_range(2)=b_range(1)+2
  max_kpt=min(nkibz,6) ! print only the fist 6 kpoints

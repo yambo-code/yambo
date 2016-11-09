@@ -55,8 +55,8 @@ CFGFILES = config/setup config/Makefile config/report  \
            lib/install/make_iotk.inc
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
-CLEANS   = clean_fast clean clean_extlibs clean_all distclean
-PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr \
+CLEANS   = clean_fast clean clean_all distclean
+PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl \
            ypp_ph ypp_sc ypp_rt ypp_magnetic 
 BROKEN   = yambo_surf ypp_surf 
 DEBUG    = 
@@ -101,7 +101,6 @@ YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
                      pol_function bse sc 
 YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface surf tddft pol_function bse
-YDBLIBS            = $(BASIC_LIBS) 
 
 nothing: 
 	@$(make_message)

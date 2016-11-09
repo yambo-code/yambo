@@ -31,7 +31,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
 &                        global_gauge,Dipole_approach,Chi_linalg_mode, &
-&                        l_X_terminator,X_terminator_Kind,X_terminator_E
+&                        X_terminator_Kind,X_terminator_E
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
@@ -48,7 +48,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        BS_n_g_W,BS_n_g_exch
  use BS_solvers,    ONLY:BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
+&                        BSS_Wd,K_INV_EPS,K_INV_PL
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -289,8 +289,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
- ! 
- !
  !
  ! BSE/BSK
  !
@@ -306,7 +304,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! GPL_INCLUDE_END
  !
- !
  ! GPL_EXCLUDE_START
  !
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
@@ -316,7 +313,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_END
  !
- call it(defs,'BSSmod',    '[BSS] (h)aydock/(s)lepc/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
 &        K_INV_EPS%PERT_FULL_ratio)
@@ -327,7 +324,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'BSEPSInvTrs', '[BSS EPS] Inversion treshold. Relative[o/o](>0)/Absolute(<0)',K_INV_EPS%treshold)
  call it(defs,'BSPLInvTrs',  '[BSS PL] Inversion treshold',K_INV_PL%treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
- call it(defs,'BSSNEig',   '[BSS] Number of eigenvalues to compute',BSS_n_eig)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
@@ -707,9 +703,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
        name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
        call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
 &              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
-       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg"
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_INV"
        call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
-&              CPU_structure(i_s)%nCPU_lin_algebra,verb_level=V_parallel)
+&              CPU_structure(i_s)%nCPU_lin_algebra_INV,verb_level=V_parallel)
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_DIAGO"
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+&              CPU_structure(i_s)%nCPU_lin_algebra_DIAGO,verb_level=V_parallel)
      enddo
      !
    end subroutine

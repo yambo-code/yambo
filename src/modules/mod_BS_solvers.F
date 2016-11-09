@@ -154,12 +154,10 @@ module BS_solvers
    subroutine BS_mat_alloc( )
      use pars,      ONLY:cZERO
      use memory_m,  ONLY:mem_est
-     
      allocate(BS_mat(BS_H_dim,BS_H_dim))
      call mem_est('BS_mat',(/size(BS_mat)/))
      BS_mat    = cZERO
-
-     call BS_mat_alloc_BSS() 
+     call BS_mat_alloc_BSS()
    end subroutine
    !
    subroutine BS_mat_alloc_BSS( )
@@ -185,13 +183,11 @@ module BS_solvers
        if (.not.W_is_allocated) W_is_allocated=allocated(BS_T_grp(i_g)%W)
        if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
      enddo
-
      if (W_is_allocated) then
        allocate(BSS_eh_W(BS_K_dim))
        call mem_est("BSS_eh_W",(/BS_K_dim/),(/SP/))
        BSS_eh_W = rZERO
      endif
-
      if (Z_is_allocated) then
        allocate(BSS_eh_Z(BS_K_dim))
        call mem_est("BSS_eh_Z",(/BS_K_dim/))

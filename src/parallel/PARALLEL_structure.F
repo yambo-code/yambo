@@ -25,7 +25,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  !
  use parallel_m,  ONLY:ncpu,myid,INTER_CHAIN,nchains_group,n_groups,INTRA_CHAIN,&
 &                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
-&                      ncpu_chain,mpi_comm_world
+&                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
  !
  implicit none
  !
@@ -34,7 +34,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  !
  ! Work Space 
  !
- integer     ::i_err,ID(n_elements),i_cpu,i_chain,i_chain_lim(2),chain_now,i_order,&
+ integer     ::ID(n_elements),i_cpu,i_chain,i_chain_lim(2),chain_now,i_order,&
 &              tmp_comm_inter,tmp_comm_intra,i_structure
  !
  if (ncpu==1) then
@@ -105,14 +105,8 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  do i_chain=i_chain_lim(2),i_chain_lim(1),-1
    i_order=i_chain-nchains_group(chain_now)+1
    !
-   call MPI_COMM_SPLIT(tmp_comm_intra,INTRA_CHAIN(i_chain)%my_CHAIN,myid,INTRA_CHAIN(i_chain)%COMM,i_err)
+   call CREATE_the_COMM(tmp_comm_intra,INTRA_CHAIN(i_chain),myid)
    tmp_comm_intra = INTRA_CHAIN(i_chain)%COMM
-   !
-   call MPI_COMM_RANK(INTRA_CHAIN(i_chain)%COMM,INTRA_CHAIN(i_chain)%CPU_id,i_err)
-   !
-   INTER_CHAIN(i_chain)%my_CHAIN=INTRA_CHAIN(i_chain)%my_CHAIN
-   INTER_CHAIN(i_chain)%n_CPU=ncpu/product(ncpu_chain(i_chain_lim(1):i_chain))
-   INTER_CHAIN(i_chain)%chain_order=i_order
    !
  enddo
  !
@@ -122,10 +116,12 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  !
  do i_chain=i_chain_lim(1),i_chain_lim(2)
    !
-   call MPI_COMM_SPLIT(tmp_comm_inter,INTRA_CHAIN(i_chain)%CPU_id,myid,INTER_CHAIN(i_chain)%COMM,i_err)
-   tmp_comm_inter = INTER_CHAIN(i_chain)%COMM
+   INTER_CHAIN(i_chain)%my_CHAIN   =INTRA_CHAIN(i_chain)%CPU_id
+   INTER_CHAIN(i_chain)%n_CPU      =ncpu/product(ncpu_chain(i_chain_lim(1):i_chain))
+   INTER_CHAIN(i_chain)%chain_order=i_order
    !
-   call MPI_COMM_RANK(INTER_CHAIN(i_chain)%COMM,INTER_CHAIN(i_chain)%CPU_id,i_err)
+   call CREATE_the_COMM(tmp_comm_inter,INTER_CHAIN(i_chain),myid)
+   tmp_comm_inter = INTER_CHAIN(i_chain)%COMM
    !
  enddo
  !

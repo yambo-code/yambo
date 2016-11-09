@@ -23,13 +23,14 @@
 !
 subroutine SC_History(it,E)
  !
- use pars,           ONLY:schlen,SP
+ use pars,           ONLY:schlen,SP,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:n_full_bands,levels,n_sp_pol
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:of_open_close,msg
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
+ use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions,E_bare
+ use vec_operate,    ONLY:degeneration_finder
  implicit none
  !
  integer      :: it
@@ -37,9 +38,33 @@ subroutine SC_History(it,E)
  !
  ! Work Space
  !
- integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt,b_range(2)
+ integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt,b_range(2),i_deg_grp,&
+&            first_el(SC_bands(2)),n_of_el(SC_bands(2)),n_deg_grp
+ real(SP) :: E_average
  character(schlen), SAVE :: E_file_name(2)
  character(schlen)       :: headers(SC_bands(2)*nkibz)
+ !
+ ! First I fix the degenerations
+ !
+ do i_spin=1,n_sp_pol
+   !
+   do ik=1,nkibz
+     !
+     ! Check for degenerate bands in the bare energies
+     !
+     call degeneration_finder(E_bare(:,ik,i_spin),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+     !
+     do i_deg_grp=1,n_deg_grp
+       E_average=rZERO
+       do ib=first_el(i_deg_grp),first_el(i_deg_grp)+n_of_el(i_deg_grp)-1
+         E_average=E_average+E%E(ib,ik,i_spin)/real(n_of_el(i_deg_grp))
+       enddo
+       E%E(first_el(i_deg_grp):first_el(i_deg_grp)+n_of_el(i_deg_grp)-1,ik,i_spin)=E_average
+     enddo
+     !
+   enddo
+   !
+ enddo
  !
  b_range(1)=max(n_full_bands-1,1)
  b_range(2)=b_range(1)+2

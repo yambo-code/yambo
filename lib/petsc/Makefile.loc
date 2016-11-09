@@ -37,7 +37,7 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) ) ; fi
+	( cd $(PACKAGE);  $(make) -j1 PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) ) ; fi
 	#
 	if test -d ./lib      ; then rm -rf ./lib      ; fi
 	if test -d ./include  ; then rm -rf ./include  ; fi

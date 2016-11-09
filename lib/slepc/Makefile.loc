@@ -31,7 +31,7 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) SLEPC_DIR=$(PWD)/$(PACKAGE) \
+	( cd $(PACKAGE);  $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) \
 	  PETSC_DIR=$(PWD)/../petsc/$(pkgname_petsc) \
 	  PETSC_ARCH=$(PETSC_ARCH) ) ; fi
 	#

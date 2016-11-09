@@ -365,9 +365,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  call timing('T_space IP',OPR='stop')
 #endif
  !
- contains
-   !
 #if defined _PL
+ !
+ contains
    !
    subroutine GET_the_rotated_P( )
      !

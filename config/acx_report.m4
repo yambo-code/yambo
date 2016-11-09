@@ -59,7 +59,6 @@ else
   LIBXC_str="I"
 fi
 
-
 TIME_profile_str="-"
 if test "$enable_time_profile" = "yes" ; then TIME_profile_str="X"; fi
 
@@ -71,7 +70,9 @@ fi
 
 OPENMP_str="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_str="X"; fi
-
+#
+# OPTIONALS
+#
 ETSF_str="-"
 if test "$compile_e2y" = "yes" ; then
   ETSF_str="E"
@@ -85,19 +86,23 @@ BLAS_str="E"
 if test "$compile_blas" = "yes" ; then BLAS_str="I"; fi
 
 PET_str="-"
-if test "$enable_petsc"  = "yes" ; then PET_str="E"; fi
-if test "$compile_petsc" = "yes" ; then PET_str="I"; fi
+if test "$enable_petsc"  = "yes" ; 
+ then PET_str="E"; 
+ if test "$compile_petsc" = "yes" ; then PET_str="I"; fi
+fi
 
 SLE_str="-"
-if test "$enable_slepc"  = "yes" ; then SLE_str="E"; fi
-if test "$compile_slepc" = "yes" ; then SLE_str="I"; fi
+if test "$enable_slepc"  = "yes" ; 
+ then SLE_str="E"; 
+ if test "$compile_slepc" = "yes" ; then SLE_str="I"; fi
+fi
 
 SLK_str="-"
 if test "$enable_scalapack" = "yes" ; then SLK_str="E"; fi
-if test "$compile_slk" = "yes" ; then SLK_str="I"; fi
+if test "$compile_slk"      = "yes" ; then SLK_str="I"; fi
 
 BLACS_str="-"
-if test "$enable_scalapack" = "yes" ; then BLACS_str="E"; fi
+if test "$enable_blacs"  = "yes" ; then BLACS_str="E"; fi
 if test "$compile_blacs" = "yes" ; then BLACS_str="I"; fi
 
 BGQ_str="-"

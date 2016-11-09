@@ -5,7 +5,7 @@
 #
 include ../../config/setup
 include ../archive/package.list
-
+#
 LIBNAME=libpetsc.a
 PACKAGE=$(pkgname_petsc)
 TARBALL=$(tarball_petsc)
@@ -29,7 +29,7 @@ configure-stamp: uncompress-stamp
       --with-shared-libraries=0 \
 	  --with-cc=$(pcc) \
 	  --with-fc=$(pf90) \
-	  --with-blas-lapack-lib='$(lblas) $(llapack)' \
+	  --with-blas-lapack-lib="$(lblas) $(llapack)" \
 	  --with-scalar-type="complex" \
 	  --with-precision="single" ); \
 	fi

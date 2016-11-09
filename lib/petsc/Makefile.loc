@@ -26,6 +26,7 @@ configure-stamp: uncompress-stamp
 	  ./configure \
 	  --PETSC_ARCH=$(PETSC_ARCH) \
 	  --with-cxx=0 \
+      --with-shared-libraries=0 \
 	  --with-cc=$(pcc) \
 	  --with-fc=$(pf90) \
 	  --with-blas-lapack-lib='$(lblas) $(llapack)' \
@@ -37,6 +38,16 @@ configure-stamp: uncompress-stamp
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) ) ; fi
+	#
+	if test -d ./lib      ; then rm -rf ./lib      ; fi
+	if test -d ./include  ; then rm -rf ./include  ; fi
+	#
+	cp -r $(PACKAGE)/$(PETSC_ARCH)/lib .
+	cp -r $(PACKAGE)/$(PETSC_ARCH)/include .
+	#
+	mv ./lib/*.a $(libdir)
+	mv ./include/*.mod ./include/*.h $(includedir)
+	#
 	touch package-ready-stamp
 #
 # cleaning

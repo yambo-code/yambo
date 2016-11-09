@@ -34,6 +34,16 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	( cd $(PACKAGE);  $(make) SLEPC_DIR=$(PWD)/$(PACKAGE) \
 	  PETSC_DIR=$(PWD)/../petsc/$(pkgname_petsc) \
 	  PETSC_ARCH=$(PETSC_ARCH) ) ; fi
+	#
+	if test -d ./lib      ; then rm -rf ./lib      ; fi
+	if test -d ./include  ; then rm -rf ./include  ; fi
+	#
+	cp -r $(PACKAGE)/$(PETSC_ARCH)/lib .
+	cp -r $(PACKAGE)/$(PETSC_ARCH)/include .
+	#
+	mv ./lib/*.a $(libdir)
+	mv ./include/*.mod ./include/*.h $(includedir)
+	#
 	touch package-ready-stamp
 #
 # cleaning

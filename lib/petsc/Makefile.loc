@@ -9,6 +9,7 @@ include ../archive/package.list
 LIBNAME=libpetsc.a
 PACKAGE=$(pkgname_petsc)
 TARBALL=$(tarball_petsc)
+PETSC_ARCH=yambo_single_complex
 #
 # MAIN target
 #
@@ -23,7 +24,7 @@ uncompress-stamp:
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	  ./configure \
-	  --PETSC_ARCH=yambo \
+	  --PETSC_ARCH=$(PETSC_ARCH) \
 	  --with-cxx=0 \
 	  --with-cc=$(pcc) \
 	  --with-fc=$(pf90) \
@@ -35,13 +36,13 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) PETSC_DIR=$(shell pwd)/$(PACKAGE) PETSC_ARCH=yambo ) ; fi
+	( cd $(PACKAGE);  $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) ) ; fi
 	touch package-ready-stamp
 #
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  rm -rf $(PETSC_ARCH) ) ; fi
 	@- rm -rf ./bin ./lib ./include package-ready-stamp configure-stamp
 
 clean_all: 

@@ -6,7 +6,7 @@
 
 include make.inc
 
-all: blaslib lapacklib 
+all: blaslib cblaslib lapacklib 
 
 clean: cleanlib cleantesting cleanblas_testing cleancblas_testing
 

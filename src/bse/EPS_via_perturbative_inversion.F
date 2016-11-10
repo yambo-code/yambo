@@ -86,8 +86,10 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
      call M_by_V_omp('n',n,BS_mat,R_x_D_nm1(:,1),R_x_D_n(:,1))
      if (n_loop==2) call M_by_V_omp('n',n,conjg(BS_mat),R_x_D_nm1(:,2),R_x_D_n(:,2))
    else
+#if defined _SCALAPACK
      call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,1),R_x_D_n(:,1))
      if (n_loop==2) call PARALLEL_M_by_V('C',n,K_slk,R_x_D_nm1(:,2),R_x_D_n(:,2))
+#endif
    endif
    !
    R_x_D_n(:,1)=Lo(:,1)*R_x_D_n(:,1)

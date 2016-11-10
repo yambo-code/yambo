@@ -150,6 +150,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  if (BLACS_structure_in_use) then
    !
+#if defined _SCALAPACK
+   !
    call msg('rs','[LA] BLACS matrix filling')
    !
    ! Prepare the BLACS matrices (reference, K_slk and local, K_inv_slk)
@@ -162,6 +164,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    call K_diagonal(iq,"rm_OCC DIAG")
    !
    if (FULL) call SLK_matrix_duplicate( "none", K_slk, K_inv_slk )
+   !
+#endif
    !
  else
    !

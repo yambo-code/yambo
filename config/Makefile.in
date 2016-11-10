@@ -265,9 +265,7 @@ define mksrc
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
    ./sbin/make_makefile.sh $$XPATH/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
-   cd $$XPATH/$$ldir ; \
-   $(MAKE) VPATH=$$VPATH/$$ldir -f Makefile.locks ; \
-   $(MAKE) VPATH=$$VPATH/$$ldir -f Makefile.archive || exit "$$?" ; cd ../../; \
+   cd $$XPATH/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../ ; \
   fi ; \
  done
 endef
@@ -283,9 +281,7 @@ define mk_ypp_src
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
    ./sbin/make_makefile.sh $$XPATH/$$ldir lib_ypp_$$ldir.a .objects l $(xcpp) $$ADF ; \
-   cd $$XPATH/$$ldir ; \
-   $(MAKE) VPATH=$$VPATH/$$ldir -f Makefile.locks ; \
-   $(MAKE) VPATH=$$VPATH/$$ldir -f Makefile.archive || exit "$$?" ; cd ../../; \
+   cd $$XPATH/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; \
   fi ; \
  done
 endef
@@ -299,9 +295,7 @@ define mklib_internal
     cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
    fi ; \
    ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $(xcpp) $$ADF ; \
-   cd $$DIR2GO/$$ldir ; \
-   $(MAKE) VPATH=$$VPATH/$$ldir -f Makefile.locks ; \
-   $(MAKE) VPATH=$$VPATH/$$ldir -f Makefile.archive || exit "$$?" ; cd ../../; \
+   cd $$DIR2GO/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; \
   fi \
  done
 endef
@@ -367,8 +361,7 @@ endef
 # CLEANING
 #
 define objects_clean
- find . \( -name '*.o' -o -name 'Makefile' -o -name 'Makefile.archive' -o -name '*.f90' \
-        -o -name 'Makefile.locks' \
+ find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name 'make.dep' \) \
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \

@@ -24,6 +24,7 @@
 #
 os="@build_os@"
 cpp="@CPP@"
+fpp="@FPP@"
 cppflags="@C_AS_CPP_FLAGS@"
 ECHO_N="@ECHO_N@"
 PREFIX="@MKMF_PREFIX@"
@@ -81,7 +82,7 @@ llibinclude="\$(netcdf_idir)"
 #
 case $target in
   yambo*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lpetsc) \$(lslepc)"
+   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir) \$(slepc_idir)"
     ;;
@@ -104,21 +105,19 @@ case $target in
 esac
 
 cat config/setup >>$cdir/Makefile
-cat << EOF >> $cdir/Makefile
-fc=$fc
-fcflags=$fcflags
-fcuflags=$fcuflags
-llibs=$llibs
-linclude=$linclude
-llibinclude=$llibinclude
-lf90include=$lf90include $llibinclude
-mfiles=find . -name '*.mod'
-target=$target
-dmpi=$dmpi
-dopts=$dopts -D_\$(os)
-lock_file=$lock_file
-dep_file=$dep_file
-EOF
+echo "fc=$fc" >> $cdir/Makefile
+echo "fcflags=$fcflags" >> $cdir/Makefile
+echo "fcuflags=$fcuflags" >> $cdir/Makefile
+echo "llibs=$llibs" >> $cdir/Makefile
+echo "linclude=$linclude" >> $cdir/Makefile
+echo "llibinclude=$llibinclude" >> $cdir/Makefile
+echo "lf90include=$lf90include $llibinclude" >> $cdir/Makefile
+echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
+echo "target=$target" >> $cdir/Makefile
+echo "dmpi=$dmpi" >> $cdir/Makefile
+echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
+echo "lock_file=$lock_file" >> $cdir/Makefile
+echo "dep_file=$dep_file" >> $cdir/Makefile
 cp $cdir/$ofile $cdir/$ofile.c
 $cpp $cppflags $dopts -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile
 rm -f $cdir/$ofile.c
@@ -191,7 +190,7 @@ FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
 \$(FC_NOOPT_SRC):
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
 	@rm -f \$*\$(f90suffix)
@@ -201,7 +200,7 @@ FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 FC_LOCAL_SRC= sgfft.o
 \$(FC_LOCAL_SRC):
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fpp) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$*".F "
 
@@ -222,10 +221,12 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$(linclude) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	${rm_command}
 	@echo $ECHO_N \$*".F "
+EOF
+cat << EOF >> $cdir/Makefile
 .f.o:
 	${PREFIX}(eval \$(f77) -c \$(f77flags) \$(topdir)/$cdir/\$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "

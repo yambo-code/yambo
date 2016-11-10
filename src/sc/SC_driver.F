@@ -33,7 +33,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,magn_n,SC_rho_threshold,it_now,E_convergence, &
 &                         rho_convergence,magn_convergence,SC_R,V_xc_sc,l_sc_V_is_local,H_nl_sc,H_rotate,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,&
+&                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,l_sc_XC_is_local,&
 &                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_table_setup,it_to_start
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
@@ -177,6 +177,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    io_V=io_SC_components('V' ,E,ID(3))
  endif
  !
+ !
  if (l_SC_RESTART) then
    !
    if ((1._SP-SC_cycle_mixing)>1.E-5) call &
@@ -277,24 +278,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    do ik = 1, QP_nk 
      !
+     H_nl_sc=cZERO
+     !
      ! Build H_nl_sc
      !===============
      !
-     if (l_sc_V_is_local) then
-       !
-       H_nl_sc(:,:,:) = Ho(:,:,ik,:)/real(ncpu)
-       if(n_spinor==1) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo,'def')
-       if(n_spinor==2) then
-         call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
-         call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WFo,'xc ')
-       endif
-       !
-     else
-       !
-       H_nl_sc=cZERO
+     if (l_use_collisions .or. (.not.l_sc_V_is_local) ) then
        !
        ! Without collisions FOCK goes in QP_Vnl_xc and CORR in QP_Sc.
-       ! With    collisions FOCK and CORR go in QP_Vnl_xc
+       ! With    collisions FOCK and CORR (with also Hartree) go in QP_Vnl_xc
        !
        if (l_sc_fock.or.l_sc_sex.or.l_use_collisions) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
@@ -316,8 +308,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(3))
        io_V=io_SC_components('V',E,ID(3))
        !
-       H_nl_sc = H_nl_sc + Ho(:,:,ik,:)/real(ncpu)
-       !
        ! Mixing for non-local self-energies
        !====================================
        !
@@ -325,18 +315,26 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
           !
           if (it==1) H_nl_nm1(:,:,ik,:) = H_nl_sc
           !
-          H_nl_sc = H_nl_nm1(:,:,ik,:) + SC_cycle_mixing*(H_nl_sc - H_nl_nm1(:,:,ik,:))
+          H_nl_sc = SC_cycle_mixing*H_nl_sc + (1._SP-SC_cycle_mixing)*H_nl_nm1(:,:,ik,:)
           H_nl_nm1(:,:,ik,:)= H_nl_sc
           !
        endif
        !
-       ! Add V_Hartree
-       !
-       if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
-       !
      endif
      !
+     ! Add local V_xc
+     !
+     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,V_xc_sc,H_nl_sc,WFo,'xc ')
+     !
+     ! Add V_Hartree
+     !
+     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
+     !
      call PP_redux_wait(H_nl_sc)
+     !
+     ! Add Ho
+     !
+     H_nl_sc = H_nl_sc + Ho(:,:,ik,:)
      !
      ! Diagonalize H_nl_sc 
      !=====================
@@ -574,10 +572,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      allocate(rho_nm1(fft_size))
      call mem_est("rho_nm1",(/fft_size/),(/SP/))
+     rho_nm1=0._SP
      !
      if(n_spin>1) then
        allocate(magn_nm1(fft_size,3))
        call mem_est("magn_nm1",(/fft_size*3/),(/SP/))
+       magn_nm1=0._SP
      endif
      !
      allocate(E_xc(fft_size))
@@ -586,7 +586,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(V_xc_nm1(fft_size,n_spin))
      call mem_est("V_xc_nm1",(/size(V_xc_nm1)/))
      !
-     if (trim(SC_preconditioning)/="none") then
+     if (trim(SC_preconditioning)=="thomas-fermi") then
        allocate(delta_rho(fft_size))
        call mem_est("delta_rho",(/fft_size/),(/SP/))
        if(n_spin>1) then
@@ -610,6 +610,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (l_SC_nl_mix) then
        allocate(H_nl_nm1(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("H_nl_nm1",(/size(QP_Vnl_xc)/),(/2*SP/))
+       H_nl_nm1=cZERO
      endif
      !
    end subroutine
@@ -630,7 +631,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      deallocate(V_xc_nm1)
      call mem_est("V_xc_nm1")
      !
-     if (trim(SC_preconditioning)/="none") then
+     if (trim(SC_preconditioning)=="thomas-fermi") then
        deallocate(delta_rho)
        call mem_est("delta_rho")
        if(n_spin>1) then

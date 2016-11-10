@@ -111,11 +111,10 @@ changelog:
 all: interfaces
 	for target in $(PROJECTS); do $(MAKE) $$target ; done
 	for target in $(TARGETS); do $(MAKE) $$target ; done
-	for target in $(INTERFCS); do $(MAKE) $$target ; done
 libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
-	@+LIBS2DO="slatec";  DIR2GO="lib"; VPATH="$(topdir)/lib" ; $(mklib_ext)
+	@+LIBS2DO="slatec";  DIR2GO="lib"; VPATH="$(topdir)/lib" ; $(mklib_ext) ; $(mklib_internal)
 	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \

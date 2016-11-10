@@ -115,11 +115,11 @@ all: interfaces
 libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
-	@+LIBS2DO="slatec";  DIR2GO="lib"; VPATH="$(topdir)/lib" ; $(mklib_internal)
+	@+LIBS2DO="slatec";  DIR2GO="lib"; VPATH="$(topdir)/lib" ; $(mklib_ext)
 	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) 
 	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal); fi
@@ -130,13 +130,13 @@ libs:
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
 	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
 	@+if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
 	@+if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
 get_extlibs:
 	@+mkdir lib/archive; \
 	if [ $(topdir) != $(prefix) ] ; then \

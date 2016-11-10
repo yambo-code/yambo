@@ -102,8 +102,10 @@ if test "$enable_scalapack" = "yes" ; then SLK_str="E"; fi
 if test "$compile_slk"      = "yes" ; then SLK_str="I"; fi
 
 BLACS_str="-"
-if test "$enable_blacs"  = "yes" ; then BLACS_str="E"; fi
-if test "$compile_blacs" = "yes" ; then BLACS_str="I"; fi
+if ! test "$SLK_str" = "-" ; then
+ if test "$enable_scalapack" = "yes" ; then BLACS_str="E"; fi
+ if test "$compile_blacs"    = "yes" ; then BLACS_str="I"; fi
+fi
 
 BGQ_str="-"
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi

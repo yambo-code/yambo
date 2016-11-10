@@ -30,7 +30,8 @@ precision   = @dp_cpp@
 fft         = @FFT_CPP@
 xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
 debug       = @enable_debug@
-do_blas     = @compile_blas@
+do_blacs    = @compile_blacs@
+do_slk      = @compile_slk@
 do_lapack   = @compile_lapack@
 do_fftqe    = @compile_fftqe@
 do_iotk     = @compile_iotk@
@@ -39,6 +40,8 @@ do_etsf     = @compile_etsf@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
 do_libxc    = @compile_libxc@
+do_petsc    = @compile_petsc@
+do_slepc    = @compile_slepc@
 shell       = @SHELL@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
@@ -50,7 +53,7 @@ includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
+           sbin/objects_debug.sh driver/editor.h lib/archive/keep-extlibs-stamp \
            lib/install/make_iotk.inc
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
@@ -126,6 +129,14 @@ libs:
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) fi
+	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) fi
+	@+if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) fi
+	@+if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) fi
 get_extlibs:
 	@+mkdir lib/archive; \
 	if [ $(topdir) != $(prefix) ] ; then \
@@ -315,6 +326,8 @@ define mklib_ext
    if [ "$(topdir)" != "$(prefix)" ] ; then \
     if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
     cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/ ; \
+    cp $$VPATH/$$ldir/Makefile.lib $$DIR2GO/$$ldir/ ; \
+    cp $$VPATH/$$ldir/*inc* $$DIR2GO/$$ldir/ ; \
    fi ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
@@ -366,7 +379,10 @@ define objects_clean
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
-        grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | xargs rm -f
+        grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
+        grep -v '.*lapack*' | grep -v '.*blacs*' |  \
+        grep -v '.*scalapack*' | grep -v '.*slepc*' | \
+        grep -v '.*petsc*'  | xargs rm -f
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
@@ -378,7 +394,7 @@ endef
 define lib_ext_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "slatec" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; $(MAKE) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
@@ -395,7 +411,7 @@ define lib_ext_clean_all
   cd ../.. ; \
  fi
  find . -name 'xc*.h' -type f -print | xargs rm -f
- @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "slatec" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; \

@@ -1,13 +1,33 @@
 #
-# autoconf macro for detecting NetCDF module file
-# from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
+#        Copyright (C) 2000-2016 the YAMBO team
+#              http://www.yambo-code.org
 #
-AC_DEFUN([SLK_SETUP],[
+# Authors (see AUTHORS file for details): AM
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+#
+AC_DEFUN([AC_SLK_SETUP],[
 
 AC_ARG_WITH(blacs_libs,
-        [AC_HELP_STRING([--with-blacs-libs=<libs>], [Use BLACS libraries <libs>],[32])])
+        [AC_HELP_STRING([--with-blacs-libs=<libs>], [Use BLACS libraries <libs> or leave empty to use internal lib],[32])])
 AC_ARG_WITH(scalapack_libs,
-        [AC_HELP_STRING([--with-scalapack-libs=<libs>], [Use SCALAPACK libraries <libs>],[32])])
+        [AC_HELP_STRING([--with-scalapack-libs=<libs>], [Use SCALAPACK libraries <libs> or leave empty to use internal lib],[32])])
 
 SCALAPACK_LIBS=""
 BLACS_LIBS=""
@@ -60,7 +80,7 @@ if test "$mpibuild"  = "yes" && ! test "$with_blacs_libs" = "no" && ! test "$wit
   fi
   #
 fi
-
+#
 if test "$acx_blacs_ok" = "yes" &&  test "$acx_scalapack_ok" = "yes"; then
   enable_scalapack="yes"
   dscalapack="-D_SCALAPACK"
@@ -70,10 +90,26 @@ else
   BLACS_LIBS=""
   SCALAPACK_LIBS=""
 fi
+#
+compile_blacs="no"
+if test "$mpibuild"  = "yes" && test "$with_blacs_libs" = "yes"; then
+compile_blacs="yes"
+BLACS_LIBS="-lblacs -lblacs_init"
+fi
+compile_slk="no"
+if test "$mpibuild"  = "yes" && test "$with_scalapack_libs" = "yes"; then
+compile_slk="yes"
+SCALAPACK_LIBS="-lscalapack"
+enable_scalapack="yes"
+dscalapack="-D_SCALAPACK"
 
+fi
+#
 AC_SUBST(BLACS_LIBS)
 AC_SUBST(SCALAPACK_LIBS)
 AC_SUBST(enable_scalapack)
 AC_SUBST(dscalapack)
+AC_SUBST(compile_slk)
+AC_SUBST(compile_blacs)
 
 ])

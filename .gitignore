@@ -34,6 +34,9 @@ lib/*/etsf_io*
 lib/*/netcdf-*
 lib/*/iotk*
 lib/*/libxc-*
+lib/*/lapack-*
+lib/slatec/*.o
+lib/slatec/*.f
 #
 compile.sh
 sbin/make_makefile.sh
@@ -43,7 +46,6 @@ bin/*
 
 # source #
 ##########
-lib/local/.objects
 src/external_c/.objects
 *__lock*
 Makefile.locks

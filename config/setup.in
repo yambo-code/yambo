@@ -29,6 +29,7 @@ f77         = @F77@
 f77flags    = @FFLAGS@
 f77uflags   = @UFFLAGS@
 package_bugreport = @PACKAGE_BUGREPORT@
+shell       = @SHELL@
 #
 # Paths
 #

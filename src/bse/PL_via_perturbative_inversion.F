@@ -72,7 +72,9 @@ integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo)
    do ic=1,3
      !
      if (BLACS_structure_in_use) then
+#if defined _SCALAPACK
        call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,1,ic),R_x_D_n(:,1,ic))
+#endif
      else
        call M_by_V_omp('n',n,BS_mat,R_x_D_nm1(:,1,ic),R_x_D_n(:,1,ic))
      endif
@@ -82,7 +84,9 @@ integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo)
      !
      if (n_loop==2) then
        if (BLACS_structure_in_use) then
+#if defined _SCALAPACK
          call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,2,ic),R_x_D_n(:,2,ic))
+#endif
        else
          call M_by_V_omp('n',n,BS_mat,R_x_D_nm1(:,2,ic),R_x_D_n(:,2,ic))
        endif

@@ -68,7 +68,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
 &               dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),   &
 &               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),   &
 &               dE_tot(3),dE_kin(3),dE_ion(3),dE_h(3),dE_xc(3),dE_hxc(3),             &
-&               dE_h_sc(3),E_xc_sc(3),E_xc_ref(3),dE_Hxc_sc(3),                       &
+&               dE_h_sc(3),E_xc_sc(3),E_xc_ref(3),dE_xc_sc(3),dE_hxc_sc(3),           &
 &               Ho_limited(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol)
  !
  if (.not. RT_do_it('OUT') ) return
@@ -116,6 +116,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  E_xc_ref  =cZERO
  E_xc_sc   =cZERO
  dE_h_sc   =cZERO
+ dE_xc_sc  =cZERO
  dE_hxc_sc =cZERO
  !
  ! Non-interacting energy variation
@@ -153,9 +154,9 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  ! Sum of Hartree plus xc energy
  !
- dE_Hxc=dE_h+dE_xc
+ dE_hxc=dE_h+dE_xc
  !
- dE_tot=dE_kin+dE_ion+dE_Hxc
+ dE_tot=dE_kin+dE_ion+dE_hxc
  !
  if (.not.l_use_Hxc_collisions) then
    !
@@ -166,16 +167,14 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
      !  E_h[rho]=1/2 <V_h[rho]rho>= 1/2 int rho(r)rho(r')/|r-r'|
      !
      ! dE_h[rho]=E_h[rho]-E_h[rho0]
-     !          =<V_h[rho0]delta_rho> + <V_h[delta_rho]delta_rho>
+     !          =1/2*[ 2*(int rho0(r)rho(r')/|r-r'|) + (int drho(r)drho(r')/|r-r'|) ]
      ! 
-     ! Vrho0 is already computed at the IP level. Thus it only remains
-     ! dE_h = <V_h[delta_rho]delta_rho>
+     ! The first term is already computed at the IP level. Thus it only remains the second term
+     ! Remember that V_hartree_sc is constructed starting from drho
      !
-     call RT_average_operator(O_VALUE=dE_h_sc(1),O_REAL=V_hartree_sc,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_h_sc(2),O_REAL=V_hartree_sc,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_h_sc(3),O_REAL=V_hartree_sc,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
-     !
-     dE_tot = dE_tot + dE_h_sc
+     call RT_average_operator(O_VALUE=dE_h_sc(1),O_REAL=V_hartree_sc/2._SP,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(O_VALUE=dE_h_sc(2),O_REAL=V_hartree_sc/2._SP,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(O_VALUE=dE_h_sc(3),O_REAL=V_hartree_sc/2._SP,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
      !
    endif
    !
@@ -188,21 +187,21 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
      call RT_average_operator(O_VALUE=E_xc_ref(1),O_REAL=E_xc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
      call RT_average_operator(O_VALUE=E_xc_sc(1), O_REAL=E_xc,G=G_full            ,en=en,k=k,nK_mem=k%nibz)
      !
-     dE_tot = dE_tot + (E_xc_sc-E_xc_ref)
+     dE_xc_sc = (E_xc_sc-E_xc_ref)-dE_xc
      !
    endif
    !
+   ! Here I would need the Galitskii Migdal equation for the XC self energy in MBPT
+   !
  else
    !
-   ! HF or SEX energy
-   ! Davide: Is this correctly defined also in the SEX case 
-   !         or should I use the Galitskii Migdal equation ?
+   ! Davide: This is int V_rt(r)*drho(r)
+   !         - If V_rt contains only the Hartree term, this is twice the dE_h_sc
+   !         - If V_rt contains also the xc-term, this is not well defined ...
    !
-   call RT_average_operator(O_VALUE=dE_hxc(1),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
-   call RT_average_operator(O_VALUE=dE_hxc(2),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
-   call RT_average_operator(O_VALUE=dE_hxc(3),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
-   !
-   dE_tot = dE_tot + dE_hxc
+   call RT_average_operator(O_VALUE=dE_hxc_sc(1),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=dE_hxc_sc(2),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=dE_hxc_sc(3),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
    !
  endif
  !
@@ -266,6 +265,12 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  RT_E_thermodynamics=real(dE_tot,SP)
  RT_S_thermodynamics=dS_tot
+ !
+ dE_tot = dE_tot+dE_h_sc+dE_xc_sc+dE_hxc_sc
+ !
+ dE_h   = dE_h   +dE_h_sc
+ dE_xc  = dE_xc  +dE_xc_sc
+ dE_hxc = dE_hxc +dE_hxc_sc
  !
  ! Transfer the shadow variables
  !

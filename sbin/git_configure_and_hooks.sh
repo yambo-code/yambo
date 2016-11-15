@@ -40,10 +40,11 @@ chmod +x .git/hooks/pre-commit
 cat <<EOF > .git/hooks/prepare-commit-msg
 #!/bin/bash
 SOB=\$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/ \1/p')
-./sbin/make_message.pl -p "\$SOB"
 echo " " >> \$1
-cat commit.msg >> \$1
-rm commit.msg
+case "\$2,\$3" in
+  merge,) ;;
+  *) ./sbin/make_message.pl -p "\$SOB"; cat commit.msg >> \$1; rm commit.msg;;
+esac
 EOF
 chmod +x .git/hooks/prepare-commit-msg
 #

@@ -75,7 +75,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  ! At the beginning I do not have enough points to perform the fit. I, therefore,
  ! introduce blocks with an increasing number of elements
  !
- if (NE_i_time==NE_i_start_time) then
+ if (NE_i_time==NE_i_start_time .and. l_RT_lifetimes_extrapolation) then
    !
    do i1=1,N_intra_steps,max(N_intra_steps/10,1)
      call BUILD_up_group(N_blocks*i1,i1)

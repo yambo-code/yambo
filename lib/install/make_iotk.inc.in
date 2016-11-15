@@ -8,7 +8,7 @@
 
 .F.o:
 	@rm -f $*@F90SUFFIX@
-	(eval $(CPP) $(CPPFLAGS) $(dopts) $*.F > $*@F90SUFFIX@ ) > /dev/null
+	(eval $(FPP) $(IFLAGS) $(dopts) $*.F > $*@F90SUFFIX@ ) > /dev/null
 	(eval $(F90) $(F90FLAGS) -c $*@F90SUFFIX@ ) > /dev/null
 	@rm -f $*@F90SUFFIX@
 
@@ -25,6 +25,7 @@ make             = @MAKE@
 CC               = @CC@
 CFLAGS           = @CFLAGS@ $(IFLAGS)
 CPP              = @CPP@
+FPP              = @FPP@
 CPPFLAGS         = @C_AS_CPP_FLAGS@ $(IFLAGS)
 F90              = @F90@
 MPIF90           = @F90@

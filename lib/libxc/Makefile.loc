@@ -33,7 +33,7 @@ configure-stamp: uncompress-stamp
 	        --prefix=$(INSTALL_DIR) \
 	        CC="$(cc)" \
 	        FC="$(f90)" \
-		FCCPP="$(fccpp)" ); \
+		FCCPP="$(fpp)" ); \
 	fi
 	touch configure-stamp
 	

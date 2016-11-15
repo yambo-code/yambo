@@ -71,9 +71,13 @@ subroutine fft_3d(c,n,fft_sign,fftw_plan)
      call dfftw_plan_with_nthreads(n_threads_now)
    endif
 #endif
+#if defined _OPENMP
 !$omp single
+#endif
    call dfftw_plan_dft_3d(fftw_plan,n(1),n(2),n(3),c,c,i_sign,FFTW_ESTIMATE)
+#if defined _OPENMP
 !$omp end single
+#endif
  endif
  !
  call dfftw_execute_dft(fftw_plan,c,c)

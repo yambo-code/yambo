@@ -1,5 +1,5 @@
 #
-# [VER] @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@
+# [VER] @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@
 # 
 # - GENERAL CONFIGURATIONS -
 # 
@@ -37,6 +37,7 @@
 # - COMPILERS, MAKE and EDITOR -
 #
 # [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
+# [ FPP ] @FPP@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
 # [  C  ] @CC@ @CFLAGS@
 # [MPICC] @PCC@ @PCCFLAGS@
 # [ F90 ] @F90@ @FCFLAGS@ @OPENMPLIBS@

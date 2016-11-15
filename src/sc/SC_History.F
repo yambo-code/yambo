@@ -23,13 +23,14 @@
 !
 subroutine SC_History(it,E)
  !
- use pars,           ONLY:schlen,SP
+ use pars,           ONLY:schlen,SP,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:n_full_bands,levels,n_sp_pol
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:of_open_close,msg
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
+ use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions,E_bare
+ use vec_operate,    ONLY:degeneration_finder
  implicit none
  !
  integer      :: it
@@ -37,7 +38,9 @@ subroutine SC_History(it,E)
  !
  ! Work Space
  !
- integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt,b_range(2)
+ integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt,b_range(2),i_deg_grp,&
+&            first_el(SC_bands(2)),n_of_el(SC_bands(2)),n_deg_grp
+ real(SP) :: E_average
  character(schlen), SAVE :: E_file_name(2)
  character(schlen)       :: headers(SC_bands(2)*nkibz)
  !

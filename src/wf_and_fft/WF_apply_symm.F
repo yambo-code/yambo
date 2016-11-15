@@ -70,7 +70,7 @@ subroutine WF_apply_symm(isc,WF_symm)
  endif
  !
  if(n_spinor==1) then
-
+ !
 !$omp parallel do default(shared), private(i)
    do i = 1, fft_size
      WF_symm(i,1)=WF%c(fft_rot_r(i,isc(3)),i_wf(1))

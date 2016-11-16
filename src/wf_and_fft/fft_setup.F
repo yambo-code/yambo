@@ -74,7 +74,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        iv=nint(v1)
        if (i2==1.or.i1<=iG_max) forall(i3=1:3) ln(i3)=max(ln(i3),iv(i3))
 #if defined _FFTQE
-       if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=fft_setmap(iv,fft_dim)
+       if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=fft_setmap(iv,dffts)
 #else
        if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=1+modx(iv(1),fft_dim(1))+&
 &                                   modx(iv(2),fft_dim(2))*fft_dim(1)+&

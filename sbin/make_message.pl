@@ -129,4 +129,3 @@ print MSGFILE "Changes:\n";
 print MSGFILE "- \n\n";
 if($patchname) {print MSGFILE "Patch sent by: $patchname\n"};
 close(MSGFILE);
-print "Edit the commit.msg file and commit/patch with -F commit.msg \n";

@@ -154,7 +154,7 @@ subroutine K_diagonal(iq,what)
        enddo
      endif
      !
-     call PP_redux_wait(BS_diagonal)
+     if (BLACS_structure_in_use) call PP_redux_wait(BS_diagonal)
      !
    endif
    !

@@ -210,7 +210,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    call PARALLEL_index(PAR_IND_freqs,(/W%n_freqs/),COMM=PAR_COM_SLK_INDEX_local)
    call PARALLEL_live_message('Perturbative Inversion Frequencies',LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),&
 &                              TOTAL=W%n_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
-   call live_timing(' Perturbative inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
+   call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
    !
    call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !

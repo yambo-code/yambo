@@ -34,8 +34,9 @@
 # [ @SLE_str@ ] SLEPC    : @SLEPC_LIBS@ 
 #
 #  OTHER
-# [ @LIBXC_str@ ] LibXC      : @LIBS_LIBXC@
-# [ @MPI_LIB_str@ ] MPI library: @MPILIBS@
+# [ @LIBXC_str@ ] LibXC          : @LIBS_LIBXC@
+# [ @MPI_LIB_str@ ] MPI linking lib: @MPILIBS@
+# [ @MPI_LIB_str@ ] MPI root       : @MPIROOT@
 #
 # - COMPILERS, MAKE and EDITOR -
 #

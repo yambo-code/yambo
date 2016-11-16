@@ -355,19 +355,19 @@ AC_SUBST(compile_lapack)
 # ============================================================================
 # MPI
 mpibuild="yes" 
-AC_ARG_WITH(mpi-libs, AC_HELP_STRING([--with-mpi-libs=<lib>],[Use MPI library <lib>],[32]))
-case $with_mpi_libs in
+AC_ARG_WITH(mpi-lib,  AC_HELP_STRING([--with-mpi-lib=<lib>],[Use MPI specific library <lib> to link],[32]))
+case $with_mpi_lib in
   yes | "") ;;
   no ) 
     mpibuild="no" 
     ;;
   -* | */* | *.a | *.so | *.so.* | *.o)
-    MPILIBS="$with_mpi_libs"
-    enable_mpi_libs="yes"
+    MPILIBS="$with_mpi_lib"
+    enable_mpi_lib="yes"
     ;;
   *) 
-    MPILIBS="-l$with_mpi_libs"
-    enable_mpi_libs="yes"
+    MPILIBS="-l$with_mpi_lib"
+    enable_mpi_lib="yes"
     ;;
 esac
 if test "$mpibuild" = "yes"; then
@@ -400,7 +400,7 @@ if test "$mpibuild" = "yes"; then
  fi
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
- AC_SUBST(enable_mpi_libs)
+ AC_SUBST(enable_mpi_lib)
  AC_SUBST(MPILIBS)
  AC_SUBST(PF90)
  AC_SUBST(PF90FLAGS)

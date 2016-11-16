@@ -28,6 +28,7 @@ AC_ARG_WITH(blacs_libs,
         [AC_HELP_STRING([--with-blacs-libs=<libs>], [Use BLACS libraries <libs> or leave empty to use internal lib],[32])])
 AC_ARG_WITH(scalapack_libs,
         [AC_HELP_STRING([--with-scalapack-libs=<libs>], [Use SCALAPACK libraries <libs> or leave empty to use internal lib],[32])])
+AC_ARG_WITH(mpi-root, AC_HELP_STRING([--with-mpi-root=<path>],[MPI root directory (needed by BLACS)],[32]))
 
 SCALAPACK_LIBS=""
 BLACS_LIBS=""
@@ -91,20 +92,23 @@ else
   SCALAPACK_LIBS=""
 fi
 #
+AC_CHECK_FILE($with_mpi_root/include/mpif.h,[mpif_found="yes"],[mpif_found="no"])
+#
 compile_blacs="no"
-if test "$mpibuild"  = "yes" && test "$with_blacs_libs" = "yes"; then
+if test "$mpibuild"  = "yes" && test "$with_blacs_libs" = "yes" && test "$mpif_found" = "yes"; then
 compile_blacs="yes"
 BLACS_LIBS="-lblacs -lblacs_init"
-fi
 compile_slk="no"
-if test "$mpibuild"  = "yes" && test "$with_scalapack_libs" = "yes"; then
-compile_slk="yes"
-SCALAPACK_LIBS="-lscalapack"
-enable_scalapack="yes"
-dscalapack="-D_SCALAPACK"
-
+MPIROOT=$with_mpi_root
+ if test "$with_scalapack_libs" = "yes"; then
+  compile_slk="yes"
+  SCALAPACK_LIBS="-lscalapack"
+  enable_scalapack="yes"
+  dscalapack="-D_SCALAPACK"
+ fi
 fi
 #
+AC_SUBST(MPIROOT)
 AC_SUBST(BLACS_LIBS)
 AC_SUBST(SCALAPACK_LIBS)
 AC_SUBST(enable_scalapack)

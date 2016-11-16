@@ -670,6 +670,7 @@ dscalapack
 enable_scalapack
 SCALAPACK_LIBS
 BLACS_LIBS
+MPIROOT
 compile_petsc
 compile_slepc
 enable_slepc
@@ -688,7 +689,7 @@ PCC
 PF90FLAGS
 PF90
 MPILIBS
-enable_mpi_libs
+enable_mpi_lib
 mpi_cpp
 openmp_cpp
 MPICC
@@ -818,7 +819,7 @@ with_f90ext
 enable_open_mp
 with_blas_libs
 with_lapack_libs
-with_mpi_libs
+with_mpi_lib
 with_fft_libs
 with_fft_path
 with_fft_libdir
@@ -831,6 +832,7 @@ with_petsc_libs
 with_slepc_libs
 with_blacs_libs
 with_scalapack_libs
+with_mpi_root
 enable_iotk
 with_iotk_libs
 with_iotk_path
@@ -1514,7 +1516,7 @@ Optional Packages:
   --with-f90ext=<flags>         Use .<flags> Fortran 90 extension
   --with-blas-libs=<libs>       Use BLAS libraries <libs>
   --with-lapack-libs=<libs>     Use LAPACK libraries <libs>
-  --with-mpi-libs=<lib>         Use MPI library <lib>
+  --with-mpi-lib=<lib>          Use MPI specific library <lib> to link
   --with-fft-libs=<libs>        Link to FFT libraries
   --with-fft-path=<path>        Path to the FFT install directory
   --with-fft-libdir=<path>      Path to the FFT lib directory
@@ -1528,6 +1530,7 @@ Optional Packages:
                                 use internal lib
   --with-scalapack-libs=<libs>  Use SCALAPACK libraries <libs> or leave empty
                                 to use internal lib
+  --with-mpi-root=<path>        MPI root directory (needed by BLACS)
   --with-iotk-libs=<libs>       Use the IOTK library in <libs>
   --with-iotk-path=<path>       Path to the IOTK install directory
   --with-iotk-libdir=<path>     Path to the IOTK lib directory
@@ -9410,23 +9413,23 @@ if test x"$compile_lapack" = "xyes"; then LAPACK_LIBS="-llapack"; fi
 # MPI
 mpibuild="yes"
 
-# Check whether --with-mpi-libs was given.
-if test "${with_mpi_libs+set}" = set; then :
-  withval=$with_mpi_libs;
+# Check whether --with-mpi-lib was given.
+if test "${with_mpi_lib+set}" = set; then :
+  withval=$with_mpi_lib;
 fi
 
-case $with_mpi_libs in
+case $with_mpi_lib in
   yes | "") ;;
   no )
     mpibuild="no"
     ;;
   -* | */* | *.a | *.so | *.so.* | *.o)
-    MPILIBS="$with_mpi_libs"
-    enable_mpi_libs="yes"
+    MPILIBS="$with_mpi_lib"
+    enable_mpi_lib="yes"
     ;;
   *)
-    MPILIBS="-l$with_mpi_libs"
-    enable_mpi_libs="yes"
+    MPILIBS="-l$with_mpi_lib"
+    enable_mpi_lib="yes"
     ;;
 esac
 if test "$mpibuild" = "yes"; then
@@ -10441,6 +10444,12 @@ if test "${with_scalapack_libs+set}" = set; then :
 fi
 
 
+# Check whether --with-mpi-root was given.
+if test "${with_mpi_root+set}" = set; then :
+  withval=$with_mpi_root;
+fi
+
+
 SCALAPACK_LIBS=""
 BLACS_LIBS=""
 acx_blacs_ok="no"
@@ -10529,20 +10538,45 @@ else
   SCALAPACK_LIBS=""
 fi
 #
+as_ac_File=`$as_echo "ac_cv_file_$with_mpi_root/include/mpif.h" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $with_mpi_root/include/mpif.h" >&5
+$as_echo_n "checking for $with_mpi_root/include/mpif.h... " >&6; }
+if eval \${$as_ac_File+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "$with_mpi_root/include/mpif.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+eval ac_res=\$$as_ac_File
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
+  mpif_found="yes"
+else
+  mpif_found="no"
+fi
+
+#
 compile_blacs="no"
-if test "$mpibuild"  = "yes" && test "$with_blacs_libs" = "yes"; then
+if test "$mpibuild"  = "yes" && test "$with_blacs_libs" = "yes" && test "$mpif_found" = "yes"; then
 compile_blacs="yes"
 BLACS_LIBS="-lblacs -lblacs_init"
-fi
 compile_slk="no"
-if test "$mpibuild"  = "yes" && test "$with_scalapack_libs" = "yes"; then
-compile_slk="yes"
-SCALAPACK_LIBS="-lscalapack"
-enable_scalapack="yes"
-dscalapack="-D_SCALAPACK"
-
+MPIROOT=$with_mpi_root
+ if test "$with_scalapack_libs" = "yes"; then
+  compile_slk="yes"
+  SCALAPACK_LIBS="-lscalapack"
+  enable_scalapack="yes"
+  dscalapack="-D_SCALAPACK"
+ fi
 fi
 #
+
 
 
 
@@ -11492,7 +11526,7 @@ BGQ_str="-"
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
 
 MPI_LIB_str="-"
-if test "$enable_mpi_libs" = "yes" ; then MPI_LIB_str="E"; fi
+if test "$enable_mpi_lib" = "yes" ; then MPI_LIB_str="E"; fi
 
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
 

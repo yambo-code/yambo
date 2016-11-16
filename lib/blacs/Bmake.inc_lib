@@ -50,10 +50,9 @@
 #  -------------------------------------
 #  Name and location of the MPI library.
 #  -------------------------------------
-   MPIdir = /opt/mpich
+   MPIdir = $(mpidir)
    MPILIBdir = $(MPIdir)/lib/
    MPIINCdir = $(MPIdir)/include
-   MPILIB = $(MPILIBdir)/libmpich.a
 
 #  -------------------------------------
 #  All libraries required by the tester.

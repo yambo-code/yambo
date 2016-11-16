@@ -111,7 +111,7 @@ BGQ_str="-"
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
 
 MPI_LIB_str="-"
-if test "$enable_mpi_libs" = "yes" ; then MPI_LIB_str="E"; fi
+if test "$enable_mpi_lib" = "yes" ; then MPI_LIB_str="E"; fi
 
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
 

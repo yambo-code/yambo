@@ -21,12 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.1.1 r.14042 h.3c4ab80 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.1.1 r.13976 h.c43890d , yambo@yambo-code.org)
 SVERSION="4"
 SSUBVERSION="1"
 SPATCHLEVEL="1"
-SREVISION="14042"
-SHASH="3c4ab80"
+SREVISION="13976"
+SHASH="c43890d"
 AC_SUBST(SVERSION)
 AC_SUBST(SSUBVERSION)
 AC_SUBST(SPATCHLEVEL)
@@ -45,7 +45,6 @@ m4_include([config/fft.m4])
 m4_include([config/iotk.m4])
 m4_include([config/etsf_io.m4])
 m4_include([config/scalapack.m4])
-m4_include([config/petsc_slepc.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
@@ -64,6 +63,7 @@ AC_FUNC_REALLOC
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STAT
 AC_PROG_MAKE_SET
+
 # ============================================================================
 # check size of pointers to int - needed to decide the size of integer
 # arrays in fortran holding C pointers for FFTW
@@ -71,6 +71,7 @@ ACX_POINTER_SIZE
 SIZEOF_INT_P=$ac_pointersize
 AC_SUBST(SIZEOF_INT_P)
 # 
+
 # ============================================================================
 # Checks for programs.
 AC_PROG_CC
@@ -351,23 +352,31 @@ AC_SUBST(BLAS_LIBS)
 AC_SUBST(LAPACK_LIBS)
 AC_SUBST(compile_blas)
 AC_SUBST(compile_lapack)
+# ============================================================================
+# check for local libs needed
+# 
+DLARAN=""
+if test x"$acx_dlaran_ok" = xno; then
+ DLARAN="dlaran.o"
+fi
+AC_SUBST(DLARAN)
 #
 # ============================================================================
 # MPI
 mpibuild="yes" 
-AC_ARG_WITH(mpi-lib,  AC_HELP_STRING([--with-mpi-lib=<lib>],[Use MPI specific library <lib> to link],[32]))
-case $with_mpi_lib in
+AC_ARG_WITH(mpi-libs, AC_HELP_STRING([--with-mpi-libs=<lib>],[Use MPI library <lib>],[32]))
+case $with_mpi_libs in
   yes | "") ;;
   no ) 
     mpibuild="no" 
     ;;
   -* | */* | *.a | *.so | *.so.* | *.o)
-    MPILIBS="$with_mpi_lib"
-    enable_mpi_lib="yes"
+    MPILIBS="$with_mpi_libs"
+    enable_mpi_libs="yes"
     ;;
   *) 
-    MPILIBS="-l$with_mpi_lib"
-    enable_mpi_lib="yes"
+    MPILIBS="-l$with_mpi_libs"
+    enable_mpi_libs="yes"
     ;;
 esac
 if test "$mpibuild" = "yes"; then
@@ -400,7 +409,7 @@ if test "$mpibuild" = "yes"; then
  fi
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
- AC_SUBST(enable_mpi_lib)
+ AC_SUBST(enable_mpi_libs)
  AC_SUBST(MPILIBS)
  AC_SUBST(PF90)
  AC_SUBST(PF90FLAGS)
@@ -414,11 +423,8 @@ fi
 AC_LANG_PUSH(Fortran)
 AC_HAVE_FFT
 # ============================================================================
-# PETSC/SLEPC
-AC_PETSC_SLEPC_SETUP
-# ============================================================================
 # SCALAPACK/BLACS
-AC_SLK_SETUP
+SLK_SETUP
 # ============================================================================
 # IOTK library 
 AC_HAVE_IOTK
@@ -436,7 +442,7 @@ ACX_LIBXC
 ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
-                 src/wf_and_fft/sgfft.F 
+                 src/wf_and_fft/sgfft.F lib/local/.objects
                  sbin/make_makefile.sh sbin/objects_debug.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 AC_OUTPUT

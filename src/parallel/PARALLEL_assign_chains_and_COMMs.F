@@ -63,7 +63,7 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
  !
  i_chain(2)=nchains_group(chain_now)+1
  i_cpu(2)  =ncpu_chain(i_chain(2))*i_cpu(1)
- call PARALLEL_build_up_child_chains(i_chain(2),COMM_index_2,i_chain(1))
+ call PARALLEL_build_up_child_INTER_chains(i_chain(2),COMM_index_2,i_chain(1))
  if (present(COMM_A2A_2).and.i_cpu(2)/=ncpu) then
    call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_A2A_2)
  endif
@@ -75,9 +75,9 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
  i_chain(3)=nchains_group(chain_now)+2
  i_cpu(3)  =ncpu_chain(i_chain(3))*i_cpu(2)
  if (i_cpu(2)/=ncpu) then
-   call PARALLEL_build_up_child_chains(i_chain(3),COMM_index_3,i_chain(2))
+   call PARALLEL_build_up_child_INTER_chains(i_chain(3),COMM_index_3,i_chain(2))
  else
-   call PARALLEL_build_up_child_chains(i_chain(3),COMM_index_3,i_chain(1))
+   call PARALLEL_build_up_child_INTER_chains(i_chain(3),COMM_index_3,i_chain(1))
  endif
  if (present(COMM_A2A_3).and.i_cpu(3)/=ncpu) then
    call COMM_copy(INTER_CHAIN(i_chain(3)),COMM_A2A_3)
@@ -90,11 +90,11 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
  i_chain(4)=nchains_group(chain_now)+3
  i_cpu(4)  =ncpu_chain(i_chain(4))*i_cpu(3)
  if (i_cpu(3)/=ncpu) then
-   call PARALLEL_build_up_child_chains(i_chain(4),COMM_index_4,i_chain(3))
+   call PARALLEL_build_up_child_INTER_chains(i_chain(4),COMM_index_4,i_chain(3))
  else if (i_cpu(2)/=ncpu) then
-   call PARALLEL_build_up_child_chains(i_chain(4),COMM_index_4,i_chain(2))
+   call PARALLEL_build_up_child_INTER_chains(i_chain(4),COMM_index_4,i_chain(2))
  else
-   call PARALLEL_build_up_child_chains(i_chain(4),COMM_index_4,i_chain(1))
+   call PARALLEL_build_up_child_INTER_chains(i_chain(4),COMM_index_4,i_chain(1))
  endif
  !
  if(n_elements==4) return 

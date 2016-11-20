@@ -122,7 +122,8 @@ module parallel_m
    character(schlen)    :: ROLE_string = " "
    character(schlen)    :: Long_Description  = " "
    character(schlen)    :: Short_Description = " "
-   integer              :: nCPU_lin_algebra =0
+   integer              :: nCPU_lin_algebra_INV   =1
+   integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
  !      if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
@@ -143,7 +144,6 @@ module parallel_m
  integer          :: PARALLEL_CPU_used(MAX_N_OF_CHAINS) = 1
  character(4)     :: PARALLEL_CPU_role(MAX_N_OF_CHAINS) = " "
  integer          :: PARALLEL_n_structures_active = 0
- integer          :: PARALLEL_cpu_linear_algebra
  logical          :: linear_algebra_is_parallel = .false.
  !
  !... Logging CPUs ...
@@ -238,9 +238,6 @@ module parallel_m
  ! Specific MPI ID's ...
  !======================
  !
- ! ... linear algebra
- integer            :: PAR_IND_SLK_ID
- !
  ! ... QP
  integer            :: PAR_IND_QP_ID
  !
@@ -289,8 +286,9 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_NULL
  !
  ! ... linear algebra
- type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX
  type(MPI_comm),SAVE :: PAR_COM_SLK
+ type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_global
+ type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
  !
  ! ... RL vectors
  integer             :: PAR_nRL
@@ -393,6 +391,20 @@ module parallel_m
  end interface PP_bcast
  !
  contains
+   !
+   subroutine CREATE_the_COMM(WORLD, COMM, ID )
+     integer       :: WORLD,ID,i_err
+     type(MPI_comm):: COMM
+     call MPI_COMM_SPLIT(WORLD,COMM%my_CHAIN,ID,COMM%COMM,i_err)
+     call MPI_COMM_RANK(COMM%COMM,COMM%CPU_id,i_err)
+     call MPI_COMM_SIZE(COMM%COMM,COMM%n_CPU ,i_err)
+   end subroutine
+   !
+   integer function i_INTER_CHAIN(N_father,N_child)
+     ! Note that N_child/_father art the #cpu's in the two chains
+     integer :: N_father,N_child
+     i_INTER_CHAIN=(myid/N_father)*(N_father/N_child)+mod(myid,N_father/N_child)
+   end function
    !
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc

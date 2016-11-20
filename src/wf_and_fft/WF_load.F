@@ -204,9 +204,18 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
      WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
      deallocate(states_to_load)
-     return
    endif
  endif
+ !
+ ! AM 28 Sept 2016. When no states need to be loaded still the calculation
+ ! is not stopped. If we are in an HF calculation also the XC potential is calculated.
+ ! In that case the fft_size must be defined for all cpu's of the density COMM otherwise
+ ! the PP_redux in el_density hungs up forever
+ !
+ if (WF%space=='R') call fft_setup(iG_max,iGo_max,.false.)
+ if (WF%space=="R") fft_dim_loaded=fft_dim
+ !
+ if (.not.WF%to_load) return
  !
 #if defined _SC
  !
@@ -235,9 +244,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  endif
  !
 #endif
- !
- if (WF%space=='R') call fft_setup(iG_max,iGo_max,.false.)
- if (WF%space=="R") fft_dim_loaded=fft_dim
  !
  call WF_alloc(WF)
  !

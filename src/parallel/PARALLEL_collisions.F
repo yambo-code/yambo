@@ -46,6 +46,23 @@ subroutine PARALLEL_collisions( k, COLL )
  !   "qp"  -> QP (k,n,n')  
  !   "b"   -> m and PAR_IND_Bp_mat (this second is for the COLLISIONS case)
  !
+ ! Local XC
+ !==========
+ !                        _ \ _
+ !                       /  /  \
+ !              G_p{n,m}|       | p
+ !                       \_ _ _/
+ !                          | 
+ !                          | W
+ !                          |
+ !    (n,k)------>----------.---------->----(n',k)
+ !
+ ! "SC"="q.qp.b" 
+ !  
+ !   "q"   -> q 
+ !   "qp"  -> QP (k,n,n')  
+ !   "b"   -> m and PAR_IND_Bp_mat (this second is for the COLLISIONS case)
+ !
  ! REAL-TIME
  !===========
  !
@@ -88,6 +105,21 @@ subroutine PARALLEL_collisions( k, COLL )
  !  
  !   "k.b" -> (k,n,n')  
  !   "q"   -> q (BZ)
+ !   "qp"  -> Bp_mat (m,m')
+ !
+ ! Local XC
+ !==========
+ !                        _ \ _
+ !                       /  /  \
+ !              G_p{n,m}|       | p
+ !                       \_ _ _/
+ !                          | 
+ !                          | W
+ !                          |
+ !    (n,k)------>----------.---------->----(n',k)
+ !
+ !   "k.b" -> (k,n,n')  
+ !   "q"   -> q_fake (to span the "p= k-q")
  !   "qp"  -> Bp_mat (m,m')
  !
  ! e-photon correlation 

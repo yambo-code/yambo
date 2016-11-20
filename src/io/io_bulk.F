@@ -43,7 +43,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1
  ! Work Space
  !
  integer, allocatable :: var_dim(:),ipos_loc(:),isize_loc(:)
- integer              :: j1,dims
+ integer              :: j1,dims,shuffle,deflate,deflate_level
  !
  !====================
  !== NETCDF I/O ======
@@ -58,11 +58,16 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1
      do j1=1,size(VAR_SZ)
        var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1))
      enddo
+     shuffle=0
+     deflate=1
+     deflate_level=2
      call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID)))
+     call netcdf_call(nf90_def_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level))
      call netcdf_call(nf90_enddef(io_unit(ID))) 
      deallocate(var_dim)
    else if (read_is_on(ID)) then
      call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)))
+     call netcdf_call(nf90_inq_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level))
    endif
    return
  endif

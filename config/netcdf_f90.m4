@@ -205,9 +205,9 @@ if test x"$enable_hdf5" = "xyes"; then
   if test -d "$with_hdf5_includedir" ; then try_incdir=$with_hdf5_includedir ; fi
   #
   try_hdf5_flags="-lhdf5_fortran -lhdf5_hl -lhdf5"
+  if test x"$with_hdf5_libs" != "x" ; then try_hdf5_flags="$with_hdf5_libs" ; fi
   #
   if test -d "$try_libdir" ; then try_hdf5_flags="-L$try_libdir $try_hdf5_flags" ; fi
-  if test x"$with_hdf5_libs" != "x" ; then try_hdf5_flags="$with_hdf5_libs" ; fi
   #
   HDF5_FLAGS="$try_hdf5_flags"
   #

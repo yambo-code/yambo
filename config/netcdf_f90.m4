@@ -248,8 +248,8 @@ fi
 #
 # NETCDF-HDF5 IO
 #
-if test x"$netcdf" = "xyes" && test x"hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
-    dnetcdf="${dnetcdf} -D_HDF5_IO"
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
+    dnetcdf="${dnetcdf} -D_HDF5_IO";
 fi
 
 AC_SUBST(NCLIBS)

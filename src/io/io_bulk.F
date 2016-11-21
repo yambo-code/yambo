@@ -62,12 +62,16 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1
      deflate=1
      deflate_level=2
      call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID)))
+#if defined _HDF5_IO
      call netcdf_call(nf90_def_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level))
+#endif
      call netcdf_call(nf90_enddef(io_unit(ID))) 
      deallocate(var_dim)
    else if (read_is_on(ID)) then
      call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)))
+#if defined _HDF5_IO
      call netcdf_call(nf90_inq_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level))
+#endif
    endif
    return
  endif

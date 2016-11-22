@@ -56,7 +56,7 @@ subroutine MAG_Hamiltonian()
  !
  use pars,           ONLY:SP,cZERO,cI,cONE
  use units,          ONLY:SPEED_OF_LIGHT
- use SC,             ONLY:Ho
+ use hamiltonian,    ONLY:Ho
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use R_lattice,      ONLY:nkibz

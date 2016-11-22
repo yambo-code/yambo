@@ -499,11 +499,8 @@ module parallel_m
    subroutine MPI_close
      implicit none
 #if defined _MPI
-     if (ncpu>1) then
-       call mpi_finalize(i_err)
-     endif
+     call mpi_finalize(i_err)
 #endif
-     stop 
      return
    end subroutine
    !

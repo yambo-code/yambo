@@ -24,18 +24,21 @@
 sub load_db
 {
 open(DB,"<","$DB_file");
+$runs=0;
 while(<DB>) { 
  @element = split(' ',$_);
  if ($element[1] eq "material")    { 
+  $ID=0;
   $n_keys=0;
   $n_outs=0;
   $n_dbs=0;
   $n_ins=0;
-  $runs=$element[0];
+  $runs++;
   $RUN_material[$runs]=$element[2];
  }
- if ($element[1] eq "date")        { $RUN_date[$runs]=$element[2] } ;
- if ($element[1] eq "description") { $RUN_description[$runs]=$element[2] } ;
+ $ID[$runs]=$element[0];
+ if ($element[1] eq "date")        { $RUN_date[$ID[$runs]]=$element[2] } ;
+ if ($element[1] eq "description") { $RUN_description[$ID[$runs]]=$element[2] } ;
  if ($element[1] eq "key")         { 
    $n_keys++;
    $RUN_key[$runs][$n_keys]=$element[2];

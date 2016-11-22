@@ -35,7 +35,7 @@ sub create_new_run{
  }
  #
  # New ID
- $ID = $runs+1;
+ $ID_here = $runs+1;
  #
  $test=&have_run();
  if ($test ne 0 ) {
@@ -46,27 +46,27 @@ sub create_new_run{
  print "\n\n Creating RUN...";
  #
  #############################
- print "\n ID\t\t:$ID\n";
+ print "\n ID\t\t:$ID_here\n";
  if (&have_material() eq 0) {&remote_cmd("mkdir $path/$material")};
- &remote_cmd("mkdir $path/$material/$ID");
- &remote_cmd("mkdir $path/$material/$ID/inputs");
- &remote_cmd("mkdir $path/$material/$ID/outputs");
- &remote_cmd("mkdir $path/$material/$ID/databases");
- $RUN_dir="$path/$material/$ID";
- $database_line[0]="$ID material $material";
- $database_line[1]="$ID date $date";
- $database_line[2]="$ID description";
- if ($description) {$database_line[2]="$ID description $description"};
+ &remote_cmd("mkdir $path/$material/$ID_here");
+ &remote_cmd("mkdir $path/$material/$ID_here/inputs");
+ &remote_cmd("mkdir $path/$material/$ID_here/outputs");
+ &remote_cmd("mkdir $path/$material/$ID_here/databases");
+ $RUN_dir="$path/$material/$ID_here";
+ $database_line[0]="$ID_here material $material";
+ $database_line[1]="$ID_here date $date";
+ $database_line[2]="$ID_here description";
+ if ($description) {$database_line[2]="$ID_here description $description"};
  $ic=2;
  foreach $key (@keys) {
   $ic++;
-  $database_line[$ic]="$ID key $key";
+  $database_line[$ic]="$ID_here key $key";
  };
  foreach $line (@database_line) {
   print DB "$line\n";
  }
  if ($description) {
-  $local_description_file="$HOME/.ydb/${ID}_description";
+  $local_description_file="$HOME/.ydb/${ID_here}_description";
   open(LOCAL_DESC,'>',$local_description_file) or die;
   print LOCAL_DESC "$description";
   close(LOCAL_DESC);

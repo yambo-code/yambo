@@ -821,40 +821,44 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
+#if defined _SC || defined _RT
+ !
+ ! Collisions
+ !
+ if (l_eval_collisions) call initactivate( 0,'COLLBands')
+ !
+ if ( (l_eval_collisions.or.l_real_time).and.l_elel_scatt ) call initactivate(1,'PlasmaPerc')
+ !
+ if (l_eval_collisions.or.l_real_time.or.l_sc_run) then
+   !
+   call initactivate( 1,'HXC_Potential FFTGvecs')
+   !
+   call initactivate(-1,'QpntsRXs')
+   !
+   if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
+   if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate( 1,'EXXCut EXXRLvcs ALLGexx')
+   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
+   !
+ endif
+ !
+ !
+#endif
+ !
 #if defined _SC 
  !
- ! Self-Consistency & Collisions (for REAL-TIME and SC calculations)
+ ! Self-Consistency
  !
- if (l_sc_run.or.l_eval_collisions) then
+ if (l_sc_run) then
    !
-   call                        initactivate( 1,'HXC_Potential FFTGvecs')
-   if (l_sc_run)          call initactivate( 1,'SCBands')
-   if (l_eval_collisions) call initactivate( 1,'COLLBands')
+   call initactivate( 1,'SCBands')
    !
-   call initactivate(-1,'QpntsRXs')
+   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0  ) call initactivate(1,'UseEbands SCUpWIter')
    !
-   if( index(H_potential,"FOCK")>0   ) call initactivate( 1,'EXXCut EXXRLvcs ALLGexx')
+   if( index(H_potential,"EXX")>0.or.index(H_potential,"SRPA")>0 ) call initactivate(1,'OEPapprox OEPItSolver') 
    !
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) then
-     if (l_sc_run)          call initactivate(1,'UseEbands SCUpWIter')
-     if (l_eval_collisions) call initactivate(1,'CORRLvcs ALLGexx')
-   endif
-   !
-   if( index(H_potential,"HARTREE")>0.and.l_eval_collisions) call initactivate(1,'HARRLvcs ALLGHAR')
-   !
-   if( index(H_potential,"EXX")>0.or.index(H_potential,"SRPA")>0 ) then
-     call initactivate(1,'OEPapprox OEPItSolver') 
-   endif
-   !
-   if (l_sc_run) then
-     call initactivate(1,'SCIter SCEtresh SCRhoTresh SC_precondition')
-     call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
-     call initactivate(1,'SCdiag Mean_Potential')
-   endif
-   !
-   if (l_eval_collisions.and.l_elel_scatt) call initactivate(1,'PlasmaPerc')
-   !
-   call initactivate(-1,'QpntsRXs')
+   call initactivate(1,'SCIter SCEtresh SCRhoTresh SC_precondition')
+   call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
+   call initactivate(1,'SCdiag Mean_Potential')
    !
  endif
  !
@@ -865,13 +869,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_real_time) then
    call INIT_QP_ctl_switch('G')
    call INIT_RT_ctl_switch('G')
-   call initactivate(-1,'SCmixing')
-   call initactivate(1,'RTBands HXC_Potential Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep dTupdateTime dTupdateJump dTupdateTresh dT_MAX NEsteps NETime COHsteps DipoleEtresh')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp')
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
-   if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
-   call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime SaveGhistory')
+   if (l_elel_scatt) call initactivate( 1,'EERimPerc')
+   call initactivate(1,'BGR RTskipImposeN RTeeImposeE InducedField IOtime SaveGhistory')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
    ! or parsed from the input file in INIT_load.F
@@ -879,8 +882,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    do i1=1,n_ext_fields
      call Afield_activate(i1)
    enddo
-   !
-   call initactivate(1,'ShiftedPaths')
    !
  endif
  !

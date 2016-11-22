@@ -104,8 +104,10 @@ subroutine NL_driver(en,k)
  !
  ! Special case for monochromatic source and no user input set:
  !
- if (any((/trim(Efield_probe%ef_name) == 'SIN', trim(Efield_probe%ef_name) == 'SOFTSIN',trim(Efield_probe%ef_name) == 'ANTIRES'/)).and.RT_conf%T_range(1)<0._SP)&
-&  RT_conf%T_range(1) = JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-T_period
+ if (any((/trim(Efield_probe%ef_name) == 'SIN', trim(Efield_probe%ef_name) == 'SOFTSIN', &
+&          trim(Efield_probe%ef_name) == 'ANTIRES'/)).and.RT_conf%T_range(1)<0._SP) then
+    RT_conf%T_range(1) = JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-T_period
+ endif
  !
  call RT_time_configuration_setup('POLARIZATION')
  !

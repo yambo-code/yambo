@@ -50,7 +50,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  integer, parameter    :: max_iter=10000,fit_dim=1000,nmax_file_report=16
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
  real(SP)              :: RT_occ(RT_carriers%nstates,n_T_steps),RT_spin_occ(RT_carriers%nstates,2,n_T_steps)
- real(SP)              :: RT_gamma(RT_carriers%nstates,6,n_T_steps),RT_gamma_ratio(RT_carriers%nstates,2,n_T_steps)
+ real(SP)              :: RT_gamma(RT_carriers%nstates,6,n_T_steps),  &
+&                         RT_NEQ_gamma(RT_carriers%nstates,n_T_steps),RT_gamma_ratio(RT_carriers%nstates,2,n_T_steps)
  !
  real(SP)              :: RT_occ_fit(fit_dim,2,n_T_steps),RT_occ_spin_fit(fit_dim,2,2,n_T_steps),RT_E_fit(fit_dim,2)
  real(SP)              :: RT_gamma_ratio_fit(fit_dim,2,2,n_T_steps)
@@ -64,12 +65,12 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  !
  logical  :: l_ELPH_lifetimes
  !
- integer  :: i_fit,i_fit_kind,i_RT,ib,ik,i_spinor,i_T,i1,i2,n1,n2,n3,igamma,n_gamma,i_ratio,n_ratio,n_fits_done
+ integer  :: i_fit,i_fit_kind,i_RT,ib,ik,i_spinor,i_T,i1,i2,n1,n2,n3,igamma,n_gamma,i_ratio,n_ratio,n_fits_done,i_neq_g_file
  integer  :: nfound(3),nfound_gamma(5),nfound_spin(5)
  integer  :: E_sort_index(RT_carriers%nstates)
  !
  character(10)     ::titles(max(n_T_steps+4,11)),data_ch(n_T_steps+4,5,2),columns(n_T_steps+4),tmp_titles(12)
- character(schlen) ::output_fname(11),gamma_fname(7),gamma_ratio_fname(2),GRP_string
+ character(schlen) ::output_fname(12),gamma_fname(7),gamma_ratio_fname(2),GRP_string
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
  !
@@ -136,6 +137,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
        RT_gamma(i_RT,n_gamma-1,i_T)=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,1)
        RT_gamma(i_RT,n_gamma  ,i_T)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,2)
      endif
+     !
+     if (n_gamma>0) RT_NEQ_gamma(i_RT,i_T)=RT_carriers%NEQ_Lifetime(i_RT)
      !
    enddo
    !
@@ -254,7 +257,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    !
  enddo
  !
- RT_gamma=RT_gamma*HA2EV*1000._SP
+ RT_gamma    =RT_gamma*HA2EV*1000._SP
+ RT_NEQ_gamma=RT_NEQ_gamma*HA2EV*1000._SP
  !
  !
  ! Write to output fitted temperatures
@@ -328,6 +332,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    tmp_titles(n1+1:n1+4)=(/'(e-EP)','(h-EP)','(e-EE)','(h-EE)'/)   
    n1=n1+4
  endif
+ !
+ if(n_gamma> 0) gamma_fname(n_gamma+1)='YPP-RT_NEQ_linewidths'
  !
  output_fname(1)='YPP-RT_Temperatures'
  output_fname(2)='YPP-RT_E_Fermi'
@@ -507,6 +513,24 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      !
    enddo
    !
+   if(n_gamma>0) then
+     !
+     i_neq_g_file=n_gamma+n3+i_ratio
+     !
+     output_fname(i_neq_g_file)=trim(gamma_fname(n_gamma+1))
+     if (n_T_steps>nmax_file_report) output_fname(i_neq_g_file)=trim(gamma_fname(n_gamma+1))//trim(GRP_string)
+     call of_open_close(trim(output_fname(i_neq_g_file)),'ot')
+     call RT_write_descriptions(trim(output_fname(i_neq_g_file)))
+     !
+     call msg('o '//trim(output_fname(i_neq_g_file)),'#')
+     call msg('o '//trim(output_fname(i_neq_g_file)),'# NEQ Lifetimes distribution [meV] at different times (Gamma@ time)')
+     call msg('o '//trim(output_fname(i_neq_g_file)),'#')
+     call msg('o '//trim(output_fname(i_neq_g_file)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(i_neq_g_file)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(i_neq_g_file)),'#')
+     !
+   endif
+   !
    ! Data
    !======
    !
@@ -535,6 +559,11 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
 &                                                       INDENT=-2,USE_TABS=.true.)
      enddo
      !
+     if(n_gamma>0) then
+       call msg('o '//trim(output_fname(i_neq_g_file)),'',(/RT_E_sorted(i_RT),RT_NEQ_gamma(i_RT,n1:n2)/),&
+&                                                       INDENT=-2,USE_TABS=.true.)
+     endif
+     !
    enddo
    !
    call of_open_close(trim(output_fname(1)))
@@ -548,6 +577,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    do i_ratio=1,n_ratio
      call of_open_close(trim(output_fname(n_gamma+n3+i_ratio)))
    enddo
+   if(n_gamma>0) call of_open_close(trim(output_fname(i_neq_g_file)))
    !
    ! FIT
    !=====

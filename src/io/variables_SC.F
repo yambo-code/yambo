@@ -59,7 +59,6 @@ integer function variables_SC(ID,local_description,what)
  MENU_ =0
  if (l_NSC_shot) CHECK_=.FALSE.
  !
- !
  ! ATOMS_STRING
  !
  call io_elemental(ID,VAR='ATOMS_STRING',CH0="",VAR_SZ=1,MENU=0)
@@ -208,7 +207,12 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
 #endif
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ !
+ if (what/="carriers".and.what/="THETA".and.what/="JPSM".and.what/="G".and.what/="REF") then
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ else
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
  !
  variables_SC=io_status(ID)
  n_SC_descriptions=i_desc

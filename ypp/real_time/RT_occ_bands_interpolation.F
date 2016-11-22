@@ -212,6 +212,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    !
    call of_open_close(file_name_rt,'ot')
    !
+   call RT_write_descriptions(trim(file_name_rt))
+   !
    call msg('o bands'," "," ",INDENT=0)
    call msg('o bands',"#",' t= '//trim(real2ch( RT_time(i_T)*AUT2FS )),INDENT=0)
    !

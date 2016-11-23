@@ -307,11 +307,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! GPL_EXCLUDE_START
  !
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
- call it(defs,'Gauge' ,  '[BSE] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
  call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !
+ call it(defs,'Gauge' ,  '[BSE] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
@@ -401,17 +401,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
- call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  !
  ! GPL_EXCLUDE_END
  !
- ! GPL_EXCLUDE_START SC_IGNORE
- !
- ! Real Time dynamics
+ call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  !
 #if defined _RT
+ !
+ ! Real Time dynamics
  !
  call it(defs,'RTBands',    '[RT] Bands',RT_bands)
  !
@@ -490,9 +489,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #endif
  !
+#if defined _SCALAPACK
+ !
  ! SLK test
  !
-#if defined _SCALAPACK
  call it(defs,'SLKdim',  '[SLK] Matrix Dimension',SLK_test_H_dim)
 #endif
  !
@@ -506,11 +506,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
  !
- ! GPL_EXCLUDE_END SC_IGNORE
- ! 
+#if defined _SURF
+ !
  ! Surface spectroscopy
  !
-#if defined _SURF
  call init_bulk(defs)
  call init_surface(defs)
  call init_cutoff(defs)

@@ -1,0 +1,20 @@
+1) Removing symmetries I get
+
+1s> PPs rotation |########################################| [100%] --(E) --(X)
+ <01s> [08] Game OverAt line 149 of file section.f90 (unit = 11, file = '�w�3')
+Fortran runtime error: File '' does not exist
+
+but the code works
+
+
+2) when using only 1 valence and 1 conduction some time 
+if I restart I get 
+
+<---> Covariant Dipoles: |                                        | [000%] --(E) --(X)
+
+[ERROR] STOP signal received while in :[04.02] Messaging
+[ERROR]Matrix Ops. driver [GETRF (SI)]:workspace failed
+
+to be checked and verified
+
+

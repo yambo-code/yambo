@@ -38,7 +38,7 @@ subroutine NL_initialize(E,k,q)
 &                         Phase_LifeTime,Integrator_name,RT_bands,RT_dyn_step,NE_i_time
  use RT_control,     ONLY:SETUP_RT_IO_type,JPC_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
-&                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,RPA,LRC,JGM, &
+&                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS
  use electric,       ONLY:l_force_SndOrd
  use parser_m,       ONLY:parser
@@ -139,8 +139,8 @@ subroutine NL_initialize(E,k,q)
     case('IPA')
         Correlation=IPA
         SC_potential='IP'
-    case('RPA')
-        Correlation=RPA
+    case('HARTREE')
+        Correlation=HARTREE
         SC_potential='HARTREE'
         eval_HARTREE =.true.
     case('TDDFT')  

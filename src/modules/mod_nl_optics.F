@@ -85,14 +85,14 @@ module nl_optics
  character(schlen)            :: NL_correlation
  integer                      :: Correlation
  !
- integer, parameter :: IPA   = 1
- integer, parameter :: RPA   = 2
- integer, parameter :: TDDFT = 3
- integer, parameter :: LRC   = 4
- integer, parameter :: JGM   = 5
- integer, parameter :: LRCW  = 6
- integer, parameter :: HF    = 7
- integer, parameter :: SEX   = 8
+ integer, parameter :: IPA    = 1
+ integer, parameter :: HARTREE= 2
+ integer, parameter :: TDDFT  = 3
+ integer, parameter :: LRC    = 4
+ integer, parameter :: JGM    = 5
+ integer, parameter :: LRCW   = 6
+ integer, parameter :: HF     = 7
+ integer, parameter :: SEX    = 8
  !
  logical :: eval_COLLISIONS
  logical :: eval_dG

@@ -36,7 +36,8 @@ subroutine XCo_local(E,Xk)
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear 
 #if defined _RT || defined _SC
- use hamiltonian,   ONLY:H_ref_bands,V_xc_sc,V_hartree_sc
+ use drivers,       ONLY:l_real_time,l_sc_run
+ use hamiltonian,   ONLY:H_ref_bands
 #endif
 #if defined _RT
  use drivers,       ONLY:l_real_time
@@ -44,7 +45,7 @@ subroutine XCo_local(E,Xk)
  use matrix_operate,ONLY:UP_matrix_index,matrix_index
 #endif
 #if defined _SC
- use drivers,       ONLY:l_real_time,l_sc_run
+ use hamiltonian,   ONLY:V_xc_sc,V_hartree_sc
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
@@ -222,12 +223,12 @@ subroutine XCo_local(E,Xk)
  !
  ! Clean
  !
-#if defined _SC
+#if defined _SC || defined _RT
  if(.not.(l_sc_run.or.l_real_time)) then
 #endif
    deallocate(V_xc)
    if(n_spin>1) deallocate(magn)
-#if defined _SC
+#if defined _SC || defined _RT
  endif
 #endif
  !

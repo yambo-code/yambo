@@ -43,7 +43,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
 #if defined _SC           
  use SC,                  ONLY: SC_bands
 #endif
-#if defined _RT           
+#if defined _RT
  use real_time,           ONLY: RT_bands
 #endif
  !
@@ -264,7 +264,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
 #if defined _SC       
        SC_bands_save     = SC_bands
 #endif 
-#if defined _RT       
+#if defined _RT
        RT_bands_save     = RT_bands
 #endif 
      else if( grid.eq.'shifted'.and. command.eq.' define') then
@@ -277,7 +277,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
 #if defined _SC       
        SC_bands = SC_bands_save
 #endif
-#if defined _RT       
+#if defined _RT
        RT_bands = RT_bands_save
 #endif
      endif

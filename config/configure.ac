@@ -21,17 +21,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.1.1 r.13977 h.1433dfa , yambo@yambo-code.org)
-SVERSION="4"
-SSUBVERSION="1"
-SPATCHLEVEL="1"
-SREVISION="13977"
-SHASH="1433dfa"
-AC_SUBST(SVERSION)
-AC_SUBST(SSUBVERSION)
-AC_SUBST(SPATCHLEVEL)
-AC_SUBST(SREVISION)
-AC_SUBST(SHASH)
+m4_include([config/version.m4])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR([driver/driver.c])
 m4_include([config/acx_lapack.m4])

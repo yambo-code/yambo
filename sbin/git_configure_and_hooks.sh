@@ -29,9 +29,9 @@
 cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 sbin/yambo_versions_update.tcsh r
-git add config/configure.ac
 git add configure
 git add include/version.inc
+git add config/version.m4
 EOF
 chmod +x .git/hooks/pre-commit
 #

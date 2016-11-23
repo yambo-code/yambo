@@ -44,21 +44,25 @@ sub have_material
  } 
  return 0;
 }
-sub have_run{
+sub have_run
+#============
+{
  $irun=0;
- while ($irun<$runs) {
-  $n_keys=0;
-  $matches=0;
-  $irun++;
-  for($ik = 1; $ik < 100; $ik++) {
-    if (exists($RUN_key[$irun][$ik])){
-     $n_keys++;
-     if ("$RUN_key[$irun][$ik]" ~~ @keys) {$matches++};
+ while ($irun<$runs) 
+  {
+   $n_keys=0;
+   $matches=0;
+   $irun++;
+   if ($key_words) {
+    for($ik = 1; $ik < 100; $ik++) {
+     if (exists($RUN_key[$irun][$ik])){
+      $n_keys++;
+      if ( "$RUN_key[$irun][$ik]" ~~ @keys) {$matches++};
+     }
     }
-  };
-  if ("$RUN_material[$irun]" =~ "$material" and $n_keys eq  $matches){ 
-   return $irun;
-  }
+   }
+   if ($material and "$RUN_material[$irun]" =~ "$material" and $n_keys eq  $matches){return $irun;};
+   if ($ID_in and $ID[$irun] eq $ID_in) {return $irun;};
  }
  return 0;
 }

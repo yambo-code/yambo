@@ -68,7 +68,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  integer  :: nfound(3),nfound_gamma(5),nfound_spin(5)
  integer  :: E_sort_index(RT_carriers%nstates)
  !
- character(10)     ::titles(max(n_T_steps+4,11)),data_ch(n_T_steps+4,5,2),columns(n_T_steps+4)
+ character(10)     ::titles(max(n_T_steps+4,11)),data_ch(n_T_steps+4,5,2),columns(n_T_steps+4),tmp_titles(12)
  character(schlen) ::output_fname(11),gamma_fname(7),gamma_ratio_fname(2),GRP_string
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
@@ -291,10 +291,10 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  endif
  !
  titles(1)='Time [fs]'
- titles(2:3)=(/'OCC el ','OCC hol'/)
+ tmp_titles(2:3)=(/'(e)   ','(h)   '/)
  n1=3
  if(n_spinor==2) then
-   titles(4:7)=(/'OCC e-up','OCC h-up','OCC e-dw','OCC h-dw'/)
+   tmp_titles(4:7)=(/'(e-up)','(h-up)','(e-dw)','(h-dw)'/)
    n1=n1+4
  endif
  !
@@ -303,7 +303,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    gamma_fname(1)='YPP-RT_EE_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EE_Elec_linewidths'
    gamma_ratio_fname(1)='YPP-RT_EE_widths_ratio'
-   titles(n1+1:n1+2)=(/'EE  el ','EE  hol'/)   
+   tmp_titles(n1+1:n1+2)=(/'(e-EE)','(h-EE)'/)   
    n1=n1+2
    n_ratio=1
  ! Only El-Ph
@@ -313,7 +313,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    gamma_fname(3)='YPP-RT_EP_Hole_abs_linewidths'
    gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
    gamma_ratio_fname(1)='YPP-RT_EP_widths_ratio'
-   titles(n1+1:n1+2)=(/'EP  el ','EP  hol'/)   
+   tmp_titles(n1+1:n1+2)=(/'(e-EP)','(h-EP)'/)   
    n1=n1+2
  ! Both
  else if (n_gamma==6) then
@@ -325,7 +325,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    gamma_fname(6)='YPP-RT_EE_Elec_linewidths'
    gamma_ratio_fname(1)='YPP-RT_EP_widths_ratio'
    gamma_ratio_fname(2)='YPP-RT_EE_widths_ratio'
-   titles(n1+1:n1+4)=(/'EP  el ','EP  hol','EE  el ','EE  hol'/)   
+   tmp_titles(n1+1:n1+4)=(/'(e-EP)','(h-EP)','(e-EE)','(h-EE)'/)   
    n1=n1+4
  endif
  !
@@ -337,12 +337,18 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  call of_open_close(trim(output_fname(2)),'ot')
  call RT_write_descriptions(trim(output_fname(2)))
  !
+ do i1=2,n1
+   titles(i1)='T'//trim(tmp_titles(i1))
+ enddo
  call msg('o '//trim(output_fname(1)),'#')
  call msg('o '//trim(output_fname(1)),'# Fitted temperatures [K]')
  call msg('o '//trim(output_fname(1)),'#')
  call msg('o '//trim(output_fname(1)),'#',(/titles(1:n1)/),INDENT=0,USE_TABS=.true.)
  call msg('o '//trim(output_fname(1)),'#')
  !
+ do i1=2,n1
+   titles(11)='Ef'//trim(tmp_titles(i1))
+ enddo
  call msg('o '//trim(output_fname(2)),'#')
  call msg('o '//trim(output_fname(2)),'# Fitted Fermi levels [eV]')
  call msg('o '//trim(output_fname(2)),'#')

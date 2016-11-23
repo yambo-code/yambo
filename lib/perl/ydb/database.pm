@@ -62,6 +62,7 @@ sub delete_database_entry
 #========================
 {
  $local_id=@_[0];
+ $what = @_[1];
  $file = $DB_file;
  $old  = $file;
  $new  = "$file.tmp.$$";
@@ -69,10 +70,16 @@ sub delete_database_entry
  open(NEW, "> $new")         or die "can't open $new: $!";
  while (<OLD>) {
   @line = split(' ',$_);
-  if ( $line[0] !~ "$local_id") { print NEW $_ } ;
+  if ( $line[0] !~ "$local_id") {
+   print NEW $_ ;
+  }else{
+   if ($what !~ "all" and $what !~ "input"){
+     
+   } 
+  }
  }
  close(OLD)                  or die "can't close $old: $!";
  close(NEW)                  or die "can't close $new: $!";
- rename($new, $old)          or die "can't rename $new to $old: $!";
+ if (!$quiet) {rename($new, $old)          or die "can't rename $new to $old: $!"};
 }
 1;

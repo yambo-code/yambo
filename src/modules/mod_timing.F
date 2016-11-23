@@ -316,15 +316,15 @@ MODULE timing_m
      IMPLICIT NONE
      TYPE(clock),         INTENT(inout) :: obj    
      CHARACTER(*), OPTIONAL, INTENT(in) :: form
-     CHARACTER(3)                       :: form_
+     CHARACTER(4)                       :: form_
      CHARACTER(256)                     :: str
      CHARACTER(lchlen)                  :: local_ch
-     INTEGER                            :: nhour,nmin
+     INTEGER                            :: nday,nhour,nmin
      INTEGER                            :: call_number
      REAL(DP)                           :: total_time
      REAL(DP)                           :: nsec
      !
-     form_="sec"
+     form_="sec "
      IF ( PRESENT(form) ) form_ = TRIM(form)
      CALL clock_update(obj)
      !
@@ -348,12 +348,16 @@ MODULE timing_m
      ENDIF
      !
      SELECT CASE ( TRIM(form_) ) 
-       CASE ( "hms" )
-         nhour = INT( total_time / 3600 )
-         nmin =  INT( (total_time-3600 * nhour) / 60 )
-         nsec =  INT( total_time-3600 * nhour - 60 * nmin )
+       CASE ( "dhms" )
+         nday  = INT(  total_time/ 86400 )
+         nhour = INT( (total_time -86400*nday)/3600 )
+         nmin =  INT( (total_time -86400*nday -3600*nhour)/60 )
+         nsec =  INT(  total_time -86400*nday -3600*nhour -60*nmin )
          IF ( call_number == 1 )  THEN
-           IF (nhour > 0) THEN
+           IF (nday > 0) THEN
+             WRITE (local_ch, '(a20," : ",3x,i2,"d",i2,"h CPU ")') &
+                         TRIM(obj%name), nday, nhour
+           ELSEIF (nhour > 0) THEN
              WRITE (local_ch, '(a20," : ",3x,i2,"h",i2,"m CPU ")') &
                          TRIM(obj%name), nhour, nmin
            ELSEIF (nmin > 0) THEN
@@ -366,7 +370,11 @@ MODULE timing_m
            if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
            call msg('r',local_ch(:100))
          ELSE
-           IF (nhour > 0) THEN
+           IF (nday > 0) THEN
+             WRITE(local_ch,'(a20," : ",3x,i2,"d",i2,"h CPU (", &
+                   &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nday, nhour, &
+                   call_number , total_time / REAL( call_number, DP )
+           ELSEIF (nhour > 0) THEN
              WRITE(local_ch,'(a20," : ",3x,i2,"h",i2,"m CPU (", &
                    &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nhour, nmin, &
                    call_number , total_time / REAL( call_number, DP )
@@ -382,7 +390,7 @@ MODULE timing_m
            if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
            call msg('r',local_ch(:100))
          ENDIF
-       CASE ( "sec" )
+       CASE ( "sec " )
          !
          ! time in seconds
          !
@@ -447,7 +455,7 @@ MODULE timing_m
      DO i=1,list%nclock 
        !
        tmp_clock = list%clock(i)
-       CALL clock_write(tmp_clock,FORM="hms")
+       CALL clock_write(tmp_clock,FORM="dhms")
        !
      ENDDO
      !

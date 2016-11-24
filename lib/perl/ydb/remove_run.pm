@@ -42,6 +42,7 @@ sub remove_run{
    if (exists($RUN_db[$IRUN_in][$if])){
     if ( ($database and $RUN_db[$IRUN_in][$if] =~ /$database/) or $todo eq "all" or  $database eq "all") {
      &remote_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/databases/$RUN_db[$IRUN_in][$if].nc.gz");
+     &delete_database_entry($ID_in,"database",$RUN_db[$IRUN_in][$if]);
     }
    }
  };
@@ -51,7 +52,7 @@ sub remove_run{
   &remote_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/outputs");
   &remote_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/databases");
   &remote_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in");
+  &delete_database_entry($ID_in," ","all");
  }
- &delete_database_entry($ID_in,"all");
 }
 1;

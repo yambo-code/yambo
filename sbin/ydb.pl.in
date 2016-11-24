@@ -52,9 +52,9 @@ $awk=gawk;
             "k=s"            => \$key_words,
             "desc=s"         => \$description,
             "id=i"           => \$ID_in,
-            "i:s"            => \$input,
-            "o:s"            => \$output,
-            "d:s"            => \$database,
+            "i=s"            => \$input,
+            "o=s"            => \$output,
+            "d=s"            => \$database,
             "a"              => \$add,
             "c"              => \$create,
             "g"              => \$get,
@@ -75,9 +75,9 @@ sub usage {
                    -k      [Key1,Key2,...] List of keywords
                    -desc   [DESC]          Run description
                    -id     [ID]            Run ID 
-                   -i      <FILE>          Input (not needed with -g)
-                   -o      <FILE or DIR>   Output file or entire directory (not needed with -g)
-                   -d      <FILE or DIR>   Database file or entire directory (not needed with -g)
+                   -i      [FILE]          Input (not needed with -g) (also use all with -del)
+                   -o      [FILE or DIR]   Output file/entire directory (not needed with -g) (also use all with -del)
+                   -d      [FILE or DIR]   Database file/entire directory (not needed with -g) (also use all with -del)
                    -a                      Add to run ID (to be used together with -i/-o/-d)
                    -c                      Create the RUN
                    -g                      Get the run ID components (to be used together with -i/-o/-d)
@@ -142,6 +142,8 @@ if ($key_words) {
 @keys= split(/\s*,\s*/, $key_words); 
 print   " Key words\t:@keys\n" ;
 };
+# Description
+if ($description) {print   " Description\t:$description \n"};
 #
 # LIST
 if ($list) { 
@@ -184,12 +186,19 @@ if ($get and $ID_in and &have_ID($ID_in)==1) {
 # CREATE
 if ($create) { 
  if (!$material) {die " A material must be provided\n"};
- if ($description) {print   " Description\t:$description \n"};
  &create_new_run();
 };
 #
+# UPDATE
+if ($ID_in and $description) {&add_a_database_line($ID_in,"description","$description")};
+if ($ID_in and $key_words) {
+ foreach $key (@keys) {
+  &add_a_database_line($ID_in,"key","$key")
+ }
+}
+#
 # SYNC
-if ( ($create or ($add and $ID_in) or ($del and $ID_in) or ($get and $ID_in)) and !$quiet )
+if ( ($create or ($ID_in and !$get) ) and !$quiet )
 {
  if (!$get) {&remote_cmd("put $DB_file $path/database")};
  close(DB);

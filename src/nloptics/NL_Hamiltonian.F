@@ -32,6 +32,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use R_lattice,      ONLY:bz_samp
  use zeros,          ONLY:zero_dfl
+ use drivers,        ONLY:l_use_Hxc_collisions
  use SC,             ONLY:V_hartree_SC,V_xc_SC,rho_n,H_nl_sc
  use QP_m,           ONLY:QP_nk
  use X_m,            ONLY:X_t

@@ -395,9 +395,11 @@ module parallel_m
    subroutine CREATE_the_COMM(WORLD, COMM, ID )
      integer       :: WORLD,ID,i_err
      type(MPI_comm):: COMM
+#if defined _MPI
      call MPI_COMM_SPLIT(WORLD,COMM%my_CHAIN,ID,COMM%COMM,i_err)
      call MPI_COMM_RANK(COMM%COMM,COMM%CPU_id,i_err)
      call MPI_COMM_SIZE(COMM%COMM,COMM%n_CPU ,i_err)
+#endif
    end subroutine
    !
    integer function i_INTER_CHAIN(N_father,N_child)

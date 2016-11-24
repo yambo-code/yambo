@@ -98,7 +98,7 @@ while($line = <VER>) {
   $ID  = substr $line, 13, 1;
   if ( "$ID" =~ "1" ) {$SV = substr $line, 16, 1};
   if ( "$ID" =~ "2" ) {$SS = substr $line, 16, 1};
-  if ( "$ID" =~ "3" ) {$SP = substr $line, 16, 1};
+  if ( "$ID" =~ "3" ) {$SP = substr $line, 16, 1; last;};
 }
 close(VER);
 $Revision=`git rev-list  --count HEAD`;

@@ -191,7 +191,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
            !
            do i_spinor=1,n_spinor
              !
-             rho = rho + Vstar_dot_V_omp(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,i_spinor,iv_wf), &
+             rho = rho + Vstar_dot_V(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,i_spinor,iv_wf), &
 &                                                  WF%c(1:wf_ng_eff,i_spinor,ic_wf))
              !
            enddo

@@ -29,7 +29,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use pars,           ONLY:SP,DP,pi,cZERO
  use interfaces,     ONLY:WF_load
  use wave_func,      ONLY:WF,wf_ng,wf_x,wf_y,wf_z,WF_derivative_alloc
- use electrons,      ONLY:n_sp_pol
+ use electrons,      ONLY:n_sp_pol,n_spinor
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use R_lattice,      ONLY:g_vec,nkibz
  use stderr,         ONLY:intc
@@ -54,7 +54,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  complex(SP), allocatable  :: wf_der(:,:)
  complex(DP), allocatable  :: wf_DP(:)
  ! Dummys
- integer :: i1,i_spin,ib,ik,ifft
+ integer :: i1,i_wf,i_spin,i_spinor,ib,ik,ifft
  !
  ! wf_load could change bands_to_load(:) if it founds an SC-database 
  bands_to_load(:)=derivative_bands(:)
@@ -76,7 +76,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  call WF_derivative_alloc(do_derivative)
  !
- allocate(wf_der(wf_ng))                              ! G space
+ allocate(wf_der(wf_ng,n_spinor))                              ! G space
  call mem_est("wf_der",(/wf_ng/))
  allocate(wf_DP(fft_size))                            ! real space
  call mem_est("wf_DP",(/fft_size/),(/DP/))

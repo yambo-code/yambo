@@ -47,10 +47,12 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use R_lattice,      ONLY:qindx_S
 #endif
 #if defined _YPP_RT
+ use pars,           ONLY:cZERO
  use YPP_real_time,  ONLY:l_RT_bands
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,       ONLY:elph_residual_treshold
+ use pars,           ONLY:cZERO
  use ELPH,           ONLY:elph_Ham_bands
  use com,            ONLY:jobstr,file_exists
  use R_lattice,      ONLY:nkibz

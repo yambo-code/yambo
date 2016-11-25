@@ -47,7 +47,7 @@ subroutine WF_spatial_inversion(en,Xk)
  !
  integer                 ::i1,i_spinor
  real(SP),   allocatable ::rho_si(:),rho_nsi(:)
- complex(SP)             ::cv
+ complex(SP),allocatable ::cv(:)
  complex(SP)             ::mv(2)
  !
  ! Already set
@@ -68,7 +68,7 @@ subroutine WF_spatial_inversion(en,Xk)
    i_space_inv=0
  else
    !
-   allocate(rho_si(fft_size),rho_nsi(fft_size))
+   allocate(rho_si(fft_size),rho_nsi(fft_size),cv(fft_size))
    call el_density_and_current(en,Xk,rho=rho_si,force_spatial_inversion=.true.)
    call el_density_and_current(en,Xk,rho=rho_nsi)
    !
@@ -86,9 +86,9 @@ subroutine WF_spatial_inversion(en,Xk)
    !$omp parallel do default(shared), private(i1,i_spinor), reduction(+:mv)
    do i_spinor=1,n_spinor
      do i1=1,fft_size
-       cv=conjg(WF%c(i1,i_spinor,1))*WF%c(i1,i_spinor,1)
-       mv(1)=mv(1) +rho_nsi(i1)*cv
-       mv(2)=mv(2) +rho_si(i1) *cv
+       cv(i1)=conjg(WF%c(i1,i_spinor,1))*WF%c(i1,i_spinor,1)
+       mv(1)=mv(1) +rho_nsi(i1)*cv(i1)
+       mv(2)=mv(2) +rho_si(i1) *cv(i1)
      enddo
    enddo
    !$omp end parallel do

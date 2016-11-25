@@ -52,7 +52,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
 &                           H_pseudo_tot(SC_bands(2),SC_bands(2),Xk%nibz,n_sp_pol)
  !
  ! Dummies
- integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf(n_spinor),&
+ integer                 :: i1,ib,ibp,ik,i_spinor,i_sp_pol,iwf(n_spinor),&
 &                           im,alloc_err
  !
  ! I / O
@@ -114,13 +114,12 @@ subroutine MAG_H_pseudo(Xk,Xen)
        !
        do ib=SC_bands(1),SC_bands(2)
          !
+         iwf=WF%index(ib,ik,i_sp_pol)
+         !
          do i_spinor=1,n_spinor
            !
-           i_spin=i_sp_pol+i_spinor-1
-           iwf(i_spinor)=WF%index(ib,ik,i_spin)
-           !
-           kbv_ks_space(ib,1)=kbv_ks_space(ib,1)+V_dot_V(fft_size,WF%c(:,iwf(i_spinor)),new_pp(:,i1,i_spinor))
-           kbv_ks_space(ib,2)=kbv_ks_space(ib,2)+V_dot_V(fft_size,WF%c(:,iwf(i_spinor)),old_pp(:,i1,i_spinor))
+           kbv_ks_space(ib,1)=kbv_ks_space(ib,1)+V_dot_V(fft_size,WF%c(:,i_spinor,iwf),new_pp(:,i1,i_spinor))
+           kbv_ks_space(ib,2)=kbv_ks_space(ib,2)+V_dot_V(fft_size,WF%c(:,i_spinor,iwf),old_pp(:,i1,i_spinor))
            !
          enddo
          !

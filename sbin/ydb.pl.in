@@ -33,7 +33,7 @@ use Cwd 'abs_path';
 use Net::Domain qw(hostname hostfqdn hostdomain domainname);
 #
 # LIBS 
-use lib "/home/marini/Yambo/sources/git/yambo/branches/devel-daddy/lib/perl/ydb";
+use lib "@srcdir_path@/lib/perl/ydb";
 use print_the_run;
 use database;
 use load_db;
@@ -52,15 +52,16 @@ $awk=gawk;
             "k=s"            => \$key_words,
             "desc=s"         => \$description,
             "id=i"           => \$ID_in,
-            "i:s"            => \$input,
-            "o:s"            => \$output,
-            "d:s"            => \$database,
+            "i=s"            => \$input,
+            "o=s"            => \$output,
+            "d=s"            => \$database,
             "a"              => \$add,
             "c"              => \$create,
             "g"              => \$get,
             "del"            => \$del,
             "move"           => \$move,
             "u"              => \$update,
+            "q"              => \$quiet,
             "list"           => \$list) or die;
 sub usage {
 
@@ -74,15 +75,16 @@ sub usage {
                    -k      [Key1,Key2,...] List of keywords
                    -desc   [DESC]          Run description
                    -id     [ID]            Run ID 
-                   -i      <FILE>          Input (not needed with -g)
-                   -o      <FILE or DIR>   Output file or entire directory (not needed with -g)
-                   -d      <FILE or DIR>   Database file or entire directory (not needed with -g)
+                   -i      [FILE]          Input (not needed with -g) (also use all with -del)
+                   -o      [FILE or DIR]   Output file/entire directory (not needed with -g) (also use all with -del)
+                   -d      [FILE or DIR]   Database file/entire directory (not needed with -g) (also use all with -del)
                    -a                      Add to run ID (to be used together with -i/-o/-d)
                    -c                      Create the RUN
-                   -g                      Get the run ID (to be used together with -i/-o/-d)
+                   -g                      Get the run ID components (to be used together with -i/-o/-d)
                    -del                    Delete the run ID
                    -move   [OD]            Move the components of run ID to OD
                    -u                      Update local database
+                   -q                      Quiet run (just list the actions)
                    -list                   List the content of the database (can be used with -k/-m/-i/-o/-d)
 
    [X] means X is requested
@@ -129,7 +131,7 @@ $FILE_to_remove[1]="$ACTIONS_file";
 if ($update or $create)
 {
 print " Local database synced with server...\n\n";
-&local_cmd("get $server:$path/database $HOME/.ydb/$DB_file");
+&local_cmd("scp -qp $server:$path/database $DB_file");
 if (not $create) {exit;}
 }
 # Load DB components
@@ -140,6 +142,8 @@ if ($key_words) {
 @keys= split(/\s*,\s*/, $key_words); 
 print   " Key words\t:@keys\n" ;
 };
+# Description
+if ($description) {print   " Description\t:$description \n"};
 #
 # LIST
 if ($list) { 
@@ -156,6 +160,9 @@ if ($list) {
 open(DB,">>","$DB_file");
 open(ACTIONS,">","$ACTIONS_file");
 #
+# IRUN_in
+if ($ID_in) { $IRUN_in=&have_run };
+#
 # Material
 if ($material) { print   " Material\t:$material \n" }
 #
@@ -166,8 +173,9 @@ if ($add and $ID_in) { &add_command_line_object } ;
 if ($del and $ID_in) { &remove_run } ;
 #
 # Get it
+$test=&have_ID($ID_in);
 if ($get and $ID_in and &have_ID($ID_in)==1) { 
- $local_dir="$cwd/$RUN_material[$ID_in]_ID_$ID_in";
+ $local_dir="$cwd/$RUN_material[$IRUN_in]_ID_$ID_in";
  &local_cmd("mkdir -p $local_dir");
  if ($input)    {&local_cmd("mkdir -p $local_dir/inputs")};
  if ($output)   {&local_cmd("mkdir -p $local_dir/outputs")};
@@ -177,12 +185,20 @@ if ($get and $ID_in and &have_ID($ID_in)==1) {
 #
 # CREATE
 if ($create) { 
- if ($description) {print   " Description\t:$description \n"};
+ if (!$material) {die " A material must be provided\n"};
  &create_new_run();
 };
 #
+# UPDATE
+if ($ID_in and $description) {&add_a_database_line($ID_in,"description","$description")};
+if ($ID_in and $key_words) {
+ foreach $key (@keys) {
+  &add_a_database_line($ID_in,"key","$key")
+ }
+}
+#
 # SYNC
-if ($create or ($add and $ID_in) or ($del and $ID_in) or ($get and $ID_in) )
+if ( ($create or ($ID_in and !$get) ) and !$quiet )
 {
  if (!$get) {&remote_cmd("put $DB_file $path/database")};
  close(DB);
@@ -199,6 +215,7 @@ close(DB);
 if ($get) {&local_uncompress};
 #
 # Delete Files
+if ($quiet) { &local_cmd("cat $ACTIONS_file") };
 for($ik = 1; $ik <= $n_to_remove; $ik++) {
   unlink $FILE_to_remove[$ik] if exists($FILE_to_remove[$ik]);
 };

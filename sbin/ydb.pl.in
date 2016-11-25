@@ -43,7 +43,7 @@ use functions;
 use remove_run;
 #
 # Initialize
-$version="1.0";
+$version="2.0";
 $awk=gawk;
 #
 # CMD line

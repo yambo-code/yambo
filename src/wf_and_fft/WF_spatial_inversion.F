@@ -29,7 +29,7 @@ subroutine WF_spatial_inversion(en,Xk)
  !  i_space_inv=0 (it is not)
  !  i_space_inv=1 (it is)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:levels,n_spinor
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:WF
@@ -37,6 +37,7 @@ subroutine WF_spatial_inversion(en,Xk)
  use D_lattice,     ONLY:i_time_rev,i_space_inv,mag_syms
  use R_lattice,     ONLY:bz_samp
  use interfaces,    ONLY:el_density_and_current
+ !
  implicit none
  !
  type(levels) ::en
@@ -71,7 +72,16 @@ subroutine WF_spatial_inversion(en,Xk)
    call el_density_and_current(en,Xk,rho=rho_si,force_spatial_inversion=.true.)
    call el_density_and_current(en,Xk,rho=rho_nsi)
    !
+   cv=cZERO
    mv(1:2)=0.0_SP
+   !
+#if !defined _OPENMP
+   !
+   forall(i1=1:fft_size) cv(i1)=conjg(WF%c(i1,i_spinor,1))*WF%c(i1,i_spinor,1)
+   mv(1)=sum(rho_nsi(:)*cv(:))
+   mv(2)=sum(rho_si(:)*cv(:))
+   !
+#else
    !
    !$omp parallel do default(shared), private(i1,i_spinor), reduction(+:mv)
    do i_spinor=1,n_spinor
@@ -82,6 +92,8 @@ subroutine WF_spatial_inversion(en,Xk)
      enddo
    enddo
    !$omp end parallel do
+   !
+#endif
    !
    if (abs(mv(1)-mv(2))<abs(mv(1))/1.E5) then
      i_space_inv=1

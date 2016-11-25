@@ -36,12 +36,13 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use interfaces,          ONLY:PARALLEL_global_indexes
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:write_to_log
- use YPP
+ use YPP,                 ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
+&                              l_QP_DBs_create_and_modify,l_QP_DBs_merge,l_excitons,l_wannier
 #if defined _YPP_RT
- use YPP_real_time
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH
+ use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp
 #endif
  !
  implicit none
@@ -86,16 +87,16 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  ! Switch off report file support
  !
- write_to_report=.FALSE.
- live_timing_is_on=myid==0
- write_to_log=myid==0
+ write_to_report   =.FALSE.
+ live_timing_is_on =myid==0
+ write_to_log      =myid==0
  !
  ! DB1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=io_DB1(en,k,ID)
  if (iinf/=0) then
-   call ypp_finalize()
+   call ypp_finalize("Where is the SAVE?")
    return
  else
    call mk_dir(more_io_path)
@@ -107,7 +108,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=io_WF(ID) 
  if (iinf/=0) then
-   call ypp_finalize()
+   call ypp_finalize("Where is the SAVE?")
    return
  endif
  !  
@@ -116,7 +117,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  i_err=io_GROT(ID) 
  if (i_err/=0) then
-   call ypp_finalize()
+   call ypp_finalize("Missing post-setup databases. Please run yambo as it is first.")
    return
  endif
  !
@@ -125,7 +126,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call INIT_ypp(en,instr,lnstr,.false.)
  if (infile_editing) then
    iinf=1
-   call ypp_finalize()
+   call ypp_finalize(" ")
    return
  endif
  !
@@ -165,7 +166,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  q_pt=q%pt
  !
  if (i_err/=0) then
-   call ypp_finalize()
+   call ypp_finalize(" ")
    return
  endif
  !
@@ -254,20 +255,21 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  if (ltrans) call ras_trans_ypp(en,k)
  !
 #endif
-
  !
  ! END
  !
- call ypp_finalize()
+ call ypp_finalize(" ")
  return
  !
 contains
   !
-  subroutine ypp_finalize()
+  subroutine ypp_finalize(STRING)
+    character(*) :: STRING
     if (.not.infile_editing) then
-      call section('X','Game Over')
+      if (len_trim(STRING)> 0) call msg("nl",trim(STRING))
+      if (len_trim(STRING)==0) call section('X','Game Over')
+      call msg("nln"," ")
       call INIT_ypp(en,instr,lnstr,.TRUE.)
-      call msg("nl","")
       call MPI_close()
     else
       call INIT_ypp(en,instr,lnstr,.TRUE.)

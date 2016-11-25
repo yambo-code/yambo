@@ -21,17 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
+subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,&
+&                                SVD_digits,det)
  !
  use pars,          ONLY:SP,cONE,cZERO
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,min_cpu_block_size,&
 &                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error
  use wrapper,       ONLY:M_by_M
- use com,           ONLY:msg
  use parallel_m,    ONLY:linear_algebra_is_parallel
 #if defined _SCALAPACK
- use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_ORTHO,SLK_POOL,&
-&                        SLK_matrix,SLK_matrix_reset
+ use SLK_m,         ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix,SLK_matrix_reset
 #endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -54,11 +53,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  ! Work Spaces ...
  !
  complex(SP)         :: det_
- integer             :: N,lib_in_use,Ncpu_in_use,slk_error
+ integer             :: N,lib_in_use,Ncpu_in_use
 #if defined _SCALAPACK
  type (SLK_matrix)   :: M_slk,B_slk,C_slk,EIGEN_slk
 #endif
-
+ !
 #if defined _TIMING
  call timing("LINEAR ALGEBRA",OPR="start")
 #endif
@@ -92,14 +91,12 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
- !
  if (lib_in_use==USE_SLK) then
    !
    if (idriver==INV) then
      !
      call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk, N, M )
      !
-     call msg('s','[LA] PARALLEL inversion (SLK) using grid: ',SLK_ORTHO%grid(1:2))
      call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, M_slk, N, M )
      !
    else if (idriver==DIAGO) then
@@ -111,12 +108,10 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
        !
        call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','parallel non-herm diag not yet implemented')
        !
-       !call msg('s','[LA] PARALLEL diag (SLK) using grid: ',SLK_ORTHO%grid(1:2))
        !call PARALLEL_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, N, M, E_cmpl )
        !
      else
        !
-       call msg('s','[LA] PARALLEL Herm. diag (SLK) using grid: ',SLK_ORTHO%grid(1:2))
        call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, N, M, E_real )
        !
      endif
@@ -126,7 +121,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
      call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk, N, M )
      call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, B_slk, N, B )
      !
-     call msg('s','[LA] PARALLEL linear system solution (SLK) using grid: ',SLK_ORTHO%grid(1:2))
      call PARALLEL_lin_system( SLK_ORTHO, SLK_POOL, M_slk, B_slk, N, size(B,2), B )
      !
    else if (idriver==MAT_MUL) then
@@ -135,7 +129,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
      call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, B_slk, N, B )
      call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, C_slk, N, C )
      !
-     call msg('s','[LA] PARALLEL matrix multiplication (SLK) using grid: ',SLK_ORTHO%grid(1:2))
      call PARALLEL_mat_mul( SLK_ORTHO, SLK_POOL, M_slk, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), size(M,2), C )
      !
    endif
@@ -158,14 +151,12 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
    if (idriver==SVD_INV) then
-     call msg('s','[LA] SERIAL SVD inversion (LK)')
      call SERIAL_SVD_inversion(N,M,SVD_digits)
    endif
    !
    ! ###> SERIAL INVERSION 
    !
    if (idriver==INV) then
-     call msg('s','[LA] SERIAL inversion (LK)')
      call SERIAL_inversion(N,M,det_,present(det))
    endif
    !
@@ -176,12 +167,10 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
      if (present(E_cmpl)) then
        !
        !... non-Hermitian case
-       call msg('s','[LA] SERIAL diagonalization (LK)')
        call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
      else
        !
        !... Hermitian case
-       call msg('s','[LA] SERIAL Herm. diagonalization (LK)')
        call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
      endif
      !
@@ -190,15 +179,12 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    ! ####> LINEAR SYSTEM SOLUTION
    !
    if (idriver==LIN_SYS) then
-     call msg('s','[LA] SERIAL linear system solution (LK)')
      call SERIAL_lin_system(N,size(B,2),M,B)
    endif
-   !
    !
    ! ####> MAT_MUL
    ! C = M * B
    if (idriver==MAT_MUL) then
-     call msg('s','[LA] SERIAL matrix multiplication (LK)')
      call M_by_M('N','N',size(C,1),size(C,2),size(M,2),cONE,M,size(M,1),&
 &                        B,size(B,1),cZERO,C,size(C,1))
    endif

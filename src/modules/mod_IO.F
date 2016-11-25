@@ -306,22 +306,8 @@ module IO_m
        !
        CREATE_MODE=nf90_share
        !
-       ! Setting NF90_64BIT_OFFSET causes netCDF to create a 64-bit 
-       ! offset format file, instead of a netCDF classic format file. 
-       ! The 64-bit offset format imposes far fewer restrictions on very large 
-       ! (i.e. over 2 GB) data files. See Large File Support.
-       !
-       ! http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Large-File-Support.html
-       ! http://www.unidata.ucar.edu/software/netcdf/faq-lfs.html
-       !
 #if defined _64BIT_OFFSET
-       !
-       if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
-&                index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
-&                index(desc,'elph')/=0,index(desc,'gops')/=0, & 
-&                index(desc,'kindx')/=0/))) & 
-&                CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
-       !
+       CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
 #elif defined _HDF5_IO
        CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif
@@ -329,8 +315,7 @@ module IO_m
        if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
          !
          if( file_exists(trim(io_file(ID))) ) then
-           call netcdf_call(nf90_open(trim(io_file(ID)),&
-&                           ior(nf90_write,nf90_share),io_unit(ID)))
+           call netcdf_call(nf90_open(trim(io_file(ID)),ior(nf90_write,nf90_share),io_unit(ID)))
          else
            call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)))
            call netcdf_call(nf90_enddef(io_unit(ID)))

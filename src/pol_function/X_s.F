@@ -27,8 +27,8 @@ subroutine X_s(iq,X,Xw,W_range)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Q_A2A,linear_algebra_is_parallel,PAR_COM_WORLD,&
-&                        PAR_COM_NULL,PP_indexes,PP_indexes_reset,PAR_COM_DIPOLES
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
+&                        PAR_COM_DIPOLES,PAR_COM_SLK_INDEX_local
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:LINEAR_ALGEBRA_driver,INV,SVD_INV,LIN_SYS,MAT_MUL
@@ -76,31 +76,19 @@ subroutine X_s(iq,X,Xw,W_range)
    call mem_est("Xo_m1",(/size(Xom1)/))
  endif
  !
- ! Frequencies distribution
+ ! Stop... 
  !
  call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
  !
- if(.not.linear_algebra_is_parallel) then
-   !
-   if (PAR_COM_Q_INDEX%n_CPU>1) then
-     call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_Q_A2A)
-     PAR_IND_FREQ_ID=PAR_COM_Q_A2A%cpu_id
-   else
-     call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_WORLD)
-     PAR_IND_FREQ_ID=PAR_COM_WORLD%cpu_id
-   endif
-   !
- else
-   !
-   call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_NULL)
-   PAR_IND_FREQ_ID=PAR_COM_NULL%cpu_id
-   !
- endif
+ ! ... and frequencies distribution
  !
- call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1),TOTAL=Xw%n_freqs)
+ call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_SLK_INDEX_local)
+ PAR_IND_FREQ_ID=PAR_COM_SLK_INDEX_local%CPU_id+1
+ call PARALLEL_live_message("X Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),TOTAL=Xw%n_freqs,&
+&                           NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) &
-&  call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1))
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) &
+&  call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
  !
  do iw=1,Xw%n_freqs
    !
@@ -184,17 +172,19 @@ subroutine X_s(iq,X,Xw,W_range)
    ! I must cycle here to allow the FXC I/O properly
    !
    !if (.not.PAR_IND_freqs%element_1D(iw)) cycle
-
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
+#if defined _OPENMP
    !$omp parallel do default(shared), private(i1)
+#endif
    do i1=1,X%ng
      tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4._SP*pi/bare_qpg(iq,i1)**2
      tddftk(i1,i1)=tddftk(i1,i1)+cONE
    enddo
+#if defined _OPENMP
    !$omp end parallel do
-
+#endif
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -204,6 +194,7 @@ subroutine X_s(iq,X,Xw,W_range)
      !
      X_mat(:,:,iw_mat)=Xo
      call LINEAR_ALGEBRA_driver(LIN_SYS,tddftk,B=X_mat(:,:,iw_mat))
+     !
   else
      !
      ! formulation matrix inversion + matmul
@@ -225,23 +216,20 @@ subroutine X_s(iq,X,Xw,W_range)
    forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4._SP*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
 #endif
    !
-   if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) call live_timing(steps=1)
+   if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) call live_timing(steps=1)
    !
  enddo
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID+1)>0) call live_timing()
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) call live_timing()
  !
 #if defined _TIMING
  call timing('X (procedure)',OPR='stop')
  call timing('X (REDUX)',OPR='start')
 #endif
  !
- if(.not.linear_algebra_is_parallel) then
-   do iw=W_range(1),W_range(2)
-     if (PAR_COM_Q_INDEX%n_CPU> 1) call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_Q_A2A%COMM)
-     if (PAR_COM_Q_INDEX%n_CPU==1) call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_WORLD%COMM)
-   enddo
- endif
+ do iw=W_range(1),W_range(2)
+   call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_SLK_INDEX_local%COMM)
+ enddo
  !
 #if defined _TIMING
  call timing('X (REDUX)',OPR='stop')

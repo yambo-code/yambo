@@ -352,8 +352,8 @@ subroutine ypp_INIT_load(defs)
  ! Post-Processing
  !
  call it(defs,'Xorder','Max order of the response functions',X_order)
- call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword)
- call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword)
+ call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword,verb_level=V_real_time)
+ call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword,verb_level=V_real_time)
  !
  call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)

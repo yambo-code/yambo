@@ -78,6 +78,7 @@ integer function io_BS(iq,X,ID)
      BSS_n_descs=0
      !
      goto 1
+     !
    endif
    !
    ! Descriptions transfer

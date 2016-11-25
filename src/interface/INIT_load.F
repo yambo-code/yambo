@@ -356,12 +356,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! BSE: Kerr
  !
  call it('f',defs,'EvalKerr', '[BSE] Compute the Kerr effect')
- !
- ! GPL_EXCLUDE_START
- !
  call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge')
- !
- ! GPL_EXCLUDE_END
  !
 #endif
  !

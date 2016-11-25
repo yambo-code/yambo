@@ -23,22 +23,11 @@
 #
 sub create_new_run{
  #
- if ($ID_in and &have_ID($ID_in) == 1)
- {
-  if ($description) {&add_a_database_line($ID_in,"description","$description")};
-  if ($keys) {
-   foreach $key (@keys) {
-     &add_a_database_line($ID_in,"key","$key")
-   }
-  };
-  return
- }
- #
  # New ID
  $ID_here = $runs+1;
  #
  $test=&have_run();
- if ($test ne 0 ) {
+ if ($test ne 0 and !$ID_in ) {
   die "\n Found matching run with ID $test\n\n";
   return;
  };
@@ -47,20 +36,25 @@ sub create_new_run{
  #
  #############################
  print "\n ID\t\t:$ID_here\n";
- if (&have_material() eq 0) {&remote_cmd("mkdir $path/$material")};
- &remote_cmd("mkdir $path/$material/$ID_here");
- &remote_cmd("mkdir $path/$material/$ID_here/inputs");
- &remote_cmd("mkdir $path/$material/$ID_here/outputs");
- &remote_cmd("mkdir $path/$material/$ID_here/databases");
- $RUN_dir="$path/$material/$ID_here";
- $database_line[0]="$ID_here material $material";
- $database_line[1]="$ID_here date $date";
- $database_line[2]="$ID_here description";
+ $id_father=$ID_here;
+ if ($ID_in) {$id_father=$ID_in};
+ if ($ID_here eq $id_father) {$material_here=$material};
+ if ($ID_here ne $id_father) {$material_here=$RUN_material[$IRUN_in]};
+ if (&have_material("$material_here") eq 0) {&remote_ssh_cmd("mkdir -p $path/$material_here")};
+ &remote_ssh_cmd("mkdir -p $path/$material_here/$ID_here");
+ &remote_ssh_cmd("mkdir -p $path/$material_here/$ID_here/inputs");
+ &remote_ssh_cmd("mkdir -p $path/$material_here/$ID_here/outputs");
+ &remote_ssh_cmd("mkdir -p $path/$material_here/$ID_here/databases");
+ $RUN_dir="$path/$material_here/$ID_here";
+ $database_line[0]="$ID_here father $id_father";
+ $database_line[1]="$ID_here material $material_here";
+ $database_line[2]="$ID_here date $date";
+ $database_line[3]="$ID_here description";
  if ($description) {$database_line[2]="$ID_here description $description"};
- $ic=2;
- foreach $key (@keys) {
+ $ic=3;
+ foreach $tag (@tags) {
   $ic++;
-  $database_line[$ic]="$ID_here key $key";
+  $database_line[$ic]="$ID_here tag $tag";
  };
  foreach $line (@database_line) {
   print DB "$line\n";
@@ -70,7 +64,7 @@ sub create_new_run{
   open(LOCAL_DESC,'>',$local_description_file) or die;
   print LOCAL_DESC "$description";
   close(LOCAL_DESC);
-  &remote_cmd("put $local_description_file $RUN_dir/description");
+  &remote_sftp_cmd("put $local_description_file $RUN_dir/description");
   $n_to_remove++;
   $FILE_to_remove[$n_to_remove]="$local_description_file";
  }

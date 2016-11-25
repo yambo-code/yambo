@@ -104,7 +104,7 @@ YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface surf t
 nothing: 
 	@$(make_message)
 changelog:
-	svn log | perl sbin/svn2cl.pl > ChangeLog
+	./sbin/gitchangelog.py > ChangeLog
 all:
 	for target in $(PROJECTS); do $(MAKE) $$target ; done
 	for target in $(TARGETS); do $(MAKE) $$target ; done

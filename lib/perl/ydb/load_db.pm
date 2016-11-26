@@ -27,33 +27,41 @@ open(DB,"<","$DB_file");
 $runs=0;
 while(<DB>) { 
  @element = split(' ',$_);
- if ($element[1] eq "material")    { 
+ if ($element[1] eq "father")    { 
   $ID=0;
-  $n_keys=0;
+  $n_tags=0;
   $n_outs=0;
   $n_dbs=0;
   $n_ins=0;
   $runs++;
-  $RUN_material[$runs]=$element[2];
  }
  $ID[$runs]=$element[0];
- if ($element[1] eq "date")        { $RUN_date[$ID[$runs]]=$element[2] } ;
- if ($element[1] eq "description") { $RUN_description[$ID[$runs]]=$element[2] } ;
- if ($element[1] eq "key")         { 
-   $n_keys++;
-   $RUN_key[$runs][$n_keys]=$element[2];
- } ;
+ if ($element[1] eq "material")    { $RUN_material[$runs]=$element[2] } ;
+ if ($element[1] eq "father")      { $RUN_father[$runs]=$element[2] } ;
+ if ($element[1] eq "date")        { $RUN_date[$runs]=$element[2] } ;
+ if ($element[1] eq "description") { $RUN_description[$runs]=$element[2] } ;
+ if ($element[1] eq "tag")         { 
+  for($ik = 2; $ik < 100; $ik++) {
+   if ($element[$ik]){
+     $n_tags++;
+     $RUN_tag[$runs][$n_tags]=$element[$ik];
+   }
+  };
+ };
  if ($element[1] eq "output")         { 
    $n_outs++;
    $RUN_out[$runs][$n_outs]=$element[2];
+   if ($element[3]) {$RUN_out_tag[$runs][$n_outs]=$element[3]};
  } ;
  if ($element[1] eq "input")         { 
    $n_ins++;
    $RUN_in[$runs][$n_ins]=$element[2];
+   if ($element[3]) {$RUN_in_tag[$runs][$n_ins]=$element[3]};
  } ;
  if ($element[1] eq "database")         { 
    $n_dbs++;
    $RUN_db[$runs][$n_dbs]=$element[2];
+   if ($element[3]) {$RUN_db_tag[$runs][$n_dbs]=$element[3]};
  } ;
 };
 close(DB);

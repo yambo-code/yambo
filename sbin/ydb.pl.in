@@ -43,15 +43,16 @@ use functions;
 use remove_run;
 #
 # Initialize
-$version="1.0";
+$version="2.0";
 $awk=gawk;
 #
 # CMD line
 &GetOptions("help"           => \$help,
             "m=s"            => \$material,
-            "k=s"            => \$key_words,
+            "k=s"            => \$key,
             "desc=s"         => \$description,
             "id=i"           => \$ID_in,
+            "if=i"           => \$IF_in,
             "i=s"            => \$input,
             "o=s"            => \$output,
             "d=s"            => \$database,
@@ -62,6 +63,8 @@ $awk=gawk;
             "move"           => \$move,
             "u"              => \$update,
             "q"              => \$quiet,
+            "r"              => \$rebuild,
+            "t=s"            => \$user_tags,
             "list"           => \$list) or die;
 sub usage {
 
@@ -72,9 +75,10 @@ sub usage {
          [OPTIONS] are:
                    -h                      This help
                    -m      [STRING]        Material definition
-                   -k      [Key1,Key2,...] List of keywords
+                   -k      [key]           Key used to select specific groups of files
                    -desc   [DESC]          Run description
-                   -id     [ID]            Run ID 
+                   -id     [ID]            Run ID (father)
+                   -ic     [ID]            Run ID (child)
                    -i      [FILE]          Input (not needed with -g) (also use all with -del)
                    -o      [FILE or DIR]   Output file/entire directory (not needed with -g) (also use all with -del)
                    -d      [FILE or DIR]   Database file/entire directory (not needed with -g) (also use all with -del)
@@ -85,6 +89,8 @@ sub usage {
                    -move   [OD]            Move the components of run ID to OD
                    -u                      Update local database
                    -q                      Quiet run (just list the actions)
+                   -r                      Rebuild the database from the remote files list
+                   -t      [tag1,tag2,...] Rebuild the database from the remote files list
                    -list                   List the content of the database (can be used with -k/-m/-i/-o/-d)
 
    [X] means X is requested
@@ -122,10 +128,21 @@ print "\n YdB version $version \n\n";
 print   " Remote DB  \t$server:$path \n";
 #
 # Files (I)
-$ACTIONS_file="$HOME/.ydb/todo";
+$ACTIONS_sftp_file="$HOME/.ydb/todo_sftp";
+$ACTIONS_ssh_file="$HOME/.ydb/todo_ssh";
 $DB_file="$HOME/.ydb/database";
-$n_to_remove=1;
-$FILE_to_remove[1]="$ACTIONS_file";
+$n_to_remove=2;
+$FILE_to_remove[1]="$ACTIONS_ssh_file";
+$FILE_to_remove[2]="$ACTIONS_sftp_file";
+#
+# DB REBUILD
+if ($rebuild)
+{
+# &local_cmd("ssh $server 'find $path > file_list'");
+# &local_cmd("scp -qp $server:file_list $HOME/.ydb/file_list");
+# &local_cmd("ssh $server 'rm -f file_list'");
+ die "\n";
+}
 #
 # DB UPDATE
 if ($update or $create)
@@ -137,13 +154,22 @@ if (not $create) {exit;}
 # Load DB components
 &load_db();
 #
-# KeyWords
-if ($key_words) { 
-@keys= split(/\s*,\s*/, $key_words); 
-print   " Key words\t:@keys\n" ;
+# Input report
+if ($user_tags) { 
+ @tags= split(/\s*,\s*/, $user_tags); 
+ print   " Tags\t\t:@tags\n" ;
 };
-# Description
 if ($description) {print   " Description\t:$description \n"};
+if ($input) {print   " Input      \t:$input \n"};
+if ($output) {print   " Output(s) \t:$output \n"};
+if ($database) {print " Database(s) \t:$database \n"};
+#
+# IRUN_in
+if ($ID_in) { 
+ $id_father=$ID_in;
+ if ($IF_in) {$id_father=$IF_in};
+ $IRUN_in=&have_run;
+}
 #
 # LIST
 if ($list) { 
@@ -158,10 +184,8 @@ if ($list) {
 #
 # Files (II)
 open(DB,">>","$DB_file");
-open(ACTIONS,">","$ACTIONS_file");
-#
-# IRUN_in
-if ($ID_in) { $IRUN_in=&have_run };
+open(ACTIONS_sftp,">","$ACTIONS_sftp_file");
+open(ACTIONS_ssh,">","$ACTIONS_ssh_file");
 #
 # Material
 if ($material) { print   " Material\t:$material \n" }
@@ -185,26 +209,28 @@ if ($get and $ID_in and &have_ID($ID_in)==1) {
 #
 # CREATE
 if ($create) { 
- if (!$material) {die " A material must be provided\n"};
+ if (!$material and !$ID_in) {die " A material must be provided\n"};
  &create_new_run();
 };
 #
 # UPDATE
-if ($ID_in and $description) {&add_a_database_line($ID_in,"description","$description")};
-if ($ID_in and $key_words) {
- foreach $key (@keys) {
-  &add_a_database_line($ID_in,"key","$key")
- }
+if ($ID_in){
+ if ($quiet) {print "\n Changes in the database:\n\n"};
+ if ($description) {&add_a_database_line($ID_in,"description","$description")};
+ if ($material) {&add_a_database_line($ID_in,"material","$material")};
+ if ($user_tags) {&add_a_database_line($ID_in,"tag","@tags")};
 }
 #
 # SYNC
-if ( ($create or ($ID_in and !$get) ) and !$quiet )
+if ( ($create or ($ID_in and !$get) or $del ) and !$quiet )
 {
- if (!$get) {&remote_cmd("put $DB_file $path/database")};
+ if (!$get) {&remote_sftp_cmd("put $DB_file $path/database")};
  close(DB);
- close(ACTIONS);
+ close(ACTIONS_sftp);
+ close(ACTIONS_ssh);
  print "\n\n Running SFTP...\n\n";
- &local_cmd("sftp -q -b $ACTIONS_file $server");
+ &local_cmd("sftp -q -b $ACTIONS_sftp_file $server");
+ &local_cmd("ssh $server 'bash -s' < $ACTIONS_ssh_file");
 }
 #
 # End
@@ -215,7 +241,11 @@ close(DB);
 if ($get) {&local_uncompress};
 #
 # Delete Files
-if ($quiet) { &local_cmd("cat $ACTIONS_file") };
+if ($quiet) { 
+ print "\n\n ACTIONS to be done\n\n";
+ &local_cmd("cat $ACTIONS_sftp_file");
+ &local_cmd("cat $ACTIONS_ssh_file");
+};
 for($ik = 1; $ik <= $n_to_remove; $ik++) {
   unlink $FILE_to_remove[$ik] if exists($FILE_to_remove[$ik]);
 };
@@ -224,13 +254,20 @@ print "\n\n";
 #
 exit;
 #
-sub remote_cmd 
-#==============
+sub remote_sftp_cmd 
+#===================
 {
 foreach $command (@_) {
- print ACTIONS "$command\n";
+ print ACTIONS_sftp "$command\n";
+ }
 }
 #
+sub remote_ssh_cmd 
+#===================
+{
+foreach $command (@_) {
+ print ACTIONS_ssh "$command\n";
+ }
 }
 sub local_cmd 
 #=============

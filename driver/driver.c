@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
      };
      if (strcmp(opts[j].ln,"jobstr")==0) {
        free(js);
-       js = (char *) malloc(strlen(cv[1]));
+       js = (char *) malloc(strlen(cv[1])+1);
        strcpy(js,cv[1]);
        ijs=strlen(js);
      };

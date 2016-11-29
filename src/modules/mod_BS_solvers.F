@@ -46,7 +46,7 @@ module BS_solvers
  !
  ! SCALAPACK shadow matrix
  !=========================
- type(SLK_matrix):: K_slk
+ type(SLK_matrix), SAVE:: K_slk
  !
  ! Solvers (General)
  !=========
@@ -78,10 +78,10 @@ module BS_solvers
  !
  ! Solvers (Inversion)
  !=========
- character(schlen):: BSS_inversion_mode
- logical          :: BSS_uses_partial_diago
- logical          :: K_diago_in_BS_mat
- type(SLK_matrix) :: K_inv_slk
+ character(schlen)     :: BSS_inversion_mode
+ logical               :: BSS_uses_partial_diago
+ logical               :: K_diago_in_BS_mat
+ type(SLK_matrix),SAVE :: K_inv_slk
  !
  type K_Inversion_data
    !

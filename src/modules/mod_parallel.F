@@ -512,9 +512,8 @@ module parallel_m
    subroutine MPI_shutdown
      implicit none
 #if defined _MPI
-     if (ncpu>1) then
-       call mpi_abort(1,mpi_comm_world)
-     endif
+     call mpi_abort(mpi_comm_world,1)
+     call mpi_finalize(i_err)
 #endif
      stop 
      return

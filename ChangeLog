@@ -4,6 +4,83 @@ Changelog
 %%version%% (unreleased)
 ------------------------
 
+- Version 4.1.2,  Revision 13997,  Hash 4c4f906. [Davide Sangalli]
+
+  MODIFIED *  config/netcdf_f90.m4 config/version.m4 configure include/version.inc
+
+  NEW *  doc/test_hdf5/compile_test_program.sh
+
+  Changes:
+  - configure upgraded to deal with netcdf and netcdff with both lib and include in two separate folders
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.2,  Revision 13999,  Hash a35b6fb. [marini]
+
+  MODIFIED *  config/Makefile.in config/version.m4 configure include/version.inc
+
+  Bugs:
+  - Added ydb.pl to objects configure-created
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 8.1.2,  Revision 13990,  Hash 2718086. [marini]
+
+  MODIFIED *  config/version.m4 configure include/version.inc sbin/ydb.pl.in
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.1,  Revision 13989,  Hash a76c03a. [marini]
+
+  MODIFIED *  ChangeLog config/Makefile.in configure include/version.inc lib/perl/ydb/create_new_run.pm lib/perl/ydb/database.pm lib/perl/ydb/functions.pm lib/perl/ydb/load_db.pm lib/perl/ydb/objects_IO.pm lib/perl/ydb/print_the_run.pm lib/perl/ydb/remove_run.pm sbin/ydb.pl.in
+
+  Bugs:
+  - Fixed Changelog creation in Makefile.
+
+  Changes:
+  - Ydb.pl 2.0 now in working status.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge branch 'master' into 4.1. [Davide Sangalli]
+
+- Version 4.1.2,  Revision 13991,  Hash 37eb2ac. [Davide Sangalli]
+
+  MODIFIED *  config/version.m4 configure include/version.inc modules/mod_parallel.F
+
+  Bugs:
+  - [yambo] Fixed compilation when mpi compilers are not available
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into 4.1. [Davide Sangalli]
+
+- Version 4.1.2,  Revision 13990,  Hash db10bc3. [Davide Sangalli]
+
+  MODIFIED *  config/version.m4 configure include/version.inc sbin/make_message.pl
+
+  - Fixed make_message.pl
+  - Fixed versions
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Check on FC version fixed. [Andrea Ferretti]
+
+  Version 4.1.1,  Revision 13989,  Hash a76c03a
+
+  MODIFIED *  modified: modified: modified: modified:
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Andrea Ferretti <aferrett@r000u18l02.marconi.cineca.it>
+
 - Version 4.1.1,  Revision 13980,  Hash ccfc028. [marini]
 
   MODIFIED *  configure include/version.inc lib/perl/ydb/database.pm lib/perl/ydb/remove_run.pm sbin/ydb.pl.in
@@ -13,6 +90,8 @@ Changelog
 
   Patch sent by:  marini <andrea.marini@cnr.it>
 
+- Merge branch 'master' into 4.1. [Davide Sangalli]
+
 - Version 4.1.2,  Revision 13987,  Hash 2301fce. [Davide Sangalli]
 
   MODIFIED *  config/version.m4 configure include/version.inc ypp/init/INIT_ypp.F
@@ -21,6 +100,8 @@ Changelog
   - [ypp_rt] Restored FixSyms operation for gpl
 
   Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into 4.1. [Davide Sangalli]
 
 - Version 4.1.2,  Revision 13986,  Hash 665669f. [Davide Sangalli]
 
@@ -61,21 +142,6 @@ Changelog
   Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
 
 - Merge branch 'master' into 4.1. [Davide Sangalli]
-
-- Version 4.1.1,  Revision 13953,  Hash 97ebbac. [Davide Sangalli]
-
-  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_BS_solvers.F
-
-  Bugs:
-  -
-
-  Additions:
-  -
-
-  Changes:
-  - Fixed complation issue with gfortran 4.4.7
-
-  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
 
 - Version 4.1.1,  Revision 13979,  Hash 53da1aa. [Davide Sangalli]
 
@@ -252,6 +318,50 @@ Changelog
 
 - Merge branch '4.1' [Davide Sangalli]
 
+- Merge branch '4.1' [Davide Sangalli]
+
+- Version 4.1.0,  Revision 13950,  Hash 8d78aab. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/generate_gpl.sh
+
+  Changes:
+  - Script to generate gpl updated
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.f.0,  Revision 13945,  Hash 8421af6. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sc/SC_History.F
+
+  Bugs:
+  - [yambo_sc] removed lines which deal with degeneracies in SC_History
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13954,  Hash add4ae9. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_driver.F interface/INIT_load.F
+
+  Changes:
+  - AnHall input variable restored in GPL
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13953,  Hash 97ebbac. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_BS_solvers.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - Fixed complation issue with gfortran 4.4.7
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
 - Version 4.1.1,  Revision 13952,  Hash 80be4d7. [Davide Sangalli]
 
   MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F common/.objects_gpl common/FREQUENCIES_setup.F interface/INIT_load.F
@@ -260,8 +370,6 @@ Changelog
   -  Updated gpl flags for kerr
 
   Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
-
-- Merge branch '4.1' [Davide Sangalli]
 
 - Version 4.1.1,  Revision 13951,  Hash e2b7a00. [Davide Sangalli]
 
@@ -281,15 +389,6 @@ Changelog
 
   Changes:
   - updated generate_gpl.sh script
-
-  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
-
-- Version 4.1.0,  Revision 13950,  Hash 8d78aab. [Davide Sangalli]
-
-  MODIFIED *  config/configure.ac configure include/version.inc sbin/generate_gpl.sh
-
-  Changes:
-  - Script to generate gpl updated
 
   Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
 
@@ -342,15 +441,6 @@ Changelog
 
   Changes:
   - Fixed typo in input file generation
-
-  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
-
-- Version 4.f.0,  Revision 13945,  Hash 8421af6. [Davide Sangalli]
-
-  MODIFIED *  config/configure.ac configure include/version.inc sc/SC_History.F
-
-  Bugs:
-  - [yambo_sc] removed lines which deal with degeneracies in SC_History
 
   Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
 

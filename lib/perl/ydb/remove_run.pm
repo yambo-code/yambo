@@ -25,33 +25,39 @@ sub remove_run{
  #
  $todo=" ";
  if (!$input and !$output and !$database) {$todo="all"};
+ if ($IRUN_in eq 0) {return};
  #
- print "\n\n Removing RUN $IRUN_in (ID $ID_in) ...";
+ print "\n\n Removing RUN $IRUN_in (ID $ID_in) ...\n\n";
+ #
+ if ($quiet) { print "\n\n Removed DATABASE entries\n\n"};
  #
  for($if = 1; $if < 100; $if++) {
    if (exists($RUN_out[$IRUN_in][$if])){
-    if ( $RUN_out[$IRUN_in][$if] =~ /$output/ or $todo eq "all") {
-     &remote_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/outputs/$RUN_out[$IRUN_in][$if].gz");
+    if ( "$RUN_out[$IRUN_in][$if]" eq "$output" or $todo eq "all") {
+     &remote_sftp_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/outputs/$RUN_out[$IRUN_in][$if].gz");
+     &delete_database_entry($ID_in,"output",$RUN_out[$IRUN_in][$if]);
     }
    }
    if (exists($RUN_in[$IRUN_in][$if])){
-    if ( ($input and $RUN_in[$IRUN_in][$if] =~ /$input/) or $todo eq "all" or $input eq "all") {
-     &remote_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/inputs/$RUN_in[$IRUN_in][$if]");
+    if ( ($input and "$RUN_in[$IRUN_in][$if]" eq "$input") or $todo eq "all" or $input eq "all") {
+     &remote_sftp_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/inputs/$RUN_in[$IRUN_in][$if]");
+     &delete_database_entry($ID_in,"input",$RUN_in[$IRUN_in][$if]);
     }
    }
    if (exists($RUN_db[$IRUN_in][$if])){
-    if ( ($database and $RUN_db[$IRUN_in][$if] =~ /$database/) or $todo eq "all" or  $database eq "all") {
-     &remote_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/databases/$RUN_db[$IRUN_in][$if].nc.gz");
+    if ( ($database and "$RUN_db[$IRUN_in][$if]" eq "$database") or $todo eq "all" or  $database eq "all") {
+     &remote_sftp_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/databases/$RUN_db[$IRUN_in][$if].nc.gz");
      &delete_database_entry($ID_in,"database",$RUN_db[$IRUN_in][$if]);
     }
    }
  };
  if ("$todo" =~ "all") {
-  &remote_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/description");
-  &remote_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/inputs");
-  &remote_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/outputs");
-  &remote_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/databases");
-  &remote_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in");
+  print "$RUN_description[$IRUN_in]\n";
+  if ( "$RUN_description[$IRUN_in]" ne "") {&remote_sftp_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/description")};
+  &remote_sftp_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/inputs");
+  &remote_sftp_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/outputs");
+  &remote_sftp_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/databases");
+  &remote_sftp_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in");
   &delete_database_entry($ID_in," ","all");
  }
 }

@@ -647,7 +647,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &            Efield(i_field)%frequency,unit=E_unit)
-     call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
+     call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &            Efield(i_field)%intensity,unit=I_unit)

@@ -58,7 +58,7 @@ $awk=gawk;
             "d=s"            => \$database,
             "a"              => \$add,
             "c"              => \$create,
-            "g"              => \$get,
+            "g=s"            => \$get,
             "del"            => \$del,
             "move"           => \$move,
             "u"              => \$update,
@@ -90,7 +90,7 @@ sub usage {
                    -u                      Update local database
                    -q                      Quiet run (just list the actions)
                    -r                      Rebuild the database from the remote files list
-                   -t      [tag1,tag2,...] Rebuild the database from the remote files list
+                   -t      [tag1,tag2,...] User tags
                    -list                   List the content of the database (can be used with -k/-m/-i/-o/-d)
 
    [X] means X is requested
@@ -199,7 +199,7 @@ if ($del and $ID_in) { &remove_run } ;
 # Get it
 $test=&have_ID($ID_in);
 if ($get and $ID_in and &have_ID($ID_in)==1) { 
- $local_dir="$cwd/$RUN_material[$IRUN_in]_ID_$ID_in";
+ $local_dir="$cwd/$get";
  &local_cmd("mkdir -p $local_dir");
  if ($input)    {&local_cmd("mkdir -p $local_dir/inputs")};
  if ($output)   {&local_cmd("mkdir -p $local_dir/outputs")};
@@ -222,7 +222,7 @@ if ($ID_in){
 }
 #
 # SYNC
-if ( ($create or ($ID_in and !$get) or $del ) and !$quiet )
+if ( ($create or ($ID_in and !$get) or $del or $get ) and !$quiet )
 {
  if (!$get) {&remote_sftp_cmd("put $DB_file $path/database")};
  close(DB);
@@ -236,10 +236,6 @@ if ( ($create or ($ID_in and !$get) or $del ) and !$quiet )
 # End
 close(DB);
 #
-# Unzip/Dump local files
-#
-if ($get) {&local_uncompress};
-#
 # Delete Files
 if ($quiet) { 
  print "\n\n ACTIONS to be done\n\n";
@@ -249,6 +245,10 @@ if ($quiet) {
 for($ik = 1; $ik <= $n_to_remove; $ik++) {
   unlink $FILE_to_remove[$ik] if exists($FILE_to_remove[$ik]);
 };
+#
+# Unzip/Dump local files
+#
+if ($get and ($output or $database)) {&local_uncompress};
 #
 print "\n\n";
 #

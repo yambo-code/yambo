@@ -39,7 +39,10 @@ while(<DB>) {
  if ($element[1] eq "material")    { $RUN_material[$runs]=$element[2] } ;
  if ($element[1] eq "father")      { $RUN_father[$runs]=$element[2] } ;
  if ($element[1] eq "date")        { $RUN_date[$runs]=$element[2] } ;
- if ($element[1] eq "description") { $RUN_description[$runs]=$element[2] } ;
+ if ($element[1] eq "description") { 
+  $RUN_description[$runs]=$element[2];
+  for($ik = 3; $ik < $#element+1; $ik++) {$RUN_description[$runs]= "$RUN_description[$runs]"." "."$element[$ik]"};
+ }
  if ($element[1] eq "tag")         { 
   for($ik = 2; $ik < 100; $ik++) {
    if ($element[$ik]){

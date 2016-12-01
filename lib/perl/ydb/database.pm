@@ -95,8 +95,8 @@ sub add_a_database_line
  unlink $new3;
  #
  if ("@_[1]" =~ "material")   { &remote_sftp_cmd("rename $path/$RUN_material[$IRUN_in] $path/$material"); }
- if ("@_[1]" =~ "description"){ &remote_ssh_cmd("echo $description > $path/$RUN_material[$IRUN_in]/description"); }
- if ("@_[1]" =~ "tag"){ &remote_ssh_cmd("echo $filename > $path/$RUN_material[$IRUN_in]/tags"); }
+ if ("@_[1]" =~ "description"){ &remote_ssh_cmd("echo $description > $path/$RUN_material[$IRUN_in]/$local_id/description"); }
+ if ("@_[1]" =~ "tag"){ &remote_ssh_cmd("echo $filename > $path/$RUN_material[$IRUN_in]/$local_id/tags"); }
 }
 sub elemental_add
 {

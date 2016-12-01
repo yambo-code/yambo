@@ -29,7 +29,7 @@ subroutine Dipole_magnetization(Xk,X)
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
- use electrons,           ONLY:levels,n_spinor,n_sp_pol
+ use electrons,           ONLY:n_spinor,n_sp_pol
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_spin
@@ -63,7 +63,7 @@ subroutine Dipole_magnetization(Xk,X)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
- if (n_LT_steps>0) call live_timing('Dipoles spin',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles: spin',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !

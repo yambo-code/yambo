@@ -229,7 +229,7 @@ if ( ($create or ($ID_in and !$get) or $del or $get ) and !$quiet )
  close(ACTIONS_sftp);
  close(ACTIONS_ssh);
  print "\n\n Running SFTP...\n\n";
- &local_cmd("sftp -q -b $ACTIONS_sftp_file $server");
+ &local_cmd("sftp -b $ACTIONS_sftp_file $server");
  &local_cmd("ssh $server 'bash -s' < $ACTIONS_ssh_file");
 }
 #

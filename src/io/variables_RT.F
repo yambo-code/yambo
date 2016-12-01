@@ -317,7 +317,7 @@ integer function variables_RT(ID,local_description,what)
 &        DESCRIPTION=local_description(i_desc),UNIT=AU2KWCMm2)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [FIELDs] Damping            [fs]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
+&        VAR=" [FIELDs] Damping            [fs]:",R0=Efield(i1)%width,CHECK=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
        i_desc=i_desc+1
        call io_elemental(ID,&

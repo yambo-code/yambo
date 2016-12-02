@@ -26,7 +26,7 @@ use experimental 'smartmatch';
 sub have_ID
 #===========
 {
- if (exists($RUN_description[@_]))
+ if (exists($RUN_material[@_]))
  {
    return @_
  }

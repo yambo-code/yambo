@@ -40,8 +40,15 @@ while(<DB>) {
  if ($element[1] eq "father")      { $RUN_father[$runs]=$element[2] } ;
  if ($element[1] eq "date")        { $RUN_date[$runs]=$element[2] } ;
  if ($element[1] eq "description") { 
-  $RUN_description[$runs]=$element[2];
-  for($ik = 3; $ik < $#element+1; $ik++) {$RUN_description[$runs]= "$RUN_description[$runs]"." "."$element[$ik]"};
+  $desc_line  = substr $_, index($_,"description")+length("description")+1 ; 
+  chomp($desc_line);
+  @DESCs = split(/NEWLINE/,$desc_line);
+  $id=0;
+  foreach $single_desc (@DESCs) {
+   chomp($single_desc);
+   $id++;
+   $RUN_description[$runs][$id]=$single_desc;
+  }
  }
  if ($element[1] eq "tag")         { 
   for($ik = 2; $ik < 100; $ik++) {

@@ -26,10 +26,10 @@ sub local_uncompress{
  #
  print "\n Uncompresing $ID_in ...\n";
  #
- foreach $file (<$local_dir/output/*gz>,<$local_dir/database/*gz>) {
+ foreach $file (<$local_dir/outputs/*gz>,<$local_dir/databases/*gz>) {
   &local_cmd("gunzip -f $file");
  }
- foreach $file (<$local_dir/database/*nc>) {
+ foreach $file (<$local_dir/databases/*nc>) {
   my $filename = basename("$file",  ".nc");
   &local_cmd("ncdump < $file > $filename");
  }
@@ -48,7 +48,7 @@ sub get_the_run{
     &remote_sftp_cmd("get $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
    }
   }
-  if (exists($RUN_in[$ID_out][$ik]) and $output){
+  if (exists($RUN_out[$IRUN_in][$ik]) and $output){
     if ($RUN_out[$IRUN_in][$ik] =~ /$output/ or "$output" =~ "all"){
     &remote_sftp_cmd("get $RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz $local_dir/outputs/");
    }

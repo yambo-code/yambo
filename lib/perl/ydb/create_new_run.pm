@@ -37,7 +37,7 @@ sub create_new_run{
  #############################
  print "\n ID\t\t:$ID_here\n";
  $id_father=$ID_here;
- if ($ID_in) {$id_father=$ID_in};
+ if ($IF_in) {$id_father=$IF_in};
  if ($ID_here eq $id_father) {$material_here=$material};
  if ($ID_here ne $id_father) {$material_here=$RUN_material[$IRUN_in]};
  if (&have_material("$material_here") eq 0) {&remote_ssh_cmd("mkdir -p $path/$material_here")};
@@ -61,9 +61,7 @@ sub create_new_run{
  }
  if ($description) {
   $local_description_file="$HOME/.ydb/${ID_here}_description";
-  open(LOCAL_DESC,'>',$local_description_file) or die;
-  print LOCAL_DESC "$description";
-  close(LOCAL_DESC);
+  $return_value = system("vim $local_description_file"); 
   &remote_sftp_cmd("put $local_description_file $RUN_dir/description");
   $n_to_remove++;
   $FILE_to_remove[$n_to_remove]="$local_description_file";

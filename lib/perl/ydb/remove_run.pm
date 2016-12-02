@@ -52,8 +52,7 @@ sub remove_run{
    }
  };
  if ("$todo" =~ "all") {
-  print "$RUN_description[$IRUN_in]\n";
-  if ( "$RUN_description[$IRUN_in]" ne "") {&remote_sftp_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/description")};
+  if ( "$RUN_description[$IRUN_in][1]" ne "") {&remote_sftp_cmd("rm $path/$RUN_material[$IRUN_in]/$ID_in/description")};
   &remote_sftp_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/inputs");
   &remote_sftp_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/outputs");
   &remote_sftp_cmd("rmdir $path/$RUN_material[$IRUN_in]/$ID_in/databases");

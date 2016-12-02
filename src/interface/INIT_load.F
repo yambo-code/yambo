@@ -171,7 +171,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
-#if defined _RT || defined _QED
+#if defined _RT 
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _MAGNETIC

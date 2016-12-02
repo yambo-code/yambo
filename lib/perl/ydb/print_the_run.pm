@@ -28,7 +28,7 @@ sub print_the_run
  my $ID_now=$ID[$IRUN_now];
  if ($list) {
   if ($ID_in and "$ID[$irun]" ne "$ID_in") {return};
-  if ($IF_in and "$RUN_father[$irun]" ne "$IF_in") {return};
+  if ($IF_in and "$RUN_father[$irun]" ne "$IF_in" and $ID_now ne $IF_in ) {return};
   if ($material and index($RUN_material[$irun],$material) eq -1 ) {return};
   if ($ID_in and $ID_in ne $ID_now){return};
   # 
@@ -48,47 +48,63 @@ sub print_the_run
  print "\n ID\t\t:$ID_now\n";
  print " Father\t\t:$RUN_father[$IRUN_now]\n";
  print " Material\t:$RUN_material[$IRUN_now]\n";
- print " Description\t:$RUN_description[$IRUN_now]\n";
+ if ($RUN_description[$IRUN_now][1]) {
+  print " Description\t:";
+  $start="";
+  for($ik = 1; $ik < 100; $ik++) {
+    if ($ik >1 ) { $start="\n\t\t " };
+    print "$start$RUN_description[$IRUN_now][$ik]" if exists($RUN_description[$IRUN_now][$ik]);
+  };
+  print "\n";
+ }
  print " Date\t\t:$RUN_date[$IRUN_now]\n";
- print " Tags\t\t:";
- $start=" ";
- for($ik = 1; $ik < 100; $ik++) {
-   if ($ik >1 ) { $start="\n\t\t  " };
-   print "$start$RUN_tag[$IRUN_now][$ik]" if exists($RUN_tag[$IRUN_now][$ik]);
- };
+ if ($RUN_tag[$IRUN_now][1]) {
+  print " Tags\t\t:";
+  $start=" ";
+  for($ik = 1; $ik < 100; $ik++) {
+    if ($ik >1 ) { $start="\n\t\t  " };
+    print "$start$RUN_tag[$IRUN_now][$ik]" if exists($RUN_tag[$IRUN_now][$ik]);
+  };
+  print "\n";
+ }
+ if ($RUN_in[$IRUN_now][1]) {
+  print " Input(s)\t:";
+  $start="";
+  for($ik = 1; $ik < 100; $ik++) {
+    if ($ik >1 ) { $start="\n\t\t " };
+    if ($RUN_in_tag[$IRUN_now][$ik]){
+     print "$start$RUN_in[$IRUN_now][$ik] (Tag(s): $RUN_in_tag[$IRUN_now][$ik])" if exists($RUN_in[$IRUN_now][$ik]);
+    }else{
+     print "$start$RUN_in[$IRUN_now][$ik]" if exists($RUN_in[$IRUN_now][$ik]);
+    }
+  };
+  print "\n";
+ }
+ if ($RUN_out[$IRUN_now][1]) {
+  print " Output(s)\t:";
+  $start="";
+  for($ik = 1; $ik < 100; $ik++) {
+    if ($ik >1 ) { $start="\n\t\t " };
+    if ($RUN_out_tag[$IRUN_now][$ik]){
+     print "$start$RUN_out[$IRUN_now][$ik] (Tag(s): $RUN_out_tag[$IRUN_now][$ik])" if exists($RUN_out[$IRUN_now][$ik]);
+    }else{
+     print "$start$RUN_out[$IRUN_now][$ik]" if exists($RUN_out[$IRUN_now][$ik]);
+    }
+  };
  print "\n";
- print " Input(s)\t:";
- $start=" ";
- for($ik = 1; $ik < 100; $ik++) {
-   if ($ik >1 ) { $start="\n\t\t  " };
-   if ($RUN_in_tag[$IRUN_now][$ik]){
-    print "$start$RUN_in[$IRUN_now][$ik] (Tag(s): $RUN_in_tag[$IRUN_now][$ik])" if exists($RUN_in[$IRUN_now][$ik]);
-   }else{
-    print "$start$RUN_in[$IRUN_now][$ik]" if exists($RUN_in[$IRUN_now][$ik]);
-   }
- };
- print "\n";
- print " Output(s)\t:";
- $start=" ";
- for($ik = 1; $ik < 100; $ik++) {
-   if ($ik >1 ) { $start="\n\t\t  " };
-   if ($RUN_out_tag[$IRUN_now][$ik]){
-    print "$start$RUN_out[$IRUN_now][$ik] (Tag(s): $RUN_out_tag[$IRUN_now][$ik])" if exists($RUN_out[$IRUN_now][$ik]);
-   }else{
-    print "$start$RUN_out[$IRUN_now][$ik]" if exists($RUN_out[$IRUN_now][$ik]);
-   }
- };
- print "\n";
- print " Database(s)\t:";
- $start=" ";
- for($ik = 1; $ik < 100; $ik++) {
-   if ($ik >1 ) { $start="\n\t\t  " };
-   if ($RUN_db_tag[$IRUN_now][$ik]){
-    print "$start$RUN_db[$IRUN_now][$ik] (Tag(s): $RUN_db_tag[$IRUN_now][$ik])" if exists($RUN_db[$IRUN_now][$ik]);
-   }else{
-    print "$start$RUN_db[$IRUN_now][$ik]" if exists($RUN_db[$IRUN_now][$ik]);
-   }
- };
- print "\n";
+ }
+ if ($RUN_db[$IRUN_now][1]) {
+  print " Database(s)\t:";
+  $start=" ";
+  for($ik = 1; $ik < 100; $ik++) {
+    if ($ik >1 ) { $start="\n\t\t  " };
+    if ($RUN_db_tag[$IRUN_now][$ik]){
+     print "$start$RUN_db[$IRUN_now][$ik] (Tag(s): $RUN_db_tag[$IRUN_now][$ik])" if exists($RUN_db[$IRUN_now][$ik]);
+    }else{
+     print "$start$RUN_db[$IRUN_now][$ik]" if exists($RUN_db[$IRUN_now][$ik]);
+    }
+  };
+  print "\n";
+ }
 }
 1;

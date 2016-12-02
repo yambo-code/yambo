@@ -50,7 +50,7 @@ $awk=gawk;
 &GetOptions("help"           => \$help,
             "m=s"            => \$material,
             "k=s"            => \$key,
-            "desc=s"         => \$description,
+            "desc"           => \$description,
             "id=i"           => \$ID_in,
             "if=i"           => \$IF_in,
             "i=s"            => \$input,
@@ -76,7 +76,7 @@ sub usage {
                    -h                      This help
                    -m      [STRING]        Material definition
                    -k      [key]           Key used to select specific groups of files
-                   -desc   [DESC]          Run description
+                   -desc                   Edit run description
                    -id     [ID]            Run ID (father)
                    -ic     [ID]            Run ID (child)
                    -i      [FILE]          Input (not needed with -g) (also use all with -del)
@@ -159,10 +159,9 @@ if ($user_tags) {
  @tags= split(/\s*,\s*/, $user_tags); 
  print   " Tags\t\t:@tags\n" ;
 };
-if ($description) {print   " Description\t:$description \n"};
-if ($input) {print   " Input      \t:$input \n"};
-if ($output) {print   " Output(s) \t:$output \n"};
-if ($database) {print " Database(s) \t:$database \n"};
+if ($input)       {print   " Input      \t:$input \n"};
+if ($output)      {print   " Output(s) \t:$output \n"};
+if ($database)    {print " Database(s) \t:$database \n"};
 #
 # IRUN_in
 if ($ID_in) { 
@@ -209,14 +208,14 @@ if ($get and $ID_in and &have_ID($ID_in)==1) {
 #
 # CREATE
 if ($create) { 
- if (!$material and !$ID_in) {die " A material must be provided\n"};
+ if (!$material and !$ID_in and !$IF_in) {die " A material must be provided\n"};
  &create_new_run();
 };
 #
 # UPDATE
 if ($ID_in){
  if ($quiet) {print "\n Changes in the database:\n\n"};
- if ($description) {&add_a_database_line($ID_in,"description","$description")};
+ if ($description) {&add_a_database_line($ID_in,"description")};
  if ($material) {&add_a_database_line($ID_in,"material","$material")};
  if ($user_tags) {&add_a_database_line($ID_in,"tag","@tags")};
 }

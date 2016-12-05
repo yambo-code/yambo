@@ -106,7 +106,7 @@ sub file_add
  next if ($file =~ m/[.gz]$/);
  $n_to_remove++;
  $FILE_to_remove[$n_to_remove]="$file.gz";
- &local_cmd("gzip -k -f $file");
+ &local_cmd("gzip $file");
  &remote_sftp_cmd("put $file.gz $RUN_dir/outputs");
  &add_a_database_line($ID_in,"output","$file");
 }
@@ -121,7 +121,7 @@ sub db_add
  $n_to_remove++;
  $FILE_to_remove[$n_to_remove]="$file.nc";
  &local_cmd("ncdump $file> $file.nc");
- &local_cmd("gzip -k -f $file.nc");
+ &local_cmd("gzip $file.nc");
  &remote_sftp_cmd("put $file.nc.gz $RUN_dir/databases");
  &add_a_database_line($ID_in,"database","$file");
 }

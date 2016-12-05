@@ -61,6 +61,7 @@ sub add_a_database_line
   }
   $replace_it="no";
   if ( "@line" eq "$new_line" ){ $replace_it = "yes" };
+  if ( "$line[1]" =~ "father" and "@_[1]" =~ "father"){ $replace_it = "yes"};
   if ( "$line[1]" =~ "material" and "@_[1]" =~ "material"){ $replace_it = "yes"};
   if ( "$line[1]" =~ "description" and "@_[1]" =~ "description"){ 
    open(DESC_file,"<","$local_description_file");

@@ -55,7 +55,7 @@ print   " DB elemets\t:$runs \n";
         &print_the_run($irun3,$irun2,3);
         my $irun4=$irun3;
         while ($irun4<$runs) {
-         $irun3++;
+         $irun4++;
          if ($RUN_father[$irun4] eq $irun3) {
           #print "CHILD(4) of $irun3 \n";
           &print_the_run($irun4,$irun3,4);

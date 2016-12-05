@@ -25,6 +25,7 @@ sub load_db
 {
 open(DB,"<","$DB_file");
 $runs=0;
+$N_fathers=0;
 while(<DB>) { 
  @element = split(' ',$_);
  if ($element[1] eq "father")    { 
@@ -37,7 +38,17 @@ while(<DB>) {
  }
  $ID[$runs]=$element[0];
  if ($element[1] eq "material")    { $RUN_material[$runs]=$element[2] } ;
- if ($element[1] eq "father")      { $RUN_father[$runs]=$element[2] } ;
+ if ($element[1] eq "father")      { 
+  $RUN_father[$runs]=$element[2];
+  $F_found="no";
+  for($if_here = 1; $if_here <= $N_fathers; $if_here++) {
+    if ("$element[2]" =~ "$father[$if_here]") {$F_found="yes"};
+  } 
+  if ("$F_found" eq "no") {
+   $N_fathers++;
+   $father[$N_fathers]=$element[2];
+  }
+ }
  if ($element[1] eq "date")        { $RUN_date[$runs]=$element[2] } ;
  if ($element[1] eq "description") { 
   $desc_line  = substr $_, index($_,"description")+length("description")+1 ; 

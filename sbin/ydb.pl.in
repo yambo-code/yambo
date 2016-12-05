@@ -41,10 +41,12 @@ use objects_IO;
 use create_new_run;
 use functions;
 use remove_run;
+use prompt;
 #
 # Initialize
-$version="2.0";
+$version="3.0";
 $awk=gawk;
+local $| = 1;
 #
 # CMD line
 &GetOptions("help"           => \$help,
@@ -167,17 +169,12 @@ if ($database)    {print " Database(s) \t:$database \n"};
 if ($ID_in) { 
  $id_father=$ID_in;
  if ($IF_in) {$id_father=$IF_in};
- $IRUN_in=&have_run;
+ $IRUN_in=&have_run("ID",$ID_in);
 }
 #
 # LIST
 if ($list) { 
- print   " DB elemets\t:$runs \n\n";
- $irun=0;
- while ($irun<$runs) {
-  $irun++;
-  &print_the_run($irun);
- } 
+ &list_all_runs;
  exit;
 };
 #

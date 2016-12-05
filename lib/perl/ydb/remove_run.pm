@@ -26,6 +26,8 @@ sub remove_run{
  $todo=" ";
  if (!$input and !$output and !$database) {$todo="all"};
  if ($IRUN_in eq 0) {return};
+ $test=&prompt("\n Do you really want to delete the ID $ID_in DB entry ");
+ if ("$test" eq "n") {return};
  #
  print "\n\n Removing RUN $IRUN_in (ID $ID_in) ...\n\n";
  #

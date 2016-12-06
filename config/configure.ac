@@ -427,7 +427,7 @@ ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F 
-                 sbin/make_makefile.sh sbin/objects_debug.sh sbin/ydb.pl
+                 sbin/make_makefile.sh sbin/objects_debug.sh 
                  driver/codever.h driver/editor.h src/external_c/.objects])
 AC_OUTPUT
 chmod u+x sbin/*

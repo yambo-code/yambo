@@ -27,7 +27,7 @@ sub local_uncompress{
  print "\n Uncompresing $ID_in ...\n";
  #
  foreach $file (<$local_dir/outputs/*gz>,<$local_dir/databases/*gz>) {
-  &local_cmd("gunzip -f $file");
+  &local_cmd("gunzip $file");
  }
  foreach $file (<$local_dir/databases/*nc>) {
   my $filename = basename("$file",  ".nc");
@@ -41,15 +41,43 @@ sub get_the_run{
  print "\n Fetching RUN $IRUN_in (ID $ID_in) ...\n";
  #
  &print_the_run($ID_in);
+ if ($see) { 
+  $n_to_remove++;
+  $FILE_to_remove[$n_to_remove]="$local_dir/";
+  if ($input) {
+   $n_to_remove++;
+   $FILE_to_remove[$n_to_remove]="$local_dir/inputs";
+  }
+  if ($output) {
+   $n_to_remove++;
+   $FILE_to_remove[$n_to_remove]="$local_dir/output";
+  }
+ }
  #
  for($ik = 1; $ik < 100; $ik++) {
   if (exists($RUN_in[$IRUN_in][$ik]) and $input){
-    if ($RUN_in[$IRUN_in][$ik] =~ /$input/ or "$input" =~ "all"){
-    &remote_sftp_cmd("get $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
+   if ($RUN_in[$IRUN_in][$ik] =~ /$input/ or "$input" =~ "all"){
+    if ($see) { 
+     $return_value = system("scp $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
+     $return_value = system("vim $local_dir/inputs/$RUN_in[$IRUN_in][$ik]");
+     $n_to_remove++;
+     $FILE_to_remove[$n_to_remove]="$local_dir/inputs/$RUN_in[$IRUN_in][$ik]";
+    }else{
+     &remote_sftp_cmd("get $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
+    };
    }
   }
   if (exists($RUN_out[$IRUN_in][$ik]) and $output){
-    if ($RUN_out[$IRUN_in][$ik] =~ /$output/ or "$output" =~ "all"){
+   if ($RUN_out[$IRUN_in][$ik] =~ /$output/ or "$output" =~ "all"){
+    if ($see) { 
+     $return_value = system("scp $RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz $local_dir/outputs/");
+     $return_value = system("gunzip $local_dir/outputs/$RUN_out[$IRUN_in][$ik].gz");
+     $return_value = system("vim $local_dir/outputs/$RUN_out[$IRUN_in][$ik]");
+     $n_to_remove++;
+     $FILE_to_remove[$n_to_remove]="$local_dir/outputs/$RUN_out[$IRUN_in][$ik]";
+    }else{
+     &remote_sftp_cmd("get $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
+    };
     &remote_sftp_cmd("get $RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz $local_dir/outputs/");
    }
   }

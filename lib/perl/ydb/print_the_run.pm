@@ -179,7 +179,7 @@ sub print_the_run
   };
   print "\n";
  }
- if ($RUN_in[$IRUN_now][1]) {
+ if ($RUN_in[$IRUN_now][1] and $verb eq 1) {
   print $space."Input(s)\t:";
   $start="";
   for($ik = 1; $ik < 100; $ik++) {
@@ -192,7 +192,7 @@ sub print_the_run
   };
   print "\n";
  }
- if ($RUN_out[$IRUN_now][1]) {
+ if ($RUN_out[$IRUN_now][1] and $verb eq 1) {
   print $space."Output(s)\t:";
   $start="";
   for($ik = 1; $ik < 100; $ik++) {
@@ -205,7 +205,7 @@ sub print_the_run
   };
  print "\n";
  }
- if ($RUN_db[$IRUN_now][1]) {
+ if ($RUN_db[$IRUN_now][1] and $verb eq 1) {
   print $space."Database(s)\t:";
   $start=" ";
   for($ik = 1; $ik < 100; $ik++) {

@@ -51,7 +51,7 @@ CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
-           lib/install/make_iotk.inc
+           lib/install/make_iotk.inc sbin/ydb.pl
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
 CLEANS   = clean_fast clean clean_all distclean
@@ -104,7 +104,7 @@ YPPSURF_MAIN_LIBS  = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface surf t
 nothing: 
 	@$(make_message)
 changelog:
-	svn log | perl sbin/svn2cl.pl > ChangeLog
+	./sbin/gitchangelog.py > ChangeLog
 all:
 	for target in $(PROJECTS); do $(MAKE) $$target ; done
 	for target in $(TARGETS); do $(MAKE) $$target ; done

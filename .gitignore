@@ -38,6 +38,7 @@ lib/*/libxc-*
 compile.sh
 sbin/make_makefile.sh
 sbin/objects_debug.sh
+sbin/ydb.pl
 src/wf_and_fft/sgfft.F
 bin/*
 

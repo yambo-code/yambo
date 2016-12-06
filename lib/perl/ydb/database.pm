@@ -61,6 +61,7 @@ sub add_a_database_line
   }
   $replace_it="no";
   if ( "@line" eq "$new_line" ){ $replace_it = "yes" };
+  if ( "$line[1]" =~ "date" and "@_[1]" =~ "date"){ $replace_it = "yes"};
   if ( "$line[1]" =~ "father" and "@_[1]" =~ "father"){ $replace_it = "yes"};
   if ( "$line[1]" =~ "material" and "@_[1]" =~ "material"){ $replace_it = "yes"};
   #
@@ -90,21 +91,21 @@ sub add_a_database_line
     if ("$line[2]" eq "$output") { 
      $new_line = "$line[0] $line[1] $line[2] $user_tags";
      $replace_it = "yes";
-     &remote_ssh_cmd("echo $user_tags > $path/$RUN_material[$IRUN_in]/$local_id/outputs/$line[2].tags");
+     &remote_ssh_cmd("echo $user_tags > '$path/$RUN_material[$IRUN_in]/$local_id/outputs/$line[2].tags'");
     }
    }
    if ("$line[1]" eq "input" and $input) {
     if ("$line[2]" eq "$input") { 
      $new_line = "$line[0] $line[1] $line[2] $user_tags";
      $replace_it = "yes";
-     &remote_ssh_cmd("echo $user_tags > $path/$RUN_material[$IRUN_in]/$local_id/inputs/$line[2].tags");
+     &remote_ssh_cmd("echo $user_tags > '$path/$RUN_material[$IRUN_in]/$local_id/inputs/$line[2].tags'");
     }
    }
    if ("$line[1]" eq "database" and $database) {
     if ("$line[2]" eq "$database") { 
      $new_line = "$line[0] $line[1] $line[2] $user_tags";
      $replace_it = "yes";
-     &remote_ssh_cmd("echo $user_tags > $path/$RUN_material[$IRUN_in]/$local_id/databases/$line[2].tags");
+     &remote_ssh_cmd("echo $user_tags > '$path/$RUN_material[$IRUN_in]/$local_id/databases/$line[2].tags'");
     }
    }
   };

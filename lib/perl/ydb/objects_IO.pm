@@ -27,7 +27,7 @@ sub local_uncompress{
  print "\n Uncompresing $ID_in ...\n";
  #
  foreach $file (<$local_dir/outputs/*gz>,<$local_dir/databases/*gz>) {
-  &local_cmd("gunzip $file");
+  &local_cmd("gunzip -f '$file'");
  }
  foreach $file (<$local_dir/databases/*nc>) {
   my $filename = basename("$file",  ".nc");
@@ -71,19 +71,18 @@ sub get_the_run{
    if ($RUN_out[$IRUN_in][$ik] =~ /$output/ or "$output" =~ "all"){
     if ($see) { 
      $return_value = system("scp $RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz $local_dir/outputs/");
-     $return_value = system("gunzip $local_dir/outputs/$RUN_out[$IRUN_in][$ik].gz");
+     $return_value = system("gunzip -f $local_dir/outputs/$RUN_out[$IRUN_in][$ik].gz");
      $return_value = system("vim $local_dir/outputs/$RUN_out[$IRUN_in][$ik]");
      $n_to_remove++;
      $FILE_to_remove[$n_to_remove]="$local_dir/outputs/$RUN_out[$IRUN_in][$ik]";
     }else{
-     &remote_sftp_cmd("get $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
+     &remote_sftp_cmd("get '$RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz' $local_dir/outputs/");
     };
-    &remote_sftp_cmd("get $RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz $local_dir/outputs/");
    }
   }
   if (exists($RUN_db[$IRUN_in][$ik]) and $database){
     if ($RUN_db[$IRUN_in][$ik] =~ /$database/ or "$database" =~ "all"){
-    &remote_sftp_cmd("get $RUN_dir/databases/$RUN_db[$IRUN_in][$ik].nc.gz $local_dir/databases/");
+    &remote_sftp_cmd("get '$RUN_dir/databases/$RUN_db[$IRUN_in][$ik].nc.gz' $local_dir/databases/");
    }
   }
  }
@@ -131,10 +130,11 @@ sub file_add
 #============
 {
  $file="@_";
- next if ($file =~ m/[.gz]$/);
+ chomp $file;
+ my ($name, $dir, $ext) = fileparse($file, ".gz");
  $n_to_remove++;
  $FILE_to_remove[$n_to_remove]="$file.gz";
- &local_cmd("gzip -c $file > $file.gz");
+ if ( "$ext" ne ".gz") { &local_cmd("gzip -c '$file' > '$file'.gz")};
  &remote_sftp_cmd("put $file.gz $RUN_dir/outputs");
  &add_a_database_line($ID_in,"output","$file");
 }

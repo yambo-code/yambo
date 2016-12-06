@@ -182,7 +182,7 @@ sub print_the_run
  if ($RUN_tag[$IRUN_now][1]) {
   $right_space= (" " x ($field_length-length("Tags")));
   print $space."Tags".$right_space.":";
-  $start=" ";
+  $start="";
   for($ik = 1; $ik < 100; $ik++) {
     if ($ik >1 ) { $start="\n".$space.$right_free_space };
     print "$start$RUN_tag[$IRUN_now][$ik]" if exists($RUN_tag[$IRUN_now][$ik]);

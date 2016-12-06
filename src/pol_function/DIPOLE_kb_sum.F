@@ -43,7 +43,7 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  integer     :: i1,i2,i_spinor,j_spinor
  complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3,pp_kbv_dim,n_spinor)
  !
-!$omp parallel do default(shared), private(i_spinor,i1,i2,Cv,CC,Vv,Vc), collapse(2)
+!$omp parallel do default(shared), private(i_spinor,i1,i2,Cv,Cc,Vv,Vc), collapse(2)
  do i_spinor=1,n_spinor
    !
    do i1=1,pp_kbv_dim

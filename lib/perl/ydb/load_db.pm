@@ -37,6 +37,7 @@ while(<DB>) {
   $runs++;
  }
  $ID[$runs]=$element[0];
+ if ($element[1] eq "running")     { $RUN_run[$runs]=$element[2] } ;
  if ($element[1] eq "material")    { $RUN_material[$runs]=$element[2] } ;
  if ($element[1] eq "father")      { 
   $RUN_father[$runs]=$element[2];

@@ -109,6 +109,9 @@ sub print_the_run
  my $IRUN_now=@_[0];
  my $ID_now=$ID[$IRUN_now];
  #
+ my $field_length=12;
+ $right_free_space= (" " x ($field_length+1));
+ #
  if ($list) {
   #
   my $IFATHER_now=@_[1];
@@ -156,34 +159,42 @@ sub print_the_run
  }
  #
  if ($tab_now eq 0) { 
-  print $space."Material\t:$RUN_material[$IRUN_now]\n";
+  $right_space= (" " x ($field_length-length("Material")));
+  print $space."Material".$right_space.":$RUN_material[$IRUN_now]\n";
  }
  #
  if ($RUN_description[$IRUN_now][1]) {
-  print $space."Description:";
+  $right_space= (" " x ($field_length-length("Description")));
+  print $space."Description".$right_space.":";
   $start="";
   for($ik = 1; $ik < 100; $ik++) {
-    if ($ik >1 ) { $start="\n".$space."\t\t " };
+    if ($ik >1 ) { $start="\n".$space.$right_free_space };
     print "$start$RUN_description[$IRUN_now][$ik]" if exists($RUN_description[$IRUN_now][$ik]);
   };
   print "\n";
  }
- print $space."Date\t:$RUN_date[$IRUN_now]\n";
+ $right_space= (" " x ($field_length-length("Date")));
+ print $space."Date".$right_space.":$RUN_date[$IRUN_now]\n";
+ #
+ $right_space= (" " x ($field_length-length("Running")));
+ if ($RUN_run[$IRUN_now]) {print $space."Running".$right_space.":$RUN_run[$IRUN_now]\n"};
  #
  if ($RUN_tag[$IRUN_now][1]) {
-  print $space."Tags\t:";
+  $right_space= (" " x ($field_length-length("Tags")));
+  print $space."Tags".$right_space.":";
   $start=" ";
   for($ik = 1; $ik < 100; $ik++) {
-    if ($ik >1 ) { $start="\n".$space."\t\t  " };
+    if ($ik >1 ) { $start="\n".$space.$right_free_space };
     print "$start$RUN_tag[$IRUN_now][$ik]" if exists($RUN_tag[$IRUN_now][$ik]);
   };
   print "\n";
  }
  if ($RUN_in[$IRUN_now][1] and $verb eq 1) {
-  print $space."Input(s)\t:";
+  $right_space= (" " x ($field_length-length("Input(s)")));
+  print $space."Input(s)".$right_space.":";
   $start="";
   for($ik = 1; $ik < 100; $ik++) {
-    if ($ik >1 ) { $start="\n".$space."\t\t " };
+    if ($ik >1 ) { $start="\n".$space.$right_free_space };
     if ($RUN_in_tag[$IRUN_now][$ik]){
      print "$start$RUN_in[$IRUN_now][$ik] (Tag(s): $RUN_in_tag[$IRUN_now][$ik])" if exists($RUN_in[$IRUN_now][$ik]);
     }else{
@@ -193,10 +204,11 @@ sub print_the_run
   print "\n";
  }
  if ($RUN_out[$IRUN_now][1] and $verb eq 1) {
-  print $space."Output(s)\t:";
+  $right_space= (" " x ($field_length-length("Output(s)")));
+  print $space."Output(s)".$right_space.":";
   $start="";
   for($ik = 1; $ik < 100; $ik++) {
-    if ($ik >1 ) { $start="\n".$space."\t\t " };
+    if ($ik >1 ) { $start="\n".$space.$right_free_space };
     if ($RUN_out_tag[$IRUN_now][$ik]){
      print "$start$RUN_out[$IRUN_now][$ik] (Tag(s): $RUN_out_tag[$IRUN_now][$ik])" if exists($RUN_out[$IRUN_now][$ik]);
     }else{
@@ -206,10 +218,11 @@ sub print_the_run
  print "\n";
  }
  if ($RUN_db[$IRUN_now][1] and $verb eq 1) {
-  print $space."Database(s)\t:";
+  $right_space= (" " x ($field_length-length("Database(s)")));
+  print $space."Database(s)".$right_space.":";
   $start=" ";
   for($ik = 1; $ik < 100; $ik++) {
-    if ($ik >1 ) { $start="\n".$space."\t\t  " };
+    if ($ik >1 ) { $start="\n".$space.$right_free_space };
     if ($RUN_db_tag[$IRUN_now][$ik]){
      print "$start$RUN_db[$IRUN_now][$ik] (Tag(s): $RUN_db_tag[$IRUN_now][$ik])" if exists($RUN_db[$IRUN_now][$ik]);
     }else{

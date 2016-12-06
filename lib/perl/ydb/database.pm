@@ -63,6 +63,12 @@ sub add_a_database_line
   if ( "@line" eq "$new_line" ){ $replace_it = "yes" };
   if ( "$line[1]" =~ "father" and "@_[1]" =~ "father"){ $replace_it = "yes"};
   if ( "$line[1]" =~ "material" and "@_[1]" =~ "material"){ $replace_it = "yes"};
+  #
+  if ( "$line[1]" =~ "running" and "@_[1]" =~ "running"){ 
+   $replace_it = "yes";
+   &remote_ssh_cmd("echo $running > $path/$RUN_material[$IRUN_in]/$local_id/running");
+  }
+  #
   if ( "$line[1]" =~ "description" and "@_[1]" =~ "description"){ 
    open(DESC_file,"<","$local_description_file");
    @DESC=<DESC_file>;

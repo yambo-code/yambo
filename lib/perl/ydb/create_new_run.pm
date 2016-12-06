@@ -56,6 +56,7 @@ sub create_new_run{
   &remote_ssh_cmd("mkdir -p $path/$material_here/$ID_here/databases");
  }
  $RUN_dir="$path/$material_here/$ID_here";
+ if ($running) {$database_line[0]="$ID_here running $running"};
  $database_line[0]="$ID_here father $id_father";
  $database_line[1]="$ID_here material $material_here";
  $database_line[2]="$ID_here date $date";

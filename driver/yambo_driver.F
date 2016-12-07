@@ -37,7 +37,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use drivers,       ONLY:l_slk_test
 #endif
  use X_m,           ONLY:X_t
- use parallel_m,    ONLY:myid,ncpu,MPI_close
+ use parallel_m,    ONLY:myid,ncpu
  use it_m,          ONLY:it_reset,infile
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
@@ -106,13 +106,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  iinf=0 
  iinf=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.false.)
  !
- ! the iinf==2 (DB listing mode) stops the job so no file editing
- ! or error msg from the driver.c is possible
- !
- if (iinf==2) then
-   call MPI_close
-   return
- endif
  if (iinf/=0) return
  !
  ! PARALLEL and I/O Setup 
@@ -304,6 +297,5 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  call timing_deallocate( )
 #endif
  call it_reset(-1)
- call MPI_close
  !
 end function

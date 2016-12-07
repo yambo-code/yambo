@@ -501,24 +501,6 @@ module parallel_m
      endif
    end subroutine
    !
-   subroutine MPI_close
-     implicit none
-#if defined _MPI
-     call mpi_finalize(i_err)
-#endif
-     return
-   end subroutine
-   !
-   subroutine MPI_shutdown
-     implicit none
-#if defined _MPI
-     call mpi_abort(mpi_comm_world,1)
-     call mpi_finalize(i_err)
-#endif
-     stop 
-     return
-   end subroutine
-   !
    subroutine PP_indexes_reset(ip)
      type(PP_indexes)::ip
      if(associated(ip%element_1D))    deallocate(ip%element_1D)

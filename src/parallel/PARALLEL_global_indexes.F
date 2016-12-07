@@ -24,6 +24,7 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
+ use com,           ONLY:secnm
  use linear_algebra,ONLY:INV
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,CPU_structure,master_cpu,&
@@ -102,7 +103,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Work Space
  !
  integer              :: i_k,i_k_bz,X_type,ib1,ib2,i_field,nb_mat
- logical              :: reset_all
+ logical              :: reset_all,computing_Fock
  character(10)        :: WHAT,WHATp
  !
  ! Resets...
@@ -111,6 +112,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (present(RESET)) then
    reset_all=RESET
  endif
+ !
+ computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Bare local and non-local Exchange-Correlation")/=0 )
  !
  ! Logicals
  !
@@ -298,9 +301,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Generic Bands
  !---------------
  if (ENVIRONMENT=="Self_Energy"                     ) then
-   if (l_HF_and_locXC)     n_bands=(/1,max(E%nbm,QP_nb)/)
-   if (l_gw0.or.l_life)    n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
-   if (.not.l_HF_and_locXC) n_bands(1)=QP_n_G_bands(1)
+   if (l_HF_and_locXC)                               n_bands=(/1,max(E%nbm,QP_nb)/)
+   if ((l_gw0.or.l_life).and..not.computing_Fock)    n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
+   if (.not.computing_Fock)                          n_bands(1)=QP_n_G_bands(1)
 #if defined _SC || defined _RT
    if (l_eval_collisions)  n_bands=COLL_bands
 #endif

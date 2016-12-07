@@ -367,7 +367,6 @@ module com
    subroutine error(mesg)
      use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
      use stderr,     ONLY:string_pack
-     use parallel_m, ONLY:MPI_shutdown
      character(*)    :: mesg
      !
      live_timing_is_on=.FALSE.
@@ -380,7 +379,7 @@ module com
      call LIVE_message(string_pack('[ERROR] ',trim(mesg)),"n","","%s")
      call LIVE_message("","n","","%s")
      !
-     call MPI_shutdown( ) 
+     stop
      !
    end subroutine
    !

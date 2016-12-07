@@ -350,9 +350,7 @@ int main(int argc, char *argv[])
    fprintf(stderr," \n%s\n\n","yambo: invalid command line options and/or build");
   };
 #if defined _MPI
-  if (mpi_init==0) {
-   MPI_Abort(1,MPI_COMM_WORLD);
-  };
+  if (mpi_init==0) { MPI_Abort(1,MPI_COMM_WORLD); };
 #endif 
  };
  /* 
@@ -365,13 +363,13 @@ int main(int argc, char *argv[])
  free(js);
  free(od); 
  free(db);
- exit(0);
 #if defined _MPI
   if (mpi_init==0) {
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
   };
 #endif 
+ exit(0);
 }
 static void usage(int verbose)
 {

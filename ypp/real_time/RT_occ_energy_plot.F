@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): DS AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -26,8 +26,9 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  ! FIT the occupations with a Gauss–Newton algorithm
  !
  use units,          ONLY:HA2EV,HA2KEL,AUT2FS
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use pars,           ONLY:SP,schlen
+ use LIVE_t,         ONLY:live_timing
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
+ use pars,           ONLY:SP,schlen,rZERO
  use YPP_real_time,  ONLY:RT_time
  use RT_control,     ONLY:RT_apply
  use D_lattice,      ONLY:Bose_Temp
@@ -41,61 +42,95 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  !
  implicit none
  !
+#include <memory.h>
+ !
  type(bz_samp) :: kpt
  type(levels)  :: En
  integer       :: n_T_steps
  !
  ! Work Space
  !
- integer, parameter    :: max_iter=10000,fit_dim=1000,nmax_file_report=16
+ integer, parameter    :: fit_dim=1000,N_max_files=16
+ integer               :: n_groups=1,i_g,i_g_ep=0,i_g_ee=0,i_T,i_RT,ib,ik,i_f,i_fit
+ integer               :: E_sort_index(RT_carriers%nstates)
+ logical               :: l_ep_lifetimes
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
- real(SP)              :: RT_occ(RT_carriers%nstates,n_T_steps),RT_spin_occ(RT_carriers%nstates,2,n_T_steps)
- real(SP)              :: RT_gamma(RT_carriers%nstates,6,n_T_steps),RT_gamma_ratio(RT_carriers%nstates,2,n_T_steps)
- !
- real(SP)              :: RT_occ_fit(fit_dim,2,n_T_steps),RT_occ_spin_fit(fit_dim,2,2,n_T_steps),RT_E_fit(fit_dim,2)
- real(SP)              :: RT_gamma_ratio_fit(fit_dim,2,2,n_T_steps)
- !
- real(SP)              :: TMP_vec(RT_carriers%nstates),data_fit(2,11),GAMMA_holes,GAMMA_elecs
- real(SP)              :: err_fit(4,n_T_steps),err_fit_gamma(4,n_T_steps),err_fit_spin(4,n_T_steps)
- real(SP)              :: T_fit(2,n_T_steps),T_fit_gamma(4,n_T_steps),T_fit_spin(4,n_T_steps)
- real(SP)              :: Ef_fit(2,n_T_steps),Ef_fit_gamma(4,n_T_steps),Ef_fit_spin(4,n_T_steps)
- !
  real(SP),allocatable  :: spin_factors(:,:,:)
  !
- logical  :: l_ELPH_lifetimes
+ !...output (FIT)
+ integer           ::n_titles
+ character(10)     ::titles(max(n_T_steps+4,11)),ch_dummy,data_ch(n_T_steps+4,5,2),columns(n_T_steps+4)
+ character(schlen) ::Ef_and_T_fname(2)
+!,gamma_fname(8),gamma_ratio_fname(2),GRP_string
+ real(SP)          ::o_data(20)
  !
- integer  :: i_fit,i_fit_kind,i_RT,ib,ik,i_spinor,i_T,i1,i2,n1,n2,n3,igamma,n_gamma,i_ratio,n_ratio,n_fits_done
- integer  :: nfound(3),nfound_gamma(5),nfound_spin(5)
- integer  :: E_sort_index(RT_carriers%nstates)
+ ! Local group Load&Fit type
+ !---------------------------
+ type Load_and_Fit
+   !...main
+   character(schlen) :: kind="none"
+   real(SP), allocatable :: data(:,:,:)
+   !...output
+   integer           :: n_files=0
+   character(schlen) :: file(6)
+   character(schlen) :: running_file
+   character(schlen) :: file_desc(6)
+   !...FIT
+   integer           :: n_fit_ok(2)=0
+   logical           :: fittable=.FALSE.
+   character(10)     :: FIT_title(2)
+   real(SP), allocatable :: data_fit(:,:,:)
+   real(SP), allocatable :: E_fit(:,:)
+   real(SP), allocatable :: err_fit(:,:)
+   real(SP), allocatable :: T(:,:)
+   real(SP), allocatable :: Ef(:,:)
+ end type Load_and_Fit
  !
- character(10)     ::titles(max(n_T_steps+4,11)),data_ch(n_T_steps+4,5,2),columns(n_T_steps+4),tmp_titles(12)
- character(schlen) ::output_fname(11),gamma_fname(7),gamma_ratio_fname(2),GRP_string
+ type(Load_and_Fit)    :: DATA_grp(5) ! e-e, e-p, e-gamma, occ, spin_occ
  !
- l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
- !
+ ! Energies
+ !==========
  RT_E_sorted=RT_carriers%E_bare*HA2EV
  call sort(RT_E_sorted,indx=E_sort_index)
- !
- RT_gamma=0._SP
- !
- T_fit=0._SP
- Ef_fit=0._SP
- nfound=0
- !
- T_fit_spin=0._SP
- Ef_fit_spin=0._SP
- nfound_spin=0
- !
- T_fit_gamma=0._SP
- Ef_fit_gamma=0._SP
- nfound_gamma=0
- !
  filled_tresh=1.E-7
  !
+ ! Allocate GROUPs!
+ !==================
+ !
+ call Load_and_Fit_alloc(DATA_grp(1),1,"CARRIERS")
+ !
  if (n_spinor==2) then
+   call Load_and_Fit_alloc(DATA_grp(2),1,"spin-up")
+   call Load_and_Fit_alloc(DATA_grp(3),1,"spin-dn")
    allocate(spin_factors(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
-   call electrons_spin_factors(kpt,(/1,kpt%nibz/),RT_carriers%nb,spin_factors)
- endif 
+   call electrons_spin_factors((/1,kpt%nibz/),RT_carriers%nb,spin_factors)
+   n_groups=3
+ endif
+ !
+ if (l_elel_scatt) then
+   n_groups=n_groups+1
+   call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-e")
+   i_g_ee=n_groups
+   n_groups=n_groups+1
+   call Load_and_Fit_alloc(DATA_grp(n_groups),1,"e-e-ratio")
+ endif
+ if (l_elphoton_scatt) then
+   n_groups=n_groups+1
+   call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-photon")
+ endif
+ !
+ l_ep_lifetimes = l_elph_scatt.and.l_RT_CCA_Kernel
+ if (l_ep_lifetimes) then
+   n_groups=n_groups+1
+   call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-p")
+   i_g_ep=n_groups
+   n_groups=n_groups+1
+   call Load_and_Fit_alloc(DATA_grp(n_groups),1,"e-p-ratio")
+ endif
+ !
+ ! Load the GROUPs!
+ !==================
+ call live_timing('Data loading',n_T_steps)
  !
  do i_T=1,n_T_steps
    !
@@ -109,304 +144,140 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      !
      ! Occupations
      !============
-     RT_occ(i_RT,i_T)=RT_carriers%delta_f(i_RT)
+     DATA_grp(1)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)
      !
      ! Spin occupations
      !==================
-     if(n_spinor==2) then
+     if (n_spinor==2) then
        ib=RT_carriers%table(i_RT,1)
        ik=RT_carriers%table(i_RT,3)
-       RT_spin_occ(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,1)
-       RT_spin_occ(i_RT,2,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,2)
+       DATA_grp(2)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,1)
+       DATA_grp(3)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,2)
      endif
      !
      ! Lifetimes
      !===========
-     n_gamma=0
-     if (l_ELPH_lifetimes) then
-       n_gamma=4
-       RT_gamma(i_RT,1,i_T)=RT_carriers%dGAMMA_E_P_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,3)
-       RT_gamma(i_RT,2,i_T)=RT_carriers%dGAMMA_E_P_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,4)
-       RT_gamma(i_RT,3,i_T)=RT_carriers%dGAMMA_E_P_Ho_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,5)
-       RT_gamma(i_RT,4,i_T)=RT_carriers%dGAMMA_E_P_El_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,6)
-     endif
      !
-     if (l_elel_scatt) then
-       n_gamma=n_gamma+2
-       RT_gamma(i_RT,n_gamma-1,i_T)=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,1)
-       RT_gamma(i_RT,n_gamma  ,i_T)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,2)
-     endif
-     !
-   enddo
-   !
-   ! Part 2: Fit occ and life ratio
-   !================================
-   if(i_T>1) then
-     T_fit(:,i_T) =T_fit(:,i_T-1)
-     Ef_fit(:,i_T)=Ef_fit(:,i_T-1)
-     T_fit_spin(:,i_T) =T_fit_spin(:,i_T-1)
-     Ef_fit_spin(:,i_T)=Ef_fit_spin(:,i_T-1)
-     T_fit_gamma(:,i_T) =T_fit_gamma(:,i_T-1)
-     Ef_fit_gamma(:,i_T)=Ef_fit_gamma(:,i_T-1)
-   endif
-   !
-   ! Occupations FIT
-   !
-   nfound(3)=Fermi_fnc_fit(RT_occ(:,i_T),RT_carriers%nstates,T_fit(:,i_T),Ef_fit(:,i_T),err_fit(:,i_T),&
-&                            RT_occ_fit_out=RT_occ_fit(:,:,i_T),RT_E_fit_out=RT_E_fit)
-   !
-   if(nfound(3)==1) nfound(1)  =nfound(1)+1
-   if(nfound(3)==2) nfound(2)  =nfound(2)+1
-   if(nfound(3)==3) nfound(1:2)=nfound(1:2)+1
-   !
-   if(n_spinor==2) then
-     !
-     ! Spin occupations FIT
-     !
-     nfound_spin(5)=Fermi_fnc_fit(RT_spin_occ(:,1,i_T),RT_carriers%nstates,&
-&                                 T_fit_spin(1:2,i_T),Ef_fit_spin(1:2,i_T),err_fit_spin(:,i_T), &
-&                                 RT_occ_fit_out=RT_occ_spin_fit(:,:,1,i_T))
-     !
-     if(nfound_spin(5)==1) nfound_spin(1)  =nfound_spin(1)+1
-     if(nfound_spin(5)==2) nfound_spin(2)  =nfound_spin(2)+1
-     if(nfound_spin(5)==3) nfound_spin(1:2)=nfound_spin(1:2)+1
-     !
-     nfound_spin(5)=Fermi_fnc_fit(RT_spin_occ(:,2,i_T),RT_carriers%nstates,&
-&                                 T_fit_spin(3:4,i_T),Ef_fit_spin(3:4,i_T),err_fit_spin(:,i_T), &
-&                                 RT_occ_fit_out=RT_occ_spin_fit(:,:,2,i_T))
-     !
-     if(nfound_spin(5)==1) nfound_spin(3)  =nfound_spin(3)+1
-     if(nfound_spin(5)==2) nfound_spin(4)  =nfound_spin(4)+1
-     if(nfound_spin(5)==3) nfound_spin(3:4)=nfound_spin(3:4)+1
-     !
-   endif
-   !
-   n_ratio=0
-   !
-   if(n_gamma<2) cycle
-   n_ratio=1
-   !
-   ! Lifetimes ratio FIT
-   !
-   do i_RT=1,RT_carriers%nstates
-     !
-     if(n_gamma==2) then
-       GAMMA_holes=RT_gamma(i_RT,1,i_T)
-       GAMMA_elecs=RT_gamma(i_RT,2,i_T)
-     else if(n_gamma> 2) then
-       GAMMA_holes=RT_gamma(i_RT,1,i_T)+RT_gamma(i_RT,3,i_T)
-       GAMMA_elecs=RT_gamma(i_RT,2,i_T)+RT_gamma(i_RT,4,i_T)
-     endif
-     !
-     if(RT_carriers%E_bare(i_RT)<=0._SP) RT_gamma_ratio(i_RT,1,i_T)=-GAMMA_elecs/(GAMMA_elecs+GAMMA_holes)*spin_occ
-     if(RT_carriers%E_bare(i_RT)> 0._SP) RT_gamma_ratio(i_RT,1,i_T)= GAMMA_holes/(GAMMA_elecs+GAMMA_holes)*spin_occ
+     do i_g=1,n_groups
+       select case (DATA_grp(i_g)%kind)
+         case("e-e")
+           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,1)
+           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,2)
+         case("e-p")
+           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,3)
+           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,4)
+           DATA_grp(i_g)%data(i_RT,3,i_T)=RT_carriers%dGAMMA_E_P_Ho_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,5)
+           DATA_grp(i_g)%data(i_RT,4,i_T)=RT_carriers%dGAMMA_E_P_El_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,6)
+         case("e-p-ratio")
+           call LIFE_ratio( DATA_grp(i_g_ep), DATA_grp(i_g) )
+         case("e-e-ratio")
+           call LIFE_ratio( DATA_grp(i_g_ee), DATA_grp(i_g) )
+         case("e-photon")
+           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_PHOT_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,7)
+           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_PHOT_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,8)
+       end select
+     enddo
      !
    enddo
    !
-   nfound_gamma(5)=Fermi_fnc_fit(RT_gamma_ratio(:,1,i_T),RT_carriers%nstates,&
-&                                 T_fit_gamma(1:2,i_T),Ef_fit_gamma(1:2,i_T),err_fit_gamma(:,i_T), &
-&                                 RT_occ_fit_out=RT_gamma_ratio_fit(:,:,1,i_T))
-   !
-   if(nfound_gamma(5)==1) nfound_gamma(1)  =nfound_gamma(1)+1
-   if(nfound_gamma(5)==2) nfound_gamma(2)  =nfound_gamma(2)+1
-   if(nfound_gamma(5)==3) nfound_gamma(1:2)=nfound_gamma(1:2)+1
-   !
-   if(n_gamma<=6) cycle
-   n_ratio=2
-   !
-   do i_RT=1,RT_carriers%nstates
-     !
-     GAMMA_holes=RT_gamma(i_RT,5,i_T)
-     GAMMA_elecs=RT_gamma(i_RT,6,i_T)
-     !
-     if(RT_carriers%E_bare(i_RT)<=0._SP) RT_gamma_ratio(i_RT,2,i_T)=-GAMMA_elecs/(GAMMA_elecs+GAMMA_holes)*spin_occ
-     if(RT_carriers%E_bare(i_RT)> 0._SP) RT_gamma_ratio(i_RT,2,i_T)= GAMMA_holes/(GAMMA_elecs+GAMMA_holes)*spin_occ
-     !
-   enddo
-   !
-   nfound_gamma(5)=Fermi_fnc_fit(RT_gamma_ratio(:,2,i_T),RT_carriers%nstates,&
-&                                  T_fit_gamma(3:4,i_T),Ef_fit_gamma(3:4,i_T),err_fit_gamma(:,i_T), &
-&                                 RT_occ_fit_out=RT_gamma_ratio_fit(:,:,2,i_T))
-   !
-   if(nfound_gamma(5)==1) nfound_gamma(3)  =nfound_gamma(3)+1
-   if(nfound_gamma(5)==2) nfound_gamma(4)  =nfound_gamma(4)+1
-   if(nfound_gamma(5)==3) nfound_gamma(3:4)=nfound_gamma(3:4)+1
+   call live_timing(steps=1)
    !
  enddo
  !
+ call live_timing( )
+ !
+ ! Fit the GROUPs!
+ !=================
+ call live_timing('Data fitting (Temperature and Fermi Level)',n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   TMP_vec=RT_occ(E_sort_index(:),i_T)
-   RT_occ(:,i_T)=TMP_vec
-   do i_spinor=1,2*(n_spinor-1)
-     TMP_vec=RT_spin_occ(E_sort_index(:),i_spinor,i_T)
-     RT_spin_occ(:,i_spinor,i_T)=TMP_vec
-   enddo
-   do igamma=1,n_gamma
-     TMP_vec=RT_gamma(E_sort_index(:),igamma,i_T)
-     RT_gamma(:,igamma,i_T)=TMP_vec
-   enddo
-   do i_ratio=1,n_ratio
-     TMP_vec=RT_gamma_ratio(E_sort_index(:),i_ratio,i_T)
-     RT_gamma_ratio(:,i_ratio,i_T)=TMP_vec
-   enddo
+   do i_g=1,n_groups
+     !
+     if (DATA_grp(i_g)%fittable) call FIT_me(DATA_grp(i_g))
+     !
+   enddo 
+   !
+   call live_timing(steps=1)
    !
  enddo
  !
- RT_gamma=RT_gamma*HA2EV*1000._SP
+ call live_timing( )
  !
+ ! ... report ...
  !
- ! Write to output fitted temperatures
- !====================================
- !
- call msg('s',":: Holes fitting Temperatures found " &
-&          //trim(intc(nfound(1)))//"/"//trim(intc(n_T_steps)))
- call msg('s',":: Elec. fitting Temperatures found " &
-&          //trim(intc(nfound(2)))//"/"//trim(intc(n_T_steps)))
- !
- if(n_spinor>1) then
-   call msg('s',":: Holes spin up fitting Temperatures found " &
-&            //trim(intc(nfound_spin(1)))//"/"//trim(intc(n_T_steps)))
-   call msg('s',":: Elec. spin up fitting Temperatures found " &
-&            //trim(intc(nfound_spin(2)))//"/"//trim(intc(n_T_steps)))
-   call msg('s',":: Holes spin dw fitting Temperatures found " &
-&            //trim(intc(nfound_spin(3)))//"/"//trim(intc(n_T_steps)))
-   call msg('s',":: Elec. spin dw fitting Temperatures found " &
-&            //trim(intc(nfound_spin(4)))//"/"//trim(intc(n_T_steps)))
- endif
- !
- if(n_gamma>1) then
-   call msg('s',":: Hole lifetimes(1) fitting Temperatures found " &
-&          //trim(intc(nfound_gamma(1)))//"/"//trim(intc(n_T_steps)))
-   call msg('s',":: Elec lifetimes(1) fitting Temperatures found " &
-&          //trim(intc(nfound_gamma(2)))//"/"//trim(intc(n_T_steps)))
- endif
- !
- if(n_gamma>4) then
-   call msg('s',":: Hole lifetimes(2) fitting Temperatures found " &
-&          //trim(intc(nfound_gamma(3)))//"/"//trim(intc(n_T_steps)))
-   call msg('s',":: Elec lifetimes(2) fitting Temperatures found " &
-&          //trim(intc(nfound_gamma(4)))//"/"//trim(intc(n_T_steps)))
- endif
- !
- titles(1)='Time [fs]'
- tmp_titles(2:3)=(/'(e)   ','(h)   '/)
- n1=3
- if(n_spinor==2) then
-   tmp_titles(4:7)=(/'(e-up)','(h-up)','(e-dw)','(h-dw)'/)
-   n1=n1+4
- endif
- !
- ! Only El-El
- if(n_gamma==2) then
-   gamma_fname(1)='YPP-RT_EE_Hole_linewidths'
-   gamma_fname(2)='YPP-RT_EE_Elec_linewidths'
-   gamma_ratio_fname(1)='YPP-RT_EE_widths_ratio'
-   tmp_titles(n1+1:n1+2)=(/'(e-EE)','(h-EE)'/)   
-   n1=n1+2
-   n_ratio=1
- ! Only El-Ph
- else if (n_gamma==4) then
-   gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
-   gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
-   gamma_fname(3)='YPP-RT_EP_Hole_abs_linewidths'
-   gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
-   gamma_ratio_fname(1)='YPP-RT_EP_widths_ratio'
-   tmp_titles(n1+1:n1+2)=(/'(e-EP)','(h-EP)'/)   
-   n1=n1+2
- ! Both
- else if (n_gamma==6) then
-   gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
-   gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
-   gamma_fname(3)='YPP-RT_EP_Hole_abs_linewidths'
-   gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
-   gamma_fname(5)='YPP-RT_EE_Hole_linewidths'
-   gamma_fname(6)='YPP-RT_EE_Elec_linewidths'
-   gamma_ratio_fname(1)='YPP-RT_EP_widths_ratio'
-   gamma_ratio_fname(2)='YPP-RT_EE_widths_ratio'
-   tmp_titles(n1+1:n1+4)=(/'(e-EP)','(h-EP)','(e-EE)','(h-EE)'/)   
-   n1=n1+4
- endif
- !
- output_fname(1)='YPP-RT_Temperatures'
- output_fname(2)='YPP-RT_E_Fermi'
- !
- call of_open_close(trim(output_fname(1)),'ot')
- call RT_write_descriptions(trim(output_fname(1)))
- call of_open_close(trim(output_fname(2)),'ot')
- call RT_write_descriptions(trim(output_fname(2)))
- !
- do i1=2,n1
-   titles(i1)='T'//trim(tmp_titles(i1))
+ do i_g=1,n_groups
+   if (DATA_grp(i_g)%fittable) then
+     call  msg('s',":: Fit success ("//trim(DATA_grp(i_g)%kind)//"):"//trim(intc(DATA_grp(i_g)%n_fit_ok(1)))//&
+&                  "(h) -- "//trim(intc(DATA_grp(i_g)%n_fit_ok(2)))//"(e)")
+   endif
  enddo
- call msg('o '//trim(output_fname(1)),'#')
- call msg('o '//trim(output_fname(1)),'# Fitted temperatures [K]')
- call msg('o '//trim(output_fname(1)),'#')
- call msg('o '//trim(output_fname(1)),'#',(/titles(1:n1)/),INDENT=0,USE_TABS=.true.)
- call msg('o '//trim(output_fname(1)),'#')
  !
- do i1=2,n1
-   titles(11)='Ef'//trim(tmp_titles(i1))
- enddo
- call msg('o '//trim(output_fname(2)),'#')
- call msg('o '//trim(output_fname(2)),'# Fitted Fermi levels [eV]')
- call msg('o '//trim(output_fname(2)),'#')
- call msg('o '//trim(output_fname(2)),'#',(/titles(1:n1)/),INDENT=0,USE_TABS=.true.)
- call msg('o '//trim(output_fname(2)),'#')
+ ! Re-ordering
+ !=============
+ !
+ call live_timing('Data ordering',n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   data_fit(1:2,:)= RT_time(i_T)*AUT2FS
+   call REORDER_it(DATA_grp(i_g))
    !
-   do i1=1,2
-     data_fit(1,i1+1)= T_fit(i1,i_T)*HA2KEL
-     data_fit(2,i1+1)= Ef_fit(i1,i_T)*HA2EV
-   enddo
-   !
-   n1=3
-   if(n_spinor==2) then
-     do i1=1,4
-       data_fit(1,i1+n1)= T_fit_spin(i1,i_T)*HA2KEL
-       data_fit(2,i1+n1)= Ef_fit_spin(i1,i_T)*HA2EV
-     enddo
-     n1=n1+4
-   endif
-   !
-   if(n_gamma>=2) then
-     do i1=1,2
-       data_fit(1,i1+n1)= T_fit_gamma(i1,i_T)*HA2KEL
-       data_fit(2,i1+n1)= Ef_fit_gamma(i1,i_T)*HA2EV
-     enddo
-     n1=n1+2
-   endif
-   !
-   if(n_gamma==6) then
-     do i1=1,2
-       data_fit(1,i1+n1)= T_fit_gamma(i1,i_T)*HA2KEL
-       data_fit(2,i1+n1)= Ef_fit_gamma(i1,i_T)*HA2EV
-     enddo
-     n1=n1+2
-   endif
-   !
-   ! Write temperatures and fermi levels to file
-   !
-   call msg('o '//trim(output_fname(1)),'',(/data_fit(1,1:n1)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o '//trim(output_fname(2)),'',(/data_fit(2,1:n1)/),INDENT=-2,USE_TABS=.true.)
+   call live_timing(steps=1)
    !
  enddo
  !
- call of_open_close(trim(output_fname(1)))
- call of_open_close(trim(output_fname(2)))
+ call live_timing( )
  !
- ! Write to output distributions and fits
- !========================================
+ ! Output(s)
+ !==========
+ !
+ ! Fitted temperatures & Fermi Levels
+ !------------------------------------
+ Ef_and_T_fname(1)='YPP-RT_Temperatures'
+ Ef_and_T_fname(2)='YPP-RT_E_Fermi'
+ ! 
+ do i_f=1,2
+   if (i_f==1) ch_dummy='T'
+   if (i_f==2) ch_dummy='Ef'
+   call of_open_close(trim(Ef_and_T_fname(i_f)),'ot')
+   call RT_write_descriptions(trim(Ef_and_T_fname(i_f)))
+   n_titles =1
+   titles(1)='Time [fs]'
+   do i_g=1,n_groups
+     if (.not.DATA_grp(i_g)%fittable) cycle
+     titles(n_titles+1)=trim(ch_dummy)//trim(DATA_grp(i_g)%FIT_title(1))
+     titles(n_titles+2)=trim(ch_dummy)//trim(DATA_grp(i_g)%FIT_title(2))
+     n_titles=n_titles+2
+   enddo
+   call msg('o '//trim(Ef_and_T_fname(i_f)),'#')
+   if (i_f==1) call msg('o '//trim(Ef_and_T_fname(i_f)),'# Fitted temperatures [K]')
+   if (i_f==2) call msg('o '//trim(Ef_and_T_fname(i_f)),'# Fitted Fermi Levels [eV]')
+   call msg('o '//trim(Ef_and_T_fname(i_f)),'#')
+   call msg('o '//trim(Ef_and_T_fname(i_f)),'#',(/titles(1:n_titles)/),INDENT=0,USE_TABS=.true.)
+   call msg('o '//trim(Ef_and_T_fname(i_f)),'#')
+   do i_T=1,n_T_steps
+     n_titles =1
+     do i_g=1,n_groups
+       if (.not.DATA_grp(i_g)%fittable) cycle
+       o_data(1)                                = RT_time(i_T)*AUT2FS
+       if (i_f==1) o_data(n_titles+1:n_titles+2)= DATA_grp(i_g)%T(:,i_T)*HA2KEL
+       if (i_f==2) o_data(n_titles+1:n_titles+2)= DATA_grp(i_g)%Ef(:,i_T)*HA2EV
+       n_titles=n_titles+2
+     enddo
+     call msg('o '//trim(Ef_and_T_fname(i_f)),'',(/o_data(1:n_titles)/),INDENT=-2,USE_TABS=.true.)
+   enddo
+   call of_open_close(trim(Ef_and_T_fname(i_f)))
+ enddo
+ !
+ ! Distributions and fits
+ !------------------------
+ !
+ !...columns
  do i_T=1,n_T_steps+1
    columns(i_T)="  #"//trim(intc(i_T))
  enddo
  !
- ! Prepare titles
- !
+ !... Titles
  titles(1)     =' E [eV]'
  data_ch(1,1,:)=' Time [fs]'
  data_ch(1,2,1)=' T(h) [K]'
@@ -419,195 +290,311 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    titles(i_T+1)=' @'//trim(real2ch( RT_time(i_T)*AUT2FS ))
    data_ch(i_T+1,1,:)= trim(real2ch( RT_time(i_T)*AUT2FS ))
    do i_fit=1,2
-     data_ch(i_T+1,2,i_fit)=   trim(real2ch( T_fit(i_fit,i_T)*HA2KEL ))
-     data_ch(i_T+1,3,i_fit)=   trim(real2ch( Ef_fit(i_fit,i_T)*HA2EV ))
-     data_ch(i_T+1,4,i_fit)=   trim(real2ch( err_fit(i_fit,i_T) ))
-     data_ch(i_T+1,5,i_fit)=   trim(real2ch( err_fit(i_fit+2,i_T) ))
+     data_ch(i_T+1,2,i_fit)=   trim(real2ch( DATA_grp(1)%T(i_fit,i_T)*HA2KEL ))
+     data_ch(i_T+1,3,i_fit)=   trim(real2ch( DATA_grp(1)%Ef(i_fit,i_T)*HA2EV ))
+     data_ch(i_T+1,4,i_fit)=   trim(real2ch( DATA_grp(1)%err_fit(i_fit,i_T) ))
+     data_ch(i_T+1,5,i_fit)=   trim(real2ch( DATA_grp(1)%err_fit(i_fit+2,i_T) ))
    enddo
  enddo
  !
- do i2=1,n_T_steps,nmax_file_report
+ do i_g=1,n_groups
    !
-   ! Titles
-   !========
+   if (trim(DATA_grp(i_g)%kind)=="none") cycle
    !
-   n1=i2
-   n2=min(n_T_steps,i2+15)
+   call PLOT_the_GROUP_data( DATA_grp(i_g) )
    !
-   GRP_string="_"//trim(intc(i2/nmax_file_report+1))//"_of_"//trim(intc(n_T_steps/nmax_file_report+1))
+   if (DATA_grp(i_g)%fittable) then
+     !
+     !call PLOT_the_GROUP_fit( DATA_grp(i_g) )
+     !
+   endif
    !
-   output_fname(1)='YPP-RT_occupations_DATA'
+ enddo
+ !
+!   do igamma=1,n_gamma
+!     !
+!     if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle 
+!     !
+!     output_fname(igamma+n3)=trim(gamma_fname(igamma))
+!     if (n_T_steps>N_max_files) output_fname(igamma+n3)=trim(gamma_fname(igamma))//trim(GRP_string)
+!     call of_open_close(trim(output_fname(igamma+n3)),'ot')
+!     call RT_write_descriptions(trim(output_fname(igamma+n3)))
+!     !
+!     call msg('o '//trim(output_fname(igamma+n3)),'#')
+!     call msg('o '//trim(output_fname(igamma+n3)),'# Lifetimes distribution [meV] at different times (Gamma@ time)')
+!     call msg('o '//trim(output_fname(igamma+n3)),'#')
+!     call msg('o '//trim(output_fname(igamma+n3)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
+!     call msg('o '//trim(output_fname(igamma+n3)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
+!     call msg('o '//trim(output_fname(igamma+n3)),'#')
+!     !
+!   enddo
+!   !
+!   ! FIT
+!   !=====
+!   !
+!   do i_fit_kind=1,2
+!     !
+!     output_fname(1)='YPP-RT_occupations_FIT'
+!     n_fits_done=1
+!     if(n_spinor==2) then
+!       output_fname(2)='YPP-RT_occupations_up_FIT'
+!       output_fname(3)='YPP-RT_occupations_dw_FIT'
+!       n_fits_done=n_fits_done+2
+!     endif
+!     do i_ratio=1,n_ratio
+!       output_fname(n_fits_done+i_ratio)=trim(gamma_ratio_fname(i_ratio))//'_FIT'
+!       n_fits_done=n_fits_done+1
+!     enddo
+!     !
+!     do i_fit=1,n_fits_done
+!       !
+!       if(i_fit_kind==1) output_fname(i_fit)=trim(output_fname(i_fit))//'_holes'
+!       if(i_fit_kind==2) output_fname(i_fit)=trim(output_fname(i_fit))//'_electrons'
+!       if (n_T_steps>N_max_files) output_fname(i_fit)=trim(output_fname(i_fit))//trim(GRP_string)
+!       !
+!       call of_open_close(trim(output_fname(i_fit)),'ot')
+!       call RT_write_descriptions(trim(output_fname(i_fit)))
+!       !
+!       call msg('o '//trim(output_fname(i_fit)),'#')
+!       call msg('o '//trim(output_fname(i_fit)),'# Results of the FIT')
+!       call msg('o '//trim(output_fname(i_fit)),'#')
+!       do i1=1,5
+!         call msg('o '//trim(output_fname(i_fit)),'#',(/data_ch(1,i1,i_fit_kind), &
+!&                                            data_ch(n1+1:n2+1,i1,i_fit_kind)/), INDENT=-2,USE_TABS=.true.)
+!       enddo
+!       !     
+!       call msg('o '//trim(output_fname(i_fit)),'#')
+!       call msg('o '//trim(output_fname(i_fit)),'# Fit functions at different time (f@ time)')
+!       call msg('o '//trim(output_fname(i_fit)),'#')
+!       call msg('o '//trim(output_fname(i_fit)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
+!       call msg('o '//trim(output_fname(i_fit)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
+!       call msg('o '//trim(output_fname(i_fit)),'#')
+!       !
+!       do i1=1,fit_dim
+!         if(i_fit==1)                               call msg('o '//trim(output_fname(i_fit)),'',&
+!&                (/RT_E_fit(i1,i_fit_kind)*HA2EV,RT_occ_fit(i1,i_fit_kind,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+!         if((i_fit==2.or.i_fit==3).and.n_spinor==2) call msg('o '//trim(output_fname(i_fit)),'',&
+!&                (/RT_E_fit(i1,i_fit_kind)*HA2EV,RT_occ_spin_fit(i1,i_fit_kind,i_fit-1,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+!         if((i_fit==2.or.i_fit==3).and.n_spinor==1) call msg('o '//trim(output_fname(i_fit)),'',&
+!&                (/RT_E_fit(i1,i_fit_kind)*HA2EV,RT_gamma_ratio_fit(i1,i_fit_kind,i_fit-1,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+!         if (i_fit==4.or.i_fit==5)                  call msg('o '//trim(output_fname(i_fit)),'',&
+!&                (/RT_E_fit(i1,i_fit_kind)*HA2EV,RT_gamma_ratio_fit(i1,i_fit_kind,i_fit-3,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+!       enddo
+!       !
+!       call of_open_close(trim(output_fname(i_fit)))
+!       !
+!     enddo
+!     !
+!   enddo
+ !
+ if (n_spinor==2) then
+   YAMBO_DEALLOCATE_A(spin_factors)
+ endif
+ do i_g=1,n_groups 
+   call local_free(DATA_grp(i_g))
+ enddo
+ !
+ contains 
    !
-   if (n_T_steps>nmax_file_report) output_fname(1)=trim(output_fname(1))//trim(GRP_string)
-   call of_open_close(trim(output_fname(1)),'ot')
-   call RT_write_descriptions(trim(output_fname(1)))
-   !
-   call msg('o '//trim(output_fname(1)),'#')
-   call msg('o '//trim(output_fname(1)),'# Occupations distribution at different times (f@ time)')
-   call msg('o '//trim(output_fname(1)),'#')
-   call msg('o '//trim(output_fname(1)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o '//trim(output_fname(1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o '//trim(output_fname(1)),'#')
-   n3=1
-   !
-   do i_spinor=1,2*(n_spinor-1)
+   subroutine PLOT_the_GROUP_data(TYP)
+     type(Load_and_Fit) :: TYP
+     integer            :: range_(2),i_T_grp
+     character(schlen)  :: GRP_string
+     real(SP)           :: PRE_factor
      !
-     if(i_spinor==1) output_fname(i_spinor+1)='YPP-RT_occupations_up_DATA'
-     if(i_spinor==2) output_fname(i_spinor+1)='YPP-RT_occupations_dw_DATA'
-     !
-     if (n_T_steps>nmax_file_report) output_fname(i_spinor+1)=trim(output_fname(i_spinor+1))//trim(GRP_string)
-     call of_open_close(trim(output_fname(i_spinor+1)),'ot')
-     call RT_write_descriptions(trim(output_fname(i_spinor+1)))
-     !
-     call msg('o '//trim(output_fname(i_spinor+1)),'#')
-     if(i_spinor==1) call msg('o '//trim(output_fname(i_spinor+1)),&
-&                             '# Spin up occupations distribution at different times (f@ time)')
-     if(i_spinor==2) call msg('o '//trim(output_fname(i_spinor+1)),&
-&                             '# Spin dw occupations distribution at different times (f@ time)')
-     call msg('o '//trim(output_fname(i_spinor+1)),'#')
-     call msg('o '//trim(output_fname(i_spinor+1)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname(i_spinor+1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname(i_spinor+1)),'#')
-     !
-     n3=i_spinor+1
-     !
-   enddo
-   !
-   do igamma=1,n_gamma
-     !
-     if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle 
-     !
-     output_fname(igamma+n3)=trim(gamma_fname(igamma))
-     if (n_T_steps>nmax_file_report) output_fname(igamma+n3)=trim(gamma_fname(igamma))//trim(GRP_string)
-     call of_open_close(trim(output_fname(igamma+n3)),'ot')
-     call RT_write_descriptions(trim(output_fname(igamma+n3)))
-     !
-     call msg('o '//trim(output_fname(igamma+n3)),'#')
-     call msg('o '//trim(output_fname(igamma+n3)),'# Lifetimes distribution [meV] at different times (Gamma@ time)')
-     call msg('o '//trim(output_fname(igamma+n3)),'#')
-     call msg('o '//trim(output_fname(igamma+n3)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname(igamma+n3)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname(igamma+n3)),'#')
-     !
-   enddo
-   !
-   do i_ratio=1,n_ratio
-     !
-     output_fname(n_gamma+n3+i_ratio)=trim(gamma_ratio_fname(i_ratio))//"_DATA"
-     if (n_T_steps>nmax_file_report) output_fname(n_gamma+n3+i_ratio)=trim(gamma_ratio_fname(i_ratio))//trim(GRP_string)
-     call of_open_close(trim(output_fname(igamma+n3)),'ot')
-     call RT_write_descriptions(trim(output_fname(igamma+n3)))
-     !
-     call msg('o '//trim(output_fname(igamma+n3)),'#')
-     call msg('o '//trim(output_fname(igamma+n3)),'# Lifetimes ratio distribution at different times (Gamma_ratio@ time)')
-     call msg('o '//trim(output_fname(igamma+n3)),'#')
-     call msg('o '//trim(output_fname(igamma+n3)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname(igamma+n3)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname(igamma+n3)),'#')
-     !
-   enddo
-   !
-   ! Data
-   !======
-   !
-   do i_RT=1,RT_carriers%nstates
-     !
-     !ib    =RT_carriers%table(i_RT,1)
-     !ik    =RT_carriers%table(i_RT,2)
-     !ik_RT =RT_carriers%table(i_RT,3)
-     !i_spin=RT_carriers%table(i_RT,4)
-     !
-     call msg('o '//trim(output_fname(1)),'',(/RT_E_sorted(i_RT),RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
-     !
-     do i_spinor=1,2*(n_spinor-1)
-       call msg('o '//trim(output_fname(i_spinor+1)),'',(/RT_E_sorted(i_RT),RT_spin_occ(i_RT,i_spinor,n1:n2)/),&
-&                                                       INDENT=-2,USE_TABS=.true.)
-     enddo
-     !
-     do igamma=1,n_gamma
-       if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle
-       call msg('o '//trim(output_fname(igamma+n3)),'',(/RT_E_sorted(i_RT),RT_gamma(i_RT,igamma,n1:n2)/),&
-&                                                       INDENT=-2,USE_TABS=.true.)
-     enddo
-     !
-     do i_ratio=1,n_ratio
-       call msg('o '//trim(output_fname(n_gamma+n3+i_ratio)),'',(/RT_E_sorted(i_RT),RT_gamma_ratio(i_RT,i_ratio,n1:n2)/),&
-&                                                       INDENT=-2,USE_TABS=.true.)
-     enddo
-     !
-   enddo
-   !
-   call of_open_close(trim(output_fname(1)))
-   do i_spinor=1,2*(n_spinor-1)
-     call of_open_close(trim(output_fname(i_spinor+1)))
-   enddo
-   do igamma=1,n_gamma
-     if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle
-     call of_open_close(trim(output_fname(igamma+n3)))
-   enddo
-   do i_ratio=1,n_ratio
-     call of_open_close(trim(output_fname(n_gamma+n3+i_ratio)))
-   enddo
-   !
-   ! FIT
-   !=====
-   !
-   do i_fit_kind=1,2
-     !
-     output_fname(1)='YPP-RT_occupations_FIT'
-     n_fits_done=1
-     if(n_spinor==2) then
-       output_fname(2)='YPP-RT_occupations_up_FIT'
-       output_fname(3)='YPP-RT_occupations_dw_FIT'
-       n_fits_done=n_fits_done+2
+     PRE_factor=1._SP
+     if (trim(TYP%kind)=="e-p".or.trim(TYP%kind)=="e-e") then
+       PRE_factor=HA2EV*1000._SP
+     else if (trim(TYP%kind)=="e-photon") then
+       PRE_factor=HA2EV*1000._SP
      endif
-     do i_ratio=1,n_ratio
-       output_fname(n_fits_done+i_ratio)=trim(gamma_ratio_fname(i_ratio))//'_FIT'
-       n_fits_done=n_fits_done+1
-     enddo
      !
-     do i_fit=1,n_fits_done
+     do i_T_grp=1,n_T_steps,N_max_files
        !
-       if(i_fit_kind==1) output_fname(i_fit)=trim(output_fname(i_fit))//'_holes'
-       if(i_fit_kind==2) output_fname(i_fit)=trim(output_fname(i_fit))//'_electrons'
-       if (n_T_steps>nmax_file_report) output_fname(i_fit)=trim(output_fname(i_fit))//trim(GRP_string)
+       GRP_string="_"//trim(intc(i_T_grp/N_max_files+1))//"_of_"//trim(intc(n_T_steps/N_max_files+1))
        !
-       call of_open_close(trim(output_fname(i_fit)),'ot')
-       call RT_write_descriptions(trim(output_fname(i_fit)))
+       range_=(/i_f, min(n_T_steps,i_f+N_max_files-1) /)
        !
-       call msg('o '//trim(output_fname(i_fit)),'#')
-       call msg('o '//trim(output_fname(i_fit)),'# Results of the FIT')
-       call msg('o '//trim(output_fname(i_fit)),'#')
-       do i1=1,5
-         call msg('o '//trim(output_fname(i_fit)),'#',(/data_ch(1,i1,i_fit_kind), &
-&                                            data_ch(n1+1:n2+1,i1,i_fit_kind)/), INDENT=-2,USE_TABS=.true.)
+       do i_f=1,TYP%n_files
+         !
+         TYP%running_file=TYP%file(i_f)
+         if (n_T_steps>N_max_files) TYP%running_file=trim(TYP%file(i_f))//trim(GRP_string)
+         !
+         call of_open_close(trim(TYP%running_file),'ot')
+         call RT_write_descriptions(trim(TYP%running_file))
+         !
+         call msg('o '//trim(TYP%running_file),'#')
+         call msg('o '//trim(TYP%running_file),'# '//trim(TYP%file_desc(i_f)))
+         call msg('o '//trim(TYP%running_file),'#')
+         call msg('o '//trim(TYP%running_file),'#',(/columns(1:range_(2)-range_(1)+2)/),INDENT=-2,USE_TABS=.true.)
+         call msg('o '//trim(TYP%running_file),'#',(/titles(1),titles(range_(1)+1:range_(2)+1)/),INDENT=-2,USE_TABS=.true.)
+         call msg('o '//trim(TYP%running_file),'#')
+         !
+         do i_RT=1,RT_carriers%nstates
+           !
+           !ib    =RT_carriers%table(i_RT,1)
+           !ik    =RT_carriers%table(i_RT,2)
+           !ik_RT =RT_carriers%table(i_RT,3)
+           !i_spin=RT_carriers%table(i_RT,4)
+           !
+           call msg('o '//trim(TYP%running_file),'',(/RT_E_sorted(i_RT),&
+&                   TYP%data(i_RT,i_f,range_(1):range_(2))*PRE_factor/),INDENT=-2,USE_TABS=.true.)
+           !
+         enddo
+         !
+         call of_open_close(trim(TYP%running_file))
+         !
        enddo
-       !     
-       call msg('o '//trim(output_fname(i_fit)),'#')
-       call msg('o '//trim(output_fname(i_fit)),'# Fit functions at different time (f@ time)')
-       call msg('o '//trim(output_fname(i_fit)),'#')
-       call msg('o '//trim(output_fname(i_fit)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
-       call msg('o '//trim(output_fname(i_fit)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
-       call msg('o '//trim(output_fname(i_fit)),'#')
-       !
-       do i1=1,fit_dim
-         if(i_fit==1)                               call msg('o '//trim(output_fname(i_fit)),'',&
-&                (/RT_E_fit(i1,i_fit_kind)*HA2EV,RT_occ_fit(i1,i_fit_kind,n1:n2)/),INDENT=-2,USE_TABS=.true.)
-         if((i_fit==2.or.i_fit==3).and.n_spinor==2) call msg('o '//trim(output_fname(i_fit)),'',&
-&                (/RT_E_fit(i1,i_fit_kind)*HA2EV,RT_occ_spin_fit(i1,i_fit_kind,i_fit-1,n1:n2)/),INDENT=-2,USE_TABS=.true.)
-         if((i_fit==2.or.i_fit==3).and.n_spinor==1) call msg('o '//trim(output_fname(i_fit)),'',&
-&                (/RT_E_fit(i1,i_fit_kind)*HA2EV,RT_gamma_ratio_fit(i1,i_fit_kind,i_fit-1,n1:n2)/),INDENT=-2,USE_TABS=.true.)
-         if (i_fit==4.or.i_fit==5)                  call msg('o '//trim(output_fname(i_fit)),'',&
-&                (/RT_E_fit(i1,i_fit_kind)*HA2EV,RT_gamma_ratio_fit(i1,i_fit_kind,i_fit-3,n1:n2)/),INDENT=-2,USE_TABS=.true.)
-       enddo
-       !
-       call of_open_close(trim(output_fname(i_fit)))
        !
      enddo
      !
-   enddo
- enddo
- !
- if (n_spinor==2) deallocate(spin_factors)
- !
+   end subroutine
+   !
+   subroutine local_free(TYP)
+     type(Load_and_Fit) :: TYP
+     if (trim(TYP%kind)=="none") return
+     YAMBO_DEALLOCATE_A(TYP%data_fit)
+     YAMBO_DEALLOCATE_A(TYP%E_fit)
+     YAMBO_DEALLOCATE_A(TYP%err_fit)
+     YAMBO_DEALLOCATE_A(TYP%T)
+     YAMBO_DEALLOCATE_A(TYP%Ef)
+   end subroutine
+   !
+   subroutine Load_and_Fit_alloc(TYP,dim,what)
+     !
+     type(Load_and_Fit) :: TYP
+     integer            :: dim
+     character(*)       :: what
+     !
+     YAMBO_ALLOCATE(TYP%data(RT_carriers%nstates,dim,n_T_steps))
+     !
+     if (what=="CARRIERS".or.what=="spin-up".or.what=="spin-dn".or.what=="e-p-ratio".or.what=="e-e-ratio") then
+       TYP%fittable=.TRUE.
+       YAMBO_ALLOCATE(TYP%data_fit(fit_dim,dim,n_T_steps))
+       YAMBO_ALLOCATE(TYP%E_fit(fit_dim,2))
+       YAMBO_ALLOCATE(TYP%err_fit(4,n_T_steps))
+       YAMBO_ALLOCATE(TYP%T(2,n_T_steps))
+       YAMBO_ALLOCATE(TYP%Ef(2,n_T_steps))
+       TYP%data_fit=rZERO
+       TYP%E_fit  =rZERO
+       TYP%err_fit=rZERO
+       TYP%T      =rZERO
+       TYP%Ef     =rZERO
+     endif
+     !
+     TYP%kind=what
+     !
+     select case (what)
+       case("CARRIERS")
+         TYP%n_files=dim
+         TYP%FIT_title=(/'(e)   ','(h)   '/)
+         TYP%file(1)="YPP-RT_occupations_DATA"
+         TYP%file_desc(1)="Occupations at different times"
+       case("spin-up")
+         TYP%n_files=dim
+         TYP%FIT_title=(/'(e-up)','(h-up)'/)
+         TYP%file(1)="YPP-RT_occupations_up_DATA"
+         TYP%file_desc(1)="Occupations UP channel at different times"
+       case("spin-dn")
+         TYP%n_files=dim
+         TYP%FIT_title=(/'(e-dn)','(h-dn)'/)
+         TYP%file(1)="YPP-RT_occupations_dn_DATA"
+         TYP%file_desc(1)="Occupations down channel at different times"
+       case("e-p")
+         TYP%n_files=dim
+         TYP%file(1)='YPP-RT_EP_Hole_linewidths'
+         TYP%file(2)='YPP-RT_EP_Elec_linewidths'
+         TYP%file(3)='YPP-RT_EP_Hole_abs_linewidths'
+         TYP%file(4)='YPP-RT_EP_Elec_abs_linewidths'
+         TYP%file_desc(:)="Lifetimes distribution [meV] at different times"
+       case("e-p-ratio")
+         TYP%n_files=dim
+         TYP%FIT_title=(/'(e-EP)','(h-EP)'/)
+         TYP%file(1)='YPP-RT_EP_widths_ratio'
+         TYP%file_desc(:)="Lifetimes ratio distribution [meV] at different times"
+       case("e-e")
+         TYP%n_files=dim
+         TYP%file(1)='YPP-RT_EE_Hole_linewidths'
+         TYP%file(2)='YPP-RT_EE_Elec_linewidths'
+         TYP%file_desc(:)="Lifetimes distribution [meV] at different times"
+       case("e-e-ratio")
+         TYP%n_files=dim
+         TYP%FIT_title=(/'(e-EE)','(h-EE)'/)
+         TYP%file(1)='YPP-RT_EE_widths_ratio'
+         TYP%file_desc(:)="Lifetimes ratio distribution [meV] at different times"
+       case("e-photon")
+         TYP%n_files=dim
+         TYP%file(1)='YPP-RT_EPhoton_Hole_linewidths'
+         TYP%file(2)='YPP-RT_EPhoton_Elec_linewidths'
+         TYP%file_desc(:)="Lifetimes distribution [meV] at different times"
+     end select
+     !
+   end subroutine
+   !
+   subroutine LIFE_ratio(TYP,TYP_ratio)
+     !
+     type(Load_and_Fit) :: TYP,TYP_ratio
+     real(SP)           :: GAMMA_holes,GAMMA_elecs
+     !
+     do i_RT=1,RT_carriers%nstates
+       !
+       GAMMA_holes=TYP%data(i_RT,1,i_T)
+       GAMMA_elecs=TYP%data(i_RT,2,i_T)
+       if (trim(TYP%kind)=="e-p") then
+         GAMMA_holes=GAMMA_holes+TYP%data(i_RT,3,i_T)
+         GAMMA_elecs=GAMMA_elecs+TYP%data(i_RT,4,i_T)
+       endif
+       !
+       if (RT_carriers%E_bare(i_RT)<=0._SP) TYP_ratio%data(i_RT,1,i_T)=-GAMMA_elecs/(GAMMA_elecs+GAMMA_holes)*spin_occ
+       if (RT_carriers%E_bare(i_RT)> 0._SP) TYP_ratio%data(i_RT,2,i_T)= GAMMA_holes/(GAMMA_elecs+GAMMA_holes)*spin_occ
+       !
+     enddo
+     !
+   end subroutine
+   !
+   subroutine REORDER_it(TYP)
+     type(Load_and_Fit) :: TYP
+     real(SP)           :: TMP_vec(RT_carriers%nstates)
+     integer            :: i_data
+     if (trim(TYP%kind)=="none") return
+     do i_data = 1, size(TYP%data,2)
+       TMP_vec=TYP%data(E_sort_index(:),i_data,i_T)
+       TYP%data(:,i_data,i_T)=TMP_vec
+     enddo
+   end subroutine
+   !
+   subroutine FIT_me(TYP)
+     !
+     type(Load_and_Fit) :: TYP
+     integer            :: i_err
+     !
+     if (i_T>1) then
+       TYP%T (:,i_T) = TYP%T (:,i_T-1)
+       TYP%Ef(:,i_T) = TYP%Ef(:,i_T-1)
+     endif
+     !
+     if (trim(TYP%kind)=="CARRIERS") then
+       i_err=Fermi_fnc_fit(TYP%data(:,1,i_T),RT_carriers%nstates,&
+&                          TYP%T(:,i_T),TYP%Ef(:,i_T),TYP%err_fit(:,i_T),&
+&                          RT_occ_fit_out=TYP%data_fit(:,:,i_T),RT_E_fit_out=TYP%E_fit)
+     else
+       i_err=Fermi_fnc_fit(TYP%data(:,1,i_T),RT_carriers%nstates,&
+&                          TYP%T(:,i_T),TYP%Ef(:,i_T),TYP%err_fit(:,i_T),&
+&                          RT_occ_fit_out=TYP%data_fit(:,:,i_T))
+     endif
+     !
+     if (i_err==1) then
+       TYP%n_fit_ok(1)   =TYP%n_fit_ok(1)+1
+       !TYP%T(2,i_T)      =rZERO
+       !TYP%Ef(2,i_T)     =rZERO
+     else if (i_err==2) then
+       TYP%n_fit_ok(2)   =TYP%n_fit_ok(2)+1
+       !TYP%T(1,i_T)      =rZERO
+       !TYP%Ef(1,i_T)     =rZERO
+     else if (i_err==3) then
+       TYP%n_fit_ok(1:2) =TYP%n_fit_ok(1:2)+1
+     endif
+     !
+   end subroutine
+   !
 end subroutine RT_occ_energy_plot

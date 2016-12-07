@@ -49,7 +49,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  type(bz_samp)         :: k_bands
  type(levels)          :: E_bands
  !
- type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
+ type(bz_samp)         :: USER_k,CIRCUIT_k,INTERP_k
  real(SP), pointer     :: bands_interpolated(:,:,:) => null()
  !
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
@@ -84,7 +84,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  if(n_spinor>1 .and. BANDS_steps> 0) then
    allocate(spin_interpolated(RT_BANDS(1):RT_bands(2),CIRCUIT_k%nibz,n_spinor))
    allocate(magn_interpolated(RT_bands(1):RT_bands(2),CIRCUIT_k%nibz,3))
-   call electrons_spin_and_magn_interpolate(En,kpt,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
+   call electrons_spin_and_magn_interpolate(kpt,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
  endif
  !
  ! Perform the occupations interpolation

@@ -64,9 +64,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    k_range    =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
    bands_range=(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
    allocate(spin_factors(bands_range(1):bands_range(2),k_range(1):k_range(2),2))
-   call electrons_spin_factors(kpt,k_range,bands_range,spin_factors)
+   call electrons_spin_factors(k_range,bands_range,spin_factors)
    allocate(magn_factors(bands_range(1):bands_range(2),k_range(1):k_range(2),3))
-   call electrons_magn_factors(kpt,k_range,bands_range,magn_factors)
+   call electrons_magn_factors(k_range,bands_range,magn_factors)
  endif
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel

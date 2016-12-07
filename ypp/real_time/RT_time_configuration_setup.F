@@ -26,7 +26,7 @@ subroutine RT_time_configuration_setup(what)
  use units,          ONLY:AUT2FS,pi,HA2EV
  use YPP_real_time,  ONLY:RT_conf,RT_time
  use pars,           ONLY:SP
- use com,            ONLY:msg
+ use com,            ONLY:msg,warning
  use real_time,      ONLY:RT_step
  use RT_control,     ONLY:JPC_RT_IO_t,TIME_adjust
  !
@@ -84,6 +84,10 @@ subroutine RT_time_configuration_setup(what)
    i_ref           = (/1,JPC_RT_IO_t%N/)
    RT_conf%T_range = (/JPC_RT_IO_t%Time(1),TIME/)
    !
+ endif
+ !
+ if (RT_conf%delta_T>0._SP.and..not.UNIFORM) then
+   call warning("Found a non-uniform Time sampling. User provided deltaT cannot be used. Switching to I/O step.")
  endif
  !
  if (RT_conf%delta_T>0._SP.and.UNIFORM) then

@@ -37,8 +37,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use FFT_m,         ONLY:fftw_plan
 #endif
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_buffer,&
-&                        wf_ng,wf_norm_test,wf_ncx,io_WF,&
-&                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
+&                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
+&                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        DUMP,IO_and_Messaging_switch
@@ -68,7 +68,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #if defined _SC
  integer          ::wf_size
 #endif
- integer          ::i_sp_pol,ikibz,ifrag,ib_grp,ib_in_grp,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
+ integer          ::i_sp_pol,ikibz,ifrag,ib_grp,ib_to_load,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
 &                   iG_max,iG_bounds_loaded(2),iGo_max,sp_pol_to_load_(2)
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
@@ -265,10 +265,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
+ !
  if (.not.buffer_is_ok) then
    !
-   allocate(wf_disk(wf_ncx,n_spinor,wf_nb_io))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/),quiet=QUIET_alloc)
+   allocate(wf_b_indx(wf_nb_io))
+   wf_b_indx=0
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err=io_WF(ID,wf_disk)
@@ -288,40 +289,41 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      do ib_grp=1,wf_nb_io_groups
        !
+       ib1=wf_nb_io*(ib_grp-1)+1
+       ib2=wf_nb_io*ib_grp
+       !
+       if (ib1<WF%b(1)) ib1=WF%b(1)
+       if (ib2>WF%b(2)) ib2=WF%b(2)
+       !
+       wf_nb_to_load=0
+       !
+       do ib=ib1,ib2
+         !
+         if ( allocated(states_to_load) ) then
+           if ( .not.states_to_load(ib,ikibz,i_sp_pol) ) cycle
+         endif
+         !
+         wf_nb_to_load=wf_nb_to_load+1
+         wf_b_indx(wf_nb_to_load)=ib
+         !
+       enddo
+       !
        if (.not.buffer_is_ok) then
          !
-         ib1=wf_nb_io*(ib_grp-1)+1
-         ib2=wf_nb_io*ib_grp
-         !
-         if ( ib2<WF%b(1) ) cycle
-         if ( ib1>WF%b(2) ) cycle
-         !
-         ! In case the states to load are distributed in a complex way
-         ! by PARALLEL_WF_distribute I skip fragments that are not needed
-         ! 
-         if ( allocated(states_to_load) ) then
-           if (ib1<WF%b(1)) ib1=WF%b(1)
-           if (ib2>WF%b(2)) ib2=WF%b(2)
-           if (.not.any(states_to_load(ib1:ib2,ikibz,i_sp_pol))) cycle
-         endif
+         allocate(wf_disk(wf_ncx,n_spinor,wf_nb_to_load))
+         call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/),quiet=QUIET_alloc)
          !
          call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf_disk)
          !
        endif
        !
-       do ib=wf_nb_io*(ib_grp-1)+1,wf_nb_io*ib_grp
+       do ib_to_load=1,wf_nb_to_load
          !
-         if (any((/ib<WF%b(1),ib>WF%b(2)/))) cycle
+         ib=wf_b_indx(ib_to_load)
          !
          WF%N=WF%N+1
          WF%index(ib,ikibz,i_sp_pol)=WF%N
-         !
-         if(allocated(states_to_load)) then
-           if(.not.states_to_load(ib,ikibz,i_sp_pol)) cycle
-         endif
-         !
-         ib_in_grp=ib-wf_nb_io*(ib_grp-1)
          !
          do i_spinor=1,n_spinor
            !
@@ -335,7 +337,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
              if (buffer_is_ok) then
                wf_DP(igfft)=WF_buffer%c(ic,i_spinor,WF_buffer%index(ib,ikibz,i_sp_pol))
              else
-               wf_DP(igfft)=cmplx(wf_disk(ic,i_spinor,ib_in_grp),kind=DP)
+               wf_DP(igfft)=cmplx(wf_disk(ic,i_spinor,ib_to_load),kind=DP)
              endif
            enddo
            !
@@ -356,16 +358,19 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
            !
          enddo  ! i_spinor
        enddo    ! i_b
+       !
+       if (.not.buffer_is_ok) then
+         deallocate(wf_disk)
+         call mem_est("wf_disk",quiet=QUIET_free)
+       endif
+       !
      enddo      ! i_b_grp
    enddo        ! i_k
  enddo          ! i_sp_pol
  !
  ! CLEAN
  !
- if (.not.buffer_is_ok) then
-   deallocate(wf_disk)
-   call mem_est("wf_disk",quiet=QUIET_free)
- endif
+ if (.not.buffer_is_ok) deallocate(wf_b_indx)
  !
  deallocate(wf_DP)
  call mem_est("wf_DP")

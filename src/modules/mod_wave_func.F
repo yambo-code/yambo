@@ -56,6 +56,9 @@ module wave_func
  integer                :: wf_nb_io
  integer                :: wf_nb_io_groups
  !
+ integer                :: wf_nb_to_load
+ integer, allocatable   :: wf_b_indx(:)            ! given ib_to_load=1,wf_nb_to_load returns the band index
+ !
  ! Max Num. of COMPONENTS
  !
  integer                :: wf_ncx

@@ -27,7 +27,7 @@ integer function io_WF(ID,wf)
  use electrons,        ONLY:n_sp_pol,n_spinor
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
- use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
+ use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_to_load,wf_b_indx,wf_nb_io_groups
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_bulk,io_header,ver_is_gt_or_eq,&
 &                           io_action,io_fragment,io_elemental,frag_WF,&
@@ -39,7 +39,7 @@ integer function io_WF(ID,wf)
  integer,       intent(in) :: ID
  complex(SP),   optional   :: wf(:,:,:)
  !
- integer                   :: i_sp_pol,ik,ifrag,ib_grp,ib,ib_in_grp,head_io
+ integer                   :: nb_io,i_sp_pol,ik,ifrag,ib_grp,ib,ib_io,head_io
  character(schlen)         :: VAR_NAME
  !
 #if defined _TIMING
@@ -79,11 +79,9 @@ integer function io_WF(ID,wf)
    io_WF=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    !
    call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2,MENU=0)
-   call io_elemental(ID,VAR=&
-&       ' Bands in each block             :',I0=wf_nb_io)
-   call io_elemental(ID,VAR=&
-&       ' Blocks                          :',I0=wf_nb_io_groups)
-   call io_elemental(ID,VAR="",VAR_SZ=0)
+   call io_elemental(ID, VAR=" Bands in each block             :",I0=wf_nb_io)
+   call io_elemental(ID, VAR=" Blocks                          :",I0=wf_nb_io_groups)
+   call io_elemental(ID, VAR="",VAR_SZ=0)
    !
    if (io_WF/=0) goto 1
    !
@@ -99,9 +97,19 @@ integer function io_WF(ID,wf)
  !
  call io_fragment(ID,i_fragment=ifrag,j_fragment=ib_grp)
  !
- VAR_NAME="WF_COMPONENTS_@_SP_POL"//trim(intc(i_sp_pol))//"_K"//trim(intc(ik))//"_BAND_GRP_"//trim(intc(ib_grp))
- call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor,wf_nb_io/))
- call io_bulk(ID,C3=wf)
+ if(.not.allocated(wf_b_indx)) nb_io=wf_nb_io
+ if(     allocated(wf_b_indx)) nb_io=wf_nb_to_load
+ !
+ do ib_io=1,nb_io
+   !
+   if(.not.allocated(wf_b_indx)) ib=ib_io
+   if(     allocated(wf_b_indx)) ib=wf_b_indx(ib_io)
+   !
+   VAR_NAME="WF_COMPONENTS_@_SP_POL"//trim(intc(i_sp_pol))//"_K"//trim(intc(ik))//"_BAND_"//trim(intc(ib))
+   call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor/))
+   call io_bulk(ID,C2=wf(:,:,ib_io))
+   !
+ enddo
  !
 1 call io_disconnect(ID=ID)
  !

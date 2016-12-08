@@ -28,7 +28,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use pars,                only : SP,lchlen
  use LOGO,                only : pickup_a_random
  use com,                 only : msg,write_to_report,core_io_path, file_exists,write_the_logo
- use parallel_m,          only : ncpu,myid,MPI_close
+ use parallel_m,          only : ncpu,myid
  use electrons,           only : levels,E_reset,n_bands,n_spin
  use D_lattice,           only : n_atoms_species_max
  use pseudo,              only : PP_alloc_abinit, PP_free
@@ -107,13 +107,11 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if(trim(ETSF_kind)/='KSS'.and.trim(ETSF_kind)/='WFK') then
    call msg('ln','File kind not supported! Use either KSS or WFK filename.')
-   call MPI_close
    return
  endif
 
  if(.not.file_exists(trim(inf))) then
    call msg('ln','File not found! Specify -F filename.')
-   call MPI_close
    return
  endif
  !
@@ -138,7 +136,6 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
    io_err=io_DB1(en,k,ID)
    call msg('ln','done ==')
-   call MPI_close
    return
  endif
  !
@@ -195,12 +192,10 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  io_err=io_DB1(en,k,ID)
  call msg('ln','done ==')
- call MPI_close
  !
  ! Close file
  !
  call etsf_io_low_close(ncid, lstat, error_data = error_data)
- call MPI_close
  !
 end function
 

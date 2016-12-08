@@ -29,9 +29,10 @@ logical function stop_now(DO_IT_NOW)
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset
- use parallel_m,     ONLY:myid
+ use parallel_m,     ONLY:myid,mpi_comm_world
  use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
+ !
  implicit none
  !
  logical :: DO_IT_NOW
@@ -83,6 +84,10 @@ logical function stop_now(DO_IT_NOW)
  !
  call it_reset(-1)
  !
+ 
+#if defined _MPI
+ call MPI_Abort(1,mpi_comm_world)
+#endif
  stop
  !
 end function

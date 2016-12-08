@@ -100,16 +100,22 @@ integer function io_WF(ID,wf)
  if(.not.allocated(wf_b_indx)) nb_io=wf_nb_io
  if(     allocated(wf_b_indx)) nb_io=wf_nb_to_load
  !
- do ib_io=1,nb_io
+ VAR_NAME="WF_COMPONENTS_@_SP_POL"//trim(intc(i_sp_pol))//"_K"//trim(intc(ik))//"_BAND_GRP_"//trim(intc(ib_grp))
+ call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor,wf_nb_io/))
+ !
+ if(nb_io==wf_nb_io) then
    !
-   if(.not.allocated(wf_b_indx)) ib=ib_io
-   if(     allocated(wf_b_indx)) ib=wf_b_indx(ib_io)
+   call io_bulk(ID,C3=wf)
    !
-   VAR_NAME="WF_COMPONENTS_@_SP_POL"//trim(intc(i_sp_pol))//"_K"//trim(intc(ik))//"_BAND_"//trim(intc(ib))
-   call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor/))
-   call io_bulk(ID,C2=wf(:,:,ib_io))
+ else
    !
- enddo
+   do ib_io=1,nb_io
+     if(.not.allocated(wf_b_indx)) ib=ib_io
+     if(     allocated(wf_b_indx)) ib=wf_b_indx(ib_io)
+     call io_bulk(ID,C3=wf(:,:,ib_io:ib_io),IPOS=(/1,1,1,ib/))
+   enddo
+   !
+ endif
  !
 1 call io_disconnect(ID=ID)
  !

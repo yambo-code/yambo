@@ -29,7 +29,7 @@ logical function stop_now(DO_IT_NOW)
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset
- use parallel_m,     ONLY:myid,mpi_comm_world
+ use parallel_m,     ONLY:myid,mpi_comm_world,ncpu
  use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
  !
@@ -86,7 +86,7 @@ logical function stop_now(DO_IT_NOW)
  !
  
 #if defined _MPI
- call MPI_Abort(1,mpi_comm_world)
+ if (ncpu>1) call MPI_Abort(1,mpi_comm_world)
 #endif
  stop
  !

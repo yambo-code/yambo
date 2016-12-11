@@ -86,7 +86,7 @@ logical function stop_now(DO_IT_NOW)
  !
  
 #if defined _MPI
- if (ncpu>1) call MPI_Abort(1,mpi_comm_world)
+ if (ncpu>1) call MPI_Abort(mpi_comm_world,ierr,1)
 #endif
  stop
  !

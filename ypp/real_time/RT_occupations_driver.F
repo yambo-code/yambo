@@ -57,7 +57,7 @@ subroutine RT_occupations_driver(kpt,En)
  !
  ! Occupations energy plot 
  !=========================
- if (l_RT_energy) call RT_occ_energy_plot(En,kpt,RT_conf%T_n_steps)
+ if (l_RT_energy) call RT_components_energy_plot(En,kpt,RT_conf%T_n_steps)
  !
  ! Occupations time plot 
  !=========================

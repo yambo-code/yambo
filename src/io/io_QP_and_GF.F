@@ -62,7 +62,7 @@ integer function io_QP_and_GF(what,qp,ID)
    ! used to apply QP corrections. In this case QP_DB_kind must be 
    ! present to be transferred in the energy type by mod_qp_ctl
    !
-   if (variable_is_found(ID,"QP_DB_kind")==1.or.write_is_on(ID)) then
+   if (variable_is_found(ID,"QP_DB_kind").or.write_is_on(ID)) then
      call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
      call io_elemental(ID,DB_I0=QP_DB_kind_disk,I0=QP_DB_kind)
      if(io_mode(ID)==VERIFY) then
@@ -72,7 +72,7 @@ integer function io_QP_and_GF(what,qp,ID)
         endif
      endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then
+   else if (.not.variable_is_found(ID,"QP_DB_kind").and.read_is_on(ID)) then
      QP_DB_kind=0
      io_QP_and_GF=IO_INCOMPATIBLE_VAR
      return

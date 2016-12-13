@@ -38,8 +38,8 @@ subroutine RT_occupations_driver(kpt,En)
  type(bz_samp) :: kpt
  type(levels)  :: En
  !
- call section('+','Real-Time occupations')
- !============================================
+ call section('+','Real-Time components (Occupations, Lifetimes,...)')
+ !=====================================================================
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================

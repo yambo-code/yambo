@@ -58,7 +58,6 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  integer           ::n_titles
  character(10)     ::titles(max(n_T_steps+4,11)),ch_dummy,data_ch(n_T_steps+4,5,2),columns(n_T_steps+4)
  character(schlen) ::Ef_and_T_fname(2)
-!,gamma_fname(8),gamma_ratio_fname(2),GRP_string
  real(SP)          ::o_data(20)
  !
  ! Local group Load&Fit type
@@ -85,9 +84,11 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  !
  type(Load_and_Fit)    :: DATA_grp(5) ! e-e, e-p, e-gamma, occ, spin_occ
  !
+ !... metallic bands precision
+ filled_tresh=1.E-7
+ !
  ! Allocate GROUPs!
  !==================
- filled_tresh=1.E-7
  !
  call Load_and_Fit_alloc(DATA_grp(1),1,"CARRIERS")
  !
@@ -150,7 +151,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !===========
      !
      do i_g=1,n_groups
-       select case (DATA_grp(i_g)%kind)
+       select case (trim(DATA_grp(i_g)%kind))
          case("e-e")
            DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,1)
            DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,2)
@@ -488,19 +489,15 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      type(Load_and_Fit) :: TYP,TYP_ratio
      real(SP)           :: GAMMA_holes,GAMMA_elecs
      !
-     do i_RT=1,RT_carriers%nstates
-       !
-       GAMMA_holes=TYP%data(i_RT,1,i_T)
-       GAMMA_elecs=TYP%data(i_RT,2,i_T)
-       if (trim(TYP%kind)=="e-p") then
-         GAMMA_holes=GAMMA_holes+TYP%data(i_RT,3,i_T)
-         GAMMA_elecs=GAMMA_elecs+TYP%data(i_RT,4,i_T)
-       endif
-       !
-       if (RT_carriers%E_bare(i_RT)<=0._SP) TYP_ratio%data(i_RT,1,i_T)=-GAMMA_elecs/(GAMMA_elecs+GAMMA_holes)*spin_occ
-       if (RT_carriers%E_bare(i_RT)> 0._SP) TYP_ratio%data(i_RT,2,i_T)= GAMMA_holes/(GAMMA_elecs+GAMMA_holes)*spin_occ
-       !
-     enddo
+     GAMMA_holes=TYP%data(i_RT,1,i_T)
+     GAMMA_elecs=TYP%data(i_RT,2,i_T)
+     if (trim(TYP%kind)=="e-p") then
+       GAMMA_holes=GAMMA_holes+TYP%data(i_RT,3,i_T)
+       GAMMA_elecs=GAMMA_elecs+TYP%data(i_RT,4,i_T)
+     endif
+     !
+     if (RT_carriers%E_bare(i_RT)<=0._SP) TYP_ratio%data(i_RT,1,i_T)=-GAMMA_elecs/(GAMMA_elecs+GAMMA_holes)*spin_occ
+     if (RT_carriers%E_bare(i_RT)> 0._SP) TYP_ratio%data(i_RT,2,i_T)= GAMMA_holes/(GAMMA_elecs+GAMMA_holes)*spin_occ
      !
    end subroutine
    !

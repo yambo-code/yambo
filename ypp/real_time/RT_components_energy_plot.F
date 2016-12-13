@@ -114,7 +114,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  l_ep_lifetimes = l_elph_scatt.and.l_RT_CCA_Kernel
  if (l_ep_lifetimes) then
    n_groups=n_groups+1
-   call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-p")
+   call Load_and_Fit_alloc(DATA_grp(n_groups),4,"e-p")
    i_g_ep=n_groups
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),1,"e-p-ratio")
@@ -413,6 +413,8 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    subroutine local_free(TYP)
      type(Load_and_Fit) :: TYP
      if (trim(TYP%kind)=="none") return
+     YAMBO_DEALLOCATE_A(TYP%data)
+     if (.not.TYP%fittable) return
      YAMBO_DEALLOCATE_A(TYP%data_fit)
      YAMBO_DEALLOCATE_A(TYP%E_fit)
      YAMBO_DEALLOCATE_A(TYP%err_fit)
@@ -496,8 +498,12 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
        GAMMA_elecs=GAMMA_elecs+TYP%data(i_RT,4,i_T)
      endif
      !
-     if (RT_carriers%E_bare(i_RT)<=0._SP) TYP_ratio%data(i_RT,1,i_T)=-GAMMA_elecs/(GAMMA_elecs+GAMMA_holes)*spin_occ
-     if (RT_carriers%E_bare(i_RT)> 0._SP) TYP_ratio%data(i_RT,2,i_T)= GAMMA_holes/(GAMMA_elecs+GAMMA_holes)*spin_occ
+     if (GAMMA_elecs+GAMMA_holes>0._SP) then
+       if (RT_carriers%E_bare(i_RT)<=0._SP) TYP_ratio%data(i_RT,1,i_T)=-GAMMA_elecs/(GAMMA_elecs+GAMMA_holes)*spin_occ
+       if (RT_carriers%E_bare(i_RT)> 0._SP) TYP_ratio%data(i_RT,2,i_T)= GAMMA_holes/(GAMMA_elecs+GAMMA_holes)*spin_occ
+     else
+       TYP_ratio%data(i_RT,:,i_T)=0._SP
+     endif
      !
    end subroutine
    !

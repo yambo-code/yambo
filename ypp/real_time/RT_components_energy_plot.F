@@ -29,6 +29,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use pars,           ONLY:SP,schlen,rZERO
  use YPP_real_time,  ONLY:RT_time
  use RT_control,     ONLY:RT_apply
+ use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor
  use vec_operate,    ONLY:sort
@@ -82,7 +83,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    real(SP), allocatable :: Ef(:,:)
  end type Load_and_Fit
  !
- type(Load_and_Fit)    :: DATA_grp(5) ! e-e, e-p, e-gamma, occ, spin_occ
+ type(Load_and_Fit)    :: DATA_grp(7) ! CARRIERS, spin-up/down,e-e, e-e-ratio, e-p, e-p-ratio
  !
  !... metallic bands precision
  filled_tresh=1.E-7
@@ -156,10 +157,12 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
            DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,1)
            DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,2)
          case("e-p")
-           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,3)
-           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,4)
-           DATA_grp(i_g)%data(i_RT,3,i_T)=RT_carriers%dGAMMA_E_P_Ho_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,5)
-           DATA_grp(i_g)%data(i_RT,4,i_T)=RT_carriers%dGAMMA_E_P_El_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,6)
+           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_P_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,3)
+           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_P_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,4)
+           if (Bose_Temp > 0._SP) then
+             DATA_grp(i_g)%data(i_RT,3,i_T)=RT_carriers%dGAMMA_E_P_Ho_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,5)
+             DATA_grp(i_g)%data(i_RT,4,i_T)=RT_carriers%dGAMMA_E_P_El_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,6)
+           endif
          case("e-p-ratio")
            call LIFE_ratio( DATA_grp(i_g_ep), DATA_grp(i_g) )
          case("e-e-ratio")
@@ -184,7 +187,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   do i_g=1,1
+   do i_g=1,n_groups
      !
      if (DATA_grp(i_g)%fittable) call FIT_me(DATA_grp(i_g))
      !
@@ -355,8 +358,10 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
          do i_fit=1,n_files
            !
            TYP%running_file=TYP%file(i_f)
-           if (FIT)      TYP%running_file=trim(TYP%running_file)//"_FIT"
-           if (.not.FIT) TYP%running_file=trim(TYP%running_file)//"_DATA"
+           if (TYP%fittable) then
+              TYP%running_file         =trim(TYP%file(i_f))//"_DATA"
+              if (FIT) TYP%running_file=trim(TYP%file(i_f))//"_FIT"
+           endif
            !
            TYP%running_file=trim(TYP%running_file)//trim(extension(i_fit))
            !
@@ -444,7 +449,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
        TYP%Ef     =rZERO
      endif
      !
-     TYP%kind=what
+     TYP%kind   =what
      TYP%n_files=dim
      !
      select case (what)
@@ -461,10 +466,14 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
          TYP%file(1)="YPP-RT_occupations_dn"
          TYP%file_desc(1)="Occupations down channel at different times"
        case("e-p")
+         TYP%n_files=2
          TYP%file(1)='YPP-RT_EP_Hole_linewidths'
          TYP%file(2)='YPP-RT_EP_Elec_linewidths'
-         TYP%file(3)='YPP-RT_EP_Hole_abs_linewidths'
-         TYP%file(4)='YPP-RT_EP_Elec_abs_linewidths'
+         if (Bose_Temp > 0._SP) then
+           TYP%n_files=4
+           TYP%file(3)='YPP-RT_EP_Hole_abs_linewidths'
+           TYP%file(4)='YPP-RT_EP_Elec_abs_linewidths'
+         endif
          TYP%file_desc(:)="Lifetimes distribution [meV] at different times"
        case("e-p-ratio")
          TYP%FIT_title=(/'(e-EP)','(h-EP)'/)
@@ -493,17 +502,13 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !
      GAMMA_holes=TYP%data(i_RT,1,i_T)
      GAMMA_elecs=TYP%data(i_RT,2,i_T)
-     if (trim(TYP%kind)=="e-p") then
+     if (trim(TYP%kind)=="e-p".and.Bose_Temp > 0._SP) then
        GAMMA_holes=GAMMA_holes+TYP%data(i_RT,3,i_T)
        GAMMA_elecs=GAMMA_elecs+TYP%data(i_RT,4,i_T)
      endif
      !
-     if (GAMMA_elecs+GAMMA_holes>0._SP) then
-       if (RT_carriers%E_bare(i_RT)<=0._SP) TYP_ratio%data(i_RT,1,i_T)=-GAMMA_elecs/(GAMMA_elecs+GAMMA_holes)*spin_occ
-       if (RT_carriers%E_bare(i_RT)> 0._SP) TYP_ratio%data(i_RT,2,i_T)= GAMMA_holes/(GAMMA_elecs+GAMMA_holes)*spin_occ
-     else
-       TYP_ratio%data(i_RT,:,i_T)=0._SP
-     endif
+     if (RT_carriers%E_bare(i_RT)<=0._SP) TYP_ratio%data(i_RT,1,i_T)=-GAMMA_elecs/(GAMMA_elecs+GAMMA_holes)*spin_occ
+     if (RT_carriers%E_bare(i_RT)> 0._SP) TYP_ratio%data(i_RT,1,i_T)= GAMMA_holes/(GAMMA_elecs+GAMMA_holes)*spin_occ
      !
    end subroutine
    !
@@ -541,12 +546,8 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !
      if (i_err==1) then
        TYP%n_fit_ok(1)   =TYP%n_fit_ok(1)+1
-       !TYP%T(2,i_T)      =rZERO
-       !TYP%Ef(2,i_T)     =rZERO
      else if (i_err==2) then
        TYP%n_fit_ok(2)   =TYP%n_fit_ok(2)+1
-       !TYP%T(1,i_T)      =rZERO
-       !TYP%Ef(1,i_T)     =rZERO
      else if (i_err==3) then
        TYP%n_fit_ok(1:2) =TYP%n_fit_ok(1:2)+1
      endif

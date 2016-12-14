@@ -24,7 +24,7 @@
 subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  use pars,      ONLY:SP,lchlen,schlen,rZERO
- use units,     ONLY:HA2EV,HBAR_eVfs,HA2GHZ,FS2AUT,PS2AUT
+ use units,     ONLY:HA2EV,HA2GHZ
  use drivers,   ONLY:l_life,l_elph_corr
  use com,       ONLY:msg,of_open_close
  use electrons, ONLY:levels,spin,n_sp_pol
@@ -32,7 +32,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 &                    QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
 &                    QP_Sc_steps,use_GreenF_to_eval_QP,Vnlxc_kind,&
 &                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,&
-&                    QP_states_simmetrize,QP_G_info
+&                    QP_states_simmetrize,QP_G_info,Time_of
  use stderr,    ONLY:set_real_printed_length
  implicit none
  type(QP_t)   ::qp
@@ -188,8 +188,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        !
        values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
        values(9:10) =(/real(qp_k),real(qp_b)/)
-       values(12:13)=(/aimag(qp%E(i1))*HA2EV/1.E-3,HBAR_eVfs*Lifetime/HA2EV/)
-       values(28)   =(HBAR_eVfs*Lifetime/HA2EV)*FS2AUT/PS2AUT
+       values(12:13)=(/aimag(qp%E(i1))*HA2EV/1.E-3,Time_of(Lifetime,"fs")/)
+       values(28)   =Time_of(Lifetime,"ps")
        values(15:16)=(/real(qp%Z(i1)),aimag(qp%Z(i1))/)
        !
        if (allocated(QP_G_amplitude_integral)) then

@@ -24,7 +24,7 @@
 module fields
  !
  use pars, ONLY:SP,schlen,lchlen,pi
- use units,ONLY:HA2EV,FS2AUT,HBAR_eVfs
+ use units,ONLY:FS2AUT
  !
  implicit none
  !
@@ -86,10 +86,11 @@ module fields
    end function
    !
    real(SP) function EtoT(E,T)
+     use QP_m,       ONLY:Time_of
      real(SP), optional ::T
      real(SP), optional ::E
-     if (present(T)) EtoT=2._SP*pi*HBAR_eVfs/(T*HA2EV)*FS2AUT
-     if (present(E)) EtoT=2._SP*pi*HBAR_eVfs/(E*HA2EV)*FS2AUT
+     if (present(T)) EtoT=2._SP*pi*Time_of(T,"fs")*FS2AUT
+     if (present(E)) EtoT=2._SP*pi*Time_of(E,"fs")*FS2AUT
    end function
    !
    real(SP) function field_frequency(E_field,i_f)

@@ -326,16 +326,15 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  contains 
    !
    subroutine PLOT_the_GROUP(TYP,FIT)
+     use QP_m,       ONLY: Time_of
      type(Load_and_Fit) :: TYP
      logical            :: FIT
-     integer            :: range_(2),i_T_grp,i_line,n_files,i_fit,i_fit_data
+     integer            :: range_(2),i_T_grp,i_line,n_files,i_fit,i_fit_data,i_data
      character(schlen)  :: GRP_string,extension(2)
-     real(SP)           :: PRE_factor
+     real(SP)           :: PRE_factor,local_data(n_T_steps)
      !
      PRE_factor=1._SP
      if (trim(TYP%kind)=="e-p".or.trim(TYP%kind)=="e-e") then
-       PRE_factor=HA2EV*1000._SP
-     else if (trim(TYP%kind)=="e-photon") then
        PRE_factor=HA2EV*1000._SP
      endif
      !
@@ -399,8 +398,13 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
                !
                ! RT_carriers%table(i_RT,:) = (/ ib, ik, ik_RT, i_spin/)
                !
+               do i_data=range_(1),range_(2)
+                 if (trim(TYP%kind)=="e-photon") local_data(i_data)=Time_of(TYP%data(i_RT,i_f,i_data),"ps")
+                 if (trim(TYP%kind)/="e-photon") local_data(i_data)=TYP%data(i_RT,i_f,i_data)*PRE_factor
+               enddo
+               !
                call msg('o '//trim(TYP%running_file),'',(/RT_E_sorted(i_RT)*HA2EV,&
-&                       TYP%data(i_RT,i_f,range_(1):range_(2))*PRE_factor/),INDENT=-2,USE_TABS=.true.)
+&                                                         local_data(range_(1):range_(2))/),INDENT=-2,USE_TABS=.true.)
                !
              enddo
            endif

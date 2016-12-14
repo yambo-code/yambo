@@ -23,11 +23,12 @@
 !
 subroutine RT_output(what,VALUES,TIME,E)
  ! 
- use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1,HBAR_eVfs,FS2AUT
+ use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_use_Hxc_collisions
  use SC,             ONLY:SC_description,n_SC_descriptions
+ use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_vecpot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Total_magn
  use D_lattice,      ONLY:Bose_Temp
@@ -57,7 +58,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  logical,           save  :: RT_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,11),append_ch,extension_ch,tmp_ch
  character(2)             :: chart_string(3)
- real(SP)                 :: data_to_dump(11),Linewidth(2),Lifetime(2)
+ real(SP)                 :: data_to_dump(11)
  !
  open_files=index(what,'open')>0
  add_space=index(what,'space')>0
@@ -587,11 +588,8 @@ subroutine RT_output(what,VALUES,TIME,E)
          data_to_dump(n1:n1+1) = RT_Tfit_lifetimes(3:4)*HA2KEL
        endif
      case('mean_RADlifetimes')
-       Linewidth=RT_mean_lifetimes(7:8)
-       Lifetime=0._SP
-       if (Linewidth(1)>1.E-10) Lifetime(1)=1._SP/Linewidth(1)
-       if (Linewidth(2)>1.E-10) Lifetime(2)=1._SP/Linewidth(2)
-       data_to_dump(2:3) = Lifetime(1:2)*HBAR_eVfs/HA2EV*real(FS2AUT/PS2AUT,SP)
+       data_to_dump(2) = Time_of(RT_mean_lifetimes(7),"ps")
+       data_to_dump(3) = Time_of(RT_mean_lifetimes(8),"ps")
      case('N_dN_E_conservation_factors')
        n1=1
        if(l_elph_scatt) then

@@ -36,35 +36,36 @@ sub local_uncompress{
 }
 sub get_the_run{
 #===========================
- $RUN_dir="$path/$RUN_material[$ID_in]/$ID_in";
+ $RUN_dir="$path/$RUN_material[$IRUN_in]/$ID_in";
  #
- print "\n Fetching RUN $ID_in ...\n";
+ print "\n Fetching RUN $IRUN_in (ID $ID_in) ...\n";
  #
  &print_the_run($ID_in);
  #
  for($ik = 1; $ik < 100; $ik++) {
-  if (exists($RUN_in[$ID_in][$ik]) and $input){
-    if ($RUN_in[$ID_in][$ik] =~ /$input/ or "$input" =~ "all"){
-    &remote_cmd("get $RUN_dir/inputs/$RUN_in[$ID_in][$ik] $local_dir/inputs/");
+  if (exists($RUN_in[$IRUN_in][$ik]) and $input){
+    if ($RUN_in[$IRUN_in][$ik] =~ /$input/ or "$input" =~ "all"){
+    &remote_sftp_cmd("get $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
    }
   }
   if (exists($RUN_in[$ID_out][$ik]) and $output){
-    if ($RUN_out[$ID_in][$ik] =~ /$output/ or "$output" =~ "all"){
-    &remote_cmd("get $RUN_dir/outputs/$RUN_out[$ID_in][$ik].gz $local_dir/outputs/");
+    if ($RUN_out[$IRUN_in][$ik] =~ /$output/ or "$output" =~ "all"){
+    &remote_sftp_cmd("get $RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz $local_dir/outputs/");
    }
   }
-  if (exists($RUN_db[$ID_in][$ik]) and $database){
-    if ($RUN_db[$ID_in][$ik] =~ /$database/ or "$database" =~ "all"){
-    &remote_cmd("get $RUN_dir/databases/$RUN_db[$ID_in][$ik].nc.gz $local_dir/databases/");
+  if (exists($RUN_db[$IRUN_in][$ik]) and $database){
+    if ($RUN_db[$IRUN_in][$ik] =~ /$database/ or "$database" =~ "all"){
+    &remote_sftp_cmd("get $RUN_dir/databases/$RUN_db[$IRUN_in][$ik].nc.gz $local_dir/databases/");
    }
   }
  }
 }
 sub add_command_line_object{
 #===========================
- $RUN_dir="$path/$RUN_material[$ID_in]/$ID_in";
+ if ($quiet) { print "\n\n New DATABASE entries\n\n"};
+ $RUN_dir="$path/$RUN_material[$IRUN_in]/$ID_in";
  if ($input) {
-  &remote_cmd("put $input $RUN_dir/inputs");
+  &remote_sftp_cmd("put $input $RUN_dir/inputs");
   &add_a_database_line($ID_in,"input","$input");
  };
  if ($output) {
@@ -76,7 +77,7 @@ sub add_command_line_object{
     opendir (DIR, $obj) or die $!;
     while (my $el = readdir(DIR)) {
       next if ($el !~ m/^[o-]/ and  $el !~ m/^[r-]/ and $el !~ m/^[l-]/ );
-      if ($key_words){next if ($el !~ /$keys[0]/)};
+      if ($key){next if ($el !~ /$key/)};
       &file_add("$obj/$el");
     }
    }
@@ -91,7 +92,7 @@ sub add_command_line_object{
     opendir (DIR, $obj) or die $!;
     while (my $el = readdir(DIR)) {
       next if ($el !~ m/^[ndb-]/);
-      if ($key_words){next if ($el !~ /$keys[0]/)};
+      if ($key){next if ($el !~ /$key/)};
       &db_add("$obj/$el");
     }
    }
@@ -106,7 +107,7 @@ sub file_add
  $n_to_remove++;
  $FILE_to_remove[$n_to_remove]="$file.gz";
  &local_cmd("gzip -k -f $file");
- &remote_cmd("put $file.gz $RUN_dir/outputs");
+ &remote_sftp_cmd("put $file.gz $RUN_dir/outputs");
  &add_a_database_line($ID_in,"output","$file");
 }
 sub db_add
@@ -117,9 +118,11 @@ sub db_add
  next if ($file =~ m/[.gz]$/);
  $n_to_remove++;
  $FILE_to_remove[$n_to_remove]="$file.nc.gz";
+ $n_to_remove++;
+ $FILE_to_remove[$n_to_remove]="$file.nc";
  &local_cmd("ncdump $file> $file.nc");
  &local_cmd("gzip -k -f $file.nc");
- &remote_cmd("put $file.nc.gz $RUN_dir/databases");
+ &remote_sftp_cmd("put $file.nc.gz $RUN_dir/databases");
  &add_a_database_line($ID_in,"database","$file");
 }
 1;

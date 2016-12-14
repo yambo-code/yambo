@@ -26,7 +26,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use pars,                ONLY:SP,lchlen
  use LOGO,                ONLY:pickup_a_random
  use com,                 ONLY:msg,write_to_report,core_io_path,write_the_logo
- use parallel_m,          ONLY:ncpu,myid,MPI_close
+ use parallel_m,          ONLY:ncpu,myid
  use electrons,           ONLY:levels,E_reset,n_spin
  use D_lattice,           ONLY:n_atoms_species_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
@@ -82,7 +82,6 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if ( a2y_KSS_file_name(inf,KSS_file_name) < 0 ) then
    call msg('ln','failed')
-   call MPI_close
    return
  endif
  call msg('l',trim(KSS_file_name))
@@ -101,7 +100,6 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (force_noWFs) then
    call msg('s',' == A2Y completed ==')
    call msg('s',' ')
-   call MPI_close
    return
  endif
  !
@@ -152,7 +150,5 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call msg('s','... WF and PP done')
  call msg('s',' == A2Y completed ==')
  call msg('s',' ')
- !
- call MPI_close
  !
 end function

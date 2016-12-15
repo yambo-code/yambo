@@ -58,7 +58,7 @@ integer function io_RT_components(what,ID)
  character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: what_
  !
- integer               :: ik,ib,i_spin,i_memory,i_time,db_type,n_cache_steps
+ integer               :: nbands,ik,ib,i_spin,i_memory,i_time,db_type,n_cache_steps
  logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
  !
  ! DB kind and name
@@ -244,7 +244,7 @@ integer function io_RT_components(what,ID)
    !
    nbands=RT_bands(2)-RT_bands(1)+1
    call io_bulk(ID,VAR="RT_THETA_K"//trim(intc(ik)),VAR_SZ=(/2,2*nqbz*ph_modes,nbands,nbands/))
-   call io_bulk(ID,C2=THETA_matrix(:,:,:,ik))
+   call io_bulk(ID,C3=THETA_matrix(:,:,:,ik))
    !
  endif
  !

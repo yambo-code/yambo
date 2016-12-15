@@ -238,22 +238,12 @@ integer function io_ELPH(ID,what)
  ! ELPH_gkkp 
  !
  call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
- !
- do ik=1,nkbz
-   ! 
-   call io_bulk(ID,C3=elph_gkkp(ik,:,:,:),IPOS=(/1,1,1,ik/))
-   ! 
- enddo
+ call io_bulk(ID,C4=elph_gkkp)
  !
  ! ELPH_DW 
  !
  call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
- !
- do ik=1,nkbz
-   ! 
-   call io_bulk(ID,R3=elph_DW(ik,:,:,:),IPOS=(/1,1,1,ik/))
-   ! 
- enddo
+ call io_bulk(ID,R4=elph_DW)
  !
 1 call io_disconnect(ID=ID)
  !

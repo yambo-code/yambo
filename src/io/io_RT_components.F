@@ -58,7 +58,7 @@ integer function io_RT_components(what,ID)
  character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: what_
  !
- integer               :: ik,ib,i_spin,i_memory,i_time,db_type,n_cache_steps
+ integer               :: nbands,ik,ib,i_spin,i_memory,i_time,db_type,n_cache_steps
  logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
  !
  ! DB kind and name
@@ -222,10 +222,8 @@ integer function io_RT_components(what,ID)
      !
      i_spin=1
      !
-     do ik=1,RT_nk
-       call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),VAR_SZ=(/2,RT_nbands,RT_nbands/))
-       call io_bulk(ID,C2=G_lesser_reference(:,:,ik))
-     enddo
+     call io_bulk(ID,VAR="G_lesser_reference",VAR_SZ=(/2,RT_nbands,RT_nbands,RT_nk/))
+     call io_bulk(ID,C3=G_lesser_reference)
      !
      if (read_is_on(ID)) call RT_init_occupation_reference( )
      !
@@ -244,10 +242,9 @@ integer function io_RT_components(what,ID)
    !
    call io_fragment(ID,i_fragment=ik)
    !
-   do ib=1,RT_bands(2)-RT_bands(1)+1
-     call io_bulk(ID,VAR="RT_THETA_B"//trim(intc(ib))//"_K"//trim(intc(ik)),VAR_SZ=(/2,2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1/))
-     call io_bulk(ID,C2=THETA_matrix(:,:,ib,ik))
-   enddo
+   nbands=RT_bands(2)-RT_bands(1)+1
+   call io_bulk(ID,VAR="RT_THETA_K"//trim(intc(ik)),VAR_SZ=(/2,2*nqbz*ph_modes,nbands,nbands/))
+   call io_bulk(ID,C3=THETA_matrix(:,:,:,ik))
    !
  endif
  !

@@ -155,7 +155,7 @@ module IO_m
      character(*),optional :: VAR
      integer,     optional :: VAR_SZ(:),IPOS(:)
      integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:)
-     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:)
+     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:)
      complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:)
      integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
      !

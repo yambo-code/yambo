@@ -28,18 +28,21 @@ integer function io_BS(iq,X,ID)
  use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use parallel_m,    ONLY:myid
- use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
+ use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded,&
+&                        BS_ID_VAR_RES,BS_ID_VAR_CPL
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
-&                        read_is_on,write_is_on,io_header,io_mode,VERIFY,&
+&                        read_is_on,write_is_on,io_header,io_mode,VERIFY,io_netcdf_var, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
  implicit none
+ !
  type(X_t):: X 
  integer  :: iq,ID
  !
  ! Work Space
  !
- integer             ::i_block,i1,n1,n2
+ complex(SP),allocatable :: tmp_map(:)
+ integer             ::i_block,i1,n1,n2,n1_max,n2_max,block_pos
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  !
@@ -104,19 +107,30 @@ integer function io_BS(iq,X,ID)
  !
  if(frag_BS_K) then
    if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
-   if (BS_blk(i_block)%mode=="A") ch="BSE_ANTIRESONANT_BLOCK_"//trim(intc(i_block))
+   if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING_BLOCK_"//trim(intc(i_block))
    !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/))
    call io_bulk(ID,C2=BS_blk(i_block)%mat)
  else
+   n1=BS_blk(i_block)%size(1)
+   n2=BS_blk(i_block)%size(2)
+   block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1
    if(i_block==1) then
-     ch="BSE_RESONANT"
-     ch="BSE_ANTIRESONANT"
-     n1=BS_blk(i_block)%size(1)
-     n2=BS_blk(i_block)%size(2)
-     call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,n1,n2,n_BS_blks/))
+     if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
+     if (BS_blk(i_block)%mode=="A") ch="BSE_COPULING"
+     call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
+     if (BS_blk(i_block)%mode=="R") BS_ID_VAR_RES=io_netcdf_var(ID)
+     if (BS_blk(i_block)%mode=="A") BS_ID_VAR_CPL=io_netcdf_var(ID)
+   else
+     if (BS_blk(i_block)%mode=="R") io_netcdf_var(ID)=BS_ID_VAR_RES
+     if (BS_blk(i_block)%mode=="A") io_netcdf_var(ID)=BS_ID_VAR_CPL
    endif
-   call io_bulk(ID,C3=reshape(BS_blk(i_block)%mat,(/n1,n2,1/)),IPOS=(/1,1,1,i_block/))
+   allocate(tmp_map(n1*n2))
+   if(write_is_on(ID)) tmp_map=reshape(BS_blk(i_block)%mat,(/n1*n2/))
+   call io_bulk(ID,C1=tmp_map,IPOS=(/1,block_pos/))
+   if(read_is_on(ID)) BS_blk(i_block)%mat=reshape(tmp_map,(/n1,n2/))
+   deallocate(tmp_map)
+   !call io_bulk(ID,C1=reshape(BS_blk(i_block)%mat,(/n1_times_n2(i_block)/)),IPOS=(/1,pos_size/))
  endif
  !
 1 continue

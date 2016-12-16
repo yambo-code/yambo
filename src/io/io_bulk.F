@@ -157,8 +157,8 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1
  if (present(I4)) then
    allocate(isize_loc(4))
    isize_loc=(/size(I4,1),size(I4,2),size(I4,3),size(I4,4)/)
-   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), I3, ipos_loc, isize_loc)
-   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), I3, ipos_loc, isize_loc)
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), I4, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), I4, ipos_loc, isize_loc)
  endif
  !
  ! Real numbers / vectors / matricies

@@ -21,7 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1,L2,L3,L4,IPOS)
+subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
+                   &             R0,R1,R2,R3,R4,R5,&
+                   &             C0,C1,C2,C3,C4,   &
+                   &             L0,L1,L2,L3,L4,   &
+                   &                            IPOS)
  !
  use pars,    ONLY:SP,LP,nf90_SP
  use netcdf
@@ -31,9 +35,9 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1
  integer      :: ID, error
  character(*),optional :: VAR
  integer,     optional :: VAR_SZ(:),IPOS(:)
- integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:)
- real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:)
- complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:)
+ integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
+ real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
+ complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:)
  !
  ! These types can be used instead of logical that 
  ! are not supported by NetCdf
@@ -79,17 +83,17 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1
  ! Actual IO
  !
  error=0
- if (present(IPOS)) then
-   allocate(ipos_loc(size(IPOS)))
-   ipos_loc=IPOS
- else
-   if (present(L1).or.present(I1).or.present(R1)               ) dims=1
-   if (present(L2).or.present(I2).or.present(R2).or.present(C1)) dims=2
-   if (present(L3).or.present(I3).or.present(R3).or.present(C2)) dims=3
-   if (present(L4).or.present(I4).or.present(R4).or.present(C3)) dims=4
-   allocate(ipos_loc(dims))
-   ipos_loc=1
- endif
+ !
+ if (present(L1).or.present(I1).or.present(R1)               ) dims=1
+ if (present(L2).or.present(I2).or.present(R2).or.present(C1)) dims=2
+ if (present(L3).or.present(I3).or.present(R3).or.present(C2)) dims=3
+ if (present(L4).or.present(I4).or.present(R4).or.present(C3)) dims=4
+ if (               present(I5).or.present(R5).or.present(C4)) dims=5
+ !
+ allocate(ipos_loc(dims))
+ !
+ if (     present(IPOS)) ipos_loc=IPOS
+ if (.not.present(IPOS)) ipos_loc=1
  !
  ! Logical numbers / vectors / matricies
  !
@@ -161,6 +165,13 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1
    if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), I4, ipos_loc, isize_loc)
  endif
  !
+ if (present(I5)) then
+   allocate(isize_loc(5))
+   isize_loc=(/size(I5,1),size(I5,2),size(I5,3),size(I5,4),size(I5,5)/)
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), I5, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), I5, ipos_loc, isize_loc)
+ endif
+ !
  ! Real numbers / vectors / matricies
  !
  if (present(R0)) then
@@ -196,6 +207,13 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1
    if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), R4, ipos_loc, isize_loc)
  endif
  !
+ if (present(R5)) then
+   allocate(isize_loc(5))
+   isize_loc=(/size(R5,1),size(R5,2),size(R5,3),size(R5,4),size(R5,5)/)
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), R5, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), R5, ipos_loc, isize_loc)
+ endif
+ !
  ! Complex numbers / vectors / matricies
  !
  if (present(C0)) then
@@ -222,6 +240,13 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,R0,R1,R2,R3,R4,C0,C1,C2,C3,L0,L1
    isize_loc=(/2,size(C3,1),size(C3,2),size(C3,3)/)
    if (write_is_on(ID)) call nf_put_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C3)
    if (read_is_on(ID) ) call nf_get_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C3)
+ endif
+ !
+ if (present(C4)) then
+   allocate(isize_loc(5))
+   isize_loc=(/2,size(C4,1),size(C4,2),size(C4,3),size(C4,4)/)
+   if (write_is_on(ID)) call nf_put_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C4)
+   if (read_is_on(ID) ) call nf_get_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C4)
  endif
  !
  call netcdf_call(error)

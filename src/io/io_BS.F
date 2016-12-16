@@ -42,7 +42,7 @@ integer function io_BS(iq,X,ID)
  ! Work Space
  !
  complex(SP),allocatable :: tmp_map(:)
- integer             ::i_block,i1,n1,n2,n1_max,n2_max,block_pos
+ integer             ::i_block,i1,n1,n2,block_pos
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  !
@@ -125,12 +125,14 @@ integer function io_BS(iq,X,ID)
      if (BS_blk(i_block)%mode=="R") io_netcdf_var(ID)=BS_ID_VAR_RES
      if (BS_blk(i_block)%mode=="A") io_netcdf_var(ID)=BS_ID_VAR_CPL
    endif
-   allocate(tmp_map(n1*n2))
-   if(write_is_on(ID)) tmp_map=reshape(BS_blk(i_block)%mat,(/n1*n2/))
-   call io_bulk(ID,C1=tmp_map,IPOS=(/1,block_pos/))
-   if(read_is_on(ID)) BS_blk(i_block)%mat=reshape(tmp_map,(/n1,n2/))
-   deallocate(tmp_map)
-   !call io_bulk(ID,C1=reshape(BS_blk(i_block)%mat,(/n1_times_n2(i_block)/)),IPOS=(/1,pos_size/))
+   if(write_is_on(ID)) then
+     call io_bulk(ID,C1=(/BS_blk(i_block)%mat(:,:)/),IPOS=(/1,block_pos/))
+   else if(read_is_on(ID)) then
+     allocate(tmp_map(n1*n2))
+     call io_bulk(ID,C1=tmp_map,IPOS=(/1,block_pos/))
+     BS_blk(i_block)%mat=reshape(tmp_map,(/n1,n2/))
+     deallocate(tmp_map)
+   endif
  endif
  !
 1 continue

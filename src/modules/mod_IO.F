@@ -189,8 +189,7 @@ module IO_m
    ! 
    logical function open_is_on(ID)
      !
-     ! Note that an identical IF statement must be defined in 
-     ! io_control.
+     ! Note that an identical IF statement must be defined in io_control.
      !
      integer :: ID
      open_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_WR_CL,&

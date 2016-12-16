@@ -39,7 +39,7 @@ integer function io_BS(iq,X,ID)
  !
  ! Work Space
  !
- integer             ::i_block,i1
+ integer             ::i_block,i1,n1,n2
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  !
@@ -102,11 +102,22 @@ integer function io_BS(iq,X,ID)
  !
  call io_fragment(ID,i_fragment=i_block)
  !
- if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
- if (BS_blk(i_block)%mode=="A") ch="BSE_ANTIRESONANT_BLOCK_"//trim(intc(i_block))
- !
- call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/))
- call io_bulk(ID,C2=BS_blk(i_block)%mat)
+ if(frag_BS_K) then
+   if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
+   if (BS_blk(i_block)%mode=="A") ch="BSE_ANTIRESONANT_BLOCK_"//trim(intc(i_block))
+   !
+   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/))
+   call io_bulk(ID,C2=BS_blk(i_block)%mat)
+ else
+   if(i_block==1) then
+     ch="BSE_RESONANT"
+     ch="BSE_ANTIRESONANT"
+     n1=BS_blk(i_block)%size(1)
+     n2=BS_blk(i_block)%size(2)
+     call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,n1,n2,n_BS_blks/))
+   endif
+   call io_bulk(ID,C3=reshape(BS_blk(i_block)%mat,(/n1,n2,1/)),IPOS=(/1,1,1,i_block/))
+ endif
  !
 1 continue
  !

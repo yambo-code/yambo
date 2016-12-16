@@ -53,11 +53,6 @@ module BS
  integer :: BS_q(2)
  integer :: BS_identifier
  !
- ! IO
- !=============
- integer :: BS_ID_VAR_RES
- integer :: BS_ID_VAR_CPL
- !
  ! Live Timing
  !=============
  integer     :: BS_LiveTiming_prefactor = 1

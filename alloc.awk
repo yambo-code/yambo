@@ -1,0 +1,43 @@
+{
+LINE=$0
+split(LINE,a)
+POS=index(LINE,a[1])
+gsub(" ","",LINE)
+if (index($0,"deallocate(")>0)
+{
+#print $0
+VAR=substr(LINE, index(LINE,"deallocate("))
+gsub("deallocate","Y_FREE_A",VAR)
+print repeat( " ", POS-1 ) VAR
+}
+else if (index($0,"allocate(")>0)
+{
+#print $0
+VAR=substr(LINE, index(LINE,"allocate("))
+sub("stat="," ",VAR)
+split(VAR,a)
+gsub("allocate","Y_ALLOCATE",a[1])
+VAR=substr(a[1],1,length(a[1])-1)
+print repeat( " ", POS-1 ) VAR")"
+gsub("\\("," ",VAR)
+split(VAR,b)
+if (index(VAR,"%")==0) {
+OBJ=b[2]
+}
+else
+{
+OBJ=b[2]"("b[3]
+}
+print repeat( " ", POS-1 ) "Y_MEM("OBJ")"
+}
+else
+{
+ if (index ($0,"mem_est(")==0) {print $0}
+}
+}
+function repeat( str, n,    rep, i )
+{
+    for( ; i<n; i++ )
+        rep = rep str   
+    return rep
+}

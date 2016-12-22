@@ -23,10 +23,10 @@
 !
 module X_m
  !
- use pars,  ONLY:SP,lchlen,schlen
- use units, ONLY:HA2EV
+ use pars,     ONLY:SP,lchlen,schlen
+ use units,    ONLY:HA2EV
  !
- implicit none
+#include <memory.h>
  !
  ! Polarizability
  !
@@ -153,52 +153,47 @@ module X_m
    subroutine X_alloc(what,d)
      !
      use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
      use pars,      ONLY:cZERO
      !
      character(*)      :: what
      integer, optional :: d(:)
      !
-     ! Work Space
-     !
-     integer :: err
-     !
      if (present(d)) then
        select case(what)
        case('X')
          if (allocated(X_mat)) return
-         allocate(X_mat(d(1),d(2),d(3)),stat=err)
-         call mem_est(what,(/size(X_mat)/),errors=(/err/))
+         Y_ALLOCATE(X_mat(d(1),d(2),d(3)))
+         Y_MEM(X_mat)
          X_mat=cZERO
        case('DIP_iR')
          if (allocated(DIP_iR)) return
-         allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_iR)/),errors=(/err/))
+         Y_ALLOCATE(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         Y_MEM(DIP_iR)
          DIP_iR=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
-         allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         Y_ALLOCATE(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         Y_MEM(DIP_P)
          DIP_P=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
-         allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_S)/),errors=(/err/))
+         Y_ALLOCATE(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol))
+         Y_MEM(DIP_S)
          DIP_S=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
-         allocate(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         Y_ALLOCATE(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         Y_MEM(DIP_spin)
          DIP_spin=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
-         allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/size(DIP_projected)/),errors=(/err/))
+         Y_ALLOCATE(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
+         Y_MEM(DIP_projected)
          DIP_projected=cZERO
        case('P_square')
          if (allocated(P_square)) return
-         allocate(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/size(P_square)/),errors=(/err/))
+         Y_ALLOCATE(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
+         Y_MEM(P_square)
          P_square=cZERO
        end select
      else
@@ -207,31 +202,30 @@ module X_m
          !
          ! I clean the RL components mapping
          !
-         if (allocated(X_RLcomp_ig)) deallocate(X_RLcomp_ig)
+         Y_FREE_A(X_RLcomp_ig)
          !
          ! and the matrix itself
          !
-         if (.not.allocated(X_mat)) return
-         deallocate(X_mat)
+         Y_FREE_A(X_mat)
          !
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
-         deallocate(DIP_iR)
+         Y_FREE_A(DIP_iR)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
-         deallocate(DIP_P)
+         Y_FREE_A(DIP_P)
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
-         deallocate(DIP_S)
+         Y_FREE_A(DIP_S)
        case('DIP_spin')
          if (.not.allocated(DIP_spin)) return
-         deallocate(DIP_spin)
+         Y_FREE_A(DIP_spin)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
-         deallocate(DIP_projected)
+         Y_FREE_A(DIP_projected)
        case('P_square')
          if (.not.allocated(P_square)) return
-         deallocate(P_square)
+         Y_FREE_A(P_square)
        end select
        call mem_est(what)
      endif

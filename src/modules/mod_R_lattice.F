@@ -24,7 +24,7 @@
 module R_lattice
  !
  use pars, ONLY:SP,schlen, IP
- implicit none
+#include<memory.h>
  !
  ! K lattice
  !
@@ -154,45 +154,31 @@ module R_lattice
  contains
    !
    subroutine qindx_alloc()
-     use memory_m, ONLY:mem_est
-     integer :: err(4)
-     err=0
      !
-     allocate(qindx_X(nqibz,nXkbz,2),stat=err(1))
-     call mem_est("qindx_X",(/size(qindx_X)/),(/IP/),(/err(1)/))
+     Y_ALLOCATE(qindx_X(nqibz,nXkbz,2))
+     Y_MEM(qindx_X)
      if (.not.Xk_grid_is_uniform) return
      !
-     allocate(qindx_S(qp_states_k(2),nqbz,2),stat=err(3))
-     call mem_est("qindx_S",(/size(qindx_S)/),(/IP/),(/err(3)/))
+     Y_ALLOCATE(qindx_S(qp_states_k(2),nqbz,2))
+     Y_MEM(qindx_S)
      !     
      if (bse_scattering) then
-       allocate(qindx_B(nXkbz,nXkbz,2),stat=err(2))
-       call mem_est("qindx_B",(/size(qindx_B)/),(/IP/),(/err(2)/))
+       Y_ALLOCATE(qindx_B(nXkbz,nXkbz,2))
+       Y_MEM(qindx_B)
      endif
      !
      if (coll_scattering) then
-       allocate(qindx_C(nXkbz,nXkbz,2),stat=err(4))
-       call mem_est("qindx_C",(/size(qindx_C)/),(/IP/),(/err(4)/))
+       Y_ALLOCATE(qindx_C(nXkbz,nXkbz,2))
+       Y_MEM(qindx_C)
      endif
      !
    end subroutine
    !
    subroutine qindx_free()
-     use memory_m, ONLY:mem_est
-     deallocate(qindx_X)
-     call mem_est("qindx_X")
-     if (allocated(qindx_B)) then
-       deallocate(qindx_B)
-       call mem_est("qindx_B")
-     endif
-     if (allocated(qindx_S)) then
-       deallocate(qindx_S)
-       call mem_est("qindx_S")
-     endif
-     if (allocated(qindx_C)) then
-       deallocate(qindx_C)
-       call mem_est("qindx_C")
-     endif
+     Y_FREE_A(qindx_X)
+     Y_FREE_A(qindx_B)
+     Y_FREE_A(qindx_S)
+     Y_FREE_A(qindx_C)
    end subroutine qindx_free
    !
    subroutine bz_samp_reset(k)
@@ -202,15 +188,14 @@ module R_lattice
      k%units=' '
      k%description=' '
      !
-     if(associated(k%s_table))  deallocate(k%s_table)
-     if(associated(k%k_table))  deallocate(k%k_table)
-     if(associated(k%nstar))    deallocate(k%nstar)
-     if(associated(k%star))     deallocate(k%star)
-     if(associated(k%sstar))    deallocate(k%sstar)
-     if(associated(k%pt))       deallocate(k%pt)
-     if(associated(k%ptbz))     deallocate(k%ptbz)
-     if(associated(k%weights))  deallocate(k%weights)
-     nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights,k%s_table,k%k_table)
+     Y_FREE_P(k%s_table)
+     Y_FREE_P(k%k_table)
+     Y_FREE_P(k%nstar)
+     Y_FREE_P(k%star)
+     Y_FREE_P(k%sstar)
+     Y_FREE_P(k%pt)
+     Y_FREE_P(k%ptbz)
+     Y_FREE_P(k%weights)
      !
    end subroutine bz_samp_reset
    !
@@ -221,26 +206,32 @@ module R_lattice
      BZo%nbz   = BZi%nbz
      BZo%units = BZi%units
      BZo%description = BZi%description
-     allocate( BZo%pt(BZo%nibz,3) )
+     Y_ALLOCATE(BZo%pt(BZo%nibz,3))
+     Y_MEM(BZo%pt)
      BZo%pt(:,:) = BZi%pt(:,:)
      if (associated( BZi%nstar )) then
-       allocate( BZo%nstar(BZo%nibz) ) 
+       Y_ALLOCATE(BZo%nstar(BZo%nibz))
+       Y_MEM(BZo%nstar)
        BZo%nstar=BZi%nstar
      endif
      if (associated( BZi%weights )) then
-       allocate( BZo%weights(BZo%nibz) ) 
+       Y_ALLOCATE(BZo%weights(BZo%nibz))
+       Y_MEM(BZo%weights)
        BZo%weights=BZi%weights
      endif
      if (associated( BZi%star )) then
-       allocate( BZo%star(BZo%nibz, size(BZi%star,2) ) ) 
+       Y_ALLOCATE(BZo%star(BZo%nibz,size(BZi%star,2)))
+       Y_MEM(BZo%star)
        BZo%star=BZi%star
      endif
      if (associated( BZi%sstar )) then
-       allocate( BZo%sstar(BZo%nbz,2) ) 
+       Y_ALLOCATE(BZo%sstar(BZo%nbz,2))
+       Y_MEM(BZo%sstar)
        BZo%sstar=BZi%sstar
      endif
      if (associated( BZi%ptbz )) then
-       allocate( BZo%ptbz(BZo%nbz,3) ) 
+       Y_ALLOCATE(BZo%ptbz(BZo%nbz,3))
+       Y_MEM(BZo%ptbz)
        BZo%ptbz=BZi%ptbz
      endif
    return

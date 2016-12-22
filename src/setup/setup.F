@@ -46,10 +46,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
 &                         X_xc_functional,setup_global_XC,MORE_NONE,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
- use memory_m,       ONLY:mem_est
 #endif
+#include <memory.h>
  !
- implicit none
  type(levels)    ::en,Xen,Ken
  type(bz_samp)   ::k,Xk
  !
@@ -143,7 +142,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call build_spin_sop()
  !
- allocate(rl_sop(3,3,nsym))
+ Y_ALLOCATE(rl_sop(3,3,nsym))
+ Y_MEM(rl_sop)
+ !
  do is=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
    if (is<=nsym/(1+i_time_rev))&

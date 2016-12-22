@@ -24,7 +24,7 @@
 module electrons
  !
  use pars,  ONLY:SP,IP
- implicit none
+#include<memory.h>
  !
  real(SP) :: nel
  real(SP) :: default_nel
@@ -123,7 +123,6 @@ module electrons
  contains
    !
    subroutine E_duplicate(Ei,Eo)
-     use memory_m,  ONLY:mem_est
      type(levels):: Ei,Eo
      !
      integer :: BOUNDS(2)
@@ -144,8 +143,10 @@ module electrons
        Eo%E_dir_gap=Ei%E_dir_gap
        Eo%E_ind_gap=Ei%E_ind_gap
      endif
-     allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
-     call mem_est("E-E E-f",(/size(Eo%E),size(Eo%f)/),(/SP,SP/))
+     Y_ALLOCATE(Eo%E(Eo%nb,Eo%nk,n_sp_pol))
+     Y_MEM(Eo%E)
+     Y_ALLOCATE(Eo%f(Eo%nb,Eo%nk,n_sp_pol))
+     Y_MEM(Eo%f)
      Eo%E=0._SP
      Eo%f=0._SP
      !
@@ -159,40 +160,40 @@ module electrons
        ! %E
        Eo%E(:,:,:)=Ei%E(:,:,:)
        if (associated(Ei%Eo)) then
-         allocate(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
-         call mem_est("E-Eo",(/size(Eo%Eo)/),(/SP/))
+         Y_ALLOCATE(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
+         Y_MEM(Eo%Eo)
          Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
        endif
        ! %f
        Eo%f(:,:,:)=Ei%f(:,:,:) 
        if (associated(Ei%fo)) then
-         allocate(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
-         call mem_est("E-fo",(/size(Eo%fo)/),(/SP/))
+         Y_ALLOCATE(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
+         Y_MEM(Eo%fo)
          Eo%fo(:BOUNDS(1),:,:)=Ei%fo(:BOUNDS(1),:,:)
        endif
        if (associated(Ei%df)) then
-         allocate(Eo%df(BOUNDS(1),Eo%nk,n_sp_pol))
-         call mem_est("E-df",(/size(Eo%df)/),(/SP/))
+         Y_ALLOCATE(Eo%df(BOUNDS(1),Eo%nk,n_sp_pol))
+         Y_MEM(Eo%df)
          Eo%df(:BOUNDS(1),:,:)=Ei%df(:BOUNDS(1),:,:)
        endif
        ! %W
        if (associated(Ei%W)) then
-         allocate(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
-         call mem_est("E-W",(/size(Eo%W)/),(/SP/))
+         Y_ALLOCATE(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
+         Y_MEM(Eo%W)
          Eo%W(:BOUNDS(2),:,:)=Ei%W(:BOUNDS(2),:,:)
        endif
        ! %Z
        if (associated(Ei%Z)) then
-         allocate(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
-         call mem_est("E-Z",(/size(Eo%Z)/))
+         Y_ALLOCATE(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
+         Y_MEM(Eo%Z)
          Eo%Z(:BOUNDS(2),:,:)=Ei%Z(:BOUNDS(2),:,:)
        endif
        ! %QP_corrected
        if (associated(Ei%QP_corrected)) then
          BOUNDS(1)=size(Ei%QP_corrected,1)
          BOUNDS(2)=size(Ei%QP_corrected,2)
-         allocate(Eo%QP_corrected(BOUNDS(1),BOUNDS(2),n_sp_pol))
-         call mem_est("E-QP_corrected",(/size(Eo%QP_corrected)/),(/IP/))
+         Y_ALLOCATE(Eo%QP_corrected(BOUNDS(1),BOUNDS(2),n_sp_pol))
+         Y_MEM(Eo%QP_corrected)
          Eo%QP_corrected=Ei%QP_corrected
        endif
      else
@@ -202,16 +203,18 @@ module electrons
      ! E Double Grid
      !
      if (BZ_DbGd_nbands/=0.and.Ei%nk==Eo%nk) then
-       allocate(Eo%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       allocate(Eo%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       allocate(Eo%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       call mem_est("E_DbGd W_DbGd f_DbGd",(/size(Eo%E_DbGd),size(Eo%W_DbGd),size(Eo%f_DbGd)/),(/SP,SP,SP/))
+       Y_ALLOCATE(Eo%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       Y_MEM(Eo%E_DbGd)
+       Y_ALLOCATE(Eo%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       Y_MEM(Eo%W_DbGd)
+       Y_ALLOCATE(Eo%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       Y_MEM(Eo%f_DbGd)
        Eo%E_DbGd=Ei%E_DbGd
        Eo%W_DbGd=Ei%W_DbGd
        Eo%f_DbGd=Ei%f_DbGd
        if(associated(Ei%df_DbGd)) then
-         allocate(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-         call mem_est("df_DbGd",(/size(Eo%df_DbGd)/),(/SP/))
+         Y_ALLOCATE(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+         Y_MEM(Eo%df_DbGd)
          Eo%df_DbGd=Ei%df_DbGd
        endif
      endif
@@ -219,15 +222,14 @@ module electrons
      ! E_SOC
      !
      if (E_SOC_nbands/=0.and.Ei%nk==Eo%nk) then
-       allocate(Eo%E_SOC(E_SOC_nbands,Eo%nk))
-       call mem_est("E_SOC",(/size(Eo%E_SOC)/),(/SP/))
+       Y_ALLOCATE(Eo%E_SOC(E_SOC_nbands,Eo%nk))
+       Y_MEM(Eo%E_SOC)
        Eo%E_SOC=Ei%E_SOC
      endif
      !
    end subroutine
    !
    subroutine E_reset(E)
-     use memory_m, ONLY:mem_est
      type(levels)::E
      E%E_dir_gap=0._SP
      E%E_ind_gap=0._SP
@@ -242,39 +244,33 @@ module electrons
      E%kf=0 
      E%GreenF_n_E_steps=0 
      E%GreenF_is_causal=.FALSE. 
-     if(associated(E%E))              deallocate(E%E)
-     if(associated(E%Eo))             deallocate(E%Eo)
-     if(associated(E%Z))              deallocate(E%Z)
-     if(associated(E%W))              deallocate(E%W)
-     if(associated(E%f))              deallocate(E%f)
-     if(associated(E%fo))             deallocate(E%fo)
-     if(associated(E%df))             deallocate(E%df)
-     if(associated(E%QP_corrected))   deallocate(E%QP_corrected)
-     if(associated(E%GreenF))         deallocate(E%GreenF)
-     if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
-     call mem_est("E-E E-Eo E-f E-fo E-df E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
+     Y_FREE_P(E%E)
+     Y_FREE_P(E%Eo)
+     Y_FREE_P(E%Z)
+     Y_FREE_P(E%W)
+     Y_FREE_P(E%f)
+     Y_FREE_P(E%fo)
+     Y_FREE_P(E%df)
+     Y_FREE_P(E%QP_corrected)
+     Y_FREE_P(E%GreenF)
+     Y_FREE_P(E%GreenF_W)
      !
      call E_DbGd_components_reset(E,.FALSE.)
      !
-     if(associated(E%E_SOC))          deallocate(E%E_SOC)
+     Y_FREE_P(E%E_SOC)
      !
    end subroutine
    !
    subroutine E_DbGd_components_reset(E,FULL_RESET)
      !
-     use memory_m, ONLY:mem_est
-     !
      type(levels)::E
      logical     ::FULL_RESET
      !
-     if(associated(E%E_DbGd) )      deallocate(E%E_DbGd )
-     if(associated(E%W_DbGd) )      deallocate(E%W_DbGd )
-     if(associated(E%f_DbGd) )      deallocate(E%f_DbGd )
-     if(associated(E%df_DbGd))      deallocate(E%df_DbGd)
+     Y_FREE_P(E%E_DbGd)
+     Y_FREE_P(E%W_DbGd)
+     Y_FREE_P(E%f_DbGd)
+     Y_FREE_P(E%df_DbGd)
      !
-     nullify(E%E_DbGd,E%W_DbGd,E%f_DbGd,E%df_DbGd)
-     call mem_est("E_DbGd W_DbGd f_DbGd df_DbGd")
      !
      if (.not.FULL_RESET) return
      !
@@ -283,10 +279,10 @@ module electrons
      BZ_ASSOCIATED_nkpts=0
      BZ_DbGd_nbands=0
      !
-     if(allocated(BZ_DbGd_nkpt))        deallocate(BZ_DbGd_nkpt)
-     if(allocated(BZ_DbGd_table))       deallocate(BZ_DbGd_table)
-     if(allocated(BZ_DbGd_ipol_weight)) deallocate(BZ_DbGd_ipol_weight)
-     if(allocated(BZ_DbGd_kpts))        deallocate(BZ_DbGd_kpts)
+     Y_FREE_A(BZ_DbGd_nkpt)
+     Y_FREE_A(BZ_DbGd_table)
+     Y_FREE_A(BZ_DbGd_ipol_weight)
+     Y_FREE_A(BZ_DbGd_kpts)
      !
    end subroutine
    !

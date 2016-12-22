@@ -317,7 +317,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  enddo
  !
  if (n_spinor==2) then
-   YAMBO_DEALLOCATE_A(spin_factors)
+   Y_DEALLOCATE_A(spin_factors)
  endif
  do i_g=1,n_groups 
    call local_free(DATA_grp(i_g))
@@ -422,13 +422,13 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    subroutine local_free(TYP)
      type(Load_and_Fit) :: TYP
      if (trim(TYP%kind)=="none") return
-     YAMBO_DEALLOCATE_A(TYP%data)
+     Y_DEALLOCATE_A(TYP%data)
      if (.not.TYP%fittable) return
-     YAMBO_DEALLOCATE_A(TYP%data_fit)
-     YAMBO_DEALLOCATE_A(TYP%E_fit)
-     YAMBO_DEALLOCATE_A(TYP%err_fit)
-     YAMBO_DEALLOCATE_A(TYP%T)
-     YAMBO_DEALLOCATE_A(TYP%Ef)
+     Y_DEALLOCATE_A(TYP%data_fit)
+     Y_DEALLOCATE_A(TYP%E_fit)
+     Y_DEALLOCATE_A(TYP%err_fit)
+     Y_DEALLOCATE_A(TYP%T)
+     Y_DEALLOCATE_A(TYP%Ef)
    end subroutine
    !
    subroutine Load_and_Fit_alloc(TYP,dim,what)
@@ -437,15 +437,15 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      integer            :: dim
      character(*)       :: what
      !
-     YAMBO_ALLOCATE(TYP%data(RT_carriers%nstates,dim,n_T_steps))
+     Y_ALLOCATE(TYP%data(RT_carriers%nstates,dim,n_T_steps))
      !
      if (what=="CARRIERS".or.what=="spin-up".or.what=="spin-dn".or.what=="e-p-ratio".or.what=="e-e-ratio") then
        TYP%fittable=.TRUE.
-       YAMBO_ALLOCATE(TYP%data_fit(fit_dim,2,n_T_steps))
-       YAMBO_ALLOCATE(TYP%E_fit(fit_dim,2))
-       YAMBO_ALLOCATE(TYP%err_fit(4,n_T_steps))
-       YAMBO_ALLOCATE(TYP%T(2,n_T_steps))
-       YAMBO_ALLOCATE(TYP%Ef(2,n_T_steps))
+       Y_ALLOCATE(TYP%data_fit(fit_dim,2,n_T_steps))
+       Y_ALLOCATE(TYP%E_fit(fit_dim,2))
+       Y_ALLOCATE(TYP%err_fit(4,n_T_steps))
+       Y_ALLOCATE(TYP%T(2,n_T_steps))
+       Y_ALLOCATE(TYP%Ef(2,n_T_steps))
        TYP%data_fit=rZERO
        TYP%E_fit  =rZERO
        TYP%err_fit=rZERO

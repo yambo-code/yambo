@@ -24,11 +24,9 @@
 module BS_solvers
  !
  use pars,       ONLY:SP,schlen,lchlen
- use memory_m,   ONLY:mem_est
  use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block
  use SLK_m,      ONLY:SLK_matrix
- !
- implicit none
+#include <memory.h>
  !
  ! Epsilon factor
  !==================
@@ -154,7 +152,8 @@ module BS_solvers
      !
      do i_B=1,n_BS_blks
        !
-       allocate(BLKs_out(i_B)%mat( BLKS_in(i_B)%size(1) , BLKS_in(i_B)%size(2) ))
+       Y_ALLOCATE(BLKs_out(i_B)%mat(BLKS_in(i_B)%size(1),BLKS_in(i_B)%size(2)))
+       Y_MEM(BLKs_out(i_B)%mat)
        !
        tot_size=tot_size+BLKS_in(i_B)%size(1)*BLKS_in(i_B)%size(2)
        !
@@ -168,8 +167,6 @@ module BS_solvers
        !
      enddo
      !
-     call mem_est(label,(/tot_size/))
-     !
    end subroutine
    !
    subroutine BS_mat_alloc( )
@@ -181,16 +178,19 @@ module BS_solvers
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
      if (.not.BLACS_structure_in_use) then
-       allocate(BS_mat(BS_H_dim,BS_H_dim))
-       call mem_est('BS_mat',(/size(BS_mat)/))
+       Y_ALLOCATE(BS_mat(BS_H_dim,BS_H_dim))
+       Y_MEM(BS_mat)
        BS_mat    = cZERO
      endif
-     allocate(BSS_dipoles(BS_H_dim))
-     call mem_est('BSS_dipoles',(/size(BSS_dipoles)/))
+     Y_ALLOCATE(BSS_dipoles(BS_H_dim))
+     Y_MEM(BSS_dipoles)
      BSS_dipoles = cZERO
-     allocate(BSS_eh_table(BS_K_dim,3+n_sp_pol-1),BSS_eh_E(BS_K_dim),BSS_eh_f(BS_K_dim))
-     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f",&
-&                 (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
+     Y_ALLOCATE(BSS_eh_table(BS_K_dim,3+n_sp_pol-1))
+     Y_MEM(BSS_eh_table)
+     Y_ALLOCATE(BSS_eh_E(BS_K_dim))
+     Y_MEM(BSS_eh_E)
+     Y_ALLOCATE(BSS_eh_f(BS_K_dim))
+     Y_MEM(BSS_eh_f)
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
@@ -201,34 +201,31 @@ module BS_solvers
        if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
      enddo
      if (W_is_allocated) then
-       allocate(BSS_eh_W(BS_K_dim))
-       call mem_est("BSS_eh_W",(/BS_K_dim/),(/SP/))
+       Y_ALLOCATE(BSS_eh_W(BS_K_dim))
+       Y_MEM(BSS_eh_W)
        BSS_eh_W = rZERO
      endif
      if (Z_is_allocated) then
-       allocate(BSS_eh_Z(BS_K_dim))
-       call mem_est("BSS_eh_Z",(/BS_K_dim/))
+       Y_ALLOCATE(BSS_eh_Z(BS_K_dim))
+       Y_MEM(BSS_eh_Z)
        BSS_eh_Z = cZERO
      endif
      if (E_SOC_nbands/=0) then
-       allocate(BSS_eh_E_SOC_corr(2/n_sp_pol,BS_H_dim))
-       call mem_est("BSS_eh_E_SOC_corr",(/2/n_sp_pol*BS_H_dim/),(/SP/))
+       Y_ALLOCATE(BSS_eh_E_SOC_corr(2/n_sp_pol,BS_H_dim))
+       Y_MEM(BSS_eh_E_SOC_corr)
        BSS_eh_E_SOC_corr = rZERO
      endif
    end subroutine
    !
    subroutine BS_mat_free()
-     use memory_m,   ONLY:mem_est
-     if (allocated(BSS_eh_table))      deallocate(BSS_eh_table)
-     if (allocated(BSS_dipoles))       deallocate(BSS_dipoles)
-     if (allocated(BSS_eh_E))          deallocate(BSS_eh_E)
-     if (allocated(BSS_eh_W))          deallocate(BSS_eh_W)
-     if (allocated(BSS_eh_f))          deallocate(BSS_eh_f)
-     if (allocated(BSS_eh_Z))          deallocate(BSS_eh_Z)
-     if (allocated(BSS_eh_E_SOC_corr)) deallocate(BSS_eh_E_SOC_corr)
-     if (allocated(BS_mat))            deallocate(BS_mat)
-     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f BSS_eh_W")
-     call mem_est("BSS_eh_table BSS_eh_Z BS_mat")
+     Y_FREE_A(BSS_eh_table)
+     Y_FREE_A(BSS_dipoles)
+     Y_FREE_A(BSS_eh_E)
+     Y_FREE_A(BSS_eh_W)
+     Y_FREE_A(BSS_eh_f)
+     Y_FREE_A(BSS_eh_Z)
+     Y_FREE_A(BSS_eh_E_SOC_corr)
+     Y_FREE_A(BS_mat)
    end subroutine
    !
    subroutine BS_HAYVEC_alloc(V)
@@ -239,7 +236,8 @@ module BS_solvers
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
+       Y_ALLOCATE(V(i_g)%fragment(BS_T_grp(i_g)%size))
+       Y_MEM(V(i_g)%fragment)
      enddo
    end subroutine BS_HAYVEC_alloc
    !
@@ -250,7 +248,7 @@ module BS_solvers
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
-       if (allocated(V(i_g)%fragment)) deallocate(V(i_g)%fragment)
+       Y_FREE_A(V(i_g)%fragment)
      end do
    end subroutine BS_HAYVEC_free
    !

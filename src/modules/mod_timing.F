@@ -418,7 +418,7 @@ MODULE timing_m
      !
      total_time = real(internal_list%clock(1)%total_time,SP)
      !
-     ch='             [Time-Profile]: '//trim(real2ch(total_time))//'s'
+     ch='            [Time-Profile]: '//trim(real2ch(total_time))//'s'
      call msg('rn',ch(:100))
      if (ncpu>1) call LIVE_message(message=ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
      !

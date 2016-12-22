@@ -168,13 +168,15 @@ module QP_m
    ! Lifetimes definition
    !----------------------
    real(SP) function Time_of(E,T_unit)
+     use pars,      ONLY:zero_dfl
      use units,     ONLY:HBAR_eVfs,HA2EV
      use functions, ONLY:NAN
      real(SP)    :: E,G_evm1
      character(*):: T_unit
      !
-     G_evm1=1._SP/E/HA2EV
-     if ( NAN(G_evm1) ) G_evm1=0._SP
+     G_evm1=1._SP/abs(E)/HA2EV
+     if ( NAN(G_evm1)                      ) G_evm1=0._SP
+     if ( abs(E)*HA2EV*1000.<epsilon(1._SP)) G_evm1=0._SP
      Time_of=G_evm1*HBAR_eVfs
      ! 
      select case (T_unit) 

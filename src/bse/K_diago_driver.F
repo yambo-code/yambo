@@ -131,7 +131,7 @@ subroutine K_diago_driver(iq,W)
  !============================
  call K_output_file(iq,"open Diago")
  !
- if(io_err<0) then
+ if (io_err<0) then
    !
 #if defined _SCALAPACK
    !
@@ -159,8 +159,7 @@ subroutine K_diago_driver(iq,W)
      !
    endif
    !
-   call live_timing(steps=1)
-   call live_timing
+   call live_timing( )
    !
    ! Construct the residuals of epsilon
    !====================================

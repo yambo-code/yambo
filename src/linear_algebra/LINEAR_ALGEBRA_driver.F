@@ -28,7 +28,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
 &                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error
  use wrapper,       ONLY:M_by_M
- use parallel_m,    ONLY:linear_algebra_is_parallel
+ use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
  use SLK_m,         ONLY:SLK_matrix
  use interfaces,    ONLY:SLK_matrix_transfer
  use BS,            ONLY:BS_block,BS_H_dim
@@ -100,7 +100,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  endif
  !
 #if defined _SCALAPACK
- if (idriver==DIAGO.and.present(E_cmpl)) then
+ if (idriver==DIAGO.and.present(E_cmpl).and.ncpu>1) then
    !
    call warning('Parallel non-herm diag not yet implemented. Switching to LK')
    lib_in_use=USE_LK

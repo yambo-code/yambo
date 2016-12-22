@@ -90,9 +90,11 @@ subroutine RT_time_configuration_setup(what)
  if (JPC_RT_IO_t%N/=nint(TIME/STEP)+1) UNIFORM=.FALSE.
  !
  ! Time step ...
- !===============
  !
- if (RT_conf%delta_T>0._SP.or..not.UNIFORM) then
+ ! N.B.: This is needed for the carriers post-processing only
+ !============================================================
+ !
+ if ( (RT_conf%delta_T>0._SP.or..not.UNIFORM) .and. what/="CURRENT") then
    !
    if (UNIFORM) then
      RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)

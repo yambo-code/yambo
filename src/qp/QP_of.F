@@ -23,7 +23,7 @@
 !
 subroutine QP_of(qp,en,QPdb_read_err,what)
  !
- use pars,      ONLY:SP,lchlen,schlen,rZERO
+ use pars,      ONLY:SP,lchlen,schlen
  use units,     ONLY:HA2EV,HA2GHZ
  use drivers,   ONLY:l_life,l_elph_corr
  use com,       ONLY:msg,of_open_close
@@ -50,7 +50,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  integer, parameter:: tpar=31
  integer       :: ntitles,titles_order(tpar)
- real(SP)      :: values(tpar),Lifetime
+ real(SP)      :: values(tpar)
  character(schlen) :: titles(tpar)
  !
  titles(1)  = trim(Vxc_kind) 
@@ -167,9 +167,6 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      qp_k  =QP_table(i1,3)
      qp_isp=spin(QP_table(i1,:))
      !
-     Lifetime=rZERO
-     if (abs(aimag(qp%E(i1)))>=1.E-10) Lifetime=1._SP/abs(aimag(qp%E(i1)))
-     !
      if (what=="qp") then
        !
        if (.not.l_life) then
@@ -188,15 +185,15 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        !
        values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
        values(9:10) =(/real(qp_k),real(qp_b)/)
-       values(12:13)=(/aimag(qp%E(i1))*HA2EV/1.E-3,Time_of(Lifetime,"fs")/)
-       values(28)   =Time_of(Lifetime,"ps")
+       values(12:13)=(/aimag(qp%E(i1))*HA2EV/1.E-3,Time_of(aimag(qp%E(i1)),"fs")/)
+       values(28)   =Time_of(aimag(qp%E(i1)),"ps")
        values(15:16)=(/real(qp%Z(i1)),aimag(qp%Z(i1))/)
        !
        if (allocated(QP_G_amplitude_integral)) then
          values(23)=QP_G_amplitude_integral(i1)
        endif
 #if defined _QED
-       values(30)=values(28)/1000._SP
+       values(30)=Time_of(aimag(qp%E(i1)),"ns")
        if (.not.l_life) then
          values(29)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ
          values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP

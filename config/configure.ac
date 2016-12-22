@@ -441,12 +441,18 @@ if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi
  if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
  if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi
+ if test ! -d "$prefix/lib"        ; then mkdir "$prefix/lib" ; fi
+ if test ! -d "$prefix/lib/local"  ; then mkdir "$prefix/lib/local" ; fi
  cd "$srcdir/driver/" ;
  for file in `ls *.h` ; do
   cp "$file" "$prefix/driver" ;
  done ;
  for file in `ls *.c` ; do
   cp "$file" "$prefix/driver" ;
+ done ;
+ cd "$srcdir/lib/local" ;
+ for file in `ls *.f` ; do
+  cp "$file" "$prefix/lib/local" ;
  done ;
  cd "$prefix" ;
 fi

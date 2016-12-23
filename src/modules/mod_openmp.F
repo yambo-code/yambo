@@ -26,7 +26,7 @@ module openmp
 #if defined _OPENMP
  use omp_lib,   ONLY:omp_lock_kind
 #endif
-#include<memory.h>
+ implicit none
  !
  ! ... Threads
  !     the default value of 0 means that the actual number of threads is obtained
@@ -236,8 +236,7 @@ module openmp
      !
      if (INIT_) then
        openmp_num_locks=nlocks_
-       Y_ALLOCATE(omp_locks(nlocks_))
-       Y_MEM(omp_locks)
+       allocate(omp_locks(nlocks_))
        do i = 1, nlocks_
          call omp_init_lock(omp_locks(i))
        enddo

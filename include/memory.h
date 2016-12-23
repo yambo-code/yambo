@@ -22,11 +22,11 @@
  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
  
 */
- use memory_m, ONLY:MEM_err,mem_est
+ use memory, ONLY:MEM_err,MEM_dri
  implicit none
 #define Y_ALLOCATE(x) allocate(x,stat=MEM_err)
-#define Y_MEM(x) call mem_est("x",size(x),kind(x))
+#define Y_MEM(x) call MEM_dri("x",size(x),kind(x))
 #define Y_FREE_P(x) \
- if (associated(x)) deallocate(x);nullify(x);call mem_est("x")
+ if (associated(x)) deallocate(x);nullify(x);call MEM_dri("x")
 #define Y_FREE(x) \
- if (allocated(x)) deallocate(x);call mem_est("x")
+ if (allocated(x)) deallocate(x);call MEM_dri("x")

@@ -21,52 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module memory
+subroutine MEM_dri(what,Sz,Kn,Er,quiet,overall_report)
  !
- use pars,       ONLY:SP,lchlen,schlen
- use openmp,     ONLY:master_thread
- !
- implicit none
- !
- integer, parameter :: max_mem_elements=100000
- integer, parameter :: preset_kind=2*SP
- character(schlen), private  :: mem_element(max_mem_elements)
- integer          , private  :: element_loaded
- integer                     :: MEM_err
- real(SP)         , private  :: mem_element_size(max_mem_elements)
- real(SP)         :: mem_sum
- !
- interface
-   !
-   subroutine MEM_dri(what,Sz,Kn,Er,quiet,overall_report)
-     character(*)         :: what
-     integer,optional     :: Sz
-     integer,optional     :: Kn
-     integer,optional     :: Er
-     logical,optional     :: quiet,overall_report
-   end subroutine
-   !
- end interface
- !
- contains
-   !
-   subroutine MEM_reset()
-     mem_element=' '
-     mem_element_size=0._SP
-     element_loaded=0
-     mem_sum=0._SP
-   end subroutine
-!   !
-!   subroutine mem_est(what,Sz,Kn,Er,quiet,overall_report)
-!     use drivers,      ONLY:infile_editing
-!     use com,          ONLY:msg,error,warning
-!     use units,        ONLY:Gigabyte
-!     character(*)         :: what
-!     integer,optional     :: Sz
-!     integer,optional     :: Kn
-!     integer,optional     :: Er
-!     logical,optional     :: quiet,overall_report
-!     ! 
+ use drivers,      ONLY:infile_editing
+ use com,          ONLY:msg,error,warning
+ use units,        ONLY:Gigabyte
+ character(*)         :: what
+ integer,optional     :: Sz
+ integer,optional     :: Kn
+ integer,optional     :: Er
+ logical,optional     :: quiet,overall_report
+ ! 
 !     ! Work Space
 !     !
 !     integer :: i1,i2,local_kind
@@ -156,6 +121,4 @@ module memory
 !     write (ch(2),'(a,f6.3,4a,f6.3,a)') "[M ",mem_sum," Gb] ",trim(action),trim(ch(1))," (",mem_moved,")"
 !     call msg('s',trim(ch(2)))
 !     !
-!   end subroutine
-   !  
-end module memory
+end subroutine

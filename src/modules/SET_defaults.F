@@ -81,7 +81,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
- use memory_m,   ONLY:mem_reset
+ use memory,     ONLY:MEM_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
 #if defined _SC 
@@ -308,7 +308,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !memory
  !
- call mem_reset()
+ call MEM_reset()
  !
  !wave_func
  !

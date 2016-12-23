@@ -227,7 +227,6 @@ module X_m
          if (.not.allocated(P_square)) return
          Y_FREE(P_square)
        end select
-       call mem_est(what)
      endif
    end subroutine
    !

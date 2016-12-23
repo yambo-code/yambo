@@ -143,7 +143,6 @@ module BS_solvers
    subroutine BS_duplicate_K_structure(label,BLKs_in,BLKs_out)
      !
      use BS,        ONLY:n_BS_blks
-     use memory_m,  ONLY:mem_est
      character(*)   :: label
      type(BS_block) :: BLKs_in(:),BLKs_out(:)
      integer        :: i_B,tot_size
@@ -172,7 +171,6 @@ module BS_solvers
    subroutine BS_mat_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
      use electrons, ONLY:E_SOC_nbands
      use SLK_m,     ONLY:BLACS_structure_in_use
      integer :: i_g

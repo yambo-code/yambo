@@ -47,7 +47,7 @@ subroutine XCo_local(E,Xk)
  use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size,compatible_SC_DB
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::E       
  type(bz_samp)::Xk
@@ -66,9 +66,11 @@ subroutine XCo_local(E,Xk)
  !
  ! Allocation 
  !
- if (.not.allocated(V_xc))   allocate(V_xc(fft_size,n_spin))
+ Y_ALLOCATE(V_xc(fft_size,n_spin))
+ Y_MEM(V_xc)
  !
- if (n_spin>1.and..not.allocated(magn)) allocate(magn(fft_size,3))
+ Y_ALLOCATE(magn(fft_size,3))
+ Y_MEM(magn)
  !
  ! Precompiler options in case a non-DFT potential is required
  !
@@ -95,14 +97,18 @@ subroutine XCo_local(E,Xk)
    !
    ! ...SC EXX and EXX+LDA_C
    !
-   allocate(V_xc_sc(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
+   Y_ALLOCATE(V_xc_sc(fft_size,n_spin))
+   Y_ALLOCATE(V_hartree_sc(fft_size,n_spin))
+   Y_MEM(V_xc_sc)
+   Y_MEM(V_hartree_sc)
    SC_fft_size=fft_size
    call load_SC_components('V',COM_=REP,MODE_=VERIFY)
    !
    if (.not.compatible_SC_DB) call error('Incompatible potential database')
    !
    V_xc=V_xc_sc
-   deallocate(V_xc_sc,V_hartree_sc)
+   Y_FREE(V_xc_sc)
+   Y_FREE(V_hartree_sc)
  endif
 #endif
  !
@@ -165,7 +171,8 @@ subroutine XCo_local(E,Xk)
  !
  if (n_spin==2) then
    !
-   allocate(V_xc_mat(fft_size,n_spin,n_spin))
+   Y_ALLOCATE(V_xc_mat(fft_size,n_spin,n_spin))
+   Y_MEM(V_xc_mat)
    !
    call Build_V_xc_mat(V_xc,V_xc_mat)
    !
@@ -213,7 +220,7 @@ subroutine XCo_local(E,Xk)
      !
    enddo
    !
-   deallocate(V_xc_mat)
+   Y_FREE(V_xc_mat)
    !
  endif
  !
@@ -222,8 +229,10 @@ subroutine XCo_local(E,Xk)
 #if defined _SC
  if(.not.(l_sc_run.or.l_real_time)) then
 #endif
-   deallocate(V_xc)
-   if(n_spin>1) deallocate(magn)
+   Y_FREE(V_xc)
+   if(n_spin>1) then   
+     Y_FREE(magn)
+   endif
 #if defined _SC
  endif
 #endif

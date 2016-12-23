@@ -202,9 +202,9 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    Y_ALLOCATE(X_s(X%ng,X%ng))
    Y_MEM(X_s)
-   Y_ALLOCATE(isc%gamp(X%ng,1)))
+   Y_ALLOCATE(isc%gamp(X%ng,1))
    Y_MEM(isc%gamp)
-   Y_ALLOCATE(tddftk(X%ng,X%ng)))
+   Y_ALLOCATE(tddftk(X%ng,X%ng))
    Y_MEM(tddftk)
    Y_ALLOCATE(dX(X%ng))
    call X_alloc('X',(/X%ng,X%ng,ACFDT_n_freqs/))
@@ -256,7 +256,9 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    call X_alloc('X')
    call elemental_collision_free(isc)
    call PP_indexes_reset(plw)
-   Y_FREE(X_s,tddftk,dX)
+   Y_FREE(X_s)
+   Y_FREE(dX)
+   Y_FREE(dX)
    !
  endif
  !

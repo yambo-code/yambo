@@ -39,7 +39,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  ::en
  type(bz_samp) ::k,q
@@ -97,10 +97,22 @@ subroutine ELPH_Hamiltonian(en,k,q)
  H_size=No_PH_basis_size*(nqbz*(elph_branches(2)-elph_branches(1)+1)+1)
  call msg('rsn','[ElPh Ham] Hamiltonian size is:',H_size)
  !
- allocate(elph_Ham_Table(H_size,3),elph_Mat(H_size,H_size),elph_E(H_size),&
-&         mean_u(n_atoms,3,H_size),num_of_ph(nqbz,Ph_branches,H_size)) 
- allocate(top_residual(H_size),top_ph_residual(nqbz,Ph_branches,H_size))
- allocate(mean_u_sq(n_atoms,3,H_size))
+ Y_ALLOCATE(elph_Ham_Table(H_size,3))
+ Y_MEM(elph_Ham_Table)
+ Y_ALLOCATE(elph_Mat(H_size,H_size))
+ Y_MEM(elph_Mat)
+ Y_ALLOCATE(elph_E(H_size))
+ Y_MEM(elph_E)
+ Y_ALLOCATE(mean_u(n_atoms,3,H_size))
+ Y_MEM(mean_u)
+ Y_ALLOCATE(num_of_ph(nqbz,Ph_branches,H_size))
+ Y_MEM(num_of_ph)
+ Y_ALLOCATE(top_residual(H_size))
+ Y_MEM(top_residual)
+ Y_ALLOCATE(top_ph_residual(nqbz,Ph_branches,H_size))
+ Y_MEM(top_ph_residual)
+ Y_ALLOCATE(mean_u_sq(n_atoms,3,H_size))
+ Y_MEM(mean_u_sq)
  top_residual=.FALSE.
  elph_Mat=(0._SP,0._SP)
  elph_Ham_Table=0
@@ -449,13 +461,13 @@ subroutine ELPH_Hamiltonian(en,k,q)
 1 continue
  !
  call elph_global_free( )
- if (allocated(elph_Ham_Table)) deallocate(elph_Ham_Table)
- if (allocated(elph_Mat))       deallocate(elph_Mat)
- if (allocated(elph_E))         deallocate(elph_E)
- if (allocated(mean_u))         deallocate(mean_u)
- if (allocated(top_residual))   deallocate(top_residual)
- if (allocated(num_of_ph))      deallocate(num_of_ph)
- if (allocated(top_ph_residual))deallocate(top_ph_residual)
- if (allocated(mean_u_sq))      deallocate(mean_u_sq)
+ Y_FREE(elph_Ham_Table)
+ Y_FREE(elph_Mat)
+ Y_FREE(elph_E)
+ Y_FREE(mean_u)
+ Y_FREE(top_residual)
+ Y_FREE(num_of_ph)
+ Y_FREE(top_ph_residual)
+ Y_FREE(mean_u_sq)
  !
 end subroutine

@@ -23,9 +23,8 @@
 !
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
- use pars,          ONLY:SP,IP,pi,cONE,cZERO
+ use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
@@ -48,7 +47,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_QED
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD
- implicit none
+#include<memory.h>
  !
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -207,7 +206,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    ! has been added already
    !
    qp%E_bare(i1)=en%E(QP_table(i1,1),QP_table(i1,3),i_spin)
-   if (associated(en%Eo)) qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
+   if (allocated(en%Eo)) qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
    !
    qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
    !
@@ -253,8 +252,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        endif
        !
        if (use_GreenF_Zoom) then
-         allocate(QP_G_zoom_er(QP_n_states,2))
-         call mem_est("QP_G_zoom_er",(/size(QP_G_zoom_er)/),(/SP/))
+         Y_ALLOCATE(QP_G_zoom_er(QP_n_states,2))
+         Y_MEM(QP_G_zoom_er)
        else
          QP_G_Zoom_treshold=0._SP
        endif
@@ -278,7 +277,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  call QP_descriptions(qp,X,Xw,.TRUE.)
  !
- call mem_est("QP_Sc",(/size(QP_Sc)/))
  !
  ! Solvers 
  !=========
@@ -352,13 +350,17 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    subroutine local_alloc()
      !
-     allocate(qp%Z(qp%n_states),qp%E(qp%n_states),&
-&             qp%E_bare(qp%n_states),&
-&             qp%k(qp%nk,3),qp%table(qp%n_states,3+n_sp_pol-1))
+     Y_ALLOCATE(qp%Z(qp%n_states))
+     Y_MEM(qp%Z)
+     Y_ALLOCATE(qp%E(qp%n_states))
+     Y_MEM(qp%E)
+     Y_ALLOCATE(qp%E_bare(qp%n_states))
+     Y_MEM(qp%E_bare)
+     Y_ALLOCATE(qp%k(qp%nk,3))
+     Y_MEM(qp%k)
+     Y_ALLOCATE(qp%table(qp%n_states,3+n_sp_pol-1))
+     Y_MEM(qp%table)
      !
-     call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table",&
-&        (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,QP_n_states*(3+n_sp_pol-1)/),&
-&        (/2*SP,       2*SP,       SP,         SP,           IP/))
      qp%table=QP_table
      qp%E=cZERO
      qp%k=0._SP
@@ -375,65 +377,59 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      !
      if (trim(QP_solver)/='g')        QP_Sc_steps=QP_dSc_steps
      !
-     allocate(QP_Sc(QP_n_states,QP_Sc_steps))
-     call mem_est("QP_Sc",(/size(QP_Sc)/))
+     Y_ALLOCATE(QP_Sc(QP_n_states,QP_Sc_steps))
+     Y_MEM(QP_Sc)
      !
 #if defined _ELPH
      if (l_elph_corr) then
-       allocate(QP_OMS_Fan(QP_n_states))
-       call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))
-       allocate(QP_DW(QP_n_states))
-       call mem_est("QP_DW",(/size(QP_DW)/))
+       Y_ALLOCATE(QP_OMS_Fan(QP_n_states))
+       Y_MEM(QP_OMS_Fan)
+       Y_ALLOCATE(QP_DW(QP_n_states))
+       Y_MEM(QP_DW)
      endif
 #endif
      !
      if (trim(QP_solver)=='g') then
-       allocate(qp%GreenF(QP_n_states,QP_Sc_steps))
-       call mem_est("qp_GreenF",(/size(qp%GreenF)/))
-       allocate(qp%S_total(QP_n_states,QP_Sc_steps))
-       call mem_est("qp_S_total",(/size(qp%S_total)/))
-       allocate(qp%GreenF_W(QP_n_states,QP_Sc_steps))
-       call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
+       Y_ALLOCATE(qp%GreenF(QP_n_states,QP_Sc_steps))
+       Y_MEM(qp%GreenF)
+       Y_ALLOCATE(qp%S_total(QP_n_states,QP_Sc_steps))
+       Y_MEM(qp%S_total)
+       Y_ALLOCATE(qp%GreenF_W(QP_n_states,QP_Sc_steps))
+       Y_MEM(qp%GreenF_W)
        qp%GreenF_n_steps=QP_Sc_steps
-       allocate(QP_G_amplitude_integral(QP_n_states))
-       call mem_est("QP_G_amplitude_integral",(/size(QP_G_amplitude_integral)/))
-       allocate(QP_G_info(QP_n_states,3,2))
-       call mem_est("QP_G_info",(/size(QP_G_info)/))
+       Y_ALLOCATE(QP_G_amplitude_integral(QP_n_states))
+       Y_MEM(QP_G_amplitude_integral)
+       Y_ALLOCATE(QP_G_info(QP_n_states,3,2))
+       Y_MEM(QP_G_info)
      else if (.not.l_life) then
-       allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
-       call mem_est("QP_dSc",(/size(QP_dSc)/))
+       Y_ALLOCATE(QP_dSc(qp%n_states,QP_dSc_steps-1))
+       Y_MEM(QP_dSc)
      endif
      !
    end subroutine
    !
    subroutine local_free()
-     deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,QP_table,QP_state)
+     Y_FREE(qp%Z)
+     Y_FREE(qp%E)
+     Y_FREE(qp%E_bare)
+     Y_FREE(qp%k)
+     Y_FREE(qp%table)
+     Y_FREE(QP_table)
+     Y_FREE(QP_state)
 #if defined _ELPH
-     if (allocated(QP_DW))          deallocate(QP_DW)
-     if (allocated(QP_OMS_Fan))     deallocate(QP_OMS_Fan)
+     Y_FREE(QP_DW)
+     Y_FREE(QP_OMS_Fan)
 #endif
-     if (allocated(QP_Sc))          deallocate(QP_Sc)
-     if (allocated(QP_dSc))         deallocate(QP_dSc)
-     if (allocated(QP_Vnl_xc))      deallocate(QP_Vnl_xc,QP_Vxc)
-     if (associated(qp%GreenF)) then
-       deallocate(qp%GreenF)
-       nullify(qp%GreenF)
-     endif
-     if (associated(qp%GreenF_W)) then
-       deallocate(qp%GreenF_W)
-       nullify(qp%GreenF_W)
-     endif
-     if (associated(qp%S_total))  then
-       deallocate(qp%S_total)
-       nullify(qp%S_total)
-     endif
-     if (allocated(QP_G_info)) deallocate(QP_G_info)
-     if (allocated(QP_G_amplitude_integral)) deallocate(QP_G_amplitude_integral)
-     if (allocated(QP_G_zoom_er))  deallocate(QP_G_zoom_er)
-     call mem_est("QP_G_amplitude_integral")
-     call mem_est("QP_Sc QP_dSc qp_GreenF QP_Vnl_xc QP_Vxc qp_GreenF_W QP_G_zoom_er")
-     call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
-     call mem_est("QP_DW QP_OMS_Fan")
+     Y_FREE(QP_Sc)
+     Y_FREE(QP_dSc)
+     Y_FREE(QP_Vnl_xc)
+     Y_FREE(QP_Vxc)
+     Y_FREE(qp%GreenF)
+     Y_FREE(qp%GreenF_W)
+     Y_FREE(qp%S_total)
+     Y_FREE(QP_G_info)
+     Y_FREE(QP_G_amplitude_integral)
+     Y_FREE(QP_G_zoom_er)
    end subroutine
    !
 end subroutine

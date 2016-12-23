@@ -27,7 +27,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  use pars,          ONLY:SP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
@@ -59,7 +58,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use SC,            ONLY:it_now,it_to_start
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::E
  type(bz_samp)::Xk,k,q
@@ -196,11 +195,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    allocate(dc(2))
  else
    if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
-   allocate(W_(QP_dSc_steps),dc(QP_dSc_steps),stat=alloc_err)
-   call mem_est("GW-E",(/QP_dSc_steps*2/),errors=(/alloc_err/))
+   allocate(W_(QP_dSc_steps))
+   allocate(dc(QP_dSc_steps),stat=alloc_err)
    if(l_GW_terminator) then
-     allocate(eet_factor(X%ng,X%ng),stat=alloc_err)
-     call mem_est("EET_factor",(/size(eet_factor)/),(/2*SP/),errors=(/alloc_err/))
+     Y_ALLOCATE(eet_factor(X%ng,X%ng))
+     Y_MEM(eet_factor)
    endif
  endif
  !
@@ -573,11 +572,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if(l_ppa) then
    deallocate(W_)
    if(l_GW_terminator) then
-       deallocate(eet_factor)
-       call mem_est("EET_factor")
+       Y_FREE(eet_factor)
    endif
  endif
- call mem_est("ISC-GAMP GW-E")
  l_X_alloc=.true.
 #if defined _SC
  l_X_alloc=l_sc_run.and.io_RESPONSE

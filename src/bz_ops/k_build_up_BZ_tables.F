@@ -47,16 +47,16 @@ subroutine k_build_up_BZ_tables(k)
  !
  s_table_is_ok=.FALSE.
  k_table_is_ok=.FALSE.
- if (associated(k%s_table)) then
+ if (allocated(k%s_table)) then
    if (size(k%s_table)==k%nibz*nsym) s_table_is_ok=.TRUE.
  endif
- if (associated(k%k_table)) then
+ if (allocated(k%k_table)) then
    if (size(k%k_table)==k%nibz*nsym) k_table_is_ok=.TRUE.
  endif
- if (.not.k_table_is_ok.and.associated(k%k_table)) then
+ if (.not.k_table_is_ok.and.allocated(k%k_table)) then
    Y_FREE(k%k_table)
  endif
- if (.not.s_table_is_ok.and.associated(k%s_table)) then
+ if (.not.s_table_is_ok.and.allocated(k%s_table)) then
    Y_FREE(k%s_table)
  endif
  !

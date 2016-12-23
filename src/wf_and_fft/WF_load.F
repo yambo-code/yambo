@@ -28,7 +28,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! Load and (eventually) FFTs the wavefunctions
  !
  use pars,          ONLY:SP,DP,schlen
- use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,core_io_path
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spin,n_spinor,n_sp_pol
@@ -50,7 +49,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        WF_perturbation,global_XC_string,SE_NONE
 #endif
  !
- implicit none
+#include<memory.h>
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs)           :: WF
@@ -129,11 +128,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      !
      ! See if the %c in WF is already ok
      !
-     if (associated(WF%state)) call check_states(WF,loaded_bounds_ok)
+     if (allocated(WF%state)) call check_states(WF,loaded_bounds_ok)
      !
    endif
    !
-   if (associated(WF_buffer%state).and.wf_space_here/='B') then
+   if (allocated(WF_buffer%state).and.wf_space_here/='B') then
      !
      ! See if the %c Buffered are ok
      !
@@ -200,10 +199,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
-     if (associated(WF%state)) deallocate(WF%state)
-     allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+     Y_FREE(WF%state)
+     Y_ALLOCATE(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+     Y_MEM(WF%state)
      WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
-     deallocate(states_to_load)
+     Y_FREE(states_to_load)
    endif
  endif
  !
@@ -226,7 +226,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (found_SC_DB.and.compatible_SC_DB) then
    !
    if(allocated(states_to_load).and..not.force_WFo_) then
-     deallocate(states_to_load)
+     Y_FREE(states_to_load)
      call warning(' [WF] WF-distribution turned off, not compatible with SC wave functions')
    endif
    !
@@ -247,10 +247,18 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  call WF_alloc(WF)
  !
- if (WF%space=='R') allocate(wf_DP(fft_size))
- if (WF%space=='G') allocate(wf_DP(wf_ng))
- if (WF%space=='C'.or.WF%space=='B') allocate(wf_DP(wf_ncx))
- call mem_est("wf_DP",(/size(wf_DP)/),(/2*DP/))
+ if (WF%space=='R')  then
+   Y_ALLOCATE(wf_DP(fft_size))
+   Y_MEM(wf_DP)
+ endif
+ if (WF%space=='G') then
+   Y_ALLOCATE(wf_DP(wf_ng))
+   Y_MEM(wf_DP)
+ endif
+ if (WF%space=='C'.or.WF%space=='B') then
+   Y_ALLOCATE(wf_DP(wf_ncx))
+   Y_MEM(wf_DP)
+ endif
  !
  ! LOG the states loaded
  !
@@ -275,8 +283,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (.not.buffer_is_ok) then
    !
-   allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/),quiet=QUIET_alloc)
+   Y_ALLOCATE(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+   Y_MEM(wf_disk)
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err=io_WF(ID,wf_disk)
@@ -362,12 +370,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! CLEAN
  !
  if (.not.buffer_is_ok) then
-   deallocate(wf_disk)
-   call mem_est("wf_disk",quiet=QUIET_free)
+   Y_FREE(wf_disk)
  endif
  !
- deallocate(wf_DP)
- call mem_est("wf_DP")
+ Y_FREE(wf_DP)
  !
  ! The states_to_load is a temporary array that points to the states to be loaded
  ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling 
@@ -382,21 +388,24 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if(allocated(states_to_load)) then
    !
-   if (associated(WF%state)) deallocate(WF%state)
+   Y_FREE(WF%state)
    !
-   allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+   Y_ALLOCATE(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+   Y_MEM(WF%state)
    !
    WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))= &
 &           states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))
    !
    ! When using the buffer the states_to_load must not be cleaned
    !
-   clean_up_states=.not.associated(WF_buffer%c)
+   clean_up_states=.not.allocated(WF_buffer%c)
    if (present(keep_states_to_load)) then
      clean_up_states=.not.keep_states_to_load
    endif
    !
-   if (clean_up_states) deallocate(states_to_load)
+   if (clean_up_states) then
+     Y_FREE(states_to_load)
+   endif
    !
  endif
  !

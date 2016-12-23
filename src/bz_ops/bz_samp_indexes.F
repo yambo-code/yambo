@@ -57,8 +57,8 @@ subroutine bz_samp_indexes(k,Xk,q)
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
 #endif
+#include<memory.h>
  !
- implicit none
  type(bz_samp)::k,Xk,q
  !
  !Work Space

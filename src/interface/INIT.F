@@ -87,7 +87,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::en        
 #if defined _SC
@@ -330,10 +330,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !In DUMP mode qp%table is dumped as well (to be used in QP_apply).
  !Here, however, qp%table is not needed
  !
- if (associated(qp%table)) then
-   deallocate(qp%table)
-   nullify(qp%table)
- endif
+ Y_FREE(qp%table)
  !
  ! Green Functions
  !
@@ -965,7 +962,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (QP_state_in_input_file) then
        !
-       deallocate(QP_state)
+       Y_FREE(QP_state)
        QP_nb=0
        QP_nk=0
        !
@@ -985,8 +982,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! ... but afterword I must deallocate it to use user defined values
    !
-   if (allocated(QP_state)) deallocate(QP_state)
-   if (allocated(QP_table)) deallocate(QP_table)
+   Y_FREE(QP_state)
+   Y_FREE(QP_table)
    !
  endif
  !

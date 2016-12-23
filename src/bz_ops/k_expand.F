@@ -75,7 +75,7 @@ subroutine k_expand(k)
  real(SP)        :: v(3),kstar(nsym,3)
  logical         :: k_found
  !
- if (associated(k%sstar)) return
+ if (allocated(k%sstar)) return
  !
  Y_ALLOCATE(k%star(k%nibz,nsym))
  Y_MEM(k%star)

@@ -24,7 +24,6 @@
 subroutine rim()
  !
  use pars,          ONLY:SP,pi,DP
- use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
@@ -38,7 +37,7 @@ subroutine rim()
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
@@ -143,9 +142,9 @@ subroutine rim()
  !
  call section('=','RIM integrals')
  !
- allocate(RIM_qpg(nqibz,RIM_ng,RIM_ng))
+ Y_ALLOCATE(RIM_qpg(nqibz,RIM_ng,RIM_ng))
+ Y_MEM(RIM_qpg)
  RIM_qpg=0._SP
- call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
  !
  call PARALLEL_index(px,(/nqibz/))
  call live_timing('Momenta loop',px%n_of_elements(myid+1))

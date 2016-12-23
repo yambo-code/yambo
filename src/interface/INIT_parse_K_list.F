@@ -27,7 +27,7 @@ subroutine init_parse_K_list(k,variable)
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
  !
- implicit none
+#include<memory.h>
  type(bz_samp)::k
  character(*) ::variable
  !
@@ -38,8 +38,9 @@ subroutine init_parse_K_list(k,variable)
  real_ctl=0.
  k%nibz=1
  K_loop: do while(real_ctl/=999.)
-   if (associated(k%pt)) deallocate(k%pt)
-   allocate(k%pt(k%nibz,3))
+   Y_FREE(k%pt)
+   Y_ALLOCATE(k%pt(k%nibz,3))
+   Y_MEM(k%pt)
    k%pt(k%nibz,:)=(/0.,0.,999./)
    call parser('QptCoord',k%pt)
    real_ctl=k%pt(k%nibz,3)

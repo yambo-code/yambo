@@ -28,7 +28,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  use pars,           ONLY:SP,schlen
  use vec_operate,    ONLY:c2a,k2bz
  use R_lattice,      ONLY:rl_sop,bz_samp
- implicit none
+#include<memory.h>
  type(bz_samp)::k
  character(1) ::units
  logical      ::FORCE_BZ
@@ -43,16 +43,16 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! Clean
  !
- if (associated(k%ptbz).and.(units=="d".or.k%units/=units)) then
+ if (allocated(k%ptbz).and.(units=="d".or.k%units/=units)) then
    Y_FREE(k%ptbz)
    if (units=="d") return
  endif
- if (associated(k%ptbz).and.k%units==units) return
+ if (allocated(k%ptbz).and.k%units==units) return
  k%units=units
  !
  ! First the stars...
  !
- if (.not.associated(k%sstar)) call k_expand(k) 
+ if (.not.allocated(k%sstar)) call k_expand(k) 
  !
  ! ...then the pts
  !

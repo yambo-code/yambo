@@ -51,14 +51,14 @@ module R_lattice
  character(schlen)    :: q_source="User defined / from ndb.kindx."
  type bz_samp
    integer           :: nibz,nbz
-   integer,  pointer :: nstar(:)     => null()  ! n° of points in the star
-   integer,  pointer :: star(:,:)    => null()  ! ik,ikstar --> is     is sends ik in ikstar
-   integer,  pointer :: sstar(:,:)   => null()  ! ik_bz     --> ik,is  is sends ik in ikbz
-   integer,  pointer :: s_table(:,:) => null()  ! ik,is     --> sym@k_bz  revers of sstar(2)
-   integer,  pointer :: k_table(:,:) => null()  ! ik,is     --> ik_bz     revers of sstar(1)
-   real(SP), pointer :: pt(:,:)      => null()
-   real(SP), pointer :: ptbz(:,:)    => null()
-   real(SP), pointer :: weights(:)   => null()
+   integer,  allocatable :: nstar(:)      ! n° of points in the star
+   integer,  allocatable :: star(:,:)     ! ik,ikstar --> is     is sends ik in ikstar
+   integer,  allocatable :: sstar(:,:)    ! ik_bz     --> ik,is  is sends ik in ikbz
+   integer,  allocatable :: s_table(:,:)  ! ik,is     --> sym@k_bz  revers of sstar(2)
+   integer,  allocatable :: k_table(:,:)  ! ik,is     --> ik_bz     revers of sstar(1)
+   real(SP), allocatable :: pt(:,:)      
+   real(SP), allocatable :: ptbz(:,:)    
+   real(SP), allocatable :: weights(:)   
    character(6)      :: description
    character(1)      :: units
  end type bz_samp
@@ -188,14 +188,14 @@ module R_lattice
      k%units=' '
      k%description=' '
      !
-     Y_FREE_P(k%s_table)
-     Y_FREE_P(k%k_table)
-     Y_FREE_P(k%nstar)
-     Y_FREE_P(k%star)
-     Y_FREE_P(k%sstar)
-     Y_FREE_P(k%pt)
-     Y_FREE_P(k%ptbz)
-     Y_FREE_P(k%weights)
+     Y_FREE(k%s_table)
+     Y_FREE(k%k_table)
+     Y_FREE(k%nstar)
+     Y_FREE(k%star)
+     Y_FREE(k%sstar)
+     Y_FREE(k%pt)
+     Y_FREE(k%ptbz)
+     Y_FREE(k%weights)
      !
    end subroutine bz_samp_reset
    !
@@ -209,27 +209,27 @@ module R_lattice
      Y_ALLOCATE(BZo%pt(BZo%nibz,3))
      Y_MEM(BZo%pt)
      BZo%pt(:,:) = BZi%pt(:,:)
-     if (associated( BZi%nstar )) then
+     if (allocated( BZi%nstar )) then
        Y_ALLOCATE(BZo%nstar(BZo%nibz))
        Y_MEM(BZo%nstar)
        BZo%nstar=BZi%nstar
      endif
-     if (associated( BZi%weights )) then
+     if (allocated( BZi%weights )) then
        Y_ALLOCATE(BZo%weights(BZo%nibz))
        Y_MEM(BZo%weights)
        BZo%weights=BZi%weights
      endif
-     if (associated( BZi%star )) then
+     if (allocated( BZi%star )) then
        Y_ALLOCATE(BZo%star(BZo%nibz,size(BZi%star,2)))
        Y_MEM(BZo%star)
        BZo%star=BZi%star
      endif
-     if (associated( BZi%sstar )) then
+     if (allocated( BZi%sstar )) then
        Y_ALLOCATE(BZo%sstar(BZo%nbz,2))
        Y_MEM(BZo%sstar)
        BZo%sstar=BZi%sstar
      endif
-     if (associated( BZi%ptbz )) then
+     if (allocated( BZi%ptbz )) then
        Y_ALLOCATE(BZo%ptbz(BZo%nbz,3))
        Y_MEM(BZo%ptbz)
        BZo%ptbz=BZi%ptbz

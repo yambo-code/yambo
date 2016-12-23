@@ -33,7 +33,7 @@ module memory_m
  integer, parameter :: preset_kind=2*SP
  character(schlen), private  :: mem_element(max_mem_elements)
  integer          , private  :: element_loaded
- integer                     :: Y_err
+ integer                     :: MEM_err
  real(SP)         , private  :: mem_element_size(max_mem_elements)
  real(SP)         :: mem_sum
  !

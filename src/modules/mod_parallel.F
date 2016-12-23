@@ -54,8 +54,7 @@ module parallel_m
  !    - return the maximum and the location 
  !
  use pars,       ONLY:SP,DP,schlen,lchlen
- !
- implicit none
+#include<memory.h>
  !
  integer, parameter :: max_n_of_cpus=100000
  !
@@ -164,13 +163,13 @@ module parallel_m
  ! PP indexes
  !
  type PP_indexes
-   logical, pointer :: element_1D(:)     => null()
-   logical, pointer :: element_2D(:,:)   => null()
-   ! Davide 4/09/2015: n_of_elements should be a number. It is useless that it is a pointer
+   logical, allocatable :: element_1D(:)
+   logical, allocatable :: element_2D(:,:)
+   ! Davide 4/09/2015: n_of_elements should be a number. It is useless that it is a vector
    !                   allocated to nCPU and that each CPU fills only the element myid.
-   integer, pointer :: n_of_elements(:)  => null()
-   integer, pointer :: weight_1D(:)      => null()
-   integer, pointer :: first_of_1D(:)    => null()
+   integer, allocatable :: n_of_elements(:)
+   integer, allocatable :: weight_1D(:)
+   integer, allocatable :: first_of_1D(:)
  end type PP_indexes
  !
  ! Number of Bands to load
@@ -479,36 +478,39 @@ module parallel_m
    subroutine PAR_INDEX_copy(IND_in,IND_out)
      type(PP_indexes):: IND_in,IND_out
      integer :: dim_
-     if (associated(IND_in%n_of_elements)) then
+     if (allocated(IND_in%n_of_elements)) then
        dim_=size(IND_in%n_of_elements)
-       allocate(IND_out%n_of_elements(dim_))
+       Y_ALLOCATE(IND_out%n_of_elements(dim_))
+       Y_MEM(IND_out%n_of_elements)
        IND_out%n_of_elements=IND_in%n_of_elements
      endif
-     if (associated(IND_in%element_1D)) then
+     if (allocated(IND_in%element_1D)) then
        dim_=size(IND_in%element_1D)
-       allocate(IND_out%element_1D(dim_))
+       Y_ALLOCATE(IND_out%element_1D(dim_))
+       Y_MEM(IND_out%element_1D)
        IND_out%element_1D=IND_in%element_1D
      endif
-     if (associated(IND_in%weight_1D)) then
+     if (allocated(IND_in%weight_1D)) then
        dim_=size(IND_in%weight_1D)
-       allocate(IND_out%weight_1D(dim_))
+       Y_ALLOCATE(IND_out%weight_1D(dim_))
+       Y_MEM(IND_out%weight_1D)
        IND_out%weight_1D=IND_in%weight_1D
      endif
-     if (associated(IND_in%first_of_1D)) then
+     if (allocated(IND_in%first_of_1D)) then
        dim_=size(IND_in%first_of_1D)
-       allocate(IND_out%first_of_1D(dim_))
+       Y_ALLOCATE(IND_out%first_of_1D(dim_))
+       Y_MEM(IND_out%first_of_1D)
        IND_out%first_of_1D=IND_in%first_of_1D
      endif
    end subroutine
    !
    subroutine PP_indexes_reset(ip)
      type(PP_indexes)::ip
-     if(associated(ip%element_1D))    deallocate(ip%element_1D)
-     if(associated(ip%element_2D))    deallocate(ip%element_2D)
-     if(associated(ip%weight_1D))     deallocate(ip%weight_1D)
-     if(associated(ip%n_of_elements)) deallocate(ip%n_of_elements)
-     if(associated(ip%first_of_1D))   deallocate(ip%first_of_1D)
-     nullify(ip%element_1D,ip%element_2D,ip%n_of_elements,ip%weight_1D,ip%first_of_1D)
+     Y_FREE(ip%element_1D)
+     Y_FREE(ip%element_2D)
+     Y_FREE(ip%weight_1D)
+     Y_FREE(ip%n_of_elements)
+     Y_FREE(ip%first_of_1D)
    end subroutine
    !
    subroutine PARALLEL_wait(COMM)

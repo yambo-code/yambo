@@ -175,10 +175,10 @@ module R_lattice
    end subroutine
    !
    subroutine qindx_free()
-     Y_FREE_A(qindx_X)
-     Y_FREE_A(qindx_B)
-     Y_FREE_A(qindx_S)
-     Y_FREE_A(qindx_C)
+     Y_FREE(qindx_X)
+     Y_FREE(qindx_B)
+     Y_FREE(qindx_S)
+     Y_FREE(qindx_C)
    end subroutine qindx_free
    !
    subroutine bz_samp_reset(k)

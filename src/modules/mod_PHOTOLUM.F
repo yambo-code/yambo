@@ -25,9 +25,7 @@ module PHOTOLUM
  !
  use drivers,    ONLY:l_photolum
  use pars,       ONLY:SP
- use memory_m,   ONLY:mem_est
- !
- implicit none
+#include<memory.h>
  !
  real(SP)                 :: PL_prefactor
  !
@@ -59,7 +57,8 @@ module PHOTOLUM
      !
      if (allocated(PL))  return
      !
-     allocate(PL(BSS_n_freqs,3)) !  2 (int) 3 (non int) 
+     Y_ALLOCATE(PL(BSS_n_freqs,3))!2(int)3(nonint)
+     Y_MEM(PL)
      PL = rZERO
      do ic=1,3
        PL_weights(ic) = PL_weights(ic)/(sqrt(PL_weights(ic)))
@@ -74,12 +73,12 @@ module PHOTOLUM
      !
      if (.not.l_photolum) return
      !
-     allocate(BSS_dipoles_PL(BS_H_dim,3))
-     call mem_est('BSS_dipoles_PL',(/size(BSS_dipoles_PL)/))
+     Y_ALLOCATE(BSS_dipoles_PL(BS_H_dim,3))
+     Y_MEM(BSS_dipoles_PL)
      BSS_dipoles_PL = cZERO
      !
-     allocate(BSS_PL_f(2,BS_K_dim))
-     call mem_est('BSS_PL_f',(/2,BS_K_dim/))
+     Y_ALLOCATE(BSS_PL_f(2,BS_K_dim))
+     Y_MEM(BSS_PL_f)
      BSS_PL_f = rZERO
      !
    end subroutine
@@ -89,12 +88,10 @@ module PHOTOLUM
      if (.not.l_photolum) return
      !
      if (allocated(BSS_dipoles_PL)) then
-       deallocate(BSS_dipoles_PL)
-       call mem_est('BSS_dipoles_PL')
+       Y_FREE(BSS_dipoles_PL)
      endif
      if (allocated(BSS_PL_f)) then
-       deallocate(BSS_PL_f)
-       call mem_est('BSS_PL_f')
+       Y_FREE(BSS_PL_f)
      endif
      !
    end subroutine

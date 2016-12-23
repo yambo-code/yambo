@@ -26,8 +26,8 @@ module ELPH
  use pars,       ONLY:SP
  use electrons,  ONLY:levels
  use D_lattice,  ONLY:n_atoms_species
+#include<memory.h>
  !
- implicit none
  integer   :: ph_modes
  integer   :: elph_nb
  integer   :: elph_nk_bz
@@ -73,12 +73,10 @@ module ELPH
  contains
    !
    subroutine elph_global_alloc(what)
-     use memory_m,  ONLY:mem_est
      use parallel_m,ONLY:PAR_nQ
      use QP_m,      ONLY:QP_n_states
      use R_lattice, ONLY:nkbz,nqibz
      character(*)      ::what
-     integer           ::alloc_err
      !
      select case (trim(what))
        !
@@ -86,19 +84,19 @@ module ELPH
          !
          if (.not.allocated(gsqF_fan)) then
            if (.not.eval_G_using_KK) then
-             allocate(gsqF_fan(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
-             call mem_est('gsqF_fan',(/size(gsqF_fan)/),(/SP/),errors=(/alloc_err/))
-             allocate(gsqF_ca_corr(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
-             call mem_est('gsqF_ca_corr',(/size(gsqF_ca_corr)/),(/SP/),errors=(/alloc_err/))
+             Y_ALLOCATE(gsqF_fan(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+             Y_MEM(gsqF_fan)
+             Y_ALLOCATE(gsqF_ca_corr(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+             Y_MEM(gsqF_ca_corr)
              gsqF_fan=0.
              gsqF_ca_corr=0.
            endif
-           allocate(gsqF_dw(QP_n_states,PAR_nQ,ph_modes),stat=alloc_err)
-           call mem_est('gsqF_dw',(/size(gsqF_dw)/),(/SP/),errors=(/alloc_err/))
-           allocate(gsqF_life_bose(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
-           call mem_est('gsqF_life_bose',(/size(gsqF_life_bose)/),(/SP/),errors=(/alloc_err/))
-           allocate(gsqF_life_f(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
-           call mem_est('gsqF_life_f',(/size(gsqF_life_f)/),(/SP/),errors=(/alloc_err/))
+           Y_ALLOCATE(gsqF_dw(QP_n_states,PAR_nQ,ph_modes))
+           Y_MEM(gsqF_dw)
+           Y_ALLOCATE(gsqF_life_bose(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+           Y_MEM(gsqF_life_bose)
+           Y_ALLOCATE(gsqF_life_f(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+           Y_MEM(gsqF_life_f)
            gsqF_dw=0.
            gsqF_life_bose=0.
            gsqF_life_f=0.
@@ -107,62 +105,51 @@ module ELPH
        case ('gkkp')
          !
          if (.not.allocated(elph_gkkp)) then
-           allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
-           call mem_est("GKKP",(/size(elph_gkkp)/),(/2*SP/),errors=(/alloc_err/))
-           allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
-           call mem_est("GKKP_DW",(/size(elph_DW)/),(/SP/),errors=(/alloc_err/))
-           allocate(f_k_plus_q(elph_nb,nkbz,1))
+           Y_ALLOCATE(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb))
+           Y_MEM(elph_gkkp)
+           Y_ALLOCATE(elph_DW(nkbz,ph_modes,elph_nb,elph_nb))
+           Y_MEM(elph_DW)
+           Y_ALLOCATE(f_k_plus_q(elph_nb,nkbz,1))
+           Y_MEM(f_k_plus_q)
          endif
          !
      end select
      !
      if (.not.allocated(ph_freqs_sq)) then
-       allocate(ph_freqs_sq(elph_nDBs,ph_modes))
+       Y_ALLOCATE(ph_freqs_sq(elph_nDBs,ph_modes))
+       Y_MEM(ph_freqs_sq)
        ph_freqs_sq=0._SP
-       allocate(E_k_plus_q(elph_nb,nkbz,1))
-       call mem_est("ph_freqs_sq E_k_plus_q",(/size(ph_freqs_sq),size(E_k_plus_q)/),&
-&                                            (/SP,SP/))
+       Y_ALLOCATE(E_k_plus_q(elph_nb,nkbz,1))
+       Y_MEM(E_k_plus_q)
        !
-       allocate(pol_vector(ph_modes,sum(n_atoms_species),3))
-       call mem_est("pol_vector",(/size(pol_vector)/))
+       Y_ALLOCATE(pol_vector(ph_modes,sum(n_atoms_species),3))
+       Y_MEM(pol_vector)
        !
      endif
      !
      if (.not.allocated(ph_qpt)) then
-       allocate(ph_qpt(elph_nDBs,3))
-       call mem_est("ph_qpt",(/size(ph_qpt)/),(/SP/))
-       allocate(ph_kpt_bz(nkbz,3))
-       call mem_est("ph_kpt_bz",(/size(ph_kpt_bz)/),(/SP/))
+       Y_ALLOCATE(ph_qpt(elph_nDBs,3))
+       Y_MEM(ph_qpt)
+       Y_ALLOCATE(ph_kpt_bz(nkbz,3))
+       Y_MEM(ph_kpt_bz)
      endif
      !
    end subroutine
    !
    subroutine elph_global_free()
-     use memory_m,  ONLY:mem_est
-     if (allocated(gsqF_fan)) then
-       deallocate(gsqF_fan,gsqF_dw,gsqF_ca_corr)
-       call mem_est("gsqF_fan gsqF_dw gsqF_ca_corr")
-     endif
-     if (allocated(gsqF_life_f)) then
-       deallocate(gsqF_life_bose,gsqF_life_f)
-       call mem_est("gsqF_life_bose gsqF_life_f")
-     endif
-     if (allocated(elph_gkkp)) then
-       deallocate(elph_gkkp,elph_DW,f_k_plus_q)
-       call mem_est("elph_gkkp elph_DW f_k_plus_q")
-     endif
-     if (allocated(ph_freqs_sq)) then
-       deallocate(ph_freqs_sq,E_k_plus_q)
-       call mem_est("ph_freqs_sq f_k_plus_q")
-     endif
-     if (allocated(pol_vector)) then
-       deallocate(pol_vector)
-       call mem_est("pol_vector")
-     endif
-     if (allocated(ph_qpt)) then
-       deallocate(ph_qpt,ph_kpt_bz)
-       call mem_est("ph_qpt ph_kpt_bz")
-     endif
+     Y_FREE(gsqF_fan)
+     Y_FREE(gsqF_dw)
+     Y_FREE(gsqF_ca_corr)
+     Y_FREE(gsqF_life_bose)
+     Y_FREE(gsqF_life_f)
+     Y_FREE(elph_gkkp)
+     Y_FREE(elph_DW)
+     Y_FREE(f_k_plus_q)
+     Y_FREE(ph_freqs_sq)
+     Y_FREE(E_k_plus_q)
+     Y_FREE(pol_vector)
+     Y_FREE(ph_qpt)
+     Y_FREE(ph_kpt_bz)
    end subroutine
    !
    subroutine setup_k_plus_q_levels(E)

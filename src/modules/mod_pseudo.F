@@ -79,9 +79,9 @@ module pseudo
    end subroutine
    !
    subroutine PP_free()
-     Y_FREE_A(pp_kbs)
-     Y_FREE_A(pp_kb)
-     Y_FREE_A(pp_kbd)
+     Y_FREE(pp_kbs)
+     Y_FREE(pp_kb)
+     Y_FREE(pp_kbd)
    end subroutine
    !
 end module pseudo

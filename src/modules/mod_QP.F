@@ -24,7 +24,7 @@
 module QP_m
  !
  use pars,      ONLY:SP,schlen
- implicit none
+#include<memory.h>
  !
  integer, parameter:: max_qp_descs=100
  !
@@ -95,12 +95,12 @@ module QP_m
  type QP_t
    !
    character(schlen)  :: description(max_qp_descs)
-   integer,    pointer:: table(:,:) => null()
-   real(SP)   ,pointer:: k(:,:)     => null()
-   real(SP)   ,pointer:: wk(:)      => null()
-   real(SP)   ,pointer:: E_bare(:)  => null()
-   complex(SP),pointer:: E(:)       => null()
-   complex(SP),pointer:: Z(:)       => null()
+   integer,    allocatable:: table(:,:)
+   real(SP)   ,allocatable:: k(:,:)
+   real(SP)   ,allocatable:: wk(:)
+   real(SP)   ,allocatable:: E_bare(:)
+   complex(SP),allocatable:: E(:)
+   complex(SP),allocatable:: Z(:)
    integer  :: n_descs
    integer  :: nk
    integer  :: nb
@@ -108,10 +108,10 @@ module QP_m
    !
    ! Green Function and Self-Energy
    !
-   integer            :: GreenF_n_steps
-   complex(SP),pointer:: S_total(:,:)   => null()
-   complex(SP),pointer:: GreenF(:,:)    => null()
-   complex(SP),pointer:: GreenF_W(:,:)  => null()
+   integer                :: GreenF_n_steps
+   complex(SP),allocatable:: S_total(:,:)
+   complex(SP),allocatable:: GreenF(:,:)
+   complex(SP),allocatable:: GreenF_W(:,:)
    !
  end type QP_t
  !
@@ -211,16 +211,15 @@ module QP_m
      qp%description=' '
      qp%n_descs=0
      qp%n_states=0
-     if(associated(qp%table))      deallocate(qp%table)
-     if(associated(qp%k))          deallocate(qp%k)
-     if(associated(qp%wk))         deallocate(qp%wk)
-     if(associated(qp%E))          deallocate(qp%E)
-     if(associated(qp%Z))          deallocate(qp%Z)
-     if(associated(qp%E_bare))     deallocate(qp%E_bare)
-     if(associated(qp%S_total))    deallocate(qp%S_total)
-     if(associated(qp%GreenF))     deallocate(qp%GreenF)
-     if(associated(qp%GreenF_W))   deallocate(qp%GreenF_W)
-     nullify(qp%table,qp%k,qp%wk,qp%E,qp%Z,qp%E_bare,qp%S_total,qp%GreenF,qp%GreenF_W)
+     Y_FREE(qp%table)
+     Y_FREE(qp%k)
+     Y_FREE(qp%wk)
+     Y_FREE(qp%E)
+     Y_FREE(qp%Z)
+     Y_FREE(qp%E_bare)
+     Y_FREE(qp%S_total)
+     Y_FREE(qp%GreenF)
+     Y_FREE(qp%GreenF_W)
    end subroutine
    !
    subroutine QP_states_simmetrize(en,V_real,V_complex,state_is_2do)

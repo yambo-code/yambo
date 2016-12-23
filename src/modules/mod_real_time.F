@@ -29,8 +29,7 @@ module real_time
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:SE_NONE
  use electrons,  ONLY:levels
- !
- implicit none
+#include<memory.h>
  !
  ! CORE LOGICALS
  !
@@ -305,37 +304,37 @@ module real_time
    integer  :: nb(2)
    integer  :: nstates
    character(schlen)  :: description
-   integer,    pointer:: table(:,:)      => null() ! ib,ik_RT,ik,i_spin
-   real(SP)   ,pointer:: kpt(:,:)        => null()
-   real(SP)   ,pointer:: k_weight(:)     => null()
+   integer,    allocatable:: table(:,:)      ! ib,ik_RT,ik,i_spin
+   real(SP)   ,allocatable:: kpt(:,:)        
+   real(SP)   ,allocatable:: k_weight(:)     
    !
    ! Energies
    !
-   real(SP)   ,pointer:: E_bare(:)       => null() ! equilibrium energy, i.e. the QP energy
-   real(SP)   ,pointer:: delta_E(:)      => null() ! change in E (BGR)
-   real(SP)   ,pointer:: dE_Hartree(:)   => null()
-   real(SP)   ,pointer:: dE_V_xc(:)        => null()
-   real(SP)   ,pointer:: dE_Self_Energy(:) => null()
+   real(SP)   ,allocatable:: E_bare(:)       ! equilibrium energy, i.e. the QP energy
+   real(SP)   ,allocatable:: delta_E(:)      ! change in E (BGR)
+   real(SP)   ,allocatable:: dE_Hartree(:)   
+   real(SP)   ,allocatable:: dE_V_xc(:)        
+   real(SP)   ,allocatable:: dE_Self_Energy(:) 
    !
    ! Occupations
    !
-   real(SP)   ,pointer:: f_bare(:)       => null() ! equilibrium occupations
-   real(SP)   ,pointer:: delta_f(:)      => null() ! change in the occupations
+   real(SP)   ,allocatable:: f_bare(:)       ! equilibrium occupations
+   real(SP)   ,allocatable:: delta_f(:)      ! change in the occupations
    !
    ! Lifetimes
    !
-   real(SP)   ,pointer:: GAMMA_bare(:,:) => null() ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
+   real(SP)   ,allocatable:: GAMMA_bare(:,:) ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
                                                    ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
-   real(SP)   ,pointer:: NEQ_Lifetime(:) => null() ! time dependent lifetime defined as for Silicon
-   real(SP)   ,pointer:: delta_GAMMA(:)  => null() ! change with respect to the "initial equilibrium" lifetimes
-   real(SP)   ,pointer:: dGAMMA_E_P_Hole(:)     => null() 
-   real(SP)   ,pointer:: dGAMMA_E_P_Electron(:) => null() 
-   real(SP)   ,pointer:: dGAMMA_E_P_Ho_abs(:)   => null() 
-   real(SP)   ,pointer:: dGAMMA_E_P_El_abs(:)   => null() 
-   real(SP)   ,pointer:: dGAMMA_E_E_Hole(:)     => null() 
-   real(SP)   ,pointer:: dGAMMA_E_E_Electron(:) => null() 
-   real(SP)   ,pointer:: dGAMMA_E_PHOT_Hole(:)     => null() 
-   real(SP)   ,pointer:: dGAMMA_E_PHOT_Electron(:) => null() 
+   real(SP)   ,allocatable:: NEQ_Lifetime(:) ! time dependent lifetime defined as for Silicon
+   real(SP)   ,allocatable:: delta_GAMMA(:)  ! change with respect to the "initial equilibrium" lifetimes
+   real(SP)   ,allocatable:: dGAMMA_E_P_Hole(:)     
+   real(SP)   ,allocatable:: dGAMMA_E_P_Electron(:) 
+   real(SP)   ,allocatable:: dGAMMA_E_P_Ho_abs(:)   
+   real(SP)   ,allocatable:: dGAMMA_E_P_El_abs(:)   
+   real(SP)   ,allocatable:: dGAMMA_E_E_Hole(:)     
+   real(SP)   ,allocatable:: dGAMMA_E_E_Electron(:) 
+   real(SP)   ,allocatable:: dGAMMA_E_PHOT_Hole(:)     
+   real(SP)   ,allocatable:: dGAMMA_E_PHOT_Electron(:) 
    !
  end type RT_t
  !
@@ -345,14 +344,22 @@ module real_time
    !
    subroutine RT_obj_alloc(RT)
      type(RT_t)::RT
-     if(.not.associated(RT%kpt))            allocate(RT%kpt(RT%nk,3))
-     if(.not.associated(RT%k_weight))       allocate(RT%k_weight(RT%nk))
-     if(.not.associated(RT%table))          allocate(RT%table(RT%nstates,4))
-     if(.not.associated(RT%E_bare))         allocate(RT%E_bare(RT%nstates)) 
-     if(.not.associated(RT%f_bare))         allocate(RT%f_bare(RT%nstates))
-     if(.not.associated(RT%dE_Hartree))     allocate(RT%dE_Hartree(RT%nstates))
-     if(.not.associated(RT%dE_V_xc))        allocate(RT%dE_V_xc(RT%nstates))
-     if(.not.associated(RT%dE_Self_Energy)) allocate(RT%dE_Self_Energy(RT%nstates))
+     Y_ALLOCATE(RT%kpt(RT%nk,3))
+     Y_MEM(RT%kpt)
+     Y_ALLOCATE(RT%k_weight(RT%nk))
+     Y_MEM(RT%k_weight)
+     Y_ALLOCATE(RT%table(RT%nstates,4))
+     Y_MEM(RT%table)
+     Y_ALLOCATE(RT%E_bare(RT%nstates))
+     Y_MEM(RT%E_bare)
+     Y_ALLOCATE(RT%f_bare(RT%nstates))
+     Y_MEM(RT%f_bare)
+     Y_ALLOCATE(RT%dE_Hartree(RT%nstates))
+     Y_MEM(RT%dE_Hartree)
+     Y_ALLOCATE(RT%dE_V_xc(RT%nstates))
+     Y_MEM(RT%dE_V_xc)
+     Y_ALLOCATE(RT%dE_Self_Energy(RT%nstates))
+     Y_MEM(RT%dE_Self_Energy)
      RT%table         =0
      RT%E_bare        =0._SP
      RT%f_bare        =0._SP
@@ -360,37 +367,50 @@ module real_time
      RT%dE_V_xc       =0._SP
      RT%dE_Self_Energy=0._SP
      if (l_elel_scatt) then
-       if(.not.associated(RT%dGAMMA_E_E_Hole))     allocate(RT%dGAMMA_E_E_Hole(RT%nstates))
-       if(.not.associated(RT%dGAMMA_E_E_Electron)) allocate(RT%dGAMMA_E_E_Electron(RT%nstates))
+       Y_ALLOCATE(RT%dGAMMA_E_E_Hole(RT%nstates))
+       Y_MEM(RT%dGAMMA_E_E_Hole)
+       Y_ALLOCATE(RT%dGAMMA_E_E_Electron(RT%nstates))
+       Y_MEM(RT%dGAMMA_E_E_Electron)
        RT%dGAMMA_E_E_Hole    =0._SP
        RT%dGAMMA_E_E_Electron=0._SP
      endif
      if (l_elph_scatt) then
-       if(.not.associated(RT%dGAMMA_E_P_Hole))     allocate(RT%dGAMMA_E_P_Hole(RT%nstates))
-       if(.not.associated(RT%dGAMMA_E_P_Electron)) allocate(RT%dGAMMA_E_P_Electron(RT%nstates))
-       if(.not.associated(RT%dGAMMA_E_P_Ho_abs))   allocate(RT%dGAMMA_E_P_Ho_abs(RT%nstates))
-       if(.not.associated(RT%dGAMMA_E_P_El_abs))   allocate(RT%dGAMMA_E_P_El_abs(RT%nstates))
+       Y_ALLOCATE(RT%dGAMMA_E_P_Hole(RT%nstates))
+       Y_MEM(RT%dGAMMA_E_P_Hole)
+       Y_ALLOCATE(RT%dGAMMA_E_P_Electron(RT%nstates))
+       Y_MEM(RT%dGAMMA_E_P_Electron)
+       Y_ALLOCATE(RT%dGAMMA_E_P_Ho_abs(RT%nstates))
+       Y_MEM(RT%dGAMMA_E_P_Ho_abs)
+       Y_ALLOCATE(RT%dGAMMA_E_P_El_abs(RT%nstates))
+       Y_MEM(RT%dGAMMA_E_P_El_abs)
        RT%dGAMMA_E_P_Hole    =0._SP
        RT%dGAMMA_E_P_Electron=0._SP
        RT%dGAMMA_E_P_Ho_abs  =0._SP
        RT%dGAMMA_E_P_El_abs  =0._SP
      endif
      if (l_elphoton_scatt) then
-       if(.not.associated(RT%dGAMMA_E_PHOT_Hole))     allocate(RT%dGAMMA_E_PHOT_Hole(RT%nstates))
-       if(.not.associated(RT%dGAMMA_E_PHOT_Electron)) allocate(RT%dGAMMA_E_PHOT_Electron(RT%nstates))
+       Y_ALLOCATE(RT%dGAMMA_E_PHOT_Hole(RT%nstates))
+       Y_MEM(RT%dGAMMA_E_PHOT_Hole)
+       Y_ALLOCATE(RT%dGAMMA_E_PHOT_Electron(RT%nstates))
+       Y_MEM(RT%dGAMMA_E_PHOT_Electron)
        RT%dGAMMA_E_PHOT_Hole    =0._SP
        RT%dGAMMA_E_PHOT_Electron=0._SP
      endif
      if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
-       if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates,8))
-       if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
-       if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
+       Y_ALLOCATE(RT%GAMMA_bare(RT%nstates,8))
+       Y_MEM(RT%GAMMA_bare)
+       Y_ALLOCATE(RT%delta_GAMMA(RT%nstates))
+       Y_MEM(RT%delta_GAMMA)
+       Y_ALLOCATE(RT%NEQ_Lifetime(RT%nstates))
+       Y_MEM(RT%NEQ_Lifetime)
        RT%GAMMA_bare  =0._SP
        RT%delta_GAMMA =0._SP
        RT%NEQ_Lifetime=0._SP
      endif
-     if(.not.associated(RT%delta_E))      allocate(RT%delta_E(RT%nstates))   
-     if(.not.associated(RT%delta_f))      allocate(RT%delta_f(RT%nstates))  
+     Y_ALLOCATE(RT%delta_E(RT%nstates))
+     Y_MEM(RT%delta_E)
+     Y_ALLOCATE(RT%delta_f(RT%nstates))
+     Y_MEM(RT%delta_f)
      RT%delta_f=0._SP
      RT%delta_E=0._SP
    end subroutine
@@ -400,34 +420,33 @@ module real_time
      RT%nk=0
      RT%nb=0
      RT%nstates=0
-     if(associated(RT%dE_Hartree))     deallocate(RT%dE_Hartree)
-     if(associated(RT%dE_V_xc))        deallocate(RT%dE_V_xc)
-     if(associated(RT%dE_Self_Energy)) deallocate(RT%dE_Self_Energy)
-     if(associated(RT%dGAMMA_E_E_Hole))     deallocate(RT%dGAMMA_E_E_Hole)
-     if(associated(RT%dGAMMA_E_E_Electron)) deallocate(RT%dGAMMA_E_E_Electron)
-     if(associated(RT%dGAMMA_E_P_Hole))     deallocate(RT%dGAMMA_E_P_Hole)
-     if(associated(RT%dGAMMA_E_P_Electron)) deallocate(RT%dGAMMA_E_P_Electron)
-     if(associated(RT%dGAMMA_E_P_Ho_abs))   deallocate(RT%dGAMMA_E_P_Ho_abs)
-     if(associated(RT%dGAMMA_E_P_El_abs))   deallocate(RT%dGAMMA_E_P_El_abs)
-     if(associated(RT%dGAMMA_E_PHOT_Hole))     deallocate(RT%dGAMMA_E_PHOT_Hole)
-     if(associated(RT%dGAMMA_E_PHOT_Electron)) deallocate(RT%dGAMMA_E_PHOT_Electron)
-     if(associated(RT%E_bare))       deallocate(RT%E_bare)
-     if(associated(RT%f_bare))       deallocate(RT%f_bare)
-     if(associated(RT%GAMMA_bare))   deallocate(RT%GAMMA_bare)
-     if(associated(RT%delta_E))      deallocate(RT%delta_E)
-     if(associated(RT%delta_f))      deallocate(RT%delta_f)
-     if(associated(RT%delta_GAMMA))  deallocate(RT%delta_GAMMA)
-     if(associated(RT%NEQ_Lifetime)) deallocate(RT%NEQ_Lifetime)
-     if(associated(RT%kpt))          deallocate(RT%kpt)
-     if(associated(RT%k_weight))     deallocate(RT%k_weight)
-     if(associated(RT%table))        deallocate(RT%table)
+     Y_FREE(RT%dE_Hartree)
+     Y_FREE(RT%dE_V_xc)
+     Y_FREE(RT%dE_Self_Energy)
+     Y_FREE(RT%dGAMMA_E_E_Hole)
+     Y_FREE(RT%dGAMMA_E_E_Electron)
+     Y_FREE(RT%dGAMMA_E_P_Hole)
+     Y_FREE(RT%dGAMMA_E_P_Electron)
+     Y_FREE(RT%dGAMMA_E_P_Ho_abs)
+     Y_FREE(RT%dGAMMA_E_P_El_abs)
+     Y_FREE(RT%dGAMMA_E_PHOT_Hole)
+     Y_FREE(RT%dGAMMA_E_PHOT_Electron)
+     Y_FREE(RT%E_bare)
+     Y_FREE(RT%f_bare)
+     Y_FREE(RT%GAMMA_bare)
+     Y_FREE(RT%delta_E)
+     Y_FREE(RT%delta_f)
+     Y_FREE(RT%delta_GAMMA)
+     Y_FREE(RT%NEQ_Lifetime)
+     Y_FREE(RT%kpt)
+     Y_FREE(RT%k_weight)
+     Y_FREE(RT%table)
    end subroutine
    !
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
-     use memory_m,       ONLY:mem_est
      use SC,             ONLY:V_hartree_sc,l_sc_V_is_local,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional
      use FFT_m,          ONLY:fft_size
@@ -442,62 +461,67 @@ module real_time
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
-     allocate(E_xc(fft_size))
-     call mem_est('Exc',(/fft_size/),(/SP/))
+     Y_ALLOCATE(E_xc(fft_size))
+     Y_MEM(E_xc)
      !
-     allocate(G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
-     call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
+     Y_ALLOCATE(G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+     Y_MEM(G_lesser)
      !
-     allocate(RT_H_occupations(RT_bands(1):RT_bands(2),RT_nk))
-     call mem_est("RT_H_occupations",(/size(RT_H_occupations)/),(/SP/))
+     Y_ALLOCATE(RT_H_occupations(RT_bands(1):RT_bands(2),RT_nk))
+     Y_MEM(RT_H_occupations)
      !
-     allocate(RT_delta0_occupations(RT_bands(1):RT_bands(2),RT_nk))
-     call mem_est("RT_delta0_occupations",(/size(RT_delta0_occupations)/),(/SP/))
+     Y_ALLOCATE(RT_delta0_occupations(RT_bands(1):RT_bands(2),RT_nk))
+     Y_MEM(RT_delta0_occupations)
      !
-     allocate(RT_delta_occupations(RT_bands(1):RT_bands(2),RT_nk))
-     call mem_est("RT_delta_occupations",(/size(RT_delta_occupations)/),(/SP/))
+     Y_ALLOCATE(RT_delta_occupations(RT_bands(1):RT_bands(2),RT_nk))
+     Y_MEM(RT_delta_occupations)
      !
-     allocate(RT_E_occupations_reference(RT_bands(1):RT_bands(2),RT_nk))
-     call mem_est("RT_E_occupations_reference",(/size(RT_E_occupations_reference)/),(/SP/))
+     Y_ALLOCATE(RT_E_occupations_reference(RT_bands(1):RT_bands(2),RT_nk))
+     Y_MEM(RT_E_occupations_reference)
      RT_E_occupations_reference=0._SP
      !
-     allocate(RT_H_occupations_reference(RT_bands(1):RT_bands(2),RT_nk))
-     call mem_est("RT_H_occupations_reference",(/size(RT_H_occupations_reference)/),(/SP/))
+     Y_ALLOCATE(RT_H_occupations_reference(RT_bands(1):RT_bands(2),RT_nk))
+     Y_MEM(RT_H_occupations_reference)
      RT_H_occupations_reference=0._SP
      !
-     allocate(RT_occupations_locked(RT_bands(1):RT_bands(2),RT_nk))
-     call mem_est("RT_occupations_locked",(/size(RT_occupations_locked)/),(/LP/))
+     Y_ALLOCATE(RT_occupations_locked(RT_bands(1):RT_bands(2),RT_nk))
+     Y_MEM(RT_occupations_locked)
      RT_occupations_locked=.false.
      !
-     allocate(RT_lifetimes_locked(RT_bands(1):RT_bands(2),RT_nk))
-     call mem_est("RT_lifetimes_locked",(/size(RT_lifetimes_locked)/),(/LP/))
+     Y_ALLOCATE(RT_lifetimes_locked(RT_bands(1):RT_bands(2),RT_nk))
+     Y_MEM(RT_lifetimes_locked)
      RT_lifetimes_locked=.false.
      !
-     allocate(RT_E_occupations(RT_bands(1):RT_bands(2),RT_nk))
-     call mem_est("RT_E_occupations",(/size(RT_E_occupations)/),(/SP/))
+     Y_ALLOCATE(RT_E_occupations(RT_bands(1):RT_bands(2),RT_nk))
+     Y_MEM(RT_E_occupations)
      !
      if (l_elphoton_scatt) then
-       allocate(E_PHOT_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       allocate(E_PHOT_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       call mem_est("RT_E_PHOT_lifetimes",(/2*size(E_PHOT_Hole_lifetime)/),(/SP/))
+       Y_ALLOCATE(E_PHOT_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       Y_MEM(E_PHOT_Hole_lifetime)
+       Y_ALLOCATE(E_PHOT_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       Y_MEM(E_PHOT_Electron_lifetime)
        E_PHOT_Hole_lifetime=0._SP
        E_PHOT_Electron_lifetime=0._SP
      endif
      !
      if (l_elel_scatt) then
-       allocate(E_E_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       allocate(E_E_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
+       Y_ALLOCATE(E_E_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       Y_MEM(E_E_Hole_lifetime)
+       Y_ALLOCATE(E_E_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       Y_MEM(E_E_Electron_lifetime)
        E_E_Hole_lifetime=0._SP
        E_E_Electron_lifetime=0._SP
      endif
      !
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       allocate(E_P_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       allocate(E_P_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       allocate(E_P_El_abs_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       allocate(E_P_Ho_abs_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       call mem_est("RT_E_P_lifetimes",(/4*size(E_P_Hole_lifetime)/),(/SP/))
+       Y_ALLOCATE(E_P_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       Y_MEM(E_P_Hole_lifetime)
+       Y_ALLOCATE(E_P_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       Y_MEM(E_P_Electron_lifetime)
+       Y_ALLOCATE(E_P_El_abs_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       Y_MEM(E_P_El_abs_lifetime)
+       Y_ALLOCATE(E_P_Ho_abs_lifetime(RT_bands(1):RT_bands(2),RT_nk))
+       Y_MEM(E_P_Ho_abs_lifetime)
        E_P_Hole_lifetime=0._SP
        E_P_Electron_lifetime=0._SP
        E_P_El_abs_lifetime=0._SP
@@ -505,77 +529,79 @@ module real_time
      endif
      !
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt.or.l_elphoton_scatt) then
-       allocate(REF_lifetime(RT_bands(1):RT_bands(2),RT_nk,8))
-       call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs), e-g h, e-g e
-       allocate(SAVED_lifetime(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs), e-g h, e-g e
-       call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
-       allocate(SAVED_times(Life_MEM_steps)) 
+       Y_ALLOCATE(REF_lifetime(RT_bands(1):RT_bands(2),RT_nk,8))
+       Y_MEM(REF_lifetime)
+       Y_ALLOCATE(SAVED_lifetime(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
+       Y_MEM(SAVED_lifetime)
+       Y_ALLOCATE(SAVED_times(Life_MEM_steps))
+       Y_MEM(SAVED_times)
        REF_lifetime=0._SP
        SAVED_lifetime=0._SP
        SAVED_times=0._SP
      endif
      !
-     allocate(Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-     call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
+     Y_ALLOCATE(Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     Y_MEM(Ho_plus_Sigma)
      !
      if(l_use_Hxc_collisions) then
-       allocate(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-       call mem_est("RT_Vnl_xc",(/size(RT_Vnl_xc)/),(/2*SP/))
+       Y_ALLOCATE(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+       Y_MEM(RT_Vnl_xc)
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
      if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
-       allocate(I_relax_static(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-       call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
+       Y_ALLOCATE(I_relax_static(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+       Y_MEM(I_relax_static)
      endif
      !
-     allocate(HARTREE0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("HARTREE0",(/size(HARTREE0)/),(/2*SP/))
+     Y_ALLOCATE(HARTREE0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     Y_MEM(HARTREE0)
      HARTREE0=cZERO
      !
-     allocate(XC0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("XC0",(/size(XC0)/),(/2*SP/))
+     Y_ALLOCATE(XC0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     Y_MEM(XC0)
      XC0=cZERO
      !
-     allocate(SC_R(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
+     Y_ALLOCATE(SC_R(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
+     Y_MEM(SC_R)
      !
-     allocate(G_lesser_reference(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-     call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
+     Y_ALLOCATE(G_lesser_reference(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+     Y_MEM(G_lesser_reference)
      !
-     allocate(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
-     call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
+     Y_ALLOCATE(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+     Y_MEM(dG_lesser)
      !
-     allocate(MEM_pointer(G_MEM_steps)) 
+     Y_ALLOCATE(MEM_pointer(G_MEM_steps))
+     Y_MEM(MEM_pointer)
      MEM_pointer    = 0
      MEM_pointer(1) = 1
      !
-     allocate(REF_V_xc_sc(fft_size,n_spin))
-     call mem_est("REF_V_xc_sc",(/fft_size*n_spin/),(/SP/))
-     allocate(REF_V_hartree_sc(fft_size,n_spin))
-     call mem_est("REF_V_hartree_sc",(/fft_size*n_spin/),(/SP/))
-     allocate(REF_Vnl_xc(QP_n_states))
-     call mem_est("REF_Vnl_xc",(/size(REF_Vnl_xc)/),(/2*SP/))
+     Y_ALLOCATE(REF_V_xc_sc(fft_size,n_spin))
+     Y_MEM(REF_V_xc_sc)
+     Y_ALLOCATE(REF_V_hartree_sc(fft_size,n_spin))
+     Y_MEM(REF_V_hartree_sc)
+     Y_ALLOCATE(REF_Vnl_xc(QP_n_states))
+     Y_MEM(REF_Vnl_xc)
      !
-     allocate(BGR_hartree(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
-      allocate(BGR_V_xc(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
-     allocate(BGR_Self_Energy(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
+     Y_ALLOCATE(BGR_hartree(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     Y_MEM(BGR_hartree)
+      Y_ALLOCATE(BGR_V_xc(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+      Y_MEM(BGR_V_xc)
+     Y_ALLOCATE(BGR_Self_Energy(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     Y_MEM(BGR_Self_Energy)
      !
-     allocate(rho_reference(fft_size))
-     call mem_est("rho_reference",(/fft_size/),(/SP/))
+     Y_ALLOCATE(rho_reference(fft_size))
+     Y_MEM(rho_reference)
      !
      if(n_spin>1) then
-       allocate(magn_reference(fft_size,3))
-       call mem_est("magn_reference",(/fft_size*3/),(/SP/))
+       Y_ALLOCATE(magn_reference(fft_size,3))
+       Y_MEM(magn_reference)
      endif
      !
      ! Reference energies
      !
-     allocate(E_bare(1:RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("E_bare",(/size(E_bare)/))
+     Y_ALLOCATE(E_bare(1:RT_bands(2),nXkibz,n_sp_pol))
+     Y_MEM(E_bare)
      E_bare=en%E(:RT_bands(2),:,:)
      !
    end subroutine RT_alloc
@@ -583,153 +609,63 @@ module real_time
    subroutine RT_free
      !
      use SC,             ONLY:SC_free,E_bare
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      !
      call SC_free()
      !
-     deallocate(DbGd_ibz_coo,DbGd_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
-     if(allocated(DbGd_EE_scatt_table)) deallocate(DbGd_EE_scatt_table)
-     !
-     if(allocated(E_xc)) then
-       deallocate(E_xc)
-       call mem_est('Exc')
-     endif
-     !
-     if(allocated(RT_Vnl_xc)) then
-       deallocate(RT_Vnl_xc)
-       call mem_est("RT_Vnl_xc")
-     endif
-     !
-     if(allocated(Ho_plus_sigma)) then
-       deallocate(Ho_plus_Sigma)
-       call mem_est("Ho_plus_Sigma")
-     endif
-     !
-     if(allocated(RT_TIME_status)) then
-       deallocate(RT_TIME_status)
-       call mem_est("RT_TIME_status")
-     endif
-     !
-     if(allocated(I_relax_static)) then
-       deallocate(I_relax_static)
-       call mem_est("I_relax_static")
-     endif
-     !
-     if(allocated(HARTREE0)) then
-       deallocate(HARTREE0)
-       call mem_est("HARTREE0")
-     endif
-     !
-     if(allocated(XC0)) then
-       deallocate(XC0)
-       call mem_est("XC0")
-     endif
-     !
-     if(allocated(SC_R)) then
-       deallocate(SC_R)
-       call mem_est("SC_R")
-     endif
-     !
-     if(allocated(E_PHOT_Hole_lifetime)) then
-       deallocate(E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime)
-       call mem_est("RT_E_PHOT_lifetimes")
-     endif
-     !
-     if(allocated(E_E_Hole_lifetime)) then
-       deallocate(E_E_Hole_lifetime,E_E_Electron_lifetime)
-       call mem_est("RT_E_E_lifetimes")
-     endif
-     !
-     if(allocated(E_P_Hole_lifetime)) then
-       deallocate(E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime)
-       call mem_est("RT_E_P_lifetimes")
-     endif
-     !
-     if(allocated(REF_lifetime)) then
-       deallocate(REF_lifetime)
-       call mem_est("REF_lifetime")
-     endif
-     !
-     if(allocated(SAVED_lifetime)) then
-       deallocate(SAVED_lifetime,SAVED_times)
-       call mem_est("SAVED_lifetime")
-     endif
-     !
-     deallocate(REF_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
-     call mem_est("REF_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
-     deallocate(BGR_hartree,BGR_V_xc,BGR_Self_Energy)
-     call mem_est("BGR_hartree BGR_V_xc BGR_Self_Energy")
-     !
-     deallocate(RT_H_occupations)
-     call mem_est("RT_H_occupations")
-     !
-     deallocate(RT_delta0_occupations)
-     call mem_est("RT_delta0_occupations")
-     !
-     deallocate(RT_delta_occupations)
-     call mem_est("RT_delta_occupations")
-     !
-     deallocate(RT_E_occupations_reference)
-     call mem_est("RT_E_occupations_reference")
-     !
-     deallocate(RT_H_occupations_reference)
-     call mem_est("RT_H_occupations_reference")
-     !
-     deallocate(RT_occupations_locked)
-     call mem_est("RT_occupations_locked")
-     !
-     deallocate(RT_lifetimes_locked)
-     call mem_est("RT_lifetimes_locked")
-     !
-     deallocate(RT_E_occupations)
-     call mem_est("RT_E_occupations")
-     !
-     deallocate(G_lesser)
-     call mem_est("G_lesser")
-     !
-     deallocate(MEM_pointer)
-     !
-     if (allocated(q_weight_RT)) deallocate(q_weight_RT)
-     !
-     if (allocated(THETA_matrix)) then
-       deallocate(THETA_matrix)
-       call mem_est("THETA_matrix")
-       deallocate(THETA_matrix_index)
-     endif
-     !
-     if (allocated(elph_gkkp_expanded)) then
-       deallocate(elph_gkkp_expanded)
-       call mem_est("GKKP_expanded")
-     endif
-     !
-     deallocate(G_lesser_reference)
-     call mem_est("Gf_l_ref")
-     !
-     deallocate(dG_lesser)
-     call mem_est("dG_lesser")
-     !
-     if(allocated(rho_reference)) then
-       deallocate(rho_reference)
-       call mem_est("rho_reference")
-     endif
-     !
-     if(allocated(magn_reference)) then
-       deallocate(magn_reference)
-       call mem_est("magn_reference")
-     endif
-     !
-     deallocate(E_bare)
-     call mem_est("E_bare")
-     !
-     if(allocated(RT_Deph_Matrix)) then
-       deallocate(RT_Deph_Matrix)
-       call mem_est("DephMatrix")
-     endif
-     !
-     if(allocated(Q_io_map)) then
-       deallocate(Q_io_map,K_io_map)
-     endif
+     Y_FREE(DbGd_ibz_coo)
+     Y_FREE(DbGd_bz_coo)
+     Y_FREE(RT_ibz_coo)
+     Y_FREE(RT_all2ibz)
+     Y_FREE(RT_Nk_ibz)
+     Y_FREE(DbGd_EE_scatt_table)
+     Y_FREE(E_xc)
+     Y_FREE(RT_Vnl_xc)
+     Y_FREE(Ho_plus_Sigma)
+     Y_FREE(RT_TIME_status)
+     Y_FREE(I_relax_static)
+     Y_FREE(HARTREE0)
+     Y_FREE(XC0)
+     Y_FREE(SC_R)
+     Y_FREE(E_PHOT_Hole_lifetime)
+     Y_FREE(E_PHOT_Electron_lifetime)
+     Y_FREE(E_E_Hole_lifetime)
+     Y_FREE(E_E_Electron_lifetime)
+     Y_FREE(E_P_Hole_lifetime)
+     Y_FREE(E_P_Electron_lifetime)
+     Y_FREE(E_P_El_abs_lifetime)
+     Y_FREE(E_P_Ho_abs_lifetime)
+     Y_FREE(REF_lifetime)
+     Y_FREE(SAVED_lifetime)
+     Y_FREE(SAVED_times)
+     Y_FREE(REF_Vnl_xc)
+     Y_FREE(REF_V_xc_sc)
+     Y_FREE(REF_V_hartree_sc)
+     Y_FREE(BGR_hartree)
+     Y_FREE(BGR_V_xc)
+     Y_FREE(BGR_Self_Energy)
+     Y_FREE(RT_H_occupations)
+     Y_FREE(RT_delta0_occupations)
+     Y_FREE(RT_delta_occupations)
+     Y_FREE(RT_E_occupations_reference)
+     Y_FREE(RT_H_occupations_reference)
+     Y_FREE(RT_occupations_locked)
+     Y_FREE(RT_lifetimes_locked)
+     Y_FREE(RT_E_occupations)
+     Y_FREE(G_lesser)
+     Y_FREE(MEM_pointer)
+     Y_FREE(q_weight_RT)
+     Y_FREE(THETA_matrix)
+     Y_FREE(THETA_matrix_index)
+     Y_FREE(elph_gkkp_expanded)
+     Y_FREE(G_lesser_reference)
+     Y_FREE(dG_lesser)
+     Y_FREE(rho_reference)
+     Y_FREE(magn_reference)
+     Y_FREE(E_bare)
+     Y_FREE(RT_Deph_Matrix)
+     Y_FREE(Q_io_map)
+     Y_FREE(K_io_map)
      !
    end subroutine RT_free
    !

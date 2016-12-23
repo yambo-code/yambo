@@ -7,7 +7,7 @@ if (index($0,"deallocate(")>0)
 {
 #print $0
 VAR=substr(LINE, index(LINE,"deallocate("))
-gsub("deallocate","Y_FREE_A",VAR)
+gsub("deallocate","Y_FREE",VAR)
 print repeat( " ", POS-1 ) VAR
 }
 else if (index($0,"allocate(")>0)
@@ -26,7 +26,7 @@ OBJ=b[2]
 }
 else
 {
-OBJ=b[2]"("b[3]
+OBJ=b[2]
 }
 print repeat( " ", POS-1 ) "Y_MEM("OBJ")"
 }

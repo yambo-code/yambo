@@ -178,7 +178,7 @@ module BS
      integer :: iG,iB
      integer :: i_g,i_b,ik_loop,ip_loop,ik_now,ip_now
      do i_g=iG,1,-1
-       Y_FREE_A(BS_T_grp(i_g)%O_x)
+       Y_FREE(BS_T_grp(i_g)%O_x)
      enddo
      if(iB==0) return
      ik_now=BS_blk(iB)%ik
@@ -191,8 +191,8 @@ module BS
        ik_loop=BS_blk(i_b)%ik
        ip_loop=BS_blk(i_b)%ip
        if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
-       Y_FREE_A(BS_blk(i_b)%O_c)
-       Y_FREE_A(BS_blk(i_b)%O_table)
+       Y_FREE(BS_blk(i_b)%O_c)
+       Y_FREE(BS_blk(i_b)%O_table)
      enddo
      !
    end subroutine
@@ -259,28 +259,28 @@ module BS
      use electrons,  ONLY:E_SOC_nbands
      integer :: i_g
      !
-     Y_FREE_A(BS_nT_at_k)
-     Y_FREE_A(PAR_BS_T_grps_index)
-     Y_FREE_A(BS_T_grp_1st_el)
+     Y_FREE(BS_nT_at_k)
+     Y_FREE(PAR_BS_T_grps_index)
+     Y_FREE(BS_T_grp_1st_el)
      !
      do i_g=1,BS_nT_grps
        !
        if (.not.allocated(BS_T_grp(i_g)%table)) cycle
        !
-       Y_FREE_A(BS_T_grp(i_g)%dipoles_R)
-       Y_FREE_A(BS_T_grp(i_g)%dipoles_A)
-       if(l_kerr) then
-         Y_FREE_A(BS_T_grp(i_g)%dipoles_R_kerr)
-         Y_FREE_A(BS_T_grp(i_g)%dipoles_A_kerr)
-       endif
-       Y_FREE_A(BS_T_grp(i_g)%table)
-       Y_FREE_A(BS_T_grp(i_g)%E)
-       Y_FREE_A(BS_T_grp(i_g)%f)
-       Y_FREE_A(BS_T_grp(i_g)%f_RES)
-       Y_FREE_A(BS_T_grp(i_g)%f_PL)
-       Y_FREE_A(BS_T_grp(i_g)%Z)
-       Y_FREE_A(BS_T_grp(i_g)%W)
-       Y_FREE_A(BS_T_grp(i_g)%E_SOC_corr)
+       Y_FREE(BS_T_grp(i_g)%dipoles_R)
+       Y_FREE(BS_T_grp(i_g)%dipoles_A)
+if (l_kerr) then
+  Y_FREE(BS_T_grp(i_g)%dipoles_R_kerr)
+  Y_FREE(BS_T_grp(i_g)%dipoles_A_kerr)
+endif
+       Y_FREE(BS_T_grp(i_g)%table)
+       Y_FREE(BS_T_grp(i_g)%E)
+       Y_FREE(BS_T_grp(i_g)%f)
+       Y_FREE(BS_T_grp(i_g)%f_RES)
+       Y_FREE(BS_T_grp(i_g)%f_PL)
+       Y_FREE(BS_T_grp(i_g)%Z)
+       Y_FREE(BS_T_grp(i_g)%W)
+       Y_FREE(BS_T_grp(i_g)%E_SOC_corr)
        !
      enddo
      !

@@ -202,30 +202,30 @@ module X_m
          !
          ! I clean the RL components mapping
          !
-         Y_FREE_A(X_RLcomp_ig)
+         Y_FREE(X_RLcomp_ig)
          !
          ! and the matrix itself
          !
-         Y_FREE_A(X_mat)
+         Y_FREE(X_mat)
          !
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
-         Y_FREE_A(DIP_iR)
+         Y_FREE(DIP_iR)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
-         Y_FREE_A(DIP_P)
+         Y_FREE(DIP_P)
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
-         Y_FREE_A(DIP_S)
+         Y_FREE(DIP_S)
        case('DIP_spin')
          if (.not.allocated(DIP_spin)) return
-         Y_FREE_A(DIP_spin)
+         Y_FREE(DIP_spin)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
-         Y_FREE_A(DIP_projected)
+         Y_FREE(DIP_projected)
        case('P_square')
          if (.not.allocated(P_square)) return
-         Y_FREE_A(P_square)
+         Y_FREE(P_square)
        end select
        call mem_est(what)
      endif

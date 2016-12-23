@@ -25,8 +25,7 @@ module SLK_m
  !
  use pars,       ONLY: SP
  use parallel_m, ONLY: MPI_comm
- !
- implicit none
+#include<memory.h>
  !
  integer              :: n_pools = 1 ! number of pools
  integer, parameter   :: desc_len= 9
@@ -102,11 +101,12 @@ module SLK_m
      type(SLK_matrix)  :: M_slk
      integer, optional :: nrows, ncols 
      !
-     if (allocated(M_slk%blc)) deallocate(M_slk%blc)
+     Y_FREE(M_slk%blc)
      if (present(nrows).and.present(ncols)) then
        M_slk%nrows    = nrows
        M_slk%ncols    = ncols
-       allocate(M_slk%blc(nrows,ncols))
+       Y_ALLOCATE(M_slk%blc(nrows,ncols))
+       Y_MEM(M_slk%blc)
      else
        M_slk%N        = 0
        M_slk%desc     = 0

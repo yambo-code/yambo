@@ -26,8 +26,7 @@ module openmp
 #if defined _OPENMP
  use omp_lib,   ONLY:omp_lock_kind
 #endif
- !
- implicit none
+#include<memory.h>
  !
  ! ... Threads
  !     the default value of 0 means that the actual number of threads is obtained
@@ -75,8 +74,7 @@ module openmp
  !
  integer       :: n_outthr, n_innthr
  character(25) :: s_outthr, s_innthr
-
- 
+ !
  contains
    !
    subroutine OPENMP_initialize( )
@@ -233,15 +231,16 @@ module openmp
         do i = 1, size(omp_locks)
            call omp_destroy_lock(omp_locks(i))
         enddo
-        deallocate(omp_locks)
+        Y_FREE(omp_locks)
      endif
      !
      if (INIT_) then
-        openmp_num_locks=nlocks_
-        allocate(omp_locks(nlocks_))
-        do i = 1, nlocks_
-           call omp_init_lock(omp_locks(i))
-        enddo
+       openmp_num_locks=nlocks_
+       Y_ALLOCATE(omp_locks(nlocks_))
+       Y_MEM(omp_locks)
+       do i = 1, nlocks_
+         call omp_init_lock(omp_locks(i))
+       enddo
      endif
 #else
      return

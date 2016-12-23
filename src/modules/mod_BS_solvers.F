@@ -218,14 +218,14 @@ module BS_solvers
    end subroutine
    !
    subroutine BS_mat_free()
-     Y_FREE_A(BSS_eh_table)
-     Y_FREE_A(BSS_dipoles)
-     Y_FREE_A(BSS_eh_E)
-     Y_FREE_A(BSS_eh_W)
-     Y_FREE_A(BSS_eh_f)
-     Y_FREE_A(BSS_eh_Z)
-     Y_FREE_A(BSS_eh_E_SOC_corr)
-     Y_FREE_A(BS_mat)
+     Y_FREE(BSS_eh_table)
+     Y_FREE(BSS_dipoles)
+     Y_FREE(BSS_eh_E)
+     Y_FREE(BSS_eh_W)
+     Y_FREE(BSS_eh_f)
+     Y_FREE(BSS_eh_Z)
+     Y_FREE(BSS_eh_E_SOC_corr)
+     Y_FREE(BS_mat)
    end subroutine
    !
    subroutine BS_HAYVEC_alloc(V)
@@ -248,7 +248,7 @@ module BS_solvers
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
-       Y_FREE_A(V(i_g)%fragment)
+       Y_FREE(V(i_g)%fragment)
      end do
    end subroutine BS_HAYVEC_free
    !

@@ -73,32 +73,32 @@ module electrons
    !
    ! QP corrections
    !
-   integer,pointer :: QP_corrected(:,:,:)  => null()
-   real(SP),   pointer :: E(:,:,:)         => null()
-   real(SP),   pointer :: Eo(:,:,:)        => null()
-   real(SP),   pointer :: f(:,:,:)         => null()
-   real(SP),   pointer :: fo(:,:,:)        => null()
-   real(SP),   pointer :: df(:,:,:)        => null()
-   real(SP),   pointer :: W(:,:,:)         => null()
-   complex(SP),pointer :: Z(:,:,:)         => null()
+   integer,    allocatable :: QP_corrected(:,:,:)  
+   real(SP),   allocatable :: E(:,:,:)         
+   real(SP),   allocatable :: Eo(:,:,:)        
+   real(SP),   allocatable :: f(:,:,:)         
+   real(SP),   allocatable :: fo(:,:,:)        
+   real(SP),   allocatable :: df(:,:,:)        
+   real(SP),   allocatable :: W(:,:,:)         
+   complex(SP),allocatable :: Z(:,:,:)         
    !
    ! Green Functions
    !
-   logical             :: GreenF_is_causal
-   integer             :: GreenF_n_E_steps
-   complex(SP),pointer :: GreenF_W(:,:,:,:)   => null()
-   complex(SP),pointer :: GreenF(:,:,:,:)     => null()
+   logical                 :: GreenF_is_causal
+   integer                 :: GreenF_n_E_steps
+   complex(SP),allocatable :: GreenF_W(:,:,:,:)   
+   complex(SP),allocatable :: GreenF(:,:,:,:)     
    ! 
    ! Double energy and k-points grid
    !   
-   real(SP),   pointer :: E_DbGd(:,:,:)        => null()
-   real(SP),   pointer :: W_DbGd(:,:,:)        => null()
-   real(SP),   pointer :: f_DbGd(:,:,:)        => null()
-   real(SP),   pointer :: df_DbGd(:,:,:)       => null()
+   real(SP),   allocatable :: E_DbGd(:,:,:)        
+   real(SP),   allocatable :: W_DbGd(:,:,:)        
+   real(SP),   allocatable :: f_DbGd(:,:,:)        
+   real(SP),   allocatable :: df_DbGd(:,:,:)       
    !
    ! Perturbative SOC
    !
-   real(SP),   pointer :: E_SOC(:,:)           => null()
+   real(SP),   allocatable :: E_SOC(:,:)           
    !
  end type levels
  ! 
@@ -159,37 +159,37 @@ module electrons
      if (naive) then
        ! %E
        Eo%E(:,:,:)=Ei%E(:,:,:)
-       if (associated(Ei%Eo)) then
+       if (allocated(Ei%Eo)) then
          Y_ALLOCATE(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
          Y_MEM(Eo%Eo)
          Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
        endif
        ! %f
        Eo%f(:,:,:)=Ei%f(:,:,:) 
-       if (associated(Ei%fo)) then
+       if (allocated(Ei%fo)) then
          Y_ALLOCATE(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
          Y_MEM(Eo%fo)
          Eo%fo(:BOUNDS(1),:,:)=Ei%fo(:BOUNDS(1),:,:)
        endif
-       if (associated(Ei%df)) then
+       if (allocated(Ei%df)) then
          Y_ALLOCATE(Eo%df(BOUNDS(1),Eo%nk,n_sp_pol))
          Y_MEM(Eo%df)
          Eo%df(:BOUNDS(1),:,:)=Ei%df(:BOUNDS(1),:,:)
        endif
        ! %W
-       if (associated(Ei%W)) then
+       if (allocated(Ei%W)) then
          Y_ALLOCATE(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
          Y_MEM(Eo%W)
          Eo%W(:BOUNDS(2),:,:)=Ei%W(:BOUNDS(2),:,:)
        endif
        ! %Z
-       if (associated(Ei%Z)) then
+       if (allocated(Ei%Z)) then
          Y_ALLOCATE(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
          Y_MEM(Eo%Z)
          Eo%Z(:BOUNDS(2),:,:)=Ei%Z(:BOUNDS(2),:,:)
        endif
        ! %QP_corrected
-       if (associated(Ei%QP_corrected)) then
+       if (allocated(Ei%QP_corrected)) then
          BOUNDS(1)=size(Ei%QP_corrected,1)
          BOUNDS(2)=size(Ei%QP_corrected,2)
          Y_ALLOCATE(Eo%QP_corrected(BOUNDS(1),BOUNDS(2),n_sp_pol))
@@ -212,7 +212,7 @@ module electrons
        Eo%E_DbGd=Ei%E_DbGd
        Eo%W_DbGd=Ei%W_DbGd
        Eo%f_DbGd=Ei%f_DbGd
-       if(associated(Ei%df_DbGd)) then
+       if(allocated(Ei%df_DbGd)) then
          Y_ALLOCATE(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
          Y_MEM(Eo%df_DbGd)
          Eo%df_DbGd=Ei%df_DbGd
@@ -231,6 +231,7 @@ module electrons
    !
    subroutine E_reset(E)
      type(levels)::E
+     !
      E%E_dir_gap=0._SP
      E%E_ind_gap=0._SP
      E%E_Fermi=0._SP
@@ -244,20 +245,20 @@ module electrons
      E%kf=0 
      E%GreenF_n_E_steps=0 
      E%GreenF_is_causal=.FALSE. 
-     Y_FREE_P(E%E)
-     Y_FREE_P(E%Eo)
-     Y_FREE_P(E%Z)
-     Y_FREE_P(E%W)
-     Y_FREE_P(E%f)
-     Y_FREE_P(E%fo)
-     Y_FREE_P(E%df)
-     Y_FREE_P(E%QP_corrected)
-     Y_FREE_P(E%GreenF)
-     Y_FREE_P(E%GreenF_W)
+     Y_FREE(E%E)
+     Y_FREE(E%Eo)
+     Y_FREE(E%Z)
+     Y_FREE(E%W)
+     Y_FREE(E%f)
+     Y_FREE(E%fo)
+     Y_FREE(E%df)
+     Y_FREE(E%QP_corrected)
+     Y_FREE(E%GreenF)
+     Y_FREE(E%GreenF_W)
      !
      call E_DbGd_components_reset(E,.FALSE.)
      !
-     Y_FREE_P(E%E_SOC)
+     Y_FREE(E%E_SOC)
      !
    end subroutine
    !
@@ -266,10 +267,10 @@ module electrons
      type(levels)::E
      logical     ::FULL_RESET
      !
-     Y_FREE_P(E%E_DbGd)
-     Y_FREE_P(E%W_DbGd)
-     Y_FREE_P(E%f_DbGd)
-     Y_FREE_P(E%df_DbGd)
+     Y_FREE(E%E_DbGd)
+     Y_FREE(E%W_DbGd)
+     Y_FREE(E%f_DbGd)
+     Y_FREE(E%df_DbGd)
      !
      !
      if (.not.FULL_RESET) return
@@ -279,10 +280,10 @@ module electrons
      BZ_ASSOCIATED_nkpts=0
      BZ_DbGd_nbands=0
      !
-     Y_FREE_A(BZ_DbGd_nkpt)
-     Y_FREE_A(BZ_DbGd_table)
-     Y_FREE_A(BZ_DbGd_ipol_weight)
-     Y_FREE_A(BZ_DbGd_kpts)
+     Y_FREE(BZ_DbGd_nkpt)
+     Y_FREE(BZ_DbGd_table)
+     Y_FREE(BZ_DbGd_ipol_weight)
+     Y_FREE(BZ_DbGd_kpts)
      !
    end subroutine
    !

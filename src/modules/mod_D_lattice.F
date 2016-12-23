@@ -24,8 +24,7 @@
 module D_lattice
  !
  use pars,      ONLY:SP,lchlen
- !
- implicit none
+#include<memory.h>
  !
  ! Non periodic directions
  !
@@ -88,7 +87,6 @@ module D_lattice
      !
      use pars,           ONLY:SP,IP
      use com,            ONLY:error,msg
-     use memory_m,       ONLY:mem_est
      !
      character(*) :: msg_where
      !
@@ -97,12 +95,12 @@ module D_lattice
      integer  :: i1,i2,i3
      real(SP) :: m(3,3)
      !
-     if (allocated(sop_tab)) then
-       deallocate(sop_tab,sop_inv)
-       call mem_est("SYMtable SYMinv")
-     endif
-     allocate(sop_tab(nsym,nsym),sop_inv(nsym))
-     call mem_est("SYMtable SYMinv",(/3*3*nsym,nsym**2+nsym/),(/SP,IP/))
+     Y_FREE(sop_tab)
+     Y_FREE(sop_inv)
+     Y_ALLOCATE(sop_tab(nsym,nsym))
+     Y_MEM(sop_tab)
+     Y_ALLOCATE(sop_inv(nsym))
+     Y_MEM(sop_inv)
      sop_tab=0
      sop_inv=0
      do i1=1,nsym

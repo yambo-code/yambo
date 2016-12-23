@@ -24,7 +24,7 @@
 module SC
  !
  use pars,            ONLY:SP,schlen,lchlen
- implicit none
+#include<memory.h>
  !
  integer           :: SC_bands(2)
  integer           :: it_to_start
@@ -123,7 +123,6 @@ module SC
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
-     use memory_m,       ONLY:mem_est
      !
      implicit none
      !
@@ -136,10 +135,10 @@ module SC
      ! 
      ! QP_state my be read from DBs at start-up
      !
-     if (allocated(QP_state)) deallocate(QP_state)
+     Y_FREE(QP_state)
      !
-     allocate(QP_state(QP_nb,QP_nk))
-     call mem_est("QP_state",(/QP_nb*QP_nk/))
+     Y_ALLOCATE(QP_state(QP_nb,QP_nk))
+     Y_MEM(QP_state)
      QP_state=.TRUE.
      call QP_state_table_setup(E)
      !
@@ -162,46 +161,46 @@ module SC
      !
      ! In the magnetic project Ho has already been allocated
      !
-     allocate(Ho(SC_bands(2),SC_bands(2),E%nk,n_sp_pol))
-     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+     Y_ALLOCATE(Ho(SC_bands(2),SC_bands(2),E%nk,n_sp_pol))
+     Y_MEM(Ho)
      !
-     allocate(rho_n(fft_size))
-     call mem_est("rho",(/fft_size/),(/SP/))
+     Y_ALLOCATE(rho_n(fft_size))
+     Y_MEM(rho_n)
      !
      if(n_spin>1) then
-       allocate(magn(fft_size,3))
-       allocate(magn_n(fft_size,3))
-       call mem_est("magn",(/2*fft_size*3/),(/SP/))
+       Y_ALLOCATE(magn(fft_size,3))
+       Y_MEM(magn)
+       Y_ALLOCATE(magn_n(fft_size,3))
+       Y_MEM(magn_n)
      endif
      !
-     allocate(V_xc_sc(fft_size,n_spin))
-     call mem_est('V_xc_sc',(/size(V_xc_sc)/),(/SP/))
+     Y_ALLOCATE(V_xc_sc(fft_size,n_spin))
+     Y_MEM(V_xc_sc)
      !
-     allocate(V_xc(fft_size,n_spin))
-     call mem_est('V_xc',(/size(V_xc)/),(/SP/))
+     Y_ALLOCATE(V_xc(fft_size,n_spin))
+     Y_MEM(V_xc)
      !
-     allocate(V_hartree_sc(fft_size,n_spin))
-     call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
+     Y_ALLOCATE(V_hartree_sc(fft_size,n_spin))
+     Y_MEM(V_hartree_sc)
      !
-     allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
-     call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
+     Y_ALLOCATE(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
+     Y_MEM(H_nl_sc)
      !
      if (l_real_time) return
      !
      if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
-       allocate(QP_Sc(QP_n_states,1))
-       call mem_est("QP_Sc",(/QP_n_states/))
+       Y_ALLOCATE(QP_Sc(QP_n_states,1))
+       Y_MEM(QP_Sc)
      endif
      !
-     allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-     call mem_est("SC_R",(/size(SC_R)/))
+     Y_ALLOCATE(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+     Y_MEM(SC_R)
      !
    end subroutine
    !
    subroutine SC_free()
      use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
      implicit none
@@ -211,47 +210,16 @@ module SC
      call X_alloc('DIP_spin')
      call X_alloc('P_square')
      !
-     deallocate(Ho)
-     call mem_est("Ho")
-     !
-     deallocate(H_nl_sc)
-     call mem_est("H_nl_sc")
-     !
-     if(allocated(rho_n)) then
-       deallocate(rho_n)
-       call mem_est("rho")
-     endif
-     !
-     if(allocated(magn_n)) then
-       deallocate(magn,magn_n)
-       call mem_est("magn")
-     endif
-     !
-     if(allocated(magn)) then
-       deallocate(magn)
-       call mem_est("magn")
-     endif
-     !
-     if(allocated(V_xc)) then 
-       deallocate(V_xc)
-       call mem_est('V_xc')
-     endif
-     !
-     deallocate(V_xc_sc)
-     call mem_est('V_xc_sc')
-     !
-     deallocate(V_hartree_sc)
-     call mem_est("Hartree_Potential")
-     !
-     if (allocated(QP_Sc)) then
-       deallocate(QP_Sc)
-       call mem_est("QP_Sc")
-     endif
-     !
-     if (.not.l_real_time) then
-       deallocate(SC_R)
-       call mem_est("SC_R")
-     endif
+     Y_FREE(Ho)
+     Y_FREE(H_nl_sc)
+     Y_FREE(rho_n)
+     Y_FREE(magn_n)
+     Y_FREE(magn)
+     Y_FREE(V_xc)
+     Y_FREE(V_xc_sc)
+     Y_FREE(V_hartree_sc)
+     Y_FREE(QP_Sc)
+     Y_FREE(SC_R)
      !
    end subroutine
    !

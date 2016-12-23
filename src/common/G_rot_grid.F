@@ -29,8 +29,7 @@ subroutine G_rot_grid(is,call_kind)
  use D_lattice,    ONLY:dl_sop,alat
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero
- !
- implicit none
+#include<memory.h>
  !
  integer               :: is
  character(*)          :: call_kind
@@ -74,7 +73,9 @@ subroutine G_rot_grid(is,call_kind)
  allocate(g_vec_tmp(2*ng,3),g_rot_found(2*ng))
  g_vec_tmp(1:ng,:)=g_vec(1:ng,:)
  g_rot_found=.false.
- if(extend_grid) deallocate(g_vec)
+ if(extend_grid) then
+   Y_FREE(g_vec)
+ endif
  !
  g_rot_found(1)=.true.
  !
@@ -110,7 +111,8 @@ subroutine G_rot_grid(is,call_kind)
  enddo
  !
  if(extend_grid) then
-   allocate(g_vec(ng_vec,3))
+   Y_ALLOCATE(g_vec(ng_vec,3))
+   Y_MEM(g_vec)
    g_vec=g_vec_tmp(1:ng_vec,:)
  endif
  !

@@ -39,9 +39,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
- use pars,           ONLY:SP,lchlen,IP
+ use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_bse,l_elel_scatt
- use memory_m,       ONLY:mem_est
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error,warning
  use parallel_m,     ONLY:PP_redux_wait
@@ -141,7 +140,8 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    ! q_ptbz in iku for k_reduce
    !
-   allocate(q%ptbz(q%nbz,3))
+   Y_ALLOCATE(q%ptbz(q%nbz,3))
+   Y_MEM(q%ptbz)
    do i1=1,q%nbz
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
@@ -151,10 +151,11 @@ subroutine bz_samp_indexes(k,Xk,q)
    enddo
    if (.not.allocated(q_pt)) then
      call k_reduce(q,.TRUE.)
-     deallocate(q%ptbz)
+     Y_FREE(q%ptbz)
    else
      q%nibz=nqibz
-     allocate(q%pt(q%nibz,3))
+     Y_ALLOCATE(q%pt(q%nibz,3))
+     Y_MEM(q%pt)
      q%pt=q_pt(:q%nibz,:)
      call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
      user_defined_qpts=.true.
@@ -326,7 +327,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
- if (Xk_grid_is_uniform) deallocate(q%ptbz)
+ if (Xk_grid_is_uniform) then
+   Y_FREE(q%ptbz)
+ endif
  call PP_redux_wait()
  !
  contains 
@@ -406,56 +409,51 @@ subroutine bz_samp_indexes(k,Xk,q)
      ! using Gamma point only definition
      !
      if (force_gamma_only) then
-       if (allocated(k_pt))    deallocate(k_pt)
-       if (allocated(q_pt))    deallocate(q_pt)
-       if (allocated(q_norm))  deallocate(q_norm)
-       if (allocated(q_sstar)) deallocate(q_sstar)
-       if (associated(q%pt)) then
-         deallocate(q%pt)      
-         nullify(q%pt)
-       endif
-       call mem_est("k_pt q_pt q_norm q_sstar q-pt")
-       allocate(q%pt(1,3),q_pt(1,3),k_pt(k%nibz,3),q_norm(1),q_sstar(1,2)) 
-       q%pt=0.
-       q_pt=0.
-       k_pt=k%pt
-       q_norm=q0_def_norm
+       Y_FREE(k_pt)
+       Y_FREE(q_pt)
+       Y_FREE(q_norm)
+       Y_FREE(q_sstar)
+       Y_FREE(q%pt)
        nqbz=1
        nqibz=1
        q%nibz=1
        q%nbz=1
-       q_sstar=1
        return
      endif
      !
-     ! q_pt , q_norm & k_pt
-     !
      if (.not.allocated(q_pt)) then
-       allocate(q_pt(q%nibz,3))
-       q_pt=q%pt
-       call mem_est("q_pt",(/q%nibz*3/),(/SP/))
+       Y_ALLOCATE(q_pt(q%nibz,3))
+       Y_MEM(q_pt)
      endif
      if (.not.allocated(k_pt)) then
-       allocate(k_pt(k%nibz,3))
-       k_pt=k%pt
-       call mem_est("q_pt",(/k%nibz*3/),(/SP/))
+       Y_ALLOCATE(k_pt(k%nibz,3))
+       Y_MEM(k_pt)
      endif
      if (.not.allocated(q_norm)) then
-       allocate(q_norm(q%nibz))
+       Y_ALLOCATE(q_norm(q%nibz))
+       Y_MEM(q_norm)
+     endif
+     if (allocated(q%sstar).and..not.allocated(q_sstar)) then
+       Y_ALLOCATE(q_sstar(q%nbz,2))
+       Y_MEM(q_sstar)
+     endif
+     !
+     if (force_gamma_only) then
+       q%pt=0.
+       q_pt=0.
+       k_pt=k%pt
+       q_sstar=1
+       q_norm=q0_def_norm
+     else
+       q_pt=q%pt
+       k_pt=k%pt
        do i1=1,q%nibz
          q_norm(i1)=iku_v_norm(q_pt(i1,:))
        enddo
        q_norm(1)=q0_def_norm
-       call mem_est("q_norm",(/q%nibz/),(/SP/))
-     endif
-     !
-     ! sstar
-     !
-     if (associated(q%sstar).and..not.allocated(q_sstar)) then
-       allocate(q_sstar(q%nbz,2))
        q_sstar=q%sstar
-       call mem_est("q_sstar",(/q%nbz*2/),(/IP/))
      endif
+     !
    end subroutine
    !
 end subroutine

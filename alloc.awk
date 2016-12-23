@@ -32,7 +32,10 @@ print repeat( " ", POS-1 ) "Y_MEM("OBJ")"
 }
 else
 {
- if (index ($0,"mem_est(")==0) {print $0}
+ if (index ($0,"implicit")> 0) {
+   print "#include<memory.h>"
+ }
+ else if (index ($0,"mem_est(")==0) {print $0}
 }
 }
 function repeat( str, n,    rep, i )

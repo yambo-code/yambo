@@ -147,7 +147,7 @@ subroutine PARALLEL_collisions( k, COLL )
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,l_par_RT,l_par_SE,l_par_SC
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
- implicit none
+#include<memory.h>
  !
  type(bz_samp)          :: k
  type(COLLISIONS_group) :: COLL
@@ -158,10 +158,14 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  if ( COLL%N == 0 ) return
  !
- allocate(COLL%PAR_map(COLL%N),COLL%PAR_IND%element_1D(COLL%N)) 
+ Y_ALLOCATE(COLL%PAR_map(COLL%N))
+ Y_ALLOCATE(COLL%PAR_IND%element_1D(COLL%N))
+ Y_MEM(COLL%PAR_map)
+ Y_MEM(COLL%PAR_IND%element_1D)
  !
  if (.not.associated(PAR_IND_G_k%element_1D) ) then
-   allocate(PAR_IND_G_k%element_1D(k%nibz))
+   Y_ALLOCATE(PAR_IND_G_k%element_1D(k%nibz))
+   Y_MEM(PAR_IND_G_k%element_1D)
    PAR_IND_G_k%element_1D=.FALSE.
  endif
  COLL%PAR_IND%element_1D=.FALSE.

@@ -23,15 +23,14 @@
 !
 integer function io_BS(iq,X,ID)
  !
- use pars,          ONLY:SP,schlen,lchlen
+ use pars,          ONLY:schlen,lchlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
- use matrix_operate,ONLY:mat_c2r,mat_r2c
  use parallel_m,    ONLY:myid
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
-&                        read_is_on,write_is_on,io_header,io_mode,VERIFY,&
+&                        write_is_on,io_header,io_mode,VERIFY,&
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
  implicit none
  type(X_t):: X 
@@ -42,7 +41,6 @@ integer function io_BS(iq,X,ID)
  integer             ::i_block,i1
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
- real(SP),allocatable::BS_mat_disk(:,:,:)
  !
  if (.not.io_BS_K.and.maxval(io_sec(ID,:))>1) then
    io_BS=IO_NOT_ALLOWED
@@ -103,20 +101,12 @@ integer function io_BS(iq,X,ID)
  !
  call io_fragment(ID,i_fragment=i_block)
  !
- allocate(BS_mat_disk(BS_blk(i_block)%size(1),BS_blk(i_block)%size(2),2))
- !
  if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
  if (BS_blk(i_block)%mode=="A") ch="BSE_ANTIRESONANT_BLOCK_"//trim(intc(i_block))
  !
  call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk(i_block)%size(1),BS_blk(i_block)%size(2),2/))
  !
- if (write_is_on(ID)) call mat_c2r(BS_blk(i_block)%mat,BS_mat_disk)
- !
- call io_bulk(ID,R3=BS_mat_disk)
- !
- if (read_is_on(ID)) call mat_r2c(BS_mat_disk,BS_blk(i_block)%mat)
- !
- deallocate(BS_mat_disk)
+ call io_bulk(ID,C2=BS_blk(i_block)%mat)
  !
 1 continue
  !

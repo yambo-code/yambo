@@ -38,8 +38,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use R_lattice,       ONLY:nkbz
  use collision,       ONLY:GW_NEQ_collisions
 #endif
- !
- implicit none
+#include<memory.h>
  !
  type(PP_indexes), optional    :: K_index
  type(PP_indexes), optional    :: B_index
@@ -80,8 +79,9 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  !
  if (present(CLEAN_UP)) then
    !
-   if (allocated(states_to_load)) deallocate(states_to_load)
-   allocate(states_to_load(NB,NK,n_spin))
+   Y_FREE(states_to_load)
+   Y_ALLOCATE(states_to_load(NB,NK,n_spin))
+   Y_MEM(states_to_load)
    !
    states_to_load=CLEAN_UP
    if (ncpu==1) states_to_load=.TRUE.

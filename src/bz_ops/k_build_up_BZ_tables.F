@@ -30,14 +30,13 @@ subroutine k_build_up_BZ_tables(k)
  !  R k_ibz = S k_ibz with S=k%s_table(k,R)  
  !  R k_ibz = k_bz    with k_bz=k%k_table(k,R)
  !
- use pars,           ONLY:SP,IP
+ use pars,           ONLY:SP
  use vec_operate,    ONLY:c2a,rlu_v_is_zero
  use D_lattice,      ONLY:nsym
- use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
+#include<memory.h>
  !
- implicit none
  type(bz_samp)::k
  !
  ! Work Space
@@ -55,18 +54,16 @@ subroutine k_build_up_BZ_tables(k)
    if (size(k%k_table)==k%nibz*nsym) k_table_is_ok=.TRUE.
  endif
  if (.not.k_table_is_ok.and.associated(k%k_table)) then
-   deallocate(k%k_table)
-   call mem_est("k_k_table")
+   Y_FREE(k%k_table)
  endif
  if (.not.s_table_is_ok.and.associated(k%s_table)) then
-   deallocate(k%s_table)
-   call mem_est("k_s_table")
+   Y_FREE(k%s_table)
  endif
  !
- allocate(k%s_table(k%nibz,nsym))
- call mem_est("k_s_table",(/size(k%s_table)/),(/IP/))
- allocate(k%k_table(k%nibz,nsym))
- call mem_est("k_k_table",(/size(k%k_table)/),(/IP/))
+ Y_ALLOCATE(k%s_table(k%nibz,nsym))
+ Y_MEM(k%s_table)
+ Y_ALLOCATE(k%k_table(k%nibz,nsym))
+ Y_MEM(k%k_table)
  !
  call k_ibz2bz(k,'a',.false.)
  k%s_table=0

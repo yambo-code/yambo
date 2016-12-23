@@ -32,8 +32,7 @@ subroutine PARALLEL_WF_index(COMM)
 &                          COMM_copy,PAR_COM_density
  use wave_func,       ONLY:states_to_load
  use parallel_m,      ONLY:PP_redux_wait
- !
- implicit none
+#include<memory.h>
  !
  type(MPI_comm), optional :: COMM
  !
@@ -60,8 +59,14 @@ subroutine PARALLEL_WF_index(COMM)
  NB=size(states_to_load,1)
  NK=size(states_to_load,2)
  !
- allocate(WF_linear%element_1D(NB*NK),WF_linear%n_of_elements(NC))
- allocate(PAR_IND_WF_linear%element_2D(NB,NK),PAR_IND_WF_linear%n_of_elements(NC))
+ Y_ALLOCATE(WF_linear%element_1D(NB*NK))
+ Y_ALLOCATE(WF_linear%n_of_elements(NC))
+ Y_MEM(WF_linear%element_1D)
+ Y_MEM(WF_linear%n_of_elements)
+ Y_ALLOCATE(PAR_IND_WF_linear%element_2D(NB,NK))
+ Y_ALLOCATE(PAR_IND_WF_linear%n_of_elements(NC))
+ Y_MEM(PAR_IND_WF_linear%element_2D)
+ Y_MEM(PAR_IND_WF_linear%n_of_elements)
  !
  WF_linear%element_1D=.FALSE.
  PAR_IND_WF_linear%element_2D=.FALSE.

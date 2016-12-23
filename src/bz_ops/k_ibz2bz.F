@@ -26,7 +26,6 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !  k%ptbz
  !
  use pars,           ONLY:SP,schlen
- use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:c2a,k2bz
  use R_lattice,      ONLY:rl_sop,bz_samp
  implicit none
@@ -45,8 +44,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  ! Clean
  !
  if (associated(k%ptbz).and.(units=="d".or.k%units/=units)) then
-   deallocate(k%ptbz)
-   call mem_est(trim(ch))
+   Y_FREE(k%ptbz)
    if (units=="d") return
  endif
  if (associated(k%ptbz).and.k%units==units) return
@@ -58,7 +56,8 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! ...then the pts
  !
- allocate(k%ptbz(k%nbz,3))
+ Y_ALLOCATE(k%ptbz(k%nbz,3))
+ Y_MEM(k%ptbz)
  !
  do i1=1,k%nbz
    !
@@ -75,7 +74,5 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
    if (units=='c') call c2a(v_in=k_bz,v_out=k%ptbz(i1,:),mode='ki2c')
    !
  enddo
- !
- call mem_est(trim(ch),(/k%nbz*3/),(/SP/))
  !
 end subroutine

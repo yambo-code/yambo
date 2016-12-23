@@ -24,7 +24,6 @@
 integer function io_QP_and_GF(what,qp,ID)
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,&
 &                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
@@ -35,7 +34,7 @@ integer function io_QP_and_GF(what,qp,ID)
  use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_COHSEX,SE_NONE,&
 &                         SE_POLARON,SE_GW_QED
  !
- implicit none
+#include<memory.h>
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'G'/filename
  integer     ::ID
@@ -175,7 +174,7 @@ integer function io_QP_and_GF(what,qp,ID)
    call io_bulk(ID,VAR="QP_table",VAR_SZ=(/qp_n_states_disk,3+n_sp_pol-1/))
    call io_bulk(ID,I2=qp_table_disk)
    !
-   if (io_mode(ID)==VERIFY.and.associated(qp%table)) then
+   if (io_mode(ID)==VERIFY.and.allocated(qp%table)) then
      do i1=1,qp%n_states
        i_found=-1
        do i2=1,qp_n_states_disk
@@ -188,7 +187,8 @@ integer function io_QP_and_GF(what,qp,ID)
    endif
    !
    if (io_mode(ID)==DUMP) then
-     allocate(qp%table(qp_n_states_disk,3+n_sp_pol-1))
+     Y_ALLOCATE(qp%table(qp_n_states_disk,3+n_sp_pol-1))
+     Y_MEM(qp%table)
      qp%table=qp_table_disk
    endif
    !
@@ -207,8 +207,14 @@ integer function io_QP_and_GF(what,qp,ID)
    !
    call io_bulk(ID,VAR="QP_kpts",VAR_SZ=(/qp%nk,3/))
    !
-   if (.not.associated(qp%k))  allocate(qp%k(qp%nk,3))
-   if (.not.associated(qp%wk)) allocate(qp%wk(qp%nk ))
+   if (.not.allocated(qp%k)) then
+     Y_ALLOCATE(qp%k(qp%nk,3))
+     Y_MEM(qp%k)
+   endif
+   if (.not.allocated(qp%wk)) then
+     Y_ALLOCATE(qp%wk(qp%nk))
+     Y_MEM(qp%wk)
+   endif
    !
    call io_bulk(ID,R2=qp%k)
    !
@@ -244,8 +250,12 @@ integer function io_QP_and_GF(what,qp,ID)
      call io_bulk(ID,R3=qp_DATA_disk)
      !
      if (read_is_on(ID)) then
-       allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
-       call mem_est("qp_Z qp_E qp_E_bare",(/qp%n_states,qp%n_states,qp%n_states/))
+       Y_ALLOCATE(qp%Z(qp%n_states))
+       Y_ALLOCATE(qp%E(qp%n_states))
+       Y_ALLOCATE(qp%E_bare(qp%n_states))
+       Y_MEM(qp%E)
+       Y_MEM(qp%E_bare)
+       Y_MEM(qp%Z)
        do i1=1,qp%n_states
          qp%E(i1) =cmplx(qp_DATA_disk(1,i1,1),qp_DATA_disk(1,i1,2),SP)
          qp%E_bare(i1)=qp_DATA_disk(2,i1,1)
@@ -283,12 +293,12 @@ integer function io_QP_and_GF(what,qp,ID)
      call io_bulk(ID,R3=qp_DATA_disk(:,:,5:6))
      !
      if (read_is_on(ID)) then
-       allocate(qp%S_total(qp%n_states,qp%GreenF_n_steps))
-       call mem_est("qp_S_total",(/size(qp%S_total)/))
-       allocate(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
-       call mem_est("qp_GreenF",(/size(qp%GreenF)/))
-       allocate(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
-       call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
+       Y_ALLOCATE(qp%S_total(qp%n_states,qp%GreenF_n_steps))
+       Y_MEM(qp%S_total)
+       Y_ALLOCATE(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
+       Y_MEM(qp%GreenF)
+       Y_ALLOCATE(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
+       Y_MEM(qp%GreenF_W)
        do i1=1,qp%n_states
          qp%S_total(i1,:) =cmplx(qp_DATA_disk(i1,:,1),qp_DATA_disk(i1,:,2),SP)
          qp%GreenF(i1,:)  =cmplx(qp_DATA_disk(i1,:,3),qp_DATA_disk(i1,:,4),SP)

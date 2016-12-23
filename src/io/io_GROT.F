@@ -23,15 +23,13 @@
 !
 integer function io_GROT(io_db)
  !
- use pars,           ONLY:SP,IP
  use it_m,           ONLY:initactivate
- use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:nsym,inv_index
  use R_lattice,      ONLY:n_g_shells,ng_closed,ng_in_shell,E_of_shell,g_rot,&
 &                         minus_G
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_status,io_bulk,io_header,io_sec,ver_is_gt_or_eq
- implicit none
+#include<memory.h>
  integer :: io_db,nsym_db
  !
  io_GROT=io_connect(desc='gops',type=1,ID=io_db)
@@ -58,10 +56,14 @@ integer function io_GROT(io_db)
  if (.not.any((/io_sec(io_db,:)==2/))) goto 1
  !
  if (read_is_on(io_db)) then
-   allocate(ng_in_shell(n_g_shells),E_of_shell(n_g_shells))
-   allocate(g_rot(nsym_db,ng_closed),minus_G(ng_closed))
-   call mem_est("RL_Gshells RL_Eshells",&
-&               (/n_g_shells+nsym*ng_closed,n_g_shells/),(/IP,SP/))
+   Y_ALLOCATE(ng_in_shell(n_g_shells))
+   Y_MEM(ng_in_shell)
+   Y_ALLOCATE(g_rot(nsym_db,ng_closed))
+   Y_MEM(g_rot)
+   Y_ALLOCATE(E_of_shell(n_g_shells))
+   Y_MEM(E_of_shell)
+   Y_ALLOCATE(minus_G(ng_closed))
+   Y_MEM(minus_G)
  endif
  !
  call io_bulk(io_db,VAR="SHELLS",VAR_SZ=(/2*n_g_shells/))

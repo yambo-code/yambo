@@ -34,7 +34,7 @@ integer function io_HF_and_locXC(ID)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  integer :: ID
  !
  ! Work Space
@@ -112,8 +112,9 @@ integer function io_HF_and_locXC(ID)
  i_found=0
  if (any((/io_sec(ID,:)==2/))) then
    if (io_mode(ID)==DUMP) then
-     if (allocated(QP_state)) deallocate(QP_state)
-     allocate(QP_state(Qp_nb,QP_nk))
+     Y_FREE(QP_state)
+     Y_ALLOCATE(QP_state(Qp_nb,QP_nk))
+     Y_MEM(QP_state)
      QP_state=.false.
    endif
    !  

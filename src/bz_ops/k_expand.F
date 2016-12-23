@@ -60,14 +60,13 @@ subroutine k_expand(k)
  ! N.B
  ! rang(ik) = # of symmetries | R_is ik = ik
  !
- use pars,           ONLY:SP,IP
- use memory_m,       ONLY:mem_est
+ use pars,           ONLY:SP
  use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
+#include<memory.h>
  !
- implicit none
  type(bz_samp)::k
  !
  ! Work Space
@@ -78,8 +77,12 @@ subroutine k_expand(k)
  !
  if (associated(k%sstar)) return
  !
- allocate(k%star(k%nibz,nsym),k%nstar(k%nibz),k%weights(k%nibz))
- call mem_est( trim(k%description)//'-star' ,(/k%nibz*(nsym+2)/),(/IP/))
+ Y_ALLOCATE(k%star(k%nibz,nsym))
+ Y_MEM(k%star)
+ Y_ALLOCATE(k%nstar(k%nibz))
+ Y_MEM(k%nstar)
+ Y_ALLOCATE(k%weights(k%nibz))
+ Y_MEM(k%weights)
  !
  k%nstar=0
  k%star=0
@@ -102,7 +105,8 @@ subroutine k_expand(k)
  k%weights(:)=k%weights(:)/sum(k%weights)
  k%nbz=sum(k%nstar(:))
  !
- allocate(k%sstar(k%nbz,2))
+ Y_ALLOCATE(k%sstar(k%nbz,2))
+ Y_MEM(k%sstar)
  i2=0
  do i1=1,k%nibz
    do is=1,k%nstar(i1)

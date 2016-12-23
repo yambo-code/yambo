@@ -31,12 +31,11 @@ integer function io_KB_abinit(ID)
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_abinit
- use memory_m,         ONLY:mem_est
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
 &                           io_elemental,io_bulk,io_header,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,frag_WF
  use electrons,        ONLY:n_sp_pol
- implicit none
+#include<memory.h>
  integer,       intent(in) :: ID
  character(schlen)         :: VAR_NAME
  real(SP),      allocatable:: pp_disk(:,:,:)
@@ -76,14 +75,14 @@ integer function io_KB_abinit(ID)
    if (read_is_on(ID)) then
      ! 
      if (.not.allocated(n_atoms_species)) then
-       allocate(n_atoms_species(n_atomic_species))
-       allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
-       call mem_est("n_atoms_species atom_pos",&
-&                   (/n_atomic_species,size(atom_pos)/),(/IP,SP/))
+       Y_ALLOCATE(n_atoms_species(n_atomic_species))
+       Y_MEM(n_atoms_species)
+       Y_ALLOCATE(atom_pos(3,n_atoms_species_max,n_atomic_species))
+       Y_MEM(atom_pos)
      endif
      if (.not.allocated(pp_n_l_comp)) then
-       allocate(pp_n_l_comp(n_atomic_species))
-       call mem_est("pp_n_l_comp",(/n_atomic_species/),(/IP/))
+       Y_ALLOCATE(pp_n_l_comp(n_atomic_species))
+       Y_MEM(pp_n_l_comp)
      endif
      !
    endif
@@ -95,9 +94,9 @@ integer function io_KB_abinit(ID)
    !
    if (.not.ver_is_gt_or_eq(ID,revision=898)) pp_n_l_times_proj_max=maxval(pp_n_l_comp)
    if (read_is_on(ID)) then
-     if(allocated(pp_table)) deallocate(pp_table)
-     allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
-     call mem_est("pp_table",(/size(pp_table)/),(/IP/))
+     Y_FREE(pp_table)
+     Y_ALLOCATE(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+     Y_MEM(pp_table)
    endif
    !
    if (ver_is_gt_or_eq(ID,revision=898)) then
@@ -126,7 +125,8 @@ integer function io_KB_abinit(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- allocate(pp_disk(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
+ Y_ALLOCATE(pp_disk(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
+ Y_MEM(pp_disk)
  !
  call io_fragment(ID,i_fragment=ik)
  !
@@ -163,7 +163,7 @@ integer function io_KB_abinit(ID)
    ! 
  enddo
  !
- deallocate(pp_disk)
+ Y_FREE(pp_disk)
  !
 1 call io_disconnect(ID=ID)
  !

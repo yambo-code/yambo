@@ -30,7 +30,7 @@ integer function io_BSS_invert(iq,W,ID)
  use BS_solvers,    ONLY:BSS_q0,BSS_uses_DbGd,BSS_dr,BSS_damp_reference,K_INV_EPS,K_INV_PL
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on
- implicit none
+#include<memory.h>
  integer      :: iq
  type(w_samp) :: W
  !
@@ -98,8 +98,9 @@ integer function io_BSS_invert(iq,W,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   if (read_is_on(ID).and..not.associated(W%p)) then
-     allocate(W%p(K_INV_EPS%n_freqs))
+   if (read_is_on(ID).and..not.allocated(W%p)) then
+     Y_ALLOCATE(W%p(K_INV_EPS%n_freqs))
+     Y_MEM(W%p)
      W%n_freqs=K_INV_EPS%n_freqs
    endif
    !

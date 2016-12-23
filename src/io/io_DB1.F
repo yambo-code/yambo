@@ -26,7 +26,6 @@ integer function io_DB1(E,k,ID)
  use pars,             ONLY:SP,IP
  use units,            ONLY:HA2EV
  use com,              ONLY:error,msg
- use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision,code_GPL_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
@@ -54,7 +53,7 @@ integer function io_DB1(E,k,ID)
  use real_time,        ONLY:RT_bands
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  :: E
  type(bz_samp) :: k
@@ -267,25 +266,30 @@ integer function io_DB1(E,k,ID)
  !
  if (read_is_on(ID)) then
    ! 
-   allocate(E%E(E%nb,E%nk,n_sp_pol),E%f(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-E E-f",(/size(E%E),size(E%f)/),(/SP,SP/))
+   Y_ALLOCATE(E%E(E%nb,E%nk,n_sp_pol))
+   Y_ALLOCATE(E%f(E%nb,E%nk,n_sp_pol))
+   Y_MEM(E%E)
+   Y_MEM(E%f)
    E%f=0._SP
    !
-   allocate(g_vec(ng_vec,3),k%pt(k%nibz,3))
-   allocate(dl_sop(3,3,nsym),wf_nc_k(k%nibz))
-   allocate(wf_igk(wf_ncx,k%nibz))
-   !
-   call mem_est("g_vec k_pt dl_sop wf_nc_k wf_igk",&
-&               (/size(g_vec),size(k%pt),size(dl_sop),size(wf_nc_k),size(wf_igk)/),&
-&               (/SP,        SP,        SP,           IP,         IP/), quiet=.TRUE. )
+   Y_ALLOCATE(g_vec(ng_vec,3))
+   Y_MEM(g_vec)
+   Y_ALLOCATE(dl_sop(3,3,nsym))
+   Y_MEM(dl_sop)
+   Y_ALLOCATE(k%pt(k%nibz,3))
+   Y_MEM(k%pt)
+   Y_ALLOCATE(wf_nc_k(k%nibz))
+   Y_MEM(wf_nc_k)
+   Y_ALLOCATE(wf_igk(wf_ncx,k%nibz))
+   Y_MEM(wf_igk)
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
-     allocate(n_atoms_species(n_atomic_species))
-     allocate(Z_species(n_atomic_species))
-     allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
-     call mem_est("n_atoms_species atom_pos Z_species",&
-&                 (/n_atomic_species,size(atom_pos),n_atomic_species/),&
-&                 (/IP,SP,IP/))
+     Y_ALLOCATE(n_atoms_species(n_atomic_species))
+     Y_MEM(n_atoms_species)
+     Y_ALLOCATE(Z_species(n_atomic_species))
+     Y_MEM(Z_species)
+     Y_ALLOCATE(atom_pos(3,n_atoms_species_max,n_atomic_species))
+     Y_MEM(atom_pos)
      !
    endif
    !

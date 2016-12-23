@@ -25,7 +25,6 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
  use pars,           ONLY:SP,schlen,lchlen
  use units,          ONLY:HA2EV
- use memory_m,       ONLY:mem_est
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_dim
  use BS_solvers,     ONLY:BSS_q0,variables_BS
@@ -38,7 +37,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
 &                         io_elemental,io_status,io_bulk,io_mode,&
 &                         read_is_on,write_is_on,io_header,DUMP,&
 &                         close_is_on,RD_CL,io_action
- implicit none
+#include<memory.h>
  type(w_samp)        ::FXC_W
  integer             ::ID,iq
  type(X_t), optional ::X 
@@ -154,18 +153,18 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    call io_bulk(ID,R2=W_disk)
    !
    if (read_is_on(ID)) then
-     if (associated(FXC_W%p)) then
-       deallocate(FXC_W%p)
-       call mem_est("W-p")
-     endif
-     allocate(FXC_W%p(FXC_W%n_freqs))
-     call mem_est("W-p",(/FXC_W%n_freqs/))
+     Y_FREE(FXC_W%p)
+     Y_ALLOCATE(FXC_W%p(FXC_W%n_freqs))
+     Y_MEM(FXC_W%p)
      FXC_W%p(:)=cmplx(W_disk(:,1),W_disk(:,2))
    endif
    !
    deallocate(W_disk)
    !
-   if (.not.allocated(FXC_K_diagonal)) allocate(FXC_K_diagonal(BS_K_dim))
+   if (.not.allocated(FXC_K_diagonal)) then
+     Y_ALLOCATE(FXC_K_diagonal(BS_K_dim))
+     Y_MEM(FXC_K_diagonal)
+   endif
    !
    call io_bulk(ID,VAR='FXC_K_diagonal',VAR_SZ=(/BS_K_dim/))
    call io_bulk(ID,R1=FXC_K_diagonal)
@@ -178,7 +177,8 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  if (write_is_on(ID)) FXC_n_g_db=FXC_n_g_corr
  call io_bulk(ID,I0=FXC_n_g_db)
  !
- allocate(FXC_disk(FXC_n_g_db,FXC_n_g_db,2))
+ Y_ALLOCATE(FXC_disk(FXC_n_g_db,FXC_n_g_db,2))
+ Y_MEM(FXC_disk)
  !
  write (ch,'(a,i3.3)') "FXC_W_GROUP_",w_group
  !
@@ -194,7 +194,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    !
  enddo
  !
- deallocate(FXC_disk)
+ Y_FREE(FXC_disk)
  !
 1 call io_disconnect(ID)
  !

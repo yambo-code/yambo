@@ -29,7 +29,6 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use FFT_m,          ONLY:fft_size
  use frequency,      ONLY:w_samp,W_reset
  use wave_func,      ONLY:WF
- use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use linear_algebra, ONLY:INV,USE_LK
@@ -45,7 +44,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
- implicit none
+#include<memory.h>
+ !
  type(levels) ::Xen,En
  type(bz_samp)::Xk,q,k
  type(X_t)    ::X
@@ -95,7 +95,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  call WF_load(WF,0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
  !
- allocate(E_xc(fft_size),rho(fft_size))
+ Y_ALLOCATE(E_xc(fft_size))
+ Y_ALLOCATE(rho(fft_size))
+ Y_MEM(E_xc)
+ Y_MEM(rho)
  call el_density_and_current(Xen,Xk,rho=rho)
  !
  KIND_=XC_EXCHANGE_CORRELATION
@@ -124,7 +127,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  Ec_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- deallocate(E_xc,rho)
+ Y_FREE(E_xc)
+ Y_FREE(rho)
  call WF_free(WF)
  !
  ! Correlatin Setup
@@ -138,7 +142,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    !GL-grid setup (energy)
    !
-   allocate(freq(2*ACFDT_n_freqs+1),freq_weight(2*ACFDT_n_freqs+1))
+   Y_ALLOCATE(freq(2*ACFDT_n_freqs+1))
+   Y_MEM(freq)
+   Y_ALLOCATE(freq_weight(2*ACFDT_n_freqs+1))
+   Y_MEM(freq_weight)
    !
    call gauss_leg_grid(0._SP,ACFDT_E_range(1),freq(:ACFDT_n_freqs),&
 &                      freq_weight(:ACFDT_n_freqs),ACFDT_n_freqs)
@@ -153,7 +160,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    !GL-grid setup (coupling)
    !
-   allocate(lambda(ACFDT_n_lambda),lambda_weight(ACFDT_n_lambda))
+   Y_ALLOCATE(lambda(ACFDT_n_lambda))
+   Y_MEM(lambda)
+   Y_ALLOCATE(lambda_weight(ACFDT_n_lambda))
+   Y_MEM(lambda_weight)
    call gauss_leg_grid(0._SP,1._SP,lambda,lambda_weight,ACFDT_n_lambda)
    lambda_weight(:)=lambda_weight(:)*2.*pi
    !
@@ -179,9 +189,9 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
      Xw%n_freqs=ACFDT_n_freqs
      Xw%er=0.
      Xw%dr=(/freq(1),freq(ACFDT_n_freqs)/)
-     allocate(Xw%p(ACFDT_n_freqs))
+     Y_ALLOCATE(Xw%p(ACFDT_n_freqs))
+     Y_MEM(Xw%p)
      Xw%p(:)=(0.,1.)*freq(:)
-     call mem_est("W-p",(/ACFDT_n_freqs/))
      i_err=X_em1(Xen,Xk,q,X,Xw,iqibz>1)
      if (i_err==0) exit
    enddo
@@ -190,8 +200,13 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    call msg('r','[Ec] RL components :',X%ng)
    !
-   allocate(X_s(X%ng,X%ng),isc%gamp(X%ng,1),tddftk(X%ng,X%ng),dX(X%ng))
-   call mem_est("X_WS",(/2*size(X_s)+3*X%ng/))
+   Y_ALLOCATE(X_s(X%ng,X%ng))
+   Y_MEM(X_s)
+   Y_ALLOCATE(isc%gamp(X%ng,1)))
+   Y_MEM(isc%gamp)
+   Y_ALLOCATE(tddftk(X%ng,X%ng)))
+   Y_MEM(tddftk)
+   Y_ALLOCATE(dX(X%ng))
    call X_alloc('X',(/X%ng,X%ng,ACFDT_n_freqs/))
    !
    ACFDT_Ec=0.
@@ -241,8 +256,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    call X_alloc('X')
    call elemental_collision_free(isc)
    call PP_indexes_reset(plw)
-   deallocate(X_s,tddftk,dX)
-   call mem_est("X_WS")
+   Y_FREE(X_s,tddftk,dX)
    !
  endif
  !
@@ -250,8 +264,9 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  QP_nb=En%nbm
  QP_nk=k%nibz
- if (allocated(QP_state)) deallocate(QP_state)
- allocate(QP_state(QP_nb,QP_nk))
+ Y_FREE(QP_state)
+ Y_ALLOCATE(QP_state(QP_nb,QP_nk))
+ Y_MEM(QP_state)
  QP_state=.TRUE.
  !
  call XCo_driver(En,k,Xk,q)
@@ -287,9 +302,14 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  ! CLEAN
  !
- if (do_Ec) deallocate(freq,freq_weight,lambda,lambda_weight)
- if (do_Ec) deallocate(Xw%p)
- deallocate(QP_Vnl_xc,QP_Vxc,QP_table,QP_state)
- call mem_est("QP_table QP_state QP_Vnl_xc QP_Vxc W-p")
+ Y_FREE(freq)
+ Y_FREE(freq_weight)
+ Y_FREE(lambda)
+ Y_FREE(lambda_weight)
+ Y_FREE(Xw%p)
+ Y_FREE(QP_Vnl_xc)
+ Y_FREE(QP_Vxc)
+ Y_FREE(QP_table)
+ Y_FREE(QP_state)
  !
 end subroutine

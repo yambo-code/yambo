@@ -25,7 +25,6 @@ integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nqibz,g_vec
  use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description,X_alloc
@@ -42,7 +41,7 @@ integer function io_X(X,Xw,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  type(X_t)   :: X
  type(w_samp):: Xw
  integer     :: ID
@@ -185,7 +184,8 @@ integer function io_X(X,Xw,ID)
  !
  if (any((/io_sec(ID,:)==2*iq+1/))) then
    !
-   allocate(X_disk(X%ng_db,X%ng_db,2))
+   Y_ALLOCATE(X_disk(X%ng_db,X%ng_db,2))
+   Y_MEM(X_disk)
    !
    ch="FREQ_sec_iq"//trim(intc(iq))
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/Xw%n_freqs,2/))
@@ -199,12 +199,9 @@ integer function io_X(X,Xw,ID)
    call io_bulk(ID,R2=W_disk)
    !
    if (read_is_on(ID)) then
-     if (associated(Xw%p)) then
-       deallocate(Xw%p)
-       call mem_est("W-p")
-     endif
-     allocate(Xw%p(Xw%n_freqs))
-     call mem_est("W-p",(/Xw%n_freqs/))
+     Y_FREE(Xw%p)
+     Y_ALLOCATE(Xw%p(Xw%n_freqs))
+     Y_MEM(Xw%p)
      Xw%p(:)=cmplx(W_disk(:,1),W_disk(:,2))
    endif
    !
@@ -232,7 +229,7 @@ integer function io_X(X,Xw,ID)
      !
    enddo
    !
-   deallocate(X_disk)
+   Y_FREE(X_disk)
    !
  endif
  !

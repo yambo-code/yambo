@@ -30,8 +30,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  ! and returns the orginal iG that is redefined in output
  ! in such a way that G_m_G(iG,j) exists for all j
  !
- use pars,         ONLY:SP,IP
- use memory_m,     ONLY:mem_est
+ use pars,         ONLY:SP
  use vec_operate,  ONLY:iku_v_norm
  use parallel_m,   ONLY:MPI_comm,PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
@@ -39,8 +38,8 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 #if defined _TIMING
  use timing_m,     ONLY:timing
 #endif
+#include<memory.h>
  !
- implicit none
  integer :: iG,iGo
  type(MPI_comm), optional :: COMM
  !
@@ -72,7 +71,6 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! aux data
  allocate(E_G_m_G(iG_,iGo_))
-
  !
  ! setup MPI parallelism if required
  !
@@ -162,10 +160,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! Fill the actual G_m_G matrix
  !
- allocate(G_m_G(iG_,iGo_))
+ Y_ALLOCATE(G_m_G(iG_,iGo_))
+ Y_MEM(G_m_G)
  G_m_G=0
- !
- call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
  !
 #if defined _OPENMP
 !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)

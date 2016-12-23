@@ -31,7 +31,7 @@ integer function io_COL_CUT(ID)
 &                         ng_closed,nqibz,bare_qpg,cut_description
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
- implicit none
+#include<memory.h>
  integer :: ID
  ! 
  ! Work Space
@@ -89,7 +89,8 @@ integer function io_COL_CUT(ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    ! 
-   allocate(bare_qpg_disk(nqibz,wf_ncx,2))
+   Y_ALLOCATE(bare_qpg_disk(nqibz,wf_ncx,2))
+   Y_MEM(bare_qpg_disk)
    ! 
    if (write_is_on(ID)) call mat_c2r(bare_qpg,bare_qpg_disk)
    !
@@ -98,7 +99,7 @@ integer function io_COL_CUT(ID)
    !   
    if (read_is_on(ID)) call mat_r2c(bare_qpg_disk,bare_qpg)
    !
-   deallocate(bare_qpg_disk)
+   Y_FREE(bare_qpg_disk)
    !
  endif
  !

@@ -29,10 +29,9 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
 &                    SC_xc_functional,SC_perturbation,found_SC_DB
  use electrons, ONLY:levels,E_reset,n_sp_pol
  use R_lattice, ONLY:nkibz
- use memory_m,  ONLY:mem_est
  use IO_m,      ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
 &                    DUMP,OP_RD_CL,NONE,IO_NO_DATABASE
- implicit none
+#include<memory.h>
  !
  character(*)           :: what
  type(levels), optional :: E
@@ -85,8 +84,8 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
      io_err=io_SC_components('V',E_dummy,ID)
      if (io_err==0.and.ik>0) then
        if (ik==1) then
-         allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
-         call mem_est("H_nl_sc",(/size(H_nl_sc)/))
+         Y_ALLOCATE(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
+         Y_MEM(H_nl_sc)
        endif
        do ip=1,ik
          if (ip< ik) call io_control(ACTION=RD_CL_IF_END,SEC=(/ip+1/),ID=ID)
@@ -98,8 +97,8 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
    case("WF")
      io_err=io_SC_components('WF',E_dummy,ID)
      if (io_err==0) then
-       allocate(SC_R(SC_bands(2),SC_bands(2),nkibz,n_sp_pol))
-       call mem_est("SC_R",(/size(SC_R)/))
+       Y_ALLOCATE(SC_R(SC_bands(2),SC_bands(2),nkibz,n_sp_pol))
+       Y_MEM(SC_R)
        do ip=1,nkibz
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ip+1/),ID=ID)
          io_err=io_SC_components('WF',E_dummy,ID)
@@ -108,15 +107,13 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
      !
    case("Hsc_clean")
      if (allocated(H_nl_sc)) then
-       deallocate(H_nl_sc)
-       call mem_est("H_nl_sc")
+       Y_FREE(H_nl_sc)
        return
      endif
      !
    case("WF_clean")
      if (allocated(SC_R)) then
-       deallocate(SC_R)
-       call mem_est("SC_R")
+       Y_FREE(SC_R)
        return
      endif
      ! 

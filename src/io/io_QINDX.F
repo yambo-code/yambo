@@ -29,7 +29,7 @@ integer function io_QINDX(Xk,q,io_db)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on,io_header,&
 &                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB
- implicit none
+#include<memory.h>
  type(bz_samp)::q,Xk
  integer      ::io_db
  !
@@ -85,12 +85,14 @@ integer function io_QINDX(Xk,q,io_db)
  if (any((/io_sec(io_db,:)==2/))) then
    !
    if(ioScatt==0) then
-     if (read_is_on(io_db)) allocate(q%pt(q%nibz,3))
+     Y_ALLOCATE(q%pt(q%nibz,3))
+     Y_MEM(q%pt)
      call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q%pt))
      call io_bulk(io_db,R2=q%pt)
    else
      if(.not.allocated(q_pt)) then
-       allocate(q_pt(nqibz,3))
+       Y_ALLOCATE(q_pt(nqibz,3))
+       Y_MEM(q_pt)
        call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q_pt))
        call io_bulk(io_db,R2=q_pt)
      endif

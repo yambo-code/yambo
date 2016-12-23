@@ -41,14 +41,13 @@ integer function io_RT_components(what,ID)
  use RT_control,     ONLY:J_cache,P_cache,M_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_JPSM_cache_steps,SAVE_G_history
  use fields,         ONLY:A_vecpot
- use matrix_operate, ONLY:mat_c2r,mat_r2c
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer,      intent(in) :: ID
  character(*), intent(in) :: what
@@ -59,7 +58,6 @@ integer function io_RT_components(what,ID)
  character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: what_
  !
- real(SP), allocatable :: TMP_matrix(:,:,:)
  integer               :: ik,ib,i_spin,i_memory,i_time,db_type
  logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
  real(SP)              :: A_vecpot_disk(3,3,2)
@@ -182,8 +180,9 @@ integer function io_RT_components(what,ID)
    if (l_elph_scatt) then
      !
      if (read_is_on(ID)) then
-       if(allocated(q_weight_RT)) deallocate(q_weight_RT)
-       allocate(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
+       Y_FREE(q_weight_RT)
+       Y_ALLOCATE(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
+       Y_MEM(q_weight_RT)
      endif
      !
      call io_bulk(ID,VAR="Q_WEIGHT",VAR_SZ=(/nqbz,elph_branches(2)-elph_branches(1)+1,2/))
@@ -223,19 +222,13 @@ integer function io_RT_components(what,ID)
    !
    if (allocated(G_lesser_reference)) then
      !
-     allocate(TMP_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
-     !
      i_spin=1
      !
      do ik=1,RT_nk
        call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &                      VAR_SZ=(/RT_nbands,RT_nbands,2/))
-       if (write_is_on(ID)) call mat_c2r(G_lesser_reference(:,:,ik),TMP_matrix)
-       call io_bulk(ID,R3=TMP_matrix)
-       if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser_reference(:,:,ik))
+       call io_bulk(ID,C3=G_lesser_reference(:,:,ik))
      enddo
-     !
-     deallocate(TMP_matrix)
      !
      if (read_is_on(ID)) call RT_init_occupation_reference( )
      !
@@ -254,16 +247,10 @@ integer function io_RT_components(what,ID)
    !
    call io_fragment(ID,i_fragment=ik)
    !
-   allocate(TMP_matrix(2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2))
-   !
    do ib=1,RT_bands(2)-RT_bands(1)+1
-     if (write_is_on(ID)) call mat_c2r(THETA_matrix(:,:,ib,ik),TMP_matrix)
      call io_bulk(ID,VAR="RT_THETA_B"//trim(intc(ib))//"_K"//trim(intc(ik)),VAR_SZ=(/2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2/))
-     call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,THETA_matrix(:,:,ib,ik))
+     call io_bulk(ID,C3=THETA_matrix(:,:,ib,ik))
    enddo
-   !
-   deallocate(TMP_matrix)
    !
  endif
  !
@@ -279,8 +266,6 @@ integer function io_RT_components(what,ID)
    !
    i_spin=1
    !
-   allocate(TMP_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
-   !
    do i_memory=1,G_MEM_steps
      !
      i_time=NE_i_time-G_MEM_steps+i_memory
@@ -290,13 +275,9 @@ integer function io_RT_components(what,ID)
 &                              "_TIME"//trim(TIME_string( (i_time-1)*RT_step )),&
 &                 VAR_SZ=(/RT_nbands,RT_nbands,2/))
      !
-     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,i_memory),TMP_matrix)
-     call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,i_memory))
+     call io_bulk(ID,C3=dG_lesser(:,:,ik,i_memory))
      !
    enddo
-   !
-   deallocate(TMP_matrix)
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
      if (write_is_on(ID)) then
@@ -370,7 +351,9 @@ integer function io_RT_components(what,ID)
      call io_elemental(ID,I0=TYP%last_point)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     if (.not.allocated(TYP%Time)) allocate(TYP%Time(NE_steps))
+     Y_ALLOCATE(TYP%Time(NE_steps))
+     Y_MEM(TYP%Time)
+     !
      call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
      call io_bulk(ID,R1=TYP%Time(:TYP%N))
      !

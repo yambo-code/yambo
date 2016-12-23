@@ -28,7 +28,6 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !  k_grid_b k_grid_dim k_grid k_grid_uc_vol
  !
  use pars,           ONLY:SP,schlen
- use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
 &                         c2a,sort,rlu_v_norm
  use com,            ONLY:msg,warning
@@ -37,8 +36,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
 &                         bz_samp,g_vec,ng_in_shell
  use zeros,          ONLY:k_rlu_zero
+#include<memory.h>
  !
- implicit none
  type(bz_samp)::k,Xk
  integer      ::G_shell
  logical      ::be_verbose
@@ -62,8 +61,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  if (G_shell == 1) then
    !
-   allocate(Xk%pt(Xk%nibz,3))
-   call mem_est("Xk-pt",(/Xk%nibz*3/),(/SP/))
+   Y_ALLOCATE(Xk%pt(Xk%nibz,3))
+   Y_MEM(Xk%pt)
    Xk%pt(:,:)=k%pt(:Xk%nibz,:)
    !
    ! IBZ -> BZ

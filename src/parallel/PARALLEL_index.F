@@ -27,8 +27,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
 &                     MPI_comm,comm_default_value
  use com,        ONLY:error,warning
  use stderr,     ONLY:intc
- !
- implicit none
+#include<memory.h>
  !
  type(PP_indexes)       ::px
  integer                ::uplim(:)
@@ -74,14 +73,17 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  lowlim=1
  if (present(low_range))  lowlim=low_range
  !
- allocate(px%n_of_elements(ncpu_loop))
+ Y_ALLOCATE(px%n_of_elements(ncpu_loop))
+ Y_MEM(px%n_of_elements)
  px%n_of_elements=0
  !
  if (uplim(1)==0) goto 1
  !
  if (nindxs==1.and.local_CONSECUTIVE) then
    !
-   allocate(px%element_1D(uplim(1)),i_done(uplim(1)))
+   Y_ALLOCATE(px%element_1D(uplim(1)))
+   Y_MEM(px%element_1D)
+   allocate(i_done(uplim(1)))
    px%element_1D=.false.
    i_done=1
    i_done(:lowlim(1))=0
@@ -108,12 +110,17 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
    if (any(i_done==1)) call error('Incomplete Parallel Index Filling')
    !
  else if (nindxs==1.and..not.local_CONSECUTIVE) then
-   if (.not.associated(px%weight_1D)) then
-     allocate(px%weight_1D(uplim(1)))
+   if (.not.allocated(px%weight_1D)) then
+     Y_ALLOCATE(px%weight_1D(uplim(1)))
+     Y_MEM(px%weight_1D)
      px%weight_1D=1
      if (lowlim(1)>1) px%weight_1D(1:lowlim(1)-1)=0
    endif
-   allocate(px%element_1D(uplim(1)),i_done(uplim(1)),px%first_of_1D(ncpu_loop))
+   allocate(i_done(uplim(1)))
+   Y_ALLOCATE(px%element_1D(uplim(1)))
+   Y_MEM(px%element_1D)
+   Y_ALLOCATE(px%first_of_1D(ncpu_loop))
+   Y_MEM(px%first_of_1D)
    px%first_of_1D(myid_loop+1)=-1
    px%element_1D=.false.
    tot_steps=sum(px%weight_1D)
@@ -159,7 +166,8 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
    !
    if (par_kind_2D==1) call error(' PARALLEL index structure not implemented')
    !
-   allocate(px%element_2D(uplim(1),uplim(2)))
+   Y_ALLOCATE(px%element_2D(uplim(1),uplim(2)))
+   Y_MEM(px%element_2D)
    px%element_2D=.false.
    !
    if (present(MASK)) then

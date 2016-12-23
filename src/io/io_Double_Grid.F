@@ -23,17 +23,15 @@
 !
 integer function io_Double_Grid(E,Xk,ID)
  !
- use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_max_filling,&
 &                         BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol,BZ_DbGd_ipol_weight,&
 &                         DbGd_is_symmetry_expanded,BZ_ASSOCIATED_nkpts,BZ_DbGd_kpts,&
 &                         BZ_DbGd_nkpts
  use R_lattice,      ONLY:nXkbz,bz_samp
- use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
 &                         IO_OUTDATED_DB
- implicit none
+#include<memory.h>
  !
  type(levels) :: E
  type(bz_samp):: Xk
@@ -92,16 +90,22 @@ integer function io_Double_Grid(E,Xk,ID)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then
-   allocate(E%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   allocate(E%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   allocate(E%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   if(.not.DbGd_is_symmetry_expanded) allocate(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
-   if(     DbGd_is_symmetry_expanded) allocate(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
-   allocate(BZ_DbGd_nkpt(BZ_ASSOCIATED_nkpts),BZ_DbGd_table(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling,2))
-   allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
-   call mem_est("E_DbGd W_DbGd f_DbGd k_DbGd BZ_DbGd_nkpt BZ_DbGd_table",&
-&               (/size(E%E_DbGd),size(E%W_DbGd),size(E%f_DbGd),size(BZ_DbGd_kpts),size(BZ_DbGd_nkpt),&
-&                 size(BZ_DbGd_table)/),(/SP,SP,SP,SP,IP,IP/))
+   Y_ALLOCATE(E%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+   Y_MEM(E%E_DbGd)
+   Y_ALLOCATE(E%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+   Y_MEM(E%W_DbGd)
+   Y_ALLOCATE(E%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+   Y_MEM(E%f_DbGd)
+   Y_ALLOCATE(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
+   Y_MEM(BZ_DbGd_kpts)
+   Y_ALLOCATE(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
+   Y_MEM(BZ_DbGd_kpts)
+   Y_ALLOCATE(BZ_DbGd_nkpt(BZ_ASSOCIATED_nkpts))
+   Y_MEM(BZ_DbGd_nkpt)
+   Y_ALLOCATE(BZ_DbGd_table(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling,2))
+   Y_MEM(BZ_DbGd_table)
+   Y_ALLOCATE(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
+   Y_MEM(BZ_DbGd_ipol_weight)
  endif
  !
  ! Eigenvalues

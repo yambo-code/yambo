@@ -24,13 +24,12 @@
 integer function io_RIM(ID)
  !
  use pars,           ONLY:SP,schlen
- use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
 &                         RIM_id_epsm1_reference,RIM_epsm1,RIM_anisotropy,RIM_qpg,&
 &                         nqibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
- implicit none
+#include<memory.h>
  integer :: ID
  ! 
  ! Work Space
@@ -77,11 +76,12 @@ integer function io_RIM(ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   allocate(RIM_qpg_disk(RIM_ng_disk,RIM_ng_disk))
+   Y_ALLOCATE(RIM_qpg_disk(RIM_ng_disk,RIM_ng_disk))
+   Y_MEM(RIM_qpg_disk)
    !
    if (read_is_on(ID)) then
-     allocate(RIM_qpg(nqibz,RIM_ng,RIM_ng))
-     call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
+     Y_ALLOCATE(RIM_qpg(nqibz,RIM_ng,RIM_ng))
+     Y_MEM(RIM_qpg)
    endif
    !
    do i1=1,nqibz 
@@ -96,7 +96,7 @@ integer function io_RIM(ID)
      !
    enddo
    !
-   deallocate(RIM_qpg_disk)
+   Y_FREE(RIM_qpg_disk)
    !
  endif
  !

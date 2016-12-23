@@ -23,11 +23,11 @@
 !
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
- use pars,          ONLY:SP,schlen,lchlen
+ use pars,          ONLY:schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision,     ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
-&                        io_bulk,write_is_on,io_disconnect,&
+&                        io_bulk,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
  use xc_functionals,ONLY:GS_xc_kind
@@ -44,7 +44,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use timing_m,      ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  integer, intent(inout)            ::ID
  type(COLLISIONS_group)            ::COLL
@@ -54,7 +54,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  ! Work Space
  !
  character(schlen)     :: db_name
- real(SP), allocatable :: COLLISIONS_v_disk(:,:)
  integer               :: V_kind_disk,i_desc,i_coll_loop,io_err,i_coll,SIZE_
  character(lchlen)     :: V_kind_string,X_string
  !
@@ -208,8 +207,9 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
    ! States
    !
-   if (read_is_on(ID).and..not.associated(COLL%state)) then
-     allocate(COLL%state(COLL%N,4))
+   if (read_is_on(ID).and..not.allocated(COLL%state)) then
+     Y_ALLOCATE(COLL%state(COLL%N,4))
+     Y_MEM(COLL%state)
    endif
    call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/COLL%N,4/))
    call io_bulk(ID,I2=COLL%state)
@@ -221,7 +221,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  ! Check the restart point
  !
- if (IO_mode(ID)==VERIFY.and.associated(COLL%IO_status)) then
+ if (IO_mode(ID)==VERIFY.and.allocated(COLL%IO_status)) then
    !
    COLL%IO_status=1
    do i_coll_loop=1,COLL%N
@@ -270,17 +270,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      call io_bulk(ID,R1=COLL_element%v_r)
    else
      ! Complex collisions
-     allocate(COLLISIONS_v_disk(COLL_element%N,2))
      call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL_element%N,2/))
-     if(write_is_on(ID)) then
-       COLLISIONS_v_disk(:,1) =real(COLL_element%v_c(1:COLL_element%N))
-       COLLISIONS_v_disk(:,2)=aimag(COLL_element%v_c(1:COLL_element%N))
-       call io_bulk(ID,R2=COLLISIONS_v_disk)
-     else
-       call io_bulk(ID,R2=COLLISIONS_v_disk)
-       COLL_element%v_c(1:COLL_element%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
-     endif
-     deallocate(COLLISIONS_v_disk)
+     call io_bulk(ID,C2=COLL_element%v_c)
    endif
    !
  endif

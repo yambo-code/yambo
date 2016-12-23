@@ -55,7 +55,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use timing_m,       ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  type(levels) ::Ken
  type(bz_samp)::Xk
  type(X_t)    ::X_oscillators
@@ -94,14 +94,17 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Eps_0
  !=======
- allocate(Epsilon_ii(BSS_n_freqs,4)) ! 2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
- allocate(X_drude_term(BSS_n_freqs))
+ Y_ALLOCATE(Epsilon_ii(BSS_n_freqs,4))!2(int)3(nonint)4(n-1Haydock/invshifted)
+ Y_MEM(Epsilon_ii)
+ Y_ALLOCATE(X_drude_term(BSS_n_freqs))
+ Y_MEM(X_drude_term)
  Epsilon_ii   = cZERO
  X_drude_term = cZERO
  !
  Epsilon_ii(:,1)=W_bss%p(:)  
  if (BSS_eval_JDOS) then
-   allocate(Joint_DOS(BSS_n_freqs,4))
+   Y_ALLOCATE(Joint_DOS(BSS_n_freqs,4))
+   Y_MEM(Joint_DOS)
    Joint_DOS=cZERO
    Joint_DOS(:,1) =W_bss%p(:)
  endif
@@ -348,13 +351,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call K_output_file(iq,"open IP")
    call K_output_file(iq,"IP")
    !
-   deallocate(Epsilon_ii,X_drude_term)
-   if (BSS_eval_JDOS) deallocate(Joint_DOS)
+   Y_FREE(Epsilon_ii)
+   Y_FREE(X_drude_term)
+   Y_FREE(Joint_DOS)
 #if defined _KERR
-   if(l_kerr) deallocate(Epsilon_ij)
+   Y_FREE(Epsilon_ij)
 #endif
 #if defined _PL
-   if(l_photolum) deallocate(PL)
+   Y_FREE(PL)
 #endif
    !
  endif

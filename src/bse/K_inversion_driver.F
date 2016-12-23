@@ -30,14 +30,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 &                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:q_norm,bz_samp
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
-&                         PAR_COM_SLK_INDEX_local,myid
+&                         PAR_COM_SLK_INDEX_local
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
  use SLK_m,          ONLY:BLACS_structure_in_use
@@ -64,7 +63,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! GPL_EXCLUDE_END
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp) :: W
  integer      :: iq
@@ -191,8 +190,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
 #endif
  !
- allocate(Lo(BS_H_dim,W%n_freqs,Lo_dim))
- call mem_est("Lo",(/size(Lo)/))
+ Y_ALLOCATE(Lo(BS_H_dim,W%n_freqs,Lo_dim))
+ Y_MEM(Lo)
  !
  call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
@@ -433,8 +432,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      !
      call PP_indexes_reset(PAR_IND_freqs)
-     deallocate(Lo)
-     call mem_est("Lo")
+     Y_FREE(Lo)
      !
 #if defined _SCALAPACK
      call SLK_matrix_reset(K_slk)

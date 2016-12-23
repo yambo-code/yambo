@@ -56,7 +56,7 @@ subroutine K_diago_driver(iq,W)
  use timing_m,       ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp)  :: W
  integer       :: iq
@@ -268,21 +268,28 @@ subroutine K_diago_driver(iq,W)
      select case(ii)
      case(1)
        !
-       allocate(BS_E(BS_H_dim))
+       Y_ALLOCATE(BS_E(BS_H_dim))
+       Y_MEM(BS_E)
        if(E_SOC_nbands/=0) then
-         allocate(BS_corrections(2/n_sp_pol,BS_H_dim))
-         allocate(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
+         Y_ALLOCATE(BS_corrections(2/n_sp_pol,BS_H_dim))
+         Y_MEM(BS_corrections)
+         Y_ALLOCATE(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
+         Y_MEM(BS_E_SOC_corr)
        endif
-       allocate(BS_R_left(BS_H_dim))
-       allocate(BS_R_right(BS_H_dim))
+       Y_ALLOCATE(BS_R_left(BS_H_dim))
+       Y_MEM(BS_R_left)
+       Y_ALLOCATE(BS_R_right(BS_H_dim))
+       Y_MEM(BS_R_right)
        !
        ! GPL_EXCLUDE_START
        !
 #if defined _KERR
-       if (l_kerr) allocate(BS_R_right_kerr(BS_H_dim))
+       Y_ALLOCATE(BS_R_right_kerr(BS_H_dim))
+       Y_MEM(BS_R_right_kerr)
 #endif
 #if defined _PL
-       if (l_photolum) allocate(BS_R_PL(2,BS_H_dim))
+       Y_ALLOCATE(BS_R_PL(2,BS_H_dim))
+       Y_MEM(BS_R_PL)
 #endif
        !
        ! GPL_EXCLUDE_END
@@ -290,13 +297,19 @@ subroutine K_diago_driver(iq,W)
      case(2)
        !
        if(K_is_not_hermitian) then
-         allocate(BS_V_left(BS_H_dim,BS_H_dim))
-         allocate(BS_V_right(BS_H_dim,BS_H_dim))
-         allocate(BS_overlap(BS_H_dim,BS_H_dim))
+         Y_ALLOCATE(BS_V_left(BS_H_dim,BS_H_dim))
+         Y_MEM(BS_V_left)
+         Y_ALLOCATE(BS_V_right(BS_H_dim,BS_H_dim))
+         Y_MEM(BS_V_right)
+         Y_ALLOCATE(BS_overlap(BS_H_dim,BS_H_dim))
+         Y_MEM(BS_overlap)
        else
-         allocate(BS_E_real(BS_H_dim))
-         if(BSS_perturbative_width.and..not.allocated(BS_corrections)) &
-&          allocate(BS_corrections(1,BS_H_dim))
+         Y_ALLOCATE(BS_E_real(BS_H_dim))
+         Y_MEM(BS_E_real)
+         if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
+           Y_ALLOCATE(BS_corrections(1,BS_H_dim))
+           Y_MEM(BS_corrections)
+         endif
        endif
        !
      end select
@@ -305,32 +318,20 @@ subroutine K_diago_driver(iq,W)
    !
    subroutine local_free()
      !
-     if(allocated(BS_E))            deallocate(BS_E)
-     if(allocated(BS_E_real))       deallocate(BS_E_real)
-     if(allocated(BS_corrections))  deallocate(BS_corrections)
-     if(allocated(BS_R_right))      deallocate(BS_R_right)
-     if(allocated(BS_R_left))       deallocate(BS_R_left)
-     if(allocated(BS_V_right))      deallocate(BS_V_right)
-     if(allocated(BS_V_left))       deallocate(BS_V_left)
-     if(associated(BS_overlap)) then
-       deallocate(BS_overlap)
-       nullify(BS_overlap)
-     endif
-     if(associated(BS_E_SOC_corr)) then
-       deallocate(BS_E_SOC_corr)
-       nullify(BS_E_SOC_corr)
-     endif
+     Y_FREE(BS_E)
+     Y_FREE(BS_E_real)
+     Y_FREE(BS_corrections)
+     Y_FREE(BS_R_right)
+     Y_FREE(BS_R_left)
+     Y_FREE(BS_V_right)
+     Y_FREE(BS_V_left)
+     Y_FREE_P(BS_overlap)
+     Y_FREE_P(BS_E_SOC_corr)
 #if defined _KERR
-     if(associated(BS_R_right_kerr)) then
-       deallocate(BS_R_right_kerr)
-       nullify(BS_R_right_kerr)
-     endif
+     Y_FREE_P(BS_R_right_kerr)
 #endif
 #if defined _PL
-     if(associated(BS_R_PL)) then
-       deallocate(BS_R_PL)
-       nullify(BS_R_PL)
-     endif
+     Y_FREE_P(BS_R_PL)
 #endif
      !
    end subroutine local_free

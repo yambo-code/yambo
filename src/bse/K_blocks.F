@@ -36,18 +36,17 @@ subroutine K_blocks( )
  !end type BS_block
  !
  use pars,         ONLY:cZERO,SP
- use memory_m,     ONLY:mem_est
  use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim
  use com,          ONLY:msg
  use interfaces,   ONLY:PARALLEL_live_message
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_loop,tot_size,i_block,n_new_blocks
+ integer    :: i_T,j_T,i_loop,i_block,n_new_blocks
  real(SP)   :: N_Ts_total,N_Ts_local
  !
  call section('=','CPU-dependent Block structure')
@@ -60,7 +59,6 @@ subroutine K_blocks( )
    endif
    !
    N_Ts_total  =0
-   tot_size    =0
    n_BS_blks   =0
    !
    do i_T=1,BS_nT_grps
@@ -74,9 +72,9 @@ subroutine K_blocks( )
        !
        if (i_loop==2) then
          do i_block=n_BS_blks+1,n_BS_blks+n_new_blocks
-           allocate(BS_blk(i_block)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           Y_ALLOCATE(BS_blk(i_block)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           Y_MEM(BS_blk(i_block)%mat)
            BS_blk(i_block)%mat=cZERO
-           tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
            BS_blk(i_block)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
            if (i_block-n_BS_blks==1) BS_blk(i_block)%mode="R"
            if (i_block-n_BS_blks==2) BS_blk(i_block)%mode="A"
@@ -95,11 +93,6 @@ subroutine K_blocks( )
    enddo
    !
  enddo
- !
- ! Memory message
- !================
- !
- call mem_est("BSK",(/tot_size/))
  !
  ! Live Timing Blocks
  !====================

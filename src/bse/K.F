@@ -27,7 +27,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
  use LOGO,         ONLY:pickup_a_random
- use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf,l_bss
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
@@ -72,7 +71,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! GPL_EXCLUDE_END
  !
- implicit none
+#include<memory.h>
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
  type(X_t)     ::X
@@ -87,7 +86,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
-&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,alloc_err,&
+&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,&
 &              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
@@ -251,8 +250,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Allocation
    !-----------
-   allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
-   call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
+   Y_ALLOCATE(FXC_K_diagonal(BS_K_dim))
+   Y_MEM(FXC_K_diagonal)
+   Y_ALLOCATE(FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
+   Y_MEM(FXC)
    FXC_K_diagonal=0._SP
    FXC=cZERO
    !
@@ -301,7 +302,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !===============
  ! GPL_EXCLUDE_START
  !
-! if (l_bs_fxc) call mem_est("BS_K_2_FXC",&
 !&                          (/2*6*FXC_n_g_corr*O_x_dim+2*FXC_n_g_corr**2+2*O_x_dim/),&
 !&                          (/SP/))
  !
@@ -310,7 +310,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ALDA
  !======
  if (BS_K_is_ALDA) then
-   allocate(F_xc(fft_size,n_spin,n_spin))
+   Y_ALLOCATE(F_xc(fft_size,n_spin,n_spin))
+   Y_MEM(F_xc)
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
@@ -334,13 +335,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! when the TR is applied
    !
    if (i_space_inv==0.and.i_time_rev==1.and..not.BS_W_is_diagonal) then
-     allocate(BS_W(BS_n_g_W,i_g1,2*q%nibz),stat=alloc_err)
+     Y_ALLOCATE(BS_W(BS_n_g_W,i_g1,2*q%nibz))
+     Y_MEM(BS_W)
    else
-     allocate(BS_W(BS_n_g_W,i_g1,q%nibz),stat=alloc_err)
+     Y_ALLOCATE(BS_W(BS_n_g_W,i_g1,q%nibz))
+     Y_MEM(BS_W)
    endif
-   call mem_est('BS_W',(/size(BS_W)/),errors=(/alloc_err/))
    !
-   allocate(isc%gamp(i_g1,BS_n_g_W))
+   Y_ALLOCATE(isc%gamp(i_g1,BS_n_g_W))
+   Y_MEM(isc%gamp)
    !
    if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
@@ -378,7 +381,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
    !
-   deallocate(isc%gamp)
+   Y_FREE(isc%gamp)
    !
    if (.not.l_td_hf) call X_alloc('X')
    !
@@ -403,11 +406,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Allocations
  !-------------
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   allocate(Ovv(BS_n_g_W),Occ(BS_n_g_W),O_times_W(BS_n_g_W))
-   call mem_est('O_RES_WS',(/3*BS_n_g_W/))
+   Y_ALLOCATE(Ovv(BS_n_g_W))
+   Y_MEM(Ovv)
+   Y_ALLOCATE(Occ(BS_n_g_W))
+   Y_MEM(Occ)
+   Y_ALLOCATE(O_times_W(BS_n_g_W))
+   Y_MEM(O_times_W)
    if (BS_cpl_K_corr) then
-     allocate(Ovc(BS_n_g_W),Ocv(BS_n_g_W))
-     call mem_est('O_CPL_WS',(/2*BS_n_g_W/))
+     Y_ALLOCATE(Ovc(BS_n_g_W))
+     Y_MEM(Ovc)
+     Y_ALLOCATE(Ocv(BS_n_g_W))
+     Y_MEM(Ocv)
    endif
  endif
  !
@@ -673,13 +682,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call BS_oscillators_free(BS_nT_grps,0)
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   deallocate(WF_phase)
-   call mem_est("WF_phase")
-   deallocate(Ovv,Occ,O_times_W)
-   call mem_est("O_RES_WS")
+   Y_FREE(WF_phase)
+   Y_FREE(Ovv)
+   Y_FREE(O_times_W)
+   Y_FREE(Occ)
    if (BS_cpl_K_corr) then
-     deallocate(Ovc,Ocv)
-     call mem_est("O_CPL_WS")
+     Y_FREE(Ovc)
+     Y_FREE(Ocv)
    endif
  endif
  !
@@ -687,14 +696,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
-   deallocate(FXC_K_diagonal,FXC)
-   call mem_est("FXC_K_diagonal FXC")
-   call mem_est("BS_K_2_FXC")
+   Y_FREE(FXC)
+   Y_FREE(FXC_K_diagonal)
    !
    ! GPL_EXCLUDE_END
    !
  else if (BS_K_is_ALDA) then
-   deallocate(F_xc)
+   Y_FREE(F_xc)
  endif
  !
 1 continue

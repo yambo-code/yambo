@@ -48,7 +48,7 @@ subroutine K_correlation_collisions(i_block,Xk,q)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer        :: i_block
  type(bz_samp)  :: Xk,q
@@ -76,7 +76,8 @@ subroutine K_correlation_collisions(i_block,Xk,q)
  ! Table allocation
  !------------------
  !
- allocate(BS_blk(i_block)%O_table(2,nsym,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
+ Y_ALLOCATE(BS_blk(i_block)%O_table(2,nsym,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
+ Y_MEM(BS_blk(i_block)%O_table)
  !
  do i_cycle=1,2
    !

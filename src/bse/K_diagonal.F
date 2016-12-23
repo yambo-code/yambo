@@ -30,7 +30,7 @@ subroutine K_diagonal(iq,what)
  use SLK_m,          ONLY:BLACS_structure_in_use,SLK_POOL
  use parallel_m,     ONLY:PP_redux_wait
  !
- implicit none
+#include<memory.h>
  !
  integer,       intent(in) :: iq
  character(*)              :: what
@@ -135,7 +135,8 @@ subroutine K_diagonal(iq,what)
    !
    if (.not.K_diago_in_BS_mat) then
      !
-     allocate(BS_diagonal(BS_K_dim))
+     Y_ALLOCATE(BS_diagonal(BS_K_dim))
+     Y_MEM(BS_diagonal)
      BS_diagonal=cZERO
      !
      if (rows(1)<=rows(2)) then

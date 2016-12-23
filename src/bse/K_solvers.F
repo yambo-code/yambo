@@ -37,11 +37,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use drivers,        ONLY:l_photolum
 #endif
 #if defined _KERR
- use drivers,        ONLY:l_kerr
  use X_m,            ONLY:Epsilon_ij
 #endif
  !
- implicit none
+#include<memory.h>
  type(levels) ::Ken
  type(bz_samp)::Xk,q
  type(X_t)    ::X_static
@@ -87,7 +86,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
  !
- if (run_Haydock.and.associated(Ken%W)) then
+ if (run_Haydock.and.allocated(Ken%W)) then
    call warning('K with QP widths not supported in the Haydock solver')
    run_Haydock=.false.
  endif
@@ -104,7 +103,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! No JDOS in Inversion/Hadydock
  !
- if (BSS_eval_JDOS) deallocate(Joint_DOS)
+ if (BSS_eval_JDOS) then
+   Y_FREE(Joint_DOS)
+ endif
  BSS_eval_JDOS=.FALSE.
  !
  ! Inversion
@@ -134,9 +135,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! CLEAN
  !
- deallocate(X_drude_term,Epsilon_ii)
+ Y_FREE(X_drude_term)
+ Y_FREE(Epsilon_ii)
 #if defined _KERR
- if(l_kerr) deallocate(Epsilon_ij)
+ Y_FREE(Epsilon_ij)
 #endif
  !
 end subroutine

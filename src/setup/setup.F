@@ -247,7 +247,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
  endif
  !
- if (BZ_DbGd_nbands>0.and.associated(en%E_DbGd)) then
+ if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
    !
    call section('=','Double K-grid')
    !=======================================
@@ -360,9 +360,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Copy Ho eigenvalues in Xen%Eo for dipoles
  !
- if (l_sc_run .and. .not.associated(Xen%Eo) .and. found_SC_DB) then
-   allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-   call mem_est("XenE-Eo",(/size(Xen%Eo)/),(/SP/))
+ if (l_sc_run .and. .not.allocated(Xen%Eo) .and. found_SC_DB) then
+   Y_ALLOCATE(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
+   Y_MEM(Xen%Eo)
    Xen%Eo(:,:,:)=en%Eo(:,:en%nk,:)
  endif
  !

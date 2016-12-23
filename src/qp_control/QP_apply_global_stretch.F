@@ -29,7 +29,6 @@ subroutine QP_apply_global_stretch(band_range,E,k,QP_ctl_from_DB,QP_ctl_add,DB_c
  !
  use pars,          ONLY:SP,lchlen,rZERO,cI,cONE
  use units,         ONLY:HA2EV,HBAR_eVfs
- use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use electrons,     ONLY:levels,n_sp_pol,n_spin,n_spinor
  use R_lattice,     ONLY:bz_samp
@@ -37,7 +36,7 @@ subroutine QP_apply_global_stretch(band_range,E,k,QP_ctl_from_DB,QP_ctl_add,DB_c
  use QP_m,          ONLY:QP_ctl_applied
  use interfaces,    ONLY:el_density_of_states
  !
- implicit none
+#include<memory.h>
  !
  type(levels)    ::E
  type(bz_samp)   ::k
@@ -79,9 +78,9 @@ subroutine QP_apply_global_stretch(band_range,E,k,QP_ctl_from_DB,QP_ctl_add,DB_c
        do_W_DBs=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'W')
      endif
      do_W_CTL=.true.
-     if (.not.associated(E%W)) then
-       allocate(E%W(E%nb,E%nk,n_sp_pol))
-       call mem_est("E-W",(/size(E%W)/),(/SP/))
+     if (.not.allocated(E%W)) then
+       Y_ALLOCATE(E%W(E%nb,E%nk,n_sp_pol))
+       Y_MEM(E%W)
        E%W=rZERO
      endif
    endif
@@ -90,9 +89,9 @@ subroutine QP_apply_global_stretch(band_range,E,k,QP_ctl_from_DB,QP_ctl_add,DB_c
        do_Z_DBs=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')
      endif
      do_Z_CTL=.true.
-     if (.not.associated(E%Z)) then
-       allocate(E%Z(E%nb,E%nk,n_sp_pol))
-       call mem_est("E-Z",(/size(E%Z)/))
+     if (.not.allocated(E%Z)) then
+       Y_ALLOCATE(E%Z(E%nb,E%nk,n_sp_pol))
+       Y_MEM(E%Z)
        E%Z=1._SP
      endif
    endif
@@ -102,9 +101,9 @@ subroutine QP_apply_global_stretch(band_range,E,k,QP_ctl_from_DB,QP_ctl_add,DB_c
    !
    ! Backup (only once)
    !
-   if (.not.associated(E%Eo)) then
-     allocate(E%Eo(E%nb,E%nk,n_sp_pol))
-     call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
+   if (.not.allocated(E%Eo)) then
+     Y_ALLOCATE(E%Eo(E%nb,E%nk,n_sp_pol))
+     Y_MEM(E%Eo)
      E%Eo=E%E
    endif
    !

@@ -40,7 +40,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &                              Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
 &                              use_g_space_approach,force_v_g_space_approach
  use IO_m,                ONLY:io_control,RD_CL,RD
- use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:error,msg
 #if defined _SC
@@ -48,7 +47,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use com,                 ONLY:secnm
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
@@ -63,7 +62,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,icfft(n_spinor),ivfft(n_spinor),ic,iv,&
-&                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem,ic_min
+&                                i_sp_pol,i_spinor,i_spin,wf_dim,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4)
  real(SP)                     :: Ev_m_Ec,W_,Dipole_Energy_treshold_
@@ -85,8 +84,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  io_Vnl_err      = io_err(3)
  !
  if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-   allocate(kbv(wf_ng,pp_kbv_dim,4,n_spinor),stat=alloc_err)
-   call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
+   Y_ALLOCATE(kbv(wf_ng,pp_kbv_dim,4,n_spinor))
+   Y_MEM(kbv)
  endif
  !
  ! WF load
@@ -100,7 +99,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! Eo    are always the eigenvalues consistent with the WFs
  ! E     do also include the QP corrections when Eo are associated
  !
- if (associated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
+ if (allocated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
  !
  l_eval_DIP_iR=use_g_space_approach
 #if defined _PL
@@ -180,12 +179,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
          enddo
          !
-         if (associated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
+         if (allocated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
          !
          Ev_m_Ec   =Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
          Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)+cI*W_
          !
-         if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+         if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
          !
          ! Evaluate <ivfft|   p   |icfft>
          !================================
@@ -213,8 +212,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
            ! See for this PRB 48, 11789 (1993), definition of p_eff
            !
-           if (.not.(associated(Xen%Eo).or.associated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
-           if (     (associated(Xen%Eo).or.associated(Xen%W))) then
+           if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
+           if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
              if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
              if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)*Ev_m_Ec_QP/Ev_m_Ec
            endif
@@ -251,8 +250,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (l_eval_DIP_P2) then
            ! See for this PRB 48, 11789 (1993), definition of p_eff
-           if(.not.associated(Xen%Eo)) P_square(ic,iv,ik_mem,i_sp_pol)= rho(4)
-           if(     associated(Xen%Eo)) then
+           if(.not.allocated(Xen%Eo)) P_square(ic,iv,ik_mem,i_sp_pol)= rho(4)
+           if(     allocated(Xen%Eo)) then
              if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) P_square(ic,iv,ik_mem,i_sp_pol)=cZERO
              if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) P_square(ic,iv,ik_mem,i_sp_pol)=rho(4)*(Ev_m_Ec_QP/Ev_m_Ec)**2
            endif
@@ -272,14 +271,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! CLEAN
  !
  if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
-   if (allocated(kbv))          deallocate(kbv)
-   if (allocated(pp_n_l_comp))  deallocate(pp_n_l_comp)
-   if (allocated(pp_table))     deallocate(pp_table)
-   if (allocated(pp_factor))    deallocate(pp_factor)
+   Y_FREE(kbv)
+   Y_FREE(pp_n_l_comp)
+   Y_FREE(pp_table)
+   Y_FREE(pp_factor)
    call PP_free()
-   call mem_est("KBV") 
  else if (io_Vnl_err==0) then
-   if (allocated(Vnl)) deallocate(Vnl)
+   Y_FREE(Vnl)
  endif 
  !
  call WF_free(WF)

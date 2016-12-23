@@ -37,7 +37,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_RD,RD_CL,&
 &                        NONE,OP_WR_CL,REP,VERIFY
  use frequency,     ONLY:w_samp
- implicit none
+#include<memory.h>
  type(w_samp) ::W
  integer      ::ik1,ik2,O_x_dim,iq
  complex(SP)  ::O1x(FXC_n_g_corr,O_x_dim),O2x(FXC_n_g_corr,O_x_dim)
@@ -101,9 +101,12 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    endif
  endif
  !
- allocate(conjg_O1x_qpg(FXC_n_g_corr,BS_nT_at_k(ik1)))
- allocate(O2x_qpg(BS_nT_at_k(ik2),FXC_n_g_corr))
- allocate(blk_Eo(2,O_x_dim))
+ Y_ALLOCATE(conjg_O1x_qpg(FXC_n_g_corr,BS_nT_at_k(ik1)))
+ Y_MEM(conjg_O1x_qpg)
+ Y_ALLOCATE(O2x_qpg(BS_nT_at_k(ik2),FXC_n_g_corr))
+ Y_MEM(O2x_qpg)
+ Y_ALLOCATE(blk_Eo(2,O_x_dim))
+ Y_MEM(blk_Eo)
  !
  forall(i1=1:FXC_n_g_corr) conjg_O1x_qpg(i1,:BS_nT_at_k(ik1))=conjg(O1x(i1,:BS_nT_at_k(ik1)))*bare_qpg(iq,i1)
  forall(i2=1:FXC_n_g_corr) O2x_qpg(:BS_nT_at_k(ik2),i2)=O2x(i2,:BS_nT_at_k(ik2))*bare_qpg(iq,i2)
@@ -154,8 +157,10 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Residuals
  !
- allocate(left_R(FXC_n_g_corr,BS_nT_at_k(ik2)))
- allocate(right_R(BS_nT_at_k(ik1),FXC_n_g_corr))
+ Y_ALLOCATE(left_R(FXC_n_g_corr,BS_nT_at_k(ik2)))
+ Y_MEM(left_R)
+ Y_ALLOCATE(right_R(BS_nT_at_k(ik1),FXC_n_g_corr))
+ Y_MEM(right_R)
  left_R=(0._SP,0._SP)
  right_R=(0._SP,0._SP)
  !
@@ -181,8 +186,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Fxc
  !
- allocate(wk1(BS_nT_at_k(ik1),FXC_n_g_corr),wk2(FXC_n_g_corr,BS_nT_at_k(ik2)),&
-&         FXC_temp(FXC_n_g_corr,FXC_n_g_corr))
+ Y_ALLOCATE(wk1(BS_nT_at_k(ik1),FXC_n_g_corr))
+ Y_ALLOCATE(wk2(FXC_n_g_corr,BS_nT_at_k(ik2)))
+ Y_ALLOCATE(FXC_temp(FXC_n_g_corr,FXC_n_g_corr))
  !
  COM_MODE=NONE
  if (ik1==1.and.ik2==1) COM_MODE=REP
@@ -258,7 +264,13 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! CLEAN
  !
- deallocate(conjg_O1x_qpg,O2x_qpg,blk_Eo,left_R,right_R,wk1,wk2,FXC_temp)
+ Y_FREE(conjg_O1x_qpg)
+ Y_FREE(blk_Eo)
+ Y_FREE(left_R)
+ Y_FREE(right_R)
+ Y_FREE(wk1)
+ Y_FREE(wk2)
+ Y_FREE(FXC_temp)
  ! 
  contains
    !

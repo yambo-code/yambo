@@ -87,8 +87,8 @@ subroutine X_pre_setup(Xen,X)
  !
  ! Transfer the GF's ordering 
  !
- if ( associated(Xen%GreenF).and.     Xen%GreenF_is_causal ) X%ordering='R'
- if ( associated(Xen%GreenF).and..not.Xen%GreenF_is_causal ) then
+ if ( allocated(Xen%GreenF).and.     Xen%GreenF_is_causal ) X%ordering='R'
+ if ( allocated(Xen%GreenF).and..not.Xen%GreenF_is_causal ) then
    if ( .not.(Finite_Tel.or.l_rt_carriers_in_use) ) X%ordering='T'
    if (      (Finite_Tel.or.l_rt_carriers_in_use) ) then
      call error('Fractional occupations but GF is not retarded (causal in yambo language)')

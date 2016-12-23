@@ -29,7 +29,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! 
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp
@@ -48,7 +47,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  :: Xen
  type(bz_samp) :: Xk,q
@@ -125,11 +124,15 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Arrays to be written in the o. files
    !
-   allocate(Epsilon_ii(wv%n_freqs,2))
-   allocate(EEL(wv%n_freqs,2))
-   allocate(Alpha(wv%n_freqs,2))
+   Y_ALLOCATE(Epsilon_ii(wv%n_freqs,2))
+   Y_MEM(Epsilon_ii)
+   Y_ALLOCATE(EEL(wv%n_freqs,2))
+   Y_MEM(EEL)
+   Y_ALLOCATE(Alpha(wv%n_freqs,2))
+   Y_MEM(Alpha)
    if (l_bs_fxc) then
-     allocate(X_fxc(wv%n_freqs))
+     Y_ALLOCATE(X_fxc(wv%n_freqs))
+     Y_MEM(X_fxc)
      X_fxc=cZERO
    endif
    !
@@ -226,7 +229,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
    !
-   call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%ordering)
+   call X_write_messages_before_headers(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
    !
    ! Titles 
    !
@@ -314,11 +317,13 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call X_alloc('X')
    !
-   deallocate(Epsilon_ii,EEL,Alpha)
+   Y_FREE(Epsilon_ii)
+   Y_FREE(EEL)
+   Y_FREE(Epsilon_ii)
    !
    call FREQUENCIES_reset(wv,"all")
    !
-   if (allocated(X_fxc)) deallocate(X_fxc)
+   Y_FREE(X_fxc)
    !
  enddo
  !
@@ -329,8 +334,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  call PP_redux_wait
  call set_real_printed_length()
  if (l_bs_fxc.and.allocated(FXC)) then
-   deallocate(FXC,FXC_K_diagonal)
-   call mem_est("FXC FXC_K_diagonal")
+   Y_FREE(FXC)
+   Y_FREE(FXC_K_diagonal)
  endif
  !
 end subroutine

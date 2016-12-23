@@ -45,7 +45,7 @@ subroutine X_GreenF_convoluted(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  complex(SP), allocatable  :: Green_F_convoluted(:)
  real(SP)                  :: W_step
  !
- if (.not.associated(Xen%GreenF)) call error(' Green function not associated')
+ if (.not.allocated(Xen%GreenF)) call error(' Green function not allocated')
  !
  GreenF  = cZERO
  !

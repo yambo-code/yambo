@@ -57,7 +57,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use D_lattice,     ONLY:i_space_inv
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
- use memory_m,      ONLY:mem_est
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
@@ -69,7 +68,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
  type(X_t)            :: X
@@ -98,7 +97,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
- force_bare_X_G=use_X_DbGd.or.associated(Xen%W).or.associated(Xen%GreenF)
+ force_bare_X_G=use_X_DbGd.or.allocated(Xen%W).or.allocated(Xen%GreenF)
  !
  skip_WF_load= (iq==1.and.X%ng==1)
  !
@@ -140,8 +139,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    if (n_poles==0) call warning(' [CPU '//trim(intc(myid))//'] has no poles')
    !
-   allocate(X_poles_tab(n_poles,4)) 
-   call mem_est("X_poles_tab",(/size(X_poles_tab)/))
+   Y_ALLOCATE(X_poles_tab(n_poles,4))
+   Y_MEM(X_poles_tab)
    !
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
    if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
@@ -149,7 +148,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    minmax_ehe=0._SP
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
-   deallocate(X_poles,X_Ein_poles)
+   Y_FREE(X_poles)
+   Y_FREE(X_Ein_poles)
    !
    if (self_detect_E_range) then
      call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
@@ -172,7 +172,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Green Functions must be all mapped to the Xw range so
  ! to be easily convoluted
  !
- if (associated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
+ if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
  !
 #endif
  !
@@ -224,8 +224,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! memory estimate and local alloc
  !=================================
- call mem_est("Xo_WS",(/X%ng**2 * n_outthr/))
- allocate(Xo_res(X%ng,X%ng))
+ Y_ALLOCATE(Xo_res(X%ng,X%ng))
+ Y_MEM(Xo_res)
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo")
  !
@@ -262,7 +262,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    ! GPL_EXCLUDE_START
    !
 #if defined _ELPH
-   if( associated(Xen%GreenF) ) then
+   if( allocated(Xen%GreenF) ) then
      call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
    else
      call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
@@ -309,8 +309,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! CLEAN
  !=======
- call mem_est("Xo_WS")
- deallocate(Xo_res)
+ Y_FREE(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
 #if defined _OPENMP

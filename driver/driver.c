@@ -212,25 +212,25 @@ int main(int argc, char *argv[])
      };
      if (strcmp(opts[j].ln,"idir")==0) {
        free(id);
-       id = (char *) malloc(strlen(cv[1]));
+       id = (char *) malloc(strlen(cv[1])+1);
        strcpy(id,cv[1]);
        iid=strlen(id);
      };
      if (strcmp(opts[j].ln,"odir")==0) {
        free(od);
-       od = (char *) malloc(strlen(cv[1]));
+       od = (char *) malloc(strlen(cv[1])+1);
        strcpy(od,cv[1]);
        iod=strlen(od);
      };
      if (strcmp(opts[j].ln,"cdir")==0) {
        free(com_dir);
-       com_dir = (char *) malloc(strlen(cv[1]));
+       com_dir = (char *) malloc(strlen(cv[1])+1);
        strcpy(com_dir,cv[1]);
        icd=strlen(com_dir);
      };
      if (strcmp(opts[j].ln,"jobstr")==0) {
        free(js);
-       js = (char *) malloc(strlen(cv[1]));
+       js = (char *) malloc(strlen(cv[1])+1);
        strcpy(js,cv[1]);
        ijs=strlen(js);
      };

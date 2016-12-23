@@ -26,7 +26,7 @@ subroutine X_GreenF_remap(bands,E,W)
  use pars,          ONLY:SP,pi
  use units,         ONLY:HA2EV
  use LIVE_t,        ONLY:live_timing
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels,n_sp_pol,E_reset
  use frequency,     ONLY:w_samp,W_reset
 #include<memory.h>
  integer      :: bands(2)
@@ -47,7 +47,7 @@ subroutine X_GreenF_remap(bands,E,W)
  ! Resets
  !
  call W_reset(W_A)
- nullify(E_map%GreenF)
+ call E_reset(E_map)
  !
  ! New energy range where the convolution is defined
  !
@@ -156,6 +156,7 @@ subroutine X_GreenF_remap(bands,E,W)
  ! CLEAN
  !
  call W_reset(W_A)
- nullify(E_map%GreenF)
+ Y_FREE(E_map%GreenF)
+ call E_reset(E_map)
  !
 end subroutine

@@ -61,7 +61,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
-
  !
  ! logicals and control
  !
@@ -73,6 +72,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  l_X_terminator = X_terminator_Kind/='none'
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
 &   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
+ !
+ X%ngostnts=Dip%ngostnts
  !
  ! TDDFT SETUP (-1 argument)
  !

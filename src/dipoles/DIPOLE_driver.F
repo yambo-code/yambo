@@ -103,6 +103,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  call timing('Dipoles',OPR='start')
 #endif
  !
+ call section('*','Dipoles')
+ !
  ! Setup logicals 
  !================
  !

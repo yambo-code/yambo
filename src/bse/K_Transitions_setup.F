@@ -51,7 +51,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
 &                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc
  use DIPOLES,      ONLY:DIPOLE_t
  use X_m,          ONLY:global_gauge
- use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups,&
+ use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
@@ -163,9 +163,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              !
              l_grp_to_grp= any( PAR_IND_T_ordered%element_2D(i_T_group_now,:)) .or. &
 &                          any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
-             !
-             if (BS_k_coupling) l_grp_to_grp=l_grp_to_grp .or. any( PAR_IND_T_all%element_2D(i_T_group_now,:) ) &
-&                                                         .or. any( PAR_IND_T_all%element_2D(:,i_T_group_now))
              !
              if ( .not. (l_trans_in_group .or. l_grp_to_grp) ) cycle
              !

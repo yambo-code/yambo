@@ -697,8 +697,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call INIT_RT_ctl_switch('X')
 #endif
    call initactivate(1,'ShiftedPaths')
-   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','DmRnge','CGrdSp','EhEngy',&
-&                  'LongDr','DrudeW'/))
+   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
    call initactivate(1,'XTermKind')
    call initactivate(1,'XTermEn')
  endif
@@ -1049,9 +1048,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      field='Field'//trim(intc(i1))
      call initactivate(1,field//'_Freq')
      call initactivate(1,field//'_MaxFreq')
-     call initactivate(1,field//'_FrStep')
+     call initactivate(1,field//'_DFreq')
      call initactivate(1,field//'_Int')
-     call initactivate(1,field//'_Damp')
+     call initactivate(1,field//'_Width')
+     call initactivate(1,field//'_FWHM')
      call initactivate(1,field//'_kind')
      call initactivate(1,field//'_pol')
      call initactivate(1,field//'_Dir')
@@ -1066,14 +1066,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MPI
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if (what=="X".or.what=="BS") call initactivate(1,what//"_nCPU_invert")
-     if (what=="BS")              call initactivate(1,what//"_nCPU_diago")
+     if (what=="X".or.what=="BS") call initactivate(1,what//"_nCPU_LinAlg_INV")
+     if (what=="BS")              call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
 #endif
 #if defined _SCALAPACK &&  defined _MPI
-     if (what=="SLK") then
-       call initactivate(1,what//"_nCPU_diago")
-       call initactivate(1,what//"_nCPU_invert")
-     endif
+     if (what=="SLK")             call initactivate(1,what//"_nCPU_LinAlg_INV")
 #endif
      !
    end subroutine
@@ -1734,7 +1731,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
            if ( trim(rstr_piece(i1+1)) == 'e'.or. trim(rstr_piece(i1+1)) == 'a') l_elel_scatt=.true.
            if ( trim(rstr_piece(i1+1)) == 'p'.or. trim(rstr_piece(i1+1)) == 'a') l_elph_scatt=.true.
 #endif
-#if defined _RT && defined _QED
+#if defined _RT 
            if ( trim(rstr_piece(i1+1)) == 'h'.or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
            if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
 #endif

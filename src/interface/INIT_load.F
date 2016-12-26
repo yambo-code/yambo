@@ -31,7 +31,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
 &                        global_gauge,Chi_linalg_mode, &
-&                        l_X_terminator,X_terminator_Kind,X_terminator_E
+&                        X_terminator_Kind,X_terminator_E
  use DIPOLES,       ONLY:DIPOLE_t
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
@@ -173,7 +173,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
-#if defined _RT || defined _QED
+#if defined _RT 
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _MAGNETIC
@@ -291,8 +291,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
- ! 
- !
  !
  ! BSE/BSK
  !
@@ -308,16 +306,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! GPL_INCLUDE_END
  !
- !
  ! GPL_EXCLUDE_START
  !
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
- call it(defs,'Gauge' ,  '[BSE] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
  call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
- call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !
+ call it(defs,'Gauge' ,  '[BSE] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
+ call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
@@ -332,7 +329,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
- call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
+ call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs',verb_level=V_resp)
 #if !defined _SC
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
 #endif
@@ -361,12 +358,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! BSE: Kerr
  !
  call it('f',defs,'EvalKerr', '[BSE] Compute the Kerr effect')
- !
- ! GPL_EXCLUDE_START
- !
  call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge')
- !
- ! GPL_EXCLUDE_END
  !
 #endif
  !
@@ -406,17 +398,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
- call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  !
  ! GPL_EXCLUDE_END
  !
- ! GPL_EXCLUDE_START SC_IGNORE
- !
- ! Real Time dynamics
+ call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  !
 #if defined _RT
+ !
+ ! Real Time dynamics
  !
  call it(defs,'RTBands',    '[RT] Bands',RT_bands)
  !
@@ -495,9 +486,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  !
+#if defined _SCALAPACK
+ !
  ! SLK test
  !
-#if defined _SCALAPACK
  call it(defs,'SLKdim',  '[SLK] Matrix Dimension',SLK_test_H_dim)
 #endif
  !
@@ -511,11 +503,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
  !
- ! GPL_EXCLUDE_END SC_IGNORE
- ! 
+#if defined _SURF
+ !
  ! Surface spectroscopy
  !
-#if defined _SURF
  call init_bulk(defs)
  call init_surface(defs)
  call init_cutoff(defs)
@@ -658,12 +649,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &            Efield(i_field)%frequency,unit=E_unit)
-     call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
+     call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &            Efield(i_field)%intensity,unit=I_unit)
-     call it(defs,trim(name)//'_Damp',            '[RT '//trim(name)//'] Damping',&
-&            Efield(i_field)%damping,unit=Time_unit(1))
+     call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
+&            Efield(i_field)%width,unit=Time_unit(1))
+     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
+&            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &            Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
@@ -678,6 +671,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      if (initmode==4) then
        call parser(trim(name)//'_kind',is_def)
        if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
+       call parser(trim(name)//'_FWHM',is_def)
+       if (is_def) then
+         Efield(i_field)%width=Efield(i_field)%FWHM/(2.*sqrt(2.*log(2.)))
+       else
+         Efield(i_field)%FWHM=Efield(i_field)%width*2.*sqrt(2.*log(2.))
+       endif
      endif
      !
    end subroutine
@@ -708,9 +707,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
        call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
 &              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
-       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg"
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_INV"
        call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
-&              CPU_structure(i_s)%nCPU_lin_algebra,verb_level=V_parallel)
+&              CPU_structure(i_s)%nCPU_lin_algebra_INV,verb_level=V_parallel)
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_DIAGO"
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+&              CPU_structure(i_s)%nCPU_lin_algebra_DIAGO,verb_level=V_parallel)
      enddo
      !
    end subroutine

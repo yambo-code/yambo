@@ -1,5 +1,5 @@
 #
-# [VER] @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@
+# [VER] @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@
 # 
 # - GENERAL CONFIGURATIONS -
 # 
@@ -28,15 +28,20 @@
 # [ @FFT_str@ ] FFT      : @FFT_LIBS@ @FFT_DESCRIPTION@
 # [ @BLAS_str@ ] BLAS     : @BLAS_LIBS@
 # [ @LAPACK_str@ ] LAPACK   : @LAPACK_LIBS@
-# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@ @BLACS_LIBS@
+# [ @BLACS_str@ ] BLACS    : @BLACS_LIBS@
+# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@ 
+# [ @PET_str@ ] PETSC    : @PETSC_LIBS@ 
+# [ @SLE_str@ ] SLEPC    : @SLEPC_LIBS@ 
 #
 #  OTHER
-# [ @LIBXC_str@ ] LibXC      : @LIBS_LIBXC@
-# [ @MPI_LIB_str@ ] MPI library: @MPILIBS@
+# [ @LIBXC_str@ ] LibXC          : @LIBS_LIBXC@
+# [ @MPI_LIB_str@ ] MPI linking lib: @MPILIBS@
+# [ @MPI_LIB_str@ ] MPI root       : @MPIROOT@
 #
 # - COMPILERS, MAKE and EDITOR -
 #
 # [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
+# [ FPP ] @FPP@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
 # [  C  ] @CC@ @CFLAGS@
 # [MPICC] @PCC@ @PCCFLAGS@
 # [ F90 ] @F90@ @FCFLAGS@ @OPENMPLIBS@

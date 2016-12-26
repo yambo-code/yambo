@@ -121,7 +121,8 @@ module parallel_m
    character(schlen)    :: ROLE_string = " "
    character(schlen)    :: Long_Description  = " "
    character(schlen)    :: Short_Description = " "
-   integer              :: nCPU_lin_algebra =0
+   integer              :: nCPU_lin_algebra_INV   =1
+   integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
  !      if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
@@ -142,7 +143,6 @@ module parallel_m
  integer          :: PARALLEL_CPU_used(MAX_N_OF_CHAINS) = 1
  character(4)     :: PARALLEL_CPU_role(MAX_N_OF_CHAINS) = " "
  integer          :: PARALLEL_n_structures_active = 0
- integer          :: PARALLEL_cpu_linear_algebra
  logical          :: linear_algebra_is_parallel = .false.
  !
  !... Logging CPUs ...
@@ -236,14 +236,10 @@ module parallel_m
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
  type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
  type(PP_indexes)            ,SAVE :: PAR_IND_T_Haydock
- type(PP_indexes)            ,SAVE :: PAR_IND_T_all
  type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
  !
  ! Specific MPI ID's ...
  !======================
- !
- ! ... linear algebra
- integer            :: PAR_IND_SLK_ID
  !
  ! ... QP
  integer            :: PAR_IND_QP_ID
@@ -296,8 +292,9 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_NULL
  !
  ! ... linear algebra
- type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX
  type(MPI_comm),SAVE :: PAR_COM_SLK
+ type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_global
+ type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
  !
  ! ... RL vectors
  integer             :: PAR_nRL
@@ -407,7 +404,27 @@ module parallel_m
    module procedure c0bcast,c1bcast,c2bcast,i0bcast
  end interface PP_bcast
  !
+ interface PP_send_and_receive
+   module procedure PP_snd_rcv_c2
+ end interface PP_send_and_receive
+ !
  contains
+   !
+   subroutine CREATE_the_COMM(WORLD, COMM, ID )
+     integer       :: WORLD,ID,i_err
+     type(MPI_comm):: COMM
+#if defined _MPI
+     call MPI_COMM_SPLIT(WORLD,COMM%my_CHAIN,ID,COMM%COMM,i_err)
+     call MPI_COMM_RANK(COMM%COMM,COMM%CPU_id,i_err)
+     call MPI_COMM_SIZE(COMM%COMM,COMM%n_CPU ,i_err)
+#endif
+   end subroutine
+   !
+   integer function i_INTER_CHAIN(N_father,N_child)
+     ! Note that N_child/_father art the #cpu's in the two chains
+     integer :: N_father,N_child
+     i_INTER_CHAIN=(myid/N_father)*(N_father/N_child)+mod(myid,N_father/N_child)
+   end function
    !
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc
@@ -497,28 +514,6 @@ module parallel_m
        allocate(IND_out%first_of_1D(dim_))
        IND_out%first_of_1D=IND_in%first_of_1D
      endif
-   end subroutine
-   !
-   subroutine MPI_close
-     implicit none
-#if defined _MPI
-     if (ncpu>1) then
-       call mpi_finalize(i_err)
-     endif
-#endif
-     stop 
-     return
-   end subroutine
-   !
-   subroutine MPI_shutdown
-     implicit none
-#if defined _MPI
-     if (ncpu>1) then
-       call mpi_abort(1,mpi_comm_world)
-     endif
-#endif
-     stop 
-     return
    end subroutine
    !
    subroutine PP_indexes_reset(ip)
@@ -1170,6 +1165,32 @@ module parallel_m
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
      !
      call mpi_bcast(array(1,1),size(array),local_type, node,mpi_comm_world , i_err)
+#endif
+   end subroutine
+   !
+   subroutine PP_snd_rcv_c2(mode,array,node,COMM)
+     character(*):: mode
+     complex(SP) :: array(:,:)
+     integer, intent(in) :: node
+     integer, optional   :: COMM
+#if defined _MPI
+     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer::LOCAL_COMM,i_err! Work Space  
+     if (ncpu==1) return
+     !
+     local_type=MPI_COMPLEX
+     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
+     !
 #endif
    end subroutine
    !

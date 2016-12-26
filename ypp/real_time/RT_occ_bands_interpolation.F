@@ -49,7 +49,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  type(bz_samp)         :: k_bands
  type(levels)          :: E_bands
  !
- type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
+ type(bz_samp)         :: USER_k,CIRCUIT_k,INTERP_k
  real(SP), pointer     :: bands_interpolated(:,:,:) => null()
  !
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
@@ -84,7 +84,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  if(n_spinor>1 .and. BANDS_steps> 0) then
    allocate(spin_interpolated(RT_BANDS(1):RT_bands(2),CIRCUIT_k%nibz,n_spinor))
    allocate(magn_interpolated(RT_bands(1):RT_bands(2),CIRCUIT_k%nibz,3))
-   call electrons_spin_and_magn_interpolate(En,kpt,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
+   call electrons_spin_and_magn_interpolate(kpt,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
  endif
  !
  ! Perform the occupations interpolation
@@ -192,7 +192,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Output: bands on circuit
  !==========================
  !
- headings(1)="Step"
+ headings(1)="|k|"
  if (l_RT_lifetimes  ) headings(3)='LIFE'
  if (l_RT_occupations) headings(3)=' occ'
  n_values=3
@@ -212,17 +212,19 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    !
    call of_open_close(file_name_rt,'ot')
    !
-   call msg('o '//file_name_rt," "," ",INDENT=0)
-   call msg('o '//file_name_rt,"#",' t= '//trim(real2ch( RT_time(i_T)*AUT2FS )),INDENT=0)
+   call RT_write_descriptions(trim(file_name_rt))
+   !
+   call msg('o bands'," "," ",INDENT=0)
+   call msg('o bands',"#",' t= '//trim(real2ch( RT_time(i_T)*AUT2FS )),INDENT=0)
    !
    do ib=RT_bands(1),RT_bands(2)
      !
-     call msg('o '//file_name_rt,"#"," ",INDENT=0)
+     call msg('o bands',"#"," ",INDENT=0)
      !
      headings(2)=' b'//intc(ib) 
      !
-     call msg('o '//file_name_rt,"#",headings(:n_values),INDENT=0,USE_TABS=.true.)
-     call msg('o '//file_name_rt,"#"," ",INDENT=0)
+     call msg('o bands',"#",headings(:n_values),INDENT=0,USE_TABS=.true.)
+     call msg('o bands',"#"," ",INDENT=0)
      !
      do ik=1,CIRCUIT_K%nibz
        !
@@ -236,7 +238,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
          values(4)=values(3)*spin_interpolated(ib,ik,1)
          values(5)=values(3)*spin_interpolated(ib,ik,2)
        endif
-       call msg('o '//file_name_rt,' ',values(:n_values),INDENT=0,USE_TABS=.true.)
+       call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.)
        !
      enddo
      !

@@ -21,21 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_magnetization(Xen,Xk,X)
+subroutine Dipole_magnetization(Xen,Xk,dip)
  !
  ! This routine returns <sigma> (and <L> todo).
  !
- use pars,                ONLY:SP,schlen,cZERO,cI
+ use pars,                ONLY:cI
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_spin
- use memory_m,            ONLY:mem_est
  use fft_m,               ONLY:fft_size
  use wave_func,           ONLY:WF
- use com,                 ONLY:error,msg
+ use com,                 ONLY:error
  use wrapper,             ONLY:Vstar_dot_V
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
@@ -45,7 +44,7 @@ subroutine Dipole_magnetization(Xen,Xk,X)
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
- type(X_t),     intent(inout) :: X
+ type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Work Space
  !
@@ -60,7 +59,7 @@ subroutine Dipole_magnetization(Xen,Xk,X)
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Dipoles spin',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles: spin',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !

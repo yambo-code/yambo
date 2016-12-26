@@ -63,7 +63,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach
- use X_m,            ONLY:l_X_terminator,X_terminator_Kind
+ use X_m,            ONLY:l_X_terminator
  use IO_m,           ONLY:IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&

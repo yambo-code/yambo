@@ -159,6 +159,8 @@ subroutine plot_gnuplot(eval_only)
        enddo
      endif
      !
+     if (.not.use_xcrysden) deallocate(v2plot2D)
+     !
  end select
  !
  call live_timing()

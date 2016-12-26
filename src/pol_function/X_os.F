@@ -111,6 +111,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X,Dip)
  ! Dipoles
  !=========
  if (iq==1) then
+   Dip%ib=X%ib
+   Dip%q0=X%q0
    call DIPOLE_IO(Xk,Dip,'read ',io_err)
    call DIPOLE_expand_and_project(Xk,Dip)   
  endif

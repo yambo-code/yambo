@@ -184,6 +184,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  X_oscillators%whoami=X_static_pp%whoami
  X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
+ !
  Dip%ib=BS_bands
  Dip%q0=BSS_q0
  !

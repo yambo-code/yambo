@@ -143,7 +143,7 @@ module DIPOLES
      type(DIPOLE_t)::Dip
      integer       ::nb
      Dip%iq=(/1,1/)
-     Dip%ib=(/nb,-1/)
+     Dip%ib=(/-1,-1/)
      Dip%ib_lim=(/0,0/)
      Dip%db_ib=(/0,0/)
      Dip%db_ib_lim=(/0,0/)

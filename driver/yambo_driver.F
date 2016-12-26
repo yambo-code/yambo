@@ -161,17 +161,20 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
  if (                    l_ppa ) i_X_kind=4
  !
- if (l_sta_X.or.l_dyn_X) Dip%ib=X(i_X_kind)%ib
+ if(l_sta_X.or.l_dyn_X)            Dip%ib=X(i_X_kind)%ib
+ if((l_optics.and.l_bse).or.l_bss) Dip%ib=BS_bands
  !
- if((l_optics.and.l_bse).or.l_bss) then
-   Dip%ib(1)=min(Dip%ib(1),BS_bands(1))
-   Dip%ib(2)=max(Dip%ib(2),BS_bands(2))
+ if( (l_optics.and.l_bse).or.l_bss .and. (l_sta_X.or.l_dyn_X)  ) then
+   !
+   Dip%ib(1)=min(X(i_X_kind)%ib(1),BS_bands(1))
+   Dip%ib(2)=max(X(i_X_kind)%ib(2),BS_bands(2))
+   !
  endif
  !
  ! DIPOLES
  !=========
  !
- if (l_sta_X.or.l_dyn_X) call DIPOLE_driver(Xen, Xk, q, Dip)
+ if (l_sta_X.or.l_dyn_X.or.l_optics) call DIPOLE_driver(Xen, Xk, q, Dip)
  !
  !
  ! OPTICS

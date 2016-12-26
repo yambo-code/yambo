@@ -181,6 +181,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! PARALLEL SETUP
  !================
  call X_duplicate(X_static_pp,X_oscillators) 
+ X_oscillators%whoami=X_static_pp%whoami
  X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
  !

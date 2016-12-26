@@ -299,17 +299,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  ! Generic Bands
  !---------------
-<<<<<<< HEAD
- if (ENVIRONMENT=="Self_Energy"     ) then
-   if (l_HF_and_locXC)     n_bands=(/1,max(E%nbm,QP_nb)/)
-   if (l_gw0.or.l_life)    n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
-   if (.not.l_HF_and_locXC) n_bands(1)=QP_n_G_bands(1)
-=======
  if (ENVIRONMENT=="Self_Energy"                     ) then
    if (l_HF_and_locXC)                               n_bands=(/1,max(E%nbm,QP_nb)/)
    if ((l_gw0.or.l_life).and..not.computing_Fock)    n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
    if (.not.computing_Fock)                          n_bands(1)=QP_n_G_bands(1)
->>>>>>> master
 #if defined _SC || defined _RT
    if (l_eval_collisions)  n_bands=COLL_bands
 #endif
@@ -376,19 +369,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
 &                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
 &                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
    !
-<<<<<<< HEAD
-=======
-   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(1)%nCPU_lin_algebra_INV)
-   !
-   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
-&                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
-   !
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
-   !
-   call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
-   PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
->>>>>>> master
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
@@ -469,14 +449,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
    call PARALLEL_live_message("K-q(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
-   ! Inversion
-   !
-<<<<<<< HEAD
-   PARALLEL_cpu_linear_algebra=CPU_structure(3)%nCPU_lin_algebra
-   !
-   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,INV,PARALLEL_cpu_linear_algebra)
-   PAR_IND_SLK_ID=PAR_COM_SLK_INDEX%CPU_id
-   !
    ! DIPOLES
    !
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPk_bz_index)
@@ -493,16 +465,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
      call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
 &                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
 &                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
-=======
-   if (ENVIRONMENT=="Response_G_space_Finite_Momentum") then
-     !
-     call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(2)%nCPU_lin_algebra_INV)
-     !
-   else if (ENVIRONMENT=="Response_G_space") then
-     !
-     call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(3)%nCPU_lin_algebra_INV)
-     !
->>>>>>> master
    endif
    !
    ! I/O privileges

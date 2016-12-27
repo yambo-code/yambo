@@ -57,6 +57,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
  !
  implicit none
+ !
  type(levels) ::en,Xen,Ken
  type(bz_samp)::q,k,Xk
  ! 
@@ -154,17 +155,19 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Logicals to be fixed
  !
- l_dyn_X = (l_optics.and.l_chi) .or. l_em1d .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex)
+ l_dyn_X = (l_optics.and.l_chi) .or. l_em1d .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex) .or. l_life
  l_sta_X = l_em1s
  !
  if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
  if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
  if (                    l_ppa ) i_X_kind=4
  !
+ ! Dipole dimensions to be fixed
+ !
  if(l_sta_X.or.l_dyn_X)            Dip%ib=X(i_X_kind)%ib
  if((l_optics.and.l_bse).or.l_bss) Dip%ib=BS_bands
  !
- if( (l_optics.and.l_bse).or.l_bss .and. (l_sta_X.or.l_dyn_X)  ) then
+ if( ((l_optics.and.l_bse).or.l_bss) .and. (l_sta_X.or.l_dyn_X)  ) then
    !
    Dip%ib(1)=min(X(i_X_kind)%ib(1),BS_bands(1))
    Dip%ib(2)=max(X(i_X_kind)%ib(2),BS_bands(2))
@@ -174,7 +177,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! DIPOLES
  !=========
  !
- if (l_sta_X.or.l_dyn_X.or.l_optics) call DIPOLE_driver(Xen, Xk, q, Dip)
+ if (l_sta_X.or.l_dyn_X.or.l_optics.or.l_life) call DIPOLE_driver(Xen, Xk, q, Dip)
  !
  !
  ! OPTICS
@@ -204,13 +207,13 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
 #if defined _SC
- if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2))
+ if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
 #endif
  !
  ! SELF-ENERGIES
  !===============
  !
- if (l_gw0.or.l_life)   call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind))
+ if (l_gw0.or.l_life)   call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
  !
  ! BETHE-SALPETER
  !================

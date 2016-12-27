@@ -170,6 +170,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
+ !call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
+ !call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  if (.not.allocated(X_mat)) then
    if (     io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
    if (.not.io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))

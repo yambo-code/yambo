@@ -58,14 +58,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning
  use electrons,      ONLY:levels,n_sp_pol
+ use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach
- use X_m,            ONLY:l_X_terminator
  use IO_m,           ONLY:IO_and_Messaging_switch
- use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parser_m,       ONLY:parser
@@ -74,12 +73,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use electrons,      ONLY:n_spin
 #endif
 #if defined _SC
- use com,            ONLY:secnm
  use drivers,        ONLY:l_real_time,l_sc_run
  use DIPOLES,        ONLY:P_square
-#endif
-#if defined _QED
- use drivers,        ONLY:l_elphoton_corr
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -94,10 +89,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! Work Space
  !
  integer           :: ik,i_sp_pol,io_err
- logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3)
-#if defined _SC
- logical           :: l_evaluating_em1s
-#endif
+ logical           :: use_dipole_transverse,idir_not_done(3)
  !
 #if defined _TIMING
  call timing('Dipoles',OPR='start')
@@ -128,35 +120,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use_dipole_transverse   =force_v_g_space_approach.or.       use_g_space_approach
  idir_not_done           =.true.
  !
- DIP%ngostnts=wf_ng
- !
- !
- ! NOTE: 1 - that in case we will enter here during a SC run to update the
- !           screened interaction all transitions must be considered in order to rotate <P>.
- !       2 - when using internal SC potentials oscilators must be rotated
- !           in the new basis. So all transitions are needed.
- !       3 - In real-time simulations P and P^2 are ALWAYS calculated => no band ordering
- !
- Dipole_bands_ordered=.true.
- !
-#if defined _SC 
- l_evaluating_em1s=index(secnm,"Dielectric")/=0
- if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.false.
-#endif
-#if defined _QED 
- if (l_elphoton_corr) Dipole_bands_ordered=.false.
-#endif
- !
- ! Set up band limits
- !
- if (Dipole_bands_ordered.or.Dip%Energy_treshold<0._SP) then
-   Dip%ib_lim(1)=Xen%nbm
-   Dip%ib_lim(2)=Xen%nbf+1
-   if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)
- else
-   Dip%ib_lim(1)=Dip%ib(2)
-   Dip%ib_lim(2)=Dip%ib(1)
- endif
+ call DIPOLE_dimensions(Xen,Dip,Dip%ib,(/0._SP,0._SP,0._SP/))
  !
  ! Check if Dipoles DBs exist and are ok
  !=======================================
@@ -229,6 +193,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  endif
  !
  ! Clean up
+ !
+ if (.not.IO_dip) return 
  !
  call DIP_alloc('DIP_iR')
  call DIP_alloc('DIP_P')

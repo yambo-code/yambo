@@ -21,12 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
+subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
  use com,           ONLY:msg
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,&
@@ -46,6 +47,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
  type(QP_t)   ::qp
+ type(DIPOLE_t) :: Dip
  type(w_samp) ::Xw
  !
  ! Work Space
@@ -81,7 +83,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        !
      else 
        !
-       call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,iter)
+       call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,iter)
        !
      endif
    else

@@ -412,7 +412,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        current_iq=0
        call IO_and_Messaging_switch("-report")
-       io_X_err=X_em1(E,Xk,q,X(2),Xw(2),.true.)
+       io_X_err=X_em1(E,Xk,q,X(2),Xw(2),Dip,.true.)
        call IO_and_Messaging_switch("+report")
        !
        ! Reload and rotate wave-functions if W is updated

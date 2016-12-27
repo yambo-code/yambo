@@ -36,7 +36,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
 &                        PAR_Q_bz_index,PAR_nQ_bz,PAR_RL_index,PAR_DIPk_bz_index,PAR_DIPk_nbz,&
 &                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands,EH_range
  use parallel_m,    ONLY:& ! LOGICALS
-&                        l_par_X_T,l_par_X_G,l_par_RT,l_par_SE,l_par_DIP,&
+&                        l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_RT,l_par_SE,l_par_DIP,&
 &                        HEAD_QP_cpu,HEAD_k_cpu,l_par_SC
  use parallel_m,    ONLY:& ! COMMUNICATORS
 &                        COMM_reset,PAR_COM_WORLD,&
@@ -122,6 +122,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  l_par_DIP  = ENVIRONMENT=="DIPOLES"
  l_par_X_T  = ENVIRONMENT=="Response_T_space"
+ l_par_X_G_finite_q  = ENVIRONMENT=="Response_G_space_Finite_Momentum"
  l_par_X_G  = ENVIRONMENT=="Response_G_space"
  l_par_SE   = ENVIRONMENT=="Self_Energy"
  l_par_RT   = ENVIRONMENT=="Real_Time"
@@ -253,26 +254,29 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !-------
  K_range=Xk%nibz
  if (ENVIRONMENT=="DIPOLES")          K_range=Xk%nibz
- if (ENVIRONMENT=="Response_G_space") K_range=Xk%nibz
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum"  ) K_range=Xk%nbz
+ if (ENVIRONMENT=="Response_G_space") K_range=Xk%nbz
  if (ENVIRONMENT=="Response_T_space") K_range=Xk%nibz
  if (ENVIRONMENT=="Real_Time"       ) K_range=Xk%nibz
  !
  ! COND bands
  !------------
  if (ENVIRONMENT=="DIPOLES")          n_c_bands= (/E%nbf+1,Dip%ib(2)/)
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum") n_c_bands= (/E%nbf+1,X%ib(2)/)
  if (ENVIRONMENT=="Response_G_space") n_c_bands= (/E%nbf+1,X%ib(2)/)
  if (ENVIRONMENT=="Response_T_space") n_c_bands= (/E%nbf+1,BS_bands(2)/)
  !
  ! VAL bands
  !-----------
  if (ENVIRONMENT=="DIPOLES")          n_v_bands= (/Dip%ib(1),E%nbm/)
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum") n_v_bands= (/X%ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_G_space") n_v_bands= (/X%ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_T_space") n_v_bands= (/BS_bands(1),E%nbm/)
  !
  ! Q-pts
  !-------
  Q_range=(/1,nqibz/)
- if (ENVIRONMENT=="Response_G_space") Q_range=(/X%iq(1),X%iq(2)/)
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum") Q_range=(/X%iq(1),X%iq(2)/)
  if (ENVIRONMENT=="Real_Time"       ) Q_range=(/1,nqbz/)
  if (ENVIRONMENT=="Self_Energy"     ) then
 #if defined _SC
@@ -389,7 +393,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  endif
  !
  !===========================================================================================
- if (ENVIRONMENT=="Response_G_space") then
+ if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_Finite_Momentum") then
    !=========================================================================================
    !
    CALL PARALLEL_structure(4,(/"q","k","c","v"/))
@@ -447,6 +451,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
    call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    !
    call PARALLEL_live_message("K-q(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
+&                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
+   !
+   ! Inversion
+   !
+   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(1)%nCPU_lin_algebra_INV)
+   !
+   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
    ! DIPOLES
@@ -987,7 +998,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  endif
  !
  !==========================================================================================================
- if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_T_space".or.&
+ if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_T_space".or.&
 &    (ENVIRONMENT=="Self_Energy".and.l_life.and.l_elphoton_corr) ) then
    !========================================================================================================
    !

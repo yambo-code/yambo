@@ -81,7 +81,7 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
            endif
-         case("Response_G_space") 
+         case("Response_G_space","Response_G_space_Finite_Momentum") 
            if (any(trim(PARALLEL_CPU_role(i_c))==(/"q","k","c","v"/))) then
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)

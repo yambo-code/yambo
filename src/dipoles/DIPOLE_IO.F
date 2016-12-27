@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -47,7 +47,6 @@ subroutine DIPOLE_IO(Xk,Dip,check_read_or_write,io_err)
  !
  if (.not.IO_dip) return 
  !
- !
  check  =trim(check_read_or_write)=="check"
  reading=trim(check_read_or_write)=="read"
  writing=trim(check_read_or_write)=="write"
@@ -56,12 +55,7 @@ subroutine DIPOLE_IO(Xk,Dip,check_read_or_write,io_err)
  write_header  =(     master_cpu.and.writing)
  read_header   =(.not.master_cpu.and.writing).or.reading.or.check
  !
- ! AM March 2016. The next lines are in the nasty case where only a fraction of all CPU's compute the
- ! dipoles. In this case only those cpu's know the right value of Dip%Vnl_included that is defined in the
- ! calculation process. If, in the same run, all cpu's must access the dipoles the other CPU's will have
- ! the wrong value of Dip%Vnl_included and the code will get stuck.
- !
- if ((reading.or.check).and.PAR_COM_DIPk_ibz_INDEX%n_CPU==ncpu)then
+ if ((reading.or.check).and.PAR_COM_DIPk_ibz_INDEX%n_CPU==ncpu) then
    l_vnl=Dip%Vnl_included
    call PP_redux_wait(l_vnl)
    Dip%Vnl_included=l_vnl(1)

@@ -245,7 +245,8 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  if (present(PARALLEL_STRUCTURE)) then
    ! 
-   if (trim(PARALLEL_STRUCTURE)=="DIPOLES")          p_structure=2
+   if (trim(PARALLEL_STRUCTURE)=="DIPOLES")          p_structure=1
+   if (trim(PARALLEL_STRUCTURE)=="Response_G_space_finite_momentum") p_structure=2
    if (trim(PARALLEL_STRUCTURE)=="Response_G_space") p_structure=3
    if (trim(PARALLEL_STRUCTURE)=="Response_T_space") p_structure=4
    if (trim(PARALLEL_STRUCTURE)=="Self_Energy")      p_structure=5

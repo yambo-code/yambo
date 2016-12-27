@@ -203,13 +203,14 @@ module SC
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
-     use X_m,            ONLY:X_alloc
+     use DIPOLES,        ONLY:DIP_alloc
+     !
      implicit none
      !
-     call X_alloc('DIP_P')
-     call X_alloc('DIP_iR')
-     call X_alloc('DIP_spin')
-     call X_alloc('P_square')
+     call DIP_alloc('DIP_P')
+     call DIP_alloc('DIP_iR')
+     call DIP_alloc('DIP_spin')
+     call DIP_alloc('P_square')
      !
      deallocate(Ho)
      call mem_est("Ho")

@@ -30,7 +30,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use DIPOLES,       ONLY:DIPOLE_t
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
 &                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys
  use frequency,     ONLY:w_samp
@@ -170,8 +170,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
- !call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
- !call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  if (.not.allocated(X_mat)) then
    if (     io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
    if (.not.io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
@@ -258,9 +256,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  !
  if (io_RESPONSE) call X_alloc('X')
  !
- call X_alloc('DIP_projected')
+ call DIP_alloc('DIP_projected')
 #if defined _PL
- if (l_photolum) call X_alloc('DIP_P')
+ if (l_photolum) call DIP_alloc('DIP_P')
 #endif
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
  !

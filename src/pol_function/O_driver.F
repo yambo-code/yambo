@@ -36,7 +36,7 @@ subroutine O_driver(Xen,Xk,q,wv,X,Dip)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use DIPOLES,       ONLY:DIPOLE_t
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
@@ -320,7 +320,7 @@ subroutine O_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! CLEAN
  !
- call X_alloc('DIP_projected')
+ call DIP_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()

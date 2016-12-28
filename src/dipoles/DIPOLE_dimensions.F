@@ -28,6 +28,7 @@ subroutine DIPOLE_dimensions(Xen,Dip,ib,q0)
  use DIPOLES,        ONLY:DIPOLE_t
  use X_m,            ONLY:l_X_terminator
  use wave_func,      ONLY:wf_ng
+use com,             ONLY:warning
 #if defined _SC
  use drivers,        ONLY:l_real_time,l_sc_run
  use DIPOLES,        ONLY:P_square
@@ -55,6 +56,12 @@ subroutine DIPOLE_dimensions(Xen,Dip,ib,q0)
  Dip%ngostnts=wf_ng
  Dip%ib=ib
  Dip%q0=q0
+ !
+ if (Dip%ib(1)<1 .or. Dip%ib(2)>Xen%nb) then
+   if (Dip%ib(1)<1)      Dip%ib(1)=1
+   if (Dip%ib(2)>Xen%nb) Dip%ib(2)=Xen%nb
+   call warning(' Bands range adjusted to number of bands in SAVE folder')
+ endif
  !
  Dipole_bands_ordered=.true.
  !

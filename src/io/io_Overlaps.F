@@ -31,7 +31,7 @@ integer function io_Overlaps(Dip,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
- use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_nbz,PAR_IND_Xk_bz
+ use parallel_m,    ONLY:PAR_DIPk_bz_index,PAR_DIPk_nbz,PAR_IND_DIPk_bz
  !
  implicit none
  type(DIPOLE_t) :: Dip
@@ -75,15 +75,15 @@ integer function io_Overlaps(Dip,ID)
    !
    allocate(disk_data(Dip%ib(2),Dip%ib(2),2))
    !
-   if (read_is_on(ID)) call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_Xk_nbz/))
+   if (read_is_on(ID)) call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
    !
    do i_sp_pol=1,n_sp_pol
      !
      do ik=1,nXkbz
        !
-       if (.not.PAR_IND_Xk_bz%element_1D(ik)) cycle
+       if (.not.PAR_IND_DIPk_bz%element_1D(ik)) cycle
        !
-       ik_mem=PAR_Xk_bz_index(ik)
+       ik_mem=PAR_DIPk_bz_index(ik)
        !
        ! Fragmentation
        !

@@ -29,7 +29,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use vec_operate,       ONLY:k_periodic_idx
  use DIPOLES,           ONLY:DIPOLE_t,DIP_S
  use electrons,         ONLY:n_spinor,n_sp_pol,n_spin
- use wrapper_omp,       ONLY:Vstar_dot_V_omp
+ use wrapper,           ONLY:Vstar_dot_V
  use wave_func,         ONLY:wf_ng
  use IO_m,              ONLY:IO_and_Messaging_switch
  !
@@ -113,7 +113,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
              do i_spinor=1,n_spinor
                i_spin=i_sp_pol+i_spinor-1
                DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)=DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)+ &
-                       &  Vstar_dot_V_omp(wf_ng,WF_shifted(:wf_ng,ibp,i_spin),WF_ik(:wf_ng,ib,i_spin)) 
+                       &  Vstar_dot_V(wf_ng,WF_shifted(:wf_ng,ibp,i_spin),WF_ik(:wf_ng,ib,i_spin)) 
              enddo
            enddo ! ibp
          enddo ! ib

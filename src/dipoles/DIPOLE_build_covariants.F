@@ -36,7 +36,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
-&                         PAR_Xk_nbz,PP_redux_wait
+&                         PAR_DIPk_nbz,PP_redux_wait
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use drivers,        ONLY:l_sc_run
@@ -83,7 +83,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  ! If they do not I have to compute them
  if(io_err/=0) then
    ! Notice that DIP_S is defined in the BZ       
-   call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_Xk_nbz/))
+   call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
    DIP_S=cZERO
    !
    call DIPOLE_overlaps(Xk,Dip)

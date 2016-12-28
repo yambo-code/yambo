@@ -41,8 +41,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
- use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,DIAGO
- use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use linear_algebra, ONLY:DIAGO
+ use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index,&
+&                         LINEAR_ALGEBRA_driver
  use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc
  use LIVE_t,         ONLY:LIVE_message
@@ -340,7 +341,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! Diagonalize H_nl_sc 
      !=====================
      !
-     call LINEAR_ALGEBRA_driver(DIAGO,H_nl_sc,E_real=E%E(:SC_bands(2),ik,i_sp_pol))
+     call LINEAR_ALGEBRA_driver(DIAGO,M=H_nl_sc,E_real=E%E(:SC_bands(2),ik,i_sp_pol))
      !
      ! Rotation (WFo->WF) matrix
      !

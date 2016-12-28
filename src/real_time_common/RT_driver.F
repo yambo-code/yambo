@@ -74,7 +74,8 @@ subroutine RT_driver(E,X,k,q)
  !
  integer, external :: io_RT_components
  !
- sec_title=' '
+ sec_title   =' '
+ sec_title(1)='none'
  if (l_elph_scatt)                  sec_title(1)='el-ph'
  if (l_elel_scatt)                  sec_title(2)='el-el'
  if (l_elph_scatt.and.l_elel_scatt) sec_title(2)='+el-el'

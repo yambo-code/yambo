@@ -51,7 +51,6 @@ subroutine SC_History(it,E)
  !
  do i_spin=1,n_sp_pol
    !
-   !
    if ( it == 1 ) then
      !
      headers(1)='Iteration'

@@ -41,7 +41,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
- use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
+ use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,RD_CL,&
 &                        DUMP,IO_and_Messaging_switch
 #if defined _SC
  use com,           ONLY:warning,error
@@ -305,7 +305,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
        endif
        !
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
+       call io_control(ACTION=RD,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
        !
        io_err=io_WF(ID,wf_disk)
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
@@ -362,8 +362,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! CLEAN
  !
  if (.not.buffer_is_ok) then
+   !
+   call io_control(ACTION=RD_CL,COM=NONE,MODE=VERIFY,SEC=(/0/),ID=ID)
+   io_err=io_WF(ID,wf_disk)
+   !
    deallocate(wf_disk)
    call mem_est("wf_disk",quiet=QUIET_free)
+   !
  endif
  !
  deallocate(wf_DP)

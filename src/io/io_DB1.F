@@ -64,16 +64,12 @@ integer function io_DB1(E,k,ID)
  !
  ! Work Space
  !
- integer :: code_version_local(3),code_revision_local,var_err,MENU
+ integer :: code_version_local(3),code_revision_local,MENU
  !
  io_DB1 =io_connect(desc="db1",type=0,ID=ID)
  if (io_DB1/=0) goto 1
  !
  MENU=1
- !
- var_err= variable_is_found(ID,"EXX_FRACTION")
- !
- if ( read_is_on(ID) .and.  var_err < 0 ) call compatibility_message( )
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -199,19 +195,18 @@ integer function io_DB1(E,k,ID)
    !
    ! Hybrids stuff
    !	
-   if (var_err==1) then
-     !
-     if (ver_is_gt_or_eq(ID,revision=2962)) then
-         call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
-         call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
-&                             VAR=' Exact exchange fraction in XC   :')
+   if (ver_is_gt_or_eq(ID,revision=2962)) then
+     if (variable_is_found(ID,"EXX_FRACTION")) then
+       call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
+&                           VAR=' Exact exchange fraction in XC   :')
      endif
-     if (ver_is_gt_or_eq(ID,revision=3997)) then
-         call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
-         call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
-&                                VAR=' Exact exchange screening in XC  :')
+   else if (ver_is_gt_or_eq(ID,revision=3997)) then
+     if (variable_is_found(ID,"EXX_SCREENING")) then
+       call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
+&                              VAR=' Exact exchange screening in XC  :')
      endif
-     !
    endif
    !
    if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
@@ -361,13 +356,8 @@ integer function io_DB1(E,k,ID)
      !
      live_timing_is_on=.FALSE.
      !
-     if (var_err<0) then
-       call msg("s","No NETCDF support. It is not possible to verify if the present database is compatible")
-       call msg("s","with the current Yambo version. Re-create the DB1 databases with the NETCDF support and try again")
-     else if (var_err==1) then
-       call msg("s","The present DB1 database is NOT compatible with the current Yambo version." )
-       call msg("s","Re-create the DB1 databases with a more recent version of the code")
-     endif
+     call msg("s","The present DB1 database is NOT compatible with the current Yambo version." )
+     call msg("s","Re-create the DB1 databases with a more recent version of the code")
      call msg("s"," ")
      !
      call error("I/O failed.")

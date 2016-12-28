@@ -43,7 +43,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,warning,error
+ use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,myid

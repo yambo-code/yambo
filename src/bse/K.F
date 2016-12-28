@@ -85,10 +85,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! ... Kernel loop
  !
- integer    :: i_block,i_block_vv,i_block_cc,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
+ integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
 &              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,alloc_err,&
-&              bands_to_load(2),iOvv,iOcc,is(4),os(4),isp(4),osp(4)
+&              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
  !
@@ -535,66 +535,115 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
        endif
        !
-       if (BS_res_K_corr.and.BS_blk(i_block)%mode=="R".and.i_k_spin==i_p_spin) then
+       if (BS_blk(i_block)%mode=="R") then
          !
-         ! :::SEX         (resonant):::
-         !=============================
-         !
-         iOcc        = BS_blk(i_block)%O_table(1,i_k_p_s,i_c_k,i_c_p,i_k_spin)
-         i_block_cc  = BS_blk(i_block)%O_table(2,i_k_p_s,i_c_k,i_c_p,i_k_spin)
-         PHASE_1=WF_phase(i_p,i_k_p_s,i_c_p,i_p_spin)
-         if (PHASE_1==cZERO  ) PHASE_1=1._SP
-         if (PHASE_1==-99._SP) PHASE_1=1._SP
-         !
-         iOvv       = BS_blk(i_block)%O_table(1,i_k_p_s,i_v_k,i_v_p,i_k_spin)
-         i_block_vv = BS_blk(i_block)%O_table(2,i_k_p_s,i_v_k,i_v_p,i_k_spin)
-         PHASE_2=WF_phase(i_p,i_k_p_s,i_v_p,i_p_spin)
-         if (PHASE_2==cZERO  ) PHASE_2=1._SP
-         if (PHASE_2==-99._SP) PHASE_2=1._SP
-         !
-#if defined _OPENMP
-!$omp parallel default(shared), private(i_g1)
-!$omp do
-#endif
-         do i_g1=1,BS_n_g_W
-           Occ(i_g1)=BS_blk(i_block_cc)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOcc)*PHASE_1
-         enddo
-#if defined _OPENMP
-!$omp end do
-!$omp do
-#endif
-         do i_g1=1,BS_n_g_W
-           Ovv(i_g1)=BS_blk(i_block_vv)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOvv)*PHASE_2
-         enddo
-#if defined _OPENMP
-!$omp end do
-!$omp end parallel
-#endif
-         !
-         if (i_k_s>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
-         if (i_k_s>nsym/(i_time_rev+1)) Occ=conjg(Occ)
-         !
-         if (BS_W_is_diagonal) then
+         if (BS_res_K_corr.and.i_k_spin==i_p_spin) then
            !
-#if defined _OPENMP
-!$omp parallel do default(shared), private(i_g1)
-#endif
+           ! :::SEX         (resonant):::
+           !=============================
+           !
+           iOcc        = BS_blk(i_block)%O_table(1,i_k_p_s,i_c_k,i_c_p,i_k_spin)
+           i_block_cc  = BS_blk(i_block)%O_table(2,i_k_p_s,i_c_k,i_c_p,i_k_spin)
+           PHASE_1=WF_phase(i_p,i_k_p_s,i_c_p,i_p_spin)
+           if (PHASE_1==cZERO  ) PHASE_1=1._SP
+           if (PHASE_1==-99._SP) PHASE_1=1._SP
+           !
+           iOvv       = BS_blk(i_block)%O_table(1,i_k_p_s,i_v_k,i_v_p,i_k_spin)
+           i_block_vv = BS_blk(i_block)%O_table(2,i_k_p_s,i_v_k,i_v_p,i_k_spin)
+           PHASE_2=WF_phase(i_p,i_k_p_s,i_v_p,i_p_spin)
+           if (PHASE_2==cZERO  ) PHASE_2=1._SP
+           if (PHASE_2==-99._SP) PHASE_2=1._SP
+           !
+           !$omp parallel default(shared), private(i_g1)
+           !$omp do
            do i_g1=1,BS_n_g_W
-             O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
+             Occ(i_g1)=BS_blk(i_block_cc)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOcc)*PHASE_1
            enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
+           !$omp end do
+           !$omp do
+           do i_g1=1,BS_n_g_W
+             Ovv(i_g1)=BS_blk(i_block_vv)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOvv)*PHASE_2
+           enddo
+           !$omp end do
+           !$omp end parallel
            !
-         else
+           if (i_k_s>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
+           if (i_k_s>nsym/(i_time_rev+1)) Occ=conjg(Occ)
            !
-           if (iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
+           if (BS_W_is_diagonal) then
+             !
+             !$omp parallel do default(shared), private(i_g1)
+             do i_g1=1,BS_n_g_W
+               O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
+             enddo
+             !$omp end parallel do
+             !
+           else
+             !
+             if (iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
+             !
+             call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),Occ(:),O_times_W)
+             !
+           endif
            !
-           call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),Occ(:),O_times_W)
+           H_c=Vstar_dot_V_omp(BS_n_g_W,Ovv,O_times_W)*4._SP*pi
            !
          endif
          !
-         H_c=Vstar_dot_V_omp(BS_n_g_W,Ovv,O_times_W)*4._SP*pi
+       else
+         !
+         if (BS_cpl_K_corr.and.i_k_spin==i_p_spin) then
+           !
+           ! :::SEX         (resonant):::
+           !=============================
+           !
+           iOcv        = BS_blk(i_block)%O_table(1,i_k_p_s,i_c_k,i_v_p,i_k_spin)
+           i_block_cv  = BS_blk(i_block)%O_table(2,i_k_p_s,i_c_k,i_v_p,i_k_spin)
+           PHASE_1=WF_phase(i_p,i_k_p_s,i_v_p,i_p_spin)
+           if (PHASE_1==cZERO  ) PHASE_1=1._SP
+           if (PHASE_1==-99._SP) PHASE_1=1._SP
+           !
+           iOvc       = BS_blk(i_block)%O_table(1,i_k_p_s,i_v_k,i_c_p,i_k_spin)
+           i_block_vc = BS_blk(i_block)%O_table(2,i_k_p_s,i_v_k,i_c_p,i_k_spin)
+           PHASE_2=WF_phase(i_p,i_k_p_s,i_c_p,i_p_spin)
+           if (PHASE_2==cZERO  ) PHASE_2=1._SP
+           if (PHASE_2==-99._SP) PHASE_2=1._SP
+           !
+           !$omp parallel default(shared), private(i_g1)
+           !$omp do
+           do i_g1=1,BS_n_g_W
+             Ocv(i_g1)=BS_blk(i_block_cv)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOcv)*PHASE_1
+           enddo
+           !$omp end do
+           !$omp do
+           do i_g1=1,BS_n_g_W
+             Ovc(i_g1)=BS_blk(i_block_vc)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOvc)*PHASE_2
+           enddo
+           !$omp end do
+           !$omp end parallel
+           !
+           if (i_k_s>nsym/(i_time_rev+1)) Ovc=conjg(Ovc)
+           if (i_k_s>nsym/(i_time_rev+1)) Ocv=conjg(Ocv)
+           !
+           if (BS_W_is_diagonal) then
+             !
+             !$omp parallel do default(shared), private(i_g1)
+             do i_g1=1,BS_n_g_W
+               O_times_W(i_g1)=Ocv(i_g1)*BS_W(i_g1,1,iq_W)
+             enddo
+             !$omp end parallel do
+             !
+           else
+             !
+             if (iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
+             !
+             call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),Ocv(:),O_times_W)
+             !
+           endif
+           !
+           H_c=Vstar_dot_V_omp(BS_n_g_W,Ovc,O_times_W)*4._SP*pi
+           !
+         endif
          !
        endif
        !

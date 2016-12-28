@@ -27,12 +27,12 @@ integer function io_RT_components(what,ID)
  !
  use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_elph_scatt,l_real_time
- use R_lattice,      ONLY:nkibz,nqbz
+ use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,write_is_on,io_fragment, &
-&                         manage_OP_IF_START_and_CL_IF_END,variable_is_found,&
+&                         manage_OP_IF_START_and_CL_IF_END,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
@@ -60,7 +60,7 @@ integer function io_RT_components(what,ID)
  character(schlen)     :: what_
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
- integer               :: ik,ib,i_spin,i_memory,i_time,db_type,n_cache_steps
+ integer               :: ik,ib,i_spin,i_memory,i_time,db_type
  logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
  real(SP)              :: A_vecpot_disk(3,3,2)
  !

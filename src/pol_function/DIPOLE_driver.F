@@ -62,7 +62,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
-&                         l_X_terminator,X_terminator_Kind
+&                         l_X_terminator
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
@@ -195,7 +195,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
    !
 #if defined _RT
-   if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xen,Xk,X)
+   if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xk,X)
 #endif
    !
    call DIPOLES_ppredux_and_symmetrize()

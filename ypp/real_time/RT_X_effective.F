@@ -129,7 +129,7 @@ subroutine RT_X_effective(en)
    else
      if (Efield_probe%t_initial/=Efield(i_Probe)%t_initial) Probe_consistency_error=.TRUE.
      if (Efield_probe%ef_name/=Efield(i_Probe)%ef_name) Probe_consistency_error=.TRUE.
-     if ( any( (/ abs(Efield_probe%damping-Efield(i_Probe)%damping)>1.E-5,&
+     if ( any( (/ abs(Efield_probe%width-Efield(i_Probe)%width)>1.E-5,&
 &                 abs(Efield_probe%intensity-Efield(i_Probe)%intensity)>1.E-5/))) Probe_consistency_error=.TRUE.
    endif
    !

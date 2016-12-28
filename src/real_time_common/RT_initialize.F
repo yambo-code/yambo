@@ -402,7 +402,7 @@ subroutine RT_initialize(E,k,q)
      call msg('r', MSG_ch//' energy window/period [eV/fs]:',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
      call msg('r', MSG_ch//' elemental oscillation   [fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))*AUT2FS)
-     call msg('r', MSG_ch//' damping                 [fs]:',Efield(i1)%damping*AUT2FS)
+     call msg('r', MSG_ch//' width                   [fs]:',Efield(i1)%width*AUT2FS)
      call msg('r', MSG_ch//' energy steps                :',Efield(i1)%n_frequencies)
      call msg('r', MSG_ch//' electric field         [V/m]:',Efield(i1)%amplitude*AU2VMm1)
      call msg('r', MSG_ch//' max intensity      [kW/cm^2]:',Efield(i1)%intensity*AU2KWCMm2)
@@ -410,6 +410,7 @@ subroutine RT_initialize(E,k,q)
      if( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='DELTA') ) then
        call msg('r', MSG_ch//' max fluence        [nJ/cm^2]:',Efield(i1)%fluence )
        call msg('r', MSG_ch//' final time              [fs]:',Efield(i1)%t_final*AUT2FS)
+       call msg('r', MSG_ch//' half maximum full width [fs]:',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS)
      endif
      !
    enddo

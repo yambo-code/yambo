@@ -168,7 +168,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
-#if defined _RT || defined _QED
+#if defined _RT 
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _MAGNETIC
@@ -646,12 +646,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &            Efield(i_field)%frequency,unit=E_unit)
-     call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
+     call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &            Efield(i_field)%intensity,unit=I_unit)
-     call it(defs,trim(name)//'_Damp',            '[RT '//trim(name)//'] Damping',&
-&            Efield(i_field)%damping,unit=Time_unit(1))
+     call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
+&            Efield(i_field)%width,unit=Time_unit(1))
+     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
+&            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &            Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
@@ -666,6 +668,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      if (initmode==4) then
        call parser(trim(name)//'_kind',is_def)
        if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
+       call parser(trim(name)//'_FWHM',is_def)
+       if (is_def) then
+         Efield(i_field)%width=Efield(i_field)%FWHM/(2.*sqrt(2.*log(2.)))
+       else
+         Efield(i_field)%FWHM=Efield(i_field)%width*2.*sqrt(2.*log(2.))
+       endif
      endif
      !
    end subroutine

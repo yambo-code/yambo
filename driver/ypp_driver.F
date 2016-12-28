@@ -24,7 +24,7 @@
 integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
- use parallel_m,          ONLY:ncpu,myid,MPI_close
+ use parallel_m,          ONLY:ncpu,myid
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
 &                              nXkibz,nqibz,k_pt,q_pt
@@ -269,11 +269,8 @@ contains
       if (len_trim(STRING)> 0) call msg("nl",trim(STRING))
       if (len_trim(STRING)==0) call section('X','Game Over')
       call msg("nln"," ")
-      call INIT_ypp(en,instr,lnstr,.TRUE.)
-      call MPI_close()
-    else
-      call INIT_ypp(en,instr,lnstr,.TRUE.)
     endif
+    call INIT_ypp(en,instr,lnstr,.TRUE.)
   end subroutine
   !
 end function ypp_driver

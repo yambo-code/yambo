@@ -59,9 +59,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  ! Work Space
  !
  character(schlen)            :: live_t_string
-#if defined _SC
- logical                      :: l_evaluating_em1s 
-#endif
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2
  integer                      :: ik,icfft(n_spinor),ivfft(n_spinor),ic,iv,&
 &                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem,ic_min
@@ -74,10 +71,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
- !
-#if defined _SC 
- l_evaluating_em1s=index(secnm,"Dielectric")/=0
-#endif
  !
  call DIPOLE_kb_init(Xen,Dip,io_err,ID)
  !
@@ -147,7 +140,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    ik_mem=PAR_DIPk_ibz_index(ik)
    !
    ! WF load
-   !
    call WF_load(WF,0,1,Dip%ib,(/ik,ik/),space='G',title='-Oscillators/G space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
    ! 
@@ -255,6 +247,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
              if (abs(Ev_m_Ec)> Dipole_Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=rho(4)*(Ev_m_Ec_QP/Ev_m_Ec)**2
            endif
          endif
+         !
          !
          call live_timing(steps=1)
          !

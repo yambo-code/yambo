@@ -241,7 +241,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call PP_redux_wait
    X_tddft%iq=iq
    X_tddft%ng=BS_n_g_exch
-   call O_driver(Xen,Xk,q,W_bss,X_tddft) 
+   call O_driver(Xen,Xk,q,W_bss,X_tddft,Dip) 
    !
  endif
  !

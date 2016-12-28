@@ -29,7 +29,8 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  use electrons,      ONLY:n_sp_pol
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
+ use DIPOLES,        ONLY:DIP_iR,DIP_P
+ use X_m,            ONLY:global_gauge
  use real_time,      ONLY:RT_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
  !

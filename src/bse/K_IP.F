@@ -25,6 +25,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
  use units,         ONLY:HA2EV
+ use IO_m,          ONLY:io_DIP
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
@@ -43,7 +44,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _PL
  use drivers,       ONLY:l_photolum
- use X_m,           ONLY:DIP_P
+ use DIPOLES,       ONLY:DIP_P
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights,PL_init
 #endif
 #if defined _KERR
@@ -327,14 +328,20 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    ! GPL_EXCLUDE_END
    !
 #if defined _KERR
-   if (l_kerr) call K_kerr_IP(iq,W_bss%p)
+   if (l_kerr) call K_kerr_IP(iq,W_bss%p,Dip)
 #endif
    !
  endif
  !
  ! CLEAN
  !
- if (iq==1) call DIP_alloc('DIP_projected')
+ if (iq==1.and.io_DIP) then
+   call DIP_alloc('DIP_iR')
+   call DIP_alloc('DIP_P')
+   call DIP_alloc('DIP_spin')
+   call DIP_alloc('P_square') 
+   call DIP_alloc('DIP_projected')
+ endif
  !
  if (l_rpa_IP) then
    !

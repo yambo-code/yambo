@@ -31,7 +31,8 @@ subroutine Dipole_magnetization(Xen,Xk,dip)
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,           ONLY:bz_samp
- use X_m,                 ONLY:X_t,DIP_spin
+ use X_m,                 ONLY:X_t
+ use DIPOLES,             ONLY:DIP_spin,DIPOLE_t
  use fft_m,               ONLY:fft_size
  use wave_func,           ONLY:WF
  use com,                 ONLY:error

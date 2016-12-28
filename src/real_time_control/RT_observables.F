@@ -28,7 +28,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use drivers,        ONLY:l_sc_is_libDFT,l_elel_scatt,l_elph_scatt,l_use_Hxc_collisions,l_sc_hartree
  use QP_m,           ONLY:QP_nk
  use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:P_square
+ use DIPOLES,        ONLY:P_square
  use SC,             ONLY:V_hartree_sc,Ho
  use RT_control,     ONLY:RT_do_it
  use rt_interfaces,  ONLY:RT_average_operator
@@ -39,7 +39,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use electrons,      ONLY:levels,n_sp_pol
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
+ use parallel_m,     ONLY:PAR_DIPk_nibz,master_cpu
  use RT_interfaces,  ONLY:RT_average_operator
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -82,7 +82,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  ! dE_Kin = - i Tr { P^2 dG^<}/2  
  !
- call RT_average_operator(O_VALUE=dE_kin,O_MATRIX=P_square,G=dG_lesser,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(O_VALUE=dE_kin,O_MATRIX=P_square,G=dG_lesser,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
  !
  dE_kin=dE_kin/2._SP
  !  

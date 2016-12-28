@@ -33,7 +33,8 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  use R_lattice,           ONLY:bz_samp
  use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_IND_DIPk_ibz,PAR_nG_bands,PAR_nQP,PP_redux_wait,&
 &                              PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_DIPk_ibz_index
- use X_m,                 ONLY:DIP_P,X_t
+ use DIPOLES,             ONLY:DIP_P
+ use X_m,                 ONLY:X_t
  use wave_func,           ONLY:wf_ng
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute

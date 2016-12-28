@@ -68,7 +68,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! 
  ! Work Space
  !
- integer           :: io_REF
+ integer           :: io_REF,io_err
  character(schlen) :: sec_title(3)
  complex(SP)       :: on_the_fly_operators(10)
  !

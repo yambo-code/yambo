@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
+subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  ! Presently there exist two gauges: (i ) the length   which uses <r>            
  !                                   (ii) the velocity which uses <v>=<p-[x,Vnl]> 
@@ -51,13 +51,16 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  ! being a derived structure it must be mapped in the calling routine.
  !
- use drivers,        ONLY:l_optics
+ use drivers,        ONLY:l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
+&                         l_gw0,l_elel_corr,l_life
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
+ use BS,             ONLY:BS_bands
  use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning
  use electrons,      ONLY:levels,n_sp_pol
+ use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -84,12 +87,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  type(bz_samp), intent(inout) :: Xk,Xq
  type(levels),  intent(inout) :: Xen
+ type(X_t),     intent(in)    :: X
  type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Work Space
  !
- integer           :: ik,i_sp_pol,io_err
- logical           :: use_dipole_transverse,idir_not_done(3)
+ integer           :: ik,i_sp_pol,io_err,ib(2)
+ logical           :: l_sta_X,l_dyn_X,use_dipole_transverse,idir_not_done(3)
  !
 #if defined _TIMING
  call timing('Dipoles',OPR='start')
@@ -120,7 +124,22 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use_dipole_transverse   =force_v_g_space_approach.or.       use_g_space_approach
  idir_not_done           =.true.
  !
- call DIPOLE_dimensions(Xen,Dip,Dip%ib,(/0._SP,0._SP,0._SP/))
+ ! Dipole dimensions to be fixed
+ !
+ l_dyn_X = (l_optics.and.l_chi) .or. l_em1d .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex) .or. l_life
+ l_sta_X = l_em1s
+ ! 
+ if (  l_sta_X.or.l_dyn_X           ) ib=X%ib
+ if ( (l_optics.and.l_bse).or.l_bss ) ib=BS_bands
+ !
+ if ( ((l_optics.and.l_bse).or.l_bss) .and. (l_sta_X.or.l_dyn_X)  ) then
+   !
+   ib(1)=min(X%ib(1),BS_bands(1))
+   ib(2)=max(X%ib(2),BS_bands(2))
+   !
+ endif
+ !
+ call DIPOLE_dimensions(Xen,Dip,ib,(/0._SP,0._SP,0._SP/))
  !
  ! Check if Dipoles DBs exist and are ok
  !=======================================

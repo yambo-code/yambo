@@ -39,7 +39,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X,Dip)
  !
  ! 
  use drivers,       ONLY:l_life
- use IO_m,          ONLY:io_RESPONSE
+ use IO_m,          ONLY:io_RESPONSE,io_DIP
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
@@ -59,7 +59,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X,Dip)
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use memory_m,      ONLY:mem_est
  use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use DIPOLES,       ONLY:DIPOLE_t
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E
@@ -382,5 +382,15 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X,Dip)
  !
  current_iq=iq
  n_threads_FFT=0
+ !
+ ! CLEAN
+ !
+ if (iq==1.and.io_DIP) then
+   call DIP_alloc('DIP_iR')
+   call DIP_alloc('DIP_P')
+   call DIP_alloc('DIP_spin')
+   call DIP_alloc('P_square') 
+   call DIP_alloc('DIP_projected')
+ endif
  !
 end subroutine

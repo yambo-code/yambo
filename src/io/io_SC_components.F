@@ -97,7 +97,7 @@ integer function io_SC_components(what,E_sc,ID)
 #endif
    !
    if (any((/l_E,l_V,l_WF,l_MP/))) then
-     if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")/=0) then
+     if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")) then
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL,FRAG=frag_SC)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,FRAG=frag_Sc)

@@ -23,11 +23,6 @@
 !
 subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
- use drivers,    ONLY:infile_editing,l_acfdt,l_alda_fxc,l_bs_fxc,l_bse,l_bsk,l_bss,l_chi,l_cohsex,l_col_cut,l_elel_corr,&
-&                     l_elel_scatt,l_elph_corr,l_elph_Hamiltonian,l_elph_scatt,l_em1d,l_em1s,l_eval_collisions,l_gw0,&
-&                     l_HF_and_locXC,l_life,l_lrc_fxc,l_optics,l_ppa,l_rim,l_rpa_IP,l_rt_carriers_in_use,l_sc_coh,l_sc_exx,&
-&                     l_sc_fock,l_sc_hartree,l_sc_ip,l_sc_is_libDFT,l_sc_magnetic,l_sc_run,l_sc_sex,l_setup,l_td_hartree,&
-&                     l_td_hf,l_tddft,l_use_collisions,l_use_Hxc_collisions,l_W_eh,l_W_eh_cpl,l_W_eh_diag,list_dbs
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
@@ -295,57 +290,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  pp_n_l_times_proj_max=0
  pp_kbv_dim=0
  !
- ! Drivers
- !
- list_dbs=.FALSE.
- infile_editing=.FALSE.
- l_setup=.FALSE.
- l_rim=.FALSE.
- l_col_cut=.FALSE.
- l_optics=.FALSE.
- l_HF_and_locXC=.FALSE.
- l_em1d=.FALSE.
- l_em1s=.FALSE.
- l_ppa=.FALSE.
- l_cohsex=.FALSE.
- l_gw0=.FALSE.
- l_life=.FALSE.
- l_chi=.FALSE.
- l_bse=.FALSE.
- l_bsk=.FALSE.
- l_bss=.FALSE.
- l_rpa_IP=.FALSE.
- l_td_hartree=.FALSE.
- l_tddft=.FALSE.
- l_alda_fxc=.FALSE.
- l_lrc_fxc=.FALSE.
- l_bs_fxc=.FALSE.
- l_td_hf=.FALSE.
- l_W_eh=.FALSE.
- l_W_eh_diag=.FALSE.
- l_W_eh_cpl=.FALSE.
- l_acfdt=.FALSE.
- l_elel_corr=.FALSE.
- l_elph_corr=.FALSE.
- l_elel_scatt=.FALSE.
- l_elph_scatt=.FALSE.
- l_use_collisions=.FALSE.
- l_use_Hxc_collisions=.FALSE.
- !
- l_rt_carriers_in_use=.FALSE.
- l_sc_run=.FALSE.
- l_sc_ip=.FALSE.
- l_sc_fock=.FALSE.
- l_sc_hartree=.FALSE.
- l_sc_coh=.FALSE.
- l_sc_sex=.FALSE.
- l_sc_exx=.FALSE.
- l_sc_is_libDFT=.FALSE.
- l_sc_magnetic=.FALSE.
- l_eval_collisions=.FALSE.
- l_elph_Hamiltonian=.FALSE.
- !
- !electrons
+ ! Electrons
  !
  n_spin=1
  n_sp_pol=1

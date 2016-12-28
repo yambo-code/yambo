@@ -46,33 +46,21 @@ case "${FC}" in
       VER_14=`grep 14. ver_ | wc -l`
       VER_15=`grep 15. ver_ | wc -l`
       VER_16=`grep 16. ver_ | wc -l`
-      if ! test "$VER_8" = "0"; then
-       FCVERSION="8"
-      fi
-      if ! test "$VER_9" = "0"; then
-       FCVERSION="9"
-      fi
-      if ! test "$VER_10" = "0"; then
-       FCVERSION="10"
-      fi
-      if ! test "$VER_11" = "0"; then
-       FCVERSION="11"
-      fi
-      if ! test "$VER_12" = "0"; then
-       FCVERSION="12"
-      fi
-      if ! test "$VER_13" = "0"; then
-       FCVERSION="13"
-      fi
-      if ! test "$VER_14" = "0"; then
-       FCVERSION="14"
-      fi
-      if ! test "$VER_15" = "0"; then
-       FCVERSION="15"
-      fi
-      if ! test "$VER_16" = "0"; then
-       FCVERSION="16"
-      fi
+      VER_17=`grep 17. ver_ | wc -l`
+      VER_18=`grep 18. ver_ | wc -l`
+      VER_19=`grep 19. ver_ | wc -l`
+      if ! test "$VER_8" = "0";  then FCVERSION="8"  ; fi
+      if ! test "$VER_9" = "0";  then FCVERSION="9"  ; fi
+      if ! test "$VER_10" = "0"; then FCVERSION="10" ; fi
+      if ! test "$VER_11" = "0"; then FCVERSION="11" ; fi
+      if ! test "$VER_12" = "0"; then FCVERSION="12" ; fi
+      if ! test "$VER_13" = "0"; then FCVERSION="13" ; fi
+      if ! test "$VER_14" = "0"; then FCVERSION="14" ; fi
+      if ! test "$VER_15" = "0"; then FCVERSION="15" ; fi
+      if ! test "$VER_16" = "0"; then FCVERSION="16" ; fi
+      if ! test "$VER_17" = "0"; then FCVERSION="17" ; fi
+      if ! test "$VER_18" = "0"; then FCVERSION="18" ; fi
+      if ! test "$VER_19" = "0"; then FCVERSION="19" ; fi
       rm -f ver_
       ;;
     *)

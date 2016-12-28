@@ -7,8 +7,8 @@ subroutine SLK_test(E,k,q)
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_test_H_dim,SLK_COM_A2A
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use interfaces,     ONLY:PARALLEL_global_indexes
- use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV,DIAGO,LIN_SYS,MAT_MUL,USE_LK,USE_SLK
+ use interfaces,     ONLY:PARALLEL_global_indexes,LINEAR_ALGEBRA_driver
+ use linear_algebra, ONLY:INV,DIAGO,LIN_SYS,MAT_MUL,USE_LK,USE_SLK
  use matrix_operate, ONLY:hermitian
  !
  implicit none
@@ -44,10 +44,10 @@ subroutine SLK_test(E,k,q)
  call build_matrix( ndim, A_in )
  !
  A_out  =A_in
- call LINEAR_ALGEBRA_driver(INV,A_out,lib_in=USE_LK)
+ call LINEAR_ALGEBRA_driver(INV,M=A_out,lib_in=USE_LK)
  !
  A_out_par =A_in
- call LINEAR_ALGEBRA_driver(INV,A_out_par,lib_in=USE_SLK)
+ call LINEAR_ALGEBRA_driver(INV,M=A_out_par,lib_in=USE_SLK)
  !
  call matrix_check( "InvMat", ndim, ndim, A_out, A_out_par )
  call inverse_check( ndim, A_in, A_out_par )
@@ -63,11 +63,11 @@ subroutine SLK_test(E,k,q)
  !
  M_mat = A_in
  A_out = B_in
- call LINEAR_ALGEBRA_driver(LIN_SYS,M_mat,B=A_out,lib_in=USE_LK)
+ call LINEAR_ALGEBRA_driver(LIN_SYS,M=M_mat,B=A_out,lib_in=USE_LK)
  !
  M_mat     = A_in
  A_out_par = B_in
- call LINEAR_ALGEBRA_driver(LIN_SYS,M_mat,B=A_out_par,lib_in=USE_SLK)
+ call LINEAR_ALGEBRA_driver(LIN_SYS,M=M_mat,B=A_out_par,lib_in=USE_SLK)
  !
  call matrix_check( "LinSys X", ndim, ndim, A_out, A_out_par )
  deallocate(B_in,M_mat)
@@ -79,9 +79,9 @@ subroutine SLK_test(E,k,q)
  !
  call build_matrix( ndim, A_in )
  !
- call LINEAR_ALGEBRA_driver(MAT_MUL,A_in,A_in,A_out,lib_in=USE_LK)
+ call LINEAR_ALGEBRA_driver(MAT_MUL,M=A_in,B=A_in,C=A_out,lib_in=USE_LK)
  !
- call LINEAR_ALGEBRA_driver(MAT_MUL,A_in,A_in,A_out_par,lib_in=USE_SLK)
+ call LINEAR_ALGEBRA_driver(MAT_MUL,M=A_in,B=A_in,C=A_out_par,lib_in=USE_SLK)
  !
  call matrix_check( "Mat Mult", ndim, ndim, A_out, A_out_par )
 
@@ -96,10 +96,10 @@ subroutine SLK_test(E,k,q)
  allocate(W(ndim),W_par(ndim))
  !
  A_out  =A_in
- call LINEAR_ALGEBRA_driver(DIAGO,A_out,lib_in=USE_LK,e_real=W)
+ call LINEAR_ALGEBRA_driver(DIAGO,M=A_out,lib_in=USE_LK,e_real=W)
  !
  A_out_par =A_in
- call LINEAR_ALGEBRA_driver(DIAGO,A_out_par,lib_in=USE_SLK,e_real=W_par)
+ call LINEAR_ALGEBRA_driver(DIAGO,M=A_out_par,lib_in=USE_SLK,e_real=W_par)
  !
  call matrix_check( " Eigenval", ndim, 1, cmplx(W,KIND=SP), cmplx(W_par,KIND=SP))
  !

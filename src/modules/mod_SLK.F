@@ -30,6 +30,7 @@ module SLK_m
  !
  integer              :: n_pools = 1 ! number of pools
  integer, parameter   :: desc_len= 9
+ logical              :: BLACS_structure_in_use=.FALSE.
  !
  ! SLK test
  !
@@ -68,18 +69,22 @@ module SLK_m
  ! SLK matrix distributed block and informations
  !===============================================
  type SLK_matrix 
+   !
    integer :: desc(desc_len)
-   integer :: lwork    = 0
-   integer :: lrwork   = 0
-   integer :: liwork   = 0
-   integer :: info     = 0
-   integer :: rows(2)  = 0
-   integer :: cols(2)  = 0
-   integer :: nrows    = 0
-   integer :: ncols    = 0
+   integer :: N          = 0
+   integer :: lwork      = 0
+   integer :: lrwork     = 0
+   integer :: liwork     = 0
+   integer :: info       = 0
+   integer :: rows(2)    = 0
+   integer :: cols(2)    = 0
+   integer :: nrows      = 0
+   integer :: ncols      = 0
    integer :: nrows_used = 0
    integer :: ncols_used = 0
+   !
    complex(SP), allocatable :: blc(:,:)
+   !
  end type SLK_matrix 
  !
  ! Specific SLK worlds ...
@@ -103,6 +108,7 @@ module SLK_m
        M_slk%ncols    = ncols
        allocate(M_slk%blc(nrows,ncols))
      else
+       M_slk%N        = 0
        M_slk%desc     = 0
        M_slk%lwork    = 0
        M_slk%lrwork   = 0
@@ -111,6 +117,8 @@ module SLK_m
        M_slk%rows(2)  = 0
        M_slk%cols(2)  = 0
        M_slk%nrows    = 0
+       M_slk%ncols_used = 0
+       M_slk%nrows_used = 0
        M_slk%ncols    = 0
      endif
    end subroutine

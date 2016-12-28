@@ -91,6 +91,9 @@ module LOGO
 #if defined _MPI
      MPI_string="MPI"
 #endif
+#if defined _SCALAPACK
+     MPI_string="MPI+SLK"
+#endif
      OMP_string=" "
 #if defined _OPENMP
      OMP_string="+OpenMP"

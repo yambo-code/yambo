@@ -68,7 +68,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #if defined _SC
  integer          ::wf_size
 #endif
- integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
+ integer          ::i1,i_sp_pol,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
 &                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
@@ -420,8 +420,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
    if (WF%space=='R') wf_size=fft_size
    if (WF%space=='G') wf_size=wf_ng
-   do ikibz=WF%k(1),WF%k(2)
-     call WF_rotate(ikibz,wf,wf_size)
+   do i_sp_pol=1,n_sp_pol
+     do ikibz=WF%k(1),WF%k(2)
+       call WF_rotate(ikibz,i_sp_pol,wf,wf_size)
+     enddo
    enddo
    call load_SC_components('WF_clean')
    !

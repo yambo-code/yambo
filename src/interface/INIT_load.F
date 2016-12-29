@@ -589,7 +589,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! 
  ! SC
  !
-#if defined _SC && !defined _RT
+#if defined _SC
  !
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  !

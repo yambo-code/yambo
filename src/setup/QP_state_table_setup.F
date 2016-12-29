@@ -229,7 +229,7 @@ subroutine QP_state_table_setup(en)
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !
 #if defined _SC || defined _RT
-         if (l_sc_run.or.l_real_time .and. (i2<H_ref_bands(1)) ) cycle
+         if ((l_sc_run.or.l_real_time) .and. (i2<H_ref_bands(1)) ) cycle
 #endif
 #if defined _SC
          if (l_sc_run .and. (l_SC_diagonal.and.i3/=0) ) cycle

@@ -55,7 +55,7 @@ subroutine QP_load_SC_xc()
      if (.not.compatible_SC_DB.or..not.found_SC_DB) return
      !
      call LINEAR_ALGEBRA_driver(INV,M=SC_R(:,:,i_k,i_sp_pol))
-     call H_rotate(SC_R(:,:,i_k,i_sp_pol),H_nl_sc(:,:,i_sp_pol),SC_bands(2),-1)
+     call H_rotate(SC_R(:,:,i_k,i_sp_pol),H_nl_sc,SC_bands(2),-1)
      !
      do i_qp=1,QP_n_states
        if (.not.QP_table(i_qp,3) ==i_k)      cycle

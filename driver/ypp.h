@@ -74,10 +74,10 @@
 #if defined _YPP_RT
   {"RTDBs",   "c","Carriers [(e)nergy,(k)-space,(m)anual]",0,0,1,0,0}, 
   {"RealTime","t","TD-polarization [(X)response,Tr(a)bs]",0,0,1,0,0}, 
-  {"RealTime","n","NEQ plot opt1 [(o)ccupations,(l)ifetimes,(d)ensity]",0,0,2,0,0}, 
-  {"DESC",    " ","         opt2 occ. [(b)ands,(t)ime,(e)nergy,(d)os]",0,0,0,0,0},
-  {"DESC",    " ","         opt2 life [(b)ands,(t)ime,(e)nergy]",0,0,0,0,0},
-  {"DESC",    " ","         opt2 den. [(t)ime]",0,0,0,0,0}, 
+  {"RealTime","n","NEQ plot opt#1 [(o)ccupations,(l)ifetimes,(d)ensity]",0,0,2,0,0}, 
+  {"DESC",    " ","         opt#2 occ. [(b)ands,(t)ime,(e)nergy,(d)os]",0,0,0,0,0},
+  {"DESC",    " ","         opt#2 life [(b)ands,(t)ime,(e)nergy]",0,0,0,0,0},
+  {"DESC",    " ","         opt#2 den. [(t)ime]",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH && ! defined _YPP_RT
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 

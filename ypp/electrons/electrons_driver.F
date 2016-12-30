@@ -68,7 +68,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:),el_cur(:,:)
- integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_sp_pol,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
  logical               :: flag
  character(lchlen)     :: ch_ws(2)
 #if defined _YPP_ELPH
@@ -229,7 +229,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
      !
      ib    =QP_table(i_qp,1)
      ik    =QP_table(i_qp,3)
-     i_spin=spin(QP_table(i_qp,:))
+     i_sp_pol=spin(QP_table(i_qp,:))
      !
      db_name=trim(jobstr)//'/TOP_RESIDUAL_b'//trim(intc(ib))//'_k'//trim(intc(ik))
      !
@@ -350,13 +350,13 @@ subroutine electrons_driver(Xk,Xen,Xq)
      !
      ib    =QP_table(i_qp,1)
      ik    =QP_table(i_qp,3)
-     i_spin=spin(QP_table(i_qp,:))
+     i_sp_pol=spin(QP_table(i_qp,:))
      !
      i_qp=i_qp+1
      !
 #if defined _YPP_SC
      if (l_mean_potential.and.ik/=ik_ref) then
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID)
        io_V=io_SC_components('MP',Xen,ID)
        ik_ref=ik
      endif
@@ -365,7 +365,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then
 #endif
-       i_wf=WF%index(ib,ik,i_spin)
+       i_wf=WF%index(ib,ik,i_sp_pol)
        if (n_spinor==2) i_wfp=WF%index(ib,ik,2)
 #if defined _YPP_SC
      endif
@@ -389,15 +389,15 @@ subroutine electrons_driver(Xk,Xen,Xq)
      !
      ibp=ib+1
      if (ib==Xen%nb) ibp=ib
-     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ibp,ik,i_spin))<deg_energy) then
+     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_sp_pol)-Xen%E(ibp,ik,i_sp_pol))<deg_energy) then
        cycle
      else
        !
        if (n_sp_pol==2) then
-         if (i_spin==1) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
-         if (i_spin==2) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
-         if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
-         if (i_spin==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
+         if (i_sp_pol==1) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
+         if (i_sp_pol==2) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
+         if (i_sp_pol==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
+         if (i_sp_pol==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
        else
          ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim)) 
        endif
@@ -465,10 +465,10 @@ subroutine electrons_driver(Xk,Xen,Xq)
      !
      call section('*','Spin Polarized densities')
      !
-     do i_spin=1,2
+     do i_sp_pol=1,2
        !
        ! rho DN
-       if (i_spin==1) then
+       if (i_sp_pol==1) then
          v2plot=(el_den(:)-magn(:,3))/2.
          ch_ws(1)='density_DN_'//trim(intc(plot_dim))
        else
@@ -489,8 +489,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
          call msg('o density_UP density_DN',"#")
        endif
        !
-       if (i_spin==1) plot_title='den DN'
-       if (i_spin==2) plot_title='den UP'
+       if (i_sp_pol==1) plot_title='den DN'
+       if (i_sp_pol==2) plot_title='den UP'
        call plot_check_and_launch(.false.)
        !
        call of_open_close(trim(output_fname))

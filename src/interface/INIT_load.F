@@ -55,21 +55,18 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use functions,     ONLY:bose_E_cut
  use parallel_m,    ONLY:n_log_CPUs
  use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
- use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
 #endif
 #if defined _SC || defined _RT || defined _QED
- use hamiltonian,   ONLY:IP_h_bands
- ! to be moved in mod hamiltonian
- use SC,            ONLY:SC_potential,OEP_approx
- ! to be moved in defined _SC only
- use SC,            ONLY:SC_bands,SC_preconditioning
+ use hamiltonian,   ONLY:H_ref_bands,H_potential
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
 #endif
-#if defined _SC && !defined _RT
+#if defined _SC
  use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
  use SC,            ONLY:SC_iterations,SC_up_W_iters,&
-&                        SC_rho_threshold,SC_cycle_mixing
+&                        SC_rho_threshold,SC_cycle_mixing,&
+&                        SC_bands,SC_preconditioning,OEP_approx
 #endif
 #if defined _RT
  use RT_control,    ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
@@ -171,7 +168,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
-#if defined _RT || defined _QED
+#if defined _RT 
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _MAGNETIC
@@ -592,7 +589,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! 
  ! SC
  !
-#if defined _SC && !defined _RT
+#if defined _SC
  !
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  !
@@ -612,7 +609,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #endif
  ! 
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _QED
  !
  ! SC and RT common
  !
@@ -620,18 +617,20 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call TMP_mirror_bands( )
  !
- call it(defs,'HXC_Potential', '[SC] SC HXC Potential',SC_potential,protect=.FALSE.)
+ call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
- call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
- call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
  !
 #endif
  !
 #if defined _RT
- !
  call TMP_mirror_bands( )
- !
 #endif
+ !
+#if defined _SC
+ call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
+ call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
+#endif
+
  ! 
  contains 
    !
@@ -647,12 +646,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &            Efield(i_field)%frequency,unit=E_unit)
-     call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
+     call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &            Efield(i_field)%intensity,unit=I_unit)
-     call it(defs,trim(name)//'_Damp',            '[RT '//trim(name)//'] Damping',&
-&            Efield(i_field)%damping,unit=Time_unit(1))
+     call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
+&            Efield(i_field)%width,unit=Time_unit(1))
+     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
+&            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &            Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
@@ -667,6 +668,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      if (initmode==4) then
        call parser(trim(name)//'_kind',is_def)
        if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
+       call parser(trim(name)//'_FWHM',is_def)
+       if (is_def) then
+         Efield(i_field)%width=Efield(i_field)%FWHM/(2.*sqrt(2.*log(2.)))
+       else
+         Efield(i_field)%FWHM=Efield(i_field)%width*2.*sqrt(2.*log(2.))
+       endif
      endif
      !
    end subroutine
@@ -780,28 +787,30 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      use parser_m,       ONLY:parser
      logical :: is_def(3)
      integer :: bands_(2)
-     call parser('SCbands',is_def(1))
-     call parser('RTbands',is_def(2))
+     call parser('SCbands',  is_def(1))
+     call parser('RTbands',  is_def(2))
      call parser('COLLbands',is_def(3))
 #endif
      !
 #if defined _SC 
      if (is_def(1)) bands_=SC_bands
-     if (is_def(3)) bands_=COLL_bands
 #endif
 #if defined _RT || defined _QED
      if (is_def(2)) bands_=RT_bands
 #endif
+#if defined _SC || defined _RT || defined _QED
+     if (is_def(3)) bands_=COLL_bands
+#endif
      !
 #if defined _SC 
      SC_bands  =bands_
-     COLL_bands=bands_
-     IP_h_bands=bands_
 #endif
 #if defined _RT || defined _QED
      RT_bands  =bands_
 #endif
 #if defined _SC || defined _RT || defined _QED
+     COLL_bands=bands_
+     H_ref_bands=bands_     
      !
    end subroutine
    !TMP<

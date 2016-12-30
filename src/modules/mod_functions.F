@@ -52,6 +52,22 @@ module functions
  !
  contains
    !
+   logical function infinity(E)
+     use pars, ONLY: infinity_dfl
+     real(SP)     :: E
+     infinity= E > infinity_dfl
+   end function infinity
+   !
+   logical function NAN(E)
+     real(SP) :: E
+#if defined _BLUEGENE || _PGI
+     use ieee_arithmetic
+     NAN= ieee_is_nan(E)
+#else
+     NAN= isnan(E)
+#endif
+   end function NAN
+   !
    real(SP) function theta_function(T,step,order)
      !
      ! This is an easy numerical implementation of the

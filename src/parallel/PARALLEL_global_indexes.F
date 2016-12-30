@@ -279,6 +279,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (l_sc_run.and.&
 &      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
 &                                               Q_range=(/1,nqbz/)
+#endif
+#if defined _SC || defined _RT
    if (l_eval_collisions)                       Q_range=(/1,nqbz/)
 #endif
 #if defined _ELPH

@@ -209,7 +209,7 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin)),&
+   call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,SC_bands(2),SC_bands(2)/))
    call io_bulk(ID,C2=SC_R(:,:,ik,i_sp_pol))
    !

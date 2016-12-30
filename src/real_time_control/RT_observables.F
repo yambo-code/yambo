@@ -83,12 +83,12 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  do ik=1,en%nk
    do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     if (l_RT_uses_E_DbGd) ik_E=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+     if (l_RT_uses_E_FineGd) ik_E=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
      do ib1=RT_bands(1),RT_bands(2)
        do ib2=RT_bands(1),RT_bands(2)
-         if (l_RT_uses_E_DbGd) then
-           Energy(1)=en%E_DbGd(ib1,ik_E,1)
-           Energy(2)=en%E_DbGd(ib2,ik_E,1)
+         if (l_RT_uses_E_FineGd) then
+           Energy(1)=en%E_FineGd(ib1,ik_E,1)
+           Energy(2)=en%E_FineGd(ib2,ik_E,1)
          else
            Energy(1)=en%E(ib1,ik,1)
            Energy(2)=en%E(ib2,ik,1)

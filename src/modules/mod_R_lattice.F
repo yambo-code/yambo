@@ -80,8 +80,8 @@ module R_lattice
    !
    integer           :: nibz_duplicate
    integer           :: nbz_duplicate
-   integer,  pointer :: nibz_mapped(:)    => null()  ! For each IBZ kpt in the Fg, n° of IBZ kpt_FineGd associated
-   integer,  pointer :: nbz_mapped(:)     => null()  ! For each IBZ kpt in the Fg, n° of IBZ kpt_FineGd associated
+   integer,  pointer :: nibz_mapped(:)    => null()  ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd associated
+   integer,  pointer :: nbz_mapped(:)     => null()  ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd associated
    integer,  pointer :: ibz_DbGd_map(:,:) => null()  ! map kpt_FineGd in the IBZ --> kpts in the IBZ
    integer,  pointer :: bz_DbGd_map(:,:)  => null()  ! map kpt_FineGd in the  BZ --> kpts in the  BZ
    real(SP), pointer :: weights_DbGd(:)   => null()  

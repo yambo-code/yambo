@@ -71,7 +71,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,ik_RT_DbGd,ik_FineGd,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  complex(SP):: M_tmp(RT_bands(2),RT_bands(2))
  integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
@@ -373,7 +373,7 @@ subroutine RT_start_and_restart(E,k,q,X)
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           ik_FineGd=ik_RT_rim-ik
+           ik_FineGd=ik_RT_DbGd-ik
            if (ik_RT_DbGd==RT_ibz_coo(ik,1)) then
              G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
              if (associated(E%fo)) G_lesser_reference(ib,ib,ik) =cI*E%fo(ib,ik,1)

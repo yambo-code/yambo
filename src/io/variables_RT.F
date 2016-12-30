@@ -26,7 +26,6 @@ integer function variables_RT(ID,local_description,what)
  use pars,           ONLY:lchlen,SP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
- use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
 &                         n_TIME_STEP_CONF_descriptions,JPC_RT_IO_t,GF_RT_IO_t,RT_IO_t
@@ -265,15 +264,11 @@ integer function variables_RT(ID,local_description,what)
    !
    ! Double Grid
    !======================
-   call io_elemental(ID,VAR="Double_Grid_support",VAR_SZ=3,MENU=0) 
+   call io_elemental(ID,VAR="Double_Grid_support",VAR_SZ=2,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_uses_E_FineGd,&
 &    VAR=' [DbGd] Double Grid support      :',  CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,I0=BZ_DbGd_tot_nkpts,&
-&    VAR=' [DbGd] Number of k-points       :',  CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,R0=DbGd_EE_percent,&
 &    VAR=' [DbGd] Used for e-e        [o/o]:',  CHECK=.true.,OP=(/"=="/),&

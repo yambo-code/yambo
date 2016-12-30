@@ -32,7 +32,7 @@ subroutine RT_initialize(E,k,q)
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
- use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
+ use electrons,      ONLY:levels
  use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
 &                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
@@ -380,7 +380,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'nr','---RIM---')
  call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_FineGd)
  if (l_RT_uses_E_FineGd) then
-   call msg( 'r', 'K-points            (TOTAL):',BZ_DbGd_tot_nkpts)
+   call msg( 'r', 'K-points            (TOTAL):',k%nibz_FineGd)
    call msg( 'r', '                     (USED):',RT_nk)
    if (l_elel_scatt) then
      call msg( 'r', 'Percentual used in e-e[o/o]:',DbGd_EE_percent)

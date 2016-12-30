@@ -25,7 +25,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  use pars,           ONLY:SP
  use memory_m,       ONLY:mem_est
- use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nkpts,BZ_DbGd_kpts,BZ_DbGd_nbands
+ use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
@@ -48,7 +48,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  integer,parameter     :: n_pieces=10
  logical               :: l_DbGd
  !
- l_DbGd=BZ_DbGd_tot_nkpts>0
+ l_DbGd=K%nibz_FineGd>0
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
@@ -72,10 +72,10 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    E%f=E%fo+E%df
    !
    if (l_DbGd) then
-     allocate(E%df_FineGd(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
+     allocate(E%df_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
      call mem_est("E-df_FineGd",(/size(E%df_FineGd)/),(/SP,SP/))
      E%df_FineGd=0._SP
-     call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
+     call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt_FineGd,K%nibz_FineGd)
      E%f_FineGd=E%f_FineGd+E%df_FineGd
    endif
    !
@@ -95,7 +95,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    !
    call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt,E%nk)
    !
-   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
+   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt_FineGd,K%nibz_FineGd)
    !
  endif
  !
@@ -141,14 +141,14 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
     !
     l_renormalize=.not.l_real_time
     ! 
-    if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nkpts,SP)
-    if (NK==E%nk) K_weights(:)=K%weights(:)
+    if (NK/=E%nk) K_weights=K%weights_FineGd
+    if (NK==E%nk) K_weights=K%weights
     !
     call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,what,l_renormalize)
     !
+    if (NK/=E%nk) nb_max=min(nb(2),E%nb_FineGd)
     if (NK==E%nk) nb_max=    nb(2)
-    if (NK/=E%nk) nb_max=min(nb(2),BZ_DbGd_nbands)
     !
     if (OBJ=="df") then
       !

@@ -80,7 +80,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: ik,ik_RT,ik_DbGd,ib,ibp
+ integer          :: ik,ik_RT,ik_FineGd,ib,ibp
  real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3)
  !
 #if defined _TIMING

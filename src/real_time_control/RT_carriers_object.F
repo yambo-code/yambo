@@ -28,7 +28,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
- use electrons,      ONLY:n_sp_pol,spin_occ,levels,BZ_DbGd_kpts
+ use electrons,      ONLY:n_sp_pol,spin_occ,levels
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
@@ -48,7 +48,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  integer,       intent(in)   ,optional :: DB_id
  character(*),  intent(in)   ,optional :: WHAT
  !
- integer  :: i_RT,i_b,i_k,i_k_DbGd,i_k_RT,i_spin
+ integer  :: i_RT,i_b,i_k,i_k_FineGd,i_k_RT,i_spin
  real(SP) :: Hole_lifetime,Elec_lifetime,df_occ,f_occ
  !
  select case(WHAT)
@@ -87,11 +87,10 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        i_k_FineGd=i_k_RT-i_k
        !
-       if(i_k_RT==RT_ibz_coo()
        if(l_RT_uses_E_FineGd) then
-         RT%E_bare(i_RT)=E%E_FineGd(i_b,i_k_DbGd,i_spin)
-         if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_DbGd,i_spin)
-         if(     associated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_DbGd,i_spin)-E%df_FineGd(i_b,i_k_DbGd,i_spin)
+         RT%E_bare(i_RT)=E%E_FineGd(i_b,i_k_FineGd,i_spin)
+         if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)
+         if(     associated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)-E%df_FineGd(i_b,i_k_FineGd,i_spin)
        else
          RT%E_bare(i_RT)=E%E(i_b,i_k,i_spin)
          if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)

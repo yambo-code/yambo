@@ -105,7 +105,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
      do ik=RT_ibz_coo(ik_ibz,1)+1,RT_ibz_coo(ik_ibz,2)
        !
        if(l_rim_energy) then
-         ik_FineGd=ik-ik_ibz
+         iE_rim=ik-ik_ibz
          do ib=RT_bands(1),RT_bands(2)
            Hk(1,ib,ib)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%E_FineGd(ib,iE_rim,i_sp_pol)
            do ibp=ib+1,RT_bands(2)
@@ -114,7 +114,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
            enddo
          enddo
        else if(l_rim_dipole) then
-         ik_FineGd=ik-ik_ibz
+         iE_rim=ik-ik_ibz
          do ib=RT_bands(1),RT_bands(2)
            Hk(i_dir,ib,ib)=Hk_vec_tmp(i_dir,ib,ib)
            do ibp=ib+1,RT_bands(2)

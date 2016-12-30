@@ -27,7 +27,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  ! 
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree
- use collision,        ONLY:HXC_COLL_element,COLL_bands,&
+ use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,&
 &                           HXC_collisions,COLLISIONS_group,COLLISIONS_element
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz

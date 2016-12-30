@@ -27,7 +27,7 @@ subroutine RT_BGR(dG,E,k)
  !
  use pars,           ONLY:SP,cZERO,rZERO
  use drivers,        ONLY:l_sc_fock,l_sc_sex
- use SC,             ONLY:V_hartree_sc,V_xc_sc,rho_n
+ use hamiltonian,    ONLY:V_hartree_sc,V_xc_sc,rho_n
  use R_lattice,      ONLY:nkibz,bz_samp
 #if defined _TIMING
  use timing_m,       ONLY:timing

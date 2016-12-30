@@ -21,17 +21,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.1.1 r.13978 h.cad601c , yambo@yambo-code.org)
-SVERSION="4"
-SPATCHLEVEL="1"
-SSUBLEVEL="2"
-SREVISION="13978"
-SHASH="cad601c"
-AC_SUBST(SVERSION)
-AC_SUBST(SPATCHLEVEL)
-AC_SUBST(SSUBLEVEL)
-AC_SUBST(SREVISION)
-AC_SUBST(SHASH)
+m4_include([config/version.m4])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR([driver/driver.c])
 m4_include([config/acx_lapack.m4])
@@ -45,6 +35,7 @@ m4_include([config/fft.m4])
 m4_include([config/iotk.m4])
 m4_include([config/etsf_io.m4])
 m4_include([config/scalapack.m4])
+m4_include([config/petsc_slepc.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
@@ -63,7 +54,6 @@ AC_FUNC_REALLOC
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STAT
 AC_PROG_MAKE_SET
-
 # ============================================================================
 # check size of pointers to int - needed to decide the size of integer
 # arrays in fortran holding C pointers for FFTW
@@ -71,7 +61,6 @@ ACX_POINTER_SIZE
 SIZEOF_INT_P=$ac_pointersize
 AC_SUBST(SIZEOF_INT_P)
 # 
-
 # ============================================================================
 # Checks for programs.
 AC_PROG_CC
@@ -352,14 +341,6 @@ AC_SUBST(BLAS_LIBS)
 AC_SUBST(LAPACK_LIBS)
 AC_SUBST(compile_blas)
 AC_SUBST(compile_lapack)
-# ============================================================================
-# check for local libs needed
-# 
-DLARAN=""
-if test x"$acx_dlaran_ok" = xno; then
- DLARAN="dlaran.o"
-fi
-AC_SUBST(DLARAN)
 #
 # ============================================================================
 # MPI
@@ -423,8 +404,11 @@ fi
 AC_LANG_PUSH(Fortran)
 AC_HAVE_FFT
 # ============================================================================
+# PETSC/SLEPC
+AC_PETSC_SLEPC_SETUP
+# ============================================================================
 # SCALAPACK/BLACS
-SLK_SETUP
+AC_SLK_SETUP
 # ============================================================================
 # IOTK library 
 AC_HAVE_IOTK
@@ -442,8 +426,8 @@ ACX_LIBXC
 ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
-                 src/wf_and_fft/sgfft.F lib/local/.objects
-                 sbin/make_makefile.sh sbin/objects_debug.sh
+                 src/wf_and_fft/sgfft.F 
+                 sbin/make_makefile.sh sbin/objects_debug.sh 
                  driver/codever.h driver/editor.h src/external_c/.objects])
 AC_OUTPUT
 chmod u+x sbin/*
@@ -457,12 +441,18 @@ if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi
  if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
  if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi
+ if test ! -d "$prefix/lib"        ; then mkdir "$prefix/lib" ; fi
+ if test ! -d "$prefix/lib/local"  ; then mkdir "$prefix/lib/local" ; fi
  cd "$srcdir/driver/" ;
  for file in `ls *.h` ; do
   cp "$file" "$prefix/driver" ;
  done ;
  for file in `ls *.c` ; do
   cp "$file" "$prefix/driver" ;
+ done ;
+ cd "$srcdir/lib/local" ;
+ for file in `ls *.f` ; do
+  cp "$file" "$prefix/lib/local" ;
  done ;
  cd "$prefix" ;
 fi

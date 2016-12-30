@@ -38,7 +38,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  use frequency,     ONLY:bare_grid_N,coarse_grid_pt
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
- use collision,     ONLY:elemental_collision
+ use collision_el,  ONLY:elemental_collision
  !
  implicit none
  !

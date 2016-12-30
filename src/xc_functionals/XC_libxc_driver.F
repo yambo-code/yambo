@@ -33,7 +33,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use D_lattice,      ONLY:DL_vol, alat
 #if defined _RT
  use drivers,        ONLY:l_real_time
- use SC,             ONLY:rho_n,magn_n
+ use hamiltonian,    ONLY:rho_n,magn_n
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size

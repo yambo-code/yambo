@@ -35,16 +35,20 @@ subroutine XCo_local(E,Xk)
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear 
+#if defined _RT || defined _SC
+ use drivers,       ONLY:l_real_time,l_sc_run
+ use hamiltonian,   ONLY:H_ref_bands
+#endif
 #if defined _RT
+ use drivers,       ONLY:l_real_time
  use parallel_m,    ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
  use matrix_operate,ONLY:UP_matrix_index,matrix_index
- use SC,            ONLY:SC_bands
 #endif
 #if defined _SC
- use drivers,       ONLY:l_real_time,l_sc_run
+ use hamiltonian,   ONLY:V_xc_sc,V_hartree_sc
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
- use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size,compatible_SC_DB
+ use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
  !
  implicit none
@@ -73,7 +77,7 @@ subroutine XCo_local(E,Xk)
  ! Precompiler options in case a non-DFT potential is required
  !
 #if defined _SC
- if (WF_KIND< 300 ) then
+ if (WF_KIND< 300) then
    !
    ! ...LDA (and more) Vxc
    !
@@ -123,7 +127,7 @@ subroutine XCo_local(E,Xk)
        endif
        !
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
        !
      else
 #endif
@@ -143,7 +147,7 @@ subroutine XCo_local(E,Xk)
 !$omp parallel do default(shared), private(ifft)
 #endif
      do ifft=1,fft_size
-         c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,iwfp)
+       c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,iwfp)
      enddo
 #if defined _OPENMP
 !$omp end parallel do
@@ -160,7 +164,7 @@ subroutine XCo_local(E,Xk)
  endif
  !
 #if defined _RT
- nb=SC_bands(2)-SC_bands(1)+1
+ nb=H_ref_bands(2)-H_ref_bands(1)+1
 #endif
  !
  if (n_spin==2) then
@@ -178,7 +182,7 @@ subroutine XCo_local(E,Xk)
 #if defined _RT
      if (l_real_time) then
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
      else
 #endif
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
@@ -219,12 +223,12 @@ subroutine XCo_local(E,Xk)
  !
  ! Clean
  !
-#if defined _SC
+#if defined _SC || defined _RT
  if(.not.(l_sc_run.or.l_real_time)) then
 #endif
    deallocate(V_xc)
    if(n_spin>1) deallocate(magn)
-#if defined _SC
+#if defined _SC || defined _RT
  endif
 #endif
  !

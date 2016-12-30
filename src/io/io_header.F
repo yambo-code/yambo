@@ -83,7 +83,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  call io_elemental(ID,DB_I0=io_code_revision(ID,1),I0=code_revision)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (ver_is_gt_or_eq(ID,revision=4350).and.(variable_is_found(ID,"HEAD_GPL_REVISION")==1)) then
+ if (ver_is_gt_or_eq(ID,revision=4350).and.variable_is_found(ID,"HEAD_GPL_REVISION")) then
    call io_elemental(ID,VAR="HEAD_GPL_REVISION",VAR_SZ=1,MENU=0)
    call io_elemental(ID,DB_I0=io_code_revision(ID,2),I0=code_GPL_revision)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

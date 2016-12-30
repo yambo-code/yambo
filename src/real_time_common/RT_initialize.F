@@ -33,10 +33,9 @@ subroutine RT_initialize(E,k,q)
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
- use SC,             ONLY:SC_potential
  use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
 &                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
- use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,                &
+ use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,Gr_kind,l_RT_uses_E_FineGd,               &
@@ -242,7 +241,7 @@ subroutine RT_initialize(E,k,q)
      endif
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
-     call SC_check_symmetries(Efield(i1)%versor)
+     call Check_symmetries(Efield(i1)%versor)
      !
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
@@ -354,7 +353,7 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'nr','---Flags (if any)---')
  !
- call msg( 'r','Hxc approximation          :',trim(SC_potential))
+ call msg( 'r','Hxc approximation          :',trim(RT_potential))
  !
  if (l_elph_scatt)        call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El         scattering   :',l_elel_scatt)
@@ -403,7 +402,7 @@ subroutine RT_initialize(E,k,q)
      call msg('r', MSG_ch//' energy window/period [eV/fs]:',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
      call msg('r', MSG_ch//' elemental oscillation   [fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))*AUT2FS)
-     call msg('r', MSG_ch//' damping                 [fs]:',Efield(i1)%damping*AUT2FS)
+     call msg('r', MSG_ch//' width                   [fs]:',Efield(i1)%width*AUT2FS)
      call msg('r', MSG_ch//' energy steps                :',Efield(i1)%n_frequencies)
      call msg('r', MSG_ch//' electric field         [V/m]:',Efield(i1)%amplitude*AU2VMm1)
      call msg('r', MSG_ch//' max intensity      [kW/cm^2]:',Efield(i1)%intensity*AU2KWCMm2)
@@ -411,6 +410,7 @@ subroutine RT_initialize(E,k,q)
      if( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='DELTA') ) then
        call msg('r', MSG_ch//' max fluence        [nJ/cm^2]:',Efield(i1)%fluence )
        call msg('r', MSG_ch//' final time              [fs]:',Efield(i1)%t_final*AUT2FS)
+       call msg('r', MSG_ch//' half maximum full width [fs]:',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS)
      endif
      !
    enddo

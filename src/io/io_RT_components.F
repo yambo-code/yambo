@@ -27,12 +27,12 @@ integer function io_RT_components(what,ID)
  !
  use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_elph_scatt,l_real_time
- use R_lattice,      ONLY:nkibz,nqbz
+ use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,write_is_on,io_fragment, &
-&                         manage_OP_IF_START_and_CL_IF_END,variable_is_found,&
+&                         manage_OP_IF_START_and_CL_IF_END,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
@@ -55,12 +55,12 @@ integer function io_RT_components(what,ID)
  !
  ! Work Space
  !
- integer, external     :: variables_SC,variables_RT
+ integer, external     :: variables_RT
  character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: what_
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
- integer               :: ik,ib,i_spin,i_memory,i_time,db_type,n_cache_steps
+ integer               :: ik,ib,i_spin,i_memory,i_time,db_type
  logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
@@ -113,9 +113,6 @@ integer function io_RT_components(what,ID)
    if ( db_type==2 .or. (db_type==-3.and..not.l_real_time) ) then
      !
      io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
-     if (io_RT_components/=0) goto 1
-     !
-     io_RT_components=variables_SC(ID,local_description,trim(what_))
      if (io_RT_components/=0) goto 1
      !
      io_RT_components=variables_RT(ID,local_description,trim(what_))

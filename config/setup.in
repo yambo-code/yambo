@@ -1,7 +1,7 @@
 @SET_MAKE@
-#====================================
+#========================================================
 #        @PACKAGE_STRING@ setup
-#====================================
+#========================================================
 #
 # Main setup
 #
@@ -18,7 +18,7 @@ pcc         = @PCC@
 pccflags    = @PCCFLAGS@
 cpp         = @C_AS_CPP@
 cppflags    = @C_AS_CPP_FLAGS@ 
-fccpp       = @FCCPP@
+fpp         = @FPP@
 f90         = @F90@
 f90flags    = @FCFLAGS@ @FCMFLAG@ @OPENMPLIBS@
 f90uflags   = @FCUFLAGS@ @FCMFLAG@ @OPENMPLIBS@
@@ -29,6 +29,7 @@ f77         = @F77@
 f77flags    = @FFLAGS@
 f77uflags   = @UFFLAGS@
 package_bugreport = @PACKAGE_BUGREPORT@
+shell       = @SHELL@
 #
 # Paths
 #
@@ -39,6 +40,7 @@ srcdir      = @srcdir_path@
 libdir      = @srcdir_path@/lib
 libpath     = -L@srcdir_path@/lib @LDFLAGS@
 includedir  = @srcdir_path@/include
+mpidir      = @MPIROOT@
 lblas       = @BLAS_LIBS@
 llapack     = @LAPACK_LIBS@
 lblacs      = @BLACS_LIBS@

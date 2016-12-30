@@ -23,9 +23,9 @@
 !
 module BS
  !
- use pars,       ONLY:IP,SP,schlen,lchlen
- use collision,  ONLY:elemental_collision
- use memory_m,   ONLY:mem_est
+ use pars,         ONLY:IP,SP,schlen,lchlen
+ use collision_el, ONLY:elemental_collision
+ use memory_m,     ONLY:mem_est
  !
  implicit none
  !
@@ -56,7 +56,6 @@ module BS
  !
  ! Live Timing
  !=============
- integer     :: BS_LiveTiming_prefactor = 1
  integer(IP) :: BS_LiveTiming_steps     = 0
  !
  ! Transition Controls
@@ -111,12 +110,13 @@ module BS
  ! Blocks ...
  !============
  type BS_block
-   integer                       :: ik         ! ik index (IBZ)
-   integer                       :: ip         ! ip index (ik -> ip transition) (IBZ)
-   integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
-   integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
-   integer                       :: size(2)    ! rows x columns
-   character(1)                  :: mode       ! "R"esonant/"A"ntiresonant
+   integer                       :: ik            ! ik index (IBZ)
+   integer                       :: ip            ! ip index (ik -> ip transition) (IBZ)
+   integer                       :: iT_k          ! Index (among n_BS_T_grps) of the cv transitions @ k
+   integer                       :: iT_p          ! Index (among n_BS_T_grps) of the cv transitions @ p
+   integer                       :: size(2)       ! rows x columns
+   integer                       :: coordinate(2) ! Position of the left-bottom corner in the whole matrix
+   character(1)                  :: mode          ! "R"esonant/"A"ntiresonant
    !
    ! Matrix Block
    !--------------
@@ -312,6 +312,7 @@ module BS
    end subroutine
    !
    function BS_Block_size(i_block)
+     !
      integer              :: i_block
      integer(IP)          :: BS_Block_size
      !
@@ -321,12 +322,14 @@ module BS
        BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)
      endif
      !
-     BS_Block_size=BS_Block_size/BS_LiveTiming_prefactor
-     !
    end function BS_Block_size
    !
    subroutine BS_Blocks_symmetrize_K()
+     !
+     ! Symmetrize the DIAGONAL blocks only (i_Tk=i_Tp)
+     !
      integer :: i_B,i_Tk,i_Tp,i_r,i_c
+     !
      do i_B=1,n_BS_blks
        !
        i_Tk  =BS_blk(i_B)%iT_k
@@ -336,6 +339,7 @@ module BS
        ! Coupling part (mode ==A) is symmetric
        !
        if (.not.(i_Tk.eq.i_Tp)) cycle
+       !
        if (BS_blk(i_B)%mode=="R") then
          forall(i_r=1:BS_blk(i_B)%size(1),&
 &             i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c) BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))

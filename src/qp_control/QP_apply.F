@@ -60,9 +60,9 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
  use parser_m,      ONLY:parser
- use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
-&                        K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
-&                        X_kind,X_xc_functional,QP_DB_kind,SE_NONE
+ use global_XC,     ONLY:setup_global_XC,QP_MORE_SCISSOR,QP_MORE_SCIS_AND_STRE,QP_MORE_STRETCH,&
+&                        K_kind,K_xc_functional,QP_MORE_NONE,G_kind,G_xc_functional,&
+&                        X_kind,X_xc_functional,QP_DB_kind,QP_SE_NONE
  use QP_CTL_m,      ONLY:QP_ctl_t,reset_QP_ctl
  !
  implicit none
@@ -81,7 +81,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  type(QP_t)       ::qp
  type(QP_ctl_t)   ::QP_ctl_from_DB(n_sp_pol),QP_ctl_input_or_impose(n_sp_pol)
  integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_ibz,ib,i1,&
-&                       ik_r,SE_MORE,i_spin,QP_load_DB_err,nbf_m_SAVE(2)
+&                       ik_r,QP_SE_MORE,i_spin,QP_load_DB_err,nbf_m_SAVE(2)
  character(schlen)::ch
  character(1)     ::what
  character(11)    ::spin_ch(2)
@@ -164,7 +164,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    ! Update QP db kind in the global_XC kinds 
    !
-   if (QP_DB_kind/=SE_NONE.and.QP_load_DB_err>0) then
+   if (QP_DB_kind/=QP_SE_NONE.and.QP_load_DB_err>0) then
      if (Eid==1) X_kind=QP_DB_kind
      if (Eid==2) K_kind=QP_DB_kind
      if (Eid==3) G_kind=QP_DB_kind
@@ -180,14 +180,14 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    ! Then update scissor & stretching in the global_XC kinds 
    !
-   SE_MORE=MORE_NONE
-   if (any(QP_ctl_E(Eid,1,:)  /=0._SP)) SE_MORE=MORE_SCISSOR
-   if (any(QP_ctl_E(Eid,2:3,:)/=1._SP)) SE_MORE=MORE_STRETCH
-   if (any(QP_ctl_E(Eid,1,:)  /=0._SP).and.any(QP_ctl_E(Eid,2:3,:)/=1._SP)) SE_MORE=MORE_SCIS_AND_STRE
+   QP_SE_MORE=QP_MORE_NONE
+   if (any(QP_ctl_E(Eid,1,:)  /=0._SP)) QP_SE_MORE=QP_MORE_SCISSOR
+   if (any(QP_ctl_E(Eid,2:3,:)/=1._SP)) QP_SE_MORE=QP_MORE_STRETCH
+   if (any(QP_ctl_E(Eid,1,:)  /=0._SP).and.any(QP_ctl_E(Eid,2:3,:)/=1._SP)) QP_SE_MORE=QP_MORE_SCIS_AND_STRE
    !
-   if (SE_MORE>0.and.Eid==1) call setup_global_XC(what,X_kind,SE_MORE,X_xc_functional)
-   if (SE_MORE>0.and.Eid==2) call setup_global_XC(what,K_kind,SE_MORE,K_xc_functional)
-   if (SE_MORE>0.and.Eid==3) call setup_global_XC(what,G_kind,SE_MORE,G_xc_functional)
+   if (QP_SE_MORE>0.and.Eid==1) call setup_global_XC(what,X_kind,QP_SE_MORE,X_xc_functional)
+   if (QP_SE_MORE>0.and.Eid==2) call setup_global_XC(what,K_kind,QP_SE_MORE,K_xc_functional)
+   if (QP_SE_MORE>0.and.Eid==3) call setup_global_XC(what,G_kind,QP_SE_MORE,G_xc_functional)
    !
    QP_ctl_db(Eid)=trim(QP_ctl_from_DB(1)%db)
    !

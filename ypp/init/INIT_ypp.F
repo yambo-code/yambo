@@ -28,8 +28,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_merge,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
-&                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
-&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths
+&                         l_wannier,l_wavefunction,MAX_FineGd_DBs,n_FineGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths
  use pars,           ONLY:pi,SP,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
@@ -608,7 +608,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
  if (l_map_kpts) then
-   n_FineGd_DBs=parse_character_arrays(FineGd_DB1_paths,MAX_FineGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
+   n_FineGd_DBs=parse_character_arrays(FineGd_DB1_paths,MAX_FineGd_DBs,"FineGd_DB1_paths"," ",.TRUE.)
    if (infile_editing) i1=parse_character_arrays(FineGd_DB1_paths,n_FineGd_DBs,&
 &              "FineGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
  endif

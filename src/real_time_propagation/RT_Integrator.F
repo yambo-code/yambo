@@ -219,7 +219,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
          !
          ! Dephasing is integrated analitically in this case.
          !
-         call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
+         call RT_apply_RWA(ik,E,k,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
          !
        else
          !

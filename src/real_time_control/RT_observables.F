@@ -38,7 +38,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use RT_control,     ONLY:RT_do_it
  use rt_interfaces,  ONLY:RT_average_operator
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
-&                         XC0,HARTREE0,DbGd_ibz_coo,l_RT_uses_E_FineGd,REF_V_hartree_sc,     &
+&                         XC0,HARTREE0,l_RT_uses_E_FineGd,REF_V_hartree_sc,     &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,          &
 &                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc,RT_bands,            &
 &                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics
@@ -83,7 +83,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  do ik=1,en%nk
    do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     if (l_RT_uses_E_FineGd) ik_E=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+     if (l_RT_uses_E_FineGd) ik_E=ik_RT-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
      do ib1=RT_bands(1),RT_bands(2)
        do ib2=RT_bands(1),RT_bands(2)
          if (l_RT_uses_E_FineGd) then
@@ -228,7 +228,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
      VALUE_tmp=0._SP
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if (l_RT_uses_E_FineGd) then
-         ik_E=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+         ik_E=ik_RT-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
          Energy(1)=en%E_FineGd(ib1,ik_E,1)
        else
          Energy(1)=en%E(ib1,ik,1)

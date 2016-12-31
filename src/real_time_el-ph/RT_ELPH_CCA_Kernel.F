@@ -21,14 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,k,ph_freq,Gkkp,l_skip_ABS)
  !  
  use pars,           ONLY:SP,zero_dfl,rZero
  use electrons,      ONLY:levels,n_full_bands,spin_occ
+ use R_lattice,      ONLY:bz_samp
  use hamiltonian,    ONLY:B_mat_index
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         l_RT_uses_E_FineGd,DbGd_ibz_coo,RT_occupations_locked,&
+&                         l_RT_uses_E_FineGd,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_delta_occupations,l_initial_equilibrium,q_weight_RT,&
 &                         RT_eh_en,RT_scatt_tresh,RT_ibz_coo,RT_Nk_ibz,RT_bands
@@ -37,6 +38,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
  implicit none
  !
  type(levels),  intent(in) :: E
+ type(bz_samp), intent(in) :: k
  integer,       intent(in) :: ik,ik_m_q,i_q,i_l
  real(SP),      intent(in) :: ph_freq,N_q
  complex(SP),   intent(in) :: Gkkp(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
@@ -107,8 +109,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
          !
          if (l_RT_uses_E_FineGd) then
            !
-           i1=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-           i2=ip_rim-RT_ibz_coo(ik_m_q,1)+DbGd_ibz_coo(ik_m_q,1)
+           i1=ik_rim-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
+           i2=ip_rim-RT_ibz_coo(ik_m_q,1)+k%ibz_DbGd_map(ik_m_q,1)
            !
            if(E%E_FineGd(i_np_shift,i2,1)<RT_eh_en(1) .or. E%E_FineGd(i_np_shift,i2,1)>RT_eh_en(2)) cycle
            if(E%E_FineGd(i_n_shift ,i1,1)<RT_eh_en(1) .or. E%E_FineGd(i_n_shift ,i1,1)>RT_eh_en(2)) cycle

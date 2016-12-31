@@ -27,7 +27,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use functions,      ONLY:NAN
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_FineGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
+ use real_time,      ONLY:l_RT_uses_E_FineGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
 &                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_impose_E,RT_E_occupations_reference,&
@@ -95,7 +95,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+       if(l_RT_uses_E_FineGd) iE_rim=ik_rim-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
        !
        if(l_initial_equilibrium) then
          f_E=real(RT_E_occupations_reference(ib,ik_rim),DP)
@@ -186,7 +186,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    do ik=1,k%nibz
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+       if(l_RT_uses_E_FineGd) iE_rim=ik_rim-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
        !
        if(.not.l_RT_uses_E_FineGd) En=real(E%E(ib,ik,1)         ,DP)
        if(     l_RT_uses_E_FineGd) En=real(E%E_FineGd(ib,iE_rim,1),DP)

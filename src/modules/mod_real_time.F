@@ -164,8 +164,6 @@ module real_time
  logical                  :: l_RT_uses_E_FineGd
  logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
  integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
- integer,     allocatable :: DbGd_ibz_coo(:,:)
- integer,     allocatable :: DbGd_bz_coo(:,:)  
  real(SP)                 :: DbGd_EE_percent 
  !
  ! ELPH kernel...
@@ -599,7 +597,7 @@ module real_time
      !
      call H_free()
      !
-     deallocate(DbGd_ibz_coo,DbGd_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
+     deallocate(RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
      if(allocated(DbGd_EE_scatt_table)) deallocate(DbGd_EE_scatt_table)
      !
      if(allocated(E_xc)) then

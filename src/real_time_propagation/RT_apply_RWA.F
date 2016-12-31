@@ -21,17 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
+subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
- use real_time,      ONLY:RT_ibz_coo,DbGd_ibz_coo,l_RT_uses_E_FineGd, &
+ use R_lattice,      ONLY:bz_samp
+ use real_time,      ONLY:RT_ibz_coo,l_RT_uses_E_FineGd, &
 &                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_statically_dephased,RT_bands
  !
  implicit none
  !
  integer,      intent(in)     :: ik
  type(levels), intent(in)     :: E
+ type(bz_samp),intent(in)     :: k
  real(SP),     intent(in)     :: dT,dTp
  !
  complex(SP),  intent(in)     :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -44,7 +46,7 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  complex(SP) :: phase
  !
  ik_ibz=RT_all2ibz(ik)
- ik_DbGd=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
+ if(l_RT_uses_E_FineGd) ik_DbGd=ik-RT_ibz_coo(ik_ibz,1)+k%ibz_DbGd_map(ik_ibz,1)
  !
  do i_n=RT_bands(1),RT_bands(2)
    do i_np=i_n+1,RT_bands(2)
@@ -53,11 +55,8 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
      !
      if (RT_is_statically_dephased) sumGAMMA=RT_Deph_Matrix(i_n,i_np,ik_ibz)
      !
-     if (     l_RT_uses_E_FineGd) then
-       deltaE=E%E_FineGd(i_n,ik_DbGd,1)-E%E_FineGd(i_np,ik_DbGd,1)
-     else
-       deltaE=E%E(i_n,ik,1)-E%E(i_np,ik,1)
-     endif
+     if (ik/=RT_ibz_coo(ik_ibz,1)) deltaE=E%E_FineGd(i_n,ik_DbGd,1)-E%E_FineGd(i_np,ik_DbGd,1)
+     if (ik==RT_ibz_coo(ik_ibz,1)) deltaE=E%E(i_n,ik,1)-E%E(i_np,ik,1)
      !
      if (l_RT_EXP) then
        !

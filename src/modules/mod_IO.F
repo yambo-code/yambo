@@ -307,10 +307,10 @@ module IO_m
      !
      if (open_is_on(ID).and.write_is_on(ID)) then
        !
-       CREATE_MODE=nf90_share
-       !
-#if defined _64BIT_OFFSET
        CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+       !
+#if defined _NC_CLASSIC
+       CREATE_MODE=ior(nf90_share,nf90_classic)
 #elif defined _HDF5_IO
        CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif

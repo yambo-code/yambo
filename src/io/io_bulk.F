@@ -47,7 +47,10 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  ! Work Space
  !
  integer, allocatable :: var_dim(:),ipos_loc(:),isize_loc(:)
- integer              :: j1,dims,shuffle,deflate,deflate_level
+ integer              :: j1,dims
+#if defined _HDF5_COMPRESSION
+ integer              :: shuffle,deflate,deflate_level
+#endif
  !
  !====================
  !== NETCDF I/O ======
@@ -62,18 +65,18 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
      do j1=1,size(VAR_SZ)
        var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1))
      enddo
+     call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID)))
+#if defined _HDF5_COMPRESSION
      shuffle=0
      deflate=1
      deflate_level=2
-     call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID)))
-#if defined _HDF5_IO
      call netcdf_call(nf90_def_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level))
 #endif
      call netcdf_call(nf90_enddef(io_unit(ID))) 
      deallocate(var_dim)
    else if (read_is_on(ID)) then
      call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)))
-#if defined _HDF5_IO
+#if defined _HDF5_COMPRESSION
      call netcdf_call(nf90_inq_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level))
 #endif
    endif

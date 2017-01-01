@@ -38,7 +38,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use RT_control,     ONLY:RT_do_it
  use rt_interfaces,  ONLY:RT_average_operator
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
-&                         XC0,HARTREE0,l_RT_uses_E_FineGd,REF_V_hartree_sc,     &
+&                         XC0,HARTREE0,REF_V_hartree_sc,RT_E_and_k,     &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,          &
 &                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc,RT_bands,            &
 &                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics
@@ -61,7 +61,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  ! WorkSpace
  !
  integer     :: ib1,ib2,ik,ik_RT,ik_E,i1,i2
- real(SP)    :: Energy(2),dS_tot(3),S_e,S_h,N_carriers(2),N_err,VALUE_tmp(5),one_over_T
+ real(SP)    :: dS_tot(3),S_e,S_h,N_carriers(2),N_err,VALUE_tmp(5),one_over_T
  complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),        &
 &               G_full_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),      &
 &               G_full_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),      &
@@ -77,25 +77,17 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  call timing('RT observables',OPR='start')
 #endif
  !
- !
  dG_lesser_h=cZERO
  dG_lesser_e=cZERO
  !
- do ik=1,en%nk
-   do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     if (l_RT_uses_E_FineGd) ik_E=ik_RT-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
-     do ib1=RT_bands(1),RT_bands(2)
-       do ib2=RT_bands(1),RT_bands(2)
-         if (l_RT_uses_E_FineGd) then
-           Energy(1)=en%E_FineGd(ib1,ik_E,1)
-           Energy(2)=en%E_FineGd(ib2,ik_E,1)
-         else
-           Energy(1)=en%E(ib1,ik,1)
-           Energy(2)=en%E(ib2,ik,1)
-         endif
-         if ( Energy(1)<=0._SP .and. Energy(2)<=0._SP ) dG_lesser_h(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
-         if ( Energy(1)> 0._SP .and. Energy(2)> 0._SP ) dG_lesser_e(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
-       enddo
+ do ik_RT=1,RT_nk
+   do ib1=RT_bands(1),RT_bands(2)
+     do ib2=RT_bands(1),RT_bands(2)
+       if ( RT_E_and_k%En(ib1,ik_RT)<=0._SP .and. RT_E_and_k%En(ib2,ik_RT)<=0._SP ) then
+         dG_lesser_h(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
+       else if ( RT_E_and_k%En(ib1,ik_RT)> 0._SP .and. RT_E_and_k%En(ib2,ik_RT)> 0._SP ) then
+         dG_lesser_e(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
+       endif
      enddo
    enddo
  enddo
@@ -227,22 +219,16 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    do ib1=RT_bands(1),RT_bands(2)
      VALUE_tmp=0._SP
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       if (l_RT_uses_E_FineGd) then
-         ik_E=ik_RT-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
-         Energy(1)=en%E_FineGd(ib1,ik_E,1)
-       else
-         Energy(1)=en%E(ib1,ik,1)
-       endif
        S_h=0._SP
        S_e=0._SP
        if(RT_H_occupations(ib1,ik_RT)>0._SP) S_h=-RT_H_occupations(ib1,ik_RT)*log(RT_H_occupations(ib1,ik_RT)/spin_occ)
        if(RT_E_occupations(ib1,ik_RT)>0._SP) S_e=-RT_E_occupations(ib1,ik_RT)*log(RT_E_occupations(ib1,ik_RT)/spin_occ)
        VALUE_tmp(3)=VALUE_tmp(3)+S_e+S_h
-       if ( Energy(1)<=0._SP ) then
+       if ( RT_E_and_k%En(ib1,ik_RT)<=0._SP ) then
          VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib1,ik_RT)
          VALUE_tmp(4)=VALUE_tmp(4)+S_h
        endif
-       if ( Energy(1)> 0._SP ) then
+       if ( RT_E_and_k%En(ib1,ik_RT)> 0._SP ) then
          VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib1,ik_RT)
          VALUE_tmp(5)=VALUE_tmp(5)+S_e
        endif

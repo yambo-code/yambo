@@ -26,8 +26,7 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:RT_ibz_coo,l_RT_uses_E_FineGd, &
-&                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_statically_dephased,RT_bands
+ use real_time,      ONLY:RT_E_and_k,RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_statically_dephased,RT_bands
  !
  implicit none
  !
@@ -41,12 +40,11 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  !
  ! Work space
  !
- integer  :: i_n,i_np,ik_DbGd,ik_ibz
+ integer  :: i_n,i_np,ik_ibz
  real(SP) :: deltaE,sumGAMMA,alpha,dec_exp
  complex(SP) :: phase
  !
  ik_ibz=RT_all2ibz(ik)
- if(l_RT_uses_E_FineGd) ik_DbGd=ik-RT_ibz_coo(ik_ibz,1)+k%ibz_DbGd_map(ik_ibz,1)
  !
  do i_n=RT_bands(1),RT_bands(2)
    do i_np=i_n+1,RT_bands(2)
@@ -55,8 +53,7 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
      !
      if (RT_is_statically_dephased) sumGAMMA=RT_Deph_Matrix(i_n,i_np,ik_ibz)
      !
-     if (ik/=RT_ibz_coo(ik_ibz,1)) deltaE=E%E_FineGd(i_n,ik_DbGd,1)-E%E_FineGd(i_np,ik_DbGd,1)
-     if (ik==RT_ibz_coo(ik_ibz,1)) deltaE=E%E(i_n,ik,1)-E%E(i_np,ik,1)
+     deltaE=RT_E_and_k%En(i_n,ik)-RT_E_and_k%En(i_np,ik)
      !
      if (l_RT_EXP) then
        !

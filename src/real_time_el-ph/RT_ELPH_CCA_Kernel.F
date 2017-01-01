@@ -29,7 +29,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,k,ph_freq,Gkkp,l_skip_ABS)
  use hamiltonian,    ONLY:B_mat_index
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         l_RT_uses_E_FineGd,RT_occupations_locked,&
+&                         l_RT_uses_E_FineGd,RT_occupations_locked,RT_E_and_k,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_delta_occupations,l_initial_equilibrium,q_weight_RT,&
 &                         RT_eh_en,RT_scatt_tresh,RT_ibz_coo,RT_Nk_ibz,RT_bands
@@ -46,8 +46,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,k,ph_freq,Gkkp,l_skip_ABS)
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,&
-&            ip_rim,i1,i2
+ integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,ip_rim
  real(SP) :: P_ph_abs,P_ph_emit,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Hole_lifetime(2),TMP_Electron_lifetime(2),f_kmq,Hole_f_kmq
  real(SP), external :: RT_G_retarded_convolution
@@ -85,14 +84,13 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,k,ph_freq,Gkkp,l_skip_ABS)
      !
      if (.not. l_RT_uses_E_FineGd) then
        !
-       if(E%E(i_np_shift,ik_m_q,1)<RT_eh_en(1) .or. E%E(i_np_shift,ik_m_q,1)>RT_eh_en(2)) cycle
-       if(E%E(i_n_shift ,ik    ,1)<RT_eh_en(1) .or. E%E(i_n_shift ,ik    ,1)>RT_eh_en(2)) cycle
+       if(RT_E_and_k%En(i_np_shift,ik_m_q)<RT_eh_en(1) .or. RT_E_and_k%En(i_np_shift,ik_m_q)>RT_eh_en(2)) cycle
+       if(RT_E_and_k%En(i_n_shift ,ik    )<RT_eh_en(1) .or. RT_E_and_k%En(i_n_shift ,ik    )>RT_eh_en(2)) cycle
        !
-       DELTA_E=    E%E(i_n_shift,ik,1) -    E%E(i_np_shift,ik_m_q,1)
-       DELTA_W=abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1))
+       DELTA_E=RT_E_and_k%En(i_np_shift,ik)-RT_E_and_k%En(i_n_shift,ik_m_q)
+       DELTA_W=RT_E_and_k%W(i_np_shift,ik) +RT_E_and_k%W(i_n_shift,ik_m_q)
        !
      endif
-     !
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
@@ -109,14 +107,11 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,k,ph_freq,Gkkp,l_skip_ABS)
          !
          if (l_RT_uses_E_FineGd) then
            !
-           i1=ik_rim-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
-           i2=ip_rim-RT_ibz_coo(ik_m_q,1)+k%ibz_DbGd_map(ik_m_q,1)
+           if(RT_E_and_k%En(i_np_shift,ip_rim)<RT_eh_en(1) .or. RT_E_and_k%En(i_np_shift,ip_rim)>RT_eh_en(2)) cycle
+           if(RT_E_and_k%En(i_n_shift ,ik_rim)<RT_eh_en(1) .or. RT_E_and_k%En(i_n_shift ,ik_rim)>RT_eh_en(2)) cycle
            !
-           if(E%E_FineGd(i_np_shift,i2,1)<RT_eh_en(1) .or. E%E_FineGd(i_np_shift,i2,1)>RT_eh_en(2)) cycle
-           if(E%E_FineGd(i_n_shift ,i1,1)<RT_eh_en(1) .or. E%E_FineGd(i_n_shift ,i1,1)>RT_eh_en(2)) cycle
-           !
-           DELTA_E=    E%E_FineGd(i_n_shift,i1,1) -    E%E_FineGd(i_np_shift,i2,1)
-           DELTA_W=abs(E%W_FineGd(i_n_shift,i1,1))+abs(E%W_FineGd(i_np_shift,i2,1))
+           DELTA_E=RT_E_and_k%En(i_np_shift,ik_rim)-RT_E_and_k%En(i_n_shift,ip_rim)
+           DELTA_W=RT_E_and_k%W(i_np_shift,ik_rim) +RT_E_and_k%W(i_n_shift,ip_rim)
            !
          endif
          !

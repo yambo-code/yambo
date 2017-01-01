@@ -27,7 +27,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use functions,      ONLY:NAN
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:l_RT_uses_E_FineGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
+ use real_time,      ONLY:RT_E_and_k,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
 &                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_impose_E,RT_E_occupations_reference,&
@@ -46,7 +46,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  real(DP), parameter :: cut_off=0.1_SP  ! 1 = 100%
  !
- integer      :: i1,ib,ik,ik_rim,iE_rim,iref
+ integer      :: i1,ib,ik,ik_rim,iref
  real(DP)     :: f_E,f_H,df,k_weight,En,Hole_fac,Elec_fac,prefactor(2),&
 &                dN_dT_h_v,dN_dT_h_c,dN_dT_e_v,dN_dT_e_c,dE_dT_h_v,dE_dT_h_c,dE_dT_e_v,dE_dT_e_c,&
 &                dN_v,dN_c,dE_v,dE_c,dN_e,dN_h,dE_e,dE_h,prefactor_to_use,GAMMA_h,GAMMA_e
@@ -95,8 +95,6 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       if(l_RT_uses_E_FineGd) iE_rim=ik_rim-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
-       !
        if(l_initial_equilibrium) then
          f_E=real(RT_E_occupations_reference(ib,ik_rim),DP)
          f_H=real(RT_H_occupations_reference(ib,ik_rim),DP)
@@ -110,8 +108,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        Hole_fac=real(Hole_lifetime(ib,ik_rim)    ,DP)*f_H-real(REF_lifetime(ib,ik_rim,iref  ),DP)*df
        Elec_fac=real(Electron_lifetime(ib,ik_rim),DP)*f_E+real(REF_lifetime(ib,ik_rim,iref+1),DP)*df
        !
-       if(.not.l_RT_uses_E_FineGd) En=real(E%E(ib,ik,1)         ,DP)
-       if(     l_RT_uses_E_FineGd) En=real(E%E_FineGd(ib,iE_rim,1),DP) 
+       En=real(RT_E_and_k%En(ib,ik_rim),DP)
        !
        if (En<=0._DP) then
          !
@@ -186,10 +183,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    do ik=1,k%nibz
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       if(l_RT_uses_E_FineGd) iE_rim=ik_rim-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
        !
-       if(.not.l_RT_uses_E_FineGd) En=real(E%E(ib,ik,1)         ,DP)
-       if(     l_RT_uses_E_FineGd) En=real(E%E_FineGd(ib,iE_rim,1),DP)
+       En=real(RT_E_and_k%En(ib,ik_rim),DP)
        !
        if (En<=0._DP) prefactor_to_use=prefactor(1)
        if (En> 0._DP) prefactor_to_use=prefactor(2)

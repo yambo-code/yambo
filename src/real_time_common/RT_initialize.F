@@ -380,8 +380,9 @@ subroutine RT_initialize(E,k,q)
  call msg( 'nr','---RIM---')
  call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_FineGd)
  if (l_RT_uses_E_FineGd) then
-   call msg( 'r', 'K-points            (TOTAL):',k%nibz_FineGd)
-   call msg( 'r', '                     (USED):',RT_nk)
+   call msg( 'r', 'K-points        (Fine grid):',k%nibz)
+   call msg( 'r', 'K-points      (Coarse grid):',k%nibz_FineGd)
+   call msg( 'r', '                    (Total):',RT_nk)
    if (l_elel_scatt) then
      call msg( 'r', 'Percentual used in e-e[o/o]:',DbGd_EE_percent)
      call msg( 'r', 'Max e-e scattering states  :',maxval(DbGd_EE_Nk_table))

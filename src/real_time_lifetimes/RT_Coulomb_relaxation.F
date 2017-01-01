@@ -28,7 +28,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                          RT_H_occupations,RT_E_occupations,l_RT_uses_E_FineGd,&
+&                          RT_H_occupations,RT_E_occupations,l_RT_uses_E_FineGd,RT_E_and_k,&
 &                          l_initial_equilibrium,DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en,&
 &                          RT_scatt_tresh,RT_ibz_coo
  use plasma,          ONLY:EH_gas
@@ -44,7 +44,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  ! Work Space ...
  !
  integer               :: i_coll,i_coll_p,i_p,i_p_bz,ik_m_q,ik_m_q_bz,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
-&                         iqbz,i_p_s,i_q,i_q_s,i_coll_p_mem,i_q_mem,i_pmq_bz,i1,i2,&
+&                         iqbz,i_p_s,i_q,i_q_s,i_coll_p_mem,i_q_mem,i_pmq_bz,&
 &                         i_J,i_J_bg,i_J_mem,ik_m_q_rim,N_poles_grouped
  real(SP)              :: pre_factor,P_pl_abs,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
  !
@@ -161,11 +161,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
        if (.not. l_RT_uses_E_FineGd) then
          !
-         if(E%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-         if(E%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+         if(RT_E_and_k%En(i_np,ik_m_q)<RT_eh_en(1) .or. RT_E_and_k%En(i_np,ik_m_q)>RT_eh_en(2)) cycle
+         if(RT_E_and_k%En(i_n ,ik    )<RT_eh_en(1) .or. RT_E_and_k%En(i_n ,ik    )>RT_eh_en(2)) cycle
          !
-         DELTA_E=    E%E(i_np,ik_m_q,1) -    E%E(i_n,ik,1)
-         DELTA_W=abs(E%W(i_np,ik_m_q,1))+abs(E%W(i_n,ik,1))
+         DELTA_E=RT_E_and_k%En(i_np,ik_m_q)-RT_E_and_k%En(i_n,ik)
+         DELTA_W=RT_E_and_k%W(i_np,ik_m_q) +RT_E_and_k%W(i_n,ik)
          !
        endif
        !
@@ -190,14 +190,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
            if (l_RT_uses_E_FineGd) then
              !
-             i1=ik_rim-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(ik,1)
-             i2=ik_m_q_rim-RT_ibz_coo(ik_m_q,1)+k%ibz_DbGd_map(ik_m_q,1)
+             if(RT_E_and_k%En(i_np,ik_m_q_rim)<RT_eh_en(1) .or. RT_E_and_k%En(i_np,ik_m_q_rim)>RT_eh_en(2)) cycle
+             if(RT_E_and_k%En(i_n ,ik_rim    )<RT_eh_en(1) .or. RT_E_and_k%En(i_n ,ik_rim    )>RT_eh_en(2)) cycle
              !
-             if(E%E_FineGd(i_np,i2,1)<RT_eh_en(1) .or. E%E_FineGd(i_np,i2,1)>RT_eh_en(2)) cycle
-             if(E%E_FineGd(i_n ,i1,1)<RT_eh_en(1) .or. E%E_FineGd(i_n ,i1,1)>RT_eh_en(2)) cycle
-             !
-             DELTA_E=    E%E_FineGd(i_np,i2,1) -    E%E_FineGd(i_n,i1,1)
-             DELTA_W=abs(E%W_FineGd(i_np,i2,1))+abs(E%W_FineGd(i_n,i1,1))
+             DELTA_E=RT_E_and_k%En(i_np,ik_m_q_rim)-RT_E_and_k%En(i_n,ik_rim)
+             DELTA_W=RT_E_and_k%W(i_np,ik_m_q_rim) +RT_E_and_k%W(i_n,ik_rim)
              !
            endif
            !

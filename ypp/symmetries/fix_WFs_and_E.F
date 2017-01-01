@@ -326,7 +326,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  call fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  !
-#if defined _YPP_SC || defined _YPP_RT
+#if defined _YPP_SC
  call fix_SC_DBs(k,k_save,kpoints_map,action_kind)
 #endif
  !

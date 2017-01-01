@@ -33,7 +33,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
- use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,myid
+ use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,P_square,DIP_P,l_X_terminator,&
@@ -43,7 +43,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:error,msg
-#if defined _SC
+#if defined _SC || defined _RT
  use drivers,             ONLY:l_real_time
  use com,                 ONLY:secnm
 #endif
@@ -57,7 +57,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! Work Space
  !
  character(schlen)            :: live_t_string
-#if defined _SC
+#if defined _SC || defined _RT
  logical                      :: l_evaluating_em1s 
 #endif
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
@@ -74,7 +74,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
-#if defined _SC 
+#if defined _SC || defined _RT
  l_evaluating_em1s=index(secnm,"Dielectric")/=0
 #endif
  !
@@ -117,7 +117,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
-#if defined _SC
+#if defined _SC || defined _RT
  l_eval_DIP_P2=l_sc_run.or.l_real_time
  if(l_eval_DIP_P2) wf_dim=4
 #endif

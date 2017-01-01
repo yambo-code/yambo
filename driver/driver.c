@@ -120,14 +120,14 @@ int main(int argc, char *argv[])
 /* 
  Default input file, Job string, I/O directories
 */
- inf = (char *) malloc(strlen(tool)+4);
+ inf = malloc(strlen(tool)+4);
  strcpy(inf,tool);
  strcat(inf,".in");
  iif=strlen(inf);
- id       = (char *) malloc(2);
- od       = (char *) malloc(2);
- com_dir  = (char *) malloc(2);
- js  = (char *) malloc(2);
+ id       = malloc(2);
+ od       = malloc(2);
+ com_dir  = malloc(2);
+ js  = malloc(2);
  strcpy(od,".");
  strcpy(js," ");
  strcpy(id,".");
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
  strcpy(rnstr2," ");
  if (argc>1) {
    while(opts[nr].ln!=NULL) {nr++;};
-   fmt = (char *) malloc(sizeof(char)*nr+1);
+   fmt = malloc(sizeof(char)*nr+1);
  /* 
   strcat needs fmt to be initialized 
  */
@@ -206,31 +206,31 @@ int main(int argc, char *argv[])
  */
      if (strcmp(opts[j].ln,"ifile")==0) {
        free(inf);
-       inf = (char *) malloc(strlen(cv[1])+1);  
+       inf = malloc(strlen(cv[1])+1);
        strcpy(inf,cv[1]);
        iif=strlen(inf);
      };
      if (strcmp(opts[j].ln,"idir")==0) {
        free(id);
-       id = (char *) malloc(strlen(cv[1]));
+       id = malloc(strlen(cv[1])+1);
        strcpy(id,cv[1]);
        iid=strlen(id);
      };
      if (strcmp(opts[j].ln,"odir")==0) {
        free(od);
-       od = (char *) malloc(strlen(cv[1]));
+       od = malloc(strlen(cv[1])+1);
        strcpy(od,cv[1]);
        iod=strlen(od);
      };
      if (strcmp(opts[j].ln,"cdir")==0) {
        free(com_dir);
-       com_dir = (char *) malloc(strlen(cv[1]));
+       com_dir = malloc(strlen(cv[1])+1);
        strcpy(com_dir,cv[1]);
        icd=strlen(com_dir);
      };
      if (strcmp(opts[j].ln,"jobstr")==0) {
        free(js);
-       js = (char *) malloc(strlen(cv[1]));
+       js = malloc(strlen(cv[1])+1);
        strcpy(js,cv[1]);
        ijs=strlen(js);
      };

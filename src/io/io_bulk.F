@@ -83,18 +83,17 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  ! Actual IO
  !
  error=0
- if (present(IPOS)) then
-   allocate(ipos_loc(size(IPOS)))
-   ipos_loc=IPOS
- else
-   if (present(L1).or.present(I1).or.present(R1)               ) dims=1
-   if (present(L2).or.present(I2).or.present(R2).or.present(C1)) dims=2
-   if (present(L3).or.present(I3).or.present(R3).or.present(C2)) dims=3
-   if (present(L4).or.present(I4).or.present(R4).or.present(C3)) dims=4
-   if (               present(I5).or.present(R5).or.present(C4)) dims=5
-   allocate(ipos_loc(dims))
-   ipos_loc=1
- endif
+ !
+ if (present(L1).or.present(I1).or.present(R1)               ) dims=1
+ if (present(L2).or.present(I2).or.present(R2).or.present(C1)) dims=2
+ if (present(L3).or.present(I3).or.present(R3).or.present(C2)) dims=3
+ if (present(L4).or.present(I4).or.present(R4).or.present(C3)) dims=4
+ if (               present(I5).or.present(R5).or.present(C4)) dims=5
+ !
+ allocate(ipos_loc(dims))
+ !
+ if (     present(IPOS)) ipos_loc=IPOS
+ if (.not.present(IPOS)) ipos_loc=1
  !
  ! Logical numbers / vectors / matricies
  !

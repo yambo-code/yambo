@@ -32,11 +32,12 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
 &                              QP_dSc,QP_time_order_sign,QP_table,QP_n_states
  use IO_m,                ONLY:io_COLLs
- use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
-&                              elemental_collision_copy,P_COLL_element,COLL_bands,P_collisions
+ use collision_el,        ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
+&                              elemental_collision_copy
+ use collision_ext,       ONLY:P_COLL_element,COLL_bands,P_collisions
  use wave_func,           ONLY:WF
- use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute,&
-&                              SCATTERING_GW_kinematics
+ use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
+ use COLL_interfaces,     ONLY:SCATTERING_GW_kinematics
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&

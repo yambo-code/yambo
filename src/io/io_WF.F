@@ -30,8 +30,7 @@ integer function io_WF(ID,wf)
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_to_load,wf_b_indx,wf_nb_io_groups
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_bulk,io_header,ver_is_gt_or_eq,&
-&                           io_action,io_fragment,io_elemental,frag_WF,&
-&                           manage_OP_IF_START_and_CL_IF_END
+&                           io_action,io_fragment,io_elemental,frag_WF
 #if defined _TIMING
  use timing_m,         ONLY:timing
 #endif
@@ -48,6 +47,8 @@ integer function io_WF(ID,wf)
  !
  head_io=0
  select case ( count((/io_sec(ID,:)/=0/)) )
+   case(0)
+     goto 1
    case(1)
      ifrag=0
      ib_grp=0
@@ -137,10 +138,6 @@ integer function io_WF(ID,wf)
    ib_lim(3,n_blocks)=ib_io-1
    !
  endif
- !
- ! Manage RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,ifrag,nkibz*n_sp_pol)
  !
  ! Fragmentation
  !

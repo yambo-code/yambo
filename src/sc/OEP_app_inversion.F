@@ -40,15 +40,15 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
- use linear_algebra,  ONLY:LINEAR_ALGEBRA_driver,INV
- use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use linear_algebra,  ONLY:INV
+ use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,            ONLY:QP_ng_Sx
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:it_now,l_oep_EWeight
  use drivers,         ONLY:l_oep_kli,l_oep_ceda
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index
+ use interfaces,      ONLY:PARALLEL_index,LINEAR_ALGEBRA_driver 
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
@@ -190,7 +190,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  ! Calculate Vkli (RL) 
  !
  allocate(Vkli_RL(QP_ng_Sx-1))
- call LINEAR_ALGEBRA_driver(INV,Ko)
+ call LINEAR_ALGEBRA_driver(INV,M=Ko)
  ! 
  Vkli_RL=matmul(Ko,rho_xc)
  !

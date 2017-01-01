@@ -28,7 +28,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Sc,QP_Vnl_xc
- use collision,        ONLY:COH_COLL_element,HXC_COLL_element,COLL_bands,HXC_collisions,&
+ use collision_ext,    ONLY:COH_COLL_element,HXC_COLL_element,COLL_bands,HXC_collisions,&
 &                           COH_collisions,COLLISIONS_have_HARTREE
  use parallel_m,       ONLY:PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
  !

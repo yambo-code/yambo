@@ -29,39 +29,41 @@ subroutine QP_load_SC_xc()
  use QP_m,            ONLY:QP_table,QP_n_states,QP_vnl_xc
  use IO_m,            ONLY:VERIFY,DUMP,NONE
  use R_lattice,       ONLY:nkibz
- use SC,              ONLY:SC_bands,H_nl_sc,load_SC_components,SC_R,H_rotate,compatible_SC_DB,&
+ use SC,              ONLY:SC_bands,load_SC_components,SC_R,H_rotate,compatible_SC_DB,&
 &                          found_SC_DB
- use linear_algebra,  ONLY:LINEAR_ALGEBRA_driver,INV
+ use hamiltonian,     ONLY:H_nl_sc
+ use interfaces,      ONLY:LINEAR_ALGEBRA_driver
+ use linear_algebra,  ONLY:INV
  !
  implicit none
  !
  ! Work Space
  !
- integer  :: i_qp,i_k,i_spin
+ integer  :: i_qp,i_k,i_sp_pol
  !
  ! Load SC_R rotation matrices
  !
  call load_SC_components('WF',COM_=NONE,MODE_=DUMP)
  !
- do i_k=1,nkibz
-   if (any(QP_table(:,3)==i_k)) then 
+ do i_sp_pol=1,n_sp_pol
+   do i_k=1,nkibz
      !
-     call load_SC_components('Hsc',COM_=NONE,MODE_=VERIFY,ik=i_k)
+     if (.not.any(QP_table(:,3)==i_k)  ) cycle 
+     !
+     call load_SC_components('Hsc',COM_=NONE,MODE_=VERIFY,ik=i_k,i_sp_pol=i_sp_pol)
+     !
      if (.not.compatible_SC_DB.or..not.found_SC_DB) return
      !
-     do i_spin=1,n_sp_pol
-       call LINEAR_ALGEBRA_driver(INV,SC_R(:,:,i_k,i_spin))
-       call H_rotate(SC_R(:,:,i_k,i_spin),H_nl_sc(:,:,i_spin),SC_bands(2),-1)
-     enddo
+     call LINEAR_ALGEBRA_driver(INV,M=SC_R(:,:,i_k,i_sp_pol))
+     call H_rotate(SC_R(:,:,i_k,i_sp_pol),H_nl_sc,SC_bands(2),-1)
      !
      do i_qp=1,QP_n_states
-       if (QP_table(i_qp,3)==i_k) then
-         i_spin = spin(QP_table(i_qp,:))
-         QP_vnl_xc(i_qp)=QP_vnl_xc(i_qp)-H_nl_sc(QP_table(i_qp,1),QP_table(i_qp,2),i_spin)
-       endif
+       if (.not.QP_table(i_qp,3) ==i_k)      cycle
+       if (spin(QP_table(i_qp,:))==i_sp_pol) cycle
+       QP_vnl_xc(i_qp)=QP_vnl_xc(i_qp)-H_nl_sc(QP_table(i_qp,1),QP_table(i_qp,2))
      enddo
      !
-   endif
+   enddo
  enddo
  !
  ! Deallocations

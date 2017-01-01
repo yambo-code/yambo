@@ -40,14 +40,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
- use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
+ use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,RD_CL,&
 &                        DUMP,IO_and_Messaging_switch
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
-&                        WF_perturbation,global_XC_string,SE_NONE
+&                        WF_perturbation,global_XC_string,QP_SE_NONE
 #endif
  !
  implicit none
@@ -313,7 +313,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
          allocate(wf_disk(wf_ncx,n_spinor,wf_nb_to_load))
          call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/),quiet=QUIET_alloc)
          !
-         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+         call io_control(ACTION=RD,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf_disk)
          !
        endif
@@ -370,7 +370,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! CLEAN
  !
- if (.not.buffer_is_ok) deallocate(wf_b_indx)
+ if (.not.buffer_is_ok) then
+   !
+   call io_control(ACTION=RD_CL,COM=NONE,MODE=VERIFY,SEC=(/0/),ID=ID)
+   io_err=io_WF(ID,wf_disk)
+   !
+   deallocate(wf_b_indx)
+   !
+ endif
  !
  deallocate(wf_DP)
  call mem_est("wf_DP")
@@ -416,7 +423,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)
    !
-   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,SE_NONE,WF_xc_functional,WF_perturbation))//&
+   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,QP_SE_NONE,WF_xc_functional,WF_perturbation))//&
 &                             ' wavefunctions loaded')
    !
    if (WF%space=='R') wf_size=fft_size
@@ -425,8 +432,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      do ikibz=WF%k(1),WF%k(2)
        call WF_rotate(i_sp_pol,ikibz,wf,wf_size)
      enddo
-     call load_SC_components('WF_clean')
    enddo
+   !
+   call load_SC_components('WF_clean')
    !
  endif
  !

@@ -42,7 +42,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  use R_lattice,       ONLY:bz_samp,g_rot,qindx_S,nkibz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use QP_m,            ONLY:QP_ng_Sx
- use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:WF

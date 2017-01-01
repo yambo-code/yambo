@@ -358,7 +358,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
      !
 #if defined _YPP_SC
      if (l_mean_potential.and.ik/=ik_ref) then
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID)
        io_V=io_SC_components('MP',Xen,ID)
        ik_ref=ik
      endif

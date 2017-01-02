@@ -28,7 +28,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! Load and (eventually) FFTs the wavefunctions
  !
  use pars,          ONLY:SP,DP,schlen
- use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,core_io_path
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spin,n_spinor,n_sp_pol

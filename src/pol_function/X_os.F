@@ -57,7 +57,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use D_lattice,     ONLY:i_space_inv
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
- use memory_m,      ONLY:mem_est
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&

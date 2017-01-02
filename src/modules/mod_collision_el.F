@@ -30,7 +30,7 @@ module collision_el
  use pars,       ONLY:DP,SP,LP,schlen
  use parallel_m, ONLY:PP_indexes
  !
- implicit none
+#include<memory.h>
  !
  type elemental_collision
    !
@@ -48,14 +48,14 @@ module collision_el
    !
    character(schlen) :: name="El_Coll"
    !
-   complex(SP), pointer :: gamp(:,:) => null()
-   complex(SP), pointer :: rhotw(:)  => null()
+   complex(SP), allocatable :: gamp(:,:)
+   complex(SP), allocatable :: rhotw(:)
    !
    ! scatter bamp workspace
    !
-   complex(DP), pointer :: rho_tw_rs(:) => null()
-   complex(SP), pointer :: WF_symm_i(:,:) => null()
-   complex(SP), pointer :: WF_symm_o(:,:) => null()
+   complex(DP), allocatable :: rho_tw_rs(:)
+   complex(SP), allocatable :: WF_symm_i(:,:)
+   complex(SP), allocatable :: WF_symm_o(:,:)
    !
  end type elemental_collision
  !
@@ -75,20 +75,17 @@ module collision_el
      !
      if(present(INIT_ONLY)) init_only_=INIT_ONLY
      if(.not.init_only_) then
-       if(associated(ggw%gamp))      deallocate(ggw%gamp)
-       if(associated(ggw%rhotw))     deallocate(ggw%rhotw)
-       if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
-       if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
-       if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
+       Y_FREE(ggw%gamp)
+       Y_FREE(ggw%rhotw)
+       Y_FREE(ggw%rho_tw_rs)
+       Y_FREE(ggw%WF_symm_i)
+       Y_FREE(ggw%WF_symm_o)
      endif
-     nullify(ggw%gamp,ggw%rhotw,ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
    end subroutine
    !
    subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)
      use electrons,      ONLY:n_spinor
      use FFT_m,          ONLY:fft_size
-     use memory_m,       ONLY:mem_est
-     implicit none
      type(elemental_collision) ::ggw
      integer,         OPTIONAL :: NG
      integer,         OPTIONAL :: NG_GAMP(2)
@@ -99,26 +96,26 @@ module collision_el
        ggw%name=TITLE
      endif
      !
-     allocate(ggw%rho_tw_rs(fft_size))
-     allocate(ggw%WF_symm_i(fft_size,n_spinor))
-     allocate(ggw%WF_symm_o(fft_size,n_spinor))
-     !
-     call mem_est(trim(ggw%name)//"-rho_tw_rs",(/fft_size/),(/2*SP/))
-     call mem_est(trim(ggw%name)//"-WF_symm_i",(/fft_size*n_spinor/),(/2*SP/))
-     call mem_est(trim(ggw%name)//"-WF_symm_o",(/fft_size*n_spinor/),(/2*SP/))
+     Y_ALLOCATE(ggw%rho_tw_rs(fft_size))
+     Y_MEM(ggw%rho_tw_rs)
+     Y_ALLOCATE(ggw%WF_symm_i(fft_size,n_spinor))
+     Y_MEM(ggw%WF_symm_i)
+     Y_ALLOCATE(ggw%WF_symm_o(fft_size,n_spinor))
+     Y_MEM(ggw%WF_symm_o)
      !
      if (present(NG)) then
        if (present(GRADIENT)) then
-         if (GRADIENT) allocate(ggw%rhotw(3*NG))
+         Y_ALLOCATE(ggw%rhotw(3*NG))
+         Y_MEM(ggw%rhotw)
        else
-         allocate(ggw%rhotw(NG))
+         Y_ALLOCATE(ggw%rhotw(NG))
+         Y_MEM(ggw%rhotw)
        endif
        ggw%ngrho=NG
-       call mem_est(trim(ggw%name)//"-rhotw",(/size(ggw%rhotw)/),(/2*SP/))
      endif
      if (present(NG_GAMP)) then
-       allocate(ggw%gamp(NG_GAMP(1),NG_GAMP(2)))
-       call mem_est(trim(ggw%name)//"-gamp",(/size(ggw%gamp)/),(/2*SP/))
+       Y_ALLOCATE(ggw%gamp(NG_GAMP(1),NG_GAMP(2)))
+       Y_MEM(ggw%gamp)
      endif
      !
    end subroutine

@@ -109,7 +109,7 @@ subroutine RT_BGR(dG,E,k)
      !
      if (eval_HARTREE) then
        H=cZERO
-       call V_real_space_to_H(ik,V_hartree_sc,H,WF,'def')
+       call V_real_space_to_H(ik,1,V_hartree_sc,H,WF,'def')
        do ib=RT_bands(1),RT_bands(2)
          BGR_Hartree(ib,ik,1)=real(H(ib,ib,1),SP)
        enddo
@@ -119,7 +119,7 @@ subroutine RT_BGR(dG,E,k)
      !
      if (eval_DFT) then
        H=cZERO
-       call V_real_space_to_H(ik,V_xc_sc,H,WF,'xc ')
+       call V_real_space_to_H(ik,1,V_xc_sc,H,WF,'xc ')
        do ib=RT_bands(1),RT_bands(2)
          BGR_V_xc(ib,ik,1)=real(H(ib,ib,1),SP)
        enddo

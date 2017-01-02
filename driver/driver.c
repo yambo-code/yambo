@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
  */
      if (strcmp(opts[j].ln,"ifile")==0) {
        free(inf);
-       inf = malloc(strlen(cv[1])+1);  
+       inf = malloc(strlen(cv[1])+1);
        strcpy(inf,cv[1]);
        iif=strlen(inf);
      };

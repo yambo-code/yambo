@@ -54,7 +54,7 @@ integer function io_RT_components(what,ID)
  !
  ! Work Space
  !
- integer, external     :: variables_SC,variables_RT
+ integer, external     :: variables_RT
  character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: what_
  !
@@ -111,9 +111,6 @@ integer function io_RT_components(what,ID)
    if ( db_type==2 .or. (db_type==-3.and..not.l_real_time) ) then
      !
      io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
-     if (io_RT_components/=0) goto 1
-     !
-     io_RT_components=variables_SC(ID,local_description,trim(what_))
      if (io_RT_components/=0) goto 1
      !
      io_RT_components=variables_RT(ID,local_description,trim(what_))

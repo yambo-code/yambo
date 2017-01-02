@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_bare_Hamiltonian(E,Xk,k)
+subroutine Bare_Hamiltonian(E,Xk,k)
  !
  use pars,           ONLY:cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
- use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
-&                         WF_G_max,WF_Go_indx,SC_bands
+ use hamiltonian,    ONLY:Ho,E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
+&                         H_ref_bands,WF_G_max,WF_Go_indx
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
  use wave_func,      ONLY:WF
@@ -50,7 +50,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_spin
+ integer     :: ik,ib,i_sp_pol
  !
  Ho=cZERO
  !
@@ -77,7 +77,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  ! WF Loading, density and magnetization
  !=======================================
- call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
+ call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(H_ref_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
  !
  call el_density_and_current(E,Xk,rho=rho_n)
  if(n_spin>1) call el_magnetization(E,Xk,magn_n)
@@ -104,6 +104,8 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  QP_Vxc=cZERO
  call XCo_local(E,k)
  !
+ do i_sp_pol=1,n_sp_pol
+ !
  do ik=1,QP_nk
    !
    ! Add bare energies ... 
@@ -111,9 +113,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
    !
    do ib=1,QP_nb
      if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-     do i_spin=1,n_sp_pol
-       Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
-     enddo
+     Ho(ib,ib,ik,i_sp_pol) = Ho(ib,ib,ik,i_sp_pol) + E_bare(ib,ik,i_sp_pol)  
    enddo
    !
 #if defined _RT
@@ -125,13 +125,15 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
    ! ... then remove Vh[rho_0] 
    !===========================
    !
-   call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),WF,'def')
+   call V_real_space_to_H(ik,i_sp_pol,-V_hartree_sc,Ho(:,:,ik,i_sp_pol),WF,'def')
    !
    ! ... then remove Vxc[rho_0] also
    !=================================
    !
-   call V_qp_basis_to_H(ik,-QP_Vxc,Ho(:,:,ik,:))
+   call V_qp_basis_to_H(ik,i_sp_pol,-QP_Vxc,Ho(:,:,ik,i_sp_pol))
    !
+ enddo
+ !
  enddo
  !
 #if defined _RT
@@ -151,4 +153,4 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  call PP_redux_wait(Ho)
  !
-end subroutine SC_bare_Hamiltonian
+end subroutine Bare_Hamiltonian

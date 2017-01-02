@@ -49,9 +49,6 @@ module SC
  logical           :: compatible_SC_DB
  logical           :: found_SC_DB
  !
- logical           :: l_sc_V_is_local=.TRUE.
- logical           :: l_sc_XC_is_local=.TRUE.
- !
  ! General flags
  !
  logical           :: l_NSC_shot
@@ -81,27 +78,10 @@ module SC
  !
  complex(SP), allocatable :: SC_R(:,:,:,:)
  complex(SP), allocatable :: V_mean(:,:)
- real(SP),    allocatable :: V_xc_sc(:,:)
- real(SP),    allocatable :: V_hartree_sc(:,:)
- real(SP),    allocatable :: rho_n(:)
- real(SP),    allocatable :: magn_n(:,:)
- !
- ! Kinetic Energy and Ionic potential energy
- !
- complex(SP), allocatable :: Ho(:,:,:,:)
- real(SP),    allocatable :: E_bare(:,:,:)
- !
- ! Non-Local part (sigma_x, sigma_cohsex)
- !
- complex(SP), allocatable :: H_nl_sc(:,:,:)
- !
- ! Wavefunction indexes
- !
- integer :: WF_G_max,WF_Go_indx
  !
  interface
    !
-   subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,&
+   subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,xc_functional,&
 &                                perturbation)
      use electrons, ONLY:levels
      implicit none
@@ -109,7 +89,7 @@ module SC
      type(levels), optional :: E
      integer,      optional :: COM_
      integer,      optional :: MODE_
-     integer,      optional :: ik
+     integer,      optional :: ik,i_sp_pol
      integer,      optional :: n_bands
      integer,      optional :: kind
      integer,      optional :: xc_functional
@@ -119,74 +99,22 @@ module SC
  !
  contains
    !
-   subroutine SC_QP_table_setup(E)
-     use R_lattice,      ONLY:nkibz
-     use electrons,      ONLY:levels
-     use QP_m,           ONLY:QP_nk,QP_state,QP_nb
-     !
-     implicit none
-     !
-     type(levels) :: E
-     !
-     ! Build-up QP table
-     !
-     QP_nb=SC_bands(2)
-     QP_nk=nkibz
-     ! 
-     ! QP_state my be read from DBs at start-up
-     !
-     Y_FREE(QP_state)
-     !
-     Y_ALLOCATE(QP_state(QP_nb,QP_nk))
-     Y_MEM(QP_state)
-     QP_state=.TRUE.
-     call QP_state_table_setup(E)
-     !
-   end subroutine
-   !
    subroutine SC_alloc(E)
      use pars,           ONLY:SP
      use drivers,        ONLY:l_real_time,l_sc_sex,l_sc_coh,l_sc_srpa
      use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
      !
      implicit none
      !
      type(levels) :: E
      !
-     call SC_QP_table_setup(E)
+     call H_alloc(E)
      !
-     ! In the magnetic project Ho has already been allocated
-     !
-     Y_ALLOCATE(Ho(SC_bands(2),SC_bands(2),E%nk,n_sp_pol))
-     Y_MEM(Ho)
-     !
-     Y_ALLOCATE(rho_n(fft_size))
-     Y_MEM(rho_n)
-     !
-     if(n_spin>1) then
-       Y_ALLOCATE(magn(fft_size,3))
-       Y_MEM(magn)
-       Y_ALLOCATE(magn_n(fft_size,3))
-       Y_MEM(magn_n)
-     endif
-     !
-     Y_ALLOCATE(V_xc_sc(fft_size,n_spin))
-     Y_MEM(V_xc_sc)
-     !
-     Y_ALLOCATE(V_xc(fft_size,n_spin))
-     Y_MEM(V_xc)
-     !
-     Y_ALLOCATE(V_hartree_sc(fft_size,n_spin))
-     Y_MEM(V_hartree_sc)
-     !
-     Y_ALLOCATE(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
-     Y_MEM(H_nl_sc)
-     !
-     if (l_real_time) return
+     call H_QP_table_setup(E)
      !
      if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
        Y_ALLOCATE(QP_Sc(QP_n_states,1))
@@ -201,23 +129,19 @@ module SC
    subroutine SC_free()
      use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
+     use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
+     !
      implicit none
+     !
+     call H_free()
      !
      call X_alloc('DIP_P')
      call X_alloc('DIP_iR')
      call X_alloc('DIP_spin')
      call X_alloc('P_square')
      !
-     Y_FREE(Ho)
-     Y_FREE(H_nl_sc)
-     Y_FREE(rho_n)
-     Y_FREE(magn_n)
-     Y_FREE(magn)
-     Y_FREE(V_xc)
-     Y_FREE(V_xc_sc)
-     Y_FREE(V_hartree_sc)
      Y_FREE(QP_Sc)
      Y_FREE(SC_R)
      !

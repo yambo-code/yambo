@@ -23,7 +23,40 @@
 !
 module hamiltonian
  !
- integer           :: IP_h_bands(2)
+ use pars,       ONLY:SP,schlen
+ !
+ integer           :: H_ref_bands(2)
+ !
+ character(schlen) :: H_potential
+ !
+ ! Possible Kinds, functionals and external perturbations
+ !
+ integer           :: H_kind
+ integer           :: H_xc_functional
+ integer           :: H_perturbation
+ !
+ complex(SP), allocatable :: Ho(:,:,:,:)
+ !
+ ! Non-Local part (sigma_x, sigma_cohsex)
+ !
+ complex(SP), allocatable :: H_nl_sc(:,:)
+ !
+ real(SP),    allocatable :: V_xc_sc(:,:)
+ real(SP),    allocatable :: V_hartree_sc(:,:)
+ !
+ logical           :: l_sc_V_is_local=.TRUE.
+ logical           :: l_sc_XC_is_local=.TRUE.
+ !
+ ! Kinetic Energy and Ionic potential energy
+ !
+ real(SP),    allocatable :: E_bare(:,:,:)
+ !
+ real(SP),    allocatable :: rho_n(:)
+ real(SP),    allocatable :: magn_n(:,:)
+ !
+ ! Wavefunction indexes
+ !
+ integer :: WF_G_max,WF_Go_indx
  !
  contains
    !
@@ -33,5 +66,113 @@ module hamiltonian
      B_mat_index=(ib1-nb(1))*(nb(2)-nb(1)+1)+ib2-nb(1)+1
      !
    end function
+   !
+   subroutine H_QP_table_setup(E)
+     use R_lattice,      ONLY:nkibz
+     use electrons,      ONLY:levels
+     use QP_m,           ONLY:QP_nk,QP_state,QP_nb
+     use memory_m,       ONLY:mem_est
+     !
+     implicit none
+     !
+     type(levels) :: E
+     !
+     ! Build-up QP table
+     !
+     QP_nb=H_ref_bands(2)
+     QP_nk=nkibz
+     ! 
+     ! QP_state my be read from DBs at start-up
+     !
+     if (allocated(QP_state)) deallocate(QP_state)
+     !
+     allocate(QP_state(QP_nb,QP_nk))
+     call mem_est("QP_state",(/QP_nb*QP_nk/))
+     QP_state=.TRUE.
+     call QP_state_table_setup(E)
+     !
+   end subroutine
+   !
+   subroutine H_alloc(E)
+     use pars,           ONLY:SP
+     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
+     use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use FFT_m,          ONLY:fft_size
+     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
+     use memory_m,       ONLY:mem_est
+     use xc_functionals, ONLY:magn,V_xc
+     !
+     implicit none
+     !
+     type(levels) :: E
+     !
+     allocate(rho_n(fft_size))
+     call mem_est("rho",(/fft_size/),(/SP/))
+     !
+     if(n_spin>1) then
+       allocate(magn(fft_size,3))
+       allocate(magn_n(fft_size,3))
+       call mem_est("magn",(/2*fft_size*3/),(/SP/))
+     endif
+     !
+     allocate(Ho(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
+     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+     !
+     allocate(V_xc_sc(fft_size,n_spin))
+     call mem_est('V_xc_sc',(/size(V_xc_sc)/),(/SP/))
+     !
+     allocate(V_xc(fft_size,n_spin))
+     call mem_est('V_xc',(/size(V_xc)/),(/SP/))
+     !
+     allocate(V_hartree_sc(fft_size,n_spin))
+     call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
+     !
+     allocate(H_nl_sc(H_ref_bands(2),H_ref_bands(2)))
+     call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
+     !
+   end subroutine
+   !
+   subroutine H_free()
+     use drivers,        ONLY:l_real_time
+     use QP_m,           ONLY:QP_Sc
+     use memory_m,       ONLY:mem_est
+     use xc_functionals, ONLY:magn,V_xc
+     use X_m,            ONLY:X_alloc
+     !
+     implicit none
+     !
+     if(allocated(rho_n)) then
+       deallocate(rho_n)
+       call mem_est("rho")
+     endif
+     !
+     if(allocated(magn_n)) then
+       deallocate(magn_n)
+       call mem_est("magn")
+     endif
+     !
+     if(allocated(magn)) then
+       deallocate(magn)
+       call mem_est("magn")
+     endif
+     !
+     deallocate(Ho)
+     call mem_est("Ho")
+     !
+     deallocate(H_nl_sc)
+     call mem_est("H_nl_sc")
+     !
+     if(allocated(V_xc)) then 
+       deallocate(V_xc)
+       call mem_est('V_xc')
+     endif
+     !
+     deallocate(V_xc_sc)
+     call mem_est('V_xc_sc')
+     !
+     deallocate(V_hartree_sc)
+     call mem_est("Hartree_Potential")
+     !
+   end subroutine
    !
 end module

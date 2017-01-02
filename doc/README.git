@@ -64,6 +64,7 @@ Checkout a branch:
 
 Create a new branch:
 ===================
+“git checkout -b new_branch”
 (equivalent to “git branch new_branch” + “git checkout new_branch”)
 “git push origin new_branch”: if you want to make available the new branch
 “git branch -u origin/new_branch new_branch”: to set that the new branch tracks the new remote one
@@ -77,7 +78,7 @@ From current branch you want to tag
 Moving/removing files branches:
 ===============================
 $$ git mv hello.html lib/
-$$git rm hello.html
+$$ git rm hello.html
 $git branch -d the_local_branch
 
 Sorting passws

@@ -31,8 +31,8 @@ integer function io_QP_and_GF(what,qp,ID)
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,&
 &                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
- use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_COHSEX,SE_NONE,&
-&                         SE_POLARON,SE_GW_QED
+ use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
+&                         QP_SE_POLARON,QP_SE_GW_QED
  !
 #include<memory.h>
  type(QP_t)  ::qp
@@ -84,15 +84,15 @@ integer function io_QP_and_GF(what,qp,ID)
  ! and it is also later transfered to the G/X .. global kinds in mod_qp_ctl.
  !
  select case (QP_DB_kind)
-   case(0,SE_NONE)
+   case(0,QP_SE_NONE)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=.true.)
-   case(SE_COHSEX)
+   case(QP_SE_COHSEX)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=.true.)
-   case(SE_GoWo_PPA,SE_GWo_PPA)
+   case(QP_SE_GoWo_PPA,QP_SE_GWo_PPA)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=.true.)
-   case(SE_GoWo,SE_GWo)
+   case(QP_SE_GoWo,QP_SE_GWo)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
-   case(SE_POLARON,SE_GW_QED)
+   case(QP_SE_POLARON,QP_SE_GW_QED)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
  !
@@ -113,7 +113,7 @@ integer function io_QP_and_GF(what,qp,ID)
    ! Though the GF's parameters are already stored in the QP_descriptions
    ! I need them on-the-fly to, eventually, rebuild the Green's function
    !
-   call io_elemental(ID,VAR="SE_OPERATOR_PARAMETERS",VAR_SZ=7,MENU=0)
+   call io_elemental(ID,VAR="QP_SE_OPERATOR_PARAMETERS",VAR_SZ=7,MENU=0)
    call io_elemental(ID,I0=qp%GreenF_n_steps)
    call io_elemental(ID,R1=QP_G_er) ! <- This is, actually, not needed as the
                                     !    full frequency dependence is stored in sec 3
@@ -285,7 +285,7 @@ integer function io_QP_and_GF(what,qp,ID)
        enddo
      endif
      !
-     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
+     call io_bulk(ID,VAR="QP_SE_Operator",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
      call io_bulk(ID,R3=qp_DATA_disk(:,:,1:2))
      call io_bulk(ID,VAR="Green_Functions",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
      call io_bulk(ID,R3=qp_DATA_disk(:,:,3:4))

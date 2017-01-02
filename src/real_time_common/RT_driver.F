@@ -35,10 +35,12 @@ subroutine RT_driver(E,X,k,q)
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
- use SC,             ONLY:SC_potential,WF_G_max,WF_Go_indx,rho_n,magn_n
+ use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
+&                         H_potential,H_kind,H_xc_functional,H_perturbation
  use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
 &                         NE_i_start_time,RT_carriers_object,TIME_adjust,RT_apply
- use real_time,      ONLY:NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
+ use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
+&                         NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference,magn_reference, &
@@ -49,7 +51,7 @@ subroutine RT_driver(E,X,k,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous,A_ext
- use collision,       ONLY:HXC_COLL_element,GW_NEQ_COLL_element
+ use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast
@@ -68,7 +70,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: io_REF
  character(schlen) :: sec_title(3)
- complex(SP)       :: on_the_fly_operators(10)
+ real(SP)          :: on_the_fly_operators(10)
  !
  integer, external :: io_RT_components
  !
@@ -81,23 +83,28 @@ subroutine RT_driver(E,X,k,q)
  if (l_elphoton_scatt.and.&
 &   (l_elel_scatt.or.l_elph_scatt)) sec_title(3)='+el-photon'
  !
- call section('*',trim(SC_potential)//' Real-Time Dynamics')
+ call set_real_printed_length(f_length=10,g_length=10)  
+ !
+ ! Potential 
+ !===========
+ !
+ call XC_switch()
+ !
+ RT_potential    =H_potential
+ RT_kind         =H_kind
+ RT_xc_functional=H_xc_functional
+ RT_perturbation =H_perturbation
+ !
+ call section('*',trim(RT_potential)//' Real-Time Dynamics')
  call msg('s','Scattering(s):'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
  !
  call section('+','Initialization')
  !#################################
  !
- call set_real_printed_length(f_length=10,g_length=10)  
- !
- ! Switch 
- !========
- !
- call XC_switch()
- !
  ! Dipoles & WF dimensions
  !=========================
  !
- call SC_WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X)
  !
  ! Parallel Setups
  !=================
@@ -158,6 +165,7 @@ subroutine RT_driver(E,X,k,q)
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')
+ !######################################
  !
  call RT_start_and_restart(E,k,q,X)
  !
@@ -219,7 +227,7 @@ subroutine RT_driver(E,X,k,q)
  !==========================
  !
  call RT_output(what="initialize")
- call RT_output(what="open dyn ene cur pol magn")
+ call RT_output(what="open carr therm energy curr pol magn")
  call RT_output(what="open BGR")
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
@@ -308,9 +316,9 @@ subroutine RT_driver(E,X,k,q)
    ! OUTPUT(s)
    !###########
    call RT_output('BGR',TIME=NE_time*AUT2FS)
-   call RT_output('cur pol magn',TIME=NE_time*AUT2FS)
-   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
-   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
+   call RT_output('curr pol magn therm',TIME=NE_time*AUT2FS)
+   call RT_output('energy',VALUES=on_the_fly_operators(1:5 ),TIME=NE_time*AUT2FS)
+   call RT_output('carr',VALUES=on_the_fly_operators(6:10),TIME=NE_time*AUT2FS)
    !
    ! Mean Carrier Lifetimes
    !========================

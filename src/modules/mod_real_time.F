@@ -24,10 +24,9 @@
 module real_time
  !
  use drivers,    ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
- use SC,         ONLY:SC_R
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
- use global_XC,  ONLY:SE_NONE
+ use global_XC,  ONLY:QP_SE_NONE
  use electrons,  ONLY:levels
 #include<memory.h>
  !
@@ -39,6 +38,14 @@ module real_time
  logical           :: l_NE_with_fields
  logical           :: l_Dynamics_is_over   
  logical           :: l_Update_Time_Step  = .FALSE.
+ !
+ character(schlen) :: RT_potential
+ !
+ ! Possible Kinds, functionals and external perturbations
+ !
+ integer           :: RT_kind
+ integer           :: RT_xc_functional
+ integer           :: RT_perturbation
  !
  ! Evaluation logicals
  !
@@ -82,8 +89,8 @@ module real_time
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
  !
- integer           :: RT_EE_CORR_kind=SE_NONE
- integer           :: RT_EE_SCATT_kind=SE_NONE
+ integer           :: RT_EE_CORR_kind=QP_SE_NONE
+ integer           :: RT_EE_SCATT_kind=QP_SE_NONE
  !
  ! ... Memory ...
  !
@@ -236,6 +243,12 @@ module real_time
  !-----------------
  real(SP)                 :: RT_Tfit_occupations(2)
  real(SP)                 :: RT_Efit_occupations(2)
+ !
+ ! Thermodynamics
+ !-----------------
+ real(SP)                 :: RT_T_thermodynamics(3)
+ real(SP)                 :: RT_E_thermodynamics(3)
+ real(SP)                 :: RT_S_thermodynamics(3)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -447,8 +460,8 @@ module real_time
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
-     use SC,             ONLY:V_hartree_sc,l_sc_V_is_local,SC_alloc,E_bare, &
-&                             SC_xc_functional,SC_xc_functional
+     use memory_m,       ONLY:mem_est
+     use hamiltonian,    ONLY:H_alloc,H_QP_table_setup,E_bare
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -457,7 +470,9 @@ module real_time
      !
      type(levels), intent(in) :: en
      !
-     call SC_alloc(en)
+     call H_alloc(en)
+     !
+     call H_QP_table_setup(en)
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
@@ -585,8 +600,8 @@ module real_time
      !
      Y_ALLOCATE(BGR_hartree(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      Y_MEM(BGR_hartree)
-      Y_ALLOCATE(BGR_V_xc(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-      Y_MEM(BGR_V_xc)
+     Y_ALLOCATE(BGR_V_xc(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     Y_MEM(BGR_V_xc)
      Y_ALLOCATE(BGR_Self_Energy(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      Y_MEM(BGR_Self_Energy)
      !
@@ -608,10 +623,11 @@ module real_time
    !   
    subroutine RT_free
      !
-     use SC,             ONLY:SC_free,E_bare
+     use hamiltonian,    ONLY:H_free,E_bare
+     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      !
-     call SC_free()
+     call H_free()
      !
      Y_FREE(DbGd_ibz_coo)
      Y_FREE(DbGd_bz_coo)

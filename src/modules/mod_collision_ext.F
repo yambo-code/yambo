@@ -21,46 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module collision
- !
- use pars,       ONLY:DP,SP,LP,schlen
- use parallel_m, ONLY:PP_indexes
-#include<memory.h>
- !
- !=====================
- ! ELEMENTAL COLLISION
- !=====================
- !
- type elemental_collision
-   !
-   !  is(3)=(ib,ik,is,isp) --<--:--<-- os(3)=(ob,ok,os,osp)
-   !                            :
-   !                           /:\ iqs=(ig0,iq,is)
-   !                            :
-   !  iq_is = bz(ik_is-ok_os)+Go
-   !
-   integer :: is(4) 
-   integer :: os(4)
-   integer :: qs(3)
-   integer :: ngrho
-   integer :: iqref
-   !
-   character(schlen) :: name="El_Coll"
-   !
-   complex(SP), allocatable :: gamp(:,:)
-   complex(SP), allocatable :: rhotw(:)
-   !
-   ! scatter bamp workspace
-   !
-   complex(DP), allocatable :: rho_tw_rs(:)
-   complex(SP), allocatable :: WF_symm_i(:,:)
-   complex(SP), allocatable :: WF_symm_o(:,:)
-   !
- end type elemental_collision
+module collision_ext
  !
  !====================
  ! EXTENDED COLLISION
  !====================
+ !
+ use pars,       ONLY:SP,LP,schlen
+ use parallel_m, ONLY:PP_indexes
+ !
+ implicit none
  !
  integer :: COLL_bands(2)
  !
@@ -130,28 +100,27 @@ module collision
  !
  contains
    !
-   subroutine COLLISIONS_naming( SC_kind , what )
+   subroutine COLLISIONS_naming( H_SE_kind , what )
      !
-     use global_XC,      ONLY:SC_COH,SC_HARTREE,SC_SEX,SE_GW_QED,SE_GW_NEQ,&
-&                             SC_FOCK
+     use global_XC,      ONLY:H_SE_COH,H_SE_HARTREE,H_SE_SEX,QP_SE_GW_QED,QP_SE_GW_NEQ,H_SE_FOCK
      use xc_functionals, ONLY:GS_xc_KIND
      !
-     integer            :: SC_kind
+     integer            :: H_SE_kind
      character(*)       :: what
      !
      integer, parameter :: nc=7
      integer            :: i_c,local_kind(nc)
      character(schlen)  :: local_name(nc)
      !
-     if (SC_kind==0) then
+     if (H_SE_kind==0) then
        !
-       COH_collisions%kind=SC_COH
+       COH_collisions%kind=H_SE_COH
        COH_collisions%name="COH"
-       HXC_collisions%kind=SC_HARTREE+SC_SEX
+       HXC_collisions%kind=H_SE_HARTREE+H_SE_SEX
        HXC_collisions%name="HARTREE+SEX"
-       P_collisions%kind=SE_GW_QED
+       P_collisions%kind=QP_SE_GW_QED
        P_collisions%name="Momentum"
-       GW_NEQ_collisions%kind=SE_GW_NEQ
+       GW_NEQ_collisions%kind=QP_SE_GW_NEQ
        GW_NEQ_collisions%name="GW_NEQ"
        !
      else if (what=="HXC") then
@@ -159,8 +128,8 @@ module collision
        HXC_collisions%kind=0
        HXC_collisions%name=" "
        !
-       local_kind=(/SC_FOCK,SC_SEX,SC_Hartree,SC_FOCK+SC_Hartree,SC_SEX+SC_Hartree,&
-&                   GS_xc_KIND,GS_xc_KIND+SC_Hartree/)
+       local_kind=(/H_SE_FOCK,H_SE_SEX,H_SE_Hartree,H_SE_FOCK+H_SE_Hartree,H_SE_SEX+H_SE_Hartree,&
+&                   GS_xc_KIND,GS_xc_KIND+H_SE_Hartree/)
        local_name(1)="FOCK"
        local_name(2)="SEX"
        local_name(3)="HARTREE"
@@ -170,7 +139,7 @@ module collision
        local_name(7)="HARTREE+GS_xc"
        !
        do i_c=1,nc
-         if (SC_kind==local_kind(i_c).or.SC_kind==local_kind(i_c)+SC_COH) then
+         if (H_SE_kind==local_kind(i_c).or.H_SE_kind==local_kind(i_c)+H_SE_COH) then
            HXC_collisions%kind=local_kind(i_c)
            HXC_collisions%name=local_name(i_c)
            return
@@ -180,64 +149,4 @@ module collision
      endif
    end subroutine
    !
-   subroutine elemental_collision_copy(I,O)
-     type(elemental_collision)::I,O
-     O%is=I%is
-     O%os=I%os
-     O%qs=I%qs
-   end subroutine
-   !
-   subroutine elemental_collision_free(ggw,INIT_ONLY)
-     type(elemental_collision)::ggw
-     logical,optional::INIT_ONLY
-     logical::init_only_=.false.
-     !
-     if(present(INIT_ONLY)) init_only_=INIT_ONLY
-     if(.not.init_only_) then
-       Y_FREE(ggw%gamp)
-       Y_FREE(ggw%rhotw)
-       Y_FREE(ggw%rho_tw_rs)
-       Y_FREE(ggw%WF_symm_i)
-       Y_FREE(ggw%WF_symm_o)
-     endif
-   end subroutine
-   !
-   subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)
-     use electrons,      ONLY:n_spinor
-     use FFT_m,          ONLY:fft_size
-     implicit none
-     type(elemental_collision) ::ggw
-     integer,         OPTIONAL :: NG
-     integer,         OPTIONAL :: NG_GAMP(2)
-     logical,         OPTIONAL :: GRADIENT
-     character(*),    OPTIONAL :: TITLE
-     !
-     if (present(TITLE)) then
-       ggw%name=TITLE
-     endif
-     !
-     Y_ALLOCATE(ggw%rho_tw_rs(fft_size))
-     Y_MEM(ggw%rho_tw_rs)
-     Y_ALLOCATE(ggw%WF_symm_i(fft_size,n_spinor))
-     Y_MEM(ggw%WF_symm_i)
-     Y_ALLOCATE(ggw%WF_symm_o(fft_size,n_spinor))
-     Y_MEM(ggw%WF_symm_o)
-     !
-     if (present(NG)) then
-       if (present(GRADIENT)) then
-         Y_ALLOCATE(ggw%rhotw(3*NG))
-         Y_MEM(ggw%rhotw)
-       else
-         Y_ALLOCATE(ggw%rhotw(NG))
-         Y_MEM(ggw%rhotw)
-       endif
-       ggw%ngrho=NG
-     endif
-     if (present(NG_GAMP)) then
-       Y_ALLOCATE(ggw%gamp(NG_GAMP(1),NG_GAMP(2)))
-       Y_MEM(ggw%gamp)
-     endif
-     !
-   end subroutine
-   !
-end module collision
+end module collision_ext

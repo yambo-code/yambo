@@ -207,11 +207,6 @@ module BS
      type(levels) :: E
      !
      if(iT==0) then
-       nT=sum(BS_T_grp(:)%size)
-       if(l_kerr) then
-       endif
-       if(l_photolum) then
-       endif
        return
      endif
      !

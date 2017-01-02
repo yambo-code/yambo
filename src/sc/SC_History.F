@@ -29,7 +29,8 @@ subroutine SC_History(it,E)
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:of_open_close,msg
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions,E_bare
+ use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
+ use hamiltonian,    ONLY:E_bare
  use vec_operate,    ONLY:degeneration_finder
  implicit none
  !

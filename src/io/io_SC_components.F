@@ -30,10 +30,10 @@ integer function io_SC_components(what,E_sc,ID)
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,rho_convergence,magn_convergence,E_convergence,&
-&                         SC_R,V_xc_sc,l_sc_V_is_local,H_nl_sc,&
-&                         V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
+&                         SC_R,l_NSC_shot,SC_fft_size,V_mean
+ use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
-&                         io_sec,io_bulk,write_is_on,frag_SC,&
+&                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
 &                         manage_OP_IF_START_and_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,&
 &                         io_fragment,ver_is_gt_or_eq
  use FFT_m,          ONLY:fft_size
@@ -85,6 +85,15 @@ integer function io_SC_components(what,E_sc,ID)
  if (io_SC_components/=0) goto 1
  !
  ik = maxval(io_sec(ID,:))-1
+ !
+ i_sec=maxval(io_sec(ID,:))-1
+ if(i_sec<=nkibz) then
+   i_sp_pol=1
+   ik=i_sec
+ else
+   i_sp_pol=2
+   ik=i_sec-nkibz
+ endif
  !
  if (any((/io_sec(ID,:)==1/))) then
    !

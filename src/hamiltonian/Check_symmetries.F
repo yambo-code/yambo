@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_check_symmetries(field_dir)
+subroutine Check_symmetries(field_dir)
   !
   use pars,          ONLY:SP
   use vec_operate,   ONLY:v_norm
@@ -75,4 +75,4 @@ subroutine SC_check_symmetries(field_dir)
     stop '  '
   endif
   !
-end subroutine SC_check_symmetries
+end subroutine Check_symmetries

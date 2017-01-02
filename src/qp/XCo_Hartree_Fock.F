@@ -34,7 +34,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
 &                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
 &                        PAR_IND_Q_ID,n_WF_bands_to_load
- use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
 #if defined _SC

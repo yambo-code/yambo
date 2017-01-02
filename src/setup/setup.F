@@ -44,7 +44,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:load_SC_components,found_SC_DB
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
-&                         X_xc_functional,setup_global_XC,MORE_NONE,K_kind,K_xc_functional,loaded_WF_xc_string,&
+&                         X_xc_functional,setup_global_XC,QP_MORE_NONE,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
 #endif
 #include <memory.h>
@@ -282,10 +282,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call load_SC_components('E',E=en,COM_=REP,MODE_=DUMP,ik=0,&
 &                         kind=G_kind,xc_functional=G_xc_functional,perturbation=G_perturbation)
- if (found_SC_DB) call setup_global_XC('G',G_kind,MORE_NONE,G_xc_functional,G_perturbation)
+ if (found_SC_DB) call setup_global_XC('G',G_kind,QP_MORE_NONE,G_xc_functional,G_perturbation)
  call load_SC_components('E',E=Xen,COM_=NONE,MODE_=DUMP,ik=0,&
 &                         kind=X_kind,xc_functional=X_xc_functional,perturbation=X_perturbation)
- if (found_SC_DB) call setup_global_XC('X',X_kind,MORE_NONE,X_xc_functional,X_perturbation)
+ if (found_SC_DB) call setup_global_XC('X',X_kind,QP_MORE_NONE,X_xc_functional,X_perturbation)
  if (found_SC_DB.and.WF_buffered_IO) then
    call warning(' SC WFs and WF_buffered not supported. Turning off buffering')
    WF_buffered_IO=.false.
@@ -340,7 +340,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  K_kind=X_kind
  K_xc_functional=X_xc_functional
  K_perturbation=X_perturbation
- call setup_global_XC('K',K_kind,MORE_NONE,K_xc_functional,K_perturbation)
+ call setup_global_XC('K',K_kind,QP_MORE_NONE,K_xc_functional,K_perturbation)
  !
  if (.not.l_sc_run) then
    !
@@ -352,7 +352,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                          kind=WF_kind,xc_functional=WF_xc_functional,perturbation=WF_perturbation)
    !
    if (found_SC_DB) then
-     call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional,WF_perturbation)
+     call setup_global_XC('WF',WF_kind,QP_MORE_NONE,WF_xc_functional,WF_perturbation)
      call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
    endif
    !

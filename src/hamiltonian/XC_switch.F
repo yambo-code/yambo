@@ -26,8 +26,11 @@ subroutine XC_switch()
  use pars,           ONLY:schlen
  use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_fock,l_sc_coh,l_sc_sex,l_sc_is_libDFT,&
 &                         l_sc_srpa,l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater
- use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,l_sc_V_is_local,SC_perturbation,&
-&                         OEP_approx,l_oep_EWeight,l_oep_iterative,l_sc_XC_is_local
+ use global_XC,      ONLY:H_SE_EXX,H_SE_Hartree,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_SRPA
+ use hamiltonian,    ONLY:H_kind,H_xc_functional,H_potential,H_perturbation,l_sc_XC_is_local,l_sc_V_is_local
+#if defined _SC
+ use SC,             ONLY:OEP_approx,l_oep_EWeight,l_oep_iterative
+#endif
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
 #if defined _MAGNETIC
@@ -35,7 +38,7 @@ subroutine XC_switch()
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
  use magnetic,       ONLY:MAG_landau,MAG_pauli
 #endif
- use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC,SC_SRPA,EXT_NONE
+ use global_XC,      ONLY:EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error,warning
  use stderr,         ONLY:string_split
@@ -51,12 +54,12 @@ subroutine XC_switch()
  ! POTENTIAL selector
  !===================
  !
- potential=trim(SC_potential)
- do i_c=1,len_trim(SC_potential)
+ potential=trim(H_potential)
+ do i_c=1,len_trim(H_potential)
    if (potential(i_c:i_c)=="+") potential(i_c:i_c)=" "
  enddo
- SC_xc_functional=0
- SC_kind=0
+ H_xc_functional=0
+ H_kind=0
  call string_split(potential,potentials)
  do i_c=1,10
    if (len_trim(potentials(i_c))==0) cycle
@@ -66,6 +69,7 @@ subroutine XC_switch()
  ! OEP approximation
  !===================
  !
+#if defined _SC
  if (l_sc_exx) then
    select case (trim(OEP_approx))
      case('n')
@@ -73,40 +77,41 @@ subroutine XC_switch()
        if (l_oep_iterative) l_oep_EWeight=.true.
      case('k')
        l_oep_kli=.true.
-       SC_kind=SC_kind+KLI_APPRX 
+       H_kind=H_kind+KLI_APPRX 
      case('s')
        l_oep_slater=.true.
        l_oep_iterative=.false.
-       SC_kind=SC_kind+SLT_APPRX
+       H_kind=H_kind+SLT_APPRX
      case('c')
        l_oep_ceda=.true.
-       SC_kind=SC_kind+CED_APPRX
+       H_kind=H_kind+CED_APPRX
      case('sw')
        l_oep_slater=.true.
        l_oep_EWeight=.true.
        l_oep_iterative=.false.
-       SC_kind=SC_kind+LEVY_APPRX
+       H_kind=H_kind+LEVY_APPRX
      case('kw')
        l_oep_kli=.true.
        l_oep_EWeight=.true.
-       SC_kind=SC_kind+LEVY_APPRX
+       H_kind=H_kind+LEVY_APPRX
      case('cw')
        l_oep_ceda=.true.
        l_oep_EWeight=.true.
-       SC_kind=SC_kind+LEVY_APPRX
+       H_kind=H_kind+LEVY_APPRX
      case default
        call error("Unknown EXX approximation! ")
    end select
  end if
+#endif
  !
- SC_perturbation=EXT_NONE
+ H_perturbation=EXT_NONE
  !
 #if defined _MAGNETIC
  !
  if (l_sc_magnetic) then
-   if (MAG_pauli)  SC_perturbation=EXT_B_PAULI
-   if (MAG_landau) SC_perturbation=EXT_B_LANDAU
-   if (MAG_landau.and.MAG_pauli) SC_perturbation=EXT_B_MAGNETISM
+   if (MAG_pauli)  H_perturbation=EXT_B_PAULI
+   if (MAG_landau) H_perturbation=EXT_B_LANDAU
+   if (MAG_landau.and.MAG_pauli) H_perturbation=EXT_B_MAGNETISM
  endif
 #endif
  !
@@ -119,69 +124,69 @@ subroutine XC_switch()
        case('IP')
          ! This means Hartree and V_xc are frozed: IP=KS-IP
          l_sc_ip=.true.
-         SC_kind=-1
-         SC_xc_functional=0
+         H_kind=-1
+         H_xc_functional=0
        case('default')
          ! special case
          l_sc_hartree=.true.
          l_sc_is_libDFT=.true.
-         SC_kind=SC_HARTREE+GS_xc_KIND
-         SC_xc_functional=GS_xc_FUNCTIONAL
-         SC_potential="HARTREE+GS_xc"
+         H_kind=H_SE_HARTREE+GS_xc_KIND
+         H_xc_functional=GS_xc_FUNCTIONAL
+         H_potential="HARTREE+GS_xc"
        case('HARTREE')
          l_sc_hartree=.true.
-         SC_kind=SC_kind+SC_HARTREE
+         H_kind=H_kind+H_SE_HARTREE
        case('GS_xc')
          l_sc_is_libDFT=.true.
-         SC_kind=SC_kind+GS_xc_KIND
-         if(SC_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
-         SC_xc_functional=GS_xc_FUNCTIONAL
+         H_kind=H_kind+GS_xc_KIND
+         if(H_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
+         H_xc_functional=GS_xc_FUNCTIONAL
        case('FOCK')
          l_sc_fock=.true.
          l_sc_V_is_local=.false.
-         SC_kind=SC_kind+SC_FOCK
+         H_kind=H_kind+H_SE_FOCK
        case('LDA_X')
          l_sc_is_libDFT=.true.
-         SC_kind=SC_kind+XC_EXCHANGE
-         if(SC_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
-         SC_xc_functional=XC_LDA_X
+         H_kind=H_kind+XC_EXCHANGE
+         if(H_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
+         H_xc_functional=XC_LDA_X
        case('PZ')
          l_sc_is_libDFT=.true.
-         SC_kind=SC_kind+XC_EXCHANGE_CORRELATION
-         if(SC_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
-         SC_xc_functional=XC_LDA_C_PZ
+         H_kind=H_kind+XC_EXCHANGE_CORRELATION
+         if(H_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
+         H_xc_functional=XC_LDA_C_PZ
        case('EXX')
          l_sc_exx=.true.
-         SC_kind=SC_kind+SC_EXX
+         H_kind=H_kind+H_SE_EXX
          if (n_full_bands/=n_met_bands) return
        case('EXXC')
          l_sc_exx=.true.
          l_sc_is_libDFT=.true.
-         SC_kind=SC_kind+SC_EXXC
-         if(SC_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
-         SC_xc_functional=XC_LDA_C_PZ
+         H_kind=H_kind+H_SE_EXXC
+         if(H_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
+         H_xc_functional=XC_LDA_C_PZ
          if (n_full_bands/=n_met_bands) return
        case('SRPA')
          l_sc_exx=.true.
          l_sc_srpa=.true.
-         SC_kind=SC_kind+SC_SRPA
+         H_kind=H_kind+H_SE_SRPA
          if (n_full_bands/=n_met_bands) return
        case('COH')
          l_sc_coh=.true.
          l_sc_XC_is_local=.false.
          l_sc_V_is_local=.false.
-         SC_kind=SC_kind+SC_COH
+         H_kind=H_kind+H_SE_COH
        case('SEX')
          l_sc_sex=.true.
          l_sc_V_is_local=.false.
          l_sc_XC_is_local=.false.
-         SC_kind=SC_kind+SC_SEX
+         H_kind=H_kind+H_SE_SEX
        case('COHSEX')
          l_sc_coh=.true.
          l_sc_sex=.true.
          l_sc_V_is_local=.false.
          l_sc_XC_is_local=.false.
-         SC_kind=SC_kind+SC_SEX+SC_COH
+         H_kind=H_kind+H_SE_SEX+H_SE_COH
        case ('none')
          call warning("NULL SC potential! ")
        case default

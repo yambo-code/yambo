@@ -49,7 +49,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  character(*),  intent(in)   ,optional :: WHAT
  !
  integer  :: i_RT,i_b,i_k,i_k_DbGd,i_k_RT,i_spin
- real(SP) :: Hole_lifetime,Elec_lifetime,f_occ
+ real(SP) :: Hole_lifetime,Elec_lifetime,df_occ,f_occ
  !
  select case(WHAT)
    !
@@ -103,10 +103,10 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
    case('fill','dump')
      !
-     Hole_lifetime=0._SP
-     Elec_lifetime=0._SP
-     !
      do i_RT=1,RT%nstates
+       !
+       Hole_lifetime=0._SP
+       Elec_lifetime=0._SP
        !
        i_b    =RT%table(i_RT,1)
        i_k    =RT%table(i_RT,2)
@@ -186,7 +186,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if (what=="fill") then
          !
-         f_occ=(RT%f_bare(i_RT)+RT%delta_f(i_RT))/spin_occ
+         f_occ=RT%f_bare(i_RT)/spin_occ
+         df_occ=RT%delta_f(i_RT)/spin_occ
          if(l_elel_scatt.or.l_elph_scatt) then
            RT%delta_GAMMA(i_RT)=  Hole_lifetime+Elec_lifetime
            Hole_lifetime=Hole_lifetime+REF_lifetime(i_b,i_k_RT,1)+REF_lifetime(i_b,i_k_RT,3)+&
@@ -194,11 +195,15 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
            Elec_lifetime=Elec_lifetime+REF_lifetime(i_b,i_k_RT,2)+REF_lifetime(i_b,i_k_RT,4)+&
 &                                      REF_lifetime(i_b,i_k_RT,6)+REF_lifetime(i_b,i_k_RT,8)
            !
-           if(f_occ>0._SP) then
-             RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime) - Hole_lifetime / f_occ
-           else
-             RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
+           RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
+           if(RT%E_bare(i_RT)> 0._SP) then
+             if ((      f_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/       f_occ
+             if(  abs(df_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/(     df_occ)
+           else if(RT%E_bare(i_RT)<=0._SP) then
+             if((1._SP-f_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Elec_lifetime/(1._SP-f_occ)
+             if(  abs(df_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Elec_lifetime/(    -df_occ)
            endif
+           !
          endif
          !
        endif

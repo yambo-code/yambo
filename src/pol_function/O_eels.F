@@ -32,7 +32,7 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  integer              :: nw
  complex(SP)          :: wv(nw)
  logical              :: be_verbose
- character(1)         :: ordering
+ character(2)         :: ordering
  complex(SP) ,optional:: eps(nw),eel(nw)
  !
  ! Work Space
@@ -43,7 +43,7 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  O_eels=.TRUE.
  !
  if (.not.present(eps)) then
-   if (ordering=='r'.or.ordering=='a') then
+   if (ordering=='Tr'.or.ordering=='Ta') then
      if (real(wv(1))<-real(wv(1))) then
        O_eels=.FALSE.
        if (be_verbose) call warning(' [O_eels] Impossible to evaluate the EELS')
@@ -53,7 +53,7 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
    return
  endif
  !
- if (ordering=='t'.or.ordering=='c') then
+ if (trim(ordering)=='T'.or.trim(ordering)=='R') then
    eel(:)=-1._SP/eps(:)
    return
  endif

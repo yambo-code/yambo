@@ -39,7 +39,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
  use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
-&                        l_use_COH_collisions,l_elphoton_scatt
+&                        l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
  use com,           ONLY:error
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -47,8 +47,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use wave_func,     ONLY:WF
  use SC,            ONLY:SC_potential,SC_kind
  use global_XC,     ONLY:SE_GW_NEQ,SE_GW_QED
- use collision,     ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
-&                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
+ use collision,     ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,COLLISIONS_have_HARTREE,&
+&                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
@@ -66,7 +66,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! WorkSpace
  !
  integer       :: ID,i_kind,IO_err
- character(20) :: PAR_ch
+ character(20) :: PAR_ch,FREE_ch
  !
  call section('*','Extended collisions')
  !=======================================
@@ -74,6 +74,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! If I am calculating the collisions then I can use them
  !
  l_use_collisions=.TRUE.
+ !
+ COLLISIONS_have_HARTREE=index(SC_potential,"HARTREE")>0
  !
  l_use_Hxc_collisions  =(index(SC_potential,"HARTREE")>0.or.index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.&
 &                        trim(SC_potential)=="default")
@@ -89,14 +91,12 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !========
  call XC_switch()
  !
- if(l_use_Hxc_collisions) then
-   HXC_collisions%name=SC_potential
-   HXC_collisions%kind=SC_kind
- endif
+ ! Naming 
+ !========
+ call COLLISIONS_naming( SC_kind , "HXC" )
  !
  ! Initial Setup
  !===============
- !
  if (l_use_COH_collisions) call COLLISIONS_basic_operations( "alloc",    COH_collisions )
  if (l_use_Hxc_collisions) call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
  if (l_elphoton_scatt)     call COLLISIONS_basic_operations( "alloc",      P_collisions )
@@ -129,7 +129,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
  endif
  !
- if (l_use_Hxc_collisions) then
+ if (l_use_Hxc_collisions.or.l_use_COH_collisions) then
    !
    call section('+',trim(SC_potential)//' (e-e correlation)')
    !=========================================================
@@ -143,7 +143,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      ! COHSEX clean
      !--------------
-     if (io_COLLs) call COLLISIONS_alloc_and_free("HXC","v3 table","clean",1)
+     if (io_COLLs.and.l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC","v3 table","clean",1)
+     if (io_COLLs.and.l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH","v3 table","clean",1)
      !
    endif
    !
@@ -210,20 +211,33 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (io_COLLs) then
    !
-   call COLLISIONS_basic_operations( "clean",    HXC_collisions )
-   call COLLISIONS_basic_operations( "clean",    COH_collisions )
-   call COLLISIONS_basic_operations( "clean",      P_collisions )
-   call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
+   if (.not.l_real_time.and..not.l_sc_run) then
+     !
+     ! %state and %N are needed in RT_driver and SC_driver to distribute the collisions.
+     ! This distribution is done BEFORE the call to COLLLISIONS_load. Therefore %state and %N
+     ! must not be cleared here.
+     !
+     call COLLISIONS_basic_operations( "clean",    HXC_collisions )
+     call COLLISIONS_basic_operations( "clean",    COH_collisions )
+     call COLLISIONS_basic_operations( "clean",      P_collisions )
+     call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
+     !
+   endif
+   !
+   if (IO_err==0) return
+   !
+   FREE_ch="all"
    !
  else
    !
-   if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,"v3","clean",1)
-   if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,"v3","clean",1)
-#if defined _QED
-   if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,"v3","clean",1)
-#endif
+   FREE_ch="v3"
    !
  endif
+ !
+ if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
+ if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
+ if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
+ if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
  !
  contains
    !

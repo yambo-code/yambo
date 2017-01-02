@@ -38,27 +38,31 @@ sub have_material
  $irun=0;
  while ($irun<$runs) {
   $irun++;
-  if ("$RUN_material[$irun]" =~ "$material") {
+  if ("$RUN_material[$irun]" =~ @_) {
    return $irun;
   }
  } 
  return 0;
 }
-sub have_run{
+sub have_run
+#============
+{
  $irun=0;
- while ($irun<$runs) {
-  $n_keys=0;
+ while ($irun<$runs) 
+ {
+  $n_tags=0;
   $matches=0;
   $irun++;
-  for($ik = 1; $ik < 100; $ik++) {
-    if (exists($RUN_key[$irun][$ik])){
-     $n_keys++;
-     if ("$RUN_key[$irun][$ik]" ~~ @keys) {$matches++};
+  if ($user_tags) {
+   for($ik = 1; $ik < 100; $ik++) {
+    if (exists($RUN_tag[$irun][$ik])){
+     $n_tags++;
+     if ( "$RUN_tag[$irun][$ik]" ~~ @tags) {$matches++};
     }
-  };
-  if ("$RUN_material[$irun]" =~ "$material" and $n_keys eq  $matches){ 
-   return $irun;
+   }
   }
+  if ($material and "$RUN_material[$irun]" =~ "$material" and $n_tags eq  $matches){return $irun;};
+  if ($ID_in and $ID[$irun] eq $ID_in) {return $irun;};
  }
  return 0;
 }

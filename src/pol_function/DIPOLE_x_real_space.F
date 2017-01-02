@@ -32,7 +32,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:bz_samp
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
- use X_m,                ONLY:X_t,DIP_iR,DIP_P,force_v_g_space_approach
+ use X_m,                ONLY:X_t,DIP_iR,DIP_P,force_v_g_space_approach,l_X_terminator
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
  use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
@@ -46,7 +46,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  !
  ! Work space
  !
- integer                      :: ik,ik_mem,i_sp_pol,i_spinor,i_spin,ic,iv,&
+ integer                      :: ik,ik_mem,i_sp_pol,i_spinor,i_spin,ic,iv,ic_min,&
 &                                icfft(n_spinor),ivfft(n_spinor),idir,n_LT_steps
  logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  real(SP)                     :: Ev_m_Ec
@@ -76,7 +76,11 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
      DIP_tmp=cZERO
      !
      do iv=X%ib(1),X%ib_lim(1) 
-       do ic=max(iv,X%ib_lim(2)),X%ib(2)
+       !
+       ic_min=max(iv,X%ib_lim(2))
+       if (l_X_terminator) ic_min=iv
+       !
+       do ic=ic_min,X%ib(2)
          !
          if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !

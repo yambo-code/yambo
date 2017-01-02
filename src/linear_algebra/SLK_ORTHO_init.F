@@ -11,7 +11,6 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 SUBROUTINE SLK_ORTHO_init( ORTHO, POOL, n_CPU_in, parent_comm)
- !---------------------------------------------------------------------------
  !
  ! ... Ortho group initialization
  !

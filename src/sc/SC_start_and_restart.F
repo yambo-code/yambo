@@ -33,15 +33,16 @@ subroutine SC_start_and_restart(X,E)
  use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,SC_QP_table_setup,&
-&                         SC_potential,E_bare,l_sc_pot_is_local,SC_iterations,l_TF_precond, &
+&                         SC_potential,E_bare,l_sc_V_is_local,SC_iterations,SC_preconditioning, &
 &                         l_oep_iterative,rho_convergence,E_convergence, &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
 &                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
-&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,l_froze_density
+&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,SC_kind,l_froze_density
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
+ use collision,      ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  !
  implicit none
  type(levels) ::E
@@ -56,7 +57,6 @@ subroutine SC_start_and_restart(X,E)
  ! Parsering
  !============
  !
- call parser('TF_precondition',l_TF_precond) 
  call parser('OEPItSolver',    l_oep_iterative) 
  call parser('UseEbands',      COHSEX_use_empties)
  call parser('Mean_Potential', l_Mean_Potential)
@@ -64,7 +64,11 @@ subroutine SC_start_and_restart(X,E)
  call parser('SCnlMix',        l_SC_nl_mix)
  call parser('FrozeDensity',   l_froze_density)
  !
- if (l_sc_pot_is_local) l_SC_nl_mix=.FALSE.
+ ! Preconditioning
+ !=================
+ if (trim(SC_preconditioning)/="simple".and. &
+&    trim(SC_preconditioning)/="none".and. &
+&    trim(SC_preconditioning)/="thomas-fermi") SC_preconditioning="none"
  !
  ! Magnetic logical setup
  !========================
@@ -142,7 +146,7 @@ subroutine SC_start_and_restart(X,E)
    !
  else
    !
-   l_NSC_shot=SC_iterations==1.and.(io_V==0.or.io_V==-2).and.l_sc_pot_is_local.and..not.l_SC_cycle
+   l_NSC_shot=SC_iterations==1.and.(io_V==0.or.io_V==-2).and.l_sc_V_is_local.and..not.l_SC_cycle
    !
  endif
  !
@@ -164,7 +168,7 @@ subroutine SC_start_and_restart(X,E)
  call msg('r' ,'[SC] Bands                            :',SC_bands)
  call msg('r' ,'[SC] Bands mixing                     :',SC_band_mixing)
  call msg('r' ,'[SC] Use non-local mixing             :',l_SC_nl_mix)
- call msg('r' ,'[SC] Use Thomas-Fermi precondition    :',l_TF_precond) 
+ call msg('r' ,'[SC] Preconditioning                  :',SC_preconditioning) 
  call msg('r' ,'[SC] Diagonal approximation           :',l_SC_diagonal)
  if (l_SC_cycle) then
    call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
@@ -209,12 +213,18 @@ subroutine SC_start_and_restart(X,E)
  ! Checking extended COLLISIONS
  !==============================
  !
+ call COLLISIONS_naming( SC_kind , "HXC" )
+ !
  if (io_COLLs) call COLLISIONS_load(.TRUE.)
  !
  if (l_use_Hxc_collisions) then
    call msg('s' ,'[SC] Extented collisions Used')
    call msg('r' ,'[SC] Extented collisions              :',l_use_Hxc_collisions)
    COHSEX_use_empties=.TRUE.
+   if (COLLISIONS_have_HARTREE.and.SC_preconditioning=="thomas-fermi") then
+     call warning(" [COLLISIONS] Found Hartree collisions. Switched to simple preconditioning")
+     SC_preconditioning="simple"
+   endif
  endif
  !
 end subroutine SC_start_and_restart

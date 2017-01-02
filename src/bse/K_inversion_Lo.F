@@ -21,24 +21,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo) 
+subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo) 
  !
- use pars,           ONLY:SP,cZERO,cI
+ use pars,           ONLY:SP,cZERO,cI,pi,rZERO
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
- use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,iw_ref,l_drude
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,iw_ref,l_drude
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
- use BS,             ONLY:Co_factor,BSS_dipoles,BS_H_dim,BS_K_dim,&
-&                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
-&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z
+ use BS_solvers,     ONLY:Co_factor,BSS_dipoles,&
+&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
+&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,&
+&                         BSS_add_antiresonant
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  !
 #if defined _ELPH
- use BS,             ONLY:BSS_uses_GreenF,BS_bands
+ use BS_solvers,     ONLY:BSS_uses_GreenF
+ use BS,             ONLY:BS_bands
+#endif
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+ use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
 #endif
  !
  implicit none
@@ -46,20 +53,31 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  type(w_samp),  intent(in)  :: W
  type(levels),  intent(in)  :: E
  type(bz_samp), intent(in)  :: k,q
- integer,       intent(in)  :: iq,Lo_dim
+ integer,       intent(in)  :: iq,Lo_dim,Lo_n_loop
  complex(SP),   intent(out) :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
  !
  type(PP_indexes) :: px
  type(w_samp)     :: W_mins,W_plus
  !
- logical          :: K_diago_in_BS_mat,eval_anti_resonant
- integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
+ logical          :: K_diago_in_BS_mat
+ integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
  complex(SP)      :: E_plus_W,residual
+#if defined _PL
+ complex(SP)      :: SF(W%n_freqs,2)
+#endif
  !
  complex(SP), allocatable :: BS_mat_diagonal(:)
  !
- Epsilon_ii(:,3:4)=cZERO
- Joint_DOS(:,3:4) =cZERO
+#if defined _PL
+ !
+ ! PL_0
+ !=======
+ call PL_init( )
+ PL(:,3) = rZERO
+ !
+#endif
+ !
+ Epsilon_ii(:,3:4) = cZERO
  !
  call parser('BSSInvKdiag',K_diago_in_BS_mat)
  !
@@ -116,8 +134,6 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
  !
 #endif
  !
- eval_anti_resonant= (trim(BSE_mode)=='causal') .or. (trim(BSE_mode)=='coupling')
- !
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2
  !
@@ -129,10 +145,15 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    i_eps=2+i_loop
    !
    if(n_loop==2) then
+#if defined _PL
+     if(i_loop==1) call live_timing('IP PL',px%n_of_elements(myid+1))
+     if(i_loop==2) call live_timing('Shifted GF and PL',px%n_of_elements(myid+1))
+#else
      if(i_loop==1) call live_timing('IP Absorption',px%n_of_elements(myid+1))
      if(i_loop==2) call live_timing('Shifted GF and Absorption',px%n_of_elements(myid+1))
+#endif
    else
-     call live_timing('IP GF and Absorptio',px%n_of_elements(myid+1))
+     call live_timing('IP GF and Absorption',px%n_of_elements(myid+1))
    endif
    !
    Lo=cZERO
@@ -157,7 +178,10 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
      !
      transition=(/ik_bz,iv,ic,i_sp/)
      !
-     if ( trim(BSE_mode)=='causal') then
+     i_Lo_trans=i_res
+     i_Lo      =1
+     !
+     if ( trim(BSE_mode)=='retarded') then
        i_Lo_trans=i_res
        i_Lo      =2
      else if( trim(BSE_mode)=="coupling") then
@@ -173,52 +197,70 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
        forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_mat_diagonal(i_res)*BSS_eh_f(i_res)
      endif
      !
-#if defined _ELPH
      if ( .not.associated(E%GreenF) ) then
-#endif
        !
        ! Analytical GFs
        !================
-       call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh")
+       call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh",.FALSE.)
+#if defined _PL
+       call X_GreenF_analytical(1,transition,W,E,k,SF(:,1),"r","eh",.TRUE.)
+       Lo(i_res,:,1+Lo_n_loop)=BSS_PL_f(1,i_res)/BSS_eh_f(i_res)**2.*aimag(W%p(1))/pi
+#endif
        !
-       if (eval_anti_resonant) then
+       if (BSS_add_antiresonant.or.BS_K_coupling) then
          !
-         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"ca","eh")
+         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.)
+#if defined _PL
+         !
+         ! The -1 coming from SF(:,2) and -abs(Lo)...compensate each other
+         !
+         call X_GreenF_analytical(1,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.)
+         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)/BSS_eh_f(i_res)**2.*aimag(W%p(1))/pi
+#endif
          !
        endif
        !
-#if defined _ELPH
      else 
        !
        ! GPL_EXCLUDE_START
        !
        ! Convoluted GFs
        !================
-       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i_res,:,1),"r")
+       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i_res,:,1),"r",.FALSE.)
        !
-       if (eval_anti_resonant) then
+       if (BSS_add_antiresonant.or.BS_K_coupling) then
          !
-         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"ca")
+         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra",.FALSE.)
          !
        endif
        !
        ! GPL_EXCLUDE_END
        !
      endif
-#endif
      !
      residual=BSS_dipoles(i_res)*conjg(BSS_dipoles(i_res))
      if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
      if (trim(global_gauge)=='velocity') Lo(i_res,:,1)=(Lo(i_res,:,1)-Lo(i_res,iw_ref,1))
      Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
-     Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -         Lo(i_res,:,1)
      !
-     if ( eval_anti_resonant ) then
+     if (BSS_add_antiresonant.or.BS_K_coupling) then
        residual=conjg(BSS_dipoles(i_Lo_trans))*BSS_dipoles(i_Lo_trans)
        if (trim(global_gauge)=='velocity') Lo(i_Lo_trans,:,i_Lo)=(Lo(i_Lo_trans,:,i_Lo)-Lo(i_Lo_trans,iw_ref,i_Lo))
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
-       Joint_DOS(:,i_eps) =Joint_DOS(:,i_eps) -                Lo(i_Lo_trans,:,i_Lo)
      endif
+     !
+#if defined _PL
+     if (l_photolum.and.i_loop==1) then
+       !
+       residual=dot_product(BSS_dipoles_PL(i_res,:),BSS_dipoles_PL(i_res,:))
+       !
+       PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(1,i_res)
+       if (BSS_add_antiresonant.or.BS_K_coupling) then
+         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(2,i_res)
+       endif
+       !
+     endif
+#endif
      !
      call live_timing(steps=1)
      !
@@ -229,11 +271,12 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo)
    if(i_loop==n_loop) call PP_redux_wait(Lo)
    !
    call PP_redux_wait(Epsilon_ii(:,i_eps))
-   call PP_redux_wait(Joint_DOS(:,i_eps) )
+#if defined _PL
+   if (l_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps))
+#endif
    !
    if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/q_norm(1)**2)
    if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/  W%p(:) **2)
-   Joint_DOS(:,i_eps)=Joint_DOS(:,i_eps)*Co_factor
    !
    if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/q_norm(1)**2
    !

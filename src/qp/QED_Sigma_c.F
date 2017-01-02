@@ -55,7 +55,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! WorkSpace
  !
- integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_G0,i_c,i_cp,i_g,i_m,i_m_wf_load,PAR_bands(2)
+ integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_G0,i_c,i_cp,i_g,i_m,i_m_wf_load,PAR_bands(2),n_lt_steps,i_qp_mem
  complex(SP)               ::P(3)
  real(SP)                  ::Photon_E,T_matrix(3,3),T_vec(3),E_diff,Photon_Gamma_E,f_k,f_k_m_q,&
 &                            P_square_times_tau(QP_QED_ng),Sc_re,Sc_im,beta,R0
@@ -137,6 +137,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Band index for Empty bands allocation 
  !=======================================
+ !
  i_m_wf_load=-1
  if (PAR_IND_G_b%element_1D(n_met_bands+1)) i_m_wf_load=n_met_bands+1
  do i_m=n_met_bands+1,QP_n_G_bands(2)
@@ -145,7 +146,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
  PAR_bands(1)=count(PAR_IND_G_b%element_1D(:n_met_bands  ))
  PAR_bands(2)=count(PAR_IND_G_b%element_1D(n_met_bands+1:))
  !
- if (PAR_bands(1)>0) call live_timing('Sigma_c [FILLED bands]',PAR_nQP*PAR_bands(1)*PAR_nQ)
+ n_lt_steps=PAR_nQP*PAR_bands(1)*PAR_nQ
+ !
+ if (n_lt_steps>0) call live_timing('Sigma_c [FILLED bands]',n_lt_steps)
  !
  B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
    !
@@ -197,7 +200,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        if (l_use_collisions) then
          !
-         P_square_times_tau(:)=P_COLL_element(i_qp)%v3_r(:,i_m,i_q_bz)
+         i_qp_mem=P_collisions%PAR_map(i_qp)
+         !
+         P_square_times_tau(:)=P_COLL_element(i_qp_mem)%v3_r(:,i_m,i_q_bz)
          !
        else
          !
@@ -242,6 +247,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call live_timing( )
  !
  call PP_redux_wait(QP_Sc)
+ call PP_redux_wait(QP_dSc)
  !
  ! Symmetrize
  !

@@ -68,12 +68,12 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  integer  :: nfound(3),nfound_gamma(5),nfound_spin(5)
  integer  :: E_sort_index(RT_carriers%nstates)
  !
- character(10)     ::titles(max(n_T_steps+4,11)),data_ch(n_T_steps+4,5,2),columns(n_T_steps+4)
+ character(10)     ::titles(max(n_T_steps+4,11)),data_ch(n_T_steps+4,5,2),columns(n_T_steps+4),tmp_titles(12)
  character(schlen) ::output_fname(11),gamma_fname(7),gamma_ratio_fname(2),GRP_string
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
  !
- RT_E_sorted=RT_carriers%E_bare
+ RT_E_sorted=RT_carriers%E_bare*HA2EV
  call sort(RT_E_sorted,indx=E_sort_index)
  !
  RT_gamma=0._SP
@@ -254,6 +254,8 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    !
  enddo
  !
+ RT_gamma=RT_gamma*HA2EV*1000._SP
+ !
  !
  ! Write to output fitted temperatures
  !====================================
@@ -289,10 +291,10 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  endif
  !
  titles(1)='Time [fs]'
- titles(2:3)=(/'OCC el ','OCC hol'/)
+ tmp_titles(2:3)=(/'(e)   ','(h)   '/)
  n1=3
  if(n_spinor==2) then
-   titles(4:7)=(/'OCC e-up','OCC h-up','OCC e-dw','OCC h-dw'/)
+   tmp_titles(4:7)=(/'(e-up)','(h-up)','(e-dw)','(h-dw)'/)
    n1=n1+4
  endif
  !
@@ -301,7 +303,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    gamma_fname(1)='YPP-RT_EE_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EE_Elec_linewidths'
    gamma_ratio_fname(1)='YPP-RT_EE_widths_ratio'
-   titles(n1+1:n1+2)=(/'EE  el ','EE  hol'/)   
+   tmp_titles(n1+1:n1+2)=(/'(e-EE)','(h-EE)'/)   
    n1=n1+2
    n_ratio=1
  ! Only El-Ph
@@ -311,7 +313,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    gamma_fname(3)='YPP-RT_EP_Hole_abs_linewidths'
    gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
    gamma_ratio_fname(1)='YPP-RT_EP_widths_ratio'
-   titles(n1+1:n1+2)=(/'EP  el ','EP  hol'/)   
+   tmp_titles(n1+1:n1+2)=(/'(e-EP)','(h-EP)'/)   
    n1=n1+2
  ! Both
  else if (n_gamma==6) then
@@ -323,7 +325,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
    gamma_fname(6)='YPP-RT_EE_Elec_linewidths'
    gamma_ratio_fname(1)='YPP-RT_EP_widths_ratio'
    gamma_ratio_fname(2)='YPP-RT_EE_widths_ratio'
-   titles(n1+1:n1+4)=(/'EP  el ','EP  hol','EE  el ','EE  hol'/)   
+   tmp_titles(n1+1:n1+4)=(/'(e-EP)','(h-EP)','(e-EE)','(h-EE)'/)   
    n1=n1+4
  endif
  !
@@ -335,12 +337,18 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  call of_open_close(trim(output_fname(2)),'ot')
  call RT_write_descriptions(trim(output_fname(2)))
  !
+ do i1=2,n1
+   titles(i1)='T'//trim(tmp_titles(i1))
+ enddo
  call msg('o '//trim(output_fname(1)),'#')
  call msg('o '//trim(output_fname(1)),'# Fitted temperatures [K]')
  call msg('o '//trim(output_fname(1)),'#')
  call msg('o '//trim(output_fname(1)),'#',(/titles(1:n1)/),INDENT=0,USE_TABS=.true.)
  call msg('o '//trim(output_fname(1)),'#')
  !
+ do i1=2,n1
+   titles(11)='Ef'//trim(tmp_titles(i1))
+ enddo
  call msg('o '//trim(output_fname(2)),'#')
  call msg('o '//trim(output_fname(2)),'# Fitted Fermi levels [eV]')
  call msg('o '//trim(output_fname(2)),'#')
@@ -475,7 +483,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      call RT_write_descriptions(trim(output_fname(igamma+n3)))
      !
      call msg('o '//trim(output_fname(igamma+n3)),'#')
-     call msg('o '//trim(output_fname(igamma+n3)),'# Lifetimes distribution at different times (Gamma@ time)')
+     call msg('o '//trim(output_fname(igamma+n3)),'# Lifetimes distribution [meV] at different times (Gamma@ time)')
      call msg('o '//trim(output_fname(igamma+n3)),'#')
      call msg('o '//trim(output_fname(igamma+n3)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(igamma+n3)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
@@ -509,21 +517,21 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      !ik_RT =RT_carriers%table(i_RT,3)
      !i_spin=RT_carriers%table(i_RT,4)
      !
-     call msg('o '//trim(output_fname(1)),'',(/RT_E_sorted(i_RT)*HA2EV,RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(1)),'',(/RT_E_sorted(i_RT),RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
      !
      do i_spinor=1,2*(n_spinor-1)
-       call msg('o '//trim(output_fname(i_spinor+1)),'',(/RT_E_sorted(i_RT)*HA2EV,RT_spin_occ(i_RT,i_spinor,n1:n2)/),&
+       call msg('o '//trim(output_fname(i_spinor+1)),'',(/RT_E_sorted(i_RT),RT_spin_occ(i_RT,i_spinor,n1:n2)/),&
 &                                                       INDENT=-2,USE_TABS=.true.)
      enddo
      !
      do igamma=1,n_gamma
        if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle
-       call msg('o '//trim(output_fname(igamma+n3)),'',(/RT_E_sorted(i_RT)*HA2EV,RT_gamma(i_RT,igamma,n1:n2)/),&
+       call msg('o '//trim(output_fname(igamma+n3)),'',(/RT_E_sorted(i_RT),RT_gamma(i_RT,igamma,n1:n2)/),&
 &                                                       INDENT=-2,USE_TABS=.true.)
      enddo
      !
      do i_ratio=1,n_ratio
-       call msg('o '//trim(output_fname(n_gamma+n3+i_ratio)),'',(/RT_E_sorted(i_RT)*HA2EV,RT_gamma_ratio(i_RT,i_ratio,n1:n2)/),&
+       call msg('o '//trim(output_fname(n_gamma+n3+i_ratio)),'',(/RT_E_sorted(i_RT),RT_gamma_ratio(i_RT,i_ratio,n1:n2)/),&
 &                                                       INDENT=-2,USE_TABS=.true.)
      enddo
      !

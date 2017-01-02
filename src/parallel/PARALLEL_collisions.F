@@ -46,6 +46,23 @@ subroutine PARALLEL_collisions( k, COLL )
  !   "qp"  -> QP (k,n,n')  
  !   "b"   -> m and PAR_IND_Bp_mat (this second is for the COLLISIONS case)
  !
+ ! Local XC
+ !==========
+ !                        _ \ _
+ !                       /  /  \
+ !              G_p{n,m}|       | p
+ !                       \_ _ _/
+ !                          | 
+ !                          | W
+ !                          |
+ !    (n,k)------>----------.---------->----(n',k)
+ !
+ ! "SC"="q.qp.b" 
+ !  
+ !   "q"   -> q 
+ !   "qp"  -> QP (k,n,n')  
+ !   "b"   -> m and PAR_IND_Bp_mat (this second is for the COLLISIONS case)
+ !
  ! REAL-TIME
  !===========
  !
@@ -88,6 +105,21 @@ subroutine PARALLEL_collisions( k, COLL )
  !  
  !   "k.b" -> (k,n,n')  
  !   "q"   -> q (BZ)
+ !   "qp"  -> Bp_mat (m,m')
+ !
+ ! Local XC
+ !==========
+ !                        _ \ _
+ !                       /  /  \
+ !              G_p{n,m}|       | p
+ !                       \_ _ _/
+ !                          | 
+ !                          | W
+ !                          |
+ !    (n,k)------>----------.---------->----(n',k)
+ !
+ !   "k.b" -> (k,n,n')  
+ !   "q"   -> q_fake (to span the "p= k-q")
  !   "qp"  -> Bp_mat (m,m')
  !
  ! e-photon correlation 
@@ -159,16 +191,20 @@ subroutine PARALLEL_collisions( k, COLL )
    !
    PAR_IND_G_k%element_1D(i_k)=.TRUE.
    !
-   do i_q=1,nqbz
+   if (.not.l_par_SE) then
      !
-     if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+     do i_q=1,nqbz
+       !
+       if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+       !
+       i_p_bz=qindx_S(i_k,i_q,1)
+       i_p   =k%sstar(i_p_bz,1)
+       !
+       PAR_IND_G_k%element_1D(i_p)=.TRUE.
+       !
+     enddo
      !
-     i_p_bz=qindx_S(i_k,i_q,1)
-     i_p   =k%sstar(i_p_bz,1)
-     !
-     PAR_IND_G_k%element_1D(i_p)=.TRUE.
-     !
-   enddo
+   endif
    !
  enddo
  !

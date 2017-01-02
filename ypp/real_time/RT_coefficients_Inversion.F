@@ -28,8 +28,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  use pars,            ONLY:SP,cI,cONE,cZERO
  use YPP_real_time,   ONLY:X_order,RT_conf,RT_time
  use real_time,       ONLY:RT_step,NE_steps
- use interfaces,      ONLY:MATRIX_driver
- use matrix_operate,  ONLY:INV
+ use linear_algebra,  ONLY:LINEAR_ALGEBRA_driver,INV
  implicit none
  !
  integer,     intent(in)   :: NW,NX
@@ -65,7 +64,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
    end do
  end do
  !
- call MATRIX_driver(INV,M)
+ call LINEAR_ALGEBRA_driver(INV,M)
  !
  X = cZERO
  X_here = cZERO

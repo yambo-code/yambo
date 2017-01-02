@@ -61,6 +61,9 @@ subroutine V_Hartree(rho,vhr)
    vhg(ig)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(ig,1))))/bare_qpg(1,ig)**2.
  enddo
 !$omp end parallel do
+!
+! vhg(2:wf_ng)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(2:wf_ng,1))))/bare_qpg(1,2:wf_ng)**2
+!
  !
 !$omp parallel do default(shared), private(ig)
  do ig=1,wf_ng

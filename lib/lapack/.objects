@@ -5,7 +5,7 @@ objs = 	zgetf2.o  zhetrd.o  zlarft.o  zlaswp.o  \
 	zungql.o  lsame.o   dlapy2.o  dsterf.o  \
 	zgetri.o  zlanhe.o  zlaset.o  zsteqr.o  \
 	zungqr.o  dlae2.o   dlartg.o  zheev.o   \
-    zheevr.o \
+        zheevr.o  zgesv.o \
 	zlarfb.o  zlasr.o   ztrti2.o  zungtr.o  \
 	dlaev2.o  dlascl.o  zhetd2.o  zlarfg.o  \
 	zlassq.o  ztrtri.o  ieeeck.o \
@@ -36,7 +36,7 @@ objs = 	cgetf2.o  chetrd.o  clarft.o  claswp.o  \
 	cungql.o  lsame.o   slapy2.o  ssterf.o  \
 	cgetri.o  clanhe.o  claset.o  csteqr.o  \
 	cungqr.o  slae2.o   slartg.o  cheev.o   \
-    cheevr.o \
+        cheevr.o  cgesv.o \
 	clarfb.o  clasr.o   ctrti2.o  cungtr.o  \
 	slaev2.o  slascl.o  chetd2.o  clarfg.o  \
 	classq.o  ctrtri.o  ieeeck.o \

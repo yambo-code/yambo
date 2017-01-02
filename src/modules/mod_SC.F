@@ -43,18 +43,20 @@ module SC
  real(SP)          :: SC_rho_threshold
  real(SP)          :: SC_cycle_mixing
  !
+ character(schlen) :: SC_preconditioning="simple"
  character(schlen) :: SC_potential
  character(lchlen) :: SC_description(100)
  logical           :: compatible_SC_DB
  logical           :: found_SC_DB
- logical           :: l_sc_pot_is_local
+ !
+ logical           :: l_sc_V_is_local=.TRUE.
+ logical           :: l_sc_XC_is_local=.TRUE.
  !
  ! General flags
  !
  logical           :: l_NSC_shot
  logical           :: l_SC_RESTART
  logical           :: l_SC_cycle
- logical           :: l_TF_precond
  logical           :: l_write_qp_histo
  logical           :: l_Mean_Potential
  logical           :: l_SC_update_W

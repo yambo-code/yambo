@@ -35,7 +35,7 @@ configure-stamp: uncompress-stamp
 	        CFLAGS="$(cflags)" \
 	        FC="$(f90)" \
 	        FCFLAGS="$(f77flags)" \
-		FCCPP="$(fccpp)" ); \
+		FCCPP="$(fpp)" ); \
 	fi
 	touch configure-stamp
 	

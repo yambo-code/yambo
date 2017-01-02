@@ -105,7 +105,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  else
 #endif
    call el_density_and_current(en,Xk,rho=rho)
-   if(n_spin> 1) call el_magnetization(en,Xk,magn)
+   if (n_spin> 1) call el_magnetization(en,Xk,magn)
 #if defined _RT
  endif
 #endif

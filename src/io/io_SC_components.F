@@ -30,7 +30,7 @@ integer function io_SC_components(what,E_sc,ID)
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,rho_convergence,magn_convergence,E_convergence,&
-&                         SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,&
+&                         SC_R,V_xc_sc,l_sc_V_is_local,H_nl_sc,&
 &                         V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
@@ -132,7 +132,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! Potential
  !===========
  !
- if (l_V.and.l_sc_pot_is_local.and.ik==0.and.allocated(V_xc_sc)) then
+ if (l_V.and.l_sc_V_is_local.and.ik==0.and.allocated(V_xc_sc)) then
    !
    call io_bulk(ID,VAR="V_xc_sc",VAR_SZ=(/SC_fft_size,n_spin/))
    call io_bulk(ID,R2=V_xc_sc)
@@ -194,7 +194,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if (l_V.and..not.l_sc_pot_is_local) then
+ if (l_V.and..not.l_sc_V_is_local) then
    !
    ! H_sc
    !======

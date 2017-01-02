@@ -29,23 +29,48 @@ module PHOTOLUM
  !
  implicit none
  !
- real(SP) :: PL_prefactor
+ real(SP)                 :: PL_prefactor
  !
- ! Photo Luminescence Spectrum
+ ! PL Spectrum
  !
  real(SP),    allocatable :: PL(:,:)
+ !
+ ! PL direction
+ !
+ real(SP)                 :: PL_weights(3)=(/1.,1.,1./)
  !
  ! BS dipoles
  !
  complex(SP), allocatable :: BSS_dipoles_PL(:,:)
- complex(SP), allocatable :: BSS_PL_f(:)
+ complex(SP), allocatable :: BSS_PL_f(:,:)
  !
  contains
+   !
+   subroutine PL_init( )
+     !
+     use pars,       ONLY:pi,rZERO
+     use units,      ONLY:SPEED_OF_LIGHT
+     use R_lattice,  ONLY:RL_vol,nqbz
+     use BS_solvers, ONLY:BSS_n_freqs
+     !
+     integer :: ic
+     !
+     PL_prefactor =32._SP*pi**3*SPEED_OF_LIGHT*2._SP/3._SP*RL_vol/nqbz/(2._SP*pi)**3
+     !
+     if (allocated(PL))  return
+     !
+     allocate(PL(BSS_n_freqs,3)) !  2 (int) 3 (non int) 
+     PL = rZERO
+     do ic=1,3
+       PL_weights(ic) = PL_weights(ic)/(sqrt(PL_weights(ic)))
+     enddo
+     !
+   end subroutine
    !
    subroutine BS_PL_alloc( )
      !
      use pars,       ONLY:cZERO,rZERO
-     use BS,         ONLY:BS_H_dim
+     use BS,         ONLY:BS_H_dim,BS_K_dim
      !
      if (.not.l_photolum) return
      !
@@ -53,8 +78,8 @@ module PHOTOLUM
      call mem_est('BSS_dipoles_PL',(/size(BSS_dipoles_PL)/))
      BSS_dipoles_PL = cZERO
      !
-     allocate(BSS_PL_f(BS_H_dim))
-     call mem_est('BSS_PL_f',(/BS_H_dim/))
+     allocate(BSS_PL_f(2,BS_K_dim))
+     call mem_est('BSS_PL_f',(/2,BS_K_dim/))
      BSS_PL_f = rZERO
      !
    end subroutine

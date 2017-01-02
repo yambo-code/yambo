@@ -1,6 +1,10 @@
 
 Extracted from https://docs.google.com/document/d/1JecXBxlHlEKYY86x6McfbwKcs7W-E8xoWm2PC3UJ43U/edit
 
+clone
+=====
+git clone ssh://developername@qeforge.qe-forge.org/gitroot/yambo-git ./
+
 svn status
 ==========
 “git status” (show status of local branch)
@@ -60,10 +64,16 @@ Checkout a branch:
 
 Create a new branch:
 ===================
-“git checkout -b new_branch”: new local branch
 (equivalent to “git branch new_branch” + “git checkout new_branch”)
 “git push origin new_branch”: if you want to make available the new branch
 “git branch -u origin/new_branch new_branch”: to set that the new branch tracks the new remote one
+
+Create a new tag:
+=================
+From current branch you want to tag
+“git tag -a 4.1.0 -m "Version 4.1.0"”: new local tag created
+“git push origin 4.1.0”: if you want to make available the new tag
+
 
 Moving/removing files branches:
 ===============================

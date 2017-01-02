@@ -77,6 +77,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_table    =index(elements,"table")>0
  l_collision=index(elements,"coll")>0
  !
+ !
  ! Actions
  !
  l_alloc     =index(actions,"alloc")>0
@@ -92,12 +93,11 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      COH_COLL_element%N=size_
    endif
    call local_alloc_and_free(COH_COLL_element,COH_collisions)
-   if (l_collision.and.l_clean) then
+   if ((l_collision.or.l_all).and.l_clean) then
      if (allocated(COH_COLL_element)) then
        call local_alloc_and_free(COH_COLL_element,COH_collisions)
        deallocate(COH_COLL_element)
      endif
-     COH_COLL_element%N=0
    endif
  endif
  !
@@ -110,37 +110,30 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      HXC_COLL_element%N=size_
    endif
    call local_alloc_and_free(HXC_COLL_element,HXC_collisions)
-   if (l_collision.and.l_clean) then
+   if ((l_collision.or.l_all).and.l_clean) then
      if (allocated(HXC_COLL_element)) then
        call local_alloc_and_free(HXC_COLL_element,HXC_collisions)
        deallocate(HXC_COLL_element)
      endif
-     HXC_COLL_element%N=0
    endif
  endif
  !
 #if defined _QED
  !
  if (l_Momentum) then
-    D(1,:)=(/1,QP_QED_ng/)
-    D(2,:)=COLL_bands
-    D(3,:)=(/1,nqbz/)
-    !DEBUG> TO CODE the distribute part
-    if (l_distribute) then
-     !D(1,:)=(/1,PAR_nRL/)
-     !D(3,:)=(/1,PAR_nQ/)
-   endif
+   D(1,:)=(/1,QP_QED_ng/)
+   D(2,:)=COLL_bands
+   D(3,:)=(/1,nqbz/)
    if (l_collision.and.l_alloc) then
      allocate(P_COLL_element(size_))
      P_COLL_element%N=size_
    endif
    call local_alloc_and_free(P_COLL_element,P_collisions)
-   if (l_collision.and.l_clean) then
+   if ((l_collision.or.l_all).and.l_clean) then
      if (allocated(P_COLL_element)) then
        call local_alloc_and_free(P_COLL_element,P_collisions)
        deallocate(P_COLL_element)
      endif
-     P_COLL_element%N=0
    endif
  endif
  !
@@ -159,11 +152,10 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      GW_NEQ_COLL_element%N=size_
    endif
    call local_alloc_and_free(GW_NEQ_COLL_element,GW_NEQ_collisions)
-   if(l_collision.and.l_clean) then
+   if((l_collision.or.l_all).and.l_clean) then
      if (allocated(GW_NEQ_COLL_element)) then
        deallocate(GW_NEQ_COLL_element)
      endif
-     GW_NEQ_COLL_element%N=0
    endif
  endif
  !
@@ -172,6 +164,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    subroutine local_alloc_and_free(COLL,COLL_grp)
      type(COLLISIONS_group)   :: COLL_grp
      type(COLLISIONS_element) :: COLL(COLL_grp%N)
+     if(COLL_grp%N==0) return
      mem_size=0
      do J=COLL_range(1),COLL_range(2)
        !
@@ -196,7 +189,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
          COLL_grp%D=D
        endif
        if (l_clean.and.(l_v3.or.l_all)) then
-         if (l_real  .and.associated(COLL(J)%v3_r)) deallocate(COLL(J)%v3_r)
+         if (l_real   .and.associated(COLL(J)%v3_r)) deallocate(COLL(J)%v3_r)
          if (l_complex.and.associated(COLL(J)%v3_c)) deallocate(COLL(J)%v3_c)
        endif
        if (l_alloc.and.(l_v1.or.l_all)) then

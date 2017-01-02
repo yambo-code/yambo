@@ -28,8 +28,9 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  use com,            ONLY:write_to_report,write_to_of
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:string_split,write_to_log
- use LIVE_t,         ONLY:live_timing_is_on
+ use LIVE_t,         ONLY:live_timing_is_on,what_is_running
  use stderr,         ONLY:write_fragments_IO_log,write_to_log_default
+ !
  implicit none
  !
  character(*)      :: what
@@ -122,8 +123,6 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  ! YPP cannot set to .TRUE. the write_to_report
  !
-#if defined _YPP || defined _YPP_ELPH || defined _YPP_RT || defined _YPP_SC || defined _YPP_ELPH || defined _YPP_SURF || defined _YPP_MAGNETIC
- write_to_report = local_write_to_report
-#endif
+ if (index(what_is_running,'YPP')>0) write_to_report = local_write_to_report
  !
 end subroutine IO_and_Messaging_switch

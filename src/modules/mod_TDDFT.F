@@ -37,7 +37,8 @@ module TDDFT
  real(SP)         :: FXC_LRC_alpha
  real(SP)         :: FXC_LRC_beta
  character(schlen):: FXC_PF_alpha
- logical          :: FXC_is_causal
+! logical          :: FXC_is_causal
+ logical          :: FXC_is_retarded
  !
  real(SP),    allocatable :: FXC_K_diagonal(:)
  complex(SP), allocatable :: FXC(:,:,:)

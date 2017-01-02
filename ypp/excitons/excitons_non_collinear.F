@@ -25,7 +25,8 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
  !
  use pars,          ONLY:SP,cZERO
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_mat,BSS_eh_table,BS_H_dim,BS_bands
+ use BS,            ONLY:BS_H_dim,BS_bands
+ use BS_solvers,    ONLY:BS_mat,BSS_eh_table
  use com,           ONLY:msg,error,warning
  use FFT_m,         ONLY:fft_size
  use R_lattice,     ONLY:bz_samp

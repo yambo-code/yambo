@@ -228,8 +228,10 @@ subroutine QP_state_table_setup(en)
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !
 #if defined _SC
-         if(i2<SC_bands(1)) cycle
-         if(l_SC_diagonal.and.i3/=0) cycle
+         if (l_sc_run.or.l_real_time) then
+           if (i2<SC_bands(1)) cycle
+           if (l_SC_diagonal.and.i3/=0) cycle
+         endif
 #endif
          !
          QP_n_states=QP_n_states+1

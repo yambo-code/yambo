@@ -28,10 +28,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t,Epsilon_ii,Joint_DOS,X_drude_term
- use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode,&
-&                         BS_K_has_been_calculated_loaded
- use parallel_m,     ONLY:master_cpu
+ use BS_solvers,     ONLY:BSS_mode,BSS_n_descs,BSS_eval_JDOS
+ use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded
+ use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
+ use linear_algebra, ONLY:INV,DIAGO
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -76,11 +77,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  run_inversion = index(BSS_mode,'i')/=0
  !
 #if defined _PL
- !
- if (l_photolum) then
-   call warning('PL currently implemented only using the diagonalization solver')
+ if (l_photolum.and.run_Haydock) then
+   call warning('PL currently implemented only using the diagonalization/inversion solver')
    run_Haydock  =.false.
-   run_inversion=.false.
  endif
 #endif
  !
@@ -92,6 +91,33 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    call warning('K with QP widths not supported in the Haydock solver')
    run_Haydock=.false.
  endif
+ !
+ ! Diagonalization
+ !
+ if (run_Diago) then 
+   !
+   call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
+   !
+   call K_diago_driver(iq,W_bss)
+   !
+ endif
+ !
+ ! No JDOS in Inversion/Hadydock
+ !
+ if (BSS_eval_JDOS) deallocate(Joint_DOS)
+ BSS_eval_JDOS=.FALSE.
+ !
+ ! Inversion
+ !
+ if (run_inversion) then 
+   !
+   call PARALLEL_assign_LA_COMMs("Response_T_space",INV,CPU_structure(4)%nCPU_lin_algebra_INV)
+   !
+   call K_inversion_driver(iq,W_bss,Ken,Xk,q)
+   !
+ endif
+ !
+ ! Haydock
  !
  if (run_Haydock) then
    !
@@ -106,13 +132,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
- if (run_Diago)          call K_diago_driver(iq,W_bss)
- !
- if (run_inversion)      call K_inversion(iq,W_bss,Ken,Xk,q)
- !
  ! CLEAN
  !
- deallocate(Epsilon_ii,Joint_DOS,X_drude_term)
+ deallocate(X_drude_term,Epsilon_ii)
 #if defined _KERR
  if(l_kerr) deallocate(Epsilon_ij)
 #endif

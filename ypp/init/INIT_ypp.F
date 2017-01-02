@@ -23,10 +23,15 @@
 !
 subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
- use YPP
- use pars,           ONLY:pi
- use interpolate,    ONLY:max_interpls
- use units,          ONLY:HA2EV,FS2AUT
+ use YPP,            ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,&
+&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,&
+&                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,&
+&                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
+&                         l_QP_DBs_merge,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
+&                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths
+ use pars,           ONLY:pi,SP,schlen
+ use units,          ONLY:FS2AUT
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
@@ -47,7 +52,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
- use YPP_real_time
+ use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
+&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
+&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
  use fields,         ONLY:n_ext_fields
@@ -286,8 +293,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RT_X           =trim(rstr_piece(i1+1))=='X'
      l_RT_abs         =trim(rstr_piece(i1+1))=='a'
      !
-     l_RT_occupations =trim(rstr_piece(i1+1))=='o'
-     l_RT_lifetimes   =trim(rstr_piece(i1+1))=='l'
+     l_RT_occupations =index(rstr_piece(i1+1),'o')>0
+     l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
      l_RT_density     =trim(rstr_piece(i1+1))=='d'
      !
      l_RT_bands       =trim(rstr_piece(i1+2))=='b'
@@ -463,7 +470,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_START
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
  !
 #if defined _YPP_RT
  !
@@ -484,7 +491,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_map_kpts) call initactivate(1,"BZ_DbGd_nkpts SkipCheck noBZExpand NoWeights")
  !
- if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map")
+ if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
@@ -506,7 +513,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    l_flag=l_RT_occupations.or.l_RT_abs
    if (l_flag)      call init_RT_ctl_switch('G')
-   l_flag=l_RT_occupations.or.l_RT_density
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations

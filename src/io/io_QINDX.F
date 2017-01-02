@@ -85,8 +85,10 @@ integer function io_QINDX(Xk,q,io_db)
  if (any((/io_sec(io_db,:)==2/))) then
    !
    if(ioScatt==0) then
-     Y_ALLOCATE(q%pt(q%nibz,3))
-     Y_MEM(q%pt)
+     if (read_is_on(io_db)) then
+       Y_ALLOCATE(q%pt(q%nibz,3))
+       Y_MEM(q%pt)
+     endif
      call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q%pt))
      call io_bulk(io_db,R2=q%pt)
    else

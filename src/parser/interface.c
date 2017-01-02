@@ -17,19 +17,9 @@
  02111-1307, USA.
 */
 
-#if defined _C_US
- #define F90_FUNC_(name,NAME) name ## _
-#else
- #define F90_FUNC_(name,NAME) name
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <c_defs.h>
 #include <ctype.h>
-#include <unistd.h>
-#include <string.h>
 #include <math.h>
-
 #include "symbols.h"
 #include "parser.h"
 

@@ -17,17 +17,7 @@
  02111-1307, USA.
 */
 
-#if defined _C_US
- #define F90_FUNC_(name,NAME) name ## _
-#else
- #define F90_FUNC_(name,NAME) name
-#endif
-
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <stdio.h>
+#include "c_defs.h"
 
 void F90_FUNC_(imkdir, IMKDIR)
                  (char *name) 

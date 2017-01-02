@@ -37,6 +37,7 @@ subroutine WF_free(WF)
  !
  Y_FREE(WF%c)
  Y_FREE(WF%state)
+ Y_FREE(WF%index)
  !
  if (WF%space=="R") then
    fft_size=0

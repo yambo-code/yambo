@@ -399,6 +399,17 @@ if test "$mpibuild" = "yes"; then
  AC_SUBST(mpibuild)
 fi
 
+
+# ============================================================================
+# check if the structure mallinfo is present in malloc.h
+AC_CHECK_HEADER(malloc.h,have_malloc_h=1,have_malloc_h=0, )
+if test "$have_malloc_h" -ne 0
+then
+AC_CHECK_MEMBER([struct mallinfo.arena],
+                [AC_DEFINE(HAVE_MALLINFO)],
+                ,
+                [#include <malloc.h>])
+fi
 # ============================================================================
 # FFT 
 AC_LANG_PUSH(Fortran)
@@ -429,6 +440,7 @@ AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F 
                  sbin/make_makefile.sh sbin/objects_debug.sh 
                  driver/codever.h driver/editor.h src/external_c/.objects])
+AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
 AC_OUTPUT
 chmod u+x sbin/*
 cp config/Makefile .

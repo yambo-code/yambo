@@ -5,14 +5,7 @@
    or http://www.gnu.org/copyleft/gpl.txt .
 */
 
-#if defined _C_US
- #define F90_FUNC(name,NAME) name ## _
-#else
- #define F90_FUNC(name,NAME) name
-#endif
-
-#include <sys/time.h>
-#include <sys/resource.h>
+#include "c_defs.h"
 
 double F90_FUNC(etime,ETIME)(tt)
 #if defined _DOUBLE

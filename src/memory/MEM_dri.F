@@ -21,104 +21,81 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MEM_dri(what,Sz,Kn,Er,quiet,overall_report)
+subroutine MEM_dri(what,Sz,Kn,Er,quiet,REPORT)
  !
+ use pars,         ONLY:SP
  use drivers,      ONLY:infile_editing
- use com,          ONLY:msg,error,warning
- use units,        ONLY:Gigabyte
+ use com,          ONLY:msg,error
+ use openmp,       ONLY:master_thread
+ use units,        ONLY:Kilobyte
+ use stderr,       ONLY:intc
+ use memory,       ONLY:TOT_MEM_kilobytes,TOT_MEM_kilobytes_MEMSTAT,MEM_element_name,&
+&                       MEM_element_use,N_MEM_max,i_element_free,MEM_err,MEM_treshold,&
+&                       N_MEM_elements
+ !
+ implicit none
+ !
  character(*)         :: what
  integer,optional     :: Sz
  integer,optional     :: Kn
  integer,optional     :: Er
- logical,optional     :: quiet,overall_report
+ logical,optional     :: quiet
+ logical,optional     :: REPORT
  ! 
-!     ! Work Space
-!     !
-!     integer :: i1,i2,local_kind
-!     logical :: loading,stdout_report
-!     real(SP):: mem_moved,mem_element_size_change(max_mem_elements)
-!     real(SP),parameter :: mem_tresh=0.01_SP  ! ( in Gb. CAREFUL! mem_tresh must be >0)
-!     character(lchlen)  ::ch(2)
-!     character(schlen)  ::input_name(10),action
-!     !
-!     if (.not.master_thread) return
-!     !
-!     mem_element_size_change=0._SP
-!     !
-!     loading=present(Sz)
-!     !
-!     mem_moved=0._SP
-!     ch(1)=""
-!     if (loading) then
-!       action="Alloc"
-!       do i1=1,10
-!         if (len_trim(input_name(i1))==0) cycle
-!         do i2=1,max_mem_elements
-!           if (trim(mem_element(i2))=="") exit
-!           if (trim(mem_element(i2))==trim(input_name(i1))) exit
-!         enddo
-!         if (i2==element_loaded+1) element_loaded=element_loaded+1
-!         !
-!         if (i2>max_mem_elements) call error(" Too many elements in memory!! ")
-!         !
-!         mem_element(i2)=trim(input_name(i1))
-!         local_kind=preset_kind
-!         if (present(Kn)) local_kind=Kn(i1)
-!         mem_element_size(i2)=mem_element_size(i2)+real(Sz(i1),SP)*real(local_kind,SP)/Gigabyte
-!         mem_element_size_change(i2)=mem_element_size_change(i2)+real(Sz(i1),SP)*real(local_kind,SP)/Gigabyte
-!         if (present(Er)) then
-!           if (Er(i1)/=0) then
-!             write (ch(1),'(3a,f10.5,a)') 'Mem All. failed. Element ',trim(mem_element(i2)),&
-!&                                         ' require ',mem_element_size(i2), ' [Gb]'
-!             call error(trim(ch(1)))
-!           endif
-!         endif
-!         mem_sum=mem_sum+mem_element_size_change(i2)
-!         mem_moved=mem_moved+mem_element_size_change(i2)
-!         write (ch(2),'(3a)') trim(ch(1))," ",trim(mem_element(i2))
-!         ch(1)=ch(2)
-!       enddo
-!     else if (.not.present(overall_report)) then
-!       action="Free"
-!       do i1=1,10
-!         if (len_trim(input_name(i1))==0) cycle
-!         do i2=1,max_mem_elements
-!           if(trim(mem_element(i2))==trim(input_name(i1))) then
-!              write (ch(2),'(3a)') trim(ch(1))," ",trim(mem_element(i2))
-!              ch(1)=ch(2)
-!              mem_element(i2)=""
-!              mem_sum=mem_sum-mem_element_size(i2)
-!              mem_moved=mem_moved+mem_element_size(i2)
-!              mem_element_size(i2)=0
-!           endif
-!         enddo
-!       enddo
-!     endif
-!     !
-!     !  Overall Report
-!     !
-!     !   character(schlen)  :: mem_element(max_mem_elements)
-!     !   real(SP)           :: mem_element_size(max_mem_elements)
-!     !
-!     if (present(overall_report).and.element_loaded>0) then
-!       do i1=1,element_loaded
-!         if (len_trim(mem_element(i1))==0) cycle
-!         write (ch(1),'(4a,t70,f15.5)') "[MEM@",trim(what),"] ",&
-!&              trim(mem_element(i1)),mem_element_size(i1)
-!         call msg("r",trim(ch(1)))
-!       enddo
-!     endif
-!     !
-!     if(mem_moved.lt.0.0_SP.or.mem_sum.lt.0.0_SP) then
-!       mem_moved=0._SP
-!       mem_sum  =0._SP
-!     endif
-!     !
-!     stdout_report=mem_moved>mem_tresh.and..not.infile_editing
-!     if (stdout_report.and.present(quiet)) stdout_report=.not.quiet
-!     if (.not.stdout_report) return
-!     !
-!     write (ch(2),'(a,f6.3,4a,f6.3,a)') "[M ",mem_sum," Gb] ",trim(action),trim(ch(1))," (",mem_moved,")"
-!     call msg('s',trim(ch(2)))
-!     !
+ ! Work Space
+ !
+ logical :: adding,deliver_a_msg,found
+ integer :: i_mem,i_element,MEM_now
+ !
+ if (.not.master_thread) return
+ !
+ adding=present(Sz)
+ !
+ ! Error Message
+ !=================
+ if (MEM_err/=0) call error("Allocation of "//what//" failed")
+ !
+ ! Database Update
+ !=================
+ if (adding) then
+   found=.TRUE.
+   MEM_loopA: do i_mem=1,N_MEM_max
+     if ( len_trim(MEM_element_name(i_mem))==0 ) then
+       i_element_free=i_mem
+       exit MEM_loopA
+     endif
+   enddo MEM_loopA
+   MEM_now=real(Sz*Kn)/Kilobyte
+   MEM_element_name(i_element_free)=what
+   MEM_element_use(i_element_free) =MEM_now
+   TOT_MEM_kilobytes=TOT_MEM_kilobytes+MEM_now
+   N_MEM_elements=N_MEM_elements+1
+ else
+   found=.FALSE.
+   MEM_loopB: do i_mem=1,N_MEM_max
+     if ( trim(MEM_element_name(i_mem))==what ) then
+       MEM_element_name(i_mem)=" "
+       MEM_now=MEM_element_use(i_mem)
+       MEM_element_use(i_mem) =0
+       N_MEM_elements=N_MEM_elements-1
+       TOT_MEM_kilobytes=TOT_MEM_kilobytes-MEM_now
+       found=.TRUE.
+       exit MEM_loopB
+     endif
+   enddo MEM_loopB
+ endif
+ !
+ ! Process Memory Update
+ !=======================
+ call memstat( TOT_MEM_kilobytes_MEMSTAT )
+ !
+ ! Messages
+ !==========
+ deliver_a_msg=MEM_now>MEM_treshold.and..not.infile_editing.and.found
+ if (deliver_a_msg) then
+   if (adding     ) call msg("sr","[MEMORY] "//what//" allocated "//trim(intc(MEM_now))//" Kb")
+   if (.not.adding) call msg("sr","[MEMORY] "//what//" freed "//trim(intc(MEM_now))//" Kb")
+   call msg("sr","[MEMORY] SUM:"//trim(intc(TOT_MEM_kilobytes))//"Kb - MEMSTAT "//trim(intc(TOT_MEM_kilobytes_MEMSTAT))//" Kb")
+ endif
+ !
 end subroutine

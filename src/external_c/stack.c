@@ -6,15 +6,7 @@
   or http://www.gnu.org/copyleft/gpl.txt .
 */
 
-#if defined _C_US
- #define F90_FUNC_(name,NAME) name ## _
-#else
- #define F90_FUNC_(name,NAME) name
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/resource.h>
+#include "c_defs.h"
 
 void F90_FUNC_(remove_stack_limit,REMOVE_STACK_LIMIT) (void) {
  

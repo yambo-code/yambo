@@ -77,7 +77,7 @@ subroutine XCo_local(E,Xk)
  ! Precompiler options in case a non-DFT potential is required
  !
 #if defined _SC
- if (WF_KIND< 300) then
+ if ((WF_KIND< 300).or..true.) then
    !
    ! ...LDA (and more) Vxc
    !

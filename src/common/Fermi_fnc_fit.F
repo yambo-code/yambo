@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,14 +28,11 @@ integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit
  ! - if this fails try with a damped Gauss–Newton algorithm, with
  !   increasing damping. This is the Levenberg-Marquartd algorithm
  !
-#if defined _BLUEGENE || _PGI
- use ieee_arithmetic 
-#endif
  use pars,           ONLY:SP
  use vec_operate,    ONLY:sort
  use real_time,      ONLY:RT_carriers
  use electrons,      ONLY:spin,spin_occ,n_sp_pol
- use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative
+ use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative,NAN
  use com,            ONLY:error
  !
  implicit none
@@ -219,12 +216,7 @@ integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit
      !write(100,*) err_fit
      !DEBUG>
      !
-
-#if defined _BLUEGENE || _PGI
-     if(any(ieee_is_nan(Fit_new(:)))) exit
-#else
-     if(any(isnan(Fit_new(:))))            exit
-#endif
+     if(NAN(Fit_new(1)).or.NAN(Fit_new(2))) exit
      if(any(Fit_new(:)==Fit_new(:)+1._SP)) exit
      !
      T_fit(ifit)=T_guess(ifit)  -Fit_new(1)

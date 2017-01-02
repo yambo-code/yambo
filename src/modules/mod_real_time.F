@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -24,10 +24,9 @@
 module real_time
  !
  use drivers,    ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
- use SC,         ONLY:SC_R
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
- use global_XC,  ONLY:SE_NONE
+ use global_XC,  ONLY:QP_SE_NONE
  use electrons,  ONLY:levels
  !
  implicit none
@@ -40,6 +39,14 @@ module real_time
  logical           :: l_NE_with_fields
  logical           :: l_Dynamics_is_over   
  logical           :: l_Update_Time_Step  = .FALSE.
+ !
+ character(schlen) :: RT_potential
+ !
+ ! Possible Kinds, functionals and external perturbations
+ !
+ integer           :: RT_kind
+ integer           :: RT_xc_functional
+ integer           :: RT_perturbation
  !
  ! Evaluation logicals
  !
@@ -58,13 +65,13 @@ module real_time
  ! 
  ! ... NE dynamics ...
  !
- real(SP) :: NE_time    =0._SP                  ! <- incremented
- real(SP) :: NE_tot_time=0._SP                  ! Total (fixed)
- integer  :: NE_time_step_update_last_point = 1 ! Last time-point of the dT update
- real(SP) :: NE_initial_time_step_update= 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
- real(SP) :: NE_time_step_update_jump   = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
- real(SP) :: NE_step_update_treshold    = 2._SP ! Time-step update treshold
- real(SP) :: NE_time_step_update_jump_SAVE = 0._SP
+ real(SP) :: NE_time    =0._SP  ! <- incremented
+ real(SP) :: NE_tot_time=0._SP  ! Total (fixed)
+ integer  :: NE_time_step_update_last_point = 1     ! Last time-point of the dT update
+ real(SP) :: NE_initial_time_step_update    = 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
+ real(SP) :: NE_time_step_update_jump       = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_step_update_treshold        = 2._SP ! Time-step update treshold
+ real(SP) :: NE_time_step_update_jump_SAVE  = 0._SP
  !
  integer  :: NE_i_time=1 ! = (NE_time+1)/RT_step
  integer  :: NE_steps    ! Still relative to RT_step
@@ -83,8 +90,8 @@ module real_time
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
  !
- integer           :: RT_EE_CORR_kind=SE_NONE
- integer           :: RT_EE_SCATT_kind=SE_NONE
+ integer           :: RT_EE_CORR_kind=QP_SE_NONE
+ integer           :: RT_EE_SCATT_kind=QP_SE_NONE
  !
  ! ... Memory ...
  !
@@ -237,6 +244,12 @@ module real_time
  !-----------------
  real(SP)                 :: RT_Tfit_occupations(2)
  real(SP)                 :: RT_Efit_occupations(2)
+ !
+ ! Thermodynamics
+ !-----------------
+ real(SP)                 :: RT_T_thermodynamics(3)
+ real(SP)                 :: RT_E_thermodynamics(3)
+ real(SP)                 :: RT_S_thermodynamics(3)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -428,8 +441,7 @@ module real_time
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:V_hartree_sc,l_sc_V_is_local,SC_alloc,E_bare, &
-&                             SC_xc_functional,SC_xc_functional
+     use hamiltonian,    ONLY:H_alloc,H_QP_table_setup,E_bare
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -438,7 +450,9 @@ module real_time
      !
      type(levels), intent(in) :: en
      !
-     call SC_alloc(en)
+     call H_alloc(en)
+     !
+     call H_QP_table_setup(en)
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
@@ -537,9 +551,6 @@ module real_time
      call mem_est("XC0",(/size(XC0)/),(/2*SP/))
      XC0=cZERO
      !
-     allocate(SC_R(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
-     !
      allocate(G_lesser_reference(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
@@ -582,11 +593,11 @@ module real_time
    !   
    subroutine RT_free
      !
-     use SC,             ONLY:SC_free,E_bare
+     use hamiltonian,    ONLY:H_free,E_bare
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      !
-     call SC_free()
+     call H_free()
      !
      deallocate(DbGd_ibz_coo,DbGd_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
      if(allocated(DbGd_EE_scatt_table)) deallocate(DbGd_EE_scatt_table)
@@ -624,11 +635,6 @@ module real_time
      if(allocated(XC0)) then
        deallocate(XC0)
        call mem_est("XC0")
-     endif
-     !
-     if(allocated(SC_R)) then
-       deallocate(SC_R)
-       call mem_est("SC_R")
      endif
      !
      if(allocated(E_PHOT_Hole_lifetime)) then

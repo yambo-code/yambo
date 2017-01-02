@@ -59,7 +59,6 @@ else
   LIBXC_str="I"
 fi
 
-
 TIME_profile_str="-"
 if test "$enable_time_profile" = "yes" ; then TIME_profile_str="X"; fi
 
@@ -71,7 +70,9 @@ fi
 
 OPENMP_str="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_str="X"; fi
-
+#
+# OPTIONALS
+#
 ETSF_str="-"
 if test "$compile_e2y" = "yes" ; then
   ETSF_str="E"
@@ -84,14 +85,33 @@ if test "$compile_lapack" = "yes" ; then LAPACK_str="I"; fi
 BLAS_str="E"
 if test "$compile_blas" = "yes" ; then BLAS_str="I"; fi
 
+PET_str="-"
+if test "$enable_petsc"  = "yes" ; 
+ then PET_str="E"; 
+ if test "$compile_petsc" = "yes" ; then PET_str="I"; fi
+fi
+
+SLE_str="-"
+if test "$enable_slepc"  = "yes" ; 
+ then SLE_str="E"; 
+ if test "$compile_slepc" = "yes" ; then SLE_str="I"; fi
+fi
+
 SLK_str="-"
 if test "$enable_scalapack" = "yes" ; then SLK_str="E"; fi
+if test "$compile_slk"      = "yes" ; then SLK_str="I"; fi
+
+BLACS_str="-"
+if ! test "$SLK_str" = "-" ; then
+ if test "$enable_scalapack" = "yes" ; then BLACS_str="E"; fi
+ if test "$compile_blacs"    = "yes" ; then BLACS_str="I"; fi
+fi
 
 BGQ_str="-"
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
 
 MPI_LIB_str="-"
-if test "$enable_mpi_libs" = "yes" ; then MPI_LIB_str="E"; fi
+if test "$enable_mpi_lib" = "yes" ; then MPI_LIB_str="E"; fi
 
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
 
@@ -111,6 +131,9 @@ AC_SUBST(PW_str)
 AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
 AC_SUBST(SLK_str)
+AC_SUBST(PET_str)
+AC_SUBST(SLE_str)
+AC_SUBST(BLACS_str)
 AC_SUBST(OPENMP_str)
 AC_SUBST(BGQ_str)
 AC_SUBST(TIME_profile_str)

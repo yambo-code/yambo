@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM EC
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -34,7 +34,8 @@ subroutine ELPH_atomic_amplitude(q)
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
- use linear_algebra,      ONLY:LINEAR_ALGEBRA_driver,DIAGO,USE_LK
+ use interfaces,          ONLY:LINEAR_ALGEBRA_driver
+ use linear_algebra,      ONLY:DIAGO,USE_LK
  implicit none
  type(bz_samp)::q
  !
@@ -124,7 +125,7 @@ subroutine ELPH_atomic_amplitude(q)
  !
  do is=1,n_atoms
    !
-   call LINEAR_ALGEBRA_driver(DIAGO,mean_ui_uj(is,:,:),lib_in=USE_LK,E_real=U_eigenvalues)
+   call LINEAR_ALGEBRA_driver(DIAGO,M=mean_ui_uj(is,:,:),lib_in=USE_LK,E_real=U_eigenvalues)
    !
    call msg('s','Atom '//trim(atom_name(is)))
    call msg('s','Displacement  [a.u.]/A #1: ',sqrt(U_eigenvalues(1))*(/1._SP,BO2ANG/) )

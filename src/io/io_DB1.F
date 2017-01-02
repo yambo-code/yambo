@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,10 +45,12 @@ integer function io_DB1(E,k,ID)
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
+#if defined _SC || defined _RT
+ use collision_ext,    ONLY:COLL_bands
+ use hamiltonian,      ONLY:H_ref_bands
+#endif
 #if defined _SC
  use SC,               ONLY:SC_bands
- use collision,        ONLY:COLL_bands
- use hamiltonian,      ONLY:IP_h_bands
 #endif
 #if defined _RT
  use real_time,        ONLY:RT_bands
@@ -62,16 +64,12 @@ integer function io_DB1(E,k,ID)
  !
  ! Work Space
  !
- integer :: code_version_local(3),code_revision_local,var_err,MENU
+ integer :: code_version_local(3),code_revision_local,MENU
  !
  io_DB1 =io_connect(desc="db1",type=0,ID=ID)
  if (io_DB1/=0) goto 1
  !
  MENU=1
- !
- var_err= variable_is_found(ID,"EXX_FRACTION")
- !
- if ( read_is_on(ID) .and.  var_err < 0 ) call compatibility_message( )
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -197,19 +195,18 @@ integer function io_DB1(E,k,ID)
    !
    ! Hybrids stuff
    !	
-   if (var_err==1) then
-     !
-     if (ver_is_gt_or_eq(ID,revision=2962)) then
-         call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
-         call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
-&                             VAR=' Exact exchange fraction in XC   :')
+   if (ver_is_gt_or_eq(ID,revision=2962)) then
+     if (variable_is_found(ID,"EXX_FRACTION")) then
+       call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
+&                           VAR=' Exact exchange fraction in XC   :')
      endif
-     if (ver_is_gt_or_eq(ID,revision=3997)) then
-         call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
-         call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
-&                                VAR=' Exact exchange screening in XC  :')
+   else if (ver_is_gt_or_eq(ID,revision=3997)) then
+     if (variable_is_found(ID,"EXX_SCREENING")) then
+       call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
+&                              VAR=' Exact exchange screening in XC  :')
      endif
-     !
    endif
    !
    if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
@@ -243,10 +240,12 @@ integer function io_DB1(E,k,ID)
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
      if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
+#if defined _SC || defined _RT
+     if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
+     if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,E%nb/)
+#endif
 #if defined _SC
      if(any(SC_bands(:)==0)) SC_bands=(/1,E%nb/)
-     if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
-     if(any(IP_h_bands(:)==0)) IP_h_bands=(/1,E%nb/)
 #endif
 #if defined _RT
      if(any(RT_bands(:)==0)) RT_bands=(/1,E%nb/)
@@ -357,13 +356,8 @@ integer function io_DB1(E,k,ID)
      !
      live_timing_is_on=.FALSE.
      !
-     if (var_err<0) then
-       call msg("s","No NETCDF support. It is not possible to verify if the present database is compatible")
-       call msg("s","with the current Yambo version. Re-create the DB1 databases with the NETCDF support and try again")
-     else if (var_err==1) then
-       call msg("s","The present DB1 database is NOT compatible with the current Yambo version." )
-       call msg("s","Re-create the DB1 databases with a more recent version of the code")
-     endif
+     call msg("s","The present DB1 database is NOT compatible with the current Yambo version." )
+     call msg("s","Re-create the DB1 databases with a more recent version of the code")
      call msg("s"," ")
      !
      call error("I/O failed.")

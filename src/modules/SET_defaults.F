@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,11 +23,6 @@
 !
 subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
- use drivers,    ONLY:infile_editing,l_acfdt,l_alda_fxc,l_bs_fxc,l_bse,l_bsk,l_bss,l_chi,l_cohsex,l_col_cut,l_elel_corr,&
-&                     l_elel_scatt,l_elph_corr,l_elph_Hamiltonian,l_elph_scatt,l_em1d,l_em1s,l_eval_collisions,l_gw0,&
-&                     l_HF_and_locXC,l_life,l_lrc_fxc,l_optics,l_ppa,l_rim,l_rpa_IP,l_rt_carriers_in_use,l_sc_coh,l_sc_exx,&
-&                     l_sc_fock,l_sc_hartree,l_sc_ip,l_sc_is_libDFT,l_sc_magnetic,l_sc_run,l_sc_sex,l_setup,l_td_hartree,&
-&                     l_td_hf,l_tddft,l_use_collisions,l_use_Hxc_collisions,l_W_eh,l_W_eh_cpl,l_W_eh_diag,list_dbs
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
@@ -94,7 +89,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix
- use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_naming
+#endif
+#if defined _SC || defined _RT || defined _QED
+ use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
@@ -105,6 +102,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
+&                     RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,        &
 &                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
@@ -294,57 +292,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  pp_n_l_times_proj_max=0
  pp_kbv_dim=0
  !
- ! Drivers
- !
- list_dbs=.FALSE.
- infile_editing=.FALSE.
- l_setup=.FALSE.
- l_rim=.FALSE.
- l_col_cut=.FALSE.
- l_optics=.FALSE.
- l_HF_and_locXC=.FALSE.
- l_em1d=.FALSE.
- l_em1s=.FALSE.
- l_ppa=.FALSE.
- l_cohsex=.FALSE.
- l_gw0=.FALSE.
- l_life=.FALSE.
- l_chi=.FALSE.
- l_bse=.FALSE.
- l_bsk=.FALSE.
- l_bss=.FALSE.
- l_rpa_IP=.FALSE.
- l_td_hartree=.FALSE.
- l_tddft=.FALSE.
- l_alda_fxc=.FALSE.
- l_lrc_fxc=.FALSE.
- l_bs_fxc=.FALSE.
- l_td_hf=.FALSE.
- l_W_eh=.FALSE.
- l_W_eh_diag=.FALSE.
- l_W_eh_cpl=.FALSE.
- l_acfdt=.FALSE.
- l_elel_corr=.FALSE.
- l_elph_corr=.FALSE.
- l_elel_scatt=.FALSE.
- l_elph_scatt=.FALSE.
- l_use_collisions=.FALSE.
- l_use_Hxc_collisions=.FALSE.
- !
- l_rt_carriers_in_use=.FALSE.
- l_sc_run=.FALSE.
- l_sc_ip=.FALSE.
- l_sc_fock=.FALSE.
- l_sc_hartree=.FALSE.
- l_sc_coh=.FALSE.
- l_sc_sex=.FALSE.
- l_sc_exx=.FALSE.
- l_sc_is_libDFT=.FALSE.
- l_sc_magnetic=.FALSE.
- l_eval_collisions=.FALSE.
- l_elph_Hamiltonian=.FALSE.
- !
- !electrons
+ ! Electrons
  !
  n_spin=1
  n_sp_pol=1
@@ -546,6 +494,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call COLLISIONS_naming( 0 , "all" )
  !
+ ! COLLISIONS I/O
+ !
+ COLLISIONS_cutoff=0.0005_SP
+ !
 #endif
  !
 #if defined _SC
@@ -564,10 +516,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
- !
- ! COLLISIONS I/O
- !
- COLLISIONS_cutoff=0.0005_SP
  !
 #endif
  !
@@ -626,6 +574,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_Efit_lifetimes=0._SP
  RT_Tfit_occupations=0._SP
  RT_Efit_occupations=0._SP
+ RT_T_thermodynamics=0._SP
+ RT_E_thermodynamics=0._SP
+ RT_S_thermodynamics=0._SP
  RAD_prefactor=0._SP
  EE_prefactor=0._SP
  EP_prefactor=0._SP

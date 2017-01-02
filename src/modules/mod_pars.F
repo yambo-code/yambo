@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -61,6 +61,7 @@ module pars
  real(SP),    parameter :: pi=3.141592653589793238462643383279502884197_SP
  real(DP),    parameter :: pi_DP=3.141592653589793238462643383279502884197_DP
  real(SP),    parameter :: zero_dfl=1.E-5_SP
+ real(SP),    parameter :: infinity_dfl=HUGE(1._SP)
  real(SP),    parameter :: rZERO=0._SP
  real(SP),    parameter :: rONE =1._SP
  complex(SP), parameter :: cI   =(0._SP,1._SP)

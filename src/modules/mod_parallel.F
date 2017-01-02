@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -232,7 +232,6 @@ module parallel_m
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
  type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
  type(PP_indexes)            ,SAVE :: PAR_IND_T_Haydock
- type(PP_indexes)            ,SAVE :: PAR_IND_T_all
  type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
  !
  ! Specific MPI ID's ...
@@ -389,6 +388,10 @@ module parallel_m
  interface PP_bcast
    module procedure c0bcast,c1bcast,c2bcast,i0bcast
  end interface PP_bcast
+ !
+ interface PP_send_and_receive
+   module procedure PP_snd_rcv_c2
+ end interface PP_send_and_receive
  !
  contains
    !
@@ -1147,6 +1150,32 @@ module parallel_m
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
      !
      call mpi_bcast(array(1,1),size(array),local_type, node,mpi_comm_world , i_err)
+#endif
+   end subroutine
+   !
+   subroutine PP_snd_rcv_c2(mode,array,node,COMM)
+     character(*):: mode
+     complex(SP) :: array(:,:)
+     integer, intent(in) :: node
+     integer, optional   :: COMM
+#if defined _MPI
+     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer::LOCAL_COMM,i_err! Work Space  
+     if (ncpu==1) return
+     !
+     local_type=MPI_COMPLEX
+     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
+     !
 #endif
    end subroutine
    !

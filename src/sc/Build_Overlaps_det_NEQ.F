@@ -32,8 +32,8 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  use vec_operate,    ONLY:k_periodic_idx
  use X_m,            ONLY:DIP_S
  use wrapper    ,    ONLY:M_by_V
- use matrix_operate, ONLY:hermitian,INV,USE_LK
- use interfaces,     ONLY:MATRIX_driver
+ use matrix_operate, ONLY:hermitian
+ use linear_algebra, ONLY:INV,USE_LK,LINEAR_ALGEBRA_driver
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:l_force_SndOrd
  !
@@ -91,7 +91,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        enddo
 !$omp end parallel do
        !
-       call MATRIX_driver(INV,Sm1_minus(:,:,id+(istep-1)*3),lib_in=USE_LK)
+       call LINEAR_ALGEBRA_driver(INV,Sm1_minus(:,:,id+(istep-1)*3),lib_in=USE_LK)
        !
        idx=k_map%k_map_inv(ikbz,:)
        idx(id)=idx(id)+istep
@@ -112,7 +112,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        enddo
 !$omp end parallel do
        !
-       call MATRIX_driver(INV,Sm1_plus(:,:,id+(istep-1)*3),lib_in=USE_LK,det=S_det(id+(istep-1)*3))
+       call LINEAR_ALGEBRA_driver(INV,Sm1_plus(:,:,id+(istep-1)*3),lib_in=USE_LK,det=S_det(id+(istep-1)*3))
        !
      enddo  
      !

@@ -27,7 +27,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     l_elel_scatt,l_elph_corr,l_elph_Hamiltonian,l_elph_scatt,l_em1d,l_em1s,l_eval_collisions,l_gw0,&
 &                     l_HF_and_locXC,l_life,l_lrc_fxc,l_optics,l_ppa,l_rim,l_rpa_IP,l_rt_carriers_in_use,l_sc_coh,l_sc_exx,&
 &                     l_sc_fock,l_sc_hartree,l_sc_ip,l_sc_is_libDFT,l_sc_magnetic,l_sc_run,l_sc_sex,l_setup,l_td_hartree,&
-&                     l_td_hf,l_tddft,l_use_collisions,l_use_Hxc_collisions,l_W_eh,l_W_eh_cpl,l_W_eh_diag,list_dbs
+&                     l_td_hf,l_tddft,l_use_collisions,l_use_Hxc_collisions,l_W_eh,l_W_eh_cpl,l_W_eh_diag,list_dbs,l_sc_electric
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
@@ -80,7 +80,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     BS_K_is_ALDA,BSE_mode
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
-&                     FXC_is_retarted,TDDFT_mode
+&                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&

@@ -37,6 +37,9 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  integer           :: N
@@ -53,6 +56,10 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  E=0.0_SP
  !
  if (ORTHO%coordinate(1)==-1) return
+ !
+#if defined _TIMING
+ call timing('PARALLEL_HERMITIAN_diagonalization',OPR='start')
+#endif
  !
  lwork=-1
  lrwork=-1
@@ -87,5 +94,9 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  !
  call PP_redux_wait(E,COMM=POOL%INTRA_comm)
  ! 
+#if defined _TIMING
+ call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
+#endif
+ !
 end subroutine PARALLEL_HERMITIAN_diagonalization
 

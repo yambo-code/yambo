@@ -33,8 +33,11 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  ! perform the inversion by using scalapack
  !
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  integer           :: N
@@ -45,6 +48,10 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  character(64) :: subname="PARALLEL_inversion"
  !
  if (ORTHO%coordinate(1)==-1) return
+ !
+#if defined _TIMING
+ call timing('PARALLEL_inversion',OPR='start')
+#endif
  !
  ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
  ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
@@ -70,4 +77,8 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PCGETRI')
 #endif
  ! 
+#if defined _TIMING
+ call timing('PARALLEL_inversion',OPR='stop')
+#endif
+ !
 end subroutine PARALLEL_inversion

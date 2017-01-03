@@ -29,13 +29,19 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !
  use pars,           ONLY:SP
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
- !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  integer     :: n,nrhs
  complex(SP) :: A(n,n),B(n,nrhs)
  !
  character(64) :: subname="SERIAL_lin_system"
+ !
+#if defined _TIMING
+ call timing('SERIAL_lin_system',OPR='start')
+#endif
  !
  WS%dim=n
  if (allocated(WS%v_int)) deallocate(WS%v_int)
@@ -50,5 +56,9 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
 #endif
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
+ !
+#if defined _TIMING
+ call timing('SERIAL_lin_system',OPR='stop')
+#endif
  !
 end subroutine

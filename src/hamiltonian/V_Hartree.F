@@ -32,7 +32,9 @@ subroutine V_Hartree(rho,vhr)
  use D_lattice,     ONLY: DL_vol
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
  use wave_func,     ONLY: wf_ng
- !
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  implicit none
  real(SP) :: rho(fft_size)
  real(SP) :: vhr(fft_size,n_spin)
@@ -40,6 +42,10 @@ subroutine V_Hartree(rho,vhr)
  ! Work Space
  !
  complex(DP) :: rhog(fft_size),vhtmp(fft_size),vhg(wf_ng)
+ !
+#if defined _TIMING
+ call timing('V_Hartree',OPR='start')
+#endif
  !
  vhg   = (0._DP,0._DP)
  vhtmp = (0._DP,0._DP)
@@ -71,5 +77,9 @@ subroutine V_Hartree(rho,vhr)
  !
  vhr(:,1) = real(vhtmp,SP)
  if(n_spin==2) vhr(:,2)=vhr(:,1)
+ !
+#if defined _TIMING
+ call timing('V_Hartree',OPR='stop')
+#endif
  !
 end subroutine V_hartree

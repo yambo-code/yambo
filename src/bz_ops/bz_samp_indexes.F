@@ -57,6 +57,9 @@ subroutine bz_samp_indexes(k,Xk,q)
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
 #endif
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
 #include<memory.h>
  !
  type(bz_samp)::k,Xk,q
@@ -74,6 +77,10 @@ subroutine bz_samp_indexes(k,Xk,q)
  logical :: bse_setup_scatt
 #endif
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
+ !
+#if defined _TIMING
+ call timing('bz_samp_indexes',OPR='start')
+#endif
  !
  call section('*','Transferred momenta grid')
  !
@@ -331,6 +338,10 @@ subroutine bz_samp_indexes(k,Xk,q)
    Y_FREE(q%ptbz)
  endif
  call PP_redux_wait()
+ !
+#if defined _TIMING
+ call timing('bz_samp_indexes',OPR='stop')
+#endif
  !
  contains 
    !

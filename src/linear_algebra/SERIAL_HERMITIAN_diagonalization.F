@@ -27,6 +27,9 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,&
 &                         LINEAR_ALGEBRA_WS_clean_up
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  integer     :: n
@@ -35,7 +38,11 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  character(64) :: subname="SERIAL_HERMITIAN_diagonalization"
  integer :: lwork
-
+ !
+#if defined _TIMING
+ call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
+#endif
+ !
  lwork=-1
  allocate(WS%v_cmplx(1),WS%v_real(max(1,3*n-2)))
  !
@@ -60,5 +67,9 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  ! eigenvectors are stored in M
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
+ !
+#if defined _TIMING
+ call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
+#endif
  !
 end subroutine

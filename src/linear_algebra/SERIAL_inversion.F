@@ -27,12 +27,19 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,LU_factorization,LU_inversion,&
 &                        LINEAR_ALGEBRA_WS_clean_up
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  integer     :: n
  complex(SP) :: M(n,n),det
  logical     :: eval_det
  integer     :: i_loop !ws
+ !
+#if defined _TIMING
+ call timing('SERIAL_inversion',OPR='start')
+#endif
  !
  allocate(WS%v_int(n))
  !
@@ -61,5 +68,9 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
+ !
+#if defined _TIMING
+ call timing('SERIAL_inversion',OPR='stop')
+#endif
  !
 end subroutine

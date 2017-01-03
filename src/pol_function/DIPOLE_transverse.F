@@ -47,6 +47,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use com,                 ONLY:secnm
 #endif
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
 #include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
@@ -73,6 +76,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
+#if defined _TIMING
+ call timing('DIPOLE_transverse',OPR='start')
+#endif
 #if defined _SC || defined _RT
  l_evaluating_em1s=index(secnm,"Dielectric")/=0
 #endif
@@ -281,5 +287,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  endif 
  !
  call WF_free(WF)
+ !
+#if defined _TIMING
+ call timing('DIPOLE_transverse',OPR='stop')
+#endif
  !
 end subroutine Dipole_transverse

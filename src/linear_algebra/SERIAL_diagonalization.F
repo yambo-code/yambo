@@ -33,7 +33,9 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  use pars,          ONLY:SP
  use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,M_eigenvalues,LINEAR_ALGEBRA_WS_clean_up
- !
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  implicit none
  !
  integer     :: n
@@ -41,6 +43,10 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  allocate(WS%v_cmplx(1),WS%v_real(2*n))
  call M_eigenvalues(n,M,E,V_left,V_right,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
+ !
+#if defined _TIMING
+ call timing('SERIAL_diagonalization',OPR='start')
+#endif
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues (SD)','WS%v_cmplxspace failed')
  !
@@ -52,5 +58,9 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues (SD)','failed')
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
+ !
+#if defined _TIMING
+ call timing('SERIAL_diagonalization',OPR='stop')
+#endif
  !
 end subroutine

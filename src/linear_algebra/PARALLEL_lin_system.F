@@ -29,8 +29,11 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  integer           :: n,nrhs
@@ -45,6 +48,10 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  !
  if (ORTHO%coordinate(1)==-1) return
  !
+#if defined _TIMING
+ call timing('PARALLEL_lin_system',OPR='start')
+#endif
+ !
  ! better estimate of the dimensions to be included
  !
  if (allocated(WS%v_int)) deallocate(WS%v_int)
@@ -58,4 +65,8 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCGESV')
 #endif
  ! 
+#if defined _TIMING
+ call timing('PARALLEL_lin_system',OPR='stop')
+#endif
+ !
 end subroutine

@@ -43,6 +43,9 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use drivers,        ONLY:l_sc_magnetic
 #endif
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  type(levels)             :: E
@@ -53,6 +56,10 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  integer     :: ik,ib,i_sp_pol
  !
  Ho=cZERO
+ 1
+#if defined _TIMING
+ call timing('Bare_Hamiltonian',OPR='start')
+#endif
  !
 #if defined _MAGNETIC
  !
@@ -152,5 +159,9 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  call mem_est("QP_Vxc")
  !
  call PP_redux_wait(Ho)
+ !
+#if defined _TIMING
+ call timing('Bare_Hamiltonian',OPR='stop')
+#endif
  !
 end subroutine Bare_Hamiltonian

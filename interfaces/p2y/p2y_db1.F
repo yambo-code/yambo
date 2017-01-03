@@ -30,7 +30,7 @@ subroutine p2y_db1(en,k)
  use R_lattice,             ONLY : ng_vec,g_vec
  use wave_func,             ONLY : wf_ng, wf_nc_k, wf_ncx, wf_igk
  use mod_com2y,             ONLY : force_noWFs
- implicit none
+#include<memory.h>
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
  !---------------------------------------------------------------------*
@@ -116,12 +116,15 @@ subroutine p2y_db1(en,k)
    !
    wf_ng      =1
    ng_vec     =1
-   allocate(g_vec(1,3))
+   Y_ALLOCATE(g_vec(1,3))
+   Y_MEM(g_vec)
    g_vec(1,:)=(/0,0,0/)
-   allocate(wf_nc_k(k%nibz))
+   Y_ALLOCATE(wf_nc_k(k%nibz))
+   Y_MEM(wf_nc_k)
    wf_nc_k(:)=1
    wf_ncx    =1
-   allocate(wf_igk(1,k%nibz))
+   Y_ALLOCATE(wf_igk(1,k%nibz))
+   Y_MEM(wf_igk)
    wf_igk(1,:)=1
    !
    call warning('IGK array and RL vectors skipped! ')

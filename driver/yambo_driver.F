@@ -191,6 +191,8 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! HARTREE-FOCK AND VXC
  !======================
  !
+ l_XCo=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
+ !
  if (l_XCo)             call XCo_driver(en,k,Xk,q)
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)

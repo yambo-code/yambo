@@ -56,8 +56,6 @@ subroutine MEM_dri(what,Sz,Kn,Er,REPORT)
  ! REPORTs 
  !=========
  if (present(REPORT)) then
-   if (REPORT=="check") call section("*","Memory Check")
-   if (REPORT=="final") call section("*","Memory Overview")
    ORPHAN_TOT=0
    if (N_MEM_elements>0) then
      WRITE(msg_,'(1x,a8,a18," : ",3x)') "[MEMORY]","(still) Allocated"

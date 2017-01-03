@@ -54,7 +54,6 @@ integer function io_DB1(E,k,ID)
 #if defined _RT
  use real_time,        ONLY:RT_bands
 #endif
- !
 #include<memory.h>
  !
  type(levels)  :: E

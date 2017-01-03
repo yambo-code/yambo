@@ -30,7 +30,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use P2Y,                 ONLY : pw_init, pw_close 
  use LOGO,                ONLY : pickup_a_random
  use pars,                ONLY : SP,lchlen,DP
- use memory_m,            ONLY : mem_est
  use com,                 ONLY : msg,write_to_report,core_io_path,error,write_the_logo
  use parallel_m,          ONLY : ncpu,myid,PARALLEL_wait
  use electrons,           ONLY : levels,E_reset,n_bands, n_spin
@@ -41,8 +40,11 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_wf2y,            ONLY : wf_splitter
  use stderr,              ONLY : intc
  use interfaces,          ONLY : PARALLEL_live_message
+#if defined _MEM_CHECK 
+ use memory,              ONLY : MEM_dri
+#endif
  !
- implicit none
+#include<memory.h>
  type(levels)                 :: en
  type(bz_samp)                :: k
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
@@ -148,8 +150,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !             
  call msg('s','== DB2 (wavefunctions)  ... ')
  !
- allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+ Y_ALLOCATE(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+ Y_MEM(wf_disk)
  !
  do ik=1,nkibz
    !
@@ -176,8 +178,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
  enddo
  !
- deallocate(wf_disk)
- call mem_est("wf_disk")
+ Y_FREE(wf_disk)
  !
  if(verboseIO) then
    call msg('s','== DB2 (wavefunctions)  ... done ==')
@@ -200,6 +201,14 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call PARALLEL_wait()
  !
  call pw_close
+ !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call MEM_dri("",REPORT="final")
+ !
+#endif
  !
  call msg('s',' == P2Y completed ==')
  call msg('s' ,' ')

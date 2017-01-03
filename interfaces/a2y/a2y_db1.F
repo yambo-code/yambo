@@ -42,7 +42,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
 &                                 alat_mult_factor,artificial_spin_pol,ng_vec_abinit
  use vec_operate,           ONLY: v_is_zero
  !
- implicit none
+#include<memory.h>
  character(*)                   :: KSS_file_name
  type(levels),     intent(out)  :: en
  type(bz_samp),    intent(out)  :: k  
@@ -128,7 +128,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz
- allocate(k%pt(k%nibz,3))
+ Y_ALLOCATE(k%pt(k%nibz,3))
+ Y_MEM(k%pt)
  do ik = 1,k%nibz
    k%pt(ik,:)=matmul(transpose(b),ahdr%kptns(:,ik))*alat(:)/2._SP/pi
  enddo
@@ -151,8 +152,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  n_atomic_species=ahdr%ntypat
  !
- allocate(n_atoms_species(n_atomic_species),pp_n_l_comp(n_atomic_species),&
-&         pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+ Y_ALLOCATE(pp_n_l_comp(n_atomic_species))
+ Y_MEM(pp_n_l_comp)
+ Y_ALLOCATE(n_atoms_species(n_atomic_species))
+ Y_MEM(n_atoms_species)
+ Y_ALLOCATE(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+ Y_MEM(pp_table)
  pp_n_l_comp(:)=pp_n_l_max
  !
  ! if "l_many_proj" the table is readen in a2y_wf
@@ -169,7 +174,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
    n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
  enddo
  n_atoms_species_max=maxval(n_atoms_species)
- allocate(atom_pos(3,n_atoms_species_max,n_atomic_species),Z_species(n_atomic_species))
+ Y_ALLOCATE(atom_pos(3,n_atoms_species_max,n_atomic_species))
+ Y_MEM(atom_pos)
+ Y_ALLOCATE(Z_species(n_atomic_species))
+ Y_MEM(Z_species)
  n_atoms_species(:)=0
  do i1=1,ahdr%natom
    n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
@@ -183,8 +191,16 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ! ALLOCATION
  !
- allocate(wf_nc_k(k%nibz),g_vec(ng_vec_abinit,3),rstr(en%nb))
- allocate(en%E(en%nb,k%nibz,n_sp_pol),rel_gvec(3,ng_vec_abinit))
+ Y_ALLOCATE(wf_nc_k(k%nibz))
+ Y_MEM(wf_nc_k)
+ Y_ALLOCATE(rel_gvec(3,ng_vec_abinit))
+ Y_MEM(rel_gvec)
+ Y_ALLOCATE(wf_nc_k(k%nibz))
+ Y_MEM(wf_nc_k)
+ Y_ALLOCATE(g_vec(ng_vec_abinit,3))
+ Y_MEM(g_vec)
+ Y_ALLOCATE(rstr(en%nb))
+ Y_MEM(rstr)
  !
  call msg('s','Symmetries...')
  !============================
@@ -231,8 +247,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('s','Energies...')
  !==========================
  !
- allocate(wf_disk_DP(ng_vec_abinit,n_spinor))
- allocate(wf_igk_tmp(ng_vec_abinit,k%nibz))
+ Y_ALLOCATE(wf_disk_DP(ng_vec_abinit,n_spinor))
+ Y_MEM(wf_disk_DP)
+ Y_ALLOCATE(wf_igk_tmp(ng_vec_abinit,k%nibz))
+ Y_MEM(wf_igk_tmp)
  wf_igk_tmp=-1
  WF_disk_DP=0._DP
  !
@@ -271,7 +289,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
    wf_ncx=maxval(wf_nc_k)
    wf_ng=maxval(wf_igk_tmp)
    !
-   allocate(wf_igk(wf_ncx,k%nibz))
+   Y_ALLOCATE(wf_igk(wf_ncx,k%nibz))
+   Y_MEM(wf_igk)
    do ik=1,k%nibz
      wf_igk(1:wf_ncx,ik)=wf_igk_tmp(1:wf_ncx,ik)
    enddo
@@ -279,9 +298,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ! CLEAN
  !
- deallocate(wf_igk_tmp)
- deallocate(wf_disk_DP)
- deallocate(rel_gvec,rstr)
+ Y_FREE(wf_igk_tmp)
+ Y_FREE(wf_disk_DP)
+ Y_FREE(rel_gvec)
+ Y_FREE(rstr)
  !
  close(11)
  !

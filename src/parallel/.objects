@@ -3,7 +3,7 @@ RT_objs =  PARALLEL_collisions.o
 #endif
 objs =  check_for_a_redundant_IO.o  PARALLEL_defaults.o PARALLEL_live_message.o PARALLEL_clean_up_the_structure.o \
         PARALLEL_Transitions_grouping.o $(RT_objs) PARALLEL_add_Q_to_K_list.o PARALLEL_minimal_index_from_overlaping.o \
-        PARALLEL_get_user_structure.o PARALLEL_assign_chains_and_COMMs.o \
+        PARALLEL_get_ENVIRONMENT_structure.o PARALLEL_get_user_structure.o PARALLEL_assign_chains_and_COMMs.o \
         SLK_communicators.o \
         PARALLEL_assign_LA_COMMs.o PARALLEL_WF_index.o \
         PARALLEL_structure.o PARALLEL_build_up_child_INTER_chains.o \

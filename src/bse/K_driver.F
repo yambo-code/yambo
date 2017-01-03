@@ -47,6 +47,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use drivers,        ONLY:l_rt_carriers_in_use
  use com,            ONLY:error
 #endif
+#if defined _MEM_CHECK 
+ use memory,         ONLY:MEM_dri
+#endif
  !
 #include<memory.h>
  !
@@ -207,6 +210,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! 2. The KERNEL
  ! ================
  if (.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+ !
+#if defined _MEM_CHECK 
+ !
+ call MEM_dri("",REPORT="check")
+ !
+#endif
  !
  ! 3. The SOLVER
  ! =================

@@ -504,13 +504,13 @@ module parallel_m
      endif
    end subroutine
    !
-   subroutine PP_indexes_reset(ip)
-     type(PP_indexes)::ip
-     Y_FREE(ip%element_1D)
-     Y_FREE(ip%element_2D)
-     Y_FREE(ip%weight_1D)
-     Y_FREE(ip%n_of_elements)
-     Y_FREE(ip%first_of_1D)
+   subroutine PP_indexes_reset(px)
+     type(PP_indexes)::px
+     Y_FREE(px%element_1D)
+     Y_FREE(px%element_2D)
+     Y_FREE(px%weight_1D)
+     Y_FREE(px%n_of_elements)
+     Y_FREE(px%first_of_1D)
    end subroutine
    !
    subroutine PARALLEL_wait(COMM)

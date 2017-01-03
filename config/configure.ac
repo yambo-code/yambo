@@ -172,16 +172,16 @@ fi
 AC_SUBST(bluegene_cpp)
 # ============================================================================
 #
-# Time Profiling (mod_timing)
+# Memory Profiling 
 #
-AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
-              [Extended timing profile of specific sections]))
-if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
-time_profile_cpp=" "
-if test x"$enable_time_profile" = "xyes"; then 
- time_profile_cpp="-D_TIMING"
+AC_ARG_ENABLE(memory-profile, AC_HELP_STRING([--enable-memory-profile],
+              [Extended Memory profile of specific sections]))
+if test x"$enable_memory_profile" = "x"; then enable_memory_profile="no"; fi
+memory_profile_cpp=" "
+if test x"$enable_memory_profile" = "xyes"; then 
+ memory_profile_cpp="-D_MEM_CHECK"
 fi
-AC_SUBST(time_profile_cpp)
+AC_SUBST(memory_profile_cpp)
 # ============================================================================
 #
 # Time Profiling (mod_timing)

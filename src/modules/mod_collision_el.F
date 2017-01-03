@@ -71,10 +71,13 @@ module collision_el
    subroutine elemental_collision_free(ggw,INIT_ONLY)
      type(elemental_collision)::ggw
      logical,optional::INIT_ONLY
-     logical::init_only_=.false.
+     logical         ::init_only_
      !
-     if(present(INIT_ONLY)) init_only_=INIT_ONLY
-     if(.not.init_only_) then
+     init_only_=.false.
+     if (present(INIT_ONLY)) then
+       init_only_=INIT_ONLY
+     endif
+     if (.not.init_only_) then
        Y_FREE(ggw%gamp)
        Y_FREE(ggw%rhotw)
        Y_FREE(ggw%rho_tw_rs)
@@ -95,7 +98,6 @@ module collision_el
      if (present(TITLE)) then
        ggw%name=TITLE
      endif
-     !
      Y_ALLOCATE(ggw%rho_tw_rs(fft_size))
      Y_MEM(ggw%rho_tw_rs)
      Y_ALLOCATE(ggw%WF_symm_i(fft_size,n_spinor))

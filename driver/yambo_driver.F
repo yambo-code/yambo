@@ -42,6 +42,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
+#if defined _MEM_CHECK 
+ use memory,        ONLY:MEM_dri
+#endif
 #if defined _TIMING
  use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
 #endif
@@ -76,7 +79,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  integer           ::i_err
  integer, external ::X_em1,INIT
- logical           ::l_pp_em1,l_dyn_em1
+ logical           ::l_pp_em1,l_dyn_em1,l_XCo
  !
  ! Presets
  !
@@ -146,6 +149,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !========
  !
  if (l_optics.and.l_chi) call O_driver(Xen,Xk,q,Xw(3),X(3))
+#if defined _MEM_CHECK 
+ if (l_optics.and.l_chi) call MEM_dri("",REPORT="check")
+#endif
  !
 #if defined _SURF
  !
@@ -178,15 +184,23 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
  !
+#if defined _MEM_CHECK 
+ if (any((/l_em1s,l_pp_em1,l_dyn_em1/))) call MEM_dri("",REPORT="check")
+#endif
+ !
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))) call XCo_driver(en,k,Xk,q)
+ if (l_XCo)             call XCo_driver(en,k,Xk,q)
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
 #if defined _SC || defined _RT
  if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2))
+#endif
+ !
+#if defined _MEM_CHECK 
+ if (any((/l_eval_collisions,l_XCo/))) call MEM_dri("",REPORT="check")
 #endif
  !
  ! SELF-ENERGIES
@@ -217,14 +231,25 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
      !
    endif
    !
+#if defined _MEM_CHECK 
+   call MEM_dri("",REPORT="check")
+#endif
+   !
  endif
  !
  ! BETHE-SALPETER
  !================
  !
  if ((l_optics.and.l_bse).or.l_bss) then
+   !
    if (l_ppa)      call K_driver(Xen,Ken,Xk,q,X(4),Xw(4))
+   !
    if (.not.l_ppa) call K_driver(Xen,Ken,Xk,q,X(2),Xw(2))
+   !
+#if defined _MEM_CHECK 
+   call MEM_dri("",REPORT="check")
+#endif
+   !
  endif
  !
  ! GPL_EXCLUDE_START
@@ -243,6 +268,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !
 #if defined _SC
    call SC_driver(X(:2),Xw(:2),Xk,en,k,q)
+   !
+#endif
+   !
+#if defined _MEM_CHECK 
+   call MEM_dri("",REPORT="check")
 #endif
    !
  endif
@@ -254,6 +284,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !
 #if defined _RT
    call RT_driver(en,X(:2),k,q)
+   !
+#endif
+#if defined _MEM_CHECK 
+   !
+   call MEM_dri("",REPORT="check")
+   !
 #endif
    !
  endif
@@ -282,6 +318,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !=================
  call section('*','Timing Overview')
  call timing_overview(LIST=global_list,MAIN_NAME="yambo")
+#endif
+ !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call MEM_dri("",REPORT="final")
+ !
 #endif
  !
  ! GAME OVER :(

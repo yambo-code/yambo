@@ -46,7 +46,7 @@ subroutine K_blocks( )
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_loop,i_block,n_new_blocks
+ integer    :: i_T,j_T,i_loop,iB,n_new_blocks
  real(SP)   :: N_Ts_total,N_Ts_local
  !
  call section('=','CPU-dependent Block structure')
@@ -71,18 +71,18 @@ subroutine K_blocks( )
        if (BS_K_coupling) n_new_blocks=2
        !
        if (i_loop==2) then
-         do i_block=n_BS_blks+1,n_BS_blks+n_new_blocks
-           Y_ALLOCATE(BS_blk(i_block)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-           Y_MEM(BS_blk(i_block)%mat)
-           BS_blk(i_block)%mat=cZERO
-           BS_blk(i_block)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-           if (i_block-n_BS_blks==1) BS_blk(i_block)%mode="R"
-           if (i_block-n_BS_blks==2) BS_blk(i_block)%mode="A"
-           BS_blk(i_block)%iT_k=i_T
-           BS_blk(i_block)%iT_p=j_T
-           BS_blk(i_block)%ik=BS_T_grp(i_T)%ik
-           BS_blk(i_block)%ip=BS_T_grp(j_T)%ik
-           BS_blk(i_block)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
+         do iB=n_BS_blks+1,n_BS_blks+n_new_blocks
+           Y_ALLOCATE(BS_blk(iB)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           Y_MEM(BS_blk(iB)%mat)
+           BS_blk(iB)%mat=cZERO
+           BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+           if (iB-n_BS_blks==1) BS_blk(iB)%mode="R"
+           if (iB-n_BS_blks==2) BS_blk(iB)%mode="A"
+           BS_blk(iB)%iT_k=i_T
+           BS_blk(iB)%iT_p=j_T
+           BS_blk(iB)%ik=BS_T_grp(i_T)%ik
+           BS_blk(iB)%ip=BS_T_grp(j_T)%ik
+           BS_blk(iB)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
         enddo
        endif
        !
@@ -97,8 +97,8 @@ subroutine K_blocks( )
  ! Live Timing Blocks
  !====================
  !
- do i_block=1,n_BS_blks
-   BS_LiveTiming_steps=BS_LiveTiming_steps+BS_Block_size(i_block)
+ do iB=1,n_BS_blks
+   BS_LiveTiming_steps=BS_LiveTiming_steps+BS_Block_size(iB)
  enddo
  !
  N_Ts_local=real(BS_LiveTiming_steps,SP)

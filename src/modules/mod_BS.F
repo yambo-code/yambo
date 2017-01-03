@@ -173,12 +173,12 @@ module BS
      !
    end subroutine
    !
-   subroutine BS_oscillators_free(iG,iB_ref)
+   subroutine BS_oscillators_free(iG_ref,iB_ref)
      use stderr,     ONLY:intc
-     integer :: iG,iB_ref
-     integer :: i_g,iB,ik_loop,ip_loop,ik_now,ip_now
-     do i_g=iG,1,-1
-       Y_FREE(BS_T_grp(i_g)%O_x)
+     integer :: iG_ref,iB_ref
+     integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
+     do iG=iG_ref,1,-1
+       Y_FREE(BS_T_grp(iG)%O_x)
      enddo
      if(iB_ref==0) return
      ik_now=BS_blk(iB_ref)%ik
@@ -238,12 +238,18 @@ module BS
      Y_MEM(BS_T_grp(iT)%f_RES)
      Y_ALLOCATE(BS_T_grp(iT)%f_PL(2,nT))
      Y_MEM(BS_T_grp(iT)%f_PL)
-     Y_ALLOCATE(BS_T_grp(iT)%Z(nT))
-     Y_MEM(BS_T_grp(iT)%Z)
-     Y_ALLOCATE(BS_T_grp(iT)%W(nT))
-     Y_MEM(BS_T_grp(iT)%W)
-     Y_ALLOCATE(BS_T_grp(iT)%E_SOC_corr(2/n_sp_pol,nT))
-     Y_MEM(BS_T_grp(iT)%E_SOC_corr)
+     if (allocated(E%Z)) then
+       Y_ALLOCATE(BS_T_grp(iT)%Z(nT))
+       Y_MEM(BS_T_grp(iT)%Z)
+     endif
+     if (allocated(E%W)) then
+       Y_ALLOCATE(BS_T_grp(iT)%W(nT))
+       Y_MEM(BS_T_grp(iT)%W)
+     endif
+     if (E_SOC_nbands/=0) then
+       Y_ALLOCATE(BS_T_grp(iT)%E_SOC_corr(2/n_sp_pol,nT))
+       Y_MEM(BS_T_grp(iT)%E_SOC_corr)
+     endif
      !
    end subroutine
    !
@@ -252,30 +258,30 @@ module BS
      use drivers,    ONLY:l_kerr,l_photolum
      use parallel_m, ONLY:PAR_BS_T_grps_index
      use electrons,  ONLY:E_SOC_nbands
-     integer :: i_g
+     integer :: iT
      !
      Y_FREE(BS_nT_at_k)
      Y_FREE(PAR_BS_T_grps_index)
      Y_FREE(BS_T_grp_1st_el)
      !
-     do i_g=1,BS_nT_grps
+     do iT=1,BS_nT_grps
        !
-       if (.not.allocated(BS_T_grp(i_g)%table)) cycle
+       if (.not.allocated(BS_T_grp(iT)%table)) cycle
        !
-       Y_FREE(BS_T_grp(i_g)%dipoles_R)
-       Y_FREE(BS_T_grp(i_g)%dipoles_A)
+       Y_FREE(BS_T_grp(iT)%dipoles_R)
+       Y_FREE(BS_T_grp(iT)%dipoles_A)
 if (l_kerr) then
-  Y_FREE(BS_T_grp(i_g)%dipoles_R_kerr)
-  Y_FREE(BS_T_grp(i_g)%dipoles_A_kerr)
+  Y_FREE(BS_T_grp(iT)%dipoles_R_kerr)
+  Y_FREE(BS_T_grp(iT)%dipoles_A_kerr)
 endif
-       Y_FREE(BS_T_grp(i_g)%table)
-       Y_FREE(BS_T_grp(i_g)%E)
-       Y_FREE(BS_T_grp(i_g)%f)
-       Y_FREE(BS_T_grp(i_g)%f_RES)
-       Y_FREE(BS_T_grp(i_g)%f_PL)
-       Y_FREE(BS_T_grp(i_g)%Z)
-       Y_FREE(BS_T_grp(i_g)%W)
-       Y_FREE(BS_T_grp(i_g)%E_SOC_corr)
+       Y_FREE(BS_T_grp(iT)%table)
+       Y_FREE(BS_T_grp(iT)%E)
+       Y_FREE(BS_T_grp(iT)%f)
+       Y_FREE(BS_T_grp(iT)%f_RES)
+       Y_FREE(BS_T_grp(iT)%f_PL)
+       Y_FREE(BS_T_grp(iT)%Z)
+       Y_FREE(BS_T_grp(iT)%W)
+       Y_FREE(BS_T_grp(iT)%E_SOC_corr)
        !
      enddo
      !

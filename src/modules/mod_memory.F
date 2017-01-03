@@ -31,12 +31,13 @@ module memory
  !
  !...parameters
  integer, parameter  :: N_MEM_max    = 10000
- integer, parameter  :: MEM_treshold = 50
+ integer, parameter  :: MEM_treshold = 1000 ! Kb
  !
  integer :: N_MEM_elements           = 0
  integer :: i_element_free           = 1
  integer :: MEM_err                  = 0
  integer(kind=c_int) :: TOT_MEM_kilobytes_MEMSTAT 
+ integer             :: TOT_MEM_kilobytes_MEMSTAT_SAVE
  integer             :: TOT_MEM_kilobytes
  !
  character(schlen) :: MEM_element_name(N_MEM_max) = " "
@@ -44,12 +45,11 @@ module memory
  !
  interface
    !
-   subroutine MEM_dri(what,Sz,Kn,Er,quiet,REPORT)
+   subroutine MEM_dri(what,Sz,Kn,Er,REPORT)
      character(*)         :: what
      integer,optional     :: Sz
      integer,optional     :: Kn
      integer,optional     :: Er
-     logical,optional     :: quiet
      logical,optional     :: REPORT
    end subroutine
    !

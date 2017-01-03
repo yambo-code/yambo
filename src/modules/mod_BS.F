@@ -173,26 +173,26 @@ module BS
      !
    end subroutine
    !
-   subroutine BS_oscillators_free(iG,iB)
+   subroutine BS_oscillators_free(iG,iB_ref)
      use stderr,     ONLY:intc
-     integer :: iG,iB
-     integer :: i_g,i_b,ik_loop,ip_loop,ik_now,ip_now
+     integer :: iG,iB_ref
+     integer :: i_g,iB,ik_loop,ip_loop,ik_now,ip_now
      do i_g=iG,1,-1
        Y_FREE(BS_T_grp(i_g)%O_x)
      enddo
-     if(iB==0) return
-     ik_now=BS_blk(iB)%ik
-     ip_now=BS_blk(iB)%ip
-     if(iB==n_BS_blks) then
+     if(iB_ref==0) return
+     ik_now=BS_blk(iB_ref)%ik
+     ip_now=BS_blk(iB_ref)%ip
+     if(iB_ref==n_BS_blks) then
        ik_now=0
        ip_now=0
      endif
-     do i_b=iB,1,-1
-       ik_loop=BS_blk(i_b)%ik
-       ip_loop=BS_blk(i_b)%ip
+     do iB=iB_ref,1,-1
+       ik_loop=BS_blk(iB)%ik
+       ip_loop=BS_blk(iB)%ip
        if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
-       Y_FREE(BS_blk(i_b)%O_c)
-       Y_FREE(BS_blk(i_b)%O_table)
+       Y_FREE(BS_blk(iB)%O_c)
+       Y_FREE(BS_blk(iB)%O_table)
      enddo
      !
    end subroutine

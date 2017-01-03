@@ -27,7 +27,9 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  use netcdf
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on
- !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  integer      :: ID
@@ -46,6 +48,10 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  !
  integer, allocatable :: var_dim(:)
  integer              :: j1
+ !
+#if defined _TIMING
+ call timing('io_bulk',OPR='start')
+#endif
  !
  !====================
  !== NETCDF I/O ======
@@ -256,5 +262,9 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+2*size(C3)
  endif
+ !
+#if defined _TIMING
+ call timing('io_bulk',OPR='stop')
+#endif
  !
 end subroutine

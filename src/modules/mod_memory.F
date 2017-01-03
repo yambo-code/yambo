@@ -31,7 +31,7 @@ module memory
  !
  !...parameters
  integer, parameter  :: N_MEM_max    = 10000
- integer, parameter  :: MEM_treshold = 1000 ! Kb
+ integer, parameter  :: MEM_treshold = 10000 ! Kb
  !
  integer :: N_MEM_elements           = 0
  integer :: i_element_free           = 1

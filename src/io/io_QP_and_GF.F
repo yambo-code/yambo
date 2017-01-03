@@ -34,6 +34,9 @@ integer function io_QP_and_GF(what,qp,ID)
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
 &                         QP_SE_POLARON,QP_SE_GW_QED
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
 #include<memory.h>
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'G'/filename
@@ -47,6 +50,10 @@ integer function io_QP_and_GF(what,qp,ID)
  character(schlen)    ::ch
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
+ !
+#if defined _TIMING
+ call timing('io_QP_and_',OPR='start')
+#endif
  !
  if (what=="QP".or.what=="G") then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
@@ -316,5 +323,9 @@ integer function io_QP_and_GF(what,qp,ID)
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_QP_and_',OPR='stop')
+#endif
  !
 end function

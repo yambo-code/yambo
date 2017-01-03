@@ -367,7 +367,7 @@ MODULE timing_m
              WRITE (local_ch, '(a20," : ",3x,f5.2,"s CPU ")') &
                    TRIM(obj%name), nsec
            ENDIF
-           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+           if (ncpu>1) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
            call msg('r',local_ch(:100))
          ELSE
            IF (nday > 0) THEN
@@ -387,7 +387,7 @@ MODULE timing_m
                    &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
                         call_number , total_time / REAL( call_number, DP )
            ENDIF
-           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+           if (ncpu>1) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
            call msg('r',local_ch(:100))
          ENDIF
        CASE ( "sec " )
@@ -401,7 +401,7 @@ MODULE timing_m
                         TRIM(obj%name) , total_time , call_number ,   &
                         total_time / REAL( call_number, DP )
          ENDIF
-         if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+         if (ncpu>1) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
          call msg('r',local_ch(:100))
        CASE DEFAULT
          CALL error('clock_write:  Invalid FORM '//TRIM(form_) )
@@ -418,8 +418,7 @@ MODULE timing_m
      REAL(SP) :: total_time
      character(lchlen)::ch
      !
-     IF ( .NOT. internal_list%alloc ) & 
-          CALL error('timing_upto_now:  Internal clock not allocated')
+     IF ( .NOT. internal_list%alloc ) CALL error('timing_upto_now:  Internal clock not allocated')
      CALL clock_update(internal_list%clock(1))
      !
      ! recovering over pools may create deadlocks
@@ -428,7 +427,7 @@ MODULE timing_m
      !
      ch='            [Time-Profile]: '//trim(real2ch(total_time))//'s'
      call msg('rn',ch(:100))
-     if (ncpu>1) call LIVE_message(message=ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+     if (ncpu>1) call LIVE_message(message="[TIMING]"//ch(:100),lfmt="n")
      !
    END SUBROUTINE timing_upto_now    
    !
@@ -443,11 +442,10 @@ MODULE timing_m
      !
      IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
      !
-     if (ncpu>1) call LIVE_message(message='Routines: '//TRIM(list%name),lfmt="n",CPU_TIME=.FALSE.)
      call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')
      !
      IF ( list%nclock == 0 ) THEN
-       if (ncpu>1) call LIVE_message(message='No clock to display',lfmt="n",CPU_TIME=.FALSE.)
+       if (ncpu>1) call LIVE_message(message="[TIMING]"//'No clock to display',lfmt="n")
        call msg('r','No clock to display')
        RETURN
      ENDIF

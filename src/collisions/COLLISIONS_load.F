@@ -46,7 +46,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use collision_ext,   ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
 &                          GW_NEQ_COLL_element
 #endif
- !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  logical            :: CHECK_EXISTENCE_ONLY
@@ -59,6 +61,10 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  io_err      =0
  !
  if (.not.any((/l_sc_fock,l_sc_coh,l_sc_hartree,l_sc_sex,l_sc_exx,l_sc_srpa,l_elel_scatt,l_elphoton_scatt,l_elphoton_corr/))) return
+ !
+#if defined _TIMING
+ call timing('COLLISIONS_load',OPR='start')
+#endif
  !
  ! Initial Setup & EXISTENCE
  !============================
@@ -150,6 +156,10 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
 #if defined _QED
  if (l_elphoton_scatt.or.l_elphoton_corr)  call local_IO( P_collisions )
+#endif
+ !
+#if defined _TIMING
+ call timing('COLLISIONS_load',OPR='stop')
 #endif
  !
  contains
@@ -277,7 +287,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #endif
      !
      call live_timing()
-     ! 
+     !
    end subroutine
    !
 end subroutine COLLISIONS_load

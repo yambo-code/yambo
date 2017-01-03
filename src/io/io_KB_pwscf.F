@@ -34,6 +34,9 @@ integer function io_KB_pwscf(ID)
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_pwscf
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
 #include<memory.h>
  !
  integer,intent(in) :: ID
@@ -41,6 +44,10 @@ integer function io_KB_pwscf(ID)
  ! Work Space
  !
  integer :: ik
+ !
+#if defined _TIMING
+ call timing('io_KB_pwscf',OPR='start')
+#endif
  !
  ik=maxval(io_sec(ID,:))-1
  !
@@ -125,5 +132,9 @@ integer function io_KB_pwscf(ID)
  call io_bulk(ID,R3=pp_kbd(:,:,:,1))
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_KB_pwscf',OPR='stop')
+#endif
  !
 end function io_KB_pwscf

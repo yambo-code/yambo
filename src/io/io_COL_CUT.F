@@ -31,6 +31,9 @@ integer function io_COL_CUT(ID)
 &                         ng_closed,nqibz,bare_qpg,cut_description
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
 #include<memory.h>
  integer :: ID
  ! 
@@ -38,6 +41,10 @@ integer function io_COL_CUT(ID)
  !
  real(SP),allocatable::bare_qpg_disk(:,:,:)
  integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ncx
+ !
+#if defined _TIMING
+ call timing('io_COL_CUT',OPR='start')
+#endif
  !
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)
  !
@@ -104,5 +111,9 @@ integer function io_COL_CUT(ID)
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_COL_CUT',OPR='stop')
+#endif
  !
 end function

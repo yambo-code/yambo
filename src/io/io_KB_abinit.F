@@ -23,7 +23,7 @@
 !
 integer function io_KB_abinit(ID)
  !
- use pars,             ONLY:schlen,IP,SP
+ use pars,             ONLY:schlen,SP
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
@@ -35,6 +35,9 @@ integer function io_KB_abinit(ID)
 &                           io_elemental,io_bulk,io_header,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,frag_WF
  use electrons,        ONLY:n_sp_pol
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
 #include<memory.h>
  integer,       intent(in) :: ID
  character(schlen)         :: VAR_NAME
@@ -43,6 +46,11 @@ integer function io_KB_abinit(ID)
  ! Work Space
  !
  integer :: ik,i1,i_spin,var_size
+ !
+#if defined _TIMING
+ call timing('io_KB_abinit',OPR='start')
+#endif
+ !
  ik=maxval(io_sec(ID,:))-1
  !
  io_KB_abinit=io_connect(desc="kb_pp",type=0,ID=ID)
@@ -166,5 +174,9 @@ integer function io_KB_abinit(ID)
  Y_FREE(pp_disk)
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_KB_abinit',OPR='stop')
+#endif
  !
 end function io_KB_abinit

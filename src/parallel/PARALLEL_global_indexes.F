@@ -237,8 +237,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  endif
  !
  !==================================
- ! USER provided PARALLEL structure
+ ! USER provided PARALLEL structure 
  !==================================
+ !
+ !... via the ENVIRONMENT variable
+ !
+ call PARALLEL_get_ENVIRONMENT_structure(ENVIRONMENT)
+ !
+ !...via the input file
  !
  call PARALLEL_get_user_structure(ENVIRONMENT,.TRUE.)
  !

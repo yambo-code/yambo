@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -622,13 +622,12 @@ module IO_m
 &                               nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim))
    end function
    !
-   integer function variable_is_found(ID,var_name)
+   logical function variable_is_found(ID,var_name)
      integer,      intent ( in) :: ID
      character(*), intent ( in) :: var_name
      integer :: var_ID ! Work Space
-     variable_is_found=-1
-     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=1  
-     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=0  
+     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=.TRUE.
+     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=.FALSE.
    end function
    !
    subroutine deliver_IO_error_message(i_err,DB)

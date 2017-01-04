@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -32,7 +32,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
 &                          l_initial_equilibrium,DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en,&
 &                          RT_scatt_tresh,RT_ibz_coo
  use plasma,          ONLY:EH_gas
- use collision,       ONLY:GW_NEQ_COLL_element,GW_NEQ_collisions
+ use collision_ext,   ONLY:GW_NEQ_COLL_element,GW_NEQ_collisions
  use parallel_m,      ONLY:PAR_Q_index,PAR_IND_Q,PAR_IND_Plasma,PAR_PLASMA_index
  !
  implicit none

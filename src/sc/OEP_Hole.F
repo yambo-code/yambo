@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -36,7 +36,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
  use FFT_m,           ONLY:fft_size,fft_rot_r
- use collision,       ONLY:elemental_collision
+ use collision_el,    ONLY:elemental_collision
  use wave_func,       ONLY:WF
  use SC,              ONLY:l_oep_EWeight
  !

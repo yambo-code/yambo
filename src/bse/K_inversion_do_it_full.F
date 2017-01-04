@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,8 @@ subroutine K_inversion_do_it_full(Lo,KERNEL,what)
  use pars,           ONLY:SP,cZERO
  use BS_solvers,     ONLY:BS_mat
  use BS,             ONLY:BS_H_dim
- use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV
+ use interfaces,     ONLY:LINEAR_ALGEBRA_driver
+ use linear_algebra, ONLY:INV
  !
  implicit none
  !
@@ -50,6 +51,6 @@ subroutine K_inversion_do_it_full(Lo,KERNEL,what)
    enddo
  enddo
  !
- call LINEAR_ALGEBRA_driver(INV,KERNEL)
+ call LINEAR_ALGEBRA_driver(INV,M=KERNEL)
  !
 end subroutine

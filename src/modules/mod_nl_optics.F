@@ -130,7 +130,8 @@ module nl_optics
      use memory_m,       ONLY:mem_est
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
-     use SC,             ONLY:SC_bands,E_bare,SC_alloc
+     use SC,             ONLY:SC_bands,E_bare
+     use hamiltonian,    ONLY:H_alloc
      use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
      use R_lattice,      ONLY:nXkbz
      use QP_m,           ONLY:QP_nk
@@ -140,7 +141,7 @@ module nl_optics
      !
      type(levels), intent(in) :: en
      !
-     call SC_alloc(en)
+     call H_alloc(en)
      !
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
@@ -196,13 +197,14 @@ module nl_optics
    subroutine NL_free
      !
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:E_bare,SC_free
+     use SC,             ONLY:E_bare
+     use hamiltonian,    ONLY:H_free
      use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
      use electric,       ONLY:ELECTRIC_free
      !
      implicit none
      !
-     call SC_free()
+     call H_free()
      !
      deallocate(Ho_plus_Sigma)
      call mem_est("Ho_plus_Sigma")

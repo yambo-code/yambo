@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -27,10 +27,9 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
- use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use com,            ONLY:msg,of_open_close,error,warning
- use vec_operate,    ONLY:c2a,v_norm,iku_v_norm
- use parser_m,       ONLY:parser
+ use R_lattice,      ONLY:bz_samp
+ use com,            ONLY:msg,of_open_close
+ use vec_operate,    ONLY:v_norm,iku_v_norm
  use stderr,         ONLY:intc
  use interpolate,    ONLY:reset_interpolation,electrons_bands_interpolate
  use QP_CTL_m,       ONLY:QP_apply
@@ -72,7 +71,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  if(n_spinor>1 .and. BANDS_steps> 0) then
    allocate(spin_interpolated(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,n_spinor))
    allocate(magn_interpolated(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,3))
-   call electrons_spin_and_magn_interpolate(Xen,Xk,CIRCUIT_k,BANDS_range,spin_interpolated,magn_interpolated)
+   call electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_range,spin_interpolated,magn_interpolated)
  endif
  !
  call reset_interpolation(ID_interp)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -144,7 +144,7 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
            CPU_structure(i_PAR_structure)%ROLE(4)="q"
            CPU_structure(i_PAR_structure)%CPU(4)=assign_cpu(Q_range(2)-Q_range(1)+1)
            CPU_structure(i_PAR_structure)%N_chains=4
-#if defined _SC
+#if defined _RT
          case("Real_Time") 
            CPU_structure(i_PAR_structure)%ROLE(1)="k"
            CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(K_range)

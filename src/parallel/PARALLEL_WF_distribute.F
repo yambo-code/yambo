@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,13 +30,13 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use R_lattice,       ONLY:nkibz
  use QP_m,            ONLY:QP_n_states,QP_table
 #if defined _SC || defined _RT
- use hamiltonian,     ONLY:B_mat_index,IP_h_bands
+ use hamiltonian,     ONLY:B_mat_index,H_ref_bands
 #endif
 #if defined _RT
  use parallel_m,      ONLY:PAR_IND_Q,PAR_Q_index
  use plasma,          ONLY:EH_gas
  use R_lattice,       ONLY:nkbz
- use collision,       ONLY:GW_NEQ_collisions
+ use collision_ext,   ONLY:GW_NEQ_collisions
 #endif
  !
  implicit none
@@ -58,7 +58,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
 #if defined _SC || defined _RT
- logical :: Vl(IP_h_bands(2))
+ logical :: Vl(H_ref_bands(2))
 #endif
  !
  NB=n_bands
@@ -134,15 +134,15 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
        !
        Vl=.FALSE. 
        !
-       do i_b=IP_h_bands(1),IP_h_bands(2)
-         do i_bp=IP_h_bands(1),IP_h_bands(2)
-           if (Bm_index%element_1D( B_mat_index(i_b,i_bp,IP_h_bands) ) ) then
+       do i_b=H_ref_bands(1),H_ref_bands(2)
+         do i_bp=H_ref_bands(1),H_ref_bands(2)
+           if (Bm_index%element_1D( B_mat_index(i_b,i_bp,H_ref_bands) ) ) then
              Vl(i_b )=.TRUE.
              Vl(i_bp)=.TRUE.
            endif
          enddo
        enddo
-       do i_b=IP_h_bands(1),IP_h_bands(2)
+       do i_b=H_ref_bands(1),H_ref_bands(2)
          if (.not.Vl(i_b)) states_to_load(i_b,i_k,:)=.FALSE.
        enddo
      else

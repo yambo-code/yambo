@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -25,17 +25,16 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision,     ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
  use xc_functionals,ONLY:GS_xc_kind
- use global_XC,     ONLY:SC_FOCK,global_XC_string,EXT_NONE,SE_NONE,SC_COH,SC_SEX,&
-&                        SE_GW_NEQ,SE_GW_QED,SC_HARTREE
+ use global_XC,     ONLY:EXT_NONE,QP_SE_NONE,QP_SE_GW_NEQ,QP_SE_GW_QED,&
+&                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
- use SC,            ONLY:SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH,SC_band_mixing,QP_QED_ng
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
@@ -72,14 +71,14 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  call timing('io_COLLISIONS',OPR='start')
 #endif
  !
- if(COLL%kind==SC_COH) then
+ if(COLL%kind==H_SE_COH) then
    db_name = "COLLISIONS_COH"
- elseif(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind==GS_xc_kind.or.&
-&       COLL%kind>=SC_HARTREE) then
+ elseif(COLL%kind==H_SE_HARTREE.or.COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind==GS_xc_kind.or.&
+&       COLL%kind>=H_SE_HARTREE) then
    db_name = "COLLISIONS_HXC"
- elseif(COLL%kind==SE_GW_NEQ) then
+ elseif(COLL%kind==QP_SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"
- elseif(COLL%kind==SE_GW_QED) then
+ elseif(COLL%kind==QP_SE_GW_QED) then
    db_name = "COLLISIONS_P"
  else
    call error("COLLISIONS I/O : Unknown database type ")
@@ -102,8 +101,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    SIZE_=6
-   if (COLL%kind==SE_GW_NEQ) SIZE_=SIZE_+3
-   if (COLL%kind==SE_GW_QED) SIZE_=SIZE_+2
+   if (COLL%kind==QP_SE_GW_NEQ) SIZE_=SIZE_+3
+   if (COLL%kind==QP_SE_GW_QED) SIZE_=SIZE_+2
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=SIZE_,MENU=0)
    !
    call io_elemental(ID,I0=COLL%N,&
@@ -114,7 +113,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    call io_elemental(ID,I1=COLL_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    !
-   if (COLL%kind==SE_GW_NEQ) then
+   if (COLL%kind==QP_SE_GW_NEQ) then
      call io_elemental(ID,L0=l_elel_scatt,&
 &         VAR=' Electron-Electron scattering    :',WARN=.true.,OP=(/"=="/))
      if(l_elel_scatt) then
@@ -125,7 +124,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      endif
    endif
    !
-   if (COLL%kind==SE_GW_QED) then
+   if (COLL%kind==QP_SE_GW_QED) then
      call io_elemental(ID,L0=l_elphoton_scatt,&
 &         VAR=' Electron-Photon   scattering    :',WARN=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=QP_QED_ng,&
@@ -137,36 +136,31 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    call io_elemental(ID,I0=COLL%kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   V_kind_string     =global_XC_string(COLL%kind,SE_NONE,0,EXT_NONE)
-   !
-   call io_elemental(ID,VAR='INTERACTION_KIND',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=V_kind_string,&
-&       VAR=' Interaction Kind                :',CHECK=.true.,OP=(/"=="/))
-   !
-   if(COLL%kind==SC_HARTREE.or.COLL%kind==SC_FOCK.or.COLL%kind==SC_SEX.or.COLL%kind>=SC_HARTREE) then
+   if(COLL%kind==H_SE_HARTREE.or.COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) then
      !
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      SIZE_=1
-     if (V_kind_disk>=SC_HARTREE) SIZE_=SIZE_+1
-     if (V_kind_disk==           SC_FOCK.or.V_kind_disk==           SC_SEX.or.&
-&        V_kind_disk==SC_HARTREE+SC_FOCK.or.V_kind_disk==SC_HARTREE+SC_SEX     ) SIZE_=SIZE_+1
+     if (V_kind_disk>=H_SE_HARTREE) SIZE_=SIZE_+1
+     if (V_kind_disk==             H_SE_FOCK.or.V_kind_disk==             H_SE_SEX.or.&
+&        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX     ) SIZE_=SIZE_+1
      call io_elemental(ID,VAR="HXC_PARAMETERS",VAR_SZ=SIZE_,MENU=0)
      call io_elemental(ID,R0=COLLISIONS_cutoff,&
 &         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
      !
-     if (V_kind_disk>=SC_HARTREE) then
+     if (V_kind_disk>=H_SE_HARTREE) then
        call io_elemental(ID,I0=QP_ng_SH,&
 &         VAR=' Hartree  RL vectors             :',CHECK=.true.,OP=(/"=="/))
      endif
-     if (V_kind_disk==SC_FOCK.or.V_kind_disk==SC_SEX.or.V_kind_disk==SC_HARTREE+SC_FOCK.or.V_kind_disk==SC_HARTREE+SC_SEX) then
+     if (V_kind_disk==             H_SE_FOCK.or.V_kind_disk==             H_SE_SEX.or.&
+&        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX) then
        call io_elemental(ID,I0=QP_ng_Sx,&
 &         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
      endif
    endif
    !
-   if (V_kind_disk==SE_GW_NEQ .or.V_kind_disk==SC_COH.or.V_kind_disk==SC_SEX.or.&
-&      V_kind_disk==SC_HARTREE.or.V_kind_disk==SC_FOCK .or.V_kind_disk>=SC_HARTREE) then
+   if (V_kind_disk==QP_SE_GW_NEQ   .or.V_kind_disk==H_SE_COH  .or.V_kind_disk==H_SE_SEX.or.&
+&      V_kind_disk==H_SE_HARTREE.or.V_kind_disk==H_SE_FOCK .or.V_kind_disk>=H_SE_HARTREE) then
      !
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
@@ -189,13 +183,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
        call io_elemental(ID,DB_CH0=X_string,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        !
-       ! For the real-time databases I need to extract from the X_descriptions few parameters which describe
-       ! the response function properties
-       !
-       if (read_is_on(ID).and.i_desc<=2) then
-         if (i_desc==1) read (X_string(26:40),*) SC_X_size
-         if (i_desc==2) read (X_string(26:40),'(i2,1x,i3)') SC_X_bands
-       endif
      enddo
      !
      call io_elemental(ID,VAR="RIM_PARAMETERS",VAR_SZ=2,MENU=0)
@@ -264,7 +251,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &                                        COLL%D(2,1):COLL%D(2,2),&
 &                                        COLL%D(3,1):COLL%D(3,2)))
    !
-   if(COLL%kind==SE_GW_NEQ.or.COLL%kind==SE_GW_QED) then
+   if(COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
      ! Real collisions
      call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL_element%N/))
      call io_bulk(ID,R1=COLL_element%v_r)

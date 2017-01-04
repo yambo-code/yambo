@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine RT_BGR(dG,E,k)
  !
  use pars,           ONLY:SP,cZERO,rZERO
  use drivers,        ONLY:l_sc_fock,l_sc_sex
- use SC,             ONLY:V_hartree_sc,V_xc_sc,rho_n
+ use hamiltonian,    ONLY:V_hartree_sc,V_xc_sc,rho_n
  use R_lattice,      ONLY:nkibz,bz_samp
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -109,7 +109,7 @@ subroutine RT_BGR(dG,E,k)
      !
      if (eval_HARTREE) then
        H=cZERO
-       call V_real_space_to_H(ik,V_hartree_sc,H,WF,'def')
+       call V_real_space_to_H(ik,1,V_hartree_sc,H,WF,'def')
        do ib=RT_bands(1),RT_bands(2)
          BGR_Hartree(ib,ik,1)=real(H(ib,ib,1),SP)
        enddo
@@ -119,7 +119,7 @@ subroutine RT_BGR(dG,E,k)
      !
      if (eval_DFT) then
        H=cZERO
-       call V_real_space_to_H(ik,V_xc_sc,H,WF,'xc ')
+       call V_real_space_to_H(ik,1,V_xc_sc,H,WF,'xc ')
        do ib=RT_bands(1),RT_bands(2)
          BGR_V_xc(ib,ik,1)=real(H(ib,ib,1),SP)
        enddo

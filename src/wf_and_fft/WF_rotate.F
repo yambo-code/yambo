@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_rotate(ik,WFo,wf_size)
+subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  !
  ! <r|n'>= <m|n'><r|m>
  !
@@ -41,16 +41,14 @@ subroutine WF_rotate(ik,WFo,wf_size)
  !
  implicit none
  !
- integer     :: ik,wf_size,ig
+ integer     :: ik,i_sp_pol,wf_size,ig
  type(WAVEs) :: WFo
  !
  ! Work Space
  !
- integer     :: ib,ibp,i_wf(n_spinor),i_wfp(n_spinor),i_spin,i_sp_pol,i_spinor
+ integer     :: ib,ibp,i_wf(n_spinor),i_wfp(n_spinor),i_spin,i_spinor
  complex(SP) :: WS_wf(wf_size,n_spinor,SC_bands(2))
  !
- do i_sp_pol=1,n_sp_pol
-   !
    WS_wf=cZERO
    !
    do ib = 1,SC_bands(2)
@@ -100,7 +98,5 @@ subroutine WF_rotate(ik,WFo,wf_size)
 #if defined _OPENMP
 !$omp end parallel
 #endif
-   !
- enddo
  !
 end subroutine

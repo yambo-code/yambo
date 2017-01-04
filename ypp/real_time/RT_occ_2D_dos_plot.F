@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -82,7 +82,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  if (n_spinor==2) then
    allocate(spin_factors(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
-   call electrons_spin_factors(kpt,(/1,kpt%nibz/),RT_carriers%nb,spin_factors)
+   call electrons_spin_factors((/1,kpt%nibz/),RT_carriers%nb,spin_factors)
  endif 
  !
  ! Parallel setup and live_timing

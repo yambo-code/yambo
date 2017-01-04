@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -72,7 +72,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
    ! 
    ! GPL_EXCLUDE_START 
    !
-#if defined _SC
+#if defined _SC || defined _RT
    if (wf_dim==4) then
      wf_xyz(1:wf_ng,4) = WF%c(1:wf_ng,ivfft(i_spinor)) *  & 
 &                        ( (Xk%pt(ik,1) + g_vec(1:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &

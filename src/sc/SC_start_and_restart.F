@@ -1,5 +1,5 @@
 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,17 +32,21 @@ subroutine SC_start_and_restart(X,E)
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
- use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,SC_QP_table_setup,&
-&                         SC_potential,E_bare,l_sc_V_is_local,SC_iterations,SC_preconditioning, &
-&                         l_oep_iterative,rho_convergence,E_convergence, &
-&                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
-&                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
-&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,SC_kind,l_froze_density
+ use hamiltonian,    ONLY:H_potential,H_kind,H_xc_functional,H_perturbation,    &
+&                         WF_G_max,WF_Go_indx,E_bare,l_sc_V_is_local,           &
+&                         H_QP_table_setup
+ use SC,             ONLY:SC_potential,SC_kind,SC_xc_functional,SC_perturbation,&
+&                         l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,       &
+&                         SC_iterations,SC_preconditioning,                     &
+&                         l_oep_iterative,rho_convergence,E_convergence,        &
+&                         SC_rho_threshold,SC_iterations,l_SC_cycle,            &
+&                         SC_fft_size,E_bare_Ef,l_oep_EWeight,SC_cycle_mixing,  &
+&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,l_froze_density
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
- use collision,      ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
+ use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  !
  implicit none
  type(levels) ::E
@@ -92,10 +96,15 @@ subroutine SC_start_and_restart(X,E)
  !
  call XC_switch()
  !
+ SC_potential    =H_potential
+ SC_kind         =H_kind
+ SC_xc_functional=H_xc_functional
+ SC_perturbation =H_perturbation
+ !
  ! Dipoles & dimensions
  !======================
  ! 
- call SC_WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X)
  !
  ! Sectioning
  !============
@@ -152,7 +161,7 @@ subroutine SC_start_and_restart(X,E)
  !
  ! Quasi-Particle setup
  ! ====================
- call SC_QP_table_setup(E)
+ call H_QP_table_setup(E)
  !
  if (.not.l_SC_RESTART.and..not.l_NSC_shot) l_SC_cycle=SC_iterations>0
  !

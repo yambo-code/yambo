@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,10 +37,9 @@ subroutine K_blocks( )
  !
  use pars,         ONLY:cZERO,SP
  use memory_m,     ONLY:mem_est
- use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered,PP_redux_wait
+ use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
-&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,&
-&                       BS_LiveTiming_prefactor,BS_H_dim
+&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim
  use com,          ONLY:msg
  use interfaces,   ONLY:PARALLEL_live_message
  !
@@ -48,7 +47,7 @@ subroutine K_blocks( )
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_loop,tot_size,i_block
+ integer    :: i_T,j_T,i_loop,tot_size,i_block,n_new_blocks
  real(SP)   :: N_Ts_total,N_Ts_local
  !
  call section('=','CPU-dependent Block structure')
@@ -68,43 +67,28 @@ subroutine K_blocks( )
      !
      do j_T=1,BS_nT_grps
        !
-       if (PAR_IND_T_ordered%element_2D(i_T,j_T)) then 
-         !
-         n_BS_blks=n_BS_blks+1
-         !
-         if (i_loop==2) then
-           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-           BS_blk(n_BS_blks)%mat=cZERO
+       if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
+       !
+       n_new_blocks                   =1 
+       if (BS_K_coupling) n_new_blocks=2
+       !
+       if (i_loop==2) then
+         do i_block=n_BS_blks+1,n_BS_blks+n_new_blocks
+           allocate(BS_blk(i_block)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           BS_blk(i_block)%mat=cZERO
            tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
-           BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-           BS_blk(n_BS_blks)%mode="R"
-           BS_blk(n_BS_blks)%iT_k=i_T
-           BS_blk(n_BS_blks)%iT_p=j_T
-           BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
-           BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
-         endif
-         !
+           BS_blk(i_block)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+           if (i_block-n_BS_blks==1) BS_blk(i_block)%mode="R"
+           if (i_block-n_BS_blks==2) BS_blk(i_block)%mode="A"
+           BS_blk(i_block)%iT_k=i_T
+           BS_blk(i_block)%iT_p=j_T
+           BS_blk(i_block)%ik=BS_T_grp(i_T)%ik
+           BS_blk(i_block)%ip=BS_T_grp(j_T)%ik
+           BS_blk(i_block)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
+        enddo
        endif
        !
-       if (BS_K_coupling) then
-         !
-         if (.not.PAR_IND_T_all%element_2D(i_T,j_T)) cycle
-         !
-         n_BS_blks=n_BS_blks+1
-         !
-         if (i_loop==2) then
-           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-           tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
-           BS_blk(n_BS_blks)%mat=cZERO
-           BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-           BS_blk(n_BS_blks)%mode="A"
-           BS_blk(n_BS_blks)%iT_k=i_T
-           BS_blk(n_BS_blks)%iT_p=j_T
-           BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
-           BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
-         endif
-         !
-       endif
+       n_BS_blks=n_BS_blks+n_new_blocks
        !
      enddo
      !
@@ -119,8 +103,6 @@ subroutine K_blocks( )
  !
  ! Live Timing Blocks
  !====================
- !
- BS_LiveTiming_prefactor=1
  !
  do i_block=1,n_BS_blks
    BS_LiveTiming_steps=BS_LiveTiming_steps+BS_Block_size(i_block)

@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -62,7 +62,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  if (n_spinor==2) then
    allocate(WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2))
-   call electrons_spin_factors(Xk,(/1,Xk%nibz/),dos_bands,WF_fac)
+   call electrons_spin_factors((/1,Xk%nibz/),dos_bands,WF_fac)
  endif
  !
  if (l_DbGd) dos_bands(2)=min(dos_bands(2),BZ_DbGd_nbands)

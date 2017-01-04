@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -21,12 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_spin_factors(Xk,kpts,bands,spin_factors)
+subroutine electrons_spin_factors(kpts,bands,spin_factors)
  !
  use pars,           ONLY:SP
  use wave_func,      ONLY:WF
  use YPP,            ONLY:WF_ref
- use R_lattice,      ONLY:bz_samp
  use FFT_m,          ONLY:fft_size
  use LIVE_t,         ONLY:live_timing
  use interfaces,     ONLY:PARALLEL_index,WF_load
@@ -35,7 +34,6 @@ subroutine electrons_spin_factors(Xk,kpts,bands,spin_factors)
  !
  implicit none
  !
- type(bz_samp), intent(in)  :: Xk
  integer,       intent(in)  :: kpts(2),bands(2)
  real(SP),      intent(out) :: spin_factors(bands(1):bands(2),kpts(1):kpts(2),2)
  !
@@ -76,7 +74,7 @@ subroutine electrons_spin_factors(Xk,kpts,bands,spin_factors)
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/kpts(2)-kpts(1)+1,bands(2)-bands(1)+1/))
  !
- call live_timing('Spinor-factor',px%n_of_elements(myid+1))
+ call live_timing('Spinor Components',px%n_of_elements(myid+1))
  !
  spin_factors=0._SP
  !

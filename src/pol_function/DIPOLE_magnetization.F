@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -21,28 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_magnetization(Xen,Xk,X)
+subroutine Dipole_magnetization(Xk,X)
  !
  ! This routine returns <sigma> (and <L> todo).
  !
- use pars,                ONLY:SP,schlen,cZERO,cI
+ use pars,                ONLY:cI
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
- use electrons,           ONLY:levels,n_spinor,n_sp_pol
+ use electrons,           ONLY:n_spinor,n_sp_pol
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_spin
- use memory_m,            ONLY:mem_est
  use fft_m,               ONLY:fft_size
  use wave_func,           ONLY:WF
- use com,                 ONLY:error,msg
+ use com,                 ONLY:error
  use wrapper,             ONLY:Vstar_dot_V
  !
  implicit none
  !
  type(bz_samp), intent(in)    :: Xk
- type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
  !
  ! Work Space
@@ -65,7 +63,7 @@ subroutine Dipole_magnetization(Xen,Xk,X)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
- if (n_LT_steps>0) call live_timing('Dipoles spin',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles: spin',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !

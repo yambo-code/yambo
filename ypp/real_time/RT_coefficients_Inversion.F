@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -28,7 +28,8 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  use pars,            ONLY:SP,cI,cONE,cZERO
  use YPP_real_time,   ONLY:X_order,RT_conf,RT_time
  use real_time,       ONLY:RT_step,NE_steps
- use linear_algebra,  ONLY:LINEAR_ALGEBRA_driver,INV
+ use interfaces,      ONLY:LINEAR_ALGEBRA_driver
+ use linear_algebra,  ONLY:INV
  implicit none
  !
  integer,     intent(in)   :: NW,NX
@@ -64,7 +65,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
    end do
  end do
  !
- call LINEAR_ALGEBRA_driver(INV,M)
+ call LINEAR_ALGEBRA_driver(INV,M=M)
  !
  X = cZERO
  X_here = cZERO

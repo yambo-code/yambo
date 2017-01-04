@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -39,7 +39,9 @@ subroutine ypp_INIT_load(defs)
  use eels_detector,        ONLY: init_detector
 #endif
 #if defined _YPP_RT
- use YPP_real_time
+ use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_reagions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
+&                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Z_input,Eh_pumped_pair_energy,&
+&                               n_regions,Eh_pumped_pair_BZ_width
  use real_time,            ONLY:RT_bands
  use stderr,               ONLY:intc
 #endif
@@ -125,10 +127,10 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
  call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
  !
- call it('r',defs,'RTfitbands',   '[R]  pp kind: fit on bands')
- call it('r',defs,'RTtime',       '[R]  pp kind: function of time')
- call it('r',defs,'RTenergy',     '[R]  pp kind: function of energy')
- call it('r',defs,'RTdos',        '[R]  pp kind: 2D DOS, function of time and energy')
+ call it('r',defs,'RTfitbands',   '[R] Post-Processing kind: fit on bands')
+ call it('r',defs,'RTtime',       '[R] Post-Processing kind: function of time')
+ call it('r',defs,'RTenergy',     '[R] Post-Processing kind: function of energy')
+ call it('r',defs,'RTdos',        '[R] Post-Processing kind: 2D DOS, function of time and energy')
  !
 #endif
 #if defined _YPP_NL

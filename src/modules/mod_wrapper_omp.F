@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, AF
@@ -53,7 +53,6 @@ module wrapper_omp
  !
  contains
    !
-   !
    !===================
    ! interface M_by_M 
    !===================
@@ -91,7 +90,6 @@ module wrapper_omp
      call CGEMM(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
 #endif
    end subroutine mm_c_omp
-   !
    !
    !===================
    ! interface M_by_V 
@@ -163,7 +161,6 @@ module wrapper_omp
 #endif
    end subroutine mv_r_omp
    !
-   !
    !=========================
    ! interface V_by_V_plus_V 
    !=========================
@@ -233,7 +230,6 @@ module wrapper_omp
 #endif
    end subroutine vv_saxpy_omp   
    !
-   !
    !======
    ! COPY 
    !======
@@ -257,7 +253,6 @@ module wrapper_omp
      call ccopy(N,CX,1,CY,1)
 #endif
    end subroutine V_copy_omp   
-   !
    !
    !==============
    ! DOT PRODUCTS

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -27,15 +27,15 @@ subroutine K_diago_driver(iq,W)
  ! Hamiltonians.
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_K_coupling,BS_H_dim
+ use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_mat
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
- use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,DIAGO
- use interfaces,     ONLY:K_diago_compute_epsilon
+ use linear_algebra, ONLY:DIAGO
+ use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver 
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  !
@@ -119,7 +119,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Kernel loading
  !================
- if(io_err<0) call K_stored_in_a_BIG_matrix(iq)
+ if(io_err<0) call K_components_folded_in_serial_arrays(iq)
  !
  K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
  !
@@ -131,7 +131,15 @@ subroutine K_diago_driver(iq,W)
  !============================
  call K_output_file(iq,"open Diago")
  !
- if(io_err<0) then
+ if (io_err<0) then
+   !
+#if defined _SCALAPACK
+   !
+   ! Symmetrize the K blocks (to be eventually sent to the BLACS)
+   !=========================
+   call BS_Blocks_symmetrize_K()
+   !
+#endif
    !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================
@@ -139,20 +147,19 @@ subroutine K_diago_driver(iq,W)
    !
    if (K_is_not_hermitian) then
      !
-     call LINEAR_ALGEBRA_driver(DIAGO,BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+     call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
      !
-     call LINEAR_ALGEBRA_driver(DIAGO,BS_mat,E_real=BS_E_real)
+     call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
      !
    endif
    !
-   call live_timing(steps=1)
-   call live_timing
+   call live_timing( )
    !
    ! Construct the residuals of epsilon
    !====================================

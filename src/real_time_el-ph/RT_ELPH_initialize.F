@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -192,7 +192,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  if (l_use_Debye_E) ph_freqs_sq=W_debye**2
  !
  ! q_weight_RT are written in section 2, thus here are not known
- ! since only sectin 1 of the REF DB is written
+ ! since only section 1 of the REF DB is written
  !
  if (.not.allocated(q_weight_RT)) then
    !

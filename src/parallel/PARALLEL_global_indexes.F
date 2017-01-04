@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,6 +24,7 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
+ use com,           ONLY:secnm
  use linear_algebra,ONLY:INV
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,CPU_structure,master_cpu,&
@@ -59,7 +60,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_SLK,&
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
 &                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
-&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T_all,PAR_IND_WF_b_and_k,&
+&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_WF_b_and_k,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered,PAR_IND_Q_bz
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
@@ -73,7 +74,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,&
 &                        l_real_time,l_elphoton_corr
  use matrix_operate,ONLY:UP_matrix_index
- use BS,            ONLY:BS_bands,BS_nT_at_k,BS_nT_grps,BS_K_coupling
+ use BS,            ONLY:BS_bands,BS_nT_at_k,BS_nT_grps
 #if defined _ELPH
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
@@ -89,13 +90,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
 #if defined _SC || defined _RT
  use hamiltonian,   ONLY:B_mat_index,IP_h_bands
- use collision,     ONLY:COLL_bands,COH_collisions,GW_NEQ_collisions,P_collisions,HXC_collisions
+ use collision_ext, ONLY:COLL_bands,COH_collisions,GW_NEQ_collisions,P_collisions,HXC_collisions
 #endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
 #endif
  use electrons,     ONLY:levels
- use stderr,        ONLY:intc
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use IO_m,          ONLY:IO_and_Messaging_switch,io_COLLs,io_RESPONSE
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
@@ -112,7 +112,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Work Space
  !
  integer              :: i_k,i_k_bz,X_type,i_qp,ib1,ib2,i_field,nb_mat
- logical              :: reset_all
+ logical              :: reset_all,computing_Fock
  character(10)        :: WHAT,WHATp
  !
  ! Resets...
@@ -121,6 +121,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (present(RESET)) then
    reset_all=RESET
  endif
+ !
+ computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Bare local and non-local Exchange-Correlation")/=0 )
  !
  ! Logicals
  !
@@ -165,7 +167,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_WF_b_and_k)
    call PP_indexes_reset(PAR_IND_WF_linear)
    call PP_indexes_reset(PAR_IND_T_ordered)
-   call PP_indexes_reset(PAR_IND_T_all)
 #if defined _NL
    call PP_indexes_reset(PAR_IND_freqs)
 #endif
@@ -308,6 +309,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (l_sc_run.and.&
 &      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
 &                                               Q_range=(/1,nqbz/)
+#endif
+#if defined _SC || defined _RT
    if (l_eval_collisions)                       Q_range=(/1,nqbz/)
 #endif
 #if defined _ELPH
@@ -328,9 +331,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Generic Bands
  !---------------
  if (ENVIRONMENT=="Self_Energy"                     ) then
-   if (l_HF_and_locXC)     n_bands=(/1,max(E%nbm,QP_nb)/)
-   if (l_gw0.or.l_life)    n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
-   if (.not.l_HF_and_locXC) n_bands(1)=QP_n_G_bands(1)
+   if (l_HF_and_locXC)                               n_bands=(/1,max(E%nbm,QP_nb)/)
+   if ((l_gw0.or.l_life).and..not.computing_Fock)    n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
+   if (.not.computing_Fock)                          n_bands(1)=QP_n_G_bands(1)
 #if defined _SC || defined _RT
    if (l_eval_collisions)  n_bands=COLL_bands
 #endif
@@ -818,7 +821,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call Build_up_index(PAR_IND_Q_bz,nqbz,PAR_Q_bz_index,PAR_nQ_bz)
    endif
    !
-#if defined _SC
+#if defined _SC || defined _RT
    !
    if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
      !
@@ -845,7 +848,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    HEAD_QP_cpu=PAR_COM_QP_A2A%CPU_id==0
    !
-#if defined _SC
+#if defined _SC || defined _RT
    endif
 #endif
    !
@@ -872,7 +875,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                             TOTAL=n_bands(2)-n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
-#if defined _SC || defined _QED
+#if defined _SC || defined _RT || defined _QED
    !
    ! Lamb is a special case. Collisions can be used also in simple Self-Energy mode.
    !
@@ -891,8 +894,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call PARALLEL_collisions( Xk, COH_collisions )
      call PARALLEL_collisions( Xk, HXC_collisions )
      !
-     nb_mat=(SC_bands(2)-SC_bands(1)+1)**2
-     call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',SC_bands)
+     nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
+     call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',COLL_bands)
      call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
@@ -1172,16 +1175,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !  
    ! Group@k (among BS_nT_grps) ->Group'@p (among BS_nT_grps)
    !
-   if (BS_K_coupling) then
-     call PARALLEL_index(PAR_IND_T_all,    (/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
-&                        MASK=PAR_IND_T_groups%element_1D,NO_EMPTIES=.FALSE.)
-     !
-     call PARALLEL_live_message("(e/h)->(e/h)' Transitions (all)",ENVIRONMENT=ENVIRONMENT,&
-&                               LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&
-&                               TOTAL=BS_nT_grps*BS_nT_grps,NCPU=PAR_COM_T_INDEX%n_CPU)
-     !
-   endif
-   !
    call PARALLEL_index(PAR_IND_T_ordered,(/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
 &                      MASK=PAR_IND_T_groups%element_1D,ORDERED=.TRUE.,NO_EMPTIES=.FALSE.)
    !
@@ -1246,7 +1239,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  contains
    !
-#if defined _SC
+#if defined _SC || defined _RT
    !
    subroutine G_b_to_B_mat(pCOMM,what,nb)
      !

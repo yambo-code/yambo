@@ -45,24 +45,16 @@ subroutine SLK_communicators(INTRA_world,INTER_world,N)
  use parallel_m,    ONLY:MPI_comm,COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_global,&
 &                        PAR_COM_SLK_INDEX_local,PAR_COM_NULL,&
 &                        PAR_COM_WORLD,myid,i_INTER_CHAIN,CREATE_the_COMM
-#if defined _SCALAPACK
- use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
-#endif
-! use com,           ONLY:warning,msg
-! use stderr,        ONLY:intc
  !
  implicit none
  !
  type(MPI_comm) :: INTRA_world,INTER_world
  integer        :: N
  !
- ! Work Space
- ! 
- integer :: i_err
- !
  ! First the simple cases where all (or none) CPU's of the "world" (/= from the MPI world) are used.
  !
  if (N==1.or.N==INTRA_world%n_CPU) then
+   !
    call COMM_copy(INTRA_world ,PAR_COM_SLK)
    call COMM_copy(INTER_world ,PAR_COM_SLK_INDEX_global)
    ! 

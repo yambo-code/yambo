@@ -34,7 +34,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  use BS,            ONLY:BS_block,BS_H_dim
  use com,           ONLY:warning
 #if defined _SCALAPACK
- use SLK_m,         ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
+ use SLK_m,         ONLY:SLK_ORTHO,SLK_matrix_reset
 #endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -185,7 +185,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
      !
      if (INIT) then
        !
-       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, MAT, N )
+       call SLK_matrix_init( SLK_ORTHO, MAT, N )
        !
        if (present(M_bse)) then
          call SLK_matrix_transfer( "fill_the_SLK",  MAT, M_bse=M_bse, M=M )
@@ -197,7 +197,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
      !
      if (idriver==INV) then
        !
-       call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, MAT, N ) 
+       call PARALLEL_inversion( SLK_ORTHO, MAT, N ) 
        !
        if (present(M)) then
          call SLK_matrix_transfer( "transfer_from_the_SLK",  MAT, M=M )
@@ -205,9 +205,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
        !
      else if (idriver==DIAGO) then
        !
-       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, EIGEN_slk, N )
+       call SLK_matrix_init( SLK_ORTHO, EIGEN_slk, N )
        !
-       call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, MAT, EIGEN_slk, N, E_real )
+       call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, MAT, EIGEN_slk, N, E_real )
        !
        if (present(M)) then
          call SLK_matrix_transfer( "transfer_from_the_SLK", EIGEN_slk , M=M )
@@ -215,20 +215,20 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
        !
      else if (idriver==LIN_SYS) then
        !
-       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
+       call SLK_matrix_init( SLK_ORTHO, B_slk, N )
        call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
        !
-       call PARALLEL_lin_system( SLK_ORTHO, SLK_POOL, MAT, B_slk, N, size(B,2), B )
+       call PARALLEL_lin_system( SLK_ORTHO, MAT, B_slk, N, size(B,2), B )
        call SLK_matrix_transfer( "transfer_from_the_SLK",  B_slk, M=B )
        !
      else if (idriver==MAT_MUL) then
        ! 
-       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
-       call SLK_matrix_init( SLK_ORTHO, SLK_POOL, C_slk, N )
+       call SLK_matrix_init( SLK_ORTHO, B_slk, N )
+       call SLK_matrix_init( SLK_ORTHO, C_slk, N )
        call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
        call SLK_matrix_transfer( "fill_the_SLK", C_slk, M=C )
        !
-       call PARALLEL_M_by_M( SLK_ORTHO, SLK_POOL, MAT, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), N , C )
+       call PARALLEL_M_by_M( SLK_ORTHO, MAT, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), N , C )
        call SLK_matrix_transfer( "transfer_from_the_SLK",  C_slk, M=C )
        !
      endif

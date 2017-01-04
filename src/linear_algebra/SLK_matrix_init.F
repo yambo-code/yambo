@@ -28,17 +28,16 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
+subroutine SLK_matrix_init(ORTHO, M_slk, N)
  !
  use pars,           ONLY:SP
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset
+ use SLK_m,          ONLY:ORTHO_group,SLK_matrix,SLK_matrix_reset
  use parallel_m,     ONLY:ncpu
  !
  implicit none
  !
  integer           :: N
  type(ORTHO_group) :: ORTHO
- type(POOL_group)  :: POOL
  type(SLK_matrix)  :: M_slk
  !
  ! Work Space

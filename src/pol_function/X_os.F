@@ -61,6 +61,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E
+ use SLK_m,         ONLY:SLK_matrix
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -74,7 +75,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  type(X_t)            :: X
  type(w_samp)         :: Xw
  integer              :: iq
- complex(SP)          :: Xo(X%ng,X%ng,Xw%n_freqs)
+ type(SLK_matrix)     :: Xo(Xw%n_freqs)
  !
  ! Work Space
  !
@@ -87,11 +88,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
  type(elemental_collision):: Xo_scatt
-
  !
  ! Defaults & Setups
  !===================
- Xo             = cZERO
+ do iw=1,Xw%n_freqs
+   Xo(iw)%blc   = cZERO
+ enddo
  GreenF         = cZERO
  drude_GreenF   = cZERO
  !
@@ -224,7 +226,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! memory estimate and local alloc
  !=================================
- Y_ALLOCATE(Xo_res(X%ng,X%ng))
+ Y_ALLOCATE(Xo_res(Xo(1)%rows(1):Xo(1)%rows(2),Xo(1)%cols(1):Xo(1)%cols(2)))
  Y_MEM(Xo_res)
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo")
@@ -251,7 +253,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #if defined _OPENMP
      !$omp critical
 #endif
-     Xo(1,1,:)=Xo(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
+!     Xo(1,1,:)=Xo(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
 #if defined _OPENMP
      !$omp end critical
 #endif
@@ -288,10 +290,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
        call OPENMP_compute_mutex(ig2,mutexid)
        call omp_set_lock(omp_locks(mutexid))
 #endif
-       call V_by_V_plus_V(ig2,GreenF(iw),Xo_res(:ig2,ig2),Xo(:ig2,ig2,iw))
+!       call V_by_V_plus_V(ig2,GreenF(iw),Xo_res(:ig2,ig2),Xo(:ig2,ig2,iw))
        !
        if (.not.half_X_mat_only) then
-         call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_res(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
+!         call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_res(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
        endif
 #if defined _OPENMP
        call omp_unset_lock(omp_locks(mutexid))
@@ -328,7 +330,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
+!   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
  enddo
  !
 #if defined _TIMING
@@ -349,7 +351,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
-         Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
+!         Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
        enddo
      enddo
 #if defined _OPENMP
@@ -363,7 +365,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
-         Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
+!         Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
        enddo
      enddo
 #if defined _OPENMP

@@ -30,8 +30,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
-&                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys
+ use SLK_m,         ONLY:SLK_matrix_reset
+ use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
+&                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys,X_slk
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -55,7 +56,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,iq_mem,X_range(2),X_n_freqs,io_X_done(nqibz)
+ integer              :: iq,Xdb,i_err,iq_mem,X_range(2),X_n_freqs,io_X_done(nqibz),i_x
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
@@ -174,10 +175,15 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
- if (.not.allocated(X_mat)) then
-   if (     io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
-   if (.not.io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
+ if (.not.allocated(X_slk)) then
+   !
+   call PARALLEL_X_distribute( X )
+   !
+   !if (     io_RESPONSE) allocate(X_slk(Xw%n_freqs))
+   !if (.not.io_RESPONSE) allocate(X_slk(X_n_freqs*PAR_nq))
+   !
  endif
+ stop
  !
  ! WF distribution 
  !=================
@@ -224,11 +230,11 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    X_range               =(/1,Xw%n_freqs/)
    if (.not.io_RESPONSE) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
    !
-   call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
+   call X_os(X_slk(X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
-   if (X%whoami/=1) call X_s(iq,X,Xw,X_range)
+!   if (X%whoami/=1) call X_s(iq,X,Xw,X_range)
    !
    call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
@@ -239,7 +245,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (iq==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
    if (iq> 1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
-   i_err=io_X(X,Xw,Xdb)
+!   i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
@@ -258,7 +264,12 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! CLEAN (2)
  !
- if (io_RESPONSE) call X_alloc('X')
+ if (io_RESPONSE) then
+   do i_x=1,size(X_slk)
+     call SLK_matrix_reset(X_slk(i_x))
+   enddo
+   deallocate(X_slk)
+ endif
  !
  call X_alloc('DIP_projected')
 #if defined _PL

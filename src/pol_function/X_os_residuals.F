@@ -207,9 +207,9 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      !$omp parallel do default(shared), private(ig1,ig2)
 #endif
      do ig2=1,X%ng
-     do ig1=ig_start,ig2
-       Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
-     enddo
+       do ig1=ig_start,ig2
+         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
+       enddo
      enddo
 #if defined _OPENMP
      !$omp end parallel do 

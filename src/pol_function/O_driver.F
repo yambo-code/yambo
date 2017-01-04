@@ -319,11 +319,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    Y_FREE(Epsilon_ii)
    Y_FREE(EEL)
+   Y_FREE(Alpha)
    Y_FREE(Epsilon_ii)
-   !
-   call FREQUENCIES_reset(wv,"all")
-   !
    Y_FREE(X_fxc)
+   call FREQUENCIES_reset(wv,"all")
    !
  enddo
  !

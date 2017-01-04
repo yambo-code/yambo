@@ -131,6 +131,16 @@ module SLK_m
      POOL%INTRA_comm  = 0
    end subroutine
    !
+   subroutine SLK_POOL_init(POOL,COMM)
+     use parallel_m, ONLY:myid
+     type(POOL_group) :: POOL
+     type(MPI_comm)   :: COMM
+     POOL%CPU_id      = COMM%CPU_id
+     POOL%n_CPU       = COMM%n_CPU
+     POOL%ID          = myid/POOL%n_CPU
+     POOL%INTRA_comm  = COMM%COMM
+   end subroutine
+   !
    subroutine SLK_ORTHO_GROUP_clean_up(ORTHO)
      type(ORTHO_group) :: ORTHO
      ORTHO%grid(2)       = 1        

@@ -77,12 +77,12 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
        !
        select case(ENVIRONMENT)
          case("Response_G_space_Zero_Momentum")
-           if (any(trim(PARALLEL_CPU_role(i_c))==(/"k","c","v"/))) then
+           if (any(trim(PARALLEL_CPU_role(i_c))==(/"k","c","v","g"/))) then
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
            endif
          case("Response_G_space_Finite_Momentum","Response_G_space") 
-           if (any(trim(PARALLEL_CPU_role(i_c))==(/"q","k","c","v"/))) then
+           if (any(trim(PARALLEL_CPU_role(i_c))==(/"q","k","c","v","g"/))) then
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
            endif
@@ -94,13 +94,13 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
            endif
          case("Self_Energy") 
            if (trim(PARALLEL_CPU_role(i_c))=="q".or.trim(PARALLEL_CPU_role(i_c))=="qp".or.&
-&              trim(PARALLEL_CPU_role(i_c))=="b") then
+&              trim(PARALLEL_CPU_role(i_c))=="b".or.trim(PARALLEL_CPU_role(i_c))=="g") then
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
            endif
          case("Response_T_space") 
            if (trim(PARALLEL_CPU_role(i_c))=="k".or.trim(PARALLEL_CPU_role(i_c))=="eh".or.&
-&              trim(PARALLEL_CPU_role(i_c))=="t") then
+&              trim(PARALLEL_CPU_role(i_c))=="t".or.trim(PARALLEL_CPU_role(i_c))=="g") then
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
            endif

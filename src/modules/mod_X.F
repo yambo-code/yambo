@@ -25,6 +25,7 @@ module X_m
  !
  use pars,     ONLY:SP,lchlen,schlen
  use units,    ONLY:HA2EV
+ use SLK_m,    ONLY:SLK_matrix
  !
 #include <memory.h>
  !
@@ -117,6 +118,12 @@ module X_m
  integer          :: n_X_descs
  character(lchlen):: X_description(100)
  !
+ ! PARALLEL distribution
+ !
+ type(SLK_matrix), allocatable :: X_slk(:)
+ integer                       :: Xo_rows(2)
+ integer                       :: Xo_cols(2)
+ !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
    integer    :: ng
@@ -160,6 +167,11 @@ module X_m
      !
      if (present(d)) then
        select case(what)
+       case('X_parallel')
+         if (allocated(X_mat)) return
+         Y_ALLOCATE(X_mat(d(1):d(2),d(3):d(4),d(5)))
+         Y_MEM(X_mat)
+         X_mat=cZERO
        case('X')
          if (allocated(X_mat)) return
          Y_ALLOCATE(X_mat(d(1),d(2),d(3)))

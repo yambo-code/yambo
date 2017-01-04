@@ -9,4 +9,4 @@ objs =  check_for_a_redundant_IO.o  PARALLEL_defaults.o PARALLEL_live_message.o 
         PARALLEL_structure.o PARALLEL_build_up_child_INTER_chains.o \
         PARALLEL_Transitions_grouping.o \
         PARALLEL_global_indexes.o PARALLEL_index.o PARALLEL_WF_distribute.o \
-        PARALLEL_Haydock_VEC_COMMs.o 
+        PARALLEL_Haydock_VEC_COMMs.o PARALLEL_X_distribute.o

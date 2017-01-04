@@ -125,16 +125,6 @@ module parallel_m
    integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
- !      if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
- !      if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
- !      if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
- !      if (i_s==4) possible_fields='(k,eh,t)'  ! BS
- !      if (i_s==5) possible_fields='(q,qp,b)'  ! SE
- !      if (i_s==6) possible_fields='(k,b,q,qp)'! RT
-#if defined _SCALAPACK
- !      if (i_s==7) possible_fields='  '        ! SLK test
-#endif
- !
  integer,parameter   :: n_CPU_str_max=20
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
  !
@@ -289,8 +279,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
  !
  ! ... RL vectors
- integer             :: PAR_nRL
- integer,allocatable :: PAR_RL_index(:)
+ type(MPI_comm),SAVE :: PAR_COM_RL_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_RL_A2A
  !
  ! ... QP
  type(MPI_comm),SAVE :: PAR_COM_QP_INDEX
@@ -345,6 +335,8 @@ module parallel_m
  !
  ! ... and derived variables
  !==========================
+ integer            :: PAR_nRL
+ integer,allocatable:: PAR_RL_index(:)
  integer            :: PAR_nPlasma
  integer,allocatable:: PAR_PLASMA_index(:)
  integer            :: PAR_nQP

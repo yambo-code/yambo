@@ -34,6 +34,8 @@ module pseudo
  integer :: pp_n_l_max
  integer :: pp_n_l_times_proj_max
  integer :: pp_kbv_dim
+ integer :: pp_kbv_dim_yambo
+ integer,  allocatable:: pp_kbv_table(:)
  integer,  allocatable:: pp_table(:,:,:)
  integer,  allocatable:: pp_n_l_comp(:)
  real(SP), allocatable:: pp_factor(:,:,:,:,:)
@@ -61,9 +63,9 @@ module pseudo
      call mem_est("pp_kbs pp_kb pp_kbd",&
 &                 (/size(pp_kbs),size(pp_kb),size(pp_kbd)/),&
 &                 elements_kind=(/SP,SP,SP/),errors=alloc_err)
-     pp_kbs =0.
-     pp_kb  =0.
-     pp_kbd =0.
+     pp_kbs =0._SP
+     pp_kb  =0._SP
+     pp_kbd =0._SP
    end subroutine
    !
    ! PWscf
@@ -77,9 +79,9 @@ module pseudo
      call mem_est("pp_kbs pp_kb pp_kbd",&
 &                 (/size(pp_kbs),size(pp_kb),size(pp_kbd)/),&
 &                 elements_kind=(/SP,SP,SP/),errors=alloc_err)
-     pp_kbs =0.
-     pp_kb  =0.
-     pp_kbd =0.
+     pp_kbs =0._SP
+     pp_kb  =0._SP
+     pp_kbd =0._SP
    end subroutine
    !
    subroutine PP_free()

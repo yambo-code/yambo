@@ -34,13 +34,13 @@ subroutine Dipole_kb_pwscf_comp(ik,Xk,kbv)
  use wave_func,     ONLY:wf_ng,wf_igk,wf_nc_k
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
  use pseudo,        ONLY:pp_n_l_max,pp_n_l_times_proj_max,pp_table, &
-&                        pp_kbs,pp_kb,pp_kbd,pp_kbv_dim,   &
-&                        pp_factor
+&                        pp_kbs,pp_kb,pp_kbd,pp_kbv_dim,pp_kbv_dim_yambo,   &
+&                        pp_factor,pp_kbv_table
  !
  implicit none
  !
  type(bz_samp) :: Xk
- complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4,n_spinor)
+ complex(SP)   :: kbv(wf_ng,pp_kbv_dim_yambo,4,n_spinor)
  integer       :: ik,i_spinor
  ! 
  ! Work Space
@@ -49,7 +49,7 @@ subroutine Dipole_kb_pwscf_comp(ik,Xk,kbv)
  complex(SP) :: kb_Ylm(4)
  real(SP)    :: Ygrad(2,3)
  !
- integer     :: ic,ig,i1,is,ia
+ integer     :: ic,ig,i1,i2,is,ia
  integer     :: im,il,i_pp,j2p1
  complex(SP) :: e_iGR
  real(SP)    :: KpG_cc(3),G_cc(3)
@@ -86,8 +86,12 @@ subroutine Dipole_kb_pwscf_comp(ik,Xk,kbv)
              kb_Ylm=conjg(kb_Ylm)                                              ! not in abinit
              !                                                               
              i1=i1+1
-             kbv(ig,i1,1  ,i_spinor)=kb_Ylm(1)*pp_kb(ic,is,i_pp,1)*pp_kbs(is,i_pp)*e_iGR*sf
-             kbv(ig,i1,2:4,i_spinor)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ic,is,i_pp,1) +  &
+             i2=pp_kbv_table(i1)
+             !
+             if(i2==0) cycle
+             !
+             kbv(ig,i2,1  ,i_spinor)=kb_Ylm(1)*pp_kb(ic,is,i_pp,1)*pp_kbs(is,i_pp)*e_iGR*sf
+             kbv(ig,i2,2:4,i_spinor)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ic,is,i_pp,1) +  &
 &                                     kb_Ylm(2:4)*pp_kb(ic,is,i_pp,1) )*e_iGR*sf
              !
            enddo

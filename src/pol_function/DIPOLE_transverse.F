@@ -34,7 +34,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
- use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim,pp_factor
+ use pseudo,              ONLY:PP_free,pp_table,pp_kbv_table,Vnl,pp_n_l_comp,pp_kbv_dim_yambo,pp_factor
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,P_square,DIP_P,l_X_terminator,&
 &                              Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
@@ -84,8 +84,22 @@ subroutine Dipole_transverse(Xen,Xk,X)
  io_KB_pwscf_err = io_err(2)
  io_Vnl_err      = io_err(3)
  !
+ ! Define pp_kbv_dim_yambo and pp_kbv_table
+ !
+ if (io_KB_pwscf_err==0) then
+   call io_control(ACTION=RD,SEC=(/2/),ID=ID)
+   io_KB_pwscf_err=io_KB_pwscf(ID)
+   call DIPOLE_kb_pwscf_def_dim()
+ endif
+ !
+ if (io_KB_abinit_err==0) then
+   call io_control(ACTION=RD,SEC=(/2/),ID=ID)
+   io_KB_abinit_err=io_KB_abinit(ID)
+   call DIPOLE_kb_abinit_def_dim()
+ endif
+ !
  if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-   allocate(kbv(wf_ng,pp_kbv_dim,4,n_spinor),stat=alloc_err)
+   allocate(kbv(wf_ng,pp_kbv_dim_yambo,4,n_spinor),stat=alloc_err)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  endif
  !
@@ -139,13 +153,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ! 
    ! [Vnl,r]
    !
-   if (io_KB_pwscf_err==0) then
+   if (io_KB_pwscf_err==0.and.ik>1) then
      if (ik< Xk%nibz ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      io_KB_pwscf_err=io_KB_pwscf(ID)
    endif
    !
-   if (io_KB_abinit_err==0) then
+   if (io_KB_abinit_err==0.and.ik>1) then
      if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      io_KB_abinit_err=io_KB_abinit(ID)
@@ -275,6 +289,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
    if (allocated(kbv))          deallocate(kbv)
    if (allocated(pp_n_l_comp))  deallocate(pp_n_l_comp)
    if (allocated(pp_table))     deallocate(pp_table)
+   if (allocated(pp_kbv_table)) deallocate(pp_kbv_table)
    if (allocated(pp_factor))    deallocate(pp_factor)
    call PP_free()
    call mem_est("KBV") 

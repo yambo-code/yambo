@@ -99,7 +99,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  endif
  !
  if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-   allocate(kbv(wf_ng,pp_kbv_dim_yambo,4,n_spinor),stat=alloc_err)
+   allocate(kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo),stat=alloc_err)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  endif
  !
@@ -208,8 +208,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! Evaluate <ivfft|[x,Vnl]|icfft>
          !================================
          if (io_Vnl_err==0) rho(:3) = rho(:3) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv)
+         if (io_KB_abinit_err==0 .or. io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv)
          !
          !
          ! define a different thr for val-val transitions

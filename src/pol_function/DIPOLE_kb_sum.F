@@ -36,37 +36,38 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  implicit none
  !
  integer    :: ivfft(n_spinor),icfft(n_spinor)
- complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim_yambo,4,n_spinor)
+ complex(SP):: rho(3),kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
  ! 
  ! Work Space
  !
- integer     :: i1,i2,i_spinor,j_spinor
- complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3,pp_kbv_dim_yambo,n_spinor)
+ integer     :: i1,i2,i_spinor
+ complex(SP) :: XX(2,n_spinor,4,pp_kbv_dim_yambo),drho(n_spinor,3,pp_kbv_dim_yambo)
  !
+ XX=cZERO
  drho=cZERO
  !
- !$omp parallel do default(shared), private(i_spinor,i1,i2,Cv,Cc,Vv,Vc), collapse(2)
- do i_spinor=1,n_spinor
-   !
-   do i1=1,pp_kbv_dim_yambo
-     !
-     Cv(i_spinor)=V_dot_V(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1,i_spinor))
-     Cc(i_spinor)=V_dot_V(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1,i_spinor))
-     !
-     do i2=1,3
-       !
-       Vv(i2,i_spinor)=V_dot_V(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1+i2,i_spinor))
-       Vc(i2,i_spinor)=V_dot_V(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1+i2,i_spinor))
-       !
-       drho(i2,i1,i_spinor)=conjg(Cv(i_spinor))*Vc(i2,i_spinor)+conjg(Vv(i2,i_spinor))*Cc(i_spinor)
-       !
+ !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
+ do i1=1,pp_kbv_dim_yambo
+   do i2=1,4
+     do i_spinor=1,n_spinor
+       XX(1,i_spinor,i2,i1)=V_dot_V(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i_spinor,i2,i1))
+       XX(2,i_spinor,i2,i1)=V_dot_V(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i_spinor,i2,i1))
      enddo
-     !
    enddo
  enddo
  !$omp end parallel do
  !
- forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(i1,:,:))
+ !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
+ do i1=1,pp_kbv_dim_yambo
+   do i2=1,3
+     do i_spinor=1,n_spinor
+       drho(i_spinor,i2,i1)=conjg(XX(1,i_spinor,1,i1))*XX(2,i_spinor,i2+1,i1)+conjg(XX(1,i_spinor,i2+1,i1))*XX(2,i_spinor,1,i1)
+     enddo
+   enddo
+ enddo
+ !$omp end parallel do
+ !
+ forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
  !
 end subroutine
 

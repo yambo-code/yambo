@@ -29,7 +29,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
  use X_m,           ONLY:X_t
  use wave_func,     ONLY:WF,wf_ng
  use FFT_m,         ONLY:fft_size
- use pseudo,        ONLY:pp_kbv_dim
+ use pseudo,        ONLY:pp_kbv_dim_yambo
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
  use hamiltonian,   ONLY:H_ref_bands,Ho
@@ -63,16 +63,30 @@ subroutine MAG_H_pseudo(Xk,Xen)
  !
  io_KB_abinit_err= io_err(1)
  io_KB_pwscf_err = io_err(2)
- io_Vnl_err     = io_err(3)
+ io_Vnl_err      = io_err(3)
  !
  if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0) return
  !
+ ! Define pp_kbv_dim_yambo and pp_kbv_table
+ !
+ if (io_KB_pwscf_err==0) then
+   call io_control(ACTION=RD,SEC=(/2/),ID=ID)
+   io_KB_pwscf_err=io_KB_pwscf(ID)
+   call DIPOLE_kb_pwscf_def_dim()
+ endif
+ !
+ if (io_KB_abinit_err==0) then
+   call io_control(ACTION=RD,SEC=(/2/),ID=ID)
+   io_KB_abinit_err=io_KB_abinit(ID)
+   call DIPOLE_kb_abinit_def_dim()
+ endif
+ !
  call fft_setup(0,1,.true.)  ! fft_size
  !
- allocate(kbv(wf_ng,pp_kbv_dim,4,n_spinor),stat=alloc_err)
+ allocate(kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo),stat=alloc_err)
  call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  !
- allocate(new_pp(fft_size,pp_kbv_dim,n_spinor),old_pp(fft_size,pp_kbv_dim,n_spinor))
+ allocate(new_pp(fft_size,n_spinor,pp_kbv_dim_yambo),old_pp(fft_size,n_spinor,pp_kbv_dim_yambo))
  call mem_est('new_pp old_pp',(/size(new_pp),size(old_pp)/))
  !
  allocate(kbv_ks_space(H_ref_bands(1):H_ref_bands(2),2))
@@ -86,14 +100,14 @@ subroutine MAG_H_pseudo(Xk,Xen)
    !
    call WF_load(WF,0,1,(/1,H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
    !
-   if (io_KB_pwscf_err==0) then
-     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+   if (io_KB_pwscf_err==0.and.ik>1) then
+     if (ik <Xk%nibz ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      io_KB_pwscf_err=io_KB_pwscf(ID)
    endif
    !
-   if (io_KB_abinit_err==0) then
-     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+   if (io_KB_abinit_err==0.and.ik>1) then
+     if (ik <Xk%nibz ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      io_KB_abinit_err=io_KB_abinit(ID)
    endif
@@ -107,7 +121,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
      ! 
      call MAG_pseudo_nl(kbv)
      !
-     do i1=1,pp_kbv_dim
+     do i1=1,pp_kbv_dim_yambo
        !     
        kbv_ks_space=cZERO
        !
@@ -118,8 +132,8 @@ subroutine MAG_H_pseudo(Xk,Xen)
            i_spin=i_sp_pol+i_spinor-1
            iwf(i_spinor)=WF%index(ib,ik,i_spin)
            !
-           kbv_ks_space(ib,1)=kbv_ks_space(ib,1)+V_dot_V(fft_size,WF%c(:,iwf(i_spinor)),new_pp(:,i1,i_spinor))
-           kbv_ks_space(ib,2)=kbv_ks_space(ib,2)+V_dot_V(fft_size,WF%c(:,iwf(i_spinor)),old_pp(:,i1,i_spinor))
+           kbv_ks_space(ib,1)=kbv_ks_space(ib,1)+V_dot_V(fft_size,WF%c(:,iwf(i_spinor)),new_pp(:,i_spinor,i1))
+           kbv_ks_space(ib,2)=kbv_ks_space(ib,2)+V_dot_V(fft_size,WF%c(:,iwf(i_spinor)),old_pp(:,i_spinor,i1))
            !
          enddo
          !

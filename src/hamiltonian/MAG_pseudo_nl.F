@@ -28,7 +28,7 @@ subroutine MAG_pseudo_nl(kbv)
  use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
- use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
+ use pseudo,        ONLY:pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_table
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc
  use com,           ONLY:warning
  use magnetic,      ONLY:Bz,new_pp,old_pp,phase_trick,MAG_radius,n_loops
@@ -37,7 +37,7 @@ subroutine MAG_pseudo_nl(kbv)
  !
  ! Work Space
  !
- complex(SP)             :: kbv(wf_ng,pp_kbv_dim,4,n_spinor)
+ complex(SP)             :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
  complex(DP)             :: kbv_DP(fft_size)
  complex(SP)             :: gauge_factor(fft_size)
  real(SP)                :: int_A_dl(fft_size),r_atom_pos(fft_size),r_x(fft_size)
@@ -77,21 +77,23 @@ subroutine MAG_pseudo_nl(kbv)
        gauge_factor(:)=gauge_factor(:)*cmplx(  cos_delta_phi(:) , sin_delta_phi(:)   )**Phi_over_Phio
      endif
      !
-     do i_spinor=1,n_spinor
-       ! 
-       do i_pp = 1, pp_n_l_times_proj_max
-         il = pp_table(1,is,i_pp)
-         pp_spin = pp_table(3,is,i_pp)   ! neglect the so-term for abinit KB
-         if(pp_spin>1) cycle
+     do i_pp = 1, pp_n_l_times_proj_max
+       il = pp_table(1,is,i_pp)
+       pp_spin = pp_table(3,is,i_pp)   ! neglect the so-term for abinit KB
+       if(pp_spin>1) cycle
+       !
+       do im = 1,2*(il-1)+1
          !
-         do im = 1,2*(il-1)+1
-           !
-           i1=i1+2-i_spinor
+         i1=i1+1
+         i2=pp_kbv_table(i1)
+         !
+         if(i2==0) cycle
+         !
+         do i_spinor=1,n_spinor
            !
            kbv_DP=(0._DP,0._DP)
-           kbv_DP(fft_g_table(1:wf_ng,1))=conjg(kbv(1:wf_ng,i1,1,i_spinor))*fft_norm
+           kbv_DP(fft_g_table(1:wf_ng,1))=conjg(kbv(1:wf_ng,i_spinor,1,i2))*fft_norm
            !
-           ! Here I need to fourier tranform kbv(G,i1,1)
 #if defined _FFTW
            fftw_plan = 0
            call fft_3d(kbv_DP,fft_dim,1,fftw_plan)
@@ -99,12 +101,13 @@ subroutine MAG_pseudo_nl(kbv)
            call fft_3d(kbv_DP,fft_dim,1)
 #endif
            !
-           old_pp(:,i1,i_spinor)=conjg(kbv_DP(:))
-           new_pp(:,i1,i_spinor)=conjg(kbv_DP(:))*gauge_factor(:)
+           old_pp(:,i_spinor,i2)=conjg(kbv_DP(:))
+           new_pp(:,i_spinor,i2)=conjg(kbv_DP(:))*gauge_factor(:)
            !       
-         enddo   ! im
-       enddo   ! i_pp
-     enddo   ! i_spinor
+         enddo   ! spinor
+         !
+       enddo   ! i_m
+     enddo   ! i_pp
    enddo   ! ia
  enddo  ! is
  !

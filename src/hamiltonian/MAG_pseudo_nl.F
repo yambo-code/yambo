@@ -28,7 +28,7 @@ subroutine MAG_pseudo_nl(kbv)
  use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
- use pseudo,        ONLY:pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_table
+ use pseudo,        ONLY:pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_table,pp_kbv_table
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc
  use com,           ONLY:warning
  use magnetic,      ONLY:Bz,new_pp,old_pp,phase_trick,MAG_radius,n_loops
@@ -45,7 +45,8 @@ subroutine MAG_pseudo_nl(kbv)
  real(SP)                :: Phi_over_Phio
  !
  ! Dummies
- integer                 :: i1,is,ia,il,im,i_pp,pp_spin,i_spinor
+ !
+ integer                 :: i1,i2,is,ia,il,im,i_pp,pp_spin,i_spinor
  !
  if (n_spinor>1) call warning('new kb implementation to be tested for the case n_spinor>1')
  !

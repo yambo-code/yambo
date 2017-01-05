@@ -33,7 +33,7 @@ module memory
  integer, parameter  :: N_MEM_max      = 10000
  integer, parameter  :: N_MEM_SAVE_max = 1000
  integer, parameter  :: MEM_jump_treshold   = 200000 ! Kb
- integer, parameter  :: MEM_treshold        = 100000 ! Kb
+ integer, parameter  :: MEM_treshold        = 1000 ! Kb
  integer, parameter  :: MEM_SAVE_treshold   = 5000  ! Kb
  !
  integer :: N_MEM_SAVE_elements      = 0

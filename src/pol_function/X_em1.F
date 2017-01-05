@@ -30,9 +30,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use SLK_m,         ONLY:SLK_matrix_reset
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
-&                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys,X_slk
+&                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys,Xo_cols,&
+&                        Xo_rows,X_mat,Xo_lower_triangle
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -56,7 +56,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,iq_mem,X_range(2),X_n_freqs,io_X_done(nqibz),i_x
+ integer              :: iq,Xdb,i_err,iq_mem,X_range(2),X_n_freqs,io_X_done(nqibz)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
@@ -175,15 +175,18 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
- if (.not.allocated(X_slk)) then
+ !
+ if (.not.allocated(X_mat)) then
    !
-   call PARALLEL_X_distribute( X )
+   call X_half_mat_check(Xen,Xk,Xw)
    !
-   !if (     io_RESPONSE) allocate(X_slk(Xw%n_freqs))
-   !if (.not.io_RESPONSE) allocate(X_slk(X_n_freqs*PAR_nq))
+   if (     io_RESPONSE) then
+     call PARALLEL_X_distribute( X , Xw%n_freqs )
+   else
+     call PARALLEL_X_distribute( X , Xw%n_freqs*PAR_nq )
+   endif
    !
  endif
- stop
  !
  ! WF distribution 
  !=================
@@ -230,7 +233,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    X_range               =(/1,Xw%n_freqs/)
    if (.not.io_RESPONSE) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
    !
-   call X_os(X_slk(X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
+   call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
+ stop
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
@@ -265,10 +269,10 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! CLEAN (2)
  !
  if (io_RESPONSE) then
-   do i_x=1,size(X_slk)
-     call SLK_matrix_reset(X_slk(i_x))
-   enddo
-   deallocate(X_slk)
+   Y_FREE_P(Xo_lower_triangle)
+   Y_FREE(X_mat)
+   Y_FREE(Xo_rows)
+   Y_FREE(Xo_cols)
  endif
  !
  call X_alloc('DIP_projected')

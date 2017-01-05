@@ -35,8 +35,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,&
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels,X_mat,Xo_lower_triangle,Xo_rows,Xo_cols
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_DIPOLES
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -138,7 +138,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! X_mat allocation
    !
-   call X_alloc('X',(/X%ng,X%ng,wv%n_freqs/))
+   if (.not.allocated(X_mat)) then
+     call PARALLEL_X_distribute( X , wv%n_freqs )
+   endif
    !
    ! Frequencies (AFTER TDDFT SETUP!)
    !
@@ -219,7 +221,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      Epsilon_ii(:,2)=Epsilon_ii(:,1)
    else
      call X_s(iq,X,wv,(/1,wv%n_freqs/))
-     !
      Epsilon_ii(:,2)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
    endif
    !
@@ -315,8 +316,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! CLEAN (each q)
    !
-   call X_alloc('X')
-   !
    Y_FREE(Epsilon_ii)
    Y_FREE(EEL)
    Y_FREE(Alpha)
@@ -328,6 +327,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  ! CLEAN
  !
+ Y_FREE_P(Xo_lower_triangle)
+ Y_FREE(X_mat)
+ Y_FREE(Xo_rows)
+ Y_FREE(Xo_cols)
  call X_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait

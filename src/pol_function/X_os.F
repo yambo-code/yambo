@@ -46,7 +46,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,myid
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,myid,PAR_COM_RL_INDEX
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
 &                        n_threads_DIP,n_outthr,n_innthr,OPENMP_locks_reset,n_threads_FFT
 #if defined _OPENMP
@@ -54,14 +54,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
- use D_lattice,     ONLY:i_space_inv
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
-&                        l_X_terminator,X_terminator_E,X_term_E
- use SLK_m,         ONLY:SLK_matrix
+&                        self_detect_E_range,UPPER_X_mat_only,use_X_DbGd,&
+&                        l_X_terminator,X_terminator_E,X_term_E,Xo_my_rows,Xo_my_cols,Xo_lower_triangle
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -75,13 +73,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  type(X_t)            :: X
  type(w_samp)         :: Xw
  integer              :: iq
- type(SLK_matrix)     :: Xo(Xw%n_freqs)
+ complex(SP)          :: Xo(Xo_my_rows(1):Xo_my_rows(2),Xo_my_cols(1):Xo_my_cols(2),Xw%n_freqs)
  !
  ! Work Space
  !
  character(schlen)        :: live_t_string
- integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg
- integer                  :: mutexid,ngrho
+ integer                  :: ig2,iw,n_poles,i_cg,i_bg,mutexid,ngrho,X_rows(2)
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
@@ -91,9 +88,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Defaults & Setups
  !===================
- do iw=1,Xw%n_freqs
-   Xo(iw)%blc   = cZERO
- enddo
+ Xo             = cZERO
  GreenF         = cZERO
  drude_GreenF   = cZERO
  !
@@ -182,11 +177,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
- call WF_spatial_inversion(Xen,Xk)
- !
- half_X_mat_only=i_space_inv==1
- if (.not.half_X_mat_only) half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
- if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
+ if (UPPER_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
  ! omp settings and workspace
  !=================================
@@ -226,10 +217,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! memory estimate and local alloc
  !=================================
- Y_ALLOCATE(Xo_res(Xo(1)%rows(1):Xo(1)%rows(2),Xo(1)%cols(1):Xo(1)%cols(2)))
+ Y_ALLOCATE(Xo_res(Xo_my_rows(1):Xo_my_rows(2),Xo_my_cols(1):Xo_my_cols(2)))
  Y_MEM(Xo_res)
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
- call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo")
+ call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
  !
  ! MAIN LOOP
  !===========
@@ -285,15 +276,19 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !===========================================================
    do iw=1,Xw%n_freqs
      !
-     do ig2=1,X%ng
+     do ig2=Xo_my_cols(1),Xo_my_cols(2)
 #if defined _OPENMP
        call OPENMP_compute_mutex(ig2,mutexid)
        call omp_set_lock(omp_locks(mutexid))
 #endif
-!       call V_by_V_plus_V(ig2,GreenF(iw),Xo_res(:ig2,ig2),Xo(:ig2,ig2,iw))
        !
-       if (.not.half_X_mat_only) then
-!         call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_res(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
+       X_rows=(/Xo_my_rows(1),min(Xo_my_rows(2),ig2)/)
+       !
+       call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),Xo_res(X_rows(1):X_rows(2),ig2),Xo(X_rows(1):X_rows(2),ig2,iw))
+       !
+       if (.not.UPPER_X_mat_only) then
+         call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),&
+&                           conjg(Xo_res(X_rows(1):X_rows(2),ig2)),Xo_lower_triangle(ig2,X_rows(1):X_rows(2),iw))
        endif
 #if defined _OPENMP
        call omp_unset_lock(omp_locks(mutexid))
@@ -330,53 +325,15 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-!   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
+   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
+   if (PAR_COM_RL_INDEX%n_CPU>1) then
+     call PP_redux_wait(Xo_lower_triangle(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
+   endif
  enddo
  !
 #if defined _TIMING
  call timing('Xo (REDUX)',OPR='stop')
 #endif
- !
- ! Symmetrize Xo when only half has been avaluated
- !=================================================
- !
- if (half_X_mat_only) then
-   !
-#if defined _OPENMP
-   !$omp parallel default(shared), private(ig2,ig1)
-#endif
-   if (i_space_inv==0) then
-#if defined _OPENMP
-     !$omp do
-#endif
-     do ig2=1,X%ng
-       do ig1=ig2+1,X%ng
-!         Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
-       enddo
-     enddo
-#if defined _OPENMP
-     !$omp end do
-#endif
-   endif
-   !
-   if (i_space_inv==1) then
-#if defined _OPENMP
-     !$omp do
-#endif
-     do ig2=1,X%ng
-       do ig1=ig2+1,X%ng
-!         Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
-       enddo
-     enddo
-#if defined _OPENMP
-     !$omp end do
-#endif
-   endif
-#if defined _OPENMP
-   !$omp end parallel
-#endif
-   !
- endif
  !
  current_iq=iq
  n_threads_FFT=0

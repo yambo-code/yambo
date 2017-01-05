@@ -95,11 +95,11 @@ module X_m
  real(SP),    allocatable :: X_Ein_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
- complex(SP), allocatable :: X_mat(:,:,:)
+ complex(SP), allocatable, target :: X_mat(:,:,:)
  integer :: current_iq
  integer :: iw_ref
  integer :: X_DbGd_nkpts
- logical :: half_X_mat_only
+ logical :: UPPER_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
  real(SP):: X_terminator_E
@@ -121,8 +121,11 @@ module X_m
  ! PARALLEL distribution
  !
  type(SLK_matrix), allocatable :: X_slk(:)
- integer                       :: Xo_rows(2)
- integer                       :: Xo_cols(2)
+ complex(SP),          pointer :: Xo_lower_triangle(:,:,:) => null()
+ integer                       :: Xo_my_rows(2)
+ integer                       :: Xo_my_cols(2)
+ integer         , allocatable :: Xo_rows(:,:)
+ integer         , allocatable :: Xo_cols(:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp

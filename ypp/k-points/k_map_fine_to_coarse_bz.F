@@ -145,12 +145,12 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
  if(allocated(TMP_table_duplicate)) deallocate(TMP_table_duplicate)
  !
  ! DEBUG <
- do ikbz=1,Xk%nbz
-   write(1100,*) Xk%ptbz(ikbz,:)
-   do ikbz_FineGd=Xk%bz_DbGd_map(1,ikbz),Xk%bz_DbGd_map(2,ikbz)
-     write(1100+ikbz,*) Xk%ptbz_fineGd(ikbz_FineGd,:)
-   enddo
- enddo
+ !do ikbz=1,Xk%nbz
+ !  write(1100,*) Xk%ptbz(ikbz,:)
+ !  do ikbz_FineGd=Xk%bz_DbGd_map(1,ikbz),Xk%bz_DbGd_map(2,ikbz)
+ !    write(1100+ikbz,*) Xk%ptbz_fineGd(ikbz_FineGd,:)
+ !  enddo
+ !enddo
  ! DEBUG >
  !
 end subroutine

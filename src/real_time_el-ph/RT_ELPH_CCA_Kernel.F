@@ -87,8 +87,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,k,ph_freq,Gkkp,l_skip_ABS)
        if(RT_E_and_k%En(i_np_shift,ik_m_q)<RT_eh_en(1) .or. RT_E_and_k%En(i_np_shift,ik_m_q)>RT_eh_en(2)) cycle
        if(RT_E_and_k%En(i_n_shift ,ik    )<RT_eh_en(1) .or. RT_E_and_k%En(i_n_shift ,ik    )>RT_eh_en(2)) cycle
        !
-       DELTA_E=RT_E_and_k%En(i_np_shift,ik)-RT_E_and_k%En(i_n_shift,ik_m_q)
-       DELTA_W=RT_E_and_k%W(i_np_shift,ik) +RT_E_and_k%W(i_n_shift,ik_m_q)
+       DELTA_E=RT_E_and_k%En(i_n_shift,ik)-RT_E_and_k%En(i_np_shift,ik_m_q)
+       DELTA_W=RT_E_and_k%W(i_n_shift,ik) +RT_E_and_k%W(i_np_shift,ik_m_q)
        !
      endif
      !

@@ -316,7 +316,6 @@ module R_lattice
        allocate(BZo%nbz_mapped(BZo%nbz))
        BZo%nbz_mapped=BZi%nbz_mapped
      endif
-     write(*,*) associated( BZi%ibz_DbGd_map ),BZo%nibz
      if (associated( BZi%ibz_DbGd_map )) then
        allocate(BZo%ibz_DbGd_map(2,BZo%nibz))
        BZo%ibz_DbGd_map=BZi%ibz_DbGd_map

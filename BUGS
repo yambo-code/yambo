@@ -17,4 +17,11 @@ if I restart I get
 
 to be checked and verified
 
+======
+After merge of 01/2017:
+
 3) In SC object ELECTRICAL?
+
+4) collinear spin pol does not work anymore in NL 
+
+5) damping substituted with FWHM for ext_field

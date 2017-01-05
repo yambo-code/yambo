@@ -59,7 +59,7 @@ module it_m
  integer, parameter :: maxi1vars=100
  integer, parameter :: maxi2vars=50
  integer, parameter :: maxi3vars=50
- integer, parameter :: maxr1vars=100
+ integer, parameter :: maxr1vars=150
  integer, parameter :: maxr2vars=50
  integer, parameter :: maxr3vars=100
  integer, parameter :: maxr4vars=50
@@ -195,7 +195,7 @@ module it_m
      nr4v=0
      nc1v=0
      nchv=0
-     ns=0 
+     ns=0
    end subroutine
    !
    subroutine infile_dump()

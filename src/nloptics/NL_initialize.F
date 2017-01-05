@@ -26,7 +26,7 @@ subroutine NL_initialize(E,k,q)
  use pars,           ONLY:SP,DP
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v
- use real_time,      ONLY:RT_potential
+ use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use com,            ONLY:msg,warning,error
@@ -35,7 +35,7 @@ subroutine NL_initialize(E,k,q)
  use R_lattice,      ONLY:bz_samp,bare_qpg
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
-&                         Phase_LifeTime,Integrator_name,RT_bands,RT_dyn_step,NE_i_time
+&                         Phase_LifeTime,Integrator_name,RT_bands,RT_dyn_step,NE_i_time,RT_potential
  use RT_control,     ONLY:SETUP_RT_IO_type,JPC_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
@@ -182,6 +182,10 @@ subroutine NL_initialize(E,k,q)
     case default
         call error("Unknow correlation in the response function")
  end select
+ !
+ !
+ !
+ H_potential = RT_potential
  !
  ! Deallocate bare_qpg if not required
  !=============================

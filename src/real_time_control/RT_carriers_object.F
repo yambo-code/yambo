@@ -87,7 +87,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        i_k_FineGd=i_k_RT-i_k
        !
-       if(l_RT_uses_E_FineGd) then
+       if(i_k_RT/=RT_ibz_coo(i_k,1)) then
          RT%E_bare(i_RT)=E%E_FineGd(i_b,i_k_FineGd,i_spin)
          if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)
          if(     associated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)-E%df_FineGd(i_b,i_k_FineGd,i_spin)

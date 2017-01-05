@@ -244,8 +244,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    do ik_ibz=1,k%nibz
      !
-     do i1=1,k%nibz_mapped(ik_ibz)
-       ik_r=k%ibz_DbGd_map(ik_ibz,i1)
+     do ik_r=k%ibz_DbGd_map(1,ik_ibz),k%ibz_DbGd_map(2,ik_ibz)
        !
        if (DbGd_k_done(ik_r)==1) cycle
        !

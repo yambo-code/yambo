@@ -80,12 +80,16 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (read_is_on(ID)) then
    allocate(Xk%pt_FineGd(Xk%nibz_FineGd,3))
+   allocate(Xk%weights_FineGd(Xk%nibz_FineGd))
    allocate(Xk%ptbz_FineGd(Xk%nbz_FineGd,3))
    allocate(Xk%sstar_FineGd(Xk%nbz_FineGd))
  endif
  !
  call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%pt_FineGd) ) 
  call io_bulk(ID, R2=Xk%pt_FineGd )
+ !
+ call io_bulk(ID, VAR="KPTS_WEIGHTS", VAR_SZ=shape(Xk%weights_FineGd) ) 
+ call io_bulk(ID, R1=Xk%weights_FineGd )
  !
  call io_bulk(ID, VAR="KPTS_BZ", VAR_SZ=shape(Xk%ptbz_FineGd) ) 
  call io_bulk(ID, R2=Xk%ptbz_FineGd )

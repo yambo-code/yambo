@@ -494,7 +494,8 @@ end subroutine NL_Integrator
    !
    subroutine INVINT_step(V_out,V_in,H_in,I_in,nbf,dT)
      !
-     use linear_algebra, ONLY:INV,USE_LK,LINEAR_ALGEBRA_driver
+     use linear_algebra, ONLY:INV,USE_LK
+     use interfaces,     ONLY:LINEAR_ALGEBRA_driver
      use pars,           ONLY:SP,cI,cZERO,cONE
      use real_time,      ONLY:RT_bands
      !
@@ -523,7 +524,7 @@ end subroutine NL_Integrator
        Hm=Hm-cI*dT/2._SP*(H_in+I_in(:,:,ib))
        Hp=Hp+cI*dT/2._SP*(H_in+I_in(:,:,ib))
        !     
-       call LINEAR_ALGEBRA_driver(INV,Hp,lib_in=USE_LK)
+       call LINEAR_ALGEBRA_driver(INV,M=Hp,lib_in=USE_LK)
        !
        Hm=matmul(Hm,Hp)
        !

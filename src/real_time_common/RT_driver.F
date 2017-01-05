@@ -278,8 +278,8 @@ subroutine RT_driver(E,X,k,q)
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
-   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time*AUT2FS)
-   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time*AUT2FS)
+   call RT_output('ene',real(on_the_fly_operators(1:5 ),SP),TIME=NE_time*AUT2FS)
+   call RT_output('dyn',real(on_the_fly_operators(5:10),SP),TIME=NE_time*AUT2FS)
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================

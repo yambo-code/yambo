@@ -26,7 +26,7 @@ subroutine NL_initialize(E,k,q)
  use pars,           ONLY:SP,DP
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v
- use SC,             ONLY:SC_potential
+ use real_time,      ONLY:RT_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use com,            ONLY:msg,warning,error
@@ -135,34 +135,37 @@ subroutine NL_initialize(E,k,q)
  eval_dG        =.false.
  eval_COLLISIONS=.false.
  !
+ ! NB.: This part duplicates what is in
+ !      INIT.F 
+ ! 
  select case (trim(NL_Correlation))
     case('IPA')
         Correlation=IPA
-        SC_potential='IP'
+        RT_potential='IP'
     case('HARTREE')
         Correlation=HARTREE
-        SC_potential='HARTREE'
+        RT_potential='HARTREE'
         eval_HARTREE =.true.
     case('TDDFT')  
         Correlation=TDDFT
-        SC_potential='default'
+        RT_potential='default'
         eval_HARTREE =.true.
         eval_DFT     =.true.
     case('LRC')
         Correlation=LRC
-        SC_potential='HARTREE'
+        RT_potential='HARTREE'
         eval_HARTREE =.true.
     case('LRW')
         Correlation=LRCW
-        SC_potential='HARTREE'
+        RT_potential='HARTREE'
         eval_HARTREE =.true.
     case('JGM')
         Correlation=JGM
-        SC_potential='HARTREE'
+        RT_potential='HARTREE'
         eval_HARTREE =.true.
     case('SEX')
         Correlation    =SEX
-        SC_potential   ='COHSEX'
+        RT_potential   ='COHSEX'
         eval_HARTREE   =.true.
         eval_dG        =.true.
         eval_COLLISIONS=.true.
@@ -170,7 +173,7 @@ subroutine NL_initialize(E,k,q)
         l_sc_sex       =.true.
     case('HF')
         Correlation=HF
-        SC_potential   ='HARTREE-FOCK'
+        RT_potential   ='HARTREE-FOCK'
         eval_HARTREE   =.true.
         eval_dG        =.true.
         eval_COLLISIONS=.true.
@@ -231,7 +234,7 @@ subroutine NL_initialize(E,k,q)
      Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
      Efield(i1)%ef_pol        ="linear"
      !
-     call SC_check_symmetries(Efield(i1)%versor)
+     call Check_symmetries(Efield(i1)%versor)
      !
  enddo
  !
@@ -252,7 +255,7 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Damping                [eV]:',NL_damping*HA2EV)
  call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime*AUT2FS)
  call msg( 'r', 'Efield                     :'//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield damping         [fs]:',Efield(1)%damping*AUT2FS)
+ call msg( 'r', 'Efield FWHM            [fs]:',Efield(1)%FWHM*AUT2FS)
  call msg( 'r', 'Efield Amplitude      [V/m]:',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          :',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          :',n_frequencies)

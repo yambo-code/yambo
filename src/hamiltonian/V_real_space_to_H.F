@@ -102,11 +102,10 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
          c_ws(ir,1)=V(ir,1)*WF%c(ir,ifftp)
        enddo
 !$omp end parallel do
-       H(ib,ibp) = H(ib,ibp)+Vstar_dot_V_(fft_size,WF%c(:,ifft),c_ws(:,1))
+       H(ib,ibp) = H(ib,ibp)+Vstar_dot_V_omp(fft_size,WF%c(:,ifft),c_ws(:,1))
        !
        ifft   =WF%index(ib,ik,2)
        ifftp  =WF%index(ibp,ik,2)
-<<<<<<< HEAD:src/sc/V_real_space_to_H.F
 !$omp parallel do default(shared), private(ir)
        do ir=1,fft_size
          c_ws(ir,2)=V(ir,2)*WF%c(ir,ifftp)

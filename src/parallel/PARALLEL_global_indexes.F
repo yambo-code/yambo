@@ -89,7 +89,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use real_time,     ONLY:RT_bands
 #endif
 #if defined _SC || defined _RT
- use hamiltonian,   ONLY:B_mat_index,IP_h_bands
+ use hamiltonian,   ONLY:B_mat_index
  use collision_ext, ONLY:COLL_bands,COH_collisions,GW_NEQ_collisions,P_collisions,HXC_collisions
 #endif
 #if defined _SCALAPACK
@@ -348,7 +348,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Real_Time"                       ) n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
 #endif
 #if defined _NL
- if (ENVIRONMENT=="Non_Linear") n_bands=(/SC_bands(1),SC_bands(2)/)
+ if (ENVIRONMENT=="Non_Linear") n_bands=(/RT_bands(1),RT_bands(2)/)
 #endif
  !
  ! QP states
@@ -1017,7 +1017,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    ! Bands
    ! 
-   call PARALLEL_index(PAR_IND_G_b,(/SC_bands(2)/),low_range=(/SC_bands(1)/),&
+   call PARALLEL_index(PAR_IND_G_b,(/RT_bands(2)/),low_range=(/RT_bands(1)/),&
 &                      COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
    PAR_nG_bands=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
@@ -1037,15 +1037,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Build Indexes
    !
    call Build_up_index(PAR_IND_G_b,n_bands(2),PAR_G_bands_index,PAR_nG_bands)
-   call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,SC_bands(2)-SC_bands(1)+1)-1 /),&
+   call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1 /),&
 &                      COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.)
    ! Non evolved bands loaded by all
    !
-   PAR_IND_WF_b%element_1D(:max(SC_bands(1)-1,1))=.TRUE.
+   PAR_IND_WF_b%element_1D(:max(RT_bands(1)-1,1))=.TRUE.
    !
-   do ib1=SC_bands(1),SC_bands(2)
-     do ib2=ib1,SC_bands(2)
-       if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) then
+   do ib1=RT_bands(1),RT_bands(2)
+     do ib2=ib1,RT_bands(2)
+       if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) then
          if (.not.PAR_IND_WF_b%element_1D(ib1)) then
            PAR_IND_WF_b%element_1D(ib1)=.TRUE.
            PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)+1
@@ -1060,7 +1060,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Build QP indexes for the Collisions
    !
-   n_bands=SC_bands
+   n_bands=RT_bands
    !
    allocate(PAR_QP_index(QP_n_states),PAR_IND_QP%n_of_elements(ncpu),PAR_IND_QP%element_1D(QP_n_states)) 
    PAR_IND_QP%element_1D=.FALSE.

@@ -32,7 +32,7 @@ subroutine NL_driver(E,X,k,q)
  use X_m,            ONLY:X_t,Dipole_approach,X_alloc
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load
- use SC,             ONLY:WF_G_max,WF_Go_indx,SC_QP_table_setup,SC_bands
+ use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,H_QP_table_setup
  use R_lattice,      ONLY:bz_samp,qindx_free
  use memory_m,       ONLY:mem_est
  use fields,         ONLY:Efield
@@ -64,7 +64,6 @@ subroutine NL_driver(E,X,k,q)
  ! In Non-Linear RT_bands always equal to SC_bands
  ! ==============================================
  !
- RT_bands =SC_bands
  RT_nbands=RT_bands(2)-RT_bands(1)+1
  !
  call section('+','Initialization')
@@ -82,7 +81,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Dipoles & WF dimensions
  !=========================
- call SC_WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X)
  !
  ! Deallocate qindx_S (used only in previous subroutine)
  ! ========================
@@ -93,7 +92,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! QP dimensions
  !================
- call SC_QP_table_setup(E)
+ call H_QP_table_setup(E)
  !
  ! Parallelization
  ! =======================

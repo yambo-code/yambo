@@ -606,7 +606,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  call Efield_reset(Efield(1))
  Efield(1)%frequency=0.1_SP/HA2EV
  Efield(1)%intensity=1000._SP*kWCMm22AU
- Efield(1)%damping=2._SP*FS2AUT
+ Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
  !
 #endif

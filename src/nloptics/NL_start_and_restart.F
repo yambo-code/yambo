@@ -36,7 +36,7 @@ subroutine NL_start_and_restart(E,k,X)
  use real_time,      ONLY:rho_reference,RT_bands
  use R_lattice,      ONLY:bz_samp,k_map
  use X_m,            ONLY:X_t
- use SC,             ONLY:V_hartree_sc,E_bare,V_xc_sc,H_nl_sc,rho_n
+ use hamiltonian,    ONLY:V_hartree_sc,E_bare,V_xc_sc,H_nl_sc,rho_n
  use X_m,            ONLY:X_t 
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use QP_m,           ONLY:QP_nk

@@ -27,7 +27,7 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
  use electrons,      ONLY:n_sp_pol,levels
  use D_lattice,      ONLY:a,DL_vol
  use R_lattice,      ONLY:bz_samp,k_map,nXkbz
- use SC,             ONLY:SC_bands
+ use real_time,      ONLY:RT_bands
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:All_S_det,Sm1_plus,Sm1_minus
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
@@ -35,7 +35,7 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
  implicit none           
  type(bz_samp), intent(in)  :: Xk
  type(levels),  intent(in)  :: Xen
- complex(SP),   intent(in)  :: V_bands(SC_bands(2),Xen%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: V_bands(RT_bands(2),Xen%nbf,QP_nk,n_sp_pol)
  complex(SP),   intent(out) :: Polarization(3)
  !
  ! Work Space

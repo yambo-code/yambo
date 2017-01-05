@@ -33,7 +33,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use R_lattice,      ONLY:bz_samp
  use zeros,          ONLY:zero_dfl
  use drivers,        ONLY:l_use_Hxc_collisions
- use SC,             ONLY:V_hartree_SC,V_xc_SC,rho_n,H_nl_sc
+ use hamiltonian,    ONLY:V_hartree_SC,V_xc_SC,rho_n,H_nl_sc
  use QP_m,           ONLY:QP_nk
  use X_m,            ONLY:X_t
  use fields,         ONLY:A_ext,A_vecpot,Efield
@@ -170,17 +170,22 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    if(Correlation/=IPA) then
      !  
      if(n_spinor==1) then
-        call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+        if (eval_Hartree.or.eval_DFT) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
      elseif (n_spinor==2) then
-        call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
-        if(eval_DFT) call V_real_space_to_H(ik,V_xc_sc,H_nl_sc,WF,'xc ')
+        if (eval_Hartree) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
+        if (eval_DFT) call V_real_space_to_H(ik,V_xc_sc,H_nl_sc,WF,'xc ')
      endif
      !
    endif
    !
    ! Add Ho = T+V_ion+V_h+V_xc
    !==================
-   forall(i1=RT_bands(1):RT_bands(2),is=1:n_sp_pol) H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+E_full(i1,ik,is)
+   !
+   forall(i1=RT_bands(1):RT_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,1) 
+   !
+   ! For compatibility does not work with collinear spin 
+   !
+   !   forall(i1=RT_bands(1):RT_bands(2),is=1:n_sp_pol) H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+E_full(i1,ik,is) 
    ! 
    if(l_use_DIPOLES) then
      !    
@@ -190,9 +195,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
      ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
      !
-     do is=1,n_sp_pol
-       call  Build_W_operator(V_bands,E,k,A_vecpot,ik,is,H_nl_sc)
-     enddo
+     call  Build_W_operator(V_bands,E,k,A_vecpot,ik,1,H_nl_sc)
+     !do is=1,n_sp_pol
+     !  call  Build_W_operator(V_bands,E,k,A_vecpot,ik,is,H_nl_sc)
+     !enddo
      !
    endif                                                         
    !
@@ -201,7 +207,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    if(eval_COLLISIONS) then
      call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,1),&
-&                                            H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1))
+&                                            H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
 
    endif
    !
@@ -214,8 +220,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! Store the Hamiltonian
    ! =====================
-   Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,:)= &
-&        H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:)
+   Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,1)= &
+&        H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+!   Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,:)= &
+!&        H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:)
    !
  enddo  !---- loop on k-point
  !

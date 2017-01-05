@@ -130,9 +130,8 @@ module nl_optics
      use memory_m,       ONLY:mem_est
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
-     use SC,             ONLY:SC_bands,E_bare
-     use hamiltonian,    ONLY:H_alloc
-     use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
+     use hamiltonian,    ONLY:H_alloc,E_bare
+     use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc,RT_bands
      use R_lattice,      ONLY:nXkbz
      use QP_m,           ONLY:QP_nk
      use electric,       ONLY:ELECTRIC_alloc
@@ -143,13 +142,13 @@ module nl_optics
      !
      call H_alloc(en)
      !
-     allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+     allocate(Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
-     allocate(I_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),en%nbf,QP_nk,n_sp_pol))
+     allocate(I_relax(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),en%nbf,QP_nk,n_sp_pol))
      call mem_est("I_relax",(/size(I_relax)/),(/2*SP/))
      !
-     allocate(V_bands(1:SC_bands(2),en%nbf,QP_nk,n_sp_pol))
+     allocate(V_bands(1:RT_bands(2),en%nbf,QP_nk,n_sp_pol))
      call mem_est("V_bands",(/size(V_bands)/),(/2*SP/))
      !
      allocate(rho_reference(fft_size))
@@ -164,23 +163,23 @@ module nl_optics
      endif          
      !
      if(Correlation==SEX.or.Correlation==HF) then
-       allocate(dG(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
+       allocate(dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk))
        call mem_est("dG",(/size(dG)/),(/2*SP/))
-       allocate(RT_Vnl_xc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+       allocate(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
        call mem_est("RT_Vnl_xc",(/size(RT_Vnl_xc)/),(/2*SP/))
      endif          
      !
      ! Reference energies
      !
-     allocate(E_bare(1:SC_bands(2),QP_nk,n_sp_pol))
+     allocate(E_bare(1:RT_bands(2),QP_nk,n_sp_pol))
      call mem_est("E_bare",(/size(E_bare)/))
-     E_bare=en%E(:SC_bands(2),:,:)
+     E_bare=en%E(:RT_bands(2),:,:)
      !
-     allocate(E_full(1:SC_bands(2),QP_nk,n_sp_pol))
+     allocate(E_full(1:RT_bands(2),QP_nk,n_sp_pol))
      call mem_est("E_full",(/size(E_full)/))
      !
      if(l_use_DIPOLES) then
-       allocate(DIP_bz(3,SC_bands(2),SC_bands(2),nXkbz,n_sp_pol))
+       allocate(DIP_bz(3,RT_bands(2),RT_bands(2),nXkbz,n_sp_pol))
        call mem_est("DIP_bz",(/size(DIP_bz)/))
      else
        call  ELECTRIC_alloc(en)
@@ -197,8 +196,7 @@ module nl_optics
    subroutine NL_free
      !
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:E_bare
-     use hamiltonian,    ONLY:H_free
+     use hamiltonian,    ONLY:H_free,E_bare
      use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
      use electric,       ONLY:ELECTRIC_free
      !

@@ -25,3 +25,5 @@ After merge of 01/2017:
 4) collinear spin pol does not work anymore in NL 
 
 5) damping substituted with FWHM for ext_field
+
+6) SEGFAULT: when using openmp, allocatable already allocated

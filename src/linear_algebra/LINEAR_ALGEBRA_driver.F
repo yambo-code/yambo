@@ -166,6 +166,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
    !
    call LINEAR_ALGEBRA_WS_clean_up(WS) 
    !
+   if(present(det)) det=det_
+   !
  endif
  !
  ! ===========================================================================================

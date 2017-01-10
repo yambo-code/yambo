@@ -462,7 +462,7 @@ if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  for file in `ls *.c` ; do
   cp "$file" "$prefix/driver" ;
  done ;
- cd "$srcdir/lib/local" ;
+ cd "../lib/local" ;
  for file in `ls *.f` ; do
   cp "$file" "$prefix/lib/local" ;
  done ;

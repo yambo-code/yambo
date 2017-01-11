@@ -33,9 +33,9 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  ! perform the diagonalization by using scalapack
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait,PAR_matrix
+ use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:POOL_group,ORTHO_group
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up,PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing

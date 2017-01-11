@@ -29,9 +29,9 @@ module interfaces
    !
    subroutine SLK_matrix_transfer( mode, M_slk, M_bse, M )
      !
-     use parallel_m, ONLY:PAR_matrix
-     use pars,       ONLY:SP
-     use BS,         ONLY:BS_block
+     use linear_algebra, ONLY:PAR_matrix
+     use pars,           ONLY:SP
+     use BS,             ONLY:BS_block
      !
      character(1)     :: mode
      type(PAR_matrix) :: M_slk
@@ -43,7 +43,7 @@ module interfaces
    subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V_right,E_real,&
 &                                   E_cmpl,SVD_digits,det,V_par)
      !
-     use parallel_m,     ONLY:PAR_matrix
+     use linear_algebra, ONLY:PAR_matrix
      use pars,           ONLY:SP
      use BS,             ONLY:BS_block
      !

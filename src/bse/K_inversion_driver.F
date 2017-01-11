@@ -36,10 +36,11 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
-&                         PAR_COM_SLK_INDEX_local,PAR_matrix_reset
+&                         PAR_COM_SLK_INDEX_local
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
  use SLK_m,          ONLY:BLACS_structure_in_use
+ use linear_algebra, ONLY:PAR_matrix_reset
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL
  use interfaces,     ONLY:SLK_matrix_transfer

@@ -59,11 +59,56 @@ module linear_algebra
  public :: SV_decomposition
  public :: M_eigenvalues
  !
+ ! Distributed Matrix structure
+ !==============================
+ integer, parameter   :: desc_len= 8
+ type PAR_matrix
+   integer :: desc(desc_len)
+   integer :: N          = -1
+   integer :: lwork      = -1
+   integer :: lrwork     = -1
+   integer :: liwork     = -1
+   integer :: info       = -1
+   integer :: rows(2)    = 0
+   integer :: cols(2)    = 0
+   integer :: nrows      = -1
+   integer :: ncols      = -1
+   integer :: nrows_used = -1
+   integer :: ncols_used = -1
+   complex(SP), allocatable :: blc(:,:)
+ end type PAR_matrix 
+ !
  interface M_eigenvalues
    module procedure heev,geev
  end interface
  !
  contains
+   !
+   subroutine PAR_matrix_reset(M_par,nrows, ncols)
+     type(PAR_matrix)  :: M_par
+     integer, optional :: nrows, ncols 
+     !
+     if (allocated(M_par%blc)) deallocate(M_par%blc)
+     if (present(nrows).and.present(ncols)) then
+       M_par%nrows    = nrows
+       M_par%ncols    = ncols
+       Y_ALLOCATE(M_par%blc(nrows,ncols))
+       Y_MEM(M_par%blc)
+     else
+       M_par%N        = 0
+       M_par%desc     = 0
+       M_par%lwork    = 0
+       M_par%lrwork   = 0
+       M_par%liwork   = 0
+       M_par%info     = 0
+       M_par%rows     = 0
+       M_par%cols     = 0
+       M_par%nrows    = 0
+       M_par%ncols_used = 0
+       M_par%nrows_used = 0
+       M_par%ncols    = 0
+     endif
+   end subroutine
    !
    subroutine LINEAR_ALGEBRA_WS_clean_up(WS)
      type(LALGEBRA_WS) :: WS

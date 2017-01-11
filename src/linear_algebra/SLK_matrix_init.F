@@ -32,9 +32,9 @@ subroutine PAR_matrix_init(ORTHO, M_slk, N)
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:ORTHO_group
- use parallel_m,     ONLY:ncpu,PAR_matrix,PAR_matrix_reset 
- !
- implicit none
+ use parallel_m,     ONLY:ncpu
+ use linear_algebra, ONLY:PAR_matrix,PAR_matrix_reset 
+#include<memory.h>
  !
  integer           :: N
  type(ORTHO_group) :: ORTHO

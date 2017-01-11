@@ -26,9 +26,10 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V
  !
  use pars,          ONLY:SP,cONE,cZERO
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
-&                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error
+&                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error,&
+&                        PAR_matrix,PAR_matrix_reset
  use wrapper,       ONLY:M_by_M
- use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu,PAR_matrix,PAR_matrix_reset
+ use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
  use interfaces,    ONLY:SLK_matrix_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use com,           ONLY:warning

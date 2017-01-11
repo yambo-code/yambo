@@ -32,7 +32,8 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  use pars,           ONLY:SP,cZERO
  use SLK_m,          ONLY:SLK_POOL
  use BS,             ONLY:BS_block
- use parallel_m,     ONLY:PP_redux_wait,PAR_matrix
+ use parallel_m,     ONLY:PP_redux_wait
+ use linear_algebra, ONLY:PAR_matrix
  !
  implicit none
  !

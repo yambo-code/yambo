@@ -27,10 +27,10 @@ subroutine X_s(iq,X,Xw,W_range)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
-&                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_matrix
+&                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
- use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL
+ use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL,PAR_matrix
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,LINEAR_ALGEBRA_driver 
  use stderr,        ONLY:intc

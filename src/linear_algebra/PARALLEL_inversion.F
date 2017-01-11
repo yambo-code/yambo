@@ -33,8 +33,7 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  ! perform the inversion by using scalapack
  !
  use SLK_m,          ONLY:POOL_group,ORTHO_group
- use parallel_m,     ONLY:PAR_matrix
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS
+ use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing

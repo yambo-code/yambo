@@ -31,7 +31,7 @@ subroutine PARALLEL_M_by_M(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use SLK_m,          ONLY:POOL_group,ORTHO_group
- use parallel_m,     ONLY:PAR_matrix
+ use linear_algebra, ONLY:PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing

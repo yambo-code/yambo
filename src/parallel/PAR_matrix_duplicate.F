@@ -26,7 +26,7 @@ SUBROUTINE PAR_matrix_duplicate( operation, M_in, M_out )
  ! operation can be "none/+1/-1/-C(= -1 * conjg)"
  !
  use pars,           ONLY:cZERO
- use parallel_m,     ONLY:PAR_matrix,PAR_matrix_reset
+ use linear_algebra, ONLY:PAR_matrix,PAR_matrix_reset
  !
  implicit none
  !

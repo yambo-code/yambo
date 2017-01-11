@@ -29,8 +29,7 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:POOL_group,ORTHO_group
- use parallel_m,     ONLY:PAR_matrix
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing

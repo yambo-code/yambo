@@ -28,8 +28,8 @@ SUBROUTINE SLK_matrix_transfer_K( M_slk, M_bse )
  use pars,           ONLY:SP
  use SLK_m,          ONLY:SLK_POOL,n_pools
  use BS,             ONLY:BS_block,n_BS_blks,BS_K_dim,BS_K_coupling
- use parallel_m,     ONLY:PP_redux_wait,ncpu,myid,PAR_matrix
- use linear_algebra, ONLY:SLK_matrix_transfer_side_crop
+ use parallel_m,     ONLY:PP_redux_wait,ncpu,myid
+ use linear_algebra, ONLY:SLK_matrix_transfer_side_crop,PAR_matrix
  !
  implicit none
  !

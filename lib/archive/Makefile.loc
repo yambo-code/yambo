@@ -42,6 +42,7 @@ clean_all:
           if test -s $(tarball_blacs)    && test "$(keep_blacs)"     != "yes" ;  then rm $(tarball_blacs)     ; fi ; \
           if test -s $(tarball_petsc)    && test "$(keep_petsc)"     != "yes" ;  then rm $(tarball_petsc)     ; fi ; \
           if test -s $(tarball_slepc)    && test "$(keep_slepc)"     != "yes" ;  then rm $(tarball_slepc)     ; fi ; \
+          if test -s $(tarball_slatec)   && test "$(keep_slatec)"    != "yes" ;  then rm $(tarball_slatec)    ; fi ; \
 	fi
 #
 define getsrc

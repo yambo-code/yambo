@@ -414,14 +414,14 @@ define lib_ext_clean_all
  @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "slatec" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; \
-   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; \
+   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
    cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
  @if test -d $(libdir)/archive ; then \
   cd $(libdir)/archive; \
-  $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; \
+  $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
   cd ../.. ; \
  fi
  echo "[CLEAN] Libs EXT (clean_all) ... done" 

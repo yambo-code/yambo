@@ -1,15 +1,15 @@
 #
 # storing options
 #
-keep_iotk=no
-keep_netcdf=no
-keep_etsf_io=no
-keep_libxc=no
-keep_lapack=no
-keep_blacs=no
-keep_scalapack=no
-keep_petsc=no
-keep_slepc=no
+keep_iotk=yes
+keep_netcdf=yes
+keep_etsf_io=yes
+keep_libxc=yes
+keep_lapack=yes
+keep_blacs=yes
+keep_scalapack=yes
+keep_petsc=yes
+keep_slepc=yes
 keep_slatec=yes
 #
 # tarball names

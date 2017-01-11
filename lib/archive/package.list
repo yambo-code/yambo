@@ -10,7 +10,7 @@ keep_blacs=no
 keep_scalapack=no
 keep_petsc=no
 keep_slepc=no
-keep_slatec=no
+keep_slatec=yes
 #
 # tarball names
 #

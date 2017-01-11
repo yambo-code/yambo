@@ -59,7 +59,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,UPPER_X_mat_only,use_X_DbGd,&
-&                        l_X_terminator,X_terminator_E,X_term_E,Xo_my_rows,Xo_my_cols,Xo_lower_triangle
+&                        l_X_terminator,X_terminator_E,X_term_E,Xo_my_rows,Xo_my_cols
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -287,8 +287,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
        call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),Xo_res(X_rows(1):X_rows(2),ig2),Xo(X_rows(1):X_rows(2),ig2,iw))
        !
        if (.not.UPPER_X_mat_only) then
-         call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),&
-&                           conjg(Xo_res(X_rows(1):X_rows(2),ig2)),Xo_lower_triangle(ig2,X_rows(1):X_rows(2),iw))
+!         call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),&
+!&                           conjg(Xo_res(X_rows(1):X_rows(2),ig2)),Xo_lower_triangle(ig2,X_rows(1):X_rows(2),iw))
        endif
 #if defined _OPENMP
        call omp_unset_lock(omp_locks(mutexid))
@@ -327,7 +327,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  do iw=1,Xw%n_freqs
    call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
    if (PAR_COM_RL_INDEX%n_CPU>1.and..not.UPPER_X_mat_only) then
-     call PP_redux_wait(Xo_lower_triangle(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
+     !call PP_redux_wait(Xo_lower_triangle(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
    endif
  enddo
  !

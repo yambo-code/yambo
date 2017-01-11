@@ -32,12 +32,12 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #endif
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
 &                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys,Xo_cols,&
-&                        Xo_rows,X_mat,Xo_lower_triangle
+&                        Xo_rows,X_mat,X_par
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index, &
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,PAR_COM_RL_INDEX, &
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX,COMM_copy
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth,error
@@ -45,6 +45,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load
  use QP_m,          ONLY:QP_n_W_freqs_redux
+ use linear_algebra,ONLY:PARALLEL_matrix_distribute
  !
 #include<memory.h>
  !
@@ -180,10 +181,12 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call X_half_mat_check(Xen,Xk,Xw)
    !
+   call COMM_copy(PAR_COM_RL_INDEX, X_par%COMM)
+   !
    if (     io_RESPONSE) then
-     call PARALLEL_X_distribute( X , Xw%n_freqs )
+     call PARALLEL_matrix_distribute( X_par , X%ng, N_mats=Xw%n_freqs, mode="X" )
    else
-     call PARALLEL_X_distribute( X , Xw%n_freqs*PAR_nq )
+     call PARALLEL_matrix_distribute( X_par , X%ng, N_mats=Xw%n_freqs*PAR_nq, mode="X" )
    endif
    !
  endif
@@ -269,7 +272,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! CLEAN (2)
  !
  if (io_RESPONSE) then
-   Y_FREE_P(Xo_lower_triangle)
    Y_FREE(X_mat)
    Y_FREE(Xo_rows)
    Y_FREE(Xo_cols)

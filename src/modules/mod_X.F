@@ -95,7 +95,6 @@ module X_m
  real(SP),    allocatable :: X_Ein_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
- complex(SP), allocatable, target :: X_mat(:,:,:)
  integer :: current_iq
  integer :: iw_ref
  integer :: X_DbGd_nkpts
@@ -120,7 +119,10 @@ module X_m
  !
  ! PARALLEL distribution
  !
- complex(SP),          pointer :: Xo_lower_triangle(:,:,:) => null()
+ type(PAR_matrix)              :: X_par
+ type(PAR_matrix)              :: Xo_par
+ type(PAR_matrix)              :: Xo_par_lower_triangle
+ complex(SP)     , allocatable :: X_mat(:,:,:)
  integer                       :: Xo_my_rows(2)
  integer                       :: Xo_my_cols(2)
  integer         , allocatable :: Xo_rows(:,:)
@@ -169,11 +171,6 @@ module X_m
      !
      if (present(d)) then
        select case(what)
-       case('X_parallel')
-         if (allocated(X_mat)) return
-         Y_ALLOCATE(X_mat(d(1):d(2),d(3):d(4),d(5)))
-         Y_MEM(X_mat)
-         X_mat=cZERO
        case('X')
          if (allocated(X_mat)) return
          Y_ALLOCATE(X_mat(d(1),d(2),d(3)))

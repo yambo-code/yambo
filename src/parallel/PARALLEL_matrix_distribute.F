@@ -1,0 +1,100 @@
+!
+!        Copyright (C) 2000-2017 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine PARALLEL_matrix_distribute( M_par, N , N_mats ,mode )
+ !
+ ! I distribute here the upper part of the X matrix.
+ !
+ use pars,           ONLY:SP
+ use parallel_m,     ONLY:PAR_COM_RL_INDEX
+ use linear_algebra, ONLY:PAR_matrix
+#include <memory.h>
+ !
+ type(PAR_matrix)       :: M_par
+ integer                :: N
+ integer,      optional :: N_mats
+ character(*), optional :: mode
+ !
+ ! Work Space
+ !
+ integer       :: M,rows(M_par%COMM%n_CPU,2),cols(M_par%COMM%n_CPU,2),i_c,N_rows
+ character(10) :: mode_
+ !
+ mode_="symmetric"
+ if (present(mode)) then
+  mode_=mode
+ endif
+ !
+ if (M_par%COMM%n_CPU==1) then
+   rows(1,:)=(/1,N/)
+   cols(1,:)=(/1,N/)
+ else if (mode=="symmetric") then
+   M= ( (N**2-N)/2 + N )/M_par%COMM%n_CPU
+   rows(1,:)=(/1,N/)
+   cols(1,:)=(/1,SYMM_sol(N)/)
+   do i_c=2,M_par%COMM%n_CPU
+     rows(i_c,:)=(/cols(i_c-1,2)+1,N/)
+     N_rows=SYMM_sol( rows(i_c,2)- rows(i_c,1)+1 )
+     cols(i_c,:)=cols(i_c-1,2)+(/1,N_rows/)
+     if (N_rows==0) cols(i_c,2)=N
+   enddo
+ else if (mode=="full") then
+ endif
+ !do i_c=1,PAR_COM_RL_INDEX%n_CPU
+ ! if (PAR_COM_RL_INDEX%CPU_id+1==i_c) then
+ !   write (*,*) i_c,rows(i_c,:),cols(i_c,:)
+ !   N_rows=(cols(i_c,2)-cols(i_c,1)+1)
+ !   write (*,*) (rows(i_c,2)-rows(i_c,1)+1)*N_rows-(N_rows**2-N_rows)/2,M
+ ! endif
+ !enddo
+ !
+ M_par%rows  = rows(M_par%COMM%CPU_id+1,:)
+ M_par%cols  = cols(M_par%COMM%CPU_id+1,:)
+ M_par%nrows = M_par%rows(2)-M_par%rows(1)+1 
+ M_par%ncols = M_par%cols(2)-M_par%cols(1)+1 
+ !
+! Y_ALLOCATE(X_mat(Xo_my_rows(1):Xo_my_rows(2),Xo_my_cols(1):Xo_my_cols(2),NW))
+! Y_MEM(X_mat)
+! !
+! if (UPPER_X_mat_only) return
+! !
+! if (PAR_COM_RL_INDEX%n_CPU==1) then
+!   !
+!   Xo_lower_triangle => X_mat
+!   !
+! else
+!   !
+!   Y_ALLOCATE(Xo_lower_triangle(Xo_my_cols(1):Xo_my_cols(2),Xo_my_rows(1):Xo_my_rows(2),NW))
+!   Y_MEM(Xo_lower_triangle)
+!   !
+! endif
+ !
+ contains
+   !
+   integer function SYMM_sol(N)
+     integer :: N
+     SYMM_sol=nint( (real(N)+.5_SP)-sqrt( (real(N)+0.5_SP)**2 - 2.*real(M) ) )+1
+     if (  (real(N)+.5_SP)**2 - 2.*real(M) < 0 ) SYMM_sol=0
+   end function
+   !
+end subroutine

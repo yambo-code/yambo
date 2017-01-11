@@ -23,7 +23,8 @@
 !
 module linear_algebra
  !
- use pars, ONLY:SP
+ use pars,       ONLY:SP
+ use parallel_m, ONLY:MPI_comm
 #include<memory.h>
  !
  integer, parameter :: USE_LK=1
@@ -63,6 +64,7 @@ module linear_algebra
  !==============================
  integer, parameter   :: desc_len= 8
  type PAR_matrix
+   !
    integer :: desc(desc_len)
    integer :: N          = -1
    integer :: lwork      = -1
@@ -75,7 +77,15 @@ module linear_algebra
    integer :: ncols      = -1
    integer :: nrows_used = -1
    integer :: ncols_used = -1
+   !
+   type(MPI_comm) :: COMM
+   !
+   integer,     allocatable :: rows_global(:,:)
+   integer,     allocatable :: cols_global(:,:)
+   !
    complex(SP), allocatable :: blc(:,:)
+   complex(SP), allocatable :: blc_prime(:,:)
+   !
  end type PAR_matrix 
  !
  interface M_eigenvalues
@@ -88,7 +98,11 @@ module linear_algebra
      type(PAR_matrix)  :: M_par
      integer, optional :: nrows, ncols 
      !
-     if (allocated(M_par%blc)) deallocate(M_par%blc)
+     if (allocated(M_par%blc)) then
+       Y_FREE(M_par%blc)
+       Y_FREE(M_par%rows_global)
+       Y_FREE(M_par%cols_global)
+     endif
      if (present(nrows).and.present(ncols)) then
        M_par%nrows    = nrows
        M_par%ncols    = ncols
@@ -104,10 +118,17 @@ module linear_algebra
        M_par%rows     = 0
        M_par%cols     = 0
        M_par%nrows    = 0
+       M_par%ncols    = 0
        M_par%ncols_used = 0
        M_par%nrows_used = 0
-       M_par%ncols    = 0
      endif
+   end subroutine
+   !
+   subroutine PARALLEL_matrix_distribute( M_par, N , N_mats ,mode )
+     type(PAR_matrix)       :: M_par
+     integer                :: N
+     integer,      optional :: N_mats
+     character(*), optional :: mode
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_WS_clean_up(WS)

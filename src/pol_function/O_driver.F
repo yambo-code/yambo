@@ -35,10 +35,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels,X_mat,Xo_lower_triangle,Xo_rows,Xo_cols
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels,X_mat,Xo_rows,Xo_cols
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,COMM_copy,&
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,PAR_COM_RL_INDEX
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
@@ -46,6 +46,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
+ use linear_algebra,ONLY:PARALLEL_matrix_distribute
  !
 #include<memory.h>
  !
@@ -136,10 +137,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      X_fxc=cZERO
    endif
    !
-   ! X_mat allocation
+   ! Response function parallel allocation
    !
    if (.not.allocated(X_mat)) then
-     call PARALLEL_X_distribute( X , wv%n_freqs )
+     !
+     call COMM_copy(PAR_COM_RL_INDEX, X_par%COMM)
+     !
+     call PARALLEL_matrix_distribute( X_par , X%ng, N_mats=wv%n_freqs, mode="X" )
+     !
    endif
    !
    ! Frequencies (AFTER TDDFT SETUP!)
@@ -327,7 +332,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  ! CLEAN
  !
- Y_FREE_P(Xo_lower_triangle)
  Y_FREE(X_mat)
  Y_FREE(Xo_rows)
  Y_FREE(Xo_cols)

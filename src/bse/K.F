@@ -298,15 +298,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !========================
  call WF_spatial_inversion(Ken,Xk)
  !
- ! BSE-based Fxc
- !===============
- ! GPL_EXCLUDE_START
- !
-!&                          (/2*6*FXC_n_g_corr*O_x_dim+2*FXC_n_g_corr**2+2*O_x_dim/),&
-!&                          (/SP/))
- !
- ! GPL_EXCLUDE_END
- !
  ! ALDA
  !======
  if (BS_K_is_ALDA) then

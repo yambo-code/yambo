@@ -27,7 +27,7 @@ subroutine X_s(iq,X,Xw,W_range)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
-&                        PAR_COM_DIPOLES,PAR_COM_SLK_INDEX_local
+&                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_matrix
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL
@@ -38,6 +38,9 @@ subroutine X_s(iq,X,Xw,W_range)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,io_BS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
+#if defined _SCALAPACK
+ use SLK_m,         ONLY:SLK_ORTHO
+#endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -51,11 +54,13 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  type(PP_indexes) ::PAR_IND_freqs
  integer          ::i1,i2,iw,iw_mat,INV_MODE,PAR_IND_FREQ_ID
- complex(SP), allocatable :: Xom1(:,:),tddftk(:,:),Xo(:,:)
+ type(PAR_matrix) ::X_kernel
+ type(PAR_matrix) ::Xo
  !
  ! Fxc I/O (for the BS based kernel)
  !
  !integer           ::ioFxc_err,ID,FXC_w_ref
+ !type(SLK)         ::Xo_m1
  !
  ! Setup 
  !
@@ -65,21 +70,16 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  call PP_indexes_reset(PAR_IND_freqs)
  !
- Y_ALLOCATE(tddftk(X%ng,X%ng))
- Y_MEM(tddftk)
- Y_ALLOCATE(Xo(X%ng,X%ng))
- Y_MEM(Xo)
- !
  ! Xo^-1 matrix (BS Fxc)
  !
- if (l_bs_fxc) then
-   Y_ALLOCATE(Xom1(FXC_n_g_corr,FXC_n_g_corr))
-   Y_MEM(Xom1)
- endif
+ !if (l_bs_fxc) then
+ !  Y_ALLOCATE(Xom1(FXC_n_g_corr,FXC_n_g_corr))
+ !  Y_MEM(Xom1)
+ !endif
  !
  ! Stop... 
  !
- call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
+ call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
  !
  ! ... and frequencies distribution
  !
@@ -88,8 +88,18 @@ subroutine X_s(iq,X,Xw,W_range)
  call PARALLEL_live_message("X Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),TOTAL=Xw%n_freqs,&
 &                           NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) &
-&  call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) then
+   call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
+ endif
+ !
+ ! I build here a local BLACS structure for the response function components
+ !
+ call PAR_matrix_init( SLK_ORTHO, X_kernel,X%ng)
+ Y_ALLOCATE(X_kernel%blc(X_kernel%nrows,X_kernel%ncols))
+ Y_MEM(X_kernel%blc)
+ call PAR_matrix_init( SLK_ORTHO, Xo,X%ng)
+ Y_ALLOCATE(Xo%blc(Xo%nrows,Xo%ncols))
+ Y_MEM(Xo%blc)
  !
  do iw=1,Xw%n_freqs
    !
@@ -100,9 +110,8 @@ subroutine X_s(iq,X,Xw,W_range)
      cycle
    endif
    !
-   Xo=X_mat(:,:,iw_mat)
-   !
-   tddftk=cZERO
+   Xo%blc      =X_mat(:,:,iw_mat)
+   X_kernel%blc=cZERO
    !
    ! If the freqs remaining are not enough for all the cpu's or
    ! Fxc needs the SVD procedure use the SLK
@@ -160,13 +169,13 @@ subroutine X_s(iq,X,Xw,W_range)
      !
      ! LRC Fxc
      !
-     tddftk(:,1)=-Xo(:,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
+     X_kernel%blc(:,1)=-Xo%blc(:,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
      !
    else if (l_alda_fxc) then
      !
      ! ALDA Fxc
      !
-     call M_by_M('N','N', X%ng, -Xo(:,:FXC_n_g_corr), FXC(:,:,1), tddftk(:,:FXC_n_g_corr))
+     call M_by_M('N','N', X%ng, -Xo%blc(:,:FXC_n_g_corr), FXC(:,:,1), X_kernel%blc(:,:FXC_n_g_corr))
      !
    endif
    !
@@ -180,8 +189,8 @@ subroutine X_s(iq,X,Xw,W_range)
    !$omp parallel do default(shared), private(i1)
 #endif
    do i1=1,X%ng
-     tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4._SP*pi/bare_qpg(iq,i1)**2
-     tddftk(i1,i1)=tddftk(i1,i1)+cONE
+     X_kernel%blc(:,i1) =X_kernel%blc(:,i1)-Xo%blc(:,i1)*4._SP*pi/bare_qpg(iq,i1)**2
+     X_kernel%blc(i1,i1)=X_kernel%blc(i1,i1)+cONE
    enddo
 #if defined _OPENMP
    !$omp end parallel do
@@ -193,15 +202,15 @@ subroutine X_s(iq,X,Xw,W_range)
      !
      ! formulation as a linear system
      !
-     X_mat(:,:,iw_mat)=Xo
-     call LINEAR_ALGEBRA_driver(LIN_SYS,M=tddftk,B=X_mat(:,:,iw_mat))
+     X_mat(:,:,iw_mat)=Xo%blc
+     call LINEAR_ALGEBRA_driver(LIN_SYS,M=X_kernel%blc,B=X_mat(:,:,iw_mat))
      !
   else
      !
      ! formulation matrix inversion + matmul
      !
-     call LINEAR_ALGEBRA_driver(INV,M=tddftk)
-     call LINEAR_ALGEBRA_driver(MAT_MUL,M=tddftk,B=Xo,C=X_mat(:,:,iw_mat))
+     call LINEAR_ALGEBRA_driver(INV,M=X_kernel%blc)
+     call LINEAR_ALGEBRA_driver(MAT_MUL,M=X_kernel%blc,B=Xo%blc,C=X_mat(:,:,iw_mat))
      !
    endif
    !
@@ -229,7 +238,7 @@ subroutine X_s(iq,X,Xw,W_range)
 #endif
  !
  do iw=W_range(1),W_range(2)
-   call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_SLK_INDEX_local%COMM)
+!   call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_SLK_INDEX_local%COMM)
  enddo
  !
 #if defined _TIMING
@@ -239,10 +248,10 @@ subroutine X_s(iq,X,Xw,W_range)
  ! CLEAN
  !
  call PP_indexes_reset(PAR_IND_freqs)
- Y_FREE(tddftk)
- Y_FREE(Xo)
- if (l_bs_fxc) then
-   Y_FREE(Xom1)
- endif
+ Y_FREE(X_kernel%blc)
+ Y_FREE(Xo%blc)
+ !if (l_bs_fxc) then
+ !  Y_FREE(Xom1)
+ !endif
  !
 end subroutine

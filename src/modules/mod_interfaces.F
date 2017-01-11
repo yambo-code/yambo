@@ -29,28 +29,29 @@ module interfaces
    !
    subroutine SLK_matrix_transfer( mode, M_slk, M_bse, M )
      !
-     use SLK_m, ONLY:SLK_matrix
-     use pars,  ONLY:SP
-     use BS,    ONLY:BS_block
+     use parallel_m, ONLY:PAR_matrix
+     use pars,       ONLY:SP
+     use BS,         ONLY:BS_block
      !
-     character(*)     :: mode
-     type(SLK_matrix) :: M_slk
+     character(1)     :: mode
+     type(PAR_matrix) :: M_slk
      type(BS_block), optional :: M_bse(:)
      complex(SP),    optional :: M(:,:)
      !
    end subroutine
    !
-   subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right,E_real,&
-&                                   E_cmpl,SVD_digits,det,V_slk)
+   subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V_right,E_real,&
+&                                   E_cmpl,SVD_digits,det,V_par)
      !
-     use SLK_m,          ONLY:SLK_matrix
+     use parallel_m,     ONLY:PAR_matrix
      use pars,           ONLY:SP
      use BS,             ONLY:BS_block
      !
      integer                    :: idriver
      integer,          optional :: lib_in
      complex(SP),      optional :: M(:,:)
-     type(SLK_matrix), optional :: M_slk
+     type(PAR_matrix), optional :: M_slk
+     type(PAR_matrix), optional :: M_par
      type(BS_block),   optional :: M_bse(:)
      complex(SP),      optional :: B(:,:)
      complex(SP),      optional :: C(:,:)
@@ -60,7 +61,7 @@ module interfaces
      complex(SP),      optional :: E_cmpl(:)
      integer,          optional :: SVD_digits 
      complex(SP),      optional :: det
-     type(SLK_matrix), optional :: V_slk
+     type(PAR_matrix), optional :: V_par
      !
    end subroutine
    !

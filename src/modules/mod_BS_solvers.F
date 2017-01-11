@@ -25,7 +25,7 @@ module BS_solvers
  !
  use pars,       ONLY:SP,schlen,lchlen
  use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block
- use SLK_m,      ONLY:SLK_matrix
+ use parallel_m, ONLY:PAR_matrix
 #include <memory.h>
  !
  ! Epsilon factor
@@ -44,7 +44,7 @@ module BS_solvers
  !
  ! SCALAPACK shadow matrix
  !=========================
- type(SLK_matrix), SAVE:: K_slk
+ type(PAR_matrix), SAVE:: K_slk
  !
  ! Solvers (General)
  !=========
@@ -79,10 +79,9 @@ module BS_solvers
  character(schlen)     :: BSS_inversion_mode
  logical               :: BSS_uses_partial_diago
  logical               :: K_diago_in_BS_mat
- type(SLK_matrix),SAVE :: K_inv_slk
+ type(PAR_matrix),SAVE :: K_inv_slk
  !
  type K_Inversion_data
-   !
    character(3)             :: what
    integer                  :: n_freqs = 0
    integer                  :: n_full_inv_freqs = 0
@@ -91,7 +90,6 @@ module BS_solvers
    integer    , allocatable :: err(:)
    integer    , allocatable :: iw_full(:)
    complex(SP), allocatable :: spectra(:,:)
-   !
  end type K_Inversion_data
  !
  type(K_Inversion_data), save :: K_INV_EPS

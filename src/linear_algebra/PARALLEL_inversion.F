@@ -32,7 +32,8 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  !
  ! perform the inversion by using scalapack
  !
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
+ use SLK_m,          ONLY:POOL_group,ORTHO_group
+ use parallel_m,     ONLY:PAR_matrix
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS
  !
 #if defined _TIMING
@@ -43,7 +44,7 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  integer           :: N
  type(POOL_group)  :: POOL
  type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: M_slk
+ type(PAR_matrix)  :: M_slk
  !
  character(64) :: subname="PARALLEL_inversion"
  !

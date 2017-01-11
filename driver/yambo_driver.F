@@ -326,6 +326,8 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !=================
 #if defined _MEM_CHECK 
  !
+ call section('*','Memory Overview')
+ !
  call MEM_dri("",REPORT="final")
  !
 #endif

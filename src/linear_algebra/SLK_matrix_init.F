@@ -28,17 +28,17 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine SLK_matrix_init(ORTHO, M_slk, N)
+subroutine PAR_matrix_init(ORTHO, M_slk, N)
  !
  use pars,           ONLY:SP
- use SLK_m,          ONLY:ORTHO_group,SLK_matrix,SLK_matrix_reset
- use parallel_m,     ONLY:ncpu
+ use SLK_m,          ONLY:ORTHO_group
+ use parallel_m,     ONLY:ncpu,PAR_matrix,PAR_matrix_reset 
  !
  implicit none
  !
  integer           :: N
  type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: M_slk
+ type(PAR_matrix)  :: M_slk
  !
  ! Work Space
  !
@@ -48,6 +48,11 @@ subroutine SLK_matrix_init(ORTHO, M_slk, N)
  !
  if (ncpu==1) then
    ORTHO%coordinate(1)=-1
+   M_slk%rows       = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
+   M_slk%cols       = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
+   M_slk%nrows_used = N
+   M_slk%ncols_used = N
+   M_slk%N          = N
    return
  endif
  !
@@ -73,7 +78,7 @@ subroutine SLK_matrix_init(ORTHO, M_slk, N)
  !
  call DESCINIT( M_slk%desc, N, N, N_blcs, N_blcs, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
  !
- call SLK_matrix_reset(M_slk,N_blcs,N_blcs)
+ call PAR_matrix_reset(M_slk,N_blcs,N_blcs)
  !
  M_slk%rows       = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
  M_slk%cols       = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)

@@ -21,24 +21,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE SLK_matrix_duplicate( operation, M_in, M_out )
+SUBROUTINE PAR_matrix_duplicate( operation, M_in, M_out )
  !
  ! operation can be "none/+1/-1/-C(= -1 * conjg)"
  !
  use pars,           ONLY:cZERO
- use SLK_m,          ONLY:SLK_matrix,SLK_matrix_reset
+ use parallel_m,     ONLY:PAR_matrix,PAR_matrix_reset
  !
  implicit none
  !
  character(*)     :: operation
- type(SLK_matrix) :: M_in,M_out
+ type(PAR_matrix) :: M_in,M_out
  !
  ! Work Space
  !
  integer :: BLK_size
  !
  BLK_size=size(M_in%blc,1)
- call SLK_matrix_reset(M_out,BLK_size,BLK_size)
+ call PAR_matrix_reset(M_out,BLK_size,BLK_size)
  !
  M_out%N          = M_in%N         
  M_out%desc       = M_in%desc      

@@ -23,9 +23,9 @@
 !
 module X_m
  !
- use pars,     ONLY:SP,lchlen,schlen
- use units,    ONLY:HA2EV
- use SLK_m,    ONLY:SLK_matrix
+ use pars,       ONLY:SP,lchlen,schlen
+ use units,      ONLY:HA2EV
+ use parallel_m, ONLY:PAR_matrix
  !
 #include <memory.h>
  !
@@ -120,7 +120,8 @@ module X_m
  !
  ! PARALLEL distribution
  !
- type(SLK_matrix), allocatable :: X_slk(:)
+ type(PAR_matrix)              :: X_kernel
+ type(PAR_matrix)              :: Xo
  complex(SP),          pointer :: Xo_lower_triangle(:,:,:) => null()
  integer                       :: Xo_my_rows(2)
  integer                       :: Xo_my_cols(2)

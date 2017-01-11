@@ -30,7 +30,8 @@ subroutine PARALLEL_M_by_M(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
  !  where A(m,k), B(k,n), C(m,n)
  !
  use pars,           ONLY:SP,cONE,cZERO
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
+ use SLK_m,          ONLY:POOL_group,ORTHO_group
+ use parallel_m,     ONLY:PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -40,7 +41,7 @@ subroutine PARALLEL_M_by_M(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
  integer           :: n,m,k
  type(POOL_group)  :: POOL
  type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: A_slk, B_slk, C_slk
+ type(PAR_matrix)  :: A_slk, B_slk, C_slk
  character         :: transa,transb
  complex(SP)       :: C(n,m)
  !

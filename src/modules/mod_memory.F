@@ -52,11 +52,10 @@ module memory
  !
  interface
    !
-   subroutine MEM_dri(what,Sz,Kn,Er,REPORT)
+   subroutine MEM_dri(what,Sz,Kn,REPORT)
      character(*)         :: what
      integer,optional     :: Sz
      integer,optional     :: Kn
-     integer,optional     :: Er
      character(*),optional:: REPORT
    end subroutine
    !

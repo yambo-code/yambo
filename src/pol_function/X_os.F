@@ -36,7 +36,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !   outer region opened here (not working yet)
  !
  ! X terminator (BG kind) implemented (IM,AF)
- !
  ! 
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE
@@ -46,7 +45,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_DIPOLES,myid,PAR_COM_RL_INDEX
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_X_WORLD,myid,PAR_COM_RL_INDEX
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
 &                        n_threads_DIP,n_outthr,n_innthr,OPENMP_locks_reset,n_threads_FFT
 #if defined _OPENMP
@@ -56,6 +55,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use interfaces,    ONLY:WF_load
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
+ use D_lattice,     ONLY:i_space_inv
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,UPPER_X_mat_only,use_X_DbGd,&
@@ -78,9 +78,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Work Space
  !
  character(schlen)        :: live_t_string
- integer                  :: ig2,iw,n_poles,i_cg,i_bg,mutexid,ngrho,X_rows(2)
+ integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg,mutexid,ngrho,X_rows(2)
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_DIPOLES%n_CPU),cutoff
+ real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable  :: Xo_res(:,:)
  integer,    external     :: X_eh_setup
@@ -144,12 +144,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    minmax_ehe=0._SP
    !
-   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
+   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_X_WORLD%CPU_id+1))
    Y_FREE(X_poles)
    Y_FREE(X_Ein_poles)
    !
    if (self_detect_E_range) then
-     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
+     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_X_WORLD%COMM)
      Xw%er(1)=minval(minmax_ehe(1,:))
      Xw%er(2)=maxval(minmax_ehe(2,:))
    endif
@@ -325,15 +325,56 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
-   if (PAR_COM_RL_INDEX%n_CPU>1) then
-     call PP_redux_wait(Xo_lower_triangle(:,:,iw),COMM=PAR_COM_DIPOLES%COMM)
+   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
+   if (PAR_COM_RL_INDEX%n_CPU>1.and..not.UPPER_X_mat_only) then
+     call PP_redux_wait(Xo_lower_triangle(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
    endif
  enddo
  !
 #if defined _TIMING
  call timing('Xo (REDUX)',OPR='stop')
 #endif
+ !
+ ! Symmetrize Xo when only half has been avaluated
+ !=================================================
+ !
+ if (UPPER_X_mat_only) then
+   !
+#if defined _OPENMP
+   !$omp parallel default(shared), private(ig2,ig1)
+#endif
+   if (i_space_inv==0) then
+#if defined _OPENMP
+     !$omp do
+#endif
+     do ig2=Xo_my_rows(1),Xo_my_rows(2)
+       do ig1=max(Xo_my_cols(1),ig2+1),Xo_my_cols(2)
+         Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
+       enddo
+     enddo
+#if defined _OPENMP
+     !$omp end do
+#endif
+   endif
+   !
+   if (i_space_inv==1) then
+#if defined _OPENMP
+     !$omp do
+#endif
+     do ig2=Xo_my_rows(1),Xo_my_rows(2)
+       do ig1=max(Xo_my_cols(1),ig2+1),Xo_my_cols(2)
+         Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
+       enddo
+     enddo
+#if defined _OPENMP
+     !$omp end do
+#endif
+   endif
+#if defined _OPENMP
+   !$omp end parallel
+#endif
+   !
+ endif
  !
  current_iq=iq
  n_threads_FFT=0

@@ -162,6 +162,25 @@ module parallel_m
    integer, allocatable :: first_of_1D(:)
  end type PP_indexes
  !
+ ! Distributed Matrix structure
+ !==============================
+ integer, parameter   :: desc_len= 9
+ type PAR_matrix
+   integer :: desc(desc_len)
+   integer :: N          = 0
+   integer :: lwork      = 0
+   integer :: lrwork     = 0
+   integer :: liwork     = 0
+   integer :: info       = 0
+   integer :: rows(2)    = 0
+   integer :: cols(2)    = 0
+   integer :: nrows      = 0
+   integer :: ncols      = 0
+   integer :: nrows_used = 0
+   integer :: ncols_used = 0
+   complex(SP), allocatable :: blc(:,:)
+ end type PAR_matrix 
+ !
  ! Number of Bands to load
  !=========================
  !
@@ -308,6 +327,7 @@ module parallel_m
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_X_WORLD
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
  !
@@ -384,6 +404,32 @@ module parallel_m
  end interface PP_send_and_receive
  !
  contains
+   !
+   subroutine PAR_matrix_reset(M_par,nrows,ncols)
+     type(PAR_matrix)  :: M_par
+     integer, optional :: nrows, ncols 
+     !
+     Y_FREE(M_par%blc)
+     if (present(nrows).and.present(ncols)) then
+       M_par%nrows    = nrows
+       M_par%ncols    = ncols
+       Y_ALLOCATE(M_par%blc(nrows,ncols))
+       Y_MEM(M_par%blc)
+     else
+       M_par%N        = 0
+       M_par%desc     = 0
+       M_par%lwork    = 0
+       M_par%lrwork   = 0
+       M_par%liwork   = 0
+       M_par%info     = 0
+       M_par%rows(2)  = 0
+       M_par%cols(2)  = 0
+       M_par%nrows    = 0
+       M_par%ncols_used = 0
+       M_par%nrows_used = 0
+       M_par%ncols    = 0
+     endif
+   end subroutine
    !
    subroutine CREATE_the_COMM(WORLD, COMM, ID )
      integer       :: WORLD,ID,i_err

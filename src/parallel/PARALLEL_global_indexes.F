@@ -48,7 +48,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
 &                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX,PAR_COM_SLK_INDEX_local,&
-&                        PAR_COM_RL_INDEX
+&                        PAR_COM_RL_INDEX,PAR_COM_X_WORLD
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_SLK,&
@@ -213,6 +213,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_WF_k_A2A)
    call COMM_reset(PAR_COM_WF_b_INDEX)
    call COMM_reset(PAR_COM_WF_k_INDEX)
+   call COMM_reset(PAR_COM_X_WORLD)
    call COMM_reset(PAR_COM_DIPOLES)
    call COMM_reset(PAR_COM_DIPOLES_k_subgroup)
    call COMM_reset(PAR_COM_density)
@@ -389,6 +390,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
    call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
@@ -499,6 +501,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! The COMM is anyway the one for the all2all of each q.
    !
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    if (ENVIRONMENT/="Response_G_space_Finite_Momentum") then
@@ -622,6 +625,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !.........................................................................
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
    call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
    PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
@@ -886,6 +890,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      ! Dipoles are calculated using the three user-defined COMs
      !
      call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
      call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES_k_subgroup)
      call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX(X_type))
      call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX(X_type))
@@ -946,6 +951,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
    !
    call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
    call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))

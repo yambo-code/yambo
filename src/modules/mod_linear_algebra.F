@@ -40,7 +40,6 @@ module linear_algebra
  ! Common Work Space
  !
  type LALGEBRA_WS
-   !
    real(SP),    allocatable :: v_real(:)
    real(SP),    allocatable :: vp_real(:)
    complex(SP), allocatable :: v_cmplx(:)
@@ -51,7 +50,6 @@ module linear_algebra
    integer    , allocatable :: vp_int(:)
    integer                  :: i_fail
    integer                  :: dim
-   !
  end type LALGEBRA_WS
  !
  type(LALGEBRA_WS) :: WS

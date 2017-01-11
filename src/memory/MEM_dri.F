@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MEM_dri(what,Sz,Kn,Er,REPORT)
+subroutine MEM_dri(what,Sz,Kn,REPORT)
  !
  use pars,         ONLY:lchlen
  use drivers,      ONLY:infile_editing
- use com,          ONLY:msg,error,warning
+ use com,          ONLY:msg,error
  use openmp,       ONLY:master_thread
  use units,        ONLY:Kilobyte,Megabyte
  use stderr,       ONLY:intc
@@ -40,13 +40,12 @@ subroutine MEM_dri(what,Sz,Kn,Er,REPORT)
  character(*)         :: what
  integer,optional     :: Sz
  integer,optional     :: Kn
- integer,optional     :: Er
  character(*),optional:: REPORT
  ! 
  ! Work Space
  !
  logical :: adding,deliver_a_msg,found
- integer :: i_mem,i_element,MEM_now,delta_MEM,MEM_prefactor,i_mem_p,ORPHAN_TOT,i_same
+ integer :: i_mem,MEM_now,delta_MEM,MEM_prefactor,i_mem_p,ORPHAN_TOT,i_same
  character(lchlen) :: msg_
  !
  if (.not.master_thread) return
@@ -66,24 +65,26 @@ subroutine MEM_dri(what,Sz,Kn,Er,REPORT)
        enddo
        if  (i_same==0) msg_=trim(msg_)//" "//trim(MEM_element_name(i_mem))
        if (len_trim(msg_)>100) then
-         call msg("sr",msg_(1:len_trim(msg_)))
+         call msg("r",msg_(1:len_trim(msg_)))
          WRITE(msg_,'(1x,a8,a18," : ",3x)') "[MEMORY]"
          ORPHAN_TOT=ORPHAN_TOT+MEM_element_use(i_mem)
        endif
      enddo
    endif
-   WRITE(msg_,'(1x,a8,a18," : ",3x,i6,a)') "[MEMORY]","(still) Allocated",ORPHAN_TOT,"Kb"
-   call msg("sr",msg_(1:len_trim(msg_)))
-   if (REPORT=="final".and.N_MEM_SAVE_elements>0) then
-     do i_mem=1,N_MEM_SAVE_elements
-       WRITE(msg_,'(1x,a8,a18," : ",3x,i6,a)') "[MEMORY]",trim(MEM_element_name_SAVE(i_mem)),&
-&                                                         int(MEM_element_use_SAVE(i_mem)),"Kb (cleaned)"
-       call msg("sr",trim(msg_))
-     enddo
+   if (ORPHAN_TOT>0) then
+     WRITE(msg_,'(1x,a8,a18," : ",3x,i6,a)') "[MEMORY]","(still) Allocated",ORPHAN_TOT,"Kb"
+     call msg("r",msg_(1:len_trim(msg_)))
    endif
    if (REPORT=="final") then
+     if (N_MEM_SAVE_elements>0) then
+       do i_mem=1,N_MEM_SAVE_elements
+         WRITE(msg_,'(1x,a8,a18," : ",3x,i6,a)') "[MEMORY]",trim(MEM_element_name_SAVE(i_mem)),&
+&                                                           int(MEM_element_use_SAVE(i_mem)),"Kb (cleaned)"
+         call msg("r",trim(msg_))
+       enddo
+     endif
      WRITE(msg_,'(1x,a8,a18," : ",3x,i6,a)') "[MEMORY]","Max memory used",MAX_MEM_kilobytes_MEMSTAT,"Kb"
-     call msg("sr",trim(msg_))
+     call msg("r",trim(msg_))
    endif
    return
  endif

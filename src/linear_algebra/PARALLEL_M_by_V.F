@@ -32,7 +32,8 @@ subroutine PARALLEL_M_by_V(transa,N,A_slk,X,Y)
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:M_by_V_omp
  use parallel_m,     ONLY:PP_redux_wait
- use SLK_m,          ONLY:SLK_matrix,SLK_POOL,SLK_ORTHO
+ use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
+ use parallel_m,     ONLY:PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -40,7 +41,7 @@ subroutine PARALLEL_M_by_V(transa,N,A_slk,X,Y)
  implicit none
  !
  integer           :: N
- type(SLK_matrix)  :: A_slk
+ type(PAR_matrix)  :: A_slk
  character(1)      :: transa
  complex(SP)       :: X(N)
  complex(SP)       :: Y(N)

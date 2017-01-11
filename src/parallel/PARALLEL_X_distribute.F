@@ -51,15 +51,6 @@ subroutine PARALLEL_X_distribute( X , NW )
      cols(i_c,:)=cols(i_c-1,2)+(/1,N_rows/)
      if (N_rows==0) cols(i_c,2)=X%ng
    enddo
-! else
-!   M= X%ng/PAR_COM_RL_INDEX%n_CPU
-!   rows(1,:)=(/1,X%ng/)
-!   cols(1,:)=(/1,M /)
-!   do i_c=2,PAR_COM_RL_INDEX%n_CPU
-!     rows(i_c,:)=(/1,X%ng/)
-!     cols(i_c,:)=cols(i_c-1,:)+M
-!     if (i_c==PAR_COM_RL_INDEX%n_CPU) cols(i_c,2)=X%ng
-!   enddo
  endif
  !do i_c=1,PAR_COM_RL_INDEX%n_CPU
  ! if (PAR_COM_RL_INDEX%CPU_id+1==i_c) then

@@ -28,7 +28,8 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
  use pars,           ONLY:SP
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
+ use SLK_m,          ONLY:POOL_group,ORTHO_group
+ use parallel_m,     ONLY:PAR_matrix
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
  !
 #if defined _TIMING
@@ -39,7 +40,7 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  integer           :: n,nrhs
  type(POOL_group)  :: POOL
  type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: A_slk, B_slk
+ type(PAR_matrix)  :: A_slk, B_slk
  complex(SP)       :: B(n,nrhs)
  !
  character(64) :: subname="PARALLEL_lin_system"

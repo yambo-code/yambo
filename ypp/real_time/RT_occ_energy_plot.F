@@ -64,7 +64,7 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
  !
  logical  :: l_ELPH_lifetimes
  !
- integer  :: i_fit,i_fit_kind,i_RT,ib,ik,i_spinor,i_T,i1,i2,n1,n2,n3,igamma,n_gamma,i_ratio,n_ratio,n_fits_done
+ integer  :: i_fit,i_fit_kind,i_RT,ib,ik,ik_ibz,i_spinor,i_T,i1,i2,n1,n2,n3,igamma,n_gamma,i_ratio,n_ratio,n_fits_done
  integer  :: nfound(3),nfound_gamma(5),nfound_spin(5)
  integer  :: E_sort_index(RT_carriers%nstates)
  !
@@ -115,9 +115,10 @@ subroutine RT_occ_energy_plot(En,kpt,n_T_steps)
      !==================
      if(n_spinor==2) then
        ib=RT_carriers%table(i_RT,1)
+       ik_ibz=RT_carriers%table(i_RT,2)
        ik=RT_carriers%table(i_RT,3)
-       RT_spin_occ(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,1)
-       RT_spin_occ(i_RT,2,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,2)
+       RT_spin_occ(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,1)
+       RT_spin_occ(i_RT,2,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,2)
      endif
      !
      ! Lifetimes

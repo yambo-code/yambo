@@ -21,34 +21,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_matrix_distribute( M_par, N , N_mats ,mode )
+subroutine PARALLEL_matrix_distribute( what, M_par, N )
  !
  ! I distribute here the upper part of the X matrix.
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PAR_COM_RL_INDEX
  use linear_algebra, ONLY:PAR_matrix
 #include <memory.h>
  !
+ character(*)           :: what
  type(PAR_matrix)       :: M_par
  integer                :: N
- integer,      optional :: N_mats
- character(*), optional :: mode
  !
  ! Work Space
  !
  integer       :: M,rows(M_par%COMM%n_CPU,2),cols(M_par%COMM%n_CPU,2),i_c,N_rows
- character(10) :: mode_
- !
- mode_="symmetric"
- if (present(mode)) then
-  mode_=mode
- endif
  !
  if (M_par%COMM%n_CPU==1) then
-   rows(1,:)=(/1,N/)
-   cols(1,:)=(/1,N/)
- else if (mode=="symmetric") then
+   M_par%rows  = (/1,N/)
+   M_par%cols  = (/1,N/)
+   M_par%nrows = N
+   M_par%ncols = N
+   return
+ endif
+ !
+ if (what=="X") then
    M= ( (N**2-N)/2 + N )/M_par%COMM%n_CPU
    rows(1,:)=(/1,N/)
    cols(1,:)=(/1,SYMM_sol(N)/)
@@ -58,7 +55,6 @@ subroutine PARALLEL_matrix_distribute( M_par, N , N_mats ,mode )
      cols(i_c,:)=cols(i_c-1,2)+(/1,N_rows/)
      if (N_rows==0) cols(i_c,2)=N
    enddo
- else if (mode=="full") then
  endif
  !do i_c=1,PAR_COM_RL_INDEX%n_CPU
  ! if (PAR_COM_RL_INDEX%CPU_id+1==i_c) then

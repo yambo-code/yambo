@@ -27,7 +27,7 @@ subroutine X_half_mat_check(Xen,Xk,Xw)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_space_inv
- use X_m,           ONLY:UPPER_X_mat_only
+ use X_m,           ONLY:UPPER_X_matrix_only
  !
  implicit none
  !
@@ -38,9 +38,9 @@ subroutine X_half_mat_check(Xen,Xk,Xw)
  call WF_spatial_inversion(Xen,Xk)
  !
  if (i_space_inv==1) then
-   UPPER_X_mat_only= .TRUE.
+   UPPER_X_matrix_only= .TRUE.
  else
-   UPPER_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
+   UPPER_X_matrix_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
  !
 end subroutine

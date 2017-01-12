@@ -28,7 +28,7 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PAR_matrix_init(ORTHO, M_slk, N)
+subroutine SLK_matrix_init(ORTHO, M_slk, N)
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:ORTHO_group
@@ -78,7 +78,7 @@ subroutine PAR_matrix_init(ORTHO, M_slk, N)
  !
  call DESCINIT( M_slk%desc, N, N, N_blcs, N_blcs, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
  !
- call PAR_matrix_reset(M_slk,N_blcs,N_blcs)
+ call PAR_matrix_reset(M_slk)
  !
  M_slk%rows       = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
  M_slk%cols       = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)

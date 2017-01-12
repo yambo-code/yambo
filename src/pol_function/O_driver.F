@@ -46,7 +46,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
- use linear_algebra,ONLY:PARALLEL_matrix_distribute
  !
 #include<memory.h>
  !
@@ -139,11 +138,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Response function parallel allocation
    !
-   if (.not.allocated(X_mat)) then
+   if (.not.allocated(X_par%blc)) then
      !
      call COMM_copy(PAR_COM_RL_INDEX, X_par%COMM)
      !
-     call PARALLEL_matrix_distribute( X_par , X%ng, N_mats=wv%n_freqs, mode="X" )
+     call PARALLEL_matrix_distribute( "X", X_par , X%ng )
+     !
+     Y_ALLOCATE(X_par%blc_s(X_par%nrows,X_par%ncols,wv%n_freqs))
+     Y_MEM(X_par%blc_s)
      !
    endif
    !
@@ -214,7 +216,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    EEL       =cZERO
    Alpha     =cZERO
    !
-   call X_os(X_mat,iq,Xen,Xk,wv,X)     
+   call X_irredux(iq,Xen,Xk,wv,X)     
    !
    ! Without LF eps
    !
@@ -223,10 +225,15 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! X Dyson equation solver
    !
    if(l_rpa_IP) then
+     !
      Epsilon_ii(:,2)=Epsilon_ii(:,1)
+     !
    else
-     call X_s(iq,X,wv,(/1,wv%n_freqs/))
+     !
+     call X_redux(iq,wv,X)
+     !
      Epsilon_ii(:,2)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     !
    endif
    !
    call of_open_close(eps_file_name,'oa')

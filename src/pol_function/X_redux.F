@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_s(iq,X,Xw,W_range)
+subroutine X_redux(iq,X,Xw)
  !
  use pars,          ONLY:SP,pi,cZERO,cONE
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
@@ -44,11 +44,11 @@ subroutine X_s(iq,X,Xw,W_range)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- !
 #include<memory.h>
+ !
  type(X_t)    :: X
  type(w_samp) :: Xw
- integer      :: iq,W_range(2)
+ integer      :: iq
  !
  ! Work Space
  !
@@ -94,10 +94,10 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  ! I build here a local BLACS structure for the response function components
  !
- call PAR_matrix_init( SLK_ORTHO, X_kernel,X%ng)
+ call SLK_matrix_init( SLK_ORTHO, X_kernel,X%ng)
  Y_ALLOCATE(X_kernel%blc(X_kernel%nrows,X_kernel%ncols))
  Y_MEM(X_kernel%blc)
- call PAR_matrix_init( SLK_ORTHO, Xo,X%ng)
+ call SLK_matrix_init( SLK_ORTHO, Xo,X%ng)
  Y_ALLOCATE(Xo%blc(Xo%nrows,Xo%ncols))
  Y_MEM(Xo%blc)
  !

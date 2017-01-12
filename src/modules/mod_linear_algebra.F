@@ -84,7 +84,8 @@ module linear_algebra
    integer,     allocatable :: cols_global(:,:)
    !
    complex(SP), allocatable :: blc(:,:)
-   complex(SP), allocatable :: blc_prime(:,:)
+   !
+   complex(SP), allocatable :: blc_s(:,:,:)
    !
  end type PAR_matrix 
  !
@@ -94,41 +95,20 @@ module linear_algebra
  !
  contains
    !
-   subroutine PAR_matrix_reset(M_par,nrows, ncols)
+   subroutine PAR_matrix_reset(M_par)
      type(PAR_matrix)  :: M_par
-     integer, optional :: nrows, ncols 
-     !
-     if (allocated(M_par%blc)) then
-       Y_FREE(M_par%blc)
-       Y_FREE(M_par%rows_global)
-       Y_FREE(M_par%cols_global)
-     endif
-     if (present(nrows).and.present(ncols)) then
-       M_par%nrows    = nrows
-       M_par%ncols    = ncols
-       Y_ALLOCATE(M_par%blc(nrows,ncols))
-       Y_MEM(M_par%blc)
-     else
-       M_par%N        = 0
-       M_par%desc     = 0
-       M_par%lwork    = 0
-       M_par%lrwork   = 0
-       M_par%liwork   = 0
-       M_par%info     = 0
-       M_par%rows     = 0
-       M_par%cols     = 0
-       M_par%nrows    = 0
-       M_par%ncols    = 0
-       M_par%ncols_used = 0
-       M_par%nrows_used = 0
-     endif
-   end subroutine
-   !
-   subroutine PARALLEL_matrix_distribute( M_par, N , N_mats ,mode )
-     type(PAR_matrix)       :: M_par
-     integer                :: N
-     integer,      optional :: N_mats
-     character(*), optional :: mode
+     M_par%N        = 0
+     M_par%desc     = 0
+     M_par%lwork    = 0
+     M_par%lrwork   = 0
+     M_par%liwork   = 0
+     M_par%info     = 0
+     M_par%rows     = 0
+     M_par%cols     = 0
+     M_par%nrows    = 0
+     M_par%ncols    = 0
+     M_par%ncols_used = 0
+     M_par%nrows_used = 0
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_WS_clean_up(WS)

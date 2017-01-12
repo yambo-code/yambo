@@ -98,7 +98,7 @@ module X_m
  integer :: current_iq
  integer :: iw_ref
  integer :: X_DbGd_nkpts
- logical :: UPPER_X_mat_only
+ logical :: UPPER_X_matrix_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
  real(SP):: X_terminator_E
@@ -123,10 +123,6 @@ module X_m
  type(PAR_matrix)              :: Xo_par
  type(PAR_matrix)              :: Xo_par_lower_triangle
  complex(SP)     , allocatable :: X_mat(:,:,:)
- integer                       :: Xo_my_rows(2)
- integer                       :: Xo_my_cols(2)
- integer         , allocatable :: Xo_rows(:,:)
- integer         , allocatable :: Xo_cols(:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp

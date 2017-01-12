@@ -27,8 +27,7 @@ SUBROUTINE PAR_matrix_duplicate( operation, M_in, M_out )
  !
  use pars,           ONLY:cZERO
  use linear_algebra, ONLY:PAR_matrix,PAR_matrix_reset
- !
- implicit none
+#include<memory.h>
  !
  character(*)     :: operation
  type(PAR_matrix) :: M_in,M_out
@@ -38,7 +37,7 @@ SUBROUTINE PAR_matrix_duplicate( operation, M_in, M_out )
  integer :: BLK_size
  !
  BLK_size=size(M_in%blc,1)
- call PAR_matrix_reset(M_out,BLK_size,BLK_size)
+ call PAR_matrix_reset(M_out)
  !
  M_out%N          = M_in%N         
  M_out%desc       = M_in%desc      
@@ -53,6 +52,8 @@ SUBROUTINE PAR_matrix_duplicate( operation, M_in, M_out )
  M_out%nrows_used = M_in%nrows_used
  M_out%ncols_used = M_in%ncols_used
  !
+ Y_ALLOCATE(M_out%blc(M_out%nrows,M_out%ncols))
+ Y_MEM(M_out%blc)
  M_out%blc=cZERO
  !
  if (operation=="none") return

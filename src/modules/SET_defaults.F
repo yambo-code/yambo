@@ -29,7 +29,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use pars,       ONLY:SP,cZERO,schlen
  use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
- use X_m,        ONLY:current_iq,self_detect_E_range,UPPER_X_mat_only,eps_2_alpha,l_drude,&
+ use X_m,        ONLY:current_iq,self_detect_E_range,UPPER_X_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
@@ -341,7 +341,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
- UPPER_X_mat_only=.FALSE.
+ UPPER_X_matrix_only=.FALSE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
  Dipole_Energy_treshold_vv=1.E+5_SP/HA2EV
  Dipole_approach="G-space v"

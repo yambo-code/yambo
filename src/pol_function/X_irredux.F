@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
+subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
  ! Non interacting Xo
  !
@@ -58,8 +58,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use D_lattice,     ONLY:i_space_inv
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,UPPER_X_mat_only,use_X_DbGd,&
-&                        l_X_terminator,X_terminator_E,X_term_E,Xo_my_rows,Xo_my_cols
+&                        self_detect_E_range,UPPER_X_matrix_only,use_X_DbGd,&
+&                        l_X_terminator,X_terminator_E,X_term_E,
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -73,7 +73,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  type(X_t)            :: X
  type(w_samp)         :: Xw
  integer              :: iq
- complex(SP)          :: Xo(Xo_my_rows(1):Xo_my_rows(2),Xo_my_cols(1):Xo_my_cols(2),Xw%n_freqs)
  !
  ! Work Space
  !
@@ -177,7 +176,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
- if (UPPER_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
+ if (UPPER_X_matrix_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
  ! omp settings and workspace
  !=================================
@@ -217,7 +216,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! memory estimate and local alloc
  !=================================
- Y_ALLOCATE(Xo_res(Xo_my_rows(1):Xo_my_rows(2),Xo_my_cols(1):Xo_my_cols(2)))
+ Y_ALLOCATE(Xo_res(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
  Y_MEM(Xo_res)
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
@@ -276,19 +275,19 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !===========================================================
    do iw=1,Xw%n_freqs
      !
-     do ig2=Xo_my_cols(1),Xo_my_cols(2)
+     do ig2=X_par%cols(1),X_par%cols(2)
 #if defined _OPENMP
        call OPENMP_compute_mutex(ig2,mutexid)
        call omp_set_lock(omp_locks(mutexid))
 #endif
        !
-       X_rows=(/Xo_my_rows(1),min(Xo_my_rows(2),ig2)/)
+       X_rows=(/X_par%rows(1),min(X_par%rows(2),ig2)/)
        !
        call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),Xo_res(X_rows(1):X_rows(2),ig2),Xo(X_rows(1):X_rows(2),ig2,iw))
        !
-       if (.not.UPPER_X_mat_only) then
+       if (.not.UPPER_X_matrix_only) then
 !         call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),&
-!&                           conjg(Xo_res(X_rows(1):X_rows(2),ig2)),Xo_lower_triangle(ig2,X_rows(1):X_rows(2),iw))
+!&                           conjg(Xo_res(X_rows(1):X_rows(2),ig2)),Xo(ig2,X_rows(1):X_rows(2),iw))
        endif
 #if defined _OPENMP
        call omp_unset_lock(omp_locks(mutexid))
@@ -326,8 +325,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  do iw=1,Xw%n_freqs
    call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
-   if (PAR_COM_RL_INDEX%n_CPU>1.and..not.UPPER_X_mat_only) then
-     !call PP_redux_wait(Xo_lower_triangle(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
+   if (PAR_COM_RL_INDEX%n_CPU>1.and..not.UPPER_X_matrix_only) then
+     !call PP_redux_wait(X_par%blcs(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
    endif
  enddo
  !
@@ -338,7 +337,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Symmetrize Xo when only half has been avaluated
  !=================================================
  !
- if (UPPER_X_mat_only) then
+ if (UPPER_X_matrix_only.and.X_par%COMM%n_CPU==1) then
    !
 #if defined _OPENMP
    !$omp parallel default(shared), private(ig2,ig1)
@@ -347,8 +346,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #if defined _OPENMP
      !$omp do
 #endif
-     do ig2=Xo_my_rows(1),Xo_my_rows(2)
-       do ig1=max(Xo_my_cols(1),ig2+1),Xo_my_cols(2)
+     do ig2=X_par%rows(1),X_par%rows(2)
+       do ig1=max(X_par%cols(1),ig2+1),X_par%cols(2)
          Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
        enddo
      enddo
@@ -361,8 +360,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #if defined _OPENMP
      !$omp do
 #endif
-     do ig2=Xo_my_rows(1),Xo_my_rows(2)
-       do ig1=max(Xo_my_cols(1),ig2+1),Xo_my_cols(2)
+     do ig2=X_par%rows(1),X_par%rows(2)
+       do ig1=max(X_par%cols(1),ig2+1),X_par%cols(2)
          Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
        enddo
      enddo

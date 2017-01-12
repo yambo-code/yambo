@@ -104,18 +104,21 @@ AC_SUBST(enable_debug)
 # ============================================================================= 
 # KEEP SOURCE FILES 
 AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
-dp_cpp=""
 if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
 if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 AC_SUBST(enable_keep_src)
 # ============================================================================
 # KEEP EXT LIBS
-AC_ARG_ENABLE(keep-extlibs, AC_HELP_STRING([--enable-keep-extlibs], [Keep downloaded packages as tar.gz . Default is no.]))
-dp_cpp=""
-if test x"$enable_keep_extlibs" = "xno";  then 
+AC_ARG_ENABLE(keep-extlibs, AC_HELP_STRING([--enable-keep-extlibs], [Keep downloaded packages as tar.gz . Default is yes.]))
+if test x"$enable_keep_extlibs" = "x"; then enable_keep_extlibs="yes"; fi
+if test x"$enable_keep_extlibs" = "xno";  then
+   enable_keep_extlibs="no"; 
    if test -e ./lib/archive/keep-extlibs-stamp ; then rm ./lib/archive/keep-extlibs-stamp ; fi
 fi
-if test x"$enable_keep_extlibs" = "xyes"; then enable_keep_extlibs="yes"; touch ./lib/archive/keep-extlibs-stamp ; fi
+if test x"$enable_keep_extlibs" = "xyes"; then
+  enable_keep_extlibs="yes";
+  touch ./lib/archive/keep-extlibs-stamp ;
+fi
 AC_SUBST(enable_keep_extlibs)
 # ============================================================================
 # DP

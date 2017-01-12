@@ -49,7 +49,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  ! Work Space
  !
  integer, parameter    :: fit_dim=1000,N_max_files=16
- integer               :: n_groups=1,i_g,i_g_ep=0,i_g_ee=0,i_T,i_RT,ib,ik,i_f,i_fit
+ integer               :: n_groups=1,i_g,i_g_ep=0,i_g_ee=0,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit
  integer               :: E_sort_index(RT_carriers%nstates)
  logical               :: l_ep_lifetimes
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
@@ -147,9 +147,10 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !==================
      if (n_spinor==2) then
        ib=RT_carriers%table(i_RT,1)
+       ik_ibz=RT_carriers%table(i_RT,2)
        ik=RT_carriers%table(i_RT,3)
-       DATA_grp(2)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,1)
-       DATA_grp(3)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,2)
+       DATA_grp(2)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,1)
+       DATA_grp(3)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,2)
      endif
      !
      ! Lifetimes

@@ -231,7 +231,7 @@ module openmp
         do i = 1, size(omp_locks)
            call omp_destroy_lock(omp_locks(i))
         enddo
-        Y_FREE(omp_locks)
+        deallocate(omp_locks)
      endif
      !
      if (INIT_) then

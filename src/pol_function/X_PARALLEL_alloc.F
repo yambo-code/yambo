@@ -71,6 +71,7 @@ subroutine X_PARALLEL_alloc(X,E,k,W,NW,mode)
    Y_ALLOCATE(X_par_lower_triangle%blc_3d(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
    Y_MEM(X_par_lower_triangle%blc_3d)
    X_par_lower_triangle%blc_3d=cZERO
+   call COMM_copy(PAR_COM_RL_INDEX, X_par_lower_triangle%COMM)
  endif
  !
  Y_ALLOCATE(X_par%blc_3d(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),X_size))

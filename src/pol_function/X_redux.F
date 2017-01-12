@@ -34,7 +34,7 @@ subroutine X_redux(iq,Xw,X)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,LINEAR_ALGEBRA_driver,PAR_matrix_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_mat,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle
+ use X_m,           ONLY:X_t,X_mat,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle,UPPER_X_matrix_only
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
 #if defined _SCALAPACK
  use SLK_m,          ONLY:BLACS_structure_in_use
@@ -95,11 +95,15 @@ subroutine X_redux(iq,Xw,X)
 #if defined _SCALAPACK
    if (BLACS_structure_in_use) then
      call PAR_matrix_transfer("<",M_slk=Xo,M_par=X_par,i_MAT=iw_X)
-     call PAR_matrix_transfer("<",M_slk=Xo,M_par=X_par_lower_triangle,i_MAT=iw_X)
+     if (X_par%COMM%n_CPU>1.and..not.UPPER_X_matrix_only) then
+       call PAR_matrix_transfer("<",M_slk=Xo,M_par=X_par_lower_triangle,i_MAT=iw_X)
+     endif
    else
 #endif
-     call PAR_matrix_transfer("<",M=Xo%blc,M_par=X_par,i_MAT=iw_X)
-     call PAR_matrix_transfer("<",M=Xo%blc,M_par=X_par_lower_triangle,i_MAT=iw_X)
+     call PAR_matrix_transfer("<",M_par=X_par,M=Xo%blc,i_MAT=iw_X)
+     if (X_par%COMM%n_CPU>1.and..not.UPPER_X_matrix_only) then
+       call PAR_matrix_transfer("<",M_par=X_par_lower_triangle,M=Xo%blc,i_MAT=iw_X)
+     endif
 #if defined _SCALAPACK
    endif
 #endif
@@ -120,11 +124,11 @@ subroutine X_redux(iq,Xw,X)
      !
      ! LRC Fxc
      !
-     if (X_par%cols(1)==1) then
+     if (Xo%cols(1)==1) then
 #if defined _OPENMP
        !$omp parallel do default(shared), private(ig1)
 #endif
-       do ig1=X_par%rows(1),X_par%rows(2)
+       do ig1=Xo%rows(1),Xo%rows(2)
          X_kernel%blc(ig1,1)=-Xo%blc(ig1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
        enddo
 #if defined _OPENMP
@@ -145,8 +149,8 @@ subroutine X_redux(iq,Xw,X)
 #if defined _OPENMP
    !$omp parallel do default(shared), private(ig1,ig2)
 #endif
-   do ig1=X_par%rows(1),X_par%rows(2)
-     do ig2=X_par%cols(1),X_par%cols(2)
+   do ig1=Xo%rows(1),Xo%rows(2)
+     do ig2=Xo%cols(1),Xo%cols(2)
        X_kernel%blc(ig1,ig2) =X_kernel%blc(ig1,ig2)-Xo%blc(ig1,ig2)*4._SP*pi/bare_qpg(iq,ig2)**2
      enddo
      X_kernel%blc(ig1,ig1)=X_kernel%blc(ig1,ig1)+cONE
@@ -176,8 +180,8 @@ subroutine X_redux(iq,Xw,X)
 #if defined _OPENMP
    !$omp parallel do default(shared), private(ig1,ig2)
 #endif
-   do ig1=X_par%rows(1),X_par%rows(2)
-     do ig2=X_par%cols(1),X_par%cols(2)
+   do ig1=Xo%rows(1),Xo%rows(2)
+     do ig2=Xo%cols(1),Xo%cols(2)
        X_mat(ig1,ig2,iw_X)=X_mat(ig1,ig2,iw_X)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
      enddo
    enddo

@@ -91,7 +91,7 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, M_bse, M ,i_MAT )
    !
    if (present(M)) then
      !
-     if (mode==">") then
+     if (mode=="<") then
        !
        M=cZERO
        !

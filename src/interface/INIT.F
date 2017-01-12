@@ -569,8 +569,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Kernels
  !
- if (l_em1s.or.l_em1d)             call initactivate(1,'Chimod')
- if (l_optics.and.l_chi)           call initactivate(1,'Chimod')
+ if (l_em1s.or.l_em1d)             call initactivate(1,'Chimod ChiLinAlgMod')
+ if (l_optics.and.l_chi)           call initactivate(1,'Chimod ChiLinAlgMod')
  if (l_optics.and.l_bse)           call initactivate(1,'BSEmod')
  if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')

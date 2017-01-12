@@ -804,7 +804,6 @@ module it_m
            nflines=nflines+1
            if (ou/=20) call init_convert_i(defs%i1def(i2),i1vars(i2,3),.FALSE.)
            ch(2)=gen_fmt((/defs%i1def(i2)/))
-write (*,*) 'here'
            write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t32,2a)'
            write (flines(nflines),trim(ch(1))) trim(i1vars(i2,1)),'=',&
 &                defs%i1def(i2),trim(i1vars(i2,3)),'# ',trim(i1vars(i2,2))

@@ -43,7 +43,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use linear_algebra, ONLY:PAR_matrix_reset
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL
- use interfaces,     ONLY:SLK_matrix_transfer
+ use interfaces,     ONLY:PAR_matrix_transfer
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -159,7 +159,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    ! Prepare the BLACS matrices (reference, K_slk and local, K_inv_slk)
    !============================
    !
-   call SLK_matrix_transfer("<", K_slk, BS_blk )
+   call PAR_matrix_transfer("<", M_slk=K_slk, M_bse= BS_blk )
    !
    ! Diagonal removal
    !==================

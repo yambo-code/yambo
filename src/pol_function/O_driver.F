@@ -36,9 +36,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels,X_mat,Xo_rows,Xo_cols
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,COMM_copy,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,PAR_COM_RL_INDEX
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels,X_mat
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
@@ -46,6 +46,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
+ use linear_algebra,ONLY:PAR_matrix_reset
  !
 #include<memory.h>
  !
@@ -136,22 +137,13 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      X_fxc=cZERO
    endif
    !
-   ! Response function parallel allocation
-   !
-   if (.not.allocated(X_par%blc)) then
-     !
-     call COMM_copy(PAR_COM_RL_INDEX, X_par%COMM)
-     !
-     call PARALLEL_matrix_distribute( "X", X_par , X%ng )
-     !
-     Y_ALLOCATE(X_par%blc_s(X_par%nrows,X_par%ncols,wv%n_freqs))
-     Y_MEM(X_par%blc_s)
-     !
-   endif
-   !
    ! Frequencies (AFTER TDDFT SETUP!)
    !
    call FREQUENCIES_setup(wv)
+   !
+   ! Response function parallel allocation
+   !
+   call X_PARALLEL_alloc(X,Xen,Xk,wv,wv%n_freqs,"OPTICS")
    !
    ! Check if EELS can be evaluated
    !
@@ -217,10 +209,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    Alpha     =cZERO
    !
    call X_irredux(iq,Xen,Xk,wv,X)     
+ stop
    !
    ! Without LF eps
    !
-   Epsilon_ii(:,1)=1.0_SP-X_mat(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   Epsilon_ii(:,1)=1.0_SP-X_par%blc_3d(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
    !
@@ -340,8 +333,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! CLEAN
  !
  Y_FREE(X_mat)
- Y_FREE(Xo_rows)
- Y_FREE(Xo_cols)
+ Y_FREE(X_par%blc_3d)
+ call PAR_matrix_reset(X_par)
  call X_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait

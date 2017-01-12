@@ -31,13 +31,13 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use drivers,       ONLY:l_photolum
 #endif
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
-&                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys,Xo_cols,&
-&                        Xo_rows,X_mat,X_par
+&                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys,&
+&                        X_mat,X_par,iW_offset,iW_lower_triangle_offset
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,PAR_COM_RL_INDEX, &
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX,COMM_copy
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_Q_index, &
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth,error
@@ -45,6 +45,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load
  use QP_m,          ONLY:QP_n_W_freqs_redux
+ use linear_algebra,ONLY:PAR_matrix_reset
  !
 #include<memory.h>
  !
@@ -56,7 +57,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,iq_mem,X_range(2),X_n_freqs,io_X_done(nqibz),X_size
+ integer              :: iq,Xdb,i_err,X_n_freqs,io_X_done(nqibz)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
@@ -176,21 +177,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
  !
- if (.not.allocated(X_mat)) then
-   !
-   call X_half_mat_check(Xen,Xk,Xw)
-   !
-   call COMM_copy(PAR_COM_RL_INDEX, X_par%COMM)
-   !
-   call PARALLEL_matrix_distribute( "X", X_par , X%ng )
-   !
-   if (.not.io_RESPONSE) X_size=Xw%n_freqs*PAR_nq
-   if (     io_RESPONSE) X_size=Xw%n_freqs
-   !
-   Y_ALLOCATE(X_par%blc_s(X_par%nrows,X_par%ncols,X_size))
-   Y_MEM(X_par%blc_s)
-   !
- endif
+ call X_PARALLEL_alloc(X,Xen,Xk,Xw,"DIELETRIC_MATRIX")
  !
  ! WF distribution 
  !=================
@@ -233,10 +220,14 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
-   iq_mem=PAR_Q_index(iq)
+   ! Frequency offsets for resonant and lower_triangle (if any) part
    !
-   X_range               =(/1,Xw%n_freqs/)
-   if (.not.io_RESPONSE) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
+   iW_offset                =0
+   iW_lower_triangle_offset =0
+   if (.not.io_RESPONSE) then
+     iW_offset                =X_n_freqs*(PAR_Q_index(iq)-1)
+     iW_lower_triangle_offset =X_n_freqs*(PAR_Q_index(iq)-1)
+   endif
    !
    call X_irredux(iq,Xen,Xk,Xw,X)  
    !
@@ -273,9 +264,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! CLEAN (2)
  !
  if (io_RESPONSE) then
+   Y_FREE(X_par%blc_3d)
    Y_FREE(X_mat)
-   Y_FREE(Xo_rows)
-   Y_FREE(Xo_cols)
+   call PAR_matrix_reset(X_par)
  endif
  !
  call X_alloc('DIP_projected')

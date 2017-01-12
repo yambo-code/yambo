@@ -27,6 +27,10 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  !
  use pars,           ONLY:SP
  use linear_algebra, ONLY:PAR_matrix
+ use parallel_m,     ONLY:PAR_COM_SLK,COMM_copy
+#if defined _SCALAPACK
+ use SLK_m,          ONLY:SLK_ORTHO
+#endif
 #include <memory.h>
  !
  character(*)           :: what
@@ -37,11 +41,22 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  !
  integer       :: M,rows(M_par%COMM%n_CPU,2),cols(M_par%COMM%n_CPU,2),i_c,N_rows
  !
+ if (what=="SLK") then
+   call COMM_copy(PAR_COM_SLK, M_par%COMM)
+ endif
+ !
  if (M_par%COMM%n_CPU==1) then
    M_par%rows  = (/1,N/)
    M_par%cols  = (/1,N/)
    M_par%nrows = N
    M_par%ncols = N
+   return
+ endif
+ !
+ if (what=="SLK") then
+#if defined _SCALAPACK
+   call SLK_matrix_init( SLK_ORTHO, M_par,N)
+#endif
    return
  endif
  !
@@ -55,35 +70,12 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
      cols(i_c,:)=cols(i_c-1,2)+(/1,N_rows/)
      if (N_rows==0) cols(i_c,2)=N
    enddo
+   M_par%rows  = rows(M_par%COMM%CPU_id+1,:)
+   M_par%cols  = cols(M_par%COMM%CPU_id+1,:)
+   M_par%nrows = M_par%rows(2)-M_par%rows(1)+1 
+   M_par%ncols = M_par%cols(2)-M_par%cols(1)+1 
+   return
  endif
- !do i_c=1,PAR_COM_RL_INDEX%n_CPU
- ! if (PAR_COM_RL_INDEX%CPU_id+1==i_c) then
- !   write (*,*) i_c,rows(i_c,:),cols(i_c,:)
- !   N_rows=(cols(i_c,2)-cols(i_c,1)+1)
- !   write (*,*) (rows(i_c,2)-rows(i_c,1)+1)*N_rows-(N_rows**2-N_rows)/2,M
- ! endif
- !enddo
- !
- M_par%rows  = rows(M_par%COMM%CPU_id+1,:)
- M_par%cols  = cols(M_par%COMM%CPU_id+1,:)
- M_par%nrows = M_par%rows(2)-M_par%rows(1)+1 
- M_par%ncols = M_par%cols(2)-M_par%cols(1)+1 
- !
-! Y_ALLOCATE(X_mat(Xo_my_rows(1):Xo_my_rows(2),Xo_my_cols(1):Xo_my_cols(2),NW))
-! Y_MEM(X_mat)
-! !
-! if (UPPER_X_mat_only) return
-! !
-! if (PAR_COM_RL_INDEX%n_CPU==1) then
-!   !
-!   Xo_lower_triangle => X_mat
-!   !
-! else
-!   !
-!   Y_ALLOCATE(Xo_lower_triangle(Xo_my_cols(1):Xo_my_cols(2),Xo_my_rows(1):Xo_my_rows(2),NW))
-!   Y_MEM(Xo_lower_triangle)
-!   !
-! endif
  !
  contains
    !

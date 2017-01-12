@@ -58,8 +58,8 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  use D_lattice,     ONLY:i_space_inv
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,UPPER_X_matrix_only,use_X_DbGd,&
-&                        l_X_terminator,X_terminator_E,X_term_E,
+&                        self_detect_E_range,UPPER_X_matrix_only,use_X_DbGd,X_par,&
+&                        l_X_terminator,X_terminator_E,X_term_E,iW_offset,iW_lower_triangle_offset
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -87,9 +87,12 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
  ! Defaults & Setups
  !===================
- Xo             = cZERO
- GreenF         = cZERO
- drude_GreenF   = cZERO
+ X_par%blc_3d(:,:,iW_offset+1:iW_offset+Xw%n_freqs) = cZERO
+ GreenF                                             = cZERO
+ drude_GreenF                                       = cZERO
+ if (iW_lower_triangle_offset>0) then
+   X_par%blc_3d(:,:,iW_lower_triangle_offset+1:iW_lower_triangle_offset+Xw%n_freqs) = cZERO
+ endif
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
@@ -189,7 +192,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
 #  else
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
  n_threads_FFT=1
- !call msg('s','[X] NESTED openmp parallelism off')
+ call msg('s','[X] NESTED openmp parallelism off')
 #  endif
 #endif
  call OPENMP_locks_reset(INIT=.true.,nlocks=16)
@@ -239,11 +242,11 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
    !=======================================
    Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
    !
-   if(Drude_pole) then
+   if(Drude_pole.and.X_par%rows(1)==1.and.X_par%cols(1)==1) then
 #if defined _OPENMP
      !$omp critical
 #endif
-!     Xo(1,1,:)=Xo(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
+     X_par%blc_3d(1,1,:)=X_par%blc_3d(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
 #if defined _OPENMP
      !$omp end critical
 #endif
@@ -283,11 +286,12 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
        !
        X_rows=(/X_par%rows(1),min(X_par%rows(2),ig2)/)
        !
-       call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),Xo_res(X_rows(1):X_rows(2),ig2),Xo(X_rows(1):X_rows(2),ig2,iw))
+       call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),Xo_res(X_rows(1):X_rows(2),ig2),X_par%blc_3d(X_rows(1):X_rows(2),ig2,iw))
        !
        if (.not.UPPER_X_matrix_only) then
-!         call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),&
-!&                           conjg(Xo_res(X_rows(1):X_rows(2),ig2)),Xo(ig2,X_rows(1):X_rows(2),iw))
+         call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,GreenF(iw),&
+&                           conjg(Xo_res(X_rows(1):X_rows(2),ig2)),&
+&                           X_par%blc_3d(ig2,X_rows(1):X_rows(2),iw+iW_lower_triangle_offset))
        endif
 #if defined _OPENMP
        call omp_unset_lock(omp_locks(mutexid))
@@ -324,9 +328,9 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
+   call PP_redux_wait(X_par%blc_3d(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
    if (PAR_COM_RL_INDEX%n_CPU>1.and..not.UPPER_X_matrix_only) then
-     !call PP_redux_wait(X_par%blcs(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
+     call PP_redux_wait(X_par%blc_3d(:,:,iw+iW_lower_triangle_offset),COMM=PAR_COM_X_WORLD%COMM)
    endif
  enddo
  !
@@ -348,7 +352,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
 #endif
      do ig2=X_par%rows(1),X_par%rows(2)
        do ig1=max(X_par%cols(1),ig2+1),X_par%cols(2)
-         Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
+         X_par%blc_3d(ig1,ig2,:)=conjg(X_par%blc_3d(ig2,ig1,:))
        enddo
      enddo
 #if defined _OPENMP
@@ -362,7 +366,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
 #endif
      do ig2=X_par%rows(1),X_par%rows(2)
        do ig1=max(X_par%cols(1),ig2+1),X_par%cols(2)
-         Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
+         X_par%blc_3d(ig1,ig2,:)=X_par%blc_3d(ig2,ig1,:)
        enddo
      enddo
 #if defined _OPENMP
@@ -374,6 +378,9 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
 #endif
    !
  endif
+ !
+ ! Closing
+ !=========
  !
  current_iq=iq
  n_threads_FFT=0

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE SLK_matrix_transfer_K( M_slk, M_bse )
+SUBROUTINE PAR_matrix_transfer_K_to_SLK( M_slk, M_bse )
  !
  ! M_bse (WORLD) ->M_slk (SLK WORLD)
  !

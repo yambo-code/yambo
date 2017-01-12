@@ -122,6 +122,8 @@ module X_m
  type(PAR_matrix)              :: X_par
  type(PAR_matrix)              :: Xo_par
  type(PAR_matrix)              :: Xo_par_lower_triangle
+ integer                       :: iW_offset                = 0
+ integer                       :: iW_lower_triangle_offset = 0
  complex(SP)     , allocatable :: X_mat(:,:,:)
  !
  type X_t
@@ -239,21 +241,21 @@ module X_m
    !
    subroutine X_duplicate(Xi,Xo)
      type(X_t):: Xi,Xo
-     Xo%ng=Xi%ng
-     Xo%ng_db=Xi%ng_db
-     Xo%iq=Xi%iq
-     Xo%ib    =Xi%ib
-     Xo%ib_lim=Xi%ib_lim
-     Xo%db_ib    =Xi%db_ib
-     Xo%db_ib_lim=Xi%db_ib_lim
-     Xo%ngostnts=Xi%ngostnts
-     Xo%ordering=Xi%ordering
-     Xo%Vnl_included=Xi%Vnl_included
-     Xo%ehe=Xi%ehe
-     Xo%q0=Xi%q0
+     Xo%ng           =Xi%ng
+     Xo%ng_db        =Xi%ng_db
+     Xo%iq           =Xi%iq
+     Xo%ib           =Xi%ib
+     Xo%ib_lim       =Xi%ib_lim
+     Xo%db_ib        =Xi%db_ib
+     Xo%db_ib_lim    =Xi%db_ib_lim
+     Xo%ngostnts     =Xi%ngostnts
+     Xo%ordering     =Xi%ordering
+     Xo%Vnl_included =Xi%Vnl_included
+     Xo%ehe          =Xi%ehe
+     Xo%q0           =Xi%q0
      Xo%cg_percentual=Xi%cg_percentual
-     Xo%ppaE=Xi%ppaE
-     Xo%Wd=Xi%Wd
+     Xo%ppaE         =Xi%ppaE
+     Xo%Wd           =Xi%Wd
      Xo%f_xc=Xi%f_xc
    end subroutine
    !
@@ -261,20 +263,20 @@ module X_m
      use pars,  ONLY:czero
      integer, optional :: type
      type(X_t)::X
-     X%ng=1
-     X%ng_db=0
-     X%iq=(/1,-1/)
-     X%ngostnts=0
-     X%whoami=0
-     X%Vnl_included=.false.
+     X%ng           =1
+     X%ng_db        =0
+     X%iq           =(/1,-1/)
+     X%ngostnts     =0
+     X%whoami       =0
+     X%Vnl_included =.false.
      if (present(type)) X%whoami=type
-     X%ehe=(/-1._SP,-1._SP/)/HA2EV
-     X%q0=(/1._SP,0._SP,0._SP/)
-     X%Wd=cZERO
+     X%ehe          =(/-1._SP,-1._SP/)/HA2EV
+     X%q0           =(/1._SP,0._SP,0._SP/)
+     X%Wd           =cZERO
      X%cg_percentual=100._SP
-     X%ppaE=1._SP
-     X%ordering="T"
-     X%f_xc="none"       
+     X%ppaE         =1._SP
+     X%ordering     ="T"
+     X%f_xc         ="none"       
    end subroutine
    !
 end module

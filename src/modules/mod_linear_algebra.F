@@ -84,8 +84,7 @@ module linear_algebra
    integer,     allocatable :: cols_global(:,:)
    !
    complex(SP), allocatable :: blc(:,:)
-   !
-   complex(SP), allocatable :: blc_s(:,:,:)
+   complex(SP), allocatable :: blc_3d(:,:,:)
    !
  end type PAR_matrix 
  !
@@ -96,7 +95,8 @@ module linear_algebra
  contains
    !
    subroutine PAR_matrix_reset(M_par)
-     type(PAR_matrix)  :: M_par
+     use parallel_m, ONLY:COMM_reset
+     type(PAR_matrix)   :: M_par
      M_par%N        = 0
      M_par%desc     = 0
      M_par%lwork    = 0
@@ -109,6 +109,7 @@ module linear_algebra
      M_par%ncols    = 0
      M_par%ncols_used = 0
      M_par%nrows_used = 0
+     call COMM_reset(M_par%COMM)
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_WS_clean_up(WS)

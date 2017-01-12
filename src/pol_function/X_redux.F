@@ -34,9 +34,11 @@ subroutine X_redux(iq,Xw,X)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,LINEAR_ALGEBRA_driver,PAR_matrix_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_mat,X_use_lin_sys,iW_lower_triangle_offset,iW_offset,X_par
- use TDDFT,         ONLY:FXC_n_g_corr,FXC,&
-&                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
+ use X_m,           ONLY:X_t,X_mat,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle
+ use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
+#if defined _SCALAPACK
+ use SLK_m,          ONLY:BLACS_structure_in_use
+#endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -49,9 +51,8 @@ subroutine X_redux(iq,Xw,X)
  ! Work Space
  !
  type(PP_indexes) ::PAR_IND_freqs
- integer          ::ig1,ig2,iw,iw_X,INV_MODE,PAR_IND_FREQ_ID,iw_X_lower_triangle
- type(PAR_matrix) ::X_kernel
- type(PAR_matrix) ::Xo
+ integer          ::ig1,ig2,iw,iw_X,INV_MODE,PAR_IND_FREQ_ID
+ type(PAR_matrix) ::X_kernel,Xo
  !
  ! Setup 
  !
@@ -90,12 +91,17 @@ subroutine X_redux(iq,Xw,X)
  do iw=1,Xw%n_freqs
    !
    iw_X               =iw+iW_offset
-   iw_X_lower_triangle=iw+iW_lower_triangle_offset
    !
 #if defined _SCALAPACK
-   call PAR_matrix_transfer("<",M_slk=Xo,M_par=X_par,i_MAT=iw_X)
-#else
-   call PAR_matrix_transfer("<",M=Xo%blc,M_par=X_par,i_MAT=iw_X)
+   if (BLACS_structure_in_use) then
+     call PAR_matrix_transfer("<",M_slk=Xo,M_par=X_par,i_MAT=iw_X)
+     call PAR_matrix_transfer("<",M_slk=Xo,M_par=X_par_lower_triangle,i_MAT=iw_X)
+   else
+#endif
+     call PAR_matrix_transfer("<",M=Xo%blc,M_par=X_par,i_MAT=iw_X)
+     call PAR_matrix_transfer("<",M=Xo%blc,M_par=X_par_lower_triangle,i_MAT=iw_X)
+#if defined _SCALAPACK
+   endif
 #endif
    X_kernel%blc=cZERO
    !

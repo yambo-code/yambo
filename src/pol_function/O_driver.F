@@ -209,7 +209,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    Alpha     =cZERO
    !
    call X_irredux(iq,Xen,Xk,wv,X)     
- stop
    !
    ! Without LF eps
    !

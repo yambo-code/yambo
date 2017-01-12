@@ -97,7 +97,7 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, M_bse, M ,i_MAT )
        !
        if (present(i_MAT)) then
          M(M_par%rows(1):M_par%rows(2),M_par%cols(1):M_par%cols(2))=M_par%blc_3d(:,:,i_MAT)
-       else if (allocated(M_par%blc_3d)) then
+       else 
          M(M_par%rows(1):M_par%rows(2),M_par%cols(1):M_par%cols(2))=M_par%blc(:,:)
        endif
        !

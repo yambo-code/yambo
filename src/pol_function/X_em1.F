@@ -32,7 +32,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #endif
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
 &                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys,&
-&                        X_mat,X_par,iW_offset,iW_lower_triangle_offset
+&                        X_mat,X_par,iW_offset
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -220,14 +220,10 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
-   ! Frequency offsets for resonant and lower_triangle (if any) part
+   ! Frequency offset 
    !
-   iW_offset                =0
-   iW_lower_triangle_offset =0
-   if (.not.io_RESPONSE) then
-     iW_offset                =X_n_freqs*(PAR_Q_index(iq)-1)
-     iW_lower_triangle_offset =X_n_freqs*(PAR_Q_index(iq)-1)
-   endif
+   if (     io_RESPONSE) iW_offset=0
+   if (.not.io_RESPONSE) iW_offset=X_n_freqs*(PAR_Q_index(iq)-1)
    !
    call X_irredux(iq,Xen,Xk,Xw,X)  
    !

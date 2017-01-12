@@ -120,10 +120,8 @@ module X_m
  ! PARALLEL distribution
  !
  type(PAR_matrix)              :: X_par
- type(PAR_matrix)              :: Xo_par
- type(PAR_matrix)              :: Xo_par_lower_triangle
+ type(PAR_matrix)              :: X_par_lower_triangle
  integer                       :: iW_offset                = 0
- integer                       :: iW_lower_triangle_offset = 0
  complex(SP)     , allocatable :: X_mat(:,:,:)
  !
  type X_t

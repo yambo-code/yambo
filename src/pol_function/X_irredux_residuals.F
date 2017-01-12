@@ -55,11 +55,12 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !     (stack overflow, causing random crashes of the code)
  !     it would be best to define it as allocatable (less efficient if too
  !     many calls are done, though)
+ !
  complex(SP)              :: rhotw_save(Xo_scatt%ngrho),rhotw_save2(Xo_scatt%ngrho),Z_
  real(SP)                 :: Z_eh_occ
  logical                  :: l_X_term_vv
  integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
-&                            isp,iv,ic,isave(4),n_poles,i_bg,ig_start
+&                            isp,iv,ic,isave(4),n_poles,i_bg,ig_start,X_rows(2)
  !
  isave=0
  !
@@ -156,8 +157,9 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !$omp parallel do default(shared), private(ig2)
 #endif
    do ig2=X_par%cols(1),X_par%cols(2)
-     call V_by_V_plus_V(ig2-X_par%rows(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
-&                       conjg(Xo_scatt%rhotw(X_par%rows(1):ig2)),Xo_res(X_par%rows(1):ig2,ig2))
+     X_rows=(/X_par%rows(1),min(ig2,X_par%rows(2))/)
+     call V_by_V_plus_V(X_rows(2)-X_rows(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
+&                       conjg(Xo_scatt%rhotw(X_rows(1):X_rows(2))),Xo_res(X_rows(1):X_rows(2),ig2))
    enddo
 #if defined _OPENMP
    !$omp end parallel do
@@ -201,14 +203,14 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      !
      ! take into account the cancellation of terms
      ! occurring when dealing with the wings
-     ig_start=1
-     if(iq==1) ig_start=2
+     ig_start=X_par%rows(1)
+     if (iq==1) ig_start= max(2,ig_start)
      !
 #if defined _OPENMP
      !$omp parallel do default(shared), private(ig1,ig2)
 #endif
      do ig2=X_par%cols(1),X_par%cols(2)
-       do ig1=ig_start,ig2
+       do ig1=ig_start,min(ig2,X_par%rows(2))
          Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
        enddo
      enddo

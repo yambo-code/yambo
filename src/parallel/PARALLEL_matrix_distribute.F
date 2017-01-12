@@ -29,7 +29,7 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  use linear_algebra, ONLY:PAR_matrix
  use parallel_m,     ONLY:PAR_COM_SLK,COMM_copy
 #if defined _SCALAPACK
- use SLK_m,          ONLY:SLK_ORTHO
+ use SLK_m,          ONLY:SLK_ORTHO,BLACS_structure_in_use
 #endif
 #include <memory.h>
  !
@@ -43,6 +43,9 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  !
  if (what=="SLK") then
    call COMM_copy(PAR_COM_SLK, M_par%COMM)
+#if defined _SCALAPACK
+   BLACS_structure_in_use=.FALSE.
+#endif
  endif
  !
  if (M_par%COMM%n_CPU==1) then
@@ -56,19 +59,20 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  if (what=="SLK") then
 #if defined _SCALAPACK
    call SLK_matrix_init( SLK_ORTHO, M_par,N)
+   BLACS_structure_in_use=.TRUE.
 #endif
    return
  endif
  !
  if (what=="X") then
    M= ( (N**2-N)/2 + N )/M_par%COMM%n_CPU
-   rows(1,:)=(/1,N/)
-   cols(1,:)=(/1,SYMM_sol(N)/)
+   cols(1,:)=(/1,N/)
+   rows(1,:)=(/1,SYMM_sol(N)/)
    do i_c=2,M_par%COMM%n_CPU
-     rows(i_c,:)=(/cols(i_c-1,2)+1,N/)
-     N_rows=SYMM_sol( rows(i_c,2)- rows(i_c,1)+1 )
-     cols(i_c,:)=cols(i_c-1,2)+(/1,N_rows/)
-     if (N_rows==0) cols(i_c,2)=N
+     cols(i_c,:)=(/rows(i_c-1,2)+1,N/)
+     N_rows=SYMM_sol( cols(i_c,2)- cols(i_c,1)+1 )
+     rows(i_c,:)=rows(i_c-1,2)+(/1,N_rows/)
+     if (N_rows==0) rows(i_c,2)=N
    enddo
    M_par%rows  = rows(M_par%COMM%CPU_id+1,:)
    M_par%cols  = cols(M_par%COMM%CPU_id+1,:)

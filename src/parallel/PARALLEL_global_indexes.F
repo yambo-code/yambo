@@ -48,7 +48,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
 &                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX,PAR_COM_SLK_INDEX_local,&
-&                        PAR_COM_RL_INDEX,PAR_COM_X_WORLD
+&                        PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_RL_A2A
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_SLK,&
@@ -219,6 +219,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_density)
    call COMM_reset(PAR_COM_eh_INDEX)
    call COMM_reset(PAR_COM_RL_INDEX)
+   call COMM_reset(PAR_COM_RL_A2A)
    call COMM_reset(PAR_COM_eh_A2A)
    call COMM_reset(PAR_COM_T_INDEX)
    call COMM_reset(PAR_COM_SLK_INDEX_local)
@@ -360,11 +361,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum") then
    !====================================================
    !
-   CALL PARALLEL_structure(4,(/"k","c","v","g"/))
+   CALL PARALLEL_structure(4,(/"k","g","c","v"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_CON_INDEX(X_type),&
-&                                          COMM_index_3=PAR_COM_VAL_INDEX(X_type),COMM_index_4=PAR_COM_RL_INDEX,&
-&                                          COMM_A2A_1=PAR_COM_Xk_ibz_A2A)
+   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_3=PAR_COM_CON_INDEX(X_type),&
+&                                          COMM_index_4=PAR_COM_VAL_INDEX(X_type),COMM_index_2=PAR_COM_RL_INDEX,&
+&                                          COMM_A2A_1=PAR_COM_Xk_ibz_A2A,COMM_A2A_2=PAR_COM_RL_A2A)
    !
    ! K-points (IBZ)
    !
@@ -390,7 +391,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
    call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
+   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
+   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
@@ -416,13 +418,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
    !=========================================================================================
    !
-   CALL PARALLEL_structure(5,(/"q","k","c","v","g"/))
+   CALL PARALLEL_structure(5,(/"q","g","k","c","v"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(5,COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_Xk_bz_INDEX,&
-&                                          COMM_index_3=PAR_COM_CON_INDEX(X_type),&
-&                                          COMM_index_4=PAR_COM_VAL_INDEX(X_type),&
-&                                          COMM_index_5=PAR_COM_RL_INDEX,COMM_A2A_1=PAR_COM_Q_A2A,&
-&                                          COMM_A2A_2=PAR_COM_Xk_bz_A2A)
+   call PARALLEL_assign_chains_and_COMMs(5,COMM_index_1=PAR_COM_Q_INDEX,COMM_index_3=PAR_COM_Xk_bz_INDEX,&
+&                                          COMM_index_4=PAR_COM_CON_INDEX(X_type),&
+&                                          COMM_index_5=PAR_COM_VAL_INDEX(X_type),&
+&                                          COMM_index_2=PAR_COM_RL_INDEX,COMM_A2A_1=PAR_COM_Q_A2A,&
+&                                          COMM_A2A_2=PAR_COM_RL_A2A,&
+&                                          COMM_A2A_3=PAR_COM_Xk_bz_A2A)
    !
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
@@ -501,7 +504,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! The COMM is anyway the one for the all2all of each q.
    !
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
+   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
+   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    if (ENVIRONMENT/="Response_G_space_Finite_Momentum") then
@@ -744,13 +748,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Self_Energy") then
    !=================================
    !
-   CALL PARALLEL_structure(4,(/"q ","qp","b ","g "/))
+   CALL PARALLEL_structure(4,(/"q ","g ","qp","b "/))
    !
-   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_QP_INDEX,&
-&                                          COMM_index_3=PAR_COM_G_b_INDEX,&
-&                                          COMM_index_4=PAR_COM_RL_INDEX,&
+   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Q_INDEX,COMM_index_3=PAR_COM_QP_INDEX,&
+&                                          COMM_index_4=PAR_COM_G_b_INDEX,&
+&                                          COMM_index_2=PAR_COM_RL_INDEX,&
 &                                          COMM_A2A_1=PAR_COM_Q_A2A,&
-&                                          COMM_A2A_2=PAR_COM_QP_A2A)
+&                                          COMM_A2A_2=PAR_COM_RL_A2A,&
+&                                          COMM_A2A_3=PAR_COM_QP_A2A)
    !
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
@@ -805,14 +810,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
      !
-     ! 0000     0000     <- q
+     ! 00000000          <- q
+     ! 0000     0000     <- g
      ! x0 x0    00 00    <- qp
      ! 0 0 0 0  0 0 0 0  <- b
      !
      ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
      !
-     HEAD_QP_cpu=PAR_COM_Q_index%CPU_id==0.and.PAR_COM_QP_A2A%CPU_id==0
-     if (PAR_COM_Q_index%n_CPU==1.and.PAR_COM_QP_A2A%n_CPU==1) then
+     HEAD_QP_cpu=PAR_COM_RL_index%CPU_id==0.and.PAR_COM_QP_A2A%CPU_id==0
+     if (PAR_COM_RL_index%n_CPU==1.and.PAR_COM_QP_A2A%n_CPU==1) then
        HEAD_QP_cpu=PAR_COM_G_b_index%CPU_id==0
      endif
      !
@@ -820,7 +826,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   
 #endif
    !
-   ! 0000     0000     <- q
+   ! 00000000          <- q
+   ! 0000     0000     <- g
    ! x0 x0    x0 x0    <- qp
    ! 0 0 0 0  0 0 0 0  <- b
    !
@@ -901,7 +908,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      ! As there will be a mismatch between the k-distribution here and in the self-energy (qp-loop)
      ! I cannot distribute the k-pts. Therefore the PAR_COM_DIPOLES_k_subgroup is the WORLD
      !
-     call PARALLEL_index(PAR_IND_DIPk_ibz,(/Xk%nibz/),COMM=PAR_COM_Q_index,NO_EMPTIES=.TRUE.)
+     call PARALLEL_index(PAR_IND_DIPk_ibz,(/Xk%nibz/),COMM=PAR_COM_Q_INDEX,NO_EMPTIES=.TRUE.)
      PAR_IND_DIPk_ID=PAR_IND_Q_ID
      Y_ALLOCATE(PAR_DIPk_ibz_index(Xk%nibz))
      Y_MEM(PAR_DIPk_ibz_index)
@@ -918,7 +925,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    if (PARALLEL_n_structures_active>1) then
      if (l_eval_collisions.and.io_COLLs) then
-       call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_index%CPU_id==0)
+       call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
      else 
        call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
      endif

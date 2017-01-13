@@ -34,7 +34,7 @@ subroutine X_redux(iq,Xw,X)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,LINEAR_ALGEBRA_driver,PAR_matrix_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_mat,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle,UPPER_X_matrix_only
+ use X_m,           ONLY:X_t,X_mat,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle,X_lower_triangle_matrix_in_use
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
 #if defined _SCALAPACK
  use SLK_m,          ONLY:BLACS_structure_in_use
@@ -92,25 +92,28 @@ subroutine X_redux(iq,Xw,X)
    !
    iw_X               =iw+iW_offset
    !
+   if (X_lower_triangle_matrix_in_use) then
 #if defined _SCALAPACK
-   if (BLACS_structure_in_use) then
-     call PAR_matrix_transfer("<",M_slk=Xo,M_par=X_par,i_MAT=iw_X)
-     if (X_par%COMM%n_CPU>1.and..not.UPPER_X_matrix_only) then
-       call PAR_matrix_transfer("<",M_slk=Xo,M_par=X_par_lower_triangle,i_MAT=iw_X)
+     if (BLACS_structure_in_use) then
+       call PAR_matrix_transfer("slk < X",M_slk=Xo,X_up=X_par,X_dn=X_par_lower_triangle,i_MAT=iw_X)
+     else
+#endif
+       call PAR_matrix_transfer("M < X",X_up=X_par,X_dn=X_par_lower_triangle,M=Xo%blc,i_MAT=iw_X)
+#if defined _SCALAPACK
      endif
+#endif
    else
-#endif
-     call PAR_matrix_transfer("<",M_par=X_par,M=Xo%blc,i_MAT=iw_X)
-     if (X_par%COMM%n_CPU>1.and..not.UPPER_X_matrix_only) then
-       call PAR_matrix_transfer("<",M_par=X_par_lower_triangle,M=Xo%blc,i_MAT=iw_X)
-     endif
 #if defined _SCALAPACK
-   endif
+     if (BLACS_structure_in_use) then
+       call PAR_matrix_transfer("slk < X",M_slk=Xo,X_up=X_par,i_MAT=iw_X)
+     else
 #endif
+       call PAR_matrix_transfer("M < X",X_up=X_par,M=Xo%blc,i_MAT=iw_X)
+#if defined _SCALAPACK
+     endif
+#endif
+   endif
    X_kernel%blc=cZERO
-   !
-   ! If the freqs remaining are not enough for all the cpu's or
-   ! Fxc needs the SVD procedure use the SLK
    !
    if (FXC_SVD_digits>0) INV_MODE=SVD_INV
    !

@@ -45,7 +45,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_X_WORLD,myid,PAR_COM_RL_INDEX
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
 &                        n_threads_DIP,n_outthr,n_innthr,OPENMP_locks_reset,n_threads_FFT
 #if defined _OPENMP
@@ -57,8 +57,8 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use D_lattice,     ONLY:i_space_inv
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,UPPER_X_matrix_only,use_X_DbGd,X_par,&
+ use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
+&                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,X_par,&
 &                        l_X_terminator,X_terminator_E,X_term_E,iW_offset,X_par_lower_triangle
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
@@ -90,8 +90,8 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  X_par%blc_3d(:,:,iW_offset+1:iW_offset+Xw%n_freqs) = cZERO
  GreenF                                             = cZERO
  drude_GreenF                                       = cZERO
- if (.not.UPPER_X_matrix_only.and.X_par%COMM%n_CPU>1) then
-   X_par_lower_triangle%blc_3d(:,:,:)               = cZERO
+ if (X_lower_triangle_matrix_in_use) then
+   X_par_lower_triangle%blc_3d(:,:,:) = cZERO
  endif
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
@@ -179,7 +179,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
- if (UPPER_X_matrix_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
+ if (X_FILL_UP_matrix_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
  ! omp settings and workspace
  !=================================
@@ -212,7 +212,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
 #if defined _OPENMP
 !$omp parallel num_threads(n_outthr) default(shared), &
-!$omp &        private(i_cg, Drude_pole,GreenF, i_bg, Xo_res, Xo_scatt, ig2, iw, mutexid)
+!$omp &        private(i_cg, Drude_pole,GreenF, i_bg, Xo_res, Xo_scatt, ig2, iw, mutexid,X_cols)
 #endif
  !
  call OPENMP_update(master_thread)
@@ -284,19 +284,19 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
        call omp_set_lock(omp_locks(mutexid))
 #endif
        !
-       X_cols=X_par%cols
-       if (X_cols(1)<ig1) X_cols(1)=ig1
+       X_cols=(/ig1,X_par%cols(2)/)
        !
        ! ----    ----
        ! -xxx    -xxx
        ! ---- => ----
        ! ----    ----
        !
-       call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),Xo_res(ig1,X_cols(1):X_cols(2)),X_par%blc_3d(ig1,X_cols(1):X_cols(2),iw))
+       call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),Xo_res(ig1,X_cols(1):X_cols(2)),&
+&                         X_par%blc_3d(ig1,X_cols(1):X_cols(2),iw+iW_offset))
        !
-       if (.not.UPPER_X_matrix_only) then
+       if (.not.X_FILL_UP_matrix_only) then
          !
-         if (X_cols(1)==ig1) X_cols(1)=ig1+1
+         X_cols(1)=ig1+1
          !
          ! ----    ----
          ! -xxx    ----
@@ -305,10 +305,12 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
          !
          if (PAR_COM_RL_INDEX%n_CPU>1) then
            call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),&
-&                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),X_par_lower_triangle%blc_3d(X_cols(1):X_cols(2),ig1,iw))
+&                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),&
+&                             X_par_lower_triangle%blc_3d(X_cols(1):X_cols(2),ig1,iw+iW_offset))
          else
            call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),&
-&                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),X_par%blc_3d(X_cols(1):X_cols(2),ig1,iw))
+&                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),&
+&                             X_par%blc_3d(X_cols(1):X_cols(2),ig1,iw+iW_offset))
          endif
        endif
 #if defined _OPENMP
@@ -349,8 +351,8 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
  do iw=1,Xw%n_freqs
    call PP_redux_wait(X_par%blc_3d(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD%COMM)
-   if (PAR_COM_RL_INDEX%n_CPU>1.and..not.UPPER_X_matrix_only) then
-     call PP_redux_wait(X_par_lower_triangle%blc_3d(:,:,iw),COMM=PAR_COM_X_WORLD%COMM)
+   if (X_lower_triangle_matrix_in_use) then
+     call PP_redux_wait(X_par_lower_triangle%blc_3d(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD%COMM)
    endif
  enddo
  !
@@ -358,42 +360,22 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  call timing('Xo (REDUX)',OPR='stop')
 #endif
  !
- ! Symmetrize Xo when only half has been avaluated
- !=================================================
- !
- if (.not.UPPER_X_matrix_only.or.X_par%COMM%n_CPU>1) return
+ ! Populate the lower triangle of Xo 
+ !===================================
+ if (.not.X_FILL_UP_matrix_only.or.PAR_COM_RL_INDEX%n_CPU>1) return
  !
 #if defined _OPENMP
  !$omp parallel default(shared), private(ig2,ig1)
+ !$omp do
 #endif
- if (i_space_inv==0) then
-#if defined _OPENMP
-   !$omp do
-#endif
-   do ig2=X_par%rows(1),X_par%rows(2)
-     do ig1=max(X_par%cols(1),ig2+1),X_par%cols(2)
-       X_par%blc_3d(ig1,ig2,:)=conjg(X_par%blc_3d(ig2,ig1,:))
-     enddo
+ do ig1=1,X%ng
+   do ig2=1,ig1-1
+     if (i_space_inv==1) X_par%blc_3d(ig1,ig2,:)=X_par%blc_3d(ig2,ig1,:)
+     if (i_space_inv==0) X_par%blc_3d(ig1,ig2,:)=conjg(X_par%blc_3d(ig2,ig1,:))
    enddo
+ enddo
 #if defined _OPENMP
-   !$omp end do
-#endif
- endif
- !
- if (i_space_inv==1) then
-#if defined _OPENMP
-   !$omp do
-#endif
-   do ig2=X_par%rows(1),X_par%rows(2)
-     do ig1=max(X_par%cols(1),ig2+1),X_par%cols(2)
-       X_par%blc_3d(ig1,ig2,:)=X_par%blc_3d(ig2,ig1,:)
-     enddo
-   enddo
-#if defined _OPENMP
-   !$omp end do
-#endif
- endif
-#if defined _OPENMP
+ !$omp end do
  !$omp end parallel
 #endif
  !

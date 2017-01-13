@@ -191,9 +191,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V
        Y_MEM(MAT%blc)
        !
        if (present(M_bse)) then
-         call PAR_matrix_transfer( "<", M_slk= MAT, M_bse=M_bse )
+         call PAR_matrix_transfer( "slk < K", M_slk= MAT, M_bse=M_bse )
        else if (present(M)) then
-         call PAR_matrix_transfer( "<", M_slk= MAT, M=M )
+         call PAR_matrix_transfer( "slk < M", M_slk= MAT, M=M )
        endif
        !
      else if (idriver==DIAGO) then
@@ -205,7 +205,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V
        call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, MAT, EIGEN_slk, N, E_real )
        !
        if (present(M)) then
-         call PAR_matrix_transfer( ">", M_slk = EIGEN_slk , M=M )
+         call PAR_matrix_transfer( "slk > M", M_slk = EIGEN_slk , M=M )
        endif
        !
      else if (idriver==LIN_SYS) then
@@ -213,24 +213,24 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V
        call SLK_matrix_init( SLK_ORTHO, B_slk, N )
        Y_ALLOCATE(B_slk%blc(B_slk%nrows,B_slk%ncols))
        Y_MEM(B_slk%blc)
-       call PAR_matrix_transfer( "<", M_slk = B_slk, M=B )
+       call PAR_matrix_transfer( "slk < M", M_slk = B_slk, M=B )
        !
        call PARALLEL_lin_system( SLK_ORTHO, MAT, B_slk, N, size(B,2), B )
-       call PAR_matrix_transfer( ">", M_slk =  B_slk, M=B )
+       call PAR_matrix_transfer( "slk > M", M_slk =  B_slk, M=B )
        !
      else if (idriver==MAT_MUL) then
        ! 
        call SLK_matrix_init( SLK_ORTHO, B_slk, N )
        Y_ALLOCATE(B_slk%blc(B_slk%nrows,B_slk%ncols))
        Y_MEM(B_slk%blc)
-       call PAR_matrix_transfer( "<",M_slk =  B_slk, M=B )
+       call PAR_matrix_transfer( "slk < M",M_slk =  B_slk, M=B )
        call SLK_matrix_init( SLK_ORTHO, C_slk, N )
        Y_ALLOCATE(C_slk%blc(C_slk%nrows,C_slk%ncols))
        Y_MEM(C_slk%blc)
-       call PAR_matrix_transfer( "<",M_slk =  C_slk, M=C )
+       call PAR_matrix_transfer( "slk < M",M_slk =  C_slk, M=C )
        !
        call PARALLEL_M_by_M( SLK_ORTHO, MAT, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), N , C )
-       call PAR_matrix_transfer( ">",M_slk =   C_slk, M=C )
+       call PAR_matrix_transfer( "slk > M",M_slk =   C_slk, M=C )
        !
      endif
      !

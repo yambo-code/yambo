@@ -30,7 +30,8 @@ subroutine X_PARALLEL_alloc(X,E,k,W,NW,mode)
  use frequency,     ONLY:w_samp
  use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_nq
  use linear_algebra,ONLY:PAR_matrix_reset
- use X_m,           ONLY:X_t,X_par,iW_offset,X_par_lower_triangle,UPPER_X_matrix_only,X_mat
+ use X_m,           ONLY:X_t,X_par,iW_offset,X_par_lower_triangle,&
+&                        X_FILL_UP_matrix_only,X_mat,X_lower_triangle_matrix_in_use
  !
 #include<memory.h>
  !
@@ -63,7 +64,8 @@ subroutine X_PARALLEL_alloc(X,E,k,W,NW,mode)
  !
  iW_offset = 0
  !
- if (.not.UPPER_X_matrix_only.and.X_par%COMM%n_CPU>1) then
+ if (.not.X_FILL_UP_matrix_only.and.X_par%COMM%n_CPU>1) then
+   X_lower_triangle_matrix_in_use=.TRUE.
    X_par_lower_triangle%rows =X_par%cols
    X_par_lower_triangle%cols =X_par%rows
    X_par_lower_triangle%nrows=X_par%ncols

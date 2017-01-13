@@ -98,7 +98,7 @@ module X_m
  integer :: current_iq
  integer :: iw_ref
  integer :: X_DbGd_nkpts
- logical :: UPPER_X_matrix_only
+ logical :: X_FILL_UP_matrix_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
  real(SP):: X_terminator_E
@@ -121,7 +121,8 @@ module X_m
  !
  type(PAR_matrix)              :: X_par
  type(PAR_matrix)              :: X_par_lower_triangle
- integer                       :: iW_offset                = 0
+ logical                       :: X_lower_triangle_matrix_in_use=.FALSE.
+ integer                       :: iW_offset = 0
  complex(SP)     , allocatable :: X_mat(:,:,:)
  !
  type X_t

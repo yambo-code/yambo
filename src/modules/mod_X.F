@@ -96,7 +96,6 @@ module X_m
  integer ,    allocatable :: X_RLcomp_ig(:)
  complex(SP), allocatable :: X_mat(:,:,:)
  integer :: current_iq
- integer :: iw_ref
  integer :: X_DbGd_nkpts
  logical :: half_X_mat_only
  logical :: self_detect_E_range

@@ -33,7 +33,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
  use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
-&                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
+&                        DIP_projected,X_drude_term,X_alloc,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        BSS_n_freqs,BSS_q0,Co_factor,BSS_Wd
@@ -79,10 +79,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _TIMING
  call timing('T_space IP',OPR='start')
 #endif
- !
- ! Look for the W(iw_ref) closest 0
- !==================================
- call FREQUENCIES_set_reference_point(W_bss%p,BSS_n_freqs)
  !
  if (l_bs_fxc) goto 1
  !
@@ -144,6 +140,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      n_SOC=2
      Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
+   !
+   diam_term=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
    !
    para_term=cZERO
    !
@@ -291,7 +289,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    ! Drude term
    !============
    !
-   diam_term=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
    !
    if (l_drude           ) X_drude_term(:)=  -drude_GreenF(:)   *Co_factor/ q_norm(1)**2
    if (skip_cond_sum_rule) X_drude_term(:)=(para_term-diam_term)*Co_factor/W_bss%p(:)**2

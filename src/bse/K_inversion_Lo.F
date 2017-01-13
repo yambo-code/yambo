@@ -26,7 +26,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
- use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,iw_ref,l_drude
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,BSS_dipoles,&
@@ -193,12 +193,12 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
      !
      residual=BSS_dipoles(i_res)*conjg(BSS_dipoles(i_res))
      if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
-     if (trim(global_gauge)=='velocity') Lo(i_res,:,1)=(Lo(i_res,:,1)-Lo(i_res,iw_ref,1))
+     !if (trim(global_gauge)=='velocity') Lo(i_res,:,1)=(Lo(i_res,:,1)-Lo(i_res,iw_ref,1))
      Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
      !
      if (BSS_add_antiresonant.or.BS_K_coupling) then
        residual=conjg(BSS_dipoles(i_Lo_trans))*BSS_dipoles(i_Lo_trans)
-       if (trim(global_gauge)=='velocity') Lo(i_Lo_trans,:,i_Lo)=(Lo(i_Lo_trans,:,i_Lo)-Lo(i_Lo_trans,iw_ref,i_Lo))
+       !if (trim(global_gauge)=='velocity') Lo(i_Lo_trans,:,i_Lo)=(Lo(i_Lo_trans,:,i_Lo)-Lo(i_Lo_trans,iw_ref,i_Lo))
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
      endif
      !

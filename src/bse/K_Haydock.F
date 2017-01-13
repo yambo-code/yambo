@@ -27,7 +27,7 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:error
  use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
- use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,iw_ref,global_gauge
+ use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge
  use R_lattice,      ONLY:q_norm
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
@@ -618,10 +618,9 @@ subroutine K_Haydock(iq,W)
      i_eps(1)=2
      i_eps(2)=4
      !
-     if(trim(global_gauge)=='length'  ) then
-       factor_jj=0._SP
-       gauge_factor=cONE*Co/q_norm(1)**2
-     endif
+     factor_jj=cZERO
+     !
+     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/q_norm(1)**2
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -685,10 +684,10 @@ subroutine K_Haydock(iq,W)
        !
        ! GPL_EXCLUDE_START
        ! 
-       if(trim(global_gauge)=='velocity'.and.iw==iw_ref) then
-         if (.not.retarded) factor_jj(:)=X_o(1:2,1)
-         if (     retarded) factor_jj(:)=X_o(1:2,1)-X_o(3:4,1)
-       endif
+       !if(trim(global_gauge)=='velocity'.and.iw==iw_ref) then
+       !  if (.not.retarded) factor_jj(:)=X_o(1:2,1)
+       !  if (     retarded) factor_jj(:)=X_o(1:2,1)-X_o(3:4,1)
+       !endif
        !
        ! GPL_EXCLUDE_END
        !

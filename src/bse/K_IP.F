@@ -66,7 +66,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  integer           ::ik_bz,iv,ic,i_sp_pol,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
  real(SP)          ::conjg_fac,Z_
- complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),diam_term,diam_term0
+ complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),&
+&                    para_term,diam_term,diam_term_used
 #if defined _PL
  complex(SP)       ::rotated_P(3),P_weighted(3)
  real(SP)          ::res_PL(2)
@@ -144,11 +145,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
    !
-   ! GPL_EXCLUDE_END
+   para_term=cZERO
    !
-#if defined _KERR
-   if (trim(global_gauge)=='velocity') A_drude(1)=cZERO
-#endif
+   ! GPL_EXCLUDE_END
    !
    call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
    !
@@ -235,10 +234,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
          !
          ! GPL_EXCLUDE_START
          !
-#if defined _KERR
-         if(trim(global_gauge)=='length')   A_drude(1)=A_drude(1)+res*E_plus_W(i_pert_SOC)
-         if(trim(global_gauge)=='velocity') A_drude(1)=A_drude(1)+res/E_plus_W(i_pert_SOC)
-#endif
+         if(trim(global_gauge)=='length')   para_term=para_term+res*E_plus_W(i_pert_SOC)/q_norm(1)**2
+         if(trim(global_gauge)=='velocity') para_term=para_term+res/E_plus_W(i_pert_SOC)
+         !
 #if defined _PL
          if (l_photolum) then
            PL(:,3)=PL(:,3)  +PL_prefactor*res_PL(1)*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
@@ -266,10 +264,16 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
-#if defined _KERR
-   call PP_redux_wait( A_drude(1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( A_drude(1) ,COMM=PAR_COM_eh_INDEX%COMM )
-#endif
+   !
+   ! GPL_EXCLUDE_START
+   !
+   call PP_redux_wait( para_term ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( para_term ,COMM=PAR_COM_eh_INDEX%COMM )
+   !
+   if (BSS_add_antiresonant.or.BS_K_coupling) para_term=para_term+conjg(para_term)
+   !
+   ! GPL_EXCLUDE_END
+   !
 #if defined _PL
    if (l_photolum) then
      call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
@@ -281,58 +285,27 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !=====
    if (BSS_eval_JDOS) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor
    !
-   ! Pure diamagnetic term
-   !=======================
-   diam_term0=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
+   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=1._SP+Co_factor* Epsilon_ii(:,3)           / q_norm(1)**2
+   if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=1._SP+Co_factor*(Epsilon_ii(:,3)-para_term)/W_bss%p(:)**2
    !
-   if (trim(global_gauge)=='length'  ) then
-     !
-     Epsilon_ii(:,3)=1._SP+Epsilon_ii(:,3)*Co_factor/q_norm(1)**2
-     !
-   else if (trim(global_gauge)=='velocity') then
-     !
-     if (.not.skip_cond_sum_rule) then
-       ! Here I impose the conductivity sum rule for the velocity gauge
-       call msg('nsr','Gauge velocity: reference freq. for w=0 is [eV]:',real(W_bss%p(iw_ref))*HA2EV )
-       diam_term=Epsilon_ii(iw_ref,3)
-     else
-       diam_term=diam_term0
-     endif
-     !
-     Epsilon_ii(:,3)=1._SP+(Epsilon_ii(:,3)-diam_term)*Co_factor/W_bss%p(:)**2
-     !
-   endif
+   ! Drude term
+   !============
    !
-   ! Drude
-   !=======
+   diam_term=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
    !
-   if (l_drude.and..not.skip_cond_sum_rule) then
-     X_drude_term(:)=-drude_GreenF(:)
-     Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)*Co_factor/q_norm(1)**2
-   endif
+   if (l_drude           ) X_drude_term(:)=  -drude_GreenF(:)   *Co_factor/ q_norm(1)**2
+   if (skip_cond_sum_rule) X_drude_term(:)=(para_term-diam_term)*Co_factor/W_bss%p(:)**2
    !
-   ! GPL_EXCLUDE_START 
+   Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
    !
 #if defined _KERR
    !
-   ! Drude term, Eq.(1.12) PRB 48, 11705 (1993)
-   if (BSS_add_antiresonant.or.BS_K_coupling) A_drude(1)=A_drude(1)+conjg(A_drude(1))
+   ! Eq.(1.12) PRB 48, 11705 (1993)
    !
-   if (trim(global_gauge)=='length'  ) then
-     A_drude(1)=A_drude(1)/q_norm(1)**2-diam_term0
-     ! I add the term describing the intraband transitions which is
-     ! missing in the length gauge (this should be zero for systems with a gap)
-     if (skip_cond_sum_rule) Epsilon_ii(:,3)=Epsilon_ii(:,3)+A_drude(1)*Co_factor/W_bss%p(:)**2
-   endif
+   A_drude(1)=para_term-diam_term
    !
-   if(trim(global_gauge)=='velocity') A_drude(1)=A_drude(1)-diam_term0
-   !
-#endif
-   !
-   ! GPL_EXCLUDE_END
-   !
-#if defined _KERR
    if (l_kerr) call K_kerr_IP(iq,W_bss%p)
+   !
 #endif
    !
  endif

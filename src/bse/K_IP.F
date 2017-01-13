@@ -41,6 +41,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+ use parser_m,      ONLY:parser
 #if defined _PL
  use drivers,       ONLY:l_photolum
  use X_m,           ONLY:DIP_P
@@ -88,6 +89,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
    call msg('rn','Polarizability dimension      :',trim(alpha_dim))
  endif
+ !
+ if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
  !
  ! Eps_0
  !=======

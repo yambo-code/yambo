@@ -18,7 +18,7 @@ if test -d "$with_slepc_include"; then slepc_include="$with_slepc_include" ; fi
 petsc_include="$with_petsc_include"
 slepc_include="$with_slepc_include"
 slepc_idir="$petsc_include $slepc_include"
-C_AS_CPP_FLAGS="$C_AS_CPP_FLAGS $slepc_idir"
+#C_AS_CPP_FLAGS="$C_AS_CPP_FLAGS $slepc_idir"
 
 SLEPC_LIBS=""
 PETSC_LIBS=""

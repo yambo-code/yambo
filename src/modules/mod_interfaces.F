@@ -71,6 +71,7 @@ module interfaces
      real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
    end subroutine el_density_of_states
    !
+#if defined _SLEPC
    subroutine MATRIX_slepc(A,BS_H_eig,E_real,E_cmpl,V_right,V_left)
      !
      use pars,           ONLY:SP
@@ -85,6 +86,7 @@ module interfaces
      real(SP),     optional :: E_real(:)    ! real eigenvalues
      !
    end subroutine
+#endif
    !
    integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll)
      use collision,  ONLY:COLLISIONS_element,COLLISIONS_group

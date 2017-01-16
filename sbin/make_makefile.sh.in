@@ -74,7 +74,7 @@ done
 #
 llibs="$lib_path $llibs"
 lf90include="@F90_MODULE_FLAG@\$(includedir)"
-linclude="-I\$(includedir)"
+linclude="-I\$(includedir) \$(slepc_idir)"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi
@@ -82,24 +82,24 @@ llibinclude="\$(netcdf_idir)"
 #
 case $target in
   yambo*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(lpetsc) \$(lslepc) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir) \$(slepc_idir)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(lpetsc) \$(lslepc) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(lpetsc) \$(lslepc) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(iotk_idir) \$(netcdf_idir)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(lscalapack) \$(lpetsc) \$(lslepc) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(etsf_idir) \$(netcdf_idir)"
     ;;
   ypp*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(lpetsc) \$(lslepc) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir)"
     ;;
 esac
@@ -221,7 +221,7 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	${rm_command}
 	@echo $ECHO_N \$*".F "

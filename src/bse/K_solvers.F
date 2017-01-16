@@ -74,7 +74,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  run_Diago     = index(BSS_mode,'d')/=0
  run_Haydock   = index(BSS_mode,'h')/=0
+#if defined _SLEPC
  run_Slepc     = index(BSS_mode,'s')/=0
+#endif
  run_inversion = index(BSS_mode,'i')/=0
  !
 #if defined _PL
@@ -104,7 +106,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
+#if defined _SLEPC
  if (run_Slepc)           call K_slepc_driver(iq,W_bss)
+#endif
  !
  ! No JDOS in Inversion/Hadydock
  !

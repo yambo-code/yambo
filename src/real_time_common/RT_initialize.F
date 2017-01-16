@@ -377,8 +377,8 @@ subroutine RT_initialize(E,k,q)
    if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_impose_E)
  endif
  !
- call msg( 'nr','---RIM---')
- call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_FineGd)
+ call msg( 'nr','---Double Grid---')
+ call msg( 'r', 'Double Grid support          :',l_RT_uses_E_FineGd)
  if (l_RT_uses_E_FineGd) then
    call msg( 'r', 'K-points        (Fine grid):',k%nibz)
    call msg( 'r', 'K-points      (Coarse grid):',k%nibz_FineGd)

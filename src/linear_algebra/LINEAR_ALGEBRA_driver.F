@@ -133,6 +133,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
    !
    if (idriver==INV) then
      call SERIAL_inversion(N,M,det_,present(det))
+     if(present(det)) det=det_
    endif
    !
    ! ###> SERIAL DIAGONALIZATION

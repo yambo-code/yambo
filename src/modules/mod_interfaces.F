@@ -77,7 +77,7 @@ module interfaces
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
      !
-     type(Mat)              :: A            ! matrix to diagonalize of stype from slepc
+     Mat                    :: A            ! matrix to diagonalize of stype from slepc
      integer                :: BS_H_eig     ! number of eigenvalues to compute
      complex(SP),  optional :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional :: V_left(:,:)  ! left eigenvalues

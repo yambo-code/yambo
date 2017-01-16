@@ -66,8 +66,8 @@ subroutine K_slepc_driver(iq,W)
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
- type(Mat)      slepc_mat ! Slepc matrix where the hamiltonian will be stored
- type(Vec)      vin,vout
+ Mat           slepc_mat ! Slepc matrix where the hamiltonian will be stored
+ Vec           vin,vout
  type(w_samp)  :: W
  integer       :: iq
  logical       :: K_is_not_hermitian
@@ -89,8 +89,8 @@ subroutine K_slepc_driver(iq,W)
  !
  integer              ::io_err,ID  ! I/O
  !
- type(PetscFortranInt)     :: vec_index(4)
- type(PetscFortranComplex) :: vec_value(4)
+ PetscFortranInt     :: vec_index(4)
+ PetscFortranComplex :: vec_value(4)
  !
 #if defined _TIMING
  call timing('Slepc Solver',OPR='start')
@@ -175,7 +175,7 @@ subroutine K_slepc_driver(iq,W)
    YAMBO_ALLOCATE( BS_V_left(BS_H_dim,BSS_n_eig) )
    YAMBO_ALLOCATE( BS_V_right(BS_H_dim,BSS_n_eig) )
  else
-   YAMBO_ALLOCATE( BS_V_right(BS_H_dim,BSS_n_eig) )
+   YAMBO_ALLOCATE( BS_mat(BS_H_dim,BSS_n_eig) )
    YAMBO_ALLOCATE( BS_E_real(BSS_n_eig) )
    if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
      YAMBO_ALLOCATE( BS_corrections(1,BS_H_dim) )
@@ -199,8 +199,7 @@ subroutine K_slepc_driver(iq,W)
      !
    else
      !
-     call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real, V_right=BS_V_right)
-     BS_mat = BS_V_right
+     call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real, V_right=BS_mat)
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
      !
@@ -255,6 +254,7 @@ subroutine K_slepc_driver(iq,W)
  YAMBO_DEALLOCATE_A(BS_R_left)
  YAMBO_DEALLOCATE_A(BS_V_right)
  YAMBO_DEALLOCATE_A(BS_V_left)
+ YAMBO_DEALLOCATE_A(BS_mat)
  if(associated(BS_E_SOC_corr)) then
    deallocate(BS_E_SOC_corr)
    nullify(BS_E_SOC_corr)
@@ -381,8 +381,8 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  complex(SP) :: E_plus_W
  integer     :: iq,i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,i_k_bz,i_v,i_cond,i_spin
  integer     :: ierr
- type(Mat)   :: slepc_mat
- type(PetscFortranComplex) :: val
+ Mat   :: slepc_mat
+ PetscFortranComplex :: val
  !
  ! Allocate the slepc Matrix
  !
@@ -539,7 +539,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  implicit none
  !
- type(PetscFortranComplex)   :: tmp_value(1)
+ PetscFortranComplex   :: tmp_value(1)
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>

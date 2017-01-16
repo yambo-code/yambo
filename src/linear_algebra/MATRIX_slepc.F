@@ -56,9 +56,9 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   ! slepc
   !
   external MyEPSMonitor !function to monitor the convergence
-  !
-  type(Mat)      A
-  type(EPS)      eps
+  ! 
+  Mat            A
+  EPS            eps
   EPSType        tname
   PetscReal      tol, ferror
   PetscErrorCode ierr

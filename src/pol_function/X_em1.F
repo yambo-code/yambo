@@ -177,7 +177,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
  !
- call X_PARALLEL_alloc(X,Xen,Xk,Xw,"DIELETRIC_MATRIX")
+ call X_PARALLEL_alloc(X,Xen,Xk,Xw,Xw%n_freqs,"DIELETRIC_MATRIX")
  !
  ! WF distribution 
  !=================

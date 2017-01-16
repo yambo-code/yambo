@@ -27,7 +27,7 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  !
  use pars,           ONLY:SP
  use linear_algebra, ONLY:PAR_matrix
- use parallel_m,     ONLY:PAR_COM_SLK,COMM_copy
+ use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO,BLACS_structure_in_use
 #endif
@@ -57,6 +57,9 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  endif
  !
  if (what=="SLK") then
+   !
+   ! SLK structure.
+   !
 #if defined _SCALAPACK
    call SLK_matrix_init( SLK_ORTHO, M_par,N)
    BLACS_structure_in_use=.TRUE.
@@ -65,12 +68,15 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  endif
  !
  if (what=="X") then
+   !
+   ! Response function. Only upper triangle is distributed.
+   !
    M= ( (N**2-N)/2 + N )/M_par%COMM%n_CPU
    cols(1,:)=(/1,N/)
-   rows(1,:)=(/1,SYMM_sol(N)/)
+   rows(1,:)=(/1,UPPER_solver(N)/)
    do i_c=2,M_par%COMM%n_CPU
      cols(i_c,:)=(/rows(i_c-1,2)+1,N/)
-     N_rows=SYMM_sol( cols(i_c,2)- cols(i_c,1)+1 )
+     N_rows=UPPER_solver( cols(i_c,2)- cols(i_c,1)+1 )
      rows(i_c,:)=rows(i_c-1,2)+(/1,N_rows/)
      if (N_rows==0) rows(i_c,2)=N
    enddo
@@ -83,10 +89,10 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  !
  contains
    !
-   integer function SYMM_sol(N)
+   integer function UPPER_solver(N)
      integer :: N
-     SYMM_sol=nint( (real(N)+.5_SP)-sqrt( (real(N)+0.5_SP)**2 - 2.*real(M) ) )+1
-     if (  (real(N)+.5_SP)**2 - 2.*real(M) < 0 ) SYMM_sol=0
+     UPPER_solver=nint( (real(N)+.5_SP)-sqrt( (real(N)+0.5_SP)**2 - 2.*real(M) ) )+1
+     if (  (real(N)+.5_SP)**2 - 2.*real(M) < 0 ) UPPER_solver=0
    end function
    !
 end subroutine

@@ -87,7 +87,6 @@ subroutine X_redux(iq,Xw,X)
  Y_ALLOCATE(Xo%blc(Xo%nrows,Xo%ncols))
  Y_MEM(Xo%blc)
  Xo%blc=cZERO
- !
  do iw=1,Xw%n_freqs
    !
    iw_X               =iw+iW_offset

@@ -212,7 +212,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
 #if defined _OPENMP
 !$omp parallel num_threads(n_outthr) default(shared), &
-!$omp &        private(i_cg, Drude_pole,GreenF, i_bg, Xo_res, Xo_scatt, ig2, iw, mutexid,X_cols)
+!$omp &        private(i_cg, Drude_pole,GreenF, i_bg, Xo_res, Xo_scatt, ig1, iw, mutexid,X_cols)
 #endif
  !
  call OPENMP_update(master_thread)

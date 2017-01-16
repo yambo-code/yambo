@@ -89,8 +89,21 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
    !
    if (present(M_par)) then
      !
-     if (mode=="par > slk".or.mode=="slk < par") then
-       call PAR_matrix_transfer_PAR_to_SLK(M_par,M_slk)
+     if (mode=="par > slk".or.mode=="par < par") then
+       call PAR_matrix_transfer_PAR_to_SLK("par",M_par,M_slk)
+     endif
+     !
+   endif
+   !
+   if (present(X_up)) then
+     !
+     if (mode=="X > slk".or.mode=="slk < X") then
+       if (present(X_dn)) then
+         call PAR_matrix_transfer_PAR_to_SLK("X up",X_up,M_slk,i_MAT)
+         call PAR_matrix_transfer_PAR_to_SLK("X dn",X_dn,M_slk,i_MAT)
+       else
+         call PAR_matrix_transfer_PAR_to_SLK("X",X_up,M_slk,i_MAT)
+       endif
      endif
      !
    endif

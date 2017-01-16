@@ -55,27 +55,29 @@ subroutine MEM_dri(what,Sz,Kn,REPORT)
  ! REPORTs 
  !=========
  if (present(REPORT)) then
-   ORPHAN_TOT=0
-   if (N_MEM_elements>0) then
-     WRITE(msg_,'(1x,a8,a18," : ",3x)') "[MEMORY]","(still) Allocated"
-     do i_mem=1,N_MEM_elements
-       i_same=0
-       do i_mem_p=i_mem-1,1,-1
-         if (MEM_element_name(i_mem_p)==MEM_element_name(i_mem)) i_same=1
+   !
+   if (REPORT=="check") then
+     ORPHAN_TOT=0
+     if (N_MEM_elements>0) then
+       WRITE(msg_,'(a8,a18," : ",3x)') "[MEMORY]","(still) Allocated"
+       do i_mem=1,N_MEM_elements
+         i_same=0
+         do i_mem_p=i_mem-1,1,-1
+           if (MEM_element_name(i_mem_p)==MEM_element_name(i_mem)) i_same=1
+         enddo
+         if  (i_same==0) msg_=trim(msg_)//" "//trim(MEM_element_name(i_mem))
+         if (len_trim(msg_)>100) then
+           call msg("s",msg_(1:len_trim(msg_)))
+           WRITE(msg_,'(a8,a18," : ",3x)') "[MEMORY]"
+           ORPHAN_TOT=ORPHAN_TOT+MEM_element_use(i_mem)
+         endif
        enddo
-       if  (i_same==0) msg_=trim(msg_)//" "//trim(MEM_element_name(i_mem))
-       if (len_trim(msg_)>100) then
-         call msg("r",msg_(1:len_trim(msg_)))
-         WRITE(msg_,'(1x,a8,a18," : ",3x)') "[MEMORY]"
-         ORPHAN_TOT=ORPHAN_TOT+MEM_element_use(i_mem)
-       endif
-     enddo
-   endif
-   if (ORPHAN_TOT>0) then
-     WRITE(msg_,'(1x,a8,a18," : ",3x,i6,a)') "[MEMORY]","(still) Allocated",ORPHAN_TOT,"Kb"
-     call msg("r",msg_(1:len_trim(msg_)))
-   endif
-   if (REPORT=="final") then
+     endif
+     if (ORPHAN_TOT>0) then
+       WRITE(msg_,'(a8,a18," : ",3x,i6,a)') "[MEMORY]","(still) Allocated",ORPHAN_TOT,"Kb"
+       call msg("s",msg_(1:len_trim(msg_)))
+     endif
+   else if (REPORT=="final") then
      if (N_MEM_SAVE_elements>0) then
        do i_mem=1,N_MEM_SAVE_elements
          WRITE(msg_,'(1x,a8,a18," : ",3x,i6,a)') "[MEMORY]",trim(MEM_element_name_SAVE(i_mem)),&
@@ -149,7 +151,7 @@ subroutine MEM_dri(what,Sz,Kn,REPORT)
    msg_=trim(msg_)//"("//trim(intc(int(MEM_now*Kilobyte/Megabyte)))//"Mb)"
    msg_=trim(msg_)//" TOTAL: "//trim(intc(int(TOT_MEM_kilobytes*Kilobyte/Megabyte)))//"Mb (sum)"
    msg_=trim(msg_)//" "//trim(intc(int(TOT_MEM_kilobytes_MEMSTAT*Kilobyte/Megabyte)))//"Mb (memstat)"
-   call msg("sr",trim(msg_))
+   call msg("s",trim(msg_))
  endif
  !#2
  deliver_a_msg=(TOT_MEM_kilobytes_MEMSTAT-MEM_jump_save)>int(MEM_jump_treshold*Megabyte/Kilobyte).and.adding
@@ -157,7 +159,7 @@ subroutine MEM_dri(what,Sz,Kn,REPORT)
    msg_="[MEMORY] In use: "
    msg_=trim(msg_)//" TOTAL: "//trim(intc(int(TOT_MEM_kilobytes*Kilobyte/Megabyte)))//"Mb (sum)"
    msg_=trim(msg_)//" "//trim(intc(int(TOT_MEM_kilobytes_MEMSTAT*Kilobyte/Megabyte)))//"Mb (memstat)"
-   call msg("sr",trim(msg_))
+   call msg("s",trim(msg_))
    MEM_jump_save=TOT_MEM_kilobytes_MEMSTAT
  endif
  !

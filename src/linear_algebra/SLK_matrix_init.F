@@ -30,7 +30,6 @@
 !
 subroutine SLK_matrix_init(ORTHO, M_slk, N)
  !
- use pars,           ONLY:SP
  use SLK_m,          ONLY:ORTHO_group
  use parallel_m,     ONLY:ncpu
  use linear_algebra, ONLY:PAR_matrix,PAR_matrix_reset 
@@ -85,6 +84,5 @@ subroutine SLK_matrix_init(ORTHO, M_slk, N)
  M_slk%nrows_used = M_slk%rows(2)-M_slk%rows(1)+1
  M_slk%ncols_used = M_slk%cols(2)-M_slk%cols(1)+1
  M_slk%N          = N
- M_slk%blc        = 0.0_SP
  !
 end subroutine 

@@ -62,6 +62,7 @@ module BS_solvers
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
  integer  :: BSS_n_eig
+ real(SP) :: BSS_target_E
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference

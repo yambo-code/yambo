@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
+subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy)
   !
   ! 10/06/2016 HM
   ! Use slepc to obtain the first few eigenpairs of a large matrix
@@ -48,6 +48,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   complex(SP),  optional :: V_left(:,:)  ! left eigenvalues
   complex(SP),  optional :: E_cmpl(:)    ! complex eigenvalues
   real(SP),     optional :: E_real(:)    ! real eigenvalues
+  real(SP),     optional :: target_energy! energy near where to find the eigenvalues
   ! 
   ! internal variables
   !
@@ -99,7 +100,12 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left)
   !Set operators. In this case, it is a standard eigenvalue problem
   call EPSSetOperators(eps,A,PETSC_NULL_OBJECT,ierr)
   call EPSSetProblemType(eps,EPS_HEP,ierr)
-  call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
+  if (present(target_energy)) then
+    call EPSSetTarget(eps,target_energy)
+    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
+  else
+    call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
+  endif
 
   !set type of problem
   !call EPSSetType(eps,EPSLAPACK,ierr)

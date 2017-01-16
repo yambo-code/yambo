@@ -679,7 +679,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSEPSInvTrs BSSInvPFratio BSSInvKdiag')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
-   if (index(BSS_mode,'s')/=0)  call initactivate(1,'BSSNEig')
+   if (index(BSS_mode,'s')/=0)  then
+      call initactivate(1,'BSSNEig')
+      call initactivate(1,'BSSEnTarget')
+   endif
    !
    ! Special project dependent variables
    !

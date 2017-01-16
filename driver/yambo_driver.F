@@ -78,7 +78,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Local Variables
  !
  integer           ::i_err
- integer, external ::X_em1,INIT
+ integer, external ::X_dielectric_matrix,INIT
  logical           ::l_pp_em1,l_dyn_em1,l_XCo
  !
  ! Presets
@@ -167,14 +167,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Static
  !--------
  !
- if (l_em1s)       i_err=X_em1(Xen,Xk,q,X(2),Xw(2),.false.)
+ if (l_em1s)       i_err=X_dielectric_matrix(Xen,Xk,q,X(2),Xw(2),.false.)
  !
  ! Plasmon Pole 
  !--------------
  !
  l_pp_em1=l_ppa.and.((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr).or.l_bse )
  !
- if (l_pp_em1)     i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
+ if (l_pp_em1)     i_err=X_dielectric_matrix(Xen,Xk,q,X(4),Xw(4),.false.)
  !
  ! Dynamical 
  !-----------
@@ -182,7 +182,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  l_dyn_em1= (.not.l_ppa.and..not.l_cohsex.and..not.l_elphoton_corr).and. &
 &           ((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr))
  !
- if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
+ if (l_dyn_em1)    i_err=X_dielectric_matrix(Xen,Xk,q,X(3),Xw(3),.false.)
  !
 #if defined _MEM_CHECK 
  if (any((/l_em1s,l_pp_em1,l_dyn_em1/))) call MEM_dri("",REPORT="check")

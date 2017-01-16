@@ -28,6 +28,9 @@ BSSSlepcShell
 This creates a PETSC Shell matrix intead of re-allocating a PETSC sparse matrix.
 This is more memory efficient and yields the same results as with the re-allocation.
 
+BSSEnTarget
+Choose this value to look for eigenvalues close to a certain energy
+
 More variables can be added for better control of the library.
 After getting the eigenvalues and eigenstates you can use ypp normally (of course less states are present).
 

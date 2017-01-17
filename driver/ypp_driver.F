@@ -155,7 +155,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  ! Rim energies and kpts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
- i_err_DbGd=io_Double_Grid(en,Xk,ID) 
+ i_err_DbGd=io_Double_Grid(en,k,ID)
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !

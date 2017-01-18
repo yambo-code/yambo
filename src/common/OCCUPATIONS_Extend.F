@@ -39,7 +39,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use electrons,  ONLY:levels,n_sp_pol,spin_occ,BZ_DbGd_nbands,&
 &                     BZ_DbGd_tot_nkpts
  use com,        ONLY:warning
- use D_lattice,  ONLY:Tel
+ use D_lattice,  ONLY:T_elecs,T_holes
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
  !
@@ -106,7 +106,8 @@ subroutine OCCUPATIONS_Extend(Xe,E)
      do i1=1,E%nb
        do i2=1,E%nk
          do is=1,n_sp_pol
-           E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,Tel)
+           if((E%E(i1,i2,is)-Ef)<=0._SP) E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,T_holes)
+           if((E%E(i1,i2,is)-Ef)> 0._SP) E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,T_elecs)
          enddo
        enddo 
      enddo
@@ -114,7 +115,8 @@ subroutine OCCUPATIONS_Extend(Xe,E)
        do i1=1,BZ_DbGd_nbands
          do i2=1,BZ_DbGd_tot_nkpts
            do is=1,n_sp_pol
-             E%f_DbGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_DbGd(i1,i2,is)-Ef,Tel)
+             if( (E%E_DbGd(i1,i2,is)-Ef)<=0._SP) E%f_DbGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_DbGd(i1,i2,is)-Ef,T_holes)
+             if( (E%E_DbGd(i1,i2,is)-Ef)> 0._SP) E%f_DbGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_DbGd(i1,i2,is)-Ef,T_elecs)
              Xe%f_DbGd(i1,i2,is)=E%f_DbGd(i1,i2,is)
            enddo
          enddo 

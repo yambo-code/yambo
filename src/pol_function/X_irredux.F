@@ -360,16 +360,49 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  call timing('Xo (REDUX)',OPR='stop')
 #endif
  !
- ! Populate the lower triangle of Xo 
- !===================================
- if (.not.X_FILL_UP_matrix_only.or.PAR_COM_RL_INDEX%n_CPU>1) return
+ ! Populate the lower triangle/piece of Xo 
+ !=========================================
+ !
+ if (.not.X_FILL_UP_matrix_only) return
+ !
+ ! X_FILL_UP_matrix_only=.TRUE.
+ !
+ ! ------
+ ! --oooo
+ ! --Xooo
+ ! ------
+ ! ------
+ ! ------
+ !
+ ! X_FILL_UP_matrix_only=.FALSE.
+ !
+ ! PAR_COM_RL_INDEX%n_CPU=1
+ !
+ ! oooooo
+ ! oooooo
+ ! oooooo
+ ! oooooo
+ ! oooooo
+ ! oooooo
+ !
+ ! PAR_COM_RL_INDEX%n_CPU > 1
+ !
+ ! ------    ------
+ ! --oooo    ------
+ ! ---ooo    --o---
+ ! ------ +  --oo--
+ ! ------    --oo--
+ ! ------    --oo--
+ !
+ ! "o" = calculated
+ ! "X" = to be filled now
  !
 #if defined _OPENMP
  !$omp parallel default(shared), private(ig2,ig1)
  !$omp do
 #endif
- do ig1=1,X%ng
-   do ig2=1,ig1-1
+ do ig1=X_par%rows(1),X_par%rows(2)
+   do ig2=X_par%cols(1),ig1-1
      if (i_space_inv==1) X_par%blc_3d(ig1,ig2,:)=X_par%blc_3d(ig2,ig1,:)
      if (i_space_inv==0) X_par%blc_3d(ig1,ig2,:)=conjg(X_par%blc_3d(ig2,ig1,:))
    enddo

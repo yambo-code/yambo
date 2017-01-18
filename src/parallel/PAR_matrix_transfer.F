@@ -51,9 +51,13 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
  !
  ! Work Space
  !
- integer :: i_row,cols(2)
+ integer :: i_row,i_col,cols(2)
  !
 #if defined _SCALAPACK
+ !
+#if defined _OPENMP
+ !$omp parallel default(shared), private(i_row,i_col)
+#endif
  !
  if (present(M_slk)) then
    !
@@ -61,7 +65,17 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
      !
      if (mode=="slk < M".or.mode=="M > slk") then
        !
-       M_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)=M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))
+#if defined _OPENMP
+       !$omp do
+#endif
+       do i_row=1,M_slk%nrows_used
+         do i_col=1,M_slk%nrows_used
+           M_slk%blc(i_row,i_col)=M(M_slk%rows(1)+i_row-1,M_slk%cols(1)+i_col-1)
+         enddo
+       enddo
+#if defined _OPENMP
+       !$omp end do
+#endif
        !
      endif
      !
@@ -69,13 +83,21 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
        !
        M=cZERO
        !
-       M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=M_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)
+#if defined _OPENMP
+       !$omp do
+#endif
+       do i_row=1,M_slk%nrows_used
+         do i_col=1,M_slk%nrows_used
+           M(M_slk%rows(1)+i_row-1,M_slk%cols(1)+i_col-1)=M_slk%blc(i_row,i_col)
+         enddo
+       enddo
+#if defined _OPENMP
+       !$omp end do
+#endif
        !
        call PP_redux_wait(M,COMM=SLK_POOL%INTRA_comm)
        !
      endif
-     !
-     return
      !
    endif
    !
@@ -110,6 +132,14 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
    !
  endif
  !
+#if defined _OPENMP
+ !$omp end parallel
+#endif
+ !
+#endif
+ !
+#if defined _OPENMP
+ !$omp parallel default(shared), private(i_row,i_col,cols)
 #endif
  !
  if (present(X_up)) then
@@ -123,21 +153,26 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
        do i_row=X_up%rows(1),X_up%rows(2)
          cols=X_up%cols
          if (X_FILL_UP_matrix_only.or.X_lower_triangle_matrix_in_use) cols=(/i_row,X_up%cols(2)/)
-         M(i_row,cols(1):cols(2))=X_up%blc_3d(i_row,cols(1):cols(2),i_MAT)
+         do i_col=cols(1),cols(2)
+           M(i_row,i_col)=X_up%blc_3d(i_row,i_col,i_MAT)
+         enddo
          !
          if (.not.X_FILL_UP_matrix_only.and..not.X_lower_triangle_matrix_in_use) cycle
+         !
          if (cols(1)==cols(2)) cycle
          !
          cols=(/i_row+1,X_up%cols(2)/)
-         if (present(X_dn)) then
-           M(cols(1):cols(2),i_row)=X_dn%blc_3d(cols(1):cols(2),i_row,i_MAT)
-         else
-           if (i_space_inv==0) then
-             M(cols(1):cols(2),i_row)=conjg(X_up%blc_3d(i_row,cols(1):cols(2),i_MAT))
+         do i_col=cols(1),cols(2)
+           if (present(X_dn)) then
+             M(i_col,i_row)=X_dn%blc_3d(i_col,i_row,i_MAT)
            else
-             M(cols(1):cols(2),i_row)=X_up%blc_3d(i_row,cols(1):cols(2),i_MAT)
+             if (i_space_inv==0) then
+               M(i_col,i_row)=conjg(X_up%blc_3d(i_row,i_col,i_MAT))
+             else
+               M(i_col,i_row)=X_up%blc_3d(i_row,i_col,i_MAT)
+             endif
            endif
-         endif
+         enddo
        enddo
        !
        call PP_redux_wait(M,COMM=X_up%COMM%COMM)
@@ -149,5 +184,9 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
    endif
    !
  endif
+ !
+#if defined _OPENMP
+ !$omp end parallel
+#endif
  !
 end SUBROUTINE

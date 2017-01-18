@@ -23,6 +23,30 @@
 !
 subroutine SLK_communicators(INTRA_world,INTER_world,N)
  !
+ ! Here I have an example with 12 cpu's
+ !
+ !          MPI WORLD 
+ !  ________________________
+ !    INTRA            
+ !  _____________
+ !  0 0 0 0 0 0 0 0 0 0 0 0  
+ !  |___________|
+ !    INTER
+ !
+ ! PAR_COM_SLK is made of the N cpu's in INTRA 
+ ! 
+ ! Let's assume  N=4
+ ! 
+ ! PAR_COM_SLK 
+ !  _______
+ !  0 0 0 0 0 0 0 0 0 0 0 0  
+ !  |___________|
+ !   PAR_COM_SLK_INDEX_global
+ !
+ ! In this case there is only one PAR_COM_SLK in INTRA so PAR_COM_SLK_INDEX_local is the serial COM.
+ ! If there are two or more PAR_COM_SLK in INTRA PAR_COM_SLK_INDEX_local connects 1-to-1 the cpu's
+ ! in PAR_COM_SLK's contained in INTRA.
+ !
  ! Input:
  !
  ! 1. INTRA_world is the communicator among the cpu's of the local world containg the SLK instances.

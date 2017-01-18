@@ -114,6 +114,14 @@ subroutine X_redux(iq,Xw,X)
    endif
    X_kernel%blc=cZERO
    !
+   ! The cycle is here to allow ALL CPU's to transfer to the SLK group the X matrix.
+   ! Unfortunately in this procedure also the CPU
+   !
+   if (.not.PAR_IND_freqs%element_1D(iw)) then
+     X_mat(:,:,iw_X)=cZERO
+     cycle
+   endif
+   !
    if (FXC_SVD_digits>0) INV_MODE=SVD_INV
    !
    ! TDDFT Kernel. Different procedure depending on the kernel 

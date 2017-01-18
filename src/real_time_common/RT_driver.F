@@ -171,7 +171,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions => No need of WFs and Density
  !
- if(l_use_Hxc_collisions) then  
+ if(l_use_Hxc_collisions.or.trim(RT_potential)=="IP") then
    !
    call WF_free(WF)
    !

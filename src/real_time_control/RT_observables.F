@@ -35,13 +35,14 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:P_square
  use hamiltonian,    ONLY:V_hartree_sc,Ho
- use RT_control,     ONLY:RT_do_it
+ use RT_control,     ONLY:RT_do_it,NE_i_start_time
  use rt_interfaces,  ONLY:RT_average_operator
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
 &                         XC0,HARTREE0,DbGd_ibz_coo,l_RT_uses_E_DbGd,REF_V_hartree_sc,       &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,          &
 &                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc,RT_bands,            &
-&                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics
+&                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,       &
+&                         RT_delta0_occupations,NE_i_time
  use electrons,      ONLY:levels,n_sp_pol,spin_occ
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -239,11 +240,13 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
        if(RT_E_occupations(ib1,ik_RT)>0._SP) S_e=-RT_E_occupations(ib1,ik_RT)*log(RT_E_occupations(ib1,ik_RT)/spin_occ)
        VALUE_tmp(3)=VALUE_tmp(3)+S_e+S_h
        if ( Energy(1)<=0._SP ) then
-         VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib1,ik_RT)
+         if(NE_i_time==NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib1,ik_RT)
+         if(NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_delta0_occupations(ib1,ik_RT)
          VALUE_tmp(4)=VALUE_tmp(4)+S_h
        endif
        if ( Energy(1)> 0._SP ) then
-         VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib1,ik_RT)
+         if(NE_i_time==NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib1,ik_RT)
+         if(NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_delta0_occupations(ib1,ik_RT)
          VALUE_tmp(5)=VALUE_tmp(5)+S_e
        endif
      enddo

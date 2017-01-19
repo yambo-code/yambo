@@ -59,7 +59,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  integer          :: iw,iq,i_G_shift,n_output
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus
- logical          :: l_skip_non_int_eps,eval_eels
+ logical          :: l_skip_non_int_eps,eval_eels,Macroscopic_CPU
  !
  integer,external :: O_select_q_and_G
  !
@@ -145,6 +145,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call X_PARALLEL_alloc(X,Xen,Xk,wv,wv%n_freqs,"OPTICS")
    !
+   Macroscopic_CPU=X_par%rows(1)<=i_G_shift.and.i_G_shift<=X_par%rows(2).and.&
+&                  X_par%cols(1)<=i_G_shift.and.i_G_shift<=X_par%cols(2)
+   !
    ! Check if EELS can be evaluated
    !
    eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
@@ -212,19 +215,25 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Without LF eps
    !
-   Epsilon_ii(:,1)=1.0_SP-X_par%blc_3d(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   if (Macroscopic_CPU) Epsilon_ii(:,1)=1.0_SP-X_par%blc_3d(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
    !
    if(l_rpa_IP) then
      !
-     Epsilon_ii(:,2)=Epsilon_ii(:,1)
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=Epsilon_ii(:,1)
      !
    else
      !
+     ! Back compatibility
+     !
+     Y_ALLOCATE(X_mat(X%ng,X%ng,wv%n_freqs))
+     Y_MEM(X_mat)
+     X_mat=cZERO
+     !
      call X_redux(iq,wv,X)
      !
-     Epsilon_ii(:,2)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
      !
    endif
    !

@@ -26,18 +26,18 @@ subroutine X_redux(iq,Xw,X)
  use pars,          ONLY:SP,pi,cZERO,cONE
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
-&                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,ncpu,&
+&                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL,PAR_matrix,PAR_matrix_reset
  use wrapper,       ONLY:M_by_M
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,LINEAR_ALGEBRA_driver,PAR_matrix_transfer
+ use interfaces,    ONLY:LINEAR_ALGEBRA_driver,PAR_matrix_transfer
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_mat,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle,X_lower_triangle_matrix_in_use
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
 #if defined _SCALAPACK
- use SLK_m,          ONLY:BLACS_structure_in_use
+ use SLK_m,         ONLY:BLACS_structure_in_use
 #endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -51,7 +51,7 @@ subroutine X_redux(iq,Xw,X)
  ! Work Space
  !
  type(PP_indexes) ::PAR_IND_freqs
- integer          ::ig1,ig2,iw,iw_X,INV_MODE,PAR_IND_FREQ_ID
+ integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU)
  type(PAR_matrix) ::X_kernel,Xo
  !
  ! Setup 
@@ -60,22 +60,18 @@ subroutine X_redux(iq,Xw,X)
  call timing('X (procedure)',OPR='start')
 #endif
  !
- call PP_indexes_reset(PAR_IND_freqs)
- !
  ! Stop... 
  !
  call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
  !
  ! ... and frequencies distribution
  !
- call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_SLK_INDEX_local)
- PAR_IND_FREQ_ID=PAR_COM_SLK_INDEX_local%CPU_id+1
- call PARALLEL_live_message("X Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),TOTAL=Xw%n_freqs,&
-&                           NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
+ call PARALLEL_FREQS_setup(Xw,PAR_IND_freqs,PAR_COM_SLK_INDEX_local)
+ PAR_n_freqs_global                                  =0
+ PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%CPU_id+1)=PAR_n_freqs
+ call PP_redux_wait(PAR_n_freqs_global,COMM=PAR_COM_X_WORLD%COMM)
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) then
-   call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
- endif
+ if (PAR_n_freqs>0) call live_timing('X@q['//trim(intc(iq))//'] ',PAR_n_freqs)
  !
  ! I build here a local BLACS structure for the response function components
  !
@@ -87,40 +83,34 @@ subroutine X_redux(iq,Xw,X)
  Y_ALLOCATE(Xo%blc(Xo%nrows,Xo%ncols))
  Y_MEM(Xo%blc)
  Xo%blc=cZERO
- do iw=1,Xw%n_freqs
+ !
+ do iw_par=1,maxval(PAR_n_freqs_global)
    !
-   iw_X               =iw+iW_offset
+   ! In this delicate part I need to transfer the PAR structure of Xo in the BLACS/serial
+   ! by filling the appropriate frequency element. This is why I need to loop on the frequency pools
    !
-   if (X_lower_triangle_matrix_in_use) then
-#if defined _SCALAPACK
-     if (BLACS_structure_in_use) then
-       call PAR_matrix_transfer("slk < X",M_slk=Xo,X_up=X_par,X_dn=X_par_lower_triangle,i_MAT=iw_X)
-     else
-#endif
-       call PAR_matrix_transfer("M < X",X_up=X_par,X_dn=X_par_lower_triangle,M=Xo%blc,i_MAT=iw_X)
-#if defined _SCALAPACK
+   do i_LA_pool=1,PAR_COM_SLK_INDEX_local%n_CPU
+     !
+     if (iw_par>PAR_n_freqs_global(i_LA_pool)) cycle
+     !
+     iw_X    = 0
+     if (i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1.and.PAR_COM_SLK%CPU_id==0) then
+       iw_X  = PAR_FREQS_index(iw_par)+iW_offset
      endif
-#endif
-   else
-#if defined _SCALAPACK
-     if (BLACS_structure_in_use) then
-       call PAR_matrix_transfer("slk < X",M_slk=Xo,X_up=X_par,i_MAT=iw_X)
-     else
-#endif
-       call PAR_matrix_transfer("M < X",X_up=X_par,M=Xo%blc,i_MAT=iw_X)
-#if defined _SCALAPACK
-     endif
-#endif
-   endif
+     !
+     call PP_redux_wait(iw_X,COMM=PAR_COM_X_WORLD%COMM)
+     !
+     if (ncpu>1.and.i_LA_pool/=PAR_COM_SLK_INDEX_local%CPU_id+1) iw_X(1)=-iw_X(1)
+     !
+     call LOCAL_X_transfer(iw_X(1))
+     !
+   enddo
+   !
+   if (iw_par>PAR_n_freqs) cycle
+   !
+   iw    = PAR_FREQS_index(iw_par)
+   iw_X  = iw+iW_offset
    X_kernel%blc=cZERO
-   !
-   ! The cycle is here to allow ALL CPU's to transfer to the SLK group the X matrix.
-   ! Unfortunately in this procedure also the CPU
-   !
-   if (.not.PAR_IND_freqs%element_1D(iw)) then
-     X_mat(:,:,iw_X)=cZERO
-     cycle
-   endif
    !
    if (FXC_SVD_digits>0) INV_MODE=SVD_INV
    !
@@ -175,15 +165,15 @@ subroutine X_redux(iq,Xw,X)
      !
      ! formulation as a linear system
      !
-     X_mat(:,:,iw_X)=Xo%blc
-     call LINEAR_ALGEBRA_driver(LIN_SYS,M=X_kernel%blc,B=X_mat(:,:,iw_X))
+     X_mat(:,:,iw_X(1))=Xo%blc
+     call LINEAR_ALGEBRA_driver(LIN_SYS,M=X_kernel%blc,B=X_mat(:,:,iw_X(1)))
      !
   else
      !
      ! formulation matrix inversion + matmul
      !
      call LINEAR_ALGEBRA_driver(INV,M=X_kernel%blc)
-     call LINEAR_ALGEBRA_driver(MAT_MUL,M=X_kernel%blc,B=Xo%blc,C=X_mat(:,:,iw_X))
+     call LINEAR_ALGEBRA_driver(MAT_MUL,M=X_kernel%blc,B=Xo%blc,C=X_mat(:,:,iw_X(1)))
      !
    endif
    !
@@ -192,18 +182,18 @@ subroutine X_redux(iq,Xw,X)
 #endif
    do ig1=Xo%rows(1),Xo%rows(2)
      do ig2=Xo%cols(1),Xo%cols(2)
-       X_mat(ig1,ig2,iw_X)=X_mat(ig1,ig2,iw_X)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+       X_mat(ig1,ig2,iw_X(1))=X_mat(ig1,ig2,iw_X(1))*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
      enddo
    enddo
 #if defined _OPENMP
    !$omp end parallel do
 #endif
    !
-   if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) call live_timing(steps=1)
+   if (PAR_n_freqs>0) call live_timing(steps=1)
    !
  enddo
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID)>0) call live_timing()
+ if (PAR_n_freqs>0) call live_timing()
  !
 #if defined _TIMING
  call timing('X (procedure)',OPR='stop')
@@ -226,4 +216,31 @@ subroutine X_redux(iq,Xw,X)
  call PAR_matrix_reset(X_kernel)
  call PAR_matrix_reset(Xo)
  !
+ contains
+   !
+   subroutine LOCAL_X_transfer(iW_to_be_filled)
+     integer :: iW_to_be_filled
+     if (X_lower_triangle_matrix_in_use) then
+#if defined _SCALAPACK
+       if (BLACS_structure_in_use) then
+         call PAR_matrix_transfer("X > slk",M_slk=Xo,X_up=X_par,X_dn=X_par_lower_triangle,i_MAT=iW_to_be_filled)
+       else
+#endif
+         call PAR_matrix_transfer("X > M",  X_up=X_par,X_dn=X_par_lower_triangle,M=Xo%blc,i_MAT=iW_to_be_filled)
+#if defined _SCALAPACK
+       endif
+#endif
+     else
+#if defined _SCALAPACK
+       if (BLACS_structure_in_use) then
+         call PAR_matrix_transfer("X > slk",M_slk=Xo,X_up=X_par,i_MAT=iW_to_be_filled)
+       else
+#endif
+         call PAR_matrix_transfer("X > M",  X_up=X_par,M=Xo%blc,i_MAT=iW_to_be_filled)
+#if defined _SCALAPACK
+       endif
+#endif
+     endif
+   end subroutine
+   !
 end subroutine

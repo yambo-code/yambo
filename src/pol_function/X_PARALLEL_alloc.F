@@ -31,7 +31,7 @@ subroutine X_PARALLEL_alloc(X,E,k,W,NW,mode)
  use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_nq
  use linear_algebra,ONLY:PAR_matrix_reset
  use X_m,           ONLY:X_t,X_par,iW_offset,X_par_lower_triangle,&
-&                        X_FILL_UP_matrix_only,X_mat,X_lower_triangle_matrix_in_use
+&                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
  !
 #include<memory.h>
  !
@@ -79,11 +79,5 @@ subroutine X_PARALLEL_alloc(X,E,k,W,NW,mode)
  Y_ALLOCATE(X_par%blc_3d(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),X_size))
  Y_MEM(X_par%blc_3d)
  X_par%blc_3d=cZERO
- !
- ! Back compatibility
- !
- Y_ALLOCATE(X_mat(X%ng,X%ng,X_size))
- Y_MEM(X_mat)
- X_mat=cZERO
  !
 end subroutine

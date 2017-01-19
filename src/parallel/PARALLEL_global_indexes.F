@@ -34,7 +34,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_PLASMA_index,&
 &                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,PAR_nG_bands,PAR_G_bands_index,&
 &                        PAR_Q_bz_index,PAR_nQ_bz,PAR_RL_index,&
-&                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands,EH_range
+&                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands,EH_range,PAR_build_index
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu,l_par_SC
@@ -48,7 +48,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
 &                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX,PAR_COM_SLK_INDEX_local,&
-&                        PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_RL_A2A
+&                        PAR_COM_RL_INDEX,PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved,PAR_COM_X_WORLD
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_SLK,&
@@ -213,6 +213,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_WF_k_A2A)
    call COMM_reset(PAR_COM_WF_b_INDEX)
    call COMM_reset(PAR_COM_WF_k_INDEX)
+   call COMM_reset(PAR_COM_X_WORLD_RL_resolved)
    call COMM_reset(PAR_COM_X_WORLD)
    call COMM_reset(PAR_COM_DIPOLES)
    call COMM_reset(PAR_COM_DIPOLES_k_subgroup)
@@ -381,7 +382,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
    Y_ALLOCATE(PAR_Xk_ibz_index(Xk%nibz))
    Y_MEM(PAR_Xk_ibz_index)
-   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    !
    ! Inversion
    !
@@ -390,16 +391,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
+   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_WORLD, PAR_COM_X_WORLD_RL_resolved)
+   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
-   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
    PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
    Y_ALLOCATE(PAR_DIPk_ibz_index(Xk%nibz))
    Y_MEM(PAR_DIPk_ibz_index)
-   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
    ! I/O privileges
    !
@@ -443,7 +445,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             NCPU=PAR_COM_Xk_bz_INDEX%n_CPU)
    Y_ALLOCATE(PAR_Xk_bz_index(Xk%nbz))
    Y_MEM(PAR_Xk_bz_index)
-   call Build_up_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
+   call PAR_build_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
    !
    ! Q-points 
    !
@@ -460,7 +462,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    Y_ALLOCATE(PAR_Q_index(Q_range(2)))
    Y_MEM(PAR_Q_index)
-   call Build_up_index(PAR_IND_Q,Q_range(2),PAR_Q_index,PAR_nQ)
+   call PAR_build_index(PAR_IND_Q,Q_range(2),PAR_Q_index,PAR_nQ)
    !
    ! K-points (IBZ) after shifting of Q (BZ/IBZ)
    !
@@ -474,7 +476,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    Y_ALLOCATE(PAR_Xk_ibz_index(Xk%nibz))
    Y_MEM(PAR_Xk_ibz_index)
-   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    !
    call PARALLEL_live_message("K-q(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
@@ -503,9 +505,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
    ! The COMM is anyway the one for the all2all of each q.
    !
+   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD_RL_resolved)
+   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
-   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
-   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD)
+   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    if (ENVIRONMENT/="Response_G_space_Finite_Momentum") then
@@ -515,7 +518,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !
      Y_ALLOCATE(PAR_DIPk_ibz_index(Xk%nibz))
      Y_MEM(PAR_DIPk_ibz_index)
-     call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+     call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
      !
    endif
    !
@@ -629,16 +632,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !.........................................................................
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
    call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
    PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
    Y_ALLOCATE(PAR_DIPk_ibz_index(Xk%nibz))
    Y_MEM(PAR_DIPk_ibz_index)
-   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    Y_ALLOCATE(PAR_Xk_ibz_index(Xk%nibz))
    Y_MEM(PAR_Xk_ibz_index)
-   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    do ib1=RT_bands(1),RT_bands(2)
      do ib2=RT_bands(1),RT_bands(2)
        if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,RT_bands) ) ) then
@@ -696,7 +700,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    Y_ALLOCATE(PAR_Q_index(q%nbz))
    Y_MEM(PAR_Q_index)
-   call Build_up_index(PAR_IND_Q,q%nbz,PAR_Q_index,PAR_nQ)
+   call PAR_build_index(PAR_IND_Q,q%nbz,PAR_Q_index,PAR_nQ)
    !
    call PARALLEL_live_message("Q(bz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=q%nbz,&
@@ -772,7 +776,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    Y_ALLOCATE(PAR_QP_index(QP_n_states))
    Y_MEM(PAR_QP_index)
    PAR_QP_index=0
-   call Build_up_index(PAR_IND_QP,QP_n_states,PAR_QP_index,PAR_nQP)
+   call PAR_build_index(PAR_IND_QP,QP_n_states,PAR_QP_index,PAR_nQP)
    call PARALLEL_live_message("QPs",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1),TOTAL=QP_n_states,&
 &                             NCPU=PAR_COM_QP_INDEX%n_CPU)
@@ -795,7 +799,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    Y_ALLOCATE(PAR_Q_index(Q_range(2)))
    Y_MEM(PAR_Q_index)
-   call Build_up_index(PAR_IND_Q,Q_range(2),PAR_Q_index,PAR_nQ)
+   call PAR_build_index(PAR_IND_Q,Q_range(2),PAR_Q_index,PAR_nQ)
    !
    if (trim(WHAT)=="ibz") then
      Y_ALLOCATE(PAR_Q_bz_index(nqbz))
@@ -803,7 +807,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call distribute_BZk_using_IBZk(PAR_COM_Q_INDEX,q,PAR_IND_Q   , PAR_IND_Q_ID,&
 &                                                     PAR_IND_Q_bz, PAR_IND_Q_ID,&
 &                                                     PAR_Q_bz_index,PAR_nQ_bz)
-     call Build_up_index(PAR_IND_Q_bz,nqbz,PAR_Q_bz_index,PAR_nQ_bz)
+     call PAR_build_index(PAR_IND_Q_bz,nqbz,PAR_Q_bz_index,PAR_nQ_bz)
    endif
    !
 #if defined _SC || defined _RT
@@ -857,7 +861,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_nG_bands=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
    Y_ALLOCATE(PAR_G_bands_index(n_bands(2)))
    Y_MEM(PAR_G_bands_index)
-   call Build_up_index(PAR_IND_G_b,n_bands(2),PAR_G_bands_index,PAR_nG_bands)
+   call PAR_build_index(PAR_IND_G_b,n_bands(2),PAR_G_bands_index,PAR_nG_bands)
    !
    call PARALLEL_live_message("G bands",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
@@ -898,6 +902,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !
      call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
      call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD_RL_resolved)
      call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES_k_subgroup)
      call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX(X_type))
      call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX(X_type))
@@ -959,6 +964,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
    call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
    call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
@@ -984,10 +990,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_DIPk_nibz=PAR_Kk_nibz
    Y_ALLOCATE(PAR_DIPk_ibz_index(Xk%nibz))
    Y_MEM(PAR_DIPk_ibz_index)
-   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    Y_ALLOCATE(PAR_Xk_ibz_index(Xk%nibz))
    Y_MEM(PAR_Xk_ibz_index)
-   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    Y_ALLOCATE(PAR_Xk_bz_index(Xk%nbz))
    Y_MEM(PAR_Xk_bz_index)
    call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
@@ -1133,26 +1139,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    end subroutine
    !
 #endif
-   !
-   subroutine Build_up_index(PAR_ind,n_PAR_ind,V_ind,n_V_ind)
-     !
-     use parallel_m,ONLY:PP_indexes
-     integer           ::n_PAR_ind,n_V_ind,V_ind(n_PAR_ind),i_p
-     type(PP_indexes)  ::PAR_ind
-     !
-     V_ind  =0
-     n_V_ind=0
-     !
-     do i_p=1,n_PAR_ind
-       !
-       if (PAR_IND%element_1D(i_p)) then
-         n_V_ind=n_V_ind+1
-         V_ind(i_p)=n_V_ind
-       endif
-       !
-     enddo
-     !
-   end subroutine
    !
    subroutine fill_IBZk_using_BZk(IND_ibz,IND_bz,COMM)
      !

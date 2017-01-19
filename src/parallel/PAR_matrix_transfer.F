@@ -37,8 +37,7 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
  use X_m,            ONLY:X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
  use D_lattice,      ONLY:i_space_inv
  use linear_algebra, ONLY:PAR_matrix
- !
- implicit none
+#include<memory.h>
  !
  character(*)               :: mode
  type(PAR_matrix), optional :: M_slk
@@ -51,7 +50,8 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
  !
  ! Work Space
  !
- integer :: i_row,i_col,cols(2)
+ integer              :: i_row,i_col,cols(2),N
+ complex, allocatable :: SWAP(:,:)
  !
 #if defined _SCALAPACK
  !
@@ -144,17 +144,21 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
  !
  if (present(X_up)) then
    !
+   N=size(M,1)
+   Y_ALLOCATE(SWAP(N,N))
+   Y_MEM(SWAP)
+   !
    if (present(M)) then
      !
      if (mode=="X > M".or.mode=="M < X") then
        !
-       M=cZERO
+       SWAP=cZERO
        !
        do i_row=X_up%rows(1),X_up%rows(2)
          cols=X_up%cols
          if (X_FILL_UP_matrix_only.or.X_lower_triangle_matrix_in_use) cols=(/i_row,X_up%cols(2)/)
          do i_col=cols(1),cols(2)
-           M(i_row,i_col)=X_up%blc_3d(i_row,i_col,i_MAT)
+           SWAP(i_row,i_col)=X_up%blc_3d(i_row,i_col,iabs(i_MAT))
          enddo
          !
          if (.not.X_FILL_UP_matrix_only.and..not.X_lower_triangle_matrix_in_use) cycle
@@ -164,24 +168,26 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
          cols=(/i_row+1,X_up%cols(2)/)
          do i_col=cols(1),cols(2)
            if (present(X_dn)) then
-             M(i_col,i_row)=X_dn%blc_3d(i_col,i_row,i_MAT)
+             SWAP(i_col,i_row)=X_dn%blc_3d(i_col,i_row,iabs(i_MAT))
            else
              if (i_space_inv==0) then
-               M(i_col,i_row)=conjg(X_up%blc_3d(i_row,i_col,i_MAT))
+               SWAP(i_col,i_row)=conjg(X_up%blc_3d(i_row,i_col,iabs(i_MAT)))
              else
-               M(i_col,i_row)=X_up%blc_3d(i_row,i_col,i_MAT)
+               SWAP(i_col,i_row)=X_up%blc_3d(i_row,i_col,iabs(i_MAT))
              endif
            endif
          enddo
        enddo
        !
-       call PP_redux_wait(M,COMM=X_up%COMM%COMM)
+       call PP_redux_wait(SWAP,COMM=X_up%COMM%COMM)
+       !
+       if (i_MAT>0) M=SWAP
        !
      endif
      !
-     return
-     !
    endif
+   !
+   Y_FREE(SWAP)
    !
  endif
  !

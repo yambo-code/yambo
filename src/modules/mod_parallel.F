@@ -263,6 +263,9 @@ module parallel_m
  ! ... Optical oscillators
  integer            :: PAR_IND_DIPk_ID
  !
+ ! ... Freqs
+ integer            :: PAR_IND_FREQ_ID
+ !
  ! Specific MPI COMMUNICATORS...
  !==============================
  ! PAR_COM_*_INDEX is the interchain comunicator
@@ -309,6 +312,7 @@ module parallel_m
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
  type(MPI_comm),SAVE :: PAR_COM_X_WORLD
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
@@ -361,6 +365,8 @@ module parallel_m
  integer,allocatable:: PAR_BS_T_grps_index(:)
  integer            :: PAR_nG_bands 
  integer,allocatable:: PAR_G_bands_index(:)
+ integer            :: PAR_n_freqs 
+ integer,allocatable:: PAR_FREQS_index(:)
  !
  ! WorkSpace
  !
@@ -386,6 +392,31 @@ module parallel_m
  end interface PP_send_and_receive
  !
  contains
+   !
+   subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
+     !
+     integer           ::N_elements,n_V_ind,V_ind(N_elements),i_p
+     type(PP_indexes)  ::PAR_ind
+     !
+     V_ind  =0
+     n_V_ind=0
+     if (N_elements==size(PAR_IND%element_1D)) then
+       do i_p=1,N_elements
+         if (PAR_IND%element_1D(i_p)) then
+           n_V_ind=n_V_ind+1
+           V_ind(i_p)=n_V_ind
+         endif
+       enddo
+     else 
+       do i_p=1,size(PAR_IND%element_1D)
+         if (PAR_IND%element_1D(i_p)) then
+           n_V_ind=n_V_ind+1
+           V_ind(n_V_ind)=i_p
+         endif
+       enddo
+     endif
+     !
+   end subroutine
    !
    subroutine CREATE_the_COMM(WORLD, COMM, ID )
      integer       :: WORLD,ID,i_err

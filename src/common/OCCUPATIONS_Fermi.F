@@ -200,6 +200,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  call ef2nel(T_holes,E%E_Fermi,n_holes,'holes')
  do while (i_trials(1)<=5000)
    call ef2nel(T_elecs,E%E_Fermi,n_elecs,'elecs')
+   if(abs(n_elecs+n_holes)==0._SP) exit
    balance=(n_holes-n_elecs)/(n_elecs+n_holes)
    if ( abs(balance)< 1.E-5 ) exit
    if (     balance <-1.E-5 ) T_elecs=T_elecs-Tel_step*abs(n_holes-n_elecs)*1000
@@ -316,11 +317,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
        tmp_holes= real(spin_occ*Fermi_fnc(-(E_sorted(i1)-Ef),tTel)*K%weights(ik),DP)
        tmp_elecs= real(spin_occ*Fermi_fnc( (E_sorted(i1)-Ef),tTel)*K%weights(ik),DP)
        if(what=='both ') nel_acc=nel_acc+tmp_elecs
-       ! DS: The = on the holes is a yambo convention, since at T=0 Ef=E_VBM
-       !     It should be changed putting at T=0 Ef=(E_VBM+E_CBm)/2.
-       !     and removing the equal. Accordingly yambo_rt needs to be changed
-       if(what=='holes'.and.E_sorted(i1)<=Ef) holes_acc=holes_acc+tmp_holes
-       if(what=='elecs'.and.E_sorted(i1)> Ef) elecs_acc=elecs_acc+tmp_elecs
+       if(what=='holes'.and.E_sorted(i1)<Ef) holes_acc=holes_acc+tmp_holes
+       if(what=='elecs'.and.E_sorted(i1)>Ef) elecs_acc=elecs_acc+tmp_elecs
      enddo
      if (n_b_full_guess==0) nel_theo=nel
      if(what=='both ') N_of_el_diff=real(nel_acc-nel_theo,SP)

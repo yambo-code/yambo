@@ -370,13 +370,13 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  ! Populate the lower triangle/piece of Xo 
  !=========================================
  !
- if (.not.X_FILL_UP_matrix_only) return
+ if (.not.X_FILL_UP_matrix_only.and.PAR_COM_RL_INDEX%n_CPU==1) return
  !
  ! X_FILL_UP_matrix_only=.TRUE.
  !
- ! ------
- ! --oooo
- ! --Xooo
+ ! oooooo
+ ! xooooo
+ ! xxoooo
  ! ------
  ! ------
  ! ------
@@ -394,25 +394,32 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
  ! PAR_COM_RL_INDEX%n_CPU > 1
  !
- ! ------    ------
- ! --oooo    ------
- ! ---ooo    --o---
- ! ------ +  --oo--
- ! ------    --oo--
- ! ------    --oo--
+ ! oooooo    xxx---
+ ! xooooo    oxx---
+ ! xxoooo    oox---
+ ! ------ +  ooo---
+ ! ------    ooo---
+ ! ------    ooo---
  !
  ! "o" = calculated
- ! "X" = to be filled now
+ ! "x" = to be filled now
  !
 #if defined _OPENMP
  !$omp parallel default(shared), private(ig2,ig1)
  !$omp do
 #endif
  do ig1=X_par%rows(1),X_par%rows(2)
-   do ig2=X_par%cols(1),ig1-1
-     if (i_space_inv==1) X_par%blc_3d(ig1,ig2,:)=X_par%blc_3d(ig2,ig1,:)
-     if (i_space_inv==0) X_par%blc_3d(ig1,ig2,:)=conjg(X_par%blc_3d(ig2,ig1,:))
-   enddo
+   if (X_FILL_UP_matrix_only) then
+     do ig2=X_par%cols(1),ig1-1
+       if (i_space_inv==1) X_par%blc_3d(ig1,ig2,:)=X_par%blc_3d(ig2,ig1,:)
+       if (i_space_inv==0) X_par%blc_3d(ig1,ig2,:)=conjg(X_par%blc_3d(ig2,ig1,:))
+     enddo
+   else if (PAR_COM_RL_INDEX%n_CPU>1) then
+     do ig2=X_par%cols(1),ig1
+       X_par_lower_triangle%blc_3d(ig2,ig1,:)=X_par%blc_3d(ig2,ig1,:)
+       X_par%blc_3d(ig1,ig2,:)               =X_par_lower_triangle%blc_3d(ig1,ig2,:)
+     enddo
+   endif
  enddo
 #if defined _OPENMP
  !$omp end do

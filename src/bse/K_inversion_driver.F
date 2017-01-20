@@ -138,7 +138,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! 
  ! SLK matrix initialization before the Kernel loading
  !
- call SLK_matrix_init( SLK_ORTHO, K_slk, BS_H_dim )
+ call SLK_matrix_init( K_slk, BS_H_dim )
  Y_ALLOCATE(K_slk%blc(K_slk%nrows,K_slk%ncols))
  Y_MEM(K_slk%blc)
  !

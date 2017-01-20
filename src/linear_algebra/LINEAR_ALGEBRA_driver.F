@@ -21,8 +21,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V_right,E_real,E_cmpl,&
-&                                SVD_digits,det,V_par)
+subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
+&                                M,M_slk,&
+&                                M_bse,&
+&                                B,B_slk,&
+&                                C,C_slk,&
+&                                V_left,V_right,E_real,E_cmpl,&
+&                                SVD_digits,det)
+ !
+ ! Operations:
+ !
+ ! * INV:   M_slk/M => M_slk/M
+ !
+ ! * DIAGO: M => M + E_real/E_cmpl + V_left/V_right (SLK external arrays still to implement)
+ !
+ ! * LIN_SYSTEM: M_slk/M + B_slk/B => B_slk/B 
+ !
+ ! * MAT_MUL: M_slk/M + B_slk/B => C_slk/C 
  !
  use pars,          ONLY:SP,cONE,cZERO
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
@@ -33,9 +48,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V
  use interfaces,    ONLY:PAR_matrix_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use com,           ONLY:warning
-#if defined _SCALAPACK
- use SLK_m,         ONLY:SLK_ORTHO
-#endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -45,23 +57,23 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V
  integer,          optional :: lib_in
  complex(SP),      optional :: M(:,:)
  type(PAR_matrix), optional :: M_slk
- type(PAR_matrix), optional :: M_par
  type(BS_block),   optional :: M_bse(:)
  complex(SP),      optional :: B(:,:)
+ complex(SP),      optional :: B_slk
  complex(SP),      optional :: C(:,:)
+ complex(SP),      optional :: C_slk
  complex(SP),      optional :: V_left(:,:)
  complex(SP),      optional :: V_right(:,:)
  real(SP),         optional :: E_real(:)
  complex(SP),      optional :: E_cmpl(:)
  integer,          optional :: SVD_digits 
  complex(SP),      optional :: det
- type(PAR_matrix), optional :: V_par
  !
  ! Work Spaces ...
  !
  complex(SP)         :: det_
  integer             :: N,lib_in_use
- type (PAR_matrix)   :: M_loc_slk,B_slk,C_slk,EIGEN_slk
+ type (PAR_matrix)   :: M_loc_slk,B_loc_slk,C_loc_slk,EIGEN_slk
  !
 #if defined _TIMING
  call timing("LINEAR ALGEBRA",OPR="start")
@@ -110,11 +122,96 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V
  ! =============== PARALLEL SECTION ==========================================================
  !
  if (lib_in_use==USE_SLK) then 
-   if (present(M_slk)) then
-     call SCALAPACK_section(M_slk,.FALSE.)
-   else
-     call SCALAPACK_section(M_loc_slk,.TRUE.)
+   !
+   if (.not.present(M_slk)) then
+     !
+     call SLK_matrix_init( M_loc_slk, N )
+     Y_ALLOCATE(M_loc_slk%blc(M_loc_slk%nrows,M_loc_slk%ncols))
+     Y_MEM(M_loc_slk%blc)
+     !
+     if (present(M_bse)) then
+       call PAR_matrix_transfer( "K > slk", M_slk= M_loc_slk, M_bse=M_bse )
+     else if (present(M)) then
+       call PAR_matrix_transfer( "M > slk", M_slk= M_loc_slk, M=M )
+     endif
+     !
    endif
+   !
+   if (idriver==DIAGO) then
+     !
+     call SLK_matrix_init( EIGEN_slk, N )
+     Y_ALLOCATE(EIGEN_slk%blc(EIGEN_slk%nrows,EIGEN_slk%ncols))
+     Y_MEM(EIGEN_slk%blc)
+     !
+     call PARALLEL_HERMITIAN_diagonalization( M_loc_slk, EIGEN_slk, N, E_real )
+     !
+     call PAR_matrix_transfer( "slk > M", M_slk = EIGEN_slk , M=M )
+     Y_FREE(EIGEN_slk%blc)
+     call PAR_matrix_reset(EIGEN_slk)
+     !
+   else if (idriver==INV) then
+     !
+     if (present(M)) then
+       call PARALLEL_inversion( M_loc_slk, N ) 
+       call PAR_matrix_transfer( "slk > M", M_slk = M_loc_slk , M=M )
+     else
+       call PARALLEL_inversion( M_slk, N ) 
+     endif
+     !
+   else if (idriver==LIN_SYS) then
+     !
+     if (.not.present(B_slk)) then
+       !
+       call SLK_matrix_init( B_loc_slk, N )
+       Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols))
+       Y_MEM(B_loc_slk%blc)
+       call PAR_matrix_transfer( "M > slk", M_slk = B_loc_slk, M=B )
+       !
+       call PARALLEL_lin_system( M_loc_slk, B_loc_slk, N, N)
+       call PAR_matrix_transfer( "slk > M", M_slk =  B_loc_slk, M=B )
+       !
+       Y_FREE(B_loc_slk%blc)
+       call PAR_matrix_reset(B_loc_slk)
+       !
+     else
+       !
+       call PARALLEL_lin_system( M_slk, B_slk, N, N)
+       !
+     endif
+     !
+   else if (idriver==MAT_MUL) then
+     !
+     if (.not.present(B_slk)) then
+       !
+       call SLK_matrix_init( B_loc_slk, N )
+       Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols))
+       Y_MEM(B_loc_slk%blc)
+       call PAR_matrix_transfer( "M > slk",M_slk =  B_loc_slk, M=B )
+       !
+       call SLK_matrix_init( C_loc_slk, N )
+       Y_ALLOCATE(C_loc_slk%blc(C_loc_slk%nrows,C_loc_slk%ncols))
+       Y_MEM(C_loc_slk%blc)
+       call PAR_matrix_transfer( "M > slk",M_slk =  C_loc_slk, M=C )
+       !
+       call PARALLEL_M_by_M( M_loc_slk, B_loc_slk, C_loc_slk, 'N', 'N', N, N , N )
+       call PAR_matrix_transfer( "slk > M",M_slk =  C_loc_slk, M=C )
+       !
+       call PAR_matrix_reset(B_loc_slk)
+       Y_FREE(B_loc_slk%blc)
+       !
+       call PAR_matrix_reset(C_loc_slk)
+       Y_FREE(C_loc_slk%blc)
+       !
+     else
+       !
+       call PARALLEL_M_by_M( M_slk, B_slk, C_slk, 'N', 'N', N, N , N )
+       !
+     endif
+     !
+   endif
+   !
+   call LINEAR_ALGEBRA_WS_clean_up(WS) 
+   !
  endif
  !
 #endif
@@ -173,86 +270,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_par,M_bse,B,C,V_left,V
  !
 #if defined _TIMING
  call timing("LINEAR ALGEBRA",OPR="stop")
-#endif
- !
- contains
-   !
-#if defined _SCALAPACK
-   !
-   subroutine SCALAPACK_section(MAT,INIT)  
-     !
-     type (PAR_matrix)   :: MAT
-     logical             :: INIT
-     !
-     if (INIT) then
-       !
-       call SLK_matrix_init( SLK_ORTHO, MAT, N )
-       Y_ALLOCATE(MAT%blc(MAT%nrows,MAT%ncols))
-       Y_MEM(MAT%blc)
-       !
-       if (present(M_bse)) then
-         call PAR_matrix_transfer( "slk < K", M_slk= MAT, M_bse=M_bse )
-       else if (present(M)) then
-         call PAR_matrix_transfer( "slk < M", M_slk= MAT, M=M )
-       endif
-       !
-     else if (idriver==DIAGO) then
-       !
-       call SLK_matrix_init( SLK_ORTHO, EIGEN_slk, N )
-       Y_ALLOCATE(EIGEN_slk%blc(EIGEN_slk%nrows,EIGEN_slk%ncols))
-       Y_MEM(EIGEN_slk%blc)
-       !
-       call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, MAT, EIGEN_slk, N, E_real )
-       !
-       if (present(M)) then
-         call PAR_matrix_transfer( "slk > M", M_slk = EIGEN_slk , M=M )
-       endif
-       !
-     else if (idriver==LIN_SYS) then
-       !
-       call SLK_matrix_init( SLK_ORTHO, B_slk, N )
-       Y_ALLOCATE(B_slk%blc(B_slk%nrows,B_slk%ncols))
-       Y_MEM(B_slk%blc)
-       call PAR_matrix_transfer( "slk < M", M_slk = B_slk, M=B )
-       !
-       call PARALLEL_lin_system( SLK_ORTHO, MAT, B_slk, N, size(B,2), B )
-       call PAR_matrix_transfer( "slk > M", M_slk =  B_slk, M=B )
-       !
-     else if (idriver==MAT_MUL) then
-       ! 
-       call SLK_matrix_init( SLK_ORTHO, B_slk, N )
-       Y_ALLOCATE(B_slk%blc(B_slk%nrows,B_slk%ncols))
-       Y_MEM(B_slk%blc)
-       call PAR_matrix_transfer( "slk < M",M_slk =  B_slk, M=B )
-       call SLK_matrix_init( SLK_ORTHO, C_slk, N )
-       Y_ALLOCATE(C_slk%blc(C_slk%nrows,C_slk%ncols))
-       Y_MEM(C_slk%blc)
-       call PAR_matrix_transfer( "slk < M",M_slk =  C_slk, M=C )
-       !
-       call PARALLEL_M_by_M( SLK_ORTHO, MAT, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), N , C )
-       call PAR_matrix_transfer( "slk > M",M_slk =   C_slk, M=C )
-       !
-     endif
-     !
-     call LINEAR_ALGEBRA_WS_clean_up(WS) 
-     !
-     if (INIT) then
-       if (.not.present(M_slk)) then
-         Y_FREE(M_loc_slk%blc)
-         call PAR_matrix_reset(M_loc_slk)
-       endif
-       if (.not.present(V_par)) then
-         Y_FREE(EIGEN_slk%blc)
-         call PAR_matrix_reset(EIGEN_slk)
-       endif
-     endif
-     call PAR_matrix_reset(B_slk)
-     Y_FREE(B_slk%blc)
-     call PAR_matrix_reset(C_slk)
-     Y_FREE(C_slk%blc)
-     !
-   end subroutine
-   !
 #endif
  !
 end subroutine

@@ -28,15 +28,14 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine SLK_matrix_init(ORTHO, M_slk, N)
+subroutine SLK_matrix_init(M_slk, N)
  !
- use SLK_m,          ONLY:ORTHO_group
+ use SLK_m,          ONLY:SLK_ORTHO
  use parallel_m,     ONLY:ncpu
  use linear_algebra, ONLY:PAR_matrix,PAR_matrix_reset 
 #include<memory.h>
  !
  integer           :: N
- type(ORTHO_group) :: ORTHO
  type(PAR_matrix)  :: M_slk
  !
  ! Work Space
@@ -46,26 +45,26 @@ subroutine SLK_matrix_init(ORTHO, M_slk, N)
  ! init global blacs grid
  !
  if (ncpu==1) then
-   ORTHO%coordinate(1)=-1
-   M_slk%rows       = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
-   M_slk%cols       = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
-   M_slk%nrows_used = N
-   M_slk%ncols_used = N
-   M_slk%N          = N
+   SLK_ORTHO%coordinate(1)=-1
+   M_slk%rows             = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
+   M_slk%cols             = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
+   M_slk%nrows_used       = N
+   M_slk%ncols_used       = N
+   M_slk%N                = N
    return
  endif
  !
- call BLACS_GRIDINFO( ORTHO%ortho_cntx, ORTHO%grid(1), ORTHO%grid(2), ORTHO%coordinate(1), ORTHO%coordinate(2) )
+ call BLACS_GRIDINFO( SLK_ORTHO%ortho_cntx, SLK_ORTHO%grid(1), SLK_ORTHO%grid(2), SLK_ORTHO%coordinate(1), SLK_ORTHO%coordinate(2) )
  !
- nprow=ORTHO%grid(1)
- npcol=ORTHO%grid(2)
- myrow=ORTHO%coordinate(1)
- mycol=ORTHO%coordinate(2)
+ nprow=SLK_ORTHO%grid(1)
+ npcol=SLK_ORTHO%grid(2)
+ myrow=SLK_ORTHO%coordinate(1)
+ mycol=SLK_ORTHO%coordinate(2)
  !
  ! spectator tasks
  ! only MPI tasks in the grid need to go ahead
  !
- if (ORTHO%coordinate(1) == -1) return
+ if (SLK_ORTHO%coordinate(1) == -1) return
  !
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B
@@ -75,14 +74,16 @@ subroutine SLK_matrix_init(ORTHO, M_slk, N)
  !
  lld = N_blcs
  !
- call DESCINIT( M_slk%desc, N, N, N_blcs, N_blcs, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
+ call DESCINIT( M_slk%desc, N, N, N_blcs, N_blcs, 0, 0, SLK_ORTHO%ortho_cntx, lld, M_slk%info )
  !
  call PAR_matrix_reset(M_slk)
  !
  M_slk%rows       = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
  M_slk%cols       = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
- M_slk%nrows_used = M_slk%rows(2)-M_slk%rows(1)+1
- M_slk%ncols_used = M_slk%cols(2)-M_slk%cols(1)+1
+ M_slk%nrows      = M_slk%rows(2)-M_slk%rows(1)+1
+ M_slk%ncols      = M_slk%cols(2)-M_slk%cols(1)+1
+ M_slk%nrows_used = M_slk%nrows
+ M_slk%ncols_used = M_slk%ncols
  M_slk%N          = N
  !
 end subroutine 

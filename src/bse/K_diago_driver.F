@@ -119,7 +119,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Kernel loading
  !================
- if(io_err<0) call K_components_folded_in_serial_arrays(iq)
+ if (io_err<0) call K_components_folded_in_serial_arrays(iq)
  !
  K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
  !

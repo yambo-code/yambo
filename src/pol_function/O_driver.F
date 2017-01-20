@@ -36,7 +36,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels,X_mat
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -143,7 +143,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Response function parallel allocation
    !
-   call X_PARALLEL_alloc(X,Xen,Xk,wv,wv%n_freqs,"OPTICS")
+   call X_half_mat_check(Xen,Xk,wv)
+   !
+   call X_PARALLEL_alloc(X,wv%n_freqs,"Xo")
    !
    Macroscopic_CPU=X_par%rows(1)<=i_G_shift.and.i_G_shift<=X_par%rows(2).and.&
 &                  X_par%cols(1)<=i_G_shift.and.i_G_shift<=X_par%cols(2)
@@ -227,13 +229,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      ! Back compatibility
      !
-     Y_ALLOCATE(X_mat(X%ng,X%ng,wv%n_freqs))
-     Y_MEM(X_mat)
-     X_mat=cZERO
-     !
      call X_redux(iq,wv,X)
      !
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par%blc_3d(i_G_shift,i_G_shift,:)*&
+&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
      !
    endif
    !
@@ -340,7 +339,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  ! CLEAN
  !
- Y_FREE(X_mat)
  Y_FREE(X_par%blc_3d)
  call PAR_matrix_reset(X_par)
  call X_alloc('DIP_projected')

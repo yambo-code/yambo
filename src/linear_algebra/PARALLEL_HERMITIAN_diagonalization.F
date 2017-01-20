@@ -28,14 +28,14 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, E)
+subroutine PARALLEL_HERMITIAN_diagonalization(M_slk, EIGEN_slk, N, E)
  !
  ! perform the diagonalization by using scalapack
  !
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
- use SLK_m,          ONLY:POOL_group,ORTHO_group
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up,PAR_matrix
+ use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
+ use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -43,8 +43,6 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  implicit none
  !
  integer           :: N
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
  type(PAR_matrix)  :: M_slk,EIGEN_slk
  real(SP)          :: E(N)
  !
@@ -55,7 +53,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  !
  E=0.0_SP
  !
- if (ORTHO%coordinate(1)==-1) return
+ if (SLK_ORTHO%coordinate(1)==-1) return
  !
 #if defined _TIMING
  call timing('PARALLEL_HERMITIAN_diagonalization',OPR='start')
@@ -90,9 +88,9 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCHEEV')
 #endif
  !
- if (ORTHO%task/=0) E=0.0_SP
+ if (SLK_ORTHO%task/=0) E=0.0_SP
  !
- call PP_redux_wait(E,COMM=POOL%INTRA_comm)
+ call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
  ! 
 #if defined _TIMING
  call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')

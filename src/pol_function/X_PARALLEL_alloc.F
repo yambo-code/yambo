@@ -21,50 +21,64 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_PARALLEL_alloc(X,E,k,W,NW,mode)
+subroutine X_PARALLEL_alloc(X,NW,mode)
  !
  use pars,          ONLY:cZERO
- use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:io_RESPONSE
- use electrons,     ONLY:levels
- use frequency,     ONLY:w_samp
- use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_nq
+ use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_nq,PAR_COM_RL_A2A
  use linear_algebra,ONLY:PAR_matrix_reset
  use X_m,           ONLY:X_t,X_par,iW_offset,X_par_lower_triangle,&
 &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
+ use interfaces,    ONLY:PARALLEL_live_message
  !
 #include<memory.h>
  !
  type(X_t)       :: X 
- type(levels)    :: E 
- type(bz_samp)   :: k
- type(w_samp)    :: W
  integer         :: NW
  character(*)    :: mode
  !
  ! Work Space
  !
  integer         :: X_size
+ logical         :: l_Xo,l_PAR,l_ALL_in_MEM
+ !
+ ! Reset...
  !
  call PAR_matrix_reset(X_par)
- call PAR_matrix_reset(X_par_lower_triangle)
  !
- call X_half_mat_check(E,k,W)
+ ! COMMS...
  !
- call COMM_copy(PAR_COM_RL_INDEX, X_par%COMM)
+ call COMM_copy(PAR_COM_RL_A2A,   X_par%INTRA_comm)
+ call COMM_copy(PAR_COM_RL_INDEX, X_par%INTER_comm)
  !
- call PARALLEL_matrix_distribute( "X", X_par , X%ng )
+ ! Type of allocation....
  !
- if (mode=="DIELETRIC_MATRIX") then
+ l_Xo         =index(mode,"Xo")>0
+ l_PAR        =index(mode,"PAR")>0
+ l_ALL_in_MEM =index(mode,"DIELETRIC_MATRIX")>0
+ !
+ ! NG distribution...
+ !
+ if (l_Xo)  call PARALLEL_matrix_distribute( "Xo", X_par , X%ng )
+ if (l_PAR) call PARALLEL_matrix_distribute( "PAR", X_par , X%ng )
+ !
+ ! Frequency size
+ !
+ if (l_ALL_in_MEM) then
    if (.not.io_RESPONSE) X_size=NW*PAR_nq
    if (     io_RESPONSE) X_size=NW
- else if (mode=="OPTICS") then
+ else if (l_Xo) then
    X_size                   = NW
+   call PARALLEL_matrix_distribute( "Xo", X_par , X%ng )
+ else if (l_PAR) then
+   X_size                   = NW
+   call PARALLEL_matrix_distribute( "PAR", X_par , X%ng )
  endif
  !
  iW_offset = 0
  !
- if (.not.X_FILL_UP_matrix_only.and.X_par%COMM%n_CPU>1) then
+ if (mode=="Xo".and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
+   call PAR_matrix_reset(X_par_lower_triangle)
    X_lower_triangle_matrix_in_use=.TRUE.
    X_par_lower_triangle%rows =X_par%cols
    X_par_lower_triangle%cols =X_par%rows
@@ -73,11 +87,14 @@ subroutine X_PARALLEL_alloc(X,E,k,W,NW,mode)
    Y_ALLOCATE(X_par_lower_triangle%blc_3d(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
    Y_MEM(X_par_lower_triangle%blc_3d)
    X_par_lower_triangle%blc_3d=cZERO
-   call COMM_copy(PAR_COM_RL_INDEX, X_par_lower_triangle%COMM)
+   call COMM_copy(PAR_COM_RL_A2A,   X_par_lower_triangle%INTRA_comm)
+   call COMM_copy(PAR_COM_RL_INDEX, X_par_lower_triangle%INTER_comm)
  endif
  !
  Y_ALLOCATE(X_par%blc_3d(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),X_size))
  Y_MEM(X_par%blc_3d)
  X_par%blc_3d=cZERO
+ !
+ call PARALLEL_live_message("RL vectors(X)",LOADED=X_par%ncols*X_par%nrows,TOTAL=X%ng**2,NCPU=X_par%INTER_comm%n_CPU)
  !
 end subroutine

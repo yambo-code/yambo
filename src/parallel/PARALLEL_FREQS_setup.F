@@ -22,6 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_FREQS_setup(W,IND,COMM)
+ !
  use frequency,   ONLY:w_samp
  use parallel_m,  ONLY:PP_indexes,MPI_comm,PAR_IND_FREQ_ID,PAR_n_freqs,PP_indexes_reset,&
 &                      PAR_build_index,PAR_FREQS_index

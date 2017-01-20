@@ -29,7 +29,7 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  use linear_algebra, ONLY:PAR_matrix
  use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK
 #if defined _SCALAPACK
- use SLK_m,          ONLY:SLK_ORTHO,BLACS_structure_in_use
+ use SLK_m,          ONLY:BLACS_structure_in_use
 #endif
 #include <memory.h>
  !
@@ -39,16 +39,16 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
  !
  ! Work Space
  !
- integer       :: M,rows(M_par%COMM%n_CPU,2),cols(M_par%COMM%n_CPU,2),i_c,N_rows
+ integer       :: M,rows(M_par%INTER_comm%n_CPU,2),cols(M_par%INTER_comm%n_CPU,2),i_c,N_rows
  !
  if (what=="SLK") then
-   call COMM_copy(PAR_COM_SLK, M_par%COMM)
+   call COMM_copy(PAR_COM_SLK, M_par%INTER_comm)
 #if defined _SCALAPACK
    BLACS_structure_in_use=.FALSE.
 #endif
  endif
  !
- if (M_par%COMM%n_CPU==1) then
+ if (M_par%INTER_comm%n_CPU==1) then
    M_par%rows  = (/1,N/)
    M_par%cols  = (/1,N/)
    M_par%nrows = N
@@ -61,27 +61,39 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
    ! SLK structure.
    !
 #if defined _SCALAPACK
-   call SLK_matrix_init( SLK_ORTHO, M_par,N)
+   call SLK_matrix_init(M_par,N)
    BLACS_structure_in_use=.TRUE.
 #endif
-   return
  endif
  !
- if (what=="X") then
+ if (what=="Xo") then
    !
    ! Response function. Only upper triangle is distributed.
    !
-   M= ( (N**2-N)/2 + N )/M_par%COMM%n_CPU
+   M= ( (N**2-N)/2 + N )/M_par%INTER_comm%n_CPU
    cols(1,:)=(/1,N/)
    rows(1,:)=(/1,UPPER_solver(N)/)
-   do i_c=2,M_par%COMM%n_CPU
+   do i_c=2,M_par%INTER_comm%n_CPU
      cols(i_c,:)=(/rows(i_c-1,2)+1,N/)
      N_rows=UPPER_solver( cols(i_c,2)- cols(i_c,1)+1 )
      rows(i_c,:)=rows(i_c-1,2)+(/1,N_rows/)
      if (N_rows==0) rows(i_c,2)=N
    enddo
-   M_par%rows  = rows(M_par%COMM%CPU_id+1,:)
-   M_par%cols  = cols(M_par%COMM%CPU_id+1,:)
+   M_par%rows  = rows(M_par%INTER_comm%CPU_id+1,:)
+   M_par%cols  = cols(M_par%INTER_comm%CPU_id+1,:)
+   M_par%nrows = M_par%rows(2)-M_par%rows(1)+1 
+   M_par%ncols = M_par%cols(2)-M_par%cols(1)+1 
+   return
+ endif
+ !
+ if (what=="PAR") then
+   !
+   ! Response function. Entire Matrix.
+   !
+   M= N/M_par%INTER_comm%n_CPU
+   M_par%cols  = (/1,N/)
+   M_par%rows  = (/M*M_par%INTER_comm%CPU_id+1,M*(M_par%INTER_comm%CPU_id+1)/)
+   if (M_par%INTER_comm%CPU_id+1==M_par%INTER_comm%n_CPU) M_par%rows(2) = N
    M_par%nrows = M_par%rows(2)-M_par%rows(1)+1 
    M_par%ncols = M_par%cols(2)-M_par%cols(1)+1 
    return

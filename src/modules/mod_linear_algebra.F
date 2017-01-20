@@ -78,7 +78,8 @@ module linear_algebra
    integer :: nrows_used = -1
    integer :: ncols_used = -1
    !
-   type(MPI_comm) :: COMM
+   type(MPI_comm) :: INTRA_comm
+   type(MPI_comm) :: INTER_comm
    !
    integer,     allocatable :: rows_global(:,:)
    integer,     allocatable :: cols_global(:,:)
@@ -109,7 +110,8 @@ module linear_algebra
      M_par%ncols    = 0
      M_par%ncols_used = 0
      M_par%nrows_used = 0
-     call COMM_reset(M_par%COMM)
+     call COMM_reset(M_par%INTER_comm)
+     call COMM_reset(M_par%INTRA_comm)
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_WS_clean_up(WS)

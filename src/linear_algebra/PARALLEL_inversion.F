@@ -28,11 +28,11 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
+subroutine PARALLEL_inversion(M_slk,N)
  !
  ! perform the inversion by using scalapack
  !
- use SLK_m,          ONLY:POOL_group,ORTHO_group
+ use SLK_m,          ONLY:SLK_ORTHO
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,PAR_matrix
  !
 #if defined _TIMING
@@ -41,13 +41,11 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  implicit none
  !
  integer           :: N
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
  type(PAR_matrix)  :: M_slk
  !
  character(64) :: subname="PARALLEL_inversion"
  !
- if (ORTHO%coordinate(1)==-1) return
+ if (SLK_ORTHO%coordinate(1)==-1) return
  !
 #if defined _TIMING
  call timing('PARALLEL_inversion',OPR='start')

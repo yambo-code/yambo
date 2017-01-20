@@ -514,7 +514,7 @@ end subroutine NL_Integrator
      complex(SP)   :: Hm(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
      integer       :: i1,ib
      !
-!$omp parallel do default(shared), private(ib,Hp,Hm)
+ !!!!!!! NOT WORKING AFTER THE ALGEBRA DRIVER WAS CHANGED   !$omp parallel do default(shared), private(ib,Hp,Hm)
      do ib=1,nbf
        !
        Hp=cZERO
@@ -531,7 +531,7 @@ end subroutine NL_Integrator
        V_out(RT_bands(1):,ib)=matmul(Hm,V_in(RT_bands(1):,ib))
        !
      enddo
-!$omp end parallel do
+!!!!!!!!!!!!!!!$omp end parallel do
      !
      if(RT_bands(1)/=1) V_out(:RT_bands(1)-1,:)=V_in(:RT_bands(1)-1,:)
      !

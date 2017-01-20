@@ -24,8 +24,8 @@
 subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  use pars,          ONLY:SP,cONE
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,LU_factorization,LU_inversion,&
-&                        LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
+&                        LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
  !
  implicit none
  !
@@ -33,6 +33,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  complex(SP) :: M(n,n),det
  logical     :: eval_det
  integer     :: i_loop !ws
+ type(LALGEBRA_WS) :: WS
  !
  allocate(WS%v_int(n))
  !

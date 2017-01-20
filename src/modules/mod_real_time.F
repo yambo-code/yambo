@@ -50,6 +50,8 @@ module real_time
  !
  ! Evaluation logicals
  !
+ logical          :: eval_energy
+ logical          :: eval_entropy
  logical          :: eval_HARTREE
  logical          :: eval_DFT
  !

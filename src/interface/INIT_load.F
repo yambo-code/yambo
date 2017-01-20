@@ -434,6 +434,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
+ call it('f',defs,'RTEvalEnergt',  '[RT] Energy variation computed on the fly',Verb_level=V_real_time)
+ call it('f',defs,'RTEvalEntropy', '[RT] Entropy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
  !
  ! Scattering

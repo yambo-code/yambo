@@ -42,15 +42,15 @@ subroutine RT_driver(E,X,k,q)
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
-&                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
-&                         G_lesser_reference,rho_reference,magn_reference, &
+&                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,eval_energy,&
+&                         G_lesser_reference,rho_reference,magn_reference,eval_entropy, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
- use fields,          ONLY:A_vecpot,A_vecpot_previous,A_ext
+ use fields,          ONLY:A_vecpot,A_vecpot_previous
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -70,7 +70,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: io_REF
  character(schlen) :: sec_title(3)
- real(SP)          :: on_the_fly_operators(10)
+ real(SP)          :: Energies(5),Carriers(5)
  !
  integer, external :: io_RT_components
  !
@@ -227,7 +227,9 @@ subroutine RT_driver(E,X,k,q)
  !==========================
  !
  call RT_output(what="initialize")
- call RT_output(what="open carr therm energy curr pol magn")
+ call RT_output(what="open carr curr pol magn")
+ if(eval_energy)  call RT_output(what="open energy")
+ if(eval_entropy) call RT_output(what="open therm")
  call RT_output(what="open BGR")
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
@@ -269,14 +271,9 @@ subroutine RT_driver(E,X,k,q)
    ! G_lesser@NE_time
    !###################
    !
-   ! Current, Polarization and Magnetization
-   !==========================================
-   ! (evaluated also in RT_integrator when and induced field is included)
-   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot)
-   !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),Energies,Carriers,A_vecpot)
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================
@@ -316,9 +313,10 @@ subroutine RT_driver(E,X,k,q)
    ! OUTPUT(s)
    !###########
    call RT_output('BGR',TIME=NE_time*AUT2FS)
-   call RT_output('curr pol magn therm',TIME=NE_time*AUT2FS)
-   call RT_output('energy',VALUES=on_the_fly_operators(1:5 ),TIME=NE_time*AUT2FS)
-   call RT_output('carr',VALUES=on_the_fly_operators(6:10),TIME=NE_time*AUT2FS)
+   call RT_output('curr pol magn',TIME=NE_time*AUT2FS)
+   call RT_output('carr',VALUES=Carriers,TIME=NE_time*AUT2FS)
+   if(eval_entropy) call RT_output('therm ',TIME=NE_time*AUT2FS)
+   if(eval_energy)  call RT_output('energy',VALUES=Energies,TIME=NE_time*AUT2FS)
    !
    ! Mean Carrier Lifetimes
    !========================

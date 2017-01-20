@@ -46,7 +46,8 @@ subroutine RT_initialize(E,k,q)
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
-&                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step
+&                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
+&                         eval_energy,eval_entropy
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -79,6 +80,9 @@ subroutine RT_initialize(E,k,q)
  !
  call parser('RTskipImposeE',        l_skip_it)
  if (l_skip_it) l_RT_impose_E=.FALSE.
+ !
+ call parser('RTEvalEnergy',         eval_energy)
+ call parser('RTEvalEntropy',        eval_entropy)
  !
  call parser('SaveGhistory',         SAVE_G_history)
  !

@@ -300,6 +300,7 @@ module fields
      E2%n_frequencies=E1%n_frequencies  
      E2%W_step=E1%W_step  
      E2%width=E1%width  
+     E2%FWHM=E1%FWHM  
      E2%intensity=E1%intensity  
      E2%amplitude=E1%amplitude  
      E2%versor=E1%versor

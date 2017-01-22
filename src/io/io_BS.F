@@ -40,7 +40,7 @@ integer function io_BS(iq,X,ID)
  !
  ! Work Space
  !
- complex(SP),allocatable :: tmp_map(:)
+ complex(SP),pointer ::tmp_link(:)
  integer             ::i_block,i1,n1,n2,block_pos
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
@@ -117,10 +117,9 @@ integer function io_BS(iq,X,ID)
    if(i_block==1)      call io_bulk(ID,VAR="BSE_MATRIX",VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
    if(write_is_on(ID)) call io_bulk(ID,C1=(/BS_blk(i_block)%mat(:,:)/),IPOS=(/1,block_pos/))
    if(read_is_on(ID)) then
-     allocate(tmp_map(n1*n2))
-     call io_bulk(ID,C1=tmp_map,IPOS=(/1,block_pos/))
-     BS_blk(i_block)%mat=reshape(tmp_map,(/n1,n2/))
-     deallocate(tmp_map)
+     tmp_link => linkMatrix(BS_blk(i_block)%mat(1,1),(/n1*n2/))
+     call io_bulk(ID,C1=tmp_link,IPOS=(/1,block_pos/))
+     nullify(tmp_link)
    endif
  endif
  !
@@ -134,4 +133,18 @@ integer function io_BS(iq,X,ID)
  !
  call io_disconnect(ID)
  !
+ contains
+   !
+   function linkMatrix(M,N) result(VEC_pointer)
+     !
+     use iso_c_binding, only: C_LOC, C_F_POINTER
+     !
+     complex(SP), target  :: M(1,1)
+     integer, intent(in)  :: N(1)
+     complex(SP), pointer :: VEC_pointer(:)
+     !
+     call C_F_POINTER(C_LOC(M), VEC_pointer, N )
+     !
+   end function linkMatrix
+   !
 end function

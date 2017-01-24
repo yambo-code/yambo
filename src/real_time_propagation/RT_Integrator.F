@@ -50,7 +50,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
  type(levels),         intent(in) :: E
  real(SP),             intent(in) :: T_step,Time
  complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- complex(SP),       intent(inout) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),         intent(out) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  type(gauge_field),    intent(in) :: A_in
  type(gauge_field), intent(inout) :: A_out
  !
@@ -172,10 +172,11 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      complex(SP),   intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
      !
      integer                :: ik,ib
-     complex(SP)            :: G_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
      complex(SP)            :: I1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
      complex(SP)            :: I2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
      complex(SP)            :: I1_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     !
+     dG_out=cZERO
      !
      if(l_RT_EXP) then
        I1_matrix=cZERO
@@ -201,9 +202,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
          ! I1(t) = Ho_plus_Sigma*G   
          ! I2(t) = G*Ho_plus_Sigma
          !
-         G_tmp=dG_in(:,:,ik)+G_lesser_reference(:,:,ik)
-         !
-         call RT_build_I1_and_I2(G_tmp,ik,I1_k,I2_k)
+         call RT_build_I1_and_I2(dG_in(:,:,ik),G_lesser_reference(:,:,ik),ik,I1_k,I2_k)
          !
          ! dG_out = G(T0+dt) -G(T0)= - i dt *(I1(T) - I2(T))
          !

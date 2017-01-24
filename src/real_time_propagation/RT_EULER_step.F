@@ -34,10 +34,6 @@ subroutine RT_EULER_step(dG,I1_k,I2_k,deltaT)
  complex(SP), intent(in)  :: I2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(out) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
- ! dG(T+dt) = 0.
- !
- dG=0._SP
- !
  ! dG(T+dt) = - i dt *(I1(T) - I2(T))
  !
  call V_by_V_plus_V_omp(RT_nbands, -cI*deltaT, I1_k-I2_k, dG)

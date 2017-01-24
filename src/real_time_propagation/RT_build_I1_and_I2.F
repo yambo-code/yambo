@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_build_I1_and_I2(G_input_k,ik,I1_k,I2_k)
+subroutine RT_build_I1_and_I2(G_input_k,G_ref_k,ik,I1_k,I2_k)
  !
  use pars,           ONLY:SP,cZERO
  use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands
@@ -31,12 +31,23 @@ subroutine RT_build_I1_and_I2(G_input_k,ik,I1_k,I2_k)
  !
  integer, intent(in)      :: ik
  complex(SP), intent(in)  :: G_input_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)  :: G_ref_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(out) :: I1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(out) :: I2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
+ !complex(SP)  :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ !complex(SP)  :: M2_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ !
  I1_k=cZERO
  I2_k=cZERO
- call M_by_M_omp('n','n',RT_nbands,Ho_plus_Sigma(:,:,ik,1),G_input_k,I1_k)
- call M_by_M_omp('n','n',RT_nbands,G_input_k,Ho_plus_Sigma(:,:,ik,1),I2_k)     
+ !
+ call M_by_M_omp('n','n',RT_nbands,Ho_plus_Sigma(:,:,ik,1),G_input_k+G_ref_k,I1_k)
+ call M_by_M_omp('n','n',RT_nbands,G_input_k+G_ref_k,Ho_plus_Sigma(:,:,ik,1),I2_k)
+ !
+ !call M_by_M_omp('n','n',RT_nbands,Ho_plus_Sigma(:,:,ik,1),G_ref_k,M1_tmp)
+ !call M_by_M_omp('n','n',RT_nbands,G_ref_k,Ho_plus_Sigma(:,:,ik,1),M2_tmp)
+ !
+ !I1_k=I1_k+M1_tmp
+ !I2_k=I2_k+M2_tmp
  !
 end subroutine RT_build_I1_and_I2

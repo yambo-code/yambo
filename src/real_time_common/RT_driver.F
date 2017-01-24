@@ -44,7 +44,7 @@ subroutine RT_driver(E,X,k,q)
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,eval_energy,&
 &                         G_lesser_reference,rho_reference,magn_reference,eval_entropy, &
-&                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,&
+&                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased
  use plasma,          ONLY:PLASMA_free,EH_gas
@@ -122,26 +122,9 @@ subroutine RT_driver(E,X,k,q)
  !
  call DIPOLE_driver(E,k,X(1),X(1)%q0)
  !
- ! IO 
- !====
- !
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !
  call IO_and_Messaging_switch("RESET")
- !
- ! WFs loading
- !=============
- !
- call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_index( )
- !
- call WF_load(WF,WF_G_max,WF_Go_indx,(/1,RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
- !
- ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)
- ! this means that the WF's are distributed only among few cpu's. But, as a consequence, the fft_size
- ! is not defined for all CPU's. This causes seg. fault. when the density is computed.
- !
- call PP_bcast(fft_size,0)
  !
  ! QP & carriers corrections 
  !===========================
@@ -152,6 +135,23 @@ subroutine RT_driver(E,X,k,q)
  ! Core initialization
  !
  call RT_initialize(E,k,q)
+ !
+ ! WFs loading
+ !=============
+ if ( .not. l_RT_is_WFfree ) then
+   !
+   call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_index( )
+   !
+   call WF_load(WF,WF_G_max,WF_Go_indx,(/1,RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
+   !
+   ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)
+   ! this means that the WF's are distributed only among few cpu's. But, as a consequence, the fft_size
+   ! is not defined for all CPU's. This causes seg. fault. when the density is computed.
+   !
+   call PP_bcast(fft_size,0)
+   !
+ endif
  !
  ! Core allocations
  !
@@ -171,7 +171,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions => No need of WFs and Density
  !
- if(l_use_Hxc_collisions.or.trim(RT_potential)=="IP") then
+ if( (l_use_Hxc_collisions.or.trim(RT_potential)=="IP").and. eval_energy ) then
    !
    call WF_free(WF)
    !

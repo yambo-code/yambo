@@ -93,7 +93,7 @@ module hamiltonian
      !
    end subroutine
    !
-   subroutine H_alloc(E)
+   subroutine H_alloc(E,l_real_space)
      use pars,           ONLY:SP
      use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
      use electrons,      ONLY:n_spin,n_sp_pol,levels
@@ -104,7 +104,16 @@ module hamiltonian
      !
      implicit none
      !
-     type(levels) :: E
+     type(levels), intent(in) :: E
+     logical,      intent(in) :: l_real_space
+     !
+     allocate(Ho(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
+     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+     !
+     allocate(H_nl_sc(H_ref_bands(2),H_ref_bands(2)))
+     call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
+     !
+     if (.not.l_real_space) return
      !
      allocate(rho_n(fft_size))
      call mem_est("rho",(/fft_size/),(/SP/))
@@ -115,9 +124,6 @@ module hamiltonian
        call mem_est("magn",(/2*fft_size*3/),(/SP/))
      endif
      !
-     allocate(Ho(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
-     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
-     !
      allocate(V_xc_sc(fft_size,n_spin))
      call mem_est('V_xc_sc',(/size(V_xc_sc)/),(/SP/))
      !
@@ -126,9 +132,6 @@ module hamiltonian
      !
      allocate(V_hartree_sc(fft_size,n_spin))
      call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
-     !
-     allocate(H_nl_sc(H_ref_bands(2),H_ref_bands(2)))
-     call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
    end subroutine
    !
@@ -140,6 +143,12 @@ module hamiltonian
      use X_m,            ONLY:X_alloc
      !
      implicit none
+     !
+     deallocate(Ho)
+     call mem_est("Ho")
+     !
+     deallocate(H_nl_sc)
+     call mem_est("H_nl_sc")
      !
      if(allocated(rho_n)) then
        deallocate(rho_n)
@@ -156,22 +165,20 @@ module hamiltonian
        call mem_est("magn")
      endif
      !
-     deallocate(Ho)
-     call mem_est("Ho")
-     !
-     deallocate(H_nl_sc)
-     call mem_est("H_nl_sc")
-     !
      if(allocated(V_xc)) then 
        deallocate(V_xc)
        call mem_est('V_xc')
      endif
      !
-     deallocate(V_xc_sc)
-     call mem_est('V_xc_sc')
+     if(allocated(V_xc_Sc)) then 
+       deallocate(V_xc_sc)
+       call mem_est('V_xc_sc')
+     endif
      !
-     deallocate(V_hartree_sc)
-     call mem_est("Hartree_Potential")
+     if(allocated(V_hartree_sc)) then 
+       deallocate(V_hartree_sc)
+       call mem_est("Hartree_Potential")
+     endif
      !
    end subroutine
    !

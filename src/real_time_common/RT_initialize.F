@@ -23,7 +23,7 @@
 !
 subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,&
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
 &                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use
  use pars,           ONLY:SP,pi
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
@@ -47,7 +47,7 @@ subroutine RT_initialize(E,k,q)
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
-&                         eval_energy,eval_entropy
+&                         eval_energy,eval_entropy,l_RT_is_WFfree
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -83,6 +83,7 @@ subroutine RT_initialize(E,k,q)
  !
  call parser('RTEvalEnergy',         eval_energy)
  call parser('RTEvalEntropy',        eval_entropy)
+ if(.not.eval_energy) eval_entropy=.false.
  !
  call parser('SaveGhistory',         SAVE_G_history)
  !
@@ -313,6 +314,8 @@ subroutine RT_initialize(E,k,q)
    if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
+ !
+ l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. .not. eval_energy
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
  !

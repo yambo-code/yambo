@@ -113,7 +113,7 @@ module SC
      !
      type(levels) :: E
      !
-     call H_alloc(E)
+     call H_alloc(E,.true.)
      !
      call H_QP_table_setup(E)
      !

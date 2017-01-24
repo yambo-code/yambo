@@ -47,7 +47,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use RT_control,     ONLY:ID,NE_i_start_time,JPC_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
-&                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,&
+&                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
@@ -95,38 +95,43 @@ subroutine RT_start_and_restart(E,k,q,X)
    E_bare=E%E(:RT_bands(2),:,:)
  endif
  !
- call Bare_Hamiltonian(E,k,k)
- !
- ! Reference Hartree and XC
- !==========================
- do i_sp_pol=1,n_sp_pol
- do ik=1,nXkibz
+ if(.not.l_RT_is_WFfree) then
    !
-   M_tmp=cZERO
-   call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
-   HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+   call Bare_Hamiltonian(E,k,k)
    !
-   M_tmp=cZERO
-   call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
-   XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+   ! Reference Hartree and XC
+   !==========================
+   do i_sp_pol=1,n_sp_pol
+     do ik=1,nXkibz
+       !
+       M_tmp=cZERO
+       call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
+       HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+       !
+       M_tmp=cZERO
+       call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
+       XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+       !
+     enddo
+   enddo
    !
- enddo
- enddo
- !
- ! In the driver loop both V_hartree_sc and V_xc corresponds to the [delta_rho] value. As here
- ! delta_rho=0 both V_hartree_sc and V_xc must be set to zero. Eventually a non zero value is read
- ! from the potential databaes in case of a RESTARTed run
- !
- V_xc_sc           =rZERO
- V_hartree_sc      =rZERO
- !
- call PP_redux_wait(HARTREE0)
- call PP_redux_wait(XC0)
- !
- ! Reference density
- !====================
- rho_reference=rho_n
- if(n_spin>1) magn_reference=magn_n
+   !
+   ! In the driver loop both V_hartree_sc and V_xc corresponds to the [delta_rho] value. As here
+   ! delta_rho=0 both V_hartree_sc and V_xc must be set to zero. Eventually a non zero value is read
+   ! from the potential databaes in case of a RESTARTed run
+   !
+   V_xc_sc           =rZERO
+   V_hartree_sc      =rZERO
+   !
+   call PP_redux_wait(HARTREE0)
+   call PP_redux_wait(XC0)
+   !
+   ! Reference density
+   !====================
+   rho_reference=rho_n
+   if(n_spin>1) magn_reference=magn_n
+   !
+ endif
  !
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
@@ -339,14 +344,19 @@ subroutine RT_start_and_restart(E,k,q,X)
      G_lesser_reference=cZERO
      dG_lesser         =cZERO
      !
-     V_xc_sc           =rZERO
-     V_hartree_sc      =rZERO
      H_nl_sc           =cZERO
-     HARTREE0          =cZERO
-     XC0               =cZERO
      !
-     rho_reference     =rZERO
-     if(n_spin>1) magn_reference    =rZERO
+     if(.not.l_RT_is_WFfree) then
+       !
+       V_xc_sc           =rZERO
+       V_hartree_sc      =rZERO
+       HARTREE0          =cZERO
+       XC0               =cZERO
+       !
+       rho_reference     =rZERO
+       if(n_spin>1) magn_reference    =rZERO
+       !
+     endif
      !
      ! Set to zero occupations
      !

@@ -39,6 +39,7 @@ module real_time
  logical           :: l_NE_with_fields
  logical           :: l_Dynamics_is_over   
  logical           :: l_Update_Time_Step  = .FALSE.
+ logical           :: l_RT_is_WFfree
  !
  character(schlen) :: RT_potential
  !
@@ -452,7 +453,7 @@ module real_time
      !
      type(levels), intent(in) :: en
      !
-     call H_alloc(en)
+     call H_alloc(en,.not.l_RT_is_WFfree)
      !
      call H_QP_table_setup(en)
      !
@@ -577,12 +578,16 @@ module real_time
      allocate(BGR_Self_Energy(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
      !
-     allocate(rho_reference(fft_size))
-     call mem_est("rho_reference",(/fft_size/),(/SP/))
-     !
-     if(n_spin>1) then
-       allocate(magn_reference(fft_size,3))
-       call mem_est("magn_reference",(/fft_size*3/),(/SP/))
+     if( .not.l_RT_is_WFfree ) then
+       !
+       allocate(rho_reference(fft_size))
+       call mem_est("rho_reference",(/fft_size/),(/SP/))
+       !
+       if(n_spin>1) then
+         allocate(magn_reference(fft_size,3))
+         call mem_est("magn_reference",(/fft_size*3/),(/SP/))
+       endif
+       !
      endif
      !
      ! Reference energies

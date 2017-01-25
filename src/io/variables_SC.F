@@ -37,6 +37,10 @@ integer function variables_SC(ID,local_description,what)
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
+#if defined _ELECTRIC
+ use drivers,        ONLY:l_sc_electric
+ use fields,         ONLY:Efield
+#endif
  use global_XC,      ONLY:H_SE_EXX,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_HARTREE
  !
  implicit none

@@ -41,6 +41,7 @@ module drivers
  logical :: l_photolum           =.FALSE.
  logical :: l_real_time          =.FALSE.
  logical :: l_sc_run             =.FALSE.
+ logical :: l_sc_electric        =.FALSE.
  logical :: l_rt_carriers_in_use =.FALSE.
  logical :: l_sc_magnetic        =.FALSE.
  logical :: l_eval_collisions    =.FALSE.

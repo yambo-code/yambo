@@ -23,7 +23,6 @@
 !
 subroutine ELECTR_initial_check(k)
  !
- use drivers,     ONLY:l_sc_electric
  use pars,        ONLY:SP
  use units,       ONLY:AU2VMm1
  use com,         ONLY:error,msg,warning
@@ -31,7 +30,7 @@ subroutine ELECTR_initial_check(k)
  use vec_operate, ONLY:normalize_v
  use SC,          ONLY:SC_potential
  use parser_m,    ONLY:parser
- use fields,      ONLY:Efield,Efield_strength,n_ext_fields,EtoT
+ use fields,      ONLY:Efield,Efield_strength,EtoT
  use vec_operate, ONLY:v_norm
  use R_lattice,   ONLY:k_map,bz_samp
  !
@@ -67,7 +66,7 @@ subroutine ELECTR_initial_check(k)
  Efield(1)%t_initial     =0._SP
  Efield(1)%ef_pol        ="linear"
  !
- call SC_check_symmetries(Efield(1)%versor)
+ call Check_symmetries(Efield(1)%versor)
  !
  Dipole_approach='Covariant'
  !

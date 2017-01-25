@@ -345,15 +345,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
  endif
 #if defined _RT
- if (ENVIRONMENT=="Real_Time"                       ) n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
+ if (ENVIRONMENT=="Real_Time" ) n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
 #endif
 #if defined _NL
- if (ENVIRONMENT=="Non_Linear") n_bands=(/RT_bands(1),RT_bands(2)/)
+ if (ENVIRONMENT=="Non_Linear") n_bands=RT_bands
 #endif
  !
  ! QP states
  !-----------
- if (ENVIRONMENT=="Self_Energy"                     ) QP_range=QP_n_states
+ if (ENVIRONMENT=="Self_Energy") QP_range=QP_n_states
  !
  !------------
  ! Frequencies
@@ -964,14 +964,26 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Non_Linear") then
    !=================================
    !
-   CALL PARALLEL_structure(3,(/"w ","k ","b "/))
+   CALL PARALLEL_structure(4,(/"w ","k ","b ","q "/))
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"w ","k ","b "/),  &
 &                                  COMM_index_1=PAR_COM_freqs_INDEX, &
 &                                  COMM_index_2=PAR_COM_Xk_ibz_INDEX,&
 &                                  COMM_index_3=PAR_COM_G_b_INDEX,   &
+&                                  COMM_index_4=PAR_COM_Q_INDEX,     &
 &                                  COMM_A2A_1=PAR_COM_freqs_A2A,     &
-&                                  COMM_A2A_2=PAR_COM_Xk_ibz_A2A)
+&                                  COMM_A2A_2=PAR_COM_Xk_ibz_A2A,    &
+&                                  COMM_A2A_3=PAR_COM_G_b_A2A)
+   !
+   ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
+   ! A2A when there is no internal distribution
+   !
+   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
+     call COMM_copy(PAR_COM_freqs_A2A,PAR_COM_Xk_ibz_A2A)
+   endif
+   if (PAR_COM_G_b_A2A%n_CPU==1) then
+     call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
+   endif
    !
    !
    ! Freq-points
@@ -1060,8 +1072,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Build QP indexes for the Collisions
    !
-   n_bands=RT_bands
-   !
    allocate(PAR_QP_index(QP_n_states),PAR_IND_QP%n_of_elements(ncpu),PAR_IND_QP%element_1D(QP_n_states)) 
    PAR_IND_QP%element_1D=.FALSE.
    PAR_IND_QP%n_of_elements=0
@@ -1080,6 +1090,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    enddo
    call PARALLEL_live_message("QPs",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nQP,TOTAL=QP_n_states)
 
+   !.........................................................................
+   !   "COLLISIONS"
+   !.........................................................................
+   !
+   call PARALLEL_collisions( Xk,    HXC_collisions )
    ! 
    !
    ! Io and messaging

@@ -64,6 +64,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  complex(SP) :: E_vec_pot(3),E_xc_pot(3)
  real :: alpha_
  !
+ if(.not.l_use_Hxc_collisions) then
+ !
  if(eval_HARTREE .or.  eval_DFT) call el_density_vbands(E,k,rho_n,V_bands,RT_bands(1))
  !
  if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
@@ -83,6 +85,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
  else
    V_xc_sc=cZERO
+ endif
+ !
  endif
  !
  ! Evaluate the Polarization 
@@ -110,7 +114,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  E_tot=E_ext
  E_ks =E_ext
  !
- if(Correlation==LRC.or.Correlation==JGM.or.l_RT_induced_Field.or.Correlation==LRCW) then
+ if( (Correlation==LRC.or.Correlation==JGM.or.l_RT_induced_Field.or.Correlation==LRCW) .and. .not.l_use_Hxc_collisions) then
     !
     ! Evaluate the induced field and/or the LRC correction
     !
@@ -144,9 +148,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
  ! ======================================================
- if(eval_dG)         call NL_build_dG_lesser(E,V_bands,dG)
- if(eval_COLLISIONS) call COLLISIONS_compose_nl(dG)
- !
+ if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
+ if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG)
  !
  ! GPL_EXCLUDE_END
  !
@@ -168,7 +171,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Correlation part Hartree + TDDFT
    ! ================================
    !
-   if(Correlation/=IPA) then
+   if(Correlation/=IPA .and. .not.l_use_Hxc_collisions) then
      !  
      if(n_spinor==1) then
         if (eval_Hartree.or.eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
@@ -199,7 +202,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! GPL_EXCLUDE_START
    !
-   if(eval_COLLISIONS) then
+   if(l_use_Hxc_collisions) then
      call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,i_sp_pol),&
 &                                            H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
 

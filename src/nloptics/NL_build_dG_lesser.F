@@ -43,6 +43,10 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  integer :: i1,i2
  integer :: ik
  !
+#if defined _TIMING
+ call timing('NL build_dG',OPR='start')
+#endif
+ !
  dG=cZERO
  !
  do ik=1,QP_nk
@@ -55,12 +59,16 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
    enddo
  enddo
  !
- dG(:,:,:)=cI*spin_occ*dG(:,:,:)
+ dG=cI*spin_occ*dG
  !
  call PP_redux_wait(dG,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !
  do i1=RT_bands(1),en%nbf
    dG(i1,i1,:)=dG(i1,i1,:)-cI*spin_occ
  enddo
+ !
+#if defined _TIMING
+ call timing('NL build_dG',OPR='stop')
+#endif
  !
 end subroutine NL_build_dG_lesser

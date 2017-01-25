@@ -33,7 +33,7 @@ subroutine COLLISIONS_compose_nl(G_in)
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
- use real_time,        ONLY:RT_Vnl_xc,RT_ibz_coo,RT_bands
+ use real_time,        ONLY:RT_Vnl_xc,RT_bands
  !
  implicit none
  !
@@ -46,6 +46,10 @@ subroutine COLLISIONS_compose_nl(G_in)
  integer           :: i_n,i_m
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and..not.l_sc_hartree) return
+ !
+#if defined _TIMING
+ call timing('NL COLL_compose',OPR='start')
+#endif
  !
  RT_Vnl_xc=cZERO
  !
@@ -61,7 +65,7 @@ subroutine COLLISIONS_compose_nl(G_in)
    !
    i_comp=1
    !
-   i_k_NL=RT_ibz_coo(i_k,1)
+   i_k_NL=i_k
    !
    do i_kmq=1,nXkibz
      !
@@ -89,11 +93,15 @@ subroutine COLLISIONS_compose_nl(G_in)
    i_n       =HXC_collisions%state(i_coll,1)
    i_m       =HXC_collisions%state(i_coll,2)
    !
-   RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=real(RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
-   RT_Vnl_xc(i_m,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=conjg(RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
+   RT_Vnl_xc(i_n,i_n,i_k,:)=real(RT_Vnl_xc(i_n,i_n,i_k,:))
+   RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
    ! 
  enddo
  !
  call PP_redux_wait(RT_Vnl_xc)
+ !
+#if defined _TIMING
+ call timing('NL COLL_compose',OPR='start')
+#endif
  !
 end subroutine COLLISIONS_compose_nl

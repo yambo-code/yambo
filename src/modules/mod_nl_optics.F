@@ -135,6 +135,7 @@ module nl_optics
      use R_lattice,      ONLY:nXkbz
      use QP_m,           ONLY:QP_nk
      use electric,       ONLY:ELECTRIC_alloc
+     use drivers,        ONLY:l_use_Hxc_collisions
      !
      implicit none
      !
@@ -162,7 +163,7 @@ module nl_optics
        call mem_est("V_xc_0",(/fft_size,n_spin/),(/SP/))
      endif          
      !
-     if(Correlation==SEX.or.Correlation==HF) then
+     if(l_use_Hxc_collisions) then
        allocate(dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk))
        call mem_est("dG",(/size(dG)/),(/2*SP/))
        allocate(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
@@ -199,6 +200,7 @@ module nl_optics
      use hamiltonian,    ONLY:H_free,E_bare
      use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
      use electric,       ONLY:ELECTRIC_free
+     use drivers,        ONLY:l_use_Hxc_collisions
      !
      implicit none
      !
@@ -249,7 +251,7 @@ module nl_optics
      deallocate(E_tot_t,E_ext_t,E_ks_t)
      call mem_est("E_tot_t E_ext_t E_ks_t")
      !
-     if(Correlation==SEX.or.Correlation==HF) then
+     if(l_use_Hxc_collisions) then
        deallocate(dG)
        call mem_est("dG")
        deallocate(RT_Vnl_xc)

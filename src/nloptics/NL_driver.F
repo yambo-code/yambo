@@ -24,7 +24,7 @@
 subroutine NL_driver(E,X,k,q)
  !
  use pars,           ONLY:SP,cZERO,cONE
- use drivers,        ONLY:l_use_collisions
+ use drivers,        ONLY:l_use_Hxc_collisions
  use stderr,         ONLY:set_real_printed_length
  use com,            ONLY:error
  use LIVE_t,         ONLY:live_timing 
@@ -38,11 +38,11 @@ subroutine NL_driver(E,X,k,q)
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
- use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,         &
+ use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_bands,RT_nbands
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_WF_b,PAR_IND_freqs,PAR_IND_freqs_ID
  !
@@ -148,10 +148,6 @@ subroutine NL_driver(E,X,k,q)
  !================
  call QP_apply(RT_bands,E,k,"G",msg_fmt='s')
  !
- ! Allocation
- ! ==================
- call NL_alloc(E) 
- !
  ! Generate DIPOLES in all the BZ if required
  !===================
  if(l_use_DIPOLES) call Build_DIP_bz(k,E,X)
@@ -159,15 +155,18 @@ subroutine NL_driver(E,X,k,q)
  !
  ! GPL_EXCLUDE_START
  !
+ !
  ! Load Collisions if necessary
  ! =====================================
- if(eval_COLLISIONS) then
+ if(io_COLLs) then
    !      
    ! check if they exist      
    !
    call COLLISIONS_load(.true.)
    !
-   if(l_use_collisions.eqv..false.) call error(" Error loading collisions! ")
+   if(l_use_Hxc_collisions.eqv..false.) call error(" Error loading collisions! ")
+   !
+   eval_dG=l_use_Hxc_collisions
    !
    ! and load ....
    !
@@ -177,6 +176,9 @@ subroutine NL_driver(E,X,k,q)
  !
  ! GPL_EXCLUDE_END
  !
+ ! Allocation
+ ! ==================
+ call NL_alloc(E) 
  !
  ! Initialization
  ! ==================

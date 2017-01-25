@@ -58,9 +58,9 @@ CFGFILES = config/setup config/Makefile config/report  \
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
 CLEANS   = clean_fast clean clean_all distclean
-PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl yambo_nl yambo_electric\
+PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl yambo_nl yambo \
            ypp_ph ypp_sc ypp_rt ypp_magnetic ypp_nl
-BROKEN   = yambo_surf ypp_surf 
+BROKEN   = yambo_electric yambo_surf ypp_surf 
 DEBUG    = 	
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
@@ -159,6 +159,9 @@ yambo: libs
 yambo_magnetic: libs
 	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_MAGNETIC -D_SC"; $(mksrc)
 	@+X2DO="yambo_magnetic"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS)"; ADF="-D_MAGNETIC -D_SC"; $(mkx)
+yambo_electric: libs
+	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELECTRIC -D_SC"; $(mksrc)
+	@+X2DO="yambo_electric"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS)"; ADF="-D_ELECTRIC -D_SC"; $(mkx)
 yambo_kerr: libs
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_KERR"; $(mksrc)
 	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_ELPH -D_KERR"; $(mkx)

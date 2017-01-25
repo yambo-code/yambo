@@ -43,7 +43,7 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  !
  ! Working space
  !
- integer :: i_spin,ik
+ integer :: i_sp_pol,ik
  !
  ! Calculate the Berry Polarization and update the Overlaps
  !
@@ -59,8 +59,8 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  W_electric=cZERO
  !
  do ik=1,QP_nk
-   do i_spin=1,n_sp_pol
-     call Build_W_operator(V_bands,E,k,A_vecpot,ik,i_spin,W_electric(:,:,ik,i_spin))
+   do i_sp_pol=1,n_sp_pol
+     call Build_W_operator(V_bands,E,k,A_vecpot,ik,i_sp_pol,W_electric(:,:,ik,i_spin))
    enddo
  enddo
  !

@@ -60,7 +60,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  ! Working Space
  !
- integer     :: ik,is,i1
+ integer     :: ik,i_sp_pol,is,i1
  complex(SP) :: E_vec_pot(3),E_xc_pot(3)
  real :: alpha_
  !
@@ -156,6 +156,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  Ho_plus_Sigma=cZERO
  I_relax      =cZERO
  !
+ do i_sp_pol=1,n_sp_pol
  do ik=1,QP_nk
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
@@ -170,10 +171,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    if(Correlation/=IPA) then
      !  
      if(n_spinor==1) then
-        if (eval_Hartree.or.eval_DFT) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+        if (eval_Hartree.or.eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
      elseif (n_spinor==2) then
-        if (eval_Hartree) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
-        if (eval_DFT) call V_real_space_to_H(ik,V_xc_sc,H_nl_sc,WF,'xc ')
+        if (eval_Hartree) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
+        if (eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')
      endif
      !
    endif
@@ -181,24 +182,17 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Add Ho = T+V_ion+V_h+V_xc
    !==================
    !
-   forall(i1=RT_bands(1):RT_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,1) 
+   forall(i1=RT_bands(1):RT_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
    !
-   ! For compatibility does not work with collinear spin 
-   !
-   !   forall(i1=RT_bands(1):RT_bands(2),is=1:n_sp_pol) H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+E_full(i1,ik,is) 
-   ! 
    if(l_use_DIPOLES) then
      !    
-     call RT_apply_field(ik,H_nl_sc,A_vecpot)
+     call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_vecpot)
      !
    else
      !
      ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
      !
-     call  Build_W_operator(V_bands,E,k,A_vecpot,ik,1,H_nl_sc)
-     !do is=1,n_sp_pol
-     !  call  Build_W_operator(V_bands,E,k,A_vecpot,ik,is,H_nl_sc)
-     !enddo
+     call  Build_W_operator(V_bands,E,k,A_vecpot,ik,i_sp_pol,H_nl_sc)
      !
    endif                                                         
    !
@@ -206,7 +200,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! GPL_EXCLUDE_START
    !
    if(eval_COLLISIONS) then
-     call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,1),&
+     call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,i_sp_pol),&
 &                                            H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
 
    endif
@@ -216,24 +210,19 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! Damping: NL_damping fills the I_relax matrix 
    ! ================================================
-   call NL_damping(E,V_bands,ik)
+   call NL_damping(E,V_bands,ik,i_sp_pol)
    !
    ! Store the Hamiltonian
    ! =====================
-   Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,1)= &
+   Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,i_sp_pol)= &
 &        H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-!   Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,:)= &
-!&        H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:)
    !
  enddo  !---- loop on k-point
+ enddo
  !
  call PP_redux_wait(Ho_plus_Sigma,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
  !
- if(Phase_LifeTime<zero_dfl) then
-   do is=1,n_sp_pol
-      call PP_redux_wait(I_relax(:,:,:,:,is),COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
-   enddo
- endif
+ if(Phase_LifeTime<zero_dfl) call PP_redux_wait(I_relax,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
  !
 end subroutine NL_Hamiltonian
 

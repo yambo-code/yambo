@@ -87,3 +87,7 @@ Sorting passws
 ===============
 git config credential.helper store
 
+Change remote origin
+====================
+git remote set-url origin https://github.com/yambo/devel
+

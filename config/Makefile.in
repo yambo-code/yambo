@@ -175,8 +175,8 @@ yambo_rt: libs
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH"; $(mksrc)
 	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS)"; ADF="-D_RT -D_ELPH"; $(mkx)
 yambo_nl: libs
-	@LIBS2DO="$(PJ_NLLIBS)"; XPATH="src";VPATH="$(topdir)/src";ADF="-D_NL -D_RT -D_ELPH"; $(mksrc)
-	@X2DO="yambo_nl"; XPATH="driver";VPATH="$(topdir)/driver";XLIBS="$(PJ_NLLIBS)";ADF="-D_NL -D_RT -D_ELPH";$(mkx)
+	@+LIBS2DO="$(PJ_NLLIBS)"; XPATH="src";VPATH="$(topdir)/src";ADF="-D_NL -D_RT -D_ELPH"; $(mksrc)
+	@+X2DO="yambo_nl"; XPATH="driver";VPATH="$(topdir)/driver";XLIBS="$(PJ_NLLIBS)";ADF="-D_NL -D_RT -D_ELPH";$(mkx)
 yambo_ph: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
 	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS)"; ADF="-D_ELPH"; $(mkx)

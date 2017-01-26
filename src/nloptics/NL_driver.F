@@ -53,13 +53,15 @@ subroutine NL_driver(E,X,k,q)
  type(levels)      :: E
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
+ !
  logical, external :: stop_now
+ integer, external :: eval_G_minus_G
  ! 
  ! Work Space
  !
  integer           :: i_f,i1,RT_bands1_save
+ logical           :: l_dynamics_is_over
  real(SP)          :: Time
- integer, external :: eval_G_minus_G
  !
  ! In Non-Linear RT_bands always equal to SC_bands
  ! ==============================================
@@ -155,22 +157,22 @@ subroutine NL_driver(E,X,k,q)
  !
  ! GPL_EXCLUDE_START
  !
- !
  ! Load Collisions if necessary
- ! =====================================
+ ! ============================
  if(io_COLLs) then
    !      
    ! check if they exist      
    !
    call COLLISIONS_load(.true.)
    !
-   if(l_use_Hxc_collisions.eqv..false.) call error(" Error loading collisions! ")
-   !
    eval_dG=l_use_Hxc_collisions
+   !
+   if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
+&    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
    !
    ! and load ....
    !
-   call COLLISIONS_load(.false.)
+   if(l_use_Hxc_collisions)  call COLLISIONS_load(.false.)
    !
  endif
  !
@@ -214,7 +216,11 @@ subroutine NL_driver(E,X,k,q)
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
    !
-   do NE_i_time=1,NE_steps
+   l_dynamics_is_over=.false.
+   !
+   NE_i_time=1
+   !
+   do while(.not.l_dynamics_is_over)
      !
      Time=real(NE_i_time-1,SP)*RT_step
      !
@@ -233,9 +239,15 @@ subroutine NL_driver(E,X,k,q)
      !
      call live_timing(steps=1)
      !
+     NE_i_time=NE_i_time+1
+     !
+     l_dynamics_is_over= (NE_i_time>=NE_steps) .or. stop_now(.false.)
+     !
    enddo
    !
    call NL_databases_IO(i_f,'write')
+   !
+   if(stop_now(.false.)) exit
    !
  enddo
  !

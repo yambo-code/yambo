@@ -32,6 +32,10 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  use wrapper_omp, ONLY:Vstar_dot_V_omp
  use QP_m,        ONLY:QP_nk
  use parallel_m,  ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+#if defined _TIMING
+ use timing_m,         ONLY:timing
+#endif
+ !
  implicit none
  !
  type(levels), intent(in)  :: en

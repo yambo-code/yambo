@@ -52,6 +52,9 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  use R_lattice,      ONLY:bz_samp
  use wrapper_omp,    ONLY:M_by_M_omp,M_by_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+#if defined _TIMING
+ use timing_m,         ONLY:timing
+#endif
  ! 
  implicit none
  !
@@ -78,6 +81,10 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  real(SP),dimension(2), parameter:: Heun_apar=(/ 1._SP/3._SP, 2._SP/3._SP /)
  real(SP),dimension(4), parameter:: RK4_bpar=(/ 1._SP/6._SP, 1._SP/3._SP, 1._SP/3._SP, 1._SP/6._SP /)
  real(SP),dimension(3), parameter:: RK4_apar=(/ 1._SP/2._SP, 1._SP/2._SP, 1._SP /)
+ !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
  !
  Time=real(i_time-1._SP)*RT_step
  !  
@@ -410,7 +417,11 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  case default
    call error("Unknown integrator! ")
  end select
-   ! 
+ !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
+ ! 
 end subroutine NL_Integrator
    !
    subroutine EXP_op(U,H,dT)

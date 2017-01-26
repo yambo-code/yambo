@@ -34,6 +34,9 @@ subroutine COLLISIONS_compose_nl(G_in)
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
  use real_time,        ONLY:RT_Vnl_xc,RT_bands
+#if defined _TIMING
+ use timing_m,         ONLY:timing
+#endif
  !
  implicit none
  !
@@ -93,7 +96,7 @@ subroutine COLLISIONS_compose_nl(G_in)
    i_n       =HXC_collisions%state(i_coll,1)
    i_m       =HXC_collisions%state(i_coll,2)
    !
-   RT_Vnl_xc(i_n,i_n,i_k,:)=real(RT_Vnl_xc(i_n,i_n,i_k,:))
+   RT_Vnl_xc(i_n,i_n,i_k,:) =real(RT_Vnl_xc(i_n,i_n,i_k,:))
    RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
    ! 
  enddo
@@ -101,7 +104,7 @@ subroutine COLLISIONS_compose_nl(G_in)
  call PP_redux_wait(RT_Vnl_xc)
  !
 #if defined _TIMING
- call timing('NL COLL_compose',OPR='start')
+ call timing('NL COLL_compose',OPR='stop')
 #endif
  !
 end subroutine COLLISIONS_compose_nl

@@ -50,7 +50,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
-&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
+&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser,RT_potential, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
@@ -213,7 +213,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
-   if (.not.l_use_Hxc_collisions) then
+   if (.not.l_use_Hxc_collisions.and. trim(RT_potential)/='IP') then
      call el_density_matrix(G_lesser_reference,E,k,rho_reference,1)
      if(n_spin>1) call el_magnetization_matrix(G_lesser_reference,E,k,magn_reference,1)
    endif

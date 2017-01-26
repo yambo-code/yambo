@@ -237,6 +237,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
          !
          if(trim(global_gauge)=='length')   para_term=para_term+res*E_plus_W(i_pert_SOC)/q_norm(1)**2
          if(trim(global_gauge)=='velocity') para_term=para_term+res/E_plus_W(i_pert_SOC)
+         if (BSS_add_antiresonant.or.BS_K_coupling) then
+           if(trim(global_gauge)=='length')   para_term=para_term+conjg(res*E_plus_W(i_pert_SOC))/q_norm(1)**2
+           if(trim(global_gauge)=='velocity') para_term=para_term+conjg(res/E_plus_W(i_pert_SOC))
+         endif
          !
 #if defined _PL
          if (l_photolum) then
@@ -270,8 +274,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    call PP_redux_wait( para_term ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( para_term ,COMM=PAR_COM_eh_INDEX%COMM )
-   !
-   if (BSS_add_antiresonant.or.BS_K_coupling) para_term=para_term+conjg(para_term)
    !
    ! GPL_EXCLUDE_END
    !

@@ -367,8 +367,6 @@ MODULE timing_m
              WRITE (local_ch, '(a20," : ",3x,f5.2,"s CPU ")') &
                    TRIM(obj%name), nsec
            ENDIF
-           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
-           call msg('r',local_ch(:100))
          ELSE
            IF (nday > 0) THEN
              WRITE(local_ch,'(a20," : ",3x,i2,"d",i2,"h CPU (", &
@@ -387,9 +385,9 @@ MODULE timing_m
                    &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
                         call_number , total_time / REAL( call_number, DP )
            ENDIF
-           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
-           call msg('r',local_ch(:100))
          ENDIF
+         if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+         call msg('r',local_ch(:100))
        CASE ( "sec " )
          !
          ! time in seconds

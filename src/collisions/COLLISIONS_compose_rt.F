@@ -49,7 +49,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and..not.l_sc_hartree) return
  !
 #if defined _TIMING 
- call timing('COLLISIONS_compose_rt',OPR='start')
+ call timing('COLL compose RT',OPR='start')
 #endif
  !
  G_avg=cZERO
@@ -126,7 +126,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  call PP_redux_wait(RT_Vnl_xc)
  !
 #if defined _TIMING 
- call timing('COLLISIONS_compose_rt',OPR='stop')
+ call timing('COLL compose RT',OPR='stop')
 #endif
  !
 end subroutine COLLISIONS_compose_rt

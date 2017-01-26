@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply_field(ik,H_nl_sc,A_input)
+subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  !
  ! This subroutine add the vector potential to the Hamiltonian
  !
@@ -34,8 +34,8 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  use parallel_m,     ONLY:PAR_Xk_ibz_index
  !
  implicit none
- integer,           intent(in) :: ik
- complex(SP),    intent(inout) :: H_nl_sc(RT_bands(2),RT_bands(2),n_sp_pol)
+ integer,           intent(in) :: ik,i_sp_pol
+ complex(SP),    intent(inout) :: H_nl_sc(RT_bands(2),RT_bands(2))
  type(gauge_field), intent(in) :: A_input
  ! 
  ! Work Space
@@ -57,7 +57,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    do i1=RT_bands(1),RT_bands(2)
      CURR(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)+A_vec_pot(1:3)/2._SP
      A_dot_J=sum(A_vec_pot(1:3)*CURR(1:3)) 
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(A_dot_J,SP)
+     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J,SP)
    enddo
    !
    do i1=RT_bands(1),RT_bands(2)
@@ -67,8 +67,8 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
        !     
        CURR(:)=-DIP_P(1:3,i1,i2,PAR_Xk_ibz_index(ik),1) ! the off-diagonal diamagnetic term is zero
        A_dot_J=sum(A_vec_pot(1:3)*CURR(1:3)) 
-       H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)-      A_dot_J
-       H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)-conjg(A_dot_J)
+       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      A_dot_J
+       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J)
        !
      enddo
    enddo
@@ -87,7 +87,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    do i1=RT_bands(1),RT_bands(2)
      POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),1)
      E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(E_dot_P,SP)
+     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(E_dot_P,SP)
    enddo
    !
    do i1=RT_bands(1),RT_bands(2)
@@ -97,8 +97,8 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
        !
        POL(:)=cI*DIP_iR(:,i2,i1,PAR_Xk_ibz_index(ik),1)
        E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
-       H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)-      E_dot_P
-       H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)-conjg(E_dot_P)
+       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      E_dot_P
+       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(E_dot_P)
        !
      enddo
    enddo

@@ -202,7 +202,11 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! GPL_EXCLUDE_START
    !
-   if(l_use_Hxc_collisions) H_nl_sc=H_nl_sc+RT_Vnl_xc(:,:,ik,i_sp_pol)
+   if(l_use_Hxc_collisions) then
+     call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,i_sp_pol),&
+&                                            H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
+
+   endif
    !
    ! GPL_EXCLUDE_END
    !
@@ -213,7 +217,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! Store the Hamiltonian
    ! =====================
-   Ho_plus_Sigma(:,:,ik,i_sp_pol)=H_nl_sc
+   Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,i_sp_pol)= &
+&        H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
    !
  enddo  !---- loop on k-point
  enddo

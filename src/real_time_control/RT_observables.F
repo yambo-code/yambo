@@ -47,8 +47,6 @@ subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers)
  !
  real(SP) :: E_IP
  !
- if (.not. RT_do_it('OUT') ) return
- !
 #if defined _TIMING
  call timing('RT observables',OPR='start')
 #endif
@@ -57,6 +55,13 @@ subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers)
  !==========================================
  ! (evaluated also in RT_integrator when and induced field is included)
  call RT_current_AND_polarization(k,en,dG_lesser,A_vecpot)
+ !
+ if (.not. RT_do_it('OUT') ) then
+#if defined _TIMING
+ call timing('RT observables',OPR='stop')
+#endif
+   return
+ endif
  !
  ! Carriers
  !==========

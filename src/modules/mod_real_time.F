@@ -592,9 +592,9 @@ module real_time
      !
      ! Reference energies
      !
-     allocate(E_bare(1:RT_bands(2),nXkibz,n_sp_pol))
+     allocate(E_bare(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      call mem_est("E_bare",(/size(E_bare)/))
-     E_bare=en%E(:RT_bands(2),:,:)
+     E_bare=en%E(RT_bands(1):RT_bands(2),:,:)
      !
    end subroutine RT_alloc
    !   

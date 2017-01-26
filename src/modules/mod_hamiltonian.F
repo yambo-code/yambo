@@ -107,10 +107,10 @@ module hamiltonian
      type(levels), intent(in) :: E
      logical,      intent(in) :: l_real_space
      !
-     allocate(Ho(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
+     allocate(Ho(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
      call mem_est("Ho",(/size(Ho)/),(/2*SP/))
      !
-     allocate(H_nl_sc(H_ref_bands(2),H_ref_bands(2)))
+     allocate(H_nl_sc(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
      if (.not.l_real_space) return

@@ -304,7 +304,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Rotate H_nl_sc in the WFo basis.
        !
-       if (.not.l_use_collisions.and.it_now>1) call H_rotate(SC_R(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2),-1)
+       if (.not.l_use_collisions.and.it_now>1) call H_rotate(SC_R(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2)-SC_bands(1)+1,-1)
        ! 
        ! I/O [H_nl_sc]
        !
@@ -609,7 +609,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      endif
      !
      if (l_SC_nl_mix) then
-       allocate(H_nl_nm1(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+       allocate(H_nl_nm1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("H_nl_nm1",(/size(QP_Vnl_xc)/),(/2*SP/))
        H_nl_nm1=cZERO
      endif

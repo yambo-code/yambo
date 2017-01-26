@@ -37,12 +37,16 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
 #if defined _RT
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+ !
  implicit none
  !
  integer     :: ik,i_sp_pol
  real(SP)    :: V(fft_size,n_spin)
  complex(SP) :: V_mat(fft_size,n_spin,n_spin)
- complex(SP) :: H(QP_nb,QP_nb)
+ complex(SP) :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  character(3):: V_kind
  type(WAVEs) :: WF
  !
@@ -55,27 +59,19 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return
 #endif
  !
+#if defined _TIMING 
+ call timing('V_real_space_to_H',OPR='start')
+#endif
+ !
  if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
  !
  ! Fill ...
  !
- do i_qp=1,QP_n_states
-   !
-   if (     QP_table(i_qp,3) /=ik      ) cycle
-   if (spin(QP_table(i_qp,:))/=i_sp_pol) cycle
-   !
-   ib =QP_table(i_qp,1)
-   ibp=QP_table(i_qp,2)
-   !
-   if (ib>ibp) cycle
+ do ib=H_ref_bands(1),H_ref_bands(2)
+   do ibp=ib,H_ref_bands(2)
    !
    if (.not.HEAD_QP_cpu) cycle
-#if defined _SC && !defined _RT
-   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
-#endif
-#if defined _RT
    if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
-#endif
    !
    ! <ifft|V|ifftp>
    !
@@ -124,15 +120,14 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
      !
    endif
    !
- enddo
- !
- ! ... and symmetrize
- !
- do ib=1,QP_nb
-   H(ib,ib)=real(H(ib,ib),SP)
-   do ibp=1,ib-1
-     H(ib,ibp)=conjg(H(ibp,ib))
+   if(ib==ibp) H(ib,ib) =real(H(ib,ib),SP)
+   if(ib/=ibp) H(ibp,ib)=conjg(H(ib,ibp))
+   !
    enddo
  enddo
+ !
+#if defined _TIMING 
+ call timing('V_real_space_to_H',OPR='stop')
+#endif
  !
 end subroutine 

@@ -87,7 +87,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
      io_err=io_SC_components('V',E_dummy,ID)
      if (io_err==0.and.ik>0.and.i_sp_pol>0) then
        if (ik==1.and.i_sp_pol==1) then
-         allocate(H_nl_sc(SC_bands(2),SC_bands(2)))
+         allocate(H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
          call mem_est("H_nl_sc",(/size(H_nl_sc)/))
        endif
        call io_control(ACTION=RD_CL,SEC=(/ip+1+(ip_sp_pol-1)*nkibz/),ID=ID)
@@ -97,7 +97,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
    case("WF")
      io_err=io_SC_components('WF',E_dummy,ID)
      if (io_err==0) then
-       allocate(SC_R(SC_bands(2),SC_bands(2),nkibz,n_sp_pol))
+       allocate(SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz,n_sp_pol))
        call mem_est("SC_R",(/size(SC_R)/))
        do ip_sp_pol=1,n_sp_pol
          do ip=1,nkibz

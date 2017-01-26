@@ -42,6 +42,9 @@ subroutine el_magnetization(en,Xk,magn)
 #if defined _RT
  use drivers,       ONLY:l_real_time
 #endif
+#if defined _TIMING && defined _RT
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -53,6 +56,10 @@ subroutine el_magnetization(en,Xk,magn)
  !
  integer :: isym,ifft,ib,ik,i_wf_up,i_wf_dn
  real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ(n_sp_pol)
+ !
+#if defined _TIMING && defined _RT
+ call timing('el_magnetization',OPR='start')
+#endif
  !
  magn=0._SP
  cv=0._SP
@@ -130,5 +137,9 @@ subroutine el_magnetization(en,Xk,magn)
  do ifft=1,fft_size
    Total_magn(:)=Total_magn(:)+magn(ifft,:)
  enddo
+ !
+#if defined _TIMING && defined _RT
+ call timing('el_magnetization',OPR='stop')
+#endif
  !
 end subroutine

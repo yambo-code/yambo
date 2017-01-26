@@ -77,7 +77,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! WF Loading, density and magnetization
  !=======================================
- call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(H_ref_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
+ call WF_load(WF,WF_G_max,WF_Go_indx,(/H_ref_bands(1),max(H_ref_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
  !
  call el_density_and_current(E,Xk,rho=rho_n)
  if(n_spin>1) call el_magnetization(E,Xk,magn_n)
@@ -113,6 +113,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    do ib=1,QP_nb
      if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+     if( ib<H_ref_bands(1).or.ib>H_ref_bands(2) ) cycle
      Ho(ib,ib,ik,i_sp_pol) = Ho(ib,ib,ik,i_sp_pol) + E_bare(ib,ik,i_sp_pol)  
    enddo
    !

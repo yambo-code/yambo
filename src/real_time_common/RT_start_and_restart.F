@@ -73,7 +73,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  integer :: i_sp_pol,ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
- complex(SP):: M_tmp(RT_bands(2),RT_bands(2))
  integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
  !
@@ -103,15 +102,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    !==========================
    do i_sp_pol=1,n_sp_pol
      do ik=1,nXkibz
-       !
-       M_tmp=cZERO
-       call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
-       HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-       !
-       M_tmp=cZERO
-       call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
-       XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-       !
+       call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,HARTREE0(:,:,ik,i_sp_pol),WF,'def') 
+       call V_real_space_to_H(ik,i_sp_pol,V_xc,        XC0(:,:,ik,i_sp_pol),WF,'xc ') 
      enddo
    enddo
    !
@@ -279,11 +271,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  do ib=RT_bands(1),RT_bands(2)
    Ho(ib,ib,1:nXkibz,1:n_sp_pol)=Ho(ib,ib,1:nXkibz,1:n_sp_pol) &
 &                              -E_bare(ib,1:nXkibz,1:n_sp_pol)+E%E(ib,1:nXkibz,1:n_sp_pol)
- enddo
- !
- do ib=1,RT_bands(1)-1
-   Ho(ib,ib,1:nXkibz,1:n_sp_pol)=Ho(ib,ib,1:nXkibz,1:n_sp_pol) &
-&                              -E_bare(RT_bands(1),1:nXkibz,1:n_sp_pol)+E%E(RT_bands(1),1:nXkibz,1:n_sp_pol)
  enddo
  !
  ! Store the starting Eigenvalues in Eo

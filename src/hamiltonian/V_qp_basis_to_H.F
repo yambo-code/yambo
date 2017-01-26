@@ -34,11 +34,15 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
 #if defined _RT
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+ !
  implicit none
  !
  integer                 :: ik,i_sp_pol
  complex(SP),intent(in)  :: V(QP_n_states)
- complex(SP),intent(out) :: H(QP_nb,QP_nb)
+ complex(SP),intent(out) :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
  ! Work Space
  !
@@ -48,6 +52,10 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
  !
 #if defined _RT
  if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_QP_cpu) return
+#endif
+ !
+#if defined _TIMING 
+ call timing('V_qp_basis_to_H',OPR='start')
 #endif
  !
  do i1=1,QP_n_states
@@ -80,5 +88,9 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
    if (ib/=ibp) H(ibp,ib) = conjg(H(ib,ibp))
    !
  end do
+ !
+#if defined _TIMING 
+ call timing('V_qp_basis_to_H',OPR='stop')
+#endif
  !
 end subroutine 

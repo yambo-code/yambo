@@ -58,6 +58,9 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #if defined _YPP_RT
  use real_time,     ONLY:RT_delta0_occupations,RT_ibz_coo,RT_Nk_ibz
 #endif
+#if defined _TIMING && defined _RT
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -77,6 +80,10 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
 ! complex(SP):: WF_der(3,fft_size)
  logical    :: warn_done,l_si,l_rho !,l_J
+ !
+#if defined _TIMING && defined _RT
+ call timing('el_density',OPR='start')
+#endif
  !
  ! Basic Setups
  !
@@ -176,5 +183,9 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !    J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(:,i_symm),:),SP)/real(nsym,SP)
  !  enddo
  !endif
+ !
+#if defined _TIMING && defined _RT
+ call timing('el_density',OPR='stop')
+#endif
  ! 
 end subroutine

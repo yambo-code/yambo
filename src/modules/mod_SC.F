@@ -174,7 +174,7 @@ module SC
      use wrapper,        ONLY:M_by_M
      !
      integer     :: direction,N
-     complex(SP) :: H(N,N),R(N,N)
+     complex(SP) :: H(N1:N2,N),R(N,N)
      !
      ! Work Space
      !

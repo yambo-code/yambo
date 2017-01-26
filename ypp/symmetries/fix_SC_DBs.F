@@ -140,10 +140,10 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  call XC_switch()
  if(.not.l_sc_V_is_local) then
    !
-   allocate(H_nl_sc(SC_bands(2),SC_bands(2)))
+   allocate(H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
    call mem_est("H_nl_sc",(/size(H_nl_sc)/))
    !
-   allocate(full_H(SC_bands(2),SC_bands(2),k_save%nibz,n_sp_pol))
+   allocate(full_H(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k_save%nibz,n_sp_pol))
    call mem_est("full_H",(/size(full_H)/))
    !
    nkibz=k_save%nibz

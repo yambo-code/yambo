@@ -39,6 +39,9 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use real_time,      ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_bands
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
  use matrix_operate, ONLY:UP_matrix_index,m3det
+#if defined _TIMING && defined _RT
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -53,6 +56,10 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  integer :: ib1,ib2,ik,ik_RT,isym,ifft,i_wf1(n_spin),i_wf2(n_spin)
  real(SP):: cv(fft_size,3),tmp_sop(3,3)
  complex(SP) :: f_occ(n_sp_pol)
+ !
+#if defined _TIMING && defined _RT
+ call timing('el_magnetization_matrix',OPR='start')
+#endif
  !
  magn=0._SP
  cv=  0._SP
@@ -161,5 +168,9 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    endif
    !
  enddo
+ !
+#if defined _TIMING && defined _RT
+ call timing('el_magnetization_matrix',OPR='stop')
+#endif
  !
 end subroutine

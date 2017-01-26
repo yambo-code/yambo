@@ -208,7 +208,7 @@ integer function io_SC_components(what,E_sc,ID)
    ! H_sc
    !======
    !
-   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
+   allocate(TMP_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),2))
    !
    call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
@@ -226,7 +226,7 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
+   allocate(TMP_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),2))
    !
    call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/SC_bands(2),SC_bands(2),2/))

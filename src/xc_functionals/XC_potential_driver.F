@@ -34,6 +34,9 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  use xc_functionals, ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
 &                         XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done
  use IO_m,           ONLY:IO_and_Messaging_switch
+#if defined _TIMING && defined _RT
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -50,6 +53,10 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  integer           :: ic
  real(SP)          :: local_exx_fraction, local_exx_screening
  character(schlen) :: local_mute_ch
+ !
+#if defined _TIMING && defined _RT
+ call timing('XC_potential_driver',OPR='start')
+#endif
  !
  if (present(MUTE)) call IO_and_Messaging_switch(MUTE)
  !
@@ -102,5 +109,9 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
      call IO_and_Messaging_switch(MUTE)
    endif
  endif
+ !
+#if defined _TIMING && defined _RT
+ call timing('XC_potential_driver',OPR='stop')
+#endif
  !
 end subroutine XC_potential_driver

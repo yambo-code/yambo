@@ -31,13 +31,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,SC_rho_threshold,E_convergence,      &
-&                         rho_convergence,magn_convergence,SC_R,H_rotate,it_now,      &
+&                         rho_convergence,magn_convergence,H_rotate,it_now,           &
 &                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
 &                         l_SC_RESTART,l_Mean_Potential,it_to_start,                  &
 &                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
 &                         V_hartree_sc,Ho,V_xc_sc,E_bare,l_sc_XC_is_local,            &
-&                         H_QP_table_setup
+&                         H_QP_table_setup,SC_R
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size

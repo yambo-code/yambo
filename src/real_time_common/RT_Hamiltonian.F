@@ -109,29 +109,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  Ho_plus_Sigma=cZERO
  !
- ! The bare Hamiltonian
- !=========================
- if (.not.l_RT_RWA) then
-   !
-   do ik=1,nXkibz
-     !
-     if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu ) cycle
-     !
-     ! DAVIDE:
-     ! Ho+Sigma[eq]= E^{QP} 
-     !
-     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-       do ib=RT_bands(1),RT_bands(2)
-         if(     l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
-         if(.not.l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
-       enddo
-     enddo
-     !
-   enddo
-   !
- endif
- !
  ! Local part computed in real space (V_xc_sc and V_Hartree_sc)
  !=============================================================
  !
@@ -179,13 +156,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      !
      if (.not.PAR_IND_WF_k%element_1D(ik).or. .not.HEAD_QP_cpu) cycle
      !
-     if (l_RT_RWA) then
-       forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
-     else
-       do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-         call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_Sigma(:,:,ik_RT,1))
-       enddo
-     endif
+     forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
      !
    enddo
    !
@@ -204,9 +175,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
          if (l_RT_RWA) then
-           Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik_RT,1)
+           forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
          else
-           call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(:,:,ik_RT,1),Ho_plus_Sigma(:,:,ik_RT,1))
+           call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(:,:,ik,1),Ho_plus_Sigma(:,:,ik_RT,1))
          endif
        enddo
      enddo
@@ -225,10 +196,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      !
      call RT_apply_field(ik,1,H_nl_sc,A_input)
      !
-     forall( ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2) ) Ho_plus_Sigma(:,:,ik_RT,1)= Ho_plus_Sigma(:,:,ik_RT,1)+H_nl_sc
-     !do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     !  call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
-     !enddo
+     do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
+     enddo
      !  
    enddo
  endif
@@ -236,6 +206,55 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  ! All2All
  !=========
  call PP_redux_wait(Ho_plus_Sigma)
+ !
+ ! The Energies only update
+ !==========================
+ if (l_update_QP_E.and.(.not.l_update_QP_WFs)) then
+   do ik=1,nXkibz 
+     do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+       do ib=RT_bands(1),RT_bands(2)
+         deltaE=real(Ho_plus_sigma(ib,ib,ik_RT,1),SP)
+         if(l_RT_uses_E_DbGd)        E%E_DbGd(ib,ik_DbGd,1)=E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
+         if(ik_RT==RT_ibz_coo(ik,1)) E%E(ib,ik_ibz,1)      =E_reference%E(ib,ik,1)          +deltaE
+       enddo
+     enddo
+   enddo
+ endif
+ !
+ ! The bare Hamiltonian
+ !=========================
+ if (.not.l_RT_RWA) then
+   !
+   do ik=1,nXkibz
+     !
+     !if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu ) cycle
+     !
+     ! DAVIDE:
+     ! Ho+Sigma[eq]= E^{QP} 
+     !
+     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+       do ib=RT_bands(1),RT_bands(2)
+         if (l_update_QP_E.and.(.not.l_update_QP_WFs)) then
+           if(     l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
+           if(.not.l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
+         else
+           if(     l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E%E_DbGd(ib,ik_DbGd,1)
+           if(.not.l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E%E(ib,ik,1)
+         endif
+       enddo
+     enddo
+     !
+   enddo
+   !
+ endif
+ !
+ if (l_update_QP_E.and.l_update_QP_WFs) then
+   ! Here I should diagonalize H and then rotate the WFs ...
+   ! Maybe better in a dedicated subroutine
+   !
+ endif
  !
 #if defined _TIMING
  call timing('RT Hamiltonian',OPR='stop')

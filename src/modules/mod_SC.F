@@ -74,9 +74,8 @@ module SC
  character(schlen)    :: OEP_approx
  logical              :: l_oep_iterative,l_oep_EWeight
  !
- ! Rotation matrices and xc potential
+ ! xc potential
  !
- complex(SP), allocatable :: SC_R(:,:,:,:)
  complex(SP), allocatable :: V_mean(:,:)
  !
  interface
@@ -122,9 +121,6 @@ module SC
        call mem_est("QP_Sc",(/QP_n_states/))
      endif
      !
-     allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-     call mem_est("SC_R",(/size(SC_R)/))
-     !
    end subroutine
    !
    subroutine SC_free()
@@ -148,9 +144,6 @@ module SC
        deallocate(QP_Sc)
        call mem_est("QP_Sc")
      endif
-     !
-     deallocate(SC_R)
-     call mem_est("SC_R")
      !
    end subroutine
    !

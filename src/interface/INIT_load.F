@@ -446,10 +446,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
  ! 
- ! BGR
+ ! Update QP Energies and WFs
  !
- call it('f',defs,'BGR',     '[RT] Evaluate the Band-Gap Renormalization consistent with the applied potential',&
-&                            verb_level=V_real_time)
+ call it('f',defs,'RTupdateEqp', '[RT] Update QP energies on the fly',verb_level=V_real_time)
+ call it('f',defs,'RTupdateWFqp','[RT] Update QP wave-functions on the fly',verb_level=V_real_time)
  !
  ! EE scattering
  !

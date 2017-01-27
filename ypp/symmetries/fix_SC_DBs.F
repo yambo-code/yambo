@@ -29,7 +29,8 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  use com,                 ONLY:core_io_path,more_io_path
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
 &                              OP_RD_CL,DUMP,RD_CL_IF_END,WR_CL_IF_END
- use SC,                  ONLY:l_sc_V_is_local,SC_R,H_nl_sc,SC_bands
+ use SC,                  ONLY:l_sc_V_is_local,H_nl_sc,SC_bands
+ use hamiltonian,         ONLY:SC_R
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
  !
@@ -101,7 +102,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  !  Wave-function
  !
- allocate(SC_R(SC_bands(2),SC_bands(2),k%nibz,n_sp_pol))
+ allocate(SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k%nibz,n_sp_pol))
  call mem_est("SC_R",(/size(SC_R)/))
  !
  nkibz=k_save%nibz

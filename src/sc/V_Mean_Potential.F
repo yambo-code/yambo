@@ -34,8 +34,8 @@ subroutine V_mean_potential(ik,i_sp_pol,WFo)
  use pars,           ONLY:SP,cZERO
  use wave_func,      ONLY:WAVEs
  use FFT_m,          ONLY:fft_size
- use hamiltonian,    ONLY:H_nl_sc
- use SC,             ONLY:SC_R,SC_bands,V_mean
+ use hamiltonian,    ONLY:H_nl_sc,SC_R
+ use SC,             ONLY:SC_bands,V_mean
  use wrapper,        ONLY:M_by_M
  implicit none
  !
@@ -45,7 +45,7 @@ subroutine V_mean_potential(ik,i_sp_pol,WFo)
  ! Work Space
  !
  integer    :: ib,ifft,ir,ibp
- complex(SP):: Sigma_times_R(SC_bands(2),SC_bands(2))
+ complex(SP):: Sigma_times_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
  Sigma_Times_R=cZERO
  !
@@ -53,7 +53,7 @@ subroutine V_mean_potential(ik,i_sp_pol,WFo)
  !                               |        |     |
  !                               bare     bare  SC
  !
- call M_by_M('n','n',SC_bands(2),H_nl_sc,SC_R(:,:,ik,i_sp_pol),Sigma_times_R)
+ call M_by_M('n','n',SC_bands(2)-SC_bands(1)+1,H_nl_sc,SC_R(:,:,ik,i_sp_pol),Sigma_times_R)
  !
  ! V_m(r) = \sum_n <r|n> Sigma_times_R(n,m) /<r|m> * |<r|m>|²
  !
@@ -66,11 +66,11 @@ subroutine V_mean_potential(ik,i_sp_pol,WFo)
  !
  ! V_m(r) = \sum_n <r|n> Sigma_times_R(n,m) /<r|m> * |<r|m>|²
  !
- do ib=1,SC_bands(2)
+ do ib=SC_bands(1),SC_bands(2)
    !
    V_mean(:,ib)=cZERO
    !
-   do ibp=1,SC_bands(2)
+   do ibp=SC_bands(1),SC_bands(2)
      !
      ifft=WFo%index(ibp,ik,1)
      !

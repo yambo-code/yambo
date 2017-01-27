@@ -150,17 +150,22 @@ module real_time
  integer                 :: RT_bands(2)
  integer                 :: RT_nbands
  !
- ! BGR
- !----------------------------
- logical                  :: l_BGR=.false.
- real(SP),    allocatable :: BGR_hartree(:,:,:)  
- real(SP),    allocatable :: BGR_V_xc(:,:,:)  
- real(SP),    allocatable :: BGR_Self_Energy(:,:,:)  
+ ! Equilibrium V_xc and V_hartree in real space
+ ! Presently REF_V_hartree_sc is not used
+ !
  real(SP),    allocatable :: REF_V_xc_sc(:,:)  
- real(SP),    allocatable :: REF_V_hartree_sc(:,:)  
- real(SP),    allocatable :: REF_Vnl_xc(:)  
- real(SP)                 :: BGR(5) ! (BGR at the minimum dir/ind gap, H contrib., xc contrib., SE contrib.)
+ real(SP),    allocatable :: REF_V_hartree_sc(:,:)   
+ !
+ ! Update QP Energies and WFs
+ !----------------------------
+ logical                  :: l_update_QP_Energies=.false.
+ logical                  :: l_update_QP_WFs     =.false.
  type(levels),save        :: E_reference
+ !
+ ! BGR
+ !
+ real(SP)                 :: RT_BGR(5)
+ !
  !
  ! Relaxation and Dissipation 
  !----------------------------
@@ -536,7 +541,7 @@ module real_time
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
      if(l_use_Hxc_collisions) then
-       allocate(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+       allocate(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
        call mem_est("RT_Vnl_xc",(/size(RT_Vnl_xc)/),(/2*SP/))
        RT_Vnl_xc=(0._SP,0._SP)
      endif

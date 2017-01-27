@@ -208,8 +208,6 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0._SP,.true.)
    !
-   call RT_BGR(G_lesser_reference,E,k)
-   !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !
@@ -274,22 +272,6 @@ subroutine RT_driver(E,X,k,q)
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),Energies,Carriers,A_vecpot)
-   !
-   ! Update Bose Temp and Phonons distribution
-   !===========================================
-   !if (l_Debye_TBose_update) then
-   !  if (it==it_start) E_previous=real(on_the_fly_operators(5))
-   !  if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
-   !  &       nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
-   !    E_now=real(on_the_fly_operators(5))
-   !    call TEMPERATURE_Debye(E_previous-E_now)
-   !    E_previous=E_now
-   !  endif
-   !endif
-   !
-   ! BGR
-   !=======================================
-   call RT_BGR(dG_lesser(:,:,:,i_MEM_collision),E,k)
    !
    ! COLLISIONS@NE_time
    !####################

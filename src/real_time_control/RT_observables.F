@@ -75,6 +75,10 @@ subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers)
  !==========
  call RT_entropy(en,k,dG_lesser,E_IP)
  !
+ ! BGR
+ !=======================================
+ call RT_BGR(dG_lesser,en,k)
+ !
 #if defined _TIMING
  call timing('RT observables',OPR='stop')
 #endif

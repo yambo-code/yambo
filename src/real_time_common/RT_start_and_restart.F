@@ -49,7 +49,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
+&                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,E_reference,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser,RT_potential, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
@@ -344,6 +344,11 @@ subroutine RT_start_and_restart(E,k,q,X)
        if(n_spin>1) magn_reference    =rZERO
        !
      endif
+     !
+     ! Store the reference energies
+     !
+     call E_reset(E_reference)
+     call E_duplicate(E,E_reference)
      !
      ! Set to zero occupations
      !

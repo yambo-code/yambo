@@ -37,7 +37,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  use electrons,      ONLY:n_sp_pol,n_spinor
  use pars,           ONLY:SP
  use wave_func,      ONLY:WAVEs,WF
- use SC,             ONLY:SC_R,SC_bands
+ use hamiltonian,    ONLY:SC_R,H_ref_bands
  !
  implicit none
  !
@@ -47,11 +47,11 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  ! Work Space
  !
  integer     :: ib,ibp,i_wf(n_spinor),i_wfp(n_spinor),i_spin,i_spinor
- complex(SP) :: WS_wf(wf_size,n_spinor,SC_bands(2))
+ complex(SP) :: WS_wf(wf_size,n_spinor,H_ref_bands(1):H_ref_bands(2))
  !
    WS_wf=cZERO
    !
-   do ib = 1,SC_bands(2)
+   do ib = H_ref_bands(1),H_ref_bands(2)
      !
      do i_spinor=1,n_spinor
        i_spin=i_sp_pol+i_spinor-1
@@ -60,7 +60,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
      !
      if (any(i_wf(:)==0)) cycle
      !
-     do ibp = 1,SC_bands(2)
+     do ibp = H_ref_bands(1),H_ref_bands(2)
        !
        do i_spinor=1,n_spinor
          i_spin=i_sp_pol+i_spinor-1
@@ -70,33 +70,18 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
          !
          call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,i_wfp(i_spinor)),WS_wf(:,i_spinor,ib))
          !
-       end do
-     end do
-     !
+       enddo
+     enddo
    enddo
    !
-#if defined _OPENMP
-!$omp parallel default(shared), private(ig,ib)
-#endif
-   do ib=1,SC_bands(2)
-#if defined _OPENMP
-!$omp do
-#endif
-     !
+   do ib=H_ref_bands(1),H_ref_bands(2)
      do i_spinor=1,n_spinor
        i_spin=i_sp_pol+i_spinor-1
        i_wf(i_spinor) = WF%index(ib,ik,i_spin)
-       !
        do ig=1,wf_size
          WF%c(ig,i_wf(i_spinor))=WS_wf(ig,i_spinor,ib)
        enddo
      enddo
-#if defined _OPENMP
-!$omp end do
-#endif
    enddo
-#if defined _OPENMP
-!$omp end parallel
-#endif
  !
 end subroutine

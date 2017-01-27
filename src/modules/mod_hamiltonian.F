@@ -54,6 +54,10 @@ module hamiltonian
  real(SP),    allocatable :: rho_n(:)
  real(SP),    allocatable :: magn_n(:,:)
  !
+ ! Rotation matrix which diagonalize the hamiltonian
+ !
+ complex(SP), allocatable :: SC_R(:,:,:,:)
+ !
  ! Wavefunction indexes
  !
  integer :: WF_G_max,WF_Go_indx
@@ -113,6 +117,11 @@ module hamiltonian
      allocate(H_nl_sc(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
+     if(l_sc_run .or. l_update_QP_WFs) then
+       allocate(SC_R(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
+       call mem_est("SC_R",(/size(SC_R)/))
+     endif
+     !
      if (.not.l_real_space) return
      !
      allocate(rho_n(fft_size))
@@ -149,6 +158,11 @@ module hamiltonian
      !
      deallocate(H_nl_sc)
      call mem_est("H_nl_sc")
+     !
+     if(allocated(SC_R)) then
+       deallocate(SC_R)
+       call mem_est("SC_R")
+     endif
      !
      if(allocated(rho_n)) then
        deallocate(rho_n)

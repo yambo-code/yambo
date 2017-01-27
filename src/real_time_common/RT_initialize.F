@@ -42,12 +42,12 @@ subroutine RT_initialize(E,k,q)
 &                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,             &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_EULER,l_RT_RK2,l_RT_RWA,      &
 &                         l_RT_EXP,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,            &
-&                         l_BGR,l_RT_HEUN,eval_HARTREE,eval_DFT,l_NE_dynamics,                &
+&                         l_update_QP_energies,l_RT_HEUN,eval_HARTREE,eval_DFT,l_NE_dynamics, &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
-&                         eval_energy,eval_entropy,l_RT_is_WFfree
+&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_QP_WFs
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -69,8 +69,11 @@ subroutine RT_initialize(E,k,q)
  ! Logicals
  !==========
  !
+ call parser('RTUpdateEqp',          l_update_QP_Energies)
+ call parser('RTUpdateWFqp',         l_update_QP_WFs)
+ if(l_update_QP_WFs) l_update_QP_Energies=.true.
+ !
  call parser('RAD_prefactor',        RAD_magnification)
- call parser('BGR',                  l_BGR)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTskipImposeN',        l_skip_it)

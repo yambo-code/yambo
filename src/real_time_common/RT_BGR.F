@@ -54,54 +54,21 @@ subroutine RT_BGR(dG,E,k)
  !
  ! Work Space
  !
- complex(SP)  :: H(RT_bands(2),RT_bands(2),n_sp_pol)
+ complex(SP)  :: H(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),n_sp_pol)
  real(SP)     :: deltaE
  integer      :: ib,ik,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_DbGd,i_sp
  !
- ! SAVE fall-back. Source to be tested and re-introduced
+ if(trim(RT_potential)=='IP'.or..not.eval_BGR) return
  !
  BGR_Self_Energy=rZERO
  BGR_Hartree=rZERO
  BGR_V_xc=rZERO
  !
- return
- !
 #if defined _TIMING
  call timing('RT BGR',OPR='start')
 #endif
  !
- if (l_initial_equilibrium) then
-   call E_reset(E_reference)
-   call E_duplicate(E,E_reference)
- endif
- !
- ! Davide 20/11/2015:
- ! Why do I recompute V_hartree_SC, V_xc_SC and RT_Vnl_xc which have just
- ! been computed by RT_collisions ? This is a waste of CPU time.
- !
- if (.not.l_initial_equilibrium) then
-   !
-   ! From RT_Collision I get rho_n to calculate the new Hartree and XC potential
-   !
-   if (eval_HARTREE) then
-     !
-     ! Hartree
-     !
-     call V_Hartree(rho_n,V_hartree_sc)
-     !
-     V_hartree_sc=V_hartree_sc-REF_V_hartree_sc
-     !
-   endif
-   !
-   if (eval_DFT) then
-     !
-     ! V_xc
-     !
-     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
-&                             MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
-     V_xc_sc=V_xc-REF_V_xc_sc
-     !
-   endif
+ if (.not.l_use_Hxc_collisions) then
    !
    do ik=1,nkibz
      !
@@ -134,26 +101,16 @@ subroutine RT_BGR(dG,E,k)
    !
  endif
  !
- if (l_sc_fock.or.l_sc_sex) then
+ if (l_use_Hxc_collisions) then
    !
    call COLLISIONS_compose_rt(dG)
-   !
-   do i_qp=1,QP_n_states
-     !
-     ib  =QP_table(i_qp,1)
-     ibp =QP_table(i_qp,2)
-     ik  =QP_table(i_qp,3)
-     i_sp=spin(QP_table(i_qp,:))
-     !
-     ik_RT=RT_ibz_coo(ik,1)
-     !
-     if (l_initial_equilibrium) then
-       REF_Vnl_xc(i_qp)=real(RT_Vnl_xc(ib,ibp,ik_RT,i_sp),SP)
-     else
-       if (ib/=ibp) cycle
-       BGR_Self_Energy(ib,ik,1)=real(RT_Vnl_xc(ib,ib,ik_RT,i_sp),SP)
-     endif
-     !
+
+   do ik=1,nkibz
+     do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       do ib=RT_bands(1),RT_bands(2)
+         BGR_Self_Energy(ib,ik,1)=real(RT_Vnl_xc(ib,ib,ik_RT,i_sp),SP)
+       enddo
+     enddo
    enddo
    !
  endif

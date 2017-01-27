@@ -31,7 +31,7 @@ integer function io_RT_components(what,ID)
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
-&                         io_sec,io_bulk,read_is_on,write_is_on,io_fragment, &
+&                         io_sec,io_bulk,read_is_on,io_fragment, &
 &                         manage_OP_IF_START_and_CL_IF_END,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
@@ -58,9 +58,8 @@ integer function io_RT_components(what,ID)
  character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: what_
  !
- integer               :: ik,ib,i_spin,i_memory,i_time,db_type
+ integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
  logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
- real(SP)              :: A_vecpot_disk(3,3,2)
  !
  ! DB kind and name
  !==================
@@ -221,11 +220,8 @@ integer function io_RT_components(what,ID)
      !
      i_spin=1
      !
-     do ik=1,RT_nk
-       call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                      VAR_SZ=(/RT_nbands,RT_nbands,2/))
-       call io_bulk(ID,C3=G_lesser_reference(:,:,ik))
-     enddo
+     call io_bulk(ID,VAR="G_lesser_reference",VAR_SZ=(/2,RT_nbands,RT_nbands,RT_nk/))
+     call io_bulk(ID,C3=G_lesser_reference)
      !
      if (read_is_on(ID)) call RT_init_occupation_reference( )
      !
@@ -244,10 +240,9 @@ integer function io_RT_components(what,ID)
    !
    call io_fragment(ID,i_fragment=ik)
    !
-   do ib=1,RT_bands(2)-RT_bands(1)+1
-     call io_bulk(ID,VAR="RT_THETA_B"//trim(intc(ib))//"_K"//trim(intc(ik)),VAR_SZ=(/2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2/))
-     call io_bulk(ID,C3=THETA_matrix(:,:,ib,ik))
-   enddo
+   nbands=RT_bands(2)-RT_bands(1)+1
+   call io_bulk(ID,VAR="RT_THETA_K"//trim(intc(ik)),VAR_SZ=(/2,2*nqbz*ph_modes,nbands,nbands/))
+   call io_bulk(ID,C3=THETA_matrix(:,:,:,ik))
    !
  endif
  !
@@ -269,31 +264,14 @@ integer function io_RT_components(what,ID)
      if(i_time<=0) cycle
      !
      call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
-&                              "_TIME"//trim(TIME_string( (i_time-1)*RT_step )),&
-&                 VAR_SZ=(/RT_nbands,RT_nbands,2/))
-     !
-     call io_bulk(ID,C3=dG_lesser(:,:,ik,i_memory))
+&                        "_TIME"//trim(TIME_string( (i_time-1)*RT_step )),VAR_SZ=(/2,RT_nbands,RT_nbands/))
+     call io_bulk(ID,C2=dG_lesser(:,:,ik,i_memory))
      !
    enddo
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
-     if (write_is_on(ID)) then
-       A_vecpot_disk(:,1,1)= real(A_vecpot%vecpot(:),SP)
-       A_vecpot_disk(:,1,2)=aimag(A_vecpot%vecpot(:))
-       A_vecpot_disk(:,2,1)= real(A_vecpot%vecpot_vel(:),SP)
-       A_vecpot_disk(:,2,2)=aimag(A_vecpot%vecpot_vel(:))
-       A_vecpot_disk(:,3,1)= real(A_vecpot%vecpot_acc(:),SP)
-       A_vecpot_disk(:,3,2)=aimag(A_vecpot%vecpot_acc(:))
-     endif
-     !
-     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
-     call io_bulk(ID,R3=A_vecpot_disk)
-     !
-     if (read_is_on(ID)) then 
-       A_vecpot%vecpot(:)    =cmplx(A_vecpot_disk(:,1,1),A_vecpot_disk(:,1,2),SP)
-       A_vecpot%vecpot_vel(:)=cmplx(A_vecpot_disk(:,2,1),A_vecpot_disk(:,2,2),SP)
-       A_vecpot%vecpot_acc(:)=cmplx(A_vecpot_disk(:,3,1),A_vecpot_disk(:,3,2),SP)
-     endif
+     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/2,9/))
+     call io_bulk(ID,C1=(/A_vecpot%vecpot,A_vecpot%vecpot_vel,A_vecpot%vecpot_acc/))
    endif
    !
  endif

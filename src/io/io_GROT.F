@@ -73,8 +73,10 @@ integer function io_GROT(io_db)
    Y_MEM(minus_G)
  endif
  !
- call io_bulk(io_db,VAR="SHELLS",VAR_SZ=(/2*n_g_shells/))
+ call io_bulk(io_db,VAR="ng_in_shell",VAR_SZ=(/n_g_shells/))
  call io_bulk(io_db,I1=ng_in_shell(:n_g_shells))
+ !
+ call io_bulk(io_db,VAR="E_of_shell",VAR_SZ=(/n_g_shells/))
  call io_bulk(io_db,R1=E_of_shell(:n_g_shells))
  !
  call io_bulk(io_db,VAR="GROT",VAR_SZ=(/nsym_db,ng_closed/))

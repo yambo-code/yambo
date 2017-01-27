@@ -55,13 +55,19 @@ AC_ARG_WITH(hdf5_includedir,AC_HELP_STRING([--with-hdf5-includedir=<path>],
 #
 # Large Databases Support (LFS)
 #
-AC_ARG_ENABLE(netcdf-LFS, AC_HELP_STRING([--enable-netcdf-LFS],
-             [Activate NetCDF Large File Support. Default is no.]))
+AC_ARG_ENABLE(netcdf-classic, AC_HELP_STRING([--enable-netcdf-classic],
+             [Switch to OLD NetCDF classic. Default is no.]))
 #
 # HDF5 support
 #
 AC_ARG_ENABLE(netcdf_hdf5,AC_HELP_STRING([--enable-netcdf-hdf5],
-                                  [Activate the HDF5 support. Default is no.]))
+             [Activate the HDF5 support. Default is no.]))
+#
+#
+# HDF5 data compression
+#
+AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
+             [Activate the HDF5 data compression. Default is no.]))
 #
 netcdf="no"
 netcdf_idir=""
@@ -215,7 +221,7 @@ fi
 #
 # Large File Support
 #
-if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="$dnetcdf -D_64BIT_OFFSET"; fi
+if test x"$enable_netcdf_classic" = "xyes"; then dnetcdf="$dnetcdf -D_NC_CLASSIC"; fi
 #
 #
 # HDF5 support
@@ -292,6 +298,12 @@ fi
 #
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
     dnetcdf="${dnetcdf} -D_HDF5_IO";
+fi
+#
+# HDF5-DATA COMPRESSION
+#
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
+    dnetcdf="${dnetcdf} -D_HDF5_COMPRESSION";
 fi
 
 AC_SUBST(NETCDF_LIBS)

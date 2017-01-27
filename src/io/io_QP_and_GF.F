@@ -49,7 +49,6 @@ integer function io_QP_and_GF(what,qp,ID)
 &                       QP_DB_kind_disk 
  character(schlen)    ::ch
  integer ,    allocatable ::qp_table_disk(:,:)
- real(SP),    allocatable ::qp_DATA_disk(:,:,:)
  !
 #if defined _TIMING
  call timing('io_QP_and_',OPR='start')
@@ -239,23 +238,6 @@ integer function io_QP_and_GF(what,qp,ID)
      !
      ! QP corrections 
      !
-     allocate(qp_DATA_disk(3,qp%n_states,2))
-     !  
-     if (write_is_on(ID)) then
-       do i1=1,qp%n_states
-         qp_DATA_disk(1,i1,1)=real(qp%E(i1))
-         qp_DATA_disk(1,i1,2)=aimag(qp%E(i1))
-         qp_DATA_disk(2,i1,1)=qp%E_bare(i1)
-         qp_DATA_disk(2,i1,2)=0._SP
-         qp_DATA_disk(3,i1,1)=real(qp%Z(i1))
-         qp_DATA_disk(3,i1,2)=aimag(qp%Z(i1))
-       enddo
-     endif
-     !
-     call io_bulk(ID,VAR="QP_E_Eo_Z",VAR_SZ=(/3,qp%n_states,2/))
-     !
-     call io_bulk(ID,R3=qp_DATA_disk)
-     !
      if (read_is_on(ID)) then
        Y_ALLOCATE(qp%Z(qp%n_states))
        Y_ALLOCATE(qp%E(qp%n_states))
@@ -263,42 +245,23 @@ integer function io_QP_and_GF(what,qp,ID)
        Y_MEM(qp%E)
        Y_MEM(qp%E_bare)
        Y_MEM(qp%Z)
-       do i1=1,qp%n_states
-         qp%E(i1) =cmplx(qp_DATA_disk(1,i1,1),qp_DATA_disk(1,i1,2),SP)
-         qp%E_bare(i1)=qp_DATA_disk(2,i1,1)
-         qp%Z(i1) =cmplx(qp_DATA_disk(3,i1,1),qp_DATA_disk(3,i1,2),SP)
-       enddo
      endif
      !
-     deallocate(qp_DATA_disk)
+     call io_bulk(ID,VAR="QP_E",VAR_SZ=(/2,qp%n_states/))
+     call io_bulk(ID,C1=qp%E)
+     !
+     call io_bulk(ID,VAR="QP_Eo",VAR_SZ=(/qp%n_states/))
+     call io_bulk(ID,R1=qp%E_bare)
+     !
+     call io_bulk(ID,VAR="QP_Z",VAR_SZ=(/2,qp%n_states/))
+     call io_bulk(ID,C1=qp%Z)
      !
    endif
    !
    if (index(what,".G")/=0.or.what=="G") then
      !
-     allocate(qp_DATA_disk(qp%n_states,qp%GreenF_n_steps,6))
-     !
      ! Real axis Self Energy & Green Function 
      !=========================================
-     !
-     if (write_is_on(ID)) then
-       do i1=1,qp%n_states
-         qp_DATA_disk(i1,:,1)=real(qp%S_total(i1,:))
-         qp_DATA_disk(i1,:,2)=aimag(qp%S_total(i1,:))
-         qp_DATA_disk(i1,:,3)=real(qp%GreenF(i1,:))
-         qp_DATA_disk(i1,:,4)=aimag(qp%GreenF(i1,:))
-         qp_DATA_disk(i1,:,5)=real(qp%GreenF_W(i1,:))
-         qp_DATA_disk(i1,:,6)=aimag(qp%GreenF_W(i1,:))
-       enddo
-     endif
-     !
-     call io_bulk(ID,VAR="QP_SE_Operator",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
-     call io_bulk(ID,R3=qp_DATA_disk(:,:,1:2))
-     call io_bulk(ID,VAR="Green_Functions",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
-     call io_bulk(ID,R3=qp_DATA_disk(:,:,3:4))
-     call io_bulk(ID,VAR="Green_Functions_Energies",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
-     call io_bulk(ID,R3=qp_DATA_disk(:,:,5:6))
-     !
      if (read_is_on(ID)) then
        Y_ALLOCATE(qp%S_total(qp%n_states,qp%GreenF_n_steps))
        Y_MEM(qp%S_total)
@@ -306,14 +269,16 @@ integer function io_QP_and_GF(what,qp,ID)
        Y_MEM(qp%GreenF)
        Y_ALLOCATE(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
        Y_MEM(qp%GreenF_W)
-       do i1=1,qp%n_states
-         qp%S_total(i1,:) =cmplx(qp_DATA_disk(i1,:,1),qp_DATA_disk(i1,:,2),SP)
-         qp%GreenF(i1,:)  =cmplx(qp_DATA_disk(i1,:,3),qp_DATA_disk(i1,:,4),SP)
-         qp%GreenF_W(i1,:)=cmplx(qp_DATA_disk(i1,:,5),qp_DATA_disk(i1,:,6),SP)
-       enddo
      endif
      !
-     deallocate(qp_DATA_disk)
+     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
+     call io_bulk(ID,C2=qp%S_total)
+     !
+     call io_bulk(ID,VAR="Green_Functions",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
+     call io_bulk(ID,C2=qp%GreenF)
+     !
+     call io_bulk(ID,VAR="Green_Functions_Energies",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
+     call io_bulk(ID,C2=qp%GreenF_W)
      !
    endif
    !
@@ -323,9 +288,5 @@ integer function io_QP_and_GF(what,qp,ID)
  endif
  !
 1 call io_disconnect(ID=ID)
- !
-#if defined _TIMING
- call timing('io_QP_and_',OPR='stop')
-#endif
  !
 end function

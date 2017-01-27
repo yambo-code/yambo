@@ -97,9 +97,8 @@ module hamiltonian
      !
    end subroutine
    !
-   subroutine H_alloc(E,l_real_space)
+   subroutine H_alloc(E,l_real_space,l_rotation_matrix)
      use pars,           ONLY:SP
-     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
      use electrons,      ONLY:n_spin,n_sp_pol,levels
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
@@ -109,7 +108,7 @@ module hamiltonian
      implicit none
      !
      type(levels), intent(in) :: E
-     logical,      intent(in) :: l_real_space
+     logical,      intent(in) :: l_real_space,l_rotation_matrix
      !
      allocate(Ho(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
      call mem_est("Ho",(/size(Ho)/),(/2*SP/))
@@ -117,7 +116,7 @@ module hamiltonian
      allocate(H_nl_sc(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
-     if(l_sc_run .or. l_update_QP_WFs) then
+     if(l_rotation_matrix) then
        allocate(SC_R(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
        call mem_est("SC_R",(/size(SC_R)/))
      endif

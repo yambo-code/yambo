@@ -60,7 +60,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  rho=0._SP
  rho_no_sym=0._SP
  !
- if(lowest_band<RT_bands(1)-1) then
+ if(lowest_band<RT_bands(1)) then
    !
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nibz

@@ -33,7 +33,7 @@ subroutine RT_initialize(E,k,q)
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
- use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
+ use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
 &                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
@@ -47,7 +47,7 @@ subroutine RT_initialize(E,k,q)
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
-&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_QP_WFs
+&                         eval_energy,eval_entropy,l_RT_is_WFfree
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -69,13 +69,11 @@ subroutine RT_initialize(E,k,q)
  ! Logicals
  !==========
  !
- call parser('RTUpdateEqp',          l_update_QP_Energies)
- call parser('RTUpdateWFqp',         l_update_QP_WFs)
- if(l_update_QP_WFs) l_update_QP_Energies=.true.
- !
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
+ call parser('RTUpdateEqp',          l_update_QP_Energies)
+ if(l_update_QP_Energies) l_update_QP_Energies=.not.trim(RT_potential)=='IP'
  call parser('RTskipImposeN',        l_skip_it)
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
  call parser('LifeFitTemp',          l_lftm_fit_temperatures)
@@ -324,11 +322,6 @@ subroutine RT_initialize(E,k,q)
  !
  if (RT_is_dynamically_dephased) N_T_samplings =RT_Lifetimes_evaluation_plan( )
  !
- ! Initial allocation and basic definitions of the RT_carriers object
- !====================================================================
- !
- call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
- !
  ! LOG
  ! ===
  !
@@ -365,10 +358,10 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'r','Hxc approximation          :',trim(RT_potential))
  !
- if (l_elph_scatt)        call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
- if (l_elel_scatt)        call msg( 'r','El-El         scattering   :',l_elel_scatt)
- if (l_elphoton_scatt)    call msg( 'r','El-Photon     scattering   :',l_elphoton_scatt)
- if (l_BGR)               call msg( 'r','On-the-fly BGR added       :',l_BGR)
+ if (l_elph_scatt)         call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
+ if (l_elel_scatt)         call msg( 'r','El-El         scattering   :',l_elel_scatt)
+ if (l_elphoton_scatt)     call msg( 'r','El-Photon     scattering   :',l_elphoton_scatt)
+ if (l_update_QP_Energies) call msg( 'r','Update QP Energies         :',l_update_QP_Energies)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T between I/O of J,P,f [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)

@@ -158,14 +158,9 @@ module real_time
  !
  ! Update QP Energies and WFs
  !----------------------------
- logical                  :: l_update_QP_Energies=.false.
- logical                  :: l_update_QP_WFs     =.false.
+ logical                  :: l_update_QP_Energies
+ logical                  :: l_update_QP_WFs=.false.
  type(levels),save        :: E_reference
- !
- ! BGR
- !
- real(SP)                 :: RT_BGR(5)
- !
  !
  ! Relaxation and Dissipation 
  !----------------------------
@@ -333,10 +328,7 @@ module real_time
    ! Energies
    !
    real(SP)   ,pointer:: E_bare(:)       => null() ! equilibrium energy, i.e. the QP energy
-   real(SP)   ,pointer:: delta_E(:)      => null() ! change in E (BGR)
-   real(SP)   ,pointer:: dE_Hartree(:)   => null()
-   real(SP)   ,pointer:: dE_V_xc(:)        => null()
-   real(SP)   ,pointer:: dE_Self_Energy(:) => null()
+   real(SP)   ,pointer:: delta_E(:)      => null() ! change in the nenergies
    !
    ! Occupations
    !
@@ -371,15 +363,9 @@ module real_time
      if(.not.associated(RT%table))          allocate(RT%table(RT%nstates,4))
      if(.not.associated(RT%E_bare))         allocate(RT%E_bare(RT%nstates)) 
      if(.not.associated(RT%f_bare))         allocate(RT%f_bare(RT%nstates))
-     if(.not.associated(RT%dE_Hartree))     allocate(RT%dE_Hartree(RT%nstates))
-     if(.not.associated(RT%dE_V_xc))        allocate(RT%dE_V_xc(RT%nstates))
-     if(.not.associated(RT%dE_Self_Energy)) allocate(RT%dE_Self_Energy(RT%nstates))
      RT%table         =0
      RT%E_bare        =0._SP
      RT%f_bare        =0._SP
-     RT%dE_Hartree    =0._SP
-     RT%dE_V_xc       =0._SP
-     RT%dE_Self_Energy=0._SP
      if (l_elel_scatt) then
        if(.not.associated(RT%dGAMMA_E_E_Hole))     allocate(RT%dGAMMA_E_E_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_E_Electron)) allocate(RT%dGAMMA_E_E_Electron(RT%nstates))
@@ -421,9 +407,6 @@ module real_time
      RT%nk=0
      RT%nb=0
      RT%nstates=0
-     if(associated(RT%dE_Hartree))     deallocate(RT%dE_Hartree)
-     if(associated(RT%dE_V_xc))        deallocate(RT%dE_V_xc)
-     if(associated(RT%dE_Self_Energy)) deallocate(RT%dE_Self_Energy)
      if(associated(RT%dGAMMA_E_E_Hole))     deallocate(RT%dGAMMA_E_E_Hole)
      if(associated(RT%dGAMMA_E_E_Electron)) deallocate(RT%dGAMMA_E_E_Electron)
      if(associated(RT%dGAMMA_E_P_Hole))     deallocate(RT%dGAMMA_E_P_Hole)
@@ -451,14 +434,18 @@ module real_time
      use memory_m,       ONLY:mem_est
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup,E_bare
      use FFT_m,          ONLY:fft_size
-     use electrons,      ONLY:levels,n_spin,n_sp_pol
+     use electrons,      ONLY:levels,n_spin,n_sp_pol,E_reset,E_duplicate
      use xc_functionals, ONLY:E_xc
-     use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use R_lattice,      ONLY:nqbz,nXkibz
      !
      type(levels), intent(in) :: en
      !
-     call H_alloc(en,.not.l_RT_is_WFfree)
+     ! Store the reference energies
+     !
+     call E_reset(E_reference)
+     call E_duplicate(en,E_reference)
+     !
+     call H_alloc(en,.not.l_RT_is_WFfree,l_update_QP_WFs)
      !
      call H_QP_table_setup(en)
      !
@@ -573,15 +560,6 @@ module real_time
      call mem_est("REF_V_xc_sc",(/fft_size*n_spin/),(/SP/))
      allocate(REF_V_hartree_sc(fft_size,n_spin))
      call mem_est("REF_V_hartree_sc",(/fft_size*n_spin/),(/SP/))
-     allocate(REF_Vnl_xc(QP_n_states))
-     call mem_est("REF_Vnl_xc",(/size(REF_Vnl_xc)/),(/2*SP/))
-     !
-     allocate(BGR_hartree(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
-      allocate(BGR_V_xc(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
-     allocate(BGR_Self_Energy(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
      !
      if( .not.l_RT_is_WFfree ) then
        !
@@ -674,10 +652,8 @@ module real_time
        call mem_est("SAVED_lifetime")
      endif
      !
-     deallocate(REF_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
-     call mem_est("REF_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
-     deallocate(BGR_hartree,BGR_V_xc,BGR_Self_Energy)
-     call mem_est("BGR_hartree BGR_V_xc BGR_Self_Energy")
+     deallocate(REF_V_xc_sc,REF_V_hartree_sc)
+     call mem_est("REF_V_xc_sc REF_V_hartree_sc")
      !
      deallocate(RT_H_occupations)
      call mem_est("RT_H_occupations")

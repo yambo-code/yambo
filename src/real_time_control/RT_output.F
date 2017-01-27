@@ -34,7 +34,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use stderr,         ONLY:set_real_printed_length,string_split,intc,real2ch
  use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
-&                         EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR,RAD_prefactor,    &
+&                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
 &                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,     &
 &                         RT_Tfit_lifetimes
  use LIVE_t,         ONLY:what_is_running
@@ -64,10 +64,6 @@ subroutine RT_output(what,VALUES,TIME,E)
  open_files=index(what,'open')>0
  add_space=index(what,'space')>0
  initialize=index(what,'initialize')>0
- !
- ! FALL back till BGR procedure is not fixed 
- !
- if (index(what,'BGR')>0) return
  !
  if (.not.RT_do_it('OUT').and..not.open_files.and..not.initialize) return      
  !
@@ -251,18 +247,11 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'BGR'
  short_file_name(next_file)=trim(append_ch)//'BGR'
- n_headings(next_file)=6
- headings(next_file,2:3)=(/"Dir Gap","Ind Gap"/)
- headings(next_file,4  )=  "H+XC"  
- if (l_sc_sex) headings(next_file,4)="H+XC+SEX"
- if (l_sc_fock ) headings(next_file,4)="H+XC+HF"
- headings(next_file,5:6)=(/"Hartree","XC(DFT)"/)
- if (l_sc_sex) headings(next_file,7)=" SEX  "
- if (l_sc_fock ) headings(next_file,7)="  HF  "
- if (l_sc_sex.or.l_sc_fock) n_headings(next_file)=7
+ n_headings(next_file)=3
+ headings(next_file,2:3)=(/"DGap [meV]","IGap [meV]"/)
  next_file=next_file+1
  !
- headings(1:next_file-1,1)="Time[fs]"
+ headings(1:next_file-1,1)="Time[fs]  "
  !
  ! ... energy resolved ...
  !
@@ -546,10 +535,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:4) = -real(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
      case('BGR')
-       data_to_dump(2:3) = BGR(1:2)*HA2EV
-       data_to_dump(5:7) = BGR(3:5)*HA2EV
-       data_to_dump(4)   = (BGR(3)+BGR(4))*HA2EV
-       if (l_sc_sex.or.l_sc_fock) data_to_dump(4)   = (BGR(3)+BGR(4)+BGR(5))*HA2EV
+       data_to_dump(2:3) = VALUES(1:2)*HA2EV*1000._SP
      case('energy')
        if(     l_use_Hxc_collisions) data_to_dump(2:5) = VALUES(1:4)
        if(.not.l_use_Hxc_collisions) data_to_dump(2:6) = VALUES(1:5)

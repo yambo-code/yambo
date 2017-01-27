@@ -57,10 +57,10 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
  use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
-&                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
-&                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,&
-&                         RT_bands,RT_nbands,RT_nk
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc, &
+&                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
+&                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,E_reference,       &
+&                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
@@ -81,7 +81,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  ! Work Space
  !
  integer          :: ik,ik_RT,ik_DbGd,ib,ibp
- real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3)
+ real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3),deltaE
  !
 #if defined _TIMING
  call timing('RT Hamiltonian',OPR='start')
@@ -174,11 +174,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      do ik=1,nXkibz 
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-         if (l_RT_RWA) then
-           forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
-         else
-           call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(:,:,ik,1),Ho_plus_Sigma(:,:,ik_RT,1))
-         endif
+         forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
        enddo
      enddo
    endif
@@ -199,7 +195,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
      enddo
-     !  
+     !
    enddo
  endif
  !
@@ -209,14 +205,14 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  ! The Energies only update
  !==========================
- if (l_update_QP_E.and.(.not.l_update_QP_WFs)) then
+ if (l_update_QP_Energies) then
    do ik=1,nXkibz 
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        do ib=RT_bands(1),RT_bands(2)
          deltaE=real(Ho_plus_sigma(ib,ib,ik_RT,1),SP)
-         if(l_RT_uses_E_DbGd)        E%E_DbGd(ib,ik_DbGd,1)=E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
-         if(ik_RT==RT_ibz_coo(ik,1)) E%E(ib,ik_ibz,1)      =E_reference%E(ib,ik,1)          +deltaE
+         if(     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)=E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
+         if(.not.l_RT_uses_E_DbGd) E%E(ib,ik,1)          =E_reference%E(ib,ik,1)          +deltaE
        enddo
      enddo
    enddo
@@ -230,13 +226,10 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      !
      !if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu ) cycle
      !
-     ! DAVIDE:
-     ! Ho+Sigma[eq]= E^{QP} 
-     !
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        do ib=RT_bands(1),RT_bands(2)
-         if (l_update_QP_E.and.(.not.l_update_QP_WFs)) then
+         if (l_update_QP_Energies) then
            if(     l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
            if(.not.l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
          else
@@ -247,12 +240,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      enddo
      !
    enddo
-   !
- endif
- !
- if (l_update_QP_E.and.l_update_QP_WFs) then
-   ! Here I should diagonalize H and then rotate the WFs ...
-   ! Maybe better in a dedicated subroutine
    !
  endif
  !

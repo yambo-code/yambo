@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers)
+subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers,BGR)
  !
  ! This subroutine compute the variation of the energy and its different components,
  ! the number of electrons injected in conduction and holes in valence,
@@ -43,7 +43,7 @@ subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers)
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- real(SP),      intent(out):: Energies(5),Carriers(5)
+ real(SP),      intent(out):: Energies(5),Carriers(5),BGR(2)
  !
  real(SP) :: E_IP
  !
@@ -76,8 +76,8 @@ subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers)
  call RT_entropy(en,k,dG_lesser,E_IP)
  !
  ! BGR
- !=======================================
- call RT_BGR(dG_lesser,en,k)
+ !==========
+ call RT_BGR(en,k,BGR)
  !
 #if defined _TIMING
  call timing('RT observables',OPR='stop')

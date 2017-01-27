@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_databases_IO( )
+subroutine RT_databases_IO(E)
  !
  use drivers,        ONLY:l_elph_scatt
- use electrons,      ONLY:n_spin
+ use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,M_cache,JPC_RT_IO_t,&
 &                         GF_RT_IO_t,IO_JPSM_cache_steps,SAVE_G_history
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
@@ -34,6 +34,8 @@ subroutine RT_databases_IO( )
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time
  !
  implicit none
+ !
+ type(levels)      :: E
  !
  ! Work Space
  !
@@ -72,7 +74,7 @@ subroutine RT_databases_IO( )
    endif
    !
    if (io_CARRIERs) then
-     call RT_carriers_object(RT_carriers,WHAT='fill')
+     call RT_carriers_object(RT_carriers,E,WHAT='fill')
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
      io_carr=io_RT_components('carriers',ID(6))
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))

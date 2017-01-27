@@ -66,7 +66,7 @@ module RT_control
  !
  logical                 :: NEQ_Kernel
  logical                 :: NEQ_Residuals
- !
+ ! 
  interface
    !
    subroutine RT_output(what,VALUEs,TIME,E)

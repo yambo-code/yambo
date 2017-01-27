@@ -26,7 +26,6 @@ subroutine RT_driver(E,X,k,q)
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use stderr,         ONLY:set_real_printed_length
- use units,          ONLY:AUT2FS
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin
  use X_m,            ONLY:X_t
@@ -37,16 +36,17 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
- use RT_control,     ONLY:RT_output,RT_alloc_control,RT_free_control,ID,&
+ use RT_control,     ONLY:RT_alloc_control,RT_free_control,ID,&
 &                         NE_i_start_time,RT_carriers_object,TIME_adjust,RT_apply
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
-&                         NE_steps,RT_step,G_lesser,RT_bands,l_Update_Time_Step,&
+&                         NE_steps,RT_step,G_lesser,RT_bands,&
 &                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,eval_energy,&
 &                         G_lesser_reference,rho_reference,magn_reference,eval_entropy, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
-&                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased
+&                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
+&                         l_update_QP_Energies
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
@@ -70,7 +70,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: io_REF
  character(schlen) :: sec_title(3)
- real(SP)          :: Energies(5),Carriers(5)
+ real(SP)          :: Energies(5),Carriers(5),BGR(2)
  !
  integer, external :: io_RT_components
  !
@@ -224,19 +224,7 @@ subroutine RT_driver(E,X,k,q)
  ! Initialize output files
  !==========================
  !
- call RT_output(what="initialize")
- call RT_output(what="open carr curr pol magn")
- if(eval_energy)  call RT_output(what="open energy")
- if(eval_entropy) call RT_output(what="open therm")
- call RT_output(what="open BGR")
- if (l_NE_with_fields) then
-   call RT_output(what="open ext")
-   if(l_RT_induced_field) call RT_output(what="open tot ind")
- endif
- if (l_elph_scatt)     call RT_output('open EPlife')
- if (l_elel_scatt)     call RT_output('open EElife')
- if (l_elphoton_scatt) call RT_output('open RADlife')
- if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
+ call RT_output_and_IO_driver('initialize',E,k,Carriers,Energies,BGR)
  !
  ! Loop on time
  !==============
@@ -271,10 +259,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),Energies,Carriers,A_vecpot)
-   !
-   ! COLLISIONS@NE_time
-   !####################
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),Energies,Carriers,BGR)
    !
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
@@ -284,56 +269,16 @@ subroutine RT_driver(E,X,k,q)
    !===============================================
    call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time,.false.)
    !
-   ! Write DBs
-   !===========
-   call set_real_printed_length()
-   call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO( )
-   call IO_and_Messaging_switch("+fragments_IO_log")
-   call set_real_printed_length(f_length=10,g_length=10)  
+   ! Write DBs and output
+   !=====================
+   call RT_output_and_IO_driver('write',E,k,Carriers,Energies,BGR)
    !
-   ! OUTPUT(s)
-   !###########
-   call RT_output('BGR',TIME=NE_time*AUT2FS)
-   call RT_output('curr pol magn',TIME=NE_time*AUT2FS)
-   call RT_output('carr',VALUES=Carriers,TIME=NE_time*AUT2FS)
-   if(eval_entropy) call RT_output('therm ',TIME=NE_time*AUT2FS)
-   if(eval_energy)  call RT_output('energy',VALUES=Energies,TIME=NE_time*AUT2FS)
-   !
-   ! Mean Carrier Lifetimes
-   !========================
-   if (RT_is_dynamically_dephased) then
-     call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)                      call RT_output('EPlife',TIME=NE_time*AUT2FS)
-     if(l_elel_scatt)                      call RT_output('EElife',TIME=NE_time*AUT2FS)
-     if(l_elphoton_scatt)                  call RT_output('RADlife',TIME=NE_time*AUT2FS)
-     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('factors',TIME=NE_time*AUT2FS)
-   endif
-   !
-   ! Field(s)
-   !==========
-   if (l_NE_with_fields) then
-     call RT_output('external_field',TIME=NE_time*AUT2FS) 
-     if(l_RT_induced_field) then
-       call RT_output('total_field'  ,TIME=NE_time*AUT2FS) 
-       call RT_output('induced_field',TIME=NE_time*AUT2FS) 
-     endif
-   endif
-   !
-   ! T -> T+dT step 
-   !################
-   !
-   ! New steps & times ...
+   ! Time step update
    !=======================
-   !
-   ! ... Dynamical Time-Step evaluation
-   !
-   l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0._SP
-   !
-   if (l_Update_Time_Step) call RT_time_step_update( )
+   call RT_time_step_update( )
    !
    ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
-   !
+   !=========================
    call RT_MEMORY_index( )
    !
    ! I (eventually) stop after all actions at the time just calculated in the previous step of the loop
@@ -345,7 +290,6 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Integration
    !=============
-   !
    call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,A_vecpot_previous,RT_dyn_step,E,k,q,NE_time)
    !
    ! A update

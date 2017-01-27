@@ -112,8 +112,8 @@ subroutine COLLISIONS_compose_rt(dG_in)
    i_n       =HXC_collisions%state(i_coll,1)
    i_m       =HXC_collisions%state(i_coll,2)
    !
-   RT_Vnl_xc(i_n,i_n,i_k,:)= real(RT_Vnl_xc(i_n,i_n,ik,:))
-   RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,ik,:))
+   RT_Vnl_xc(i_n,i_n,i_k,:)= real(RT_Vnl_xc(i_n,i_n,i_k,:))
+   RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
    !
  enddo
  !

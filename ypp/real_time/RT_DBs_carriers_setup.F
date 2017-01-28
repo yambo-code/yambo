@@ -29,7 +29,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use R_lattice,     ONLY:bz_samp
  use RT_control,    ONLY:JPC_RT_IO_t
  use real_time,     ONLY:RT_carriers,NE_i_time,RT_nk,l_elel_scatt,l_elph_scatt,&
-&                        l_elphoton_scatt,l_RT_CCA_Kernel
+&                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_alloc,RT_free
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace
  !
  implicit none
@@ -53,6 +53,8 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  RT_nk=RT_k_grid(en,kpt,qpt)
  !
+ call RT_alloc(en)
+ !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"allocate")
  !
  if(l_RTpump_energy .or. l_RTpump_kspace) call RT_manual_excitation(en,kpt)
@@ -68,5 +70,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  io_RT_err=io_RT_components("carriers",ID)
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"free")
+ !
+ call RT_free()
  !
 end subroutine

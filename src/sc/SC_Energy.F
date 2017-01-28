@@ -33,8 +33,8 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  use parallel_m,     ONLY:master_cpu
  use xc_functionals, ONLY:V_xc,E_xc,XC_potential_driver,magn
  use FFT_m,          ONLY:fft_size
- use hamiltonian,    ONLY:l_sc_V_is_local,V_hartree_sc
- use SC,             ONLY:SC_kind,SC_xc_functional,E_bare_Ef
+ use hamiltonian,    ONLY:l_sc_V_is_local,V_hartree_sc,E_reference
+ use SC,             ONLY:SC_kind,SC_xc_functional
  !
  implicit none
  !
@@ -69,7 +69,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  !
  ! Fermi level contribution to E_total
  !
- E_total=(E%E_Fermi+E_bare_Ef)*nel
+ E_total=(E%E_Fermi+E_reference%E_Fermi)*nel
  !
  ! Bands energy
  !

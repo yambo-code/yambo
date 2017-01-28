@@ -24,6 +24,7 @@
 module hamiltonian
  !
  use pars,       ONLY:SP,schlen
+ use electrons,  ONLY:levels
  !
  integer           :: H_ref_bands(2)
  !
@@ -35,7 +36,7 @@ module hamiltonian
  integer           :: H_xc_functional
  integer           :: H_perturbation
  !
- complex(SP), allocatable :: Ho(:,:,:,:)
+ complex(SP), allocatable :: Hzero(:,:,:,:)
  !
  ! Non-Local part (sigma_x, sigma_cohsex)
  !
@@ -49,7 +50,7 @@ module hamiltonian
  !
  ! Kinetic Energy and Ionic potential energy
  !
- real(SP),    allocatable :: E_bare(:,:,:)
+ type(levels),save        :: E_reference
  !
  real(SP),    allocatable :: rho_n(:)
  real(SP),    allocatable :: magn_n(:,:)
@@ -99,7 +100,7 @@ module hamiltonian
    !
    subroutine H_alloc(E,l_real_space,l_rotation_matrix)
      use pars,           ONLY:SP
-     use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
      use memory_m,       ONLY:mem_est
@@ -110,8 +111,13 @@ module hamiltonian
      type(levels), intent(in) :: E
      logical,      intent(in) :: l_real_space,l_rotation_matrix
      !
-     allocate(Ho(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
-     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+     ! Store the reference energies
+     !
+     call E_reset(E_reference)
+     call E_duplicate(E,E_reference)
+     !
+     allocate(Hzero(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
+     call mem_est("Hzero",(/size(Hzero)/),(/2*SP/))
      !
      allocate(H_nl_sc(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
@@ -152,8 +158,8 @@ module hamiltonian
      !
      implicit none
      !
-     deallocate(Ho)
-     call mem_est("Ho")
+     deallocate(Hzero)
+     call mem_est("Hzero")
      !
      deallocate(H_nl_sc)
      call mem_est("H_nl_sc")

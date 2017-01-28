@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
+subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !
  !  This subroutine perform integration using different methods
  !
@@ -51,8 +51,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
  real(SP),             intent(in) :: T_step,Time
  complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  complex(SP),         intent(out) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- type(gauge_field),    intent(in) :: A_in
- type(gauge_field), intent(inout) :: A_out
+ type(gauge_field), intent(inout) :: A_vecpot
  !
  complex(SP) :: dG1(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  complex(SP) :: dG2(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -86,7 +85,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
 #if defined _TIMING
    call timing('RT integrator',OPR='stop')
 #endif
-   call RT_Hamiltonian(dG1,A_out,E,k,q,Time+T_step/2._SP)
+   call RT_Hamiltonian(dG1,A_vecpot,E,k,q,Time+T_step/2._SP)
    call RT_relaxation(dG1,E,k,q,Time+T_step/2._SP,.false.)
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
@@ -113,7 +112,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
 #if defined _TIMING
    call timing('RT integrator',OPR='stop')
 #endif
-   call RT_Hamiltonian(dG1,A_out,E,k,q,Time+T_step)
+   call RT_Hamiltonian(dG1,A_vecpot,E,k,q,Time+T_step)
    call RT_relaxation(dG1,E,k,q,Time+T_step,.false.)
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
@@ -151,9 +150,9 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      !
      if (l_NE_with_fields) then
        !
-       if (l_RT_induced_field) call RT_current_AND_polarization(E,dG,A_in) 
+       if (l_RT_induced_field) call RT_current_AND_polarization(E,dG,A_vecpot) 
        !
-       call RT_propagate_fields(E,A_out,T+dT,dT)
+       call RT_propagate_fields(E,A_vecpot,T+dT,dT)
        !
      endif
      !

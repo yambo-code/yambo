@@ -29,10 +29,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! [1] Initialize the Gf and potentials
  ! [2] Build Ho
  ! [3] Check for SC and RESTART DBs
- !  |
- !  .> Use SC as a starting point
- !  |
- !  .> RESTART from a previous run
+ !   > Use SC as a starting point
+ !   > RESTART from a previous run
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
  ! [6] (Eventually) load the retarded Green Functions 
@@ -54,8 +52,8 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
- use fields,         ONLY:A_vecpot,A_vecpot_previous,A_ext
- use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
+ use fields,         ONLY:A_vecpot,A_ext
+ use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,rho_n,magn_n,Hzero
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF
@@ -85,15 +83,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  call RT_set_G_lesser() 
  call RT_set_occupations()
  !
- ! Build Ho and save initial energies 
- !====================================
- !
- if(associated(E%Eo)) then
-   E_bare=E%Eo(:RT_bands(2),:,:)
- else
-   E_bare=E%E(:RT_bands(2),:,:)
- endif
- !
  if(.not.l_RT_is_WFfree) then
    !
    call Bare_Hamiltonian(E,k,k)
@@ -106,7 +95,6 @@ subroutine RT_start_and_restart(E,k,q,X)
        call V_real_space_to_H(ik,i_sp_pol,V_xc,        XC0(:,:,ik,i_sp_pol),WF,'xc ') 
      enddo
    enddo
-   !
    !
    ! In the driver loop both V_hartree_sc and V_xc corresponds to the [delta_rho] value. As here
    ! delta_rho=0 both V_hartree_sc and V_xc must be set to zero. Eventually a non zero value is read
@@ -249,35 +237,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Initialize the Vector Potential
  !=================================
  !
- if (l_NE_with_fields) then
-   !
-   call RT_Ext_fields(A_ext,NE_time)
-   !
-   ! If RESTARTing A_vecpot is read from GF database
-   !
-   if (NE_i_start_time==1) A_vecpot=A_ext
-   ! 
-   ! To properly initiate the loop the A@To must be stored in A_vecpot_previous
-   ! 
-   A_vecpot_previous = A_vecpot
-   !
- endif
+ if (l_NE_with_fields) call RT_propagate_fields(E,A_vecpot,NE_time,RT_step)
  !
  call msg('r','')
- !
- ! Apply QP-corrections 
- !======================
- !
- do ib=RT_bands(1),RT_bands(2)
-   Ho(ib,ib,1:nXkibz,1:n_sp_pol)=Ho(ib,ib,1:nXkibz,1:n_sp_pol) &
-&                              -E_bare(ib,1:nXkibz,1:n_sp_pol)+E%E(ib,1:nXkibz,1:n_sp_pol)
- enddo
- !
- ! Store the starting Eigenvalues in Eo
- !======================================
- !
- if (.not.associated(E%Eo)) allocate(E%Eo(RT_bands(2),nXkibz,n_sp_pol))
- E%Eo(1:RT_bands(2),1:nXkibz,1:n_sp_pol)=E%E(1:RT_bands(2),1:nXkibz,1:n_sp_pol)
  !
  ! Define RT_eh_en
  !================

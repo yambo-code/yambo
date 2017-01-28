@@ -56,10 +56,10 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
- use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
+ use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc,E_reference
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc, &
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
-&                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,E_reference,       &
+&                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,                   &
 &                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF

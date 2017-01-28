@@ -36,7 +36,6 @@ module SC
  integer           :: SC_X_size
  integer           :: SC_up_W_iters
  integer           :: n_SC_descriptions = 0
- real(SP)          :: E_bare_Ef
  real(SP)          :: rho_convergence
  real(SP)          :: magn_convergence
  real(SP)          :: E_convergence
@@ -167,7 +166,7 @@ module SC
      use wrapper,        ONLY:M_by_M
      !
      integer     :: direction,N
-     complex(SP) :: H(N1:N2,N),R(N,N)
+     complex(SP) :: H(N,N),R(N,N)
      !
      ! Work Space
      !

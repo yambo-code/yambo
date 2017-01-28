@@ -27,7 +27,6 @@ module real_time
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
- use electrons,  ONLY:levels
  !
  implicit none
  !
@@ -160,7 +159,6 @@ module real_time
  !----------------------------
  logical                  :: l_update_QP_Energies
  logical                  :: l_update_QP_WFs=.false.
- type(levels),save        :: E_reference
  !
  ! Relaxation and Dissipation 
  !----------------------------
@@ -432,18 +430,13 @@ module real_time
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
-     use hamiltonian,    ONLY:H_alloc,H_QP_table_setup,E_bare
+     use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
-     use electrons,      ONLY:levels,n_spin,n_sp_pol,E_reset,E_duplicate
+     use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
      use R_lattice,      ONLY:nqbz,nXkibz
      !
      type(levels), intent(in) :: en
-     !
-     ! Store the reference energies
-     !
-     call E_reset(E_reference)
-     call E_duplicate(en,E_reference)
      !
      call H_alloc(en,.not.l_RT_is_WFfree,l_update_QP_WFs)
      !
@@ -573,17 +566,11 @@ module real_time
        !
      endif
      !
-     ! Reference energies
-     !
-     allocate(E_bare(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     call mem_est("E_bare",(/size(E_bare)/))
-     E_bare=en%E(RT_bands(1):RT_bands(2),:,:)
-     !
    end subroutine RT_alloc
    !   
    subroutine RT_free
      !
-     use hamiltonian,    ONLY:H_free,E_bare
+     use hamiltonian,    ONLY:H_free
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      !
@@ -712,9 +699,6 @@ module real_time
        deallocate(magn_reference)
        call mem_est("magn_reference")
      endif
-     !
-     deallocate(E_bare)
-     call mem_est("E_bare")
      !
      if(allocated(RT_Deph_Matrix)) then
        deallocate(RT_Deph_Matrix)

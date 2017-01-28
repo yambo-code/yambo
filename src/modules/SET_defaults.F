@@ -105,7 +105,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,        &
 &                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
-&                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
+&                     A_vecpot,A_ind,A_ind_previous,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _MAGNETIC
@@ -529,7 +529,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  enddo
  !
  call A_vecpot_reset(A_vecpot)
- call A_vecpot_reset(A_vecpot_previous)
  call A_vecpot_reset(A_ext)
  call A_vecpot_reset(A_ind)
  call A_vecpot_reset(A_ind_previous)

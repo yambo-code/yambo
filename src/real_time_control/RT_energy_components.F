@@ -27,7 +27,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  use X_m,            ONLY:P_square
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol
- use hamiltonian,    ONLY:V_hartree_sc,Ho
+ use hamiltonian,    ONLY:V_hartree_sc,Hzero
  use rt_interfaces,  ONLY:RT_average_operator
  use QP_m,           ONLY:QP_nk
  use units,          ONLY:HA2EV
@@ -48,7 +48,6 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  character(3),  intent(in) :: what
  !
  complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),              &
-&               Ho_limited(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol), &
 &               dE_tot,dE_kin,dE_ion,dE_h,dE_xc,dE_hxc,dE_h_sc,E_xc_sc,E_xc_ref,dE_xc_sc,dE_hxc_sc
  !
  if(.not.eval_energy) return
@@ -72,10 +71,9 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  !
  ! Non-interacting energy variation
  !
- ! d_Ho = \delta\eps_{nmk} - V_Hxc[\rho_eq]
+ ! d_Hzero = \delta\eps_{nmk} - V_Hxc[\rho_eq]
  !
- Ho_limited=Ho(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:,:)
- call RT_average_operator(O_VALUE=dE_ion,O_MATRIX=Ho_limited,G=dG_lesser,  en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_ion,O_MATRIX=Hzero,G=dG_lesser,  en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
  !
  ! Non-interacting kinetc energy variation
  !

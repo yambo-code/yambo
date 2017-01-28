@@ -35,7 +35,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
 &                         E_P_El_abs_lifetime,l_RT_uses_E_DbGd,RT_ibz_coo,DbGd_ibz_coo,  &
 &                         RT_nk,RT_all2ibz,RT_delta0_occupations,RT_Nk_ibz,RT_bands,&
 &                         RT_obj_alloc,RT_obj_free,&
-&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,E_reference
+&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
+ use hamiltonian,    ONLY:E_reference
  use IO_m,           ONLY:io_bulk
  !
  implicit none

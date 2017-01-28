@@ -50,7 +50,7 @@ subroutine RT_driver(E,X,k,q)
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
- use fields,          ONLY:A_vecpot,A_vecpot_previous
+ use fields,          ONLY:A_vecpot
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -290,11 +290,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Integration
    !=============
-   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,A_vecpot_previous,RT_dyn_step,E,k,q,NE_time)
-   !
-   ! A update
-   !==========
-   A_vecpot_previous=A_vecpot
+   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,RT_dyn_step,E,k,q,NE_time)
    !
    ! G_lesser update
    !=================

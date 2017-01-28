@@ -31,10 +31,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  use wrapper,        ONLY:Vstar_dot_V
  use matrix_operate, ONLY:UP_matrix_index
  use hamiltonian,    ONLY:H_ref_bands
-#if defined _SC || !defined _RT
- use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
-#endif
-#if defined _RT
+#if defined _RT || defined _SC
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
 #if defined _TIMING

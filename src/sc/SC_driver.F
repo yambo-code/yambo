@@ -36,7 +36,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         l_SC_RESTART,l_Mean_Potential,it_to_start,                  &
 &                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
-&                         V_hartree_sc,Ho,V_xc_sc,E_bare,l_sc_XC_is_local,            &
+&                         V_hartree_sc,Hzero,V_xc_sc,E_reference,l_sc_XC_is_local,            &
 &                         H_QP_table_setup,SC_R
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
@@ -163,8 +163,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call msg('r','')
  !
- !  Ho (kinetic + potential)
- !===========================
+ !  Hzero (kinetic + potential)
+ !=============================
  call Bare_Hamiltonian(E,Xk,k)
  !
  ! Reference wavefunctions
@@ -334,9 +334,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call PP_redux_wait(H_nl_sc)
      !
-     ! Add Ho
+     ! Add Hzero
      !
-     H_nl_sc = H_nl_sc + Ho(:,:,ik,i_sp_pol)
+     H_nl_sc = H_nl_sc + Hzero(:,:,ik,i_sp_pol)
      !
      ! Diagonalize H_nl_sc 
      !=====================
@@ -558,8 +558,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call SC_report()
  !
- deallocate(E_bare)
- call mem_est("E_bare")
  if (l_SC_cycle.or.l_NSC_shot) then
    call WF_free(WF)
    call WF_free(WFo)
@@ -668,12 +666,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    subroutine SC_report()
      !     
      ! Before all the DFT energies are shifted the V_xc_sc
-     ! must be shifted of max(Ev)-max(E_bare_v)
+     ! must be shifted of max(Ev)-max(E_reference_v)
      ! for more details see A. Fleszar PRB 64, 245204
      !
      if (l_SC_cycle) then
        do i_sp_pol=1,n_sp_pol
-         V_xc_sc_shift(i_sp_pol )= maxval(E_bare(:n_met_bands,:,i_sp_pol))-maxval(E%E(:n_met_bands,:,i_sp_pol)) 
+         V_xc_sc_shift(i_sp_pol )= maxval(E_reference%E(:n_met_bands,:,i_sp_pol))-maxval(E%E(:n_met_bands,:,i_sp_pol)) 
          if (l_sc_V_is_local) then
            V_xc_sc(:,i_sp_pol)=V_xc_sc(:,i_sp_pol)+V_xc_sc_shift(i_sp_pol)
            call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
@@ -687,7 +685,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          !
          ! Check for degenrate bands in the bare energies
          !
-         call degeneration_finder(E_bare(:,ik,i_sp_pol),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+         call degeneration_finder(E_reference%E(:SC_bands(2),ik,i_sp_pol),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
          !
          do ib=1,SC_bands(2)
            !
@@ -725,7 +723,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          !
          ! end do SC_bands(2)
          !
-         dE(:,ik,i_sp_pol)=E%E(:SC_bands(2),ik,i_sp_pol)-E_bare(:,ik,i_sp_pol)
+         dE(:,ik,i_sp_pol)=E%E(:SC_bands(2),ik,i_sp_pol)-E_reference%E(:SC_bands(2),ik,i_sp_pol)
          !
        enddo
        !
@@ -735,14 +733,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !====================
      if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,2)  
      !
-     dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_bare(:,:,:)
+     dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_reference%E(:SC_bands(2),:,:)
      !
      call msg('r',' ')
      !
      do ik=1,k%nibz
        call REPORT_Energies(E%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.TRUE.)
        call REPORT_Energies(E%f(:SC_bands(2),:,:)/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'occ',.FALSE.)
-       call REPORT_Energies(E_bare,k,Xk,SC_bands(2),(/ik,ik/),'E_o',.FALSE.)
+       call REPORT_Energies(E_reference%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E_o',.FALSE.)
        call REPORT_Energies(dE,k,Xk,SC_bands(2),(/ik,ik/),'d_E',.FALSE.)
        call REPORT_Energies(spread,k,Xk,SC_bands(2),(/ik,ik/),'Spr',.FALSE.)
        call REPORT_Energies(max_overlap/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'MxO',.FALSE.)

@@ -47,7 +47,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
+&                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,RT_E_and_k,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser,RT_potential, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
@@ -69,7 +69,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,ik_RT_DbGd,ik_E_DbGd,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
@@ -331,14 +331,20 @@ subroutine RT_start_and_restart(E,k,q,X)
      !
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
-         do ik_RT_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           ik_E_rim=ik_RT_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+         do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
            if (l_RT_uses_E_DbGd) then
-             G_lesser(ib,ib,ik_RT_rim,1) =cI*E%f_DbGd(ib,ik_E_rim,1)
-             if (associated(E%W))  E%W_DbGd(ib,ik_E_rim,1)=E%W(ib,ik,1)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik_RT_rim) =cI*(E%f_DbGd(ib,ik_E_rim,1)-E%df_DbGd(ib,ik_E_rim,1))
+             !if (associated(E%W))  RT_E_and_k%W(ib,ik_RT_DbGd,1) =abs(E%W_DbGd(ib,ik_E_DbGd,1))
+             if (associated(E%W))  E%W_DbGd(ib,ik_E_DbGd,1) =abs(E%W(ib,ik,1))
+             RT_E_and_k%En(ib,ik_RT_DbGd,1)=E%E_DbGd(ib,ik_E_DbGd,1)
+             !RT_E_and_k%kpt(:,ik_RT_DbGd)=k%pt(ik,:)
+             G_lesser(ib,ib,ik_RT_DbGd,1) =cI*E%f_DbGd(ib,ik_E_DbGd,1)
+             if (associated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*(E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1))
            else
              G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
+             if (associated(E%W))  RT_E_and_k%W(ib,ik,1) =abs(E%W(ib,ik,1))
+             RT_E_and_k%En(ib,ik,1)=E%E(ib,ik,1)
+             !RT_E_and_k%kpt(:,ik)=k%pt(ik,:)
              if (associated(E%fo)) G_lesser_reference(ib,ib,ik) =cI*E%fo(ib,ik,1)
            endif
          enddo

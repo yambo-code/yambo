@@ -107,7 +107,7 @@ integer function RT_Lifetimes_evaluation_plan( )
        RT_TIME_status(it_+it)=i_default
        !
        if (N_intra>1) then
-         local_condition= (mod(it_,N_intra)==1) .or. it_+it==NE_steps
+         local_condition= (mod(it_+1,N_intra)==1) .or. it_+it==NE_steps
          if (local_condition) RT_TIME_status(it_+it)=int(real(it_)/real(N_intra))+1
        else
          RT_TIME_status(it_+it)=it_+1

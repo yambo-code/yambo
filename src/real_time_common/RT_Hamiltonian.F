@@ -59,8 +59,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc,E_reference
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc, &
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
-&                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,                   &
-&                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies
+&                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
+&                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies,RT_E_and_k
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
@@ -112,7 +112,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  ! Local part computed in real space (V_xc_sc and V_Hartree_sc)
  !=============================================================
  !
- if (.not.l_use_Hxc_collisions) then
+ if ( .not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP' ) then
    !
    ! Density & Magnetization (needed by Hartree and local XCs)
    !--------------------------
@@ -211,8 +211,12 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        do ib=RT_bands(1),RT_bands(2)
          deltaE=real(Ho_plus_sigma(ib,ib,ik_RT,1),SP)
-         if(     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)=E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
-         if(.not.l_RT_uses_E_DbGd) E%E(ib,ik,1)          =E_reference%E(ib,ik,1)          +deltaE
+         ! Here I update both E%E and RT_E_and_k%En
+         ! In future only RT_E_and_k could be used, like for the occupations
+         if(     l_RT_uses_E_DbGd) RT_E_and_k%En(ib,ik_RT,1)=E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
+         if(.not.l_RT_uses_E_DbGd) RT_E_and_k%En(ib,ik_RT,1)=E_reference%E(ib,ik,1)          +deltaE
+         if(     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)   =E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
+         if(.not.l_RT_uses_E_DbGd) E%E(ib,ik,1)             =E_reference%E(ib,ik,1)          +deltaE
        enddo
      enddo
    enddo
@@ -229,13 +233,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        do ib=RT_bands(1),RT_bands(2)
-         if (l_update_QP_Energies) then
-           if(     l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
-           if(.not.l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
-         else
-           if(     l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E%E_DbGd(ib,ik_DbGd,1)
-           if(.not.l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E%E(ib,ik,1)
-         endif
+         if (     l_update_QP_Energies) Ho_plus_Sigma(ib,ib,ik_RT,1)=RT_E_and_k%En(ib,ik_RT,1)
+         if (.not.l_update_QP_Energies) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+RT_E_and_k%En(ib,ik_RT,1)
        enddo
      enddo
      !

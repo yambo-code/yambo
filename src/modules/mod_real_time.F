@@ -191,6 +191,16 @@ module real_time
  logical                  :: l_RT_impose_N_dN    = .TRUE.
  logical                  :: l_RT_impose_E    = .TRUE.
  !
+ ! Energies
+ !---------------------
+ type RT_DbGd
+   real(SP), allocatable :: En(:,:,:)
+   real(SP), allocatable :: W(:,:,:)
+   real(SP), allocatable :: kpt(:,:)
+ end type
+ !
+ type(RT_DbGd),save  :: RT_E_and_k
+ !
  ! Locks and reference
  !----------------------
  logical                  :: l_use_updated_reference
@@ -436,6 +446,15 @@ module real_time
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
+     allocate(RT_E_and_k%En(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     call mem_est("RT_En",(/size(RT_E_and_k%En)/),(/SP/))
+     !
+     allocate(RT_E_and_k%W(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     call mem_est("RT_W",(/size(RT_E_and_k%W)/),(/SP/))
+     ! 
+     allocate(RT_E_and_k%kpt(3,RT_nk))
+     call mem_est("RT_kpt",(/size(RT_E_and_k%kpt)/),(/SP/))
+     !
      allocate(G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
@@ -654,6 +673,15 @@ module real_time
      !
      deallocate(RT_E_occupations)
      call mem_est("RT_E_occupations")
+     !
+     deallocate(RT_E_and_k%En)
+     call mem_est("RT_En")
+     !
+     deallocate(RT_E_and_k%W)
+     call mem_est("RT_W")
+     !
+     deallocate(RT_E_and_k%kpt)
+     call mem_est("RT_kpt")
      !
      deallocate(G_lesser)
      call mem_est("G_lesser")

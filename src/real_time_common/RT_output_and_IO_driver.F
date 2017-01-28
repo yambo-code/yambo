@@ -39,7 +39,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  character(*)           :: what
  type(levels)           :: E
  type(bz_samp)          :: k
- real(SP),    intent(in):: OBSERVABLES(23)
+ real(SP), intent(inout):: OBSERVABLES(23)
  !
  ! Workspace
  !
@@ -48,6 +48,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  select case(trim(what))
    !
  case('initialize')
+   !
+   OBSERVABLES=0._SP
    !
    call RT_output(what="initialize")
    call RT_output(what="open carr curr pol magn")

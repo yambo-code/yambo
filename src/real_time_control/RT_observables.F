@@ -77,7 +77,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! Carriers
  !==========
- call RT_carriers_number_and_temperature(en,k,NCarr,TFit)
+ call RT_carriers_number_and_temperature(en,k,NCarr,TFit,EfFit)
  !
  ! Energy
  !==========

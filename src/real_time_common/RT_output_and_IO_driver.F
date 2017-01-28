@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_output_and_IO_driver(what,E,k,Energies,Carriers,BGR)
+subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  !
  use pars,           ONLY:SP
  use RT_control,     ONLY:RT_output
@@ -39,27 +39,40 @@ subroutine RT_output_and_IO_driver(what,E,k,Energies,Carriers,BGR)
  character(*)           :: what
  type(levels)           :: E
  type(bz_samp)          :: k
- real(SP), intent(in)   :: Energies(5),Carriers(5),BGR(2)
+ real(SP),    intent(in):: OBSERVABLES(23)
+ !
+ ! Workspace
+ !
+ real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(2)
  !
  select case(trim(what))
    !
  case('initialize')
- !
- call RT_output(what="initialize")
- call RT_output(what="open carr curr pol magn")
- if(eval_energy)  call RT_output(what="open energy")
- if(eval_entropy) call RT_output(what="open therm")
- if(l_update_QP_Energies) call RT_output(what="open BGR")
- if (l_NE_with_fields) then
-   call RT_output(what="open ext")
-   if(l_RT_induced_field) call RT_output(what="open tot ind")
- endif
- if (l_elph_scatt)     call RT_output('open EPlife')
- if (l_elel_scatt)     call RT_output('open EElife')
- if (l_elphoton_scatt) call RT_output('open RADlife')
- if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
- !
+   !
+   call RT_output(what="initialize")
+   call RT_output(what="open carr curr pol magn")
+   if(eval_energy)  call RT_output(what="open energy")
+   if(eval_entropy) call RT_output(what="open therm")
+   if(l_update_QP_Energies) call RT_output(what="open BGR")
+   if (l_NE_with_fields) then
+     call RT_output(what="open ext")
+     if(l_RT_induced_field) call RT_output(what="open tot ind")
+   endif
+   if (l_elph_scatt)     call RT_output('open EPlife')
+   if (l_elel_scatt)     call RT_output('open EElife')
+   if (l_elphoton_scatt) call RT_output('open RADlife')
+   if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
+   !
  case('write')
+   !
+   NCarr =OBSERVABLES( 1: 3)
+   TFit  =OBSERVABLES( 4: 5)
+   EfFit =OBSERVABLES( 6: 7)
+   Ener  =OBSERVABLES( 8:12)
+   Entr  =OBSERVABLES(13:15)
+   TEntr =OBSERVABLES(16:18)
+   EnEntr=OBSERVABLES(19:21)
+   BGR   =OBSERVABLES(22:23)
    !
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
@@ -70,17 +83,17 @@ subroutine RT_output_and_IO_driver(what,E,k,Energies,Carriers,BGR)
    ! OUTPUT(s)
    !###########
    call RT_output('curr pol magn',TIME=NE_time*AUT2FS)
-   call RT_output('carr',VALUES=Carriers,TIME=NE_time*AUT2FS)
-   if(l_update_QP_Energies) call RT_output('BGR',Values=BGR,TIME=NE_time*AUT2FS)
-   if(eval_entropy) call RT_output('therm ',TIME=NE_time*AUT2FS)
-   if(eval_energy)  call RT_output('energy',VALUES=Energies,TIME=NE_time*AUT2FS)
+   call RT_output('carr',VALUES=(/NCarr(:),TFit(:),EfFit(:)/),TIME=NE_time*AUT2FS)
+   if(eval_energy)          call RT_output('energy',VALUES=Ener,                          TIME=NE_time*AUT2FS)
+   if(eval_entropy)         call RT_output('therm ',VALUES=(/EnEntr(:),Entr(:),TEntr(:)/),TIME=NE_time*AUT2FS)
+   if(l_update_QP_Energies) call RT_output('BGR',   VALUES=BGR,                           TIME=NE_time*AUT2FS)
    !
    ! Mean Carrier Lifetimes
    !========================
    if (RT_is_dynamically_dephased) then
      call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)                      call RT_output('EPlife',TIME=NE_time*AUT2FS)
-     if(l_elel_scatt)                      call RT_output('EElife',TIME=NE_time*AUT2FS)
+     if(l_elph_scatt)                      call RT_output('EPlife', TIME=NE_time*AUT2FS)
+     if(l_elel_scatt)                      call RT_output('EElife', TIME=NE_time*AUT2FS)
      if(l_elphoton_scatt)                  call RT_output('RADlife',TIME=NE_time*AUT2FS)
      if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('factors',TIME=NE_time*AUT2FS)
    endif
@@ -88,7 +101,7 @@ subroutine RT_output_and_IO_driver(what,E,k,Energies,Carriers,BGR)
    ! Field(s)
    !==========
    if (l_NE_with_fields) then
-     call RT_output('external_field',TIME=NE_time*AUT2FS)
+     call RT_output('external_field', TIME=NE_time*AUT2FS)
      if(l_RT_induced_field) then
        call RT_output('total_field'  ,TIME=NE_time*AUT2FS)
        call RT_output('induced_field',TIME=NE_time*AUT2FS)

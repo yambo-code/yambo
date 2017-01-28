@@ -241,17 +241,6 @@ module real_time
  real(SP)                 :: EP_prefactor(2)
  real(SP)                 :: EP_abs_prefactor(2) 
  !
- ! Occupations fit
- !-----------------
- real(SP)                 :: RT_Tfit_occupations(2)
- real(SP)                 :: RT_Efit_occupations(2)
- !
- ! Thermodynamics
- !-----------------
- real(SP)                 :: RT_T_thermodynamics(3)
- real(SP)                 :: RT_E_thermodynamics(3)
- real(SP)                 :: RT_S_thermodynamics(3)
- !
  ! Relaxation: Dephasing Matrix
  !------------------------------
  !

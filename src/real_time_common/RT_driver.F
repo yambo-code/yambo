@@ -70,7 +70,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: io_REF
  character(schlen) :: sec_title(3)
- real(SP)          :: Energies(5),Carriers(5),BGR(2)
+ real(SP)          :: OBSERVABLES(23)
  !
  integer, external :: io_RT_components
  !
@@ -224,7 +224,7 @@ subroutine RT_driver(E,X,k,q)
  ! Initialize output files
  !==========================
  !
- call RT_output_and_IO_driver('initialize',E,k,Carriers,Energies,BGR)
+ call RT_output_and_IO_driver('initialize',E,k,OBSERVABLES)
  !
  ! Loop on time
  !==============
@@ -259,7 +259,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),Energies,Carriers,BGR)
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
    !
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
@@ -271,7 +271,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Write DBs and output
    !=====================
-   call RT_output_and_IO_driver('write',E,k,Carriers,Energies,BGR)
+   call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
    !
    ! Time step update
    !=======================

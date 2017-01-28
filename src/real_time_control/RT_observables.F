@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers,BGR)
+subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! This subroutine compute the variation of the energy and its different components,
  ! the number of electrons injected in conduction and holes in valence,
@@ -43,8 +43,11 @@ subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers,BGR)
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- real(SP),      intent(out):: Energies(5),Carriers(5),BGR(2)
+ real(SP),   intent(inout) :: OBSERVABLES(23)
  !
+ ! Workspace
+ !
+ real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(2)
  real(SP) :: E_IP
  !
 #if defined _TIMING
@@ -63,21 +66,32 @@ subroutine RT_Observables(en,k,dG_lesser,Energies,Carriers,BGR)
    return
  endif
  !
+ NCarr =OBSERVABLES( 1: 3)
+ TFit  =OBSERVABLES( 4: 5)
+ EfFit =OBSERVABLES( 6: 7)
+ Ener  =OBSERVABLES( 8:12)
+ Entr  =OBSERVABLES(13:15)
+ TEntr =OBSERVABLES(16:18)
+ EnEntr=OBSERVABLES(19:21)
+ BGR   =OBSERVABLES(22:23)
+ !
  ! Carriers
  !==========
- call RT_carriers_number_and_temperature(en,k,Carriers(1:3),Carriers(4:5))
+ call RT_carriers_number_and_temperature(en,k,NCarr,TFit)
  !
  ! Energy
  !==========
- call RT_energy_components(en,k,dG_lesser,Energies,E_IP,'tot')
+ call RT_energy_components(en,k,dG_lesser,Ener,E_IP,'tot')
  !
  ! Entropy
  !==========
- call RT_entropy(en,k,dG_lesser,E_IP)
+ call RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
  ! BGR
  !==========
  call RT_BGR(en,k,BGR)
+ !
+ OBSERVABLES=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:),BGR(:)/)
  !
 #if defined _TIMING
  call timing('RT observables',OPR='stop')

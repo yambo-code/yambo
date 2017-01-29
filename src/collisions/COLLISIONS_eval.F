@@ -54,7 +54,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
- use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
+ use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
  !
  implicit none
  !
@@ -253,6 +253,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        IO_err=io_COLLISIONS(ID,COLL)
        if (any(COLL%IO_status/=1)) IO_err=-1
      endif
+     !
+     ! In case io_Colls is /=0 all CPU have to sincronize before starting
+     ! to compute the collisions and write a new header
+     !
+     call PP_redux_wait()
      !
      if (IO_err==0) return
      !

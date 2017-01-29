@@ -81,7 +81,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  ! Work Space
  !
  integer          :: ik,ik_RT,ik_DbGd,ib,ibp
- real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3),deltaE
+ real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3),E_new
  !
 #if defined _TIMING
  call timing('RT Hamiltonian',OPR='start')
@@ -114,7 +114,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  if ( .not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP' ) then
    !
-   ! Density & Magnetization (needed by Hartree and local XCs)
+   ! Density & Magnetization (needed for VHartree and Vxc)
    !--------------------------
    if (eval_HARTREE .or. eval_DFT) then
      call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
@@ -126,39 +126,32 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      magn_n=magn_reference+delta_magn
    endif
    !
-   ! The Hartree term
+   ! The VHartree term
    !-------------------
    if (eval_HARTREE) call V_Hartree(delta_rho,V_hartree_sc)
    !
-   ! The DFT-like
-   !-------------
+   ! The Vxc term
+   !--------------
    if (eval_DFT) then
-     !
-     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
-&                              MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
-     !
+     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,MUTE="-report -log -io_in -io_out")
      V_xc_sc=V_xc-REF_V_xc_sc
-     ! 
    endif
+   !
    !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
-   do ik=1,nXkibz 
-     !
-     H_nl_sc=cZERO
-     !
-     if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-     !
-     if (n_spinor==2) then
-       if(eval_HARTREE) call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
-       if(eval_DFT)     call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
-     endif
-     !
-     if (.not.PAR_IND_WF_k%element_1D(ik).or. .not.HEAD_QP_cpu) cycle
-     !
-     forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
-     !
-   enddo
+   if (HEAD_k_CPU.and.HEAD_QP_cpu) then
+     do ik=1,nXkibz 
+       H_nl_sc=cZERO
+       if (.not.PAR_IND_WF_k%element_1D(ik) ) return
+       if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+       if (n_spinor==2) then
+         if(eval_HARTREE) call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
+         if(eval_DFT)     call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
+       endif
+       forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
+     enddo
+   endif
    !
  endif
  !
@@ -184,62 +177,58 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  ! The External Field
  !====================
  if (l_NE_with_fields.and.HEAD_k_cpu) then
+   !
    do ik=1,nXkibz 
-     !
      if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-     !
      H_nl_sc=cZERO
-     !
      call RT_apply_field(ik,1,H_nl_sc,A_input)
-     !
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
      enddo
+   enddo
+   !
+ endif
+ !
+ ! The bare Hamiltonian
+ !=========================
+ if (.not.l_RT_RWA.and.HEAD_k_CPU) then
+   !
+   do ik=1,nXkibz
+     !
+     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+     !
+     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+       do ib=RT_bands(1),RT_bands(2)
+         if(     l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E_reference%E_DbGd(ib,ik_DbGd,1)
+         if(.not.l_RT_uses_E_DbGd) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E_reference%E(ib,ik,1)
+       enddo
+     enddo
      !
    enddo
+   !
  endif
  !
  ! All2All
  !=========
  call PP_redux_wait(Ho_plus_Sigma)
  !
- ! The Energies only update
+ ! The Energies (only) update
  !==========================
  if (l_update_QP_Energies) then
    do ik=1,nXkibz 
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        do ib=RT_bands(1),RT_bands(2)
-         deltaE=real(Ho_plus_sigma(ib,ib,ik_RT,1),SP)
+         E_new=real(Ho_plus_sigma(ib,ib,ik_RT,1),SP)
          ! Here I update both E%E and RT_E_and_k%En
          ! In future only RT_E_and_k could be used, like for the occupations
-         if(     l_RT_uses_E_DbGd) RT_E_and_k%En(ib,ik_RT,1)=E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
-         if(.not.l_RT_uses_E_DbGd) RT_E_and_k%En(ib,ik_RT,1)=E_reference%E(ib,ik,1)          +deltaE
-         if(     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)   =E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
-         if(.not.l_RT_uses_E_DbGd) E%E(ib,ik,1)             =E_reference%E(ib,ik,1)          +deltaE
+         if(     l_RT_uses_E_DbGd) RT_E_and_k%En(ib,ik_RT,1)=E_new
+         if(     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)   =E_new
+         if(.not.l_RT_uses_E_DbGd) E%E(ib,ik,1)             =E_new
        enddo
      enddo
    enddo
- endif
- !
- ! The bare Hamiltonian
- !=========================
- if (.not.l_RT_RWA) then
-   !
-   do ik=1,nXkibz
-     !
-     !if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu ) cycle
-     !
-     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-       do ib=RT_bands(1),RT_bands(2)
-         if (     l_update_QP_Energies) Ho_plus_Sigma(ib,ib,ik_RT,1)=RT_E_and_k%En(ib,ik_RT,1)
-         if (.not.l_update_QP_Energies) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+RT_E_and_k%En(ib,ik_RT,1)
-       enddo
-     enddo
-     !
-   enddo
-   !
  endif
  !
 #if defined _TIMING

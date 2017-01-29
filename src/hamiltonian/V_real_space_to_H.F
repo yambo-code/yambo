@@ -52,10 +52,6 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  integer    :: i_qp,ib,ibp,ifft,ifftp
  complex(SP):: c_ws(fft_size,n_spin)
  !
-#if defined _RT
- if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return
-#endif
- !
 #if defined _TIMING 
  call timing('V_real_space_to_H',OPR='start')
 #endif

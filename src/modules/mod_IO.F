@@ -590,12 +590,19 @@ module IO_m
      !
    end function
    !
-   subroutine netcdf_call(status)
+   subroutine netcdf_call(status,ID,VAR)
      use com,           ONLY:error
-     integer, intent ( in) :: status
+     integer,      intent (in)           :: status
+     integer,      intent (in), optional :: ID
+     character(*), intent (in), optional :: VAR
      character(schlen) :: msg
+     character(schlen) :: VARLOCAL
+     integer           :: local_error
      if(status /= nf90_noerr) then
-       write (msg,'(2a)') '[NetCDF] ',trim(nf90_strerror(status))
+       VARLOCAL=' unknown'
+       if( present(ID) ) local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARLOCAL)
+       if( present(VAR)) VARLOCAL=VAR
+       write (msg,'(4a)') ' Variable ',trim(VARLOCAL),': ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
    end subroutine

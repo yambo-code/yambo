@@ -1,4 +1,4 @@
-/wf_ng!
+!
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !

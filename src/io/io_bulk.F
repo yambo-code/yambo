@@ -28,6 +28,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
                    &                            IPOS)
  !
  use pars,    ONLY:SP,LP,nf90_SP
+ use pointers,ONLY:linkC2R
  use netcdf
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,read_is_on
@@ -46,6 +47,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  ! 
  ! Work Space
  !
+ real(SP), pointer    :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:)
  integer, allocatable :: var_dim(:),ipos_loc(:),isize_loc(:)
  integer              :: j1,dims
 #if defined _HDF5_COMPRESSION
@@ -61,23 +63,23 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  if (present(VAR).and.present(VAR_SZ)) then
    if (write_is_on(ID)) then
      allocate(var_dim(size(VAR_SZ)))
-     call netcdf_call(nf90_redef(io_unit(ID)))
+     call netcdf_call(nf90_redef(io_unit(ID)),ID,VAR=VAR)
      do j1=1,size(VAR_SZ)
        var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1))
      enddo
-     call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID)),VAR=VAR)
+     call netcdf_call(nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID)),ID,VAR=VAR)
 #if defined _HDF5_COMPRESSION
      shuffle=0
      deflate=1
      deflate_level=2
-     call netcdf_call(nf90_def_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level),VAR=VAR)
+     call netcdf_call(nf90_def_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level),ID,VAR=VAR)
 #endif
-     call netcdf_call(nf90_enddef(io_unit(ID))) 
+     call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
      deallocate(var_dim)
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)),VAR=VAR)
+     call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)),ID,VAR=VAR)
 #if defined _HDF5_COMPRESSION
-     call netcdf_call(nf90_inq_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level),VAR=VAR)
+     call netcdf_call(nf90_inq_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level),ID,VAR=VAR)
 #endif
    endif
    return
@@ -220,38 +222,43 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  ! Complex numbers / vectors / matricies
  !
  if (present(C0)) then
-   if (write_is_on(ID)) call nf_put_vara(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), C0)
-   if (read_is_on(ID) ) call nf_get_vara(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), C0)
+   RC0 => linkC2R(C0,(/2/))
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RC0, (/1/), (/2/))
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RC0, (/1/), (/2/))
  endif
  !
  if (present(C1)) then
    allocate(isize_loc(2))
    isize_loc=(/2,size(C1)/)
-   if (write_is_on(ID)) call nf_put_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C1)
-   if (read_is_on(ID) ) call nf_get_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C1)
+   RC1 => linkC2R(C1,isize_loc)
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RC1, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RC1, ipos_loc, isize_loc)
  endif
  !
  if (present(C2)) then
    allocate(isize_loc(3))
    isize_loc=(/2,size(C2,1),size(C2,2)/)
-   if (write_is_on(ID)) call nf_put_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C2)
-   if (read_is_on(ID) ) call nf_get_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C2)
+   RC2 => linkC2R(C2,isize_loc)
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RC2, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RC2, ipos_loc, isize_loc)
  endif
  !
  if (present(C3)) then
    allocate(isize_loc(4))
    isize_loc=(/2,size(C3,1),size(C3,2),size(C3,3)/)
-   if (write_is_on(ID)) call nf_put_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C3)
-   if (read_is_on(ID) ) call nf_get_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C3)
+   RC3 => linkC2R(C3,isize_loc)
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RC3, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RC3, ipos_loc, isize_loc)
  endif
  !
  if (present(C4)) then
    allocate(isize_loc(5))
    isize_loc=(/2,size(C4,1),size(C4,2),size(C4,3),size(C4,4)/)
-   if (write_is_on(ID)) call nf_put_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C4)
-   if (read_is_on(ID) ) call nf_get_vara(io_unit(ID), io_netcdf_var(ID), ipos_loc, isize_loc, C4)
+   RC4 => linkC2R(C4,isize_loc)
+   if (write_is_on(ID)) error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RC4, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RC4, ipos_loc, isize_loc)
  endif
  !
- call netcdf_call(error,ID=ID)
+ call netcdf_call(error,ID)
  !
 end subroutine

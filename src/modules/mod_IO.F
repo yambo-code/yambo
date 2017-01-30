@@ -318,18 +318,18 @@ module IO_m
        if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
          !
          if( file_exists(trim(io_file(ID))) ) then
-           call netcdf_call(nf90_open(trim(io_file(ID)),ior(nf90_write,nf90_share),io_unit(ID)))
+           call netcdf_call(nf90_open(trim(io_file(ID)),ior(nf90_write,nf90_share),io_unit(ID)),ID)
          else
-           call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)))
-           call netcdf_call(nf90_enddef(io_unit(ID)))
+           call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)),ID)
+           call netcdf_call(nf90_enddef(io_unit(ID)),ID)
            if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
            if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
          endif
          !
        else
          !
-         call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)))
-         call netcdf_call(nf90_enddef(io_unit(ID)))
+         call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)),ID)
+         call netcdf_call(nf90_enddef(io_unit(ID)),ID)
          !
        endif
        !
@@ -388,7 +388,7 @@ module IO_m
        if (type==-2) then
          open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
        else
-         call netcdf_call(nf90_open(trim(io_file(ID)),nf90_nowrite,io_unit(ID)))
+         call netcdf_call(nf90_open(trim(io_file(ID)),nf90_nowrite,io_unit(ID)),ID)
        endif
        !
        io_type(ID)=type
@@ -419,7 +419,7 @@ module IO_m
        if (io_type(ID)==-2) then
          close(unit=io_unit(ID))
        else
-         call netcdf_call(nf90_close(io_unit(ID)))
+         call netcdf_call(nf90_close(io_unit(ID)),ID)
        endif
        !
        io_unit(ID)=0
@@ -590,12 +590,19 @@ module IO_m
      !
    end function
    !
-   subroutine netcdf_call(status)
+   subroutine netcdf_call(status,ID,VAR)
      use com,           ONLY:error
-     integer, intent ( in) :: status
+     integer,      intent (in)           :: status
+     integer,      intent (in)           :: ID
+     character(*), intent (in), optional :: VAR
      character(schlen) :: msg
+     character(schlen) :: VARNAME,FILENAME
+     integer           :: local_error
      if(status /= nf90_noerr) then
-       write (msg,'(2a)') '[NetCDF] ',trim(nf90_strerror(status))
+       FILENAME=io_file(ID)
+       local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARNAME)
+       if( present(VAR)) VARNAME=VAR
+       write (msg,'(6a)') ' File ',trim(FILENAME),' Variable ',trim(VARNAME),': ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
    end subroutine
@@ -607,8 +614,7 @@ module IO_m
      netcdf_dim=0
      write (dim_strng,'(a,i10.10)') 'D_',dim
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
-     if (dim_found/=nf90_noerr) call netcdf_call(&
-&                               nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim))
+     if (dim_found/=nf90_noerr) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function
    !
    logical function variable_is_found(ID,var_name)

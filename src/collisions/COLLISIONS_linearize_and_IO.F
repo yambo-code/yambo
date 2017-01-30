@@ -25,7 +25,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  use pars,            ONLY:SP
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
- use IO_m,            ONLY:io_control,REP,OP_WR_CL,io_COLLs
+ use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS
  !
  implicit none                                              
@@ -95,12 +95,9 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  if (.not.IO_colls) return
  !
- if (i_coll==1) then 
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-   io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
- endif
+ if (i_coll==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
+ if (i_coll/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/2,3/),ID=ID)
  io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
  !
  call COLLISIONS_alloc_and_free(what,"v1","clean",1)

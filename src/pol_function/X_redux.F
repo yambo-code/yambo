@@ -37,7 +37,7 @@ subroutine X_redux(iq,Xw,X)
  use pars,          ONLY:SP,pi,cZERO,cONE
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,ncpu,myid,&
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,ncpu,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
@@ -129,6 +129,12 @@ subroutine X_redux(iq,Xw,X)
      !
      call LOCAL_X_transfer("Xo > SLK",iw_X(1),0)
      !
+   enddo
+   write (*,*) 
+   write (*,*) "1",Xo%blc(1,:3)
+   write (*,*) "2",Xo%blc(2,:3)
+   write (*,*) "3",Xo%blc(3,:3)
+   do while(.true.) 
    enddo
    !
    if (iw_par>PAR_n_freqs) cycle
@@ -310,7 +316,7 @@ subroutine X_redux(iq,Xw,X)
          endif
        endif
      else if (trim(mode)=="X > PAR") then
-       call PAR_matrix_transfer("slk > par",M_slk=BUFFER(iw_SLK),X_up=X_par,i_MAT=iW_X)
+       call PAR_matrix_transfer("slk > par",M_slk=BUFFER(iW_SLK),X_up=X_par,i_MAT=iW_X)
      endif
    end subroutine
    !

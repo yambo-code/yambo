@@ -1,0 +1,1 @@
+objs =  PARALLEL_matrix_distribute.o  PAR_matrix_duplicate.o  PAR_matrix_transfer.o  PAR_matrix_transfer_K_to_SLK.o  PAR_matrix_transfer_PAR_to_SLK.o

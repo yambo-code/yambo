@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
+subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  ! This subroutine must be kept thread-safe, since it is used
  ! inside an external omp loop.
@@ -62,13 +62,10 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
 &                            isp,iv,ic,isave(4),n_poles,i_bg,ig_start,X_rows(2)
  !
- isave=0
- !
- n_poles = sum(bare_grid_N(1:i_cg-1))
- !
+ isave       = 0
+ n_poles     = sum(bare_grid_N(1:i_cg-1))
  Xo_res(:,:) = cZERO
- !
- Z_=cONE
+ Z_          = cONE
  !
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
    !
@@ -104,12 +101,10 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    ! GPL_EXCLUDE_END
    !
    !
-   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
-&             spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
    if (l_X_term_vv) then
-     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin)/ &
-&               spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin)/spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    endif  
    !
    ! Scattering CALL
@@ -119,7 +114,7 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      Xo_scatt%is = (/ic,ik,1,i_spin/)
      Xo_scatt%os = (/iv,ik,1,i_spin/)
      Xo_scatt%qs = (/1,1,1/)
-     ik_bz_mem=PAR_Xk_bz_index(ikbz)
+     ik_bz_mem   = PAR_Xk_bz_index(ikbz)
      if (.not. X%ng==1) then
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
          call scatter_Bamp(Xo_scatt)
@@ -224,4 +219,4 @@ subroutine X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !
  enddo loop_bare_grid
  !
-end subroutine X_os_residuals
+end subroutine X_irredux_residuals

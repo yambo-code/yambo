@@ -23,7 +23,7 @@
 !
 module linear_algebra
  !
- use pars,       ONLY:SP
+ use pars,       ONLY:SP,schlen
  use parallel_m, ONLY:MPI_comm
 #include<memory.h>
  !
@@ -65,7 +65,10 @@ module linear_algebra
  integer, parameter   :: desc_len= 8
  type PAR_matrix
    !
+   character(schlen) :: kind = "SER" ! "PAR" "SLK" "XUP" "XDN"
+   !
    integer :: desc(desc_len)
+   integer :: N_blcs     = 0         ! If > 0 blcs_3d are used
    integer :: N          = -1
    integer :: lwork      = -1
    integer :: lrwork     = -1

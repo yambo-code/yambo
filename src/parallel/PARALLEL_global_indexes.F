@@ -339,6 +339,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  CALL PARALLEL_defaults(ENVIRONMENT)
  !
+ CALL DIPOLE_COMMUNICATORS_default( )
+ !
 #if defined _SCALAPACK
  !
  !======================================================
@@ -362,11 +364,21 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum") then
    !====================================================
    !
-   CALL PARALLEL_structure(4,(/"k","g","c","v"/))
+   CALL PARALLEL_structure(4,(/"g","k","c","v"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_3=PAR_COM_CON_INDEX(X_type),&
-&                                          COMM_index_4=PAR_COM_VAL_INDEX(X_type),COMM_index_2=PAR_COM_RL_INDEX,&
-&                                          COMM_A2A_1=PAR_COM_Xk_ibz_A2A,COMM_A2A_2=PAR_COM_RL_A2A)
+   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_RL_INDEX,&
+&                                          COMM_index_2=PAR_COM_Xk_ibz_INDEX,&
+&                                          COMM_index_3=PAR_COM_CON_INDEX(X_type),&
+&                                          COMM_index_4=PAR_COM_VAL_INDEX(X_type),&
+&                                          COMM_A2A_1=PAR_COM_RL_A2A,&
+&                                          COMM_A2A_2=PAR_COM_Xk_ibz_A2A)
+   !
+   ! COMMs setup
+   !
+    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
+   if (PAR_COM_RL_INDEX%n_CPU> 1) then
+     call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
+   endif
    !
    ! K-points (IBZ)
    !
@@ -390,12 +402,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
-   !
-   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_WORLD, PAR_COM_X_WORLD_RL_resolved)
-   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
    PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
@@ -422,10 +428,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    CALL PARALLEL_structure(5,(/"q","g","k","c","v"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(5,COMM_index_1=PAR_COM_Q_INDEX,COMM_index_3=PAR_COM_Xk_bz_INDEX,&
+   call PARALLEL_assign_chains_and_COMMs(5,COMM_index_1=PAR_COM_Q_INDEX,&
+&                                          COMM_index_2=PAR_COM_RL_INDEX,COMM_A2A_1=PAR_COM_Q_A2A,&
+&                                          COMM_index_3=PAR_COM_Xk_bz_INDEX,&
 &                                          COMM_index_4=PAR_COM_CON_INDEX(X_type),&
 &                                          COMM_index_5=PAR_COM_VAL_INDEX(X_type),&
-&                                          COMM_index_2=PAR_COM_RL_INDEX,COMM_A2A_1=PAR_COM_Q_A2A,&
 &                                          COMM_A2A_2=PAR_COM_RL_A2A,&
 &                                          COMM_A2A_3=PAR_COM_Xk_bz_A2A)
    !
@@ -433,6 +440,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! A2A when there is no internal distribution
    !
    if (PAR_COM_Xk_bz_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A)
+   !
+   ! COMMs setup
+   !
+   ! To define proper indexes to calculate the dipoles I need to build up
+   ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
+   ! The COMM is anyway the one for the all2all of each q.
+   !
+   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD_RL_resolved)
+   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
+   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
+   call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    ! K-points 
    !
@@ -501,16 +520,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif
    !
-   ! To define proper indexes to calculate the dipoles I need to build up
-   ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
-   ! The COMM is anyway the one for the all2all of each q.
-   !
-   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD_RL_resolved)
-   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
-   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
-   call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
-   !
    if (ENVIRONMENT/="Response_G_space_Finite_Momentum") then
      !
      call PARALLEL_minimal_index_from_overlaping(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz,PAR_COM_Xk_bz_INDEX)
@@ -555,12 +564,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_G_b_INDEX,&
+   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
+&                                          COMM_index_2=PAR_COM_G_b_INDEX,&
 &                                          COMM_index_3=PAR_COM_Q_INDEX,&
 &                                          COMM_index_4=PAR_COM_PLASMA_INDEX,&
 &                                          COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
 &                                          COMM_A2A_2=PAR_COM_G_b_A2A,&
 &                                          COMM_A2A_3=PAR_COM_Q_A2A)
+   !
+   ! COMMs setup
    !
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
@@ -571,6 +583,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (PAR_COM_Q_INDEX%n_CPU==1) then
      call COMM_copy(PAR_COM_G_b_A2A,PAR_COM_Q_A2A)
    endif
+   !
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
+   call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
+   call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX(X_type))
+   call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX(X_type))
    !
    ! K-points (IBZ)
    !
@@ -586,7 +603,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !.........................................................................
    !
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_WF_k)
-   call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
    PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
    !
    call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1 /),&
@@ -631,10 +647,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    !.........................................................................
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD_RL_resolved)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
    PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
    Y_ALLOCATE(PAR_DIPk_ibz_index(Xk%nibz))
@@ -754,9 +766,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    CALL PARALLEL_structure(4,(/"q ","g ","qp","b "/))
    !
-   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Q_INDEX,COMM_index_3=PAR_COM_QP_INDEX,&
-&                                          COMM_index_4=PAR_COM_G_b_INDEX,&
+   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Q_INDEX,&
 &                                          COMM_index_2=PAR_COM_RL_INDEX,&
+&                                          COMM_index_3=PAR_COM_QP_INDEX,&
+&                                          COMM_index_4=PAR_COM_G_b_INDEX,&
 &                                          COMM_A2A_1=PAR_COM_Q_A2A,&
 &                                          COMM_A2A_2=PAR_COM_RL_A2A,&
 &                                          COMM_A2A_3=PAR_COM_QP_A2A)
@@ -897,15 +910,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (l_elphoton_corr.and.l_life) then
      !
      ! Oscillators needed to evaluate the Radiative Lifetimes
-     !
-     ! Dipoles are calculated using the three user-defined COMs
-     !
-     call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-     call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
-     call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD_RL_resolved)
-     call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES_k_subgroup)
-     call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX(X_type))
-     call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX(X_type))
      ! 
      n_c_bands=QP_n_G_bands
      n_v_bands=QP_n_G_bands
@@ -962,9 +966,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
    !
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
    call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
@@ -1088,6 +1089,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  endif
  !
  contains
+   !
+   subroutine DIPOLE_COMMUNICATORS_default( )
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES_k_subgroup)
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD_RL_resolved)
+   end subroutine
    !
 #if defined _SC || defined _RT
    !

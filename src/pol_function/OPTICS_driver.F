@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine O_driver(Xen,Xk,q,wv,X)
+subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  ! 
  ! Optics driver
  !
@@ -36,7 +36,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -152,7 +152,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Check if EELS can be evaluated
    !
-   eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
    if (eval_alpha) eval_alpha=eval_eels
    !
@@ -221,13 +221,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! X Dyson equation solver
    !
-   if(l_rpa_IP) then
+   if (l_rpa_IP) then
      !
      if (Macroscopic_CPU) Epsilon_ii(:,2)=Epsilon_ii(:,1)
      !
    else
-     !
-     ! Back compatibility
      !
      call X_redux(iq,wv,X)
      !
@@ -276,9 +274,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call of_open_close(eel_file_name,'oa')
      call of_open_close(alpha_file_name,'oa')
      !
-     eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
+     eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
      if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
-     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
+     if(.not.l_rpa_IP) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
      !
      if (eval_alpha) then
        !

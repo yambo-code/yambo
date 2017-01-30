@@ -148,7 +148,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! OPTICS
  !========
  !
- if (l_optics.and.l_chi) call O_driver(Xen,Xk,q,Xw(3),X(3))
+ if (l_optics.and.l_chi) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3))
 #if defined _MEM_CHECK 
  if (l_optics.and.l_chi) call MEM_dri("",REPORT="check")
 #endif

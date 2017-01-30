@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT )
+SUBROUTINE MATRIX_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT )
  !
  ! Possible enviroments: M_slk,M_par,M_bse,X
  !
@@ -114,7 +114,7 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
    if (present(M_bse)) then
      !
      if (mode=="K > slk".or.mode=="slk < K") then
-       call PAR_matrix_transfer_K_to_SLK(M_bse,M_slk)
+       call MATRIX_K_to_SLK(M_bse,M_slk)
      endif
      !
    endif
@@ -126,10 +126,10 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
      !
      if (mode=="X > slk".or.mode=="slk < X") then
        if (present(X_dn)) then
-         call PAR_matrix_transfer_PAR_to_SLK("X up","SLK",X_up,M_slk,i_MAT)
-         call PAR_matrix_transfer_PAR_to_SLK("X dn","SLK",X_dn,M_slk,i_MAT)
+         call MATRIX_PAR_to_from_SLK("X up","SLK",X_up,M_slk,i_MAT)
+         call MATRIX_PAR_to_from_SLK("X dn","SLK",X_dn,M_slk,i_MAT)
        else
-         call PAR_matrix_transfer_PAR_to_SLK("X","SLK",X_up,M_slk,i_MAT)
+         call MATRIX_PAR_to_from_SLK("X","SLK",X_up,M_slk,i_MAT)
        endif
      endif
      !
@@ -141,7 +141,7 @@ SUBROUTINE PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M ,i_MAT 
    if (present(M_par)) then
      !
      if (mode=="slk > par".or.mode=="par < slk") then
-       call PAR_matrix_transfer_PAR_to_SLK(" ","PAR",M_par,M_slk,i_MAT)
+       call MATRIX_PAR_to_from_SLK(" ","PAR",M_par,M_slk,i_MAT)
      endif
      !
    endif

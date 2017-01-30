@@ -32,7 +32,7 @@ subroutine SLK_matrix_init(M_slk, N)
  !
  use SLK_m,          ONLY:SLK_ORTHO
  use parallel_m,     ONLY:ncpu
- use linear_algebra, ONLY:PAR_matrix,PAR_matrix_reset 
+ use linear_algebra, ONLY:PAR_matrix,MATRIX_reset 
 #include<memory.h>
  !
  integer           :: N
@@ -76,7 +76,7 @@ subroutine SLK_matrix_init(M_slk, N)
  !
  call DESCINIT( M_slk%desc, N, N, N_blcs, N_blcs, 0, 0, SLK_ORTHO%ortho_cntx, lld, M_slk%info )
  !
- call PAR_matrix_reset(M_slk)
+ call MATRIX_reset(M_slk)
  !
  M_slk%rows       = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
  M_slk%cols       = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)

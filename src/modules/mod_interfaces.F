@@ -27,7 +27,7 @@ module interfaces
  !
  interface
    !
-   subroutine PAR_matrix_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M, i_MAT )
+   subroutine MATRIX_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M, i_MAT )
      !
      use linear_algebra, ONLY:PAR_matrix
      use pars,           ONLY:SP

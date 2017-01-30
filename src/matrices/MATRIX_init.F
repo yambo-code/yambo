@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_matrix_distribute( what, M_par, N )
+subroutine MATRIX_init( what, M_par, N )
  !
  ! I distribute here the upper part of the X matrix.
  !
@@ -46,6 +46,7 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
 #if defined _SCALAPACK
    BLACS_structure_in_use=.FALSE.
 #endif
+   M_par%kind="SLK"
  endif
  !
  if (M_par%INTER_comm%n_CPU==1) then
@@ -53,6 +54,7 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
    M_par%cols  = (/1,N/)
    M_par%nrows = N
    M_par%ncols = N
+   M_par%kind="SER"
    return
  endif
  !
@@ -70,6 +72,7 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
    !
    ! Response function. Only upper triangle is distributed.
    !
+   M_par%kind="XUP"
    M= ( (N**2-N)/2 + N )/M_par%INTER_comm%n_CPU
    cols(1,:)=(/1,N/)
    rows(1,:)=(/1,UPPER_solver(N)/)
@@ -90,6 +93,7 @@ subroutine PARALLEL_matrix_distribute( what, M_par, N )
    !
    ! Response function. Entire Matrix.
    !
+   M_par%kind="PAR"
    M= N/M_par%INTER_comm%n_CPU
    M_par%cols  = (/1,N/)
    M_par%rows  = (/M*M_par%INTER_comm%CPU_id+1,M*(M_par%INTER_comm%CPU_id+1)/)

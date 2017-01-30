@@ -42,10 +42,10 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use pars,          ONLY:SP,cONE,cZERO
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
 &                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error,&
-&                        PAR_matrix,PAR_matrix_reset
+&                        PAR_matrix,MATRIX_reset
  use wrapper,       ONLY:M_by_M
  use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
- use interfaces,    ONLY:PAR_matrix_transfer
+ use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use com,           ONLY:warning
 #if defined _TIMING
@@ -130,9 +130,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      Y_MEM(M_loc_slk%blc)
      !
      if (present(M_bse)) then
-       call PAR_matrix_transfer( "K > slk", M_slk= M_loc_slk, M_bse=M_bse )
+       call MATRIX_transfer( "K > slk", M_slk= M_loc_slk, M_bse=M_bse )
      else if (present(M)) then
-       call PAR_matrix_transfer( "M > slk", M_slk= M_loc_slk, M=M )
+       call MATRIX_transfer( "M > slk", M_slk= M_loc_slk, M=M )
      endif
      !
    endif
@@ -145,15 +145,15 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      !
      call PARALLEL_HERMITIAN_diagonalization( M_loc_slk, EIGEN_slk, N, E_real )
      !
-     call PAR_matrix_transfer( "slk > M", M_slk = EIGEN_slk , M=M )
+     call MATRIX_transfer( "slk > M", M_slk = EIGEN_slk , M=M )
      Y_FREE(EIGEN_slk%blc)
-     call PAR_matrix_reset(EIGEN_slk)
+     call MATRIX_reset(EIGEN_slk)
      !
    else if (idriver==INV) then
      !
      if (present(M)) then
        call PARALLEL_inversion( M_loc_slk, N ) 
-       call PAR_matrix_transfer( "slk > M", M_slk = M_loc_slk , M=M )
+       call MATRIX_transfer( "slk > M", M_slk = M_loc_slk , M=M )
      else
        call PARALLEL_inversion( M_slk, N ) 
      endif
@@ -165,13 +165,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        call SLK_matrix_init( B_loc_slk, N )
        Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols))
        Y_MEM(B_loc_slk%blc)
-       call PAR_matrix_transfer( "M > slk", M_slk = B_loc_slk, M=B )
+       call MATRIX_transfer( "M > slk", M_slk = B_loc_slk, M=B )
        !
        call PARALLEL_lin_system( M_loc_slk, B_loc_slk, N, N)
-       call PAR_matrix_transfer( "slk > M", M_slk =  B_loc_slk, M=B )
+       call MATRIX_transfer( "slk > M", M_slk =  B_loc_slk, M=B )
        !
        Y_FREE(B_loc_slk%blc)
-       call PAR_matrix_reset(B_loc_slk)
+       call MATRIX_reset(B_loc_slk)
        !
      else
        !
@@ -186,20 +186,20 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        call SLK_matrix_init( B_loc_slk, N )
        Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols))
        Y_MEM(B_loc_slk%blc)
-       call PAR_matrix_transfer( "M > slk",M_slk =  B_loc_slk, M=B )
+       call MATRIX_transfer( "M > slk",M_slk =  B_loc_slk, M=B )
        !
        call SLK_matrix_init( C_loc_slk, N )
        Y_ALLOCATE(C_loc_slk%blc(C_loc_slk%nrows,C_loc_slk%ncols))
        Y_MEM(C_loc_slk%blc)
-       call PAR_matrix_transfer( "M > slk",M_slk =  C_loc_slk, M=C )
+       call MATRIX_transfer( "M > slk",M_slk =  C_loc_slk, M=C )
        !
        call PARALLEL_M_by_M( M_loc_slk, B_loc_slk, C_loc_slk, 'N', 'N', N, N , N )
-       call PAR_matrix_transfer( "slk > M",M_slk =  C_loc_slk, M=C )
+       call MATRIX_transfer( "slk > M",M_slk =  C_loc_slk, M=C )
        !
-       call PAR_matrix_reset(B_loc_slk)
+       call MATRIX_reset(B_loc_slk)
        Y_FREE(B_loc_slk%blc)
        !
-       call PAR_matrix_reset(C_loc_slk)
+       call MATRIX_reset(C_loc_slk)
        Y_FREE(C_loc_slk%blc)
        !
      else

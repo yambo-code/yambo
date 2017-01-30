@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE PAR_matrix_duplicate( operation, M_in, M_out )
+SUBROUTINE MATRIX_duplicate( operation, M_in, M_out )
  !
  ! operation can be "none/+1/-1/-C(= -1 * conjg)"
  !
  use pars,           ONLY:cZERO
- use linear_algebra, ONLY:PAR_matrix,PAR_matrix_reset
+ use linear_algebra, ONLY:PAR_matrix,MATRIX_reset
 #include<memory.h>
  !
  character(*)     :: operation
@@ -37,7 +37,7 @@ SUBROUTINE PAR_matrix_duplicate( operation, M_in, M_out )
  integer :: BLK_size
  !
  BLK_size=size(M_in%blc,1)
- call PAR_matrix_reset(M_out)
+ call MATRIX_reset(M_out)
  !
  M_out%N          = M_in%N         
  M_out%desc       = M_in%desc      

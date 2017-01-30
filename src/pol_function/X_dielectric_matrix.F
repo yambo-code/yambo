@@ -45,7 +45,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load
  use QP_m,          ONLY:QP_n_W_freqs_redux
- use linear_algebra,ONLY:PAR_matrix_reset
+ use linear_algebra,ONLY:MATRIX_reset
  !
 #include<memory.h>
  !
@@ -263,7 +263,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  if (io_RESPONSE) then
    Y_FREE(X_par%blc_3d)
    Y_FREE(X_mat)
-   call PAR_matrix_reset(X_par)
+   call MATRIX_reset(X_par)
  endif
  !
  call X_alloc('DIP_projected')

@@ -40,10 +40,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
  use SLK_m,          ONLY:BLACS_structure_in_use
- use linear_algebra, ONLY:PAR_matrix_reset
+ use linear_algebra, ONLY:MATRIX_reset
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO
- use interfaces,     ONLY:PAR_matrix_transfer
+ use interfaces,     ONLY:MATRIX_transfer
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -159,13 +159,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    ! Prepare the BLACS matrices (reference, K_slk and local, K_inv_slk)
    !============================
    !
-   call PAR_matrix_transfer("slk < K", M_slk=K_slk, M_bse= BS_blk )
+   call MATRIX_transfer("slk < K", M_slk=K_slk, M_bse= BS_blk )
    !
    ! Diagonal removal
    !==================
    call K_diagonal(iq,"rm_OCC DIAG")
    !
-   if (FULL) call PAR_matrix_duplicate( "none", K_slk, K_inv_slk )
+   if (FULL) call MATRIX_duplicate( "none", K_slk, K_inv_slk )
    !
 #endif
    !
@@ -438,8 +438,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      Y_FREE(Lo)
      !
 #if defined _SCALAPACK
-     call PAR_matrix_reset(K_slk)
-     call PAR_matrix_reset(K_inv_slk)
+     call MATRIX_reset(K_slk)
+     call MATRIX_reset(K_inv_slk)
      BLACS_structure_in_use=.FALSE.    
 #endif
      !

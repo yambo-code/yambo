@@ -98,7 +98,7 @@ module linear_algebra
  !
  contains
    !
-   subroutine PAR_matrix_reset(M_par)
+   subroutine MATRIX_reset(M_par)
      use parallel_m, ONLY:COMM_reset
      type(PAR_matrix)   :: M_par
      M_par%N        = 0

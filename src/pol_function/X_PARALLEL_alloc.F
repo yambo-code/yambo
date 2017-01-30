@@ -26,7 +26,7 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  use pars,          ONLY:cZERO
  use IO_m,          ONLY:io_RESPONSE
  use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_nq,PAR_COM_RL_A2A
- use linear_algebra,ONLY:PAR_matrix_reset
+ use linear_algebra,ONLY:MATRIX_reset
  use X_m,           ONLY:X_t,X_par,iW_offset,X_par_lower_triangle,&
 &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
  use interfaces,    ONLY:PARALLEL_live_message
@@ -44,7 +44,7 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  !
  ! Reset...
  !
- call PAR_matrix_reset(X_par)
+ call MATRIX_reset(X_par)
  !
  ! COMMS...
  !
@@ -59,8 +59,8 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  !
  ! NG distribution...
  !
- if (l_Xo)  call PARALLEL_matrix_distribute( "Xo", X_par , X%ng )
- if (l_PAR) call PARALLEL_matrix_distribute( "PAR", X_par , X%ng )
+ if (l_Xo)  call MATRIX_init( "Xo", X_par , X%ng )
+ if (l_PAR) call MATRIX_init( "PAR", X_par , X%ng )
  !
  ! Frequency size
  !
@@ -69,17 +69,18 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
    if (     io_RESPONSE) X_size=NW
  else if (l_Xo) then
    X_size                   = NW
-   call PARALLEL_matrix_distribute( "Xo", X_par , X%ng )
+   call MATRIX_init( "Xo", X_par , X%ng )
  else if (l_PAR) then
    X_size                   = NW
-   call PARALLEL_matrix_distribute( "PAR", X_par , X%ng )
+   call MATRIX_init( "PAR", X_par , X%ng )
  endif
  !
  iW_offset = 0
  !
  if (mode=="Xo".and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
-   call PAR_matrix_reset(X_par_lower_triangle)
+   call MATRIX_reset(X_par_lower_triangle)
    X_lower_triangle_matrix_in_use=.TRUE.
+   X_par_lower_triangle%kind ="XDN"
    X_par_lower_triangle%rows =X_par%cols
    X_par_lower_triangle%cols =X_par%rows
    X_par_lower_triangle%nrows=X_par%ncols

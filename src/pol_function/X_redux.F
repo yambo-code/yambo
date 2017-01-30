@@ -41,9 +41,9 @@ subroutine X_redux(iq,Xw,X)
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
- use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL,PAR_matrix,PAR_matrix_reset
+ use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL,PAR_matrix,MATRIX_reset
  use wrapper,       ONLY:M_by_M
- use interfaces,    ONLY:LINEAR_ALGEBRA_driver,PAR_matrix_transfer
+ use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle,X_lower_triangle_matrix_in_use
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
@@ -86,17 +86,17 @@ subroutine X_redux(iq,Xw,X)
  !
  ! ... and local BLACS structures for the response function components
  !         ======================
- call PARALLEL_matrix_distribute( "SLK", KERNEL , X%ng )
+ call MATRIX_init( "SLK", KERNEL , X%ng )
  Y_ALLOCATE(KERNEL%blc(KERNEL%nrows,KERNEL%ncols))
  Y_MEM(KERNEL%blc)
  KERNEL%blc=cZERO
- call PARALLEL_matrix_distribute( "SLK", Xo , X%ng )
+ call MATRIX_init( "SLK", Xo , X%ng )
  Y_ALLOCATE(Xo%blc(Xo%nrows,Xo%ncols))
  Y_MEM(Xo%blc)
  Xo%blc=cZERO
  allocate(BUFFER(maxval(PAR_n_freqs_global)))
  do iw_par=1,maxval(PAR_n_freqs_global)
-   call PARALLEL_matrix_distribute( "SLK", BUFFER(iw_par) , X%ng )
+   call MATRIX_init( "SLK", BUFFER(iw_par) , X%ng )
    Y_ALLOCATE(BUFFER(iw_par)%blc(Xo%nrows,Xo%ncols))
    Y_MEM(BUFFER(iw_par)%blc)
    BUFFER(iw_par)%blc=cZERO
@@ -244,9 +244,9 @@ subroutine X_redux(iq,Xw,X)
  Y_FREE(KERNEL%blc)
  Y_FREE(Xo%blc)
  Y_FREE(X_par_lower_triangle%blc)
- call PAR_matrix_reset(KERNEL)
- call PAR_matrix_reset(Xo)
- call PAR_matrix_reset(X_par_lower_triangle)
+ call MATRIX_reset(KERNEL)
+ call MATRIX_reset(Xo)
+ call MATRIX_reset(X_par_lower_triangle)
  !
 #if defined _TIMING
  call timing('X (procedure)',OPR='stop')
@@ -263,7 +263,7 @@ subroutine X_redux(iq,Xw,X)
    NW=size(X_par%blc_3d,3)
    !
    Y_FREE(X_par%blc_3d)
-   call PAR_matrix_reset(X_par)
+   call MATRIX_reset(X_par)
    !
    call X_PARALLEL_alloc(X,NW,"PAR")
    !
@@ -304,19 +304,19 @@ subroutine X_redux(iq,Xw,X)
      if (trim(mode)=="Xo > SLK") then
        if (X_lower_triangle_matrix_in_use) then
          if (BLACS_structure_in_use) then
-           call PAR_matrix_transfer("X > slk",M_slk=Xo,X_up=X_par,X_dn=X_par_lower_triangle,i_MAT=iW_X)
+           call MATRIX_transfer("X > slk",M_slk=Xo,X_up=X_par,X_dn=X_par_lower_triangle,i_MAT=iW_X)
          else
-           call PAR_matrix_transfer("X > M",  X_up=X_par,X_dn=X_par_lower_triangle,M=Xo%blc,i_MAT=iW_X)
+           call MATRIX_transfer("X > M",  X_up=X_par,X_dn=X_par_lower_triangle,M=Xo%blc,i_MAT=iW_X)
          endif
        else
          if (BLACS_structure_in_use) then
-           call PAR_matrix_transfer("X > slk",M_slk=Xo,X_up=X_par,i_MAT=iW_X)
+           call MATRIX_transfer("X > slk",M_slk=Xo,X_up=X_par,i_MAT=iW_X)
          else
-           call PAR_matrix_transfer("X > M",  X_up=X_par,M=Xo%blc,i_MAT=iW_X)
+           call MATRIX_transfer("X > M",  X_up=X_par,M=Xo%blc,i_MAT=iW_X)
          endif
        endif
      else if (trim(mode)=="X > PAR") then
-       call PAR_matrix_transfer("slk > par",M_slk=BUFFER(iW_SLK),X_up=X_par,i_MAT=iW_X)
+       call MATRIX_transfer("slk > par",M_slk=BUFFER(iW_SLK),X_up=X_par,i_MAT=iW_X)
      endif
    end subroutine
    !

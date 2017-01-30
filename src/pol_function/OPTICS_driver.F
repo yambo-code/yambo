@@ -46,7 +46,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
- use linear_algebra,ONLY:PAR_matrix_reset
+ use linear_algebra,ONLY:MATRIX_reset
  !
 #include<memory.h>
  !
@@ -338,7 +338,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  ! CLEAN
  !
  Y_FREE(X_par%blc_3d)
- call PAR_matrix_reset(X_par)
+ call MATRIX_reset(X_par)
  call X_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait

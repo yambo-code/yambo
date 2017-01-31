@@ -178,7 +178,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  endif
  !
  call X_half_mat_check(Xen,Xk,Xw)
- call X_PARALLEL_alloc(X,Xw%n_freqs,"Xo DIELETRIC_MATRIX")
+ call X_PARALLEL_alloc(X,Xw%n_freqs,"XUP DIELETRIC_MATRIX")
  !
  ! WF distribution 
  !=================

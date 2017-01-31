@@ -1,1 +1,2 @@
-objs =  MATRIX_init.o MATRIX_duplicate.o MATRIX_K_to_SLK.o MATRIX_PAR_to_from_SLK.o MATRIX_transfer.o
+objs =  MATRIX_init.o MATRIX_duplicate.o \
+        MATRIX_BSE_to_PAR.o MATRIX_PAR_to_from_PAR.o MATRIX_SER_to_from_PAR.o MATRIX_transfer.o

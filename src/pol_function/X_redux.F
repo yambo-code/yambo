@@ -45,7 +45,7 @@ subroutine X_redux(iq,Xw,X)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle,X_lower_triangle_matrix_in_use
+ use X_m,           ONLY:X_t,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use SLK_m,         ONLY:BLACS_structure_in_use
 #if defined _TIMING
@@ -127,15 +127,20 @@ subroutine X_redux(iq,Xw,X)
      !
      if (ncpu>1.and.i_LA_pool/=PAR_COM_SLK_INDEX_local%CPU_id+1) iw_X(1)=-iw_X(1)
      !
-     call LOCAL_X_transfer("Xo > SLK",iw_X(1),0)
+     call MATRIX_transfer(M_in=X_par,               M_out=Xo,INDEX_in=iw_X(1))
+     call MATRIX_transfer(M_in=X_par_lower_triangle,M_out=Xo,INDEX_in=iw_X(1))
      !
    enddo
-   write (*,*) 
-   write (*,*) "1",Xo%blc(1,:3)
-   write (*,*) "2",Xo%blc(2,:3)
-   write (*,*) "3",Xo%blc(3,:3)
-   do while(.true.) 
-   enddo
+   !write (*,*) 
+   !write (*,*) "1",X_par%blc_3d(1,:3,1)
+   !write (*,*) "2",X_par%blc_3d(2,:3,1)
+   !write (*,*) "3",X_par%blc_3d(3,:3,1)
+   !write (*,*) 
+   !write (*,*) "1",Xo%blc(1,:3)
+   !write (*,*) "2",Xo%blc(2,:3)
+   !write (*,*) "3",Xo%blc(3,:3)
+   !do while(.true.) 
+   !enddo
    !
    if (iw_par>PAR_n_freqs) cycle
    !
@@ -267,16 +272,16 @@ subroutine X_redux(iq,Xw,X)
    !
    call X_PARALLEL_alloc(X,NW,"PAR")
    !
-   do i_LA_pool=1,PAR_COM_SLK_INDEX_local%n_CPU
-     !
-     do iw_par=1,PAR_n_freqs_global(i_LA_pool)
-       !
-       call LOCAL_X_transfer("X > PAR",PAR_FREQS_index(iw_par),iw_par)
-       !
-     enddo
-   enddo
-   !
  endif
+ !
+ do i_LA_pool=1,PAR_COM_SLK_INDEX_local%n_CPU
+   !
+   do iw_par=1,PAR_n_freqs_global(i_LA_pool)
+     !
+     call MATRIX_transfer(M_in=BUFFER(iw_par),M_out=X_par,INDEX_out=PAR_FREQS_index(iw_par))
+     !
+   enddo
+ enddo
  !
  do iw=1,Xw%n_freqs
    call PP_redux_wait(X_par%blc_3d(:,:,iw+iW_offset),COMM=X_par%INTRA_comm%COMM)
@@ -298,26 +303,26 @@ subroutine X_redux(iq,Xw,X)
  !
  contains
    !
-   subroutine LOCAL_X_transfer(mode,iW_X,iW_SLK)
-     character(*) :: mode
-     integer :: iW_X,iW_SLK
-     if (trim(mode)=="Xo > SLK") then
-       if (X_lower_triangle_matrix_in_use) then
-         if (BLACS_structure_in_use) then
-           call MATRIX_transfer("X > slk",M_slk=Xo,X_up=X_par,X_dn=X_par_lower_triangle,i_MAT=iW_X)
-         else
-           call MATRIX_transfer("X > M",  X_up=X_par,X_dn=X_par_lower_triangle,M=Xo%blc,i_MAT=iW_X)
-         endif
-       else
-         if (BLACS_structure_in_use) then
-           call MATRIX_transfer("X > slk",M_slk=Xo,X_up=X_par,i_MAT=iW_X)
-         else
-           call MATRIX_transfer("X > M",  X_up=X_par,M=Xo%blc,i_MAT=iW_X)
-         endif
-       endif
-     else if (trim(mode)=="X > PAR") then
-       call MATRIX_transfer("slk > par",M_slk=BUFFER(iW_SLK),X_up=X_par,i_MAT=iW_X)
-     endif
-   end subroutine
+!   subroutine LOCAL_X_transfer(mode,iW_X,iW_SLK)
+!     character(*) :: mode
+!     integer :: iW_X,iW_SLK
+!     if (trim(mode)=="Xo > SLK") then
+!       if (X_lower_triangle_matrix_in_use) then
+!         if (BLACS_structure_in_use) then
+!           call MATRIX_transfer("X > slk",M_slk=Xo,X_up=X_par,X_dn=X_par_lower_triangle,i_MAT=iW_X)
+!         else
+!           call MATRIX_transfer("X > M",  X_up=X_par,X_dn=X_par_lower_triangle,M=Xo%blc,i_MAT=iW_X)
+!         endif
+!       else
+!         if (BLACS_structure_in_use) then
+!           call MATRIX_transfer("X > slk",M_slk=Xo,X_up=X_par,i_MAT=iW_X)
+!         else
+!           call MATRIX_transfer("X > M",  X_up=X_par,M=Xo%blc,i_MAT=iW_X)
+!         endif
+!       endif
+!     else if (trim(mode)=="X > PAR") then
+!       call MATRIX_transfer("slk > par",M_slk=BUFFER(iW_SLK),X_up=X_par,i_MAT=iW_X)
+!     endif
+!   end subroutine
    !
 end subroutine

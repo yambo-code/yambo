@@ -52,6 +52,7 @@ subroutine MATRIX_init( what, M_par, N )
  if (M_par%INTER_comm%n_CPU==1) then
    M_par%rows  = (/1,N/)
    M_par%cols  = (/1,N/)
+   M_par%N     = N
    M_par%nrows = N
    M_par%ncols = N
    M_par%kind="SER"
@@ -82,6 +83,7 @@ subroutine MATRIX_init( what, M_par, N )
      rows(i_c,:)=rows(i_c-1,2)+(/1,N_rows/)
      if (N_rows==0) rows(i_c,2)=N
    enddo
+   M_par%N     = N
    M_par%rows  = rows(M_par%INTER_comm%CPU_id+1,:)
    M_par%cols  = cols(M_par%INTER_comm%CPU_id+1,:)
    M_par%nrows = M_par%rows(2)-M_par%rows(1)+1 
@@ -93,8 +95,9 @@ subroutine MATRIX_init( what, M_par, N )
    !
    ! Response function. Entire Matrix.
    !
-   M_par%kind="PAR"
-   M= N/M_par%INTER_comm%n_CPU
+   M_par%N     = N
+   M_par%kind  ="PAR"
+   M           = N/M_par%INTER_comm%n_CPU
    M_par%cols  = (/1,N/)
    M_par%rows  = (/M*M_par%INTER_comm%CPU_id+1,M*(M_par%INTER_comm%CPU_id+1)/)
    if (M_par%INTER_comm%CPU_id+1==M_par%INTER_comm%n_CPU) M_par%rows(2) = N

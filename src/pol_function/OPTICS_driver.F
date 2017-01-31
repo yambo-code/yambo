@@ -145,7 +145,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    call X_half_mat_check(Xen,Xk,wv)
    !
-   call X_PARALLEL_alloc(X,wv%n_freqs,"Xo")
+   call X_PARALLEL_alloc(X,wv%n_freqs,"XUP")
    !
    Macroscopic_CPU=X_par%rows(1)<=i_G_shift.and.i_G_shift<=X_par%rows(2).and.&
 &                  X_par%cols(1)<=i_G_shift.and.i_G_shift<=X_par%cols(2)

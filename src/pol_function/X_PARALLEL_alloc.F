@@ -40,7 +40,7 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  ! Work Space
  !
  integer         :: X_size
- logical         :: l_Xo,l_PAR,l_ALL_in_MEM
+ logical         :: l_XUP,l_PAR,l_ALL_in_MEM
  !
  ! Reset...
  !
@@ -53,13 +53,13 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  !
  ! Type of allocation....
  !
- l_Xo         =index(mode,"Xo")>0
+ l_XUP        =index(mode,"XUP")>0
  l_PAR        =index(mode,"PAR")>0
  l_ALL_in_MEM =index(mode,"DIELETRIC_MATRIX")>0
  !
  ! NG distribution...
  !
- if (l_Xo)  call MATRIX_init( "Xo", X_par , X%ng )
+ if (l_XUP) call MATRIX_init( "XUP", X_par , X%ng )
  if (l_PAR) call MATRIX_init( "PAR", X_par , X%ng )
  !
  ! Frequency size
@@ -67,9 +67,9 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  if (l_ALL_in_MEM) then
    if (.not.io_RESPONSE) X_size=NW*PAR_nq
    if (     io_RESPONSE) X_size=NW
- else if (l_Xo) then
+ else if (l_XUP) then
    X_size                   = NW
-   call MATRIX_init( "Xo", X_par , X%ng )
+   call MATRIX_init( "XUP", X_par , X%ng )
  else if (l_PAR) then
    X_size                   = NW
    call MATRIX_init( "PAR", X_par , X%ng )
@@ -77,7 +77,7 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  !
  iW_offset = 0
  !
- if (mode=="Xo".and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
+ if (mode=="XUP".and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
    call MATRIX_reset(X_par_lower_triangle)
    X_lower_triangle_matrix_in_use=.TRUE.
    X_par_lower_triangle%kind ="XDN"

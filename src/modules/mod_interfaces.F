@@ -27,20 +27,18 @@ module interfaces
  !
  interface
    !
-   subroutine MATRIX_transfer( mode, M_slk, M_par, X_up, X_dn, M_bse, M, i_MAT )
+   subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out)
      !
      use linear_algebra, ONLY:PAR_matrix
-     use pars,           ONLY:SP
      use BS,             ONLY:BS_block
+     use pars,           ONLY:SP
      !
-     character(*)               :: mode
-     type(PAR_matrix), optional :: M_slk
-     type(PAR_matrix), optional :: M_par
-     type(PAR_matrix), optional :: X_up
-     type(PAR_matrix), optional :: X_dn
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix), optional :: M_out
      type(BS_block),   optional :: M_bse(:)
+     integer,          optional :: INDEX_in
+     integer,          optional :: INDEX_out
      complex(SP),      optional :: M(:,:)
-     integer,          optional :: i_MAT
      !
    end subroutine
    !

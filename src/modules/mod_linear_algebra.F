@@ -65,7 +65,7 @@ module linear_algebra
  integer, parameter   :: desc_len= 8
  type PAR_matrix
    !
-   character(schlen) :: kind = "SER" ! "PAR" "SLK" "XUP" "XDN"
+   character(schlen) :: kind = "NAN" ! "PAR" "SLK" "XUP" "XDN"
    !
    integer :: desc(desc_len)
    integer :: N_blcs     = 0         ! If > 0 blcs_3d are used

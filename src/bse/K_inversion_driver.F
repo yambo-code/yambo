@@ -159,7 +159,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    ! Prepare the BLACS matrices (reference, K_slk and local, K_inv_slk)
    !============================
    !
-   call MATRIX_transfer("slk < K", M_slk=K_slk, M_bse= BS_blk )
+   call MATRIX_transfer(M_out=K_slk, M_bse= BS_blk )
    !
    ! Diagonal removal
    !==================

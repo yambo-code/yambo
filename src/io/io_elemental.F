@@ -29,7 +29,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  use pointers,ONLY:linkC2R
  use netcdf
  use drivers, ONLY:list_dbs
- use com,     ONLY:msg
+ use com,     ONLY:msg,warning
  use stderr,  ONLY:string_pack,intc,real2ch,complex2ch
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
@@ -52,57 +52,52 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  !
  character(lchlen) :: ch
  character(1)      :: msg_where
- integer :: i_db(MAX_DB_ELEMENTS),i_err,nf_error
+ character(3)      :: MODE_
+ integer :: i_db(MAX_DB_ELEMENTS),i_err,nf_error,MENU_
  real(SP):: r_db(MAX_DB_ELEMENTS),r_from_c(2,MAX_DB_ELEMENTS),local_unit
  complex(SP) :: c_db(MAX_DB_ELEMENTS)
  real(SP), pointer  :: RC0(:)
  character(schlen) :: db_ch(MAX_DB_ELEMENTS)
  logical :: CHECK_,DUMP_
  !
- DUMP_=io_mode(ID)==DUMP
- if (present(DO_NOT_DUMP)) then
-   DUMP_=.not.DO_NOT_DUMP
- endif
+ DUMP_= (io_mode(ID)==DUMP)
+ if (present(DO_NOT_DUMP)) DUMP_=.not.DO_NOT_DUMP
  !
- if  (present(CHECK)) then
-   CHECK_=CHECK
- else
-   CHECK_=.FALSE.
- endif
+ CHECK_=.false.
+ if (present(CHECK)) CHECK_=CHECK
+ !
+ MENU_=1
+ if (present(MENU)) MENU_=MENU
+ !
+ if (write_is_on(ID)) MODE_="[WR"
+ if ( read_is_on(ID)) MODE_="[RD"
  !
  local_unit=1._SP
  if (present(UNIT)) local_unit=UNIT
+ !
  msg_where=""
- if (io_com(ID)==REP) msg_where="r"
+ if (io_com(ID)==REP            ) msg_where="r"
  if (io_com(ID)==LOG.or.list_dbs) msg_where="s"
  !
  if (present(VAR).and.present(VAR_SZ)) then
    io_rec_pos(ID)=1
    if (VAR_SZ>0) then
+     ch=string_pack(MODE_,trim(io_file(ID)),"]",repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
      if (write_is_on(ID)) then
        call netcdf_call(nf90_redef(io_unit(ID)),ID,VAR=VAR)
-       if (present(CH0).or.present(CH1)) then
-         nf_error=nf90_def_var(io_unit(ID),VAR,nf90_char,(/netcdf_dim(ID,schlen),netcdf_dim(ID,VAR_SZ)/),io_netcdf_var(ID))
-         call netcdf_call(nf_error,ID,VAR=VAR)
-       else
-         if (ver_is_gt_or_eq(ID,revision=723)) then 
-           nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID))
+       nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID))
+       !if (nf_error==NF90_NOERR) call warning(' Owriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
+       if (nf_error/=NF90_NOERR) then
+         if (present(CH0).or.present(CH1) ) then
+           nf_error=nf90_def_var(io_unit(ID),VAR,nf90_char,(/netcdf_dim(ID,schlen),netcdf_dim(ID,VAR_SZ)/),io_netcdf_var(ID))
          else
-           nf_error=nf90_def_var(io_unit(ID),VAR,nf90_real,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID))
+           nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID))
          endif
-         call netcdf_call(nf_error,ID,VAR=VAR)
        endif
+       call netcdf_call(nf_error,ID,VAR=VAR)
        call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
-       ch=string_pack("[WR",trim(io_file(ID)),"]",&
-&                     repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
      else if (read_is_on(ID)) then
-       ch=string_pack("[RD",trim(io_file(ID)),"]",&
-&                     repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
        call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)),ID,VAR=VAR)
-     endif
-     if (.not.present(MENU)) call msg(msg_where,trim(ch))
-     if (present(MENU)) then
-       if (MENU==1) call msg(msg_where,trim(ch))
      endif
    else
      !
@@ -123,11 +118,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 !&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,2),' -'
      ! GPL_INCLUDE_END
      !
-     if (.not.present(MENU)) call msg(msg_where,trim(ch))
-     if (present(MENU)) then
-       if (MENU==1) call msg(msg_where,trim(ch))
-     endif
    endif
+   if (MENU_==1) call msg(msg_where,trim(ch))
    return
  endif
  !

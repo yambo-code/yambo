@@ -231,7 +231,7 @@ module IO_m
      !
    end function
    !
-   integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
+   integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
      !
      use stderr,        ONLY:string_pack
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
@@ -239,14 +239,20 @@ module IO_m
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
-     logical,      optional :: no_full_RESET
+     logical,      optional :: no_full_RESET,OWRITE
      !
      ! Work Space
      !
      integer          ::CREATE_MODE,i_jobstr
      character(lchlen)::alternative_file(num_of_alternative_locations),folder
      character(schlen)::subfolder_
-     logical          ::file_found
+     logical          ::file_found,no_full_RESET_,OWRITE_
+     !
+     no_full_RESET_=.false.
+     if (present(no_full_RESET)) no_full_RESET_=no_full_RESET
+     !
+     OWRITE_=.false.
+     if (present(OWRITE)) OWRITE_=OWRITE
      !
      io_connect=0
      if ( (read_is_on(ID).and..not.IO_read).or.&
@@ -313,7 +319,7 @@ module IO_m
        CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif
        !
-       if( file_exists(trim(io_file(ID))) ) then
+       if( file_exists(trim(io_file(ID))) .and. (.not.OWRITE_) ) then
          call netcdf_call(nf90_open(trim(io_file(ID)),ior(nf90_write,nf90_share),io_unit(ID)),ID)
        else
          call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)),ID)
@@ -362,7 +368,7 @@ module IO_m
          !
          if (.not.file_found) then
            io_connect=IO_NO_DATABASE
-           if (present(no_full_RESET)) then
+           if (no_full_RESET_) then
              io_file(ID)=''
            else
              call io_reset(ID)
@@ -580,11 +586,15 @@ module IO_m
      character(schlen) :: msg
      character(schlen) :: VARNAME,FILENAME
      integer           :: local_error
-     if(status /= nf90_noerr) then
+     if(status /= NF90_NOERR) then
        FILENAME=io_file(ID)
-       local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARNAME)
-       if( present(VAR)) VARNAME=VAR
-       write (msg,'(6a)') ' File ',trim(FILENAME),' Variable ',trim(VARNAME),': ',trim(nf90_strerror(status))
+       VARNAME=' NOT DEFINED '
+       if(.not.present(VAR)) then
+         local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARNAME)
+         if(local_error/=0) VARNAME=' NOT DEFINED '
+       endif
+       if(present(VAR)) VARNAME=VAR
+       write (msg,'(6a)') ' File ',trim(FILENAME),'; Variable ',trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
    end subroutine
@@ -596,15 +606,21 @@ module IO_m
      netcdf_dim=0
      write (dim_strng,'(a,i10.10)') 'D_',dim
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
-     if (dim_found/=nf90_noerr) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
+     if (dim_found/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function
    !
-   logical function variable_is_found(ID,var_name)
-     integer,      intent ( in) :: ID
-     character(*), intent ( in) :: var_name
-     integer :: var_ID ! Work Space
-     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=.TRUE.
-     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=.FALSE.
+   logical function variable_exist(ID,var_name,var_ID)
+     integer,           intent ( in) :: ID
+     character(*),      intent ( in) :: var_name
+     integer, optional, intent (out) :: var_ID
+     integer                    :: var_check,var_ID_
+     var_check=nf90_inq_varid(io_unit(ID),var_name,var_ID_)
+     if (var_check==NF90_NOERR) variable_exist=.TRUE.
+     if (var_check/=NF90_NOERR) variable_exist=.FALSE.
+     if (present(var_ID)) then
+       if(     variable_exist) var_ID=var_ID_
+       if(.not.variable_exist) var_ID=-1
+     endif
    end function
    !
    subroutine deliver_IO_error_message(i_err,DB)

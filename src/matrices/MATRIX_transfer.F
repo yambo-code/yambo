@@ -21,13 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out)
+SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM)
  !
  ! For the table of actions see below...
  !
+ use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset
  use pars,           ONLY:SP
  use BS,             ONLY:BS_block
- use linear_algebra, ONLY:PAR_matrix
+ use X_m,            ONLY:X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
+ use D_lattice,      ONLY:i_space_inv
+ use linear_algebra, ONLY:PAR_matrix,I_do_SND,I_do_RCV,TRANSFER_world
 #include<memory.h>
  !
  type(PAR_matrix), optional :: M_in
@@ -36,12 +39,15 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out)
  integer,          optional :: INDEX_in
  integer,          optional :: INDEX_out
  complex(SP),      optional :: M(:,:)
+ logical,          optional :: SND,RCV
+ type(MPI_comm),   optional :: COMM
  !
  ! Work Space
  !
  integer              :: M_index_in,M_index_out,N
  character(3)         :: M_in_kind, M_out_kind
  logical              :: l_MAT_ARRAY
+ type(PAR_matrix)     :: M_Xdn
  !
  ! KIND of the I/O matrices
  !
@@ -69,6 +75,8 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out)
    M_out_kind="SER"
  endif
  !
+ if (M_in_kind=="NAN".or.M_out_kind=="NAN") return
+ !
  ! INDEXes
  !
  M_index_in =0
@@ -80,30 +88,43 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out)
    M_index_out=INDEX_out
  endif
  !
+ ! Local SND/RCV
+ !
+ I_do_SND=.TRUE.
+ if (present(SND)) then
+  I_do_SND=SND
+ endif
+ I_do_RCV=.TRUE.
+ if (present(RCV)) then
+  I_do_RCV=RCV
+ endif
+ !
+ ! Transfer World
+ !
+ if (present(COMM)) then
+   call COMM_copy(COMM,TRANSFER_world)
+ else
+   call COMM_copy(PAR_COM_WORLD,TRANSFER_world)
+ endif
+ !
  ! Table of actions
  !
  ! in\out NAN SER                     BSE PAR                     SLK                    XUP XDN 
  ! NAN     x   x                       x   x                       x                      x   x
  ! SER     x  MATRIX_SER_to_from_PAR   x  MATRIX_SER_to_from_PAR  MATRIX_SER_to_from_PAR  x   x
  ! BSE     x   x                       x   x                      MATRIX_BSE_to_PAR       x   x
- ! PAR     x  MATRIX_SER_to_from_PAR   x   x                      MATRIX_PAR_to_from_PAR  x   x  
- ! SLK     x  MATRIX_SER_to_from_PAR   x  MATRIX_PAR_to_from_PAR   x                      x   x
- ! XUP     x  ???                      x   x                      ???                     x   x
- ! XDN     x  ???                      x   x                      ???                     x   x
+ ! PAR     x  MATRIX_PAR_to_from_PAR   x   x                      MATRIX_PAR_to_from_PAR  x   x  
+ ! SLK     x  MATRIX_PAR_to_from_PAR   x  MATRIX_PAR_to_from_PAR   x                      x   x
+ ! XUP     x  MATRIX_PAR_to_from_PAR   x   x                      MATRIX_PAR_to_from_PAR  x   x
+ ! XDN     x  MATRIX_PAR_to_from_PAR   x   x                      MATRIX_PAR_to_from_PAR  x   x
  !
- !
- if (M_in_kind=="SER") then
+ if (M_in_kind=="SER".and.l_MAT_array) then
    !
-   if (M_out_kind=="PAR".or.M_out_kind=="SLK".or.M_out_kind=="SER") then
-     if (     l_MAT_ARRAY) call MATRIX_SER_to_from_PAR(N,M,">",M_out,M_index_out) 
-     if (.not.l_MAT_ARRAY) then
-       if (M_index_in>0) then                   
-         call MATRIX_SER_to_from_PAR(M_in%N,M_in%blc_3d(:,:,M_index_in),">",M_out,M_index_out) 
-       else
-         call MATRIX_SER_to_from_PAR(M_in%N,M_in%blc,">",M_out,M_index_out) 
-       endif
-     endif
-   endif
+   call MATRIX_SER_to_from_PAR(N,M,">",M_out,M_index_out) 
+   !
+ else if (M_in_kind=="SER") then
+   !
+   call MATRIX_PAR_to_from_PAR(M_in,M_out,M_index_in,M_index_out) 
    !
  else if (M_in_kind=="BSE") then
    !
@@ -113,132 +134,23 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out)
    !
    if (M_out_kind=="SER") then
      if (     l_MAT_ARRAY) call MATRIX_SER_to_from_PAR(N,M,"<",M_in,M_index_in) 
-     if (.not.l_MAT_ARRAY) then
-       if (M_index_in>0) then                   
-         call MATRIX_SER_to_from_PAR(M_in%N,M_in%blc_3d(:,:,M_index_in),"<",M_in,M_index_in) 
-       else
-         call MATRIX_SER_to_from_PAR(M_in%N,M_in%blc,"<",M_in,M_index_in) 
-       endif
-     endif
+     if (.not.l_MAT_ARRAY) call MATRIX_PAR_to_from_PAR(M_in,M_out,M_index_in,M_index_out) 
    endif
-   if (M_out_kind=="SLK".or.M_out_kind=="PAR") call MATRIX_PAR_to_from_PAR(M_in,">",M_out,M_index_in,M_index_out)
+   if (M_out_kind=="SLK".or.M_out_kind=="PAR") call MATRIX_PAR_to_from_PAR(M_in,M_out,M_index_in,M_index_out)
+   !
+ else if (M_in_kind=="XUP".or.M_in_kind=="XDN") then
+   !
+   call MATRIX_PAR_to_from_PAR(M_in,M_out,M_index_in,M_index_out) 
+   !
+   if (M_in_kind=="XUP".and.X_FILL_UP_matrix_only.or.X_lower_triangle_matrix_in_use) then
+     if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in,M_index_in,M_Xdn)
+     if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in,M_index_in,M_Xdn)
+     call MATRIX_PAR_to_from_PAR(M_Xdn,M_out,0,M_index_out) 
+     call MATRIX_duplicate("free",M_in,0,M_Xdn)
+   endif
    !
  endif
-!   !
-!   ! X > slk
-!   !=========
-!   !
-!   if (present(X_up)) then
-!     !
-!     if (mode=="X > slk".or.mode=="slk < X") then
-!       if (present(X_dn)) then
-!         call MATRIX_PAR_to_from_SLK("X up","SLK",X_up,M_slk,i_MAT)
-!         call MATRIX_PAR_to_from_SLK("X dn","SLK",X_dn,M_slk,i_MAT)
-!       else
-!         call MATRIX_PAR_to_from_SLK("X","SLK",X_up,M_slk,i_MAT)
-!       endif
-!     endif
-!     !
-!   endif
-!   !
-!   ! slk > PAR
-!   !===========
-!   !
-!   if (present(M_par)) then
-!     !
-!     if (mode=="slk > par".or.mode=="par < slk") then
-!       call MATRIX_PAR_to_from_SLK(" ","PAR",M_par,M_slk,i_MAT)
-!     endif
-!     !
-!   endif
-!   !
-! endif
-! !
-!! if (present(M_par)) then
-!!   !
-!!   ! M > PAR
-!!   !=========
-!!   !
-!!   if (present(M)) then
-!!     !
-!!     call PAR_matrix_transfer_PAR_to_SLK("X","PAR",X_up,M_slk,i_MAT)
-!!     !
-!!     N=size(M,1)
-!!     Y_ALLOCATE(SWAP(N,N))
-!!     Y_MEM(SWAP)
-!!     SWAP=cZERO
-!!     !
-!!#if defined _OPENMP
-!!     !$omp do
-!#endif
-!     do i_row=M_par%rows(1),M_par%rows(2)
-!       do i_col=M_par%cols(1),M_par%cols(2)
-!         M_par%blc_3d(i_row,i_col,i_MAT)=M(i_row,i_col)
-!       enddo
-!     enddo
-!#if defined _OPENMP
-!     !$omp end do
-!#endif
-!   endif
-! endif
-! !
-!#if defined _OPENMP
-! !$omp end parallel
-!#endif
-! !
-! if (present(X_up)) then
-!   !
-!   ! X > M
-!   !=======
-!   !
-!   if (present(M)) then
-!     !
-!     N=size(M,1)
-!     Y_ALLOCATE(SWAP(N,N))
-!     Y_MEM(SWAP)
-!     SWAP=cZERO
-!     !
-!     if (mode=="X > M".or.mode=="M < X") then
-!       !
-!#if defined _OPENMP
-!       !$omp parallel default(shared), private(i_row,i_col)
-!#endif
-!       !
-!       do i_row=X_up%rows(1),X_up%rows(2)
-!         do i_col=X_up%cols(1),X_up%cols(2)
-!           !
-!           SWAP(i_row,i_col)=X_up%blc_3d(i_row,i_col,iabs(i_MAT))
-!           !
-!           if (X_FILL_UP_matrix_only.or.X_lower_triangle_matrix_in_use) then
-!             if (present(X_dn)) then
-!               SWAP(i_col,i_row)=X_dn%blc_3d(i_col,i_row,iabs(i_MAT))
-!             else
-!               if (i_space_inv==0) then
-!                 SWAP(i_col,i_row)=conjg(X_up%blc_3d(i_row,i_col,iabs(i_MAT)))
-!               else
-!                 SWAP(i_col,i_row)=X_up%blc_3d(i_row,i_col,iabs(i_MAT))
-!               endif
-!             endif
-!           endif
-!           !
-!         enddo
-!       enddo
-!       !
-!#if defined _OPENMP
-!       !$omp end parallel
-!#endif
-!       !
-!       call PP_redux_wait(SWAP,COMM=X_up%INTER_comm%COMM)
-!       !
-!       if (i_MAT>0) M=SWAP
-!       !
-!     endif
-!     !
-!     Y_FREE(SWAP)
-!     !
-!   endif
-!   !
-!   !
-! endif
-! !
+ !
+ call COMM_reset(TRANSFER_world)
+ !
 end SUBROUTINE

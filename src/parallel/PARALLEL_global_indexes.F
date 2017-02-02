@@ -25,7 +25,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
  use com,           ONLY:secnm
- use linear_algebra,ONLY:INV
+ use linear_algebra,ONLY:INV,TRANSFER_world
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,CPU_structure,master_cpu,&
 &                        PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
@@ -224,6 +224,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_eh_A2A)
    call COMM_reset(PAR_COM_T_INDEX)
    call COMM_reset(PAR_COM_SLK_INDEX_local)
+   call COMM_reset(TRANSFER_world)
 #if defined _SCALAPACK
    call COMM_reset(PAR_COM_SLK)
    call COMM_reset(PAR_COM_SLK_INDEX_global)
@@ -429,10 +430,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    CALL PARALLEL_structure(5,(/"q","g","k","c","v"/))
    !
    call PARALLEL_assign_chains_and_COMMs(5,COMM_index_1=PAR_COM_Q_INDEX,&
-&                                          COMM_index_2=PAR_COM_RL_INDEX,COMM_A2A_1=PAR_COM_Q_A2A,&
+&                                          COMM_index_2=PAR_COM_RL_INDEX,&
 &                                          COMM_index_3=PAR_COM_Xk_bz_INDEX,&
 &                                          COMM_index_4=PAR_COM_CON_INDEX(X_type),&
 &                                          COMM_index_5=PAR_COM_VAL_INDEX(X_type),&
+&                                          COMM_A2A_1=PAR_COM_Q_A2A,&
 &                                          COMM_A2A_2=PAR_COM_RL_A2A,&
 &                                          COMM_A2A_3=PAR_COM_Xk_bz_A2A)
    !

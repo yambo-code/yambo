@@ -21,49 +21,93 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE MATRIX_duplicate( operation, M_in, M_out )
+SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  !
  ! operation can be "none/+1/-1/-C(= -1 * conjg)"
  !
- use pars,           ONLY:cZERO
+ use parallel_m,     ONLY:COMM_copy
+ use pars,           ONLY:cZERO,SP
  use linear_algebra, ONLY:PAR_matrix,MATRIX_reset
 #include<memory.h>
  !
  character(*)     :: operation
  type(PAR_matrix) :: M_in,M_out
+ integer          :: INDEX_in
  !
  ! Work Space
  !
- integer :: BLK_size
+ integer     :: i_row,i_col,i_r,i_c
+ complex(SP) :: ME
+ real(SP)    :: pre_factor
  !
- BLK_size=size(M_in%blc,1)
  call MATRIX_reset(M_out)
  !
+ if (operation=="free") then
+   Y_FREE(M_out%blc)
+   return
+ endif
+ !
+ M_out%kind       = M_in%kind      
+ M_out%N_blcs     = M_in%N_blcs    
  M_out%N          = M_in%N         
  M_out%desc       = M_in%desc      
  M_out%lwork      = M_in%lwork
  M_out%lrwork     = M_in%lrwork
  M_out%liwork     = M_in%liwork
  M_out%info       = M_in%info
+ !
  M_out%rows       = M_in%rows
  M_out%cols       = M_in%cols
- M_out%nrows      = M_in%nrows
- M_out%ncols      = M_in%ncols
- M_out%nrows_used = M_in%nrows_used
- M_out%ncols_used = M_in%ncols_used
+ if (operation=="+TC".or.operation=="+T") then
+   M_out%rows       = M_in%cols
+   M_out%cols       = M_in%rows
+ endif
  !
- Y_ALLOCATE(M_out%blc(M_out%nrows,M_out%ncols))
+ M_out%nrows      = M_out%rows(2)-M_in%rows(1)+1
+ M_out%ncols      = M_out%cols(2)-M_in%cols(1)+1
+ M_out%nrows_used = M_out%nrows
+ M_out%ncols_used = M_out%ncols
+ !
+ Y_ALLOCATE(M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2)))
  Y_MEM(M_out%blc)
  M_out%blc=cZERO
  !
+ call COMM_copy(M_in%INTER_comm,M_out%INTER_comm)
+ call COMM_copy(M_in%INTRA_comm,M_out%INTRA_comm)
+ !
  if (operation=="none") return
  !
- if (operation=="+1") then
-   M_out%blc(:M_out%nrows_used,:M_out%ncols_used)=M_in%blc(:M_in%nrows_used,:M_in%ncols_used)
- else if (operation=="-1") then
-   M_out%blc(:M_out%nrows_used,:M_out%ncols_used)=-M_in%blc(:M_in%nrows_used,:M_in%ncols_used)
- else if (operation=="-C") then
-   M_out%blc(:M_out%nrows_used,:M_out%ncols_used)=-conjg(M_in%blc(:M_in%nrows_used,:M_in%ncols_used))
- endif
+ pre_factor=1._SP
+ if (index(operation,"-")>0 ) pre_factor=-1._SP
+ !
+#if defined _OPENMP
+ !$omp parallel default(shared), private(i_row,i_col,i_r,i_c)
+ !$omp do
+#endif
+ do i_row=M_in%rows(1),M_in%rows(2)
+   do i_col=M_in%cols(1),M_in%cols(2)
+     !
+     i_r=i_row
+     i_c=i_col
+     !
+     if (index(operation,"T")>0) then
+       i_r=i_col
+       i_c=i_row
+     endif
+     !
+     if (INDEX_in==0) ME=M_in%blc(i_row,i_col)
+     if (INDEX_in> 0) ME=M_in%blc_3d(i_row,i_col,INDEX_in)
+     !
+     if (index(operation,"C")>0 ) then
+       M_out%blc(i_r,i_c)=pre_factor*conjg(ME)
+     else
+       M_out%blc(i_r,i_c)=pre_factor*ME
+     endif
+     !
+   enddo
+ enddo
+#if defined _OPENMP
+ !$omp enddo
+#endif
  !
 end SUBROUTINE

@@ -21,175 +21,146 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE MATRIX_PAR_to_from_PAR( M_par, mode, M_slk, i_M_par, i_M_slk )
+SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv, i_S, i_R )
  !
- ! M_par <-> M_slk
+ ! M_snd > M_rcv
  !
- ! mode can be ">" or "<". 
- !
- ! In the case of a XUP/XDN "PAR" kinds the UP/DN triangles are treated differently.
- !
- use pars,           ONLY:SP
- use linear_algebra, ONLY:PAR_matrix,SLK_matrix_transfer_side_crop
- use parallel_m,     ONLY:PP_redux_wait,myid,PAR_COM_X_WORLD
- use SLK_m,          ONLY:SLK_POOL,n_pools
- use D_lattice,      ONLY:i_space_inv
+ use linear_algebra, ONLY:PAR_matrix,I_do_RCV,I_do_SND,TRANSFER_world
+ use parallel_m,     ONLY:PP_redux_wait,myid,MPI_comm,COMM_reset,CREATE_the_COMM
  !
  implicit none
  !
- character(1)     :: mode
- type(PAR_matrix) :: M_par,M_slk
- integer          :: i_M_par,i_M_slk
+ type(PAR_matrix) :: M_snd,M_rcv
+ integer          :: i_S,i_R
  !
  ! Work Space
  !
- integer :: SLK_coordinates(SLK_POOL%n_CPU,4),M_coordinates(M_par%INTER_comm%n_CPU,4),i_c_slk,i_c_par,i_pool,&
-&           SLK_cpu_id_in_the_world(SLK_POOL%n_CPU),CROP(4)
- logical :: l_UP,l_DN,l_SYMM
+ integer :: i_rcv,i_snd,CROP(4),i_snd_world,i_rcv_world,i_cpu
+ integer :: RCV_corners(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU,4),&
+&           SND_corners(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU,4),&
+&           ACTIVE_cpus_snd(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU),&
+&           ACTIVE_cpus_rcv(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU),&
+&           CPU_in_the_world(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU)
+ ! 
+ ! Local global MPI comm
  !
- l_UP  =index(mode,"up")>0
- l_DN  =index(mode,"dn")>0
- l_SYMM=.not.l_UP.and..not.l_DN.and.index(mode,"X")>0
+ type(MPI_comm) :: COMM
  !
- ! SLK
+ ! Local WORLD
  !
- SLK_coordinates                      =0
- SLK_coordinates(SLK_POOL%CPU_id+1,:) =(/M_slk%rows(1),M_slk%rows(2),M_slk%cols(1),M_slk%cols(2)/)
- call PP_redux_wait(SLK_coordinates ,COMM=SLK_POOL%INTRA_comm)
+ call COMM_reset(COMM)
+ COMM%my_CHAIN=myid
+ do i_snd=1,M_snd%INTER_comm%n_CPU
+   if (M_snd%INTER_comm%CPU_id==i_snd-1.and.I_do_SND) COMM%my_CHAIN=-1
+ enddo
+ do i_rcv=1,M_rcv%INTER_comm%n_CPU
+   if (M_rcv%INTER_comm%CPU_id==i_rcv-1.and.I_do_RCV) COMM%my_CHAIN=-1
+ enddo
+ call CREATE_the_COMM(TRANSFER_world%COMM,COMM,myid)
  !
- ! PAR
- M_coordinates                        =0
- M_coordinates(M_par%INTER_comm%CPU_id+1,:) =(/M_par%rows(1),M_par%rows(2),M_par%cols(1),M_par%cols(2)/)
- call PP_redux_wait(M_coordinates ,COMM=M_par%INTER_comm%COMM)
+ if (.not.I_do_SND.and..not.I_do_RCV) return
  !
- do i_pool=1,n_pools
+ CPU_in_the_world=0
+ ACTIVE_cpus_snd =0
+ ACTIVE_cpus_rcv =0
+ do i_cpu=1,COMM%n_CPU
+   if (COMM%CPU_id==i_cpu-1) then
+     CPU_in_the_world(i_cpu)=myid
+     if (I_do_SND) ACTIVE_cpus_snd(i_cpu)=1
+     if (I_do_RCV) ACTIVE_cpus_rcv(i_cpu)=1
+   endif
+ enddo
+ call PP_redux_wait(CPU_in_the_world,COMM=COMM%COMM)
+ call PP_redux_wait(ACTIVE_cpus_snd,COMM=COMM%COMM)
+ call PP_redux_wait(ACTIVE_cpus_rcv,COMM=COMM%COMM)
+ !
+ !write (*,*) "ID=",myid,"C=",CPU_in_the_world
+ !write (*,*) "ID=",myid,"A_S=",ACTIVE_cpus_snd
+ !write (*,*) "ID=",myid,"A_R=",ACTIVE_cpus_rcv
+ !
+ ! CORNERS
+ !
+ SND_corners                              =0
+ SND_corners(COMM%CPU_id+1,:) =(/M_snd%rows(1),M_snd%rows(2),M_snd%cols(1),M_snd%cols(2)/)
+ RCV_corners                              =0
+ RCV_corners(COMM%CPU_id+1,:) =(/M_rcv%rows(1),M_rcv%rows(2),M_rcv%cols(1),M_rcv%cols(2)/)
+ call PP_redux_wait(SND_corners         ,COMM=COMM%COMM)
+ call PP_redux_wait(RCV_corners         ,COMM=COMM%COMM)
+ !
+ ! Here I define the list of "local buffers" to exchange. They are the minimal overlaps of the
+ ! two PAR matrices.
+ !
+ do i_snd=1,COMM%n_CPU
    !
-   SLK_cpu_id_in_the_world = 0
-   if (SLK_POOL%ID==i_pool-1) SLK_cpu_id_in_the_world(SLK_POOL%CPU_id+1)=myid+1
+   if (ACTIVE_cpus_snd(i_snd)==0) cycle
    !
-   call PP_redux_wait(SLK_cpu_id_in_the_world,COMM=M_par%INTER_comm%COMM)
-   !
-   ! Here I define the list of "local buffers" to exchange. They are the minimal overlaps of the
-   ! SLK and PAR sub-matrices.
-   !
-   do i_c_slk=1,SLK_POOL%n_CPU
+   do i_rcv=1,COMM%n_CPU
      !
-     ! i_c_slk is the BLACS cpu
+     if (ACTIVE_cpus_rcv(i_rcv)==0) cycle
      !
-     do i_c_par=1,M_par%INTER_comm%n_CPU
-       !
-       ! i_c_par is the X/PAR cpu
-       !
-       ! a. Upper part (X) or entire matrix block (PAR)
-       !
-       ! ------
-       ! -ooooo
-       ! -ooooo
-       ! ------
-       ! ------
-       ! ------
-       !
-       if (l_UP.or.l_SYMM) then
-         call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c_slk,1:2), M_coordinates(i_c_par,1:2), CROP(1:2) )
-         call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c_slk,3:4), M_coordinates(i_c_par,3:4), CROP(3:4) )
-         if (.not.any(CROP==0)) then
-           call elemental_transfer('N')
-           call elemental_transfer('N')
-         endif
-       endif
-       !
-       ! a. Lower part
-       !
-       ! ------
-       ! -oo---
-       ! -oo---
-       ! -oo---
-       ! -oo---
-       ! -oo---
-       !
-       if (l_DN.or.l_SYMM) then
-         call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c_slk,1:2), M_coordinates(i_c_par,3:4), CROP(1:2) )
-         call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c_slk,3:4), M_coordinates(i_c_par,1:2), CROP(3:4) )
-         if (.not.any(CROP==0)) then
-           if (l_DN) call elemental_transfer('N')
-           if (l_SYMM) then
-             if (i_space_inv==0) call elemental_transfer('C')
-             if (i_space_inv==1) call elemental_transfer('T')
-           endif
-         endif
-       endif
-       !
-       call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
-       !
-     enddo
+     i_snd_world=CPU_in_the_world(i_snd)
+     i_rcv_world=CPU_in_the_world(i_rcv)
+     !
+     call MATRIX_transfer_side_crop(RCV_corners(i_rcv,1:2), SND_corners(i_snd,1:2), CROP(1:2) )
+     call MATRIX_transfer_side_crop(RCV_corners(i_rcv,3:4), SND_corners(i_snd,3:4), CROP(3:4) )
+     if (.not.any(CROP==0)) call elemental_transfer( )
      !
    enddo
    !
  enddo
  !
+ call COMM_reset(COMM)
+ !
+ return
+ !
  contains
    !
-   subroutine elemental_transfer(mode)
+   subroutine elemental_transfer( )
      !
      use parallel_m, ONLY:PP_send_and_receive
-     character(*) :: mode
+     integer :: S(4),R(4)
      !
-     integer      :: BUFF_size,i_r,i_c,SLK_blk_coo(4)
-     complex(SP)  :: M_cropped(CROP(1):CROP(2),CROP(3):CROP(4))
+     if (myid/=i_snd_world.and.myid/=i_rcv_world) return
      !
-     if (myid/=i_c_par-1.and.myid/=SLK_cpu_id_in_the_world(i_c_slk)-1) return
+     S=CROP
+     if (M_snd%kind=="SLK") then
+       S(1:2) = CROP(1:2)-M_snd%rows(1)+1
+       S(3:4) = CROP(3:4)-M_snd%cols(1)+1
+     endif
+     R=CROP
+     if (M_rcv%kind=="SLK") then
+       R(1:2) = CROP(1:2)-M_rcv%rows(1)+1
+       R(3:4) = CROP(3:4)-M_rcv%cols(1)+1
+     endif
      !
-     SLK_blk_coo(1:2) = CROP(1:2)-M_slk%rows(1)+1
-     SLK_blk_coo(3:4) = CROP(3:4)-M_slk%cols(1)+1
-     !
-     BUFF_size    = (CROP(2)-CROP(1)+1)*(CROP(4)-CROP(3)+1)
-     !
-!     if (target_world=="SLK") then
-       !
-       if (myid==i_c_par-1) then
-         !
-         do i_r=CROP(1),CROP(2)
-           do i_c=CROP(3),CROP(4)
-             if (trim(mode)=="N") M_cropped(i_r,i_c)=M_par%blc_3d(i_r,i_c,i_M_par)
-             if (trim(mode)=="T") M_cropped(i_r,i_c)=M_par%blc_3d(i_c,i_r,i_M_par)
-             if (trim(mode)=="C") M_cropped(i_r,i_c)=conjg(M_par%blc_3d(i_c,i_r,i_M_par))
-           enddo
-         enddo
-         !
-         if (i_c_par==SLK_cpu_id_in_the_world(i_c_slk)) then
-           M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4))=M_cropped
+     if (myid==i_snd_world.and.i_snd_world==i_rcv_world) then
+       !write (*,*) i_snd_world,i_S,"<=>",i_rcv_world,i_R
+       if  (i_S==0) then
+         if  (i_R==0) then
+           M_rcv%blc(R(1):R(2),R(3):R(4))=M_snd%blc(S(1):S(2),S(3):S(4))
          else
-           call PP_send_and_receive("send",M_cropped,SLK_cpu_id_in_the_world(i_c_slk)-1)
+           M_rcv%blc_3d(R(1):R(2),R(3):R(4),i_R)=M_snd%blc(S(1):S(2),S(3):S(4))
          endif
-         !
-         return
-         !
-!       endif
-       !
-       if (myid==SLK_cpu_id_in_the_world(i_c_slk)-1) then
-         call PP_send_and_receive("receive",M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),&
-&                                                     SLK_blk_coo(3):SLK_blk_coo(4)),i_c_par-1)
-       endif
-       !
-     else
-       !
-       if (myid==SLK_cpu_id_in_the_world(i_c_slk)-1) then
-         !
-         if (i_c_par==SLK_cpu_id_in_the_world(i_c_slk)) then
-           M_par%blc_3d(CROP(1):CROP(2),CROP(3):CROP(4),i_M_par)=&
-&                                   M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4))
+       else 
+         if  (i_R==0) then
+           M_rcv%blc(R(1):R(2),R(3):R(4))=M_snd%blc_3d(S(1):S(2),S(3):S(4),i_S)
          else
-           call PP_send_and_receive("send",M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),&
-&                                                    SLK_blk_coo(3):SLK_blk_coo(4)),i_c_par-1)
+           M_rcv%blc_3d(R(1):R(2),R(3):R(4),i_R)=M_snd%blc_3d(S(1):S(2),S(3):S(4),i_S)
          endif
-         !
-         return
-         !
        endif
-       !
-       if (myid==i_c_par-1) then
-         call PP_send_and_receive("receive",M_par%blc_3d(CROP(1):CROP(2),&
-&                                                        CROP(3):CROP(4),i_M_par),SLK_cpu_id_in_the_world(i_c_slk)-1)
+     else if (myid==i_snd_world) then
+       !write (*,*) i_snd_world,i_S,"=>",i_rcv_world,i_R
+       if  (i_S==0) then
+         call PP_send_and_receive("send",M_snd%blc(S(1):S(2),S(3):S(4)),i_rcv_world)
+       else 
+         call PP_send_and_receive("send",M_snd%blc_3d(S(1):S(2),S(3):S(4),i_S),i_rcv_world)
+       endif
+     else if (myid==i_rcv_world) then
+       !write (*,*) i_rcv_world,i_R,"<=",i_snd_world,i_S
+       if  (i_R==0) then
+         call PP_send_and_receive("receive",M_rcv%blc(R(1):R(2),R(3):R(4)),i_snd_world)
+       else 
+         call PP_send_and_receive("receive",M_rcv%blc_3d(R(1):R(2),R(3):R(4),i_R),i_snd_world)
        endif
      endif
      !

@@ -23,12 +23,13 @@
 !
 subroutine SLK_communicators(INTRA_world,INTER_world,N)
  !
- ! Here I have an example with 12 cpu's
+ ! Here I have an example with 12 cpu's divided in two INTRA of 6 cpu's. In each INTRA I want to build-up a SLK structure.
  !
  !          MPI WORLD 
  !  ________________________
+ !
  !    INTRA            
- !  _____________
+ !  ___________  
  !  0 0 0 0 0 0 0 0 0 0 0 0  
  !  |___________|
  !    INTER
@@ -37,8 +38,8 @@ subroutine SLK_communicators(INTRA_world,INTER_world,N)
  ! 
  ! Let's assume  N=4
  ! 
- ! PAR_COM_SLK 
- !  _______
+ !  PAR_COM_SLK PAR_COM_SLK
+ !  _______     _______
  !  0 0 0 0 0 0 0 0 0 0 0 0  
  !  |___________|
  !   PAR_COM_SLK_INDEX_global

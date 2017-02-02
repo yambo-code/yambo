@@ -26,7 +26,7 @@ SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par, i_MAT )
  ! SER <-> M_par
  !
  use pars,           ONLY:SP,cZERO
- use linear_algebra, ONLY:PAR_matrix
+ use linear_algebra, ONLY:PAR_matrix,I_do_RCV
  use parallel_m,     ONLY:PP_redux_wait
  !
  implicit none
@@ -38,19 +38,20 @@ SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par, i_MAT )
  !
  ! Work Space
  !
- integer         :: i_row,i_col
+ integer     :: i_row,i_col
+ complex(SP) :: SWAP(M_par%cols(1):M_par%cols(2))
  !
 #if defined _OPENMP
  !$omp parallel default(shared), private(i_row,i_col)
  !$omp do
 #endif
- !
- if (mode==">") then
+ ! 
+ if (mode==">".and.I_do_RCV) then
    do i_row=M_par%rows(1),M_par%rows(2)
      do i_col=M_par%cols(1),M_par%cols(2)
        if (i_MAT>0) then
          M_par%blc_3d(i_row,i_col,i_MAT)=M(i_row,i_col)
-       else
+       else if (i_MAT==0) then
          M_par%blc(i_row,i_col)         =M(i_row,i_col)
        endif
      enddo
@@ -58,17 +59,20 @@ SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par, i_MAT )
  endif
  !
  if (mode=="<") then
-   M=cZERO
    do i_row=M_par%rows(1),M_par%rows(2)
+     SWAP=cZERO
      do i_col=M_par%cols(1),M_par%cols(2)
        if (i_MAT>0) then
-         M(i_row,i_col)=M_par%blc_3d(i_row,i_col,i_MAT)
-       else
-         M(i_row,i_col)=M_par%blc(i_row,i_col)
+         SWAP(i_col)=M_par%blc_3d(i_row,i_col,i_MAT)
+       else if (i_MAT==0) then
+         SWAP(i_col)=M_par%blc(i_row,i_col)
        endif
      enddo
+     call PP_redux_wait(SWAP,COMM=M_par%INTRA_comm%COMM)
+     if (I_do_RCV) then
+       M(i_row,M_par%cols(1):M_par%cols(2))=SWAP
+     endif
    enddo
-   call PP_redux_wait(M,COMM=M_par%INTRA_comm%COMM)
  endif
  !
 #if defined _OPENMP

@@ -23,11 +23,19 @@
 !
 subroutine MATRIX_init( what, M_par, N )
  !
- ! I distribute here the upper part of the X matrix.
+ ! I initialize a general parallel matrix here. Note the meaning of the two COMMS: INTRA and INTER.
+ !
+ ! INTER_comm is the one the connects CPU's with pieces of the matrix.
+ ! INTRA_comm is the one the connects CPU's with the SAME piece of the matrix.
+ !
+ ! Thus...
+ !
+ ! INTER_comm is used to transfer pieces to pieces
+ ! INTRA_comm is used to do ALL2ALL at the end of a single piece filling
  !
  use pars,           ONLY:SP
  use linear_algebra, ONLY:PAR_matrix
- use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK
+ use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_local,ncpu
 #if defined _SCALAPACK
  use SLK_m,          ONLY:BLACS_structure_in_use
 #endif
@@ -42,14 +50,15 @@ subroutine MATRIX_init( what, M_par, N )
  integer       :: M,rows(M_par%INTER_comm%n_CPU,2),cols(M_par%INTER_comm%n_CPU,2),i_c,N_rows
  !
  if (what=="SLK") then
-   call COMM_copy(PAR_COM_SLK, M_par%INTER_comm)
+   call COMM_copy(PAR_COM_SLK,             M_par%INTER_comm)
+   call COMM_copy(PAR_COM_SLK_INDEX_local, M_par%INTRA_comm)
 #if defined _SCALAPACK
    BLACS_structure_in_use=.FALSE.
 #endif
    M_par%kind="SLK"
  endif
  !
- if (M_par%INTER_comm%n_CPU==1) then
+ if (M_par%INTER_comm%n_CPU==1.or.ncpu==1) then
    M_par%rows  = (/1,N/)
    M_par%cols  = (/1,N/)
    M_par%N     = N
@@ -69,7 +78,7 @@ subroutine MATRIX_init( what, M_par, N )
 #endif
  endif
  !
- if (what=="Xo") then
+ if (what=="XUP") then
    !
    ! Response function. Only upper triangle is distributed.
    !

@@ -62,10 +62,15 @@ module linear_algebra
  !
  ! Distributed Matrix structure
  !==============================
+ !
  integer, parameter   :: desc_len= 8
+ logical              :: I_do_RCV=.TRUE.
+ logical              :: I_do_SND=.TRUE.
+ type(MPI_comm)       :: TRANSFER_world
+ !
  type PAR_matrix
    !
-   character(schlen) :: kind = "NAN" ! "PAR" "SLK" "XUP" "XDN"
+   character(3) :: kind = "NAN" ! "PAR" "SLK" "XUP" "XDN"
    !
    integer :: desc(desc_len)
    integer :: N_blcs     = 0         ! If > 0 blcs_3d are used
@@ -101,18 +106,20 @@ module linear_algebra
    subroutine MATRIX_reset(M_par)
      use parallel_m, ONLY:COMM_reset
      type(PAR_matrix)   :: M_par
-     M_par%N        = 0
-     M_par%desc     = 0
-     M_par%lwork    = 0
-     M_par%lrwork   = 0
-     M_par%liwork   = 0
-     M_par%info     = 0
-     M_par%rows     = 0
-     M_par%cols     = 0
-     M_par%nrows    = 0
-     M_par%ncols    = 0
-     M_par%ncols_used = 0
-     M_par%nrows_used = 0
+     M_par%kind       = "NAN"
+     M_par%N_blcs     = 0
+     M_par%N          = -1
+     M_par%desc       = 0
+     M_par%lwork      = -1
+     M_par%lrwork     = -1
+     M_par%liwork     = -1
+     M_par%info       = -1
+     M_par%rows       = 0
+     M_par%cols       = 0
+     M_par%nrows      = -1
+     M_par%ncols      = -1
+     M_par%ncols_used = -1
+     M_par%nrows_used = -1
      call COMM_reset(M_par%INTER_comm)
      call COMM_reset(M_par%INTRA_comm)
    end subroutine
@@ -134,23 +141,6 @@ module linear_algebra
      use com,     ONLY:error
      character(*) calling_subr,message_
      call error( trim( string_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']:',trim(message_)) ))
-   end subroutine
-   !
-   subroutine SLK_matrix_transfer_side_crop(I,J,O)
-     !
-     integer :: I(2),J(2),O(2)
-     !
-     O=0
-     !
-     if (I(2)<J(1)) return
-     if (I(1)>J(2)) return
-     !
-     O(1)=I(1)
-     if (I(1)<=J(1)) O(1)=J(1)
-     !
-     O(2)=J(2)
-     if (I(2)<J(2)) O(2)=I(2)
-     !
    end subroutine
    !
    !============================

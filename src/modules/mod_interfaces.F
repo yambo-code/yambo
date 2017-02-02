@@ -27,8 +27,9 @@ module interfaces
  !
  interface
    !
-   subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out)
+   subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM)
      !
+     use parallel_m,     ONLY:MPI_comm
      use linear_algebra, ONLY:PAR_matrix
      use BS,             ONLY:BS_block
      use pars,           ONLY:SP
@@ -39,6 +40,8 @@ module interfaces
      integer,          optional :: INDEX_in
      integer,          optional :: INDEX_out
      complex(SP),      optional :: M(:,:)
+     logical,          optional :: SND,RCV
+     type(MPI_comm),   optional :: COMM
      !
    end subroutine
    !

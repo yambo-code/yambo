@@ -37,7 +37,7 @@ subroutine X_redux(iq,Xw,X)
  use pars,          ONLY:SP,pi,cZERO,cONE
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,ncpu,&
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
@@ -123,24 +123,16 @@ subroutine X_redux(iq,Xw,X)
      endif
      call PP_redux_wait(iw_X,COMM=PAR_COM_X_WORLD%COMM)
      !
-     ! Only the CPU of this POOL has to store the X matrix.
+     ! Only the CPU of this POOL has to store the X matrix (RCV logical).
      !
-     if (ncpu>1.and.i_LA_pool/=PAR_COM_SLK_INDEX_local%CPU_id+1) iw_X(1)=-iw_X(1)
-     !
-     call MATRIX_transfer(M_in=X_par,               M_out=Xo,INDEX_in=iw_X(1))
-     call MATRIX_transfer(M_in=X_par_lower_triangle,M_out=Xo,INDEX_in=iw_X(1))
+     call MATRIX_transfer(M_in=X_par,               M_out=Xo,INDEX_in=iw_X(1),&
+&                                                   SND=X_par%INTRA_comm%CPU_id==0,&
+&                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1)
+     call MATRIX_transfer(M_in=X_par_lower_triangle,M_out=Xo,INDEX_in=iw_X(1),&
+&                                                   SND=X_par%INTRA_comm%CPU_id==0,&
+&                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1)
      !
    enddo
-   !write (*,*) 
-   !write (*,*) "1",X_par%blc_3d(1,:3,1)
-   !write (*,*) "2",X_par%blc_3d(2,:3,1)
-   !write (*,*) "3",X_par%blc_3d(3,:3,1)
-   !write (*,*) 
-   !write (*,*) "1",Xo%blc(1,:3)
-   !write (*,*) "2",Xo%blc(2,:3)
-   !write (*,*) "3",Xo%blc(3,:3)
-   !do while(.true.) 
-   !enddo
    !
    if (iw_par>PAR_n_freqs) cycle
    !
@@ -150,6 +142,20 @@ subroutine X_redux(iq,Xw,X)
    iw    = PAR_FREQS_index(iw_par)
    iw_X  = iw+iW_offset
    KERNEL%blc=cZERO
+   !if (iw_X(1)==3) then
+   !  write (*,*) 
+   !  write (*,*) myid,"1",iw_X(1),Xo%blc(1,:5)
+   !  write (*,*) myid,"2",iw_X(1),Xo%blc(2,:5)
+   !  write (*,*) myid,"3",iw_X(1),Xo%blc(3,:5)
+   !  write (*,*) myid,"4",iw_X(1),Xo%blc(4,:5)
+   !  write (*,*) myid,"5",iw_X(1),Xo%blc(5,:5)
+   !  write (*,*) myid,"6",iw_X(1),Xo%blc(6,:5)
+   !  write (*,*) myid,"7",iw_X(1),Xo%blc(7,:5)
+   !  write (*,*) myid,"8",iw_X(1),Xo%blc(8,:5)
+   !  write (*,*) myid,"9",iw_X(1),Xo%blc(9,:5)
+   !  do while(.true.) 
+   !  enddo
+   !endif
    !
    if (FXC_SVD_digits>0) INV_MODE=SVD_INV
    !
@@ -278,7 +284,21 @@ subroutine X_redux(iq,Xw,X)
    !
    do iw_par=1,PAR_n_freqs_global(i_LA_pool)
      !
-     call MATRIX_transfer(M_in=BUFFER(iw_par),M_out=X_par,INDEX_out=PAR_FREQS_index(iw_par))
+     ! Empty pool at this frequency?
+     !
+     if (iw_par>PAR_n_freqs_global(i_LA_pool)) cycle
+     !
+     ! The PP_redux forces me to define the iw_X only using the first CPU of each freq pool
+     !
+     iw_X    = 0
+     if (i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1.and.PAR_COM_SLK%CPU_id==0) then
+       iw_X  = PAR_FREQS_index(iw_par)+iW_offset
+     endif
+     call PP_redux_wait(iw_X,COMM=PAR_COM_X_WORLD%COMM)
+     !
+     call MATRIX_transfer(M_in=BUFFER(iw_par),M_out=X_par,INDEX_out=iw_X(1),&
+&                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
+&                         RCV=X_par%INTRA_comm%CPU_id==0)
      !
    enddo
  enddo

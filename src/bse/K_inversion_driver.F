@@ -165,7 +165,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !==================
    call K_diagonal(iq,"rm_OCC DIAG")
    !
-   if (FULL) call MATRIX_duplicate( "none", K_slk, K_inv_slk )
+   if (FULL) call MATRIX_duplicate( "none", K_slk, 0, K_inv_slk )
    !
 #endif
    !

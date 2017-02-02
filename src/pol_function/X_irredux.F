@@ -45,8 +45,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg,warning
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved,&
-&                        PAR_COM_Xk_ibz_INDEX,l_par_X_G_q0
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
 &                        n_threads_DIP,n_outthr,n_innthr,OPENMP_locks_reset,n_threads_FFT
 #if defined _OPENMP
@@ -127,7 +126,6 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
  ! Poles tabulation
  !==================
- ! 
  if(l_X_terminator) then
    cutoff=minval(Xen%E(X%ib(2),:,:))
    X_term_E=cutoff+X_terminator_E
@@ -354,12 +352,6 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
    call PP_redux_wait(X_par%blc_3d(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
    if (X_lower_triangle_matrix_in_use) then
      call PP_redux_wait(X_par_lower_triangle%blc_3d(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
-   endif
-   if (PAR_COM_RL_INDEX%n_CPU>1.and.l_par_X_G_q0) then
-     call PP_redux_wait(X_par%blc_3d(:,:,iw+iW_offset),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     if (X_lower_triangle_matrix_in_use) then
-       call PP_redux_wait(X_par_lower_triangle%blc_3d(:,:,iw+iW_offset),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     endif
    endif
  enddo
  !

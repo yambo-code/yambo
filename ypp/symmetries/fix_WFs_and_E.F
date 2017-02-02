@@ -26,9 +26,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use pars,                ONLY:SP,lchlen,cZERO
  use com,                 ONLY:msg,warning,core_io_path,more_io_path,error
  use memory_m,            ONLY:mem_est
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
-&                              OP_APP,cp_file,cp_directory, &
-&                              OP_RD_CL,RD_CL,RD,frag_WF
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,&
+&                              cp_file,cp_directory,OP_RD_CL,RD_CL,frag_WF
  use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_spin,n_spinor
@@ -58,7 +57,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  character(lchlen)     :: core_io_path_save,fragment_name
  integer               :: n_steps,nb1,nb2,ng_closed_save
- integer               :: ACTION_,ID
+ integer               :: ID
  integer               :: ierr,io_err
  !
  integer               :: wf_nb_io_save
@@ -155,9 +154,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
      io_err=io_WF(ID)
      !
-     ACTION_=OP_APP_WR_CL
-     if(frag_WF) ACTION_=OP_WR_CL
-     !
      do ik=1,k_save%nibz
        !
        ik_save=kpoints_map(1,ik)
@@ -188,7 +184,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k%nibz
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
-         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
+         call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf=wf_disk)
          !
        enddo
@@ -206,9 +202,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
    allocate(ic_rot_table(wf_ncx_new))
    allocate(wf_tmp(wf_ncx_new,n_spin))
-   !
-   ACTION_=OP_APP_WR_CL
-   if (frag_WF) ACTION_=OP_WR_CL
    !
    do ik=k_save%nibz+1,k%nibz 
      !      
@@ -271,7 +264,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nkibz=k%nibz
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
-       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
+       call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf=wf_disk)
        !
      enddo
@@ -294,9 +287,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
    allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
-   !
-   ACTION_=OP_APP_WR_CL
-   if(frag_WF) ACTION_=OP_WR_CL
    !
    do ik=1,k%nibz
      !
@@ -328,7 +318,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nkibz=k%nibz
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
-       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
+       call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf=wf_disk)
        !
      enddo

@@ -218,6 +218,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  n_colls=max(HXC_collisions%N,COH_collisions%N)
  !
+ if (l_HXC_collisions) call COLLISIONS_linearize_and_IO("HXC",0,HXC_collisions,HXC_COLL_element)
+ if (l_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,COH_collisions,COH_COLL_element)
+ !
  call live_timing("Collisions",n_steps)
  !
  do i_coll=1,n_colls

@@ -71,8 +71,8 @@ module IO_m
  !
  ! Actions
  !
- integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_WR_CL=4,OP_RD=5,OP_APP=6,&
-&                     OP_WR=7,RD=8,WR=9,RD_CL_IF_END=10,WR_CL=11,WR_CL_IF_END=12,   &
+ integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_RD=5,OP_WR=7,RD=8,WR=9,WR_CL=11, &
+&                                 RD_CL_IF_END=10,            WR_CL_IF_END=12,          &
 &                     OP_IF_START_RD_CL_IF_END=13,OP_IF_START_WR_CL_IF_END=14
  !
  ! Modes
@@ -198,32 +198,29 @@ module IO_m
      !
      integer :: ID
      open_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_WR_CL,&
-&                     io_action(ID)==OP_APP_WR_CL,io_action(ID)==OP_RD,&
-&                     io_action(ID)==OP_APP,io_action(ID)==OP_WR/))
+&                     io_action(ID)==OP_RD,   io_action(ID)==OP_WR    /))
    end function
    !
    logical function close_is_on(ID)
      !
      integer :: ID
-     close_is_on=any((/io_action(ID)==RD_CL,io_action(ID)==OP_RD_CL,&
-&                      io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
-&                      io_action(ID)==WR_CL/))
+     close_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_RD_CL,&
+&                      io_action(ID)==   WR_CL,io_action(ID)==   RD_CL/))
    end function
    !
    logical function read_is_on(ID)
      !
      integer :: ID
      read_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_RD,&
-&                     io_action(ID)==RD_CL,   io_action(ID)==RD,&
+&                     io_action(ID)==   RD_CL,io_action(ID)==   RD,&
 &                     io_action(ID)==RD_CL_IF_END,io_action(ID)==OP_IF_START_RD_CL_IF_END/))
    end function
    !
    logical function write_is_on(ID)
      !
      integer :: ID
-     write_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
-&                      io_action(ID)==WR      ,io_action(ID)==OP_APP,&
-&                      io_action(ID)==OP_WR   ,io_action(ID)==WR_CL,&
+     write_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_WR,&
+&                      io_action(ID)==   WR_CL,io_action(ID)==   WR,&
 &                      io_action(ID)==WR_CL_IF_END,io_action(ID)==OP_IF_START_WR_CL_IF_END/))
    end function
    ! 
@@ -316,22 +313,11 @@ module IO_m
        CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif
        !
-       if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
-         !
-         if( file_exists(trim(io_file(ID))) ) then
-           call netcdf_call(nf90_open(trim(io_file(ID)),ior(nf90_write,nf90_share),io_unit(ID)),ID)
-         else
-           call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)),ID)
-           call netcdf_call(nf90_enddef(io_unit(ID)),ID)
-           if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
-           if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
-         endif
-         !
+       if( file_exists(trim(io_file(ID))) ) then
+         call netcdf_call(nf90_open(trim(io_file(ID)),ior(nf90_write,nf90_share),io_unit(ID)),ID)
        else
-         !
          call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)),ID)
          call netcdf_call(nf90_enddef(io_unit(ID)),ID)
-         !
        endif
        !
        io_type(ID)=type
@@ -444,8 +430,7 @@ module IO_m
      ! Assign a new unit if the unit is not already open
      !
      if ( any((/ACTION==OP_RD_CL,ACTION==OP_WR_CL,&
-&               ACTION==OP_APP_WR_CL,ACTION==OP_RD,&
-&               ACTION==OP_APP,ACTION==OP_WR/)) ) then
+&               ACTION==OP_RD,   ACTION==OP_WR    /)) ) then
        ID=-1
        do i1=1,max_io_units
          if (io_unit(i1)==0) then
@@ -474,18 +459,14 @@ module IO_m
      integer :: start_,end_
      !
      if (read_is_on(ID)) then
-       if (io_action(ID)==RD_CL_IF_END.and.start_==end_) io_action(ID)=RD_CL
-     else  if (write_is_on(ID)) then
-       if (io_action(ID)==WR_CL_IF_END.and.start_==end_) io_action(ID)=WR_CL
-     endif
-     !
-     if (read_is_on(ID)) then
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_RD
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
+       if (io_action(ID)==            RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
      else  if (write_is_on(ID)) then
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_WR
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
+       if (io_action(ID)==            WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
      endif
      !

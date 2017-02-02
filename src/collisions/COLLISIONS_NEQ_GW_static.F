@@ -52,7 +52,6 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  implicit none
  !
- !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk
  type(X_t)                ::X
@@ -118,6 +117,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  call elemental_collision_alloc(isc, NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="NEQ_GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="NEQ_GW")
+ !
+ if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",0,GW_NEQ_collisions,GW_NEQ_COLL_element)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !

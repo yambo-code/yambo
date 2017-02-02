@@ -30,8 +30,7 @@ integer function io_WF(ID,wf)
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_bulk,io_header,ver_is_gt_or_eq,&
-&                           RD_CL_IF_END,RD_CL,io_action,io_fragment,&
-&                           io_elemental,frag_WF
+&                           io_fragment,io_elemental,frag_WF
 #if defined _TIMING
  use timing_m,         ONLY:timing
 #endif

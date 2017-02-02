@@ -48,7 +48,7 @@
  use pars,                ONLY:DP, lchlen,schlen, PI
  use units,               ONLY:HA2EV
  use com,                 ONLY:msg, error
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR_CL,&
 &                              OP_RD_CL,VERIFY
  use LIVE_t,              ONLY:live_timing
  use YPP

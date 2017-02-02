@@ -62,16 +62,16 @@ subroutine PARALLEL_inversion(M_slk,N)
  allocate( WS%v_int(N+M_slk%nrows) )
  !
 #if defined _DOUBLE
- CALL PZGETRF( N, N, M_slk%blc, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
+ CALL PZGETRF( N, N, M_slk%blc(:,:,M_slk%I), 1, 1, M_slk%desc, WS%v_int, M_slk%info )
  if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PZGETRF')
  !
- CALL PZGETRI( N, M_slk%blc, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
+ CALL PZGETRI( N, M_slk%blc(:,:,M_slk%I), 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
  if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PZGETRI')
 #else
- CALL PCGETRF( N, N, M_slk%blc, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
+ CALL PCGETRF( N, N, M_slk%blc(:,:,M_slk%I), 1, 1, M_slk%desc, WS%v_int, M_slk%info )
  if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PCGETRF')
  !
- CALL PCGETRI( N, M_slk%blc, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
+ CALL PCGETRI( N, M_slk%blc(:,:,M_slk%I), 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
  if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PCGETRI')
 #endif
  ! 

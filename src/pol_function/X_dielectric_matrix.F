@@ -178,7 +178,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  endif
  !
  call X_half_mat_check(Xen,Xk,Xw)
- call X_PARALLEL_alloc(X,Xw%n_freqs,"XUP DIELETRIC_MATRIX")
+ call X_PARALLEL_alloc(X,Xw%n_freqs,"XUP ALL_FREQUENCIES")
  !
  ! WF distribution 
  !=================
@@ -261,7 +261,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! CLEAN (2)
  !
  if (io_RESPONSE) then
-   Y_FREE(X_par%blc_3d)
+   Y_FREE(X_par%blc)
    Y_FREE(X_mat)
    call MATRIX_reset(X_par)
  endif

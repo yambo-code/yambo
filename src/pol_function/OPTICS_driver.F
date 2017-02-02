@@ -217,7 +217,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    ! Without LF eps
    !
-   if (Macroscopic_CPU) Epsilon_ii(:,1)=1.0_SP-X_par%blc_3d(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   if (Macroscopic_CPU) Epsilon_ii(:,1)=1.0_SP-X_par%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
    !
@@ -229,7 +229,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
      !
      call X_redux(iq,wv,X)
      !
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par%blc_3d(i_G_shift,i_G_shift,:)*&
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par%blc(i_G_shift,i_G_shift,:)*&
 &                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
      !
    endif
@@ -337,7 +337,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  !
  ! CLEAN
  !
- Y_FREE(X_par%blc_3d)
+ Y_FREE(X_par%blc)
  call MATRIX_reset(X_par)
  call X_alloc('DIP_projected')
  call WF_free(WF)

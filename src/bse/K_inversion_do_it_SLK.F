@@ -51,7 +51,7 @@ subroutine K_inversion_do_it_SLK(Lo,what)
      i_r_=i_r-K_slk%rows(1)+1
      i_c_=i_r-K_slk%cols(1)+1
      !
-     K_inv_slk%blc(i_r_,i_c_)=K_inv_slk%blc(i_r_,i_c_)+1._SP/Lo(i_r)
+     K_inv_slk%blc(i_r_,i_c_,1)=K_inv_slk%blc(i_r_,i_c_,1)+1._SP/Lo(i_r)
      !
    enddo
  endif

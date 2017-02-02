@@ -49,11 +49,7 @@ SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par, i_MAT )
  if (mode==">".and.I_do_RCV) then
    do i_row=M_par%rows(1),M_par%rows(2)
      do i_col=M_par%cols(1),M_par%cols(2)
-       if (i_MAT>0) then
-         M_par%blc_3d(i_row,i_col,i_MAT)=M(i_row,i_col)
-       else if (i_MAT==0) then
-         M_par%blc(i_row,i_col)         =M(i_row,i_col)
-       endif
+       M_par%blc(i_row,i_col,M_par%I)=M(i_row,i_col)
      enddo
    enddo
  endif
@@ -62,11 +58,7 @@ SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par, i_MAT )
    do i_row=M_par%rows(1),M_par%rows(2)
      SWAP=cZERO
      do i_col=M_par%cols(1),M_par%cols(2)
-       if (i_MAT>0) then
-         SWAP(i_col)=M_par%blc_3d(i_row,i_col,i_MAT)
-       else if (i_MAT==0) then
-         SWAP(i_col)=M_par%blc(i_row,i_col)
-       endif
+       SWAP(i_col)=M_par%blc(i_row,i_col,M_par%I)
      enddo
      call PP_redux_wait(SWAP,COMM=M_par%INTRA_comm%COMM)
      if (I_do_RCV) then

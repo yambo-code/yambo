@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_init( what, M_par, N )
+subroutine MATRIX_init( what, M_par, N, Nb)
  !
  ! I initialize a general parallel matrix here. Note the meaning of the two COMMS: INTRA and INTER.
  !
@@ -35,7 +35,8 @@ subroutine MATRIX_init( what, M_par, N )
  !
  use pars,           ONLY:SP
  use linear_algebra, ONLY:PAR_matrix
- use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_local,ncpu
+ use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_local,ncpu,&
+&                         PAR_COM_RL_INDEX,PAR_COM_RL_A2A
 #if defined _SCALAPACK
  use SLK_m,          ONLY:BLACS_structure_in_use
 #endif
@@ -43,11 +44,13 @@ subroutine MATRIX_init( what, M_par, N )
  !
  character(*)           :: what
  type(PAR_matrix)       :: M_par
- integer                :: N
+ integer                :: N,Nb
  !
  ! Work Space
  !
  integer       :: M,rows(M_par%INTER_comm%n_CPU,2),cols(M_par%INTER_comm%n_CPU,2),i_c,N_rows
+ !
+ ! COMMs
  !
  if (what=="SLK") then
    call COMM_copy(PAR_COM_SLK,             M_par%INTER_comm)
@@ -56,11 +59,18 @@ subroutine MATRIX_init( what, M_par, N )
    BLACS_structure_in_use=.FALSE.
 #endif
    M_par%kind="SLK"
+ else if (what=="XUP".or.what=="XDN".or.what=="X") then
+   call COMM_copy(PAR_COM_RL_A2A,   M_par%INTRA_comm)
+   call COMM_copy(PAR_COM_RL_INDEX, M_par%INTER_comm)
  endif
+ !
+ ! ... SERIAL fallback
  !
  if (M_par%INTER_comm%n_CPU==1.or.ncpu==1) then
    M_par%rows  = (/1,N/)
    M_par%cols  = (/1,N/)
+   M_par%Nb    = Nb
+   M_par%I     = 1
    M_par%N     = N
    M_par%nrows = N
    M_par%ncols = N
@@ -68,19 +78,19 @@ subroutine MATRIX_init( what, M_par, N )
    return
  endif
  !
+ ! ... SLK
+ !
  if (what=="SLK") then
    !
-   ! SLK structure.
-   !
 #if defined _SCALAPACK
-   call SLK_matrix_init(M_par,N)
+   call SLK_matrix_init(M_par,N, Nb)
    BLACS_structure_in_use=.TRUE.
 #endif
  endif
  !
+ ! Response function. Only upper triangle is distributed.
+ !
  if (what=="XUP") then
-   !
-   ! Response function. Only upper triangle is distributed.
    !
    M_par%kind="XUP"
    M= ( (N**2-N)/2 + N )/M_par%INTER_comm%n_CPU
@@ -98,11 +108,12 @@ subroutine MATRIX_init( what, M_par, N )
    M_par%nrows = M_par%rows(2)-M_par%rows(1)+1 
    M_par%ncols = M_par%cols(2)-M_par%cols(1)+1 
    return
+   !
  endif
  !
- if (what=="PAR") then
-   !
-   ! Response function. Entire Matrix.
+ ! Entire Matrix
+ !
+ if (what=="X".or.what=="PAR") then
    !
    M_par%N     = N
    M_par%kind  ="PAR"
@@ -113,6 +124,7 @@ subroutine MATRIX_init( what, M_par, N )
    M_par%nrows = M_par%rows(2)-M_par%rows(1)+1 
    M_par%ncols = M_par%cols(2)-M_par%cols(1)+1 
    return
+   !
  endif
  !
  contains

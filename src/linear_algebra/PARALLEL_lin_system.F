@@ -54,10 +54,10 @@ subroutine PARALLEL_lin_system(A_slk,B_slk,n,nrhs)
  allocate(WS%v_int(n+A_slk%nrows))
  !
 #if defined _DOUBLE
- CALL PZGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
+ CALL PZGESV( n, nrhs, A_slk%blc(:,:,A_slk%I), 1, 1, A_slk%desc, WS%v_int, B_slk%blc(:,:,B_slk%I), 1, 1, B_slk%desc, WS%i_fail)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZGESV')
 #else
- CALL PCGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
+ CALL PCGESV( n, nrhs, A_slk%blc(:,:,A_slk%I), 1, 1, A_slk%desc, WS%v_int, B_slk%blc(:,:,B_slk%I), 1, 1, B_slk%desc, WS%i_fail)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCGESV')
 #endif
  ! 

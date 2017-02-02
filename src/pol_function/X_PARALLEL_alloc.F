@@ -46,38 +46,32 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  !
  call MATRIX_reset(X_par)
  !
- ! COMMS...
- !
- call COMM_copy(PAR_COM_RL_A2A,   X_par%INTRA_comm)
- call COMM_copy(PAR_COM_RL_INDEX, X_par%INTER_comm)
- !
  ! Type of allocation....
  !
  l_XUP        =index(mode,"XUP")>0
- l_PAR        =index(mode,"PAR")>0
- l_ALL_in_MEM =index(mode,"DIELETRIC_MATRIX")>0
+ l_PAR        =index(mode,"XFULL")>0
+ l_ALL_in_MEM =index(mode,"ALL_FREQUENCIES")>0
  !
- ! NG distribution...
+ ! FREQs
  !
- if (l_XUP) call MATRIX_init( "XUP", X_par , X%ng )
- if (l_PAR) call MATRIX_init( "PAR", X_par , X%ng )
- !
- ! Frequency size
- !
+ X_size = NW
  if (l_ALL_in_MEM) then
    if (.not.io_RESPONSE) X_size=NW*PAR_nq
    if (     io_RESPONSE) X_size=NW
- else if (l_XUP) then
-   X_size                   = NW
-   call MATRIX_init( "XUP", X_par , X%ng )
+ endif
+ !
+ ! Initialization
+ !
+ if (l_XUP) then
+   call MATRIX_init( "XUP", X_par , X%ng, X_size )
  else if (l_PAR) then
    X_size                   = NW
-   call MATRIX_init( "PAR", X_par , X%ng )
+   call MATRIX_init( "X"  , X_par , X%ng, X_size )
  endif
  !
  iW_offset = 0
  !
- if (mode=="XUP".and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
+ if (l_XUP.and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
    call MATRIX_reset(X_par_lower_triangle)
    X_lower_triangle_matrix_in_use=.TRUE.
    X_par_lower_triangle%kind ="XDN"
@@ -85,16 +79,16 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
    X_par_lower_triangle%cols =X_par%rows
    X_par_lower_triangle%nrows=X_par%ncols
    X_par_lower_triangle%ncols=X_par%nrows
-   Y_ALLOCATE(X_par_lower_triangle%blc_3d(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
-   Y_MEM(X_par_lower_triangle%blc_3d)
-   X_par_lower_triangle%blc_3d=cZERO
+   Y_ALLOCATE(X_par_lower_triangle%blc(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
+   Y_MEM(X_par_lower_triangle%blc)
+   X_par_lower_triangle%blc=cZERO
    call COMM_copy(PAR_COM_RL_A2A,   X_par_lower_triangle%INTRA_comm)
    call COMM_copy(PAR_COM_RL_INDEX, X_par_lower_triangle%INTER_comm)
  endif
  !
- Y_ALLOCATE(X_par%blc_3d(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),X_size))
- Y_MEM(X_par%blc_3d)
- X_par%blc_3d=cZERO
+ Y_ALLOCATE(X_par%blc(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),X_size))
+ Y_MEM(X_par%blc)
+ X_par%blc=cZERO
  !
  call PARALLEL_live_message("RL vectors(X)",LOADED=X_par%ncols*X_par%nrows,TOTAL=X%ng**2,NCPU=X_par%INTER_comm%n_CPU)
  !

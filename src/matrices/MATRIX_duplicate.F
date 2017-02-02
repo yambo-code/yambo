@@ -23,20 +23,21 @@
 !
 SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  !
- ! operation can be "none/+1/-1/-C(= -1 * conjg)"
+ ! operation can be "none/free/+1/-1/-C/+T/+TC"
  !
  use parallel_m,     ONLY:COMM_copy
  use pars,           ONLY:cZERO,SP
  use linear_algebra, ONLY:PAR_matrix,MATRIX_reset
 #include<memory.h>
  !
- character(*)     :: operation
- type(PAR_matrix) :: M_in,M_out
- integer          :: INDEX_in
+ character(*)               :: operation
+ type(PAR_matrix), optional :: M_in
+ type(PAR_matrix)           :: M_out
+ integer         , optional :: INDEX_in
  !
  ! Work Space
  !
- integer     :: i_row,i_col,i_r,i_c
+ integer     :: i_row,i_col,i_r,i_c,i_b,Nb_i(2),Nb_o(2)
  complex(SP) :: ME
  real(SP)    :: pre_factor
  !
@@ -48,7 +49,7 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  endif
  !
  M_out%kind       = M_in%kind      
- M_out%N_blcs     = M_in%N_blcs    
+ M_out%I          = M_in%I
  M_out%N          = M_in%N         
  M_out%desc       = M_in%desc      
  M_out%lwork      = M_in%lwork
@@ -63,12 +64,21 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
    M_out%cols       = M_in%rows
  endif
  !
+ Nb_i=(/1, M_in%Nb /)
+ Nb_o=(/1, M_out%Nb/)
+ if (present(INDEX_in)) then
+   Nb_i=(/INDEX_in,INDEX_in/)
+   Nb_o=(/1,1/)
+   M_out%I =1
+ endif
+ M_out%Nb = Nb_o(2)-Nb_o(1)+1
+ !
  M_out%nrows      = M_out%rows(2)-M_in%rows(1)+1
  M_out%ncols      = M_out%cols(2)-M_in%cols(1)+1
  M_out%nrows_used = M_out%nrows
  M_out%ncols_used = M_out%ncols
  !
- Y_ALLOCATE(M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2)))
+ Y_ALLOCATE(M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),Nb_o(1):Nb_o(2)))
  Y_MEM(M_out%blc)
  M_out%blc=cZERO
  !
@@ -81,29 +91,28 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  if (index(operation,"-")>0 ) pre_factor=-1._SP
  !
 #if defined _OPENMP
- !$omp parallel default(shared), private(i_row,i_col,i_r,i_c)
+ !$omp parallel default(shared), private(i_row,i_col,i_r,i_c,i_b)
  !$omp do
 #endif
  do i_row=M_in%rows(1),M_in%rows(2)
    do i_col=M_in%cols(1),M_in%cols(2)
-     !
-     i_r=i_row
-     i_c=i_col
-     !
-     if (index(operation,"T")>0) then
-       i_r=i_col
-       i_c=i_row
-     endif
-     !
-     if (INDEX_in==0) ME=M_in%blc(i_row,i_col)
-     if (INDEX_in> 0) ME=M_in%blc_3d(i_row,i_col,INDEX_in)
-     !
-     if (index(operation,"C")>0 ) then
-       M_out%blc(i_r,i_c)=pre_factor*conjg(ME)
-     else
-       M_out%blc(i_r,i_c)=pre_factor*ME
-     endif
-     !
+     do i_b=Nb_i(1),Nb_i(2)
+       !
+       i_r=i_row
+       i_c=i_col
+       !
+       if (index(operation,"T")>0) then
+         i_r=i_col
+         i_c=i_row
+       endif
+       !
+       if (index(operation,"C")>0 ) then
+         M_out%blc(i_r,i_c,i_b+Nb_o(1)-Nb_i(1))=pre_factor*conjg(M_in%blc(i_row,i_col,i_b))
+       else
+         M_out%blc(i_r,i_c,i_b+Nb_o(1)-Nb_i(1))=pre_factor*M_in%blc(i_row,i_col,i_b)
+       endif
+       !
+     enddo
    enddo
  enddo
 #if defined _OPENMP

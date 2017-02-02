@@ -28,28 +28,30 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine SLK_matrix_init(M_slk, N)
+subroutine SLK_matrix_init(M_slk, N, N_blocks)
  !
  use SLK_m,          ONLY:SLK_ORTHO
  use parallel_m,     ONLY:ncpu
  use linear_algebra, ONLY:PAR_matrix,MATRIX_reset 
 #include<memory.h>
  !
- integer           :: N
+ integer           :: N,N_blocks
  type(PAR_matrix)  :: M_slk
  !
  ! Work Space
  !
- integer   :: lld,N_blcs,nprow,npcol,myrow,mycol
+ integer   :: lld,N_SLK_blocks,nprow,npcol,myrow,mycol
  !
  ! init global blacs grid
  !
  if (ncpu==1) then
    SLK_ORTHO%coordinate(1)=-1
-   M_slk%rows             = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
-   M_slk%cols             = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
+   M_slk%rows             = (/1,N/)
+   M_slk%cols             = (/1,N/)
    M_slk%nrows_used       = N
    M_slk%ncols_used       = N
+   M_slk%I                = 1
+   M_slk%Nb               = N_blocks
    M_slk%N                = N
    return
  endif
@@ -69,21 +71,23 @@ subroutine SLK_matrix_init(M_slk, N)
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B
  !
- N_blcs = int(N/nprow)
- if (N_blcs*nprow < N ) N_blcs=N_blcs+1
+ N_SLK_blocks                             = int(N/nprow)
+ if (N_SLK_blocks*nprow < N ) N_SLK_blocks=N_SLK_blocks+1
  !
- lld = N_blcs
+ lld = N_SLK_blocks
  !
- call DESCINIT( M_slk%desc, N, N, N_blcs, N_blcs, 0, 0, SLK_ORTHO%ortho_cntx, lld, M_slk%info )
+ call DESCINIT( M_slk%desc, N, N, N_SLK_blocks, N_SLK_blocks, 0, 0, SLK_ORTHO%ortho_cntx, lld, M_slk%info )
  !
  call MATRIX_reset(M_slk)
  !
- M_slk%rows       = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
- M_slk%cols       = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
+ M_slk%rows       = (/myrow*N_SLK_blocks+1,min(myrow*N_SLK_blocks+N_SLK_blocks,N)/)
+ M_slk%cols       = (/mycol*N_SLK_blocks+1,min(mycol*N_SLK_blocks+N_SLK_blocks,N)/)
  M_slk%nrows      = M_slk%rows(2)-M_slk%rows(1)+1
  M_slk%ncols      = M_slk%cols(2)-M_slk%cols(1)+1
  M_slk%nrows_used = M_slk%nrows
  M_slk%ncols_used = M_slk%ncols
  M_slk%N          = N
+ M_slk%I          = 1
+ M_slk%Nb         = N_blocks
  !
 end subroutine 

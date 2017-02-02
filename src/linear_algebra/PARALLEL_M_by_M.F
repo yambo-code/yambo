@@ -51,11 +51,11 @@ subroutine PARALLEL_M_by_M(A_slk,B_slk,C_slk,transa,transb,m,n,k)
 #endif
  !
 #if defined _DOUBLE
- CALL PZGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
-              B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
+ CALL PZGEMM( transa, transb, m, n, k, cONE, A_slk%blc(:,:,A_slk%I), 1, 1, A_slk%desc, &
+              B_slk%blc(:,:,B_slk%I), 1, 1, B_slk%desc, cZERO, C_slk%blc(:,:,C_slk%I), 1, 1, C_slk%desc)
 #else
- CALL PCGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
-              B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
+ CALL PCGEMM( transa, transb, m, n, k, cONE, A_slk%blc(:,:,A_slk%I), 1, 1, A_slk%desc, &
+              B_slk%blc(:,:,B_slk%I), 1, 1, B_slk%desc, cZERO, C_slk%blc(:,:,C_slk%I), 1, 1, C_slk%desc)
 #endif
  !
 #if defined _TIMING

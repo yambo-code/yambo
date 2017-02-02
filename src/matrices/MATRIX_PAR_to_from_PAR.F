@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv, i_S, i_R )
+SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv )
  !
  ! M_snd > M_rcv
  !
@@ -31,7 +31,6 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv, i_S, i_R )
  implicit none
  !
  type(PAR_matrix) :: M_snd,M_rcv
- integer          :: i_S,i_R
  !
  ! Work Space
  !
@@ -134,34 +133,14 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv, i_S, i_R )
      endif
      !
      if (myid==i_snd_world.and.i_snd_world==i_rcv_world) then
-       !write (*,*) i_snd_world,i_S,"<=>",i_rcv_world,i_R
-       if  (i_S==0) then
-         if  (i_R==0) then
-           M_rcv%blc(R(1):R(2),R(3):R(4))=M_snd%blc(S(1):S(2),S(3):S(4))
-         else
-           M_rcv%blc_3d(R(1):R(2),R(3):R(4),i_R)=M_snd%blc(S(1):S(2),S(3):S(4))
-         endif
-       else 
-         if  (i_R==0) then
-           M_rcv%blc(R(1):R(2),R(3):R(4))=M_snd%blc_3d(S(1):S(2),S(3):S(4),i_S)
-         else
-           M_rcv%blc_3d(R(1):R(2),R(3):R(4),i_R)=M_snd%blc_3d(S(1):S(2),S(3):S(4),i_S)
-         endif
-       endif
+       !write (*,*) i_snd_world,M_snd%I,"<=>",i_rcv_world,M_rcv%I
+       M_rcv%blc(R(1):R(2),R(3):R(4),M_rcv%I)=M_snd%blc(S(1):S(2),S(3):S(4),M_snd%I)
      else if (myid==i_snd_world) then
        !write (*,*) i_snd_world,i_S,"=>",i_rcv_world,i_R
-       if  (i_S==0) then
-         call PP_send_and_receive("send",M_snd%blc(S(1):S(2),S(3):S(4)),i_rcv_world)
-       else 
-         call PP_send_and_receive("send",M_snd%blc_3d(S(1):S(2),S(3):S(4),i_S),i_rcv_world)
-       endif
+       call PP_send_and_receive("send",M_snd%blc(S(1):S(2),S(3):S(4),M_snd%I),i_rcv_world)
      else if (myid==i_rcv_world) then
        !write (*,*) i_rcv_world,i_R,"<=",i_snd_world,i_S
-       if  (i_R==0) then
-         call PP_send_and_receive("receive",M_rcv%blc(R(1):R(2),R(3):R(4)),i_snd_world)
-       else 
-         call PP_send_and_receive("receive",M_rcv%blc_3d(R(1):R(2),R(3):R(4),i_R),i_snd_world)
-       endif
+       call PP_send_and_receive("receive",M_rcv%blc(R(1):R(2),R(3):R(4),M_rcv%I),i_snd_world)
      endif
      !
    end subroutine

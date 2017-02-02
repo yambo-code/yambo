@@ -27,7 +27,7 @@ subroutine X_redux(iq,Xw,X)
  !
  ! More precisely the routine handles:
  !
- !  1. Xo(PAR/SER)    : INPUT
+ !  1. Xo(XUP/XDN/SER): INPUT
  !  2. Dyson(SER/SLK) : SOLVER
  !  3. X(PAR/SER)     : OUTPUT
  !
@@ -62,8 +62,7 @@ subroutine X_redux(iq,Xw,X)
  type(PP_indexes) ::PAR_IND_freqs
  integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
 &                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU),NW
- type(PAR_matrix) ::KERNEL,Xo
- type(PAR_matrix), allocatable ::BUFFER(:)
+ type(PAR_matrix) ::KERNEL,Xo,BUFFER
  !
  ! Setup 
  !
@@ -86,21 +85,18 @@ subroutine X_redux(iq,Xw,X)
  !
  ! ... and local BLACS structures for the response function components
  !         ======================
- call MATRIX_init( "SLK", KERNEL , X%ng )
- Y_ALLOCATE(KERNEL%blc(KERNEL%nrows,KERNEL%ncols))
+ call MATRIX_init( "SLK", KERNEL , X%ng, 1 )
+ Y_ALLOCATE(KERNEL%blc(KERNEL%nrows,KERNEL%ncols,1))
  Y_MEM(KERNEL%blc)
  KERNEL%blc=cZERO
- call MATRIX_init( "SLK", Xo , X%ng )
- Y_ALLOCATE(Xo%blc(Xo%nrows,Xo%ncols))
+ call MATRIX_init( "SLK", Xo , X%ng, 1 )
+ Y_ALLOCATE(Xo%blc(Xo%nrows,Xo%ncols,1))
  Y_MEM(Xo%blc)
  Xo%blc=cZERO
- allocate(BUFFER(maxval(PAR_n_freqs_global)))
- do iw_par=1,maxval(PAR_n_freqs_global)
-   call MATRIX_init( "SLK", BUFFER(iw_par) , X%ng )
-   Y_ALLOCATE(BUFFER(iw_par)%blc(Xo%nrows,Xo%ncols))
-   Y_MEM(BUFFER(iw_par)%blc)
-   BUFFER(iw_par)%blc=cZERO
- enddo
+ call MATRIX_init( "SLK", BUFFER , X%ng, PAR_n_freqs)
+ Y_ALLOCATE(BUFFER%blc(Xo%nrows,Xo%ncols,PAR_n_freqs))
+ Y_MEM(BUFFER%blc)
+ BUFFER%blc=cZERO
  !
  do iw_par=1,maxval(PAR_n_freqs_global)
    !
@@ -142,6 +138,7 @@ subroutine X_redux(iq,Xw,X)
    iw    = PAR_FREQS_index(iw_par)
    iw_X  = iw+iW_offset
    KERNEL%blc=cZERO
+   BUFFER%I  =iw_par
    !if (iw_X(1)==3) then
    !  write (*,*) 
    !  write (*,*) myid,"1",iw_X(1),Xo%blc(1,:5)
@@ -174,7 +171,7 @@ subroutine X_redux(iq,Xw,X)
        !$omp parallel do default(shared), private(ig1)
 #endif
        do ig1=Xo%rows(1),Xo%rows(2)
-         KERNEL%blc(ig1,1)=-Xo%blc(ig1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
+         KERNEL%blc(ig1,1,1)=-Xo%blc(ig1,1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
        enddo
 #if defined _OPENMP
        !$omp end parallel do
@@ -185,7 +182,7 @@ subroutine X_redux(iq,Xw,X)
      !
      ! ALDA Fxc (to be implemented in PARALLEL)
      !
-     call M_by_M('N','N', X%ng, -Xo%blc(:,:FXC_n_g_corr), FXC(:,:,1), KERNEL%blc(:,:FXC_n_g_corr))
+     call M_by_M('N','N', X%ng, -Xo%blc(:,:FXC_n_g_corr,1), FXC(:,:,1), KERNEL%blc(:,:FXC_n_g_corr,iw_par))
      !
    endif
    !
@@ -196,9 +193,9 @@ subroutine X_redux(iq,Xw,X)
 #endif
    do ig1=Xo%rows(1),Xo%rows(2)
      do ig2=Xo%cols(1),Xo%cols(2)
-       KERNEL%blc(ig1,ig2) =KERNEL%blc(ig1,ig2)-Xo%blc(ig1,ig2)*4._SP*pi/bare_qpg(iq,ig2)**2
+       KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
      enddo
-     KERNEL%blc(ig1,ig1)=KERNEL%blc(ig1,ig1)+cONE
+     KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
    enddo
 #if defined _OPENMP
    !$omp end parallel do
@@ -211,11 +208,11 @@ subroutine X_redux(iq,Xw,X)
      ! Linear System
      !
      if (BLACS_structure_in_use) then
-       BUFFER(iw_par)%blc=Xo%blc
-       call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER(iw_par))
+       BUFFER%blc(:,:,iw_par)=Xo%blc(:,:,1)
+       call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
      else
-       X_par%blc_3d(:,:,iw_X(1))=Xo%blc
-       call LINEAR_ALGEBRA_driver(LIN_SYS,M=KERNEL%blc,B=BUFFER(iw_X(1))%blc(:,:))
+       X_par%blc(:,:,iw_X(1))=Xo%blc(:,:,1)
+       call LINEAR_ALGEBRA_driver(LIN_SYS,M=KERNEL%blc(:,:,1),B=BUFFER%blc(:,:,iw_par))
      endif
      !
   else
@@ -224,10 +221,10 @@ subroutine X_redux(iq,Xw,X)
      !
      if (BLACS_structure_in_use) then
        call LINEAR_ALGEBRA_driver(INV,M_slk=KERNEL)
-       call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER(iw_par))
+       call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
      else
-       call LINEAR_ALGEBRA_driver(INV,M=KERNEL%blc)
-       call LINEAR_ALGEBRA_driver(MAT_MUL,M=KERNEL%blc,B=Xo%blc,C=BUFFER(iw_par)%blc(:,:))
+       call LINEAR_ALGEBRA_driver(INV,M=KERNEL%blc(:,:,1))
+       call LINEAR_ALGEBRA_driver(MAT_MUL,M=KERNEL%blc(:,:,1),B=Xo%blc(:,:,1),C=BUFFER%blc(:,:,iw_par))
      endif
      !
    endif
@@ -237,7 +234,7 @@ subroutine X_redux(iq,Xw,X)
 #endif
    do ig1=Xo%rows(1),Xo%rows(2)
      do ig2=Xo%cols(1),Xo%cols(2)
-       BUFFER(iw_par)%blc(ig1,ig2)=BUFFER(iw_par)%blc(ig1,ig2)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+       BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
      enddo
    enddo
 #if defined _OPENMP
@@ -271,12 +268,10 @@ subroutine X_redux(iq,Xw,X)
  !
  if (X_par%INTER_comm%n_CPU>1) then
    !
-   NW=size(X_par%blc_3d,3)
-   !
-   Y_FREE(X_par%blc_3d)
+   NW=X_par%Nb
+   Y_FREE(X_par%blc)
    call MATRIX_reset(X_par)
-   !
-   call X_PARALLEL_alloc(X,NW,"PAR")
+   call X_PARALLEL_alloc(X,NW,"XFULL")
    !
  endif
  !
@@ -296,7 +291,7 @@ subroutine X_redux(iq,Xw,X)
      endif
      call PP_redux_wait(iw_X,COMM=PAR_COM_X_WORLD%COMM)
      !
-     call MATRIX_transfer(M_in=BUFFER(iw_par),M_out=X_par,INDEX_out=iw_X(1),&
+     call MATRIX_transfer(M_in=BUFFER,M_out=X_par,INDEX_in=iw_par,INDEX_out=iw_X(1),&
 &                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
 &                         RCV=X_par%INTRA_comm%CPU_id==0)
      !
@@ -304,7 +299,7 @@ subroutine X_redux(iq,Xw,X)
  enddo
  !
  do iw=1,Xw%n_freqs
-   call PP_redux_wait(X_par%blc_3d(:,:,iw+iW_offset),COMM=X_par%INTRA_comm%COMM)
+   call PP_redux_wait(X_par%blc(:,:,iw+iW_offset),COMM=X_par%INTRA_comm%COMM)
  enddo
  !
 #if defined _TIMING
@@ -314,35 +309,8 @@ subroutine X_redux(iq,Xw,X)
  ! CLEAN
  !
  if (BLACS_structure_in_use) then
-   do iw_par=1,PAR_n_freqs
-     Y_FREE(BUFFER(iw_par)%blc)
-   enddo
-   deallocate(BUFFER)
+   Y_FREE(BUFFER%blc)
  endif
  call PP_indexes_reset(PAR_IND_freqs)
  !
- contains
-   !
-!   subroutine LOCAL_X_transfer(mode,iW_X,iW_SLK)
-!     character(*) :: mode
-!     integer :: iW_X,iW_SLK
-!     if (trim(mode)=="Xo > SLK") then
-!       if (X_lower_triangle_matrix_in_use) then
-!         if (BLACS_structure_in_use) then
-!           call MATRIX_transfer("X > slk",M_slk=Xo,X_up=X_par,X_dn=X_par_lower_triangle,i_MAT=iW_X)
-!         else
-!           call MATRIX_transfer("X > M",  X_up=X_par,X_dn=X_par_lower_triangle,M=Xo%blc,i_MAT=iW_X)
-!         endif
-!       else
-!         if (BLACS_structure_in_use) then
-!           call MATRIX_transfer("X > slk",M_slk=Xo,X_up=X_par,i_MAT=iW_X)
-!         else
-!           call MATRIX_transfer("X > M",  X_up=X_par,M=Xo%blc,i_MAT=iW_X)
-!         endif
-!       endif
-!     else if (trim(mode)=="X > PAR") then
-!       call MATRIX_transfer("slk > par",M_slk=BUFFER(iW_SLK),X_up=X_par,i_MAT=iW_X)
-!     endif
-!   end subroutine
-   !
 end subroutine

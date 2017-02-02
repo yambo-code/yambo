@@ -125,8 +125,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    !
    if (.not.present(M_slk)) then
      !
-     call SLK_matrix_init( M_loc_slk, N )
-     Y_ALLOCATE(M_loc_slk%blc(M_loc_slk%nrows,M_loc_slk%ncols))
+     call MATRIX_init( "SLK", M_loc_slk, N, 1 )
+     Y_ALLOCATE(M_loc_slk%blc(M_loc_slk%nrows,M_loc_slk%ncols,M_loc_slk%Nb))
      Y_MEM(M_loc_slk%blc)
      !
      if (present(M_bse)) then
@@ -139,8 +139,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    !
    if (idriver==DIAGO) then
      !
-     call SLK_matrix_init( EIGEN_slk, N )
-     Y_ALLOCATE(EIGEN_slk%blc(EIGEN_slk%nrows,EIGEN_slk%ncols))
+     call MATRIX_init("SLK",  EIGEN_slk, N, 1 )
+     Y_ALLOCATE(EIGEN_slk%blc(EIGEN_slk%nrows,EIGEN_slk%ncols,EIGEN_slk%Nb))
      Y_MEM(EIGEN_slk%blc)
      !
      call PARALLEL_HERMITIAN_diagonalization( M_loc_slk, EIGEN_slk, N, E_real )
@@ -162,8 +162,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      !
      if (.not.present(B_slk)) then
        !
-       call SLK_matrix_init( B_loc_slk, N )
-       Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols))
+       call MATRIX_init("SLK",  B_loc_slk, N, 1 )
+       Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols,B_loc_slk%Nb))
        Y_MEM(B_loc_slk%blc)
        call MATRIX_transfer( M_out = B_loc_slk, M=B )
        !
@@ -183,13 +183,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      !
      if (.not.present(B_slk)) then
        !
-       call SLK_matrix_init( B_loc_slk, N )
-       Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols))
+       call MATRIX_init("SLK",  B_loc_slk, N, 1 )
+       Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols,B_loc_slk%Nb))
        Y_MEM(B_loc_slk%blc)
        call MATRIX_transfer( M_out =  B_loc_slk, M=B )
        !
-       call SLK_matrix_init( C_loc_slk, N )
-       Y_ALLOCATE(C_loc_slk%blc(C_loc_slk%nrows,C_loc_slk%ncols))
+       call MATRIX_init("SLK",  C_loc_slk, N, 1 )
+       Y_ALLOCATE(C_loc_slk%blc(C_loc_slk%nrows,C_loc_slk%ncols,C_loc_slk%Nb))
        Y_MEM(C_loc_slk%blc)
        call MATRIX_transfer( M_out =  C_loc_slk, M=C )
        !

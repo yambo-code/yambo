@@ -297,7 +297,7 @@ SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
        enddo
        !
        if (i_c2==SLK_cpu_id_in_the_world(i_c1)) then
-         M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4))=M_tmp
+         M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4),M_slk%I)=M_tmp
        else
          call PP_send_and_receive("send",M_tmp,SLK_cpu_id_in_the_world(i_c1)-1)
        endif
@@ -307,7 +307,7 @@ SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
      endif
      !
      if (myid==SLK_cpu_id_in_the_world(i_c1)-1) then
-       call PP_send_and_receive("receive",M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4)),i_c2-1)
+       call PP_send_and_receive("receive",M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4),M_slk%I),i_c2-1)
      endif
      !
    end subroutine

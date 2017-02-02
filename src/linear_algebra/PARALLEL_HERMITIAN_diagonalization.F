@@ -63,10 +63,10 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M_slk, EIGEN_slk, N, E)
  lrwork=-1
  !
 #if defined _DOUBLE
- call PZHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
+ call PZHEEV('V','U',N,M_slk%blc(:,:,M_slk%I),1,1,M_slk%desc,E,EIGEN_slk%blc(:,:,EIGEN_slk%I),1,1,EIGEN_slk%desc,&
              cvar,lwork,rvar,lrwork,WS%i_fail)
 #else
- call PCHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
+ call PCHEEV('V','U',N,M_slk%blc(:,:,M_slk%I),1,1,M_slk%desc,E,EIGEN_slk%blc(:,:,EIGEN_slk%I),1,1,EIGEN_slk%desc,&
              cvar,lwork,rvar,lrwork,WS%i_fail)
 #endif
  !
@@ -79,11 +79,11 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M_slk, EIGEN_slk, N, E)
  allocate(WS%v_real(lrwork))
  !
 #if defined _DOUBLE
- call PZHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
+ call PZHEEV('V','U',N,M_slk%blc(:,:,M_slk%I),1,1,M_slk%desc,E,EIGEN_slk%blc(:,:,EIGEN_slk%I),1,1,EIGEN_slk%desc,&
              WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZHEEV')
 #else
- call PCHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
+ call PCHEEV('V','U',N,M_slk%blc(:,:,M_slk%I),1,1,M_slk%desc,E,EIGEN_slk%blc(:,:,EIGEN_slk%I),1,1,EIGEN_slk%desc,&
              WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCHEEV')
 #endif

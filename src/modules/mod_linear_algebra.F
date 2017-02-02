@@ -70,11 +70,12 @@ module linear_algebra
  !
  type PAR_matrix
    !
-   character(3) :: kind = "NAN" ! "PAR" "SLK" "XUP" "XDN"
+   character(3) :: kind = "NAN" ! "PAR" "SLK" "XUP" "XDN" "SER"
    !
    integer :: desc(desc_len)
-   integer :: N_blcs     = 0         ! If > 0 blcs_3d are used
-   integer :: N          = -1
+   integer :: Nb         = 1  ! # of Blocks
+   integer :: I          = 1  ! Block element
+   integer :: N          = -1 ! Global dimension
    integer :: lwork      = -1
    integer :: lrwork     = -1
    integer :: liwork     = -1
@@ -89,11 +90,7 @@ module linear_algebra
    type(MPI_comm) :: INTRA_comm
    type(MPI_comm) :: INTER_comm
    !
-   integer,     allocatable :: rows_global(:,:)
-   integer,     allocatable :: cols_global(:,:)
-   !
-   complex(SP), allocatable :: blc(:,:)
-   complex(SP), allocatable :: blc_3d(:,:,:)
+   complex(SP), allocatable :: blc(:,:,:)
    !
  end type PAR_matrix 
  !
@@ -107,7 +104,8 @@ module linear_algebra
      use parallel_m, ONLY:COMM_reset
      type(PAR_matrix)   :: M_par
      M_par%kind       = "NAN"
-     M_par%N_blcs     = 0
+     M_par%Nb         = 1
+     M_par%I          = 1
      M_par%N          = -1
      M_par%desc       = 0
      M_par%lwork      = -1

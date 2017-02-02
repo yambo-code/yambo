@@ -26,6 +26,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  ! For the table of actions see below...
  !
  use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset
+ use interfaces,     ONLY:MATRIX_duplicate
  use pars,           ONLY:SP
  use BS,             ONLY:BS_block
  use X_m,            ONLY:X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
@@ -44,7 +45,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  ! Work Space
  !
- integer              :: M_index_in,M_index_out,N
+ integer              :: N
  character(3)         :: M_in_kind, M_out_kind
  logical              :: l_MAT_ARRAY
  type(PAR_matrix)     :: M_Xdn
@@ -79,13 +80,13 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  ! INDEXes
  !
- M_index_in =0
- M_index_out=0
+ M_in%I =1
+ M_out%I=1
  if (present(INDEX_in)) then
-   M_index_in=INDEX_in
+   M_in%I=INDEX_in
  endif
  if (present(INDEX_out)) then
-   M_index_out=INDEX_out
+   M_out%I=INDEX_out
  endif
  !
  ! Local SND/RCV
@@ -120,11 +121,11 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  if (M_in_kind=="SER".and.l_MAT_array) then
    !
-   call MATRIX_SER_to_from_PAR(N,M,">",M_out,M_index_out) 
+   call MATRIX_SER_to_from_PAR(N,M,">",M_out) 
    !
  else if (M_in_kind=="SER") then
    !
-   call MATRIX_PAR_to_from_PAR(M_in,M_out,M_index_in,M_index_out) 
+   call MATRIX_PAR_to_from_PAR(M_in,M_out) 
    !
  else if (M_in_kind=="BSE") then
    !
@@ -133,20 +134,20 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  else if (M_in_kind=="PAR".or.M_in_kind=="SLK") then
    !
    if (M_out_kind=="SER") then
-     if (     l_MAT_ARRAY) call MATRIX_SER_to_from_PAR(N,M,"<",M_in,M_index_in) 
-     if (.not.l_MAT_ARRAY) call MATRIX_PAR_to_from_PAR(M_in,M_out,M_index_in,M_index_out) 
+     if (     l_MAT_ARRAY) call MATRIX_SER_to_from_PAR(N,M,"<",M_in) 
+     if (.not.l_MAT_ARRAY) call MATRIX_PAR_to_from_PAR(M_in,M_out) 
    endif
-   if (M_out_kind=="SLK".or.M_out_kind=="PAR") call MATRIX_PAR_to_from_PAR(M_in,M_out,M_index_in,M_index_out)
+   if (M_out_kind=="SLK".or.M_out_kind=="PAR") call MATRIX_PAR_to_from_PAR(M_in,M_out)
    !
  else if (M_in_kind=="XUP".or.M_in_kind=="XDN") then
    !
-   call MATRIX_PAR_to_from_PAR(M_in,M_out,M_index_in,M_index_out) 
+   call MATRIX_PAR_to_from_PAR(M_in,M_out) 
    !
    if (M_in_kind=="XUP".and.X_FILL_UP_matrix_only.or.X_lower_triangle_matrix_in_use) then
-     if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in,M_index_in,M_Xdn)
-     if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in,M_index_in,M_Xdn)
-     call MATRIX_PAR_to_from_PAR(M_Xdn,M_out,0,M_index_out) 
-     call MATRIX_duplicate("free",M_in,0,M_Xdn)
+     if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in=M_in,M_out=M_Xdn)
+     if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in=M_in,M_out=M_Xdn)
+     call MATRIX_PAR_to_from_PAR(M_Xdn,M_out) 
+     call MATRIX_duplicate("free",M_out=M_Xdn)
    endif
    !
  endif

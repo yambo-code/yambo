@@ -87,11 +87,11 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
  ! Defaults & Setups
  !===================
- X_par%blc_3d(:,:,iW_offset+1:iW_offset+Xw%n_freqs) = cZERO
+ X_par%blc(:,:,iW_offset+1:iW_offset+Xw%n_freqs)    = cZERO
  GreenF                                             = cZERO
  drude_GreenF                                       = cZERO
  if (X_lower_triangle_matrix_in_use) then
-   X_par_lower_triangle%blc_3d(:,:,:) = cZERO
+   X_par_lower_triangle%blc(:,:,:) = cZERO
  endif
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
@@ -245,7 +245,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
 #if defined _OPENMP
      !$omp critical
 #endif
-     X_par%blc_3d(1,1,:)=X_par%blc_3d(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
+     X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
 #if defined _OPENMP
      !$omp end critical
 #endif
@@ -291,7 +291,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
        ! ----    ----
        !
        call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),Xo_res(ig1,X_cols(1):X_cols(2)),&
-&                         X_par%blc_3d(ig1,X_cols(1):X_cols(2),iw+iW_offset))
+&                         X_par%blc(ig1,X_cols(1):X_cols(2),iw+iW_offset))
        !
        if (.not.X_FILL_UP_matrix_only) then
          !
@@ -305,11 +305,11 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
          if (PAR_COM_RL_INDEX%n_CPU>1) then
            call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),&
 &                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),&
-&                             X_par_lower_triangle%blc_3d(X_cols(1):X_cols(2),ig1,iw+iW_offset))
+&                             X_par_lower_triangle%blc(X_cols(1):X_cols(2),ig1,iw+iW_offset))
          else
            call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),&
 &                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),&
-&                             X_par%blc_3d(X_cols(1):X_cols(2),ig1,iw+iW_offset))
+&                             X_par%blc(X_cols(1):X_cols(2),ig1,iw+iW_offset))
          endif
        endif
 #if defined _OPENMP
@@ -349,9 +349,9 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-   call PP_redux_wait(X_par%blc_3d(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
+   call PP_redux_wait(X_par%blc(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
    if (X_lower_triangle_matrix_in_use) then
-     call PP_redux_wait(X_par_lower_triangle%blc_3d(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
+     call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
    endif
  enddo
  !
@@ -403,13 +403,13 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  do ig1=X_par%rows(1),X_par%rows(2)
    if (X_FILL_UP_matrix_only) then
      do ig2=X_par%cols(1),ig1-1
-       if (i_space_inv==1) X_par%blc_3d(ig1,ig2,:)=X_par%blc_3d(ig2,ig1,:)
-       if (i_space_inv==0) X_par%blc_3d(ig1,ig2,:)=conjg(X_par%blc_3d(ig2,ig1,:))
+       if (i_space_inv==1) X_par%blc(ig1,ig2,:)=X_par%blc(ig2,ig1,:)
+       if (i_space_inv==0) X_par%blc(ig1,ig2,:)=conjg(X_par%blc(ig2,ig1,:))
      enddo
    else if (PAR_COM_RL_INDEX%n_CPU>1) then
      do ig2=X_par%cols(1),ig1
-       X_par_lower_triangle%blc_3d(ig2,ig1,:)=X_par%blc_3d(ig2,ig1,:)
-       X_par%blc_3d(ig1,ig2,:)               =X_par_lower_triangle%blc_3d(ig1,ig2,:)
+       X_par_lower_triangle%blc(ig2,ig1,:)=X_par%blc(ig2,ig1,:)
+       X_par%blc(ig1,ig2,:)               =X_par_lower_triangle%blc(ig1,ig2,:)
      enddo
    endif
  enddo

@@ -73,9 +73,9 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv )
  call PP_redux_wait(ACTIVE_cpus_snd,COMM=COMM%COMM)
  call PP_redux_wait(ACTIVE_cpus_rcv,COMM=COMM%COMM)
  !
- !write (*,*) "ID=",myid,"C=",CPU_in_the_world
- !write (*,*) "ID=",myid,"A_S=",ACTIVE_cpus_snd
- !write (*,*) "ID=",myid,"A_R=",ACTIVE_cpus_rcv
+ !write (*,*) "ID=",myid,"C=",CPU_in_the_world(:COMM%n_CPU)
+ !write (*,*) "ID=",myid,"A_S=",ACTIVE_cpus_snd(:COMM%n_CPU)
+ !write (*,*) "ID=",myid,"A_R=",ACTIVE_cpus_rcv(:COMM%n_CPU)
  !
  ! CORNERS
  !
@@ -136,10 +136,10 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv )
        !write (*,*) i_snd_world,M_snd%I,"<=>",i_rcv_world,M_rcv%I
        M_rcv%blc(R(1):R(2),R(3):R(4),M_rcv%I)=M_snd%blc(S(1):S(2),S(3):S(4),M_snd%I)
      else if (myid==i_snd_world) then
-       !write (*,*) i_snd_world,i_S,"=>",i_rcv_world,i_R
+       !write (*,*) i_snd_world,M_snd%I,"=>",i_rcv_world,M_rcv%I
        call PP_send_and_receive("send",M_snd%blc(S(1):S(2),S(3):S(4),M_snd%I),i_rcv_world)
      else if (myid==i_rcv_world) then
-       !write (*,*) i_rcv_world,i_R,"<=",i_snd_world,i_S
+       !write (*,*) i_rcv_world,M_rcv%I,"<=",i_snd_world,M_snd%I
        call PP_send_and_receive("receive",M_rcv%blc(R(1):R(2),R(3):R(4),M_rcv%I),i_snd_world)
      endif
      !

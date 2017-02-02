@@ -48,7 +48,8 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  !
  ! Work Space
  !
- integer       :: M,rows(M_par%INTER_comm%n_CPU,2),cols(M_par%INTER_comm%n_CPU,2),i_c,N_rows
+ integer              :: M,i_c,N_rows
+ integer, allocatable :: rows(:,:),cols(:,:)
  !
  ! COMMs
  !
@@ -71,6 +72,7 @@ subroutine MATRIX_init( what, M_par, N, Nb)
    M_par%cols  = (/1,N/)
    M_par%Nb    = Nb
    M_par%I     = 1
+   M_par%Nb    = Nb
    M_par%N     = N
    M_par%nrows = N
    M_par%ncols = N
@@ -92,6 +94,8 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  !
  if (what=="XUP") then
    !
+   allocate(rows(M_par%INTER_comm%n_CPU,2))
+   allocate(cols(M_par%INTER_comm%n_CPU,2))
    M_par%kind="XUP"
    M= ( (N**2-N)/2 + N )/M_par%INTER_comm%n_CPU
    cols(1,:)=(/1,N/)
@@ -102,11 +106,14 @@ subroutine MATRIX_init( what, M_par, N, Nb)
      rows(i_c,:)=rows(i_c-1,2)+(/1,N_rows/)
      if (N_rows==0) rows(i_c,2)=N
    enddo
+   M_par%I     = 1
+   M_par%Nb    = Nb
    M_par%N     = N
    M_par%rows  = rows(M_par%INTER_comm%CPU_id+1,:)
    M_par%cols  = cols(M_par%INTER_comm%CPU_id+1,:)
    M_par%nrows = M_par%rows(2)-M_par%rows(1)+1 
    M_par%ncols = M_par%cols(2)-M_par%cols(1)+1 
+   deallocate(rows,cols)
    return
    !
  endif
@@ -115,6 +122,8 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  !
  if (what=="X".or.what=="PAR") then
    !
+   M_par%I     = 1
+   M_par%Nb    = Nb
    M_par%N     = N
    M_par%kind  ="PAR"
    M           = N/M_par%INTER_comm%n_CPU

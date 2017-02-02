@@ -65,7 +65,6 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  if (l_XUP) then
    call MATRIX_init( "XUP", X_par , X%ng, X_size )
  else if (l_PAR) then
-   X_size                   = NW
    call MATRIX_init( "X"  , X_par , X%ng, X_size )
  endif
  !

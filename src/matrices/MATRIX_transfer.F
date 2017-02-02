@@ -29,7 +29,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  use interfaces,     ONLY:MATRIX_duplicate
  use pars,           ONLY:SP
  use BS,             ONLY:BS_block
- use X_m,            ONLY:X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
+ use X_m,            ONLY:X_FILL_UP_matrix_only
  use D_lattice,      ONLY:i_space_inv
  use linear_algebra, ONLY:PAR_matrix,I_do_SND,I_do_RCV,TRANSFER_world
 #include<memory.h>
@@ -143,9 +143,9 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
    !
    call MATRIX_PAR_to_from_PAR(M_in,M_out) 
    !
-   if (M_in_kind=="XUP".and.X_FILL_UP_matrix_only.or.X_lower_triangle_matrix_in_use) then
-     if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in=M_in,M_out=M_Xdn)
-     if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in=M_in,M_out=M_Xdn)
+   if (M_in_kind=="XUP".and.X_FILL_UP_matrix_only) then
+     if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
+     if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
      call MATRIX_PAR_to_from_PAR(M_Xdn,M_out) 
      call MATRIX_duplicate("free",M_out=M_Xdn)
    endif

@@ -50,6 +50,7 @@ subroutine X_redux(iq,Xw,X)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ use parser_m
 #include<memory.h>
  !
  type(X_t)    :: X
@@ -62,9 +63,6 @@ subroutine X_redux(iq,Xw,X)
  integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
 &                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU),NW
  type(PAR_matrix) ::KERNEL,Xo,BUFFER
- !
- !TEMP!!!
- logical          ::l_USE_SLK_WS=.FALSE.
  !
  ! Setup 
  !
@@ -87,18 +85,15 @@ subroutine X_redux(iq,Xw,X)
  !
  ! ... and local BLACS structures for the response function components
  !         ======================
- if (     l_USE_SLK_WS) call MATRIX_init( "SLK", KERNEL , X%ng, 1 )
- if (.not.l_USE_SLK_WS) call MATRIX_init( "SER", KERNEL , X%ng, 1 )
+ call MATRIX_init( "SLK", KERNEL , X%ng, 1 )
  Y_ALLOCATE(KERNEL%blc(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
  Y_MEM(KERNEL%blc)
  KERNEL%blc=cZERO
- if (     l_USE_SLK_WS) call MATRIX_init( "SLK", Xo , X%ng, 1 )
- if (.not.l_USE_SLK_WS) call MATRIX_init( "SER", Xo , X%ng, 1 )
+ call MATRIX_init( "SLK", Xo , X%ng, 1 )
  Y_ALLOCATE(Xo%blc(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
  Y_MEM(Xo%blc)
  Xo%blc=cZERO
- if (     l_USE_SLK_WS) call MATRIX_init( "SLK", BUFFER , X%ng, PAR_n_freqs )
- if (.not.l_USE_SLK_WS) call MATRIX_init( "SER", BUFFER , X%ng, PAR_n_freqs )
+ call MATRIX_init( "SLK", BUFFER , X%ng, PAR_n_freqs )
  Y_ALLOCATE(BUFFER%blc(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),PAR_n_freqs))
  Y_MEM(BUFFER%blc)
  BUFFER%blc=cZERO
@@ -185,8 +180,8 @@ subroutine X_redux(iq,Xw,X)
    do ig1=Xo%rows(1),Xo%rows(2)
      do ig2=Xo%cols(1),Xo%cols(2)
        KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
+       if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
      enddo
-     KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
    enddo
 #if defined _OPENMP
    !$omp end parallel do

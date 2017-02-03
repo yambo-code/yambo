@@ -36,7 +36,7 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  use pars,           ONLY:SP
  use linear_algebra, ONLY:PAR_matrix,MATRIX_reset
  use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_local,&
-&                         PAR_COM_RL_INDEX,PAR_COM_RL_A2A
+&                         PAR_COM_RL_INDEX,PAR_COM_RL_A2A,ncpu
 #include <memory.h>
  !
  character(*)           :: what

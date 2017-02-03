@@ -87,8 +87,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Response_T_space") X_type=5
  !
  if (reset_all) then
-   call PARALLEL_reset(Xk,X_type)
-   return
+   call PARALLEL_reset(Xk,ENVIRONMENT,X_type)
+   if(present(RESET)) return
  endif
  !
  computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Bare local and non-local Exchange-Correlation")/=0 )

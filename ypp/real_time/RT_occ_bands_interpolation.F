@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -130,8 +130,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        ik      =RT_carriers%table(i_RT,3)
        i_sp_pol=RT_carriers%table(i_RT,4)
        !
-       if (l_RT_occupations) variable_to_fit(ib,i_sp_pol,ik)=    RT_carriers%delta_f(i_RT)
-       if (l_RT_lifetimes  ) variable_to_fit(ib,i_sp_pol,ik)=sum(RT_carriers%GAMMA_bare(i_RT,:))
+       if (l_RT_occupations) variable_to_fit(ib,i_sp_pol,ik)= RT_carriers%delta_f(i_RT)
+       if (l_RT_lifetimes  ) variable_to_fit(ib,i_sp_pol,ik)= RT_carriers%NEQ_Lifetime(i_RT) 
        !
      enddo
      !
@@ -159,7 +159,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nibz,&
 &                                       RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
 &                                       CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                       RT_carriers%GAMMA_bare,fit_on_circuit(:,:,:,i_T),message,.false.)
+&                                       RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),message,.false.)
      endif
      !
    endif
@@ -207,7 +207,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   if (l_RT_lifetimes  ) file_name_rt="YPP-RT_REF_LIFE_bands"
+   if (l_RT_lifetimes  ) file_name_rt="YPP-RT_NEQ_LIFE_bands_iT"//intc(i_T)
    if (l_RT_occupations) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
    !
    call of_open_close(file_name_rt,'ot')

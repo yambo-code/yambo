@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -33,10 +33,9 @@ subroutine RT_initialize(E,k,q)
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
- use SC,             ONLY:SC_potential
  use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
 &                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
- use real_time,      ONLY:RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,                &
+ use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,Gr_kind,l_RT_uses_E_DbGd,               &
@@ -242,7 +241,7 @@ subroutine RT_initialize(E,k,q)
      endif
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
-     call SC_check_symmetries(Efield(i1)%versor)
+     call Check_symmetries(Efield(i1)%versor)
      !
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
@@ -354,7 +353,7 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'nr','---Flags (if any)---')
  !
- call msg( 'r','Hxc approximation          :',trim(SC_potential))
+ call msg( 'r','Hxc approximation          :',trim(RT_potential))
  !
  if (l_elph_scatt)        call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El         scattering   :',l_elel_scatt)
@@ -378,8 +377,8 @@ subroutine RT_initialize(E,k,q)
    if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_impose_E)
  endif
  !
- call msg( 'nr','---RIM---')
- call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_DbGd)
+ call msg( 'nr','---Double Grid---')
+ call msg( 'r', 'Double Grid support          :',l_RT_uses_E_DbGd)
  if (l_RT_uses_E_DbGd) then
    call msg( 'r', 'K-points            (TOTAL):',BZ_DbGd_tot_nkpts)
    call msg( 'r', '                     (USED):',RT_nk)

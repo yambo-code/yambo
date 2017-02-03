@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -56,21 +56,18 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use functions,     ONLY:bose_E_cut
  use parallel_m,    ONLY:n_log_CPUs
  use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
- use collision,     ONLY:COLLISIONS_cutoff,COLL_bands
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
 #endif
 #if defined _SC || defined _RT || defined _QED
- use hamiltonian,   ONLY:IP_h_bands
- ! to be moved in mod hamiltonian
- use SC,            ONLY:SC_potential,OEP_approx
- ! to be moved in defined _SC only
- use SC,            ONLY:SC_bands,SC_preconditioning
+ use hamiltonian,   ONLY:H_ref_bands,H_potential
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
 #endif
-#if defined _SC && !defined _RT
+#if defined _SC
  use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
  use SC,            ONLY:SC_iterations,SC_up_W_iters,&
-&                        SC_rho_threshold,SC_cycle_mixing
+&                        SC_rho_threshold,SC_cycle_mixing,&
+&                        SC_bands,SC_preconditioning,OEP_approx
 #endif
 #if defined _RT
  use RT_control,    ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
@@ -594,7 +591,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! 
  ! SC
  !
-#if defined _SC && !defined _RT
+#if defined _SC
  !
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  !
@@ -614,7 +611,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  ! 
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _QED
  !
  ! SC and RT common
  !
@@ -622,19 +619,20 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call TMP_mirror_bands( )
  !
- call it(defs,'HXC_Potential', '[SC] SC HXC Potential',SC_potential,protect=.FALSE.)
+ call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
- call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
- call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
  !
 #endif
  !
 #if defined _RT
- !
  call TMP_mirror_bands( )
- !
 #endif
  !
+#if defined _SC
+ call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
+ call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
+#endif
+ ! 
  contains 
    !
 #if defined _RT
@@ -790,28 +788,30 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      use parser_m,       ONLY:parser
      logical :: is_def(3)
      integer :: bands_(2)
-     call parser('SCbands',is_def(1))
-     call parser('RTbands',is_def(2))
+     call parser('SCbands',  is_def(1))
+     call parser('RTbands',  is_def(2))
      call parser('COLLbands',is_def(3))
 #endif
      !
 #if defined _SC 
      if (is_def(1)) bands_=SC_bands
-     if (is_def(3)) bands_=COLL_bands
 #endif
 #if defined _RT || defined _QED
      if (is_def(2)) bands_=RT_bands
 #endif
+#if defined _SC || defined _RT || defined _QED
+     if (is_def(3)) bands_=COLL_bands
+#endif
      !
 #if defined _SC 
      SC_bands  =bands_
-     COLL_bands=bands_
-     IP_h_bands=bands_
 #endif
 #if defined _RT || defined _QED
      RT_bands  =bands_
 #endif
 #if defined _SC || defined _RT || defined _QED
+     COLL_bands=bands_
+     H_ref_bands=bands_     
      !
    end subroutine
    !TMP<

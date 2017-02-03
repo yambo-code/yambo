@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -49,7 +49,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  ! Work Space
  !
  integer, parameter    :: fit_dim=1000,N_max_files=16
- integer               :: n_groups=1,i_g,i_g_ep=0,i_g_ee=0,i_T,i_RT,ib,ik,i_f,i_fit
+ integer               :: n_groups=1,i_g,i_g_ep=0,i_g_ee=0,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit
  integer               :: E_sort_index(RT_carriers%nstates)
  logical               :: l_ep_lifetimes
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
@@ -83,7 +83,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    real(SP), allocatable :: Ef(:,:)
  end type Load_and_Fit
  !
- type(Load_and_Fit)    :: DATA_grp(7) ! CARRIERS, spin-up/down,e-e, e-e-ratio, e-p, e-p-ratio
+ type(Load_and_Fit)    :: DATA_grp(8) ! CARRIERS, spin-up/down,e-e, e-e-ratio, e-p, e-p-ratio, neq
  !
  !... metallic bands precision
  filled_tresh=1.E-7
@@ -120,6 +120,10 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),1,"e-p-ratio")
  endif
+ if (l_elel_scatt.or.l_ep_lifetimes) then
+   n_groups=n_groups+1
+   call Load_and_Fit_alloc(DATA_grp(n_groups),1,"neq")
+ endif
  !
  ! Load the GROUPs!
  !==================
@@ -143,9 +147,10 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !==================
      if (n_spinor==2) then
        ib=RT_carriers%table(i_RT,1)
+       ik_ibz=RT_carriers%table(i_RT,2)
        ik=RT_carriers%table(i_RT,3)
-       DATA_grp(2)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,1)
-       DATA_grp(3)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik,2)
+       DATA_grp(2)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,1)
+       DATA_grp(3)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,2)
      endif
      !
      ! Lifetimes
@@ -170,6 +175,8 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
          case("e-photon")
            DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_PHOT_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,7)
            DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_PHOT_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,8)
+         case("neq")
+           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%NEQ_lifetime(i_RT)
        end select
      enddo
      !
@@ -334,7 +341,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      real(SP)           :: PRE_factor,local_data(n_T_steps)
      !
      PRE_factor=1._SP
-     if (trim(TYP%kind)=="e-p".or.trim(TYP%kind)=="e-e") then
+     if (trim(TYP%kind)=="e-p".or.trim(TYP%kind)=="e-e".or.trim(TYP%kind)=="neq") then
        PRE_factor=HA2EV*1000._SP
      endif
      !
@@ -495,6 +502,9 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
          TYP%file(1)='YPP-RT_EPhoton_Hole_linewidths'
          TYP%file(2)='YPP-RT_EPhoton_Elec_linewidths'
          TYP%file_desc(:)="Lifetimes distribution [meV] at different times"
+       case("neq")
+         TYP%file(1)='YPP-RT_NEQ_linewidths'
+         TYP%file_desc(:)="NEQ lifetimes distribution [meV] at different times"
      end select
      !
    end subroutine

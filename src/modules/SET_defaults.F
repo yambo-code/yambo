@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -90,7 +90,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix
- use collision,  ONLY:COLLISIONS_cutoff,COLLISIONS_naming
+#endif
+#if defined _SC || defined _RT || defined _QED
+ use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
@@ -101,6 +103,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
+&                     RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,        &
 &                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
@@ -488,6 +491,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call COLLISIONS_naming( 0 , "all" )
  !
+ ! COLLISIONS I/O
+ !
+ COLLISIONS_cutoff=0.0005_SP
+ !
 #endif
  !
 #if defined _SC
@@ -506,10 +513,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
- !
- ! COLLISIONS I/O
- !
- COLLISIONS_cutoff=0.0005_SP
  !
 #endif
  !
@@ -568,6 +571,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_Efit_lifetimes=0._SP
  RT_Tfit_occupations=0._SP
  RT_Efit_occupations=0._SP
+ RT_T_thermodynamics=0._SP
+ RT_E_thermodynamics=0._SP
+ RT_S_thermodynamics=0._SP
  RAD_prefactor=0._SP
  EE_prefactor=0._SP
  EP_prefactor=0._SP

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -59,6 +59,8 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !
  integer               :: i_s,i_map(-1:1),il,i_gkkp
  real(SP)              :: ph_freq,N_q(2)
+ real(SP)              :: max_gkkp
+ real(SP), parameter   :: cutoff=0.005
  !
  complex(SP)           :: Gkkp(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
  complex(SP)           :: S_mat_out_of_eq(2,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
@@ -86,6 +88,8 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  S_mat_out_of_eq=cZero
  S_mat_sum=cZero
  !
+ max_gkkp=maxval(abs(elph_gkkp_expanded))
+ !
  do iqbz=1,q%nbz
    !
    if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
@@ -112,14 +116,16 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !
-     Gkkp=(0._SP,0._SP)
+     Gkkp=cZERO
      do i_n=RT_bands(1),RT_bands(2)
        i_n_m=i_n-RT_bands(1)+1
        Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_n,i_n)
+       if(abs(Gkkp(i_n_m,i_n_m))<max_gkkp*cutoff) Gkkp(i_n_m,i_n_m)=cZERO
        do i_np=RT_bands(1),RT_bands(2)
          if(i_n==i_np) cycle
          i_np_m=i_np-RT_bands(1)+1
          Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_np,i_n)
+         if(abs(Gkkp(i_n_m,i_np_m))<max_gkkp*cutoff) Gkkp(i_n_m,i_np_m)=cZERO
        enddo 
      enddo
      !

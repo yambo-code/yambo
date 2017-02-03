@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -43,7 +43,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
- use collision,       ONLY:elemental_collision,elemental_collision_free
+ use collision_el,    ONLY:elemental_collision,elemental_collision_free
  use memory_m,        ONLY:mem_est
  use wave_func,       ONLY:WF
  !

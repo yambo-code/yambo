@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -24,7 +24,7 @@
 subroutine MAG_H_pseudo(Xk,Xen)
  !
  use pars,          ONLY:SP,cZERO
- use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol
+ use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use wrapper,       ONLY:V_dot_V
  use X_m,           ONLY:X_t
  use wave_func,     ONLY:WF,wf_ng
@@ -32,7 +32,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
  use pseudo,        ONLY:pp_kbv_dim
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
- use SC,            ONLY:SC_bands,Ho
+ use hamiltonian,   ONLY:H_ref_bands,Ho
  use memory_m,      ONLY:mem_est
  use magnetic,      ONLY:new_pp,old_pp
  use interfaces,    ONLY:WF_load
@@ -48,12 +48,11 @@ subroutine MAG_H_pseudo(Xk,Xen)
  type(X_t)     :: X
  !
  complex(SP),allocatable :: kbv(:,:,:,:),kbv_ks_space(:,:)
- complex(SP)             :: H_pseudo(SC_bands(2),SC_bands(2)), &
-&                           H_pseudo_tot(SC_bands(2),SC_bands(2),Xk%nibz,n_sp_pol)
+ complex(SP)             :: H_pseudo(H_ref_bands(2),H_ref_bands(2)), &
+&                           H_pseudo_tot(H_ref_bands(2),H_ref_bands(2),Xk%nibz,n_sp_pol)
  !
  ! Dummies
- integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf(n_spinor),&
-&                           im,alloc_err
+ integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf(n_spinor),alloc_err
  !
  ! I / O
  integer                 :: ID,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err
@@ -76,7 +75,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
  allocate(new_pp(fft_size,pp_kbv_dim,n_spinor),old_pp(fft_size,pp_kbv_dim,n_spinor))
  call mem_est('new_pp old_pp',(/size(new_pp),size(old_pp)/))
  !
- allocate(kbv_ks_space(SC_bands(1):SC_bands(2),2))
+ allocate(kbv_ks_space(H_ref_bands(1):H_ref_bands(2),2))
  call mem_est('kbv_ks_space',(/size(kbv_ks_space)/))
  !
  H_pseudo_tot=cZERO
@@ -85,7 +84,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
  !
  do ik=1,Xk%nibz
    !
-   call WF_load(WF,0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
+   call WF_load(WF,0,1,(/1,H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
    !
    if (io_KB_pwscf_err==0) then
      if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
@@ -112,7 +111,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
        !     
        kbv_ks_space=cZERO
        !
-       do ib=SC_bands(1),SC_bands(2)
+       do ib=H_ref_bands(1),H_ref_bands(2)
          !
          do i_spinor=1,n_spinor
            !
@@ -124,7 +123,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
            !
          enddo
          !
-         do ibp=SC_bands(1),ib
+         do ibp=H_ref_bands(1),ib
            !
            H_pseudo(ibp,ib)=conjg(kbv_ks_space(ibp,1))*kbv_ks_space(ib,1)-conjg(kbv_ks_space(ibp,2))*kbv_ks_space(ib,2)
            if(ib/=ibp) H_pseudo(ib,ibp)=conjg(H_pseudo(ibp,ib))

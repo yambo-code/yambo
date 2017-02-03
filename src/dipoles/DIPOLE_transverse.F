@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -45,7 +45,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:error,msg
-#if defined _SC
+#if defined _SC || defined _RT
  use drivers,             ONLY:l_real_time
  use com,                 ONLY:secnm
 #endif
@@ -97,7 +97,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  l_eval_DIP_P2=.false.
  wf_dim=3
  !
-#if defined _SC
+#if defined _SC || defined _RT
  l_eval_DIP_P2=l_sc_run.or.l_real_time
  if(l_eval_DIP_P2) wf_dim=4
 #endif

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_WF_and_dipole_dimensions(X)
+subroutine WF_and_dipole_dimensions(X)
  !
  use drivers,      ONLY:l_real_time,l_sc_fock,l_sc_exx,l_sc_coh,l_sc_sex,l_sc_srpa,l_use_Hxc_collisions
  use com,          ONLY:warning,msg
@@ -30,8 +30,11 @@ subroutine SC_WF_and_dipole_dimensions(X)
  use QP_m,         ONLY:QP_ng_Sx,QP_n_G_bands,COHSEX_use_empties
  use R_lattice,    ONLY:qindx_S,G_m_G
  use interfaces,   ONLY:eval_G_minus_G
- use SC,           ONLY:SC_bands,WF_Go_indx,WF_G_max,SC_X_bands,SC_ng_Sx,SC_X_size, &
-&                       SC_up_W_iters
+ use hamiltonian,  ONLY:H_ref_bands,WF_Go_indx,WF_G_max
+#if defined _SC
+ use SC,           ONLY:SC_X_bands,SC_ng_Sx,SC_X_size,SC_up_W_iters
+#endif
+ !
  implicit none
  !
  type(X_t)         :: X(2)
@@ -42,10 +45,10 @@ subroutine SC_WF_and_dipole_dimensions(X)
  ! In real-time I need X(1)%ib(1)=1 in order to calculate E_kin
  !
  if (l_real_time) then
-   X(1)%ib=SC_bands
+   X(1)%ib=H_ref_bands
    X(1)%ng=wf_ng
  else
-   X(1)%ib=(/1,SC_bands(2)/)
+   X(1)%ib=(/1,H_ref_bands(2)/)
    X(1)%ng=QP_ng_Sx
  endif
  !
@@ -68,8 +71,8 @@ subroutine SC_WF_and_dipole_dimensions(X)
      ! [07/07/2016] Modified these two lines to avoid the annoying QP_n_G_bands in the input.
      ! At the moment I do not see any reason to use the same bands of the density here.
      !
-     QP_n_G_bands(1)=SC_bands(1)
-     QP_n_G_bands(2)=SC_bands(2)
+     QP_n_G_bands(1)=H_ref_bands(1)
+     QP_n_G_bands(2)=H_ref_bands(2)
      !
      if (     l_real_time) COHSEX_use_empties=.TRUE.
      !
@@ -84,6 +87,7 @@ subroutine SC_WF_and_dipole_dimensions(X)
  ! SC shadow variables
  !====================
  !
+#if defined _SC
  SC_ng_Sx  =QP_ng_Sx
  SC_X_bands=X(2)%ib
  SC_X_size =X(2)%ng
@@ -102,5 +106,6 @@ subroutine SC_WF_and_dipole_dimensions(X)
    endif
    !
  endif    
+#endif
  !
 end subroutine

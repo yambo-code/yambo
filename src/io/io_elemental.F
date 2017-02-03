@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -22,26 +22,27 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                       DB_R0,R0,R1,DB_R1,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                       DB_R0,R0,R1,DB_R1,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                       DESCRIPTION,DO_NOT_DUMP)
  !
  use pars,    ONLY:SP,schlen,lchlen,nf90_SP
  use netcdf
  use drivers, ONLY:list_dbs
  use com,     ONLY:msg
- use stderr,  ONLY:string_pack,intc,real2ch
+ use stderr,  ONLY:string_pack,intc,real2ch,complex2ch
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,io_com,io_file,&
 &                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
  implicit none
- integer               :: ID
+ integer               :: ID,error
  integer,parameter     :: MAX_DB_ELEMENTS=100
  character(*),optional :: VAR,OP(:)
  integer,     optional :: VAR_SZ,MENU
                                ! MENU = 1 (on) 0 (off)
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+ complex(SP), optional :: C0,DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
  character(*),optional :: CH0,DB_CH0,CH1(:)
  character(lchlen),optional :: DESCRIPTION
@@ -51,7 +52,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  character(lchlen) :: ch
  character(1)      :: msg_where
  integer :: i_db(MAX_DB_ELEMENTS),i_err
- real(SP):: r_db(MAX_DB_ELEMENTS),local_unit
+ real(SP):: r_db(MAX_DB_ELEMENTS),r_from_c(2,MAX_DB_ELEMENTS),local_unit
+ complex(SP) :: c_db(MAX_DB_ELEMENTS)
  character(schlen) :: db_ch(MAX_DB_ELEMENTS)
  logical :: CHECK_,DUMP_
  !
@@ -285,6 +287,48 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
  !
+ !
+ if (present(C0)) then
+   if (write_is_on(ID)) then
+     call nf_put_vara(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), C0)
+     r_from_c(1,1)=real(C0)
+     r_from_c(2,1)=aimag(C0)
+     if (present(DB_C0)) DB_C0=C0
+     if (present(VAR)) call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
+   else if (read_is_on(ID)) then
+     call nf_get_vara(io_unit(ID), io_netcdf_var(ID), (/1/), (/2/), c_db(1))
+     r_from_c(1,1)=real(C0)
+     r_from_c(2,1)=aimag(C0)
+     if (DUMP_)          C0=c_db(1)
+     if (present(DB_C0)) DB_C0=c_db(1)
+     ch=""
+     if (io_mode(ID)==VERIFY.and.present(OP)) then
+       i_err=c_verify((/C0/),(/c_db(1)/))
+       if (CHECK_) then
+         if (io_status(ID)==0) io_status(ID)=i_err
+         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+       else if (present(WARN)) then
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+       endif
+     endif
+     if (len_trim(ch)>0) then
+       call msg(msg_where,trim(ch),r_from_c(:,1)*local_unit)
+     else if (present(VAR)) then
+       call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
+     endif
+   endif
+   !
+   ! DESCRIPTION
+   !
+   if (present(DESCRIPTION)) then
+     DESCRIPTION=VAR//trim(complex2ch(C0*local_unit))
+   endif
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+2
+   !
+ endif
+ !
+ !
  if (present(L0)) then
    i_db(1)=0
    if (L0) i_db(1)=1
@@ -420,6 +464,41 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
          if (rv1(i1)<rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
        endif
        if (r_verify/=0) return
+     enddo
+   end function
+   !
+   integer function c_verify(cv1,cv2)
+     integer     :: i1
+     complex(SP) :: cv1(:),cv2(:)
+     real(SP)    :: eq_accuracy,acc_fraction
+     c_verify   =0
+     eq_accuracy=1.E-5_SP
+     acc_fraction=0.001_SP
+     !
+     ! Define the accuracy of the comparison
+     !
+     do i1=1,size(cv1)
+       if ( abs(cv1(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(cv1(i1))*acc_fraction )
+       if ( abs(cv2(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(cv2(i1))*acc_fraction )
+     enddo
+     !
+     do i1=1,size(cv1)
+       if (OP(i1)=="==") then 
+         if (abs(cv1(i1)-cv2(i1))>eq_accuracy) c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (OP(i1)=="<") then 
+         if (abs(cv1(i1))>=abs(cv2(i1))) c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (OP(i1)=="<=") then 
+         if (abs(cv1(i1))>abs(cv2(i1)))  c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (OP(i1)==">") then 
+         if (abs(cv1(i1))<=abs(cv2(i1))) c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (OP(i1)==">=") then 
+         if (abs(cv1(i1))<abs(cv2(i1)))  c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (c_verify/=0) return
      enddo
    end function
    !

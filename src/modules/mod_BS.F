@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -23,9 +23,9 @@
 !
 module BS
  !
- use pars,       ONLY:IP,SP,schlen,lchlen
- use collision,  ONLY:elemental_collision
- use memory_m,   ONLY:mem_est
+ use pars,         ONLY:IP,SP,schlen,lchlen
+ use collision_el, ONLY:elemental_collision
+ use memory_m,     ONLY:mem_est
  !
  implicit none
  !

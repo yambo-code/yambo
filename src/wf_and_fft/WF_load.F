@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -47,7 +47,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
-&                        WF_perturbation,global_XC_string,SE_NONE
+&                        WF_perturbation,global_XC_string,QP_SE_NONE
 #endif
  !
  implicit none
@@ -68,7 +68,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #if defined _SC
  integer          ::wf_size
 #endif
- integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
+ integer          ::i1,i_sp_pol,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
 &                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
@@ -415,13 +415,15 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)
    !
-   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,SE_NONE,WF_xc_functional,WF_perturbation))//&
+   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,QP_SE_NONE,WF_xc_functional,WF_perturbation))//&
 &                             ' wavefunctions loaded')
    !
    if (WF%space=='R') wf_size=fft_size
    if (WF%space=='G') wf_size=wf_ng
-   do ikibz=WF%k(1),WF%k(2)
-     call WF_rotate(ikibz,wf,wf_size)
+   do i_sp_pol=1,n_sp_pol
+     do ikibz=WF%k(1),WF%k(2)
+       call WF_rotate(ikibz,i_sp_pol,wf,wf_size)
+     enddo
    enddo
    call load_SC_components('WF_clean')
    !

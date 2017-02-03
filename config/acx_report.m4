@@ -42,14 +42,15 @@ if test "$compile_netcdf" = "yes" ; then
 else
   NETCDF_str="E"
 fi
-NETCDF_LF_str="(No large files support)"
-if test "$enable_netcdf_LFS" = "yes"; then NETCDF_LF_str="(With large files support)"; fi
+NETCDF_LF_str="(With large files support)"
+if test "$enable_netcdf_classic" = "yes"; then NETCDF_LF_str="(No large files support)"; fi
 
 HDF5_str="-"
 if test "$hdf5" = "yes" ; then
   HDF5_str="E"
-  HDF5_support="(No specific HDF5-IO support)"
-  if test "$enable_netcdf_hdf5" = "yes"; then HDF5_support="(With specific HDF5-IO support)" ; fi
+  HDF5_support="(No HDF5-IO format)"
+  if test "$enable_netcdf_hdf5" = "yes"; then HDF5_support="(HDF5-IO format, no data compression)" ; fi
+  if test "$enable_netcdf_hdf5" = "yes" && test "$enable_hdf5_compression" = "yes"; then HDF5_support="(HDF5-IO format with data compression)" ; fi
 fi
 
 LIBXC_str="-"

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -24,9 +24,9 @@
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  use pars,            ONLY:SP
- use collision,       ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
+ use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL,io_COLLs
- use interfaces,      ONLY:io_COLLISIONS
+ use COLL_interfaces, ONLY:io_COLLISIONS
  !
  implicit none                                              
  !

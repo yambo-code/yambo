@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,10 +45,12 @@ integer function io_DB1(E,k,ID)
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
+#if defined _SC || defined _RT
+ use collision_ext,    ONLY:COLL_bands
+ use hamiltonian,      ONLY:H_ref_bands
+#endif
 #if defined _SC
  use SC,               ONLY:SC_bands
- use collision,        ONLY:COLL_bands
- use hamiltonian,      ONLY:IP_h_bands
 #endif
 #if defined _RT
  use real_time,        ONLY:RT_bands
@@ -238,10 +240,12 @@ integer function io_DB1(E,k,ID)
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
      if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
+#if defined _SC || defined _RT
+     if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
+     if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,E%nb/)
+#endif
 #if defined _SC
      if(any(SC_bands(:)==0)) SC_bands=(/1,E%nb/)
-     if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
-     if(any(IP_h_bands(:)==0)) IP_h_bands=(/1,E%nb/)
 #endif
 #if defined _RT
      if(any(RT_bands(:)==0)) RT_bands=(/1,E%nb/)

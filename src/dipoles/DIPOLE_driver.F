@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -71,13 +71,19 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parser_m,       ONLY:parser
+#if defined _RT || defined _SC
+ use drivers,        ONLY:l_real_time,l_sc_run
+ use com,            ONLY:secnm
+#endif
 #if defined _RT
  use DIPOLES,        ONLY:DIP_spin
  use electrons,      ONLY:n_spin
 #endif
-#if defined _SC
- use drivers,        ONLY:l_real_time,l_sc_run
+#if defined _SC || defined _RT
  use DIPOLES,        ONLY:P_square
+#endif
+#if defined _QED
+ use drivers,        ONLY:l_elphoton_corr
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -117,7 +123,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    Dip%approach='G-space v'
  endif
  !
-#if defined _SC
+#if defined _SC || defined _RT
  force_v_g_space_approach=force_v_g_space_approach.or.l_sc_run.or.l_real_time
 #endif
  force_v_g_space_approach=force_v_g_space_approach.and.(.not.use_g_space_approach)
@@ -237,7 +243,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #endif
 
      !
-#if defined _SC
+#if defined _SC || defined _RT
      if (l_sc_run.or.l_real_time) then
        call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
        P_square=cZERO
@@ -271,7 +277,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
 #endif
         !
-#if defined _SC
+#if defined _SC || defined _RT
         !
         if (l_sc_run.or.l_real_time) then
           !
@@ -296,7 +302,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
               DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             endif
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
             if (l_sc_run.or.l_real_time) &
 &             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #endif
@@ -310,7 +316,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
                 DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
               endif
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
               if (l_sc_run.or.l_real_time) &
 &               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
 #endif

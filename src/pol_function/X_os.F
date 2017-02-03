@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF,FA
@@ -58,7 +58,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X,Dip)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use memory_m,      ONLY:mem_est
- use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&

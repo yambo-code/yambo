@@ -37,7 +37,7 @@ subroutine K_diagonal(iq,what)
  !
  ! Work Space
  !
- integer          :: i_r,i_r_slk,i_c,i_c_slk,rows(2),cols(2)
+ integer          :: i_r,i_c,rows(2),cols(2)
  real(SP)         :: f_r,f_c
  complex(SP)      :: E_plus_W,pre_factor
  !
@@ -58,19 +58,16 @@ subroutine K_diagonal(iq,what)
      !
      if (BLACS_structure_in_use.and.index(what,"add_E")>0)then
        !
-       i_r_slk=i_r-K_slk%rows(1)+1
-       i_c_slk=i_r-K_slk%cols(1)+1
-       !
        if (i_r<=BS_K_dim) then
-         K_slk%blc(i_r_slk,i_c_slk,1)=K_slk%blc(i_r_slk,i_c_slk,1)+E_plus_W
+         K_slk%blc(i_r,i_c,1)=K_slk%blc(i_r,i_c,1)+E_plus_W
        else if (cpl(i_r)) then
-         K_slk%blc(i_r_slk,i_c_slk,1)=K_slk%blc(i_r_slk,i_c_slk,1)-conjg(E_plus_W)
+         K_slk%blc(i_r,i_c,1)=K_slk%blc(i_r,i_c,1)-conjg(E_plus_W)
        endif
        !
      else if (.not.BLACS_structure_in_use.and.index(what,"rm_E")>0)then
        !
        if (i_r<=BS_K_dim) then
-          BS_mat(i_r,i_r)=BS_mat(i_r,i_r)-E_plus_W
+         BS_mat(i_r,i_r)=BS_mat(i_r,i_r)-E_plus_W
        else if (cpl(i_r)) then
          BS_mat(i_r,i_r)= BS_mat(i_r,i_r)+conjg(E_plus_W)
        endif
@@ -106,10 +103,7 @@ subroutine K_diagonal(iq,what)
        !
        if (BLACS_structure_in_use) then
          !
-         i_r_slk=i_r-K_slk%rows(1)+1
-         i_c_slk=i_c-K_slk%cols(1)+1
-         !
-         K_slk%blc(i_r_slk,i_c_slk,1)=K_slk%blc(i_r_slk,i_c_slk,1)/f_r/f_c*pre_factor
+         K_slk%blc(i_r,i_c,1)=K_slk%blc(i_r,i_c,1)/f_r/f_c*pre_factor
          !
        else
          !
@@ -142,12 +136,9 @@ subroutine K_diagonal(iq,what)
      if (rows(1)<=rows(2)) then
        do i_r=rows(1),rows(2)
          !
-         i_r_slk=i_r-K_slk%rows(1)+1
-         i_c_slk=i_r-K_slk%cols(1)+1
-         !
          if (BLACS_structure_in_use) then
-           if (.not.cpl(i_r).and.SLK_POOL%ID==0) BS_diagonal(i_r)=K_slk%blc(i_r_slk,i_c_slk,1)
-           K_slk%blc(i_r_slk,i_c_slk,1)=cZERO
+           if (.not.cpl(i_r).and.SLK_POOL%ID==0) BS_diagonal(i_r)=K_slk%blc(i_r,i_c,1)
+           K_slk%blc(i_r,i_c,1)=cZERO
          else
            if (.not.cpl(i_r)) BS_diagonal(i_r)=BS_mat(i_r,i_r)
            BS_mat(i_r,i_r)=cZERO

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_M_by_M(A_slk,B_slk,C_slk,transa,transb,m,n,k)
+subroutine PARALLEL_M_by_M(A,B,C,transa,transb,m,n,k)
  !
  !  Perform the parallel matrix multiplication
  !
@@ -39,7 +39,7 @@ subroutine PARALLEL_M_by_M(A_slk,B_slk,C_slk,transa,transb,m,n,k)
  implicit none
  !
  integer           :: n,m,k
- type(PAR_matrix)  :: A_slk, B_slk, C_slk
+ type(PAR_matrix)  :: A, B, C
  character         :: transa,transb
  !
  character(64) :: subname="PARALLEL_M_by_M"
@@ -51,12 +51,12 @@ subroutine PARALLEL_M_by_M(A_slk,B_slk,C_slk,transa,transb,m,n,k)
 #endif
  !
 #if defined _DOUBLE
- CALL PZGEMM( transa, transb, m, n, k, cONE, A_slk%blc(:,:,A_slk%I), 1, 1, A_slk%desc, &
-              B_slk%blc(:,:,B_slk%I), 1, 1, B_slk%desc, cZERO, C_slk%blc(:,:,C_slk%I), 1, 1, C_slk%desc)
+ CALL PZGEMM&
 #else
- CALL PCGEMM( transa, transb, m, n, k, cONE, A_slk%blc(:,:,A_slk%I), 1, 1, A_slk%desc, &
-              B_slk%blc(:,:,B_slk%I), 1, 1, B_slk%desc, cZERO, C_slk%blc(:,:,C_slk%I), 1, 1, C_slk%desc)
+ CALL PCGEMM&
 #endif
+& ( transa, transb, m, n, k, cONE, A%blc(:,:,A%I), 1, 1, A%desc, &
+    B%blc(:,:,B%I), 1, 1, B%desc, cZERO, C%blc(:,:,C%I), 1, 1, C%desc)
  !
 #if defined _TIMING
  call timing('PARALLEL_M_by_M',OPR='stop')

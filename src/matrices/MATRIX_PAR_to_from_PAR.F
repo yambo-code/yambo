@@ -26,7 +26,7 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv )
  ! M_snd > M_rcv
  !
  use linear_algebra, ONLY:PAR_matrix,I_do_RCV,I_do_SND,TRANSFER_world
- use parallel_m,     ONLY:PP_redux_wait,myid,MPI_comm,COMM_reset,CREATE_the_COMM
+ use parallel_m,     ONLY:PP_redux_wait,myid,MPI_comm,COMM_reset,CREATE_the_COMM,ncpu
  !
  implicit none
  !
@@ -35,11 +35,8 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv )
  ! Work Space
  !
  integer :: i_rcv,i_snd,CROP(4),i_snd_world,i_rcv_world,i_cpu
- integer :: RCV_corners(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU,4),&
-&           SND_corners(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU,4),&
-&           ACTIVE_cpus_snd(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU),&
-&           ACTIVE_cpus_rcv(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU),&
-&           CPU_in_the_world(M_rcv%INTER_comm%n_CPU+M_snd%INTER_comm%n_CPU)
+ integer :: RCV_corners(ncpu,4),SND_corners(ncpu,4),ACTIVE_cpus_snd(ncpu),&
+&           ACTIVE_cpus_rcv(ncpu),CPU_in_the_world(ncpu)
  ! 
  ! Local global MPI comm
  !
@@ -110,6 +107,8 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv )
  !
  call COMM_reset(COMM)
  !
+ !write (*,*) "FINISHED PAR_to_from_PAR"
+ !
  return
  !
  contains
@@ -117,30 +116,18 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv )
    subroutine elemental_transfer( )
      !
      use parallel_m, ONLY:PP_send_and_receive
-     integer :: S(4),R(4)
      !
      if (myid/=i_snd_world.and.myid/=i_rcv_world) return
      !
-     S=CROP
-     if (M_snd%kind=="SLK") then
-       S(1:2) = CROP(1:2)-M_snd%rows(1)+1
-       S(3:4) = CROP(3:4)-M_snd%cols(1)+1
-     endif
-     R=CROP
-     if (M_rcv%kind=="SLK") then
-       R(1:2) = CROP(1:2)-M_rcv%rows(1)+1
-       R(3:4) = CROP(3:4)-M_rcv%cols(1)+1
-     endif
-     !
      if (myid==i_snd_world.and.i_snd_world==i_rcv_world) then
-       !write (*,*) i_snd_world,M_snd%I,"<=>",i_rcv_world,M_rcv%I
-       M_rcv%blc(R(1):R(2),R(3):R(4),M_rcv%I)=M_snd%blc(S(1):S(2),S(3):S(4),M_snd%I)
+       !write (*,*) i_snd_world,M_snd%I,"<=>",i_rcv_world,M_rcv%I,CROP
+       M_rcv%blc(CROP(1):CROP(2),CROP(3):CROP(4),M_rcv%I)=M_snd%blc(CROP(1):CROP(2),CROP(3):CROP(4),M_snd%I)
      else if (myid==i_snd_world) then
-       !write (*,*) i_snd_world,M_snd%I,"=>",i_rcv_world,M_rcv%I
-       call PP_send_and_receive("send",M_snd%blc(S(1):S(2),S(3):S(4),M_snd%I),i_rcv_world)
+       !write (*,*) i_snd_world,M_snd%I,"=>",i_rcv_world,M_rcv%I,CROP
+       call PP_send_and_receive("send",M_snd%blc(CROP(1):CROP(2),CROP(3):CROP(4),M_snd%I),i_rcv_world)
      else if (myid==i_rcv_world) then
-       !write (*,*) i_rcv_world,M_rcv%I,"<=",i_snd_world,M_snd%I
-       call PP_send_and_receive("receive",M_rcv%blc(R(1):R(2),R(3):R(4),M_rcv%I),i_snd_world)
+       !write (*,*) i_rcv_world,M_rcv%I,"<=",i_snd_world,M_snd%I,CROP
+       call PP_send_and_receive("receive",M_rcv%blc(CROP(1):CROP(2),CROP(3):CROP(4),M_rcv%I),i_snd_world)
      endif
      !
    end subroutine

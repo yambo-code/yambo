@@ -326,7 +326,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    ! CLEAN (each q)
    !
-   Y_FREE(Epsilon_ii)
    Y_FREE(EEL)
    Y_FREE(Alpha)
    Y_FREE(Epsilon_ii)

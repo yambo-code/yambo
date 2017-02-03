@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_M_by_V(transa,N,A_slk,X,Y)
+subroutine PARALLEL_M_by_V(transa,N,A,X,Y)
  !
  !  Perform the parallel matrix multiplication
  !
@@ -41,7 +41,7 @@ subroutine PARALLEL_M_by_V(transa,N,A_slk,X,Y)
  implicit none
  !
  integer           :: N
- type(PAR_matrix)  :: A_slk
+ type(PAR_matrix)  :: A
  character(1)      :: transa
  complex(SP)       :: X(N)
  complex(SP)       :: Y(N)
@@ -55,17 +55,14 @@ subroutine PARALLEL_M_by_V(transa,N,A_slk,X,Y)
 #endif
  !
  if (transa=="C") then
-   call M_by_V_omp("n",A_slk%nrows_used,A_slk%ncols_used,cONE,conjg(A_slk%blc(:,:,A_slk%I)),&
-&                  A_slk%nrows_used,X(A_slk%cols(1):A_slk%cols(2)),1,cZERO,&
-&                  Y(A_slk%rows(1):A_slk%rows(2)),1)
+   call M_by_V_omp("n",A%nrows,A%ncols,cONE,conjg(A%blc(A%rows(1):A%rows(2),A%cols(1):A%cols(2),A%I)),&
+&                  A%nrows,X(A%cols(1):A%cols(2)),1,cZERO,Y(A%rows(1):A%rows(2)),1)
  else if (transa=="c") then
-   call M_by_V_omp("c",A_slk%nrows_used,A_slk%ncols_used,cONE,A_slk%blc(:,:,A_slk%I),&
-&                  A_slk%nrows_used,X(A_slk%rows(1):A_slk%rows(2)),1,cZERO,&
-&                  Y(A_slk%cols(1):A_slk%cols(2)),1)
+   call M_by_V_omp("c",A%nrows,A%ncols,cONE,A%blc(A%rows(1):A%rows(2),A%cols(1):A%cols(2),A%I),&
+&                  A%nrows,X(A%rows(1):A%rows(2)),1,cZERO,Y(A%cols(1):A%cols(2)),1)
  else
-   call M_by_V_omp("n",A_slk%nrows_used,A_slk%ncols_used,cONE,A_slk%blc(:,:,A_slk%I),&
-&                  A_slk%nrows_used,X(A_slk%cols(1):A_slk%cols(2)),1,cZERO,&
-&                  Y(A_slk%rows(1):A_slk%rows(2)),1)
+   call M_by_V_omp("n",A%nrows,A%ncols,cONE,A%blc(A%rows(1):A%rows(2),A%cols(1):A%cols(2),A%I),&
+&                  A%nrows,X(A%cols(1):A%cols(2)),1,cZERO,Y(A%rows(1):A%rows(2)),1)
  endif
  !
  call PP_redux_wait(Y,COMM=SLK_POOL%INTRA_comm)

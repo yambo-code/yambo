@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_lin_system(A_slk,B_slk,n,nrhs)
+subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !
  !  Solve the linear system
  !
@@ -38,7 +38,7 @@ subroutine PARALLEL_lin_system(A_slk,B_slk,n,nrhs)
  implicit none
  !
  integer           :: n,nrhs
- type(PAR_matrix)  :: A_slk, B_slk
+ type(PAR_matrix)  :: A, B
  !
  character(64) :: subname="PARALLEL_lin_system"
  !
@@ -51,15 +51,16 @@ subroutine PARALLEL_lin_system(A_slk,B_slk,n,nrhs)
  ! better estimate of the dimensions to be included
  !
  if (allocated(WS%v_int)) deallocate(WS%v_int)
- allocate(WS%v_int(n+A_slk%nrows))
+ allocate(WS%v_int(n+A%BLCnrows))
  !
 #if defined _DOUBLE
- CALL PZGESV( n, nrhs, A_slk%blc(:,:,A_slk%I), 1, 1, A_slk%desc, WS%v_int, B_slk%blc(:,:,B_slk%I), 1, 1, B_slk%desc, WS%i_fail)
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZGESV')
+ CALL PZGESV&
 #else
- CALL PCGESV( n, nrhs, A_slk%blc(:,:,A_slk%I), 1, 1, A_slk%desc, WS%v_int, B_slk%blc(:,:,B_slk%I), 1, 1, B_slk%desc, WS%i_fail)
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCGESV')
+ CALL PCGESV&
 #endif
+& ( n, nrhs, A%blc(:,:,A%I), 1, 1, A%desc, WS%v_int, B%blc(:,:,B%I), 1, 1, B%desc, WS%i_fail)
+ !
+ if (WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)GESV')
  ! 
 #if defined _TIMING
  call timing('PARALLEL_lin_system',OPR='stop')

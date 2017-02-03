@@ -57,11 +57,25 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  M_out%liwork     = M_in%liwork
  M_out%info       = M_in%info
  !
+ ! Dimensions
+ !
+ M_out%nrows      = M_in%nrows
+ M_out%ncols      = M_in%ncols
  M_out%rows       = M_in%rows
  M_out%cols       = M_in%cols
+ M_out%BLCnrows   = M_in%BLCnrows
+ M_out%BLCncols   = M_in%BLCncols
+ M_out%BLCrows    = M_in%BLCrows
+ M_out%BLCcols    = M_in%BLCcols
  if (operation=="+TC".or.operation=="+T") then
    M_out%rows       = M_in%cols
    M_out%cols       = M_in%rows
+   M_out%nrows      = M_in%ncols
+   M_out%ncols      = M_in%nrows
+   M_out%BLCrows    = M_in%BLCcols
+   M_out%BLCcols    = M_in%BLCrows
+   M_out%BLCnrows   = M_in%BLCncols
+   M_out%BLCncols   = M_in%BLCnrows
  endif
  !
  Nb_i=(/1, M_in%Nb /)
@@ -73,12 +87,7 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  endif
  M_out%Nb = Nb_o(2)-Nb_o(1)+1
  !
- M_out%nrows      = M_out%rows(2)-M_in%rows(1)+1
- M_out%ncols      = M_out%cols(2)-M_in%cols(1)+1
- M_out%nrows_used = M_out%nrows
- M_out%ncols_used = M_out%ncols
- !
- Y_ALLOCATE(M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),Nb_o(1):Nb_o(2)))
+ Y_ALLOCATE(M_out%blc(M_out%BLCrows(1):M_out%BLCrows(2),M_out%cols(1):M_out%BLCcols(2),Nb_o(1):Nb_o(2)))
  Y_MEM(M_out%blc)
  M_out%blc=cZERO
  !

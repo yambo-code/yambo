@@ -30,9 +30,8 @@
 !
 subroutine SLK_matrix_init(M_slk, N, N_blocks)
  !
- use SLK_m,          ONLY:SLK_ORTHO
- use parallel_m,     ONLY:ncpu
- use linear_algebra, ONLY:PAR_matrix,MATRIX_reset 
+ use SLK_m,          ONLY:SLK_ORTHO,BLACS_structure_in_use
+ use linear_algebra, ONLY:PAR_matrix
 #include<memory.h>
  !
  integer           :: N,N_blocks
@@ -40,21 +39,9 @@ subroutine SLK_matrix_init(M_slk, N, N_blocks)
  !
  ! Work Space
  !
- integer   :: lld,N_SLK_blocks,nprow,npcol,myrow,mycol
+ integer   :: lld,SLK_block_size,nprow,npcol,myrow,mycol
  !
  ! init global blacs grid
- !
- if (ncpu==1) then
-   SLK_ORTHO%coordinate(1)=-1
-   M_slk%rows             = (/1,N/)
-   M_slk%cols             = (/1,N/)
-   M_slk%nrows_used       = N
-   M_slk%ncols_used       = N
-   M_slk%I                = 1
-   M_slk%Nb               = N_blocks
-   M_slk%N                = N
-   return
- endif
  !
  call BLACS_GRIDINFO( SLK_ORTHO%ortho_cntx, SLK_ORTHO%grid(1), SLK_ORTHO%grid(2), SLK_ORTHO%coordinate(1), SLK_ORTHO%coordinate(2) )
  !
@@ -71,23 +58,25 @@ subroutine SLK_matrix_init(M_slk, N, N_blocks)
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B
  !
- N_SLK_blocks                             = int(N/nprow)
- if (N_SLK_blocks*nprow < N ) N_SLK_blocks=N_SLK_blocks+1
+ SLK_block_size                               = int(N/nprow)
+ if (SLK_block_size*nprow < N ) SLK_block_size=SLK_block_size+1
  !
- lld = N_SLK_blocks
+ lld = SLK_block_size
  !
- call DESCINIT( M_slk%desc, N, N, N_SLK_blocks, N_SLK_blocks, 0, 0, SLK_ORTHO%ortho_cntx, lld, M_slk%info )
+ call DESCINIT( M_slk%desc, N, N, SLK_block_size, SLK_block_size, 0, 0, SLK_ORTHO%ortho_cntx, lld, M_slk%info )
  !
- call MATRIX_reset(M_slk)
- !
- M_slk%rows       = (/myrow*N_SLK_blocks+1,min(myrow*N_SLK_blocks+N_SLK_blocks,N)/)
- M_slk%cols       = (/mycol*N_SLK_blocks+1,min(mycol*N_SLK_blocks+N_SLK_blocks,N)/)
+ M_slk%rows       = (/myrow*SLK_block_size+1,min(myrow*SLK_block_size+SLK_block_size,N)/)
+ M_slk%cols       = (/mycol*SLK_block_size+1,min(mycol*SLK_block_size+SLK_block_size,N)/)
  M_slk%nrows      = M_slk%rows(2)-M_slk%rows(1)+1
  M_slk%ncols      = M_slk%cols(2)-M_slk%cols(1)+1
- M_slk%nrows_used = M_slk%nrows
- M_slk%ncols_used = M_slk%ncols
+ M_slk%BLCrows    = (/M_slk%rows(1),M_slk%rows(1)+SLK_block_size-1/)
+ M_slk%BLCcols    = (/M_slk%cols(1),M_slk%cols(1)+SLK_block_size-1/)
+ M_slk%BLCnrows   = SLK_block_size
+ M_slk%BLCncols   = SLK_block_size  
  M_slk%N          = N
  M_slk%I          = 1
  M_slk%Nb         = N_blocks
+ M_slk%kind       = "SLK"
+ BLACS_structure_in_use = .TRUE.
  !
 end subroutine 

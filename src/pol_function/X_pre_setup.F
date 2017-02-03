@@ -23,7 +23,7 @@
 !
 subroutine X_pre_setup(Xen,X)
  !
- use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,Chi_linalg_mode 
  use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
  use com,           ONLY:error
@@ -93,6 +93,12 @@ subroutine X_pre_setup(Xen,X)
    if (      (Finite_Tel.or.l_rt_carriers_in_use) ) then
      call error('Fractional occupations but GF is not retarded (causal in yambo language)')
    endif 
-endif
+ endif
+ !
+ ! Dyson solver
+ !
+ X_use_lin_sys=.true.
+ if (trim(Chi_linalg_mode)=="inversion") X_use_lin_sys=.false.
+ if (trim(Chi_linalg_mode)=="lin_sys"  ) X_use_lin_sys=.true.
  !
 end subroutine

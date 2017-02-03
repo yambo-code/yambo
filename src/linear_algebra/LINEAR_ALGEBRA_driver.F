@@ -41,7 +41,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  use pars,          ONLY:SP,cONE,cZERO
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
-&                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error,&
+&                        LINEAR_ALGEBRA_WS_clean_up,WS,&
 &                        PAR_matrix,MATRIX_reset
  use wrapper,       ONLY:M_by_M
  use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
@@ -73,7 +73,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  complex(SP)         :: det_
  integer             :: N,lib_in_use
- type (PAR_matrix)   :: M_loc_slk,B_loc_slk,C_loc_slk,EIGEN_slk
+ type (PAR_matrix)   :: M_loc,B_loc,C_loc,V_loc
  !
 #if defined _TIMING
  call timing("LINEAR ALGEBRA",OPR="start")
@@ -103,14 +103,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  if (.not.linear_algebra_is_parallel) lib_in_use=USE_LK
  !
- if (idriver==LIN_SYS.and..not.present(B)) then
-   call LINEAR_ALGEBRA_error(" ",'B must be present for LIN_SYS')
- endif
- !
- if (idriver==MAT_MUL.and.(.not.present(B).or..not.present(C))) then
-   call LINEAR_ALGEBRA_error(" ",'B,C must be present for MAT_MUL')
- endif
- !
 #if defined _SCALAPACK
  if (idriver==DIAGO.and.present(E_cmpl).and.ncpu>1) then
    !
@@ -125,35 +117,35 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    !
    if (.not.present(M_slk)) then
      !
-     call MATRIX_init( "SLK", M_loc_slk, N, 1 )
-     Y_ALLOCATE(M_loc_slk%blc(M_loc_slk%nrows,M_loc_slk%ncols,M_loc_slk%Nb))
-     Y_MEM(M_loc_slk%blc)
+     call MATRIX_init( "SLK", M_loc, N, 1 )
+     Y_ALLOCATE(M_loc%blc(M_loc%BLCrows(1):M_loc%BLCrows(2),M_loc%BLCcols(1):M_loc%BLCcols(2),M_loc%Nb))
+     Y_MEM(M_loc%blc)
      !
      if (present(M_bse)) then
-       call MATRIX_transfer( M_out= M_loc_slk, M_bse=M_bse )
+       call MATRIX_transfer( M_out= M_loc, M_bse=M_bse )
      else if (present(M)) then
-       call MATRIX_transfer( M_out= M_loc_slk, M=M )
+       call MATRIX_transfer( M_out= M_loc, M=M )
      endif
      !
    endif
    !
    if (idriver==DIAGO) then
      !
-     call MATRIX_init("SLK",  EIGEN_slk, N, 1 )
-     Y_ALLOCATE(EIGEN_slk%blc(EIGEN_slk%nrows,EIGEN_slk%ncols,EIGEN_slk%Nb))
-     Y_MEM(EIGEN_slk%blc)
+     call MATRIX_init("SLK",  V_loc, N, 1 )
+     Y_ALLOCATE(V_loc%blc(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
+     Y_MEM(V_loc%blc)
      !
-     call PARALLEL_HERMITIAN_diagonalization( M_loc_slk, EIGEN_slk, N, E_real )
+     call PARALLEL_HERMITIAN_diagonalization( M_loc, V_loc, N, E_real )
      !
-     call MATRIX_transfer( M_in = EIGEN_slk , M=M )
-     Y_FREE(EIGEN_slk%blc)
-     call MATRIX_reset(EIGEN_slk)
+     call MATRIX_transfer( M_in = V_loc , M=M )
+     Y_FREE(V_loc%blc)
+     call MATRIX_reset(V_loc)
      !
    else if (idriver==INV) then
      !
      if (present(M)) then
-       call PARALLEL_inversion( M_loc_slk, N ) 
-       call MATRIX_transfer( M_in = M_loc_slk , M=M )
+       call PARALLEL_inversion( M_loc, N ) 
+       call MATRIX_transfer( M_in = M_loc , M=M )
      else
        call PARALLEL_inversion( M_slk, N ) 
      endif
@@ -162,16 +154,17 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      !
      if (.not.present(B_slk)) then
        !
-       call MATRIX_init("SLK",  B_loc_slk, N, 1 )
-       Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols,B_loc_slk%Nb))
-       Y_MEM(B_loc_slk%blc)
-       call MATRIX_transfer( M_out = B_loc_slk, M=B )
+       call MATRIX_init("SLK",  B_loc, N, 1 )
+       Y_ALLOCATE(B_loc%blc(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
+       Y_MEM(B_loc%blc)
+       call MATRIX_transfer( M_out = B_loc, M=B )
        !
-       call PARALLEL_lin_system( M_loc_slk, B_loc_slk, N, N)
-       call MATRIX_transfer( M_in =  B_loc_slk, M=B )
+       call PARALLEL_lin_system( M_loc, B_loc, N, N)
        !
-       Y_FREE(B_loc_slk%blc)
-       call MATRIX_reset(B_loc_slk)
+       call MATRIX_transfer( M_in =  B_loc, M=B )
+       !
+       Y_FREE(B_loc%blc)
+       call MATRIX_reset(B_loc)
        !
      else
        !
@@ -183,24 +176,24 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      !
      if (.not.present(B_slk)) then
        !
-       call MATRIX_init("SLK",  B_loc_slk, N, 1 )
-       Y_ALLOCATE(B_loc_slk%blc(B_loc_slk%nrows,B_loc_slk%ncols,B_loc_slk%Nb))
-       Y_MEM(B_loc_slk%blc)
-       call MATRIX_transfer( M_out =  B_loc_slk, M=B )
+       call MATRIX_init("SLK",  B_loc, N, 1 )
+       Y_ALLOCATE(B_loc%blc(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
+       Y_MEM(B_loc%blc)
+       call MATRIX_transfer( M_out =  B_loc, M=B )
        !
-       call MATRIX_init("SLK",  C_loc_slk, N, 1 )
-       Y_ALLOCATE(C_loc_slk%blc(C_loc_slk%nrows,C_loc_slk%ncols,C_loc_slk%Nb))
-       Y_MEM(C_loc_slk%blc)
-       call MATRIX_transfer( M_out =  C_loc_slk, M=C )
+       call MATRIX_init("SLK",  C_loc, N, 1 )
+       Y_ALLOCATE(C_loc%blc(C_loc%BLCrows(1):B_loc%BLCrows(2),C_loc%BLCcols(1):C_loc%BLCcols(2),C_loc%Nb))
+       Y_MEM(C_loc%blc)
+       call MATRIX_transfer( M_out =  C_loc, M=C )
        !
-       call PARALLEL_M_by_M( M_loc_slk, B_loc_slk, C_loc_slk, 'N', 'N', N, N , N )
-       call MATRIX_transfer( M_in =  C_loc_slk, M=C )
+       call PARALLEL_M_by_M( M_loc, B_loc, C_loc, 'N', 'N', N, N , N )
+       call MATRIX_transfer( M_in =  C_loc, M=C )
        !
-       call MATRIX_reset(B_loc_slk)
-       Y_FREE(B_loc_slk%blc)
+       call MATRIX_reset(B_loc)
+       Y_FREE(B_loc%blc)
        !
-       call MATRIX_reset(C_loc_slk)
-       Y_FREE(C_loc_slk%blc)
+       call MATRIX_reset(C_loc)
+       Y_FREE(C_loc%blc)
        !
      else
        !

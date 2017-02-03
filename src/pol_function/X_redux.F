@@ -37,7 +37,7 @@ subroutine X_redux(iq,Xw,X)
  use pars,          ONLY:SP,pi,cZERO,cONE
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,&
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
@@ -47,7 +47,6 @@ subroutine X_redux(iq,Xw,X)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
- use SLK_m,         ONLY:BLACS_structure_in_use
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -64,6 +63,9 @@ subroutine X_redux(iq,Xw,X)
 &                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU),NW
  type(PAR_matrix) ::KERNEL,Xo,BUFFER
  !
+ !TEMP!!!
+ logical          ::l_USE_SLK_WS=.FALSE.
+ !
  ! Setup 
  !
 #if defined _TIMING
@@ -79,22 +81,25 @@ subroutine X_redux(iq,Xw,X)
  call PARALLEL_FREQS_setup(Xw,PAR_IND_freqs,PAR_COM_SLK_INDEX_local)
  PAR_n_freqs_global                                  =0
  PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%CPU_id+1)=PAR_n_freqs
- call PP_redux_wait(PAR_n_freqs_global,COMM=PAR_COM_X_WORLD%COMM)
+ call PP_redux_wait(PAR_n_freqs_global,COMM=PAR_COM_SLK_INDEX_local%COMM)
  !
  if (PAR_n_freqs>0) call live_timing('X@q['//trim(intc(iq))//'] ',PAR_n_freqs)
  !
  ! ... and local BLACS structures for the response function components
  !         ======================
- call MATRIX_init( "SLK", KERNEL , X%ng, 1 )
- Y_ALLOCATE(KERNEL%blc(KERNEL%nrows,KERNEL%ncols,1))
+ if (     l_USE_SLK_WS) call MATRIX_init( "SLK", KERNEL , X%ng, 1 )
+ if (.not.l_USE_SLK_WS) call MATRIX_init( "SER", KERNEL , X%ng, 1 )
+ Y_ALLOCATE(KERNEL%blc(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
  Y_MEM(KERNEL%blc)
  KERNEL%blc=cZERO
- call MATRIX_init( "SLK", Xo , X%ng, 1 )
- Y_ALLOCATE(Xo%blc(Xo%nrows,Xo%ncols,1))
+ if (     l_USE_SLK_WS) call MATRIX_init( "SLK", Xo , X%ng, 1 )
+ if (.not.l_USE_SLK_WS) call MATRIX_init( "SER", Xo , X%ng, 1 )
+ Y_ALLOCATE(Xo%blc(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
  Y_MEM(Xo%blc)
  Xo%blc=cZERO
- call MATRIX_init( "SLK", BUFFER , X%ng, PAR_n_freqs)
- Y_ALLOCATE(BUFFER%blc(Xo%nrows,Xo%ncols,PAR_n_freqs))
+ if (     l_USE_SLK_WS) call MATRIX_init( "SLK", BUFFER , X%ng, PAR_n_freqs )
+ if (.not.l_USE_SLK_WS) call MATRIX_init( "SER", BUFFER , X%ng, PAR_n_freqs )
+ Y_ALLOCATE(BUFFER%blc(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),PAR_n_freqs))
  Y_MEM(BUFFER%blc)
  BUFFER%blc=cZERO
  !
@@ -135,24 +140,10 @@ subroutine X_redux(iq,Xw,X)
    ! [2] SER/SLK Solver
    ! ==================
    !
-   iw    = PAR_FREQS_index(iw_par)
-   iw_X  = iw+iW_offset
-   KERNEL%blc=cZERO
-   BUFFER%I  =iw_par
-   !if (iw_X(1)==3) then
-   !  write (*,*) 
-   !  write (*,*) myid,"1",iw_X(1),Xo%blc(1,:5)
-   !  write (*,*) myid,"2",iw_X(1),Xo%blc(2,:5)
-   !  write (*,*) myid,"3",iw_X(1),Xo%blc(3,:5)
-   !  write (*,*) myid,"4",iw_X(1),Xo%blc(4,:5)
-   !  write (*,*) myid,"5",iw_X(1),Xo%blc(5,:5)
-   !  write (*,*) myid,"6",iw_X(1),Xo%blc(6,:5)
-   !  write (*,*) myid,"7",iw_X(1),Xo%blc(7,:5)
-   !  write (*,*) myid,"8",iw_X(1),Xo%blc(8,:5)
-   !  write (*,*) myid,"9",iw_X(1),Xo%blc(9,:5)
-   !  do while(.true.) 
-   !  enddo
-   !endif
+   iw         = PAR_FREQS_index(iw_par)
+   iw_X       = iw+iW_offset
+   KERNEL%blc = cZERO
+   BUFFER%I   = iw_par
    !
    if (FXC_SVD_digits>0) INV_MODE=SVD_INV
    !
@@ -180,9 +171,9 @@ subroutine X_redux(iq,Xw,X)
      !
    else if (l_alda_fxc) then
      !
-     ! ALDA Fxc (to be implemented in PARALLEL)
+     ! ALDA Fxc (to be implemented in PARALLEL) (TODO!)
      !
-     call M_by_M('N','N', X%ng, -Xo%blc(:,:FXC_n_g_corr,1), FXC(:,:,1), KERNEL%blc(:,:FXC_n_g_corr,iw_par))
+!     call M_by_M('N','N', X%ng, -Xo%blc(:,:FXC_n_g_corr,1), FXC(:,:,1), KERNEL%blc(:,:FXC_n_g_corr,iw_par))
      !
    endif
    !
@@ -207,11 +198,10 @@ subroutine X_redux(iq,Xw,X)
      !
      ! Linear System
      !
-     if (BLACS_structure_in_use) then
-       BUFFER%blc(:,:,iw_par)=Xo%blc(:,:,1)
+     BUFFER%blc(:,:,BUFFER%I)=Xo%blc(:,:,1)
+     if (Xo%kind=="SLK") then
        call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
      else
-       X_par%blc(:,:,iw_X(1))=Xo%blc(:,:,1)
        call LINEAR_ALGEBRA_driver(LIN_SYS,M=KERNEL%blc(:,:,1),B=BUFFER%blc(:,:,iw_par))
      endif
      !
@@ -219,12 +209,12 @@ subroutine X_redux(iq,Xw,X)
      !
      ! Matrix Inversion + Matmul
      !
-     if (BLACS_structure_in_use) then
+     if (Xo%kind=="SLK") then
        call LINEAR_ALGEBRA_driver(INV,M_slk=KERNEL)
        call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
      else
        call LINEAR_ALGEBRA_driver(INV,M=KERNEL%blc(:,:,1))
-       call LINEAR_ALGEBRA_driver(MAT_MUL,M=KERNEL%blc(:,:,1),B=Xo%blc(:,:,1),C=BUFFER%blc(:,:,iw_par))
+       call LINEAR_ALGEBRA_driver(MAT_MUL,M=KERNEL%blc(:,:,1),B=Xo%blc(:,:,1),C=BUFFER%blc(:,:,BUFFER%I))
      endif
      !
    endif
@@ -279,10 +269,6 @@ subroutine X_redux(iq,Xw,X)
    !
    do iw_par=1,PAR_n_freqs_global(i_LA_pool)
      !
-     ! Empty pool at this frequency?
-     !
-     if (iw_par>PAR_n_freqs_global(i_LA_pool)) cycle
-     !
      ! The PP_redux forces me to define the iw_X only using the first CPU of each freq pool
      !
      iw_X    = 0
@@ -308,9 +294,7 @@ subroutine X_redux(iq,Xw,X)
  !
  ! CLEAN
  !
- if (BLACS_structure_in_use) then
-   Y_FREE(BUFFER%blc)
- endif
+ Y_FREE(BUFFER%blc)
  call PP_indexes_reset(PAR_IND_freqs)
  !
 end subroutine

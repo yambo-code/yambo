@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par, i_MAT )
+SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par )
  !
  ! SER <-> M_par
  !
@@ -31,15 +31,15 @@ SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par, i_MAT )
  !
  implicit none
  !
+ integer          :: N
  complex(SP)      :: M(N,N)
  character(1)     :: mode
  type(PAR_matrix) :: M_par
- integer          :: i_MAT,N
  !
  ! Work Space
  !
  integer     :: i_row,i_col
- complex(SP) :: SWAP(M_par%cols(1):M_par%cols(2))
+ complex(SP) :: SWAP(M_par%N)
  !
 #if defined _OPENMP
  !$omp parallel default(shared), private(i_row,i_col)
@@ -54,16 +54,17 @@ SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par, i_MAT )
    enddo
  endif
  !
- if (mode=="<") then
+ if (mode=="<".and.I_do_RCV) then
+   M=cZERO
    do i_row=M_par%rows(1),M_par%rows(2)
-     SWAP=cZERO
      do i_col=M_par%cols(1),M_par%cols(2)
-       SWAP(i_col)=M_par%blc(i_row,i_col,M_par%I)
+       M(i_row,i_col)=M_par%blc(i_row,i_col,M_par%I)
      enddo
-     call PP_redux_wait(SWAP,COMM=M_par%INTRA_comm%COMM)
-     if (I_do_RCV) then
-       M(i_row,M_par%cols(1):M_par%cols(2))=SWAP
-     endif
+   enddo
+   do i_row=1,M_par%N
+     SWAP=M(i_row,:)
+     call PP_redux_wait(SWAP,COMM=M_par%INTER_comm%COMM)
+     M(i_row,:)=SWAP
    enddo
  endif
  !

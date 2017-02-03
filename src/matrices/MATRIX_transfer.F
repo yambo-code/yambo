@@ -80,12 +80,10 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  ! INDEXes
  !
- M_in%I =1
- M_out%I=1
- if (present(INDEX_in)) then
+ if (present(M_in).and.present(INDEX_in)) then
    M_in%I=INDEX_in
  endif
- if (present(INDEX_out)) then
+ if (present(M_out).and.present(INDEX_out)) then
    M_out%I=INDEX_out
  endif
  !
@@ -125,7 +123,14 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
    !
  else if (M_in_kind=="SER") then
    !
-   call MATRIX_PAR_to_from_PAR(M_in,M_out) 
+   if (M_out_kind=="SER") then 
+     !
+     call MATRIX_SER_to_from_PAR(M_in%N,M_in%blc(:,:,M_in%I),">",M_out) 
+   else
+     !
+     call MATRIX_PAR_to_from_PAR(M_in,M_out) 
+     !
+   endif
    !
  else if (M_in_kind=="BSE") then
    !

@@ -45,7 +45,7 @@ subroutine MEM_dri(what,Sz,Kn,REPORT)
  ! Work Space
  !
  logical :: adding,deliver_a_msg,found
- integer :: i_mem,MEM_now,delta_MEM,MEM_prefactor,i_mem_p,ORPHAN_TOT,i_same
+ integer :: i_mem,MEM_now,delta_MEM_MEMSTAT,MEM_prefactor,i_mem_p,ORPHAN_TOT,i_same
  character(lchlen) :: msg_
  !
  if (.not.master_thread) return
@@ -97,21 +97,16 @@ subroutine MEM_dri(what,Sz,Kn,REPORT)
  !===============
  if (MEM_err/=0) call error("Allocation of "//what//" failed")
  !
- ! Process Memory Update
- !=======================
- call memstat( TOT_MEM_kilobytes_MEMSTAT )
- delta_MEM=TOT_MEM_kilobytes_MEMSTAT-TOT_MEM_kilobytes_MEMSTAT_SAVE
- TOT_MEM_kilobytes_MEMSTAT_SAVE=TOT_MEM_kilobytes_MEMSTAT
- if (TOT_MEM_kilobytes_MEMSTAT>MAX_MEM_kilobytes_MEMSTAT) MAX_MEM_kilobytes_MEMSTAT=TOT_MEM_kilobytes_MEMSTAT
- !
  ! Database Update
  !=================
  if (adding) then
    found=.TRUE.
    MEM_now=real(Sz*Kn)/Kilobyte
    if (MEM_now>0) then
-     ! Complex value correction
-     MEM_prefactor=nint(real(delta_MEM)/real(MEM_now))
+     !MEMSTAT call
+     call MEM_STAT_update( )
+     !Complex value correction
+     MEM_prefactor=nint(real(delta_MEM_MEMSTAT)/real(MEM_now))
      if (MEM_prefactor==2) MEM_now=MEM_now*MEM_prefactor
      N_MEM_elements=N_MEM_elements+1
      MEM_element_name(N_MEM_elements)=what
@@ -145,6 +140,7 @@ subroutine MEM_dri(what,Sz,Kn,REPORT)
  !#1
  deliver_a_msg=MEM_now>MEM_treshold.and..not.infile_editing.and.found
  if (deliver_a_msg) then
+   call MEM_STAT_update( )
    msg_="[MEMORY]"
    if (     adding) msg_=trim(msg_)//" Alloc "//what
    if (.not.adding) msg_=trim(msg_)//" Free "//what
@@ -154,8 +150,9 @@ subroutine MEM_dri(what,Sz,Kn,REPORT)
    call msg("s",trim(msg_))
  endif
  !#2
- deliver_a_msg=(TOT_MEM_kilobytes_MEMSTAT-MEM_jump_save)>int(MEM_jump_treshold*Megabyte/Kilobyte).and.adding
+ deliver_a_msg=(TOT_MEM_kilobytes-MEM_jump_save)>int(MEM_jump_treshold*Megabyte/Kilobyte).and.adding
  if (deliver_a_msg) then
+   call MEM_STAT_update( )
    msg_="[MEMORY] In use: "
    msg_=trim(msg_)//" TOTAL: "//trim(intc(int(TOT_MEM_kilobytes*Kilobyte/Megabyte)))//"Mb (sum)"
    msg_=trim(msg_)//" "//trim(intc(int(TOT_MEM_kilobytes_MEMSTAT*Kilobyte/Megabyte)))//"Mb (memstat)"
@@ -165,4 +162,14 @@ subroutine MEM_dri(what,Sz,Kn,REPORT)
  !
 #endif
  !
+ contains
+   !
+   subroutine MEM_STAT_update
+     ! Process Memory Update
+     !=======================
+     call memstat( TOT_MEM_kilobytes_MEMSTAT )
+     delta_MEM_MEMSTAT=TOT_MEM_kilobytes_MEMSTAT-TOT_MEM_kilobytes_MEMSTAT_SAVE
+     TOT_MEM_kilobytes_MEMSTAT_SAVE=TOT_MEM_kilobytes_MEMSTAT
+     if (TOT_MEM_kilobytes_MEMSTAT>MAX_MEM_kilobytes_MEMSTAT) MAX_MEM_kilobytes_MEMSTAT=TOT_MEM_kilobytes_MEMSTAT
+   end subroutine
 end subroutine

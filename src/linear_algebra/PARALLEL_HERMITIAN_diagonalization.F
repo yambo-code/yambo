@@ -28,7 +28,7 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_HERMITIAN_diagonalization(M_slk, EIGEN_slk, N, E)
+subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  ! perform the diagonalization by using scalapack
  !
@@ -43,7 +43,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M_slk, EIGEN_slk, N, E)
  implicit none
  !
  integer           :: N
- type(PAR_matrix)  :: M_slk,EIGEN_slk
+ type(PAR_matrix)  :: M,V
  real(SP)          :: E(N)
  !
  character(64) :: subname="PARALLEL_HERMITIAN_diagonalization"
@@ -63,30 +63,26 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M_slk, EIGEN_slk, N, E)
  lrwork=-1
  !
 #if defined _DOUBLE
- call PZHEEV('V','U',N,M_slk%blc(:,:,M_slk%I),1,1,M_slk%desc,E,EIGEN_slk%blc(:,:,EIGEN_slk%I),1,1,EIGEN_slk%desc,&
-             cvar,lwork,rvar,lrwork,WS%i_fail)
+ call PZHEEV&
 #else
- call PCHEEV('V','U',N,M_slk%blc(:,:,M_slk%I),1,1,M_slk%desc,E,EIGEN_slk%blc(:,:,EIGEN_slk%I),1,1,EIGEN_slk%desc,&
-             cvar,lwork,rvar,lrwork,WS%i_fail)
+ call PCHEEV&
 #endif
+&  ('V','U',N,M%blc(:,:,M%I),1,1,M%desc,E,V%blc(:,:,V%I),1,1,V%desc,cvar,lwork,rvar,lrwork,WS%i_fail)
  !
- !lwork=nint(real(cvar))
- !lrwork=nint(rvar)
- ! AF: better estimates should be used
+ ! AF: A better estimates should be used
  lwork=2*n**2
  lrwork=2*n + 2*n-2
  allocate(WS%v_cmplx(lwork))
  allocate(WS%v_real(lrwork))
  !
 #if defined _DOUBLE
- call PZHEEV('V','U',N,M_slk%blc(:,:,M_slk%I),1,1,M_slk%desc,E,EIGEN_slk%blc(:,:,EIGEN_slk%I),1,1,EIGEN_slk%desc,&
-             WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZHEEV')
+ call PZHEEV&
 #else
- call PCHEEV('V','U',N,M_slk%blc(:,:,M_slk%I),1,1,M_slk%desc,E,EIGEN_slk%blc(:,:,EIGEN_slk%I),1,1,EIGEN_slk%desc,&
-             WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCHEEV')
+ call PCHEEV&
 #endif
+& ('V','U',N,M%blc(:,:,M%I),1,1,M%desc,E,V%blc(:,:,V%I),1,1,V%desc,WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
+ !
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)HEEV')
  !
  if (SLK_ORTHO%task/=0) E=0.0_SP
  !

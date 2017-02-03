@@ -254,13 +254,9 @@ SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
      character(*) :: mode
      complex(SP)  :: M_tmp(K_coo(1):K_coo(2),K_coo(3):K_coo(4))
      !
-     integer      :: SLK_blk_coo(4)
      integer      :: i_r_in_BLK,i_c_in_BLK
      !
      if (myid/=i_c2-1.and.myid/=SLK_cpu_id_in_the_world(i_c1)-1) return
-     !
-     SLK_blk_coo(1:2) = K_coo(1:2)-M_slk%rows(1)+1
-     SLK_blk_coo(3:4) = K_coo(3:4)-M_slk%cols(1)+1
      !
      if (myid==i_c2-1) then
        !
@@ -297,7 +293,7 @@ SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
        enddo
        !
        if (i_c2==SLK_cpu_id_in_the_world(i_c1)) then
-         M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4),M_slk%I)=M_tmp
+         M_slk%blc(K_coo(1):K_coo(2),K_coo(3):K_coo(4),M_slk%I)=M_tmp
        else
          call PP_send_and_receive("send",M_tmp,SLK_cpu_id_in_the_world(i_c1)-1)
        endif
@@ -307,7 +303,7 @@ SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
      endif
      !
      if (myid==SLK_cpu_id_in_the_world(i_c1)-1) then
-       call PP_send_and_receive("receive",M_slk%blc(SLK_blk_coo(1):SLK_blk_coo(2),SLK_blk_coo(3):SLK_blk_coo(4),M_slk%I),i_c2-1)
+       call PP_send_and_receive("receive",M_slk%blc(K_coo(1):K_coo(2),K_coo(3):K_coo(4),M_slk%I),i_c2-1)
      endif
      !
    end subroutine

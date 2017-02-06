@@ -331,12 +331,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    Y_FREE(Epsilon_ii)
    Y_FREE(X_fxc)
    call FREQUENCIES_reset(wv,"all")
+   Y_FREE(X_par%blc)
    !
  enddo
  !
  ! CLEAN
  !
- Y_FREE(X_par%blc)
  call MATRIX_reset(X_par)
  call X_alloc('DIP_projected')
  call WF_free(WF)

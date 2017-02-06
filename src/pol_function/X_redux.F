@@ -38,7 +38,7 @@ subroutine X_redux(iq,Xw,X)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
-&                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
+&                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index,myid
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL,PAR_matrix,MATRIX_reset
@@ -253,6 +253,10 @@ subroutine X_redux(iq,Xw,X)
    !
  endif
  !
+ ! Now the interfaces. Divide in 2 steps:
+ !
+ ! 1. From all CPU of the SLK group to one of the RL group.
+ !
  do i_LA_pool=1,PAR_COM_SLK_INDEX_local%n_CPU
    !
    do iw_par=1,PAR_n_freqs_global(i_LA_pool)
@@ -272,9 +276,14 @@ subroutine X_redux(iq,Xw,X)
    enddo
  enddo
  !
- do iw=1,Xw%n_freqs
-   call PP_redux_wait(X_par%blc(:,:,iw+iW_offset),COMM=X_par%INTRA_comm%COMM)
- enddo
+ if (X_par%INTER_comm%n_CPU>1) then
+   !
+   ! 2. From the HEAD of the CPUs of the RL group to all others.
+   !
+   do iw=1,Xw%n_freqs
+     call PP_redux_wait(X_par%blc(:,:,iw+iW_offset),COMM=X_par%INTRA_comm%COMM)
+   enddo
+ endif
  !
 #if defined _TIMING
  call timing('X (REDUX)',OPR='stop')

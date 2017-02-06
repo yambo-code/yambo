@@ -376,7 +376,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! COMMs setup
    !
-    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    if (PAR_COM_RL_INDEX%n_CPU> 1) then
      call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
    endif
@@ -438,18 +438,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                          COMM_A2A_2=PAR_COM_RL_A2A,&
 &                                          COMM_A2A_3=PAR_COM_Xk_bz_A2A)
    !
-   ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
-   ! A2A when there is no internal distribution
-   !
-   if (PAR_COM_Xk_bz_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A)
-   !
    ! COMMs setup
    !
    ! To define proper indexes to calculate the dipoles I need to build up
    ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
    ! The COMM is anyway the one for the all2all of each q.
    !
-   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD_RL_resolved)
+   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A, PAR_COM_X_WORLD_RL_resolved)
    if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)

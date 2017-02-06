@@ -53,8 +53,8 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  ! COMMs
  !
  if (what=="SLK") then
-   call COMM_copy(PAR_COM_SLK,             M_par%INTER_comm)
    call COMM_copy(PAR_COM_SLK_INDEX_local, M_par%INTRA_comm)
+   call COMM_copy(PAR_COM_SLK,             M_par%INTER_comm)
  else if (what=="XUP".or.what=="XDN".or.what=="X") then
    call COMM_copy(PAR_COM_RL_A2A,   M_par%INTRA_comm)
    call COMM_copy(PAR_COM_RL_INDEX, M_par%INTER_comm)

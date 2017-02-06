@@ -231,7 +231,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
    if (X%whoami/=1) call X_redux(iq,Xw,X)
-   write (*,*) X_par%blc(:2,:2,1)
    !
    ! PAR => SER for I/O
    !

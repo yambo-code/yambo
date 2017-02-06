@@ -24,6 +24,7 @@
 subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
  !  
  use pars,           ONLY:SP,zero_dfl,rZero
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
@@ -70,8 +71,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
      !
      ! Extra condition: the EP scattering cannot cross the gap
      !
-     if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
-     if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
+     if ((i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
+     if ((i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
      !
      if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift,RT_bands) ) ) cycle
      !

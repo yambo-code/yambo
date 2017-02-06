@@ -26,7 +26,7 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv )
  ! M_snd > M_rcv
  !
  use linear_algebra, ONLY:PAR_matrix,I_do_RCV,I_do_SND,TRANSFER_world
- use parallel_m,     ONLY:PP_redux_wait,myid,MPI_comm,COMM_reset,CREATE_the_COMM,ncpu
+ use parallel_m,     ONLY:PP_redux_wait,myid,MPI_comm,COMM_reset,CREATE_the_COMM
  !
  implicit none
  !
@@ -35,8 +35,9 @@ SUBROUTINE MATRIX_PAR_to_from_PAR( M_snd, M_rcv )
  ! Work Space
  !
  integer :: i_rcv,i_snd,CROP(4),i_snd_world,i_rcv_world,i_cpu
- integer :: RCV_corners(ncpu,4),SND_corners(ncpu,4),ACTIVE_cpus_snd(ncpu),&
-&           ACTIVE_cpus_rcv(ncpu),CPU_in_the_world(ncpu)
+ integer :: RCV_corners(TRANSFER_world%n_CPU,4),SND_corners(TRANSFER_world%n_CPU,4),&
+&           ACTIVE_cpus_snd(TRANSFER_world%n_CPU),&
+&           ACTIVE_cpus_rcv(TRANSFER_world%n_CPU),CPU_in_the_world(TRANSFER_world%n_CPU)
  ! 
  ! Local global MPI comm
  !

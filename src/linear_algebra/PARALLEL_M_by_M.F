@@ -25,7 +25,7 @@ subroutine PARALLEL_M_by_M(A,B,C,transa,transb,m,n,k)
  !
  !  Perform the parallel matrix multiplication
  !
- !          C = A B 
+ !          A x B = C
  !
  !  where A(m,k), B(k,n), C(m,n)
  !

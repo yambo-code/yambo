@@ -23,7 +23,7 @@
 !
 SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM)
  !
- ! For the table of actions see below...
+ ! General, multi-purpose M <-> M transfer
  !
  use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset
  use interfaces,     ONLY:MATRIX_duplicate
@@ -106,26 +106,23 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
    call COMM_copy(PAR_COM_WORLD,TRANSFER_world)
  endif
  !
- ! Table of actions
- !
- ! in\out NAN SER                     BSE PAR                     SLK                    XUP XDN 
- ! NAN     x   x                       x   x                       x                      x   x
- ! SER     x  MATRIX_SER_to_from_PAR   x  MATRIX_SER_to_from_PAR  MATRIX_SER_to_from_PAR  x   x
- ! BSE     x   x                       x   x                      MATRIX_BSE_to_PAR       x   x
- ! PAR     x  MATRIX_PAR_to_from_PAR   x   x                      MATRIX_PAR_to_from_PAR  x   x  
- ! SLK     x  MATRIX_PAR_to_from_PAR   x  MATRIX_PAR_to_from_PAR   x                      x   x
- ! XUP     x  MATRIX_PAR_to_from_PAR   x   x                      MATRIX_PAR_to_from_PAR  x   x
- ! XDN     x  MATRIX_PAR_to_from_PAR   x   x                      MATRIX_PAR_to_from_PAR  x   x
+ ! Actual Interface
+ !        =========
  !
  if (M_in_kind=="SER".and.l_MAT_array) then
    !
-   call MATRIX_SER_to_from_PAR(N,M,">",M_out) 
+   if (present(M_in)) then
+     call MATRIX_SER_to_from_PAR(N,M,"<",M_in) 
+   else if (present(M_out)) then
+     call MATRIX_SER_to_from_PAR(N,M,">",M_out) 
+   endif
    !
  else if (M_in_kind=="SER") then
    !
    if (M_out_kind=="SER") then 
      !
      call MATRIX_SER_to_from_PAR(M_in%N,M_in%blc(:,:,M_in%I),">",M_out) 
+     !
    else
      !
      call MATRIX_PAR_to_from_PAR(M_in,M_out) 

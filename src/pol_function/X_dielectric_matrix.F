@@ -35,14 +35,14 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_Q_index, &
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_Q_index, PAR_nq, &
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth,error
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
-&                        PARALLEL_WF_index,WF_load
+&                        PARALLEL_WF_index,WF_load,MATRIX_transfer
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use linear_algebra,ONLY:MATRIX_reset
  !
@@ -56,7 +56,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_n_freqs,io_X_done(nqibz)
+ integer              :: iq,Xdb,i_err,X_n_freqs,io_X_done(nqibz),iw
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
@@ -171,9 +171,14 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
- !
  call X_half_mat_check(Xen,Xk,Xw)
  call X_PARALLEL_alloc(X,Xw%n_freqs,"XUP ALL_FREQUENCIES")
+ !
+ ! Backward compatibility...to be removed
+ if (.not.allocated(X_mat)) then
+   if (     io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+   if (.not.io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
+ endif
  !
  ! WF distribution 
  !=================
@@ -226,6 +231,17 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
    if (X%whoami/=1) call X_redux(iq,Xw,X)
+   write (*,*) X_par%blc(:2,:2,1)
+   !
+   ! PAR => SER for I/O
+   !
+   do iw=1,Xw%n_freqs
+     !
+     X_par%I=iw+iW_offset
+     !
+     call MATRIX_transfer(M_in=X_par,M=X_mat(:,:,X_par%I),COMM=PAR_COM_Q_A2A)
+     !
+   enddo
    !
    call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !

@@ -25,6 +25,9 @@ SUBROUTINE MATRIX_SER_to_from_PAR(N, M, mode, M_par )
  !
  ! SER <-> M_par
  !
+ ! I assume here that M is common to all CPU's entering here. So not SND specific operation
+ ! is implmented.
+ !
  use pars,           ONLY:SP,cZERO
  use linear_algebra, ONLY:PAR_matrix,I_do_RCV
  use parallel_m,     ONLY:PP_redux_wait

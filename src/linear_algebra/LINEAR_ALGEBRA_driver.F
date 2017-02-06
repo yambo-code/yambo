@@ -59,9 +59,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  type(PAR_matrix), optional :: M_slk
  type(BS_block),   optional :: M_bse(:)
  complex(SP),      optional :: B(:,:)
- complex(SP),      optional :: B_slk
+ type(PAR_matrix), optional :: B_slk
  complex(SP),      optional :: C(:,:)
- complex(SP),      optional :: C_slk
+ type(PAR_matrix), optional :: C_slk
  complex(SP),      optional :: V_left(:,:)
  complex(SP),      optional :: V_right(:,:)
  real(SP),         optional :: E_real(:)
@@ -83,6 +83,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  if (present(M_slk)) then
    N=M_slk%N
+#if defined _SCALAPACK 
+   if (M_slk%kind=="SLK") lib_in_use=USE_SLK
+#endif
  else if (present(M_bse)) then
    N=BS_H_dim
  else if (present(M)) then
@@ -95,7 +98,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
 #if defined _SCALAPACK 
  lib_in_use=USE_SLK
 #endif
- !
  if (present(lib_in)) then
    lib_in_use=lib_in
  endif
@@ -216,13 +218,21 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
    if (idriver==SVD_INV) then
-     call SERIAL_SVD_inversion(N,M,SVD_digits)
+     if (present(M_slk)) then
+       call SERIAL_SVD_inversion(N,M_slk%blc(:,:,M_slk%I),SVD_digits)
+     else
+       call SERIAL_SVD_inversion(N,M,SVD_digits)
+     endif
    endif
    !
    ! ###> SERIAL INVERSION 
    !
    if (idriver==INV) then
-     call SERIAL_inversion(N,M,det_,present(det))
+     if (present(M_slk)) then
+       call SERIAL_inversion(N,M_slk%blc(:,:,M_slk%I),det_,present(det))
+     else
+       call SERIAL_inversion(N,M,det_,present(det))
+     endif
      if(present(det)) det=det_
    endif
    !
@@ -233,11 +243,19 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      if (present(E_cmpl)) then
        !
        !... non-Hermitian case
-       call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
+       if (present(M_slk)) then
+         call SERIAL_diagonalization(N,M_slk%blc(:,:,M_slk%I),E_cmpl,V_left,V_right)
+       else
+         call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
+       endif
      else
        !
        !... Hermitian case
-       call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
+       if (present(M_slk)) then
+         call SERIAL_HERMITIAN_diagonalization(N,M_slk%blc(:,:,M_slk%I),E_real)
+       else
+         call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
+       endif
      endif
      !
    endif
@@ -245,14 +263,23 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    ! ####> LINEAR SYSTEM SOLUTION
    !
    if (idriver==LIN_SYS) then
-     call SERIAL_lin_system(N,size(B,2),M,B)
+     if (present(M_slk)) then
+       call SERIAL_lin_system(N,N,M_slk%blc(:,:,M_slk%I),B_slk%blc(:,:,B_slk%I))
+     else
+       call SERIAL_lin_system(N,size(B,2),M,B)
+     endif
    endif
    !
    ! ####> MAT_MUL
    ! C = M * B
    if (idriver==MAT_MUL) then
-     call M_by_M('N','N',size(C,1),size(C,2),size(M,2),cONE,M,size(M,1),&
-&                        B,size(B,1),cZERO,C,size(C,1))
+     if (present(M_slk)) then
+       call M_by_M('N','N',N,N,N,cONE,M_slk%blc(:,:,M_slk%I),N,&
+&                          B_slk%blc(:,:,B_slk%I),N,cZERO,C_slk%blc(:,:,C_slk%I),N)
+     else
+       call M_by_M('N','N',size(C,1),size(C,2),size(M,2),cONE,M,size(M,1),&
+&                          B,size(B,1),cZERO,C,size(C,1))
+     endif
    endif
    !
    call LINEAR_ALGEBRA_WS_clean_up(WS) 

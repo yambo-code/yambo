@@ -123,10 +123,12 @@ subroutine X_redux(iq,Xw,X)
      !
      call MATRIX_transfer(M_in=X_par,               M_out=Xo,INDEX_in=iw_X(1),&
 &                                                   SND=X_par%INTRA_comm%CPU_id==0,&
-&                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1)
+&                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
+&                                                   COMM=PAR_COM_X_WORLD)
      call MATRIX_transfer(M_in=X_par_lower_triangle,M_out=Xo,INDEX_in=iw_X(1),&
 &                                                   SND=X_par%INTRA_comm%CPU_id==0,&
-&                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1)
+&                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
+&                                                   COMM=PAR_COM_X_WORLD)
      !
    enddo
    !
@@ -194,23 +196,14 @@ subroutine X_redux(iq,Xw,X)
      ! Linear System
      !
      BUFFER%blc(:,:,BUFFER%I)=Xo%blc(:,:,1)
-     if (Xo%kind=="SLK") then
-       call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
-     else
-       call LINEAR_ALGEBRA_driver(LIN_SYS,M=KERNEL%blc(:,:,1),B=BUFFER%blc(:,:,iw_par))
-     endif
+     call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
      !
   else
      !
      ! Matrix Inversion + Matmul
      !
-     if (Xo%kind=="SLK") then
-       call LINEAR_ALGEBRA_driver(INV,M_slk=KERNEL)
-       call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
-     else
-       call LINEAR_ALGEBRA_driver(INV,M=KERNEL%blc(:,:,1))
-       call LINEAR_ALGEBRA_driver(MAT_MUL,M=KERNEL%blc(:,:,1),B=Xo%blc(:,:,1),C=BUFFER%blc(:,:,BUFFER%I))
-     endif
+     call LINEAR_ALGEBRA_driver(INV,M_slk=KERNEL)
+     call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
      !
    endif
    !
@@ -274,7 +267,7 @@ subroutine X_redux(iq,Xw,X)
      !
      call MATRIX_transfer(M_in=BUFFER,M_out=X_par,INDEX_in=iw_par,INDEX_out=iw_X(1),&
 &                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
-&                         RCV=X_par%INTRA_comm%CPU_id==0)
+&                         RCV=X_par%INTRA_comm%CPU_id==0,COMM=PAR_COM_X_WORLD)
      !
    enddo
  enddo
@@ -287,9 +280,11 @@ subroutine X_redux(iq,Xw,X)
  call timing('X (REDUX)',OPR='stop')
 #endif
  !
- ! CLEAN
- !
+ ! Clean-up of FREQ structure
+ !==========
  Y_FREE(BUFFER%blc)
+ call MATRIX_reset(BUFFER)
+ Y_FREE(PAR_FREQS_index)
  call PP_indexes_reset(PAR_IND_freqs)
  !
 end subroutine

@@ -682,6 +682,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (index(BSS_mode,'s')/=0)  then
       call initactivate(1,'BSSNEig')
       call initactivate(1,'BSSEnTarget')
+      call initactivate(1,'BSSSlepcExtraction')
    endif
    !
    ! Special project dependent variables

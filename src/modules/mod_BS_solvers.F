@@ -58,6 +58,7 @@ module BS_solvers
  !=========
  character(lchlen):: BSS_description(100)
  character(schlen):: BSS_mode
+ character(schlen):: BSS_slepc_extraction
  complex(SP) :: BSS_Wd
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs

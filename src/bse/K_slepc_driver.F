@@ -42,7 +42,7 @@ subroutine K_slepc_driver(iq,W)
  use BS,             ONLY:BS_K_coupling,BS_H_dim
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BS_mat_free,BS_mat,BSS_n_eig,BSS_target_E, &
-&                         BSS_write_eig_2_db,BSS_eh_W, Slepc_shell
+&                         BSS_write_eig_2_db,BSS_eh_W, Slepc_shell,BSS_slepc_extraction
  use electrons,      ONLY:E_SOC_nbands
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec,warning
@@ -196,19 +196,19 @@ subroutine K_slepc_driver(iq,W)
    if (K_is_not_hermitian) then
      !
      if (BSS_target_E==0) then
-         call MATRIX_slepc(slepc_mat,BSS_n_eig,E_cmpl=BS_E, V_right=BS_V_right,V_left=BS_V_left)
+         call MATRIX_slepc(slepc_mat,BSS_n_eig,E_cmpl=BS_E, V_right=BS_V_right,V_left=BS_V_left,extraction=BSS_slepc_extraction)
      else
          call MATRIX_slepc(slepc_mat,BSS_n_eig,E_cmpl=BS_E, V_right=BS_V_right,V_left=BS_V_left,&
- &                         target_energy=BSS_target_E)
+ &                         target_energy=BSS_target_E,extraction=BSS_slepc_extraction)
      endif
      !
    else
      !
      if (BSS_target_E==0) then
-         call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real, V_right=BS_mat)
+         call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real, V_right=BS_mat,extraction=BSS_slepc_extraction)
      else
          call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real, V_right=BS_mat,&
-                           target_energy=BSS_target_E)
+                           target_energy=BSS_target_E,extraction=BSS_slepc_extraction)
      endif
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)

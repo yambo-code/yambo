@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy)
+subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extraction)
   !
   ! 10/06/2016 HM
   ! Use slepc to obtain the first few eigenpairs of a large matrix
   ! This routine can be called from within Matrix_driver.F but should be kept in
   ! a separate souce file for clarity.
   !
-  use pars,          ONLY : SP,cONE,cZERO
+  use pars,          ONLY : SP,cONE,cZERO,schlen
   use com,           ONLY : error,msg
   implicit none
   !
@@ -43,12 +43,13 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy)
   !
   ! arguments
   !
-  integer                :: n_eig        ! number of eigenvalues to compute
-  complex(SP),  optional :: V_right(:,:) ! right eigenvalues
-  complex(SP),  optional :: V_left(:,:)  ! left eigenvalues
-  complex(SP),  optional :: E_cmpl(:)    ! complex eigenvalues
-  real(SP),     optional :: E_real(:)    ! real eigenvalues
-  real(SP),     optional :: target_energy! energy near where to find the eigenvalues
+  integer                     :: n_eig         ! number of eigenvalues to compute
+  character(schlen), optional :: extraction    ! extraction method for the eigenvalues
+  complex(SP),  optional      :: V_right(:,:)  ! right eigenvalues
+  complex(SP),  optional      :: V_left(:,:)   ! left eigenvalues
+  complex(SP),  optional      :: E_cmpl(:)     ! complex eigenvalues
+  real(SP),     optional      :: E_real(:)     ! real eigenvalues
+  real(SP),     optional      :: target_energy ! energy near where to find the eigenvalues
   ! 
   ! internal variables
   !
@@ -61,6 +62,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy)
   Mat            A
   EPS            eps
   EPSType        tname
+  EPSExtraction  extr
   PetscReal      tol, ferror
   PetscErrorCode ierr
   PetscInt       nev, ncv, mpd, maxit, its, nconv, n, i, j
@@ -107,6 +109,27 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy)
     call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
   endif
 
+  !set type of extraction
+  if (present(extraction)) then
+    call msg( 'rs', 'Extraction method:', extraction )
+    if      (extraction == 'ritz')              then
+        extr = EPS_RITZ
+    else if (extraction == 'harmonic')          then
+        extr = EPS_HARMONIC         
+    else if (extraction == 'harmonic_relative') then
+        extr = EPS_HARMONIC_RELATIVE
+    else if (extraction == 'harmonic_right')    then
+        extr = EPS_HARMONIC_RIGHT
+    else if (extraction == 'harmonic_largest')  then
+        extr = EPS_HARMONIC_LARGEST
+    else if (extraction == 'refined')           then
+        extr = EPS_REFINED
+    else if (extraction == 'refined_harmonic')  then
+        extr = EPS_REFINED_HARMONIC
+    endif
+  endif
+  call EPSSetExtraction(eps, extr, ierr)
+
   !set type of problem
   !call EPSSetType(eps,EPSLAPACK,ierr)
 
@@ -116,17 +139,20 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy)
   !mpd = 2*nev
   !call EPSSetDimensions(eps,nev,ncv,mpd,ierr)
   call EPSSetDimensions(eps,nev,PETSC_DEFAULT_INTEGER,PETSC_DEFAULT_INTEGER,ierr)
-  call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
+  
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   call EPSSolve(eps,ierr)
   call EPSGetIterationNumber(eps,its,ierr)
   call msg( 'rs', 'Number of iterations of the method:', its )
+  call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
+  !call msg( 'rs', 'nev: ', nev)
+  !call msg( 'rs', 'ncv: ', ncv)
+  !call msg( 'rs', 'mpd: ', mpd)
 
   !Optional: Get some information from the solver and display it
   call EPSGetType(eps,tname,ierr)
-  call EPSGetDimensions(eps,nev,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,ierr)
   call EPSGetTolerances(eps,tol,maxit,ierr)
 
   call msg( 'rs', 'Solution method: ', tname )
@@ -206,8 +232,14 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
   PetscReal      re,errest(*)
   PetscMPIInt    rank
 
+  character(12)  c_nconv, c_err, c_its
+
   ! write the number of converged eigenvalues
-  call msg('s', '[SLEPC] converged eigenpairs: ', its)
+  write(c_nconv,'(i5)') nconv
+  write(c_its, '(i5)') its
+  write(c_err,'(e12.4)') errest(nconv+1)
+  call msg('s', trim('[SLEPC] iteration') // trim(c_its) // trim(' conv_eigenpairs: ') &
+&            // trim(c_nconv) // trim(' error: ') // trim(c_err) )
 
   ierr = 0
   !

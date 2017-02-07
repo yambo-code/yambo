@@ -35,10 +35,9 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
- use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,&
+ use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,K_slk,&
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
- use SLK_m,          ONLY:BLACS_structure_in_use
  !
  ! GPL_EXCLUDE_START
  !
@@ -176,7 +175,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !
  ! GPL_EXCLUDE_END
  !
- if (BLACS_structure_in_use) return
+ if (K_slk%kind=="SLK") return
  !
  ! FILLING the BS_mat
  !====================

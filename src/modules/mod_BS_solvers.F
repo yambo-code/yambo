@@ -170,10 +170,9 @@ module BS_solvers
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
      use electrons, ONLY:E_SOC_nbands
-     use SLK_m,     ONLY:BLACS_structure_in_use
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-     if (.not.BLACS_structure_in_use) then
+     if (.not.K_slk%kind=="SLK") then
        Y_ALLOCATE(BS_mat(BS_H_dim,BS_H_dim))
        Y_MEM(BS_mat)
        BS_mat    = cZERO

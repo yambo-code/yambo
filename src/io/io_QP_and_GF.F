@@ -238,7 +238,7 @@ integer function io_QP_and_GF(what,qp,ID)
      !
      ! QP corrections 
      !
-     if (read_is_on(ID)) then
+     if (read_is_on(ID).and..not.allocated(qp%E)) then
        Y_ALLOCATE(qp%Z(qp%n_states))
        Y_ALLOCATE(qp%E(qp%n_states))
        Y_ALLOCATE(qp%E_bare(qp%n_states))

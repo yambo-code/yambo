@@ -39,7 +39,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 &                         PAR_COM_SLK_INDEX_local
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_duplicate
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
- use SLK_m,          ONLY:BLACS_structure_in_use
  use linear_algebra, ONLY:MATRIX_reset
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO
@@ -114,6 +113,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! Restart database
  !==================
  call K_inversion_restart(iq,W)
+ !
  completed=count(K_INV_EPS%err/=0)==0
 #if defined _PL
  completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
@@ -142,15 +142,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  Y_ALLOCATE(K_slk%blc(K_slk%BLCrows(1):K_slk%BLCrows(2),K_slk%BLCcols(1):K_slk%BLCcols(2),1))
  Y_MEM(K_slk%blc)
  !
- if ( SLK_ORTHO%coordinate(1) /= -1 )BLACS_structure_in_use=.TRUE.
- !
 #endif
  !
  ! Kernel Loading 
  !================
  call K_components_folded_in_serial_arrays(iq)
  !
- if (BLACS_structure_in_use) then
+ if (K_slk%kind=="SLK") then
    !
 #if defined _SCALAPACK
    !
@@ -440,7 +438,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _SCALAPACK
      call MATRIX_reset(K_slk)
      call MATRIX_duplicate( "free", M_out=K_inv_slk )
-     BLACS_structure_in_use=.FALSE.    
 #endif
      !
 #if defined _TIMING

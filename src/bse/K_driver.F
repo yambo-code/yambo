@@ -213,13 +213,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
 #if defined _MEM_CHECK 
  !
- call MEM_dri("",REPORT="check")
+ if (.not.l_rpa_IP) call MEM_dri("",REPORT="check")
  !
 #endif
  !
  ! 3. The SOLVER
  ! =================
- if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  ! GPL_EXCLUDE_START
  !

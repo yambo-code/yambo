@@ -30,7 +30,7 @@
 !
 subroutine SLK_matrix_init(M_slk, N, N_blocks)
  !
- use SLK_m,          ONLY:SLK_ORTHO,BLACS_structure_in_use
+ use SLK_m,          ONLY:SLK_ORTHO
  use linear_algebra, ONLY:PAR_matrix
 #include<memory.h>
  !
@@ -77,6 +77,5 @@ subroutine SLK_matrix_init(M_slk, N, N_blocks)
  M_slk%I          = 1
  M_slk%Nb         = N_blocks
  M_slk%kind       = "SLK"
- BLACS_structure_in_use = .TRUE.
  !
 end subroutine 

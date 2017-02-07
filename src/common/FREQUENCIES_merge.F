@@ -73,10 +73,17 @@ subroutine FREQUENCIES_merge(W1,W2,table)
      !
      r=(/real(W_new%p(iw2)),real(W1%p(iw1)),real(W_new%p(iw2+1))/)
      !
-     ! o=N  
+     ! N=o  
      !
      if (abs(r(1)-r(2))<1.E-5) then
        table(iw2)=iw1
+       exit W2_loop 
+     endif
+     !
+     ! o=N  
+     !
+     if (abs(r(3)-r(2))<1.E-5) then
+       table(iw2+1)=iw1
        exit W2_loop 
      endif
      !

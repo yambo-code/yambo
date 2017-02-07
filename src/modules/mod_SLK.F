@@ -28,7 +28,6 @@ module SLK_m
 #include<memory.h>
  !
  integer              :: n_pools = 1 ! number of pools
- logical              :: BLACS_structure_in_use=.FALSE.
  !
  ! SLK test
  !

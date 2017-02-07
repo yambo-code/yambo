@@ -491,10 +491,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations
-   if (l_flag)      call initactivate(1,"OCCgroup")
-   if (l_RT_density)call initactivate(1,"LoadGhistory")
-   if (l_RT_bands)  call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
-   if (l_RT_2D_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
+   if (l_flag)           call initactivate(1,"OCCgroup")
+   if (l_RT_occupations) call initactivate(1,"IncludeEQocc")
+   if (l_RT_density)     call initactivate(1,"LoadGhistory")
+   if (l_RT_bands)       call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
+   if (l_RT_2D_dos)      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
    if ((l_RT_2D_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")

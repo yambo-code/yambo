@@ -27,6 +27,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use pars,           ONLY:SP,schlen,rZERO
+ use parser_m,       ONLY:parser
  use YPP_real_time,  ONLY:RT_time
  use RT_control,     ONLY:RT_apply
  use D_lattice,      ONLY:Bose_Temp
@@ -51,7 +52,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  integer, parameter    :: fit_dim=1000,N_max_files=16
  integer               :: n_groups=1,i_g,i_g_ep=0,i_g_ee=0,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit
  integer               :: E_sort_index(RT_carriers%nstates)
- logical               :: l_ep_lifetimes
+ logical               :: l_ep_lifetimes,l_sum_equilibrium
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
  real(SP),allocatable  :: spin_factors(:,:,:)
  !
@@ -87,6 +88,9 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  !
  !... metallic bands precision
  filled_tresh=1.E-7
+ !
+ call parser('IncludeEQocc',l_sum_equilibrium)
+
  !
  ! Allocate GROUPs!
  !==================
@@ -143,14 +147,16 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !============
      DATA_grp(1)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)
      !
+     if(l_sum_equilibrium) DATA_grp(1)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)+RT_carriers%f_bare(i_RT)
+     !
      ! Spin occupations
      !==================
      if (n_spinor==2) then
        ib=RT_carriers%table(i_RT,1)
        ik_ibz=RT_carriers%table(i_RT,2)
        ik=RT_carriers%table(i_RT,3)
-       DATA_grp(2)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,1)
-       DATA_grp(3)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,2)
+       DATA_grp(2)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)*spin_factors(ib,ik_ibz,1)
+       DATA_grp(3)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)*spin_factors(ib,ik_ibz,2)
      endif
      !
      ! Lifetimes

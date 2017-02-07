@@ -600,8 +600,12 @@ module IO_m
      integer           :: local_error
      if(status /= nf90_noerr) then
        FILENAME=io_file(ID)
-       local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARNAME)
-       if( present(VAR)) VARNAME=VAR
+       VARNAME=' NOT DEFINED '
+       if(.not.present(VAR)) then
+         local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARNAME)
+         if(local_error/=0) VARNAME=' NOT DEFINED '
+       endif
+       if(present(VAR)) VARNAME=VAR
        write (msg,'(6a)') ' File ',trim(FILENAME),' Variable ',trim(VARNAME),': ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if

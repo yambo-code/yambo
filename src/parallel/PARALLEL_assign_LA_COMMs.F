@@ -114,6 +114,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
    call msg('s','[LA] SERIAL linear algebra')
 #if defined _SCALAPACK
  endif
+#endif
  !
  contains
    !
@@ -130,6 +131,5 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
      call msg('s','[LA] SERIAL linear algebra')
      !
    end subroutine
-#endif
- !
+   !
 end subroutine

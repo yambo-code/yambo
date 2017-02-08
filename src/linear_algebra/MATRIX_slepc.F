@@ -174,7 +174,9 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   !Get number of converged eigenpairs
   call EPSGetConverged(eps,nconv,ierr)
   call msg( 'rs', 'Number of converged eigenpairs:', nconv)
-  n_eig = nconv
+  if ( nconv < n_eig ) then
+    n_eig = nconv
+  endif
 
   !free the A matrix
   call MatDestroy(A,ierr)

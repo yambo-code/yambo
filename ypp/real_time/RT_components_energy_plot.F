@@ -50,7 +50,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  ! Work Space
  !
  integer, parameter    :: fit_dim=1000,N_max_files=16
- integer               :: n_groups=1,i_g,i_g_ep=0,i_g_ee=0,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit
+ integer               :: n_groups,i_g,i_g_ep,i_g_ee,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit
  integer               :: E_sort_index(RT_carriers%nstates)
  logical               :: l_ep_lifetimes,l_sum_equilibrium
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
@@ -90,12 +90,12 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  filled_tresh=1.E-7
  !
  call parser('IncludeEQocc',l_sum_equilibrium)
-
  !
  ! Allocate GROUPs!
  !==================
  !
  call Load_and_Fit_alloc(DATA_grp(1),1,"CARRIERS")
+ n_groups=1
  !
  if (n_spinor==2) then
    call Load_and_Fit_alloc(DATA_grp(2),1,"spin-up")
@@ -105,6 +105,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    n_groups=3
  endif
  !
+ i_g_ee=0
  if (l_elel_scatt) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-e")
@@ -112,11 +113,14 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),1,"e-e-ratio")
  endif
+ !
  if (l_elphoton_scatt) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-photon")
  endif
+ !
  l_ep_lifetimes = l_elph_scatt.and.l_RT_CCA_Kernel
+ i_g_ep=0
  if (l_ep_lifetimes) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),4,"e-p")

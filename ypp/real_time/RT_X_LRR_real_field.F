@@ -47,7 +47,7 @@ subroutine RT_X_LRR_real_field(en)
  ! Work Space
  !
  integer  :: i_t,i_w,i_p_dir,iE_err,i_Probe,i_field,n_fields
- character(10):: FT_title
+ character(11):: FT_title
  logical      :: l_rm_asympt_limit
  real(SP)     :: W_step,W_reached,Field_time,outdata(6),E_ver(3,3)
  complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
@@ -126,15 +126,21 @@ subroutine RT_X_LRR_real_field(en)
  !... FT
  !
  allocate(E_t(RT_conf%T_n_steps,n_fields))
- do i_field=1,n_fields
-   do i_t=1,RT_conf%T_n_steps
-     Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
-     A_of_t =small_a(Field_time,Efield(i_Probe),0)
-     E_of_t =small_a(Field_time,Efield(i_Probe),1)
-     theta  =theta_function(Field_time,RT_time(2)-RT_time(1),0)
-     delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
+ !
+ do i_t=1,RT_conf%T_n_steps
+   Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
+   A_of_t =small_a(Field_time,Efield(i_Probe),0)
+   E_of_t =small_a(Field_time,Efield(i_Probe),1)
+   theta  =theta_function(Field_time,RT_time(2)-RT_time(1),0)
+   delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
+   !
+   do i_field=1,n_fields
      E_t(i_t,i_field)=Efield(i_Probe)%amplitude*(E_of_t(i_field)*theta+A_of_t(i_field)*delta)
    enddo
+   !
+ enddo
+ !
+ do i_field=1,n_fields
    !
    if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) then
      call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,E_t(:,i_field),1)
@@ -149,6 +155,7 @@ subroutine RT_X_LRR_real_field(en)
 &                                E_t(:,i_field),RT_conf%T_n_steps,USE_FFT,1)
    !
  enddo
+ !
  deallocate(E_t)
  !
  ! Check of finiteness of E field

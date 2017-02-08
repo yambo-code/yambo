@@ -41,7 +41,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
  use linear_algebra, ONLY:MATRIX_reset
 #if defined _SCALAPACK
- use SLK_m,          ONLY:SLK_ORTHO
  use interfaces,     ONLY:MATRIX_transfer
 #endif
 #if defined _TIMING

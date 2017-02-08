@@ -25,7 +25,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  ! General, multi-purpose M <-> M transfer
  !
- use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset
+ use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset,PAR_COM_NULL
  use interfaces,     ONLY:MATRIX_duplicate
  use pars,           ONLY:SP
  use BS,             ONLY:BS_block
@@ -91,11 +91,11 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  I_do_SND=.TRUE.
  if (present(SND)) then
-  I_do_SND=SND
+   I_do_SND=SND
  endif
  I_do_RCV=.TRUE.
  if (present(RCV)) then
-  I_do_RCV=RCV
+   I_do_RCV=RCV
  endif
  !
  ! Transfer World
@@ -109,49 +109,33 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  ! Actual Interface
  !        =========
  !
- if (M_in_kind=="SER".and.l_MAT_array) then
-   !
-   if (present(M_in)) then
-     call MATRIX_SER_to_from_PAR(N,M,"<",M_in) 
-   else if (present(M_out)) then
-     call MATRIX_SER_to_from_PAR(N,M,">",M_out) 
-   endif
-   !
- else if (M_in_kind=="SER") then
-   !
-   if (M_out_kind=="SER") then 
-     !
-     call MATRIX_SER_to_from_PAR(M_in%N,M_in%blc(:,:,M_in%I),">",M_out) 
-     !
-   else
-     !
-     call MATRIX_PAR_to_from_PAR(M_in,M_out) 
-     !
-   endif
-   !
- else if (M_in_kind=="BSE") then
+ if (M_in_kind=="BSE") then
    !
    if (M_out_kind=="SLK") call MATRIX_BSE_to_PAR(M_bse,M_out)
    !
- else if (M_in_kind=="PAR".or.M_in_kind=="SLK") then
+ else if (l_MAT_array) then
    !
-   if (M_out_kind=="SER") then
-     if (     l_MAT_ARRAY) call MATRIX_SER_to_from_PAR(N,M,"<",M_in) 
-     if (.not.l_MAT_ARRAY) call MATRIX_PAR_to_from_PAR(M_in,M_out) 
-   endif
-   if (M_out_kind=="SLK".or.M_out_kind=="PAR") call MATRIX_PAR_to_from_PAR(M_in,M_out)
-   !
- else if (M_in_kind=="XUP".or.M_in_kind=="XDN") then
-   !
-   call MATRIX_PAR_to_from_PAR(M_in,M_out) 
-   !
-   if (M_in_kind=="XUP".and.X_FILL_UP_matrix_only) then
-     if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
-     if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
-     call MATRIX_PAR_to_from_PAR(M_Xdn,M_out) 
-     call MATRIX_duplicate("free",M_out=M_Xdn)
+   if (present(M_in)) then
+     call MATRIX_PAR_to_from_PAR(M_in%blc(:,:,M_in%I)  ,M_in%INTER_comm, M_in%rows, M_in%cols,&
+&                                M                     ,PAR_COM_NULL,     (/1,N/),   (/1,N/))
+   else if (present(M_out)) then
+     call MATRIX_PAR_to_from_PAR(M                     ,PAR_COM_NULL,     (/1,N/),   (/1,N/),&
+&                                M_out%blc(:,:,M_out%I),M_out%INTER_comm,M_out%rows,M_out%cols) 
    endif
    !
+ else
+   !
+   call MATRIX_PAR_to_from_PAR(M_in%blc(:,:,M_in%I)  ,M_in%INTER_comm, M_in%rows, M_in%cols,&
+&                              M_out%blc(:,:,M_out%I),M_out%INTER_comm,M_out%rows,M_out%cols) 
+   !
+ endif
+ !
+ if (M_in_kind=="XUP".and.X_FILL_UP_matrix_only) then
+   if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
+   if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
+   call MATRIX_PAR_to_from_PAR(M_Xdn%blc(:,:,M_Xdn%I),M_Xdn%INTER_comm,M_Xdn%rows,M_Xdn%cols,&
+&                              M_out%blc(:,:,M_out%I),M_out%INTER_comm,M_out%rows,M_out%cols) 
+   call MATRIX_duplicate("free",M_out=M_Xdn)
  endif
  !
  call COMM_reset(TRANSFER_world)

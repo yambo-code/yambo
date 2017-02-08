@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_redux(iq,Xw,X)
+subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Here we solve the Dyson equation using a combination of Serial(SER)/Parallel(PAR)/SLK environments.
  !
@@ -38,30 +38,30 @@ subroutine X_redux(iq,Xw,X)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
-&                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index,myid
+&                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL,PAR_matrix,MATRIX_reset
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_use_lin_sys,iW_offset,X_par,X_par_lower_triangle
+ use X_m,           ONLY:X_t,X_use_lin_sys,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- use parser_m
 #include<memory.h>
  !
- type(X_t)    :: X
- type(w_samp) :: Xw
- integer      :: iq
+ type(PAR_matrix) :: X_par
+ type(X_t)        :: X
+ type(w_samp)     :: Xw
+ integer          :: iq
  !
  ! Work Space
  !
  type(PP_indexes) ::PAR_IND_freqs
  integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
-&                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU),NW
+&                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU)
  type(PAR_matrix) ::KERNEL,Xo,BUFFER
  !
  ! Setup 
@@ -115,7 +115,7 @@ subroutine X_redux(iq,Xw,X)
      !
      iw_X    = 0
      if (i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1.and.PAR_COM_SLK%CPU_id==0) then
-       iw_X  = PAR_FREQS_index(iw_par)+iW_offset
+       iw_X  = PAR_FREQS_index(iw_par)
      endif
      call PP_redux_wait(iw_X,COMM=PAR_COM_X_WORLD%COMM)
      !
@@ -138,7 +138,6 @@ subroutine X_redux(iq,Xw,X)
    ! ==================
    !
    iw         = PAR_FREQS_index(iw_par)
-   iw_X       = iw+iW_offset
    KERNEL%blc = cZERO
    BUFFER%I   = iw_par
    !
@@ -229,10 +228,8 @@ subroutine X_redux(iq,Xw,X)
  ! ========
  Y_FREE(KERNEL%blc)
  Y_FREE(Xo%blc)
- Y_FREE(X_par_lower_triangle%blc)
  call MATRIX_reset(KERNEL)
  call MATRIX_reset(Xo)
- call MATRIX_reset(X_par_lower_triangle)
  !
 #if defined _TIMING
  call timing('X (procedure)',OPR='stop')
@@ -246,10 +243,9 @@ subroutine X_redux(iq,Xw,X)
  !
  if (X_par%INTER_comm%n_CPU>1) then
    !
-   NW=X_par%Nb
    Y_FREE(X_par%blc)
    call MATRIX_reset(X_par)
-   call X_PARALLEL_alloc(X,NW,"XFULL")
+   call X_PARALLEL_alloc(X_par,X%ng,Xw%n_freqs,"X")
    !
  endif
  !
@@ -265,25 +261,15 @@ subroutine X_redux(iq,Xw,X)
      !
      iw_X    = 0
      if (i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1.and.PAR_COM_SLK%CPU_id==0) then
-       iw_X  = PAR_FREQS_index(iw_par)+iW_offset
+       iw_X  = PAR_FREQS_index(iw_par)
      endif
      call PP_redux_wait(iw_X,COMM=PAR_COM_X_WORLD%COMM)
      !
      call MATRIX_transfer(M_in=BUFFER,M_out=X_par,INDEX_in=iw_par,INDEX_out=iw_X(1),&
-&                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
-&                         RCV=X_par%INTRA_comm%CPU_id==0,COMM=PAR_COM_X_WORLD)
+&                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,COMM=PAR_COM_X_WORLD)
      !
    enddo
  enddo
- !
- if (X_par%INTER_comm%n_CPU>1) then
-   !
-   ! 2. From the HEAD of the CPUs of the RL group to all others.
-   !
-   do iw=1,Xw%n_freqs
-     call PP_redux_wait(X_par%blc(:,:,iw+iW_offset),COMM=X_par%INTRA_comm%COMM)
-   enddo
- endif
  !
 #if defined _TIMING
  call timing('X (REDUX)',OPR='stop')

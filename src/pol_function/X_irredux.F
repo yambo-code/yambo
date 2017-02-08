@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_irredux(iq,Xen,Xk,Xw,X)
+subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  ! Non interacting Xo
  !
@@ -43,6 +43,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,warning
+ use linear_algebra,ONLY:PAR_matrix
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved
@@ -58,8 +59,8 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  use D_lattice,     ONLY:i_space_inv
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
-&                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,X_par,&
-&                        l_X_terminator,X_terminator_E,X_term_E,iW_offset,X_par_lower_triangle
+&                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
+&                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -68,6 +69,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  use timing_m,      ONLY:timing
 #endif
 #include<memory.h>
+ type(PAR_matrix)     :: X_par
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
  type(X_t)            :: X
@@ -87,12 +89,10 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
  !
  ! Defaults & Setups
  !===================
- X_par%blc(:,:,iW_offset+1:iW_offset+Xw%n_freqs)    = cZERO
- GreenF                                             = cZERO
- drude_GreenF                                       = cZERO
- if (X_lower_triangle_matrix_in_use) then
-   X_par_lower_triangle%blc(:,:,:) = cZERO
- endif
+ X_par%blc(:,:,:)                 = cZERO
+ GreenF                           = cZERO
+ drude_GreenF                     = cZERO
+ if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc(:,:,:) = cZERO
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
@@ -291,7 +291,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
        ! ----    ----
        !
        call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),Xo_res(ig1,X_cols(1):X_cols(2)),&
-&                         X_par%blc(ig1,X_cols(1):X_cols(2),iw+iW_offset))
+&                         X_par%blc(ig1,X_cols(1):X_cols(2),iw))
        !
        if (.not.X_FILL_UP_matrix_only) then
          !
@@ -305,11 +305,11 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
          if (PAR_COM_RL_INDEX%n_CPU>1) then
            call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),&
 &                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),&
-&                             X_par_lower_triangle%blc(X_cols(1):X_cols(2),ig1,iw+iW_offset))
+&                             X_par_lower_triangle%blc(X_cols(1):X_cols(2),ig1,iw))
          else
            call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),&
 &                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),&
-&                             X_par%blc(X_cols(1):X_cols(2),ig1,iw+iW_offset))
+&                             X_par%blc(X_cols(1):X_cols(2),ig1,iw))
          endif
        endif
 #if defined _OPENMP
@@ -322,6 +322,7 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
    if (master_thread) call live_timing(steps=1)
    !
  enddo 
+ !
 #if defined _OPENMP
 !$omp end do
 #endif
@@ -349,9 +350,9 @@ subroutine X_irredux(iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-   call PP_redux_wait(X_par%blc(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
+   call PP_redux_wait(X_par%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
    if (X_lower_triangle_matrix_in_use) then
-     call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw+iW_offset),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
+     call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
    endif
  enddo
  !

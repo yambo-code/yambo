@@ -36,7 +36,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -70,6 +70,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  call X_pre_setup(Xen,X)
  !
  call set_real_printed_length(f_length=10,g_length=10)
+ !
+ allocate(X_par(1))
  !
  do iq=X%iq(1),X%iq(2)
    !
@@ -145,10 +147,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    call X_half_mat_check(Xen,Xk,wv)
    !
-   call X_PARALLEL_alloc(X,wv%n_freqs,"XUP")
+   call X_PARALLEL_alloc(X_par(1),X%ng,wv%n_freqs,"XUP")
    !
-   Macroscopic_CPU=X_par%rows(1)<=i_G_shift.and.i_G_shift<=X_par%rows(2).and.&
-&                  X_par%cols(1)<=i_G_shift.and.i_G_shift<=X_par%cols(2)
+   Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
+&                  X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
    !
    ! Check if EELS can be evaluated
    !
@@ -213,11 +215,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    EEL       =cZERO
    Alpha     =cZERO
    !
-   call X_irredux(iq,Xen,Xk,wv,X)     
+   call X_irredux(iq,X_par(1),Xen,Xk,wv,X)     
    !
    ! Without LF eps
    !
-   if (Macroscopic_CPU) Epsilon_ii(:,1)=1.0_SP-X_par%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   if (Macroscopic_CPU) Epsilon_ii(:,1)=1.0_SP-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
    !
@@ -227,9 +229,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
      !
    else
      !
-     call X_redux(iq,wv,X)
+     call X_redux(iq,X_par(1),wv,X)
      !
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par%blc(i_G_shift,i_G_shift,:)*&
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
 &                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
      !
    endif
@@ -331,13 +333,16 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    Y_FREE(Epsilon_ii)
    Y_FREE(X_fxc)
    call FREQUENCIES_reset(wv,"all")
-   Y_FREE(X_par%blc)
+   Y_FREE(X_par(1)%blc)
+   Y_FREE(X_par_lower_triangle%blc)
    !
  enddo
  !
  ! CLEAN
  !
- call MATRIX_reset(X_par)
+ call MATRIX_reset(X_par(1))
+ call MATRIX_reset(X_par_lower_triangle)
+ deallocate(X_par)
  call X_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait

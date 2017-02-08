@@ -21,26 +21,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_PARALLEL_alloc(X,NW,mode)
+subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  !
  use pars,          ONLY:cZERO
- use IO_m,          ONLY:io_RESPONSE
- use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_nq,PAR_COM_RL_A2A
- use linear_algebra,ONLY:MATRIX_reset
- use X_m,           ONLY:X_t,X_par,iW_offset,X_par_lower_triangle,&
+ use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_COM_RL_A2A
+ use linear_algebra,ONLY:MATRIX_reset,PAR_matrix
+ use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
 &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
  use interfaces,    ONLY:PARALLEL_live_message
  !
 #include<memory.h>
  !
- type(X_t)       :: X 
- integer         :: NW
- character(*)    :: mode
+ type(PAR_matrix) :: X_par
+ integer          :: NG,NW
+ character(*)     :: mode
  !
  ! Work Space
  !
- integer         :: X_size
- logical         :: l_XUP,l_PAR,l_ALL_in_MEM
+ logical         :: l_XUP,l_PAR
  !
  ! Reset...
  !
@@ -48,27 +46,19 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
  !
  ! Type of allocation....
  !
- l_XUP        =index(mode,"XUP")>0
- l_PAR        =index(mode,"XFULL")>0
- l_ALL_in_MEM =index(mode,"ALL_FREQUENCIES")>0
- !
- ! FREQs
- !
- X_size = NW
- if (l_ALL_in_MEM) then
-   if (.not.io_RESPONSE) X_size=NW*PAR_nq
-   if (     io_RESPONSE) X_size=NW
- endif
+ l_XUP        =trim(mode)=="XUP"
+ l_PAR        =trim(mode)=="X"
  !
  ! Initialization
  !
  if (l_XUP) then
-   call MATRIX_init( "XUP", X_par , X%ng, X_size )
+   call MATRIX_init( "XUP", X_par , NG, NW )
  else if (l_PAR) then
-   call MATRIX_init( "X"  , X_par , X%ng, X_size )
+   call MATRIX_init( "X"  , X_par , NG, NW )
  endif
  !
- iW_offset = 0
+ X_rows = X_par%rows
+ X_cols = X_par%cols
  !
  if (l_XUP.and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
    call MATRIX_reset(X_par_lower_triangle)
@@ -85,10 +75,10 @@ subroutine X_PARALLEL_alloc(X,NW,mode)
    call COMM_copy(PAR_COM_RL_INDEX, X_par_lower_triangle%INTER_comm)
  endif
  !
- Y_ALLOCATE(X_par%blc(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),X_size))
+ Y_ALLOCATE(X_par%blc(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
  Y_MEM(X_par%blc)
  X_par%blc=cZERO
  !
- call PARALLEL_live_message("RL vectors(X)",LOADED=X_par%ncols*X_par%nrows,TOTAL=X%ng**2,NCPU=X_par%INTER_comm%n_CPU)
+ call PARALLEL_live_message("RL vectors(X)",LOADED=X_par%ncols*X_par%nrows,TOTAL=NG**2,NCPU=X_par%INTER_comm%n_CPU)
  !
 end subroutine

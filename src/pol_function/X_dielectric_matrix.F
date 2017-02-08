@@ -31,7 +31,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use drivers,       ONLY:l_photolum
 #endif
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
-&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,iW_offset
+&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -56,7 +56,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_n_freqs,io_X_done(nqibz),iw
+ integer              :: iq,Xdb,i_err,X_n_freqs,io_X_done(nqibz),iw,iq_mem
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
@@ -172,12 +172,17 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
  call X_half_mat_check(Xen,Xk,Xw)
- call X_PARALLEL_alloc(X,Xw%n_freqs,"XUP ALL_FREQUENCIES")
  !
- ! Backward compatibility...to be removed
  if (.not.allocated(X_mat)) then
-   if (     io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
-   if (.not.io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
+   !
+   if (io_RESPONSE) then
+     allocate(X_par(1))
+     call X_alloc('X',(/X%ng,X%ng,X_n_freqs/))
+   else
+     allocate(X_par(PAR_nq))
+     call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
+   endif
+   !
  endif
  !
  ! WF distribution 
@@ -204,6 +209,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  do iq=X%iq(1),X%iq(2)
    !
+   ! Allocation and Frequency offset 
+   !
+   if (io_RESPONSE) then
+     call X_PARALLEL_alloc(X_par(1),X%ng,Xw%n_freqs,"XUP")
+     iq_mem=1
+   else
+     iq_mem=PAR_Q_index(iq)
+   endif
+   !
    ! TDDFT setup
    !
    call TDDFT_do_X_W_typs(iq,X,Xw)
@@ -221,24 +235,23 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
-   ! Frequency offset 
-   !
-   if (     io_RESPONSE) iW_offset=0
-   if (.not.io_RESPONSE) iW_offset=X_n_freqs*(PAR_Q_index(iq)-1)
-   !
-   call X_irredux(iq,Xen,Xk,Xw,X)  
+   call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
-   if (X%whoami/=1) call X_redux(iq,Xw,X)
+   if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
    ! PAR => SER for I/O
    !
    do iw=1,Xw%n_freqs
      !
-     X_par%I=iw+iW_offset
+     X_par(iq_mem)%I=iw
      !
-     call MATRIX_transfer(M_in=X_par,M=X_mat(:,:,X_par%I),COMM=PAR_COM_Q_A2A)
+     if (io_RESPONSE) then
+       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,iw),COMM=PAR_COM_Q_A2A)
+     else
+       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,(iq_mem-1)*Xw%n_freqs+iw),COMM=PAR_COM_Q_A2A)
+     endif
      !
    enddo
    !
@@ -263,19 +276,26 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      call FREQUENCIES_reset(Xw,"all")
    endif
    !
+   ! CLEAN (2)
+   !
+   if (io_RESPONSE) then
+     Y_FREE(X_par(iq_mem)%blc)
+     call MATRIX_reset(X_par(iq_mem))
+   endif
+   Y_FREE(X_par_lower_triangle%blc)
+   call MATRIX_reset(X_par_lower_triangle)
+   !
  enddo
  !
  X_is_evaluated_for_all_Qs=.false.
  l_X_terminator=.false.
  !
- ! CLEAN (2)
+ ! CLEAN (3)
  !
  if (io_RESPONSE) then
-   Y_FREE(X_par%blc)
    Y_FREE(X_mat)
-   call MATRIX_reset(X_par)
+   deallocate(X_par)
  endif
- !
  call X_alloc('DIP_projected')
 #if defined _PL
  if (l_photolum) call X_alloc('DIP_P')

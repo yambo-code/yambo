@@ -119,10 +119,11 @@ module X_m
  !
  ! PARALLEL distribution
  !
- type(PAR_matrix)              :: X_par
+ type(PAR_matrix), allocatable :: X_par(:)
  type(PAR_matrix)              :: X_par_lower_triangle
  logical                       :: X_lower_triangle_matrix_in_use=.FALSE.
- integer                       :: iW_offset = 0
+ integer                       :: X_rows(2) = 0
+ integer                       :: X_cols(2) = 0
  complex(SP)     , allocatable :: X_mat(:,:,:)
  !
  type X_t

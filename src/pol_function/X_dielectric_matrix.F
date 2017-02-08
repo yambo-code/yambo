@@ -66,8 +66,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  self_detect_E_range=.false.
  !
  l_X_terminator = X_terminator_Kind/='none'
- if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
-&   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
+ if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') then
+   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
+ endif
  !
  ! TDDFT SETUP (-1 argument)
  !
@@ -229,10 +230,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    ! Allocation
    !
    iq_mem=PAR_Q_index(iq)
-   if (io_RESPONSE) then
-     call X_PARALLEL_alloc(X_par(1),X%ng,Xw%n_freqs,"XUP")
-     iq_mem=1
-   endif
+   if (io_RESPONSE) iq_mem=1
+   call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
    call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X)  
    !

@@ -102,7 +102,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
- integer              :: i_k,i_k_bz,X_type,ib1,ib2,i_field,nb_mat
+ integer              :: i_k,i_k_bz,X_type,ib1,ib2,nb_mat
  logical              :: reset_all,computing_Fock
  character(10)        :: WHAT,WHATp
  !
@@ -539,12 +539,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !  
      if (.not.io_RESPONSE) then
        !
-       i_field=3
        call PARALLEL_get_user_structure("Self_Energy",.FALSE.)
        !
-       if (CPU_structure(5)%CPU(1)>1) i_field=5
-       !
-       if (CPU_structure(3)%CPU(1)/=CPU_structure(i_field)%CPU(1)) io_RESPONSE=.TRUE.
+       if (CPU_structure(3)%CPU(1)/=CPU_structure(5)%CPU(1)) io_RESPONSE=.TRUE.
        !
        if (io_RESPONSE) call warning('Response function I/O forced. Different CPU for the "q" field in X and SE')
        !

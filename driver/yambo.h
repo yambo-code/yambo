@@ -49,6 +49,7 @@
   {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
   {"quiet",  "Q","Don't launch the text editor",0,0,0,0,0}, 
 #if defined _MPI
+  {"parenv", "E","Environment Parallel Variables editor",0,0,0,0,0},               
   {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
 #endif
 #if defined _OPENMP

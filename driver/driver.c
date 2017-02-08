@@ -85,6 +85,7 @@ typedef struct
 /* 
  Declarations 
 */
+static void edit_environments();
 static void usage(int verbose);
 static void title(FILE *file_name,char *cmnt);
 /*
@@ -163,15 +164,19 @@ int main(int argc, char *argv[])
 #endif
  /*
    Upper Case actions
+   
+   Help...
  */
      if (strcmp(opts[j].ln,"help")==0) {usage(1);exit(0);};
      if (strcmp(opts[j].ln,"lhelp")==0) {usage(2);exit(0);};
 /* 
- Switch off MPI_init for non-prallel options ...
+ ...switch off MPI_init for non-parallel options ...
 */
      if (opts[j].mp==0)  {mpi_init=-1;};
 /* 
+ ...or for an explicit request
 */
+     if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
 /*
  Switch off launch editor
 */
@@ -199,6 +204,10 @@ int main(int argc, char *argv[])
        if (opts[j].nr!=0 && k==0) {lnr++;rv[lnr]=atof(argv[optind-1+i]);opts[j].nr--;k=1;};
        if (opts[j].nc!=0 && k==0) {lnc++;cv[lnc]=argv[optind-1+i];opts[j].nc--;k=1; };
      };
+/* 
+ ...Parallel environments
+*/
+     if (strcmp(opts[j].ln,"parenv")==0) {edit_environments();exit(0);};
  /* 
    Input File, i/o directory 
  
@@ -371,6 +380,42 @@ int main(int argc, char *argv[])
 #endif 
  exit(0);
 }
+static void edit_environments()
+{
+ FILE *fp;
+ char edit_line[100]={'\0'};
+ strcpy(edit_line,editor);
+ strncat(edit_line,"YAMBO_ENVIRONMENTS",18);
+ fp = fopen("YAMBO_ENVIRONMENTS", "r");
+ if (!fp) {
+  fp = fopen("YAMBO_ENVIRONMENTS", "w+");
+  fputs("#\n",fp);
+  fputs("#Edit it and use\n#\n",fp);
+  fputs("# >source YAMBO_ENVIRONMENTS (tcsh only)\n#\n",fp);
+  fputs("#CPU section (just edit, do not remove fields)\n",fp);
+  fputs("setenv YAMBO_X_q_0_CPU '1.1.1.1' #g.k.c.v \n",fp);
+  fputs("setenv YAMBO_X_finite_q_CPU '1.1.1.1.1' #q.g.k.c.v \n",fp);
+  fputs("setenv YAMBO_X_all_q_CPU '1.1.1.1.1' #q.g.k.c.v\n",fp);
+  fputs("setenv YAMBO_BS_CPU '1.1.1.1' #g.k.eh.t\n",fp);
+  fputs("setenv YAMBO_SE_CPU '1.1.1.1' #q.g.qp.b\n",fp);
+  fputs("setenv YAMBO_RT_CPU '1.1.1.1' #k.b.q.qp\n\n",fp);
+  fputs("#Scalapack section (leave unchanged if you wish)\n",fp);
+  fputs("setenv YAMBO_X_q_0_nCPU_LinAlg_INV 1\n",fp);
+  fputs("setenv YAMBO_X_finite_q_nCPU_LinAlg_INV 1\n",fp);
+  fputs("setenv YAMBO_X_all_q_nCPU_LinAlg_INV 1\n",fp);
+  fputs("setenv YAMBO_BS_nCPU_LinAlg_INV 1\n",fp);
+  fputs("setenv YAMBO_BS_nCPU_LinAlg_DIAGO 1\n\n",fp);
+  fputs("#ROLEs section (leave unchanged if you wish)\n",fp);
+  fputs("setenv YAMBO_X_q_0_ROLEs 'g.k.c.v'\n",fp);
+  fputs("setenv YAMBO_X_finite_q_ROLEs 'q.g.k.c.v'\n",fp);
+  fputs("setenv YAMBO_X_all_q_ROLEs 'q.g.k.c.v'\n",fp);
+  fputs("setenv YAMBO_BS_ROLEs 'g.k.eh.t'\n",fp);
+  fputs("setenv YAMBO_SE_ROLEs 'q.g.qp.b'\n",fp);
+  fputs("setenv YAMBO_RT_ROLEs 'k.b.q.qp'\n",fp);
+ }
+ fclose(fp);
+ system(edit_line);
+};
 static void usage(int verbose)
 {
  int i,j,nr=0;
@@ -405,8 +450,7 @@ static void usage(int verbose)
    };
   };
   fprintf(stderr,"\n");
-  fprintf(stderr,"%s\t%s\n\t%s\n\n","By","YAMBO developers group",
-                 "http://www.yambo-code.org");
+  fprintf(stderr,"%s\n\n"," YAMBO developers group (http://www.yambo-code.org)");
  };
 };
 static void title(FILE *file_name,char *cmnt)

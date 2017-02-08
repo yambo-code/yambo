@@ -34,7 +34,7 @@ SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
  implicit none
  !
  type(PAR_matrix) :: M_slk
- type(BS_block)   :: M_bse(:)
+ type(BS_block)   :: M_bse(n_BS_blks)
  !
  ! Work Space
  !

@@ -209,15 +209,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  do iq=X%iq(1),X%iq(2)
    !
-   ! Allocation and Frequency offset 
-   !
-   if (io_RESPONSE) then
-     call X_PARALLEL_alloc(X_par(1),X%ng,Xw%n_freqs,"XUP")
-     iq_mem=1
-   else
-     iq_mem=PAR_Q_index(iq)
-   endif
-   !
    ! TDDFT setup
    !
    call TDDFT_do_X_W_typs(iq,X,Xw)
@@ -234,6 +225,14 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   !
+   ! Allocation
+   !
+   iq_mem=PAR_Q_index(iq)
+   if (io_RESPONSE) then
+     call X_PARALLEL_alloc(X_par(1),X%ng,Xw%n_freqs,"XUP")
+     iq_mem=1
+   endif
    !
    call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X)  
    !

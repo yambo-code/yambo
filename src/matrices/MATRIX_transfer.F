@@ -116,25 +116,31 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  else if (l_MAT_array) then
    !
    if (present(M_in)) then
-     call MATRIX_PAR_to_from_PAR(M_in%blc(:,:,M_in%I)  ,M_in%INTER_comm, M_in%rows, M_in%cols,&
+     call MATRIX_PAR_to_from_PAR(M_in%blc(M_in%rows(1):M_in%rows(2),M_in%cols(1):M_in%cols(2),M_in%I)  ,&
+&                                M_in%INTER_comm, M_in%rows, M_in%cols,&
 &                                M                     ,PAR_COM_NULL,     (/1,N/),   (/1,N/))
    else if (present(M_out)) then
      call MATRIX_PAR_to_from_PAR(M                     ,PAR_COM_NULL,     (/1,N/),   (/1,N/),&
-&                                M_out%blc(:,:,M_out%I),M_out%INTER_comm,M_out%rows,M_out%cols) 
+&                                M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),M_out%I),&
+&                                M_out%INTER_comm,M_out%rows,M_out%cols) 
    endif
    !
  else
    !
-   call MATRIX_PAR_to_from_PAR(M_in%blc(:,:,M_in%I)  ,M_in%INTER_comm, M_in%rows, M_in%cols,&
-&                              M_out%blc(:,:,M_out%I),M_out%INTER_comm,M_out%rows,M_out%cols) 
+   call MATRIX_PAR_to_from_PAR(M_in%blc(M_in%rows(1):M_in%rows(2),M_in%cols(1):M_in%cols(2),M_in%I)  ,&
+&                              M_in%INTER_comm, M_in%rows, M_in%cols,&
+&                              M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),M_out%I),&
+&                              M_out%INTER_comm,M_out%rows,M_out%cols) 
    !
  endif
  !
  if (M_in_kind=="XUP".and.X_FILL_UP_matrix_only) then
    if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
    if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
-   call MATRIX_PAR_to_from_PAR(M_Xdn%blc(:,:,M_Xdn%I),M_Xdn%INTER_comm,M_Xdn%rows,M_Xdn%cols,&
-&                              M_out%blc(:,:,M_out%I),M_out%INTER_comm,M_out%rows,M_out%cols) 
+   call MATRIX_PAR_to_from_PAR(M_Xdn%blc(M_Xdn%rows(1):M_Xdn%rows(2),M_Xdn%cols(1):M_Xdn%cols(2),M_Xdn%I)  ,&
+&                              M_Xdn%INTER_comm, M_Xdn%rows, M_Xdn%cols,&
+&                              M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),M_out%I),&
+&                              M_out%INTER_comm,M_out%rows,M_out%cols) 
    call MATRIX_duplicate("free",M_out=M_Xdn)
  endif
  !

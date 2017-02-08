@@ -43,7 +43,7 @@ subroutine K_diagonal(iq,what)
  !
  ! Diagonal (Energies) 
  !====================
- if ( (K_slk%kind=="SLK".and.index(what,"add_E")>0.and.rows(1)<=rows(2)) .or.&
+ if ( (K_slk%kind=="SLK".and.index(what,"add_E")>0) .or.&
 &     (.not.K_slk%kind=="SLK".and.index(what,"rm_E")>0) ) then
    !
    rows=(/1,BS_H_dim/)
@@ -59,9 +59,9 @@ subroutine K_diagonal(iq,what)
      if (K_slk%kind=="SLK".and.index(what,"add_E")>0)then
        !
        if (i_r<=BS_K_dim) then
-         K_slk%blc(i_r,i_c,1)=K_slk%blc(i_r,i_c,1)+E_plus_W
+         K_slk%blc(i_r,i_r,1)=K_slk%blc(i_r,i_r,1)+E_plus_W
        else if (cpl(i_r)) then
-         K_slk%blc(i_r,i_c,1)=K_slk%blc(i_r,i_c,1)-conjg(E_plus_W)
+         K_slk%blc(i_r,i_r,1)=K_slk%blc(i_r,i_r,1)-conjg(E_plus_W)
        endif
        !
      else if (.not.K_slk%kind=="SLK".and.index(what,"rm_E")>0)then
@@ -137,8 +137,8 @@ subroutine K_diagonal(iq,what)
        do i_r=rows(1),rows(2)
          !
          if (K_slk%kind=="SLK") then
-           if (.not.cpl(i_r).and.SLK_POOL%ID==0) BS_diagonal(i_r)=K_slk%blc(i_r,i_c,1)
-           K_slk%blc(i_r,i_c,1)=cZERO
+           if (.not.cpl(i_r).and.SLK_POOL%ID==0) BS_diagonal(i_r)=K_slk%blc(i_r,i_r,1)
+           K_slk%blc(i_r,i_r,1)=cZERO
          else
            if (.not.cpl(i_r)) BS_diagonal(i_r)=BS_mat(i_r,i_r)
            BS_mat(i_r,i_r)=cZERO

@@ -72,20 +72,20 @@ module interfaces
    end subroutine el_density_of_states
    !
 #if defined _SLEPC
-   subroutine MATRIX_slepc(A,BS_H_eig,E_real,E_cmpl,V_right,V_left,target_energy,extraction)
+   subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extraction,slepc_ncv)
      !
      use pars,           ONLY:SP,schlen
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
      !
      Mat                         :: A            ! matrix to diagonalize of stype from slepc
-     integer                     :: BS_H_eig     ! number of eigenvalues to compute
-     character(schlen), optional :: extraction   ! extraction method for the eigenvalues
      complex(SP),  optional      :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
      real(SP),     optional      :: E_real(:)    ! real eigenvalues
      real(SP),     optional      :: target_energy! energy near where to find the eigenvalues
+     character(schlen), optional :: extraction   ! extraction method for the eigenvalues
+     integer,optional            :: slepc_ncv    ! dimension of the subspace
      !
    end subroutine
 #endif

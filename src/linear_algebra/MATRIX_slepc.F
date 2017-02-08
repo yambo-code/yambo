@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extraction)
+subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extraction,slepc_ncv)
   !
   ! 10/06/2016 HM
   ! Use slepc to obtain the first few eigenpairs of a large matrix
@@ -44,12 +44,13 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   ! arguments
   !
   integer                     :: n_eig         ! number of eigenvalues to compute
-  character(schlen), optional :: extraction    ! extraction method for the eigenvalues
   complex(SP),  optional      :: V_right(:,:)  ! right eigenvalues
   complex(SP),  optional      :: V_left(:,:)   ! left eigenvalues
   complex(SP),  optional      :: E_cmpl(:)     ! complex eigenvalues
   real(SP),     optional      :: E_real(:)     ! real eigenvalues
   real(SP),     optional      :: target_energy ! energy near where to find the eigenvalues
+  character(schlen), optional :: extraction    ! extraction method for the eigenvalues
+  integer,optional            :: slepc_ncv     ! dimension of the subspace
   ! 
   ! internal variables
   !
@@ -111,7 +112,6 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
 
   !set type of extraction
   if (present(extraction)) then
-    call msg( 'rs', 'Extraction method:', extraction )
     if      (extraction == 'ritz')              then
         extr = EPS_RITZ
     else if (extraction == 'harmonic')          then
@@ -127,6 +127,10 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
     else if (extraction == 'refined_harmonic')  then
         extr = EPS_REFINED_HARMONIC
     endif
+    call msg( 'rs', 'Extraction method: ', extraction )
+  else
+    call msg( 'rs', 'Extraction method: ritz' )
+    extr = EPS_RITZ
   endif
   call EPSSetExtraction(eps, extr, ierr)
 
@@ -135,10 +139,13 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
 
   !Set solver parameters at runtime
   nev = n_eig
-  !ncv = 2*nev
-  !mpd = 2*nev
+  if (present(slepc_ncv)) then
+    ncv = slepc_ncv
+  else
+    ncv = PETSC_DEFAULT_integer
+  endif 
   !call EPSSetDimensions(eps,nev,ncv,mpd,ierr)
-  call EPSSetDimensions(eps,nev,PETSC_DEFAULT_INTEGER,PETSC_DEFAULT_INTEGER,ierr)
+  call EPSSetDimensions(eps,nev,ncv,PETSC_DEFAULT_INTEGER,ierr)
   
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
@@ -147,9 +154,9 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   call EPSGetIterationNumber(eps,its,ierr)
   call msg( 'rs', 'Number of iterations of the method:', its )
   call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
-  !call msg( 'rs', 'nev: ', nev)
-  !call msg( 'rs', 'ncv: ', ncv)
-  !call msg( 'rs', 'mpd: ', mpd)
+  call msg( 'rs', 'nev: ', nev)
+  call msg( 'rs', 'ncv: ', ncv)
+  call msg( 'rs', 'mpd: ', mpd)
 
   !Optional: Get some information from the solver and display it
   call EPSGetType(eps,tname,ierr)
@@ -167,6 +174,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   !Get number of converged eigenpairs
   call EPSGetConverged(eps,nconv,ierr)
   call msg( 'rs', 'Number of converged eigenpairs:', nconv)
+  n_eig = nconv
 
   !free the A matrix
   call MatDestroy(A,ierr)

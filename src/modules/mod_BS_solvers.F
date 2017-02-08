@@ -58,12 +58,10 @@ module BS_solvers
  !=========
  character(lchlen):: BSS_description(100)
  character(schlen):: BSS_mode
- character(schlen):: BSS_slepc_extraction
  complex(SP) :: BSS_Wd
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
- integer  :: BSS_n_eig
- real(SP) :: BSS_target_E
+ integer  :: BSS_n_eig            !number of eigenvalues to find
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
@@ -87,7 +85,10 @@ module BS_solvers
  !
  ! Solvers (Slepc)
  !=========
- logical  :: Slepc_shell
+ character(schlen):: BSS_slepc_extraction !choose slepc eigenvalue extraction method (ritz,harmonic)
+ integer          :: BSS_slepc_ncv        !dimension of the subspace
+ real(SP)         :: BSS_target_E         !find eigenvalues close to this energy
+ logical          :: Slepc_shell          !use a shell matrix for slepc
  !
  ! Solvers (Inversion)
  !=========

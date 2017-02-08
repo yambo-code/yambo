@@ -683,6 +683,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
       call initactivate(1,'BSSNEig')
       call initactivate(1,'BSSEnTarget')
       call initactivate(1,'BSSSlepcExtraction')
+      call initactivate(1,'BSSSlepcNCV')
    endif
    !
    ! Special project dependent variables

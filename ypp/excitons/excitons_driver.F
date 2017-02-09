@@ -147,6 +147,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
  enddo
+
  !
  ! Sort energies and write to output
  !===================================
@@ -158,7 +159,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &    call error(' Diagonalization database does not contain excitonic eigenstates.'//&
 &               ' Re-run yambo using the WRbsWF flag in the input file.')
    !
-   allocate(BS_E_degs(BS_H_dim))
+   allocate(BS_E_degs(BSS_n_eig))
    !
    ! Sort energies to find degenerate states
    !========================================

@@ -24,7 +24,7 @@
 */
  use memory, ONLY:MEM_err,MEM_dri
  implicit none
-#define Y_ALLOC(x) allocate(x,stat=MEM_err);
+#define Y_ALLOC(x) allocate(x,stat=MEM_err)
 #define Y_MEM_ALLOC(x) call MEM_dri("x",x)
 #define Y_FREE_P(x) if (associated(x)) deallocate(x);nullify(x)
 #define Y_FREE(x) if (allocated(x)) deallocate(x)

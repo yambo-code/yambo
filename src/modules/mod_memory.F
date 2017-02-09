@@ -44,9 +44,10 @@ module memory
  integer             :: TOT_MEM_bytes
  integer             :: TOT_MEM_bytes_SAVE = 0
  !
- character(schlen) :: MEM_element_name(N_MEM_max)       = " "
- integer           :: MEM_element_use (N_MEM_max)       =0  
- integer           :: MEM_element_kind(N_MEM_max)       =1  
+ character(schlen) :: MEM_element_name(N_MEM_max) = " "
+ integer           :: MEM_element_use (N_MEM_max) =0  
+ integer           :: MEM_element_kind(N_MEM_max) =1  
+ integer           :: MEM_element_size(N_MEM_max) =0  
  character(schlen) :: MEM_element_name_SAVE(N_MEM_SAVE_max) = " "
  integer           :: MEM_element_use_SAVE (N_MEM_SAVE_max) =0  
  !

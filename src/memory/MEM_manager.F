@@ -31,7 +31,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  use stderr,       ONLY:intc
  use memory,       ONLY:TOT_MEM_bytes,TOT_MEM_kilobytes_MEMSTAT,MEM_element_name,&
 &                       MEM_element_use,N_MEM_max,MEM_err,MEM_treshold,&
-&                       N_MEM_elements,&
+&                       N_MEM_elements,MEM_element_size,&
 &                       N_MEM_SAVE_elements,MEM_element_name_SAVE,MEM_element_use_SAVE,&
 &                       MEM_SAVE_treshold,MEM_jump_treshold,MAX_MEM_bytes,&
 &                       MEM_element_kind,TOT_MEM_bytes_SAVE
@@ -150,6 +150,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
        MEM_element_name(N_MEM_elements)=what
        MEM_element_use(N_MEM_elements) =MEM_now
        MEM_element_kind(N_MEM_elements)=Kn
+       MEM_element_size(N_MEM_elements)=Sz
        i_FOUND=N_MEM_elements
      else
        MEM_element_use(i_FOUND) = MEM_element_use(i_FOUND)+MEM_now
@@ -175,10 +176,10 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    !
  else if (i_FOUND/=0) then
    !
-   MEM_now=nint(real(Sz*MEM_element_kind(i_FOUND))/Kilobyte)
+   MEM_now=nint(real(MEM_element_size(i_FOUND)*MEM_element_kind(i_FOUND))/Kilobyte)
    !
    MEM_element_use(i_FOUND) = MEM_element_use(i_FOUND)-MEM_now
-   TOT_MEM_bytes=TOT_MEM_bytes-Sz*MEM_element_kind(i_FOUND)
+   TOT_MEM_bytes=TOT_MEM_bytes-MEM_element_size(i_FOUND)*MEM_element_kind(i_FOUND)
    !
    if ( MEM_element_use(i_FOUND) <= 0 ) then
      !
@@ -186,6 +187,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
        MEM_element_name(i_mem)=MEM_element_name(i_mem+1)
        MEM_element_use(i_mem) =MEM_element_use(i_mem+1)
        MEM_element_kind(i_mem)=MEM_element_kind(i_mem+1)
+       MEM_element_size(i_mem)=MEM_element_size(i_mem+1)
      enddo    
      !
      N_MEM_elements=N_MEM_elements-1
@@ -233,7 +235,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
      i_FOUND=0
      i_FOUND_SAVE=0
      LOOP_1: do i_m=1,N_MEM_max
-       if ( trim(MEM_element_name(i_m))==name ) then
+       if ( trim(MEM_element_name(i_m))==name .and. MEM_element_size(i_m)==Sz ) then
          i_FOUND=i_m
          exit LOOP_1
        endif

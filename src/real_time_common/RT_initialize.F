@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -377,8 +377,8 @@ subroutine RT_initialize(E,k,q)
    if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_impose_E)
  endif
  !
- call msg( 'nr','---RIM---')
- call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_DbGd)
+ call msg( 'nr','---Double Grid---')
+ call msg( 'r', 'Double Grid support          :',l_RT_uses_E_DbGd)
  if (l_RT_uses_E_DbGd) then
    call msg( 'r', 'K-points            (TOTAL):',BZ_DbGd_tot_nkpts)
    call msg( 'r', '                     (USED):',RT_nk)

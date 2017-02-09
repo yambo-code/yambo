@@ -243,16 +243,12 @@ module IO_m
      integer           :: ID
      logical, optional :: FORCE
      !
-     if (present(FORCE)) then
-       !
-       if (.not.FORCE.and..not.close_is_on(ID).and.io_status(ID)>=0) return
-       !
-     else
-       !
-       if (.not.close_is_on(ID).and.io_status(ID)>=0) return
-       !
-     endif
+     logical :: FORCE_
      !
+     FORCE_=.FALSE.
+     if (present(FORCE)) FORCE_=FORCE
+     !
+     if ( (.not.FORCE_) .and. (.not.close_is_on(ID)) .and. (io_status(ID)>=0) ) return
      !
      if ( (io_type(ID)/=-2.and.file_is_open(io_file(ID),ID)) .or.&
 &         (io_type(ID)==-2.and.file_is_open(io_file(ID)))          ) then

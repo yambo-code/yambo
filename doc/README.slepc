@@ -30,6 +30,21 @@ This is more memory efficient and yields the same results as with the re-allocat
 
 BSSEnTarget
 Choose this value to look for eigenvalues close to a certain energy
+If the target is set in the middle of the spectra, then it might be a good idea to also specify BSSSlepcExtraction to harmonic.
+
+BSSSlepcExtraction
+Specifies the type of extraction technique to be employed by the eigensolver.
+The available options are:
+'ritz'     -> Finds eigenvalues from the outer limits
+'harmonic' -> Finds eigenvalues close to the specified target
+For more details see:
+http://slepc.upv.es/documentation/current/docs/manualpages/EPS/EPSSetExtraction.html
+
+BSSSlepcNCV
+Size of subspace for finding the eigenvalues.
+In general the bigger the better. But it uses more memory.
+The menaing of this value is described in:
+http://slepc.upv.es/documentation/current/docs/manualpages/EPS/EPSSetDimensions.html
 
 More variables can be added for better control of the library.
 After getting the eigenvalues and eigenstates you can use ypp normally (of course less states are present).

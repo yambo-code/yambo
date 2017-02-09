@@ -504,26 +504,26 @@ module parallel_m
      integer :: dim_
      if (allocated(IND_in%n_of_elements)) then
        dim_=size(IND_in%n_of_elements)
-       Y_ALLOCATE(IND_out%n_of_elements(dim_))
-       Y_MEM(IND_out%n_of_elements)
+       Y_ALLOC(IND_out%n_of_elements(dim_))
+       Y_MEM_ALLOC(IND_out%n_of_elements)
        IND_out%n_of_elements=IND_in%n_of_elements
      endif
      if (allocated(IND_in%element_1D)) then
        dim_=size(IND_in%element_1D)
-       Y_ALLOCATE(IND_out%element_1D(dim_))
-       Y_MEM(IND_out%element_1D)
+       Y_ALLOC(IND_out%element_1D(dim_))
+       Y_MEM_ALLOC(IND_out%element_1D)
        IND_out%element_1D=IND_in%element_1D
      endif
      if (allocated(IND_in%weight_1D)) then
        dim_=size(IND_in%weight_1D)
-       Y_ALLOCATE(IND_out%weight_1D(dim_))
-       Y_MEM(IND_out%weight_1D)
+       Y_ALLOC(IND_out%weight_1D(dim_))
+       Y_MEM_ALLOC(IND_out%weight_1D)
        IND_out%weight_1D=IND_in%weight_1D
      endif
      if (allocated(IND_in%first_of_1D)) then
        dim_=size(IND_in%first_of_1D)
-       Y_ALLOCATE(IND_out%first_of_1D(dim_))
-       Y_MEM(IND_out%first_of_1D)
+       Y_ALLOC(IND_out%first_of_1D(dim_))
+       Y_MEM_ALLOC(IND_out%first_of_1D)
        IND_out%first_of_1D=IND_in%first_of_1D
      endif
    end subroutine

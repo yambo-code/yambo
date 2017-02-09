@@ -37,7 +37,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_wf2y,            ONLY:WF_splitter
  use pseudo,              ONLY:PP_free
 #if defined _MEM_CHECK 
- use memory,              ONLY:MEM_dri
+ use memory,              ONLY:MEM_manager
 #endif
 #include<memory.h>
  !
@@ -126,8 +126,8 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s','Writing WFs and (eventually) nlPP ...')
  !
- Y_ALLOCATE(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- Y_MEM(wf_disk)
+ Y_ALLOC(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+ Y_MEM_ALLOC(wf_disk)
  !
  do ik=1,nkibz
    !
@@ -155,7 +155,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !=================
 #if defined _MEM_CHECK 
  !
- call MEM_dri("",REPORT="final")
+ call MEM_manager("",REPORT="final")
  !
 #endif
  !

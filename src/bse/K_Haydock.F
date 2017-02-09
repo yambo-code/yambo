@@ -133,14 +133,14 @@ subroutine K_Haydock(iq,W)
  !
  !
  if (use_cpl_scheme) then
-   Y_ALLOCATE(Cf(Max_iterations+1))
-   Y_MEM(Cf)
+   Y_ALLOC(Cf(Max_iterations+1))
+   Y_MEM_ALLOC(Cf)
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   Y_ALLOCATE(Cf_kerr(Max_iterations+1))
-   Y_MEM(Cf_kerr)
+   Y_ALLOC(Cf_kerr(Max_iterations+1))
+   Y_MEM_ALLOC(Cf_kerr)
 #endif
    !
    ! GPL_EXCLUDE_END

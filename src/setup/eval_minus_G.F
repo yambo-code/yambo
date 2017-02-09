@@ -37,8 +37,8 @@ subroutine eval_minus_G()
  integer  :: ig
  !
  Y_FREE(minus_G)
- Y_ALLOCATE(minus_G(ng_closed))
- Y_MEM(minus_G)
+ Y_ALLOC(minus_G(ng_closed))
+ Y_MEM_ALLOC(minus_G)
  !
  minus_G=0
  !

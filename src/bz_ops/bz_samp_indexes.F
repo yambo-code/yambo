@@ -147,8 +147,8 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    ! q_ptbz in iku for k_reduce
    !
-   Y_ALLOCATE(q%ptbz(q%nbz,3))
-   Y_MEM(q%ptbz)
+   Y_ALLOC(q%ptbz(q%nbz,3))
+   Y_MEM_ALLOC(q%ptbz)
    do i1=1,q%nbz
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
@@ -161,8 +161,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      Y_FREE(q%ptbz)
    else
      q%nibz=nqibz
-     Y_ALLOCATE(q%pt(q%nibz,3))
-     Y_MEM(q%pt)
+     Y_ALLOC(q%pt(q%nibz,3))
+     Y_MEM_ALLOC(q%pt)
      q%pt=q_pt(:q%nibz,:)
      call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
      user_defined_qpts=.true.
@@ -433,20 +433,20 @@ subroutine bz_samp_indexes(k,Xk,q)
      endif
      !
      if (.not.allocated(q_pt)) then
-       Y_ALLOCATE(q_pt(q%nibz,3))
-       Y_MEM(q_pt)
+       Y_ALLOC(q_pt(q%nibz,3))
+       Y_MEM_ALLOC(q_pt)
      endif
      if (.not.allocated(k_pt)) then
-       Y_ALLOCATE(k_pt(k%nibz,3))
-       Y_MEM(k_pt)
+       Y_ALLOC(k_pt(k%nibz,3))
+       Y_MEM_ALLOC(k_pt)
      endif
      if (.not.allocated(q_norm)) then
-       Y_ALLOCATE(q_norm(q%nibz))
-       Y_MEM(q_norm)
+       Y_ALLOC(q_norm(q%nibz))
+       Y_MEM_ALLOC(q_norm)
      endif
      if (allocated(q%sstar).and..not.allocated(q_sstar)) then
-       Y_ALLOCATE(q_sstar(q%nbz,2))
-       Y_MEM(q_sstar)
+       Y_ALLOC(q_sstar(q%nbz,2))
+       Y_MEM_ALLOC(q_sstar)
      endif
      !
      if (force_gamma_only) then

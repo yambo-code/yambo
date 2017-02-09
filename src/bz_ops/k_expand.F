@@ -77,12 +77,12 @@ subroutine k_expand(k)
  !
  if (allocated(k%sstar)) return
  !
- Y_ALLOCATE(k%star(k%nibz,nsym))
- Y_MEM(k%star)
- Y_ALLOCATE(k%nstar(k%nibz))
- Y_MEM(k%nstar)
- Y_ALLOCATE(k%weights(k%nibz))
- Y_MEM(k%weights)
+ Y_ALLOC(k%star(k%nibz,nsym))
+ Y_MEM_ALLOC(k%star)
+ Y_ALLOC(k%nstar(k%nibz))
+ Y_MEM_ALLOC(k%nstar)
+ Y_ALLOC(k%weights(k%nibz))
+ Y_MEM_ALLOC(k%weights)
  !
  k%nstar=0
  k%star=0
@@ -105,8 +105,8 @@ subroutine k_expand(k)
  k%weights(:)=k%weights(:)/sum(k%weights)
  k%nbz=sum(k%nstar(:))
  !
- Y_ALLOCATE(k%sstar(k%nbz,2))
- Y_MEM(k%sstar)
+ Y_ALLOC(k%sstar(k%nbz,2))
+ Y_MEM_ALLOC(k%sstar)
  i2=0
  do i1=1,k%nibz
    do is=1,k%nstar(i1)

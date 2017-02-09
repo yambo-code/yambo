@@ -37,8 +37,8 @@ subroutine build_spin_sop()
  !
  Y_FREE(spin_sop)
  !
- Y_ALLOCATE(spin_sop(n_spinor,n_spinor,nsym))
- Y_MEM(spin_sop)
+ Y_ALLOC(spin_sop(n_spinor,n_spinor,nsym))
+ Y_MEM_ALLOC(spin_sop)
  !
  if(n_spinor==1) then
    spin_sop(1,1,:)=cONE

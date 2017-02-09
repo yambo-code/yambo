@@ -95,10 +95,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  call WF_load(WF,0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
  !
- Y_ALLOCATE(E_xc(fft_size))
- Y_ALLOCATE(rho(fft_size))
- Y_MEM(E_xc)
- Y_MEM(rho)
+ Y_ALLOC(E_xc(fft_size))
+ Y_ALLOC(rho(fft_size))
+ Y_MEM_ALLOC(E_xc)
+ Y_MEM_ALLOC(rho)
  call el_density_and_current(Xen,Xk,rho=rho)
  !
  KIND_=XC_EXCHANGE_CORRELATION
@@ -142,10 +142,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    !GL-grid setup (energy)
    !
-   Y_ALLOCATE(freq(2*ACFDT_n_freqs+1))
-   Y_MEM(freq)
-   Y_ALLOCATE(freq_weight(2*ACFDT_n_freqs+1))
-   Y_MEM(freq_weight)
+   Y_ALLOC(freq(2*ACFDT_n_freqs+1))
+   Y_MEM_ALLOC(freq)
+   Y_ALLOC(freq_weight(2*ACFDT_n_freqs+1))
+   Y_MEM_ALLOC(freq_weight)
    !
    call gauss_leg_grid(0._SP,ACFDT_E_range(1),freq(:ACFDT_n_freqs),&
 &                      freq_weight(:ACFDT_n_freqs),ACFDT_n_freqs)
@@ -160,10 +160,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    !GL-grid setup (coupling)
    !
-   Y_ALLOCATE(lambda(ACFDT_n_lambda))
-   Y_MEM(lambda)
-   Y_ALLOCATE(lambda_weight(ACFDT_n_lambda))
-   Y_MEM(lambda_weight)
+   Y_ALLOC(lambda(ACFDT_n_lambda))
+   Y_MEM_ALLOC(lambda)
+   Y_ALLOC(lambda_weight(ACFDT_n_lambda))
+   Y_MEM_ALLOC(lambda_weight)
    call gauss_leg_grid(0._SP,1._SP,lambda,lambda_weight,ACFDT_n_lambda)
    lambda_weight(:)=lambda_weight(:)*2.*pi
    !
@@ -189,8 +189,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
      Xw%n_freqs=ACFDT_n_freqs
      Xw%er=0.
      Xw%dr=(/freq(1),freq(ACFDT_n_freqs)/)
-     Y_ALLOCATE(Xw%p(ACFDT_n_freqs))
-     Y_MEM(Xw%p)
+     Y_ALLOC(Xw%p(ACFDT_n_freqs))
+     Y_MEM_ALLOC(Xw%p)
      Xw%p(:)=(0.,1.)*freq(:)
      i_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,iqibz>1)
      if (i_err==0) exit
@@ -200,13 +200,13 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    call msg('r','[Ec] RL components :',X%ng)
    !
-   Y_ALLOCATE(X_s(X%ng,X%ng))
-   Y_MEM(X_s)
-   Y_ALLOCATE(isc%gamp(X%ng,1))
-   Y_MEM(isc%gamp)
-   Y_ALLOCATE(tddftk(X%ng,X%ng))
-   Y_MEM(tddftk)
-   Y_ALLOCATE(dX(X%ng))
+   Y_ALLOC(X_s(X%ng,X%ng))
+   Y_MEM_ALLOC(X_s)
+   Y_ALLOC(isc%gamp(X%ng,1))
+   Y_MEM_ALLOC(isc%gamp)
+   Y_ALLOC(tddftk(X%ng,X%ng))
+   Y_MEM_ALLOC(tddftk)
+   Y_ALLOC(dX(X%ng))
    call X_alloc('X',(/X%ng,X%ng,ACFDT_n_freqs/))
    !
    ACFDT_Ec=0.
@@ -267,8 +267,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  QP_nb=En%nbm
  QP_nk=k%nibz
  Y_FREE(QP_state)
- Y_ALLOCATE(QP_state(QP_nb,QP_nk))
- Y_MEM(QP_state)
+ Y_ALLOC(QP_state(QP_nb,QP_nk))
+ Y_MEM_ALLOC(QP_state)
  QP_state=.TRUE.
  !
  call XCo_driver(En,k,Xk,q)

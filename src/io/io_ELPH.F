@@ -121,10 +121,10 @@ integer function io_ELPH(ID,what)
    ! ... allocation
    !
    if (read_is_on(ID).and..not.allocated(ph_qpt)) then
-     Y_ALLOCATE(ph_qpt(elph_nDBs,3))
-     Y_MEM(ph_qpt)
-     Y_ALLOCATE(ph_kpt_bz(elph_nk_bz,3))
-     Y_MEM(ph_kpt_bz)
+     Y_ALLOC(ph_qpt(elph_nDBs,3))
+     Y_MEM_ALLOC(ph_qpt)
+     Y_ALLOC(ph_kpt_bz(elph_nk_bz,3))
+     Y_MEM_ALLOC(ph_kpt_bz)
      ph_kpt_bz=0._SP
    endif
    !
@@ -216,8 +216,8 @@ integer function io_ELPH(ID,what)
  call io_bulk(ID,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
  call io_bulk(ID,R1=ph_freqs_sq(iq,:))
  !
- Y_ALLOCATE(pol_vec_disk(ph_modes,sum(n_atoms_species),2,3))
- Y_MEM(pol_vec_disk)
+ Y_ALLOC(pol_vec_disk(ph_modes,sum(n_atoms_species),2,3))
+ Y_MEM_ALLOC(pol_vec_disk)
  !
  ! Polarization vectors
  ! 
@@ -251,15 +251,15 @@ integer function io_ELPH(ID,what)
    call E_reset(E_k_p_q)
    E_k_p_q%nb=elph_nb
    E_k_p_q%nk=nkbz
-   Y_ALLOCATE(E_k_p_q%E(elph_nb,nkbz,1))
-   Y_MEM(E_k_p_q%E)
+   Y_ALLOC(E_k_p_q%E(elph_nb,nkbz,1))
+   Y_MEM_ALLOC(E_k_p_q%E)
    E_k_p_q%E=E_k_plus_q
  endif
  ! 
  ! ELPH_gkkp 
  !
- Y_ALLOCATE(elph_gkkp_disk(elph_nb*elph_nb,ph_modes,2))
- Y_MEM(elph_gkkp_disk)
+ Y_ALLOC(elph_gkkp_disk(elph_nb*elph_nb,ph_modes,2))
+ Y_MEM_ALLOC(elph_gkkp_disk)
  !
  call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),&
 &                VAR_SZ=(/elph_nb*elph_nb,ph_modes,2,nkbz/) )

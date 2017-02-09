@@ -49,8 +49,8 @@ subroutine load_cc(manage_zero,center_cc)
  !
  call fft_setup(0,1,.true.)      ! FFT size
  !
- Y_ALLOCATE(x_cc(fft_size,3))
- Y_MEM(x_cc)
+ Y_ALLOC(x_cc(fft_size,3))
+ Y_MEM_ALLOC(x_cc)
  !
  ! Not implemented. Option to set the jump elsewhere
  x_zero_point=0._SP

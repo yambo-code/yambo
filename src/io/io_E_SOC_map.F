@@ -52,10 +52,10 @@ integer function io_E_SOC_map(En,kpt,ID)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then
-   Y_ALLOCATE(En%E_SOC(E_SOC_nbands,kpt%nibz))
-   Y_MEM(En%E_SOC)
-   Y_ALLOCATE(E_SOC_table(2,En%nb,kpt%nibz))
-   Y_MEM(E_SOC_table)
+   Y_ALLOC(En%E_SOC(E_SOC_nbands,kpt%nibz))
+   Y_MEM_ALLOC(En%E_SOC)
+   Y_ALLOC(E_SOC_table(2,En%nb,kpt%nibz))
+   Y_MEM_ALLOC(E_SOC_table)
  endif
  !
  ! Eigenvalues

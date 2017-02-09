@@ -111,8 +111,8 @@ subroutine G_rot_grid(is,call_kind)
  enddo
  !
  if(extend_grid) then
-   Y_ALLOCATE(g_vec(ng_vec,3))
-   Y_MEM(g_vec)
+   Y_ALLOC(g_vec(ng_vec,3))
+   Y_MEM_ALLOC(g_vec)
    g_vec=g_vec_tmp(1:ng_vec,:)
  endif
  !

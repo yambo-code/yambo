@@ -48,8 +48,8 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU
  !
- Y_ALLOCATE(BS_T_grp_1st_el(n_GRP))
- Y_MEM(BS_T_grp_1st_el)
+ Y_ALLOC(BS_T_grp_1st_el(n_GRP))
+ Y_MEM_ALLOC(BS_T_grp_1st_el)
  allocate(GRP_data(n_GRP),GRP_index(n_GRP))
  !
  ! Here PAR_BS_nT_grps is the number of groups without taking into account the k-parallelization.
@@ -102,12 +102,12 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  ! Groups index
  !
- Y_ALLOCATE(PAR_IND_T_groups%element_1D(BS_nT_grps))
- Y_MEM(PAR_IND_T_groups%element_1D)
- Y_ALLOCATE(PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%n_CPU))
- Y_MEM(PAR_IND_T_groups%n_of_elements)
- Y_ALLOCATE(PAR_BS_T_grps_index(BS_nT_grps))
- Y_MEM(PAR_BS_T_grps_index)
+ Y_ALLOC(PAR_IND_T_groups%element_1D(BS_nT_grps))
+ Y_MEM_ALLOC(PAR_IND_T_groups%element_1D)
+ Y_ALLOC(PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%n_CPU))
+ Y_MEM_ALLOC(PAR_IND_T_groups%n_of_elements)
+ Y_ALLOC(PAR_BS_T_grps_index(BS_nT_grps))
+ Y_MEM_ALLOC(PAR_BS_T_grps_index)
  !
  PAR_IND_T_groups%element_1D=.FALSE.
  PAR_IND_T_groups%n_of_elements=0

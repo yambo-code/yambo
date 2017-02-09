@@ -171,38 +171,38 @@ module X_m
        select case(what)
        case('X')
          if (allocated(X_mat)) return
-         Y_ALLOCATE(X_mat(d(1),d(2),d(3)))
-         Y_MEM(X_mat)
+         Y_ALLOC(X_mat(d(1),d(2),d(3)))
+         Y_MEM_ALLOC(X_mat)
          X_mat=cZERO
        case('DIP_iR')
          if (allocated(DIP_iR)) return
-         Y_ALLOCATE(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         Y_MEM(DIP_iR)
+         Y_ALLOC(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         Y_MEM_ALLOC(DIP_iR)
          DIP_iR=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
-         Y_ALLOCATE(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         Y_MEM(DIP_P)
+         Y_ALLOC(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         Y_MEM_ALLOC(DIP_P)
          DIP_P=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
-         Y_ALLOCATE(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol))
-         Y_MEM(DIP_S)
+         Y_ALLOC(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol))
+         Y_MEM_ALLOC(DIP_S)
          DIP_S=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
-         Y_ALLOCATE(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         Y_MEM(DIP_spin)
+         Y_ALLOC(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         Y_MEM_ALLOC(DIP_spin)
          DIP_spin=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
-         Y_ALLOCATE(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         Y_MEM(DIP_projected)
+         Y_ALLOC(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
+         Y_MEM_ALLOC(DIP_projected)
          DIP_projected=cZERO
        case('P_square')
          if (allocated(P_square)) return
-         Y_ALLOCATE(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         Y_MEM(P_square)
+         Y_ALLOC(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
+         Y_MEM_ALLOC(P_square)
          P_square=cZERO
        end select
      else

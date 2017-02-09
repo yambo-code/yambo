@@ -88,16 +88,16 @@ subroutine XCo_driver(E,k,Xk,q)
  ! Allocation
  !
  if (.not.allocated(QP_Vnl_xc)) then
-   Y_ALLOCATE(QP_Vnl_xc(QP_n_states))
-   Y_MEM(QP_Vnl_xc)
+   Y_ALLOC(QP_Vnl_xc(QP_n_states))
+   Y_MEM_ALLOC(QP_Vnl_xc)
  endif
  if (.not.allocated(QP_Vxc)) then
-   Y_ALLOCATE(QP_Vxc(QP_n_states))
-   Y_MEM(QP_Vxc)
+   Y_ALLOC(QP_Vxc(QP_n_states))
+   Y_MEM_ALLOC(QP_Vxc)
  endif
  if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb) then
-   Y_ALLOCATE(QP_Vnl_sex(QP_n_states))
-   Y_MEM(QP_Vnl_sex)
+   Y_ALLOC(QP_Vnl_sex(QP_n_states))
+   Y_MEM_ALLOC(QP_Vnl_sex)
  endif
  QP_Vnl_xc=cZERO
  QP_Vxc=cZERO
@@ -218,10 +218,10 @@ subroutine XCo_driver(E,k,Xk,q)
      report_Vnlxc=.TRUE.
      report_dSc=.FALSE.
      !
-     Y_ALLOCATE(qp%E(qp%n_states))
-     Y_MEM(qp%E)
-     Y_ALLOCATE(qp%E_bare(qp%n_states))
-     Y_MEM(qp%E_bare)
+     Y_ALLOC(qp%E(qp%n_states))
+     Y_MEM_ALLOC(qp%E)
+     Y_ALLOC(qp%E_bare(qp%n_states))
+     Y_MEM_ALLOC(qp%E_bare)
      !
      ik=QP_table(1,3)
      call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))

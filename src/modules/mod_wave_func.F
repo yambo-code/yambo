@@ -116,14 +116,14 @@ module wave_func
      WF_out%N=WF_in%N
      WF_out%space=WF_in%space
      WF_out%to_load=WF_in%to_load
-     Y_ALLOCATE(WF_out%c(fft_size,WF_out%N))
-     Y_MEM(WF_out%c)
-     Y_ALLOCATE(WF_out%c(wf_ng,WF_out%N))
-     Y_MEM(WF_out%c)
-     Y_ALLOCATE(WF%c(wf_ncx,WF%N))
-     Y_MEM(WF%c)
-     Y_ALLOCATE(WF_out%index(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
-     Y_MEM(WF_out%index)
+     Y_ALLOC(WF_out%c(fft_size,WF_out%N))
+     Y_MEM_ALLOC(WF_out%c)
+     Y_ALLOC(WF_out%c(wf_ng,WF_out%N))
+     Y_MEM_ALLOC(WF_out%c)
+     Y_ALLOC(WF%c(wf_ncx,WF%N))
+     Y_MEM_ALLOC(WF%c)
+     Y_ALLOC(WF_out%index(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
+     Y_MEM_ALLOC(WF_out%index)
      WF_out%c=WF_in%c
      WF_out%index=WF_in%index
    end subroutine
@@ -133,18 +133,18 @@ module wave_func
      logical  :: cart_direction(3)
      !
      if(cart_direction(1)) then
-       Y_ALLOCATE(wf_x(fft_size,WF%N))
-       Y_MEM(wf_x)
+       Y_ALLOC(wf_x(fft_size,WF%N))
+       Y_MEM_ALLOC(wf_x)
        wf_x=(0.,0.)
      endif
      if(cart_direction(2)) then
-       Y_ALLOCATE(wf_y(fft_size,WF%N))
-       Y_MEM(wf_y)
+       Y_ALLOC(wf_y(fft_size,WF%N))
+       Y_MEM_ALLOC(wf_y)
        wf_y=(0.,0.)
      endif
      if(cart_direction(3)) then
-       Y_ALLOCATE(wf_z(fft_size,WF%N))
-       Y_MEM(wf_z)
+       Y_ALLOC(wf_z(fft_size,WF%N))
+       Y_MEM_ALLOC(wf_z)
        wf_z=(0.,0.)
      endif
    end subroutine

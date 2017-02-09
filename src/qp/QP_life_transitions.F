@@ -95,8 +95,8 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
    endif
    !
    if (i1==1) then
-     Y_ALLOCATE(X_freqs(q%nibz,maxval(n_of_transitions)))
-     Y_MEM(X_freqs)
+     Y_ALLOC(X_freqs(q%nibz,maxval(n_of_transitions)))
+     Y_MEM_ALLOC(X_freqs)
      X_freqs=0.
    endif
    !
@@ -118,8 +118,8 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  X_life_W%er=(/minval(coarse_grid_Pt),maxval(coarse_grid_Pt)/)
  !
- Y_ALLOCATE(X_life_W%p(coarse_grid_N))
- Y_MEM(X_life_W%p)
+ Y_ALLOC(X_life_W%p(coarse_grid_N))
+ Y_MEM_ALLOC(X_life_W%p)
  do i1=1,coarse_grid_N
    ! 
    X_life_W%p(i1)=coarse_grid_Pt(i1)+FREQUENCIES_damping(X_life_W,coarse_grid_Pt(i1))*cmplx(0.,1.,SP)

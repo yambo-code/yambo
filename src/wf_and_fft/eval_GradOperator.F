@@ -49,8 +49,8 @@ subroutine eval_GradOperator()
  ! Allocation
  !
  if (.not.allocated(Grad_R)) then 
-   Y_ALLOCATE(Grad_R(fft_size,fft_size,3))
-   Y_MEM(Grad_R)
+   Y_ALLOC(Grad_R(fft_size,fft_size,3))
+   Y_MEM_ALLOC(Grad_R)
  end if
  Grad_R(:,:,:) = (0._SP,0._SP)
  !

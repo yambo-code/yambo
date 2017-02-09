@@ -24,7 +24,7 @@
 integer function io_Double_Grid(E,Xk,ID)
  !
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_max_filling,&
-&                         BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol,BZ_DbGd_ipol_weight,&
+&                         BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol,BZ_DbGd_weight,&
 &                         DbGd_is_symmetry_expanded,BZ_ASSOCIATED_nkpts,BZ_DbGd_kpts,&
 &                         BZ_DbGd_nkpts
  use R_lattice,      ONLY:nXkbz,bz_samp
@@ -97,22 +97,22 @@ integer function io_Double_Grid(E,Xk,ID)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then
-   Y_ALLOCATE(E%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   Y_MEM(E%E_DbGd)
-   Y_ALLOCATE(E%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   Y_MEM(E%W_DbGd)
-   Y_ALLOCATE(E%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   Y_MEM(E%f_DbGd)
-   Y_ALLOCATE(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
-   Y_MEM(BZ_DbGd_kpts)
-   Y_ALLOCATE(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
-   Y_MEM(BZ_DbGd_kpts)
-   Y_ALLOCATE(BZ_DbGd_nkpt(BZ_ASSOCIATED_nkpts))
-   Y_MEM(BZ_DbGd_nkpt)
-   Y_ALLOCATE(BZ_DbGd_table(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling,2))
-   Y_MEM(BZ_DbGd_table)
-   Y_ALLOCATE(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
-   Y_MEM(BZ_DbGd_ipol_weight)
+   Y_ALLOC(E%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+   Y_MEM_ALLOC(E%E_DbGd)
+   Y_ALLOC(E%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+   Y_MEM_ALLOC(E%W_DbGd)
+   Y_ALLOC(E%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+   Y_MEM_ALLOC(E%f_DbGd)
+   Y_ALLOC(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
+   Y_MEM_ALLOC(BZ_DbGd_kpts)
+   Y_ALLOC(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
+   Y_MEM_ALLOC(BZ_DbGd_kpts)
+   Y_ALLOC(BZ_DbGd_nkpt(BZ_ASSOCIATED_nkpts))
+   Y_MEM_ALLOC(BZ_DbGd_nkpt)
+   Y_ALLOC(BZ_DbGd_table(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling,2))
+   Y_MEM_ALLOC(BZ_DbGd_table)
+   Y_ALLOC(BZ_DbGd_weight(BZ_DbGd_max_filling))
+   Y_MEM_ALLOC(BZ_DbGd_weight)
  endif
  !
  ! Eigenvalues
@@ -156,12 +156,12 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Double grid interpolation weights of each element in table
  !
  if (DG_format==3) then
-   call io_bulk(ID, VAR="INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 
+   call io_bulk(ID, VAR="INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_weight) ) 
  else
-   call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 
+   call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_weight) ) 
  endif
  !
- call io_bulk(ID, R1=BZ_DbGd_ipol_weight)
+ call io_bulk(ID, R1=BZ_DbGd_weight)
  !
 1 call io_disconnect(ID=ID)
  !

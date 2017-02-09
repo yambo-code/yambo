@@ -250,10 +250,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Allocation
    !-----------
-   Y_ALLOCATE(FXC_K_diagonal(BS_K_dim))
-   Y_MEM(FXC_K_diagonal)
-   Y_ALLOCATE(FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
-   Y_MEM(FXC)
+   Y_ALLOC(FXC_K_diagonal(BS_K_dim))
+   Y_MEM_ALLOC(FXC_K_diagonal)
+   Y_ALLOC(FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
+   Y_MEM_ALLOC(FXC)
    FXC_K_diagonal=0._SP
    FXC=cZERO
    !
@@ -301,8 +301,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ALDA
  !======
  if (BS_K_is_ALDA) then
-   Y_ALLOCATE(F_xc(fft_size,n_spin,n_spin))
-   Y_MEM(F_xc)
+   Y_ALLOC(F_xc(fft_size,n_spin,n_spin))
+   Y_MEM_ALLOC(F_xc)
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
@@ -326,15 +326,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! when the TR is applied
    !
    if (i_space_inv==0.and.i_time_rev==1.and..not.BS_W_is_diagonal) then
-     Y_ALLOCATE(BS_W(BS_n_g_W,i_g1,2*q%nibz))
-     Y_MEM(BS_W)
+     Y_ALLOC(BS_W(BS_n_g_W,i_g1,2*q%nibz))
+     Y_MEM_ALLOC(BS_W)
    else
-     Y_ALLOCATE(BS_W(BS_n_g_W,i_g1,q%nibz))
-     Y_MEM(BS_W)
+     Y_ALLOC(BS_W(BS_n_g_W,i_g1,q%nibz))
+     Y_MEM_ALLOC(BS_W)
    endif
    !
-   Y_ALLOCATE(isc%gamp(i_g1,BS_n_g_W))
-   Y_MEM(isc%gamp)
+   Y_ALLOC(isc%gamp(i_g1,BS_n_g_W))
+   Y_MEM_ALLOC(isc%gamp)
    !
    if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
@@ -397,17 +397,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Allocations
  !-------------
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   Y_ALLOCATE(Ovv(BS_n_g_W))
-   Y_MEM(Ovv)
-   Y_ALLOCATE(Occ(BS_n_g_W))
-   Y_MEM(Occ)
-   Y_ALLOCATE(O_times_W(BS_n_g_W))
-   Y_MEM(O_times_W)
+   Y_ALLOC(Ovv(BS_n_g_W))
+   Y_MEM_ALLOC(Ovv)
+   Y_ALLOC(Occ(BS_n_g_W))
+   Y_MEM_ALLOC(Occ)
+   Y_ALLOC(O_times_W(BS_n_g_W))
+   Y_MEM_ALLOC(O_times_W)
    if (BS_cpl_K_corr) then
-     Y_ALLOCATE(Ovc(BS_n_g_W))
-     Y_MEM(Ovc)
-     Y_ALLOCATE(Ocv(BS_n_g_W))
-     Y_MEM(Ocv)
+     Y_ALLOC(Ovc(BS_n_g_W))
+     Y_MEM_ALLOC(Ovc)
+     Y_ALLOC(Ocv(BS_n_g_W))
+     Y_MEM_ALLOC(Ocv)
    endif
  endif
  !
@@ -698,6 +698,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 1 continue
  !
+ Y_FREE(BS_W)
  call WF_free(WF)
  call elemental_collision_free(K_CORR_collision)
  call elemental_collision_free(K_EXCH_collision)

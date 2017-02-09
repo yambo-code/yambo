@@ -179,8 +179,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs=QP_dSc_steps
-     Y_ALLOCATE(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
-     Y_MEM(Sc_W(i_qp)%p)
+     Y_ALLOC(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
+     Y_MEM_ALLOC(Sc_W(i_qp)%p)
      forall (i2=1:QP_dSc_steps) Sc_W(i_qp)%p(i2)=&
 &           en%E(QP_table(i_qp,1),QP_table(i_qp,3),1)+(i2-1)*QP_dSc_delta+&
 &           cmplx(0.,QP_G_damp,SP)
@@ -218,14 +218,14 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  if (elph_use_q_grid) then
    nq_to_sum=q%nbz
    call k_ibz2bz(q,'i',.TRUE.)
-   Y_ALLOCATE(q_weight(nq_to_sum))
-   Y_MEM(q_weight)
+   Y_ALLOC(q_weight(nq_to_sum))
+   Y_MEM_ALLOC(q_weight)
    call rim_spherical(nq_to_sum,q%ptbz,q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
    call k_ibz2bz(q,'d',.TRUE.)
  else
    nq_to_sum=elph_nDBs_used
-   Y_ALLOCATE(q_weight(nq_to_sum))
-   Y_MEM(q_weight)
+   Y_ALLOC(q_weight(nq_to_sum))
+   Y_MEM_ALLOC(q_weight)
    call rim_spherical(nq_to_sum,ph_qpt(:nq_to_sum,:),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
  endif
  !
@@ -275,8 +275,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        E_k_p_q%E(:,:,1)=E_k_plus_q(:,:,1)
        !
-       Y_ALLOCATE(DB_corrected(elph_nb,k%nbz,1))
-       Y_MEM(DB_corrected)
+       Y_ALLOC(DB_corrected(elph_nb,k%nbz,1))
+       Y_MEM_ALLOC(DB_corrected)
        DB_corrected=0
        call QP_apply_global_stretch((/1,elph_nb/),E_k_p_q,k,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
        Y_FREE(DB_corrected)

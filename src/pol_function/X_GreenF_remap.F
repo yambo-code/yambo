@@ -86,8 +86,8 @@ subroutine X_GreenF_remap(bands,E,W)
  call FREQUENCIES_setup(W_A)
  W_A%p=real(W_A%p)
  !
- Y_ALLOCATE(E_map%GreenF(bands(2),E%nk,n_sp_pol,W_A%n_freqs))
- Y_MEM(E_map%GreenF)
+ Y_ALLOC(E_map%GreenF(bands(2),E%nk,n_sp_pol,W_A%n_freqs))
+ Y_MEM_ALLOC(E_map%GreenF)
  E_map%GreenF=(0.,0.)
  !
  call live_timing('GF remapping',(bands(2)-bands(1)+1)*E%nk)
@@ -138,10 +138,10 @@ subroutine X_GreenF_remap(bands,E,W)
  Y_FREE(E%GreenF)
  Y_FREE(E%GreenF_W)
  E%GreenF_n_E_steps=W_A%n_freqs
- Y_ALLOCATE(E%GreenF(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
- Y_MEM(E%GreenF)
- Y_ALLOCATE(E%GreenF_W(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
- Y_MEM(E%GreenF_W)
+ Y_ALLOC(E%GreenF(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
+ Y_MEM_ALLOC(E%GreenF)
+ Y_ALLOC(E%GreenF_W(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
+ Y_MEM_ALLOC(E%GreenF_W)
  do i_b=bands(1),bands(2)
    do i_k=1,E%nk
      do i_spin=1,n_sp_pol

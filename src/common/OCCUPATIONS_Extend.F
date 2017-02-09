@@ -52,8 +52,8 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  real(SP),parameter :: Ef_step=0.1/HA2EV
  !
   if (.not.allocated(E%f)) then
-   Y_ALLOCATE(E%f(E%nb,E%nk,n_sp_pol))
-   Y_MEM(E%f)
+   Y_ALLOC(E%f(E%nb,E%nk,n_sp_pol))
+   Y_MEM_ALLOC(E%f)
  endif
  !
  E%E_Fermi=Xe%E_Fermi

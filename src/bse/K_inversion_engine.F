@@ -58,8 +58,8 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  integer,        external :: EPS_via_perturbative_inversion
  !
  if (do_it_full.and..not.K_slk%kind=="SLK") then
-   Y_ALLOCATE(Mm1(BS_H_dim,BS_H_dim))
-   Y_MEM(Mm1)
+   Y_ALLOC(Mm1(BS_H_dim,BS_H_dim))
+   Y_MEM_ALLOC(Mm1)
    Mm1=cZERO
  endif
  !

@@ -80,8 +80,8 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  if (present(CLEAN_UP)) then
    !
    Y_FREE(states_to_load)
-   Y_ALLOCATE(states_to_load(NB,NK,n_spin))
-   Y_MEM(states_to_load)
+   Y_ALLOC(states_to_load(NB,NK,n_spin))
+   Y_MEM_ALLOC(states_to_load)
    !
    states_to_load=CLEAN_UP
    if (ncpu==1) states_to_load=.TRUE.

@@ -87,8 +87,8 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  endif
  M_out%Nb = Nb_o(2)-Nb_o(1)+1
  !
- Y_ALLOCATE(M_out%blc(M_out%BLCrows(1):M_out%BLCrows(2),M_out%cols(1):M_out%BLCcols(2),Nb_o(1):Nb_o(2)))
- Y_MEM(M_out%blc)
+ Y_ALLOC(M_out%blc(M_out%BLCrows(1):M_out%BLCrows(2),M_out%cols(1):M_out%BLCcols(2),Nb_o(1):Nb_o(2)))
+ Y_MEM_ALLOC(M_out%blc)
  M_out%blc=cZERO
  !
  call COMM_copy(M_in%INTER_comm,M_out%INTER_comm)

@@ -120,8 +120,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    if (.not.present(M_slk)) then
      !
      call MATRIX_init( "SLK", M_loc, N, 1 )
-     Y_ALLOCATE(M_loc%blc(M_loc%BLCrows(1):M_loc%BLCrows(2),M_loc%BLCcols(1):M_loc%BLCcols(2),M_loc%Nb))
-     Y_MEM(M_loc%blc)
+     Y_ALLOC(M_loc%blc(M_loc%BLCrows(1):M_loc%BLCrows(2),M_loc%BLCcols(1):M_loc%BLCcols(2),M_loc%Nb))
+     Y_MEM_ALLOC(M_loc%blc)
      !
      if (present(M_bse)) then
        call MATRIX_transfer( M_out= M_loc, M_bse=M_bse )
@@ -134,8 +134,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    if (idriver==DIAGO) then
      !
      call MATRIX_init("SLK",  V_loc, N, 1 )
-     Y_ALLOCATE(V_loc%blc(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
-     Y_MEM(V_loc%blc)
+     Y_ALLOC(V_loc%blc(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
+     Y_MEM_ALLOC(V_loc%blc)
      !
      call PARALLEL_HERMITIAN_diagonalization( M_loc, V_loc, N, E_real )
      !
@@ -157,8 +157,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      if (.not.present(B_slk)) then
        !
        call MATRIX_init("SLK",  B_loc, N, 1 )
-       Y_ALLOCATE(B_loc%blc(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
-       Y_MEM(B_loc%blc)
+       Y_ALLOC(B_loc%blc(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
+       Y_MEM_ALLOC(B_loc%blc)
        call MATRIX_transfer( M_out = B_loc, M=B )
        !
        call PARALLEL_lin_system( M_loc, B_loc, N, N)
@@ -179,13 +179,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      if (.not.present(B_slk)) then
        !
        call MATRIX_init("SLK",  B_loc, N, 1 )
-       Y_ALLOCATE(B_loc%blc(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
-       Y_MEM(B_loc%blc)
+       Y_ALLOC(B_loc%blc(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
+       Y_MEM_ALLOC(B_loc%blc)
        call MATRIX_transfer( M_out =  B_loc, M=B )
        !
        call MATRIX_init("SLK",  C_loc, N, 1 )
-       Y_ALLOCATE(C_loc%blc(C_loc%BLCrows(1):B_loc%BLCrows(2),C_loc%BLCcols(1):C_loc%BLCcols(2),C_loc%Nb))
-       Y_MEM(C_loc%blc)
+       Y_ALLOC(C_loc%blc(C_loc%BLCrows(1):B_loc%BLCrows(2),C_loc%BLCcols(1):C_loc%BLCcols(2),C_loc%Nb))
+       Y_MEM_ALLOC(C_loc%blc)
        call MATRIX_transfer( M_out =  C_loc, M=C )
        !
        call PARALLEL_M_by_M( M_loc, B_loc, C_loc, 'N', 'N', N, N , N )

@@ -48,8 +48,8 @@ module KERR
        select case(what)
        case('DIP_projected')
          if (allocated(DIP_projected_r90)) return
-         Y_ALLOCATE(DIP_projected_r90(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         Y_MEM(DIP_projected_r90)
+         Y_ALLOC(DIP_projected_r90(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
+         Y_MEM_ALLOC(DIP_projected_r90)
        end select
      else
        select case(what)
@@ -66,8 +66,8 @@ module KERR
      use pars,       ONLY:cZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
      if (.not.l_kerr) return
-     Y_ALLOCATE(BSS_dipoles_kerr(BS_H_dim))
-     Y_MEM(BSS_dipoles_kerr)
+     Y_ALLOC(BSS_dipoles_kerr(BS_H_dim))
+     Y_MEM_ALLOC(BSS_dipoles_kerr)
      BSS_dipoles_kerr = cZERO
    end subroutine
    !

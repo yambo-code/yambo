@@ -26,7 +26,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  use pars,                ONLY:SP
  use R_lattice,           ONLY:bz_samp,k_grid
  use electrons,           ONLY:BZ_DbGd_table,BZ_DbGd_nkpt,&
-                               BZ_DbGd_ipol_weight
+                               BZ_DbGd_weight
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
@@ -116,8 +116,8 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  allocate(BZ_DbGd_table(Xk%nbz, npts_around_coarse,2))
  BZ_DbGd_table = 0
- allocate(BZ_DbGd_ipol_weight(npts_around_coarse))
- BZ_DbGd_ipol_weight = 0.0_SP
+ allocate(BZ_DbGd_weight(npts_around_coarse))
+ BZ_DbGd_weight = 0.0_SP
  !
  !---------------------- SAMPLE POINTS (KNOTS) -----------------------------
  ! find kpoints of fine grid that correspond to those of coarse grid
@@ -216,7 +216,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
                       intvz, pt_ipol, real(nz-1)/nstep_f(3))
              !
              ii = ii + 1
-             BZ_DbGd_ipol_weight(ii) = product(tmp_ipol_weight)
+             BZ_DbGd_weight(ii) = product(tmp_ipol_weight)
              !   
              call live_timing(steps=1)
              !
@@ -231,7 +231,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  ! later in construction of GreenF every contribution will be divided by npts_around_coarse,
  ! which is not wanted for dgrid here, has to be cured beforehand. 
  !
- BZ_DbGd_ipol_weight = BZ_DbGd_ipol_weight/product(nstep_f)*real(npts_around_coarse)
+ BZ_DbGd_weight = BZ_DbGd_weight/product(nstep_f)*real(npts_around_coarse)
  !
  ! everything is ok 
  !

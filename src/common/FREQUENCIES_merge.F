@@ -42,8 +42,8 @@ subroutine FREQUENCIES_merge(W1,W2,table)
  real(SP)    :: r(3)
  !
  call W_reset(W_new)
- Y_ALLOCATE(W_new%p(W1%n_freqs+W2%n_freqs))
- Y_MEM(W_new%p)
+ Y_ALLOC(W_new%p(W1%n_freqs+W2%n_freqs))
+ Y_MEM_ALLOC(W_new%p)
  W_new%p            =cZERO
  W_new%n_freqs      =W2%n_freqs
  do iw2=1,W2%n_freqs
@@ -102,8 +102,8 @@ subroutine FREQUENCIES_merge(W1,W2,table)
  W2%n_freqs=W_new%n_freqs
  W2%damp_reference=W_new%damp_reference
  W2%per_memstps=W_new%per_memstps
- Y_ALLOCATE(W2%p(W2%n_freqs))
- Y_MEM(W2%p)
+ Y_ALLOC(W2%p(W2%n_freqs))
+ Y_MEM_ALLOC(W2%p)
  W2%p=W_new%p(:W_new%n_freqs)
  W2%er=(/real(W2%p(1)) ,real(W2%p(W2%n_freqs))/)
  W2%dr=(/aimag(W2%p(1)),aimag(W2%p(W2%n_freqs))/)

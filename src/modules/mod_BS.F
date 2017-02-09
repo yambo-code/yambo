@@ -162,13 +162,13 @@ module BS
      integer :: iG,iB
      !
      if (EXCHANGE) then
-       Y_ALLOCATE(BS_T_grp(iG)%O_x(BS_n_g_exch,BS_T_grp(iG)%size))
-       Y_MEM(BS_T_grp(iG)%O_x)
+       Y_ALLOC(BS_T_grp(iG)%O_x(BS_n_g_exch,BS_T_grp(iG)%size))
+       Y_MEM_ALLOC(BS_T_grp(iG)%O_x)
      endif
      !
      if (CORRELATION) then
-       Y_ALLOCATE(BS_blk(iB)%O_c(O_ng,BS_blk(iB)%N_oscillators))
-       Y_MEM(BS_blk(iB)%O_c)
+       Y_ALLOC(BS_blk(iB)%O_c(O_ng,BS_blk(iB)%N_oscillators))
+       Y_MEM_ALLOC(BS_blk(iB)%O_c)
      endif
      !
    end subroutine
@@ -212,43 +212,43 @@ module BS
      !
      nT=BS_T_grp(iT)%size
      !
-     Y_ALLOCATE(BS_T_grp(iT)%dipoles_R(nT))
-     Y_MEM(BS_T_grp(iT)%dipoles_R)
-     Y_ALLOCATE(BS_T_grp(iT)%dipoles_A(nT))
-     Y_MEM(BS_T_grp(iT)%dipoles_A)
+     Y_ALLOC(BS_T_grp(iT)%dipoles_R(nT))
+     Y_MEM_ALLOC(BS_T_grp(iT)%dipoles_R)
+     Y_ALLOC(BS_T_grp(iT)%dipoles_A(nT))
+     Y_MEM_ALLOC(BS_T_grp(iT)%dipoles_A)
      if(l_kerr) then
-       Y_ALLOCATE(BS_T_grp(iT)%dipoles_R_kerr(nT))
-       Y_MEM(BS_T_grp(iT)%dipoles_R_kerr)
-       Y_ALLOCATE(BS_T_grp(iT)%dipoles_A_kerr(nT))
-       Y_MEM(BS_T_grp(iT)%dipoles_A_kerr)
+       Y_ALLOC(BS_T_grp(iT)%dipoles_R_kerr(nT))
+       Y_MEM_ALLOC(BS_T_grp(iT)%dipoles_R_kerr)
+       Y_ALLOC(BS_T_grp(iT)%dipoles_A_kerr(nT))
+       Y_MEM_ALLOC(BS_T_grp(iT)%dipoles_A_kerr)
      endif
      if(l_photolum) then
-       Y_ALLOCATE(BS_T_grp(iT)%dipoles_R_PL(nT,3))
-       Y_MEM(BS_T_grp(iT)%dipoles_R_PL)
-       Y_ALLOCATE(BS_T_grp(iT)%dipoles_A_PL(nT,3))
-       Y_MEM(BS_T_grp(iT)%dipoles_A_PL)
+       Y_ALLOC(BS_T_grp(iT)%dipoles_R_PL(nT,3))
+       Y_MEM_ALLOC(BS_T_grp(iT)%dipoles_R_PL)
+       Y_ALLOC(BS_T_grp(iT)%dipoles_A_PL(nT,3))
+       Y_MEM_ALLOC(BS_T_grp(iT)%dipoles_A_PL)
      endif
-     Y_ALLOCATE(BS_T_grp(iT)%table(nT,4))
-     Y_MEM(BS_T_grp(iT)%table)
-     Y_ALLOCATE(BS_T_grp(iT)%E(nT))
-     Y_MEM(BS_T_grp(iT)%E)
-     Y_ALLOCATE(BS_T_grp(iT)%f(nT))
-     Y_MEM(BS_T_grp(iT)%f)
-     Y_ALLOCATE(BS_T_grp(iT)%f_RES(nT))
-     Y_MEM(BS_T_grp(iT)%f_RES)
-     Y_ALLOCATE(BS_T_grp(iT)%f_PL(2,nT))
-     Y_MEM(BS_T_grp(iT)%f_PL)
+     Y_ALLOC(BS_T_grp(iT)%table(nT,4))
+     Y_MEM_ALLOC(BS_T_grp(iT)%table)
+     Y_ALLOC(BS_T_grp(iT)%E(nT))
+     Y_MEM_ALLOC(BS_T_grp(iT)%E)
+     Y_ALLOC(BS_T_grp(iT)%f(nT))
+     Y_MEM_ALLOC(BS_T_grp(iT)%f)
+     Y_ALLOC(BS_T_grp(iT)%f_RES(nT))
+     Y_MEM_ALLOC(BS_T_grp(iT)%f_RES)
+     Y_ALLOC(BS_T_grp(iT)%f_PL(2,nT))
+     Y_MEM_ALLOC(BS_T_grp(iT)%f_PL)
      if (allocated(E%Z)) then
-       Y_ALLOCATE(BS_T_grp(iT)%Z(nT))
-       Y_MEM(BS_T_grp(iT)%Z)
+       Y_ALLOC(BS_T_grp(iT)%Z(nT))
+       Y_MEM_ALLOC(BS_T_grp(iT)%Z)
      endif
      if (allocated(E%W)) then
-       Y_ALLOCATE(BS_T_grp(iT)%W(nT))
-       Y_MEM(BS_T_grp(iT)%W)
+       Y_ALLOC(BS_T_grp(iT)%W(nT))
+       Y_MEM_ALLOC(BS_T_grp(iT)%W)
      endif
      if (E_SOC_nbands/=0) then
-       Y_ALLOCATE(BS_T_grp(iT)%E_SOC_corr(2/n_sp_pol,nT))
-       Y_MEM(BS_T_grp(iT)%E_SOC_corr)
+       Y_ALLOC(BS_T_grp(iT)%E_SOC_corr(2/n_sp_pol,nT))
+       Y_MEM_ALLOC(BS_T_grp(iT)%E_SOC_corr)
      endif
      !
    end subroutine

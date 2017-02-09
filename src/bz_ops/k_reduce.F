@@ -80,8 +80,8 @@ subroutine k_reduce(k,FORCE_BZ)
  !
  call live_timing()
  !
- Y_ALLOCATE(k%pt(k%nibz,3))
- Y_MEM(k%pt)
+ Y_ALLOC(k%pt(k%nibz,3))
+ Y_MEM_ALLOC(k%pt)
  k%pt(:k%nibz,:)=k_ibz(:k%nibz,:)
  !
 end subroutine

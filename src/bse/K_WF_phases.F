@@ -63,8 +63,8 @@ subroutine K_WF_phases(Xk)
  call section('=','Wave-Function Phases')
  !
  if (.not.allocated(WF_phase)) then
-   Y_ALLOCATE(WF_phase(Xk%nibz,nsym,BS_bands(1):BS_bands(2),n_sp_pol))
-   Y_MEM(WF_phase)
+   Y_ALLOC(WF_phase(Xk%nibz,nsym,BS_bands(1):BS_bands(2),n_sp_pol))
+   Y_MEM_ALLOC(WF_phase)
  endif
  WF_phase=cZERO
  !

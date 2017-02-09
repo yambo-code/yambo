@@ -158,14 +158,14 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  if ( COLL%N == 0 ) return
  !
- Y_ALLOCATE(COLL%PAR_map(COLL%N))
- Y_ALLOCATE(COLL%PAR_IND%element_1D(COLL%N))
- Y_MEM(COLL%PAR_map)
- Y_MEM(COLL%PAR_IND%element_1D)
+ Y_ALLOC(COLL%PAR_map(COLL%N))
+ Y_ALLOC(COLL%PAR_IND%element_1D(COLL%N))
+ Y_MEM_ALLOC(COLL%PAR_map)
+ Y_MEM_ALLOC(COLL%PAR_IND%element_1D)
  !
  if (.not.associated(PAR_IND_G_k%element_1D) ) then
-   Y_ALLOCATE(PAR_IND_G_k%element_1D(k%nibz))
-   Y_MEM(PAR_IND_G_k%element_1D)
+   Y_ALLOC(PAR_IND_G_k%element_1D(k%nibz))
+   Y_MEM_ALLOC(PAR_IND_G_k%element_1D)
    PAR_IND_G_k%element_1D=.FALSE.
  endif
  COLL%PAR_IND%element_1D=.FALSE.

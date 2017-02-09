@@ -84,19 +84,19 @@ module ELPH
          !
          if (.not.allocated(gsqF_fan)) then
            if (.not.eval_G_using_KK) then
-             Y_ALLOCATE(gsqF_fan(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-             Y_MEM(gsqF_fan)
-             Y_ALLOCATE(gsqF_ca_corr(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-             Y_MEM(gsqF_ca_corr)
+             Y_ALLOC(gsqF_fan(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+             Y_MEM_ALLOC(gsqF_fan)
+             Y_ALLOC(gsqF_ca_corr(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+             Y_MEM_ALLOC(gsqF_ca_corr)
              gsqF_fan=0.
              gsqF_ca_corr=0.
            endif
-           Y_ALLOCATE(gsqF_dw(QP_n_states,PAR_nQ,ph_modes))
-           Y_MEM(gsqF_dw)
-           Y_ALLOCATE(gsqF_life_bose(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-           Y_MEM(gsqF_life_bose)
-           Y_ALLOCATE(gsqF_life_f(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-           Y_MEM(gsqF_life_f)
+           Y_ALLOC(gsqF_dw(QP_n_states,PAR_nQ,ph_modes))
+           Y_MEM_ALLOC(gsqF_dw)
+           Y_ALLOC(gsqF_life_bose(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+           Y_MEM_ALLOC(gsqF_life_bose)
+           Y_ALLOC(gsqF_life_f(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+           Y_MEM_ALLOC(gsqF_life_f)
            gsqF_dw=0.
            gsqF_life_bose=0.
            gsqF_life_f=0.
@@ -105,33 +105,33 @@ module ELPH
        case ('gkkp')
          !
          if (.not.allocated(elph_gkkp)) then
-           Y_ALLOCATE(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb))
-           Y_MEM(elph_gkkp)
-           Y_ALLOCATE(elph_DW(nkbz,ph_modes,elph_nb,elph_nb))
-           Y_MEM(elph_DW)
-           Y_ALLOCATE(f_k_plus_q(elph_nb,nkbz,1))
-           Y_MEM(f_k_plus_q)
+           Y_ALLOC(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb))
+           Y_MEM_ALLOC(elph_gkkp)
+           Y_ALLOC(elph_DW(nkbz,ph_modes,elph_nb,elph_nb))
+           Y_MEM_ALLOC(elph_DW)
+           Y_ALLOC(f_k_plus_q(elph_nb,nkbz,1))
+           Y_MEM_ALLOC(f_k_plus_q)
          endif
          !
      end select
      !
      if (.not.allocated(ph_freqs_sq)) then
-       Y_ALLOCATE(ph_freqs_sq(elph_nDBs,ph_modes))
-       Y_MEM(ph_freqs_sq)
+       Y_ALLOC(ph_freqs_sq(elph_nDBs,ph_modes))
+       Y_MEM_ALLOC(ph_freqs_sq)
        ph_freqs_sq=0._SP
-       Y_ALLOCATE(E_k_plus_q(elph_nb,nkbz,1))
-       Y_MEM(E_k_plus_q)
+       Y_ALLOC(E_k_plus_q(elph_nb,nkbz,1))
+       Y_MEM_ALLOC(E_k_plus_q)
        !
-       Y_ALLOCATE(pol_vector(ph_modes,sum(n_atoms_species),3))
-       Y_MEM(pol_vector)
+       Y_ALLOC(pol_vector(ph_modes,sum(n_atoms_species),3))
+       Y_MEM_ALLOC(pol_vector)
        !
      endif
      !
      if (.not.allocated(ph_qpt)) then
-       Y_ALLOCATE(ph_qpt(elph_nDBs,3))
-       Y_MEM(ph_qpt)
-       Y_ALLOCATE(ph_kpt_bz(nkbz,3))
-       Y_MEM(ph_kpt_bz)
+       Y_ALLOC(ph_qpt(elph_nDBs,3))
+       Y_MEM_ALLOC(ph_qpt)
+       Y_ALLOC(ph_kpt_bz(nkbz,3))
+       Y_MEM_ALLOC(ph_kpt_bz)
      endif
      !
    end subroutine

@@ -164,10 +164,10 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
          if(do_EWZ_using_Ik_IE(2)) N_val_to_int=N_val_to_int+1
          if(do_EWZ_using_Ik_IE(3)) N_val_to_int=N_val_to_int+2
          !
-         Y_ALLOCATE(Vali(qp%n_states,N_val_to_int))
-         Y_MEM(Vali)
-         Y_ALLOCATE(Valo(band_range(1):band_range(2),k%nibz,n_sp_pol,N_val_to_int))
-         Y_MEM(Valo)
+         Y_ALLOC(Vali(qp%n_states,N_val_to_int))
+         Y_MEM_ALLOC(Vali)
+         Y_ALLOC(Valo(band_range(1):band_range(2),k%nibz,n_sp_pol,N_val_to_int))
+         Y_MEM_ALLOC(Valo)
          Valo=0._SP
          !
          i1=0

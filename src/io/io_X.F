@@ -187,8 +187,8 @@ integer function io_X(X,Xw,ID)
    !
    if (read_is_on(ID)) then
      Y_FREE(Xw%p)
-     Y_ALLOCATE(Xw%p(Xw%n_freqs))
-     Y_MEM(Xw%p)
+     Y_ALLOC(Xw%p(Xw%n_freqs))
+     Y_MEM_ALLOC(Xw%p)
    endif
    !
    ch="FREQ_sec_iq"//trim(intc(iq))

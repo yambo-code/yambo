@@ -77,14 +77,14 @@ integer function io_KB_pwscf(ID)
    if (read_is_on(ID)) then
      ! 
      if (.not.allocated(n_atoms_species)) then
-       Y_ALLOCATE(n_atoms_species(n_atomic_species))
-       Y_MEM(n_atoms_species)
-       Y_ALLOCATE(atom_pos(3,n_atoms_species_max,n_atomic_species))
-       Y_MEM(atom_pos)
+       Y_ALLOC(n_atoms_species(n_atomic_species))
+       Y_MEM_ALLOC(n_atoms_species)
+       Y_ALLOC(atom_pos(3,n_atoms_species_max,n_atomic_species))
+       Y_MEM_ALLOC(atom_pos)
      endif
      if (.not.allocated(pp_n_l_comp)) then
-       Y_ALLOCATE(pp_n_l_comp(n_atomic_species))
-       Y_MEM(pp_n_l_comp)
+       Y_ALLOC(pp_n_l_comp(n_atomic_species))
+       Y_MEM_ALLOC(pp_n_l_comp)
      endif
      !
    endif
@@ -96,8 +96,8 @@ integer function io_KB_pwscf(ID)
    !
    if (read_is_on(ID)) then
      Y_FREE(pp_table)
-     Y_ALLOCATE(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
-     Y_MEM(pp_table)
+     Y_ALLOC(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+     Y_MEM_ALLOC(pp_table)
    endif
    !
    call io_bulk(ID,VAR="PP_TABLE",VAR_SZ=(/3,n_atomic_species,pp_n_l_times_proj_max/))

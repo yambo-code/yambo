@@ -124,8 +124,8 @@ integer function io_HF_and_locXC(ID)
    if (read_is_on(ID)) then
      if(io_mode(ID)==DUMP) then
        Y_FREE(QP_state)
-       Y_ALLOCATE(QP_state(QP_nb_disk,QP_nk_disk))
-       Y_MEM(QP_state)
+       Y_ALLOC(QP_state(QP_nb_disk,QP_nk_disk))
+       Y_MEM_ALLOC(QP_state)
        QP_state=.false.
        do i1=1,QP_n_states_disk
          call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i1/))

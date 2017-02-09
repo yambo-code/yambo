@@ -289,23 +289,23 @@ contains
    real(SP)                       :: z
    integer                        :: i1,i2,u
 
-   Y_ALLOCATE(ityp_(nat_))
-   Y_MEM(ityp_)
-   Y_ALLOCATE(tau_(3,nat_))
-   Y_MEM(tau_)
+   Y_ALLOC(ityp_(nat_))
+   Y_MEM_ALLOC(ityp_)
+   Y_ALLOC(tau_(3,nat_))
+   Y_MEM_ALLOC(tau_)
 
 #if defined _P2Y_EXPORT
 
-   Y_ALLOCATE(atom_type_(nat_))
-   Y_MEM(atom_type_)
-   Y_ALLOCATE(species_type_(nat_))
-   Y_MEM(species_type_)
+   Y_ALLOC(atom_type_(nat_))
+   Y_MEM_ALLOC(atom_type_)
+   Y_ALLOC(species_type_(nat_))
+   Y_MEM_ALLOC(species_type_)
 
    call pw_atoms(pw_unit)
 
    n_atomic_species = nsp_     ! n_atom_species only read here
-   Y_ALLOCATE(atm_(n_atomic_species))
-   Y_MEM(atm_)
+   Y_ALLOC(atm_(n_atomic_species))
+   Y_MEM_ALLOC(atm_)
    atm_(1:n_atomic_species) = species_type_(1:n_atomic_species)
    do i1=1, nat_
      ityp_(i1) = -1
@@ -322,14 +322,14 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    tau_units = 1.0_DP
-   Y_ALLOCATE(atm_(n_atomic_species))
-   Y_MEM(atm_)
-   Y_ALLOCATE(psfile(n_atomic_species))
-   Y_MEM(psfile)
-   Y_ALLOCATE(nmesh(n_atomic_species))
-   Y_MEM(nmesh)
-   Y_ALLOCATE(nbeta(n_atomic_species))
-   Y_MEM(nbeta)
+   Y_ALLOC(atm_(n_atomic_species))
+   Y_MEM_ALLOC(atm_)
+   Y_ALLOC(psfile(n_atomic_species))
+   Y_MEM_ALLOC(psfile)
+   Y_ALLOC(nmesh(n_atomic_species))
+   Y_MEM_ALLOC(nmesh)
+   Y_ALLOC(nbeta(n_atomic_species))
+   Y_MEM_ALLOC(nbeta)
    call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
    ! Check USPP/NC pseudopotential
    do i1 =1,n_atomic_species
@@ -338,23 +338,23 @@ contains
 
 #endif
 
-   Y_ALLOCATE(n_atoms_species(n_atomic_species))
-   Y_MEM(n_atoms_species)
+   Y_ALLOC(n_atoms_species(n_atomic_species))
+   Y_MEM_ALLOC(n_atoms_species)
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
    enddo
    n_atoms_species_max = maxval(n_atoms_species)
-   Y_ALLOCATE(atom_pos(3,n_atoms_species_max,n_atomic_species))
-   Y_MEM(atom_pos)
+   Y_ALLOC(atom_pos(3,n_atoms_species_max,n_atomic_species))
+   Y_MEM_ALLOC(atom_pos)
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
      atom_pos(:, n_atoms_species( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1)*tau_units
    enddo
 
-   Y_ALLOCATE(Z_species(n_atomic_species))
-   Y_MEM(Z_species)
+   Y_ALLOC(Z_species(n_atomic_species))
+   Y_MEM_ALLOC(Z_species)
    do i1 = 1, n_atomic_species
      Z_species(i1) = atomic_number(atm_(i1))
    enddo
@@ -459,8 +459,8 @@ contains
    use com,         ONLY:warning
    type(bz_samp) :: k
    !
-   Y_ALLOCATE(xk_(3,k%nibz))
-   Y_MEM(xk_)
+   Y_ALLOC(xk_(3,k%nibz))
+   Y_MEM_ALLOC(xk_)
 #if defined _P2Y_EXPORT
 
    call pw_kpoints(pw_unit)
@@ -475,8 +475,8 @@ contains
    ! PW k in units of [cart, tpiba] -> units of [cart, 2*pi/alat(:)]
    ! PW cart tpiba/cart au/cart alat/RLU units
    !
-   Y_ALLOCATE(k%pt(k%nibz,3))
-   Y_MEM(k%pt)
+   Y_ALLOC(k%pt(k%nibz,3))
+   Y_MEM_ALLOC(k%pt)
    do i1=1,k%nibz
      k%pt(i1,:)=xk_(:,i1) * alat(:)/alat_ 
    enddo
@@ -518,18 +518,18 @@ contains
    use D_lattice,   ONLY:alat
    !
    Y_ALLOCATE(g_vec(ng_vec,3)) ! The YAMBO array
-   Y_MEM(g_vec)
+   Y_MEM_ALLOC(g_vec)
 
 #if defined _P2Y_EXPORT
 
-   Y_ALLOCATE(igv_(3,ng_vec))
-   Y_MEM(igv_)
+   Y_ALLOC(igv_(3,ng_vec))
+   Y_MEM_ALLOC(igv_)
    call pw_gvectors(pw_unit)
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    Y_ALLOCATE(igv_(3,ngm_)) ! The PWscf array (ngm = ng_vec if not gamma_only)
-   Y_MEM(igv_)
+   Y_MEM_ALLOC(igv_)
    call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
 
@@ -569,25 +569,25 @@ contains
    type(bz_samp) :: k
    integer i1,ik
    !
-   Y_ALLOCATE(wf_nc_k(k%nibz))
-   Y_MEM(wf_nc_k)
+   Y_ALLOC(wf_nc_k(k%nibz))
+   Y_MEM_ALLOC(wf_nc_k)
 
 #if defined _P2Y_EXPORT
 
-   Y_ALLOCATE(pw_igk_(wf_ncx,k%nibz))
-   Y_MEM(pw_igk_)
-   Y_ALLOCATE(pw_npwk_(k%nibz))
-   Y_MEM(pw_npwk_)
+   Y_ALLOC(pw_igk_(wf_ncx,k%nibz))
+   Y_MEM_ALLOC(pw_igk_)
+   Y_ALLOC(pw_npwk_(k%nibz))
+   Y_MEM_ALLOC(pw_npwk_)
    call pw_igkindex(pw_unit)
    wf_nc_k(:) = pw_npwk_(:)
    Y_FREE(pw_npwk_)
 
 #elif defined _P2Y_V31  || defined _P2Y_V311 
 
-   Y_ALLOCATE(pw_igk_(ngm_,k%nibz))
-   Y_MEM(pw_igk_)
+   Y_ALLOC(pw_igk_(ngm_,k%nibz))
+   Y_MEM_ALLOC(pw_igk_)
    Y_ALLOCATE(index_(ngm_)) ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
-   Y_MEM(index_)
+   Y_MEM_ALLOC(index_)
    do ik = 1, k%nibz
      !
      pw_igk_(1:ngm_, ik)= 0
@@ -623,10 +623,10 @@ contains
 
 #elif defined _P2Y_V32 || defined _P2Y_V40 || defined _P2Y_V50
 
-   Y_ALLOCATE(pw_igk_(npwx_,k%nibz))
-   Y_MEM(pw_igk_)
-   Y_ALLOCATE(index_(npwx_))
-   Y_MEM(index_)
+   Y_ALLOC(pw_igk_(npwx_,k%nibz))
+   Y_MEM_ALLOC(pw_igk_)
+   Y_ALLOC(index_(npwx_))
+   Y_MEM_ALLOC(index_)
    do ik = 1, k%nibz
      call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
@@ -637,8 +637,8 @@ contains
      
 #endif
 
-   Y_ALLOCATE(wf_igk(wf_ncx,k%nibz)) ! this will be incorrect for parallel 3.1
-   Y_MEM(wf_igk)
+   Y_ALLOC(wf_igk(wf_ncx,k%nibz)) ! this will be incorrect for parallel 3.1
+   Y_MEM_ALLOC(wf_igk)
    wf_igk(:,:)=-1 ! for checking
 
    if(gamma_only_) then
@@ -682,13 +682,13 @@ contains
    integer      :: ik_,ispin_
    type(levels) :: en
    !
-   Y_ALLOCATE(en%E(en%nb,k%nibz,n_sp_pol))
-   Y_MEM(en%E)
+   Y_ALLOC(en%E(en%nb,k%nibz,n_sp_pol))
+   Y_MEM_ALLOC(en%E)
 
 #if defined _P2Y_EXPORT
 
-   Y_ALLOCATE(eig_(en%nb,k%nibz))
-   Y_MEM(eig_)
+   Y_ALLOC(eig_(en%nb,k%nibz))
+   Y_MEM_ALLOC(eig_)
 
    call pw_eigenvalues(pw_unit)
     
@@ -698,15 +698,15 @@ contains
 
    select case(n_sp_pol)
    case(1)
-     Y_ALLOCATE(eig_(en%nb,k%nibz))
-     Y_MEM(eig_)
+     Y_ALLOC(eig_(en%nb,k%nibz))
+     Y_MEM_ALLOC(eig_)
      call qexml_read_bands(eig=eig_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
      en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
      Y_FREE(eig_)
    case(2)
-     Y_ALLOCATE(eig_s_(en%nb,k%nibz,n_sp_pol))
-     Y_MEM(eig_s_)
+     Y_ALLOC(eig_s_(en%nb,k%nibz,n_sp_pol))
+     Y_MEM_ALLOC(eig_s_)
      call qexml_read_bands(eig_s=eig_s_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
      en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_sp_pol )
@@ -715,8 +715,8 @@ contains
 
 #elif defined _P2Y_V32  || defined _P2Y_V40 || defined _P2Y_V50
 
-   Y_ALLOCATE(eigb_(en%nb))
-   Y_MEM(eigb_)
+   Y_ALLOC(eigb_(en%nb))
+   Y_MEM_ALLOC(eigb_)
    select case(n_sp_pol)
    case(2)
      do ik_ = 1,k%nibz

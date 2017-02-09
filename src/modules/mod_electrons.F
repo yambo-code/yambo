@@ -112,7 +112,7 @@ module electrons
  logical  :: DbGd_is_symmetry_expanded=.FALSE.
  integer ,allocatable :: BZ_DbGd_nkpt(:)
  integer ,allocatable :: BZ_DbGd_table(:,:,:)
- real(SP),allocatable :: BZ_DbGd_ipol_weight(:)
+ real(SP),allocatable :: BZ_DbGd_weight(:)
  real(SP),allocatable :: BZ_DbGd_kpts(:,:)
  !
  ! Perturbative SOC table
@@ -143,10 +143,10 @@ module electrons
        Eo%E_dir_gap=Ei%E_dir_gap
        Eo%E_ind_gap=Ei%E_ind_gap
      endif
-     Y_ALLOCATE(Eo%E(Eo%nb,Eo%nk,n_sp_pol))
-     Y_MEM(Eo%E)
-     Y_ALLOCATE(Eo%f(Eo%nb,Eo%nk,n_sp_pol))
-     Y_MEM(Eo%f)
+     Y_ALLOC(Eo%E(Eo%nb,Eo%nk,n_sp_pol))
+     Y_MEM_ALLOC(Eo%E)
+     Y_ALLOC(Eo%f(Eo%nb,Eo%nk,n_sp_pol))
+     Y_MEM_ALLOC(Eo%f)
      Eo%E=0._SP
      Eo%f=0._SP
      !
@@ -160,40 +160,40 @@ module electrons
        ! %E
        Eo%E(:,:,:)=Ei%E(:,:,:)
        if (allocated(Ei%Eo)) then
-         Y_ALLOCATE(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%Eo)
+         Y_ALLOC(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
+         Y_MEM_ALLOC(Eo%Eo)
          Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
        endif
        ! %f
        Eo%f(:,:,:)=Ei%f(:,:,:) 
        if (allocated(Ei%fo)) then
-         Y_ALLOCATE(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%fo)
+         Y_ALLOC(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
+         Y_MEM_ALLOC(Eo%fo)
          Eo%fo(:BOUNDS(1),:,:)=Ei%fo(:BOUNDS(1),:,:)
        endif
        if (allocated(Ei%df)) then
-         Y_ALLOCATE(Eo%df(BOUNDS(1),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%df)
+         Y_ALLOC(Eo%df(BOUNDS(1),Eo%nk,n_sp_pol))
+         Y_MEM_ALLOC(Eo%df)
          Eo%df(:BOUNDS(1),:,:)=Ei%df(:BOUNDS(1),:,:)
        endif
        ! %W
        if (allocated(Ei%W)) then
-         Y_ALLOCATE(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%W)
+         Y_ALLOC(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
+         Y_MEM_ALLOC(Eo%W)
          Eo%W(:BOUNDS(2),:,:)=Ei%W(:BOUNDS(2),:,:)
        endif
        ! %Z
        if (allocated(Ei%Z)) then
-         Y_ALLOCATE(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%Z)
+         Y_ALLOC(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
+         Y_MEM_ALLOC(Eo%Z)
          Eo%Z(:BOUNDS(2),:,:)=Ei%Z(:BOUNDS(2),:,:)
        endif
        ! %QP_corrected
        if (allocated(Ei%QP_corrected)) then
          BOUNDS(1)=size(Ei%QP_corrected,1)
          BOUNDS(2)=size(Ei%QP_corrected,2)
-         Y_ALLOCATE(Eo%QP_corrected(BOUNDS(1),BOUNDS(2),n_sp_pol))
-         Y_MEM(Eo%QP_corrected)
+         Y_ALLOC(Eo%QP_corrected(BOUNDS(1),BOUNDS(2),n_sp_pol))
+         Y_MEM_ALLOC(Eo%QP_corrected)
          Eo%QP_corrected=Ei%QP_corrected
        endif
      else
@@ -203,18 +203,18 @@ module electrons
      ! E Double Grid
      !
      if (BZ_DbGd_nbands/=0.and.Ei%nk==Eo%nk) then
-       Y_ALLOCATE(Eo%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       Y_MEM(Eo%E_DbGd)
-       Y_ALLOCATE(Eo%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       Y_MEM(Eo%W_DbGd)
-       Y_ALLOCATE(Eo%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       Y_MEM(Eo%f_DbGd)
+       Y_ALLOC(Eo%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       Y_MEM_ALLOC(Eo%E_DbGd)
+       Y_ALLOC(Eo%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       Y_MEM_ALLOC(Eo%W_DbGd)
+       Y_ALLOC(Eo%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       Y_MEM_ALLOC(Eo%f_DbGd)
        Eo%E_DbGd=Ei%E_DbGd
        Eo%W_DbGd=Ei%W_DbGd
        Eo%f_DbGd=Ei%f_DbGd
        if(allocated(Ei%df_DbGd)) then
-         Y_ALLOCATE(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-         Y_MEM(Eo%df_DbGd)
+         Y_ALLOC(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+         Y_MEM_ALLOC(Eo%df_DbGd)
          Eo%df_DbGd=Ei%df_DbGd
        endif
      endif
@@ -222,8 +222,8 @@ module electrons
      ! E_SOC
      !
      if (E_SOC_nbands/=0.and.Ei%nk==Eo%nk) then
-       Y_ALLOCATE(Eo%E_SOC(E_SOC_nbands,Eo%nk))
-       Y_MEM(Eo%E_SOC)
+       Y_ALLOC(Eo%E_SOC(E_SOC_nbands,Eo%nk))
+       Y_MEM_ALLOC(Eo%E_SOC)
        Eo%E_SOC=Ei%E_SOC
      endif
      !
@@ -282,7 +282,7 @@ module electrons
      !
      Y_FREE(BZ_DbGd_nkpt)
      Y_FREE(BZ_DbGd_table)
-     Y_FREE(BZ_DbGd_ipol_weight)
+     Y_FREE(BZ_DbGd_weight)
      Y_FREE(BZ_DbGd_kpts)
      !
    end subroutine

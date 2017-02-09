@@ -101,12 +101,12 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    endif
  endif
  !
- Y_ALLOCATE(conjg_O1x_qpg(FXC_n_g_corr,BS_nT_at_k(ik1)))
- Y_MEM(conjg_O1x_qpg)
- Y_ALLOCATE(O2x_qpg(BS_nT_at_k(ik2),FXC_n_g_corr))
- Y_MEM(O2x_qpg)
- Y_ALLOCATE(blk_Eo(2,O_x_dim))
- Y_MEM(blk_Eo)
+ Y_ALLOC(conjg_O1x_qpg(FXC_n_g_corr,BS_nT_at_k(ik1)))
+ Y_MEM_ALLOC(conjg_O1x_qpg)
+ Y_ALLOC(O2x_qpg(BS_nT_at_k(ik2),FXC_n_g_corr))
+ Y_MEM_ALLOC(O2x_qpg)
+ Y_ALLOC(blk_Eo(2,O_x_dim))
+ Y_MEM_ALLOC(blk_Eo)
  !
  forall(i1=1:FXC_n_g_corr) conjg_O1x_qpg(i1,:BS_nT_at_k(ik1))=conjg(O1x(i1,:BS_nT_at_k(ik1)))*bare_qpg(iq,i1)
  forall(i2=1:FXC_n_g_corr) O2x_qpg(:BS_nT_at_k(ik2),i2)=O2x(i2,:BS_nT_at_k(ik2))*bare_qpg(iq,i2)
@@ -157,10 +157,10 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Residuals
  !
- Y_ALLOCATE(left_R(FXC_n_g_corr,BS_nT_at_k(ik2)))
- Y_MEM(left_R)
- Y_ALLOCATE(right_R(BS_nT_at_k(ik1),FXC_n_g_corr))
- Y_MEM(right_R)
+ Y_ALLOC(left_R(FXC_n_g_corr,BS_nT_at_k(ik2)))
+ Y_MEM_ALLOC(left_R)
+ Y_ALLOC(right_R(BS_nT_at_k(ik1),FXC_n_g_corr))
+ Y_MEM_ALLOC(right_R)
  left_R=(0._SP,0._SP)
  right_R=(0._SP,0._SP)
  !
@@ -186,9 +186,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Fxc
  !
- Y_ALLOCATE(wk1(BS_nT_at_k(ik1),FXC_n_g_corr))
- Y_ALLOCATE(wk2(FXC_n_g_corr,BS_nT_at_k(ik2)))
- Y_ALLOCATE(FXC_temp(FXC_n_g_corr,FXC_n_g_corr))
+ Y_ALLOC(wk1(BS_nT_at_k(ik1),FXC_n_g_corr))
+ Y_ALLOC(wk2(FXC_n_g_corr,BS_nT_at_k(ik2)))
+ Y_ALLOC(FXC_temp(FXC_n_g_corr,FXC_n_g_corr))
  !
  COM_MODE=NONE
  if (ik1==1.and.ik2==1) COM_MODE=REP

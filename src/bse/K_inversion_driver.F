@@ -27,7 +27,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
+&                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
  use electrons,      ONLY:levels
@@ -138,8 +138,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! SLK matrix initialization before the Kernel loading
  !
  call MATRIX_init( "SLK", K_slk, BS_H_dim, 1 )
- Y_ALLOCATE(K_slk%blc(K_slk%BLCrows(1):K_slk%BLCrows(2),K_slk%BLCcols(1):K_slk%BLCcols(2),1))
- Y_MEM(K_slk%blc)
+ Y_ALLOC(K_slk%blc(K_slk%BLCrows(1):K_slk%BLCrows(2),K_slk%BLCcols(1):K_slk%BLCcols(2),1))
+ Y_MEM_ALLOC(K_slk%blc)
  !
 #endif
  !
@@ -190,8 +190,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
 #endif
  !
- Y_ALLOCATE(Lo(BS_H_dim,W%n_freqs,Lo_dim))
- Y_MEM(Lo)
+ Y_ALLOC(Lo(BS_H_dim,W%n_freqs,Lo_dim))
+ Y_MEM_ALLOC(Lo)
  !
  call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
@@ -308,6 +308,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! CLEAN
  !
+ call LOCAL_clean()
+ !
  contains 
    !
    subroutine do_it_FULL(TYP)
@@ -413,7 +415,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    end subroutine
    !
    subroutine LOCAL_clean
-     call BS_mat_free( )
 #if defined _PL
      call BS_PL_free( )
 #endif
@@ -435,6 +436,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      Y_FREE(Lo)
      !
 #if defined _SCALAPACK
+     Y_FREE(K_slk%blc)
      call MATRIX_reset(K_slk)
      call MATRIX_duplicate( "free", M_out=K_inv_slk )
 #endif

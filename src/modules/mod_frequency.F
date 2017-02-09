@@ -65,8 +65,8 @@ module frequency
      Wo%dr=Wi%dr
      Wo%damp_reference=Wi%damp_reference
      if (allocated(Wi%p)) then
-       Y_ALLOCATE(Wo%p(Wo%n_freqs))
-       Y_MEM(Wo%p)
+       Y_ALLOC(Wo%p(Wo%n_freqs))
+       Y_MEM_ALLOC(Wo%p)
        Wo%p=Wi%p
      endif
    end subroutine W_duplicate

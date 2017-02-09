@@ -198,8 +198,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    allocate(W_(QP_dSc_steps))
    allocate(dc(QP_dSc_steps),stat=alloc_err)
    if(l_GW_terminator) then
-     Y_ALLOCATE(eet_factor(X%ng,X%ng))
-     Y_MEM(eet_factor)
+     Y_ALLOC(eet_factor(X%ng,X%ng))
+     Y_MEM_ALLOC(eet_factor)
    endif
  endif
  !

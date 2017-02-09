@@ -60,10 +60,10 @@ subroutine TDDFT_ALDA_G_space(E,k)
  !
  ! ALDA functional
  !
- Y_ALLOCATE(F_xc(fft_size,n_spin,n_spin))
- Y_ALLOCATE(F_xc_DP(fft_size))
- Y_MEM(F_xc)
- Y_MEM(F_xc_DP)
+ Y_ALLOC(F_xc(fft_size,n_spin,n_spin))
+ Y_ALLOC(F_xc_DP(fft_size))
+ Y_MEM_ALLOC(F_xc)
+ Y_MEM_ALLOC(F_xc_DP)
  call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,2)
  do i1=1,fft_size
    F_xc_DP(i1)=sum(cmplx(F_xc(i1,:,:),kind=DP))
@@ -80,8 +80,8 @@ subroutine TDDFT_ALDA_G_space(E,k)
  !
  ! Fxc
  !
- Y_ALLOCATE(FXC(FXC_n_g_corr,FXC_n_g_corr,1))
- Y_MEM(FXC)
+ Y_ALLOC(FXC(FXC_n_g_corr,FXC_n_g_corr,1))
+ Y_MEM_ALLOC(FXC)
  do i1=1,FXC_n_g_corr
    do i2=1,FXC_n_g_corr
      FXC(i1,i2,1)=cmplx(F_xc_DP( fft_g_table( G_m_G(i1,i2),1) ),kind=SP)/real(fft_size,SP)

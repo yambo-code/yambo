@@ -93,8 +93,8 @@ subroutine G_shells_finder()
  !
  ! Init
  !
- Y_ALLOCATE(g_rot(nsym,ng_closed))
- Y_MEM(g_rot)
+ Y_ALLOC(g_rot(nsym,ng_closed))
+ Y_MEM_ALLOC(g_rot)
  !
  g_rot=0
  if (myid==0) g_rot(:,1)=1 ! Gamma point
@@ -180,10 +180,10 @@ subroutine G_shells_finder()
  !
  ! Shells Allocation & Transfer 
  !
- Y_ALLOCATE(ng_in_shell(n_g_shells))
- Y_ALLOCATE(E_of_shell(n_g_shells))
- Y_MEM(ng_in_shell)
- Y_MEM(E_of_shell)
+ Y_ALLOC(ng_in_shell(n_g_shells))
+ Y_ALLOC(E_of_shell(n_g_shells))
+ Y_MEM_ALLOC(ng_in_shell)
+ Y_MEM_ALLOC(E_of_shell)
  !
  ng_in_shell=ng_in_shell_TMP(:n_g_shells)
  ng_closed=ng_in_shell(n_g_shells)
@@ -196,8 +196,8 @@ subroutine G_shells_finder()
  ! will fail as the shells are not closed anymore with respect to the inversion.
  !
  if (inv_index<0) then
-   Y_ALLOCATE(minus_G(ng_closed))
-   Y_MEM(minus_G)
+   Y_ALLOC(minus_G(ng_closed))
+   Y_MEM_ALLOC(minus_G)
    call eval_minus_G()
    do while (  count(minus_G==0)>0 ) 
      n_g_shells=n_g_shells-1 

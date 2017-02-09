@@ -142,8 +142,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call build_spin_sop()
  !
- Y_ALLOCATE(rl_sop(3,3,nsym))
- Y_MEM(rl_sop)
+ Y_ALLOC(rl_sop(3,3,nsym))
+ Y_MEM_ALLOC(rl_sop)
  !
  do is=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
@@ -361,8 +361,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Copy Ho eigenvalues in Xen%Eo for dipoles
  !
  if (l_sc_run .and. .not.allocated(Xen%Eo) .and. found_SC_DB) then
-   Y_ALLOCATE(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-   Y_MEM(Xen%Eo)
+   Y_ALLOC(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
+   Y_MEM_ALLOC(Xen%Eo)
    Xen%Eo(:,:,:)=en%Eo(:,:en%nk,:)
  endif
  !

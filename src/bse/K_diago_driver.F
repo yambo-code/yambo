@@ -29,7 +29,7 @@ subroutine K_diago_driver(iq,W)
  use pars,           ONLY:SP
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_mat
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
@@ -241,7 +241,6 @@ subroutine K_diago_driver(iq,W)
  !
  ! CLEAN
  !=======
- call BS_mat_free( )
  call local_free( )
  !
  ! GPL_EXCLUDE_START
@@ -268,28 +267,28 @@ subroutine K_diago_driver(iq,W)
      select case(ii)
      case(1)
        !
-       Y_ALLOCATE(BS_E(BS_H_dim))
-       Y_MEM(BS_E)
+       Y_ALLOC(BS_E(BS_H_dim))
+       Y_MEM_ALLOC(BS_E)
        if(E_SOC_nbands/=0) then
-         Y_ALLOCATE(BS_corrections(2/n_sp_pol,BS_H_dim))
-         Y_MEM(BS_corrections)
-         Y_ALLOCATE(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
-         Y_MEM(BS_E_SOC_corr)
+         Y_ALLOC(BS_corrections(2/n_sp_pol,BS_H_dim))
+         Y_MEM_ALLOC(BS_corrections)
+         Y_ALLOC(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
+         Y_MEM_ALLOC(BS_E_SOC_corr)
        endif
-       Y_ALLOCATE(BS_R_left(BS_H_dim))
-       Y_MEM(BS_R_left)
-       Y_ALLOCATE(BS_R_right(BS_H_dim))
-       Y_MEM(BS_R_right)
+       Y_ALLOC(BS_R_left(BS_H_dim))
+       Y_MEM_ALLOC(BS_R_left)
+       Y_ALLOC(BS_R_right(BS_H_dim))
+       Y_MEM_ALLOC(BS_R_right)
        !
        ! GPL_EXCLUDE_START
        !
 #if defined _KERR
-       Y_ALLOCATE(BS_R_right_kerr(BS_H_dim))
-       Y_MEM(BS_R_right_kerr)
+       Y_ALLOC(BS_R_right_kerr(BS_H_dim))
+       Y_MEM_ALLOC(BS_R_right_kerr)
 #endif
 #if defined _PL
-       Y_ALLOCATE(BS_R_PL(2,BS_H_dim))
-       Y_MEM(BS_R_PL)
+       Y_ALLOC(BS_R_PL(2,BS_H_dim))
+       Y_MEM_ALLOC(BS_R_PL)
 #endif
        !
        ! GPL_EXCLUDE_END
@@ -297,18 +296,18 @@ subroutine K_diago_driver(iq,W)
      case(2)
        !
        if(K_is_not_hermitian) then
-         Y_ALLOCATE(BS_V_left(BS_H_dim,BS_H_dim))
-         Y_MEM(BS_V_left)
-         Y_ALLOCATE(BS_V_right(BS_H_dim,BS_H_dim))
-         Y_MEM(BS_V_right)
-         Y_ALLOCATE(BS_overlap(BS_H_dim,BS_H_dim))
-         Y_MEM(BS_overlap)
+         Y_ALLOC(BS_V_left(BS_H_dim,BS_H_dim))
+         Y_MEM_ALLOC(BS_V_left)
+         Y_ALLOC(BS_V_right(BS_H_dim,BS_H_dim))
+         Y_MEM_ALLOC(BS_V_right)
+         Y_ALLOC(BS_overlap(BS_H_dim,BS_H_dim))
+         Y_MEM_ALLOC(BS_overlap)
        else
-         Y_ALLOCATE(BS_E_real(BS_H_dim))
-         Y_MEM(BS_E_real)
+         Y_ALLOC(BS_E_real(BS_H_dim))
+         Y_MEM_ALLOC(BS_E_real)
          if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
-           Y_ALLOCATE(BS_corrections(1,BS_H_dim))
-           Y_MEM(BS_corrections)
+           Y_ALLOC(BS_corrections(1,BS_H_dim))
+           Y_MEM_ALLOC(BS_corrections)
          endif
        endif
        !

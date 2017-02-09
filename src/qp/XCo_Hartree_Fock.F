@@ -116,8 +116,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="HF")
  call elemental_collision_alloc(iscp,NG=QP_ng_Sx,TITLE="HF")
- Y_ALLOCATE(local_rhotw(QP_ng_Sx))
- Y_MEM(local_rhotw)
+ Y_ALLOC(local_rhotw(QP_ng_Sx))
+ Y_MEM_ALLOC(local_rhotw)
  isc%qs    =1
  !
  call scatter_Gamp(isc,'x')

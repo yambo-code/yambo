@@ -160,8 +160,8 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! Fill the actual G_m_G matrix
  !
- Y_ALLOCATE(G_m_G(iG_,iGo_))
- Y_MEM(G_m_G)
+ Y_ALLOC(G_m_G(iG_,iGo_))
+ Y_MEM_ALLOC(G_m_G)
  G_m_G=0
  !
 #if defined _OPENMP

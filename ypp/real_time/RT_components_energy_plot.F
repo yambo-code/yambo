@@ -444,15 +444,15 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      integer            :: dim
      character(*)       :: what
      !
-     Y_ALLOCATE(TYP%data(RT_carriers%nstates,dim,n_T_steps))
+     Y_ALLOC(TYP%data(RT_carriers%nstates,dim,n_T_steps))
      !
      if (what=="CARRIERS".or.what=="spin-up".or.what=="spin-dn".or.what=="e-p-ratio".or.what=="e-e-ratio") then
        TYP%fittable=.TRUE.
-       Y_ALLOCATE(TYP%data_fit(fit_dim,2,n_T_steps))
-       Y_ALLOCATE(TYP%E_fit(fit_dim,2))
-       Y_ALLOCATE(TYP%err_fit(4,n_T_steps))
-       Y_ALLOCATE(TYP%T(2,n_T_steps))
-       Y_ALLOCATE(TYP%Ef(2,n_T_steps))
+       Y_ALLOC(TYP%data_fit(fit_dim,2,n_T_steps))
+       Y_ALLOC(TYP%E_fit(fit_dim,2))
+       Y_ALLOC(TYP%err_fit(4,n_T_steps))
+       Y_ALLOC(TYP%T(2,n_T_steps))
+       Y_ALLOC(TYP%Ef(2,n_T_steps))
        TYP%data_fit=rZERO
        TYP%E_fit  =rZERO
        TYP%err_fit=rZERO

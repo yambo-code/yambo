@@ -76,9 +76,9 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  call WF_derivative_alloc(do_derivative)
  !
  Y_ALLOCATE(wf_der(wf_ng))!G space
- Y_MEM(wf_der)
+ Y_MEM_ALLOC(wf_der)
  Y_ALLOCATE(wf_DP(fft_size))! realspace
- Y_MEM(wf_DP)
+ Y_MEM_ALLOC(wf_DP)
  !
  use_live_timing=.false.
  if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.true.

@@ -114,15 +114,15 @@ module RT_control
      !
      if(l_NE_dynamics) then
        !
-       Y_ALLOCATE(J_cache(6,IO_JPSM_cache_steps))
-       Y_MEM(J_cache)
+       Y_ALLOC(J_cache(6,IO_JPSM_cache_steps))
+       Y_MEM_ALLOC(J_cache)
        J_cache=rZERO
-       Y_ALLOCATE(P_cache(6,IO_JPSM_cache_steps))
-       Y_MEM(P_cache)
+       Y_ALLOC(P_cache(6,IO_JPSM_cache_steps))
+       Y_MEM_ALLOC(P_cache)
        P_cache=rZERO
        if(n_spin>1) then
-         Y_ALLOCATE(M_cache(6,IO_JPSM_cache_steps))
-         Y_MEM(M_cache)
+         Y_ALLOC(M_cache(6,IO_JPSM_cache_steps))
+         Y_MEM_ALLOC(M_cache)
          M_cache=rZERO
        endif
        !
@@ -130,14 +130,14 @@ module RT_control
      !
      Y_FREE(JPC_RT_IO_t%Time)
      !
-     Y_ALLOCATE(JPC_RT_IO_t%Time(NE_steps))
-     Y_MEM(JPC_RT_IO_t%Time)
+     Y_ALLOC(JPC_RT_IO_t%Time(NE_steps))
+     Y_MEM_ALLOC(JPC_RT_IO_t%Time)
      JPC_RT_IO_t%Time=rZERO
      !
      Y_FREE(GF_RT_IO_t%Time)
      !
-     Y_ALLOCATE(GF_RT_IO_t%Time(NE_steps))
-     Y_MEM(GF_RT_IO_t%Time)
+     Y_ALLOC(GF_RT_IO_t%Time(NE_steps))
+     Y_MEM_ALLOC(GF_RT_IO_t%Time)
      GF_RT_IO_t%Time=rZERO
      !
    end subroutine RT_alloc_control

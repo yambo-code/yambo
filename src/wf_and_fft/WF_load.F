@@ -40,7 +40,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
- use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,RD_CL,&
+ use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,&
 &                        DUMP,IO_and_Messaging_switch
 #if defined _SC
  use com,           ONLY:warning,error
@@ -200,8 +200,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
      Y_FREE(WF%state)
-     Y_ALLOCATE(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
-     Y_MEM(WF%state)
+     Y_ALLOC(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+     Y_MEM_ALLOC(WF%state)
      WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
      Y_FREE(states_to_load)
    endif
@@ -248,16 +248,16 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call WF_alloc(WF)
  !
  if (WF%space=='R')  then
-   Y_ALLOCATE(wf_DP(fft_size))
-   Y_MEM(wf_DP)
+   Y_ALLOC(wf_DP(fft_size))
+   Y_MEM_ALLOC(wf_DP)
  endif
  if (WF%space=='G') then
-   Y_ALLOCATE(wf_DP(wf_ng))
-   Y_MEM(wf_DP)
+   Y_ALLOC(wf_DP(wf_ng))
+   Y_MEM_ALLOC(wf_DP)
  endif
  if (WF%space=='C'.or.WF%space=='B') then
-   Y_ALLOCATE(wf_DP(wf_ncx))
-   Y_MEM(wf_DP)
+   Y_ALLOC(wf_DP(wf_ncx))
+   Y_MEM_ALLOC(wf_DP)
  endif
  !
  ! LOG the states loaded
@@ -283,8 +283,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (.not.buffer_is_ok) then
    !
-   Y_ALLOCATE(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
-   Y_MEM(wf_disk)
+   Y_ALLOC(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+   Y_MEM_ALLOC(wf_disk)
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err=io_WF(ID,wf_disk)
@@ -390,8 +390,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
    Y_FREE(WF%state)
    !
-   Y_ALLOCATE(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
-   Y_MEM(WF%state)
+   Y_ALLOC(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+   Y_MEM_ALLOC(WF%state)
    !
    WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))= &
 &           states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))

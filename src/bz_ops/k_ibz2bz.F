@@ -56,8 +56,8 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! ...then the pts
  !
- Y_ALLOCATE(k%ptbz(k%nbz,3))
- Y_MEM(k%ptbz)
+ Y_ALLOC(k%ptbz(k%nbz,3))
+ Y_MEM_ALLOC(k%ptbz)
  !
  do i1=1,k%nbz
    !

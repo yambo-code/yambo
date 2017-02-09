@@ -127,15 +127,15 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    ! Arrays to be written in the o. files
    !
-   Y_ALLOCATE(Epsilon_ii(wv%n_freqs,2))
-   Y_MEM(Epsilon_ii)
-   Y_ALLOCATE(EEL(wv%n_freqs,2))
-   Y_MEM(EEL)
-   Y_ALLOCATE(Alpha(wv%n_freqs,2))
-   Y_MEM(Alpha)
+   Y_ALLOC(Epsilon_ii(wv%n_freqs,2))
+   Y_MEM_ALLOC(Epsilon_ii)
+   Y_ALLOC(EEL(wv%n_freqs,2))
+   Y_MEM_ALLOC(EEL)
+   Y_ALLOC(Alpha(wv%n_freqs,2))
+   Y_MEM_ALLOC(Alpha)
    if (l_bs_fxc) then
-     Y_ALLOCATE(X_fxc(wv%n_freqs))
-     Y_MEM(X_fxc)
+     Y_ALLOC(X_fxc(wv%n_freqs))
+     Y_MEM_ALLOC(X_fxc)
      X_fxc=cZERO
    endif
    !

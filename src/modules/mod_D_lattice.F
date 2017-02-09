@@ -97,10 +97,10 @@ module D_lattice
      !
      Y_FREE(sop_tab)
      Y_FREE(sop_inv)
-     Y_ALLOCATE(sop_tab(nsym,nsym))
-     Y_MEM(sop_tab)
-     Y_ALLOCATE(sop_inv(nsym))
-     Y_MEM(sop_inv)
+     Y_ALLOC(sop_tab(nsym,nsym))
+     Y_MEM_ALLOC(sop_tab)
+     Y_ALLOC(sop_inv(nsym))
+     Y_MEM_ALLOC(sop_inv)
      sop_tab=0
      sop_inv=0
      do i1=1,nsym

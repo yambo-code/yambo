@@ -102,18 +102,18 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! W energy and damping ranges
  !-----------------------------
- Y_ALLOCATE(QP_W_er(q%nbz,2))
- Y_MEM(QP_W_er)
- Y_ALLOCATE(QP_W_dr(q%nbz,2))
- Y_MEM(QP_W_dr)
+ Y_ALLOC(QP_W_er(q%nbz,2))
+ Y_MEM_ALLOC(QP_W_er)
+ Y_ALLOC(QP_W_dr(q%nbz,2))
+ Y_MEM_ALLOC(QP_W_dr)
  !
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
  if (trim(QP_solver)=='n') then
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs=QP_dSc_steps
-     Y_ALLOCATE(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
-     Y_MEM(Sc_W(i_qp)%p)
+     Y_ALLOC(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
+     Y_MEM_ALLOC(Sc_W(i_qp)%p)
      forall (i2=1:QP_dSc_steps) Sc_W(i_qp)%p(i2)=qp%E_bare(i_qp)+(i2-1)*QP_dSc_delta
    enddo
  else if (trim(QP_solver)=='g') then
@@ -168,8 +168,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      !==================
      QP_n_W_freqs=Xw%n_freqs
      QP_n_W_freqs_redux=Xw%n_freqs
-     Y_ALLOCATE(QP_W(QP_n_states,1,QP_n_G_bands(2),QP_n_W_freqs))
-     Y_MEM(QP_W)
+     Y_ALLOC(QP_W(QP_n_states,1,QP_n_G_bands(2),QP_n_W_freqs))
+     Y_MEM_ALLOC(QP_W)
      !
      if (QP_solver=="n".or.QP_solver=="g") then
        QP_Sc=cZERO
@@ -217,8 +217,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    call section('=','Lifetimes Transitions Selector')
    !
    QP_n_W_freqs=QP_life_transitions(-1,en,k,q,X_life_W(1))
-   Y_ALLOCATE(life_W_table(q%nibz,QP_n_W_freqs))
-   Y_MEM(life_W_table)
+   Y_ALLOC(life_W_table(q%nibz,QP_n_W_freqs))
+   Y_MEM_ALLOC(life_W_table)
    life_W_table=0
    QP_n_W_freqs_redux=-1
    do iqibz=1,q%nibz
@@ -274,8 +274,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  if (.not.l_life) then
    QP_n_W_freqs=Xw%n_freqs
    QP_n_W_freqs_redux=Xw%n_freqs
-   Y_ALLOCATE(QP_W(PAR_nQP,PAR_nQ_bz,PAR_nG_bands,QP_n_W_freqs))
-   Y_MEM(QP_W)
+   Y_ALLOC(QP_W(PAR_nQP,PAR_nQ_bz,PAR_nG_bands,QP_n_W_freqs))
+   Y_MEM_ALLOC(QP_W)
    QP_W=cZERO
  endif
  !

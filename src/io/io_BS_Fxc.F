@@ -143,16 +143,16 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    !
    if (read_is_on(ID)) then
      Y_FREE(FXC_W%p)
-     Y_ALLOCATE(FXC_W%p(FXC_W%n_freqs))
-     Y_MEM(FXC_W%p)
+     Y_ALLOC(FXC_W%p(FXC_W%n_freqs))
+     Y_MEM_ALLOC(FXC_W%p)
    endif
    !
    call io_bulk(ID,VAR='FREQUENCIES',VAR_SZ=(/2,FXC_W%n_freqs/))
    call io_bulk(ID,C1=FXC_W%p)
    !
    if (.not.allocated(FXC_K_diagonal)) then
-     Y_ALLOCATE(FXC_K_diagonal(BS_K_dim))
-     Y_MEM(FXC_K_diagonal)
+     Y_ALLOC(FXC_K_diagonal(BS_K_dim))
+     Y_MEM_ALLOC(FXC_K_diagonal)
    endif
    !
    call io_bulk(ID,VAR='FXC_K_diagonal',VAR_SZ=(/BS_K_dim/))
@@ -167,8 +167,8 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  call io_bulk(ID,VAR='FXC_RL_SIZE',VAR_SZ=(/1/))
  call io_bulk(ID,I0=FXC_n_g_db)
  !
- Y_ALLOCATE(FXC_disk(FXC_n_g_db,FXC_n_g_db))
- Y_MEM(FXC_disk)
+ Y_ALLOC(FXC_disk(FXC_n_g_db,FXC_n_g_db))
+ Y_MEM_ALLOC(FXC_disk)
  !
  write (ch,'(a,i3.3)') "FXC_W_GROUP_",w_group
  !

@@ -46,8 +46,16 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  !
  ! Type of allocation....
  !
- l_XUP        =trim(mode)=="XUP"
- l_PAR        =trim(mode)=="X"
+ l_XUP        =mode=="XUP"
+ l_PAR        =mode=="X"
+ !
+ ! Clean-up
+ !
+ if (mode=="CLEAN") then
+   Y_FREE(X_par%blc)
+   call MATRIX_reset(X_par)
+   return
+ endif
  !
  ! Initialization
  !
@@ -68,15 +76,15 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
    X_par_lower_triangle%cols =X_par%rows
    X_par_lower_triangle%nrows=X_par%ncols
    X_par_lower_triangle%ncols=X_par%nrows
-   Y_ALLOCATE(X_par_lower_triangle%blc(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
-   Y_MEM(X_par_lower_triangle%blc)
+   Y_ALLOC(X_par_lower_triangle%blc(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
+   Y_MEM_ALLOC(X_par_lower_triangle%blc)
    X_par_lower_triangle%blc=cZERO
    call COMM_copy(PAR_COM_RL_A2A,   X_par_lower_triangle%INTRA_comm)
    call COMM_copy(PAR_COM_RL_INDEX, X_par_lower_triangle%INTER_comm)
  endif
  !
- Y_ALLOCATE(X_par%blc(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
- Y_MEM(X_par%blc)
+ Y_ALLOC(X_par%blc(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
+ Y_MEM_ALLOC(X_par%blc)
  X_par%blc=cZERO
  !
  call PARALLEL_live_message("RL vectors(X)",LOADED=X_par%ncols*X_par%nrows,TOTAL=NG**2,NCPU=X_par%INTER_comm%n_CPU)

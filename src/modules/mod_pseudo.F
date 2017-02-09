@@ -53,12 +53,12 @@ module pseudo
    ! Abinit
    subroutine PP_alloc_abinit()
      use R_lattice,  ONLY:ng_vec
-     Y_ALLOCATE(pp_kbs(n_atomic_species,pp_n_l_times_proj_max))
-     Y_MEM(pp_kbs)
-     Y_ALLOCATE(pp_kb(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin))
-     Y_MEM(pp_kb)
-     Y_ALLOCATE(pp_kbd(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin))
-     Y_MEM(pp_kbd)
+     Y_ALLOC(pp_kbs(n_atomic_species,pp_n_l_times_proj_max))
+     Y_MEM_ALLOC(pp_kbs)
+     Y_ALLOC(pp_kb(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin))
+     Y_MEM_ALLOC(pp_kb)
+     Y_ALLOC(pp_kbd(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin))
+     Y_MEM_ALLOC(pp_kbd)
      pp_kbs =0.
      pp_kb  =0.
      pp_kbd =0.
@@ -67,12 +67,12 @@ module pseudo
    ! PWscf
    subroutine PP_alloc_pwscf()
      use wave_func,  ONLY:wf_ncx
-     Y_ALLOCATE(pp_kbs(n_atomic_species,pp_n_l_times_proj_max))
-     Y_MEM(pp_kbs)
-     Y_ALLOCATE(pp_kb(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
-     Y_MEM(pp_kb)
-     Y_ALLOCATE(pp_kbd(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
-     Y_MEM(pp_kbd)
+     Y_ALLOC(pp_kbs(n_atomic_species,pp_n_l_times_proj_max))
+     Y_MEM_ALLOC(pp_kbs)
+     Y_ALLOC(pp_kb(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
+     Y_MEM_ALLOC(pp_kb)
+     Y_ALLOC(pp_kbd(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
+     Y_MEM_ALLOC(pp_kbd)
      pp_kbs =0.
      pp_kb  =0.
      pp_kbd =0.

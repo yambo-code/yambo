@@ -36,8 +36,8 @@ subroutine eval_R_minus_R()
  ! Allocation
  !
  if (.not.allocated(R_m_R)) then 
-   Y_ALLOCATE(R_m_R(fft_size,fft_size))
-   Y_MEM(R_m_R)
+   Y_ALLOC(R_m_R(fft_size,fft_size))
+   Y_MEM_ALLOC(R_m_R)
  end if
  !
  ! Loop

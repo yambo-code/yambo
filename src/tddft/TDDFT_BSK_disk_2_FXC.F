@@ -84,17 +84,17 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! Exchange oscillators
  !
- Y_ALLOCATE(O1x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
- Y_MEM(O1x)
- Y_ALLOCATE(O2x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
- Y_MEM(O2x)
+ Y_ALLOC(O1x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
+ Y_MEM_ALLOC(O1x)
+ Y_ALLOC(O2x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
+ Y_MEM_ALLOC(O2x)
  !
  ! Kernel 2 FXC
  !
- Y_ALLOCATE(FXC_K_diagonal(BS_K_dim))
- Y_ALLOCATE(FXC(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
- Y_MEM(FXC_K_diagonal)
- Y_MEM(FXC)
+ Y_ALLOC(FXC_K_diagonal(BS_K_dim))
+ Y_ALLOC(FXC(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
+ Y_MEM_ALLOC(FXC_K_diagonal)
+ Y_MEM_ALLOC(FXC)
  O_x_dim=maxval(BS_nT_at_k)
  FXC_K_diagonal=0._SP
  FXC=(0._SP,0._SP)
@@ -115,8 +115,8 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
      !if (ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)
      if (ik1==ik2) O1x=O2x
      !
-     Y_ALLOCATE(BS_mat(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
-     Y_MEM(BS_mat)
+     Y_ALLOC(BS_mat(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
+     Y_MEM_ALLOC(BS_mat)
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL

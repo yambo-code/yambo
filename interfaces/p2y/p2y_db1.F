@@ -116,15 +116,15 @@ subroutine p2y_db1(en,k)
    !
    wf_ng      =1
    ng_vec     =1
-   Y_ALLOCATE(g_vec(1,3))
-   Y_MEM(g_vec)
+   Y_ALLOC(g_vec(1,3))
+   Y_MEM_ALLOC(g_vec)
    g_vec(1,:)=(/0,0,0/)
-   Y_ALLOCATE(wf_nc_k(k%nibz))
-   Y_MEM(wf_nc_k)
+   Y_ALLOC(wf_nc_k(k%nibz))
+   Y_MEM_ALLOC(wf_nc_k)
    wf_nc_k(:)=1
    wf_ncx    =1
-   Y_ALLOCATE(wf_igk(1,k%nibz))
-   Y_MEM(wf_igk)
+   Y_ALLOC(wf_igk(1,k%nibz))
+   Y_MEM_ALLOC(wf_igk)
    wf_igk(1,:)=1
    !
    call warning('IGK array and RL vectors skipped! ')

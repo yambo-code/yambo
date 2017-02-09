@@ -61,8 +61,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  if (G_shell == 1) then
    !
-   Y_ALLOCATE(Xk%pt(Xk%nibz,3))
-   Y_MEM(Xk%pt)
+   Y_ALLOC(Xk%pt(Xk%nibz,3))
+   Y_MEM_ALLOC(Xk%pt)
    Xk%pt(:,:)=k%pt(:Xk%nibz,:)
    !
    ! IBZ -> BZ

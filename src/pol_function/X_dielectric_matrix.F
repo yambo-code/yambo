@@ -276,10 +276,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    ! CLEAN (2)
    !
-   if (io_RESPONSE) then
-     Y_FREE(X_par(iq_mem)%blc)
-     call MATRIX_reset(X_par(iq_mem))
-   endif
+   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
    Y_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
    !

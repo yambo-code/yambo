@@ -86,16 +86,16 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! ... and local BLACS structures for the response function components
  !         ======================
  call MATRIX_init( "SLK", KERNEL , X%ng, 1 )
- Y_ALLOCATE(KERNEL%blc(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
- Y_MEM(KERNEL%blc)
+ Y_ALLOC(KERNEL%blc(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
+ Y_MEM_ALLOC(KERNEL%blc)
  KERNEL%blc=cZERO
  call MATRIX_init( "SLK", Xo , X%ng, 1 )
- Y_ALLOCATE(Xo%blc(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
- Y_MEM(Xo%blc)
+ Y_ALLOC(Xo%blc(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
+ Y_MEM_ALLOC(Xo%blc)
  Xo%blc=cZERO
  call MATRIX_init( "SLK", BUFFER , X%ng, PAR_n_freqs )
- Y_ALLOCATE(BUFFER%blc(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),PAR_n_freqs))
- Y_MEM(BUFFER%blc)
+ Y_ALLOC(BUFFER%blc(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),PAR_n_freqs))
+ Y_MEM_ALLOC(BUFFER%blc)
  BUFFER%blc=cZERO
  !
  do iw_par=1,maxval(PAR_n_freqs_global)

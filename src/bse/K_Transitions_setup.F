@@ -97,27 +97,27 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    n_loops=2
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    !
-   Y_ALLOCATE(PAR_IND_WF_b_and_k%element_2D(BS_bands(2),Xk%nibz))
-   Y_MEM(PAR_IND_WF_b_and_k%element_2D)
+   Y_ALLOC(PAR_IND_WF_b_and_k%element_2D(BS_bands(2),Xk%nibz))
+   Y_MEM_ALLOC(PAR_IND_WF_b_and_k%element_2D)
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
    if (index(BSS_mode,'h')/=0) then
-     Y_ALLOCATE(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
-     Y_MEM(PAR_IND_T_Haydock%element_1D)
+     Y_ALLOC(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
+     Y_MEM_ALLOC(PAR_IND_T_Haydock%element_1D)
      PAR_IND_T_Haydock%element_1D=.FALSE.
    endif
    !
  else
    !
-   Y_ALLOCATE(BS_nT_at_k(Xk%nibz))
-   Y_MEM(BS_nT_at_k)
+   Y_ALLOC(BS_nT_at_k(Xk%nibz))
+   Y_MEM_ALLOC(BS_nT_at_k)
    BS_nT_at_k=0
    n_loops=1
    !
  endif 
  !
- Y_ALLOCATE(i_T_at_k(Xk%nibz))
- Y_MEM(i_T_at_k)
+ Y_ALLOC(i_T_at_k(Xk%nibz))
+ Y_MEM_ALLOC(i_T_at_k)
  !
  call k_build_up_BZ_tables(Xk)
  !

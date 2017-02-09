@@ -24,7 +24,7 @@
 module BS_solvers
  !
  use pars,           ONLY:SP,schlen,lchlen
- use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block
+ use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
  use linear_algebra, ONLY:PAR_matrix
 #include <memory.h>
  !
@@ -138,34 +138,6 @@ module BS_solvers
  !
  contains
    !
-   subroutine BS_duplicate_K_structure(label,BLKs_in,BLKs_out)
-     !
-     use BS,        ONLY:n_BS_blks
-     character(*)   :: label
-     type(BS_block) :: BLKs_in(:),BLKs_out(:)
-     integer        :: i_B,tot_size
-     !
-     tot_size=0
-     !
-     do i_B=1,n_BS_blks
-       !
-       Y_ALLOCATE(BLKs_out(i_B)%mat(BLKS_in(i_B)%size(1),BLKS_in(i_B)%size(2)))
-       Y_MEM(BLKs_out(i_B)%mat)
-       !
-       tot_size=tot_size+BLKS_in(i_B)%size(1)*BLKS_in(i_B)%size(2)
-       !
-       BLKs_out(i_B)%ik         =BLKS_in(i_B)%ik
-       BLKs_out(i_B)%ip         =BLKS_in(i_B)%ip
-       BLKs_out(i_B)%iT_k       =BLKS_in(i_B)%iT_k
-       BLKs_out(i_B)%iT_p       =BLKS_in(i_B)%iT_p
-       BLKs_out(i_B)%size       =BLKS_in(i_B)%size
-       BLKs_out(i_B)%mode       =BLKS_in(i_B)%mode
-       BLKs_out(i_B)%coordinate =BLKS_in(i_B)%coordinate
-       !
-     enddo
-     !
-   end subroutine
-   !
    subroutine BS_mat_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
@@ -173,19 +145,19 @@ module BS_solvers
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
      if (.not.K_slk%kind=="SLK") then
-       Y_ALLOCATE(BS_mat(BS_H_dim,BS_H_dim))
-       Y_MEM(BS_mat)
+       Y_ALLOC(BS_mat(BS_H_dim,BS_H_dim))
+       Y_MEM_ALLOC(BS_mat)
        BS_mat    = cZERO
      endif
-     Y_ALLOCATE(BSS_dipoles(BS_H_dim))
-     Y_MEM(BSS_dipoles)
+     Y_ALLOC(BSS_dipoles(BS_H_dim))
+     Y_MEM_ALLOC(BSS_dipoles)
      BSS_dipoles = cZERO
-     Y_ALLOCATE(BSS_eh_table(BS_K_dim,3+n_sp_pol-1))
-     Y_MEM(BSS_eh_table)
-     Y_ALLOCATE(BSS_eh_E(BS_K_dim))
-     Y_MEM(BSS_eh_E)
-     Y_ALLOCATE(BSS_eh_f(BS_K_dim))
-     Y_MEM(BSS_eh_f)
+     Y_ALLOC(BSS_eh_table(BS_K_dim,3+n_sp_pol-1))
+     Y_MEM_ALLOC(BSS_eh_table)
+     Y_ALLOC(BSS_eh_E(BS_K_dim))
+     Y_MEM_ALLOC(BSS_eh_E)
+     Y_ALLOC(BSS_eh_f(BS_K_dim))
+     Y_MEM_ALLOC(BSS_eh_f)
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
@@ -196,23 +168,24 @@ module BS_solvers
        if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
      enddo
      if (W_is_allocated) then
-       Y_ALLOCATE(BSS_eh_W(BS_K_dim))
-       Y_MEM(BSS_eh_W)
+       Y_ALLOC(BSS_eh_W(BS_K_dim))
+       Y_MEM_ALLOC(BSS_eh_W)
        BSS_eh_W = rZERO
      endif
      if (Z_is_allocated) then
-       Y_ALLOCATE(BSS_eh_Z(BS_K_dim))
-       Y_MEM(BSS_eh_Z)
+       Y_ALLOC(BSS_eh_Z(BS_K_dim))
+       Y_MEM_ALLOC(BSS_eh_Z)
        BSS_eh_Z = cZERO
      endif
      if (E_SOC_nbands/=0) then
-       Y_ALLOCATE(BSS_eh_E_SOC_corr(2/n_sp_pol,BS_H_dim))
-       Y_MEM(BSS_eh_E_SOC_corr)
+       Y_ALLOC(BSS_eh_E_SOC_corr(2/n_sp_pol,BS_H_dim))
+       Y_MEM_ALLOC(BSS_eh_E_SOC_corr)
        BSS_eh_E_SOC_corr = rZERO
      endif
    end subroutine
    !
    subroutine BS_mat_free()
+     integer :: iB
      Y_FREE(BSS_eh_table)
      Y_FREE(BSS_dipoles)
      Y_FREE(BSS_eh_E)
@@ -221,6 +194,9 @@ module BS_solvers
      Y_FREE(BSS_eh_Z)
      Y_FREE(BSS_eh_E_SOC_corr)
      Y_FREE(BS_mat)
+     do iB=1,n_BS_blks
+        Y_FREE(BS_blk(iB)%mat)
+     enddo
    end subroutine
    !
    subroutine BS_HAYVEC_alloc(V)
@@ -231,8 +207,8 @@ module BS_solvers
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       Y_ALLOCATE(V(i_g)%fragment(BS_T_grp(i_g)%size))
-       Y_MEM(V(i_g)%fragment)
+       Y_ALLOC(V(i_g)%fragment(BS_T_grp(i_g)%size))
+       Y_MEM_ALLOC(V(i_g)%fragment)
      enddo
    end subroutine BS_HAYVEC_alloc
    !

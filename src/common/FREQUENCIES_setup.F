@@ -56,8 +56,8 @@ subroutine FREQUENCIES_setup(W)
  if (W%er(2)==W%er(1)) W%n_freqs=1
  W%n_freqs=nint(W%per_memstps*real(W%n_freqs)/100._SP)
  !
- Y_ALLOCATE(W%p(W%n_freqs))
- Y_MEM(W%p)
+ Y_ALLOC(W%p(W%n_freqs))
+ Y_MEM_ALLOC(W%p)
  !
  W%p(1)=cmplx(W%er(1),W%dr(1),SP)
  if (W%n_freqs==1) then

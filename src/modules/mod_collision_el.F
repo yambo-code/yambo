@@ -98,26 +98,26 @@ module collision_el
      if (present(TITLE)) then
        ggw%name=TITLE
      endif
-     Y_ALLOCATE(ggw%rho_tw_rs(fft_size))
-     Y_MEM(ggw%rho_tw_rs)
-     Y_ALLOCATE(ggw%WF_symm_i(fft_size,n_spinor))
-     Y_MEM(ggw%WF_symm_i)
-     Y_ALLOCATE(ggw%WF_symm_o(fft_size,n_spinor))
-     Y_MEM(ggw%WF_symm_o)
+     Y_ALLOC(ggw%rho_tw_rs(fft_size))
+     Y_MEM_ALLOC(ggw%rho_tw_rs)
+     Y_ALLOC(ggw%WF_symm_i(fft_size,n_spinor))
+     Y_MEM_ALLOC(ggw%WF_symm_i)
+     Y_ALLOC(ggw%WF_symm_o(fft_size,n_spinor))
+     Y_MEM_ALLOC(ggw%WF_symm_o)
      !
      if (present(NG)) then
        if (present(GRADIENT)) then
-         Y_ALLOCATE(ggw%rhotw(3*NG))
-         Y_MEM(ggw%rhotw)
+         Y_ALLOC(ggw%rhotw(3*NG))
+         Y_MEM_ALLOC(ggw%rhotw)
        else
-         Y_ALLOCATE(ggw%rhotw(NG))
-         Y_MEM(ggw%rhotw)
+         Y_ALLOC(ggw%rhotw(NG))
+         Y_MEM_ALLOC(ggw%rhotw)
        endif
        ggw%ngrho=NG
      endif
      if (present(NG_GAMP)) then
-       Y_ALLOCATE(ggw%gamp(NG_GAMP(1),NG_GAMP(2)))
-       Y_MEM(ggw%gamp)
+       Y_ALLOC(ggw%gamp(NG_GAMP(1),NG_GAMP(2)))
+       Y_MEM_ALLOC(ggw%gamp)
      endif
      !
    end subroutine

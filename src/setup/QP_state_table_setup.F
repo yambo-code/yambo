@@ -71,8 +71,8 @@ subroutine QP_state_table_setup(en)
    icheck=1
    do while(icheck/=0)
      Y_FREE(QP_i_limits)
-     Y_ALLOCATE(QP_i_limits(k_rng_lines,4))
-     Y_MEM(QP_i_limits)
+     Y_ALLOC(QP_i_limits(k_rng_lines,4))
+     Y_MEM_ALLOC(QP_i_limits)
      QP_i_limits=0
      call parser('QPkrange',QP_i_limits)
      icheck=sum(QP_i_limits(k_rng_lines,:))
@@ -91,8 +91,8 @@ subroutine QP_state_table_setup(en)
    rcheck=1._SP
    do while(rcheck>0._SP)
      Y_FREE(QP_r_limits)
-     Y_ALLOCATE(QP_r_limits(e_rng_lines,4))
-     Y_MEM(QP_r_limits)
+     Y_ALLOC(QP_r_limits(e_rng_lines,4))
+     Y_MEM_ALLOC(QP_r_limits)
      QP_r_limits(e_rng_lines,3:4)=(/0._SP,-1._SP/)
      call parser('QPerange',QP_r_limits)
      rcheck=QP_r_limits(e_rng_lines,4)-QP_r_limits(e_rng_lines,3)
@@ -136,8 +136,8 @@ subroutine QP_state_table_setup(en)
      !
      ! QP_state setup
      !
-     Y_ALLOCATE(QP_state(QP_nb,QP_nk))
-     Y_MEM(QP_state)
+     Y_ALLOC(QP_state(QP_nb,QP_nk))
+     Y_MEM_ALLOC(QP_state)
      QP_state(:,:)=.false.
      do i1=1,k_rng_lines
        QP_state(QP_i_limits(i1,3):QP_i_limits(i1,4),QP_i_limits(i1,1):QP_i_limits(i1,2))=.true.
@@ -156,8 +156,8 @@ subroutine QP_state_table_setup(en)
    else
      !
      if (.not.allocated(en%E)) return
-     Y_ALLOCATE(QP_state(QP_nb,QP_nk))
-     Y_MEM(QP_state)
+     Y_ALLOC(QP_state(QP_nb,QP_nk))
+     Y_MEM_ALLOC(QP_state)
      QP_state(:,:)=.true.
      !
    endif
@@ -214,8 +214,8 @@ subroutine QP_state_table_setup(en)
  QP_n_states=QP_n_states*n_sp_pol
  !
  if (.not.allocated(QP_table)) then
-   Y_ALLOCATE(QP_table(QP_n_states,3+n_sp_pol-1))
-   Y_MEM(QP_table)
+   Y_ALLOC(QP_table(QP_n_states,3+n_sp_pol-1))
+   Y_MEM_ALLOC(QP_table)
    QP_table=0
  endif
  !

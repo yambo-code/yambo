@@ -159,8 +159,8 @@ integer function io_SC_components(what,E_sc,ID)
      ! Make a copy of Kohn-Sham Energies in E_sc%Eo
      !
      if(l_sc_run .and. .not.allocated(E_sc%Eo) ) then
-       Y_ALLOCATE(E_sc%Eo(E_sc%nb,E_sc%nk,n_sp_pol))
-       Y_MEM(E_sc%Eo)
+       Y_ALLOC(E_sc%Eo(E_sc%nb,E_sc%nk,n_sp_pol))
+       Y_MEM_ALLOC(E_sc%Eo)
        E_sc%Eo=E_sc%E
      endif
    else

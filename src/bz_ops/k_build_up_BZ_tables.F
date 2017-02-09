@@ -55,13 +55,13 @@ subroutine k_build_up_BZ_tables(k)
  endif
  if (.not.k_table_is_ok) then
    Y_FREE(k%k_table)
-   Y_ALLOCATE(k%k_table(k%nibz,nsym))
-   Y_MEM(k%k_table)
+   Y_ALLOC(k%k_table(k%nibz,nsym))
+   Y_MEM_ALLOC(k%k_table)
  endif
  if (.not.s_table_is_ok) then
    Y_FREE(k%s_table)
-   Y_ALLOCATE(k%s_table(k%nibz,nsym))
-   Y_MEM(k%s_table)
+   Y_ALLOC(k%s_table(k%nibz,nsym))
+   Y_MEM_ALLOC(k%s_table)
  endif
  !
  call k_ibz2bz(k,'a',.false.)

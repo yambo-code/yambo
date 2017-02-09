@@ -39,10 +39,10 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  !
  IND_k_out_ID=IND_in_ID
  !
- Y_ALLOCATE(IND_k_out%n_of_elements(COMM%n_CPU))
- Y_ALLOCATE(IND_k_out%element_1D(nkibz))
- Y_MEM(IND_k_out%n_of_elements)
- Y_MEM(IND_k_out%element_1D)
+ Y_ALLOC(IND_k_out%n_of_elements(COMM%n_CPU))
+ Y_ALLOC(IND_k_out%element_1D(nkibz))
+ Y_MEM_ALLOC(IND_k_out%n_of_elements)
+ Y_MEM_ALLOC(IND_k_out%element_1D)
  !
  IND_k_out%n_of_elements(IND_k_out_ID+1)=0
  IND_k_out%element_1D(:)=.FALSE.

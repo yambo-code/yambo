@@ -35,7 +35,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
 &                              BZ_DbGd_nbands,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_kpts,&
 &                              BZ_DbGd_tot_nkpts,BZ_DbGd_nkpts,n_sp_pol,BZ_DbGd_max_filling,&
-&                              BZ_DbGd_ipol_weight,E_reset,DbGd_is_symmetry_expanded
+&                              BZ_DbGd_weight,E_reset,DbGd_is_symmetry_expanded
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,          ONLY:PARALLEL_index
  use LIVE_t,              ONLY:live_timing
@@ -355,8 +355,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! DbGd double grid interpolation weights, not used here, but must be defined.
  !
- allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
- BZ_DbGd_ipol_weight = 1.0_SP
+ allocate(BZ_DbGd_weight(BZ_DbGd_max_filling))
+ BZ_DbGd_weight = 1.0_SP
  !
  allocate(Xen%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
  !
@@ -403,7 +403,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! CLEAN
  !
- deallocate(BZ_DbGd_nkpt,BZ_DbGd_table,Xen%E_DbGd,BZ_DbGd_ipol_weight)
+ deallocate(BZ_DbGd_nkpt,BZ_DbGd_table,Xen%E_DbGd,BZ_DbGd_weight)
  if(allocated(BZ_SYM_table)) deallocate(BZ_SYM_table)
  if(allocated(BZ_DbGd_kpts))  deallocate(BZ_DbGd_kpts)
  call k_ibz2bz(Xk,'d',.false.) 

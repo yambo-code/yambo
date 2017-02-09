@@ -66,8 +66,8 @@ subroutine K_inversion_restart(iq,W)
    !
    W_db%n_freqs=K_INV_EPS%n_freqs
    !
-   Y_ALLOCATE(freq_table(W_db%n_freqs+W%n_freqs))
-   Y_MEM(freq_table)
+   Y_ALLOC(freq_table(W_db%n_freqs+W%n_freqs))
+   Y_MEM_ALLOC(freq_table)
    !
    ! Here I create a new energy array that merges the db to the current energies. 
    !
@@ -177,8 +177,8 @@ subroutine K_inversion_restart(iq,W)
      !
      if (TYP%what=="EPS") then
        Y_FREE(Epsilon_ii)
-       Y_ALLOCATE(Epsilon_ii(BSS_n_freqs,4))
-       Y_MEM(Epsilon_ii)
+       Y_ALLOC(Epsilon_ii(BSS_n_freqs,4))
+       Y_MEM_ALLOC(Epsilon_ii)
        Epsilon_ii(:,1)=W%p(:)
        Epsilon_ii(:,2)=TYP%spectra(:,1)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
        Epsilon_ii(:,3)=TYP%spectra(:,2)
@@ -187,8 +187,8 @@ subroutine K_inversion_restart(iq,W)
 #if defined _PL
      if (TYP%what=="PLS") then
        Y_FREE(PL)
-       Y_ALLOCATE(PL(BSS_n_freqs,3))
-       Y_MEM(PL)
+       Y_ALLOC(PL(BSS_n_freqs,3))
+       Y_MEM_ALLOC(PL)
        PL(:,1)=W%p(:)
        PL(:,2)=TYP%spectra(:,1)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
        PL(:,3)=TYP%spectra(:,2)

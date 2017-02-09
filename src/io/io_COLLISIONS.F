@@ -195,8 +195,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    ! States
    !
    if (read_is_on(ID).and..not.allocated(COLL%state)) then
-     Y_ALLOCATE(COLL%state(COLL%N,4))
-     Y_MEM(COLL%state)
+     Y_ALLOC(COLL%state(COLL%N,4))
+     Y_MEM_ALLOC(COLL%state)
    endif
    call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/COLL%N,4/))
    call io_bulk(ID,I2=COLL%state)

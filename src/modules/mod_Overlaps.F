@@ -61,12 +61,12 @@ module Overlaps_m
      type(bz_samp), intent(in) :: Xk
      type(levels),  intent(in) :: Xen
      !
-     Y_ALLOCATE(S_det(3,Xk%nbz))
-     Y_MEM(S_det)
-     Y_ALLOCATE(Sm1_plus(3,Xen%nbf,Xen%nbf,Xk%nbz))
-     Y_MEM(Sm1_plus)
-     Y_ALLOCATE(Sm1_minus(3,Xen%nbf,Xen%nbf,Xk%nbz))
-     Y_MEM(Sm1_minus)
+     Y_ALLOC(S_det(3,Xk%nbz))
+     Y_MEM_ALLOC(S_det)
+     Y_ALLOC(Sm1_plus(3,Xen%nbf,Xen%nbf,Xk%nbz))
+     Y_MEM_ALLOC(Sm1_plus)
+     Y_ALLOC(Sm1_minus(3,Xen%nbf,Xen%nbf,Xk%nbz))
+     Y_MEM_ALLOC(Sm1_minus)
      !
    end subroutine S_alloc
    !

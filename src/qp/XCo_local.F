@@ -43,7 +43,6 @@ subroutine XCo_local(E,Xk)
  use drivers,       ONLY:l_real_time
  use parallel_m,    ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
  use matrix_operate,ONLY:UP_matrix_index,matrix_index
- use SC,            ONLY:SC_bands
 #endif
 #if defined _SC
  use hamiltonian,   ONLY:V_xc_sc,V_hartree_sc
@@ -71,11 +70,11 @@ subroutine XCo_local(E,Xk)
  !
  ! Allocation 
  !
- Y_ALLOCATE(V_xc(fft_size,n_spin))
- Y_MEM(V_xc)
+ Y_ALLOC(V_xc(fft_size,n_spin))
+ Y_MEM_ALLOC(V_xc)
  !
- Y_ALLOCATE(magn(fft_size,3))
- Y_MEM(magn)
+ Y_ALLOC(magn(fft_size,3))
+ Y_MEM_ALLOC(magn)
  !
  ! Precompiler options in case a non-DFT potential is required
  !
@@ -102,10 +101,10 @@ subroutine XCo_local(E,Xk)
    !
    ! ...SC EXX and EXX+LDA_C
    !
-   Y_ALLOCATE(V_xc_sc(fft_size,n_spin))
-   Y_ALLOCATE(V_hartree_sc(fft_size,n_spin))
-   Y_MEM(V_xc_sc)
-   Y_MEM(V_hartree_sc)
+   Y_ALLOC(V_xc_sc(fft_size,n_spin))
+   Y_ALLOC(V_hartree_sc(fft_size,n_spin))
+   Y_MEM_ALLOC(V_xc_sc)
+   Y_MEM_ALLOC(V_hartree_sc)
    SC_fft_size=fft_size
    call load_SC_components('V',COM_=REP,MODE_=VERIFY)
    !
@@ -176,8 +175,8 @@ subroutine XCo_local(E,Xk)
  !
  if (n_spin==2) then
    !
-   Y_ALLOCATE(V_xc_mat(fft_size,n_spin,n_spin))
-   Y_MEM(V_xc_mat)
+   Y_ALLOC(V_xc_mat(fft_size,n_spin,n_spin))
+   Y_MEM_ALLOC(V_xc_mat)
    !
    call Build_V_xc_mat(V_xc,V_xc_mat)
    !

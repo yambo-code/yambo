@@ -73,16 +73,16 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  lowlim=1
  if (present(low_range))  lowlim=low_range
  !
- Y_ALLOCATE(px%n_of_elements(ncpu_loop))
- Y_MEM(px%n_of_elements)
+ Y_ALLOC(px%n_of_elements(ncpu_loop))
+ Y_MEM_ALLOC(px%n_of_elements)
  px%n_of_elements=0
  !
  if (uplim(1)==0) goto 1
  !
  if (nindxs==1.and.local_CONSECUTIVE) then
    !
-   Y_ALLOCATE(px%element_1D(uplim(1)))
-   Y_MEM(px%element_1D)
+   Y_ALLOC(px%element_1D(uplim(1)))
+   Y_MEM_ALLOC(px%element_1D)
    allocate(i_done(uplim(1)))
    px%element_1D=.false.
    i_done=1
@@ -111,16 +111,16 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
    !
  else if (nindxs==1.and..not.local_CONSECUTIVE) then
    if (.not.allocated(px%weight_1D)) then
-     Y_ALLOCATE(px%weight_1D(uplim(1)))
-     Y_MEM(px%weight_1D)
+     Y_ALLOC(px%weight_1D(uplim(1)))
+     Y_MEM_ALLOC(px%weight_1D)
      px%weight_1D=1
      if (lowlim(1)>1) px%weight_1D(1:lowlim(1)-1)=0
    endif
    allocate(i_done(uplim(1)))
-   Y_ALLOCATE(px%element_1D(uplim(1)))
-   Y_MEM(px%element_1D)
-   Y_ALLOCATE(px%first_of_1D(ncpu_loop))
-   Y_MEM(px%first_of_1D)
+   Y_ALLOC(px%element_1D(uplim(1)))
+   Y_MEM_ALLOC(px%element_1D)
+   Y_ALLOC(px%first_of_1D(ncpu_loop))
+   Y_MEM_ALLOC(px%first_of_1D)
    px%first_of_1D(myid_loop+1)=-1
    px%element_1D=.false.
    tot_steps=sum(px%weight_1D)
@@ -166,8 +166,8 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
    !
    if (par_kind_2D==1) call error(' PARALLEL index structure not implemented')
    !
-   Y_ALLOCATE(px%element_2D(uplim(1),uplim(2)))
-   Y_MEM(px%element_2D)
+   Y_ALLOC(px%element_2D(uplim(1),uplim(2)))
+   Y_MEM_ALLOC(px%element_2D)
    px%element_2D=.false.
    !
    if (present(MASK)) then

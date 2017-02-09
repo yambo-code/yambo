@@ -71,14 +71,14 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  real(SP),allocatable:: in_sorted(:)
  !
  if(npts==0) then
-   Y_ALLOCATE(ordered_grid_index(npts))
-   Y_MEM(ordered_grid_index)
-   Y_ALLOCATE(coarse_grid_index(npts))
-   Y_MEM(coarse_grid_index)
-   Y_ALLOCATE(bare_grid_N(npts))
-   Y_MEM(bare_grid_N)
-   Y_ALLOCATE(coarse_grid_Pt(npts))
-   Y_MEM(coarse_grid_Pt)
+   Y_ALLOC(ordered_grid_index(npts))
+   Y_MEM_ALLOC(ordered_grid_index)
+   Y_ALLOC(coarse_grid_index(npts))
+   Y_MEM_ALLOC(coarse_grid_index)
+   Y_ALLOC(bare_grid_N(npts))
+   Y_MEM_ALLOC(bare_grid_N)
+   Y_ALLOC(coarse_grid_Pt(npts))
+   Y_MEM_ALLOC(coarse_grid_Pt)
    coarse_grid_N=0
    return
  endif   
@@ -89,14 +89,14 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    ! the response function is calculated using an external set of
    ! k-points/bands.
    !
-   Y_ALLOCATE(ordered_grid_index(npts))
-   Y_MEM(ordered_grid_index)
-   Y_ALLOCATE(coarse_grid_index(npts))
-   Y_MEM(coarse_grid_index)
-   Y_ALLOCATE(bare_grid_N(npts))
-   Y_MEM(bare_grid_N)
-   Y_ALLOCATE(coarse_grid_Pt(npts))
-   Y_MEM(coarse_grid_Pt)
+   Y_ALLOC(ordered_grid_index(npts))
+   Y_MEM_ALLOC(ordered_grid_index)
+   Y_ALLOC(coarse_grid_index(npts))
+   Y_MEM_ALLOC(coarse_grid_index)
+   Y_ALLOC(bare_grid_N(npts))
+   Y_MEM_ALLOC(bare_grid_N)
+   Y_ALLOC(coarse_grid_Pt(npts))
+   Y_MEM_ALLOC(coarse_grid_Pt)
    coarse_grid_N=npts
    bare_grid_N=1
    coarse_grid_Pt=bg_pt
@@ -164,14 +164,14 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  enddo
  coarse_grid_N=i_cg
  !
- Y_ALLOCATE(ordered_grid_index(npts))
- Y_MEM(ordered_grid_index)
- Y_ALLOCATE(coarse_grid_index(npts))
- Y_MEM(coarse_grid_index)
- Y_ALLOCATE(bare_grid_N(coarse_grid_N))
- Y_MEM(bare_grid_N)
- Y_ALLOCATE(coarse_grid_Pt(coarse_grid_N))
- Y_MEM(coarse_grid_Pt)
+ Y_ALLOC(ordered_grid_index(npts))
+ Y_MEM_ALLOC(ordered_grid_index)
+ Y_ALLOC(coarse_grid_index(npts))
+ Y_MEM_ALLOC(coarse_grid_index)
+ Y_ALLOC(bare_grid_N(coarse_grid_N))
+ Y_MEM_ALLOC(bare_grid_N)
+ Y_ALLOC(coarse_grid_Pt(coarse_grid_N))
+ Y_MEM_ALLOC(coarse_grid_Pt)
  !
  ordered_grid_index=ipos(:,2)
  !

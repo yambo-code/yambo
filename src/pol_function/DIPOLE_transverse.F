@@ -90,8 +90,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  io_Vnl_err      = io_err(3)
  !
  if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-   Y_ALLOCATE(kbv(wf_ng,pp_kbv_dim,4,n_spinor))
-   Y_MEM(kbv)
+   Y_ALLOC(kbv(wf_ng,pp_kbv_dim,4,n_spinor))
+   Y_MEM_ALLOC(kbv)
  endif
  !
  ! WF load

@@ -30,7 +30,7 @@ subroutine bxsf_read(Xk,Xen)
  use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
  use electrons,           ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,&
                                BZ_DbGd_max_filling,BZ_DbGd_nbands, &
-                               BZ_DbGd_tot_nkpts,BZ_DbGd_ipol_weight,n_spin
+                               BZ_DbGd_tot_nkpts,BZ_DbGd_weight,n_spin
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
@@ -247,8 +247,8 @@ subroutine bxsf_read(Xk,Xen)
    call live_timing()
    ! 
    BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
-   allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
-   BZ_DbGd_ipol_weight = 1.0_SP
+   allocate(BZ_DbGd_weight(BZ_DbGd_max_filling))
+   BZ_DbGd_weight = 1.0_SP
  else
    call section('*','Employ double grid method' )
    call msg('s',':: Perform polynomial interpolation of order :',ord_dgrid_ipol)
@@ -301,6 +301,6 @@ subroutine bxsf_read(Xk,Xen)
  deallocate(nkpoints_gengrid)
  deallocate(startkpoint)
  deallocate(recip_lattice)
- deallocate(BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_ipol_weight)
+ deallocate(BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_weight)
  !
 end subroutine

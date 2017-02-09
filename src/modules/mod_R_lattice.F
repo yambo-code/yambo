@@ -155,21 +155,21 @@ module R_lattice
    !
    subroutine qindx_alloc()
      !
-     Y_ALLOCATE(qindx_X(nqibz,nXkbz,2))
-     Y_MEM(qindx_X)
+     Y_ALLOC(qindx_X(nqibz,nXkbz,2))
+     Y_MEM_ALLOC(qindx_X)
      if (.not.Xk_grid_is_uniform) return
      !
-     Y_ALLOCATE(qindx_S(qp_states_k(2),nqbz,2))
-     Y_MEM(qindx_S)
+     Y_ALLOC(qindx_S(qp_states_k(2),nqbz,2))
+     Y_MEM_ALLOC(qindx_S)
      !     
      if (bse_scattering) then
-       Y_ALLOCATE(qindx_B(nXkbz,nXkbz,2))
-       Y_MEM(qindx_B)
+       Y_ALLOC(qindx_B(nXkbz,nXkbz,2))
+       Y_MEM_ALLOC(qindx_B)
      endif
      !
      if (coll_scattering) then
-       Y_ALLOCATE(qindx_C(nXkbz,nXkbz,2))
-       Y_MEM(qindx_C)
+       Y_ALLOC(qindx_C(nXkbz,nXkbz,2))
+       Y_MEM_ALLOC(qindx_C)
      endif
      !
    end subroutine
@@ -206,32 +206,32 @@ module R_lattice
      BZo%nbz   = BZi%nbz
      BZo%units = BZi%units
      BZo%description = BZi%description
-     Y_ALLOCATE(BZo%pt(BZo%nibz,3))
-     Y_MEM(BZo%pt)
+     Y_ALLOC(BZo%pt(BZo%nibz,3))
+     Y_MEM_ALLOC(BZo%pt)
      BZo%pt(:,:) = BZi%pt(:,:)
      if (allocated( BZi%nstar )) then
-       Y_ALLOCATE(BZo%nstar(BZo%nibz))
-       Y_MEM(BZo%nstar)
+       Y_ALLOC(BZo%nstar(BZo%nibz))
+       Y_MEM_ALLOC(BZo%nstar)
        BZo%nstar=BZi%nstar
      endif
      if (allocated( BZi%weights )) then
-       Y_ALLOCATE(BZo%weights(BZo%nibz))
-       Y_MEM(BZo%weights)
+       Y_ALLOC(BZo%weights(BZo%nibz))
+       Y_MEM_ALLOC(BZo%weights)
        BZo%weights=BZi%weights
      endif
      if (allocated( BZi%star )) then
-       Y_ALLOCATE(BZo%star(BZo%nibz,size(BZi%star,2)))
-       Y_MEM(BZo%star)
+       Y_ALLOC(BZo%star(BZo%nibz,size(BZi%star,2)))
+       Y_MEM_ALLOC(BZo%star)
        BZo%star=BZi%star
      endif
      if (allocated( BZi%sstar )) then
-       Y_ALLOCATE(BZo%sstar(BZo%nbz,2))
-       Y_MEM(BZo%sstar)
+       Y_ALLOC(BZo%sstar(BZo%nbz,2))
+       Y_MEM_ALLOC(BZo%sstar)
        BZo%sstar=BZi%sstar
      endif
      if (allocated( BZi%ptbz )) then
-       Y_ALLOCATE(BZo%ptbz(BZo%nbz,3))
-       Y_MEM(BZo%ptbz)
+       Y_ALLOC(BZo%ptbz(BZo%nbz,3))
+       Y_MEM_ALLOC(BZo%ptbz)
        BZo%ptbz=BZi%ptbz
      endif
    return

@@ -23,9 +23,17 @@
 !
 integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
  !
+ use pars,          ONLY:schlen,lchlen
  use stderr,        ONLY:string_pack
+ use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,&
+&                        io_raw_extension,mk_dir,io_extension,io_folder,io_type,netcdf_call,&
+&                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE
+ use netcdf,        ONLY:nf90_open,nf90_create,nf90_enddef
  use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
-&                            num_of_alternative_locations,n_alt_jobstr
+&                        num_of_alternative_locations,n_alt_jobstr
+ !
+ implicit none
+ !
  character(*)           :: desc
  integer                :: type,ID
  character(*), optional :: subfolder
@@ -36,17 +44,17 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
  integer          ::CREATE_MODE,i_jobstr
  character(lchlen)::alternative_file(num_of_alternative_locations),folder
  character(schlen)::subfolder_
- logical          ::file_found,no_full_RESET_,OWRITE_
+ logical          ::file_found,full_RESET,OWRITE_
  !
- no_full_RESET_=.false.
- if (present(no_full_RESET)) no_full_RESET_=no_full_RESET
+ full_RESET=.true.
+ if (present(no_full_RESET)) full_RESET=.not.no_full_RESET
  !
  OWRITE_=.false.
  if (present(OWRITE)) OWRITE_=OWRITE
  !
  io_connect=0
- if ( (read_is_on(ID).and..not.IO_read).or.&
-&         (write_is_on(ID).and..not.IO_write) ) then
+ if ( ( read_is_on(ID).and..not.IO_read ).or.&
+&     (write_is_on(ID).and..not.IO_write)      ) then
    io_connect=IO_NO_DATABASE
    call io_reset(ID)
    return
@@ -101,18 +109,10 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
  !
  if (open_is_on(ID).and.write_is_on(ID)) then
    !
-   CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
-   !
-#if defined _NC_CLASSIC
-   CREATE_MODE=ior(nf90_share,nf90_classic)
-#elif defined _HDF5_IO
-   CREATE_MODE=ior(nf90_share,nf90_hdf5)
-#endif
-   !
    if( file_exists(trim(io_file(ID))) .and. (.not.OWRITE_) ) then
-     call netcdf_call(nf90_open(trim(io_file(ID)),ior(nf90_write,nf90_share),io_unit(ID)),ID)
+     call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
    else
-     call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)),ID)
+     call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
      call netcdf_call(nf90_enddef(io_unit(ID)),ID)
    endif
    !
@@ -128,51 +128,24 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
      !
      file_found=.FALSE.
      !
-     if (file_exists(trim(alternative_file(1)))) then
-       io_file(ID)=alternative_file(1)
-       file_found=.TRUE.
-     else if (file_exists(trim(alternative_file(2)))) then
-       io_file(ID)=alternative_file(2)
-       file_found=.TRUE.
-     else if (file_exists(trim(alternative_file(3)))) then
-       io_file(ID)=alternative_file(3)
-       file_found=.TRUE.
-     else if (file_exists(trim(alternative_file(4)))) then
-       io_file(ID)=alternative_file(4)
-       file_found=.TRUE.
-     endif
-     !
-     if (.not.file_found) then
-       do i_jobstr=1,n_alt_jobstr
-         if (file_exists(trim(alternative_file(3+2*i_jobstr)))) then
-           io_file(ID)=alternative_file(3+2*i_jobstr)
-           file_found=.TRUE.
-           exit
-         else if (file_exists(trim(alternative_file(4+2*i_jobstr)))) then
-           io_file(ID)=alternative_file(4+2*i_jobstr)
-           file_found=.TRUE.
-           exit
-         endif
-       enddo
-     endif
+     do i_jobstr=1,4+2*n_alt_jobstr
+       file_found=file_exists(trim(alternative_file(i_jobstr)))
+       if(file_found) exit
+     enddo
      !
      if (.not.file_found) then
        io_connect=IO_NO_DATABASE
-       if (no_full_RESET_) then
-         io_file(ID)=''
-       else
-         call io_reset(ID)
-         io_type(ID)=0
-       endif
+       if (.not.full_RESET) io_file(ID)=''
+       if (     full_RESET) call io_reset(ID)
        return
      endif
+     !
+     io_file(ID)=alternative_file(i_jobstr)
+     !
    endif
    !
-   if (type==-2) then
-     open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
-   else
-     call netcdf_call(nf90_open(trim(io_file(ID)),nf90_nowrite,io_unit(ID)),ID)
-   endif
+   if (type==-2) open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
+   if (type/=-2) call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
    !
    io_type(ID)=type
    !

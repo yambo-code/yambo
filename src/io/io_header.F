@@ -47,6 +47,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
 &                        G_WF_xc_string,X_WF_xc_string,K_WF_xc_string
  !
  implicit none
+ !
  integer               :: ID
  logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG
  character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
@@ -60,7 +61,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
  logical             :: WARN,xc_kind_force
- character(schlen)   :: xc_string_kinds(10)
+ character(schlen)   :: xc_string_kinds(10),PARALLEL_STRUCTURE_
  !
  io_header=0
  !
@@ -243,7 +244,10 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    endif
  endif
  !
- if (present(PARALLEL_STRUCTURE)) then
+ PARALLEL_STRUCTURE_="NONE"
+ if (present(PARALLEL_STRUCTURE)) PARALLEL_STRUCTURE_=trim(PARALLEL_STRUCTURE)
+
+ if (trim(PARALLEL_STRUCTURE_)/="NONE") then
    ! 
    if (trim(PARALLEL_STRUCTURE)=="Response_G_space_Zero_Momentum") p_structure=1
    if (trim(PARALLEL_STRUCTURE)=="Response_G_space_Finite_Momentum") p_structure=2

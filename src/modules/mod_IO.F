@@ -92,6 +92,18 @@ module IO_m
  integer, parameter:: IO_NO_DATABASE=-1,IO_INCOMPATIBLE_VAR=-2,IO_GENERIC_ERROR=-3,&
 &                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0,IO_OUTDATED_DB=-5,IO_NOT_ALLOWED=-6
  !
+ ! I/O create / read / write modes
+ !
+ integer, parameter:: IO_WRITE_MODE =ior(nf90_share,nf90_write)
+ integer, parameter:: IO_READ_MODE  =               nf90_nowrite
+ !
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+#if defined _NC_CLASSIC
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_classic)
+#elif defined _HDF5_IO
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_hdf5)
+#endif
+ !
  ! Units
  !
  integer, parameter:: max_io_units=10
@@ -100,6 +112,7 @@ module IO_m
  integer :: io_com(max_io_units)
  integer :: io_mode(max_io_units)
  integer :: io_status(max_io_units)
+ integer :: io_type(max_io_units)
  integer :: io_sec(max_io_units,max_active_sections)
  integer :: io_rec_pos(max_io_units)
  integer :: io_unit(max_io_units)
@@ -118,7 +131,6 @@ module IO_m
                                                               ! It differs from io_extension as it does not contain any
                                                               ! i_fragment/j_fragment.
  character(schlen)          :: io_extension(max_io_units)
- integer                    :: io_type(max_io_units)
  !
  ! Save variables (to try different DB locations at the same time)
  !
@@ -250,18 +262,10 @@ module IO_m
      !
      if ( (.not.FORCE_) .and. (.not.close_is_on(ID)) .and. (io_status(ID)>=0) ) return
      !
-     if ( (io_type(ID)/=-2.and.file_is_open(io_file(ID),ID)) .or.&
-&         (io_type(ID)==-2.and.file_is_open(io_file(ID)))          ) then
-       !
-       if (io_type(ID)==-2) then
-         close(unit=io_unit(ID))
-       else
-         call netcdf_call(nf90_close(io_unit(ID)),ID)
-       endif
-       !
-       io_unit(ID)=0
-       !
-     endif
+     if ( io_type(ID)/=-2.and.file_is_open(io_file(ID),ID) ) call netcdf_call(nf90_close(io_unit(ID)),ID)
+     if ( io_type(ID)==-2.and.file_is_open(io_file(ID))    ) close(unit=io_unit(ID))
+     !
+     io_unit(ID)=0
      !
      if (io_resetable(ID)) call io_reset(ID)
      !
@@ -325,6 +329,7 @@ module IO_m
    subroutine io_reset(ID)
      integer :: ID
      io_status(ID)=0
+     io_type(ID)=0
      io_unit(ID)=0
      io_mode(ID)=0
      io_sec(ID,:)=0

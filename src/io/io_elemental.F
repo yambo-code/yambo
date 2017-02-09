@@ -36,7 +36,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                  io_status,DUMP,REP,LOG,io_com,io_file,&
 &                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
  implicit none
- integer               :: ID,error
+ !
+ integer               :: ID
  integer,parameter     :: MAX_DB_ELEMENTS=100
  character(*),optional :: VAR,OP(:)
  integer,     optional :: VAR_SZ,MENU

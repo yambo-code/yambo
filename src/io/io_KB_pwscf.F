@@ -95,6 +95,7 @@ integer function io_KB_pwscf(ID)
    call io_bulk(ID,I1=pp_n_l_comp)
    !
    if (read_is_on(ID)) then
+     Y_MEM_FREE(pp_table)
      Y_FREE(pp_table)
      Y_ALLOC(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
      Y_MEM_ALLOC(pp_table)

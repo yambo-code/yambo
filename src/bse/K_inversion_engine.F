@@ -131,6 +131,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  enddo
  !
  if (do_it_full) then
+   Y_MEM_FREE(Mm1)
    Y_FREE(Mm1)
  else
    call live_timing()

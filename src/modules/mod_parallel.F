@@ -530,10 +530,15 @@ module parallel_m
    !
    subroutine PP_indexes_reset(px)
      type(PP_indexes)::px
+     Y_MEM_FREE(px%element_1D)
      Y_FREE(px%element_1D)
+     Y_MEM_FREE(px%element_2D)
      Y_FREE(px%element_2D)
+     Y_MEM_FREE(px%weight_1D)
      Y_FREE(px%weight_1D)
+     Y_MEM_FREE(px%n_of_elements)
      Y_FREE(px%n_of_elements)
+     Y_MEM_FREE(px%first_of_1D)
      Y_FREE(px%first_of_1D)
    end subroutine
    !

@@ -74,8 +74,11 @@ module Overlaps_m
      !
      use drivers,   ONLY:l_real_time
      !
+     Y_MEM_FREE(S_det)
      Y_FREE(S_det)
+     Y_MEM_FREE(Sm1_plus)
      Y_FREE(Sm1_plus)
+     Y_MEM_FREE(Sm1_minus)
      Y_FREE(Sm1_minus)
      !
    end subroutine S_dealloc    

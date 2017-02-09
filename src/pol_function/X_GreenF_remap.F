@@ -135,7 +135,9 @@ subroutine X_GreenF_remap(bands,E,W)
  ! Note that the spectral function of the Green Functions defined here have 
  ! an integral equal to (Z*pi)
  !
+ Y_MEM_FREE(E%GreenF)
  Y_FREE(E%GreenF)
+ Y_MEM_FREE(E%GreenF_W)
  Y_FREE(E%GreenF_W)
  E%GreenF_n_E_steps=W_A%n_freqs
  Y_ALLOC(E%GreenF(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
@@ -156,6 +158,7 @@ subroutine X_GreenF_remap(bands,E,W)
  ! CLEAN
  !
  call W_reset(W_A)
+ Y_MEM_FREE(E_map%GreenF)
  Y_FREE(E_map%GreenF)
  call E_reset(E_map)
  !

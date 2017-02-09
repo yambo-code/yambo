@@ -88,9 +88,11 @@ module PHOTOLUM
      if (.not.l_photolum) return
      !
      if (allocated(BSS_dipoles_PL)) then
+       Y_MEM_FREE(BSS_dipoles_PL)
        Y_FREE(BSS_dipoles_PL)
      endif
      if (allocated(BSS_PL_f)) then
+       Y_MEM_FREE(BSS_PL_f)
        Y_FREE(BSS_PL_f)
      endif
      !

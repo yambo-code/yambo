@@ -176,6 +176,7 @@ integer function io_RT_components(what,ID)
    if (l_elph_scatt) then
      !
      if (read_is_on(ID)) then
+       Y_MEM_FREE(q_weight_RT)
        Y_FREE(q_weight_RT)
        Y_ALLOC(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
        Y_MEM_ALLOC(q_weight_RT)

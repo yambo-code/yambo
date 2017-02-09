@@ -244,6 +244,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  ! CLEAN UP
  !
+ Y_MEM_FREE(i_T_at_k)
  Y_FREE(i_T_at_k)
  !
  contains

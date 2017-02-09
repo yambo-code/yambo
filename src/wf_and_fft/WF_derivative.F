@@ -128,7 +128,9 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  if(use_live_timing) call live_timing()
  call WF_free(WF)
  !
+ Y_MEM_FREE(wf_DP)
  Y_FREE(wf_DP)
+ Y_MEM_FREE(wf_der)
  Y_FREE(wf_der)
  !
 end subroutine

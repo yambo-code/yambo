@@ -108,12 +108,14 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
      !
    case("Hsc_clean")
      if (allocated(H_nl_sc)) then
+       Y_MEM_FREE(H_nl_sc)
        Y_FREE(H_nl_sc)
        return
      endif
      !
    case("WF_clean")
      if (allocated(SC_R)) then
+       Y_MEM_FREE(SC_R)
        Y_FREE(SC_R)
        return
      endif

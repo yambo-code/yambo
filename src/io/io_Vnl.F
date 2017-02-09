@@ -125,6 +125,7 @@ integer function io_Vnl(X,Xen,ID)
      !
    enddo
    !
+   Y_MEM_FREE(Vnl_disk)
    Y_FREE(Vnl_disk)
    !
  endif

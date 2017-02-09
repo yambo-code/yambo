@@ -175,6 +175,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
    Y_MEM_ALLOC(Sc_W(i1)%p)
    forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=Eqp_raxis(i1,1)+(i2-1)*QP_dSc_delta
  enddo
+ Y_MEM_FREE(QP_solver_state)
  Y_FREE(QP_solver_state)
  !
  call W2Sc_local_call()
@@ -195,8 +196,11 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  do i1=1,QP_n_states
    call W_reset(Sc_W(i1))
  enddo
+ Y_MEM_FREE(QP_W)
  Y_FREE(QP_W)
+ Y_MEM_FREE(QP_W_dr)
  Y_FREE(QP_W_dr)
+ Y_MEM_FREE(QP_W_er)
  Y_FREE(QP_W_er)
  call PP_redux_wait()
  !

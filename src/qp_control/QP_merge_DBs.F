@@ -135,6 +135,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
  do i_db=1,n_dbs
    call QP_reset(qp2merge(i_db))
  enddo
+ Y_MEM_FREE(dummy_table)
  Y_FREE(dummy_table)
  !
 end subroutine

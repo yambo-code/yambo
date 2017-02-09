@@ -222,6 +222,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp) 
+ Y_MEM_FREE(local_rhotw)
  Y_FREE(local_rhotw)
  !
 #if defined _TIMING

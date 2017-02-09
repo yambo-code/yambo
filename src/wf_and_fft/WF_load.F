@@ -199,10 +199,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
+     Y_MEM_FREE(WF%state)
      Y_FREE(WF%state)
      Y_ALLOC(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
      Y_MEM_ALLOC(WF%state)
      WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
+     Y_MEM_FREE(states_to_load)
      Y_FREE(states_to_load)
    endif
  endif
@@ -226,6 +228,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (found_SC_DB.and.compatible_SC_DB) then
    !
    if(allocated(states_to_load).and..not.force_WFo_) then
+     Y_MEM_FREE(states_to_load)
      Y_FREE(states_to_load)
      call warning(' [WF] WF-distribution turned off, not compatible with SC wave functions')
    endif
@@ -370,9 +373,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! CLEAN
  !
  if (.not.buffer_is_ok) then
+   Y_MEM_FREE(wf_disk)
    Y_FREE(wf_disk)
  endif
  !
+ Y_MEM_FREE(wf_DP)
  Y_FREE(wf_DP)
  !
  ! The states_to_load is a temporary array that points to the states to be loaded
@@ -388,6 +393,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if(allocated(states_to_load)) then
    !
+   Y_MEM_FREE(WF%state)
    Y_FREE(WF%state)
    !
    Y_ALLOC(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
@@ -404,6 +410,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    endif
    !
    if (clean_up_states) then
+     Y_MEM_FREE(states_to_load)
      Y_FREE(states_to_load)
    endif
    !

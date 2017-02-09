@@ -567,11 +567,13 @@ subroutine K_Haydock(iq,W)
  if (use_cpl_scheme)  then
    call BS_HAYVEC_free(V0)
    if (allocated(V0)) deallocate(V0)
+   Y_MEM_FREE(Cf)
    Y_FREE(Cf)
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
+   Y_MEM_FREE(Cf_kerr)
    Y_FREE(Cf_kerr)
 #endif
    !

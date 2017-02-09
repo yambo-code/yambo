@@ -279,6 +279,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        Y_MEM_ALLOC(DB_corrected)
        DB_corrected=0
        call QP_apply_global_stretch((/1,elph_nb/),E_k_p_q,k,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
+       Y_MEM_FREE(DB_corrected)
        Y_FREE(DB_corrected)
        !
      endif
@@ -502,6 +503,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! CLEAN
  !
  call elph_global_free()
+ Y_MEM_FREE(q_weight)
  Y_FREE(q_weight)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))

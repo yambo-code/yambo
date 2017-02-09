@@ -351,13 +351,18 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call K_output_file(iq,"open IP")
    call K_output_file(iq,"IP")
    !
+   Y_MEM_FREE(Epsilon_ii)
    Y_FREE(Epsilon_ii)
+   Y_MEM_FREE(X_drude_term)
    Y_FREE(X_drude_term)
+   Y_MEM_FREE(Joint_DOS)
    Y_FREE(Joint_DOS)
 #if defined _KERR
+   Y_MEM_FREE(Epsilon_ij)
    Y_FREE(Epsilon_ij)
 #endif
 #if defined _PL
+   Y_MEM_FREE(PL)
    Y_FREE(PL)
 #endif
    !

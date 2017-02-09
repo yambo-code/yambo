@@ -178,6 +178,7 @@ module BS
      integer :: iG_ref,iB_ref
      integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
      do iG=iG_ref,1,-1
+       Y_MEM_FREE(BS_T_grp(iG)%O_x)
        Y_FREE(BS_T_grp(iG)%O_x)
      enddo
      if(iB_ref==0) return
@@ -191,7 +192,9 @@ module BS
        ik_loop=BS_blk(iB)%ik
        ip_loop=BS_blk(iB)%ip
        if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
+       Y_MEM_FREE(BS_blk(iB)%O_c)
        Y_FREE(BS_blk(iB)%O_c)
+       Y_MEM_FREE(BS_blk(iB)%O_table)
        Y_FREE(BS_blk(iB)%O_table)
      enddo
      !
@@ -260,27 +263,42 @@ module BS
      use electrons,  ONLY:E_SOC_nbands
      integer :: iT
      !
+     Y_MEM_FREE(BS_nT_at_k)
      Y_FREE(BS_nT_at_k)
+     Y_MEM_FREE(PAR_BS_T_grps_index)
      Y_FREE(PAR_BS_T_grps_index)
+     Y_MEM_FREE(BS_T_grp_1st_el)
      Y_FREE(BS_T_grp_1st_el)
      !
      do iT=1,BS_nT_grps
        !
        if (.not.allocated(BS_T_grp(iT)%table)) cycle
        !
+       Y_MEM_FREE(BS_T_grp(iT)%dipoles_R)
        Y_FREE(BS_T_grp(iT)%dipoles_R)
+       Y_MEM_FREE(BS_T_grp(iT)%dipoles_A)
        Y_FREE(BS_T_grp(iT)%dipoles_A)
 if (l_kerr) then
+  Y_MEM_FREE(BS_T_grp(iT)%dipoles_R_kerr)
   Y_FREE(BS_T_grp(iT)%dipoles_R_kerr)
+  Y_MEM_FREE(BS_T_grp(iT)%dipoles_A_kerr)
   Y_FREE(BS_T_grp(iT)%dipoles_A_kerr)
 endif
+       Y_MEM_FREE(BS_T_grp(iT)%table)
        Y_FREE(BS_T_grp(iT)%table)
+       Y_MEM_FREE(BS_T_grp(iT)%E)
        Y_FREE(BS_T_grp(iT)%E)
+       Y_MEM_FREE(BS_T_grp(iT)%f)
        Y_FREE(BS_T_grp(iT)%f)
+       Y_MEM_FREE(BS_T_grp(iT)%f_RES)
        Y_FREE(BS_T_grp(iT)%f_RES)
+       Y_MEM_FREE(BS_T_grp(iT)%f_PL)
        Y_FREE(BS_T_grp(iT)%f_PL)
+       Y_MEM_FREE(BS_T_grp(iT)%Z)
        Y_FREE(BS_T_grp(iT)%Z)
+       Y_MEM_FREE(BS_T_grp(iT)%W)
        Y_FREE(BS_T_grp(iT)%W)
+       Y_MEM_FREE(BS_T_grp(iT)%E_SOC_corr)
        Y_FREE(BS_T_grp(iT)%E_SOC_corr)
        !
      enddo

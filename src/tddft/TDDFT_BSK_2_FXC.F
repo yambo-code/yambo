@@ -264,12 +264,19 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! CLEAN
  !
+ Y_MEM_FREE(conjg_O1x_qpg)
  Y_FREE(conjg_O1x_qpg)
+ Y_MEM_FREE(blk_Eo)
  Y_FREE(blk_Eo)
+ Y_MEM_FREE(left_R)
  Y_FREE(left_R)
+ Y_MEM_FREE(right_R)
  Y_FREE(right_R)
+ Y_MEM_FREE(wk1)
  Y_FREE(wk1)
+ Y_MEM_FREE(wk2)
  Y_FREE(wk2)
+ Y_MEM_FREE(FXC_temp)
  Y_FREE(FXC_temp)
  ! 
  contains

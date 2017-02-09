@@ -298,9 +298,13 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ! CLEAN
  !
+ Y_MEM_FREE(wf_igk_tmp)
  Y_FREE(wf_igk_tmp)
+ Y_MEM_FREE(wf_disk_DP)
  Y_FREE(wf_disk_DP)
+ Y_MEM_FREE(rel_gvec)
  Y_FREE(rel_gvec)
+ Y_MEM_FREE(rstr)
  Y_FREE(rstr)
  !
  close(11)

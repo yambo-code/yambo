@@ -260,6 +260,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      !
    enddo
    !
+   Y_MEM_FREE(DbGd_k_done)
    Y_FREE(DbGd_k_done)
    !
  endif
@@ -299,6 +300,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    call OCCUPATIONS_Extend(Fermi_en,en)
    !
+   Y_MEM_FREE(Fermi_en%E)
    Y_FREE(Fermi_en%E)
    !
  endif

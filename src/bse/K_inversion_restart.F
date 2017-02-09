@@ -82,6 +82,7 @@ subroutine K_inversion_restart(iq,W)
    call elemental_restart(K_INV_PL)
 #endif
    !
+   Y_MEM_FREE(freq_table)
    Y_FREE(freq_table)
    !
  else
@@ -176,6 +177,7 @@ subroutine K_inversion_restart(iq,W)
      ! De/Allocate Epsilon_ii/PL
      !
      if (TYP%what=="EPS") then
+       Y_MEM_FREE(Epsilon_ii)
        Y_FREE(Epsilon_ii)
        Y_ALLOC(Epsilon_ii(BSS_n_freqs,4))
        Y_MEM_ALLOC(Epsilon_ii)
@@ -186,6 +188,7 @@ subroutine K_inversion_restart(iq,W)
      endif
 #if defined _PL
      if (TYP%what=="PLS") then
+       Y_MEM_FREE(PL)
        Y_FREE(PL)
        Y_ALLOC(PL(BSS_n_freqs,3))
        Y_MEM_ALLOC(PL)

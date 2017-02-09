@@ -1,1 +1,1 @@
-objs = MEM_dri.o
+objs = MEM_manager.o

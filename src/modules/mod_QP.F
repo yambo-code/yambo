@@ -211,14 +211,23 @@ module QP_m
      qp%description=' '
      qp%n_descs=0
      qp%n_states=0
+     Y_MEM_FREE(qp%table)
      Y_FREE(qp%table)
+     Y_MEM_FREE(qp%k)
      Y_FREE(qp%k)
+     Y_MEM_FREE(qp%wk)
      Y_FREE(qp%wk)
+     Y_MEM_FREE(qp%E)
      Y_FREE(qp%E)
+     Y_MEM_FREE(qp%Z)
      Y_FREE(qp%Z)
+     Y_MEM_FREE(qp%E_bare)
      Y_FREE(qp%E_bare)
+     Y_MEM_FREE(qp%S_total)
      Y_FREE(qp%S_total)
+     Y_MEM_FREE(qp%GreenF)
      Y_FREE(qp%GreenF)
+     Y_MEM_FREE(qp%GreenF_W)
      Y_FREE(qp%GreenF_W)
    end subroutine
    !

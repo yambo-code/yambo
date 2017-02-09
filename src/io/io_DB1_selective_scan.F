@@ -74,14 +74,21 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
      call E_reset(E)
      !
      if (allocated(g_vec)) then
+       Y_MEM_FREE(g_vec)
        Y_FREE(g_vec)
+       Y_MEM_FREE(dl_sop)
        Y_FREE(dl_sop)
+       Y_MEM_FREE(rl_sop)
        Y_FREE(rl_sop)
+       Y_MEM_FREE(wf_nc_k)
        Y_FREE(wf_nc_k)
      endif
      if (allocated(n_atoms_species)) then
+       Y_MEM_FREE(n_atoms_species)
        Y_FREE(n_atoms_species)
+       Y_MEM_FREE(Z_species)
        Y_FREE(Z_species)
+       Y_MEM_FREE(atom_pos)
        Y_FREE(atom_pos)
      endif
      !

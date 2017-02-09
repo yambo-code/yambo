@@ -106,6 +106,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  QP_life_transitions=maxval(n_of_transitions)
  !
  if (iqibz_in<0) then
+   Y_MEM_FREE(X_freqs)
    Y_FREE(X_freqs)
    return
  endif
@@ -128,9 +129,13 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  ! Clean
  !
+ Y_MEM_FREE(bare_grid_N)
  Y_FREE(bare_grid_N)
+ Y_MEM_FREE(coarse_grid_Pt)
  Y_FREE(coarse_grid_Pt)
+ Y_MEM_FREE(ordered_grid_index)
  Y_FREE(ordered_grid_index)
+ Y_MEM_FREE(X_freqs)
  Y_FREE(X_freqs)
  !
 end function

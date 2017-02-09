@@ -433,9 +433,11 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      !
      call PP_indexes_reset(PAR_IND_freqs)
+     Y_MEM_FREE(Lo)
      Y_FREE(Lo)
      !
 #if defined _SCALAPACK
+     Y_MEM_FREE(K_slk%blc)
      Y_FREE(K_slk%blc)
      call MATRIX_reset(K_slk)
      call MATRIX_duplicate( "free", M_out=K_inv_slk )

@@ -74,6 +74,7 @@ subroutine G_rot_grid(is,call_kind)
  g_vec_tmp(1:ng,:)=g_vec(1:ng,:)
  g_rot_found=.false.
  if(extend_grid) then
+   Y_MEM_FREE(g_vec)
    Y_FREE(g_vec)
  endif
  !

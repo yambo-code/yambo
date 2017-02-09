@@ -572,6 +572,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if(l_ppa) then
    deallocate(W_)
    if(l_GW_terminator) then
+       Y_MEM_FREE(eet_factor)
        Y_FREE(eet_factor)
    endif
  endif

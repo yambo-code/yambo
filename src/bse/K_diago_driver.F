@@ -317,19 +317,30 @@ subroutine K_diago_driver(iq,W)
    !
    subroutine local_free()
      !
+     Y_MEM_FREE(BS_E)
      Y_FREE(BS_E)
+     Y_MEM_FREE(BS_E_real)
      Y_FREE(BS_E_real)
+     Y_MEM_FREE(BS_corrections)
      Y_FREE(BS_corrections)
+     Y_MEM_FREE(BS_R_right)
      Y_FREE(BS_R_right)
+     Y_MEM_FREE(BS_R_left)
      Y_FREE(BS_R_left)
+     Y_MEM_FREE(BS_V_right)
      Y_FREE(BS_V_right)
+     Y_MEM_FREE(BS_V_left)
      Y_FREE(BS_V_left)
+     Y_MEM_FREE(BS_overlap)
      Y_FREE_P(BS_overlap)
+     Y_MEM_FREE(BS_E_SOC_corr)
      Y_FREE_P(BS_E_SOC_corr)
 #if defined _KERR
+     Y_MEM_FREE(BS_R_right_kerr)
      Y_FREE_P(BS_R_right_kerr)
 #endif
 #if defined _PL
+     Y_MEM_FREE(BS_R_PL)
      Y_FREE_P(BS_R_PL)
 #endif
      !

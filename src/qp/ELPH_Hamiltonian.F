@@ -461,13 +461,21 @@ subroutine ELPH_Hamiltonian(en,k,q)
 1 continue
  !
  call elph_global_free( )
+ Y_MEM_FREE(elph_Ham_Table)
  Y_FREE(elph_Ham_Table)
+ Y_MEM_FREE(elph_Mat)
  Y_FREE(elph_Mat)
+ Y_MEM_FREE(elph_E)
  Y_FREE(elph_E)
+ Y_MEM_FREE(mean_u)
  Y_FREE(mean_u)
+ Y_MEM_FREE(top_residual)
  Y_FREE(top_residual)
+ Y_MEM_FREE(num_of_ph)
  Y_FREE(num_of_ph)
+ Y_MEM_FREE(top_ph_residual)
  Y_FREE(top_ph_residual)
+ Y_MEM_FREE(mean_u_sq)
  Y_FREE(mean_u_sq)
  !
 end subroutine

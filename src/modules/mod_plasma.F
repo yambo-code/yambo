@@ -77,9 +77,13 @@ module plasma
      !
      type(plasma_gas) :: Gas
      !
+     Y_MEM_FREE(Gas%N_poles)
      Y_FREE(Gas%N_poles)
+     Y_MEM_FREE(Gas%tab)
      Y_FREE(Gas%tab)
+     Y_MEM_FREE(Gas%tab_m1)
      Y_FREE(Gas%tab_m1)
+     Y_MEM_FREE(Gas%grid)
      Y_FREE(Gas%grid)
      !
    end subroutine

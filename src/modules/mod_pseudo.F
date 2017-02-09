@@ -79,8 +79,11 @@ module pseudo
    end subroutine
    !
    subroutine PP_free()
+     Y_MEM_FREE(pp_kbs)
      Y_FREE(pp_kbs)
+     Y_MEM_FREE(pp_kb)
      Y_FREE(pp_kb)
+     Y_MEM_FREE(pp_kbd)
      Y_FREE(pp_kbd)
    end subroutine
    !

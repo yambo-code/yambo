@@ -186,15 +186,24 @@ module BS_solvers
    !
    subroutine BS_mat_free()
      integer :: iB
+     Y_MEM_FREE(BSS_eh_table)
      Y_FREE(BSS_eh_table)
+     Y_MEM_FREE(BSS_dipoles)
      Y_FREE(BSS_dipoles)
+     Y_MEM_FREE(BSS_eh_E)
      Y_FREE(BSS_eh_E)
+     Y_MEM_FREE(BSS_eh_W)
      Y_FREE(BSS_eh_W)
+     Y_MEM_FREE(BSS_eh_f)
      Y_FREE(BSS_eh_f)
+     Y_MEM_FREE(BSS_eh_Z)
      Y_FREE(BSS_eh_Z)
+     Y_MEM_FREE(BSS_eh_E_SOC_corr)
      Y_FREE(BSS_eh_E_SOC_corr)
+     Y_MEM_FREE(BS_mat)
      Y_FREE(BS_mat)
      do iB=1,n_BS_blks
+        Y_MEM_FREE(BS_blk(iB)%mat)
         Y_FREE(BS_blk(iB)%mat)
      enddo
    end subroutine
@@ -219,6 +228,7 @@ module BS_solvers
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
+       Y_MEM_FREE(V(i_g)%fragment)
        Y_FREE(V(i_g)%fragment)
      end do
    end subroutine BS_HAYVEC_free

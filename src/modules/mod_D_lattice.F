@@ -95,7 +95,9 @@ module D_lattice
      integer  :: i1,i2,i3
      real(SP) :: m(3,3)
      !
+     Y_MEM_FREE(sop_tab)
      Y_FREE(sop_tab)
+     Y_MEM_FREE(sop_inv)
      Y_FREE(sop_inv)
      Y_ALLOC(sop_tab(nsym,nsym))
      Y_MEM_ALLOC(sop_tab)

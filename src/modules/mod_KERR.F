@@ -54,6 +54,7 @@ module KERR
      else
        select case(what)
        case('DIP_projected')
+         Y_MEM_FREE(DIP_projected_r90)
          Y_FREE(DIP_projected_r90)
        end select
      endif
@@ -73,6 +74,7 @@ module KERR
    !
    subroutine BS_KERR_free( )
      if (.not.l_kerr) return
+     Y_MEM_FREE(BSS_dipoles_kerr)
      Y_FREE(BSS_dipoles_kerr)
    end subroutine
    !

@@ -162,6 +162,7 @@ subroutine XCo_driver(E,k,Xk,q)
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
    else
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
+     Y_MEM_FREE(QP_Vnl_sex)
      Y_FREE(QP_Vnl_sex)
    endif
 #endif
@@ -288,7 +289,9 @@ subroutine XCo_driver(E,k,Xk,q)
      !
      ! Clean up
      !
+     Y_MEM_FREE(qp%E)
      Y_FREE(qp%E)
+     Y_MEM_FREE(qp%E_bare)
      Y_FREE(qp%E_bare)
      call E_reset(E_dummy)
      call QP_reset(qp)

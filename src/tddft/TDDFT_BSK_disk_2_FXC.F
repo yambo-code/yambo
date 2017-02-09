@@ -143,6 +143,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
 &                         O2x(:FXC_n_g_corr,:),O_x_dim,W,X_static)
      !
      call live_timing(steps=1)
+     Y_MEM_FREE(BS_mat)
      Y_FREE(BS_mat)
    enddo
  enddo
@@ -151,10 +152,14 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ! CLEAN
  !
  call PP_redux_wait
+ Y_MEM_FREE(O1x)
  Y_FREE(O1x)
+ Y_MEM_FREE(O2x)
  Y_FREE(O2x)
  call WF_free(WF)
+ Y_MEM_FREE(FXC_K_diagonal)
  Y_FREE(FXC_K_diagonal)
+ Y_MEM_FREE(FXC)
  Y_FREE(FXC)
  !
 end subroutine

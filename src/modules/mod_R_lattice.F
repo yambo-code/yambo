@@ -175,9 +175,13 @@ module R_lattice
    end subroutine
    !
    subroutine qindx_free()
+     Y_MEM_FREE(qindx_X)
      Y_FREE(qindx_X)
+     Y_MEM_FREE(qindx_B)
      Y_FREE(qindx_B)
+     Y_MEM_FREE(qindx_S)
      Y_FREE(qindx_S)
+     Y_MEM_FREE(qindx_C)
      Y_FREE(qindx_C)
    end subroutine qindx_free
    !
@@ -188,13 +192,21 @@ module R_lattice
      k%units=' '
      k%description=' '
      !
+     Y_MEM_FREE(k%s_table)
      Y_FREE(k%s_table)
+     Y_MEM_FREE(k%k_table)
      Y_FREE(k%k_table)
+     Y_MEM_FREE(k%nstar)
      Y_FREE(k%nstar)
+     Y_MEM_FREE(k%star)
      Y_FREE(k%star)
+     Y_MEM_FREE(k%sstar)
      Y_FREE(k%sstar)
+     Y_MEM_FREE(k%pt)
      Y_FREE(k%pt)
+     Y_MEM_FREE(k%ptbz)
      Y_FREE(k%ptbz)
+     Y_MEM_FREE(k%weights)
      Y_FREE(k%weights)
      !
    end subroutine bz_samp_reset

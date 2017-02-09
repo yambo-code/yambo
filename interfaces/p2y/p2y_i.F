@@ -178,6 +178,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
  enddo
  !
+ Y_MEM_FREE(wf_disk)
  Y_FREE(wf_disk)
  !
  if(verboseIO) then

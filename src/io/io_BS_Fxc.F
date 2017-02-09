@@ -142,6 +142,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  if (any((/io_sec(ID,:)==2/))) then
    !
    if (read_is_on(ID)) then
+     Y_MEM_FREE(FXC_W%p)
      Y_FREE(FXC_W%p)
      Y_ALLOC(FXC_W%p(FXC_W%n_freqs))
      Y_MEM_ALLOC(FXC_W%p)
@@ -184,6 +185,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    !
  enddo
  !
+ Y_MEM_FREE(FXC_disk)
  Y_FREE(FXC_disk)
  !
 1 call io_disconnect(ID)

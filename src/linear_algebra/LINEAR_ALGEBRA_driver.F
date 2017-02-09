@@ -140,6 +140,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      call PARALLEL_HERMITIAN_diagonalization( M_loc, V_loc, N, E_real )
      !
      call MATRIX_transfer( M_in = V_loc , M=M )
+     Y_MEM_FREE(V_loc%blc)
      Y_FREE(V_loc%blc)
      call MATRIX_reset(V_loc)
      !
@@ -165,6 +166,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        !
        call MATRIX_transfer( M_in =  B_loc, M=B )
        !
+       Y_MEM_FREE(B_loc%blc)
        Y_FREE(B_loc%blc)
        call MATRIX_reset(B_loc)
        !
@@ -192,9 +194,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        call MATRIX_transfer( M_in =  C_loc, M=C )
        !
        call MATRIX_reset(B_loc)
+       Y_MEM_FREE(B_loc%blc)
        Y_FREE(B_loc%blc)
        !
        call MATRIX_reset(C_loc)
+       Y_MEM_FREE(C_loc%blc)
        Y_FREE(C_loc%blc)
        !
      else

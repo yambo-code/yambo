@@ -102,6 +102,7 @@ integer function io_KB_abinit(ID)
    !
    if (.not.ver_is_gt_or_eq(ID,revision=898)) pp_n_l_times_proj_max=maxval(pp_n_l_comp)
    if (read_is_on(ID)) then
+     Y_MEM_FREE(pp_table)
      Y_FREE(pp_table)
      Y_ALLOC(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
      Y_MEM_ALLOC(pp_table)
@@ -171,6 +172,7 @@ integer function io_KB_abinit(ID)
    ! 
  enddo
  !
+ Y_MEM_FREE(pp_disk)
  Y_FREE(pp_disk)
  !
 1 call io_disconnect(ID=ID)

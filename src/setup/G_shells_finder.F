@@ -60,9 +60,13 @@ subroutine G_shells_finder()
  !
  if (io_err==0) then
    if(inv_index<0) then
+     Y_MEM_FREE(ng_in_shell)
      Y_FREE(ng_in_shell)
+     Y_MEM_FREE(E_of_shell)
      Y_FREE(E_of_shell)
+     Y_MEM_FREE(g_rot)
      Y_FREE(g_rot)
+     Y_MEM_FREE(minus_G)
      Y_FREE(minus_G)
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
      io_err=io_GROT(ID)
@@ -70,9 +74,13 @@ subroutine G_shells_finder()
    return
  else
    if (allocated(g_rot)) then
+     Y_MEM_FREE(ng_in_shell)
      Y_FREE(ng_in_shell)
+     Y_MEM_FREE(E_of_shell)
      Y_FREE(E_of_shell)
+     Y_MEM_FREE(g_rot)
      Y_FREE(g_rot)
+     Y_MEM_FREE(minus_G)
      Y_FREE(minus_G)
    endif
  endif

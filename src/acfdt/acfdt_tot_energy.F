@@ -127,7 +127,9 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  Ec_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
+ Y_MEM_FREE(E_xc)
  Y_FREE(E_xc)
+ Y_MEM_FREE(rho)
  Y_FREE(rho)
  call WF_free(WF)
  !
@@ -256,8 +258,11 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    call X_alloc('X')
    call elemental_collision_free(isc)
    call PP_indexes_reset(plw)
+   Y_MEM_FREE(X_s)
    Y_FREE(X_s)
+   Y_MEM_FREE(dX)
    Y_FREE(dX)
+   Y_MEM_FREE(dX)
    Y_FREE(dX)
    !
  endif
@@ -266,6 +271,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  QP_nb=En%nbm
  QP_nk=k%nibz
+ Y_MEM_FREE(QP_state)
  Y_FREE(QP_state)
  Y_ALLOC(QP_state(QP_nb,QP_nk))
  Y_MEM_ALLOC(QP_state)
@@ -304,14 +310,23 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  ! CLEAN
  !
+ Y_MEM_FREE(freq)
  Y_FREE(freq)
+ Y_MEM_FREE(freq_weight)
  Y_FREE(freq_weight)
+ Y_MEM_FREE(lambda)
  Y_FREE(lambda)
+ Y_MEM_FREE(lambda_weight)
  Y_FREE(lambda_weight)
+ Y_MEM_FREE(Xw%p)
  Y_FREE(Xw%p)
+ Y_MEM_FREE(QP_Vnl_xc)
  Y_FREE(QP_Vnl_xc)
+ Y_MEM_FREE(QP_Vxc)
  Y_FREE(QP_Vxc)
+ Y_MEM_FREE(QP_table)
  Y_FREE(QP_table)
+ Y_MEM_FREE(QP_state)
  Y_FREE(QP_state)
  !
 end subroutine

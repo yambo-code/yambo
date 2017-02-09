@@ -175,7 +175,9 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
    X_Ein_poles=X_Ein_poles+Ein_poles(:X_eh_setup)
  endif
  !
+ Y_MEM_FREE(poles)
  Y_FREE(poles)
+ Y_MEM_FREE(Ein_poles)
  Y_FREE(Ein_poles)
  !
 end function

@@ -44,6 +44,7 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  call MATRIX_reset(M_out)
  !
  if (operation=="free") then
+   Y_MEM_FREE(M_out%blc)
    Y_FREE(M_out%blc)
    return
  endif

@@ -334,6 +334,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !In DUMP mode qp%table is dumped as well (to be used in QP_apply).
  !Here, however, qp%table is not needed
  !
+ Y_MEM_FREE(qp%table)
  Y_FREE(qp%table)
  !
  ! Green Functions
@@ -958,6 +959,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (QP_state_in_input_file) then
        !
+       Y_MEM_FREE(QP_state)
        Y_FREE(QP_state)
        QP_nb=0
        QP_nk=0
@@ -978,7 +980,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! ... but afterword I must deallocate it to use user defined values
    !
+   Y_MEM_FREE(QP_state)
    Y_FREE(QP_state)
+   Y_MEM_FREE(QP_table)
    Y_FREE(QP_table)
    !
  endif

@@ -146,7 +146,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    minmax_ehe=0._SP
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_X_WORLD%CPU_id+1))
+   Y_MEM_FREE(X_poles)
    Y_FREE(X_poles)
+   Y_MEM_FREE(X_Ein_poles)
    Y_FREE(X_Ein_poles)
    !
    if (self_detect_E_range) then
@@ -329,6 +331,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  ! CLEAN
  !=======
+ Y_MEM_FREE(Xo_res)
  Y_FREE(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !

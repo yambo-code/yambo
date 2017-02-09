@@ -35,8 +35,11 @@ subroutine WF_free(WF)
  !
  if (.not.allocated(WF%c)) return
  !
+ Y_MEM_FREE(WF%c)
  Y_FREE(WF%c)
+ Y_MEM_FREE(WF%state)
  Y_FREE(WF%state)
+ Y_MEM_FREE(WF%index)
  Y_FREE(WF%index)
  !
  if (WF%space=="R") then
@@ -45,8 +48,11 @@ subroutine WF_free(WF)
    fft_dim_loaded=0
    fft_multiplier=1
    if (allocated(fft_g_table)) then
+     Y_MEM_FREE(fft_g_table)
      Y_FREE(fft_g_table)
+     Y_MEM_FREE(fft_rot_r)
      Y_FREE(fft_rot_r)
+     Y_MEM_FREE(fft_rot_r_inv)
      Y_FREE(fft_rot_r_inv)
    endif
 #if defined _FFTW

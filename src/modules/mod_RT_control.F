@@ -128,12 +128,14 @@ module RT_control
        !
      endif
      !
+     Y_MEM_FREE(JPC_RT_IO_t%Time)
      Y_FREE(JPC_RT_IO_t%Time)
      !
      Y_ALLOC(JPC_RT_IO_t%Time(NE_steps))
      Y_MEM_ALLOC(JPC_RT_IO_t%Time)
      JPC_RT_IO_t%Time=rZERO
      !
+     Y_MEM_FREE(GF_RT_IO_t%Time)
      Y_FREE(GF_RT_IO_t%Time)
      !
      Y_ALLOC(GF_RT_IO_t%Time(NE_steps))
@@ -144,10 +146,15 @@ module RT_control
    !
    subroutine RT_free_control
      !
+     Y_MEM_FREE(J_cache)
      Y_FREE(J_cache)
+     Y_MEM_FREE(P_cache)
      Y_FREE(P_cache)
+     Y_MEM_FREE(M_cache)
      Y_FREE(M_cache)
+     Y_MEM_FREE(JPC_RT_IO_t%Time)
      Y_FREE(JPC_RT_IO_t%Time)
+     Y_MEM_FREE(GF_RT_IO_t%Time)
      Y_FREE(GF_RT_IO_t%Time)
      !
    end subroutine RT_free_control

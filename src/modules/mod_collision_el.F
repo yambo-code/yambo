@@ -78,10 +78,15 @@ module collision_el
        init_only_=INIT_ONLY
      endif
      if (.not.init_only_) then
+       Y_MEM_FREE(ggw%gamp)
        Y_FREE(ggw%gamp)
+       Y_MEM_FREE(ggw%rhotw)
        Y_FREE(ggw%rhotw)
+       Y_MEM_FREE(ggw%rho_tw_rs)
        Y_FREE(ggw%rho_tw_rs)
+       Y_MEM_FREE(ggw%WF_symm_i)
        Y_FREE(ggw%WF_symm_i)
+       Y_MEM_FREE(ggw%WF_symm_o)
        Y_FREE(ggw%WF_symm_o)
      endif
    end subroutine

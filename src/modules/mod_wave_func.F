@@ -151,8 +151,11 @@ module wave_func
    !
    subroutine WF_derivative_free()
        !
+       Y_MEM_FREE(wf_x)
        Y_FREE(wf_x)
+       Y_MEM_FREE(wf_y)
        Y_FREE(wf_y)
+       Y_MEM_FREE(wf_z)
        Y_FREE(wf_z)
        !
    end subroutine

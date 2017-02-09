@@ -78,6 +78,7 @@ module frequency
      W%er=(/0._SP,10._SP/)/HA2EV
      W%dr=(/0.1_SP,0.1_SP/)/HA2EV
      W%damp_reference=0._SP
+     Y_MEM_FREE(W%p)
      Y_FREE(W%p)
    end subroutine W_reset
    !

@@ -231,7 +231,9 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
            enddo
          enddo
          !
+         Y_MEM_FREE(Vali)
          Y_FREE(Vali)
+         Y_MEM_FREE(Valo)
          Y_FREE(Valo)
          !
      end select

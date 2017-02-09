@@ -99,7 +99,9 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  call msg("s",dump_ch)
  !
  if(allocated(k_map%k_map_dir)) then
+   Y_MEM_FREE(k_map%k_map_dir)
    Y_FREE(k_map%k_map_dir)
+   Y_MEM_FREE(k_map%k_map_inv)
    Y_FREE(k_map%k_map_inv)
  endif
  Y_ALLOC(k_map%k_map_dir(k_map%max_kdir(1),k_map%max_kdir(2),k_map%max_kdir(3)))

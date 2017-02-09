@@ -142,7 +142,9 @@ module SC
      call X_alloc('DIP_spin')
      call X_alloc('P_square')
      !
+     Y_MEM_FREE(QP_Sc)
      Y_FREE(QP_Sc)
+     Y_MEM_FREE(SC_R)
      Y_FREE(SC_R)
      !
    end subroutine

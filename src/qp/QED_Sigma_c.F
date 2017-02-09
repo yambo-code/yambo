@@ -260,7 +260,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Clean-UP
  !
+ Y_MEM_FREE(q_weight_power_1)
  Y_FREE(q_weight_power_1)
+ Y_MEM_FREE(q_weight_power_2)
  Y_FREE(q_weight_power_2)
  !
  if (l_use_collisions) then

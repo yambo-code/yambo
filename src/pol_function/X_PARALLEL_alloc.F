@@ -52,6 +52,7 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  ! Clean-up
  !
  if (mode=="CLEAN") then
+   Y_MEM_FREE(X_par%blc)
    Y_FREE(X_par%blc)
    call MATRIX_reset(X_par)
    return

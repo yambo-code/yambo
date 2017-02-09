@@ -49,6 +49,7 @@ subroutine FREQUENCIES_setup(W)
 &      abs( aimag(W%p(W%n_freqs))-W%dr(2) )<1.E-5) return
  endif
  !
+ Y_MEM_FREE(W%p)
  Y_FREE(W%p)
  !
  ! First the total/mem steps

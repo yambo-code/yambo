@@ -90,7 +90,9 @@ subroutine TDDFT_ALDA_G_space(E,k)
  !
  ! Clean
  !
+ Y_MEM_FREE(F_xc)
  Y_FREE(F_xc)
+ Y_MEM_FREE(F_xc_DP)
  Y_FREE(F_xc_DP)
  call WF_free(WF)
  !

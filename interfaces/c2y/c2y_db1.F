@@ -121,6 +121,7 @@ subroutine c2y_db1(en,k,file_name_)
    enddo
  enddo
  atom_pos = atom_pos_dp
+ Y_MEM_FREE(atom_pos_dp)
  Y_FREE(atom_pos_dp)
 !
 !      ==  Section  5: Atomic velocities (Skipped)                     ==
@@ -268,6 +269,7 @@ subroutine c2y_db1(en,k,file_name_)
      read (11)  (rstr(i1),i1=1,en%nb) 
      en%E(:,ik,i_spin)=rstr(:)
    enddo
+   Y_MEM_FREE(rstr)
    Y_FREE(rstr)
  else
    write(*,'(A)') 'C2Y: ERROR ! CANNOT read EIGENVALUES'
@@ -353,6 +355,7 @@ subroutine c2y_db1(en,k,file_name_)
  Y_MEM_ALLOC(wf_igk)
  forall(i1=1:wf_ng) wf_igk(i1,:)=i1
  !
+ Y_MEM_FREE(rel_gvec)
  Y_FREE(rel_gvec)
  !
  !

@@ -238,6 +238,7 @@ integer function io_ELPH(ID,what)
    call mat_r2c(pol_vec_disk(:,:,:,3),pol_vector(:,:,3))
  endif
  !
+ Y_MEM_FREE(pol_vec_disk)
  Y_FREE(pol_vec_disk)
  !
  if (what=='no_gkkp') goto 1
@@ -287,6 +288,7 @@ integer function io_ELPH(ID,what)
    !
  enddo
  !
+ Y_MEM_FREE(elph_gkkp_disk)
  Y_FREE(elph_gkkp_disk)
  ! 
  ! ELPH_DW 

@@ -226,7 +226,9 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Clean-up of local BLACS structures
  ! ========
+ Y_MEM_FREE(KERNEL%blc)
  Y_FREE(KERNEL%blc)
+ Y_MEM_FREE(Xo%blc)
  Y_FREE(Xo%blc)
  call MATRIX_reset(KERNEL)
  call MATRIX_reset(Xo)
@@ -243,6 +245,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  if (X_par%INTER_comm%n_CPU>1) then
    !
+   Y_MEM_FREE(X_par%blc)
    Y_FREE(X_par%blc)
    call MATRIX_reset(X_par)
    call X_PARALLEL_alloc(X_par,X%ng,Xw%n_freqs,"X")
@@ -277,8 +280,10 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Clean-up of FREQ structure
  !==========
+ Y_MEM_FREE(BUFFER%blc)
  Y_FREE(BUFFER%blc)
  call MATRIX_reset(BUFFER)
+ Y_MEM_FREE(PAR_FREQS_index)
  Y_FREE(PAR_FREQS_index)
  call PP_indexes_reset(PAR_IND_freqs)
  !

@@ -111,7 +111,9 @@ subroutine XCo_local(E,Xk)
    if (.not.compatible_SC_DB) call error('Incompatible potential database')
    !
    V_xc=V_xc_sc
+   Y_MEM_FREE(V_xc_sc)
    Y_FREE(V_xc_sc)
+   Y_MEM_FREE(V_hartree_sc)
    Y_FREE(V_hartree_sc)
  endif
 #endif
@@ -224,6 +226,7 @@ subroutine XCo_local(E,Xk)
      !
    enddo
    !
+   Y_MEM_FREE(V_xc_mat)
    Y_FREE(V_xc_mat)
    !
  endif
@@ -233,8 +236,10 @@ subroutine XCo_local(E,Xk)
 #if defined _SC || defined _RT
  if(.not.(l_sc_run.or.l_real_time)) then
 #endif
+   Y_MEM_FREE(V_xc)
    Y_FREE(V_xc)
    if(n_spin>1) then   
+     Y_MEM_FREE(magn)
      Y_FREE(magn)
    endif
 #if defined _SC || defined _RT

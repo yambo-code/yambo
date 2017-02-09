@@ -38,6 +38,7 @@ subroutine init_parse_K_list(k,variable)
  real_ctl=0.
  k%nibz=1
  K_loop: do while(real_ctl/=999.)
+   Y_MEM_FREE(k%pt)
    Y_FREE(k%pt)
    Y_ALLOC(k%pt(k%nibz,3))
    Y_MEM_ALLOC(k%pt)

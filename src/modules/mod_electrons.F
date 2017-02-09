@@ -245,19 +245,30 @@ module electrons
      E%kf=0 
      E%GreenF_n_E_steps=0 
      E%GreenF_is_causal=.FALSE. 
+     Y_MEM_FREE(E%E)
      Y_FREE(E%E)
+     Y_MEM_FREE(E%Eo)
      Y_FREE(E%Eo)
+     Y_MEM_FREE(E%Z)
      Y_FREE(E%Z)
+     Y_MEM_FREE(E%W)
      Y_FREE(E%W)
+     Y_MEM_FREE(E%f)
      Y_FREE(E%f)
+     Y_MEM_FREE(E%fo)
      Y_FREE(E%fo)
+     Y_MEM_FREE(E%df)
      Y_FREE(E%df)
+     Y_MEM_FREE(E%QP_corrected)
      Y_FREE(E%QP_corrected)
+     Y_MEM_FREE(E%GreenF)
      Y_FREE(E%GreenF)
+     Y_MEM_FREE(E%GreenF_W)
      Y_FREE(E%GreenF_W)
      !
      call E_DbGd_components_reset(E,.FALSE.)
      !
+     Y_MEM_FREE(E%E_SOC)
      Y_FREE(E%E_SOC)
      !
    end subroutine
@@ -267,9 +278,13 @@ module electrons
      type(levels)::E
      logical     ::FULL_RESET
      !
+     Y_MEM_FREE(E%E_DbGd)
      Y_FREE(E%E_DbGd)
+     Y_MEM_FREE(E%W_DbGd)
      Y_FREE(E%W_DbGd)
+     Y_MEM_FREE(E%f_DbGd)
      Y_FREE(E%f_DbGd)
+     Y_MEM_FREE(E%df_DbGd)
      Y_FREE(E%df_DbGd)
      !
      !
@@ -280,9 +295,13 @@ module electrons
      BZ_ASSOCIATED_nkpts=0
      BZ_DbGd_nbands=0
      !
+     Y_MEM_FREE(BZ_DbGd_nkpt)
      Y_FREE(BZ_DbGd_nkpt)
+     Y_MEM_FREE(BZ_DbGd_table)
      Y_FREE(BZ_DbGd_table)
+     Y_MEM_FREE(BZ_DbGd_weight)
      Y_FREE(BZ_DbGd_weight)
+     Y_MEM_FREE(BZ_DbGd_kpts)
      Y_FREE(BZ_DbGd_kpts)
      !
    end subroutine

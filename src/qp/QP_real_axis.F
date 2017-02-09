@@ -189,6 +189,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
          call live_timing(steps=1)
        enddo
+       Y_MEM_FREE(QP_W)
        Y_FREE(QP_W)
        call live_timing()
        !
@@ -229,6 +230,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      life_W_table(iqibz,:size(coarse_grid_index))=coarse_grid_index(:)
      !
      QP_n_W_freqs_redux=max(QP_n_W_freqs_redux,coarse_grid_N)
+     Y_MEM_FREE(coarse_grid_index)
      Y_FREE(coarse_grid_index)
      !
    enddo
@@ -506,6 +508,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! CLEAN
  !
  if (l_life) then
+   Y_MEM_FREE(life_W_table)
    Y_FREE(life_W_table)
    call PP_redux_wait(qp%E)
  else
@@ -514,6 +517,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  if (io_SCREEN) then
    if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
+     Y_MEM_FREE(QP_W)
      Y_FREE(QP_W)
    endif
  endif

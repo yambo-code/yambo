@@ -158,6 +158,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    enddo
    if (.not.allocated(q_pt)) then
      call k_reduce(q,.TRUE.)
+     Y_MEM_FREE(q%ptbz)
      Y_FREE(q%ptbz)
    else
      q%nibz=nqibz
@@ -335,6 +336,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
  if (Xk_grid_is_uniform) then
+   Y_MEM_FREE(q%ptbz)
    Y_FREE(q%ptbz)
  endif
  call PP_redux_wait()
@@ -420,10 +422,15 @@ subroutine bz_samp_indexes(k,Xk,q)
      ! using Gamma point only definition
      !
      if (force_gamma_only) then
+       Y_MEM_FREE(k_pt)
        Y_FREE(k_pt)
+       Y_MEM_FREE(q_pt)
        Y_FREE(q_pt)
+       Y_MEM_FREE(q_norm)
        Y_FREE(q_norm)
+       Y_MEM_FREE(q_sstar)
        Y_FREE(q_sstar)
+       Y_MEM_FREE(q%pt)
        Y_FREE(q%pt)
        nqbz=1
        nqibz=1

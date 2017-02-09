@@ -317,6 +317,7 @@ contains
    enddo
    tau_units = alat_
 
+   Y_MEM_FREE(atom_type_,species_type_)
    Y_FREE(atom_type_,species_type_)
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
@@ -580,6 +581,7 @@ contains
    Y_MEM_ALLOC(pw_npwk_)
    call pw_igkindex(pw_unit)
    wf_nc_k(:) = pw_npwk_(:)
+   Y_MEM_FREE(pw_npwk_)
    Y_FREE(pw_npwk_)
 
 #elif defined _P2Y_V31  || defined _P2Y_V311 
@@ -615,6 +617,7 @@ contains
      pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
      wf_nc_k(ik) = npwk_
    enddo
+   Y_MEM_FREE(index_)
    Y_FREE(index_)
 !
 ! This is a correct definition of wf_ncx only if gamma_only = .false.
@@ -633,6 +636,7 @@ contains
      pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
      wf_nc_k(ik) = npwk_
    enddo
+   Y_MEM_FREE(index_)
    Y_FREE(index_)
      
 #endif
@@ -658,6 +662,7 @@ contains
        wf_igk(1:wf_nc_k(i1),i1)= pw_igk_(1:wf_nc_k(i1),i1) 
      enddo   
    endif
+   Y_MEM_FREE(pw_igk_)
    Y_FREE(pw_igk_)
 
    wf_ng = maxval(wf_igk)
@@ -703,6 +708,7 @@ contains
      call qexml_read_bands(eig=eig_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
      en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
+     Y_MEM_FREE(eig_)
      Y_FREE(eig_)
    case(2)
      Y_ALLOC(eig_s_(en%nb,k%nibz,n_sp_pol))
@@ -710,6 +716,7 @@ contains
      call qexml_read_bands(eig_s=eig_s_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
      en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_sp_pol )
+     Y_MEM_FREE(eig_s_)
      Y_FREE(eig_s_)
    end select
 
@@ -733,6 +740,7 @@ contains
         en%E(:,ik_,1) = eigb_( 1:en%nb )
      enddo
    end select
+   Y_MEM_FREE(eigb_)
    Y_FREE(eigb_)
 
 #endif

@@ -372,6 +372,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
    !
+   Y_MEM_FREE(isc%gamp)
    Y_FREE(isc%gamp)
    !
    if (.not.l_td_hf) call X_alloc('X')
@@ -673,12 +674,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call BS_oscillators_free(BS_nT_grps,0)
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   Y_MEM_FREE(WF_phase)
    Y_FREE(WF_phase)
+   Y_MEM_FREE(Ovv)
    Y_FREE(Ovv)
+   Y_MEM_FREE(O_times_W)
    Y_FREE(O_times_W)
+   Y_MEM_FREE(Occ)
    Y_FREE(Occ)
    if (BS_cpl_K_corr) then
+     Y_MEM_FREE(Ovc)
      Y_FREE(Ovc)
+     Y_MEM_FREE(Ocv)
      Y_FREE(Ocv)
    endif
  endif
@@ -687,17 +694,21 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
+   Y_MEM_FREE(FXC)
    Y_FREE(FXC)
+   Y_MEM_FREE(FXC_K_diagonal)
    Y_FREE(FXC_K_diagonal)
    !
    ! GPL_EXCLUDE_END
    !
  else if (BS_K_is_ALDA) then
+   Y_MEM_FREE(F_xc)
    Y_FREE(F_xc)
  endif
  !
 1 continue
  !
+ Y_MEM_FREE(BS_W)
  Y_FREE(BS_W)
  call WF_free(WF)
  call elemental_collision_free(K_CORR_collision)

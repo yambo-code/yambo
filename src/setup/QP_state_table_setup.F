@@ -70,6 +70,7 @@ subroutine QP_state_table_setup(en)
    k_rng_lines=1
    icheck=1
    do while(icheck/=0)
+     Y_MEM_FREE(QP_i_limits)
      Y_FREE(QP_i_limits)
      Y_ALLOC(QP_i_limits(k_rng_lines,4))
      Y_MEM_ALLOC(QP_i_limits)
@@ -90,6 +91,7 @@ subroutine QP_state_table_setup(en)
    e_rng_lines=1
    rcheck=1._SP
    do while(rcheck>0._SP)
+     Y_MEM_FREE(QP_r_limits)
      Y_FREE(QP_r_limits)
      Y_ALLOC(QP_r_limits(e_rng_lines,4))
      Y_MEM_ALLOC(QP_r_limits)
@@ -162,7 +164,9 @@ subroutine QP_state_table_setup(en)
      !
    endif
    !
+   Y_MEM_FREE(QP_i_limits)
    Y_FREE(QP_i_limits)
+   Y_MEM_FREE(QP_r_limits)
    Y_FREE(QP_r_limits)
    !
  endif

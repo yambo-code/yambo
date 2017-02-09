@@ -34,20 +34,18 @@ module memory
  integer, parameter  :: N_MEM_SAVE_max = 1000
  integer, parameter  :: MEM_jump_treshold   = 200000 ! Kb
  integer, parameter  :: MEM_treshold        = 1000 ! Kb
- integer, parameter  :: MEM_SAVE_treshold   = 5000  ! Kb
+ integer, parameter  :: MEM_SAVE_treshold   = 1000  ! Kb
  !
  integer :: N_MEM_SAVE_elements      = 0
  integer :: N_MEM_elements           = 0
  integer :: MEM_err                  = 0
  integer(kind=c_int) :: TOT_MEM_kilobytes_MEMSTAT 
- integer             :: MAX_MEM_kilobytes_MEMSTAT = 0
- integer             :: TOT_MEM_kilobytes_MEMSTAT_SAVE
- integer             :: TOT_MEM_kilobytes
- integer             :: MEM_jump_save= 0
+ integer             :: MAX_MEM_bytes = 0
+ integer             :: TOT_MEM_bytes
+ integer             :: TOT_MEM_bytes_SAVE = 0
  !
  character(schlen) :: MEM_element_name(N_MEM_max)       = " "
  integer           :: MEM_element_use (N_MEM_max)       =0  
- integer           :: MEM_element_pre_factor(N_MEM_max) =1  
  integer           :: MEM_element_kind(N_MEM_max)       =1  
  character(schlen) :: MEM_element_name_SAVE(N_MEM_SAVE_max) = " "
  integer           :: MEM_element_use_SAVE (N_MEM_SAVE_max) =0  

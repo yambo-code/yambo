@@ -294,6 +294,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        io_err=io_DIPOLES(X,ID)
      endif
      !
+     ! In case io_err is /=0 all CPU have to sincronize before starting
+     ! to recompute the dipoles and write a new header
+     !
+     call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
+     !
      if (io_err==0) then
        !
        if(reading) IO_ACTION=OP_RD_CL

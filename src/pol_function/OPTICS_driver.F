@@ -352,7 +352,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()
- if (l_bs_fxc.and.allocated(FXC)) then
+ if (allocated(FXC)) then
+   Y_MEM_FREE(FXC)
+   Y_FREE(FXC)
+ endif
+ if (l_bs_fxc) then
    Y_MEM_FREE(FXC)
    Y_FREE(FXC)
    Y_MEM_FREE(FXC_K_diagonal)

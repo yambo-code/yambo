@@ -62,7 +62,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  type(PP_indexes) ::PAR_IND_freqs
  integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
 &                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU)
- type(PAR_matrix) ::KERNEL,Xo,BUFFER
+ type(PAR_matrix) ::KERNEL,Xo,BUFFER,K_FXC
  !
  ! Setup 
  !
@@ -97,6 +97,13 @@ subroutine X_redux(iq,X_par,Xw,X)
  Y_ALLOC(BUFFER%blc(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),PAR_n_freqs))
  Y_MEM_ALLOC(BUFFER%blc)
  BUFFER%blc=cZERO
+ if (l_alda_fxc.and.Xo%kind=="SLK") then
+   call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )
+   Y_ALLOC(K_FXC%blc(K_FXC%BLCrows(1):K_FXC%BLCrows(2),K_FXC%BLCcols(1):K_FXC%BLCcols(2),1))
+   Y_MEM_ALLOC(K_FXC%blc)
+   K_FXC%blc=cZERO
+   call MATRIX_transfer(M=FXC(:,:,1),M_out=K_FXC)
+ endif
  !
  do iw_par=1,maxval(PAR_n_freqs_global)
    !
@@ -167,9 +174,15 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
    else if (l_alda_fxc) then
      !
-     ! ALDA Fxc (to be implemented in PARALLEL) (TODO!)
+     ! ALDA Fxc
      !
-!     call M_by_M('N','N', X%ng, -Xo%blc(:,:FXC_n_g_corr,1), FXC(:,:,1), KERNEL%blc(:,:FXC_n_g_corr,iw_par))
+     if (Xo%kind=="SLK") then
+       call PARALLEL_M_by_M(Xo,K_FXC,KERNEL,"N","N",X%ng,FXC_n_g_corr,FXC_n_g_corr)
+       K_FXC%blc=-K_FXC%blc
+     else
+       call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,cONE,-Xo%blc(:,:FXC_n_g_corr,1),X%ng,&
+&                  FXC(:,:,1),FXC_n_g_corr,cZERO,KERNEL%blc(:,:FXC_n_g_corr,1),X%ng)
+     endif
      !
    endif
    !
@@ -232,6 +245,11 @@ subroutine X_redux(iq,X_par,Xw,X)
  Y_FREE(Xo%blc)
  call MATRIX_reset(KERNEL)
  call MATRIX_reset(Xo)
+ if (l_alda_fxc.and.Xo%kind=="SLK") then
+   Y_MEM_FREE(K_FXC%blc)
+   Y_FREE(K_FXC%blc)
+   call MATRIX_reset(K_FXC)
+ endif
  !
 #if defined _TIMING
  call timing('X (procedure)',OPR='stop')

@@ -294,6 +294,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    Y_FREE(X_mat)
    deallocate(X_par)
  endif
+ if (allocated(FXC)) then
+   Y_MEM_FREE(FXC)
+   Y_FREE(FXC)
+ endif
  call X_alloc('DIP_projected')
 #if defined _PL
  if (l_photolum) call X_alloc('DIP_P')

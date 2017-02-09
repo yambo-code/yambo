@@ -282,13 +282,15 @@ contains
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
 &                        atom_pos, Z_species,atomic_number
+   ! 
+#include<memory.h>
    !
    ! Work Space
    !
    real(DP)                       :: tau_units
    real(SP)                       :: z
    integer                        :: i1,i2,u
-
+   !
    Y_ALLOC(ityp_(nat_))
    Y_MEM_ALLOC(ityp_)
    Y_ALLOC(tau_(3,nat_))
@@ -304,8 +306,7 @@ contains
    call pw_atoms(pw_unit)
 
    n_atomic_species = nsp_     ! n_atom_species only read here
-   Y_ALLOC(atm_(n_atomic_species))
-   Y_MEM_ALLOC(atm_)
+   allocate(atm_(n_atomic_species))
    atm_(1:n_atomic_species) = species_type_(1:n_atomic_species)
    do i1=1, nat_
      ityp_(i1) = -1
@@ -323,10 +324,8 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    tau_units = 1.0_DP
-   Y_ALLOC(atm_(n_atomic_species))
-   Y_MEM_ALLOC(atm_)
-   Y_ALLOC(psfile(n_atomic_species))
-   Y_MEM_ALLOC(psfile)
+   allocate(atm_(n_atomic_species))
+   allocate(psfile(n_atomic_species))
    Y_ALLOC(nmesh(n_atomic_species))
    Y_MEM_ALLOC(nmesh)
    Y_ALLOC(nbeta(n_atomic_species))
@@ -453,11 +452,12 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_k_points(k)
-   !
+   ! 
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
    use vec_operate, ONLY:v_is_zero
    use com,         ONLY:warning
+#include<memory.h>
    type(bz_samp) :: k
    !
    Y_ALLOC(xk_(3,k%nibz))
@@ -514,11 +514,13 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_R_vectors
+   ! 
    use pars,        only : pi
    use R_lattice,   ONLY:b, ng_vec, g_vec
    use D_lattice,   ONLY:alat
+#include<memory.h>
    !
-   Y_ALLOCATE(g_vec(ng_vec,3)) ! The YAMBO array
+   Y_ALLOC(g_vec(ng_vec,3)) ! The YAMBO array
    Y_MEM_ALLOC(g_vec)
 
 #if defined _P2Y_EXPORT
@@ -529,7 +531,7 @@ contains
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
-   Y_ALLOCATE(igv_(3,ngm_)) ! The PWscf array (ngm = ng_vec if not gamma_only)
+   Y_ALLOC(igv_(3,ngm_)) ! The PWscf array (ngm = ng_vec if not gamma_only)
    Y_MEM_ALLOC(igv_)
    call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
@@ -588,7 +590,7 @@ contains
 
    Y_ALLOC(pw_igk_(ngm_,k%nibz))
    Y_MEM_ALLOC(pw_igk_)
-   Y_ALLOCATE(index_(ngm_)) ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
+   Y_ALLOC(index_(ngm_)) ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
    Y_MEM_ALLOC(index_)
    do ik = 1, k%nibz
      !

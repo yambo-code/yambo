@@ -52,9 +52,9 @@ module memory
  integer           :: MEM_element_use_SAVE (N_MEM_SAVE_max) =0  
  !
  interface MEM_dri
-   module procedure MEM_clean,MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,&
-&                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,&
-&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,&
+   module procedure MEM_clean,MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,&
+&                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
+&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,        MEM_rd3,&
 &                                    MEM_r4,MEM_c4,&
 &                             MEM_i5,MEM_r5,MEM_c5
  end interface MEM_dri
@@ -105,6 +105,21 @@ module memory
      real(SP)    ::r(:,:)
      call MEM_manager(name,size(r),kind(r(1,1)))
    end subroutine
+   subroutine MEM_rd1(name,r)
+     character(*)::name
+     real(DP)    ::r(:)
+     call MEM_manager(name,size(r),kind(r))
+   end subroutine
+   subroutine MEM_rd2(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:)
+     call MEM_manager(name,size(r),kind(r(1,1)))
+   end subroutine
+   subroutine MEM_rd3(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:,:)
+     call MEM_manager(name,size(r),kind(r(1,1,1)))
+   end subroutine
    subroutine MEM_r3(name,r)
      character(*)::name
      real(SP)    ::r(:,:,:)
@@ -128,7 +143,12 @@ module memory
    subroutine MEM_cd1(name,c)
      character(*)::name
      complex(DP) ::c(:)
-     call MEM_manager(name,size(c),4*kind(c(1)))
+     call MEM_manager(name,size(c),2*kind(c(1)))
+   end subroutine
+   subroutine MEM_cd2(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:)
+     call MEM_manager(name,size(c),2*kind(c(1,1)))
    end subroutine
    subroutine MEM_c2(name,c)
      character(*)::name

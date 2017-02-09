@@ -104,27 +104,27 @@ integer function io_BSS_invert(iq,W,ID)
    endif
    !
    call io_bulk(ID,'FREQs',VAR_SZ=(/2,K_INV_EPS%n_freqs/))
-   call io_bulk(ID,C1=W%p(:K_INV_EPS%n_freqs))
+   call io_bulk(ID,C1=W%p)
    !
  endif
  !
  if (any((/io_sec(ID,:)==3/))) then
    !
    call io_bulk(ID,'EPS_INV_ERRs',VAR_SZ=(/K_INV_EPS%n_freqs/))
-   call io_bulk(ID,I1=K_INV_EPS%err(:K_INV_EPS%n_freqs))
+   call io_bulk(ID,I1=K_INV_EPS%err)
    !
    call io_bulk(ID,'EPSILON',VAR_SZ=(/2,K_INV_EPS%n_freqs,3/))
-   call io_bulk(ID,C2=K_INV_EPS%spectra(:K_INV_EPS%n_freqs,:))
+   call io_bulk(ID,C2=K_INV_EPS%spectra)
    !
  endif
  !
  if (any((/io_sec(ID,:)==4/))) then
    !
    call io_bulk(ID,'PL_INV_ERRs',VAR_SZ=(/K_INV_PL%n_freqs/))
-   call io_bulk(ID,I1=K_INV_PL%err(:K_INV_PL%n_freqs))
+   call io_bulk(ID,I1=K_INV_PL%err)
    !
    call io_bulk(ID,'PL',VAR_SZ=(/2,K_INV_PL%n_freqs,2/))
-   call io_bulk(ID,C2=K_INV_PL%spectra(:K_INV_PL%n_freqs,:))
+   call io_bulk(ID,C2=K_INV_PL%spectra)
    !
  endif
  !

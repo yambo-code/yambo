@@ -58,9 +58,9 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  !
  W_electric=cZERO
  !
- do ik=1,QP_nk
-   do i_sp_pol=1,n_sp_pol
-     call Build_W_operator(V_bands,E,k,A_vecpot,ik,i_sp_pol,W_electric(:,:,ik,i_spin))
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,QP_nk
+     call Build_W_operator(V_bands,E,k,A_vecpot,ik,i_sp_pol,W_electric(:,:,ik,i_sp_pol))
    enddo
  enddo
  !

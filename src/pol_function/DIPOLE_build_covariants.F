@@ -97,30 +97,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  ! If they do not I have to compute them
  !
- !
- if(io_err/=0) then
-   !
-   ! Notice that DIP_S is defined in the BZ       
-   !
-   call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,PAR_Xk_nbz/))
-   DIP_S=cZERO
-   !
-   call DIPOLE_overlaps(Xk,X)
-   !
-   if (     master_cpu) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(X,ID)
-   endif
-   call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
-   if (.not.master_cpu) then
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(X,ID)
-   endif
-   !
-   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
-   io_err=io_Overlaps(X,ID)
-   !
- endif
+ if(io_err/=0) call DIPOLE_overlaps(Xk,X)
  !
  idir_not_done(:)= (k_map%max_kdir(:)==1)
  !

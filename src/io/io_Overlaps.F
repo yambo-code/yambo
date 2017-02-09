@@ -45,7 +45,6 @@ integer function io_Overlaps(X,ID)
  integer :: ik,ik_mem,i_fragment,ixyz,i_sp_pol,shift(2)
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
- real(SP),allocatable :: disk_data(:,:,:)
  !
  if (.not.io_DIP) then
    io_Overlaps=IO_NOT_ALLOWED
@@ -85,11 +84,7 @@ integer function io_Overlaps(X,ID)
  !
  ik_mem=ik 
  !
- allocate(disk_data(X%ib(2),X%ib(2),2))
- !
- if (read_is_on(ID)) then
-   call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,nXkbz/))
- endif
+ if (read_is_on(ID)) call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,nXkbz/))
  !
  ! Fragmentation
  !
@@ -99,19 +94,11 @@ integer function io_Overlaps(X,ID)
  !
  if (io_action(ID)==RD_CL_IF_END.and.ik==nXkbz) io_action(ID)=RD_CL
  !
- do ixyz=1,6
-   !
-   ! S
-   !
-   if (write_is_on(ID)) call mat_c2r(DIP_S(:,:,ixyz,ik_mem,i_sp_pol),disk_data)
-   write (VAR_name,'(3(a,i4.4))') 'DIP_S_k_',ik,'_xyz_',ixyz,'_spin_',i_sp_pol
-   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
-   call io_bulk(ID,R3=disk_data)
-   if (read_is_on(ID)) call mat_r2c(disk_data,DIP_S(:,:,ixyz,ik_mem,i_sp_pol))
-   !
- enddo
+ ! S
  !
- deallocate(disk_data)
+ write (VAR_name,'(3(a,i4.4))') 'DIP_S_k_',ik,'_sp_pol_',i_sp_pol
+ call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,X%ib(2),X%ib(2),6/))
+ call io_bulk(ID,C3=DIP_S(:,:,:,ik_mem,i_sp_pol))
  !
 1 call io_disconnect(ID=ID)
  !

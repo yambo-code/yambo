@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,9 +29,10 @@ logical function stop_now(DO_IT_NOW)
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset
- use parallel_m,     ONLY:myid,MPI_shutdown
+ use parallel_m,     ONLY:myid,mpi_comm_world,ncpu
  use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
+ !
  implicit none
  !
  logical :: DO_IT_NOW
@@ -83,6 +84,10 @@ logical function stop_now(DO_IT_NOW)
  !
  call it_reset(-1)
  !
- call MPI_shutdown( ) 
+ 
+#if defined _MPI
+ if (ncpu>1) call MPI_Abort(mpi_comm_world,ierr,1)
+#endif
+ stop
  !
 end function

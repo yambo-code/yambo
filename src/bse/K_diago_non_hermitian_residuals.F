@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -36,10 +36,10 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  use pars,           ONLY:SP,cZERO,cI
  use wrapper_omp,    ONLY:M_by_M_omp,Vstar_dot_V_omp,V_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
+ use interfaces,     ONLY:PARALLEL_index,LINEAR_ALGEBRA_driver 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use linear_algebra, ONLY:LINEAR_ALGEBRA_driver,INV
+ use linear_algebra, ONLY:INV
  use BS,             ONLY:BS_K_dim,BS_H_dim
  use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_E,BSS_eh_Z,BSS_eh_f
  !
@@ -126,7 +126,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  call M_by_M_omp('c','n',BS_H_dim,BS_V_left,BS_V_right,BS_overlap)
  !
- call LINEAR_ALGEBRA_driver(INV,BS_overlap)
+ call LINEAR_ALGEBRA_driver(INV,M=BS_overlap)
  call live_timing(steps=1)
  call live_timing()
  !

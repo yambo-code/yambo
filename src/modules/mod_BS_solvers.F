@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,7 +25,8 @@ module BS_solvers
  !
  use pars,       ONLY:SP,schlen,lchlen
  use memory_m,   ONLY:mem_est
- use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim
+ use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block
+ use SLK_m,      ONLY:SLK_matrix
  !
  implicit none
  !
@@ -55,6 +56,10 @@ module BS_solvers
  type(Slepc_vector) :: Slepc_v
  !
  integer, allocatable :: Haydock_parallel_group_comm(:)
+ !
+ ! SCALAPACK shadow matrix
+ !=========================
+ type(SLK_matrix), SAVE:: K_slk
  !
  ! Solvers (General)
  !=========
@@ -96,8 +101,10 @@ module BS_solvers
  !
  ! Solvers (Inversion)
  !=========
- character(schlen):: BSS_inversion_mode
- logical  :: BSS_uses_partial_diago
+ character(schlen)     :: BSS_inversion_mode
+ logical               :: BSS_uses_partial_diago
+ logical               :: K_diago_in_BS_mat
+ type(SLK_matrix),SAVE :: K_inv_slk
  !
  type K_Inversion_data
    !
@@ -122,8 +129,8 @@ module BS_solvers
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
+ complex(SP), allocatable :: BS_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
- complex(SP), allocatable :: BS_cpl_mat(:,:)
  complex(SP), allocatable :: BSS_dipoles(:)
  complex(SP), allocatable :: BSS_eh_Z(:)
  !
@@ -158,6 +165,36 @@ module BS_solvers
  !
  contains
    !
+   subroutine BS_duplicate_K_structure(label,BLKs_in,BLKs_out)
+     !
+     use BS,        ONLY:n_BS_blks
+     use memory_m,  ONLY:mem_est
+     character(*)   :: label
+     type(BS_block) :: BLKs_in(:),BLKs_out(:)
+     integer        :: i_B,tot_size
+     !
+     tot_size=0
+     !
+     do i_B=1,n_BS_blks
+       !
+       allocate(BLKs_out(i_B)%mat( BLKS_in(i_B)%size(1) , BLKS_in(i_B)%size(2) ))
+       !
+       tot_size=tot_size+BLKS_in(i_B)%size(1)*BLKS_in(i_B)%size(2)
+       !
+       BLKs_out(i_B)%ik         =BLKS_in(i_B)%ik
+       BLKs_out(i_B)%ip         =BLKS_in(i_B)%ip
+       BLKs_out(i_B)%iT_k       =BLKS_in(i_B)%iT_k
+       BLKs_out(i_B)%iT_p       =BLKS_in(i_B)%iT_p
+       BLKs_out(i_B)%size       =BLKS_in(i_B)%size
+       BLKs_out(i_B)%mode       =BLKS_in(i_B)%mode
+       BLKs_out(i_B)%coordinate =BLKS_in(i_B)%coordinate
+       !
+     enddo
+     !
+     call mem_est(label,(/tot_size/))
+     !
+   end subroutine
+   !
    subroutine BS_mat_alloc( )
      use pars,      ONLY:cZERO
      use memory_m,  ONLY:mem_est
@@ -172,9 +209,14 @@ module BS_solvers
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
      use electrons, ONLY:E_SOC_nbands
+     use SLK_m,     ONLY:BLACS_structure_in_use
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-
+     if (.not.BLACS_structure_in_use) then
+       allocate(BS_mat(BS_H_dim,BS_H_dim))
+       call mem_est('BS_mat',(/size(BS_mat)/))
+       BS_mat    = cZERO
+     endif
      allocate(BSS_dipoles(BS_H_dim))
      call mem_est('BSS_dipoles',(/size(BSS_dipoles)/))
      BSS_dipoles = cZERO

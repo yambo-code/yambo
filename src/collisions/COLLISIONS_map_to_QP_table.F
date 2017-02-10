@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine COLLISIONS_map_to_QP_table(what,COLL)
  !
  use pars,          ONLY:IP
- use collision,     ONLY:COLLISIONS_group,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_group,COLL_bands
  use QP_m,          ONLY:QP_nk,QP_nb,QP_table,QP_n_states
  use electrons,     ONLY:n_sp_pol
  use R_lattice,     ONLY:nXkibz

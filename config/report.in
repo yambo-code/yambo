@@ -28,12 +28,15 @@
 # [ @FFT_str@ ] FFT      : @FFT_LIBS@ @FFT_DESCRIPTION@
 # [ @BLAS_str@ ] BLAS     : @BLAS_LIBS@
 # [ @LAPACK_str@ ] LAPACK   : @LAPACK_LIBS@
-# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@ @BLACS_LIBS@
-# [ @SLEPC_str@ ] SLEPC    : @PETSC_LIBS@ @SLEPC_LIBS@
+# [ @BLACS_str@ ] BLACS    : @BLACS_LIBS@
+# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@ 
+# [ @PET_str@ ] PETSC    : @PETSC_LIBS@ 
+# [ @SLE_str@ ] SLEPC    : @SLEPC_LIBS@ 
 #
 #  OTHER
-# [ @LIBXC_str@ ] LibXC      : @LIBS_LIBXC@
-# [ @MPI_LIB_str@ ] MPI library: @MPILIBS@
+# [ @LIBXC_str@ ] LibXC          : @LIBS_LIBXC@
+# [ @MPI_LIB_str@ ] MPI linking lib: @MPILIBS@
+# [ @MPI_LIB_str@ ] MPI root       : @MPIROOT@
 #
 # - COMPILERS, MAKE and EDITOR -
 #

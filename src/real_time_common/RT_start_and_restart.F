@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -55,7 +55,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
  use fields,         ONLY:A_vecpot,A_vecpot_previous,A_ext
- use SC,             ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
+ use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF
@@ -71,10 +71,10 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
- complex(SP):: M_tmp(RT_bands(2),RT_bands(2),n_sp_pol)
- integer, external :: io_SC_components,io_RT_components,RT_Lifetimes_evaluation_plan
+ complex(SP):: M_tmp(RT_bands(2),RT_bands(2))
+ integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
  !
  ! Initialize the Gf and potentials
@@ -95,20 +95,22 @@ subroutine RT_start_and_restart(E,k,q,X)
    E_bare=E%E(:RT_bands(2),:,:)
  endif
  !
- call SC_bare_Hamiltonian(E,k,k)
+ call Bare_Hamiltonian(E,k,k)
  !
  ! Reference Hartree and XC
  !==========================
+ do i_sp_pol=1,n_sp_pol
  do ik=1,nXkibz
    !
    M_tmp=cZERO
-   call V_real_space_to_H(ik,V_hartree_sc,M_tmp,WF,'def') 
-   HARTREE0(:,:,ik,:)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1:n_sp_pol)
+   call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
+   HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
    !
    M_tmp=cZERO
-   call V_real_space_to_H(ik,V_xc,        M_tmp,WF,'xc ') 
-   XC0(:,:,ik,:)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1:n_sp_pol)
+   call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
+   XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
    !
+ enddo
  enddo
  !
  ! In the driver loop both V_hartree_sc and V_xc corresponds to the [delta_rho] value. As here
@@ -128,13 +130,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
- io_E=io_SC_components('E' ,E,ID(1))
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2)) ! WFs
- io_WF=io_SC_components('WF',E,ID(2))
- call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
- io_V=io_SC_components('V' ,E,ID(3))
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response

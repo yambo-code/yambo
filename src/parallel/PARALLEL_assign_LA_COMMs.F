@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -83,7 +83,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
    !
    call SLK_communicators( SLK_COM_A2A(1), SLK_COM_INDEX(1), Ncpu_in )
    !
- else if (ENVIRONMENT=="Response_T_space") then
+ else if (ENVIRONMENT=="Response_T_space".or.ENVIRONMENT=="Response_G_space_Zero_Momentum") then
    !
    call SLK_communicators( PAR_COM_WORLD, PAR_COM_NULL, Ncpu_in )
    !

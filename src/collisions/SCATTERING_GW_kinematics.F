@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -36,7 +36,7 @@ subroutine SCATTERING_GW_kinematics(i_q_bz,i_m,I,k,q,TABLE,E,N,G0,Ek,Ekmq,E_diff
  use pars,                ONLY:SP
  use electrons,           ONLY:spin,levels
  use R_lattice,           ONLY:qindx_S,bz_samp
- use collision,           ONLY:elemental_collision
+ use collision_el,        ONLY:elemental_collision
  !
  implicit none
  !

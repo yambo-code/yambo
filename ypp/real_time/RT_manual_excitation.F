@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -23,14 +23,13 @@
 !
 subroutine RT_manual_excitation(E,k)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP
  use units,          ONLY:BO2ANG
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
- use parser_m,       ONLY:parser
  use vec_operate,    ONLY:v_is_zero,c2a
  use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
@@ -153,14 +152,10 @@ subroutine RT_manual_excitation(E,k)
    !
    ib     = RT_carriers%table(i_RT,1)
    ik     = RT_carriers%table(i_RT,2)
-   !ik_RT  = RT_carriers%table(i_RT,3)
-   !i_spin = RT_carriers%table(i_RT,4)
    !
    if (.not.Pumped_state(ib,ik)) cycle
    !
    occupation=min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff)
-   !
-   !write(*,*) ib,ik,occupation
    !
    if (Pump_level(ib,ik)>0) then
      RT_carriers%delta_f(i_RT)= spin_occ*occupation

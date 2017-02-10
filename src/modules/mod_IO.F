@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -132,7 +132,7 @@ module IO_m
  interface 
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                          DB_R0,R0,R1,DB_R1,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                          DB_R0,R0,R1,DB_R1,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                          DESCRIPTION,DO_NOT_DUMP)
      !
      use pars
@@ -141,22 +141,27 @@ module IO_m
      integer,     optional :: VAR_SZ,MENU
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+     complex(SP), optional :: C0,DB_C0
      logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0,CH1(:)
      character(lchlen),optional :: DESCRIPTION
      !
    end subroutine
    !
-   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
+   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
+                      &             R0,R1,R2,R3,R4,R5,&
+                      &             C0,C1,C2,C3,C4,   &
+                      &             L0,L1,L2,L3,L4,   &
+                      &                            IPOS)
      !
      use pars
      integer      :: ID, error
      character(*),optional :: VAR
      integer,     optional :: VAR_SZ(:),IPOS(:)
-     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:)
-     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:)
-     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:)
-     integer(LP), optional :: L1(:),L3(:,:,:)
+     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
+     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
+     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:)
+     integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
      !
    end subroutine
    !
@@ -188,8 +193,7 @@ module IO_m
    ! 
    logical function open_is_on(ID)
      !
-     ! Note that an identical IF statement must be defined in 
-     ! io_control.
+     ! Note that an identical IF statement must be defined in io_control.
      !
      integer :: ID
      open_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_WR_CL,&
@@ -303,24 +307,10 @@ module IO_m
      !
      if (open_is_on(ID).and.write_is_on(ID)) then
        !
-       CREATE_MODE=nf90_share
+       CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
        !
-       ! Setting NF90_64BIT_OFFSET causes netCDF to create a 64-bit 
-       ! offset format file, instead of a netCDF classic format file. 
-       ! The 64-bit offset format imposes far fewer restrictions on very large 
-       ! (i.e. over 2 GB) data files. See Large File Support.
-       !
-       ! http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Large-File-Support.html
-       ! http://www.unidata.ucar.edu/software/netcdf/faq-lfs.html
-       !
-#if defined _64BIT_OFFSET
-       !
-       if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
-&                index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
-&                index(desc,'elph')/=0,index(desc,'gops')/=0, & 
-&                index(desc,'kindx')/=0/))) & 
-&                CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
-       !
+#if defined _NC_CLASSIC
+       CREATE_MODE=ior(nf90_share,nf90_classic)
 #elif defined _HDF5_IO
        CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif
@@ -328,8 +318,7 @@ module IO_m
        if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
          !
          if( file_exists(trim(io_file(ID))) ) then
-           call netcdf_call(nf90_open(trim(io_file(ID)),&
-&                           ior(nf90_write,nf90_share),io_unit(ID)))
+           call netcdf_call(nf90_open(trim(io_file(ID)),ior(nf90_write,nf90_share),io_unit(ID)))
          else
            call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)))
            call netcdf_call(nf90_enddef(io_unit(ID)))
@@ -622,13 +611,12 @@ module IO_m
 &                               nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim))
    end function
    !
-   integer function variable_is_found(ID,var_name)
+   logical function variable_is_found(ID,var_name)
      integer,      intent ( in) :: ID
      character(*), intent ( in) :: var_name
      integer :: var_ID ! Work Space
-     variable_is_found=-1
-     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=1  
-     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=0  
+     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=.TRUE.
+     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=.FALSE.
    end function
    !
    subroutine deliver_IO_error_message(i_err,DB)

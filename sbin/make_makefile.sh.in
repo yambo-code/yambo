@@ -228,7 +228,7 @@ cat << EOF >> $cdir/Makefile
 EOF
 cat << EOF >> $cdir/Makefile
 .f.o:
-	${PREFIX}(eval \$(f77) -c \$(f77flags) \$(topdir)/$cdir/\$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(f77flags) \$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "
 .c.o:
 	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<) > /dev/null

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -90,6 +90,9 @@ module LOGO
      MPI_string="Serial"
 #if defined _MPI
      MPI_string="MPI"
+#endif
+#if defined _SCALAPACK
+     MPI_string="MPI+SLK"
 #endif
      OMP_string=" "
 #if defined _OPENMP

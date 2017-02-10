@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -52,10 +52,9 @@ subroutine symmetries_driver(E,Xk)
  !
  integer               :: action_kind,old_nkpt
  !
- if (core_io_path==more_io_path) then
-   more_io_path=trim(core_io_path)//"/FixSymm"
-   call msg('s','Setting I/O path to "FixSymm"')
- endif
+ if (core_io_path==more_io_path) more_io_path=trim(core_io_path)//"/FixSymm"
+ !
+ call msg('s','Symmetries-respecting SAVE written to'//trim(more_io_path))
  !
  call mk_dir(more_io_path)
  call mk_dir(trim(more_io_path)//"/SAVE")

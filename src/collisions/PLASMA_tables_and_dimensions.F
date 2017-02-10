@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -30,7 +30,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  use plasma,        ONLY:EH_gas
  use parallel_m,    ONLY:PAR_nQ,PAR_Q_index,PAR_IND_Q
  use memory_m,      ONLY:mem_est
- use collision,     ONLY:GW_NEQ_collisions
+ use collision_ext, ONLY:GW_NEQ_collisions
  !
  implicit none
  !

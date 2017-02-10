@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,19 +27,41 @@ module interfaces
  !
  interface
    !
-   subroutine SCATTERING_GW_kinematics(i_q_bz,i_m,I,k,q,TABLE,E,N,G0,Ek,Ekmq,E_diff)
-     use pars,                ONLY:SP
-     use electrons,           ONLY:levels
-     use R_lattice,           ONLY:bz_samp
-     use QP_m,                ONLY:QP_table
-     use collision,           ONLY:elemental_collision
-     integer,       intent(in) ::i_q_bz,i_m
-     integer,       intent(in) ::TABLE(:)
-     type(elemental_collision) ::I
-     type(bz_samp)             ::k,q
-     type(levels),  OPTIONAL   ::E
-     integer,       OPTIONAL   ::N,G0
-     real(SP),      OPTIONAL   ::Ek,Ekmq,E_diff
+   subroutine SLK_matrix_transfer( mode, M_slk, M_bse, M )
+     !
+     use SLK_m, ONLY:SLK_matrix
+     use pars,  ONLY:SP
+     use BS,    ONLY:BS_block
+     !
+     character(*)     :: mode
+     type(SLK_matrix) :: M_slk
+     type(BS_block), optional :: M_bse(:)
+     complex(SP),    optional :: M(:,:)
+     !
+   end subroutine
+   !
+   subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right,E_real,&
+&                                   E_cmpl,SVD_digits,det,V_slk)
+     !
+     use SLK_m,          ONLY:SLK_matrix
+     use pars,           ONLY:SP
+     use BS,             ONLY:BS_block
+     !
+     integer                    :: idriver
+     integer,          optional :: lib_in
+     complex(SP),      optional :: M(:,:)
+     type(SLK_matrix), optional :: M_slk
+     type(BS_block),   optional :: M_bse(:)
+     complex(SP),      optional :: B(:,:)
+     complex(SP),      optional :: C(:,:)
+     complex(SP),      optional :: V_left(:,:)
+     complex(SP),      optional :: V_right(:,:)
+     real(SP),         optional :: E_real(:)
+     complex(SP),      optional :: E_cmpl(:)
+     integer,          optional :: SVD_digits 
+     complex(SP),      optional :: det
+     type(SLK_matrix), optional :: V_slk
+     !
    end subroutine
    !
    subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
@@ -89,14 +111,6 @@ module interfaces
      !
    end subroutine
 #endif
-   !
-   integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll)
-     use collision,  ONLY:COLLISIONS_element,COLLISIONS_group
-     integer, intent(inout)             ::ID
-     type(COLLISIONS_group)             ::COLL_grp
-     type(COLLISIONS_element), optional ::COLL_element
-     integer, intent(in)     , optional ::i_coll
-   end function
    !
    integer function eval_G_minus_G(iG,iGo,COMM)
      use parallel_m,      ONLY:MPI_comm

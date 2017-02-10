@@ -35,6 +35,15 @@ AC_ARG_WITH(netcdf_libdir,AC_HELP_STRING([--with-netcdf-libdir=<path>],
 AC_ARG_WITH(netcdf_includedir,AC_HELP_STRING([--with-netcdf-includedir=<path>],
             [Path to the NetCDF include directory],[32]))
 #
+AC_ARG_WITH(netcdff_libs,AC_HELP_STRING([--with-netcdff-libs=<libs>],
+            [Use NetCDFF libraries <libs>],[32]))
+AC_ARG_WITH(netcdff_path, AC_HELP_STRING([--with-netcdff-path=<path>],
+            [Path to the NetCDFF install directory],[32]),[],[])
+AC_ARG_WITH(netcdff_libdir,AC_HELP_STRING([--with-netcdff-libdir=<path>],
+            [Path to the NetCDFF lib directory],[32]))
+AC_ARG_WITH(netcdff_includedir,AC_HELP_STRING([--with-netcdff-includedir=<path>],
+            [Path to the NetCDFF include directory],[32]))
+#
 AC_ARG_WITH(hdf5_libs,AC_HELP_STRING([--with-hdf5-libs=<libs>],
             [Use HDF5 libraries <libs>],[32]))
 AC_ARG_WITH(hdf5_path, AC_HELP_STRING([--with-hdf5-path=<path>],
@@ -46,19 +55,27 @@ AC_ARG_WITH(hdf5_includedir,AC_HELP_STRING([--with-hdf5-includedir=<path>],
 #
 # Large Databases Support (LFS)
 #
-AC_ARG_ENABLE(netcdf-LFS, AC_HELP_STRING([--enable-netcdf-LFS],
-             [Activate NetCDF Large File Support. Default is no.]))
+AC_ARG_ENABLE(netcdf-classic, AC_HELP_STRING([--enable-netcdf-classic],
+             [Switch to OLD NetCDF classic. Default is no.]))
 #
 # HDF5 support
 #
 AC_ARG_ENABLE(netcdf_hdf5,AC_HELP_STRING([--enable-netcdf-hdf5],
-                                  [Activate the HDF5 support. Default is no.]))
+             [Activate the HDF5 support. Default is no.]))
+#
+#
+# HDF5 data compression
+#
+AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
+             [Activate the HDF5 data compression. Default is no.]))
 #
 netcdf="no"
 netcdf_idir=""
+netcdff_idir=""
 dnetcdf=""
 NCFLAGS=""
 NCLIBS=""
+NFLIBS=""
 IFLAG=""
 compile_netcdf="no"
 enable_hdf5=""
@@ -94,8 +111,16 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
       try_libdir=$with_netcdf_path/lib
       try_incdir=$with_netcdf_path/include
   fi
+  if test -d "$with_netcdff_path" ; then 
+      tryf_libdir=$with_netcdff_path/lib
+      tryf_incdir=$with_netcdff_path/include
+  fi
+  #
   if test -d "$with_netcdf_libdir"     ; then try_libdir=$with_netcdf_libdir ; fi
   if test -d "$with_netcdf_includedir" ; then try_incdir=$with_netcdf_includedir ; fi
+  #
+  if test -d "$with_netcdff_libdir"     ; then tryf_libdir=$with_netcdff_libdir ; fi
+  if test -d "$with_netcdff_includedir" ; then tryf_incdir=$with_netcdff_includedir ; fi
   #
   if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
   if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
@@ -105,6 +130,9 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
   save_fcflags="$FCFLAGS"
   #
   FCFLAGS="$IFLAG$try_incdir $save_fcflags"
+  if test -d "$tryf_incdir" ; then
+    FCFLAGS="$IFLAG$try_incdir $IFLAG$tryf_incdir  $save_fcflags"
+  fi
   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [use netcdf]),
      [netcdf=yes
       if test ! -d include ; then mkdir include ; fi
@@ -114,16 +142,31 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
       for file in `find "$try_incdir" \( -name '*NETCDF*' -o -name '*TYPESIZES*' \) `; do
         cp $file include/ 
       done
+      if test -d "$tryf_incdir"; then
+        for file in `find "$tryf_incdir" \( -name '*netcdf*' -o -name '*typesizes*' \) `; do
+          cp $file include/ 
+        done
+        for file in `find "$tryf_incdir" \( -name '*NETCDF*' -o -name '*TYPESIZES*' \) `; do
+          cp $file include/ 
+        done
+      fi
       if test ! -d lib ; then mkdir lib ; fi
       for file in `find $try_libdir -name '*netcdf*.a'`; do
         cp $file lib/ 
       done
+      if test -d "$tryf_libdir" ; then 
+        for file in `find $tryf_libdir -name '*netcdf*.a'`; do
+          cp $file lib/ 
+        done
+      fi
      ], [netcdf=no])
   FCFLAGS="$save_fcflags"
   #
   NCLIBS="-lnetcdf"
-  if test -r $try_libdir/libnetcdff.a ; then
-    NCLIBS="-lnetcdff ${NCLIBS}"
+  if test -r $tryf_libdir/libnetcdff.a ; then
+    NFLIBS="-lnetcdff"
+  elif test -r $try_libdir/libnetcdff.a ; then
+    NCLIBS="-lnetcdff -lnetcdf"
   fi
   #
   if test "x$netcdf" = xyes; then
@@ -134,6 +177,10 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
   fi
   #
   NETCDF_LIBS="-L$try_libdir $NCLIBS"
+  if test -d "$tryf_libdir" ;  then
+    NETCDF_LIBS="-L$tryf_libdir $NFLIBS -L$try_libdir $NCLIBS"
+  fi
+  NCLIBS="$NFLIBS $NCLIBS"
   #
 elif test x"$with_netcdf_libs" != "x" ; then
   #
@@ -142,11 +189,12 @@ elif test x"$with_netcdf_libs" != "x" ; then
   AC_MSG_CHECKING([for NetCDF Library using $with_netcdf_libs])
   compile_netcdf="no"
   if test -d "$with_netcdf_includedir" ; then netcdf_idir="$IFLAG$with_netcdf_includedir" ; fi
+  if test -d "$with_netcdff_includedir" ; then netcdff_idir="$IFLAG$with_netcdff_includedir" ; fi
   netcdf=yes
-  NCLIBS="$with_netcdf_libs"
+  NCLIBS="$with_netcdff_libs $with_netcdf_libs" 
   AC_MSG_RESULT(yes)
   #
-  NETCDF_LIBS=$NCLIBS
+  NETCDF_LIBS="$NCLIBS"
   #
 fi
 if test "x$netcdf" = xno; then
@@ -167,13 +215,13 @@ if test "x$netcdf" = xno; then
   netcdf=yes
   AC_MSG_RESULT(Internal)
   #
-  NETCDF_LIBS=$NCLIBS
+  NETCDF_LIBS="$NCLIBS"
   # 
 fi
 #
 # Large File Support
 #
-if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="$dnetcdf -D_64BIT_OFFSET"; fi
+if test x"$enable_netcdf_classic" = "xyes"; then dnetcdf="$dnetcdf -D_NC_CLASSIC"; fi
 #
 #
 # HDF5 support
@@ -205,14 +253,14 @@ if test x"$enable_hdf5" = "xyes"; then
   if test -d "$with_hdf5_includedir" ; then try_incdir=$with_hdf5_includedir ; fi
   #
   try_hdf5_flags="-lhdf5_fortran -lhdf5_hl -lhdf5"
+  if test x"$with_hdf5_libs" != "x" ; then try_hdf5_flags="$with_hdf5_libs" ; fi
   #
   if test -d "$try_libdir" ; then try_hdf5_flags="-L$try_libdir $try_hdf5_flags" ; fi
-  if test x"$with_hdf5_libs" != "x" ; then try_hdf5_flags="$with_hdf5_libs" ; fi
   #
   HDF5_FLAGS="$try_hdf5_flags"
   #
-  FCFLAGS_="$netcdf_idir"
-  if test -d "$try_incdir" ; then FCFLAGS_="$netcdf_idir $IFLAG$try_incdir" ; fi
+  FCFLAGS_="$netcdf_idir $netcdff_idir"
+  if test -d "$try_incdir" ; then FCFLAGS_="$FCFLAGS_ $IFLAG$try_incdir" ; fi
   FCFLAGS="${IFLAG}./include $FCFLAGS_ $save_fcflags"
   #
   for ldflag in "-lcurl -lz" "-lcurl -lsz -lz" "-lsz -lz" "-lz" " "; do
@@ -248,11 +296,16 @@ fi
 #
 # NETCDF-HDF5 IO
 #
-if test x"$netcdf" = "xyes" && test x"hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
-    dnetcdf="${dnetcdf} -D_HDF5_IO"
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
+    dnetcdf="${dnetcdf} -D_HDF5_IO";
+fi
+#
+# HDF5-DATA COMPRESSION
+#
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
+    dnetcdf="${dnetcdf} -D_HDF5_COMPRESSION";
 fi
 
-AC_SUBST(NCLIBS)
 AC_SUBST(NETCDF_LIBS)
 AC_SUBST(HDF5_LIBS)
 AC_SUBST(NCLIBS)
@@ -263,5 +316,3 @@ AC_SUBST(dnetcdf)
 AC_SUBST(compile_netcdf)
 
 ])
-
-

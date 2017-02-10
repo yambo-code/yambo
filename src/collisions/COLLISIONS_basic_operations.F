@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !
  use pars,          ONLY:IP
  use memory_m,      ONLY:mem_est
- use collision,     ONLY:COLLISIONS_group,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_group,COLL_bands
  use R_lattice,     ONLY:nXkibz
  use electrons,     ONLY:n_sp_pol
  use wave_func,     ONLY:states_to_load

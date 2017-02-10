@@ -477,6 +477,10 @@ subroutine K_shell_matrix(iq,slepc_mat)
  use pars,           ONLY:SP
  use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
  use BS_solvers,     ONLY:BS_mat_alloc_BSS,Slepc_v,BS_HAYVEC_alloc
+ !REMOVE
+ use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_blk,n_BS_blks,BS_H_dim
+ use parallel_m,    ONLY : PAR_IND_T_Haydock, myid
+ !REMOVE
  !
  implicit none
  !
@@ -486,7 +490,10 @@ subroutine K_shell_matrix(iq,slepc_mat)
 #include <petsc/finclude/petscvec.h90>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
- ! 
+ !
+ !REMOVE
+ integer        i_g
+ !REMOVE 
  integer        iq, i_B, i_r, i_c, i_Tk, i_Tp
  Mat            slepc_mat
  PetscErrorCode ierr
@@ -506,6 +513,28 @@ subroutine K_shell_matrix(iq,slepc_mat)
  ! TODO: In the future it should be done acording to the BS parallelization
  ! to avoid the scattering vi (distributed) -> x (local) in K_multiply_by_V_slepc
  !
+ !get local number of rows
+ !
+ !do i_B=1,n_BS_blks
+   !
+ !  i_Tk  =BS_blk(i_B)%iT_k
+ !  i_Tp  =BS_blk(i_B)%iT_p
+   !
+ !  write(*,*) myid, i_Tk, i_Tp
+   !
+ !enddo
+ !
+ !call exit(0)
+ !
+ !write(*,*) '----'
+ !write(*,*) myid, n_BS_blks, BS_nT_grps
+ !write(*,*)
+ !do i_g=1,BS_nT_grps
+ !  if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+ !  write(*,*) myid, sum(BS_T_grp(:i_g-1)%size), BS_T_grp(i_g)%size, i_g, PAR_IND_T_Haydock%element_1D(i_g)
+ !enddo
+ !
+ ! 
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,BS_H_dim,BS_H_dim,0,slepc_mat,ierr)
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
@@ -544,10 +573,10 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  ! Interface with the K_multiply_by_V from the Haydock method
  ! This function has to take the same arguments as MatMult from PETSC
  !
- use pars,          ONLY : SP,DP
+ use pars,          ONLY : SP,DP,cZERO
  use BS_solvers,    ONLY : Slepc_v
  use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_blk,n_BS_blks,BS_H_dim
- use parallel_m,    ONLY : PAR_IND_T_Haydock
+ use parallel_m,    ONLY : PP_redux_wait,PAR_IND_T_Haydock,PAR_COM_T_Haydock
  !
  implicit none
  !
@@ -560,38 +589,35 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
- VecScatter           :: ctx
- PetscScalar, pointer :: xx(:)
- Vec                  :: vi,vo,x
+ Vec                  :: vi,vo
  Mat                  :: slepc_mat
- integer              :: n, i_g, rank, i_c, ierr, H_pos(1), start_index
+ integer              :: n, i_g, i_c, ierr, H_pos, start_index, low, high
  !
- ! create scattering context vi (distributed) -> x (local)
+ ! from vi (distributed) build Slepc%Vi
  !
- call VecScatterCreateToAll(vi,ctx,x,ierr);
+ call VecGetOwnershipRange(vi,low,high,ierr)
  !
- ! scatter from vi (distributed) -> x (local)
- ! 
- call VecScatterBegin(ctx,vi,x,INSERT_VALUES,SCATTER_FORWARD,ierr);
- call VecScatterEnd(ctx,vi,x,INSERT_VALUES,SCATTER_FORWARD,ierr);
+ forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Slepc_v%Vi(i_g)%fragment = cZERO
  !
- ! from x (local) build Slepc%Vi
- ! 
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
-     !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecGetValues( x, 1, H_pos, tmp_value, ierr )
-     Slepc_v%Vi(i_g)%fragment(i_c)=cmplx(tmp_value(1),kind=SP)
+     if (H_pos<high .and. H_pos>low) then
+        !SLEPC funcitons expect C indexes both in Fortran and C
+        call VecGetValues( vi, 1, H_pos, tmp_value, ierr )
+        Slepc_v%Vi(i_g)%fragment(i_c)=cmplx(tmp_value(1),kind=SP)
+     endif
    enddo
  enddo
  !
- ! destroy scatter context and local vector when no longer needed
- !
- call VecScatterDestroy(ctx,ierr);
- call VecDestroy(x,ierr);
+#if defined _MPI
+ do i_g=1,BS_nT_grps
+   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+   call PP_redux_wait(Slepc_v%Vi(i_g)%fragment,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+ enddo
+#endif
  !
  ! use the haydock routine to calculate the BSE auxiliaxy hamiltonian matrix-vector product
  ! Slepc_v%Vo = H Slepc_v%Vi
@@ -605,14 +631,13 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
-     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c))
-     !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
+     if (H_pos<high .and. H_pos>low) then
+         tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c))
+         !SLEPC funcitons expect C indexes both in Fortran and C
+         call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
+     endif
    enddo
  enddo
- !
- call VecAssemblyBegin(vo,ierr)
- call VecAssemblyEnd(vo,ierr)
  !
 end subroutine
 

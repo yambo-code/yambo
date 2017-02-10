@@ -40,6 +40,7 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:)
    !
  end type Haydock_vector
+ #if defined _SLEPC
  !
  ! Slepc
  !==========
@@ -49,6 +50,7 @@ module BS_solvers
    type(Haydock_vector), allocatable :: Vo(:)
    !
  end type Slepc_vector
+ #endif
  !
  type(Slepc_vector) :: Slepc_v
  !
@@ -82,6 +84,7 @@ module BS_solvers
  logical  :: Haydock_terminator
  real(SP) :: Haydock_treshold
  real(SP) :: Haydock_v0_mod
+ #if defined _SLEPC
  !
  ! Solvers (Slepc)
  !=========
@@ -89,6 +92,7 @@ module BS_solvers
  integer          :: BSS_slepc_ncv        !dimension of the subspace
  real(SP)         :: BSS_target_E         !find eigenvalues close to this energy
  logical          :: Slepc_shell          !use a shell matrix for slepc
+ #endif
  !
  ! Solvers (Inversion)
  !=========

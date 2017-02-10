@@ -23,17 +23,14 @@
 !
 subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_k,BANDS_range,bands_output)
  !
- use pars,           ONLY:SP,schlen
- use units,          ONLY:HA2EV
+ use pars,           ONLY:SP
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid
- use electrons,      ONLY:levels,n_sp_pol,n_spinor
+ use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use com,            ONLY:msg,of_open_close,error,warning
- use vec_operate,    ONLY:c2a,v_norm,iku_v_norm
+ use com,            ONLY:msg,error
+ use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
- use stderr,         ONLY:intc
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation
- use QP_CTL_m,       ONLY:QP_apply
  !
  implicit none
  !
@@ -41,7 +38,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  type(levels),  intent(in)  :: Xen
  integer      , intent(in)  :: BANDS_range(2)
  integer      , intent(out) :: ID_interp
- type(bz_samp), intent(out) :: USER_K,CIRCUIT_K,INTERP_K
+ type(bz_samp), intent(out) :: USER_K,CIRCUIT_K,INTERP_k
  real(SP)     , pointer     :: bands_output(:,:,:)
  !
  ! Work space
@@ -65,7 +62,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
    USER_K%nibz=1
    !
    kgrid_main_loop: do while(real_ctl/=999._SP)
-     if (associated(USER_K%pt)) deallocate(USER_K%pt)
+     if (allocated(USER_K%pt)) deallocate(USER_K%pt)
      allocate(USER_K%pt(USER_K%nibz,3))
      USER_K%pt(USER_K%nibz,:)=(/0._SP,0._SP,999._SP/)
      call parser('BKpts',USER_K%pt)

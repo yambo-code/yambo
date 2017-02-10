@@ -29,14 +29,12 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   ! Code take from BoltzTrap
   ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
   !
-  use pars,           ONLY:SP,DP,pi,cI,IP,cZERO,cONE
+  use pars,           ONLY:SP,DP,pi,cI,cZERO
   use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop
   use D_lattice,      ONLY:nsym
   use R_lattice,      ONLY:bz_samp
-  use memory_m,       ONLY:mem_est
   use vec_operate,    ONLY:c2a
   use com,            ONLY:error
-  use wrapper,        ONLY:M_by_M,M_by_V
   !
   implicit none
   !
@@ -61,13 +59,9 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   ikn =Nk             ! last k-point index
   !
   allocate(delta(Nkm1,nvalues))
-  call mem_est("delta",(/size(delta)/),(/SP/))
   allocate(rho(nshells))
-  call mem_est("rho",(/nshells/),(/SP/))
   allocate(h_mat(Nkm1,Nkm1),star_1(nshells,Nk),star_2(nshells,Nkm1))
-  call mem_est("h_mat star_1 star_2",(/size(h_mat),size(star_1),size(star_2)/),(/2*SP,2*SP,2*SP/))
   allocate(ipiv(Nkm1))
-  call mem_est("ipiv",(/size(ipiv)/),(/IP/))
   !
   ! Construct delta_epsilon eq. 10
   !
@@ -147,11 +141,8 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   ! Deallocation
   !
   deallocate(h_mat,star_1,star_2)
-  call mem_est("h_mat star_1 star_2")
   deallocate(ipiv)
-  call mem_est("ipiv")
   deallocate(delta,rho)
-  call mem_est("delta rho")
   !
   call k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
   !

@@ -24,11 +24,10 @@
 subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   !
   use pars,           ONLY:SP,pi,cI,cZERO,DP
-  use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop
+  use interpolate,    ONLY:nshells,lattice_vectors,make_star,int_sop
   use R_lattice,      ONLY:bz_samp
   use D_lattice,      ONLY:nsym
   use vec_operate,    ONLY:c2a
-  use memory_m,       ONLY:mem_est
   implicit none
   !
   integer,intent(in)        :: nvalues
@@ -45,7 +44,6 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   complex(SP), allocatable :: star(:,:)
   !
   allocate (star(nshells,Nk))
-  call mem_est("star",(/size(star)/),(/SP/))
   !
   ! Make stars
   !
@@ -68,6 +66,5 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   enddo
   !
   deallocate (star)
-  call mem_est("star")
   !
 end subroutine fourier_interpolation

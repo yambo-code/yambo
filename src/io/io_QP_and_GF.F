@@ -55,7 +55,10 @@ integer function io_QP_and_GF(what,qp,ID)
  else
    io_QP_and_GF=io_connect(desc=what,type=-3,ID=ID)
  endif
- if (io_QP_and_GF/=0) goto 1
+ if (io_QP_and_GF/=0) then
+   call io_disconnect(ID=ID)
+   return
+ endif
  !
  if (any((/io_sec(ID,:)==1/))) then
    ! 
@@ -290,7 +293,7 @@ integer function io_QP_and_GF(what,qp,ID)
 1 call io_disconnect(ID=ID)
  !
 #if defined _TIMING
- if (io_QP_and_GF==0) call timing('io_QP_and_GF',OPR='stop')
+ call timing('io_QP_and_GF',OPR='stop')
 #endif
  !
 end function

@@ -25,7 +25,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  use YPP,                 ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map,&
 &                              SOC_bands_buffer
- use pars,                ONLY:lchlen,rZERO,cZERO,cI,SP,IP
+ use pars,                ONLY:lchlen,rZERO,cZERO,cI,SP
  use stderr,              ONLY:real2ch,intc
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:spin_sop,a,alat,x_cc
@@ -35,7 +35,6 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use zeros,               ONLY:k_iku_zero
  use wave_func,           ONLY:WAVEs
  use interfaces,          ONLY:WF_load
- use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin,E_SOC_table,E_SOC_nbands
  use LIVE_t,              ONLY:live_timing
@@ -131,7 +130,6 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  E_SOC_nbands=En_SOC%nb
  allocate(En%E_SOC(E_SOC_nbands,kpt%nibz))
  allocate(E_SOC_table(2,En%nb,kpt%nibz))
- call mem_est("E_SOC E_SOC_table",(/size(En%E_SOC),size(E_SOC_table)/),(/SP,IP/))
  En%E_SOC=0._SP
  E_SOC_table=0
  !

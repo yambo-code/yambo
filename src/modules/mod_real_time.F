@@ -481,7 +481,6 @@ module real_time
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
-     use memory_m,       ONLY:mem_est
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup,E_bare
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
@@ -645,7 +644,6 @@ module real_time
    subroutine RT_free
      !
      use hamiltonian,    ONLY:H_free,E_bare
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      !
      call H_free()

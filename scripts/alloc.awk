@@ -7,7 +7,9 @@ if (index($0,"deallocate(")>0)
 {
 #print $0
 VAR=substr(LINE, index(LINE,"deallocate("))
-gsub("deallocate","Y_FREE",VAR)
+gsub("deallocate","Y_MEM_FREE",VAR)
+print repeat( " ", POS-1 ) VAR
+gsub("Y_MEM_FREE","Y_FREE",VAR)
 print repeat( " ", POS-1 ) VAR
 }
 else if (index($0,"allocate(")>0)
@@ -16,7 +18,7 @@ else if (index($0,"allocate(")>0)
 VAR=substr(LINE, index(LINE,"allocate("))
 sub("stat="," ",VAR)
 split(VAR,a)
-gsub("allocate","Y_ALLOCATE",a[1])
+gsub("allocate","Y_ALLOC",a[1])
 VAR=substr(a[1],1,length(a[1])-1)
 print repeat( " ", POS-1 ) VAR")"
 gsub("\\("," ",VAR)
@@ -28,7 +30,7 @@ else
 {
 OBJ=b[2]
 }
-print repeat( " ", POS-1 ) "Y_MEM("OBJ")"
+print repeat( " ", POS-1 ) "Y_MEM_ALLOC("OBJ")"
 }
 else
 {

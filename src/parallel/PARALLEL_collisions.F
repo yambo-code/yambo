@@ -163,7 +163,7 @@ subroutine PARALLEL_collisions( k, COLL )
  Y_MEM_ALLOC(COLL%PAR_map)
  Y_MEM_ALLOC(COLL%PAR_IND%element_1D)
  !
- if (.not.associated(PAR_IND_G_k%element_1D) ) then
+ if (.not.allocated(PAR_IND_G_k%element_1D) ) then
    Y_ALLOC(PAR_IND_G_k%element_1D(k%nibz))
    Y_MEM_ALLOC(PAR_IND_G_k%element_1D)
    PAR_IND_G_k%element_1D=.FALSE.

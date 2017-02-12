@@ -54,7 +54,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
- use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
+ use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp,M_by_V_omp
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
 #if defined _TIMING
@@ -496,10 +496,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            ! :::EXCHANGE    (resonant):::
            !=============================
            if (l_col_cut) then
-             H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
+             H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
 &                                             BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
            else
-             H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+             H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
            endif
          endif
        else 
@@ -508,10 +508,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            ! :::EXCHANGE    (coupling):::
            !=============================
            if (l_col_cut) then
-             H_x=V_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+             H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
 &                        BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
            else
-             H_x=V_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+             H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
 &                        BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
            endif
          endif

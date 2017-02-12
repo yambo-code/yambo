@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -65,23 +65,6 @@ module SLK_m
    INTEGER :: world_cntx = -1    ! BLACS context of all processor 
    INTEGER :: ortho_cntx = -1    ! BLACS context for ortho_comm
  end type ORTHO_group
- !_
- ! Common Work Space
- !
- type SLK_matrix 
-   integer :: desc(desc_len)
-   integer :: lwork    = 0
-   integer :: lrwork   = 0
-   integer :: liwork   = 0
-   integer :: info     = 0
-   integer :: rows(2)  = 0
-   integer :: cols(2)  = 0
-   integer :: nrows    = 0
-   integer :: ncols    = 0
-   integer :: nrows_used = 0
-   integer :: ncols_used = 0
-   complex(SP), allocatable :: blc(:,:)
- end type SLK_matrix 
  !
  ! SLK matrix distributed block and informations
  !===============================================

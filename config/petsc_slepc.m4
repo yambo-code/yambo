@@ -27,10 +27,16 @@ AC_ARG_WITH(petsc_libs,
         [AC_HELP_STRING([--with-petsc-libs=<libs>], [Use PETSC libraries <libs> or leave empty to use internal lib],[32])])
 AC_ARG_WITH(slepc_libs,
         [AC_HELP_STRING([--with-slepc-libs=<libs>], [Use SLEPC libraries <libs> or leave empty to use internal lib],[32])])
+AC_ARG_WITH(slepc_include,
+        [AC_HELP_STRING([--with-slepc-include=<incs>], [Use SLEPc includes <incs>],[33])])
+AC_ARG_WITH(petsc_include,
+        [AC_HELP_STRING([--with-petsc-include=<incs>], [Use PETSc includes <incs>],[32])])
 #
 PETSC_LIBS=""
 SLEPC_LIBS=""
 dslepc=""
+petsc_idir="$with_petsc_include"
+slepc_idir="$with_slepc_include"
 enable_slepc="no"
 enable_petsc="no"
 compile_petsc="no"
@@ -53,17 +59,20 @@ esac
 if test "$compile_petsc" = "yes" &&  test "$compile_slepc" = "yes"  ; then
   enable_slepc="yes"
   enable_petsc="yes"
-  dslepc="-D_PETSC"
+  dslepc="-D_SLEPC"
 else 
  if ! test "x$PETSC_LIBS" = "x" &&  ! test "x$SLEPC_LIBS" = "x" ; then
   enable_slepc="yes"
   enable_petsc="yes"
-  dslepc="-D_PETSC"
+  dslepc="-D_SLEPC"
  fi
 fi
 #
 AC_SUBST(PETSC_LIBS)
 AC_SUBST(SLEPC_LIBS)
+AC_SUBST(dslepc)
+AC_SUBST(slepc_idir)
+AC_SUBST(petsc_idir)
 AC_SUBST(enable_slepc)
 AC_SUBST(compile_slepc)
 AC_SUBST(compile_petsc)

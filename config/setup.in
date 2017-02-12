@@ -53,6 +53,7 @@ lnetcdf     = @NCLIBS@
 netcdf_aux  = @NCFLAGS@ 
 netcdf_idir = @netcdf_idir@
 slepc_idir  = @slepc_idir@
+petsc_idir  = @petsc_idir@
 llibxc      = @LIBS_LIBXC@
 lfftqe      = @FFTQELIBS@
 lfft	    = @FFT_LIBS@

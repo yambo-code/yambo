@@ -74,21 +74,21 @@ done
 #
 llibs="$lib_path $llibs"
 lf90include="@F90_MODULE_FLAG@\$(includedir)"
-linclude="-I\$(includedir) \$(slepc_idir)"
+linclude="-I\$(includedir)"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi
-llibinclude="\$(netcdf_idir)"
+llibinclude="\$(netcdf_idir) \$(petsc_idir) \$(slepc_idir)"
 #
 case $target in
   yambo*)
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(lpetsc) \$(lslepc) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(netcdf_idir) \$(slepc_idir)"
+   linclude="$linclude \$(netcdf_idir) \$(petsc_idir) \$(slepc_idir)"
     ;;
   a2y|elk2y|c2y)
    llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(lpetsc) \$(lslepc) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(netcdf_idir)"
+   linclude="$linclude \$(netcdf_idir) \$(petsc_idir) \$(slepc_idir)"
     ;;
   p2y*)
    llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(lpetsc) \$(lslepc) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
@@ -101,6 +101,9 @@ case $target in
   ypp*)
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(lpetsc) \$(lslepc) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir)"
+    ;;
+  lib*)
+   linclude="$linclude \$(netcdf_idir) \$(petsc_idir) \$(slepc_idir)"
     ;;
 esac
 

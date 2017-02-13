@@ -90,8 +90,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  io_Vnl_err      = io_err(3)
  !
  if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-   Y_ALLOC(kbv(wf_ng,pp_kbv_dim,4,n_spinor))
-   Y_MEM_ALLOC(kbv)
+   YAMBO_ALLOC(kbv,(wf_ng,pp_kbv_dim,4,n_spinor))
  endif
  !
  ! WF load
@@ -277,18 +276,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! CLEAN
  !
  if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
-   Y_MEM_FREE(kbv)
-   Y_FREE(kbv)
-   Y_MEM_FREE(pp_n_l_comp)
-   Y_FREE(pp_n_l_comp)
-   Y_MEM_FREE(pp_table)
-   Y_FREE(pp_table)
-   Y_MEM_FREE(pp_factor)
-   Y_FREE(pp_factor)
+   YAMBO_FREE(kbv)
+   YAMBO_FREE(pp_n_l_comp)
+   YAMBO_FREE(pp_table)
+   YAMBO_FREE(pp_factor)
    call PP_free()
  else if (io_Vnl_err==0) then
-   Y_MEM_FREE(Vnl)
-   Y_FREE(Vnl)
+   YAMBO_FREE(Vnl)
  endif 
  !
  call WF_free(WF)

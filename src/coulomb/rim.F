@@ -142,8 +142,7 @@ subroutine rim()
  !
  call section('=','RIM integrals')
  !
- Y_ALLOC(RIM_qpg(nqibz,RIM_ng,RIM_ng))
- Y_MEM_ALLOC(RIM_qpg)
+ YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
  RIM_qpg=0._SP
  !
  call PARALLEL_index(px,(/nqibz/))

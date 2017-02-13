@@ -117,12 +117,10 @@ module SC
      call H_QP_table_setup(E)
      !
      if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
-       Y_ALLOC(QP_Sc(QP_n_states,1))
-       Y_MEM_ALLOC(QP_Sc)
+       YAMBO_ALLOC(QP_Sc,(QP_n_states,1))
      endif
      !
-     Y_ALLOC(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-     Y_MEM_ALLOC(SC_R)
+     YAMBO_ALLOC(SC_R,(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
      !
    end subroutine
    !
@@ -142,10 +140,8 @@ module SC
      call X_alloc('DIP_spin')
      call X_alloc('P_square')
      !
-     Y_MEM_FREE(QP_Sc)
-     Y_FREE(QP_Sc)
-     Y_MEM_FREE(SC_R)
-     Y_FREE(SC_R)
+     YAMBO_FREE(QP_Sc)
+     YAMBO_FREE(SC_R)
      !
    end subroutine
    !

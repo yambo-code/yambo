@@ -114,48 +114,36 @@ module RT_control
      !
      if(l_NE_dynamics) then
        !
-       Y_ALLOC(J_cache(6,IO_JPSM_cache_steps))
-       Y_MEM_ALLOC(J_cache)
+       YAMBO_ALLOC(J_cache,(6,IO_JPSM_cache_steps))
        J_cache=rZERO
-       Y_ALLOC(P_cache(6,IO_JPSM_cache_steps))
-       Y_MEM_ALLOC(P_cache)
+       YAMBO_ALLOC(P_cache,(6,IO_JPSM_cache_steps))
        P_cache=rZERO
        if(n_spin>1) then
-         Y_ALLOC(M_cache(6,IO_JPSM_cache_steps))
-         Y_MEM_ALLOC(M_cache)
+         YAMBO_ALLOC(M_cache,(6,IO_JPSM_cache,_steps))
          M_cache=rZERO
        endif
        !
      endif
      !
-     Y_MEM_FREE(JPC_RT_IO_t%Time)
-     Y_FREE(JPC_RT_IO_t%Time)
+     YAMBO_FREE(JPC_RT_IO_t%Time)
      !
-     Y_ALLOC(JPC_RT_IO_t%Time(NE_steps))
-     Y_MEM_ALLOC(JPC_RT_IO_t%Time)
+     YAMBO_ALLOC(JPC_RT_IO_t%Time,(NE_steps))
      JPC_RT_IO_t%Time=rZERO
      !
-     Y_MEM_FREE(GF_RT_IO_t%Time)
-     Y_FREE(GF_RT_IO_t%Time)
+     YAMBO_FREE(GF_RT_IO_t%Time)
      !
-     Y_ALLOC(GF_RT_IO_t%Time(NE_steps))
-     Y_MEM_ALLOC(GF_RT_IO_t%Time)
+     YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
      GF_RT_IO_t%Time=rZERO
      !
    end subroutine RT_alloc_control
    !
    subroutine RT_free_control
      !
-     Y_MEM_FREE(J_cache)
-     Y_FREE(J_cache)
-     Y_MEM_FREE(P_cache)
-     Y_FREE(P_cache)
-     Y_MEM_FREE(M_cache)
-     Y_FREE(M_cache)
-     Y_MEM_FREE(JPC_RT_IO_t%Time)
-     Y_FREE(JPC_RT_IO_t%Time)
-     Y_MEM_FREE(GF_RT_IO_t%Time)
-     Y_FREE(GF_RT_IO_t%Time)
+     YAMBO_FREE(J_cache)
+     YAMBO_FREE(P_cache)
+     YAMBO_FREE(M_cache)
+     YAMBO_FREE(JPC_RT_IO_t%Time)
+     YAMBO_FREE(GF_RT_IO_t%Time)
      !
    end subroutine RT_free_control
    !

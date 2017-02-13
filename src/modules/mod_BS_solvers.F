@@ -145,19 +145,14 @@ module BS_solvers
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
      if (.not.K_slk%kind=="SLK") then
-       Y_ALLOC(BS_mat(BS_H_dim,BS_H_dim))
-       Y_MEM_ALLOC(BS_mat)
+       YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
        BS_mat    = cZERO
      endif
-     Y_ALLOC(BSS_dipoles(BS_H_dim))
-     Y_MEM_ALLOC(BSS_dipoles)
+     YAMBO_ALLOC(BSS_dipoles,(BS_H_dim))
      BSS_dipoles = cZERO
-     Y_ALLOC(BSS_eh_table(BS_K_dim,3+n_sp_pol-1))
-     Y_MEM_ALLOC(BSS_eh_table)
-     Y_ALLOC(BSS_eh_E(BS_K_dim))
-     Y_MEM_ALLOC(BSS_eh_E)
-     Y_ALLOC(BSS_eh_f(BS_K_dim))
-     Y_MEM_ALLOC(BSS_eh_f)
+     YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,3+n_sp_pol-1))
+     YAMBO_ALLOC(BSS_eh_E,(BS_K_dim))
+     YAMBO_ALLOC(BSS_eh_f,(BS_K_dim))
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
@@ -168,43 +163,31 @@ module BS_solvers
        if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
      enddo
      if (W_is_allocated) then
-       Y_ALLOC(BSS_eh_W(BS_K_dim))
-       Y_MEM_ALLOC(BSS_eh_W)
+       YAMBO_ALLOC(BSS_eh_W,(BS_K_dim))
        BSS_eh_W = rZERO
      endif
      if (Z_is_allocated) then
-       Y_ALLOC(BSS_eh_Z(BS_K_dim))
-       Y_MEM_ALLOC(BSS_eh_Z)
+       YAMBO_ALLOC(BSS_eh_Z,(BS_K_dim))
        BSS_eh_Z = cZERO
      endif
      if (E_SOC_nbands/=0) then
-       Y_ALLOC(BSS_eh_E_SOC_corr(2/n_sp_pol,BS_H_dim))
-       Y_MEM_ALLOC(BSS_eh_E_SOC_corr)
+       YAMBO_ALLOC(BSS_eh_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
        BSS_eh_E_SOC_corr = rZERO
      endif
    end subroutine
    !
    subroutine BS_mat_free()
      integer :: iB
-     Y_MEM_FREE(BSS_eh_table)
-     Y_FREE(BSS_eh_table)
-     Y_MEM_FREE(BSS_dipoles)
-     Y_FREE(BSS_dipoles)
-     Y_MEM_FREE(BSS_eh_E)
-     Y_FREE(BSS_eh_E)
-     Y_MEM_FREE(BSS_eh_W)
-     Y_FREE(BSS_eh_W)
-     Y_MEM_FREE(BSS_eh_f)
-     Y_FREE(BSS_eh_f)
-     Y_MEM_FREE(BSS_eh_Z)
-     Y_FREE(BSS_eh_Z)
-     Y_MEM_FREE(BSS_eh_E_SOC_corr)
-     Y_FREE(BSS_eh_E_SOC_corr)
-     Y_MEM_FREE(BS_mat)
-     Y_FREE(BS_mat)
+     YAMBO_FREE(BSS_eh_table)
+     YAMBO_FREE(BSS_dipoles)
+     YAMBO_FREE(BSS_eh_E)
+     YAMBO_FREE(BSS_eh_W)
+     YAMBO_FREE(BSS_eh_f)
+     YAMBO_FREE(BSS_eh_Z)
+     YAMBO_FREE(BSS_eh_E_SOC_corr)
+     YAMBO_FREE(BS_mat)
      do iB=1,n_BS_blks
-        Y_MEM_FREE(BS_blk(iB)%mat)
-        Y_FREE(BS_blk(iB)%mat)
+        YAMBO_FREE(BS_blk(iB)%mat)
      enddo
    end subroutine
    !
@@ -216,8 +199,7 @@ module BS_solvers
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       Y_ALLOC(V(i_g)%fragment(BS_T_grp(i_g)%size))
-       Y_MEM_ALLOC(V(i_g)%fragment)
+       YAMBO_ALLOC(V(i_g)%fragment,(BS_T_grp(i_g)%size))
      enddo
    end subroutine BS_HAYVEC_alloc
    !
@@ -228,8 +210,7 @@ module BS_solvers
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
-       Y_MEM_FREE(V(i_g)%fragment)
-       Y_FREE(V(i_g)%fragment)
+       YAMBO_FREE(V(i_g)%fragment)
      end do
    end subroutine BS_HAYVEC_free
    !

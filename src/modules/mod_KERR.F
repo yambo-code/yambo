@@ -48,14 +48,12 @@ module KERR
        select case(what)
        case('DIP_projected')
          if (allocated(DIP_projected_r90)) return
-         Y_ALLOC(DIP_projected_r90(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         Y_MEM_ALLOC(DIP_projected_r90)
+         YAMBO_ALLOC(DIP_projected_r90,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
        end select
      else
        select case(what)
        case('DIP_projected')
-         Y_MEM_FREE(DIP_projected_r90)
-         Y_FREE(DIP_projected_r90)
+         YAMBO_FREE(DIP_projected_r90)
        end select
      endif
    end subroutine
@@ -67,15 +65,13 @@ module KERR
      use pars,       ONLY:cZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
      if (.not.l_kerr) return
-     Y_ALLOC(BSS_dipoles_kerr(BS_H_dim))
-     Y_MEM_ALLOC(BSS_dipoles_kerr)
+     YAMBO_ALLOC(BSS_dipoles_kerr,(BS_H_dim))
      BSS_dipoles_kerr = cZERO
    end subroutine
    !
    subroutine BS_KERR_free( )
      if (.not.l_kerr) return
-     Y_MEM_FREE(BSS_dipoles_kerr)
-     Y_FREE(BSS_dipoles_kerr)
+     YAMBO_FREE(BSS_dipoles_kerr)
    end subroutine
    !
    ! GPL_EXCLUDE_END

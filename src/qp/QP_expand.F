@@ -89,16 +89,11 @@ subroutine QP_expand(k,qp,qp_expanded)
      qp_expanded%nk=max_ik
      qp_expanded%n_states=n_qp_expanded
      !
-     Y_ALLOC(qp_expanded%k(max_ik,3))
-     Y_MEM_ALLOC(qp_expanded%k)
-     Y_ALLOC(qp_expanded%table(qp_expanded%n_states,3+n_sp_pol-1))
-     Y_MEM_ALLOC(qp_expanded%table)
-     Y_ALLOC(qp_expanded%E_bare(qp_expanded%n_states))
-     Y_MEM_ALLOC(qp_expanded%E_bare)
-     Y_ALLOC(qp_expanded%E(qp_expanded%n_states))
-     Y_MEM_ALLOC(qp_expanded%E)
-     Y_ALLOC(qp_expanded%Z(qp_expanded%n_states))
-     Y_MEM_ALLOC(qp_expanded%Z)
+     YAMBO_ALLOC(qp_expanded%k,(max_ik,3))
+     YAMBO_ALLOC(qp_expanded%table,(qp_expanded%n_states,3+n_sp_pol-1))
+     YAMBO_ALLOC(qp_expanded%E_bare,(qp_expanded%n_states))
+     YAMBO_ALLOC(qp_expanded%E,(qp_expanded%n_states))
+     YAMBO_ALLOC(qp_expanded%Z,(qp_expanded%n_states))
      !
    endif
    !

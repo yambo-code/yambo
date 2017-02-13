@@ -83,8 +83,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  ! FXC_K_diagonal has been allocated in ioFxc_err
  !
- Y_ALLOC(FXC(FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs))
- Y_MEM_ALLOC(FXC)
+ YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs))
  !
  !
  ! As wv%p is read from DB %n_freqs is not setup in freqs_setup.
@@ -111,8 +110,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  X%ordering="R"
  if (.not.FXC_is_retarded) X%ordering="r"
  !
- Y_ALLOC(X_poles(BS_K_dim))
- Y_MEM_ALLOC(X_poles)
+ YAMBO_ALLOC(X_poles,(BS_K_dim))
  X_poles=FXC_K_diagonal
  !
  ! GPL_EXCLUDE_END

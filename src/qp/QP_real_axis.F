@@ -102,18 +102,15 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! W energy and damping ranges
  !-----------------------------
- Y_ALLOC(QP_W_er(q%nbz,2))
- Y_MEM_ALLOC(QP_W_er)
- Y_ALLOC(QP_W_dr(q%nbz,2))
- Y_MEM_ALLOC(QP_W_dr)
+ YAMBO_ALLOC(QP_W_er,(q%nbz,2))
+ YAMBO_ALLOC(QP_W_dr,(q%nbz,2))
  !
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
  if (trim(QP_solver)=='n') then
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs=QP_dSc_steps
-     Y_ALLOC(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
-     Y_MEM_ALLOC(Sc_W(i_qp)%p)
+     YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
      forall (i2=1:QP_dSc_steps) Sc_W(i_qp)%p(i2)=qp%E_bare(i_qp)+(i2-1)*QP_dSc_delta
    enddo
  else if (trim(QP_solver)=='g') then
@@ -168,8 +165,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      !==================
      QP_n_W_freqs=Xw%n_freqs
      QP_n_W_freqs_redux=Xw%n_freqs
-     Y_ALLOC(QP_W(QP_n_states,1,QP_n_G_bands(2),QP_n_W_freqs))
-     Y_MEM_ALLOC(QP_W)
+     YAMBO_ALLOC(QP_W,(QP_n_states,1,QP_n_G_bands(2),QP_n_W_freqs))
      !
      if (QP_solver=="n".or.QP_solver=="g") then
        QP_Sc=cZERO
@@ -189,8 +185,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
          call live_timing(steps=1)
        enddo
-       Y_MEM_FREE(QP_W)
-       Y_FREE(QP_W)
+       YAMBO_FREE(QP_W)
        call live_timing()
        !
        return
@@ -218,8 +213,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    call section('=','Lifetimes Transitions Selector')
    !
    QP_n_W_freqs=QP_life_transitions(-1,en,k,q,X_life_W(1))
-   Y_ALLOC(life_W_table(q%nibz,QP_n_W_freqs))
-   Y_MEM_ALLOC(life_W_table)
+   YAMBO_ALLOC(life_W_table,(q%nibz,QP_n_W_freqs))
    life_W_table=0
    QP_n_W_freqs_redux=-1
    do iqibz=1,q%nibz
@@ -230,8 +224,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      life_W_table(iqibz,:size(coarse_grid_index))=coarse_grid_index(:)
      !
      QP_n_W_freqs_redux=max(QP_n_W_freqs_redux,coarse_grid_N)
-     Y_MEM_FREE(coarse_grid_index)
-     Y_FREE(coarse_grid_index)
+     YAMBO_FREE(coarse_grid_index)
      !
    enddo
    !
@@ -276,8 +269,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  if (.not.l_life) then
    QP_n_W_freqs=Xw%n_freqs
    QP_n_W_freqs_redux=Xw%n_freqs
-   Y_ALLOC(QP_W(PAR_nQP,PAR_nQ_bz,PAR_nG_bands,QP_n_W_freqs))
-   Y_MEM_ALLOC(QP_W)
+   YAMBO_ALLOC(QP_W,(PAR_nQP,PAR_nQ_bz,PAR_nG_bands,QP_n_W_freqs))
    QP_W=cZERO
  endif
  !
@@ -508,8 +500,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! CLEAN
  !
  if (l_life) then
-   Y_MEM_FREE(life_W_table)
-   Y_FREE(life_W_table)
+   YAMBO_FREE(life_W_table)
    call PP_redux_wait(qp%E)
  else
    call PP_redux_wait(QP_Sc)
@@ -517,8 +508,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  if (io_SCREEN) then
    if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
-     Y_MEM_FREE(QP_W)
-     Y_FREE(QP_W)
+     YAMBO_FREE(QP_W)
    endif
  endif
  if (l_life) then

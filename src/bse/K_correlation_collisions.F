@@ -76,8 +76,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
  ! Table allocation
  !------------------
  !
- Y_ALLOC(BS_blk(iB)%O_table(2,nsym,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
- Y_MEM_ALLOC(BS_blk(iB)%O_table)
+ YAMBO_ALLOC(BS_blk(iB)%O_table,(2,nsym,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  !
  do i_cycle=1,2
    !

@@ -106,8 +106,7 @@ integer function io_BSS_invert(iq,W,ID)
  if (any((/io_sec(ID,:)==2/))) then
    !
    if (read_is_on(ID).and..not.allocated(W%p)) then
-     Y_ALLOC(W%p(K_INV_EPS%n_freqs))
-     Y_MEM_ALLOC(W%p)
+     YAMBO_ALLOC(W%p,(K_INV_EPS%n_freqs))
      W%n_freqs=K_INV_EPS%n_freqs
    endif
    !

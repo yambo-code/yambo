@@ -23,13 +23,9 @@
 !
 integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
-#if !defined _P2Y_EXPORT
- use qexml_module
-#endif
- use wave_func,           ONLY : wf_nc_k, wf_igk, wf_ng
  use P2Y,                 ONLY : pw_init, pw_close 
  use LOGO,                ONLY : pickup_a_random
- use pars,                ONLY : SP,lchlen,DP
+ use pars,                ONLY : SP,lchlen
  use com,                 ONLY : msg,write_to_report,core_io_path,error,write_the_logo
  use parallel_m,          ONLY : ncpu,myid,PARALLEL_wait
  use electrons,           ONLY : levels,E_reset,n_bands, n_spin
@@ -40,6 +36,9 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_wf2y,            ONLY : wf_splitter
  use stderr,              ONLY : intc
  use interfaces,          ONLY : PARALLEL_live_message
+#if !defined _P2Y_EXPORT
+ use qexml_module
+#endif
 #if defined _MEM_CHECK 
  use memory,              ONLY : MEM_manager
 #endif
@@ -150,8 +149,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !             
  call msg('s','== DB2 (wavefunctions)  ... ')
  !
- Y_ALLOC(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- Y_MEM_ALLOC(wf_disk)
+ YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx,n_spin))
  !
  do ik=1,nkibz
    !
@@ -178,8 +176,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
  enddo
  !
- Y_MEM_FREE(wf_disk)
- Y_FREE(wf_disk)
+ YAMBO_FREE(wf_disk)
  !
  if(verboseIO) then
    call msg('s','== DB2 (wavefunctions)  ... done ==')

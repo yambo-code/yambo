@@ -250,10 +250,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Allocation
    !-----------
-   Y_ALLOC(FXC_K_diagonal(BS_K_dim))
-   Y_MEM_ALLOC(FXC_K_diagonal)
-   Y_ALLOC(FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
-   Y_MEM_ALLOC(FXC)
+   YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+   YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
    FXC_K_diagonal=0._SP
    FXC=cZERO
    !
@@ -301,8 +299,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ALDA
  !======
  if (BS_K_is_ALDA) then
-   Y_ALLOC(F_xc(fft_size,n_spin,n_spin))
-   Y_MEM_ALLOC(F_xc)
+   YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
@@ -326,15 +323,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! when the TR is applied
    !
    if (i_space_inv==0.and.i_time_rev==1.and..not.BS_W_is_diagonal) then
-     Y_ALLOC(BS_W(BS_n_g_W,i_g1,2*q%nibz))
-     Y_MEM_ALLOC(BS_W)
+     YAMBO_ALLOC(BS_W,(BS_n_g_W,i_g1,2*q%nibz))
    else
-     Y_ALLOC(BS_W(BS_n_g_W,i_g1,q%nibz))
-     Y_MEM_ALLOC(BS_W)
+     YAMBO_ALLOC(BS_W,(BS_n_g_W,i_g1,q%nibz))
    endif
    !
-   Y_ALLOC(isc%gamp(i_g1,BS_n_g_W))
-   Y_MEM_ALLOC(isc%gamp)
+   YAMBO_ALLOC(isc%gamp,(i_g1,BS_n_g_W))
    !
    if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
@@ -372,8 +366,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
    !
-   Y_MEM_FREE(isc%gamp)
-   Y_FREE(isc%gamp)
+   YAMBO_FREE(isc%gamp)
    !
    if (.not.l_td_hf) call X_alloc('X')
    !
@@ -398,17 +391,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Allocations
  !-------------
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   Y_ALLOC(Ovv(BS_n_g_W))
-   Y_MEM_ALLOC(Ovv)
-   Y_ALLOC(Occ(BS_n_g_W))
-   Y_MEM_ALLOC(Occ)
-   Y_ALLOC(O_times_W(BS_n_g_W))
-   Y_MEM_ALLOC(O_times_W)
+   YAMBO_ALLOC(Ovv,(BS_n_g_W))
+   YAMBO_ALLOC(Occ,(BS_n_g_W))
+   YAMBO_ALLOC(O_times_W,(BS_n_g_W))
    if (BS_cpl_K_corr) then
-     Y_ALLOC(Ovc(BS_n_g_W))
-     Y_MEM_ALLOC(Ovc)
-     Y_ALLOC(Ocv(BS_n_g_W))
-     Y_MEM_ALLOC(Ocv)
+     YAMBO_ALLOC(Ovc,(BS_n_g_W))
+     YAMBO_ALLOC(Ocv,(BS_n_g_W))
    endif
  endif
  !
@@ -674,19 +662,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call BS_oscillators_free(BS_nT_grps,0)
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   Y_MEM_FREE(WF_phase)
-   Y_FREE(WF_phase)
-   Y_MEM_FREE(Ovv)
-   Y_FREE(Ovv)
-   Y_MEM_FREE(O_times_W)
-   Y_FREE(O_times_W)
-   Y_MEM_FREE(Occ)
-   Y_FREE(Occ)
+   YAMBO_FREE(WF_phase)
+   YAMBO_FREE(Ovv)
+   YAMBO_FREE(O_times_W)
+   YAMBO_FREE(Occ)
    if (BS_cpl_K_corr) then
-     Y_MEM_FREE(Ovc)
-     Y_FREE(Ovc)
-     Y_MEM_FREE(Ocv)
-     Y_FREE(Ocv)
+     YAMBO_FREE(Ovc)
+     YAMBO_FREE(Ocv)
    endif
  endif
  !
@@ -694,22 +676,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
-   Y_MEM_FREE(FXC)
-   Y_FREE(FXC)
-   Y_MEM_FREE(FXC_K_diagonal)
-   Y_FREE(FXC_K_diagonal)
+   YAMBO_FREE(FXC)
+   YAMBO_FREE(FXC_K_diagonal)
    !
    ! GPL_EXCLUDE_END
    !
  else if (BS_K_is_ALDA) then
-   Y_MEM_FREE(F_xc)
-   Y_FREE(F_xc)
+   YAMBO_FREE(F_xc)
  endif
  !
 1 continue
  !
- Y_MEM_FREE(BS_W)
- Y_FREE(BS_W)
+ YAMBO_FREE(BS_W)
  call WF_free(WF)
  call elemental_collision_free(K_CORR_collision)
  call elemental_collision_free(K_EXCH_collision)

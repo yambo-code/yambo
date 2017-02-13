@@ -43,8 +43,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
  n_states_merged=qp2merge(1)%n_states
  qp%n_descs=qp2merge(1)%n_descs+n_dbs-1
  !
- Y_ALLOC(dummy_table(sum(qp2merge(:)%n_states),3+n_sp_pol-1))
- Y_MEM_ALLOC(dummy_table)
+ YAMBO_ALLOC(dummy_table,(sum(qp2merge(:)%n_states),3+n_sp_pol-1))
  dummy_table=0
  dummy_table(:n_states_merged,:)=qp2merge(1)%table(:,:)
  qp%description(:qp2merge(1)%n_descs)=qp2merge(1)%description(:qp2merge(1)%n_descs)
@@ -76,33 +75,24 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
  !
  l_QP_db=allocated(qp2merge(1)%E)
  !
- Y_ALLOC(qp%k(qp%nk,3))
- Y_MEM_ALLOC(qp%k)
- Y_ALLOC(qp%wk(qp%nk))
- Y_MEM_ALLOC(qp%wk)
- Y_ALLOC(qp%table(qp%n_states,3+n_sp_pol-1))
- Y_MEM_ALLOC(qp%table)
+ YAMBO_ALLOC(qp%k,(qp%nk,3))
+ YAMBO_ALLOC(qp%wk,(qp%nk))
+ YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
  !
  qp%k =rZERO
  qp%wk=rZERO
  !
  if (l_QP_db) then
-   Y_ALLOC(qp%Z(qp%n_states))
-   Y_MEM_ALLOC(qp%Z)
-   Y_ALLOC(qp%E(qp%n_states))
-   Y_MEM_ALLOC(qp%E)
-   Y_ALLOC(qp%E_bare(qp%n_states))
-   Y_MEM_ALLOC(qp%E_bare)
+   YAMBO_ALLOC(qp%Z,(qp%n_states))
+   YAMBO_ALLOC(qp%E,(qp%n_states))
+   YAMBO_ALLOC(qp%E_bare,(qp%n_states))
    qp%Z=cZERO
    qp%E=cZERO
    qp%E_bare=rZERO
  else
-   Y_ALLOC(qp%S_total(qp%n_states,qp%GreenF_n_steps))
-   Y_MEM_ALLOC(qp%S_total)
-   Y_ALLOC(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
-   Y_MEM_ALLOC(qp%GreenF)
-   Y_ALLOC(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
-   Y_MEM_ALLOC(qp%GreenF_W)
+   YAMBO_ALLOC(qp%S_total,(qp%n_states,qp%GreenF_n_steps))
+   YAMBO_ALLOC(qp%GreenF,(qp%n_states,qp%GreenF_n_steps))
+   YAMBO_ALLOC(qp%GreenF_W,(qp%n_states,qp%GreenF_n_steps))
  endif
  !
  qp%table=dummy_table(:qp%n_states,:)
@@ -135,7 +125,6 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
  do i_db=1,n_dbs
    call QP_reset(qp2merge(i_db))
  enddo
- Y_MEM_FREE(dummy_table)
- Y_FREE(dummy_table)
+ YAMBO_FREE(dummy_table)
  !
 end subroutine

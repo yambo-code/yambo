@@ -116,14 +116,10 @@ module wave_func
      WF_out%N=WF_in%N
      WF_out%space=WF_in%space
      WF_out%to_load=WF_in%to_load
-     Y_ALLOC(WF_out%c(fft_size,WF_out%N))
-     Y_MEM_ALLOC(WF_out%c)
-     Y_ALLOC(WF_out%c(wf_ng,WF_out%N))
-     Y_MEM_ALLOC(WF_out%c)
-     Y_ALLOC(WF%c(wf_ncx,WF%N))
-     Y_MEM_ALLOC(WF%c)
-     Y_ALLOC(WF_out%index(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
-     Y_MEM_ALLOC(WF_out%index)
+     YAMBO_ALLOC(WF_out%c,(fft_size,WF_out%N))
+     YAMBO_ALLOC(WF_out%c,(wf_ng,WF_out%N))
+     YAMBO_ALLOC(WF%c,(wf_ncx,WF%N))
+     YAMBO_ALLOC(WF_out%index,(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
      WF_out%c=WF_in%c
      WF_out%index=WF_in%index
    end subroutine
@@ -133,30 +129,24 @@ module wave_func
      logical  :: cart_direction(3)
      !
      if(cart_direction(1)) then
-       Y_ALLOC(wf_x(fft_size,WF%N))
-       Y_MEM_ALLOC(wf_x)
+       YAMBO_ALLOC(wf_x,(fft_size,WF%N))
        wf_x=(0.,0.)
      endif
      if(cart_direction(2)) then
-       Y_ALLOC(wf_y(fft_size,WF%N))
-       Y_MEM_ALLOC(wf_y)
+       YAMBO_ALLOC(wf_y,(fft_size,WF%N))
        wf_y=(0.,0.)
      endif
      if(cart_direction(3)) then
-       Y_ALLOC(wf_z(fft_size,WF%N))
-       Y_MEM_ALLOC(wf_z)
+       YAMBO_ALLOC(wf_z,(fft_size,WF%N))
        wf_z=(0.,0.)
      endif
    end subroutine
    !
    subroutine WF_derivative_free()
        !
-       Y_MEM_FREE(wf_x)
-       Y_FREE(wf_x)
-       Y_MEM_FREE(wf_y)
-       Y_FREE(wf_y)
-       Y_MEM_FREE(wf_z)
-       Y_FREE(wf_z)
+       YAMBO_FREE(wf_x)
+       YAMBO_FREE(wf_y)
+       YAMBO_FREE(wf_z)
        !
    end subroutine
    !

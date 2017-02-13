@@ -116,8 +116,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="HF")
  call elemental_collision_alloc(iscp,NG=QP_ng_Sx,TITLE="HF")
- Y_ALLOC(local_rhotw(QP_ng_Sx))
- Y_MEM_ALLOC(local_rhotw)
+ YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))
  isc%qs    =1
  !
  call scatter_Gamp(isc,'x')
@@ -222,8 +221,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp) 
- Y_MEM_FREE(local_rhotw)
- Y_FREE(local_rhotw)
+ YAMBO_FREE(local_rhotw)
  !
 #if defined _TIMING
  call timing('HF',OPR='stop')

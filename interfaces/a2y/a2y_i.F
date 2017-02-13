@@ -126,8 +126,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s','Writing WFs and (eventually) nlPP ...')
  !
- Y_ALLOC(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- Y_MEM_ALLOC(wf_disk)
+ YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx,n_spin))
  !
  do ik=1,nkibz
    !
@@ -148,8 +147,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    enddo
    !
  enddo
- Y_MEM_FREE(wf_disk)
- Y_FREE(wf_disk)
+ YAMBO_FREE(wf_disk)
  call PP_free()
  !
  ! Memory Overview

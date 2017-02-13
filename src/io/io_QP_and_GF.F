@@ -196,8 +196,7 @@ integer function io_QP_and_GF(what,qp,ID)
    endif
    !
    if (io_mode(ID)==DUMP) then
-     Y_ALLOC(qp%table(qp_n_states_disk,3+n_sp_pol-1))
-     Y_MEM_ALLOC(qp%table)
+     YAMBO_ALLOC(qp%table,(qp_n_states_disk,3+n_sp_pol-1))
      qp%table=qp_table_disk
    endif
    !
@@ -217,12 +216,10 @@ integer function io_QP_and_GF(what,qp,ID)
    call io_bulk(ID,VAR="QP_kpts",VAR_SZ=(/qp%nk,3/))
    !
    if (.not.allocated(qp%k)) then
-     Y_ALLOC(qp%k(qp%nk,3))
-     Y_MEM_ALLOC(qp%k)
+     YAMBO_ALLOC(qp%k,(qp%nk,3))
    endif
    if (.not.allocated(qp%wk)) then
-     Y_ALLOC(qp%wk(qp%nk))
-     Y_MEM_ALLOC(qp%wk)
+     YAMBO_ALLOC(qp%wk,(qp%nk))
    endif
    !
    call io_bulk(ID,R2=qp%k)
@@ -242,12 +239,9 @@ integer function io_QP_and_GF(what,qp,ID)
      ! QP corrections 
      !
      if (read_is_on(ID).and..not.allocated(qp%E)) then
-       Y_ALLOC(qp%Z(qp%n_states))
-       Y_ALLOC(qp%E(qp%n_states))
-       Y_ALLOC(qp%E_bare(qp%n_states))
-       Y_MEM_ALLOC(qp%E)
-       Y_MEM_ALLOC(qp%E_bare)
-       Y_MEM_ALLOC(qp%Z)
+       YAMBO_ALLOC(qp%Z,(qp%n_states))
+       YAMBO_ALLOC(qp%E,(qp%n_states))
+       YAMBO_ALLOC(qp%E_bare,(qp%n_states))
      endif
      !
      call io_bulk(ID,VAR="QP_E",VAR_SZ=(/2,qp%n_states/))
@@ -266,12 +260,9 @@ integer function io_QP_and_GF(what,qp,ID)
      ! Real axis Self Energy & Green Function 
      !=========================================
      if (read_is_on(ID)) then
-       Y_ALLOC(qp%S_total(qp%n_states,qp%GreenF_n_steps))
-       Y_MEM_ALLOC(qp%S_total)
-       Y_ALLOC(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
-       Y_MEM_ALLOC(qp%GreenF)
-       Y_ALLOC(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
-       Y_MEM_ALLOC(qp%GreenF_W)
+       YAMBO_ALLOC(qp%S_total,(qp%n_states,qp%GreenF_n_steps))
+       YAMBO_ALLOC(qp%GreenF,(qp%n_states,qp%GreenF_n_steps))
+       YAMBO_ALLOC(qp%GreenF_W,(qp%n_states,qp%GreenF_n_steps))
      endif
      !
      call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))

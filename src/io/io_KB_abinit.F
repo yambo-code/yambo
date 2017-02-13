@@ -83,14 +83,11 @@ integer function io_KB_abinit(ID)
    if (read_is_on(ID)) then
      ! 
      if (.not.allocated(n_atoms_species)) then
-       Y_ALLOC(n_atoms_species(n_atomic_species))
-       Y_MEM_ALLOC(n_atoms_species)
-       Y_ALLOC(atom_pos(3,n_atoms_species_max,n_atomic_species))
-       Y_MEM_ALLOC(atom_pos)
+       YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+       YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
      endif
      if (.not.allocated(pp_n_l_comp)) then
-       Y_ALLOC(pp_n_l_comp(n_atomic_species))
-       Y_MEM_ALLOC(pp_n_l_comp)
+       YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
      endif
      !
    endif
@@ -102,10 +99,8 @@ integer function io_KB_abinit(ID)
    !
    if (.not.ver_is_gt_or_eq(ID,revision=898)) pp_n_l_times_proj_max=maxval(pp_n_l_comp)
    if (read_is_on(ID)) then
-     Y_MEM_FREE(pp_table)
-     Y_FREE(pp_table)
-     Y_ALLOC(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
-     Y_MEM_ALLOC(pp_table)
+     YAMBO_FREE(pp_table)
+     YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
    endif
    !
    if (ver_is_gt_or_eq(ID,revision=898)) then
@@ -134,8 +129,7 @@ integer function io_KB_abinit(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- Y_ALLOC(pp_disk(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
- Y_MEM_ALLOC(pp_disk)
+ YAMBO_ALLOC(pp_disk,(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
  !
  call io_fragment(ID,i_fragment=ik)
  !
@@ -172,8 +166,7 @@ integer function io_KB_abinit(ID)
    ! 
  enddo
  !
- Y_MEM_FREE(pp_disk)
- Y_FREE(pp_disk)
+ YAMBO_FREE(pp_disk)
  !
 1 call io_disconnect(ID=ID)
  !

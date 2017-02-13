@@ -104,8 +104,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ! No JDOS in Inversion/Hadydock
  !
  if (BSS_eval_JDOS) then
-   Y_MEM_FREE(Joint_DOS)
-   Y_FREE(Joint_DOS)
+   YAMBO_FREE(Joint_DOS)
  endif
  BSS_eval_JDOS=.FALSE.
  !
@@ -137,13 +136,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ! CLEAN
  !
  call BS_mat_free( )
- Y_MEM_FREE(X_drude_term)
- Y_FREE(X_drude_term)
- Y_MEM_FREE(Epsilon_ii)
- Y_FREE(Epsilon_ii)
+ YAMBO_FREE(X_drude_term)
+ YAMBO_FREE(Epsilon_ii)
 #if defined _KERR
- Y_MEM_FREE(Epsilon_ij)
- Y_FREE(Epsilon_ij)
+ YAMBO_FREE(Epsilon_ij)
 #endif
  !
 end subroutine

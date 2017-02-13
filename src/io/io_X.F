@@ -186,10 +186,8 @@ integer function io_X(X,Xw,ID)
    ! Xw%p
    !
    if (read_is_on(ID)) then
-     Y_MEM_FREE(Xw%p)
-     Y_FREE(Xw%p)
-     Y_ALLOC(Xw%p(Xw%n_freqs))
-     Y_MEM_ALLOC(Xw%p)
+     YAMBO_FREE(Xw%p)
+     YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    endif
    !
    ch="FREQ_sec_iq"//trim(intc(iq))

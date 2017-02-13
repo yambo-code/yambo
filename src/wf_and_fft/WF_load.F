@@ -199,13 +199,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
-     Y_MEM_FREE(WF%state)
-     Y_FREE(WF%state)
-     Y_ALLOC(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
-     Y_MEM_ALLOC(WF%state)
+     YAMBO_FREE(WF%state)
+     YAMBO_ALLOC(WF%state,(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
      WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
-     Y_MEM_FREE(states_to_load)
-     Y_FREE(states_to_load)
+     YAMBO_FREE(states_to_load)
    endif
  endif
  !
@@ -228,8 +225,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (found_SC_DB.and.compatible_SC_DB) then
    !
    if(allocated(states_to_load).and..not.force_WFo_) then
-     Y_MEM_FREE(states_to_load)
-     Y_FREE(states_to_load)
+     YAMBO_FREE(states_to_load)
      call warning(' [WF] WF-distribution turned off, not compatible with SC wave functions')
    endif
    !
@@ -251,16 +247,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call WF_alloc(WF)
  !
  if (WF%space=='R')  then
-   Y_ALLOC(wf_DP(fft_size))
-   Y_MEM_ALLOC(wf_DP)
+   YAMBO_ALLOC(wf_DP,(fft_size))
  endif
  if (WF%space=='G') then
-   Y_ALLOC(wf_DP(wf_ng))
-   Y_MEM_ALLOC(wf_DP)
+   YAMBO_ALLOC(wf_DP,(wf_ng))
  endif
  if (WF%space=='C'.or.WF%space=='B') then
-   Y_ALLOC(wf_DP(wf_ncx))
-   Y_MEM_ALLOC(wf_DP)
+   YAMBO_ALLOC(wf_DP,(wf_ncx))
  endif
  !
  ! LOG the states loaded
@@ -286,8 +279,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (.not.buffer_is_ok) then
    !
-   Y_ALLOC(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
-   Y_MEM_ALLOC(wf_disk)
+   YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx,n_spin))
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err=io_WF(ID,wf_disk)
@@ -373,12 +365,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! CLEAN
  !
  if (.not.buffer_is_ok) then
-   Y_MEM_FREE(wf_disk)
-   Y_FREE(wf_disk)
+   YAMBO_FREE(wf_disk)
  endif
  !
- Y_MEM_FREE(wf_DP)
- Y_FREE(wf_DP)
+ YAMBO_FREE(wf_DP)
  !
  ! The states_to_load is a temporary array that points to the states to be loaded
  ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling 
@@ -393,11 +383,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if(allocated(states_to_load)) then
    !
-   Y_MEM_FREE(WF%state)
-   Y_FREE(WF%state)
+   YAMBO_FREE(WF%state)
    !
-   Y_ALLOC(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
-   Y_MEM_ALLOC(WF%state)
+   YAMBO_ALLOC(WF%state,(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
    !
    WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))= &
 &           states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))
@@ -410,8 +398,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    endif
    !
    if (clean_up_states) then
-     Y_MEM_FREE(states_to_load)
-     Y_FREE(states_to_load)
+     YAMBO_FREE(states_to_load)
    endif
    !
  endif

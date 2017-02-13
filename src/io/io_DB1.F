@@ -269,30 +269,20 @@ integer function io_DB1(E,k,ID)
  !
  if (read_is_on(ID)) then
    ! 
-   Y_ALLOC(E%E(E%nb,E%nk,n_sp_pol))
-   Y_ALLOC(E%f(E%nb,E%nk,n_sp_pol))
-   Y_MEM_ALLOC(E%E)
-   Y_MEM_ALLOC(E%f)
+   YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
+   YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
    E%f=0._SP
    !
-   Y_ALLOC(g_vec(ng_vec,3))
-   Y_MEM_ALLOC(g_vec)
-   Y_ALLOC(dl_sop(3,3,nsym))
-   Y_MEM_ALLOC(dl_sop)
-   Y_ALLOC(k%pt(k%nibz,3))
-   Y_MEM_ALLOC(k%pt)
-   Y_ALLOC(wf_nc_k(k%nibz))
-   Y_MEM_ALLOC(wf_nc_k)
-   Y_ALLOC(wf_igk(wf_ncx,k%nibz))
-   Y_MEM_ALLOC(wf_igk)
+   YAMBO_ALLOC(g_vec,(ng_vec,3))
+   YAMBO_ALLOC(dl_sop,(3,3,nsym))
+   YAMBO_ALLOC(k%pt,(k%nibz,3))
+   YAMBO_ALLOC(wf_nc_k,(k%nibz))
+   YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
-     Y_ALLOC(n_atoms_species(n_atomic_species))
-     Y_MEM_ALLOC(n_atoms_species)
-     Y_ALLOC(Z_species(n_atomic_species))
-     Y_MEM_ALLOC(Z_species)
-     Y_ALLOC(atom_pos(3,n_atoms_species_max,n_atomic_species))
-     Y_MEM_ALLOC(atom_pos)
+     YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+     YAMBO_ALLOC(Z_species,(n_atomic_species))
+     YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
      !
    endif
    !

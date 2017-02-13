@@ -74,22 +74,15 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
      call E_reset(E)
      !
      if (allocated(g_vec)) then
-       Y_MEM_FREE(g_vec)
-       Y_FREE(g_vec)
-       Y_MEM_FREE(dl_sop)
-       Y_FREE(dl_sop)
-       Y_MEM_FREE(rl_sop)
-       Y_FREE(rl_sop)
-       Y_MEM_FREE(wf_nc_k)
-       Y_FREE(wf_nc_k)
+       YAMBO_FREE(g_vec)
+       YAMBO_FREE(dl_sop)
+       YAMBO_FREE(rl_sop)
+       YAMBO_FREE(wf_nc_k)
      endif
      if (allocated(n_atoms_species)) then
-       Y_MEM_FREE(n_atoms_species)
-       Y_FREE(n_atoms_species)
-       Y_MEM_FREE(Z_species)
-       Y_FREE(Z_species)
-       Y_MEM_FREE(atom_pos)
-       Y_FREE(atom_pos)
+       YAMBO_FREE(n_atoms_species)
+       YAMBO_FREE(Z_species)
+       YAMBO_FREE(atom_pos)
      endif
      !
      ! DB1
@@ -118,8 +111,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  if (what/='all') call io_disconnect(ID=ID)
  !
  if (what=='all'.and.io_DB1_selective_scan>=0) then
-   Y_ALLOC(rl_sop(3,3,nsym))
-   Y_MEM_ALLOC(rl_sop)
+   YAMBO_ALLOC(rl_sop,(3,3,nsym))
    forall (i1=1:3,i2=1:3,is=1:nsym) rl_sop(i1,i2,is)=dl_sop(i1,i2,is)*alat(i1)/alat(i2) 
  endif
  !

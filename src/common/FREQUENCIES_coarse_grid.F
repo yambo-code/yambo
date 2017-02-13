@@ -71,14 +71,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  real(SP),allocatable:: in_sorted(:)
  !
  if(npts==0) then
-   Y_ALLOC(ordered_grid_index(npts))
-   Y_MEM_ALLOC(ordered_grid_index)
-   Y_ALLOC(coarse_grid_index(npts))
-   Y_MEM_ALLOC(coarse_grid_index)
-   Y_ALLOC(bare_grid_N(npts))
-   Y_MEM_ALLOC(bare_grid_N)
-   Y_ALLOC(coarse_grid_Pt(npts))
-   Y_MEM_ALLOC(coarse_grid_Pt)
+   YAMBO_ALLOC(ordered_grid_index,(npts))
+   YAMBO_ALLOC(coarse_grid_index,(npts))
+   YAMBO_ALLOC(bare_grid_N,(npts))
+   YAMBO_ALLOC(coarse_grid_Pt,(npts))
    coarse_grid_N=0
    return
  endif   
@@ -89,14 +85,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    ! the response function is calculated using an external set of
    ! k-points/bands.
    !
-   Y_ALLOC(ordered_grid_index(npts))
-   Y_MEM_ALLOC(ordered_grid_index)
-   Y_ALLOC(coarse_grid_index(npts))
-   Y_MEM_ALLOC(coarse_grid_index)
-   Y_ALLOC(bare_grid_N(npts))
-   Y_MEM_ALLOC(bare_grid_N)
-   Y_ALLOC(coarse_grid_Pt(npts))
-   Y_MEM_ALLOC(coarse_grid_Pt)
+   YAMBO_ALLOC(ordered_grid_index,(npts))
+   YAMBO_ALLOC(coarse_grid_index,(npts))
+   YAMBO_ALLOC(bare_grid_N,(npts))
+   YAMBO_ALLOC(coarse_grid_Pt,(npts))
    coarse_grid_N=npts
    bare_grid_N=1
    coarse_grid_Pt=bg_pt
@@ -164,14 +156,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  enddo
  coarse_grid_N=i_cg
  !
- Y_ALLOC(ordered_grid_index(npts))
- Y_MEM_ALLOC(ordered_grid_index)
- Y_ALLOC(coarse_grid_index(npts))
- Y_MEM_ALLOC(coarse_grid_index)
- Y_ALLOC(bare_grid_N(coarse_grid_N))
- Y_MEM_ALLOC(bare_grid_N)
- Y_ALLOC(coarse_grid_Pt(coarse_grid_N))
- Y_MEM_ALLOC(coarse_grid_Pt)
+ YAMBO_ALLOC(ordered_grid_index,(npts))
+ YAMBO_ALLOC(coarse_grid_index,(npts))
+ YAMBO_ALLOC(bare_grid_N,(coarse_grid_N))
+ YAMBO_ALLOC(coarse_grid_Pt,(coarse_grid_N))
  !
  ordered_grid_index=ipos(:,2)
  !

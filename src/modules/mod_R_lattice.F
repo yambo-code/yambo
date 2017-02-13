@@ -155,34 +155,26 @@ module R_lattice
    !
    subroutine qindx_alloc()
      !
-     Y_ALLOC(qindx_X(nqibz,nXkbz,2))
-     Y_MEM_ALLOC(qindx_X)
+     YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
      if (.not.Xk_grid_is_uniform) return
      !
-     Y_ALLOC(qindx_S(qp_states_k(2),nqbz,2))
-     Y_MEM_ALLOC(qindx_S)
+     YAMBO_ALLOC(qindx_S,(qp_states_k(2),nqbz,2))
      !     
      if (bse_scattering) then
-       Y_ALLOC(qindx_B(nXkbz,nXkbz,2))
-       Y_MEM_ALLOC(qindx_B)
+       YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
      endif
      !
      if (coll_scattering) then
-       Y_ALLOC(qindx_C(nXkbz,nXkbz,2))
-       Y_MEM_ALLOC(qindx_C)
+       YAMBO_ALLOC(qindx_C,(nXkbz,nXkbz,2))
      endif
      !
    end subroutine
    !
    subroutine qindx_free()
-     Y_MEM_FREE(qindx_X)
-     Y_FREE(qindx_X)
-     Y_MEM_FREE(qindx_B)
-     Y_FREE(qindx_B)
-     Y_MEM_FREE(qindx_S)
-     Y_FREE(qindx_S)
-     Y_MEM_FREE(qindx_C)
-     Y_FREE(qindx_C)
+     YAMBO_FREE(qindx_X)
+     YAMBO_FREE(qindx_B)
+     YAMBO_FREE(qindx_S)
+     YAMBO_FREE(qindx_C)
    end subroutine qindx_free
    !
    subroutine bz_samp_reset(k)
@@ -192,22 +184,14 @@ module R_lattice
      k%units=' '
      k%description=' '
      !
-     Y_MEM_FREE(k%s_table)
-     Y_FREE(k%s_table)
-     Y_MEM_FREE(k%k_table)
-     Y_FREE(k%k_table)
-     Y_MEM_FREE(k%nstar)
-     Y_FREE(k%nstar)
-     Y_MEM_FREE(k%star)
-     Y_FREE(k%star)
-     Y_MEM_FREE(k%sstar)
-     Y_FREE(k%sstar)
-     Y_MEM_FREE(k%pt)
-     Y_FREE(k%pt)
-     Y_MEM_FREE(k%ptbz)
-     Y_FREE(k%ptbz)
-     Y_MEM_FREE(k%weights)
-     Y_FREE(k%weights)
+     YAMBO_FREE(k%s_table)
+     YAMBO_FREE(k%k_table)
+     YAMBO_FREE(k%nstar)
+     YAMBO_FREE(k%star)
+     YAMBO_FREE(k%sstar)
+     YAMBO_FREE(k%pt)
+     YAMBO_FREE(k%ptbz)
+     YAMBO_FREE(k%weights)
      !
    end subroutine bz_samp_reset
    !
@@ -218,32 +202,26 @@ module R_lattice
      BZo%nbz   = BZi%nbz
      BZo%units = BZi%units
      BZo%description = BZi%description
-     Y_ALLOC(BZo%pt(BZo%nibz,3))
-     Y_MEM_ALLOC(BZo%pt)
+     YAMBO_ALLOC(BZo%pt,(BZo%nibz,3))
      BZo%pt(:,:) = BZi%pt(:,:)
      if (allocated( BZi%nstar )) then
-       Y_ALLOC(BZo%nstar(BZo%nibz))
-       Y_MEM_ALLOC(BZo%nstar)
+       YAMBO_ALLOC(BZo%nstar,(BZo%nibz))
        BZo%nstar=BZi%nstar
      endif
      if (allocated( BZi%weights )) then
-       Y_ALLOC(BZo%weights(BZo%nibz))
-       Y_MEM_ALLOC(BZo%weights)
+       YAMBO_ALLOC(BZo%weights,(BZo%nibz))
        BZo%weights=BZi%weights
      endif
      if (allocated( BZi%star )) then
-       Y_ALLOC(BZo%star(BZo%nibz,size(BZi%star,2)))
-       Y_MEM_ALLOC(BZo%star)
+       YAMBO_ALLOC(BZo%star,(BZo%nibz,size(BZi%star,2)))
        BZo%star=BZi%star
      endif
      if (allocated( BZi%sstar )) then
-       Y_ALLOC(BZo%sstar(BZo%nbz,2))
-       Y_MEM_ALLOC(BZo%sstar)
+       YAMBO_ALLOC(BZo%sstar,(BZo%nbz,2))
        BZo%sstar=BZi%sstar
      endif
      if (allocated( BZi%ptbz )) then
-       Y_ALLOC(BZo%ptbz(BZo%nbz,3))
-       Y_MEM_ALLOC(BZo%ptbz)
+       YAMBO_ALLOC(BZo%ptbz,(BZo%nbz,3))
        BZo%ptbz=BZi%ptbz
      endif
    return

@@ -129,8 +129,7 @@ subroutine K_diagonal(iq,what)
    !
    if (.not.K_diago_in_BS_mat) then
      !
-     Y_ALLOC(BS_diagonal(BS_K_dim))
-     Y_MEM_ALLOC(BS_diagonal)
+     YAMBO_ALLOC(BS_diagonal,(BS_K_dim))
      BS_diagonal=cZERO
      !
      if (rows(1)<=rows(2)) then

@@ -133,14 +133,12 @@ subroutine K_Haydock(iq,W)
  !
  !
  if (use_cpl_scheme) then
-   Y_ALLOC(Cf(Max_iterations+1))
-   Y_MEM_ALLOC(Cf)
+   YAMBO_ALLOC(Cf,(Max_iterations+1))
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   Y_ALLOC(Cf_kerr(Max_iterations+1))
-   Y_MEM_ALLOC(Cf_kerr)
+   YAMBO_ALLOC(Cf_kerr,(Max_iterations+1))
 #endif
    !
    ! GPL_EXCLUDE_END
@@ -567,14 +565,12 @@ subroutine K_Haydock(iq,W)
  if (use_cpl_scheme)  then
    call BS_HAYVEC_free(V0)
    if (allocated(V0)) deallocate(V0)
-   Y_MEM_FREE(Cf)
-   Y_FREE(Cf)
+   YAMBO_FREE(Cf)
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   Y_MEM_FREE(Cf_kerr)
-   Y_FREE(Cf_kerr)
+   YAMBO_FREE(Cf_kerr)
 #endif
    !
    ! GPL_EXCLUDE_END

@@ -176,10 +176,8 @@ integer function io_RT_components(what,ID)
    if (l_elph_scatt) then
      !
      if (read_is_on(ID)) then
-       Y_MEM_FREE(q_weight_RT)
-       Y_FREE(q_weight_RT)
-       Y_ALLOC(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
-       Y_MEM_ALLOC(q_weight_RT)
+       YAMBO_FREE(q_weight_RT)
+       YAMBO_ALLOC(q_weight_RT,(nqbz,elph_branches(1):elph_branches(2),2))
      endif
      !
      call io_bulk(ID,VAR="Q_WEIGHT",VAR_SZ=(/nqbz,elph_branches(2)-elph_branches(1)+1,2/))
@@ -327,8 +325,7 @@ integer function io_RT_components(what,ID)
      call io_elemental(ID,I0=TYP%last_point)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     Y_ALLOC(TYP%Time(NE_steps))
-     Y_MEM_ALLOC(TYP%Time)
+     YAMBO_ALLOC(TYP%Time,(NE_steps))
      !
      call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
      call io_bulk(ID,R1=TYP%Time(:TYP%N))

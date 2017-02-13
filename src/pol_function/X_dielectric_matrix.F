@@ -145,8 +145,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        !
        if (self_detect_E_range) then
          call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
-         Y_MEM_FREE(X_poles)
-         Y_FREE(X_poles)
+         YAMBO_FREE(X_poles)
          Xw%er=minmax_ehe
        endif
        !
@@ -278,8 +277,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    ! CLEAN (2)
    !
    if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
-   Y_MEM_FREE(X_par_lower_triangle%blc)
-   Y_FREE(X_par_lower_triangle%blc)
+   YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
    !
  enddo
@@ -290,13 +288,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! CLEAN (3)
  !
  if (io_RESPONSE) then
-   Y_MEM_FREE(X_mat)
-   Y_FREE(X_mat)
+   YAMBO_FREE(X_mat)
    deallocate(X_par)
  endif
  if (allocated(FXC)) then
-   Y_MEM_FREE(FXC)
-   Y_FREE(FXC)
+   YAMBO_FREE(FXC)
  endif
  call X_alloc('DIP_projected')
 #if defined _PL

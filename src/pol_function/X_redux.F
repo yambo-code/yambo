@@ -86,21 +86,17 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! ... and local BLACS structures for the response function components
  !         ======================
  call MATRIX_init( "SLK", KERNEL , X%ng, 1 )
- Y_ALLOC(KERNEL%blc(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
- Y_MEM_ALLOC(KERNEL%blc)
+ YAMBO_ALLOC(KERNEL%blc,(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
  KERNEL%blc=cZERO
  call MATRIX_init( "SLK", Xo , X%ng, 1 )
- Y_ALLOC(Xo%blc(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
- Y_MEM_ALLOC(Xo%blc)
+ YAMBO_ALLOC(Xo%blc,(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
  Xo%blc=cZERO
  call MATRIX_init( "SLK", BUFFER , X%ng, PAR_n_freqs )
- Y_ALLOC(BUFFER%blc(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),PAR_n_freqs))
- Y_MEM_ALLOC(BUFFER%blc)
+ YAMBO_ALLOC(BUFFER%blc,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),PAR_n_freqs))
  BUFFER%blc=cZERO
  if (l_alda_fxc.and.Xo%kind=="SLK") then
    call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )
-   Y_ALLOC(K_FXC%blc(K_FXC%BLCrows(1):K_FXC%BLCrows(2),K_FXC%BLCcols(1):K_FXC%BLCcols(2),1))
-   Y_MEM_ALLOC(K_FXC%blc)
+   YAMBO_ALLOC(K_FXC%blc,(K_FXC%BLCrows(1):K_FXC%BLCrows(2),K_FXC%BLCcols(1):K_FXC%BLCcols(2),1))
    K_FXC%blc=cZERO
    call MATRIX_transfer(M=FXC(:,:,1),M_out=K_FXC)
  endif
@@ -239,15 +235,12 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Clean-up of local BLACS structures
  ! ========
- Y_MEM_FREE(KERNEL%blc)
- Y_FREE(KERNEL%blc)
- Y_MEM_FREE(Xo%blc)
- Y_FREE(Xo%blc)
+ YAMBO_FREE(KERNEL%blc)
+ YAMBO_FREE(Xo%blc)
  call MATRIX_reset(KERNEL)
  call MATRIX_reset(Xo)
  if (l_alda_fxc.and.Xo%kind=="SLK") then
-   Y_MEM_FREE(K_FXC%blc)
-   Y_FREE(K_FXC%blc)
+   YAMBO_FREE(K_FXC%blc)
    call MATRIX_reset(K_FXC)
  endif
  !
@@ -263,8 +256,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  if (X_par%INTER_comm%n_CPU>1) then
    !
-   Y_MEM_FREE(X_par%blc)
-   Y_FREE(X_par%blc)
+   YAMBO_FREE(X_par%blc)
    call MATRIX_reset(X_par)
    call X_PARALLEL_alloc(X_par,X%ng,Xw%n_freqs,"X")
    !
@@ -298,11 +290,9 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Clean-up of FREQ structure
  !==========
- Y_MEM_FREE(BUFFER%blc)
- Y_FREE(BUFFER%blc)
+ YAMBO_FREE(BUFFER%blc)
  call MATRIX_reset(BUFFER)
- Y_MEM_FREE(PAR_FREQS_index)
- Y_FREE(PAR_FREQS_index)
+ YAMBO_FREE(PAR_FREQS_index)
  call PP_indexes_reset(PAR_IND_freqs)
  !
 end subroutine

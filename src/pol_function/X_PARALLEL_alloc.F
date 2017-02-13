@@ -52,8 +52,7 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  ! Clean-up
  !
  if (mode=="CLEAN") then
-   Y_MEM_FREE(X_par%blc)
-   Y_FREE(X_par%blc)
+   YAMBO_FREE(X_par%blc)
    call MATRIX_reset(X_par)
    return
  endif
@@ -77,15 +76,13 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
    X_par_lower_triangle%cols =X_par%rows
    X_par_lower_triangle%nrows=X_par%ncols
    X_par_lower_triangle%ncols=X_par%nrows
-   Y_ALLOC(X_par_lower_triangle%blc(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
-   Y_MEM_ALLOC(X_par_lower_triangle%blc)
+   YAMBO_ALLOC(X_par_lower_triangle%blc,(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
    X_par_lower_triangle%blc=cZERO
    call COMM_copy(PAR_COM_RL_A2A,   X_par_lower_triangle%INTRA_comm)
    call COMM_copy(PAR_COM_RL_INDEX, X_par_lower_triangle%INTER_comm)
  endif
  !
- Y_ALLOC(X_par%blc(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
- Y_MEM_ALLOC(X_par%blc)
+ YAMBO_ALLOC(X_par%blc,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
  X_par%blc=cZERO
  !
  call PARALLEL_live_message("RL vectors(X)",LOADED=X_par%ncols*X_par%nrows,TOTAL=NG**2,NCPU=X_par%INTER_comm%n_CPU)

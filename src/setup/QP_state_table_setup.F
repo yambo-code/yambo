@@ -70,10 +70,8 @@ subroutine QP_state_table_setup(en)
    k_rng_lines=1
    icheck=1
    do while(icheck/=0)
-     Y_MEM_FREE(QP_i_limits)
-     Y_FREE(QP_i_limits)
-     Y_ALLOC(QP_i_limits(k_rng_lines,4))
-     Y_MEM_ALLOC(QP_i_limits)
+     YAMBO_FREE(QP_i_limits)
+     YAMBO_ALLOC(QP_i_limits,(k_rng_lines,4))
      QP_i_limits=0
      call parser('QPkrange',QP_i_limits)
      icheck=sum(QP_i_limits(k_rng_lines,:))
@@ -91,10 +89,8 @@ subroutine QP_state_table_setup(en)
    e_rng_lines=1
    rcheck=1._SP
    do while(rcheck>0._SP)
-     Y_MEM_FREE(QP_r_limits)
-     Y_FREE(QP_r_limits)
-     Y_ALLOC(QP_r_limits(e_rng_lines,4))
-     Y_MEM_ALLOC(QP_r_limits)
+     YAMBO_FREE(QP_r_limits)
+     YAMBO_ALLOC(QP_r_limits,(e_rng_lines,4))
      QP_r_limits(e_rng_lines,3:4)=(/0._SP,-1._SP/)
      call parser('QPerange',QP_r_limits)
      rcheck=QP_r_limits(e_rng_lines,4)-QP_r_limits(e_rng_lines,3)
@@ -138,8 +134,7 @@ subroutine QP_state_table_setup(en)
      !
      ! QP_state setup
      !
-     Y_ALLOC(QP_state(QP_nb,QP_nk))
-     Y_MEM_ALLOC(QP_state)
+     YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
      QP_state(:,:)=.false.
      do i1=1,k_rng_lines
        QP_state(QP_i_limits(i1,3):QP_i_limits(i1,4),QP_i_limits(i1,1):QP_i_limits(i1,2))=.true.
@@ -158,16 +153,13 @@ subroutine QP_state_table_setup(en)
    else
      !
      if (.not.allocated(en%E)) return
-     Y_ALLOC(QP_state(QP_nb,QP_nk))
-     Y_MEM_ALLOC(QP_state)
+     YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
      QP_state(:,:)=.true.
      !
    endif
    !
-   Y_MEM_FREE(QP_i_limits)
-   Y_FREE(QP_i_limits)
-   Y_MEM_FREE(QP_r_limits)
-   Y_FREE(QP_r_limits)
+   YAMBO_FREE(QP_i_limits)
+   YAMBO_FREE(QP_r_limits)
    !
  endif
  !
@@ -218,8 +210,7 @@ subroutine QP_state_table_setup(en)
  QP_n_states=QP_n_states*n_sp_pol
  !
  if (.not.allocated(QP_table)) then
-   Y_ALLOC(QP_table(QP_n_states,3+n_sp_pol-1))
-   Y_MEM_ALLOC(QP_table)
+   YAMBO_ALLOC(QP_table,(QP_n_states,3+n_sp_pol-1))
    QP_table=0
  endif
  !

@@ -60,28 +60,20 @@ subroutine G_shells_finder()
  !
  if (io_err==0) then
    if(inv_index<0) then
-     Y_MEM_FREE(ng_in_shell)
-     Y_FREE(ng_in_shell)
-     Y_MEM_FREE(E_of_shell)
-     Y_FREE(E_of_shell)
-     Y_MEM_FREE(g_rot)
-     Y_FREE(g_rot)
-     Y_MEM_FREE(minus_G)
-     Y_FREE(minus_G)
+     YAMBO_FREE(ng_in_shell)
+     YAMBO_FREE(E_of_shell)
+     YAMBO_FREE(g_rot)
+     YAMBO_FREE(minus_G)
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
      io_err=io_GROT(ID)
    endif
    return
  else
    if (allocated(g_rot)) then
-     Y_MEM_FREE(ng_in_shell)
-     Y_FREE(ng_in_shell)
-     Y_MEM_FREE(E_of_shell)
-     Y_FREE(E_of_shell)
-     Y_MEM_FREE(g_rot)
-     Y_FREE(g_rot)
-     Y_MEM_FREE(minus_G)
-     Y_FREE(minus_G)
+     YAMBO_FREE(ng_in_shell)
+     YAMBO_FREE(E_of_shell)
+     YAMBO_FREE(g_rot)
+     YAMBO_FREE(minus_G)
    endif
  endif
  !
@@ -101,8 +93,7 @@ subroutine G_shells_finder()
  !
  ! Init
  !
- Y_ALLOC(g_rot(nsym,ng_closed))
- Y_MEM_ALLOC(g_rot)
+ YAMBO_ALLOC(g_rot,(nsym,ng_closed))
  !
  g_rot=0
  if (myid==0) g_rot(:,1)=1 ! Gamma point
@@ -188,10 +179,8 @@ subroutine G_shells_finder()
  !
  ! Shells Allocation & Transfer 
  !
- Y_ALLOC(ng_in_shell(n_g_shells))
- Y_ALLOC(E_of_shell(n_g_shells))
- Y_MEM_ALLOC(ng_in_shell)
- Y_MEM_ALLOC(E_of_shell)
+ YAMBO_ALLOC(ng_in_shell,(n_g_shells))
+ YAMBO_ALLOC(E_of_shell,(n_g_shells))
  !
  ng_in_shell=ng_in_shell_TMP(:n_g_shells)
  ng_closed=ng_in_shell(n_g_shells)
@@ -204,8 +193,7 @@ subroutine G_shells_finder()
  ! will fail as the shells are not closed anymore with respect to the inversion.
  !
  if (inv_index<0) then
-   Y_ALLOC(minus_G(ng_closed))
-   Y_MEM_ALLOC(minus_G)
+   YAMBO_ALLOC(minus_G,(ng_closed))
    call eval_minus_G()
    do while (  count(minus_G==0)>0 ) 
      n_g_shells=n_g_shells-1 

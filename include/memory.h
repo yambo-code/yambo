@@ -24,10 +24,10 @@
 */
  use memory, ONLY:MEM_err,MEM_dri
  implicit none
-#define Y_FREE_P(x) if (associated(x)) deallocate(x);nullify(x)
-#define Y_FREE(x) if (allocated(x)) deallocate(x)
-#define Y_MEM_FREE(x) call MEM_dri("x",size(x))
-
+#define YAMBO_ALLOC_P(x,SIZE) \
+  allocate(x SIZE,stat=MEM_err)NEWLINE \
+  if (associated(x)) call MEM_dri("x",x)NEWLINE \
+  if (.not.associated(x)) call MEM_dri("x")
 #define YAMBO_ALLOC(x,SIZE) \
   allocate(x SIZE,stat=MEM_err)NEWLINE \
   if (allocated(x)) call MEM_dri("x",x)NEWLINE \

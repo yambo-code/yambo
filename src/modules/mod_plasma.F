@@ -58,17 +58,14 @@ module plasma
      type(plasma_gas) :: Gas
      integer          :: DIM_(3)
      !
-     Y_ALLOC(Gas%N_poles(DIM_(1)))
-     Y_MEM_ALLOC(Gas%N_poles)
+     YAMBO_ALLOC(Gas%N_poles,(DIM_(1)))
      !
      if(.not.allocated(Gas%tab).and.Gas%max_N_poles>0) then       
-       Y_ALLOC(Gas%tab(Gas%max_N_poles,DIM_(2),2))
-       Y_MEM_ALLOC(Gas%tab)
+       YAMBO_ALLOC(Gas%tab,(Gas%max_N_poles,DIM_(2),2))
      endif
      !
      if(.not.allocated(Gas%tab_m1)) then
-       Y_ALLOC(Gas%tab_m1(DIM_(3),nsym,DIM_(2)))
-       Y_MEM_ALLOC(Gas%tab_m1)
+       YAMBO_ALLOC(Gas%tab_m1,(DIM_(3),nsym,DIM_(2)))
      endif
      !
    end subroutine
@@ -77,14 +74,10 @@ module plasma
      !
      type(plasma_gas) :: Gas
      !
-     Y_MEM_FREE(Gas%N_poles)
-     Y_FREE(Gas%N_poles)
-     Y_MEM_FREE(Gas%tab)
-     Y_FREE(Gas%tab)
-     Y_MEM_FREE(Gas%tab_m1)
-     Y_FREE(Gas%tab_m1)
-     Y_MEM_FREE(Gas%grid)
-     Y_FREE(Gas%grid)
+     YAMBO_FREE(Gas%N_poles)
+     YAMBO_FREE(Gas%tab)
+     YAMBO_FREE(Gas%tab_m1)
+     YAMBO_FREE(Gas%grid)
      !
    end subroutine
    !

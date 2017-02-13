@@ -95,8 +95,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
    endif
    !
    if (i1==1) then
-     Y_ALLOC(X_freqs(q%nibz,maxval(n_of_transitions)))
-     Y_MEM_ALLOC(X_freqs)
+     YAMBO_ALLOC(X_freqs,(q%nibz,maxval(n_of_transitions)))
      X_freqs=0.
    endif
    !
@@ -106,8 +105,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  QP_life_transitions=maxval(n_of_transitions)
  !
  if (iqibz_in<0) then
-   Y_MEM_FREE(X_freqs)
-   Y_FREE(X_freqs)
+   YAMBO_FREE(X_freqs)
    return
  endif
  !
@@ -119,8 +117,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  X_life_W%er=(/minval(coarse_grid_Pt),maxval(coarse_grid_Pt)/)
  !
- Y_ALLOC(X_life_W%p(coarse_grid_N))
- Y_MEM_ALLOC(X_life_W%p)
+ YAMBO_ALLOC(X_life_W%p,(coarse_grid_N))
  do i1=1,coarse_grid_N
    ! 
    X_life_W%p(i1)=coarse_grid_Pt(i1)+FREQUENCIES_damping(X_life_W,coarse_grid_Pt(i1))*cmplx(0.,1.,SP)
@@ -129,13 +126,9 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  ! Clean
  !
- Y_MEM_FREE(bare_grid_N)
- Y_FREE(bare_grid_N)
- Y_MEM_FREE(coarse_grid_Pt)
- Y_FREE(coarse_grid_Pt)
- Y_MEM_FREE(ordered_grid_index)
- Y_FREE(ordered_grid_index)
- Y_MEM_FREE(X_freqs)
- Y_FREE(X_freqs)
+ YAMBO_FREE(bare_grid_N)
+ YAMBO_FREE(coarse_grid_Pt)
+ YAMBO_FREE(ordered_grid_index)
+ YAMBO_FREE(X_freqs)
  !
 end function

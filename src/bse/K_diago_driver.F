@@ -267,28 +267,21 @@ subroutine K_diago_driver(iq,W)
      select case(ii)
      case(1)
        !
-       Y_ALLOC(BS_E(BS_H_dim))
-       Y_MEM_ALLOC(BS_E)
+       YAMBO_ALLOC(BS_E,(BS_H_dim))
        if(E_SOC_nbands/=0) then
-         Y_ALLOC(BS_corrections(2/n_sp_pol,BS_H_dim))
-         Y_MEM_ALLOC(BS_corrections)
-         Y_ALLOC(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
-         Y_MEM_ALLOC(BS_E_SOC_corr)
+         YAMBO_ALLOC(BS_corrections,(2/n_sp_pol,BS_H_dim))
+         YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
        endif
-       Y_ALLOC(BS_R_left(BS_H_dim))
-       Y_MEM_ALLOC(BS_R_left)
-       Y_ALLOC(BS_R_right(BS_H_dim))
-       Y_MEM_ALLOC(BS_R_right)
+       YAMBO_ALLOC(BS_R_left,(BS_H_dim))
+       YAMBO_ALLOC(BS_R_right,(BS_H_dim))
        !
        ! GPL_EXCLUDE_START
        !
 #if defined _KERR
-       Y_ALLOC(BS_R_right_kerr(BS_H_dim))
-       Y_MEM_ALLOC(BS_R_right_kerr)
+       YAMBO_ALLOC(BS_R_right_kerr,(BS_H_dim))
 #endif
 #if defined _PL
-       Y_ALLOC(BS_R_PL(2,BS_H_dim))
-       Y_MEM_ALLOC(BS_R_PL)
+       YAMBO_ALLOC(BS_R_PL,(2,BS_H_dim))
 #endif
        !
        ! GPL_EXCLUDE_END
@@ -296,18 +289,13 @@ subroutine K_diago_driver(iq,W)
      case(2)
        !
        if(K_is_not_hermitian) then
-         Y_ALLOC(BS_V_left(BS_H_dim,BS_H_dim))
-         Y_MEM_ALLOC(BS_V_left)
-         Y_ALLOC(BS_V_right(BS_H_dim,BS_H_dim))
-         Y_MEM_ALLOC(BS_V_right)
-         Y_ALLOC(BS_overlap(BS_H_dim,BS_H_dim))
-         Y_MEM_ALLOC(BS_overlap)
+         YAMBO_ALLOC(BS_V_left,(BS_H_dim,BS_H_dim))
+         YAMBO_ALLOC(BS_V_right,(BS_H_dim,BS_H_dim))
+         YAMBO_ALLOC_P(BS_overlap,(BS_H_dim,BS_H_dim))
        else
-         Y_ALLOC(BS_E_real(BS_H_dim))
-         Y_MEM_ALLOC(BS_E_real)
+         YAMBO_ALLOC(BS_E_real,(BS_H_dim))
          if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
-           Y_ALLOC(BS_corrections(1,BS_H_dim))
-           Y_MEM_ALLOC(BS_corrections)
+           YAMBO_ALLOC(BS_corrections,(1,BS_H_dim))
          endif
        endif
        !
@@ -317,31 +305,20 @@ subroutine K_diago_driver(iq,W)
    !
    subroutine local_free()
      !
-     Y_MEM_FREE(BS_E)
-     Y_FREE(BS_E)
-     Y_MEM_FREE(BS_E_real)
-     Y_FREE(BS_E_real)
-     Y_MEM_FREE(BS_corrections)
-     Y_FREE(BS_corrections)
-     Y_MEM_FREE(BS_R_right)
-     Y_FREE(BS_R_right)
-     Y_MEM_FREE(BS_R_left)
-     Y_FREE(BS_R_left)
-     Y_MEM_FREE(BS_V_right)
-     Y_FREE(BS_V_right)
-     Y_MEM_FREE(BS_V_left)
-     Y_FREE(BS_V_left)
-     Y_MEM_FREE(BS_overlap)
-     Y_FREE_P(BS_overlap)
-     Y_MEM_FREE(BS_E_SOC_corr)
-     Y_FREE_P(BS_E_SOC_corr)
+     YAMBO_FREE(BS_E)
+     YAMBO_FREE(BS_E_real)
+     YAMBO_FREE(BS_corrections)
+     YAMBO_FREE(BS_R_right)
+     YAMBO_FREE(BS_R_left)
+     YAMBO_FREE(BS_V_right)
+     YAMBO_FREE(BS_V_left)
+     YAMBO_FREE_P(BS_overlap)
+     YAMBO_FREE_P(BS_E_SOC_corr)
 #if defined _KERR
-     Y_MEM_FREE(BS_R_right_kerr)
-     Y_FREE_P(BS_R_right_kerr)
+     YAMBO_FREE_P(BS_R_right_kerr)
 #endif
 #if defined _PL
-     Y_MEM_FREE(BS_R_PL)
-     Y_FREE_P(BS_R_PL)
+     YAMBO_FREE_P(BS_R_PL)
 #endif
      !
    end subroutine local_free

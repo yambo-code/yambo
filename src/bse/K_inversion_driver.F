@@ -138,8 +138,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! SLK matrix initialization before the Kernel loading
  !
  call MATRIX_init( "SLK", K_slk, BS_H_dim, 1 )
- Y_ALLOC(K_slk%blc(K_slk%BLCrows(1):K_slk%BLCrows(2),K_slk%BLCcols(1):K_slk%BLCcols(2),1))
- Y_MEM_ALLOC(K_slk%blc)
+ YAMBO_ALLOC(K_slk%blc,(K_slk%BLCrows(1):K_slk%BLCrows(2),K_slk%BLCcols(1):K_slk%BLCcols(2),1))
  !
 #endif
  !
@@ -190,8 +189,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
 #endif
  !
- Y_ALLOC(Lo(BS_H_dim,W%n_freqs,Lo_dim))
- Y_MEM_ALLOC(Lo)
+ YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))
  !
  call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
@@ -433,12 +431,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      !
      call PP_indexes_reset(PAR_IND_freqs)
-     Y_MEM_FREE(Lo)
-     Y_FREE(Lo)
+     YAMBO_FREE(Lo)
      !
 #if defined _SCALAPACK
-     Y_MEM_FREE(K_slk%blc)
-     Y_FREE(K_slk%blc)
+     YAMBO_FREE(K_slk%blc)
      call MATRIX_reset(K_slk)
      call MATRIX_duplicate( "free", M_out=K_inv_slk )
 #endif

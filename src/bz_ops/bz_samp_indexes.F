@@ -147,8 +147,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    ! q_ptbz in iku for k_reduce
    !
-   Y_ALLOC(q%ptbz(q%nbz,3))
-   Y_MEM_ALLOC(q%ptbz)
+   YAMBO_ALLOC(q%ptbz,(q%nbz,3))
    do i1=1,q%nbz
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
@@ -158,12 +157,10 @@ subroutine bz_samp_indexes(k,Xk,q)
    enddo
    if (.not.allocated(q_pt)) then
      call k_reduce(q,.TRUE.)
-     Y_MEM_FREE(q%ptbz)
-     Y_FREE(q%ptbz)
+     YAMBO_FREE(q%ptbz)
    else
      q%nibz=nqibz
-     Y_ALLOC(q%pt(q%nibz,3))
-     Y_MEM_ALLOC(q%pt)
+     YAMBO_ALLOC(q%pt,(q%nibz,3))
      q%pt=q_pt(:q%nibz,:)
      call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
      user_defined_qpts=.true.
@@ -336,8 +333,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
  if (Xk_grid_is_uniform) then
-   Y_MEM_FREE(q%ptbz)
-   Y_FREE(q%ptbz)
+   YAMBO_FREE(q%ptbz)
  endif
  call PP_redux_wait()
  !
@@ -422,16 +418,11 @@ subroutine bz_samp_indexes(k,Xk,q)
      ! using Gamma point only definition
      !
      if (force_gamma_only) then
-       Y_MEM_FREE(k_pt)
-       Y_FREE(k_pt)
-       Y_MEM_FREE(q_pt)
-       Y_FREE(q_pt)
-       Y_MEM_FREE(q_norm)
-       Y_FREE(q_norm)
-       Y_MEM_FREE(q_sstar)
-       Y_FREE(q_sstar)
-       Y_MEM_FREE(q%pt)
-       Y_FREE(q%pt)
+       YAMBO_FREE(k_pt)
+       YAMBO_FREE(q_pt)
+       YAMBO_FREE(q_norm)
+       YAMBO_FREE(q_sstar)
+       YAMBO_FREE(q%pt)
        nqbz=1
        nqibz=1
        q%nibz=1
@@ -440,20 +431,16 @@ subroutine bz_samp_indexes(k,Xk,q)
      endif
      !
      if (.not.allocated(q_pt)) then
-       Y_ALLOC(q_pt(q%nibz,3))
-       Y_MEM_ALLOC(q_pt)
+       YAMBO_ALLOC(q_pt,(q%nibz,3))
      endif
      if (.not.allocated(k_pt)) then
-       Y_ALLOC(k_pt(k%nibz,3))
-       Y_MEM_ALLOC(k_pt)
+       YAMBO_ALLOC(k_pt,(k%nibz,3))
      endif
      if (.not.allocated(q_norm)) then
-       Y_ALLOC(q_norm(q%nibz))
-       Y_MEM_ALLOC(q_norm)
+       YAMBO_ALLOC(q_norm,(q%nibz))
      endif
      if (allocated(q%sstar).and..not.allocated(q_sstar)) then
-       Y_ALLOC(q_sstar(q%nbz,2))
-       Y_MEM_ALLOC(q_sstar)
+       YAMBO_ALLOC(q_sstar,(q%nbz,2))
      endif
      !
      if (force_gamma_only) then

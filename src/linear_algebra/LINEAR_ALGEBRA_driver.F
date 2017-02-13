@@ -120,8 +120,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    if (.not.present(M_slk)) then
      !
      call MATRIX_init( "SLK", M_loc, N, 1 )
-     Y_ALLOC(M_loc%blc(M_loc%BLCrows(1):M_loc%BLCrows(2),M_loc%BLCcols(1):M_loc%BLCcols(2),M_loc%Nb))
-     Y_MEM_ALLOC(M_loc%blc)
+     YAMBO_ALLOC(M_loc%blc,(M_loc%BLCrows(1):M_loc%BLCrows(2),M_loc%BLCcols(1):M_loc%BLCcols(2),M_loc%Nb))
      !
      if (present(M_bse)) then
        call MATRIX_transfer( M_out= M_loc, M_bse=M_bse )
@@ -134,14 +133,12 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    if (idriver==DIAGO) then
      !
      call MATRIX_init("SLK",  V_loc, N, 1 )
-     Y_ALLOC(V_loc%blc(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
-     Y_MEM_ALLOC(V_loc%blc)
+     YAMBO_ALLOC(V_loc%blc,(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
      !
      call PARALLEL_HERMITIAN_diagonalization( M_loc, V_loc, N, E_real )
      !
      call MATRIX_transfer( M_in = V_loc , M=M )
-     Y_MEM_FREE(V_loc%blc)
-     Y_FREE(V_loc%blc)
+     YAMBO_FREE(V_loc%blc)
      call MATRIX_reset(V_loc)
      !
    else if (idriver==INV) then
@@ -158,16 +155,14 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      if (.not.present(B_slk)) then
        !
        call MATRIX_init("SLK",  B_loc, N, 1 )
-       Y_ALLOC(B_loc%blc(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
-       Y_MEM_ALLOC(B_loc%blc)
+       YAMBO_ALLOC(B_loc%blc,(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
        call MATRIX_transfer( M_out = B_loc, M=B )
        !
        call PARALLEL_lin_system( M_loc, B_loc, N, N)
        !
        call MATRIX_transfer( M_in =  B_loc, M=B )
        !
-       Y_MEM_FREE(B_loc%blc)
-       Y_FREE(B_loc%blc)
+       YAMBO_FREE(B_loc%blc)
        call MATRIX_reset(B_loc)
        !
      else
@@ -181,25 +176,21 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      if (.not.present(B_slk)) then
        !
        call MATRIX_init("SLK",  B_loc, N, 1 )
-       Y_ALLOC(B_loc%blc(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
-       Y_MEM_ALLOC(B_loc%blc)
+       YAMBO_ALLOC(B_loc%blc,(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
        call MATRIX_transfer( M_out =  B_loc, M=B )
        !
        call MATRIX_init("SLK",  C_loc, N, 1 )
-       Y_ALLOC(C_loc%blc(C_loc%BLCrows(1):B_loc%BLCrows(2),C_loc%BLCcols(1):C_loc%BLCcols(2),C_loc%Nb))
-       Y_MEM_ALLOC(C_loc%blc)
+       YAMBO_ALLOC(C_loc%blc,(C_loc%BLCrows(1):B_loc%BLCrows(2),C_loc%BLCcols(1):C_loc%BLCcols(2),C_loc%Nb))
        call MATRIX_transfer( M_out =  C_loc, M=C )
        !
        call PARALLEL_M_by_M( M_loc, B_loc, C_loc, 'N', 'N', N, N , N )
        call MATRIX_transfer( M_in =  C_loc, M=C )
        !
        call MATRIX_reset(B_loc)
-       Y_MEM_FREE(B_loc%blc)
-       Y_FREE(B_loc%blc)
+       YAMBO_FREE(B_loc%blc)
        !
        call MATRIX_reset(C_loc)
-       Y_MEM_FREE(C_loc%blc)
-       Y_FREE(C_loc%blc)
+       YAMBO_FREE(C_loc%blc)
        !
      else
        !

@@ -75,8 +75,7 @@ subroutine col_driver(bare_NG,q)
  !
  ! Bare interaction
  !
- Y_ALLOC(bare_qpg(nqibz,max(bare_NG,wf_ng)))
- Y_MEM_ALLOC(bare_qpg)
+ YAMBO_ALLOC(bare_qpg,(nqibz,max(bare_NG,wf_ng)))
  bare_qpg(1,1)=q_norm(1)
  do ig=2,max(bare_NG,wf_ng)
    bare_qpg(1,ig)=iku_v_norm(g_vec(ig,:))

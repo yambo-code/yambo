@@ -93,15 +93,13 @@ integer function io_QINDX(Xk,q,io_db)
    !
    if(ioScatt==0) then
      if (read_is_on(io_db)) then
-       Y_ALLOC(q%pt(q%nibz,3))
-       Y_MEM_ALLOC(q%pt)
+       YAMBO_ALLOC(q%pt,(q%nibz,3))
      endif
      call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q%pt))
      call io_bulk(io_db,R2=q%pt)
    else
      if(.not.allocated(q_pt)) then
-       Y_ALLOC(q_pt(nqibz,3))
-       Y_MEM_ALLOC(q_pt)
+       YAMBO_ALLOC(q_pt,(nqibz,3))
        call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q_pt))
        call io_bulk(io_db,R2=q_pt)
      endif

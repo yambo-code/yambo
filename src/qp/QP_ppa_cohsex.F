@@ -198,8 +198,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    allocate(W_(QP_dSc_steps))
    allocate(dc(QP_dSc_steps),stat=alloc_err)
    if(l_GW_terminator) then
-     Y_ALLOC(eet_factor(X%ng,X%ng))
-     Y_MEM_ALLOC(eet_factor)
+     YAMBO_ALLOC(eet_factor,(X%ng,X%ng))
    endif
  endif
  !
@@ -572,8 +571,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if(l_ppa) then
    deallocate(W_)
    if(l_GW_terminator) then
-       Y_MEM_FREE(eet_factor)
-       Y_FREE(eet_factor)
+       YAMBO_FREE(eet_factor)
    endif
  endif
  l_X_alloc=.true.

@@ -43,8 +43,7 @@ subroutine PARALLEL_FREQS_setup(W,IND,COMM)
 &                                           TOTAL=W%n_freqs,NCPU=COMM%n_CPU)
  PAR_n_freqs=IND%n_of_elements(PAR_IND_FREQ_ID)
  !
- Y_ALLOC(PAR_FREQS_index(PAR_n_freqs))
- Y_MEM_ALLOC(PAR_FREQS_index)
+ YAMBO_ALLOC(PAR_FREQS_index,(PAR_n_freqs))
  call PAR_build_index(IND,PAR_n_freqs,PAR_FREQS_index,PAR_n_freqs)
  !
 end subroutine

@@ -38,14 +38,12 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  ! Work Space
  !
  integer     :: i_row,i_col,i_r,i_c,i_b,Nb_i(2),Nb_o(2)
- complex(SP) :: ME
  real(SP)    :: pre_factor
  !
  call MATRIX_reset(M_out)
  !
  if (operation=="free") then
-   Y_MEM_FREE(M_out%blc)
-   Y_FREE(M_out%blc)
+   YAMBO_FREE(M_out%blc)
    return
  endif
  !
@@ -88,8 +86,7 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  endif
  M_out%Nb = Nb_o(2)-Nb_o(1)+1
  !
- Y_ALLOC(M_out%blc(M_out%BLCrows(1):M_out%BLCrows(2),M_out%cols(1):M_out%BLCcols(2),Nb_o(1):Nb_o(2)))
- Y_MEM_ALLOC(M_out%blc)
+ YAMBO_ALLOC(M_out%blc,(M_out%BLCrows(1):M_out%BLCrows(2),M_out%cols(1):M_out%BLCcols(2),Nb_o(1):Nb_o(2)))
  M_out%blc=cZERO
  !
  call COMM_copy(M_in%INTER_comm,M_out%INTER_comm)

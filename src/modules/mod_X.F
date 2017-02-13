@@ -171,38 +171,31 @@ module X_m
        select case(what)
        case('X')
          if (allocated(X_mat)) return
-         Y_ALLOC(X_mat(d(1),d(2),d(3)))
-         Y_MEM_ALLOC(X_mat)
+         YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
          X_mat=cZERO
        case('DIP_iR')
          if (allocated(DIP_iR)) return
-         Y_ALLOC(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         Y_MEM_ALLOC(DIP_iR)
+         YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_iR=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
-         Y_ALLOC(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         Y_MEM_ALLOC(DIP_P)
+         YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_P=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
-         Y_ALLOC(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol))
-         Y_MEM_ALLOC(DIP_S)
+         YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
          DIP_S=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
-         Y_ALLOC(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         Y_MEM_ALLOC(DIP_spin)
+         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_spin=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
-         Y_ALLOC(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         Y_MEM_ALLOC(DIP_projected)
+         YAMBO_ALLOC(DIP_projected,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          DIP_projected=cZERO
        case('P_square')
          if (allocated(P_square)) return
-         Y_ALLOC(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         Y_MEM_ALLOC(P_square)
+         YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          P_square=cZERO
        end select
      else
@@ -211,38 +204,30 @@ module X_m
          !
          ! I clean the RL components mapping
          !
-         Y_MEM_FREE(X_RLcomp_ig)
-         Y_FREE(X_RLcomp_ig)
+         YAMBO_FREE(X_RLcomp_ig)
          !
          ! and the matrix itself
          !
-         Y_MEM_FREE(X_mat)
-         Y_FREE(X_mat)
+         YAMBO_FREE(X_mat)
          !
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
-         Y_MEM_FREE(DIP_iR)
-         Y_FREE(DIP_iR)
+         YAMBO_FREE(DIP_iR)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
-         Y_MEM_FREE(DIP_P)
-         Y_FREE(DIP_P)
+         YAMBO_FREE(DIP_P)
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
-         Y_MEM_FREE(DIP_S)
-         Y_FREE(DIP_S)
+         YAMBO_FREE(DIP_S)
        case('DIP_spin')
          if (.not.allocated(DIP_spin)) return
-         Y_MEM_FREE(DIP_spin)
-         Y_FREE(DIP_spin)
+         YAMBO_FREE(DIP_spin)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
-         Y_MEM_FREE(DIP_projected)
-         Y_FREE(DIP_projected)
+         YAMBO_FREE(DIP_projected)
        case('P_square')
          if (.not.allocated(P_square)) return
-         Y_MEM_FREE(P_square)
-         Y_FREE(P_square)
+         YAMBO_FREE(P_square)
        end select
      endif
    end subroutine

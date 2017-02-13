@@ -97,27 +97,23 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    n_loops=2
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    !
-   Y_ALLOC(PAR_IND_WF_b_and_k%element_2D(BS_bands(2),Xk%nibz))
-   Y_MEM_ALLOC(PAR_IND_WF_b_and_k%element_2D)
+   YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
    if (index(BSS_mode,'h')/=0) then
-     Y_ALLOC(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
-     Y_MEM_ALLOC(PAR_IND_T_Haydock%element_1D)
+     YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
      PAR_IND_T_Haydock%element_1D=.FALSE.
    endif
    !
  else
    !
-   Y_ALLOC(BS_nT_at_k(Xk%nibz))
-   Y_MEM_ALLOC(BS_nT_at_k)
+   YAMBO_ALLOC(BS_nT_at_k,(Xk%nibz))
    BS_nT_at_k=0
    n_loops=1
    !
  endif 
  !
- Y_ALLOC(i_T_at_k(Xk%nibz))
- Y_MEM_ALLOC(i_T_at_k)
+ YAMBO_ALLOC(i_T_at_k,(Xk%nibz))
  !
  call k_build_up_BZ_tables(Xk)
  !
@@ -244,8 +240,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  ! CLEAN UP
  !
- Y_MEM_FREE(i_T_at_k)
- Y_FREE(i_T_at_k)
+ YAMBO_FREE(i_T_at_k)
  !
  contains
    !

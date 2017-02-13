@@ -110,8 +110,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s','== DB2 ...')
  !
- Y_ALLOC(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- Y_MEM_ALLOC(wf_disk)
+ YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx,n_spin))
  !
  do ik=1,nkibz
    !
@@ -126,8 +125,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    enddo
    !
  enddo
- Y_MEM_FREE(wf_disk)
- Y_FREE(wf_disk)
+ YAMBO_FREE(wf_disk)
  !
  ! Memory Overview
  !=================

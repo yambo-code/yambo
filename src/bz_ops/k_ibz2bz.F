@@ -44,8 +44,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  ! Clean
  !
  if (allocated(k%ptbz).and.(units=="d".or.k%units/=units)) then
-   Y_MEM_FREE(k%ptbz)
-   Y_FREE(k%ptbz)
+   YAMBO_FREE(k%ptbz)
    if (units=="d") return
  endif
  if (allocated(k%ptbz).and.k%units==units) return
@@ -57,8 +56,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! ...then the pts
  !
- Y_ALLOC(k%ptbz(k%nbz,3))
- Y_MEM_ALLOC(k%ptbz)
+ YAMBO_ALLOC(k%ptbz,(k%nbz,3))
  !
  do i1=1,k%nbz
    !

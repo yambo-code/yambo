@@ -211,24 +211,15 @@ module QP_m
      qp%description=' '
      qp%n_descs=0
      qp%n_states=0
-     Y_MEM_FREE(qp%table)
-     Y_FREE(qp%table)
-     Y_MEM_FREE(qp%k)
-     Y_FREE(qp%k)
-     Y_MEM_FREE(qp%wk)
-     Y_FREE(qp%wk)
-     Y_MEM_FREE(qp%E)
-     Y_FREE(qp%E)
-     Y_MEM_FREE(qp%Z)
-     Y_FREE(qp%Z)
-     Y_MEM_FREE(qp%E_bare)
-     Y_FREE(qp%E_bare)
-     Y_MEM_FREE(qp%S_total)
-     Y_FREE(qp%S_total)
-     Y_MEM_FREE(qp%GreenF)
-     Y_FREE(qp%GreenF)
-     Y_MEM_FREE(qp%GreenF_W)
-     Y_FREE(qp%GreenF_W)
+     YAMBO_FREE(qp%table)
+     YAMBO_FREE(qp%k)
+     YAMBO_FREE(qp%wk)
+     YAMBO_FREE(qp%E)
+     YAMBO_FREE(qp%Z)
+     YAMBO_FREE(qp%E_bare)
+     YAMBO_FREE(qp%S_total)
+     YAMBO_FREE(qp%GreenF)
+     YAMBO_FREE(qp%GreenF_W)
    end subroutine
    !
    subroutine QP_states_simmetrize(en,V_real,V_complex,state_is_2do)

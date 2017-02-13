@@ -83,11 +83,9 @@ module hamiltonian
      ! 
      ! QP_state my be read from DBs at start-up
      !
-     Y_MEM_FREE(QP_state)
-     Y_FREE(QP_state)
+     YAMBO_FREE(QP_state)
      !
-     Y_ALLOC(QP_state(QP_nb,QP_nk))
-     Y_MEM_ALLOC(QP_state)
+     YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
      QP_state=.TRUE.
      call QP_state_table_setup(E)
      !
@@ -103,30 +101,22 @@ module hamiltonian
      !
      type(levels) :: E
      !
-     Y_ALLOC(rho_n(fft_size))
-     Y_MEM_ALLOC(rho_n)
+     YAMBO_ALLOC(rho_n,(fft_size))
      !
      if(n_spin>1) then
-       Y_ALLOC(magn(fft_size,3))
-       Y_MEM_ALLOC(magn)
-       Y_ALLOC(magn_n(fft_size,3))
-       Y_MEM_ALLOC(magn_n)
+       YAMBO_ALLOC(magn,(fft_size,3))
+       YAMBO_ALLOC(magn_n,(fft_size,3))
      endif
      !
-     Y_ALLOC(Ho(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
-     Y_MEM_ALLOC(Ho)
+     YAMBO_ALLOC(Ho(H_ref_bands,(2),H_ref_bands,(2),E%nk,n_sp_pol))
      !
-     Y_ALLOC(V_xc_sc(fft_size,n_spin))
-     Y_MEM_ALLOC(V_xc_sc)
+     YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
      !
-     Y_ALLOC(V_xc(fft_size,n_spin))
-     Y_MEM_ALLOC(V_xc)
+     YAMBO_ALLOC(V_xc,(fft_size,n_spin))
      !
-     Y_ALLOC(V_hartree_sc(fft_size,n_spin))
-     Y_MEM_ALLOC(V_hartree_sc)
+     YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
      !
-     Y_ALLOC(H_nl_sc(H_ref_bands(2),H_ref_bands(2)))
-     Y_MEM_ALLOC(H_nl_sc)
+     YAMBO_ALLOC(H_nl_sc,(H_ref_bands(2),H_ref_bands(2)))
      !
    end subroutine
    !
@@ -137,36 +127,28 @@ module hamiltonian
      use X_m,            ONLY:X_alloc
      !
      if(allocated(rho_n)) then
-       Y_MEM_FREE(rho_n)
-       Y_FREE(rho_n)
+       YAMBO_FREE(rho_n)
      endif
      !
      if(allocated(magn_n)) then
-       Y_MEM_FREE(magn_n)
-       Y_FREE(magn_n)
+       YAMBO_FREE(magn_n)
      endif
      !
      if(allocated(magn)) then
-       Y_MEM_FREE(magn)
-       Y_FREE(magn)
+       YAMBO_FREE(magn)
      endif
      !
-     Y_MEM_FREE(Ho)
-     Y_FREE(Ho)
+     YAMBO_FREE(Ho)
      !
-     Y_MEM_FREE(H_nl_sc)
-     Y_FREE(H_nl_sc)
+     YAMBO_FREE(H_nl_sc)
      !
      if(allocated(V_xc)) then 
-       Y_MEM_FREE(V_xc)
-       Y_FREE(V_xc)
+       YAMBO_FREE(V_xc)
      endif
      !
-     Y_MEM_FREE(V_xc_sc)
-     Y_FREE(V_xc_sc)
+     YAMBO_FREE(V_xc_sc)
      !
-     Y_MEM_FREE(V_hartree_sc)
-     Y_FREE(V_hartree_sc)
+     YAMBO_FREE(V_hartree_sc)
      !
    end subroutine
    !

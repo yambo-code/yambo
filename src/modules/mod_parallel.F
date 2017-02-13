@@ -504,42 +504,33 @@ module parallel_m
      integer :: dim_
      if (allocated(IND_in%n_of_elements)) then
        dim_=size(IND_in%n_of_elements)
-       Y_ALLOC(IND_out%n_of_elements(dim_))
-       Y_MEM_ALLOC(IND_out%n_of_elements)
+       YAMBO_ALLOC(IND_out%n_of_elements,(dim_))
        IND_out%n_of_elements=IND_in%n_of_elements
      endif
      if (allocated(IND_in%element_1D)) then
        dim_=size(IND_in%element_1D)
-       Y_ALLOC(IND_out%element_1D(dim_))
-       Y_MEM_ALLOC(IND_out%element_1D)
+       YAMBO_ALLOC(IND_out%element_1D,(dim_))
        IND_out%element_1D=IND_in%element_1D
      endif
      if (allocated(IND_in%weight_1D)) then
        dim_=size(IND_in%weight_1D)
-       Y_ALLOC(IND_out%weight_1D(dim_))
-       Y_MEM_ALLOC(IND_out%weight_1D)
+       YAMBO_ALLOC(IND_out%weight_1D,(dim_))
        IND_out%weight_1D=IND_in%weight_1D
      endif
      if (allocated(IND_in%first_of_1D)) then
        dim_=size(IND_in%first_of_1D)
-       Y_ALLOC(IND_out%first_of_1D(dim_))
-       Y_MEM_ALLOC(IND_out%first_of_1D)
+       YAMBO_ALLOC(IND_out%first_of_1D,(dim_))
        IND_out%first_of_1D=IND_in%first_of_1D
      endif
    end subroutine
    !
    subroutine PP_indexes_reset(px)
      type(PP_indexes)::px
-     Y_MEM_FREE(px%element_1D)
-     Y_FREE(px%element_1D)
-     Y_MEM_FREE(px%element_2D)
-     Y_FREE(px%element_2D)
-     Y_MEM_FREE(px%weight_1D)
-     Y_FREE(px%weight_1D)
-     Y_MEM_FREE(px%n_of_elements)
-     Y_FREE(px%n_of_elements)
-     Y_MEM_FREE(px%first_of_1D)
-     Y_FREE(px%first_of_1D)
+     YAMBO_FREE(px%element_1D)
+     YAMBO_FREE(px%element_2D)
+     YAMBO_FREE(px%weight_1D)
+     YAMBO_FREE(px%n_of_elements)
+     YAMBO_FREE(px%first_of_1D)
    end subroutine
    !
    subroutine PARALLEL_wait(COMM)

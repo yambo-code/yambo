@@ -92,10 +92,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call k_ibz2bz(q,'i',.TRUE.)
  !
- Y_ALLOC(q_weight_power_1(nqbz))
- Y_MEM_ALLOC(q_weight_power_1)
- Y_ALLOC(q_weight_power_2(nqbz))
- Y_MEM_ALLOC(q_weight_power_2)
+ YAMBO_ALLOC(q_weight_power_1,(nqbz))
+ YAMBO_ALLOC(q_weight_power_2,(nqbz))
  call rim_spherical(nqbz,q%ptbz,q_weight_power_1,(3.*RL_vol/nqbz/4./pi)**(1./3.),1,.FALSE.)
  call rim_spherical(nqbz,q%ptbz,q_weight_power_2,(3.*RL_vol/nqbz/4./pi)**(1./3.),2,.FALSE.)
  !
@@ -260,10 +258,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Clean-UP
  !
- Y_MEM_FREE(q_weight_power_1)
- Y_FREE(q_weight_power_1)
- Y_MEM_FREE(q_weight_power_2)
- Y_FREE(q_weight_power_2)
+ YAMBO_FREE(q_weight_power_1)
+ YAMBO_FREE(q_weight_power_2)
  !
  if (l_use_collisions) then
    !

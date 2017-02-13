@@ -41,8 +41,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  real(SP) :: k_shift(3),dshift
  character(schlen) :: dump_ch
  !
- Y_ALLOC(WF_shifts(Xk%nbz,3))
- Y_MEM_ALLOC(WF_shifts)
+ YAMBO_ALLOC(WF_shifts,(Xk%nbz,3))
  !
  ! Map k-points on a regular grid with information and the neighboars
  ! along the reciprocal lattice vectors 
@@ -99,15 +98,11 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  call msg("s",dump_ch)
  !
  if(allocated(k_map%k_map_dir)) then
-   Y_MEM_FREE(k_map%k_map_dir)
-   Y_FREE(k_map%k_map_dir)
-   Y_MEM_FREE(k_map%k_map_inv)
-   Y_FREE(k_map%k_map_inv)
+   YAMBO_FREE(k_map%k_map_dir)
+   YAMBO_FREE(k_map%k_map_inv)
  endif
- Y_ALLOC(k_map%k_map_dir(k_map%max_kdir(1),k_map%max_kdir(2),k_map%max_kdir(3)))
- Y_MEM_ALLOC(k_map%k_map_dir)
- Y_ALLOC(k_map%k_map_inv(Xk%nbz,3))
- Y_MEM_ALLOC(k_map%k_map_inv)
+ YAMBO_ALLOC(k_map%k_map_dir,(k_map%max_kdir(1),k_map%max_kdir(2),k_map%max_kdir(3)))
+ YAMBO_ALLOC(k_map%k_map_inv,(Xk%nbz,3))
  ! 
  !Find index	     
  ! 

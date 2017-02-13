@@ -127,15 +127,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    ! Arrays to be written in the o. files
    !
-   Y_ALLOC(Epsilon_ii(wv%n_freqs,2))
-   Y_MEM_ALLOC(Epsilon_ii)
-   Y_ALLOC(EEL(wv%n_freqs,2))
-   Y_MEM_ALLOC(EEL)
-   Y_ALLOC(Alpha(wv%n_freqs,2))
-   Y_MEM_ALLOC(Alpha)
+   YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,2))
+   YAMBO_ALLOC(EEL,(wv%n_freqs,2))
+   YAMBO_ALLOC(Alpha,(wv%n_freqs,2))
    if (l_bs_fxc) then
-     Y_ALLOC(X_fxc(wv%n_freqs))
-     Y_MEM_ALLOC(X_fxc)
+     YAMBO_ALLOC(X_fxc,(wv%n_freqs))
      X_fxc=cZERO
    endif
    !
@@ -328,18 +324,13 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    ! CLEAN (each q)
    !
-   Y_MEM_FREE(EEL)
-   Y_FREE(EEL)
-   Y_MEM_FREE(Alpha)
-   Y_FREE(Alpha)
-   Y_MEM_FREE(Epsilon_ii)
-   Y_FREE(Epsilon_ii)
-   Y_MEM_FREE(X_fxc)
-   Y_FREE(X_fxc)
+   YAMBO_FREE(EEL)
+   YAMBO_FREE(Alpha)
+   YAMBO_FREE(Epsilon_ii)
+   YAMBO_FREE(X_fxc)
    call FREQUENCIES_reset(wv,"all")
    call X_PARALLEL_alloc(X_par(1),0,0,"CLEAN")
-   Y_MEM_FREE(X_par_lower_triangle%blc)
-   Y_FREE(X_par_lower_triangle%blc)
+   YAMBO_FREE(X_par_lower_triangle%blc)
    !
  enddo
  !
@@ -353,14 +344,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  call PP_redux_wait
  call set_real_printed_length()
  if (allocated(FXC)) then
-   Y_MEM_FREE(FXC)
-   Y_FREE(FXC)
+   YAMBO_FREE(FXC)
  endif
  if (l_bs_fxc) then
-   Y_MEM_FREE(FXC)
-   Y_FREE(FXC)
-   Y_MEM_FREE(FXC_K_diagonal)
-   Y_FREE(FXC_K_diagonal)
+   YAMBO_FREE(FXC)
+   YAMBO_FREE(FXC_K_diagonal)
  endif
  !
 end subroutine

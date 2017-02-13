@@ -63,14 +63,10 @@ integer function io_GROT(io_db)
  if (.not.any((/io_sec(io_db,:)==2/))) goto 1
  !
  if (read_is_on(io_db)) then
-   Y_ALLOC(ng_in_shell(n_g_shells))
-   Y_MEM_ALLOC(ng_in_shell)
-   Y_ALLOC(g_rot(nsym_db,ng_closed))
-   Y_MEM_ALLOC(g_rot)
-   Y_ALLOC(E_of_shell(n_g_shells))
-   Y_MEM_ALLOC(E_of_shell)
-   Y_ALLOC(minus_G(ng_closed))
-   Y_MEM_ALLOC(minus_G)
+   YAMBO_ALLOC(ng_in_shell,(n_g_shells))
+   YAMBO_ALLOC(g_rot,(nsym_db,ng_closed))
+   YAMBO_ALLOC(E_of_shell,(n_g_shells))
+   YAMBO_ALLOC(minus_G,(ng_closed))
  endif
  !
  call io_bulk(io_db,VAR="ng_in_shell",VAR_SZ=(/n_g_shells/))

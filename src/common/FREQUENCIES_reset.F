@@ -40,22 +40,16 @@ subroutine FREQUENCIES_reset(Xw,what)
  character(*)  :: what
  !
  if (what=="points".or.what=="all") then
-   Y_MEM_FREE(Xw%p)
-   Y_FREE(Xw%p)
+   YAMBO_FREE(Xw%p)
  endif
  !
  if (what=="coarse_grid".or.what=="all") then
-   Y_MEM_FREE(ordered_grid_index)
-   Y_FREE(ordered_grid_index)
+   YAMBO_FREE(ordered_grid_index)
    if (allocated(X_poles_tab)) then
-     Y_MEM_FREE(X_poles_tab)
-     Y_FREE(X_poles_tab)
-     Y_MEM_FREE(bare_grid_N)
-     Y_FREE(bare_grid_N)
-     Y_MEM_FREE(coarse_grid_Pt)
-     Y_FREE(coarse_grid_Pt)
-     Y_MEM_FREE(coarse_grid_index)
-     Y_FREE(coarse_grid_index)
+     YAMBO_FREE(X_poles_tab)
+     YAMBO_FREE(bare_grid_N)
+     YAMBO_FREE(coarse_grid_Pt)
+     YAMBO_FREE(coarse_grid_index)
    endif
  endif
  !

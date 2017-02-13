@@ -36,8 +36,7 @@ subroutine eval_R_minus_R()
  ! Allocation
  !
  if (.not.allocated(R_m_R)) then 
-   Y_ALLOC(R_m_R(fft_size,fft_size))
-   Y_MEM_ALLOC(R_m_R)
+   YAMBO_ALLOC(R_m_R,(fft_size,fft_size))
  end if
  !
  ! Loop

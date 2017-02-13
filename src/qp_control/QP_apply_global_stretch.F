@@ -79,8 +79,7 @@ subroutine QP_apply_global_stretch(band_range,E,k,QP_ctl_from_DB,QP_ctl_add,DB_c
      endif
      do_W_CTL=.true.
      if (.not.allocated(E%W)) then
-       Y_ALLOC(E%W(E%nb,E%nk,n_sp_pol))
-       Y_MEM_ALLOC(E%W)
+       YAMBO_ALLOC(E%W,(E%nb,E%nk,n_sp_pol))
        E%W=rZERO
      endif
    endif
@@ -90,8 +89,7 @@ subroutine QP_apply_global_stretch(band_range,E,k,QP_ctl_from_DB,QP_ctl_add,DB_c
      endif
      do_Z_CTL=.true.
      if (.not.allocated(E%Z)) then
-       Y_ALLOC(E%Z(E%nb,E%nk,n_sp_pol))
-       Y_MEM_ALLOC(E%Z)
+       YAMBO_ALLOC(E%Z,(E%nb,E%nk,n_sp_pol))
        E%Z=1._SP
      endif
    endif
@@ -102,8 +100,7 @@ subroutine QP_apply_global_stretch(band_range,E,k,QP_ctl_from_DB,QP_ctl_add,DB_c
    ! Backup (only once)
    !
    if (.not.allocated(E%Eo)) then
-     Y_ALLOC(E%Eo(E%nb,E%nk,n_sp_pol))
-     Y_MEM_ALLOC(E%Eo)
+     YAMBO_ALLOC(E%Eo,(E%nb,E%nk,n_sp_pol))
      E%Eo=E%E
    endif
    !

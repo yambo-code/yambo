@@ -49,16 +49,14 @@ subroutine FREQUENCIES_setup(W)
 &      abs( aimag(W%p(W%n_freqs))-W%dr(2) )<1.E-5) return
  endif
  !
- Y_MEM_FREE(W%p)
- Y_FREE(W%p)
+ YAMBO_FREE(W%p)
  !
  ! First the total/mem steps
  !
  if (W%er(2)==W%er(1)) W%n_freqs=1
  W%n_freqs=nint(W%per_memstps*real(W%n_freqs)/100._SP)
  !
- Y_ALLOC(W%p(W%n_freqs))
- Y_MEM_ALLOC(W%p)
+ YAMBO_ALLOC(W%p,(W%n_freqs))
  !
  W%p(1)=cmplx(W%er(1),W%dr(1),SP)
  if (W%n_freqs==1) then

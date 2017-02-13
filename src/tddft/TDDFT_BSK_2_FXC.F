@@ -101,12 +101,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    endif
  endif
  !
- Y_ALLOC(conjg_O1x_qpg(FXC_n_g_corr,BS_nT_at_k(ik1)))
- Y_MEM_ALLOC(conjg_O1x_qpg)
- Y_ALLOC(O2x_qpg(BS_nT_at_k(ik2),FXC_n_g_corr))
- Y_MEM_ALLOC(O2x_qpg)
- Y_ALLOC(blk_Eo(2,O_x_dim))
- Y_MEM_ALLOC(blk_Eo)
+ YAMBO_ALLOC(conjg_O1x_qpg,(FXC_n_g_corr,BS_nT_at_k(ik1)))
+ YAMBO_ALLOC(O2x_qpg,(BS_nT_at_k(ik2),FXC_n_g_corr))
+ YAMBO_ALLOC(blk_Eo,(2,O_x_dim))
  !
  forall(i1=1:FXC_n_g_corr) conjg_O1x_qpg(i1,:BS_nT_at_k(ik1))=conjg(O1x(i1,:BS_nT_at_k(ik1)))*bare_qpg(iq,i1)
  forall(i2=1:FXC_n_g_corr) O2x_qpg(:BS_nT_at_k(ik2),i2)=O2x(i2,:BS_nT_at_k(ik2))*bare_qpg(iq,i2)
@@ -157,10 +154,8 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Residuals
  !
- Y_ALLOC(left_R(FXC_n_g_corr,BS_nT_at_k(ik2)))
- Y_MEM_ALLOC(left_R)
- Y_ALLOC(right_R(BS_nT_at_k(ik1),FXC_n_g_corr))
- Y_MEM_ALLOC(right_R)
+ YAMBO_ALLOC(left_R,(FXC_n_g_corr,BS_nT_at_k(ik2)))
+ YAMBO_ALLOC(right_R,(BS_nT_at_k(ik1),FXC_n_g_corr))
  left_R=(0._SP,0._SP)
  right_R=(0._SP,0._SP)
  !
@@ -186,9 +181,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Fxc
  !
- Y_ALLOC(wk1(BS_nT_at_k(ik1),FXC_n_g_corr))
- Y_ALLOC(wk2(FXC_n_g_corr,BS_nT_at_k(ik2)))
- Y_ALLOC(FXC_temp(FXC_n_g_corr,FXC_n_g_corr))
+ YAMBO_ALLOC(wk1,(BS_nT_at_k(ik1),FXC_n_g_corr))
+ YAMBO_ALLOC(wk2,(FXC_n_g_corr,BS_nT_at_k(ik2)))
+ YAMBO_ALLOC(FXC_temp,(FXC_n_g_corr,FXC_n_g_corr))
  !
  COM_MODE=NONE
  if (ik1==1.and.ik2==1) COM_MODE=REP
@@ -264,20 +259,13 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! CLEAN
  !
- Y_MEM_FREE(conjg_O1x_qpg)
- Y_FREE(conjg_O1x_qpg)
- Y_MEM_FREE(blk_Eo)
- Y_FREE(blk_Eo)
- Y_MEM_FREE(left_R)
- Y_FREE(left_R)
- Y_MEM_FREE(right_R)
- Y_FREE(right_R)
- Y_MEM_FREE(wk1)
- Y_FREE(wk1)
- Y_MEM_FREE(wk2)
- Y_FREE(wk2)
- Y_MEM_FREE(FXC_temp)
- Y_FREE(FXC_temp)
+ YAMBO_FREE(conjg_O1x_qpg)
+ YAMBO_FREE(blk_Eo)
+ YAMBO_FREE(left_R)
+ YAMBO_FREE(right_R)
+ YAMBO_FREE(wk1)
+ YAMBO_FREE(wk2)
+ YAMBO_FREE(FXC_temp)
  ! 
  contains
    !

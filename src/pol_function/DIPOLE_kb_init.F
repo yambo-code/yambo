@@ -88,8 +88,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  if (io_KB_pwscf_err==0) then
    !
    D=(/2*(pp_n_l_max-1)+1,pp_n_l_max,maxval(pp_table(2,:,:)+1)/)
-   Y_ALLOC(pp_factor(D(1),D(2),D(3),n_atomic_species,2))
-   Y_MEM_ALLOC(pp_factor)
+   YAMBO_ALLOC(pp_factor,(D(1),D(2),D(3),n_atomic_species,2))
    !
    do is = 1,n_atomic_species
      !

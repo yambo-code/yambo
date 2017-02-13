@@ -158,14 +158,11 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  if ( COLL%N == 0 ) return
  !
- Y_ALLOC(COLL%PAR_map(COLL%N))
- Y_ALLOC(COLL%PAR_IND%element_1D(COLL%N))
- Y_MEM_ALLOC(COLL%PAR_map)
- Y_MEM_ALLOC(COLL%PAR_IND%element_1D)
+ YAMBO_ALLOC(COLL%PAR_map,(COLL%N))
+ YAMBO_ALLOC(COLL%PAR_IND%element_1D,(COLL%N))
  !
  if (.not.allocated(PAR_IND_G_k%element_1D) ) then
-   Y_ALLOC(PAR_IND_G_k%element_1D(k%nibz))
-   Y_MEM_ALLOC(PAR_IND_G_k%element_1D)
+   YAMBO_ALLOC(PAR_IND_G_k%element_1D,(k%nibz))
    PAR_IND_G_k%element_1D=.FALSE.
  endif
  COLL%PAR_IND%element_1D=.FALSE.

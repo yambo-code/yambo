@@ -35,11 +35,9 @@ subroutine build_spin_sop()
  real(SP)       ::alpha,beta,delta,tmp_sop(3,3)
  integer        ::is,i1,i2
  !
- Y_MEM_FREE(spin_sop)
- Y_FREE(spin_sop)
+ YAMBO_FREE(spin_sop)
  !
- Y_ALLOC(spin_sop(n_spinor,n_spinor,nsym))
- Y_MEM_ALLOC(spin_sop)
+ YAMBO_ALLOC(spin_sop,(n_spinor,n_spinor,nsym))
  !
  if(n_spinor==1) then
    spin_sop(1,1,:)=cONE

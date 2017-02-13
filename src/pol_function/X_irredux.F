@@ -137,8 +137,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !
    if (n_poles==0) call warning(' [CPU '//trim(intc(myid))//'] has no poles')
    !
-   Y_ALLOC(X_poles_tab(n_poles,4))
-   Y_MEM_ALLOC(X_poles_tab)
+   YAMBO_ALLOC(X_poles_tab,(n_poles,4))
    !
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
    if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
@@ -146,10 +145,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    minmax_ehe=0._SP
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_X_WORLD%CPU_id+1))
-   Y_MEM_FREE(X_poles)
-   Y_FREE(X_poles)
-   Y_MEM_FREE(X_Ein_poles)
-   Y_FREE(X_Ein_poles)
+   !
+   YAMBO_FREE(X_poles)
+   YAMBO_FREE(X_Ein_poles)
    !
    if (self_detect_E_range) then
      call PP_redux_wait(minmax_ehe,COMM=PAR_COM_X_WORLD%COMM)
@@ -220,8 +218,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  ! memory estimate and local alloc
  !=================================
- Y_ALLOC(Xo_res(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
- Y_MEM_ALLOC(Xo_res)
+ YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
  !
@@ -331,8 +328,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  ! CLEAN
  !=======
- Y_MEM_FREE(Xo_res)
- Y_FREE(Xo_res)
+ YAMBO_FREE(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
 #if defined _OPENMP

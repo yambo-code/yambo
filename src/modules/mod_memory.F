@@ -52,7 +52,8 @@ module memory
  integer           :: MEM_element_use_SAVE (N_MEM_SAVE_max) =0  
  !
  interface MEM_dri
-   module procedure MEM_clean,MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,&
+   module procedure MEM_clean,MEM_error,&
+&                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,&
 &                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
 &                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,        MEM_rd3,&
 &                                    MEM_r4,MEM_c4,&
@@ -70,6 +71,10 @@ module memory
  !
  contains
    !
+   subroutine MEM_error(name)
+     character(*)::name
+     call MEM_manager(name)
+   end subroutine
    subroutine MEM_clean(name,N)
      character(*)::name
      integer     ::N

@@ -77,6 +77,11 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  BlackList(20)="E_of_shell"
  N_bl=20
  !
+ ! Error Message
+ !===============
+ if (MEM_err/=0) call error("Allocation of "//what//" failed")
+ !
+ if (.not.present(Sz).and..not.present(Kn).and..not.present(REPORT)) return
  if (.not.master_thread) return
  !
 #if defined _MEM_CHECK
@@ -124,10 +129,6 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    endif
    return
  endif
- !
- ! Error Message
- !===============
- if (MEM_err/=0) call error("Allocation of "//what//" failed")
  !
  adding  =     present(Kn)
  removing=.not.present(Kn)

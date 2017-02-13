@@ -1,8 +1,6 @@
 #! /bin/tcsh
 #
-
 set file_list = `find . -name '*.F'`
-
 unalias cp
 unalias mv
 foreach file  ($file_list)

@@ -25,7 +25,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
  use com,           ONLY:secnm
- use linear_algebra,ONLY:INV,TRANSFER_world
+ use linear_algebra,ONLY:INV,TRANSFER_world,PAR_to_PAR_comm
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,CPU_structure,master_cpu,&
 &                        PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
@@ -238,6 +238,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_T_INDEX)
    call COMM_reset(PAR_COM_SLK_INDEX_local)
    call COMM_reset(TRANSFER_world)
+   call COMM_reset(PAR_to_PAR_comm)
 #if defined _SCALAPACK
    call COMM_reset(PAR_COM_SLK)
    call COMM_reset(PAR_COM_SLK_INDEX_global)

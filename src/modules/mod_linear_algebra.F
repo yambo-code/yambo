@@ -68,6 +68,10 @@ module linear_algebra
  logical              :: I_do_SND=.TRUE.
  type(MPI_comm)       :: TRANSFER_world
  !
+ ! PAR to PAR 
+ integer, allocatable :: PAR_to_PAR_cpu(:,:)
+ type(MPI_comm)       :: PAR_to_PAR_comm
+ !
  type PAR_matrix
    !
    character(3) :: kind = "NAN" ! "PAR" "SLK" "XUP" "XDN" "SER"

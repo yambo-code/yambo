@@ -33,7 +33,7 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, COMM_s, ROWS_s, COLS_s,&
  ! M_snd > M_rcv
  !
  use pars,           ONLY:SP
- use linear_algebra, ONLY:I_do_RCV,I_do_SND,TRANSFER_world
+ use linear_algebra, ONLY:I_do_RCV,I_do_SND,TRANSFER_world,PAR_to_PAR_cpu,PAR_to_PAR_comm
  use parallel_m,     ONLY:PP_redux_wait,myid,MPI_comm,COMM_reset,CREATE_the_COMM,COMM_copy
  !
  implicit none
@@ -49,59 +49,82 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, COMM_s, ROWS_s, COLS_s,&
  integer :: i_rcv,i_snd,CROP(4),i_snd_world,i_rcv_world,i_cpu
  integer :: RCV_corners(TRANSFER_world%n_CPU,4),SND_corners(TRANSFER_world%n_CPU,4),&
 &           ACTIVE_cpus_snd(TRANSFER_world%n_CPU),ACTIVE_cpus_rcv(TRANSFER_world%n_CPU),&
-&           CPU_in_the_world(TRANSFER_world%n_CPU)
- ! 
- ! Local global MPI comm
+&           CPU_in_the_world(TRANSFER_world%n_CPU),LOCAL_PAR_to_PAR_cpu(TRANSFER_world%n_CPU,2)
+ logical :: BUILD_the_COMM=.TRUE.
  !
- type(MPI_comm) :: COMM
+ ! Create a local MAP
+ !
+ LOCAL_PAR_to_PAR_cpu=0
+ do i_cpu=1,TRANSFER_world%n_CPU
+   if (i_cpu-1==TRANSFER_world%CPU_id) then
+     LOCAL_PAR_to_PAR_cpu(i_cpu,1)=myid+1
+     if (I_do_SND) LOCAL_PAR_to_PAR_cpu(i_cpu,2)=+1
+     if (I_do_RCV) LOCAL_PAR_to_PAR_cpu(i_cpu,2)=-1
+   endif
+ enddo
+ call PP_redux_wait(LOCAL_PAR_to_PAR_cpu,COMM=TRANSFER_world%COMM)
+ ! 
+ ! Compare with the saved MAP
+ !
+ if (allocated(PAR_to_PAR_cpu)) then
+   if (size(LOCAL_PAR_to_PAR_cpu)==size(PAR_to_PAR_cpu)) then
+     BUILD_the_COMM=any(LOCAL_PAR_to_PAR_cpu/=PAR_to_PAR_cpu)
+   endif
+   if (BUILD_the_COMM) deallocate(PAR_to_PAR_cpu)
+ endif
  !
  ! Local WORLD
  !
- call COMM_reset(COMM)
- !
- COMM%my_CHAIN=myid
- do i_snd=1,COMM_s%n_CPU
-   if (COMM_s%CPU_id==i_snd-1.and.I_do_SND) COMM%my_CHAIN=-1
- enddo
- do i_rcv=1,COMM_r%n_CPU
-   if (COMM_r%CPU_id==i_rcv-1.and.I_do_RCV) COMM%my_CHAIN=-1
- enddo
- if (TRANSFER_world%n_CPU >1) call CREATE_the_COMM(TRANSFER_world%COMM,COMM,myid)
- if (TRANSFER_world%n_CPU==1) call COMM_copy(TRANSFER_world,COMM)
- !
+ if (BUILD_the_COMM) then
+   call COMM_reset(PAR_to_PAR_comm)
+   PAR_to_PAR_comm%my_CHAIN=myid
+   do i_snd=1,COMM_s%n_CPU
+     if (COMM_s%CPU_id==i_snd-1.and.I_do_SND) PAR_to_PAR_comm%my_CHAIN=-1
+   enddo
+   do i_rcv=1,COMM_r%n_CPU
+     if (COMM_r%CPU_id==i_rcv-1.and.I_do_RCV) PAR_to_PAR_comm%my_CHAIN=-1
+   enddo
+   if (TRANSFER_world%n_CPU >1) call CREATE_the_COMM(TRANSFER_world%COMM,PAR_to_PAR_comm,myid)
+   if (TRANSFER_world%n_CPU==1) call COMM_copy(TRANSFER_world,PAR_to_PAR_comm)
+   !
+   allocate(PAR_to_PAR_cpu(TRANSFER_world%n_CPU,2))
+   PAR_to_PAR_cpu=LOCAL_PAR_to_PAR_cpu
+   !
+ endif
+ ! 
  if (.not.I_do_SND.and..not.I_do_RCV) return
  !
  CPU_in_the_world=0
  ACTIVE_cpus_snd =0
  ACTIVE_cpus_rcv =0
- do i_cpu=1,COMM%n_CPU
-   if (COMM%CPU_id==i_cpu-1) then
+ do i_cpu=1,PAR_to_PAR_comm%n_CPU
+   if (PAR_to_PAR_comm%CPU_id==i_cpu-1) then
      CPU_in_the_world(i_cpu)=myid
      if (I_do_SND) ACTIVE_cpus_snd(i_cpu)=1
      if (I_do_RCV) ACTIVE_cpus_rcv(i_cpu)=1
    endif
  enddo
- call PP_redux_wait(CPU_in_the_world,COMM=COMM%COMM)
- call PP_redux_wait(ACTIVE_cpus_snd,COMM=COMM%COMM)
- call PP_redux_wait(ACTIVE_cpus_rcv,COMM=COMM%COMM)
+ call PP_redux_wait(CPU_in_the_world,COMM=PAR_to_PAR_comm%COMM)
+ call PP_redux_wait(ACTIVE_cpus_snd,COMM=PAR_to_PAR_comm%COMM)
+ call PP_redux_wait(ACTIVE_cpus_rcv,COMM=PAR_to_PAR_comm%COMM)
  !
  ! CORNERS
  !
  SND_corners                              =0
- SND_corners(COMM%CPU_id+1,:) =(/ROWS_s(1),ROWS_s(2),COLS_s(1),COLS_s(2)/)
+ SND_corners(PAR_to_PAR_comm%CPU_id+1,:) =(/ROWS_s(1),ROWS_s(2),COLS_s(1),COLS_s(2)/)
  RCV_corners                              =0
- RCV_corners(COMM%CPU_id+1,:) =(/ROWS_r(1),ROWS_r(2),COLS_r(1),COLS_r(2)/)
- call PP_redux_wait(SND_corners         ,COMM=COMM%COMM)
- call PP_redux_wait(RCV_corners         ,COMM=COMM%COMM)
+ RCV_corners(PAR_to_PAR_comm%CPU_id+1,:) =(/ROWS_r(1),ROWS_r(2),COLS_r(1),COLS_r(2)/)
+ call PP_redux_wait(SND_corners         ,COMM=PAR_to_PAR_comm%COMM)
+ call PP_redux_wait(RCV_corners         ,COMM=PAR_to_PAR_comm%COMM)
  !
  ! Here I define the list of "local buffers" to exchange. They are the minimal overlaps of the
  ! two PAR matrices.
  !
- do i_snd=1,COMM%n_CPU
+ do i_snd=1,PAR_to_PAR_comm%n_CPU
    !
    if (ACTIVE_cpus_snd(i_snd)==0) cycle
    !
-   do i_rcv=1,COMM%n_CPU
+   do i_rcv=1,PAR_to_PAR_comm%n_CPU
      !
      if (ACTIVE_cpus_rcv(i_rcv)==0) cycle
      !
@@ -115,8 +138,6 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, COMM_s, ROWS_s, COLS_s,&
    enddo
    !
  enddo
- !
- call COMM_reset(COMM)
  !
  return
  !

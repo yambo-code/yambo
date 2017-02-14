@@ -42,6 +42,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use linear_algebra, ONLY:MATRIX_reset
 #if defined _SCALAPACK
  use interfaces,     ONLY:MATRIX_transfer
+ use parallel_m,     ONLY:linear_algebra_is_parallel
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -105,7 +106,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Symmetrize the K blocks (to be eventually sent to the BLACS)
  !=========================
- call BS_Blocks_symmetrize_K()
+ if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
  !
 #endif
  !

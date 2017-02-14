@@ -7,9 +7,9 @@ B=substr($0,1,index($0,"%"))
 gsub("\\("," ",A)
 split(A,a)
 if (index(B,")")>0)
-{gsub(a[3],a[3]",",$0)}
+{sub(a[3],a[3]",",$0)}
 else
-{gsub(a[2],a[2]",",$0)}
+{sub(a[2],a[2]",",$0)}
 gsub("Y_ALLOC","YAMBO_ALLOC",$0)
 print $0
 }

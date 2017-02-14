@@ -34,9 +34,16 @@ integer function io_out_of_date(ID)
  !
  io_out_of_date=IO_OUTDATED_DB
  !
- ! Global revision check (mostly based on io_header)
- !===================================================
+ ! Global revision check 
+ !=======================
  !
+ ! 4.1.0: global change of IO bulk due to the introduction of the COMPLEX interface. 
+ !        affects only ndb files
+ if (.not.ver_is_gt_or_eq(ID,(/4,1,0/))) then
+   if (index(io_file(ID),'ns.')==0) return
+ endif
+ !
+ ! 3.0.15: mostly based on io_header changes
  if (.not.ver_is_gt_or_eq(ID,(/3,0,15/))) return
  !
  ! DB specific

@@ -25,7 +25,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
 #if defined _PL
  use drivers,       ONLY:l_photolum
@@ -56,7 +56,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_n_freqs,io_X_done(nqibz),iw,iq_mem
+ integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
@@ -87,26 +87,27 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  if (.not.APPEND_NO_VERIFY) then
    if (X%whoami==2) then
      call section(sec_mode,'Static Dielectric Matrix')
-     Xw%n_freqs=1
-     X_n_freqs =1
+     Xw%n_freqs    =1
+     X_MEM_n_freqs =1
    else if (X%whoami==3) then
      call section(sec_mode,'Dynamical Dielectric Matrix')
      if (l_gw0) self_detect_E_range=.true.
+     !
+     ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
+     ! Note that in lifetimes calculations it is QP_n_W_freqs_redux=MAX(all q-dependent frequencies)
+     !
+     X_MEM_n_freqs             = Xw%n_freqs
+     if (l_life) X_MEM_n_freqs = QP_n_W_freqs_redux
+     !
    else if (X%whoami==4) then
      call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
-     Xw%n_freqs=2
-     X_n_freqs =2
+     Xw%n_freqs    =2
+     X_MEM_n_freqs =2
      Xw%er=(/epsilon(1._SP),0._SP/)
      Xw%dr=(/0._SP,X%ppaE/)
      X%ordering='R'
    endif
  endif
- !
- ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
- ! Note that in lifetimes calculations it is QP_n_W_freqs_redux=MAX(all q-dependent frequencies)
- !
- X_n_freqs             = Xw%n_freqs
- if (l_life) X_n_freqs = QP_n_W_freqs_redux
  !
  call X_pre_setup(Xen,X)
  !
@@ -178,11 +179,13 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (io_RESPONSE) then
      allocate(X_par(1))
-     call X_alloc('X',(/X%ng,X%ng,X_n_freqs/))
+     call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
    else
      allocate(X_par(PAR_nq))
-     call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
+     call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nq/))
    endif
+   !
+   X_mat=cZERO
    !
  endif
  !
@@ -248,7 +251,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      if (io_RESPONSE) then
        call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,iw),COMM=PAR_COM_Q_A2A)
      else
-       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,(iq_mem-1)*Xw%n_freqs+iw),COMM=PAR_COM_Q_A2A)
+       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,(iq_mem-1)*X_MEM_n_freqs+iw),COMM=PAR_COM_Q_A2A)
      endif
      !
    enddo
@@ -260,8 +263,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    X%ng_db=X%ng
    !
-   if (iq==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
-   if (iq> 1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
+   if (iq==1) call io_control(ACTION=OP_WR_CL,    COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
+   if (iq> 1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)

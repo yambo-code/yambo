@@ -100,8 +100,11 @@ integer function io_Double_Grid(E,Xk,ID)
    YAMBO_ALLOC(E%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
    YAMBO_ALLOC(E%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
    YAMBO_ALLOC(E%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_tot_nkpts,3))
-   YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_nkpts,3))
+   if (DbGd_is_symmetry_expanded) then
+     YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_nkpts,3))
+   else
+     YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_tot_nkpts,3))
+   endif
    YAMBO_ALLOC(BZ_DbGd_nkpt,(BZ_ASSOCIATED_nkpts))
    YAMBO_ALLOC(BZ_DbGd_table,(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling,2))
    YAMBO_ALLOC(BZ_DbGd_weight,(BZ_DbGd_max_filling))

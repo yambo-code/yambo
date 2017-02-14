@@ -254,10 +254,10 @@ module BS
        !
        YAMBO_FREE(BS_T_grp(iT)%dipoles_R)
        YAMBO_FREE(BS_T_grp(iT)%dipoles_A)
-if (l_kerr) then
-  YAMBO_FREE(BS_T_grp(iT)%dipoles_R_kerr)
-  YAMBO_FREE(BS_T_grp(iT)%dipoles_A_kerr)
-endif
+       if (l_kerr) then
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_R_kerr)
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_A_kerr)
+       endif
        YAMBO_FREE(BS_T_grp(iT)%table)
        YAMBO_FREE(BS_T_grp(iT)%E)
        YAMBO_FREE(BS_T_grp(iT)%f)

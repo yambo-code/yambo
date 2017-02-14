@@ -31,7 +31,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  use electrons,        ONLY:levels,E_reset
  use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos,nsym,alat
  use R_lattice,        ONLY:g_vec,rl_sop,bz_samp,bz_samp_reset
- use wave_func,        ONLY:wf_nc_k
+ use wave_func,        ONLY:wf_nc_k,wf_igk
  use com,              ONLY:core_io_path
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE,DUMP,io_connect,io_disconnect,&
 &                           io_elemental,io_bulk
@@ -78,6 +78,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
        YAMBO_FREE(dl_sop)
        YAMBO_FREE(rl_sop)
        YAMBO_FREE(wf_nc_k)
+       YAMBO_FREE(wf_igk)
      endif
      if (allocated(n_atoms_species)) then
        YAMBO_FREE(n_atoms_species)

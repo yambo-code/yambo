@@ -187,7 +187,7 @@ module BS_solvers
      YAMBO_FREE(BSS_eh_E_SOC_corr)
      YAMBO_FREE(BS_mat)
      do iB=1,n_BS_blks
-        YAMBO_FREE(BS_blk(iB)%mat)
+       YAMBO_FREE(BS_blk(iB)%mat)
      enddo
    end subroutine
    !

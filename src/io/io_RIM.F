@@ -73,6 +73,11 @@ integer function io_RIM(ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
+   if (read_is_on(ID)) then
+     allocate(RIM_qpg(nqibz,RIM_ng,RIM_ng))
+     call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
+   endif
+   !
    call io_bulk(ID,VAR="RIM_qpg",VAR_SZ=(/shape(RIM_qpg)/))
    call io_bulk(ID,R3=RIM_qpg)
    !

@@ -38,9 +38,22 @@ integer function io_out_of_date(ID)
  !=======================
  !
  ! 4.1.0: global change of IO bulk due to the introduction of the COMPLEX interface. 
- !        affects only ndb files
+ !        affects only some ndb files
  if (.not.ver_is_gt_or_eq(ID,(/4,1,0/))) then
-   if (index(io_file(ID),'ns.')==0) return
+   if (index(io_file(ID),'Vnl')==0.and.&
+&      index(io_file(ID),'Double_Grid')==0.and.&
+&      index(io_file(ID),'RIM_E_and_k')==0.and.&
+&      index(io_file(ID),'E_RIM')==0.and.&
+&      index(io_file(ID),'elph_')==0.and.&
+&      index(io_file(ID),'kindx')==0.and.&
+&      index(io_file(ID),'RIM')==0.and.&
+&      index(io_file(ID),'Overlaps')==0.and.&
+&      index(io_file(ID),'gops')==0.and.&
+&      index(io_file(ID),'db1')==0.and.&
+&      index(io_file(ID),'kb_pp')==0.and.&
+&      index(io_file(ID),'wf')==0.and.&
+&      index(io_file(ID),'E_SOC_map')==0&
+&     ) return
  endif
  !
  ! 3.0.15: mostly based on io_header changes

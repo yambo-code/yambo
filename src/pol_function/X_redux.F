@@ -98,7 +98,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )
    YAMBO_ALLOC(K_FXC%blc,(K_FXC%BLCrows(1):K_FXC%BLCrows(2),K_FXC%BLCcols(1):K_FXC%BLCcols(2),1))
    K_FXC%blc=cZERO
-   call MATRIX_transfer(M=FXC(:,:,1),M_out=K_FXC)
+   call MATRIX_transfer(M=-FXC(:,:,1),M_out=K_FXC)
  endif
  !
  do iw_par=1,maxval(PAR_n_freqs_global)
@@ -174,7 +174,6 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
      if (Xo%kind=="SLK") then
        call PARALLEL_M_by_M(Xo,K_FXC,KERNEL,"N","N",X%ng,FXC_n_g_corr,FXC_n_g_corr)
-       K_FXC%blc=-K_FXC%blc
      else
        call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,cONE,-Xo%blc(:,:FXC_n_g_corr,1),X%ng,&
 &                  FXC(:,:,1),FXC_n_g_corr,cZERO,KERNEL%blc(:,:FXC_n_g_corr,1),X%ng)

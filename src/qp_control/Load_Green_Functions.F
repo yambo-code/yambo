@@ -41,7 +41,7 @@ subroutine Load_Green_Functions(band_range,qp,E,DB_corrected)
  E%GreenF_is_causal=GF_is_causal
  E%GreenF_n_E_steps=qp%GreenF_n_steps
  !
- YAMBO_ALLOC(E%GreenF,(band_range(2),E%nk,n_sp_pol,E%GreenF,_n_E_steps))
+ YAMBO_ALLOC(E%GreenF,(band_range(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
  YAMBO_ALLOC(E%GreenF_W,(band_range(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
  !
  do i_qp=1,qp%n_states

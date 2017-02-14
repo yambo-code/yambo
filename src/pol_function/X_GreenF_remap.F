@@ -137,7 +137,7 @@ subroutine X_GreenF_remap(bands,E,W)
  YAMBO_FREE(E%GreenF)
  YAMBO_FREE(E%GreenF_W)
  E%GreenF_n_E_steps=W_A%n_freqs
- YAMBO_ALLOC(E%GreenF,(bands(2),E%nk,n_sp_pol,E%GreenF,_n_E_steps))
+ YAMBO_ALLOC(E%GreenF,(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
  YAMBO_ALLOC(E%GreenF_W,(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
  do i_b=bands(1),bands(2)
    do i_k=1,E%nk

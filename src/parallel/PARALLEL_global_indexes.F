@@ -932,7 +932,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    CALL PARALLEL_structure(4,(/"g ","k ","eh","t "/))
    !
-   call PARALLEL_assign_chains_and_COMMs(3,&
+   call PARALLEL_assign_chains_and_COMMs(4,&
 &                                          COMM_index_1=PAR_COM_RL_INDEX,&
 &                                          COMM_index_2=PAR_COM_Xk_ibz_INDEX,&
 &                                          COMM_index_3=PAR_COM_eh_INDEX,&

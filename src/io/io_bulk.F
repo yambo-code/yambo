@@ -267,4 +267,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
  call timing('io_bulk',OPR='stop')
 #endif
  !
+ deallocate(ipos_loc)
+ if (allocated(isize_loc)) deallocate(isize_loc)
+ !
 end subroutine

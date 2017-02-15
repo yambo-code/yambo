@@ -95,20 +95,16 @@ subroutine c2y_db1(en,k,file_name_)
  call msg('s',":: Atom's information ...")
  read(11) irecord
  read(11) n_atomic_species    ! Number of atomic species 
- Y_ALLOCATE(n_atoms_species(n_atomic_species))
- Y_MEM(n_atoms_species)
- Y_ALLOCATE(Z_species(n_atomic_species))
- Y_MEM(Z_species)
+ YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+ YAMBO_ALLOC(Z_species,(n_atomic_species))
  read(11) (n_atoms_species(i1),i1=1,n_atomic_species),(zel(i1),i1=1,n_atomic_species)
  do i1=1,n_atomic_species
    call assign_z_spec(zel(i1),Z_species(i1))
  enddo
  !atoms per species
  n_atoms_species_max=maxval(n_atoms_species)
- Y_ALLOCATE(atom_pos(3,n_atoms_species_max,n_atomic_species))
- Y_MEM(atom_pos)
- Y_ALLOCATE(atom_pos_dp(3,n_atoms_species_max,n_atomic_species))
- Y_MEM(atom_pos_dp)
+ YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
+ YAMBO_ALLOC(atom_pos_dp,(3,n_atoms_species_max,n_atomic_species))
  !
  !     ==  Section  4: Atomic coordinates                              ==
  !
@@ -121,7 +117,7 @@ subroutine c2y_db1(en,k,file_name_)
    enddo
  enddo
  atom_pos = atom_pos_dp
- Y_FREE(atom_pos_dp)
+ YAMBO_FREE(atom_pos_dp)
 !
 !      ==  Section  5: Atomic velocities (Skipped)                     ==
 !
@@ -233,8 +229,7 @@ subroutine c2y_db1(en,k,file_name_)
 !C     ==  Section 21: K-Points                                        ==
 !
 !     If only gamma, in cpmd it looks nkpt=0 ! Now set to gamma, then look how to read the k-sampling
- Y_ALLOCATE(k%pt(k%nibz,3))
- Y_MEM(k%pt)
+ YAMBO_ALLOC(k%pt,(k%nibz,3))
  k%pt = 0.
  read(11) irecord
  irecord = abs(irecord)
@@ -260,15 +255,13 @@ subroutine c2y_db1(en,k,file_name_)
    call msg('s',':: Energies...')
    read(11) rdum
    i_spin = 1 
-   Y_ALLOCATE(rstr(en%nb))
-   Y_MEM(rstr)
-   Y_ALLOCATE(en%E(en%nb,k%nibz,n_spin))
-   Y_MEM(en%E)
+   YAMBO_ALLOC(rstr,(en%nb))
+   YAMBO_ALLOC(en%E,(en%nb,k%nibz,n_spin))
    do ik=1,k%nibz
      read (11)  (rstr(i1),i1=1,en%nb) 
      en%E(:,ik,i_spin)=rstr(:)
    enddo
-   Y_FREE(rstr)
+   YAMBO_FREE(rstr)
  else
    write(*,'(A)') 'C2Y: ERROR ! CANNOT read EIGENVALUES'
    stop
@@ -328,12 +321,9 @@ subroutine c2y_db1(en,k,file_name_)
  !
  ! ALLOCATION
  !
- Y_ALLOCATE(wf_nc_k(k%nibz))
- Y_MEM(wf_nc_k)
- Y_ALLOCATE(g_vec(ng_vec,3))
- Y_MEM(g_vec)
- Y_ALLOCATE(rel_gvec(3,wf_ng))
- Y_MEM(rel_gvec)
+ YAMBO_ALLOC(wf_nc_k,(k%nibz))
+ YAMBO_ALLOC(g_vec,(ng_vec,3))
+ YAMBO_ALLOC(rel_gvec,(3,wf_ng))
  ig=1
  read(40,*) (rel_gvec(i2,ig),i2=1,3)
  do i1= 1,(wf_ng-1)/2
@@ -349,11 +339,10 @@ subroutine c2y_db1(en,k,file_name_)
  wf_nc_k=wf_ng
  wf_ncx=maxval(wf_nc_k)
  wf_ng=wf_ncx
- Y_ALLOCATE(wf_igk(wf_ncx,k%nibz))
- Y_MEM(wf_igk)
+ YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
  forall(i1=1:wf_ng) wf_igk(i1,:)=i1
  !
- Y_FREE(rel_gvec)
+ YAMBO_FREE(rel_gvec)
  !
  !
  call msg('l','done')

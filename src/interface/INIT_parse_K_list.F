@@ -38,9 +38,8 @@ subroutine init_parse_K_list(k,variable)
  real_ctl=0.
  k%nibz=1
  K_loop: do while(real_ctl/=999.)
-   Y_FREE(k%pt)
-   Y_ALLOCATE(k%pt(k%nibz,3))
-   Y_MEM(k%pt)
+   YAMBO_FREE(k%pt)
+   YAMBO_ALLOC(k%pt,(k%nibz,3))
    k%pt(k%nibz,:)=(/0.,0.,999./)
    call parser('QptCoord',k%pt)
    real_ctl=k%pt(k%nibz,3)

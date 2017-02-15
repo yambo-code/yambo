@@ -74,7 +74,7 @@ subroutine G_rot_grid(is,call_kind)
  g_vec_tmp(1:ng,:)=g_vec(1:ng,:)
  g_rot_found=.false.
  if(extend_grid) then
-   Y_FREE(g_vec)
+   YAMBO_FREE(g_vec)
  endif
  !
  g_rot_found(1)=.true.
@@ -111,8 +111,7 @@ subroutine G_rot_grid(is,call_kind)
  enddo
  !
  if(extend_grid) then
-   Y_ALLOCATE(g_vec(ng_vec,3))
-   Y_MEM(g_vec)
+   YAMBO_ALLOC(g_vec,(ng_vec,3))
    g_vec=g_vec_tmp(1:ng_vec,:)
  endif
  !

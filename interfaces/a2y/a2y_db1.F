@@ -128,8 +128,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz
- Y_ALLOCATE(k%pt(k%nibz,3))
- Y_MEM(k%pt)
+ YAMBO_ALLOC(k%pt,(k%nibz,3))
  do ik = 1,k%nibz
    k%pt(ik,:)=matmul(transpose(b),ahdr%kptns(:,ik))*alat(:)/2._SP/pi
  enddo
@@ -152,12 +151,9 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  n_atomic_species=ahdr%ntypat
  !
- Y_ALLOCATE(pp_n_l_comp(n_atomic_species))
- Y_MEM(pp_n_l_comp)
- Y_ALLOCATE(n_atoms_species(n_atomic_species))
- Y_MEM(n_atoms_species)
- Y_ALLOCATE(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
- Y_MEM(pp_table)
+ YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
+ YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+ YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
  pp_n_l_comp(:)=pp_n_l_max
  !
  ! if "l_many_proj" the table is readen in a2y_wf
@@ -174,10 +170,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
    n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
  enddo
  n_atoms_species_max=maxval(n_atoms_species)
- Y_ALLOCATE(atom_pos(3,n_atoms_species_max,n_atomic_species))
- Y_MEM(atom_pos)
- Y_ALLOCATE(Z_species(n_atomic_species))
- Y_MEM(Z_species)
+ YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
+ YAMBO_ALLOC(Z_species,(n_atomic_species))
  n_atoms_species(:)=0
  do i1=1,ahdr%natom
    n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
@@ -191,16 +185,11 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ! ALLOCATION
  !
- Y_ALLOCATE(wf_nc_k(k%nibz))
- Y_MEM(wf_nc_k)
- Y_ALLOCATE(rel_gvec(3,ng_vec_abinit))
- Y_MEM(rel_gvec)
- Y_ALLOCATE(wf_nc_k(k%nibz))
- Y_MEM(wf_nc_k)
- Y_ALLOCATE(g_vec(ng_vec_abinit,3))
- Y_MEM(g_vec)
- Y_ALLOCATE(rstr(en%nb))
- Y_MEM(rstr)
+ YAMBO_ALLOC(wf_nc_k,(k%nibz))
+ YAMBO_ALLOC(rel_gvec,(3,ng_vec_abinit))
+ YAMBO_ALLOC(wf_nc_k,(k%nibz))
+ YAMBO_ALLOC(g_vec,(ng_vec_abinit,3))
+ YAMBO_ALLOC(rstr,(en%nb))
  !
  call msg('s','Symmetries...')
  !============================
@@ -247,10 +236,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('s','Energies...')
  !==========================
  !
- Y_ALLOCATE(wf_disk_DP(ng_vec_abinit,n_spinor))
- Y_MEM(wf_disk_DP)
- Y_ALLOCATE(wf_igk_tmp(ng_vec_abinit,k%nibz))
- Y_MEM(wf_igk_tmp)
+ YAMBO_ALLOC(wf_disk_DP,(ng_vec_abinit,n_spinor))
+ YAMBO_ALLOC(wf_igk_tmp,(ng_vec_abinit,k%nibz))
  wf_igk_tmp=-1
  WF_disk_DP=0._DP
  !
@@ -289,8 +276,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    wf_ncx=maxval(wf_nc_k)
    wf_ng=maxval(wf_igk_tmp)
    !
-   Y_ALLOCATE(wf_igk(wf_ncx,k%nibz))
-   Y_MEM(wf_igk)
+   YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
    do ik=1,k%nibz
      wf_igk(1:wf_ncx,ik)=wf_igk_tmp(1:wf_ncx,ik)
    enddo
@@ -298,10 +284,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ! CLEAN
  !
- Y_FREE(wf_igk_tmp)
- Y_FREE(wf_disk_DP)
- Y_FREE(rel_gvec)
- Y_FREE(rstr)
+ YAMBO_FREE(wf_igk_tmp)
+ YAMBO_FREE(wf_disk_DP)
+ YAMBO_FREE(rel_gvec)
+ YAMBO_FREE(rstr)
  !
  close(11)
  !

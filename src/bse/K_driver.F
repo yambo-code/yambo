@@ -47,9 +47,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use drivers,        ONLY:l_rt_carriers_in_use
  use com,            ONLY:error
 #endif
-#if defined _MEM_CHECK 
- use memory,         ONLY:MEM_dri
-#endif
  !
 #include<memory.h>
  !
@@ -211,15 +208,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! ================
  if (.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
  !
-#if defined _MEM_CHECK 
- !
- call MEM_dri("",REPORT="check")
- !
-#endif
- !
  ! 3. The SOLVER
  ! =================
- if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  ! GPL_EXCLUDE_START
  !
@@ -235,10 +226,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    ! If the kernel contains QP corrections I have to equally correct Xen
    !
    if (allocated(Ken%QP_corrected)) then
-     Y_ALLOCATE(Xen%QP_corrected(Xen%nb,Xen%nk,n_sp_pol))
-     Y_ALLOCATE(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-     Y_MEM(Xen%QP_corrected)
-     Y_MEM(Xen%Eo)
+     YAMBO_ALLOC(Xen%QP_corrected,(Xen%nb,Xen%nk,n_sp_pol))
+     YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
      Xen%QP_corrected=Ken%QP_corrected
      Xen%Eo=Xen%E
      Xen%E =Ken%E

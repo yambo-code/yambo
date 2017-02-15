@@ -94,17 +94,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Eps_0
  !=======
- Y_ALLOCATE(Epsilon_ii(BSS_n_freqs,4))!2(int)3(nonint)4(n-1Haydock/invshifted)
- Y_MEM(Epsilon_ii)
- Y_ALLOCATE(X_drude_term(BSS_n_freqs))
- Y_MEM(X_drude_term)
+ YAMBO_ALLOC(Epsilon_ii,(BSS_n_freqs,4))!2(int)3(nonint)4(n-1 Haydock/inv shifted)
+ YAMBO_ALLOC(X_drude_term,(BSS_n_freqs))
  Epsilon_ii   = cZERO
  X_drude_term = cZERO
  !
  Epsilon_ii(:,1)=W_bss%p(:)  
  if (BSS_eval_JDOS) then
-   Y_ALLOCATE(Joint_DOS(BSS_n_freqs,4))
-   Y_MEM(Joint_DOS)
+   YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
    Joint_DOS=cZERO
    Joint_DOS(:,1) =W_bss%p(:)
  endif
@@ -351,14 +348,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call K_output_file(iq,"open IP")
    call K_output_file(iq,"IP")
    !
-   Y_FREE(Epsilon_ii)
-   Y_FREE(X_drude_term)
-   Y_FREE(Joint_DOS)
+   YAMBO_FREE(Epsilon_ii)
+   YAMBO_FREE(X_drude_term)
+   YAMBO_FREE(Joint_DOS)
 #if defined _KERR
-   Y_FREE(Epsilon_ij)
+   YAMBO_FREE(Epsilon_ij)
 #endif
 #if defined _PL
-   Y_FREE(PL)
+   YAMBO_FREE(PL)
 #endif
    !
  endif

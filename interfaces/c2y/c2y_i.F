@@ -35,7 +35,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_wf2y,            ONLY:wf_splitter
  use interfaces,          ONLY:PARALLEL_live_message
 #if defined _MEM_CHECK 
- use memory,              ONLY:MEM_dri
+ use memory,              ONLY:MEM_manager
 #endif
  !
 #include<memory.h>
@@ -110,8 +110,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s','== DB2 ...')
  !
- Y_ALLOCATE(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- Y_MEM(wf_disk)
+ YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx,n_spin))
  !
  do ik=1,nkibz
    !
@@ -126,13 +125,13 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    enddo
    !
  enddo
- Y_FREE(wf_disk)
+ YAMBO_FREE(wf_disk)
  !
  ! Memory Overview
  !=================
 #if defined _MEM_CHECK 
  !
- call MEM_dri("",REPORT="final")
+ call MEM_manager("",REPORT="final")
  !
 #endif
  !

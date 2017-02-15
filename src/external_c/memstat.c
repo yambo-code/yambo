@@ -29,6 +29,12 @@ void F90_FUNC_(memstat,MEMSTAT)(int *kilobytes)
 #if defined(__AIX)
   *kilobytes = (info.arena) / 1024 ;
 #else
+/*
+    arena+hblkhd             total taken from the system
+    uordblks+usmblks+hblkhd  total in use by program
+    fordblks+fsmblks         total free within program
+
+*/
   *kilobytes = (info.arena + info.hblkhd) / 1024 ;
 #endif
 

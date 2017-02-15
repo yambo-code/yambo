@@ -48,8 +48,7 @@ subroutine K_kerr_IP(iq,w)
  complex(SP)       :: E_plus_W0,res,E_plus_W(2/n_sp_pol)
  integer           :: ik_bz,iv,ic,i_sp_pol,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
  !
- Y_ALLOCATE(Epsilon_ij(BSS_n_freqs,4))
- Y_MEM(Epsilon_ij)
+ YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
  Epsilon_ij=cZERO
  !
  Epsilon_ij(:,1)=w(:)

@@ -72,8 +72,7 @@ subroutine K_blocks( )
        !
        if (i_loop==2) then
          do iB=n_BS_blks+1,n_BS_blks+n_new_blocks
-           Y_ALLOCATE(BS_blk(iB)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-           Y_MEM(BS_blk(iB)%mat)
+           YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
            BS_blk(iB)%mat=cZERO
            BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
            if (iB-n_BS_blks==1) BS_blk(iB)%mode="R"

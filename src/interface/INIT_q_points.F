@@ -71,8 +71,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
        if (i1==2) q_pt(nqibz,:)=-real(q_pt_db,SP)
      enddo
      if (i1==1.and..not.allocated(q_pt)) then
-       Y_ALLOCATE(q_pt(nqibz,3))
-       Y_MEM(q_pt)
+       YAMBO_ALLOC(q_pt,(nqibz,3))
      endif
    enddo
    return
@@ -80,8 +79,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
  else if (allocated(ph_qpt).and.elph_use_q_grid) then
    q_source="Electron-Phonon databases"
    nqibz=elph_nDBs
-   Y_ALLOCATE(q_pt(nqibz,3))
-   Y_MEM(q_pt)
+   YAMBO_ALLOC(q_pt,(nqibz,3))
    q_pt(:,:)=-real(ph_qpt(:,:),SP)
    return
 #endif
@@ -90,8 +88,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
    call init_parse_K_list(q,'QptCoord')
    nqibz=q%nibz
    if (nqibz>0)  then
-     Y_ALLOCATE(q_pt(nqibz,3))
-     Y_MEM(q_pt)
+     YAMBO_ALLOC(q_pt,(nqibz,3))
      q_pt=q%pt
    endif
    call bz_samp_reset(q)

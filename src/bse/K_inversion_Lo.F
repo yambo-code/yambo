@@ -236,7 +236,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  enddo
  !
  if(.not.K_diago_in_BS_mat) then
-   Y_FREE(BS_diagonal)
+   YAMBO_FREE(BS_diagonal)
  endif
  !
  BSS_n_descs=BSS_n_descs+2

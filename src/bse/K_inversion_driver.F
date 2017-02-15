@@ -43,6 +43,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
  use interfaces,     ONLY:SLK_matrix_transfer
+ use parallel_m,     ONLY:linear_algebra_is_parallel
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -106,13 +107,14 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Symmetrize the K blocks (to be eventually sent to the BLACS)
  !=========================
- call BS_Blocks_symmetrize_K()
+ if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
  !
 #endif
  !
  ! Restart database
  !==================
  call K_inversion_restart(iq,W)
+ !
  completed=count(K_INV_EPS%err/=0)==0
 #if defined _PL
  completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
@@ -190,8 +192,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
 #endif
  !
- Y_ALLOCATE(Lo(BS_H_dim,W%n_freqs,Lo_dim))
- Y_MEM(Lo)
+ YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))
  !
  call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
@@ -308,6 +309,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! CLEAN
  !
+ call LOCAL_clean()
+ !
  contains 
    !
    subroutine do_it_FULL(TYP)
@@ -413,7 +416,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    end subroutine
    !
    subroutine LOCAL_clean
-     call BS_mat_free( )
 #if defined _PL
      call BS_PL_free( )
 #endif
@@ -432,7 +434,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      !
      call PP_indexes_reset(PAR_IND_freqs)
-     Y_FREE(Lo)
+     YAMBO_FREE(Lo)
      !
 #if defined _SCALAPACK
      call SLK_matrix_reset(K_slk)

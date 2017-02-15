@@ -203,8 +203,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! Build the occupations and find the nearest occupied state to the Fermi level
  !
   if (.not.allocated(E%f)) then  
-   Y_ALLOCATE(E%f(E%nb,E%nk,n_sp_pol))
-   Y_MEM(E%f)
+   YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
  endif
  Efdist=1.E5_SP
  !

@@ -265,6 +265,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        if (any(COLL%IO_status/=1)) IO_err=-1
      endif
      !
+     ! In case io_Colls is /=0 all CPU have to sincronize before starting
+     ! to compute the collisions and write a new header
+     !
+     call PP_redux_wait()
+     !
      if (IO_err==0) return
      !
      if (io_COLLs) then

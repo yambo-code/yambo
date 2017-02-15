@@ -59,8 +59,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  integer,        external :: EPS_via_perturbative_inversion
  !
  if (do_it_full.and..not.BLACS_structure_in_use) then
-   Y_ALLOCATE(Mm1(BS_H_dim,BS_H_dim))
-   Y_MEM(Mm1)
+   YAMBO_ALLOC(Mm1,(BS_H_dim,BS_H_dim))
    Mm1=cZERO
  endif
  !
@@ -132,7 +131,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  enddo
  !
  if (do_it_full) then
-   Y_FREE(Mm1)
+   YAMBO_FREE(Mm1)
  else
    call live_timing()
  endif

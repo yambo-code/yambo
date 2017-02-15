@@ -37,9 +37,9 @@ integer function io_out_of_date(ID)
  ! Global revision check 
  !=======================
  !
- ! 4.1.0: global change of IO bulk due to the introduction of the COMPLEX interface. 
+ ! 4.2.0: global change of IO bulk due to the introduction of the COMPLEX interface.
  !        affects only some ndb files
- if (.not.ver_is_gt_or_eq(ID,(/4,1,0/))) then
+ if (.not.ver_is_gt_or_eq(ID,(/4,2,0/))) then
    if (index(io_file(ID),'Vnl')==0.and.&
 &      index(io_file(ID),'Double_Grid')==0.and.&
 &      index(io_file(ID),'RIM_E_and_k')==0.and.&

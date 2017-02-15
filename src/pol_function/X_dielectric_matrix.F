@@ -249,9 +249,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      X_par(iq_mem)%I=iw
      !
      if (io_RESPONSE) then
-       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,iw),COMM=PAR_COM_Q_A2A)
+       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,iw),COMM=PAR_COM_Q_A2A,&
+&                                              COMM_name="X_dielectric")
      else
-       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,(iq_mem-1)*X_MEM_n_freqs+iw),COMM=PAR_COM_Q_A2A)
+       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,(iq_mem-1)*X_MEM_n_freqs+iw),&
+&                           COMM=PAR_COM_Q_A2A,COMM_name="X_dielectric")
      endif
      !
    enddo

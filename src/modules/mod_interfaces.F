@@ -35,7 +35,7 @@ module interfaces
      integer         , optional :: INDEX_in
    end subroutine
    !
-   subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM)
+   subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
      !
      use parallel_m,     ONLY:MPI_comm
      use linear_algebra, ONLY:PAR_matrix
@@ -48,8 +48,10 @@ module interfaces
      integer,          optional :: INDEX_in
      integer,          optional :: INDEX_out
      complex(SP),      optional :: M(:,:)
-     logical,          optional :: SND,RCV
+     logical,          optional :: SND
+     logical,          optional :: RCV
      type(MPI_comm),   optional :: COMM
+     character(*),     optional :: COMM_name
      !
    end subroutine
    !

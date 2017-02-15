@@ -127,11 +127,11 @@ subroutine X_redux(iq,X_par,Xw,X)
      call MATRIX_transfer(M_in=X_par,               M_out=Xo,INDEX_in=iw_X(1),&
 &                                                   SND=X_par%INTRA_comm%CPU_id==0,&
 &                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
-&                                                   COMM=PAR_COM_X_WORLD)
+&                                                   COMM=PAR_COM_X_WORLD,COMM_name="X_redux_1_"//trim(intc(i_LA_pool)))
      call MATRIX_transfer(M_in=X_par_lower_triangle,M_out=Xo,INDEX_in=iw_X(1),&
 &                                                   SND=X_par%INTRA_comm%CPU_id==0,&
 &                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
-&                                                   COMM=PAR_COM_X_WORLD)
+&                                                   COMM=PAR_COM_X_WORLD,COMM_name="X_redux_1_"//trim(intc(i_LA_pool)))
      !
    enddo
    !
@@ -278,7 +278,8 @@ subroutine X_redux(iq,X_par,Xw,X)
      call PP_redux_wait(iw_X,COMM=PAR_COM_X_WORLD%COMM)
      !
      call MATRIX_transfer(M_in=BUFFER,M_out=X_par,INDEX_in=iw_par,INDEX_out=iw_X(1),&
-&                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,COMM=PAR_COM_X_WORLD)
+&                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
+&                         COMM=PAR_COM_X_WORLD,COMM_name="X_redux_2_"//trim(intc(i_LA_pool)))
      !
    enddo
  enddo

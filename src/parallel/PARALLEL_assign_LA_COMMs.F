@@ -23,9 +23,10 @@
 !
 subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
- use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,&
+ use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,COMM_reset,&
 &                        PAR_COM_SLK,PAR_COM_SLK_INDEX_global,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,&
-&                        linear_algebra_is_parallel
+&                        linear_algebra_is_parallel,PAR_COM_SLK_INDEX_local
+ use linear_algebra,ONLY:N_PAR_to_PAR_comms,PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_SAVE_NAME
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
 #endif
@@ -40,7 +41,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
  ! Work Space
  !
- integer :: Ncpu_lin_algebra, slk_error
+ integer :: Ncpu_lin_algebra, slk_error,i_comm
  !
  !  LK -> Lapack,     serial linear algebra
  ! SLK -> Scalapack, parallel linear algebra
@@ -115,6 +116,20 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
 #if defined _SCALAPACK
  endif
 #endif
+ !
+ ! PAR to PAR communicators
+ !
+ if (N_PAR_to_PAR_comms>0) then
+   deallocate(PAR_to_PAR_comm_SAVE_NAME)
+   do i_comm=1,N_PAR_to_PAR_comms
+     call COMM_reset(PAR_to_PAR_comm_SAVE(i_comm))
+   enddo  
+   deallocate(PAR_to_PAR_comm_SAVE)
+ endif
+ N_PAR_to_PAR_comms=PAR_COM_SLK_INDEX_local%n_CPU*2+1
+ allocate(PAR_to_PAR_comm_SAVE(N_PAR_to_PAR_comms))
+ allocate(PAR_to_PAR_comm_SAVE_NAME(N_PAR_to_PAR_comms))
+ PAR_to_PAR_comm_SAVE_NAME=" "
  !
  contains
    !

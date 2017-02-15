@@ -68,9 +68,11 @@ module linear_algebra
  logical              :: I_do_SND=.TRUE.
  type(MPI_comm)       :: TRANSFER_world
  !
- ! PAR to PAR 
- integer, allocatable :: PAR_to_PAR_cpu(:,:)
- type(MPI_comm)       :: PAR_to_PAR_comm
+ ! PAR to PAR special COMMs
+ integer              :: N_PAR_to_PAR_comms=0
+ character(schlen)    :: PAR_to_PAR_comm_NAME
+ type(MPI_comm),    allocatable  :: PAR_to_PAR_comm_SAVE(:)
+ character(schlen), allocatable  :: PAR_to_PAR_comm_SAVE_NAME(:)
  !
  type PAR_matrix
    !

@@ -99,7 +99,6 @@ module parallel_m
    integer  :: COMM      
    integer  :: CPU_id    
    integer  :: my_CHAIN    ! equivalent to CPU_id+1 in INTER_CHAIN
-   integer  :: chain_name  ! INTRA, INTER, CHILD
    integer  :: chain_order ! this corresponds to the order in the local hierarchy
    integer  :: n_CPU     
  end type MPI_comm

@@ -308,6 +308,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
          !
        enddo
        !
+       if (wf_nb_to_load==0) cycle
+       !
        if (.not.buffer_is_ok) then
          !
          allocate(wf_disk(wf_ncx,n_spinor,wf_nb_to_load))

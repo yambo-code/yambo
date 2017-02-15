@@ -310,7 +310,7 @@ module IO_m
        CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
        !
 #if defined _NC_CLASSIC
-       CREATE_MODE=ior(nf90_share,nf90_classic)
+       CREATE_MODE=    nf90_share
 #elif defined _HDF5_IO
        CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif

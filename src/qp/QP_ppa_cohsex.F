@@ -476,8 +476,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
-               PPA_E= real(X%ppaE/X_mat(ig1,ig2,2))
-               PPA_R=-X_mat(ig1,ig2,1)/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)))
+               PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i4)-E_kmq-PPA_E)+&

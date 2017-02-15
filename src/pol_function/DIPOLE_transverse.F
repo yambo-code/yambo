@@ -134,23 +134,21 @@ subroutine Dipole_transverse(Xen,Xk,X)
  W_=0._SP
  !
  do i_sp_pol=1,n_sp_pol
+   if (n_LT_steps==0) cycle
    do ik=1,Xk%nibz
      ifrag=ik+(i_sp_pol-1)*Xk%nibz
-     !
-     !
-     if (n_LT_steps==0) cycle
      ! 
      ! [Vnl,r]
      !
      if (io_KB_pwscf_err==0) then
-       if (ik< Xk%nibz ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-       if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
        io_KB_pwscf_err=io_KB_pwscf(ID)
      endif
      !
      if (io_KB_abinit_err==0) then
-       if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-       if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
+       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
        io_KB_abinit_err=io_KB_abinit(ID)
      endif
      ! 

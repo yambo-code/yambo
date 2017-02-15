@@ -143,8 +143,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
 #endif
  !
- ! Kernel Loading 
- !================
+ ! Kernel and/or BSS components loading
+ !======================================
  call K_components_folded_in_serial_arrays(iq)
  !
  if (K_slk%kind=="SLK") then

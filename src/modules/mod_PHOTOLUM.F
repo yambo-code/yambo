@@ -65,7 +65,7 @@ module PHOTOLUM
      !
    end subroutine
    !
-   subroutine BS_PL_alloc( )
+   subroutine BSS_PL_alloc( )
      !
      use pars,       ONLY:cZERO,rZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
@@ -80,7 +80,7 @@ module PHOTOLUM
      !
    end subroutine
    !
-   subroutine BS_PL_free( )
+   subroutine BSS_PL_free( )
      !
      if (.not.l_photolum) return
      !

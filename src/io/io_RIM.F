@@ -23,12 +23,12 @@
 !
 integer function io_RIM(ID)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
 &                         RIM_id_epsm1_reference,RIM_epsm1,RIM_anisotropy,RIM_qpg,&
 &                         nqibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
-&                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
+&                         io_elemental,io_status,io_bulk,read_is_on
 #include <memory.h>
  integer :: ID
  ! 

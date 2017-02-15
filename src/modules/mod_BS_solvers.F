@@ -138,16 +138,12 @@ module BS_solvers
  !
  contains
    !
-   subroutine BS_mat_alloc( )
+   subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
      use electrons, ONLY:E_SOC_nbands
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-     if (.not.K_slk%kind=="SLK") then
-       YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
-       BS_mat    = cZERO
-     endif
      YAMBO_ALLOC(BSS_dipoles,(BS_H_dim))
      BSS_dipoles = cZERO
      YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,3+n_sp_pol-1))
@@ -176,7 +172,7 @@ module BS_solvers
      endif
    end subroutine
    !
-   subroutine BS_mat_free()
+   subroutine BSS_free()
      integer :: iB
      YAMBO_FREE(BSS_eh_table)
      YAMBO_FREE(BSS_dipoles)
@@ -185,7 +181,10 @@ module BS_solvers
      YAMBO_FREE(BSS_eh_f)
      YAMBO_FREE(BSS_eh_Z)
      YAMBO_FREE(BSS_eh_E_SOC_corr)
-     YAMBO_FREE(BS_mat)
+   end subroutine
+   !
+   subroutine BS_blks_free()
+     integer :: iB
      do iB=1,n_BS_blks
        YAMBO_FREE(BS_blk(iB)%mat)
      enddo

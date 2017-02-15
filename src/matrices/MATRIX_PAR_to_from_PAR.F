@@ -49,7 +49,7 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, COMM_s, ROWS_s, COLS_s,&
  integer :: i_rcv,i_snd,CROP(4),i_snd_world,i_rcv_world,i_cpu
  integer :: RCV_corners(TRANSFER_world%n_CPU,4),SND_corners(TRANSFER_world%n_CPU,4),&
 &           ACTIVE_cpus_snd(TRANSFER_world%n_CPU),ACTIVE_cpus_rcv(TRANSFER_world%n_CPU),&
-&           CPU_in_the_world(TRANSFER_world%n_CPU),LOCAL_PAR_to_PAR_cpu(TRANSFER_world%n_CPU,2)
+&           CPU_in_the_world(TRANSFER_world%n_CPU),LOCAL_PAR_to_PAR_cpu(TRANSFER_world%n_CPU,4)
  logical :: BUILD_the_COMM=.TRUE.
  !
  ! Create a local MAP
@@ -59,7 +59,9 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, COMM_s, ROWS_s, COLS_s,&
    if (i_cpu-1==TRANSFER_world%CPU_id) then
      LOCAL_PAR_to_PAR_cpu(i_cpu,1)=myid+1
      if (I_do_SND) LOCAL_PAR_to_PAR_cpu(i_cpu,2)=+1
-     if (I_do_RCV) LOCAL_PAR_to_PAR_cpu(i_cpu,2)=-1
+     if (I_do_RCV) LOCAL_PAR_to_PAR_cpu(i_cpu,2)=LOCAL_PAR_to_PAR_cpu(i_cpu,2)-1
+     LOCAL_PAR_to_PAR_cpu(i_cpu,3)=COMM_s%COMM
+     LOCAL_PAR_to_PAR_cpu(i_cpu,4)=COMM_r%COMM
    endif
  enddo
  call PP_redux_wait(LOCAL_PAR_to_PAR_cpu,COMM=TRANSFER_world%COMM)
@@ -78,16 +80,11 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, COMM_s, ROWS_s, COLS_s,&
  if (BUILD_the_COMM) then
    call COMM_reset(PAR_to_PAR_comm)
    PAR_to_PAR_comm%my_CHAIN=myid
-   do i_snd=1,COMM_s%n_CPU
-     if (COMM_s%CPU_id==i_snd-1.and.I_do_SND) PAR_to_PAR_comm%my_CHAIN=-1
-   enddo
-   do i_rcv=1,COMM_r%n_CPU
-     if (COMM_r%CPU_id==i_rcv-1.and.I_do_RCV) PAR_to_PAR_comm%my_CHAIN=-1
-   enddo
+   if (I_do_SND.or.I_do_RCV) PAR_to_PAR_comm%my_CHAIN=-1
    if (TRANSFER_world%n_CPU >1) call CREATE_the_COMM(TRANSFER_world%COMM,PAR_to_PAR_comm,myid)
    if (TRANSFER_world%n_CPU==1) call COMM_copy(TRANSFER_world,PAR_to_PAR_comm)
    !
-   allocate(PAR_to_PAR_cpu(TRANSFER_world%n_CPU,2))
+   allocate(PAR_to_PAR_cpu(TRANSFER_world%n_CPU,4))
    PAR_to_PAR_cpu=LOCAL_PAR_to_PAR_cpu
    !
  endif

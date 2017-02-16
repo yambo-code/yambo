@@ -33,8 +33,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
-&                         infile,infile_dump,ofiles_append,runlevel_is_on
- use parser_m,       ONLY:parser
+&                         infile,infile_dump,ofiles_append,runlevel_is_on,&
+&                         switch_off_runlevel
  use par_proc_m,     ONLY:pp_redux_wait,master_cpu
  use com,            ONLY:msg,repfile,com_path,jobstr,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
@@ -116,7 +116,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    return
  endif
  !
- !First vars loading
+ ! First vars loading
  ! 
  call call_init_load('load')
  !
@@ -171,6 +171,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  ioQINDX_err=ioQINDX(k,q,io_ID) 
  if (ioQINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
+ !
+ ! If the GOPS/KINDX DBs are not present, reset to setup run
+ !
+ if (io_err==-1.or.ioQINDX_err==-1) then
+   !
+   ! switch off all logicals loaded in read_command_line
+   call switch_off_runlevel('all',on_name="")
+   !
+   ! force a setup run
+   instr="setup"
+   call read_command_line(instr,init)
+ endif
  !
  ! rim
  !
@@ -349,7 +361,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
-       if (.not.l_chosex) call initactivate(1,'GDamping') 
+       if (.not.l_chosex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_ppa.and..not.l_chosex) call Xon('Xd',(/'BndsRn','NGsBlk',&
 &                      'DmRnge','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 

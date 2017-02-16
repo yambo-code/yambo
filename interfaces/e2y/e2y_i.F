@@ -31,9 +31,11 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use D_lattice,           only : PP_alloc, PP_free, n_atoms_max
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
  use timing,              only : live_timing_is_on
- use wave_func,           only : wf_ncx,ioWF
+ use wave_func,           only : wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
  use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
- use mod_com2y,          only : interface_presets, force_noWFs
+ use mod_com2y,           only : interface_presets, force_noWFs
+ use mod_wf2y,            only : wf_splitter
+ !
  implicit none
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
  integer,          intent(in) :: iinf
@@ -47,7 +49,7 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  type(levels)                 :: en
  type(bz_samp)                :: k
  character(lchlen)            :: ETSF_file_name
- integer                      :: ID,io_err,ik,icycle
+ integer                      :: ID,io_err,ik,icycle, ib_grp
  integer,     external        :: ioDB1, ioKB_PP
  real(SP), allocatable        :: wf_disk(:,:,:,:)
  logical                      :: letsf_file, lwrite_PP, force_kbpp
@@ -117,29 +119,40 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    call msg('l','done ==')
  endif
  !
+ call wf_splitter()
+ !
  ! WF & PP
  !==========================================
  !
- call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...')
- allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
+ call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
+ allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call PP_alloc()
 
  do ik=1,nkibz
    !
-   call e2y_wf(wf_disk,ik,ncid)
-   call e2y_kb_pp(ik,ncid)
-   ! 
-   ! Write to the YAMBO database
-   ! 
-   do icycle=1,2
-     if (icycle==2.and.n_atoms_max==0) cycle
-     if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-     if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-     if (icycle==1) io_err=ioWF(ID,wf=wf_disk)
-     if (icycle==2) io_err=ioKB_PP(ID)
+   do ib_grp=1,wf_nb_io_groups
+     !
+     ! Read from the etsf-nc file
+     !
+     call e2y_wf(wf_disk,ik,ib_grp,ncid)
+     call e2y_kb_pp(ik,ncid) 
+     ! 
+     ! Write to the YAMBO database
+     ! 
+     if (n_atoms_max>0.and.ib_grp==1) then
+       if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+       if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
+       io_err=ioKB_PP(ID) 
+     endif
+     if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
+     if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
+     io_err=ioWF(ID,wf=wf_disk)
+     !
    enddo
+   !
  enddo
  deallocate(wf_disk)
+
  call PP_free()
 
  call msg('ln','done ==')

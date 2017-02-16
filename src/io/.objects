@@ -1,4 +1,5 @@
-objs = ioRIM.o        ioGROT.o     \
+objs = ver_is_gt_or_eq.o \
+       ioRIM.o        ioGROT.o     \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   ioXXVXC.o \
        ioBS.o         \

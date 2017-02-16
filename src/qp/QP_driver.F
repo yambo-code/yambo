@@ -61,6 +61,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  if (.not.allocated(QP_Sx).and..not.allocated(QP_Vxc).and.l_el_corr.and.&
      .not.l_life) return
  !
+ QP_solver='n'
+ !
  ! Head message
  !
  call QP_reset(qp)

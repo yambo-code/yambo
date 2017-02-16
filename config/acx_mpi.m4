@@ -32,7 +32,6 @@ AC_LANG_CASE([C], [
         AC_CHECK_PROGS(MPICC, mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
         acx_mpi_save_CC="$CC"
         CC="$MPICC"
-        AC_SUBST(MPICC)
 ],
 [C++], [
         AC_REQUIRE([AC_PROG_CXX])
@@ -74,10 +73,12 @@ if test x = x"$MPILIBS"; then
         AC_CHECK_LIB(mpich, MPI_Init, [MPILIBS="-lmpich"])
 fi
 
-dnl We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
-dnl latter uses $CPP, not $CC (which may be mpicc).
+# We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
+# latter uses $CPP, not $CC (which may be mpicc).
+# In any case I had to rename CPPFLAGS in C_AS_CPP_FLAGS as
+# non empty CPPFLAGS are passed to $PCC 
 AC_LANG_CASE([C], [if test x != x"$MPILIBS"; then
-        AC_MSG_CHECKING([for mpi.h])
+        AC_MSG_CHECKING([for a working mpi.h])
         AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], 
         [#include <mpi.h>]),
         [AC_MSG_RESULT(yes);acx_mpi_ok="yes"],
@@ -123,17 +124,8 @@ AC_LANG_CASE([Fortran],
   call MPI_Init(ierr)]), 
   [HAVE_MPI_MOD=1; acx_mpi_ok="yes"; AC_MSG_RESULT(yes)], 
   [HAVE_MPI_MOD=0; AC_MSG_RESULT(no)]);fi])
-
-PFC=""
-PFCFLAGS=""
+#
 if test x = x"$MPILIBS"; then acx_mpi_ok="no"; fi
-AC_LANG_CASE([C], [CC="$acx_mpi_save_CC"],
-        [C++], [CXX="$acx_mpi_save_CXX"],
-        [Fortran 77], [F77="$acx_mpi_save_F77"],
-        [Fortran], 
-        [if test "$acx_mpi_ok" = "yes"; 
-         then PFC="$acx_mpi_save_FC" PFCFLAGS="$FCFLAGS";
-         fi])
 
 mpibuild="no"
 AC_LANG_CASE(
@@ -141,20 +133,22 @@ AC_LANG_CASE(
  [if test "$acx_mpi_ok" = "yes"; then
   mpibuild="yes"
   PF90=$PFC
-  PF90FLAGS=$PFCFLAGS
-  AC_SUBST(MPILIBS)
-  AC_SUBST(PF90)
-  AC_SUBST(PF90FLAGS)
-  AC_SUBST(mpibuild)
+  PF90FLAGS=$FCFLAGS
   fi],
  [C],
  [if test "$acx_mpi_ok" = "yes"; then
   mpibuild="yes"
-  PCFLAGS=$CFLAGS
-  AC_SUBST(MPICC)
-  AC_SUBST(PCFLAGS)
-  AC_SUBST(mpibuild)
-  fi],)
+  PCC=$MPICC
+  PCCFLAGS=$CFLAGS
+  fi
+#
+# While the Fortran checks use FC (we use F90) the
+# variable for C is CC, the same used here. 
+# So we need to rename it.
+#
+  CC=$acx_mpi_save_CC
+ ],
+)
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x = x"$MPILIBS"; then

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine e2y_wf(wf_disk,ikibz, ncid)
+subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
 !==============================================
   ! Reads and returns wf_disk for both spins!
   use etsf_io
@@ -29,9 +29,9 @@ subroutine e2y_wf(wf_disk,ikibz, ncid)
   use com,                   only : msg, error
   use electrons,             only : n_bands, n_spin, n_sp_pol, n_spinor
   use R_lattice,             only : nkibz
-  use wave_func,             only : wf_ncx,wf_nc_k
+  use wave_func,             only : wf_ncx,wf_nc_k,wf_nb_io,wf_nb_io_groups
   implicit none
-  integer,           intent(in)  :: ikibz, ncid
+  integer,           intent(in)  :: ikibz, ncid, ib_grp
   real(SP),          intent(out) :: wf_disk(2,n_bands,wf_ncx,n_spin)
   double precision, allocatable  :: wavefunction_section_(:,:,:)
   logical                        :: lstat
@@ -39,7 +39,7 @@ subroutine e2y_wf(wf_disk,ikibz, ncid)
   ! 
   ! Work Space
   !
-  integer        :: ib, ierr, npwk, ik, ig, ispin, ireal
+  integer        :: ib, ierr, npwk, ik, ig, ispin, ireal, nb_to_read
   integer        :: start(6), count(6), ncvarid
 !
   type(etsf_main)   :: main_group
@@ -61,10 +61,19 @@ subroutine e2y_wf(wf_disk,ikibz, ncid)
 ! Using low level routine to select the spin AND spinor as wanted.
 ! No high level option to read wavefunction spinor components: the choice
 ! was made to keep high level routines split on nkibz and n_sp_pol
-
   allocate(wavefunction_section_(dims%real_or_complex_coefficients, &
 &                                dims%max_number_of_coefficients,    &
 &                                dims%max_number_of_states ) )
+  !
+  ! Read all bands or only the remaining in the last block
+  !
+  nb_to_read=wf_nb_io
+  if (ib_grp*wf_nb_io>n_bands) nb_to_read=n_bands-wf_nb_io*(ib_grp-1)
+  ! Note: Splitting over bands does not presently work, since
+  ! etsf-nc files may also be split, and things get confusing.
+  if (nb_to_read.ne.n_bands) call error('Splitting over bands does not currently work for etsf-nc.'//&
+& '  Contact developers.')
+  nb_to_read = n_bands
   !
   ! Initialize the mapping
   !

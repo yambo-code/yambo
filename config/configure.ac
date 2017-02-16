@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.1.2 r.300 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.0 r.315 , yambo@yambo-code.org)
 SVERSION="3"
-SPATCHLEVEL="1"
-SSUBLEVEL="2"
-SREVISION="300"
+SPATCHLEVEL="2"
+SSUBLEVEL="0"
+SREVISION="315"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -57,10 +57,15 @@ AC_PROG_MAKE_SET
 # ============================================================================
 # Checks for programs.
 AC_PROG_CC
+#
+# AS CPPFLAGS are used (dunno why) in the MPI check of MPICC
+# we need to rename the CPP precompiler in C_AS_CPP
+C_AS_CPP=$CPP
+#
 AC_CANONICAL_HOST
 hostname=`uname -n`
 AC_SUBST(hostname)
-
+AC_SUBST(C_AS_CPP)
 # ============================================================================
 # EDITOR
 AC_ARG_WITH(EDITOR, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor])) 
@@ -187,6 +192,7 @@ AC_SUBST(compile_e2y)
 AC_SUBST(etsf_dir)
 
 # ============================================================================
+#
 # Fortran 90
 #
 acx_save_fcflags="$FCFLAGS"
@@ -194,6 +200,7 @@ AC_PROG_FC([],[90])
 if test "$FC" = "" ; then
  AC_MSG_ERROR([could not find Fortran 90 compiler])
 fi
+# WIDESETUP affects the FCFLAGS/CFLAGS only if the variable is empty
 ACX_WIDESETUP
 AC_LANG_PUSH(Fortran)
 #
@@ -218,7 +225,6 @@ ACX_FCSETUP()
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
 ACX_EXTUS
-AC_LANG_PREPROC
 AC_FC_FREEFORM
 F90=$FC
 AC_SUBST(F90)
@@ -281,7 +287,6 @@ esac
 if test "$mpibuild" = "yes"; then
 # MPIF90
 #
- PFCFLAGS=""
  mpi_cpp="-D_MPI"
  AC_LANG_PUSH(Fortran)
  ACX_MPI([], 
@@ -295,8 +300,24 @@ if test "$mpibuild" = "yes"; then
   ACX_MPI([], 
    AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
  fi
- if test "$mpibuild" = "no" ; then mpi_cpp=""; fi
+#
+# OVERALL CHECK
+#
+ if test "$mpibuild" = "no" ; then 
+  mpi_cpp=""
+  MPILIBS=""
+  PF90=""
+  PF90FLAGS=""
+  PCC=""
+  PCCFLAGS=""
+ fi
  AC_SUBST(mpi_cpp)
+ AC_SUBST(MPILIBS)
+ AC_SUBST(PF90)
+ AC_SUBST(PF90FLAGS)
+ AC_SUBST(PCC)
+ AC_SUBST(PCCFLAGS)
+ AC_SUBST(mpibuild)
 fi
 # ============================================================================
 # FFT 

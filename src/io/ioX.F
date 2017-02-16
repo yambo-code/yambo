@@ -33,6 +33,7 @@ integer function ioX(X,Xw,ID)
 &                        io_fragment,RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        io_save_to_try_again,io_restore_to_try_again,NONE
+ use stderr,        ONLY:intc
  implicit none
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -199,7 +200,11 @@ integer function ioX(X,Xw,ID)
    sec_size=6
    !
    if (X%whoami==4) sec_size=1
-   write (ch,'(a,i3.3)') "FREQ_PARS_sec_iq",iq
+   if (ver_is_gt_or_eq(ID,revision=308)) then
+     ch="FREQ_PARS_sec_iq"//trim(intc(iq))
+   else
+     write (ch,'(a,i3.3)') "FREQ_PARS_sec_iq",iq
+   endif
    !
    io_com_save=io_com(ID)
    if (io_sec(ID,1)/=1) io_com(ID)=NONE
@@ -241,7 +246,11 @@ integer function ioX(X,Xw,ID)
  if (any((/io_sec(ID,:)==2*iq+1/))) then
    allocate(X_disk(X%ng_db,X%ng_db,2))
    !
-   write (ch,'(a,i3.3)') "FREQ_sec_iq",iq
+   if (ver_is_gt_or_eq(ID,revision=308)) then
+     ch="FREQ_sec_iq"//trim(intc(iq))
+   else
+     write (ch,'(a,i3.3)') "FREQ_sec_iq",iq
+   endif
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/Xw%n(1),2/))
    allocate(W_disk(Xw%n(1),2))
    !
@@ -264,7 +273,11 @@ integer function ioX(X,Xw,ID)
    !
    deallocate(W_disk)
    !
-   write (ch,'(a,i3.3)') "X_Q_",iq
+   if (ver_is_gt_or_eq(ID,revision=308)) then
+     ch="X_Q_"//trim(intc(iq))
+   else
+     write (ch,'(a,i3.3)') "X_Q_",iq
+   endif
    !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n(1)/))
    !

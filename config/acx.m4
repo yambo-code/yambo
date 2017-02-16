@@ -57,15 +57,6 @@ m4_define([AC_LANG_FUNC_LINK_TRY(Fortran)],
 [AC_LANG_PROGRAM([], [call [$1]])])
 
 ################################################
-# AC_LANG_PREPROC(Fortran)
-# ---------------------------
-m4_define([AC_LANG_PREPROC(Fortran)],[
-  # this should not be hardwired
-  if test -z "$FCCPP"; then FCCPP="/usr/bin/cpp"; fi
-  AC_SUBST(FCCPP)
-])
-
-################################################
 # Set various default FLAGS
 # ----------------------------------
 AC_DEFUN([ACX_WIDESETUP],
@@ -75,40 +66,28 @@ AC_REQUIRE([AC_CANONICAL_HOST])
 AC_MSG_CHECKING([if the current OS is supported])
 TIMER="ct_cclock.o"
 case "${host}" in
- i?86*linux* | ia64*linux* | *x86*64* | *86*apple*)
+ i?86*linux* | ia64*linux* | *x86*64* | *86*apple* | *86*cygwin )
    build_os="linux"
    TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
-   case "${FC}" in
-   *g95*)
-     if test -z "$FCPPFLAGS"; then FCPPFLAGS="-P -traditional"; fi
-     ;;
-   *)
-     if test -z "$FCPPFLAGS"; then FCPPFLAGS="-traditional"; fi
-     ;;
-   esac
    ;;
  powerpc64*linux* )
    build_os="linux"
    TIMER="ct_etime.o"
-   if test -z "$FCPPFLAGS"; then FCPPFLAGS="-P -traditional-cpp"; fi
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f"; fi
    ;;
  powerpc-ibm* )
    build_os="aix"  
    save=$AR_FLAGS
    AR_FLAGS="$save -X32_64"
-   if test -z "$FCPPFLAGS"; then FCPPFLAGS="-P"; fi
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f"; fi
    ;;
  mips-sgi-irix*)
    build_os="irix"  
-   if test -z "$FCPPFLAGS"; then FCPPFLAGS="-P"; fi
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
  alphaev*)
    build_os="tru64"  
-   if test -z "$FCPPFLAGS"; then FCPPFLAGS="-P -C"; fi
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
   *)
@@ -123,16 +102,18 @@ case "${host}" in
 esac
 AC_MSG_RESULT([yes])
 
+C_AS_CPP_FLAGS="-P"
+
 AC_MSG_NOTICE([WIDESETUP: using build_os="$build_os"])
 AC_MSG_NOTICE([WIDESETUP: using F90SUFFIX="$F90SUFFIX"])
 AC_MSG_NOTICE([WIDESETUP: using AR="$AR"])
 AC_MSG_NOTICE([WIDESETUP: using AR_FLAGS="$AR_FLAGS"])
-AC_MSG_NOTICE([WIDESETUP: using FCPPFLAGS="$FCPPFLAGS"])
+AC_MSG_NOTICE([WIDESETUP: using C_AS_CPP_FLAGS="$C_AS_CPP_FLAGS"])
 AC_SUBST(F90SUFFIX)
 AC_SUBST(TIMER)
 AC_SUBST(AR)
 AC_SUBST(AR_FLAGS)
-AC_SUBST(FCPPFLAGS)
+AC_SUBST(C_AS_CPP_FLAGS)
 ])
 
 ################################################
@@ -223,8 +204,17 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0 -w -tpp2"
       ;;
     *ifort*)
-      FCFLAGS="-assume bscc -O3 -tpp7"
-      UFFLAGS="-assume bscc -O0 -tpp7"
+      CPU_FLAG=""
+      case "${FCVERSION}" in
+        *10*)
+         CPU_FLAG="-xT"
+         ;;
+        *)
+         CPU_FLAG="-tpp7"
+         ;;
+      esac
+      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
       ;;
     *)

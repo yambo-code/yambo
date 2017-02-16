@@ -61,7 +61,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use timing_m,      ONLY:timing
 #endif
  !
-#include<memory.h>
+ implicit none
  type(levels)  ::en
  type(bz_samp) ::k,q
  type(QP_t)    ::qp
@@ -69,8 +69,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! WorkSpace  
  !
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
-&                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,&
-&                   live_timing_steps,iq_range(2)
+&                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps,iq_range(2)
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,iv4(4)
  integer, external::io_ELPH,QP_state_extract
@@ -79,6 +78,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping,E_random_shift
  complex(SP)      ::delta_E
  logical          ::l_WRgFsq,l_GF_from_CA
+ integer , allocatable :: q_each_cpu(:)
  real(SP), allocatable :: q_weight(:)
  ! 
  ! QP corrections on k+q states
@@ -179,8 +179,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs=QP_dSc_steps
-     Y_ALLOCATE(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
-     Y_MEM(Sc_W(i_qp)%p)
+     allocate(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
      forall (i2=1:QP_dSc_steps) Sc_W(i_qp)%p(i2)=&
 &           en%E(QP_table(i_qp,1),QP_table(i_qp,3),1)+(i2-1)*QP_dSc_delta+&
 &           cmplx(0.,QP_G_damp,SP)
@@ -218,14 +217,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  if (elph_use_q_grid) then
    nq_to_sum=q%nbz
    call k_ibz2bz(q,'i',.TRUE.)
-   Y_ALLOCATE(q_weight(nq_to_sum))
-   Y_MEM(q_weight)
+   allocate(q_weight(nq_to_sum))
+   allocate(q_each_cpu(q%nibz))
    call rim_spherical(nq_to_sum,q%ptbz,q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
    call k_ibz2bz(q,'d',.TRUE.)
  else
    nq_to_sum=elph_nDBs_used
-   Y_ALLOCATE(q_weight(nq_to_sum))
-   Y_MEM(q_weight)
+   allocate(q_weight(nq_to_sum))
    call rim_spherical(nq_to_sum,ph_qpt(:nq_to_sum,:),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
  endif
  !
@@ -275,11 +273,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        E_k_p_q%E(:,:,1)=E_k_plus_q(:,:,1)
        !
-       Y_ALLOCATE(DB_corrected(elph_nb,k%nbz,1))
-       Y_MEM(DB_corrected)
+       allocate(DB_corrected(elph_nb,k%nbz,1))
        DB_corrected=0
        call QP_apply_global_stretch((/1,elph_nb/),E_k_p_q,k,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
-       Y_FREE(DB_corrected)
+       deallocate(DB_corrected)
        !
      endif
      !
@@ -461,29 +458,51 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Dump on file gFsq coefficients 
  !
- iq_range=(/nq_to_sum,1/)
- do iq_loop=1,nq_to_sum
-   if (PAR_Q_index(iq_loop)>0) then
-     iq_range(1)=min(iq_range(1),iq_loop)
-     iq_range(2)=max(iq_range(2),iq_loop)
-   endif
- enddo
- !
  if (l_WRgFsq) then
+   !
+   iq_range=(/nq_to_sum,1/)
+   do iq_loop=1,nq_to_sum
+     if (PAR_Q_index(iq_loop)>0) then
+       iq_range(1)=min(iq_range(1),iq_loop)
+       iq_range(2)=max(iq_range(2),iq_loop)
+     endif
+   enddo
    !
    ! AndreaM, March 2015.
    !
    ! In the iq_loop loop the q=1 is read by ALL cpu's. This is in order
    ! to get the DW elements written only for q=0. This means that all cpu's has the ph_freqs_sq(1,:)
    ! 
-   ph_freqs_sq(1,:)=ph_freqs_sq(1,:)/real(PAR_COM_Q_index%n_CPU)
+   ph_freqs_sq(1,:)=ph_freqs_sq(1,:)/PAR_COM_Q_index%n_CPU
+   !
+   ! AndreaM, Feb 2017
+   !
+   ! In addition to the gamma point also other points can be read by 2 cpu's in the case of uniform grids
+   ! as the BZ points are distributed.
+   ! The only case where the Q is read only by one cpu (of the PAR_COM_Q_A2A comm) is when all the star is assigned to 
+   ! that cpu
+   !
+   if (elph_use_q_grid) then
+     q_each_cpu=0
+     do iq_ibz=2,q%nibz
+       do iq_s=1,q%nstar(iq_ibz)
+         if ( PAR_IND_Q%element_1D(sum(q%nstar(:iq_ibz-1))+iq_s) ) q_each_cpu(iq_ibz)=1
+       enddo
+     enddo
+     !
+     call PP_redux_wait(q_each_cpu,COMM=PAR_COM_Q_index%COMM)
+     !
+     do iq_ibz=2,q%nibz
+       if (q_each_cpu(iq_ibz)>0) ph_freqs_sq(iq_ibz,:)=ph_freqs_sq(iq_ibz,:)/q_each_cpu(iq_ibz)
+     enddo
+     !
+   endif
    !
    call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_index%COMM)
    !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !
    do iq_loop=iq_range(1),iq_range(2)
-     iq_mem=PAR_Q_index(iq_loop)
      if (iq_loop==iq_range(1)) then
        if (iq_loop==1) call io_control(ACTION=OP_WR,COM=REP,SEC=(/1,iq_loop+1/),ID=ID)
        if (iq_loop> 1) call io_control(ACTION=OP_WR,COM=REP,SEC=(/iq_loop+1/),ID=ID)
@@ -502,7 +521,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! CLEAN
  !
  call elph_global_free()
- Y_FREE(q_weight)
+ deallocate(q_each_cpu)
+ deallocate(q_weight)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))
  enddo

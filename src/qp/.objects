@@ -1,0 +1,3 @@
+objs = QP_driver.o QP_newton.o  QP_ppa_chosex.o  \
+       QP_descriptions.o QP_XX_Vxc.o DFT_Vxc.o \
+       QP_of.o 

@@ -1,0 +1,44 @@
+!
+! Copyright (C) 2000-2008 D. Varsano and the YAMBO team
+!              http://www.yambo-code.org
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+function bessel_F6(x,y)
+ use pars,          ONLY:SP
+ use R_lattice,     ONLY:cyl_ph_radius
+ implicit none
+ real(SP) :: x,y
+ ! 
+ ! Work Space
+ !
+ real(SP) :: arg1,arg2,bk0,bk1,bessel_F6
+ real(SP), external :: BESJ0,BESJ1,BESK0,BESK1
+ !
+ arg1=x*cyl_ph_radius
+ arg2=y*cyl_ph_radius
+ if (arg2 > 80) then
+   bk0=0.
+   bk1=0.
+ else
+   bk0=BESK0(arg2)
+   bk1=BESK1(arg2)
+ endif
+ bessel_F6=arg1*BESJ1(arg1)*bk0-arg2*BESJ0(arg1)*bk1
+ bessel_F6=bessel_F6+1
+end function

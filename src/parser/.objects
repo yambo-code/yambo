@@ -1,0 +1,3 @@
+objs =   math.o interface.o parser.o parser_exp.o symbols.o \
+         parser_lib.o mod_parser_m.o mod_itm.o Gclose.o \
+         init_convert.o ps_convert.o

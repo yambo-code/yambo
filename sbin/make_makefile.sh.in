@@ -1,0 +1,193 @@
+#! @SHELL@
+#
+# Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+#              http://www.yambo-code.org
+# 
+# This file is distributed under the terms of the GNU 
+# General Public License. You can redistribute it and/or 
+# modify it under the terms of the GNU General Public 
+# License as published by the Free Software Foundation; 
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will 
+# be useful, but WITHOUT ANY WARRANTY; without even the 
+# implied warranty of MERCHANTABILITY or FITNESS FOR A 
+# PARTICULAR PURPOSE.  See the GNU General Public License 
+# for more details.
+#
+# You should have received a copy of the GNU General Public 
+# License along with this program; if not, write to the Free 
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+os="@build_os@"
+cpp="@FCCPP@"
+cppflags="@FCPPFLAGS@"
+#
+if [ $# = 0 ] ; then
+ echo $0 "dir target objectfile mode(l/x) Dflag1 Dflag2 Dflag3 ..."
+ exit 0
+fi
+cdir=$1
+target=$2
+ofile=$3
+mode=$4
+libs=$5
+if [ ! -f $cdir/$ofile ]; then exit 0; fi
+if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
+#
+fc="\$(f90)"
+fcflags="\$(f90flags)"
+fcuflags="\$(f90uflags)"
+lib_path="\$(libpath)"
+llibs=""
+lock_file="__lock"
+for arg in $@; do
+ case $arg in
+  -D_MPI)
+   dmpi="yes" ;
+   dopts="$dopts $arg";
+   fc="\$(pf90)" ;
+   fcflags="\$(pf90flags)"
+   llmpi="\$(lmpi)"
+   ;;
+  -D_NETCDF_IO)
+   dopts="$dopts $arg";
+   ;;
+  -D_*) 
+   dopts="$dopts $arg"
+   a=`echo $arg  | sed "s/-/_/"`
+   lock_file="$lock_file$a"
+   ;;
+  -l*) 
+   llibs="$arg $llibs"
+   ;;
+ esac
+done
+#
+llibs="$lib_path $llibs"
+linclude="-I\$(includedir)"
+case $target in
+  yambo*)
+   llibs="$llibs \$(llapack) \$(lscalapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lnetcdf) -lslatec \$(lfftw) -lm $llmpi"
+    ;;
+  a2y|f2y)
+   llibs="-lint_modules $llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+    ;;
+  p2y*)
+   llibs="-lint_modules $llibs -liotk \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   linclude="$linclude -I\$(iotk_dir)"
+    ;;
+  e2y)
+   llibs="-lint_modules $llibs -letsf_io \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   linclude="$linclude -I\$(etsf_dir)"
+    ;;
+  ypp*)
+   llibs="$llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+    ;;
+esac
+
+cat config/setup >>$cdir/Makefile
+echo "fc=$fc" >> $cdir/Makefile
+echo "fcflags=$fcflags" >> $cdir/Makefile
+echo "fcuflags=$fcuflags" >> $cdir/Makefile
+echo "llibs=$llibs" >> $cdir/Makefile
+echo "linclude=$linclude" >> $cdir/Makefile
+echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
+echo "target=$target" >> $cdir/Makefile
+echo "dmpi=$dmpi" >> $cdir/Makefile
+echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
+echo "lock_file=$lock_file" >> $cdir/Makefile
+$cpp $cppflags $dopts -D_$os $cdir/$ofile >> $cdir/Makefile
+
+if [ "$mode" = "x" ] ; then 
+cat << EOF >> $cdir/Makefile
+\$(target): locks \$(objs) 
+	\$(driver)\$
+	\$(link)\$
+	\$(modmove)\$ 
+	\$(done)\$
+	\$(dircheck)\$
+	@mv \$@ \$(exec_prefix)
+EOF
+else 
+rm -f ./lib/$target
+cat << EOF >> $cdir/Makefile
+\$(target): locks \$(objs) arcreate  
+	\$(modmove)\$ 
+	\$(done)\$
+EOF
+fi
+
+cat << EOF >> $cdir/Makefile
+locks:
+	@if test ! -f \$(lock_file) && test "\$(debug)" = "no" ; then \
+	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
+	touch \$(lock_file); fi
+	@if test "\$(debug)" = "yes"; \
+	then "\$(srcdir)"/sbin/objects_debug.sh \$(lock_file); fi
+arcreate:
+	@\$(ar) \$(arflags) \$(target) \$(objs)
+	@mv \$(target) \$(libdir) ; chmod u+x \$(libdir)/\$(target)
+#
+# Functions
+#
+define driver
+ @if test -f \$(srcdir)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
+                    \$(srcdir)/driver/yambo.h > \$(srcdir)/driver/yambo_cpp.h; fi
+ @if test -f \$(srcdir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
+                   \$(srcdir)/driver/ypp.h > \$(srcdir)/driver/ypp_cpp.h; fi
+ \$(cc) \$(cflags) -c \$(srcdir)/driver/getopt.c
+ @if test "\$(dmpi)" = ""; \
+  then \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
+ @if test ! "\$(dmpi)" = ""; \
+  then \$(pcc) \$(pccflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
+ @rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/ypp_cpp.h
+endef
+define link
+ \$(fc) \$(fcflags) \$(linclude) -o \$@ driver.o getopt.o \$(objs) \$(llibs)
+endef
+define modmove
+ @test \`\$(mfiles) | wc -l\` -eq 0 || mv *.mod \$(includedir)
+endef
+define dircheck
+ @if test ! -d \$(exec_prefix); then mkdir \$(exec_prefix);fi
+endef
+define done
+ @echo "____________________________________________________"
+ @echo "               [" \$@ "] completed"
+ @echo "----------------------------------------------------"
+endef
+#
+# Sources that do not want optimization
+#
+F77_NOOPT_SRC= xerbla.o slamch.o
+#
+\$(F77_NOOPT_SRC):
+	\$(f77) -c \$(f77uflags) \$*.f
+#
+FC_NOOPT_SRC= mod_parser_m.o 
+#
+\$(FC_NOOPT_SRC):
+	@rm -f \$*\$(f90suffix)
+	\$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)
+	\$(fc) -c \$(fcuflags) \$(linclude) \$*\$(f90suffix)
+	@rm -f \$*\$(f90suffix)
+#
+# Suffixes
+#
+.SUFFIXES: .F .f90 .c .f .o .a
+#
+# Rules
+#
+.F.o:
+	@rm -f \$*\$(f90suffix)
+	\$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)
+	\$(fc) -c \$(fcflags) \$(linclude) \$*\$(f90suffix)
+	@rm -f \$*\$(f90suffix)
+.f.o:
+	\$(f77) -c \$(f77flags) \$*.f
+.c.o:
+	\$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<
+EOF

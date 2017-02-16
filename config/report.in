@@ -1,0 +1,30 @@
+
+#
+# [VER] @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@
+# 
+# [SYS] @build_os@@@build_cpu@
+# [SRC] @srcdir_path@
+# [BIN] @prefix@/bin
+# [FFT] @FFT_DESCRIPTION@
+#
+# [@DP_str@] Double precision
+# [@Red_str@] Redundant compilation  
+# [@MPI_str@] MPI 
+# [@PW_str@] PW (@PW_VER@) support
+# [@ETSF_str@] ETSF I/O support
+# [@SLK_str@] SCALAPACK
+# [@NETCDF_str@@NETCDF_LF_str@] NETCDF/Large Files 
+# [@BLAS_str@@LAPACK_str@] Built-in BLAS/LAPACK
+#
+# [ CPP ] @FCCPP@ @FCPPFLAGS@
+# [  C  ] @CC@ @CFLAGS@
+# [MPIC ] @MPICC@ @PCFLAGS@
+# [ F90 ] @F90@ @FCFLAGS@
+# [MPIF ] @PF90@ @PF90FLAGS@
+# [ F77 ] @F77@ @FFLAGS@
+# [Cmain] @FCMFLAG@
+# [NoOpt] @UFFLAGS@
+#
+# [ MAKE ] @MAKE@
+# [EDITOR] @EDITOR@
+#

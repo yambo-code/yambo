@@ -173,7 +173,6 @@ module BS_solvers
    end subroutine
    !
    subroutine BSS_free()
-     integer :: iB
      YAMBO_FREE(BSS_eh_table)
      YAMBO_FREE(BSS_dipoles)
      YAMBO_FREE(BSS_eh_E)

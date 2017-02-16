@@ -95,7 +95,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
        deallocate(PAR_COM_T_Haydock)
 #endif
        ! This is allocated in K_Transitions setup
-YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
+       YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
        !
    end select
    !

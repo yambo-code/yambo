@@ -79,7 +79,7 @@ subroutine DIPOLE_project_along_q(Xk,X,field_dir)
  !
  ! This is q       *iR in the length gauge
  !         q_versor*P  in the velocity
- !,
+ !
  call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
  DIP_projected = cZERO
  !

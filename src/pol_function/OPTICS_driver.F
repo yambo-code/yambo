@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine O_driver(Xen,Xk,q,wv,X)
+subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  ! 
  ! Optics driver
  !
@@ -124,15 +124,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Arrays to be written in the o. files
    !
-   Y_ALLOCATE(Epsilon_ii(wv%n_freqs,2))
-   Y_MEM(Epsilon_ii)
-   Y_ALLOCATE(EEL(wv%n_freqs,2))
-   Y_MEM(EEL)
-   Y_ALLOCATE(Alpha(wv%n_freqs,2))
-   Y_MEM(Alpha)
+   YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,2))
+   YAMBO_ALLOC(EEL,(wv%n_freqs,2))
+   YAMBO_ALLOC(Alpha,(wv%n_freqs,2))
    if (l_bs_fxc) then
-     Y_ALLOCATE(X_fxc(wv%n_freqs))
-     Y_MEM(X_fxc)
+     YAMBO_ALLOC(X_fxc,(wv%n_freqs))
      X_fxc=cZERO
    endif
    !
@@ -146,7 +142,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Check if EELS can be evaluated
    !
-   eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
    if (eval_alpha) eval_alpha=eval_eels
    !
@@ -207,7 +203,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    EEL       =cZERO
    Alpha     =cZERO
    !
-   call X_os(X_mat,iq,Xen,Xk,wv,X)     
+   call X_irredux(X_mat,iq,Xen,Xk,wv,X)     
    !
    ! Without LF eps
    !
@@ -218,7 +214,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    if(l_rpa_IP) then
      Epsilon_ii(:,2)=Epsilon_ii(:,1)
    else
-     call X_s(iq,X,wv,(/1,wv%n_freqs/))
+     call X_redux(iq,X,wv,(/1,wv%n_freqs/))
      !
      Epsilon_ii(:,2)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
    endif
@@ -263,9 +259,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call of_open_close(eel_file_name,'oa')
      call of_open_close(alpha_file_name,'oa')
      !
-     eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
+     eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
      if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
-     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
+     if(.not.l_rpa_IP) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
      !
      if (eval_alpha) then
        !
@@ -316,14 +312,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! CLEAN (each q)
    !
    call X_alloc('X')
-   !
-   Y_FREE(Epsilon_ii)
-   Y_FREE(EEL)
-   Y_FREE(Epsilon_ii)
-   !
+   YAMBO_FREE(Alpha)
+   YAMBO_FREE(Epsilon_ii)
+   YAMBO_FREE(X_fxc)
    call FREQUENCIES_reset(wv,"all")
-   !
-   Y_FREE(X_fxc)
    !
  enddo
  !
@@ -333,9 +325,12 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()
- if (l_bs_fxc.and.allocated(FXC)) then
-   Y_FREE(FXC)
-   Y_FREE(FXC_K_diagonal)
+ if (allocated(FXC)) then
+   YAMBO_FREE(FXC)
+ endif
+ if (l_bs_fxc) then
+   YAMBO_FREE(FXC)
+   YAMBO_FREE(FXC_K_diagonal)
  endif
  !
 end subroutine

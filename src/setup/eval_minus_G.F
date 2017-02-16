@@ -36,9 +36,8 @@ subroutine eval_minus_G()
  !
  integer  :: ig
  !
- Y_FREE(minus_G)
- Y_ALLOCATE(minus_G(ng_closed))
- Y_MEM(minus_G)
+ YAMBO_FREE(minus_G)
+ YAMBO_ALLOC(minus_G,(ng_closed))
  !
  minus_G=0
  !

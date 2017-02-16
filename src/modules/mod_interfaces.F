@@ -27,40 +27,56 @@ module interfaces
  !
  interface
    !
-   subroutine SLK_matrix_transfer( mode, M_slk, M_bse, M )
+   subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
+     use linear_algebra, ONLY:PAR_matrix
+     character(*)               :: operation
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix)           :: M_out
+     integer         , optional :: INDEX_in
+   end subroutine
+   !
+   subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
      !
-     use SLK_m, ONLY:SLK_matrix
-     use pars,  ONLY:SP
-     use BS,    ONLY:BS_block
+     use parallel_m,     ONLY:MPI_comm
+     use linear_algebra, ONLY:PAR_matrix
+     use BS,             ONLY:BS_block
+     use pars,           ONLY:SP
      !
-     character(*)     :: mode
-     type(SLK_matrix) :: M_slk
-     type(BS_block), optional :: M_bse(:)
-     complex(SP),    optional :: M(:,:)
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix), optional :: M_out
+     type(BS_block),   optional :: M_bse(:)
+     integer,          optional :: INDEX_in
+     integer,          optional :: INDEX_out
+     complex(SP),      optional :: M(:,:)
+     logical,          optional :: SND
+     logical,          optional :: RCV
+     type(MPI_comm),   optional :: COMM
+     character(*),     optional :: COMM_name
      !
    end subroutine
    !
-   subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right,E_real,&
-&                                   E_cmpl,SVD_digits,det,V_slk)
+   subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,B_slk,C,C_slk,V_left,V_right,E_real,&
+&                                   E_cmpl,SVD_digits,det)
      !
-     use SLK_m,          ONLY:SLK_matrix
+     use linear_algebra, ONLY:PAR_matrix
      use pars,           ONLY:SP
      use BS,             ONLY:BS_block
      !
      integer                    :: idriver
      integer,          optional :: lib_in
      complex(SP),      optional :: M(:,:)
-     type(SLK_matrix), optional :: M_slk
+     type(PAR_matrix), optional :: M_slk
      type(BS_block),   optional :: M_bse(:)
      complex(SP),      optional :: B(:,:)
+     type(PAR_matrix), optional :: B_slk
      complex(SP),      optional :: C(:,:)
+     type(PAR_matrix), optional :: C_slk
      complex(SP),      optional :: V_left(:,:)
      complex(SP),      optional :: V_right(:,:)
      real(SP),         optional :: E_real(:)
      complex(SP),      optional :: E_cmpl(:)
      integer,          optional :: SVD_digits 
      complex(SP),      optional :: det
-     type(SLK_matrix), optional :: V_slk
      !
    end subroutine
    !
@@ -181,18 +197,20 @@ module interfaces
      real(SP),    pointer     :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&
-&                                              COMM_index_4,COMM_A2A_1,COMM_A2A_2,COMM_A2A_3)
+   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
+&                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
+&                                              COMM_A2A_3,COMM_A2A_4)
      use parallel_m,    ONLY:MPI_comm
      integer                 :: n_elements
-     character(*)            :: ROLE(:)
      type(MPI_comm)          :: COMM_index_1
      type(MPI_comm),optional :: COMM_index_2
      type(MPI_comm),optional :: COMM_index_3
      type(MPI_comm),optional :: COMM_index_4
+     type(MPI_comm),optional :: COMM_index_5
      type(MPI_comm),optional :: COMM_A2A_1
      type(MPI_comm),optional :: COMM_A2A_2
      type(MPI_comm),optional :: COMM_A2A_3
+     type(MPI_comm),optional :: COMM_A2A_4
    end subroutine
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)

@@ -26,17 +26,13 @@ subroutine bz_interp_setup(Xk)
  ! Code inspired by BolzTraP
  ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
  !
- use pars,           ONLY:SP,IP,pi,zero_dfl
+ use pars,           ONLY:SP,pi
  use interpolate,    ONLY:nshells,lattice_vectors,lpfac,int_sop,nshells,make_star,metric,int_sop
  use D_lattice,      ONLY:nsym,DL_vol,a,dl_sop
  use R_lattice,      ONLY:bz_samp,b
- use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:sort
  use matrix_operate, ONLY:m3inv
  use com,            ONLY:msg
-#if defined _RT
- use real_time,      ONLY:DbGd_BZ_coo
-#endif
  !
  implicit none
  !
@@ -79,8 +75,6 @@ subroutine bz_interp_setup(Xk)
  nR_max=product(2*R_max+1)
  !
  allocate(all_vec(3,nR_max),all_vec_mod(nR_max),indx(nR_max),tmp_vec(3,nR_max))
- call mem_est("all_vec tmp_vec",(/size(all_vec),size(tmp_vec)/),(/SP,SP/))
- call mem_est("all_vec_mod indx",(/size(all_vec_mod),size(indx)/),(/SP,IP/))
  !
  all_vec    =0._SP
  all_vec_mod=0._SP
@@ -107,12 +101,10 @@ subroutine bz_interp_setup(Xk)
  tmp_vec(:,1:n_vec)=all_vec(:,indx(1:n_vec))
  all_vec(:,1:n_vec)=tmp_vec(:,1:n_vec)
  deallocate(tmp_vec)
- call mem_est("tmp_vec")
  !
  ! Find R sheels
  !
  allocate(lattice_vectors(3,n_vec),lattice_vec_mod(n_vec))
- call mem_est("lattice_vectors lattice_vec_mod",(/3*n_vec,n_vec/),(/SP,SP/))
  !
  istart=1
  iend=1
@@ -162,15 +154,12 @@ subroutine bz_interp_setup(Xk)
  all_vec(1:3,1:nshells)=lattice_vectors(1:3,1:nshells)
  !
  deallocate(lattice_vectors,lattice_vec_mod)
- call mem_est("lattice_vectors lattice_vec_mod")
  !
  allocate(lattice_vectors(3,nshells))
- call mem_est("lattice_vectors",(/3*nshells/),(/SP/))
  !
  lattice_vectors(1:3,1:nshells)=all_vec(1:3,1:nshells)
  !
  deallocate(all_vec,all_vec_mod,indx)
- call mem_est("all_vec all_vec_mod indx")
  !
 end subroutine bz_interp_setup
 

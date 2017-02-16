@@ -144,7 +144,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  !
  call live_timing()
  !
- Y_FREE(x_cc)
+ YAMBO_FREE(x_cc)
  !
  call WF_free(WF)
  !

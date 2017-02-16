@@ -186,10 +186,8 @@ integer function io_X(X,Xw,ID)
    ! Xw%p
    !
    if (read_is_on(ID)) then
-     Y_FREE(Xw%p)
-     Y_ALLOCATE(Xw%p(Xw%n_freqs))
-     Y_MEM(Xw%p)
-     Xw%p(:)=cmplx(W_disk(:,1),W_disk(:,2))
+     YAMBO_FREE(Xw%p)
+     YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    endif
    !
    ch="FREQ_sec_iq"//trim(intc(iq))
@@ -203,7 +201,7 @@ integer function io_X(X,Xw,ID)
    if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
    !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
-   call io_bulk(ID,C3=X_mat,IPOS=(/1,1,1,1/))
+   call io_bulk(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
      allocate(X_on_disk(X%ng,X%ng))

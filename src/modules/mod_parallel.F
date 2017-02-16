@@ -99,7 +99,6 @@ module parallel_m
    integer  :: COMM      
    integer  :: CPU_id    
    integer  :: my_CHAIN    ! equivalent to CPU_id+1 in INTER_CHAIN
-   integer  :: chain_name  ! INTRA, INTER, CHILD
    integer  :: chain_order ! this corresponds to the order in the local hierarchy
    integer  :: n_CPU     
  end type MPI_comm
@@ -124,16 +123,6 @@ module parallel_m
    integer              :: nCPU_lin_algebra_INV   =1
    integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
- !
- !      if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
- !      if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
- !      if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
- !      if (i_s==4) possible_fields='(k,eh,t)'  ! BS
- !      if (i_s==5) possible_fields='(q,qp,b)'  ! SE
- !      if (i_s==6) possible_fields='(k,b,q,qp)'! RT
-#if defined _SCALAPACK
- !      if (i_s==7) possible_fields='  '        ! SLK test
-#endif
  !
  integer,parameter   :: n_CPU_str_max=20
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
@@ -273,6 +262,9 @@ module parallel_m
  ! ... Optical oscillators
  integer            :: PAR_IND_DIPk_ID
  !
+ ! ... Freqs
+ integer            :: PAR_IND_FREQ_ID
+ !
  ! Specific MPI COMMUNICATORS...
  !==============================
  ! PAR_COM_*_INDEX is the interchain comunicator
@@ -289,8 +281,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
  !
  ! ... RL vectors
- integer             :: PAR_nRL
- integer,allocatable :: PAR_RL_index(:)
+ type(MPI_comm),SAVE :: PAR_COM_RL_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_RL_A2A
  !
  ! ... QP
  type(MPI_comm),SAVE :: PAR_COM_QP_INDEX
@@ -319,6 +311,8 @@ module parallel_m
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
+ type(MPI_comm),SAVE :: PAR_COM_X_WORLD
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
  !
@@ -345,6 +339,8 @@ module parallel_m
  !
  ! ... and derived variables
  !==========================
+ integer            :: PAR_nRL
+ integer,allocatable:: PAR_RL_index(:)
  integer            :: PAR_nPlasma
  integer,allocatable:: PAR_PLASMA_index(:)
  integer            :: PAR_nQP
@@ -368,6 +364,8 @@ module parallel_m
  integer,allocatable:: PAR_BS_T_grps_index(:)
  integer            :: PAR_nG_bands 
  integer,allocatable:: PAR_G_bands_index(:)
+ integer            :: PAR_n_freqs 
+ integer,allocatable:: PAR_FREQS_index(:)
  !
  ! WorkSpace
  !
@@ -393,6 +391,31 @@ module parallel_m
  end interface PP_send_and_receive
  !
  contains
+   !
+   subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
+     !
+     integer           ::N_elements,n_V_ind,V_ind(N_elements),i_p
+     type(PP_indexes)  ::PAR_ind
+     !
+     V_ind  =0
+     n_V_ind=0
+     if (N_elements==size(PAR_IND%element_1D)) then
+       do i_p=1,N_elements
+         if (PAR_IND%element_1D(i_p)) then
+           n_V_ind=n_V_ind+1
+           V_ind(i_p)=n_V_ind
+         endif
+       enddo
+     else 
+       do i_p=1,size(PAR_IND%element_1D)
+         if (PAR_IND%element_1D(i_p)) then
+           n_V_ind=n_V_ind+1
+           V_ind(n_V_ind)=i_p
+         endif
+       enddo
+     endif
+     !
+   end subroutine
    !
    subroutine CREATE_the_COMM(WORLD, COMM, ID )
      integer       :: WORLD,ID,i_err
@@ -480,37 +503,33 @@ module parallel_m
      integer :: dim_
      if (allocated(IND_in%n_of_elements)) then
        dim_=size(IND_in%n_of_elements)
-       Y_ALLOCATE(IND_out%n_of_elements(dim_))
-       Y_MEM(IND_out%n_of_elements)
+       YAMBO_ALLOC(IND_out%n_of_elements,(dim_))
        IND_out%n_of_elements=IND_in%n_of_elements
      endif
      if (allocated(IND_in%element_1D)) then
        dim_=size(IND_in%element_1D)
-       Y_ALLOCATE(IND_out%element_1D(dim_))
-       Y_MEM(IND_out%element_1D)
+       YAMBO_ALLOC(IND_out%element_1D,(dim_))
        IND_out%element_1D=IND_in%element_1D
      endif
      if (allocated(IND_in%weight_1D)) then
        dim_=size(IND_in%weight_1D)
-       Y_ALLOCATE(IND_out%weight_1D(dim_))
-       Y_MEM(IND_out%weight_1D)
+       YAMBO_ALLOC(IND_out%weight_1D,(dim_))
        IND_out%weight_1D=IND_in%weight_1D
      endif
      if (allocated(IND_in%first_of_1D)) then
        dim_=size(IND_in%first_of_1D)
-       Y_ALLOCATE(IND_out%first_of_1D(dim_))
-       Y_MEM(IND_out%first_of_1D)
+       YAMBO_ALLOC(IND_out%first_of_1D,(dim_))
        IND_out%first_of_1D=IND_in%first_of_1D
      endif
    end subroutine
    !
    subroutine PP_indexes_reset(px)
      type(PP_indexes)::px
-     Y_FREE(px%element_1D)
-     Y_FREE(px%element_2D)
-     Y_FREE(px%weight_1D)
-     Y_FREE(px%n_of_elements)
-     Y_FREE(px%first_of_1D)
+     YAMBO_FREE(px%element_1D)
+     YAMBO_FREE(px%element_2D)
+     YAMBO_FREE(px%weight_1D)
+     YAMBO_FREE(px%n_of_elements)
+     YAMBO_FREE(px%first_of_1D)
    end subroutine
    !
    subroutine PARALLEL_wait(COMM)

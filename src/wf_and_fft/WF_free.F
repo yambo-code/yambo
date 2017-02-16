@@ -35,9 +35,9 @@ subroutine WF_free(WF)
  !
  if (.not.allocated(WF%c)) return
  !
- Y_FREE(WF%c)
- Y_FREE(WF%state)
- Y_FREE(WF%index)
+ YAMBO_FREE(WF%c)
+ YAMBO_FREE(WF%state)
+ YAMBO_FREE(WF%index)
  !
  if (WF%space=="R") then
    fft_size=0
@@ -45,9 +45,9 @@ subroutine WF_free(WF)
    fft_dim_loaded=0
    fft_multiplier=1
    if (allocated(fft_g_table)) then
-     Y_FREE(fft_g_table)
-     Y_FREE(fft_rot_r)
-     Y_FREE(fft_rot_r_inv)
+     YAMBO_FREE(fft_g_table)
+     YAMBO_FREE(fft_rot_r)
+     YAMBO_FREE(fft_rot_r_inv)
    endif
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)

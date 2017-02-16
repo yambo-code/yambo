@@ -78,11 +78,11 @@ module collision_el
        init_only_=INIT_ONLY
      endif
      if (.not.init_only_) then
-       Y_FREE(ggw%gamp)
-       Y_FREE(ggw%rhotw)
-       Y_FREE(ggw%rho_tw_rs)
-       Y_FREE(ggw%WF_symm_i)
-       Y_FREE(ggw%WF_symm_o)
+       YAMBO_FREE(ggw%gamp)
+       YAMBO_FREE(ggw%rhotw)
+       YAMBO_FREE(ggw%rho_tw_rs)
+       YAMBO_FREE(ggw%WF_symm_i)
+       YAMBO_FREE(ggw%WF_symm_o)
      endif
    end subroutine
    !
@@ -98,26 +98,20 @@ module collision_el
      if (present(TITLE)) then
        ggw%name=TITLE
      endif
-     Y_ALLOCATE(ggw%rho_tw_rs(fft_size))
-     Y_MEM(ggw%rho_tw_rs)
-     Y_ALLOCATE(ggw%WF_symm_i(fft_size,n_spinor))
-     Y_MEM(ggw%WF_symm_i)
-     Y_ALLOCATE(ggw%WF_symm_o(fft_size,n_spinor))
-     Y_MEM(ggw%WF_symm_o)
+     YAMBO_ALLOC(ggw%rho_tw_rs,(fft_size))
+     YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
+     YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
      !
      if (present(NG)) then
        if (present(GRADIENT)) then
-         Y_ALLOCATE(ggw%rhotw(3*NG))
-         Y_MEM(ggw%rhotw)
+         YAMBO_ALLOC(ggw%rhotw,(3*NG))
        else
-         Y_ALLOCATE(ggw%rhotw(NG))
-         Y_MEM(ggw%rhotw)
+         YAMBO_ALLOC(ggw%rhotw,(NG))
        endif
        ggw%ngrho=NG
      endif
      if (present(NG_GAMP)) then
-       Y_ALLOCATE(ggw%gamp(NG_GAMP(1),NG_GAMP(2)))
-       Y_MEM(ggw%gamp)
+       YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
      endif
      !
    end subroutine

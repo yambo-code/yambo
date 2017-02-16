@@ -95,12 +95,10 @@ module D_lattice
      integer  :: i1,i2,i3
      real(SP) :: m(3,3)
      !
-     Y_FREE(sop_tab)
-     Y_FREE(sop_inv)
-     Y_ALLOCATE(sop_tab(nsym,nsym))
-     Y_MEM(sop_tab)
-     Y_ALLOCATE(sop_inv(nsym))
-     Y_MEM(sop_inv)
+     YAMBO_FREE(sop_tab)
+     YAMBO_FREE(sop_inv)
+     YAMBO_ALLOC(sop_tab,(nsym,nsym))
+     YAMBO_ALLOC(sop_inv,(nsym))
      sop_tab=0
      sop_inv=0
      do i1=1,nsym

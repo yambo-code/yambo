@@ -363,7 +363,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Q_Shift_Order=1
  n_X_descs=0
  l_X_terminator=.FALSE.
- X_terminator_E=1.5_SP
+ X_terminator_E=40._SP/HA2EV
  !
  !QPm
  !

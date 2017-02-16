@@ -57,8 +57,7 @@ module PHOTOLUM
      !
      if (allocated(PL))  return
      !
-     Y_ALLOCATE(PL(BSS_n_freqs,3))!2(int)3(nonint)
-     Y_MEM(PL)
+     YAMBO_ALLOCATE(PL,(BSS_n_freqs,3))!2(int)3(nonint)
      PL = rZERO
      do ic=1,3
        PL_weights(ic) = PL_weights(ic)/(sqrt(PL_weights(ic)))
@@ -66,32 +65,30 @@ module PHOTOLUM
      !
    end subroutine
    !
-   subroutine BS_PL_alloc( )
+   subroutine BSS_PL_alloc( )
      !
      use pars,       ONLY:cZERO,rZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
      !
      if (.not.l_photolum) return
      !
-     Y_ALLOCATE(BSS_dipoles_PL(BS_H_dim,3))
-     Y_MEM(BSS_dipoles_PL)
+     YAMBO_ALLOC(BSS_dipoles_PL,(BS_H_dim,3))
      BSS_dipoles_PL = cZERO
      !
-     Y_ALLOCATE(BSS_PL_f(2,BS_K_dim))
-     Y_MEM(BSS_PL_f)
+     YAMBO_ALLOC(BSS_PL_f,(2,BS_K_dim))
      BSS_PL_f = rZERO
      !
    end subroutine
    !
-   subroutine BS_PL_free( )
+   subroutine BSS_PL_free( )
      !
      if (.not.l_photolum) return
      !
      if (allocated(BSS_dipoles_PL)) then
-       Y_FREE(BSS_dipoles_PL)
+       YAMBO_FREE(BSS_dipoles_PL)
      endif
      if (allocated(BSS_PL_f)) then
-       Y_FREE(BSS_PL_f)
+       YAMBO_FREE(BSS_PL_f)
      endif
      !
    end subroutine

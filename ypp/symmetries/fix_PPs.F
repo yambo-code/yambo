@@ -25,7 +25,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,core_io_path,more_io_path
- use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,OP_RD_CL,RD_CL,RD,DUMP
  use electrons,           ONLY:n_spin,n_sp_pol
@@ -38,7 +37,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nXkibz,ng_vec
  use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
- use YPP_symm
+ use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
+&                              wf_nc_k_new,wf_igk_new,&
+&                              wf_nc_k_new,wf_ncx_new,wf_ncx_save
  !
  implicit none
  !
@@ -127,7 +128,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    allocate(pp_kb_store(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
    allocate(pp_kbd_store(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
    allocate(pp_kbs_store(n_atomic_species,pp_n_l_times_proj_max))
-   call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
    !
    do ik=1,k_save%nibz
      !
@@ -156,7 +156,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    allocate(pp_kb_store(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1,k_save%nibz))
    allocate(pp_kbd_store(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1,k_save%nibz))
    allocate(pp_kbs_store(n_atomic_species,pp_n_l_times_proj_max))
-   call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
    !
    do ik=1,k_save%nibz
      !
@@ -178,7 +177,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  if(io_Vnl_err==0) then
    allocate( Vnl_store(3,E%nb,E%nbm,k_save%nibz,n_sp_pol) )
    Vnl_store=(0._SP,0._SP)
-   call mem_est("Vnl_store",(/size(Vnl_store)/),elements_kind=(/SP/))
    !
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
    io_Vnl_err=io_Vnl(X_Vnl,E,ID)
@@ -258,7 +256,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      enddo
      !
      deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
-     call mem_est("pp_kb_store pp_kbd_store")
      !
      call PP_free()
      !
@@ -330,7 +327,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      enddo
      !
      deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
-     call mem_est("pp_kb_store pp_kbd_store")
      !
      call PP_free()
      !
@@ -367,7 +363,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      io_Vnl_err=io_Vnl(X_Vnl,E,ID)
      !
      deallocate(Vnl,Vnl_store)
-     call mem_est("Vnl Vnl_store")
      !
      if(n_steps>0) call live_timing()
      !
@@ -399,7 +394,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      enddo
      !
      deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
-     call mem_est("pp_kb_store pp_kbd_store")
      call PP_free()
      !
    endif
@@ -426,7 +420,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      enddo
      !
      deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
-     call mem_est("pp_kb_store pp_kbd_store")
      call PP_free()
      !
    endif
@@ -443,7 +436,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      io_Vnl_err=io_Vnl(X_Vnl,E,ID)
      !
      deallocate(Vnl_store,Vnl)
-     call mem_est("Vnl_store Vnl") 
      !
    endif
    !

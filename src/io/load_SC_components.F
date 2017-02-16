@@ -86,8 +86,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
      io_err=io_SC_components('V',E_dummy,ID)
      if (io_err==0.and.ik>0.and.i_sp_pol>0) then
        if (ik==1.and.i_sp_pol==1) then
-         Y_ALLOCATE(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
-         Y_MEM(H_nl_sc)
+         YAMBO_ALLOC(H_nl_sc,(SC_bands(2),SC_bands(2),n_sp_pol))
        endif
        call io_control(ACTION=RD_CL,SEC=(/ip+1+(ip_sp_pol-1)*nkibz/),ID=ID)
        io_err=io_SC_components('V',E_dummy,ID)
@@ -96,8 +95,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
    case("WF")
      io_err=io_SC_components('WF',E_dummy,ID)
      if (io_err==0) then
-       Y_ALLOCATE(SC_R(SC_bands(2),SC_bands(2),nkibz,n_sp_pol))
-       Y_MEM(SC_R)
+       YAMBO_ALLOC(SC_R,(SC_bands(2),SC_bands(2),nkibz,n_sp_pol))
        do ip_sp_pol=1,n_sp_pol
          do ip=1,nkibz
            call io_control(ACTION=RD_CL_IF_END,SEC=(/ip+1+(ip_sp_pol-1)*nkibz/),ID=ID)
@@ -108,13 +106,13 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
      !
    case("Hsc_clean")
      if (allocated(H_nl_sc)) then
-       Y_FREE(H_nl_sc)
+       YAMBO_FREE(H_nl_sc)
        return
      endif
      !
    case("WF_clean")
      if (allocated(SC_R)) then
-       Y_FREE(SC_R)
+       YAMBO_FREE(SC_R)
        return
      endif
      ! 

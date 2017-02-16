@@ -253,8 +253,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        endif
        !
        if (use_GreenF_Zoom) then
-         Y_ALLOCATE(QP_G_zoom_er(QP_n_states,2))
-         Y_MEM(QP_G_zoom_er)
+         YAMBO_ALLOC(QP_G_zoom_er,(QP_n_states,2))
        else
          QP_G_Zoom_treshold=0._SP
        endif
@@ -351,16 +350,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    subroutine local_alloc()
      !
-     Y_ALLOCATE(qp%Z(qp%n_states))
-     Y_MEM(qp%Z)
-     Y_ALLOCATE(qp%E(qp%n_states))
-     Y_MEM(qp%E)
-     Y_ALLOCATE(qp%E_bare(qp%n_states))
-     Y_MEM(qp%E_bare)
-     Y_ALLOCATE(qp%k(qp%nk,3))
-     Y_MEM(qp%k)
-     Y_ALLOCATE(qp%table(qp%n_states,3+n_sp_pol-1))
-     Y_MEM(qp%table)
+     YAMBO_ALLOC(qp%Z,(qp%n_states))
+     YAMBO_ALLOC(qp%E,(qp%n_states))
+     YAMBO_ALLOC(qp%E_bare,(qp%n_states))
+     YAMBO_ALLOC(qp%k,(qp%nk,3))
+     YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
      !
      qp%table=QP_table
      qp%E=cZERO
@@ -378,59 +372,50 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      !
      if (trim(QP_solver)/='g')        QP_Sc_steps=QP_dSc_steps
      !
-     Y_ALLOCATE(QP_Sc(QP_n_states,QP_Sc_steps))
-     Y_MEM(QP_Sc)
+     YAMBO_ALLOC(QP_Sc,(QP_n_states,QP_Sc_steps))
      !
 #if defined _ELPH
      if (l_elph_corr) then
-       Y_ALLOCATE(QP_OMS_Fan(QP_n_states))
-       Y_MEM(QP_OMS_Fan)
-       Y_ALLOCATE(QP_DW(QP_n_states))
-       Y_MEM(QP_DW)
+       YAMBO_ALLOC(QP_OMS_Fan,(QP_n_states))
+       YAMBO_ALLOC(QP_DW,(QP_n_states))
      endif
 #endif
      !
      if (trim(QP_solver)=='g') then
-       Y_ALLOCATE(qp%GreenF(QP_n_states,QP_Sc_steps))
-       Y_MEM(qp%GreenF)
-       Y_ALLOCATE(qp%S_total(QP_n_states,QP_Sc_steps))
-       Y_MEM(qp%S_total)
-       Y_ALLOCATE(qp%GreenF_W(QP_n_states,QP_Sc_steps))
-       Y_MEM(qp%GreenF_W)
+       YAMBO_ALLOC(qp%GreenF,(QP_n_states,QP_Sc_steps))
+       YAMBO_ALLOC(qp%S_total,(QP_n_states,QP_Sc_steps))
+       YAMBO_ALLOC(qp%GreenF_W,(QP_n_states,QP_Sc_steps))
        qp%GreenF_n_steps=QP_Sc_steps
-       Y_ALLOCATE(QP_G_amplitude_integral(QP_n_states))
-       Y_MEM(QP_G_amplitude_integral)
-       Y_ALLOCATE(QP_G_info(QP_n_states,3,2))
-       Y_MEM(QP_G_info)
+       YAMBO_ALLOC(QP_G_amplitude_integral,(QP_n_states))
+       YAMBO_ALLOC(QP_G_info,(QP_n_states,3,2))
      else if (.not.l_life) then
-       Y_ALLOCATE(QP_dSc(qp%n_states,QP_dSc_steps-1))
-       Y_MEM(QP_dSc)
+       YAMBO_ALLOC(QP_dSc,(qp%n_states,QP_dSc_steps-1))
      endif
      !
    end subroutine
    !
    subroutine local_free()
-     Y_FREE(qp%Z)
-     Y_FREE(qp%E)
-     Y_FREE(qp%E_bare)
-     Y_FREE(qp%k)
-     Y_FREE(qp%table)
-     Y_FREE(QP_table)
-     Y_FREE(QP_state)
+     YAMBO_FREE(qp%Z)
+     YAMBO_FREE(qp%E)
+     YAMBO_FREE(qp%E_bare)
+     YAMBO_FREE(qp%k)
+     YAMBO_FREE(qp%table)
+     YAMBO_FREE(QP_table)
+     YAMBO_FREE(QP_state)
 #if defined _ELPH
-     Y_FREE(QP_DW)
-     Y_FREE(QP_OMS_Fan)
+     YAMBO_FREE(QP_DW)
+     YAMBO_FREE(QP_OMS_Fan)
 #endif
-     Y_FREE(QP_Sc)
-     Y_FREE(QP_dSc)
-     Y_FREE(QP_Vnl_xc)
-     Y_FREE(QP_Vxc)
-     Y_FREE(qp%GreenF)
-     Y_FREE(qp%GreenF_W)
-     Y_FREE(qp%S_total)
-     Y_FREE(QP_G_info)
-     Y_FREE(QP_G_amplitude_integral)
-     Y_FREE(QP_G_zoom_er)
+     YAMBO_FREE(QP_Sc)
+     YAMBO_FREE(QP_dSc)
+     YAMBO_FREE(QP_Vnl_xc)
+     YAMBO_FREE(QP_Vxc)
+     YAMBO_FREE(qp%GreenF)
+     YAMBO_FREE(qp%GreenF_W)
+     YAMBO_FREE(qp%S_total)
+     YAMBO_FREE(QP_G_info)
+     YAMBO_FREE(QP_G_amplitude_integral)
+     YAMBO_FREE(QP_G_zoom_er)
    end subroutine
    !
 end subroutine

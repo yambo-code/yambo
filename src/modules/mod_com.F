@@ -351,7 +351,8 @@ module com
      ch=name
      do while (file_exists(ch))
        i1=i1+1
-       write (ch,'(2a,i2.2)') trim(name),'_',i1
+       if (i1< 99) write (ch,'(2a,i2.2)') trim(name),'_',i1
+       if (i1> 99) write (ch,'(2a,i3.3)') trim(name),'_',i1
      enddo
      name=ch
    end subroutine

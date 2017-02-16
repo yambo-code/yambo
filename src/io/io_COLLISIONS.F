@@ -31,7 +31,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
  use xc_functionals,ONLY:GS_xc_kind
- use global_XC,     ONLY:EXT_NONE,QP_SE_NONE,QP_SE_GW_NEQ,QP_SE_GW_QED,&
+ use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED,&
 &                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
@@ -54,7 +54,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  character(schlen)     :: db_name
  integer               :: V_kind_disk,i_desc,i_coll_loop,io_err,i_coll,SIZE_
- character(lchlen)     :: V_kind_string,X_string
+ character(lchlen)     :: X_string
  !
  ! Collision element...
  !
@@ -195,8 +195,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    ! States
    !
    if (read_is_on(ID).and..not.allocated(COLL%state)) then
-     Y_ALLOCATE(COLL%state(COLL%N,4))
-     Y_MEM(COLL%state)
+     YAMBO_ALLOC(COLL%state,(COLL%N,4))
    endif
    call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/COLL%N,4/))
    call io_bulk(ID,I2=COLL%state)
@@ -257,8 +256,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      call io_bulk(ID,R1=COLL_element%v_r)
    else
      ! Complex collisions
-     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL_element%N,2/))
-     call io_bulk(ID,C2=COLL_element%v_c)
+     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/2,COLL_element%N/))
+     call io_bulk(ID,C1=COLL_element%v_c)
    endif
    !
  endif

@@ -27,7 +27,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
+&                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
  use electrons,      ONLY:levels
@@ -145,8 +145,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
 #endif
  !
- ! Kernel Loading 
- !================
+ ! Kernel and/or BSS components loading
+ !======================================
  call K_components_folded_in_serial_arrays(iq)
  !
  if (BLACS_structure_in_use) then

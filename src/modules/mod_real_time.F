@@ -357,22 +357,14 @@ module real_time
    !
    subroutine RT_obj_alloc(RT)
      type(RT_t)::RT
-     Y_ALLOCATE(RT%kpt(RT%nk,3))
-     Y_MEM(RT%kpt)
-     Y_ALLOCATE(RT%k_weight(RT%nk))
-     Y_MEM(RT%k_weight)
-     Y_ALLOCATE(RT%table(RT%nstates,4))
-     Y_MEM(RT%table)
-     Y_ALLOCATE(RT%E_bare(RT%nstates))
-     Y_MEM(RT%E_bare)
-     Y_ALLOCATE(RT%f_bare(RT%nstates))
-     Y_MEM(RT%f_bare)
-     Y_ALLOCATE(RT%dE_Hartree(RT%nstates))
-     Y_MEM(RT%dE_Hartree)
-     Y_ALLOCATE(RT%dE_V_xc(RT%nstates))
-     Y_MEM(RT%dE_V_xc)
-     Y_ALLOCATE(RT%dE_Self_Energy(RT%nstates))
-     Y_MEM(RT%dE_Self_Energy)
+     YAMBO_ALLOC(RT%kpt,(RT%nk,3))
+     YAMBO_ALLOC(RT%k_weight,(RT%nk))
+     YAMBO_ALLOC(RT%table,(RT%nstates,4))
+     YAMBO_ALLOC(RT%E_bare,(RT%nstates))
+     YAMBO_ALLOC(RT%f_bare,(RT%nstates))
+     YAMBO_ALLOC(RT%dE_Hartree,(RT%nstates))
+     YAMBO_ALLOC(RT%dE_V_xc,(RT%nstates))
+     YAMBO_ALLOC(RT%dE_Self_Energy,(RT%nstates))
      RT%table         =0
      RT%E_bare        =0._SP
      RT%f_bare        =0._SP
@@ -380,50 +372,37 @@ module real_time
      RT%dE_V_xc       =0._SP
      RT%dE_Self_Energy=0._SP
      if (l_elel_scatt) then
-       Y_ALLOCATE(RT%dGAMMA_E_E_Hole(RT%nstates))
-       Y_MEM(RT%dGAMMA_E_E_Hole)
-       Y_ALLOCATE(RT%dGAMMA_E_E_Electron(RT%nstates))
-       Y_MEM(RT%dGAMMA_E_E_Electron)
+       YAMBO_ALLOC(RT%dGAMMA_E_E_Hole,(RT%nstates))
+       YAMBO_ALLOC(RT%dGAMMA_E_E_Electron,(RT%nstates))
        RT%dGAMMA_E_E_Hole    =0._SP
        RT%dGAMMA_E_E_Electron=0._SP
      endif
      if (l_elph_scatt) then
-       Y_ALLOCATE(RT%dGAMMA_E_P_Hole(RT%nstates))
-       Y_MEM(RT%dGAMMA_E_P_Hole)
-       Y_ALLOCATE(RT%dGAMMA_E_P_Electron(RT%nstates))
-       Y_MEM(RT%dGAMMA_E_P_Electron)
-       Y_ALLOCATE(RT%dGAMMA_E_P_Ho_abs(RT%nstates))
-       Y_MEM(RT%dGAMMA_E_P_Ho_abs)
-       Y_ALLOCATE(RT%dGAMMA_E_P_El_abs(RT%nstates))
-       Y_MEM(RT%dGAMMA_E_P_El_abs)
+       YAMBO_ALLOC(RT%dGAMMA_E_P_Hole,(RT%nstates))
+       YAMBO_ALLOC(RT%dGAMMA_E_P_Electron,(RT%nstates))
+       YAMBO_ALLOC(RT%dGAMMA_E_P_Ho_abs,(RT%nstates))
+       YAMBO_ALLOC(RT%dGAMMA_E_P_El_abs,(RT%nstates))
        RT%dGAMMA_E_P_Hole    =0._SP
        RT%dGAMMA_E_P_Electron=0._SP
        RT%dGAMMA_E_P_Ho_abs  =0._SP
        RT%dGAMMA_E_P_El_abs  =0._SP
      endif
      if (l_elphoton_scatt) then
-       Y_ALLOCATE(RT%dGAMMA_E_PHOT_Hole(RT%nstates))
-       Y_MEM(RT%dGAMMA_E_PHOT_Hole)
-       Y_ALLOCATE(RT%dGAMMA_E_PHOT_Electron(RT%nstates))
-       Y_MEM(RT%dGAMMA_E_PHOT_Electron)
+       YAMBO_ALLOC(RT%dGAMMA_E_PHOT_Hole,(RT%nstates))
+       YAMBO_ALLOC(RT%dGAMMA_E_PHOT_Electron,(RT%nstates))
        RT%dGAMMA_E_PHOT_Hole    =0._SP
        RT%dGAMMA_E_PHOT_Electron=0._SP
      endif
      if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
-       Y_ALLOCATE(RT%GAMMA_bare(RT%nstates,8))
-       Y_MEM(RT%GAMMA_bare)
-       Y_ALLOCATE(RT%delta_GAMMA(RT%nstates))
-       Y_MEM(RT%delta_GAMMA)
-       Y_ALLOCATE(RT%NEQ_Lifetime(RT%nstates))
-       Y_MEM(RT%NEQ_Lifetime)
+       YAMBO_ALLOC(RT%GAMMA_bare,(RT%nstates,8))
+       YAMBO_ALLOC(RT%delta_GAMMA,(RT%nstates))
+       YAMBO_ALLOC(RT%NEQ_Lifetime,(RT%nstates))
        RT%GAMMA_bare  =0._SP
        RT%delta_GAMMA =0._SP
        RT%NEQ_Lifetime=0._SP
      endif
-     Y_ALLOCATE(RT%delta_E(RT%nstates))
-     Y_MEM(RT%delta_E)
-     Y_ALLOCATE(RT%delta_f(RT%nstates))
-     Y_MEM(RT%delta_f)
+     YAMBO_ALLOC(RT%delta_E,(RT%nstates))
+     YAMBO_ALLOC(RT%delta_f,(RT%nstates))
      RT%delta_f=0._SP
      RT%delta_E=0._SP
    end subroutine
@@ -433,34 +412,33 @@ module real_time
      RT%nk=0
      RT%nb=0
      RT%nstates=0
-     Y_FREE(RT%dE_Hartree)
-     Y_FREE(RT%dE_V_xc)
-     Y_FREE(RT%dE_Self_Energy)
-     Y_FREE(RT%dGAMMA_E_E_Hole)
-     Y_FREE(RT%dGAMMA_E_E_Electron)
-     Y_FREE(RT%dGAMMA_E_P_Hole)
-     Y_FREE(RT%dGAMMA_E_P_Electron)
-     Y_FREE(RT%dGAMMA_E_P_Ho_abs)
-     Y_FREE(RT%dGAMMA_E_P_El_abs)
-     Y_FREE(RT%dGAMMA_E_PHOT_Hole)
-     Y_FREE(RT%dGAMMA_E_PHOT_Electron)
-     Y_FREE(RT%E_bare)
-     Y_FREE(RT%f_bare)
-     Y_FREE(RT%GAMMA_bare)
-     Y_FREE(RT%delta_E)
-     Y_FREE(RT%delta_f)
-     Y_FREE(RT%delta_GAMMA)
-     Y_FREE(RT%NEQ_Lifetime)
-     Y_FREE(RT%kpt)
-     Y_FREE(RT%k_weight)
-     Y_FREE(RT%table)
+     YAMBO_FREE(RT%dE_Hartree)
+     YAMBO_FREE(RT%dE_V_xc)
+     YAMBO_FREE(RT%dE_Self_Energy)
+     YAMBO_FREE(RT%dGAMMA_E_E_Hole)
+     YAMBO_FREE(RT%dGAMMA_E_E_Electron)
+     YAMBO_FREE(RT%dGAMMA_E_P_Hole)
+     YAMBO_FREE(RT%dGAMMA_E_P_Electron)
+     YAMBO_FREE(RT%dGAMMA_E_P_Ho_abs)
+     YAMBO_FREE(RT%dGAMMA_E_P_El_abs)
+     YAMBO_FREE(RT%dGAMMA_E_PHOT_Hole)
+     YAMBO_FREE(RT%dGAMMA_E_PHOT_Electron)
+     YAMBO_FREE(RT%E_bare)
+     YAMBO_FREE(RT%f_bare)
+     YAMBO_FREE(RT%GAMMA_bare)
+     YAMBO_FREE(RT%delta_E)
+     YAMBO_FREE(RT%delta_f)
+     YAMBO_FREE(RT%delta_GAMMA)
+     YAMBO_FREE(RT%NEQ_Lifetime)
+     YAMBO_FREE(RT%kpt)
+     YAMBO_FREE(RT%k_weight)
+     YAMBO_FREE(RT%table)
    end subroutine
    !
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
-     use memory_m,       ONLY:mem_est
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup,E_bare
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
@@ -476,67 +454,49 @@ module real_time
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
-     Y_ALLOCATE(E_xc(fft_size))
-     Y_MEM(E_xc)
+     YAMBO_ALLOC(E_xc,(fft_size))
      !
-     Y_ALLOCATE(G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
-     Y_MEM(G_lesser)
+     YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      !
-     Y_ALLOCATE(RT_H_occupations(RT_bands(1):RT_bands(2),RT_nk))
-     Y_MEM(RT_H_occupations)
+     YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
-     Y_ALLOCATE(RT_delta0_occupations(RT_bands(1):RT_bands(2),RT_nk))
-     Y_MEM(RT_delta0_occupations)
+     YAMBO_ALLOC(RT_delta0_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
-     Y_ALLOCATE(RT_delta_occupations(RT_bands(1):RT_bands(2),RT_nk))
-     Y_MEM(RT_delta_occupations)
+     YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
-     Y_ALLOCATE(RT_E_occupations_reference(RT_bands(1):RT_bands(2),RT_nk))
-     Y_MEM(RT_E_occupations_reference)
+     YAMBO_ALLOC(RT_E_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
      RT_E_occupations_reference=0._SP
      !
-     Y_ALLOCATE(RT_H_occupations_reference(RT_bands(1):RT_bands(2),RT_nk))
-     Y_MEM(RT_H_occupations_reference)
+     YAMBO_ALLOC(RT_H_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
      RT_H_occupations_reference=0._SP
      !
-     Y_ALLOCATE(RT_occupations_locked(RT_bands(1):RT_bands(2),RT_nk))
-     Y_MEM(RT_occupations_locked)
+     YAMBO_ALLOC(RT_occupations_locked,(RT_bands(1):RT_bands(2),RT_nk))
      RT_occupations_locked=.false.
      !
-     Y_ALLOCATE(RT_lifetimes_locked(RT_bands(1):RT_bands(2),RT_nk))
-     Y_MEM(RT_lifetimes_locked)
+     YAMBO_ALLOC(RT_lifetimes_locked,(RT_bands(1):RT_bands(2),RT_nk))
      RT_lifetimes_locked=.false.
      !
-     Y_ALLOCATE(RT_E_occupations(RT_bands(1):RT_bands(2),RT_nk))
-     Y_MEM(RT_E_occupations)
+     YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
      if (l_elphoton_scatt) then
-       Y_ALLOCATE(E_PHOT_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       Y_MEM(E_PHOT_Hole_lifetime)
-       Y_ALLOCATE(E_PHOT_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       Y_MEM(E_PHOT_Electron_lifetime)
+       YAMBO_ALLOC(E_PHOT_Hole_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(E_PHOT_Electron_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
        E_PHOT_Hole_lifetime=0._SP
        E_PHOT_Electron_lifetime=0._SP
      endif
      !
      if (l_elel_scatt) then
-       Y_ALLOCATE(E_E_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       Y_MEM(E_E_Hole_lifetime)
-       Y_ALLOCATE(E_E_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       Y_MEM(E_E_Electron_lifetime)
+       YAMBO_ALLOC(E_E_Hole_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(E_E_Electron_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
        E_E_Hole_lifetime=0._SP
        E_E_Electron_lifetime=0._SP
      endif
      !
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       Y_ALLOCATE(E_P_Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       Y_MEM(E_P_Hole_lifetime)
-       Y_ALLOCATE(E_P_Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       Y_MEM(E_P_Electron_lifetime)
-       Y_ALLOCATE(E_P_El_abs_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       Y_MEM(E_P_El_abs_lifetime)
-       Y_ALLOCATE(E_P_Ho_abs_lifetime(RT_bands(1):RT_bands(2),RT_nk))
-       Y_MEM(E_P_Ho_abs_lifetime)
+       YAMBO_ALLOC(E_P_Hole_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(E_P_Electron_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(E_P_El_abs_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(E_P_Ho_abs_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
        E_P_Hole_lifetime=0._SP
        E_P_Electron_lifetime=0._SP
        E_P_El_abs_lifetime=0._SP
@@ -544,79 +504,58 @@ module real_time
      endif
      !
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt.or.l_elphoton_scatt) then
-       Y_ALLOCATE(REF_lifetime(RT_bands(1):RT_bands(2),RT_nk,8))
-       Y_MEM(REF_lifetime)
-       Y_ALLOCATE(SAVED_lifetime(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
-       Y_MEM(SAVED_lifetime)
-       Y_ALLOCATE(SAVED_times(Life_MEM_steps))
-       Y_MEM(SAVED_times)
+       YAMBO_ALLOC(REF_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8))
+       YAMBO_ALLOCATE(SAVED_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
+       YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))
        REF_lifetime=0._SP
        SAVED_lifetime=0._SP
        SAVED_times=0._SP
      endif
      !
-     Y_ALLOCATE(Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-     Y_MEM(Ho_plus_Sigma)
+     YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      !
      if(l_use_Hxc_collisions) then
-       Y_ALLOCATE(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-       Y_MEM(RT_Vnl_xc)
+       YAMBO_ALLOC(RT_Vnl_xc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
      if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
-       Y_ALLOCATE(I_relax_static(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-       Y_MEM(I_relax_static)
+       YAMBO_ALLOC(I_relax_static,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
      endif
      !
-     Y_ALLOCATE(HARTREE0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     Y_MEM(HARTREE0)
+     YAMBO_ALLOC(HARTREE0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      HARTREE0=cZERO
      !
-     Y_ALLOCATE(XC0(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     Y_MEM(XC0)
+     YAMBO_ALLOC(XC0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      XC0=cZERO
      !
-     Y_ALLOCATE(SC_R(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
-     Y_MEM(SC_R)
+     YAMBO_ALLOC(SC_R,(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
      !
-     Y_ALLOCATE(G_lesser_reference(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-     Y_MEM(G_lesser_reference)
+     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
      !
-     Y_ALLOCATE(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
-     Y_MEM(dG_lesser)
+     YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      !
-     Y_ALLOCATE(MEM_pointer(G_MEM_steps))
-     Y_MEM(MEM_pointer)
+     YAMBO_ALLOC(MEM_pointer,(G_MEM_steps))
      MEM_pointer    = 0
      MEM_pointer(1) = 1
      !
-     Y_ALLOCATE(REF_V_xc_sc(fft_size,n_spin))
-     Y_MEM(REF_V_xc_sc)
-     Y_ALLOCATE(REF_V_hartree_sc(fft_size,n_spin))
-     Y_MEM(REF_V_hartree_sc)
-     Y_ALLOCATE(REF_Vnl_xc(QP_n_states))
-     Y_MEM(REF_Vnl_xc)
+     YAMBO_ALLOC(REF_V_xc_sc,(fft_size,n_spin))
+     YAMBO_ALLOC(REF_V_hartree_sc,(fft_size,n_spin))
+     YAMBO_ALLOC(REF_Vnl_xc,(QP_n_states))
      !
-     Y_ALLOCATE(BGR_hartree(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     Y_MEM(BGR_hartree)
-     Y_ALLOCATE(BGR_V_xc(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     Y_MEM(BGR_V_xc)
-     Y_ALLOCATE(BGR_Self_Energy(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     Y_MEM(BGR_Self_Energy)
+     YAMBO_ALLOC(BGR_hartree,(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     YAMBO_ALLOC(BGR_V_xc,(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     YAMBO_ALLOC(BGR_Self_Energy,(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      !
-     Y_ALLOCATE(rho_reference(fft_size))
-     Y_MEM(rho_reference)
+     YAMBO_ALLOC(rho_reference,(fft_size))
      !
      if(n_spin>1) then
-       Y_ALLOCATE(magn_reference(fft_size,3))
-       Y_MEM(magn_reference)
+       YAMBO_ALLOC(magn_reference,(fft_size,3))
      endif
      !
      ! Reference energies
      !
-     Y_ALLOCATE(E_bare(1:RT_bands(2),nXkibz,n_sp_pol))
-     Y_MEM(E_bare)
+     YAMBO_ALLOC(E_bare,(1:RT_bands(2),nXkibz,n_sp_pol))
      E_bare=en%E(:RT_bands(2),:,:)
      !
    end subroutine RT_alloc
@@ -624,64 +563,63 @@ module real_time
    subroutine RT_free
      !
      use hamiltonian,    ONLY:H_free,E_bare
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      !
      call H_free()
      !
-     Y_FREE(DbGd_ibz_coo)
-     Y_FREE(DbGd_bz_coo)
-     Y_FREE(RT_ibz_coo)
-     Y_FREE(RT_all2ibz)
-     Y_FREE(RT_Nk_ibz)
-     Y_FREE(DbGd_EE_scatt_table)
-     Y_FREE(E_xc)
-     Y_FREE(RT_Vnl_xc)
-     Y_FREE(Ho_plus_Sigma)
-     Y_FREE(RT_TIME_status)
-     Y_FREE(I_relax_static)
-     Y_FREE(HARTREE0)
-     Y_FREE(XC0)
-     Y_FREE(SC_R)
-     Y_FREE(E_PHOT_Hole_lifetime)
-     Y_FREE(E_PHOT_Electron_lifetime)
-     Y_FREE(E_E_Hole_lifetime)
-     Y_FREE(E_E_Electron_lifetime)
-     Y_FREE(E_P_Hole_lifetime)
-     Y_FREE(E_P_Electron_lifetime)
-     Y_FREE(E_P_El_abs_lifetime)
-     Y_FREE(E_P_Ho_abs_lifetime)
-     Y_FREE(REF_lifetime)
-     Y_FREE(SAVED_lifetime)
-     Y_FREE(SAVED_times)
-     Y_FREE(REF_Vnl_xc)
-     Y_FREE(REF_V_xc_sc)
-     Y_FREE(REF_V_hartree_sc)
-     Y_FREE(BGR_hartree)
-     Y_FREE(BGR_V_xc)
-     Y_FREE(BGR_Self_Energy)
-     Y_FREE(RT_H_occupations)
-     Y_FREE(RT_delta0_occupations)
-     Y_FREE(RT_delta_occupations)
-     Y_FREE(RT_E_occupations_reference)
-     Y_FREE(RT_H_occupations_reference)
-     Y_FREE(RT_occupations_locked)
-     Y_FREE(RT_lifetimes_locked)
-     Y_FREE(RT_E_occupations)
-     Y_FREE(G_lesser)
-     Y_FREE(MEM_pointer)
-     Y_FREE(q_weight_RT)
-     Y_FREE(THETA_matrix)
-     Y_FREE(THETA_matrix_index)
-     Y_FREE(elph_gkkp_expanded)
-     Y_FREE(G_lesser_reference)
-     Y_FREE(dG_lesser)
-     Y_FREE(rho_reference)
-     Y_FREE(magn_reference)
-     Y_FREE(E_bare)
-     Y_FREE(RT_Deph_Matrix)
-     Y_FREE(Q_io_map)
-     Y_FREE(K_io_map)
+     YAMBO_FREE(DbGd_ibz_coo)
+     YAMBO_FREE(DbGd_bz_coo)
+     YAMBO_FREE(RT_ibz_coo)
+     YAMBO_FREE(RT_all2ibz)
+     YAMBO_FREE(RT_Nk_ibz)
+     YAMBO_FREE(DbGd_EE_scatt_table)
+     YAMBO_FREE(E_xc)
+     YAMBO_FREE(RT_Vnl_xc)
+     YAMBO_FREE(Ho_plus_Sigma)
+     YAMBO_FREE(RT_TIME_status)
+     YAMBO_FREE(I_relax_static)
+     YAMBO_FREE(HARTREE0)
+     YAMBO_FREE(XC0)
+     YAMBO_FREE(SC_R)
+     YAMBO_FREE(E_PHOT_Hole_lifetime)
+     YAMBO_FREE(E_PHOT_Electron_lifetime)
+     YAMBO_FREE(E_E_Hole_lifetime)
+     YAMBO_FREE(E_E_Electron_lifetime)
+     YAMBO_FREE(E_P_Hole_lifetime)
+     YAMBO_FREE(E_P_Electron_lifetime)
+     YAMBO_FREE(E_P_El_abs_lifetime)
+     YAMBO_FREE(E_P_Ho_abs_lifetime)
+     YAMBO_FREE(REF_lifetime)
+     YAMBO_FREE(SAVED_lifetime)
+     YAMBO_FREE(SAVED_times)
+     YAMBO_FREE(REF_Vnl_xc)
+     YAMBO_FREE(REF_V_xc_sc)
+     YAMBO_FREE(REF_V_hartree_sc)
+     YAMBO_FREE(BGR_hartree)
+     YAMBO_FREE(BGR_V_xc)
+     YAMBO_FREE(BGR_Self_Energy)
+     YAMBO_FREE(RT_H_occupations)
+     YAMBO_FREE(RT_delta0_occupations)
+     YAMBO_FREE(RT_delta_occupations)
+     YAMBO_FREE(RT_E_occupations_reference)
+     YAMBO_FREE(RT_H_occupations_reference)
+     YAMBO_FREE(RT_occupations_locked)
+     YAMBO_FREE(RT_lifetimes_locked)
+     YAMBO_FREE(RT_E_occupations)
+     YAMBO_FREE(G_lesser)
+     YAMBO_FREE(MEM_pointer)
+     YAMBO_FREE(q_weight_RT)
+     YAMBO_FREE(THETA_matrix)
+     YAMBO_FREE(THETA_matrix_index)
+     YAMBO_FREE(elph_gkkp_expanded)
+     YAMBO_FREE(G_lesser_reference)
+     YAMBO_FREE(dG_lesser)
+     YAMBO_FREE(rho_reference)
+     YAMBO_FREE(magn_reference)
+     YAMBO_FREE(E_bare)
+     YAMBO_FREE(RT_Deph_Matrix)
+     YAMBO_FREE(Q_io_map)
+     YAMBO_FREE(K_io_map)
      !
    end subroutine RT_free
    !

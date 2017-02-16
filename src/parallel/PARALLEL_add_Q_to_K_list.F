@@ -39,10 +39,8 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  !
  IND_k_out_ID=IND_in_ID
  !
- Y_ALLOCATE(IND_k_out%n_of_elements(COMM%n_CPU))
- Y_ALLOCATE(IND_k_out%element_1D(nkibz))
- Y_MEM(IND_k_out%n_of_elements)
- Y_MEM(IND_k_out%element_1D)
+ YAMBO_ALLOC(IND_k_out%n_of_elements,(COMM%n_CPU))
+ YAMBO_ALLOC(IND_k_out%element_1D,(nkibz))
  !
  IND_k_out%n_of_elements(IND_k_out_ID+1)=0
  IND_k_out%element_1D(:)=.FALSE.

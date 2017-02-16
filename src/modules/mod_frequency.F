@@ -65,8 +65,7 @@ module frequency
      Wo%dr=Wi%dr
      Wo%damp_reference=Wi%damp_reference
      if (allocated(Wi%p)) then
-       Y_ALLOCATE(Wo%p(Wo%n_freqs))
-       Y_MEM(Wo%p)
+       YAMBO_ALLOC(Wo%p,(Wo%n_freqs))
        Wo%p=Wi%p
      endif
    end subroutine W_duplicate
@@ -78,7 +77,7 @@ module frequency
      W%er=(/0._SP,10._SP/)/HA2EV
      W%dr=(/0.1_SP,0.1_SP/)/HA2EV
      W%damp_reference=0._SP
-     Y_FREE(W%p)
+     YAMBO_FREE(W%p)
    end subroutine W_reset
    !
 end module frequency

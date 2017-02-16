@@ -165,7 +165,7 @@ subroutine k_grids(en,k,Xk,q)
    USER_K%nibz=1
    gw_main_loop: do ik=1,n_u_k_pts
      !
-     if (associated(USER_K%pt)) deallocate(USER_K%pt)
+     if (allocated(USER_K%pt)) deallocate(USER_K%pt)
      allocate(USER_K%pt(USER_K%nibz,3))
      USER_K%pt(USER_K%nibz,:)=U_k_pts(ik,:)
      !
@@ -229,7 +229,7 @@ subroutine k_grids(en,k,Xk,q)
    Q_user%nibz=1
    q_main_loop: do iq=1,n_u_q_pts
      !
-     if (associated(Q_user%pt)) deallocate(Q_user%pt)
+     if (allocated(Q_user%pt)) deallocate(Q_user%pt)
      allocate(Q_user%pt(Q_user%nibz,3))
      Q_user%pt(Q_user%nibz,:)=U_q_pts(iq,:)
      !

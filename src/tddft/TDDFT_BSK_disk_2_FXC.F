@@ -84,17 +84,13 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! Exchange oscillators
  !
- Y_ALLOCATE(O1x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
- Y_MEM(O1x)
- Y_ALLOCATE(O2x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
- Y_MEM(O2x)
+ YAMBO_ALLOC(O1x,(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
+ YAMBO_ALLOC(O2x,(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
  !
  ! Kernel 2 FXC
  !
- Y_ALLOCATE(FXC_K_diagonal(BS_K_dim))
- Y_ALLOCATE(FXC(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
- Y_MEM(FXC_K_diagonal)
- Y_MEM(FXC)
+ YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+ YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
  O_x_dim=maxval(BS_nT_at_k)
  FXC_K_diagonal=0._SP
  FXC=(0._SP,0._SP)
@@ -115,8 +111,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
      !if (ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)
      if (ik1==ik2) O1x=O2x
      !
-     Y_ALLOCATE(BS_mat(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
-     Y_MEM(BS_mat)
+     YAMBO_ALLOC(BS_mat,(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
@@ -143,7 +138,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
 &                         O2x(:FXC_n_g_corr,:),O_x_dim,W,X_static)
      !
      call live_timing(steps=1)
-     Y_FREE(BS_mat)
+     YAMBO_FREE(BS_mat)
    enddo
  enddo
  call live_timing
@@ -151,10 +146,10 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ! CLEAN
  !
  call PP_redux_wait
- Y_FREE(O1x)
- Y_FREE(O2x)
+ YAMBO_FREE(O1x)
+ YAMBO_FREE(O2x)
  call WF_free(WF)
- Y_FREE(FXC_K_diagonal)
- Y_FREE(FXC)
+ YAMBO_FREE(FXC_K_diagonal)
+ YAMBO_FREE(FXC)
  !
 end subroutine

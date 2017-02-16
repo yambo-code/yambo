@@ -112,7 +112,7 @@ module electrons
  logical  :: DbGd_is_symmetry_expanded=.FALSE.
  integer ,allocatable :: BZ_DbGd_nkpt(:)
  integer ,allocatable :: BZ_DbGd_table(:,:,:)
- real(SP),allocatable :: BZ_DbGd_ipol_weight(:)
+ real(SP),allocatable :: BZ_DbGd_weight(:)
  real(SP),allocatable :: BZ_DbGd_kpts(:,:)
  !
  ! Perturbative SOC table
@@ -143,10 +143,8 @@ module electrons
        Eo%E_dir_gap=Ei%E_dir_gap
        Eo%E_ind_gap=Ei%E_ind_gap
      endif
-     Y_ALLOCATE(Eo%E(Eo%nb,Eo%nk,n_sp_pol))
-     Y_MEM(Eo%E)
-     Y_ALLOCATE(Eo%f(Eo%nb,Eo%nk,n_sp_pol))
-     Y_MEM(Eo%f)
+     YAMBO_ALLOC(Eo%E,(Eo%nb,Eo%nk,n_sp_pol))
+     YAMBO_ALLOC(Eo%f,(Eo%nb,Eo%nk,n_sp_pol))
      Eo%E=0._SP
      Eo%f=0._SP
      !
@@ -160,40 +158,34 @@ module electrons
        ! %E
        Eo%E(:,:,:)=Ei%E(:,:,:)
        if (allocated(Ei%Eo)) then
-         Y_ALLOCATE(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%Eo)
+         YAMBO_ALLOC(Eo%Eo,(BOUNDS(1),Eo%nk,n_sp_pol))
          Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
        endif
        ! %f
        Eo%f(:,:,:)=Ei%f(:,:,:) 
        if (allocated(Ei%fo)) then
-         Y_ALLOCATE(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%fo)
+         YAMBO_ALLOC(Eo%fo,(BOUNDS(1),Eo%nk,n_sp_pol))
          Eo%fo(:BOUNDS(1),:,:)=Ei%fo(:BOUNDS(1),:,:)
        endif
        if (allocated(Ei%df)) then
-         Y_ALLOCATE(Eo%df(BOUNDS(1),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%df)
+         YAMBO_ALLOC(Eo%df,(BOUNDS(1),Eo%nk,n_sp_pol))
          Eo%df(:BOUNDS(1),:,:)=Ei%df(:BOUNDS(1),:,:)
        endif
        ! %W
        if (allocated(Ei%W)) then
-         Y_ALLOCATE(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%W)
+         YAMBO_ALLOC(Eo%W,(BOUNDS(2),Eo%nk,n_sp_pol))
          Eo%W(:BOUNDS(2),:,:)=Ei%W(:BOUNDS(2),:,:)
        endif
        ! %Z
        if (allocated(Ei%Z)) then
-         Y_ALLOCATE(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
-         Y_MEM(Eo%Z)
+         YAMBO_ALLOC(Eo%Z,(BOUNDS(2),Eo%nk,n_sp_pol))
          Eo%Z(:BOUNDS(2),:,:)=Ei%Z(:BOUNDS(2),:,:)
        endif
        ! %QP_corrected
        if (allocated(Ei%QP_corrected)) then
          BOUNDS(1)=size(Ei%QP_corrected,1)
          BOUNDS(2)=size(Ei%QP_corrected,2)
-         Y_ALLOCATE(Eo%QP_corrected(BOUNDS(1),BOUNDS(2),n_sp_pol))
-         Y_MEM(Eo%QP_corrected)
+         YAMBO_ALLOC(Eo%QP_corrected,(BOUNDS(1),BOUNDS(2),n_sp_pol))
          Eo%QP_corrected=Ei%QP_corrected
        endif
      else
@@ -203,18 +195,14 @@ module electrons
      ! E Double Grid
      !
      if (BZ_DbGd_nbands/=0.and.Ei%nk==Eo%nk) then
-       Y_ALLOCATE(Eo%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       Y_MEM(Eo%E_DbGd)
-       Y_ALLOCATE(Eo%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       Y_MEM(Eo%W_DbGd)
-       Y_ALLOCATE(Eo%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       Y_MEM(Eo%f_DbGd)
+       YAMBO_ALLOC(Eo%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       YAMBO_ALLOC(Eo%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       YAMBO_ALLOC(Eo%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
        Eo%E_DbGd=Ei%E_DbGd
        Eo%W_DbGd=Ei%W_DbGd
        Eo%f_DbGd=Ei%f_DbGd
        if(allocated(Ei%df_DbGd)) then
-         Y_ALLOCATE(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-         Y_MEM(Eo%df_DbGd)
+         YAMBO_ALLOC(Eo%df_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
          Eo%df_DbGd=Ei%df_DbGd
        endif
      endif
@@ -222,8 +210,7 @@ module electrons
      ! E_SOC
      !
      if (E_SOC_nbands/=0.and.Ei%nk==Eo%nk) then
-       Y_ALLOCATE(Eo%E_SOC(E_SOC_nbands,Eo%nk))
-       Y_MEM(Eo%E_SOC)
+       YAMBO_ALLOC(Eo%E_SOC,(E_SOC_nbands,Eo%nk))
        Eo%E_SOC=Ei%E_SOC
      endif
      !
@@ -245,20 +232,20 @@ module electrons
      E%kf=0 
      E%GreenF_n_E_steps=0 
      E%GreenF_is_causal=.FALSE. 
-     Y_FREE(E%E)
-     Y_FREE(E%Eo)
-     Y_FREE(E%Z)
-     Y_FREE(E%W)
-     Y_FREE(E%f)
-     Y_FREE(E%fo)
-     Y_FREE(E%df)
-     Y_FREE(E%QP_corrected)
-     Y_FREE(E%GreenF)
-     Y_FREE(E%GreenF_W)
+     YAMBO_FREE(E%E)
+     YAMBO_FREE(E%Eo)
+     YAMBO_FREE(E%Z)
+     YAMBO_FREE(E%W)
+     YAMBO_FREE(E%f)
+     YAMBO_FREE(E%fo)
+     YAMBO_FREE(E%df)
+     YAMBO_FREE(E%QP_corrected)
+     YAMBO_FREE(E%GreenF)
+     YAMBO_FREE(E%GreenF_W)
      !
      call E_DbGd_components_reset(E,.FALSE.)
      !
-     Y_FREE(E%E_SOC)
+     YAMBO_FREE(E%E_SOC)
      !
    end subroutine
    !
@@ -267,10 +254,10 @@ module electrons
      type(levels)::E
      logical     ::FULL_RESET
      !
-     Y_FREE(E%E_DbGd)
-     Y_FREE(E%W_DbGd)
-     Y_FREE(E%f_DbGd)
-     Y_FREE(E%df_DbGd)
+     YAMBO_FREE(E%E_DbGd)
+     YAMBO_FREE(E%W_DbGd)
+     YAMBO_FREE(E%f_DbGd)
+     YAMBO_FREE(E%df_DbGd)
      !
      !
      if (.not.FULL_RESET) return
@@ -280,10 +267,10 @@ module electrons
      BZ_ASSOCIATED_nkpts=0
      BZ_DbGd_nbands=0
      !
-     Y_FREE(BZ_DbGd_nkpt)
-     Y_FREE(BZ_DbGd_table)
-     Y_FREE(BZ_DbGd_ipol_weight)
-     Y_FREE(BZ_DbGd_kpts)
+     YAMBO_FREE(BZ_DbGd_nkpt)
+     YAMBO_FREE(BZ_DbGd_table)
+     YAMBO_FREE(BZ_DbGd_weight)
+     YAMBO_FREE(BZ_DbGd_kpts)
      !
    end subroutine
    !

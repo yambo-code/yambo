@@ -88,8 +88,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  do i1=1,qp%n_states
    call W_reset(Sc_W(i1))
    Sc_W(i1)%n_freqs=1
-   Y_ALLOCATE(Sc_W(i1)%p(1))
-   Y_MEM(Sc_W(i1)%p)
+   YAMBO_ALLOC(Sc_W(i1)%p,(1))
  enddo
  !
  !SOLVER STATE
@@ -100,8 +99,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! <0: Eqp_raxis(?,iabs(SOLVER_STATE))  converged
  !
- Y_ALLOCATE(QP_solver_state(qp%n_states))
- Y_MEM(QP_solver_state)
+ YAMBO_ALLOC(QP_solver_state,(qp%n_states))
  !
  !Brackets
  !
@@ -171,11 +169,10 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
    Eqp_raxis(i1,1)=Eqp_raxis(i1,iabs(QP_solver_state(i1)))
    call W_reset(Sc_W(i1))
    Sc_W(i1)%n_freqs=QP_dSc_steps
-   Y_ALLOCATE(Sc_W(i1)%p(QP_dSc_steps))
-   Y_MEM(Sc_W(i1)%p)
+   YAMBO_ALLOC(Sc_W(i1)%p,(QP_dSc_steps))
    forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=Eqp_raxis(i1,1)+(i2-1)*QP_dSc_delta
  enddo
- Y_FREE(QP_solver_state)
+ YAMBO_FREE(QP_solver_state)
  !
  call W2Sc_local_call()
  !
@@ -195,9 +192,9 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  do i1=1,QP_n_states
    call W_reset(Sc_W(i1))
  enddo
- Y_FREE(QP_W)
- Y_FREE(QP_W_dr)
- Y_FREE(QP_W_er)
+ YAMBO_FREE(QP_W)
+ YAMBO_FREE(QP_W_dr)
+ YAMBO_FREE(QP_W_er)
  call PP_redux_wait()
  !
  contains 

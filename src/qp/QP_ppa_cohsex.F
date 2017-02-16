@@ -198,8 +198,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    allocate(W_(QP_dSc_steps))
    allocate(dc(QP_dSc_steps),stat=alloc_err)
    if(l_GW_terminator) then
-     Y_ALLOCATE(eet_factor(X%ng,X%ng))
-     Y_MEM(eet_factor)
+     YAMBO_ALLOC(eet_factor,(X%ng,X%ng))
    endif
  endif
  !
@@ -475,8 +474,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
-               PPA_E= real(X%ppaE/X_mat(ig1,ig2,2))
-               PPA_R=-X_mat(ig1,ig2,1)/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)))
+               PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i4)-E_kmq-PPA_E)+&
@@ -572,7 +571,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if(l_ppa) then
    deallocate(W_)
    if(l_GW_terminator) then
-       Y_FREE(eet_factor)
+       YAMBO_FREE(eet_factor)
    endif
  endif
  l_X_alloc=.true.

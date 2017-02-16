@@ -40,7 +40,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
      !
 #if defined _MPI
      !
-     !Y_ALLOCATE(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
+     !YAMBO_ALLOCATE(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
      !Y_MEM(PAR_IND_T_Haydock%element_1D)
      !
      !PAR_IND_T_Haydock%element_1D = .false.
@@ -95,7 +95,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
        deallocate(PAR_COM_T_Haydock)
 #endif
        ! This is allocated in K_Transitions setup
-Y_FREE(PAR_IND_T_Haydock%element_1D)
+       YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
        !
    end select
    !

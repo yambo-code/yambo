@@ -23,7 +23,7 @@
 !
 module memory
  !
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:SP,schlen,IP,DP
  use openmp,        ONLY:master_thread
  use iso_c_binding, ONLY:c_int
  !
@@ -33,33 +33,161 @@ module memory
  integer, parameter  :: N_MEM_max      = 10000
  integer, parameter  :: N_MEM_SAVE_max = 1000
  integer, parameter  :: MEM_jump_treshold   = 200000 ! Kb
- integer, parameter  :: MEM_treshold        = 100000 ! Kb
- integer, parameter  :: MEM_SAVE_treshold   = 5000  ! Kb
+ integer, parameter  :: MEM_treshold        = 1000 ! Kb
+ integer, parameter  :: MEM_SAVE_treshold   = 1000  ! Kb
  !
  integer :: N_MEM_SAVE_elements      = 0
  integer :: N_MEM_elements           = 0
  integer :: MEM_err                  = 0
  integer(kind=c_int) :: TOT_MEM_kilobytes_MEMSTAT 
- integer             :: MAX_MEM_kilobytes_MEMSTAT = 0
- integer             :: TOT_MEM_kilobytes_MEMSTAT_SAVE
- integer             :: TOT_MEM_kilobytes
- integer             :: MEM_jump_save= 0
+ integer             :: MAX_MEM_bytes = 0
+ integer             :: TOT_MEM_bytes
+ integer             :: TOT_MEM_bytes_SAVE = 0
  !
  character(schlen) :: MEM_element_name(N_MEM_max) = " "
  integer           :: MEM_element_use (N_MEM_max) =0  
+ integer           :: MEM_element_kind(N_MEM_max) =1  
+ integer           :: MEM_element_size(N_MEM_max) =0  
  character(schlen) :: MEM_element_name_SAVE(N_MEM_SAVE_max) = " "
  integer           :: MEM_element_use_SAVE (N_MEM_SAVE_max) =0  
  !
- interface
-   !
-   subroutine MEM_dri(what,Sz,Kn,Er,REPORT)
+ interface MEM_dri
+   module procedure MEM_clean,MEM_error,&
+&                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,&
+&                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
+&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,        MEM_rd3,&
+&                                    MEM_r4,MEM_c4,&
+&                             MEM_i5,MEM_r5,MEM_c5
+ end interface MEM_dri
+ !
+ interface  
+   subroutine MEM_manager(what,Sz,Kn,REPORT)
      character(*)         :: what
      integer,optional     :: Sz
      integer,optional     :: Kn
-     integer,optional     :: Er
      character(*),optional:: REPORT
-   end subroutine
-   !
+   end subroutine 
  end interface
  !
+ contains
+   !
+   subroutine MEM_error(name)
+     character(*)::name
+     call MEM_manager(name)
+   end subroutine
+   subroutine MEM_clean(name,N)
+     character(*)::name
+     integer     ::N
+     call MEM_manager(name,N)
+   end subroutine
+   subroutine MEM_i1(name,i)
+     character(*)::name
+     integer     ::i(:)
+     call MEM_manager(name,kind(i(1)))
+   end subroutine
+   subroutine MEM_i2(name,i)
+     character(*)::name
+     integer     ::i(:,:)
+     call MEM_manager(name,kind(i(1,1)))
+   end subroutine
+   subroutine MEM_i3(name,i)
+     character(*)::name
+     integer     ::i(:,:,:)
+     call MEM_manager(name,kind(i(1,1,1)))
+   end subroutine
+   subroutine MEM_i5(name,i)
+     character(*)::name
+     integer     ::i(:,:,:,:,:)
+     call MEM_manager(name,kind(i(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_r1(name,r)
+     character(*)::name
+     real(SP)    ::r(:)
+     call MEM_manager(name,size(r),kind(r))
+   end subroutine
+   subroutine MEM_r2(name,r)
+     character(*)::name
+     real(SP)    ::r(:,:)
+     call MEM_manager(name,size(r),kind(r(1,1)))
+   end subroutine
+   subroutine MEM_rd1(name,r)
+     character(*)::name
+     real(DP)    ::r(:)
+     call MEM_manager(name,size(r),kind(r))
+   end subroutine
+   subroutine MEM_rd2(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:)
+     call MEM_manager(name,size(r),kind(r(1,1)))
+   end subroutine
+   subroutine MEM_rd3(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:,:)
+     call MEM_manager(name,size(r),kind(r(1,1,1)))
+   end subroutine
+   subroutine MEM_r3(name,r)
+     character(*)::name
+     real(SP)    ::r(:,:,:)
+     call MEM_manager(name,size(r),kind(r(1,1,1)))
+   end subroutine
+   subroutine MEM_r4(name,r)
+     character(*)::name
+     real(SP)    ::r(:,:,:,:)
+     call MEM_manager(name,size(r),kind(r(1,1,1,1)))
+   end subroutine
+   subroutine MEM_r5(name,r)
+     character(*)::name
+     real(SP)    ::r(:,:,:,:,:)
+     call MEM_manager(name,size(r),kind(r(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_c1(name,c)
+     character(*)::name
+     complex(SP) ::c(:)
+     call MEM_manager(name,size(c),2*kind(c(1)))
+   end subroutine
+   subroutine MEM_cd1(name,c)
+     character(*)::name
+     complex(DP) ::c(:)
+     call MEM_manager(name,size(c),2*kind(c(1)))
+   end subroutine
+   subroutine MEM_cd2(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:)
+     call MEM_manager(name,size(c),2*kind(c(1,1)))
+   end subroutine
+   subroutine MEM_c2(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:)
+     call MEM_manager(name,size(c),2*kind(c(1,1)))
+   end subroutine
+   subroutine MEM_c3(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:)
+     call MEM_manager(name,size(c),2*kind(c(1,1,1)))
+   end subroutine
+   subroutine MEM_c4(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:,:)
+     call MEM_manager(name,size(c),2*kind(c(1,1,1,1)))
+   end subroutine
+   subroutine MEM_c5(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:,:,:)
+     call MEM_manager(name,size(c),2*kind(c(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_l1(name,l)
+     character(*)::name
+     logical     ::l(:)
+     call MEM_manager(name,size(l),kind(l(1)))
+   end subroutine
+   subroutine MEM_l2(name,l)
+     character(*)::name
+     logical     ::l(:,:)
+     call MEM_manager(name,size(l),kind(l(1,1)))
+   end subroutine
+   subroutine MEM_l3(name,l)
+     character(*)::name
+     logical     ::l(:,:,:)
+     call MEM_manager(name,size(l),kind(l(1,1,1)))
+   end subroutine
 end module memory

@@ -84,19 +84,14 @@ module ELPH
          !
          if (.not.allocated(gsqF_fan)) then
            if (.not.eval_G_using_KK) then
-             Y_ALLOCATE(gsqF_fan(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-             Y_MEM(gsqF_fan)
-             Y_ALLOCATE(gsqF_ca_corr(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-             Y_MEM(gsqF_ca_corr)
+             YAMBO_ALLOC(gsqF_fan,(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+             YAMBO_ALLOC(gsqF_ca_corr,(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
              gsqF_fan=0.
              gsqF_ca_corr=0.
            endif
-           Y_ALLOCATE(gsqF_dw(QP_n_states,PAR_nQ,ph_modes))
-           Y_MEM(gsqF_dw)
-           Y_ALLOCATE(gsqF_life_bose(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-           Y_MEM(gsqF_life_bose)
-           Y_ALLOCATE(gsqF_life_f(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-           Y_MEM(gsqF_life_f)
+           YAMBO_ALLOC(gsqF_dw,(QP_n_states,PAR_nQ,ph_modes))
+           YAMBO_ALLOC(gsqF_life_bose,(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+           YAMBO_ALLOC(gsqF_life_f,(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
            gsqF_dw=0.
            gsqF_life_bose=0.
            gsqF_life_f=0.
@@ -105,51 +100,43 @@ module ELPH
        case ('gkkp')
          !
          if (.not.allocated(elph_gkkp)) then
-           Y_ALLOCATE(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb))
-           Y_MEM(elph_gkkp)
-           Y_ALLOCATE(elph_DW(nkbz,ph_modes,elph_nb,elph_nb))
-           Y_MEM(elph_DW)
-           Y_ALLOCATE(f_k_plus_q(elph_nb,nkbz,1))
-           Y_MEM(f_k_plus_q)
+           YAMBO_ALLOC(elph_gkkp,(nkbz,ph_modes,elph_nb,elph_nb))
+           YAMBO_ALLOC(elph_DW,(nkbz,ph_modes,elph_nb,elph_nb))
+           YAMBO_ALLOC(f_k_plus_q,(elph_nb,nkbz,1))
          endif
          !
      end select
      !
      if (.not.allocated(ph_freqs_sq)) then
-       Y_ALLOCATE(ph_freqs_sq(elph_nDBs,ph_modes))
-       Y_MEM(ph_freqs_sq)
+       YAMBO_ALLOC(ph_freqs_sq,(elph_nDBs,ph_modes))
        ph_freqs_sq=0._SP
-       Y_ALLOCATE(E_k_plus_q(elph_nb,nkbz,1))
-       Y_MEM(E_k_plus_q)
+       YAMBO_ALLOC(E_k_plus_q,(elph_nb,nkbz,1))
        !
-       Y_ALLOCATE(pol_vector(ph_modes,sum(n_atoms_species),3))
-       Y_MEM(pol_vector)
+       YAMBO_ALLOC(pol_vector,(ph_modes,sum(n_atoms_species),3))
        !
      endif
      !
      if (.not.allocated(ph_qpt)) then
-       Y_ALLOCATE(ph_qpt(elph_nDBs,3))
-       Y_MEM(ph_qpt)
-       Y_ALLOCATE(ph_kpt_bz(nkbz,3))
-       Y_MEM(ph_kpt_bz)
+       YAMBO_ALLOC(ph_qpt,(elph_nDBs,3))
+       YAMBO_ALLOC(ph_kpt_bz,(nkbz,3))
      endif
      !
    end subroutine
    !
    subroutine elph_global_free()
-     Y_FREE(gsqF_fan)
-     Y_FREE(gsqF_dw)
-     Y_FREE(gsqF_ca_corr)
-     Y_FREE(gsqF_life_bose)
-     Y_FREE(gsqF_life_f)
-     Y_FREE(elph_gkkp)
-     Y_FREE(elph_DW)
-     Y_FREE(f_k_plus_q)
-     Y_FREE(ph_freqs_sq)
-     Y_FREE(E_k_plus_q)
-     Y_FREE(pol_vector)
-     Y_FREE(ph_qpt)
-     Y_FREE(ph_kpt_bz)
+     YAMBO_FREE(gsqF_fan)
+     YAMBO_FREE(gsqF_dw)
+     YAMBO_FREE(gsqF_ca_corr)
+     YAMBO_FREE(gsqF_life_bose)
+     YAMBO_FREE(gsqF_life_f)
+     YAMBO_FREE(elph_gkkp)
+     YAMBO_FREE(elph_DW)
+     YAMBO_FREE(f_k_plus_q)
+     YAMBO_FREE(ph_freqs_sq)
+     YAMBO_FREE(E_k_plus_q)
+     YAMBO_FREE(pol_vector)
+     YAMBO_FREE(ph_qpt)
+     YAMBO_FREE(ph_kpt_bz)
    end subroutine
    !
    subroutine setup_k_plus_q_levels(E)

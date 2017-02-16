@@ -123,8 +123,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! done
  !
  if (.not.allocated(en%QP_corrected)) then
-   Y_ALLOCATE(en%QP_corrected(en%nb,en%nk,n_sp_pol))
-   Y_MEM(en%QP_corrected)
+   YAMBO_ALLOC(en%QP_corrected,(en%nb,en%nk,n_sp_pol))
    en%QP_corrected=0
  endif 
  !
@@ -239,8 +238,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  if (allocated(en%E_DbGd).and.allocated(en%Eo)) then
    !
-   Y_ALLOCATE(DbGd_k_done(BZ_DbGd_tot_nkpts))
-   Y_MEM(DbGd_k_done)
+   YAMBO_ALLOC(DbGd_k_done,(BZ_DbGd_tot_nkpts))
    DbGd_k_done=0
    !
    do ik_bz=1,k%nbz
@@ -260,7 +258,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      !
    enddo
    !
-   Y_FREE(DbGd_k_done)
+   YAMBO_FREE(DbGd_k_done)
    !
  endif
  !
@@ -299,7 +297,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    call OCCUPATIONS_Extend(Fermi_en,en)
    !
-   Y_FREE(Fermi_en%E)
+   YAMBO_FREE(Fermi_en%E)
    !
  endif
  !

@@ -113,22 +113,22 @@ subroutine K_diago_driver(iq,W)
  !
  ! Allocation (BS_R and BS_E)
  !===========================
- call local_alloc(1)
+ call local_alloc("E")
  !
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
- ! Kernel loading
- !================
+ ! Kernel and/or BSS components loading
+ !======================================
  if (io_err<0) call K_components_folded_in_serial_arrays(iq)
  !
  K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
  !
  ! Allocation (BS_E_real or BS_V)
  !===============================
- call local_alloc(2)
+ call local_alloc("V")
  !
  ! Initialize the output file 
  !============================
@@ -263,12 +263,12 @@ subroutine K_diago_driver(iq,W)
  !
  contains
    !
-   subroutine local_alloc(ii)
+   subroutine local_alloc(what)
      !
-     integer  :: ii
+     character  :: what
      !
-     select case(ii)
-     case(1)
+     select case(what)
+     case("E")
        !
        YAMBO_ALLOC(BS_E,(BS_H_dim))
        if(E_SOC_nbands/=0) then
@@ -289,7 +289,7 @@ subroutine K_diago_driver(iq,W)
        !
        ! GPL_EXCLUDE_END
        !
-     case(2)
+     case("V")
        !
        if(K_is_not_hermitian) then
          YAMBO_ALLOC(BS_V_left,(BS_H_dim,BS_H_dim))
@@ -324,7 +324,7 @@ subroutine K_diago_driver(iq,W)
      YAMBO_FREE_P(BS_R_PL)
 #endif
      !
-     ! BS_mat must be cleaned as it contains the eigenvectors
+     ! BS_mat must be cleaned as it contains the eigenvectors. 
      !
      YAMBO_FREE(BS_mat)
      !

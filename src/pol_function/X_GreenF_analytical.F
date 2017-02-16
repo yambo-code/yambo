@@ -28,10 +28,10 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  use pars,       ONLY:SP,cZERO,cONE
  use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs,&
-&                     X_t,l_X_terminator,X_terminator_E,X_term_E
+&                     X_t,l_X_terminator,X_term_E
  use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
-                      BZ_DbGd_ipol_weight,BZ_DbGd_kpts
+                      BZ_DbGd_weight,BZ_DbGd_kpts
  use R_lattice,  ONLY:qindx_X,bz_samp,q_pt,nqibz
  use frequency,  ONLY:w_samp
  use vec_operate,ONLY:iku_v_norm
@@ -137,7 +137,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  do i1=1,BZ_DbGd_nkpt(ikbz)
    !
-   weight1   = BZ_DbGd_ipol_weight(i1)/real(BZ_DbGd_nkpt(ikbz),SP)
+   weight1   = BZ_DbGd_weight(i1)/real(BZ_DbGd_nkpt(ikbz),SP)
    ik_rand   = BZ_DbGd_table(ikbz,i1,1)
    ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
    !
@@ -148,7 +148,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
      !
      if(.not.use_kpt(i1,i2)) cycle
      !
-     weight2    = BZ_DbGd_ipol_weight(i2)/real(BZ_DbGd_iq_npt(i1),SP)
+     weight2    = BZ_DbGd_weight(i2)/real(BZ_DbGd_iq_npt(i1),SP)
      ikp_rand   = BZ_DbGd_table(ikpbz,i2,1)
      ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
      !

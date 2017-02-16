@@ -23,14 +23,14 @@
 !
 integer function io_BS(iq,X,ID)
  !
- use pars,          ONLY:schlen,lchlen
+ use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
-&                        write_is_on,io_header,io_mode,VERIFY,&
+&                        read_is_on,write_is_on,io_header,io_mode,VERIFY, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -42,7 +42,8 @@ integer function io_BS(iq,X,ID)
  !
  ! Work Space
  !
- integer             ::i_block,i1
+ complex(SP),allocatable :: tmp_map(:)
+ integer             ::i_block,i1,n1,n2,block_pos
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  !
@@ -109,12 +110,25 @@ integer function io_BS(iq,X,ID)
  !
  call io_fragment(ID,i_fragment=i_block)
  !
- if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
- if (BS_blk(i_block)%mode=="A") ch="BSE_ANTIRESONANT_BLOCK_"//trim(intc(i_block))
- !
- call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk(i_block)%size(1),BS_blk(i_block)%size(2),2/))
- !
- call io_bulk(ID,C2=BS_blk(i_block)%mat)
+ if(frag_BS_K) then
+   if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
+   if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING_BLOCK_"//trim(intc(i_block))
+   !
+   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/))
+   call io_bulk(ID,C2=BS_blk(i_block)%mat)
+ else
+   n1=BS_blk(i_block)%size(1)
+   n2=BS_blk(i_block)%size(2)
+   block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1
+   if(i_block==1)      call io_bulk(ID,VAR="BSE_MATRIX",VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
+   if(write_is_on(ID)) call io_bulk(ID,C1=(/BS_blk(i_block)%mat(:,:)/),IPOS=(/1,block_pos/))
+   if(read_is_on(ID)) then
+     allocate(tmp_map(n1*n2))
+     call io_bulk(ID,C1=tmp_map,IPOS=(/1,block_pos/))
+     BS_blk(i_block)%mat=reshape(tmp_map,(/n1,n2/))
+     deallocate(tmp_map)
+   endif
+ endif
  !
 1 continue
  !
@@ -122,7 +136,7 @@ integer function io_BS(iq,X,ID)
  ! with the inversion database (like dimensions errors).
  !
  if (io_BS==0) BS_K_has_been_calculated_loaded=.TRUE.
- if (io_BS<0 ) BS_K_has_been_calculated_loaded=.FALSE.
+ if (io_BS< 0) BS_K_has_been_calculated_loaded=.FALSE.
  !
  call io_disconnect(ID)
  !

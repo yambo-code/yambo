@@ -58,6 +58,18 @@ module wrapper
    !===================
    !
    subroutine mm_cgemm(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     !
+     ! CGEMM  performs one of the matrix-matrix operations
+     !
+     !    C := alpha*op( A )*op( B ) + beta*C,
+     !
+     ! where  op( X ) is one of
+     !
+     !    op( X ) = X   or   op( X ) = X**T   or   op( X ) = X**H,
+     !
+     ! alpha and beta are scalars, and A, B and C are matrices, with op( A )
+     ! an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
+     !
      complex(SP), intent(in)  :: ALPHA,BETA
      integer,     intent(in)  :: K,LDA,LDB,LDC,M,N
      character,   intent(in)  :: TRANSA,TRANSB

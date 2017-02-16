@@ -59,14 +59,10 @@ subroutine PARALLEL_WF_index(COMM)
  NB=size(states_to_load,1)
  NK=size(states_to_load,2)
  !
- Y_ALLOCATE(WF_linear%element_1D(NB*NK))
- Y_ALLOCATE(WF_linear%n_of_elements(NC))
- Y_MEM(WF_linear%element_1D)
- Y_MEM(WF_linear%n_of_elements)
- Y_ALLOCATE(PAR_IND_WF_linear%element_2D(NB,NK))
- Y_ALLOCATE(PAR_IND_WF_linear%n_of_elements(NC))
- Y_MEM(PAR_IND_WF_linear%element_2D)
- Y_MEM(PAR_IND_WF_linear%n_of_elements)
+ YAMBO_ALLOC(WF_linear%element_1D,(NB*NK))
+ YAMBO_ALLOC(WF_linear%n_of_elements,(NC))
+ YAMBO_ALLOC(PAR_IND_WF_linear%element_2D,(NB,NK))
+ YAMBO_ALLOC(PAR_IND_WF_linear%n_of_elements,(NC))
  !
  WF_linear%element_1D=.FALSE.
  PAR_IND_WF_linear%element_2D=.FALSE.

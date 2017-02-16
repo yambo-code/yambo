@@ -80,6 +80,7 @@ subroutine symmetries_driver(E,Xk)
  !
  ! Expansion of default k-points
  call k_ibz2bz(Xk,'i',.false.)
+ deallocate(Xk%pt)
  call k_reduce(Xk,.false.)
  !
  call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
@@ -103,7 +104,6 @@ subroutine symmetries_driver(E,Xk)
  call msg('s',trim(intc(old_nkpt))//' k-points have been expanded/reduced to ...'//trim(intc(Xk%nibz)))
  !
  deallocate(Xk%sstar,Xk%star,Xk%nstar,Xk%weights)
- nullify(Xk%sstar,Xk%star,Xk%nstar,Xk%weights)
  call k_expand(Xk)
  !
  allocate(kpoints_map(2,Xk%nibz))

@@ -89,15 +89,13 @@ integer function io_Vnl(X,Xen,ID)
  sec_size=3*db_nb(2)*db_nbm
  if (any((/io_sec(ID,:)==2/))) then
    !
-   Y_ALLOCATE(Vnl_disk(db_nb(2),db_nbm,2))!Allocatetoexactlythesizeondis)
-   Y_MEM(Vnl_disk)
+   YAMBO_ALLOC(Vnl_disk,(db_nb(2),db_nbm,2))!Allocate to exactly the sizeo on disk)
    !
    if(read_is_on(ID)) then
       !
       ! Fill an array Vnl to size required by yambo, ignore extra elements
       !
-      Y_ALLOCATE(Vnl(3,X%ib(2),db_nbm,nXkibz,n_sp_pol))
-      Y_MEM(Vnl)
+      YAMBO_ALLOC(Vnl,(3,X%ib(2),db_nbm,nXkibz,n_sp_pol))
    endif
    !
    do i1=1,nXkibz
@@ -125,7 +123,7 @@ integer function io_Vnl(X,Xen,ID)
      !
    enddo
    !
-   Y_FREE(Vnl_disk)
+   YAMBO_FREE(Vnl_disk)
    !
  endif
  !

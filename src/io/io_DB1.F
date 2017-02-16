@@ -23,7 +23,7 @@
 !
 integer function io_DB1(E,k,ID)
  !
- use pars,             ONLY:SP,IP
+ use pars,             ONLY:SP
  use units,            ONLY:HA2EV
  use com,              ONLY:error,msg
  use LOGO,             ONLY:code_version,code_revision,code_GPL_revision
@@ -269,30 +269,20 @@ integer function io_DB1(E,k,ID)
  !
  if (read_is_on(ID)) then
    ! 
-   Y_ALLOCATE(E%E(E%nb,E%nk,n_sp_pol))
-   Y_ALLOCATE(E%f(E%nb,E%nk,n_sp_pol))
-   Y_MEM(E%E)
-   Y_MEM(E%f)
+   YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
+   YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
    E%f=0._SP
    !
-   Y_ALLOCATE(g_vec(ng_vec,3))
-   Y_MEM(g_vec)
-   Y_ALLOCATE(dl_sop(3,3,nsym))
-   Y_MEM(dl_sop)
-   Y_ALLOCATE(k%pt(k%nibz,3))
-   Y_MEM(k%pt)
-   Y_ALLOCATE(wf_nc_k(k%nibz))
-   Y_MEM(wf_nc_k)
-   Y_ALLOCATE(wf_igk(wf_ncx,k%nibz))
-   Y_MEM(wf_igk)
+   YAMBO_ALLOC(g_vec,(ng_vec,3))
+   YAMBO_ALLOC(dl_sop,(3,3,nsym))
+   YAMBO_ALLOC(k%pt,(k%nibz,3))
+   YAMBO_ALLOC(wf_nc_k,(k%nibz))
+   YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
-     Y_ALLOCATE(n_atoms_species(n_atomic_species))
-     Y_MEM(n_atoms_species)
-     Y_ALLOCATE(Z_species(n_atomic_species))
-     Y_MEM(Z_species)
-     Y_ALLOCATE(atom_pos(3,n_atoms_species_max,n_atomic_species))
-     Y_MEM(atom_pos)
+     YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+     YAMBO_ALLOC(Z_species,(n_atomic_species))
+     YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
      !
    endif
    !

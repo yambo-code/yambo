@@ -52,8 +52,7 @@ integer function io_SC_components(what,E_sc,ID)
  integer, external     :: variables_SC
  character(lchlen)     :: local_description(100)
  !
- real(SP), allocatable :: E_disk(:,:,:)
- integer               :: ik,bands_to_load,ib,i_spin,VAR_SIZE
+ integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
  !
  if (.not.io_SC) then
@@ -154,39 +153,31 @@ integer function io_SC_components(what,E_sc,ID)
    ! Energies
    !==========
    !
-   call io_bulk(ID,VAR="E_sc",VAR_SZ=(/SC_bands(2),nkibz,n_sp_pol/))
-   if (write_is_on(ID)) then
-     call io_bulk(ID,R3=E_sc%E(:SC_bands(2),:,:))
-   else
-     Y_ALLOCATE(E_disk(SC_bands(2),nkibz,n_sp_pol))
-     Y_MEM(E_disk)
-     call io_bulk(ID,R3=E_disk)
-     !
+   if(read_is_on(ID)) then
      bands_to_load=size(E_sc%E,1)
      !
      ! Make a copy of Kohn-Sham Energies in E_sc%Eo
      !
      if(l_sc_run .and. .not.allocated(E_sc%Eo) ) then
-       Y_ALLOCATE(E_sc%Eo(E_sc%nb,E_sc%nk,n_sp_pol))
-       Y_MEM(E_sc%Eo)
+       YAMBO_ALLOC(E_sc%Eo,(E_sc%nb,E_sc%nk,n_sp_pol))
        E_sc%Eo=E_sc%E
      endif
+   else
+     bands_to_load=SC_bands(2)
+   endif
+   !
+   call io_bulk(ID,VAR="E_sc",VAR_SZ=(/SC_bands(2),nkibz,n_sp_pol/))
+   call io_bulk(ID,R3=E_sc%E(:SC_bands(2),:,:))
+   !
+   if (bands_to_load>SC_bands(2)) then
      !
-     if (bands_to_load>SC_bands(2)) then
-       !
-       ! For either the H_sc and WFs I first check to 
-       ! have enough bands (in wf_load and X_O_strengths).
-       ! For the energies instead I need to shift the levels > SC_bands(2) (if any).
-       !
-       forall (ib=SC_bands(2)+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)-E_sc%E(SC_bands(2),:,:)
-       E_sc%E(:SC_bands(2),:,:)=E_disk(:SC_bands(2),:,:)
-       forall (ib=SC_bands(2)+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+E_sc%E(SC_bands(2),:,:)
-       !
-     else
-       E_sc%E(:bands_to_load,:,:)=E_disk(:bands_to_load,:,:)
-     endif
+     ! For either the H_sc and WFs I first check to 
+     ! have enough bands (in wf_load and X_O_strengths).
+     ! For the energies instead I need to shift the levels > SC_bands(2) (if any).
      !
-     Y_FREE(E_disk)
+     forall (ib=SC_bands(2)+1:bands_to_load) &
+     & E_sc%E(ib,:,:)=E_sc%Eo(ib,:,:)+ ( E_sc%E(SC_bands(2),:,:)-E_sc%Eo(SC_bands(2),:,:) )
+     !
    endif
    !
  endif
@@ -207,14 +198,9 @@ integer function io_SC_components(what,E_sc,ID)
    ! H_sc
    !======
    !
-   do i_spin=1,n_sp_pol
-     !
-     call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                 VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
-     !
-     call io_bulk(ID,C3=H_nl_sc(:,:,i_spin)
-     !
-   enddo
+   call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+&               VAR_SZ=(/2,SC_bands(2),SC_bands(2)/))
+   call io_bulk(ID,C2=H_nl_sc)
    !
  endif
  !
@@ -223,13 +209,9 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   do i_spin=1,n_sp_pol
-     call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                 VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
-     !
-     call io_bulk(ID,C3=SC_R(:,:,ik,i_spin))
-     !
-   enddo
+   call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+&               VAR_SZ=(/2,SC_bands(2),SC_bands(2)/))
+   call io_bulk(ID,C2=SC_R(:,:,ik,i_sp_pol))
    !
  endif
  !
@@ -238,13 +220,9 @@ integer function io_SC_components(what,E_sc,ID)
    ! Mean Field Potential 
    !======================
    !
-   do i_spin=1,n_sp_pol
-     call io_bulk(ID,VAR="Mean_Field_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                 VAR_SZ=(/fft_size,SC_bands(2),2/))
-     !
-     call io_bulk(ID,C3=V_mean(:,:))
-     !
-   enddo
+   call io_bulk(ID,VAR="Mean_Field_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+&               VAR_SZ=(/2,fft_size,SC_bands(2)/))
+   call io_bulk(ID,C2=V_mean)
    !
  endif
  !

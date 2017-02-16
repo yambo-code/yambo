@@ -138,7 +138,7 @@ module X_m
  end type
  !
  interface
-   logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
+   logical function OPTICS_eels(wv,nw,be_verbose,ordering,eps,eel)
      use pars,          ONLY:SP
      integer              :: nw 
      complex(SP)          :: wv(nw)
@@ -162,38 +162,31 @@ module X_m
        select case(what)
        case('X')
          if (allocated(X_mat)) return
-         Y_ALLOCATE(X_mat(d(1),d(2),d(3)))
-         Y_MEM(X_mat)
+         YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
          X_mat=cZERO
        case('DIP_iR')
          if (allocated(DIP_iR)) return
-         Y_ALLOCATE(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         Y_MEM(DIP_iR)
+         YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_iR=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
-         Y_ALLOCATE(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         Y_MEM(DIP_P)
+         YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_P=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
-         Y_ALLOCATE(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol))
-         Y_MEM(DIP_S)
+         YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
          DIP_S=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
-         Y_ALLOCATE(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         Y_MEM(DIP_spin)
+         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_spin=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
-         Y_ALLOCATE(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         Y_MEM(DIP_projected)
+         YAMBO_ALLOC(DIP_projected,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          DIP_projected=cZERO
        case('P_square')
          if (allocated(P_square)) return
-         Y_ALLOCATE(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         Y_MEM(P_square)
+         YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          P_square=cZERO
        end select
      else
@@ -202,51 +195,51 @@ module X_m
          !
          ! I clean the RL components mapping
          !
-         Y_FREE(X_RLcomp_ig)
+         YAMBO_FREE(X_RLcomp_ig)
          !
          ! and the matrix itself
          !
-         Y_FREE(X_mat)
+         YAMBO_FREE(X_mat)
          !
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
-         Y_FREE(DIP_iR)
+         YAMBO_FREE(DIP_iR)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
-         Y_FREE(DIP_P)
+         YAMBO_FREE(DIP_P)
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
-         Y_FREE(DIP_S)
+         YAMBO_FREE(DIP_S)
        case('DIP_spin')
          if (.not.allocated(DIP_spin)) return
-         Y_FREE(DIP_spin)
+         YAMBO_FREE(DIP_spin)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
-         Y_FREE(DIP_projected)
+         YAMBO_FREE(DIP_projected)
        case('P_square')
          if (.not.allocated(P_square)) return
-         Y_FREE(P_square)
+         YAMBO_FREE(P_square)
        end select
      endif
    end subroutine
    !
    subroutine X_duplicate(Xi,Xo)
      type(X_t):: Xi,Xo
-     Xo%ng=Xi%ng
-     Xo%ng_db=Xi%ng_db
-     Xo%iq=Xi%iq
-     Xo%ib    =Xi%ib
-     Xo%ib_lim=Xi%ib_lim
-     Xo%db_ib    =Xi%db_ib
-     Xo%db_ib_lim=Xi%db_ib_lim
-     Xo%ngostnts=Xi%ngostnts
-     Xo%ordering=Xi%ordering
-     Xo%Vnl_included=Xi%Vnl_included
-     Xo%ehe=Xi%ehe
-     Xo%q0=Xi%q0
+     Xo%ng           =Xi%ng
+     Xo%ng_db        =Xi%ng_db
+     Xo%iq           =Xi%iq
+     Xo%ib           =Xi%ib
+     Xo%ib_lim       =Xi%ib_lim
+     Xo%db_ib        =Xi%db_ib
+     Xo%db_ib_lim    =Xi%db_ib_lim
+     Xo%ngostnts     =Xi%ngostnts
+     Xo%ordering     =Xi%ordering
+     Xo%Vnl_included =Xi%Vnl_included
+     Xo%ehe          =Xi%ehe
+     Xo%q0           =Xi%q0
      Xo%cg_percentual=Xi%cg_percentual
-     Xo%ppaE=Xi%ppaE
-     Xo%Wd=Xi%Wd
+     Xo%ppaE         =Xi%ppaE
+     Xo%Wd           =Xi%Wd
      Xo%f_xc=Xi%f_xc
    end subroutine
    !
@@ -254,20 +247,20 @@ module X_m
      use pars,  ONLY:czero
      integer, optional :: type
      type(X_t)::X
-     X%ng=1
-     X%ng_db=0
-     X%iq=(/1,-1/)
-     X%ngostnts=0
-     X%whoami=0
-     X%Vnl_included=.false.
+     X%ng           =1
+     X%ng_db        =0
+     X%iq           =(/1,-1/)
+     X%ngostnts     =0
+     X%whoami       =0
+     X%Vnl_included =.false.
      if (present(type)) X%whoami=type
-     X%ehe=(/-1._SP,-1._SP/)/HA2EV
-     X%q0=(/1._SP,0._SP,0._SP/)
-     X%Wd=cZERO
+     X%ehe          =(/-1._SP,-1._SP/)/HA2EV
+     X%q0           =(/1._SP,0._SP,0._SP/)
+     X%Wd           =cZERO
      X%cg_percentual=100._SP
-     X%ppaE=1._SP
-     X%ordering="T"
-     X%f_xc="none"       
+     X%ppaE         =1._SP
+     X%ordering     ="T"
+     X%f_xc         ="none"       
    end subroutine
    !
 end module

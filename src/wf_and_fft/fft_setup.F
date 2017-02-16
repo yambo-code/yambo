@@ -49,10 +49,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
-     Y_FREE(fft_g_table)
+     YAMBO_FREE(fft_g_table)
    endif
-   Y_ALLOCATE(fft_g_table(max(iG_max,wf_ng),iGo_max))
-   Y_MEM(fft_g_table)
+   YAMBO_ALLOC(fft_g_table,(max(iG_max,wf_ng),iGo_max))
  endif
  !
  ! SIZE estimation
@@ -94,14 +93,12 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    endif
    !
    if (allocated(fft_rot_r)) then
-     Y_FREE(fft_rot_r)
+     YAMBO_FREE(fft_rot_r)
    endif
-   Y_ALLOCATE(fft_rot_r(fft_size,nsym))
-   Y_MEM(fft_rot_r)
+   YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))
    !
-   Y_FREE(fft_rot_r_inv)
-   Y_ALLOCATE(fft_rot_r_inv(fft_size))
-   Y_MEM(fft_rot_r_inv)
+   YAMBO_FREE(fft_rot_r_inv)
+   YAMBO_ALLOC(fft_rot_r_inv,(fft_size))
 
    !
    !Remember

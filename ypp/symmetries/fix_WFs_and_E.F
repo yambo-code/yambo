@@ -24,8 +24,7 @@
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen,cZERO
- use com,                 ONLY:msg,warning,core_io_path,more_io_path,error
- use memory_m,            ONLY:mem_est
+ use com,                 ONLY:msg,core_io_path,more_io_path,error
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
 &                              OP_APP,cp_file,cp_directory, &
 &                              OP_RD_CL,RD_CL,RD,frag_WF
@@ -37,7 +36,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz
  use D_lattice,           ONLY:spin_sop
  use interfaces,          ONLY:WF_load
- use YPP_symm
+ use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
+&                              wf_nc_k_new,l_wf_nc_k_red,wf_igk_new,&
+&                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save
  !
  implicit none
  !
@@ -146,7 +147,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    ! Rotating wavefunctions by components
    !
    allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
    if(l_wf_nc_k_red) then
      !
@@ -293,7 +293,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    io_err=io_WF(ID)
    !
    allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
    ACTION_=OP_APP_WR_CL
    if(frag_WF) ACTION_=OP_WR_CL
@@ -365,7 +364,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !=======
  call E_reset(E_new)
  deallocate(wf_disk)
- call mem_est("wf_disk")
  !
 end subroutine
 !

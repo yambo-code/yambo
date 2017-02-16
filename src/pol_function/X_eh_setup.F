@@ -51,10 +51,8 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  Nc_XTerm=0
  if (l_X_terminator) Nc_XTerm=Nv
  !
- Y_ALLOCATE(poles(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
- Y_MEM(poles)
- Y_ALLOCATE(Ein_poles(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
- Y_MEM(Ein_poles)
+ YAMBO_ALLOC(poles,(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
+ YAMBO_ALLOC(Ein_poles,(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
  !
  MPI_logicals_on=allocated(PAR_IND_Xk_bz%element_1D)
  !
@@ -161,21 +159,19 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  if (iq<0) then
    if (.not.allocated(X_poles)) then
-     Y_ALLOCATE(X_poles(X_eh_setup))
-     Y_MEM(X_poles)
+     YAMBO_ALLOC(X_poles,(X_eh_setup))
      X_poles=0._SP
    endif
    X_poles=X_poles+poles(:X_eh_setup)
    !
    if (.not.allocated(X_Ein_poles)) then
-     Y_ALLOCATE(X_Ein_poles(X_eh_setup))
-     Y_MEM(X_Ein_poles)
+     YAMBO_ALLOC(X_Ein_poles,(X_eh_setup))
      X_Ein_poles=0._SP
    endif
    X_Ein_poles=X_Ein_poles+Ein_poles(:X_eh_setup)
  endif
  !
- Y_FREE(poles)
- Y_FREE(Ein_poles)
+ YAMBO_FREE(poles)
+ YAMBO_FREE(Ein_poles)
  !
 end function

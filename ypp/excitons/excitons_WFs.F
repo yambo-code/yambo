@@ -24,7 +24,6 @@
 subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  !
  use pars,          ONLY:SP,cZERO,cI,pi
- use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:bz_samp
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
@@ -123,7 +122,6 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  ! Allocation
  !
  allocate(v2plot(nr_tot))
- call mem_est('v2plot ',(/nr_tot/),(/SP/))
  !
  ! Par Proc
  !

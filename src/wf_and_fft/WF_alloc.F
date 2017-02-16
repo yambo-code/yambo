@@ -62,26 +62,21 @@ subroutine WF_alloc(WF)
  endif
  !
  if (WF%space=="R") then
-   Y_ALLOCATE(WF%c(fft_size,WF%N))
-   Y_MEM(WF%c)
+   YAMBO_ALLOC(WF%c,(fft_size,WF%N))
  endif
  if (WF%space=="G") then
-   Y_ALLOCATE(WF%c(wf_ng,WF%N))
-   Y_MEM(WF%c)
+   YAMBO_ALLOC(WF%c,(wf_ng,WF%N))
  endif
  if (WF%space=="C") then
-   Y_ALLOCATE(WF%c(wf_ncx,WF%N))
-   Y_MEM(WF%c)
+   YAMBO_ALLOC(WF%c,(wf_ncx,WF%N))
  endif
  if (WF%space=="B") then
-   Y_ALLOCATE(WF%c(wf_ncx,WF%N))
-   Y_MEM(WF%c)
+   YAMBO_ALLOC(WF%c,(wf_ncx,WF%N))
  endif
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
  !
- Y_ALLOCATE(WF%index(WF%b(2),WF%k(2),WF%spin(2)))
- Y_MEM(WF%index)
+ YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%spin(2)))
  !
  WF%c=cZERO
  WF%index=0

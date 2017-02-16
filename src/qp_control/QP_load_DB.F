@@ -255,15 +255,13 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    if (do_EWZ_using_Ik_IE(2)) then
      qp_msg(i1:i1)="W"
      i1=i1+1
-     Y_ALLOCATE(en%W(en%nb,en%nk,n_sp_pol))
-     Y_MEM(en%W)
+     YAMBO_ALLOC(en%W,(en%nb,en%nk,n_sp_pol))
      en%W=rZero
    endif
    if (do_EWZ_using_Ik_IE(3)) then
      qp_msg(i1:i1)="Z"
      i1=i1+1
-     Y_ALLOCATE(en%Z(en%nb,en%nk,n_sp_pol))
-     Y_MEM(en%Z)
+     YAMBO_ALLOC(en%Z,(en%nb,en%nk,n_sp_pol))
      en%Z=1._SP
    endif
    if (GFs_From_DB) then
@@ -309,8 +307,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  ! Backup bare energies (only once)
  !
  if (.not.allocated(en%Eo)) then
-   Y_ALLOCATE(en%Eo(en%nb,en%nk,n_sp_pol))
-   Y_MEM(en%Eo)
+   YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
    en%Eo=en%E
  endif
  !

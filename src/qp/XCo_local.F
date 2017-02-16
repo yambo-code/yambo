@@ -43,7 +43,6 @@ subroutine XCo_local(E,Xk)
  use drivers,       ONLY:l_real_time
  use parallel_m,    ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
  use matrix_operate,ONLY:UP_matrix_index,matrix_index
- use SC,            ONLY:SC_bands
 #endif
 #if defined _SC
  use hamiltonian,   ONLY:V_xc_sc,V_hartree_sc
@@ -71,11 +70,9 @@ subroutine XCo_local(E,Xk)
  !
  ! Allocation 
  !
- Y_ALLOCATE(V_xc(fft_size,n_spin))
- Y_MEM(V_xc)
+ YAMBO_ALLOC(V_xc,(fft_size,n_spin))
  !
- Y_ALLOCATE(magn(fft_size,3))
- Y_MEM(magn)
+ YAMBO_ALLOC(magn,(fft_size,3))
  !
  ! Precompiler options in case a non-DFT potential is required
  !
@@ -102,18 +99,16 @@ subroutine XCo_local(E,Xk)
    !
    ! ...SC EXX and EXX+LDA_C
    !
-   Y_ALLOCATE(V_xc_sc(fft_size,n_spin))
-   Y_ALLOCATE(V_hartree_sc(fft_size,n_spin))
-   Y_MEM(V_xc_sc)
-   Y_MEM(V_hartree_sc)
+   YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
+   YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
    SC_fft_size=fft_size
    call load_SC_components('V',COM_=REP,MODE_=VERIFY)
    !
    if (.not.compatible_SC_DB) call error('Incompatible potential database')
    !
    V_xc=V_xc_sc
-   Y_FREE(V_xc_sc)
-   Y_FREE(V_hartree_sc)
+   YAMBO_FREE(V_xc_sc)
+   YAMBO_FREE(V_hartree_sc)
  endif
 #endif
  !
@@ -176,8 +171,7 @@ subroutine XCo_local(E,Xk)
  !
  if (n_spin==2) then
    !
-   Y_ALLOCATE(V_xc_mat(fft_size,n_spin,n_spin))
-   Y_MEM(V_xc_mat)
+   YAMBO_ALLOC(V_xc_mat,(fft_size,n_spin,n_spin))
    !
    call Build_V_xc_mat(V_xc,V_xc_mat)
    !
@@ -225,7 +219,7 @@ subroutine XCo_local(E,Xk)
      !
    enddo
    !
-   Y_FREE(V_xc_mat)
+   YAMBO_FREE(V_xc_mat)
    !
  endif
  !
@@ -234,9 +228,9 @@ subroutine XCo_local(E,Xk)
 #if defined _SC || defined _RT
  if(.not.(l_sc_run.or.l_real_time)) then
 #endif
-   Y_FREE(V_xc)
+   YAMBO_FREE(V_xc)
    if(n_spin>1) then   
-     Y_FREE(magn)
+     YAMBO_FREE(magn)
    endif
 #if defined _SC || defined _RT
  endif

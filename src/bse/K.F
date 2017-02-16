@@ -39,7 +39,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
- use BS_solvers,   ONLY:BSS_q0,BS_mat_free
+ use BS_solvers,   ONLY:BSS_q0,BS_blks_free
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
@@ -218,7 +218,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call deliver_IO_error_message(io_X_err,'PP/Em1s')
      call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
      n_BS_blks=0
-     call BS_mat_free()
+     call BS_blks_free()
      !
      ! GPL_EXCLUDE_START
      !

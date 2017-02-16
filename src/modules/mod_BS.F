@@ -162,13 +162,11 @@ module BS
      integer :: iG,iB
      !
      if (EXCHANGE) then
-       Y_ALLOCATE(BS_T_grp(iG)%O_x(BS_n_g_exch,BS_T_grp(iG)%size))
-       Y_MEM(BS_T_grp(iG)%O_x)
+       YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
      endif
      !
      if (CORRELATION) then
-       Y_ALLOCATE(BS_blk(iB)%O_c(O_ng,BS_blk(iB)%N_oscillators))
-       Y_MEM(BS_blk(iB)%O_c)
+       YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
      endif
      !
    end subroutine
@@ -178,7 +176,7 @@ module BS
      integer :: iG_ref,iB_ref
      integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
      do iG=iG_ref,1,-1
-       Y_FREE(BS_T_grp(iG)%O_x)
+       YAMBO_FREE(BS_T_grp(iG)%O_x)
      enddo
      if(iB_ref==0) return
      ik_now=BS_blk(iB_ref)%ik
@@ -191,8 +189,8 @@ module BS
        ik_loop=BS_blk(iB)%ik
        ip_loop=BS_blk(iB)%ip
        if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
-       Y_FREE(BS_blk(iB)%O_c)
-       Y_FREE(BS_blk(iB)%O_table)
+       YAMBO_FREE(BS_blk(iB)%O_c)
+       YAMBO_FREE(BS_blk(iB)%O_table)
      enddo
      !
    end subroutine
@@ -212,43 +210,29 @@ module BS
      !
      nT=BS_T_grp(iT)%size
      !
-     Y_ALLOCATE(BS_T_grp(iT)%dipoles_R(nT))
-     Y_MEM(BS_T_grp(iT)%dipoles_R)
-     Y_ALLOCATE(BS_T_grp(iT)%dipoles_A(nT))
-     Y_MEM(BS_T_grp(iT)%dipoles_A)
+     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A,(nT))
      if(l_kerr) then
-       Y_ALLOCATE(BS_T_grp(iT)%dipoles_R_kerr(nT))
-       Y_MEM(BS_T_grp(iT)%dipoles_R_kerr)
-       Y_ALLOCATE(BS_T_grp(iT)%dipoles_A_kerr(nT))
-       Y_MEM(BS_T_grp(iT)%dipoles_A_kerr)
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_kerr,(nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_kerr,(nT))
      endif
      if(l_photolum) then
-       Y_ALLOCATE(BS_T_grp(iT)%dipoles_R_PL(nT,3))
-       Y_MEM(BS_T_grp(iT)%dipoles_R_PL)
-       Y_ALLOCATE(BS_T_grp(iT)%dipoles_A_PL(nT,3))
-       Y_MEM(BS_T_grp(iT)%dipoles_A_PL)
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_PL,(nT,3))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_PL,(nT,3))
      endif
-     Y_ALLOCATE(BS_T_grp(iT)%table(nT,4))
-     Y_MEM(BS_T_grp(iT)%table)
-     Y_ALLOCATE(BS_T_grp(iT)%E(nT))
-     Y_MEM(BS_T_grp(iT)%E)
-     Y_ALLOCATE(BS_T_grp(iT)%f(nT))
-     Y_MEM(BS_T_grp(iT)%f)
-     Y_ALLOCATE(BS_T_grp(iT)%f_RES(nT))
-     Y_MEM(BS_T_grp(iT)%f_RES)
-     Y_ALLOCATE(BS_T_grp(iT)%f_PL(2,nT))
-     Y_MEM(BS_T_grp(iT)%f_PL)
+     YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,4))
+     YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f_PL,(2,nT))
      if (allocated(E%Z)) then
-       Y_ALLOCATE(BS_T_grp(iT)%Z(nT))
-       Y_MEM(BS_T_grp(iT)%Z)
+       YAMBO_ALLOC(BS_T_grp(iT)%Z,(nT))
      endif
      if (allocated(E%W)) then
-       Y_ALLOCATE(BS_T_grp(iT)%W(nT))
-       Y_MEM(BS_T_grp(iT)%W)
+       YAMBO_ALLOC(BS_T_grp(iT)%W,(nT))
      endif
      if (E_SOC_nbands/=0) then
-       Y_ALLOCATE(BS_T_grp(iT)%E_SOC_corr(2/n_sp_pol,nT))
-       Y_MEM(BS_T_grp(iT)%E_SOC_corr)
+       YAMBO_ALLOC(BS_T_grp(iT)%E_SOC_corr,(2/n_sp_pol,nT))
      endif
      !
    end subroutine
@@ -260,28 +244,28 @@ module BS
      use electrons,  ONLY:E_SOC_nbands
      integer :: iT
      !
-     Y_FREE(BS_nT_at_k)
-     Y_FREE(PAR_BS_T_grps_index)
-     Y_FREE(BS_T_grp_1st_el)
+     YAMBO_FREE(BS_nT_at_k)
+     YAMBO_FREE(PAR_BS_T_grps_index)
+     YAMBO_FREE(BS_T_grp_1st_el)
      !
      do iT=1,BS_nT_grps
        !
        if (.not.allocated(BS_T_grp(iT)%table)) cycle
        !
-       Y_FREE(BS_T_grp(iT)%dipoles_R)
-       Y_FREE(BS_T_grp(iT)%dipoles_A)
-if (l_kerr) then
-  Y_FREE(BS_T_grp(iT)%dipoles_R_kerr)
-  Y_FREE(BS_T_grp(iT)%dipoles_A_kerr)
-endif
-       Y_FREE(BS_T_grp(iT)%table)
-       Y_FREE(BS_T_grp(iT)%E)
-       Y_FREE(BS_T_grp(iT)%f)
-       Y_FREE(BS_T_grp(iT)%f_RES)
-       Y_FREE(BS_T_grp(iT)%f_PL)
-       Y_FREE(BS_T_grp(iT)%Z)
-       Y_FREE(BS_T_grp(iT)%W)
-       Y_FREE(BS_T_grp(iT)%E_SOC_corr)
+       YAMBO_FREE(BS_T_grp(iT)%dipoles_R)
+       YAMBO_FREE(BS_T_grp(iT)%dipoles_A)
+       if (l_kerr) then
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_R_kerr)
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_A_kerr)
+       endif
+       YAMBO_FREE(BS_T_grp(iT)%table)
+       YAMBO_FREE(BS_T_grp(iT)%E)
+       YAMBO_FREE(BS_T_grp(iT)%f)
+       YAMBO_FREE(BS_T_grp(iT)%f_RES)
+       YAMBO_FREE(BS_T_grp(iT)%f_PL)
+       YAMBO_FREE(BS_T_grp(iT)%Z)
+       YAMBO_FREE(BS_T_grp(iT)%W)
+       YAMBO_FREE(BS_T_grp(iT)%E_SOC_corr)
        !
      enddo
      !

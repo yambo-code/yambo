@@ -48,7 +48,6 @@ integer function ioDB1(E,k,ID)
  type(levels)  :: E
  type(bz_samp) :: k
  integer       :: ID,code_version_local(3),code_revision_local
- logical       :: l_use_libxc
  !
  ioDB1 =io_connect(desc="db1",type=0,ID=ID)
  if (ioDB1/=0) goto 1
@@ -190,7 +189,7 @@ integer function ioDB1(E,k,ID)
      wf_nb_io=E%nb
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
-     BS_bands=(/1,E%nb/)
+     if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
      !
      Tel=input_GS_Tel
      nel=default_nel

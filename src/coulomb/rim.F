@@ -24,8 +24,8 @@ subroutine rim()
  use pars,          ONLY:SP,pi,DP
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use timing,        ONLY:live_timing
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat
@@ -37,7 +37,7 @@ subroutine rim()
  !
  ! Work Space
  !
- type(pp_indexes)::px
+ type(PP_indexes)::px
  integer   :: iq
  real(SP)  :: em1_anis(3),G_sph_radii,anisotropy 
  !
@@ -51,7 +51,7 @@ subroutine rim()
  integer            :: iseed(8)
  real(DP), external :: dlaran
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! Anisotropy Setup
  !
@@ -134,7 +134,7 @@ subroutine rim()
  RIM_qpg=0._SP
  call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
  !
- call par_indexes(px,(/nqibz/))
+ call PARALLEL_index(px,(/nqibz/))
  call live_timing('Momenta loop',px%n_of_elements(myid+1))
  do iq=1,nqibz
    if (.not.px%element_1D(iq)) cycle
@@ -155,11 +155,11 @@ subroutine rim()
  enddo
  call live_timing()
  !
- call pp_redux_wait(RIM_qpg)
- call pp_redux_wait(RIM_anisotropy)
+ call PP_redux_wait(RIM_qpg)
+ call PP_redux_wait(RIM_anisotropy)
  !
  ! CLEAN
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
 end subroutine

@@ -29,8 +29,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
@@ -44,33 +44,28 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !Work Space
  !
  type(ggwinfo)    ::isc,iscp
- type(pp_indexes) ::px
- integer                 :: i2,iq,ib,ibp,jb,ik,i_qp
+ type(PP_indexes) ::px
+ integer                 :: iq,ib,ibp,jb,ik,i_qp
  integer                 :: Sx_lower_band,Sx_upper_band
 #if defined _DOUBLE
- complex(DP)             ::zdotc,zdotu
+ complex(DP)             ::zdotu
 #else 
- complex(SP)             ::cdotc,cdotu
+ complex(SP)             ::cdotu
 #endif
  complex(DP)             ::DP_Sx
  complex(SP),allocatable ::local_rhotw(:)
- character(schlen)       ::ch,ch_spin,sx_fmt,vxc_fmt,dump_ch
+ character(schlen)       ::ch
  !
  !QP list
  !
  integer              :: i4(4)
  integer, external    :: QP_state_extract
  !
- !IO
- !
- integer           :: ID,io_err
- integer, external :: io_HF_and_locXC
- !
  ! Resets & basis setup
  !
  call collision_reset(isc)
  call collision_reset(iscp) 
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  Sx_lower_band=1
  Sx_upper_band=E%nbm
@@ -125,8 +120,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ! par indexes
  !
- call par_indexes(px,(/q%nbz,E%nbm/))
- call pp_redux_wait
+ call PARALLEL_index(px,(/q%nbz,E%nbm/))
+ call PP_redux_wait
  !
  ch='EXS'
  !
@@ -138,7 +133,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  endif
  !
  do i_qp=1,QP_n_states
-   !
    !
    ib =QP_table(i_qp,1)
    ibp=QP_table(i_qp,2)
@@ -167,7 +161,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      isc%qs(1)=qindx_S(QP_table(i_qp,3),iq,2)
      iscp%qs=isc%qs
      !
-     !
      do jb=Sx_lower_band,Sx_upper_band
        !      
        if (.not.px%element_2D(iq,jb)) cycle
@@ -176,14 +169,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        !
        call scatterBamp(isc)
        !
-       !
        ! Normal case, the density matrix is diagonal
        !
        iscp%rhotw=isc%rhotw
        if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
        !
        local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(jb,isc%os(2),isc%os(4))
-       !
        !
 #if defined _DOUBLE
        DP_Sx=zdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
@@ -200,7 +191,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      !
    enddo
    !
-   !
  enddo
  !
  call live_timing()
@@ -209,8 +199,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  call collision_reset(isc)
  call collision_reset(iscp) 
- call pp_indexes_reset(px)
- !
- call pp_redux_wait(QP_Vnl_xc)
+ call PP_indexes_reset(px)
+ call PP_redux_wait(QP_Vnl_xc)
  !
 end subroutine

@@ -26,20 +26,23 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_dim,fft_size
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
- use wave_func,     ONLY:WF_load,wf,WF_free,wf_ng
+ use wave_func,     ONLY:WF_load,wf,WF_symm,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
 &                        excitons_sort_and_report,l_amplitude,l_free_hole,&
 &                        output_fname,use_xcrysden,use_gnuplot,use_cube,plot_dim,l_norm_to_one
+#if defined _YPP_ELPH
+ use YPP,           ONLY:l_eliashberg,l_gkkp
+#endif
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
 &                        BSS_n_descs,BSS_description
  use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use com,           ONLY:msg,error,warning,of_open_close
  use X_m,           ONLY:X_t
  use memory_m,      ONLY:mem_est
@@ -80,7 +83,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  integer      :: iq,ia,i1,i2,i_l,i_spin
  real(SP)     :: k_dot_r,r_hole_rlu(3)
  !
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  !
  !... I/0
  !
@@ -98,9 +101,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  integer           ::iv,ic,iv_fft,ic_fft,ikbz,ikibz,is,neh
  real(SP)          ::r_eh(3)
  complex(SP)       ::wf_
- !
- complex(SP)       ::WF_symm1(fft_size,n_spinor)
- complex(SP)       ::WF_symm2(fft_size,n_spinor)
+ complex(SP)       ::WF1_ir(n_spinor),WF2_ir(n_spinor)
  !
  complex(SP),  allocatable ::wf_vc(:)
  !
@@ -125,7 +126,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  n_lambda = get_lambda()
  !
  if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin&
+#if defined _YPP_ELPH
+&              ,l_eliashberg,l_gkkp/))) return
+#else
 &                           /))) return
+#endif
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
@@ -198,7 +203,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Loading  Wf 
  !
- if (l_exc_wf) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ if (l_exc_wf.or.(l_spin.and.n_spinor==2)) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  ! Exciton's spin (not collinear case)
  !=====================================
@@ -340,9 +345,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Par Proc
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/nr_tot/))
- call pp_redux_wait
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/nr_tot/))
+ call PP_redux_wait
  !
  ! Loop on exc states
  !===================
@@ -391,11 +396,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
        k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
        !
-       call WF_apply_symm((/iv,ikbz,is,i_spin/),WF_symm1)
-       call WF_apply_symm((/ic,ikbz,is,i_spin/),WF_symm2)
+       WF1_ir=WF_symm(rindex(ir),(/iv,ikibz,is,i_spin/))
+       WF2_ir=WF_symm(rindex(ir),(/ic,ikibz,is,i_spin/))
        !
-       wf_vc(neh) = conjg(WF_symm1(rindex(ir),1))*WF_symm2(rindex(ir),1)
-       if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF_symm1(rindex(ir),2))*WF_symm2(rindex(ir),2)
+       wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
+       if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
        !
        wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r)
        ! 
@@ -415,7 +420,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    call live_timing()
    !
-   call pp_redux_wait(v2plot)
+   call PP_redux_wait(v2plot)
    !
    ! PLOT
    !
@@ -439,7 +444,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
  enddo
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! CLEAN
  !

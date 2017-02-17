@@ -22,12 +22,12 @@
 subroutine IO_Setup(en,k)
  use pars,           ONLY:lchlen
  use stderr,         ONLY:logfile,tty_size,intc
- use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,warning
+ use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,warning,second_jobstr
  use it_m,           ONLY:infile
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,IO_write,Fragmented_IO
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use par_proc_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,pp_redux_wait,myid,&
+ use parallel_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,PP_redux_wait,myid,&
 &                         local_master_cpu,master_cpu
  use WF_distribute,  ONLY:Distributed_Memory
  implicit none
@@ -56,7 +56,8 @@ subroutine IO_Setup(en,k)
  call msg('r','Communications in ',trim(com_path))
  call msg('r','Input file     is ',trim(infile))
  call msg('r','Report file    is ',trim(repfile))
- if (len_trim(jobstr)>0 ) call msg('r','Job string     is ',trim(jobstr))
+ if (len_trim(jobstr)>0 )        call msg('r','Job string     is ',trim(jobstr))
+ if (len_trim(second_jobstr)>0 ) call msg('r','2nd Job string is ',trim(second_jobstr))
  if (tty_size<0         ) call msg('r','Log file       is ',trim(logfile))
  call msg('r','')
  !

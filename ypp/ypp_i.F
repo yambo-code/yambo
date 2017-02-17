@@ -22,7 +22,7 @@
 integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
- use par_proc_m,          ONLY:ncpu,myid,p_finalize
+ use parallel_m,          ONLY:ncpu,myid,MPI_close
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
 &                              nXkibz,nqibz,k_pt,q_pt
@@ -49,6 +49,9 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot
+#if defined _YPP_ELPH
+ integer, external :: ELPH_databases
+#endif
  !
  ! Presets
  !
@@ -99,7 +102,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! INPUT FILE
  !
- call ypp_init(instr,lnstr,.false.)
+ call ypp_init(en,instr,lnstr,.false.)
  if (infile_editing) then
    iinf=1
    call ypp_finalize()
@@ -154,18 +157,49 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_bxsf)  call read_bxsf(Xk,Xen)
  !
- if (l_qpdb)  call qpdb_setup(en,k)
+ if (l_QP_DBs_create_and_modify)  call QP_DBs_setup(en,k)
+ !
+ if (l_QP_DBs_merge)  call QP_DBs_merge(en,k)
  !
  if (l_wannier) call WANNIER_driver(k,en)
  !   =========
+ !
+ if (l_fix_syms) call symmetries_driver(en,k)
+ !  ==========
  !
  !
  if (l_excitons) call excitons_driver(k,Xk,en,Xen,q)
  !   ===========
  !
+#if defined _YPP_ELPH
+ if (l_electrons.and..not.l_eliashberg) call electrons_driver(Xk,Xen)
+#else
  if (l_electrons)                       call electrons_driver(Xk,Xen)
+#endif
  !   ===========
  !
+#if defined _YPP_ELPH
+ !
+ if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
+   ! =====     ========
+   if (l_gkkp)                i_err=ELPH_databases(k,en,q)
+   if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
+ endif
+ !
+ if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
+ !
+#endif
+
+#if defined _YPP_SURF
+ !
+ if (lras) call ras_ypp
+ if (lreels) call reels_ypp
+!if (lcelleps) call ras_generate_epsdb(en,k)
+ if (lloc) call ras_loc_ypp
+ if (ltrans) call ras_trans_ypp(en,k)
+ !
+#endif
+
  !
  ! END
  !
@@ -177,11 +211,11 @@ contains
   subroutine ypp_finalize()
     if (.not.infile_editing) then
       call section('X','Game Over')
-      call ypp_init(instr,lnstr,.TRUE.)
+      call ypp_init(en,instr,lnstr,.TRUE.)
       call msg("nl","")
-      call p_finalize()
+      call MPI_close()
     else
-      call ypp_init(instr,lnstr,.TRUE.)
+      call ypp_init(en,instr,lnstr,.TRUE.)
     endif
   end subroutine
   !

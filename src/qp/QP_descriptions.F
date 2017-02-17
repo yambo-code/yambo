@@ -35,6 +35,9 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
  use IO_m,          ONLY:ver_is_gt_or_eq
+#if defined _ELPH 
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches
+#endif
  implicit none
  !
  type(QP_t)  ::qp
@@ -153,6 +156,51 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &       ' Sx RL components       :',QP_ng_Sx
  endif
  !
+#if defined _ELPH 
+ !
+ ! El-Ph
+ !
+ if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
+   !
+   if (l_ph_corr) then
+     !
+     qp%n_descs=qp%n_descs+1
+     if (.not.l_el_corr) qp%n_descs=n_descs_save+1
+     !
+     if (trim(QP_solver)/='g') then
+       write (qp%description(qp%n_descs),trim(&
+&            string_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &
+&            ' [ph] dS/dw steps        :',QP_dSc_steps
+       qp%n_descs=qp%n_descs+1
+       write (qp%description(qp%n_descs),trim(&
+&            string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HA2EV /) ),')'))) &
+&            ' [ph] dS/dw step     [ev]:',QP_dSc_delta*HA2EV
+       qp%n_descs=qp%n_descs+1
+       write (qp%description(qp%n_descs),trim(&
+&           string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HA2EV /) ),')')))&
+&           ' [ph] Sc/G damping   [ev]:',QP_G_damp*HA2EV
+     endif
+     !
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' El-Ph correlation      : yes'
+     !
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&          string_pack('(a,2',gen_fmt( (/QP_PH_n_G_bands/) ),')'))) &
+&          ' El-Ph Sc. G bands      :',(/1,QP_PH_n_G_bands/)
+     !
+     if (ver_is_gt_or_eq(-1,(/3,2,2/))) then
+       qp%n_descs=qp%n_descs+1
+       write (qp%description(qp%n_descs),trim(&
+&            string_pack('(a,2',gen_fmt( elph_branches ),')'))) &
+&            ' El-Ph phonon branches  :',(/elph_branches/)
+     endif
+     !
+   endif
+   !
+ endif
+ !
+#endif
  !
  ! Green's Functions
  !

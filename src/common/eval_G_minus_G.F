@@ -44,7 +44,7 @@ integer function eval_G_minus_G(iG,iGo)
  real(SP):: E_of_shell_G_m_G
  real(SP):: v1(3)
  !
- integer, external :: ig_index
+ integer, external :: G_index
  !
  ! Init
  !
@@ -89,7 +89,7 @@ integer function eval_G_minus_G(iG,iGo)
        goto 1
      endif
      !
-     G_m_G(i1,i2)=ig_index(v1)
+     G_m_G(i1,i2)=G_index(v1)
      !
    enddo
  enddo 

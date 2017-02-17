@@ -28,14 +28,15 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! Mode = 1 -> Mode 0 +
  !  Define E%f and reports variations in Ef/nbf/nbm
  !  Output : E%Efermi(2:) E%nbf,E%nbm
+ !  E%E are shifted 
  !
  ! Mode > 1 -> Mode 1 +
  !  Full report of system electronic character
  !
  use pars,          ONLY:SP,DP
- use units,         ONLY:HA2EV,HA2KEL
+ use units,         ONLY:HA2EV,HA2KEL,BO2ANG
  use drivers,       ONLY:Finite_Tel
- use D_lattice,     ONLY:Tel,Bose_Temp
+ use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
 &                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
@@ -44,17 +45,18 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use functions,     ONLY:Fermi_fnc
  use interfaces,    ONLY:OCCUPATIONS_gaps
  implicit none
+ !
  type(levels) ::E
  type(bz_samp)::K
- integer :: mode
+ integer      ::mode
  !
  ! Work Space
  !
  integer :: i1,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
- real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,local_Tel
+ real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist
  logical :: Fermi_is_converged
- real(SP),parameter :: Telstep=0.0001/HA2EV
+ real(SP),parameter :: Tel_step=0.0001/HA2EV
  real(SP),parameter :: nel_diff_zero=1.E-5
  !
  !     n_spin n_sp_pol n_spinor  spin_occ 
@@ -63,8 +65,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !       2        2        1         1          collinear
  !
  spin_occ=2.0_SP/real(n_spin)
- !
- local_Tel=Telstep
  !
  ! All energies are stored in E_sorted...
  !
@@ -94,6 +94,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  n_b_full_guess= nint( real(nel)/2.0_SP*real(n_spinor)+.1)
  !
+ if (n_b_full_guess+1 > E%nb ) call error(' Too few states. Include more states in the DFT run.')
+ !
  Ef(1)=maxval(E%E(n_b_full_guess,:,:))
  Ef(2)=minval(E%E(n_b_full_guess+1,:,:))
  !
@@ -114,6 +116,13 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! 
  i_trials=1
  Fermi_is_converged=.false.
+ !
+ ! BUG-fix [Andrea 1/6/2012]: when the system is semiconductive it may happen the
+ ! Efermi falls below or above the CBM/VBM of the RIM energy levels. To avoid this
+ ! a very small temperature is imposed forcing the Fermi level to fall within the
+ ! gap.
+ !
+ if (BZ_RIM_nbands>0) Tel=Tel_step
  !
  do while (.not.Fermi_is_converged)
    !
@@ -174,7 +183,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    !
    if (Fermi_is_converged) exit
    !
-   Tel=Tel+Telstep
+   Tel=Tel+Tel_step
    if (i_trials(1)==100) call error('Impossible to converge the Fermi Level')
    !
  enddo
@@ -182,7 +191,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! Mode = 0. Check only for the Fermi energy
  !
  if (Bose_Temp<0.) Bose_Temp=Tel
- Finite_Tel=any((/Tel,Bose_Temp/)>=1.E-5)
+ Finite_Tel=any((/Tel,Bose_Temp/)>=Tel_step*3._SP)
  !
  if (mode==0) return
  !
@@ -190,7 +199,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  !... and find the nearest occupied state to the Fermi level
  !
- if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_spin))
+ if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_sp_pol))
  Efdist=1.E5
  do i1=1,n_total_states
    ib=index( index_E_sorted(i1) , 1)
@@ -214,6 +223,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
  !
  if (BZ_RIM_nbands>0) then
+   ! 
    E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%Efermi(1)
    do ik=1,BZ_RIM_tot_nkpts
      do ib=1,BZ_RIM_nbands
@@ -222,6 +232,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
        enddo
      enddo
    enddo
+   !
  endif
  !
  ! Eval Metallic/Filled bands and gaps
@@ -235,8 +246,9 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! Complete Report
  !
  call msg('r',  'Fermi Level        [ev]:',E%Efermi(1)*HA2EV)
- call msg('r',  'Electronic Temp. [ev K]:',(/Tel*HA2EV,Tel*HA2KEL/))
- call msg('r',  'Bosonic    Temp. [ev K]:',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
+ call msg('r',  'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
+ call msg('r',  'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
+ call msg('r',  'El. density      [cm-3]: ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))
  !
  call REPORT_Occupations(E)
  !

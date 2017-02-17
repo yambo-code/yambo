@@ -45,8 +45,10 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  integer     ,optional :: spins_to_load(2)
- character(*),optional :: space,title
- logical     ,optional :: impose_free_and_alloc,force_WFo
+ character(*),optional :: space
+ character(*),optional :: title
+ logical     ,optional :: impose_free_and_alloc
+ logical     ,optional :: force_WFo
  !
  ! Work Space
  !
@@ -175,6 +177,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (wf_space=='R') allocate(wf_DP(fft_size))
  if (wf_space=='G') allocate(wf_DP(wf_ng))
  if (wf_space=='C') allocate(wf_DP(wf_ncx))
+ call mem_est("wf_DP",(/size(wf_DP)/),(/2*DP/))
  !
  if (wf_space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
@@ -258,6 +261,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call mem_est("wf_disk")
  !
  deallocate(wf_DP)
+ call mem_est("wf_DP")
  !
  if(allocated(states_to_load)) then
    if(allocated(states_loaded)) deallocate(states_loaded)

@@ -2236,7 +2236,7 @@ CONTAINS
          CALL iotk_scan_dat( iunit, "HUBBARD_LMAX", Hubbard_lmax_, IERR=ierr )
          IF ( ierr/=0 ) RETURN
          !
-         ALLOCATE( Hubbard_l_(1:Hubbard_lmax_) )
+         ALLOCATE( Hubbard_l_(nsp_) )
          ALLOCATE( Hubbard_U_(nsp_) )
          ALLOCATE( Hubbard_alpha_(nsp_) )
          !
@@ -2945,10 +2945,11 @@ CONTAINS
     END SUBROUTINE qexml_read_rho
 
 subroutine read_pseudo_header(u,z,psfile,nmesh,nbeta,psp_has_so) 
+  use pars,   ONLY:SP
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
-  INTEGER, INTENT(OUT) :: nmesh,nbeta
-  REAL, INTENT(OUT)    :: z
+  INTEGER,  INTENT(OUT) :: nmesh,nbeta
+  REAL(SP), INTENT(OUT)    :: z
   LOGICAL, OPTIONAL, INTENT(OUT) :: psp_has_so
   !
   CHARACTER(256) :: filename
@@ -2978,9 +2979,10 @@ subroutine read_pseudo_header(u,z,psfile,nmesh,nbeta,psp_has_so)
 end subroutine read_pseudo_header
 
 subroutine read_upf_header_v2( u, z, nmesh, nbeta, psfile, psp_has_so, ierr )
+  use pars,        ONLY:SP
   implicit none
   INTEGER, INTENT(OUT) :: nmesh,nbeta
-  REAL, INTENT(OUT) :: z
+  REAL(SP), INTENT(OUT) :: z
   LOGICAL, INTENT(OUT) :: psp_has_so
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   INTEGER :: i,idummy,idummy2, unit, iostat, u,ios,ierr,ierr_
@@ -3013,9 +3015,10 @@ subroutine read_upf_header_v2( u, z, nmesh, nbeta, psfile, psp_has_so, ierr )
 end subroutine read_upf_header_v2
 
 subroutine read_upf_header_v1( u, z, nmesh, nbeta, psfile, ierr )
+  use pars,       ONLY:SP
   implicit none
   INTEGER, INTENT(OUT) :: nmesh,nbeta
-  REAL, INTENT(OUT) :: z
+  REAL(SP), INTENT(OUT) :: z
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
   character(50) :: dummy
@@ -3084,12 +3087,13 @@ end subroutine read_upf_header_v1
 
 subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
 &          wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psp_has_so) 
+  use pars,      ONLY:SP
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
   INTEGER, INTENT(INOUT) :: nmesh,nbeta
-  REAL, INTENT(OUT)      :: z
-  REAL, INTENT(OUT)      :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  REAL(SP), INTENT(OUT)      :: z
+  REAL(SP), INTENT(OUT)      :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
   INTEGER, INTENT(OUT)   :: lbeta(:),mesh_beta(:)
   LOGICAL, INTENT(INOUT) :: psp_has_so
     !
@@ -3112,12 +3116,13 @@ end subroutine read_pseudo_data
 
 subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
+  use pars,    ONLY:SP
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   LOGICAL, INTENT(IN)          :: psp_has_so
   !
   INTEGER, INTENT(IN) :: nmesh,nbeta
-  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  REAL(SP),INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
   !
   CHARACTER(256) :: filename
@@ -3148,11 +3153,12 @@ end subroutine
 
 subroutine read_upf_parameters_v1(u,nmesh,nbeta,mesh, &
 &                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
+  use pars,    ONLY:SP
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
   INTEGER, INTENT(IN)  :: nmesh,nbeta
-  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:)
+  REAL(SP), INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:)
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
   !
   CHARACTER(256) :: filename
@@ -3210,17 +3216,18 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
   use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
+  use pars,           ONLY:SP
   !
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   LOGICAL, INTENT(IN)          :: psp_has_so
   !
-  INTEGER, INTENT(IN)  :: nmesh,nbeta
-  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
-  INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
+  INTEGER,  INTENT(IN)  :: nmesh,nbeta
+  REAL(SP), INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  INTEGER,  INTENT(OUT) :: lbeta(:),mesh_beta(:)
   !
-  real  :: beta_tmp(nmesh,nbeta),d_tmp(nbeta,nbeta)
-  complex :: cd_tmp(nbeta,nbeta)
+  real(SP)    :: beta_tmp(nmesh,nbeta),d_tmp(nbeta,nbeta)
+  complex(SP) :: cd_tmp(nbeta,nbeta)
   !
   CHARACTER(256) :: filename
   character(50) :: dummy
@@ -3271,9 +3278,12 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh,psp_has_so, &
   ENDDO
   !
   CALL iotk_scan_dat(u, 'PP_DIJ', d_tmp , attr=attr)
-  cd_tmp=cmplx(d_tmp,0.)
-  call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
-  d_tmp=real(cd_tmp)
+  !
+  if(size(d_tmp)>1) then
+    cd_tmp=cmplx(d_tmp,0._SP)
+    call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
+    d_tmp=real(cd_tmp)
+  endif
   !
   lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
   forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))

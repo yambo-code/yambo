@@ -29,7 +29,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:DL_vol, alat
  use com,           ONLY:msg,warning
- use electrons,     ONLY:levels,n_spin
+ use electrons,     ONLY:levels,n_spin,n_spinor
  use FFT_m,         ONLY:fft_size
  use wrapper,        ONLY:real_V_dot_V
  use xc_functionals,ONLY:E_xc,F_xc,V_xc,magn,&
@@ -80,11 +80,18 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
    call el_magnetization(en,Xk)
-   do ifft=1,fft_size
-     mod_magn=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
-     spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_magn)
-     spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_magn)
-   enddo
+   if (n_spinor==1) then
+     do ifft=1,fft_size
+       spin_rho_SP(ifft,1)=0.5*(rho(ifft)+magn(ifft,3))
+       spin_rho_SP(ifft,2)=0.5*(rho(ifft)-magn(ifft,3))
+     enddo
+   else
+     do ifft=1,fft_size
+       mod_magn=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
+       spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_magn)
+       spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_magn)
+     enddo
+   endif
  endif
  !
  forall(i1=1:fft_size,i2=1:n_spin)  spin_rho_DP(i2,i1)=spin_rho_SP(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)

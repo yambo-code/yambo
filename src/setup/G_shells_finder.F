@@ -34,8 +34,8 @@ subroutine G_shells_finder()
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero
- use par_indexes_m,ONLY:par_indexes
- use par_proc_m,   ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use interfaces,   ONLY:PARALLEL_index
+ use parallel_m,   ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  !
  implicit none
  !
@@ -44,7 +44,7 @@ subroutine G_shells_finder()
  integer :: i_1,i_2,ig_1,ig_2,i_s,i_m,n_g_shells_no_holes
  integer :: G_mod_indx(ng_closed),ng_in_shell_TMP(ng_closed),first_G_in_shell(ng_closed)
  real(SP):: G_mod(ng_closed),g_rotated(3),E_of_shell_TMP(ng_closed)
- type(pp_indexes) :: px
+ type(PP_indexes) :: px
  !
  ! I/O
  !
@@ -98,9 +98,9 @@ subroutine G_shells_finder()
  ! Parallel Setup
  !================
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
- call par_indexes(px,(/n_g_shells/))
+ call PARALLEL_index(px,(/n_g_shells/))
  !
  if (ng_closed>1) call live_timing('Shells finder',px%n_of_elements(myid+1))
  !==========================================================================
@@ -143,10 +143,10 @@ subroutine G_shells_finder()
  !
  if (ng_closed>1) call live_timing(steps=1)
  !
- call pp_redux_wait(g_rot)
- call pp_redux_wait(E_of_shell_TMP)
+ call PP_redux_wait(g_rot)
+ call PP_redux_wait(E_of_shell_TMP)
  !
- ! Redefine ng_in_shell_TMP witg actual position of the last element of the
+ ! Redefine ng_in_shell_TMP with actual position of the last element of the
  ! degenerate group
  !
  do i_m=2,n_g_shells

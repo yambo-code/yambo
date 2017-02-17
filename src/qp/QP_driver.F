@@ -29,7 +29,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp
- use com,           ONLY:msg
+ use com,           ONLY:msg,warning
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
@@ -37,7 +37,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator
+&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator,l_QP_Expand,QP_G_info
+#if defined _ELPH
+ use ELPH,          ONLY:QP_DW,QP_TadPole,QP_OMS_Fan
+#endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
@@ -49,7 +52,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Work Space
  !
  type(QP_t)        ::qp
- integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin,dump_ng
+ integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin
  integer, external ::ioQP,eval_G_minus_G
  !
  ! Driver Logicals
@@ -57,8 +60,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  call parser('NewtDchk',   QP_dSc_test)
  call parser('OnMassShell',On_Mass_Shell_approx)
+ call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
- call parser('GWTerm', PPa_terminator)
+ call parser('GWTerm', PPA_terminator)
  call parser('ExtendOut',  l_extended_output)
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
@@ -67,6 +71,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! skipped
  !==============================================================
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
+ !
+ if (.not.l_el_corr.and..not.l_ph_corr) then
+   call warning('Both e-p and e-e correlation switched off')
+   return
+ endif
  !
  ! Head message
  !==============
@@ -273,6 +282,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    if (l_el_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
+# if defined _ELPH 
+   !
+   if (l_ph_corr)                                    call ELPH_Sigma_c(en,k,q,qp)
+   !
+#endif
    !
    call QP_Green_Function(qp,en,-1)
    !
@@ -330,6 +344,19 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      allocate(QP_Sc(QP_n_states,QP_Sc_steps))
      call mem_est("QP_Sc",(/size(QP_Sc)/))
      !
+#if defined _ELPH
+     if (l_ph_corr) then
+       if (On_Mass_Shell_approx) then
+         allocate(QP_OMS_Fan(QP_n_states))
+         call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))
+       endif
+       allocate(QP_DW(QP_n_states))
+       call mem_est("QP_DW",(/size(QP_DW)/))
+       allocate(QP_TadPole(QP_n_states))
+       call mem_est("QP_TadPole",(/size(QP_TadPole)/))
+     endif
+#endif
+     !
      if (trim(QP_solver)=='g') then
        allocate(qp%GreenF(QP_n_states,QP_Sc_steps))
        call mem_est("qp_GreenF",(/size(qp%GreenF)/))
@@ -340,6 +367,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        qp%GreenF_n_steps=QP_Sc_steps
        allocate(QP_G_amplitude_integral(QP_n_states))
        call mem_est("QP_G_amplitude_integral",(/size(QP_G_amplitude_integral)/))
+       allocate(QP_G_info(QP_n_states,3,2))
+       call mem_est("QP_G_info",(/size(QP_G_info)/))
      else if (.not.l_life) then
        allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
        call mem_est("QP_dSc",(/size(QP_dSc)/))
@@ -349,10 +378,15 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    subroutine local_free()
      deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,QP_table,QP_state)
-     if (allocated(QP_Sc))        deallocate(QP_Sc)
-     if (allocated(QP_dSc))       deallocate(QP_dSc)
-     if (allocated(QP_Vnl_xc))    deallocate(QP_Vnl_xc,QP_Vxc)
-     if (associated(qp%GreenF))   then
+#if defined _ELPH
+     if (allocated(QP_DW))          deallocate(QP_DW)
+     if (allocated(QP_OMS_Fan))     deallocate(QP_OMS_Fan)
+     if (allocated(QP_TadPole))     deallocate(QP_TadPole)
+#endif
+     if (allocated(QP_Sc))          deallocate(QP_Sc)
+     if (allocated(QP_dSc))         deallocate(QP_dSc)
+     if (allocated(QP_Vnl_xc))      deallocate(QP_Vnl_xc,QP_Vxc)
+     if (associated(qp%GreenF)) then
        deallocate(qp%GreenF)
        nullify(qp%GreenF)
      endif
@@ -364,11 +398,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        deallocate(qp%S_total)
        nullify(qp%S_total)
      endif
+     if (allocated(QP_G_info)) deallocate(QP_G_info)
      if (allocated(QP_G_amplitude_integral)) deallocate(QP_G_amplitude_integral)
      if (allocated(QP_G_zoom_er))  deallocate(QP_G_zoom_er)
      call mem_est("QP_G_amplitude_integral")
      call mem_est("QP_Sc QP_dSc qp_GreenF QP_Vnl_xc QP_Vxc qp_GreenF_W QP_G_zoom_er")
      call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
+     call mem_est("QP_DW QP_OMS_Fan QP_TadPole")
    end subroutine
    !
 end subroutine

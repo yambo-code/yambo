@@ -24,7 +24,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  ! Prepare X and wv types for a TDDFT calculation
  !
  use pars,          ONLY:SP
- use drivers,       ONLY:l_bs_fxc,l_bss,l_alda_fxc,l_lrc_fxc
+ use drivers,       ONLY:l_bss,l_tddft,l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:real2ch,intc
  use frequency,     ONLY:w_samp
@@ -48,7 +48,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  !
  X%f_xc='none'
  !
- if (.not.any((/l_alda_fxc,l_bs_fxc,l_lrc_fxc/))) return
+ if (.not.l_tddft) return
  !
  ! LRC setup
  !

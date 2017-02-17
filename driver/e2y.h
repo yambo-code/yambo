@@ -37,7 +37,7 @@
   {"help",  "h","Short Help",0,0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0,0}, 
   {"nompi", "N","Skip MPI initialization",0,0,0,0,0},
-  {"ifile", "F","ETSF filename",0,0,1,0,0},
+  {"ifile", "F","KSS or WFK filename",0,0,1,0,0},
   {"odir","O","Output directory",0,0,1,0,0},
   {"dbfrag","S","DataBases fragmentation",0,0,0,0,0},
   {NULL,NULL,NULL,0,0,0,0,0}

@@ -73,6 +73,11 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      QP_Sc=cmplx(0.,0.,SP)
    endif
    !
+# if defined _ELPH 
+   !
+   if (l_ph_corr)    call ELPH_Sigma_c(en,k,q,qp)
+   !
+#endif
    !
    do i1=1,QP_n_states
      !

@@ -28,7 +28,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc,real2ch
  use R_lattice,     ONLY:bz_samp
- use par_proc_m,    ONLY:pp_redux_wait
+ use parallel_m,    ONLY:PP_redux_wait
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind 
  use memory_m,      ONLY:mem_est
@@ -157,7 +157,7 @@ subroutine XCo_driver(E,k,Xk,q)
      !
      ! MPI barrier
      !
-     call pp_redux_wait
+     call PP_redux_wait
      !
    end subroutine
    !

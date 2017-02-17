@@ -23,7 +23,7 @@ subroutine read_bxsf(Xk,Xen)
  !
  use pars,                ONLY:SP,DP,lchlen,schlen
  use units,               ONLY:pi,HA2EV,BO2ANG
- use R_lattice,           ONLY:bz_samp,b,k_grid
+ use R_lattice,           ONLY:bz_samp,b,k_grid,k_the_nearest
  use D_lattice,           ONLY:alat
  use parser_m,            ONLY:parser
  use YPP,                 ONLY:BZ_RIM_path, wannier_bands, ord_dgrid_ipol
@@ -49,7 +49,6 @@ subroutine read_bxsf(Xk,Xen)
  integer :: nearest_to_g
  integer :: nbands,vband ! total number of bands, highest valence
  integer :: ndim, idim  ! total number of dimensions, iterator on dimensions
- integer, external :: k_the_nearest
  integer, external :: ioE_RIM
  integer, external :: double_k_grid
  integer :: err_dgrid
@@ -236,8 +235,8 @@ subroutine read_bxsf(Xk,Xen)
      endif
      BZ_RIM_nkpt=0
      do ii=1,RIM_k%nbz
-      !
-       ikbz=k_the_nearest(RIM_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz,.FALSE.,i_err)
+       !
+       ikbz=k_the_nearest(RIM_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
        BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
        !
        if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))= ii !RIM_k%sstar(i1,1)
@@ -278,7 +277,7 @@ subroutine read_bxsf(Xk,Xen)
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
  Xen%E_RIM(:,:RIM_k%nbz,1)=ene(:,:RIM_k%nbz)/HA2EV+Xen%Efermi(1)
  ! align last (partly) filled band at gamma.
- nearest_to_g=k_the_nearest(RIM_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz,.FALSE.,i_err) 
+ nearest_to_g=k_the_nearest(RIM_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
  if(sum((RIM_k%ptbz(1,:)-Xk%ptbz(nearest_to_g,:))**2).gt. epsilon(1._SP)) then
     call msg('s',':: Gamma is not part of your kgrid.')
     call msg('s',':: Probably you use a shifted grid. You should not!')

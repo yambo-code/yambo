@@ -90,12 +90,9 @@ subroutine barriers()
  !====================================================================
  !
  call switch_off_runlevel('acfdt',on_name=' ')
- call switch_off_runlevel('bs_fxc',on_name=' ')
  !
  ! RUNLEVELS
  !===========
- !
- if(mag_syms) call switch_off_runlevel('all',on_name=' ')
  !
  !
  !
@@ -124,16 +121,18 @@ subroutine barriers()
    goto 1
  endif
  if (alda_g_space) then
-   call switch_off_runlevel('all',on_name='chi optics alda_fxc '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='optics chi tddft '//trim(always_runlevels))
    goto 1
  endif
  if (alda_r_space) then
-   call switch_off_runlevel('all',on_name='bse optics alda_fxc bss '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='optics bse bsk bss tddft '//trim(always_runlevels))
    goto 1
  endif
  if (l_bss.or.l_bse) then
-   on_runlevels='tdhf bs_fxc bse bss em1s em1d ppa optics'
-   on_runlevels='tdhf bse bss em1s em1d ppa optics'
+   on_runlevels='optics bse bsk bss tddft em1s em1d ppa'
+    !This barrier prevent tddft to work as l_alda_fxc is not defined and alda_r_space does not work...
+    !Barrier commented (Davide: 25/06/2013)
+    !on_runlevels='optics bse bsk bss tddft em1s em1d ppa'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -146,8 +145,8 @@ subroutine barriers()
  ! SPIN
  !=============
  if (n_spin>1) then
-   on_runlevels='chi optics HF_and_locXC cohsex magnetic scpot bse tdhf em1s em1d ppa gw0 bss'
-   on_runlevels='chi optics HF_and_locXC cohsex bse tdhf em1s em1d ppa gw0 bss'
+   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
  endif 
@@ -155,5 +154,14 @@ subroutine barriers()
  ! MORE
  !======
  if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
+ !
+#if defined _KERR
+ if(l_kerr) then
+   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels='optics bse'
+   if(bss_inv.or.bss_tddft) on_runlevels=' '
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
+ endif
+#endif
  !
 end subroutine

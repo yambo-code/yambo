@@ -78,14 +78,21 @@ module wave_func
      use pars,       ONLY: SP
      integer            :: ID
      real(SP), optional :: wf(:,:,:,:)
-   end function 
+   end function
+   !
+   function WF_symm(ifft,isc)
+     use pars,        ONLY: SP
+     use electrons,   ONLY: n_spinor
+     integer             :: ifft,isc(4)
+     complex(SP),dimension(n_spinor) :: WF_symm
+   end function
    !
    subroutine WF_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
 &                     spins_to_load,space,title,impose_free_and_alloc,force_WFo)
-     integer :: iG_max,iGo_max,bands_to_load(2),&
-&               kpts_to_load(2)
+     integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
      integer,     optional :: spins_to_load(2)
-     character(*),optional :: space,title
+     character(*),optional :: space
+     character(*),optional :: title
      logical     ,optional :: impose_free_and_alloc
      logical     ,optional :: force_WFo
    end subroutine

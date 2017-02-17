@@ -21,12 +21,12 @@
 !
 subroutine electrons_bands(Xk,Xen)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,lchlen,DP
  use units,          ONLY:HA2EV
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,BANDS_range,k_transform
+ use YPP,            ONLY:BANDS_steps,coo_in,coo_out,BANDS_range,k_transform,interp_grid
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use com,            ONLY:msg,of_open_close,error
+ use com,            ONLY:msg,of_open_close,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
@@ -39,15 +39,14 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Work Space
  !
- type(bz_samp)         :: USER_K,CIRCUIT_K
+ type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
  real(SP)              :: real_ctl,v(3),max_dist
  real(SP), allocatable :: distances(:),values(:),bands(:,:,:),tmp_bands(:,:,:)
- integer               :: i1,i2,ic,is,ID_interp
+ integer               :: i1,i2,ic,is,ID_interp,ik
  integer,  allocatable :: int_distances(:)
  character(schlen)     :: bands_f_name(n_sp_pol)
  character(schlen), allocatable :: headings(:)
- !
- if(BANDS_steps<=0)  call error("Set BANDS_steps > 0")
+ character(3*lchlen)   :: bnd_line
  !
  !Input file parsing
  !
@@ -73,40 +72,7 @@ subroutine electrons_bands(Xk,Xen)
    call k_transform(USER_K%pt(i1,:),coo_in)
  enddo
  !
- if(USER_K%nibz==0) return
- !
- if(any(BANDS_range<=0)) call error("Wrong bands range")
- !
- allocate(distances(USER_K%nibz-1),int_distances(USER_K%nibz-1))
- !
- call msg("s",'Number of K-points in the circuit :',USER_K%nibz)
- !
- do i1=1,USER_K%nibz-1
-   v=USER_K%pt(i1,:)-USER_K%pt(i1+1,:)
-   call c2a(v_in=v,mode="ki2c")  
-   distances(i1)=v_norm(v)
- enddo
- !
- max_dist=maxval(distances)
- !
- do i1=1,USER_K%nibz-1
-   int_distances(i1)=maxval((/nint(BANDS_steps*distances(i1)/max_dist),1/))
- enddo
- !
- CIRCUIT_K%nibz=sum(int_distances)+1
- allocate(CIRCUIT_K%pt(CIRCUIT_K%nibz,3))
- !
- ic=1
- do i1=1,USER_K%nibz-1
-   v=(USER_K%pt(i1+1,:)-USER_K%pt(i1,:))/int_distances(i1)
-   do i2=1,int_distances(i1)
-     CIRCUIT_K%pt(ic,:)= USER_K%pt(i1,:)+(i2-1._SP)*v
-     ic=ic+1
-   enddo
- enddo
- CIRCUIT_K%pt(CIRCUIT_K%nibz,:)=USER_K%pt(USER_K%nibz,:)
- !
- deallocate(distances,int_distances)
+ if((BANDS_steps==0.or.USER_K%nibz==0).and.any(interp_grid<=0)) return
  !
  call QP_apply(BANDS_range,Xen,Xk,'G',msg_fmt='s')
  !
@@ -122,42 +88,140 @@ subroutine electrons_bands(Xk,Xen)
  deallocate(tmp_bands)
  !
  allocate(values(3+BANDS_range(2)-BANDS_range(1)+1),headings(3+BANDS_range(2)-BANDS_range(1)+1))
- allocate(bands(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz))
  !
- call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands,ID=ID_interp)
+ if(SP/=DP) &
+&  call warning("To have a smaller error in the interpolation compile yambo in double precision: --enable-dp")
  !
- do is=1,n_sp_pol
-   bands_f_name(is)="bands-sp"//intc(is)
-   call of_open_close(bands_f_name(is),'ot')
- enddo
- !
- headings(1:3)=(/" kx  "," ky  "," kz  "/)
- do i1=BANDS_range(1),BANDS_range(2)
-   headings(3+i1-BANDS_range(1)+1)=' b'//intc(i1)
- enddo
- !
- do is=1,n_sp_pol
-   call msg('o '//bands_f_name(is),"#",headings,INDENT=0,USE_TABS=.true.)
- enddo
- !
- call msg('o path',"#"," ",INDENT=0)
- !
- coo_out=coo_in
- !
- do i1=1,CIRCUIT_K%nibz
+ ! Interpolation along lines
+ ! 
+ if(BANDS_steps>0) then
+   !     
+   if(any(BANDS_range<=0)) call error("Wrong bands range")
    !
-   call k_transform(CIRCUIT_K%pt(i1,:),"iku")
-   values(1:3)=CIRCUIT_K%pt(i1,:)
-   do is=1,n_sp_pol
-     values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)=bands(BANDS_range(1):BANDS_range(2),is,i1)*HA2EV
-     call msg('o '//bands_f_name(is),"",values,INDENT=0,USE_TABS=.true.)
+   allocate(distances(USER_K%nibz-1),int_distances(USER_K%nibz-1))
+   !
+   call msg("s",'Number of K-points in the circuit :',USER_K%nibz)
+   !
+   do i1=1,USER_K%nibz-1
+     v=USER_K%pt(i1,:)-USER_K%pt(i1+1,:)
+     call c2a(v_in=v,mode="ki2c")  
+     distances(i1)=v_norm(v)
    enddo
    !
- enddo
- ! 
- do is=1,n_sp_pol
-   call of_open_close(bands_f_name(is))
- enddo
+   max_dist=maxval(distances)
+   !
+   do i1=1,USER_K%nibz-1
+     int_distances(i1)=maxval((/nint(BANDS_steps*distances(i1)/max_dist),1/))
+   enddo
+   !
+   CIRCUIT_K%nibz=sum(int_distances)+1
+   allocate(CIRCUIT_K%pt(CIRCUIT_K%nibz,3))
+   !
+   ic=1
+   do i1=1,USER_K%nibz-1
+     v=(USER_K%pt(i1+1,:)-USER_K%pt(i1,:))/int_distances(i1)
+     do i2=1,int_distances(i1)
+       CIRCUIT_K%pt(ic,:)= USER_K%pt(i1,:)+(i2-1._SP)*v
+       ic=ic+1
+     enddo
+   enddo
+   CIRCUIT_K%pt(CIRCUIT_K%nibz,:)=USER_K%pt(USER_K%nibz,:)
+   !
+   deallocate(distances,int_distances)
+   !
+   allocate(bands(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz))
+   !
+   call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands,ID=ID_interp)
+   !
+   do is=1,n_sp_pol
+     bands_f_name(is)="bands-sp"//intc(is)
+     call of_open_close(bands_f_name(is),'ot')
+   enddo
+   !
+   headings(1:3)=(/" kx  "," ky  "," kz  "/)
+   do i1=BANDS_range(1),BANDS_range(2)
+     headings(3+i1-BANDS_range(1)+1)=' b'//intc(i1)
+   enddo
+   !
+   do is=1,n_sp_pol
+     call msg('o '//bands_f_name(is),"#",headings,INDENT=0,USE_TABS=.true.)
+   enddo
+   !
+   call msg('o path',"#"," ",INDENT=0)
+   !
+   coo_out=coo_in
+   !
+   do i1=1,CIRCUIT_K%nibz
+     !
+     call k_transform(CIRCUIT_K%pt(i1,:),"iku")
+     values(1:3)=CIRCUIT_K%pt(i1,:)
+     do is=1,n_sp_pol
+       values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)=bands(BANDS_range(1):BANDS_range(2),is,i1)*HA2EV
+       write(bnd_line,'(300f16.10)') values(1:3+BANDS_range(2)-BANDS_range(1)+1)
+       call msg('o '//bands_f_name(is),trim(bnd_line))
+     enddo
+     !
+   enddo
+   ! 
+   do is=1,n_sp_pol
+     call of_open_close(bands_f_name(is))
+   enddo
+   !
+   deallocate(bands)
+   !
+ endif
+ !
+ ! Interpolation on a regural grid
+ !
+ if(all(interp_grid>0)) then
+   !
+   call bz_samp_reset(INTERP_k)
+   !
+   INTERP_k%description="Interp"
+   !
+   call grid_generator(INTERP_k,'i',interp_grid)
+   allocate(bands(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
+   call bz_interpolation(USER_k=INTERP_k,R2D=bands,ID=ID_interp)
+   !
+   do is=1,n_sp_pol
+     bands_f_name(is)="grid-sp"//intc(is)
+     call of_open_close(bands_f_name(is),'ot')
+   enddo
+   !
+   headings(1:3)=(/" kx  "," ky  "," kz  "/)
+   do i1=BANDS_range(1),BANDS_range(2)
+     headings(3+i1-BANDS_range(1)+1)=' b'//intc(i1)
+   enddo
+   !
+   do is=1,n_sp_pol
+     call msg('o '//bands_f_name(is),"#",headings,INDENT=0,USE_TABS=.true.)
+   enddo
+   !
+   coo_out=coo_in
+   !
+   do i1=1,INTERP_K%nbz
+     !
+     call k_transform(INTERP_K%ptbz(i1,:),"iku")
+     values(1:3)=INTERP_K%ptbz(i1,:)
+     !
+     ik=INTERP_K%sstar(i1,1)
+     !
+     do is=1,n_sp_pol
+       values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)=bands(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
+       write(bnd_line,'(300f16.10)') values(1:3+BANDS_range(2)-BANDS_range(1)+1)
+       call msg('o '//bands_f_name(is),trim(bnd_line))
+     enddo
+     !
+   enddo
+   !
+   do is=1,n_sp_pol
+     call of_open_close(bands_f_name(is))
+   enddo
+   !
+   deallocate(bands)
+   !
+ endif
+ !
  call reset_interpolation(ID_interp)
  !
 end subroutine

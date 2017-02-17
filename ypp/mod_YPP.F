@@ -24,6 +24,7 @@ module YPP
  use pars,    ONLY:SP,DP
  use pars,    ONLY:lchlen
  use pars,    ONLY:schlen
+ use QP_m,    ONLY:QP_t
  implicit none
  !
  ! BZ grids 
@@ -54,6 +55,7 @@ module YPP
  !
  integer               ::BANDS_steps
  integer               ::BANDS_range(2)
+ integer               ::interp_grid(3)  ! Interpolation Grid
  !
  ! REAL SPACE PLOT
  !
@@ -104,6 +106,7 @@ module YPP
  !EL-PH
  !
  logical :: l_gkkp
+ logical :: l_gkkp_expand
  logical :: l_phonons
  logical :: l_eliashberg
  logical :: l_atomic_amplitude
@@ -112,8 +115,10 @@ module YPP
  real(SP):: ph_broad
  real(SP):: elph_Ef
  real(SP):: elph_E_max
+ real(SP):: elph_residual_treshold = 0.
  character(schlen) :: elph_dbs_path
  character(schlen) :: ph_freqs_file
+ character(schlen) :: ph_modes_file
  !
  ! Wannier interface
  !
@@ -124,12 +129,6 @@ module YPP
  character(schlen) :: seed_name
  character(schlen) :: what_to_write
  !
- ! Reduce Symmetries
- !
- logical     :: l_fix_syms
- real(SP)    :: E_field(2,3)
- real(SP)    :: B_field,B_theta,B_psi
- !
  ! BZ RIM
  !
  integer  :: BZ_RIM_nkpts
@@ -137,18 +136,107 @@ module YPP
  real(SP) :: Gamma_radius
  character(lchlen) :: BZ_RIM_path
  !
- ! Quasi-Particles
+ ! QP databases
  !
- logical     :: l_qpdb
+ logical     :: l_QP_DBs_create_and_modify
+ logical     :: l_QP_DBs_merge
+ integer     :: n_QP_dbs 
+ character(lchlen),  allocatable :: QP_db_name(:)
+ character(schlen),  allocatable :: QP_db_what(:)
+ type(QP_t),         allocatable :: QP_db(:)
  !
+ ! Surface spectroscopy
+ !
+ logical           :: lras, lsurf, lreels, lcelleps
+ character(schlen) :: xdata, ydata, zdata
+ character(len=5)  :: datatype
+ real(SP)          :: sshift
+ real(SP)          :: d_cellin
+ !
+ ! Localization
+ !
+ logical           :: lloc
+ real(SP)          :: lowerlim, upperlim
+ integer           :: normdir, ngloc
+ integer           :: loc_bands(2)
+ integer           :: loc_kpts(2)
+ !
+ ! Transition Analysis
+ !
+ logical           :: ltrans
+ real(SP)          :: Ecv_min, Ecv_max
+ real(SP)          :: qdir(3)
+ integer           :: idir
+ !
+ ! SC
+ !
+ logical  :: l_mean_potential
+ !
+ ! (RT) DOS
+ !
+ real(SP) :: Fermi_fit_points(2)
  !
  ! Wannier bands
  !
- logical     :: l_bxsf
+ logical           :: l_bxsf
  character(lchlen) :: w90_fname
- integer     :: wannier_bands(2)   ! Bands Range
- integer     :: ord_dgrid_ipol     ! order of interpolation using double grid
+ integer           :: wannier_bands(2)   ! Bands Range
+ integer           :: ord_dgrid_ipol     ! order of interpolation using double grid
  !
+ ! (RT) Occupations
+ !
+ logical     :: l_RT_occupations
+ !
+ ! Reduce Symmetries
+ !
+ logical     :: l_fix_syms
+ real(SP)    :: E_field(2,3)
+ real(SP)    :: B_field,B_theta,B_psi
+ !
+ ! (RT) Retarded Green's functions
+ !
+ logical  :: l_retarded_GFs
+ integer  :: Ret_GF_bands(2)      ! Bands Range
+ real(SP) :: Gr_E_step
+ real(SP) :: GF_T_step
+ !
+ ! (RT) optics
+ !
+ logical  :: Use_FFT
+ logical  :: l_skip_pol_and_curr_IO
+ logical  :: l_force_min_damp
+ logical  :: l_RT_X
+ logical  :: l_RT_X_inversion
+ integer  :: i_t_start,i_t_end ! time window
+ integer  :: RED_steps ! reduced number of steps
+ integer  :: N_probes
+ integer  :: N_pumps
+ integer  :: N_probe_frequencies
+ integer  :: X_order
+ real(SP) :: t_jump
+ real(SP) :: W_RT_induced_step
+ real(SP) :: OCC_T_ref      ! Reference time
+ real(SP) :: OCC_T_range(2) ! Time range to plot the dos
+ real(SP) :: OCC_deltaT     ! Time step to plot the dos
+ character(schlen) :: Probe_Keyword
+ character(schlen) :: Pump_Keyword
+ integer, parameter:: max_n_of_paths=10000
+ character(schlen) :: Pump_path
+ character(schlen) :: Probe_path(max_n_of_paths)
+ !
+ complex(SP),    allocatable :: RT_occupations_ref(:,:)
+ complex(DP),    allocatable :: RT_J_t(:,:)
+ complex(DP),    allocatable :: RT_P_t(:,:)
+ !
+ type Xw_rt
+   real(SP) :: time_range(2)       ! time windows for the transform
+   integer  :: energy_steps        ! number of steps in energy mesh
+   real(SP) :: energy_range(2)     ! energy range 
+   character(schlen) :: damp       ! Damp type (none, lorentian or gaussian)
+   real(SP) :: damp_factor         ! factor used in damping
+ end type Xw_rt
+ !
+ type(Xw_rt) :: X_rt 
  !
  interface
    !

@@ -19,8 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_merge_DBs(n_dbs,qp2merge,qp)
+subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
  !
+ use pars,           ONLY:cZERO,rZERO,cI
  use QP_m,           ONLY:QP_t,QP_reset
  use electrons,      ONLY:n_sp_pol
  use com,            ONLY:error
@@ -29,6 +30,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp)
  !
  integer         ::n_dbs
  type(QP_t)      ::qp2merge(n_dbs),qp
+ logical         ::plan_EWZ(n_dbs,3)
  !
  ! Work Space
  !
@@ -75,6 +77,9 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp)
  !
  if (l_QP_db) then
    allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
+   qp%Z=cZERO
+   qp%E=cZERO
+   qp%E_bare=rZERO
  else
    allocate(qp%S_total(qp%n_states,qp%GreenF_n_steps))
    allocate(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
@@ -88,9 +93,14 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp)
      do i2=1,qp2merge(i_db)%n_states
        if (all(qp2merge(i_db)%table(i2,:)==qp%table(i1,:))) then
          if (l_QP_db) then
-           qp%Z(i1)=qp2merge(i_db)%Z(i2)
-           qp%E(i1)=qp2merge(i_db)%E(i2)
-           qp%E_bare(i1)=qp2merge(i_db)%E_bare(i2)
+           if (plan_EWZ(i_db,1)) then
+             if (i_db==1) qp%E_bare(i1)=qp2merge(i_db)%E_bare(i2)
+             if (i_db==1) qp%E(i1)=qp%E(i1)+real(qp2merge(i_db)%E(i2))
+             if (i_db> 1) qp%E(i1)=qp%E(i1)+real(qp2merge(i_db)%E(i2))-qp%E_bare(i1)
+           endif
+           if (plan_EWZ(i_db,1)) qp%E_bare(i1)=qp2merge(i_db)%E_bare(i2)
+           if (plan_EWZ(i_db,2)) qp%E(i1)=qp%E(i1)+cI*aimag(qp2merge(i_db)%E(i2))
+           if (plan_EWZ(i_db,3)) qp%Z(i1)=qp%Z(i1)+qp2merge(i_db)%Z(i2)
          else
            qp%S_total(i1,:)=qp2merge(i_db)%S_total(i2,:)
            qp%GreenF(i1,:)=qp2merge(i_db)%GreenF(i2,:)

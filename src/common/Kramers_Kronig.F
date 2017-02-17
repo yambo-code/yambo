@@ -33,10 +33,10 @@ subroutine Kramers_Kronig(fi,wi,ni,fo,wo,no,y0)
  !
  use pars,    ONLY:SP
  implicit none
- integer,     intent(in)  :: ni,no
- real(SP),    intent(in)  :: wi(ni)
- complex(SP), intent(in)  :: fi(ni),wo(no),y0
- complex(SP), intent(out) :: fo(no)
+ integer,     intent(in)    :: ni,no
+ real(SP),    intent(in)    :: wi(ni)
+ complex(SP), intent(in)    :: fi(ni),wo(no),y0
+ complex(SP), intent(inout) :: fo(no)
  !
  ! Work Space
  !

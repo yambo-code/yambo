@@ -32,13 +32,16 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
 &                        l_gw0,l_el_corr,l_life,l_acfdt,l_elph_Hamiltonian
  use X_m,           ONLY:X_t
- use par_proc_m,    ONLY:myid,ncpu,p_finalize
+ use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
  use QP_m,          ONLY:QP_ng_Sx
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
+#if defined _SURF
+ use ras_module,    ONLY:lras, lreels
+#endif
  !
  implicit none
  type(levels) ::en,Xen,Ken
@@ -71,6 +74,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  infile=inf
  !
  call std_presets(instr,ind,od,js,com_dir)
+#ifdef _SURF
+ call ras_presets()
+#endif
  call it_reset(1)
  !
  ! not resetted in init call
@@ -93,7 +99,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! or error msg from the driver.c is possible
  !
  if (iinf==2) then
-   call p_finalize
+   call MPI_close
    return
  endif
  if (iinf/=0) return
@@ -141,6 +147,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !========
  !
  if (l_optics.and.l_chi) call O_driver(Xen,Xk,q,Xw(3),X(3))
+ !
+#if defined _SURF
+ !
+ ! SURFACE SPECTROSCOPY
+ !=======================
+ !
+ if (lras.or.lreels) call surfdriver(Xen,Xk,q,Xw(3),X(3))
+#endif
  ! 
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
@@ -232,6 +246,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Finalize
  !
  call it_reset(-1)
- call p_finalize
+ call MPI_close
  !
 end function

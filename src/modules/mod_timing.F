@@ -57,7 +57,7 @@ module timing
  contains
    !
    character(lchlen) function date_and_time_string(dt_in,dt_out)
-     use par_proc_m,  ONLY:ncpu
+     use parallel_m,  ONLY:ncpu
      integer,optional    ::dt_in(6),dt_out(6)
      integer      :: dz(8)
      character(5) :: cz
@@ -97,7 +97,7 @@ module timing
      ! cput_seg = Segment CPUT
      ! cput_sec = Section CPUT
      !
-     use par_proc_m, ONLY : myid,ncpu
+     use parallel_m, ONLY : myid,ncpu
      implicit none
      logical, optional :: INIT,INIT_SEG,SEG,INIT_SEC,SEC,FIN
      !
@@ -146,7 +146,7 @@ module timing
      if (d/=0)  write (time_string,'(4(i2.2,a))') d,'d-',h,'h-',m,'m-',s,'s'
    end function
    !
-   subroutine live_time_msg(lfmt,message,rfmt,sfmt,NO_CPUT)
+   subroutine LIVE_message(lfmt,message,rfmt,sfmt,NO_CPUT)
      !
      !C simple message:
      !
@@ -156,7 +156,7 @@ module timing
      ! sfmt    =Message formatting
      !
      use stderr,     ONLY : c_print,logfile,tty_size,write_to_log
-     use par_proc_m, ONLY : myid,ncpu,master_cpu
+     use parallel_m, ONLY : myid,ncpu,master_cpu
      implicit none
      character(*)      :: lfmt,message,rfmt,sfmt
      logical, optional :: NO_CPUT
@@ -172,7 +172,7 @@ module timing
      !
      message_composed=trim(message)
      if (ncpu/=1.and.parallel_timing.and.(index(lfmt,"n")>0.or.index(lfmt,"r")>0.)) then
-       write (message_composed,'(a,i2.2,2a)') 'P',myid+1,': ',trim(message)
+       write (message_composed,'(a,i3.3,2a)') 'P',myid+1,': ',trim(message)
      endif
      add_cput=live_timing_is_on
      if (present(NO_CPUT)) then
@@ -254,7 +254,7 @@ module timing
      steps_done=0
      cput_save=0.
      call ct(INIT_SEG=.true.)
-     if (tty_size>0) call live_time_msg("n",trim(name),"","%s")
+     if (tty_size>0) call LIVE_message("n",trim(name),"","%s")
      call live_timing_update("--","--")
      if (.not.SERIAL) then
        write_to_log=.true.
@@ -263,7 +263,7 @@ module timing
    end subroutine
    !
    subroutine live_timing_add(steps)
-     use par_proc_m, ONLY : myid,master_cpu
+     use parallel_m, ONLY : myid,master_cpu
      implicit none
      integer :: steps
      ! 
@@ -298,7 +298,7 @@ module timing
    !
    subroutine live_timing_update(xch,ech)
      use stderr,     ONLY : tty_size
-     use par_proc_m, ONLY : master_cpu
+     use parallel_m, ONLY : master_cpu
      implicit none
      character(*)::xch,ech
      ! 
@@ -313,29 +313,29 @@ module timing
      ! Write the descriptor 
      !
      write (lch,'(2a)') trim(timing_name),' |'
-     if (tty_size>0) call live_time_msg("r",lch,"","%s")
-     if (tty_size<0) call live_time_msg("n",lch,"","%s")
+     if (tty_size>0) call LIVE_message("r",lch,"","%s")
+     if (tty_size<0) call LIVE_message("n",lch,"","%s")
      !
      ! Write the progression bar
      !
      if (hashes_now/=hashes_done) hashes_done=hashes_now
      do i1=1,hashes_done
-       call live_time_msg("","#","","%s",NO_CPUT=.true.)
+       call LIVE_message("","#","","%s",NO_CPUT=.true.)
      enddo
      i1=nhash-hashes_done+1 
      if (hashes_done==nhash) i1=0
      if (i1>=10) write (lfmt,'(a,i2.2,a)') '%',nhash-hashes_done+1,'s'
      if (i1< 10) write (lfmt,'(a,i1.1,a)') '%',nhash-hashes_done+1,'s'
-     call live_time_msg("","|","",lfmt,NO_CPUT=.true.)
+     call LIVE_message("","|","",lfmt,NO_CPUT=.true.)
      perc=int(real(steps_done)/real(time_steps)*100.)
      write (lmsg,'(1x,a,i3.3,5a)') '[',perc,'%] ',ech,'(E) ',xch,'(X)'
-     call live_time_msg("",lmsg,"","%s",NO_CPUT=.true.)
+     call LIVE_message("",lmsg,"","%s",NO_CPUT=.true.)
      !
    end subroutine
    !
    subroutine live_timing_finalize
      use stderr,     ONLY : write_to_log
-     use par_proc_m, ONLY : master_cpu
+     use parallel_m, ONLY : master_cpu
      implicit none
      parallel_timing=.false.
      write_to_log=master_cpu

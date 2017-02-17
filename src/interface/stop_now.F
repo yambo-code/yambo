@@ -27,7 +27,7 @@ logical function stop_now(DO_IT_NOW)
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset
- use par_proc_m,     ONLY:p_finalize
+ use parallel_m,     ONLY:MPI_close
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -66,7 +66,7 @@ logical function stop_now(DO_IT_NOW)
  !
  call it_reset(-1)
  !
- call p_finalize
+ call MPI_close
  !
  stop
  !

@@ -23,8 +23,8 @@ subroutine XCo_local(E,Xk)
  !
  ! Local V_xc
  !
- use pars,          ONLY:SP,DP,pi
- use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol,spin
+ use pars,          ONLY:SP,pi
+ use electrons,     ONLY:levels,n_spin,n_spinor,spin
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size

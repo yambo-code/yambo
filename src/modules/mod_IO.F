@@ -23,6 +23,7 @@ module IO_m
  !
  use pars,       ONLY:SP,lchlen,schlen
  use LOGO,       ONLY:code_version,code_revision
+ use com,        ONLY:error
 #if defined _NETCDF_IO
  use netcdf
 #endif
@@ -192,7 +193,8 @@ module IO_m
    integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
      !
      use stderr,        ONLY:string_pack
-     use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations
+     use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
+&                            num_of_alternative_locations
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
@@ -201,7 +203,7 @@ module IO_m
      ! Work Space
      !
      integer          ::CREATE_MODE
-     character(lchlen)::alternative_file(8),folder
+     character(lchlen)::alternative_file(num_of_alternative_locations),folder
      character(schlen)::subfolder_
      !
      io_connect=0
@@ -288,25 +290,6 @@ module IO_m
          !
 #if defined _NETCDF_IO && defined _64BIT_OFFSET
          !
-         ! List of (some) character patterns
-         !
-         ! BS_Q
-         ! BS_FXC_Q
-         ! BS_diago_Q
-         ! Haydock_restart
-         ! BS_invert_Q
-         ! cutoff
-         ! COLLISIONS
-         ! db1
-         ! dipoles
-         ! elph
-         ! RIM
-         ! gops
-         ! HF_and_locXC
-         ! kindx
-         ! scE/scWF/scV
-         ! wf
-         !
          if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
 &                  index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
 &                  index(desc,'elph')/=0,index(desc,'gops')/=0, & 
@@ -384,6 +367,14 @@ module IO_m
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else if (file_exists(trim(alternative_file(8)))) then
            io_file(ID)=alternative_file(8)
+         else if (file_exists(trim(alternative_file(9)))) then
+           io_file(ID)=alternative_file(9)
+         else if (file_exists(trim(alternative_file(10)))) then
+           io_file(ID)=alternative_file(10)
+         else if (file_exists(trim(alternative_file(11)))) then
+           io_file(ID)=alternative_file(11)
+         else if (file_exists(trim(alternative_file(12)))) then
+           io_file(ID)=alternative_file(12)
          else
            io_connect=IO_NO_DATABASE
            if (present(no_full_RESET)) then
@@ -454,6 +445,7 @@ module IO_m
      if ( any((/ACTION==OP_RD_CL,ACTION==OP_WR_CL,&
 &               ACTION==OP_APP_WR_CL,ACTION==OP_RD,&
 &               ACTION==OP_APP,ACTION==OP_WR/)) ) then
+       ID=-1
        do i1=1,max_io_units
          if (io_unit(i1)==0) then
            ID=i1
@@ -462,6 +454,7 @@ module IO_m
            exit
          endif
        enddo
+       if(ID==-1) call error(" Recompile Yambo with a larger: max_io_units")
      endif
      !
      io_action(ID)=ACTION
@@ -557,7 +550,7 @@ module IO_m
    !
    logical function file_is_present(desc,subfolder)
      !
-     use com,           ONLY:all_locations,file_exists
+     use com,           ONLY:all_locations,file_exists,num_of_alternative_locations
      !
      character(*)           :: desc
      character(*), optional :: subfolder
@@ -565,7 +558,7 @@ module IO_m
      ! Work Space
      !
      integer            :: i_f
-     character(lchlen)  :: possible_locations(8)
+     character(lchlen)  :: possible_locations(num_of_alternative_locations)
      character(schlen)  :: subfolder_
      !
      subfolder_=' '
@@ -574,7 +567,7 @@ module IO_m
      possible_locations=all_locations(desc,subfolder_,.TRUE.)
      !
      file_is_present=.true.
-     do i_f=1,8
+     do i_f=1,num_of_alternative_locations
        if( file_exists(trim( possible_locations(i_f) )  ) ) return
      enddo
      file_is_present=.false.
@@ -583,7 +576,8 @@ module IO_m
    !
    subroutine synchronize_db(desc,subfolder)
      !
-     use com,        ONLY:all_locations,file_exists,jobstr,core_io_path,more_io_path
+     use com,        ONLY:all_locations,file_exists,jobstr,core_io_path,more_io_path,&
+&                         num_of_alternative_locations
      !
      character(*), intent(in):: desc
      character(*), optional  :: subfolder
@@ -592,8 +586,8 @@ module IO_m
      ! Work Space
      !
      integer            :: i_f
-     logical            :: db_found_in_location(8),CORE_2_MORE,MORE_2_CORE
-     character(lchlen)  :: possible_locations(8)
+     logical            :: db_found_in_location(num_of_alternative_locations),CORE_2_MORE,MORE_2_CORE
+     character(lchlen)  :: possible_locations(num_of_alternative_locations)
      character(schlen)  :: subfolder_
      !
      subfolder_=' '
@@ -601,7 +595,7 @@ module IO_m
      !
      possible_locations=all_locations(desc,subfolder_,.TRUE.)
      !
-     do i_f=1,8
+     do i_f=1,num_of_alternative_locations
        db_found_in_location(i_f)=file_exists(trim( possible_locations(i_f) ) ) 
      enddo
      !

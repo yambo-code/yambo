@@ -40,7 +40,7 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  use pars, ONLY:SP,pi
  implicit none
  integer     :: lang
- complex(SP) :: Ylm(lang,2*lang+1),dYlm(2,lang,2*lang+1)
+ complex(SP) :: Ylm(lang,2*(lang-1)+1),dYlm(2,lang,2*(lang-1)+1)
  real(SP)    :: k(3),Ygrad(2,3)
  ! 
  ! Work Space
@@ -54,24 +54,32 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  !
  kmod=sqrt(dot_product(k,k))
  kxymod=sqrt(k(1)**2.+k(2)**2.)
- costh=k(3)/kmod
- sinth=sqrt(k(1)**2.+k(2)**2.)/kmod
+ costh=1.
+ sinth=0.
+ if (kmod.gt.1.E-5) then
+  costh=k(3)/kmod
+  sinth=kxymod/kmod
+ endif
  cosphi=1.
  sinphi=0.
  if (kxymod.gt.1.E-5) then
-  cosphi=k(1)/sqrt(k(1)**2.+k(2)**2.)
-  sinphi=k(2)/sqrt(k(1)**2.+k(2)**2.)
+  cosphi=k(1)/kxymod
+  sinphi=k(2)/kxymod
  endif
  eiphi=cmplx(cosphi,sinphi)
  !
- if (abs(sinth).gt.1.E-5) then
-  Ygrad(1,1:2)=k(1:2)*k(3)/(kmod**3.*sinth)
-  Ygrad(1,3)=((k(3)/kmod)**2.-1.)/(kmod*sinth)
- endif
  if (kxymod.gt.1.E-5) then
-  if (abs(cosphi).gt.1.E-5) Ygrad(2,1)=-k(1)*k(2)/(kxymod**3.*cosphi)
-  if (abs(sinphi).gt.1.E-5) Ygrad(2,2)=k(1)*k(2)/(kxymod**3.*sinphi)
-  Ygrad(2,3)=0.
+   Ygrad(1,1:2)= k(3)/kmod**2. * (k(1:2)/kxymod)
+   Ygrad(1,3)=-kxymod/kmod**2.
+ else
+   Ygrad(1,1:2)= k(3)/kmod**2.
+   Ygrad(1,3)= 0.
+ endif
+ !
+ if (kxymod.gt.1.E-5) then
+   Ygrad(2,1)=-k(2)/kxymod**2.
+   Ygrad(2,2)= k(1)/kxymod**2.
+   Ygrad(2,3)= 0.
  endif
  !
  Ylm(lindx(0),mindx(0,0))=1./sqrt(4.*pi)

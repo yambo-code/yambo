@@ -37,18 +37,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,ik_is_table,bare_qpg,minus_G
- use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
+ use parallel_m,   ONLY:PP_redux_wait,myid,ncpu
  use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_eh_E,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,O_n_c_states,&
-&                       BS_n_g_W,BS_blk_dim,O_table,BS_mat,&
+&                       BS_n_g_W,BS_blk_dim,O_table,BS_mat,BS_mat_diagonal,&
 &                       O_phase,O_c_state,O_v_state,O_ng,BS_eh_table,BS_columns,&
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
-&                       BS_cpl_K_exchange,BSS_q0,&
+&                       BS_cpl_K_exchange,BSS_q0,BSS_uses_RIM,&
 &                       O_n_scatt,BS_O,BS_cpl_K_corr
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
@@ -57,6 +57,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use xc_functionals,ONLY:F_xc
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
  use global_XC,     ONLY:WF_kind,WF_xc_functional
+ !
  implicit none
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -68,8 +69,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: ikk1,ikk2,live_timing_steps,live_timing_step_size,live_timing_accumulate,&
 &              is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
-&              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
-&              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2)
+&              i_sp1,i_sp2,j_sp1,j_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
+&              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2),&
+&              iBSE1,iBSE2
  integer    :: iOcv, iOvc
  complex(SP):: Co,H_res_x,H_res_c,H_cpl_x,H_cpl_c
  !
@@ -94,45 +96,23 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::ioX_err,ioBS_Fxc_err,XID,ID
+ integer           ::ioX_err,ioBS_Fxc_err,ioBS_err,XID,ID
  integer, external ::ioX,ioBS
  !
  Co=4._SP*pi/DL_vol/real(q%nbz,SP)
+ ioBS_err    =-1
+ ioBS_Fxc_err=-1
  !
  if (.not.l_bs_fxc) call section('*','Bethe-Salpeter Kernel')
  !
  call parser('ALLGexx',l_USE_all_Gexx)
  !
- !
- ! Setups
- !
- if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
- BS_k_and_row_restart=0
- !
- ! Dimensions and Tables
- ! 
- allocate(BS_blk_dim(Xk%nibz))
- !
- call mem_est("BS_blk_dim",(/Xk%nbz/),(/IP/))
- if (BS_res_K_corr) then
-   !
-   allocate(O_n_c_states(Xk%nbz,n_sp_pol),O_n_v_states(Xk%nbz,n_sp_pol))
-   call mem_est("O_n_c_states O_n_v_states",&
-&               (/Xk%nbz,n_sp_pol,Xk%nbz,n_sp_pol/),(/IP,IP,IP,IP/)) !to check 
-   !
- endif
- !
- call K_eh_setup(iq,Ken,Xk)
- if (any(BS_blk_dim==0)) then
-   call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
- endif
- !
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   ioBS_Fxc_err=ioBS(iq,X,ID)
+   ioBS_err=ioBS(iq,X,ID)
    !
  !
- if (ioBS_Fxc_err==0) then
+ if (ioBS_Fxc_err==0.or.ioBS_err==0) then
    if (BS_res_K_corr) then
      deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
      call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
@@ -155,7 +135,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  W_is_em1s=X%whoami==2
  W_is_pp  =X%whoami==4
- ! 
+ !
  if (BS_res_K_corr.and..not.l_td_hf) then
    !
    call section('p','Screened interaction header I/O')
@@ -206,13 +186,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  O_ng=maxval(G_m_G)
  !
- call fft_setup(O_ng,1,.true.)
- c_fft_size=fft_size
- call fft_setup(BS_n_g_exch,maxval(qindx_X(iq,:,2)),.true.)
- x_fft_size=fft_size
- if (x_fft_size>c_fft_size.and..not.l_USE_all_Gexx) then
-   call warning('Exchange FFT size is too big. RL vectors reduced to '//intc(O_ng))
-   BS_n_g_exch=O_ng
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_USE_all_Gexx.and..not.l_bs_fxc) then
+   call fft_setup(O_ng,1,.true.)
+   c_fft_size=fft_size
+   call fft_setup(BS_n_g_exch,maxval(qindx_X(iq,:,2)),.true.)
+   x_fft_size=fft_size
+   if (x_fft_size>c_fft_size) then
+     call warning('Exchange FFT size is too big. RL vectors reduced to '//intc(O_ng))
+     BS_n_g_exch=O_ng
+   endif
  endif
  !
  if (l_bs_fxc) then
@@ -358,6 +340,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
  if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
  !
+ if (BSS_uses_RIM) then
+   allocate(BS_mat_diagonal(BS_K_dim))
+   call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
+ endif
+ !
  if (.not.l_bs_fxc) call live_timing('BSK',live_timing_steps)
  if (l_bs_fxc) call live_timing('BSK->Fxc',live_timing_steps)
  !
@@ -366,7 +353,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  i8nc=ncpu
  i8id=myid
  !
- call pp_redux_wait
+ call PP_redux_wait
  do ik2=1,BS_columns
    !
    ikk2=sum(BS_blk_dim(:ik2-1))
@@ -413,12 +400,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      BS_mat=(0.,0.)
      if (BS_K_coupling) BS_cpl_mat=(0.,0.)
      !
-     call pp_redux_wait
+     call PP_redux_wait
      do icv1=1,BS_blk_dim(ik1)
-       ik1bz=BS_eh_table(ikk1+icv1,1)
-       iv1=BS_eh_table(ikk1+icv1,2)
-       ic1=BS_eh_table(ikk1+icv1,3)
-       i_sp1=spin(BS_eh_table(ikk1+icv1,:))
+       iBSE1=ikk1+icv1
+       ik1bz=BS_eh_table(iBSE1,1)
+       iv1=BS_eh_table(iBSE1,2)
+       ic1=BS_eh_table(iBSE1,3)
+       i_sp1=spin(BS_eh_table(iBSE1,:))
        is1=Xk%sstar(ik1bz,2)
        !
        is1p=Xk%sstar( qindx_X(iq,ik1bz,1) ,2)
@@ -426,10 +414,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        do icv2=1,BS_blk_dim(ik2)
          !
          if (ik1==ik2.and.icv2<icv1) cycle
+         iBSE2=ikk2+icv2
          !
          ! ::: E/h energy window :::
          !
-         if (.not.K_scatter(abs(BS_eh_E(ikk1+icv1)),abs(BS_eh_E(ikk2+icv2)),&
+         if (.not.K_scatter(abs(BS_eh_E(iBSE1)),abs(BS_eh_E(iBSE2)),&
 &                           E_eh_range,S_eh_range)) cycle
          !
          ! ::: Parallel Switch :::
@@ -473,13 +462,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! :::ALDA        (resonant):::
          !
          if (BS_K_is_ALDA) H_res_x=H_res_x+&
-&                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+&                          tddft_alda_r_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                (/iv1,iv2/),(/is1,is2,is1,is2/),1)
          !
          ! :::ALDA        (coupling):::
          !
          if (BS_K_is_ALDA) H_cpl_x=H_cpl_x+&
-&                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+&                          tddft_alda_r_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                (/iv1,iv2/),(/is1,is2,is1,is2/),2)
          !
          ! :::Correlation (resonant):::
@@ -545,15 +534,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! Impose the resonant part of the kernel to be hermitian
          !
-         if (ik1==ik2.and.icv1==icv2) H_res_c=real(H_res_c)
+         if (iBSE1==iBSE2) H_res_c=real(H_res_c)
          !
          BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
+         !
+         if (BSS_uses_RIM.and.iBSE1==iBSE2) BS_mat_diagonal(iBSE1)=BS_mat(icv1,icv2)
          !
          if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*real(spin_occ)*Co-H_cpl_c
        enddo
      enddo
-     call pp_redux_wait(BS_mat)
-     if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
+     call PP_redux_wait(BS_mat)
+     if (BSS_uses_RIM)  call PP_redux_wait(BS_mat_diagonal)
+     if (BS_K_coupling) call PP_redux_wait(BS_cpl_mat)
      !
      if (l_bs_fxc) then
        !
@@ -564,7 +556,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        else
          call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
        endif
-       ioBS_Fxc_err=ioBS(iq,X,ID)
+       ioBS_err=ioBS(iq,X,ID)
      endif
      !
      deallocate(BS_mat)
@@ -572,11 +564,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    enddo
  enddo
  !
+ if(allocated(BS_mat_diagonal)) deallocate(BS_mat_diagonal)
+ !
  ! Live Timing finalize
  !
  if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
  call live_timing()
- call pp_redux_wait
+ call PP_redux_wait
  !
  ! GLOBAL CLEANING 
  !=================

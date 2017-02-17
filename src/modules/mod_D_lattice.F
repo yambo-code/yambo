@@ -34,7 +34,7 @@ module D_lattice
  real(SP) :: Tel
  real(SP) :: Bose_Temp
  real(SP) :: input_GS_Tel
- logical  :: input_Tel_commands_over_header
+ logical  :: input_Tel_is_negative
  !
  ! SYMs
  !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 D. Sangalli and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,42 +19,41 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ig_index(v1)
+integer function full_inversion(N,W,C,f,V,M)
  !
- use pars,         ONLY:SP
- use zeros,        ONLY:G_iku_zero
- use vec_operate,  ONLY:v_is_zero,iku_v_norm
- use R_lattice,    ONLY:g_vec,ng_in_shell,n_g_shells,E_of_shell
+ ! C<W|1./(V^{-1}-M)|W>
+ !
+ use pars,           ONLY:SP
+ use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
+ use wrapper,        ONLY:Vstar_dot_V,M_by_V
  !
  implicit none
  !
- real(SP)  :: v1(3)
+ integer      ::N
+ complex(SP)  ::W(N),C,f
+ complex(SP)  ::V(N),M(N,N)
  !
- integer   :: ig,i_shell,ng1,ng2
- real(SP)  :: E_of_shell_v1
+ ! Work Space
  !
- E_of_shell_v1=iku_v_norm(v1)**2./2.
+ complex(SP), allocatable ::wk(:,:)
+ integer     ::i1,i2
+ complex(SP) ::A_n(N)
  !
- if(abs(E_of_shell_v1)<1.E-5) then
-   ig_index=1
-   return
- endif
+ full_inversion=0
  !
- do i_shell=2,n_g_shells
-   if( abs(E_of_shell(i_shell)-E_of_shell_v1)/E_of_shell(i_shell)< 1.E-5) then
-     ng1=ng_in_shell(i_shell-1)+1
-     ng2=ng_in_shell(i_shell)
-     exit
-   endif
+ allocate(wk(N,N))
+ wk=(0.,0.)
+ !
+ do i1=1,N 
+   wk(i1,i1)=1./V(i1)
+   do i2=1,N 
+     wk(i1,i2)=wk(i1,i2)-M(i1,i2)
+   enddo
  enddo
+ call mat_dia_inv(INV,USE_LK,wk)
+ call M_by_V('n',N,wk,W,A_n)
+ f=C*Vstar_dot_V(N,W,A_n)
  !
- do ig=ng1,ng2
-   if (v_is_zero(v1-g_vec(ig,:),zero_=G_iku_zero)) then
-     ig_index=ig
-     exit
-   endif
- enddo
- !
- return
+ deallocate(wk)
  !
 end function

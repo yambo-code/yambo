@@ -48,8 +48,8 @@ subroutine el_density(en,Xk,rho,force_si)
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
  use wave_func,     ONLY:wf_state,wf
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  !
  implicit none
  type(bz_samp)::Xk
@@ -63,7 +63,7 @@ subroutine el_density(en,Xk,rho,force_si)
  real(SP):: rho_no_sym(fft_size),f_occ
  logical :: warn_done
  integer :: iv_max,iv_min
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  !
  rho=0._SP
  rho_no_sym=0._SP
@@ -72,8 +72,8 @@ subroutine el_density(en,Xk,rho,force_si)
  iv_max=en%nbm
  iv_min=1
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/Xk%nibz,iv_max/),low_range=(/1,iv_min/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/Xk%nibz,iv_max/),low_range=(/1,iv_min/))
  !
  do i1=iv_min,iv_max
    do i2=1,Xk%nibz
@@ -103,8 +103,8 @@ subroutine el_density(en,Xk,rho,force_si)
   enddo
   !
   !
-  call pp_redux_wait(rho_no_sym)
-  call pp_indexes_reset(px)
+  call PP_redux_wait(rho_no_sym)
+  call PP_indexes_reset(px)
   !
   ! Simmetrization
   !

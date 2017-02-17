@@ -31,9 +31,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:Finite_Tel,l_ppa,l_cohsex,l_sc_run,l_sc_srpa,l_collisions_IO
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_cpu
- use par_indexes_m, ONLY:par_indexes
+ use drivers,       ONLY:Finite_Tel,l_ppa,l_cohsex,l_sc_run,l_sc_srpa
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,master_cpu
+ use interfaces,    ONLY:PARALLEL_index
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL
@@ -55,7 +55,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(w_samp) ::Xw
  integer      ::GW_iter
  !
- complex(SP), external :: eet_terminator
+ complex(SP), external :: QP_ppa_EET_terminator
  !
  ! Work Space
  !
@@ -64,7 +64,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  real(SP),    allocatable ::PPaP(:,:)
  complex(SP), allocatable ::PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:),eet_factor(:,:)
  type(ggwinfo)            ::isc,iscp
- type(pp_indexes)         ::px
+ type(PP_indexes)         ::px
  integer          ::iv4(4),io_err,ID, timing_states,qp_ID
  integer, external::ioX,QP_state_extract,ioQP
  logical, external::stop_now
@@ -77,10 +77,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call collision_reset(isc)
  call collision_reset(iscp)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  i_qp_to_start=1
  iq_to_start  =1
- if(.not.l_collisions_IO) QP_Sc        =cZERO
+ QP_Sc        =cZERO
  !
  ! COHSEX: bands setup
  !
@@ -88,7 +88,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                                  QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
  !
  ! Restart
- !
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=qp_ID)
  io_err=ioQP('QP',qp,qp_ID)
@@ -116,7 +115,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    if(.not.master_cpu) QP_Sc=cZERO
    !
  endif
- !
  !
  ! Section
  !
@@ -210,29 +208,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
- call par_indexes(px,(/q%nbz,QP_n_G_bands(2)/),(/iq_to_start,QP_n_G_bands(1)/))
+ call PARALLEL_index(px,(/q%nbz,QP_n_G_bands(2)/),(/iq_to_start,QP_n_G_bands(1)/))
  !
- call pp_redux_wait
- !
- !_RT (COLLISIONS)
- !do i_qp=1,QP_n_states
- ! if (.not.px%element_1D(i_qp)) cycle
- ! do iqbz=iq_to_start,q%nbz 
- !  do ib=QP_n_G_bands(1),QP_n_G_bands(2)
- !   do ib2=QP_n_G_bands(1),QP_n_G_bands(2)
- !
- !any other
- !do iqbz=iq_to_start,q%nbz 
- ! do i_qp=i_qp_to_start,QP_n_states
- !  do ib=QP_n_G_bands(1),QP_n_G_bands(2)
- !   if (.not.px%element_2D(iqbz,ib)) cycle
+ call PP_redux_wait
  !
    !
    timing_states=px%n_of_elements(myid+1)*(QP_n_states-i_qp_to_start+1)
    !
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_states)
    if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_states)
- !
  !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
@@ -267,7 +251,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    ! case when TR is present but not the spatial inversion.
    ! In this case, indeed, 
    !
-   !   X(-q,G,G') = X(q,-G',-G')
+   !   X(-q,G,G') = X(q,-G',-G)
    !
    ! While the -1 is introduced in the collisions the reflection of the
    ! matrix must be done here.
@@ -278,13 +262,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      PPaR(:,:)=PPaR_ws(:,:)
    endif
    !
-   do i_qp=i_qp_to_start,QP_n_states
+   QP_loop: do i_qp=i_qp_to_start,QP_n_states
      !
      ! i_qp must start from i_qp_to_start only during the first loop
      ! of the restart. Then it must be set to 1.
      !
      if (i_qp==QP_n_states) i_qp_to_start=1
-     !
      !
      !
      isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
@@ -320,7 +303,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              dc(1)=dc(1)+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*PPaR(ig1,ig2)
            enddo
          enddo
-         if (master_cpu.and..not.l_collisions_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         if (master_cpu) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
          dc=cZERO
          !
        endif
@@ -340,7 +323,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        call scatterBamp(isc)
        iscp%os=isc%os
        !
-       ! 
        iscp%rhotw=isc%rhotw
        if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
        !
@@ -366,7 +348,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
          enddo
          !
-         if(.not.l_collisions_IO) QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
+         QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
          !
        else
          !
@@ -388,7 +370,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        endif
        !
-     !
      enddo ! loop on scattering states
      !
      if(PPa_terminator) then
@@ -397,17 +378,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          do ig2=1,X%ng
            do i4=1,QP_dSc_steps
              QP_Sc(i_qp,i4)=QP_Sc(i_qp,i4)+4._SP/spin_occ*pi*PPaR(ig1,ig2)*eet_factor(ig1,ig2)* &
-&                     eet_terminator(E_(i4),E,isc%is,PPaP(ig1,ig2),ig1,ig2,isc%qs(2),eet_cutoff(1))
+&                     QP_ppa_EET_terminator(E_(i4),E,isc%is,PPaP(ig1,ig2),ig1,ig2,isc%qs(2),eet_cutoff(1))
              enddo
            enddo
          enddo
      endif
      !
- !
      !
      ! ALL 2 ALL of QP_Sc
      !
-     call pp_redux_wait(QP_Sc)
+     call PP_redux_wait(QP_Sc)
      if(.not.master_cpu) QP_Sc=cZERO
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,- (i_qp+QP_n_states*(iqbz-1 ))/),ID=qp_ID)
@@ -421,8 +401,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (stop_now(.FALSE.)) exit Q_loop
      !
-     !
-   enddo ! loop on quasi-particles
+   enddo QP_loop
    !
  enddo Q_loop 
  !
@@ -452,7 +431,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call collision_reset(isc)
  call collision_reset(iscp)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  contains
    !

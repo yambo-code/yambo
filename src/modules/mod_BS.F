@@ -36,8 +36,10 @@ module BS
  integer :: BS_k_and_row_restart(2)
  real(SP):: BS_eh_en(2)
  real(SP):: BS_eh_win(2)
+ real(SP):: BS_drude_f_eh
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
+ logical :: BS_anti_res
  logical :: BS_res_K_exchange
  logical :: BS_res_K_corr
  logical :: BS_cpl_K_exchange
@@ -45,15 +47,18 @@ module BS
  logical :: BS_K_is_ALDA
  logical :: BS_DB_is_fragmented
  logical :: BS_not_const_eh_f
+ character(schlen) :: BSE_mode
+ character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  integer    , allocatable :: BS_eh_table(:,:)
  integer    , allocatable :: BS_blk_dim(:)
+ complex(SP), allocatable :: BS_mat_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
  complex(SP), allocatable :: BS_cpl_mat(:,:)
  real(SP)   , allocatable :: BS_eh_E(:)
  real(SP)   , allocatable :: BS_eh_f(:)
- real(SP)   , allocatable :: BS_eh_Z(:)
+ complex(SP), allocatable :: BS_eh_Z(:)
  real(SP)   , allocatable :: BS_eh_W(:)
  !
  ! Oscillators ...
@@ -78,6 +83,7 @@ module BS
  !
  character(lchlen):: BSS_description(100)
  character(schlen):: BSS_mode
+ character(schlen):: BSS_inversion_mode
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
  real(SP) :: BSS_er(2)
@@ -97,11 +103,13 @@ module BS
  interface 
    !
    !
-   subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
+   subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
      use pars,          ONLY:SP
      integer               ::iq
-     integer,     optional ::iter
-     complex(SP), optional ::Vi(:),Vo(:)
+     integer               ::iter
+     complex(SP)           ::Vi(:),Vo(:)
+     real(SP),optional     ::iter_par
+     character(3),optional ::call_kind
    end subroutine
    !
    integer function variables_BS(ID,local_description,X)

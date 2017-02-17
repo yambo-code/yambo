@@ -38,7 +38,7 @@
   {"lhelp",  "H","Long Help",0,0,0,0,0},               
   {"jobstr", "J","Job string identifier",0,0,1,0,1},   
   {"infver", "V","Input file verbosity",0,0,1,0,0},    
-  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all",0,0,0,0,0},
+  {"DESC",   " ","[opt=RL,kpt,sc,qp,io,gen,resp,all]",0,0,0,0,0},
   {"ifile",  "F","Input file",0,0,1,0,1},              
   {"idir",   "I","Core I/O directory",0,0,1,0,1},         
   {"odir",   "O","Additional I/O directory",0,0,1,0,1},   
@@ -48,17 +48,27 @@
   {"dbfrag", "S","DataBases fragmentation",0,0,0,0,1}, 
   {"parmem", "M","Memory distribution (parallel runs)",0,0,0,0,1}, 
   {"setup",  "i","Initialization",0,0,0,0,0},          
-  {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0,0},    
-  {"tddft",  "t","The TDDFTs [opt=(a)LDA/(b)SE/(l)RC]",0,0,1,0,0},     
+  {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
+  {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex]",0,0,1,0,0},
+  {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
+  {"bss",    "y","BSE solver [opt=h/d/(p/f)i]",0,0,1,0,0},                      
+  {"DESC",   " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0,0},
   {"rim_cut","c","Coulomb interaction",0,0,0,0,0},  
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0,0},        
-  {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0,0},              
+  {"gwapprx","p","GW approximations [opt=(p)PA/(c)HOSEX]",0,0,1,0,0},              
   {"gw0",    "g","Dyson Equation solver",0,0,1,0,0}, 
-  {"DESC",   " ","opt=n(ewton)/s(ecant)/g(reen)",0,0,0,0,0},
+  {"DESC",   " ","[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0,0},
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
-  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      
+  {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
+#if defined _ELPH 
+  {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    
+  {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
+#endif
+#if defined _SURF
+  {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},
+#endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="yambo";

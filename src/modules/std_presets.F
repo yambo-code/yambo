@@ -22,14 +22,14 @@
 subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
- use pars,       ONLY:SP
+ use pars,       ONLY:SP,schlen
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use fields,     ONLY:global_gauge,grid_path
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,&
+&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,Chi_mode,&
 &                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
-&                      q_plus_G_direction,Q_Shift_Order,n_X_descs
+&                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
@@ -41,7 +41,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     GW_en_comp
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
-&                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
+&                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
@@ -50,11 +50,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                     filled_tresh, l_spin_orbit,n_spin_den,        &
 &                     eval_magn
- use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
+ use parallel_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
-&                     more_io_path,core_io_path,jobstr,com_path
- use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length
+&                     more_io_path,core_io_path,jobstr,com_path,second_jobstr
+ use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length,string_split
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
@@ -63,15 +63,20 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use IO_m,       ONLY:io_reset,max_io_units,IO_write,serial_number,IO_read,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
-&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
-&                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
+&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
+&                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF
+&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res,&
+&                     BS_bands
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
-&                     FXC_is_causal
+&                     FXC_is_causal,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use fragments,  ONLY:Parallel_Fragments
+#if defined _ELPH 
+ use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,nQ_memory,&
+&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh
+#endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
@@ -80,7 +85,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  implicit none
  !
  character(*) :: INSTR,IND,OD,JS,COM_DIR
- integer      :: i1,i2
+ !
+ ! Work Space 
+ !
+ integer           :: i1,i2
+ character(schlen) :: string(2)
  !
  ! Printed reals format lengths 
  !
@@ -109,7 +118,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! ... and Job string
  !
- jobstr=JS
+ call string_split(JS,string,",")
+ jobstr=string(1)
+ second_jobstr=" "
+ if (len_trim(string(2))>0) second_jobstr=string(2)
  !
  ! PAR PROC Setup
  !
@@ -158,7 +170,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !D_lattice
  !
- input_Tel_commands_over_header=.false.
+ input_Tel_is_negative=.false.
  non_periodic_directions='none'
  lattice='Unknown'
  Bose_Temp=-1./HA2EV
@@ -211,10 +223,20 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_ppa=.false.
  l_cohsex=.false.
  l_gw0=.false.
- l_bse=.false.
  l_chi=.false.
+ l_bse=.false.
+ l_bsk=.false.
  l_bss=.false.
+ l_rpa_IP=.false.
+ l_td_hartree=.false.
+ l_tddft=.false.
+ l_alda_fxc=.false.
+ l_lrc_fxc=.false.
  l_bs_fxc=.false.
+ l_td_hf=.false.
+ l_W_eh=.false.
+ l_W_eh_diag=.false.
+ l_W_eh_cpl=.false.
  l_acfdt=.false.
  l_el_corr=.false.
  l_ph_corr=.false.
@@ -226,6 +248,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_sc_magnetic=.false.
  l_collisions_IO=.false.
  l_elph_Hamiltonian=.false.
+ l_carrier_dynamics=.false.
  !
  !electrons
  !
@@ -285,11 +308,13 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !X
  !
+ Chi_mode=' '
  current_iq=0
  X_RIM_nkpts=0
  self_detect_E_range=.false.
  half_X_mat_only=.false.
  Dipole_bands_ordered=.true.
+ Dipole_Energy_treshold=1.E-5_SP/HA2EV
  Dipole_uses_shifted_grids=.false.
  use_X_RIM=.false.
  eps_2_alpha=1._SP
@@ -347,6 +372,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! BS/BSS
  !
+ BS_bands=0
  BS_n_g_W=1
  BS_eh_en=(/-1.,-1./)/HA2EV
  BS_identifier=0
@@ -354,8 +380,13 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_eh_win=100.
  BS_res_mode='xc'
  BS_cpl_mode='none'
+ BSE_mode='causal'
+ BSK_mode=' '
+ TDDFT_mode=' '
+ BS_anti_res=.FALSE.
  BS_K_dim=0
  BSS_mode=' '
+ BSS_inversion_mode='pf'
  BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0.,10./)/HA2EV
@@ -393,6 +424,20 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_FUNCTIONAL=-1             ! unknow 
  GS_xc_KIND=-1                   ! unknow 
  !
+#if defined _ELPH 
+ !
+ ! ELPH
+ !
+ ph_modes=0
+ elph_nb=0
+ elph_branches=0
+ gsqF_energy_steps=2
+ eval_G_using_KK=.false.
+ nQ_memory=0
+ elph_Ham_bands=0
+ elph_Ham_ik=1
+ RES_tresh=0.01
+#endif
  !
  !
  !

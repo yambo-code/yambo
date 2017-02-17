@@ -26,18 +26,22 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use pars,                ONLY:SP,pi
  use drivers,             ONLY:l_real_time
  use timing,              ONLY:live_timing
- use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
- use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,       ONLY:par_indexes
- use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
- use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,PP_free,pp_table,Vnl,pp_n_l_comp
+ use electrons,           ONLY:levels,n_spin,n_spinor,n_sp_pol
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,          ONLY:PARALLEL_index
+ use D_lattice,           ONLY:alat
+ use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,PP_free,  &
+&                              pp_kbv_dim,spin_m_table,pp_factor
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P
- use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD,OP_RD_CL
+ use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
+ use IO_m,                ONLY:io_control,REP,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
  use wrapper,             ONLY:M_by_V
  use com,                 ONLY:error,msg
+#if defined _KERR
+ use fields,              ONLY:global_gauge
+#endif
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -46,53 +50,35 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Work Space
  !
- integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_pp,pp_spin
- integer                      :: is,ia,il,im,alloc_err,i_spin,E_i_spin,wf_dim
- complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
+ integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_pp
+ integer                      :: i_spinor,i_spin,E_i_spin,pp_spin
+ integer                      :: alloc_err,wf_dim
+ complex(SP), allocatable     :: wf_xyz(:,:)
+ complex(SP), allocatable     :: kbv(:,:,:)
  complex(SP)                  :: rho(4)
  real(SP)                     :: Ev_m_Ec
- type(pp_indexes)             :: px
+ type(PP_indexes)             :: px
  !
  !I/O and external functions
  !
- integer                      :: ID,io_err,ioKB_err, io_Vnl_err
- integer, external            :: ioKB_PP, io_Vnl
+ integer                      :: ID,io_err(3)
+ integer                      :: ioKB_abinit_err,ioKB_pwscf_err,io_Vnl_err
+ integer, external            :: ioKB_abinit,ioKB_pwscf,io_Vnl
  !
- X%Vnl_included=.false.
+ call Dipole_kb_init(Xen,X,io_err,ID)
  !
- ! Check for the Vnl DB
+ ioKB_abinit_err= io_err(1)
+ ioKB_pwscf_err = io_err(2)
+ io_Vnl_err     = io_err(3)
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_Vnl_err=io_Vnl(X,Xen,ID)
- !
- ! Check for the KB PP DB 
- !
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- ioKB_err=ioKB_PP(ID)
- !
- X%Vnl_included= ioKB_err==0 .or. io_Vnl_err==0
- !
- if (ioKB_err==0) then
-   pp_kbv_dim=0
-   do is = 1,n_atomic_species
-     do ia = 1,n_atoms_species(is)
-       do i_pp = 1, pp_n_l_times_proj_max
-         il = pp_table(1,is,i_pp)
-         pp_spin = pp_table(3,is,i_pp)
-         if(pp_spin>1) cycle
-         do im = 1,2*(il-1)+1
-           pp_kbv_dim=pp_kbv_dim+1
-         enddo
-       enddo
-     enddo
-   enddo
+ if(ioKB_abinit_err==0.or.ioKB_pwscf_err==0) then
    allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  endif
  !
  ! Set up band limits
  !
- if (Dipole_bands_ordered) then
+ if (Dipole_bands_ordered.or.Dipole_Energy_treshold<0.) then
    iv_max=Xen%nbm
    ic_min=Xen%nbf+1
  else
@@ -102,16 +88,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Set up the parallel environment
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
  !
  if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
  !
  call live_timing('Dipole (T):',px%n_of_elements(myid+1)*n_spin)
  wf_dim=3
- call pp_redux_wait
+ call PP_redux_wait
  !
  allocate(wf_xyz(wf_ng,wf_dim))
+ call mem_est("wf_xyz",(/size(wf_xyz)/),(/2*SP/))
  !
  ! Main loop over k in IBZ
  !
@@ -119,17 +106,25 @@ subroutine Dipole_transverse(Xen,Xk,X)
    !
    ! [Vnl,r]
    !
-   if (ioKB_err==0) then
-     if (ik< Xk%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     io_err=ioKB_PP(ID)
+   if (ioKB_pwscf_err==0) then
+     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+     ioKB_pwscf_err=ioKB_pwscf(ID)
+   endif
+   !
+   if (ioKB_abinit_err==0) then
+     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+     ioKB_abinit_err=ioKB_abinit(ID)
    endif
    ! 
    do i_spin=1,n_spin
      ! 
      pp_spin=i_spin
-     if (n_spinor==2) pp_spin=1
-     if (ioKB_err==0) call Dipole_kb_pp_comp(ik,pp_spin,Xk,kbv)
+     if (ioKB_abinit_err==0.and.n_spinor==2) pp_spin=1
+     if (ioKB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
+     if (ioKB_abinit_err==0) call Dipole_kb_abinit_comp(ik,pp_spin,Xk,kbv)
+     if (ioKB_pwscf_err ==0) call Dipole_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
      !
      E_i_spin=i_spin
      if (n_spinor==2) E_i_spin=1
@@ -147,7 +142,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.l_real_time) cycle
+         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold.and..not.l_real_time) cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
          if(ivfft==0) call error(" Error in parallel wf distribution")
@@ -162,12 +157,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
          icfft=wf_state(ic,ik,i_spin)
          if(icfft==0) call error("Error distribution wave-function")
          !
-         ! WARNING !!!!!!!! The convention is to revert the order of the bands indexes
-         !==================
-         ! in the definition of DIP_P and DIP_iR
-         !
-         ! DIP_P(iv,ic)  = P_cv
-         ! DIP_iR(iv,ic) = (iR)_cv 
+         ! WARNING: 
+         ! ========
+         ! The convention is to revert the order of the bands
+         ! indexes in the definition of DIP_P and DIP_iR :
+         ! DIP_P(iv,ic)  = P_cv ; DIP_iR(iv,ic) = (iR)_cv 
          !
          ! Note that P is Hermitian and iR anti-hermitian.
          !
@@ -180,7 +174,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
-         if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
+         if (ioKB_abinit_err==0.or.ioKB_pwscf_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
          if (io_Vnl_err==0) then
            if(n_spinor==1) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_spin)*0.5
            if(n_spinor==2.and.i_spin==2) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
@@ -190,6 +184,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! <P>
          !=====
          ! P_vc=rho(:3)
+#if defined _KERR
+         if(trim(global_gauge)=='velocity') then
+           if (n_spinor==2) then
+             DIP_P(:,ic,iv,ik,1)=DIP_P(:,ic,iv,ik,1)+rho(:3)
+           else
+             DIP_P(:,ic,iv,ik,i_spin)=rho(:3)
+           endif
+         endif
+#endif        
+         !
          !======
          ! <iR>
          !======
@@ -200,7 +204,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          rho(1:3)=rho(1:3)/Ev_m_Ec
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP) rho(1:3)=(0._SP,0._SP)
+         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) rho(1:3)=(0._SP,0._SP)
          !
          if (n_spinor==2) then
            DIP_iR(:,ic,iv,ik,1)=DIP_iR(:,ic,iv,ik,1)+rho(:3)
@@ -215,6 +219,39 @@ subroutine Dipole_transverse(Xen,Xk,X)
      enddo      ! valence band loop
    enddo        ! spin loop
    !
+ enddo          ! k-points
+ !
+ call live_timing
+ !
+ ! CLEAN
+ !
+ deallocate(wf_xyz)
+ call mem_est("wf_xyz")
+ call PP_indexes_reset(px)
+ if (ioKB_pwscf_err==0.or.ioKB_abinit_err==0) then
+   deallocate(kbv)
+   if (allocated(pp_n_l_comp))  deallocate(pp_n_l_comp)
+   if (allocated(pp_table))     deallocate(pp_table)
+   if (allocated(pp_factor))    deallocate(pp_factor)
+   if (allocated(spin_m_table)) deallocate(spin_m_table)
+   call PP_free()
+   call mem_est("KBV pp_n_l_comp pp_table pp_factor spin_m_table") 
+ else if (io_Vnl_err==0) then
+   if (allocated(Vnl)) then
+     deallocate(Vnl)
+     call mem_est("Vnl")
+   endif
+ endif 
+ !
+ do ik=1,Xk%nibz
+   !
+   do i_spin=1,n_sp_pol
+     call PP_redux_wait(DIP_iR(:,:,:,ik,i_spin))
+#if defined _KERR
+   if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
+#endif
+   enddo
+   !
    ! Symmetrization 
    !================
    !
@@ -225,29 +262,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
      do iv=X%ib(1),X%ib(2)
        do ic=iv+1,X%ib(2)
          DIP_iR(:,ic,iv,ik,:)=-conjg(DIP_iR(:,iv,ic,ik,:))
+#if defined _KERR
+         if(trim(global_gauge)=="velocity")DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
+#endif        
        enddo
      enddo
    endif
    !
- enddo          ! k-points
- !
- call live_timing
- !
- ! CLEAN
- !
- deallocate(wf_xyz)
- call pp_indexes_reset(px)
- if (ioKB_err==0) then
-   deallocate(kbv,pp_n_l_comp)
-   if (allocated(pp_table)) deallocate(pp_table)
-   call PP_free()
-   call mem_est("KBV pp_n_l_comp pp_table")
- else if (io_Vnl_err==0) then
-   if (allocated(Vnl)) deallocate(Vnl)
- endif 
- !
- do i_spin=1,n_sp_pol
-   call pp_redux_wait(DIP_iR(:,:,:,:,i_spin))
  enddo
  !
 end subroutine Dipole_transverse

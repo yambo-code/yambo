@@ -23,9 +23,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use drivers,        ONLY:l_sc_run
  use pars,           ONLY:SP,pi,schlen
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,n_sp_pol
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
-&                         atoms_spatial_invertion,i_space_inv,input_Tel_commands_over_header,&
+&                         atoms_spatial_invertion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index
@@ -43,8 +43,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),m(3,3)
- integer           :: i1,i2,i3,is,ia,i_err
+ real(SP)          :: rv(3),m(3,3),Tel_SAVE
+ integer           :: i1,i2,i3,is,ia,i_err,nbf_m_SAVE(2)
+ type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
  integer, external :: k_lattice
  !
@@ -70,10 +71,19 @@ subroutine setup(en,Xen,Ken,k,Xk)
  endif
  !
  call msg('r','... with scaling factors [a.u.]:',alat)
- call msg('nr','Direct Lattice(DL) unit cell [iru]')
- call msg('r','A1 =',a(1,:)/alat(:))
- call msg('r','A2 =',a(2,:)/alat(:))
- call msg('rn','A3 =',a(3,:)/alat(:))
+ call msg('nr','Direct Lattice(DL) unit cell [iru  /  cc(a.u.)]')
+ dumb_ch1='A1 ='//trim(real2ch(a(1,1)/alat(1)))//' '//trim(real2ch(a(1,2)/alat(2)))//' '//&
+&                 trim(real2ch(a(1,3)/alat(3)))//'     '//&
+&                 trim(real2ch(a(1,1)))//' '//trim(real2ch(a(1,2)))//' '//trim(real2ch(a(1,3)))
+ call msg('r',dumb_ch1)
+ dumb_ch1='A2 ='//trim(real2ch(a(2,1)/alat(1)))//' '//trim(real2ch(a(2,2)/alat(2)))//' '//&
+&                 trim(real2ch(a(2,3)/alat(3)))//'     '//&
+&                 trim(real2ch(a(2,1)))//' '//trim(real2ch(a(2,2)))//' '//trim(real2ch(a(3,3)))
+ call msg('r',dumb_ch1)
+ dumb_ch1='A3 ='//trim(real2ch(a(3,1)/alat(1)))//' '//trim(real2ch(a(3,2)/alat(2)))//' '//&
+&                 trim(real2ch(a(3,3)/alat(3)))//'     '//&
+&                 trim(real2ch(a(3,1)))//' '//trim(real2ch(a(3,2)))//' '//trim(real2ch(a(3,3)))
+ call msg('rn',dumb_ch1)
  !
  ! DL vol
  !
@@ -89,13 +99,19 @@ subroutine setup(en,Xen,Ken,k,Xk)
  b(2,:)=cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
  b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
  !
- call msg('nr','Reciprocal Lattice(RL) unit cell [iku]')
+ call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
  call c2a(b,b(1,:),rv,'kc2i')
- call msg('r','B1 =',rv)
+ dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+&                 trim(real2ch(b(1,1)))//' '//trim(real2ch(b(1,2)))//' '//trim(real2ch(b(1,3)))
+ call msg('r',dumb_ch1)
  call c2a(b,b(2,:),rv,'kc2i')
- call msg('r','B2 =',rv)
+ dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+&                 trim(real2ch(b(2,1)))//' '//trim(real2ch(b(2,2)))//' '//trim(real2ch(b(2,3)))
+ call msg('r',dumb_ch1)
  call c2a(b,b(3,:),rv,'kc2i')
- call msg('rn','B3 =',rv)
+ dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+&                 trim(real2ch(b(3,1)))//' '//trim(real2ch(b(3,2)))//' '//trim(real2ch(b(3,3)))
+ call msg('rn',dumb_ch1)
  !
  ! ZERO's SETUP
  !
@@ -131,7 +147,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
      call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
      if(.not.mag_syms) inv_index=nsym/2+1
      if(mag_syms) then
-       call warning(' Magnetic symmetries and Trev are not implemented! Remove T-rev')
        do is=1,nsym
          if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
        enddo
@@ -237,11 +252,31 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! fixed in the calculation (not overwritten in io_header.F, for
  ! example).
  !
- input_Tel_commands_over_header=Tel<0.
- Tel=abs(Tel)
+ ! Moreover also %nbf and %nbm are kept at the value obtained at zero 
+ ! temperature
  !
+ input_Tel_is_negative=Tel<0.
+ Tel=abs(Tel)
+ Tel_SAVE=Tel
+ !
+ if (input_Tel_is_negative) then
+   call E_duplicate(Xen,Xen_COPY)
+   Tel=0.
+   call OCCUPATIONS_Fermi(Xen_COPY,Xk,1)
+   nbf_m_SAVE=(/Xen_COPY%nbf,Xen_COPY%nbm/)
+   call E_reset(Xen_COPY)
+ endif
+ !
+ Tel=Tel_SAVE
  call OCCUPATIONS_Fermi(Xen,Xk,2)
  call OCCUPATIONS_Extend(Xen,en)
+ !
+ if (input_Tel_is_negative) then
+   Xen%nbf=nbf_m_SAVE(1)
+   Xen%nbm=nbf_m_SAVE(2)
+   en%nbf =nbf_m_SAVE(1)
+   en%nbm =nbf_m_SAVE(2)
+ endif
  !
  n_met_bands =en%nbm
  n_full_bands=en%nbf

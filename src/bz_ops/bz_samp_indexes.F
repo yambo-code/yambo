@@ -37,12 +37,12 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
- use pars,           ONLY:SP,lchlen,IP
+ use pars,           ONLY:SP,schlen,lchlen,IP
  use drivers,        ONLY:l_bse
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error,warning
- use par_proc_m,     ONLY:pp_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait
  use timing,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
@@ -60,7 +60,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  !Work Space
  !
- integer, external :: ig_index
+ integer, external :: G_index
  !
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
@@ -83,7 +83,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  io_err=ioQINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)
-   call Q_report
+   call Q_report('iku')
+   call Q_report('cc ')
    call q_shadows(.false.)
    return
  endif
@@ -159,7 +160,8 @@ subroutine bz_samp_indexes(k,Xk,q)
    call k_ibz2bz(q,'a',.false.)
    nqbz =q%nbz
    nqibz=q%nibz
-   call Q_report()
+   call Q_report('iku')
+   call Q_report('cc ')
    !
    ! When using USER defined Q-points q%nbz may be different from Xk%nbz
    ! if the given list is not correct.
@@ -231,8 +233,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      v1=Xk%ptbz(i1,:)-Xk%ptbz(i2,:)-q%ptbz(i3,:) 
      call c2a(v_in=v1,mode='ka2i')
      !
-     if (iqs==1) qindx_X(iqibz,i1,2)=ig_index(v1)
-     if (bse_scattering) qindx_B(i1,i2,2)=ig_index(v1)
+     if (iqs==1) qindx_X(iqibz,i1,2)=G_index(v1)
+     if (bse_scattering) qindx_B(i1,i2,2)=G_index(v1)
      !     
    enddo
    !
@@ -266,7 +268,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      qindx_S(i1,iqbz,1)=i2
      v1=k%ptbz(ikbz,:)-k%ptbz(i2,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
-     qindx_S(i1,iqbz,2)=ig_index(v1)
+     qindx_S(i1,iqbz,2)=G_index(v1)
    enddo 
    !
    if (any(qindx_S(i1,:,:)==0)) call error('Null transition detected [qindx_S]')
@@ -287,20 +289,28 @@ subroutine bz_samp_indexes(k,Xk,q)
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
  if (Xk_grid_is_uniform) deallocate(q%ptbz)
- call pp_redux_wait
+ call PP_redux_wait
  !
  contains 
    !
-   subroutine Q_report()
+   subroutine Q_report(kind)
+     character(3)     ::kind
      character(lchlen)::ch(4)
-     call msg('nr','IBZ Q-points :',q%nibz)
-     call msg('rn','BZ  Q-points :',q%nbz)
+     real(SP)         ::q_cc(3)
+     logical          ::carterian
+     if(trim(kind)=='iku') then
+       call msg('nr','IBZ Q-points :',q%nibz)
+       call msg('rn','BZ  Q-points :',q%nbz)
+     endif
+     if(trim(kind)=='cc') call msg('r',' ')
      d3q_factor=RL_vol/real(q%nbz)
      do i1=1,q%nibz
+       if(trim(kind)=='cc') call c2a(v_in=q%pt(i1,:),v_out=q_cc,mode='ki2c')
        ch(2)=gen_fmt(r_v=q%pt(i1,:))
        ch(3)=gen_fmt(r_v=(/q%weights(i1)/))
        write (ch(1),'(7a)') '(a,i5.5,a,3(',trim(ch(2)),',1x),a,',trim(ch(3)),',1x)'
-       write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q%pt(i1,:),'(iku) * weight ',q%weights(i1)
+       if(trim(kind)=='cc')  write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q_cc(:),'(cc ) * weight ',q%weights(i1)
+       if(trim(kind)=='iku') write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q%pt(i1,:),'(iku) * weight ',q%weights(i1)
        call msg('r',trim(ch(2)))
      enddo
    end subroutine

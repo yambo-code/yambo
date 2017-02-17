@@ -92,28 +92,27 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  contains
    !
    subroutine f_build(Ef)
-   !
-   integer :: i1,i2,is
-   real(SP):: Ef
-   do i1=1,E%nb
-     do i2=1,E%nk
-       do is=1,n_sp_pol
-         E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,Tel)
-       enddo
-     enddo 
-   enddo
-   !
-   if (associated(E%E_RIM)) then
-     do i1=1,BZ_RIM_nbands
-       do i2=1,BZ_RIM_tot_nkpts
+     !
+     integer :: i1,i2,is
+     real(SP):: Ef
+     !
+     do i1=1,E%nb
+       do i2=1,E%nk
          do is=1,n_sp_pol
-           E%f_RIM(i1,i2,is) =spin_occ*Fermi_fnc(E%E_RIM(i1,i2,is)-Ef,Tel)
-           Xe%f_RIM(i1,i2,is)=E%f_RIM(i1,i2,is)
+           E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,Tel)
          enddo
        enddo 
      enddo
-   endif
-   !
+     if (associated(E%E_RIM)) then
+       do i1=1,BZ_RIM_nbands
+         do i2=1,BZ_RIM_tot_nkpts
+           do is=1,n_sp_pol
+             E%f_RIM(i1,i2,is) =spin_occ*Fermi_fnc(E%E_RIM(i1,i2,is)-Ef,Tel)
+             Xe%f_RIM(i1,i2,is)=E%f_RIM(i1,i2,is)
+           enddo
+         enddo 
+       enddo
+     endif
    end subroutine
    !
 end subroutine

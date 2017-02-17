@@ -35,7 +35,7 @@ scalapack_routine="pcheev"
 
 if test "$mpibuild"  = "yes" && ! test "$with_blacs" = "no" && ! test "$with_scalapack" = "no"; then
 
-acx_blacs_save_LIBS="$LIBS"
+acx_blacs_save_LIBS="$BLACS_LIBS"
 LIBS="$LIBS $FLIBS"
 # First, check BLACS_LIBS environment variable
 if test "x$BLACS_LIBS" != x; then
@@ -43,10 +43,10 @@ if test "x$BLACS_LIBS" != x; then
         AC_MSG_CHECKING([for $blacs_routine in $BLACS_LIBS])
         AC_TRY_LINK_FUNC($blacs_routine, [acx_blacs_ok=yes], [BLACS_LIBS=""])
         AC_MSG_RESULT($acx_blacs_ok)
-        BLACS_LIBS="$save_LIBS"
+        BLACS_LIBS="$acx_blacs_save_LIBS"
 fi
 
-acx_scalapack_save_LIBS="$LIBS"
+acx_scalapack_save_LIBS="$SCALAPACK_LIBS"
 LIBS="$LIBS $FLIBS"
 # First, check SCALAPACK_LIBS environment variable
 if test "x$SCALAPACK_LIBS" != x; then
@@ -54,12 +54,16 @@ if test "x$SCALAPACK_LIBS" != x; then
         AC_MSG_CHECKING([for $scalapack_routine in $SCALAPACK_LIBS])
         AC_TRY_LINK_FUNC($scalapack_routine, [acx_scalapack_ok=yes], [SCALAPACK_LIBS=""])
         AC_MSG_RESULT($acx_scalapack_ok)
-        SCALAPACK_LIBS="$save_LIBS"
+        SCALAPACK_LIBS="$acx_scalapack_save_LIBS"
 fi
 
 fi
 
-if test "$acx_blacs_ok" = "yes" && "$acx_scalapack_ok" = "yes" ; then enable_scalapack="yes";fi
+if test "$acx_blacs_ok" = "yes" ; then
+ if test "$acx_scalapack_ok" = "yes" ; then
+  enable_scalapack="yes"  
+ fi
+fi
 
 dscalapack=""
 if test "$enable_scalapack" = "yes" ; then dscalapack="-D_SCALAPACK";fi

@@ -34,8 +34,8 @@ subroutine cutoff_box(q,is_cut)
  use R_lattice,     ONLY:bare_qpg,RL_vol,RIM_ng,RIM_qpg,bz_samp,&
 &                        box_length,g_vec,g_rot,ng_closed,RIM_anisotropy,&
 &                        CUTOFF_plus_RIM
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use timing,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
  !
@@ -48,9 +48,9 @@ subroutine cutoff_box(q,is_cut)
  integer      ::iq,ig,iqbz,ig_p,is,ig_r,iqibz,i1,nq_looped
  real(SP)     ::v1(3),v2(3),V_bare(q%nibz,ng_closed),vol_factor
  complex(SP)  ::V_cut(q%nibz,wf_ng)
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! Bare interaction
  !
@@ -76,7 +76,7 @@ subroutine cutoff_box(q,is_cut)
  !
  V_cut=cmplx(0.)
  !
- call par_indexes(px,(/q%nibz,wf_ng/))
+ call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
  call live_timing('Box',px%n_of_elements(myid+1))
  !
@@ -127,7 +127,7 @@ subroutine cutoff_box(q,is_cut)
  !
  ! MPI 2 all
  !
- call pp_redux_wait(V_cut)
+ call PP_redux_wait(V_cut)
  !
  ! Volume Factor
  !

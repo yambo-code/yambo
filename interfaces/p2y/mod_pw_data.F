@@ -69,10 +69,11 @@ module pw_data
   integer, allocatable       :: pw_igk_(:,:)
 
 ! Wavefunctions
-  complex(DP), allocatable  :: wf_kindip_(:,:)
+  complex(DP), allocatable   :: wf_kindip_(:,:)
 
 ! XC
-   character(256)            :: pw_dft
+  character(256)             :: pw_dft
+  logical                    :: pw_lda_plus_u
 
 ! Pseudopotentials
   character(256),allocatable :: psfile(:)

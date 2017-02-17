@@ -47,7 +47,8 @@ integer function ioQP(what,qp,ID)
  ! Work Space
  !
  integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,restart_point,&
-&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,var_size
+&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,var_size,&
+&                       QP_DB_kind_disk 
  character(schlen)    ::ch
  character(2)         ::OP(1)
  logical              ::Terminator_msg
@@ -77,7 +78,13 @@ integer function ioQP(what,qp,ID)
      if (variable_is_found(ID,"QP_DB_kind")==1.or.write_is_on(ID)) then
 #endif
        call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
-       call io_elemental(ID,I0=QP_DB_kind)
+       call io_elemental(ID,DB_I0=QP_DB_kind_disk,I0=QP_DB_kind)
+       if(io_mode(ID)==VERIFY) then
+          if(QP_DB_kind_disk/=QP_DB_kind) then
+            ioQP=IO_INCOMPATIBLE_VAR
+            return
+          endif
+       endif
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
 #if defined _NETCDF_IO
      else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then

@@ -47,6 +47,7 @@ module QP_m
  logical           :: COHSEX_use_empties
  logical           :: PPa_terminator
  logical           :: On_Mass_Shell_approx
+ logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP
  logical           :: use_GreenF_Zoom
  logical           :: GF_is_causal
@@ -61,6 +62,7 @@ module QP_m
  real(SP)          :: QP_cg_percent
  real(SP)          :: GW_en_comp
  real(SP)   ,allocatable:: QP_G_amplitude_integral(:)
+ real(SP)   ,allocatable:: QP_G_info(:,:,:)
  real(SP)   ,allocatable:: QP_G_zoom_er(:,:)
  complex(SP),allocatable:: QP_dSc(:,:)
  complex(SP),allocatable:: QP_W(:,:,:)

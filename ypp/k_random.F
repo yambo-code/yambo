@@ -23,17 +23,18 @@ subroutine k_random(Xk,Xen)
  !
  use pars,                ONLY:SP,DP,lchlen,schlen
  use units,               ONLY:HA2EV
- use stderr,              ONLY:set_real_printed_length
- use R_lattice,           ONLY:bz_samp,nkibz
+ use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
+ use stderr,              ONLY:set_real_printed_length,intc
+ use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest
  use parser_m,            ONLY:parser
- use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop
- use com,                 ONLY:msg,of_open_close
- use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a
+ use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
+ use com,                 ONLY:msg,of_open_close,error
+ use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a,k2bz
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
-&                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling,&
-&                              BZ_RIM_ipol_weight                       
+&                              BZ_RIM_tot_nkpts,BZ_RIM_max_filling,&
+&                              BZ_RIM_ipol_weight,n_sp_pol
  use timing,              ONLY:live_timing
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
@@ -43,13 +44,13 @@ subroutine k_random(Xk,Xen)
  !
  ! Work Space
  !
- real(SP)     ::dummy,rand_kpt(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
+ real(SP)     ::dummy,rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2)
  integer      ::i1,ikbz
- integer, external :: k_the_nearest
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
  logical           :: No_Weight
+ real(SP), allocatable :: rand_E(:,:,:)
  !
  ! Random Generator
  !
@@ -61,8 +62,10 @@ subroutine k_random(Xk,Xen)
  !
  type(levels)      :: RIM_E
  type(bz_samp)     :: RIM_k
- integer           :: ID,i_err,nsym_save,nsym_RIM_DB
- integer, external :: ioDB1_reload,ioE_RIM
+ integer           :: ID
+ integer           :: i_err,nsym_save,nsym_RIM_DB
+ integer           :: i_time_rev_save,i_time_rev_DB
+ integer, external :: ioDB1_selective_scan,ioE_RIM
  real(SP)          :: dl_sop_save(3,3,48)
  !
  ! Saves 2 check
@@ -71,16 +74,28 @@ subroutine k_random(Xk,Xen)
  alat_save=alat
  nsym_save=nsym
  dl_sop_save(:,:,:nsym)=dl_sop
+ i_time_rev_save=i_time_rev
  !
  ! DB1 reloading
  !
- i_err=ioDB1_reload(RIM_E,RIM_k, trim(BZ_RIM_path) )
+ i_err=ioDB1_selective_scan(RIM_E,RIM_k, trim(BZ_RIM_path) ,'all')
+ !
+ if (i_err/=0) call error('RIM database not found')
+ !
+ ! Now that I have the finer grid of Kpts I redefine the zeros for the kpts
+ !
+ if(.not.trim(BZ_RIM_path)==".") then
+   call define_zeros(vector_=RIM_k%pt, zero_=k_iku_zero)
+   call define_zeros(vector_=RIM_k%pt, zero_=k_rlu_zero,RLU=.TRUE.)
+ endif
  !
  ! Symmetry restoring
  !
  deallocate(dl_sop)
  nsym_RIM_DB=nsym
  nsym       =nsym_save
+ i_time_rev_DB=i_time_rev
+ i_time_rev   =i_time_rev_save
  allocate(dl_sop(3,3,nsym))
  dl_sop=dl_sop_SAVE(:,:,:nsym)
  !
@@ -136,12 +151,12 @@ subroutine k_random(Xk,Xen)
        !
      endif
      !
-     call K_transform(rand_kpt(k_counter+1,:),'iku')
+     call K_transform(rand_k(k_counter+1,:),'iku')
      !
      if(No_Weight) then
-       write (dump,'(3f12.7)') rand_kpt(k_counter+1,:)
+       write (dump,'(3f12.7)') rand_k(k_counter+1,:)
      else
-       write (dump,'(4f12.7)') rand_kpt(k_counter+1,:),1._SP/real(BZ_RIM_nkpts)     
+       write (dump,'(4f12.7)') rand_k(k_counter+1,:),1._SP/real(BZ_RIM_nkpts)     
      endif
      call msg('o random',"",trim(dump),USE_TABS=.true.)
      !
@@ -160,6 +175,24 @@ subroutine k_random(Xk,Xen)
  !
  call section('*','BZ RIM DB')
  !
+ call msg('s',':: Electrons             :',default_nel)
+ call msg('s',':: Temperature       [ev]:',input_GS_Tel)
+ call msg('s',':: Lattice factors [a.u.]:',alat)
+ call msg('s',':: K points        [read]:',nkibz)
+ !
+ if (BZ_RIM_nkpts<nkibz.and.BZ_RIM_nkpts>0) then
+   nkibz   =BZ_RIM_nkpts
+   RIM_E%nk=nkibz
+   allocate(rand_E(RIM_E%nb,nkibz,n_sp_pol))
+   rand_E(:,:,:)=RIM_E%E(:,:nkibz,:)
+   rand_k(:nkibz,:)=RIM_k%pt(:nkibz,:)
+   deallocate(RIM_E%E,RIM_k%pt)
+   allocate(RIM_E%E(RIM_E%nb,nkibz,n_sp_pol),RIM_k%pt(nkibz,3))
+   RIM_E%E(:,:,:)=rand_E(:,:,:)
+   RIM_k%pt(:,:)=rand_k(:,:)
+   deallocate(rand_E)
+ endif
+ !
  gap(1)=minval(RIM_E%E(Xen%nbf+1,:,1))-maxval(RIM_E%E(Xen%nbf,:,1)) 
  gap(2)=10000.
  do i1=1,nkibz
@@ -168,12 +201,13 @@ subroutine k_random(Xk,Xen)
    endif
  enddo
  !
- call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',input_GS_Tel)
- call msg('s',':: Lattice factors [a.u.]:',alat)
- call msg('s',':: K points              :',nkibz)
+ call msg('s','::                 [used]:',BZ_RIM_nkpts)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym_RIM_DB)
+ if(i_time_rev_DB==1)&
+&   call msg('s',':: Time reversal included ')
+ if(i_time_rev_DB==0)&
+&   call msg('s',':: Time reversal not included')
  if (Xen%nbf==Xen%nbm) then
    call msg('s',':: Gap indirect      [ev]:',gap(1)*HA2EV)
    call msg('s','::     direct        [ev]:',gap(2)*HA2EV)
@@ -189,13 +223,13 @@ subroutine k_random(Xk,Xen)
  !
  call k_ibz2bz(RIM_k,'i',.true.)
  !
- call msg('l','done')
+ call msg('l','found '//trim(intc(RIM_k%nbz))//' points in the BZ')
  !
  add_X_grid=.true.
  !
  BZ_RIM_nbands=RIM_E%nb
  BZ_RIM_tot_nkpts=RIM_k%nibz
- if (add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nbz
+ if (add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nibz
  !
  allocate(BZ_RIM_nkpt(Xk%nbz))
  BZ_RIM_nkpt=0
@@ -210,7 +244,7 @@ subroutine k_random(Xk,Xen)
    BZ_RIM_nkpt=0
    do i1=1,RIM_k%nbz
      !
-     ikbz=k_the_nearest(RIM_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz,.FALSE.,i_err)
+     ikbz=k_the_nearest(RIM_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
      BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
      !
      if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=RIM_k%sstar(i1,1)
@@ -232,14 +266,14 @@ subroutine k_random(Xk,Xen)
  !
  !  At the end I add to the Xen%E_RIM array the Xen%E energies
  !
- allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
+ allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
  Xen%E_RIM(:,:RIM_k%nibz,:)=RIM_E%E(:,:,:)
  !
  if (add_X_grid) then
    forall(i1=1:Xk%nbz) BZ_RIM_nkpt(i1)=BZ_RIM_nkpt(i1)+1
-   forall(i1=1:Xk%nbz) BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k%nibz+i1
-   do i1=1,Xk%nbz
-     Xen%E_RIM(:,RIM_k%nibz+i1,:)=Xen%E(:BZ_RIM_nbands,Xk%sstar(i1,1),:)+Xen%Efermi(1)
+   forall(i1=1:Xk%nbz) BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k%nibz+Xk%sstar(i1,1)
+   do i1=1,Xk%nibz
+     Xen%E_RIM(:,RIM_k%nibz+i1,:)=Xen%E(:BZ_RIM_nbands,i1,:)+Xen%Efermi(1)
    enddo
  endif
  !
@@ -259,10 +293,11 @@ subroutine k_random(Xk,Xen)
    subroutine build_3D_k()
      real(DP), external :: dlaran
      do i1=1,3
-       rand_kpt(k_counter+1,i1)=(2.*dlaran(iseed(4:))-1.)
+       rand_k(k_counter+1,i1)=(2.*dlaran(iseed(4:))-1.)
      enddo
-     dummy=rlu_v_norm(rand_kpt(k_counter+1,:))
-     call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
+     dummy=rlu_v_norm(rand_k(k_counter+1,:))
+     call c2a(v_in=rand_k(k_counter+1,:),mode="ka2i")
+     call k2bz(v_in=rand_k(k_counter+1,:))
    end subroutine
    !
    subroutine build_spherical_k()
@@ -271,12 +306,12 @@ subroutine k_random(Xk,Xen)
      k_module=gamma_radius+1.
      do while ( k_module > gamma_radius) 
        do i1=1,3
-         rand_kpt(k_counter+1,i1)=gamma_radius*(2.*dlaran(iseed(4:))-1.)
+         rand_k(k_counter+1,i1)=gamma_radius*(2.*dlaran(iseed(4:))-1.)
        enddo
-       k_module=v_norm(rand_kpt(k_counter+1,:))
-       call c2a(v_in=rand_kpt(k_counter+1,:),mode="kc2a")
-       dummy=rlu_v_norm(rand_kpt(k_counter+1,:))
-       call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
+       k_module=v_norm(rand_k(k_counter+1,:))
+       call c2a(v_in=rand_k(k_counter+1,:),mode="kc2a")
+       dummy=rlu_v_norm(rand_k(k_counter+1,:))
+       call c2a(v_in=rand_k(k_counter+1,:),mode="ka2i")
      enddo
    end subroutine
    !

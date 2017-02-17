@@ -33,8 +33,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use frequency,     ONLY:w_samp,cg_index_bg,cg_npts,W_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use collision,     ONLY:ggwinfo,collision_reset
  use IO_m,          ONLY:io_control,REP,VERIFY,NONE,RD,RD_CL,OP_RD,&
 &                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL
@@ -62,7 +62,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! WorkSpace
  !
  type(ggwinfo)    ::isc,iscp
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
  integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,iqs,&
 &           iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
@@ -78,7 +78,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call collision_reset(isc)
  call collision_reset(iscp)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  if (l_life) then
    !
    do i1=1,q%nibz
@@ -223,7 +223,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/i_err/))
  !
  ! MPI index
- call par_indexes(px,(/QP_n_states,QP_n_G_bands(2)/),low_range=(/1,QP_n_G_bands(1)/))
+ call PARALLEL_index(px,(/QP_n_states,QP_n_G_bands(2)/),low_range=(/1,QP_n_G_bands(1)/))
  !
  QP_Sc=cmplx(0.,0.,SP)
  isc%ngrho=X%ng
@@ -232,7 +232,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! Main Loop
  !===========
  !
- call pp_redux_wait
+ call PP_redux_wait
  call live_timing(trim(Sc_name)//'W0',px%n_of_elements(myid+1)*(q%nbz-iq_to_start+1))
  !
  do iqbz=iq_to_start,q%nbz
@@ -345,8 +345,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      enddo
    enddo
    !
-   call pp_redux_wait
-   call pp_redux_wait(QP_W)
+   call PP_redux_wait
+   call PP_redux_wait(QP_W)
    !
    ! To be written in W
    !
@@ -382,7 +382,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  enddo 
  !
  call live_timing()
- call pp_redux_wait()
+ call PP_redux_wait()
  !
  ! CLEAN
  !
@@ -392,7 +392,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  if (l_life) then
    deallocate(life_W_table)
    call mem_est("life_W_table")
-   call pp_redux_wait(qp%E)
+   call PP_redux_wait(qp%E)
  else
    if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
      deallocate(QP_W)
@@ -413,7 +413,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  call WF_free()
  call collision_reset(isc)
  call collision_reset(iscp)
- call pp_indexes_reset(px)
- call pp_redux_wait()
+ call PP_indexes_reset(px)
+ call PP_redux_wait()
  !
 end subroutine

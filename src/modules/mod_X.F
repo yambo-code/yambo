@@ -23,6 +23,7 @@ module X_m
  !
  use pars,  ONLY:SP,lchlen,schlen
  use units, ONLY:HA2EV
+ !
  implicit none
  !
  ! Polarizability
@@ -44,6 +45,7 @@ module X_m
  !
  logical                  :: Dipole_bands_ordered
  logical                  :: Dipole_uses_shifted_grids
+ real(SP)                 :: Dipole_Energy_treshold
  complex(SP), allocatable :: DIP_q_dot_iR(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
@@ -52,15 +54,18 @@ module X_m
  ! Absorption & Polarizability
  !
  complex(SP), allocatable :: X_epsilon(:,:)
+ complex(SP), allocatable :: X_drude_term(:)
  complex(SP), allocatable :: X_fxc(:)
  !
  ! Response function
  !
+ character(schlen)        :: Chi_mode
  real(SP),    allocatable :: X_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
  complex(SP), allocatable :: X_mat(:,:,:)
  integer :: current_iq
+ integer :: iw_ref
  integer :: X_RIM_nkpts
  logical :: half_X_mat_only
  logical :: self_detect_E_range
@@ -150,9 +155,10 @@ module X_m
          !
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
+         deallocate(DIP_iR)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
-         deallocate(DIP_iR)
+         deallocate(DIP_P)
        case('DIP_q_dot_iR')
          if (.not.allocated(DIP_q_dot_iR)) return
          deallocate(DIP_q_dot_iR)

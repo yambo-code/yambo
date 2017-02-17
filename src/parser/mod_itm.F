@@ -21,7 +21,7 @@
 !
 module it_m
  !
- use pars
+ use pars,       ONLY:schlen,lchlen,SP
  implicit none
  !
  character(lchlen)  :: infile
@@ -64,13 +64,12 @@ module it_m
  integer, parameter :: nvars=(maxi1vars+2*maxi2vars+2*maxi3vars+&
 &                             maxr1vars+2*maxr2vars+2*maxr3vars+4*maxr4vars+&
 &                             maxc1vars+maxchvars)
- integer :: nrnlvls,nflags,nflines,ni1v,ni2v,ni3v,nr1v,nr2v,nr3v,&
+ integer :: nrnlvls,nflags,ni1v,ni2v,ni3v,nr1v,nr2v,nr3v,&
 &           nr4v,nc1v,nchv,ns,infile_verbosity,initmode
  character(schlen) :: rnlvls(maxrnlvls,2)
  integer ::      rstatus(maxrnlvls) 
  character(schlen) :: flags(maxflags,2)
  integer ::      fstatus(maxflags)
- character(schlen) :: flines(nvars+maxflags+maxrnlvls)
  character(schlen) :: i1vars(maxi1vars,3)
  integer ::           i1st(maxi1vars)
  character(schlen) :: i2vars(maxi2vars,3)
@@ -90,6 +89,13 @@ module it_m
  character(schlen) :: chvars(maxchvars,2)
  integer ::           chst(maxchvars)
  integer :: nifpos
+ !
+ ! Input file
+ !============
+ integer :: nflines
+ integer :: nQP_flines=0
+ character(lchlen) :: flines(nvars+maxflags+maxrnlvls)
+ character(lchlen) :: QP_flines(10)
  !
  ! To handle the variables verbosity I need to create a copy
  ! of the standard variable defs and an array with the verbosity 
@@ -325,7 +331,7 @@ module it_m
        do i1=1,ni1v
          if (trim(i1vars(i1,1))==trim(name)) then
            if (initmode==4) call parser(trim(name),defs%i1def(i1))
-           if (initmode==2) call init_convert(0._SP,defval,i1vars(i1,3),.TRUE.)
+           if (initmode==2) call init_convert_i(defval,i1vars(i1,3),.TRUE.)
            if (initmode<=3) defs%i1def(i1)=defval
            defval=defs%i1def(i1)
            v_id=i1
@@ -378,7 +384,7 @@ module it_m
              if (initmode==4) call parser(trim(name),defs%i2def(i1,:))
              if (initmode==2) then
                do i2=1,dim
-                 call init_convert(0._SP,defval(i2),i2vars(i1,3),.TRUE.)
+                 call init_convert_i(defval(i2),i2vars(i1,3),.TRUE.)
                enddo
              endif
              if (initmode<=3) defs%i2def(i1,:)=defval
@@ -393,7 +399,7 @@ module it_m
              if (initmode==4) call parser(trim(name),defs%i3def(i1,:))
              if (initmode==2) then
                do i2=1,dim
-                 call init_convert(0._SP,defval(i2),i3vars(i1,3),.TRUE.)
+                 call init_convert_i(defval(i2),i3vars(i1,3),.TRUE.)
                enddo
              endif
              if (initmode<=3) defs%i3def(i1,:)=defval
@@ -618,6 +624,7 @@ module it_m
      !Verbosity variables defaults update
      !
      if (initmode<=1.and.present(verb_level)) call initverbosity(name,v_id,'ch',defs,verb_level)
+     !
    end subroutine
    !
    !@@@@@@@@@@@@@@@@@@
@@ -751,7 +758,7 @@ module it_m
      use drivers,      ONLY: infile_editing
      use stderr,       ONLY: gen_fmt
      use com,          ONLY: report_file_fix,write_the_logo
-     use par_proc_m,   ONLY: master_cpu
+     use parallel_m,   ONLY: master_cpu
      type(initdefs)::defs
      integer       :: ou
      ! 
@@ -789,7 +796,7 @@ module it_m
          if (i1st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i1vars(i2,1)),1,defs%i1def(i2))) cycle
            nflines=nflines+1
-           if (ou/=20) call init_convert(0._SP,defs%i1def(i2),i1vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert_i(defs%i1def(i2),i1vars(i2,3),.FALSE.)
            ch(2)=gen_fmt((/defs%i1def(i2)/))
            write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t30,2a)'
            write (flines(nflines),trim(ch(1))) trim(i1vars(i2,1)),'=',&
@@ -799,8 +806,8 @@ module it_m
        do i2=1,ni2v
          if (i2st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i2vars(i2,1)),2,defs%i2def(i2,:))) cycle
-           if (ou/=20) call init_convert(0._SP,defs%i2def(i2,1),i2vars(i2,3),.FALSE.)
-           if (ou/=20) call init_convert(0._SP,defs%i2def(i2,2),i2vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert_i(defs%i2def(i2,1),i2vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert_i(defs%i2def(i2,2),i2vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i2vars(i2,1))
            ch(2)=gen_fmt(defs%i2def(i2,:))
@@ -816,9 +823,9 @@ module it_m
        do i2=1,ni3v
          if (i3st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i3vars(i2,1)),3,defs%i3def(i2,:))) cycle
-           if (ou/=20) call init_convert(0._SP,defs%i3def(i2,1),i3vars(i2,3),.FALSE.)
-           if (ou/=20) call init_convert(0._SP,defs%i3def(i2,2),i3vars(i2,3),.FALSE.)
-           if (ou/=20) call init_convert(0._SP,defs%i3def(i2,3),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert_i(defs%i3def(i2,1),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert_i(defs%i3def(i2,2),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert_i(defs%i3def(i2,3),i3vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i3vars(i2,1))
            ch(2)=gen_fmt(defs%i3def(i2,:))
@@ -835,7 +842,7 @@ module it_m
          if (c1st(i2)==ifpos) then
            if (.not.Cverbose_enough(trim(c1vars(i2,1)),1,defs%c1def(i2))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,c1vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,c1vars(i2,3))
            nflines=nflines+1
            v(1)=real(defs%c1def(i2))*unit_factor
            v(2)=aimag(defs%c1def(i2))*unit_factor
@@ -851,7 +858,7 @@ module it_m
          if (r1st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r1vars(i2,1)),1,defs%r1def(i2))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,r1vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,r1vars(i2,3))
            nflines=nflines+1
            ch(2)=gen_fmt(r_v=(/defs%r1def(i2)*unit_factor/))
            write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t30,2a)'
@@ -864,7 +871,7 @@ module it_m
          if (r2st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r2vars(i2,1)),2,defs%r2def(i2,:))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,r2vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,r2vars(i2,3))
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r2vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r2def(i2,:)*unit_factor)
@@ -881,7 +888,7 @@ module it_m
          if (r3st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r3vars(i2,1)),3,defs%r3def(i2,:))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,r3vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,r3vars(i2,3))
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r3vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r3def(i2,:)*unit_factor)
@@ -899,7 +906,7 @@ module it_m
          if (r4st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r4vars(i2,1)),4,defs%r4def(i2,:))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,r4vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,r4vars(i2,3))
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r4vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r4def(i2,:)*unit_factor)
@@ -930,14 +937,20 @@ module it_m
      if (master_cpu) then
        if (ou==12) call write_the_logo(ou,'#')
        if (ou==11) write (ou,'(2a)') ' .-Input file : ',trim(infile)
-       if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
-       do i1=1,nflines
-         if (ou==12) write (ou,'(a)') trim(flines(i1))
-         if (ou==11) write (ou,'(2a)') ' | ',trim(flines(i1))
-         if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(flines(i1))
-       enddo
-       if (ou==11) call report_file_fix
      endif
+     if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
+     do i1=1,nflines+nQP_flines
+       if (i1<=nflines) ch(1)=flines(i1)
+       if (i1> nflines) ch(1)=QP_flines(i1-nflines)
+       if (master_cpu) then
+         if (ou==12) write (ou,'(a)') trim(ch(1))
+         if (ou==11) write (ou,'(2a)') ' | ',trim(ch(1))
+       endif
+       if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(ch(1))
+      enddo
+     !
+     if (ou==11) close(11)
+     !
    end subroutine
    !
    logical function Iverbose_enough(var_name,nvar,var_val)

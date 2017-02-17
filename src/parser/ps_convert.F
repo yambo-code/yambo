@@ -71,7 +71,7 @@ subroutine ps_convert(rvar,ivar,v_name)
  var_is_angle    =trim(v_s_unit)==Angle_unit
  var_is_intensity=trim(v_s_unit)==I_unit
  !
- if (ivar>0) then
+ if (ivar>=0) then
    !
    ! INTEGERS
    !
@@ -90,6 +90,9 @@ subroutine ps_convert(rvar,ivar,v_name)
    else if (index(v_line,'Ry')/=0.or.index(v_line,'ry')/=0) then
      call Gclose(ivar,'fRy')
      call set_itp_unit('Ry',1)
+   else if (index(v_line,'eV')/=0.or.index(v_line,'ev')/=0) then
+     call Gclose(ivar,'feV')
+     call set_itp_unit('eV',1)
    endif
    return
    !

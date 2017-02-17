@@ -46,6 +46,33 @@ module matrix_operate
  !
  contains
    !
+   complex(SP) function trace(M)
+     use pars, ONLY:SP,cZERO
+     implicit none
+     complex(SP), intent(in) :: M(:,:)
+     !
+     ! Work Space
+     !
+     integer :: i1
+     !
+     trace=cZERO
+     !
+     do i1=1,size(M(1,:))
+       trace=trace+M(i1,i1)
+     enddo
+     !
+   end function trace   
+   !
+   function hermitian(M)
+     use pars, ONLY:SP
+     implicit none
+     complex(SP), intent(in) :: M(:,:)
+     complex(SP) :: hermitian(size(M(:,1)),size(M(1,:)))
+     !
+     hermitian=conjg(transpose(M))
+     !
+   end function hermitian
+   !
    subroutine mat_r2c_ordered(mr,mc,m_order) 
      !
      ! Copy mr in mc using m_order indexes for mc
@@ -179,7 +206,7 @@ module matrix_operate
      !
      use wrapper,     ONLY:M_by_M
      use pars,        ONLY:SP
-     use par_proc_m,  ONLY:pp_redux_wait,ncpu,myid
+     use parallel_m,  ONLY:PP_redux_wait,ncpu,myid
      integer                :: idriver,lib_in
      complex(SP)            :: M(:,:)
      complex(SP),  optional :: V_left(:,:),V_right(:,:),E_cmpl(:)
@@ -455,7 +482,7 @@ module matrix_operate
              M(i,j) = lM(i_loc, j_loc)
            end do
          end do  
-         call pp_redux_wait(M)
+         call PP_redux_wait(M)
          deallocate(lM)
        end if
        !

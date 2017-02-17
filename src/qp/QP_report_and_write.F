@@ -28,7 +28,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_t,QP_dSc,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
-&                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind
+&                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind,&
+&                        l_QP_Expand,QP_reset
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
@@ -52,6 +53,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  integer          ::iqp,i_sh
  real(SP)         ::shadow(10)
  logical          ::print_title
+ type(QP_t)       ::qp_expanded
  !
  !I/O
  integer, external::ioQP
@@ -183,14 +185,15 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    !  Data Format
    !
-   data_fmt=gen_fmt(r_v=shadow(5:n_shadows))
-   shadow_fmt(5:n_shadows) ='(a,'//trim(data_fmt)//')'
    if (l_life) then
      data_fmt=gen_fmt(r_v=shadow(3:n_shadows))
      shadow_fmt(3:n_shadows) ='(a,'//trim(data_fmt)//')'
+   else
+     data_fmt=gen_fmt(r_v=shadow(5:n_shadows))
+     shadow_fmt(5:n_shadows) ='(a,'//trim(data_fmt)//')'
    endif
    !
-   ! Spin Strins
+   ! Spin Strings
    !
    spin_string= ' '
    if (i_spin==1) spin_string='[up]'
@@ -227,12 +230,21 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
  enddo
  !
+ ! QP Expantion
+ !==============
+ !
+ call QP_reset(qp_expanded)
+ !
+ !
  ! QP DATABASE i/o
  !=================
  if (do_IO) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-   io_err=ioQP('QP',qp,ID)
+   if (.not.associated(qp_expanded%E)) io_err=ioQP('QP',qp,ID)
+   if (     associated(qp_expanded%E)) io_err=ioQP('QP',qp_expanded,ID)
  endif
+ !
+ call QP_reset(qp_expanded)
  !
  ! Output File
  !==============

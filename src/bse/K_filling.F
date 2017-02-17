@@ -26,7 +26,7 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  use com,          ONLY:msg
  use functions,    ONLY:K_scatter
  use BS,           ONLY:BS_eh_E,BS_columns,BS_blk_dim,BS_k_and_row_restart
- use par_proc_m,   ONLY:myid,ncpu,pp_redux_wait
+ use parallel_m,   ONLY:myid,ncpu,PP_redux_wait
  use timing,       ONLY:live_timing,nhash
  implicit none
  !
@@ -85,7 +85,7 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
    enddo
  enddo
  call live_timing()
- call pp_redux_wait(n_K_elements)
+ call PP_redux_wait(n_K_elements)
  !
  ! Report matrix elements assigned to each CPU
  !

@@ -40,6 +40,7 @@ module drivers
  logical :: l_sc_run
  logical :: l_sc_magnetic
  logical :: l_collisions_IO
+ logical :: l_carrier_dynamics  
  !
  ! The self-energy correlation "kind"
  !
@@ -64,12 +65,25 @@ module drivers
  logical :: l_chi
  logical :: l_em1d
  logical :: l_em1s
- !
- ! ... and BS solvers
- !
  logical :: l_bse
+ logical :: l_bsk
  logical :: l_bss
+ !
+ logical :: l_kerr
+ logical :: l_anomalous_Hall
+ !
+ ! ... and the kernel
+ !
+ logical :: l_rpa_IP
+ logical :: l_td_hartree
+ logical :: l_tddft
+ logical :: l_alda_fxc
+ logical :: l_bs_fxc
+ logical :: l_lrc_fxc
  logical :: l_td_hf
+ logical :: l_W_eh
+ logical :: l_W_eh_diag
+ logical :: l_W_eh_cpl
  !
  ! The XC types (Vxc)
  !
@@ -86,10 +100,5 @@ module drivers
  logical :: l_oep_ceda
  logical :: l_oep_slater
  !
- ! The XC types (Fxc)
- !
- logical :: l_alda_fxc
- logical :: l_bs_fxc
- logical :: l_lrc_fxc
  !
 end module drivers

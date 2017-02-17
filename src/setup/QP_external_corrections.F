@@ -26,6 +26,12 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  use electrons,     ONLY:levels,n_bands
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_apply
+#if defined _ELPH
+ use ELPH,          ONLY:E_k_p_q,elph_nb
+#endif
+#if defined _SURF
+ use ras_module,    ONLY:lras, lreels
+#endif
  implicit none
  !
  type(levels) ::en,Xen
@@ -40,6 +46,9 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  ! - Dynamical X -
  !
  apply_QP=(l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa).or.&
+#if defined _SURF
+        lras.or.lreels.or.&
+#endif
         (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
  if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,"X",msg_fmt='s')
  !
@@ -53,7 +62,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  apply_QP=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_el_corr)
  if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,"X",msg_fmt='s')
  !
- ! - Green's Function (not the one used in the BSE -
+ ! - Green's Function (not the one used in the BSE) -
  !
  if (l_gw0)     call QP_apply((/1,n_bands/),en,k,"G",msg_fmt='s')
  !

@@ -34,20 +34,16 @@ if test "$enable_debug" = "yes" ; then Red_str="X"; fi
 MPI_str="-"
 if test "$mpibuild" = "yes" ; then
   MPI_str="X"
-  OPENMPI_str="not open-mpi kind"
-  if test "$enable_openmpi" = "yes" ; then OPENMPI_str="open-mpi kind";  fi
 fi
 
 NETCDF_str="-"
-if test "$netcdf" = "yes" ; then
-  if test "$compile_netcdf" = "yes" ; then
-    NETCDF_str="I"
-  else
-    NETCDF_str="E"
-  fi
-  NETCDF_LF_str="(No large files support)"
-  if test "$enable_netcdf_LFS" = "yes"; then NETCDF_LF_str="(With large files support)"; fi
+if test "$compile_netcdf" = "yes" ; then
+  NETCDF_str="I"
+else
+  NETCDF_str="E"
 fi
+NETCDF_LF_str="(No large files support)"
+if test "$enable_netcdf_LFS" = "yes"; then NETCDF_LF_str="(With large files support)"; fi
 
 HDF5_str="-"
 if test "$hdf5" = "yes" ; then
@@ -116,7 +112,6 @@ AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
 AC_SUBST(SLK_str)
 AC_SUBST(OPENMP_str)
-AC_SUBST(OPENMPI_str)
 AC_SUBST(BGQ_str)
 AC_SUBST(TIME_profile_str)
 

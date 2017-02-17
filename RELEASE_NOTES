@@ -1,6 +1,7 @@
 Version: 4
-Date of the 4.0.0 release         : April 9th 2015
-Date of the latest (4.0.1) release: June 18th 2015
+Date of the 4.0.0 release           : April    9th 2015
+Date of the previous (4.0.1) release: June    18th 2015
+Date of the latest   (4.0.2) release: October 26th 2015
 
 Introduction:
 Starting from version 4 Yambo implements a massive parallelization scheme based on a 
@@ -34,3 +35,35 @@ several deep changes of the code structure. These changes now allow Yambo to imp
 -a controllable I/O that can be even reduced to no databases written (except the output files) 
  and only a minimal reading of the wave-functions (via a buffering system)
 
+Changes from 4.0.0 to 4.0.1
+
+- 
+
+Changes from 4.0.1 to 4.0.2
+
+- Major bug fix in the parallelization
+
+- Major change: now the code can run on any number of processors.
+  The parallelization variables do not need to be powers of 2.
+
+- Removed --enable-open-mpi option and --enable-netcdf. They are not needed anymore
+
+- yambo_surf and ypp_surf project temporarly switched off
+
+- p2y 'PZ ' functional is now recognized
+
+- p2y, psps of UPF version 1 and with multi projector are now correctly read
+
+- BSE parallelization improved
+
+- Fixed bug in BSE+openmp coupling case
+
+- Dipoles computation and I/O reorganized
+
+- Fixed bug in FREQUENCIES_coarse_grid
+
+- OCCUPATIONS_Fermi with double_grid fixed
+
+- Suppot to plain fortran removed
+
+- ...

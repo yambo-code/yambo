@@ -54,7 +54,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      deallocate(fft_g_table)
    endif
    allocate(fft_g_table(max(iG_max,wf_ng),iGo_max))
-   call mem_est('FFT_g_tab',(/product(fft_g_table)/),(/IP/))
+   call mem_est('FFT_g_tab',(/size(fft_g_table)/),(/IP/))
  endif
  !
  ! SIZE estimation
@@ -99,11 +99,12 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      deallocate(fft_rot_r)
      call mem_est('FFT_rot')
    endif
-   allocate(fft_rot_r(nsym,fft_size))
-   call mem_est('FFT_rot',(/product(fft_rot_r)/),(/IP/))
+   allocate(fft_rot_r(fft_size,nsym))
+   call mem_est('FFT_rot',(/size(fft_rot_r)/),(/IP/))
    !
    if (allocated(fft_rot_r_inv)) deallocate(fft_rot_r_inv)
    allocate(fft_rot_r_inv(fft_size))
+
    !
    !Remember
    !-------
@@ -139,7 +140,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 &                            modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
              cycle
            endif
-           fft_rot_r(is,i4)=1+modx(iv(1),fft_dim(1))+&
+           fft_rot_r(i4,is)=1+modx(iv(1),fft_dim(1))+&
 &                          modx(iv(2),fft_dim(2))*fft_dim(1)+&
 &                          modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
          enddo
@@ -148,6 +149,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    enddo
    i4=1
  enddo
+ 
  !
  contains
    !

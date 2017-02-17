@@ -175,9 +175,8 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !   =========
  !
- if (l_bzrim) call k_random
- !
  if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
+ !
  !
  if (l_bxsf)  call bxsf_read(Xk,Xen)
  !
@@ -214,15 +213,6 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
 #endif
 
-#if defined _YPP_SURF
- !
- if (lras) call ras_ypp
- if (lreels) call reels_ypp
-!if (lcelleps) call ras_generate_epsdb(en,k)
- if (lloc) call ras_loc_ypp
- if (ltrans) call ras_trans_ypp(en,k)
- !
-#endif
 
  !
  ! END

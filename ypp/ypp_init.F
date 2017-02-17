@@ -41,9 +41,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
 #endif
-#if defined _YPP_SURF
- use R_lattice,      ONLY:nkibz
-#endif
  implicit none
  type(levels)     ::E
  integer          ::lnstr
@@ -64,9 +61,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  what_is_running='YPP'
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
-#endif
-#if defined _YPP_SURF
- what_is_running='YPP_SURF'
 #endif
  !
  if (FINALIZE) then
@@ -155,34 +149,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
 #endif
  !
-#if defined _YPP_SURF
- !
- ! RAS & REELS
- !
- call ras_presets
- xdata = 'o.eps_q001-rpa_00'
- ydata = 'o.eps_q001-rpa_00'
- zdata = 'o.eps_q001-rpa_00'
- sshift = 0.0           ! surface shift
- datatype = 'eps23'
- d_cellin = 1.0
- !
- ! Localization
- !
- normdir = 3
- lowerlim = 0
- upperlim = 1
- ngloc = 0
- loc_bands = (/ 1, n_bands /)
- loc_kpts  = (/ 1, nkibz /)
- ! 
- ! Transition analysis
- ! 
- Ecv_min = 0.0
- Ecv_max = -1.0/HA2EV
- idir = 1
- !
-#endif
  !
  ! Wannier interface
  !
@@ -201,6 +167,10 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  ! BZ RIM
  !
  gamma_radius=0.
+ !
+ ! WFs perturbative SOC
+ !
+ perturbative_SOC_path=""
  !
  ! BXSF interpolation
  !
@@ -248,90 +218,92 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    call initactivate(1,'ElecTemp BoseTemp')
    !
    do i2=1,nrnlvls
-     if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) then
+     if ( trim(rstr_piece(i1)) == trim(rnlvls(i2,1)) ) then
        infile_editing=.true.
        call initactivate(1,trim(rnlvls(i2,1)))
      endif
-     if ( trim(rstr_piece(i1)) == 'bzgrids') then
-       l_k_grid=trim(rstr_piece(i1+1))=='k'
-       l_q_grid=trim(rstr_piece(i1+1))=='q'
-       l_shifted_grid=trim(rstr_piece(i1+1))=='s'
-       !
-       !
-       if (l_k_grid) call initactivate(1,"K_grid")
-       if (l_q_grid) call initactivate(1,"Q_grid")
-       if (l_shifted_grid) call initactivate(1,"Shifted_Grid")
-       if (l_high_sym_pts) call initactivate(1,"High_Symm")
-     endif
-     !
-     if ( trim(rstr_piece(i1)) == 'QPDBs') then
-       call initactivate(1,'QPDBs')
-       l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
-       l_QP_DBs_merge            =trim(rstr_piece(i1+1))=='m'
-       if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
-       if (l_QP_DBs_merge)             call initactivate(1,'QPDB_merge')
-     endif
-     !
-#if defined _YPP_ELPH
-     if ( trim(rstr_piece(i1)) == 'phonons') then
-       l_dos              =trim(rstr_piece(i1+1))=='d'
-       l_eliashberg       =trim(rstr_piece(i1+1))=='e'
-       l_atomic_amplitude =trim(rstr_piece(i1+1))=='a'
-       if (l_atomic_amplitude) infile_editing=.false.
-       if (l_eliashberg)   call initactivate(1,'eliashberg')
-     endif
-#endif
-     if ( trim(rstr_piece(i1)) == 'excitons') then
-       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
-       l_sort           =trim(rstr_piece(i1+1))=='s'
-       l_amplitude      =trim(rstr_piece(i1+1))=='a'
-#if defined _YPP_ELPH
-       l_gkkp           =trim(rstr_piece(i1+1))=='g'
-#endif
-       !
-       l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
-       l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
-       !
-       !
-     endif
-     if ( trim(rstr_piece(i1)) == 'electrons') then
-       !
-       l_current        =trim(rstr_piece(i1+1))=='c'
-       l_density        =trim(rstr_piece(i1+1))=='d'
-       l_dos            =trim(rstr_piece(i1+1))=='s'
-       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
-       l_bands          =trim(rstr_piece(i1+1))=='b'
-       l_mag            =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
-       !
-#if defined _YPP_ELPH
-       l_eliashberg       =trim(rstr_piece(i1+1))=='e'
-#endif
-       !
-       !
-     endif
-     !
-     !    
-     if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
-       if (l_amplitude)      call initactivate(1,'amplitude')
-       if (l_spin)           call initactivate(1,'spin')
-       if (l_mag)            call initactivate(1,'magnetization')
-       if (l_wavefunction)   call initactivate(1,'wavefunction')
-#if defined _YPP_ELPH
-       if (l_eliashberg)       call initactivate(1,'eliashberg')
-       if (l_gkkp)             call initactivate(1,'gkkp')
-#endif
-       if (l_current)        call initactivate(1,'current')
-       if (l_density)        call initactivate(1,'density')
-       if (l_sort)           infile_editing=.false.
-     endif
-     if ( trim(rstr_piece(i1)) == 'phonons'.or. trim(rstr_piece(i1)) == 'electrons') then
-       if (l_dos)            call initactivate(1,'dos')
-     endif
-     if ( trim(rstr_piece(i1)) == 'electrons') then
-       if (l_bands)          call initactivate(1,'bnds')
-     endif
-
    enddo
+   !
+   if ( trim(rstr_piece(i1)) == 'bzgrids') then
+     l_k_grid=trim(rstr_piece(i1+1))=='k'
+     l_q_grid=trim(rstr_piece(i1+1))=='q'
+     l_shifted_grid=trim(rstr_piece(i1+1))=='s'
+     l_random_grid=trim(rstr_piece(i1+1))=='r'
+     !
+     !
+     if (l_k_grid) call initactivate(1,"K_grid")
+     if (l_q_grid) call initactivate(1,"Q_grid")
+     if (l_shifted_grid) call initactivate(1,"Shifted_Grid")
+     if (l_random_grid)  call initactivate(1,"Random_Grid")
+     if (l_high_sym_pts) call initactivate(1,"High_Symm")
+   endif
+   !
+   if ( trim(rstr_piece(i1)) == 'QPDBs') then
+     call initactivate(1,'QPDBs')
+     l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
+     l_QP_DBs_merge            =trim(rstr_piece(i1+1))=='m'
+     if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
+     if (l_QP_DBs_merge)             call initactivate(1,'QPDB_merge')
+   endif
+   !
+#if defined _YPP_ELPH
+   if ( trim(rstr_piece(i1)) == 'phonons') then
+     l_dos              =trim(rstr_piece(i1+1))=='d'
+     l_eliashberg       =trim(rstr_piece(i1+1))=='e'
+     l_atomic_amplitude =trim(rstr_piece(i1+1))=='a'
+     if (l_atomic_amplitude) infile_editing=.false.
+     if (l_eliashberg)   call initactivate(1,'eliashberg')
+   endif
+#endif
+   if ( trim(rstr_piece(i1)) == 'excitons') then
+     l_wavefunction   =trim(rstr_piece(i1+1))=='w'
+     l_sort           =trim(rstr_piece(i1+1))=='s'
+     l_amplitude      =trim(rstr_piece(i1+1))=='a'
+#if defined _YPP_ELPH
+     l_gkkp           =trim(rstr_piece(i1+1))=='g'
+#endif
+     !
+     l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
+     l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+     !
+     !
+   endif
+   if ( trim(rstr_piece(i1)) == 'electrons') then
+     !
+     l_current        =trim(rstr_piece(i1+1))=='c'
+     l_density        =trim(rstr_piece(i1+1))=='d'
+     l_dos            =trim(rstr_piece(i1+1))=='s'
+     l_wavefunction   =trim(rstr_piece(i1+1))=='w'
+     l_bands          =trim(rstr_piece(i1+1))=='b'
+     l_mag            =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+     !
+#if defined _YPP_ELPH
+     l_eliashberg       =trim(rstr_piece(i1+1))=='e'
+#endif
+     !
+     !
+   endif
+   !
+   !    
+   if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
+     if (l_amplitude)      call initactivate(1,'amplitude')
+     if (l_spin)           call initactivate(1,'spin')
+     if (l_mag)            call initactivate(1,'magnetization')
+     if (l_wavefunction)   call initactivate(1,'wavefunction')
+#if defined _YPP_ELPH
+     if (l_eliashberg)       call initactivate(1,'eliashberg')
+     if (l_gkkp)             call initactivate(1,'gkkp')
+#endif
+     if (l_current)        call initactivate(1,'current')
+     if (l_density)        call initactivate(1,'density')
+     if (l_sort)           infile_editing=.false.
+   endif
+   if ( trim(rstr_piece(i1)) == 'phonons'.or. trim(rstr_piece(i1)) == 'electrons') then
+     if (l_dos)            call initactivate(1,'dos')
+   endif
+   if ( trim(rstr_piece(i1)) == 'electrons') then
+     if (l_bands)          call initactivate(1,'bnds')
+   endif
  enddo
  !
  if (.not.l_sort.and..not.l_atomic_amplitude) call call_init_load('parserload')
@@ -340,6 +312,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_k_grid    = runlevel_is_on('K_grid')
  l_q_grid    = runlevel_is_on('Q_grid')
  l_shifted_grid = runlevel_is_on('Shifted_Grid')
+ l_random_grid  = runlevel_is_on('Random_Grid')
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
@@ -366,22 +339,21 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if (.not.l_exc_wf) l_free_hole=.false.
  !
  if (l_bz_grids) then
-   call initactivate(1,"cooIn cooOut")
-   if (l_high_sym_pts) then
-     call initactivate(1,"PtsPath NPtsPath")
-     call initactivate(-1,"NoWeights ForceUserPts ListPts ExpandPts cooIn")
-   else
-     call initactivate(1,"NoWeights ForceUserPts ListPts ExpandPts")
-   endif
+   call initactivate(1,"NoWeights OutputAlat")
+   if (l_k_grid)        call initactivate(1,"cooIn cooOut ListPts ExpandPts")
+   if (l_q_grid)        call initactivate(1,"cooIn cooOut ListPts ExpandPts ForceUserPts")
+   if (l_high_sym_pts)  call initactivate(1,"cooIn cooOut PtsPath NPtsPath")
+   if (l_shifted_grid)  call initactivate(1,"cooIn cooOut")
+   if (l_random_grid)   call initactivate(1,"cooOut BZ_random_Nk GammaRadius")
  endif
  !
  if (l_bands) call initactivate(1,"cooIn BANDS_steps INTERPGrid ShellFac NormN NelFac")
  !	   
- l_bzrim     =runlevel_is_on('bzrim')
- !
  l_map_kpts  = runlevel_is_on('kpts_map')
  !
- l_bxsf      =runlevel_is_on('bxsf')
+ l_map_WFs   = runlevel_is_on('WFs_map')
+ !
+ l_bxsf      = runlevel_is_on('bxsf')
  !
  if (l_bxsf) call initactivate(1,"W90_fname WannBnds DgridOrd")
  !
@@ -397,9 +369,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  !
  !
- if (l_bzrim)    call initactivate(1,"BZ_DbGd_Nk cooOut OutputAlat GammaRadius")
+ if (l_map_kpts) call initactivate(1,"BZ_DbGd_nkpts SkipCheck noBZExpand NoWeights")
  !
- if (l_map_kpts) call initactivate(1,"BZ_DbGd_Nk SkipCheck noBZExpand NoWeights")
+ if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call init_QP_ctl_switch('G')
@@ -438,28 +410,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
  !
-#if defined _YPP_SURF
- !
- lsurf =runlevel_is_on('surf')
- lras  =runlevel_is_on('ras')
- lreels=runlevel_is_on('reels')
- lloc  =runlevel_is_on('loc')
- ltrans=runlevel_is_on('trans')
- if(lsurf) then
-   if (lras) call initactivate(1,"XData YData "//&
-&       " BulkFile BulkForm BlkShift BlkBroad "//&
-&       " DataType SrfShift d_cell")
-   if (lreels) call initactivate(1,"XData YData ZData"//&
-&       " q0x q0y"//&
-&       " BulkFile BulkForm BlkShift BlkBroad Layers"//&
-&       " DataType SrfShift d_cell "//&
-&       " E0 Theta0 Thetap Phi DetAngle "//&
-&       " LossForm ImpactFt DetIntMd NumIntPt GausConv")
-   if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc LbndRnge KptRange WrtLocDB")
-   if(ltrans) call initactivate(1,"EcvMin EcvMax qdir")
- endif
- !
-#endif
  !
  ! Check for existing QP control fields to be proposed in the new input files
  !
@@ -484,16 +434,17 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  ! Check and fill all possible vectorial USER fields
  ! 
  if (l_bands) call USER_vector_handle("BKpts")
+ !
  if (l_bz_grids) then
-   if (l_k_grid) call USER_vector_handle("GWKpts")
-   if (l_q_grid) call USER_vector_handle("Qpts")
+   if (l_k_grid)       call USER_vector_handle("GWKpts")
+   if (l_q_grid)       call USER_vector_handle("Qpts")
    if (l_shifted_grid) call USER_vector_handle("KShift")
  endif
  !
  if (l_map_kpts) then
    n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
    if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,&
-&                                                "DbGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
+&              "DbGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
  endif
  !
 contains
@@ -525,6 +476,7 @@ contains
    real_v(:,3)=999._SP
    call parser(field,real_v)
    !
+   !
    do i_p=1,10
      if (real_v(i_p,3)==999._SP) exit
    enddo
@@ -533,7 +485,15 @@ contains
    !
    if (n_points==0) then
      n_points=1
-     real_v(1,:)=0.
+     real_v(1,:)=0._SP
+   endif
+   !
+   if (field=="KShift") then
+     n_points=3
+     real_v(:,:)=0._SP
+     do i_p=1,3
+       real_v(i_p,i_p)=5.E-5_SP
+     enddo
    endif
    !
    ADDITIONAL_flines = " "
@@ -554,7 +514,7 @@ contains
      U_q_pts(:n_u_q_pts,:)=real_v(:n_u_q_pts,:)
    else if (field=="KShift") then
      write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K-grid shifts (max 3)'
-     U_q_shifts(:,:)=real_v(:n_points,:)
+     U_q_shifts(:n_points,:)=real_v(:n_points,:)
    endif
    !
    nflines=nflines+1

@@ -27,9 +27,9 @@ integer function io_QINDX(Xk,q,io_db)
 &                         bse_scattering,qp_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt,&
 &                         Xk_impose_minus_q
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
-&                         io_elemental,io_status,io_bulk,read_is_on,io_header,&
-&                         ver_is_gt_or_eq,io_fragmented,io_extension,io_fragment
+ use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
+&                         io_elemental,io_status,io_bulk,read_is_on,write_is_on,io_header,&
+&                         ver_is_gt_or_eq,io_extension,io_fragment
  implicit none
  type(bz_samp)::q,Xk
  integer      ::io_db
@@ -43,7 +43,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
  if (any((/io_sec(io_db,:)==1/))) then
    !
-   io_QINDX=io_header(io_db,IMPOSE_SN=.true.)
+   io_QINDX=io_header(io_db,IMPOSE_SN=.true.,FRAG=frag_QINDX)
    !
    ! In V. 3.0.7 a real parameter (RL_v_comp_norm) has been removed
    ! In revision 3085 the coll indx has been ceated with two new logicals
@@ -53,7 +53,7 @@ integer function io_QINDX(Xk,q,io_db)
    if (.not.ver_is_gt_or_eq(io_db,revision=3085)) io_QINDX=-1
    if (io_QINDX/=0) goto 1
    !
-   call io_elemental(io_db,VAR="PARS",VAR_SZ=10)
+   call io_elemental(io_db,VAR="PARS",VAR_SZ=10,MENU=0)
    !
    call io_elemental(io_db,I0=nXkbz)
    call io_elemental(io_db,&
@@ -114,7 +114,7 @@ integer function io_QINDX(Xk,q,io_db)
    ! Fragmentation (1): eXchange indx
    !
    io_extension(io_db)='kindx'
-   if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=1)
+   call io_fragment(io_db,i_fragment=1)
    !
    call io_bulk(io_db,VAR="Qindx",VAR_SZ=shape(qindx_X))
    call io_bulk(io_db,I3=qindx_X)
@@ -124,7 +124,7 @@ integer function io_QINDX(Xk,q,io_db)
      ! Fragmentation (2): Self-Energy indx
      !
      io_extension(io_db)='kindx'
-     if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=2)
+     call io_fragment(io_db,i_fragment=2)
      call io_bulk(io_db,VAR="Sindx",VAR_SZ=shape(qindx_S))
      call io_bulk(io_db,I3=qindx_S)
    endif
@@ -133,7 +133,7 @@ integer function io_QINDX(Xk,q,io_db)
      ! Fragmentation (3): BSE indx
      !
      io_extension(io_db)='kindx'
-     if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=3)
+     call io_fragment(io_db,i_fragment=3)
      call io_bulk(io_db,VAR="Bindx",VAR_SZ=shape(qindx_B))
      call io_bulk(io_db,I3=qindx_B)
    endif
@@ -142,7 +142,7 @@ integer function io_QINDX(Xk,q,io_db)
      ! Fragmentation (4): COLL indx
      !
      io_extension(io_db)='kindx'
-     if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=4)
+     call io_fragment(io_db,i_fragment=4)
      call io_bulk(io_db,VAR="Cindx",VAR_SZ=shape(qindx_C))
      call io_bulk(io_db,I3=qindx_C)
    endif

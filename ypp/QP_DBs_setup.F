@@ -72,26 +72,27 @@ subroutine QP_DBs_setup(en,k)
  QP_done=.FALSE.
  !
  ic=1
- is=1
  do i1=1,k_rng_lines
    ikrange(1:2)=int(QP_r_corrections(i1,1:2))
    ibrange(1:2)=int(QP_r_corrections(i1,3:4))
    !
    if(ikrange(2)>en%nk.or.ibrange(2)>en%nb) call error("Indices out of the range!")
    !
-   do ik=ikrange(1),ikrange(2)
-     do ib=ibrange(1),ibrange(2)
-       qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HA2EV+en%E(ib,ik,1),QP_r_corrections(i1,6)/HA2EV)
-       qp%E_bare(ic) =en%E(ib,ik,1)
-       qp%Z(ic)      =QP_r_corrections(i1,7)
-       qp%table(ic,1)=ib
-       qp%table(ic,2)=ib
-       qp%table(ic,3)=ik
-       qp%table(ic,3+1:3+n_sp_pol-1)=is
-       qp%k(qp%table(ic,3),:)       =k%pt(qp%table(ic,3),:)
-       if(QP_done(ib,ib,ik,is)) call error("Duplicate quasi-particle indexes! ")
-       QP_done(ib,ib,ik,is)=.TRUE.
-       ic=ic+1   
+   do is=1,n_sp_pol
+     do ik=ikrange(1),ikrange(2)
+       do ib=ibrange(1),ibrange(2)
+         qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HA2EV+en%E(ib,ik,is),QP_r_corrections(i1,6)/HA2EV,kind=SP)
+         qp%E_bare(ic) =en%E(ib,ik,is)
+         qp%Z(ic)      =cmplx(QP_r_corrections(i1,7),0.,kind=SP)
+         qp%table(ic,1)=ib
+         qp%table(ic,2)=ib
+         qp%table(ic,3)=ik
+         if(n_sp_pol==2) qp%table(ic,4)=is
+         qp%k(qp%table(ic,3),:)       =k%pt(qp%table(ic,3),:)
+         if(QP_done(ib,ib,ik,is)) call error("Duplicate quasi-particle indexes! ")
+         QP_done(ib,ib,ik,is)=.TRUE.
+         ic=ic+1   
+       enddo
      enddo
    enddo
  enddo

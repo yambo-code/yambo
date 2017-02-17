@@ -30,14 +30,6 @@ subroutine ypp_init_load(defs)
  use electrons,     ONLY:n_spinor
  use interpolate,   ONLY:lpfac
  use YPP
-#if defined _YPP_SURF
- use bulkeps,              ONLY: init_bulk
- use convolute,            ONLY: init_convolute
- use eels_kinematics,      ONLY: init_kinematics
- use model_loss_function,  ONLY: init_loss_function
- use surface_geometry,     ONLY: init_surface
- use eels_detector,        ONLY: init_detector
-#endif
  !
  implicit none
  !
@@ -51,7 +43,9 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'dos',       '[R] DOS')
  !
  !
- call it('r',defs,'High_Symm', '[R] High_Symmetry points and paths') 
+ call it('r',defs,'Random_Grid','[R] Random grids')
+ call it('r',defs,'High_Symm',  '[R] High_Symmetry points and paths') 
+ !
  call it('r',defs,'excitons',  '[R] Excitons')
  call it('r',defs,'electrons', '[R] Electrons (and holes)')
  call it('r',defs,'freehole',  '[R] Free hole position')
@@ -67,18 +61,11 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'phonons',      '[R] Phonons')
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
 #endif
-#if defined _YPP_SURF
- call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
- call it('r',defs,'ras',     '[R] RAS spectra generator')
- call it('r',defs,'reels',   '[R] REELS spectra generator')
- call it('r',defs,'loc',     '[R] State localizer')
- call it('r',defs,'trans',   '[R] Transition analyzer')
-#endif
  call init_QP_ctl_load(defs,3)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
- call it('r',defs,'bzrim',        '[R] BZ Random kpt generator')
  call it('r',defs,'kpts_map',     '[R] BZ map fine grid to coarse')
+ call it('r',defs,'WFs_map',      '[R] WF map WFs with SOC to present WFs')
  call it('r',defs,'QPDBs', '[R] Quasi-particle databases')
  call it('r',defs,'QPDB_edit', '[R] Generation/editing')
  call it('r',defs,'QPDB_merge','[R] Mergering')
@@ -117,6 +104,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku/alat',coo_in)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
  !
+ !
+ call it(defs,'BZ_random_Nk','BZ Random points to be printed',BZ_random_nkpts)
  !
  call it('f',defs,'NoWeights',    ' Do not print points weight') 
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
@@ -164,43 +153,10 @@ subroutine ypp_init_load(defs)
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
  !
 #endif
-#if defined _YPP_SURF
- !
- ! RAS/REELS
- !
- call it(defs,'XData',     'Filename of q[x] data',xdata)
- call it(defs,'YData',     'Filename of q[y] data',ydata)
- call it(defs,'ZData',     'Filename of q[z] data',zdata)
- call it(defs,'SrfShift',  'Shift of surface spectra',sshift,E_unit)
- call it(defs,'DataType',  'Form of epsilon/alpha data on input [eps/a_t/a_r][23/45]',datatype)
- call it(defs,'d_cell',    'Perpendicular component of cell',d_cellin)
- call init_bulk(defs)
- call init_convolute(defs)
- !
- ! Analysis
- !
- call it(defs,'NormDir',   'Index of surface normal (1/2/3)',normdir)
- call it(defs,'LowerLim',  'Lower limit of localization box (frac)',lowerlim)
- call it(defs,'UpperLim',  'Upper limit of localization box (frac)',upperlim)
- call it(defs,'NGLoc',     'G-vectors for localization sum',ngloc)
- call it(defs,'LbndRnge',  'Loc bands range',loc_bands)
- call it(defs,'KptRange',  'Loc kpts range',loc_kpts)
- call it('f',defs,'WrtLocDB','Create localization database')
- !
- call it(defs,'EcvMin',  'Lower limit of transition window',Ecv_min,E_unit)
- call it(defs,'EcvMax',  'Upper limit of transition window',Ecv_max,E_unit)
- call it(defs,'PolDir',  'Index of polarization direction',idir)
- call it(defs,'qdir'  ,  '[cc] X-polarization direction', qdir )
- call init_kinematics(defs)
- call init_loss_function(defs)
- call init_surface(defs)
- call init_detector(defs)
- !
-#endif
  !
  !BZ E Double Grid
  !
- call it(defs,'BZ_DbGd_Nk','BZ Random Integration points',BZ_DbGd_nkpts)
+ call it(defs,'BZ_DbGd_Nk','BZ Number of points in the double grid',BZ_DbGd_nkpts_to_use)
  call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
  call it('f',defs,'noBZExpand' , 'Keep the Double Grid k-points in the IBZ without using the symmetries')
  !

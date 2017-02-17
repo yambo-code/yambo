@@ -30,8 +30,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,Angle_unit,V_parallel,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        X_en_comp
- use com,           ONLY:grid_path
+&                        X_en_comp,global_gauge,Dipole_approach
+ use com,           ONLY:grid_paths
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
@@ -45,33 +45,20 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_inversion_PERT_FULL_ratio
+&                        BSS_inversion_PERT_FULL_ratio,BSS_Wd
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use functions,     ONLY:bose_E_cut
-#if defined _KERR || defined _SC
- use X_m,           ONLY:global_gauge
-#endif
-#if defined _SURF
- use bulkeps,              ONLY:init_bulk
- use eels_kinematics,      ONLY:init_kinematics
- use eels_detector,        ONLY:init_detector
- use optcut,               ONLY:init_cutoff
- use surface_geometry,     ONLY:init_surface
- use model_loss_function,  ONLY:init_loss_function
- use convolute,            ONLY:init_convolute
- use ras_module,           ONLY:locfac, loctype
-#endif
+ use parallel_m,    ONLY:n_log_CPUs
+ use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
 #if defined _ELPH 
- use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
- use parallel_m,           ONLY:n_log_CPUs
 #if defined _OPENMP
- use openmp,               ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
+ use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
 #endif
- use IO_m,                 ONLY:DBs_IO_control_string
  !
  implicit none
  type(initdefs)::defs
@@ -100,11 +87,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
  !
  !
-#if defined _SURF
- call it('r',defs,'sursp',  '[R] Surface Spectroscopy ')
- call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ')
- call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')
-#endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
 #endif
@@ -156,18 +138,22 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,WF,W,SC,BS)',&
-&                         DBs_IO_control_string,verb_level=V_io)
+ call it(defs,'DBsIOoff', &
+& '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,W,SC,BS,ALL)',&
+& DBs_IO_control_string,verb_level=V_io)
+ call it(defs,'DBsFRAGpm', &
+& '[IO] Space-separated list of +DB to be FRAG and -DB NOT to be FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
+& DBs_FRAG_control_string,verb_level=V_io)
  !
  ! S_xc
  !
- call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
+ call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transition reduction',QP_cg_percent)
  call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
- call it(defs,'dScStep',  '[GW] Energy step to evalute Z factors',QP_dSc_delta,E_unit)
- call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver,protect=.FALSE.)
+ call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit)
+ call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g")',QP_solver,protect=.FALSE.)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
  call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', &
@@ -210,7 +196,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
  call it(defs,'BSHayTrs',  '[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
- call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
+ call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
@@ -232,9 +218,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE: Kerr
  !
- call it(defs,'Gauge'       , '[BSE] Gauge (length|velocity). In metals length misses An-Hall',global_gauge)
  call it('f',defs,'EvalKerr', '[BSE] Compute the Kerr effect')
- call it('f',defs,'AnHall'  , '[BSE] Compute the anomalous Hall effect and if length add it to eps')
+ call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge')
  !
 #endif
  !
@@ -260,23 +245,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! Surface spectroscopy
  !
-#if defined _SURF
- call init_bulk(defs)
- call init_surface(defs)
- call init_cutoff(defs)
- call init_kinematics(defs)
- call init_loss_function(defs)
- call init_detector(defs)
- call init_convolute(defs)
- call it(defs,'LocType', '[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_resp)
- call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_resp)
-#endif
  !
  ! QP ctl 
  !
  call init_QP_ctl_load(defs,1)
  call init_QP_ctl_load(defs,2)
  call init_QP_ctl_load(defs,3)
+ !
  !
  !
  ! El-Ph
@@ -292,6 +267,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
  ! 
  ! SC
+ !
  !
  ! 
  contains 
@@ -314,13 +290,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
-       call it(defs,trim(name),'[PARALLEL] CPUs for each role',CPU_structure(i_s)%CPU_string)
+       call it(defs,trim(name),'[PARALLEL] CPUs for each role',&
+&              CPU_structure(i_s)%CPU_string,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
-       call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),CPU_structure(i_s)%ROLE_string)
+       call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
+&              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_diago"
-       call it(defs,trim(name),'[PARALLEL] CPUs for matrix diagonalization',CPU_structure(i_s)%nCPU_diagonalization)
+       call it(defs,trim(name),'[PARALLEL] CPUs for matrix diagonalization',&
+&              CPU_structure(i_s)%nCPU_diagonalization,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_invert"
-       call it(defs,trim(name),'[PARALLEL] CPUs for matrix inversion',CPU_structure(i_s)%nCPU_inversion)
+       call it(defs,trim(name),'[PARALLEL] CPUs for matrix inversion',&
+&              CPU_structure(i_s)%nCPU_inversion,verb_level=V_parallel)
      enddo
    end subroutine
    !
@@ -328,14 +308,15 @@ subroutine init_load(defs,en,q,k,X,Xw)
    !
    subroutine Xload(X,wv)
      !
-     use units, ONLY:HA2EV
+     use pars,   ONLY:SP
+     use units,  ONLY:HA2EV
      !
      type(X_t):: X
      type(w_samp):: wv
      ! 
      ! Work Space
      ! 
-     integer           ::i1,V_damp,V_iq
+     integer           ::i1,V_iq
      integer,parameter ::n_des=14
      character(8)      ::nms(n_des),sfx
      character(40)     ::des(n_des)
@@ -369,27 +350,23 @@ subroutine init_load(defs,en,q,k,X,Xw)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo
      !
-     V_damp=0
      V_iq  =0
-     if (X%whoami==2) then
-       V_damp=V_resp 
-       wv%dr=0.001/HA2EV
-     endif
-     if (X%whoami==3) V_iq  =V_resp 
+     !
+     if (.not.X%whoami==3) V_iq  =V_resp 
      !
      call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_resp)
      call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
-     call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=V_damp)
+     call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
      call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_resp)
      call it(defs,nms( 5),des( 5),wv%n_freqs,verb_level=0)
      call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=V_resp)
-     call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=V_resp) 
+     call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=V_resp)
      call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
      call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_resp)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
-     call it(defs,nms(11),des(11),X%ng,G_unit,verb_level=0) 
+     call it(defs,nms(11),des(11),X%ng,G_unit,verb_level=0)
      call it(defs,nms(12),des(12),X%iq,verb_level=V_iq)
-       call it(defs,nms(13),des(13),X%ib,verb_level=0)
+     call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
      !
    end subroutine

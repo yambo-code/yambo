@@ -32,8 +32,10 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  !
  use pars,       ONLY:schlen,lchlen
  use IO_m,       ONLY:close_is_on,io_connect,io_resetable,io_file,&
-&                     io_sec,io_extension,io_action,io_fragmented,read_is_on,write_is_on,&
-&                     OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_folder
+&                     io_sec,io_extension,io_action,read_is_on,write_is_on,&
+&                     OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_folder,io_raw_extension
+ use IO_m,       ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
+                      frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_SCREEN
  use stderr,     ONLY:intc,write_fragments_IO_log,logfile
  use interfaces, ONLY:PARALLEL_live_message
  use parallel_m, ONLY:ncpu
@@ -48,7 +50,32 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  logical           :: close_is_on_save
  character(schlen) :: fragment_filename
  !
- if (.not.io_fragmented(ID)) return
+ if (present(ierr)) then
+   ierr=0
+ endif
+ !
+ select case (trim(io_raw_extension(ID)))
+   case("Vnl","wf","kb_pp","kb_pp_pwscf")
+     if (.not.frag_WF) return
+   case("kindx")
+     if (.not.frag_QINDX) return
+   case("dip_iR_and_P","Overlaps")
+     if (.not.frag_DIP) return
+   case("HF_and_locXC","xxvxc")
+     if (.not.frag_HF) return
+   case("em1s","em1d","pp","Xx")
+     if (.not.frag_RESPONSE) return
+   case("carriers","THETA","J_and_P","G","REF")
+     if (.not.frag_RT) return
+   case("scE","scWFs","scV","sc_MeanPotential")
+     if (.not.frag_SC) return
+   case("elph_gkkp","elph_gkkp_expanded","elph_gFsq")
+     if (.not.frag_ELPH) return
+ end select
+ !
+ if (index(trim(io_raw_extension(ID)),"BS_Q")>0) then
+   if (.not.frag_BS_K) return
+ endif
  !
  close_is_on_save=close_is_on(ID)
  !
@@ -80,10 +107,11 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
    if (read_is_on(ID) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
  endif
  !
- if (present(ierr)) ierr=ierr_
+ if (present(ierr)) then
+   ierr=ierr_
+ endif
  !
- ! io_action must be saved otherwise any io_disconnect call would
- ! call io_reset (like in ioWF) 
+ ! io_action must be saved otherwise any io_disconnect call would call io_reset (like in ioWF) 
  !
  if (close_is_on_save) io_resetable(ID)=.true.
  !

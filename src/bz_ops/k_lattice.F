@@ -126,10 +126,10 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
      !
      if (i2==1) then
        if (v_is_zero(v0,zero_=k_rlu_zero)) cycle
-       min_idist(1)=min(min_idist(1), rlu_v_norm(v0))
+       min_idist(1)=min(min_idist(1), rlu_v_norm(v0,inside_bz=.true.))
        min_idist(2)=min(min_idist(2), v_norm(v0))
      else if (min_idist(1)<min_idist(2)) then
-       idist(i1)=rlu_v_norm(v0)
+       idist(i1)=rlu_v_norm(v0,inside_bz=.true.)
      else if (min_idist(1)>=min_idist(2)) then
        idist(i1)=v_norm(v0)
      endif

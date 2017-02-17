@@ -167,7 +167,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      dSc_diff=abs(QP_dSc(iqp,2)-QP_dSc(iqp,1))/abs(QP_dSc(iqp,1)) 
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' dSp='
-     shadow(n_shadows)=100.-int(dSc_diff*100.) 
+     shadow(n_shadows)=100._SP-int(dSc_diff*100._SP)
    endif
    !
    !
@@ -179,9 +179,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      n_shadows=5
      shadow(:3)=(/qp%E_bare(iqp)*HA2EV,real(qp%Z(iqp)),aimag(qp%Z(iqp))/)
      shadow(4)=aimag(qp%E(iqp))*HA2EV/1.E-3
-     shadow(5)=0.
+     shadow(5)=0._SP
      !
-     if (abs(shadow(4))>0.) shadow(5)=HBAR_eVfs/abs(aimag(qp%E(iqp)))/HA2EV
+     if (abs(shadow(4))>0._SP) shadow(5)=HBAR_eVfs/abs(aimag(qp%E(iqp)))/HA2EV
      !
      shadow_string(2)=' Re(Z)='
      shadow_fmt(2)   ='(a,f4.2)'
@@ -263,4 +263,3 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  call QP_of(qp,en,QPdb_read_err,'qp')
  !
 end subroutine
-

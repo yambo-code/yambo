@@ -87,9 +87,7 @@ module BS
    !
  end type Haydock_vector
  !
- logical, allocatable :: Haydock_parallel_mask(:)
  integer, allocatable :: Haydock_parallel_group_comm(:)
- integer, allocatable :: Haydock_parallel_col_comm(:)
  !
  ! CV transitions space ...
  !=========================
@@ -107,6 +105,7 @@ module BS
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: W(:)
+   real(SP)   , allocatable      :: E_SOC_corr(:,:)
    !
    ! Exchange Oscillators
    !
@@ -117,7 +116,6 @@ module BS
  type(BS_T_group), allocatable  :: BS_T_grp(:)
  integer         , allocatable  :: BS_T_grp_1st_el(:)
  integer         , allocatable  :: BS_nT_at_k(:)
- integer         , allocatable  :: BS_nT_grps_at_k(:)
  integer                        :: BS_nT_grps
  !
  ! Blocks ...
@@ -139,8 +137,8 @@ module BS
    ! ... correlation
    !------------------
    integer                       :: N_oscillators 
-   integer,     allocatable      :: O_table(:,:,:,:) ! sym,n,n',spin @ k
-   complex(SP), allocatable      :: O(:,:)
+   integer,     allocatable      :: O_table(:,:,:,:,:) ! 2,sym,n,n',spin @ k = (iOnn,i_block_ref)
+   complex(SP), allocatable      :: O_c(:,:)
    !
  end type BS_block
  !
@@ -156,6 +154,7 @@ module BS
  character(lchlen):: BSS_description(100)
  character(schlen):: BSS_mode
  character(schlen):: BSS_inversion_mode
+ complex(SP) :: BSS_Wd
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
  real(SP) :: BSS_er(2)
@@ -178,6 +177,7 @@ module BS
  real(SP)   , allocatable :: BSS_eh_E(:)
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
+ real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
  complex(SP), allocatable :: BS_mat_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
  complex(SP), allocatable :: BS_cpl_mat(:,:)
@@ -240,12 +240,11 @@ module BS
      !
      if (EXCHANGE) then
        allocate(BS_T_grp(iG)%O_x(BS_n_g_exch,BS_T_grp(iG)%size))
-       call mem_est("BS_T_group_X_oscillators",(/size (BS_T_grp(iG)%O_x)/))
+       if(iG==1) call mem_est("BS_T_group_X_oscillators",(/BS_n_g_exch*sum(BS_T_grp(:)%size)/))
      endif
      !
      if (CORRELATION) then
-       allocate(BS_blk(iB)%O(O_ng,BS_blk(iB)%N_oscillators))
-       call mem_est("BS_blk_Oscillators",(/size (BS_blk(iB)%O)/))
+       allocate(BS_blk(iB)%O_c(O_ng,BS_blk(iB)%N_oscillators))
      endif
      !
    end subroutine
@@ -253,21 +252,28 @@ module BS
    subroutine BS_oscillators_free(iG,iB)
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     integer :: iG,IB,i_g,i_b
-     do i_g=1,BS_nT_grps
-       if (iG/=0.and.i_g/=iG) cycle
-       if (allocated(BS_T_grp(i_g)%O_x)) then
-         deallocate(BS_T_grp(i_g)%O_x)
-         call mem_est("BS_T_group_X_oscillators")
-       endif
+     integer :: iG,iB
+     integer :: i_g,i_b,ik_loop,ip_loop,ik_now,ip_now
+     if (iG==BS_nT_grps) call mem_est("BS_T_group_X_oscillators")
+     do i_g=iG,1,-1
+       if (.not.allocated(BS_T_grp(i_g)%O_x)) exit
+       if (     allocated(BS_T_grp(i_g)%O_x)) deallocate(BS_T_grp(i_g)%O_x)
      enddo
-     do i_b=1,n_BS_blks
-       if (iB/=0.and.i_b/=iB) cycle
-       if (allocated(BS_blk(i_b)%O)) then
-         deallocate(BS_blk(i_b)%O)
-         call mem_est("BS_blk_"//trim(intc(i_b))//"_O")
+     if(iB==0) return
+     ik_now=BS_blk(iB)%ik
+     ip_now=BS_blk(iB)%ip
+     if(iB==n_BS_blks) then
+       ik_now=0
+       ip_now=0
+     endif
+     do i_b=iB,1,-1
+       ik_loop=BS_blk(i_b)%ik
+       ip_loop=BS_blk(i_b)%ip
+       if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
+       if (.not.allocated(BS_blk(i_b)%O_c)) exit
+       if (     allocated(BS_blk(i_b)%O_c)) then
+         deallocate(BS_blk(i_b)%O_c)
          deallocate(BS_blk(i_b)%O_table)
-         call mem_est("BS_blk_"//trim(intc(i_b))//"_O_table")
        endif
      enddo
      !
@@ -279,40 +285,40 @@ module BS
      use drivers,    ONLY:l_kerr
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     use electrons,     ONLY:levels
+     use electrons,  ONLY:levels,E_SOC_nbands
      integer      :: iT,nT
      type(levels) :: E
+     !
+     if(iT==0) then
+       nT=sum(BS_T_grp(:)%size)
+       call mem_est("BS_T_grp_dipoles_R_N",(/nT/))
+       if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N",(/nT/))
+       if(l_kerr) then
+         call mem_est("BS_T_grp_dipoles_R_N",(/nT/))
+         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N",(/nT/))
+       endif
+       call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
+       call mem_est("BS_T_grp_E_N",(/nT/),(/SP/))
+       call mem_est("BS_T_grp_f_N",(/nT/),(/SP/))
+       if (associated(E%Z)) call mem_est("BS_T_grp_Z_N",(/nT/))
+       if (associated(E%W)) call mem_est("BS_T_grp_W_N",(/nT/),(/SP/))
+       return
+     endif
      !
      nT=BS_T_grp(iT)%size
      !
      allocate(BS_T_grp(iT)%dipoles_R(nT))
-     call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(iT)),(/nT/))
-     if (BS_K_coupling) then
-       allocate(BS_T_grp(iT)%dipoles_A(nT))
-       call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(iT)),(/nT/))
-     endif
+     if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A(nT))
      if(l_kerr) then
        allocate(BS_T_grp(iT)%dipoles_R_kerr(nT))
-       call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(iT)),(/nT/))
-       if (BS_K_coupling) then
-         allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
-         call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(iT)),(/nT/))
-       endif
+       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
      endif
      allocate(BS_T_grp(iT)%table(nT,4))
-     call mem_est("BS_T_grp_table_N"//trim(intc(iT)),(/nT/),(/IP/))
      allocate(BS_T_grp(iT)%E(nT))
-     call mem_est("BS_T_grp_E_N"//trim(intc(iT)),(/nT/),(/SP/))
      allocate(BS_T_grp(iT)%f(nT))
-     call mem_est("BS_T_grp_f_N"//trim(intc(iT)),(/nT/),(/SP/))
-     if (associated(E%Z)) then
-       allocate(BS_T_grp(iT)%Z(nT))
-       call mem_est("BS_T_grp_Z_N"//trim(intc(iT)),(/nT/))
-     endif
-     if (associated(E%W)) then
-       allocate(BS_T_grp(iT)%W(nT))
-       call mem_est("BS_T_grp_W_N"//trim(intc(iT)),(/nT/),(/SP/))
-     endif
+     if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
+     if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
+     if (E_SOC_nbands/=0) allocate(BS_T_grp(iT)%E_SOC_corr(2,nT))
      !
    end subroutine
    !
@@ -320,10 +326,9 @@ module BS
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
+     use electrons, ONLY:E_SOC_nbands
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-     BS_H_dim=BS_K_dim
-     if (BS_K_coupling) BS_H_dim=2*BS_K_dim
      allocate(BS_mat_diagonal(BS_H_dim))
      BS_mat_diagonal = cZERO
      call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
@@ -355,6 +360,11 @@ module BS
        call mem_est("BSS_eh_Z",(/BS_K_dim/))
        BSS_eh_Z = cZERO
      endif
+     if (E_SOC_nbands/=0) then
+       allocate(BSS_eh_E_SOC_corr(2,BS_H_dim))
+       call mem_est("BSS_eh_E_SOC_corr",(/2*BS_H_dim/),(/SP/))
+       BSS_eh_E_SOC_corr = rZERO
+     endif
    end subroutine
    !
    subroutine BS_mat_free()
@@ -365,6 +375,7 @@ module BS
      if (allocated(BSS_eh_W))          deallocate(BSS_eh_W)
      if (allocated(BSS_eh_f))          deallocate(BSS_eh_f)
      if (allocated(BSS_eh_Z))          deallocate(BSS_eh_Z)
+     if (allocated(BSS_eh_E_SOC_corr)) deallocate(BSS_eh_E_SOC_corr)
      if (allocated(BS_mat))            deallocate(BS_mat)
      if( allocated(BS_mat_diagonal) )  deallocate(BS_mat_diagonal)
      call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f BSS_eh_W")
@@ -376,47 +387,44 @@ module BS
      use memory_m,   ONLY:mem_est
      use drivers,    ONLY:l_kerr
      use parallel_m, ONLY:PAR_BS_T_grps_index
+     use electrons,  ONLY:E_SOC_nbands
      integer :: i_g
      !
      if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
-     if (allocated(BS_nT_grps_at_k))     deallocate(BS_nT_grps_at_k)
      if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
-     call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_nT_grps_at_k")
+     if (allocated(BS_T_grp_1st_el))     deallocate(BS_T_grp_1st_el)  
+     call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_T_grp_1st_el")
      !
      do i_g=1,BS_nT_grps
        !
        if (.not.allocated(BS_T_grp(i_g)%table)) cycle
        !
        deallocate(BS_T_grp(i_g)%dipoles_R)
-       call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
-       if (BS_K_coupling) then
-         deallocate(BS_T_grp(i_g)%dipoles_A)
-         call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_g)))
-       endif
+       if (BS_K_coupling) deallocate(BS_T_grp(i_g)%dipoles_A)
        if(l_kerr) then
          deallocate(BS_T_grp(i_g)%dipoles_R_kerr)
-         call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
-         if (BS_K_coupling) then
-           deallocate(BS_T_grp(i_g)%dipoles_A_kerr)
-           call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_g)))
-         endif
+         if (BS_K_coupling) deallocate(BS_T_grp(i_g)%dipoles_A_kerr)
        endif
        deallocate(BS_T_grp(i_g)%table)
-       call mem_est("BS_T_grp_table_N"//trim(intc(i_g)))
        deallocate(BS_T_grp(i_g)%E)
-       call mem_est("BS_T_grp_E_N"//trim(intc(i_g)))
        deallocate(BS_T_grp(i_g)%f)
-       call mem_est("BS_T_grp_f_N"//trim(intc(i_g)))
-       if (allocated(BS_T_grp(i_g)%Z)) then
-         deallocate(BS_T_grp(i_g)%Z)
-         call mem_est("BS_T_grp_Z_N"//trim(intc(i_g)))
-       endif
-       if (allocated(BS_T_grp(i_g)%W)) then
-         deallocate(BS_T_grp(i_g)%W)
-         call mem_est("BS_T_grp_W_N"//trim(intc(i_g)))
-       endif
+       if (allocated(BS_T_grp(i_g)%Z)) deallocate(BS_T_grp(i_g)%Z)
+       if (allocated(BS_T_grp(i_g)%W)) deallocate(BS_T_grp(i_g)%W)
+       if (E_SOC_nbands/=0)            deallocate(BS_T_grp(i_g)%E_SOC_corr)
        !
      enddo
+     !
+     call mem_est("BS_T_grp_dipoles_R_N")
+     call mem_est("BS_T_grp_dipoles_A_N")
+     if(l_kerr) then
+       call mem_est("BS_T_grp_dipoles_R_N")
+       if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N")
+     endif
+     call mem_est("BS_T_grp_table_N")
+     call mem_est("BS_T_grp_E_N")
+     call mem_est("BS_T_grp_f_N")
+     call mem_est("BS_T_grp_Z_N")
+     call mem_est("BS_T_grp_W_N")
      !
    end subroutine
    !
@@ -424,12 +432,13 @@ module BS
      integer              :: i_block
      integer(IP)          :: BS_Block_size
      !
-     BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)/BS_LiveTiming_prefactor
-     !
      if (BS_blk(i_block)%iT_k==BS_blk(i_block)%iT_p.and.BS_blk(i_block)%mode=="R") then
-       BS_Block_size=( (BS_blk(i_block)%size(1)**2-BS_blk(i_block)%size(1))/2+&
-&                       BS_blk(i_block)%size(1) )/BS_LiveTiming_prefactor
+       BS_Block_size= (BS_blk(i_block)%size(1)*(BS_blk(i_block)%size(1)+1))/2
+     else
+       BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)
      endif
+     !
+     BS_Block_size=BS_Block_size/BS_LiveTiming_prefactor
      !
    end function BS_Block_size
    !
@@ -456,12 +465,13 @@ module BS
    end subroutine BS_Blocks_symmetrize_K
    !
    subroutine BS_HAYVEC_alloc(V)
-     type(Haydock_vector) :: V(:)
+     use parallel_m,    ONLY:PAR_IND_T_Haydock
+     type(Haydock_vector) :: V(BS_nT_grps)
      ! ws:
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
      enddo
    end subroutine BS_HAYVEC_alloc
@@ -473,9 +483,7 @@ module BS
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
-       if (allocated(V(i_g)%fragment)) then
-         deallocate(V(i_g)%fragment)
-       end if
+       if (allocated(V(i_g)%fragment)) deallocate(V(i_g)%fragment)
      end do
    end subroutine BS_HAYVEC_free
    !

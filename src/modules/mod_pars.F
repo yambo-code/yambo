@@ -23,9 +23,7 @@
 !
 module pars
  !
-#if defined _NETCDF_IO
  use netcdf
-#endif  
  !
  implicit none
  !
@@ -44,9 +42,9 @@ module pars
  !
  ! NetCDF types
  !
-#if defined _NETCDF_IO && defined _DOUBLE
+#if defined _DOUBLE
  integer, parameter  :: nf90_SP = nf90_double
-#elif defined _NETCDF_IO 
+#else
  integer, parameter  :: nf90_SP = nf90_real
 #endif
  !
@@ -61,7 +59,7 @@ module pars
  ! CONSTANTs
  !
  real(SP),    parameter :: pi=3.141592653589793238462643383279502884197_SP
- real(SP),    parameter :: zero_dfl=1.E-5
+ real(SP),    parameter :: zero_dfl=1.E-5_SP
  real(SP),    parameter :: rZERO=0._SP
  real(SP),    parameter :: rONE =1._SP
  complex(SP), parameter :: cI   =(0._SP,1._SP)

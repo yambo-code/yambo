@@ -23,6 +23,7 @@
 !
 subroutine WF_alloc(WF)
  !
+ use pars,          ONLY:cZERO
  use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
  use memory_m,      ONLY:mem_est
  use FFT_m,         ONLY:fft_size
@@ -70,7 +71,7 @@ subroutine WF_alloc(WF)
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
  !
- WF%c=(0.,0.)
+ WF%c=cZERO
  WF%index=0
 #if defined _FFTW
  fftw_plan=0

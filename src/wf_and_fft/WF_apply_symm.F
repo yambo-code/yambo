@@ -70,9 +70,10 @@ subroutine WF_apply_symm(isc,WF_symm)
  endif
  !
  if(n_spinor==1) then
+
 !$omp parallel do default(shared), private(i)
    do i = 1, fft_size
-     WF_symm(i,1)=WF%c(fft_rot_r(isc(3),i),i_wf(1))
+     WF_symm(i,1)=WF%c(fft_rot_r(i,isc(3)),i_wf(1))
    enddo
 !$omp end parallel do
  endif
@@ -81,14 +82,14 @@ subroutine WF_apply_symm(isc,WF_symm)
 !$omp parallel default(shared), private(i)
 !$omp do
    do i = 1, fft_size
-     WF_symm(i,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(isc(3),i),i_wf(1))+ &
-                  spin_sop(1,2,isc(3))*WF%c(fft_rot_r(isc(3),i),i_wf(2))
+     WF_symm(i,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(i,isc(3)),i_wf(1))+ &
+                  spin_sop(1,2,isc(3))*WF%c(fft_rot_r(i,isc(3)),i_wf(2))
    enddo
 !$omp end do
 !$omp do
    do i = 1, fft_size
-     WF_symm(i,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(isc(3),i),i_wf(1))+ &
-                  spin_sop(2,2,isc(3))*WF%c(fft_rot_r(isc(3),i),i_wf(2))
+     WF_symm(i,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(i,isc(3)),i_wf(1))+ &
+                  spin_sop(2,2,isc(3))*WF%c(fft_rot_r(i,isc(3)),i_wf(2))
    enddo
 !$omp end do
 !$omp end parallel
@@ -109,12 +110,12 @@ subroutine WF_apply_symm(isc,WF_symm)
    if(n_spinor==2) WF_symm(:,2)=WF%c(:,i_wf(2))
    return
  endif
- if(n_spinor==1) WF_symm(:,1)=WF%c(fft_rot_r(isc(3),:),i_wf(1))
+ if(n_spinor==1) WF_symm(:,1)=WF%c(fft_rot_r(:,isc(3)),i_wf(1))
  if (n_spinor==2) then
-   WF_symm(:,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(isc(3),:),i_wf(1))+ &
-&                    spin_sop(1,2,isc(3))*WF%c(fft_rot_r(isc(3),:),i_wf(2))
-   WF_symm(:,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(isc(3),:),i_wf(1))+ &
-&                    spin_sop(2,2,isc(3))*WF%c(fft_rot_r(isc(3),:),i_wf(2))
+   WF_symm(:,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),i_wf(1))+ &
+&                    spin_sop(1,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),i_wf(2))
+   WF_symm(:,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),i_wf(1))+ &
+&                    spin_sop(2,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),i_wf(2))
  endif
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
 #endif

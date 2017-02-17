@@ -57,14 +57,14 @@ subroutine K_WF_phases(Xk)
  type(bz_samp) :: Xk
  !
  complex(SP) :: wf_cmp,WF_symm1(fft_size,n_spinor),WF_symm2(fft_size,n_spinor)
- integer     :: i_k,i_s,i_s_star,i_b,i_sp,n_phases
+ integer     :: i_k,i_s,i_s_star,i_b,i_sp,n_phases(1)
  !
  if (.not.BS_res_K_corr) return 
  !
  call section('=','Wave-Function Phases')
  !
  if (.not.allocated(WF_phase)) then
-   allocate(WF_phase(Xk%nibz,nsym,BS_bands(2),n_sp_pol))
+   allocate(WF_phase(Xk%nibz,nsym,BS_bands(1):BS_bands(2),n_sp_pol))
    call mem_est("WF_phase",(/size(WF_phase)/),(/2*SP/))
  endif
  WF_phase=cZERO
@@ -104,7 +104,7 @@ subroutine K_WF_phases(Xk)
            wf_cmp=dot_product(WF_symm1(:,1),WF_symm2(:,1))
            if(n_spinor>1) wf_cmp=wf_cmp+dot_product(WF_symm1(:,2),WF_symm2(:,2))
            !
-           if (abs(abs(wf_cmp)-1.)<=1.E-3) then
+           if (abs(abs(wf_cmp)-1._SP)<=1.E-3_SP) then
              n_phases=n_phases+1
              WF_phase(i_k,i_s,i_b,i_sp)=conjg(wf_cmp)
            else
@@ -118,8 +118,8 @@ subroutine K_WF_phases(Xk)
  enddo
  !
  call PP_redux_wait(WF_phase)
- call PP_redux_wait((/n_phases/))
+ call PP_redux_wait(n_phases)
  !
- call msg('r','[BSE] WF phases found  [o/o]:',real(n_phases,SP)/real(size(WF_phase),SP)*100.)
+ call msg('r','[BSE] WF phases found  [o/o]:',real(n_phases(1),SP)/real(size(WF_phase),SP)*100._SP)
  !
 end subroutine K_WF_phases

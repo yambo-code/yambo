@@ -68,9 +68,6 @@
   {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
-#if defined _SURF
-  {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},
-#endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="yambo";

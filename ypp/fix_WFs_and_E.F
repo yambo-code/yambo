@@ -24,11 +24,11 @@
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,core_io_path,more_io_path
+ use com,                 ONLY:msg,core_io_path,more_io_path,error
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
-&                              OP_APP,cp_file,cp_directory,Fragmented_IO, &
-&                              io_fragmented,OP_RD_CL,RD_CL,RD
+&                              OP_APP,cp_file,cp_directory, &
+&                              OP_RD_CL,RD_CL,RD,frag_WF
  use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_spin
@@ -75,6 +75,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  integer               :: is,ik,ik_save
  integer               :: ib,ib_grp,ib_disk,i_wf,i_spin
  integer               :: ic,ic_rot,ig,ig_rot
+ logical               :: found
  !
  ! External functions
  !
@@ -83,7 +84,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
  io_err=io_WF(ID)
- Fragmented_IO=io_fragmented(ID)
  !
  core_io_path_save=core_io_path
  core_io_path=more_io_path
@@ -175,7 +175,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      io_err=io_WF(ID)
      !
      ACTION_=OP_APP_WR_CL
-     if(Fragmented_IO) ACTION_=OP_WR_CL
+     if(frag_WF) ACTION_=OP_WR_CL
      !
      do ik=1,k_save%nibz
        !
@@ -224,7 +224,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    allocate(wf_tmp(wf_ncx_new,n_spin))
    !
    ACTION_=OP_APP_WR_CL
-   if(Fragmented_IO) ACTION_=OP_WR_CL
+   if (frag_WF) ACTION_=OP_WR_CL
    !
    do ik=k_save%nibz+1,k%nibz 
      !      
@@ -234,10 +234,15 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      ic_rot_table=-1
      do ic=1,wf_nc_k_save(ik_save)
        ig_rot=g_rot(is,wf_igk_save(ic,ik_save))
+       found=.false.
        do ic_rot=1,wf_nc_k_new(ik)
          ig=wf_igk_new(ic_rot,ik)
-         if(ig==ig_rot) exit
+         if(ig==ig_rot) then
+           found=.true.
+           exit
+         endif
        enddo
+       if(.not.found) call error("Erro rotating an wf_igk array")
        ic_rot_table(ic)=ic_rot
      enddo
      !
@@ -303,7 +308,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
    ACTION_=OP_APP_WR_CL
-   if(Fragmented_IO) ACTION_=OP_WR_CL
+   if(frag_WF) ACTION_=OP_WR_CL
    !
    do ik=1,k%nibz
      !
@@ -344,7 +349,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
  end select
  ! 
- if(Fragmented_IO) then
+ if(frag_WF) then
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)
  endif

@@ -1,4 +1,4 @@
-
+!
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -56,13 +56,50 @@ module vec_operate
      v_norm=sqrt(dot_product(v,v))
    end function v_norm
    !
-   pure real(SP) function iku_v_norm(v)
+   real(SP) function iku_v_norm(v,inside_bz)
+     !
+     ! shifted in the BZ if inside_bz is set to true, ak2bz=|k|
+     !
      use D_lattice,      ONLY:alat
-     real(SP), intent(in) :: v(3)
+     real(SP), intent(in)           :: v(3)
+     logical,  intent(in), optional :: inside_bz
+     !
      real(SP) :: u(3)
-     u(:)=v(:)*2._SP*pi/alat(:)
+     logical  :: inside_bz_
+     !
+     inside_bz_=.false.
+     if(present(inside_bz)) inside_bz_=inside_bz
+     !
+     u(:)=v(:)
+     if(inside_bz_) call k2bz(v_in=u)
+     !
+     u(:)=u(:)*2._SP*pi/alat(:)
      iku_v_norm=sqrt(dot_product(u,u))
+     !
    end function iku_v_norm
+   !
+   real(SP) function rlu_v_norm(k,inside_bz) 
+     !
+     ! Input k is rlu 
+     !
+     ! Output is the module of the k 
+     ! shifted in the BZ if inside_bz is set to true
+     !
+     real(SP), intent(in)           :: k(3)
+     logical , intent(in), optional :: inside_bz
+     !
+     ! Work space
+     !
+     real(SP) :: k_i(3)
+     logical  :: inside_bz_
+     !
+     inside_bz_=.false.
+     if(present(inside_bz)) inside_bz_=inside_bz
+     !
+     call c2a(v_in=k,v_out=k_i,mode='ka2i')
+     rlu_v_norm=iku_v_norm(k_i,inside_bz=inside_bz_)
+     !
+   end function rlu_v_norm
    !
    function cross_product(a,b)
      real(SP), intent(in) :: a(3),b(3)
@@ -219,21 +256,6 @@ module vec_operate
      endif
      !
    end subroutine rlu_k2bz
-   !
-   real(SP) function rlu_v_norm(k) 
-     !
-     ! Input k is rlu 
-     !
-     ! Output is the module of the k shifted in the IBZ, ak2bz=|k|
-     !
-     real(SP) :: k(3)
-     real(SP) :: k_i(3) !ws
-     !
-     call c2a(v_in=k,v_out=k_i,mode='ka2i')
-     call k2bz(v_in=k_i)
-     rlu_v_norm=iku_v_norm(k_i)
-     !
-   end function rlu_v_norm
    !
    pure function k_periodic_idx(idx,k_map)
     use R_lattice,      ONLY:bz_map
@@ -484,29 +506,24 @@ module vec_operate
        !
        if (l_singles) then
          !
-         E_diff=2.*deg_accuracy
+         E_diff=2._SP*deg_accuracy
          !
-         if (iref>1) E_diff(1)=abs(E(iref)-E(iref-1))
-         E_diff(2)=abs(E(iref)-E(iref+1))
+         if (deg_grps>0) E_diff(1)=abs(E(iref)-E(first_deg_el(deg_grps)))
+         if (iref<n    ) E_diff(2)=abs(E(iref)-E(iref+1))
          !
-         if (all(E_diff>deg_accuracy)) then
+         if (all(E_diff>=deg_accuracy)) then
            deg_grps=deg_grps+1
            first_deg_el(deg_grps)=iref
            deg_elmnts(deg_grps)=1
          endif
          !
-         if (iref==n-1.and.E_diff(2)>deg_accuracy) then
-           deg_grps=deg_grps+1
-           first_deg_el(deg_grps)=iref+1
-           deg_elmnts(deg_grps)=1
-         endif
        endif
        !
        l_flag=.true.
        !
        do i1=iref+1,n
          !
-         if (abs(E(iref)-E(i1)).le.deg_accuracy) then
+         if (abs(E(iref)-E(i1))<deg_accuracy) then
            if (l_flag) then
              deg_grps=deg_grps+1
              first_deg_el(deg_grps)=iref
@@ -519,10 +536,16 @@ module vec_operate
          endif
        enddo
        ! 
-       if (l_flag) iref=iref+1
+       if (     l_flag) iref=iref+1
        if (.not.l_flag) iref=iref+deg_elmnts(deg_grps)
        !
      enddo
+     !
+     if(l_singles .and. abs(E(n)-E(first_deg_el(deg_grps)))>deg_accuracy) then
+       deg_grps=deg_grps+1
+       first_deg_el(deg_grps)=n
+       deg_elmnts(deg_grps)=1
+     endif
      !
    end subroutine
    !

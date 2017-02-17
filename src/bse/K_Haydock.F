@@ -27,22 +27,20 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:error
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use memory_m,       ONLY:mem_est
- use X_m,            ONLY:X_epsilon,X_drude_term
+ use X_m,            ONLY:X_epsilon,X_drude_term,iw_ref,global_gauge
  use R_lattice,      ONLY:d3k_factor,q_norm
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS,             ONLY:BSS_n_descs,Haydock_treshold,BSS_description,& 
 &                         io_BSS_Haydock, BS_K_Coupling,&
 &                         Haydock_terminator, BSE_mode,Haydock_v0_mod,BS_Blocks_symmetrize_K,&
-&                         BS_HAYVEC_free,BS_HAYVEC_alloc, BS_T_grp,BS_nT_grps,&
-&                         Haydock_vector,Haydock_parallel_mask,Haydock_parallel_group_comm
- use interfaces,     ONLY:K_multiply_by_V,K_dot_product
+&                         BS_HAYVEC_free,BS_HAYVEC_alloc, BS_T_grp,BS_nT_grps,Haydock_vector
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast
+ use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock
  !
  !
 #if defined _TIMING
@@ -62,9 +60,8 @@ subroutine K_Haydock(iq,W)
  complex(SP),allocatable :: Cf(:)
  !
  !
- real(SP)           ::reached_treshold, Bf(Max_iterations)&
-&,                    Af(Max_iterations)
- real(SP)           ::ItParity
+ real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
+ integer            ::ItParity
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
  logical            ::use_cpl_scheme
@@ -113,10 +110,10 @@ subroutine K_Haydock(iq,W)
  call BS_HAYVEC_alloc(Vn)
  call BS_HAYVEC_alloc(Vnm1)
  call BS_HAYVEC_alloc(Vnp1)
-  !
-  !
-  ! Haydock Coefficients and restart vector on disk
-  !=================================================
+ !
+ !
+ ! Haydock Coefficients and restart vector on disk
+ !=================================================
  it_on_disk=0
  ! call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  ! !
@@ -171,8 +168,11 @@ subroutine K_Haydock(iq,W)
  ! Initialization of Haydock vectors and tridiagonal matrix elements
  !
  if (it_on_disk==0) then
+   !
    do i_g=1,BS_nT_grps
-     if (.not.Haydock_parallel_mask(i_g)) cycle
+     !
+     if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+     !
      Vn(i_g)%fragment  = cZERO
      Vnm1(i_g)%fragment= cZERO
      Vnp1(i_g)%fragment= cZERO
@@ -182,8 +182,9 @@ subroutine K_Haydock(iq,W)
      !
    enddo
    !
-   Af= 0.
-   Bf= 0.
+   Af= 0._SP
+   Bf= 0._SP
+   !
  end if
  !
  do i_g=1,BS_nT_grps
@@ -192,10 +193,11 @@ subroutine K_Haydock(iq,W)
    !
    !
  enddo
- do i_g = 2,BS_nT_grps
-   if (.not.Haydock_parallel_mask(i_g)) cycle
+ !
+ do i_g = 1,BS_nT_grps
+   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
-   call PP_bcast(V0(i_g)%fragment(:),0,COMM=Haydock_parallel_group_comm(i_g))
+   call PP_bcast(V0(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif    
    !
    !
@@ -208,30 +210,26 @@ subroutine K_Haydock(iq,W)
    ! | Vm > =     |q->0>/(<q->0| F (H |q->0>))
    ! | Vmp1 > = H |Vm>
    !
-   ItParity = (-1._SP)**it_on_disk
+   ItParity = (-1)**it_on_disk
    if (it_on_disk==0) then
-      Cf= (0.,0.)
+      Cf= cZERO
       !
       !
-      call K_multiply_by_V(it_on_disk,V0,Vnp1,iter_par=ItParity,call_kind='Hay')
-      do i_g=1,BS_nT_grps
-        if (.not.Haydock_parallel_mask(i_g)) cycle
-        !
-      enddo
+      call K_multiply_by_V(it_on_disk,V0,Vnp1,ItParity,'Hay')
       call K_dot_product(v0_mod_,V0,Vnp1)
       Haydock_v0_mod=sqrt(2._SP*real(v0_mod_))
       Cf(1) =  0._SP
       !
       !
       do i_g=1,BS_nT_grps
-        if (.not.Haydock_parallel_mask(i_g)) cycle
+        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
         !
         Vn(i_g)%fragment   = V0(i_g)%fragment/Haydock_v0_mod
         Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
       enddo
    else
-   !   Haydock_v0_mod = Bf(1)
-   !   Bf(1) = 0._SP
+      !   Haydock_v0_mod = Bf(1)
+      !   Bf(1) = 0._SP
    endif
    !
  else ! [***] Initialization Hermitian case
@@ -243,7 +241,7 @@ subroutine K_Haydock(iq,W)
    !
    if (it_on_disk==0) then
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vn(i_g)%fragment  = V0(i_g)%fragment/Haydock_v0_mod
      enddo
    endif
@@ -262,7 +260,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vm+1> = H |Vm>
      !
-     call  K_multiply_by_V(it,Vn,Vnp1,call_kind='Hay')
+     call  K_multiply_by_V(it,Vn,Vnp1,1,'Hay')
      !
      ! A(n) = <Vm|Vm+1>
      !
@@ -272,7 +270,7 @@ subroutine K_Haydock(iq,W)
      !|Vm+1> = |Vm+1> - A(n)|Vm> - B(n)|Vm-1>
      !
      do i_g = 1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
@@ -286,14 +284,14 @@ subroutine K_Haydock(iq,W)
      !|Vm-1> = |Vm>
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle 
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle 
        Vnm1(i_g)%fragment  =Vn(i_g)%fragment
      enddo
      !
      !|Vm> =|Vm+1> / B(n+1)
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vn(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
      enddo
      !
@@ -304,13 +302,13 @@ subroutine K_Haydock(iq,W)
      ! A(n) = <Vm+1|F|Vm+1> (that is <Vm|HFH|Vm>), 
      !      =  0   by symmetry 
      !
-     ItParity=(-1._SP)**it
+     ItParity=(-1)**it
      Af(it)=0._SP
      !
      !|Vm+1> = |Vm+1> - B(n)|Vm-1> (as Am is zero by symmetry)
      !
      do i_g = 1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
      !
@@ -318,14 +316,14 @@ subroutine K_Haydock(iq,W)
      ! |Vm>   = |Vm+1> 
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vnm1(i_g)%fragment = Vn(i_g)%fragment
        Vn(i_g)%fragment   = Vnp1(i_g)%fragment
      enddo
      !
      !|Vm+1> = H |Vm>
      !
-     call K_multiply_by_V(it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_multiply_by_V(it-it_on_disk,Vn,Vnp1,ItParity,'Hay')
      !
      ! B(n+1)= <Vm|F|Vm+1>^(1/2) (that is <Vm|FH|Vm>^(1/2))
      !       = (2*Re(<Vm|Vmp1>))^(1/2) by symmetry, 
@@ -342,7 +340,7 @@ subroutine K_Haydock(iq,W)
      !|Vm> =|Vm+1> / B(n+1)
      !
      do i_g=1,BS_nT_grps
-       if (.not.Haydock_parallel_mask(i_g)) cycle
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vnp1(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
        Vn(i_g)%fragment    =Vn(i_g)%fragment/Bf(it+1)
      enddo
@@ -352,7 +350,7 @@ subroutine K_Haydock(iq,W)
      ! with all product evaluated just in the eh pairs subspace 
      !
      call K_dot_product(v0_mod_,V0,Vn) 
-     Cf(it+1)= ((1._SP-ItParity)*real(v0_mod_,SP))/Haydock_v0_mod
+     Cf(it+1)= ((1._SP-real(ItParity,SP))*real(v0_mod_,SP))/Haydock_v0_mod
      !
      !
    endif
@@ -444,6 +442,8 @@ subroutine K_Haydock(iq,W)
      integer     :: i1,iw,i_eps(2)
      real(SP)    :: Co
      !
+     complex(SP) :: factor_jj(2)
+     real(SP)    :: gauge_factor
      !
      complex(SP) :: X_o(4,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
@@ -456,13 +456,16 @@ subroutine K_Haydock(iq,W)
      logical     :: UseTerminator
      logical     :: causal, coupling
      !
-     Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi/q_norm(1)**2._SP
+     Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi*Haydock_v0_mod**2._SP
      !
-     X_t =(0._SP,0._SP)
+     X_t =cZERO
      UseTerminator = .false.  
      !
      causal  = (trim(BSE_mode)=='causal'.and..not.use_cpl_scheme)
      coupling= use_cpl_scheme
+     !
+     if(trim(global_gauge)=='length'  ) factor_jj=0._SP
+     if(trim(global_gauge)=='length'  ) gauge_factor=Co/   q_norm(1) **2
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -489,7 +492,7 @@ subroutine K_Haydock(iq,W)
      end if
      !
      do iw=1,W%n_freqs
-       X_o=(0._SP,0._SP)
+       X_o=cZERO
        if (UseTerminator) then 
          if (.not.coupling) then
            X_t(1) = terminator(W%p(iw), Av1,Av2, RES)
@@ -498,7 +501,7 @@ subroutine K_Haydock(iq,W)
          if (coupling.and.(mod(it,2)==0)) X_t(1) = terminator(W%p(iw),Av1,Av2,COUPL)
          if (coupling.and.(mod(it,2)==1)) X_t(1) = terminator(W%p(iw),Av2,Av1,COUPL)
        endif
-       X_o(:2,it) = 1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t(1))
+       X_o(1:2,it) = 1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t(1))
        if (causal) X_o(3:4,it)= 1._SP/(W%p(iw)+Af(it)-Bf(it+1)**2*X_t(2))
        do i1=it-1,1,-1
          X_o(1,i1) = 1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1) )
@@ -531,11 +534,11 @@ subroutine K_Haydock(iq,W)
        X_epsilon(1,iw)=W%p(iw)
        !
        !
-       X_epsilon(i_eps(:),iw)=1._SP-X_o(:2,1)*Co*Haydock_v0_mod**2._SP
-       if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_o(3:4,1)*Co*Haydock_v0_mod**2._SP
+       if (.not.causal) X_epsilon(i_eps(:),iw)=1._SP-(X_o(1:2,1)           -factor_jj)*gauge_factor
+       if (     causal) X_epsilon(i_eps(:),iw)=1._SP-(X_o(1:2,1)-X_o(3:4,1)-factor_jj)*gauge_factor
        if (i_eps(1)==2) then
-         X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*Co
-         X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*Co
+         X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*gauge_factor
+         X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*gauge_factor
        endif
        if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
        !

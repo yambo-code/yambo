@@ -23,7 +23,7 @@
 !
 subroutine K_inversion(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,cI,cONE,cZERO
  use X_m,            ONLY:X_epsilon,X_drude_term
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_H_dim,&
@@ -112,7 +112,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !=============================
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- i_err=io_BSS_invert(iq,1,1,(/0/),(/(0._SP,0._SP)/),W_disk,ID)
+ i_err=io_BSS_invert(iq,1,1,(/0/),(/0._SP,0._SP/),W_disk,ID)
  !
  ! When the damping range is not uniform then changing
  ! the energy borders
@@ -124,7 +124,7 @@ subroutine K_inversion(iq,W,E,k,q)
  if (i_err==0) then
    allocate(inv_err_disk(W_disk%n_freqs),disk_freq_table(W_disk%n_freqs+W%n_freqs))
    allocate(eps_disk(W_disk%n_freqs,IO_dim))
-   eps_disk=(0._SP,0._SP)
+   eps_disk=cZERO
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
    i_err=io_BSS_invert(iq,W_disk%n_freqs,IO_dim,inv_err_disk,eps_disk,W_disk,ID)
@@ -143,7 +143,7 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    allocate(X_epsilon(4,BSS_n_freqs))
    allocate(inv_err(W%n_freqs),iw_full(W%n_freqs))
-   X_epsilon=(0.,0.)
+   X_epsilon=cZERO
    inv_err=-1
    !
    nw_conv=0
@@ -165,7 +165,7 @@ subroutine K_inversion(iq,W,E,k,q)
  else
    allocate(inv_err(W%n_freqs),iw_full(W%n_freqs))
    inv_err=-1
-   X_epsilon=(0.,0.)
+   X_epsilon=cZERO
  endif
  !
  ! Kernel Loading 
@@ -175,9 +175,9 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  if (BSS_uses_DbGd) then
    !
-   forall(i1=1:BS_K_dim) BS_mat(i1,i1)=(0.,0.)
+   forall(i1=1:BS_K_dim) BS_mat(i1,i1)=cZERO
    if (index(BSE_mode,'coupling')>0) then
-     forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=(0.,0.)
+     forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=cZERO
      forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
    endif
    !
@@ -193,7 +193,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  !
  allocate(eps_disk(W%n_freqs,IO_dim))
- eps_disk=(0._SP,0._SP)
+ eps_disk=cZERO
  !
  ! I need to remove the occupations from the oscillators strenght
  ! These are now embodied in the Green's function 
@@ -211,11 +211,11 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Green`s function and non-interacting eps2
  !
- Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
+ Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q_norm(1)**2
  !
  allocate(Lo(BS_H_dim,W%n_freqs,IO_dim))
  call mem_est("Lo",(/BS_H_dim*W%n_freqs*IO_dim*2/))
- Lo=(0.,0.)
+ Lo=cZERO
  !
  call W_reset(W_shifted)
  call W_duplicate(W,W_shifted)
@@ -249,8 +249,8 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    if (.not.BSS_uses_DbGd) then
      !
-     QP_width=0.
-     QP_Z=(1.,0.)
+     QP_width=0._SP
+     QP_Z=cONE
      !
      if (allocated(BSS_eh_W)) QP_width=BSS_eh_W(i1)
      !
@@ -260,23 +260,23 @@ subroutine K_inversion(iq,W,E,k,q)
        !
        ! No Double Grid but GFs
        !=======================
-       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"r")
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"r","eh")
        !
        if (trim(BSE_mode)=='causal') then
-         call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ca")
+         call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ca","eh")
        else if (index(BSE_mode,'coupling')>0) then
-         call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ca")
+         call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ca","eh")
        endif
        !
      else
        !
        ! No Double Grid No GFs
        !=======================
-       Lo(i1,:,1)=QP_Z*BSS_eh_f(i1)/(W%p(:)-BSS_eh_E(i1)-(0.,1.)*QP_width)
+       Lo(i1,:,1)=QP_Z*BSS_eh_f(i1)/(W%p(:)-BSS_eh_E(i1)-cI*QP_width)
        if (trim(BSE_mode)=='causal') then
-         Lo(i1,:,2)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
+         Lo(i1,:,2)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-cI*QP_width)
        else if (index(BSE_mode,'coupling')>0) then
-         Lo(i1+BS_K_dim,:,1)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
+         Lo(i1+BS_K_dim,:,1)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-cI*QP_width)
        endif
        !
      endif
@@ -285,14 +285,14 @@ subroutine K_inversion(iq,W,E,k,q)
      !
      ! Energy Double Grid 
      !====================
-     call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"sr")
+     call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"r","eh")
      Lo(i1,:,1)=Lo(i1,:,1)*BSS_eh_f(i1)
      !
      if (trim(BSE_mode)=='causal') then
-       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"sa")
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"a","eh")
        Lo(i1,:,2)=Lo(i1,:,2)*BSS_eh_f(i1)
      else if (index(BSE_mode,'coupling')>0) then
-       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"a","eh")
        Lo(i1+BS_K_dim,:,1)=Lo(i1+BS_K_dim,:,2)*BSS_eh_f(i1)
      endif
      !
@@ -310,15 +310,15 @@ subroutine K_inversion(iq,W,E,k,q)
    !=======================================================================
    if (BSS_uses_DbGd) then
      forall(iw=1:W%n_freqs) W_shifted%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
-     call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"sr")
+     call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"r","eh")
      Lo(i1,:,1)=Lo(i1,:,1)*BSS_eh_f(i1)
      if (trim(BSE_mode)=='causal') then
        forall(iw=1:W%n_freqs) W_shifted%p(iw)=W%p(iw)+conjg(BS_mat_diagonal(i1))
-       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"a","eh")
        Lo(i1,:,2)=Lo(i1,:,2)*BSS_eh_f(i1)
      endif
      if (index(BSE_mode,'coupling')>0) then
-       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"a","eh")
        Lo(i1+BS_K_dim,:,1)=Lo(i1+BS_K_dim,:,2)*BSS_eh_f(i1)
      endif
    endif
@@ -333,7 +333,7 @@ subroutine K_inversion(iq,W,E,k,q)
  call PP_redux_wait(Lo(:,:,1))
  if (IO_dim==2) call PP_redux_wait(Lo(:,:,2))
  !
- X_epsilon(3,:)=(1.+X_epsilon(3,:))
+ X_epsilon(3,:)=(1._SP+X_epsilon(3,:))
  !
  X_epsilon=X_epsilon/real(ncpu,SP)
  !
@@ -488,7 +488,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call PP_redux_wait()
  !
- X_epsilon(2,:)=1.+X_epsilon(2,:)+X_drude_term(:)*Co
+ X_epsilon(2,:)=1._SP+X_epsilon(2,:)+X_drude_term(:)*Co
  X_epsilon(1,:)=W%p(:)
  !
  BSS_n_descs=BSS_n_descs+2
@@ -542,17 +542,17 @@ subroutine K_inversion(iq,W,E,k,q)
          !
          if (do_it_full) then
            !
-           inv_err(i3)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
+           inv_err(i3)=MATRIX_resolvant_via_exact_inversion(BS_H_dim,BSS_rhoq0,-Co,&
 &                                                           X_epsilon(2,i3),Lo(:,i3,1),BS_mat)
            !
            if (trim(BSE_mode)=='causal') then
-             tmp_err=MATRIX_resolvant_via_exact_inversion(BS_H_dim,conjg(BSS_rhoq0),-1.*Co,&
+             tmp_err=MATRIX_resolvant_via_exact_inversion(BS_H_dim,conjg(BSS_rhoq0),-Co,&
 &                                                         X_epsilon(4,i3),Lo(:,i3,2),conjg(BS_mat))
            endif
            !
          else
            !
-           inv_err(i3)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
+           inv_err(i3)=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,BSS_rhoq0,-Co,&
 &                                                                  X_epsilon(2,i3),Lo(:,i3,1))
            !
            if (trim(BSE_mode)=='causal') then
@@ -560,7 +560,7 @@ subroutine K_inversion(iq,W,E,k,q)
              ! Here instead of using conjg(BS_mat) I use conjg of
              ! everything else, the output included (see after the enddo)
              !
-             tmp_err=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,BSS_rhoq0,-1.*conjg(Co),&
+             tmp_err=MATRIX_resolvant_via_perturbative_inversion(BS_H_dim,BSS_rhoq0,-conjg(Co),&
 &                                                                X_epsilon(4,i3),conjg(Lo(:,i3,2)))
              !
            endif      

@@ -52,7 +52,7 @@ integer function io_QP_and_GF(what,qp,ID)
  if (what=="QP".or.what=="G") then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
  else
-   io_QP_and_GF=io_connect(desc=what,type=-2,ID=ID)
+   io_QP_and_GF=io_connect(desc=what,type=-3,ID=ID)
  endif
  if (io_QP_and_GF/=0) goto 1
  !
@@ -62,9 +62,7 @@ integer function io_QP_and_GF(what,qp,ID)
    ! used to apply QP corrections. In this case QP_DB_kind must be 
    ! present to be transferred in the energy type by mod_qp_ctl
    !
-#if defined _NETCDF_IO
    if (variable_is_found(ID,"QP_DB_kind")==1.or.write_is_on(ID)) then
-#endif
      call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
      call io_elemental(ID,DB_I0=QP_DB_kind_disk,I0=QP_DB_kind)
      if(io_mode(ID)==VERIFY) then
@@ -74,13 +72,11 @@ integer function io_QP_and_GF(what,qp,ID)
         endif
      endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-#if defined _NETCDF_IO
    else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then
      QP_DB_kind=0
      io_QP_and_GF=IO_INCOMPATIBLE_VAR
      return
    endif
-#endif
    !
  endif
  !

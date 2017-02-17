@@ -31,7 +31,7 @@ module mod_xc2y
  !
  implicit none
  !
- integer, parameter :: N_Abinit_XC = 28,N_PW_X = 10, N_PW_C = 13, N_PW_GX = 18, N_PW_GC = 13 
+ integer, parameter :: N_Abinit_XC = 28,N_PW_X = 11, N_PW_C = 13, N_PW_GX = 18, N_PW_GC = 13
  !
  !  Map for ABINIT/ETSF_IO
  !
@@ -68,7 +68,7 @@ module mod_xc2y
  ! Map for PWSCF (note that some of the acronims were used in past versions of pw.x 
  ! 
  character(len=6),parameter,dimension(N_PW_X) :: PW_X=&  
-& (/'NOX ', 'SLA ','LDA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK '/)
+& (/'NOX ', 'SLA ','LDA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK ', 'PZ  '/)
  character(len=6),parameter,dimension(N_PW_C) :: PW_C=&  
 & (/ 'NOC ', 'PZ  ','LDA ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
 &    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
@@ -80,7 +80,7 @@ module mod_xc2y
  ! 
  integer,parameter,dimension(N_PW_X) :: PWX2LIBXC=&
 & (/ NOXC, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR+XC_LDA_C_XALPHA, XC_NOT_AVAILABLE, &
-&    XC_NOT_AVAILABLE, NOXC, NOXC, XC_NOT_AVAILABLE,XC_NOT_AVAILABLE/)
+&    XC_NOT_AVAILABLE, NOXC, NOXC, XC_NOT_AVAILABLE,XC_NOT_AVAILABLE,XC_LDA_X*XC_FACTOR/)
  integer,parameter,dimension(N_PW_C) :: PWC2LIBXC=&
 & (/ NOXC, XC_LDA_C_PZ, XC_LDA_C_PZ, XC_LDA_C_VWN, XC_GGA_C_LYP, XC_LDA_C_PW,&
 &    XC_LDA_C_WIGNER, XC_LDA_C_HL, XC_LDA_C_OB_PZ, XC_LDA_C_OB_PW,XC_LDA_C_GL,&
@@ -126,6 +126,7 @@ module mod_xc2y
         if (matches(PW_GX(ii),pw_func)) XC_yamboID = PWGX2LIBXC(ii)*XC_FACTOR
        end do
        if (XC_ComponentsAreSeparate(XC_yamboID)) then
+         XC_yamboID_ = 0
          do ii=1,N_PW_GC
            if (matches(PW_GC(ii),pw_func)) XC_yamboID_ = PWGC2LIBXC(ii)
          end do
@@ -172,7 +173,7 @@ module mod_xc2y
      lcheck = (ID==XC_GGA_XC_HCTH_93).or.&
              &(ID==XC_HYB_GGA_XC_PBEH).or.&
              &(ID==XC_HYB_GGA_XC_B3LYP).or.&
-	     &(ID==XC_HYB_GGA_XC_HSE06)
+             &(ID==XC_HYB_GGA_XC_HSE06)
      XC_ComponentsAreSeparate=.not.lcheck
    end function XC_ComponentsAreSeparate
    !
@@ -187,7 +188,6 @@ module mod_xc2y
      CHARACTER (LEN=*), INTENT(IN) :: string1, string2
      LOGICAL                       :: matches
      INTEGER                       :: len1, len2, l  
-     !
      !
      len1 = LEN_TRIM( string1 )  
      len2 = LEN_TRIM( string2 )  

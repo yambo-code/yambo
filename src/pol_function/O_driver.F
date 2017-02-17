@@ -27,7 +27,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  ! Calculates dielectric function for a generic q vector.
  ! 
- use pars,          ONLY:pi,SP
+ use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc,set_real_printed_length
@@ -36,7 +36,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_fxc,Dipole_covariant,&
+ use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_fxc,use_covariant_approach,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_q_for_Xo
@@ -47,7 +47,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
- use parser_m,     ONLY:parser
  !
  implicit none
  type(levels)  :: Xen
@@ -64,8 +63,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  integer,external :: O_select_q_and_G
  !
  call section('*','Optics')
- !
- call parser('DipoleCov',Dipole_covariant)
  !
  ! Basical Checks
  !
@@ -96,11 +93,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    if (iq==1) call PARALLEL_WF_index(COMM=PAR_COM_q_for_Xo)
    if (iq> 1) call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
    !
-   if (WF_buffered_IO) then
-     !
-     call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
-     !
-   endif
+   if (WF_buffered_IO) call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
    !
    ! TDDFT setup
    !
@@ -134,7 +127,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    allocate(X_epsilon(8,wv%n_freqs))
    if (l_bs_fxc) then
      allocate(X_fxc(wv%n_freqs))
-     X_fxc=(0._SP,0._SP)
+     X_fxc=cZERO
    endif
    !
    ! X_mat allocation
@@ -202,7 +195,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! e Table
    ! 1:e0 2:e 3:eel0 4:eel 5:alpha0 6:alpha 
    !
-   X_epsilon=(0.,0.)
+   X_epsilon=cZERO
    !
    call X_os(X_mat,iq,Xen,Xk,wv,X)     
    !
@@ -217,7 +210,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    else
      call X_s(iq,X,wv,(/1,wv%n_freqs/))
      !
-     X_epsilon(2,:)=1./(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     X_epsilon(2,:)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
    endif
    !
    call of_open_close(eps_file_name,'oa')
@@ -270,9 +263,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
        !       =  (1 +eels    ) eps_2_alpha/4/pi  
        !
-       X_epsilon(5,:)=(1.+X_epsilon(3,:))/4./pi*eps_2_alpha
+       X_epsilon(5,:)=(1._SP+X_epsilon(3,:))/4._SP/pi*eps_2_alpha
        if(     l_rpa_IP) X_epsilon(6,:)=X_epsilon(5,:)
-       if(.not.l_rpa_IP) X_epsilon(6,:)=(1.+X_epsilon(4,:))/4./pi*eps_2_alpha 
+       if(.not.l_rpa_IP) X_epsilon(6,:)=(1._SP+X_epsilon(4,:))/4._SP/pi*eps_2_alpha 
        !
      endif
      !
@@ -324,7 +317,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  ! CLEAN
  !
- call X_alloc('DIP_q_dot_iR')
+ call X_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()

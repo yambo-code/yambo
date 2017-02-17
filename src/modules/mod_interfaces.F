@@ -98,10 +98,12 @@ module interfaces
      logical,         optional::RESET
    end subroutine
    !
-   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU)
+   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,NCPU)
+     use pars,           ONLY:SP
      character(*)          :: WHAT
      character(*),optional :: ENVIRONMENT
      integer,     optional :: LOADED,TOTAL,NCPU
+     real(SP),    optional :: LOADED_r,TOTAL_r
    end subroutine
    !
    subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
@@ -148,9 +150,9 @@ module interfaces
    end subroutine
    !
    subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
-     character(*), optional :: ENVIRONMENT
-     integer,      optional :: n_elements
-     character(*), optional :: ROLE(:)
+     character(*) :: ENVIRONMENT
+     integer      :: n_elements
+     character(*) :: ROLE(:)
    end subroutine
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
@@ -162,22 +164,6 @@ module interfaces
      logical,       optional::CONSECUTIVE
      logical,       optional::ORDERED
      logical,       optional::MASK(:)
-   end subroutine
-   !
-   subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
-     use pars,          ONLY:SP
-     use BS,            ONLY:Haydock_vector
-     integer               ::iter
-     type(Haydock_vector)  ::Vi(:),Vo(:)
-     real(SP),optional     ::iter_par
-     character(3),optional ::call_kind
-   end subroutine
-   !
-   subroutine K_dot_product(dot,V,W)
-     use pars,          ONLY:SP
-     use BS,            ONLY:Haydock_vector
-     complex(SP)           ::dot
-     type(Haydock_vector)  ::V(:),W(:)
    end subroutine
    !
  end interface

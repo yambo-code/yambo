@@ -27,7 +27,7 @@
 !
 subroutine Dipole_kb_pwscf_comp(ik,Xk,kbv)
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,cZERO
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
@@ -55,7 +55,7 @@ subroutine Dipole_kb_pwscf_comp(ik,Xk,kbv)
  real(SP)    :: KpG_cc(3),G_cc(3)
  real(SP)    :: KpG_norm,G_dot_Rat,sf
  !
- kbv=(0._SP,0._SP)
+ kbv=cZERO
  !
  do ic=1,wf_nc_k(ik)
    ig=wf_igk(ic,ik)

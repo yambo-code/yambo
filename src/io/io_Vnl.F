@@ -24,14 +24,14 @@
 integer function io_Vnl(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,Dipole_bands_ordered
+ use X_m,           ONLY:X_t
  use electrons,     ONLY:levels,n_sp_pol
  use pseudo,        ONLY:Vnl
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
-&                        read_is_on,write_is_on,io_header,io_fragmented,io_extension,&
-&                        io_fragment
+&                        read_is_on,write_is_on,io_header,io_extension,&
+&                        io_fragment,frag_WF
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  use com,           ONLY:warning
  use memory_m,      ONLY:mem_est
@@ -54,7 +54,7 @@ integer function io_Vnl(X,Xen,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_Vnl=io_header(ID,IMPOSE_SN=.true.)
+   io_Vnl=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    if (io_Vnl/=0) goto 1
    !
    sec_size=5
@@ -85,8 +85,6 @@ integer function io_Vnl(X,Xen,ID)
    endif
  endif
  !
- if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
- !
  ! On disk the size is Vnl(3,db_nb(2),db_nbm,nXkibz)
  !
  sec_size=3*db_nb(2)*db_nbm
@@ -108,7 +106,7 @@ integer function io_Vnl(X,Xen,ID)
      ! Fragmentation
      !
      io_extension(ID)='Vnl'
-     if (io_fragmented(ID)) call io_fragment(ID,i_fragment=i1)
+     call io_fragment(ID,i_fragment=i1)
      !
      do ixyz=1,3
        !

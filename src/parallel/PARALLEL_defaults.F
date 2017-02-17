@@ -23,7 +23,7 @@
 !
 subroutine PARALLEL_defaults(ENVIRONMENT)
  !
- use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,N_basis,&
+ use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
 &                        PARALLEL_CPU_role,ncpu,QP_range,n_bands,n_c_bands,n_v_bands,Q_range,&
 &                        EH_range,K_range,CPU_structure,i_PAR_structure
  use interfaces,    ONLY:PARALLEL_live_message
@@ -36,13 +36,18 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  !
  ! Work Space
  ! 
- integer :: N_fields,CPU_s(4),i_c,NC
+ integer :: N_fields,CPU_s(4),i_c,NC,N_basis,i1
  !
  if (ncpu==1) return
  !
  N_fields=0
  CPU_s   =1
  NC      =ncpu
+ !
+ N_basis=1
+ do i1=1,13
+   if (mod(NC,i1)==0) N_basis=i1
+ enddo
  !
  call DEFAULT_action("check")
  !

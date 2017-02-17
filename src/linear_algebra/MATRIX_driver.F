@@ -176,7 +176,7 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
    allocate(work(lwork))
    call LU_inversion(M_size,M,ipvt,work,lwork,ifail)
    !
-   if(ifail.ne.0) call report_diago_error('GETRF (SI)','failed')
+   if(ifail.ne.0) call report_diago_error('GETRI (SI)','failed')
    !
    deallocate(work,ipvt)
    return

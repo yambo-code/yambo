@@ -24,10 +24,12 @@
 subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  use pars,         ONLY:schlen
+ use R_lattice,    ONLY:nXkibz
+ use D_lattice,    ONLY:nsym
  use parallel_m,   ONLY:CPU_structure,n_CPU_str_max,PARALLEL_CPU_role,PARALLEL_CPU_used,&
 &                       PARALLEL_n_structures_active,ncpu,i_PAR_structure
- use stderr,       ONLY:string_split
- use com,          ONLY:error
+ use stderr,       ONLY:string_split,intc
+ use com,          ONLY:error,warning
  !
  implicit none
  !
@@ -36,7 +38,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  ! Work Space
  !
- integer          ::i_s,i_c,n_structures,n_eh,n_t
+ integer          ::i_s,i_c,n_structures,n_eh_grps,n_t_blks,n_k_cpus,MAX_n_blks
  logical          ::q_found,k_found
  character(schlen)::c_strings(10),r_strings(10),CPU_string_,ROLE_string_
  !
@@ -74,23 +76,34 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  call string_split(ROLE_string_,r_strings)
  !
  n_structures=0
- n_eh=1
- n_t=1
+ n_eh_grps=1
+ n_t_blks=1
+ n_k_cpus=1
  !
  do i_c=1,CPU_structure(i_PAR_structure)%N_chains
    !
    read(c_strings(i_c),'(i3)') CPU_structure(i_PAR_structure)%CPU(i_c)
    read(r_strings(i_c),'(a )') CPU_structure(i_PAR_structure)%ROLE(i_c)
-   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="eh") n_eh=CPU_structure(i_PAR_structure)%CPU(i_c)
-   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="t" ) n_t=CPU_structure(i_PAR_structure)%CPU(i_c)
-   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="k") k_found=.TRUE.
+   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="eh") n_eh_grps=CPU_structure(i_PAR_structure)%CPU(i_c)
+   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="t" ) n_t_blks=CPU_structure(i_PAR_structure)%CPU(i_c)
+   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="k") then
+     k_found=.TRUE.
+     n_k_cpus=CPU_structure(i_PAR_structure)%CPU(i_c)
+   endif
    if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="q") q_found=.TRUE.
    !
  enddo
  !
- call PARALLEL_clean_up_the_structure( n_structures )
+ MAX_n_blks=(nXkibz/n_k_cpus)*(n_eh_grps*nXkibz+1)/2
+ if (n_t_blks>MAX_n_blks) &
+&  call error(' n_t_CPU > n_blocks=M*(N+1)/2='//trim(intc(MAX_n_blks))//' with N=nkibz*n_eh_CPU and M=nkibz/n_k_CPU')
  !
- if (n_eh<n_t) call error('"eh" CPU`s cannot be smaller than "t" CPU`s.')
+ if (n_eh_grps>1 .and. nXkibz>1 .and. nsym>1 .and. n_k_cpus<nXkibz .and. n_t_blks<nXkibz) then
+   call warning(' n_eh_CPU > 1 in a system with symmetries. This is not efficient, in particular if you have many kpts.')
+   call warning(' It is suggested to first distribute on "k" and "t". Maximum value for both is: '//trim(intc(nXkibz)))
+ endif
+ !
+ call PARALLEL_clean_up_the_structure( n_structures )
  !
  if (ncpu==1) then
    CPU_structure(i_PAR_structure)%nCPU_diagonalization=1

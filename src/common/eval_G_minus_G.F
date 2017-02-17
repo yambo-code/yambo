@@ -37,6 +37,7 @@ integer function eval_G_minus_G(iG,iGo)
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
  !
  implicit none
+ !
  integer :: iG,iGo
  !
  ! Work Space
@@ -70,7 +71,16 @@ integer function eval_G_minus_G(iG,iGo)
  ! Find the shell corresponding to iG
  !
  do i1=1,n_g_shells
-   if (ng_in_shell(i1)==iG_) iG_shell=i1
+   if (ng_in_shell(i1)==iG_) then
+     iG_shell=i1
+     exit
+   endif
+   if (ng_in_shell(i1)> iG_) then
+     iG_shell=i1-1
+     iG_=ng_in_shell(iG_shell)
+     if (iGo==0) iGo_=iG_
+     exit
+   endif
  enddo
  !
  forall(i1=1:iG_) G_m_G(i1,1)=i1
@@ -80,9 +90,9 @@ integer function eval_G_minus_G(iG,iGo)
    do i2=iGo_,2,-1
      !
      v1=g_vec(i1,:)-g_vec(i2,:)
-     E_of_shell_G_m_G=iku_v_norm(v1)**2./2.
+     E_of_shell_G_m_G=iku_v_norm(v1)**2/2._SP
      !
-     if(E_of_shell_G_m_G/E_of_shell(n_g_shells)>(1+1.E-5)) then 
+     if(E_of_shell_G_m_G/E_of_shell(n_g_shells)>(1+1.E-5_SP)) then 
        iG_shell=iG_shell-1
        iG_=ng_in_shell(iG_shell)
        eval_G_minus_G=iG_

@@ -81,20 +81,20 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsR,bsR_kerr)
    if (write_is_on(ID)) V_disk(1,:)=real(bsE(:))
    if (write_is_on(ID)) V_disk(2,:)=aimag(bsE(:))
    call io_bulk(ID,R2=V_disk)
-   if (read_is_on(ID)) bsE(:)=V_disk(1,:)+(0._SP,1._SP)*V_disk(2,:)
+   if (read_is_on(ID)) bsE(:)=cmplx(V_disk(1,:),V_disk(2,:),SP)
    !
    call io_bulk(ID,'BS_Residuals',VAR_SZ=(/2,BS_H_dim/))
    if (write_is_on(ID)) V_disk(1,:)=real(bsR(:))
    if (write_is_on(ID)) V_disk(2,:)=aimag(bsR(:))
    call io_bulk(ID,R2=V_disk)
-   if (read_is_on(ID)) bsR(:)=V_disk(1,:)+(0._SP,1._SP)*V_disk(2,:)
+   if (read_is_on(ID)) bsR(:)=cmplx(V_disk(1,:),V_disk(2,:),SP)
    !
    if(present(bsR_kerr)) then
      call io_bulk(ID,'BS_KERR_Residuals',VAR_SZ=(/2,BS_H_dim/))
      if (write_is_on(ID)) V_disk(1,:)=real(bsR_kerr(:))
      if (write_is_on(ID)) V_disk(2,:)=aimag(bsR_kerr(:))
      call io_bulk(ID,R2=V_disk)
-     if (read_is_on(ID)) bsR_kerr(:)=V_disk(1,:)+(0._SP,1._SP)*V_disk(2,:)
+     if (read_is_on(ID)) bsR_kerr(:)=cmplx(V_disk(1,:),V_disk(2,:),SP)
    endif
    !
  endif
@@ -124,7 +124,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsR,bsR_kerr)
      !
      call io_bulk(ID,R2=V_disk,IPOS=(/1,1,i1/))
      !
-     if (read_is_on(ID)) BS_mat(:,i1)=V_disk(1,:)+(0._SP,1._SP)*V_disk(2,:)
+     if (read_is_on(ID)) BS_mat(:,i1)=cmplx(V_disk(1,:),V_disk(2,:),SP)
      !
    enddo
    !

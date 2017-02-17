@@ -23,10 +23,10 @@
 !
 module YPP
  !
- use pars,    ONLY:SP,DP
- use pars,    ONLY:lchlen
- use pars,    ONLY:schlen
+ use pars,    ONLY:SP,DP,lchlen,schlen
+ use units,   ONLY:HA2EV
  use QP_m,    ONLY:QP_t
+ !
  implicit none
  !
  ! BZ grids 
@@ -35,8 +35,10 @@ module YPP
  logical  :: l_k_grid
  logical  :: l_q_grid
  logical  :: l_shifted_grid
+ logical  :: l_random_grid
  logical  :: l_high_sym_pts
  integer  :: n_path_pts
+ integer  :: BZ_random_nkpts
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
@@ -146,11 +148,16 @@ module YPP
  !
  integer, parameter :: MAX_DbGd_DBs=20
  integer  :: n_DbGd_DBs
- integer  :: BZ_DbGd_nkpts
- logical  :: l_bzrim
+ integer  :: BZ_DbGd_nkpts_to_use
  logical  :: l_map_kpts
+ logical  :: l_map_WFs
  real(SP) :: Gamma_radius
  character(lchlen) :: DbGd_DB1_paths(MAX_DbGd_DBs,1)
+ !
+ ! Perturbative SOC
+ !
+ character(lchlen) :: perturbative_SOC_path
+ real(SP)          :: SOC_split=0.1/HA2EV
  !
  ! QP databases
  !

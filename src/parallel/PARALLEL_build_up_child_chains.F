@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,15 +27,17 @@ subroutine PARALLEL_build_up_child_chains(i_child,COMM_child,i_father)
  !
 #if defined _MPI
  !
- use parallel_m,    ONLY:MPI_comm,myid,mpi_comm_world
+ use parallel_m,    ONLY:MPI_comm,myid,mpi_comm_world,ncpu_chain,nchains_group,n_groups,ncpu
  !
  implicit none
  !
  type(MPI_comm) :: COMM_child
  integer        :: i_err,i_child,i_father,n_father,n_child
  !
- n_father=2**i_father
- n_child =2**(i_father-i_child)
+ n_father=ncpu/product(ncpu_chain(nchains_group(n_groups*2-1):i_father))
+ n_child =             ncpu_chain(i_child)
+ !
+ ! Warning, doing like that CPUs with the same my_chain are not countiguous
  !
  COMM_child%my_CHAIN=(myid/n_father)*(n_father/n_child)+mod(myid,n_father/n_child)
  !
@@ -43,7 +45,7 @@ subroutine PARALLEL_build_up_child_chains(i_child,COMM_child,i_father)
  call MPI_COMM_RANK(COMM_child%COMM,COMM_child%CPU_id,i_err)
  !
  COMM_child%n_CPU=n_child
- COMM_child%chain_order=i_child
+ COMM_child%chain_order=i_child-nchains_group(n_groups*2-1)+1
  !
 #endif
  !

@@ -32,12 +32,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use drivers
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
- use electrons,      ONLY:levels,E_reset
+ use electrons,      ONLY:levels,E_reset,n_spin
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel,V_real_time,V_parallel
+&                         switch_off_runlevel,V_real_time,V_parallel,V_qp
  use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu,myid
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
@@ -55,13 +55,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
-#if defined _SURF
- use ras_module,     ONLY:lras, lreels
-#endif
 #if defined _OPENMP
  use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
 #endif
- use interfaces,     ONLY:PARALLEL_structure
  !
  implicit none
  !
@@ -84,6 +80,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  integer, external :: io_Double_Grid
  !
+ !
 #if defined _ELPH 
  integer           :: io_ELPH_err
  integer, external :: io_ELPH
@@ -102,13 +99,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _ELPH 
  what_is_running='YAMBO_PH'
 #endif
-#if defined _SURF
- what_is_running='YAMBO_SURF'
-#endif
- !
- ! CPU structure
- !
- call PARALLEL_structure()
  !
  ! Global Logicals
  !
@@ -244,7 +234,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! E_rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_Double_Grid(en,k,io_ID) 
+ io_err=io_Double_Grid(en,k,io_ID)
+ !
  !
  ! xxvxc
  !
@@ -301,7 +292,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (nqibz>0) then
    !
-   do i1=1,4 ! Xx Xs Xp Xd
+   do i1=1,4 ! Xx Xs Xd Xp
      !
      X(i1)%iq=(/1,nqibz/)
      !
@@ -324,6 +315,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_BS_err=io_BS(1,Xbsk,io_ID)
+ !
+ ! When a PPA screen is used to build the kernel the %ppaE component of Xbsk must be overwritten.
+ ! Otherwise yambo will re-calculate the ppa interaction when the %ppaE is changed with respect to 
+ ! the default (notice by MP, July 2015).
+ !
+ if (io_X_err(4)>=0) Xbsk%ppaE=X(4)%ppaE
  !
  !
  ! ELPH 
@@ -380,7 +377,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn')
  !
  !FFT
  !
@@ -477,8 +474,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    !
    call init_QP_ctl_switch('X')
-   call initactivate(1,'DipoleCov ShiftedPath Qdirection QShiftOrder')
-   !
+   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Qdirection QShiftOrder')
    !
  endif
  !
@@ -506,16 +502,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call init_QP_ctl_switch('K')
    !
-   call initactivate(1,'ShiftedPath')
+   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
 #if defined _SC || defined _KERR
-   call initactivate(1,'Gauge')
-#endif
-#if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
    !
    call initactivate(1,'DrudeWBS Reflectivity')
-   call initactivate(1,'BoseCut ShiftedPath')
+   call initactivate(1,'BoseCut ShiftedPaths')
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
    !
@@ -547,7 +540,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_em1s) then
    call init_QP_ctl_switch('X')
-   call initactivate(1,'ShiftedPath')
+   call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','DmRnge','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
    call initactivate(1,'XTermKind'//'Xs')
@@ -558,7 +551,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call init_QP_ctl_switch('X')
-   call initactivate(1,'ShiftedPath')
+   call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
      call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                           'EhEngy','LongDr','PPAPnt'/))
@@ -576,7 +569,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_acfdt) then
    call init_QP_ctl_switch('X')
-   call initactivate(1,'ShiftedPath')
+   call initactivate(1,'ShiftedPaths')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
@@ -590,7 +583,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      call init_QP_ctl_switch('X')
      call init_QP_ctl_switch('G')
-     call initactivate(1,'BoseCut ShiftedPath')
+     call initactivate(1,'BoseCut ShiftedPaths')
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
@@ -620,11 +613,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                                     'DmRnge','CGrdSp',&
 &                                     'DrudeW','EhEngy','LongDr'/)) 
      endif
-   endif 
+   endif
    !
 #if defined  _ELPH 
-   !
-   call init_QP_ctl_switch('G')
    !
    if (l_elph_corr) then
      call initactivate(1,'DysSolver')
@@ -635,6 +626,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
+   !
 #endif
    !
  endif
@@ -653,28 +645,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Surface spectroscopy
  !
-#if defined _SURF
- if (lras.or.lreels) then
-    call X_activate('Xd',(/'BndsRn',&
-&                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&                 'DrudeW','EhEngy'/))
-    call initactivate(1,'FFTGvecs XfnQP_E'//&
-&     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
-&     ' q0x q0y'//&                                     ! Polarizations
-&     ' Cutoff CutZero CutStep')               ! Cut off fn
- endif
- if (lras) then
-    call initactivate(1,&
-&     ' LocLimit LocType')               ! Analyse
- endif
- if (lreels) then
-    call initactivate(1,&
-&     ' E0 Theta0 Thetap Phi DetAngle'//&               ! Kinematics
-&     ' LossForm ImpactFt'//&                        ! Model of loss function
-&     ' DetIntMd NumIntPt'//&                           ! Det. integration
-&     ' PenDepth GausConv')                    ! General flags
- endif
-#endif
  !
  ! Are we editing the input file ?
  !
@@ -727,7 +697,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    endif
    !
-   call init_QP(.TRUE.,.TRUE.)
+   call init_QP(.TRUE.,infile_verbosity==V_qp)
    !
    ! I use it to propose the value in the input file ...
    !
@@ -843,10 +813,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_cohsex=runlevel_is_on('cohsex')
        !
        ! 
-#if defined  _SURF
-       lreels=runlevel_is_on('reels')
-       lras=runlevel_is_on('ras')
-#endif
 #if defined  _ELPH  
        if (.not.CLOSE_Gs) then
          !
@@ -914,11 +880,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
-#if defined _SURF
-     X(3)%iq = 1  ! 2 components
-     X(3)%ordering = 'c'
-     Xw(3)%n_freqs = 101 
-#endif 
 #if defined  _ELPH 
      if (.not.l_elel_corr.and..not.l_elph_corr) l_elel_corr=.true.
      elph_nDBs_used=elph_nDBs
@@ -1243,13 +1204,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Surface spectroscopy
          !
-#if defined _SURF
-         if ( trim(rstr_piece(i1)) == 'sursp' )  then
-           if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
-           if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
-           if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
-         endif
-#endif
          !
          ! Sc / NEGF
          !

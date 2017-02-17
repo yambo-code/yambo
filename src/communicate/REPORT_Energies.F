@@ -37,7 +37,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
  type(bz_samp) :: k,Xk
  integer       :: n_bands_,k_range(2)
  real(SP)      :: E(n_bands_,k%nibz,n_sp_pol)
- real(SP)      :: k_cc(3)
+ real(SP)      :: k_cc(3),k_al(3)
  logical       :: header
  character(*)  :: what
  !
@@ -52,14 +52,15 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
  !
  do ik=k_range(1),k_range(2)
    !
-   call c2a(v_in=k%pt(ik,:),v_out=k_cc,mode='ki2a')
+   call c2a(v_in=k%pt(ik,:),v_out=k_al,mode='ki2a')
+   call c2a(v_in=k%pt(ik,:),v_out=k_cc,mode='ki2c')
    ! 
    dumb_ch1='K ['//trim(intc(ik))//'] :'//trim(real2ch(k_cc(1)))//' '//&
 &          trim(real2ch(k_cc(2)))//' '//trim(real2ch(k_cc(3)))//&
-&          ' (rlu) * Comp.s '//trim(intc(wf_nc_k(ik)))
+&          ' ( cc) * Comp.s '//trim(intc(wf_nc_k(ik)))
    dumb_ch2='       '//trim(real2ch(k%pt(ik,1)))//' '//&
 &          trim(real2ch(k%pt(ik,2)))//' '//trim(real2ch(k%pt(ik,3)))//&
-&          ' (iku) '
+&          ' (rlu) '
    if(ik>  9) dumb_ch2=' '//trim(dumb_ch2)
    if(ik> 99) dumb_ch2=' '//trim(dumb_ch2)
    if(ik>999) dumb_ch2=' '//trim(dumb_ch2)

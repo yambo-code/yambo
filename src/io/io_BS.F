@@ -30,9 +30,8 @@ integer function io_BS(iq,X,ID)
  use parallel_m,    ONLY:myid
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded,&
 &                        BSS_description,BSS_n_descs,variables_BS
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_elemental,io_bulk,&
-&                        read_is_on,write_is_on,io_header,io_mode,VERIFY,io_fragmented,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
+&                        read_is_on,write_is_on,io_header,io_mode,VERIFY,&
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,RD_CL,io_action,RD_CL_IF_END
  implicit none
  type(X_t):: X 
@@ -45,7 +44,7 @@ integer function io_BS(iq,X,ID)
  character(lchlen)   ::local_description(100)
  real(SP),allocatable::BS_mat_disk(:,:,:)
  !
- if (.not.io_BS_K) then
+ if (.not.io_BS_K.and.maxval(io_sec(ID,:))>1) then
    io_BS=IO_NOT_ALLOWED
    call io_disconnect(ID,FORCE=.TRUE.)
    return
@@ -56,17 +55,14 @@ integer function io_BS(iq,X,ID)
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_BS/=0) goto 1
  !
- ! The fragmented is needed here as it is used to find the (eventual) restart point.
- ! --------------
- io_fragmented(ID)=.true.
- !
  if (any((/io_sec(ID,:)==1/))) then
    !
    if (io_mode(ID)==VERIFY.or.write_is_on(ID)) then
      io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
-&                    PARALLEL_STRUCTURE="Response_T_space",CUTOFF=.true.)
+&                    PARALLEL_STRUCTURE="Response_T_space",CUTOFF=.true.,FRAG=frag_BS_K)
    else
-     io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.)
+     io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,&
+&                       XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)
    endif
    !
    if (io_BS/=0) then

@@ -280,7 +280,7 @@ integer function ELPH_databases(k,E,q)
    use D_lattice,      ONLY:nsym,sop_inv,alat,n_atoms_species
    use R_lattice,      ONLY:nqibz
    use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
-&                           io_netcdf_support,io_disconnect,io_file
+&                           io_disconnect,io_file
    use ELPH,           ONLY:ph_modes,elph_nb,E_k_plus_q,&
 &                           ph_freqs_sq,elph_gkkp,elph_DW,pol_vector
    use YPP,            ONLY:elph_dbs_path
@@ -315,8 +315,6 @@ integer function ELPH_databases(k,E,q)
    ELPH_databases_io=-1
    !
    call io_control(ACTION=OP_RD,ID=ID)
-   !
-   io_netcdf_support(ID)=.FALSE.
    !
    write (db_name,'(a,i6.6)') 's.dbph_',iabs(idb_)
    io_err=io_connect(desc=trim(elph_dbs_path)//"/"//trim(db_name),type=-2,ID=ID)
@@ -604,7 +602,7 @@ integer function ELPH_databases(k,E,q)
    deallocate(ph_freqs_sq_disk,gkkp_disk,pol_vec)
    !
 1  call io_control(ACTION=RD_CL,ID=ID)
-   call io_disconnect(ID)
+   call io_disconnect(ID,FORCE=.TRUE.)
    !
    end function
    !

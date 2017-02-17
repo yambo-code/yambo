@@ -33,10 +33,16 @@ module X_m
  real(SP)                 :: eps_2_alpha
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
+ logical                  :: l_drude
  !
  ! Main Gauge
  !
  character(schlen)        :: global_gauge
+ !
+ ! Velocity gauge specific variables
+ !
+ logical                  :: skip_cond_sum_rule
+ complex(SP)              :: A_drude(2)
  !
  ! Large Q-vector support 
  !
@@ -46,19 +52,26 @@ module X_m
  ! Warning about non-local commutator
  !
  logical                  :: Vnl_commutator_warning
- logical                  :: l_rotate_dipoles
+ !
+ ! Logical used to decid how to use the double grid in X_os
+ ! and in particular in X_bare_Double_Grid_GreenF
+ !
+ logical                  :: integrating_over_q
  !
  ! Dipole M.E.
  !
- logical                  :: Dipole_bands_ordered
- logical                  :: Dipole_covariant
- logical                  :: Dipole_uses_shifted_grids
+ character(schlen)        :: Dipole_approach
+ logical                  :: use_covariant_approach
+ logical                  :: use_shifted_grids_approach
+ logical                  :: use_g_space_approach
+ logical                  :: use_real_space_approach
+ logical                  :: force_v_g_space_approach
+ integer                  :: num_shifted_grids
  real(SP)                 :: Dipole_Energy_treshold
- complex(SP), allocatable :: DIP_q_dot_iR(:,:,:,:)
+ complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
- complex(SP), allocatable :: DIP_cov(:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
@@ -80,7 +93,6 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
- logical :: use_X_Drude
  real(SP):: X_en_comp
  logical :: X_terminator
  !
@@ -101,6 +113,9 @@ module X_m
    integer    :: ng_db
    integer    :: iq(2)
    integer    :: ib(2)
+   integer    :: ib_lim(2)
+   integer    :: db_ib(2)
+   integer    :: db_ib_lim(2)
    integer    :: ngostnts
    real(SP)   :: ehe(2)
    real(SP)   :: q0(3)
@@ -141,31 +156,27 @@ module X_m
        case('X')
          if (allocated(X_mat)) return
          allocate(X_mat(d(1),d(2),d(3)),stat=err)
-         call mem_est(what,(/product(d)/),errors=(/err/))
+         call mem_est(what,(/size(X_mat)/),errors=(/err/))
        case('DIP_iR')
          if (allocated(DIP_iR)) return
-         allocate(DIP_iR(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
+         call mem_est(what,(/size(dip_iR)/),errors=(/err/))
        case('DIP_P')
          if (allocated(DIP_P)) return
-         allocate(DIP_P(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
-       case('DIP_cov')
-         if (allocated(DIP_cov)) return
-         allocate(DIP_cov(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
+         call mem_est(what,(/size(dip_P)/),errors=(/err/))
        case('DIP_S')
          if (allocated(DIP_S)) return
          allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
-       case('DIP_q_dot_iR')
-         if (allocated(DIP_q_dot_iR)) return
-         allocate(DIP_q_dot_iR(d(1),d(2),d(3),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         call mem_est(what,(/size(dip_S)/),errors=(/err/))
+       case('DIP_projected')
+         if (allocated(DIP_projected)) return
+         allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
+         call mem_est(what,(/size(DIP_projected)/),errors=(/err/))
        case('P_square')
          if (allocated(P_square)) return
-         allocate(P_square(d(1),d(2),d(3),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         allocate(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
+         call mem_est(what,(/size(P_square)/),errors=(/err/))
        end select
      else
        select case(what)
@@ -189,12 +200,9 @@ module X_m
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
          deallocate(DIP_S)
-       case('DIP_cov')
-         if (.not.allocated(DIP_cov)) return
-         deallocate(DIP_cov)
-       case('DIP_q_dot_iR')
-         if (.not.allocated(DIP_q_dot_iR)) return
-         deallocate(DIP_q_dot_iR)
+       case('DIP_projected')
+         if (.not.allocated(DIP_projected)) return
+         deallocate(DIP_projected)
        case('P_square')
          if (.not.allocated(P_square)) return
          deallocate(P_square)
@@ -208,7 +216,10 @@ module X_m
      Xo%ng=Xi%ng
      Xo%ng_db=Xi%ng_db
      Xo%iq=Xi%iq
-     Xo%ib=Xi%ib
+     Xo%ib    =Xi%ib
+     Xo%ib_lim=Xi%ib_lim
+     Xo%db_ib    =Xi%db_ib
+     Xo%db_ib_lim=Xi%db_ib_lim
      Xo%ngostnts=Xi%ngostnts
      Xo%ordering=Xi%ordering
      Xo%Vnl_included=Xi%Vnl_included
@@ -221,20 +232,21 @@ module X_m
    end subroutine
    !
    subroutine X_reset(X,type)
+     use pars,  ONLY:czero
      integer, optional :: type
      type(X_t)::X
      X%ng=1
-     X%ng_db=0 
+     X%ng_db=0
      X%iq=(/1,-1/)
      X%ngostnts=0
      X%whoami=0
      X%Vnl_included=.false.
      if (present(type)) X%whoami=type
-     X%ehe=(/-1.,-1./)/HA2EV
-     X%q0=(/1.,0.,0./)
-     X%Wd=cmplx(0.,0.,SP)
-     X%cg_percentual=100.
-     X%ppaE=1.
+     X%ehe=(/-1._SP,-1._SP/)/HA2EV
+     X%q0=(/1._SP,0._SP,0._SP/)
+     X%Wd=cZERO
+     X%cg_percentual=100._SP
+     X%ppaE=1._SP
      X%ordering="t"       
      X%f_xc="none"       
    end subroutine

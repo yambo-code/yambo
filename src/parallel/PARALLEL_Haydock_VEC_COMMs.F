@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG
+! Authors (see AUTHORS file for details): MG, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,110 +25,81 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  !
  ! Set up the mask and communicators for the Haydock part.  
  !
- use BS,          ONLY:BS_nT_grps,n_BS_blks,BS_blk,&
-&                      Haydock_parallel_mask,Haydock_parallel_group_comm,&
-&                      Haydock_parallel_col_comm    
-#if defined _MPI
- use parallel_m,  ONLY:myid,mpi_comm_world,PAR_IND_T_groups
-#endif
+ use BS,          ONLY:BS_nT_grps,n_BS_blks,BS_blk
+ use parallel_m,  ONLY:myid,mpi_comm_world,PAR_IND_T_groups,PAR_IND_T_Haydock,&
+&                      PAR_COM_T_Haydock,ncpu
+ !
  implicit none
+ !
  character(*),       intent(in) :: what     
  !
  ! Work Space
  !
- integer :: i_b,iT_k,iT_p,i_g,i_err,iloc(1)
- integer :: local_color, local_key, local_undefined
+ integer :: i_g,i_err,i_b,iT_grp_k,iT_grp_p
+ integer :: local_key
  !
  select case (what)
    case('assign')
      !
-     if (.not.allocated(Haydock_parallel_mask)) &
-&         allocate(Haydock_parallel_mask(BS_nT_grps))
+#if defined _MPI
      !
-     ! This mask tells which vectors have to be stored on each processor
+     !allocate(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
      !
-     Haydock_parallel_mask = .false.
-     do i_b=1,n_BS_blks
-       iT_k = BS_blk(i_b)%iT_k
-       iT_p = BS_blk(i_b)%iT_p
-       if (.not.Haydock_parallel_mask(iT_k)) Haydock_parallel_mask(iT_k)=.true.
-       if (.not.Haydock_parallel_mask(iT_p)) Haydock_parallel_mask(iT_p)=.true.
-     end do
+     !PAR_IND_T_Haydock%element_1D = .false.
+     !do i_b=1,n_BS_blks
+     !  iT_grp_k = BS_blk(i_b)%iT_k
+     !  iT_grp_p = BS_blk(i_b)%iT_p
+     !  PAR_IND_T_Haydock%element_1D(iT_grp_k)=.true.
+     !  PAR_IND_T_Haydock%element_1D(iT_grp_p)=.true.
+     !end do
      !
      ! Communicators along each groups (this will be row of the _full_ matrix)
      ! Needed in distributed M|V> and <V|W> (redux) and |Vn> initialization (bcast)
+     ! Notice that here I need one different communicator for each group becasue
+     ! the distribution of the groups is derived from the distribution of the matrix
+     ! elements
      !
-#if defined _MPI
-     if (.not.allocated( Haydock_parallel_group_comm)) &
-          &allocate( Haydock_parallel_group_comm(BS_nT_grps))
-     if (.not.allocated(Haydock_parallel_col_comm)) &
-          &allocate(Haydock_parallel_col_comm(BS_nT_grps))
+     allocate( PAR_COM_T_Haydock(BS_nT_grps))
+     PAR_COM_T_Haydock(:)%n_CPU=0
+     PAR_COM_T_Haydock(:)%chain_order=0
      !
-     local_undefined = BS_nT_grps*(1 + myid) + 1
      do i_g=1,BS_nT_grps
-       local_key = 1
-       if (PAR_IND_T_groups%element_1D(i_g)) local_key = 0
-       if (Haydock_parallel_mask(i_g)) then
-         local_color = i_g
+       !
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) then
+         local_key=-1
+         PAR_COM_T_Haydock(i_g)%my_chain=BS_nT_grps+1
        else
-         local_color = local_undefined
-         local_undefined = local_undefined + 1  
+         !
+         !local_key=myid
+         local_key = 1
+         if (PAR_IND_T_groups%element_1D(i_g)) local_key = 0
+         !
+         PAR_COM_T_Haydock(i_g)%n_CPU=PAR_COM_T_Haydock(i_g)%n_CPU+1
+         PAR_COM_T_Haydock(i_g)%my_chain = i_g
+         !
        endif
        !
-#if defined _MPI
-       call MPI_COMM_SPLIT(mpi_comm_world,local_color,local_key,Haydock_parallel_group_comm(i_g),i_err)
-#endif
+       call MPI_COMM_SPLIT(mpi_comm_world,PAR_COM_T_Haydock(i_g)%my_chain,local_key,PAR_COM_T_Haydock(i_g)%COMM,i_err)
+       call MPI_COMM_RANK(PAR_COM_T_Haydock(i_g)%COMM,PAR_COM_T_Haydock(i_g)%CPU_id,i_err)
        !
-     end do
+     enddo
      !
-     ! Communicators along each column (this are the column of the _stored_ matrix, with i_Tk<=i_Tp)
-     ! This structure is needed for broadcasting in the distributed dot_product. 
+#else
      !
-     do i_g=1,BS_nT_grps 
-       if (Haydock_parallel_mask(i_g)) then
-         if (any(BS_blk(:)%iT_p==i_g)) then
-           iloc=minloc(BS_blk(:)%iT_p,BS_blk(:)%iT_p==i_g) 
-           local_color = i_g
-           local_key = BS_blk(iloc(1))%iT_k
-         else
-           local_color = local_undefined
-           local_key   = 0 
-           local_undefined = local_undefined + 1  
-         endif
-       else
-         local_color = local_undefined
-         local_key   = 0
-         local_undefined = local_undefined + 1
-       endif
-       !
-#if defined _MPI
-       call MPI_COMM_SPLIT(mpi_comm_world,local_color,local_key,Haydock_parallel_col_comm(i_g),i_err)
-#endif
-       !
-     end do
+     return
+     !
 #endif
      !
      case('reset')
-       if (allocated(Haydock_parallel_mask)) deallocate(Haydock_parallel_mask)
-#if defined _MPI
-       if (allocated(Haydock_parallel_group_comm)) then
        !
 #if defined _MPI
-         call MPI_Comm_free(Haydock_parallel_group_comm)
+       do i_g=1,BS_nT_grps
+         call MPI_Comm_free(PAR_COM_T_Haydock(i_g)%COMM)
+       enddo
+       deallocate(PAR_COM_T_Haydock)
 #endif
-         !
-         deallocate(Haydock_parallel_group_comm)
-       end if
-       !
-       if (allocated(Haydock_parallel_col_comm)) then
-         !  
-#if defined _MPI
-         call MPI_Comm_free(Haydock_parallel_col_comm)
-#endif
-         !
-         deallocate(Haydock_parallel_col_comm)
-       end if
-#endif
+       ! This is allocated in K_Transitions setup
+       deallocate(PAR_IND_T_Haydock%element_1D)
        !
    end select
    !

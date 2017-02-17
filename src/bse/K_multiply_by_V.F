@@ -36,18 +36,16 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use com,            ONLY:error
- use parallel_m,     ONLY:PP_redux_wait
- use BS,             ONLY:BS_nT_grps,Haydock_vector, &
-&                         BSS_uses_DbGd,BS_blk,n_BS_blks, BS_T_grp,&
-&                         Haydock_parallel_mask,Haydock_parallel_group_comm
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_Haydock,PAR_COM_T_Haydock
+ use BS,             ONLY:BS_nT_grps,Haydock_vector,BSS_uses_DbGd,BS_blk,n_BS_blks,BS_T_grp
  use wrapper,        ONLY:M_by_V
  !
  implicit none
  !
  integer                ::iter
- type(Haydock_vector)   ::Vi(:),Vo(:)
- real(SP),optional      ::iter_par
- character(3) ,optional ::call_kind
+ type(Haydock_vector)   ::Vi(BS_nT_grps),Vo(BS_nT_grps)
+ integer                ::iter_par
+ character(3)           ::call_kind
  !
  ! Work Space
  !
@@ -65,10 +63,9 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  if (BSS_uses_DbGd)  call error('K_multiply_by_V: BSS with Double Grid temporary disabled')
  if( (.not.l_inv) .and. (.not.l_Hay) ) call error('K_multiply_by_V: not a valid call.')
  !
- alpha=cONE
- if (present(iter_par)) alpha = iter_par*cONE 
+ alpha=real(iter_par,SP)*cONE
  !
- forall(i_g=1:BS_nT_grps,Haydock_parallel_mask(i_g)) Vo(i_g)%fragment = cZERO
+ forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !
  do i_B=1,n_BS_blks
    !
@@ -105,9 +102,9 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  !
 #if defined _MPI
  do i_g=1,BS_nT_grps
-   if (.not.Haydock_parallel_mask(i_g)) cycle 
-   call PP_redux_wait(Vo(i_g)%fragment,COMM=Haydock_parallel_group_comm(i_g))
- end do
+   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+   call PP_redux_wait(Vo(i_g)%fragment,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+ enddo
 #endif
- !  
+ !
 end subroutine

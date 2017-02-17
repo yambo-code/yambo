@@ -23,10 +23,10 @@
 !
 subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_operation)
  !
- use parallel_m,    ONLY:MPI_comm,&
+ use parallel_m,    ONLY:MPI_comm,MAX_N_OF_CHAINS,&
 &                        PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization,&
-&                        INTER_CHAIN,INTRA_CHAIN,ncpu,myid,mpi_comm_world,&
-&                        COMM_copy,n_chains,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,comm_default_value
+&                        INTER_CHAIN,INTRA_CHAIN,ncpu,myid,mpi_comm_world,ncpu_chain,&
+&                        COMM_copy,nchains_group,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,comm_default_value
  !
  implicit none
  !
@@ -37,7 +37,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
  !
  ! Work Space
  !
- integer :: i_lin_algebra_chain,i_father_chain,N_cpu_lin_algebra
+ integer :: i_lin_algebra_chain,i_chain,i_father_chain,N_cpu_lin_algebra
  !
  if (WHAT=="INV")   N_cpu_lin_algebra=PARALLEL_cpu_mat_inversion
  if (WHAT=="DIAGO") N_cpu_lin_algebra=PARALLEL_cpu_mat_diagonalization
@@ -45,9 +45,14 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
  i_father_chain=0
  i_lin_algebra_chain=0
  !
- i_lin_algebra_chain=log(real(ncpu)/real(N_cpu_lin_algebra))/log(2.)
+ ! For the moment I assume that here ncpu_lin_alg is always equal to one of the roles present in the input
+ do i_chain=1,MAX_N_OF_CHAINS
+   if(N_cpu_lin_algebra/=ncpu_chain(i_chain)) cycle
+   i_lin_algebra_chain=i_chain
+   exit
+ enddo
  !
- if (i_lin_algebra_chain==n_chains) then ! This means LK (serial). N_cpu_lin_algebra=1
+ if (N_cpu_lin_algebra==1) then         ! This means LK (serial)
    !
    COMM_operation%COMM  =comm_default_value
    COMM_operation%CPU_id=0
@@ -57,7 +62,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
    COMM_index%CPU_id=myid
    COMM_index%n_CPU =ncpu
    !
- else if (i_lin_algebra_chain==0) then ! This means SLK using all WORLD. N_cpu_lin_algebra=ncpu
+ else if (N_cpu_lin_algebra==ncpu) then ! This means SLK using all WORLD
    !
    COMM_operation%COMM  =mpi_comm_world
    COMM_operation%CPU_id=myid
@@ -77,7 +82,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
  ! Up to today I could not still use SLK with subgroups of CPU. So I switch SLK off
  ! when Q's are distributed.
  !
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum".and.PAR_COM_Q_INDEX%n_CPU/=1) then
+ if ((ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space").and.PAR_COM_Q_INDEX%n_CPU/=1) then
    !
    COMM_operation%COMM  =comm_default_value
    COMM_operation%CPU_id=0

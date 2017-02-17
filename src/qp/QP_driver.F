@@ -23,7 +23,7 @@
 !
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
- use pars,          ONLY:SP,IP,pi
+ use pars,          ONLY:SP,IP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
@@ -235,7 +235,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
          allocate(QP_G_zoom_er(QP_n_states,2))
          call mem_est("QP_G_zoom_er",(/size(QP_G_zoom_er)/),(/SP/))
        else
-         QP_G_Zoom_treshold=0.
+         QP_G_Zoom_treshold=0._SP
        endif
        call QP_Green_Function(qp,en,0) 
        if (.not.use_GreenF_Zoom) then
@@ -245,7 +245,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        endif
        !
      else
-       QP_G_Zoom_treshold=0.
+       QP_G_Zoom_treshold=0._SP
      endif
      !
    endif
@@ -305,7 +305,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
-   qp%Z=(1._SP,0._SP)
+   qp%Z=cONE
    !
    call QP_report_and_write(k,qp,en,-1)
    call local_free()
@@ -330,7 +330,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &        (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,QP_n_states*(3+n_sp_pol-1)/),&
 &        (/2*SP,       2*SP,       SP,         SP,           IP/))
      qp%table=QP_table
-     qp%E=(0._SP,0._SP)
+     qp%E=cZERO
      qp%k=0._SP
      !
      ! Sc energy steps. 2/3 If Newton/Secant. QP_Sc_steps 

@@ -28,6 +28,7 @@ subroutine section(mode,name)
  !      = -     : decrease level
  !      = p     : increase level only in this section
  !      = #     : increase level #
+ !      = r     : reset to zero level end exit
  !
  use pars,       ONLY:lchlen,schlen,SP,DP
  use it_m,       ONLY:ofiles_append
@@ -55,6 +56,11 @@ subroutine section(mode,name)
  ! Final Timing Strings
  !
  character(schlen):: average_time,min_time,max_time
+ !
+ if (mode=='r') then
+   depth=0
+   return
+ endif
  !
  call PP_redux_wait()
  !

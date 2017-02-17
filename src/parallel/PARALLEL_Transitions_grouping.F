@@ -24,7 +24,7 @@
 subroutine PARALLEL_Transitions_grouping(Xk)
  !
  use pars,          ONLY:IP,SP
- use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_nT_grps_at_k,BS_T_grp_1st_el
+ use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_T_grp_1st_el
  use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_BS_T_grps_index,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -38,7 +38,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! Work Space
  !
  logical              :: l_check
- integer              :: i_k,i_t,n_GRP,i_g,it_ref,i_counter
+ integer              :: i_k,i_t_at_k,n_GRP,i_Tgrp,it_ref,i_counter
  integer, allocatable :: GRP_data(:)
  integer, allocatable :: GRP_index(:)
  !
@@ -47,12 +47,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! In this subroutine I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
  ! Once the group of transitions are build-up the goal is to map them in the total world of transitions groups.
  !
- ! Each k is diveded in BS_nT_grps_at_k(k) groups of Transitions.
- !
- allocate(BS_nT_grps_at_k(nXkibz))
- call mem_est("BS_nT_grps_at_k",(/nXkibz/),(/IP/))
- !
- n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
+ n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU
  !
  allocate(BS_T_grp_1st_el(n_GRP),GRP_data(n_GRP),GRP_index(n_GRP))
  call mem_est("BS_T_grp_1st_el",(/n_GRP/),(/IP/))
@@ -61,7 +56,6 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! This is done to define properly the BS_T_grp_1st_el array
  !
  BS_T_grp_1st_el=0
- BS_nT_grps_at_k=0
  PAR_BS_nT_col_grps =0
  i_counter=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
  !
@@ -69,19 +63,18 @@ subroutine PARALLEL_Transitions_grouping(Xk)
    ! 
    if (.not.PAR_IND_Kk_ibz%element_1D(i_k) ) cycle
    !
-   do i_t=1,BS_nT_at_k(i_k)
+   do i_t_at_k=1,BS_nT_at_k(i_k)
      !
-     if (.not.PAR_IND_eh(i_k)%element_1D(i_t)) cycle
+     if (.not.PAR_IND_eh(i_k)%element_1D(i_t_at_k)) cycle
      !
-     if ( i_t==1 ) l_check= .false.
-     if ( i_t> 1 ) l_check= PAR_IND_eh(i_k)%element_1D(i_t-1)
+     if ( i_t_at_k==1 ) l_check= .false.
+     if ( i_t_at_k> 1 ) l_check= PAR_IND_eh(i_k)%element_1D(i_t_at_k-1)
      !
      if ( l_check ) cycle
      !
-     BS_nT_grps_at_k(i_k)=BS_nT_grps_at_k(i_k)+1
      PAR_BS_nT_col_grps = PAR_BS_nT_col_grps +1
      !
-     BS_T_grp_1st_el(i_counter)=i_t+sum(BS_nT_at_k(:i_k-1))
+     BS_T_grp_1st_el(i_counter)=i_t_at_k+sum(BS_nT_at_k(:i_k-1))
      !
      i_counter=i_counter+PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
      !
@@ -100,10 +93,10 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  BS_nT_grps     =0
  BS_T_grp_1st_el=0
  !
- do i_t=1,n_GRP
-   if (GRP_data(i_t)>0.) then
+ do i_Tgrp=1,n_GRP
+   if (GRP_data(i_Tgrp)>0._SP) then
      BS_nT_grps=BS_nT_grps+1
-     BS_T_grp_1st_el(BS_nT_grps)=GRP_data(i_t)
+     BS_T_grp_1st_el(BS_nT_grps)=GRP_data(i_Tgrp)
    endif
  enddo
  !
@@ -122,25 +115,29 @@ subroutine PARALLEL_Transitions_grouping(Xk)
    !
    if (.not.PAR_IND_Kk_ibz%element_1D(i_k)) cycle
    !
-   do i_t=1,BS_nT_at_k(i_k)
+   do i_t_at_k=1,BS_nT_at_k(i_k)
      !
-     if (.not.PAR_IND_eh(i_k)%element_1D(i_t)) cycle
+     if (.not.PAR_IND_eh(i_k)%element_1D(i_t_at_k)) cycle
      !
-     if ( i_t==1 ) l_check= .false.
-     if ( i_t> 1 ) l_check= PAR_IND_eh(i_k)%element_1D(i_t-1)
+     if ( i_t_at_k==1 ) l_check= .false.
+     if ( i_t_at_k> 1 ) l_check= PAR_IND_eh(i_k)%element_1D(i_t_at_k-1)
      !
      if ( l_check ) cycle
      !
      PAR_BS_nT_col_grps = PAR_BS_nT_col_grps + 1
      !
-     it_ref=i_t+sum(BS_nT_at_k(:i_k-1))
+     it_ref=i_t_at_k+sum(BS_nT_at_k(:i_k-1))
      !
-     do i_g=1,BS_nT_grps
-       if (BS_T_grp_1st_el(i_g)==it_ref) then
-         PAR_IND_T_groups%element_1D(i_g)=.true.
+     do i_Tgrp=1,BS_nT_grps
+       if (BS_T_grp_1st_el(i_Tgrp)==it_ref) then
+         PAR_IND_T_groups%element_1D(i_Tgrp)=.true.
          PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)=&
 &                                         PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)+1
-         PAR_BS_T_grps_index(i_g)=PAR_BS_nT_col_grps
+         !
+         ! Warning: this index is modified by the sorting previously done.
+         !          Should be probably defined via the GRP_index or similar
+         !          However it is not presently used in the code.
+         PAR_BS_T_grps_index(i_Tgrp)=PAR_BS_nT_col_grps
        endif
      enddo
      !

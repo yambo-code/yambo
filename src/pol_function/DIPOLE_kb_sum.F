@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,
 !   Francesco Sottile, Stefan Albrecht, Giovanni Onida,
@@ -25,9 +25,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv,pp_kind)
+subroutine Dipole_kb_sum(icfft,ivfft,rho,kbv,pp_kind)
  !
- use pars,          ONLY:SP,DP
+ use pars,          ONLY:SP,DP,cZERO
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp,V_by_V_plus_V_omp
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
@@ -44,20 +44,21 @@ subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv,pp_kind)
  complex(SP) :: Cv(n_spinor),Cc(n_spinor),drho(3),&
 &               Kc(wf_ng,3,n_spinor,n_spinor),Kv(wf_ng,3,n_spinor,n_spinor)
  !
- Kc=(0.,0.)
- Kv=(0.,0.)
+ Kc=cZERO
+ Kv=cZERO
  !
  do j_spinor=1,n_spinor
    do i_spinor=1,n_spinor
      !
-     if(i_spinor/=j_spinor .and. pp_kind==1) cycle
+     !if(i_spinor/=j_spinor .and. pp_kind==1) cycle
+     if(i_spinor/=j_spinor) cycle
      !
      do i1=1,pp_kbv_dim
        !
        Cv(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1,i_spinor))
        Cc(i_spinor)=V_dot_V_omp(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1,i_spinor))
        !
-       if (Cc(i_spinor)==(0.,0.)) cycle
+       if ( Cc(i_spinor)==cZERO .and. Cv(i_spinor)==cZERO ) cycle
        !
        do i2=1,3
          call V_by_V_plus_V_omp(wf_ng,Cc(i_spinor),conjg(kbv(:,i1,1+i2,j_spinor)),Kc(:,i2,i_spinor,j_spinor))
@@ -68,12 +69,12 @@ subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv,pp_kind)
      !
      do i1=1,3
        drho(i1)=Vstar_dot_V_omp(wf_ng,WF%c(:,ivfft(j_spinor)),Kc(:,i1,i_spinor,j_spinor))+ &
-&                   V_dot_V_omp(wf_ng,WF%c(:,icfft(j_spinor)),Kv(:,i1,i_spinor,j_spinor))
+&                            V_dot_V_omp(wf_ng,WF%c(:,icfft(j_spinor)),Kv(:,i1,i_spinor,j_spinor))
      enddo
+     !
+     rho=rho+drho
      !
    enddo
  enddo
- !
- rho=rho+drho
  !
 end subroutine

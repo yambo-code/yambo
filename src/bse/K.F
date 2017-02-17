@@ -48,7 +48,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,BSS_q0,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_K_has_been_calculated_loaded
+&                       BS_K_has_been_calculated_loaded,BS_nT_grps
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
@@ -75,7 +75,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! ... Kernel loop
  !
- integer    :: i_block,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
+ integer    :: i_block,i_block_vv,i_block_cc,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
 &              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,alloc_err,&
 &              bands_to_load(2),iOvv,iOcc
@@ -213,7 +213,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
    call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
    FXC_K_diagonal=0._SP
-   FXC=(0._SP,0._SP)
+   FXC=cZERO
    !
  endif
  !
@@ -312,7 +312,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
        io_X_err=io_X(X,Xw,XID)
        !
-       forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1.
+       forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
        do i_g2=1,BS_n_g_W
          do i_g3=1,BS_n_g_W
            if (.not.BS_W_is_diagonal) then
@@ -385,14 +385,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   call K_exchange_collisions(.not.l_col_cut,iq,Xk,i_Tgrp_k)
+   call K_exchange_collisions(iq,Xk,i_Tgrp_k)
    !
-   if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(.not.l_col_cut,iq,Xk,i_Tgrp_p)
+   if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
    !
    ! Exchange oscillators
    !----------------------
    ! 
-   call K_correlation_collisions(i_block,BS_blk(i_block),Xk,q)
+   call K_correlation_collisions(i_block,Xk,q)
    !
    ! Transitions Loop
    !------------------
@@ -435,8 +435,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1)
        iq_W_s =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,2)
        !
-       H_x=(0.,0.)
-       H_c=(0.,0.)
+       H_x=cZERO
+       H_c=cZERO
        !
        if (BS_blk(i_block)%mode=="R") then
          if (BS_res_K_exchange) then
@@ -488,25 +488,27 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! :::SEX         (resonant):::
          !=============================
          !
-         iOcc = BS_blk(i_block)%O_table(i_k_p_s,i_c_k,i_c_p,i_k_spin)
+         iOcc        = BS_blk(i_block)%O_table(1,i_k_p_s,i_c_k,i_c_p,i_k_spin)
+         i_block_cc  = BS_blk(i_block)%O_table(2,i_k_p_s,i_c_k,i_c_p,i_k_spin)
          PHASE_1=WF_phase(i_p,i_k_p_s,i_c_p,i_p_spin)
-         if (PHASE_1==cZERO  ) PHASE_1=1.
-         if (PHASE_1==-99._SP) PHASE_1=1.
+         if (PHASE_1==cZERO  ) PHASE_1=1._SP
+         if (PHASE_1==-99._SP) PHASE_1=1._SP
          !
-         iOvv = BS_blk(i_block)%O_table(i_k_p_s,i_v_k,i_v_p,i_k_spin)
+         iOvv       = BS_blk(i_block)%O_table(1,i_k_p_s,i_v_k,i_v_p,i_k_spin)
+         i_block_vv = BS_blk(i_block)%O_table(2,i_k_p_s,i_v_k,i_v_p,i_k_spin)
          PHASE_2=WF_phase(i_p,i_k_p_s,i_v_p,i_p_spin)
-         if (PHASE_2==cZERO  ) PHASE_2=1.
-         if (PHASE_2==-99._SP) PHASE_2=1.
+         if (PHASE_2==cZERO  ) PHASE_2=1._SP
+         if (PHASE_2==-99._SP) PHASE_2=1._SP
          !
 !$omp parallel default(shared), private(i_g1)
 !$omp do
          do i_g1=1,BS_n_g_W
-           Occ(i_g1)=BS_blk(i_block)%O(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOcc)*PHASE_1
+           Occ(i_g1)=BS_blk(i_block_cc)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOcc)*PHASE_1
          enddo
 !$omp end do
 !$omp do
          do i_g1=1,BS_n_g_W
-           Ovv(i_g1)=BS_blk(i_block)%O(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOvv)*PHASE_2
+           Ovv(i_g1)=BS_blk(i_block_vv)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOvv)*PHASE_2
          enddo
 !$omp end do
 !$omp end parallel
@@ -560,7 +562,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! GLOBAL CLEANING 
  !=================
  !
- call BS_oscillators_free(0,0)
+ call BS_oscillators_free(BS_nT_grps,0)
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(WF_phase)

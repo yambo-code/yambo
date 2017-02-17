@@ -59,10 +59,10 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  Ygrad(:,:) =0._SP
  !
  kmod=sqrt(dot_product(k,k))
- kxymod=sqrt(k(1)**2.+k(2)**2.)
+ kxymod=sqrt(k(1)**2+k(2)**2)
  costh=1._SP
  sinth=0._SP
- if (kmod.gt.1.E-5) then
+ if (kmod.gt.1.E-5_SP) then
   costh=k(3)/kmod
   sinth=kxymod/kmod
  endif
@@ -75,28 +75,28 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  eiphi=cmplx(cosphi,sinphi)
  !
  if (kxymod.gt.1.E-5_SP) then
-   Ygrad(1,1:2)= k(3)/kmod**2._SP * (k(1:2)/kxymod)
-   Ygrad(1,3)=-kxymod/kmod**2._SP
+   Ygrad(1,1:2)= k(3)/kmod**2 * (k(1:2)/kxymod)
+   Ygrad(1,3)=-kxymod/kmod**2
  else
-   Ygrad(1,1:2)= k(3)/kmod**2._SP
+   Ygrad(1,1:2)= k(3)/kmod**2
    Ygrad(1,3)= 0._SP
  endif
  !
  if (kxymod.gt.1.E-5_SP) then
-   Ygrad(2,1)=-k(2)/kxymod**2._SP
-   Ygrad(2,2)= k(1)/kxymod**2._SP
+   Ygrad(2,1)=-k(2)/kxymod**2
+   Ygrad(2,2)= k(1)/kxymod**2
    Ygrad(2,3)= 0._SP
  endif
  !
- Ylm(lindx(0),mindx(0,0))=1./sqrt(4.*pi)
- dYlm(:,lindx(0),mindx(0,0))=(0.,0.)
+ Ylm(lindx(0),mindx(0,0))=1._SP/sqrt(4._SP*pi)
+ dYlm(:,lindx(0),mindx(0,0))=cZERO
  if (lang.eq.1) return
  !
- ch=sqrt(3./(4.*pi))
+ ch=sqrt(3._SP/(4._SP*pi))
  Ylm(   lindx(1),mindx(1,0))= ch*costh
  dYlm(1,lindx(1),mindx(1,0))=-ch*sinth
  dYlm(2,lindx(1),mindx(1,0))= cZERO
- ch=sqrt(3./(8.*pi))
+ ch=sqrt(3._SP/(8._SP*pi))
  Ylm(   lindx(1),mindx(1,1))=-ch*sinth*eiphi
  dYlm(1,lindx(1),mindx(1,1))=-ch*costh*eiphi
  dYlm(2,lindx(1),mindx(1,1))=-ch*sinth*eiphi*cI
@@ -105,18 +105,18 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  dYlm(:,lindx(1),mindx(1,-1))=-conjg(dYlm(:,lindx(1),mindx(1,1)))
  if (lang.eq.2) return
  !
- ch=sqrt(5./(16.*pi))
- Ylm(   lindx(2),mindx(2,0))= ch*(3._SP*costh**2._SP-1._SP)
+ ch=sqrt(5._SP/(16._SP*pi))
+ Ylm(   lindx(2),mindx(2,0))= ch*(3._SP*costh**2-1._SP)
  dYlm(1,lindx(2),mindx(2,0))=-ch*costh*sinth*6._SP
  dYlm(2,lindx(2),mindx(2,0))= cZERO
  ch=sqrt(15./(8.*pi))
- Ylm(   lindx(2),mindx(2,1))=-ch*sinth*costh          *eiphi
- dYlm(1,lindx(2),mindx(2,1))=-ch*(costh**2.-sinth**2.)*eiphi
- dYlm(2,lindx(2),mindx(2,1))=-ch*sinth*costh          *eiphi*cI
- ch=sqrt(15./(32.*pi))
- Ylm(   lindx(2),mindx(2,2))= ch*      sinth**2._SP*eiphi**2._SP
- dYlm(1,lindx(2),mindx(2,2))= ch*2._SP*costh*sinth *eiphi**2._SP
- dYlm(2,lindx(2),mindx(2,2))= ch*2._SP*sinth**2._SP*eiphi**2._SP*cI
+ Ylm(   lindx(2),mindx(2,1))=-ch*sinth*costh        *eiphi
+ dYlm(1,lindx(2),mindx(2,1))=-ch*(costh**2-sinth**2)*eiphi
+ dYlm(2,lindx(2),mindx(2,1))=-ch*sinth*costh        *eiphi*cI
+ ch=sqrt(15._SP/(32._SP*pi))
+ Ylm(   lindx(2),mindx(2,2))= ch*      sinth**2   *eiphi**2
+ dYlm(1,lindx(2),mindx(2,2))= ch*2._SP*costh*sinth*eiphi**2
+ dYlm(2,lindx(2),mindx(2,2))= ch*2._SP*sinth**2   *eiphi**2*cI
  ! M < 0
  Ylm(   lindx(2),mindx(2,-1))=-conjg(Ylm(   lindx(2),mindx(2,1)))
  dYlm(:,lindx(2),mindx(2,-1))=-conjg(dYlm(:,lindx(2),mindx(2,1)))
@@ -124,22 +124,22 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  dYlm(:,lindx(2),mindx(2,-2))= conjg(dYlm(:,lindx(2),mindx(2,2)))
  if (lang.eq.3) return
  !
- ch=sqrt(  7./(16.*pi))
- Ylm(   lindx(3),mindx(3,0))= ch*(5._SP*costh**3._SP-3._SP*costh)
- dYlm(1,lindx(3),mindx(3,0))=-ch*sinth*(15._SP*costh**2._SP-3._SP)
+ ch=sqrt(  7._SP/(16._SP*pi))
+ Ylm(   lindx(3),mindx(3,0))= ch*(5._SP*costh**3-3._SP*costh)
+ dYlm(1,lindx(3),mindx(3,0))=-ch*sinth*(15._SP*costh**2-3._SP)
  dYlm(2,lindx(3),mindx(3,0))= cZERO
- ch=sqrt( 21./(64.*pi))
- Ylm(   lindx(3),mindx(3,1))=-ch*sinth*( 5._SP*costh**2._SP -1._SP      )*eiphi
- dYlm(1,lindx(3),mindx(3,1))=-ch      *(15._SP*costh**3._SP-11._SP*costh)*eiphi
- dYlm(2,lindx(3),mindx(3,1))=-ch*sinth*( 5._SP*costh**2._SP -1._SP      )*eiphi*cI
- ch=sqrt(105./(32.*pi))
- Ylm(   lindx(3),mindx(3,2))= ch*sinth**2._SP*costh*eiphi**2._SP
- dYlm(1,lindx(3),mindx(3,2))= ch*(2._SP*sinth*costh**2._SP-sinth**3._SP)*eiphi**2._SP
- dYlm(2,lindx(3),mindx(3,2))= ch* 2._SP*sinth**2._SP*costh              *eiphi**2._SP*cI
- ch=sqrt( 35./(64.*pi))
- Ylm(   lindx(3),mindx(3,3))=-ch*sinth**3._SP            *eiphi**3._SP
- dYlm(1,lindx(3),mindx(3,3))=-ch*3._SP*sinth**2._SP*costh*eiphi**3._SP
- dYlm(2,lindx(3),mindx(3,3))=-ch*3._SP*sinth**3._SP      *eiphi**3._SP*cI
+ ch=sqrt( 21._SP/(64._SP*pi))
+ Ylm(   lindx(3),mindx(3,1))=-ch*sinth*( 5._SP*costh**2 -1._SP      )*eiphi
+ dYlm(1,lindx(3),mindx(3,1))=-ch      *(15._SP*costh**3-11._SP*costh)*eiphi
+ dYlm(2,lindx(3),mindx(3,1))=-ch*sinth*( 5._SP*costh**2 -1._SP      )*eiphi*cI
+ ch=sqrt(105._SP/(32._SP*pi))
+ Ylm(   lindx(3),mindx(3,2))= ch*sinth**2 * costh               *eiphi**2
+ dYlm(1,lindx(3),mindx(3,2))= ch*(2._SP*sinth*costh**2-sinth**3)*eiphi**2
+ dYlm(2,lindx(3),mindx(3,2))= ch* 2._SP*sinth**2*costh          *eiphi**2*cI
+ ch=sqrt( 35._SP/(64._SP*pi))
+ Ylm(   lindx(3),mindx(3,3))=-ch*sinth**3            *eiphi**3
+ dYlm(1,lindx(3),mindx(3,3))=-ch*3._SP*sinth**2*costh*eiphi**3
+ dYlm(2,lindx(3),mindx(3,3))=-ch*3._SP*sinth**3      *eiphi**3*cI
  ! M < 0
  Ylm(   lindx(3),mindx(3,-1))=-conjg(Ylm(   lindx(3),mindx(3,1)))
  dYlm(:,lindx(3),mindx(3,-1))=-conjg(dYlm(:,lindx(3),mindx(3,1)))

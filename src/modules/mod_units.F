@@ -85,9 +85,9 @@ module UNITS
  real(SP), parameter :: HA2PSm1   =HA2THZ                     ! HA = HA2PSm1 pico-SEC^(-1)
  real(SP), parameter :: HA2FSm1   =HA2THZ/1000._SP            ! HA = HA2FSm1 femto-SEC^(-1)
  !                                                              Note that 1 THz = 10^-3 / fs
- real(SP), parameter :: FS2AUT    =10.**2/CORE_CNST           ! femto-SEC = FS2AUT unit of Time in A.U. (2.4189 10^(-17) sec)
- real(SP), parameter :: AS2AUT    =0.1/CORE_CNST              ! atto-SEC  = AS2AUT unit of Time in A.U.
- real(SP), parameter :: PS2AUT    =10.**5/CORE_CNST           ! pico-SEC  = PS2AUT unit of Time in A.U.
+ real(SP), parameter :: FS2AUT    =1.E2_SP /CORE_CNST           ! femto-SEC = FS2AUT unit of Time in A.U. (2.4189 10^(-17) sec)
+ real(SP), parameter :: AS2AUT    =1.E-1_SP/CORE_CNST              ! atto-SEC  = AS2AUT unit of Time in A.U.
+ real(SP), parameter :: PS2AUT    =1.E5_SP /CORE_CNST           ! pico-SEC  = PS2AUT unit of Time in A.U.
  !
  ! LifeTimes
  !===========
@@ -101,20 +101,20 @@ module UNITS
  !
  !   \tau=\hbar/\gamma
  !
- real(SP), parameter :: HBAR_eVfs = 6.58211899_SP*10._SP**(-1._SP)   ! eV*fs
- real(SP), parameter :: HBAR_SI   = 1.054571726_SP*10._SP**(-34._SP) !  J*s
+ real(SP), parameter :: HBAR_eVfs = 6.58211899E-1_SP   ! eV*fs
+ real(SP), parameter :: HBAR_SI   = 1.054571726E-34_SP !  J*s
  !
  ! Elementary charge
  !=================
- real(SP), parameter :: e_SI   = 1.602176565*10._SP**(-19._SP) !  C
+ real(SP), parameter :: e_SI   = 1.602176565E-19_SP !  C
  !
  !
  ! Magnetic fields
  !=================
  !
- real(SP), parameter :: AU2Tesla      =1.7152551_SP*10._SP**3   ! (A.U. + C.G.S.)
- real(SP), parameter :: Tesla2AU      =1./AU2Tesla
- real(SP), parameter :: Bohr_magneton =9.24700915*10._SP**(-24) ! Joule * SEC^{-1} (S.I.). The 
+ real(SP), parameter :: AU2Tesla      =1.7152551E3_SP   ! (A.U. + C.G.S.)
+ real(SP), parameter :: Tesla2AU      =1._SP/AU2Tesla
+ real(SP), parameter :: Bohr_magneton =9.24700915E-24_SP ! Joule * SEC^{-1} (S.I.). The 
  !                                                                Bohr magneton is also the A.U. unit for the 
  !                                                                electron magnetic dipole moment.
  !
@@ -125,31 +125,31 @@ module UNITS
  ! of E fields in C.G.S (Gaussian units)
  !
  real(SP), parameter :: SVCMm12VMm1=29.98E3_SP                  !  from [statV/cm] to [V/m]
- real(SP), parameter :: VMm12SVCMm1 =1./SVCMm12VMm1
+ real(SP), parameter :: VMm12SVCMm1 =1._SP/SVCMm12VMm1
  real(SP), parameter :: AU2nAmpere =6.62361782E6_SP             !  [nano-Ampere]
  ! 
- real(SP), parameter  :: WMm22kWCMm2      =1E-7 ! W/m^2 = WMm22kWCMm2 kW/cm^2
- real(SP), parameter  :: WMm22ERGCMm2SECm1=1E-3 ! W/m^2 = WMm22ERGCMm2SECm1 erg/cm^2/sec
+ real(SP), parameter  :: WMm22kWCMm2      =1E-7_SP ! W/m^2 = WMm22kWCMm2 kW/cm^2
+ real(SP), parameter  :: WMm22ERGCMm2SECm1=1E-3_SP ! W/m^2 = WMm22ERGCMm2SECm1 erg/cm^2/sec
  !
- real(SP), parameter  :: AU2J   =4.3597482E-18  ! Ha = AU2J Joule
- real(SP), parameter  :: J2AU   =1./AU2J        ! J  = J2AU Ha
+ real(SP), parameter  :: AU2J   =4.3597482E-18_SP  ! Ha = AU2J Joule
+ real(SP), parameter  :: J2AU   =1._SP/AU2J        ! J  = J2AU Ha
  !
  real(SP), parameter  :: AU2M  =5.2917720859E-11 ! Bohr = AU2M m
- real(SP), parameter  :: M2AU  =1./AU2M          ! m    = M2AU Bohr
+ real(SP), parameter  :: M2AU  =1._SP/AU2M          ! m    = M2AU Bohr
  !
- real(SP), parameter  :: AU2SEC =2.418884326505E-17  ! Tau = AU2SEC sec
- real(SP), parameter  :: SEC2AU =1./AU2SEC           ! sec = SEC2AU Tau
+ real(SP), parameter  :: AU2SEC =2.418884326505E-17_SP  ! Tau = AU2SEC sec
+ real(SP), parameter  :: SEC2AU =1._SP/AU2SEC           ! sec = SEC2AU Tau
  !
  real(SP), parameter  :: AU2VMm1=5.14220632E11_SP    ! V/m = AU2VMm1 AU
- real(SP), parameter  :: VMm12AU=1./AU2VMm1          ! Au  = VMm12AU AU
+ real(SP), parameter  :: VMm12AU=1._SP/AU2VMm1          ! Au  = VMm12AU AU
  !
- real(SP), parameter  :: SPEED_OF_LIGHT_SI = 2.99792458E8 ! m/sec
- real(SP), parameter  :: SPEED_OF_LIGHT    = 137.03599911 ! a.u.
+ real(SP), parameter  :: SPEED_OF_LIGHT_SI = 2.99792458E8_SP ! m/sec
+ real(SP), parameter  :: SPEED_OF_LIGHT    = 137.03599911_SP ! a.u.
  !
- real(SP), parameter  :: FREE_SPACE_PERM   = 1E7/4./pi/SPEED_OF_LIGHT_SI**2 ! Farad=Coulomb/Volt 
+ real(SP), parameter  :: FREE_SPACE_PERM   = 1E7_SP/4._SP/pi/SPEED_OF_LIGHT_SI**2 ! Farad=Coulomb/Volt 
  !
- real(SP), parameter  :: kWCMm22AU=1E7*J2AU/(M2AU**2 * SEC2AU)  ! kW/cm^2 = kWCMm22AU * AU
- real(SP), parameter  :: AU2KWCMm2=1./kWCMm22AU                 ! AU      = AU2KWCMm2 kW/cm^2
+ real(SP), parameter  :: kWCMm22AU=1E7_SP*J2AU/(M2AU**2 * SEC2AU)  ! kW/cm^2 = kWCMm22AU * AU
+ real(SP), parameter  :: AU2KWCMm2=1._SP/kWCMm22AU                 ! AU      = AU2KWCMm2 kW/cm^2
  !
  !
  ! Computer Units
@@ -159,4 +159,4 @@ module UNITS
  real(SP), parameter  :: Megabyte = 1048576._SP
  real(SP), parameter  :: Gigabyte = 1073741824._SP
  !
-end module 
+end module

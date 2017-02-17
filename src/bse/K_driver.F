@@ -30,13 +30,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use stderr,         ONLY:string_remove
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
- use X_m,            ONLY:X_t,X_duplicate,X_reset
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use BS,             ONLY:BS_bands,BS_q,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BSE_mode,&
+&                         BSS_damp_reference,BSE_mode,BSS_Wd,&
 &                         BSS_uses_DbGd,BSS_q0,BS_Blocks_and_Transitions_free
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
@@ -44,12 +44,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use R_lattice,      ONLY:bz_samp,qindx_B
- use parser_m,       ONLY:parser
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
-#endif
-#if defined _SC || defined _KERR
- use X_m,            ONLY:global_gauge
 #endif
  !
  implicit none
@@ -82,14 +78,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  call TDDFT_do_X_W_typs(-1,X_tddft,Xw)
  !
-#if defined _SC || defined _KERR
- !                 =============
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
    call warning(" Not a valid gauge in input. Switching to lenght gauge")
    global_gauge="length"
  endif
- !
-#endif
  !
  !
  ! W RL size setup looking at the max index of G-G' 
@@ -144,17 +136,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !================
  call X_duplicate(X_static_pp,X_oscillators) 
  X_oscillators%whoami=5
- X_oscillators%ib=BS_bands
+ X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
  !
  ! ... EH space (no parallelization)
- call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.FALSE.)
+ call K_Transitions_setup(iq,Ken,Xk,BSS_Wd,.FALSE.)
  !
  !... Parallel distribution
  call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
  !
  ! ... EH space (with parallelization) and Transition groups build-up
- call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.TRUE.)
+ call K_Transitions_setup(iq,Ken,Xk,BSS_Wd,.TRUE.)
  !
  !... Blocks build-up
  if (.not.l_rpa_IP) call K_blocks( )

@@ -35,11 +35,11 @@ subroutine K_blocks( )
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !
- use pars,         ONLY:cZERO
+ use pars,         ONLY:cZERO,SP
  use memory_m,     ONLY:mem_est
  use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered,PP_redux_wait
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
-&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_Block_size,&
+&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,&
 &                       BS_LiveTiming_prefactor
  use com,          ONLY:msg
  use interfaces,   ONLY:PARALLEL_live_message
@@ -48,7 +48,8 @@ subroutine K_blocks( )
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_loop,tot_size,N_Ts_total(1),i_block
+ integer    :: i_T,j_T,i_loop,tot_size,i_block
+ real(SP)   :: N_Ts_total,N_Ts_local
  !
  call section('=','CPU-dependent Block structure')
  !                 =============================
@@ -119,22 +120,23 @@ subroutine K_blocks( )
  ! Live Timing Blocks
  !====================
  !
- BS_LiveTiming_prefactor=minval( BS_blk(:)%size(1) )
+ BS_LiveTiming_prefactor=1
+ !BS_LiveTiming_prefactor=minval( BS_blk(:)%size(1) )
  !
  do i_block=1,n_BS_blks
    BS_LiveTiming_steps=BS_LiveTiming_steps+BS_Block_size(i_block)
  enddo
  !
- N_Ts_total=BS_LiveTiming_steps
+ N_Ts_local=real(BS_LiveTiming_steps,SP)
+ N_Ts_total=real(BS_LiveTiming_steps,SP)
  !
- call PP_redux_wait((/N_Ts_total/))
+ call PP_redux_wait(N_Ts_total)
  !
  ! REPORT
  !========
  !
  call msg('rsn','[BSK] Size   (total)',BS_K_dim)
  !
- call PARALLEL_live_message("Kernel matrix elements (renormalized)",ENVIRONMENT="Response_T_space",&
-&                                                                   LOADED=BS_LiveTiming_steps,TOTAL=N_Ts_total(1))
+ call PARALLEL_live_message("Kernel matrix elements",ENVIRONMENT="Response_T_space",LOADED_r=N_Ts_local,TOTAL_r=N_Ts_total)
  !
 end subroutine

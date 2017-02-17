@@ -31,7 +31,7 @@ subroutine init_QP_ctl_load(defs,i_type)
  ! spin unless the DB1 is read. 
  !
  use electrons,     ONLY:n_sp_pol
- use it_m,          ONLY:it,initmode,initdefs,V_qp,V_real_time,E_unit
+ use it_m,          ONLY:it,initmode,initdefs,V_qp,E_unit
  use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_Wv,&
 &                        QP_ctl_Wc,QP_ctl_Z,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
  !
@@ -112,5 +112,4 @@ subroutine init_QP_ctl_load(defs,i_type)
 &        '[EXTQP '//trim(description_ch(i_type))//'] Interpolation neighbours',&
 &        QP_ctl_interp_neigh(i_type),verb_level=V_qp)
  !
-!
 end subroutine

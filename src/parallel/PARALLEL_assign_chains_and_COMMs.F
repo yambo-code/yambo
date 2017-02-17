@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,9 +24,9 @@
 subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&
 &                                           COMM_index_4,COMM_A2A_1,COMM_A2A_2,COMM_A2A_3)
  !
- use parallel_m,    ONLY:MPI_comm,INTRA_CHAIN,INTER_CHAIN,PARALLEL_n_structures_active,&
-&                        PARALLEL_CPU_used,ncpu,COMM_copy,PARALLEL_CPU_role,&
-&                        n_chains
+ use parallel_m,    ONLY:MPI_comm,INTRA_CHAIN,INTER_CHAIN,ncpu,COMM_copy,&
+&                        nchains_group,ncpu_chain,n_groups,myid
+ use com,           ONLY:error
  !
  implicit none
  !
@@ -42,157 +42,61 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
  !
  ! Work Space
  !
- integer :: i_chain(n_elements),i_c
+ integer :: i_chain(4),chain_now,i_cpu(4)
  !
  if (ncpu==1) return
  !
- i_chain=0
+ chain_now=n_groups*2-1
  !
- select case (n_elements)
-   !
-   case (4)
-     !
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(1))) then
-         i_chain(1)=log(real(ncpu/PARALLEL_CPU_used(i_c)))/log(2.)
-         if (i_chain(1)==0) then
-           call COMM_copy(INTER_CHAIN(n_chains),COMM_index_1)
-           if (present(COMM_A2A_1)) then
-             call COMM_copy(INTRA_CHAIN(n_chains),COMM_A2A_1)
-           endif
-         else
-           call COMM_copy(INTRA_CHAIN(i_chain(1)),COMM_index_1)
-           if (present(COMM_A2A_1)) then
-             call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_A2A_1)
-           endif
-         endif
-       endif
-       !
-     enddo
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(2))) then
-         i_chain(2)  =i_chain(1)-log(real(PARALLEL_CPU_used(i_c)))/log(2.)
-         call PARALLEL_build_up_child_chains(i_chain(2),COMM_index_2,i_chain(1))
-         if (present(COMM_A2A_2).and.i_chain(2)>0) then
-           call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_A2A_2)
-         endif
-       endif
-       !
-     enddo
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(3))) then
-         if (i_chain(2)>0) then
-           i_chain(3)  =i_chain(2)-log(real(PARALLEL_CPU_used(i_c)))/log(2.)
-           call PARALLEL_build_up_child_chains(i_chain(3),COMM_index_3,i_chain(2))
-         else
-           i_chain(3)  =i_chain(1)-log(real(PARALLEL_CPU_used(i_c)))/log(2.)
-           call PARALLEL_build_up_child_chains(i_chain(3),COMM_index_3,i_chain(1))
-         endif
-         if (present(COMM_A2A_3).and.i_chain(3)>0) then
-           call COMM_copy(INTER_CHAIN(i_chain(3)),COMM_A2A_3)
-         endif
-       endif
-       !
-     enddo
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(4))) then
-         if (i_chain(3)>0) then
-           call COMM_copy(INTER_CHAIN(i_chain(3)),COMM_index_4)
-         else if (i_chain(2)>0) then
-           call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_index_4)
-         else if (i_chain(1)>0) then
-           call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_index_4)
-         endif
-       endif
-       !
-     enddo
-     !
-   case (3)
-     !
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(1))) then
-         i_chain(1)=log(real(ncpu/PARALLEL_CPU_used(i_c)))/log(2.)
-         if (i_chain(1)==0) then
-           call COMM_copy(INTER_CHAIN(n_chains),COMM_index_1)
-           if (present(COMM_A2A_1)) then
-             call COMM_copy(INTRA_CHAIN(n_chains),COMM_A2A_1)
-           endif
-         else
-           call COMM_copy(INTRA_CHAIN(i_chain(1)),COMM_index_1)
-           if (present(COMM_A2A_1)) then
-             call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_A2A_1)
-           endif
-         endif
-       endif
-       !
-     enddo
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(2))) then
-         i_chain(2)  =i_chain(1)-log(real(PARALLEL_CPU_used(i_c)))/log(2.)
-         call PARALLEL_build_up_child_chains(i_chain(2),COMM_index_2,i_chain(1))
-         if (present(COMM_A2A_2).and.i_chain(2)>0) then
-           call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_A2A_2)
-         endif
-       endif
-       !
-     enddo
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(3))) then
-         if (i_chain(2)>0) then
-           call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_index_3)
-         else if (i_chain(1)>0) then
-           call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_index_3)
-         endif
-       endif
-       !
-     enddo
-     !
-   case (2)
-     !
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(1))) then
-         i_chain(1)=log(real(ncpu/PARALLEL_CPU_used(i_c)))/log(2.)
-         if (i_chain(1)==0) then
-           call COMM_copy(INTER_CHAIN(n_chains),COMM_index_1)
-           if (present(COMM_A2A_1)) then
-             call COMM_copy(INTRA_CHAIN(n_chains),COMM_A2A_1)
-           endif
-         else
-           call COMM_copy(INTRA_CHAIN(i_chain(1)),COMM_index_1)
-           if (present(COMM_A2A_1)) then
-             call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_A2A_1)
-           endif
-         endif
-       endif
-       !
-     enddo
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(2))) then
-         i_chain(2)  =i_chain(1)-log(real(PARALLEL_CPU_used(i_c)))/log(2.)
-         call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_index_2)
-       endif
-       !
-     enddo
-     !
-   case (1)
-     !
-     do i_c=1,PARALLEL_n_structures_active
-       !
-       if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(1))) then
-         i_chain(1)  =log(real(PARALLEL_CPU_used(i_c)))/log(2.)
-         call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_index_1)
-       endif
-       !
-     enddo
- end select
+ ! Level 1
+ !
+ i_chain(1)=nchains_group(chain_now)
+ i_cpu(1)  =ncpu_chain(i_chain(1))
+ call COMM_copy(INTRA_CHAIN(i_chain(1)),COMM_index_1)
+ if (present(COMM_A2A_1)) then
+   call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_A2A_1)
+ endif
+ !
+ if(n_elements==1) return 
+ !
+ ! Level 2
+ !
+ i_chain(2)=nchains_group(chain_now)+1
+ i_cpu(2)  =ncpu_chain(i_chain(2))*i_cpu(1)
+ call PARALLEL_build_up_child_chains(i_chain(2),COMM_index_2,i_chain(1))
+ if (present(COMM_A2A_2).and.i_cpu(2)/=ncpu) then
+   call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_A2A_2)
+ endif
+ !
+ if(n_elements==2) return 
+ !
+ ! Level 3
+ !
+ i_chain(3)=nchains_group(chain_now)+2
+ i_cpu(3)  =ncpu_chain(i_chain(3))*i_cpu(2)
+ if (i_cpu(2)/=ncpu) then
+   call PARALLEL_build_up_child_chains(i_chain(3),COMM_index_3,i_chain(2))
+ else
+   call PARALLEL_build_up_child_chains(i_chain(3),COMM_index_3,i_chain(1))
+ endif
+ if (present(COMM_A2A_3).and.i_cpu(3)/=ncpu) then
+   call COMM_copy(INTER_CHAIN(i_chain(3)),COMM_A2A_3)
+ endif
+ !
+ if(n_elements==3) return 
+ !
+ ! Level 4
+ !
+ i_chain(4)=nchains_group(chain_now)+3
+ i_cpu(4)  =ncpu_chain(i_chain(4))*i_cpu(3)
+ if (i_cpu(3)/=ncpu) then
+   call PARALLEL_build_up_child_chains(i_chain(4),COMM_index_4,i_chain(3))
+ else if (i_cpu(2)/=ncpu) then
+   call PARALLEL_build_up_child_chains(i_chain(4),COMM_index_4,i_chain(2))
+ else
+   call PARALLEL_build_up_child_chains(i_chain(4),COMM_index_4,i_chain(1))
+ endif
+ !
+ if(n_elements==4) return 
  !
 end subroutine

@@ -33,9 +33,6 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:E_k_p_q,elph_nb
 #endif
-#if defined _SURF
- use ras_module,    ONLY:lras, lreels
-#endif
  !
  implicit none
  !
@@ -55,14 +52,8 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  ! 1) Screening
  ! ==============
  l_apply_QP_corrections=(l_optics.and.l_chi).or.l_em1d.or.l_em1s.or.l_acfdt
-#if defined _SURF
- l_apply_QP_corrections=l_apply_QP_corrections.or.lras.or.lreels
-#endif
  !
  l_dynamical=(l_optics.and.l_chi) .or. l_em1d
-#if defined _SURF
- l_dynamical=l_dynamical.or. (lras.or.lreels)
-#endif
  !
  if( l_acfdt )                      X_kind=1
  if( l_em1s  )                      X_kind=2
@@ -89,5 +80,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !    Green's Function (k+q levels loaded for the _ELPH)
  if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='s')
 #endif
+ !
+ call section('r',' ')
  !
 end subroutine

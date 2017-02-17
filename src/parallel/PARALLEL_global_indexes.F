@@ -244,6 +244,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      Q_range=(/max(X%iq(1),2),X%iq(2)/)
      n_c_bands= (/E%nbf+1,X%ib(2)/)
      n_v_bands= (/X%ib(1),E%nbm/)
+   case("Response_T_space") 
+     K_range=Xk%nibz
+     EH_range=minval( BS_nT_at_k )
+     n_c_bands= (/E%nbf+1,BS_bands(2)/)
+     n_v_bands= (/BS_bands(1),E%nbm/)
    case("Self_Energy") 
      QP_range=QP_n_states
      Q_range=(/1,q%nibz/)
@@ -258,11 +263,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #if defined _ELPH
      if (l_elph_corr)                    n_bands=(/1,QP_PH_n_G_bands/)
 #endif
-   case("Response_T_space") 
-     K_range=Xk%nibz
-     EH_range=minval( BS_nT_at_k )
-     n_c_bands= (/E%nbf+1,BS_bands(2)/)
-     n_v_bands= (/BS_bands(1),E%nbm/)
  end select
  !
  !==========
@@ -275,7 +275,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum") then
    !====================================================
    !
-   CALL PARALLEL_structure(ENVIRONMENT,3,ROLE=(/"k","c","v"/))
+   CALL PARALLEL_structure(ENVIRONMENT,3,(/"k","c","v"/))
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"k","c","v"/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_CON_INDEX(X_type),&
@@ -328,7 +328,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
    !=========================================================================================
    !
-   CALL PARALLEL_structure(ENVIRONMENT,4,ROLE=(/"q","k","c","v"/))
+   CALL PARALLEL_structure(ENVIRONMENT,4,(/"q","k","c","v"/))
    !
    call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"q","k","c","v"/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_Xk_bz_INDEX,&
@@ -339,9 +339,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
    !
-   if (PAR_COM_Xk_bz_INDEX%n_CPU==1) then
-     call COMM_copy(PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A)
-   endif
+   if (PAR_COM_Xk_bz_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A)
    !
    ! Q-points 
    !
@@ -387,7 +385,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    !
-   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
+   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
+&                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
    if (ENVIRONMENT=="Response_G_space_Finite_Momentum") then
      !
@@ -466,7 +465,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Self_Energy") then
    !=================================
    !
-   CALL PARALLEL_structure(ENVIRONMENT,3,ROLE=(/"q ","qp","b "/))
+   CALL PARALLEL_structure(ENVIRONMENT,3,(/"q ","qp","b "/))
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"q ","qp","b "/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_QP_INDEX,&
@@ -596,7 +595,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (ENVIRONMENT=="Response_T_space") then
    !======================================================================================================
    !
-   CALL PARALLEL_structure(ENVIRONMENT,3,ROLE=(/"k ","eh","t "/))
+   CALL PARALLEL_structure(ENVIRONMENT,3,(/"k ","eh","t "/))
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"k ","eh","t "/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
@@ -656,7 +655,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_Transitions_grouping(Xk)
    !
-   call PARALLEL_live_message("(e/h) Groups",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_BS_nT_col_grps,TOTAL=BS_nT_grps)
+   call PARALLEL_live_message("(e/h) Groups",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_BS_nT_col_grps,TOTAL=BS_nT_grps,&
+&                             NCPU=PAR_COM_eh_INDEX%n_CPU)
    !
    ! Now each CPU of the PAR_COM_eh_INDEX has PAR_BS_nT_grps  groups of e/h pairs
    !
@@ -669,8 +669,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        MASK=PAR_IND_T_groups%element_1D)
      !
      call PARALLEL_live_message("(e/h)->(e/h)' Transitions (all)",ENVIRONMENT=ENVIRONMENT,&
-&                               LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=BS_nT_grps*BS_nT_grps,&
-&                               NCPU=PAR_COM_T_INDEX%n_CPU)
+&                               LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&
+&                               TOTAL=BS_nT_grps*BS_nT_grps,NCPU=PAR_COM_T_INDEX%n_CPU)
      !
    endif
    !
@@ -679,8 +679,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_live_message("(e/h)->(e/h)' Transitions (ordered)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_T_ordered%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&
-&                             TOTAL=BS_nT_grps*(BS_nT_grps-1)/2+BS_nT_grps,&
-&                             NCPU=PAR_COM_T_INDEX%n_CPU)
+&                             TOTAL=BS_nT_grps*(BS_nT_grps+1)/2,NCPU=PAR_COM_T_INDEX%n_CPU)
    !
    ! Inversion
    !

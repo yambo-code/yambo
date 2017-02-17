@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DK
+! Authors (see AUTHORS file for details): DK CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -114,7 +114,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  ! prepare Double Grid quantities
  !
- allocate(BZ_DbGd_table(Xk%nbz, npts_around_coarse))
+ allocate(BZ_DbGd_table(Xk%nbz, npts_around_coarse,2))
  BZ_DbGd_table = 0
  allocate(BZ_DbGd_ipol_weight(npts_around_coarse))
  BZ_DbGd_ipol_weight = 0.0_SP
@@ -162,7 +162,8 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
                nz_period = (modulo(intvz-1, nkpoint_c(3)))* nstep_f(3) + nz
                ! 
                ii = ii + 1
-               BZ_DbGd_table(ii_c,ii) = sub2ind(nkpoint_f, nx_period, ny_period, nz_period)
+               BZ_DbGd_table(ii_c,ii,1) = sub2ind(nkpoint_f, nx_period, ny_period, nz_period)
+               !BZ_DbGd_table(ii_c,ii,2) = ???
                call live_timing(steps=1)
              end do
            end do

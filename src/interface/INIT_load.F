@@ -267,7 +267,18 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
  !
+ !
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
+ !
+ !
+#if defined _SCALAPACK
+ !
+ ! SLK test
+ !
+ call it(defs,'SLKdim',  '[SLK] Matrix Dimension',SLK_test_H_dim)
+#endif
+ !
+ !
  !
  ! QP ctl 
  !

@@ -119,6 +119,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
    !
+   !
 #if defined _KERR
    if (trim(global_gauge)=='velocity') A_drude(1)=cZERO
 #endif
@@ -266,8 +267,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  call timing('T_space IP',OPR='stop')
 #endif
  !
- contains
-   !
    !
    !
 end subroutine

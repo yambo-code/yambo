@@ -84,7 +84,7 @@ subroutine XCo_local(E,Xk)
 !$omp parallel do default(shared), private(ifft)
 #endif
      do ifft=1,fft_size
-         c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,iwfp)
+       c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,iwfp)
      enddo
 #if defined _OPENMP
 !$omp end parallel do

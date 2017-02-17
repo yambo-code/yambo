@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,11 +33,11 @@ module it_m
  character(2),parameter :: E_unit='eV'
  character(2),parameter :: G_unit='RL'
  character(2),parameter :: T_unit='eV'
- character(2),parameter :: Time_unit='fs'
+ character(2),parameter :: Time_unit(3)=(/'fs','ps','as'/)
  character(2),parameter :: Bfield_unit='T'
  character(4),parameter :: Efield_unit='V/mm'
  character(5),parameter :: I_unit='kWLm2'
- character(3),parameter :: Angle_unit='deg'
+ character(3),parameter :: Angle_unit(2)=(/'deg','rad'/)
  ! 
  ! Verbosity
  !===========
@@ -48,14 +50,15 @@ module it_m
  integer, parameter :: V_general=6
  integer, parameter :: V_resp=7
  integer, parameter :: V_real_time=8
+ integer, parameter :: V_parallel=9
  integer, parameter :: V_all=99
  !
  integer, parameter :: maxrnlvls=50
  integer, parameter :: maxflags =50
- integer, parameter :: maxi1vars=60
+ integer, parameter :: maxi1vars=100
  integer, parameter :: maxi2vars=50
  integer, parameter :: maxi3vars=50
- integer, parameter :: maxr1vars=60
+ integer, parameter :: maxr1vars=100
  integer, parameter :: maxr2vars=50
  integer, parameter :: maxr3vars=50
  integer, parameter :: maxr4vars=50
@@ -95,7 +98,7 @@ module it_m
  integer :: nflines
  integer :: nQP_flines=0
  character(lchlen) :: flines(nvars+maxflags+maxrnlvls)
- character(lchlen) :: QP_flines(10)
+ character(lchlen) :: QP_flines(100)
  !
  ! To handle the variables verbosity I need to create a copy
  ! of the standard variable defs and an array with the verbosity 
@@ -117,7 +120,8 @@ module it_m
  character(schlen) :: it_verbose_Cvars(maxc1vars)
  integer           :: n_verbose_Chvars,it_verbose_Chlevel(maxchvars),&
 &                     it_verbose_Chtable(maxchvars)
- character(schlen) :: it_verbose_Chvars(maxchvars),it_verbose_Chdefs(maxchvars)
+ character(schlen) :: it_verbose_Chvars(maxchvars)
+ character(lchlen) :: it_verbose_Chdefs(maxchvars)
  integer           :: n_verbose_Fvars,it_verbose_Flevel(maxflags),&
 &                     it_verbose_Ftable(maxflags)
  character(schlen) :: it_verbose_Fvars(maxflags)
@@ -221,7 +225,7 @@ module it_m
    !
    logical function runlevel_is_on(runlevel_name)
      character(*) :: runlevel_name
-     integer :: i2
+     integer      :: i2
      runlevel_is_on=.false.
      do i2=1,nrnlvls
        if (trim(rnlvls(i2,1))==runlevel_name) runlevel_is_on=rstatus(i2)/=0
@@ -757,16 +761,18 @@ module it_m
      use stderr,       ONLY: intc
      use drivers,      ONLY: infile_editing
      use stderr,       ONLY: gen_fmt
-     use com,          ONLY: report_file_fix,write_the_logo
+     use com,          ONLY: write_the_logo,repfile
      use parallel_m,   ONLY: master_cpu
      type(initdefs)::defs
      integer       :: ou
      ! 
      ! Work Space
      !
-     integer :: i2,i3,ifpos,ch_length
+     integer :: i2,ifpos,ch_length
      real(SP):: unit_factor,v(2)
      character(lchlen)::ch(2)  
+     !
+     if (ou==11) open(unit=11,file=trim(repfile),position='append')
      !
      nflines=0
      flines=' '
@@ -941,7 +947,7 @@ module it_m
      if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
      do i1=1,nflines+nQP_flines
        if (i1<=nflines) ch(1)=flines(i1)
-       if (i1> nflines) ch(1)=QP_flines(i1-nflines)
+       if (i1> nflines) ch(1)=trim(QP_flines(i1-nflines))
        if (master_cpu) then
          if (ou==12) write (ou,'(a)') trim(ch(1))
          if (ou==11) write (ou,'(2a)') ' | ',trim(ch(1))
@@ -1008,7 +1014,6 @@ module it_m
    end function
    !
    logical function Chverbose_enough(var_name,var_val)
-     integer :: nvar
      character(*)::var_name
      character(*)::var_val
      Chverbose_enough=.false.
@@ -1033,7 +1038,7 @@ module it_m
      do i1=1,n_verbose_Fvars
       if (it_verbose_Flevel(i1)==0) cycle
       if (trim(it_verbose_Fvars(i1))==trim(var_name))then
-        if(fstatus(ivar)>0.and.&
+        if (fstatus(ivar)>0.and.&
 &           infile_verbosity/=V_all.and.&
 &          infile_verbosity/=it_verbose_Flevel(i1)) return
        endif

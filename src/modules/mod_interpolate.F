@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,7 +34,7 @@ module interpolate
  integer               :: nshells
  real(SP), allocatable :: int_sop(:,:,:)
  real(SP), pointer     :: lattice_vectors(:,:)
- real(SP), parameter   :: lpfac = 5.0_SP  ! Use 5 times more waves than nkibz
+ real(SP) :: lpfac
  real(SP) :: metric(3,3)
  !
  ! Interpolation type
@@ -54,7 +56,7 @@ module interpolate
  !
  interface
    !
-   subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,ID)
+   subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
@@ -63,6 +65,7 @@ module interpolate
      real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(in), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(in), optional :: E
+     integer,       intent(in), optional :: Nk
      integer,       intent(out)          :: ID
    end subroutine  eval_interpolation_coeff
    !
@@ -116,6 +119,7 @@ module interpolate
    subroutine make_star(R_vec,nsym,symop,nstar,star_vec)
      use vec_operate,    ONLY:v_is_zero
      use D_lattice,      ONLY:i_time_rev
+     !
      implicit none
      !
      integer,  intent(in)   :: nsym

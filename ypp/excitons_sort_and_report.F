@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Varsano, A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -26,13 +28,12 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
  use units,         ONLY:HA2EV
  use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol
  use stderr,        ONLY:intc
- use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table,BS_bands
+ use BS,            ONLY:BSS_description,BSS_n_descs,BSS_eh_table,BS_bands
  use com,           ONLY:msg,of_open_close
  use YPP,           ONLY:deg_energy,lambda,min_weight
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
- use QP_CTL_m,      ONLY:QP_apply
  !
  implicit none 
  !
@@ -109,10 +110,6 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    call sort(arrin=A_weight,indx=S_indx)
    !
-   ! Apply quasi-particle correction if presents
-   ! 
-   call QP_apply(BS_bands,E,Xk,'G',msg_fmt='s')
-   !
    ! report on file the weights and the amplitude
    ! of the excitonic state...
    ! 
@@ -136,7 +133,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    K_weight=0.
    do neh = 1,BS_H_dim
-     ikbz  = BS_eh_table(S_indx(neh),1)
+     ikbz  = BSS_eh_table(S_indx(neh),1)
      ikibz = Xk%sstar(ikbz,1)
      K_weight(ikibz)=K_weight(ikibz)+A_weight(neh)
    enddo
@@ -171,10 +168,10 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      !
      if (A_weight(neh)/maxval(A_weight)<min_weight) cycle
      !
-     ikbz = BS_eh_table(S_indx(neh),1)
-     iv = BS_eh_table(S_indx(neh),2)
-     ic = BS_eh_table(S_indx(neh),3)
-     i_spin= spin(BS_eh_table(S_indx(neh),:))
+     ikbz = BSS_eh_table(S_indx(neh),1)
+     iv = BSS_eh_table(S_indx(neh),2)
+     ic = BSS_eh_table(S_indx(neh),3)
+     i_spin= spin(BSS_eh_table(S_indx(neh),:))
      !
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)

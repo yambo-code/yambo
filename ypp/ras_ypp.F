@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Hogan and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -48,7 +50,7 @@
  use com,                 ONLY:msg, error
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
 &                              OP_RD_CL,VERIFY
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  use YPP
  use bulkeps,             ONLY : lbulkerr, GetBulkEps
  use ras_module,          ONLY : CalcRAS

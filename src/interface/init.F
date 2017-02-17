@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,25 +33,24 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
  use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,E_reset,n_sp_pol
+ use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel
- use parallel_m,     ONLY:PP_redux_wait,master_cpu
+&                         switch_off_runlevel,V_real_time,V_parallel
+ use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu,myid
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
- use timing,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,&
-&                         QP_state,QP_reset,QP_ctl_E,QP_table
+ use LIVE_t,         ONLY:live_timing_is_on,what_is_running
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
- use stderr,         ONLY:tty_size,logfile,string_add,string_remove
+ use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
- use wave_func,      ONLY:ioWF
+ use wave_func,      ONLY:io_WF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
- use TDDFT,          ONLY:ioBS_Fxc
+ use TDDFT,          ONLY:io_BS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
 #if defined  _ELPH 
@@ -58,6 +59,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
  use ras_module,     ONLY:lras, lreels
 #endif
+#if defined _OPENMP
+ use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
+#endif
+ use interfaces,     ONLY:PARALLEL_structure
  !
  implicit none
  !
@@ -67,23 +72,22 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(w_samp) ::Xw(4)
  integer         ::lnstr
  character(lnstr)::instr
- logical         ::CLOSE_Gs,FINALIZE
+ logical         ::CLOSE_Gs,FINALIZE,QP_field
  !
  ! Work Space
  !
- integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_abinit_err,io_KB_pwscf_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G,io_Gr
- integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
-&                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_abinit,ioKB_pwscf,&
-&                     ioCOL_CUT
+ integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
+&                     io_BS_Fxc_err,io_QINDX_err
+ integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
+&                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
+&                     io_COL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
- character(6)      :: X_size
  !
- integer, external :: ioE_RIM
+ integer, external :: io_RIM_E_and_k
  !
 #if defined _ELPH 
- integer           :: ioELPH_err
- integer, external :: ioELPH
+ integer           :: io_ELPH_err
+ integer, external :: io_ELPH
 #endif
  !
  type(X_t)        ::Xbsk
@@ -95,7 +99,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! What is running ?
  !
- !
  what_is_running='YAMBO'
 #if defined _ELPH 
  what_is_running='YAMBO_PH'
@@ -104,7 +107,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO_SURF'
 #endif
  !
- !Presets (input)
+ ! CPU structure
+ !
+ call PARALLEL_structure()
+ !
+ ! Global Logicals
+ !
+ call SET_logicals()
+ !
+ ! Presets (input)
  !
  init = 0
  !
@@ -131,12 +142,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (FINALIZE) then
    call call_init_load('Game_Over')
    call initinfio(defs,11)
-   if (master_cpu) call ofiles_append(defs=defs)
+   call ofiles_append(defs=defs)
    return
  endif
  if (CLOSE_Gs) then
    call call_init_load('Close_G_vectors')
-   call barriers( )
+   call init_barriers( )
    call logicalson
    return
  endif
@@ -148,10 +159,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DB props listing mode ?
  !
  call read_command_line(instr,init)
+ !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
    init = 2
-   if (tty_size<0) write (logfile,'(2a)') trim(com_path),'/l_dbs'
+   if (log_as_a_file) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
  endif
@@ -169,13 +181,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! db1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
- io_err=ioDB1(en,k,io_ID) 
+ io_err=io_DB1(en,k,io_ID) 
  !
  ! wf
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=io_ID)
- ioWF_err=ioWF(io_ID) 
- if (io_err/=0.or.ioWF_err/=0) then
+ io_WF_err=io_WF(io_ID) 
+ if (io_err/=0.or.io_WF_err/=0) then
    init =-1
    return
  else
@@ -183,9 +195,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call mk_dir(com_path)
    call mk_dir(trim(core_io_path)//"/SAVE")
    call mk_dir(trim(more_io_path)//"/SAVE")
+   if (init==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
  endif
- !
- X(3)%ib=(/1,en%nb/)
  !
  ! Exporting DB1 informations to variables to be
  ! proposed in the input file.
@@ -195,7 +206,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! gops
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=io_ID)
- io_err=ioGROT(io_ID) 
+ io_err=io_GROT(io_ID) 
  !
  ! Updates RL variables
  !
@@ -205,12 +216,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! kindx
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- ioQINDX_err=ioQINDX(k,q,io_ID) 
- if (ioQINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
+ io_QINDX_err=io_QINDX(k,q,io_ID) 
+ if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
  !
  ! If the GOPS/KINDX DBs are not present, reset to setup run
  !
- if ((io_err==-1.or.ioQINDX_err==-1).and.infile_editing) then
+ if ((io_err==-1.or.io_QINDX_err==-1).and.infile_editing) then
    !
    ! switch off all logicals loaded in read_command_line
    call switch_off_runlevel('all',on_name="")
@@ -224,17 +235,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioRIM(io_ID) 
+ io_err=io_RIM(io_ID) 
  !
  ! cutoff
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioCOL_CUT(io_ID) 
+ io_err=io_COL_CUT(io_ID) 
  !
  ! E_rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioE_RIM(en,io_ID) 
+ io_err=io_RIM_E_and_k(en,k,io_ID) 
  !
  ! xxvxc
  !
@@ -244,7 +255,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! QP
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=ioQP('QP',qp,io_ID) 
+ io_err=io_QP_and_GF('QP',qp,io_ID) 
  !
  !In DUMP mode qp%table is dumped as well (to be used in QP_apply).
  !Here, however, qp%table is not needed
@@ -257,12 +268,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Green Functions
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=ioQP('G',qp,io_ID) 
+ io_err=io_QP_and_GF('G',qp,io_ID) 
  !
  ! W
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=ioQP('W',qp,io_ID) 
+ io_err=io_QP_and_GF('W',qp,io_ID) 
  !
  ! ostnts
  !
@@ -274,12 +285,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! PP_PWscf
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_KB_pwscf_err=ioKB_pwscf(io_ID)
+ io_KB_pwscf_err=io_KB_pwscf(io_ID)
  !
  ! kb_pp
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_KB_abinit_err=ioKB_abinit(io_ID)
+ io_KB_abinit_err=io_KB_abinit(io_ID)
  !
  if (io_err/=0) OSTNTS_Vnl_included=(io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
@@ -287,12 +298,21 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call X_var_setup
  !
- do i1=1,4 ! Xx Xs Xp Xd
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
-   io_X_err(i1)=ioX(X(i1),Xw(i1),io_ID)
-   if (nqibz>0) X(i1)%iq=(/1,nqibz/)
-   if (io_X_err(i1)>0) X(i1)%iq(1)=io_X_err(i1)+1
- enddo
+ ! When no setup has been done nqibz=0
+ !
+ if (nqibz>0) then
+   !
+   do i1=1,4 ! Xx Xs Xp Xd
+     !
+     X(i1)%iq=(/1,nqibz/)
+     !
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
+     !
+     io_X_err(i1)=io_X(X(i1),Xw(i1),io_ID)
+     !
+   enddo
+   !
+ endif
  !
  ! The GLOBAL vcalue of %Vnl_included is decided on the basis of the contents
  ! of db.OSTENTS OR on the presence of the KB_PP. This means that if the
@@ -304,18 +324,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! bs
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- ioBS_err=ioBS(1,Xbsk,io_ID)
+ io_BS_err=io_BS(1,Xbsk,io_ID)
  !
  !
  ! ELPH 
  !
 #if defined _ELPH 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- ioELPH_err=ioELPH(io_ID,'gkkp')
+ io_ELPH_err=io_ELPH(io_ID,'gkkp')
  !
- if (ioELPH_err/=0) then
+ if (io_ELPH_err/=0) then
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   ioELPH_err=ioELPH(io_ID,'gkkp_expanded')
+   io_ELPH_err=io_ELPH(io_ID,'gkkp_expanded')
  endif
  !
 #endif
@@ -338,12 +358,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !Setup on the basis of the DB read/stdin variables
  !Here I can propose values to be written in the input file
  !
- call varsetup1
+ call before_infile_write_setup( )
  !
  !Variables(read from DB files) -> local cache
  !
  !Note that here ('load_defaults') is the latest chance to change
- !a predefined var verbosity and to force its appearnce
+ !a predefined var verbosity and to force its appearance
  !in the input file.
  !
  call call_init_load('load_defaults')
@@ -361,18 +381,61 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff EvalMagn')
  !
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
-&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs')
+&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs WFbuffIO')
+ !
+ ! CPU structure
+ !
+#if defined _MPI
+ !
+ if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa) then
+   if (l_optics.and..not.l_bse) then
+     call CPU_activate("X_q_0")
+     call CPU_activate("X_finite_q")
+   else
+     call CPU_activate("X_all_q")
+   endif
+   call initactivate(1,'X_Threads DIP_Threads')
+ endif
+ !
+ if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions) ) then
+   call CPU_activate("SE")
+   call initactivate(1,'SE_Threads')
+ endif
+ !
+#endif
+ !
+ if (l_eval_collisions) then
+   call CPU_activate("RT")
+   call initactivate(1,'RT_Threads')
+ endif
+ !
+#if defined _MPI
+ !
+ if (l_real_time) then
+   call CPU_activate("RT")
+   call initactivate(1,'RT_Threads')
+ else if (l_sc_run) then
+   call CPU_activate("SE")
+   call initactivate(1,'SE_Threads')
+ endif
+ !
+ if (l_bse) then
+   call CPU_activate("BS")
+   call initactivate(1,'X_Threads DIP_Threads')
+ endif
+ !
+#endif
  !
  !Setup
  !
  if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
 #if defined  _ELPH 
- if (l_setup) call initactivate(1,'MinusQ')
+ if (l_setup) call initactivate(1,'MinusQ BSEscatt')
 #endif
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')
@@ -400,7 +463,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.and.l_chi) then
    !
    !
-   !
    ! ALDA/LRC Tddft
    if (l_alda_fxc) call initactivate(1,'FxcGRLc')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
@@ -409,15 +471,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Optics(not bse) nor GW (no PP)
  !
- if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
-   X_size='NGsBlk'
-   if(l_rpa_IP) X_size='      '
-   call X_activate('Xd',(/X_size,'QpntsR','BndsRn',&
+ if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0)) then
+   call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    !
    !
-   call QP_ctl_switch('X')
+   call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath Qdirection QShiftOrder')
    !
    !
@@ -445,18 +505,21 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_optics.and.l_bse) then
    !
-   call QP_ctl_switch('K')
+   call init_QP_ctl_switch('K')
    !
    call initactivate(1,'ShiftedPath')
-#if defined _KERR
+#if defined _SC || defined _KERR
    call initactivate(1,'Gauge')
+#endif
+#if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
    !
-   call initactivate(1,'DrudeWBS')
+   call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPath')
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
+   !
    !
  endif                    
  !
@@ -466,44 +529,54 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation
+   !
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
    !
-   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSSInvItMax')
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSSInvPFratio')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
    !
    ! Special project dependent variables
    !
 #if defined _ELPH 
-   if (l_ph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
+   if (l_elph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
 #endif
  endif
  !
  ! Static screen 
  !
  if (l_em1s) then
-   call QP_ctl_switch('X')
+   call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
+   call initactivate(1,'XTermKind'//'Xs')
+   call initactivate(1,'XTermEn'//'Xs')
  endif
  !
  ! GW (PPA & COHSEX) 
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
-   call QP_ctl_switch('X')
+   call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
-   if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
-&                      'EhEngy','LongDr','PPAPnt'/))
-   if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk',&
-&                         'EhEngy','LongDr'/))
+   if (l_ppa) then
+     call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
+&                           'EhEngy','LongDr','PPAPnt'/))
+     call initactivate(1,'XTermKind'//'Xp')
+     call initactivate(1,'XTermEn'//'Xp')
+   endif
+   if (l_cohsex) then
+     call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','EhEngy','LongDr'/))
+     call initactivate(1,'XTermKind'//'Xs')
+     call initactivate(1,'XTermEn'//'Xs')
+   endif
  endif
  !
  ! ACFDT
  !
  if (l_acfdt) then
-   call QP_ctl_switch('X')
+   call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
@@ -513,34 +586,38 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_gw0.or.l_life) then
    !
-   if (l_el_corr) then
+   !
+   if (l_elel_corr) then
      !
-     call QP_ctl_switch('X')
-     call QP_ctl_switch('G')
+     call init_QP_ctl_switch('X')
+     call init_QP_ctl_switch('G')
      call initactivate(1,'BoseCut ShiftedPath')
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
        if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
-       if (.not.l_ppa.and..not.l_cohsex) call X_activate('Xd',(/'BndsRn','NGsBlk',&
-&                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
-&                      'DrudeW','EhEngy','LongDr'/)) 
-       !
-       if (.not.l_cohsex) call initactivate(1,'GWTerm GwEnComp DysSolver')
-       if (     l_cohsex) call initactivate(1,'UseEbands')
-       if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
-       else
-         call initactivate(1,'GWoIter')
-         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+       if (.not.l_elphoton_corr) then
+         if (.not.l_ppa.and..not.l_cohsex) &
+&          call X_activate('Xd',(/'BndsRn','NGsBlk',&
+&                          'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
+&                          'DrudeW','EhEngy','LongDr'/)) 
+         !
+         if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
+         if (     l_cohsex) call initactivate(1,'UseEbands')
+         if (trim(QP_solver)=="g") then
+           call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+         else
+           call initactivate(1,'GWoIter')
+           if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+         endif
        endif
        !
      endif
      !
      if (l_life) then
        call initactivate(1,'LifeTrCG')
-       if (l_el_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
+       if (l_elel_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                                     'DmRnge','CGrdSp',&
 &                                     'DrudeW','EhEngy','LongDr'/)) 
      endif
@@ -548,14 +625,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
 #if defined  _ELPH 
    !
-   call QP_ctl_switch('G')
+   call init_QP_ctl_switch('G')
    !
-   if (l_ph_corr) then
+   if (l_elph_corr) then
      call initactivate(1,'DysSolver')
      call initactivate(1,'GphBRnge ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
-   if (trim(QP_solver)=="g".and.l_ph_corr) then
+   if (trim(QP_solver)=="g".and.l_elph_corr) then
      call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
@@ -579,7 +656,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SURF
  if (lras.or.lreels) then
-!   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',& ! Head only
     call X_activate('Xd',(/'BndsRn',&
 &                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &                 'DrudeW','EhEngy'/))
@@ -613,14 +689,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! To handle externally defined Q-points I use the init_q_pts
  !
  ! (a) first check if input file contains already a list of Q-points...
- call init_q_pts(.FALSE.)
+ call init_q_points(.FALSE.)
  !
  ! (b) ... then (re)write the file
- if (l_setup.and.ioQINDX_err/=0.and.infile_editing) call init_q_pts(.TRUE.)
+ if (l_setup.and.io_QINDX_err/=0.and.infile_editing) call init_q_points(.TRUE.)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_collisions_IO ) then
+ QP_field=any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_eval_collisions
+ !
+ if (QP_field) then
    !
    ! The QP_state can be read from ioxxvxc in DUMP mode or from the input file.
    ! The DB value is used when a new input file is created or when the previous input file
@@ -664,35 +742,64 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (infile_editing) return
  !
+ ! Update Logicals (especially the write_to_log)
+ !
+ call SET_logicals()
+ !
  ! Report/Log Files
  !
  if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
  if (trim(jobstr)/='') write (repfile,'(4a)') trim(com_path),'/','r-',trim(jobstr)
- if (tty_size<0) then
+ if (log_as_a_file) then
   if (trim(jobstr)=='') write (logfile,'(2a)') trim(com_path),'/l'
   if (trim(jobstr)/='') write (logfile,'(4a)') trim(com_path),'/','l-',trim(jobstr)
+  if (ncpu>1) then
+    if (trim(jobstr)=='') write (logfile,'(a)')  trim(com_path)//'/LOG/l'
+    if (trim(jobstr)/='') write (logfile,'(2a)') trim(com_path)//'/LOG/l-',trim(jobstr)
+  endif
  endif
  do i1=1,nrnlvls
    rch=repfile
-   if (rstatus(i1)/=0) write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i1,1))
-   repfile=rch
-   if (tty_size<0) then
+   if (rstatus(i1)/=0) then
+     write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i1,1))
+     repfile=rch
+   endif
+   if (log_as_a_file) then
      jch=logfile
      if (rstatus(i1)/=0) write (jch,'(3a)') trim(logfile),'_',trim(rnlvls(i1,1))
      logfile=jch
    endif
  enddo
+ if (ncpu>1) then
+   jch=logfile
+   logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
+ endif
  !
  ! Finalize
  !
- if (tty_size<0) call rename_file(logfile)
+ if (log_as_a_file) call rename_file(logfile)
  call rename_file(repfile)
  call PP_redux_wait
- if (master_cpu) open(unit=11,file=trim(repfile))
- call write_the_logo(11,' ')
+ if (master_cpu) then
+   open(unit=11,file=trim(repfile))
+   call write_the_logo(11,' ')
+ endif
  !
  contains
    !
+   !
+   subroutine CPU_activate(what)
+     character(*) :: what 
+     call initactivate(1,what//"_CPU")
+     call initactivate(1,what//"_ROLEs")
+     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") then
+       call initactivate(1,what//"_nCPU_invert")
+     endif
+     if (what=="BS") then
+       call initactivate(1,what//"_nCPU_diago")
+     endif
+     !
+   end subroutine
    !
    subroutine X_activate(mode,what)
      character(2)::mode
@@ -736,7 +843,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_col_cut=runlevel_is_on('rim_cut')
        l_cohsex=runlevel_is_on('cohsex')
        !
-       !
        ! 
 #if defined  _SURF
        lreels=runlevel_is_on('reels')
@@ -747,19 +853,23 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Only in this case ioELPH_err is defined
          !
-         l_ph_corr=runlevel_is_on('el_ph').and.(ioELPH_err==0.or.l_real_time)
+         l_elph_corr=runlevel_is_on('el_ph_corr').and.(io_ELPH_err==0.or.l_real_time)
        else
-         l_ph_corr=runlevel_is_on('el_ph')
+         l_elph_corr=runlevel_is_on('el_ph_corr')
        endif
-       l_el_corr=runlevel_is_on('el_el')
-#else
-       l_el_corr=l_gw0.or.l_life
+       l_elel_corr=runlevel_is_on('el_el_corr')
 #endif
+       !
+       ! In some cases l_elel_corr is switched on by default
+       !
+       if (.not.l_elel_corr) then
+         l_elel_corr=(l_gw0.or.l_life.or.l_eval_collisions).and.(.not.l_elph_corr.and..not.l_elphoton_corr)
+       endif
        !
        ! Check if this runlevel is allowed in the 
        ! present configuration
        !
-       if (i1==1) call barriers( )
+       if (i1==1) call init_barriers( )
        !
      enddo
      !
@@ -767,10 +877,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      l_rpa_IP     = trim(Chi_mode)=='IP'.or.trim(BSK_mode)=='IP'
      l_td_hartree = trim(Chi_mode)=='Hartree'.or.trim(BSK_mode)=='Hartree'
-     l_alda_fxc   = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
-     l_lrc_fxc    = trim(Chi_mode)=='LRC' 
-     l_bs_fxc     = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
-     l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
+     if (l_tddft) then
+       l_alda_fxc = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
+       l_lrc_fxc  = trim(Chi_mode)=='LRC' 
+       l_bs_fxc   = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
+     endif
      l_td_hf      = trim(BSK_mode)=="HF"
      l_W_eh       = trim(BSK_mode)=="SEX"
      !
@@ -789,7 +900,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    end subroutine X_var_setup
    !
-   subroutine varsetup1 
+   subroutine before_infile_write_setup 
      !
      ! After DB reading/stdin logicals
      ! I propose here values for the input file
@@ -797,7 +908,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! If optics with BS FXC I need to dump on X(3) the
      ! Fxc specs
      !
-     if (all((/l_bs_fxc,l_optics,l_chi.or.l_bse,ioBS_Fxc_err==0/))) then
+     if (all((/l_bs_fxc,l_optics,l_chi.or.l_bse,io_BS_Fxc_err==0/))) then
        QP_ctl_E(1,:,:)=QP_ctl_E(2,:,:) 
        X(3)%ib= BS_bands
        X(3)%ehe=BS_eh_en
@@ -809,16 +920,19 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
      X(3)%iq = 1  ! 2 components
      X(3)%ordering = 'c'
-     Xw(3)%n = 101 ! 2 components
+     Xw(3)%n_freqs = 101 
 #endif 
 #if defined  _ELPH 
-     if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
+     if (.not.l_elel_corr.and..not.l_elph_corr) l_elel_corr=.true.
      elph_nDBs_used=elph_nDBs
 #endif
-     if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
+     if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
+     !
      if (l_ppa)    call initactivate(1,'em1d')
+     if (l_gw0.and..not.l_ppa.and..not.l_cohsex.and..not.&
+&        l_HF_and_locXC.and..not.l_elph_corr.and..not.l_elphoton_corr)  &
+&                  call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
-     if (l_W_eh)   call initactivate(1,'em1s')
      if (l_bsk)    call initactivate(1,'optics')
      if (l_bsk)    call initactivate(1,'bse')
      if (l_bss)    call initactivate(1,'optics')
@@ -827,27 +941,30 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bs_fxc) BSS_mode="t"
      if (l_bse) then
        !
+       if (l_alda_fxc) BS_res_mode='x'     
+       !
        if (io_X_err(2)==0) then
-         if (ioBS_err/=0) BS_n_g_W=X(2)%ng
+         if (io_BS_err/=0) BS_n_g_W=X(2)%ng
        else if (io_X_err(4)==0) then
-         if (ioBS_err/=0) BS_n_g_W=X(4)%ng
+         if (io_BS_err/=0) BS_n_g_W=X(4)%ng
          call initactivate(1,'em1d ppa')
        endif
        !
      endif
      !
+#if defined _OPENMP
+     if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
+       n_threads_K=n_threads
+       n_threads_X=n_threads
+       n_threads_DIP=n_threads
+     endif
+     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) n_threads_SE=n_threads
+     if (l_eval_collisions.or.l_real_time)    n_threads_RT=n_threads
+#endif
      !
-   end subroutine varsetup1 
+   end subroutine before_infile_write_setup 
    !
    subroutine varsetup2 
-     !
-     ! After infile reading. Immediately before infile writing
-     ! CAREFUL! Any input file value is overwritten here !
-     !
-     Xw(2)%n(2)=Xw(2)%n(1)
-     Xw(4)%n(2)=Xw(4)%n(1)
-     Xw(3)%n(2)=Xw(3)%n(1)
-     Xw(1)%n(2)=Xw(1)%n(1)
      !
      ! q0 renormalization
      !
@@ -867,25 +984,25 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (l_bs_fxc)                   BS_res_mode='c'
        if (l_td_hf)                    BS_res_mode='xcd'
        if (l_W_eh)                     BS_res_mode='xc'
-       if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
+       if (index(BSE_mode,'coupling')>0) BS_cpl_mode=trim(BS_res_mode)
        !
        if(l_W_eh) then
          call parser('WehDiag',l_W_eh_diag)
-         call parser('WehCpl' ,l_W_eh_cpl)
+         l_W_eh_cpl=trim(BSE_mode)=='xc_coupling'
          if (l_W_eh_diag)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
          if (.not.l_W_eh_cpl)          BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
        endif
      endif
      !
-     ! When running BSE from input file l_bse is FALSE in varsetup1.
+     ! When running BSE from input file l_bse is FALSE in before_infile_write_setup.
      ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
      !
-     if (l_bse.and.io_X_err(2)/=0.and.io_X_err(4)==0.and..not.l_em1s) then
+     if (l_bse.and.io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
        call X_duplicate(X(4),X(2))
        call W_duplicate(Xw(4),Xw(2))
      endif
-#if !defined _ELPH 
-     if (l_gw0) l_el_corr=.true.
+#if !defined _ELPH  && !defined _QED
+     if (l_gw0) l_elel_corr=.true.
 #endif
      !
      !
@@ -894,9 +1011,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine read_command_line(rstr,init_) 
      !
      use com,    ONLY:error
+     use LIVE_t, ONLY:USER_wall_time_string,GET_user_WALL_time
      use stderr, ONLY:string_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
-&                     V_real_time,V_all,rstatus
+&                     V_real_time,V_all
      implicit none
      integer     :: init_
      character(*):: rstr
@@ -964,6 +1082,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          ! V_general=6
          ! V_resp=7
          ! V_real_time=8
+         ! V_parallel=9
          ! V_all=99
          !
          if ( trim(rstr_piece(i1)) == 'infver' ) then
@@ -984,12 +1103,22 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
                infile_verbosity=V_resp
              case ('rt')
                infile_verbosity=V_real_time
+             case ('par')
+               infile_verbosity=V_parallel
              case ('all')
                infile_verbosity=V_all
            end select
          endif
          !
-         if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' ) Chi_mode='hartree'
+         if ( trim(rstr_piece(i1)) == 'wallt' ) then
+           USER_wall_time_string=trim(rstr_piece(i1+1))
+           if (i3==1) call GET_user_WALL_time()
+         endif
+         !
+         if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&
+&             runlevel_is_on('em1s')         .or.  runlevel_is_on('em1d')  .or. &
+&             runlevel_is_on('cohsex')  &
+&           ) Chi_mode='hartree'
          !
          ! BSE/LLR
          !
@@ -1013,7 +1142,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Approximation used for the BSE/LLR kernel
          !
-         if ( trim(rstr_piece(i1)) == 'kernel' )  then
+         if ( i3==2 .and. trim(rstr_piece(i1)) == 'kernel' )  then
            !
            ! if the optics option is not present define defaults
            ! since kernel does not correspond to a runlevel, set 
@@ -1080,11 +1209,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            QP_solver=trim(rstr_piece(i1+1))
            if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
 &              trim(QP_solver)/='g') QP_solver='n'
-#if !defined  _ELPH 
-           l_el_corr=.true.
+#if !defined  _ELPH && !defined _QED
+           l_elel_corr=.true.
 #endif
            !
          endif
+         !
+         ! Lifetimes
+         !
+         if ( trim(rstr_piece(i1)) == 'life' )  call initactivate(1,'em1d')
          !
          ! GW approximation 
          !
@@ -1115,19 +1248,23 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          ! Sc / NEGF
          !
          !
-         ! ELPH
+#if defined  _ELPH || defined _QED
          !
-#if defined  _ELPH 
+         ! ELPH/QED
+         !
          if ( trim(rstr_piece(i1)) == 'corrtp' ) then
-           if ( trim(rstr_piece(i1+1)) == 'e') l_el_corr=.true.
-           if ( trim(rstr_piece(i1+1)) == 'p') l_ph_corr=.true.
-           if ( trim(rstr_piece(i1+1)) == 'b') then
-             l_el_corr=.true.
-             l_ph_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'p') l_elph_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'h') l_elphoton_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'a') then
+             l_elel_corr=.true.
+             l_elph_corr=.true.
+             l_elphoton_corr=.true.
            endif
-           if (.not.l_ph_corr.and..not.l_el_corr) l_el_corr=.true.
-           if (l_ph_corr) call initactivate(1,'el_ph')
-           if (l_el_corr) call initactivate(1,'el_el')
+           if (.not.l_elph_corr.and..not.l_elel_corr.and..not.l_elphoton_corr) l_elel_corr=.true.
+           if (l_elph_corr)     call initactivate(1,'el_ph_corr')
+           if (l_elel_corr)     call initactivate(1,'el_el_corr')
+           if (l_elphoton_corr) call initactivate(1,'el_photon_corr')
          endif
 #endif
          !

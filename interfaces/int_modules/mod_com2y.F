@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -22,6 +24,7 @@
 module mod_com2y
  ! 
  use pars,          ONLY:SP,PI,lchlen,schlen,DP
+ !
  implicit none
  !
  logical :: use_SI_instead_of_TR
@@ -30,7 +33,7 @@ module mod_com2y
  logical :: artificial_spin_pol
  logical :: verboseIO
  !
- integer :: ng_vec_abinit
+ integer :: ng_vec_abinit,wf_nb_io_user
  !
  real(SP):: alat_mult_factor
  !
@@ -38,7 +41,10 @@ module mod_com2y
    !
    subroutine interface_presets(in_string)
      !
-     use stderr, ONLY:string_split
+     use stderr,     ONLY:string_split
+     !
+     implicit none
+     !
      character(*)   :: in_string
      !
      character(schlen)::str_piece(100)
@@ -55,8 +61,10 @@ module mod_com2y
      verboseIO            =index(in_string,'verb')>0
      !
      alat_mult_factor=1.
+     wf_nb_io_user=0
      do i1=1,100
        if ( trim(str_piece(i1))=='alat_f')  read(str_piece(i1+1),*) alat_mult_factor
+       if ( trim(str_piece(i1))=='fragnb')  read(str_piece(i1+1),*) wf_nb_io_user
      enddo
      !
    end subroutine
@@ -68,6 +76,8 @@ module mod_com2y
      use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,inv_index,&
 &                        atoms_spatial_invertion,i_space_inv,alat
      use R_lattice, ONLY:b,rl_sop
+     !
+     implicit none
      !
      integer :: nsym_
      integer :: int_sop(3,3,nsym_) ! Symmetries in RLU
@@ -230,7 +240,9 @@ module mod_com2y
      use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng,real_wavefunctions
      use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL,xc_string
      use vec_operate,           ONLY : v_is_zero
+     !
      implicit none
+     !
      type(levels),     intent(in)   :: en     ! Energies
      type(bz_samp),    intent(in)   :: k      ! K/Q points
      ! 

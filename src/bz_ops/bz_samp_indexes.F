@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -37,23 +39,25 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
- use pars,           ONLY:SP,schlen,lchlen,IP
- use drivers,        ONLY:l_bse
+ use pars,           ONLY:SP,lchlen,IP
+ use drivers,        ONLY:l_bse,l_elel_scatt,l_setup
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error,warning
  use parallel_m,     ONLY:PP_redux_wait
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
- use R_lattice,      ONLY:b,d3q_factor,RL_vol,g_vec,ng_vec,&
-&                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
+ use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,qp_states_k,&
+&                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
-&                         q_sstar
+&                         q_sstar,coll_scattering,Xk_impose_minus_q,q_source
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use zeros,          ONLY:G_iku_zero
  use parser_m,       ONLY:parser
+#if defined _ELPH
+ use ELPH,           ONLY:elph_use_q_grid
+#endif
  !
  implicit none
  type(bz_samp)::k,Xk,q
@@ -62,10 +66,15 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  integer, external :: G_index
  !
- integer :: io_db,io_err,ioQINDX
- integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
+ character(lchlen) :: string
+ integer :: io_db,io_err,io_QINDX
+ integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3)
- logical :: connected_grids,user_defined_qpts,gamma_point_only,impose_minus_q
+ logical :: connected_grids,user_defined_qpts,gamma_point_only,&
+&           Xk_impose_minus_q_local
+#if defined _ELPH
+ logical :: bse_setup_scatt
+#endif
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
  !
  call section('*','Transferred momenta grid')
@@ -73,14 +82,20 @@ subroutine bz_samp_indexes(k,Xk,q)
  user_defined_qpts=.false.
  gamma_point_only=.false.
  !
- call parser('MinusQ',impose_minus_q)
+ call parser('MinusQ',Xk_impose_minus_q_local)
+ if (Xk_impose_minus_q_local.or.l_setup) Xk_impose_minus_q=Xk_impose_minus_q_local 
  !
- if (.not.bse_scattering) bse_scattering=l_bse
+ if (.not.bse_scattering ) bse_scattering=l_bse
+ if (.not.coll_scattering) coll_scattering=l_elel_scatt
+#if defined _ELPH
+ call parser('BSEscatt',bse_setup_scatt)
+ if (.not.bse_scattering ) bse_scattering=elph_use_q_grid.or.bse_setup_scatt
+#endif
  !
  q%description='q'
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=io_db)
- io_err=ioQINDX(Xk,q,io_db)
+ io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)
    call Q_report('iku')
@@ -112,8 +127,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  if (abs(m3det(k_b_m1))>1.E-7) then
    call m3inv(M=k_b_m1)
    !
-   if (impose_minus_q)      call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))
-   if (.not.impose_minus_q) call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
+   if (Xk_impose_minus_q)      call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))
+   if (.not.Xk_impose_minus_q) call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
    !
    ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
    !
@@ -123,7 +138,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  endif
  !
  if (Xk_grid_is_uniform) then
- !---------------------------
    !
    q%nbz=Xk%nbz
    !
@@ -134,25 +148,25 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
      !
-     if (impose_minus_q)      call c2a(v_in=-v1,v_out=q%ptbz(i1,:),mode='ka2i')
-     if (.not.impose_minus_q) call c2a(v_in=v1,v_out=q%ptbz(i1,:),mode='ka2i')
+     if (Xk_impose_minus_q)      call c2a(v_in=-v1,v_out=q%ptbz(i1,:),mode='ka2i')
+     if (.not.Xk_impose_minus_q) call c2a(v_in=v1,v_out=q%ptbz(i1,:),mode='ka2i')
      !
    enddo
    if (.not.allocated(q_pt)) then
-     call k_reduce(q,.true.)
+     call k_reduce(q,.TRUE.)
      deallocate(q%ptbz)
    else
      q%nibz=nqibz
      allocate(q%pt(q%nibz,3))
-     if (impose_minus_q) q_pt=-q_pt
-     q%pt=q_pt
-     call msg('rsn','[RL indx] User defined Q-grid.')
+     if (Xk_impose_minus_q) q_pt=-q_pt
+     q%pt=q_pt(:q%nibz,:)
+     call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
      user_defined_qpts=.true.
    endif
    !
    ! q_ptbz in rlu for qindx_*.
    ! At difference with the Q list used in evaluating the map before
-   ! here I need top recalculate the map so that it correctly points
+   ! here I need to recalculate the map so that it correctly points
    ! to the q%ptbz obtaine trought q_expand
    !
    call k_expand(q)
@@ -175,8 +189,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      ! segmentation fault in the BSE. 
      !
      Xk_grid_is_uniform=.false.
-     !
-     if (.not.Xk_grid_is_uniform) bse_scattering=.false.
+     bse_scattering=.false.
      gamma_point_only=.true.
    else
      call define_q_map(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
@@ -187,6 +200,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    call msg('nrsn','[RL indx] X grid is not uniform.  Gamma point only.')
    call q_shadows(.true.)
    gamma_point_only=.true.
+   bse_scattering=.false.
    !
  endif
  !
@@ -202,11 +216,15 @@ subroutine bz_samp_indexes(k,Xk,q)
    goto 1
  endif
  !
- if (.not.bse_scattering) call msg('nr',':: Indices: polarization function')
- if (     bse_scattering) call msg('nr',':: Indices: polarization function + BSE')
+ string=':: Indices: polarization function'
+ if ( bse_scattering) string=trim(string)//' + BSE'
+ if (coll_scattering) string=trim(string)//' + COLL'
+ call msg('nr',trim(string))
+ !
  qindx_X=0
  qindx_S=0
- if (bse_scattering) qindx_B=0
+ if ( bse_scattering) qindx_B=0
+ if (coll_scattering) qindx_C=0
  !
  ! X indexes
  !
@@ -218,24 +236,24 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call live_timing('X indexes',Xk%nbz,SERIAL=.true.)
  !
- do i1=1,Xk%nbz
+ do ikbz=1,Xk%nbz
    !
-   do i2=1,Xk%nbz
-     v1=matmul(k_b_m1,Xk%ptbz(i1,:)-Xk%ptbz(i2,:)) ! K_i1-K_i2= Q + Go
+   do ikbz_p=1,Xk%nbz
+     v1=matmul(k_b_m1,Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)) ! K-K_p= Q + Go
      iv1=nint(v1)
      call k_grid_shift(iv1)
-     i3=q_map(iv1(1),iv1(2),iv1(3))
-     iqibz=q%sstar(i3,1)
-     iqs=q%sstar(i3,2)
+     iqbz=q_map(iv1(1),iv1(2),iv1(3))
+     iqibz=q%sstar(iqbz,1)
+     iqs=q%sstar(iqbz,2)
      if (iqs/=1.and..not.bse_scattering) cycle
-     if (iqs==1) qindx_X(iqibz,i1,1)=i2
-     if (bse_scattering) qindx_B(i1,i2,1)=i3
-     v1=Xk%ptbz(i1,:)-Xk%ptbz(i2,:)-q%ptbz(i3,:) 
+     if (iqs==1) qindx_X(iqibz,ikbz,1)=ikbz_p
+     if (bse_scattering) qindx_B(ikbz,ikbz_p,1)=iqbz
+     v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
      !
-     if (iqs==1) qindx_X(iqibz,i1,2)=G_index(v1)
-     if (bse_scattering) qindx_B(i1,i2,2)=G_index(v1)
-     !     
+     if (iqs==1) qindx_X(iqibz,ikbz,2)=G_index(v1)
+     if (bse_scattering) qindx_B(ikbz,ikbz_p,2)=G_index(v1)
+     !
    enddo
    !
    call live_timing(steps=1)
@@ -245,19 +263,35 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  if (any(qindx_X==0)) call error('Error in Q-grid search [qindx_X]')
  !
- call msg('rn',':: Indices: Self-Energy')
- call live_timing('SE indexes',qp_states_k(2)-qp_states_k(1)+1,SERIAL=.true.)
+ if(coll_scattering) then
+   call msg('rn',':: Indices: Scattering and Self-Energy')
+   call live_timing('SSE indexes',k%nbz,SERIAL=.true.)
+ else
+   call msg('rn',':: Indices: Self-Energy')
+   call live_timing('SE indexes',qp_states_k(2)-qp_states_k(1)+1,SERIAL=.true.)
+ endif
  !
  call k_ibz2bz(k,'a',.false.)
  !
  connected_grids=.true.
  local_zero=1.E-4
  !
- do i1=qp_states_k(1),qp_states_k(2),1
-   ikbz=sum(k%nstar(:i1-1))+1
-   do i2=1,k%nbz
+ ! qindx_S(ik,iqbz,1)=okbz
+ ! qindx_S(ik,iqbz,2)=iGo
+ !
+ ! qindx_C(ikbz,iqbz,1)=okbz
+ ! qindx_C(ikbz,iqbz,2)=iGo
+ !
+ do ikbz=1,Xk%nbz
+   !
+   ikibz=k%sstar(ikbz,1)
+   iks  =k%sstar(ikbz,2)
+   !
+   if (iks/=1.and..not.coll_scattering) cycle
+   !
+   do ikbz_p=1,k%nbz
      !
-     v1=matmul(k_b_m1,k%ptbz(ikbz,:)-k%ptbz(i2,:))
+     v1=matmul(k_b_m1,k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:))
      iv1=nint(v1)
      !
      if (.not.v_is_zero(v1-real(iv1),zero_=local_zero)) connected_grids=.false.
@@ -265,13 +299,16 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      call k_grid_shift(iv1)
      iqbz=q_map(iv1(1),iv1(2),iv1(3))
-     qindx_S(i1,iqbz,1)=i2
-     v1=k%ptbz(ikbz,:)-k%ptbz(i2,:)-q%ptbz(iqbz,:)
+     !
+     if (iks==1) qindx_S(ikibz,iqbz,1)=ikbz_p
+     if (coll_scattering) qindx_C(ikbz,iqbz,1)=ikbz_p
+     v1=k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
-     qindx_S(i1,iqbz,2)=G_index(v1)
-   enddo 
+     if (iks==1) qindx_S(ikibz,iqbz,2)=G_index(v1)
+     if (coll_scattering) qindx_C(ikbz,iqbz,2)=G_index(v1)
+   enddo
    !
-   if (any(qindx_S(i1,:,:)==0)) call error('Null transition detected [qindx_S]')
+   if (any(qindx_S(ikibz,:,:)==0)) call error('Null transition detected [qindx_S]')
    !
    call live_timing(steps=1)
    !
@@ -279,17 +316,22 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call live_timing()
  !
+ ! For some reason I have seen CPU's loading the DB while/before it is actually written.
+ ! This is avoided here by using the PP_redux_wait call.
+ !
+ call PP_redux_wait()
+ !
  if (.not.connected_grids) call msg('rsn','[RL indx] X & Total k-grids are not connected')
  !
 1 call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
- io_err=ioQINDX(Xk,q,io_db)
+ io_err=io_QINDX(Xk,q,io_db)
  !
  !CLEAN
  !
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
  if (Xk_grid_is_uniform) deallocate(q%ptbz)
- call PP_redux_wait
+ call PP_redux_wait()
  !
  contains 
    !
@@ -297,7 +339,6 @@ subroutine bz_samp_indexes(k,Xk,q)
      character(3)     ::kind
      character(lchlen)::ch(4)
      real(SP)         ::q_cc(3)
-     logical          ::carterian
      if(trim(kind)=='iku') then
        call msg('nr','IBZ Q-points :',q%nibz)
        call msg('rn','BZ  Q-points :',q%nbz)
@@ -369,19 +410,19 @@ subroutine bz_samp_indexes(k,Xk,q)
      ! using Gamma point only definition
      !
      if (force_gamma_only) then
-       if (allocated(k_pt)) deallocate(k_pt)
-       if (allocated(q_pt)) deallocate(q_pt)
-       if (allocated(q_norm)) deallocate(q_norm)
+       if (allocated(k_pt))    deallocate(k_pt)
+       if (allocated(q_pt))    deallocate(q_pt)
+       if (allocated(q_norm))  deallocate(q_norm)
        if (allocated(q_sstar)) deallocate(q_sstar)
        if (associated(q%pt)) then
          deallocate(q%pt)      
          nullify(q%pt)
        endif
        call mem_est("k_pt q_pt q_norm q_sstar q-pt")
-       allocate(q%pt(1,3),q_pt(1,3),k_pt(1,3),q_norm(1),q_sstar(1,2)) 
+       allocate(q%pt(1,3),q_pt(1,3),k_pt(k%nibz,3),q_norm(1),q_sstar(1,2)) 
        q%pt=0.
        q_pt=0.
-       k_pt=0.
+       k_pt=k%pt
        q_norm=q0_def_norm
        nqbz=1
        nqibz=1
@@ -395,10 +436,13 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      if (.not.allocated(q_pt)) then
        allocate(q_pt(q%nibz,3))
-       allocate(k_pt(k%nibz,3))
        q_pt=q%pt
+       call mem_est("q_pt",(/q%nibz*3/),(/SP/))
+     endif
+     if (.not.allocated(k_pt)) then
+       allocate(k_pt(k%nibz,3))
        k_pt=k%pt
-       call mem_est("q_pt k_pt",(/q%nibz*3,k%nibz*3/),(/SP,SP/))
+       call mem_est("q_pt",(/k%nibz*3/),(/SP/))
      endif
      if (.not.allocated(q_norm)) then
        allocate(q_norm(q%nibz))

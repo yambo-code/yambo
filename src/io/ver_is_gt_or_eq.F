@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -32,7 +34,7 @@ logical function ver_is_gt_or_eq(ID,version,revision)
  ver_is_gt_or_eq=.false.
  !
  if (ID>0) version2comp =io_code_version(ID,:)
- if (ID>0) revision2comp=io_code_revision(ID)
+ if (ID>0) revision2comp=io_code_revision(ID,1)
  if (ID<0) version2comp =code_version
  if (ID<0) revision2comp=code_revision
  !

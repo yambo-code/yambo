@@ -1,6 +1,8 @@
 /*
-  Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+         Copyright (C) 2000-2015 the YAMBO team
                http://www.yambo-code.org
+ 
+  Authors (see AUTHORS file for details): AM
   
   This file is distributed under the terms of the GNU 
   General Public License. You can redistribute it and/or 
@@ -50,7 +52,7 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _ELPH || _SC  || _RT || _DISTRIBUTED 
+#if defined _yambo  || _ELPH || _SC  || _RT || _QED
  #define _YAMBO_MAIN
 #endif
 #if defined _MAGNETIC || _KERR || _SURF
@@ -58,6 +60,9 @@ typedef struct
 #endif
 #if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_SURF
  #define _YPP_MAIN
+#endif
+#if defined _ydb  
+ #define _YDB_MAIN
 #endif
 /* 
  Includes (II)
@@ -79,6 +84,9 @@ typedef struct
 #endif
 #if defined _e2y
  #include "e2y.h"
+#endif
+#if defined _ydb
+ #include "ydb.h"
 #endif
 /* 
  Declarations 
@@ -108,8 +116,12 @@ int main(int argc, char *argv[])
  int mpi_init=0;
  int iv[4];
  double rv[4];
- char *cv[4];
+ char *cv[4]; 
  char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL,*com_dir=NULL;
+#if defined _ydb
+ char *desc=NULL,*str_no_null=NULL,*vers=NULL,*runlevels=NULL,*fname=NULL;
+ int  lstrings=200;
+#endif
  extern int optind;
  extern int guess_winsize();
  char rnstr1[500]={'\0'},rnstr2[500]={'\0'},edit_line[100]={'\0'};
@@ -121,8 +133,14 @@ int main(int argc, char *argv[])
  strcpy(inf,tool);
  strcat(inf,".in");
  iif=strlen(inf);
- id  = (char *) malloc(2);
- od  = (char *) malloc(2);
+#if defined _ydb
+ desc     = (char *) malloc(lstrings);
+ vers     = (char *) malloc(lstrings);
+ runlevels= (char *) malloc(lstrings);
+ fname    = (char *) malloc(lstrings);
+#endif
+ id       = (char *) malloc(2);
+ od       = (char *) malloc(2);
  com_dir  = (char *) malloc(2);
  js  = (char *) malloc(2);
  strcpy(od,".");
@@ -309,6 +327,38 @@ int main(int argc, char *argv[])
  */
  F90_FUNC(e2y_i,E2Y_I)(
          &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
+#endif
+#if defined _ydb 
+ /* 
+   Running the Fortran ydb driver 
+ ===========================================================================
+ */
+ F90_FUNC(ydb_i,YDB_I)(&lni,rnstr2,&lstrings,desc,vers,runlevels,fname,&iif);
+ if (iif > 0) { 
+  str_no_null = strtok (desc," ");
+  strcpy(edit_line,editor);
+  strncat(edit_line,desc,strlen(desc));
+  if(strstr(editor,"none ")==0) { system(edit_line); };
+  if (iif > 1) { 
+   str_no_null = strtok (runlevels," ");
+   strcpy(edit_line,editor);
+   strncat(edit_line,runlevels,strlen(runlevels));
+   if(strstr(editor,"none ")==0) { system(edit_line); };
+  }
+  if (iif == 3) { 
+   str_no_null = strtok (vers," ");
+   strcpy(edit_line,editor);
+   strncat(edit_line,vers,strlen(vers));
+   if(strstr(editor,"none ")==0) { system(edit_line); };
+  }
+  if (iif == 4) { 
+   str_no_null = strtok (fname," ");
+   strcpy(edit_line,editor);
+   strncat(edit_line,fname,strlen(fname));
+   if(strstr(editor,"none ")==0) { system(edit_line); };
+  }
+ };
+ if (iif == -1) {usage(1);exit(0);};
 #endif
  /* 
    INPUT FILE

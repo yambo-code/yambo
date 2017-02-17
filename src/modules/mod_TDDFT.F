@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -41,7 +43,7 @@ module TDDFT
  !
  interface 
    !
-   integer function ioBS_Fxc(iq,W,ID,X)
+   integer function io_BS_Fxc(iq,W,ID,X)
      use frequency,  ONLY:w_samp
      use X_m,        ONLY:X_t
      integer            ::ID,iq

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Hogan and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,7 +28,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   use eels_kinematics
   use eels_detector
   use model_loss_function
-  use timing,              ONLY:live_timing
+  use LIVE_t,              ONLY:live_timing
   implicit none
   integer,      intent(in) :: nw
   real(SP),     intent(in) :: hw(nw)

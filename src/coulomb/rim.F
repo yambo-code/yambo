@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,7 +28,7 @@ subroutine rim()
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
@@ -39,14 +41,13 @@ subroutine rim()
  !
  type(PP_indexes)::px
  integer   :: iq
- real(SP)  :: em1_anis(3),G_sph_radii,anisotropy 
+ real(SP)  :: em1_anis(3),G_sph_radii
  !
  ! Random generator
  !
  real(SP)  :: first_neighbour(26,3)
  integer   :: N_out,N_in,N_out_G,rep_factor,inn1,inn2,inn3,ic
  real(SP)  :: v1(3),v2(3),qr(RIM_n_rand_pts,3),v1_norm(2)
- real(DP)  :: rr
  character(12)      :: ch(3)
  integer            :: iseed(8)
  real(DP), external :: dlaran

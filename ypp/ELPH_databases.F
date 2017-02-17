@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,8 +34,8 @@ integer function ELPH_databases(k,E,q)
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
  use YPP,                 ONLY:ph_freqs_file,l_gkkp_expand,ph_modes_file
- use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY
- use timing,              ONLY:live_timing
+ use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
+ use LIVE_t,              ONLY:live_timing
  implicit none
  type(bz_samp) ::k,q
  type(levels)  ::E
@@ -48,7 +50,7 @@ integer function ELPH_databases(k,E,q)
  !... I/O 
  !
  integer            ::idb,io_err,io_elph_err,ID,nDBs_disk
- integer, external  ::ioELPH 
+ integer, external  ::io_ELPH 
  logical            ::use_ext_ph_freqs,use_ext_ph_modes,abinit_DB
  character(schlen)  ::db_name
  !
@@ -121,6 +123,11 @@ integer function ELPH_databases(k,E,q)
    !
  endif
  !
+ ! Define elph_nk_bz before the ioELPH call to avoid a  io_elph_err<0 here and 
+ ! >0 after elph_nk_bz is defined
+ !
+ elph_nk_bz=k%nbz
+ !
  ! KBZ + SYM table
  !
  allocate(ikbz_is_table(k%nbz,nsym))
@@ -129,7 +136,7 @@ integer function ELPH_databases(k,E,q)
  ! Check if DB is already done
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_elph_err=ioELPH(ID,trim(db_name))
+ io_elph_err=io_ELPH(ID,trim(db_name))
  !
  if (io_elph_err==0) return
  !
@@ -154,7 +161,6 @@ integer function ELPH_databases(k,E,q)
  ! Keep a copy of k-points to be used by _RT to rotate the unperturbed gkkp m.e.
  !
  ph_kpt_bz=k%ptbz
- elph_nk_bz=k%nbz
  !
  ! ... rebuilding of ph q-points table
  !
@@ -176,10 +182,6 @@ integer function ELPH_databases(k,E,q)
  ! phonon frequencies read from the s.dbph* files. In this way I can, for example, 
  ! use ph freqs obtained via interpolation (q2r, matdyn ...).
  ! 
- if (use_ext_ph_freqs) then
-   open(unit=99,file=trim(ph_freqs_file))
-   read(99,*)
- endif
  if (use_ext_ph_modes) then
    open(unit=98,file=trim(ph_modes_file))
    read(98,*)
@@ -216,7 +218,7 @@ integer function ELPH_databases(k,E,q)
        !
        call ELPH_gkkp_expand(iq_bz,iq_s,k)
        !
-       io_elph_err=ioELPH(ID,trim(db_name))
+       io_elph_err=io_ELPH(ID,trim(db_name))
        !
      enddo
      !
@@ -234,7 +236,7 @@ integer function ELPH_databases(k,E,q)
      if (idb==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
      if (idb/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
      !
-     io_elph_err=ioELPH(ID,trim(db_name))
+     io_elph_err=io_ELPH(ID,trim(db_name))
      !
    endif
    !
@@ -324,6 +326,7 @@ integer function ELPH_databases(k,E,q)
    !
    ! HEADER 
    !
+   K_DP=0._DP
    read (io_unit(ID)) ph_modes,elph_nk,elph_nb
    read (io_unit(ID)) alat_DP,Q_DP,K_DP(:,:elph_nk) 
    !
@@ -343,22 +346,27 @@ integer function ELPH_databases(k,E,q)
    else
      if (idb_==-1) call msg("l","[PHONON] ...")
      !
-     ! In PW Q/K points are in cartesian coordinates (units of 2 PI /alat_DP)  
+     ! In PW Q/K points are in units of 2 PI/alat_DP
      !
      !  K_pw=K_cc*alat_DP/2/pi
      !  K_yambo=K_cc*alat(:)/2/pi=K_pw*alat(:)/alat_DP
      !
      ph_q_disk(:)=Q_DP(:)/alat_DP*alat(:)
+     !
      forall (i1=1:elph_nk) K_(:,i1)=K_DP(:,i1)/alat_DP*alat(:)
      !
    endif
    !
    if (idb_<0) then
+     !
      iq_check=0
+     !
      do i1=1,nqibz
        if (v_is_zero(ph_q_disk(:)+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
      enddo
+     !
      if (iq_check==0) elph_use_q_grid=.false.
+     !
      ELPH_databases_io=iq_check
      !
      ! When elph_use_q_grid = .false. idb_ is the q-pt counter
@@ -417,12 +425,19 @@ integer function ELPH_databases(k,E,q)
      goto 1
    endif
    if (use_ext_ph_freqs) then
+     open(unit=99,file=trim(ph_freqs_file))
+     read(99,*)
+     do i1=1,(idb-1)*(1+ceiling(real(ph_modes)/6.))
+       read(99,*) ph_q 
+     enddo
      read(99,*) ph_q 
-     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
+     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero).and.&
+&        .not.v_is_zero(ph_q(:)+real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
      do i1=1,ph_modes,6
        read(99,*) ph_freqs_sq(iq,i1:min(i1+5,ph_modes))
      enddo
      ph_freqs_sq(iq,:)=(abs(ph_freqs_sq(iq,:))/HA2CMm1)**2.
+     close(99)
    else
      do il=1,ph_modes
        ph_freqs_sq(iq,il)=max( real(ph_freqs_sq_disk(il)),0._SP)
@@ -431,7 +446,8 @@ integer function ELPH_databases(k,E,q)
    endif
    if (use_ext_ph_modes) then
      read(98, *) ws_ch(1),ws_ch(2),ph_q 
-     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_modes_file))
+     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero).and.&
+&        .not.v_is_zero(ph_q(:)+real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_modes_file))
      read(98,*)
      do i1=1,ph_modes
        read(98,*) 
@@ -502,13 +518,14 @@ integer function ELPH_databases(k,E,q)
      if (idb==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
      !
      if (.not.abinit_DB) then
+       !
        read (io_unit(ID)) Ek(:elph_nb)
        read (io_unit(ID)) Ek_p_q(:elph_nb)
        !
        ! To allign correctly the E(k+q) energies I use the shift between
        ! the ABSOLUTE YAMBO energy levels at k and the GS ones.
        !
-       GS_E_k_shift=real(Ek(1)/2._DP)-(E%E(1,k%sstar(k2k_tab(ik),1),1)+E%Efermi(1))
+       GS_E_k_shift=real(Ek(1)/2._DP)-(E%E(1,k%sstar(k2k_tab(ik),1),1)+E%E_Fermi)
        !
        E_k_plus_q(:,k2k_tab(ik),1)=real(Ek_p_q(:elph_nb)/2._DP)-GS_E_k_shift
        !
@@ -622,7 +639,7 @@ integer function ELPH_databases(k,E,q)
    use pars,           ONLY:SP
    use vec_operate,    ONLY:c2a
    use D_lattice,      ONLY:nsym,sop_tab
-   use R_lattice,      ONLY:rl_sop,nkbz,ik_is_table
+   use R_lattice,      ONLY:rl_sop,nkbz
    implicit none
    integer :: ikbz_is_table(nkbz,nsym)
    integer :: i1,is,ir,ikibz,i2
@@ -631,22 +648,22 @@ integer function ELPH_databases(k,E,q)
    !
    ! First I find the action of all the syms on the IBZ kpts
    !
-   ! R_is k_ibz = k_{ik_is_table(k_ibz,is)}
+   ! R_is k_ibz = k_{s_table(k_ibz,is)}
    !
-   ! where ik_is_table(k_ibz,is) is a BZ index
+   ! where s_table(k_ibz,is) is a BZ index
    !
-   call k_sym2sym(k,'k')
+   call k_build_up_BZ_tables(k)
    call k_ibz2bz(k,'i',.false.) ! in k_sym2sym there is the k_ibz2bz(k,'d',...) call
    !
-   ! To extend ik_is_table to the BZ I simply have that
+   ! To extend s_table to the BZ I simply have that
    !
-   ! R_is k_bz = R_is S k_ibz = ik_is_table(k_ibz,sop_tab(R_is,S))
+   ! R_is k_bz = R_is S k_ibz = s_table(k_ibz,sop_tab(R_is,S))
    !
    do i1=1,k%nbz
      ikibz=k%sstar(i1,1)
      ir   =k%sstar(i1,2)
      do is=1,nsym
-       ikbz_is_table(i1,is)=ik_is_table(ikibz,sop_tab(is,ir))
+       ikbz_is_table(i1,is)=k%k_table(ikibz,sop_tab(is,ir))
      enddo
    enddo
    !

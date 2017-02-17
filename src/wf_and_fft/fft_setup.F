@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -29,16 +31,22 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx
  use wave_func,      ONLY:wf_ng
+#if defined _FFTQE
+ use fft_base,       ONLY:dffts
+#endif
  implicit none
  integer :: iG_max,iGo_max
  logical :: ONLY_SIZE
+#if defined _FFTQE
+ integer, external :: fft_setmap
+#endif
  ! 
  ! Work Space
  !
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
  real(SP) :: v1(3),M1(3,3),M2(3,3)
  !
- space_inv=reshape((/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./),(/3,3/))
+ space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
@@ -56,14 +64,22 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  if (.not.ONLY_SIZE) fft_g_table=0
  do while(.true.)
    !
+#if defined _FFTQE
+   if (i4>0.and..not.ONLY_SIZE) call fft_desc_init(fft_dim,iGo_max,dffts)
+#endif
+   !
    do i1=1,min(max(iG_max,wf_ng),ng_vec)
      do i2=1,iGo_max
        call c2a(b,g_vec(i1,:)-g_vec(i2,:),v1,'ki2a')
        iv=nint(v1)
        if (i2==1.or.i1<=iG_max) forall(i3=1:3) ln(i3)=max(ln(i3),iv(i3))
+#if defined _FFTQE
+       if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=fft_setmap(iv,fft_dim)
+#else
        if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=1+modx(iv(1),fft_dim(1))+&
 &                                   modx(iv(2),fft_dim(2))*fft_dim(1)+&
 &                                   modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
+#endif
      enddo
    enddo
    !
@@ -89,7 +105,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    if (allocated(fft_rot_r_inv)) deallocate(fft_rot_r_inv)
    allocate(fft_rot_r_inv(fft_size))
    !
-   !Remeber
+   !Remember
    !-------
    ! 
    ! r_j= (I_i-1)/Ni a(j,i) = at(j,i) (i-1)/Ni
@@ -137,6 +153,10 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    !
    subroutine fft_best_size(test_fft_size)
      !
+#if defined _FFTQE
+     use fft_scalar, ONLY:good_fft_order
+#endif
+     !
      implicit none
      integer :: test_fft_size(3)
      ! 
@@ -160,7 +180,14 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      !
      test_fft_size=2*test_fft_size+1
      !
-#if defined _FFTW
+#if defined _FFTQE
+     ! use the good_fft_order from the quantum-espresso suite
+     do i1=1,3
+       test_fft_size(i1)=good_fft_order(test_fft_size(i1))
+     enddo
+#endif
+     !
+#if !defined _FFTQE && defined _FFTW
      ! the standard FFTW distribution works most efficiently for arrays
      ! whose size can be factored into small primes (2, 3, 5, and 7),
      ! and otherwise it uses a slower general-purpose routine
@@ -169,7 +196,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 &                mod(test_fft_size(i1),5),mod(test_fft_size(i1),7)/)==0)) cycle
        test_fft_size(i1)=test_fft_size(i1)+mod(test_fft_size(i1),2)
      enddo
-#else
+#endif
+     !
+#if !defined _FFTQE && defined _FFTSG
      do i1=1,3
        do i2=1,nn
          if (nallwd(i2)>=test_fft_size(i1)) then
@@ -180,6 +209,11 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
       if (test_fft_size(i1)>nallwd(nn)) test_fft_size(i1)=nallwd(nn)
      enddo
 #endif
+     !
+#if !defined _FFTQE && !defined _FFTSG && !defined _FFTW
+#error "[FFT] inconsistent FFT lib config"
+#endif
+     !
    end subroutine
    !
 end subroutine

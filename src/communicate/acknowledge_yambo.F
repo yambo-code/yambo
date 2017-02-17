@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,7 +24,7 @@
 subroutine acknowledge_yambo()
  !
  use com,        ONLY:msg
- use timing,     ONLY:LIVE_message
+ use LIVE_t,     ONLY:LIVE_message
  !
  call msg('r','.-ACKNOWLEDGMENT')
  call msg('r','|')
@@ -44,6 +46,6 @@ subroutine acknowledge_yambo()
  call msg('r','|')
  call msg('r',' ')
  !
- call LIVE_message("","","n","%s",NO_CPUT=.true.)
+ call LIVE_message("","","n","%s",CPU_TIME=.false.)
  !
 end subroutine

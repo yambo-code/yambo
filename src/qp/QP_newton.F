@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,7 +25,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_cohsex
+ use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
@@ -33,6 +35,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_apply
+#if defined _ELPH
+ use drivers,       ONLY:l_elph_corr
+#endif
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -61,10 +66,12 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  SC_corr_prev=1.
  !
    !
-   if (l_el_corr) then
+   if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
+       !
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
-     else
+       !
+     else 
        !
        call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,iter)
        !
@@ -73,9 +80,10 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      QP_Sc=cmplx(0.,0.,SP)
    endif
    !
+   !
 # if defined _ELPH 
    !
-   if (l_ph_corr)    call ELPH_Sigma_c(en,k,q,qp)
+   if (l_elph_corr)     call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
    !
@@ -84,6 +92,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      if(.not.l_cohsex) then
        !     
        QP_dSc(i1,1)=(0._SP,0._SP)
+       !     
        if (.not.On_Mass_Shell_approx) then
          do i2=1,QP_dSc_steps-1
            QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
@@ -91,10 +100,12 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        endif
        !
        do i2=1,QP_dSc_steps-1
+         !
          Z(i2)=1._SP/(1._SP-QP_dSc(i1,i2))
          !
          Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
-         if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Vnl_xc(i1)-QP_Vxc(i1))
+         !
+         if (l_elel_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Vnl_xc(i1)-QP_Vxc(i1))
          !
        enddo
        !

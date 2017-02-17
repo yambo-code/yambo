@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -29,23 +31,29 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:Finite_Tel,l_ppa,l_cohsex,l_sc_run,l_sc_srpa
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,master_cpu
- use interfaces,    ONLY:PARALLEL_index
- use collision,     ONLY:ggwinfo,collision_reset
+ use drivers,       ONLY:l_ppa,l_cohsex,l_sc_run,l_sc_srpa
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+&                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
+&                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
+ use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
+&                        io_RESPONSE
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        COHSEX_use_empties,QP_W_partially_done,PPa_terminator
+&                        COHSEX_use_empties,l_GW_terminator
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use wave_func,     ONLY:WF_load,WF_free
+ use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
- use WF_distribute, ONLY:WF_states_setup
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
+ use matrix_operate,ONLY:mat_transpose
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  implicit none
  type(levels) ::E
@@ -60,60 +68,28 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Work Space
  !
  integer                  ::i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                           i_qp_to_start,iq_to_start,is
- real(SP),    allocatable ::PPaP(:,:)
- complex(SP), allocatable ::PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:),eet_factor(:,:)
+&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),iv4(4),io_err,ID,timing_steps
+ complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(ggwinfo)            ::isc,iscp
- type(PP_indexes)         ::px
- integer          ::iv4(4),io_err,ID, timing_states,qp_ID
- integer, external::ioX,QP_state_extract,ioQP
- logical, external::stop_now
  character(schlen)::ch,Sc_name
- logical          ::PPaR_is_TR_rotated
- complex(SP)      ::local_rhotw(X%ng),pre_factor
- real(SP)         ::eet_cutoff(n_sp_pol)
+ logical          ::X_is_TR_rotated,l_X_alloc
+ real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
+ complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
+ !
+ integer, external::io_X,QP_state_extract
  !
  ! Reset
  !
  call collision_reset(isc)
  call collision_reset(iscp)
- call PP_indexes_reset(px)
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
  !
  ! COHSEX: bands setup
  !
- if ((l_sc_srpa.or.l_cohsex).and.(.not.COHSEX_use_empties)) &
-&                                  QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
- !
- ! Restart
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=qp_ID)
- io_err=ioQP('QP',qp,qp_ID)
- !
- if (QP_W_partially_done.and.io_err>0) then
-   !
-   ! Assuming i_qp_to_start=QP_n_states I get ...
-   !
-   iq_to_start   = io_err/QP_n_states
-   i_qp_to_start = io_err-(iq_to_start-1)*QP_n_states
-   !
-   ! If i_qp_to_start/QP_n_states I get ...
-   !
-   if (i_qp_to_start/=QP_n_states) then
-     iq_to_start   = iq_to_start+1
-     i_qp_to_start = io_err-(iq_to_start-1)*QP_n_states
-   endif
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/-1/),ID=qp_ID)
-   io_err=ioQP('QP',qp,qp_ID)
-   !
-   ! Only the master keeps in memory the QP_Sc in order 
-   ! to avoid double countings in the final ALL 2 ALL
-   !
-   if(.not.master_cpu) QP_Sc=cZERO
-   !
+ if ((l_sc_srpa.or.l_cohsex  ).and.(.not.COHSEX_use_empties)) then
+   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
  endif
  !
  ! Section
@@ -150,31 +126,43 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  isc%iqref=0
  isc%ngrho=X%ng
- if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.PPa_terminator) isc%ngrho=maxval(G_m_G)
+ if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) isc%ngrho=maxval(G_m_G)
  iscp%ngrho=isc%ngrho
  !
- ! Quasi-particle list
- ! (all processors have all qp-states)
+ ! WF distributed & load
+ !=======================
  !
- call WF_states_setup(qp_to_load=(/1,QP_n_states/),par_loop=.FALSE.)
+if( .not.l_sc_run ) then
+ call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+endif
  !
- ! Scattering states are distributed
- ! 
- call WF_states_setup(b_to_load=QP_n_G_bands,qp_to_load=(/1,QP_n_states/),q_to_load=(/iq_to_start,q%nbz/),k=k)
+ ! Redefine iq_to_start to be CPU-dependent
  !
- ! Report
+ do iqbz=1,q%nbz 
+   if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
+     iq_to_start=iqbz
+     exit
+   endif
+ enddo
  !
- call WF_states_setup(b_to_load=QP_n_G_bands,report=.TRUE.)
+ if( .not.l_sc_run ) then
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index( )
+ endif
  !
- ! WFs
+ ch='-GW'
+ call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),title=trim(ch))
  !
- call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
+#if defined _TIMING
+ call timing('GW(ppa)',OPR='start')
+#endif
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=ioX(X,Xw,ID)
- if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
+ io_err=io_X(X,Xw,ID)
+ if (io_err<0.and.io_RESPONSE) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
  ! Test the spatial Inversion
  !   
@@ -184,66 +172,80 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !------------
  !
  if (l_cohsex.or.l_sc_srpa) then
-   !
-   call X_alloc('X',(/X%ng,X%ng,1/))
-   allocate(dc(2),PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng),stat=alloc_err)
-   call mem_est("PPaR",(/2*size(PPaR_ws)/),errors=(/alloc_err/))
+   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,1/))
+   allocate(dc(2))
  else
-   !
-   call X_alloc('X',(/X%ng,X%ng,2/))
-   allocate(E_(QP_dSc_steps),dc(QP_dSc_steps),stat=alloc_err)
+   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
+   allocate(W_(QP_dSc_steps),dc(QP_dSc_steps),stat=alloc_err)
    call mem_est("GW-E",(/QP_dSc_steps*2/),errors=(/alloc_err/))
-   allocate(PPaP(X%ng,X%ng),PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng),stat=alloc_err)
-   call mem_est("PPaP",(/size(PPaP)+2*size(PPaR_ws),2*size(PPaR)/),&
-&               (/SP/),errors=(/alloc_err/))
-   if(PPa_terminator) then
+   if(l_GW_terminator) then
      allocate(eet_factor(X%ng,X%ng),stat=alloc_err)
      call mem_est("EET_factor",(/size(eet_factor)/),(/2*SP/),errors=(/alloc_err/))
    endif
-   !
  endif
  !
+ call scatterBamp_alloc(isc)
+ call scatterBamp_alloc(iscp)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
  !
- ! Parallel Indexes & LIVE-TIMING STEPS
- !
- call PARALLEL_index(px,(/q%nbz,QP_n_G_bands(2)/),(/iq_to_start,QP_n_G_bands(1)/))
- !
  call PP_redux_wait
  !
-   !
-   timing_states=px%n_of_elements(myid+1)*(QP_n_states-i_qp_to_start+1)
-   !
-   if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_states)
-   if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_states)
+ timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
+&             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
+&             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
+ !
+ if (l_ppa)    ch=trim(Sc_name)//'W0 PPA'
+ if (l_cohsex) ch=trim(Sc_name)//'W0 COHSEX'
+ call live_timing(trim(ch),timing_steps)
  !
  Q_loop: do iqbz=iq_to_start,q%nbz 
+   !
+   if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
    !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
    iqs  =isc%qs(3)
    !
    if (iqibz/=isc%iqref) then
+     !
+     iq_mem=PAR_Q_index(iqibz)
+     X_range=(/1,Xw%n_freqs/)
+     if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
+     !
      call scatterGamp(isc,'c')
      !
      ! I/O
      !
-     if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)
-     if (q%nbz==1         ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
-     if (iqbz> iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-     io_err=ioX(X,Xw,ID)
+     if (io_RESPONSE) then
+       !
+       if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)
+       if (q%nbz==1         ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
+       if (iqbz> iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+       !
+       io_err=io_X(X,Xw,ID)
+       !
+     endif
      !
      ! Poles and Residuals
      !
-     if (l_ppa) then
-       forall(i1=1:X%ng,i2=1:X%ng) PPaP(i1,i2)=PPaPf(X_mat(i1,i2,1),X_mat(i1,i2,2),X%ppaE)
-       forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=-X_mat(i1,i2,1)/2._SP*PPaP(i1,i2)*isc%gamp(i1,i2)
-     else
-       forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
-     endif
+!$omp parallel do default(shared), private(i1,i2)
+       do i2=1,X%ng
+         do i1=1,X%ng
+           if (l_ppa) then
+             if (real(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2)))<=1._SP) then
+               X_mat(i1,i2,X_range(2))=X%ppaE
+             else
+               X_mat(i1,i2,X_range(2))=sqrt(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2))-1)
+             endif
+           else
+             X_mat(i1,i2,X_range(1))=X_mat(i1,i2,X_range(1))*isc%gamp(i1,i2)
+           endif
+         enddo
+       enddo
+!$omp end parallel do
      !
-     PPaR_is_TR_rotated=.false.
+     X_is_TR_rotated=.false.
      !
    endif
    !
@@ -256,13 +258,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    ! While the -1 is introduced in the collisions the reflection of the
    ! matrix must be done here.
    !
-   if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.PPaR_is_TR_rotated) then
-     PPaR_is_TR_rotated=.true.
-     forall(i1=1:X%ng,i2=1:X%ng) PPaR_ws(i2,i1)=PPaR(i1,i2)
-     PPaR(:,:)=PPaR_ws(:,:)
+   if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
+     !
+     ! Note (AF) that $omp directives are inside mat_transpose
+     !
+     call mat_transpose(X_mat(:,:,X_range(1)))
+     if (l_ppa) call mat_transpose(X_mat(:,:,X_range(2)))
+     X_is_TR_rotated=.true.
    endif
    !
    QP_loop: do i_qp=i_qp_to_start,QP_n_states
+     !
+     if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
      !
      ! i_qp must start from i_qp_to_start only during the first loop
      ! of the restart. Then it must be set to 1.
@@ -281,7 +288,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! COH (using completeness relation)
      !
-     if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.PPa_terminator) then
+     if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
        !
        iscs_save(1,: )=isc%os
        iscs_save(2,:3)=isc%qs
@@ -289,29 +296,55 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%qs=(/1,1,1/)
        call scatterBamp(isc)
        !
-       if(PPa_terminator) then
+       if(l_GW_terminator) then
          do is=1,n_sp_pol
-           eet_cutoff(is)=minval(E%E(E%nbf+1,:,is))
+           eet_cutoff0(is)=minval(E%E(E%nbf+1,:,is))
+           eet_cutoff1(is)=minval(E%E(QP_n_G_bands(2),:,is))
          enddo
-         eet_cutoff(1)=minval(eet_cutoff(:))
+         eet_cutoff0(1)=minval(eet_cutoff0(:))
+         eet_cutoff1(1)=minval(eet_cutoff1(:))
          eet_factor=cZERO
-         if(master_cpu) forall(ig1=1:X%ng,ig2=1:X%ng) &
-&          eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
-       else
-         if (PPaR_is_TR_rotated) then 
-           do ig1=1,X%ng
-             do ig2=1,X%ng
-               dc(1)=dc(1)+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*PPaR(ig1,ig2)
-             enddo
-           enddo
-         else
-           do ig1=1,X%ng
-             do ig2=1,X%ng
-               dc(1)=dc(1)+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*PPaR(ig1,ig2)
-             enddo
-           enddo
+         !
+         if ( HEAD_QP_cpu ) then
+!$omp parallel do default(shared), private(ig1,ig2)
+            do ig2=1,X%ng
+              do ig1=1,X%ng
+                eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
+              enddo
+            enddo
+!$omp end parallel do
          endif
-         if (master_cpu) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+       else
+         !
+         sp_dummy = 0.0_SP
+         !
+         if (X_is_TR_rotated) then
+!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
+           do ig2=1,X%ng
+             do ig1=1,X%ng
+               sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1))
+             enddo
+           enddo
+!$omp end parallel do
+         else
+!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
+           do ig2=1,X%ng
+             do ig1=1,X%ng
+               sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
+             enddo
+           enddo
+!$omp end parallel do
+         endif
+         !
+         dc(1) = sp_dummy
+         !
+         ! Bug spotted by D.V. (April 2014). HEAD_QP_cpu is defined differently when
+         ! the _SC flag is used. The point is that in SE calculations HEAD_QP_cpu is used
+         ! in cases where no band loops are done (like here). In _SC instead 
+         ! it is needed for a different purpose. This is why I use PAR_COM_QP_A2A%CPU_id in this case.
+         !
+           if (HEAD_QP_cpu)              QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         !
          dc=cZERO
          !
        endif
@@ -323,8 +356,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
-       if (.not.px%element_2D(iqbz,ib)) cycle
-       call live_timing(steps=1)
+       if (.not.PAR_IND_G_b%element_1D(ib)) cycle
+       !
+       if (q%sstar(iqbz,2)==1) call live_timing(steps=1)
        !
        isc%os(1)=ib
        !
@@ -338,31 +372,68 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (l_ppa) then
          !
-         if(PPa_terminator) then
+         if(l_GW_terminator) then
+#if defined _OPENMP
+!$omp parallel do default(shared), private(ig1,ig2)
+           do ig2=1,X%ng
+             do ig1=1,X%ng
+                 eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
+             enddo
+           enddo
+!$omp end parallel do
+#else
            forall(ig1=1:X%ng,ig2=1:X%ng)
              eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
            end forall
+#endif
          endif
          !
-         forall (i4=1:QP_dSc_steps) E_(i4)=qp%E_bare(i_qp)+&
-&                                          (i4-1._SP)*QP_dSc_delta+cI*QP_G_damp
+         forall (i4=1:QP_dSc_steps) W_(i4)=qp%E_bare(i_qp)+(i4-1._SP)*QP_dSc_delta+cI*QP_G_damp
          !
-         do ig1=1,X%ng
+         E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
+         f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
+         !
+         do i4=1,QP_dSc_steps
+           !
+           sp_dummy = 0.0_SP
+           !
+!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
            do ig2=1,X%ng
-             do i4=1,QP_dSc_steps
-               dc(i4)=dc(i4)+4._SP/spin_occ*pi*isc%rhotw(ig1)*PPaR(ig1,ig2)*conjg(iscp%rhotw(ig2))*&
-&                     (Gfm(E_(i4),E,isc%os,PPaP(ig1,ig2))+Gfp(E_(i4),E,isc%os,PPaP(ig1,ig2)))
+             do ig1=1,X%ng
+               !
+               PPA_E= real(X%ppaE/X_mat(ig1,ig2,2))
+               PPA_R=-X_mat(ig1,ig2,1)/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               !
+               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
+&                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i4)-E_kmq-PPA_E)+&
+&                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i4))-E_kmq+PPA_E))
+               !
+               sp_dummy=sp_dummy+ctmp
+               !
              enddo
            enddo
+!$omp end parallel do
+           !
+           dc(i4) = sp_dummy
+           !
          enddo
          !
          QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
          !
        else
          !
-         call M_by_V('N', X%ng, PPaR, conjg(iscp%rhotw), local_rhotw)
+         call M_by_V('N', X%ng, X_mat(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
          !
+#if defined _OPENMP
+         pre_factor=0.0_SP
+!$omp parallel do default(shared), private(i1), reduction(+:pre_factor)
+         do i1=1,X%ng
+           pre_factor=pre_factor+isc%rhotw(i1)*local_rhotw(i1)
+         enddo
+!$omp end parallel do
+#else
          pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+#endif
          !
          ! SEX
          !
@@ -370,7 +441,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          dc(1)=dc(1)*e%f(isc%os(1),isc%os(2),isc%os(4))
          !
-         ! COH
+         ! COH (when no empties are used the COH part is indeed calculated above)
          !
          if (COHSEX_use_empties) dc(2)=2._SP*pi*pre_factor
          !
@@ -380,34 +451,33 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
      enddo ! loop on scattering states
      !
-     if(PPa_terminator) then
-       forall (i4=1:QP_dSc_steps) E_(i4)=qp%E_bare(i_qp)+(i4-1._SP)*QP_dSc_delta+cI*QP_G_damp
-       do ig1=1,X%ng
+     if(l_GW_terminator) then
+       forall (i4=1:QP_dSc_steps) W_(i4)=qp%E_bare(i_qp)+(i4-1._SP)*QP_dSc_delta+cI*QP_G_damp
+       !
+       do i4=1,QP_dSc_steps
+         !
+         sp_dummy=0.0_SP
+         !
+!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:sp_dummy)
          do ig2=1,X%ng
-           do i4=1,QP_dSc_steps
-             QP_Sc(i_qp,i4)=QP_Sc(i_qp,i4)+4._SP/spin_occ*pi*PPaR(ig1,ig2)*eet_factor(ig1,ig2)* &
-&                     QP_ppa_EET_terminator(E_(i4),E,isc%is,PPaP(ig1,ig2),ig1,ig2,isc%qs(2),eet_cutoff(1))
-             enddo
+           do ig1=1,X%ng
+             !
+             PPA_E=X%ppaE/real(X_mat(ig1,ig2,X_range(2)))
+             PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+             !
+             sp_dummy=sp_dummy +4._SP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
+&                         QP_ppa_EET_terminator(W_(i4),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&
+&                                               eet_cutoff0(1),eet_cutoff1(1))
+             !
            enddo
          enddo
+!$omp end parallel do
+         !
+         QP_Sc(i_qp,i4)=QP_Sc(i_qp,i4)+sp_dummy
+         !
+       enddo
+       !
      endif
-     !
-     !
-     ! ALL 2 ALL of QP_Sc
-     !
-     call PP_redux_wait(QP_Sc)
-     if(.not.master_cpu) QP_Sc=cZERO
-     !
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,- (i_qp+QP_n_states*(iqbz-1 ))/),ID=qp_ID)
-     io_err=ioQP('QP',qp,qp_ID)
-     !
-     ! In parallel runs only few cpus have access to the DB. Therefore, as QP_W_partially_done
-     ! is defined  in ioQP I need to redefine it here for the CPUs not involved in the I/O
-     !
-     QP_W_partially_done=.true.
-     if (i_qp==QP_n_states.and.iqbz==q%nbz) QP_W_partially_done=.false.
-     !
-     if (stop_now(.FALSE.)) exit Q_loop
      !
    enddo QP_loop
    !
@@ -417,69 +487,37 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! CLEAN
  !
- deallocate(isc%gamp,isc%rhotw,iscp%rhotw,dc,PPaR_ws,PPaR)
+ call scatterBamp_free(isc)
+ call scatterBamp_free(iscp)
+ deallocate(isc%gamp,isc%rhotw,iscp%rhotw,dc)
  if(l_ppa) then
-   deallocate(E_,PPaP)
-   if(PPa_Terminator) then
+   deallocate(W_)
+   if(l_GW_terminator) then
        deallocate(eet_factor)
        call mem_est("EET_factor")
    endif
  endif
  call mem_est("ISC-GAMP GW-E")
- call X_alloc('X')
- if (l_cohsex.or.l_sc_srpa) then
-   call mem_est("PPaR")
- else
-   call mem_est("PPaP")
- endif
+ l_X_alloc=.true.
+ if(l_X_alloc) call X_alloc('X')
  !
+#if defined _TIMING
+ call timing('GW(ppa)',OPR='stop')
+#endif
  !
- call WF_free()
+ ! ALL 2 ALL of QP_Sc
  !
+#if defined _TIMING
+ call timing('GW(REDUX)',OPR='start')
+#endif
+ call PP_redux_wait(QP_Sc)
+#if defined _TIMING
+ call timing('GW(REDUX)',OPR='stop')
+#endif
+ !
+ if(.not.l_sc_run) call WF_free(WF)
  !
  call collision_reset(isc)
  call collision_reset(iscp)
- call PP_indexes_reset(px)
  !
- contains
-   !
-   pure function PPaPf(e1,e2,Eo)
-     !
-     implicit none
-     real(SP)   :: PPaPf
-     real(SP),   intent(in)   :: Eo
-     complex(SP),intent(in)   :: e1,e2
-     PPaPf=Eo/sqrt(e1/e2-1._SP)
-     if (real(e1/e2)<=1._SP) PPaPf=1._SP
-     !
-   end function
-   !
-   function Gfm(W,e,vs,Ep)
-     !
-     implicit none
-     type(levels), intent(in) ::e
-     integer     , intent(in) ::vs(4)
-     complex(SP) , intent(in) ::W
-     real(SP)    , intent(in) ::Ep
-     complex(SP)  ::Gfm
-     complex(SP)  ::lW !ws
-     lW=W
-     if (Finite_Tel) lW=conjg(W)
-     Gfm=(real(spin_occ)-e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/&
-&        (lW-e%E(vs(1),vs(2),vs(4))-Ep)
-     !
-   end function
-   !
-   function Gfp(W,e,vs,Ep)
-     !
-     implicit none
-     type(levels), intent(in) ::e
-     integer,      intent(in) ::vs(4)
-     complex(SP),  intent(in) ::W
-     real(SP),     intent(in) ::Ep
-     complex(SP)  ::Gfp
-     Gfp=(e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/(conjg(W)-e%E(vs(1),vs(2),vs(4))+Ep)
-     !
-   end function
-   !
 end subroutine

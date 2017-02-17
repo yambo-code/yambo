@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -47,7 +49,8 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  use pars,          ONLY:SP,pi,DP
  use drivers,       ONLY:l_real_time
  use com,           ONLY:msg
- use timing,        ONLY:live_timing
+ use stderr,        ONLY:intc
+ use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RIM_n_rand_pts
@@ -74,8 +77,8 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  ! Filling a larger Sphere with a random grid
  !===========================================
  !
- if (l_real_time     ) call section('=','Spherical RIM')
- if (.not.l_real_time) call section('p','Spherical RIM')
+ if (l_real_time     ) call section('=','Spherical RIM with a N='//trim(intc(power))//' power')
+ if (.not.l_real_time) call section('p','Spherical RIM with a N='//trim(intc(power))//' power')
  !
  ! Random generator seed
  !

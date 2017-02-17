@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,40 +21,50 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_s(iq,X,wv)
+subroutine X_s(iq,X,Xw,W_range)
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,cZero
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,ncpu,PP_indexes_reset
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV_INDEX,&
+&                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_q_for_Xo
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
- use interfaces,    ONLY:PARALLEL_index
+ use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_driver
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_mat,X_fxc
- use matrix_operate,ONLY:mat_dia_inv,INV,USE_LK,USE_SLK,USE_SVD
- use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,ioBS_Fxc
+ use X_m,           ONLY:X_t,X_mat
+ use matrix_operate,ONLY:INV,USE_SVD
+ use TDDFT,         ONLY:FXC_n_g_corr,FXC,&
+&                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,io_BS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  implicit none
  type(X_t)    :: X
- type(w_samp) :: wv
- integer      :: iq
+ type(w_samp) :: Xw
+ integer      :: iq,W_range(2)
  !
  ! Work Space
  !
- type(PP_indexes) ::px
- integer     :: i1,i2,iw,nw_max_par,INV_MODE
+ type(PP_indexes) ::PAR_IND_freqs
+ integer          ::i1,i2,iw,iw_mat,INV_MODE
  complex(SP), allocatable :: Xom1(:,:),tddftk(:,:),Xo(:,:)
  !
  ! Fxc I/O (for the BS based kernel)
  !
- integer           ::ioFxc_err,ID,FXC_w_ref
+ !integer           ::ioFxc_err,ID,FXC_w_ref
  !
  ! Setup 
  !
- call PP_indexes_reset(px)
+#if defined _TIMING
+ call timing('X (procedure)',OPR='start')
+#endif
+ !
+ call PP_indexes_reset(PAR_IND_freqs)
+ !
  allocate(tddftk(X%ng,X%ng),Xo(X%ng,X%ng))
  call mem_est("X_WS",(/2*size(Xo)/))
  !
@@ -63,80 +75,106 @@ subroutine X_s(iq,X,wv)
    call mem_est("Xo_m1",(/size(Xom1)/))
  endif
  !
- ! Max number of frequencies inverted in serial mode (nw_max_par)
+ ! Frequencies distribution
  !
- nw_max_par=wv%n(1)-mod(wv%n(1),ncpu)
- call PARALLEL_index(px,(/wv%n(1)/))
- if (nw_max_par<wv%n(1)) px%element_1D(nw_max_par+1:)=.true.
- call PP_redux_wait
- px%n_of_elements(myid+1)=0
- do iw=1,wv%n(1)
-   if (iw<=nw_max_par.and..not.px%element_1D(iw)) X_mat(:,:,iw)=(0.,0.)
-   if (px%element_1D(iw)) px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+1
- enddo
+ call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_INV_INDEX)
  !
- call live_timing('X@q['//trim(intc(iq))//'] ',px%n_of_elements(myid+1))
+ call PP_redux_wait(COMM=PAR_COM_q_for_Xo%COMM)
  !
- do iw=1,wv%n(1)
+ call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1),TOTAL=Xw%n_freqs)
+ !
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1)>0) then
+   call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1))
+ endif
+ !
+ do iw=1,Xw%n_freqs
    !
-   INV_MODE=USE_LK
-   Xo=X_mat(:,:,iw)
+   iw_mat=iw+W_range(1)-1
+   !
+   if (.not.PAR_IND_freqs%element_1D(iw)) then
+     X_mat(:,:,iw_mat)=cZero
+     cycle
+   endif
+   !
+   Xo=X_mat(:,:,iw_mat)
+   !
    tddftk=(0.,0.) 
    !
-   ! If the freqs remaining are not anough for all the cpu's or
+   ! If the freqs remaining are not enough for all the cpu's or
    ! Fxc needs the SVD procedure use the SLK
    !
-   if (iw>nw_max_par.or.FXC_SVD_digits>0) INV_MODE=USE_SLK
+   if (FXC_SVD_digits>0) INV_MODE=USE_SVD
    !
    ! TDDFT Kernel. Different procedure depending on the kernel 
    !
    ! Kind: BS,ALDA,LRC.
    !
    if (l_bs_fxc) then
-     !
-     !
+!     !
+!     !
    else if (l_lrc_fxc) then
      !
      ! LRC Fxc
      !
-     tddftk(1,1)=-Xo(1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(wv%p(iw))**2)/q_norm(iq)**2
+     tddftk(1,1)=-Xo(1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
      !
    else if (l_alda_fxc) then
      !
      ! ALDA Fxc
      !
-     if (.not.px%element_1D(iw)) cycle
      tddftk(:,:FXC_n_g_corr)=-matmul(Xo(:,:FXC_n_g_corr),FXC(:,:,1))
      !
    endif
    !
    ! I must cycle here to allow the FXC I/O properly
    !
-   if (.not.px%element_1D(iw)) cycle
+   !if (.not.PAR_IND_freqs%element_1D(iw)) cycle
    !
    do i1=1,X%ng ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
      tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4.*pi/bare_qpg(iq,i1)**2
      tddftk(i1,i1)=tddftk(i1,i1)+1.
    enddo
-   call mat_dia_inv(INV,INV_MODE,tddftk)
+   !
+   call MATRIX_driver(INV,tddftk)
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !
-   X_mat(:,:,iw)=matmul(tddftk,Xo)
-   forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw)=X_mat(i1,i2,iw)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+   X_mat(:,:,iw_mat)=matmul(tddftk,Xo)
+   !
+#if defined _OPENMP
+!$omp parallel do default(shared), private(i1,i2)
+   do i2=1,X%ng
+     do i1=1,X%ng
+       X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+     enddo
+   enddo
+!$omp end parallel do
+#else
+   forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+#endif
+   !
    call live_timing(steps=1)
    !
  enddo
  !
- call live_timing
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1)>0) call live_timing()
  !
- do i1=1,nw_max_par
-   call PP_redux_wait(X_mat(:,:,i1))
+#if defined _TIMING
+ call timing('X (procedure)',OPR='stop')
+ call timing('X (REDUX)',OPR='start')
+#endif
+ !
+ do iw=W_range(1),W_range(2)
+   call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_INV_index%COMM)
  enddo
+ !
+#if defined _TIMING
+ call timing('X (REDUX)',OPR='stop')
+#endif
  !
  ! CLEAN
  !
- call PP_indexes_reset(px)
+ call PP_indexes_reset(PAR_IND_freqs)
  deallocate(tddftk,Xo)
  if (l_bs_fxc) then
    deallocate(Xom1)

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -39,7 +41,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  type(w_samp)         :: Xw
  !
  integer              :: iq
- complex(SP)          :: drude_GreenF(Xw%n(2))
+ complex(SP)          :: drude_GreenF(Xw%n_freqs)
  character(1)         :: drude_ordering
  !
  real(SP)             :: drude_factor
@@ -78,7 +80,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
 &             (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))/ &
 &             (spin_occ*real(Xk%nbz)*DL_vol)
  !
- do iw=1,Xw%n(1)
+ do iw=1,Xw%n_freqs
    drude_GreenF(iw)=Jellium_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
  enddo
  !

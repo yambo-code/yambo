@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Sangalli and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,25 +25,22 @@ subroutine G_rot_grid(is,call_kind)
  !
  use pars,         ONLY:SP
  use com,          ONLY:error
- use R_lattice,    ONLY:ng_vec,ng_closed,g_vec,minus_G,rl_sop
+ use R_lattice,    ONLY:ng_vec,ng_closed,g_vec,minus_G
  use D_lattice,    ONLY:dl_sop,alat
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero
+ !
+ implicit none
  !
  integer               :: is
  character(*)          :: call_kind
  !
  ! Work space
  ! 
- integer               :: ig,igp,ng,ng1,i1,i2
- logical               :: inversion
- logical               :: extend_grid
- logical               :: set_table
- logical               :: reflection
- real(SP)              :: g_rot_tmp(3) 
- real(SP)              :: identity(3,3)
- real(SP)              :: rl_sop_square(3,3)
- real(SP)              :: rl_sop_local(3,3)
+ integer               :: ig,igp,ng,ng1,i2,i3
+ logical               :: inversion,extend_grid,set_table,reflection
+ real(SP)              :: g_rot_tmp(3),identity(3,3),rl_sop_square(3,3),rl_sop_local(3,3)
+ !
  real(SP),allocatable  :: g_vec_tmp(:,:)
  logical, allocatable  :: g_rot_found(:)
  !

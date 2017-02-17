@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,23 +21,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
-!====================================
+subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
+ !
  use pars
- use com,                     ONLY : msg, warning
- use timing,                  ONLY : live_timing
+ use com,                     ONLY : msg, warning, grid_path
+ use LIVE_t,                  ONLY : live_timing
  use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
  use parallel_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
 &                                    master_cpu, pp_indexes_reset
  use D_lattice,               ONLY : nsym, i_time_rev, alat, dl_sop, sop_inv
  use R_lattice,               ONLY : g_vec, bz_samp, q0_def_norm,q_norm,bare_qpg
  use X_m,                     ONLY : X_alloc, X_t, Dipole_bands_ordered
- use fields,                  ONLY : grid_path
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
- use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free
+ use wave_func,               ONLY : WF, wf_ng
  use optcut,                  ONLY : DIP_iR_cut, DIP_q_dot_iR_cut, ng_limits, setup_optcut, pscut
  use drivers,                 ONLY : l_col_cut
+ use interfaces,              ONLY : WF_load
 #if defined _SURF
  use ras_module,              ONLY : transloc, lras
 #endif
@@ -69,10 +71,9 @@
 
  if (io_err.ne.0) then
    !
-   !
    ! WF loading (needed in both cases)
    !
-   call WF_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
+   call WF_load(WF,0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
    !
    ! Set up data needed for cut off routines
    !
@@ -88,11 +89,11 @@
    !
    if(trim(grid_path)/='none') call warning('Cutoff with shifted grids not supported! Reverting to transverse gauge')
    !
-   call Dipole_transverse_cut(Xen,Xk,X)
+   call DIPOLE_transverse_cut(Xen,Xk,X)
    !
    ! Free any loaded WFs
    !
-   call WF_free()
+   call WF_free(WF)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
    io_err=io_DIPOLES_cut(X,Xen,io_db)
@@ -148,5 +149,5 @@
  deallocate(DIP_iR_cut)
  call mem_est('DIP_iR_cut')
  return
-
+ !
 end subroutine Dipole_driver_cut

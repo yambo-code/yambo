@@ -75,14 +75,14 @@ MODULE qexml_module
             qexml_write_symmetry, qexml_write_efield,                 &
             qexml_write_planewaves, qexml_write_spin, qexml_write_xc, &
             qexml_write_occ, qexml_write_bz, qexml_write_phonon,      &
-            qexml_write_bands, qexml_write_bands_info,                &
+            qexml_write_bands, qexml_write_bands_info,qexml_write_exx,&
             qexml_write_gk, qexml_write_wfc, qexml_write_rho
   !
   PUBLIC :: qexml_read_header, qexml_read_cell, qexml_read_ions,      &
             qexml_read_symmetry, qexml_read_efield,                   &
             qexml_read_planewaves, qexml_read_spin, qexml_read_xc,    &
             qexml_read_occ, qexml_read_bz, qexml_read_phonon,         &
-            qexml_read_bands, qexml_read_bands_info,                  &
+            qexml_read_bands, qexml_read_bands_info,qexml_read_exx,   &
             qexml_read_gk, qexml_read_wfc, qexml_read_rho,            &
             read_pseudo_header, read_pseudo_data
 
@@ -1072,6 +1072,30 @@ CONTAINS
       !
     END SUBROUTINE qexml_write_xc
     !
+    SUBROUTINE qexml_write_exx( x_gamma_extrapolation, nqx1, nqx2, nqx3, &
+                          exxdiv_treatment, yukawa, ecutvcut, exx_fraction, &
+                          screening_parameter, exx_is_active )
+      !------------------------------------------------------------------------
+      !
+      LOGICAL,            INTENT(IN) :: x_gamma_extrapolation, exx_is_active
+      INTEGER,  OPTIONAL, INTENT(IN) :: nqx1, nqx2, nqx3
+      CHARACTER(LEN=*),   INTENT(IN) :: exxdiv_treatment
+      REAL(dbl),           INTENT(IN) :: yukawa, ecutvcut, exx_fraction
+      REAL(dbl),           INTENT(IN) :: screening_parameter
+
+      CALL iotk_write_begin(ounit, "EXACT_EXCHANGE" )
+      call iotk_write_dat(ounit, "x_gamma_extrapolation", x_gamma_extrapolation)
+      call iotk_write_dat(ounit, "nqx1", nqx1)
+      call iotk_write_dat(ounit, "nqx2", nqx2)
+      call iotk_write_dat(ounit, "nqx3", nqx3)
+      call iotk_write_dat(ounit, "exxdiv_treatment", exxdiv_treatment)
+      call iotk_write_dat(ounit, "yukawa", yukawa)
+      call iotk_write_dat(ounit, "ecutvcut", ecutvcut)
+      call iotk_write_dat(ounit, "exx_fraction", exx_fraction)
+      call iotk_write_dat(ounit, "screening_parameter", screening_parameter)
+      call iotk_write_dat(ounit, "exx_is_active", exx_is_active)
+      CALL iotk_write_end(ounit, "EXACT_EXCHANGE" )
+    END SUBROUTINE qexml_write_exx    
     !
     !------------------------------------------------------------------------
     SUBROUTINE qexml_write_occ( lgauss, ngauss, degauss, degauss_units, ltetra, ntetra, tetra, &
@@ -2278,6 +2302,39 @@ CONTAINS
     END SUBROUTINE qexml_read_xc
     !
     !
+    SUBROUTINE qexml_read_exx( x_gamma_extrapolation, nqx1, nqx2, nqx3, &
+                          exxdiv_treatment, yukawa, ecutvcut, exx_fraction, &
+                          screening_parameter, exx_is_active, ierr )
+      !------------------------------------------------------------------------
+      !
+      LOGICAL,                     INTENT(OUT) :: exx_is_active
+      REAL(dbl),                    INTENT(OUT) :: exx_fraction
+      INTEGER,                     INTENT(OUT) :: ierr
+      LOGICAL,           OPTIONAL, INTENT(OUT) :: x_gamma_extrapolation
+      INTEGER,           OPTIONAL, INTENT(OUT) :: nqx1, nqx2, nqx3
+      CHARACTER(LEN=*),  OPTIONAL, INTENT(OUT) :: exxdiv_treatment
+      REAL(dbl),          OPTIONAL, INTENT(OUT) :: yukawa, ecutvcut
+      REAL(dbl),          OPTIONAL, INTENT(OUT) :: screening_parameter
+
+      CALL iotk_scan_begin(iunit, "EXACT_EXCHANGE", IERR=ierr)
+      IF ( ierr/=0 ) RETURN
+      ! call iotk_scan_dat(iunit, "x_gamma_extrapolation", x_gamma_extrapolation, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "nqx1", nqx1, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "nqx2", nqx2, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "nqx3", nqx3, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "yukawa", yukawa, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, IERR=ierr )
+      call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, IERR=ierr )
+      IF ( ierr/=0 ) RETURN
+       call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
+      call iotk_scan_dat(iunit, "exx_is_active", exx_is_active, IERR=ierr )
+      IF ( ierr/=0 ) RETURN
+      CALL iotk_scan_end(iunit, "EXACT_EXCHANGE", IERR=ierr )
+      IF ( ierr/=0 ) RETURN
+    END SUBROUTINE qexml_read_exx 
+    !
+    !
     !------------------------------------------------------------------------
     SUBROUTINE qexml_read_occ( lgauss, ngauss, degauss, degauss_units, &
                                ltetra, ntetra, tetra, tfixed_occ,      &
@@ -2322,12 +2379,6 @@ CONTAINS
          CALL iotk_scan_attr( ATTR, "UNITS", degauss_units_ , IERR=ierr )
          IF (ierr/=0) RETURN
          !
-      ELSE
-         !
-         ngauss_=0
-         degauss_=0.0
-         degauss_units_=" "
-         !
       ENDIF
       !
       CALL iotk_scan_dat( iunit, "TETRAHEDRON_METHOD", ltetra_, IERR=ierr )
@@ -2349,8 +2400,6 @@ CONTAINS
             !
          ENDDO
          !
-      ELSE
-         ntetra_ = 0
       ENDIF
       !
       CALL iotk_scan_dat( iunit, "FIXED_OCCUPATIONS", tfixed_occ_, IERR=ierr )
@@ -2398,9 +2447,6 @@ CONTAINS
             !
          ENDIF
          !
-      ELSE
-         nstates_up_=0
-         nstates_dw_=0
       ENDIF
       !
       CALL iotk_scan_end( iunit, "OCCUPATIONS", IERR=ierr )
@@ -3176,7 +3222,6 @@ end subroutine
 subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
 &                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
   use pars,    ONLY:SP
-  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
@@ -3185,11 +3230,9 @@ subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
   CHARACTER(256), INTENT(IN) :: filename
   !
-  REAL(SP)      :: beta_tmp(nmesh,nbeta),d_tmp(nbeta,nbeta),rdummy
-  COMPLEX(SP)   :: cd_tmp(nbeta,nbeta)
   character(50) :: dummy
   logical       :: ldummy
-  INTEGER :: idummy,ibeta,ibetap,i_dij,n_dij,idummy2,i1
+  INTEGER :: idummy,ibeta,idummy2
   INTEGER        :: i, iostat, u ,ierr, ios
   !
   open(unit=u,file=trim(filename),status='old',form='formatted', iostat=iostat)
@@ -3221,32 +3264,19 @@ subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
     !if(idummy/=ibeta) ERROR(tools_char(idummy,10))
     read(u,*,iostat=iostat) mesh_beta(ibeta)
     beta(:,ibeta) = 0.0
-    read(u,*,iostat=iostat) beta_tmp(1:mesh_beta(ibeta),ibeta)
+    read(u,*,iostat=iostat) beta(1:mesh_beta(ibeta),ibeta)
     call iotk_scan_end(u,"PP_BETA")
   end do
   call iotk_scan_begin(u,"PP_DIJ")
-  read(u,*,iostat=iostat) n_dij
+  read(u,*,iostat=iostat) idummy
   !if(idummy/=nbeta) ERROR(tools_char(idummy,10))
-  d_tmp=0._SP
-  do i_dij=1,n_dij
-    read(u,*,iostat=iostat) ibeta,ibetap,rdummy
-    d_tmp(ibeta ,ibetap)=rdummy
-    d_tmp(ibetap,ibeta )=rdummy
+  do ibeta=1,nbeta
+    read(u,*,iostat=iostat) idummy,idummy2,d(ibeta)
+    !if(idummy/=ibeta) ERROR("")
+    !if(idummy2/=ibeta) ERROR("")
   end do
   call iotk_scan_end(u,"PP_DIJ")
   call iotk_scan_end(u,"PP_NONLOCAL",ierr=ierr)
-  !
-  if(nbeta>1) then
-    cd_tmp=cmplx(d_tmp,0._SP)
-    call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
-    d_tmp=real(cd_tmp)
-  else
-    d=d_tmp(1,1)
-    d_tmp(1,1)=1._SP
-  endif
-  !
-  lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
-  forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
   !
   rewind(u)
   !
@@ -3259,7 +3289,8 @@ end subroutine
 subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
-  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
+  use interfaces,     ONLY:MATRIX_driver
+  use matrix_operate, ONLY:DIAGO
   use pars,           ONLY:SP
   use stderr,         ONLY:intc
   !
@@ -3319,7 +3350,7 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
     !
     if(nbeta>1) then
       cd_tmp=cmplx(d_tmp,0._SP)
-      call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
+      call MATRIX_driver(DIAGO,cd_tmp,E_real=d)
       d_tmp=real(cd_tmp)
     else
       d=d_tmp(1,1)

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,7 +37,7 @@ subroutine QP_state_table_setup(en)
  !
  use pars,          ONLY:SP,IP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_sc_run,l_real_time,l_collisions_IO,l_carrier_dynamics
+ use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
@@ -47,7 +49,7 @@ subroutine QP_state_table_setup(en)
  ! Work Space
  !
  integer :: e_rng_lines,k_rng_lines,icheck,ik,ib,i1,i2,i3,&
-&           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,bands_mixed
+&           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,bands_mixed,v(2)
  real(SP):: rcheck
  integer,    allocatable:: QP_i_limits(:,:)
  real(SP)   ,allocatable:: QP_r_limits(:,:)
@@ -89,6 +91,11 @@ subroutine QP_state_table_setup(en)
    enddo
    QP_r_limits(:,3:4)=QP_r_limits(:,3:4)/HA2EV
    e_rng_lines=e_rng_lines-2
+   do i1=1,e_rng_lines,1
+     v=int(QP_r_limits(i1,:2))
+     call i_check(v,en%nk)
+     QP_r_limits(i1,:2)=real(v,SP)
+   enddo
    !
    ! Non null %QPerange/%QPkrange fields
    !
@@ -98,8 +105,8 @@ subroutine QP_state_table_setup(en)
      !
      QP_k_nk=0
      QP_e_nk=0
-     if (k_rng_lines>0) QP_k_nk=maxval(QP_i_limits(:,1:2))
-     if (e_rng_lines>0) QP_e_nk=maxval(QP_r_limits(:,1:2))
+     if (k_rng_lines>0) QP_k_nk=    maxval(QP_i_limits(:,1:2))
+     if (e_rng_lines>0) QP_e_nk=int(maxval(QP_r_limits(:,1:2)))
      if (max(QP_k_nk,QP_e_nk)>0) QP_nk=max(QP_k_nk,QP_e_nk)
      !
      ! QP_nb setup
@@ -166,6 +173,7 @@ subroutine QP_state_table_setup(en)
  !
  do i1=1,QP_nk
    do i2=1,QP_nb
+     !
      if (.not.QP_state(i2,i1)) cycle
      !
      do i_sp=1,n_sp_pol

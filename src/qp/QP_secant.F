@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -48,16 +50,16 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  use pars,          ONLY:SP,IP
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset
  use X_m,           ONLY:X_t
- use parallel_m,    ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q
  use QP_m,          ONLY:QP_t,QP_Vxc,QP_Vnl_xc,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
 &                        QP_solver_state,QP_dSc_steps,QP_dSc,&
-&                        QP_W_dr,QP_W_er,QP_dSc_delta,QP_W_partially_done
- use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD,OP_RD_CL
+&                        QP_W_dr,QP_W_er,QP_dSc_delta
+ use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD,OP_RD_CL,io_SCREEN
  use stderr,        ONLY:intc
  use com,           ONLY:warning
  !
@@ -76,19 +78,17 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  complex(SP)  :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  real(SP),parameter :: root_acc=0.001/HA2EV
  !
- integer, external  :: ioQP,secant,bracket
+ integer, external  :: io_QP_and_GF,secant,bracket
  !
  !I need to store on disk the <W> m. elemnts
  !
  call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0)
  !
- if (QP_W_partially_done) return
- !
  !I prepare the Sc energy type
  !
  do i1=1,qp%n_states
    call W_reset(Sc_W(i1))
-   Sc_W(i1)%n=1
+   Sc_W(i1)%n_freqs=1
    allocate(Sc_W(i1)%p(1))
  enddo
  !
@@ -170,7 +170,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  do i1=1,qp%n_states
    Eqp_raxis(i1,1)=Eqp_raxis(i1,iabs(QP_solver_state(i1)))
    call W_reset(Sc_W(i1))
-   Sc_W(i1)%n=QP_dSc_steps
+   Sc_W(i1)%n_freqs=QP_dSc_steps
    allocate(Sc_W(i1)%p(QP_dSc_steps))
    forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=Eqp_raxis(i1,1)+(i2-1)*QP_dSc_delta
  enddo
@@ -195,7 +195,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  do i1=1,QP_n_states
    call W_reset(Sc_W(i1))
  enddo
- deallocate(QP_W)
+ deallocate(QP_W,QP_W_er,QP_W_dr)
  call mem_est("QP_W")
  call PP_redux_wait()
  !
@@ -217,21 +217,31 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
      QP_Sc=(0._SP,0._SP)
      do iqbz=1,q%nbz
        !
-       if (iqbz==1.and.iqbz<q%nbz)  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=ID)
-       if (iqbz> 1.and.iqbz<q%nbz)  call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=ID)
-       if (iqbz> 1.and.iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=ID)
-       if (iqbz==1.and.iqbz==q%nbz) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
-       io_err=ioQP('W',qp,ID)
+       if (io_SCREEN) then
+         !
+         if (iqbz==1.and.iqbz<q%nbz)  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=ID)
+         if (iqbz> 1.and.iqbz<q%nbz)  call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=ID)
+         if (iqbz> 1.and.iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=ID)
+         if (iqbz==1.and.iqbz==q%nbz) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
+         io_err=io_QP_and_GF('W',qp,ID)
+         !
+       endif
        !
-       Xw%er=QP_W_er
-       Xw%dr=QP_W_dr
-       Xw%n=QP_n_W_freqs
+       if (.not.PAR_IND_Q%element_1D( q%sstar(iqbz,1) )) cycle
+       !
+       Xw%er=QP_W_er(iqbz,:)
+       Xw%dr=QP_W_dr(iqbz,:)
+       Xw%n_freqs=QP_n_W_freqs
        call FREQUENCIES_setup(Xw)
        !
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
+       !
        if (.not.allocated(QP_solver_state)) call live_timing(steps=1)
        !
      enddo
+     !
+     call PP_redux_wait(QP_Sc)
+     !
      if (allocated(QP_solver_state)) then
        do i1=1,QP_n_states
          !
@@ -241,7 +251,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
          ! The convergence criteria is dQP_raxis= 0.
          !
          if (QP_solver_state(i1)>0) dQP_raxis(i1,QP_solver_state(i1))=&
-&            ( qp%E_bare(i1)+real(QP_Sc(i1,1))+QP_Vnl_xc(i1)-QP_Vxc(i1) )-&
+&            ( qp%E_bare(i1)+real(QP_Sc(i1,1)+QP_Vnl_xc(i1)-QP_Vxc(i1)) )-&
 &            Eqp_raxis(i1,QP_solver_state(i1))
        enddo
      endif

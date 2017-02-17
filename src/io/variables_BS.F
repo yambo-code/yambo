@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -175,7 +177,7 @@ integer function variables_BS(ID,local_description,X)
        call io_elemental(ID,VAR="W_Cutoff",VAR_SZ=1,CH0="",MENU=0)
        i_local_desc=i_local_desc+1
        call io_elemental(ID,&
-&           VAR="    |Coulomb Cutoff        :",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),&
+&           VAR="    |Coulomb Cutoff          :",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),&
 &           DESCRIPTION=local_description(i_local_desc))
        i_local_desc=i_local_desc+1
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

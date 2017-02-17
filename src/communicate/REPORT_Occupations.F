@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,8 +26,8 @@ subroutine REPORT_Occupations(E)
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:HA2EV
  use com,           ONLY:msg,warning
- use electrons,     ONLY:levels,n_sp_pol,nel
- use interfaces,    ONLY:OCCUPATIONS_gaps
+ use electrons,     ONLY:levels,n_sp_pol,nel,spin_occ
+ use interfaces,    ONLY:OCCUPATIONS_Gaps
  !
  implicit none
  !
@@ -44,7 +46,7 @@ subroutine REPORT_Occupations(E)
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
  real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
  !
- call OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
+ call OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  !
  call msg('r','States summary         : Full        Metallic    Empty')
  !
@@ -72,7 +74,7 @@ subroutine REPORT_Occupations(E)
  ! [2] Indirect Gaps (min/max)
  !
  if(all(Nbf==Nbm)) then
-   prefix_=                               'Indirect Gaps      [ev]:'
+   prefix_=                               'Indirect Gaps      [ev]'
    call msg('r',prefix_//':',E_g_ind(1,:)*HA2EV)
  endif
  !
@@ -107,22 +109,26 @@ subroutine REPORT_Occupations(E)
  ! [3] Report if the system is treated as a metal
  !
  if (.not.all(Nbf==Nbm)) then
+   !
    if(n_sp_pol==1) call warning('Metallic system')
+   !
    if(n_sp_pol==2) then
      if(all(Nbf/=Nbm)) call warning('Metallic system')
      if(any(Nbf==Nbm)) call warning('System is an half-metal')
    endif
- endif
- !
- if (.not.all(Nbf==Nbm)) then
+   !
+   call msg('r',' ')
+   !
    N_met=0
    f_met=0
    do i_sp_pol=1,n_sp_pol
-     f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk*(Nbm(i_sp_pol)-Nbf(i_sp_pol)))
+     f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/sum(spin_occ*real(E%nk*(Nbm(:)-Nbf(:))))
      N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
    enddo
+   !
    call msg('r','N of el / N of met el: ',       (/nel,N_met/))
    call msg('r','Average metallic occ.:            ',(/f_met/))
+   !
  endif
  !
 end subroutine

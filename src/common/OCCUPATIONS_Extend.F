@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -39,8 +41,10 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use com,        ONLY:msg,warning
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
- use interfaces, ONLY:OCCUPATIONS_gaps
+ use interfaces, ONLY:OCCUPATIONS_Gaps
+ !
  implicit none
+ !
  type(levels)::Xe,E
  !
  !Work Space
@@ -50,40 +54,43 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  !
  if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_sp_pol))
  !
- E%Efermi=Xe%Efermi
- call f_build(Xe%Efermi(1))
- call OCCUPATIONS_gaps(E)
+ E%E_Fermi=Xe%E_Fermi
+ E%E_VBM =Xe%E_VBM
+ E%E_CBm =Xe%E_CBm
+ call f_build(Xe%E_Fermi)
+ call OCCUPATIONS_Gaps(E)
  !
  ! If Xe and E have same metallic character then
  ! simply shift E components (Xe have been already shifted
  ! in the Fermi routine)
  !
  if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
-   E%E=E%E-E%Efermi(1)
-   if (associated(E%E_RIM)) E%E_RIM =E%E_RIM -E%Efermi(1)
+   E%E=E%E-E%E_Fermi
+   E%E_VBM =E%E_VBM-E%E_Fermi
+   E%E_CBm =E%E_CBm-E%E_Fermi
+   if (associated(E%E_RIM)) E%E_RIM =E%E_RIM -E%E_Fermi
    return
  endif
  !
  ! If Xe and E have not the same metallic character 
- ! find a range for the Efermi that keeps the
- ! to grids with the same character
+ ! find a range for the E_Fermi that keeps the
+ ! two grids with the same character
  !
- Ef_test=Xe%Efermi(2)+Ef_step
- do while(Ef_test<Xe%Efermi(3))
+ Ef_test=Xe%E_VBM+Ef_step
+ do while(Ef_test<Xe%E_CBm)
    call f_build(Ef_test)
-   call OCCUPATIONS_gaps(E)
+   call OCCUPATIONS_Gaps(E)
    if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
-     E%Efermi(1)=Ef_test
+     E%E_Fermi=Ef_test
      exit
    endif
    Ef_test=Ef_test+Ef_step
  enddo
  !
- E%E=E%E-E%Efermi(1)
- if (associated(Xe%E_RIM)) then
-   E%E_RIM =E%E_RIM -E%Efermi(1)
-   Xe%E_RIM=Xe%E_RIM-E%Efermi(1)
- endif
+ E%E=E%E-E%E_Fermi
+ E%E_VBM =E%E_VBM-E%E_Fermi
+ E%E_CBm =E%E_CBm-E%E_Fermi
+ if (associated(Xe%E_RIM)) E%E_RIM =E%E_RIM -E%E_Fermi
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
    call warning('Global and response function energy levels have different metallic character')

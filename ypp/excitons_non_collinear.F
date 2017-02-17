@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 F. De Fausti, A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -23,14 +25,13 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_sq,S_z)
  !
  use pars,          ONLY:SP
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_mat,BS_eh_table
+ use BS,            ONLY:BS_mat,BSS_eh_table
  use com,           ONLY:msg,error,warning
  use FFT_m,         ONLY:fft_size
  use R_lattice,     ONLY:bz_samp
- use wave_func,     ONLY:wf_state,wf
  use electrons,     ONLY:n_spinor
  use YPP,           ONLY:lambda,BS_H_dim
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error,warning
  use wrapper,       ONLY:Vstar_dot_V
  !
@@ -57,17 +58,17 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_sq,S_z)
  !
  do neh1 = 1,BS_H_dim
    !
-   ikbz1  = BS_eh_table(neh1,1)
-   iv1    = BS_eh_table(neh1,2)
-   ic1    = BS_eh_table(neh1,3)
+   ikbz1  = BSS_eh_table(neh1,1)
+   iv1    = BSS_eh_table(neh1,2)
+   ic1    = BSS_eh_table(neh1,3)
    ikibz1 = Xk%sstar(ikbz1,1)
    is1    = Xk%sstar(ikbz1,2)
    !
    do neh2 = 1,BS_H_dim
      !
-     ikbz2  = BS_eh_table(neh2,1)
-     iv2    = BS_eh_table(neh2,2)
-     ic2    = BS_eh_table(neh2,3)
+     ikbz2  = BSS_eh_table(neh2,1)
+     iv2    = BSS_eh_table(neh2,2)
+     ic2    = BSS_eh_table(neh2,3)
      ikibz2 = Xk%sstar(ikbz2,1)
      is2    = Xk%sstar(ikbz2,2)
      ! 

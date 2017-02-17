@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Varsano and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DV
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,7 +30,7 @@ subroutine cutoff_cylinder(q,is_cut)
 &                        bz_samp,cyl_vr_save,cyl_vz_save
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
  
  implicit none
@@ -39,7 +41,7 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  integer       ::iq,ig,iort1,iort2,ipar,neval,ier,last,key,lenw,&
 &                lenw2,limit,leniw,maxp1
- real(SP)      ::cyl_ph_radius2,cyl_cut2,c1,c2,Vd,abserr,epsabs,z
+ real(SP)      ::cyl_ph_radius2,cyl_cut2,c1,c2,Vd,abserr,epsabs
  complex(SP)   ::V_cut(q%nibz,wf_ng)
  logical       ::infcyl
 #if defined _DOUBLE

@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.4.2 r.93 , yambo@yambo-code.org)
-SVERSION="3"
-SPATCHLEVEL="4"
-SSUBLEVEL="2"
-SREVISION="5108"
+AC_INIT(Yambo, 4.0.0 r.78 , yambo@yambo-code.org)
+SVERSION="4"
+SPATCHLEVEL="0"
+SSUBLEVEL="0"
+SREVISION="78"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -171,7 +171,6 @@ AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
 # ============================================================================
 # BLUEGENE support
-#
 AC_ARG_ENABLE(bluegene, AC_HELP_STRING([--enable-bluegene],[Bluegene specific code instructions.]))
 if test x"$enable_bluegene" = "x"; then enable_bluegene="no"; fi
 bluegene_cpp=" "
@@ -179,6 +178,33 @@ if test x"$enable_bluegene" = "xyes"; then
  bluegene_cpp="-D_BLUEGENE"
 fi
 AC_SUBST(bluegene_cpp)
+# ============================================================================
+# OpenMPI support
+AC_ARG_ENABLE(openmpi, AC_HELP_STRING([--enable-openmpi],[OpenMPI specific code instructions.]))
+if test x"$enable_openmpi" = "x"; then enable_openmpi="no"; fi
+openmpi_cpp=" "
+if test x"$enable_openmpi" = "xyes"; then
+ #
+ if test x"$ac_compiler_gnu" = x"yes"; then
+   OPENMPLIBS="-fopenmp -lpthread";
+ else
+   OPENMPLIBS="-openmp -lpthread";
+ fi
+ openmpi_cpp="-D_OPENMPI"
+ #
+fi
+# ============================================================================
+#
+# Time Profiling (mod_timing)
+#
+AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
+              [Extended timing profile of specific sections]))
+if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
+time_profile_cpp=" "
+if test x"$enable_time_profile" = "xyes"; then 
+ time_profile_cpp="-D_TIMING"
+fi
+AC_SUBST(time_profile_cpp)
 # ============================================================================
 #
 # Time Profiling (mod_timing)
@@ -385,6 +411,7 @@ if test "$mpibuild" = "yes"; then
 # OVERALL CHECK
 #
  if test "$mpibuild" = "no" ; then 
+  openmp_cpp=""
   mpi_cpp=""
   MPILIBS=""
   PF90=""
@@ -392,6 +419,7 @@ if test "$mpibuild" = "yes"; then
   PCC=""
   PCCFLAGS=""
  fi
+ AC_SUBST(openmpi_cpp)
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
  AC_SUBST(enable_mpi_libs)
@@ -428,7 +456,7 @@ ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F lib/local/.objects
-                 sbin/make_makefile.sh sbin/make_message.pl sbin/objects_debug.sh
+                 sbin/make_makefile.sh sbin/objects_debug.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 AC_OUTPUT
 chmod u+x sbin/*

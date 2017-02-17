@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,7 +25,7 @@
 !====================================
    use pars
    use com,                     ONLY : msg, error
-   use timing,                  ONLY : live_timing
+   use LIVE_t,                  ONLY : live_timing
    use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
    use parallel_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
 &                                      pp_indexes_reset
@@ -32,7 +34,7 @@
    use R_lattice,               ONLY : g_vec, bz_samp
    use X_m,                     ONLY : X_t, Dipole_bands_ordered
    use memory_m,                ONLY : mem_est
-   use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load
+   use wave_func,               ONLY : WF, wf_ng
    use optcut,                  ONLY : DIP_iR_cut, ng_limits, setup_optcut, pscut, PScut_slow
    use surface_geometry,        ONLY : setup_gvecaff
    implicit none
@@ -97,10 +99,9 @@
            if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
            if (abs(Ev_m_Ec)<=1.E-5) cycle
 
-           ivfft=wf_state(iv,ik,i_spin)
-           icfft=wf_state(ic,ik,i_spin)
-
-           call PScut(PS, wf(:,ivfft), wf(:,icfft), kg = kg )
+           ivfft=WF%index(iv,ik,i_spin)
+           icfft=WF%index(ic,ik,i_spin)
+           call PScut(PS, WF%c(:,ivfft), WF%c(:,icfft), kg = kg )
 !          call PScut_slow(PS, wf(:,ivfft), wf(:,icfft), kg )
 
 !          DIP_iR_cut(:,ic,iv,ik,i_spin) = PS(:)/Ev_m_Ec

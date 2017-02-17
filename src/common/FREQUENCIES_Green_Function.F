@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -39,8 +41,11 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
  !
  ! Work Space
  !
+#if defined _ELPH
  integer :: iw,n_small_freqs
- real(SP):: wide_range(2),Eo,small_step,large_step,running_step
+ real(SP):: wide_range(2),small_step,large_step,running_step
+#endif
+ real(SP):: Eo
  !
  W%dr=QP_G_dr
  if (allocated(QP_G_zoom_er).and..not.Spectral_Function) then
@@ -62,13 +67,13 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
    call FREQUENCIES_setup(W)
    Eo=E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))
    !
-   n_small_freqs=W%n(1)/2
+   n_small_freqs=W%n_freqs/2
    !
    small_step=( QP_G_er(2)-QP_G_er(1))/real(n_small_freqs)
-   large_step=( wide_range(2)-wide_range(1) - ( QP_G_er(2)-QP_G_er(1)) )/real(W%n(1)-n_small_freqs) 
+   large_step=( wide_range(2)-wide_range(1) - ( QP_G_er(2)-QP_G_er(1)) )/real(W%n_freqs-n_small_freqs) 
    running_step=large_step
    !
-   do iw=2,W%n(1)
+   do iw=2,W%n_freqs
      !
      W%p(iw)=real(W%p(iw-1))+running_step+cI*aimag(W%p(iw))
      !

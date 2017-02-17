@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +23,7 @@
 !
 subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
- use drivers,       ONLY:l_ph_corr,l_el_corr,l_life,l_cohsex
+ use drivers,       ONLY:l_elph_corr,l_elel_corr,l_life,l_cohsex
  use units,         ONLY:HA2EV,HBAR_eVfs
  use pars,          ONLY:SP,schlen,lchlen
  use com,           ONLY:msg
@@ -30,6 +32,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
 &                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind,&
 &                        l_QP_Expand,QP_reset
+#if defined _ELPH
+ use ELPH,          ONLY:QP_DW,QP_OMS_Fan
+#endif
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
@@ -56,7 +61,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  type(QP_t)       ::qp_expanded
  !
  !I/O
- integer, external::ioQP
+ integer, external::io_QP_and_GF
  logical          ::do_IO
  integer          ::ID,io_err
  !
@@ -69,7 +74,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !============================================================
  !
  report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx.and..not.use_GreenF_to_eval_QP
- report_Vnlxc=l_el_corr.and..not.l_life
+ report_Vnlxc=l_elel_corr.and..not.l_life
  report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'.and..not.use_GreenF_to_eval_QP.and..not.l_cohsex
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then
@@ -88,11 +93,11 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! Plot the Green Functions
    !
-   call QP_of(qp,en,QPdb_read_err,k)
+   call QP_of(qp,en,QPdb_read_err,'qp')
    !
    if (do_IO) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-     io_err=ioQP('G',qp,ID) 
+     io_err=io_QP_and_GF('G',qp,ID) 
    endif
    return
  endif
@@ -103,7 +108,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  else 
    call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
    if (report_Sc) call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
-   if (l_ph_corr) call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
+   if (l_elph_corr) call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
+   if (l_elph_corr) call msg('r', '- F  : Fan [eV]  - DW  : DW [eV]')
    if (report_dSc) call msg('rn','- dSp: Sc derivative precision')
    if (report_Vnlxc) then
      call msg('r','- lXC: Starting Local XC ('//trim(Vxc_kind)//')')
@@ -127,17 +133,20 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! SHADOWS
    ! =======
-   n_shadows=4
-   shadow(:4)=(/qp%E_bare(iqp)*HA2EV,real(qp%E(iqp))*HA2EV,&
-                real(qp%E(iqp)-qp%E_bare(iqp))*HA2EV,real(qp%Z(iqp))/)
+   n_shadows=5
+   shadow(:5)=(/qp%E_bare(iqp)*HA2EV,real(qp%E(iqp))*HA2EV,&
+&               real(qp%E(iqp)-qp%E_bare(iqp))*HA2EV,&
+&               real(qp%Z(iqp)),aimag(qp%Z(iqp))/)
    shadow_string(1)=' Eo='
    shadow_fmt(1)   ='(a,f6.2)'
    shadow_string(2)=' E='
    shadow_fmt(2)   ='(a,f6.2)'
    shadow_string(3)=' E-Eo='
    shadow_fmt(3)   ='(a,f6.2)'
-   shadow_string(4)=' Z='
+   shadow_string(4)=' Re(Z)='
    shadow_fmt(4)   ='(a,f4.2)'
+   shadow_string(5)=' Im(Z)='
+   shadow_fmt(5)   ='(a,f4.2)'
    !
    if (report_Vnlxc) then
      n_shadows=n_shadows+1
@@ -167,17 +176,19 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      ! SHADOWS
      ! =======
      !
-     n_shadows=4
-     shadow(:2)=(/qp%E_bare(iqp)*HA2EV,real(qp%Z(iqp))/)
-     shadow(3)=aimag(qp%E(iqp))*HA2EV/1.E-3
-     shadow(4)=0.
+     n_shadows=5
+     shadow(:3)=(/qp%E_bare(iqp)*HA2EV,real(qp%Z(iqp)),aimag(qp%Z(iqp))/)
+     shadow(4)=aimag(qp%E(iqp))*HA2EV/1.E-3
+     shadow(5)=0.
      !
-     if (abs(shadow(3))>0.) shadow(4)=HBAR_eVfs/abs(aimag(qp%E(iqp)))/HA2EV
+     if (abs(shadow(4))>0.) shadow(5)=HBAR_eVfs/abs(aimag(qp%E(iqp)))/HA2EV
      !
-     shadow_string(2)=' Z='
+     shadow_string(2)=' Re(Z)='
      shadow_fmt(2)   ='(a,f4.2)'
-     shadow_string(3)=' Gm='
-     shadow_string(4)=' Gf='
+     shadow_string(3)=' Im(Z)='
+     shadow_fmt(3)   ='(a,f4.2)'
+     shadow_string(4)=' Gm='
+     shadow_string(5)=' Gf='
    endif
    !
    ! Write to Report File
@@ -240,8 +251,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !=================
  if (do_IO) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-   if (.not.associated(qp_expanded%E)) io_err=ioQP('QP',qp,ID)
-   if (     associated(qp_expanded%E)) io_err=ioQP('QP',qp_expanded,ID)
+   if (.not.associated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp,ID)
+   if (     associated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp_expanded,ID)
  endif
  !
  call QP_reset(qp_expanded)
@@ -249,7 +260,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  ! Output File
  !==============
  !
- call QP_of(qp,en,QPdb_read_err,k)
+ call QP_of(qp,en,QPdb_read_err,'qp')
  !
 end subroutine
 

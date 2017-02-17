@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,10 +24,11 @@
 subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,Efield_unit,V_real_time,T_unit
+&                        Time_unit,Bfield_unit,V_real_time,T_unit
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
+ use interpolate,   ONLY:lpfac
  use YPP
 #if defined _YPP_SURF
  use bulkeps,              ONLY: init_bulk
@@ -35,7 +38,9 @@ subroutine ypp_init_load(defs)
  use surface_geometry,     ONLY: init_surface
  use eels_detector,        ONLY: init_detector
 #endif
+ !
  implicit none
+ !
  type(initdefs)::defs
  !
  ! RunLevels
@@ -53,6 +58,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'amplitude', '[R] Amplitude')
  call it('r',defs,'plot',         '[R] Plot')
  call it('r',defs,'density',      '[R] Density')
+ call it('r',defs,'current',      '[R] Current')
  call it('r',defs,'wannier',      '[R] Wannier 90 I/O')
  call it('r',defs,'bnds',        '[R] Bands')
  call it('r',defs,'wavefunction', '[R] Wavefunction')
@@ -68,10 +74,11 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'loc',     '[R] State localizer')
  call it('r',defs,'trans',   '[R] Transition analyzer')
 #endif
- call QP_ctl_load(defs,3)
+ call init_QP_ctl_load(defs,3)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
- call it('r',defs,'bzrim',     '[R] BZ energy RIM analyzer')
+ call it('r',defs,'bzrim',        '[R] BZ Random kpt generator')
+ call it('r',defs,'kpts_map',     '[R] BZ map fine grid to coarse')
  call it('r',defs,'QPDBs', '[R] Quasi-particle databases')
  call it('r',defs,'QPDB_edit', '[R] Generation/editing')
  call it('r',defs,'QPDB_merge','[R] Mergering')
@@ -93,12 +100,13 @@ subroutine ypp_init_load(defs)
  call it(defs,'DOSESteps', 'Energy steps',dos_E_steps,verb_level=V_general) 
  call it('f',defs,'PrtOccOnly', 'Occupied states only') 
  !
+ !
  ! BANDS
  !
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
- call it(defs,'BANDS_range', 'Bands Range',BANDS_range) 
  call it(defs,'BKpts','Bands circuit',Kgw_1)
  call it(defs,'INTERPGrid', 'Interpolation Grid',interp_grid)
+ call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
  !
  ! Wannier interface
  !
@@ -120,6 +128,7 @@ subroutine ypp_init_load(defs)
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
  call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 
  call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
+ call it('f',defs,'DipWeight',    ' Weight the contribution to the exciton WFs with the dipoles') 
  !
  ! WFs
  !
@@ -145,6 +154,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'Format', 'Output format [(c)ube/(g)nuplot/(x)crysden]',p_format)
  call it(defs,'Direction', '[rlu] [1/2/3] for 1d or [12/13/23] for 2d [123] for 3D',p_dir)
  call it(defs,'MagDir', 'Magnetization component',mag_dir)
+ call it(defs,'CurrentDir', '[cc] Carthesian direction to average the current',current_dir)
 #if defined _YPP_ELPH
  !
  !EL-PH
@@ -154,7 +164,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'PHmodeF',  'PWscf format file containing the phonon modes',ph_modes_file)
  call it(defs,'EfGbroad', 'Fermi surface broadening (Gamma)',elph_gamma_broad,E_unit)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
- call it(defs,'EEfermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
+ call it(defs,'EE_Fermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
  !
@@ -196,7 +206,8 @@ subroutine ypp_init_load(defs)
  !BZ E RIM
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
- call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
+ call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
+ call it('f',defs,'noBZExpand' , 'Keep the RIM k-points in the IBZ without using the symmetries')
  !
  ! Wannier bands
  !

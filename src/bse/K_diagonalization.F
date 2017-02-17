@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,40 +26,46 @@ subroutine K_diagonalization(iq,W)
  ! Generic diagonalization method to solve resonant and non resonant
  ! Hamiltonians.
  !
- use pars,           ONLY:SP,DP,pi
- use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
+ use pars,           ONLY:SP,pi
+ use wrapper_omp,    ONLY:M_by_M_omp,Vstar_dot_V_omp,V_dot_V_omp
  use X_m,            ONLY:X_epsilon,X_drude_term
- use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
-&                         BSS_write_eig_2_db,BS_eh_W,BS_eh_E,BS_anti_res,&
-&                         ioBSS_diago
- !
- !
+ use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,io_BSS_diago,&
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_anti_res,BS_mat_free,BS_H_dim
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
- use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
+ use matrix_operate, ONLY:DIAGO,INV
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:d3k_factor,q_norm
  use com,            ONLY:isec
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,ncpu,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
+ use interfaces,     ONLY:PARALLEL_index,MATRIX_driver
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
+ !
+ !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+ !
  implicit none
+ !
  type(w_samp)  :: W
  integer       :: iq
  !
  ! Work Space
  !
  type(PP_indexes)     ::px
- integer              ::i1,iw,lib_driver,BS_H_dim
+ integer              ::i1
  logical              ::K_is_not_hermitian
  real(SP)             ::gauge_factor,Co
+ !
  !
  ! Residuals & Energies
  !
  complex(SP), allocatable ::BS_E(:)
  complex(SP), allocatable ::BS_R(:) 
+ !
  !
  ! Resonant K
  !
@@ -72,12 +80,17 @@ subroutine K_diagonalization(iq,W)
  complex(SP), allocatable ::BS_R_right(:)
  !
  !
+ !
  ! I/O
  !
  integer              ::io_err,ID
  !
+#if defined _TIMING
+ call timing('Diagonalization Solver',OPR='start')
+#endif
  !  
  ! Sectioning
+ !============
  !
  if (isec(2)/=0) then
    call section('=','Diagonalization solver')
@@ -86,12 +99,12 @@ subroutine K_diagonalization(iq,W)
  endif
  !
  ! Eigenstates 2 DB ?
+ !====================
  !
  if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
  !
- ! Allocation & Par Procs
- !
- K_is_not_hermitian=BS_K_coupling.or.allocated(BS_eh_W)
+ ! Diagonalization DB (IN)
+ !========================
  !
  BS_H_dim=BS_K_dim
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
@@ -99,65 +112,72 @@ subroutine K_diagonalization(iq,W)
  allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
  !
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R)
+ !
+ if(io_err<0) then
+   !
+   ! Kernel loading
+   !
+   call K_stored_in_a_BIG_matrix(iq)
+   !
+   ! eh damping 
+   !
+   if (allocated(BSS_eh_W)) then
+     do i1=1,BS_K_dim
+       BS_mat(i1,i1)=BS_mat(i1,i1)+(0.,1.)*BSS_eh_W(i1)
+     enddo
+   endif
+   !
+ endif
+ !
+ ! Allocation & Par Procs
+ !========================
+ !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/BS_H_dim/))
+ !
+ K_is_not_hermitian=BS_K_coupling.or.allocated(BSS_eh_W)
+ !
  !
  if (K_is_not_hermitian) then
    allocate(BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim))
    call mem_est("BS_V_left BS_V_right",(/BS_H_dim,size(BS_V_left),size(BS_V_right)/))
    allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim))
    call mem_est("BS_R_left BS_R_right BS_overlap",(/BS_H_dim,BS_H_dim,size(BS_overlap)/))
+   !
+   !
    BS_overlap=(0.,0.)
-   !
-   !
  else
    allocate(BS_E_real(BS_H_dim))
    call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))
  endif
  !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BS_H_dim/))
- !
- ! Diagonalization DB (IN)
- !
- !
- !
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
- !
- !
- if(io_err<0) then
-   !
-   ! Kernel loading
-   !
-   call K_BSload(iq)
-   !
-   ! eh damping 
-   !
-   if (allocated(BS_eh_W)) &
-&     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+(0.,1.)*BS_eh_W(i1)
-   !
- endif
- !
  ! Initialize the output file 
+ !============================
  !
  call K_output_file(iq,-2)
  !
  if(io_err<0) then
    !
    ! Diagonalization of the excitonic hamiltonian
+   !==============================================
    !
-   lib_driver=USE_LK
-   if (ncpu>1) lib_driver=USE_SLK
    call live_timing('BSK diagonalize',1)
    if (K_is_not_hermitian) then
-     call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_cmpl=BS_E,&
-&                     V_left=BS_V_left,V_right=BS_V_right)
+     !
+     call MATRIX_driver(DIAGO,BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
-     call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_real=BS_E_real)
+     !
+     call MATRIX_driver(DIAGO,BS_mat,E_real=BS_E_real)
+     !
      BS_E=BS_E_real
+     !
    endif
+   !
    call live_timing(steps=1)
    call live_timing
    !
@@ -183,7 +203,7 @@ subroutine K_diagonalization(iq,W)
        BS_R_right(i1)=cmplx(0.,0.,SP)
        if (.not.px%element_1D(i1)) cycle
        !
-       BS_R_right(i1)=Vstar_dot_V(BS_H_dim,BSS_rhoq0,BS_V_right(:,i1))
+       BS_R_right(i1)=Vstar_dot_V_omp(BS_H_dim,BSS_rhoq0,BS_V_right(:,i1))
        !
        call live_timing(steps=1)
      enddo
@@ -200,7 +220,7 @@ subroutine K_diagonalization(iq,W)
        BS_R(i1)=cmplx(0.,0.,SP)
        if (.not.px%element_1D(i1)) cycle
        !
-       BS_R(i1)=Vstar_dot_V(BS_H_dim,BS_V_left(:,i1), &
+       BS_R(i1)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i1), &
 &                     (/BSS_rhoq0(1:BS_K_dim),-BSS_rhoq0(1+BS_K_dim:BS_H_dim)/) )
        !
        call live_timing(steps=1)
@@ -214,9 +234,9 @@ subroutine K_diagonalization(iq,W)
      !
      call live_timing('BSK overlap mat',1)
      !
-     call M_by_M('c','n',BS_H_dim,BS_V_left,BS_V_right,BS_overlap)
+     call M_by_M_omp('c','n',BS_H_dim,BS_V_left,BS_V_right,BS_overlap)
      !
-     call mat_dia_inv(INV,USE_SLK,BS_overlap)
+     call MATRIX_driver(INV,BS_overlap)
      call live_timing(steps=1)
      call live_timing()
      !
@@ -227,7 +247,7 @@ subroutine K_diagonalization(iq,W)
        BS_R_left(i1)=cmplx(0.,0.,SP)
        if (.not.px%element_1D(i1)) cycle
        !
-       BS_R_left(i1)=V_dot_V(BS_H_dim,BS_overlap(i1,:),BS_R)
+       BS_R_left(i1)=V_dot_V_omp(BS_H_dim,BS_overlap(i1,:),BS_R)
        !
        call live_timing(steps=1)
      enddo
@@ -244,8 +264,8 @@ subroutine K_diagonalization(iq,W)
      !
    else
      !
-     !Resonant Residuals
-     !------------------
+     ! Resonant Residuals
+     !====================
      !
      ! BS_R(i)=\sum_k <q0|k><k|i> =
      !         \sum_k BS_mat(k,i) x conjg( BSS_rhoq0(k) )
@@ -256,7 +276,7 @@ subroutine K_diagonalization(iq,W)
      do i1=1,BS_K_dim
        if (.not.px%element_1D(i1)) cycle
        !
-       BS_R(i1)=Vstar_dot_V(BS_K_dim,BSS_rhoq0,BS_mat(:,i1))
+       BS_R(i1)=Vstar_dot_V_omp(BS_K_dim,BSS_rhoq0,BS_mat(:,i1))
        !
        call live_timing(steps=1)
      enddo
@@ -268,7 +288,8 @@ subroutine K_diagonalization(iq,W)
    endif
  endif
  !
- !Now I calculate epsilon
+ ! Now I calculate epsilon
+ !=========================
  !
  ! eps2(iw)= 1 - Sum  BS_R(K)/(w +I eta - E)     (coupling or non-hermitian)
  !           1 - Sum |BS_R(K)|^2/(w +I eta - E)  (resonant)
@@ -287,10 +308,11 @@ subroutine K_diagonalization(iq,W)
    !
    ! Note the use of a causal expression here needed to avoid any
    ! distinction between the resonant and antiresonant e/h Green's functions.
+   !
    if (     K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))/gauge_factor
    if (.not.K_is_not_hermitian) then
      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/gauge_factor
-     if(BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor
+     if (BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor
    endif
    !
    !
@@ -313,20 +335,21 @@ subroutine K_diagonalization(iq,W)
  call K_output_file(iq,2)
  !
  ! Diagonalization DB (OUT)
- !
+ !==========================
  if (io_err/=0) then
    !
    !
-     call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-     io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+   call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R)
    !
    !
  endif
  !
  ! CLEAN
+ !=======
  !
- if (allocated(BS_mat)) deallocate(BS_mat)
- call mem_est("BS_mat")
+ call BS_mat_free( )
+ !
  deallocate(BS_R,BS_E)
  call mem_est("BS_R BS_E")
  !
@@ -341,5 +364,9 @@ subroutine K_diagonalization(iq,W)
    call mem_est("BS_E_real")
  endif
  call PP_indexes_reset(px)
+ !
+#if defined _TIMING
+ call timing('Diagonalization Solver',OPR='stop')
+#endif
  !
 end subroutine

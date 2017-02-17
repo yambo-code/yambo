@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Attaccalite, A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,11 +28,12 @@ subroutine symmetries_driver(E,Xk)
  use electrons,           ONLY:levels,Total_magn,n_spinor
  use FFT_m,               ONLY:fft_size
  use IO_m,                ONLY:mk_dir,rm_file
- use com,                 ONLY:msg,warning,core_io_path,more_io_path
+ use com,                 ONLY:msg,core_io_path,more_io_path
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
  use D_lattice,           ONLY:nsym
- use wave_func,           ONLY:wf_nb_io,wf_ng,WF_load,WF_free
+ use wave_func,           ONLY:wf_ng,WF
  use stderr,              ONLY:intc
+ use interfaces,          ONLY:WF_load
  !
  implicit none
  !
@@ -49,7 +52,7 @@ subroutine symmetries_driver(E,Xk)
  !
  integer               :: action_kind
  !
- if(core_io_path==more_io_path) then
+ if (core_io_path==more_io_path) then
    more_io_path=trim(core_io_path)//"/FixSymm"
    call msg('s','Setting I/O path to "FixSymm"')
  endif
@@ -68,12 +71,12 @@ subroutine symmetries_driver(E,Xk)
  ! Check if the system is magnetic
  ! Magnetization must be considered to derive syms if n_spinor==2
  if(n_spinor==2) then
-   call WF_load(0,1,(/1,E%nbm/),(/1,Xk%nibz/),title='-Magn')
+   call WF_load(WF,0,1,(/1,E%nbm/),(/1,Xk%nibz/),title='-Magn')
    allocate(magn(fft_size,3))
    call el_magnetization(E,Xk)
    call msg('s','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
    deallocate(magn)
-   call WF_free()
+   call WF_free(WF)
  endif
  !
  ! Expansion of default k-points
@@ -102,7 +105,7 @@ subroutine symmetries_driver(E,Xk)
  !
  allocate(kpoints_map(2,Xk%nibz))
  !
- call build_kpts_map(Xk,Xk_save,kpoints_map,action_kind)
+ call k_build_map(Xk,Xk_save,kpoints_map,action_kind)
  !
  ! Energies and Wave-functions
  call fix_WFs_and_E(E,Xk,Xk_save,kpoints_map,old_nsym,S_contains_TR,action_kind)

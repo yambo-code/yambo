@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -29,7 +31,7 @@ subroutine WANNIER_driver(k,E)
  use com,            ONLY:error,msg
  use vec_operate,    ONLY:rlu_v_is_zero
  use zeros,          ONLY:k_rlu_zero
- use QP_m,           ONLY:QP_table,QP_t,QP_reset,QP_n_states
+ use QP_m,           ONLY:QP_t,QP_reset
  use IO_m,           ONLY:io_control,OP_RD_CL,LOG,DUMP
  implicit none
  !
@@ -38,8 +40,8 @@ subroutine WANNIER_driver(k,E)
  !
  ! Work Space
  !
- integer              :: i1,nk_w,k_table(nkbz),ik,io_QP,ID,i_qp
- integer,    external :: ioQP
+ integer              :: i1,nk_w,k_table(nkbz),ik,io_QP_and_GF_err,ID,i_qp
+ integer,    external :: io_QP_and_GF
  real(SP)             :: k_w(3)
  type(QP_t)           :: qp
  character(lchlen)    :: nnkp_file,eig_file
@@ -68,7 +70,7 @@ subroutine WANNIER_driver(k,E)
  !
  call QP_reset(qp)
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=LOG,MODE=DUMP,ID=ID)
- io_QP=ioQP("QP",qp,ID)
+ io_QP_and_GF_err=io_QP_and_GF("QP",qp,ID)
  !
  eig_file=trim(seed_name)//".eig"
  open(unit=10,file=trim(eig_file),form='formatted')

@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -19,19 +21,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_driver(Xk,Xen)
+subroutine electrons_driver(Xk,Xen,Xq)
  !
- use pars,           ONLY:SP,schlen,lchlen
+ use pars,           ONLY:SP,lchlen
+ use units,          ONLY:AU2nAmpere
  Use stderr,         ONLY:intc
- use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
+ use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
- use R_lattice,      ONLY:bz_samp,nkibz
- use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol,Total_magn
+ use vec_operate,    ONLY:v_norm
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:i_time_rev
+ use com,            ONLY:error
+ use electrons,      ONLY:levels,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,l_angular_momentum,l_current,&
-&                         l_position,l_bands,BANDS_range
+&                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,l_RT_life_Bands,&
+&                         l_bands,l_current,current_dir
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -39,18 +45,25 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:elph_residual_treshold
  use ELPH,           ONLY:elph_Ham_bands
  use com,            ONLY:jobstr,file_exists
+ use R_lattice,      ONLY:nkibz
 #endif
+ use interfaces,     ONLY:WF_load,el_density_and_current,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
+ !
  implicit none
  !
- type(bz_samp) ::Xk
+ type(bz_samp) ::Xk,Xq
  type(levels)  ::Xen
  !
  ! Work Space
  !
- real(SP), allocatable :: el_den(:)
- integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref,iq_ibz,iq_s
- logical               :: flag,l_polaronic_wf
+ real(SP), allocatable :: el_den(:),el_cur(:,:)
+ integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ logical               :: flag
  character(lchlen)     :: ch_ws(2)
+#if defined _YPP_ELPH
+ integer               :: iq_s,iq_ibz
+ logical               :: l_polaronic_wf
+#endif
  !
 #if defined _YPP_ELPH
  !
@@ -66,27 +79,31 @@ subroutine electrons_driver(Xk,Xen)
  !
 #endif
  !
- flag=any((/l_mag,l_density,l_sp_wf,l_dos,l_bands/))
+ ! Doing something?
+ !==================
+ !
+ flag=any((/l_mag,l_density,l_sp_wf,l_dos,l_bands,l_current/))
  !===
  !
  if (.not.flag) return
  !
  call plot_check_and_launch(.true.)
  !
- ! Loading  Wf 
+ ! QP indexes loading
+ !====================
  !
  nb_to_load=(/1,Xen%nbm/)
  nkpt_to_load=(/1,Xk%nibz/)
  !
- flag=l_sp_wf
+ flag=any((/l_sp_wf,l_bands,l_RT_occ_Bands,l_RT_life_Bands/))
  !===
  !
- if (l_bands) nb_to_load=BANDS_range
- !
  if (flag) then
+   !
    call QP_state_table_setup(Xen)
    nb_to_load   =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
    nkpt_to_load =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
+   !
 #if defined _YPP_ELPH
    l_polaronic_wf=.FALSE.
    db_name=trim(jobstr)//'/TOP_RESIDUAL_b'//trim(intc(QP_table(1,1)))//'_k'//trim(intc(QP_table(1,3)))
@@ -99,13 +116,22 @@ subroutine electrons_driver(Xk,Xen)
      nkpt_to_load  =(/1,nkibz/)
    endif
 #endif
+   !
  endif
+ !
+ ! WFs
+ !=====
  !
  flag=.not.l_dos
  !===
  !
  if(flag) then
-   call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
+   !
+   call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
+   call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_index( )
+   !
+   call WF_load(WF,wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
    allocate(v2plot(fft_size))
 #if defined _YPP_ELPH
@@ -117,99 +143,19 @@ subroutine electrons_driver(Xk,Xen)
  ! DOS & DENSITY
  !===============
  !
- if (l_dos.or.l_density)  call electrons_dos_and_charge(Xk,Xen)
+ if (l_dos.or.l_density.or.l_RT_dos)  call electrons_dos_and_charge(Xk,Xen)
  !
  ! BANDS interpolation
  !======================
  !
- if(l_bands) call electrons_bands(Xk,Xen)
- !
- ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
- !==============================================================================
-#if defined _YPP_ELPH
- if (l_polaronic_wf) then
-   !
-   i_qp=1
-   !
-   l_norm_to_one=.true.
-   !
-   do while (i_qp<=QP_n_states) 
-     !
-     ib    =QP_table(i_qp,1)
-     ik    =QP_table(i_qp,3)
-     i_spin=spin(QP_table(i_qp,:))
-     !
-     db_name=trim(jobstr)//'/TOP_RESIDUAL_b'//trim(intc(ib))//'_k'//trim(intc(ik))
-     !
-     i_qp=i_qp+1
-     !
-     if (.not.file_exists(trim(db_name))) cycle
-     !  
-     do i_st=1,2
-       n_top_residuals=1
-       open(unit=100,file=trim(db_name),form='unformatted')
-       do while(.true.)
-         read(100,end=2) top_residual(n_top_residuals),polaronic_residual(n_top_residuals)
-         if  (polaronic_residual(n_top_residuals)>elph_residual_treshold/100.*max_residual) n_top_residuals=n_top_residuals+1
-       enddo
-2      n_top_residuals=n_top_residuals-1
-       close(100)
-       if (i_st==1) max_residual=maxval(polaronic_residual(:n_top_residuals))
-     enddo 
-     ! 
-     call msg('s',':: Found '//trim(intc(n_top_residuals))//' residuals@k'//trim(intc(ik))//&
-&                 '_b'//trim(intc(ib))//':', top_residual(:n_top_residuals))
-     !
-     do i_st=1,n_top_residuals
-       !
-       if  (polaronic_residual(i_st)<elph_residual_treshold/100.*maxval(polaronic_residual(:n_top_residuals))) cycle
-       !
-       v2plot_c=cmplx(0.,SP)
-       !
-       db_name=trim(jobstr)//'/EIGENV_I'//trim(intc(top_residual(i_st)))//'_k'//trim(intc(ik))
-       open(unit=100,file=trim(db_name),form='unformatted')
-       read(100) H_size
-       do i_c=1,H_size
-         read(100) ibp,ok_ibz,ok_s,il,iq_ibz,iq_s,B_n_ok
-         !
-         if (il==0) then
-           !
-           i_wf=wf_state(ib,ik,1)
-           !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+wf(ir,i_wf)
-           !
-         else
-           !
-           call WF_apply_symm((/ibp,ok_ibz,ok_s,1/),wf_rot)
-           !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+B_n_ok*wf_rot(ir)
-           !
-         endif
-         !
-       enddo
-       close(100)
-       !
-       v2plot  =abs(real(v2plot_c))
-       !
-       ch_ws(1)='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim))//&
-&               '_STATE'//trim(intc(top_residual(i_st)))//'_'//trim(intc(plot_dim))
-       if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
-       if (use_gnuplot)  output_fname=trim(ch_ws(1))//'d'
-       !
-       call of_open_close(trim(output_fname),'ot')
-       call msg('o wf',"#")
-       !
-       call plot_check_and_launch(.false.)
-       !
-       call of_open_close(trim(output_fname))
-       !
-     enddo
-     !
-   enddo
-   !
+ if(l_bands.or.l_RT_occ_Bands.or.l_RT_life_Bands) then
+   if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
+   call electrons_bands(Xk,Xen,nb_to_load)
  endif
  !
-#endif
+ !
+ ! WAVEFUNCTIONS (and Mean Potential)
+ !====================================
  !
  ik_ref=-1
  ch_ws(2)='sp_wf'
@@ -240,11 +186,11 @@ subroutine electrons_driver(Xk,Xen)
      i_qp=i_qp+1
      !
      !
-       i_wf=wf_state(ib,ik,i_spin)
-       if (n_spinor==2) i_wfp=wf_state(ib,ik,2)
+       i_wf=WF%index(ib,ik,i_spin)
+       if (n_spinor==2) i_wfp=WF%index(ib,ik,2)
      !
-       forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
-       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( wf(ir,i_wfp)*conjg( wf(ir,i_wfp) ) )
+       forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,i_wf)*conjg( WF%c(ir,i_wf) ) )
+       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%c(ir,i_wfp)*conjg( WF%c(ir,i_wfp) ) )
      !
      ibp=ib+1
      if (ib==Xen%nb) ibp=ib
@@ -298,8 +244,6 @@ subroutine electrons_driver(Xk,Xen)
    call section('*','Single Particle Magnetization along '//mag_dir)
    !
    call el_magnetization(Xen,Xk)
-   !
-   call msg('s','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
    !
    v2plot=magn(:,mag_i_dir)
    !
@@ -364,15 +308,15 @@ subroutine electrons_driver(Xk,Xen)
  endif
  !
  !
- !
 1 continue
- call WF_free()
- if (allocated(v2plot))   deallocate(v2plot)
- if (allocated(QP_table)) deallocate(QP_table,QP_state)
- if (allocated(magn))     deallocate(magn)
- if (allocated(el_den))   deallocate(el_den)
+ call WF_free(WF)
+ if (allocated(v2plot))     deallocate(v2plot)
+ if (allocated(QP_table))   deallocate(QP_table,QP_state)
+ if (allocated(magn))       deallocate(magn)
+ if (allocated(el_den))     deallocate(el_den)
+ if (allocated(el_cur))     deallocate(el_cur)
 #if defined _YPP_ELPH 
- if (allocated(v2plot_c)) deallocate(v2plot_c)
+ if (allocated(v2plot_c))   deallocate(v2plot_c)
 #endif
  plot_title=' '
  !

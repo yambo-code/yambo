@@ -1,4 +1,3 @@
-SPIN_objects = excitons_collinear.o excitons_non_collinear.o
 #if defined _YPP_ELPH
 ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o ELPH_general_gFsq.o ELPH_gkkp_expand.o
 #endif
@@ -6,11 +5,15 @@ ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o ELPH_general_gFsq.o ELPH_g
 SURF_objects = ras_ypp.o reels_ypp.o ras_loc_ypp.o ras_trans_ypp.o
 #endif
 #
+bands_objects = electrons_bands.o
 objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
        k_grids.o k_special.o QP_DBs_initialize.o QP_DBs_setup.o QP_DBs_merge.o \
-       excitons_driver.o electrons_driver.o electrons_dos_and_charge.o electrons_bands.o \
+       excitons_driver.o electrons_driver.o electrons_dos_and_charge.o \
        plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o plot_cube.o \
        excitons_sort_and_report.o excitons_collinear.o excitons_non_collinear.o $(bands_objects) \
-       WANNIER_driver.o read_bxsf.o double_k_grid.o symmetries_driver.o \
-       fix_symmetries.o build_kpts_map.o fix_WFs_Gshells.o fix_WFs_and_E.o fix_PPs.o \
-       $(ELPH_objects) $(RT_objects) $(SC_objects) k_random.o  $(magnetic_objects) $(SURF_objects)
+       WANNIER_driver.o bxsf_read.o double_k_grid.o symmetries_driver.o \
+       fix_symmetries.o k_build_map.o fix_WFs_Gshells.o fix_WFs_and_E.o fix_PPs.o \
+       $(ELPH_objects) \
+       k_RIM_grid_consistency_check.o k_random.o k_map_fine_to_coarse.o \
+       $(SURF_objects)
+

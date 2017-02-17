@@ -1,6 +1,8 @@
 #
-# Copyright (C) 2000-2016 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2015 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -26,7 +28,7 @@ netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @openmpi_cpp@ @time_profile_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -45,35 +47,36 @@ exec_prefix = @exec_prefix@
 bindir      = @bindir@
 libdir      = @srcdir_path@/lib
 includedir  = @srcdir_path@/include
-CFGFILES = config/setup config/Makefile config/report \
-  	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
-	   src/external_c/.objects Makefile driver/version.h \
+CFGFILES = config/setup config/Makefile config/report  \
+           sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
+           src/external_c/.objects Makefile driver/version.h \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects
-TARGETS  = yambo interfaces ypp 
+TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs
 CLEANS   = clean clean_all
 INTERFCS = a2y p2y e2y 
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf_and_fft 
+BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io stop_and_restart wf_and_fft 
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface \
                tddft pol_function qp bse
 #
 # Interfaces
 #
-2YLIBS       = external_c modules parser communicate common io bz_ops 
+2YLIBS       = external_c modules parallel parser communicate linear_algebra common io stop_and_restart bz_ops 
+E2YLIBS      = external_c parallel modules parser communicate linear_algebra common io stop_and_restart bz_ops 
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate pol_function bse
 #
 # PROJECTS
 #
 PROJECTS = yambo_surf ypp_surf yambo_kerr yambo_ph ypp_ph
-PJ_SURFLIBS   = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_ctl surf setup interface tddft pol_function qp bse
-YPPSURFLIBS   = $(BASIC_LIBS) surf_modules bz_ops qp_ctl setup interface interpolate surf pol_function bse
+PJ_SURFLIBS   = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_control surf setup interface tddft pol_function qp bse
+YPPSURFLIBS   = $(BASIC_LIBS) surf_modules bz_ops qp_control setup interface interpolate surf pol_function bse
 EXE      = $(TARGETS) $(PROJECTS)
 #
 nothing: 
@@ -129,7 +132,7 @@ interfaces: libs
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
-	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
+	XLIBS="$(E2YLIBS)" ; $(mkx) ; fi
 ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
@@ -150,7 +153,7 @@ clean_extlibs:
 	@if test -e ./lib/archive/keep-extlibs-stamp ; then rm ./lib/archive/keep-extlibs-stamp ; fi 
 	@$(lib_ext_clean)
 	@$(lib_ext_distclean)
-
+	
 # Functions
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
@@ -176,9 +179,9 @@ define mklibxc
   echo ">>>[Making libxc]<<<" ; \
   cd $(libdir)/libxc ; $(make) -s VPATH=$(libdir)/libxc  || exit "$$?" ; \
   echo ">>>[Installing libxc]<<<" ; \
-  make -s install ; \
+  $(make) -s install ; \
   cd ../../; \
-  fi 
+  fi
 endef
 define mklib
  for ldir in $$LIBS2DO; do \

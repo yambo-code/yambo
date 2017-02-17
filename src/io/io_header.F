@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -20,17 +22,18 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,&
-&                          CUTOFF,GAUGE,IMPOSE_GAUGE)
+&                          CUTOFF,GAUGE,IMPOSE_GAUGE,PARALLEL_STRUCTURE,USE_SYSTEM_FRAGMENTATION)
  !
  use pars,          ONLY:SP,schlen,lchlen
- use units,         ONLY:HA2EV,HA2KEL
- use fields,        ONLY:global_gauge 
+ use units,         ONLY:HA2KEL
+ use X_m,           ONLY:global_gauge 
  use drivers,       ONLY:list_dbs
- use LOGO,          ONLY:code_version,code_revision
- use com,           ONLY:msg,warning
+ use LOGO,          ONLY:code_version,code_revision,code_GPL_revision
+ use com,           ONLY:warning
  use stderr,        ONLY:string_split
- use D_lattice,     ONLY:Tel,a,alat,input_Tel_is_negative,Bose_Temp
+ use D_lattice,     ONLY:Tel,alat,input_Tel_is_negative,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor
+ use parallel_m,    ONLY:CPU_structure
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt,cut_description
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
@@ -38,25 +41,26 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
 &                        read_is_on,write_is_on,serial_number,&
 &                        io_serial_number,io_file,io_com,io_mode,&
 &                        DUMP,VERIFY,NONE,io_fragmented,Fragmented_IO,&
-&                        ver_is_gt_or_eq,db_alat,io_code_revision
+&                        ver_is_gt_or_eq,db_alat,io_code_revision,read_is_on
  use zeros,         ONLY:define_zeros
  use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,loaded_WF_xc_string,&
 &                        G_WF_xc_string,X_WF_xc_string,K_WF_xc_string
  !
  implicit none
  integer               :: ID
- logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE
- character(*),optional :: XC_KIND
+ logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,&
+&                         USE_SYSTEM_FRAGMENTATION
+ character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
  !
  ! Work Space
  !
- integer             :: i1,nqibz_disk,nkibz_disk,R_LATT_vec(4),&
-&                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2),VAR_SZ
+ integer             :: i1,nqibz_disk,nkibz_disk,R_LATT_vec(4),p_structure,&
+&                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2)
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
- logical             :: WARN,xc_kind_force
- character(schlen)   :: xc_string_kinds(10),DB_gauge
+ logical             :: WARN,xc_kind_force,l_frag
+ character(schlen)   :: xc_string_kinds(10)
  !
  io_header=0
  !
@@ -64,6 +68,10 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  WARN=.true.
  if (list_dbs) WARN=.false.
+ l_frag=.true.
+ if (present(USE_SYSTEM_FRAGMENTATION)) then
+   l_frag=USE_SYSTEM_FRAGMENTATION
+ endif
  !
  ! Things that CANNOT be dumped
  !==============================
@@ -72,20 +80,26 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  MODE=io_mode(ID)
  if (io_mode(ID)==DUMP) io_mode(ID)=VERIFY
  !
- call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=0)
- call io_elemental(ID,DB_L0=io_fragmented(ID),L0=Fragmented_IO)
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ if (l_frag) then
+   call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,DB_L0=io_fragmented(ID),L0=Fragmented_IO)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
  !
  call io_elemental(ID,VAR="HEAD_VERSION",VAR_SZ=3,MENU=0)
  call io_elemental(ID,DB_I1=io_code_version(ID,:),I1=code_version)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (ver_is_gt_or_eq(ID,(/3,0,12/))) then
-   call io_elemental(ID,VAR="HEAD_REVISION",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,DB_I0=io_code_revision(ID),I0=code_revision)
+ call io_elemental(ID,VAR="HEAD_REVISION",VAR_SZ=1,MENU=0)
+ call io_elemental(ID,DB_I0=io_code_revision(ID,1),I0=code_revision)
+ call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ if (ver_is_gt_or_eq(ID,revision=4350)) then
+   call io_elemental(ID,VAR="HEAD_GPL_REVISION",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,DB_I0=io_code_revision(ID,2),I0=code_GPL_revision)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  else
-   io_code_revision(ID)=0
+   io_code_revision(ID,2)=code_GPL_revision
  endif
  !
  call io_elemental(ID,VAR="SERIAL_NUMBER",VAR_SZ=1,MENU=0)
@@ -235,6 +249,28 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
      io_header=io_status(ID)
      if (io_header/=0) goto 1
    endif
+ endif
+ !
+ if (present(PARALLEL_STRUCTURE)) then
+   ! 
+   if (trim(PARALLEL_STRUCTURE)=="Response_G_space_Zero_Momentum") p_structure=1
+   if (trim(PARALLEL_STRUCTURE)=="Response_G_space_Finite_Momentum") p_structure=2
+   if (trim(PARALLEL_STRUCTURE)=="Response_G_space") p_structure=3
+   if (trim(PARALLEL_STRUCTURE)=="Response_T_space") p_structure=4
+   if (trim(PARALLEL_STRUCTURE)=="Self_Energy") p_structure=5
+   if (trim(PARALLEL_STRUCTURE)=="Real_Time") p_structure=6
+   !
+   call io_elemental(ID,VAR="PARALLEL_CPUs",CH0='',VAR_SZ=1,MENU=MENU)
+   call io_elemental(ID,CH0=CPU_structure(p_structure)%CPU_string,&
+&                    VAR=' Prallel CPUs                     :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   io_header=io_status(ID)
+   call io_elemental(ID,VAR="PARALLEL_ROLES",CH0='',VAR_SZ=1,MENU=MENU)
+   call io_elemental(ID,CH0=CPU_structure(p_structure)%ROLE_string,&
+&                    VAR=' Prallel Roles                    :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   io_header=io_status(ID)
+   if (io_header/=0) goto 1
  endif
  !
  ! Things that can be dumped

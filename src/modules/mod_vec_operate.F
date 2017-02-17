@@ -1,6 +1,8 @@
 
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -86,6 +88,28 @@ module vec_operate
      if (.not.present(zero_)) rlu_v_is_zero=v_is_zero(u)
      if (     present(zero_)) rlu_v_is_zero=v_is_zero(u,zero_)
    end function rlu_v_is_zero
+   !
+   subroutine rot_v_xy_plane(t,v_in,v_out)
+     !
+     ! Rotates v_in of theta in the xy plane
+     !
+     use pars,     ONLY:rZERO,rONE
+     !
+     real(SP)          :: v_in(3),t
+     real(SP), optional:: v_out(3)
+     !
+     real(SP)          :: M(3,3),v_loc(3)
+     !
+     !     ( cos(t) -sin(t)  0 )
+     ! M = ( sin(t)  cos(t)  0 )
+     !     (   0       0     1 )
+     !
+     M=reshape((/cos(t),-sin(t),rZERO,sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+     v_loc=matmul(M,v_in)
+     if (     present(v_out)) v_out=v_loc
+     if (.not.present(v_out)) v_in =v_loc
+     !
+   end subroutine rot_v_xy_plane
    !
    subroutine c2a(b_in,v_in,v_out,mode)
      !
@@ -329,7 +353,7 @@ module vec_operate
      !
      ! Work Space
      !
-     integer :: igrp,iref,i1
+     integer :: iref,i1
      real(SP):: E_diff(2)
      logical :: l_flag,l_singles
      !

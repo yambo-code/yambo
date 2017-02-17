@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -37,11 +39,12 @@ module FFT_m
  integer(8)  :: fftw_plan !(FW) +1 sign: G-space to R-space & oscillators
                           !(BW) -1 sign: R-space to G-space
  contains
+   !
    integer function modx(i,j)
      !
      !  Calculate a function similar to MOD:
      !  modx(i,j) = mod (i,j) i>=0
-     !          = mod ( mod(i,j)+j , j) i<0
+     !            = mod ( mod(i,j)+j , j) i<0
      !  Thus 
      !   modx(3,2)=1 
      !   modx(-1,2)=1.

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2011 D. Kammerlader and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DK
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,16 +23,13 @@
 !
 function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
- use pars,                ONLY:SP,DP,lchlen,schlen
- use R_lattice,           ONLY:bz_samp,b,k_grid
- use parser_m,            ONLY:parser
- use electrons,           ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,&
-                               BZ_RIM_nbands, n_bands,BZ_RIM_tot_nkpts,&
-                               BZ_RIM_ipol_weight !n_spin
- use timing,              ONLY:live_timing
- use com,                 ONLY:file_exists,msg
- use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz
- use IO_m,                ONLY:io_control,NONE,OP_WR_CL,OP_RD_CL,io_disconnect 
+ use pars,                ONLY:SP
+ use R_lattice,           ONLY:bz_samp,k_grid
+ use electrons,           ONLY:BZ_RIM_table,BZ_RIM_nkpt,&
+                               BZ_RIM_ipol_weight
+ use LIVE_t,              ONLY:live_timing
+ use com,                 ONLY:msg
+ use vec_operate,         ONLY:c2a
  !
  implicit none
  integer                  :: err
@@ -46,12 +45,11 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  real(SP), allocatable :: kpts_c(:,:)
  real(SP) :: tmp_ipol_weight(3)
  integer :: nx, ny, nz, ii, ii_c
- integer :: nx_f, ny_f, nz_f, npts_around_coarse, nx_c, ny_c, nz_c
+ integer :: npts_around_coarse, nx_c, ny_c, nz_c
  integer :: nx_period, ny_period, nz_period
  integer :: intvx, intvy, intvz, intvx_per, intvy_per, intvz_per
  integer :: stx, sty, stz
  integer :: pt_ipol
- character(20) :: fomt
  integer :: nintervls, iintervls(2)
  !
  err = 1

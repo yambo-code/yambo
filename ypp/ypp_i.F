@@ -1,6 +1,8 @@
 
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -30,7 +32,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
- use wave_func,           ONLY:ioWF
+ use wave_func,           ONLY:io_WF
  use YPP
  implicit none
  !
@@ -47,8 +49,11 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! 
  ! I/O 
  !
+ logical           :: l_flag
  integer           :: ID,i_err
- integer, external :: ioDB1,ioQINDX,iogrot
+ integer, external :: io_DB1,io_QINDX,io_GROT
+ integer           :: i_err_RIM
+ integer, external :: io_RIM_E_and_k
 #if defined _YPP_ELPH
  integer, external :: ELPH_databases
 #endif
@@ -60,7 +65,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ncpu  =np
  myid  =pid
  infile=inf
- call std_presets(instr,ind,od,js,com_dir)
+ call SET_defaults(instr,ind,od,js,com_dir)
  call bz_samp_reset(k)
  call bz_samp_reset(q)
  call bz_samp_reset(Xk)
@@ -76,7 +81,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! DB1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
- iinf=ioDB1(en,k,ID)
+ iinf=io_DB1(en,k,ID)
  if (iinf/=0) then
    call ypp_finalize()
    return
@@ -85,7 +90,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! WF
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=ID)
- iinf=ioWF(ID) 
+ iinf=io_WF(ID) 
  if (iinf/=0) then
    call ypp_finalize()
    return
@@ -94,7 +99,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! G operations table and shells
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
- i_err=iogrot(ID) 
+ i_err=io_GROT(ID) 
  if (i_err/=0) then
    call ypp_finalize()
    return
@@ -108,6 +113,11 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call ypp_finalize()
    return
  endif
+ !
+ ! PARALLEL and I/O Setup 
+ !=======================
+ !
+ call PARALLEL_and_IO_Setup(en,k)
  !
  call section('*','Y(ambo) P(ost)/(re) P(rocessor)')
  !
@@ -124,7 +134,12 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call section('*','K-point grid')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
- i_err=ioQINDX(k,q,ID)
+ i_err=io_QINDX(k,q,ID)
+ !
+ ! Rim energies and kpts
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
+ i_err_RIM=io_RIM_E_and_k(en,Xk,ID) 
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
@@ -153,9 +168,11 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !   =========
  !
- if (l_bzrim) call k_random(Xk,Xen)
+ if (l_bzrim) call k_random
  !
- if (l_bxsf)  call read_bxsf(Xk,Xen)
+ if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
+ !
+ if (l_bxsf)  call bxsf_read(Xk,Xen)
  !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_setup(en,k)
  !
@@ -168,15 +185,15 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !  ==========
  !
  !
- if (l_excitons) call excitons_driver(k,Xk,en,Xen,q)
+ if (l_excitons.or.l_RT_abs) call excitons_driver(k,Xk,en,Xen,q)
  !   ===========
  !
-#if defined _YPP_ELPH
- if (l_electrons.and..not.l_eliashberg) call electrons_driver(Xk,Xen)
-#else
- if (l_electrons)                       call electrons_driver(Xk,Xen)
+ l_flag=l_electrons
+#if defined _YPP_ELPH && !defined _YPP_RT
+ l_flag=l_flag.and.(.not.l_eliashberg)
 #endif
- !   ===========
+ !
+ if (l_flag) call electrons_driver(Xk,Xen,q)
  !
 #if defined _YPP_ELPH
  !

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,7 +26,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_cohsex,Finite_Tel
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
@@ -35,14 +37,15 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
-&                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
+&                        QP_Sc_steps,QP_G_er,QP_G_dr,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator,l_QP_Expand,QP_G_info
+&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,&
+&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info
 #if defined _ELPH
- use ELPH,          ONLY:QP_DW,QP_TadPole,QP_OMS_Fan
+ use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
- use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
+ use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_EL_PHOTON
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -52,8 +55,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Work Space
  !
  type(QP_t)        ::qp
- integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin
- integer, external ::ioQP,eval_G_minus_G
+ integer           ::i1,io_QP_and_GF_err,io_G_err,ID_QP,ID_G,i_spin
+ integer, external ::io_QP_and_GF,eval_G_minus_G
  !
  ! Driver Logicals
  !=================
@@ -62,18 +65,19 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  call parser('OnMassShell',On_Mass_Shell_approx)
  call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
- call parser('GWTerm', PPA_terminator)
  call parser('ExtendOut',  l_extended_output)
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
  !
+ l_GW_terminator=GW_terminator_Kind/='none'
+ !
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped
  !==============================================================
- if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
+ if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
  !
- if (.not.l_el_corr.and..not.l_ph_corr) then
-   call warning('Both e-p and e-e correlation switched off')
+ if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) then
+   call warning('e-p, e-e and e-photon correlation switched off')
    return
  endif
  !
@@ -101,7 +105,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HA2EV)
    call msg('rn','[Green] Sc damping range                             [ev]:',QP_G_dr*HA2EV)
    !
-   GF_is_causal=Finite_Tel.or.l_ph_corr 
+   GF_is_causal=Finite_Tel.or.l_elph_corr 
    !
  else if (.not.l_life) then
    return
@@ -110,6 +114,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  qp%n_descs=2
  if (l_ppa) then
    qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
+   !
    QP_DB_kind=SE_GoWo_PPA
    !
    !
@@ -120,16 +125,23 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    GWo_iterations=0
    !
    qp%description(2)=' == COHSEX GW =='
+   !
    QP_DB_kind=SE_COHSEX
    !
  else
    !
-   qp%description(2)=' == Real Axis GW =='
+   if (l_elel_corr)     qp%description(2)=' == Real Axis GW =='
+   if (l_elph_corr)     qp%description(2)=' == El-Ph Self-Energy =='
+   if (l_elphoton_corr) qp%description(2)=' == Lamb Shift =='
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.
    !
    QP_DB_kind=SE_GoWo
+   !
+   if (l_elph_corr) QP_DB_kind=SE_POLARON 
+   !
+   if (l_elphoton_corr) QP_DB_kind=SE_GW_EL_PHOTON
    !
    !
  endif
@@ -156,7 +168,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
  !
- if (l_ppa.and.PPa_terminator) X%ng=eval_G_minus_G(X%ng,0)
+ if (l_ppa.and.l_GW_terminator) X%ng=eval_G_minus_G(X%ng,0)
  !
  ! Local Allocations
  !===================
@@ -186,11 +198,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !========
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_QP)
-   io_QP_err=ioQP('QP',qp,ID_QP)
+   io_QP_and_GF_err=io_QP_and_GF('QP',qp,ID_QP)
    !
-   if (io_QP_err==0.and..not.trim(QP_solver)=='g'.and..not.QP_W_partially_done) then
+   if (io_QP_and_GF_err==0.and..not.trim(QP_solver)=='g') then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_QP)
-     io_QP_err=ioQP('QP',qp,ID_QP)
+     io_QP_and_GF_err=io_QP_and_GF('QP',qp,ID_QP)
      call QP_report_and_write(k,qp,en,0)
      call local_free()
      return
@@ -202,15 +214,15 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (trim(QP_solver)=='g') then
      !
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_G)
-     io_G_err=ioQP('G',qp,ID_G)
+     io_G_err=io_QP_and_GF('G',qp,ID_G)
      !
      if (io_G_err==0.or.io_G_err==IO_NO_BINDING_ERROR) then
        !
-       if (use_GreenF_to_eval_QP) use_GreenF_to_eval_QP=(.not.io_QP_err==0).and.(io_G_err==0)
+       if (use_GreenF_to_eval_QP) use_GreenF_to_eval_QP=(.not.io_QP_and_GF_err==0).and.(io_G_err==0)
        if (use_GreenF_Zoom)       use_GreenF_Zoom=io_G_err==IO_NO_BINDING_ERROR.and..not.use_GreenF_to_eval_QP
        !
        call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_G)
-       io_G_err=ioQP('G',qp,ID_G)
+       io_G_err=io_QP_and_GF('G',qp,ID_G)
        !
        if (use_GreenF_to_eval_QP) then
          call QP_Green_Function(qp,en,0) 
@@ -241,7 +253,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  endif
  !
  ! Updated descriptions (needed in case of Zoomed GFs)
- !=======================
+ !=====================================================
  !
  call QP_descriptions(qp,X,Xw,.TRUE.)
  !
@@ -256,23 +268,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !--------
    call QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
-   ! When the W q-loop is not completed done the S_c cannot be
-   ! calculated on-fly 
-   !
-   if (QP_W_partially_done) then
-     call local_free()
-     return
-   endif
  endif
  !
- ! SECANT
- !--------
  if (trim(QP_solver)=='s') then
+   !
+   ! SECANT
+   !--------
    call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
-   if (QP_W_partially_done) then
-     call local_free()
-     return
-   endif
+   !
  endif
  !
  ! GREEN`s FUNCTIONS
@@ -280,11 +283,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (trim(QP_solver)=='g') then
    !
-   if (l_el_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   if (l_elel_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
 # if defined _ELPH 
    !
-   if (l_ph_corr)                                    call ELPH_Sigma_c(en,k,q,qp)
+   if (l_elph_corr)                                    call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
    !
@@ -345,15 +348,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      call mem_est("QP_Sc",(/size(QP_Sc)/))
      !
 #if defined _ELPH
-     if (l_ph_corr) then
-       if (On_Mass_Shell_approx) then
-         allocate(QP_OMS_Fan(QP_n_states))
-         call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))
-       endif
+     if (l_elph_corr) then
+       allocate(QP_OMS_Fan(QP_n_states))
+       call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))
        allocate(QP_DW(QP_n_states))
        call mem_est("QP_DW",(/size(QP_DW)/))
-       allocate(QP_TadPole(QP_n_states))
-       call mem_est("QP_TadPole",(/size(QP_TadPole)/))
      endif
 #endif
      !
@@ -381,7 +380,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 #if defined _ELPH
      if (allocated(QP_DW))          deallocate(QP_DW)
      if (allocated(QP_OMS_Fan))     deallocate(QP_OMS_Fan)
-     if (allocated(QP_TadPole))     deallocate(QP_TadPole)
 #endif
      if (allocated(QP_Sc))          deallocate(QP_Sc)
      if (allocated(QP_dSc))         deallocate(QP_dSc)
@@ -404,7 +402,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      call mem_est("QP_G_amplitude_integral")
      call mem_est("QP_Sc QP_dSc qp_GreenF QP_Vnl_xc QP_Vxc qp_GreenF_W QP_G_zoom_er")
      call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
-     call mem_est("QP_DW QP_OMS_Fan QP_TadPole")
+     call mem_est("QP_DW QP_OMS_Fan")
    end subroutine
    !
 end subroutine

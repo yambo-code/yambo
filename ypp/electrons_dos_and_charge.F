@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -24,106 +26,98 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use units,          ONLY:HA2EV,FS2AUT
  use pars,           ONLY:SP,schlen
  use stderr,         ONLY:intc
- use wave_func,      ONLY:WF_load,WF_free,wf,wf_state
+ use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz,nkbz
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor,n_spin,spin_occ, &
 &                         BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
-&                         use_gnuplot,use_cube,plot_title,l_dos,dos_broadening,dos_bands,&
-&                         dos_E_range,dos_E_steps,OCC_T_ref,OCC_T_range,OCC_deltaT,RT_occupations_ref
+&                         use_gnuplot,use_cube,plot_title,l_dos,l_RT_dos,dos_broadening,dos_bands,&
+&                         dos_E_range,dos_E_steps
  use com,            ONLY:msg,of_open_close
  use functions,      ONLY:Fermi_fnc_derivative
  use QP_CTL_m,       ONLY:QP_apply
- use timing,         ONLY:live_timing
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
- use interfaces,     ONLY:PARALLEL_index
+ use LIVE_t,         ONLY:live_timing
+ use interfaces,     ONLY:PARALLEL_index,WF_load,el_density_and_current
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
  use parser_m,       ONLY:parser
+ !
  implicit none
  !
  type(bz_samp) ::Xk
  type(levels)  ::Xen
  !
  ! Work Space
- !
+ ! 
  real(SP), allocatable :: el_den(:)
- real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,f_occ,io_Time,dos_norm,&
+ real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,f_occ,dos_norm,&
 &                         el_dos_max,WF_fac(dos_bands(1):dos_bands(2),nkibz,n_spinor)
- integer               :: i_E,ik,ib,i_spin,i_spinor,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
+ integer               :: i_E,ik,ik_bz,ib,i_wf,i_spin,i_spinor,i_T,n_T_steps,ik_rand,i1,dos_spin
  character(schlen)     :: ch_ws,titles(4)
- logical               :: l_TIME_plot,l_3D_plot,l_RIM,l_prt_occ_only
+ logical               :: l_3D_plot,l_RIM,l_prt_occ_only,l_separate_eh
  type(PP_indexes)      :: px
- !
- integer,     external :: ioE_RIM,RT_occupations_check 
- !
  !
  call parser('PrtOccOnly',l_prt_occ_only)
  !
  ! E_rim
  !=======
  !
- call msg("s",'RIM support ...')
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioE_RIM(Xen,io_ID)
- !
- if (io_err==0) then
-   call msg("l",'yes')
-   l_RIM=.TRUE.
-   call OCCUPATIONS_Extend(Xen,Xen)
- else
-   call msg("l",'no')
+ if(.not.l_RT_dos) then
+   l_RIM=.FALSE.
+   if (BZ_RIM_nbands>0) then
+     l_RIM=.TRUE.
+     call OCCUPATIONS_Extend(Xen,Xen)
+   endif
  endif
  !
- l_RIM=io_err==0
  !
  ! DOS
  !=====
  !
- if (l_dos) then
+ if (l_dos.or.l_RT_dos) then
    !
-   call section('*','Electronic DOS')
+   if(l_dos)    call section('*','Electronic DOS')
+   if(l_RT_dos) call section('*','Electr. Time-dependent DOS')
    !
-   l_TIME_plot=.FALSE.
-   l_3D_plot  =.FALSE.
-   n_T_steps=1
+   if(.not.l_RT_dos) then
+     dos_spin=n_spin
+     l_3D_plot  =.FALSE.
+     n_T_steps=1
+   else
+     dos_spin=n_sp_pol     
+   endif
    !
-   if(n_spinor==2) then
+   if(n_spinor==2.and..not.l_RT_dos) then
      !
      call live_timing('DOS-spinor-factor',nkibz*(dos_bands(2)-dos_bands(1)+1),SERIAL=.true.)
      do ik=1,nkibz
-       call WF_load(0,1,dos_bands,(/ik,ik/),title='-Projected DOS',impose_free_and_alloc=.TRUE.)
+       call WF_load(WF,0,1,dos_bands,(/ik,ik/),title='-Projected DOS',impose_free_and_alloc=.TRUE.)
        do ib=dos_bands(1),dos_bands(2)
          do i_spinor=1,n_spinor
-           WF_fac(ib,ik,i_spinor)=dot_product(wf(:, wf_state(ib,ik,i_spinor) ),wf(:, wf_state(ib,ik,i_spinor) ))
+           i_wf=WF%index(ib,ik,i_spinor)
+           WF_fac(ib,ik,i_spinor)=dot_product( WF%c(:, i_wf ), WF%c(:,i_wf) )
          enddo
          call live_timing(steps=1)
        enddo
        call WF_free()
      enddo
      call live_timing()
-     !
    endif
-   !
-   !
-   OCC_T_range=0.
    !
    !
    if (l_RIM) dos_bands(2)=min(dos_bands(2),BZ_RIM_nbands)
    !
    el_dos_max=0.
    !
+   call QP_state_table_setup(Xen)
    call QP_apply(dos_bands,Xen,Xk,'G',msg_fmt='s')
    !
    ! Output files headers
    !
-   if (l_TIME_plot.and.l_3D_plot) then
-     !
-   else if (.not.l_3D_plot) then
      output_fname='el_dos'
      call of_open_close(trim(output_fname),'ot')
-     if (n_spin==1) then
+     if (dos_spin==1) then
        titles(1)='E[eV]'
        titles(2)='DOS'
        call msg('o dos','#',titles(:2),INDENT=0,USE_TABS=.true.)    
@@ -135,20 +129,15 @@ subroutine electrons_dos_and_charge(Xk,Xen)
        call msg('o dos','#',titles(:4),INDENT=0,USE_TABS=.true.)    
      endif
      call msg('o dos',"#")
-   endif
    !
    if (dos_E_range(1)>dos_E_range(2)) then
      dos_E_range(1)=minval(Xen%E(dos_bands(1):dos_bands(2),:,:))-5.*dos_broadening
-     dos_E_range(2)=maxval(Xen%E(dos_bands(1):dos_bands(2),:,:))-5.*dos_broadening
+     dos_E_range(2)=maxval(Xen%E(dos_bands(1):dos_bands(2),:,:))+5.*dos_broadening
    endif
    delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
    !
    dos_norm=1./DL_vol
    if (l_RIM) dos_norm=dos_norm/real(sum(BZ_RIM_nkpt))
-   !
-   ! Fermi distribution
-   !====================
-   !
    !
    ! Parallel setup and live_timing
    !================================
@@ -159,7 +148,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    do i_T=1,n_T_steps
      !
-     io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
      !
      el_dos(:,:)=0.
      !
@@ -173,9 +161,10 @@ subroutine electrons_dos_and_charge(Xk,Xen)
          do i_spin=1,n_sp_pol
            !
            if (l_RIM) then
-             do ik=1,nkbz
-               do i1=1,BZ_RIM_nkpt(ik)
-                 ik_rand=BZ_RIM_table(ik,i1)
+             do ik_bz=1,nkbz
+               ik=Xk%sstar(ik_bz,1)
+               do i1=1,BZ_RIM_nkpt(ik_bz)
+                 ik_rand=BZ_RIM_table(ik_bz,i1)
                  f_occ=spin_occ
                  if(l_prt_occ_only) f_occ=Xen%f_RIM(ib,ik_rand,i_spin)
                  el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
@@ -186,7 +175,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              do ik=1,nkibz
                f_occ=spin_occ
                if(l_prt_occ_only) f_occ=Xen%f(ib,ik,i_spin)
-               if(n_spinor==2) then
+               if(n_spinor==2.and..not.l_RT_dos) then
                  do i_spinor=1,n_spinor
                    el_dos(i_E,i_spinor)=el_dos(i_E,i_spinor)+f_occ*WF_fac(ib,ik,i_spinor)*dos_norm*&
 &                        Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)
@@ -209,19 +198,19 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
      el_dos_max=max(el_dos_max,maxval(abs(el_dos)))
      !
-     if (l_TIME_plot.and.l_3D_plot) call msg('o dos','')
      !
      ! Output file
      !
+     l_separate_eh=.true.
+     !
      do i_E=1,dos_E_steps
        dos_E=dos_E_range(1)+i_E*delta_E
-       if (l_TIME_plot) then
-         if (.not.l_3D_plot) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
-       else
-         if (n_spin==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
-         if (n_spin==2) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,:),el_dos(i_E,1)+el_dos(i_E,2)/),INDENT=-2,USE_TABS=.true.)
-       endif
+       !
+         if (dos_spin==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
+         if (dos_spin==2) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,:),  &
+&                                             el_dos(i_E,1)+el_dos(i_E,2)/),INDENT=-2,USE_TABS=.true.)
      enddo
+     !
      !
      if (n_T_steps> 1) call live_timing(steps=1)
      !
@@ -229,8 +218,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    if (n_T_steps>1) call msg('s','DOS max value  :',el_dos_max)
    !
-   if (l_TIME_plot.and.l_3D_plot) then
-   else if (.not.l_3D_plot) then
+   if (.not.l_3D_plot) then
      call of_open_close(trim(output_fname))
    endif
    !
@@ -247,7 +235,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    allocate(el_den(fft_size))
    !
-   call el_density(Xen,Xk,el_den,.FALSE.) 
+   call el_density_and_current(Xen,Xk,rho=el_den) 
    v2plot=el_den
    !
    ch_ws='density_'//trim(intc(plot_dim))

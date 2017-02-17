@@ -1,6 +1,8 @@
 /*
-  Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+         Copyright (C) 2000-2015 the YAMBO team
                http://www.yambo-code.org
+ 
+  Authors (see AUTHORS file for details): AM
   
   This file is distributed under the terms of the GNU 
   General Public License. You can redistribute it and/or 
@@ -39,7 +41,8 @@
   {"nompi", "N","Skip MPI initialization",0,0,0,0,0},
   {"ifile", "F","XML index file name",0,0,1,0,1}, 
   {"odir",  "O","Output directory",0,0,1,0,1}, 
-  {"dbfrag","S","DataBases fragmentation",0,0,0,0,1}, 
+  {"nodbfr","U","Do not fragment the DataBases (only for serial runs)",0,0,0,0,1}, 
+  {"fragnb","b","Number of bands for each fragment",1,0,0,0,1},
   {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,1},
   {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,1},
   {"nosy",  "n","Force no symmetries",0,0,0,0,1},

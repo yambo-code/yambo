@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Sangalli, A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -66,5 +68,7 @@ module KERR
        call mem_est(what)
      endif
    end subroutine
+   !
+   !
    !
 end module

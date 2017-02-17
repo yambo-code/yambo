@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,120 +21,121 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XCo_Hartree_Fock(E,k,Xk,q)
+subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_collisions_IO
+ use drivers,       ONLY:l_sc_run,l_gw0,l_cohsex,l_real_time
  use com,           ONLY:msg
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
- use collision,     ONLY:ggwinfo,collision_reset
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
+&                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
+&                        PAR_IND_Q_ID,n_WF_bands_to_load
+ use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
- use wave_func,     ONLY:WF_load
- use WF_distribute, ONLY:WF_states_setup
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
+ use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
+ use wrapper_omp,   ONLY:V_dot_V_omp
+ use global_XC,     ONLY:WF_exx_screening
  !
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
+ character(*),optional ::mode
  !
  !Work Space
  !
- type(ggwinfo)    ::isc,iscp
- type(PP_indexes) ::px
- integer                 :: iq,ib,ibp,jb,ik,i_qp
- integer                 :: Sx_lower_band,Sx_upper_band
-#if defined _DOUBLE
- complex(DP)             ::zdotu
-#else 
- complex(SP)             ::cdotu
-#endif
+ type(ggwinfo)           ::isc,iscp
+ integer                 ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands
  complex(DP)             ::DP_Sx
  complex(SP),allocatable ::local_rhotw(:)
  character(schlen)       ::ch
  !
  !QP list
  !
- integer              :: i4(4)
+ integer              :: ig,i4(4)
  integer, external    :: QP_state_extract
  !
  ! Resets & basis setup
  !
  call collision_reset(isc)
  call collision_reset(iscp) 
- call PP_indexes_reset(px)
  !
  Sx_lower_band=1
  Sx_upper_band=E%nbm
  !
- !
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  !
- if (.not.l_collisions_IO) then
+ ! QP_table -> report
+ !
+ call msg('r','')
+ i4=(/1,1,0,0/)
+ do while(QP_state_extract(i4)>0)
+   write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
+   call msg('r',trim(ch))
+ enddo
+ call msg('r','')
+ !
+if(.not.l_sc_run .and. .not.l_real_time) then
    !
-   ! QP_table -> report
+   ! WF distributed & load
+   !=======================
    !
-   call msg('r','')
-   i4=(/1,1,0,0/)
-   do while(QP_state_extract(i4)>0)
-     write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
-     call msg('r',trim(ch))
-   enddo
-   call msg('r','')
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
    !
- endif
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index()
+   !
+   if ((l_gw0.or.l_cohsex).and.WF_buffered_IO) then
+     !
+     call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+     !
+   endif
+   !
+   call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+   !
+endif
  !
- ! Quasi-particle list
- ! (all processor have all qp-states)
- !
- call WF_states_setup(qp_to_load=(/1,QP_n_states/),par_loop=.FALSE.)
- !
- ! Exchange Scattering states are distributed
- ! 
- call WF_states_setup(b_to_load=(/Sx_lower_band,Sx_upper_band/),qp_to_load=(/1,QP_n_states/),q_to_load=(/1,q%nbz/),k=k)
- !
- ! States required by the density
- !
- call WF_states_setup(b_to_load=(/1,E%nbm/),k_to_load=(/1,Xk%nibz/))
- !
- ! Report
- !
- call WF_states_setup(b_to_load=(/1,max(E%nbm,QP_nb)/),report=.TRUE.)
- !
- ! WFs
- !
- call WF_load(QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+#if defined _TIMING
+ call timing('HF',OPR='start')
+#endif
  !
  ! allocation again
  !
- allocate(isc%gamp(QP_ng_Sx,1),isc%rhotw(QP_ng_Sx),iscp%rhotw(QP_ng_Sx),&
-&         local_rhotw(QP_ng_Sx))
+ call scatterBamp_alloc(isc)
+ call scatterBamp_alloc(iscp)
+ allocate(isc%gamp(QP_ng_Sx,1),isc%rhotw(QP_ng_Sx),iscp%rhotw(QP_ng_Sx),local_rhotw(QP_ng_Sx))
  isc%qs    =1
  isc%ngrho =QP_ng_Sx
  iscp%ngrho=QP_ng_Sx
  !
  call scatterGamp(isc,'x')
- !
- ! par indexes
- !
- call PARALLEL_index(px,(/q%nbz,E%nbm/))
- call PP_redux_wait
+ if (present(mode).and.mode=='hyb') call scatter_ModScr(isc,WF_exx_screening)
  !
  ch='EXS'
  !
- if (l_sc_exx) then
-   call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbf*&
-        &(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3)))
- else  
-   call live_timing(trim(ch),px%n_of_elements(myid+1)*QP_n_states)
- endif
+! if (l_sc_exx) then
+!   call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbf*&
+!        &(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3)))
+! else  
+!   call live_timing(trim(ch),px%n_of_elements(myid+1)*QP_n_states)
+! endif
+!
+ n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
+ if (n_lt_bands>0) call live_timing(trim(ch),PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
+&                                   PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands)
  !
  do i_qp=1,QP_n_states
+   !
+   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
    !
    ib =QP_table(i_qp,1)
    ibp=QP_table(i_qp,2)
@@ -140,8 +143,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !    
    do iq=1,q%nbz
      !
+     if (.not.PAR_IND_Q%element_1D(q%sstar(iq,1))) cycle
+     !
      isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
-     if (isc%qs(2)/=isc%iqref) call scatterGamp(isc,'x')
+     if (isc%qs(2)/=isc%iqref) then 
+       call scatterGamp(isc,'x')
+       if (present(mode).and.mode=='hyb') call scatter_ModScr(isc,WF_exx_screening)
+     endif
      !
      !  (n,k,sp_n).     
      !              |
@@ -162,8 +170,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      iscp%qs=isc%qs
      !
      do jb=Sx_lower_band,Sx_upper_band
+       !
+       if (.not.PAR_IND_G_b%element_1D(jb)) cycle
        !      
-       if (.not.px%element_2D(iq,jb)) cycle
        isc%os(1)=jb
        iscp%os=isc%os
        !
@@ -174,18 +183,17 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        iscp%rhotw=isc%rhotw
        if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
        !
-       local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(jb,isc%os(2),isc%os(4))
+!$omp parallel do default(shared), private(ig)
+       do ig = 1, isc%ngrho
+         local_rhotw(ig) = -4._SP/spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))*E%f(jb,isc%os(2),isc%os(4))
+       enddo
+!$omp end parallel do
        !
-#if defined _DOUBLE
-       DP_Sx=zdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
-#else 
-       DP_Sx=cdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
-#endif
+       DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
        !
+       QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+real(DP_Sx,SP)
        !
-       QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+DP_Sx
-       !
-       call live_timing(steps=1)
+       if (q%sstar(iq,2)==1) call live_timing(steps=1)
        !
      enddo
      !
@@ -195,11 +203,22 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  call live_timing()
  !
+ call scatterBamp_free(isc)
+ call scatterBamp_free(iscp)
  deallocate(isc%gamp,isc%rhotw,iscp%rhotw,local_rhotw)
  !
  call collision_reset(isc)
  call collision_reset(iscp) 
- call PP_indexes_reset(px)
+ !
+#if defined _TIMING
+ call timing('HF',OPR='stop')
+ call timing('MPI_ALLREDUCE',OPR='start')
+#endif
+ !
  call PP_redux_wait(QP_Vnl_xc)
+ !
+#if defined _TIMING
+ call timing('MPI_ALLREDUCE',OPR='stop')
+#endif
  !
 end subroutine

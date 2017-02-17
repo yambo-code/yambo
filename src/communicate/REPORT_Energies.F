@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -50,11 +52,11 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
  !
  do ik=k_range(1),k_range(2)
    !
-   call c2a(v_in=k%pt(ik,:),v_out=k_cc,mode='ki2c')
+   call c2a(v_in=k%pt(ik,:),v_out=k_cc,mode='ki2a')
    ! 
    dumb_ch1='K ['//trim(intc(ik))//'] :'//trim(real2ch(k_cc(1)))//' '//&
 &          trim(real2ch(k_cc(2)))//' '//trim(real2ch(k_cc(3)))//&
-&          ' (cc ) * Comp.s '//trim(intc(wf_nc_k(ik)))
+&          ' (rlu) * Comp.s '//trim(intc(wf_nc_k(ik)))
    dumb_ch2='       '//trim(real2ch(k%pt(ik,1)))//' '//&
 &          trim(real2ch(k%pt(ik,2)))//' '//trim(real2ch(k%pt(ik,3)))//&
 &          ' (iku) '

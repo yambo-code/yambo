@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,13 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
+integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
  !
  ! On output : - k(k_the_nearest,:) is the nearest to k_ref
  !             - k(k_the_nearest,:)==k_ref when i_err=0
  !
  use com,            ONLY:error
  use pars,           ONLY:SP,zero_dfl
+ use zeros,          ONLY:k_iku_zero
  use vec_operate,    ONLY:iku_v_norm,c2a,k2bz
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:rl_sop
@@ -34,13 +37,15 @@ integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
  integer :: n_k
  real(SP):: k_ref(3)
  real(SP):: k(n_k,3)
+ real(SP),optional :: k_dist(n_k)
  logical, optional :: ROTATE_k_ref
+ integer, optional :: k_symm
  integer, optional :: i_err
  !
  ! Work Space
  !
- integer :: i1,i2,is
- real(SP):: v(3),k_distance
+ integer :: i1,is
+ real(SP):: v(3),k_distance_loc
  real(SP):: k_rotated(3,nsym)
  logical :: local_flag
  !
@@ -48,7 +53,7 @@ integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
  if (present(i_err)) then
    i_err=-1
  endif
- k_distance=10000.
+ k_distance_loc=10000.
  !
  local_flag=.FALSE.
  if (present(ROTATE_k_ref)) then
@@ -59,11 +64,12 @@ integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
    do i1=1,n_k
      v=k_ref-k(i1,:)
      call k2bz(v)
-     if (iku_v_norm(v)<k_distance) then
-       k_distance=iku_v_norm(v)
+     if(present(k_dist)) k_dist(i1)=iku_v_norm(v)
+     if ( iku_v_norm(v)<(k_distance_loc-iku_v_norm(k_iku_zero)) ) then
+       k_distance_loc=iku_v_norm(v)
        k_the_nearest=i1
      endif
-     if (k_distance<zero_dfl) then
+     if (k_distance_loc<zero_dfl) then
        if (present(i_err)) then
          i_err=0
        endif
@@ -77,25 +83,29 @@ integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
    k_rotated(:,is)=matmul(rl_sop(:,:,is),k_ref)
  enddo
  ! 
+ if(present(k_dist)) k_dist=10000.
+ k_distance_loc=10000.
  do i1=1,n_k
    !
    do is=1,nsym
      v=k_rotated(:,is)-k(i1,:)
      !
-     call c2a(v_in=v,mode='ki2a')
-     v(1)=abs(v(1)-nint(v(1)))     
-     v(2)=abs(v(2)-nint(v(2)))     
-     v(3)=abs(v(3)-nint(v(3)))   
-     call c2a(v_in=v,mode='ka2i')
-     !
-     if (iku_v_norm(v)<k_distance) then
-       k_distance=iku_v_norm(v)
-       k_the_nearest=i1
+     if(.not.present(k_symm)) then
+       call c2a(v_in=v,mode='ki2a')
+       v(1)=abs(v(1)-nint(v(1)))     
+       v(2)=abs(v(2)-nint(v(2)))     
+       v(3)=abs(v(3)-nint(v(3)))   
+       call c2a(v_in=v,mode='ka2i')
      endif
-     if (k_distance<zero_dfl) then
-       if (present(i_err)) then
-         i_err=0
-       endif
+     !
+     if(present(k_dist)) k_dist(i1)=min(k_dist(i1),iku_v_norm(v))
+     if ( iku_v_norm(v)<(k_distance_loc-iku_v_norm(k_iku_zero)) ) then
+       k_distance_loc=iku_v_norm(v)
+       k_the_nearest=i1
+       if(present(k_symm)) k_symm=is
+     endif
+     if (k_distance_loc<zero_dfl) then
+       if (present(i_err)) i_err=0
        exit
      endif
      !

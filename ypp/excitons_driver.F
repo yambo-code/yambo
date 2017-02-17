@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Varsano, A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -25,34 +27,36 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use units,         ONLY:BO2ANG
  use parser_m,      ONLY:parser
  use stderr,        ONLY:intc
- use FFT_m,         ONLY:fft_dim,fft_size
- use D_lattice,     ONLY:a,i_time_rev,nsym,alat
- use wave_func,     ONLY:WF_load,wf,WF_symm,WF_free,wf_ng
+ use FFT_m,         ONLY:fft_dim
+ use D_lattice,     ONLY:a,alat
+ use wave_func,     ONLY:WF,WF_symm,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp,q_norm,bare_qpg
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
 &                        excitons_sort_and_report,l_amplitude,l_free_hole,&
-&                        output_fname,use_xcrysden,use_gnuplot,use_cube,plot_dim,l_norm_to_one
+&                        output_fname,use_xcrysden,use_gnuplot,use_cube,plot_dim
 #if defined _YPP_ELPH
  use YPP,           ONLY:l_eliashberg,l_gkkp
 #endif
+ use interfaces,    ONLY:PARALLEL_global_indexes
+ use QP_CTL_m,      ONLY:QP_apply
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,BSS_q0,&
-&                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
+&                        BSS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
-&                        BSS_n_descs,BSS_description,ioBSS_diago
+&                        BSS_n_descs,BSS_description,io_BSS_diago
  use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
+ use interfaces,    ONLY:PARALLEL_index,WF_load
  use com,           ONLY:msg,error,warning,of_open_close
  use X_m,           ONLY:X_t,DIP_q_dot_iR
  use memory_m,      ONLY:mem_est
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:c2a
  use wrapper,       ONLY:V_dot_V
- use vec_operate,   ONLY:v_norm
  !
  implicit none
+ !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en
  !
@@ -82,15 +86,15 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Dummy arguments 
  !
- integer      :: iq,ia,i1,i2,i_l,i_spin
- real(SP)     :: k_dot_r,r_hole_rlu(3)
+ integer      :: iq,i1,i2,i_l,i_spin
+ real(SP)     :: k_dot_r,r_hole_rlu(3),norm_
  !
  type(PP_indexes) ::px
  !
  !... I/0
  !
- integer           ::io_err,ID,io_ID
- integer, external ::ioBS,io_DIPOLES
+ integer           ::io_err,io_ID
+ integer, external ::io_BS,io_DIPOLES
  type(X_t)         ::Xbsk,Xdip
  !
  !... Energies and Residulas
@@ -100,7 +104,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Variables needed to plot the exc-wf
  !
- integer           ::iv,ic,iv_fft,ic_fft,ikbz,ikibz,is,neh
+ integer           ::iv,ic,ikbz,ikibz,is,neh
  real(SP)          ::r_eh(3)
  complex(SP)       ::wf_
  complex(SP)       ::WF1_ir(n_spinor),WF2_ir(n_spinor)
@@ -109,18 +113,30 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Variables needed to the report of eigenvectors
  !
- real(SP)         :: dip_factor
+ logical          :: l_weight_with_dipoles,l_flag
+ complex(SP)      :: dip_factor,Wd
  real(SP), allocatable ::A_weight(:)
  !
  ! Here I read information from the BS database
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=ioBS(1,Xbsk,io_ID)
+ io_err=io_BS(1,Xbsk,io_ID) 
+ !
+ ! X type. Also used in PARALLEL setup
+ !
+ Xbsk%whoami=2
  !
  if (io_err/=0) return
+ !
+ ! Apply quasi-particle correction if presents
+ ! 
+ call QP_apply(BS_bands,Xen,Xk,'G',msg_fmt='s')
+ !
  if (BS_cpl_K_exchange) BS_cpl_mode='x'
  if (BS_cpl_K_corr) BS_cpl_mode='c'
  if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
+ !
+ call parser('DipWeight',l_weight_with_dipoles)
  !
  BS_H_dim=BS_K_dim
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
@@ -129,12 +145,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  n_lambda = get_lambda()
  !
- if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin&
+ l_flag=l_sort .or. (l_exc_wf.and.n_lambda>0) .or. (l_amplitude.and.n_lambda>0) .or. l_spin
 #if defined _YPP_ELPH
-&              ,l_eliashberg,l_gkkp/))) return
-#else
-&                           /))) return
+ l_flag=l_flag .or. l_eliashberg .or. l_gkkp
 #endif
+ if(.not.l_flag) return
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
@@ -145,14 +160,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,io_ID)
+ io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
  if (io_err/=0) return
  !
  call section('*','Excitonic Properties')
  !
  if (l_sort) then
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=io_ID)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
    call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E)
    deallocate(BS_R,BS_E)
    call mem_est('BS_R_E')
@@ -161,30 +176,42 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Loading tables and eigenvectors
  !
- allocate(BS_eh_table(BS_H_dim,3+n_sp_pol-1),BS_mat(BS_H_dim,BS_H_dim),&
+ allocate(BSS_eh_table(BS_H_dim,3+n_sp_pol-1),BS_mat(BS_H_dim,BS_H_dim),&
           BS_E_degs(BS_H_dim))
- call mem_est("BS_eh_table",(/(3+n_sp_pol-1)*BS_H_dim/),(/IP/))
+ call mem_est("BSS_eh_table",(/(3+n_sp_pol-1)*BS_H_dim/),(/IP/))
  call mem_est('BS_mat',(/BS_H_dim**2/))
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
- io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=io_ID)
+ io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
+ !
+ if(l_weight_with_dipoles) then
+   !call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+   !io_err=io_DIPOLES(Xdip,Xen,io_ID)
+   !allocate(q_norm(1),bare_qpg(1,1))
+   !Wd=(0._SP,0._SP)
+   !call K_Transitions_setup(1,Xen,Xk,Wd,.false.)
+   !call PARALLEL_global_indexes(Xen,Xk,q,"Response_T_space",X=Xdip)
+   !call Dipole_driver(Xen,Xk,Xdip,BSS_q0)
+   !deallocate(q_norm,bare_qpg)
+ endif
+ !
  !
  ! Create the anti-resonant part of the eh_table
  !
- !
  if (BS_K_coupling) then
    do neh=BS_K_dim+1,BS_H_dim
-     BS_eh_table(neh,:)=BS_eh_table(neh-BS_K_dim,1)
+     BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim,1)
      !
      ! invert conduction <-> valence order
      !
-     BS_eh_table(neh,2)=BS_eh_table(neh-BS_K_dim,3)
-     BS_eh_table(neh,3)=BS_eh_table(neh-BS_K_dim,2)
+     BSS_eh_table(neh,2)=BSS_eh_table(neh-BS_K_dim,3)
+     BSS_eh_table(neh,3)=BSS_eh_table(neh-BS_K_dim,2)
    enddo
  endif
  !
  !
- if (.not.BSS_write_eig_2_db) call error('Diago database does not contain excitonic wfs')
+ if (.not.BSS_write_eig_2_db) call error(&
+&   'Diagonalization database does not contain excitonic eigenstates. Re-run yambo using the WRbsWF flag in the input file.')
  !
  ! Sort energies to find degenerate states
  !========================================
@@ -193,6 +220,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Excitonic Eliashberg function 
  !================================
+ !
  !
  ! Exciton's spin (collinear case)
  !================================
@@ -207,7 +235,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Loading  Wf 
  !
- if (l_exc_wf.or.(l_spin.and.n_spinor==2)) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ if (l_exc_wf.or.(l_spin.and.n_spinor==2)) call WF_load(WF,wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  ! Exciton's spin (not collinear case)
  !=====================================
@@ -260,11 +288,22 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
        dip_factor=1._SP
        !
+       if(l_weight_with_dipoles) then
+         ikbz  = BSS_eh_table(neh,1)
+         iv    = BSS_eh_table(neh,2)
+         ic    = BSS_eh_table(neh,3)
+         i_spin= spin(BSS_eh_table(neh,:))
+         dip_factor=-conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))
+       endif
+       !
        do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
          A_weight(neh)=A_weight(neh)+(BS_mat(neh,i_l)*dip_factor)*conjg(BS_mat(neh,i_l)*dip_factor)
        enddo
        !
      enddo
+     !
+     norm_ = sqrt(dot_product(A_weight,A_weight))
+     if(l_weight_with_dipoles.and.norm_>0._SP) A_weight=A_weight/norm_
      !
      call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight,verbose=i_lambda==1)
      !
@@ -274,8 +313,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    deallocate(BS_R,BS_E,lambda_s)
    call mem_est('BS_R_E')
-   deallocate(BS_eh_table,BS_mat,A_weight)
-   call mem_est('BS_eh_table BS_mat A_weight')
+   deallocate(BSS_eh_table,BS_mat,A_weight)
+   call mem_est('BSS_eh_table BS_mat A_weight')
    !
    return
    !
@@ -298,7 +337,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call section('+','Real-Space grid setup')
  !
  if (l_free_hole) ncell=1
- !if (l_free_hole) l_norm_to_one=.false.
  !
  call expand_grid()
  !
@@ -392,10 +430,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      !
      do neh = 1,BS_H_dim
        !
-       ikbz  = BS_eh_table(neh,1)
-       iv    = BS_eh_table(neh,2)
-       ic    = BS_eh_table(neh,3)
-       i_spin= spin(BS_eh_table(neh,:))
+       ikbz  = BSS_eh_table(neh,1)
+       iv    = BSS_eh_table(neh,2)
+       ic    = BSS_eh_table(neh,3)
+       i_spin= spin(BSS_eh_table(neh,:))
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
@@ -457,9 +495,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  deallocate(r_cell_cc,rindex)
  deallocate(v2plot,BS_R,BS_E,lambda_s)
  call mem_est('v2plot BS_R_E')
- deallocate(BS_eh_table,BS_mat,wf_vc)
- call mem_est('BS_eh_table BS_mat wf_vc')
- call WF_free()
+ deallocate(BSS_eh_table,BS_mat,wf_vc)
+ call mem_est('BSS_eh_table BS_mat wf_vc')
+ call WF_free(WF)
  !
  contains
    !

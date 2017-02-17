@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Hogan and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,7 +37,7 @@ subroutine PP_PWscf_driver(k)
  use pseudo,                ONLY:PP_alloc_PWscf,PP_free,pp_n_l_comp,     &
 &                                pp_n_l_times_proj_max,pp_n_l_max,pp_table
  use com,                   ONLY:msg,warning
- use timing,                ONLY:live_timing
+ use LIVE_t,                ONLY:live_timing
  use memory_m,              ONLY:mem_est
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_WR_CL,REP
  use interfaces,            ONLY:PARALLEL_index
@@ -51,7 +53,7 @@ subroutine PP_PWscf_driver(k)
  !
  integer :: ik, ngmax,io_err,ID
  integer :: ibeta,itype
- integer, external :: ioKB_pwscf
+ integer, external :: io_KB_pwscf
  !
  interface
     subroutine fill_basis(basis,struct,ik,ngmax)
@@ -97,7 +99,7 @@ subroutine PP_PWscf_driver(k)
  pp_table(3,:,:)=1                                                              ! pp_spin
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
- io_err=ioKB_pwscf(ID)
+ io_err=io_KB_pwscf(ID)
  !
  do ik=1,k%nibz
    !
@@ -107,7 +109,7 @@ subroutine PP_PWscf_driver(k)
    ! Write pseudovelocity to disk
    !
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/ik+1/),ID=ID)
-   io_err=ioKB_pwscf(ID)
+   io_err=io_KB_pwscf(ID)
    !
  end do
  !

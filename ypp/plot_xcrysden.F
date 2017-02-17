@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Varsano, A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -28,7 +30,7 @@ subroutine plot_xcrysden(use_2d)
  use YPP,         ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
- use timing,      ONLY:live_timing
+ use LIVE_t,      ONLY:live_timing
  !
  implicit none
  logical  :: use_2d(3)

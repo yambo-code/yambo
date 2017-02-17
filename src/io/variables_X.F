@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -124,11 +126,11 @@ integer function variables_X(ID,local_description,X)
  !
  if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
    call io_elemental(ID,&
-&       VAR=" BZ energy Random IM    :",L0=use_X_RIM,WARN=.true.,OP=(/"=="/),&
+&       VAR=" BZ energy RIM          :",L0=use_X_RIM,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
    i_local_desc=i_local_desc+1
    call io_elemental(ID,&
-&       VAR=" BZ energy RIM points   :",I0=X_RIM_nkpts,CHECK=.true.,OP=(/"=="/),&
+&       VAR=" BZ energy RIM points   :",I0=X_RIM_nkpts,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  endif
  !

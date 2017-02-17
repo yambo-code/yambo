@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Varsano, A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -24,11 +26,9 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  use pars,        ONLY:SP,schlen
  use units,       ONLY:BO2ANG
  use com,         ONLY:msg
- use FFT_m,       ONLY:fft_dim
- use D_lattice,   ONLY:a
  use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
 &                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden
- use timing,      ONLY:live_timing
+ use LIVE_t,      ONLY:live_timing
  !
  implicit none
  logical    :: use_1d(3),use_2d(3),eval_only

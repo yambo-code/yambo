@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Hogan and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,7 +26,7 @@ subroutine p2y_db1(en,k)
  use P2Y
  use com,                   ONLY : msg,warning
  use mod_com2y,             ONLY : print_interface_dimensions
- use xc_functionals,        ONLY : xc_string,GS_xc_KIND,GS_xc_FUNCTIONAL
+ use xc_functionals,        ONLY : xc_string,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use R_lattice,             ONLY : ng_vec,g_vec
  use wave_func,             ONLY : wf_ng, wf_nc_k, wf_ncx, wf_igk
  use mod_com2y,             ONLY : force_noWFs
@@ -37,7 +39,7 @@ subroutine p2y_db1(en,k)
  call msg('s','Header/K-points/Energies...')
  !
  call get_dimensions(en,k)
- call msg("l","done")
+ call msg("l"," done")
  !
  !---------------------------------------------------------------------*
  !    Read cell data                                                   *
@@ -46,7 +48,7 @@ subroutine p2y_db1(en,k)
  call msg('s','Cell data...')
  !
  call get_cell
- call msg("l","done")
+ call msg("l"," done")
  !
  !---------------------------------------------------------------------*
  !    Read atomic data                                                 *
@@ -55,7 +57,7 @@ subroutine p2y_db1(en,k)
  call msg('s','Atomic data...')
  !
  call get_atoms
- call msg("l","done")
+ call msg("l"," done")
  !
  !---------------------------------------------------------------------*
  !    Read symmetries                                                  *
@@ -71,6 +73,8 @@ subroutine p2y_db1(en,k)
  !
  call get_xc
  call msg('s','XC functional...'//xc_string(GS_xc_FUNCTIONAL))
+ call msg('s','EXX fraction...',GS_exx_FRACTION)
+ call msg('s','EXX screening...',GS_exx_SCREENING)
  !
  !---------------------------------------------------------------------*
  !    Read k-point mesh                                                *
@@ -80,14 +84,13 @@ subroutine p2y_db1(en,k)
  !
  call get_k_points(k)
  !
- call msg('l','done')
+ call msg('l',' done')
  !
  !---------------------------------------------------------------------*
  !    Read miscellaneous data                                          *
  !---------------------------------------------------------------------*
  !
  call get_more
- !
  !
  if(.not.force_noWFs) then
    !---------------------------------------------------------------------*
@@ -98,7 +101,7 @@ subroutine p2y_db1(en,k)
    !
    call get_R_vectors
    !
-   call msg('l','done')
+   call msg('l',' done')
    !
    !---------------------------------------------------------------------*
    !    Read igk arrays                                                  *
@@ -107,7 +110,7 @@ subroutine p2y_db1(en,k)
    !
    call get_IGK(k)
    !
-   call msg('l','done')
+   call msg('l',' done')
    !
  else
    !
@@ -132,7 +135,7 @@ subroutine p2y_db1(en,k)
  !
  call get_energies(en,k)
  !
- call msg('l','done')
+ call msg('l',' done')
  !
  !---------------------------------------------------------------------*
  !    Report                                                           *

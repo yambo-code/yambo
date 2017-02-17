@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -65,10 +67,10 @@ subroutine ps_convert(rvar,ivar,v_name)
  !
  ! check if the var is a Time variable (incompatible with energy types)
  !
- var_is_time     =trim(v_s_unit)==Time_unit
+ var_is_time     =any((/trim(v_s_unit)==Time_unit/))
  var_is_B        =trim(v_s_unit)==Bfield_unit
  var_is_E        =trim(v_s_unit)==Efield_unit
- var_is_angle    =trim(v_s_unit)==Angle_unit
+ var_is_angle    =any((/trim(v_s_unit)==Angle_unit/))
  var_is_intensity=trim(v_s_unit)==I_unit
  !
  if (ivar>=0) then
@@ -157,13 +159,23 @@ subroutine ps_convert(rvar,ivar,v_name)
      rvar=rvar*PS2AUT
      call set_itp_unit('ps',1)
      return
-   else 
+     !
+   else if (index(v_line,'fs')/=0) then
      !
      ! 1 AUT= 1 FS * FSAUT
      !
      rvar=rvar*FS2AUT
      call set_itp_unit('fs',1)
      return
+     !
+   else if (index(v_line,'as')/=0) then
+     !
+     ! 1 AUT= 1 AS * ASAUT
+     !
+     rvar=rvar*AS2AUT
+     call set_itp_unit('as',1)
+     return
+     !
    endif
    !
    ! If nothing has been done and the real has a unit I assume it is in eV!

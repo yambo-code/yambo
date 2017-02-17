@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -53,6 +55,8 @@ subroutine init_convert_r(rfac,v_descr)
    rfac=1./PS2AUT
  else if (index(trim(v_descr),'fs')/=0) then
    rfac=1./FS2AUT
+ else if (index(trim(v_descr),'as')/=0) then
+   rfac=1./AS2AUT
  else if (index(trim(v_descr),'T')/=0) then
    rfac=AU2Tesla
  else if (index(trim(v_descr),'V/mm')/=0) then

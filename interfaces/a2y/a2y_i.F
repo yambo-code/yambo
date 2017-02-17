@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,10 +30,11 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use electrons,           ONLY:levels,E_reset,n_spin
  use D_lattice,           ONLY:n_atoms_species_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
- use wave_func,           ONLY:wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
+ use wave_func,           ONLY:wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
+ use interfaces,          ONLY:PARALLEL_live_message
  use mod_com2y,           ONLY:interface_presets,force_noWFs
- use mod_wf2y,            ONLY:wf_splitter
+ use mod_wf2y,            ONLY:WF_splitter
  use pseudo,              ONLY:PP_free
  !
  implicit none
@@ -48,7 +51,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  character(lchlen) :: KSS_file_name
  integer           :: ID,io_err,ik,ib_grp
- integer,     external :: a2y_KSS_file_name,ioDB1,ioKB_abinit
+ integer,     external :: a2y_KSS_file_name,io_DB1,io_KB_abinit
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  ! Presets
@@ -56,7 +59,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  a2y_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,od,od,'','')
+ call SET_defaults(instr,od,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
@@ -73,7 +76,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call write_the_logo(6,' ')
  !
- call msg('s','A(binit) 2 Y(ambo)')
+ call PARALLEL_live_message('A(binit) 2 Y(ambo)')
  !
  call msg('s','Checking input file ...')
  !
@@ -88,25 +91,26 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call a2y_db1(en,k,trim(KSS_file_name))
  !
- call msg('s','== DB1 ...')
+ call msg('s','Writing main Database ...')
  !
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
- io_err=ioDB1(en,k,ID)
+ io_err=io_DB1(en,k,ID)
+ !
+ call msg('s','... Database done')
  !
  if (force_noWFs) then
-   call msg('ln','done ==')
+   call msg('s',' == A2Y completed ==')
+   call msg('s',' ')
    call MPI_close
    return
- else
-   call msg('l','done ==')
  endif
  !
- ! Splitting + SPIN support still not implemented (see a2y_wf.F for
- ! more details)
+ ! Splitting + SPIN support still not implemented (see a2y_wf.F for more details)
+ ! Davide: barrier removed. I do not see any reason for keeping it
  !
- if (n_spin==1) call wf_splitter()
+ call WF_splitter()
  !
- call msg('s','== WFs + nlPP ...')
+ call msg('s','Writing WFs and (eventually) nlPP ...')
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  !
@@ -119,12 +123,12 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      if (n_atoms_species_max>0.and.ib_grp==1) then
        if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
        if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-       io_err=ioKB_abinit(ID)
+       io_err=io_KB_abinit(ID)
      endif
      !
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-     io_err=ioWF(ID,wf=wf_disk)
+     io_err=io_WF(ID,wf=wf_disk)
      !
    enddo
    !
@@ -132,7 +136,9 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  deallocate(wf_disk)
  call PP_free()
  !
- call msg('ln','done ==')
+ call msg('s','... WF and PP done')
+ call msg('s',' == A2Y completed ==')
+ call msg('s',' ')
  !
  call MPI_close
  !

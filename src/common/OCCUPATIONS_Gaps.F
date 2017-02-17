@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
+subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
@@ -32,6 +34,7 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  real(SP), optional ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
  integer , optional ::Nbf(n_sp_pol)
  integer , optional ::Nbm(n_sp_pol)
+ integer , optional ::I_dir(2)
  ! 
  ! Work Space
  ! 
@@ -47,8 +50,7 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  ! 
  real(SP) ::E_g_dir_(1+(n_sp_pol-1)*2,2)
  real(SP) ::E_g_ind_(1+(n_sp_pol-1)*2,2) 
- integer  ::Nbf_(n_sp_pol)
- integer  ::Nbm_(n_sp_pol)
+ integer  ::Nbf_(n_sp_pol),I_dir_(2),Nbm_(n_sp_pol)
  !
  if(sum(E%f(:,:,:))<1._SP-filled_tresh) call error('The system contains less than 1 electron')
  !
@@ -86,9 +88,7 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  !
  if (E%Nbm+1 > E%nb) call error(' Too few states. Include more states in the DFT run.')
  !
- ! E%Efermi(1) = Fermi Level
- ! E%Efermi(2) = VB max (with resepect to Efermi(1) )
- ! E%Efermi(3) = CB min (with resepect to Efermi(1) )
+ ! VBM/CBM
  !
  E_vb_min=-100._SP
  E_vb_max=-100._SP
@@ -102,7 +102,9 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
    E_cb_min(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
    E_cb_max(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
  enddo
- E%Efermi(2:)=E%Efermi(1)+(/maxval(E_vb_max),minval(E_cb_min)/)
+ !
+ E%E_VBM=maxval(E_vb_max)
+ E%E_CBm=minval(E_cb_min)
  !
  ! [1] Indirect Gaps (min/max)
  !
@@ -110,8 +112,7 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
    E_g_ind_(1,1)=minval(E_cb_min)-maxval(E_vb_max)
    E_g_ind_(1,2)=minval(E_cb_max)-maxval(E_vb_min)
    ! This should never happen
-   if(E_g_ind_(1,1)<0.and.n_sp_pol==2) &
-&    call warning('Merged spin levels are metallic')
+   if(E_g_ind_(1,1)<0.and.n_sp_pol==2) call warning('Merged spin levels are metallic')
    !
  endif
  !
@@ -138,10 +139,11 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
          if(Nbf_(j_sp_pol)==0) cycle
          E_g_dir_old=E_g_dir_(1,1)
          E_g_dir_(1,1)=min(E_g_dir_(1,1),&
-&                        E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(j_sp_pol),ik,j_sp_pol) )
+&                      E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(j_sp_pol),ik,j_sp_pol) )
          if(E_g_dir_(1,1)<E_g_dir_old) then
            i_sp_ref=i_sp_pol
            j_sp_ref=j_sp_pol
+           I_dir_=(/Nbf_(i_sp_pol),ik/)
          endif
        enddo
      enddo
@@ -166,12 +168,21 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
    enddo
  endif
  !
+ ! If the system is metallic VBM and CBm are set to zero,
+ ! i.e. equal to the Fermi level, so that stretching corrections
+ ! are applied properly
+ !
+ if(any(Nbf_/=Nbm_)) then
+   E%E_VBM=0._SP
+   E%E_CBm=0._SP
+ endif
+ !
  if(n_sp_pol==1) E%E_dir_gap(1)=E_g_dir_(1,1)
  if(n_sp_pol==2) E%E_dir_gap(1:2)=E_g_dir_(2:3,1)
  !
- !
  ! From Shadow variables to optional variables
  !
+ if (present(I_dir)) I_dir=I_dir_
  if (present(E_g_dir)) E_g_dir=E_g_dir_
  if (present(E_g_ind)) E_g_ind=E_g_ind_
  if (present(Nbf)) Nbf=Nbf_

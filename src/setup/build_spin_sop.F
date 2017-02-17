@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Sangalli and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -64,11 +66,11 @@ subroutine build_spin_sop()
    tmp_sop= tmp_sop*m3det(tmp_sop)
    !
    !           "Tait–Bryan angles"
-   if (abs(tmp_sop(3,1)+1._SP)<1.E-5) then
+   if (abs(tmp_sop(3,1)+1._SP)<1.E-5_SP) then
      alpha=0._SP
      beta= pi/2._SP
      delta=atan2(tmp_sop(1,2),tmp_sop(1,3))
-   elseif (abs(tmp_sop(3,1)-1._SP)<1.E-5) then
+   elseif (abs(tmp_sop(3,1)-1._SP)<1.E-5_SP) then
      alpha=0._SP
      beta=-pi/2._SP
      delta=atan2(-tmp_sop(1,2),-tmp_sop(1,3))

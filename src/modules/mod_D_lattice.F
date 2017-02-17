@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +23,7 @@
 !
 module D_lattice
  !
- use pars,      ONLY:LP,SP,lchlen
+ use pars,      ONLY:SP,lchlen
  implicit none
  !
  ! Non periodic directions
@@ -43,12 +45,12 @@ module D_lattice
  integer :: i_space_inv ! =1 yes SI,  =0 no SI
  integer :: inv_index   ! Index of the symmetry corresponding to -I (independently 
                         ! on the value of i_time_rev and i_space_inv
- logical :: mag_syms    ! If .true. the T-rev symmetries are not the spatial symmetries multiplied by -1
+ integer :: idt_index   ! Indentity I  index
+ logical :: mag_syms
  real(SP),allocatable    :: dl_sop(:,:,:)
  complex(SP),allocatable :: spin_sop(:,:,:)
- integer :: idt_index   ! Indentity I  index
- integer, allocatable :: sop_tab(:,:)
- integer, allocatable :: sop_inv(:)
+ integer, allocatable    :: sop_tab(:,:)
+ integer, allocatable    :: sop_inv(:)
  !
  ! Cell & atoms
  !

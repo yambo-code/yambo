@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Hogan and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -33,7 +35,7 @@
    use optcut,                  ONLY : DIP_iR_cut, DIP_q_dot_iR_cut
    use R_lattice,               ONLY : nkibz, bz_samp, nXkibz
    use X_m,           ONLY:X_t,DIP_iR,X_alloc
- use timing,              ONLY:live_timing_is_on
+ use LIVE_t,              ONLY:live_timing_is_on
 
    implicit none
    real(SP),allocatable :: DIP_iR_disk(:,:,:),DIP_iR_cut_disk(:,:,:)

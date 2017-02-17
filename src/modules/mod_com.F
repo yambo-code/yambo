@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,12 +34,18 @@ module com
  character(lchlen)  :: com_path
  character(lchlen)  :: repfile
  !
+ ! Path for the shifted grids
+ !
+ character(lchlen) :: grid_path
+ !
  character(3)      :: terminator(4)
  !
  ! JOB strings
  !
+ integer, parameter :: n_max_jobstr=10
+ integer            :: n_alt_jobstr
  character(lchlen)  :: jobstr
- character(lchlen)  :: second_jobstr
+ character(lchlen)  :: alt_jobstr(n_max_jobstr)
  !
  ! Sectioning
  !
@@ -47,9 +55,9 @@ module com
  ! 
  ! Output Files/Report File
  !
- integer,parameter  :: nofs=200
- integer,parameter  :: max_open_ofs=200
- integer, parameter :: num_of_alternative_locations=12
+ integer,parameter  :: nofs=400
+ integer,parameter  :: max_open_ofs=400
+ integer, parameter :: num_of_alternative_locations=8+8*n_max_jobstr
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)
@@ -87,7 +95,7 @@ module com
      ! 
      ! Work Space
      !
-     character(schlen)::ch(2)
+     character(lchlen)::ch(2)
      character(lchlen)::folder,jobstr_
      !
      get_name=" "
@@ -160,14 +168,22 @@ module com
      logical                ::NETCDF_DB
      character(lchlen)      ::all_locations(num_of_alternative_locations)
      !
+     ! WS
+     integer :: i_jobstr
+     !
      ! Possible Paths
      !
      ! 1/2.  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
      ! 3/4.  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
      ! 5/6.  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with JOBSTR)
      ! 7/8.  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=1 (no   JOBSTR)
-     ! 9/10. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with SECOND_JOBSTR)
-     ! 11/12.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with SECOND_JOBSTR)
+     ! 9/10. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with ALT_JOBSTR(1))
+     ! 11/12.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with ALT_JOBSTR(1))
+     ! .
+     ! .
+     ! .
+     ! 5+4*I/6+4*I.MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with ALT_JOBSTR(I))
+     ! 7+4*I/8+4*I.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with ALT_JOBSTR(I))
      !
      all_locations(1)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
 &                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
@@ -186,24 +202,27 @@ module com
      all_locations(8)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
 &                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
      !
-     ! Added on 27/12/2012 using second_jobstr
+     ! Added on 27/12/2012 using second_jobstr (Andrea)
+     ! Added on 27/6/2013 using third_jobstr (Andrea)
+     ! 30/8/2013 Merged and added general number of jobstrs (Andrea)
      !
-     all_locations(9:12) = ' '
-     !
-     if (len_trim(second_jobstr)>0) then
-       all_locations(9) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+     do i_jobstr=1,n_max_jobstr
+       all_locations(5+4*i_jobstr:8+4*i_jobstr) = ' '
+     enddo
+     do i_jobstr=1,n_alt_jobstr
+       all_locations(5+4*i_jobstr) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
 &                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(second_jobstr))
-       all_locations(10)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+       all_locations(6+4*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
 &                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(second_jobstr))
-       all_locations(11)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+       all_locations(7+4*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
 &                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(second_jobstr))
-       all_locations(12)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+       all_locations(8+4*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
 &                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(second_jobstr))
-     endif
+&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+     enddo
      !
    end function
    !
@@ -233,7 +252,7 @@ module com
             if (trim(opened_of(i2))==local_file_name) file_index=i2
          enddo
          if(file_index==-1) return
-         call flush(abs(of_unit(file_index)))
+         flush(abs(of_unit(file_index)))
        endif
        !
        if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
@@ -294,8 +313,8 @@ module com
    end subroutine
    !
    subroutine write_the_logo(unit_,comment_)
-     use timing,       ONLY:LIVE_message
-     use parallel_m,   ONLY:master_cpu
+     !
+     use LIVE_t,       ONLY:LIVE_message
      use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
      integer     ::unit_
      character(1)::comment_
@@ -304,7 +323,7 @@ module com
      !
      call pickup_a_logo(unit_)
      !
-     if (.not.master_cpu.or.unit_<0) return
+     if (unit_<0) return
      !
      if (trim(comment_)=='')  space_='(t5,3a)'
      if (trim(comment_)=='#') then
@@ -315,13 +334,17 @@ module com
        enddo
      endif
      !
+     if (unit_==11) open(unit=11,file=trim(repfile),position='append')
+     !
      do i1=1,n_logo_lines
        if (unit_/=6) write (unit_,trim(space_)) logo_line(i1)
-       if (unit_==6.and.i1>=n_logo_lines-1) cycle
-       if (unit_==6) call LIVE_message("n",logo_line(i1),"","%s",NO_CPUT=.true.)
+       if (unit_==6.and.i1>=n_logo_lines-2) cycle
+       if (unit_==6) call LIVE_message(logo_line(i1),"n","","%s",CPU_TIME=.false.,CPU_ID=.false.)
      enddo
      if (unit_/=6.and.trim(comment_)=='')  write (unit_,'(a)') ' '
-     if (unit_/=6.and.trim(comment_)=='#')  write (unit_,'(a)') '#'
+     if (unit_/=6.and.trim(comment_)=='#') write (unit_,'(a)') '#'
+     !
+     if (unit_==11) close(11)
      !
    end subroutine
    !
@@ -356,39 +379,32 @@ module com
    end subroutine
    !
    subroutine warning(mesg)
-     use timing,     ONLY:LIVE_message
+     use LIVE_t,     ONLY:LIVE_message
      use stderr,     ONLY:string_pack
      character(*) :: mesg
      call msg('nr',string_pack('[WARNING] ',trim(mesg)))
-     call LIVE_message("n",string_pack('[WARNING] ',trim(mesg)),"","%s")
+     call LIVE_message(string_pack('[WARNING] ',trim(mesg)),"n","","%s")
    end subroutine
    !
    subroutine error(mesg)
-     use timing,     ONLY:LIVE_message,live_timing_is_on
+     use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
      use stderr,     ONLY:string_pack
      use parallel_m, ONLY:MPI_close
      character(*)    :: mesg
      !
-     if (file_exists(repfile) ) call report_file_fix
-     !
      live_timing_is_on=.FALSE.
      !
-     call msg('nr',string_pack('[ERROR] STOP signal received while in :',trim(secnm)))
-     call LIVE_message("nn",&
-&         string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"","%s")
+     if (len_trim(secnm)>0) then
+       call msg('nr',string_pack('[ERROR] STOP signal received while in :',trim(secnm)))
+       call LIVE_message(string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
+     endif
      call msg('nr',string_pack('[ERROR] ',trim(mesg)))
-     call LIVE_message("n",string_pack('[ERROR] ',trim(mesg)),"","%s")
-     call LIVE_message("n","","","%s")
+     call LIVE_message(string_pack('[ERROR] ',trim(mesg)),"n","","%s")
+     call LIVE_message("","n","","%s")
      !
      call MPI_close
      !
      stop
-   end subroutine
-   !
-   subroutine report_file_fix
-     if (.not.write_to_report) return
-     close(11)
-     open(unit=11,file=trim(repfile),position='append')
    end subroutine
    !
    subroutine msg_deliver(formatted_msg)
@@ -396,7 +412,9 @@ module com
      integer      :: i_unit
      do i_unit=1,max_open_ofs
        if (of_unit(i_unit)<=0) cycle
+       if (of_unit(i_unit)==11) open(unit=11,file=trim(repfile),position='append')
        write (of_unit(i_unit),'(a)') formatted_msg
+       if (of_unit(i_unit)==11) close(11)
        of_unit(i_unit)=-of_unit(i_unit)
      enddo
     end subroutine
@@ -458,8 +476,8 @@ module com
    end subroutine
    !
    subroutine namsg(how,mesg,val,USE_TABS,INDENT)
-     use stderr,   ONLY: c_print,write_to_log,tty_size
-     use timing,   ONLY: LIVE_message
+     use stderr,   ONLY: c_print,write_to_log,log_as_a_file
+     use LIVE_t,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      character(*)     :: val(:)
@@ -482,21 +500,26 @@ module com
      if(trim(msgfmt)=="(/00x,a, 01(a,1x))") msgfmt="(/99x,a, 01(a,1x))"
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
+       if (of_unit(i1)==11) then
+         if (len_trim(repfile)==0) cycle
+         open(unit=11,file=trim(repfile),position='append')
+       endif
        write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
+       if (of_unit(i1)==11) close(11)
        of_unit(i1)=-of_unit(i1)
      enddo
      if (index(how,'o')>0.or.index(how,'O')>0) return
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
      msgfmt=composed_fmt('a',-size(val),.false.,-1)
      write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
-     if (index(how,'l')/=0.and.tty_size>0) &
+     if (index(how,'l')/=0.and..not.log_as_a_file) &
 &       call c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call LIVE_message("n",trim(lch),"","%s")
+     if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
    end subroutine
    !
    subroutine nimsg(how,mesg,val,USE_TABS,INDENT)
-     use stderr,   ONLY: c_print,write_to_log,tty_size
-     use timing,   ONLY: LIVE_message
+     use stderr,   ONLY: c_print,write_to_log,log_as_a_file
+     use LIVE_t,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
@@ -518,21 +541,23 @@ module com
      msgfmt=composed_fmt(trim(gen_fmt(val)),size(val),l_fmt,l_indent)
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
+       if (of_unit(i1)==11) open(unit=11,file=trim(repfile),position='append')
        write (of_unit(i1),trim(msgfmt)) mesg,val
+       if (of_unit(i1)==11) close(11)
        of_unit(i1)=-of_unit(i1)
      enddo
      if (index(how,'o')>0.or.index(how,'O')>0) return
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
      msgfmt=composed_fmt(trim(gen_fmt(val)),-size(val),.false.,-1)
      write (lch,trim(msgfmt)) mesg,val 
-     if (index(how,'l')/=0.and.tty_size>0) &
+     if (index(how,'l')/=0.and..not.log_as_a_file) &
 &       call c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call LIVE_message("n",trim(lch),"","%s")
+     if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
    end subroutine
    !
    subroutine nrmsg(how,mesg,val,USE_TABS,INDENT,formatted_msg)
-     use stderr,   ONLY: c_print,write_to_log,tty_size
-     use timing,   ONLY: LIVE_message
+     use stderr,   ONLY: c_print,write_to_log,log_as_a_file
+     use LIVE_t,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
@@ -554,10 +579,12 @@ module com
      msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),size(val),l_fmt,l_indent)
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
+       if (of_unit(i1)==11) open(unit=11,file=trim(repfile),position='append')
        if (present(formatted_msg)) then
          write (formatted_msg,trim(msgfmt)) mesg,val
        else
          write (of_unit(i1),trim(msgfmt)) mesg,val
+         if (of_unit(i1)==11) close(11)
          of_unit(i1)=-of_unit(i1)
        endif
      enddo
@@ -565,9 +592,9 @@ module com
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
      msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),-size(val),.false.,-1)
      write (lch,trim(msgfmt)) mesg,val 
-     if (index(how,'l')/=0.and.tty_size>0) call &
+     if (index(how,'l')/=0.and..not.log_as_a_file) call &
 &       c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call LIVE_message("n",trim(lch),"","%s")
+     if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
    end subroutine
    !
    character(lchlen) function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
@@ -626,6 +653,7 @@ module com
        do i2=2,10
          if (len_trim(ch_piece(i2))==0) cycle
          do i1=1,max_open_ofs-1
+           if (len_trim(opened_of(i1))==0) cycle
            if (index( opened_of(i1),trim(ch_piece(i2)) )/=0) then
              of_unit(i1) =-of_unit(i1)
            endif

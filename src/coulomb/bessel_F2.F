@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Varsano and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -20,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 function bessel_F2(z)
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,rZERO
  use R_lattice,     ONLY:cyl_zz_save,cyl_ph_radius
  implicit none
  real(SP) :: z
@@ -32,10 +34,10 @@ function bessel_F2(z)
  real(SP), external :: bessel_J0
  cyl_zz_save=z
 #if defined _DOUBLE
- call dqag(bessel_J0,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
+ call dqag(bessel_J0,rZERO,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
 &         3,12,last,iwork,work)
 #else
- call qag(bessel_J0,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
+ call qag(bessel_J0,rZERO,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
 &         3,12,last,iwork,work)
 #endif
  bessel_F2=G

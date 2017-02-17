@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,7 +24,7 @@
 subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
  !
  use pars,                ONLY:SP
- use R_lattice,           ONLY:bz_samp,ik_is_table,qindx_B,qindx_S
+ use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp
  implicit none
@@ -48,7 +50,7 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
        exit
      endif
    enddo
-   !
+   
    do ib=1,elph_nb
      do ob=1,elph_nb
        ! 
@@ -64,7 +66,7 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
          ! with Tk + IRq = Sp 
          !                                 R^-1                 S
          !                                 -------------------- --
-         ik_bz_gkkp=ik_is_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
+         ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
          !
          elph_gkkp_expanded(ik_bz,:,ob,ib)=conjg(elph_gkkp(ik_bz_gkkp,:,ib,ob))
          !
@@ -74,7 +76,7 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
          !                <(R^-1 T k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 T k) n>= 
          !                gkkp(ik_bz,nu,n',n)
          !
-         ik_bz_gkkp=ik_is_table(ik,sop_tab(sop_inv(iq_s),is))
+         ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
          !
          elph_gkkp_expanded(ik_bz,:,ib,ob)=elph_gkkp(ik_bz_gkkp,:,ib,ob)
          !

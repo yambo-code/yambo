@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,6 +33,10 @@ module X_m
  real(SP)                 :: eps_2_alpha
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
+ !
+ ! Main Gauge
+ !
+ character(schlen)        :: global_gauge
  !
  ! Large Q-vector support 
  !
@@ -70,6 +76,14 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_RIM
+ real(SP):: X_en_comp
+ logical :: X_terminator
+ !
+ ! I/O parameters
+ !
+ integer,parameter:: n_MAX_blocks_of_rows=1000 ! Note that in NETCDF the max number of vars is 8192
+ integer          :: n_blocks_of_rows
+ integer          :: n_rows_each_block
  !
  ! I/O descriptions
  !
@@ -193,6 +207,7 @@ module X_m
      X%ng=1
      X%ng_db=0 
      X%iq=(/1,-1/)
+     X%ngostnts=0
      X%whoami=0
      X%Vnl_included=.false.
      if (present(type)) X%whoami=type

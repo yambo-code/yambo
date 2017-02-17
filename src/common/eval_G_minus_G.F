@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,15 +33,15 @@ integer function eval_G_minus_G(iG,iGo)
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use vec_operate,  ONLY:iku_v_norm
- use timing,       ONLY:live_timing
- use R_lattice,    ONLY:G_m_G,g_vec,ng_closed,ng_in_shell,n_g_shells,minus_G,E_of_shell
+ use LIVE_t,       ONLY:live_timing
+ use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
  !
  implicit none
  integer :: iG,iGo
  !
  ! Work Space
  !
- integer :: i1,i2,ng1,ng2
+ integer :: i1,i2
  integer :: iG_shell,iG_,iGo_
  real(SP):: E_of_shell_G_m_G
  real(SP):: v1(3)

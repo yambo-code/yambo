@@ -1,7 +1,9 @@
 !
-! Copyright (C) 2000-2016 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
-! 
+!
+! Authors (see AUTHORS file for details): CA, AF
+!
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
 ! modify it under the terms of the GNU General Public 
@@ -31,12 +33,16 @@ module wrapper
  !
  implicit none
  !
- interface M_by_M 
+ interface M_eigenvalues
+   module procedure heev,geev
+ end interface
+ !
+ interface M_by_M
    module procedure mm_cgemm,mm_c 
  end interface
  !
  interface M_by_V 
-   module procedure mv_cgemv,mv_c
+   module procedure mv_cgemv,mv_sgemv,mv_c,mv_r
  end interface
  !
  interface V_by_V_plus_V
@@ -47,8 +53,15 @@ module wrapper
  public :: Vstar_dot_V
  public :: V_dot_V
  public :: real_V_dot_V
+ public :: M_by_V
+ !
+ public :: LU_factorization
+ public :: LU_inversion
+ public :: SV_decomposition
+ public :: M_eigenvalues
  !
  contains
+   !
    !
    !===================
    ! interface M_by_M 
@@ -79,9 +92,23 @@ module wrapper
 #endif
    end subroutine mm_c
    !
+   !
    !===================
    ! interface M_by_V 
    !===================
+   !
+   subroutine mv_sgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+     real(SP), intent(in) :: ALPHA,BETA
+     integer,  intent(in) :: INCX,INCY,LDA,M,N
+     character,intent(in) :: TRANS
+     real(SP), intent(in) :: A(LDA,*),X(*)
+     real(SP), intent(out):: Y(*)
+#if defined _DOUBLE
+     call DGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+#else
+     call SGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+#endif
+   end subroutine mv_sgemv
    !
    subroutine mv_cgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
      complex(SP), intent(in) :: ALPHA,BETA
@@ -107,6 +134,19 @@ module wrapper
      call CGEMV(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
 #endif
    end subroutine mv_c
+   !
+   subroutine mv_r(TRANS,msize,A,X,Y)
+     integer,  intent(in) :: msize
+     real(SP), intent(in) :: A(msize,*),X(*)
+     real(SP), intent(out):: Y(*)
+     character,intent(in) :: TRANS
+#if defined _DOUBLE
+     call DGEMV(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
+#else
+     call SGEMV(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
+#endif
+   end subroutine mv_r
+   !
    !
    !=========================
    ! interface V_by_V_plus_V 
@@ -148,6 +188,7 @@ module wrapper
 #endif
    end subroutine vv_saxpy   
    !
+   !
    !======
    ! COPY 
    !======
@@ -163,6 +204,7 @@ module wrapper
 #endif
    end subroutine V_copy   
    !
+   !
    !==============
    ! DOT PRODUCTS
    !==============
@@ -177,6 +219,7 @@ module wrapper
      complex(SP)::cdotc
      Vstar_dot_V=CDOTC(N,CX,1,CY,1)
 #endif
+     !
    end function Vstar_dot_V   
    !
    real(SP) function real_V_dot_V(N,CX,CY)
@@ -201,6 +244,101 @@ module wrapper
      complex(SP)::cdotu
      V_dot_V=CDOTU(N,CX,1,CY,1)
 #endif
+     !
    end function V_dot_V
+   !
+   !============================
+   ! SINGLE VALUE DECOMPOSITION
+   !============================
+   !
+   subroutine SV_decomposition(msize, M, SV, U, VH, work, lwork, r_WK, ifail)
+     !
+     integer,    intent(in)   :: msize, lwork
+     integer,    intent(out)  :: ifail
+     !     
+     real(SP),   intent(out)  :: r_WK(*), SV(*)
+     complex(SP),intent(inout):: M(msize,*)
+     complex(SP),intent(out)  :: U(msize,*), VH(msize,*), work(*)
+     !
+#if defined _DOUBLE
+   call ZGESVD('S','A',msize,msize,M,msize,SV,U,msize,VH,msize,work,lwork,r_WK,ifail)
+#else
+   call CGESVD('S','A',msize,msize,M,msize,SV,U,msize,VH,msize,work,lwork,r_WK,ifail)
+#endif
+     !
+   end subroutine SV_decomposition
+   !
+   !=========================================
+   ! LOWER/UPPER FACTORIZATION and INVERISON
+   !=========================================
+   !
+   subroutine LU_factorization(msize,M,ipvt,ifail)
+     !
+     integer,     intent(in)   :: msize
+     integer,     intent(out)  :: ifail, ipvt(*)
+     complex(SP), intent(inout):: M(msize,*)
+     !
+#if defined _DOUBLE
+     call zgetrf(msize,msize,M,msize,ipvt,ifail)
+#else
+     call cgetrf(msize,msize,M,msize,ipvt,ifail)
+#endif
+     !
+   end subroutine LU_factorization
+   !
+   !
+   subroutine LU_inversion(msize,M,ipvt,work,lwork,ifail)
+     !
+     integer,     intent(in)   :: msize, lwork, ipvt(*)
+     integer,     intent(out)  :: ifail
+     complex(SP), intent(inout):: M(msize,*)
+     complex(SP), intent(out)  :: work(*)
+     !
+#if defined _DOUBLE
+     call zgetri(msize,M,msize,ipvt,work,lwork,ifail)
+#else
+     call cgetri(msize,M,msize,ipvt,work,lwork,ifail)
+#endif
+     !
+   end subroutine LU_inversion
+   !
+   !==============================
+   ! EIGENVALUES AND EIGENVECTORS 
+   !==============================
+   !
+   subroutine heev(msize,M,E_real,work,lwork,rwk,ifail)
+     !
+     integer,    intent(in)    :: msize,lwork
+     integer,    intent(out)   :: ifail
+     real(SP),   intent(out)   :: E_real(*), rwk(*)
+     complex(SP),intent(out)   :: work(*)
+     complex(SP),intent(inout) :: M(msize,*)
+     !
+#if defined _DOUBLE
+   call ZHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
+#else
+   call CHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
+#endif
+     !
+   end subroutine heev 
+   !
+   subroutine geev(msize,M,E_cmpl,V_left,V_right,work,lwork,rwk,ifail)
+     !
+     integer,    intent(in)    :: msize,lwork
+     integer,    intent(out)   :: ifail
+     real(SP),   intent(out)   :: rwk(*)
+     complex(SP),intent(out)   :: E_cmpl(*),V_left(msize,*),V_right(msize,*),work(*)
+     complex(SP),intent(inout) :: M(msize,*)
+     !
+#if defined _DOUBLE
+   call ZGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,&
+&             V_right,msize,work,lwork,rwk,ifail)
+#else
+   call CGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,&
+&             V_right,msize,work,lwork,rwk,ifail)
+#endif
+     !
+   end subroutine geev
+   !
    !
 end module

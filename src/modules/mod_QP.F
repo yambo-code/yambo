@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,6 +37,7 @@ module QP_m
  integer           :: QP_dSc_steps
  integer           :: QP_Sc_steps
  integer           :: QP_n_W_freqs
+ integer           :: QP_n_W_freqs_redux
  integer           :: QP_nb
  integer           :: QP_nk
  integer           :: QP_n_states
@@ -42,10 +45,9 @@ module QP_m
  integer           :: QP_n_G_bands(2)
  integer           :: GWo_iterations
  logical           :: QP_dSc_test
- logical           :: QP_W_partially_done
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
- logical           :: PPa_terminator
+ logical           :: l_GW_terminator=.FALSE.
  logical           :: On_Mass_Shell_approx
  logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP
@@ -55,23 +57,28 @@ module QP_m
  real(SP)          :: QP_G_Zoom_treshold
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_dSc_delta
- real(SP)          :: QP_W_er(2)
- real(SP)          :: QP_W_dr(2)
  real(SP)          :: QP_G_er(2)
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
- real(SP)          :: GW_en_comp
+ character(schlen) :: GW_terminator_Kind="none"
+ real(SP)          :: GW_terminator_E
  real(SP)   ,allocatable:: QP_G_amplitude_integral(:)
  real(SP)   ,allocatable:: QP_G_info(:,:,:)
  real(SP)   ,allocatable:: QP_G_zoom_er(:,:)
+ real(SP)   ,allocatable:: QP_W_er(:,:)
+ real(SP)   ,allocatable:: QP_W_dr(:,:)
  complex(SP),allocatable:: QP_dSc(:,:)
- complex(SP),allocatable:: QP_W(:,:,:)
+ complex(SP),allocatable:: QP_W(:,:,:,:)
  complex(SP),allocatable:: QP_Vnl_xc(:)
  complex(SP),allocatable:: QP_Sc(:,:)
  complex(SP),allocatable:: QP_Vxc(:)
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
  logical,    allocatable:: QP_state(:,:)
+ ! 
+ ! QED
+ !
+ integer           :: QP_QED_ng = 1
  !
  ! Logicals used for reporting
  !
@@ -87,6 +94,7 @@ module QP_m
    character(schlen)  :: description(max_qp_descs)
    integer,    pointer:: table(:,:) => null()
    real(SP)   ,pointer:: k(:,:)     => null()
+   real(SP)   ,pointer:: wk(:)      => null()
    real(SP)   ,pointer:: E_bare(:)  => null()
    complex(SP),pointer:: E(:)       => null()
    complex(SP),pointer:: Z(:)       => null()
@@ -129,17 +137,28 @@ module QP_m
  ! is not used in non-collinear or scalar cases.
  !
  real(SP)                :: QP_ctl_E(3,3,2)
+ real(SP)                :: QP_ctl_Wc_E_ref(3,2)
+ real(SP)                :: QP_ctl_Wv_E_ref(3,2)
  real(SP)                :: QP_ctl_Wc(3,3,2)
  real(SP)                :: QP_ctl_Wv(3,3,2)
  complex(SP)             :: QP_ctl_Z(3,2)
  logical                 :: QP_ctl_applied
  !
- ! NEGF Occupations I/O. The general format is
+ ! interface
  !
- ! ??nOcc= "DIR"
- !
- character(schlen)       :: OCC_ctl(3) ! Database directory
- real(SP)                :: OCC_T_ref  ! Occupations loaded at this time
+ interface
+   subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
+      use pars,          ONLY:SP,schlen,DP,pi
+      use electrons,     ONLY:levels,spin_occ,spin
+      use R_lattice,     ONLY:qindx_S,bz_samp
+     !
+     implicit none
+     type(levels) ::E       
+     type(bz_samp)::k,Xk,q
+     character(*),optional ::mode
+   end subroutine XCo_Hartree_Fock
+   !
+ end interface
  !
  contains
    !
@@ -149,13 +168,15 @@ module QP_m
      qp%n_descs=0
      qp%n_states=0
      if(associated(qp%table))      deallocate(qp%table)
+     if(associated(qp%k))          deallocate(qp%k)
+     if(associated(qp%wk))         deallocate(qp%wk)
      if(associated(qp%E))          deallocate(qp%E)
      if(associated(qp%Z))          deallocate(qp%Z)
      if(associated(qp%E_bare))     deallocate(qp%E_bare)
      if(associated(qp%S_total))    deallocate(qp%S_total)
      if(associated(qp%GreenF))     deallocate(qp%GreenF)
      if(associated(qp%GreenF_W))   deallocate(qp%GreenF_W)
-     nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare,qp%S_total,qp%GreenF,qp%GreenF_W)
+     nullify(qp%table,qp%k,qp%wk,qp%E,qp%Z,qp%E_bare,qp%S_total,qp%GreenF,qp%GreenF_W)
    end subroutine
    !
    subroutine QP_states_simmetrize(en,vec_2_sim,state_is_2do)
@@ -182,7 +203,7 @@ module QP_m
      forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
      !
      call sort(Eo_sorted,indx=Eo_sorted_index)
-     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001_SP/HA2EV)
      !
      if (present(state_is_2do)) then
        state_is_2do=.TRUE.

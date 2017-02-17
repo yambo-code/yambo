@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Hogan and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -282,8 +284,8 @@ contains
     type(etsf_basisdata)          :: basisdata_group
     integer                       :: g_lim(6), gtotmax, ig_wf, ng_vec_old, ig, ic, ik
     real(SP)                      :: g_vec_new(3)
-    real(SP), allocatable         :: g_vec_tmp(:,:),G_mod(:)
-    integer,  allocatable         :: wf_igk_tmp(:,:),G_mod_indx(:)
+    real(SP),    allocatable      :: g_vec_tmp(:,:),G_mod(:)
+    integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
     logical                       :: gamma_only,l_new
     character(len=15)             :: format1
     !

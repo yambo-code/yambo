@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,16 +23,14 @@
 !
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
- use pars,           ONLY:SP,schlen
- use memory_m,       ONLY:mem_est
  use com,            ONLY:warning
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use drivers,        ONLY:l_bs_fxc,l_rpa_IP
- use IO_m,           ONLY:io_control,REP,NONE,OP_RD_CL
  use X_m,            ONLY:X_t,X_epsilon,X_drude_term
  use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode
+ use parallel_m,     ONLY:master_cpu
+ use IO_m,           ONLY:IO_and_Messaging_switch
  !
  implicit none
  type(levels) ::Ken
@@ -43,16 +43,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  logical           ::run_Haydock,run_Diago,run_inversion
  logical           ::stop_Haydock
- integer           ::ID,ioBS_err
- integer, external ::ioBS
  !
  call section('*','BSE solver(s)')
- !
- if(.not.l_rpa_IP) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
-   ioBS_err=ioBS(iq,X_static,ID)
-   if(ioBS_err/=0) return
- endif
  !
  !
  ! Solvers
@@ -62,6 +54,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  run_inversion      =index(BSS_mode,'i')/=0
  !
+ ! I/O. All read. Only master writes.
+ !
+ call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+ !
  if (run_Haydock.and.associated(Ken%W)) then
    call warning('K with QP widths not supported in the Haydock solver')
    run_Haydock=.false.
@@ -69,7 +65,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (run_Haydock) then
    !
-   stop_Haydock = (BS_not_const_eh_f.and.BSE_mode=='coupling')
+   stop_Haydock = (BS_not_const_eh_f.and.index(BSE_mode,'coupling')>0)
    if (stop_Haydock) call warning('Fractional occupations and coupling still unsupported (Haydock)')
    !
    if(.not.stop_Haydock) then

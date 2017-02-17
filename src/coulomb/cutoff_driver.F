@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -68,16 +70,16 @@ subroutine cutoff_driver(q)
  ! I/O
  !
  integer ::ID,io_err
- integer, external :: ioCOL_CUT
+ integer, external :: io_COL_CUT
  !
  ! First check if the cutoff written on disk is consistent
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
- io_err=ioCOL_CUT(ID)
+ io_err=io_COL_CUT(ID)
  if (io_err==0) then
    call section('*','Coloumb potential CutOff :'//trim(cut_geometry))
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=ioCOL_CUT(ID)
+   io_err=io_COL_CUT(ID)
    return
  endif
  !
@@ -95,28 +97,18 @@ subroutine cutoff_driver(q)
  !
  ! Cutoffed directions
  !
- is_cut=.false.
- is_cut(1)=index(str_piece(2),'x')/=0
- !
- ! Box
- !
- if (cut_is_box.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
- if (cut_is_box.or.(.not.is_cut(1).and..not.is_cut(2))) &
-&   is_cut(3)=index(str_piece(2),'z')/=0
- !
- ! Sphere
+ is_cut(1)=index(str_piece(2),'x')/=0.or.index(str_piece(2),'X')/=0
+ is_cut(2)=index(str_piece(2),'y')/=0.or.index(str_piece(2),'Y')/=0
+ is_cut(3)=index(str_piece(2),'z')/=0.or.index(str_piece(2),'Z')/=0
  !
  if (cut_is_sphere) is_cut=.true.
- !
- ! Cylinder
- !
- if (cut_is_cyl.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
- if (cut_is_cyl.or.(.not.is_cut(1).and..not.is_cut(2))) &
-&   is_cut(3)=index(str_piece(2),'z')/=0
  !
  if (.not.cut_is_box) box_length=0.
  if (.not.cut_is_sphere.and..not.cut_is_cyl) cyl_ph_radius=0.
  if (.not.cut_is_cyl) cyl_length=0.
+ if (.not.is_cut(1)) box_length(1)=0.
+ if (.not.is_cut(2)) box_length(2)=0.
+ if (.not.is_cut(3)) box_length(3)=0.
  !
  ! Return conditions
  !
@@ -221,14 +213,14 @@ subroutine cutoff_driver(q)
  ! I/O + Specific geometry calls
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=ioCOL_CUT(ID)
+ io_err=io_COL_CUT(ID)
  if (io_err/=0) then
    if (cut_is_sphere) call cutoff_sphere()
    if (cut_is_box)    call cutoff_box(q,is_cut)
    if (cut_is_cyl)    call cutoff_cylinder(q,is_cut)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=ioCOL_CUT(ID)
+   io_err=io_COL_CUT(ID)
    !
    ! Test
    !

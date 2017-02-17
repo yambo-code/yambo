@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,13 +28,13 @@ subroutine G_shells_finder()
  ! R_is G_ig = G_{g_rot(is,ig)}
  !
  use pars,         ONLY:SP,IP
- use timing,       ONLY:live_timing
+ use LIVE_t,       ONLY:live_timing
  use memory_m,     ONLY:mem_est
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
- use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
+ use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,IO_and_Messaging_switch
  use zeros,        ONLY:G_iku_zero
  use interfaces,   ONLY:PARALLEL_index
  use parallel_m,   ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -49,20 +51,20 @@ subroutine G_shells_finder()
  ! I/O
  !
  integer           :: ID,io_err
- integer, external :: ioGROT
+ integer, external :: io_GROT
  !
  ! I/O (read)
  !============
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_err=ioGROT(ID)
+ io_err=io_GROT(ID)
  !
  if (io_err==0) then
    if(inv_index<0) then
      deallocate(ng_in_shell,E_of_shell,g_rot,minus_G)
      call mem_est("RL_Gshells RL_Eshells")
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-     io_err=ioGROT(ID)
+     io_err=io_GROT(ID)
    endif
    return
  else
@@ -146,7 +148,7 @@ subroutine G_shells_finder()
  call PP_redux_wait(g_rot)
  call PP_redux_wait(E_of_shell_TMP)
  !
- ! Redefine ng_in_shell_TMP with actual position of the last element of the
+ ! Redefine ng_in_shell_TMP witg actual position of the last element of the
  ! degenerate group
  !
  do i_m=2,n_g_shells
@@ -199,6 +201,6 @@ subroutine G_shells_finder()
  !I/O
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
- io_err=ioGROT(ID)
+ io_err=io_GROT(ID)
  !
 end subroutine

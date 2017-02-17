@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +23,7 @@
 !
 subroutine O_driver(Xen,Xk,q,wv,X)
  ! 
- ! Optics driver.
+ ! Optics driver
  !
  ! Calculates dielectric function for a generic q vector.
  ! 
@@ -36,23 +38,25 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_fxc,&
 &                        use_X_RIM,eval_alpha,eps_2_alpha,O_eels
- use parallel_m,    ONLY:PP_redux_wait
- use wave_func,     ONLY:WF_free
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_q_for_Xo
+ use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
  !
  implicit none
- type(levels)  ::Xen
- type(bz_samp) ::Xk,q
+ type(levels)  :: Xen
+ type(bz_samp) :: Xk,q
  type(X_t)     :: X
  type(w_samp)  :: wv 
  ! 
  ! Work Space
  !
- integer          :: iw,iq,i_G_shift,n_output,n_freqs
+ integer          :: iw,iq,i_G_shift,n_output
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus
  logical          :: l_skip_non_int_eps,eval_eels
  !
@@ -68,19 +72,54 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  do iq=X%iq(1),X%iq(2)
    !
+   ! PARALLEL indexes
+   !==================
+   !
+   if (X%iq(1)==1) then
+     if (iq==1) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Zero_Momentum",X=X) 
+     if (iq==2) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+   else 
+     if (iq==X%iq(1)) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+   endif
+   !
+   ! WF distribution 
+   !=================
+   !
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
+&                              B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+&                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
+&                              CLEAN_UP=.TRUE.)
+   !
+   if (iq==1) call PARALLEL_WF_index(COMM=PAR_COM_q_for_Xo)
+   if (iq> 1) call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
+   !
+   if (WF_buffered_IO) then
+     !
+     call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
+     !
+   endif
+   !
+   ! TDDFT setup
+   !
+   call TDDFT_do_X_W_typs(iq,X,wv)
+   !
+   ! ALDA (only once) 
+   !
+   if (l_alda_fxc.and..not.allocated(FXC)) then
+     !
+     call TDDFT_ALDA_G_space(Xen,Xk)
+     !
+   endif
+   !
+   if (iq>1) then
+     if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   endif
+   !
    ! Check if this q is compatible with the user defined direction in chartesian coordinates
    ! and if an additional RL vectors must be added
    !
    i_G_shift=O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    if (i_G_shift<0) cycle
-   !
-   ! TDDFT setup
-   !
-   call tddft_do_X_W_typs(iq,X,wv)
-   !
-   n_freqs=wv%n(1)
-   !
-   if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
    !
    ! In TDDFT with BS based kernel eps0 is non-sense
    ! as shifted of the K diagonal
@@ -89,15 +128,15 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Arrays to be written in the o. files
    !
-   allocate(X_epsilon(8,n_freqs))
+   allocate(X_epsilon(8,wv%n_freqs))
    if (l_bs_fxc) then
-     allocate(X_fxc(n_freqs))
+     allocate(X_fxc(wv%n_freqs))
      X_fxc=(0._SP,0._SP)
    endif
    !
    ! X_mat allocation
    !
-   call X_alloc('X',(/X%ng,X%ng,n_freqs/))
+   call X_alloc('X',(/X%ng,X%ng,wv%n_freqs/))
    !
    ! Frequencies (AFTER TDDFT SETUP!)
    !
@@ -105,7 +144,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Check if EELS can be evaluated
    !
-   eval_eels= O_eels(wv%p,n_freqs,.TRUE.,X%ordering)
+   eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
    if (eval_alpha) eval_alpha=eval_eels
    !
@@ -131,9 +170,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    if (l_bs_fxc) then
      call X_write_descriptions(FXC_n_descs,FXC_description)
-     call msg('o eps eel alpha','#',' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr)),INDENT=0)    
-     call msg('o eps eel alpha','#','      |Hartree size         :'//trim(intc(X%ng)),INDENT=0)    
-     call msg('o eps eel alpha','#','      |Ordering             :'//trim(X%ordering),INDENT=0)    
+     call msg('o eps_q eel_q alpha','#',' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr)),INDENT=0)    
+     call msg('o eps_q eel_q alpha','#','      |Hartree size         :'//trim(intc(X%ng)),INDENT=0)    
+     call msg('o eps_q eel_q alpha','#','      |Ordering             :'//trim(X%ordering),INDENT=0)    
      !
      ! Fxc file titles
      !
@@ -145,11 +184,12 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! BZ RIM
    !
    if (use_X_RIM) then
-     call msg('o eps eel fxc alpha','#')
-     call msg('o eps eel fxc alpha','# BZ Energy RIM points :',BZ_RIM_tot_nkpts,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','#')
+     call msg('o eps_q eel_q fxc alpha','# BZ Energy RIM points :',BZ_RIM_tot_nkpts,INDENT=0)
    endif
    !
-   call PP_redux_wait
+   if (iq==1) call PP_redux_wait
+   if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
    call of_open_close(eps_file_name)
    call of_open_close(eel_file_name)
@@ -172,9 +212,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    if(l_rpa_IP) then
      X_epsilon(2,:)=X_epsilon(1,:)
    else
-     call X_s(iq,X,wv)
+     call X_s(iq,X,wv,(/1,wv%n_freqs/))
      !
-     X_epsilon(2,:)=1./(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1.)
+     X_epsilon(2,:)=1./(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
    endif
    !
    call of_open_close(eps_file_name,'oa')
@@ -189,22 +229,22 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    n_output=5
    if(l_rpa_IP.or.l_skip_non_int_eps) n_output=3
-   call msg('o eps eel fxc alpha','#')
-   call X_setup_headers('eps')
-   call msg('o eps',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call X_setup_headers('eel')
-   call msg('o eel',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
+   call msg('o eps_q eel_q fxc alpha','#')
+   call X_setup_headers('eps_q')
+   call msg('o eps_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
+   call X_setup_headers('eel_q')
+   call msg('o eel_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
    call X_setup_headers('alpha')
    call msg('o alpha','#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call msg('o eps eel alpha','#')
+   call msg('o eps_q eel_q alpha','#')
    !
-   do iw=1,n_freqs
+   do iw=1,wv%n_freqs
      !
      ! Eps
      !
      output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(2,iw)),real(X_epsilon(2,iw)),&
 &                  aimag(X_epsilon(1,iw)),real(X_epsilon(1,iw))/)
-     call msg('o eps','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
+     call msg('o eps_q','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
      !
    enddo
    !
@@ -217,9 +257,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call of_open_close(eel_file_name,'oa')
      call of_open_close(alpha_file_name,'oa')
      !
-     eval_eels= O_eels(wv%p,n_freqs,.TRUE.,X%ordering,X_epsilon(1,:),X_epsilon(3,:))
+     eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,X_epsilon(1,:),X_epsilon(3,:))
      if(     l_rpa_IP) X_epsilon(4,:)=X_epsilon(3,:)
-     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,n_freqs,.FALSE.,X%ordering,X_epsilon(2,:),X_epsilon(4,:))
+     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,X_epsilon(2,:),X_epsilon(4,:))
      !
      if (eval_alpha) then
        !
@@ -233,13 +273,13 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
      endif
      !
-     do iw=1,n_freqs
+     do iw=1,wv%n_freqs
        !
        ! EEL
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw)),&
 &                    aimag(X_epsilon(3,iw)),real(X_epsilon(3,iw))/)
-       call msg('o eel','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
+       call msg('o eel_q','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
        !
        ! Alpha
        !
@@ -257,9 +297,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! TDDFT Kernel output
    !
    if (l_bs_fxc) then
-     call PP_redux_wait(X_fxc)
+     if (iq==1) call PP_redux_wait(X_fxc)
+     if (iq> 1) call PP_redux_wait(X_fxc,COMM=PAR_COM_Q_A2A%COMM)
      call of_open_close(fxc_file_name,'oa')
-     do iw=1,n_freqs
+     do iw=1,wv%n_freqs
        call msg('o fxc','',(/real(wv%p(iw))*HA2EV,real(X_fxc(iw)*q_norm(iq)**2.),&
 &                           aimag(X_fxc(iw)*q_norm(iq)**2.)/),INDENT=-2,USE_TABS=.true.)
      enddo
@@ -272,7 +313,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    deallocate(X_epsilon)
    !
-   call FREQUENCIES_reset(wv)
+   call FREQUENCIES_reset(wv,"all")
    !
    if (allocated(X_fxc)) deallocate(X_fxc)
    !
@@ -281,11 +322,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! CLEAN
  !
  call X_alloc('DIP_q_dot_iR')
- !
- call WF_free()
+ call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()
- !
  if (l_bs_fxc.and.allocated(FXC)) then
    deallocate(FXC,FXC_K_diagonal)
    call mem_est("FXC FXC_K_diagonal")

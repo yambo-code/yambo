@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,11 +23,10 @@
 !
 subroutine QP_DBs_setup(en,k)
  !
- use pars,          ONLY:SP,IP,DP
+ use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use com,           ONLY:error,msg,warning
- use memory_m,      ONLY:mem_est
- use electrons,     ONLY:levels,n_sp_pol,spin_occ
+ use com,           ONLY:error
+ use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states
@@ -36,9 +37,9 @@ subroutine QP_DBs_setup(en,k)
  !
  ! Work Space
  !
- integer  :: io_QP,ID,icheck,i1,ib,ik,ic,is
+ integer  :: io_QP_and_GF_err,ID,icheck,i1,ib,ik,ic,is
  integer  :: k_rng_lines,ikrange(2),ibrange(2)
- integer, external :: ioQP
+ integer, external :: io_QP_and_GF
  real(SP), allocatable :: QP_r_corrections(:,:)
  logical,  allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
@@ -71,27 +72,26 @@ subroutine QP_DBs_setup(en,k)
  QP_done=.FALSE.
  !
  ic=1
+ is=1
  do i1=1,k_rng_lines
    ikrange(1:2)=int(QP_r_corrections(i1,1:2))
    ibrange(1:2)=int(QP_r_corrections(i1,3:4))
    !
    if(ikrange(2)>en%nk.or.ibrange(2)>en%nb) call error("Indices out of the range!")
    !
-   do is=1,n_sp_pol
-     do ik=ikrange(1),ikrange(2)
-       do ib=ibrange(1),ibrange(2)
-         qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HA2EV+en%E(ib,ik,is),QP_r_corrections(i1,6)/HA2EV)
-         qp%E_bare(ic) =en%E(ib,ik,is)
-         qp%Z(ic)      =QP_r_corrections(i1,7)
-         qp%table(ic,1)=ib
-         qp%table(ic,2)=ib
-         qp%table(ic,3)=ik
-         if(n_sp_pol==2) qp%table(ic,4)=is
-         qp%k(qp%table(ic,3),:)       =k%pt(qp%table(ic,3),:)
-         if(QP_done(ib,ib,ik,is)) call error("Duplicate quasi-particle indexes! ")
-         QP_done(ib,ib,ik,is)=.TRUE.
-         ic=ic+1   
-       enddo
+   do ik=ikrange(1),ikrange(2)
+     do ib=ibrange(1),ibrange(2)
+       qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HA2EV+en%E(ib,ik,1),QP_r_corrections(i1,6)/HA2EV)
+       qp%E_bare(ic) =en%E(ib,ik,1)
+       qp%Z(ic)      =QP_r_corrections(i1,7)
+       qp%table(ic,1)=ib
+       qp%table(ic,2)=ib
+       qp%table(ic,3)=ik
+       qp%table(ic,3+1:3+n_sp_pol-1)=is
+       qp%k(qp%table(ic,3),:)       =k%pt(qp%table(ic,3),:)
+       if(QP_done(ib,ib,ik,is)) call error("Duplicate quasi-particle indexes! ")
+       QP_done(ib,ib,ik,is)=.TRUE.
+       ic=ic+1   
      enddo
    enddo
  enddo
@@ -99,7 +99,7 @@ subroutine QP_DBs_setup(en,k)
  deallocate(QP_done)
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=REP,ID=ID)
- io_QP=ioQP("QP",qp,ID)
+ io_QP_and_GF_err=io_QP_and_GF("QP",qp,ID)
  !
  deallocate(QP_r_corrections,qp%k,qp%table,qp%Z,qp%E_bare,qp%E)
  !

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 C. Attaccalite, A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,16 +33,14 @@ subroutine QP_DBs_initialize()
  use IO_m,      ONLY:OP_RD_CL,DUMP,io_control,NONE
  use units,     ONLY:HA2EV
  use YPP,       ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,QP_db,QP_db_what,QP_db_name
- !
  implicit none
  ! 
  ! Work Space
  !
  type(QP_t) :: qp
- integer :: i_qp,i_f,i_c,nflines_save,state(4),io_QP,ID,TEST(2,2)
- logical :: var_is_present
+ integer :: i_qp,i_f,i_c,nflines_save,io_QP_and_GF_err,ID
  character(schlen) :: comment,DB_file_name(20,2)
- integer, external :: ioQP
+ integer, external :: io_QP_and_GF
  !
  ! If there are already the DB lines or there's not the input file todo return
  !
@@ -52,7 +52,7 @@ subroutine QP_DBs_initialize()
    !
    call QP_reset(qp)
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
-   io_QP=ioQP("QP",qp,ID)
+   io_QP_and_GF_err=io_QP_and_GF("QP",qp,ID)
    !
    comment="[QPDB] QP correction"
    !
@@ -60,7 +60,7 @@ subroutine QP_DBs_initialize()
    ! 
    write (flines(nflines+1),'(a,t22,a)') '%QPkrange',&
 &        '# '//trim(comment)//'QPDB energy correction( kp1| kp2| bnd1| bnd2| E-Eo[eV]| Img(E)[eV]| Z|)'
-   if(io_QP==0) then
+   if(io_QP_and_GF_err==0) then
      do i_qp=1,qp%n_states
        nflines=nflines+1
        write (flines(nflines+1),'(4(i3,a),3(f12.6,a))') qp%table(i_qp,3),'|',qp%table(i_qp,3),'|',&
@@ -101,8 +101,8 @@ subroutine QP_DBs_initialize()
            QP_db_what(n_QP_dbs)=DB_file_name(i_qp,1)
            QP_db_name(n_QP_dbs)=DB_file_name(i_qp,2)
            call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
-           io_QP=ioQP(trim(DB_file_name(i_qp,2)),QP_db(n_QP_dbs),ID)
-           if (io_QP/=0) then
+           io_QP_and_GF_err=io_QP_and_GF(trim(DB_file_name(i_qp,2)),QP_db(n_QP_dbs),ID)
+           if (io_QP_and_GF_err/=0) then
              call QP_reset(QP_db(n_QP_dbs))
              n_QP_dbs=n_QP_dbs-1
            endif

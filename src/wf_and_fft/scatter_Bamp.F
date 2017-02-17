@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM,DS,AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -33,39 +35,96 @@ subroutine scatterBamp(isc)
  !                                        /:\
  !  iq_is = ik_is-ok_os-Go
  !
- use pars,           ONLY:DP,SP,cZERO,cONE
+ use pars,           ONLY:cZERO,cONE
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
- use D_lattice,      ONLY:nsym,i_time_rev,spin_sop,idt_index
+ use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:g_rot
- use FFT_m,          ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
+ use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table
+#if defined _FFTW
+ use FFT_m,          ONLY:fftw_plan
+#endif
  !
  implicit none
  !
  type(ggwinfo)::isc
  !
- ! Work Space
+ integer     :: qs,iGo
+#if defined _FFTQE && !defined _USE_3D_FFT || defined _OPENMP
+ integer     :: ig, ir
+#endif
  !
- complex(DP) :: rho_tw_rs(fft_size)
- complex(SP) :: WF_symm_i(fft_size,n_spinor)
- complex(SP) :: WF_symm_o(fft_size,n_spinor)
- !
- integer     :: qs,iGo,ifft
- !
- ! <ib ik_is i_sp| 
- call WF_apply_symm(isc%is,WF_symm_i)
+ ! |ib ik_is i_sp>
+ call WF_apply_symm(isc%is,isc%WF_symm_i)
  !
  ! | ob ok_os o_sp>   
- call WF_apply_symm(isc%os,WF_symm_o)
+ call WF_apply_symm(isc%os,isc%WF_symm_o)
  !
  ! \tilde{\rho} in Real Space
- rho_tw_rs(:)=conjg(WF_symm_i(:,1))*WF_symm_o(:,1)
- if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs(:)+conjg(WF_symm_i(:,2))*WF_symm_o(:,2)
+ !
+#if defined _FFTQE && !defined _USE_3D_FFT
+ ! 
+ ! add one extra conjg since FFTQE cannot account for the conjg in one go
+ ! 
+ !$omp parallel default(shared), private(ir)
+ !$omp do
+ do ir = 1, fft_size
+   isc%rho_tw_rs(ir) = isc%WF_symm_i(ir,1)*conjg(isc%WF_symm_o(ir,1))
+ enddo
+ !$omp end do
+ !
+ if (n_spinor==2) then
+ !$omp do
+   do ir = 1, fft_size
+     isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir)+isc%WF_symm_i(ir,2)*conjg(isc%WF_symm_o(ir,2))
+   enddo
+ !$omp end do
+ endif
+ !$omp end parallel
+ !
+#else
+!
+#if defined _OPENMP
+ !$omp parallel default(shared), private(ir)
+ !$omp do
+ do ir = 1, fft_size
+   isc%rho_tw_rs(ir) = conjg(isc%WF_symm_i(ir,1))*isc%WF_symm_o(ir,1)
+ enddo
+ !$omp end do
+ !
+ if (n_spinor==2) then
+ !$omp do
+   do ir = 1, fft_size
+     isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir)+conjg(isc%WF_symm_i(ir,2))*isc%WF_symm_o(ir,2)
+   enddo
+ !$omp end do
+ endif
+ !$omp end parallel
+#else
+ isc%rho_tw_rs(:)=conjg(isc%WF_symm_i(:,1))*isc%WF_symm_o(:,1)
+ if (n_spinor==2) isc%rho_tw_rs(:)=isc%rho_tw_rs(:)+conjg(isc%WF_symm_i(:,2))*isc%WF_symm_o(:,2)
+#endif
+ !
+#endif
+ !
+ ! perform the actual FFT
  !
 #if defined _FFTW
- call fft_3d(rho_tw_rs,fft_dim,+1,fftw_plan)
+ call fft_3d(isc%rho_tw_rs,fft_dim,+1,fftw_plan)
+#elif defined _FFTSG || (defined _USE_3D_FFT && defined _FFTQE)
+ call fft_3d(isc%rho_tw_rs,fft_dim,+1)
+#elif defined _FFTQE
+ ! call fft_3d(rho_tw_rs,fft_dim,+1)
+ !
+ ! the QE fft must be performed in the right
+ ! direction. conjg is taken care separately
+ ! AF: please note the redefinition of rho_tw_rs above
+ !     (one extra conjg has been acted on rho_tw_rs)
+ !
+ call fft_3d(isc%rho_tw_rs,fft_dim,-1)
+ !
 #else
- call fft_3d(rho_tw_rs,fft_dim,+1)
+#error "[CPP] Inconsistent FFT environment"
 #endif
  !
  ! e^[I(Rs(G-G0)).r]
@@ -73,12 +132,46 @@ subroutine scatterBamp(isc)
  iGo=isc%qs(1)
  qs =isc%qs(3)
  !
- if(qs==idt_index) isc%rhotw(1:isc%ngrho)= rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
- if(qs/=idt_index) isc%rhotw(1:isc%ngrho)= rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
+#if defined _FFTQE && !defined _USE_3D_FFT
+ !
+ ! one extra conjg is performed on rho_tw_rs
+ if (qs==idt_index) then 
+   !$omp parallel do default(shared), private(ig)
+   do ig = 1, isc%ngrho
+     isc%rhotw(ig)= conjg(isc%rho_tw_rs(fft_g_table(ig,iGo)))
+   enddo
+   !$omp end parallel do
+ else
+   !$omp parallel do default(shared), private(ig)
+   do ig = 1, isc%ngrho
+     isc%rhotw(ig)= conjg(isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo)))
+   enddo
+   !$omp end parallel do
+ endif
+#else
+#  if defined _OPENMP
+ if (qs==idt_index) then 
+   !$omp parallel do default(shared), private(ig)
+   do ig = 1, isc%ngrho
+     isc%rhotw(ig)= isc%rho_tw_rs(fft_g_table(ig,iGo))
+   enddo
+   !$omp end parallel do
+ else
+   !$omp parallel do default(shared), private(ig)
+   do ig = 1, isc%ngrho
+     isc%rhotw(ig)= isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))
+   enddo
+   !$omp end parallel do
+ endif
+#  else
+ if (qs==idt_index) isc%rhotw(1:isc%ngrho)= isc%rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
+ if (qs/=idt_index) isc%rhotw(1:isc%ngrho)= isc%rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
+#  endif
+#endif
  !
  ! q=0, G=0 case
  !
- if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONe
+ if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
  if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
  !
 end subroutine

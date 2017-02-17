@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,7 +30,7 @@ subroutine k_special()
  use vec_operate,         ONLY:c2a,v_norm
  use YPP,                 ONLY:n_path_pts,PtsPath,K_transform
  use stderr,              ONLY:string_split
- use timing,              ONLY:live_timing_is_on
+ use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:intc
  !
  implicit none

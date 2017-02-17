@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -31,13 +33,11 @@ module ELPH
  integer   :: elph_nk_bz
  integer   :: elph_nDBs
  integer   :: elph_nDBs_used
- integer   :: nq_memory
  integer   :: elph_branches(2)
  real(SP)  :: W_debye
  logical   :: elph_use_q_grid
  real(SP),    allocatable :: QP_OMS_Fan(:)
  real(SP),    allocatable :: QP_DW(:)
- real(SP),    allocatable :: QP_TadPole(:)
  real(SP),    allocatable :: ph_kpt_bz(:,:)
  real(SP),    allocatable :: ph_qpt(:,:)
  real(SP),    allocatable :: ph_freqs_sq(:,:)
@@ -46,7 +46,7 @@ module ELPH
  real(SP),    allocatable :: f_k_plus_q(:,:,:)
  complex(SP), allocatable :: elph_gkkp(:,:,:,:)
  complex(SP), allocatable :: pol_vector(:,:,:)
- type(levels)             :: E_k_p_q
+ type(levels), SAVE       :: E_k_p_q
  !
  ! El_h Hamiltonian
  !
@@ -72,33 +72,30 @@ module ELPH
    !
    subroutine elph_global_alloc(what)
      use memory_m,  ONLY:mem_est
+     use parallel_m,ONLY:PAR_nQ
      use QP_m,      ONLY:QP_n_states
      use R_lattice, ONLY:nkbz,nqibz
      character(*)      ::what
-     integer           ::alloc_err,nq_to_allocate
-     !
-     nq_to_allocate=elph_nDBs_used
+     integer           ::alloc_err
      !
      select case (trim(what))
        !
        case ('gFsq')
          !
          if (.not.allocated(gsqF_fan)) then
-           if (eval_G_using_KK) then
-             if (nq_memory>0) nq_to_allocate=nq_memory
-           else
-             allocate(gsqF_fan(QP_n_states,elph_nDBs_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+           if (.not.eval_G_using_KK) then
+             allocate(gsqF_fan(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
              call mem_est('gsqF_fan',(/size(gsqF_fan)/),(/SP/),errors=(/alloc_err/))
-             allocate(gsqF_ca_corr(QP_n_states,elph_nDBs_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+             allocate(gsqF_ca_corr(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
              call mem_est('gsqF_ca_corr',(/size(gsqF_ca_corr)/),(/SP/),errors=(/alloc_err/))
              gsqF_fan=0.
              gsqF_ca_corr=0.
            endif
-           allocate(gsqF_dw(QP_n_states,elph_nDBs_used,ph_modes),stat=alloc_err)
+           allocate(gsqF_dw(QP_n_states,PAR_nQ,ph_modes),stat=alloc_err)
            call mem_est('gsqF_dw',(/size(gsqF_dw)/),(/SP/),errors=(/alloc_err/))
-           allocate(gsqF_life_bose(QP_n_states,nq_to_allocate,ph_modes,gsqF_energy_steps),stat=alloc_err)
+           allocate(gsqF_life_bose(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
            call mem_est('gsqF_life_bose',(/size(gsqF_life_bose)/),(/SP/),errors=(/alloc_err/))
-           allocate(gsqF_life_f(QP_n_states,nq_to_allocate,ph_modes,gsqF_energy_steps),stat=alloc_err)
+           allocate(gsqF_life_f(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
            call mem_est('gsqF_life_f',(/size(gsqF_life_f)/),(/SP/),errors=(/alloc_err/))
            gsqF_dw=0.
            gsqF_life_bose=0.

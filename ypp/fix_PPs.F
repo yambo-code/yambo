@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Sangalli, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,19 +24,17 @@
 subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,warning,core_io_path,more_io_path
- use drivers,             ONLY:l_sc_run
+ use com,                 ONLY:msg,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
-&                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
-&                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
+&                              OP_APP,cp_file,OP_RD_CL,RD_CL,RD,DUMP
  use electrons,           ONLY:n_spin,n_sp_pol
  use pseudo,              ONLY:pp_kb,pp_kbd,pp_kbs,n_atomic_species,PP_alloc_pwscf,&
 &                              pp_n_l_times_proj_max,PP_free,PP_alloc_abinit,Vnl
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  use X_m,                 ONLY:X_t
  use stderr,              ONLY:intc
- use wave_func,           ONLY:wf_nb_io_groups,wf_ng,wf_igk,wf_nc_k,wf_ncx
+ use wave_func,           ONLY:wf_ng,wf_igk,wf_nc_k,wf_ncx
  use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nXkibz,ng_vec
  use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
@@ -60,7 +60,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  character(lchlen)     :: core_io_path_save,fragment_name
  integer               :: n_steps,ID
- integer               :: ierr,ioKB_abinit_err,ioKB_pwscf_err,io_Vnl_err
+ integer               :: ierr,io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer               :: ng_vec_save
  !
  real(SP),allocatable     :: pp_kb_store(:,:,:,:,:)
@@ -70,14 +70,14 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  ! Dummies
  !
- integer               :: i1,is,ik,ik_save
+ integer               :: is,ik,ik_save
  integer               :: ic,ic_rot,ig,ig_rot
  integer               :: ib,ibm,i_spin
  !
  ! External functions
  !
- integer, external :: ioKB_abinit
- integer, external :: ioKB_pwscf
+ integer, external :: io_KB_abinit
+ integer, external :: io_KB_pwscf
  integer, external :: io_Vnl
  !
  ! Check the presence of PPs DBs
@@ -85,8 +85,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  n_steps=k%nibz-k_save%nibz
  !
  io_Vnl_err     =-1
- ioKB_abinit_err=-1
- ioKB_pwscf_err =-1
+ io_KB_abinit_err=-1
+ io_KB_pwscf_err =-1
  !
  ! PWscf (old)
  X_Vnl%ib=(/1,E%nb/)       ! full bands range
@@ -96,32 +96,32 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  io_Vnl_err=io_Vnl(X_Vnl,E,ID)
  !
  ! Check for the KB pwscf DB 
- if(.not.ioKB_abinit_err==0) then
+ if(.not.io_KB_abinit_err==0) then
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
-   ioKB_pwscf_err=ioKB_pwscf(ID)
+   io_KB_pwscf_err=io_KB_pwscf(ID)
  endif
  !
  ! Check for the KB abinit DB 
- if(.not.ioKB_pwscf_err==0) then
+ if(.not.io_KB_pwscf_err==0) then
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
-   ioKB_abinit_err=ioKB_abinit(ID)
+   io_KB_abinit_err=io_KB_abinit(ID)
  endif
  !
- if(ioKB_abinit_err/=0.and.ioKB_pwscf_err/=0.and.io_Vnl_err/=0) return
+ if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0.and.io_Vnl_err/=0) return
  !
- if(ioKB_abinit_err==0)   call section('=',"PseudoPotentials KB (Abinit)")
- if(ioKB_pwscf_err ==0)   call section('=',"PseudoPotentials KB (PWscf) ")
+ if(io_KB_abinit_err==0)   call section('=',"PseudoPotentials KB (Abinit)")
+ if(io_KB_pwscf_err ==0)   call section('=',"PseudoPotentials KB (PWscf) ")
  if(io_Vnl_err==0)        call section('=',"PseudoPotentials old (PWscf)")
  !
  ! Read PP DBs
  !
- if(ioKB_abinit_err==0) then
+ if(io_KB_abinit_err==0) then
    !
    ng_vec_save=ng_vec
    ng_vec=ng_closed
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-   ioKB_abinit_err=ioKB_abinit(ID) 
+   io_KB_abinit_err=io_KB_abinit(ID) 
    !  
    allocate(pp_kb_store(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
    allocate(pp_kbd_store(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
@@ -132,7 +132,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      if (ik< k_save%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==k_save%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)      
-     ioKB_abinit_err=ioKB_abinit(ID)
+     io_KB_abinit_err=io_KB_abinit(ID)
      !
      pp_kb_store(:,:,:,:,ik) =pp_kb(:,:,:,:)
      pp_kbd_store(:,:,:,:,ik)=pp_kbd(:,:,:,:)
@@ -145,13 +145,13 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
  endif
  !
- if(ioKB_pwscf_err==0) then
+ if(io_KB_pwscf_err==0) then
    !
    !ng_vec_save=ng_vec
    !ng_vec=ng_closed
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-   ioKB_pwscf_err=ioKB_pwscf(ID) 
+   io_KB_pwscf_err=io_KB_pwscf(ID) 
    !  
    allocate(pp_kb_store(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1,k_save%nibz))
    allocate(pp_kbd_store(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1,k_save%nibz))
@@ -162,7 +162,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      if (ik< k_save%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==k_save%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)      
-     ioKB_pwscf_err=ioKB_pwscf(ID)
+     io_KB_pwscf_err=io_KB_pwscf(ID)
      !
      pp_kb_store(:,:,:,:,ik) =pp_kb(:,:,:,:)
      pp_kbd_store(:,:,:,:,ik)=pp_kbd(:,:,:,:)
@@ -195,7 +195,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  select case(action_kind)
  case(1)
    !
-   if(ioKB_abinit_err==0) then
+   if(io_KB_abinit_err==0) then
      !
      call msg('s',':: Copying existing database ...')
      !
@@ -212,7 +212,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
    endif
    !
-   if(ioKB_pwscf_err==0) then
+   if(io_KB_pwscf_err==0) then
      !
      call msg('s',':: Copying existing database ...')
      !
@@ -231,7 +231,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
    ! Pseudo-potentials
    !
-   if(ioKB_abinit_err==0) then 
+   if(io_KB_abinit_err==0) then 
      !
      pp_kb=0._SP
      pp_kbd=0._SP
@@ -247,7 +247,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        pp_kbd(1:ng_closed,:,:,:)=pp_kbd_store(g_rot(old_sop_inv(is),1:ng_closed),:,:,:,ik_save)
        !
        call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
-       ioKB_abinit_err=ioKB_abinit(ID)
+       io_KB_abinit_err=io_KB_abinit(ID)
        !
        call live_timing(steps=1)
        !
@@ -262,7 +262,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
    endif
    !
-   if(ioKB_pwscf_err==0) then 
+   if(io_KB_pwscf_err==0) then 
      !
      pp_kb=0._SP
      pp_kbd=0._SP
@@ -276,18 +276,18 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        !
        do ic=1,wf_nc_k(ik_save)
          ig_rot=g_rot(is,wf_igk(ic,ik_save))
-		     do ic_rot=1,wf_nc_k(ik)
-		       ig=wf_igk(ic_rot,ik)
-		       if(ig==ig_rot) exit
-		     enddo
-		     !
-		     pp_kb(ic_rot,:,:,:) =pp_kb_store(ic,:,:,:,ik_save)
-		     pp_kbd(ic_rot,:,:,:)=pp_kbd_store(ic,:,:,:,ik_save)
-		     !
+         do ic_rot=1,wf_nc_k(ik)
+           ig=wf_igk(ic_rot,ik)
+           if(ig==ig_rot) exit
+         enddo
+         !
+         pp_kb(ic_rot,:,:,:) =pp_kb_store(ic,:,:,:,ik_save)
+         pp_kbd(ic_rot,:,:,:)=pp_kbd_store(ic,:,:,:,ik_save)
+         !
        enddo
        !
        call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
-       ioKB_pwscf_err=ioKB_pwscf(ID)
+       io_KB_pwscf_err=io_KB_pwscf(ID)
        !
        call live_timing(steps=1)
        !
@@ -339,9 +339,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
  case(2)
    !
-   if(ioKB_abinit_err==0.or.ioKB_pwscf_err==0.or.io_Vnl_err==0) call msg('s',':: PPs reduction...')
+   if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0.or.io_Vnl_err==0) call msg('s',':: PPs reduction...')
    !
-   if(ioKB_abinit_err==0) then
+   if(io_KB_abinit_err==0) then
      !
      call PP_free()
      call PP_alloc_abinit()
@@ -350,7 +350,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      pp_kbs=pp_kbs_store
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-     ioKB_abinit_err=ioKB_abinit(ID) 
+     io_KB_abinit_err=io_KB_abinit(ID) 
      !
      do ik=1,k%nibz
        !
@@ -358,7 +358,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        pp_kbd(:ng_closed,:,:,:)=pp_kbd_store(:ng_closed,:,:,:,kpoints_map(1,ik))     
        !
        call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
-       ioKB_abinit_err=ioKB_abinit(ID)
+       io_KB_abinit_err=io_KB_abinit(ID)
        !
      enddo
      !
@@ -368,7 +368,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
    endif
    !
-   if(ioKB_pwscf_err==0) then
+   if(io_KB_pwscf_err==0) then
      !
      call PP_free()
      call PP_alloc_pwscf()
@@ -377,7 +377,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      pp_kbs=pp_kbs_store
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-     ioKB_pwscf_err=ioKB_pwscf(ID) 
+     io_KB_pwscf_err=io_KB_pwscf(ID) 
      !
      do ik=1,k%nibz
        !
@@ -385,7 +385,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        pp_kbd(:wf_ncx,:,:,:)=pp_kbd_store(:wf_ncx,:,:,:,kpoints_map(1,ik))     
        !
        call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
-       ioKB_pwscf_err=ioKB_pwscf(ID)
+       io_KB_pwscf_err=io_KB_pwscf(ID)
        !
      enddo
      !

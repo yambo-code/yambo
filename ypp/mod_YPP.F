@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -54,8 +56,8 @@ module YPP
  ! BANDS
  !
  integer               ::BANDS_steps
- integer               ::BANDS_range(2)
  integer               ::interp_grid(3)  ! Interpolation Grid
+ real(SP)              ::Nel_fac
  !
  ! REAL SPACE PLOT
  !
@@ -82,6 +84,7 @@ module YPP
  integer               ::plot_dim
  real(SP), allocatable ::v2plot(:)
  real(SP), allocatable ::v2plot2D(:,:)
+ real(SP)              ::current_dir(3)=(/1.,1.,1./)
  !
  ! Exc/SP Properties
  !
@@ -103,7 +106,7 @@ module YPP
  real(SP)     ::WF_multiplier   
  character(schlen) ::state_ctl 
  !
- !EL-PH
+ ! EL-PH
  !
  logical :: l_gkkp
  logical :: l_gkkp_expand
@@ -131,10 +134,13 @@ module YPP
  !
  ! BZ RIM
  !
+ integer, parameter :: MAX_RIM_DBs=20
+ integer  :: n_RIM_DBs
  integer  :: BZ_RIM_nkpts
  logical  :: l_bzrim
+ logical  :: l_map_kpts
  real(SP) :: Gamma_radius
- character(lchlen) :: BZ_RIM_path
+ character(lchlen) :: RIM_DB1_paths(MAX_RIM_DBs,1)
  !
  ! QP databases
  !
@@ -168,13 +174,23 @@ module YPP
  real(SP)          :: qdir(3)
  integer           :: idir
  !
+ ! RT, merge QP DBs
+ !
+ real(SP) :: Z_input
+ !
  ! SC
  !
  logical  :: l_mean_potential
  !
- ! (RT) DOS
+ ! RT
  !
- real(SP) :: Fermi_fit_points(2)
+ logical  :: l_RealTime
+ !
+ ! (RT) DOS & BANDS
+ !
+ logical  :: l_RT_dos
+ logical  :: l_RT_occ_Bands
+ logical  :: l_RT_life_Bands
  !
  ! Wannier bands
  !
@@ -185,7 +201,8 @@ module YPP
  !
  ! (RT) Occupations
  !
- logical     :: l_RT_occupations
+ logical     :: l_RT_occ_Plot
+ logical     :: l_RT_occ_Fit
  !
  ! Reduce Symmetries
  !
@@ -195,7 +212,6 @@ module YPP
  !
  ! (RT) Retarded Green's functions
  !
- logical  :: l_retarded_GFs
  integer  :: Ret_GF_bands(2)      ! Bands Range
  real(SP) :: Gr_E_step
  real(SP) :: GF_T_step
@@ -206,6 +222,7 @@ module YPP
  logical  :: l_skip_pol_and_curr_IO
  logical  :: l_force_min_damp
  logical  :: l_RT_X
+ logical  :: l_RT_abs
  logical  :: l_RT_X_inversion
  integer  :: i_t_start,i_t_end ! time window
  integer  :: RED_steps ! reduced number of steps
@@ -213,18 +230,16 @@ module YPP
  integer  :: N_pumps
  integer  :: N_probe_frequencies
  integer  :: X_order
+ integer  :: J_steps
  real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
- real(SP) :: OCC_T_ref      ! Reference time
- real(SP) :: OCC_T_range(2) ! Time range to plot the dos
- real(SP) :: OCC_deltaT     ! Time step to plot the dos
+ real(SP) :: J_time_step
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
  integer, parameter:: max_n_of_paths=10000
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  !
- complex(SP),    allocatable :: RT_occupations_ref(:,:)
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
  !
@@ -266,68 +281,56 @@ module YPP
      integer, optional  :: BS_E_degs(:)
    end subroutine
    !
-   subroutine  RT_initialize(dump_and_write)
-     implicit none
-     logical, optional  :: dump_and_write
-   end subroutine
-   !
-   subroutine  RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+   subroutine  RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
      use electrons,     ONLY:levels
      implicit none
-     type(levels)       :: en
      logical, optional  :: IO_error,first_sec_only,G_lesser_only
      integer, optional  :: COM_
      character(*), optional  :: mesg
    end subroutine
    !
+   subroutine RT_IO_carriers(Time,imposed_COM)
+     use pars,       ONLY:SP
+     real(SP), optional, intent(inout) :: Time
+     integer , optional, intent(in)    :: imposed_COM
+   end subroutine RT_IO_carriers
+   !
  end interface
  !
  contains
    !
-   subroutine K_transform(k,in_mode,out_mode)
+   subroutine K_transform(k,in_mode)
      !
      use units,        ONLY:pi
      use vec_operate,  ONLY:c2a
      !
      real(SP)     :: k(3)
      character(*) :: in_mode
-     character(*),optional :: out_mode
-     !
-     character(schlen) :: out_coord
-     !
-     if(.not.present(out_mode)) out_coord=coo_out
-     if(     present(out_mode)) out_coord=out_mode
      !
      select case (in_mode)
-       case ('alat')
-         k=k/alat_used_for_output*2.*pi
-         if (trim(out_coord)=="iku")  call c2a(v_in=k,mode="kc2i")
-         if (trim(out_coord)=="rlu")  call c2a(v_in=k,mode="kc2a")
-         if (trim(out_coord)=="alat") then
-           k=k*alat_used_for_output/2./pi
-         endif
        case ('cc')
-         if (trim(out_coord)=="iku")  call c2a(v_in=k,mode="kc2i")
-         if (trim(out_coord)=="rlu")  call c2a(v_in=k,mode="kc2a")
-         if (trim(out_coord)=="alat") then
+         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="kc2i")
+         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="kc2a")
+         if (trim(coo_out)=="alat") then
            k=k*alat_used_for_output/2./pi
          endif
        case ('iku')
-         if (trim(out_coord)=="cc")   call c2a(v_in=k,mode="ki2c")
-         if (trim(out_coord)=="rlu")  call c2a(v_in=k,mode="ki2a")
-         if (trim(out_coord)=="alat") then
+         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ki2c")
+         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="ki2a")
+         if (trim(coo_out)=="alat") then
            call c2a(v_in=k,mode="ki2c")
            k=k*alat_used_for_output/2./pi
          endif
        case ('rlu')
-         if (trim(out_coord)=="cc")   call c2a(v_in=k,mode="ka2c")
-         if (trim(out_coord)=="iku")  call c2a(v_in=k,mode="ka2i")
-         if (trim(out_coord)=="alat") then
+         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ka2c")
+         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="ka2i")
+         if (trim(coo_out)=="alat") then
            call c2a(v_in=k,mode="ka2c")
            k=k*alat_used_for_output/2./pi
          endif
      end select
      !
    end subroutine
+   !
    !
 end module YPP

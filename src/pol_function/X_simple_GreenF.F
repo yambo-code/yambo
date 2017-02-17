@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,10 +29,10 @@ function X_simple_GreenF(W,pole,ordering)
  complex(SP)  ::W,X_simple_GreenF
  character(*) ::ordering
  !
- if (trim(ordering)=="t")  X_simple_GreenF=1./(W-pole)-1./(conjg(W)+pole)
- if (trim(ordering)=="c")  X_simple_GreenF=1./(W-pole)-1./(W+pole)       
- if (trim(ordering)=="r")  X_simple_GreenF=1./(W-pole)                   
- if (trim(ordering)=="a")  X_simple_GreenF=           -1./(conjg(W)+pole)
- if (trim(ordering)=="ca") X_simple_GreenF=           -1./(W+pole)
+ if (trim(ordering)=="t")  X_simple_GreenF=1._SP/(W-pole)-1._SP/(conjg(W)+pole)
+ if (trim(ordering)=="c")  X_simple_GreenF=1._SP/(W-pole)-1._SP/(W+pole)       
+ if (trim(ordering)=="r")  X_simple_GreenF=1._SP/(W-pole)                   
+ if (trim(ordering)=="a")  X_simple_GreenF=           -1._SP/(conjg(W)+pole)
+ if (trim(ordering)=="ca") X_simple_GreenF=           -1._SP/(W+pole)
  !
 end function

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,11 +34,11 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  use ELPH,                ONLY:W_debye,elph_nDBs_used,ph_modes,elph_global_free,&
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
 &                              gsqF_life_f ,elph_use_q_grid,ph_freqs_sq,elph_global_alloc
- use IO_m,                ONLY:io_control,OP_RD,RD_CL,DUMP,RD_CL
- use BS,                  ONLY:BS_mat,BS_K_dim,BS_bands,BS_eh_table
+ use IO_m,                ONLY:io_control,OP_RD,RD,DUMP,RD_CL
+ use BS,                  ONLY:BS_mat,BS_K_dim,BS_bands,BSS_eh_table
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
- use timing,              ONLY:live_timing
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
+ use LIVE_t,              ONLY:live_timing
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
  implicit none
@@ -69,7 +71,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !I/O
  !
  integer           ::io_err,ID
- integer, external ::ioELPH
+ integer, external ::io_ELPH
  !
  ! calculate q%weights
  !
@@ -104,20 +106,27 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  deallocate(QP_table)
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=ioELPH(ID,'gFsq')
+ io_err=io_ELPH(ID,'gFsq')
  !
  if (io_err/=0) return
  !
  allocate(QP_table(QP_n_states,3+n_sp_pol-1)) ! Read from the gFsq DB 
+ PAR_nQ=elph_nDBs_used
  call elph_global_alloc('gFsq')
- !
- call io_control(ACTION=RD_CL,SEC=(/2/),ID=ID)
- io_err=ioELPH(ID,'gFsq')
+ ! 
+ do iq=1,elph_nDBs_used
+   if (iq==elph_nDBs_used) then
+     call io_control(ACTION=RD_CL,SEC=(/iq+1/),ID=ID)
+   else
+     call io_control(ACTION=RD,SEC=(/iq+1/),ID=ID)
+   endif
+   io_err=io_ELPH(ID,'gFsq')
+ enddo
  !
  ! Energy setup
  !
  call W_reset(g_sq_F_E)
- g_sq_F_E%n=elph_steps
+ g_sq_F_E%n_freqs=elph_steps
  g_sq_F_E%er=(/0._SP,W_debye*1.1/)
  g_sq_F_E%dr=ph_broad
  call FREQUENCIES_setup(g_sq_F_E)
@@ -148,10 +157,9 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  enddo
  !
  QP_n_states_2do=count(QP_table_map(:,1)>0)
- call PARALLEL_index(px,(/QP_n_states_2do,elph_nDBs_used/))
  call PP_redux_wait
  !
- call live_timing('gF^2 [el]',px%n_of_elements(myid+1))
+ call live_timing('gF^2 [el]',QP_n_states_2do*elph_nDBs_used)
  !
  do i1=1,QP_n_states_DB
    !
@@ -160,8 +168,6 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
    iqp=QP_table_map(i1,1)
    !
    do iq=1,elph_nDBs_used
-     !
-     if (.not.px%element_2D(iqp,iq)) cycle
      !
      do il=1,ph_modes
        !
@@ -195,10 +201,6 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  enddo
  !
  call live_timing()
- !
- call PP_redux_wait(g_sq_F(:,:,:))
- !
- call PP_indexes_reset(px)
  !
  ! gF^2 plotting (electrons)
  !
@@ -248,9 +250,9 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
    !
    do neh = 1,BS_K_dim
      !
-     ikibz = Xk%sstar(BS_eh_table(neh,1),1) 
-     iv    = BS_eh_table(neh,2)
-     ic    = BS_eh_table(neh,3)
+     ikibz = Xk%sstar(BSS_eh_table(neh,1),1) 
+     iv    = BSS_eh_table(neh,2)
+     ic    = BSS_eh_table(neh,3)
      !
      do iqp=1,QP_n_states
        if (QP_table(iqp,1)==ic.and.QP_table(iqp,3)==ikibz) QP_table_map(neh,1)=iqp

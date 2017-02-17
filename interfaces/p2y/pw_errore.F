@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -31,3 +33,6 @@ subroutine errore(subname,msgin,ierr)
   stop ' ' ! not called
   !
 end subroutine errore
+!
+subroutine mpi_abort
+end subroutine mpi_abort

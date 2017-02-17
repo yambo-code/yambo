@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -55,7 +57,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  ! The Green's function
  !
  call W_reset(W)
- W%n                =QP_Sc_steps
+ W%n_freqs          =QP_Sc_steps
  W%dr               =QP_G_dr
  old_min_max_step   =(/1000.,0./)
  new_min_max_step   =(/1000.,0./)
@@ -92,7 +94,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
      endif
    endif
    !
-   do iw=1,W%n(1) 
+   do iw=1,W%n_freqs
      !
      qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw))
      !
@@ -100,7 +102,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    !
    ! Spectral Function Integral
    !
-   QP_G_amplitude_integral(iqp)=RIntegrate(aimag(qp%GreenF(iqp,:)),real(qp%GreenF_W(iqp,:)),W%n(1))/pi
+   QP_G_amplitude_integral(iqp)=RIntegrate(aimag(qp%GreenF(iqp,:)),real(qp%GreenF_W(iqp,:)),W%n_freqs)/pi
    !
    ! Search for a finer energy range 
    !
@@ -108,12 +110,12 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
      !
      Amp_Peak=maxval(abs(aimag(qp%GreenF(iqp,:))))
      iw_start=0
-     do iw=1,W%n(1)
+     do iw=1,W%n_freqs
        if (iw_start==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_start=iw
        if (iw_start/=0) exit
      enddo
      iw_end=0
-     do iw=W%n(1),1,-1
+     do iw=W%n_freqs,1,-1
        if (iw_end==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_end=iw
        if (iw_end/=0) exit
      enddo
@@ -136,7 +138,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    ! Extraction of the QP properties directly from the Green's function
    !====================================================================
    !
-   call QPartilize(W%n(1),qp%GreenF(iqp,:),real(qp%GreenF_W(iqp,:)),qp%E(iqp),qp%Z(iqp),QP_dSc_delta) 
+   call QPartilize(W%n_freqs,qp%GreenF(iqp,:),real(qp%GreenF_W(iqp,:)),qp%E(iqp),qp%Z(iqp),QP_dSc_delta) 
    !
    ! Width Info
    !====================================================================
@@ -144,17 +146,17 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    if (allocated(QP_G_info)) then
      Amp_Peak=maxval(abs(aimag(qp%GreenF(iqp,:))))
      QP_G_info(iqp,:,:)=1000.
-     do iw=1,W%n(1)-1
+     do iw=1,W%n_freqs-1
        Aw  =abs(aimag(qp%GreenF(iqp,iw)))
        Awp1=abs(aimag(qp%GreenF(iqp,iw+1)))
        do i_n=1,3
          if ( (Aw-Amp_Peak*.25*i_n)*(Awp1-Amp_Peak*.25*i_n)<0. ) then
            if (abs(QP_G_info(iqp,i_n,1)-1000.)<1.E-5) then
-             QP_G_info(iqp,i_n,1)=qp%GreenF_W(iqp,iw)
+             QP_G_info(iqp,i_n,1)=real(qp%GreenF_W(iqp,iw))
              cycle
            endif
            if (abs(QP_G_info(iqp,i_n,2)-1000.)<1.E-5) then
-             QP_G_info(iqp,i_n,2)=qp%GreenF_W(iqp,iw)
+             QP_G_info(iqp,i_n,2)=real(qp%GreenF_W(iqp,iw))
              cycle
            endif
          endif

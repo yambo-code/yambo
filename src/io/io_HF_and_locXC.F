@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,9 +28,12 @@ integer function io_HF_and_locXC(ID)
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
 &                         QP_table,QP_state
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
-&                         io_elemental,io_status,io_bulk,read_is_on,&
+ use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,io_HF,&
+&                         io_elemental,io_status,io_bulk,read_is_on,IO_NOT_ALLOWED,&
 &                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  integer :: ID
  !
@@ -38,6 +43,16 @@ integer function io_HF_and_locXC(ID)
 &                     QP_n_states_disk,bands(2),i1,i2,i_found,var_sz
  real(SP)          :: Sx(2),Vxc(2)
  character(schlen) :: QP_xc_FUNCTIONAL
+ !
+ if (.not.io_HF) then
+   io_HF_and_locXC=IO_NOT_ALLOWED
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
+ endif
+ !
+#if defined _TIMING
+ call timing('io_HF',OPR='start')
+#endif
  !
  io_HF_and_locXC=io_connect(desc="HF_and_locXC",type=2,ID=ID,no_full_RESET=.TRUE.)
  if (io_HF_and_locXC/=0) then
@@ -134,5 +149,9 @@ integer function io_HF_and_locXC(ID)
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ if (io_HF) call timing('io_HF',OPR='stop')
+#endif
  !
 end function

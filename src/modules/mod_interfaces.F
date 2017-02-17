@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,92 +27,158 @@ module interfaces
  !
  interface
    !
-   subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
-     use pars, ONLY: SP
+   subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp
+     use FFT_m,          ONLY:fft_size
+     implicit none
+     type(bz_samp)::k
+     type(levels) ::E       
+     real(SP), optional             ::rho(fft_size)
+     real(SP), optional             ::J(fft_size,3)
+     logical,  optional, intent(in) ::force_spatial_inversion
+     !
+   end subroutine
+   !
+   subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill)
+     !
+     use matrix_operate, ONLY:blacs_t
+     use pars,           ONLY:SP
+     !
+     integer                :: idriver
+     complex(SP)            :: M(:,:)
+     complex(SP),  optional :: V_left(:,:)
+     complex(SP),  optional :: V_right(:,:)
+     complex(SP),  optional :: E_cmpl(:)
+     type(blacs_t),optional :: blt
+     real(SP),     optional :: E_real(:)
+     integer,      optional :: lib_in
+     integer,      optional :: fill
+     integer,      optional :: SVD_digits 
+     !
+   end subroutine
+   !
+   integer function io_COLLISIONS(i_qp,ID,COLL)
+     use collision,  ONLY:COLLISIONS_element
+     integer, intent(inout)             ::ID
+     integer, intent(in)                ::i_qp
+     type(COLLISIONS_element), optional :: COLL
+   end function
+   !
+   subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
+&                     spins_to_load,space,title,impose_free_and_alloc,&
+&                     force_WFo,keep_states_to_load)
+     use wave_func,       ONLY:WAVEs
+     integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
+     type(WAVEs)           :: WF
+     integer,     optional :: spins_to_load(2)
+     character(*),optional :: space
+     character(*),optional :: title
+     logical     ,optional :: impose_free_and_alloc
+     logical     ,optional :: force_WFo
+     logical     ,optional :: keep_states_to_load
+   end subroutine
+   !
+   subroutine PARALLEL_WF_index(COMM)
+     use parallel_m,      ONLY:MPI_comm
+     type(MPI_comm), optional :: COMM
+   end subroutine
+   !
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
+     use X_m,           ONLY:X_t
+     use electrons,     ONLY:levels
+     use R_lattice,     ONLY:bz_samp
+     implicit none
+     type(levels)             ::E
+     type(bz_samp)            ::Xk,q
+     character(*)             ::ENVIRONMENT
+     type(X_t),       optional::X
+     logical,         optional::RESET
+   end subroutine
+   !
+   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU)
+     character(*)          :: WHAT
+     character(*),optional :: ENVIRONMENT
+     integer,     optional :: LOADED,TOTAL,NCPU
+   end subroutine
+   !
+   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
+&                                    QP_index,Plasma_index,Bm_index,CLEAN_UP)
+     !
+     use parallel_m,      ONLY:PP_indexes
+     !
+     implicit none
+     !
+     type(PP_indexes),    optional :: K_index
+     type(PP_indexes),    optional :: B_index
+     type(PP_indexes),    optional :: Bp_index
+     type(PP_indexes),    optional :: B_and_K_index
+     type(PP_indexes),    optional :: QP_index
+     type(PP_indexes),    optional :: Plasma_index
+     type(PP_indexes),    optional :: Bm_index
+     logical, intent(in), optional :: CLEAN_UP
+     !
+   end subroutine 
+   !
+   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir)
+     use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
      type(levels)       :: E
      real(SP), optional :: E_g_dir(n_sp_pol,2) ! min - max
      real(SP), optional :: E_g_ind(n_sp_pol,2) ! min - max
      integer , optional :: N_f(n_sp_pol)
      integer , optional :: N_m(n_sp_pol)
+     integer , optional :: I_dir(2)
    end subroutine 
+   !
+   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&
+&                                              COMM_index_4,COMM_A2A_1,COMM_A2A_2,COMM_A2A_3)
+     use parallel_m,    ONLY:MPI_comm
+     integer                 :: n_elements
+     character(*)            :: ROLE(:)
+     type(MPI_comm)          :: COMM_index_1
+     type(MPI_comm),optional :: COMM_index_2
+     type(MPI_comm),optional :: COMM_index_3
+     type(MPI_comm),optional :: COMM_index_4
+     type(MPI_comm),optional :: COMM_A2A_1
+     type(MPI_comm),optional :: COMM_A2A_2
+     type(MPI_comm),optional :: COMM_A2A_3
+   end subroutine
+   !
+   subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
+     character(*), optional :: ENVIRONMENT
+     integer,      optional :: n_elements
+     character(*), optional :: ROLE(:)
+   end subroutine
+   !
+   subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
+     use parallel_m, ONLY:PP_indexes,MPI_COMM
+     type(PP_indexes)       ::px
+     integer                ::uplim(:)
+     integer, optional      ::low_range(:)
+     type(MPI_COMM),optional::COMM
+     logical,       optional::CONSECUTIVE
+     logical,       optional::ORDERED
+     logical,       optional::MASK(:)
+   end subroutine
+   !
+   subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
+     use pars,          ONLY:SP
+     use BS,            ONLY:Haydock_vector
+     integer               ::iter
+     type(Haydock_vector)  ::Vi(:),Vo(:)
+     real(SP),optional     ::iter_par
+     character(3),optional ::call_kind
+   end subroutine
+   !
+   subroutine K_dot_product(dot,V,W)
+     use pars,          ONLY:SP
+     use BS,            ONLY:Haydock_vector
+     complex(SP)           ::dot
+     type(Haydock_vector)  ::V(:),W(:)
+   end subroutine
    !
  end interface
  !
- contains
-   !
-   subroutine PARALLEL_index(px,uplim,low_range)
-     use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod
-     use com,        ONLY:error
-     type(PP_indexes)  ::px
-     integer           ::uplim(:)
-     integer, optional ::low_range(:)
-     ! 
-     ! Work Space
-     !
-     integer :: nindxs,i1,i2,i3,d2,ic,average_steps,tot_steps
-     integer,allocatable :: i_done(:),lowlim(:)
-     !
-     nindxs=size(uplim)
-     allocate(lowlim(nindxs))
-     lowlim=1
-     if (present(low_range))  lowlim=low_range
-     !
-     allocate(px%n_of_elements(ncpu))
-     px%n_of_elements=0
-     select case (nindxs)
-       case (1)
-         if (.not.associated(px%weight_1D)) then
-           allocate(px%weight_1D(uplim(1)))
-           px%weight_1D=1
-           if (lowlim(1)>1) px%weight_1D(1:lowlim(1)-1)=0
-         endif
-         allocate(px%element_1D(uplim(1)),i_done(uplim(1)),px%first_of_1D(ncpu))
-         px%first_of_1D(myid+1)=-1
-         px%element_1D=.false.
-         tot_steps=sum(px%weight_1D)
-         i_done=1
-         if (lowlim(1)>1) i_done(:lowlim(1)-1) =0
-         average_steps=(tot_steps+ncpu-mod(tot_steps,ncpu))/ncpu
-         do i1=lowlim(1)+myid,uplim(1),ncpu
-           if (px%n_of_elements(myid+1)>=average_steps) cycle
-           if (px%first_of_1D(myid+1)==-1) px%first_of_1D(myid+1)=i1
-           px%element_1D(i1)=.true.
-           i_done(i1)=0
-           px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+px%weight_1D(i1)
-         enddo
-         call PP_redux_wait(i_done,p_prod)
-         do ic=1,ncpu
-           if (ic==myid+1) then
-             do i1=lowlim(1),uplim(1)
-               if (i_done(i1)==0) cycle
-               if (px%n_of_elements(myid+1)>=average_steps) cycle
-               px%element_1D(i1)=.true.
-               i_done(i1)=0
-               px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+px%weight_1D(i1)
-             enddo
-           endif
-           call PP_redux_wait(i_done,p_prod)
-         enddo
-         if (any(i_done==1)) call error('Incomplete Parallel Index Filling')
-         deallocate(i_done)
-       case (2)
-         allocate(px%element_2D(uplim(1),uplim(2)))
-         d2=uplim(2)-lowlim(2)+1
-         px%element_2D=.false.
-         do i1=lowlim(1),uplim(1)
-           do i2=lowlim(2),uplim(2)
-             i3=(i1-lowlim(1))*d2+i2-lowlim(2)+1-myid
-             if (mod(i3,ncpu)==1) px%element_2D(i1,i2)=.true.
-             if (ncpu==1) px%element_2D(i1,i2)=.true.
-             if (px%element_2D(i1,i2)) px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+1
-           enddo
-         enddo
-     end select
-     !
-     deallocate(lowlim)
-     if(allocated(i_done)) deallocate(i_done)
-     !
-   end subroutine
-   !
 end module

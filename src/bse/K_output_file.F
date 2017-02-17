@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,19 +24,20 @@
 subroutine K_output_file(iq,mode)
  !
  use pars,      ONLY:pi,SP
- use units,     ONLY:HA2EV,SPEED_OF_LIGHT
+ use units,     ONLY:HA2EV
  use BS,        ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
-&                    BSS_n_descs,BSE_mode,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
+&                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
  use X_m,       ONLY:X_epsilon,eval_alpha,eps_2_alpha,O_eels
  use com,       ONLY:msg,of_open_close
+ use parser_m,  ONLY:parser
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,&
-&                    eel_file_name,alpha_file_name,X_write_descriptions,&
+&                    eel_file_name,alpha_file_name,refl_file_name,X_write_descriptions,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
 #if defined _KERR
  use pars,      ONLY:cI
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,hbar_SI
  use drivers,   ONLY:l_kerr,l_anomalous_Hall
- use X_output,  ONLY:fara_file_name,moke_file_name,off_file_name,beta_file_name
+ use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name
  use KERR,      ONLY:B_Hall
 #endif
  !
@@ -47,12 +50,11 @@ subroutine K_output_file(iq,mode)
  character(2)      :: title_mode
  integer           :: iw,n_output_data
  real(SP)          :: output_data(7)
- complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs)
+ complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs),refl(3,BSS_n_freqs)
 #if defined _KERR
- real(SP)          :: w_over_c
  complex(SP)       :: beta(3,BSS_n_freqs)
 #endif
- logical           :: eval_eels
+ logical           :: eval_eels,eval_reflectivity
  !
  ! File Names 
  !
@@ -74,26 +76,27 @@ subroutine K_output_file(iq,mode)
      call X_setup_file_names(1,'IP',' ',' ')
  end select
  !
- ! EELS 
+ ordering='r'
+ if (BS_K_coupling) ordering='c'
  !
- ordering=BSE_mode
+ ! EELS / REFLECTIVITY logicals 
+ !
+ call parser('Reflectivity',eval_reflectivity)
  eval_eels= O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering)
  !
  title_mode='Ot'
  if (mode<0) title_mode='ot'
  !
  call of_open_close(eps_file_name,title_mode)
- if (eval_eels) then 
-   call of_open_close(eel_file_name,title_mode)
-   if (eval_alpha) call of_open_close(alpha_file_name,title_mode)
- endif
+ if (eval_reflectivity) call of_open_close(refl_file_name,title_mode)
+ if (eval_eels)         call of_open_close(eel_file_name,title_mode)
+ if (eval_alpha)        call of_open_close(alpha_file_name,title_mode)
  !
 #if defined _KERR
  if(l_kerr) then
    call of_open_close(off_file_name,title_mode)
-   if (eval_alpha) call of_open_close(beta_file_name,title_mode)
    call of_open_close(moke_file_name,title_mode)
-   call of_open_close(fara_file_name,title_mode)
+   if (eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
 #endif
  !
@@ -112,6 +115,13 @@ subroutine K_output_file(iq,mode)
    if (mode==1) call msg("o eps",'#',headers,INDENT=0,USE_TABS=.TRUE.)
    if (mode/=1.and.mode/=4) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (mode==4) call msg("o eps",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   !
+   if (eval_reflectivity) then 
+     call X_setup_headers('refl')
+     if (mode==1) call msg("o refl",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1.and.mode/=4) call msg("o refl",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o refl",'#',headers(:2),INDENT=0,USE_TABS=.TRUE.)
+   end if   
    !
    if (eval_eels) then 
      call X_setup_headers('eel')
@@ -174,16 +184,10 @@ subroutine K_output_file(iq,mode)
      if (mode/=1.and.mode/=4) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o moke",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      !
-     call msg('o fara','#','MCD delta alpha is equal to -4 time aimag Faraday',INDENT=0,USE_TABS=.true.)
-     call X_setup_headers('fara')
-     if (mode==1) call msg("o fara",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1.and.mode/=4) call msg("o fara",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
-     if (mode==4) call msg("o fara",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
-     !
    endif
 #endif
    !
-   call msg("o eps eel alpha off beta moke fara",'#')
+   call msg("o eps refl eel alpha off beta moke",'#')
    !
    ! ABSORPTION
    !------------
@@ -206,6 +210,38 @@ subroutine K_output_file(iq,mode)
      call msg("o eps",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
+   !
+   ! REFLECTIVITY
+   !--------------
+   !
+   if (eval_reflectivity) then
+     !
+     ! Reflectance is assumed for a 3D system
+     ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
+     ! R=|r|^2
+     !
+     refl(1,:)=(sqrt(X_epsilon(2,:))-1._SP)/(sqrt(X_epsilon(2,:))+1._SP)
+     refl(2,:)=(sqrt(X_epsilon(3,:))-1._SP)/(sqrt(X_epsilon(3,:))+1._SP)
+     if (mode==1) refl(3,:)=(sqrt(X_epsilon(4,:))-1._SP)/(sqrt(X_epsilon(4,:))+1._SP)
+     !
+     do iw=1,BSS_n_freqs
+       !
+       output_data(1:3)=(/real(X_epsilon(1,iw))*HA2EV,real(refl(1,iw)*conjg(refl(1,iw))),real(refl(2,iw)*conjg(refl(2,iw)))/)     
+       !
+       ! Haydock n-1 iteration
+       !
+       n_output_data=3
+       if (mode==1) n_output_data=4
+       if (mode==1) output_data(4)=real(refl(3,iw)*conjg(refl(3,iw)))
+       if (mode==4) n_output_data=2
+       if (mode==4) output_data(2)=output_data(3)
+       !
+       call msg("o refl",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+       !
+     enddo
+     !
+   endif
+   !
    !
    ! EELS & POLARIZABILITY
    !-----------------------
@@ -297,6 +333,17 @@ subroutine K_output_file(iq,mode)
        output_data(4)=-aimag(X_epsilon(6,iw)/( (X_epsilon(3,iw)-1.0_SP)*sqrt(X_epsilon(3,iw)) ) /DEG2RAD)
        output_data(5)=-real(X_epsilon(6,iw)/( (X_epsilon(3,iw)-1.0_SP)*sqrt(X_epsilon(3,iw)) ) /DEG2RAD)
        !
+       if( (real(X_epsilon(2,iw))==1._SP .or. real(X_epsilon(2,iw))==0._SP ) &
+&           .and. aimag(X_epsilon(2,iw))==0._SP ) then
+         output_data(2)=0._SP
+         output_data(3)=0._SP
+       endif
+       if( (real(X_epsilon(3,iw))==1._SP .or. real(X_epsilon(3,iw))==0._SP ) &
+&           .and. aimag(X_epsilon(3,iw))==0._SP ) then
+         output_data(4)=0._SP
+         output_data(5)=0._SP
+       endif         
+       !
        n_output_data=5
        if (mode==1) n_output_data=7
        if (mode==1) then
@@ -308,27 +355,6 @@ subroutine K_output_file(iq,mode)
        call msg('o moke','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      enddo
      !
-     ! Faraday parameters
-     !
-     do iw=1,BSS_n_freqs 
-       output_data(1)= real(X_epsilon(1,iw))*HA2EV
-       w_over_c= 2*pi*real(X_epsilon(1,iw))/SPEED_OF_LIGHT
-       output_data(2)=-aimag( cI*X_epsilon(5,iw)/sqrt(X_epsilon(2,iw)) ) * 2*w_over_c /DEG2RAD
-       output_data(3)=-real ( cI*X_epsilon(5,iw)/sqrt(X_epsilon(2,iw)) ) * 2*w_over_c /DEG2RAD
-       output_data(4)=-aimag( cI*X_epsilon(6,iw)/sqrt(X_epsilon(3,iw)) ) * 2*w_over_c /DEG2RAD
-       output_data(5)=-real ( cI*X_epsilon(6,iw)/sqrt(X_epsilon(3,iw)) ) * 2*w_over_c /DEG2RAD
-       !
-       n_output_data=5
-       if (mode==1) n_output_data=7
-       if (mode==1) then
-         output_data(6)=-aimag(X_epsilon(7,iw)/sqrt(X_epsilon(4,iw)) ) * 2*w_over_c /DEG2RAD
-         output_data(7)=-real (X_epsilon(7,iw)/sqrt(X_epsilon(4,iw)) ) * 2*w_over_c /DEG2RAD
-       endif
-       if (mode==4) n_output_data=3
-       if (mode==4) output_data(2:3)=output_data(4:5)
-       call msg('o fara','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
-     enddo
-     !
    endif
    !
 #endif
@@ -336,6 +362,7 @@ subroutine K_output_file(iq,mode)
  endif
  !
  call of_open_close(eps_file_name)
+ call of_open_close(refl_file_name)
  call of_open_close(eel_file_name)
  call of_open_close(alpha_file_name)
  !
@@ -344,7 +371,6 @@ subroutine K_output_file(iq,mode)
    call of_open_close(off_file_name)
    call of_open_close(beta_file_name)
    call of_open_close(moke_file_name)
-   call of_open_close(fara_file_name)
  endif
 #endif
  !

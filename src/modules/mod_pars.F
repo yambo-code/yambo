@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +23,9 @@
 !
 module pars
  !
+#if defined _NETCDF_IO
  use netcdf
+#endif  
  !
  implicit none
  !
@@ -33,13 +37,16 @@ module pars
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
 #endif
- integer, parameter  :: IP = selected_int_kind(9)
+ integer, parameter  :: IP  = selected_int_kind(8)
+ integer, parameter  :: IP4 = selected_int_kind(4)
+ integer, parameter  :: IP2 = selected_int_kind(2)
+ integer, parameter  :: IP1 = selected_int_kind(1)
  !
  ! NetCDF types
  !
-#if defined _DOUBLE
+#if defined _NETCDF_IO && defined _DOUBLE
  integer, parameter  :: nf90_SP = nf90_double
-#else 
+#elif defined _NETCDF_IO 
  integer, parameter  :: nf90_SP = nf90_real
 #endif
  !
@@ -56,6 +63,7 @@ module pars
  real(SP),    parameter :: pi=3.141592653589793238462643383279502884197_SP
  real(SP),    parameter :: zero_dfl=1.E-5
  real(SP),    parameter :: rZERO=0._SP
+ real(SP),    parameter :: rONE =1._SP
  complex(SP), parameter :: cI   =(0._SP,1._SP)
  complex(SP), parameter :: cONE =(1._SP,0._SP)
  complex(SP), parameter :: cZERO=(0._SP,0._SP)

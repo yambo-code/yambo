@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -205,7 +207,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  read(11) 
  read(11) 
  do ig=1,ng_vec_abinit
-   g_vec(ig,:)=matmul(transpose(b),rel_gvec(:,ig))*alat(:)/2./pi
+   g_vec(ig,:)=matmul(transpose(b),real(rel_gvec(:,ig),SP))*alat(:)/2._SP/pi
  enddo
  call msg('l','done')
  !
@@ -213,7 +215,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0.) )
  !
- if( i_time_rev==1 .or. i_space_inv==1 .and. .not.gamma_only) then
+ if( (i_time_rev==1 .or. i_space_inv==1) .and. .not.gamma_only) then
    !
    call msg('s','Closing shells against inversion...')
    !============================

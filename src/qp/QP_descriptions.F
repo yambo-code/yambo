@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,22 +23,25 @@
 !
 subroutine QP_descriptions(qp,X,Xw,Update)
  ! 
- ! WARNING ! Changes here must be updated in ioQP as well.
+ ! WARNING ! Changes here must be updated in io_QP_and_GF as well.
  !
  use units,         ONLY:HA2EV
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
-&                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold
+&                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold,&
+&                        GW_terminator_E,l_GW_terminator,GW_terminator_Kind
  use stderr,        ONLY:string_pack,gen_fmt
- use drivers,       ONLY:l_life,l_ppa,l_ph_corr,l_el_corr,l_cohsex
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_cohsex,&
+&                        l_HF_and_locXC
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
  use IO_m,          ONLY:ver_is_gt_or_eq
-#if defined _ELPH 
- use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches
+#if defined _ELPH
+ use drivers,       ONLY:l_elph_corr 
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nDBs_used
 #endif
  implicit none
  !
@@ -81,54 +86,57 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &          string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HA2EV /) ),')'))) &
 &          ' dS/dw step         [ev]:',QP_dSc_delta*HA2EV
    endif
- endif
+ endif 
  !
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&      string_pack('(a,',gen_fmt( (/X%ng /) ),')'))) &
-&      ' X G`s            [used]:',X%ng
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&      string_pack('(a,',gen_fmt( (/X%ng_db /) ),')'))) &
-&      ' X G`s            [disk]:',X%ng_db
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&      string_pack('(a,2(',gen_fmt( X%ib  ),',1x))'))) &
-&      ' X bands                :',X%ib
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&      string_pack('(a,',gen_fmt( r_v=(/X%cg_percentual /) ),')'))) &
-&      ' X poles           [o/o]:',X%cg_percentual
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&     string_pack('(a,2(',gen_fmt( r_v=X%ehe*HA2EV ),',1x))'))) &
-&     ' X e/h E range      [ev]:',X%ehe*HA2EV
- !
- if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            :',trim(X%f_xc)
- endif
- !
- if (.not.l_ppa.and..not.l_cohsex) then
+ if (l_elel_corr) then
+   !
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
-&        string_pack('(a,2(',gen_fmt( r_v = Xw%dr*HA2EV ),',1x))')))&
-&        ' X damping range    [ev]:',Xw%dr*HA2EV
-   if (.not.l_life) then
+&        string_pack('(a,',gen_fmt( (/X%ng /) ),')'))) &
+&        ' X G`s            [used]:',X%ng
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&        string_pack('(a,',gen_fmt( (/X%ng_db /) ),')'))) &
+&        ' X G`s            [disk]:',X%ng_db
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&        string_pack('(a,2(',gen_fmt( X%ib  ),',1x))'))) &
+&        ' X bands                :',X%ib
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&        string_pack('(a,',gen_fmt( r_v=(/X%cg_percentual /) ),')'))) &
+&        ' X poles           [o/o]:',X%cg_percentual
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&       string_pack('(a,2(',gen_fmt( r_v=X%ehe*HA2EV ),',1x))'))) &
+&       ' X e/h E range      [ev]:',X%ehe*HA2EV
+   !
+   if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            : ',trim(X%f_xc)
+   endif
+   !
+   if (.not.l_ppa.and..not.l_cohsex) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
-&          string_pack('(a,2(',gen_fmt( Xw%n ),',1x))'))) &
-&          ' X Steps                :',Xw%n(1)
+&          string_pack('(a,2(',gen_fmt( r_v = Xw%dr*HA2EV ),',1x))')))&
+&          ' X damping range    [ev]:',Xw%dr*HA2EV
+     if (.not.l_life) then
+       qp%n_descs=qp%n_descs+1
+       write (qp%description(qp%n_descs),trim(&
+&            string_pack('(a,(',gen_fmt( i_v=(/Xw%n_freqs/) ),',1x))'))) &
+&            ' X Steps                :',Xw%n_freqs
+     endif
    endif
- endif
- if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
-   qp%n_descs=qp%n_descs+1
-                  qp%description(qp%n_descs)=' X BZ energy RIM        : no'
-   if (use_X_RIM) qp%description(qp%n_descs)=' X BZ energy RIM        : yes'
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        string_pack('(a,',gen_fmt( (/BZ_RIM_tot_nkpts/) ),')'))) &
-&        ' X BZ RIM points        :',BZ_RIM_tot_nkpts
+   if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
+     qp%n_descs=qp%n_descs+1
+                    qp%description(qp%n_descs)=' X BZ energy RIM        : no'
+     if (use_X_RIM) qp%description(qp%n_descs)=' X BZ energy RIM        : yes'
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&          string_pack('(a,',gen_fmt( (/BZ_RIM_tot_nkpts/) ),')'))) &
+&          ' X BZ RIM points        :',BZ_RIM_tot_nkpts
+   endif
  endif
  !
  if (l_life) then
@@ -136,7 +144,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    write (qp%description(qp%n_descs),trim(&
 &        string_pack('(a,',gen_fmt( r_v=(/QP_cg_percent /) ),')'))) &
 &        ' Transitions       [o/o]:',QP_cg_percent
- else
+ else 
    if ( (.not.l_cohsex) .or. (l_cohsex.and.COHSEX_use_empties) ) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
@@ -150,11 +158,29 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &         ' Sc/G damping       [ev]:',QP_G_damp*HA2EV
    endif
    !
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&       string_pack('(a,',gen_fmt( (/QP_ng_Sx /) ),')'))) &
-&       ' Sx RL components       :',QP_ng_Sx
+   if (l_GW_terminator) then
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' Sc bands terminator    : yes'
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' Sc terminator kind     : '//trim(GW_terminator_Kind)    
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&           string_pack('(a,',gen_fmt( r_v=(/GW_terminator_E*HA2EV /) ),')'))) &
+&           ' Sc Terminator pole     :',GW_terminator_E*HA2EV
+   else
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' Sc bands terminator    : no'
+   endif
+   !
+   if (l_HF_and_locXC) then
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&         string_pack('(a,',gen_fmt( (/QP_ng_Sx /) ),')'))) &
+&         ' Sx RL components       :',QP_ng_Sx
+   endif
+   !
  endif
+ !
  !
 #if defined _ELPH 
  !
@@ -162,10 +188,10 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  !
  if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
    !
-   if (l_ph_corr) then
+   if (l_elph_corr) then
      !
      qp%n_descs=qp%n_descs+1
-     if (.not.l_el_corr) qp%n_descs=n_descs_save+1
+     if (.not.l_elel_corr) qp%n_descs=n_descs_save+1
      !
      if (trim(QP_solver)/='g') then
        write (qp%description(qp%n_descs),trim(&
@@ -194,6 +220,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
        write (qp%description(qp%n_descs),trim(&
 &            string_pack('(a,2',gen_fmt( elph_branches ),')'))) &
 &            ' El-Ph phonon branches  :',(/elph_branches/)
+     endif
+     !
+     if (ver_is_gt_or_eq(-1,(/4,0,0/))) then
+       qp%n_descs=qp%n_descs+1
+       write (qp%description(qp%n_descs),trim(&
+&            string_pack('(a,',gen_fmt( i_v=(/elph_nDBs_used/) ),')'))) &
+&            ' El-Ph momenta used     :',elph_nDBs_used
      endif
      !
    endif

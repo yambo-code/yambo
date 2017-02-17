@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 M. Gruning and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): MG
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,36 +21,40 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
+subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! After libxc is distributed together with Yambo (rev 1180)  
  ! this routine evaluates the xc functional in yambo 
  ! (03/05/12: LDA OK, GGA OK => EXTENSIVE TESTS NEEDED) 
+ ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
  !
- use pars,          ONLY:SP,DP,PI
- use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:DL_vol, alat
- use com,           ONLY:msg,warning
- use electrons,     ONLY:levels,n_spin,n_spinor
- use FFT_m,         ONLY:fft_size
+ use pars,           ONLY:SP,DP,pi,RZERO
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:DL_vol, alat
+ use com,            ONLY:msg,warning,error
+ use electrons,      ONLY:levels,n_spin,n_spinor
+ use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:real_V_dot_V
- use xc_functionals,ONLY:E_xc,F_xc,V_xc,magn,&
-&                        xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
- use xc_f90_lib_m   ,  ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA
+ use xc_functionals, ONLY:E_xc,F_xc,V_xc,magn,xc_setup_hyb,&
+&                         xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
+ use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
+ use interfaces,     ONLY:el_density_and_current
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
- integer      ::KIND,FUNCTIONAL,ORDER
+ integer      ::FUNCTIONAL,ORDER
+ real(SP), optional :: EXX_FRACTION, EXX_SCREENING
  !
  ! Work Space
  !
- integer      :: i1,i2,is,ic,is1,is2,ixc,ifft
- real(SP)  :: mod_magn
+ integer  :: i1,i2,is,ic,is1,is2,ixc,ifft
+ real(SP) :: mod_magn
+ real(SP) :: local_exx_fraction 
  !
  ! XC routines arrays
  !
- real(SP) :: spin_rho_SP(fft_size,n_spin),rspts(fft_size),rho(fft_size)
- real(DP) :: spin_rho_DP(n_spin,fft_size)
+ real(SP) :: spin_rho_SP(fft_size,n_spin),rho(fft_size)
+ real(DP) :: spin_rho_DP(n_spin,fft_size),rspts(fft_size)
  real(SP),allocatable:: drho(:,:,:)
  real(DP),allocatable:: sigma(:,:)
  !
@@ -56,7 +62,8 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  real(DP) :: tmp_dvxc(fft_size),tmp_vxc(n_spin,fft_size),tmp_exc(fft_size)
  real(SP),allocatable :: vdrho(:,:)
- real(DP),allocatable:: vsigma(:,:)
+ real(DP),allocatable :: vsigma(:,:)
+ logical              :: EvaluateDGradient
  !
  ! Functional and Functional infos
  !
@@ -72,14 +79,27 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
  !
+ local_exx_fraction = RZERO
+ if (present(EXX_FRACTION).and.fnctl(1)%family==XC_FAMILY_HYB_GGA) then 
+   call xc_setup_hyb(fnctl,EXX_FRACTION,EXX_SCREENING)
+!   if (abs(EXX_FRACTION - fnctl(1)%exx_fraction).gt.RZERO) then
+!     call msg('rns','[xc] EXX fraction read from disk: ',EXX_FRACTION)
+!   else
+!   end if
+     local_exx_fraction = fnctl(1)%exx_fraction
+ end if
+ !
+ EvaluateDGradient = any((fnctl(:)%family==XC_FAMILY_GGA).or.any(fnctl(:)%family==XC_FAMILY_HYB_GGA))
+ !
  !==========================
  ! Electronic/spin density 
  !==========================
  !
- call el_density(en,Xk,rho,.false.)
+   call el_density_and_current(en,Xk,rho=rho)
+   if(n_spin> 1) call el_magnetization(en,Xk)
+ !
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
-   call el_magnetization(en,Xk)
    if (n_spinor==1) then
      do ifft=1,fft_size
        spin_rho_SP(ifft,1)=0.5*(rho(ifft)+magn(ifft,3))
@@ -100,13 +120,13 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! Electronic density gradient
  !=============================
  !
- if (any(fnctl(:)%family==XC_FAMILY_GGA)) then 
+ if (EvaluateDGradient) then 
    allocate(drho(3,n_spin,fft_size),sigma(n_spin*(n_spin+1)/2,fft_size))
    if (ORDER==1) allocate(vdrho(3,fft_size),vsigma(n_spin*(n_spin+1)/2,fft_size))
    !
    do is1 = 1,n_spin
      call eval_Gradient(spin_rho_SP(:,is1),drho(:,is1,:))
-     forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*real(fft_size,DP)/real(DL_vol,DP)*2._SP*PI/alat(:)
+     forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*fft_size/DL_vol*2._SP*pi/alat(:)
    end do
    !
    do i1 = 1,fft_size
@@ -135,22 +155,22 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
      select case(ORDER)
        case(0)
          call xc_f90_lda_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_exc(1))
-         E_xc = E_xc + tmp_exc    
+         E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
-         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + tmp_vxc(i2,i1)         
+         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)         
        case(2) 
          call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_dvxc(1))
-         F_xc = F_xc + tmp_dvxc
+         F_xc = F_xc + real(tmp_dvxc,SP)
      end select
-   elseif (fnctl(ixc)%family==XC_FAMILY_GGA) then
+   elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
      select case(ORDER)
        case(0)
          call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
-         E_xc = E_xc + tmp_exc    
+         E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
-         ! vsigma(2)=vsigma_{updw}+vsigma_{dwup}=2.*vsigma_{updw}
+         ! In the presence of spin vsigma(2,:)=vsigma_updw(2,:)+vsigma_dwup(2,:)=2.*vsigma_updw(2,:)
          if(n_spin==2) vsigma(2,:)=vsigma(2,:)/2._SP
          do is1 = 1,n_spin
            vdrho(:,:) = 0._SP 
@@ -166,8 +186,9 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    end if
  enddo
  !
- if (any(fnctl(:)%family==XC_FAMILY_GGA)) deallocate(sigma,drho)
- if (any((fnctl(:)%family==XC_FAMILY_GGA)).and.(ORDER==1)) deallocate (vdrho,vsigma)
+ if (EvaluateDGradient) deallocate(sigma,drho)
+ if (EvaluateDGradient.and.(ORDER==1)) deallocate (vdrho,vsigma)
+ if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
  !
 end subroutine XC_libxc_driver
 

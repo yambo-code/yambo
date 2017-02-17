@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,19 +26,21 @@ subroutine XCo_local(E,Xk)
  ! Local V_xc
  !
  use pars,          ONLY:SP,pi
+ use drivers,       ONLY:l_real_time
  use electrons,     ONLY:levels,n_spin,n_spinor,spin
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
- use wave_func,     ONLY:wf,wf_state
- use xc_functionals,ONLY:V_xc,xc_string
- use xc_functionals,ONLY:magn
- use global_XC,     ONLY:WF_kind,WF_xc_functional
- use wrapper,       ONLY:Vstar_dot_V
+ use wave_func,     ONLY:WF
+ use xc_functionals,ONLY:V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
+ use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
+ use wrapper_omp,   ONLY:Vstar_dot_V_omp
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear 
  !
  implicit none
+ !
  type(levels) ::E       
- type(bz_samp)::k,Xk,q
+ type(bz_samp)::Xk
  !
  ! Work Space
  !
@@ -45,9 +49,8 @@ subroutine XCo_local(E,Xk)
  !
  ! Spin support (collinear and not collinear)
  !
- real(SP)    :: mod_mag,magn_versor(fft_size,3),vxc_plus(fft_size),vxc_minus(fft_size)
- complex(SP) :: V_xc_mat(fft_size,n_spin,n_spin)
  logical     :: l_call_the_driver
+ complex(SP), allocatable :: V_xc_mat(:,:,:)
  !
  ! Allocation 
  !
@@ -61,7 +64,8 @@ subroutine XCo_local(E,Xk)
    l_call_the_driver=.TRUE.
    !
    if (l_call_the_driver) then
-     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
+     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
+&         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
    endif
    !
  !
@@ -73,57 +77,47 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
+     if (l_real_time) then
+       !
+       if(ib>ibp) then
+         QP_Vxc(i1) = conjg(QP_Vxc(i1-1))
+         cycle
+       endif
+       !
+       !
+     else
+       !
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+       !
+     endif
+     !
      ! <iwf|V_xc|iwfp>
      !
-     iwf =wf_state(ib,ik,1)
-     iwfp=wf_state(ibp,ik,1)
-     c_ws(:,1)=V_xc(:,1)*wf(:,iwfp)
+     iwf =WF%index(ib,ik,1)
+     iwfp=WF%index(ibp,ik,1)
+     ! 
+!$omp parallel do default(shared), private(ifft)
+     do ifft=1,fft_size
+         c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,iwfp)
+     enddo
+!$omp end parallel do
      !
-     QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf),c_ws(:,1))
+     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf),c_ws(:,1))
      !
    enddo
+   !
+   call PP_redux_wait(QP_Vxc)
    !
    return
    !
  endif
  !
+ !
  if (n_spin==2) then
    !
-   V_xc_mat=(0._SP,0._SP)
+   allocate(V_xc_mat(fft_size,n_spin,n_spin))
    !
-   ! V_xc_mat ( 1 , 1 ) = up up
-   ! V_xc_mat ( 1 , 2 ) = up dn
-   ! V_xc_mat ( 2 , 1 ) = dn up
-   ! V_xc_mat ( 2 , 2 ) = dn dn
-   !
-   ! Magnetization, V_xc + and -
-   !
-   if (n_spinor==1) then
-     !
-     V_xc_mat(:,1,1)= V_xc(:,1)
-     V_xc_mat(:,2,2)= V_xc(:,2)
-     !
-   else if (n_spinor==2) then
-     !
-     magn_versor=0.
-     do ifft=1,fft_size
-       mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
-       if(mod_mag==0) magn_versor(ifft,:)=0.
-       if(mod_mag/=0) magn_versor(ifft,:)=magn(ifft,:)/mod_mag
-     enddo
-     !
-     ! Vxc^+=(Vxc_up+Vxc_down)/2
-     ! Vxc^+=(Vxc_up-Vxc_down)/2
-     vxc_plus(:) =(V_xc(:,1)+V_xc(:,2))/2._SP
-     vxc_minus(:)=(V_xc(:,1)-V_xc(:,2))/2._SP
-     !
-     V_xc_mat(:,1,1)= (vxc_plus(:)+vxc_minus(:)*magn_versor(:,3))
-     V_xc_mat(:,2,2)= (vxc_plus(:)-vxc_minus(:)*magn_versor(:,3))
-     !
-     V_xc_mat(:,1,2)= vxc_minus(:)*(magn_versor(:,1)-(0.,1.)*magn_versor(:,2))
-     V_xc_mat(:,2,1)= vxc_minus(:)*(magn_versor(:,1)+(0.,1.)*magn_versor(:,2))
-     !
-   endif
+   call Build_V_xc_mat(V_xc,V_xc_mat)
    !
    do i1=1,QP_n_states
      !
@@ -131,32 +125,39 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
+     if (l_real_time) then
+     else
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+     endif
+     !
      if (n_spinor==1) then
        !
        i_sp=spin(QP_table(i1,:))
-       iwf =wf_state(ib,ik,i_sp)
-       iwfp=wf_state(ibp,ik,i_sp)
+       iwf =WF%index(ib,ik,i_sp)
+       iwfp=WF%index(ibp,ik,i_sp)
        !
-       c_ws(:,1)=V_xc_mat(:,i_sp,i_sp)*wf(:,iwfp)
+       c_ws(:,1)=V_xc_mat(:,i_sp,i_sp)*WF%c(:,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf),c_ws(:,1))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf),c_ws(:,1))
        !
      else
        !
-       iwf_sp1=wf_state(ib,ik,1)
-       iwf_sp2=wf_state(ib,ik,2)
-       iwfp_sp1=wf_state(ibp,ik,1)
-       iwfp_sp2=wf_state(ibp,ik,2)
+       iwf_sp1=WF%index(ib,ik,1)
+       iwf_sp2=WF%index(ib,ik,2)
+       iwfp_sp1=WF%index(ibp,ik,1)
+       iwfp_sp2=WF%index(ibp,ik,2)
        !
-       c_ws(:,1)=V_xc_mat(:,1,1)*wf(:,iwfp_sp1)+V_xc_mat(:,1,2)*wf(:,iwfp_sp2)
-       c_ws(:,2)=V_xc_mat(:,2,1)*wf(:,iwfp_sp1)+V_xc_mat(:,2,2)*wf(:,iwfp_sp2)
+       c_ws(:,1)=V_xc_mat(:,1,1)*WF%c(:,iwfp_sp1)+V_xc_mat(:,1,2)*WF%c(:,iwfp_sp2)
+       c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,iwfp_sp1)+V_xc_mat(:,2,2)*WF%c(:,iwfp_sp2)
        !
-       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf_sp1),c_ws(:,1))+&
-&                 Vstar_dot_V(fft_size,wf(:,iwf_sp2),c_ws(:,2))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf_sp1),c_ws(:,1))+&
+&                 Vstar_dot_V_omp(fft_size,WF%c(:,iwf_sp2),c_ws(:,2))
        !
      endif
      !
    enddo
+   !
+   deallocate(V_xc_mat)
    !
  endif
  !
@@ -165,5 +166,7 @@ subroutine XCo_local(E,Xk)
  if(n_spin>1) deallocate(magn)
  ! 
  deallocate(V_xc)
+ !
+ call PP_redux_wait(QP_Vxc)
  !
 end subroutine

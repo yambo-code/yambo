@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -38,14 +40,21 @@ module drivers
  !
  logical :: l_real_time 
  logical :: l_sc_run
+ logical :: l_rt_carriers_in_use
  logical :: l_sc_magnetic
- logical :: l_collisions_IO
- logical :: l_carrier_dynamics  
+ logical :: l_eval_collisions
+ logical :: l_use_collisions
  !
  ! The self-energy correlation "kind"
  !
- logical :: l_el_corr
- logical :: l_ph_corr
+ logical :: l_elphoton_corr
+ logical :: l_elel_corr
+ logical :: l_elph_corr
+ !
+ ! The non-eq. self-energy scattering "kind"
+ !
+ logical :: l_elel_scatt
+ logical :: l_elph_scatt
  !
  ! Electron-Phonon specific flags 
  !
@@ -89,9 +98,11 @@ module drivers
  !
  logical :: l_sc_exx
  logical :: l_sc_srpa
+ logical :: l_sc_ip
+ logical :: l_sc_hartree
  logical :: l_sc_hf
  logical :: l_sc_cohsex
- logical :: l_sc_contains_lda
+ logical :: l_sc_is_libDFT
  !
  ! OEP approximations
  !

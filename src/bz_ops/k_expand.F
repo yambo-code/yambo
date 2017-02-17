@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -62,7 +64,7 @@ subroutine k_expand(k)
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
  use D_lattice,      ONLY:nsym
- use R_lattice,      ONLY:b,rl_sop,bz_samp
+ use R_lattice,      ONLY:rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
  !
  implicit none

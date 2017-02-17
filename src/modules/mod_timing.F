@@ -1,385 +1,456 @@
-!
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
-!              http://www.yambo-code.org
 ! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2004 WanT Group
+! Copyright (C) 2000-2015 the YAMBO team
+! 
+! This file is distributed under the terms of the 
+! GNU General Public License. See the file `License' 
+! in the root directory of the present distribution, 
+! or http://www.gnu.org/copyleft/gpl.txt . 
+! 
+! <INFO>
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-module timing
+MODULE timing_m
  !
- use pars,     ONLY:SP
- use pars,     ONLY:DP
- use pars,     ONLY:schlen
- use pars,     ONLY:lchlen
- implicit none
+ USE pars,          ONLY:SP,DP
+ USE com,           ONLY:error
+ USE parallel_m,    ONLY:ncpu,PP_redux_wait,mpi_comm_world
+ USE openmp,        ONLY:master_thread
  !
- ! What is running ?
+ IMPLICIT NONE
+ PRIVATE
+ ! This module contains the definition of CLOCK type and CLOCK_LIST type;
+ ! handles the timing all over the code
  !
- character(schlen) :: what_is_running
+ ! The low-level timing routine is from ESPRESSO package (cptimer.c)
+ ! 
+ ! routines in this module:
+ ! SUBROUTINE  timing(name[,opr])
+ ! SUBROUTINE  timing_allocate(nclock_max)
+ ! SUBROUTINE  timing_deallocate()
+ ! SUBROUTINE  timing_overview(list[,main_name])
+ ! SUBROUTINE  timing_upto_now()
+ ! SUBROUTINE  clock_start(obj)
+ ! SUBROUTINE  clock_stop(obj)
+ ! SUBROUTINE  clock_update(obj)
+ ! SUBROUTINE  clock_find(list,name,found,index)
+ ! </INFO>
  !
- ! Checked
+ INTEGER, PARAMETER             :: nclockx = 200
+ INTEGER, PARAMETER             :: str_len = 200
  !
- integer           :: date_time_at_start(6)
- logical           :: live_timing_is_on,parallel_timing
+ TYPE clock
+   CHARACTER(str_len)          :: name              ! clock name
+   INTEGER                     :: call_number       ! number of runs for this clock
+   REAL(DP)                    :: start             ! last start
+   REAL(DP)                    :: stop              ! last stop 
+   REAL(DP)                    :: total_time        ! total time up to now
+   LOGICAL                     :: running           ! true if clock is counting
+   LOGICAL                     :: alloc 
+ END TYPE clock
+ !     
+ TYPE clock_list
+   TYPE(clock), POINTER        :: clock(:) => null()
+   CHARACTER(str_len)          :: name              ! list name
+   INTEGER                     :: nclock            ! actual number of clocks
+   INTEGER                     :: nclock_max        ! max number of clocks
+   LOGICAL                     :: alloc 
+ END TYPE clock_list
  !
- ! Live Timing
+ TYPE(clock_list), TARGET, SAVE :: internal_list     ! internal use clock
+ TYPE(clock_list), TARGET, SAVE :: global_list       ! global use clock
  !
- integer             :: nhash
- integer             :: time_steps
- integer             :: steps_done
- integer             :: hashes_now
- integer             :: hashes_done
- real(SP),allocatable:: cput_seg(:,:)
- real(SP),allocatable:: cput_sec(:,:)
- real(SP),allocatable:: cput_tot(:,:)
- real(SP)            :: cput_save
- character(schlen)   :: timing_name
+ LOGICAL                        :: alloc = .FALSE.   ! global alloc flag
+ !   
+ ! end of declarations
  !
- ! l_* files
+ INTERFACE ASSIGNMENT(=)
+   MODULE PROCEDURE clock_assignment
+ END INTERFACE
  !
- logical           :: log_line_to_dump
- character(lchlen) :: log_line
+ PUBLIC ::  nclockx
+ PUBLIC ::  clock, clock_list, ASSIGNMENT(=)
+ PUBLIC ::  global_list
+ PUBLIC ::  timing
+ PUBLIC ::  timing_allocate
+ PUBLIC ::  timing_deallocate
+ PUBLIC ::  timing_overview
+ PUBLIC ::  timing_upto_now
+ PUBLIC ::  alloc
  !
- contains
+ CONTAINS
    !
-   character(lchlen) function date_and_time_string(dt_in,dt_out)
-     use parallel_m,  ONLY:ncpu
-     integer,optional    ::dt_in(6),dt_out(6)
-     integer      :: dz(8)
-     character(5) :: cz
-     character(8) :: cd
-     character(10):: ctz
-     character(lchlen) :: host_name
-     integer           :: hn_len
+   ! Subroutines
+   !   
+   SUBROUTINE timing(name,opr,list)
+     IMPLICIT NONE
+     CHARACTER(*),           INTENT(in)    :: name
+     CHARACTER(*), OPTIONAL, INTENT(in)    :: opr
+     TYPE(clock_list),  OPTIONAL, TARGET   :: list
      !
-     if (present(dt_in)) then
-       dz(:6)=dt_in
-     else
-       call date_and_time(cd,ctz,cz,dz)
-     endif
-     call igethname(host_name,hn_len)
-     write (date_and_time_string,&
-&          '(4a,i3.3,a,2(i2.2,a),i4.4,2x,i2.2,a,i2.2)') trim(what_is_running),'@',&
-&           host_name(:hn_len),' x ',ncpu,' CPUs * ',&
-&           dz(2),'/',dz(3),'/',dz(1),dz(5),':',dz(6)
-     if (present(dt_out)) dt_out=dz(:6)
-   end function
-   !
-   subroutine live_timing(message,steps,SERIAL)
-     character(*),optional :: message
-     integer     ,optional :: steps
-     logical     ,optional :: SERIAL
-     if (.not.live_timing_is_on) return
-     if (present(message).and.present(steps)) then
-       if (present(SERIAL)) call live_timing_activate(message,steps,.TRUE.)
-       if (.not.present(SERIAL)) call live_timing_activate(message,steps,.FALSE.)
-     endif
-     if (.not.present(message).and.present(steps)) call live_timing_add(steps)
-     if (.not.present(message).and..not.present(steps)) call live_timing_finalize()
-   end subroutine
-   !
-   subroutine ct(INIT,INIT_SEG,SEG,INIT_SEC,SEC,FIN)
+     CHARACTER(5)                          :: opr_
+     LOGICAL                               :: found
+     INTEGER                               :: index
+     TYPE(clock_list), POINTER  :: listp
      !
-     ! cput_seg = Segment CPUT
-     ! cput_sec = Section CPUT
+     if (.not.master_thread) return
      !
-     use parallel_m, ONLY : myid,ncpu
-     implicit none
-     logical, optional :: INIT,INIT_SEG,SEG,INIT_SEC,SEC,FIN
+     IF ( LEN( TRIM(name)) == 0 )  CALL error('timing: Invalid name')
+     opr_ = " "
+     IF ( PRESENT(opr) ) opr_ = TRIM(opr)
      !
-     real(DP) :: cput_now
-     !
-     call cti(cput_now)
-     if (present(INIT)) then
-       allocate(cput_seg(ncpu,2),cput_sec(ncpu,2),cput_tot(ncpu,2))
-       cput_seg=0.d0
-       cput_sec=0.d0
-       cput_tot=0.d0
-       cput_tot(myid+1,2)=cput_now
-     endif
-     cput_tot(myid+1,1)=cput_now-cput_tot(myid+1,2)
-     !
-     if (present(INIT_SEC)) cput_sec(myid+1,:)=(/0.d0,cput_now/)
-     if (present(INIT_SEG)) cput_seg(myid+1,:)=(/0.d0,cput_now/)
-     !
-     if (present(SEC)) cput_sec(myid+1,1)=cput_now-cput_sec(myid+1,2)
-     if (present(SEG)) cput_seg(myid+1,1)=cput_now-cput_seg(myid+1,2)
-     !
-     if (present(FIN)) deallocate(cput_seg,cput_sec,cput_tot)
-     !
-   end subroutine
-   !
-   character(schlen) function time_string(tcpu)
-     implicit none
-     real(SP) tcpu
+     IF ( PRESENT( list ) ) THEN
+         listp => list
+     ELSE
+         listp => global_list
+     ENDIF
      ! 
-     ! Work Space
+     CALL clock_find(listp,name,found,index)
+
      !
-     real(SP) ltcpu
-     integer:: d,h,m,s
-     integer, parameter :: st=1
-     ltcpu=abs(tcpu)
-     d=int(ltcpu/86400.d0)
-     ltcpu=ltcpu-d*86400.d0
-     h=int(ltcpu/3600.d0)
-     ltcpu=ltcpu-h*3600.d0
-     m=int(ltcpu/60.d0)
-     s=int(ltcpu-m*60.d0)
-     time_string=' '
-     if (s>=st) write (time_string,'(i2.2,a)') s,'s'
-     if (m/=0)  write (time_string,'(2(i2.2,a))') m,'m-',s,'s'
-     if (h/=0)  write (time_string,'(3(i2.2,a))') h,'h-',m,'m-',s,'s'
-     if (d/=0)  write (time_string,'(4(i2.2,a))') d,'d-',h,'h-',m,'m-',s,'s'
-   end function
-   !
-   subroutine LIVE_message(lfmt,message,rfmt,sfmt,NO_CPUT)
+     ! clock NOT found
      !
-     !C simple message:
-     !
-     ! lfmt    =left formatting (n nn r)
-     ! message =Message
-     ! rfmt    =right formatting (n nn r)
-     ! sfmt    =Message formatting
-     !
-     use stderr,     ONLY : c_print,logfile,tty_size,write_to_log
-     use parallel_m, ONLY : myid,ncpu,master_cpu
-     implicit none
-     character(*)      :: lfmt,message,rfmt,sfmt
-     logical, optional :: NO_CPUT
-     ! 
-     ! Work Space
-     !
-     character(lchlen):: lch,fmt,message_composed,time_is_now_string 
-     logical          :: add_cput
-     !
-     if (.not.write_to_log) return
-     !
-     ! Update the reference CPUT
-     !
-     message_composed=trim(message)
-     if (ncpu/=1.and.parallel_timing.and.(index(lfmt,"n")>0.or.index(lfmt,"r")>0.)) then
-       write (message_composed,'(a,i3.3,2a)') 'P',myid+1,': ',trim(message)
-     endif
-     add_cput=live_timing_is_on
-     if (present(NO_CPUT)) then
-       add_cput=.not.NO_CPUT
-     endif
-     if (add_cput) then
+     IF ( .NOT. found ) THEN
        !
-       ! Update cput_tot
+       IF ( .NOT. PRESENT(opr) .OR. TRIM(opr_) == "start" .OR. TRIM(opr_) == "START") THEN
+         opr_ = "start"
+         CALL clock_allocate(TRIM(name), listp%nclock, listp%clock(index))
+       ELSE 
+         CALL error('timing: Clock NOT found for operation '//TRIM(opr_)//' in '&
+                     //TRIM(name))
+       ENDIF
        !
-       call ct()
+     ELSE
        !
-       time_is_now_string=time_string(cput_tot(myid+1,1))
-       if (len_trim(time_is_now_string)==0) time_is_now_string='---'
-       write (lch,'(4a)') ' <',trim(time_is_now_string),'> ',trim(message_composed)
-       message_composed=lch
-     endif
-     !
-     ! TTY is active ? 
-     !
-     if (tty_size>0) then
-       call c_print(lfmt,trim(message_composed),rfmt,sfmt)
-       return
-     endif
-     !
-     ! ELSE write to log_file (if log_line_to_dump=.TRUE.)
-     !
-     ! The idea is :  lfmt message_composed rfmt ->   log_line(in)  screen     log_line(out)
-     !                "n"  "A"              ""        "??"          "??"       "A"
-     !                "n"  "B"              ""        "A"           "A"        "B"
-     ! or
-     !                "n"  "A"              ""        "??"          "??"       "A"
-     !                ""   "B"              "n"       "A"           "AB"       ""
-     ! or
-     !                "n"  "A"              ""        "??"          "??"       "A"
-     !                ""   "B"              ""        "A"           ""         "AB"
-     !
-     if (index(trim(lfmt),"n")>0) then
-       open(unit=13,file=trim(logfile),position='append')
-       if (trim(lfmt)=="nn") write (13,'(a/)') ""
-       if (master_cpu) write (13,'(a)') trim(log_line)
-       if (.not.master_cpu.and.len_trim(log_line)>0) write (13,'(a)') trim(log_line)
-       log_line=trim(message_composed) 
-       if (trim(rfmt)=="n".or.trim(rfmt)=="nn") log_line=""
-       if (trim(rfmt)=="nn") write (13,'(a/)') ""
-       close(13)
-       return
-     endif
-     fmt='(2a)'
-     if (trim(message)=='|'.and.nhash/=hashes_done) then
-       write (fmt,'(a,i2.2,a)') '(a,',nhash-hashes_done,'x,a)'
-     endif
-     write (lch,trim(fmt)) trim(log_line),trim(message_composed)
-     log_line=lch
-     if (index(trim(rfmt),"n")>0) then
-       open(unit=13,file=trim(logfile),position='append')
-       if (master_cpu) write (13,'(a)') trim(log_line)
-       if (.not.master_cpu.and.len_trim(log_line)>0) write (13,'(a)') trim(log_line)
-       if (trim(rfmt)=="nn") write (13,'(a/)') ""
-       close(13)
-       log_line=""
-     endif
-     !
-   end subroutine
-   !
-   subroutine live_timing_activate(name,steps,SERIAL)
-     use stderr,     ONLY : tty_size,write_to_log
-     implicit none
-     character(*)      :: name
-     logical           :: SERIAL
+       ! clock found
+       !
+       IF ( listp%clock(index)%running )  THEN
+         IF ( PRESENT(opr) .AND. TRIM(opr_) /= "stop" .AND. TRIM(opr_) /= "STOP" )  &
+           CALL error('timing: Operation '//TRIM(opr_)//' NOT allowed in '&
+                       //TRIM(name))
+         opr_ = "stop"
+       ELSE
+          IF ( .NOT. PRESENT(opr) )  opr_ = "start"
+       ENDIF
+       !
+     ENDIF
      ! 
-     ! Work Space
-     !
-     integer      :: steps
-     !
-     timing_name=name
-     hashes_done=0
-     hashes_now=0
-     time_steps=steps
-     steps_done=0
-     cput_save=0.
-     call ct(INIT_SEG=.true.)
-     if (tty_size>0) call LIVE_message("n",trim(name),"","%s")
-     call live_timing_update("--","--")
-     if (.not.SERIAL) then
-       write_to_log=.true.
-       parallel_timing=.true.
-     endif
-   end subroutine
-   !
-   subroutine live_timing_add(steps)
-     use parallel_m, ONLY : myid,master_cpu
-     implicit none
-     integer :: steps
+     ! case selection
      ! 
-     ! Work Space
+     SELECT CASE ( TRIM(opr_) )  
+       CASE("start","START") 
+         CALL clock_start( listp%clock(index) ) 
+       CASE("stop","STOP")
+         CALL clock_stop( listp%clock(index) ) 
+       CASE DEFAULT
+         CALL error('timing:  Invalid operation '//TRIM(opr_))
+     END SELECT
      !
-     character(schlen)  :: xtch,etch
-     real(SP),parameter :: rts=5.,p_delay=10.
-     real(SP) :: lts
-     logical  :: time_report
-     !
-     time_report=.false.
-     !
-     call ct(SEG=.true.)
-     steps_done=steps_done+steps
-     hashes_now=int(real(steps_done)/real(time_steps)*real(nhash))
-     if (hashes_now==hashes_done) return
-     !
-     etch=time_string(cput_seg(myid+1,1)) 
-     if (len_trim(etch)==0) etch='--'
-     time_report=cput_seg(myid+1,1)-cput_save>=rts+p_delay*myid
-     if (.not.time_report) time_report=all((/master_cpu,steps_done==time_steps/))
-     if (time_report) cput_save=cput_seg(myid+1,1)
-     !
-     if (time_report) then
-       lts=cput_seg(myid+1,1)*real(time_steps)/real(steps_done)
-       xtch=time_string(lts)
-       if (len_trim(xtch)==0) xtch='--'
-       if (trim(xtch)/='--'.or.master_cpu) call live_timing_update(trim(xtch),trim(etch))
-     endif
-     !
-   end subroutine
+   END SUBROUTINE timing
    !
-   subroutine live_timing_update(xch,ech)
-     use stderr,     ONLY : tty_size
-     use parallel_m, ONLY : master_cpu
-     implicit none
-     character(*)::xch,ech
-     ! 
-     ! Work Space
+   SUBROUTINE timing_allocate(nclock_max_)
+     IMPLICIT NONE
+     INTEGER,             INTENT(in)  :: nclock_max_
      !
-     integer          :: perc,i1
-     character(schlen):: lch,lfmt,lmsg
+     IF ( nclock_max_ < 1 ) CALL error('timing_allocate:  Invalid NCLOCK_MAX')
      !
-     if (hashes_now==hashes_done.and.steps_done/=0) return
-     if (steps_done==0.and..not.master_cpu) return
+     ! public clocks
      !
-     ! Write the descriptor 
+     global_list%alloc = .FALSE.
+     CALL clock_list_allocate(global_list,nclock_max_,'global')
      !
-     write (lch,'(2a)') trim(timing_name),' |'
-     if (tty_size>0) call LIVE_message("r",lch,"","%s")
-     if (tty_size<0) call LIVE_message("n",lch,"","%s")
+     ! internal clock
      !
-     ! Write the progression bar
+     internal_list%alloc = .FALSE.
+     CALL clock_list_allocate(internal_list,1,'internal')
+     CALL clock_allocate('internal',internal_list%nclock,internal_list%clock(1))
+     CALL clock_start(internal_list%clock(1))
+     alloc = .TRUE.
      !
-     if (hashes_now/=hashes_done) hashes_done=hashes_now
-     do i1=1,hashes_done
-       call LIVE_message("","#","","%s",NO_CPUT=.true.)
-     enddo
-     i1=nhash-hashes_done+1 
-     if (hashes_done==nhash) i1=0
-     if (i1>=10) write (lfmt,'(a,i2.2,a)') '%',nhash-hashes_done+1,'s'
-     if (i1< 10) write (lfmt,'(a,i1.1,a)') '%',nhash-hashes_done+1,'s'
-     call LIVE_message("","|","",lfmt,NO_CPUT=.true.)
-     perc=int(real(steps_done)/real(time_steps)*100.)
-     write (lmsg,'(1x,a,i3.3,5a)') '[',perc,'%] ',ech,'(E) ',xch,'(X)'
-     call LIVE_message("",lmsg,"","%s",NO_CPUT=.true.)
-     !
-   end subroutine
+   END SUBROUTINE timing_allocate
    !
-   subroutine live_timing_finalize
-     use stderr,     ONLY : write_to_log
-     use parallel_m, ONLY : master_cpu
-     implicit none
-     parallel_timing=.false.
-     write_to_log=master_cpu
-   end subroutine
+   SUBROUTINE timing_deallocate()
+     IMPLICIT NONE
+     CALL clock_list_deallocate(global_list)
+     CALL clock_stop(internal_list%clock(1))
+     CALL clock_list_deallocate(internal_list)
+     alloc = .FALSE.
+   END SUBROUTINE timing_deallocate
    !
-   ! COPYRIGHT
-   ! Copyright (C) 1998-2002 ABINIT group (DCA, XG, GMR, LSI, MM, MT)
-   ! This file is distributed under the terms of the
-   ! GNU General Public License, see ~ABINIT/Infos/copyright
-   ! or http://www.gnu.org/copyleft/gpl.txt .
-   ! 
-   ! NOTES
-   ! For CPU time, contains machine-dependent code (choice will be selected
-   ! by c preprocessor).
-   ! Note that all supported machines are listed explicitly below; there
-   ! is no "else" which covers "other".  The C preprocessor will place
-   ! a spurious line of code (see below) into the fortran source unless
-   ! preprocessed with -Dflag where flag refers to one of the supported machines.
+   SUBROUTINE clock_list_allocate(obj,nclock_max_,name)
+     IMPLICIT NONE
+     TYPE(clock_list),       INTENT(inout) :: obj    
+     INTEGER,                INTENT(in)    :: nclock_max_     
+     CHARACTER(*),           INTENT(in)    :: name
+     CHARACTER(19)                         :: sub_name='clock_list_allocate'
+     INTEGER                               :: iclock, ierr
+     !
+     IF ( obj%alloc ) CALL error(sub_name//': List already allocated')
+     IF ( nclock_max_ < 1 ) CALL error(sub_name//': Invalid NCLOCK_MAX')
+     IF ( LEN_TRIM(name) == 0) CALL error(sub_name//': Invalid NAME')
+     !
+     ALLOCATE( obj%clock(nclock_max_), STAT=ierr )
+     IF ( ierr /= 0 ) CALL error(sub_name//': Unable to allocate CLOCK')
+     !
+     DO iclock=1,nclock_max_
+       obj%clock(iclock)%alloc = .FALSE.
+     ENDDO
+     !
+     obj%name = TRIM(name)
+     obj%nclock = 0
+     obj%nclock_max = nclock_max_
+     obj%alloc=.TRUE.
+   END SUBROUTINE clock_list_allocate
    !
-   ! Presently supported flags: "ibm", "hp", "P6", "dec_alpha", "irix",
-   !    "T3E", "T3Efhi", "vpp", "sun", "mac", "nec", "sr8k".
-   ! Previously supported flags:  "ultrix". Might still work !
+   SUBROUTINE clock_list_deallocate(obj)
+     IMPLICIT NONE
+     TYPE(clock_list),       INTENT(inout) :: obj    
+     CHARACTER(21)                         :: sub_name='clock_list_deallocate'
+     INTEGER                               :: ierr
+     IF ( .NOT. obj%alloc ) CALL error(sub_name//': List not yet allocated')
+     DEALLOCATE( obj%clock, STAT=ierr)
+     IF ( ierr /= 0 ) CALL error(sub_name//': Unable to deallocate CLOCK')
+     obj%nclock = 0
+     obj%nclock_max = 0
+     obj%alloc=.FALSE.
+   END SUBROUTINE clock_list_deallocate
    !
-   ! Calls machine-dependent "mclock" for "ibm" .
-   ! Calls machine-dependent "second" for "T3E", "T3Efhi".
-   ! Calls ANSI C subroutine "cclock" for "hp", "ultrix", "irix", "PGIWin".
-   ! Calls machine-dependent "etime" for "P6", "mac", "dec_alpha", "sun", "nec" .
-   ! Calls machine-dependent "clock" for "vpp"
-   ! Calls machine-dependent "xclock" for "sr8k"
+   SUBROUTINE clock_allocate(name,nclock,obj)
+     IMPLICIT NONE
+     CHARACTER(*),          INTENT(in)    :: name
+     INTEGER,               INTENT(inout) :: nclock
+     TYPE(clock),           INTENT(inout) :: obj    
+     !
+     IF ( obj%alloc ) CALL error('clock_allocate: Clock already allocated')
+     IF ( LEN( TRIM(name)) == 0 )  CALL error('clock_allocate:  Invalid name')
+     !
+     nclock = nclock + 1
+     obj%name=TRIM(name)
+     obj%call_number=0
+     obj%start=0.0
+     obj%stop=0.0
+     obj%total_time=0.0
+     obj%running=.FALSE.
+     obj%alloc=.TRUE.
+   END SUBROUTINE clock_allocate
    !
-   subroutine cti(tcpu)
-     implicit none
-     real(DP) tcpu
-#if defined _irix
-     external cclock
-     call cclock(tcpu)      
-#endif 
-#if defined _linux || defined _apple
-     call cpu_time(tcpu)  ! standard fortran 95 function
+   SUBROUTINE clock_assignment(obj1,obj2)
+     IMPLICIT NONE
+     TYPE(clock),    INTENT(inout) :: obj1    
+     TYPE(clock),    INTENT(in)    :: obj2    
+     IF ( .NOT. obj2%alloc ) CALL error('clock_assignment:  Clock2 not allocated')
+     obj1%name = obj2%name
+     obj1%call_number = obj2%call_number
+     obj1%start = obj2%start
+     obj1%stop = obj2%stop
+     obj1%total_time = obj2%total_time
+     obj1%running = obj2%running
+     obj1%alloc = .TRUE.
+   END SUBROUTINE clock_assignment
+   !
+   SUBROUTINE clock_find(list,name,found,index)
+     IMPLICIT NONE
+     TYPE(clock_list),      INTENT(in)    :: list
+     CHARACTER(*),          INTENT(in)    :: name
+     LOGICAL,               INTENT(out)   :: found
+     INTEGER,               INTENT(out)   :: index
+     INTEGER                              :: i
+     IF ( .NOT. list%alloc ) CALL error('clock_find:  List not yet allocated')
+     IF ( LEN( TRIM(name)) == 0 )  CALL error('clock_find:  Invalid name')
+     found = .FALSE.
+     index = 0
+     DO i=1,list%nclock
+       IF ( TRIM(list%clock(i)%name) == TRIM(name) .AND. list%clock(i)%alloc ) THEN 
+         index = i
+         found = .TRUE.
+         EXIT
+       ENDIF
+     ENDDO
+     !
+     ! clock not found, pointing to next available clock
+     !
+     IF ( .NOT. found ) index = list%nclock + 1
+     IF ( index > list%nclock_max ) CALL error('clock_find:  too many clocks')
+     !
+   END SUBROUTINE clock_find
+   !
+   SUBROUTINE clock_start(obj)
+     use LIVE_t, ONLY:cti
+     IMPLICIT NONE
+     TYPE(clock),            INTENT(inout) :: obj    
+     IF ( .NOT. obj%alloc  ) CALL error('clock_start:  clock not yet allocated')
+     call cti(obj%start)
+     obj%running = .TRUE.
+     obj%call_number = obj%call_number + 1
+   END SUBROUTINE clock_start
+   !
+   SUBROUTINE clock_stop(obj)
+     use LIVE_t, ONLY:cti
+     IMPLICIT NONE
+     TYPE(clock),           INTENT(inout) :: obj    
+     IF ( .NOT. obj%alloc  )   CALL error('clock_stop:  Clock NOT allocated')
+     IF ( .NOT. obj%running  ) & 
+           CALL error('clock_stop:  Clock '//TRIM(obj%name)//'NOT running')
+     call cti(obj%stop)
+#if defined _BLUEGENE
+     obj%total_time = obj%total_time + real(obj%stop-obj%start,DP)
+#else
+     obj%total_time = obj%total_time + real(obj%stop-obj%start,DP)
 #endif
-#if defined _ibm || defined _aix || defined _ppc_linux
-     integer :: mclock
-     tcpu = mclock()*0.01d0
-#endif
-   end subroutine
+     obj%running = .FALSE.
+   END SUBROUTINE clock_stop
    !
-end module 
+   SUBROUTINE clock_update(obj)
+     IMPLICIT NONE
+     TYPE(clock),           INTENT(inout) :: obj    
+     IF ( obj%running ) THEN 
+       CALL clock_stop(obj) 
+       CALL clock_start(obj) 
+       obj%call_number = obj%call_number -1 
+     ENDIF
+   END SUBROUTINE clock_update
+   !
+   SUBROUTINE clock_write(obj,form)
+     use pars,       ONLY:lchlen
+     use LIVE_t,     ONLY:LIVE_message
+     use com,        ONLY:msg
+     IMPLICIT NONE
+     TYPE(clock),         INTENT(inout) :: obj    
+     CHARACTER(*), OPTIONAL, INTENT(in) :: form
+     CHARACTER(3)                       :: form_
+     CHARACTER(256)                     :: str
+     CHARACTER(lchlen)                  :: local_ch
+     INTEGER                            :: nhour,nmin
+     INTEGER                            :: call_number
+     REAL(DP)                           :: total_time
+     REAL(DP)                           :: nsec
+     !
+     form_="sec"
+     IF ( PRESENT(form) ) form_ = TRIM(form)
+     CALL clock_update(obj)
+     !
+     ! define an average over the pools
+     !
+     total_time  = obj%total_time
+     call_number = obj%call_number
+     !
+     ! do suitable averages only for MPI related clocks
+     !
+     str = obj%name
+     str(4:) = ' '
+     IF ( TRIM(str) == 'mp_' .OR. TRIM(str) == 'para_' ) THEN
+       !
+       CALL PP_redux_wait( total_time )
+       total_time = total_time / REAL( ncpu, DP )
+       !
+       CALL PP_redux_wait( (/call_number/) )
+       call_number = NINT ( call_number / REAL( ncpu, DP ) )
+       !
+     ENDIF
+     !
+     SELECT CASE ( TRIM(form_) ) 
+       CASE ( "hms" )
+         nhour = INT( total_time / 3600 )
+         nmin =  INT( (total_time-3600 * nhour) / 60 )
+         nsec =  INT( total_time-3600 * nhour - 60 * nmin )
+         IF ( call_number == 1 )  THEN
+           IF (nhour > 0) THEN
+             WRITE (local_ch, '(a20," : ",3x,i2,"h",i2,"m CPU ")') &
+                         TRIM(obj%name), nhour, nmin
+           ELSEIF (nmin > 0) THEN
+             WRITE (local_ch, '(a20," : ",i2,"m",f5.2,"s CPU ")') &
+                   TRIM(obj%name), nmin, nsec
+           ELSE
+             WRITE (local_ch, '(a20," : ",3x,f5.2,"s CPU ")') &
+                   TRIM(obj%name), nsec
+           ENDIF
+           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+           call msg('r',local_ch(:100))
+         ELSE
+           IF (nhour > 0) THEN
+             WRITE(local_ch,'(a20," : ",3x,i2,"h",i2,"m CPU (", &
+                   &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nhour, nmin, &
+                   call_number , total_time / REAL( call_number, DP )
+           ELSEIF (nmin > 0) THEN
+             WRITE (local_ch, '(a20," : ",i2,"m",f5.2,"s CPU (", &
+                   &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nmin, nsec, &
+                        call_number , total_time / REAL( call_number, DP )
+           ELSE
+             WRITE (local_ch, '(a20," : ",3x,f5.2,"s CPU (", &
+                   &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
+                        call_number , total_time / REAL( call_number, DP )
+           ENDIF
+           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+           call msg('r',local_ch(:100))
+         ENDIF
+       CASE ( "sec" )
+         !
+         ! time in seconds
+         !
+         IF ( call_number == 1) THEN
+           WRITE (local_ch, '(a20," :",f9.2,"s CPU")') TRIM(obj%name), total_time
+         ELSE
+           WRITE (local_ch, '(a20," :",f9.2,"s CPU (", i8," calls,",f8.3," s avg)")')  &
+                        TRIM(obj%name) , total_time , call_number ,   &
+                        total_time / REAL( call_number, DP )
+         ENDIF
+         if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+         call msg('r',local_ch(:100))
+       CASE DEFAULT
+         CALL error('clock_write:  Invalid FORM '//TRIM(form_) )
+     END SELECT
+     !
+   END SUBROUTINE clock_write        
+   !
+   SUBROUTINE timing_upto_now()
+     use pars,    ONLY:lchlen
+     use com,     ONLY:msg
+     use stderr,  ONLY:real2ch
+     use LIVE_t,  ONLY:LIVE_message
+     IMPLICIT NONE
+     REAL(SP) :: total_time
+     character(lchlen)::ch
+     !
+     IF ( .NOT. internal_list%alloc ) & 
+          CALL error('timing_upto_now:  Internal clock not allocated')
+     CALL clock_update(internal_list%clock(1))
+     !
+     ! recovering over pools may create deadlocks
+     !
+     total_time = real(internal_list%clock(1)%total_time,SP)
+     !
+     ch='             [Time-Profile]: '//trim(real2ch(total_time))//'s'
+     call msg('rn',ch(:100))
+     if (ncpu>1) call LIVE_message(message=ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+     !
+   END SUBROUTINE timing_upto_now    
+   !
+   SUBROUTINE timing_overview(list,main_name)
+     use LIVE_t,     ONLY:LIVE_message
+     use com,        ONLY:msg
+     IMPLICIT NONE
+     TYPE(clock_list),       INTENT(in) :: list
+     CHARACTER(*),           INTENT(in) :: main_name
+     TYPE(clock)                        :: tmp_clock
+     INTEGER                            :: i
+     !
+     IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
+     !
+     if (ncpu>1) call LIVE_message(message='Routines: '//TRIM(list%name),lfmt="n",CPU_TIME=.FALSE.)
+     call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')
+     !
+     IF ( list%nclock == 0 ) THEN
+       if (ncpu>1) call LIVE_message(message='No clock to display',lfmt="n",CPU_TIME=.FALSE.)
+       call msg('r','No clock to display')
+       RETURN
+     ENDIF
+     !
+     DO i=1,list%nclock 
+       !
+       tmp_clock = list%clock(i)
+       CALL clock_write(tmp_clock,FORM="hms")
+       !
+     ENDDO
+     !
+   END SUBROUTINE timing_overview
+   !
+END MODULE timing_m

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,10 +25,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  use YPP
  use pars,           ONLY:pi
+ use interpolate,    ONLY:lpfac
  use units,          ONLY:HA2EV,FS2AUT
- use wave_func,      ONLY:wf_ng 
  use D_lattice,      ONLY:alat,i_time_rev
- use R_lattice,      ONLY:ng_vec,nkibz
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls,runlevel_is_on,&
@@ -36,10 +37,12 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  use stderr,         ONLY:string_split
  use electrons,      ONLY:n_spin,n_bands,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
- use timing,         ONLY:what_is_running
- use QP_m,           ONLY:QP_state
+ use LIVE_t,         ONLY:what_is_running
 #if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
+#endif
+#if defined _YPP_SURF
+ use R_lattice,      ONLY:nkibz
 #endif
  implicit none
  type(levels)     ::E
@@ -51,9 +54,10 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  logical          ::l_QP_init
  type(initdefs)   ::defs
- integer          ::i1,i2, ng_save
+ integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
  !
+ integer, external::parse_character_arrays
  !
  ! What is running ?
  !
@@ -82,11 +86,25 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  dos_E_range=(/1.,-1./)/HA2EV
  dos_E_steps=500
  !
+ !
+ ! RT OCCUPATIONS and DOS
+ !
+ !
+ l_RealTime=.FALSE.
+ l_RT_X=.FALSE.
+ l_RT_abs=.FALSE.
+ l_RT_occ_Plot=.FALSE.
+ l_RT_occ_Fit=.FALSE.
+ l_RT_dos=.FALSE.
+ l_RT_occ_Bands=.FALSE.
+ l_RT_life_Bands=.FALSE.
+ !
+ !
  ! BANDS
  !
  BANDS_steps=0
- BANDS_range=(/1,n_bands/)
  l_bands=.false.
+ lpfac=20._SP
  interp_grid = (/-1, -1, -1/)
  !
  !
@@ -97,6 +115,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  p_format   ='g'
  l_exc_wf   =.false.
  l_density  =.false.
+ l_current  =.false.
  V_value    ='RE'
  l_mag=.false.
  l_sp_wf=.false.
@@ -183,7 +202,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  !BZ RIM
  !
- BZ_RIM_path="."
  gamma_radius=0.
  !
  ! BXSF interpolation
@@ -195,6 +213,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! DATABASES 
  !===========
+ !
  !
  !
  !
@@ -275,11 +294,12 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
        !
+       l_current        =trim(rstr_piece(i1+1))=='c'
        l_density        =trim(rstr_piece(i1+1))=='d'
        l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        l_bands          =trim(rstr_piece(i1+1))=='b'
-       l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       l_mag            =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
        !
 #if defined _YPP_ELPH
        l_eliashberg       =trim(rstr_piece(i1+1))=='e'
@@ -287,6 +307,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
        !
        !
      endif
+     !
+     !    
      if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
        if (l_amplitude)      call initactivate(1,'amplitude')
        if (l_spin)           call initactivate(1,'spin')
@@ -296,6 +318,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
        if (l_eliashberg)       call initactivate(1,'eliashberg')
        if (l_gkkp)             call initactivate(1,'gkkp')
 #endif
+       if (l_current)        call initactivate(1,'current')
        if (l_density)        call initactivate(1,'density')
        if (l_sort)           infile_editing=.false.
      endif
@@ -305,6 +328,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'electrons') then
        if (l_bands)          call initactivate(1,'bnds')
      endif
+
    enddo
  enddo
  !
@@ -326,12 +350,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
-&             runlevel_is_on('density')/))
+&             runlevel_is_on('density'),runlevel_is_on('current')/))
  l_free_hole=runlevel_is_on('freehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
+ l_current  =runlevel_is_on('current').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
  l_wannier  =runlevel_is_on('wannier')
  l_spin     =runlevel_is_on('spin')
@@ -351,9 +376,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    endif
  endif
  !
- if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range INTERPGrid")
+ if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps INTERPGrid ShellFac NormN NelFac")
  !	   
  l_bzrim     =runlevel_is_on('bzrim')
+ !
+ l_map_kpts  = runlevel_is_on('kpts_map')
  !
  l_bxsf      =runlevel_is_on('bxsf')
  !
@@ -371,14 +398,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  !
  !
- if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
+ if (l_bzrim)    call initactivate(1,"BZ_RIM_Nk cooOut OutputAlat GammaRadius")
+ !
+ if (l_map_kpts) call initactivate(1,"BZ_RIM_Nk SkipCheck noBZExpand NoWeights")
  !
  if (l_electrons) then
-    if (l_dos.or.l_bands) call QP_ctl_switch('G')
-    if (l_dos) then
-      call initactivate(1,"OCCdT OCCTime")
-      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad PrtOccOnly")
-    endif
+   if (l_dos.or.l_bands) call init_QP_ctl_switch('G')
+   if (l_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands")
  endif
  !
  !
@@ -389,12 +415,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    if (l_sp_wf) call initactivate(1,"ResTresh")  
 #endif
    if (l_mag)   call initactivate(1,"MagDir") 
+   if (l_current) call initactivate(1,'CurrentDir')
  endif
  !
  if (l_excitons) then
    call initactivate(1,"States")
    if (l_amplitude) then
-     call QP_ctl_switch('G')
+     call init_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")
    endif
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
@@ -407,8 +434,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF")
- if (l_phonons.and.l_eliashberg)   call initactivate(1,"EEfermi EfGbroad")
+ if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
  !
@@ -446,12 +473,17 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_merge) call QP_DBs_initialize()
  !
- l_QP_init=l_plot.and.l_sp_wf
+ l_QP_init=(l_plot.and.l_sp_wf).or.l_bands
 #if defined _YPP_ELPH
  if (.not.l_QP_init) l_QP_init=l_electrons.and.l_eliashberg
 #endif
  !
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)
+ !
+ if (l_map_kpts) then
+   n_RIM_DBs=parse_character_arrays(RIM_DB1_paths,MAX_RIM_DBs,"RIM_DB1_paths",.TRUE.)
+   if (infile_editing) i1=parse_character_arrays(RIM_DB1_paths,n_RIM_DBs,"RIM_DB1_paths",.FALSE.)
+ endif
  !
 contains
  !

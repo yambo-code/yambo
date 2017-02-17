@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 D. Sangalli, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,19 +24,19 @@
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,warning,core_io_path,more_io_path
- use drivers,             ONLY:l_sc_run
+ use com,                 ONLY:msg,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
-&                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO, &
-&                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
- use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
- &                             wf_state,WF_load,wf_state,wf,WF_free,wf_nb_io_groups
- use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
- use timing,              ONLY:live_timing
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
+&                              OP_APP,cp_file,cp_directory,Fragmented_IO, &
+&                              io_fragmented,OP_RD_CL,RD_CL,RD
+ use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
+ &                             WF,wf_nb_io_groups
+ use electrons,           ONLY:levels,E_reset,n_spin
+ use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz,ng_vec
  use D_lattice,           ONLY:spin_sop
+ use interfaces,          ONLY:WF_load
  !
  implicit none
  !
@@ -76,18 +78,18 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  ! External functions
  !
- integer, external :: ioDB1
+ integer, external :: io_DB1
  !
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
- io_err=ioWF(ID)
+ io_err=io_WF(ID)
  Fragmented_IO=io_fragmented(ID)
  !
  core_io_path_save=core_io_path
  core_io_path=more_io_path
  !
  call section('=',"Energies and WFs shells")
- !===========================
+ !===========================================
  !
  allocate(wf_igk_save(wf_ncx,k_save%nibz))
  wf_nc_k_save=wf_nc_k
@@ -117,7 +119,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  call msg('s',':: I/O...')
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
- io_err=ioDB1(E_new,k,ID)
+ io_err=io_DB1(E_new,k,ID)
  call msg('l','done')
  !
  ng_closed=ng_closed_save
@@ -168,7 +170,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      call live_timing('WFs comp. reduction',k_save%nibz)
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-     io_err=ioWF(ID)
+     io_err=io_WF(ID)
      !
      ACTION_=OP_APP_WR_CL
      if(Fragmented_IO) ACTION_=OP_WR_CL
@@ -187,13 +189,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k_save%nibz
          wf_ncx=wf_ncx_save
          core_io_path=core_io_path_save
-         call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
          !
          do ib=nb1,nb2
            do i_spin=1,n_spin
-             i_wf=wf_state(ib,ik_save,i_spin)
-             wf_disk(1,ib,:wf_nc_k_new(ik),i_spin)=  real(wf(:wf_nc_k_save(ik_save),i_wf))
-             wf_disk(2,ib,:wf_nc_k_new(ik),i_spin)= aimag(wf(:wf_nc_k_save(ik_save),i_wf))
+             i_wf=WF%index(ib,ik_save,i_spin)
+             wf_disk(1,ib,:wf_nc_k_new(ik),i_spin)=  real(WF%c(:wf_nc_k_save(ik_save),i_wf))
+             wf_disk(2,ib,:wf_nc_k_new(ik),i_spin)= aimag(WF%c(:wf_nc_k_save(ik_save),i_wf))
            enddo
          enddo
          !
@@ -201,7 +203,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
          call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
-         io_err=ioWF(ID,wf=wf_disk)
+         io_err=io_WF(ID,wf=wf_disk)
          !
        enddo
        !
@@ -246,7 +248,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nkibz=k_save%nibz
        wf_ncx=wf_ncx_save
        core_io_path=core_io_path_save
-       call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
        !
        do ib=nb1,nb2
          !
@@ -254,9 +256,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          !
          do i_spin=1,n_spin
            !
-           i_wf=wf_state(ib,ik_save,i_spin)
+           i_wf=WF%index(ib,ik_save,i_spin)
            !
-           forall(ic=1:wf_nc_k_save(ik_save)) wf_tmp(ic_rot_table(ic),i_spin)=wf(ic,i_wf)
+           forall(ic=1:wf_nc_k_save(ik_save)) wf_tmp(ic_rot_table(ic),i_spin)=WF%c(ic,i_wf)
            !
          enddo
          !
@@ -272,7 +274,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
-       io_err=ioWF(ID,wf=wf_disk)
+       io_err=io_WF(ID,wf=wf_disk)
        !
      enddo
      !
@@ -290,7 +292,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call msg('s',':: WFs reduction...')
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-   io_err=ioWF(ID)
+   io_err=io_WF(ID)
    !
    allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
@@ -312,13 +314,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nkibz=k_save%nibz
        wf_ncx=wf_ncx_save
        core_io_path=core_io_path_save
-       call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
        !
        do ib=nb1,nb2
          do i_spin=1,n_spin
-           i_wf=wf_state(ib,ik_save,i_spin)
-           wf_disk(1,ib,1:wf_ncx_new,i_spin)= real(wf(1:wf_ncx_new,i_wf))
-           wf_disk(2,ib,1:wf_ncx_new,i_spin)= aimag(wf(1:wf_ncx_new,i_wf))
+           i_wf=WF%index(ib,ik_save,i_spin)
+           wf_disk(1,ib,1:wf_ncx_new,i_spin)= real(WF%c(1:wf_ncx_new,i_wf))
+           wf_disk(2,ib,1:wf_ncx_new,i_spin)= aimag(WF%c(1:wf_ncx_new,i_wf))
          enddo
        enddo
        !
@@ -326,7 +328,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
-       io_err=ioWF(ID,wf=wf_disk)
+       io_err=io_WF(ID,wf=wf_disk)
        !
      enddo
      !
@@ -338,7 +340,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ! 
  if(Fragmented_IO) then
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-   io_err=ioWF(ID)
+   io_err=io_WF(ID)
  endif
  !
  core_io_path=core_io_path_save
@@ -356,7 +358,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ! CLEAN
  !=======
  call E_reset(E_new)
- call WF_free()
+ call WF_free(WF)
  deallocate(wf_disk)
  call mem_est("wf_disk")
  !

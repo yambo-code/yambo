@@ -41,9 +41,9 @@ AC_ARG_ENABLE(3d_fft,AC_HELP_STRING([--enable-3d-fft],[Use 3D FFT]),[],[])
 AC_ARG_WITH(fftsg_fac, AC_HELP_STRING([--with-fftsg-fac=<val>],
             [Change default Goedecker FFT cache factor],[32]))
 
+if ! test x"$enable_3d_fft" = "xno" ; then FFT3D_CPP="-D_USE_3D_FFT" ; fi
 #
 HAVE_FFT="no"
-FFT_str="-"
 save_ldflags="$LDFLAGS"
 try_libs=
 
@@ -132,15 +132,15 @@ if ! test x"$try_libs" = "x" ; then
     if test "$HAVE_FFTW_OMP" = "yes" ; then FFT_CPP="-D_FFTW -D_FFTW_OMP" ; fi
     #
     if test "$try_libs" = "-lfftw3" ; then
-      FFT_DESCRIPTION="(FFTW v3)";
+      FFT_DESCRIPTION="FFTW (v3) Fast Fourier transform";
       AC_MSG_RESULT(FFTW3)
     elif test "$try_libs" = "-lfftw3 -lfftw3_omp" && test "$HAVE_FFTW_OMP" = "yes" ; then
-      FFT_DESCRIPTION="(FFTW_OMP v3)";
+      FFT_DESCRIPTION="FFTW_OMP (v3) Fast Fourier transform";
       AC_MSG_RESULT(FFTW3_OMP)
     else 
       desc=Other
       if ! test -z "`echo $try_libs | grep -i mkl`" ; then desc="MKL" ; fi  
-      FFT_DESCRIPTION="(FFTW $desc)";
+      FFT_DESCRIPTION="FFTW ($desc) Fast Fourier transform";
       AC_MSG_RESULT(FFTW ($desc) )
     fi
     FFT_LIBS="${FFT_PATH} ${try_libs}"
@@ -149,11 +149,10 @@ if ! test x"$try_libs" = "x" ; then
     FFT_LIBS=""
     LDFLAGS="$save_ldflags"
   fi
-  if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes ; FFT_str="E" ;  fi
+  if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes ; fi
 else
   HAVE_FFTW=no
   HAVE_FFT=no
-  FFT_str="-"
 fi
 
 
@@ -185,14 +184,8 @@ if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
   #
   if test "$HAVE_ESSL" = "yes" ; then
     AC_MSG_CHECKING([for FFT])
-    if ! test x"$enable_3d_fft" = "xno" ; then 
-      FFT3D_CPP="-D_USE_3D_FFT"
-      FFT_DESCRIPTION="(FFT ESSL (FFTQE) with 3D support)";
-    else
-      FFT_DESCRIPTION="(FFT ESSL (FFTQE))";
-    fi
     FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
-    FFT_str="E"
+    FFT_DESCRIPTION="ESSL Fast Fourier transform (FFTQE)";
     FFT_LIBS="${FFT_PATH} $try_libs"
     HAVE_FFT=yes
     compile_fftqe=yes
@@ -221,14 +214,8 @@ fi
 # INTERNAL FFTW2
 #
 if test "$use_internal_fftw" = "yes" ; then
-  if ! test x"$enable_3d_fft" = "xno" ; then 
-    FFT3D_CPP="-D_USE_3D_FFT"
-    FFT_DESCRIPTION="Internal FFTW2 (FFTQE) with 3D support";
-  else
-    FFT_DESCRIPTION="Internal FFTW2 (FFTQE)";
-  fi
   FFT_CPP="-D_FFTQE $FFT3D_CPP -D_FFTW2"
-  FFT_str="I"
+  FFT_DESCRIPTION="Internal FFTW2 Fast Fourier transform (FFTQE)";
   FFT_LIBS="";
   HAVE_FFTW=yes
   compile_fftqe=yes
@@ -253,8 +240,7 @@ if test "$use_internal_fftsg" = "yes" ; then
     fft_cfactor="$with_fftsg_fac"
   fi
   #
-  FFT_DESCRIPTION="Internal Goedecker FFT with $fft_cfactor cache"
-  FFT_str="I"
+  FFT_DESCRIPTION="Goedecker Fast Fourier transform with $fft_cfactor cache"
   FFT_CPP="-D_FFTSG"
   FFT_LIBS=""
   HAVE_FFTSG=yes
@@ -268,7 +254,6 @@ if test "$HAVE_FFTSG" = "yes" ; then HAVE_FFT=yes ; fi
 #
 if test x"$compile_fftqe" = "xyes" ; then 
     FFTQELIBS="-lfftqe" 
-    FFT_str="E"
     AC_F77_WRAPPERS
     AC_DEFINE(_FFTQE)
     AC_CONFIG_HEADERS([lib/fftqe/c_defs.h:lib/fftqe/c_defs.h.in])
@@ -276,7 +261,6 @@ if test x"$compile_fftqe" = "xyes" ; then
     #
 fi
 
-AC_SUBST(FFT_str)
 AC_SUBST(FFT_LIBS)
 AC_SUBST(FFT_CPP)
 AC_SUBST(FFT_DESCRIPTION)

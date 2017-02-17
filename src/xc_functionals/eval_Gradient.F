@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini, M. Gruning and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM MG
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -19,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine eval_gradient(f,f_gradient)
+subroutine eval_Gradient(f,f_gradient)
  !
  ! The gradient of a periodic function f(r):
  ! 
@@ -30,9 +32,11 @@ subroutine eval_gradient(f,f_gradient)
  ! \sum f'(G) exp(iGr)       => FFT^-1
  !
  use pars,          ONLY:SP,DP,cI
- use FFT_m,         ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
+ use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
+#if defined _FFTW
+ use FFT_m,         ONLY:fftw_plan
+#endif
  use R_lattice,     ONLY:g_vec
- use D_lattice,     ONLY:alat
  use wave_func,     ONLY:wf_ng
  !
  implicit none
@@ -70,4 +74,4 @@ subroutine eval_gradient(f,f_gradient)
    f_gradient(ic,:) = real(Vr(:),SP)
  enddo
  !
-end subroutine eval_gradient
+end subroutine eval_Gradient

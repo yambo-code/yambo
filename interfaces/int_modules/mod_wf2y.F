@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -25,41 +27,50 @@ module mod_wf2y
  !
  contains
    !
-   subroutine wf_splitter()
+   subroutine WF_splitter()
      !
-     use pars,           ONLY:SP,DP
+     use pars,           ONLY:SP
+     use mod_com2y,      ONLY:wf_nb_io_user
      use units,          ONLY:Megabyte
      use com,            ONLY:msg
      use wave_func,      ONLY:wf_nb_io,wf_nb_io_groups,wf_ncx
-     use electrons,      ONLY:n_bands
+     use electrons,      ONLY:n_bands,n_spin
      !
      ! Work Space
      !
-     real(SP),parameter :: max_wf_block_size=400. ! MB
+     real(SP),parameter :: max_wf_block_size=10._SP ! MB
      real(SP) :: array_sz
      !
      wf_nb_io_groups=1
      wf_nb_io=n_bands
-     !
-     array_sz = DP*n_bands*real(wf_ncx)/Megabyte ! wf_disk_DP
-     !
-     ! No memory problems: no blocks
-     ! 
-     if (array_sz<=max_wf_block_size) return
-     !
-     wf_nb_io_groups = ceiling(array_sz/max_wf_block_size)
-     wf_nb_io        = ceiling(real(n_bands)/wf_nb_io_groups)
-     !
-     if(wf_nb_io_groups .gt. n_bands) then
-       wf_nb_io_groups = n_bands 
-       wf_nb_io = 1
-       return
+     if (wf_nb_io_user>0) then
+       !
+       !if (wf_nb_io_user>=n_bands) return
+       !
+       wf_nb_io=wf_nb_io_user
+       wf_nb_io_groups=ceiling(real(n_bands,SP)/real(wf_nb_io,SP))
+       !
+     else
+       !
+       array_sz = real(2*n_bands*wf_ncx*n_spin*SP,SP)/Megabyte
+       !
+       ! No memory problems: no blocks
+       ! 
+       if (array_sz<=max_wf_block_size) return
+       !
+       wf_nb_io_groups = ceiling(array_sz/max_wf_block_size)
+       wf_nb_io        = ceiling(real(n_bands,SP)/wf_nb_io_groups)
+       !
+       if(wf_nb_io_groups .gt. n_bands) then
+         wf_nb_io_groups = n_bands 
+         wf_nb_io = 1
+       endif
+       !
      endif
      !
-     array_sz = DP*wf_nb_io*real(wf_ncx)/Megabyte
+     array_sz = real(2*wf_nb_io*wf_ncx*n_spin*SP,SP)/Megabyte
      !
-     call msg('s',':: WF splitter Blocks/bands/block size(Mb):',&
-&                     (/wf_nb_io_groups,wf_nb_io,int(array_sz)/))
+     call msg('s',':: WF splitter Blocks/bands/block size(Mb):',(/real(wf_nb_io_groups,SP),real(wf_nb_io,SP),array_sz/))
      !
    end subroutine
    !

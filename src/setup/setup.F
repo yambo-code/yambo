@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,15 +23,14 @@
 !
 subroutine setup(en,Xen,Ken,k,Xk)
  !
- use drivers,        ONLY:l_sc_run
- use units,          ONLY:HA2EV
  use pars,           ONLY:SP,pi,schlen
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,n_sp_pol
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,mag_syms,&
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
+&                         BZ_RIM_nbands,RIM_is_symmetry_expanded,BZ_RIM_tot_nkpts
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_invertion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
-&                         symmetry_group_table,idt_index
+&                         symmetry_group_table,mag_syms,idt_index
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
@@ -44,11 +45,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),m(3,3),Tel_SAVE
- integer           :: i1,i2,i3,is,ia,i_err,nbf_m_SAVE(2)
+ real(SP)          :: rv(3),Tel_SAVE
+ integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2)
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
- integer, external :: k_lattice
+ integer, external :: k_lattice,RIM_grid_consistency_check
  !
  call section('*','CORE Variables Setup') 
  !########################################
@@ -106,11 +107,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                 trim(real2ch(b(1,1)))//' '//trim(real2ch(b(1,2)))//' '//trim(real2ch(b(1,3)))
  call msg('r',dumb_ch1)
  call c2a(b,b(2,:),rv,'kc2i')
- dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+ dumb_ch1='B2 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(2,1)))//' '//trim(real2ch(b(2,2)))//' '//trim(real2ch(b(2,3)))
  call msg('r',dumb_ch1)
  call c2a(b,b(3,:),rv,'kc2i')
- dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+ dumb_ch1='B3 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(3,1)))//' '//trim(real2ch(b(3,2)))//' '//trim(real2ch(b(3,3)))
  call msg('rn',dumb_ch1)
  !
@@ -128,15 +129,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call msg('r','DL (S)ymmetries [cc]')
  !
- ! spin symmetries
+ ! Spin symmetries
+ !
  call build_spin_sop()
  !
- ! reciprocal lattice symmetries
  allocate(rl_sop(3,3,nsym))
  do is=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
    if (is<=nsym/(1+i_time_rev))&
-&    call msg('r','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
+&    call msg('r','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
    if (is>nsym/(1+i_time_rev).and.mag_syms)&
 &    call msg('r','[S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
  enddo
@@ -186,11 +187,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !============================
  !
  call G_shells_finder()
- !
  call msg('rn','Shells, format: [S#] G_RL(mHa)')
  !
- ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G.
- ! When there is no Spatial inversion the map is built in G_shells_finder
+ ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G. When there is no Spatial inversion
+ ! the map is built in G_shells_finder
+ !
  if (inv_index>0) call eval_minus_G()
  !
  do i1=n_g_shells,max(n_g_shells-27,1),-4
@@ -217,6 +218,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=================================
  !
  i_err=k_lattice(k,Xk,1,.TRUE.)
+ !
  if (i_err /= 0 ) then
    call warning('Trying to expand the k-grid')
    call msg('r','')
@@ -227,7 +229,20 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if (i1==i2) i_err=k_lattice(k,Xk,i1,.TRUE.)
      i1=i1+1
    enddo
+   !
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
+   !
+ endif
+ !
+ if (BZ_RIM_nbands>0.and.associated(en%E_RIM)) then
+   !
+   call section('=','Second K-grid')
+   !=======================================
+   !
+   call msg('rn','RIM K-points :',BZ_RIM_tot_nkpts)
+   call msg('rn','RIM bands    :',BZ_RIM_nbands)
+   call msg('rn','RIM expanded :',RIM_is_symmetry_expanded)
+   !
  endif
  !
  if (trim(non_periodic_directions)/="none") then
@@ -279,6 +294,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    en%nbm =nbf_m_SAVE(2)
  endif
  !
+ !
  n_met_bands =en%nbm
  n_full_bands=en%nbf
  !
@@ -291,7 +307,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Once the occupations have been evaluated I dump Xen in Ken
  !
  call E_duplicate(Xen,Ken)
- !
  !
  !
 end subroutine

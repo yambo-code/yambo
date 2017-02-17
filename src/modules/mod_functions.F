@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,6 +27,30 @@ module functions
  implicit none
  !
  real(SP)     :: bose_E_cut
+ !
+ interface
+   !
+   integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out)
+     !
+     use pars, ONLY: SP
+     !
+     ! This function makes a fit of RT_occ(RT_E) to the Fermi-Dirac function using two
+     ! temperature and two fermi level, one for the valence and one for the conduction
+     !
+     integer, intent(in)   :: nstates
+     real(SP),intent(in)   :: RT_E(nstates)
+     real(SP),intent(in)   :: RT_occ(nstates)
+     !
+     real(SP), intent(out) :: T_fit(2)
+     real(SP), intent(out) :: Ef_fit(2)
+     real(SP), intent(out) :: err_fit(4)
+     !
+     real(SP), intent(out), optional :: RT_occ_fit_out(1000,2)
+     real(SP), intent(out), optional :: RT_E_fit_out(1000,2)
+     !
+   end function Fermi_fnc_fit
+   !
+ end interface
  !
  contains
    !
@@ -52,10 +78,20 @@ module functions
      ! Note that the function defined here is integrated to 1.
      !
      real(SP) :: E,T,Fermi_fnc_derivative
-     real(SP),parameter :: tresh=0.
-     Fermi_fnc_derivative=0. 
-     if (T/=0.) Fermi_fnc_derivative=1./(2.+exp(E/T)+exp(-E/T))/T
-     if (Fermi_fnc_derivative<tresh)  Fermi_fnc_derivative=0.
+     real(SP),parameter :: tresh=0._SP
+     Fermi_fnc_derivative=0._SP
+     if (T/=0._SP) Fermi_fnc_derivative=1._SP/(2._SP+exp(E/T)+exp(-E/T))/T
+     if (Fermi_fnc_derivative<tresh)  Fermi_fnc_derivative=0._SP
+   end function
+   !
+   function Fermi_fnc_T_derivative(E,T)
+     !
+     ! This is the Temperature derivative of the Fermi-Dirac function.
+     !
+     real(SP) :: E,T,Fermi_fnc_T_derivative
+     real(SP),parameter :: tresh=0._SP
+     Fermi_fnc_T_derivative=0._SP
+     if (T/=0._SP) Fermi_fnc_T_derivative=E/(2._SP+exp(E/T)+exp(-E/T))/T**2._SP
    end function
    !
    ! Bose functions
@@ -128,7 +164,6 @@ module functions
    function h2ht(is,os,E,F)
      !
      use electrons, ONLY:levels
-     use drivers,   ONLY:Finite_Tel
      integer      ::is(3),os(3),h2ht
      type(levels) ::E
      real(SP) :: F

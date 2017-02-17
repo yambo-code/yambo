@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,10 +24,12 @@
 module IO_m
  !
  use pars,       ONLY:SP,lchlen,schlen
- use LOGO,       ONLY:code_version,code_revision
+ use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
+ use parallel_m, ONLY:myid
  use com,        ONLY:error
+#if defined _NETCDF_IO
  use netcdf
- !
+#endif
  implicit none
  !
  ! World known variables
@@ -39,8 +43,24 @@ module IO_m
  !
  logical :: IO_write
  logical :: IO_read
+ logical :: IO_write_not_fragmented_DB
  logical :: Fragmented_IO
  logical :: Fragmented_IO_save
+ !
+ ! Global DB I/O control string
+ !
+ character(lchlen) :: DBs_IO_control_string = "none"
+ logical           :: io_DIP     =.TRUE.
+ logical           :: io_RESPONSE=.TRUE.
+ logical           :: io_WF      =.TRUE.
+ logical           :: io_HF      =.TRUE.
+ logical           :: io_COLLs   =.TRUE.
+ logical           :: io_J       =.TRUE.
+ logical           :: io_CARRIERs    =.TRUE.
+ logical           :: io_GF      =.TRUE.
+ logical           :: io_SC      =.TRUE.
+ logical           :: io_BS_K    =.TRUE.
+ logical           :: io_SCREEN  =.TRUE.
  !
  ! Actions
  !
@@ -55,10 +75,14 @@ module IO_m
  !
  integer, parameter:: REP=41,LOG=42,NONE=43
  !
+ ! I/O
+ !
+ integer, parameter:: MASTER=51,ALL=52
+ !
  ! I/O errors
  !
  integer, parameter:: IO_NO_DATABASE=-1,IO_INCOMPATIBLE_VAR=-2,IO_GENERIC_ERROR=-3,&
-&                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0,IO_OUTDATED_DB=-5
+&                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0,IO_OUTDATED_DB=-5,IO_NOT_ALLOWED=-6
  !
  ! Units
  !
@@ -73,7 +97,7 @@ module IO_m
  integer :: io_unit(max_io_units)
  integer :: io_restart_point(max_io_units)
  integer :: io_code_version(max_io_units,3)
- integer :: io_code_revision(max_io_units)
+ integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
  integer :: io_netcdf_var(max_io_units)
  logical :: io_fragmented(max_io_units)
@@ -131,16 +155,28 @@ module IO_m
      !
    end subroutine
    !
-   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,IMPOSE_GAUGE)
+   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
+&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,USE_SYSTEM_FRAGMENTATION)
      integer               :: ID
-     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE
-     character(*),optional :: XC_KIND
+     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,&
+&                             USE_SYSTEM_FRAGMENTATION
+     character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
    end function
    !
    logical function ver_is_gt_or_eq(ID,version,revision)
      integer          :: ID
      integer,optional :: version(3),revision
    end function
+   !
+   subroutine IO_and_Messaging_switch(what,CONDITION)
+     character(*)      :: what
+     logical, optional :: CONDITION
+   end subroutine
+   !
+   subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
+     integer           :: ID
+     integer, optional :: i_fragment,j_fragment,ierr
+   end subroutine
    !
  end interface
  !
@@ -193,7 +229,7 @@ module IO_m
      !
      use stderr,        ONLY:string_pack
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
-&                            num_of_alternative_locations
+&                            num_of_alternative_locations,n_alt_jobstr
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
@@ -201,9 +237,10 @@ module IO_m
      !
      ! Work Space
      !
-     integer          ::CREATE_MODE
+     integer          ::CREATE_MODE,i_jobstr
      character(lchlen)::alternative_file(num_of_alternative_locations),folder
      character(schlen)::subfolder_
+     logical          ::file_found
      !
      io_connect=0
      if ( (read_is_on(ID).and..not.IO_read).or.&
@@ -273,7 +310,11 @@ module IO_m
      if (open_is_on(ID).and.write_is_on(ID)) then
        if (io_netcdf_support(ID)) then
          !
+#if defined _NETCDF_IO
+         !
          CREATE_MODE=nf90_share
+         !
+#endif
          !
          ! Setting NF90_64BIT_OFFSET causes netCDF to create a 64-bit 
          ! offset format file, instead of a netCDF classic format file. 
@@ -283,7 +324,7 @@ module IO_m
          ! http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Large-File-Support.html
          ! http://www.unidata.ucar.edu/software/netcdf/faq-lfs.html
          !
-#if defined _64BIT_OFFSET
+#if defined _NETCDF_IO && defined _64BIT_OFFSET
          !
          if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
 &                  index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
@@ -291,9 +332,11 @@ module IO_m
 &                  index(desc,'kindx')/=0/))) & 
 &                  CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
          !
-#elif defined _HDF5_IO
+#elif defined _NETCDF_IO && defined _HDF5_IO
          CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif
+         !
+#if defined _NETCDF_IO
          !
          if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
            !
@@ -313,7 +356,7 @@ module IO_m
            call netcdf_call(nf90_enddef(io_unit(ID)))
            !
          endif
-         !
+#endif
        else
          !
          if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
@@ -340,35 +383,62 @@ module IO_m
      if (open_is_on(ID).and.read_is_on(ID)) then
        !
        if (.not.file_exists(trim(io_file(ID)))) then
+         !
+         file_found=.FALSE.
+         !
          if (file_exists(trim(alternative_file(1)))) then
            io_file(ID)=alternative_file(1)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(2)))) then
            io_file(ID)=alternative_file(2)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(3)))) then
            io_file(ID)=alternative_file(3)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(4)))) then
            io_file(ID)=alternative_file(4)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(5)))) then
            io_file(ID)=alternative_file(5)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(6)))) then
            io_file(ID)=alternative_file(6)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(7)))) then
            io_file(ID)=alternative_file(7)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(8)))) then
            io_file(ID)=alternative_file(8)
-         else if (file_exists(trim(alternative_file(9)))) then
-           io_file(ID)=alternative_file(9)
-         else if (file_exists(trim(alternative_file(10)))) then
-           io_file(ID)=alternative_file(10)
-         else if (file_exists(trim(alternative_file(11)))) then
-           io_file(ID)=alternative_file(11)
-         else if (file_exists(trim(alternative_file(12)))) then
-           io_file(ID)=alternative_file(12)
-         else
+           file_found=.TRUE.
+         endif
+         !
+         if (.not.file_found) then
+           do i_jobstr=1,n_alt_jobstr
+             if (file_exists(trim(alternative_file(5+4*i_jobstr)))) then
+               io_file(ID)=alternative_file(5+4*i_jobstr)
+               file_found=.TRUE.
+               exit
+             else if (file_exists(trim(alternative_file(6+4*i_jobstr)))) then
+               io_file(ID)=alternative_file(6+4*i_jobstr)
+               file_found=.TRUE.
+               exit
+             else if (file_exists(trim(alternative_file(7+4*i_jobstr)))) then
+               io_file(ID)=alternative_file(7+4*i_jobstr)
+               file_found=.TRUE.
+               exit
+             else if (file_exists(trim(alternative_file(8+4*i_jobstr)))) then
+               io_file(ID)=alternative_file(8+4*i_jobstr)
+               file_found=.TRUE.
+               exit
+             endif
+           enddo
+         endif
+         !
+         if (.not.file_found) then
            io_connect=IO_NO_DATABASE
            if (present(no_full_RESET)) then
              io_file(ID)=''
@@ -380,8 +450,19 @@ module IO_m
          endif
        endif
        if (io_netcdf_support(ID)) then
+#if defined _NETCDF_IO
          call netcdf_call(nf90_open(trim(io_file(ID)),&
 &                         nf90_nowrite,io_unit(ID)))
+#else
+         io_connect=IO_NO_DATABASE
+         if (present(no_full_RESET)) then
+           io_file(ID)=''
+         else
+           call io_reset(ID)
+           io_type(ID)=0
+         endif
+         return
+#endif
        else
          open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
        endif
@@ -392,18 +473,26 @@ module IO_m
      !
    end function
    !
-   subroutine io_disconnect(ID)
+   subroutine io_disconnect(ID,FORCE)
      !
-     integer :: ID
+     integer           :: ID
+     logical, optional :: FORCE
      !
-     if (.not.close_is_on(ID).and.io_status(ID)>=0) return
+     if (present(FORCE)) then
+       if (.not.FORCE.and..not.close_is_on(ID).and.io_status(ID)>=0) return
+     else
+       if (.not.close_is_on(ID).and.io_status(ID)>=0) return
+     endif
      !
      if (file_is_open(io_file(ID),ID)) then
        if (io_netcdf_support(ID)) then
+#if defined _NETCDF_IO
          call netcdf_call(nf90_close(io_unit(ID)))
+#endif
        else
          close(unit=io_unit(ID))
        endif
+       io_unit(ID)=0
      endif
      !
      if (io_resetable(ID)) call io_reset(ID)
@@ -446,7 +535,9 @@ module IO_m
      endif
      if (write_is_on(ID)) io_fragmented(ID)=Fragmented_IO
      !
+#if defined _NETCDF_IO
      if (present(NETCDF)) io_netcdf_support(ID)=NETCDF
+#endif
      !
    end subroutine
    !
@@ -477,11 +568,13 @@ module IO_m
      io_rec_pos(ID)=1
      io_restart_point(ID)=1
      io_code_version(ID,:)=code_version
-     io_code_revision(ID)=code_revision
+     io_code_revision(ID,:)=(/code_revision,code_GPL_revision/)
      io_serial_number(ID)=serial_number
      io_resetable(ID)=.true.
      io_netcdf_support(ID)=.false.
+#if defined _NETCDF_IO
      io_netcdf_support(ID)=.true.
+#endif
    end subroutine
    !
    subroutine mk_dir(dirname)
@@ -595,8 +688,10 @@ module IO_m
      if (trim(filename)=='') return
      if (present(ID)) then
        if (io_netcdf_support(ID))  then
+#if defined _NETCDF_IO
          NC_ERR=nf90_inquire(io_unit(ID))
          file_is_open=NC_ERR==NF90_NOERR
+#endif
        else
          inquire(file=filename,opened=file_is_open)
        endif
@@ -609,11 +704,13 @@ module IO_m
    subroutine netcdf_call(status)
      use com,           ONLY:error
      integer, intent ( in) :: status
+#if defined _NETCDF_IO
      character(schlen) :: msg
      if(status /= nf90_noerr) then
        write (msg,'(2a)') '[NetCDF] ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
+#endif
    end subroutine
    !
    integer function netcdf_dim(ID,DIM)
@@ -621,10 +718,12 @@ module IO_m
      integer       :: dim_found
      character(12) :: dim_strng
      netcdf_dim=0
+#if defined _NETCDF_IO
      write (dim_strng,'(a,i10.10)') 'D_',dim
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (dim_found/=nf90_noerr) call netcdf_call(&
 &                               nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim))
+#endif
    end function
    !
    integer function variable_is_found(ID,var_name)
@@ -632,8 +731,36 @@ module IO_m
      character(*), intent ( in) :: var_name
      integer :: var_ID ! Work Space
      variable_is_found=-1
+#if defined _NETCDF_IO
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=1  
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=0  
+#endif
+   end function
+   !
+   logical function fragment_exists(ID)
+     !
+     use com,       ONLY:file_exists,all_locations,num_of_alternative_locations
+     !
+     implicit none
+     !
+     integer                :: ID
+     !
+     ! Work Space
+     !
+     character(lchlen) :: fragment_filenames(num_of_alternative_locations)
+     integer           :: i_f
+     !
+     fragment_filenames=all_locations(trim(io_extension(ID)),trim(io_folder(ID)),io_netcdf_support(ID))
+     !
+     fragment_exists=.FALSE.
+     !
+     do i_f=1,num_of_alternative_locations
+       if (file_exists(trim(fragment_filenames(i_f)))) then
+         fragment_exists=.TRUE.
+         return
+       endif
+     enddo
+     !
    end function
    !
 end module IO_m

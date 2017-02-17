@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -34,6 +36,7 @@ subroutine bz_interp_setup(Xk)
  use com,            ONLY:msg
  !
  implicit none
+ !
  type(bz_samp) :: Xk
  !
  !Work Space
@@ -50,7 +53,7 @@ subroutine bz_interp_setup(Xk)
  ! 
  metric=matmul(a,transpose(a))
  !
- sphere_radius=(lpfac*Xk%nibz*nsym*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+ sphere_radius=(lpfac*Xk%nbz*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
  !
  call m3inv(transpose(a),a_inv)
  a_inv=transpose(a_inv)
@@ -67,8 +70,6 @@ subroutine bz_interp_setup(Xk)
    int_sop(:,:,is)=nint(matmul(int_sop(:,:,is),b_inv))
    !
  enddo
- !
- if(abs(int_sop(1,1,1)+1._SP)<zero) int_sop=-int_sop
  !
  nR_max=product(2*R_max+1)
  !
@@ -108,6 +109,8 @@ subroutine bz_interp_setup(Xk)
  allocate(lattice_vectors(3,n_vec),lattice_vec_mod(n_vec))
  call mem_est("lattice_vectors lattice_vec_mod",(/3*n_vec,n_vec/),(/SP,SP/))
  !
+ istart=1
+ iend=1
  nshells=1
  lattice_vectors(:,nshells)=all_vec(:,1)
  lattice_vec_mod(nshells)  =all_vec_mod(1)

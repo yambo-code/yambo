@@ -124,6 +124,12 @@ module YPP
  character(schlen) :: seed_name
  character(schlen) :: what_to_write
  !
+ ! Reduce Symmetries
+ !
+ logical     :: l_fix_syms
+ real(SP)    :: E_field(2,3)
+ real(SP)    :: B_field,B_theta,B_psi
+ !
  ! BZ RIM
  !
  integer  :: BZ_RIM_nkpts
@@ -142,12 +148,6 @@ module YPP
  character(lchlen) :: w90_fname
  integer     :: wannier_bands(2)   ! Bands Range
  integer     :: ord_dgrid_ipol     ! order of interpolation using double grid
- !
- ! Reduce Symmetries
- !
- logical     :: l_fix_syms
- real(SP)    :: E_field(2,3)
- real(SP)    :: B_field,B_theta,B_psi
  !
  !
  interface

@@ -60,6 +60,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  !Work Space
  !
+ integer, external :: ig_index
+ !
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3)
@@ -228,13 +230,10 @@ subroutine bz_samp_indexes(k,Xk,q)
      if (bse_scattering) qindx_B(i1,i2,1)=i3
      v1=Xk%ptbz(i1,:)-Xk%ptbz(i2,:)-q%ptbz(i3,:) 
      call c2a(v_in=v1,mode='ka2i')
-     do i3=1,ng_vec
-       if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
-         if (iqs==1) qindx_X(iqibz,i1,2)=i3
-         if (bse_scattering) qindx_B(i1,i2,2)=i3
-         exit
-       endif
-     enddo
+     !
+     if (iqs==1) qindx_X(iqibz,i1,2)=ig_index(v1)
+     if (bse_scattering) qindx_B(i1,i2,2)=ig_index(v1)
+     !     
    enddo
    !
    call live_timing(steps=1)
@@ -267,12 +266,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      qindx_S(i1,iqbz,1)=i2
      v1=k%ptbz(ikbz,:)-k%ptbz(i2,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
-     do i3=1,ng_vec
-       if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
-         qindx_S(i1,iqbz,2)=i3
-         exit
-       endif
-     enddo
+     qindx_S(i1,iqbz,2)=ig_index(v1)
    enddo 
    !
    if (any(qindx_S(i1,:,:)==0)) call error('Null transition detected [qindx_S]')

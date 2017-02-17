@@ -40,7 +40,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref,PPa_terminator,&
 &                     GW_en_comp
  use functions,  ONLY:bose_E_cut
- use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,mag_syms,&
+ use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
@@ -48,7 +48,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, spin_orbit,        &
+&                     filled_tresh, l_spin_orbit,n_spin_den,        &
 &                     eval_magn
  use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
@@ -189,6 +189,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  n_atoms_species_max=0
  n_atomic_species=0
  i_space_inv=-1
+ inv_index=0
  mag_syms=.false.
  !
  ! Pseudo
@@ -231,7 +232,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  n_spin=1
  n_sp_pol=1
  n_spinor=1
- spin_orbit       = .false.
+ n_spin_den=1
+ l_spin_orbit       = .false.
  BZ_RIM_nbands=0
  BZ_RIM_tot_nkpts=0
  filled_tresh=0.00001

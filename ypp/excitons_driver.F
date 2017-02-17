@@ -24,9 +24,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
- use FFT_m,         ONLY:fft_rot_r,fft_dim
+ use FFT_m,         ONLY:fft_dim,fft_size
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
- use wave_func,     ONLY:WF_load,wf_state,wf,WF_free,wf_ng
+ use wave_func,     ONLY:WF_load,wf,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
@@ -45,6 +45,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
  use vec_operate,   ONLY:c2a
+ use wrapper,       ONLY:V_dot_V
  !
  implicit none
  type(bz_samp) ::Xk,k,q
@@ -78,13 +79,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  integer      :: iq,ia,i1,i2,i_l,i_spin
  real(SP)     :: k_dot_r,r_hole_rlu(3)
-#if defined _DOUBLE
- complex(SP)  :: zdotu
-#else
- complex(SP)  :: cdotu
-#endif
+ !
  type(pp_indexes) ::px
- logical          ::TR_apply
  !
  !... I/0
  !
@@ -102,6 +98,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  integer           ::iv,ic,iv_fft,ic_fft,ikbz,ikibz,is,neh
  real(SP)          ::r_eh(3)
  complex(SP)       ::wf_
+ !
+ complex(SP)       ::WF_symm1(fft_size,n_spinor)
+ complex(SP)       ::WF_symm2(fft_size,n_spinor)
+ !
  complex(SP),  allocatable ::wf_vc(:)
  !
  !... Variables needed to the report of eigenvectors
@@ -185,11 +185,38 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Excitonic Eliashberg function 
  !================================
  !
+ ! Exciton's spin (collinear case)
+ !================================
+ !
+ if (l_spin.and.n_spinor==1) then
+   allocate(S_z(BS_H_dim),S_sq(BS_H_dim))
+   if (n_sp_pol==2)  call excitons_collinear(BS_E_degs,S_z,S_sq)
+   call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
+   deallocate(S_z,S_sq)
+   return
+ endif
  ! 
  ! Loading  Wf 
  !
  if (l_exc_wf) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
+ ! Exciton's spin (not collinear case)
+ !=====================================
+ if (l_spin.and.n_spinor==2) then
+   !
+   allocate(S_z(BS_H_dim),S_sq(BS_H_dim))
+   allocate (lambda_s(n_lambda)) 
+   !
+   n_lambda = get_lambda()
+   ! 
+   call excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
+   call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
+   !
+   deallocate(lambda_s)
+   deallocate(S_z,S_sq)
+   !
+   return
+ endif
  !
  call k_ibz2bz(Xk,'i',.false.)
  !
@@ -357,35 +384,26 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        ikbz  = BS_eh_table(neh,1)
        iv    = BS_eh_table(neh,2)
        ic    = BS_eh_table(neh,3)
-       !
-       i_spin = 1
+       i_spin= spin(BS_eh_table(neh,:))
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
        !
-       TR_apply= (is>nsym/(i_time_rev+1))
-       !
        k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
        !
-       iv_fft = wf_state(iv,ikibz,i_spin)
-       ic_fft = wf_state(ic,ikibz,i_spin)
+       call WF_apply_symm((/iv,ikbz,is,i_spin/),WF_symm1)
+       call WF_apply_symm((/ic,ikbz,is,i_spin/),WF_symm2)
        !
-       wf_vc(neh) = wf(fft_rot_r(is,rindex(ir)), ic_fft)*&
-&            conjg( wf(fft_rot_r(is,rindex(ir_hole)), iv_fft) )
+       wf_vc(neh) = conjg(WF_symm1(rindex(ir),1))*WF_symm2(rindex(ir),1)
+       if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF_symm1(rindex(ir),2))*WF_symm2(rindex(ir),2)
        !
-       !
-       if (TR_apply) wf_vc(neh) = conjg(wf_vc(neh))
-       !
-       wf_vc(neh) = exp(cI*k_dot_r)*wf_vc(neh)
-       !
+       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r)
+       ! 
      enddo  !Matrix elements
      !
      do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
-#if defined _DOUBLE
-       wf_ = zdotu(BS_H_dim,BS_mat(1,i_l),1,wf_vc,1)
-#else
-       wf_ = cdotu(BS_H_dim,BS_mat(1,i_l),1,wf_vc,1)
-#endif
+       !
+       wf_ = V_dot_V(BS_H_dim,BS_mat(1,i_l),wf_vc)
        !
        v2plot(ir) = v2plot(ir)+abs(wf_)**2.  
        !

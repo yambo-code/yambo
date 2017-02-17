@@ -31,7 +31,7 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_angular_momentum,&
-&                         l_position,l_current,l_bands
+&                         l_position,l_current,l_bands,BANDS_range
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -62,13 +62,15 @@ subroutine electrons_driver(Xk,Xen)
  flag=l_sp_wf
  !===
  !
+ if(l_bands) nb_to_load=BANDS_range
+ !
  if (flag) then
    call QP_state_table_setup(Xen)
    nb_to_load   =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)         !(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
    nkpt_to_load =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)         !(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)  
  endif
  !
- if(l_dos.or.l_bands) flag=.false.
+ flag=.not.l_dos
  !===
  !
  if(flag) then
@@ -131,9 +133,14 @@ subroutine electrons_driver(Xk,Xen)
        cycle
      else
        !
-         !
+       if (n_spin==2) then
+         if (i_spin==1) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
+         if (i_spin==2) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
+         if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
+         if (i_spin==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
+       else
          ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim)) 
-         !
+       endif
        !
        if (use_cube) output_fname=trim(ch_ws(1))//'d.cube'
        if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
@@ -154,6 +161,85 @@ subroutine electrons_driver(Xk,Xen)
      !
    enddo
     !
+ endif
+ !
+ ! MAGNETIZATION 
+ !===============
+ !
+ if (l_mag) then
+   !
+   mag_i_dir=-1
+   if (mag_dir=='X'.or.mag_dir=='x') mag_i_dir=1
+   if (mag_dir=='Y'.or.mag_dir=='y') mag_i_dir=2
+   if (mag_dir=='Z'.or.mag_dir=='z') mag_i_dir=3
+   if (mag_i_dir<0) goto 1
+   !
+   allocate(magn(fft_size,3))
+   !
+   call section('*','Single Particle Magnetization along '//mag_dir)
+   !
+   call el_magnetization(Xen,Xk)
+   !
+   v2plot=magn(:,mag_i_dir)
+   !
+   if (use_cube) output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d.cube'
+   if (use_xcrysden) output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d.xsf'
+   if (use_gnuplot)  output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d'
+   !
+   l_norm_to_one=.false.
+   !
+   if (use_cube) then 
+     call of_open_close(trim(output_fname),'o')
+   else
+     call of_open_close(trim(output_fname),'ot')
+     call msg('o mag',"#")
+   endif
+   !
+   plot_title='magnetization'
+   !
+   call plot_check_and_launch(.false.)
+   !
+   call of_open_close(trim(output_fname))
+   !
+   if (n_sp_pol==2.and.l_density) then
+     !
+     call section('*','Spin Polarized densities')
+     !
+     do i_spin=1,2
+       !
+       ! rho DN
+       if (i_spin==1) then
+         v2plot=(el_den(:)-magn(:,3))/2.
+         ch_ws(1)='density_DN_'//trim(intc(plot_dim))
+       else
+         !
+         ! rho UP
+         v2plot=(el_den(:)+magn(:,3))/2.
+         ch_ws(1)='density_UP_'//trim(intc(plot_dim))
+       endif
+       !
+       if (use_cube) output_fname=trim(ch_ws(1))//'d.cube'
+       if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
+       if (use_gnuplot)  output_fname=trim(ch_ws(1))//'d'
+       !
+       if (use_cube) then 
+         call of_open_close(trim(output_fname),'o')
+       else
+         call of_open_close(trim(output_fname),'ot')
+         call msg('o density_UP density_DN',"#")
+       endif
+       !
+       if (i_spin==1) plot_title='den DN'
+       if (i_spin==2) plot_title='den UP'
+       call plot_check_and_launch(.false.)
+       !
+       call of_open_close(trim(output_fname))
+       !
+     enddo
+     !
+   endif
+   !
+   !
  endif
  !
  !

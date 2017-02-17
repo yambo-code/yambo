@@ -35,6 +35,7 @@ public :: pw_pseudo,           &
         
 
 type pw_pseudo
+  logical          :: psp_has_so
   real             :: z               ! Ionic charge
   integer          :: nbeta           ! Number of nonlocal projectors
   integer          :: nmesh           ! Number of points in mesh
@@ -136,7 +137,7 @@ subroutine pw_pseudo_set_table(pseudo,cutoff)
     call num_interpolation_init(pseudo%interpolation(ibeta),0.0,q_max, &
                                 delta_q,parity=+1)
     nr = pseudo%mesh_beta(ibeta)
-    if(nr>pseudo%nmesh) call errore("pw_speudo_set_table","nr>mesh",1)
+    if(nr>pseudo%nmesh) call errore("pw_pseudo_set_table","nr>mesh",1)
     l = pseudo%lbeta(ibeta)
     do ir=1,nr
       aux(ir) = pseudo%beta(ir,ibeta)*pseudo%wmesh(ir)*pseudo%mesh(ir)**(l+1)

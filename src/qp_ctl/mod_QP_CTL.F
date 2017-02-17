@@ -327,8 +327,13 @@ module QP_CTL_m
          call msg('r','[QP] Ind. Gap Correction  [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
-         !
-         !
+       else
+         call msg('r','[QP] Ind. Gap Correction  (up) [ev]:',&
+&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
+&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
+         call msg('r','                        (down) [ev]:',&
+&                  (minval(en%E(en%nbf+1,:,2))-maxval(en%E(en%nbf,:,2)) &
+&                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HA2EV)
        endif
        !
      endif

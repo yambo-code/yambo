@@ -48,13 +48,11 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  poles=0._SP 
  !
- i_sp=1
- !
  X_eh_setup=0
  do i1=1,Xk%nbz
    do iv=X%ib(1),Xen%nbm
      do ic=Xen%nbf+1,X%ib(2)
-       !
+       do i_sp=1,n_sp_pol
          !
          i2=qindx_X(iabs(iq),i1,1)
          ik=Xk%sstar(i1,1) 
@@ -100,7 +98,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          if (allocated(rg_index_bg)) i_pole=rg_index_bg(X_eh_setup)
          if (iq>0) X_poles_tab(i_pole,:)=(/i1,iv,ic,i_sp/)
          !
-       !
+       enddo
      enddo
    enddo
  enddo

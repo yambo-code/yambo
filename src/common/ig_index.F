@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 D. Sangalli and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,40 +19,42 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine eval_minus_G()
+integer function ig_index(v1)
  !
- ! Output: minus_G(ng_closed)
- !
- ! G_{minus_G(ig)} = -G_ig
- !
- use pars,         ONLY:IP
- use com,          ONLY:msg
- use memory_m,     ONLY:mem_est
- use D_lattice,    ONLY:inv_index
- use R_lattice,    ONLY:ng_closed,g_rot,minus_G
+ use pars,         ONLY:SP
+ use zeros,        ONLY:G_iku_zero
+ use vec_operate,  ONLY:v_is_zero,iku_v_norm
+ use R_lattice,    ONLY:g_vec,ng_in_shell,n_g_shells,E_of_shell
  !
  implicit none
  !
- ! Work Space
+ real(SP)  :: v1(3)
  !
- integer  :: ig
+ integer   :: ig,i_shell,ng1,ng2
+ real(SP)  :: E_of_shell_v1
  !
- if (allocated(minus_G)) then
-   deallocate(minus_G)
-   call mem_est("minus_G")
- endif
- allocate(minus_G(ng_closed))
- call mem_est("minus_G",(/ng_closed/),(/IP/))
+ E_of_shell_v1=iku_v_norm(v1)**2./2.
  !
- minus_G=0
- !
- if (inv_index>0) then
-   do ig=1,ng_closed
-     minus_G(ig)=g_rot(inv_index,ig)
-   enddo
- else
-   minus_G(1)=1
-   if (ng_closed>1) call G_rot_grid(-1,'set_table')
+ if(abs(E_of_shell_v1)<1.E-5) then
+   ig_index=1
+   return
  endif
  !
-end subroutine
+ do i_shell=2,n_g_shells
+   if( abs(E_of_shell(i_shell)-E_of_shell_v1)/E_of_shell(i_shell)< 1.E-5) then
+     ng1=ng_in_shell(i_shell-1)+1
+     ng2=ng_in_shell(i_shell)
+     exit
+   endif
+ enddo
+ !
+ do ig=ng1,ng2
+   if (v_is_zero(v1-g_vec(ig,:),zero_=G_iku_zero)) then
+     ig_index=ig
+     exit
+   endif
+ enddo
+ !
+ return
+ !
+end function

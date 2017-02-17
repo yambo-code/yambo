@@ -19,40 +19,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine eval_minus_G()
- !
- ! Output: minus_G(ng_closed)
- !
- ! G_{minus_G(ig)} = -G_ig
- !
- use pars,         ONLY:IP
- use com,          ONLY:msg
- use memory_m,     ONLY:mem_est
- use D_lattice,    ONLY:inv_index
- use R_lattice,    ONLY:ng_closed,g_rot,minus_G
+module interfaces
  !
  implicit none
  !
- ! Work Space
+ interface
+   !
+   subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
+     use pars, ONLY: SP
+     use electrons,     ONLY:levels,n_sp_pol
+     type(levels)       :: E
+     real(SP), optional :: E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
+     real(SP), optional :: E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
+     integer , optional :: Nbf(n_sp_pol)
+     integer , optional :: Nbm(n_sp_pol)
+   end subroutine 
+   !
+ end interface
  !
- integer  :: ig
- !
- if (allocated(minus_G)) then
-   deallocate(minus_G)
-   call mem_est("minus_G")
- endif
- allocate(minus_G(ng_closed))
- call mem_est("minus_G",(/ng_closed/),(/IP/))
- !
- minus_G=0
- !
- if (inv_index>0) then
-   do ig=1,ng_closed
-     minus_G(ig)=g_rot(inv_index,ig)
-   enddo
- else
-   minus_G(1)=1
-   if (ng_closed>1) call G_rot_grid(-1,'set_table')
- endif
- !
-end subroutine
+end module

@@ -30,17 +30,21 @@ integer function eval_G_minus_G(iG,iGo)
  !
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
- use vec_operate,  ONLY:v_is_zero
- use R_lattice,    ONLY:G_m_G,g_vec,ng_closed,ng_in_shell,n_g_shells
- use zeros,        ONLY:G_iku_zero
+ use vec_operate,  ONLY:iku_v_norm
+ use timing,       ONLY:live_timing
+ use R_lattice,    ONLY:G_m_G,g_vec,ng_closed,ng_in_shell,n_g_shells,minus_G,E_of_shell
  !
  implicit none
  integer :: iG,iGo
  !
  ! Work Space
  !
- integer :: i1,i2,i3,iG_shell,iG_,iGo_
+ integer :: i1,i2,ng1,ng2
+ integer :: iG_shell,iG_,iGo_
+ real(SP):: E_of_shell_G_m_G
  real(SP):: v1(3)
+ !
+ integer, external :: ig_index
  !
  ! Init
  !
@@ -56,12 +60,10 @@ integer function eval_G_minus_G(iG,iGo)
  !
  ! Allocation
  !
- allocate(G_m_G(iG_,iGo_))
+1 allocate(G_m_G(iG_,iGo_))
  call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
  !
- ! Loop
- !
-1 G_m_G=0
+ G_m_G=0
  !
  ! Find the shell corresponding to iG
  !
@@ -69,25 +71,26 @@ integer function eval_G_minus_G(iG,iGo)
    if (ng_in_shell(i1)==iG_) iG_shell=i1
  enddo
  !
- do i1=1,iG_
-   do i2=1,iGo_
+ forall(i1=1:iG_) G_m_G(i1,1)=i1
+ if(iGo_>1) G_m_G(1,2:iGo_)=minus_G(2:iGo_)
+ !
+ do i1=iG_,2,-1
+   do i2=iGo_,2,-1
+     !
      v1=g_vec(i1,:)-g_vec(i2,:)
-     do i3=1,ng_closed
-       if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
-         G_m_G(i1,i2)=i3
-         exit
-       endif
-     enddo
-     if (G_m_G(i1,i2)==0) then
+     E_of_shell_G_m_G=iku_v_norm(v1)**2./2.
+     !
+     if(E_of_shell_G_m_G/E_of_shell(n_g_shells)>(1+1.E-5)) then 
        iG_shell=iG_shell-1
        iG_=ng_in_shell(iG_shell)
        eval_G_minus_G=iG_
        if (iGo==0) iGo_=iG_
        deallocate(G_m_G)
-       allocate(G_m_G(iG_,iGo_))
-       call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
        goto 1
      endif
+     !
+     G_m_G(i1,i2)=ig_index(v1)
+     !
    enddo
  enddo 
  !

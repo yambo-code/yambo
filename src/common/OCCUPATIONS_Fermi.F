@@ -42,6 +42,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use com,           ONLY:msg,error,warning
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
+ use interfaces,    ONLY:OCCUPATIONS_gaps
  implicit none
  type(levels) ::E
  type(bz_samp)::K
@@ -51,7 +52,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  integer :: i1,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
- real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),f_met,n_of_el_from_zero(2),Ef(2),Efdist,local_Tel
+ real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,local_Tel
  logical :: Fermi_is_converged
  real(SP),parameter :: Telstep=0.0001/HA2EV
  real(SP),parameter :: nel_diff_zero=1.E-5
@@ -223,12 +224,13 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    enddo
  endif
  !
+ ! Eval Metallic/Filled bands and gaps
+ !
+ call OCCUPATIONS_gaps(E)
+ !
  ! Mode = 1. Define E%f and exits
  !
- if (mode==1) then
-   call REPORT_Occupations(E,1)
-   return
- endif
+ if (mode==1) return
  !
  ! Complete Report
  !
@@ -236,12 +238,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  call msg('r',  'Electronic Temp. [ev K]:',(/Tel*HA2EV,Tel*HA2KEL/))
  call msg('r',  'Bosonic    Temp. [ev K]:',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
  !
- call REPORT_Occupations(E,mode)
- !
- if (E%nbf/=E%nbm) then
-   f_met= sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*(E%nbm-E%nbf))
-   call msg('r','N of e- - Metallic occ.:',(/n_of_el_from_zero(1)+nel,f_met/))
- endif
+ call REPORT_Occupations(E)
  !
  contains
    !

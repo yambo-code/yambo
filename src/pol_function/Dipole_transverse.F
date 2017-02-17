@@ -125,9 +125,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
      io_err=ioKB_PP(ID)
    endif
    ! 
-    i_spin=1
-   ! 
-     !
+   do i_spin=1,n_spin
+     ! 
      pp_spin=i_spin
      if (n_spinor==2) pp_spin=1
      if (ioKB_err==0) call Dipole_kb_pp_comp(ik,pp_spin,Xk,kbv)
@@ -203,16 +202,18 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (abs(Ev_m_Ec)<=1.E-5_SP) rho(1:3)=(0._SP,0._SP)
          !
-           !
+         if (n_spinor==2) then
+           DIP_iR(:,ic,iv,ik,1)=DIP_iR(:,ic,iv,ik,1)+rho(:3)
+         else 
            DIP_iR(:,ic,iv,ik,i_spin)=rho(:3)
-           !
+         endif
          !
        enddo    ! conduction band loop
        !
        call live_timing(steps=1)
        !
      enddo      ! valence band loop
-     ! 
+   enddo        ! spin loop
    !
    ! Symmetrization 
    !================

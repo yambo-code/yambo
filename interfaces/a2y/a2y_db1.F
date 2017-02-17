@@ -24,7 +24,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use pars,                  ONLY: SP, DP,pi
  use com,                   ONLY: msg,warning,error
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
-&                                 n_spinor,spin_orbit 
+&                                 n_spinor,l_spin_orbit,n_spin_den 
  use R_lattice,             ONLY: bz_samp, ng_vec, g_vec,nkibz, b
  use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,i_space_inv,&
 &                                 n_atomic_species,n_atoms_species,i_time_rev,&
@@ -39,7 +39,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor,artificial_spin_pol,ng_vec_abinit
  use vec_operate,           ONLY: v_is_zero
- use zeros,                 ONLY: G_iku_zero
  !
  implicit none
  character(*)                   :: KSS_file_name
@@ -52,6 +51,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  integer                        :: i1,ik,i2,i3,inel,i_spin,i_spinor,ic,ig
  complex(DP),allocatable        :: wf_disk_DP(:,:)
  integer, allocatable           :: wf_igk_tmp(:,:)
+ logical                        :: gamma_only
  !
  !ABINIT
  !
@@ -59,8 +59,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  type(wffile_type)              :: wff
  integer                        :: psp_so
  integer                        :: fform,ishm
- real(SP)                       :: g_inv(3)
- real(SP), allocatable          :: g_vec_tmp(:,:)
  integer,  allocatable          :: rel_gvec(:,:)
  real(DP), allocatable          :: rstr(:)
  !
@@ -81,12 +79,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  l_many_proj= (ishm==-1)
  !
  if(     l_many_proj) then
-   read(11)  pp_n_l_max, psp_so
+   read(11)  pp_n_l_max, psp_so, n_spin_den 
    read(11) 
    read(11) 
    read(11) 
    !
-   spin_orbit=(psp_so>1)
+   l_spin_orbit=(psp_so>1)
  else
    pp_n_l_max=abs(pp_n_l_times_proj_max)
  endif
@@ -101,9 +99,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ahdr%ixc)
  GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
  !
- n_spinor=1
- n_sp_pol=1
+ n_spinor=ahdr%nspinor
+ n_sp_pol=ahdr%nsppol
  !
+ if (n_sp_pol==1.and.artificial_spin_pol) n_sp_pol=2
  !
  n_spin=max(n_sp_pol,n_spinor)
  !
@@ -128,8 +127,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz
  allocate(k%pt(k%nibz,3))
- do i1 = 1,k%nibz
-   k%pt(i1,:)=matmul(transpose(b),ahdr%kptns(:,i1))*alat(:)/2./pi
+ do ik = 1,k%nibz
+   k%pt(ik,:)=matmul(transpose(b),ahdr%kptns(:,ik))*alat(:)/2./pi
  enddo
  !
  ! ABINIT 
@@ -202,54 +201,46 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('s','RL vectors...')
  !============================
  !
- read(11) (rel_gvec(:,i1),i1=1,ng_vec_abinit)
+ read(11) (rel_gvec(:,ig),ig=1,ng_vec_abinit)
  read(11) 
  read(11) 
- do i1=1,ng_vec_abinit
-   g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
+ do ig=1,ng_vec_abinit
+   g_vec(ig,:)=matmul(transpose(b),rel_gvec(:,ig))*alat(:)/2./pi
  enddo
  call msg('l','done')
  !
  ng_vec=ng_vec_abinit
  !
- if( i_time_rev==1 .or. i_space_inv==1) then
+ gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0.) )
+ !
+ if( i_time_rev==1 .or. i_space_inv==1 .and. .not.gamma_only) then
    !
-   call msg('s','Closing shells...')
+   call msg('s','Closing shells against inversion...')
    !============================
    !
-   allocate(g_vec_tmp(2*ng_vec,3))
-   g_vec_tmp(1:ng_vec,:)=g_vec
-   deallocate(g_vec)
-   !
-   do i1=1,ng_vec
-     g_inv=-g_vec_tmp(i1,:)
-     do i2=1,ng_vec
-       if( v_is_zero(g_inv-g_vec_tmp(i2,:),zero_=G_iku_zero)) exit 
-     enddo
-     if (i2<=ng_vec) cycle
-     ng_vec=ng_vec+1
-     g_vec_tmp(ng_vec,:)=g_inv
-   enddo
-   !
-   allocate(g_vec(ng_vec,3))
-   g_vec=g_vec_tmp(1:ng_vec,:)
-   deallocate(g_vec_tmp)
+   call G_rot_grid(-1,'extend_grid')
    !
    call msg('l','done')
+   !
+   if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
    !
  endif
  !
  call msg('s','Energies...')
  !==========================
  !
- i_spin=1
- ! 
  allocate(wf_disk_DP(ng_vec_abinit,n_spinor))
  allocate(wf_igk_tmp(ng_vec_abinit,k%nibz))
  wf_igk_tmp=-1
- WF_disk_DP=0._DP  
- ! 
+ WF_disk_DP=0._DP
  !
+ do i_spin=1,n_sp_pol
+   !
+   if (i_spin==2.and.artificial_spin_pol) then
+     en%E(:,:,2)=en%E(:,:,1)
+     cycle
+   endif
+   ! 
    do ik=1,k%nibz
      do i1=1,n_atomic_species
        do i2=1,pp_n_l_times_proj_max
@@ -272,7 +263,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
      enddo
      wf_nc_k(ik)=ic
    enddo
-   !
+   ! 
+   if(i_spin>1) cycle
    !
    wf_ncx=maxval(wf_nc_k)
    wf_ng=maxval(wf_igk_tmp)
@@ -281,7 +273,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    do ik=1,k%nibz
      wf_igk(1:wf_ncx,ik)=wf_igk_tmp(1:wf_ncx,ik)
    enddo
-   ! 
+ enddo
  !
  ! CLEAN
  !

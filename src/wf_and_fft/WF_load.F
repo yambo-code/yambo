@@ -186,8 +186,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_err=ioWF(ID,wf_disk)
  !
- is =1
- !
  wf_n_states=0
  do ikibz=1,nkibz
    !
@@ -209,7 +207,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      if (any((/ikibz<wf_k(1),ikibz>wf_k(2)/))) cycle
      if (wf_nb_io*(ib_grp-1)+1>wf_b(2)) cycle
      !
-       !
+     do is=1,n_spin
        do ib=wf_nb_io*(ib_grp-1)+1,wf_nb_io*ib_grp
          !
          i2=ib-wf_nb_io*(ib_grp-1)
@@ -248,8 +246,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          if (use_live_timing) call live_timing(steps=1)
          !
        enddo
-       !
-     !
+     enddo
    enddo
  enddo
  !
@@ -282,19 +279,17 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  mxdp=-1.
  do i1=1,min(int(nel)+5,wf_b(2))
    do i2=1,min(int(nel)+5,wf_b(2))
-     !
+     do is=1,n_sp_pol
        !
        if (wf_state(i1,1,is)==0.or.wf_state(i2,1,is)==0) cycle
        !
        c=dot_product(wf(:, wf_state(i1,1,is) ),wf(:, wf_state(i2,1,is) ))
-       !
-       if (n_spinor==2) then
-         c=c+dot_product(wf(:, wf_state(i1,1,2) ),wf(:, wf_state(i2,1,2) ))
-       endif
+       if (n_spinor==2) c=c+dot_product(wf(:, wf_state(i1,1,2) ),wf(:, wf_state(i2,1,2) ))
        !
        if (abs(c)>mxdp) mxdp=abs(c)
        if (abs(c)<mndp) mndp=abs(c)
        !
+     enddo
      !
    enddo
  enddo

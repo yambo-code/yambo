@@ -80,9 +80,9 @@ subroutine el_density(en,Xk,rho,force_si)
      !
      if (.not.px%element_2D(i2,i1)) cycle
      !        
-     i_spin=1
-     !
+     do i_spin=1,n_spin
        !
+       if (size(wf_state,3)<i_spin) cycle
        if (size(wf_state,1)<i1) cycle
        if (size(wf_state,2)<i2) cycle
        !
@@ -95,11 +95,10 @@ subroutine el_density(en,Xk,rho,force_si)
        endif
        !
         f_occ=en%f(i1,i2,1)
-        !
-        !
+        if (n_sp_pol==2) f_occ=en%f(i1,i2,i_spin)
         rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(i2)*abs(wf(:,ifft))**2.
         !
-      !
+      enddo
     enddo
   enddo
   !

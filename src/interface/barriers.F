@@ -49,7 +49,7 @@ subroutine barriers()
  use pars,       ONLY:schlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv,mag_syms
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor,n_sp_pol
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none
@@ -95,10 +95,7 @@ subroutine barriers()
  ! RUNLEVELS
  !===========
  !
- ! If the system is non magnetic you can safely comment the nex line
- ! Otherwise you have to run ypp_rt to remove the trev symmetry when SO is present
- !
- if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=trim(always_runlevels))
+ if(mag_syms) call switch_off_runlevel('all',on_name=' ')
  !
  !
  !
@@ -148,11 +145,12 @@ subroutine barriers()
  !
  ! SPIN
  !=============
- !
- 
- if (n_spin>1) call switch_off_runlevel('all',on_name=' ')
- 
- !
+ if (n_spin>1) then
+   on_runlevels='chi optics HF_and_locXC cohsex magnetic scpot bse tdhf em1s em1d ppa gw0 bss'
+   on_runlevels='chi optics HF_and_locXC cohsex bse tdhf em1s em1d ppa gw0 bss'
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
+   if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
+ endif 
  !
  ! MORE
  !======

@@ -115,9 +115,15 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  pp_kb=0._SP
  pp_kbd=0._SP
  !
-  i_spin=1
- ! 
+ do i_spin=1,n_sp_pol
    !
+   if (i_spin==2.and.artificial_spin_pol) then
+     pp_kb(:,:,:,2) = pp_kb(:,:,:,1) 
+     pp_kbd(:,:,:,2)= pp_kbd(:,:,:,1)
+     wf_disk(:,:,:,2)=wf_disk(:,:,:,1)
+     cycle
+   endif
+   ! 
    if (ib_grp==1) then
      do i1=1,n_atomic_species
        do i2=1,pp_n_l_times_proj_max
@@ -148,7 +154,32 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      endif
    enddo
    !
- !
+   if (n_sp_pol==2.and..not.artificial_spin_pol) then
+     ! 
+     ! BIG PROBLEM WITH ABINIT: abinit uses a different ordering
+     ! of the k-points/spins. This makes the I/O very complicate.
+     !
+     if (i_spin==1) then
+       !
+       ! After the UP spin I must read enough records in order to reach the
+       ! DN block.
+       !
+       do i1=1,number_of_records_each_k*(nkibz-1)
+         read (11)
+       enddo
+     else 
+       !
+       ! After the DN spin I must go back to the end of the spin UP block.
+       !
+       do i1=1,number_of_records_each_k*nkibz
+         backspace (11)
+       enddo
+     endif
+     !
+   endif
+   !
+ enddo
+ ! 
  if (ikibz==nkibz.and.ib_grp==wf_nb_io_groups) close(11)
  !
 end subroutine

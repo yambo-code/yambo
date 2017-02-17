@@ -25,7 +25,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use pars,           ONLY:pi
  use units,          ONLY:HA2EV,FS2AUT
  use wave_func,      ONLY:wf_ng 
- use D_lattice,      ONLY:alat
+ use D_lattice,      ONLY:alat,i_time_rev
  use R_lattice,      ONLY:ng_vec,nkibz
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
@@ -74,7 +74,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! BANDS
  !
  BANDS_steps=0
- BANDS_range=0
+ BANDS_range=(/1,n_bands/)
  l_bands=.false.
  !
  !
@@ -189,6 +189,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_sort           =trim(rstr_piece(i1+1))=='s'
        l_amplitude      =trim(rstr_piece(i1+1))=='a'
        !
+       l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
+       l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       !
        !
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
@@ -197,7 +200,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        l_bands          =trim(rstr_piece(i1+1))=='b'
-       !
+       l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
        !
        !
        !
@@ -242,7 +245,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_wannier  =runlevel_is_on('wannier')
  !
  if (.not.l_exc_wf) l_free_hole=.false.
- !
  !
  if (l_bz_grids) then
    call initactivate(1,"cooIn cooOut")

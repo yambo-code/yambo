@@ -113,7 +113,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &              Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
- call it('f',defs,'ALLGexx', '[BSS] Use all Gexx when their FFT size is larger then the correlation part',verb_level=V_resp)
+ call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
  !
  ! F_xc

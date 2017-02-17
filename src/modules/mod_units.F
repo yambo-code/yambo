@@ -23,7 +23,7 @@
 !
 module UNITS
  !
- use pars,       ONLY:SP,pi
+ use pars,       ONLY:SP,DP,pi
  !
  implicit none
  !
@@ -85,9 +85,10 @@ module UNITS
  real(SP), parameter :: HA2PSm1   =HA2THZ                     ! HA = HA2PSm1 pico-SEC^(-1)
  real(SP), parameter :: HA2FSm1   =HA2THZ/1000._SP            ! HA = HA2FSm1 femto-SEC^(-1)
  !                                                              Note that 1 THz = 10^-3 / fs
- real(SP), parameter :: FS2AUT    =1.E2_SP /CORE_CNST           ! femto-SEC = FS2AUT unit of Time in A.U. (2.4189 10^(-17) sec)
- real(SP), parameter :: AS2AUT    =1.E-1_SP/CORE_CNST              ! atto-SEC  = AS2AUT unit of Time in A.U.
- real(SP), parameter :: PS2AUT    =1.E5_SP /CORE_CNST           ! pico-SEC  = PS2AUT unit of Time in A.U.
+ real(SP), parameter :: AUT2FS    =CORE_CNST/1.E2_SP          ! SEC-femto = AUT2FS unit of Time in fs
+ real(DP), parameter :: FS2AUT    =1.E2_SP /CORE_CNST         ! femto-SEC = FS2AUT unit of Time in A.U. (2.4189 10^(-17) sec)
+ real(DP), parameter :: AS2AUT    =1.E-1_SP/CORE_CNST         ! atto-SEC  = AS2AUT unit of Time in A.U.
+ real(DP), parameter :: PS2AUT    =1.E5_SP /CORE_CNST         ! pico-SEC  = PS2AUT unit of Time in A.U.
  !
  ! LifeTimes
  !===========

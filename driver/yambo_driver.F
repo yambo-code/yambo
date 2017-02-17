@@ -33,10 +33,13 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
 &                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr
+#if defined _SCALAPACK
+ use drivers,       ONLY:l_slk_test
+#endif
  use X_m,           ONLY:X_t
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
- use QP_m,          ONLY:QP_ng_Sx
+ use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
 #if defined _TIMING
@@ -69,7 +72,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Local Variables
  !
  integer           ::i_err
- integer, external ::X_em1,init
+ integer, external ::X_em1,INIT
  logical           ::l_pp_em1,l_dyn_em1
  !
  ! Presets
@@ -81,7 +84,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  call SET_defaults(instr,ind,od,js,com_dir)
  call it_reset(1)
  !
- ! not resetted in init call
+ ! not resetted in INIT call
  !
  call bz_samp_reset(Xk)  
  call E_reset(Xen) 
@@ -95,7 +98,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! iinf=0 => No error message from driver.c 
  !
  iinf=0 
- iinf=init(en,q,k,X,Xw,instr,lnstr,.false.,.false.)
+ iinf=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.false.)
  !
  ! the iinf==2 (DB listing mode) stops the job so no file editing
  ! or error msg from the driver.c is possible
@@ -120,7 +123,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Update the default variables
  !
- i_err=init(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
+ i_err=INIT(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
  !
@@ -129,7 +132,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! COLOUMB DRIVER
  !================
  !
- call col_driver(maxval((/wf_ng,QP_ng_Sx/)),q)
+ call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! reset the section numbering
  !
@@ -245,9 +248,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !==============
  call section('X','Game Over & Game summary')
  !
- ! Update init defs
+ ! Update INIT defs
  !
- i_err=init(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
+ i_err=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
  !
  ! Finalize
 #if defined _TIMING

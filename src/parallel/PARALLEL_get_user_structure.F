@@ -28,8 +28,8 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  use D_lattice,    ONLY:nsym
  use parallel_m,   ONLY:CPU_structure,n_CPU_str_max,PARALLEL_CPU_role,PARALLEL_CPU_used,&
 &                       PARALLEL_n_structures_active,ncpu,i_PAR_structure
- use stderr,       ONLY:string_split,intc
- use com,          ONLY:error,warning
+ use stderr,       ONLY:string_split
+ use com,          ONLY:warning
  !
  implicit none
  !
@@ -38,7 +38,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  ! Work Space
  !
- integer          ::i_s,i_c,n_structures,n_eh_grps,n_t_blks,n_k_cpus,MAX_n_blks
+ integer          ::i_s,i_c,n_structures,n_eh_grps,n_t_blks,n_k_cpus
  logical          ::q_found,k_found
  character(schlen)::c_strings(10),r_strings(10),CPU_string_,ROLE_string_
  !
@@ -96,32 +96,13 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  if (ENVIRONMENT=="Response_T_space") then
    !
-   MAX_n_blks=(nXkibz/n_k_cpus)*(n_eh_grps*nXkibz+1)/2
-   if (n_t_blks>MAX_n_blks) then
-     call error(' n_t_CPU > n_blocks=M*(N+1)/2='//trim(intc(MAX_n_blks))//' with N=nkibz*n_eh_CPU and M=nkibz/n_k_CPU')
-   endif
-   !
    if (n_eh_grps>1 .and. nXkibz>1 .and. nsym>1 .and. n_k_cpus<nXkibz .and. n_t_blks<nXkibz) then
-     call warning(' n_eh_CPU > 1 in a system with symmetries. This is not efficient, in particular if you have many kpts.')
-     call warning(' It is suggested to first distribute on "k" and "t". Maximum value for both is: '//trim(intc(nXkibz)))
+     call warning(' n_eh_CPU > 1 in a system with symmetries and k-points is not efficient. Try distributing first "k" and "t" ')
    endif
    !
  endif
  !
  call PARALLEL_clean_up_the_structure( n_structures )
- !
- if (ncpu==1) then
-   CPU_structure(i_PAR_structure)%nCPU_diagonalization=1
-   CPU_structure(i_PAR_structure)%nCPU_inversion=1
- endif
- !
- if (CPU_structure(i_PAR_structure)%nCPU_diagonalization/=1.and.CPU_structure(i_PAR_structure)%nCPU_diagonalization/=ncpu) then
-   CPU_structure(i_PAR_structure)%nCPU_diagonalization=ncpu
- endif
- !
- if (CPU_structure(i_PAR_structure)%nCPU_inversion/=1.and.CPU_structure(i_PAR_structure)%nCPU_inversion/=ncpu) then
-   CPU_structure(i_PAR_structure)%nCPU_inversion=ncpu
- endif
  !
  ! The two top fields ("q" and "k") must be defined anyway. But only these two!
  !

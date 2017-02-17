@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM,AF,DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -33,19 +33,21 @@ integer function eval_G_minus_G(iG,iGo)
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use vec_operate,  ONLY:iku_v_norm
- use LIVE_t,       ONLY:live_timing
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
+#if defined _TIMING
+ use timing_m,     ONLY:timing
+#endif
  !
  implicit none
- !
  integer :: iG,iGo
  !
  ! Work Space
  !
- integer :: i1,i2
- integer :: iG_shell,iG_,iGo_
- real(SP):: E_of_shell_G_m_G
+ integer :: i1,i2,is
+ integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_
+ real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3)
+ real(SP), allocatable :: E_G_m_G(:,:)
  !
  integer, external :: G_index
  !
@@ -56,54 +58,101 @@ integer function eval_G_minus_G(iG,iGo)
    return
  endif
  !
- eval_G_minus_G=iG
+#if defined _TIMING
+ call timing("eval_G_minus_G",opr="start")
+#endif
+ !
  iG_=iG
  iGo_=iGo
  if (iGo==0) iGo_=iG
  !
- ! Allocation
+ ! aux data
+ allocate(E_G_m_G(iG_,iGo_))
  !
-1 allocate(G_m_G(iG_,iGo_))
- call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
+!$omp parallel do default(shared), private(i2,i1,v1)
+ do i2=1,iGo_
+   do i1=1,iG_
+     v1(:)=g_vec(i1,:)-g_vec(i2,:)
+     E_G_m_G(i1,i2)=0.5_SP*iku_v_norm(v1)**2
+   enddo
+ enddo
+!$omp end parallel do
  !
- G_m_G=0
- !
- ! Find the shell corresponding to iG
+ ! Find the shell corresponding to iGo
  !
  do i1=1,n_g_shells
-   if (ng_in_shell(i1)==iG_) then
-     iG_shell=i1
-     exit
-   endif
-   if (ng_in_shell(i1)> iG_) then
-     iG_shell=i1-1
-     iG_=ng_in_shell(iG_shell)
-     if (iGo==0) iGo_=iG_
-     exit
-   endif
+   if (ng_in_shell(i1)<=iG_)  iG_shell=i1
+   if (ng_in_shell(i1)<=iGo_) iGo_shell=i1
  enddo
+ if (ng_in_shell(iG_shell)  < iG_ )  iG_shell=iG_shell+1
+ if (ng_in_shell(iGo_shell) < iGo_ ) iGo_shell=iGo_shell+1
  !
- forall(i1=1:iG_) G_m_G(i1,1)=i1
- if(iGo_>1) G_m_G(1,2:iGo_)=minus_G(2:iGo_)
+ iG_shell_max=iG_shell
+ E_max=(1+1.E-5_SP)*E_of_shell(n_g_shells)
  !
- do i1=iG_,2,-1
-   do i2=iGo_,2,-1
+ ! define the a lower bound of the G shell
+ !
+ iG_shell_0=iG_shell_max
+ !
+ shell1_loop:&
+ do is=2,iG_shell_max
+   !
+   iG_shell=is
+   if (iGo==0) iGo_shell=iG_shell
+   !
+   E_iG=E_of_shell(iG_shell)
+   E_iGo=E_of_shell(iGo_shell)
+   !
+   if ( sqrt(E_iG)+sqrt(E_iGo) > sqrt(E_of_shell(n_g_shells)) ) then
+     iG_shell_0=is-1
+     exit shell1_loop
+   endif
+   !
+ enddo shell1_loop
+ !
+ ! search for a larger shell (if any)
+ !
+ iG_shell=iG_shell_0
+ !
+ shell2_loop:&
+ do is=iG_shell_0,iG_shell_max
+   !
+   iG_= ng_in_shell(is)
+   if (iGo==0) iGo_=iG_
+   !
+   if( maxval(E_G_m_G(1:iG_,1:iGo_)) > E_max ) then
+      iG_shell=is-1
+      exit shell2_loop
+   endif
+   !
+ enddo shell2_loop
+ !
+ iG_= ng_in_shell(iG_shell)
+ eval_G_minus_G=iG_
+ if (iGo==0) iGo_=iG_
+ !
+ ! Fill the actual G_m_G matrix
+ !
+ allocate(G_m_G(iG_,iGo_))
+ G_m_G=0
+ !
+ call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
+ !
+!$omp parallel do default(shared), private(i2,i1,v1)
+ do i2=1,iGo_
+   do i1=1,iG_
      !
-     v1=g_vec(i1,:)-g_vec(i2,:)
-     E_of_shell_G_m_G=iku_v_norm(v1)**2/2._SP
-     !
-     if(E_of_shell_G_m_G/E_of_shell(n_g_shells)>(1+1.E-5_SP)) then 
-       iG_shell=iG_shell-1
-       iG_=ng_in_shell(iG_shell)
-       eval_G_minus_G=iG_
-       if (iGo==0) iGo_=iG_
-       deallocate(G_m_G)
-       goto 1
-     endif
-     !
+     v1(:)=g_vec(i1,:)-g_vec(i2,:)
      G_m_G(i1,i2)=G_index(v1)
      !
    enddo
- enddo 
+ enddo
+!$omp end parallel do
+ ! 
+ deallocate(E_G_m_G)
+ !
+#if defined _TIMING
+ call timing("eval_G_minus_G",opr="stop")
+#endif
  !
 end function

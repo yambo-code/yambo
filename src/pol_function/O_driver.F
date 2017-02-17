@@ -36,10 +36,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_fxc,use_covariant_approach,&
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_q_for_Xo
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_DIPOLES
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
@@ -49,6 +49,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
  !
  implicit none
+ !
  type(levels)  :: Xen
  type(bz_samp) :: Xk,q
  type(X_t)     :: X
@@ -90,7 +91,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
 &                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                              CLEAN_UP=.TRUE.)
    !
-   if (iq==1) call PARALLEL_WF_index(COMM=PAR_COM_q_for_Xo)
+   if (iq==1) call PARALLEL_WF_index(COMM=PAR_COM_DIPOLES)
    if (iq> 1) call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
    !
    if (WF_buffered_IO) call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
@@ -124,7 +125,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Arrays to be written in the o. files
    !
-   allocate(X_epsilon(8,wv%n_freqs))
+   allocate(Epsilon_ii(wv%n_freqs,2))
+   allocate(EEL(wv%n_freqs,2))
+   allocate(Alpha(wv%n_freqs,2))
    if (l_bs_fxc) then
      allocate(X_fxc(wv%n_freqs))
      X_fxc=cZERO
@@ -172,7 +175,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      ! Fxc file titles
      !
-     call X_setup_headers('q2Fxc')
+     call X_setup_headers('q^2Fxc')
      call msg('o fxc','#',(/headers(1),headers(3),headers(2)/),INDENT=0,USE_TABS=.true.)    
      call msg('o fxc','#')
    endif
@@ -193,24 +196,28 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    call of_open_close(fxc_file_name)
    !
    ! e Table
-   ! 1:e0 2:e 3:eel0 4:eel 5:alpha0 6:alpha 
+   ! 1:e0     2:e     ==> Epsilon_ii(iw,1:2)
+   ! 1:eel0   2:eel   ==> EEL(iw,1:2)
+   ! 1:alpha0 6:alpha ==> Alpha(iw,1:2)
    !
-   X_epsilon=cZERO
+   Epsilon_ii=cZERO
+   EEL       =cZERO
+   Alpha     =cZERO
    !
    call X_os(X_mat,iq,Xen,Xk,wv,X)     
    !
-   ! Without LF eps/alpha
+   ! Without LF eps
    !
-   X_epsilon(1,:)=1.0_SP-X_mat(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   Epsilon_ii(:,1)=1.0_SP-X_mat(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
    !
    if(l_rpa_IP) then
-     X_epsilon(2,:)=X_epsilon(1,:)
+     Epsilon_ii(:,2)=Epsilon_ii(:,1)
    else
      call X_s(iq,X,wv,(/1,wv%n_freqs/))
      !
-     X_epsilon(2,:)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     Epsilon_ii(:,2)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
    endif
    !
    call of_open_close(eps_file_name,'oa')
@@ -226,11 +233,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    n_output=5
    if(l_rpa_IP.or.l_skip_non_int_eps) n_output=3
    call msg('o eps_q eel_q fxc alpha','#')
-   call X_setup_headers('eps_q')
+   call X_setup_headers('EPS')
    call msg('o eps_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call X_setup_headers('eel_q')
+   call X_setup_headers('EEL')
    call msg('o eel_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call X_setup_headers('alpha')
+   call X_setup_headers('ALPHA')
    call msg('o alpha','#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
    call msg('o eps_q eel_q alpha','#')
    !
@@ -238,8 +245,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      ! Eps
      !
-     output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(2,iw)),real(X_epsilon(2,iw)),&
-&                  aimag(X_epsilon(1,iw)),real(X_epsilon(1,iw))/)
+     output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
+&                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
      call msg('o eps_q','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
      !
    enddo
@@ -253,9 +260,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call of_open_close(eel_file_name,'oa')
      call of_open_close(alpha_file_name,'oa')
      !
-     eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,X_epsilon(1,:),X_epsilon(3,:))
-     if(     l_rpa_IP) X_epsilon(4,:)=X_epsilon(3,:)
-     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,X_epsilon(2,:),X_epsilon(4,:))
+     eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
+     if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
+     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
      !
      if (eval_alpha) then
        !
@@ -263,9 +270,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
        !       =  (1 +eels    ) eps_2_alpha/4/pi  
        !
-       X_epsilon(5,:)=(1._SP+X_epsilon(3,:))/4._SP/pi*eps_2_alpha
-       if(     l_rpa_IP) X_epsilon(6,:)=X_epsilon(5,:)
-       if(.not.l_rpa_IP) X_epsilon(6,:)=(1._SP+X_epsilon(4,:))/4._SP/pi*eps_2_alpha 
+       Alpha(:,1)=(1._SP+EEL(:,1))/4._SP/pi*eps_2_alpha
+       if(     l_rpa_IP) Alpha(:,2)= Alpha(:,1)
+       if(.not.l_rpa_IP) Alpha(:,2)=(1._SP+EEL(:,2))/4._SP/pi*eps_2_alpha
        !
      endif
      !
@@ -273,14 +280,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        ! EEL
        !
-       output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw)),&
-&                    aimag(X_epsilon(3,iw)),real(X_epsilon(3,iw))/)
+       output_data=(/real(wv%p(iw))*HA2EV,aimag(EEL(iw,2)),real(EEL(iw,2)),&
+&                    aimag(EEL(iw,1)),real(EEL(iw,1))/)
        call msg('o eel_q','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
        !
        ! Alpha
        !
-       output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(6,iw)),real(X_epsilon(6,iw)),&
-&                    aimag(X_epsilon(5,iw)),real(X_epsilon(5,iw))/)
+       output_data=(/real(wv%p(iw))*HA2EV,aimag(Alpha(iw,2)),real(Alpha(iw,2)),&
+&                    aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
        !
        call msg('o alpha','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
      enddo
@@ -297,8 +304,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      if (iq> 1) call PP_redux_wait(X_fxc,COMM=PAR_COM_Q_A2A%COMM)
      call of_open_close(fxc_file_name,'oa')
      do iw=1,wv%n_freqs
-       call msg('o fxc','',(/real(wv%p(iw))*HA2EV,real(X_fxc(iw)*q_norm(iq)**2.),&
-&                           aimag(X_fxc(iw)*q_norm(iq)**2.)/),INDENT=-2,USE_TABS=.true.)
+       call msg('o fxc','',(/real(wv%p(iw))*HA2EV,real(X_fxc(iw)*q_norm(iq)**2),&
+&                           aimag(X_fxc(iw)*q_norm(iq)**2)/),INDENT=-2,USE_TABS=.true.)
      enddo
      call of_open_close(fxc_file_name)
    endif
@@ -307,7 +314,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call X_alloc('X')
    !
-   deallocate(X_epsilon)
+   deallocate(Epsilon_ii,EEL,Alpha)
    !
    call FREQUENCIES_reset(wv,"all")
    !

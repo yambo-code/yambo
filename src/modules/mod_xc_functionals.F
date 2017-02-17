@@ -35,9 +35,9 @@ module xc_functionals
  integer     , public :: GS_xc_FUNCTIONAL
  real(SP), public :: GS_exx_FRACTION, GS_exx_SCREENING
  real(SP), public, allocatable:: magn(:,:)
+ real(SP), public, allocatable:: F_xc(:,:,:)
  real(SP), public, allocatable:: V_xc(:,:)
  real(SP), public, allocatable:: E_xc(:)
- real(SP), public, allocatable:: F_xc(:)
  !
  ! Messagging
  !

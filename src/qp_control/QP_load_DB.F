@@ -43,7 +43,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  type(bz_samp)   ::k
  integer         ::band_range(2),DB_corrected(en%nb,en%nk,n_sp_pol)
  character(*)    ::msg_fmt
- logical         ::GFs_from_DB
+ logical         ::GFs_From_DB
  !
  ! Work Space
  !
@@ -81,7 +81,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  !
  do_EWZ_using_Ik_IE=.false.
  DB_plan_todo_EWZ=.false.
- GFs_from_DB=.false.
+ GFs_From_DB=.false.
  qp_msg=' '
  QP_load_DB=1
  QPs_DB=.false.
@@ -191,7 +191,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
 &                                                                  trim(db_piece(i1))=="UeI",trim(db_piece(i1))=="Uei"/))
        !
      else if (GFs_DB) then
-       if (.not.GFs_from_DB) GFs_from_DB=any((/trim(db_piece(i1))=="G",trim(db_piece(i1))=="g"/))
+       if (.not.GFs_From_DB) GFs_From_DB=any((/trim(db_piece(i1))=="G",trim(db_piece(i1))=="g"/))
      endif
    enddo
    !
@@ -202,7 +202,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    !
    ! No compatible DB/actions 
    !
-   if (.not. (QPs_DB.and.any(do_EWZ_using_Ik_IE)) .and..not. (GFs_DB.and.GFs_from_DB) ) then
+   if (.not. (QPs_DB.and.any(do_EWZ_using_Ik_IE)) .and..not. (GFs_DB.and.GFs_From_DB) ) then
      QP_ctl_from_DB(:)%db="none"
      QP_ctl_from_DB(:)%short_descr="none"
      if (.not.QPs_DB.and..not.GFs_DB) then
@@ -222,10 +222,10 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
 &      QP_check_if_corrected(band_range,(/1,en%nk/),(/1,n_sp_pol/),en,'W')) do_EWZ_using_Ik_IE(2)=.false.
    if (do_EWZ_using_Ik_IE(3).and.&
 &      QP_check_if_corrected(band_range,(/1,en%nk/),(/1,n_sp_pol/),en,'Z')) do_EWZ_using_Ik_IE(3)=.false.
-   if (GFs_from_DB.and.&
-&      QP_check_if_corrected(band_range,(/1,en%nk/),(/1,n_sp_pol/),en,'G')) GFs_from_DB=.false.
+   if (GFs_From_DB.and.&
+&      QP_check_if_corrected(band_range,(/1,en%nk/),(/1,n_sp_pol/),en,'G')) GFs_From_DB=.false.
    !
-   if (.not.any(do_EWZ_using_Ik_IE).and..not.GFs_from_DB) then
+   if (.not.any(do_EWZ_using_Ik_IE).and..not.GFs_From_DB) then
      QP_load_DB=-1
      return
    endif
@@ -253,7 +253,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
      call mem_est("E-Z",(/size(en%Z)/))
      en%Z=1._SP
    endif
-   if (GFs_from_DB) then
+   if (GFs_From_DB) then
      qp_msg(i1:i1)="G"
      i1=i1+1
    endif
@@ -297,9 +297,11 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  !
  ! FIT
  !
- if (do_EWZ_using_Ik_IE(1)) call QP_fit_DB_values(band_range,qp,en,QP_ctl_from_DB,'E')
- if (do_EWZ_using_Ik_IE(2)) call QP_fit_DB_values(band_range,qp,en,QP_ctl_from_DB,'W')
+ if (do_EWZ_using_Ik_IE(1)) call QP_fit_DB_energies(band_range,qp,QP_ctl_from_DB)
+ if (do_EWZ_using_Ik_IE(2)) call QP_fit_DB_widths(band_range,qp,en,k,QP_ctl_from_DB)
  if (do_EWZ_using_Ik_IE(3)) QP_ctl_from_DB%Z=sum(qp%Z(:))/qp%n_states
+ !
+ if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) do_EWZ_using_Ik_IE(:3)=.false.
  !
  contains 
    !

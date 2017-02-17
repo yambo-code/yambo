@@ -140,12 +140,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    endif
  endif
  !
- if (l_life) then
+ if (l_life.and.l_elel_corr) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
 &        string_pack('(a,',gen_fmt( r_v=(/QP_cg_percent /) ),')'))) &
 &        ' Transitions       [o/o]:',QP_cg_percent
- else 
+ endif
+ if (.not.l_life) then 
    if ( (.not.l_cohsex) .or. (l_cohsex.and.COHSEX_use_empties) ) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&

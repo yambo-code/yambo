@@ -39,7 +39,7 @@ function RIntegrate(F,W,N)
  do i_w=1,N-1
    M=(F(i_w)-F(i_w+1))/(W(i_w)-W(i_w+1))
    Q=F(i_w)-M*W(i_w)
-   RIntegrate=RIntegrate+1./2.*M*(W(i_w+1)**2.-W(i_w)**2.)+Q*(W(i_w+1)-W(i_w))
+   RIntegrate=RIntegrate+1._SP/2._SP*M*(W(i_w+1)**2-W(i_w)**2)+Q*(W(i_w+1)-W(i_w))
  enddo
  !
 end function

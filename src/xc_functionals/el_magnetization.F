@@ -48,8 +48,8 @@ subroutine el_magnetization(en,Xk,magn)
  !
  ! Work Space
  !
- integer :: i1,i2,ib,ik,ifft_up,ifft_dn
- real(SP):: cv(fft_size,3),tmp_sop(3,3)
+ integer :: isym,ifft,ib,ik,i_wf_up,i_wf_dn
+ real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ(n_sp_pol)
  !
  magn=0._SP
  cv=0._SP
@@ -68,33 +68,37 @@ subroutine el_magnetization(en,Xk,magn)
      if (size(WF%index,1)<ib)        cycle
      if (size(WF%index,2)<ik)        cycle
      !
-     ifft_up=WF%index(ib,ik,1)
-     ifft_dn=WF%index(ib,ik,2)
+     i_wf_up=WF%index(ib,ik,1)
+     i_wf_dn=WF%index(ib,ik,2)
      !
-     if (ifft_up==0 .or. ifft_dn==0) cycle
+     if (i_wf_up==0 .or. i_wf_dn==0) cycle
+     !
+     f_occ=en%f(ib,ik,:)
      !
      if (n_spinor==2) then
        !
        ! mx
        !
        cv(:,1)=cv(:,1)+Xk%weights(ik)*(&
-&              en%f(ib,ik,1)*real(conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn))&
-&             +en%f(ib,ik,1)*real(conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up)) )
+&              f_occ(1)*real(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_dn))&
+&             +f_occ(1)*real(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_up)) )
        !
        ! my
        !
        cv(:,2)=cv(:,2)+Xk%weights(ik)*(&
-&              en%f(ib,ik,1)*aimag(conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn))&
-&             -en%f(ib,ik,1)*aimag(conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up)) )
+&              f_occ(1)*aimag(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_dn))&
+&             -f_occ(1)*aimag(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_up)) )
      endif
      !
      ! mz
      !
      cv(:,3)=cv(:,3)+Xk%weights(ik)*(&
-&            en%f(ib,ik,1)       *real(conjg(WF%c(:,ifft_up))*WF%c(:,ifft_up))&
-&           -en%f(ib,ik,n_sp_pol)*real(conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_dn)) )
+&            f_occ(1)       *real(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_up))&
+&           -f_occ(n_sp_pol)*real(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_dn)) )
      !
    enddo
+   !
+   !
  enddo
  !
  if (associated(PAR_IND_WF_linear%element_2D)) then
@@ -103,22 +107,22 @@ subroutine el_magnetization(en,Xk,magn)
  ! 
  ! Symmetrization
  !
- do i1=1,nsym
+ do isym=1,nsym
    ! The magnetization, like the spin, is a pseudo-vector:
    ! i.e. is invariant under spatial inversion but changes under T-rev
    if (n_spinor==2) then
-     tmp_sop(:,:)=dl_sop(:,:,i1)*m3det(dl_sop(:,:,i1))
-     if( i1> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
-     forall(i2=1:fft_size) magn(i2,:)=magn(i2,:)+ &
-&                            matmul(tmp_sop,real( cv(fft_rot_r(i2,i1),:)/real(nsym) ))
+     tmp_sop(:,:)=dl_sop(:,:,isym)*m3det(dl_sop(:,:,isym))
+     if( isym> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
+     forall(ifft=1:fft_size) magn(ifft,:)=magn(ifft,:)+ &
+&                            matmul(tmp_sop, cv(fft_rot_r(ifft,isym),:)/real(nsym,SP))
    else
-     magn(:,3)=magn(:,3)+real(cv(fft_rot_r(:,i1),3)/real(nsym))
+     magn(:,3)=magn(:,3)+cv(fft_rot_r(:,isym),3)/real(nsym,SP)
    endif
    !
  enddo
  !
- do i1=1,fft_size
-   Total_magn(:)=Total_magn(:)+magn(i1,:)
+ do ifft=1,fft_size
+   Total_magn(:)=Total_magn(:)+magn(ifft,:)
  enddo
  !
 end subroutine

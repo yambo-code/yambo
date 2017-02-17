@@ -34,7 +34,7 @@ subroutine G_shells_finder()
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
- use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,IO_and_Messaging_switch
+ use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero
  use interfaces,   ONLY:PARALLEL_index
  use parallel_m,   ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -111,6 +111,7 @@ subroutine G_shells_finder()
    !
    if (.not.px%element_1D(i_m)) cycle
    !
+!$omp parallel do default(shared), private(i_1,ig_1,i_s,g_rotated,i_2,ig_2)
    do i_1=first_G_in_shell(i_m),first_G_in_shell(i_m)+ng_in_shell_TMP(i_m)-1
      !
      ig_1=G_mod_indx(i_1)
@@ -138,6 +139,7 @@ subroutine G_shells_finder()
      enddo
      !
    enddo
+!$omp end parallel do
    !
    call live_timing(steps=1)
    !

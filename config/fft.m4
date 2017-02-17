@@ -86,7 +86,6 @@ elif test x"$with_fft_libs" != "x" ; then
 else
   AC_MSG_CHECKING([for FFT])
 fi
-
 #
 # check for FFTW
 #

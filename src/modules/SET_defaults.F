@@ -23,16 +23,21 @@
 !
 subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
- use drivers
- use pars,       ONLY:SP,schlen
- use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
+ use drivers,    ONLY:infile_editing,l_acfdt,l_alda_fxc,l_bs_fxc,l_bse,l_bsk,l_bss,l_chi,l_cohsex,l_col_cut,l_elel_corr,&
+&                     l_elel_scatt,l_elph_corr,l_elph_Hamiltonian,l_elph_scatt,l_em1d,l_em1s,l_eval_collisions,l_gw0,&
+&                     l_HF_and_locXC,l_life,l_lrc_fxc,l_optics,l_ppa,l_rim,l_rpa_IP,l_rt_carriers_in_use,l_sc_coh,l_sc_exx,&
+&                     l_sc_fock,l_sc_hartree,l_sc_ip,l_sc_is_libDFT,l_sc_magnetic,l_sc_run,l_sc_sex,l_setup,l_td_hartree,&
+&                     l_td_hf,l_tddft,l_use_collisions,l_use_Hxc_collisions,l_W_eh,l_W_eh_cpl,l_W_eh_diag,list_dbs
+ use pars,       ONLY:SP,cZERO,schlen
+ use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
- use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
-&                      eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
-&                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
-&                      X_terminator,X_en_comp,global_gauge,use_covariant_approach,integrating_over_q,&
-&                      force_v_g_space_approach,use_real_space_approach,Dipole_approach
+ use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,l_drude,&
+&                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
+&                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
+&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
+&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,X_is_evaluated_for_all_Qs,&
+&                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_inversion_mode,&
+&                     X_use_lin_sys
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,&
@@ -53,24 +58,26 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
- use parallel_m, ONLY:ncpu,CPU_str_reset
+ use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
 &                     n_max_jobstr,grid_paths
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
-&                     string_split,log_as_a_file
+&                     string_split,log_as_a_file,string_remove
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
- use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,BS_drude_f_eh,&
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
+&                     BSS_q0,Haydock_treshold,BSS_uses_DbGd,BSS_Wd,&
+&                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
+&                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
+ use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
-&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_DbGd,BSS_damp_reference,&
-&                     BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res
+&                     BS_K_is_ALDA,BSE_mode
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
-&                     FXC_is_causal,TDDFT_mode
+&                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
@@ -142,9 +149,16 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call mk_dir(core_io_path)
  !
- ! ... and Job string
+ ! ... and Job strings
  !
  call string_split(JS,string,",")
+ !
+ ! remove final /
+ do i1=1,n_max_jobstr
+   if (len_trim(string(i1))==0) cycle
+   string(i1)=trim(string_remove(string(i1),"/"))
+ enddo
+ !
  jobstr=string(1)
  alt_jobstr=" "
  do i1=2,n_max_jobstr
@@ -247,7 +261,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  pp_n_l_times_proj_max=0
  pp_kbv_dim=0
  !
- !drivers
+ ! Drivers
  !
  list_dbs=.FALSE.
  infile_editing=.FALSE.
@@ -281,13 +295,16 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elph_corr=.FALSE.
  l_elel_scatt=.FALSE.
  l_elph_scatt=.FALSE.
+ l_use_collisions=.FALSE.
+ l_use_Hxc_collisions=.FALSE.
  !
  l_rt_carriers_in_use=.FALSE.
  l_sc_run=.FALSE.
  l_sc_ip=.FALSE.
- l_sc_hf=.FALSE.
+ l_sc_fock=.FALSE.
  l_sc_hartree=.FALSE.
- l_sc_cohsex=.FALSE.
+ l_sc_coh=.FALSE.
+ l_sc_sex=.FALSE.
  l_sc_exx=.FALSE.
  l_sc_is_libDFT=.FALSE.
  l_sc_magnetic=.FALSE.
@@ -343,11 +360,14 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !X
  !
  Chi_mode=' '
+ Chi_inversion_mode="inversion"
+ X_use_lin_sys=.FALSE.
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
  half_X_mat_only=.FALSE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
+ Dipole_Energy_treshold_vv=1.E+5_SP/HA2EV
  Dipole_approach="G-space v"
  use_shifted_grids_approach = .FALSE.
  use_covariant_approach     = .FALSE.
@@ -362,12 +382,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  skip_cond_sum_rule=.FALSE.
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
- integrating_over_q=.FALSE.
+ X_is_evaluated_for_all_Qs=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
- X_terminator=.FALSE.
- X_en_comp=2._SP
+ l_X_terminator=.FALSE.
+ X_terminator_E=1.5_SP
  !
  !QPm
  !
@@ -409,16 +429,17 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  BS_n_g_W=1
  BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
- BS_drude_f_eh=0._SP
  BS_identifier=0
  BS_q=1
  BS_eh_win=100._SP
  BS_res_mode='xc'
  BS_cpl_mode='none'
- BSE_mode='causal'
+ BSE_mode='retarded'
  BSK_mode=' '
  TDDFT_mode=' '
- BS_anti_res=.FALSE.
+ BSS_add_antiresonant=.FALSE.
+ BSS_Wd=cZERO
+ l_drude=.false.
  BS_K_dim=0
  BSS_mode=' '
  BSS_inversion_mode='pf'
@@ -434,6 +455,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Haydock_treshold=-0.02_SP
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
+ BSS_perturbative_width=.FALSE.
+ K_INV_PL%what     = "PLS"
+ K_INV_PL%treshold =0.5_SP
+ K_INV_EPS%what    = "EPS"
+ K_INV_EPS%treshold=0.01_SP
  !
  ! TDDFT
  !
@@ -445,7 +471,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  FXC_LRC_alpha=0._SP
  FXC_LRC_beta=0._SP
  FXC_SVD_digits=0
- FXC_is_causal=.FALSE.
+ FXC_is_retarded=.FALSE.
  !
  ! ACFDT
  !
@@ -477,5 +503,16 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
  !
  !
+ !
+ !
+ !
+ ! Parallel
+ !
+ PARALLEL_cpu_mat_diagonalization=1
+ PARALLEL_cpu_mat_inversion      =1
+#if defined _SCALAPACK
+ PARALLEL_cpu_mat_diagonalization=0
+ PARALLEL_cpu_mat_inversion      =0
+#endif
  !
 end subroutine

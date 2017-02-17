@@ -21,11 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
+subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
  !
  use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
 &                     MPI_comm,comm_default_value
- use com,        ONLY:error
+ use com,        ONLY:error,warning
+ use stderr,     ONLY:intc
  !
  implicit none
  !
@@ -35,13 +36,14 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  type(MPI_comm),optional::COMM
  logical       ,optional::CONSECUTIVE
  logical       ,optional::ORDERED
+ logical       ,optional::NO_EMPTIES
  logical       ,optional::MASK(:)
  ! 
  ! Work Space
  !
  integer :: nindxs,i1,i2,i3,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
 &           i_range(2),missing_cpus,par_kind_2D
- logical :: SERIAL,local_ORDERED,local_CONSECUTIVE
+ logical :: NO_EMPTIES_,SERIAL,local_ORDERED,local_CONSECUTIVE
  integer,allocatable :: i_done(:),lowlim(:)
  !
  myid_loop =myid
@@ -197,5 +199,14 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  !
 1 deallocate(lowlim)
  if(allocated(i_done)) deallocate(i_done)
+ !
+ NO_EMPTIES_=.false.
+ if (present(NO_EMPTIES)) NO_EMPTIES_=NO_EMPTIES
+ !
+ if (px%n_of_elements(myid_loop+1)==0) then
+   call warning(" Empty workload for CPU "//trim(intc(myid+1)))
+   !if (.not.NO_EMPTIES_) call warning(" Empty workload for CPU "//trim(intc(myid+1)))
+   !if (     NO_EMPTIES_) call   error(" Empty workload for CPU "//trim(intc(myid+1)))
+ endif
  !
 end subroutine

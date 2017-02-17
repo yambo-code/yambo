@@ -1,4 +1,4 @@
-#
+
 #===============================
 # WanT package
 #===============================
@@ -35,8 +35,10 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
+	      CPP="$(cpp)" \
 	      CFLAGS="$(cflags)" \
 	      CXX="$(cc)" \
+	      CXXCPP="$(cpp)" \
 	      FC="$(f90)" \
 	      FCFLAGS="$(f77flags)" \
 	      FFLAGS="$(f77flags)" \

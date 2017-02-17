@@ -34,12 +34,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use electrons,     ONLY:levels,spin_occ
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:Finite_Tel,l_elel_corr
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_QP_index,PAR_IND_QP,&
+ use drivers,       ONLY:l_elel_corr
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_IND_QP,&
 &                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_index
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch
+ use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
+&                        deliver_IO_error_message
  use QP_ctl_m,      ONLY:QP_ctl_t,reset_QP_ctl
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
@@ -153,6 +154,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
  io_err=io_ELPH(ID,'gkkp')
+ call deliver_IO_error_message(io_err,"GKKP")
  if (io_err/=0) call error('El-Ph database not found')
  !
  !Sc Energy points
@@ -272,7 +274,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        allocate(DB_corrected(elph_nb,k%nbz,1))
        DB_corrected=0
-       call QP_apply_global_stretch((/1,elph_nb/),E_k_p_q,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
+       call QP_apply_global_stretch((/1,elph_nb/),E_k_p_q,k,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
        deallocate(DB_corrected)
        !
      endif

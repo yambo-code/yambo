@@ -31,15 +31,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
- use BS,             ONLY:BS_bands,BS_q,&
-&                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
-&                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
-&                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
-&                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BSE_mode,BSS_Wd,&
-&                         BSS_uses_DbGd,BSS_q0,BS_Blocks_and_Transitions_free
- use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
- use QP_CTL_m,       ONLY:QP_apply
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
+&                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS
+ use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
+&                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
+&                         BSE_mode,BS_Blocks_and_Transitions_free
+ use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -53,17 +50,26 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
  type(X_t)     ::X_static_pp
- type(w_samp)  ::Xw,W_bss 
+ type(w_samp)  ::Xw
  !
  ! Work Space
  !
  type(X_t)         :: X_tddft,X_oscillators
  integer           :: iq,Max_G_m_G
  integer, external :: eval_G_minus_G
+ type(w_samp)      :: W_bss 
  !
  call section('*','Response Functions in Transition space')
  !=========================================================
  !
+ !
+ ! Joint DOS
+ !===========
+ BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.l_rpa_IP
+ !
+ ! Copatibility with old inputs
+ !==============================
+ if (index(BSE_mode,'causal')/=0) BSE_mode='retarded'
  !
  ! Tranferred momentum. Only Gamma now
  !=====================================
@@ -99,20 +105,25 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Logicals (Drivers)
  !====================
- if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='causal'
+ if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='retarded'
  !
  BS_res_K_corr=index(BS_res_mode,'c')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BS_anti_res=index(BSE_mode,'causal')/=0
+ BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  BS_K_is_ALDA=l_alda_fxc.and.n_spin==1
  if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
- if(l_kerr) call parser('AnHall',l_anomalous_Hall)
+ !
+ !
+ 
+ l_anomalous_Hall=l_kerr
+
+ !
 #endif
  !
  ! Energy points
@@ -140,13 +151,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  X_oscillators%q0=BSS_q0
  !
  ! ... EH space (no parallelization)
- call K_Transitions_setup(iq,Ken,Xk,BSS_Wd,.FALSE.)
+ call K_Transitions_setup(iq,Ken,Xk,.FALSE.)
  !
  !... Parallel distribution
  call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
  !
  ! ... EH space (with parallelization) and Transition groups build-up
- call K_Transitions_setup(iq,Ken,Xk,BSS_Wd,.TRUE.)
+ call K_Transitions_setup(iq,Ken,Xk,.TRUE.)
  !
  !... Blocks build-up
  if (.not.l_rpa_IP) call K_blocks( )

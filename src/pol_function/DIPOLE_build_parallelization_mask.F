@@ -23,11 +23,11 @@
 !
 subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  !
- use X_m,                 ONLY:X_t
+ use X_m,                 ONLY:X_t,l_X_terminator
  use electrons,           ONLY:n_sp_pol
  use parallel_m,          ONLY:PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
-&                              PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz_ID,&
-&                              l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_RT
+&                              PAR_IND_DIPk_ibz,PAR_IND_DIPk_ID,l_par_SE,&
+&                              l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q
  !
  implicit none
  !
@@ -37,15 +37,21 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  !
  ! Work space
  !
- integer      :: iv,ic
+ integer      :: iv,ic,ic_min
  !
  n_LT_steps=0
  !
+ eval_DIP=.false.
+ !
  do iv=X%ib(1),X%ib_lim(1) 
-   do ic=max(iv,X%ib_lim(2)),X%ib(2)
+   !
+   ic_min=max(iv,X%ib_lim(2))
+   if (l_X_terminator) ic_min=iv
+   !
+   do ic=ic_min,X%ib(2)
      !
      !
-     if (any((/l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q/))) then
+     if (any((/l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_SE/))) then
        eval_DIP(ic,iv)= PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic).and. &
 &                       PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)
      endif
@@ -55,6 +61,6 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
    enddo
  enddo
  !
- n_LT_steps=n_LT_steps*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*n_sp_pol
+ n_LT_steps=n_LT_steps*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ID+1)*n_sp_pol
  !
 end subroutine

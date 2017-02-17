@@ -23,13 +23,15 @@
 !
 subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  !
- use com,                 ONLY:msg
+ use com,                 ONLY:msg,warning
  use memory_m,            ONLY:mem_est
  use vec_operate,         ONLY:v_norm,sort
  use wave_func,           ONLY:wf_nc_k, wf_igk,wf_ncx,wf_ng
- use R_lattice,           ONLY:bz_samp,g_rot,ng_closed
+ use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,ng_vec
  use vec_operate,         ONLY:v_norm
  use D_lattice,           ONLY:nsym
+ use stderr,              ONLY:intc
+ use YPP_symm
  !
  implicit none
  !
@@ -42,34 +44,45 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  !
  ! Work space
  !
- integer                     :: wf_ng_save
- integer                     :: wf_ncx_save
- integer                     :: wf_nc_k_save(k_save%nibz)
- integer                     :: wf_igk_save(wf_ncx,k_save%nibz)
- !
  integer                     :: ik,ik_save,ic,is
  !
+ !
+ ! The old SAVE tables
+ !
+ allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
  wf_nc_k_save=wf_nc_k
  wf_igk_save =wf_igk
  wf_ncx_save =wf_ncx
  wf_ng_save  =wf_ng
- !
- deallocate(wf_nc_k,wf_igk)
- call mem_est("wf_nc_k wf_igk")
+ ng_vec_save =ng_vec
  !
  ! Check which of the wfc components can be rotated
  ! and discard the ones above ng_closed
  ! This could be removed by increasing the total number of g_vectors
+ !
+ l_wf_nc_k_red=.false.
  do ik=1,k_save%nibz
-   do ic=1,wf_nc_k_save(ik)
-     if( wf_igk_save(ic,ik)<=ng_closed ) cycle
-     wf_igk_save(ic:wf_nc_k_save(ik),ik)=-1
-     wf_nc_k_save(ik)=ic-1
+   do ic=1,wf_nc_k(ik)
+     if( wf_igk(ic,ik)<=ng_closed ) cycle
+     l_wf_nc_k_red=.true.
+     wf_igk(ic:wf_nc_k(ik),ik)=-1
+     wf_nc_k(ik)=ic-1
      exit
    enddo
  enddo
  !
- wf_ncx=maxval(wf_nc_k_save)
+ wf_ncx=maxval(wf_nc_k)
+ !
+ if(l_wf_nc_k_red) call warning(' cut-off reduced on some WFs')
+ !
+ ! The old SAVE tables reduced
+ !
+ allocate(wf_nc_k_reduced(k_save%nibz),wf_igk_reduced(wf_ncx,k_save%nibz))
+ wf_nc_k_reduced=wf_nc_k
+ wf_igk_reduced =wf_igk(:wf_ncx,:)
+ !
+ deallocate(wf_nc_k,wf_igk)
+ call mem_est("wf_nc_k wf_igk")
  !
  allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
  !
@@ -82,8 +95,8 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      !
      ik_save=kpoints_map(1,ik)
      !
-     wf_nc_k(ik) = wf_nc_k_save(ik_save)
-     wf_igk(1:wf_nc_k(ik),ik) = wf_igk_save(1:wf_nc_k_save(ik_save),ik_save)
+     wf_nc_k(ik) = wf_nc_k_reduced(ik_save)
+     wf_igk(1:wf_nc_k(ik),ik) = wf_igk_reduced(1:wf_nc_k_reduced(ik_save),ik_save)
      !
    enddo
    !
@@ -92,8 +105,8 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      ik_save=kpoints_map(1,ik)
      is=kpoints_map(2,ik)
      !
-     wf_nc_k(ik) = wf_nc_k_save(ik_save)
-     wf_igk(1:wf_nc_k(ik),ik) = g_rot(is,wf_igk_save(1:wf_nc_k_save(ik_save),ik_save))
+     wf_nc_k(ik) = wf_nc_k_reduced(ik_save)
+     wf_igk(1:wf_nc_k(ik),ik) = g_rot(is,wf_igk_reduced(1:wf_nc_k_reduced(ik_save),ik_save))
      call sort( wf_igk(1:wf_nc_k(ik),ik) )
      !
    enddo
@@ -102,13 +115,26 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
    !
    wf_igk=-1
    do ik=1,k%nibz
-     wf_igk(1:wf_ncx,ik) = wf_igk_save(1:wf_ncx,kpoints_map(1,ik))
-     wf_nc_k(ik)         = wf_nc_k_save(kpoints_map(1,ik))
+     wf_igk(1:wf_ncx,ik) = wf_igk_reduced(1:wf_ncx,kpoints_map(1,ik))
+     wf_nc_k(ik)         = wf_nc_k_reduced(kpoints_map(1,ik))
    enddo
    !
    !
  end select
  !
  wf_ng=maxval(wf_igk)
+ !
+ ! The new SAVE table
+ !
+ allocate(wf_nc_k_new(k%nibz),wf_igk_new(wf_ncx,k%nibz))
+ wf_nc_k_new=wf_nc_k
+ wf_igk_new =wf_igk
+ wf_ncx_new =wf_ncx
+ wf_ng_new  =wf_ng
+ ng_vec_new =ng_vec
+ !
+ if(wf_ncx_save/=wf_ncx_new) call msg('s',':: wf_ncx was reduced from'//trim(intc(wf_ncx_save))//' to '//trim(intc(wf_ncx_new)))
+ if(wf_ng_save /=wf_ng_new ) call msg('s',':: wf_ng changed from '//trim(intc(wf_ng_save))//' to '//trim(intc(wf_ng_new)))
+ if(ng_vec_save/=ng_vec_new) call msg('s',':: ng_vec was increased to close the G-shell')
  !
 end subroutine

@@ -28,7 +28,6 @@ subroutine eval_minus_G()
  ! G_{minus_G(ig)} = -G_ig
  !
  use pars,         ONLY:IP
- use com,          ONLY:msg
  use memory_m,     ONLY:mem_est
  use D_lattice,    ONLY:inv_index
  use R_lattice,    ONLY:ng_closed,g_rot,minus_G

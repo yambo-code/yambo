@@ -78,10 +78,9 @@ module global_XC
  !
  ! SC's
  integer, public, parameter :: &
-   SC_Hartree       = 0,   &  ! Hartree
+   SC_Hartree       =1000, &  ! Hartree
    SC_EXX           = 301, &  ! OEP-EXX
-   SC_HF            = 302, &  ! Hartree-Fock
-   SC_COHSEX        = 303, &  ! Coulomb-Hole Screened-eXchange
+   SC_Fock          = 302, &  ! Fock
    SC_EXXC          = 304, &  ! OEP-EXX + LDA correlation
    SC_SRPA          = 305, &  ! OEP-COHSEX (static RPA)
    SC_EXX_KLI       = 311, &  ! OEP-EXX (KLI apprx)
@@ -89,7 +88,10 @@ module global_XC
    SC_SRPA_KLI      = 315, &  ! OEP-COHSEX (KLI apprx)
    SC_EXX_SLT       = 321, &  ! OEP-EXX (SLT apprx)
    SC_EXXC_SLT      = 324, &  ! OEP-EXX (SLT apprx) + LDA correlation
-   SC_SRPA_SLT      = 325     ! OEP-COHSEX (SLT apprx)
+   SC_SRPA_SLT      = 325, &  ! OEP-COHSEX (SLT apprx)
+   SC_COH           = 326, &  ! Coulomb-Hole 
+   SC_SEX           = 327, &  ! Screened-eXchange
+   SC_COHSEX        = SC_SEX+SC_COH  ! Coulomb-Hole + Screened-eXchange
  !
  ! Self Energies
  integer, public, parameter :: &
@@ -101,7 +103,9 @@ module global_XC
    SE_GWo           = 405, &
    SE_POLARON       = 406, &
    SE_GW_NEQ        = 407, &
-   SE_GW_QED        = 408
+   SE_GW_QED        = 408, &
+   SE_COH           = 409, &
+   SE_SEX           = 410 
  !
  ! More Self-Energies
  integer, public, parameter :: &
@@ -199,41 +203,54 @@ module global_XC
      integer           :: xc_functional ! In case kind < 300 gives DFT functional
      integer           :: perturbation
      ! 
+     integer           :: local_kind
      character(1)      :: ch_plus
      character(lchlen) :: ch
      global_XC_string=' '
-     select case (kind)
-       case(-1)
-         global_XC_string='IP'
-       case(SC_Hartree) !=0
-         global_XC_string='Hartree'
-       case(1:300)
-         global_XC_string=trim(xc_string(xc_functional))
-       case(SC_EXX)
-         global_XC_string='SC Exact Exchange'
-       case(SC_EXXC)
-         global_XC_string='SC Exact Exchange +'//trim(xc_string(xc_functional))
-       case(SC_HF)
-         global_XC_string='SC Hartree Fock'
-       case(SC_COHSEX)
-         global_XC_string='SC COHSEX'
-       case(SE_COHSEX)
-         global_XC_string='COHSEX'
-       case(SE_GoWo_PPA)
-         global_XC_string='GoWo Plasmon Pole appox.'
-       case(SE_GoWo)
-         global_XC_string='GoWo on real axis'
-       case(SE_GWo_PPA)
-         global_XC_string='GWo Plasmon Pole appox.'
-       case(SE_GWo)
-         global_XC_string='GWo on real axis'
-       case(SE_POLARON)
-         global_XC_string='Polarons'
-       case(SE_GW_NEQ)
-         global_XC_string='OUT-of-EQ GW'
-       case(SE_GW_QED)
-         global_XC_string='QED-based GW'
-     end select
+     do local_kind=kind-1000,kind,1000
+       select case (local_kind)
+         case(-1)
+           global_XC_string='IP'
+         case(SC_Hartree) !=1000
+           global_XC_string='Hartree'
+         case(1:300)
+           global_XC_string=trim(xc_string(xc_functional))
+         case(SC_EXX)
+           global_XC_string='SC Exact Exchange'
+         case(SC_EXXC)
+           global_XC_string='SC Exact Exchange +'//trim(xc_string(xc_functional))
+         case(SC_FOCK)
+           global_XC_string='SC Fock'
+         case(SC_COH)
+           global_XC_string='SC COH'
+         case(SC_SEX)
+           global_XC_string='SC SEX'
+         case(SC_COHSEX)
+           global_XC_string='SC COHSEX'
+         case(SE_COH)
+           global_XC_string='COH'
+         case(SE_SEX)
+           global_XC_string='SEX'
+         case(SE_COHSEX)
+           global_XC_string='COHSEX'
+         case(SE_GoWo_PPA)
+           global_XC_string='GoWo Plasmon Pole appox.'
+         case(SE_GoWo)
+           global_XC_string='GoWo on real axis'
+         case(SE_GWo_PPA)
+           global_XC_string='GWo Plasmon Pole appox.'
+         case(SE_GWo)
+           global_XC_string='GWo on real axis'
+         case(SE_POLARON)
+           global_XC_string='Polarons'
+         case(SE_GW_NEQ)
+           global_XC_string='OUT-of-EQ GW'
+         case(SE_GW_QED)
+           global_XC_string='QED-based GW'
+         case default
+           if(trim(global_XC_string)/="".and.local_kind>1000) global_XC_string='SC HARTREE +'//trim(global_XC_string)
+       end select
+     enddo
      !
      ch_plus='+'
      if (kind==0) ch_plus=' '

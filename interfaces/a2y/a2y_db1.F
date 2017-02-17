@@ -122,15 +122,15 @@ subroutine a2y_db1(en,k,KSS_file_name)
  do i1 = 1,3
    DL_vol = DL_vol+a(1,i1)*cp(i1)
  enddo
- b(1,:) = cross_product(a(2,:),a(3,:))*2.*pi/DL_vol
- b(2,:) = cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
- b(3,:) = cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
+ b(1,:) = cross_product(a(2,:),a(3,:))*2._SP*pi/DL_vol
+ b(2,:) = cross_product(a(3,:),a(1,:))*2._SP*pi/DL_vol
+ b(3,:) = cross_product(a(1,:),a(2,:))*2._SP*pi/DL_vol
  !
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz
  allocate(k%pt(k%nibz,3))
  do ik = 1,k%nibz
-   k%pt(ik,:)=matmul(transpose(b),ahdr%kptns(:,ik))*alat(:)/2./pi
+   k%pt(ik,:)=matmul(transpose(b),ahdr%kptns(:,ik))*alat(:)/2._SP/pi
  enddo
  !
  ! ABINIT 
@@ -213,7 +213,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ng_vec=ng_vec_abinit
  !
- gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0.) )
+ gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0._SP) )
  !
  if( (i_time_rev==1 .or. i_space_inv==1) .and. .not.gamma_only) then
    !

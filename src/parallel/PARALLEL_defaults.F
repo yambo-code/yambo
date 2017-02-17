@@ -45,8 +45,11 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  NC      =ncpu
  !
  N_basis=1
- do i1=1,13
-   if (mod(NC,i1)==0) N_basis=i1
+ do i1=2,13
+   if (mod(NC,i1)==0) then
+     N_basis=i1
+     exit
+   endif
  enddo
  !
  call DEFAULT_action("check")
@@ -101,6 +104,13 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
              N_fields=N_fields+1
              CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
            endif
+#if defined _SCALAPACK
+         case("ScaLapacK") 
+           if (trim(PARALLEL_CPU_role(i_c))=="p".or.trim(PARALLEL_CPU_role(i_c))=="d") then
+             N_fields=N_fields+1
+             CPU_s(N_fields)=PARALLEL_CPU_used(i_c)
+           endif
+#endif
        end select
        !
      enddo
@@ -125,6 +135,14 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
            CPU_structure(i_PAR_structure)%ROLE(4)="q"
            CPU_structure(i_PAR_structure)%CPU(4)=assign_cpu(Q_range(2)-Q_range(1)+1)
            CPU_structure(i_PAR_structure)%N_chains=4
+#if defined _SCALAPACK
+         case("ScaLapacK") 
+           CPU_structure(i_PAR_structure)%ROLE(1)="p"
+           CPU_structure(i_PAR_structure)%CPU(1)=ncpu
+           CPU_structure(i_PAR_structure)%ROLE(2)="d"
+           CPU_structure(i_PAR_structure)%CPU(2)=1
+           CPU_structure(i_PAR_structure)%N_chains=2
+#endif
          case("Self_Energy") 
            CPU_structure(i_PAR_structure)%ROLE(1)="b"
            CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(n_bands(2)-n_bands(1)+1)

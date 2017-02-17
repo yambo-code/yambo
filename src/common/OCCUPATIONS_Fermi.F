@@ -40,8 +40,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
-&                        BZ_DbGd_nbands,BZ_DbGd_nkpts,BZ_DbGd_nkpt,n_spinor,n_spin,&
-&                        E_DbGd_components_reset,BZ_DbGd_table
+&                        BZ_DbGd_nbands,BZ_DbGd_nkpt,n_spinor,n_spin,&
+&                        BZ_DbGd_table
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:msg,error,warning
  use stderr,        ONLY:real2ch
@@ -150,15 +150,15 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    ! 2. [Finer search] by moving of 1 element
    !
    do i1=i_Ef(1),i_Ef(2),1
+     if(i1==0) cycle
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
-       if( (E%nk*E%nb*n_sp_pol)> i1 ) E%E_Fermi= E_sorted(i1)
-       if( (E%nk*E%nb*n_sp_pol)==i1 ) E%E_Fermi= E_sorted(i1)
+       if( (E%nk*E%nb*n_sp_pol)>=i1 ) E%E_Fermi= E_sorted(i1)
        Fermi_is_converged=.true.
        exit
      endif
      if (n_of_el_from_zero(1)>0) then
-       Ef(1)=E_sorted(i1-1)
+       Ef(1)=E_sorted(max(1,i1-1))
        Ef(2)=E_sorted(i1)
        exit
      endif

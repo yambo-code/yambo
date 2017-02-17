@@ -31,7 +31,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&
-&                         mpi_comm_world,myid,COMM_reset
+&                         mpi_comm_world,myid,COMM_reset,PAR_COM_NULL
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads
@@ -57,6 +57,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !==========================
  !
  call COMM_reset(PAR_COM_WORLD)
+ call COMM_reset(PAR_COM_NULL)
  !
 #if defined _MPI
  !

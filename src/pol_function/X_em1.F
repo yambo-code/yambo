@@ -27,16 +27,16 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
- use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,integrating_over_q
+ use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
+&                        l_X_terminator,X_terminator_Kind,Chi_inversion_mode,X_use_lin_sys
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,master_cpu, &
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index, &
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
- use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer,wf_ng
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
-&                        IO_and_Messaging_switch,io_RESPONSE,NONE
- use com,           ONLY:depth
+ use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
+ use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
+ use com,           ONLY:depth,error
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load
@@ -56,8 +56,18 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
+
+ !
+ ! logicals and control
  !
  self_detect_E_range=.false.
+ !
+ X_use_lin_sys=.false.
+ if (trim(Chi_inversion_mode)=="lin_sys") X_use_lin_sys=.true.
+ !
+ l_X_terminator = X_terminator_Kind/='none'
+ if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
+&   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
  !
  ! TDDFT SETUP (-1 argument)
  !
@@ -87,7 +97,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      X_n_freqs =2
      Xw%er=(/epsilon(1._SP),0._SP/)
      Xw%dr=(/0._SP,X%ppaE/)
-     X%ordering='c'
+     X%ordering='R'
    endif
  endif
  !
@@ -110,34 +120,40 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
- ! X%ngostnts is defined only for the group of CPU's that eval q=1
- ! and must be spread to all CPUs before doing the IO of the header
+ ! X%ngostnts is defined in DIPOLE_driver. It may happen that this is called only for the group of CPU's that eval q=1. 
+ ! To avoid erroneous errors in the VERIFY mode this value must be spread to all CPUs before doing the IO of the header
  !
- if(X%iq(1)>1) call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
+ if (l_life.and.X%iq(1)>1) then
+   call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
+ endif
  !
  if (io_RESPONSE) then
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
-   do iq=X%iq(1),X%iq(2)
+   if (i_err==0) then
      !
-     ! In the next lines Yambo will VERIFY the em1d database
-     ! to check if this iq has been already done. 
-     ! When self_detect_E_range=.TRUE. however the Xw%er setup is
-     ! done only in X_os and the VERIFY fails. This is why the procedure
-     ! must be repeated here:
+     do iq=X%iq(1),X%iq(2)
+       !
+       ! In the next lines Yambo will VERIFY the em1d database
+       ! to check if this iq has been already done. 
+       ! When self_detect_E_range=.TRUE. however the Xw%er setup is
+       ! done only in X_os and the VERIFY fails. This is why the procedure
+       ! must be repeated here:
+       !
+       if (self_detect_E_range) then
+         call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+         deallocate(X_poles)
+         Xw%er=minmax_ehe
+       endif
+       !
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
+       io_X_done(iq)=io_X(X,Xw,Xdb)
+       !
+     enddo
      !
-     if (self_detect_E_range) then
-       call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
-       deallocate(X_poles)
-       Xw%er=minmax_ehe
-     endif
-     !
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
-     io_X_done(iq)=io_X(X,Xw,Xdb)
-     !
-   enddo
+   endif
    !
    ! All q databases done
    !
@@ -177,23 +193,10 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  endif
  !
- integrating_over_q=.true.
+ ! As we are cycling over the q-points the screened interaction evaluated here is supposed
+ ! to be used as an integrand. Some procedures (like the DbGd) changes accordingly.
  !
- if (io_RESPONSE) then
-   !
-   if(master_cpu) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb) 
-     i_err=io_X(X,Xw,Xdb)
-   endif
-   !
-   call PP_redux_wait()
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=Xdb)
-   i_err=io_X(X,Xw,Xdb)
-   !
- endif
- !
- ! Only the head of each q group writes the IO
+ X_is_evaluated_for_all_Qs=.true.
  !
  do iq=X%iq(1),X%iq(2)
    !
@@ -226,9 +229,13 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
-   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+   ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
+   ! be re-initialized for all the cpus
    !
-   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
+   X%ng_db=X%ng
+   !
+   if (iq==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
+   if (iq> 1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)
@@ -243,7 +250,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  enddo
  !
- integrating_over_q=.false.
+ X_is_evaluated_for_all_Qs=.false.
+ l_X_terminator=.false.
  !
  ! CLEAN (2)
  !

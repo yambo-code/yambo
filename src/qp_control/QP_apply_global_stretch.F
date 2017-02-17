@@ -21,21 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_corrected,apply_anyway)
+subroutine QP_apply_global_stretch(band_range,E,k,QP_ctl_from_DB,QP_ctl_add,DB_corrected,apply_anyway)
  !
  ! Here I apply the strecth for both QP_ctl_from_DB (respecting the qp_done array) and QP_ctl_add (everywhere)
  !
  ! When apply_anyway=.TRUE. the qp_done array is not used and both corrections are applied anywhere.
  !
- use pars,          ONLY:SP,lchlen,rZero
+ use pars,          ONLY:SP,lchlen,rZERO,cI,cONE
  use units,         ONLY:HA2EV,HBAR_eVfs
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels,n_sp_pol,n_spin,n_spinor
+ use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_ctl_t
  use QP_m,          ONLY:QP_ctl_applied
+ use interfaces,    ONLY:el_density_of_states
+ !
  implicit none
+ !
  type(levels)    ::E
+ type(bz_samp)   ::k
  type(QP_ctl_t)  ::QP_ctl_from_DB(n_sp_pol),QP_ctl_add(n_sp_pol)
  integer         ::band_range(2),DB_corrected(E%nb,E%nk,n_sp_pol)
  logical         ::apply_anyway
@@ -43,10 +48,10 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
  ! Work Space
  !
  integer  ::ib,ik,i_sp,n_of_coeff,i_spin
- real(SP) ::M_factors_DBs(6),M_factors_CTL(6)
- character(lchlen) ::ch
- logical           ::QP_check_if_corrected,do_E_DBs,do_E_CTL,&
-&                    do_W_DBs,do_W_CTL,do_Z_DBs,do_Z_CTL
+ real(SP) ::M_factors_DBs(6),M_factors_CTL(6),dos_factor(n_spin)
+ character(lchlen) :: ch
+ logical           :: do_E_DBs,do_E_CTL,do_W_DBs,do_W_CTL,do_Z_DBs,do_Z_CTL
+ logical, external :: QP_check_if_corrected
  !
  ! Loop on spins
  !
@@ -80,7 +85,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
        E%W=rZERO
      endif
    endif
-   if (QP_ctl_from_DB(i_sp)%Z/=(1.,0.).or.QP_ctl_add(i_sp)%Z/=(1.,0.)) then
+   if (QP_ctl_from_DB(i_sp)%Z/=cONE.or.QP_ctl_add(i_sp)%Z/=cONE) then
      if (.not.apply_anyway) then
        do_Z_DBs=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')
      endif
@@ -123,13 +128,14 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
      call do_fit_operation('Z')
    endif
    !
+   !
    write (ch,'(4a)') '-- ',trim(QP_ctl_add(i_sp)%short_descr),&
-&        ' Linear/Quadratic extrapolation ',repeat('-',19)
+&          ' DOS/Linear/Quadratic extrapolation ',repeat('-',19)
    call msg('r',trim(ch))
    call msg('r','=== QP/DB derived ===')
-   call fit_report(QP_ctl_from_DB(i_sp))
+   call fit_report(QP_ctl_from_DB(i_sp),'fit')
    call msg('r','=== Additional ===')
-   call fit_report(QP_ctl_add(i_sp))
+   call fit_report(QP_ctl_add(i_sp),'add')
    call msg('r',repeat('-',60))
    !
  enddo
@@ -141,105 +147,117 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_cor
      !
      ! Work Space
      !
-     integer  :: i1,iref
-     real(SP) :: delta,rref,M_factor_local
-     logical  :: QP_check_if_corrected
+     integer     :: iref
+     logical     :: l_add_DB_corr
+     real(SP)    :: delta,rref,M_factor_local
+     complex(SP) :: Z_tmp
      !
      do ib=band_range(1),band_range(2)
        !
        do ik=1,E%nk
          !
+         ! Valence or conduction
          if (E%Eo(ib,ik,i_spin)> 1.E-5) iref=0
          if (E%Eo(ib,ik,i_spin)<=1.E-5) iref=n_of_coeff
          !
-         if (what=='Z') then
+         l_add_DB_corr = (DB_corrected(ib,ik,i_spin)/=1).or.apply_anyway
+         !
+         ! Energy
+         !========
+         if (what=='E') then
+           ! Shissor correction
+           delta=M_factors_CTL(iref+1)
+           if(l_add_DB_corr) delta=delta+M_factors_DBs(iref+1)
+           ! Stretching correction
+           if (E%Eo(ib,ik,i_spin)> 1.E-5_SP) rref=E%E_CBm
+           if (E%Eo(ib,ik,i_spin)<=1.E-5_SP) rref=E%E_VBM
+           M_factor_local=(M_factors_CTL(iref+2)-1._SP)
+           if(l_add_DB_corr) M_factor_local=M_factor_local+(M_factors_DBs(iref+2)-1._SP)
+           delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)
            !
-           E%Z(ib,ik,i_spin)=M_factors_CTL(1)+(0.,1.)*M_factors_CTL(2)
-           if (DB_corrected(ib,ik,i_spin)/=1) then
-             if (M_factors_DBs(1)/=1.) E%Z(ib,ik,i_spin)=(M_factors_CTL(1)+M_factors_DBs(1))/2.+&
-&                                                 (0.,1.)*(M_factors_CTL(2)+M_factors_DBs(2))/2.
-           endif
-           if (.not.apply_anyway) E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+4
-           cycle
+           E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+delta
            !
          endif
-         !
-         ! Calculates the polinomial expansion (delta)
-         ! using M_factors_CTL and M_factors_DBs coefficients
-         !
-         delta=M_factors_CTL(iref+1)
          !
          ! Free factors are given from input file. In the case of W the user-defined reference
          ! energy is given with respect to the CBM/VBM. The position of the VBM and CBM must be consistent with their
          ! actual position in the energy levels.
          !
+         ! Lifetimes
+         !===========
          if (what=="W") then
-           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(1)
-           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(2)
-         else
-           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=E%E_CBm
-           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM
+           M_factor_local=0._SP
+           ! Constant correction (only value from input used)
+           delta=M_factors_CTL(iref+1)
+           ! DOS proportional correction
+           call el_density_of_states(k,E,E%E(ib,ik,i_spin),0.05_SP/HA2EV,(/1,E%nb/),dos_factor,.false.)
+           M_factor_local=M_factors_CTL(iref+2)
+           if(l_add_DB_corr) M_factor_local=M_factor_local+M_factors_DBs(iref+2)
+           delta=delta+M_factor_local*dos_factor(i_spin)*real(n_spinor,SP)
+           ! Quadratic correction
+           if (E%Eo(ib,ik,i_spin)> 1.E-5_SP) rref=QP_ctl_add(i_sp)%W_E_ref(1)
+           if (E%Eo(ib,ik,i_spin)<=1.E-5_SP) rref=QP_ctl_add(i_sp)%W_E_ref(2)
+           if (E%Eo(ib,ik,i_spin)> max(1.E-5_SP,rref) .or. E%Eo(ib,ik,i_spin)<min(1.E-5_SP,rref)) &
+&            delta=delta+M_factors_CTL(iref+3)*(E%Eo(ib,ik,i_spin)-rref)**2
+           if (l_add_DB_corr) then
+             if (E%Eo(ib,ik,i_spin)> 1.E-5_SP) rref=E%E_CBm+E%E_ind_gap(i_spin)
+             if (E%Eo(ib,ik,i_spin)<=1.E-5_SP) rref=E%E_VBM+E%E_ind_gap(i_spin)
+             if (E%Eo(ib,ik,i_spin)> max(1.E-5_SP,rref) .or. E%Eo(ib,ik,i_spin)<min(1.E-5_SP,rref)) &
+&              delta=delta+M_factors_DBs(iref+3)*(E%Eo(ib,ik,i_spin)-rref)**2
+           endif
+           !
+           if (E%Eo(ib,ik,i_spin)<=1.E-5_SP) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+abs(delta)
+           if (E%Eo(ib,ik,i_spin)> 1.E-5_SP) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)-abs(delta)
+           !
          endif
          !
-         do i1=1,n_of_coeff-1
-           M_factor_local=M_factors_CTL(iref+1+i1)
-           if (what=='E') M_factor_local=M_factor_local-1.
-           if (what=='W'.and.E%Eo(ib,ik,i_spin)<rref.and.E%Eo(ib,ik,i_spin)> 1.E-5) cycle
-           if (what=='W'.and.E%Eo(ib,ik,i_spin)>rref.and.E%Eo(ib,ik,i_spin)<=1.E-5) cycle
-           delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i1
-         enddo
-         !
-         if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=E%E_CBm
-         if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM
-         !
-         if (DB_corrected(ib,ik,i_spin)/=1.or.apply_anyway) then
-           delta=delta+M_factors_DBs(iref+1)
-           do i1=1,n_of_coeff-1
-             M_factor_local=M_factors_DBs(iref+1+i1)
-             if (what=='E') M_factor_local=M_factor_local-1.
-             if (what=='W'.and.E%Eo(ib,ik,i_spin)<rref.and.E%Eo(ib,ik,i_spin)> 1.E-5) cycle
-             if (what=='W'.and.E%Eo(ib,ik,i_spin)>rref.and.E%Eo(ib,ik,i_spin)<=1.E-5) cycle
-             delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i1
-           enddo
-         endif
-         !
-         if (what=='E') E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+delta
-         !
-         if (what=='W') then
-           if (E%Eo(ib,ik,i_spin)<=1.E-5) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+abs(delta)
-           if (E%Eo(ib,ik,i_spin)> 1.E-5) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)-abs(delta)
+         ! Renormalization factors
+         !=========================
+         if (what=='Z') then
+           Z_tmp=M_factors_CTL(1)+cI*M_factors_CTL(2)
+           if ( DB_corrected(ib,ik,i_spin)/=1 .and. M_factors_DBs(1)/=1._SP ) then
+             Z_tmp=( Z_tmp+ (M_factors_DBs(1)+cI*M_factors_DBs(2)) )/2._SP
+           endif
+           !
+           E%Z(ib,ik,i_spin)=Z_tmp
+           !
          endif
          !
          if (.not.apply_anyway) then
            if (what=='E') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+1
            if (what=='W') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+2
+           if (what=='Z') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+4
          endif
          !
        enddo
      enddo
    end subroutine
    !
-   subroutine fit_report(qpfit)
+   subroutine fit_report(qpfit,what)
      type(QP_ctl_t)::qpfit
-     if (qpfit%db_scissor/=0.) &
-&       call msg(' r',' Gap correction (database) [ev]:',qpfit%db_scissor*HA2EV)
-     if (qpfit%fit_scissor/=0.) &
-&       call msg(' r','                     (FIT) [ev]:',qpfit%fit_scissor*HA2EV)
-     if (any(qpfit%E/=(/0.,1.,0.,1./))) then
-      call msg(' r',' Energies 0th order c/v [ev]:',(/qpfit%E(1),qpfit%E(3)/)*HA2EV)
-      call msg(' r',' Energies 1st order         :',(/qpfit%E(2),qpfit%E(4)/))
-      if (any((/qpfit%E_err/=0./))) call msg(' r','                       Error:',qpfit%E_err)
+     character(3)  ::what
+     if (qpfit%db_scissor/=0._SP) &
+&      call msg(' r',' Gap correction (database) [ev]:',qpfit%db_scissor*HA2EV)
+     if (qpfit%fit_scissor/=0._SP) &
+&      call msg(' r','                     (FIT) [ev]:',qpfit%fit_scissor*HA2EV)
+     if (any(qpfit%E/=(/0._SP,1._SP,0._SP,1._SP/))) then
+       call msg(' r',' Energies 0th order c/v [ev]:',(/qpfit%E(1),qpfit%E(3)/)*HA2EV)
+       call msg(' r',' Energies 1st order         :',(/qpfit%E(2),qpfit%E(4)/))
+       if (any((/qpfit%E_err/=0._SP/))) call msg(' r','                       Error:',qpfit%E_err)
      endif
-     if (any((/qpfit%W/=0./))) then
-       call msg(' r',' Widths 0th order c/v [ev]:',(/qpfit%W(1),qpfit%W(4)/)*HA2EV)
-       call msg(' r','                      [fs]:',(/1./qpfit%W(1),1./qpfit%W(4)/)*HBAR_eVfs/HA2EV)
-       call msg(' r',' Widths 1st order         :',(/qpfit%W(2),qpfit%W(5)/))
-       call msg(' r',' Widths 2st order         :',(/qpfit%W(3),qpfit%W(6)/)/HA2EV)
-       if (any((/qpfit%W_err/=0./))) call msg(' r','                       Error:',qpfit%W_err)
+     if (any((/qpfit%W/=0._SP/))) then
+       if(what=="fit") call msg(' r',' Widths 0th DB derived fit is done but not used')
+       call msg(' r',' Widths 0th order c/v [ev]:',(/      qpfit%W(1),      qpfit%W(4)/)          *HA2EV)
+       call msg(' r','                      [fs]:',(/1._SP/qpfit%W(1),1._SP/qpfit%W(4)/)*HBAR_eVfs/HA2EV)
+       if (any((/qpfit%W_err(1:2)/=0._SP/))) call msg(' r','                     Error:',qpfit%W_err(1:2)*HA2EV)
+       call msg(' r',' Widths dos prop.     [eV]:',(/      qpfit%W(2),      qpfit%W(5)/)          *HA2EV)
+       if (any((/qpfit%W_err(3:4)/=0._SP/))) call msg(' r','                     Error:',qpfit%W_err(3:4)*HA2EV)
+       call msg(' r',' Widths 2st order   [1/eV]:',(/      qpfit%W(3),      qpfit%W(6)/)          /HA2EV)
+       if (any((/qpfit%W_err(5:6)/=0._SP/))) call msg(' r','                     Error:',qpfit%W_err(5:6)/HA2EV)
      endif
-     if (qpfit%Z/=(1.,0.)) &
-&       call msg(' r',' Renormalization      :',(/real(qpfit%Z),aimag(qpfit%Z)/))
-     ! 
+     if (qpfit%Z/=cONE) &
+&      call msg(' r',' Renormalization      :',(/real(qpfit%Z),aimag(qpfit%Z)/))
+     !
    end subroutine
    !
 end subroutine

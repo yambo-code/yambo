@@ -83,7 +83,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  enddo
  call msg('r','')
  !
-if(.not.l_sc_run .and. .not.l_real_time) then
+ if(.not.l_sc_run .and. .not.l_real_time) then
    !
    ! WF distributed & load
    !=======================
@@ -102,7 +102,7 @@ if(.not.l_sc_run .and. .not.l_real_time) then
    !
    call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
    !
-endif
+ endif
  !
 #if defined _TIMING
  call timing('HF',OPR='start')
@@ -207,13 +207,13 @@ endif
  !
 #if defined _TIMING
  call timing('HF',OPR='stop')
- call timing('MPI_ALLREDUCE',OPR='start')
+ call timing('HF(REDUX)',OPR='start')
 #endif
  !
  call PP_redux_wait(QP_Vnl_xc)
  !
 #if defined _TIMING
- call timing('MPI_ALLREDUCE',OPR='stop')
+ call timing('HF(REDUX)',OPR='stop')
 #endif
  !
 end subroutine

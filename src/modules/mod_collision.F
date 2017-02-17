@@ -23,7 +23,8 @@
 !
 module collision
  !
- use pars, ONLY :DP,SP,LP,schlen
+ use pars,       ONLY:DP,SP,LP,schlen
+ use parallel_m, ONLY:PP_indexes
  !
  implicit none
  !
@@ -62,8 +63,7 @@ module collision
  ! EXTENDED COLLISION
  !====================
  !
- integer                  :: n_COLLISIONS ! QP_n_states written on disk that may differ from the running value 
- integer                  :: V_kind 
+ integer :: COLL_bands(2)
  !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
@@ -72,15 +72,7 @@ module collision
  real(SP)                 :: COLLISIONS_max
  !
  logical :: COLLISIONS_parallel_SC_structure=.FALSE.
- !
- ! Fragments
- !
- integer, allocatable       :: COLLISIONS_IO_status(:)
- !
- ! States
- !
- integer, allocatable       :: COLLISIONS_state(:,:)
- integer, allocatable       :: COLLISIONS_DB_map(:) ! COLLISIONS_DB_map(I) is the DB corresponding to the QP_state I
+ logical :: COLLISIONS_have_HARTREE=.FALSE.
  !
  ! Elements used in the code
  !
@@ -95,27 +87,99 @@ module collision
  !                (USE): v3_r
  !
  type COLLISIONS_element
-   character(schlen)     :: name="none"
-   integer               :: kind=0
-   integer               :: D(3,2)=0    ! Dimension (v3)
-   integer               :: N           ! Linear Dimension
-   integer(LP), pointer  :: table(:,:,:)   => null()
-   complex(SP), pointer  :: v_c(:)         => null()
-   complex(SP), pointer  :: v3_c(:,:,:)    => null()
-   real(SP)   , pointer  :: v_r(:)         => null()
-   real(SP)   , pointer  :: v3_r(:,:,:)    => null()
+   integer               :: I=0         ! State Index 
+   integer               :: N=0         ! Linear Dimension
+   integer(LP), pointer  :: table(:,:,:)  => null()
+   complex(SP), pointer  :: v_c(:)        => null()  ! SEX and HF
+   complex(SP), pointer  :: v3_c(:,:,:)   => null()
+   real(SP)   , pointer  :: v_r(:)        => null()  ! GW NEQ collisions
+   real(SP)   , pointer  :: v3_r(:,:,:)   => null()
  end type
  !
- integer :: nGW_NEQ_collisions=0
- type(COLLISIONS_element), allocatable :: GW_NEQ_collisions(:)
- integer :: nFock_collisions=0
- type(COLLISIONS_element), allocatable :: Fock_collisions(:)
- integer :: nSEX_collisions=0
- type(COLLISIONS_element), allocatable :: SEX_collisions(:)
- integer :: nP_collisions=0
- type(COLLISIONS_element), allocatable :: P_collisions(:)
+ type COLLISIONS_group
+   integer               :: D(3,2)=0    ! Dimension (v3 of corresponding COLLISIONS_element)
+   character(schlen)     :: name="none"
+   integer               :: kind=0
+   integer               :: N=0         ! # of collisions (dimension of linked COLLISIONS_element)
+   integer,     pointer  :: state(:,:)   => null()
+   !
+   ! I/O
+   !
+   integer,     pointer  :: IO_status(:) => null()
+   !
+   ! Parallel Substructure
+   !
+   type(PP_indexes)      :: PAR_IND
+   integer               :: PAR_N=0
+   integer,     pointer  :: PAR_map(:) => null()
+   !
+ end type
+ !
+ ! COLLISIONS groups...
+ !======================
+ type(COLLISIONS_group), save :: GW_NEQ_collisions
+ type(COLLISIONS_group), save :: COH_collisions
+ type(COLLISIONS_group), save :: HXC_collisions
+ type(COLLISIONS_group), save :: P_collisions
+ !
+ ! .. and ELEMENTS
+ !=================
+ type(COLLISIONS_element), allocatable :: GW_NEQ_COLL_element(:)
+ type(COLLISIONS_element), allocatable :: COH_COLL_element(:)
+ type(COLLISIONS_element), allocatable :: HXC_COLL_element(:)
+ type(COLLISIONS_element), allocatable :: P_COLL_element(:)
  !
  contains
+   !
+   subroutine COLLISIONS_naming( SC_kind , what )
+     !
+     use global_XC,      ONLY:SC_COH,SC_HARTREE,SC_SEX,SE_GW_QED,SE_GW_NEQ,&
+&                             SC_FOCK
+     use xc_functionals, ONLY:GS_xc_KIND
+     !
+     integer            :: SC_kind
+     character(*)       :: what
+     !
+     integer, parameter :: nc=7
+     integer            :: i_c,local_kind(nc)
+     character(schlen)  :: local_name(nc)
+     !
+     if (SC_kind==0) then
+       !
+       COH_collisions%kind=SC_COH
+       COH_collisions%name="COH"
+       HXC_collisions%kind=SC_HARTREE+SC_SEX
+       HXC_collisions%name="HARTREE+SEX"
+       P_collisions%kind=SE_GW_QED
+       P_collisions%name="Momentum"
+       GW_NEQ_collisions%kind=SE_GW_NEQ
+       GW_NEQ_collisions%name="GW_NEQ"
+       !
+     else if (what=="HXC") then
+       !
+       HXC_collisions%kind=0
+       HXC_collisions%name=" "
+       !
+       local_kind=(/SC_FOCK,SC_SEX,SC_Hartree,SC_FOCK+SC_Hartree,SC_SEX+SC_Hartree,&
+&                   GS_xc_KIND,GS_xc_KIND+SC_Hartree/)
+       local_name(1)="FOCK"
+       local_name(2)="SEX"
+       local_name(3)="HARTREE"
+       local_name(4)="HARTREE+FOCK"
+       local_name(5)="HARTREE+SEX"
+       local_name(6)="GS_xc"
+       local_name(7)="HARTREE+GS_xc"
+       !
+       do i_c=1,nc
+         if (SC_kind==local_kind(i_c).or.SC_kind==local_kind(i_c)+SC_COH) then
+           HXC_collisions%kind=local_kind(i_c)
+           HXC_collisions%name=local_name(i_c)
+           return
+         endif
+       enddo
+       !
+     endif
+   end subroutine
    !
    subroutine elemental_collision_copy(I,O)
      type(elemental_collision)::I,O
@@ -124,14 +188,19 @@ module collision
      O%qs=I%qs
    end subroutine
    !
-   subroutine elemental_collision_free(ggw)
+   subroutine elemental_collision_free(ggw,INIT_ONLY)
      type(elemental_collision)::ggw
+     logical,optional::INIT_ONLY
      logical::init_only_=.false.
-     if(associated(ggw%gamp))      deallocate(ggw%gamp)
-     if(associated(ggw%rhotw))     deallocate(ggw%rhotw)
-     if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
-     if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
-     if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
+     !
+     if(present(INIT_ONLY)) init_only_=INIT_ONLY
+     if(.not.init_only_) then
+       if(associated(ggw%gamp))      deallocate(ggw%gamp)
+       if(associated(ggw%rhotw))     deallocate(ggw%rhotw)
+       if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
+       if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
+       if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
+     endif
      nullify(ggw%gamp,ggw%rhotw,ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
    end subroutine
    !

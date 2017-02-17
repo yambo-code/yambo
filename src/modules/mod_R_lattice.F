@@ -33,7 +33,6 @@ module R_lattice
  real(SP) :: k_grid_uc_vol
  real(SP) :: k_grid_b(3,3)
  logical  :: Xk_grid_is_uniform
- logical  :: Xk_impose_minus_q
  !
  ! Q/K-sampling
  !
@@ -55,8 +54,8 @@ module R_lattice
    integer,  pointer :: nstar(:)     => null()  ! n° of points in the star
    integer,  pointer :: star(:,:)    => null()  ! ik,ikstar --> is     is sends ik in ikstar
    integer,  pointer :: sstar(:,:)   => null()  ! ik_bz     --> ik,is  is sends ik in ikbz
-   integer,  pointer :: s_table(:,:) => null()  ! ik,is     --> sym@k_bz  revers of sstar
-   integer,  pointer :: k_table(:,:) => null()  ! ik,is     --> ik_bz     revers of sstar
+   integer,  pointer :: s_table(:,:) => null()  ! ik,is     --> sym@k_bz  revers of sstar(2)
+   integer,  pointer :: k_table(:,:) => null()  ! ik,is     --> ik_bz     revers of sstar(1)
    real(SP), pointer :: pt(:,:)      => null()
    real(SP), pointer :: ptbz(:,:)    => null()
    real(SP), pointer :: weights(:)   => null()

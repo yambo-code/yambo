@@ -42,7 +42,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
-&                        RD_CL,DUMP,IO_and_Messaging_switch
+&                        DUMP,IO_and_Messaging_switch
  !
  implicit none
  !
@@ -60,10 +60,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  character(1)     ::wf_space_here
  character(schlen)::wf_title
  integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
-&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
+&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
+ logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -91,6 +91,16 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  force_WFo_=.false.
  if(present(force_WFo)) force_WFo_=force_WFo
+ !
+ ! Imposed Freeing and Allocating of WF's...
+ !
+ free_and_alloc=.FALSE.
+ !... when a single k-point is loaded each time... (no _SC)
+ if (kpts_to_load(1)==kpts_to_load(2)) free_and_alloc =kpts_to_load(1)==1
+ !... or when it is externally imposed
+ if (present(impose_free_and_alloc)) then
+   free_and_alloc=impose_free_and_alloc
+ endif
  !
  ! [1]: check that loaded bounds are larger(equal) then bounds 
  !      asked now
@@ -130,7 +140,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! [2]: Check FFT size
  !
- if (loaded_bounds_ok) then
+ if (loaded_bounds_ok.and..not.free_and_alloc) then
    !
    if (WF%space=="G".or.WF%space=="C".or.WF%space=="B") return
    !
@@ -151,29 +161,19 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
  endif
  !
- ! Manage direct access I/O
- ! 
- use_direct_access=(kpts_to_load(1)==kpts_to_load(2))
- !
  ! In case of k by k I/O prevent multiple free/alloc
  !
- free_and_alloc=.TRUE.
  QUIET_alloc   =.FALSE.
  QUIET_free    =.FALSE.
  if (kpts_to_load(1)==kpts_to_load(2)) then
-   free_and_alloc =kpts_to_load(1)==1.or.nkibz==1
    QUIET_alloc    =kpts_to_load(1)>1
    QUIET_free     =kpts_to_load(2)<nkibz
-   if (present(impose_free_and_alloc)) then
-     free_and_alloc=impose_free_and_alloc
-     if (free_and_alloc) QUIET_alloc=.FALSE.
-   endif
    if (QUIET_alloc) call IO_and_Messaging_switch("-report -log")
  endif
  !
  ! First WF_free then fft_setup.
  !
- if (free_and_alloc) call WF_free(WF)
+ call WF_free(WF)
  !
  ! Save dimensions
  !
@@ -189,7 +189,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
-     if (associated(WF%state)) nullify(WF%state)
+     if (associated(WF%state)) deallocate(WF%state)
      allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
      WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
      deallocate(states_to_load)
@@ -201,7 +201,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (WF%space=='R') call fft_setup(iG_max,iGo_max,.false.)
  if (WF%space=="R") fft_dim_loaded=fft_dim
  !
- if (free_and_alloc) call WF_alloc(WF)
+ call WF_alloc(WF)
  !
  if (WF%space=='R') allocate(wf_DP(fft_size))
  if (WF%space=='G') allocate(wf_DP(wf_ng))
@@ -232,15 +232,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (.not.buffer_is_ok) then
    !
    allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/),quiet=QUIET_alloc)
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err=io_WF(ID,wf_disk)
    !
  endif
- !
- ACTION_=RD_CL_IF_END
- if (use_direct_access) ACTION_=RD_CL
  !
  WF%N=0
  do ikibz=1,nkibz
@@ -264,7 +261,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
        endif
        !
-       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
        !
        io_err=io_WF(ID,wf_disk)
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
@@ -322,7 +319,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (.not.buffer_is_ok) then
    deallocate(wf_disk)
-   call mem_est("wf_disk")
+   call mem_est("wf_disk",quiet=QUIET_free)
  endif
  !
  deallocate(wf_DP)
@@ -341,7 +338,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if(allocated(states_to_load)) then
    !
-   if (associated(WF%state)) nullify(WF%state)
+   if (associated(WF%state)) deallocate(WF%state)
    !
    allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
    !

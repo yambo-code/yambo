@@ -23,8 +23,8 @@
 !
 subroutine QP_of(qp,en,QPdb_read_err,what)
  !
- use pars,      ONLY:SP,lchlen,schlen
- use units,     ONLY:HA2EV,HBAR_eVfs,HA2GHZ
+ use pars,      ONLY:SP,lchlen,schlen,rZERO
+ use units,     ONLY:HA2EV,HBAR_eVfs,HA2GHZ,FS2AUT,PS2AUT
  use drivers,   ONLY:l_life,l_elph_corr
  use com,       ONLY:msg,of_open_close
  use electrons, ONLY:levels,spin,n_sp_pol
@@ -48,38 +48,42 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=27
+ integer, parameter:: tpar=31
  integer       :: ntitles,titles_order(tpar)
- real(SP)      :: values(tpar)
+ real(SP)      :: values(tpar),Lifetime
  character(schlen) :: titles(tpar)
  !
- titles(1)  = trim(Vxc_kind) ! 1 
- titles(2)  = 'Sc|Eo' ! 2
- titles(3)  = 'Sc|E' ! 3
- titles(4)  = 'Eo'  ! 4
- titles(5)  = 'E' ! 5
- titles(6)  = 'Z' ! 6
- titles(7)  = 'dSc/dw|Eo' ! 7
- titles(8)  = 'E-Eo' ! 8
- titles(9)  = 'K-point' ! 9
- titles(10) = 'Band' ! 10
- titles(11) = trim(Vnlxc_kind) ! 11
- titles(12) = 'Width[meV]' ! 12
- titles(13) = 'Width[fs]' ! 13
- titles(14) = 'Spin_Pol' ! 14
- titles(15) = 'Z(Re)' ! 15
- titles(16) = 'Z(Im)' ! 16
- titles(17) = 'E_25%(low)' ! 17
- titles(18) = 'E_25%(high)' ! 18
- titles(19) = 'E_50%(low)' ! 19
- titles(20) = 'E_50%(high)' ! 20
- titles(21) = 'E_75%(low)' ! 21
- titles(22) = 'E_75%(high)' ! 22
- titles(23) = 'Integral' ! 23
- titles(24) = 'E-Eo(Mhz)' ! 24
- titles(25) = 'E-Eo(meV)' ! 25
- titles(26) = 'Ehf' ! 26
- titles(27) = 'Sc|Eo(meV)' ! 25
+ titles(1)  = trim(Vxc_kind) 
+ titles(2)  = 'Sc|Eo' 
+ titles(3)  = 'Sc|E' 
+ titles(4)  = 'Eo'  
+ titles(5)  = 'E' 
+ titles(6)  = 'Z' 
+ titles(7)  = 'dSc/dw|Eo' 
+ titles(8)  = 'E-Eo' 
+ titles(9)  = 'K-point' 
+ titles(10) = 'Band' 
+ titles(11) = trim(Vnlxc_kind) 
+ titles(12) = 'Width[meV]' 
+ titles(13) = 'Width[fs]' 
+ titles(14) = 'Spin_Pol' 
+ titles(15) = 'Z(Re)' 
+ titles(16) = 'Z(Im)' 
+ titles(17) = 'E_25%(low)' 
+ titles(18) = 'E_25%(high)' 
+ titles(19) = 'E_50%(low)' 
+ titles(20) = 'E_50%(high)' 
+ titles(21) = 'E_75%(low)' 
+ titles(22) = 'E_75%(high)' 
+ titles(23) = 'Integral' 
+ titles(24) = 'E-Eo(Mhz)' 
+ titles(25) = 'E-Eo(meV)' 
+ titles(26) = 'Ehf' 
+ titles(27) = 'Sc|Eo(meV)' 
+ titles(28) = 'Width[ps]' 
+ titles(29) = 'E-Eo(Ghz)' 
+ titles(30) = 'Width[ns]'
+ titles(31) = 'dV/V[%]' 
  !
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
@@ -133,7 +137,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    if (trim(QP_solver)=='g') call msg('o '//what,'# GW [Green`s Function Solver]')
    if (what==          'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
-   if (what=="qp") call msg('o '//what,'#')
+   if (what=="qp".or.what=="hf") call msg('o '//what,'#')
    do i1=2,qp%n_descs
      call msg('o '//what,'# ',trim(qp%description(i1)),INDENT=0)
    enddo
@@ -153,6 +157,9 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      qp_k  =QP_table(i1,3)
      qp_isp=spin(QP_table(i1,:))
      !
+     Lifetime=rZERO
+     if (abs(aimag(qp%E(i1)))>=1.E-10) Lifetime=1._SP/abs(aimag(qp%E(i1)))
+     !
      if (what=="qp") then
        !
        if (.not.l_life) then
@@ -171,13 +178,14 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        !
        values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
        values(9:10) =(/real(qp_k),real(qp_b)/)
-       values(12:13)=(/aimag(qp%E(i1)*HA2EV/1.E-3),HBAR_eVfs/aimag(qp%E(i1))/HA2EV/)
+       values(12:13)=(/aimag(qp%E(i1))*HA2EV/1.E-3,HBAR_eVfs*Lifetime/HA2EV/)
+       values(28)   =(HBAR_eVfs*Lifetime/HA2EV)*FS2AUT/PS2AUT
        values(15:16)=(/real(qp%Z(i1)),aimag(qp%Z(i1))/)
        !
        if (allocated(QP_G_amplitude_integral)) then
          values(23)=QP_G_amplitude_integral(i1)
        endif
-        if (allocated(QP_G_info)) then
+       if (allocated(QP_G_info)) then
          values(17:18)=QP_G_info(i1,1,:)*HA2EV
          values(19:20)=QP_G_info(i1,2,:)*HA2EV
          values(21:22)=QP_G_info(i1,3,:)*HA2EV
@@ -194,10 +202,10 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      !
      if (qp_isp==1) values(14)= 1._SP
      if (qp_isp==2) values(14)=-1._SP
-     if (aimag(qp%E(i1))==0._SP) values(12:13)=0._SP
      call msg('o '//what,'',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
+   !
    !
    call of_open_close(file_name)
    !

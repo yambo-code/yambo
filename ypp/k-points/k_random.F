@@ -64,7 +64,7 @@ subroutine k_random(No_Weight)
  !
  call section('*',"== Random k-points generator ==")
  !
- call live_timing('Random k-points',BZ_random_nkpts,SERIAL=.true.)
+ call live_timing('Random k-points',BZ_random_nkpts)
  !
  call set_real_printed_length(f_length=20,g_length=20)
  !

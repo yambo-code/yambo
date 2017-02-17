@@ -24,7 +24,7 @@
 subroutine XCo_driver(E,k,Xk,q)
  !
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time,l_gw0
- use pars,          ONLY:schlen,RZERO,SP
+ use pars,          ONLY:schlen,rZERO,SP,cZERO
  use com,           ONLY:msg
  use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol,spin,E_reset,E_duplicate
@@ -94,9 +94,9 @@ subroutine XCo_driver(E,k,Xk,q)
    allocate(QP_Vnl_sex(QP_n_states))
    call mem_est("QP_Vnl_sex",(/QP_n_states/))
  endif
- QP_Vnl_xc=(0.,0.)
- QP_Vxc=(0.,0.)
- if (l_screen_hyb) QP_Vnl_sex=(0.,0.)
+ QP_Vnl_xc=cZERO
+ QP_Vxc=cZERO
+ if (l_screen_hyb) QP_Vnl_sex=cZERO
  !
  !
  ! Main DB I/O
@@ -116,7 +116,7 @@ subroutine XCo_driver(E,k,Xk,q)
    if (l_screen_hyb) then                          ! 
      call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')    ! For screened hybrids calculate the 
      QP_Vnl_sex=QP_Vnl_xc                          ! model nonlocal screened exchange part
-     QP_Vnl_xc=(0.,0.)                             !  
+     QP_Vnl_xc=cZERO                               !  
    end if
    !
    call XCo_Hartree_Fock(E,k,xk,q)

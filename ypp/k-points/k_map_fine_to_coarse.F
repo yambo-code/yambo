@@ -373,7 +373,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    allocate(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
    BZ_DbGd_kpts=0._SP
    !
-   call live_timing('DbGd re-ordering and distribution',Xk%nbz,SERIAL=.true.)
+   call live_timing('DbGd re-ordering and distribution',Xk%nbz)
    !                ===============
    i1=0
    do ik_bz=1,Xk%nbz

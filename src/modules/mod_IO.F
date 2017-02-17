@@ -71,7 +71,8 @@ module IO_m
  ! Actions
  !
  integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_WR_CL=4,OP_RD=5,OP_APP=6,&
-&                     OP_WR=7,RD=8,WR=9,RD_CL_IF_END=10,WR_CL=11,WR_CL_IF_END=12
+&                     OP_WR=7,RD=8,WR=9,RD_CL_IF_END=10,WR_CL=11,WR_CL_IF_END=12,   &
+&                     OP_IF_START_RD_CL_IF_END=13,OP_IF_START_WR_CL_IF_END=14
  !
  ! Modes
  !
@@ -146,15 +147,15 @@ module IO_m
      !
    end subroutine
    !
-   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C1,L1,L3,IPOS)
+   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
      !
      use pars
-     integer      :: ID
+     integer      :: ID, error
      character(*),optional :: VAR
      integer,     optional :: VAR_SZ(:),IPOS(:)
      integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:)
      real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:)
-     complex(SP), optional :: C1(:)
+     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:)
      integer(LP), optional :: L1(:),L3(:,:,:)
      !
    end subroutine
@@ -209,7 +210,7 @@ module IO_m
      integer :: ID
      read_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_RD,&
 &                     io_action(ID)==RD_CL,   io_action(ID)==RD,&
-&                     io_action(ID)==RD_CL_IF_END/))
+&                     io_action(ID)==RD_CL_IF_END,io_action(ID)==OP_IF_START_RD_CL_IF_END/))
    end function
    !
    logical function write_is_on(ID)
@@ -218,7 +219,7 @@ module IO_m
      write_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
 &                      io_action(ID)==WR      ,io_action(ID)==OP_APP,&
 &                      io_action(ID)==OP_WR   ,io_action(ID)==WR_CL,&
-&                      io_action(ID)==WR_CL_IF_END/))
+&                      io_action(ID)==WR_CL_IF_END,io_action(ID)==OP_IF_START_WR_CL_IF_END/))
    end function
    ! 
    logical function DB_is_OK(ID)
@@ -412,7 +413,6 @@ module IO_m
      integer           :: ID
      logical, optional :: FORCE
      !
-
      if (present(FORCE)) then
        !
        if (.not.FORCE.and..not.close_is_on(ID).and.io_status(ID)>=0) return
@@ -422,6 +422,7 @@ module IO_m
        if (.not.close_is_on(ID).and.io_status(ID)>=0) return
        !
      endif
+     !
      !
      if ( (io_type(ID)/=-2.and.file_is_open(io_file(ID),ID)) .or.&
 &         (io_type(ID)==-2.and.file_is_open(io_file(ID)))          ) then
@@ -442,14 +443,15 @@ module IO_m
    !
    subroutine io_control(ACTION,MODE,COM,SEC,ID)
      !
-     integer :: ACTION,ID
-     integer,optional :: MODE,COM,SEC(:)
+     integer,intent(in)    :: ACTION
+     integer,intent(inout) :: ID
+     integer,optional,intent(in) :: MODE,COM,SEC(:)
      !
      ! Work Space
      !
      integer :: i1
      !
-     ! Assign a new unit if the unit is not alreadu open
+     ! Assign a new unit if the unit is not already open
      !
      if ( any((/ACTION==OP_RD_CL,ACTION==OP_WR_CL,&
 &               ACTION==OP_APP_WR_CL,ACTION==OP_RD,&
@@ -476,7 +478,7 @@ module IO_m
      !
    end subroutine
    !
-   subroutine manage_RD_WR_CL_IF_END(ID,start_,end_)
+   subroutine manage_OP_IF_START_and_CL_IF_END(ID,start_,end_)
      !
      integer :: ID
      integer :: start_,end_
@@ -485,6 +487,16 @@ module IO_m
        if (io_action(ID)==RD_CL_IF_END.and.start_==end_) io_action(ID)=RD_CL
      else  if (write_is_on(ID)) then
        if (io_action(ID)==WR_CL_IF_END.and.start_==end_) io_action(ID)=WR_CL
+     endif
+     !
+     if (read_is_on(ID)) then
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_RD
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
+     else  if (write_is_on(ID)) then
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_WR
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
      endif
      !
    end subroutine
@@ -621,10 +633,12 @@ module IO_m
    !
    subroutine deliver_IO_error_message(i_err,DB)
      !
-     use com, ONLY:warning
+     use com,        ONLY:warning
      !
      integer      :: i_err
      character(*) :: DB
+     !
+     if (i_err==0) return
      !
      if (i_err==IO_NO_DATABASE     ) call warning('Missing all or part of '//DB//' DB')
      if (i_err==IO_INCOMPATIBLE_VAR) call warning('Variable not compatible in '//DB//' DB')

@@ -37,7 +37,7 @@ subroutine pol_fit(N,X,Y,order,Tt,EPS,t_zero)
  integer  :: NDEG,IERR
  real(SP) :: W(N),R(N),wk(3*N+3*order+3)
  !
- W(:)=1./sum(Y(:)**2.)
+ W(:)=1._SP/sum(Y(:)**2)
  !
  if (N<=1) then
    EPS=-1._SP
@@ -54,7 +54,7 @@ subroutine pol_fit(N,X,Y,order,Tt,EPS,t_zero)
  !
  ! General fit on N points
  !
- Tt=0.
+ Tt = 0._SP
  EPS=-1._SP
 #if defined _DOUBLE
  call DPOLFT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)

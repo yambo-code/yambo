@@ -50,7 +50,7 @@ subroutine symmetries_driver(E,Xk)
  integer               :: old_sop_inv(nsym)
  logical               :: S_contains_TR(nsym)
  !
- integer               :: action_kind
+ integer               :: action_kind,old_nkpt
  !
  if (core_io_path==more_io_path) then
    more_io_path=trim(core_io_path)//"/FixSymm"
@@ -98,13 +98,16 @@ subroutine symmetries_driver(E,Xk)
  call bz_samp_reset(Xk_save)
  call bz_samp_duplicate(Xk,Xk_save)
  !
- call msg('s',trim(intc(Xk%nibz))//' k-points are now expanded/reduced to ...')
+ old_nkpt=Xk%nibz
  deallocate(Xk%pt)
  call k_reduce(Xk,.false.)
- call msg('l'," "//trim(intc(Xk%nibz)))
+ call msg('s',trim(intc(old_nkpt))//' k-points have been expanded/reduced to ...'//trim(intc(Xk%nibz)))
+ !
+ deallocate(Xk%sstar,Xk%star,Xk%nstar,Xk%weights)
+ nullify(Xk%sstar,Xk%star,Xk%nstar,Xk%weights)
+ call k_expand(Xk)
  !
  allocate(kpoints_map(2,Xk%nibz))
- !
  call k_build_map(Xk,Xk_save,kpoints_map,action_kind)
  !
  ! Energies and Wave-functions

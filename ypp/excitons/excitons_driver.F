@@ -30,16 +30,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t
  use QP_CTL_m,      ONLY:QP_apply
- use electrons,     ONLY:levels,n_sp_pol,spin
- use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,&
-&                        excitons_sort_and_report
+ use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
+ use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,excitons_sort_and_report
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,&
-&                        BSS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
-&                        io_BSS_diago
+ use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat
+ use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,BS_K_coupling,BS_cpl_mode,&
+&                        BS_cpl_K_exchange,BS_cpl_K_corr
 #if defined _YPP_ELPH
- use YPP,           ONLY:l_eliashberg,l_gkkp
+ use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
  !
  implicit none
@@ -58,17 +56,24 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  !
  integer           ::io_err,io_ID,i_sec
- integer, external ::io_BS
+ integer, external ::io_BS,io_E_SOC_map
  type(X_t)         ::Xbsk
  !
  !... Energies and Residulas
  !
- complex(SP), allocatable ::BS_R(:)
+ complex(SP), allocatable ::BS_R_left(:)
+ complex(SP), allocatable ::BS_R_right(:)
  complex(SP), allocatable ::BS_E(:)
+ !
+ real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
+ real(SP),    pointer     ::BS_R_PL(:,:)       => null()
+ complex(SP), pointer     ::BS_R_kerr(:)       => null()
  !
  integer                  ::iq,neh
  !
  call section('*','Excitonic Properties')
+ !
+ !
  !
  ! Here I read information from the BS database
  !
@@ -108,26 +113,28 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
- allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
+ allocate(BS_R_right(BS_H_dim),BS_R_left(BS_H_dim),BS_E(BS_H_dim))
  call mem_est('BS_R_E',(/2*BS_H_dim/))
  iq=BS_q(1)
+ !
+ if(E_SOC_nbands/=0) allocate(BS_E_SOC_corr(2,BS_H_dim))
  !
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
+ io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
  !
  if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
  enddo
  !
  ! Sort energies and write to output
  !===================================
- if (l_sort) call excitons_sort_and_report(Xk,Xen,BS_R,BS_E)
+ if (l_sort) call excitons_sort_and_report(Xen,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
  if(.not.l_sort) then
    !
@@ -148,7 +155,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    call mem_est('BS_mat',(/BS_H_dim**2/))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table
@@ -168,7 +175,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Exciton's spin
  !=====================
- if (l_spin)       call exciton_spin(Xk,Xen,BS_R,BS_E,BS_E_degs,lambda_s,n_lambda)
+ if (l_spin)       call exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
  !
  ! Exciton's Amplitude
  !=====================
@@ -183,11 +190,15 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! CLEAN
  !
- deallocate(BS_R,BS_E,lambda_s)
+ deallocate(BS_R_left,BS_R_right,BS_E,lambda_s)
  call mem_est('BS_R_E')
  if(.not.l_sort) then
    deallocate(BSS_eh_table,BS_mat)
    call mem_est('BSS_eh_table BS_mat')
+ endif
+ if(associated(BS_E_SOC_corr)) then
+   deallocate(BS_E_SOC_corr)
+   nullify(BS_E_SOC_corr)
  endif
  !
  contains

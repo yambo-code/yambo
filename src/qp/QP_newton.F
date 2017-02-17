@@ -91,13 +91,15 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      !
      if(.not.l_cohsex) then
        !     
-       QP_dSc(i1,1)=cZERO
-       !     
-       if (.not.On_Mass_Shell_approx) then
-         do i2=1,QP_dSc_steps-1
-           QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
-         enddo
-       endif
+         !
+         QP_dSc(i1,1)=cZERO
+         !     
+         if (.not.On_Mass_Shell_approx) then
+           do i2=1,QP_dSc_steps-1
+             QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
+           enddo
+         endif
+         !
        !
        do i2=1,QP_dSc_steps-1
          !

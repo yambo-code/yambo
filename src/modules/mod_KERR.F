@@ -23,12 +23,14 @@
 !
 module KERR
  !
- use pars,  ONLY:SP
+ use drivers, ONLY:l_kerr
+ use pars,    ONLY:SP
  !
  implicit none
  !
+ complex(SP)              :: A_drude(2)
  complex(SP)              :: B_Hall(2)
- complex(SP), allocatable :: BSS_rhoq0_kerr(:)
+ complex(SP), allocatable :: BSS_dipoles_kerr(:)
  complex(SP), allocatable :: DIP_projected_r90(:,:,:,:)
  !
  contains

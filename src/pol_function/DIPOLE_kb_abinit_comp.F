@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,
 !   Francesco Sottile, Stefan Albrecht, Giovanni Onida,
@@ -27,10 +27,10 @@
 !
 subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,cZERO
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
- use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
+ use vec_operate,   ONLY:v_norm,c2a
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_kbs,&
@@ -54,7 +54,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  real(SP)    :: KpG_cc(3),G_cc(3)
  real(SP)    :: KpG_norm,G_dot_Rat,sf
  !
- kbv=(0._SP,0._SP)
+ kbv=cZERO
  !
  do ig=1,wf_ng
    call c2a(b,(Xk%pt(ik,:)+g_vec(ig,:)),KpG_cc,'ki2c')

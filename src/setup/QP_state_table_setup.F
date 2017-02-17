@@ -81,11 +81,11 @@ subroutine QP_state_table_setup(en)
    ! %QPerange fields
    !
    e_rng_lines=1
-   rcheck=1.
-   do while(rcheck>0.)
+   rcheck=1._SP
+   do while(rcheck>0._SP)
      if (allocated(QP_r_limits)) deallocate(QP_r_limits)
      allocate(QP_r_limits(e_rng_lines,4))
-     QP_r_limits(e_rng_lines,3:4)=(/0.,-1./)
+     QP_r_limits(e_rng_lines,3:4)=(/0._SP,-1._SP/)
      call parser('QPerange',QP_r_limits)
      rcheck=QP_r_limits(e_rng_lines,4)-QP_r_limits(e_rng_lines,3)
      e_rng_lines=e_rng_lines+1

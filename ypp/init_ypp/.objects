@@ -1,1 +1,0 @@
-objs = ypp_init.o ypp_init_load.o QP_DBs_initialize.o

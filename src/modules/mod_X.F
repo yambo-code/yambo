@@ -42,7 +42,6 @@ module X_m
  ! Velocity gauge specific variables
  !
  logical                  :: skip_cond_sum_rule
- complex(SP)              :: A_drude(2)
  !
  ! Large Q-vector support 
  !
@@ -54,9 +53,9 @@ module X_m
  logical                  :: Vnl_commutator_warning
  !
  ! Logical used to decid how to use the double grid in X_os
- ! and in particular in X_bare_Double_Grid_GreenF
+ ! and in particular in X_GreenF_analytical, when the DbGd is used
  !
- logical                  :: integrating_over_q
+ logical                  :: X_is_evaluated_for_all_Qs
  !
  ! Dipole M.E.
  !
@@ -68,22 +67,31 @@ module X_m
  logical                  :: force_v_g_space_approach
  integer                  :: num_shifted_grids
  real(SP)                 :: Dipole_Energy_treshold
+ real(SP)                 :: Dipole_Energy_treshold_vv
  complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
  !
- complex(SP), allocatable :: X_epsilon(:,:)
+ complex(SP), allocatable :: Epsilon_ii(:,:)
+ complex(SP), allocatable :: Epsilon_ij(:,:)
+ complex(SP), allocatable :: Joint_DOS(:,:) 
+ complex(SP), allocatable :: EEL(:,:)
+ complex(SP), allocatable :: Alpha(:,:)
  complex(SP), allocatable :: X_drude_term(:)
  complex(SP), allocatable :: X_fxc(:)
  !
  ! Response function
  !
  character(schlen)        :: Chi_mode
+ character(schlen)        :: Chi_inversion_mode
+ logical                  :: X_use_lin_sys=.false.
  real(SP),    allocatable :: X_poles(:)
+ real(SP),    allocatable :: X_Ein_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
  complex(SP), allocatable :: X_mat(:,:,:)
@@ -93,8 +101,10 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
- real(SP):: X_en_comp
- logical :: X_terminator
+ real(SP):: X_terminator_E
+ real(SP):: X_term_E
+ logical :: l_X_terminator=.false.
+ character(schlen) :: X_terminator_Kind="none"
  !
  ! I/O parameters
  !
@@ -123,7 +133,7 @@ module X_m
    real(SP)   :: ppaE
    complex(SP):: Wd
    logical          :: Vnl_included
-   character(1)     :: ordering
+   character(2)     :: ordering
    character(schlen):: f_xc
  end type
  !
@@ -133,7 +143,7 @@ module X_m
      integer              :: nw 
      complex(SP)          :: wv(nw)
      logical              :: be_verbose
-     character(1)         :: ordering
+     character(2)         :: ordering
      complex(SP) ,optional:: eps(nw),eel(nw)
    end function
  end interface
@@ -144,6 +154,8 @@ module X_m
      !
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
+     use pars,      ONLY:cZERO
+     !
      character(*)      :: what
      integer, optional :: d(:)
      !
@@ -157,26 +169,37 @@ module X_m
          if (allocated(X_mat)) return
          allocate(X_mat(d(1),d(2),d(3)),stat=err)
          call mem_est(what,(/size(X_mat)/),errors=(/err/))
+         X_mat=cZERO
        case('DIP_iR')
          if (allocated(DIP_iR)) return
          allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
          call mem_est(what,(/size(dip_iR)/),errors=(/err/))
+         DIP_iR=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
          allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
          call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         DIP_P=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
          allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
          call mem_est(what,(/size(dip_S)/),errors=(/err/))
+         DIP_S=cZERO
+       case('DIP_spin')
+         if (allocated(DIP_spin)) return
+         allocate(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
+         call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         DIP_spin=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
          allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
          call mem_est(what,(/size(DIP_projected)/),errors=(/err/))
+         DIP_projected=cZERO
        case('P_square')
          if (allocated(P_square)) return
          allocate(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
          call mem_est(what,(/size(P_square)/),errors=(/err/))
+         P_square=cZERO
        end select
      else
        select case(what)
@@ -200,6 +223,9 @@ module X_m
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
          deallocate(DIP_S)
+       case('DIP_spin')
+         if (.not.allocated(DIP_spin)) return
+         deallocate(DIP_spin)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
          deallocate(DIP_projected)
@@ -247,7 +273,7 @@ module X_m
      X%Wd=cZERO
      X%cg_percentual=100._SP
      X%ppaE=1._SP
-     X%ordering="t"       
+     X%ordering="T"
      X%f_xc="none"       
    end subroutine
    !

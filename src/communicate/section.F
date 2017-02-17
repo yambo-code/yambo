@@ -30,7 +30,7 @@ subroutine section(mode,name)
  !      = #     : increase level #
  !      = r     : reset to zero level end exit
  !
- use pars,       ONLY:lchlen,schlen,SP,DP
+ use pars,       ONLY:lchlen,schlen,DP
  use it_m,       ONLY:ofiles_append
  use stderr,     ONLY:string_pack
  use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
@@ -142,6 +142,7 @@ subroutine section(mode,name)
    !
    ch=date_and_time_string(dt_in=date_time_at_start)
    chp= string_pack(trim(ch),' [start]')
+   !
    if (write_to_report) then
      open(unit=11,file=trim(repfile),position='append')
      write (11,'(1x,a)') chp(:len_trim(chp))

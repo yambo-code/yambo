@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
-&                                 QP_index,Plasma_index,Bm_index,CLEAN_UP)
+&                                 QP_index,PLASMA_index,Bm_index,CLEAN_UP)
  !
  use parallel_m,      ONLY:PP_indexes,ncpu
  use wave_func,       ONLY:states_to_load
@@ -37,7 +37,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  type(PP_indexes), optional    :: B_and_K_index
  type(PP_indexes), optional    :: Bp_index
  type(PP_indexes), optional    :: QP_index
- type(PP_indexes), optional    :: Plasma_index
+ type(PP_indexes), optional    :: PLASMA_index
  type(PP_indexes), optional    :: Bm_index
  logical, intent(in), optional :: CLEAN_UP
  !

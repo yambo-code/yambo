@@ -54,17 +54,16 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
-&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
+&                        QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
  use com,           ONLY:msg,depth
- use electrons,     ONLY:levels,E_reset,n_sp_pol,E_duplicate,&
-&                            BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset,&
+&                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
  use parser_m,      ONLY:parser
  use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
-&                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
-&                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
- use interfaces,    ONLY:OCCUPATIONS_Gaps
+&                        K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
+&                        X_kind,X_xc_functional,QP_DB_kind,SE_NONE
  use QP_CTL_m,      ONLY:QP_ctl_t,reset_QP_ctl
  !
  implicit none
@@ -103,7 +102,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    call reset_QP_ctl(QP_ctl_from_DB(i_spin))
    call reset_QP_ctl(QP_ctl_input_or_impose(i_spin))
  enddo
- call E_Reset(Fermi_en)
+ call E_reset(Fermi_en)
  !
  ! If I'm not imposing a fit (QP_ctl_impose) of QP (qp_impose)
  ! return if the field are not present in the input file
@@ -183,9 +182,9 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    ! Then update scissor & stretching in the global_XC kinds 
    !
    SE_MORE=MORE_NONE
-   if (any(QP_ctl_E(Eid,1,:)/=0.))   SE_MORE=MORE_SCISSOR
-   if (any(QP_ctl_E(Eid,2:3,:)/=1.)) SE_MORE=MORE_STRETCH
-   if (any(QP_ctl_E(Eid,1,:)/=0.).and.any(QP_ctl_E(Eid,2:3,:)/=1.)) SE_MORE=MORE_SCIS_AND_STRE
+   if (any(QP_ctl_E(Eid,1,:)  /=0._SP)) SE_MORE=MORE_SCISSOR
+   if (any(QP_ctl_E(Eid,2:3,:)/=1._SP)) SE_MORE=MORE_STRETCH
+   if (any(QP_ctl_E(Eid,1,:)  /=0._SP).and.any(QP_ctl_E(Eid,2:3,:)/=1._SP)) SE_MORE=MORE_SCIS_AND_STRE
    !
    if (SE_MORE>0.and.Eid==1) call setup_global_XC(what,X_kind,SE_MORE,X_xc_functional)
    if (SE_MORE>0.and.Eid==2) call setup_global_XC(what,K_kind,SE_MORE,K_xc_functional)
@@ -199,16 +198,16 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    ! Note the units of QP_ctl_W:
    !
    !   QP_ctl_Wc/v(Eid,1,:) is in ev
-   !   QP_ctl_Wc/v(Eid,2,:) is adim
+   !   QP_ctl_Wc/v(Eid,2,:) is in ev
    !   QP_ctl_Wc/v(Eid,3,:) is ev^{-1}
    !
    do i_spin=1,n_sp_pol
      QP_ctl_input_or_impose(i_spin)%W(1:3)=(/QP_ctl_Wc(Eid,1,i_spin)/HA2EV,&
-&                                            QP_ctl_Wc(Eid,2,i_spin),QP_ctl_Wc(Eid,3,i_spin)*HA2EV/)
+&                                            QP_ctl_Wc(Eid,2,i_spin)/HA2EV,QP_ctl_Wc(Eid,3,i_spin)*HA2EV/)
      QP_ctl_input_or_impose(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(Eid,i_spin)+en%E_CBm,&
 &                                                QP_ctl_Wv_E_ref(Eid,i_spin)+en%E_VBM/)
      QP_ctl_input_or_impose(i_spin)%W(4:6)=(/QP_ctl_Wv(Eid,1,i_spin)/HA2EV,&
-&                                            QP_ctl_Wv(Eid,2,i_spin),QP_ctl_Wv(Eid,3,i_spin)*HA2EV/)
+&                                            QP_ctl_Wv(Eid,2,i_spin)/HA2EV,QP_ctl_Wv(Eid,3,i_spin)*HA2EV/)
      QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)
    enddo
    !
@@ -227,7 +226,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! Finally I apply the generalized stretch obtained from the procedures 1,2 and 3.
  !
- call QP_apply_global_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected,.FALSE.)
+ call QP_apply_global_stretch(band_range,en,k,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected,.FALSE.)
  !
  ! Extend the QP corrections to the RIM energies
  !
@@ -299,7 +298,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! CLEAN
  !
  call QP_reset(qp)
- call E_Reset(Fermi_en)
+ call E_reset(Fermi_en)
  !
  if (.not.QP_ctl_applied) return
  !

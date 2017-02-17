@@ -25,27 +25,26 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W>
  !
- use pars,         ONLY:SP,pi,schlen,cZERO,IP
- use parser_m,     ONLY:parser
+ use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf,l_bss
  use frequency,    ONLY:w_samp
- use electrons,    ONLY:levels,spin_occ,spin
+ use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
- use stderr,       ONLY:intc
  use interfaces,   ONLY:WF_load
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
- use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
+ use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,minus_G,bare_qpg
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
- use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,BS_mat_free,&
+ use BS_solvers,   ONLY:BSS_q0,BS_mat_free
+ use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
-&                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,BSS_q0,&
+&                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps
@@ -61,6 +60,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ !
  !
  implicit none
  type(levels)  ::Ken 
@@ -78,7 +78,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: i_block,i_block_vv,i_block_cc,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
 &              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,alloc_err,&
-&              bands_to_load(2),iOvv,iOcc
+&              bands_to_load(2),iOvv,iOcc,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
  !
@@ -88,8 +88,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Oscillators
  !
- integer    :: x_fft_size,c_fft_size
- logical    :: load_O_X,l_USE_all_Gexx
+ logical    :: load_O_X
  complex(SP),allocatable  ::Ovv(:),Occ(:),O_times_W(:)
  complex(SP),allocatable  ::Ovc(:),Ocv(:)
  type(elemental_collision)::isc
@@ -102,10 +101,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Constants & Setup
  !==================
  !
- Co=4._SP*pi/DL_vol/real(q%nbz,SP)
+ Co=4._SP*real(spin_occ)*pi/DL_vol/real(q%nbz,SP)
  io_BS_err    =-1
  io_BS_Fxc_err=-1
- call parser('ALLGexx',l_USE_all_Gexx)
  !
  call elemental_collision_free(K_CORR_collision)
  call elemental_collision_free(K_EXCH_collision)
@@ -191,6 +189,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
      n_BS_blks=0
      call BS_mat_free()
+     !
+     !
    endif
    !
    ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.
@@ -221,16 +221,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !===================
  O_ng=maxval(G_m_G)
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_USE_all_Gexx.and..not.l_bs_fxc) then
-   call fft_setup(O_ng,1,.true.)
-   c_fft_size=fft_size
-   call fft_setup(BS_n_g_exch,maxval(qindx_X(iq,:,2)),.true.)
-   x_fft_size=fft_size
-   if (x_fft_size>c_fft_size) then
-     call warning('Exchange FFT size is too big. RL vectors reduced to '//intc(O_ng))
-     BS_n_g_exch=O_ng
-   endif
- endif
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
  !
  ! Wave Functions
  !================
@@ -249,7 +240,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Elemental collisions allocation
  !=================================
  !
- call elemental_collision_alloc(K_CORR_collision,NG=O_ng,TITLE="CORR_COLL")
+ call elemental_collision_alloc(K_CORR_collision,NG=O_ng,       TITLE="CORR_COLL")
  call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
  !
  ! Wave Functions Phases
@@ -258,7 +249,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! 
  ! Spatial Inversion Test
  !========================
- call WF_spatial_invertion(Ken,Xk)
+ call WF_spatial_inversion(Ken,Xk)
  !
  ! BSE-based Fxc
  !===============
@@ -266,7 +257,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ALDA
  !======
  if (BS_K_is_ALDA) then
-   allocate(F_xc(fft_size))
+   allocate(F_xc(fft_size,n_spin,n_spin))
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
@@ -367,15 +358,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
  endif
  !
- !if (BSS_uses_DbGd) then
- !  allocate(BS_mat_diagonal(BS_K_dim))
- !  call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
- !endif
  ! Timing
  !========
  !
- if (.not.l_bs_fxc) call live_timing('Kernel',BS_LiveTiming_steps)
- if (l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
+ if (BS_LiveTiming_steps>0) then
+   if (.not.l_bs_fxc) call live_timing('Kernel',     BS_LiveTiming_steps)
+   if (     l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
+ endif
  !
  do i_block=1,n_BS_blks
    !
@@ -409,6 +398,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      i_k  = Xk%sstar(i_k_bz,1)
      i_k_s= Xk%sstar(i_k_bz,2)
      !
+     if (BS_K_is_ALDA) then
+       is=(/i_c_k,i_k,i_k_s,i_k_spin/)
+       os=(/i_v_k,i_k,i_k_s,i_k_spin/)
+     endif
+     !
      i_k_s_m1 = sop_inv(i_k_s)
      !
      H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
@@ -424,6 +418,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        i_p  =Xk%sstar(i_p_bz,1)
        i_p_s=Xk%sstar(i_p_bz,2)
+       !
+       if (BS_K_is_ALDA) then
+         isp=(/i_c_p,i_p,i_p_s,i_p_spin/)
+         osp=(/i_v_p,i_p,i_p_s,i_p_spin/)
+       endif
        !
        i_k_p_s  = sop_tab(i_k_s_m1,i_p_s)
        !
@@ -471,14 +470,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
            ! :::ALDA        (resonant):::
            !=============================
-           H_x=H_x+TDDFT_ALDA_R_space((/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
-&                                     (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),'RES')
+           H_x=H_x+TDDFT_ALDA_R_space(is,os,isp,osp,'RES')
+           !
          else
            !
            ! :::ALDA        (coupling):::
            !=============================
-           H_x=H_x+TDDFT_ALDA_R_space((/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
-&                                     (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),'CPL')
+           H_x=H_x+TDDFT_ALDA_R_space(is,os,isp,osp,'CPL')
+           !
          endif
          !
        endif
@@ -536,9 +535,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
        endif
        !
-       BS_blk(i_block)%mat(i_Tk,i_Tp)=sqrt_f_itk*(H_x*real(spin_occ)*Co-H_c)*sqrt_f_itp
-       !
-       if (H_pos(1)==H_pos(2).and.BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=real( BS_blk(i_block)%mat(i_Tk,i_Tp) )
+       if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        !
      enddo 
      !
@@ -553,9 +551,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  enddo
  !
- call live_timing( )
- !
- !if(allocated(BS_mat_diagonal)) deallocate(BS_mat_diagonal)
+ if (BS_LiveTiming_steps>0) call live_timing( )
  !
  BS_K_has_been_calculated_loaded=.TRUE.
  !

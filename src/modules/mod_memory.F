@@ -25,6 +25,7 @@ module memory_m
  !
  use pars,       ONLY:SP,lchlen,schlen
  use stderr,     ONLY:string_split
+ use openmp,     ONLY:master_thread
  !
  implicit none
  !
@@ -62,6 +63,8 @@ module memory_m
      real(SP),parameter :: mem_tresh=0.01_SP  ! ( in Gb. CAREFUL! mem_tresh must be >0)
      character(lchlen)  ::ch(2)
      character(schlen)  ::input_name(10),action
+     !
+     if (.not.master_thread) return
      !
      mem_element_size_change=0._SP
      !
@@ -138,7 +141,6 @@ module memory_m
        mem_sum  =0._SP
      endif
      !
-!     stdout_report=master_cpu.and.mem_moved>mem_tresh.and..not.infile_editing
      stdout_report=mem_moved>mem_tresh.and..not.infile_editing
      if (stdout_report.and.present(quiet)) stdout_report=.not.quiet
      if (.not.stdout_report) return

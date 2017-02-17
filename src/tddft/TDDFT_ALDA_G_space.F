@@ -28,13 +28,15 @@ subroutine TDDFT_ALDA_G_space(E,k)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC
  use com,           ONLY:msg
  use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_g_table
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,n_spin
  use R_lattice,     ONLY:bz_samp,G_m_G
  use wave_func,     ONLY:WF
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use interfaces,    ONLY:WF_load
+ !
  implicit none
+ !
  type(levels) ::E
  type(bz_samp)::k
  ! 
@@ -60,9 +62,11 @@ subroutine TDDFT_ALDA_G_space(E,k)
  !
  ! ALDA functional
  !
- allocate(F_xc(fft_size),F_xc_DP(fft_size))
+ allocate(F_xc(fft_size,n_spin,n_spin),F_xc_DP(fft_size))
  call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,2)
- F_xc_DP=F_xc
+ do i1=1,fft_size
+   F_xc_DP(i1)=sum(cmplx(F_xc(i1,:,:),kind=DP))
+ enddo
  !
  ! need to reset the plan to do a BACKWARD FFT (R->G)
  !
@@ -79,7 +83,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  call mem_est("FXC",(/size(FXC)/))
  do i1=1,FXC_n_g_corr
    do i2=1,FXC_n_g_corr
-     FXC(i1,i2,1)=F_xc_DP( fft_g_table( G_m_G(i1,i2) ,1) )/real(fft_size,SP)
+     FXC(i1,i2,1)=cmplx(F_xc_DP( fft_g_table( G_m_G(i1,i2),1) ),kind=SP)/real(fft_size,SP)
    enddo
  enddo
  !

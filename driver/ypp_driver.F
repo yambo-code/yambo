@@ -37,6 +37,9 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:write_to_log
  use YPP
+#if defined _YPP_ELPH
+ use YPP_ELPH
+#endif
  !
  implicit none
  !
@@ -116,7 +119,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  ! INPUT FILE
  !
- call ypp_init(en,instr,lnstr,.false.)
+ call INIT_ypp(en,instr,lnstr,.false.)
  if (infile_editing) then
    iinf=1
    call ypp_finalize()
@@ -195,8 +198,8 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !  ==========
  !
  !
- if (l_excitons.or.l_RT_abs) call excitons_driver(k,Xk,en,Xen,q)
- !   ===========
+ l_flag=l_excitons
+ if (l_flag) call excitons_driver(k,Xk,en,Xen,q)
  !
  l_flag=l_electrons
 #if defined _YPP_ELPH && !defined _YPP_RT
@@ -216,7 +219,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
  !
 #endif
-
+ !
 
  !
  ! END
@@ -229,11 +232,11 @@ contains
   subroutine ypp_finalize()
     if (.not.infile_editing) then
       call section('X','Game Over')
-      call ypp_init(en,instr,lnstr,.TRUE.)
+      call INIT_ypp(en,instr,lnstr,.TRUE.)
       call msg("nl","")
       call MPI_close()
     else
-      call ypp_init(en,instr,lnstr,.TRUE.)
+      call INIT_ypp(en,instr,lnstr,.TRUE.)
     endif
   end subroutine
   !

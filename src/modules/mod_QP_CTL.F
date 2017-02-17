@@ -52,7 +52,7 @@ module QP_CTL_m
    real(SP)   :: W(6)
    real(SP)   :: W_E_ref(2)
    real(SP)   :: E_err(2)
-   real(SP)   :: W_err(2)
+   real(SP)   :: W_err(6)
    complex(SP):: Z
    character(schlen):: db
    character(schlen):: short_descr

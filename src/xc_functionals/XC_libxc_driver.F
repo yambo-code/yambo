@@ -48,7 +48,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- integer  :: i1,i2,is,ic,is1,is2,ixc,ifft
+ integer  :: i1,i2,i3,is,ic,is1,is2,ixc,ifft
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
  !
@@ -61,9 +61,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  complex(SP), allocatable:: drho_cmplx(:,:)
  complex(SP), allocatable:: spin_rho_SP_cmplx(:)
  !
- ! note that multidimensional dvxc & vxc is allowed only in xcspol
+ ! note that multidimensional fxc & vxc is allowed only in xcspol
  !
- real(DP) :: tmp_dvxc(fft_size),tmp_vxc(n_spin,fft_size),tmp_exc(fft_size)
+ real(DP) :: tmp_fxc(n_spin,n_spin,fft_size),tmp_vxc(n_spin,fft_size),tmp_exc(fft_size)
  real(SP),allocatable :: vdrho(:,:)
  real(DP),allocatable :: vsigma(:,:)
  logical              :: EvaluateDGradient
@@ -78,7 +78,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  tmp_exc=0._DP
  tmp_vxc=0._DP
- tmp_dvxc=0._DP
+ tmp_fxc=0._DP
  !
  call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
  !
@@ -95,7 +95,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !==========================
  !
    call el_density_and_current(en,Xk,rho=rho)
-   if(n_spin> 1) call el_magnetization(en,Xk,magn)
+   if (n_spin> 1) call el_magnetization(en,Xk,magn)
  !
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
@@ -128,7 +128,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    do is1 = 1,n_spin
      spin_rho_SP_cmplx(:)=cmplx(spin_rho_SP(:,is1),0.0_SP,kind=SP)
      !
-     call eval_Gradient(spin_rho_SP_cmplx,drho_cmplx)
+     call eval_Gradient(spin_rho_SP_cmplx,drho_cmplx,"density")
      !
      drho(:,is1,:)=real(drho_cmplx)
      forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*fft_size/DL_vol*2._SP*pi/alat(:)
@@ -168,8 +168,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
          forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)         
        case(2) 
-         call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_dvxc(1))
-         F_xc = F_xc + real(tmp_dvxc,SP)
+         call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_fxc(1,1,1))
+         forall(i1=1:fft_size,i2=1:n_spin,i3=1:n_spin) F_xc(i1,i2,i3) = F_xc(i1,i2,i3) + real(tmp_fxc(i3,i2,i1),SP)
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
      select case(ORDER)
@@ -178,14 +178,17 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
-         ! In the presence of spin vsigma(2,:)=vsigma_updw(2,:)+vsigma_dwup(2,:)=2.*vsigma_updw(2,:)
+         !
+         ! In the presence of spin 
+         !        vsigma(2,:)=vsigma_updw(2,:)+vsigma_dwup(2,:)=2.*vsigma_updw(2,:)
          if(n_spin==2) vsigma(2,:)=vsigma(2,:)/2._SP
+         !
          do is1 = 1,n_spin
            vdrho(:,:) = 0._SP 
            do is2 = 1,n_spin
              is = max(is2*(is1+1)/2,is1*(is2+1)/2)
              forall(ic=1:3,i1=1:fft_size) vdrho(ic,i1) = vdrho(ic,i1) + &
-                  & 2._SP*real(vsigma(is,i1),SP)*drho(ic,is2,i1)
+ &                                        2._SP*real(vsigma(is,i1),SP)*drho(ic,is2,i1)
            end do
            call XC_eval_gga_potential(V_xc(:,is1),real(tmp_vxc(is1,:),SP),vdrho)
          end do

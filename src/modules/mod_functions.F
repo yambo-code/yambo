@@ -52,12 +52,6 @@ module functions
  !
  contains
    !
-   logical function infinity(E)
-     use pars, ONLY: infinity_dfl
-     real(SP)     :: E
-     infinity= E > infinity_dfl
-   end function infinity
-   !
    logical function NAN(E)
      real(SP) :: E
 #if defined _BLUEGENE || _PGI

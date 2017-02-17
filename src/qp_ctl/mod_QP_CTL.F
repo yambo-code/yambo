@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -168,7 +168,7 @@ module QP_CTL_m
      ! Description initialization
      !
      spin_ch=(/'',''/)
-     if (n_sp_pol==2) spin_ch=(/'(spin down)','  (spin up)'/)
+     if (n_sp_pol==2) spin_ch=(/'  (spin up)','(spin down)'/)
      !
      do i_spin=1,n_sp_pol
        QP_ctl_from_DB(i_spin)%short_descr='[QP@'//what//trim(spin_ch(i_spin))//']'

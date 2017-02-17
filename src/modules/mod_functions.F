@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -65,12 +65,19 @@ module functions
      !
      use drivers,   ONLY:Finite_Tel
      use D_lattice, ONLY:Bose_Temp
+     use electrons, ONLY:spin_occ
      real(SP), intent(in):: Eb
      real(SP)            :: bose_f
      bose_f=0.
-     if (Eb<0.) bose_f=-2.
+     if (Eb<0.) bose_f=-spin_occ
      if (.not.Finite_Tel) return
      !
+     if (abs(Eb)>epsilon(1.)) then
+       if (abs(Eb)<=bose_E_cut*Bose_Temp) bose_f=spin_occ*Bose_Temp/Eb
+       if (abs(Eb)> bose_E_cut*Bose_Temp) bose_f=spin_occ/(exp(Eb/Bose_Temp)-1.)
+     else
+       bose_f=spin_occ*Bose_Temp/epsilon(1.)
+     endif
      !
    end function
    !
@@ -83,14 +90,16 @@ module functions
      real(SP)            :: bose_decay
      bose_decay=1.
      !
+     if (.not.Finite_Tel) return
+     if (abs(E)<=bose_E_cut*Tel) bose_decay=E**2./(Tel*bose_E_cut)**2.
      !
    end function
    !
    ! Lifetime functions e2et/h2ht
    !------------------------------
    !
-   ! Gamma_n = 2 i \sum_m  { -/+ i Im[e^-1(e_n -e_m) (2-f+bose_f) <- e2et
-   !                           + i Im[e^-1(e_m -e_n) (f+bose_f)   <- h2ht }
+   ! Gamma_n = 2 i \sum_m  { -/+ i Im[e^-1(e_n -e_m) (spin_occ-f+bose_f) <- e2et
+   !                           + i Im[e^-1(e_m -e_n) (         f+bose_f) <- h2ht }
    !
    ! where - for T-ordered theory, + for causal (finite Tel)
    !
@@ -98,7 +107,8 @@ module functions
      !
      use electrons,   ONLY:levels
      use drivers,     ONLY:Finite_Tel
-     integer      ::is(2),os(2),e2et
+     use electrons,   ONLY:spin_occ
+     integer      ::is(3),os(3),e2et
      type(levels) ::E
      real(SP) :: F
      real(SP) :: dE !ws
@@ -106,10 +116,10 @@ module functions
      !
      ! "Electron 2 Electron" decay
      !
-     dE=E%E(is(1),is(2),1)-E%E(os(1),os(2),1)
+     dE=E%E(is(1),is(2),is(3))-E%E(os(1),os(2),os(3))
      !
-     F=               -(2.-E%f(os(1),os(2),1)+bose_f(dE))
-     if (Finite_Tel) F=(2.-E%f(os(1),os(2),1)+bose_f(dE))
+     F=               -(spin_occ-E%f(os(1),os(2),os(3))+bose_f(dE))
+     if (Finite_Tel) F=(spin_occ-E%f(os(1),os(2),os(3))+bose_f(dE))
      !
      if (dE>0..and.abs(F)>epsilon(1.)) e2et=1
      if (e2et==0) F=0.
@@ -119,7 +129,7 @@ module functions
      !
      use electrons, ONLY:levels
      use drivers,   ONLY:Finite_Tel
-     integer      ::is(2),os(2),h2ht
+     integer      ::is(3),os(3),h2ht
      type(levels) ::E
      real(SP) :: F
      !
@@ -130,9 +140,9 @@ module functions
      !
      !"Hole 2 Hole" decay
      !
-     dE=E%E(os(1),os(2),1)-E%E(is(1),is(2),1)
+     dE=E%E(os(1),os(2),os(3))-E%E(is(1),is(2),is(3))
      !
-     F=E%f(os(1),os(2),1)+bose_f(dE)
+     F=E%f(os(1),os(2),os(3))+bose_f(dE)
      !
      if (dE>0..and.abs(F)>epsilon(1.)) h2ht=1
      if (h2ht==0) F=0.

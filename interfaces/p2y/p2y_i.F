@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2013 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -88,6 +88,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  lch='P(W) 2 Y(ambo) Ver. 3.2'
 #elif defined _P2Y_V40
  lch='P(W) 2 Y(ambo) Ver. 4.0'
+#elif defined _P2Y_V50
+ lch='P(W) 2 Y(ambo) Ver. 5.0'
 #else
  call error('Unknown version of P2Y. Stopping.')
 #endif
@@ -181,7 +183,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
  if (l_Vnl) then
-#if defined _P2Y_V40
+#if defined _P2Y_V40 || defined _P2Y_V50
    call msg('s','=== Non-local pseudo-potential commutator === ')
    call Vnl_driver(en,k)
 #else
@@ -189,12 +191,12 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #endif
  endif
  !
- call msg('s','== P2Y completed ==')
- call msg('s',' ')
- !
  call pwait()
  !
  call pw_close
+ !
+ call msg('s' ,' ')
+ call msg('ln',' == P2Y completed ==')
  !
  call p_finalize
  !

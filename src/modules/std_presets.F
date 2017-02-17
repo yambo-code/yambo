@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -37,9 +37,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
 &                     COHSEX_use_empties,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,On_Mass_Shell_approx,&
-&                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref
+&                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref,PPa_terminator,&
+&                     GW_en_comp
  use functions,  ONLY:bose_E_cut
- use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
+ use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
@@ -47,7 +48,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, spin_orbit,Boltz_tau,Boltz_Efield
+&                     filled_tresh, spin_orbit,        &
+&                     eval_magn
  use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
@@ -56,6 +58,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
+ use WF_distribute, ONLY:Distributed_Memory
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,IO_write,serial_number,IO_read,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
@@ -72,6 +75,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
+ use interpolate, ONLY:interpls,max_interpls
  !
  implicit none
  !
@@ -185,6 +189,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  n_atoms_species_max=0
  n_atomic_species=0
  i_space_inv=-1
+ mag_syms=.false.
  !
  ! Pseudo
  !
@@ -220,7 +225,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_sc_magnetic=.false.
  l_collisions_IO=.false.
  l_elph_Hamiltonian=.false.
- l_kerr=.false.
  !
  !electrons
  !
@@ -231,6 +235,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BZ_RIM_nbands=0
  BZ_RIM_tot_nkpts=0
  filled_tresh=0.00001
+ !
+ ! Magnetization
+ !
+ eval_magn=.false.
  !
  !memory
  !
@@ -260,10 +268,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  IO_write=master_cpu
  n_nodes=1
  !
+ ! Interpolation
+ !
+ interpls(1:max_interpls)%ndim=0
  !
  Parallel_Fragments=.FALSE.
  Fragmented_IO=index(INSTR,'dbfrag')>0
  Fragmented_IO_save=Fragmented_IO
+ Distributed_Memory=index(INSTR,'parmem')>0.and.ncpu>1
  !
  do i1=1,max_io_units
    call io_reset(i1)
@@ -314,6 +326,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Vnlxc_kind='HF'
  Vxc_kind='LDA'
  l_extended_output=.FALSE.
+ PPa_terminator=.FALSE.
+ GW_en_comp=-1._SP
  !
  ! QP_ctl control
  !
@@ -376,7 +390,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  GS_xc_FUNCTIONAL=-1             ! unknow 
  GS_xc_KIND=-1                   ! unknow 
- !
  !
  !
  !

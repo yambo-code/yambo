@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 C. Hogan and the YAMBO team
+! Copyright (C) 2000-2013 C. Hogan and the YAMBO team
 !              http://www.yambo-code.org
 !   
 ! This file is distributed under the terms of the GNU 
@@ -37,6 +37,7 @@ module pw_data
 ! Symmetry
   integer, allocatable       :: s_(:,:,:)
   integer                    :: nsym_, isym_(3,3,48)
+  integer                    :: t_rev_(48)
   logical                    :: invsym_
 
 ! Planewaves
@@ -51,9 +52,15 @@ module pw_data
 
 ! Bandstructure
   integer                    :: nbnd_, num_k_points_, nspin_
-  real(DP)                  :: nelec_
-  real(DP), allocatable     :: eig_s_(:,:,:), eig_(:,:), eigb_(:)
-  real(DP), allocatable     :: xk_(:,:)
+  real(DP)                   :: nelec_
+  real(DP), allocatable      :: eig_s_(:,:,:), eig_(:,:), eigb_(:)
+  real(DP), allocatable      :: xk_(:,:)
+
+! Smearing parameters
+  logical                    :: lgauss_
+  integer                    :: ngauss_
+  character(256)             :: degauss_units_
+  real(dp)                   :: degauss_
 
 ! igk grids
   integer                    :: npwk_

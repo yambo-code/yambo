@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -61,7 +61,6 @@ module drivers
  ! The optical runlevels ...
  !
  logical :: l_optics
- logical :: l_kerr
  logical :: l_chi
  logical :: l_em1d
  logical :: l_em1s

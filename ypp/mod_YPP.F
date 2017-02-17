@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -115,31 +115,14 @@ module YPP
  character(schlen) :: elph_dbs_path
  character(schlen) :: ph_freqs_file
  !
- !RAS
+ ! Wannier interface
  !
- logical           :: lras, lsurf, lreels, lcelleps
- character(schlen) :: xdata, ydata, zdata
- character(len=5)  :: datatype
- real(SP)          :: sshift
- real(SP)          :: d_cellin
- !
- ! REELS
- !
- !
- ! Localization
- !
- logical           :: lloc
- real(SP)          :: lowerlim, upperlim
- integer           :: normdir, ngloc
- integer           :: loc_bands(2)
- integer           :: loc_kpts(2)
- !
- ! Transition Analysis
- !
- logical           :: ltrans
- real(SP)          :: Ecv_min, Ecv_max
- real(SP)          :: qdir(3)
- integer           :: idir
+ logical           :: l_wannier
+ logical           :: l_write_A
+ logical           :: l_write_M
+ logical           :: l_write_U
+ character(schlen) :: seed_name
+ character(schlen) :: what_to_write
  !
  ! BZ RIM
  !
@@ -151,6 +134,20 @@ module YPP
  ! Quasi-Particles
  !
  logical     :: l_qpdb
+ !
+ !
+ ! Wannier bands
+ !
+ logical     :: l_bxsf
+ character(lchlen) :: w90_fname
+ integer     :: wannier_bands(2)   ! Bands Range
+ integer     :: ord_dgrid_ipol     ! order of interpolation using double grid
+ !
+ ! Reduce Symmetries
+ !
+ logical     :: l_fix_syms
+ real(SP)    :: E_field(2,3)
+ real(SP)    :: B_field,B_theta,B_psi
  !
  !
  interface

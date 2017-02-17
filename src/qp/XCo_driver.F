@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -112,7 +112,7 @@ subroutine XCo_driver(E,k,Xk,q)
    !
    subroutine XCo_report_and_IO()
      !
-     Vxc_kind='LDA'
+     Vxc_kind='DFT'
      !
      ik=QP_table(1,3)
      call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))

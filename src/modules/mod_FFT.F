@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -30,6 +30,7 @@ module FFT_m
  integer              :: fft_dim_loaded(3)
  integer, allocatable :: fft_g_table(:,:)
  integer, allocatable :: fft_rot_r(:,:)
+ integer, allocatable :: fft_rot_r_inv(:)
  !
  ! FFTW support
  !

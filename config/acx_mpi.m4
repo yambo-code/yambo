@@ -2,7 +2,7 @@
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-# Copyright (C) 2000-2012 A. Marini and the YAMBO team
+# Copyright (C) 2000-2013 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -25,6 +25,8 @@
 AC_DEFUN([ACX_MPI], [
 AC_PREREQ(2.50) dnl for AC_LANG_CASE
 acx_mpi_ok=no
+
+AC_ARG_VAR(PFC,[Parallel Fortran compiler command])
 
 AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_CC])

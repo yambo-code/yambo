@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -25,7 +25,6 @@ subroutine REPORT_Occupations(E,mode)
  use units,         ONLY:HA2EV,BO2ANG,Bohr_magneton
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
- !
  !
  implicit none
  type(levels)::E
@@ -78,7 +77,6 @@ subroutine REPORT_Occupations(E,mode)
  !
  E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
  if (E%nbf/=E%nbm) E%Efermi(2:)=0.
- !
  !
  call msg('r','States summary         : Full        Metallic    Empty')
  !
@@ -142,6 +140,5 @@ subroutine REPORT_Occupations(E,mode)
  ! [3] Report if the system is treated as a metal
  !
  if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) call warning('Merged spin levels are metallic')
- !
  !
 end subroutine

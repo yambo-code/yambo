@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 C. Hogan and the YAMBO team
+! Copyright (C) 2000-2013 C. Hogan and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -35,8 +35,8 @@ subroutine e2y_kb_pp( ikibz, ncid )
   !   &                             dims%number_of_atom_species ))
   ! Structure of YAMBO arrays, from PP_alloc:
   !   allocate( pp_kbs ( n_atom_species, pp_n_l_comp_max ),stat=alloc_err(1))
-  !   allocate( pp_kb  ( wf_ng, n_atom_species, pp_n_l_comp_max ),stat=alloc_err(2))
-  !   allocate( pp_kbd ( wf_ng, n_atom_species, pp_n_l_comp_max ),stat=alloc_err(3)
+  !   allocate( pp_kb  ( ng_vec, n_atom_species, pp_n_l_comp_max ),stat=alloc_err(2))
+  !   allocate( pp_kbd ( ng_vec, n_atom_species, pp_n_l_comp_max ),stat=alloc_err(3)
   !
   use etsf_io
   use etsf_io_low_level

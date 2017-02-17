@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -30,7 +30,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order
  use fields,        ONLY:global_gauge,grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
-&                        QP_n_G_bands,QP_ng_Sx,&
+&                        QP_n_G_bands,QP_ng_Sx,GW_en_comp,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
 &                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,OCC_T_ref
  use timing,        ONLY:nhash
@@ -90,6 +90,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt) 
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
+ call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
+ call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
+ call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
+ call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
  !
  ! S_xc
  !
@@ -102,6 +106,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver,protect=.FALSE.)
  call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
+ call it('f',defs,'GWTerm',   '[GW] Use a terminator for the self-energy',verb_level=V_qp)
+ call it(defs,'GwEnComp',   '[GW] If <= 0 use 0-order EET ; > 0 the Bruneval-Gonze terminator', &
+&                        GW_en_comp,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
@@ -109,7 +116,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! BSE
  !
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
- call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`;`u`)',BS_cpl_mode)
+ call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`)',BS_cpl_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -141,7 +148,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
  call it(defs,'QShiftOrder', '[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
- !
  !
  ! RIM
  !
@@ -176,12 +182,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! SC
  !
  ! 
- ! RAS
- !
- ! 
- ! REELS
- !
- !
  contains 
    !
    !

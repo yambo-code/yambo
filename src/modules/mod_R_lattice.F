@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -44,7 +44,7 @@ module R_lattice
  real(SP) :: d3k_factor
  real(SP) :: d3q_factor
  real(SP) :: b(3,3)
- real(SP) :: q0_def_norm
+ real(SP) :: q0_def_norm, q0_shift_norm
  real(SP),allocatable :: q_norm(:)
  type bz_samp
    integer           :: nibz,nbz

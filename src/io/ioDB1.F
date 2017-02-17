@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -30,7 +30,7 @@ integer function ioDB1(E,k,ID)
 &                           n_spinor
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
-&                           Z_species, n_atoms
+&                           Z_species, n_atoms, mag_syms
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
@@ -63,18 +63,19 @@ integer function ioDB1(E,k,ID)
    !
    !  1 Serial Number 
    !  2 Major version   3 Minor version   4 Patchlevel
-   !  5 Bands                   E%nb
-   !  6 k-points                k%nibz
-   !  7 G-vectors (total)       ng_vec
-   !  8 G-vectors (wfc/shell)   wf_ncx
-   !  9 Time reversal flag      i_time_rev
-   ! 10 Symmetries              nsym
-   ! 11 Spinor cmpts            n_spinor
-   ! 12 Spins                   n_sp_pol
-   ! 13 Temperature             default_Tel
-   ! 14 Electrons               default_nel
-   ! 15 XC kind                 GS_xc_KIND
-   ! 16 XC functional           GS_xc_FUNCTIONAL 
+   !  5 Revision                code_revision    	
+   !  6 Bands                   E%nb
+   !  7 k-points                k%nibz
+   !  8 G-vectors (total)       ng_vec
+   !  9 G-vectors (wfc/shell)   wf_ncx
+   ! 10 Time reversal flag      i_time_rev
+   ! 11 Symmetries              nsym
+   ! 12 Spinor cmpts            n_spinor
+   ! 13 Spins                   n_sp_pol
+   ! 14 Temperature             default_Tel
+   ! 15 Electrons               default_nel
+   ! 16 XC kind                 GS_xc_KIND
+   ! 17 XC functional           GS_xc_FUNCTIONAL 
    !
    ! Added dimensions: (still in SEC=1)
    !
@@ -162,6 +163,10 @@ integer function ioDB1(E,k,ID)
      call io_elemental(ID, VAR="number_of_atom_species",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
+   endif
+   if (ver_is_gt_or_eq(ID,revision=1239)) then
+     call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)
+     call io_elemental(ID, L0=mag_syms,VAR=' Magnetic symmetries             : ')
    endif
    call io_elemental(ID, VAR="",VAR_SZ=0)
    !

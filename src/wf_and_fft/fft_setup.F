@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -24,9 +24,10 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use pars,           ONLY:SP,pi,IP
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:c2a
- use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv
+ use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev
  use R_lattice,      ONLY:b,g_vec,ng_vec
- use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_norm,fft_g_table,fft_multiplier,modx
+ use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
+&                         fft_norm,fft_g_table,fft_multiplier,modx
  use wave_func,      ONLY:wf_ng
  implicit none
  integer :: iG_max,iGo_max
@@ -34,8 +35,10 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  ! 
  ! Work Space
  !
- integer  :: i1,i2,i3,i4,iv(3),ln(3),is
+ integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
  real(SP) :: v1(3),M1(3,3),M2(3,3)
+ !
+ space_inv=reshape((/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./),(/3,3/))
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
@@ -83,6 +86,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    allocate(fft_rot_r(nsym,fft_size))
    call mem_est('FFT_rot',(/product(fft_rot_r)/),(/IP/))
    !
+   if (allocated(fft_rot_r_inv)) deallocate(fft_rot_r_inv)
+   allocate(fft_rot_r_inv(fft_size))
+   !
    !Remeber
    !-------
    ! 
@@ -99,15 +105,24 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    ! 
    ! Now I want to rewrite wf_ks(r)= wf_k(r(s^-1))
    !
-   do is=1,nsym
-     M1=matmul(dl_sop(:,:,sop_inv(is)),transpose(a))
+   do is=1,nsym+1
+     if( is<=nsym/(1+i_time_rev) )                M1=matmul( dl_sop(:,:,sop_inv(is)),transpose(a))
+     if( is> nsym/(1+i_time_rev) .and. is<=nsym ) M1=matmul(-dl_sop(:,:,sop_inv(is)),transpose(a))
+     if( is==nsym+1 )                             M1=matmul( space_inv,transpose(a))
      M2=matmul(b,M1)/2./pi
      forall (i1=1:3,i2=1:3) M2(i1,i2)=M2(i1,i2)*fft_dim(i1)/fft_dim(i2)
+     !
      do i1=0,fft_dim(1)-1
        do i2=0,fft_dim(2)-1
          do i3=0,fft_dim(3)-1
            iv=nint(matmul(M2,(/i1,i2,i3/)))
            i4=1+i1+i2*fft_dim(1)+i3*fft_dim(1)*fft_dim(2)
+           if( is==nsym+1) then
+             fft_rot_r_inv(i4)=1+modx(iv(1),fft_dim(1))+&
+&                            modx(iv(2),fft_dim(2))*fft_dim(1)+&
+&                            modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
+             cycle
+           endif
            fft_rot_r(is,i4)=1+modx(iv(1),fft_dim(1))+&
 &                          modx(iv(2),fft_dim(2))*fft_dim(1)+&
 &                          modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)

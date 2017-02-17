@@ -1,5 +1,5 @@
 ! 
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -33,7 +33,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 &                         dos_E_range,dos_E_steps
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
- use xc_functionals, ONLY:two_spin_density
  use QP_CTL_m,       ONLY:QP_apply
  use QP_m,           ONLY:OCC_ctl
  implicit none
@@ -115,7 +114,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
    !
    if (l_3D_plot) then
-     call RT_output("close el_dos")
    else
      call of_open_close(trim(output_fname))
    endif

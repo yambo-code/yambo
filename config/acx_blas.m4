@@ -16,9 +16,9 @@ case $with_blas in
         *) BLAS_LIBS="-l$with_blas" ;;
 esac
 
-# Get fortran linker names of BLAS functions to check for.
-AC_F77_FUNC(caxpy)
-AC_F77_FUNC(daxpy)
+# Set fortran linker names of BLAS functions to check for.
+caxpy="caxpy"
+daxpy="daxpy"
 
 acx_blas_save_LIBS="$LIBS"
 LIBS="$LIBS $FLIBS"

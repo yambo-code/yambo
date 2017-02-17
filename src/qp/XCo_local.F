@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -39,12 +39,12 @@ subroutine XCo_local(E,Xk)
  !
  ! Work Space
  !
- integer     ::i1,ifft,ifftp,ifft_sp1,ifftp_sp1,ifft_sp2,ib,ibp,ik,i_sp1
+ integer     ::i1,ifft,iwf,iwfp,iwf_sp1,iwfp_sp1,iwf_sp2,iwfp_sp2,ib,ibp,ik,i_sp
  complex(SP) ::c_ws(fft_size,n_spin)
  !
  ! Spin support (collinear and not collinear)
  !
- real(SP)    :: mod_mag,vxc_plus(fft_size),vxc_minus(fft_size)
+ real(SP)    :: mod_mag,magn_versor(fft_size,3),vxc_plus(fft_size),vxc_minus(fft_size)
  complex(SP) :: V_xc_mat(fft_size,n_spin,n_spin)
  logical     :: l_call_the_driver
  !
@@ -71,20 +71,21 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
-     ! <ifft|V_xc|ifftp>
+     ! <iwf|V_xc|iwfp>
      !
-     ifft =wf_state(ib,ik,1)
-     ifftp=wf_state(ibp,ik,1)
-     c_ws(:,1)=V_xc(:,1)*wf(:,ifftp)
+     iwf =wf_state(ib,ik,1)
+     iwfp=wf_state(ibp,ik,1)
+     c_ws(:,1)=V_xc(:,1)*wf(:,iwfp)
      !
-     QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,ifft),c_ws(:,1))
+     QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf),c_ws(:,1))
      !
    enddo
-   !
    !
    return
    !
  endif
  !
+ !
+ deallocate(V_xc)
  !
 end subroutine

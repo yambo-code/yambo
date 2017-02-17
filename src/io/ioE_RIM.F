@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,11 +23,11 @@ integer function ioE_RIM(E,ID)
  !
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_max_filling,&
-&                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol
+&                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_ipol_weight
  use R_lattice,      ONLY:nXkbz
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_bulk,io_header
+&                         io_bulk,io_header,ver_is_gt_or_eq
  implicit none
  !
  type(levels) :: E
@@ -47,6 +47,7 @@ integer function ioE_RIM(E,ID)
    allocate(E%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(E%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(BZ_RIM_nkpt(nXkbz),BZ_RIM_table(nXkbz,BZ_RIM_max_filling))
+   allocate(BZ_RIM_ipol_weight(BZ_RIM_max_filling))
    call mem_est("E_RIM f_RIM BZ_RIM_nkpt BZ_RIM_table",&
 &               (/size(E%E_RIM),size(E%f_RIM),size(BZ_RIM_nkpt),&
 &                 size(BZ_RIM_table)/),(/SP,SP,IP,IP/))
@@ -66,6 +67,15 @@ integer function ioE_RIM(E,ID)
  !
  call io_bulk(ID, VAR="RIM_BLOCK_TABLE", VAR_SZ=shape(BZ_RIM_table) ) 
  call io_bulk(ID, I2=BZ_RIM_table )
+ !
+ ! RIM double grid interpolation weights of each element in table
+ !
+ if (ver_is_gt_or_eq(ID,revision=1300)) then
+   call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_RIM_ipol_weight) ) 
+   call io_bulk(ID, R1=BZ_RIM_ipol_weight)
+ else
+   BZ_RIM_ipol_weight=1._SP
+ endif
  !
 1 call io_disconnect(ID=ID)
  !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -37,6 +37,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
  use wrapper,             ONLY:M_by_V
+ use com,                 ONLY:error,msg
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -102,7 +103,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! Set up the parallel environment
  !
  call pp_indexes_reset(px)
- call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
+ call par_indexes(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
+ !
+ if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
  !
  call live_timing('Dipole (T):',px%n_of_elements(myid+1)*n_spin)
  wf_dim=3
@@ -132,11 +135,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
      E_i_spin=i_spin
      if (n_spinor==2) E_i_spin=1
      !
-     do iv=X%ib(1),iv_max 
+     do ic=ic_min,X%ib(2)
        !
-       if (.not.px%element_2D(ik,iv)) cycle
+       if(.not.px%element_2D(ik,ic)) cycle
        !
-       do ic=ic_min,X%ib(2)
+       do iv=X%ib(1),iv_max 
          !
          rho(:)=(0._SP,0._SP)
          !
@@ -148,6 +151,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.l_real_time) cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
+         if(ivfft==0) call error(" Error in parallel wf distribution")
          !
          ! wf_xyz = -i grad fdo(iv,ik)
          !
@@ -157,6 +161,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! 
          !
          icfft=wf_state(ic,ik,i_spin)
+         if(icfft==0) call error("Error distribution wave-function")
          !
          ! WARNING !!!!!!!! The convention is to revert the order of the bands indexes
          !==================
@@ -177,7 +182,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
          if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
-         if(io_Vnl_err==0) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
+         if (io_Vnl_err==0) then
+           if(n_spinor==1) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_spin)*0.5
+           if(n_spinor==2.and.i_spin==2) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
+         endif
          !
          !=====
          ! <P>

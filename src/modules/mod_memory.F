@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -78,6 +78,8 @@ module memory_m
            if (trim(mem_element(i2))==trim(input_name(i1))) exit
          enddo
          if (i2==element_loaded+1) element_loaded=element_loaded+1
+         !
+         if (i2>max_mem_elements) call error(" Too many elements in memory!! ")
          !
          mem_element(i2)=trim(input_name(i1))
          local_kind=preset_kind

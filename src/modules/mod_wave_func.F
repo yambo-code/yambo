@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -53,6 +53,10 @@ module wave_func
  !
  integer    ,allocatable:: wf_state(:,:,:)
  !
+ ! Parallel wave-function distribution
+ !
+ logical    ,allocatable:: states_loaded(:,:,:) 
+ logical    ,allocatable:: states_to_load(:,:,:) 
  !
  ! Num. of COMPONENTS at each k
  !
@@ -77,12 +81,13 @@ module wave_func
    end function 
    !
    subroutine WF_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     spins_to_load,space,title,impose_free_and_alloc)
+&                     spins_to_load,space,title,impose_free_and_alloc,force_WFo)
      integer :: iG_max,iGo_max,bands_to_load(2),&
 &               kpts_to_load(2)
      integer,     optional :: spins_to_load(2)
      character(*),optional :: space,title
      logical     ,optional :: impose_free_and_alloc
+     logical     ,optional :: force_WFo
    end subroutine
    !
  end interface 
@@ -93,10 +98,26 @@ module wave_func
      use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
      integer :: err
+     integer :: ik,ib,is
      !
+     ! Distributed allocation
+     !
+     if(allocated(states_to_load)) then
+       !
+       wf_n_states=0
+       do ib=wf_b(1),wf_b(2)
+         do ik=wf_k(1),wf_k(2)
+           do is=wf_s(1),wf_s(2)
+             if(states_to_load(ib,ik,is)) wf_n_states=wf_n_states+1
+           enddo
+         enddo
+       enddo
+       !
+     else
        !
        wf_n_states=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
        !
+     endif
      !
      if (wf_space=="R") allocate(wf(fft_size,wf_n_states),stat=err)
      if (wf_space=="G") allocate(wf(wf_ng,wf_n_states),stat=err)
@@ -116,7 +137,7 @@ module wave_func
    subroutine WF_free()
      use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-  &                       fft_rot_r,fftw_plan,fft_multiplier
+  &                       fft_rot_r,fft_rot_r_inv,fftw_plan,fft_multiplier
      if (.not.allocated(wf)) return
      !
      call mem_est('WF',quiet=QUIET_free)
@@ -127,7 +148,7 @@ module wave_func
        fft_dim=0
        fft_dim_loaded=0
        fft_multiplier=1
-       deallocate(fft_g_table,fft_rot_r)
+       deallocate(fft_g_table,fft_rot_r,fft_rot_r_inv)
        call mem_est('FFT_g_tab FFT_rot')
 #if defined _FFTW
        call dfftw_destroy_plan(fftw_plan)

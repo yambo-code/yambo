@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -101,6 +101,7 @@ subroutine K_diagonalization(iq,W)
    call mem_est("BS_V_left BS_V_right",(/BS_H_dim,size(BS_V_left),size(BS_V_right)/))
    allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim))
    call mem_est("BS_R_left BS_R_right BS_overlap",(/BS_H_dim,BS_H_dim,size(BS_overlap)/))
+   BS_overlap=(0.,0.)
  else
    allocate(BS_E_real(BS_H_dim))
    call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))

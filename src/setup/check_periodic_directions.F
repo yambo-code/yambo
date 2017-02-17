@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -27,7 +27,6 @@ subroutine check_periodic_directions()
  use D_lattice,      ONLY:DL_vol,a,non_periodic_directions
  use vec_operate,    ONLY:v_norm
  !
- !
  implicit none
  !
  ! Work Space
@@ -44,7 +43,6 @@ subroutine check_periodic_directions()
  l_3D=all(non_p_dir/=0)
  l_2D=sum(non_p_dir)==2
  l_1D=sum(non_p_dir)==1
- !
  !
  if (.not.l_3D.and..not.l_2D.and..not.l_1D) return
  !
@@ -98,7 +96,6 @@ subroutine check_periodic_directions()
    call warning('Non periodic geometry and unit cell are incompatible')
    return
  endif
- !
  !
  call msg('r', 'Non-periodic chartesian directions :',trim(non_periodic_directions))
  call msg('r', 'Optical renormalization        [au]:',eps_2_alpha)

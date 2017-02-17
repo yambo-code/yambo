@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -160,7 +160,9 @@ subroutine QP_of(qp,en,QPdb_read_err)
    !
    do  i1=1,QP_n_states
      !
-     write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
+     if(spin(QP_table(i1,:))==1) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s1'
+     if(spin(QP_table(i1,:))==2) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s2'
+     if(n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
      call of_open_close(G_Sc_name,'ot')
      call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
      call msg('o G_Sc','#')

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -33,10 +33,10 @@ subroutine scatterBamp(isc)
  !                                        /:\
  !  iq_is = ik_is-ok_os-Go
  !
- use pars,           ONLY:DP
+ use pars,           ONLY:DP,SP,cZERO,cONe
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
- use D_lattice,      ONLY:nsym,i_time_rev
+ use D_lattice,      ONLY:nsym,i_time_rev,mag_syms,spin_sop,idt_index
  use R_lattice,      ONLY:g_rot
  use wave_func,      ONLY:wf,wf_state
  use FFT_m,          ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table
@@ -45,25 +45,24 @@ subroutine scatterBamp(isc)
  !
  ! Work Space
  !
- complex(DP) :: rho_tw_rs(fft_size,n_spinor)
+ complex(DP) :: rho_tw_rs(fft_size)
+ complex(SP) :: wf_tmp_i(fft_size,n_spinor),wf_tmp_o(fft_size,n_spinor)
  !
- integer :: ib,ik,is,i_sp,ifft
- integer :: ob,ok,os,o_sp,offt
- integer :: qs,iGo,i_spr,i_spinor
+ integer :: ib,ik,is,i_sp,i_wf
+ integer :: ob,ok,os,o_sp,o_wf
+ integer :: qs,iGo,ifft
  logical :: litr,lotr
  !
  i_sp =1
  o_sp =1
- i_spr=1
  !
  ! <ib ik_is i_sp| 
  !
  ib=isc%is(1)
  ik=isc%is(2)
  is=isc%is(3)
- if (is>nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1)
  i_sp=isc%is(4)
- litr=(is/=isc%is(3))
+ litr=is>nsym/(i_time_rev+1)
  !
  ! | ob ok_os o_sp>   
  !
@@ -71,8 +70,7 @@ subroutine scatterBamp(isc)
  ok=isc%os(2)
  os=isc%os(3)
  o_sp=isc%os(4)
- if (os>nsym/(i_time_rev+1)) os=os-nsym/(i_time_rev+1)
- lotr=(os/=isc%os(3))
+ lotr=os>nsym/(i_time_rev+1)
  !
  ! e^[I(Rs(G-G0)).r]
  !
@@ -81,30 +79,37 @@ subroutine scatterBamp(isc)
  !
  ! \tilde{\rho} in Real Space
  !
-   !
-   ifft=wf_state(ib,ik,i_sp+i_spr-1)
-   offt=wf_state(ob,ok,o_sp+i_spr-1)
-   !
-   rho_tw_rs(:,i_spr)=wf(fft_rot_r(is,:),ifft)
-   if (.not.litr) rho_tw_rs(:,i_spr)=conjg(rho_tw_rs(:,i_spr))
-   if (lotr)      rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*conjg(wf(fft_rot_r(os,:),offt))
-   if (.not.lotr) rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*wf(fft_rot_r(os,:),offt)
-   !
-   ! FFT call
-   !
+ i_wf=wf_state(ib,ik,i_sp)
+ o_wf=wf_state(ob,ok,o_sp)
+ !
+ if(is==idt_index) wf_tmp_i(:,1)=wf(:,i_wf)
+ if(os==idt_index) wf_tmp_o(:,1)=wf(:,o_wf)
+ if(is/=idt_index) wf_tmp_i(:,1)=wf(fft_rot_r(is,:),i_wf)
+ if(os/=idt_index) wf_tmp_o(:,1)=wf(fft_rot_r(os,:),o_wf)
+ !
+ !
+ if(.not.litr) wf_tmp_i=conjg(wf_tmp_i)
+ if(     lotr) wf_tmp_o=conjg(wf_tmp_o)
+ !
+ rho_tw_rs(:)=wf_tmp_i(:,1)*wf_tmp_o(:,1)
+ !
+ !
 #if defined _FFTW
-   call fft_3d(rho_tw_rs(:,i_spr),fft_dim,+1,fftw_plan)
+ call fft_3d(rho_tw_rs,fft_dim,+1,fftw_plan)
 #else
-   call fft_3d(rho_tw_rs(:,i_spr),fft_dim,+1)
+ call fft_3d(rho_tw_rs,fft_dim,+1)
 #endif
-   !
  !
- isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),1)
  !
- ! 
+ if(qs==idt_index) then
+   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
+ else
+   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
+ endif
+ !
  ! q=0, G=0 case
  !
- if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=(1.,0.)
- if (all((/isc%qs(2)==1,ib/=ob/))) isc%rhotw(1)=(0.,0.)
+ if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=cONe
+ if (all((/isc%qs(2)==1,ib/=ob/))) isc%rhotw(1)=cZERO
  !
 end subroutine

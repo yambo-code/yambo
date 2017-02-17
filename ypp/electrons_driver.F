@@ -1,5 +1,5 @@
 ! 
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -34,7 +34,7 @@ subroutine electrons_driver(Xk,Xen)
 &                         l_position,l_current,l_bands
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
- use xc_functionals, ONLY:two_spin_density
+ use xc_functionals, ONLY:magn
  implicit none
  !
  type(bz_samp) ::Xk
@@ -43,7 +43,7 @@ subroutine electrons_driver(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
  logical               :: success,flag
  character(schlen)     :: ch_ws(2)
  !
@@ -68,7 +68,7 @@ subroutine electrons_driver(Xk,Xen)
    nkpt_to_load =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)         !(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)  
  endif
  !
- flag=.not.l_dos
+ if(l_dos.or.l_bands) flag=.false.
  !===
  !
  if(flag) then
@@ -86,6 +86,7 @@ subroutine electrons_driver(Xk,Xen)
  ! BANDS interpolation
  !======================
  !
+ if(l_bands) call electrons_bands(Xk,Xen)
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================
@@ -124,7 +125,9 @@ subroutine electrons_driver(Xk,Xen)
      !
        forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
      !
-     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ib+1,ik,i_spin))<deg_energy) then
+     ibp=ib+1
+     if (ib==Xen%nb) ibp=ib
+     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ibp,ik,i_spin))<deg_energy) then
        cycle
      else
        !
@@ -158,7 +161,7 @@ subroutine electrons_driver(Xk,Xen)
  call WF_free()
  if (allocated(v2plot))   deallocate(v2plot)
  if (allocated(QP_table)) deallocate(QP_table,QP_state)
- if (allocated(two_spin_density))   deallocate(two_spin_density)
+ if (allocated(magn))     deallocate(magn)
  if (allocated(el_den))   deallocate(el_den)
  plot_title=' '
  !

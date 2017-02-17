@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -40,6 +40,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
+ use WF_distribute, ONLY: Distributed_Memory,WF_states_setup
  implicit none
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
@@ -71,11 +72,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  GreenF  = cmplx(0.,0.,SP)
  drude_GreenF = cmplx(0.,0.,SP)
  !
- !
  ! Logicals  to skip wf_load and/or to use bare or RIM GF (no poles accumulation)
  !==========
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  skip_WF_load=.false.
+ !
+ if(Distributed_Memory) force_bare_X_G=.true.
  !
  ! Project's dependent presets
  !=============================
@@ -85,7 +87,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !  Optical strengths
  !=====================
  if (iq==1) call Dipole_driver(Xen, Xk, X, X%q0)
- !
  !
  ! Drude Contrib. if all of following conditions hold
  !===============
@@ -111,10 +112,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
  endif
  !
- ! WF load
- !=========
- if (.not.skip_WF_load) call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
- !
  ! Poles tabulation
  !==================
  if (iq/=current_iq) then
@@ -132,14 +129,26 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
    if (self_detect_E_range) Xw%er=minmax_ehe
    !
-   !
    !  This call is needed as Xw%p is deallocated inside
    !  the q-loop of X_em1
    !
    call FREQUENCIES_setup(Xw)
    !
+   if(Distributed_Memory) call X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
+   !
  endif 
  !
+ ! WF load
+ !=========
+ if (.not.skip_WF_load) then
+    !
+    call WF_states_setup(cg_npts=cg_npts,bg_npts=bg_npts,k=Xk,qpoint=iq,Xw=Xw)
+    !
+    call WF_states_setup(b_to_load=X%ib,report=.TRUE.)
+    !
+    call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+    !
+ endif
  !
  !
  ! Time-Rev is Spatial Inv => only half X is eval
@@ -230,7 +239,6 @@ loop_bg: do i2 = 1,bg_npts(i1)
        enddo
        if (is>nsym/(i_time_rev+1)) isc%rhotw=conjg(isc%rhotw)
        isc%rhotw(1)=-conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))
-       !
        !
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^

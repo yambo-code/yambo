@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -62,7 +62,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !       2        2        1         1          collinear
  !
  spin_occ=2.0_SP/real(n_spin)
-
+ !
  local_Tel=Telstep
  !
  ! All energies are stored in E_sorted...
@@ -183,10 +183,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  if (Bose_Temp<0.) Bose_Temp=Tel
  Finite_Tel=any((/Tel,Bose_Temp/)>=1.E-5)
  !
- 
-  if (Finite_Tel) call warning('Non zero Temp. is still unsupported in this version')
- 
- !
  if (mode==0) return
  !
  ! build the occupations ...
@@ -246,7 +242,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    f_met= sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*(E%nbm-E%nbf))
    call msg('r','N of e- - Metallic occ.:',(/n_of_el_from_zero(1)+nel,f_met/))
  endif
- !
  !
  contains
    !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -47,7 +47,7 @@ subroutine barriers()
  !
  use drivers
  use pars,       ONLY:schlen
- use D_lattice,  ONLY:i_time_rev,i_space_inv
+ use D_lattice,  ONLY:i_time_rev,i_space_inv,mag_syms
  use BS,         ONLY:BSS_mode
  use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
  use QP_m,       ONLY:QP_solver
@@ -94,6 +94,11 @@ subroutine barriers()
  !
  ! RUNLEVELS
  !===========
+ !
+ ! If the system is non magnetic you can safely comment the nex line
+ ! Otherwise you have to run ypp_rt to remove the trev symmetry when SO is present
+ !
+ if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=trim(always_runlevels))
  !
  !
  !

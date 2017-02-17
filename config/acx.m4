@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 #
-# Copyright (C) 2000-2012 A. Marini and the YAMBO team
+# Copyright (C) 2000-2013 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -127,9 +127,9 @@ c_success=no
 msg="unknown"
 AC_LANG_PUSH(C)
 AC_COMPILE_IFELSE(
-[#define F90_FUNC(name,NAME) name ## _
+[AC_LANG_SOURCE(#define F90_FUNC(name,NAME) name ## _
  #define F90_FUNC_(name,NAME) name ## _
- void F90_FUNC_(ftest, FTEST)(){}],[
+ void F90_FUNC_(ftest, FTEST)(){})],[
  mv conftest.$ac_objext ftest.$ac_objext
  AC_LANG_PUSH(Fortran)
  save="$LIBS"
@@ -141,9 +141,9 @@ AC_COMPILE_IFELSE(
  rm -f ftest.$ac_objext],[])
 if test "$c_success" = "no" ; then
  AC_COMPILE_IFELSE(
- [#define F90_FUNC(name,NAME) name
+ [AC_LANG_SOURCE(#define F90_FUNC(name,NAME) name
   #define F90_FUNC_(name,NAME) name
-  void F90_FUNC_(ftest, FTEST)(){}],[
+  void F90_FUNC_(ftest, FTEST)(){})],[
   mv conftest.$ac_objext ftest.$ac_objext
   AC_LANG_PUSH(Fortran)
   save="$LIBS"

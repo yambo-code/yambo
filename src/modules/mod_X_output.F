@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -30,7 +30,6 @@ module X_output
  !
  character(15)     :: headers(7)
  character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name
- character(schlen) :: off_file_name,kerr_file_name
  !
  contains
    !
@@ -45,32 +44,32 @@ module X_output
      !
      ! T-ordering
      !
-     call msg('o eps eel alpha off kerr','#')
+     call msg('o eps eel alpha','#')
      if (GreenF) then
-       if (l_chi) call msg('o eps eel alpha off kerr','# ','- G. Functions  are '//trim(X_E_xc_string(4)),INDENT=0)
+       if (l_chi) call msg('o eps eel alpha','# ','- G. Functions  are '//trim(X_E_xc_string(4)),INDENT=0)
        if (l_bss) call msg('o eps eel alpha','# ','- G. Functions  are '//trim(K_E_xc_string),INDENT=0)
      else
-       if (l_chi) call msg('o eps eel alpha off kerr','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
+       if (l_chi) call msg('o eps eel alpha','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
        if (l_bss) call msg('o eps eel alpha','# ','- Energies      are '//trim(K_E_xc_string),INDENT=0)
      endif
-     if (l_chi) call msg('o eps eel alpha off kerr','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
+     if (l_chi) call msg('o eps eel alpha','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
      if (l_bss) call msg('o eps eel alpha','# ','- Wavefunctions are '//trim(K_WF_xc_string),INDENT=0)
-     call msg('o eps eel alpha off kerr','# ')
+     call msg('o eps eel alpha','# ')
      message='- The Green`s function is T-ordered -'
      if (trim(ordering)=='a') message='- The Green`s function is antiresonant -'
      if (trim(ordering)=='r') message='- The Green`s function is resonant -'
      if (trim(ordering)=='c') message='- The Green`s function is causal -'
-     call msg('o eps eel alpha off kerr','# ',trim(message),INDENT=0)
+     call msg('o eps eel alpha','# ',trim(message),INDENT=0)
      !
      ! Gauges
      !
      if (iq==1) then
        message='- Using Shifted Grids -'
        if (trim(global_gauge)=='velocity')       message='- Using the Velocity Gauge -'
-       call msg('o eps eel alpha off kerr','# ',trim(message),INDENT=0)
+       call msg('o eps eel alpha','# ',trim(message),INDENT=0)
        message='- [r,Vnl] is *NOT* included -'
        if (Vnl_included) message='- [r,Vnl] *is* included -'
-       call msg('o eps eel alpha off kerr','# ',trim(message),INDENT=0)
+       call msg('o eps eel alpha','# ',trim(message),INDENT=0)
      endif
      !
    end subroutine
@@ -78,11 +77,11 @@ module X_output
    subroutine X_write_descriptions(n_descs,desc)
      integer      :: n_descs,i_d
      character(*) :: desc(n_descs)
-     call msg('o eps eel fxc alpha off kerr','#')    
+     call msg('o eps eel fxc alpha','#')    
      do i_d=1,n_descs
-       call msg('o eps eel fxc alpha off kerr','#  ',trim(desc(i_d)),INDENT=0)    
+       call msg('o eps eel fxc alpha','#  ',trim(desc(i_d)),INDENT=0)    
      enddo
-     call msg('o eps eel fxc alpha off kerr','#')    
+     call msg('o eps eel fxc alpha','#')    
    end subroutine
    !
    subroutine X_write_q_plus_G(iq,Q_plus_G_pt,ig)
@@ -90,15 +89,13 @@ module X_output
      integer           :: iq
      integer,optional  :: ig
      real(SP)          :: Q_plus_G_pt(3)
-     character(schlen) :: message(6)
+     character(schlen) :: message(4)
      !
      if (iq==1.and.ig==1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
        message(2) = '# EELS @ Q('//trim(intc(iq))//')  [q->0 direction]:'
        message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//') [q->0 direction]'
        message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [q->0 direction]:'
-       message(5) = '# Off-diagonal Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(6) = '# Kerr parameters @ Q('//trim(intc(iq))//') [q->0 direction] :'
      else  if (iq/=1.and.ig==1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') [iku] :'
        message(2) = '# EELS @ Q('//trim(intc(iq))//')  [iku]:'
@@ -114,9 +111,7 @@ module X_output
      call msg("o eel",trim(message(2)),Q_plus_G_pt,INDENT=0)
      call msg("o alpha",trim(message(3)),Q_plus_G_pt,INDENT=0)
      call msg("o fxc",trim(message(4)),Q_plus_G_pt,INDENT=0)
-     call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0)
-     call msg("o kerr",trim(message(6)),Q_plus_G_pt,INDENT=0)
-     call msg('o eps eel fxc alpha off kerr','#')    
+     call msg('o eps eel fxc alpha','#')    
      !
    end subroutine
    !
@@ -132,16 +127,11 @@ module X_output
      eel_file_name  ='eel_q'//trim(intc(iq))
      alpha_file_name='alpha_q'//trim(intc(iq))
      !
-     off_file_name  ='off_q'//trim(intc(iq))
-     kerr_file_name ='kerr_q'//trim(intc(iq))
-     !
      if (present(ig)) then
        if (ig>1) then
          eps_file_name  = trim(eps_file_name)//'_G'//trim(intc(ig))
          eel_file_name  = trim(eel_file_name)//'_G'//trim(intc(ig))
          alpha_file_name= trim(alpha_file_name)//'_G'//trim(intc(ig))
-         off_file_name  = trim(off_file_name)//'_G'//trim(intc(ig))
-         kerr_file_name = trim(kerr_file_name)//'_G'//trim(intc(ig))
        endif
      endif
      !
@@ -149,24 +139,18 @@ module X_output
        eps_file_name  =  trim(eps_file_name)//'_'//solver
        eel_file_name  =  trim(eel_file_name)//'_'//solver
        alpha_file_name=  trim(alpha_file_name)//'_'//solver
-       off_file_name  =  trim(off_file_name)//'_'//solver
-       kerr_file_name =  trim(kerr_file_name)//'_'//solver
      endif
      !
      if (len_trim(approx)>0) then
        eps_file_name  =  trim(eps_file_name)//'_'//approx
        eel_file_name  =  trim(eel_file_name)//'_'//approx
        alpha_file_name=  trim(alpha_file_name)//'_'//approx
-       off_file_name  =  trim(off_file_name)//'_'//approx
-       kerr_file_name =  trim(kerr_file_name)//'_'//approx
      endif
      !
      if (len_trim(equation)>0) then
        eps_file_name  =  trim(eps_file_name)//'_'//equation
        eel_file_name  =  trim(eel_file_name)//'_'//equation
        alpha_file_name=  trim(alpha_file_name)//'_'//equation
-       off_file_name  =  trim(off_file_name)//'_'//equation
-       kerr_file_name =  trim(kerr_file_name)//'_'//equation
      endif
      !
    end subroutine

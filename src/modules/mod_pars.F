@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -57,6 +57,7 @@ module pars
  !
  real(SP),    parameter :: pi=3.141592653589793238462643383279502884197_SP
  real(SP),    parameter :: zero_dfl=1.E-5
+ real(SP),    parameter :: rZERO=0._SP
  complex(SP), parameter :: cI   =(0._SP,1._SP)
  complex(SP), parameter :: cONe =(1._SP,0._SP)
  complex(SP), parameter :: cZERO=(0._SP,0._SP)

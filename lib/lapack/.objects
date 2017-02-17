@@ -23,7 +23,12 @@ objs = 	zgetf2.o  zhetrd.o  zlarft.o  zlaswp.o  \
 	zunghr.o  zgehrd.o  dlabad.o \
 	zgeev.o   zgehd2.o  zlahqr.o \
 	zlahrd.o  zlanhs.o  zlarfx.o  zlatrs.o dlamch.o dlaran.o \
-	dlacpy.o  dgetrf.o  dgetrs.o  dgetf2.o dlaswp.o
+	dlacpy.o  dgetrf.o  dgetrs.o  dgetf2.o dlaswp.o zhpev.o zupgtr.o\
+	zhptrd.o  zlanhp.o zhegvx.o zheevx.o zhegst.o zpotf2.o  zpotrf.o\
+	zstein.o  zhegs2.o zunmtr.o zunmql.o zunm2l.o chegv.o zhegv.o \
+	dpotrf.o  dstebz.o disnan.o dlaisnan.o dlaebz.o dpotf2.o\
+	dlagts.o dlagtf.o dlarnv.o dtrtri.o dlaruv.o dlaruv.o dtrti2.o\
+        zgetrs.o
 #else
 objs = 	cgetf2.o  chetrd.o  clarft.o  claswp.o  \
 	cung2l.o  ilaenv.o  slanst.o  slassq.o  \
@@ -49,5 +54,10 @@ objs = 	cgetf2.o  chetrd.o  clarft.o  claswp.o  \
 	cunghr.o  cgehrd.o  slabad.o \
 	cgeev.o   cgehd2.o  clahqr.o \
 	clahrd.o  clanhs.o  clarfx.o  clatrs.o slamch.o dlaran.o \
-	slacpy.o  sgetrf.o sgetrs.o sgetf2.o slaswp.o
-#endif
+	slacpy.o  sgetrf.o sgetrs.o sgetf2.o slaswp.o chpev.o cupgtr.o\
+	chptrd.o  clanhp.o chegvx.o cheevx.o chegst.o cpotf2.o  cpotrf.o\
+	cstein.o  chegs2.o cunmtr.o cunmql.o cunm2l.o chegv.o\
+	spotrf.o  sstebz.o sisnan.o slaisnan.o slaebz.o spotf2.o\
+	slagts.o slagtf.o slarnv.o strtri.o slaruv.o slaruv.o strti2.o\
+        cgetrs.o
+#endif                                                                  

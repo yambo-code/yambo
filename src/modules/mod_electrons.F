@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -47,12 +47,10 @@ module electrons
  integer  :: n_spinor
  logical  :: spin_orbit
  !
- ! Boltzmann occupations
+ ! Average magnetization density
  !
- real(SP)          :: Boltz_Efield(3)
- real(SP)          :: Boltz_tau
- real(SP), pointer :: Boltz_f(:,:,:,:)
- real(SP), pointer :: Boltz_vel(:,:,:,:)
+ logical                  :: eval_magn
+ real(SP)                 :: Total_magn(3)
  !
  type levels
    integer         :: nb
@@ -94,6 +92,7 @@ module electrons
  integer  :: BZ_RIM_nbands
  integer ,allocatable :: BZ_RIM_nkpt(:)
  integer ,allocatable :: BZ_RIM_table(:,:)
+ real(SP), allocatable :: BZ_RIM_ipol_weight(:)
  !
  contains
    !

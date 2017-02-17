@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,12 +23,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use drivers,        ONLY:l_sc_run
  use pars,           ONLY:SP,pi,schlen
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_invertion,i_space_inv,input_Tel_commands_over_header,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
-&                         symmetry_group_table
+&                         symmetry_group_table,mag_syms,idt_index
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
@@ -111,11 +111,16 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call msg('r','DL (S)ymmetries [cc]')
  !
+ ! spin symmetries
+ call build_spin_sop()
+ !
  allocate(rl_sop(3,3,nsym))
  do is=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
-   if (i_time_rev==1.and.is>nsym/2) cycle
-   call msg('r','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
+   if (is<=nsym/(1+i_time_rev))&
+&    call msg('r','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
+   if (is>nsym/(1+i_time_rev).and.mag_syms)&
+&    call msg('r','[S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
  enddo
  !
  ! Time Reversal
@@ -124,13 +129,27 @@ subroutine setup(en,Xen,Ken,k,Xk)
  select case(i_time_rev)
    case(1)
      call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
-     inv_index=nsym/2+1
+     if(.not.mag_syms) inv_index=nsym/2+1
+     if(mag_syms) then
+       call warning(' Magnetic symmetries and Trev are not implemented! Remove T-rev')
+       do is=1,nsym/2
+         if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+       enddo
+     endif
    case(0)
      call msg('nr','[SYMs] K-space Time-reversal not included')
      do is=1,nsym
        if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
      enddo
  end select
+ !
+ ! Indentity index
+ !
+ idt_index=-1
+ do is=1,nsym
+   if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1.,0.,0.,0.,1.,0.,0.,0.,1./)) ) idt_index=is
+ enddo
+ !
  !
  ! Space inversion
  !

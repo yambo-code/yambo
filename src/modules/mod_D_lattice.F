@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -43,7 +43,10 @@ module D_lattice
  integer :: i_space_inv ! =1 yes SI,  =0 no SI
  integer :: inv_index   ! Index of the symmetry corresponding to -I (independently 
                         ! on the value of i_time_rev and i_space_inv
+ integer :: idt_index   ! Indentity I  index
+ logical :: mag_syms
  real(SP),allocatable :: dl_sop(:,:,:)
+ complex(SP),allocatable :: spin_sop(:,:,:)
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)
  !

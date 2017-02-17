@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -35,6 +35,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use vec_operate,    ONLY:v_norm
+ use WF_distribute,  ONLY:WF_states_setup
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk
@@ -52,8 +53,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  integer :: ID,io_err(2)
  integer, external :: io_DIPOLES
- !
- if (allocated(DIP_q_dot_iR)) return
  !
  ! Transitions ordering
  !
@@ -91,8 +90,23 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    DIP_iR=(0._SP,0._SP)
    !
    !   
+   if(trim(grid_path)=='none'.and.Dipole_bands_ordered) then
+     !
+     ! Valence bands are loaded by all processors
+     !
+     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/1,Xen%nbm/),par_loop=.FALSE.)
+     !
+     ! Parallelization on conductions bands and k-points
+     !
+     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/Xen%nbf+1,X%ib(2)/))
+     !
+     ! Report
+     !
+     call WF_states_setup(b_to_load=(/1,X%ib(2)/),report=.true.)
+     !
+   endif
    !
-   call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
+   call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',force_WFo=.true.)
    !
    use_trans_gauge = .true.
    !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -35,6 +35,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:WF_load
+ use WF_distribute, ONLY:WF_states_setup
  !
  implicit none
  type(levels) ::E       
@@ -91,6 +92,22 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
  endif
  !
+ ! Quasi-particle list
+ ! (all processor have all qp-states)
+ !
+ call WF_states_setup(qp_to_load=(/1,QP_n_states/),par_loop=.FALSE.)
+ !
+ ! Exchange Scattering states are distributed
+ ! 
+ call WF_states_setup(b_to_load=(/Sx_lower_band,Sx_upper_band/),qp_to_load=(/1,QP_n_states/),q_to_load=(/1,q%nbz/),k=k)
+ !
+ ! States required by the density
+ !
+ call WF_states_setup(b_to_load=(/1,E%nbm/),k_to_load=(/1,Xk%nibz/))
+ !
+ ! Report
+ !
+ call WF_states_setup(b_to_load=(/1,max(E%nbm,QP_nb)/),report=.TRUE.)
  !
  ! WFs
  !

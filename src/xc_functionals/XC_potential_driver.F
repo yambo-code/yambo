@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 M. Gruning and the YAMBO team 
+! Copyright (C) 2000-2013 M. Gruning and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,47 +28,31 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use com,           ONLY:msg,warning
- use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,XC_LDA_C_PW,xc_string,&
-&                        XC_NOT_AVAILABLE,xc_OnlyInLibxc
+ use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
+ use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,xc_string,&
+&                        XC_NOT_AVAILABLE,XC_FACTOR
  implicit none
- type(levels) ::en
- type(bz_samp)::Xk
- integer      ::KIND,FUNCTIONAL,ORDER
+ type(levels), intent(in)  ::en
+ type(bz_samp), intent(in) ::Xk
+ integer, intent(inout)    :: KIND,FUNCTIONAL
+ integer, intent(in)       :: ORDER
  !
  ! COM
  !
-#if defined _LIBXC
  if (KIND>0.and.FUNCTIONAL>0) then
-#else 
- if(xc_OnlyInLibxc(FUNCTIONAL)) then
-   call warning('XC functional not available. Default used instead')
-   call warning('By linking Yambo to libxc, this functional is available')
-   call msg('rsn','[xc] Requested functional:  ', xc_string(KIND,FUNCTIONAL))
-   KIND=XC_EXCHANGE_CORRELATION
-   FUNCTIONAL=XC_LDA_C_PW
-   call msg('rsn','[xc] Functional used: ', xc_string(KIND,FUNCTIONAL))
- elseif (KIND>0.and.FUNCTIONAL>0) then
-#endif
-   call msg('rsn','[xc] Functional ',xc_string(KIND,FUNCTIONAL))
+   call msg('rsn','[xc] Functional ',xc_string(FUNCTIONAL))
  else if (FUNCTIONAL==XC_NOT_AVAILABLE) then
    KIND=XC_EXCHANGE_CORRELATION
-   FUNCTIONAL=XC_LDA_C_PW
-   call msg('rsn','[xc] Functional unknown. Used ',xc_string(KIND,FUNCTIONAL))
+   FUNCTIONAL=XC_LDA_X*XC_FACTOR+XC_LDA_C_PW
+   call msg('rsn','[xc] Functional unknown. Used ',xc_string(FUNCTIONAL))
  endif
- !
-#if defined _LIBXC
  !
  ! Maybe also (spin)density should be calculated in the wrapper, since it does 
  ! not use anything of libxc.   
  !
  call msg('rsn','[xc] LIBXC used to calculate xc functional ')
  !
- call XC_libxc_driver(&
- !
-#else
- call   XC_lda_driver(&
-#endif
-&                     en,Xk,KIND,FUNCTIONAL,ORDER)
+ call XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
 end subroutine XC_potential_driver
 

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -29,6 +29,7 @@ subroutine IO_Setup(en,k)
  use electrons,      ONLY:levels
  use par_proc_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,pp_redux_wait,myid,&
 &                         local_master_cpu,master_cpu
+ use WF_distribute,  ONLY:Distributed_Memory
  implicit none
  !
  type(levels)  :: en
@@ -48,6 +49,7 @@ subroutine IO_Setup(en,k)
  local_master_cpu(myid+1)=master_cpu
  !
  !
+ if(Distributed_Memory) call msg('rn','** Distributed Memory Run **')
  ! 
  call msg('r','CORE databases in ',trim(core_io_path))
  call msg('r','Additional I/O in ',trim(more_io_path))

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -174,7 +174,9 @@ integer function ioBS(iq,X,ID)
    call io_bulk(ID,R3=BS_mat_disk)
    !
    if (read_is_on(ID)) then
-     if (.not.load_DB_once_for_all) call mat_r2c(BS_mat_disk,BS_cpl_mat)
+     if (.not.load_DB_once_for_all) call mat_r2c(BS_mat_disk,&
+&     BS_cpl_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik12(1)),&
+&            BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik12(2))))
      if (load_DB_once_for_all)      call mat_r2c(BS_mat_disk,&
 &     BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik12(1)),&
 &            BS_K_dim+BS_k_and_row_restart(2)+1:BS_K_dim+BS_k_and_row_restart(2)+BS_blk_dim(ik12(2))))

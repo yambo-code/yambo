@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -34,7 +34,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
- use electrons,      ONLY:n_spin,n_bands
+ use electrons,      ONLY:n_spin,n_bands,n_spinor
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
  implicit none
@@ -71,13 +71,21 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  dos_E_range=(/1.,-1./)/HA2EV
  dos_E_steps=500
  !
+ ! BANDS
+ !
+ BANDS_steps=0
+ BANDS_range=0
+ l_bands=.false.
+ !
  !
  ! PLOT
  !
  p_dir      ='1'
  mag_dir    ='X'
  p_format   ='g'
- wf_ng      =ng_vec
+ wf_ng=ng_vec
+ ! Notice that ng_vec can be larger than maxval(wf_igk) 
+ ! and this can cause some problem in ypp. TO BE CHECKED
  l_exc_wf   =.false.
  l_density  =.false.
  V_value    ='RE'
@@ -101,6 +109,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  WF_multiplier=1.
  !
  !
+ ! Wannier interface
+ !
+ l_wannier=.FALSE.
+ seed_name=" "
+ what_to_write=" "
  !
  ! BZ grids
  !
@@ -116,6 +129,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  BZ_RIM_path="."
  gamma_radius=0.
+ !
+ ! BXSF interpolation
+ !
+ w90_fname="./w90.bxsf"
+ wannier_bands=(/1,n_bands/)
+ ord_dgrid_ipol = 0
  !
  !
  ! DATABASES 
@@ -177,6 +196,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_density        =trim(rstr_piece(i1+1))=='d'
        l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
+       l_bands          =trim(rstr_piece(i1+1))=='b'
        !
        !
        !
@@ -194,9 +214,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_dos)            call initactivate(1,'dos')
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
-#if defined _YPP_TEST_2	     
-       if (l_bands)          call initactivate(1,'bands')
-#endif	       
+       if (l_bands)          call initactivate(1,'bnds')
      endif
    enddo
  enddo
@@ -209,6 +227,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_shifted_grid = runlevel_is_on('Shifted_Grid')
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
+ l_bands     =runlevel_is_on('bnds')
+ l_fix_syms  =runlevel_is_on('fixsyms')
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
@@ -219,6 +239,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
+ l_wannier  =runlevel_is_on('wannier')
+ !
  if (.not.l_exc_wf) l_free_hole=.false.
  !
  !
@@ -235,8 +257,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    endif
  endif
  !
+ if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range")
  !	   
  l_bzrim     =runlevel_is_on('bzrim')
+ !
+ l_bxsf      =runlevel_is_on('bxsf')
+ !
+ if (l_bxsf) call initactivate(1,"W90_fname WannBnds DgridOrd")
  !
  l_qpdb = runlevel_is_on('qpdb')
  !
@@ -266,7 +293,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
    if (l_spin) call initactivate(1,"Degen_Step")
  endif
- !
  !
  !
  if (infile_editing) then

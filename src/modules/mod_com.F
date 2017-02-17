@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -189,11 +189,24 @@ module com
      if (len_trim(of_name)==0) return
      !
      if (present(mode)) then
+       !  
+       local_file_name=of_name
+       !
+       ! Flush output
+       !
+       if (index(mode,'f')/=0) then
+         file_index=-1
+         do i2=1,max_open_ofs
+            if (trim(opened_of(i2))==local_file_name) file_index=i2
+         enddo
+         if(file_index==-1) return
+         call flush(abs(of_unit(file_index)))
+       endif
+       !
        if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
        !
        ! Here I open the unit using file_name to define the name
        !
-       local_file_name=of_name
        if (index(mode,'a')==0.and.index(mode,'O')==0) then
          local_file_name=get_name(desc=of_name,type=3,CORE_IO=.false.,&
 &                                 MORE_IO=.false.,COM_IO=.true.,NETCDF=.false.)

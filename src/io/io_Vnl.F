@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,8 +28,10 @@ integer function io_Vnl(X,Xen,ID)
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
-&                        read_is_on,write_is_on,io_header
+&                        read_is_on,write_is_on,io_header,io_fragmented,io_extension
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
+ use fragments,     ONLY:io_fragment
+ use com,           ONLY:warning
  !
  implicit none
  type(X_t)   ::X
@@ -74,7 +76,10 @@ integer function io_Vnl(X,Xen,ID)
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    io_Vnl=io_status(ID)
-   if (io_Vnl/=0) goto 1
+   if (io_Vnl/=0) then
+     call warning(' The commutator DB cannot be used. Try to lower ElecTemp in the input.')
+     goto 1
+   endif
  endif
  !
  if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
@@ -94,6 +99,11 @@ integer function io_Vnl(X,Xen,ID)
    endif
    !
    do i1=1,nXkibz
+     !
+     ! Fragmentation
+     !
+     io_extension(ID)='Vnl'
+     if (io_fragmented(ID)) call io_fragment(ID,i_fragment=i1)
      !
      do ixyz=1,3
        !

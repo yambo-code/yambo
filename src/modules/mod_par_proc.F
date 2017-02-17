@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -54,6 +54,10 @@ module par_proc_m
 &                   r1share,r2share,r3share,c0share,c1share,c2share,&
 &                   c3share,c4share,pwait
  end interface pp_redux_wait
+ !
+ interface pp_bcast
+   module procedure c1bcast,c2bcast
+ end interface pp_bcast
  !
  contains
    !
@@ -371,7 +375,7 @@ module par_proc_m
      !
      call mpi_barrier(mpi_comm_world,ierr)
      allocate(larray(size(array)))
-     larray=0.
+     larray=(0.,0.)
      call mpi_allreduce(array(1),larray,size(array),&
 &         local_type,mpi_sum,mpi_comm_world,ierr)
      array=larray
@@ -452,6 +456,34 @@ module par_proc_m
      array=reshape(larray,dimensions)
      deallocate(larray)
      call mpi_barrier(mpi_comm_world,ierr)
+#endif
+   end subroutine
+   !
+   subroutine c1bcast(array,node)
+     complex(SP):: array(:)
+     integer, intent(in) :: node
+#if defined _MPI
+     integer :: ierr
+     if (ncpu==1) return
+     !
+     local_type=MPI_COMPLEX
+     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_bcast(array(1),size(array),local_type, node, mpi_comm_world, ierr)
+#endif
+   end subroutine
+   !
+   subroutine c2bcast(array,node)
+     complex(SP):: array(:,:)
+     integer, intent(in) :: node
+#if defined _MPI
+     integer :: ierr
+     if (ncpu==1) return
+     !
+     local_type=MPI_COMPLEX
+     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_bcast(array(1,1),size(array),local_type, node, mpi_comm_world, ierr)
 #endif
    end subroutine
    !

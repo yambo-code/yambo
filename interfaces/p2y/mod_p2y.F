@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -85,10 +85,15 @@ contains
    index_filename = 'data-file.xml'
    write(lch,'(a,i3,a)') '== PWscf v.3.2 generated data =='
 
-#elif defined _P2Y_V40
+#elif defined _P2Y_V40 
 
    index_filename = 'data-file.xml'
-   write(lch,'(a,i3,a)') '== PWscf v.4.0 generated data =='
+   write(lch,'(a,i3,a)') '== PWscf v.4.x generated data =='
+
+#elif defined _P2Y_V50 
+
+   index_filename = 'data-file.xml'
+   write(lch,'(a,i3,a)') '== PWscf v.5.0 generated data =='
 
 #endif
 
@@ -122,7 +127,7 @@ contains
    call qexml_init(pw_unit,"./", rhounit_,.true.) ! sets unit numbers
    call qexml_openfile( index_filename, "read", .false., ierr)
     
-#elif defined _P2Y_V40
+#elif defined _P2Y_V40 || defined _P2Y_V50
 
    rhounit_ = 12
    call qexml_init(pw_unit) 
@@ -146,7 +151,7 @@ contains
 
    call pw_closeindex(pw_unit) ! close index.xml file
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_closefile("read",ierr) ! close index.xml file
 
@@ -162,12 +167,13 @@ contains
  subroutine get_dimensions(en,k)
    !
    use electrons,             ONLY : default_nel, n_spin, n_sp_pol, &
-&                                    n_spinor
+&                                    n_spinor, spin_orbit
    use R_lattice,             ONLY : ng_vec
    use D_lattice,             ONLY : input_GS_Tel, n_atomic_species
    use wave_func,             ONLY : wf_ncx 
    use com,                   ONLY : msg, error
    use timing,                ONLY : live_timing_is_on
+   use units,                 ONLY : HA2eV
    type(levels),     intent(out)  :: en     ! Energies
    type(bz_samp),    intent(out)  :: k      ! K/Q points
    !
@@ -188,7 +194,7 @@ contains
    call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
 
-#elif defined _P2Y_V40
+#elif defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
@@ -203,11 +209,11 @@ contains
      call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
    endif
 
-#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
-   call qexml_read_spin(lspinorb=lspinorb_, ierr=ierr)
+   call qexml_read_spin(lspinorb=spin_orbit, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_spin','IOTK error',ABS(ierr))
    call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
@@ -244,6 +250,22 @@ contains
    !
    input_GS_Tel = 0.d0
    !
+#if defined _P2Y_V40 || defined _P2Y_V50
+   !
+   call qexml_read_occ(lgauss=lgauss_,ngauss=ngauss_,degauss=degauss_,&
+&                               degauss_units=degauss_units_, ierr=ierr)
+   if (ierr.ne.0) call errore('qexml_read_occ','IOTK error',ABS(ierr))  
+   !
+   if (lgauss_) then
+     if(trim(degauss_units_)=='Hartree') input_GS_Tel=degauss_
+     if(trim(degauss_units_)=='Rydberg') input_GS_Tel=degauss_/2._SP
+     if(trim(degauss_units_)=='eV')      input_GS_Tel=degauss_/HA2eV
+     ! If I used the cold smearing method in pwscf the temperature is reduced
+     if(ngauss_==-1) input_GS_Tel=input_GS_Tel/3._SP
+   endif
+   !
+#endif
+   !
    return
  end subroutine get_dimensions
  !
@@ -258,7 +280,8 @@ contains
    ! Work Space
    !
    real(DP)                       :: tau_units
-   integer                        :: i1,i2
+   real                           :: z
+   integer                        :: i1,i2,u
 
    allocate( ityp_(nat_) )
    allocate( tau_(3,nat_) )  
@@ -285,7 +308,7 @@ contains
 
    deallocate(atom_type_,species_type_)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    tau_units = 1.0_DP
    allocate( atm_(n_atomic_species))
@@ -294,7 +317,7 @@ contains
    call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
    ! Check USPP/NC pseudopotential
    do i1 =1,n_atomic_species
-     call read_pseudo_header(psfile(i1),nmesh(i1),nbeta(i1))
+     call read_pseudo_header(u,z,psfile(i1),nmesh(i1),nbeta(i1))
    enddo
 
 #endif
@@ -336,7 +359,7 @@ contains
 
    call pw_cell(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_cell','IOTK error',ABS(ierr))
@@ -353,12 +376,6 @@ contains
    alat(2) = maxval(abs(a(2,:)))*alat_mult_factor
    alat(3) = maxval(abs(a(3,:)))*alat_mult_factor
    call crystal_lattice()
-   if (trim(lattice)=='Unknown'.and.alat_mult_factor==1.) then
-     alat(1) = maxval(abs(a(1,:)))*2.
-     alat(2) = maxval(abs(a(2,:)))*2.
-     alat(3) = maxval(abs(a(3,:)))*2.
-     call crystal_lattice()
-   endif
    cp = cross_product(a(2,:),a(3,:))
    do i1=1,3
      DL_vol= DL_vol+a(1,i1)*cp(i1)
@@ -387,9 +404,9 @@ contains
 
    call pw_symmetry(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
-   call qexml_read_symmetry(invsym=invsym_, trasl=trasl_(:,1:nsym_),s=isym_(:,:,1:nsym_), ierr=ierr)
+   call qexml_read_symmetry(invsym=invsym_, trasl=trasl_(:,1:nsym_),s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
 
 #endif
@@ -404,8 +421,7 @@ contains
    do i1 = 1,nsym_
      isym_(:,:,i1) = transpose(isym_(:,:,i1))
    enddo
-   call symmetries_check_and_load(isym_(:,:,1:nsym_),nsym_)
-
+   call symmetries_check_and_load(isym_(:,:,1:nsym_),nsym_,t_rev=t_rev_)
    !
  end subroutine get_symmetries
  !
@@ -426,7 +442,7 @@ contains
 
    call pw_kpoints(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_bz(xk=xk_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
@@ -485,7 +501,7 @@ contains
    allocate(igv_(3,ng_vec))    
    call pw_gvectors(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
    call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
@@ -576,7 +592,7 @@ contains
 !
 !  wf_ncx = maxval(wf_nc_k)  
 
-#elif defined _P2Y_V32 || defined _P2Y_V40
+#elif defined _P2Y_V32 || defined _P2Y_V40 || defined _P2Y_V50
 
    allocate( pw_igk_(npwx_, k%nibz))
    allocate( index_(npwx_) )     
@@ -661,7 +677,7 @@ contains
      deallocate(eig_s_)
    end select
 
-#elif defined _P2Y_V32  || defined _P2Y_V40
+#elif defined _P2Y_V32  || defined _P2Y_V40 || defined _P2Y_V50
 
    allocate(eigb_(en%nb))
    select case(n_sp_pol)
@@ -691,90 +707,14 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_xc
+   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND
+   use mod_xc2y, ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
-
-#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
    call qexml_read_xc(dft=pw_dft, ierr=ierr)
-   call scan_xc(pw_dft)
+   GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
+   GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
 #endif
-
-   return
  end subroutine get_xc
-
- subroutine scan_xc(pw_dft)
-   !
-   ! Default: GS_xc_KIND = -1 , GS_xc_FUNCTIONAL = -1
-   !
-   use xc_functionals
-   use com,             ONLY:warning
-   implicit none
-   character(256), intent(in)    :: pw_dft
-   integer                       :: ixc
-   !
-   ! Correlation: "noc"    none                           icorr=0
-   !              "pz"     Perdew-Zunger                  icorr=1 (default)
-   !              "vwn"    Vosko-Wilk-Nusair              icorr=2
-   !              "lyp"    Lee-Yang-Parr                  icorr=3
-   !              "pw"     Perdew-Wang                    icorr=4
-   !              "wig"    Wigner                         icorr=5
-   !              "hl"     Hedin-Lunqvist                 icorr=6
-   !              "obz"    Ortiz-Ballone form for PZ      icorr=7
-   !              "obw"    Ortiz-Ballone form for PW      icorr=8
-   !              "gl"     Gunnarson-Lunqvist             icorr=9
-   !
-   !
-   if (index(pw_dft,'PZ')/=0)  GS_xc_FUNCTIONAL = XC_LDA_C_PZ
-   !if (index(pw_dft,'VWN')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_VWN
-   !if (index(pw_dft,'LYP')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_LYP
-   if (index(pw_dft,'PW')/=0)  GS_xc_FUNCTIONAL = XC_LDA_C_PW
-   if (index(pw_dft,'WIG')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_WIGNER
-   if (index(pw_dft,'HL')/=0)  GS_xc_FUNCTIONAL = XC_LDA_C_HL
-   !if (index(pw_dft,'OBZ')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_OB_PZ
-   !if (index(pw_dft,'OBW')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_OB_PW
-   !if (index(pw_dft,'GL')/=0)  GS_xc_FUNCTIONAL = XC_LDA_C_GL
-   !
-   if (GS_xc_FUNCTIONAL>0) then
-     GS_xc_KIND=XC_CORRELATION
-   else
-     call warning ('Unknown XC functional: swicthing to PZ. PW XC string is: '//trim(pw_dft))
-   endif
-   !
-   ! Exchange:    "nox"    none                           iexch=0
-   !              "sla"    Slater (alpha=2/3)             iexch=1 (default)
-   !              "sl1"    Slater (alpha=1.0)             iexch=2
-   !              "rxc"    Relativistic Slater            iexch=3
-   !              "oep"    Optimized Effective Potential  iexch=4
-   !              "hf"     Hartree-Fock                   iexch=5
-   !              "pb0x"   PBE0                           iexch=6
-   !
-   if (index(pw_dft,'SLA')/=0) GS_xc_KIND=GS_xc_KIND+XC_EXCHANGE
-   !if (index(pw_dft,'SL1')/=0) GS_xc_FUNCTIONAL = 
-   !if (index(pw_dft,'PW')/=0)  GS_xc_FUNCTIONAL = 
-   !if (index(pw_dft,'RXC')/=0) GS_xc_FUNCTIONAL = 
-   !if (index(pw_dft,'OEP')/=0)  GS_xc_FUNCTIONAL = 
-   !if (index(pw_dft,'HF')/=0) GS_xc_FUNCTIONAL = 
-   !if (index(pw_dft,'pb0x')/=0) GS_xc_FUNCTIONAL = 
-   !
-   if (GS_xc_KIND==XC_EXCHANGE) GS_xc_FUNCTIONAL=XC_LDA_X
-   !
-   ! Default
-   !
-   if (GS_xc_FUNCTIONAL<0) then
-     GS_xc_FUNCTIONAL = XC_LDA_C_PZ
-     GS_xc_KIND = XC_EXCHANGE_CORRELATION
-   else
-     !
-     ! No support for GGA yet
-     !
-     if(index(pw_dft,'NOGX')==0.or.index(pw_dft,'NOGC')==0) then
-       call warning ('GGA not supported: switching to PZ. PW XC string is: '//trim(pw_dft))
-       GS_xc_FUNCTIONAL = XC_LDA_C_PZ
-       GS_xc_KIND = XC_EXCHANGE_CORRELATION
-     endif
-   endif
-   !
-   return
-   !
- end subroutine scan_xc
  !
 end module p2y

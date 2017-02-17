@@ -1,7 +1,1 @@
-RAS_objects = 
-objs = O_driver.o O_eels.o \
-       Dipole_driver.o Dipole_dip_dot_field.o \
-       Dipole_kb_pp_comp.o Dipole_kb_sum.o Dipole_kb_Ylm.o \
-       Dipole_transverse.o  \
-       X_drude.o  X_pre_setup.o X_simple_GreenF.o X_eh_setup.o X_em1.o X_os.o X_s.o \
-       X_delta_part.o X_bare_RIM_GreenF.o $(RAS_objects) O_select_q_and_G.o 
+objs = O_driver.o O_eels.o Dipole_driver.o Dipole_dip_dot_field.o Dipole_kb_pp_comp.o Dipole_kb_sum.o Dipole_kb_Ylm.o Dipole_transverse.o X_drude.o X_pre_setup.o X_simple_GreenF.o X_eh_setup.o X_em1.o X_os.o X_s.o X_poles_sort.o X_delta_part.o X_bare_RIM_GreenF.o O_select_q_and_G.o

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -31,6 +31,7 @@ module mod_com2y
  logical :: l_Vnl
  logical :: verboseIO
  !
+ integer :: ng_vec_abinit
  integer, public  :: N_G_vectors
  !
  real(SP):: alat_mult_factor
@@ -65,24 +66,33 @@ module mod_com2y
      !
    end subroutine
    !
-   subroutine symmetries_check_and_load(int_sop,nsym_)
+   subroutine symmetries_check_and_load(int_sop,nsym_,t_rev)
      !
      use com,       ONLY:msg,error
      use electrons, ONLY:spin_orbit
-     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,&
+     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,&
 &                        atoms_spatial_invertion,i_space_inv,alat
      use R_lattice, ONLY:b,rl_sop
      !
      integer :: nsym_
      integer :: int_sop(3,3,nsym_) ! Symmetries in RLU
+     integer, optional :: t_rev(nsym_)
      !
-     integer :: is,is_inv,i2,i3
+     integer :: is,is_inv,is_spatial,is_trev,is_yambo,i2,i3
      logical :: l_identity,l_inversion
      logical :: double_symmetries
      real(SP):: sop_mat(3,3)
      !
-     i_time_rev=1
-     double_symmetries=.true.
+     mag_syms=.false.
+     if(present(t_rev)) then
+       i_time_rev=1
+       if(any(t_rev(:)==1)) mag_syms=.true.
+       double_symmetries=.not.mag_syms
+     else
+       i_time_rev=1
+       if(spin_orbit) i_time_rev=0
+       double_symmetries=.not.spin_orbit
+     endif
      !
      ! Space Invertion (possible only for v >= 3.0.4)
      !
@@ -128,9 +138,9 @@ module mod_com2y
      if (l_identity.and.l_inversion) then
        !
        ! If -I is a space inversion I keep both I and -I
-       ! and switch off TR
+       ! and switch off TR if there is no SO coupling
        !
-       if (i_space_inv==1) i_time_rev=0
+       if (i_space_inv==1.and..not.mag_syms) i_time_rev=0
        if (i_space_inv==0) call error('-I is not a proper symmetry operation')
      endif
      !
@@ -139,26 +149,26 @@ module mod_com2y
      !
      if (.not.l_identity.and.l_inversion) int_sop=-int_sop
      !
-     if (.not.l_inversion) call msg("l","[-I no]...")
-     if (l_inversion)      call msg("l","[-I yes]...")
-     !
-     ! TR ?
-     !
-     if (spin_orbit.or.force_noSYMM) i_time_rev=0
+     if (force_noSYMM) i_time_rev=0
      ! 
      ! when the TR is imposed to be removed from the user it must be replaced
      ! by the spatial inversion. Otherwise it cannot be removed.
      !
      if (i_time_rev==0) double_symmetries=.false.
-     if (i_time_rev==1.and.use_SI_instead_of_TR.and.i_space_inv==1) then 
+     if (i_time_rev==1.and.use_SI_instead_of_TR.and.i_space_inv==1.and..not.mag_syms) then 
        i_time_rev=0
        double_symmetries=.not.l_inversion
      endif
+     !
+     if (.not.l_inversion) call msg("l","[-I no]...")
+     if (l_inversion)      call msg("l","[-I yes]...")
      !
      if (i_time_rev==1) call msg("l","[TR yes]")
      if (i_time_rev==0) call msg("l","[TR no]")
      !
      ! Double the simmetries if TR or SI is added
+     !
+     if (mag_syms) call msg('s','[MAG-SYMS] T-rev with (A) Magnetic field or (B) SOC and magnetization')
      !
      nsym=nsym_
      if (double_symmetries) nsym=2.*nsym_
@@ -179,13 +189,26 @@ module mod_com2y
      !but inverse[transpose(a)]= b/2./pi
      !
      allocate(dl_sop(3,3,nsym))
+     is_spatial=0
+     is_trev=0
      do is=1,nsym_
+       if(mag_syms) then
+         ! PWscf: I need to reorder the symmetries
+         if(t_rev(is)==0) then
+           is_spatial=is_spatial+1
+           is_yambo=is_spatial
+         else
+           is_trev=is_trev+1
+           is_yambo=nsym_/2+is_trev
+         endif
+       else
+         is_yambo=is
+       endif
        sop_mat=matmul(transpose(a),int_sop(:,:,is))
-       dl_sop(:,:,is)=matmul(sop_mat,b)/2._SP/pi
-       if (double_symmetries) dl_sop(:,:,is+nsym_)=-dl_sop(:,:,is)
+       dl_sop(:,:,is_yambo)=matmul(sop_mat,b)/2._SP/pi
+       if (double_symmetries) dl_sop(:,:,is_yambo+nsym_)=-dl_sop(:,:,is_yambo)
      enddo
-
-
+     !
      allocate(rl_sop(3,3,nsym))
      do is=1,nsym
        forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
@@ -222,7 +245,7 @@ module mod_com2y
      call msg('s',' :: Max WF components     :',wf_ncx)
      call msg('s',' :: RL vectors        (WF):',wf_ng)
      call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
-     call msg('s',' :: XC potential          : ',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
+     call msg('s',' :: XC potential          : ',xc_string(GS_xc_FUNCTIONAL))
      call msg('s',' :: Atomic species        :',n_atomic_species)
      call msg('s',' :: Max atoms/species     :',n_atoms_species_max)
      !

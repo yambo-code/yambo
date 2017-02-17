@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+  Copyright (C) 2000-2013 A. Marini and the YAMBO team 
                http://www.yambo-code.org
   
   This file is distributed under the terms of the GNU 
@@ -46,6 +46,7 @@
   {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
   {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
   {"dbfrag", "S","DataBases fragmentation",0,0,0,0,1}, 
+  {"parmem", "M","Memory distribution (parallel runs)",0,0,0,0,1}, 
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0,0},    
   {"tddft",  "t","The TDDFTs [opt=(a)LDA/(b)SE/(l)RC]",0,0,1,0,0},     

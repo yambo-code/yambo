@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -25,8 +25,9 @@ logical function ver_is_gt_or_eq(ID,version,revision)
  use LOGO,    ONLY:code_version,code_revision
  implicit none
  !
- integer,optional :: revision,version(3)
- integer          :: ID,revision2comp,version2comp(3)
+ integer, intent(in), optional     :: revision,version(3)
+ integer, intent(in)  :: ID
+ integer              :: revision2comp,version2comp(3)
  !
  ver_is_gt_or_eq=.false.
  !

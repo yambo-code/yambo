@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
-&                   spins_to_load,space,title,impose_free_and_alloc)
+&                   spins_to_load,space,title,impose_free_and_alloc,force_WFo)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
@@ -36,6 +36,8 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_state,wf_ng,wf_norm_test,wf_ncx,ioWF,WF_free,&
 &                        wf_n_states,wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free
+ use wave_func,     ONLY:states_to_load,states_loaded
+ use WF_distribute, ONLY:Distributed_Memory
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP
@@ -44,7 +46,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  integer     ,optional :: spins_to_load(2)
  character(*),optional :: space,title
- logical     ,optional :: impose_free_and_alloc
+ logical     ,optional :: impose_free_and_alloc,force_WFo
  !
  ! Work Space
  !
@@ -88,6 +90,27 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                       s_2_load(1)>=wf_s(1),s_2_load(2)<=wf_s(2),&
 &                       wf_space==wf_space_here/))
  !
+ if(loaded_bounds_ok.and.allocated(states_to_load).and.allocated(states_loaded)) then
+   !
+   if(allocated(states_loaded)) then
+     !
+     ikibz=wf_k(1)
+     do while(ikibz<=wf_k(2).and.loaded_bounds_ok) 
+       is   =wf_s(1)
+       do while(is<=wf_s(2).and.loaded_bounds_ok) 
+          ib   =wf_b(1)
+          do while(ib<=wf_b(2).and.loaded_bounds_ok) 
+            loaded_bounds_ok=states_to_load(ib,ikibz,is).eqv.states_loaded(ib,ikibz,is)
+            ib=ib+1
+          enddo
+          is=is+1
+       enddo
+       ikibz=ikibz+1
+     enddo
+     !
+   endif
+   !
+ endif
  !
  ! [2]: Check FFT size
  !
@@ -114,7 +137,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Manage direct access I/O
  ! 
- use_direct_access=.FALSE.
+ use_direct_access=(kpts_to_load(1)==kpts_to_load(2))
  use_live_timing =.not.use_direct_access
  !
  ! In case of k by k I/O prevent multiple free/alloc
@@ -193,6 +216,9 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          !
          if (any((/ib<wf_b(1),ib>wf_b(2),is<wf_s(1),is>wf_s(2)/))) cycle 
          !
+         if(allocated(states_to_load).and.Distributed_Memory) then
+           if(.not.states_to_load(ib,ikibz,is)) cycle
+         endif
          !
          wf_DP=(0._DP,0._DP)
          wf_n_states=wf_n_states+1
@@ -236,9 +262,13 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  deallocate(wf_DP)
  !
- !
- ! Rotate in the SC basis
- !========================
+ if(allocated(states_to_load)) then
+   if(allocated(states_loaded)) deallocate(states_loaded)
+   allocate(states_loaded(wf_b(1):wf_b(2),wf_k(1):wf_k(2),wf_s(1):wf_s(2)))
+   states_loaded(wf_b(1):wf_b(2),wf_k(1):wf_k(2),wf_s(1):wf_s(2))= &
+&         states_to_load(wf_b(1):wf_b(2),wf_k(1):wf_k(2),wf_s(1):wf_s(2))
+   deallocate(states_to_load)
+ endif
  !
  !
  if (.not.wf_norm_test) then

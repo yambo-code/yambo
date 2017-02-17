@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2000-2012 A. Marini and the YAMBO team
+# Copyright (C) 2000-2013 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -22,9 +22,11 @@
 ################################################
 # Set FC FLAGS
 # ----------------------------------
+
 AC_DEFUN([ACX_FCSETUP],
 [
 AC_REQUIRE([AC_CANONICAL_HOST])
+AC_ARG_VAR(UFLAGS,[Unoptimized Fortran flags])
 #
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 #
@@ -57,7 +59,7 @@ i?86*linux*)
   *ifort*)
     CPU_FLAG=""
     case "${FCVERSION}" in
-      *11* | *12* )
+      *11* | *12* | *13* )
        CPU_FLAG="-xHost"
        ;;
       *10*)
@@ -192,7 +194,7 @@ ia64*linux* )
   *ifort*)
     CPU_FLAG=""
     case "${FCVERSION}" in
-      *11* | *12* )
+      *11* | *12* | *13* )
        CPU_FLAG="-xHost"
        ;;
       *10*)
@@ -253,11 +255,16 @@ fi
 #
 AC_MSG_CHECKING([for specific $CC flags])
 AC_MSG_RESULT([$CFLAGS])
-if ! test -z "${UFFLAGS}"; then 
- AC_MSG_CHECKING([for unoptimized flags])
- AC_MSG_RESULT([$UFFLAGS])
-fi
-FCUFLAGS=$UFFLAGS
+
+AC_MSG_CHECKING([for specific unoptimized flags])
+if test -z "${UFLAGS}"; then
+ FCUFLAGS="$UFFLAGS"
+ AC_MSG_RESULT([$FCUFLAGS])
+else
+ AC_MSG_RESULT([(User-defined) $UFLAGS])
+ FCUFLAGS="$UFLAGS"
+ UFFLAGS="$UFLAGS"
+fi 
 AC_SUBST(CFLAGS)
 AC_SUBST(FCFLAGS)
 AC_SUBST(FCUFLAGS)

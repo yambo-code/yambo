@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+  Copyright (C) 2000-2013 A. Marini and the YAMBO team 
                http://www.yambo-code.org
   
   This file is distributed under the terms of the GNU 
@@ -50,10 +50,10 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT || _DISTRIBUTED 
+#if defined _yambo  || _ELPH || _SC  || _RT || _DISTRIBUTED 
  #define _YAMBO_MAIN
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_BOLTZMANN || _YPP_TEST_2
+#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_TEST_2
  #define _YPP_MAIN
 #endif
 /* 
@@ -70,9 +70,6 @@ typedef struct
 #endif
 #if defined _c2y
  #include "c2y.h"
-#endif
-#if defined _f2y
- #include "f2y.h"
 #endif
 #if defined _p2y
  #include "p2y.h"

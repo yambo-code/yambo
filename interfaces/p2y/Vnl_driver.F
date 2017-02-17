@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2013 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -26,7 +26,7 @@ subroutine Vnl_driver(en,k)
  use pw_basis_module
  use pw_wfc_module
  use pw_pseudovelocity_module
- use electrons,             ONLY:levels, n_bands,  n_sp_pol
+ use electrons,             ONLY:levels,n_bands,n_spin,n_spinor,n_sp_pol
  use R_lattice,             ONLY:bz_samp
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
  use X_m,                   ONLY:X_t
@@ -43,7 +43,7 @@ subroutine Vnl_driver(en,k)
  type(levels),     intent(in)  :: en     ! Energies 
  type(bz_samp),    intent(in)  :: k      ! K/Q points
  !
- type(pw_pseudovelocity) :: pseudovelocity
+ type(pw_pseudovelocity) :: pseudovelocity(n_spinor)
  type(pw_struct), target :: struct
  type(pw_basis), target  :: basis_con  ! Needs to be target for wfc%basis later
  type(pw_atoms)          :: atoms
@@ -52,7 +52,7 @@ subroutine Vnl_driver(en,k)
  ! Work space
  !
  complex :: Vnl_cvk(3)
- integer :: ik, ib1, ib2, iv, ic, npwk,ngmax, vb(2), cb(2), i, ig,io_err,ID,i_spin
+ integer :: ik, ib1, ib2, iv, ic, npwk,ngmax, vb(2), cb(2), i, ig,io_err,ID,i_spin, i_spinor
  type(X_t)         :: X
  type(pp_indexes)  :: px
  integer, external :: io_Vnl
@@ -98,7 +98,7 @@ subroutine Vnl_driver(en,k)
  ! (2) Vnl array to be written to disk. Size depends on input or nelec
  !
  ! Rather than use the minimum size array needed:
- ! allocate(Vnl(3, cb(1):cb(2), vb(1):vb(2), 1:k%nibz, n_sp_pol)) 
+ ! allocate(Vnl(3, cb(1):cb(2), vb(1):vb(2), 1:k%nibz, n_spin)) 
  ! we use 1 as the lower band index in both cases for simplicity.
  ! Here vb(2) is always nbm
  !
@@ -130,61 +130,73 @@ subroutine Vnl_driver(en,k)
    !
    call fill_basis(basis_con,struct,ik,ngmax)
    !
+   ! Here the beta functions are moltiplied by spherical armonics
+   ! In the case nspinor = 2 I use "spin-angle" and
+   ! I've defined pseudovelocity(nspinor).
+   ! To include all the SO commutator I should modify
+   ! the call to pw_pseudovelocity_braket later and the call to read_wfc...
    call pw_pseudovelocity_init(pseudovelocity,basis_con,atoms)
    !
-   ! Read a single wavefunction (ik) from disk:
-   ! fill the target wf_disk_SP(ik)
-   !
-   call read_wfc_k(ik,wf_disk_SP,wf_ncx, n_bands)
-   !
-   do iv=vb(1),vb(2)  ! Valence
+   ! Read a single wavefunction (ik,isp) from disk:
+   ! fill the target wf_disk_SP
+   i_spinor=1
+   do i_spin=1,n_spin
+     if(n_spinor==2) i_spinor=i_spin
      !
-     ! Fill a single valence wavefunction array and basis.
-     ! Dimension is fixed by ngmax
+     call read_wfc_k_sp(ik,i_spin,wf_disk_SP,wf_ncx,n_bands)
      !
-     allocate(wfc_val) ! needed for pointer of a pointer, even for %npw
-     wfc_val%npw   =   basis_con%npw
-     wfc_val%basis => basis_con
-     wfc_val%val   => wf_disk_SP(1:wfc_val%npw,iv)
-     !
-     ! Check normalization
-     !
-     ! I_vk     = pw_wfc_braket(wfc_val,wfc_val) 
-     !
-     do ic=cb(1),cb(2)  ! Conduction 
+     do iv=vb(1),vb(2)  ! Valence
        !
-       allocate(wfc_con)
-       wfc_con%npw   =  basis_con%npw
-       wfc_con%basis => basis_con
-       wfc_con%val   => wf_disk_SP(1:wfc_con%npw,ic)
+       ! Fill a single valence wavefunction array and basis.
+       ! Dimension is fixed by ngmax
        !
-       !== Start consistency tests =====================!
+       allocate(wfc_val) ! needed for pointer of a pointer, even for %npw
+       wfc_val%npw   =   basis_con%npw
+       wfc_val%basis => basis_con
+       wfc_val%val   => wf_disk_SP(1:wfc_val%npw,iv)
        !
-       ! Check normalization and overlap 
+       ! Check normalization
        !
-       ! I_ck     = pw_wfc_braket(wfc_con,wfc_con) 
-       ! O_cvk    = pw_wfc_braket(wfc_val,wfc_con) 
+       ! I_vk     = pw_wfc_braket(wfc_val,wfc_val) 
        !
-       ! Calculate momentum/velocity moment <v|p|c>
-       !
-       ! Ev_m_Ec=en%E(iv,ik,1)-en%E(ic,ik,1)
-       ! P_cvk    = pw_wfc_p_braket(wfc_val,wfc_con) 
-       !
-       ! Calculate dipole moment i<v|r|c> = <v|p|c>/(Ev-Ec)
-       !
-       ! DIP_iR(:,ic,iv,ik,1) = P_cvk(:)/Ev_m_Ec
-       !== Stop consistency tests =====================!
-       !
-       ! Calculate pseudo dipole (velocity) moment <v|[Vnl,r]|c>
-       !
-       Vnl_cvk = pw_pseudovelocity_braket(pseudovelocity,wfc_val,wfc_con)
-       Vnl(:,ic,iv,ik,1) = Vnl_cvk(:)
-       !
-       if(associated(wfc_con%val)) nullify(wfc_con)
+       do ic=cb(1),cb(2)  ! Conduction 
+         !
+         allocate(wfc_con)
+         wfc_con%npw   =  basis_con%npw
+         wfc_con%basis => basis_con
+         wfc_con%val   => wf_disk_SP(1:wfc_con%npw,ic)
+         !
+         !== Start consistency tests =====================!
+         !
+         ! Check normalization and overlap 
+         !
+         ! I_ck     = pw_wfc_braket(wfc_con,wfc_con) 
+         ! O_cvk    = pw_wfc_braket(wfc_val,wfc_con) 
+         !
+         ! Calculate momentum/velocity moment <v|p|c>
+         !
+         ! Ev_m_Ec=en%E(iv,ik,i_spin)-en%E(ic,ik,i_spin)
+         ! P_cvk    = pw_wfc_p_braket(wfc_val,wfc_con) 
+         !
+         ! Calculate dipole moment i<v|r|c> = <v|p|c>/(Ev-Ec)
+         !
+         ! DIP_iR(:,ic,iv,ik,i_spin) = P_cvk(:)/Ev_m_Ec
+         !== Stop consistency tests =====================!
+         !
+         ! Calculate pseudo dipole (velocity) moment <v|[Vnl,r]|c>
+         !
+         Vnl_cvk = pw_pseudovelocity_braket(pseudovelocity(i_spinor),wfc_val,wfc_con)
+         if(n_spinor==1) Vnl(:,ic,iv,ik,i_spin) = Vnl_cvk
+         if(n_spinor==2) Vnl(:,ic,iv,ik,1) = Vnl(:,ic,iv,ik,1)+Vnl_cvk
+         !
+         if(associated(wfc_con%val)) nullify(wfc_con)
+       enddo
+       if(associated(wfc_val%val)) nullify(wfc_val)
      enddo
-     if(associated(wfc_val%val)) nullify(wfc_val)
    enddo
-   call pw_pseudovelocity_destroy(pseudovelocity)
+   do i_spinor=1,n_spinor
+     call pw_pseudovelocity_destroy(pseudovelocity(i_spinor))
+   enddo
    call live_timing(steps=1)
  end do
  !
@@ -203,7 +215,7 @@ subroutine Vnl_driver(en,k)
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  io_err=io_Vnl(X,en,ID)
  !
- call msg("ln","done")
+ call msg("l","done")
  !
  return
  !
@@ -292,7 +304,7 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  use pw_data, only : ecutwfc_
  implicit none
  type(pw_pseudo), intent(out) :: pseudo
- integer, intent(inout)          :: nbeta, nmesh
+ integer, intent(inout)       :: nbeta, nmesh
  character(256), intent(in)   :: psfile
  !
  ! Allocates pseudo% types and Inizializes pseudo%interpolation table
@@ -302,7 +314,7 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  ! Read data from UPF files, fill pseudo% types
  !
  call read_pseudo_data(psfile,nmesh,nbeta,pseudo%z,pseudo%mesh,&
-&                      pseudo%wmesh,pseudo%vloc,pseudo%lbeta,&
+&                      pseudo%wmesh,pseudo%vloc,pseudo%lbeta,pseudo%jbeta,&
 &                      pseudo%mesh_beta,pseudo%beta,pseudo%d)
  !
  ! Fill the pseudo%interpolation table
@@ -358,19 +370,20 @@ subroutine fill_basis(basis,struct,ik,ngmax)
  return
 end subroutine fill_basis
 !
-subroutine read_wfc_k(ikibz,wf_disk_SP,wf_ncx,n_bands)
+subroutine read_wfc_k_sp(ikibz,i_spin,wf_disk_SP,wf_ncx,n_bands)
  ! Due to the kind type conversion from wf_disk_DP to wfc_val,
  ! cannot use direct pointer assignment => for wfc_val%val
- ! hence create a SP target in read_wfc_k
+ ! hence create a SP target in read_wfc_k_sp
  use p2y,                 only : verboseIO
  use qexml_module 
  use pars,                only : SP,DP
  use wave_func,           only : wf_nc_k, wf_igk, wf_nb_io_groups,wf_nb_io
  use mod_wf2y,            only : wf_splitter
  use memory_m,            only : mem_est
+ use electrons,           only : n_spin
  implicit none
  integer     :: npwk, ierr, ib1,ib2, n_b, ib_grp
- integer, intent(in)          :: ikibz,wf_ncx,n_bands
+ integer, intent(in)          :: ikibz,wf_ncx,n_bands,i_spin
  complex(DP), allocatable     :: wf_disk_DP(:,:)
  complex(SP),intent(inout)      :: wf_disk_SP(wf_ncx,n_bands)
  !
@@ -379,6 +392,7 @@ subroutine read_wfc_k(ikibz,wf_disk_SP,wf_ncx,n_bands)
  call wf_splitter()
  !
  allocate(wf_disk_DP(wf_ncx, wf_nb_io))
+ wf_disk_DP=0._DP
  call mem_est("wf_disk_DP",(/size(wf_disk_DP)/),(/DP*2/))
  !
  npwk = wf_nc_k(ikibz)
@@ -387,7 +401,9 @@ subroutine read_wfc_k(ikibz,wf_disk_SP,wf_ncx,n_bands)
    !
    call set_band_block
    !
-   call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, &
+   if (n_spin==1) call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, &
+&                       wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+   if (n_spin==2) call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_spin, &
 &                       wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
    !
    wf_disk_SP(:,ib1:ib2) = wf_disk_DP(:,1:n_b)  ! Type conversion
@@ -418,5 +434,5 @@ subroutine set_band_block
  endif
  end subroutine set_band_block
  !
-end subroutine read_wfc_k
+end subroutine read_wfc_k_sp
 

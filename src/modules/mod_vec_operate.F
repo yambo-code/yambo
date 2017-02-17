@@ -1,5 +1,5 @@
 
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -44,15 +44,16 @@ module vec_operate
      !
    end function normalize_v
    !
-   function v_norm(v)
-     real(SP) :: v(3),v_norm
+   pure real(SP) function v_norm(v)
+     real(SP), intent(in) :: v(3)
      v_norm=sqrt(dot_product(v,v))
    end function v_norm
    !
-   function iku_v_norm(v)
+   pure real(SP) function iku_v_norm(v)
      use D_lattice,      ONLY:alat
-     real(SP) :: v(3),u(3),iku_v_norm
-     u(:)=v(:)*2.*pi/alat(:)
+     real(SP), intent(in) :: v(3)
+     real(SP) :: u(3)
+     u(:)=v(:)*2._SP*pi/alat(:)
      iku_v_norm=sqrt(dot_product(u,u))
    end function iku_v_norm
    !
@@ -64,9 +65,10 @@ module vec_operate
      cross_product(3) = a(1) * b(2) - a(2) * b(1)
    end function cross_product
    !
-   logical function v_is_zero(v,zero_)
-     real(SP)          :: v(3),local_zero(3)
-     real(SP),optional :: zero_(3)
+   pure logical function v_is_zero(v,zero_)
+     real(SP), intent(in) :: v(3)
+     real(SP), intent(in), optional :: zero_(3)
+     real(SP)          :: local_zero(3)
      !
      local_zero=zero_dfl
      if (present(zero_)) local_zero=zero_
@@ -76,9 +78,10 @@ module vec_operate
 &                    abs(v(3))<=local_zero(3)/))
    end function v_is_zero
    !
-   logical function rlu_v_is_zero(v,zero_)
-     real(SP)          :: v(3),u(3)
-     real(SP),optional :: zero_(3)
+   pure logical function rlu_v_is_zero(v,zero_)
+     real(SP), intent(in), optional :: zero_(3)
+     real(SP), intent(in)           :: v(3)
+     real(SP)          :: u(3)
      u=v-nint(v)
      if (.not.present(zero_)) rlu_v_is_zero=v_is_zero(u)
      if (     present(zero_)) rlu_v_is_zero=v_is_zero(u,zero_)
@@ -171,6 +174,19 @@ module vec_operate
      !
    end subroutine k2bz
    !
+   subroutine rlu_k2bz(v_in,v_out) 
+     !
+     real(SP)           :: v_in(3)
+     real(SP), optional :: v_out(3)
+     !
+     if (present(v_out)) then
+       v_out=v_in-nint(v_in)                    
+     else
+       v_in =v_in-nint(v_in)                    
+     endif
+     !
+   end subroutine rlu_k2bz
+   !
    real(SP) function rlu_v_norm(k) 
      !
      ! Input k is rlu 
@@ -262,7 +278,38 @@ module vec_operate
      deallocate(l_indx,l_arrout)
    end subroutine sort
    !
-   subroutine degeneration_finder(E,n,first_deg_el,deg_elmnts,deg_grps,deg_accuracy)
+   subroutine i_sort(arrin,arrout,indx)                             
+     integer           ::  arrin(:)
+     integer,  optional::  indx(:)
+     real(SP), optional::  arrout(:)
+     !
+     integer :: n
+     !
+     real(SP), allocatable :: l_arrin(:)
+     real(SP), allocatable :: l_arrout(:)
+     !
+     n=size(arrin)
+     !
+     allocate(l_arrin(n),l_arrout(n))
+     !
+     l_arrin=real(arrin)
+     if(present(arrout)) then
+       l_arrout=real(arrout)
+       if(     present(indx)) call sort(l_arrin,arrout=l_arrout,indx=indx)
+       if(.not.present(indx)) call sort(l_arrin,arrout=l_arrout)
+       arrout=int(l_arrout)
+     else
+       if(     present(indx)) call sort(l_arrin,indx=indx)
+       if(.not.present(indx)) call sort(l_arrin)
+       arrin=int(l_arrin)
+     endif
+     !
+     return
+     !
+   end subroutine i_sort
+   !
+   subroutine degeneration_finder(E,n,first_deg_el,deg_elmnts,deg_grps,&
+&                                 deg_accuracy,Include_single_values)
      !
      ! E = ( 0 1 1 2 3 3 3 ) , n = 7
      !
@@ -274,11 +321,13 @@ module vec_operate
      integer, intent(in)  :: n
      integer, intent(out) :: first_deg_el(n),deg_elmnts(n),deg_grps
      real(SP),intent(in)  :: E(n),deg_accuracy
+     logical, optional    :: Include_single_values
      !
      ! Work Space
      !
      integer :: igrp,iref,i1
-     logical :: l_flag
+     real(SP):: E_diff(2)
+     logical :: l_flag,l_singles
      !
      deg_grps=0
      first_deg_el(2:n)=0
@@ -286,12 +335,37 @@ module vec_operate
      first_deg_el(1)=0
      deg_elmnts(1)=0
      !
+     l_singles=.FALSE.
+     if (present(Include_single_values)) l_singles=Include_single_values
+     !
      iref=1
+     !
      do while (iref < n ) 
+       !
+       if (l_singles) then
+         !
+         E_diff=2.*deg_accuracy
+         !
+         if (iref>1) E_diff(1)=abs(E(iref)-E(iref-1))
+         E_diff(2)=abs(E(iref)-E(iref+1))
+         !
+         if (all(E_diff>deg_accuracy)) then
+           deg_grps=deg_grps+1
+           first_deg_el(deg_grps)=iref
+           deg_elmnts(deg_grps)=1
+         endif
+         !
+         if (iref==n-1.and.E_diff(2)>deg_accuracy) then
+           deg_grps=deg_grps+1
+           first_deg_el(deg_grps)=iref+1
+           deg_elmnts(deg_grps)=1
+         endif
+       endif
        !
        l_flag=.true.
        !
        do i1=iref+1,n
+         !
          if (abs(E(iref)-E(i1)).le.deg_accuracy) then
            if (l_flag) then
              deg_grps=deg_grps+1

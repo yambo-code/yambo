@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -45,6 +45,7 @@ module QP_m
  logical           :: QP_W_partially_done
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
+ logical           :: PPa_terminator
  logical           :: On_Mass_Shell_approx
  logical           :: use_GreenF_to_eval_QP
  logical           :: use_GreenF_Zoom
@@ -58,6 +59,7 @@ module QP_m
  real(SP)          :: QP_G_er(2)
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
+ real(SP)          :: GW_en_comp
  real(SP)   ,allocatable:: QP_G_amplitude_integral(:)
  real(SP)   ,allocatable:: QP_G_zoom_er(:,:)
  complex(SP),allocatable:: QP_dSc(:,:)

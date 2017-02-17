@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2000-2012 A. Marini and the YAMBO team
+# Copyright (C) 2000-2013 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -50,11 +50,11 @@ if test "$compile_p2y" = "yes" ; then PW_str="X"; fi
 ETSF_str=" "
 if test "$compile_e2y" = "yes" ; then ETSF_str="X"; fi
 
-BLAS_str=" "
-if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi
-
 LAPACK_str=" "
 if test "$compile_lapack" = "yes" ; then LAPACK_str="X"; fi
+
+BLAS_str=" "
+if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi
 
 LOCAL_str=" "
 if test "$compile_local" = "yes" ; then LOCAL_str="X"; fi
@@ -62,7 +62,10 @@ if test "$compile_local" = "yes" ; then LOCAL_str="X"; fi
 SLK_str=" "
 if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
 
+if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
+
 AC_SUBST(srcdir_path)
+AC_SUBST(exec_prefix)
 AC_SUBST(DP_str)
 AC_SUBST(Red_str)
 AC_SUBST(MPI_str)

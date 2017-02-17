@@ -1,5 +1,5 @@
 
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -152,7 +152,12 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_bzrim) call k_random(Xk,Xen)
  !
+ if (l_bxsf)  call read_bxsf(Xk,Xen)
+ !
  if (l_qpdb)  call qpdb_setup(en,k)
+ !
+ if (l_wannier) call WANNIER_driver(k,en)
+ !   =========
  !
  !
  if (l_excitons) call excitons_driver(k,Xk,en,Xen,q)
@@ -160,7 +165,6 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_electrons)                       call electrons_driver(Xk,Xen)
  !   ===========
- !
  !
  !
  ! END

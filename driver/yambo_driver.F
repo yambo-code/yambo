@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -136,10 +136,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !======================
  !
  if (l_HF_and_locXC.and..not.any((/l_sc_run,l_collisions_IO,l_real_time/))) call XCo_driver(en,k,Xk,q)
- !
- ! RAS & REELS
- !=============
- !
  !
  ! OPTICS
  !========

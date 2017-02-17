@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2000-2012 A. Marini and the YAMBO team
+# Copyright (C) 2000-2013 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.5 r.1015 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.6 r.1735 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
-SSUBLEVEL="5"
-SREVISION="1015"
+SSUBLEVEL="6"
+SREVISION="1735"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -130,10 +130,10 @@ AC_SUBST(iotk_dir)
 # check for p2y versions
 #
 AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y=<mode>],
- [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0>]))
+ [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>]))
 
-PW_VER="4.0"
-PW_CPP="_P2Y_V40"
+PW_VER="5.0"
+PW_CPP="_P2Y_V50"
 if test "$compile_p2y" = "yes"; then
  if test "$with_p2y" = "export"; then
   PW_VER="export"
@@ -154,6 +154,10 @@ if test "$compile_p2y" = "yes"; then
  if test "$with_p2y" = "4.0"; then
   PW_VER="4.0"
   PW_CPP="_P2Y_V40"
+ fi
+ if test "$with_p2y" = "5.0"; then
+  PW_VER="5.0"
+  PW_CPP="_P2Y_V50"
  fi
 fi
 AC_SUBST(PW_VER)
@@ -267,6 +271,7 @@ if test "$with_blas" = "" || test "$with_lapack" = "" ; then
  compile_blas="yes"
  compile_lapack="yes"
 else
+ AC_LANG_PUSH(Fortran)
  ACX_BLAS([], 
   compile_blas="yes";
   AC_MSG_NOTICE([Could not find blas. Using the built-in library]))
@@ -276,6 +281,7 @@ else
    AC_MSG_NOTICE([Could not find lapack. Using the built-in library]))
  else
   compile_lapack="yes"
+ AC_LANG_PUSH(Fortran)
  fi
 fi
 if test x"$compile_blas" = "xyes"; then BLAS_LIBS="-lblas"; fi
@@ -389,7 +395,7 @@ if test -d "$with_etsf_io_include" && test -d "$with_etsf_io_lib" ; then
 fi
 # ============================================================================
 # LIBXC
-KH_PATH_LIBXC_F90
+ACX_LIBXC
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

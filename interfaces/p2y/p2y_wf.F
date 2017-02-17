@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2013 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -106,7 +106,7 @@
  !---------------------------------------------------------------------*
  !    PW 3.2 and later
  !---------------------------------------------------------------------*
-#elif defined _P2Y_V32 || _P2Y_V40
+#elif defined _P2Y_V32 || defined _P2Y_V40 || defined _P2Y_V50
 
  do ispin = 1, n_spin
 

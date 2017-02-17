@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -112,8 +112,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        if (MENU==1) call msg(msg_where,trim(ch))
      endif
    else
-     write (ch,'(a,i6.6,2a,3(a,i2.2),a,i3.3,a)')  '- S/N ',io_serial_number(ID),' ',&
-&          repeat('-',27),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
+     write (ch,'(a,i6.6,2a,3(a,i2.2),a,i4.4,a)')  '- S/N ',io_serial_number(ID),' ',&
+&          repeat('-',26),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
 &          '.',io_code_version(ID,3),' r.',io_code_revision(ID),' -'
      if (.not.present(MENU)) call msg(msg_where,trim(ch))
      if (present(MENU)) then

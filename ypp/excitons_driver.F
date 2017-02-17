@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 D. Varsano, A. Marini and the YAMBO team
+! Copyright (C) 2000-2013 D. Varsano, A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -363,8 +363,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
        !
-       if (is > nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1) 
-       TR_apply=is/=Xk%sstar(ikbz,2)
+       TR_apply= (is>nsym/(i_time_rev+1))
        !
        k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
        !

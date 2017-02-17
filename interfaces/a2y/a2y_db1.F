@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -26,8 +26,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
 &                                 n_spinor,spin_orbit 
  use R_lattice,             ONLY: bz_samp, ng_vec, g_vec,nkibz, b
- use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,&
-&                                 n_atomic_species,n_atoms_species,&
+ use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,i_space_inv,&
+&                                 n_atomic_species,n_atoms_species,i_time_rev,&
 &                                 n_atoms_species_max,atom_pos,Z_species,lattice
  use pseudo,                ONLY: pp_n_l_times_proj_max,pp_n_l_comp,&
 &                                 pp_n_l_max,pp_table,l_many_proj
@@ -35,9 +35,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
  use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL
- use mod_xc2y,              ONLY: XC_Abinit2Yambo,XC_Libxc2Yambo
+ use mod_xc2y,              ONLY: XC_yamboID, XC_yamboID2kind
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
-&                                 alat_mult_factor,artificial_spin_pol
+&                                 alat_mult_factor,artificial_spin_pol,ng_vec_abinit
+ use vec_operate,           ONLY: v_is_zero
+ use zeros,                 ONLY: G_iku_zero
+ !
  implicit none
  character(*)                   :: KSS_file_name
  type(levels),     intent(out)  :: en
@@ -46,7 +49,9 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !Work Space
  !
  real(SP)                       :: cp(3)
- integer                        :: i1, ik, i2, i3, inel,i_spin
+ integer                        :: i1,ik,i2,i3,inel,i_spin,i_spinor,ic,ig
+ complex(DP),allocatable        :: wf_disk_DP(:,:)
+ integer, allocatable           :: wf_igk_tmp(:,:)
  !
  !ABINIT
  !
@@ -54,6 +59,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  type(wffile_type)              :: wff
  integer                        :: psp_so
  integer                        :: fform,ishm
+ real(SP)                       :: g_inv(3)
+ real(SP), allocatable          :: g_vec_tmp(:,:)
  integer,  allocatable          :: rel_gvec(:,:)
  real(DP), allocatable          :: rstr(:)
  !
@@ -69,7 +76,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('l','abinit version ',ahdr%codvsn)
  read(11)
  read(11) 
- read(11) ahdr%nsym, n_bands, ng_vec, ishm, pp_n_l_times_proj_max
+ read(11) ahdr%nsym, n_bands, ng_vec_abinit, ishm, pp_n_l_times_proj_max
  !
  l_many_proj= (ishm==-1)
  !
@@ -91,11 +98,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! XC KIND/FUNCTIONAL
  !===================
  !
- if (ahdr%ixc.ge. 0) then
-   call XC_Abinit2Yambo(ahdr%ixc,GS_xc_FUNCTIONAL,GS_xc_KIND)
- else !negative ahdr%ixc means abinit used libxc
-   call XC_Libxc2Yambo(ahdr%ixc,GS_xc_FUNCTIONAL,GS_xc_KIND)
- end if
+ GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ahdr%ixc)
+ GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
  !
  n_spinor=1
  n_sp_pol=1
@@ -112,12 +116,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  alat(2) = maxval(abs(a(2,:)))*alat_mult_factor
  alat(3) = maxval(abs(a(3,:)))*alat_mult_factor
  call crystal_lattice()
- if (trim(lattice)=='Unknown'.and.alat_mult_factor==1.) then
-   alat(1) = maxval(abs(a(1,:)))*2.
-   alat(2) = maxval(abs(a(2,:)))*2.
-   alat(3) = maxval(abs(a(3,:)))*2.
-   call crystal_lattice()
- endif
  !
  cp=cross_product(a(2,:),a(3,:))
  do i1 = 1,3
@@ -184,8 +182,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ! ALLOCATION
  !
- allocate(wf_nc_k(k%nibz),g_vec(ng_vec,3),rstr(en%nb))
- allocate(en%E(en%nb,k%nibz,n_spin),rel_gvec(3,ng_vec))
+ allocate(wf_nc_k(k%nibz),g_vec(ng_vec_abinit,3),rstr(en%nb))
+ allocate(en%E(en%nb,k%nibz,n_sp_pol),rel_gvec(3,ng_vec_abinit))
  !
  call msg('s','Symmetries...')
  !============================
@@ -204,25 +202,54 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('s','RL vectors...')
  !============================
  !
- read(11) (rel_gvec(:,i1),i1=1,ng_vec)
+ read(11) (rel_gvec(:,i1),i1=1,ng_vec_abinit)
  read(11) 
  read(11) 
- do i1=1,ng_vec
+ do i1=1,ng_vec_abinit
    g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
  enddo
- wf_nc_k=ng_vec
- wf_ncx=maxval(wf_nc_k)
- wf_ng=wf_ncx
- allocate(wf_igk(wf_ncx,k%nibz))
- forall(i1=1:ng_vec) wf_igk(i1,:)=i1
  call msg('l','done')
+ !
+ ng_vec=ng_vec_abinit
+ !
+ if( i_time_rev==1 .or. i_space_inv==1) then
+   !
+   call msg('s','Closing shells...')
+   !============================
+   !
+   allocate(g_vec_tmp(2*ng_vec,3))
+   g_vec_tmp(1:ng_vec,:)=g_vec
+   deallocate(g_vec)
+   !
+   do i1=1,ng_vec
+     g_inv=-g_vec_tmp(i1,:)
+     do i2=1,ng_vec
+       if( v_is_zero(g_inv-g_vec_tmp(i2,:),zero_=G_iku_zero)) exit 
+     enddo
+     if (i2<=ng_vec) cycle
+     ng_vec=ng_vec+1
+     g_vec_tmp(ng_vec,:)=g_inv
+   enddo
+   !
+   allocate(g_vec(ng_vec,3))
+   g_vec=g_vec_tmp(1:ng_vec,:)
+   deallocate(g_vec_tmp)
+   !
+   call msg('l','done')
+   !
+ endif
  !
  call msg('s','Energies...')
  !==========================
  !
-  i_spin=1
+ i_spin=1
  ! 
-   !
+ allocate(wf_disk_DP(ng_vec_abinit,n_spinor))
+ allocate(wf_igk_tmp(ng_vec_abinit,k%nibz))
+ wf_igk_tmp=-1
+ WF_disk_DP=0._DP  
+ ! 
+ !
    do ik=1,k%nibz
      do i1=1,n_atomic_species
        do i2=1,pp_n_l_times_proj_max
@@ -233,13 +260,33 @@ subroutine a2y_db1(en,k,KSS_file_name)
      read(11) rstr
      en%E(:,ik,i_spin)=rstr(:)
      do i1=1,en%nb
-       read(11) 
+       if(i1==1.and.i_spin==1) read(11) (wf_disk_DP(:,i_spinor),i_spinor=1,n_spinor)
+       if(i1/=1.or. i_spin==2) read(11)
      enddo
+     if(i_spin>1) cycle
+     ic=0
+     do ig=1,ng_vec_abinit
+       if(all(wf_disk_DP(ig,:)==0)) cycle
+       ic=ic+1
+       wf_igk_tmp(ic,ik)=ig
+     enddo
+     wf_nc_k(ik)=ic
+   enddo
+   !
+   !
+   wf_ncx=maxval(wf_nc_k)
+   wf_ng=maxval(wf_igk_tmp)
+   !
+   allocate(wf_igk(wf_ncx,k%nibz))
+   do ik=1,k%nibz
+     wf_igk(1:wf_ncx,ik)=wf_igk_tmp(1:wf_ncx,ik)
    enddo
    ! 
  !
  ! CLEAN
  !
+ deallocate(wf_igk_tmp)
+ deallocate(wf_disk_DP)
  deallocate(rel_gvec,rstr)
  !
  close(11)

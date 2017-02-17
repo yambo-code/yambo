@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -50,7 +50,6 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  field_dir=field_dir*q0_def_norm/v_norm(field_dir)
  !
- !
  q_norm(1)=q0_def_norm
  if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
  !
@@ -68,16 +67,14 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
    do iv = X%ib(1), Xen%nbm
      !
      do ic = Xen%nbf+1, X%ib(2)
-     !
        !
         i_spin=1
        ! 
          !
          ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
-         DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
+         if ( is<= nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin)  )
          if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
-         !
          !
        !
      enddo

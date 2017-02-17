@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -24,7 +24,8 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  use pars,       ONLY:SP
  use X_m,        ONLY:use_X_RIM
  use BS,         ONLY:BSS_uses_RIM
- use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,BZ_RIM_nbands
+ use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,BZ_RIM_nbands,&
+                      BZ_RIM_ipol_weight
  use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
  !
@@ -93,7 +94,9 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
      !
      pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)+(0.,1.)*W_
      !
-     s_ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/real(BZ_RIM_nkpt(ikbz))
+     s_ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))*&
+&    BZ_RIM_ipol_weight(i1)/real(BZ_RIM_nkpt(ikbz))
+     ! 
      ffac=s_ffac/f0fac
      !
      do iw=fr(1),fr(2)
@@ -124,8 +127,8 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
        !
        pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)+(0.,1.)*W_
        !
-       ffac=Z_*Xen%f_RIM(iv,ikp_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
-&         real(BZ_RIM_nkpt(ikbz))/real(BZ_RIM_nkpt(ikpbz))/f0fac
+       ffac=Z_*Xen%f_RIM(iv,ikp_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))*&
+&         BZ_RIM_ipol_weight(i1)*BZ_RIM_ipol_weight(i2)/real(BZ_RIM_nkpt(ikbz))/real(BZ_RIM_nkpt(ikpbz))/f0fac
        !
        do iw=fr(1),fr(2)
          if (ordering=="t") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&

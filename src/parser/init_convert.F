@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -75,6 +75,12 @@ subroutine init_convert(rfac,ivar,v_descr,force_RL)
      rfac=1./FS2AUT
    else if (index(trim(v_descr),'T')/=0) then
      rfac=AU2Tesla
+   else if (index(trim(v_descr),'V/mm')/=0) then
+     rfac=AU2Vmm
+   else if (index(trim(v_descr),'deg')/=0) then
+     rfac=1./radian
+   else if (index(trim(v_descr),'kWLm2')/=0) then
+     rfac=1./W2Au
    endif
  endif
  !

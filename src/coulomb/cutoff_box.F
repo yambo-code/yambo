@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -78,12 +78,12 @@ subroutine cutoff_box(q,is_cut)
  !
  call par_indexes(px,(/q%nibz,wf_ng/))
  !
- call live_timing('Box',px%stps(myid+1))
+ call live_timing('Box',px%n_of_element_1D(myid+1))
  !
  do iq=1,q%nibz
    do ig=1,wf_ng
      !
-     if (.not.px%i2p(iq,ig)) cycle
+     if (.not.px%element_2D(iq,ig)) cycle
      !
      v1= ( q%pt(iq,:)+g_vec(ig,:) )*2.*pi/alat(:)
      !

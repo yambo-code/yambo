@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -30,7 +30,7 @@ module stderr
  !
  integer :: f_format_length
  integer :: g_format_length
- integer :: of_tabs(10)
+ integer :: of_tabs(30)
  !
  interface  
    !
@@ -61,7 +61,7 @@ module stderr
      endif
      !
      of_tabs(1)=2
-     do it=2,10
+     do it=2,30
        of_tabs(it)=of_tabs(it-1)+2+max(f_format_length,g_format_length)
      enddo
    end subroutine
@@ -186,9 +186,9 @@ module stderr
      !
    end function
    !
-   character(6) function intc(i)
+   character(8) function intc(i)
      !
-     character(6) temp
+     character(8) temp
      integer, intent(in) :: i
      !
      if(i.lt.10.and.i.ge.0) then
@@ -203,6 +203,10 @@ module stderr
        write(temp,'(i5)') i
      else if(i.lt.1000000.and.i.gt.-100000) then
        write(temp,'(i6)') i
+     else if(i.lt.10000000.and.i.gt.-1000000) then
+       write(temp,'(i7)') i
+     else if(i.lt.100000000.and.i.gt.-10000000) then
+       write(temp,'(i8)') i
      else
        write(temp,'(a6)') "******"
      endif

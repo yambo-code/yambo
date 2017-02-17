@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 D. Varsano, A. Marini and the YAMBO team
+! Copyright (C) 2000-2010 D. Varsano, A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -19,7 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
+subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
+&                                   A_weight,S_z,S_sq,verbose)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HARTREE
@@ -29,7 +30,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  use com,           ONLY:msg,of_open_close
  use YPP,           ONLY:deg_energy,lambda
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
- use D_lattice,     ONLY:n_atom_species,n_atoms,atom_pos,znucl
+ use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
  implicit none 
  !
@@ -41,6 +42,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  real(SP),optional  ::S_z(BS_H_dim)
  real(SP),optional  ::S_sq(BS_H_dim)
  integer, optional  ::BS_E_degs(BS_H_dim)
+ logical, optional  ::verbose
  !
  ! Work Space
  !
@@ -49,7 +51,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  real(SP), allocatable ::R(:),v2sort(:)
  real(SP)              ::Rmax,rv(10),K_weight(Xk%nibz)
  character(schlen) ::titles(6),ch_dummy(2)
- logical           ::write_widths,write_spin
+ logical           ::write_widths,write_spin,verbose_
  !
  ! Excitonc amplitude
  !
@@ -58,11 +60,14 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  integer      :: amp_n_trans
  real(SP)     :: amp_range(2),amp_damping,amp_I(amp_steps)
  real(SP),allocatable :: amp_trans(:,:)
- complex(SP)          :: amp_E(amp_steps)
+ complex(SP)          :: amp_E(amp_steps) 
+ !
+ verbose_=.TRUE.
+ if (present(verbose)) verbose_=verbose
  !
  if (present(BS_E_degs)) then  
    !
-   call msg('s',':: Sorting energies')
+   if (verbose_) call msg('s',':: Sorting energies')
    !==================================
    !
    allocate(v2sort(BS_H_dim),S_indx(BS_H_dim))
@@ -92,7 +97,8 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  endif
  !
  if (present(A_weight)) then  
-   call section('=','Reporting amplitude and weights')
+   !
+   if (verbose_) call section('=','Reporting amplitude and weights')
    !==================================================
    !
    allocate(S_indx(BS_H_dim),amp_trans(BS_H_dim,2))
@@ -168,7 +174,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
      !
      if (A_weight(neh)<0.05) cycle
      !
-     call msg('o weight','',(/real(iv),real(ic),real(ikibz),real(is),&
+     call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
 &                             A_weight(neh),amp_trans(amp_n_trans,1)/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
    enddo
@@ -180,15 +186,15 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
    amp_damping=(amp_range(2)-amp_range(1))/50. 
    amp_I=0.
    do j2=1,amp_steps
-     amp_E(j2)=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps)+&
+     amp_E(j2)=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps,SP)+&
 &              (0.,1.)*amp_damping
      do j1=1,amp_n_trans
-       amp_I(j2)=amp_I(j2)+amp_damping/pi*amp_trans(j1,2)/( (real(amp_E(j2))-amp_trans(j1,1))**2.+amp_damping**2.)
+       amp_I(j2)=amp_I(j2)+amp_damping/pi*amp_trans(j1,2)/( (real(amp_E(j2),SP)-amp_trans(j1,1))**2.+amp_damping**2.)
      enddo
    enddo
    amp_I=amp_I/maxval(amp_I)
    do j1=1,amp_steps
-     call msg('o amp','',(/real(amp_E(j1))*HARTREE,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
+     call msg('o amp','',(/real(amp_E(j1),SP)*HARTREE,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
    enddo
    !
    call of_open_close(ch_dummy(1))
@@ -204,11 +210,11 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  write_widths=any(abs(aimag(BS_E))>1.E-5)
  !
  if (write_spin) then
-   call section('=','Reporting sorted Energies, Strengths and Spins')
+   if (verbose_) call section('=','Reporting sorted Energies, Strengths and Spins')
  else if (write_widths) then
-   call section('=','Reporting sorted Energies, Strengths and widths')
+   if (verbose_) call section('=','Reporting sorted Energies, Strengths and widths')
  else
-   call section('=','Reporting sorted Energies and Strengths')
+   if (verbose_) call section('=','Reporting sorted Energies and Strengths')
  endif
  !==========================================================
  !
@@ -229,10 +235,10 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
      call msg('o sort',"#",trim(BSS_description(j1)),INDENT=0)
    enddo
    call msg('o sort',"#")
-   do is=1,n_atom_species
-     do ia=1,n_atoms(is)
+   do is=1,n_atomic_species
+     do ia=1,n_atoms_species(is)
        call msg('o sort',"# Atom "//trim(intc(ia))//&
-&                        " with Z "//trim(intc(znucl(is)))//" [cc]:",&
+&                        " with Z "//trim(intc(Z_species(is)))//" [cc]:",&
 &               atom_pos(:,ia,is),INDENT=0)
      enddo
    enddo
@@ -255,13 +261,13 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
    !
    R(:) = BS_R(:)*conjg(BS_R(:))
    if (write_widths)  R(:) = abs(BS_R(:))
-   R(:) = R(:)*real(spin_occ)/(2.*pi)**3.*&
+   R(:) = R(:)*real(spin_occ,SP)/(2.*pi)**3.*&
 &         d3k_factor*4.*pi/q0_def_norm**2*HARTREE
    Rmax = maxval(R)
    !
    if (trim(R_normalize)=='yes') R=R/Rmax
    !
-   if (i_mode==1) v2sort=real(BS_E)
+   if (i_mode==1) v2sort=real(BS_E,SP)
    if (i_mode==2) v2sort=R
    !
    call sort(arrin=v2sort,indx=S_indx)
@@ -271,7 +277,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
      if (i_mode == 1) j2=S_indx(BS_H_dim-j1+1)
      if (i_mode == 2) j2=S_indx(j1)
      !
-     rv(:3)=(/real(BS_E(j2))*HARTREE,R(j2),real(j2)/)
+     rv(:3)=(/real(BS_E(j2),SP)*HARTREE,R(j2),real(j2,SP)/)
      !
      if (write_widths) then
        rv(4)=abs(aimag(BS_E(j2)))*HARTREE*1000.

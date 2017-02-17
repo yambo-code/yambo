@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -77,9 +77,7 @@ module BS
  ! Solvers
  !
  character(lchlen):: BSS_description(100)
- character(lchlen):: BSS_file_name(3)
  character(schlen):: BSS_mode
- character(schlen):: BSS_of_title(7)
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
  real(SP) :: BSS_er(2)
@@ -89,15 +87,17 @@ module BS
  real(SP) :: Haydock_treshold
  real(SP) :: Haydock_v0_mod
  logical  :: BSS_write_eig_2_db
+ logical  :: Haydock_terminator
  logical  :: BSS_uses_RIM
-#if defined _PARTIAL_DIAGO
+ logical  :: BSS_Vnl_included
+ logical  :: BSS_uses_GreenF
+ logical  :: BSS_long_gauge
  logical  :: BSS_uses_partial_diago
-#endif
  complex(SP),allocatable :: BSS_rhoq0(:)
  !
  interface 
    !
-   subroutine Kernel_by_V(iq,iter,Vi,Vo)
+   subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
      use pars,          ONLY:SP
      integer               ::iq
      integer,     optional ::iter
@@ -129,7 +129,6 @@ module BS
      integer :: ik1,ik2
      BS_IO_index=(ik2**2+ik2)/2-ik1+2
    end function
-   !
    !
    function BS_blocks(I)
      use R_lattice, ONLY:nXkibz

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -175,7 +175,7 @@ integer function variables_BS(ID,local_description,DB,X)
        call io_elemental(ID,VAR="W_Cutoff",VAR_SZ=1,CH0="",MENU=0)
        i_local_desc=i_local_desc+1
        call io_elemental(ID,&
-&           VAR="    |Columbian Cutoff        :",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),&
+&           VAR="    |Coulomb Cutoff        :",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),&
 &           DESCRIPTION=local_description(i_local_desc))
        i_local_desc=i_local_desc+1
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -198,11 +198,11 @@ integer function variables_BS(ID,local_description,DB,X)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,I0=RIM_ng,&
 &     VAR=' RIM|RL components      [col]:',CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_local_desc))
+&     DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,I0=RIM_n_rand_pts,&
 &     VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_local_desc))
+&     DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
    !
  endif
  !

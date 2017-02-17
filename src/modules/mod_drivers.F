@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -33,20 +33,30 @@ module drivers
  logical :: l_rim       ! Random Integration Method
  logical :: l_col_cut   ! Coloumb potential cutoff
  logical :: l_acfdt     ! Total Energy
- logical :: l_real_time ! Real Time evolution
+ !
+ ! Real Time & SC
+ !
+ logical :: l_real_time 
+ logical :: l_sc_run
+ logical :: l_sc_magnetic
+ logical :: l_collisions_IO
  !
  ! The self-energy correlation "kind"
  !
  logical :: l_el_corr
  logical :: l_ph_corr
  !
+ ! Electron-Phonon specific flags 
+ !
+ logical :: l_elph_Hamiltonian
+ !
  ! Real Axis non SC Self-energies
  !
- logical :: l_xxvxc   ! HF
+ logical :: l_HF_and_locXC   ! HF + local XC
  logical :: l_life    ! GoWo lifetims
  logical :: l_gw0     ! GWo main logical
  logical :: l_ppa     ! PPA
- logical :: l_chosex  ! CHOSEX
+ logical :: l_cohsex  ! COHSEX
  !
  ! The optical runlevels ...
  !
@@ -61,14 +71,12 @@ module drivers
  logical :: l_bss
  logical :: l_td_hf
  !
- logical :: l_sc_run ! SC 
- logical :: l_sc_magnetic ! SC + Magnetic field
- !
  ! The XC types (Vxc)
  !
  logical :: l_sc_exx
+ logical :: l_sc_srpa
  logical :: l_sc_hf
- logical :: l_sc_chosex
+ logical :: l_sc_cohsex
  logical :: l_sc_contains_lda
  !
  ! The XC types (Fxc)

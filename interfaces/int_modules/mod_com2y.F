@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -21,12 +21,13 @@
 !
 module mod_com2y
  ! 
- use pars,      ONLY:SP,PI,lchlen,schlen,DP
+ use pars,          ONLY:SP,PI,lchlen,schlen,DP
  implicit none
  !
- logical :: force_noTR
- logical :: force_noSYM
+ logical :: use_SI_instead_of_TR
  logical :: force_noWFs
+ logical :: artificial_spin_pol
+ logical :: use_all_G_vectors
  !
  real(SP):: alat_mult_factor
  !
@@ -44,9 +45,10 @@ module mod_com2y
      !
      call string_split(in_string,str_piece)
      !
-     force_noTR =index(in_string,'notr')>0
-     force_noSYM=index(in_string,'nosym')>0
-     force_noWFs=index(in_string,'nowf')>0
+     use_SI_instead_of_TR =index(in_string,'notr')>0
+     force_noWFs          =index(in_string,'nowf')>0
+     artificial_spin_pol  =index(in_string,'dupl')>0
+     use_all_G_vectors    =index(in_string,'allG')>0
      !
      alat_mult_factor=1.
      do i1=1,100
@@ -68,24 +70,18 @@ module mod_com2y
      !
      integer :: is,is_inv
      logical :: l_identity,l_inversion
+     logical :: double_symmetries
      real(SP):: sop_mat(3,3)
      !
-     if (force_noSYM) then
-       i_time_rev=0
-       nsym=1
-       allocate(dl_sop(3,3,1))
-       dl_sop(1,:,1)=(/1.,0.,0./)
-       dl_sop(2,:,1)=(/0.,1.,0./)
-       dl_sop(3,:,1)=(/0.,0.,1./)
-       call msg("l","no")
-       return
-     endif
-     !
      i_time_rev=1
+     double_symmetries=.true.
      !
      ! Space Invertion (possible only for v >= 3.0.4)
      !
      call atoms_spatial_invertion()
+     !
+     if (i_space_inv==0) call msg("l","[SI no]...")
+     if (i_space_inv==1) call msg("l","[SI yes]...")
      !
      ! Search for identity and inversion symmetries.
      !
@@ -103,8 +99,8 @@ module mod_com2y
          is_inv=is
        endif 
      enddo
-     if (.not.l_identity) call msg("l","[ID no]...")
-     if (l_identity)      call msg("l","[ID yes]...")
+     if (.not.l_identity) call msg("l","[I no]...")
+     if (l_identity)      call msg("l","[I yes]...")
      !
      ! Special case where I,-I present: no TR used.
      !
@@ -114,8 +110,7 @@ module mod_com2y
        ! and switch off TR
        !
        if (i_space_inv==1) i_time_rev=0
-       if (i_space_inv==0) call &
-&         error('-I is in the symmetries list but it is not a proper operation')
+       if (i_space_inv==0) call error('-I is not a proper symmetry operation')
      endif
      !
      ! Identity was stripped in outkss: swap all
@@ -123,32 +118,29 @@ module mod_com2y
      !
      if (.not.l_identity.and.l_inversion) int_sop=-int_sop
      !
-     if (.not.l_inversion) call msg("l","[INV no]...")
-     if (l_inversion)      call msg("l","[INV yes]...")
+     if (.not.l_inversion) call msg("l","[-I no]...")
+     if (l_inversion)      call msg("l","[-I yes]...")
      !
      ! TR ?
      !
-     if (spin_orbit) then 
+     if (spin_orbit) i_time_rev=0
+     ! 
+     ! when the TR is imposed to be removed from the user it must be replaced
+     ! by the spatial inversion. Otherwise it cannot be removed.
+     !
+     if (i_time_rev==0) double_symmetries=.false.
+     if (i_time_rev==1.and.use_SI_instead_of_TR.and.i_space_inv==1) then 
        i_time_rev=0
-       call msg("l","[SO yes => TR no]...")
-     endif
-     if (force_noTR) then 
-       i_time_rev=0
-       call msg("l","[TR no]...")
-     endif
-     if (.not.spin_orbit.and..not.force_noTR) then
-       if (i_time_rev==1) call msg("l","[TR yes]...")
-       if (i_time_rev==0) call msg("l","[TR no]...")
+       double_symmetries=.not.l_inversion
      endif
      !
-     ! Double the simmetries if TR is added
+     if (i_time_rev==1) call msg("l","[TR yes]")
+     if (i_time_rev==0) call msg("l","[TR no]")
+     !
+     ! Double the simmetries if TR or SI is added
      !
      nsym=nsym_
-     if (i_time_rev==1) nsym=2.*nsym_
-     !
-     !
-     if (i_space_inv==0) call msg("l","[SI no]")
-     if (i_space_inv==1) call msg("l","[SI yes]")
+     if (double_symmetries) nsym=2.*nsym_
      !
      !From abinit help ...
      !
@@ -169,7 +161,7 @@ module mod_com2y
      do is=1,nsym_
        sop_mat=matmul(transpose(a),int_sop(:,:,is))
        dl_sop(:,:,is)=matmul(sop_mat,b)/2./pi
-       if (i_time_rev==1) dl_sop(:,:,is+nsym_)=-dl_sop(:,:,is)
+       if (double_symmetries) dl_sop(:,:,is+nsym_)=-dl_sop(:,:,is)
      enddo
      !
    end subroutine
@@ -180,18 +172,18 @@ module mod_com2y
 &                                      n_spinor, spin_orbit
      use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
      use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
-&                                      DL_vol, a, alat, default_Tel, &
-&                                      n_atoms_max,n_atom_species,n_atoms, atom_pos, &
-&                                      znucl
+&                                      DL_vol, a, alat, input_GS_Tel, &
+&                                      n_atoms_species_max,n_atomic_species,n_atoms_species, atom_pos, &
+&                                      Z_species
      use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng,real_wavefunctions
-     use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
+     use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL,xc_string
      use vec_operate,           ONLY : v_is_zero
      implicit none
      type(levels),     intent(in)   :: en     ! Energies
      type(bz_samp),    intent(in)   :: k      ! K/Q points
-     !
+     ! 
      call msg('s',' :: Electrons             :',default_nel)
-     call msg('s',' :: Temperature       [ev]:',default_Tel)
+     call msg('s',' :: Temperature       [ev]:',input_GS_Tel)
      call msg('s',' :: Lattice factors [a.u.]:',alat)
      call msg('s',' :: K-points              :',k%nibz)
      call msg('s',' :: Bands                 :',en%nb)
@@ -204,8 +196,8 @@ module mod_com2y
      call msg('s',' :: RL vectors        (WF):',wf_ng)
      call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
      call msg('s',' :: XC potential          : ',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
-     call msg('s',' :: Atomic species        :',n_atom_species)
-     call msg('s',' :: Max atoms/species     :',n_atoms_max)
+     call msg('s',' :: Atomic species        :',n_atomic_species)
+     call msg('s',' :: Max atoms/species     :',n_atoms_species_max)
      !
      ! Check if real wavefunction are possible (gamma point only).
      !

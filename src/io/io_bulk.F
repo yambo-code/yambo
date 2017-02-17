@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -20,9 +20,9 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
-&                  C1,IPOS)
+&                  C1,L1,L3,IPOS)
  !
- use pars,    ONLY:SP,lchlen
+ use pars,    ONLY:SP,LP,lchlen
 #if defined _NETCDF_IO
  use netcdf
 #endif
@@ -35,6 +35,11 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
  integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:)
  real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:)
  complex(SP), optional :: C1(:)
+ !
+ ! These types can be used instead of logical that 
+ ! are not supported by NetCdf
+ !
+ integer(LP), optional :: L1(:),L3(:,:,:)
  ! 
  ! Work Space
  !
@@ -107,6 +112,36 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
    io_rec_pos(ID)=io_rec_pos(ID)+size(I3)
  endif
  !
+ if (present(L1)) then
+   if (write_is_on(ID)) then
+     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
+&                     L1,(/io_rec_pos(ID)/)))
+   else if (read_is_on(ID)) then
+     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
+&                       L1,(/io_rec_pos(ID)/)))
+   endif
+   io_rec_pos(ID)=io_rec_pos(ID)+size(L1)
+ endif
+ !
+ if (present(L3)) then
+   if (write_is_on(ID)) then
+     if (present(IPOS)) then
+       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),R3,IPOS))
+     else
+       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
+&                       L3,(/io_rec_pos(ID)/)))
+     endif
+   else if (read_is_on(ID)) then
+     if (present(IPOS)) then
+       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),L3,IPOS))
+     else
+       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
+&                       L3,(/io_rec_pos(ID)/)))
+     endif
+   endif
+   io_rec_pos(ID)=io_rec_pos(ID)+size(L3)
+ endif             
+ !
  if (present(R0)) then
    if (write_is_on(ID)) then
      call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
@@ -171,7 +206,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
  return
  !
  !==============
- !== FOTRAN ====
+ !== FORTRAN ===
  !==============
 1 continue
  !
@@ -204,6 +239,22 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
      write(io_unit(ID)) I3
    else if (read_is_on(ID)) then
      read(io_unit(ID)) I3
+   endif
+ endif
+ !
+ if (present(L1)) then
+   if (write_is_on(ID)) then
+     write(io_unit(ID)) L1
+   else if (read_is_on(ID)) then
+     read(io_unit(ID)) L1
+   endif
+ endif
+ !
+ if (present(L3)) then
+   if (write_is_on(ID)) then
+     write(io_unit(ID)) L3
+   else if (read_is_on(ID)) then
+     read(io_unit(ID)) L3
    endif
  endif
  !

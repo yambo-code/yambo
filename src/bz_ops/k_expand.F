@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -58,7 +58,7 @@ subroutine k_expand(k)
  ! N.B
  ! rang(ik) = # of symmetries | R_is ik = ik
  !
- use pars,           ONLY:SP,schlen,IP
+ use pars,           ONLY:SP,IP
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
  use D_lattice,      ONLY:nsym

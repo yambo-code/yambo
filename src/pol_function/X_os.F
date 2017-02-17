@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,9 +21,10 @@
 !
 subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
- ! Non interacting X with SPIN support.
+ ! Non interacting Xo
  !
  use pars,          ONLY:SP
+ use wrapper,       ONLY:V_by_V_plus_V,V_copy
  use units,         ONLY:HARTREE
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
@@ -35,9 +36,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_norm 
- use wave_func,     ONLY:wf_load
+ use wave_func,     ONLY:WF_load
  use memory_m,      ONLY:mem_est
- use X_m,           ONLY:X_t,X_poles,DIP_iq_dot_r,iq_now,X_poles_tab,&
+ use X_m,           ONLY:X_t,X_poles,DIP_iq_dot_r,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
  implicit none
  type(levels)         :: Xen
@@ -49,42 +50,45 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Work Space
  !
- integer              :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
-&                        isp,iv,ic,g1,g2,g2_max,g2_min,iw,iwmax,isave(4),n_poles 
- logical              :: force_bare_X_G,skip_WF_load,Drude_term
- real(SP)             :: minmax_ehe(2),drude_factor,eh_occ
- type(pp_indexes)     :: px
- type(ggwinfo)        :: isc
- complex(SP)             :: Gf(Xw%n(2)),drude_Gf(Xw%n(2))
+ integer                 :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
+&                           isp,iv,ic,g1,g2,g2_max,g2_min,iw,iwmax,isave(4),n_poles 
+ logical                 :: force_bare_X_G,skip_WF_load,Drude_term
+ real(SP)                :: minmax_ehe(2),drude_factor,eh_occ
+ type(pp_indexes)        :: px
+ type(ggwinfo)           :: isc
+ complex(SP)             :: GreenF(Xw%n(2)),drude_GreenF(Xw%n(2))
  complex(SP),allocatable :: rhotw_save(:),XoR(:,:)
- integer,    external :: X_eh_setup
- complex(SP),external :: X_Gf,X_drude
+ integer,    external    :: X_eh_setup
+ complex(SP),external    :: X_simple_GreenF,X_drude
  !
  ! Defaults & Setups
- !
+ !===================
  call pp_indexes_reset(px) 
  allocate(XoR(X%ng,X%ng))
  if (iq==1) allocate(rhotw_save(X%ng))
  Xo  = cmplx(0.,0.,SP)
  XoR = cmplx(0.,0.,SP)
- Gf  = cmplx(0.,0.,SP)
- drude_Gf = cmplx(0.,0.,SP)
+ GreenF  = cmplx(0.,0.,SP)
+ drude_GreenF = cmplx(0.,0.,SP)
  !
- force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM
+ ! Logicals  to skip wf_load and/or to use bare or RIM GF (no poles accumulation)
+ !==========
+ force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  skip_WF_load=.false.
  g2_min=1
  !
  ! Project's dependent presets
- !
+ !=============================
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
  !
  !  Optical strengths
- !
+ !=====================
  if (iq==1) call Dipole_driver(Xen, Xk, X, X%q0)
  !
  !
  ! Drude Contrib. if all of following conditions hold
+ !===============
  !  . Non zero Drude Freq.
  !  . Metallic system 
  !  . Optical response @ q = Gamma
@@ -102,24 +106,26 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 &               (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))/&
 &               spin_occ/real(Xk%nbz)/DL_vol
    do iw=fr(1),fr(2)
-     drude_Gf(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
+     drude_GreenF(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
    enddo
    !
  endif
  !
  ! WF load
+ !=========
+ if (.not.skip_WF_load) call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
- if (.not.skip_WF_load) call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
- !
- if (iq/=iq_now) then
+ ! Poles tabulation
+ !==================
+ if (iq/=current_iq) then
    !
    n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
    !
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
-   if (.not.force_bare_X_G) call coarse_grid('X',X_poles,n_poles,X%cg_percentual)
-   if (force_bare_X_G)      call coarse_grid('X',X_poles,n_poles,0._SP)
+   if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual)
+   if (force_bare_X_G)      call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP)
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
    deallocate(X_poles)
@@ -130,13 +136,15 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !  This call is needed as Xw%p is deallocated inside
    !  the q-loop of X_em1
    !
-   call freqs_setup(Xw)
+   call FREQUENCIES_setup(Xw)
    !
  endif 
  !
+ !
+ !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
- call space_inv_by_wf(Xen,Xk)
+ call WF_spatial_invertion(Xen,Xk)
  !
  half_X_mat_only=i_space_inv==1
  if (.not.half_X_mat_only) then
@@ -146,26 +154,31 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  iwmax=1
  if (half_X_mat_only) g2_max=-1
  if (Xw%n(2)==1.and.half_X_mat_only) iwmax=2
- if (iq_now==0.and.half_X_mat_only ) call msg('s','[X] Upper matrix triangle filled')
+ if (current_iq==0.and.half_X_mat_only ) call msg('s','[X] Upper matrix triangle filled')
  !
  ! Parallel pointers
- !
- allocate(px%i1wts(cg_npts))
- px%i1wts=bg_npts+Xw%n(2)
+ !===================
+ allocate(px%weight_1D(cg_npts))
+ px%weight_1D=bg_npts+Xw%n(2)
  call par_indexes(px,(/cg_npts/))
  !
+ ! LiveTiming Title
+ !==================
  call live_timing('Xo@q['//trim(intc(iq))//'] '//&
-&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%stps(myid+1))
+&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_element_1D(myid+1))
  !
  n_poles=0
  !
  ! Here I prepare the scattering module.
+ !                    ==================
  ! Note the collision_reset destrois the bw_plan
  !
  call collision_reset(isc)
  isc%ngrho=X%ng
  allocate(isc%rhotw(X%ng))
  !
+ ! MAIN LOOP
+ !===========
  select case(iq)
    !
    ! Gamma Point
@@ -175,13 +188,13 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    isave=0
    do i1 = 1,cg_npts
      n_poles = sum(bg_npts(1:i1-1))
-     if (.not.px%i1p(i1)) cycle
+     if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
      if (cg_pt(i1)==0.) then
-       Gf=drude_Gf/real(bg_npts(i1))
+       GreenF=drude_GreenF/real(bg_npts(i1))
      else
-       if (.not.force_bare_X_G) Gf(1) = X_Gf(Xw%p(fr(1)),cg_pt(i1),X%ordering)
-       if (force_bare_X_G) call X_bare_RIM_Gf(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf,X%ordering)
+       if (.not.force_bare_X_G) GreenF(1) = X_simple_GreenF(Xw%p(fr(1)),cg_pt(i1),X%ordering)
+       if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,GreenF,X%ordering)
      endif
      do i2 = 1,bg_npts(i1)
        n_poles = n_poles+1
@@ -221,27 +234,16 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^
        do g2=g2_min,X%ng
-#if defined _DOUBLE
-         call zaxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-#else
-         call caxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-#endif
+         call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
      enddo
      !
      do i2=iwmax,Xw%n(2)
        iw=i2+fr(1)-1
-       if (.not.force_bare_X_G.and.cg_pt(i1)/=0.) Gf(i2)=X_Gf(Xw%p(iw),cg_pt(i1),X%ordering)
+       if (.not.force_bare_X_G.and.cg_pt(i1)/=0.) GreenF(i2)=X_simple_GreenF(Xw%p(iw),cg_pt(i1),X%ordering)
        do g2=1,X%ng
-#if defined _DOUBLE
-         call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2_max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                                  1,Xo(g2+1:,g2,i2),1)
-#else
-         call caxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2_max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                                  1,Xo(g2+1:,g2,i2),1)
-#endif
+         call V_by_V_plus_V(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,i2))
+         if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,i2))
        enddo
      enddo
      !
@@ -255,10 +257,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
    do i1=1,cg_npts
      n_poles=sum(bg_npts(1:i1-1))
-     if (.not.px%i1p(i1)) cycle
+     if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
-     if (.not.force_bare_X_G) Gf(1)=X_Gf(Xw%p(fr(1)),cg_pt(i1),X%ordering)
-     if (force_bare_X_G) call X_bare_RIM_Gf(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf,X%ordering)
+     if (.not.force_bare_X_G) GreenF(1)=X_simple_GreenF(Xw%p(fr(1)),cg_pt(i1),X%ordering)
+     if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,GreenF,X%ordering)
      do i2=1,bg_npts(i1)
        n_poles=n_poles+1
        ikbz   = X_poles_tab(n_poles,1)
@@ -274,29 +276,18 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        isc%os=(/iv,ikp,isp,i_spin/)
        isc%qs=(/qindx_X(iq,ikbz,2),iq,1/)
        eh_occ=Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
-&           spin_occ/real(Xk%nbz)/DL_vol
+&             spin_occ/real(Xk%nbz)/DL_vol
        call scatterBamp(isc)
        do g2=1,X%ng
-#if defined _DOUBLE
-         call zaxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-#else
-         call caxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-#endif
+         call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
      enddo
      do i2=iwmax,Xw%n(2)
        iw=i2+fr(1)-1
-       if (.not.force_bare_X_G) Gf(i2)=X_Gf(Xw%p(iw),cg_pt(i1),X%ordering)
+       if (.not.force_bare_X_G) GreenF(i2)=X_simple_GreenF(Xw%p(iw),cg_pt(i1),X%ordering)
        do g2=1,X%ng
-#if defined _DOUBLE
-         call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2_max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                                  1,Xo(g2+1:,g2,i2),1)
-#else
-         call caxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2_max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                                  1,Xo(g2+1:,g2,i2),1)
-#endif
+         call V_by_V_plus_V(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,i2))
+         if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,i2))
        enddo
      enddo
      call live_timing(steps=Xw%n(2)+bg_npts(i1))
@@ -306,11 +297,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  if (iwmax==2) then
    do g2=1,X%ng
-#if defined _DOUBLE
-     call zcopy(g2,XoR(1,g2),1,Xo(1,g2,1),1)
-#else
-     call ccopy(g2,XoR(1,g2),1,Xo(1,g2,1),1)
-#endif
+     call V_copy(g2,XoR(:,g2),Xo(:,g2,1))
    enddo
  endif
  do i1=1,Xw%n(2)
@@ -319,6 +306,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  call live_timing
  !
  ! Symmetrize Xo when only half has been avaluated
+ !=================================================
  !
  if (half_X_mat_only) then
    do i2=1,X%ng
@@ -330,6 +318,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  endif
  !
  ! CLEAN
+ !=======
  !
  call pp_indexes_reset(px) 
  if (iq==1) deallocate(rhotw_save)
@@ -337,6 +326,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  call mem_est("Xo_WS")
  call collision_reset(isc)
  !
- iq_now=iq
+ current_iq=iq
  !
 end subroutine

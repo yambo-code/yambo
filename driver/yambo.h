@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+  Copyright (C) 2000-2010 A. Marini and the YAMBO team 
                http://www.yambo-code.org
   
   This file is distributed under the terms of the GNU 
@@ -36,7 +36,7 @@
   {"help",   "h","Short Help",0,0,0,0},              
   {"lhelp",  "H","Long Help",0,0,0,0},               
   {"jobstr", "J","Job string identifier",0,0,1,0},   
-  {"infver", "V","Input file verbosity",1,0,0,0},    
+  {"infver", "V","Input file verbosity [opt=RL,kpt,sc,qp,io,gen,resp]",0,0,1,0},    
   {"ifile",  "F","Input file",0,0,1,0},              
   {"idir",   "I","Core I/O directory",0,0,1,0},
   {"odir",   "O","Additional I/O directory",0,0,1,0},
@@ -45,12 +45,12 @@
   {"dbpr",   "D","DataBases properties",0,0,0,0},    
   {"dbfrag", "S","DataBases fragmentation",0,0,0,0}, 
   {"setup",  "i","Initialization",0,0,0,0},          
-  {"optics", "o","Optics [opt=(c)hi/(b)se]",0,0,1,0},   
+  {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0},    
   {"tddft",  "t","The TDDFTs [opt=(a)LDA/(l)RC]",0,0,1,0}, 
   {"rim_cut","c","Coulomb interaction",0,0,0,0},
-  {"xxvxc",  "x","Hartree-Fock Self-energy and Vxc",0,0,0,0},  
+  {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0},
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},  
-  {"gwapprx","p","GW approximations [opt=(p)PA]",0,0,1,0},
+  {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0}, 
   {"gw0",    "g","Dyson Equation solver [opt=n(ewton)]",0,0,1,0},
   {"bss",    "y","BSE solver [opt=h/d]",0,0,1,0},   
   {NULL,NULL,NULL,0,0,0,0}

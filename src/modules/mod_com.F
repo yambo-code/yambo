@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -43,8 +43,8 @@ module com
  ! 
  ! Output Files/Report File
  !
- integer,parameter  :: nofs=100
- integer,parameter  :: max_open_ofs=100
+ integer,parameter  :: nofs=200
+ integer,parameter  :: max_open_ofs=200
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)
@@ -139,6 +139,38 @@ module com
        get_name=trim(ch(1))//"/"//trim(ch(2))
      endif
      !
+   end function
+   !
+   function all_locations(desc,subfolder,NETCDF_DB)
+     !
+     character(*)           ::desc
+     character(*), optional ::subfolder
+     logical                ::NETCDF_DB
+     character(lchlen)      ::all_locations(8)
+     !
+     ! Possible Paths
+     !
+     ! 1/2. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
+     ! 3/4. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
+     ! 5/6. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=2 (with JOBSTR)
+     ! 7/8. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=1 (no   JOBSTR)
+     !
+     all_locations(1)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
+     all_locations(2)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
+     all_locations(3)=get_name(desc,subfolder,1,CORE_IO=.FALSE.,&
+&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
+     all_locations(4)=get_name(desc,subfolder,1,CORE_IO=.FALSE.,&
+&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
+     all_locations(5)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
+     all_locations(6)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
+     all_locations(7)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
+&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
+     all_locations(8)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
+&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
    end function
    !
    subroutine of_open_close(of_name,mode)
@@ -243,6 +275,15 @@ module com
      if (unit_/=6.and.trim(comment_)=='#')  write (unit_,'(a)') '#'
      !
    end subroutine
+   !
+   logical function OF_exists(name)
+     character(*) ::name
+     integer      ::i_f
+     OF_exists=.false. 
+     do i_f=1,max_open_ofs
+       if (index(opened_of(i_f),name)/=0) OF_exists=.TRUE.
+     enddo
+   end function
    !
    logical function file_exists(name)
      character(*) name

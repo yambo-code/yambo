@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -40,15 +40,17 @@ module QP_m
  integer           :: QP_n_states
  integer           :: QP_ng_Sx
  integer           :: QP_n_G_bands(2)
- integer           :: QP_Sx_low_band
  integer           :: GWo_iterations
  logical           :: QP_dSc_test
  logical           :: QP_W_partially_done
  logical           :: GWo_SC_done
- logical           :: CHOSEX_use_empties
+ logical           :: COHSEX_use_empties
  logical           :: On_Mass_Shell_approx
- character(schlen) :: QP_rep_string
+ logical           :: use_GreenF_to_eval_QP
+ logical           :: use_GreenF_Zoom
+ logical           :: GF_is_causal
  character(schlen) :: QP_solver
+ real(SP)          :: QP_G_Zoom_treshold
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_dSc_delta
  real(SP)          :: QP_W_er(2)
@@ -56,17 +58,28 @@ module QP_m
  real(SP)          :: QP_G_er(2)
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
+ real(SP)   ,allocatable:: QP_G_amplitude_integral(:)
+ real(SP)   ,allocatable:: QP_G_zoom_er(:,:)
  complex(SP),allocatable:: QP_dSc(:,:)
  complex(SP),allocatable:: QP_W(:,:,:)
- complex(SP),allocatable:: QP_Sx(:)
+ complex(SP),allocatable:: QP_Vnl_xc(:)
  complex(SP),allocatable:: QP_Sc(:,:)
- complex(SP),allocatable:: QP_G(:,:)
  complex(SP),allocatable:: QP_Vxc(:)
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
  logical,    allocatable:: QP_state(:,:)
  !
+ ! Logicals used for reporting
+ !
+ logical           :: report_Vnlxc
+ logical           :: report_Sc
+ logical           :: report_dSc
+ logical           :: l_extended_output
+ character(12)     :: Vnlxc_kind
+ character(10)     :: Vxc_kind
+ !
  type QP_t
+   !
    character(schlen)  :: description(max_qp_descs)
    integer,    pointer:: table(:,:)
    real(SP)   ,pointer:: k(:,:)
@@ -77,6 +90,14 @@ module QP_m
    integer  :: nk
    integer  :: nb
    integer  :: n_states
+   !
+   ! Green Function and Self-Energy
+   !
+   integer            :: GreenF_n_steps
+   complex(SP),pointer:: S_total(:,:)
+   complex(SP),pointer:: GreenF(:,:)
+   complex(SP),pointer:: GreenF_W(:,:)
+   !
  end type QP_t
  !
  ! QP CTL
@@ -112,7 +133,7 @@ module QP_m
      qp%description=' '
      qp%n_descs=0
      qp%n_states=0
-     nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare)
+     nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare,qp%S_total,qp%GreenF,qp%GreenF_W)
    end subroutine
    !
    subroutine QP_states_simmetrize(en,vec_2_sim,state_is_2do)

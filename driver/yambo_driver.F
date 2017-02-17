@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -29,15 +29,15 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !    Y   /____Y88b   /   YY   Y888b  888   |  Y888   /  
  !   /   /      Y88b /          Y888b 888__/    `88_-~   
  !
- use drivers
+ use drivers,       ONLY:l_ppa,l_HF_and_locXC,l_sc_run,l_collisions_IO,l_real_time,&
+&                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
+&                        l_gw0,l_el_corr,l_life,l_acfdt,l_elph_Hamiltonian
  use X_m,           ONLY:X_t
- use com,           ONLY:msg
  use par_proc_m,    ONLY:myid,ncpu,p_finalize
  use it_m,          ONLY:it_reset,infile
  use QP_m,          ONLY:QP_ng_Sx
- use QP_CTL_m,      ONLY:QP_apply
  use wave_func,     ONLY:wf_ng
- use electrons,     ONLY:levels,E_reset,n_bands
+ use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
  !
@@ -61,9 +61,9 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  ! Local Variables
  !
- integer           ::ierr
+ integer           ::i_err
  integer, external ::X_em1,init
- logical           ::apply_QP
+ logical           ::l_pp_em1,l_dyn_em1
  !
  ! Presets
  !
@@ -102,7 +102,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  ! RUN SUMMARY 
  !=============
  !
- call job_setup(en,k)
+ call IO_Setup(en,k)
  !
  ! SETUPS ...
  !============
@@ -113,7 +113,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  ! Update the default variables
  !
- ierr=init(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
+ i_err=init(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
  !
@@ -131,31 +131,12 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  ! RESPONSE FUNCTIONS  QP CORRECTIONS (FROM INPUT FILE)
  !======================================================
  !
- !
- ! - Dynamical X -
- !
- apply_QP=(l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa).or.&
-        (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
- if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,1,msg_fmt='s')
- !
- ! - Static X -
- !
- apply_QP=l_em1s.or.(l_optics.and.l_bse.and..not.l_ppa).or.l_bss.or.(l_em1d.and.l_chosex)
- if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,1,msg_fmt='s')
- !
- ! - Plasmon Pole X -
- !
- apply_QP=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_el_corr)
- if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,1,msg_fmt='s')
- !
- ! - Green's Function (not the one used in the BSE -
- !
- if (l_gw0)     call QP_apply((/1,n_bands/),en,k,3,msg_fmt='s')
+ call QP_external_corrections(Xen,en,Xk,k,X)
  !
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_xxvxc.and..not.(l_sc_run.or.l_real_time)) call QP_XX_Vxc(en,k,Xk,q)
+ if (l_HF_and_locXC.and..not.any((/l_sc_run,l_collisions_IO,l_real_time/))) call XCo_driver(en,k,Xk,q)
  !
  ! RAS & REELS
  !=============
@@ -170,22 +151,33 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !===============================
  !
  ! Static
+ !--------
  !
- if (l_em1s)                            ierr=X_em1(Xen,Xk,q,X(2),Xw(2),.false.)
+ if (l_em1s)       i_err=X_em1(Xen,Xk,q,X(2),Xw(2),.false.)
  !
- if (l_em1d.or.(l_gw0.and.l_el_corr)) then
-   ! 
-   ! Plasmon Pole 
-   !
-   if (l_ppa)                           ierr=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
-   ! 
-   !
- endif
+ ! Plasmon Pole 
+ !--------------
+ !
+ l_pp_em1=l_ppa.and. ( l_em1d.or.(l_gw0.and.l_el_corr).or.l_bse )
+ !
+ if (l_pp_em1)     i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
+ !
+ !
+ ! EXTENDED COLLISIONS (HF & COHSEX)
+ !===================================
+ !
+ !
+ ! SELF-ENERGIES
+ !===============
  !
  if (l_gw0.or.l_life) then
    !
-   if (l_chosex) then
+   if (l_cohsex) then
      !
+     ! COHSEX 
+     !========
+     !
+     call QP_driver(X(2),Xen,Xk,en,k,q,Xw(2))
      !
    else if (l_ppa) then
      !
@@ -210,16 +202,20 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  endif
  !
  !
- ! SC
- !====
- !
  if (l_sc_run) then
- !
+   !
+   ! SC
+   !====
+   !
    !
    ! REAL-TIME
    !==========
    !
+   !
  endif
+ !
+ ! Electron-Phonon Hamiltonian
+ !=============================
  !
  ! GAME OVER :(
  !==============
@@ -228,7 +224,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  ! Update init defs
  !
- ierr=init(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
+ i_err=init(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
  !
  ! Finalize
  !

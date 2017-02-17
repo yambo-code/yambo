@@ -1,6 +1,6 @@
 #! @SHELL@
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+# Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 #              http://www.yambo-code.org
 # 
 # This file is distributed under the terms of the GNU 
@@ -22,9 +22,8 @@
 #
 os="@build_os@"
 cpp="@CPP@"
-cppflags="@CPPFLAGS@"
+cppflags="@C_AS_CPP_FLAGS@"
 ECHO_N="@ECHO_N@"
-PREFIX="@MKMF_PREFIX@"
 #
 if [ $# = 0 ] ; then
  echo $0 "dir target objectfile mode(l/x) Dflag1 Dflag2 Dflag3 ..."
@@ -68,25 +67,29 @@ for arg in $@; do
 done
 #
 llibs="$lib_path $llibs"
+lf90include="@F90_MODULE_FLAG@\$(includedir)"
 linclude="-I\$(includedir)"
+if [ @F90_MODULE_FLAG@ != "-I" ]; then
+lf90include="$lf90include $linclude"
+fi
 case $target in
   yambo*)
-   llibs="$llibs \$(llapack) \$(lscalapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
-  a2y|f2y)
-   llibs="-lint_modules $llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+  a2y|elk2y)
+   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -liotk \$(llapack) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -liotk  \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(iotk_dir)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -letsf_io \$(llapack) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -letsf_io \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(etsf_dir)"
     ;;
   ypp*)
-   llibs="$llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
 esac
 
@@ -96,6 +99,7 @@ echo "fcflags=$fcflags" >> $cdir/Makefile
 echo "fcuflags=$fcuflags" >> $cdir/Makefile
 echo "llibs=$llibs" >> $cdir/Makefile
 echo "linclude=$linclude" >> $cdir/Makefile
+echo "lf90include=$lf90include" >> $cdir/Makefile
 echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile
@@ -149,7 +153,7 @@ define driver
  @echo
 endef
 define link
- ${PREFIX}(eval \$(fc) \$(fcflags) \$(linclude) -o \$@ driver.o getopt.o \$(objs) \$(llibs) ) > /dev/null
+ ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) -o \$@ driver.o getopt.o \$(objs) \$(llibs) ) > /dev/null
 endef
 define modmove
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || mv *.mod \$(includedir)
@@ -165,14 +169,14 @@ F77_NOOPT_SRC= xerbla.o slamch.o
 \$(F77_NOOPT_SRC):
 	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$*.f) > /dev/null
 #
-FC_NOOPT_SRC= mod_parser_m.o 
+FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
 \$(FC_NOOPT_SRC):
 	@rm -f \$*\$(f90suffix)
 	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
-	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
-	@rm -f \$*\$(f90suffix)".o "
+	@rm -f \$*\$(f90suffix)
 #
 # Suffixes
 #
@@ -183,7 +187,7 @@ FC_NOOPT_SRC= mod_parser_m.o
 .F.o:
 	@rm -f \$*\$(f90suffix)
 	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
-	${PREFIX}(\$(fc) -c \$(fcflags) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	@rm -f \$*\$(f90suffix)
 	@echo $ECHO_N \$*".F "
 .f.o:

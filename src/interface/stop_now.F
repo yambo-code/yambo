@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -23,7 +23,7 @@ logical function stop_now(DO_IT_NOW)
  !
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:levels,E_reset
- use com,            ONLY:repfile,file_exists,report_file_fix,msg
+ use com,            ONLY:repfile,file_exists,report_file_fix
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset
@@ -35,8 +35,8 @@ logical function stop_now(DO_IT_NOW)
  ! 
  ! Work Space
  !
- type(levels)      ::en,Xen
- type(bz_samp)     ::q,k,Xk
+ type(levels)      ::en
+ type(bz_samp)     ::q,k
  type(X_t)         ::X
  type(w_samp)      ::Xw
  integer           ::ierr

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,7 +23,7 @@ module pseudo
  !
  use pars,      ONLY:SP
  use electrons, ONLY:n_spin
- use D_lattice, ONLY:n_atom_species
+ use D_lattice, ONLY:n_atomic_species
  implicit none
  !
  integer :: pp_n_l_comp_max
@@ -39,9 +39,9 @@ module pseudo
      use memory_m,   ONLY:mem_est
      use wave_func,  ONLY:wf_ng
      integer  :: alloc_err(3)
-     allocate(pp_kbs(n_atom_species,pp_n_l_comp_max),stat=alloc_err(1))
-     allocate(pp_kb(wf_ng,n_atom_species,pp_n_l_comp_max,n_spin),stat=alloc_err(2))
-     allocate(pp_kbd(wf_ng,n_atom_species,pp_n_l_comp_max,n_spin),stat=alloc_err(3))
+     allocate(pp_kbs(n_atomic_species,pp_n_l_comp_max),stat=alloc_err(1))
+     allocate(pp_kb(wf_ng,n_atomic_species,pp_n_l_comp_max,n_spin),stat=alloc_err(2))
+     allocate(pp_kbd(wf_ng,n_atomic_species,pp_n_l_comp_max,n_spin),stat=alloc_err(3))
      call mem_est("pp_kbs pp_kb pp_kbd",&
 &                 (/size(pp_kbs),size(pp_kb),size(pp_kbd)/),&
 &                 elements_kind=(/SP,SP,SP/),errors=alloc_err)

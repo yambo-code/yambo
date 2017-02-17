@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini, M. Gruning and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini, M. Gruning and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,6 +22,7 @@
 subroutine K_Haydock(iq,W)
  !
  use pars,           ONLY:SP,pi,schlen
+ use wrapper,        ONLY:V_by_V_plus_V
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon
  use R_lattice,      ONLY:d3k_factor,q_norm
@@ -29,12 +30,14 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:msg,isec
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
-&                         BS_DB_is_fragmented,Kernel_by_V,&
-&                         BS_eh_f,ioBSS_Haydock,BS_K_Coupling
+&                         BS_DB_is_fragmented, BS_eh_f,ioBSS_Haydock,&
+&                         BS_K_Coupling,Haydock_terminator,&
+&                         K_BSmat_by_V
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use parser_m,       ONLY:parser
  implicit none
  type(w_samp)  ::W
  integer       ::iq
@@ -46,6 +49,7 @@ subroutine K_Haydock(iq,W)
  complex(SP),allocatable :: Vn(:),Vnm1(:),Vnp1(:)
  complex(SP),allocatable :: Cf(:) 
  real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
+ real(SP)           ::ItParity
  character(schlen)  ::dumb_ch
  logical, external  ::stop_now
  !
@@ -58,6 +62,10 @@ subroutine K_Haydock(iq,W)
  else if (isec(2)==0) then
    call section('+','Haydock solver')
  endif
+ !
+ ! Use terminator?
+ !
+ if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
  !
  if (BS_K_Coupling) then
    !
@@ -149,7 +157,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call Kernel_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
+     call K_BSmat_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -157,13 +165,8 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
-#if defined _DOUBLE
-     call zaxpy(BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,1,Vnp1,1)
-     call zaxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
-#else
-     call caxpy(BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,1,Vnp1,1)
-     call caxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
-#endif
+     call V_by_V_plus_V(BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,Vnp1)
+     call V_by_V_plus_V(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1)
      !
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
      !
@@ -190,14 +193,14 @@ subroutine K_Haydock(iq,W)
        !
        !
      else
-       call build_L_and_check_convergence(Af(:it),Bf(:it),it)
+       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it)
      end if
      !
      BSS_description(BSS_n_descs-1)='        |Accuracy (reached)   [o/o]:'//&
 &                                    trim(real2ch(reached_treshold))
      BSS_description(BSS_n_descs)='        |Iteration                 :'//trim(intc(it))
      !
-     call K_dump_to_o_file(iq,1)
+     call K_output_file(iq,1)
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'//&
 &            trim(real2ch(reached_treshold))//'|'//trim(real2ch(Haydock_treshold))
      if (tty_size>0.and.it_on_disk==0) call live_time_msg("r",dumb_ch,"","%s")
@@ -248,7 +251,7 @@ subroutine K_Haydock(iq,W)
    subroutine build_L_and_check_convergence(Af,Bf,it,Cf)
      implicit none
      integer    :: it
-     real(SP)   :: Bf(it),Af(it)
+     real(SP)   :: Bf(it+1),Af(it)
      complex(SP),intent(in),optional :: Cf(it)
      !
      ! Work Space
@@ -258,26 +261,59 @@ subroutine K_Haydock(iq,W)
      complex(SP) :: X_o(2,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
      !
+     ! related to terminator
+     !
+     complex(SP) :: X_t 
+     real(SP)    :: Av1, Av2
+     integer, parameter :: RES = 2, COUPL = 1, MIN_ITER = 10
+     logical     :: UseTerminator
+     !
      ! Co includes the spin_occ factor because Haydock is expected to work
      ! only when ALL BS_eh_f == spin_occ
      !
-     Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2.*Haydock_v0_mod**2.
+     Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi/q_norm(1)**2._SP*Haydock_v0_mod**2
+     X_t =(0._SP,0._SP)
+     UseTerminator = .false.  
      !
+     if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
+     !
+     !
+     !
+     if (Useterminator) then 
+       if (.not.BS_K_Coupling) then
+         Av1 = 0._SP
+         Av2 = 0._SP
+         do i1 = 1, it
+           Av1 = Av1 + Af(i1)
+           Av2 = Av2 + Bf(i1)
+         end do
+         Av1 = Av1/it
+         Av2 = Av2/it
+       else
+       !
+       !
+       end if
+     end if
      !
      do iw=1,W%n(1)
        X_o=(0._SP,0._SP)
-       X_o(:,it)=1./(W%p(iw)-Af(it))
+       if (UseTerminator) then 
+         if (.not.BS_K_Coupling) X_t = terminator(W%p(iw),Av1,Av2,RES)
+       !
+       !
+       endif
+       X_o(:,it)=1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t)
        do i1=it-1,1,-1
-         X_o(1,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*X_o(1,i1+1))
+         X_o(1,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1))
        enddo
        do i1=it-2,1,-1
-         X_o(2,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*X_o(2,i1+1))
+         X_o(2,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1))
        enddo
        !
        !
        X_epsilon(1,iw)=W%p(iw)
-       X_epsilon(2,iw)=-X_o(1,1)*Co+1.
-       X_epsilon(4,iw)=-X_o(2,1)*Co+1.
+       X_epsilon(2,iw)=-X_o(1,1)*Co+1._SP
+       X_epsilon(4,iw)=-X_o(2,1)*Co+1._SP
        if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw)))
        if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
@@ -297,5 +333,22 @@ subroutine K_Haydock(iq,W)
 &                  -dot_product(v(BS_K_dim+1:2*BS_K_dim),w(BS_K_dim+1:2*BS_K_dim)))
      !
    end function fdot_product
+   !
+   function terminator(x,c1,c2,which)
+     !
+     complex(SP) :: terminator, f, g, x
+     real(SP) :: c1,c2
+     integer  :: which
+     !
+     select case(which)
+     case (1) 
+     !
+     !
+     case (2)
+       f = (x-c1)
+       terminator = f + sqrt(f**2 -4._SP*c2**2.)
+       terminator = terminator/2._SP/c2**2
+     end select
+   end function terminator
    !
 end subroutine

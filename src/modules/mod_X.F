@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -31,6 +31,11 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  !
+ ! Large Q-vector support 
+ !
+ real(SP)                 :: q_plus_G_direction(3)
+ integer                  :: Q_Shift_Order
+ !
  ! Warning about non-local commutator
  !
  logical                  :: Vnl_commutator_warning
@@ -54,7 +59,7 @@ module X_m
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
  complex(SP), allocatable :: X_mat(:,:,:)
- integer :: iq_now
+ integer :: current_iq
  integer :: X_RIM_nkpts
  logical :: half_X_mat_only
  logical :: self_detect_E_range

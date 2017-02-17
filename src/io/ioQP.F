@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,41 +21,41 @@
 !
 integer function ioQP(what,qp,ID)
  use pars,           ONLY:SP,schlen
- use drivers,        ONLY:l_ppa,l_chosex
  use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:nqbz
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use matrix_operate, ONLY:mat_c2r,mat_r2c
- use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,&
-&                         QP_n_G_bands,QP_n_states,QP_W,&
+ use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_G_dr,&
+&                         QP_n_G_bands,QP_n_states,QP_W,QP_G_er,&
 &                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,&
-&                         GWo_iterations
+&                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
-&                         write_is_on,io_mode,DUMP,VERIFY,&
-&                         io_fragment,io_check_restart,io_restart,&
-&                         io_netcdf_support,ver_is_gt_or_eq,&
-&                         db_alat,variable_is_found
- use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX,SE_NONE
- use com,            ONLY:warning
+&                         write_is_on,io_mode,DUMP,VERIFY,io_restart_point,&
+&                         io_netcdf_support,ver_is_gt_or_eq,DB_is_OK,&
+&                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
+ use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_COHSEX,SE_NONE,&
+&                         SE_POLARON
+ use fragments,      ONLY:io_fragment,Fragments_Restart
  !
  implicit none
  type(QP_t)  ::qp
  character(*)::what 
- !             'QP'/'W'
+ !             'QP'/'W'/'G'/filename
  integer     ::ID
  !
  ! Work Space
  !
  integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,&
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,var_size
- real(SP),allocatable ::qp_E_Eo_Z_disk(:,:,:),QP_W_disk(:,:,:)
- integer ,allocatable ::qp_table_disk(:,:)
  character(schlen)    ::ch
+ logical              ::l_CUTOFF
  character(2)         ::OP(1)
+ integer ,    allocatable ::qp_table_disk(:,:)
+ real(SP),    allocatable ::qp_DATA_disk(:,:,:),QP_W_disk(:,:,:)
  !
- if (what=="QP".or.what=="W") then
+ if (what=="QP".or.what=="W".or.what=="G") then
    ioQP=io_connect(desc=what,type=2,ID=ID)
  else
    ioQP=io_connect(desc=what,type=-2,ID=ID)
@@ -64,35 +64,48 @@ integer function ioQP(what,qp,ID)
  !
  ! Check the restart point 
  !  
- if (what=="W") call io_check_restart("W",ID)
+ if (what=="W") call Fragments_Restart(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    ! 
    if (what/="W") then
+     !
+     ! except for db.W all other DBs written by this routine can be
+     ! reload to apply QP corrections. In this case QP_DB_kind must be 
+     ! present to be transferred in the energy type by mod_qp_ctl
+     !
      if (variable_is_found(ID,"QP_DB_kind")==1.or.write_is_on(ID)) then
        call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
        call io_elemental(ID,I0=QP_DB_kind)
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then
        QP_DB_kind=0
-       ioQP=-1
+       ioQP=IO_INCOMPATIBLE_VAR
        return
      endif
    endif
    !
+   l_CUTOFF=.FALSE.
+   !
    if (what=="W") then
-     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,&
-&                   D_LATT=.true.,XC_KIND="Xd")
+     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.,XC_KIND="Xd",CUTOFF=l_CUTOFF)
    else
-     select case (QP_DB_KIND)
+     !
+     ! QP_DB_kind points to the "type" of self-energy. This is used
+     ! to report about XC kind of the components of the self-energy here
+     ! and it is also later transfered to the G/X .. global kinds in mod_qp_ctl.
+     !
+     select case (QP_DB_kind)
        case(0,SE_NONE)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.)
-       case(SE_CHOSEX)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs")
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=l_CUTOFF)
+       case(SE_COHSEX)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=l_CUTOFF)
        case(SE_GoWo_PPA,SE_GWo_PPA)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp")
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=l_CUTOFF)
        case(SE_GoWo,SE_GWo)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd")
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=l_CUTOFF)
+       case(SE_POLARON)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=l_CUTOFF)
      end select
    endif
    if (ioQP/=0) goto 1
@@ -102,7 +115,7 @@ integer function ioQP(what,qp,ID)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
-   if (what/="W") OP="<="
+   if (what/="W")  OP="<="
    if (what=="W" ) OP="=="
    !
    call io_elemental(ID,I0=qp%nb,DB_I0=QP_nb_disk,CHECK=.true.,OP=OP)
@@ -117,6 +130,10 @@ integer function ioQP(what,qp,ID)
    call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=OP)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   !
+   ioQP=io_status(ID)
+   if (.not.DB_is_OK(ID)) goto 1
    !
  endif
  !
@@ -153,6 +170,9 @@ integer function ioQP(what,qp,ID)
        else
          call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
        endif
+     else if (what=="G") then
+       call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
+       if (index(qp%description(i1),'Zoom')>0.and.io_status(ID)<0)  io_status(ID)=IO_NO_BINDING_ERROR
      else
        if (index(qp%description(i1),'QP')>0) then
          call io_elemental(ID,CH0=qp%description(i1),VAR='')
@@ -166,7 +186,7 @@ integer function ioQP(what,qp,ID)
    enddo
    !
    ioQP=io_status(ID)
-   if (ioQP/=0) goto 1
+   if (.not.DB_is_OK(ID)) goto 1
    !
    ! The table is used to check the requested QP states with the disk ones.
    ! Note that I do not extract the W m.e. for a subset of Qp states
@@ -190,7 +210,7 @@ integer function ioQP(what,qp,ID)
            i_found=0
          endif
        enddo
-       if (i_found/=0) io_status(ID)=-1
+       if (i_found/=0) io_status(ID)=IO_INCOMPATIBLE_VAR
      enddo
    endif
    !
@@ -217,7 +237,7 @@ integer function ioQP(what,qp,ID)
    deallocate(qp_table_disk)
    !
    ioQP=io_status(ID)
-   if (ioQP/=0) goto 1
+   if (.not.DB_is_OK(ID)) goto 1
    !
  endif
  !
@@ -226,7 +246,7 @@ integer function ioQP(what,qp,ID)
  ! there is a restart point
  !
  if (what=="W") then
-   ioQP=io_restart(ID)
+   ioQP=io_restart_point(ID)
    if (ioQP/=0.and.io_netcdf_support(ID)) then
      QP_W_partially_done=.true.
      goto 1
@@ -249,37 +269,41 @@ integer function ioQP(what,qp,ID)
      enddo
    endif
    !
-   allocate(qp_E_Eo_Z_disk(3,qp%n_states,2))
-   !  
-   if (write_is_on(ID)) then
-     do i1=1,qp%n_states
-       qp_E_Eo_Z_disk(1,i1,1)=real(qp%E(i1))
-       qp_E_Eo_Z_disk(1,i1,2)=aimag(qp%E(i1))
-       qp_E_Eo_Z_disk(2,i1,1)=qp%E_bare(i1)
-       qp_E_Eo_Z_disk(2,i1,2)=0.
-       qp_E_Eo_Z_disk(3,i1,1)=real(qp%Z(i1))
-       qp_E_Eo_Z_disk(3,i1,2)=aimag(qp%Z(i1))
-     enddo
+   if (index(what,".QP")/=0.or.what=="QP") then
+     !
+     ! QP corrections 
+     !
+     allocate(qp_DATA_disk(3,qp%n_states,2))
+     !  
+     if (write_is_on(ID)) then
+       do i1=1,qp%n_states
+         qp_DATA_disk(1,i1,1)=real(qp%E(i1))
+         qp_DATA_disk(1,i1,2)=aimag(qp%E(i1))
+         qp_DATA_disk(2,i1,1)=qp%E_bare(i1)
+         qp_DATA_disk(2,i1,2)=0.
+         qp_DATA_disk(3,i1,1)=real(qp%Z(i1))
+         qp_DATA_disk(3,i1,2)=aimag(qp%Z(i1))
+       enddo
+     endif
+     !
+     call io_bulk(ID,VAR="QP_E_Eo_Z",VAR_SZ=(/3,qp%n_states,2/))
+     !
+     call io_bulk(ID,R3=qp_DATA_disk)
+     !
+     if (read_is_on(ID)) then
+       allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
+       call mem_est("qp_Z qp_E qp_E_bare",(/qp%n_states,qp%n_states,qp%n_states/))
+       do i1=1,qp%n_states
+         qp%E(i1) =cmplx(qp_DATA_disk(1,i1,1),qp_DATA_disk(1,i1,2),SP)
+         qp%E_bare(i1)=cmplx(qp_DATA_disk(2,i1,1),qp_DATA_disk(2,i1,2),SP)
+         qp%Z(i1) =cmplx(qp_DATA_disk(3,i1,1),qp_DATA_disk(3,i1,2),SP)
+       enddo
+     endif
+     !
+     deallocate(qp_DATA_disk)
+     !
    endif
    !
-   call io_bulk(ID,VAR="QP_E_Eo_Z",VAR_SZ=(/3,qp%n_states,2/))
-   !
-   call io_bulk(ID,R3=qp_E_Eo_Z_disk)
-   !
-   if (read_is_on(ID)) then
-     allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
-     call mem_est("qp_Z qp_E qp_E_bare",(/qp%n_states,qp%n_states,qp%n_states/))
-     do i1=1,qp%n_states
-       qp%E(i1) =cmplx(qp_E_Eo_Z_disk(1,i1,1),qp_E_Eo_Z_disk(1,i1,2),SP)
-       qp%E_bare(i1)=cmplx(qp_E_Eo_Z_disk(2,i1,1),qp_E_Eo_Z_disk(2,i1,2),SP)
-       qp%Z(i1) =cmplx(qp_E_Eo_Z_disk(3,i1,1),qp_E_Eo_Z_disk(3,i1,2),SP)
-     enddo
-   endif
-   !
-   deallocate(qp_E_Eo_Z_disk)
-   !
-   ioQP=io_status(ID)
-   if (ioQP/=0) goto 1
    !
  endif
  !
@@ -292,7 +316,7 @@ integer function ioQP(what,qp,ID)
    ! 
    ! Fragmentation
    ! 
-   call io_fragment(ID,i_pointer=iqbz)
+   call io_fragment(ID,i_fragment=iqbz)
    !
    write (ch,'(a,i5.5)') "W_PARS_",iqbz
    !
@@ -325,9 +349,9 @@ integer function ioQP(what,qp,ID)
    deallocate(qp_W_disk)
    !
    ioQP=io_status(ID)
-   if (ioQP/=0) goto 1
+   if (.not.DB_is_OK(ID)) goto 1
    !
-   call io_check_restart("W",ID,now=iqbz,todo=nqbz)
+   call Fragments_Restart(ID,current_fragment=iqbz,fragments_todo=nqbz)
    !
  endif
  !

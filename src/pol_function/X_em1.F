@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -83,7 +83,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  call X_pre_setup(Xen,X)
  !
  !
- call freqs_setup(Xw)
+ call FREQUENCIES_setup(Xw)
  !
  ! Prepare the IO ( and check if q has been already done)
  !

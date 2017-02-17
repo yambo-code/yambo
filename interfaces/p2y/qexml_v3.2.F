@@ -50,7 +50,7 @@ MODULE qexml_module
             qexml_read_spin, qexml_read_xc,                           &
             qexml_read_occ, qexml_read_bz, qexml_read_phonon,         &
             qexml_read_bands, qexml_read_bands_info,                  &
-            qexml_read_gk, qexml_read_wfc
+            qexml_read_gk, qexml_read_wfc, check_pseudo
 !            qexml_read_rho
 
   !
@@ -1648,6 +1648,34 @@ CONTAINS
       IF ( PRESENT( igwx ) )    igwx   = igwx_
       !
     END SUBROUTINE qexml_read_wfc
+
+subroutine check_pseudo(nsp,psfile)
+  integer :: iostat
+  character(50) :: dummy
+
+  INTEGER        :: unit,i
+  INTEGER, intent(in)   :: nsp
+  CHARACTER(256) :: filename
+  CHARACTER(LEN=*), INTENT(IN) :: psfile(:)
+  do i = 1,nsp
+
+  CALL iotk_free_unit(unit)
+  filename= TRIM(datadir_in)//trim(psfile(i))
+  open(unit, FILE = TRIM(filename))
+   rewind(unit)
+    call iotk_scan_begin(unit,"PP_HEADER")
+    read(unit,*,iostat=iostat) dummy
+    read(unit,*,iostat=iostat) dummy
+    read(unit,*,iostat=iostat) dummy
+    if(trim(dummy) == "USPP") call errore( 'check_pseudo : ','Ultrasoft
+'//trim(psfile(i))//' not supported',1)
+    if(.not. trim(dummy) == "NC") call errore( 'check_pseudo :
+',trim(psfile(i))//' file not norm conserving?',1)
+    rewind(unit)
+
+  enddo
+
+end subroutine check_pseudo
     !
     !
 END MODULE qexml_module

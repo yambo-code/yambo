@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -64,7 +64,7 @@ module functions
    pure function bose_f(Eb)
      !
      use drivers,   ONLY:Finite_Tel
-     use D_lattice, ONLY:Tel
+     use D_lattice, ONLY:Bose_Temp
      real(SP), intent(in):: Eb
      real(SP)            :: bose_f
      bose_f=0.
@@ -75,8 +75,8 @@ module functions
    end function
    !
    pure function bose_decay(E)
-   !
-   use drivers,   ONLY:Finite_Tel
+     !
+     use drivers,   ONLY:Finite_Tel
      !
      use D_lattice, ONLY:Tel
      real(SP), intent(in):: E

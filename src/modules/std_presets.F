@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -23,29 +23,31 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
  use pars,       ONLY:SP
- use units,      ONLY:HARTREE,FS2AUT
+ use units,      ONLY:HARTREE,FS2AUT,AU2Vmm
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
- use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
+ use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
-&                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only
- use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
-&                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
-&                     QP_W_er,QP_W_dr,QP_cg_percent,&
+&                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only,&
+&                      q_plus_G_direction,Q_Shift_Order
+ use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
+&                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
+&                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx
+&                     COHSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx,&
+&                     Vnlxc_kind,Vxc_kind,l_extended_output 
  use functions,  ONLY:bose_E_cut
- use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,&
-&                     input_Tel_fixed,non_periodic_directions,lattice
+ use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
+&                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
  use pseudo,     ONLY:pp_n_l_comp_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, spin_orbit
- use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes
+&                     filled_tresh, spin_orbit,Boltz_tau,Boltz_Efield
+ use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path
@@ -54,19 +56,21 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,IO_write,dbs_fragment,serial_number,IO_read,mk_dir
+ use IO_m,       ONLY:io_reset,max_io_units,IO_write,serial_number,IO_read,mk_dir,&
+&                     Fragmented_IO,Fragmented_IO_save 
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns
+&                     BS_columns,BSS_Vnl_included,BSS_long_gauge,BSS_uses_GreenF
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
+ use fragments,  ONLY:Parallel_Fragments
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
- use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
+ use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
  !
  implicit none
  !
@@ -94,13 +98,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  more_io_path=OD
  com_path=COM_DIR
  !
- ! ... created
+ ! ... created (core only)
  !
  call mk_dir(core_io_path)
- call mk_dir(trim(core_io_path)//'/SAVE')
- call mk_dir(more_io_path)
- call mk_dir(trim(more_io_path)//'/SAVE')
- call mk_dir(com_path)
  !
  ! ... and Job string
  !
@@ -108,7 +108,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! PAR PROC Setup
  !
- master_cpu=myid==0
+ master_cpu          =myid==0
+ local_master_cpu(1) =.TRUE.
+ local_master_cpu(2:)=.TRUE.
  !
  ! TTY size 
  !
@@ -152,9 +154,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !D_lattice
  !
- input_Tel_fixed=.false.
+ input_Tel_commands_over_header=.false.
  non_periodic_directions='none'
  lattice='Unknown'
+ Bose_Temp=-1./HARTREE
  !
  ! R_lattice
  !
@@ -179,8 +182,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! D_lattice 
  !
- n_atoms_max=0
- n_atom_species=0
+ n_atoms_species_max=0
+ n_atomic_species=0
  i_space_inv=-1
  !
  ! Pseudo
@@ -196,11 +199,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_rim=.false.
  l_col_cut=.false.
  l_optics=.false.
- l_xxvxc=.false.
+ l_HF_and_locXC=.false.
  l_em1d=.false.
  l_em1s=.false.
  l_ppa=.false.
- l_chosex=.false.
+ l_cohsex=.false.
  l_gw0=.false.
  l_bse=.false.
  l_chi=.false.
@@ -211,9 +214,12 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_ph_corr=.false.
  l_sc_run=.false.
  l_sc_hf=.false.
- l_sc_chosex=.false.
+ l_sc_cohsex=.false.
  l_sc_exx=.false.
  l_sc_contains_lda=.false.
+ l_sc_magnetic=.false.
+ l_collisions_IO=.false.
+ l_elph_Hamiltonian=.false.
  !
  !electrons
  !
@@ -253,14 +259,17 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  IO_write=master_cpu
  n_nodes=1
  !
- dbs_fragment=index(INSTR,'dbfrag')>0
+ Parallel_Fragments=.FALSE.
+ Fragmented_IO=index(INSTR,'dbfrag')>0
+ Fragmented_IO_save=Fragmented_IO
+ !
  do i1=1,max_io_units
    call io_reset(i1)
  enddo
  !
  !X
  !
- iq_now=0
+ current_iq=0
  X_RIM_nkpts=0
  self_detect_E_range=.false.
  half_X_mat_only=.false.
@@ -271,6 +280,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  long_path='none'
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
+ q_plus_G_direction=0.
+ Q_Shift_Order=1
  !
  !Dipole
  !
@@ -278,11 +289,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !QPm
  !
- QP_rep_string='kpbne0ees0'
+ QP_n_states=0
  QP_dSc_steps=2
+ QP_G_Zoom_treshold=0.
  QP_Sc_steps=100
  QP_n_W_freqs=100
- QP_Sx_low_band=1
  QP_dSc_test=.false.
  QP_solver=' '
  QP_G_damp=0.1/HARTREE
@@ -290,15 +301,18 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  QP_W_er=0.
  QP_W_dr=0.1/HARTREE
  QP_W_partially_done=.false.
- QP_G_er=(/0._SP,10._SP/HARTREE/)
+ QP_G_er=(/-10._SP/HARTREE,10._SP/HARTREE/)
  QP_G_dr=0.1/HARTREE
  QP_cg_percent=100.
  GWo_iterations=0
  GWo_SC_done=.false.
- CHOSEX_use_empties=.false.
+ COHSEX_use_empties=.false.
  On_Mass_Shell_approx=.false.
  SC_E_threshold=0.01/HARTREE
  SC_band_mixing=100.
+ Vnlxc_kind='HF'
+ Vxc_kind='LDA'
+ l_extended_output=.FALSE.
  !
  ! QP_ctl control
  !
@@ -330,11 +344,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_not_const_eh_f=.FALSE.
  Haydock_treshold=-0.02
  BS_columns=0
+ BSS_Vnl_included=.FALSE.
+ BSS_long_gauge=.FALSE.
+ BSS_uses_GreenF=.FALSE.
  !
  ! TDDFT
  !
  FXC_description=""
- FXC_type='-rpa'
+ FXC_type='rpa'
  FXC_n_descs=0
  FXC_n_g_corr=1
  FXC_per_memstps=100.
@@ -352,6 +369,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  GS_xc_FUNCTIONAL=-1             ! unknow 
  GS_xc_KIND=-1                   ! unknow 
+ !
  !
  !
  !

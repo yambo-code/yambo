@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 D. Varsano, A. Marini and the YAMBO team
+! Copyright (C) 2000-2010 D. Varsano, A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -26,7 +26,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_rot_r,fft_dim
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
- use wave_func,     ONLY:wf_load,wf_state,wf,WF_free,wf_ng
+ use wave_func,     ONLY:WF_load,wf_state,wf,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
@@ -177,7 +177,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Loading  Wf 
  !
- if (l_exc_wf) call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ if (l_exc_wf) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  !
  call k_ibz2bz(Xk,'i',.false.)
@@ -217,7 +217,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
      enddo
      !
-     call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight)
+     call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight,verbose=i_lambda==1)
      !
    enddo
    !
@@ -291,7 +291,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    r_hole=r_cell_cc(:,ir_hole)
    !
    call msg('s','::      translated position      [cc]:',r_hole)
-   call msg('s','::                             [bohr]:',r_hole*BOHR)
+   call msg('s','::                                [A]:',r_hole*BOHR)
    !
  endif
  !
@@ -325,14 +325,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                                   trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
    !
-   call live_timing('ExcWF@'//trim(intc(lambda)),px%stps(myid+1))  
+   call live_timing('ExcWF@'//trim(intc(lambda)),px%n_of_element_1D(myid+1))  
    !
    v2plot  =0._SP
    wf_vc   =(0._SP,0._SP)
    !
    do ir=1,nr_tot
      !
-     if (.not.px%i1p(ir)) cycle
+     if (.not.px%element_1D(ir)) cycle
      !
      if (l_free_hole) then
        r_eh(:)=0.

@@ -1,5 +1,7 @@
-objs = mod_YPP.o     ypp_i.o   ypp_init.o ypp_init_load.o \
-       k_grids.o \
-       excitons_driver.o electrons_driver.o plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o \
-       excitons_sort_and_report.o \
-       $(SPIN_objects) $(RAS_objects)
+
+
+
+
+
+
+objs = mod_YPP.o ypp_i.o ypp_init.o ypp_init_load.o k_grids.o excitons_driver.o electrons_driver.o plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o excitons_sort_and_report.o $(SPIN_objects) $(RAS_objects)

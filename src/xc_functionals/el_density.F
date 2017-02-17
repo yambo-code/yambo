@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 D. De Fausti and the YAMBO team
+! Copyright (C) 2000-2010 D. De Fausti and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -60,12 +60,16 @@ subroutine el_density(en,Xk,rho,force_si)
   integer :: i1,i2,ik,i_spin,ifft,rho_syms,ifft2
   real(SP):: rho_no_sym(fft_size),f_occ
   logical :: warn_done
+  integer :: iv_max
   !
-  rho=0.
-  rho_no_sym=0.
+  rho=0._SP
+  rho_no_sym=0._SP
   warn_done=.false.
   !
-  do i1=1,en%nbm
+  iv_max=en%nbm
+  !
+  !
+  do i1=1,iv_max
     do i2=1,Xk%nibz
       !
       !        
@@ -93,12 +97,13 @@ subroutine el_density(en,Xk,rho,force_si)
   enddo
   !
   !
+  !
   ! Simmetrization
   !
   rho_syms=nsym/(i_time_rev+1)
   if (force_si) rho_syms=nsym
   do i1=1,rho_syms
-    rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)))/real(nsym)
+    rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)),SP)/real(nsym,SP)
   enddo
   !
   if (.not.force_si) rho=rho*(1+i_time_rev)

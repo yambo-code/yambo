@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,
@@ -45,7 +45,6 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! 
  ! Work Space
  !
- integer il,im
  real(SP)    :: costh,sinth,cosphi,sinphi,ch,kmod,kxymod
  complex(SP) :: eiphi
  !

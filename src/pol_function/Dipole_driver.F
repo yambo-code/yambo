@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,7 +21,7 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics
+ use drivers,        ONLY:l_optics,l_real_time
  use pars,           ONLY:SP
  use com,            ONLY:warning
  use drivers,        ONLY:l_col_cut
@@ -32,14 +32,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:DIP_iq_dot_r,X_alloc,X_t,DIP_iR_or_P,long_path,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Eval_P_and_P2_only,P_square
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use wave_func,      ONLY:wf_ng,wf_load,WF_free
+ use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use vec_operate,    ONLY:v_norm
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(inout) :: Xen
- type(X_t),  intent(inout) :: X
- real(SP),   intent(inout) :: field_dir(3)
+ type(X_t),     intent(inout) :: X
+ real(SP),      intent(inout) :: field_dir(3)
  !
  ! Work Space
  !
@@ -54,11 +54,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  if (allocated(DIP_iq_dot_r)) return
  !
- !
  ! Transitions ordering
  !
  Dipole_bands_ordered=.true.
- Eval_P_and_P2_only=.false.
+ !
+ ! NOTE that in case we will enter here during a SC run to update the screened interaction
+ ! all transitions must be considered in order to rotate <P>.
+ !
+ ! in real-time simulations P and P^2 are ALWAYS calculated => no band ordering
+ !
  !
  ! Check first if ostnts DB is already done
  !
@@ -66,7 +70,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  !
  ! Swith off I/O in case gradient is calculated
- if (Eval_P_and_P2_only) call IO_mute("io_in io_out")
+ if (Eval_P_and_P2_only) call IO_and_Messaging_switch("-io_in -io_out")
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
@@ -86,7 +90,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    endif
    DIP_iR_or_P=(0.,0.)
    !
-   call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
+   !
+   call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
    !
    use_trans_gauge = .true.
    !
@@ -117,7 +122,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Warn about missing [Vnl,r] commutator
  !
  if (.not.X%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics) then
-   call warning(' Missing non-local pseudopoential contribution')
+   call warning(' Missing non-local pseudopotential contribution')
    Vnl_commutator_warning=.TRUE.
  endif
  !

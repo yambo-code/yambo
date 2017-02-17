@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -32,34 +32,38 @@ module D_lattice
  ! Temperature
  !
  real(SP) :: Tel
- real(SP) :: default_Tel
- logical  :: input_Tel_fixed
+ real(SP) :: Bose_Temp
+ real(SP) :: input_GS_Tel
+ logical  :: input_Tel_commands_over_header
  !
  ! SYMs
  !
  integer :: nsym
  integer :: i_time_rev  ! =1 yes TR , =0 no TR
  integer :: i_space_inv ! =1 yes SI,  =0 no SI
- integer :: inv_index ! Index of the symmetry corresponding to -I (independently 
-                      ! on the value of i_time_rev and i_space_inv
+ integer :: inv_index   ! Index of the symmetry corresponding to -I (independently 
+                        ! on the value of i_time_rev and i_space_inv
  real(SP),allocatable :: dl_sop(:,:,:)
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)
  !
  ! Cell & atoms
  !
- integer  :: n_atoms_max
- integer  :: n_atom_species
+ integer  :: n_atoms
+ integer  :: n_atoms_species_max
+ integer  :: n_atomic_species
  real(SP) :: DL_vol
  real(SP) :: a(3,3)
  real(SP) :: alat(3)
- integer,  allocatable :: n_atoms(:)
- integer,  allocatable :: znucl(:)
+ integer,  allocatable :: PW_atomic_kind(:)
+ integer,  allocatable :: n_atoms_species(:)
+ integer,  allocatable :: Z_species(:)
  real(SP), allocatable :: atom_pos(:,:,:)
  character(lchlen)     :: atoms_string
  character(7)          :: lattice
  !
  ! Periodic Table
+ !
  character(len=2)      :: PT_elements(103)
  !
  contains
@@ -113,15 +117,15 @@ module D_lattice
      integer  :: ia,iap,is
      real(SP) :: at_diff(3),a_m1(3,3)
      !
-     if (n_atoms_max==0) return
+     if (n_atoms_species_max==0) return
      !
      i_space_inv=1
      !
      call m3inv(transpose(a),a_m1)
      !
-     do is=1,n_atom_species
-       atoms_loop: do ia=1,n_atoms(is)
-         do iap=1,n_atoms(is) 
+     do is=1,n_atomic_species
+       atoms_loop: do ia=1,n_atoms_species(is)
+         do iap=1,n_atoms_species(is) 
            !
            at_diff=matmul(a_m1,atom_pos(:,ia,is)+atom_pos(:,iap,is))
            !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -24,6 +24,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K = <2V-W>
  !
  use pars,         ONLY:SP,pi,IP
+ use parser_m,     ONLY:parser
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf
@@ -31,7 +32,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,spin
  use FFT_m,        ONLY:fft_size
  use stderr,       ONLY:intc
- use wave_func,    ONLY:wf_load,WF_free
+ use wave_func,    ONLY:WF_load,WF_free
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv,inv_index
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
@@ -52,9 +53,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
- use TDDFT,        ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
- use xc_functionals, ONLY:F_xc
- use global_XC,    ONLY:WF_kind,WF_xc_functional
+ use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
+ use xc_functionals,ONLY:F_xc
+ use global_XC,     ONLY:WF_kind,WF_xc_functional
  implicit none
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -89,8 +90,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: O_dim
  integer    :: O_x_dim,alloc_err(2),x_fft_size,c_fft_size
- logical    :: load_O_X
- complex(SP),allocatable::Ovv(:),Occ(:),Cc(:),O1x(:,:),O2x(:,:)
+ logical    :: load_O_X,l_USE_all_Gexx
+ complex(SP),allocatable::Ovv(:),Occ(:),Cc(:)
+ complex(SP),        allocatable::O1x(:,:),O2x(:,:)
  complex(SP),allocatable::Ovc(:),Ocv(:)
  type(ggwinfo)          ::isc
  !
@@ -102,6 +104,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  Co=4._SP*pi/DL_vol/real(q%nbz,SP)
  !
  if (.not.l_bs_fxc) call section('*','Bethe-Salpeter Kernel')
+ !
+ call parser('ALLGexx',l_USE_all_Gexx)
  !
  !
  ! Setups
@@ -155,8 +159,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  W_is_em1s=X%whoami==2
  W_is_pp  =X%whoami==4
- if (BS_res_K_corr) then
-   call section('+','Screneed interaction header I/O')
+ ! 
+ if (BS_res_K_corr.and..not.l_td_hf) then
+   !
+   call section('p','Screneed interaction header I/O')
    !
    ! X%ng are the G's in the X DB while BS_n_g_W the G's I want to read.
    ! Now to read only BS_n_g_W components I need to redefine X%ng
@@ -167,7 +173,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (ioX_err/=0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
    !
-   ! X%ng is set to BS_n_g_W to VERIFY if there wnough bands.
+   ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.
    ! From now on it is used to keep track of the actual sixe of W in the DB
    !
    X%ng=X%ng_db
@@ -208,7 +214,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  c_fft_size=fft_size
  call fft_setup(BS_n_g_exch,maxval(qindx_X(iq,:,2)),.true.)
  x_fft_size=fft_size
- if (x_fft_size>c_fft_size) then
+ if (x_fft_size>c_fft_size.and..not.l_USE_all_Gexx) then
    call warning('Exchange FFT size is too big. RL vectors reduced to '//intc(O_ng))
    BS_n_g_exch=O_ng
  endif
@@ -221,14 +227,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    bands_to_load=BS_bands
    if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
    !
-   call wf_load(max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,BS_columns/),&
+   call WF_load(max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,BS_columns/),&
 &               space='R',title='-BSK')
    !
  endif
  ! 
  ! Test the spatial Inversion
  !
- call space_inv_by_wf(Ken,Xk)
+ call WF_spatial_invertion(Ken,Xk)
  !
  allocate(O_table(BS_bands(2)-BS_bands(1)+1,nsym,&
 &                 BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol),stat=alloc_err(1))
@@ -262,8 +268,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Screneed interaction
    !
    X%ng=BS_n_g_W
+   if (.not.l_td_hf) then
      if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
      if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
+   endif
    !
    i1=BS_n_g_W
    if (BS_W_is_diagonal) i1=1
@@ -280,14 +288,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    allocate(isc%gamp(i1,BS_n_g_W))
    !
+   if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
      ioX_err=ioX(X,Xw,XID)
+   endif
    !
    do iq_W=1,q%nibz
      !
      isc%qs(2)=iq_W
      call scatterGamp(isc,'c')
      !
+     if (.not.l_td_hf) then
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
        ioX_err=ioX(X,Xw,XID)
        !
@@ -302,6 +313,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,iq_W)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
          enddo
        enddo
+     else
+       forall(i2=1:BS_n_g_W) BS_W(i2,1,iq_W)=isc%gamp(1,i2)
+     endif
      ! 
    enddo
    !
@@ -322,7 +336,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  BS_identifier=pickup_a_random(10000._SP)
  !
- call section('=','Main loop')
+ call section('+','Main loop')
  !
  !allocations
  !***********
@@ -338,9 +352,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  if (load_O_X) then
-   allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
    allocate(O2x(BS_n_g_exch,O_x_dim),stat=alloc_err(2))
-   call mem_est('O1x O2x',(/size(O1x),size(O2x)/),errors=alloc_err(:2))
+   call mem_est('O2x',(/size(O2x)/),errors=(/alloc_err(2)/))
+     allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
+     call mem_est('O1x',(/size(O1x)/),errors=(/alloc_err(1)/))
  endif
  !
  if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
@@ -549,8 +564,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call mem_est("BS_mat")
  !
  if (load_O_X) then
-   deallocate(O1x,O2x)
-   call mem_est("O1x O2x")
+     deallocate(O1x)
+     call mem_est("O1x")
+   deallocate(O2x)
+   call mem_est("O2x")
  endif
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then

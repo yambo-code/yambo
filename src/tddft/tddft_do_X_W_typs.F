@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -52,7 +52,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  ! LRC setup
  !
  if (l_lrc_fxc) then
-   FXC_type='-tddft_lrc'
+   FXC_type='LRC'
    write (X%f_xc,'(a,1x,f10.4)') 'LRC ',FXC_LRC_alpha
    return
  endif
@@ -60,7 +60,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  ! ALDA setup
  !
  if (l_alda_fxc) then
-   FXC_type='-alda'
+   FXC_type='alda'
    write (X%f_xc,'(a,1x,i4.4,a)') 'ALDA',FXC_n_g_corr,'G`s'
    return
  endif

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -27,9 +27,9 @@ subroutine rim()
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
- use vec_operate,   ONLY:c2a,v_norm
+ use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat
- use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,bz_samp,nqbz,&
+ use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&
 &                        RIM_id_epsm1_reference,RIM_anisotropy
@@ -54,7 +54,6 @@ subroutine rim()
  call pp_indexes_reset(px)
  !
  ! Anisotropy Setup
- !
  !
  ! em1_anis refers to the X part only of epsm1 as in the self-energy
  ! the bare part is embodied in the exchange.
@@ -136,9 +135,9 @@ subroutine rim()
  call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
  !
  call par_indexes(px,(/nqibz/))
- call live_timing('Momenta loop',px%stps(myid+1))
+ call live_timing('Momenta loop',px%n_of_element_1D(myid+1))
  do iq=1,nqibz
-   if (.not.px%i1p(iq)) cycle
+   if (.not.px%element_1D(iq)) cycle
    !
    call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
    !

@@ -1,5 +1,5 @@
 
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -43,7 +43,6 @@ module vec_operate
      normalize_v(:) = v(:)/norm
      !
    end function normalize_v
-   !
    !
    function v_norm(v)
      real(SP) :: v(3),v_norm
@@ -272,7 +271,6 @@ module vec_operate
      ! deg_elmnts =   ( 1 2 0 0 0 0 0 )
      !
      ! deg_grps = 2
-     !
      !
      integer, intent(in)  :: n
      integer, intent(out) :: first_deg_el(n),deg_elmnts(n),deg_grps

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2010 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.1 r.448 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.2 r.616 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
-SSUBLEVEL="1"
-SREVISION="448"
+SSUBLEVEL="2"
+SREVISION="616"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -36,11 +36,14 @@ m4_include([config/acx_blas.m4])
 m4_include([config/acx.m4])
 m4_include([config/acx_gmake.m4])
 m4_include([config/netcdf_f90.m4])
+m4_include([config/libxc.m4])
 m4_include([config/fftw.m4])
 m4_include([config/slk.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
+m4_include([config/ax_f90_module_flag.m4])
+m4_include([config/acx_fortran_flags.m4])
 
 AC_PREFIX_DEFAULT($PWD)
 
@@ -64,9 +67,9 @@ hostname=`uname -n`
 AC_SUBST(hostname)
 # ============================================================================
 # EDITOR
-AC_ARG_WITH(EDITOR, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor])) 
-AC_CHECK_PROGS(EDITOR,[$with_editor vim vi pico],["none"])
-AC_SUBST(EDITOR)
+AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor])) 
+AC_CHECK_PROGS(editor,[$with_editor vim vi pico],["none"])
+AC_SUBST(editor)
 
 # ============================================================================
 # GNU Make
@@ -183,10 +186,10 @@ AC_SUBST(etsf_dir)
 # Verbose compilation
 #
 AC_ARG_ENABLE(msgs-comps, AC_HELP_STRING([--enable-msgs-comps],
-              [Compress compilation messaging. Default is yes.]))
-if test x"$enable_msgs_comps" = "x"; then enable_msgs_comps="yes"; fi
+              [Verbose compilation log]))
+if test x"$enable_msgs_comps" = "x"; then enable_msgs_comps="no"; fi
 MKMF_PREFIX=" "
-if test x"$enable_msgs_comps" = "xyes"; then MKMF_PREFIX="@"; fi
+if test x"$enable_msgs_comps" = "xno"; then MKMF_PREFIX="@"; fi
 AC_SUBST(MKMF_PREFIX)
 AC_SUBST(ECHO_N)
 #
@@ -232,15 +235,32 @@ AC_SUBST(F90SUFFIX)
 FCFLAGS="${acx_save_fcflags}"
 acx_save_fcflags="$FCFLAGS"
 ACX_GET_FC_VERSION()
+#
+# Fortran FLAGS
+#
 ACX_FCSETUP()
+#
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
+#
+# Underscore options in subroutine naming
+#
 ACX_EXTUS
+#
+# Free Form sepcific options
+#
 AC_FC_FREEFORM
+#
 F90=$FC
 AC_SUBST(F90)
 AC_SUBST(AR_FLAGS)
 AC_LANG_POP(Fortran)
+#
+#=============================================================================
+# FLAGS TO INCLUDE MODULE
+AX_F90_MODULE_FLAG
+F90_MODULE_FLAG="$ax_cv_f90_modflag"
+AC_SUBST([F90_MODULE_FLAG])
 #
 # ============================================================================
 # CPP check & flags
@@ -363,6 +383,9 @@ AC_ARG_ENABLE(largedb, AC_HELP_STRING([--enable-largedb],
 if test x"$enable_largedb" = "x"; then enable_largedb="no"; fi
 AC_SUBST(enable_largedb)
 KH_PATH_NETCDF_F90
+# ============================================================================
+# LIBXC
+KH_PATH_LIBXC_F90
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -33,7 +33,7 @@ subroutine barriers()
  ! RUNLEVELS:
  !  RIM         l_rim          COL_CUT     l_col_cut 
  !  ACFDT       l_acfdt        GW PPA      gw0_ppa 
- !  GW RA       gw0_raxis      GW CHOSEX   gw0_chosex 
+ !  GW RA       gw0_raxis      GW COHSEX   gw0_cohsex 
  !  LIFE        l_life         EL-PH       gw0_el_ph 
  !  SIGMAX      l_xx_vxc       ALDA(G)     alda_g_space 
  !  ALDA(R)     alda_r_space   BS Fxc      l_bs_fxc 
@@ -43,11 +43,11 @@ subroutine barriers()
  !  BSE HAYD    bss_haydock    SC          l_sc_run
  !  TDHF
  !  MAGNETIC    l_magnetic
+ !  COLL_IO     l_COLLISIONS_IO
  !
  use drivers
  use pars,       ONLY:schlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
- use R_lattice,  ONLY:Xk_grid_is_uniform
  use BS,         ONLY:BSS_mode
  use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
  use QP_m,       ONLY:QP_solver
@@ -58,7 +58,7 @@ subroutine barriers()
  !
  logical :: metallic_system, newton,secant,green,bss_tddft,&
             TR_or_SI,gw0_raxis,alda_r_space,bss_diago,&
-&           bss_haydock,gw0_ppa,gw0_chosex,gw0_el_ph,alda_g_space,bss_inv
+&           bss_haydock,gw0_ppa,gw0_cohsex,gw0_el_ph,alda_g_space,bss_inv
  character(schlen) :: always_runlevels,on_runlevels
  !
  ! ...
@@ -68,9 +68,9 @@ subroutine barriers()
  secant=trim(QP_solver)=='s'
  green=trim(QP_solver)=='g'
  TR_or_SI=i_time_rev==1.or.i_space_inv==1
- gw0_raxis=l_gw0.and..not.l_chosex.and..not.l_ppa
+ gw0_raxis=l_gw0.and..not.l_cohsex.and..not.l_ppa
  gw0_ppa=l_gw0.and.l_ppa
- gw0_chosex=l_gw0.and.l_chosex
+ gw0_cohsex=l_gw0.and.l_cohsex
  gw0_el_ph=l_gw0.and.l_ph_corr
  alda_r_space=l_alda_fxc.and.l_bse
  alda_g_space=l_alda_fxc.and..not.l_bse
@@ -92,20 +92,23 @@ subroutine barriers()
  call switch_off_runlevel('life',on_name=' ')
  call switch_off_runlevel('acfdt',on_name=' ')
  call switch_off_runlevel('bs_fxc',on_name=' ')
- call switch_off_runlevel('tdhf',on_name=' ')
- !
- call switch_off_runlevel('chosex',on_name=' ')
  !
  ! RUNLEVELS
  !===========
  !
  !
  !
+ if (gw0_cohsex) then
+   call switch_off_runlevel('all',on_name='gw0 em1s cohsex el_el el_ph HF_and_locXC '//trim(always_runlevels))
+   goto 1
+ endif
+ !
+ !
  !
  !
  if (gw0_ppa) then
-   on_runlevels='gw0 ppa em1d el_el el_ph xxvxc'
-   on_runlevels='gw0 ppa em1d xxvxc'
+   on_runlevels='gw0 ppa em1d el_el el_ph HF_and_locXC'
+   on_runlevels='gw0 ppa em1d HF_and_locXC'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -119,7 +122,7 @@ subroutine barriers()
  endif
  if (l_bss.or.l_bse) then
    on_runlevels='tdhf bs_fxc bse bss em1s em1d ppa optics'
-   on_runlevels='bse bss em1s ppa optics'
+   on_runlevels='tdhf bse bss em1s ppa optics'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -128,16 +131,6 @@ subroutine barriers()
  !
  ! ENVIROMENTS
  !=============
- !
- !
- if (.not.Xk_grid_is_uniform) then
-   !
-   ! For non uniform grids I have to switch off all logicals that are
-   ! not LF/RPA
-   !
-   call switch_off_runlevel('all',on_name='chi optics sursp ras reels '//trim(always_runlevels))
- endif 
- !
  !
  ! SPIN
  !=============
@@ -149,6 +142,6 @@ subroutine barriers()
  !
  ! MORE
  !======
- if ( (l_ppa.and.trim(QP_solver)=='s').or.l_chosex ) QP_solver='n'
+ if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
  !
 end subroutine

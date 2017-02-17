@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+  Copyright (C) 2000-2010 A. Marini and the YAMBO team 
                http://www.yambo-code.org
   
   This file is distributed under the terms of the GNU 
@@ -49,10 +49,10 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT || _DISTRIBUTED
  #define _YAMBO_MAIN
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT
+#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_BOLTZMANN
  #define _YPP_MAIN
 #endif
 /* 
@@ -242,19 +242,6 @@ main(int argc, char *argv[])
  };
  lni=strlen(rnstr2);
  /* 
-
- If id/od/com_dir are not found switch to the deafult i/o directory 
-
- [June 2009] 
- I have removed this line beacuse the additional I/O directories
- can be written by the code on-fly (Andrea)
-
- if (stat(id, &buf) != 0) {strcpy(id,".");iid=1;};
- if (stat(od, &buf) != 0) {strcpy(od,".");iod=1;}; 
- if (stat(com_dir, &buf) != 0) {strcpy(com_dir,".");icd=1;};
-
- */
- /* 
    MPI
  ===========================================================================
  */
@@ -360,21 +347,30 @@ static void usage(int verbose)
   fprintf(stderr,"\nThis is %s %s\n",tool,codever); 
   fprintf(stderr,"Usage: %s",tool); 
   for(j=0;j<=nr-1;j++)
+  {if (strcmp(opts[j].ln,"DESC")!=0) 
    {fprintf(stderr," -%s",opts[j].sn);
    for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
    for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
    for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
+   };
   };
   fprintf(stderr,"\n%s%s%s\n","Try `",tool," -H' for more information");exit(0);
  };
  if (verbose==2) {title(stderr,"");
  for(j=0;j<=nr-1;j++)
-  {fprintf(stderr," -%s",opts[j].sn);
-   for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
-   for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
-   for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
-   if (opts[j].ni==0 && opts[j].nr==0 && opts[j].nc==0) {fprintf(stderr,"\t");};
-   fprintf(stderr,"\t:%s\n",opts[j].d);
+  {if (strcmp(opts[j].ln,"DESC")==0) 
+   {
+    fprintf(stderr,"\t\t %s\n",opts[j].d);
+   }
+   else
+   {
+    fprintf(stderr," -%s",opts[j].sn);
+    for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
+    for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
+    for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
+    if (opts[j].ni==0 && opts[j].nr==0 && opts[j].nc==0) {fprintf(stderr,"\t");};
+    fprintf(stderr,"\t:%s\n",opts[j].d);
+   };
   };
   fprintf(stderr,"\n");
   fprintf(stderr,"%s\t%s\n\t%s\n\n","By","YAMBO developers group",

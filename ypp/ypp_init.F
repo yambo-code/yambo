@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,18 +21,20 @@
 !
 subroutine ypp_init(instr,lnstr,FINALIZE)
  !
+ use pars,           ONLY:pi
  use units,          ONLY:HARTREE,FS2AUT
  use wave_func,      ONLY:wf_ng 
+ use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:ng_vec
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls,runlevel_is_on,&
-&                         infile_verbosity
+&                         infile_verbosity,V_general,V_qp
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
  use YPP
- use electrons,      ONLY:n_spin
+ use electrons,      ONLY:n_spin,n_bands
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
  implicit none
@@ -44,7 +46,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  type(initdefs)   ::defs
  integer          ::i1,i2
- character(schlen)::rstr_piece(50) 
+ character(schlen)::rstr_piece(60) 
  !
  !
  ! What is running ?
@@ -55,49 +57,59 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call call_init_load('GameOver')
    if (master_cpu) call ofiles_append(defs=defs)
    return
- else
-   !
-   ! DEFAULTS
-   !
-   ! PLOT
-   !
-   p_dir      ='1'
-   mag_dir    ='X'
-   p_format   ='g'
-   wf_ng      =ng_vec
-   l_exc_wf=.false.
-   l_density=.false.
-   l_mag=.false.
-   l_sp_wf=.false.
-   l_norm_to_one=.true.
-   output_fname=' '
-   plot_title=' '
-   !
-   ! EXC WF
-   !
-   l_spin=.false.
-   l_sort=.false.
-   l_amplitude=.false.
-   ncell = (/1, 1, 1/) 
-   r_hole= (/0.,0.,0./)
-   lambda = 1          
-   state_ctl = '1 - 1'
-   deg_energy =0.01/HARTREE
-   WF_multiplier=1.
-   !
-   !
-   !
-   ! BZ grids
-   !
-   coo_in="iku"
-   coo_out="rlu"
-   Kgw_1=0.
-   qlong= 0.0_SP
-   PtsPath= ' '
-   N_path_pts=0
-   !
-   !
  endif
+ !
+ ! DEFAULTS
+ ! ======== 
+ !
+ ! DOS
+ !
+ l_dos=.false.
+ dos_broadening=0.1/HARTREE
+ dos_bands=n_bands
+ !
+ ! PLOT
+ !
+ p_dir      ='1'
+ mag_dir    ='X'
+ p_format   ='g'
+ wf_ng      =ng_vec
+ l_exc_wf=.false.
+ l_density=.false.
+ l_mag=.false.
+ l_sp_wf=.false.
+ l_norm_to_one=.true.
+ output_fname=' '
+ plot_title=' '
+ !
+ ! EXC WF
+ !
+ l_spin=.false.
+ l_sort=.false.
+ l_amplitude=.false.
+ ncell = (/1, 1, 1/) 
+ r_hole= (/0.,0.,0./)
+ lambda = 1          
+ state_ctl = '1 - 1'
+ deg_energy =0.01/HARTREE
+ WF_multiplier=1.
+ !
+ !
+ !
+ ! BZ grids
+ !
+ coo_in="iku"
+ coo_out="rlu"
+ Kgw_1=0.
+ qlong= 0.0_SP
+ PtsPath= ' '
+ N_path_pts=0
+ alat_used_for_output=alat(1)
+ !
+ !
+ ! DATABASES 
+ !===========
+ !
  !
  ! Defaults->Defs + Initialization
  !
@@ -107,7 +119,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (file_exists(trim(infile))) call infile_dump()
  !
- !RunLevels on
+ ! RunLevels on
  !
  call string_split(instr,rstr_piece)
  do i1=1,50
@@ -118,8 +130,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    ! Verbosity
    !
-   if ( trim(rstr_piece(i1)) == 'infver' )  read(rstr_piece(i1+1),*) infile_verbosity
-   if (infile_verbosity<0) infile_verbosity=0
+   if (i1<50) then
+     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
+     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='qp' )  infile_verbosity=V_qp
+   endif
    !
    do i2=1,nrnlvls
      if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) then
@@ -148,7 +162,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'electrons') then
        !
        l_density        =trim(rstr_piece(i1+1))=='d'
+       l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
+       !
        !
        !
        !
@@ -161,16 +177,20 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_density)        call initactivate(1,'density')
        if (l_sort)           infile_editing=.false.
      endif
+     if ( trim(rstr_piece(i1)) == 'phonons'.or. trim(rstr_piece(i1)) == 'electrons') then
+       if (l_dos)            call initactivate(1,'dos')
+     endif
    enddo
  enddo
  !
- if (.not.l_sort) call call_init_load('parserload')
+ if (.not.l_sort.and..not.l_atomic_amplitude) call call_init_load('parserload')
  !
  l_bz_grids  = runlevel_is_on('bzgrids')
  l_k_grid    = runlevel_is_on('K_grid')
  l_q_grid    = runlevel_is_on('Q_grid')
  l_long_grid = runlevel_is_on('Long_Gauge')
  l_high_sym_pts = runlevel_is_on('High_Symm')
+ l_dos       =runlevel_is_on('dos')
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
@@ -198,6 +218,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
  !
+ if (l_electrons.and.l_dos) then
+    if(l_dos) call QP_ctl_switch('G')
+    call initactivate(1,"DOS_broad DOS_bands")
+ endif
+ !
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs") 
    if (l_sp_wf) call initactivate(1,"Degen_Step")  
@@ -212,7 +237,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    if (l_spin) call initactivate(1,"Degen_Step")
  endif
  !
-
+ !
  !
  if (infile_editing) then
    open(unit=12,file=trim(infile))

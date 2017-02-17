@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,
@@ -28,7 +28,7 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
  use pars,          ONLY:SP,pi
  use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
  use R_lattice,     ONLY:b,g_vec,bz_samp
- use D_lattice,     ONLY:n_atom_species,atom_pos,n_atoms
+ use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_comp_max,pp_n_l_comp,pp_kbs,pp_kb,pp_kbd
  use wave_func,     ONLY:wf,wf_ng
  implicit none
@@ -40,7 +40,7 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
  !
  integer     :: ig,igm,i1,is,ia,il,im
  complex(SP) :: Ylm(pp_n_l_comp_max,2*pp_n_l_comp_max+1),&
-&               dYlm(2,pp_n_l_comp_max,2*pp_n_l_comp_max+1),c1(n_atom_species),c2(4)
+&               dYlm(2,pp_n_l_comp_max,2*pp_n_l_comp_max+1),c1(n_atomic_species),c2(4)
  real(SP)    :: Ygrad(2,3),v1(3),v2(3),r1,r2
 
  kbv=(0._SP,0._SP)
@@ -52,8 +52,8 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
    r1=v_norm(v1)
    call Dipole_kb_Ylm(Ylm,dYlm,Ygrad,pp_n_l_comp_max,v1)
    i1=0
-   do is = 1,n_atom_species
-     do ia = 1,n_atoms(is)
+   do is = 1,n_atomic_species
+     do ia = 1,n_atoms_species(is)
        r2 = dot_product(v2,atom_pos(:,ia,is))
        c1(is) = cmplx(cos(r2),sin(r2))
        do il = 1, pp_n_l_comp(is)

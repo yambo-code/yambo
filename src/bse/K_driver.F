@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -95,6 +95,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
  endif
  !
+ if (l_td_hf) then
+   !
+   ! In TDHF correlation is replaced with the (d)iagonal bare W
+   !
+   BS_res_mode=trim( string_add(BS_res_mode,'d') )
+   if (index(BS_cpl_mode,'c')/=0) BS_res_mode=trim( string_add(BS_res_mode,'d') ) 
+ endif
  !
  ! Logicals (Drivers)
  !
@@ -129,7 +136,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! defines %n(2) and the memory allocation of the kernel
  !
  W_bss%per_memstps=FXC_per_memstps
- call freqs_setup(W_bss)
+ call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n(2)
  !
  ! KERNEL

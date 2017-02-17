@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 D. Varsano and the YAMBO team 
+! Copyright (C) 2000-2010 D. Varsano and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -26,7 +26,7 @@ subroutine cutoff_cylinder(q,is_cut)
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,cyl_length,cyl_cut,g_vec,&
 &                        bz_samp,cyl_vr_save,cyl_vz_save
- use par_proc_m,    ONLY:pp_indexes,myid,pp_indexes_reset
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
@@ -47,7 +47,7 @@ subroutine cutoff_cylinder(q,is_cut)
 #else
  real(SP),  external    ::BESJ1
 #endif
- real(SP),  external    ::bessel_F2,bessel_F3,bessel_F4,bessel_F5,bessel_F6,bessel_J0
+ real(SP),  external    ::bessel_F2,bessel_F3,bessel_F4,bessel_F5,bessel_F6
  real(SP),  allocatable ::work(:),work2(:)
  integer,   allocatable ::iwork(:),iwork2(:)
  type(pp_indexes) ::px
@@ -89,7 +89,7 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  call par_indexes(px,(/q%nibz,wf_ng/))
  !
- call live_timing('Cylinder',px%stps(myid+1))
+ call live_timing('Cylinder',px%n_of_element_1D(myid+1))
  !
  ! finite cylinder
  !
@@ -105,7 +105,7 @@ subroutine cutoff_cylinder(q,is_cut)
    allocate (iwork2(leniw),work2(lenw2))
    do ig=1,wf_ng
      do iq=1,q%nibz
-       if (.not.px%i2p(iq,ig)) cycle
+       if (.not.px%element_2D(iq,ig)) cycle
        cyl_vz_save=(q%pt(iq,ipar)+g_vec(ig,ipar) )*2.*pi/alat(ipar)
        cyl_vr_save=sqrt(((q%pt(iq,iort1)+g_vec(ig,iort1))*2.*pi/alat(iort1))**2+&
 &            ((q%pt(iq,iort2)+g_vec(ig,iort2))*2.*pi/alat(iort2))**2)
@@ -158,7 +158,7 @@ subroutine cutoff_cylinder(q,is_cut)
    allocate (iwork(limit),work(lenw))
    do ig=1,wf_ng
      do iq=1,q%nibz
-       if (.not.px%i2p(iq,ig)) cycle
+       if (.not.px%element_2D(iq,ig)) cycle
        cyl_vz_save=(q%pt(iq,ipar)+g_vec(ig,ipar) )*2.*pi/alat(ipar)
        cyl_vr_save=sqrt(((q%pt(iq,iort1)+g_vec(ig,iort1))*2.*pi/alat(iort1))**2+&
 &                 ((q%pt(iq,iort2)+g_vec(ig,iort2))*2.*pi/alat(iort2))**2)
@@ -183,6 +183,10 @@ subroutine cutoff_cylinder(q,is_cut)
    enddo
    deallocate(iwork,work)
  endif
+ !
+ ! MPI 2 all
+ !
+ call pp_redux_wait(V_cut)
  !
  V_cut(1,1)=0.5*(-cyl_cut2+cyl_cut*sqrt(cyl_cut2+cyl_ph_radius2)+&
 &           cyl_ph_radius2*log((cyl_cut+sqrt(cyl_cut2+cyl_ph_radius2))/&

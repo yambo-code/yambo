@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -44,7 +44,15 @@ module wave_func
  integer                :: wf_ng
  character(1)           :: wf_space
  complex(SP),allocatable:: wf(:,:)
+ !
+ ! Wave function derivatives
+ !
+ complex(SP), allocatable :: wf_x(:,:)
+ complex(SP), allocatable :: wf_y(:,:)
+ complex(SP), allocatable :: wf_z(:,:)
+ !
  integer    ,allocatable:: wf_state(:,:,:)
+ !
  !
  ! Num. of COMPONENTS at each k
  !
@@ -55,7 +63,10 @@ module wave_func
  integer    ,allocatable:: wf_igk(:,:)
  logical                :: wf_norm_test
  !
- logical, private       :: QUIET_
+ ! Allocation/deallocation messaging verbosity
+ !
+ logical                :: QUIET_free
+ logical                :: QUIET_alloc
  !
  interface
    !
@@ -65,12 +76,13 @@ module wave_func
      real(SP), optional :: wf(:,:,:,:)
    end function 
    !
-   subroutine wf_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     spins_to_load,space,title)
+   subroutine WF_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
+&                     spins_to_load,space,title,impose_free_and_alloc)
      integer :: iG_max,iGo_max,bands_to_load(2),&
 &               kpts_to_load(2)
      integer,     optional :: spins_to_load(2)
      character(*),optional :: space,title
+     logical     ,optional :: impose_free_and_alloc
    end subroutine
    !
  end interface 
@@ -82,7 +94,9 @@ module wave_func
      use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
      integer :: err
      !
+     !
      wf_n_states=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
+     !
      !
      if (wf_space=="R") allocate(wf(fft_size,wf_n_states),stat=err)
      if (wf_space=="G") allocate(wf(wf_ng,wf_n_states),stat=err)
@@ -90,9 +104,7 @@ module wave_func
      !
      if (err==0) allocate(wf_state(wf_b(2),wf_k(2),wf_s(2)),stat=err)
      !
-     QUIET_=.false.
-     !
-     call mem_est('WF',(/size(wf)/),quiet=QUIET_,errors=(/err/))
+     call mem_est('WF',(/size(wf)/),errors=(/err/))
      !
      wf=(0.,0.)
      wf_state=0
@@ -106,9 +118,8 @@ module wave_func
      use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
   &                       fft_rot_r,fftw_plan,fft_multiplier
      if (.not.allocated(wf)) return
-     QUIET_=.false.
      !
-     call mem_est('WF',quiet=QUIET_)
+     call mem_est('WF',quiet=QUIET_free)
      !
      deallocate(wf,wf_state)
      if (wf_space=="R") then
@@ -128,5 +139,37 @@ module wave_func
      wf_s=0
      wf_space=' '
    end subroutine
-   ! 
+   !
+   subroutine WF_derivative_alloc(cart_direction)
+     use memory_m, ONLY : mem_est
+     use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
+     logical  :: cart_direction(3)
+     !
+     if(cart_direction(1)) then
+       allocate(wf_x(fft_size,wf_n_states))
+       call mem_est("WF_x",(/fft_size*wf_n_states/),quiet=QUIET_alloc)
+       wf_x=(0.,0.)
+     endif
+     if(cart_direction(2)) then
+       allocate(wf_y(fft_size,wf_n_states))
+       call mem_est("WF_y",(/fft_size*wf_n_states/),quiet=QUIET_alloc)
+       wf_y=(0.,0.)
+     endif
+     if(cart_direction(3)) then
+       allocate(wf_z(fft_size,wf_n_states))
+       call mem_est("WF_z",(/fft_size*wf_n_states/),quiet=QUIET_alloc)
+       wf_z=(0.,0.)
+     endif
+   end subroutine
+   !
+   subroutine WF_derivative_free()
+     use memory_m, ONLY : mem_est
+       !
+       if(allocated(wf_x)) deallocate(wf_x)
+       if(allocated(wf_y)) deallocate(wf_y)
+       if(allocated(wf_z)) deallocate(wf_z)
+       call mem_est("WF_x WF_y WF_z",quiet=QUIET_free)
+       !
+   end subroutine
+   !
 end module

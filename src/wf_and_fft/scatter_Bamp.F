@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,7 +21,7 @@
 !
 subroutine scatterBamp(isc)
  !
- ! rhotw(G)=<ib ik_is i_sp| e^[I(Rs(G-G0)).r] | ob ok_os o_sp>   
+ ! rhotw(G)=<ib ik_is i_sp| e^[I(RsG-G0).r] | ob ok_os o_sp>   
  !
  !  is(3)=(ib,ik,is,i_sp) --<--:--<-- os(3)=(ob,ok,os,o_sp)
  !                             :
@@ -31,7 +31,7 @@ subroutine scatterBamp(isc)
  !                     \:/
  ! REMEMBER that     ->-:->-  =  conjg [-<-:-<-]
  !                                        /:\
- !  iq_is = ik_is-ok_os + Go
+ !  iq_is = ik_is-ok_os-Go
  !
  use pars,           ONLY:DP
  use electrons,      ONLY:n_spinor
@@ -84,6 +84,7 @@ subroutine scatterBamp(isc)
    !
    ifft=wf_state(ib,ik,i_sp+i_spr-1)
    offt=wf_state(ob,ok,o_sp+i_spr-1)
+   !
    !
    rho_tw_rs(:,i_spr)=wf(fft_rot_r(is,:),ifft)
    if (.not.litr) rho_tw_rs(:,i_spr)=conjg(rho_tw_rs(:,i_spr))

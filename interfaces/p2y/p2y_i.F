@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2010 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,10 +28,8 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use memory_m,            only : mem_est
  use com,                 only : msg,write_to_report,core_io_path, error
  use par_proc_m,          only : ncpu,myid,p_finalize
- use electrons,           only : levels,E_reset,n_bands, n_spin, n_sp_pol
- use D_lattice,           only : n_atoms_max
+ use electrons,           only : levels,E_reset,n_bands, n_spin
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
- use timing,              only : live_timing_is_on
  use wave_func,           only : wf_ncx,ioWF, wf_nb_io_groups,wf_nb_io
  use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           only : interface_presets,force_noWFs
@@ -49,9 +47,9 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  character(ijs),   intent(in) :: js
  character(icd),   intent(in) :: com_dir   
  !
- character(lchlen) :: index_filename, lch
- integer           :: ID,io_err,ioPP_err,ik,icycle, ib_grp
- integer, external :: ioDB1,ioKB_PP
+ character(lchlen) :: lch
+ integer           :: ID,io_err,ik, ib_grp
+ integer, external :: ioDB1
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  ! Presets
@@ -66,12 +64,11 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  ! S/N
  !
- serial_number=pickup_a_random(10000.)
+ serial_number=pickup_a_random(10000._SP)
  !
  ! Switch off report file support
  !
  write_to_report=.FALSE.
- !live_timing_is_on=.FALSE.
  !
 #if defined _P2Y_EXPORT
  call section('*','P(W) 2 Y(ambo) - pw_export.x version')
@@ -134,7 +131,7 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    ! Print verbose wfc read message
    !
    if(verboseIO.and.(any( (/1,2,nkibz/)-ik.eq.0 ) &
-&  .or.mod(ik,k%nibz/4).eq.0)) then
+&  .or.mod(ik,max(k%nibz/4,1)).eq.0)) then
      write(lch,'(" :: K-point:",i5,"/",i5," Spinors ",i1)') ik,nkibz,n_spin
      call msg('s',trim(lch))
    endif

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini & M. Bruno and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini & M. Bruno and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -143,6 +143,7 @@ module matrix_operate
    subroutine mat_dia_inv(idriver,lib_in,M,blt,V_left,V_right,&
 &                         E_real,E_cmpl,SVD_digits,fill)
      !
+     use wrapper,     ONLY:M_by_M
      use pars,        ONLY:SP
      use par_proc_m,  ONLY:pp_redux_wait,ncpu,myid
      integer                :: idriver,lib_in
@@ -194,7 +195,7 @@ module matrix_operate
      ! Decide which to use among LK or SLK
      !
      if (ncpu==1.or.M_size/ncpu<min_cpu_block_size) lib_in_use=USE_LK 
-#if ! defined _SLK
+#if ! defined _SCALAPACK
      lib_in_use=USE_LK
 #endif
      !
@@ -234,11 +235,9 @@ module matrix_operate
            VH(i1,:)=VH(i1,:)/SV(i1)
          endif
        enddo
-#if defined _DOUBLE
-       call zgemm('c','c',M_size,M_size,M_size,(1._SP,0._SP),VH,M_size,U,M_size,(0._SP,0._SP),M,M_size)
-#else
-       call cgemm('c','c',M_size,M_size,M_size,(1._SP,0._SP),VH,M_size,U,M_size,(0._SP,0._SP),M,M_size)
-#endif
+       !
+       call M_by_M('c','c',M_size,VH,U,M)
+       !
        deallocate(r_WK,SV,U,VH,work)
        !
        return
@@ -346,7 +345,7 @@ module matrix_operate
        return
      endif
      !
-#if defined _SLK
+#if defined _SCALAPACK
      !
      ! =============== PARALLEL SECTION ===============
      !
@@ -471,7 +470,7 @@ module matrix_operate
        !Release the proc grid and the BLACS library
        !
        call blacs_gridexit(iblt%ictxt)
-       call blacs_exit(1)
+       !
      endif
      !
 #endif

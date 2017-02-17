@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -48,9 +48,9 @@ module R_lattice
  real(SP),allocatable :: q_norm(:)
  type bz_samp
    integer           :: nibz,nbz
-   integer, pointer  :: nstar(:)
-   integer, pointer  :: star(:,:)
-   integer, pointer  :: sstar(:,:)
+   integer,  pointer :: nstar(:)
+   integer,  pointer :: star(:,:)
+   integer,  pointer :: sstar(:,:)
    real(SP), pointer :: pt(:,:)
    real(SP), pointer :: ptbz(:,:)
    real(SP), pointer :: weights(:)

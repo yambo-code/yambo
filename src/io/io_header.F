@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,15 +19,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
+integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF)
  !
  use pars,          ONLY:SP,schlen,lchlen
- use units,         ONLY:HARTREE
+ use units,         ONLY:HARTREE,Kelvin
  use drivers,       ONLY:list_dbs
  use LOGO,          ONLY:code_version,code_revision
  use com,           ONLY:msg,warning
  use stderr,        ONLY:string_split
- use D_lattice,     ONLY:Tel,a,alat,input_Tel_fixed
+ use D_lattice,     ONLY:Tel,a,alat,input_Tel_commands_over_header,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt
  use wave_func,     ONLY:wf_ng
@@ -35,24 +35,24 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  use IO_m,          ONLY:io_elemental,io_bulk,io_code_version,io_status,&
 &                        read_is_on,write_is_on,serial_number,&
 &                        io_serial_number,io_file,io_com,io_mode,&
-&                        DUMP,VERIFY,NONE,io_fragmented,dbs_fragment,&
+&                        DUMP,VERIFY,NONE,io_fragmented,Fragmented_IO,&
 &                        ver_is_gt_or_eq,db_alat,io_code_revision
  use zeros,         ONLY:define_zeros
- use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,WF_global_xc_string,&
-&                              G_WF_xc_string,X_WF_xc_string,K_WF_xc_string
+ use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,loaded_WF_xc_string,&
+&                        G_WF_xc_string,X_WF_xc_string,K_WF_xc_string
  !
  implicit none
  integer               :: ID
- logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT
+ logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF
  character(*),optional :: XC_KIND
  !
  ! Work Space
  !
  integer             :: i1,nqibz_disk,nkibz_disk,R_LATT_vec(4),&
-&                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2)
+&                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2),VAR_SZ
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
-&                       save_Tel
+&                       save_Tel(2)
  logical             :: WARN,xc_kind_force
  character(schlen)   :: xc_string_kinds(10)
  !
@@ -71,7 +71,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  if (io_mode(ID)==DUMP) io_mode(ID)=VERIFY
  !
  call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=0)
- call io_elemental(ID,DB_L0=io_fragmented(ID),L0=dbs_fragment)
+ call io_elemental(ID,DB_L0=io_fragmented(ID),L0=Fragmented_IO)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call io_elemental(ID,VAR="HEAD_VERSION",VAR_SZ=3,MENU=0)
@@ -103,7 +103,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
      if (IMPOSE_SN) then
        io_header=-1
        if (io_com(ID)/=NONE) &
-&        call msg('sr','Incompatible serial number for '//trim(io_file(ID)))
+&        call warning('Incompatible serial number for '//trim(io_file(ID)))
        goto 1
      endif
    endif
@@ -118,7 +118,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
    if (SPIN_vec_disk(1)/=n_sp_pol.or.SPIN_vec_disk(2)/=n_spinor) then
      io_header=-1
      if (io_com(ID)/=NONE) &
-&      call msg('sr','Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
+&      call warning('Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
      goto 1
    endif
  endif
@@ -220,6 +220,9 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
    deallocate(l_pt)
  endif
  !
+ ! Cutoff
+ !
+ !
  ! Things that can be dumped
  !===========================
  !
@@ -229,14 +232,27 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
    !
    io_mode(ID)=MODE
    !
-   call io_elemental(ID,VAR="T_EL",VAR_SZ=1,MENU=MENU)
-   MENU=0
-   save_Tel=Tel
-   call io_elemental(ID,R0=Tel,&
-&       VAR=' Electronic Temperature       [ev]:',UNIT=HARTREE,WARN=WARN,OP=(/"=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   save_Tel=(/Tel,Bose_Temp/)
+   if (ver_is_gt_or_eq(ID,revision=527).or.write_is_on(ID)) then
+     call io_elemental(ID,VAR="TEMPERATURES",VAR_SZ=2,MENU=MENU)
+     MENU=0
+     call io_elemental(ID,R0=Tel,&
+&         VAR=' Electronic Temperature        [K]:',UNIT=Kelvin,WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,R0=Bose_Temp,&
+&         VAR=' Bosonic    Temperature        [K]:',UNIT=Kelvin,WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   else
+     call io_elemental(ID,VAR="T_EL",VAR_SZ=1,MENU=MENU)
+     MENU=0
+     call io_elemental(ID,R0=Tel,&
+&         VAR=' Electronic Temperature        [K]:',UNIT=Kelvin,WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
    !
-   if (input_Tel_fixed) Tel=save_Tel
+   if (input_Tel_commands_over_header) then
+     Tel      =save_Tel(1)
+     Bose_Temp=save_Tel(2)
+   endif
    !
    io_header=io_status(ID)
    if (io_header/=0) goto 1
@@ -311,13 +327,17 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
      call io_elemental(ID,VAR=VAR_//'_wavefunctions_xc_KIND',CH0="",VAR_SZ=1,MENU=MENU)
      MENU=0
      if (read_is_on(ID)) then
-       if (xc_kind_force) then
-         call io_elemental(ID,CH0=string_,VAR=desc_,CHECK=WARN,OP=(/"=="/))
+       if (IO_mode(ID)==DUMP) then
+         call io_elemental(ID,CH0=string_,VAR=desc_)
        else
-         call io_elemental(ID,CH0=string_,VAR=desc_,WARN=WARN,OP=(/"=="/))
+         if (xc_kind_force) then
+           call io_elemental(ID,DB_CH0=string_,CH0=loaded_WF_xc_string,VAR=desc_,CHECK=WARN,OP=(/"=="/),DO_NOT_DUMP=.TRUE.)
+         else
+           call io_elemental(ID,DB_CH0=string_,CH0=loaded_WF_xc_string,VAR=desc_,WARN=WARN,OP=(/"=="/),DO_NOT_DUMP=.TRUE.)
+         endif
        endif
      else
-       call io_elemental(ID,CH0=WF_global_xc_string,VAR=desc_,WARN=WARN,OP=(/"=="/))
+       call io_elemental(ID,CH0=loaded_WF_xc_string,VAR=desc_,WARN=WARN,OP=(/"=="/))
      endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -63,7 +63,7 @@ module timing
      character(5) :: cz
      character(8) :: cd
      character(10):: ctz
-     character(schlen) :: host_name
+     character(lchlen) :: host_name
      integer           :: hn_len
      !
      if (present(dt_in)) then
@@ -373,9 +373,12 @@ module timing
      call cclock(tcpu)      
 #endif 
 #if defined _linux 
-     real(SP) tmp(2) 
+     real(4) tmp(2) 
      real(DP) etime
      tcpu=etime(tmp)
+#endif
+#if defined _apple
+     call cpu_time(tcpu)
 #endif
 #if defined _ibm || defined _aix || defined _ppc_linux
      integer :: mclock

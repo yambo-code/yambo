@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2010 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -66,8 +66,13 @@ AC_REQUIRE([AC_CANONICAL_HOST])
 AC_MSG_CHECKING([if the current OS is supported])
 TIMER="ct_cclock.o"
 case "${host}" in
- i?86*linux* | ia64*linux* | *x86*64* | *86*apple* | *86*cygwin )
+ i?86*linux* | ia64*linux* | *x86*64* | *86*cygwin )
    build_os="linux"
+   TIMER="ct_etime.o"
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
+   ;;
+ *86*apple* )
+   build_os="apple"
    TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
@@ -112,156 +117,6 @@ AC_SUBST(AR)
 AC_SUBST(AR_FLAGS)
 ])
 
-################################################
-# Set FC FLAGS
-# ----------------------------------
-AC_DEFUN([ACX_FCSETUP],
-[
-AC_REQUIRE([AC_CANONICAL_HOST])
-
-if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
-
-if test -z "${FCFLAGS}"; then
-  case "${host}" in
-  i?86*linux*)
-    case "${FC}" in
-    *pgf90*)
-      FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-      UFFLAGS="-O0"
-      FCMFLAG="-Mnomain"
-      ;;
-    *abf90*)
-      FCFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
-      ;;
-    *ifc*)
-      FCFLAGS="-O3 -w -tpp7"
-      UFFLAGS="-O0 -w -tpp7"
-      FCMFLAG=""
-      ;;
-    *g95*)
-      FCFLAGS="-O3 -fbackslash -fno-second-underscore -mtune=pentium4"
-      UFFLAGS="-O0 -fbackslash -fno-second-underscore"
-      FCMFLAG=""
-      ;;
-    *ifort*)
-      CPU_FLAG=""
-      case "${FCVERSION}" in
-        *1*)
-         CPU_FLAG="-xW"
-         ;;
-        *)
-         CPU_FLAG="-tpp7"
-         ;;
-      esac
-      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
-      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
-      FCMFLAG="-nofor_main"
-    ;;
-    *)
-      FCFLAGS="-O"
-    esac
-   ;;
-  *86*apple* )
-    case "${FC}" in
-    *g95*)
-      FCFLAGS="-O3 -fno-second-underscore -mtune=pentium4"
-      UFFLAGS="-O0 -fno-second-underscore"
-      FCMFLAG=""
-      ;;
-    *ifort*)
-      CPU_FLAG=""
-      case "${FCVERSION}" in
-        *1*)
-         CPU_FLAG="-mtune=pentium4"
-         ;;
-        *)
-         CPU_FLAG="-mtune=pentium4"
-         ;;
-      esac
-      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
-      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
-      FCMFLAG="-nofor_main"
-      ;;
-    *)
-      FCFLAGS="-O"
-    esac
-    ;;
-  ia64*linux* | *x86*64* )
-    case "${FC}" in
-    *pgf90*)
-      FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-      FCMFLAG="-Mnomain"
-      ;;
-    *abf90*)
-      FCFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
-      ;;
-    *ifc*)
-      FCFLAGS="-O3 -w -tpp2"
-      UFFLAGS="-O0 -w -tpp2"
-      ;;
-    *ifort*)
-      CPU_FLAG=""
-      case "${FCVERSION}" in
-        *1*)
-         CPU_FLAG="-xW"
-         ;;
-        *)
-         CPU_FLAG="-tpp7"
-         ;;
-      esac
-      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
-      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
-      FCMFLAG="-nofor_main"
-      ;;
-    *)
-      FCFLAGS="-O"
-    esac
-    ;;
-  alphaev*)
-    FCFLAGS="-O3 -arch host -tune host"
-    UFFLAGS="-O0"
-    FCMFLAG="-nofor_main"
-    ;;
-  powerpc64*linux* )
-    CFLAGS="-q64 -O2"
-    FCFLAGS="-q64 -O3 -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"
-    UFFLAGS="-q64 -O0"
-    ;;
-  powerpc-ibm* )
-    CFLAGS="-O -q64"
-    FCFLAGS="-O3 -q64 -qstrict -qarch=pwr5 -qtune=pwr5 -qmaxmem=-1"
-    UFFLAGS="-q64"
-    ;;
-  mips-sgi-irix*)
-    FCFLAGS="-O3 -r10000 -mips4"
-    ;;
-  *)
-    FCFLAGS="-O"
-  esac
-else
-  case "${FC}" in
-  *pgf90*)
-    FCMFLAG="-Mnomain"
-    ;;
-  *ifort*)
-    FCMFLAG="-nofor_main"
-  esac
-fi
-AC_MSG_CHECKING([for specific $FC flags])
-AC_MSG_RESULT([$FCFLAGS])
-AC_MSG_CHECKING([for specific $CC flags])
-AC_MSG_RESULT([$CFLAGS])
-if ! test "$UFFLAGS" = ""; then 
- AC_MSG_CHECKING([for unoptimized flags])
- AC_MSG_RESULT([$UFFLAGS])
-fi
-FCUFLAGS=$UFFLAGS
-AC_SUBST(CFLAGS)
-AC_SUBST(FCFLAGS)
-AC_SUBST(FCUFLAGS)
-AC_SUBST(UFFLAGS)
-AC_SUBST(FCMFLAG)
-])
 
 ################################################
 # Get External C routines naming scheme

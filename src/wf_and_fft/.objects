@@ -4,4 +4,4 @@ FFT_object =
 FFT_object = sgfft.o
 #endif
 objs = fft_setup.o fft_3d.o $(FFT_object)  \
-       scatter_Bamp.o scatter_Gamp.o space_inv_by_wf.o wf_load.o
+       scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o WF_load.o

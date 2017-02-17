@@ -1,1 +1,1 @@
-objs = acknowledge_yambo.o fermi_msg.o section.o job_setup.o report_energies.o
+objs = acknowledge_yambo.o REPORT_Occupations.o section.o REPORT_Energies.o

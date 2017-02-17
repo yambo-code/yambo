@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,7 +21,8 @@
 !
 subroutine ypp_init_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_more,Time_unit
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
+&                        Time_unit,Bfield_unit,Efield_unit
  use wave_func,     ONLY:wf_ng
  use YPP
  implicit none
@@ -32,6 +33,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'bzgrids',   '[R] BZ Grid') 
  call it('r',defs,'K_grid',    '[R] K-grid analysis') 
  call it('r',defs,'Q_grid',    '[R] Q-grid analysis') 
+ call it('r',defs,'dos',       '[R] DOS')
  !
  !
  call it('r',defs,'High_Symm', '[R] High_Symmetry points and paths') 
@@ -44,10 +46,16 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'wavefunction', '[R] Wavefunction')
  !
  !
+ ! DOS
+ !
+ call it(defs,'DOS_broad', 'Broadening of the DOS',dos_broadening,E_unit) 
+ call it(defs,'DOS_bands', 'DOS bands',dos_bands) 
+ call QP_ctl_load(defs,3)
+ !
  ! BZ grids
  !
- call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku',coo_in)
- call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku',coo_out)
+ call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku/alat',coo_in)
+ call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
  call it(defs,'GWKpts','GW K-point grid',Kgw_1)
  call it(defs,'Qpts',  'Q-point grid',   Kgw_1)
  call it(defs,'KShift1','K-grid shift vector[1] ',qlong(1,:))
@@ -66,7 +74,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
- call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_more)
+ call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
+ !
  !
  ! PLOT
  !

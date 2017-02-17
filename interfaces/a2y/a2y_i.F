@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -26,8 +26,8 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use LOGO,                ONLY:pickup_a_random
  use com,                 ONLY:msg,write_to_report,core_io_path
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
- use electrons,           ONLY:levels,E_reset,n_bands,n_spin
- use D_lattice,           ONLY:n_atoms_max
+ use electrons,           ONLY:levels,E_reset,n_spin
+ use D_lattice,           ONLY:n_atoms_species_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
@@ -47,7 +47,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen) :: KSS_file_name
- integer           :: ID,io_err,ioPP_err,ik,icycle,ib_grp
+ integer           :: ID,io_err,ik,ib_grp
  integer,     external :: a2y_KSS_file_name,ioDB1,ioKB_PP
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
@@ -63,7 +63,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  ! S/N
  !
- serial_number=pickup_a_random(10000.)
+ serial_number=pickup_a_random(10000._SP)
  !
  ! Switch off report file support
  !
@@ -105,13 +105,14 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call msg('s','== DB2 + nlPP ...')
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+ !
  do ik=1,nkibz
    !
    do ib_grp=1,wf_nb_io_groups
      !
      call a2y_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
      !
-     if (n_atoms_max>0.and.ib_grp==1) then
+     if (n_atoms_species_max>0.and.ib_grp==1) then
        if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
        if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
        io_err=ioKB_PP(ID)

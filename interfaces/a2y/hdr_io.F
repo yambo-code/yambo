@@ -288,10 +288,6 @@
   allocate(hdr%znuclpsp(npsp))
   allocate(hdr%znucltypat(ntypat))
 
-!DEBUG
-! write(6,*)' hdr_io : after allocate '
-!ENDDEBUG
-
 ! Reading the third record of the file ------------------------------------
 
 ! Initialize the values that are not present for all versions

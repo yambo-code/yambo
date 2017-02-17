@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,7 +23,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  !
  use pars,          ONLY:SP,schlen,pi
  use vec_operate,   ONLY:v_norm
- use D_lattice,     ONLY:alat,sop_inv,DL_vol,a
+ use D_lattice,     ONLY:alat,sop_inv,a,DL_vol
  use R_lattice,     ONLY:bz_samp,cyl_ph_radius,bare_qpg,cyl_length,box_length,&
 &                        g_vec,g_rot
  use wave_func,     ONLY:wf_ng
@@ -109,11 +109,11 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  call k_ibz2bz(q,'i',.true.)
  !
  call par_indexes(px,(/n_dl_pts**2/))
- call live_timing('CutOff Test',px%stps(myid+1))
+ call live_timing('CutOff Test',px%n_of_element_1D(myid+1))
  !
  do ip=1,n_dl_pts**2
    !
-   if (.not.px%i1p(ip)) cycle 
+   if (.not.px%element_1D(ip)) cycle 
    !
    do iqbz=1,q%nbz
      do ig=1,wf_ng
@@ -134,9 +134,9 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
      !
    enddo
    !
-   v_xy(ip,2)=v_xy(ip,2)/Dl_vol/real(q%nbz)
-   v_yz(ip,2)=v_yz(ip,2)/Dl_vol/real(q%nbz)
-   v_xz(ip,2)=v_xz(ip,2)/Dl_vol/real(q%nbz)
+   v_xy(ip,2)=v_xy(ip,2)/DL_vol/real(q%nbz)
+   v_yz(ip,2)=v_yz(ip,2)/DL_vol/real(q%nbz)
+   v_xz(ip,2)=v_xz(ip,2)/DL_vol/real(q%nbz)
    !
    call live_timing(steps=1)
    !

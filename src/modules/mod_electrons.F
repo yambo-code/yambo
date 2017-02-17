@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -47,6 +47,13 @@ module electrons
  integer  :: n_spinor
  logical  :: spin_orbit
  !
+ ! Boltzmann occupations
+ !
+ real(SP)          :: Boltz_Efield(3)
+ real(SP)          :: Boltz_tau
+ real(SP), pointer :: Boltz_f(:,:,:,:)
+ real(SP), pointer :: Boltz_vel(:,:,:,:)
+ !
  type levels
    integer         :: nb
    integer         :: nk
@@ -55,13 +62,23 @@ module electrons
    integer         :: bf
    integer         :: kf
    integer         :: sf
+   real(SP)        :: Efermi(3)
+   !
+   ! QP corrections
+   !
    integer,pointer :: QP_corrected(:,:,:)
-   real(SP)            :: Efermi(3)
    real(SP),   pointer :: E(:,:,:)
    real(SP),   pointer :: Eo(:,:,:)
    real(SP),   pointer :: f(:,:,:)
    real(SP),   pointer :: W(:,:,:)
    complex(SP),pointer :: Z(:,:,:)
+   !
+   ! Green Functions
+   !
+   logical             :: GreenF_is_causal
+   integer             :: GreenF_n_E_steps
+   complex(SP),pointer :: GreenF_W(:,:,:,:)
+   complex(SP),pointer :: GreenF(:,:,:,:)
    ! 
    ! Fine energy grid
    !  
@@ -77,7 +94,6 @@ module electrons
  integer  :: BZ_RIM_nbands
  integer ,allocatable :: BZ_RIM_nkpt(:)
  integer ,allocatable :: BZ_RIM_table(:,:)
- !
  !
  contains
    !
@@ -156,8 +172,10 @@ module electrons
      E%nbm=0
      E%bf=0
      E%kf=0 
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected)
-     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected")
+     E%GreenF_n_E_steps=0 
+     E%GreenF_is_causal=.FALSE. 
+     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
+     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
      nullify(E%E_RIM,E%f_RIM)
      call mem_est("E_RIM f_RIM")

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -30,14 +30,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use drivers
  use pars,           ONLY:schlen,lchlen
  use units,          ONLY:HARTREE
- use electrons,      ONLY:levels,E_reset
+ use electrons,      ONLY:levels,E_reset,n_sp_pol
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
 &                         switch_off_runlevel
  use par_proc_m,     ONLY:pp_redux_wait,master_cpu
- use com,            ONLY:msg,repfile,com_path,jobstr,&
+ use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use timing,         ONLY:live_timing_is_on,what_is_running
@@ -47,7 +47,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use stderr,         ONLY:tty_size,logfile
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:ioWF
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
+ use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
 &                         BS_eh_en,BS_res_mode,BS_cpl_mode
@@ -64,9 +64,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_err
+&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
-&                     ioXXVXC,ioQP,ioBS,ioDB1,ioKB_PP,&
+&                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
  !
  !
@@ -156,6 +156,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (io_err/=0.or.ioWF_err/=0) then
    init =-1
    return
+ else
+   call mk_dir(more_io_path)
+   call mk_dir(com_path)
+   call mk_dir(trim(core_io_path)//"/SAVE")
+   call mk_dir(trim(more_io_path)//"/SAVE")
  endif
  !
  X(3)%ib=(/1,en%nb/)
@@ -208,7 +213,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! xxvxc
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=ioXXVXC(io_ID) 
+ io_err=io_HF_and_locXC(io_ID) 
  !
  ! QP
  !
@@ -293,12 +298,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp OccTresh More_IO_Path Com_Path')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh More_IO_Path Com_Path')
+ !
  !
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
-&          l_em1s,l_acfdt,l_xxvxc,l_col_cut/))) call initactivate(1,'FFTGvecs')
+&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs')
  !
  !Setup
  !
@@ -316,17 +322,19 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !XX
  !
- if (l_xxvxc) call initactivate(1,'EXXRLvcs SxLowBnd') 
+ if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
+ !
+ !COLLISIONS
+ !
  !
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath')
-   call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
+   call initactivate(1,'LongPath Qdirection QShiftOrder')
+   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
-   !
    !
  endif
  !
@@ -336,7 +344,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('K')
    call initactivate(1,'LongPath')
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
-   call initactivate(1,'BSENGBlk BSENGexx BSEEhEny BSEClmns BSehWind')
+   call initactivate(1,'BSENGBlk BSENGexx ALLGexx BSEEhEny BSEClmns BSehWind')
  endif
  !
  ! Static screen 
@@ -344,18 +352,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_em1s) then
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath')
-   call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
+   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
  endif
  !
- ! GW (PPA & CHOSEX) 
+ ! GW (PPA & COHSEX) 
  !
- if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_chosex)) then
+ if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath')
-   if (l_ppa) call Xon('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
+   if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                      'EhEngy','LongDr','PPAPnt'/))
-   if (l_chosex) call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk',&
+   if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk',&
 &                         'EhEngy','LongDr'/))
  endif
  !
@@ -365,7 +373,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
-   call Xon('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
+   call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
  !
  ! GW/Life
@@ -380,25 +388,26 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
-       if (.not.l_chosex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
-       if (.not.l_ppa.and..not.l_chosex) call Xon('Xd',(/'BndsRn','NGsBlk',&
+       if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
+       if (.not.l_cohsex) call initactivate(1,'dScStep') 
+       if (.not.l_ppa.and..not.l_cohsex) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
-       if (.not.l_chosex) call initactivate(1,'DysSolver')
-       if (     l_chosex) call initactivate(1,'UseEbands')
+       if (.not.l_cohsex) call initactivate(1,'DysSolver')
+       if (     l_cohsex) call initactivate(1,'UseEbands')
        if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GDmRnge') 
+         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
        else
          call initactivate(1,'GWoIter')
-         if (.not.l_chosex) call initactivate(1,'NewtDchk QPreport')
+         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell')
        endif
        !
      endif
      !
      if (l_life) then
        call initactivate(1,'LifeTrCG')
-       if (l_el_corr) call Xon('Xd',(/'BndsRn','NGsBlk',&
+       if (l_el_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                                     'DmRnge','CGrdSp',&
 &                                     'DrudeW','EhEngy','LongDr'/)) 
      endif
@@ -407,6 +416,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
+ ! El-Ph: Frohlich Hamiltonian
+ !
+ !
  ! Optics + BS based TDDFT (BS fxc is only of q=0 0 0)
  !
  if (l_bs_fxc.and.l_optics.and.l_chi) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
@@ -414,10 +426,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ALDA/LRC Tddft
  !
  if (l_alda_fxc.and.&
-&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
+&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/))) &
 &    call initactivate(1,'FxcGRLc')
  if (l_lrc_fxc.and.&
-&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
+&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/))) &
 &    call initactivate(1,'LRC_alpha')
  !
  ! BSE + TDDFT = no BS db, Fxc + LF on-fly
@@ -439,10 +451,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_bss) then
   call QP_ctl_switch('K')
   call initactivate(1,'BoseCut LongPath')
-  call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir WRbsWF')
+  call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
+  if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
+  if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTer')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVdig FxcMEStps FxcCausal')
-  if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipInv FullInv')
+  if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
  endif
  !
  ! DFT
@@ -474,7 +488,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- if ( any((/l_xxvxc,l_gw0,l_life/)).and..not.l_sc_run ) then
+ if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_collisions_IO ) then
    !
    ! The QP_state is read from ioxxvxc in DUMP mode.
    ! If it is not allocated I define it on the basis 
@@ -524,38 +538,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  contains
    !
-   subroutine QP_ctl_switch(what)
-     !
-     use electrons,  ONLY:n_sp_pol
-     !
-     character(1)::what
-     !
-     ! Work Space
-     !
-     call initactivate(1,what//'fnQPdb '//what//'fnQP_N ')
-     if (n_sp_pol==1) then
-       call initactivate(1,what//'fnQP_E '//what//'fnQP_W '//what//'fnQP_Z') 
-     else
-       call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_W '//what//'fnQP_up_Z') 
-       call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_W '//what//'fnQP_dn_Z') 
-     endif
-     !
-   end subroutine
    !
-   !
-   subroutine Xon(mode,what)
-     !
+   subroutine X_activate(mode,what)
      character(2)::mode
      character(6)::what(:)
-     !
      ! Work Space
-     !
-     character(8)::lch
      integer     ::i1
-     !
      do i1=1,size(what,1)
-       write (lch,'(2a)') what(i1),mode
-       call initactivate(1,lch)
+       call initactivate(1,what(i1)//mode)
      enddo
    end subroutine
    !
@@ -580,7 +570,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bse=runlevel_is_on('bse')
        l_rim=runlevel_is_on('rim_cut')
        l_col_cut=runlevel_is_on('rim_cut')
-       l_xxvxc=runlevel_is_on('xxvxc')
+       l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
@@ -588,9 +578,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bss=runlevel_is_on('bss')
        l_alda_fxc=runlevel_is_on('alda_fxc')
        l_lrc_fxc=runlevel_is_on('lrc_fxc')
+       l_td_hf=runlevel_is_on('tdhf')
        !
        !
-       ! 
+       l_cohsex=runlevel_is_on('cohsex')
        ! 
        l_el_corr=l_gw0.or.l_life
        !
@@ -613,6 +604,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call W_duplicate(Xw(3),Xw(2))
      call W_duplicate(Xw(3),Xw(1))
      call W_duplicate(Xw(3),Xw(4))
+     !
    end subroutine X_var_setup
    !
    subroutine varsetup1 
@@ -632,9 +624,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
-     if (l_gw0.and.l_el_corr) call initactivate(1,'xxvxc')
+     if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')
-     if (l_chosex) call initactivate(1,'em1s')
+     if (l_cohsex) call initactivate(1,'em1s')
      if (l_bss)    call initactivate(1,'bse')
      if (l_bss)    call initactivate(1,'l_optics')
      if (l_bse) then
@@ -689,6 +681,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine read_command_line(rstr,init_) 
      !
      use stderr, ONLY:string_split
+     use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
      implicit none
      integer     :: init_
      character(*):: rstr
@@ -732,9 +725,35 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(1, trim(rstr_piece(i1)) )
        !
        ! Verbosity
+       ! V_RL=1
+       ! V_kpt=2
+       ! V_sc=3
+       ! V_qp=4
+       ! V_io=5
+       ! V_general=6
+       ! V_resp=7
+       ! V_real_time=8
        !
-       if ( trim(rstr_piece(i1)) == 'infver' )  read(rstr_piece(i1+1),*) infile_verbosity
-       if (infile_verbosity<0) infile_verbosity=0
+       if ( trim(rstr_piece(i1)) == 'infver' ) then
+         select case (trim(rstr_piece(i1+1)))
+           case ('RL','rl')
+             infile_verbosity=V_RL
+           case ('kpt','k')
+             infile_verbosity=V_kpt
+           case ('sc','SC')
+             infile_verbosity=V_sc
+           case ('QP','qp')
+             infile_verbosity=V_qp
+           case ('IO','io')
+             infile_verbosity=V_io
+           case ('gen')
+             infile_verbosity=V_general
+           case ('resp','X')
+             infile_verbosity=V_resp
+           case ('rt')
+             infile_verbosity=V_real_time
+         end select
+       endif
        !
        ! TDDFT
        !
@@ -757,6 +776,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_chi= trim(rstr_piece(i1+1)) == 'c'
          l_bse= trim(rstr_piece(i1+1)) == 'b'
          !
+         l_td_hf= trim(rstr_piece(i1+1)) == 't'
+         if (l_td_hf) l_bse=.TRUE.
+         if (l_td_hf) call initactivate(1,'tdhf')
          !
          if (.not.l_chi.and..not.l_bse) l_chi=.true.
          if (l_chi) call initactivate(1,'chi')
@@ -784,11 +806,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &            trim(QP_solver)/='g') QP_solver='n'
          l_el_corr=.true.
          !
-         
-         infile_editing=.true.
-         call initactivate(1,'ppa')
-         
-         !
        endif
        !
        ! GW approximation 
@@ -800,6 +817,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            call initactivate(1,'ppa')
          else if (trim(rstr_piece(i1+1))=='c') then
            !
+           infile_editing=.true.
+           call initactivate(1,'cohsex gw0') 
            !
          endif
          !
@@ -812,6 +831,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        !
        ! ELPH
+       !
+       !
+       ! RT
        !
        !
      enddo 

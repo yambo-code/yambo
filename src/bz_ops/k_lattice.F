@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -45,7 +45,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  integer  :: i1,i2,i3,iv(3),ig,N_g_vecs,N_ext_K_pts,k_grid_borders(3,2)
  real(SP) :: v0(3),v1(3),v0_ibz_mod,k_b_m1(3,3)
- real(SP),allocatable ::idist(:),extended_K_points(:,:)
+ real(SP),allocatable ::idist(:),extended_k_points(:,:)
  integer, allocatable ::order(:)
  character(schlen)    ::warn_msg,ch 
  logical  :: small_b_in_UC
@@ -102,7 +102,19 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  allocate(idist(N_ext_K_pts),order(N_ext_K_pts))
  do i1=1,N_ext_K_pts
    v0=extended_k_points(i1,:)
-   idist(i1)=ak2bz(v0)
+   !
+   ! Andrea (5/3/2010): Here I am searching for the smallest
+   ! non linear-dependent vectors of the K grid (shifted in gamma).
+   ! Up to today "smallest" meant in chartesian coordinates. However I want
+   ! to build-up a grid in RLU and in the unlucky case where the smallest in 
+   ! chartesian is not the smallest in RLU the grid will turn out to be not correctly sized.
+   !
+   ! At the moment I cannot judge if this change will or not yield other problems in the case.
+   ! In any case the deep checks in bz_samp_indexes should prevent them.
+   !
+   ! idist(i1)=ak2bz(v0)  <- PREVIOUS CALL 
+   !
+   idist(i1)=v_norm(v0)
    order(i1)=i1
  enddo
  if (N_ext_K_pts>1) call sort(idist,indx=order)
@@ -112,8 +124,10 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  k_grid_b=0.
  do i1=1,N_ext_K_pts
    v0=extended_k_points(order(i1),:)
-   v0_ibz_mod=ak2bz(v0)
-   if (v_norm(v0)<=1.E-5) cycle
+   !
+   v0_ibz_mod=v_norm(v0) 
+   !
+   if (v0_ibz_mod<=1.E-5) cycle
    select case(k_grid_dim)
      case(0)
        k_grid_dim=1
@@ -187,7 +201,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  ! Andrea 31/03/2009. 
  !
  ! I have rewritten more clearly these lines where the
- ! size of the grid is esatbilshed.
+ ! size of the grid is estabilshed.
  !
  k_b_m1(:,1)=k_grid_b(1,:)
  k_b_m1(:,2)=k_grid_b(2,:)
@@ -234,11 +248,13 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
      enddo
      !
    endif
+   !
    if (k_grid(i1)==0) k_grid(i1)=1
    !
    ! Size of the shifted grid (used by bz_samp_indexes)
    ! 
-   k_grid(i1)=sum(iabs(k_grid_borders(i1,:)))+1
+   k_grid(i1)=k_grid_borders(i1,2)-k_grid_borders(i1,1)+1
+   !
  enddo
  !
  ! Reporting

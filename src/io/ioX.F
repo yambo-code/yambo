@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -29,12 +29,13 @@ integer function ioX(X,Xw,ID)
  use X_m,           ONLY:X_t,X_mat,use_X_RIM,X_RLcomp_ig,X_RIM_nkpts
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
-&                        io_elemental,io_status,io_bulk,io_restart,&
-&                        read_is_on,write_is_on,io_check_restart,io_header,&
-&                        io_fragment,RD_CL,RD_CL_IF_END,io_action,&
+&                        io_elemental,io_status,io_bulk,io_restart_point,&
+&                        read_is_on,write_is_on,io_header,&
+&                        RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
-&                        NONE
+&                        NONE,IO_INCOMPATIBLE_VAR
  use stderr,        ONLY:intc
+ use fragments,     ONLY:io_fragment,Fragments_Restart
  implicit none
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -43,7 +44,7 @@ integer function ioX(X,Xw,ID)
  !Work Space
  !
  integer             ::sec_size,i1,iq,i_err,io_com_save
- logical             ::different_db_RL_order
+ logical             ::different_db_RL_order,l_CUTOFF
  character (schlen)  ::ch,db_desc
  real(SP)            ::Wd_disk(2)
  real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
@@ -63,16 +64,18 @@ integer function ioX(X,Xw,ID)
  !
  ! Check the restart point
  !
- call io_check_restart(trim(db_desc),ID)
-
+ call Fragments_Restart(ID)
+ !
  if (any((/io_sec(ID,:)==1/))) then
    !
    ! Header
    !
-   if (X%whoami==1) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xx")
-   if (X%whoami==2) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xs")
-   if (X%whoami==3) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xd")
-   if (X%whoami==4) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xp")
+   l_CUTOFF=.FALSE.
+   !
+   if (X%whoami==1) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xx",CUTOFF=l_CUTOFF)
+   if (X%whoami==2) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xs",CUTOFF=l_CUTOFF)
+   if (X%whoami==3) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xd",CUTOFF=l_CUTOFF)
+   if (X%whoami==4) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xp",CUTOFF=l_CUTOFF)
    if (ioX/=0) goto 1
    !
    ! PARS_1
@@ -154,7 +157,7 @@ integer function ioX(X,Xw,ID)
 &        allocated(g_vec)) then
        if (.not.allocated(X_RLcomp_ig)) allocate(X_RLcomp_ig(X%ng))
        i_err = X_RLcomp_table() 
-       if ( i_err < 0 ) io_status(ID) = -1
+       if ( i_err < 0 ) io_status(ID) = IO_INCOMPATIBLE_VAR
        if ( i_err > 0 ) different_db_RL_order=.true.
      endif
      deallocate(RL_vecs_disk)
@@ -184,7 +187,7 @@ integer function ioX(X,Xw,ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_pointer=iq)
+ call io_fragment(ID,i_fragment=iq)
  !
  !  type(X_t)    ::X(4)  x s d p
  !
@@ -192,11 +195,8 @@ integer function ioX(X,Xw,ID)
    sec_size=6
    !
    if (X%whoami==4) sec_size=1
-   if (ver_is_gt_or_eq(ID,revision=308)) then
-     ch="FREQ_PARS_sec_iq"//trim(intc(iq))
-   else
-     write (ch,'(a,i3.3)') "FREQ_PARS_sec_iq",iq
-   endif
+   write (ch,'(a,i3.3)') "FREQ_PARS_sec_iq",iq
+   if (ver_is_gt_or_eq(ID,revision=308)) ch="FREQ_PARS_sec_iq"//trim(intc(iq))
    !
    io_com_save=io_com(ID)
    if (io_sec(ID,1)/=1) io_com(ID)=NONE
@@ -232,17 +232,14 @@ integer function ioX(X,Xw,ID)
  ! Now that the menu is closed I can return with ioX/=0 if
  ! there is a restart point
  !
- ioX=io_restart(ID)
+ ioX=io_restart_point(ID)
  if (ioX/=0) goto 1
  !
  if (any((/io_sec(ID,:)==2*iq+1/))) then
    allocate(X_disk(X%ng_db,X%ng_db,2))
    !
-   if (ver_is_gt_or_eq(ID,revision=308)) then
-     ch="FREQ_sec_iq"//trim(intc(iq))
-   else
-     write (ch,'(a,i3.3)') "FREQ_sec_iq",iq
-   endif
+   write (ch,'(a,i3.3)') "FREQ_sec_iq",iq
+   if (ver_is_gt_or_eq(ID,revision=308)) ch="FREQ_sec_iq"//trim(intc(iq))
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/Xw%n(1),2/))
    allocate(W_disk(Xw%n(1),2))
    !
@@ -265,11 +262,8 @@ integer function ioX(X,Xw,ID)
    !
    deallocate(W_disk)
    !
-   if (ver_is_gt_or_eq(ID,revision=308)) then
-     ch="X_Q_"//trim(intc(iq))
-   else
-     write (ch,'(a,i3.3)') "X_Q_",iq
-   endif
+   write (ch,'(a,i3.3)') "X_Q_",iq
+   if (ver_is_gt_or_eq(ID,revision=308)) ch="X_Q_"//trim(intc(iq))
    !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n(1)/))
    !
@@ -291,15 +285,14 @@ integer function ioX(X,Xw,ID)
    !
    deallocate(X_disk)
  endif
-
- call io_check_restart(trim(db_desc),ID,now=iq,todo=nqibz)
  !
- ! No I/O errors I update Xio at the first q TODO
+ call Fragments_Restart(ID,current_fragment=iq,fragments_todo=nqibz)
  !
- ioX=io_restart(ID)
+ ! No I/O errors I update ioX at the first q TODO
+ !
+ ioX=io_restart_point(ID)
  !
 1 call io_disconnect(ID)
- !
  !
  contains
    !

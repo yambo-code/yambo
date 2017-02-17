@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,13 +23,14 @@ integer function ioDB1(E,k,ID)
  !
  use pars,             ONLY:SP,IP
  use units,            ONLY:HARTREE
+ use com,              ONLY:error
  use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
- use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop, &
-&                           Tel, n_atoms_max,n_atom_species,n_atoms,atom_pos, &
-&                           znucl
+ use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
+&                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
+&                           Z_species, n_atoms
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
@@ -39,14 +40,15 @@ integer function ioDB1(E,k,ID)
 &                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
- use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL 
- use global_XC,        ONLY:setup_global_XC
+ use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,XC_USED_LIBXC 
+ use global_XC,        ONLY:setup_global_XC,EXT_NONE
  !
  implicit none
  !
  type(levels)  :: E
  type(bz_samp) :: k
  integer       :: ID,code_version_local(3),code_revision_local
+ logical       :: l_use_libxc
  !
  ioDB1 =io_connect(desc="db1",type=0,ID=ID)
  if (ioDB1/=0) goto 1
@@ -125,7 +127,7 @@ integer function ioDB1(E,k,ID)
    !
    n_spin=max(n_sp_pol,n_spinor,1)
    !
-   call io_elemental(ID, UNIT=HARTREE,R0=default_Tel,CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID, UNIT=HARTREE,R0=input_GS_Tel,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Temperature                 [ev]:')
    call io_elemental(ID, R0=default_nel,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Electrons                       :')
@@ -150,15 +152,23 @@ integer function ioDB1(E,k,ID)
 &                      VAR=' WF G-vectors                    :')
    endif
    !
+   ! Check (n)s.db1 was generated with a a2y linked or not to libxc 
+   ! If this is the case and yambo reading it is not, the program should stop
+   ! and viceversa if a2y was not linked to libxc and yambo it is, the program should stop 
+   !
+   l_use_libxc = .false.
+   if (l_use_libxc.and.(GS_xc_KIND.ne.XC_USED_LIBXC)) &
+        &call error("ns.db1 not compatible with yambo executable [LIBXC]")
+   !
    ! Atomic data
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
      call io_elemental(ID, VAR="MAX_ATOMS",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,I0=n_atoms_max,   CHECK=.true.,OP=(/"=="/),&
+     call io_elemental(ID,I0=n_atoms_species_max,   CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' Max atoms/species               :')
      !
      call io_elemental(ID, VAR="number_of_atom_species",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,I0=n_atom_species,CHECK=.true.,OP=(/"=="/),&
+     call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
    endif
    call io_elemental(ID, VAR="",VAR_SZ=0)
@@ -179,13 +189,13 @@ integer function ioDB1(E,k,ID)
      QP_n_G_bands=(/1,E%nb/)
      BS_bands=(/1,E%nb/)
      !
-     Tel=default_Tel
+     Tel=input_GS_Tel
      nel=default_nel
      !
      ng_closed=ng_vec
      if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
      !
-     call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional)
+     call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE)
      !
    endif
    !
@@ -208,15 +218,16 @@ integer function ioDB1(E,k,ID)
    !
    call mem_est("g_vec k_pt dl_sop wf_nc_k wf_igk",&
 &               (/size(g_vec),size(k%pt),size(dl_sop),size(wf_nc_k),size(wf_igk)/),&
-&               (/SP,        SP,        SP,           IP,         IP/) )
+&               (/SP,        SP,        SP,           IP,         IP/), quiet=.TRUE. )
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
-     allocate(n_atoms(n_atom_species))
-     allocate(znucl(n_atom_species))
-     allocate(atom_pos(3,n_atoms_max,n_atom_species))
-     call mem_est("n_atoms atom_pos znucl",&
-&                 (/n_atom_species,size(atom_pos),n_atom_species/),&
+     allocate(n_atoms_species(n_atomic_species))
+     allocate(Z_species(n_atomic_species))
+     allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
+     call mem_est("n_atoms_species atom_pos Z_species",&
+&                 (/n_atomic_species,size(atom_pos),n_atomic_species/),&
 &                 (/IP,SP,IP/))
+     !
    endif
    !
  endif
@@ -232,12 +243,15 @@ integer function ioDB1(E,k,ID)
  ! Atoms
  !
  if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
-   call io_bulk(ID,VAR="N_ATOMS",VAR_SZ=(/n_atom_species/))
-   call io_bulk(ID,I1=n_atoms)
+   call io_bulk(ID,VAR="N_ATOMS",VAR_SZ=(/n_atomic_species/))
+   call io_bulk(ID,I1=n_atoms_species)
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))
    call io_bulk(ID,R3=atom_pos)
-   call io_bulk(ID,VAR="atomic_numbers",VAR_SZ=(/n_atom_species/))
-   call io_bulk(ID,I1=znucl)
+   call io_bulk(ID,VAR="atomic_numbers",VAR_SZ=(/n_atomic_species/))
+   call io_bulk(ID,I1=Z_species)
+   !
+   if (io_mode(ID)==DUMP.or.write_is_on(ID))  n_atoms=sum(n_atoms_species) 
+   !
  endif
  !
  ! Symmetry
@@ -248,7 +262,11 @@ integer function ioDB1(E,k,ID)
  ! G-vectors
  !
  call io_bulk(ID, VAR="G-VECTORS", VAR_SZ=shape(g_vec) )
- call io_bulk(ID, R2=g_vec)
+ !
+ ! Andrea (May 2010): Note here that in p2y g_vec may be allocated bigger then
+ ! ng_vec*3 due to the larger charge RL vectors.
+ !
+ call io_bulk(ID, R2=g_vec(:ng_vec,:))
  !
  ! K-point grid
  !

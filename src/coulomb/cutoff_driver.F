@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -158,7 +158,9 @@ subroutine cutoff_driver(q)
  !
  !lengths
  !
- if (cut_is_sphere) call msg('r','Sphere radius   [au]:',cyl_ph_radius)
+ if (cut_is_sphere) then 
+   call msg('r','Sphere radius   [au]:',cyl_ph_radius)
+ endif
  if (cut_is_box) then
    i1=0
    if (is_cut(1)) i1=i1+1

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 D. Varsano, A. Marini and the YAMBO team
+! Copyright (C) 2000-2010 D. Varsano, A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -69,15 +69,15 @@ subroutine plot_check_and_launch(check_only)
    plot_dim=2
    use_1d=.false.
    use_3d=.false.
-   if (use_2d(1).and..not.v_is_zero((/0.,dp(2),dp(3)/)).and.use_gnuplot) then
+   if (use_2d(1).and..not.v_is_zero((/0._SP,dp(2),dp(3)/)).and.use_gnuplot) then
      call warning('Cannot average along non orthogonal direction')
      switch_to_xcrysden=.true.
    endif
-   if (use_2d(2).and..not.v_is_zero((/dp(1),0.,dp(3)/)).and.use_gnuplot) then
+   if (use_2d(2).and..not.v_is_zero((/dp(1),0._SP,dp(3)/)).and.use_gnuplot) then
      call warning('Cannot average along non orthogonal direction')
      switch_to_xcrysden=.true.
    endif
-   if (use_2d(3).and..not.v_is_zero((/dp(1),dp(2),0./)).and.use_gnuplot) then
+   if (use_2d(3).and..not.v_is_zero((/dp(1),dp(2),0._SP/)).and.use_gnuplot) then
      call warning('Cannot average along non orthogonal direction')
      switch_to_xcrysden=.true.
    endif

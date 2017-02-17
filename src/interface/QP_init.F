@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,10 +23,10 @@ subroutine QP_init(use_for_QP,Energy_range)
  !
  ! QP_state -> input file
  !
- use QP_m,      ONLY : QP_nk,QP_nb,QP_state
- use drivers,   ONLY : infile_editing
- use it_m,      ONLY : nflines,flines,infile
- use parser_m,  ONLY : parser
+ use QP_m,      ONLY: QP_nk,QP_nb,QP_state
+ use drivers,   ONLY: infile_editing
+ use it_m,      ONLY: nflines,flines,infile
+ use parser_m,  ONLY: parser
  implicit none
  !
  logical :: use_for_QP,Energy_range

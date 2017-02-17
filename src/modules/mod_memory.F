@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -30,7 +30,7 @@ module memory_m
  character(schlen), private  :: mem_element(max_mem_elements)
  integer          , private  :: element_loaded
  real(SP)         , private  :: mem_element_size(max_mem_elements)
- real(SP)         , private  :: mem_sum
+ real(SP)         :: mem_sum
  !
  contains
    !
@@ -56,7 +56,7 @@ module memory_m
      integer :: i1,i2,local_kind
      logical :: loading,stdout_report
      real(SP):: mem_moved
-     real(SP),parameter :: mem_tresh=0.01  ! ( in Gb. CAREFUL! mem_tresh must be >0)
+     real(SP),parameter :: mem_tresh=0.1  ! ( in Gb. CAREFUL! mem_tresh must be >0)
      character(lchlen)  ::ch(2)
      character(schlen)  ::input_name(10),action
      !
@@ -77,7 +77,7 @@ module memory_m
            if (trim(mem_element(i2))==trim(input_name(i1))) exit
          enddo
          if (i2==element_loaded+1) element_loaded=element_loaded+1
-    
+         !
          mem_element(i2)=trim(input_name(i1))
          local_kind=preset_kind
          if (present(elements_kind)) local_kind=elements_kind(i1)
@@ -126,7 +126,8 @@ module memory_m
      endif
      !
      if(mem_moved.lt.0.0_SP.or.mem_sum.lt.0.0_SP) then
-       call warning( " Memory management of array "//trim(ch(1))//" failed.")
+       mem_moved=0._SP
+       mem_sum  =0._SP
      endif
      !
      stdout_report=master_cpu.and.mem_moved>mem_tresh.and..not.infile_editing

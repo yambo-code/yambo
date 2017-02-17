@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -42,30 +42,36 @@ module par_indexes_m
      lowlim=1
      if (present(low_range))  lowlim=low_range
      !
-     allocate(px%stps(ncpu))
-     px%stps=0
+     allocate(px%n_of_element_1D(ncpu))
+     px%n_of_element_1D=0
      select case (nindxs)
        case (1)
-         if (.not.associated(px%i1wts)) then
-           allocate(px%i1wts(uplim(1)-lowlim(1)+1))
-           px%i1wts=1
+         if (.not.associated(px%weight_1D)) then
+           allocate(px%weight_1D(uplim(1)-lowlim(1)+1))
+           px%weight_1D=1
          endif
-         allocate(px%i1p(uplim(1)),i_done(uplim(1)))
-         px%i1p=.false.;tot_steps=sum(px%i1wts);i_done=1
+         allocate(px%element_1D(uplim(1)),i_done(uplim(1)),px%first_of_1D(ncpu))
+         px%first_of_1D(myid+1)=-1
+         px%element_1D=.false.
+         tot_steps=sum(px%weight_1D)
+         i_done=1
          average_steps=(tot_steps+ncpu-mod(tot_steps,ncpu))/ncpu
          do i1=lowlim(1)+myid,uplim(1),ncpu
-           if (px%stps(myid+1)>=average_steps) cycle
-           px%i1p(i1)=.true.;i_done(i1)=0
-           px%stps(myid+1)=px%stps(myid+1)+px%i1wts(i1)
+           if (px%n_of_element_1D(myid+1)>=average_steps) cycle
+           if (px%first_of_1D(myid+1)==-1) px%first_of_1D(myid+1)=i1
+           px%element_1D(i1)=.true.
+           i_done(i1)=0
+           px%n_of_element_1D(myid+1)=px%n_of_element_1D(myid+1)+px%weight_1D(i1)
          enddo
          call pp_redux_wait(i_done,p_prod)
          do ic=1,ncpu
            if (ic==myid+1) then
              do i1=lowlim(1),uplim(1)
                if (i_done(i1)==0) cycle
-               if (px%stps(myid+1)>=average_steps) cycle
-               px%i1p(i1)=.true.;i_done(i1)=0
-               px%stps(myid+1)=px%stps(myid+1)+px%i1wts(i1)
+               if (px%n_of_element_1D(myid+1)>=average_steps) cycle
+               px%element_1D(i1)=.true.
+               i_done(i1)=0
+               px%n_of_element_1D(myid+1)=px%n_of_element_1D(myid+1)+px%weight_1D(i1)
              enddo
            endif
            call pp_redux_wait(i_done,p_prod)
@@ -73,15 +79,15 @@ module par_indexes_m
          if (any(i_done==1)) call error('Incomplete Parallel Index Filling')
          deallocate(i_done)
        case (2)
-         allocate(px%i2p(uplim(1),uplim(2)))
+         allocate(px%element_2D(uplim(1),uplim(2)))
          d2=uplim(2)-lowlim(2)+1
-         px%i2p=.false.
+         px%element_2D=.false.
          do i1=lowlim(1),uplim(1)
            do i2=lowlim(2),uplim(2)
              i3=(i1-lowlim(1))*d2+i2-lowlim(2)+1-myid
-             if (mod(i3,ncpu)==1) px%i2p(i1,i2)=.true.
-             if (ncpu==1) px%i2p(i1,i2)=.true.
-             if (px%i2p(i1,i2)) px%stps(myid+1)=px%stps(myid+1)+1
+             if (mod(i3,ncpu)==1) px%element_2D(i1,i2)=.true.
+             if (ncpu==1) px%element_2D(i1,i2)=.true.
+             if (px%element_2D(i1,i2)) px%n_of_element_1D(myid+1)=px%n_of_element_1D(myid+1)+1
            enddo
          enddo
      end select

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -164,7 +164,7 @@ contains
    use electrons,             ONLY : default_nel, n_spin, n_sp_pol, &
 &                                    n_spinor
    use R_lattice,             ONLY : ng_vec
-   use D_lattice,             ONLY : default_Tel, n_atom_species
+   use D_lattice,             ONLY : input_GS_Tel, n_atomic_species
    use wave_func,             ONLY : wf_ncx 
    use com,                   ONLY : msg, error
    use timing,                ONLY : live_timing_is_on
@@ -215,7 +215,7 @@ contains
    if (ierr.ne.0) call errore('qexml_read_ions','IOTK error',ABS(ierr))
    !
    default_nel = nelec_
-   n_atom_species = nsp_     
+   n_atomic_species = nsp_     
 
 #endif
 
@@ -242,7 +242,7 @@ contains
      n_spin    = 1
      !
    !
-   default_Tel = 0.d0
+   input_GS_Tel = 0.d0
    !
    return
  end subroutine get_dimensions
@@ -252,12 +252,13 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_atoms
-   use D_lattice,   ONLY:n_atoms_max,n_atom_species,n_atoms, &
-&                        atom_pos, znucl,atomic_number
+   use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
+&                        atom_pos, Z_species,atomic_number
    !
    ! Work Space
    !
    integer, allocatable           :: ityp_(:)
+   CHARACTER(256), ALLOCATABLE :: psfile_(:)
    real(DP)                       :: tau_units
    integer                        :: i1,i2
 
@@ -272,11 +273,11 @@ contains
    call pw_atoms(pw_unit)
 
    n_atom_species = nsp_     ! n_atom_species only read here
-   allocate( atm_(n_atom_species)) 
-   atm_(1:n_atom_species) = species_type_(1:n_atom_species)
+   allocate( atm_(n_atomic_species)) 
+   atm_(1:n_atomic_species) = species_type_(1:n_atomic_species)
    do i1=1, nat_
      ityp_(i1) = -1
-     do i2=1,n_atom_species
+     do i2=1,n_atomic_species
        if(trim(atom_type_(i1))==trim(atm_(i2))) then
          ityp_(i1) = i2
        endif
@@ -289,30 +290,37 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
    tau_units = 1.0_DP
-   allocate( atm_(n_atom_species))
-   call qexml_read_ions( tau=tau_, ityp=ityp_, atm=atm_, ierr=ierr)
+   allocate( atm_(n_atomic_species))
+   allocate( psfile_ (n_atomic_species))
+   call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile_, tau=tau_, ierr=ierr)
+
+   ! Check USPP/NC pseudopotential
+   call check_pseudo(n_atomic_species,psfile_)
+   deallocate(psfile_)
 
 #endif
 
-   allocate(n_atoms(n_atom_species))
-   n_atoms(:)=0
+   allocate(n_atoms_species(n_atomic_species))
+   n_atoms_species(:)=0
    do i1 = 1, nat_
-     n_atoms( ityp_(i1) ) = n_atoms( ityp_(i1) ) +1
+     n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
    enddo
-   n_atoms_max = maxval(n_atoms)
-   allocate(atom_pos(3,n_atoms_max,n_atom_species))
-   n_atoms(:)=0
+   n_atoms_species_max = maxval(n_atoms_species)
+   allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
+   n_atoms_species(:)=0
    do i1 = 1, nat_
-     n_atoms( ityp_(i1) ) = n_atoms( ityp_(i1) ) +1
-     atom_pos(:, n_atoms( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1)*tau_units
+     n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
+     atom_pos(:, n_atoms_species( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1)*tau_units
    enddo
 
-   allocate(znucl(n_atom_species))
-   do i1 = 1, n_atom_species
-     znucl(i1) = atomic_number(atm_(i1))
+   allocate(Z_species(n_atomic_species))
+   do i1 = 1, n_atomic_species
+     Z_species(i1) = atomic_number(atm_(i1))
    enddo
 
+   
    deallocate(ityp_, tau_)
+
 
    return
  end subroutine get_atoms
@@ -325,7 +333,7 @@ contains
    use pars,                  only : pi
    use R_lattice,             ONLY : bz_samp, ng_vec, b
    use D_lattice,             ONLY : DL_vol, a, alat,lattice
-   use mod_com2y,            ONLY : alat_mult_factor
+   use mod_com2y,             ONLY : alat_mult_factor
    use vec_operate,           ONLY : cross_product
    real(SP) :: cp(3)
     
@@ -350,7 +358,7 @@ contains
    alat(2) = maxval(abs(a(2,:)))*alat_mult_factor
    alat(3) = maxval(abs(a(3,:)))*alat_mult_factor
    call crystal_lattice()
-   if (trim(lattice)=='Unknown') then
+   if (trim(lattice)=='Unknown'.and.alat_mult_factor==1.) then
      alat(1) = maxval(abs(a(1,:)))*2.
      alat(2) = maxval(abs(a(2,:)))*2.
      alat(3) = maxval(abs(a(3,:)))*2.
@@ -374,6 +382,7 @@ contains
  subroutine get_symmetries
    use mod_com2y,  ONLY : symmetries_check_and_load
    use com,        ONLY : warning,error
+   use vec_operate,ONLY : v_is_zero
 
    real(DP) :: trasl_(3,48)
 
@@ -390,10 +399,12 @@ contains
 
 #endif
    !
-   if(any(trasl_(:,1:nsym_)/=0._SP)) then
-     call error(' Non-symmorphic symmetry operations are not supported! Use nosym=.true.ed in PWSCF')
-   endif
-
+   do i1=1,nsym_
+     if (.not.v_is_zero(real(trasl_(:,i1),SP)) ) then 
+       call error(' Non-symmorphic symmetry operations are not supported! Use force_symmorphic=.true. in PWSCF')
+     endif
+   enddo
+   !
    ! Note that invsym_ is well defined here, could be used for checks.
    do i1 = 1,nsym_
      isym_(:,:,i1) = transpose(isym_(:,:,i1))
@@ -517,7 +528,7 @@ contains
  subroutine get_IGK(k)
    use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
    use R_lattice,             ONLY : bz_samp, ng_vec
-   use mod_com2y,            only : force_noWFs
+   use mod_com2y,             ONLY : force_noWFs
    use com,                   ONLY : msg, error
    character(lchlen) :: lch
    type(bz_samp) :: k
@@ -703,6 +714,7 @@ contains
    use com,             ONLY:warning
    implicit none
    character(256), intent(in)    :: pw_dft
+   integer                       :: ixc
    !
    ! Correlation: "noc"    none                           icorr=0
    !              "pz"     Perdew-Zunger                  icorr=1 (default)
@@ -760,7 +772,7 @@ contains
      ! No support for GGA yet
      !
      if(index(pw_dft,'NOGX')==0.or.index(pw_dft,'NOGC')==0) then
-       call warning ('GGA not supported: swicthing to PZ. PW XC string is: '//trim(pw_dft))
+       call warning ('GGA not supported: switching to PZ. PW XC string is: '//trim(pw_dft))
        GS_xc_FUNCTIONAL = XC_LDA_C_PZ
        GS_xc_KIND = XC_EXCHANGE_CORRELATION
      endif

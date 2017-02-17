@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2010 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,13 +22,11 @@
 subroutine p2y_db1(en,k)
  !
  use P2Y
- use pars,                  ONLY : SP,schlen,pi
  use com,                   ONLY : msg
- use electrons,             ONLY : default_nel, n_sp_pol
- use R_lattice,             ONLY : g_vec, ng_vec
- use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk,wf_ng
- use mod_com2y,             ONLY : print_interface_dimensions
+ use mod_com2y,             ONLY : print_interface_dimensions,use_all_G_vectors
  use xc_functionals,        ONLY : xc_string,GS_xc_KIND,GS_xc_FUNCTIONAL
+ use R_lattice,             ONLY : ng_vec
+ use wave_func,             ONLY : wf_ng
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
@@ -106,6 +104,8 @@ subroutine p2y_db1(en,k)
  call msg('s','IGK arrays...')
  !
  call get_IGK(k)
+ !
+ if (.not.use_all_G_vectors) ng_vec=wf_ng
  !
  call msg('l','done')
  !---------------------------------------------------------------------*

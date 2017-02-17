@@ -1,7 +1,7 @@
 !
 ! Copyright (C) 2003 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team
+! Copyright (C) 2000-2010 A. Marini, M. Gruning and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -28,11 +28,14 @@ module xc_functionals
  !
  integer     , public :: GS_xc_KIND
  integer     , public :: GS_xc_FUNCTIONAL
- real(SP), public, allocatable:: el_mag(:,:)
+ real(SP), public, allocatable:: two_spin_density(:,:)
  real(SP), public, allocatable:: V_xc(:,:)
  real(SP), public, allocatable:: E_xc(:)
- real(SP), public, allocatable:: F_xc(:)
+ real(SP), public, allocatable:: F_xc(:) 
  !
+ ! whether interface to dft code used libxc (for compatibility issues)
+ !
+ integer, public, parameter :: XC_USED_LIBXC = 4
  integer, public, parameter :: &
     XC_UNPOLARIZED       =  1, &  ! Spin unpolarized
     XC_POLARIZED         =  2     ! Spin polarized
@@ -79,9 +82,10 @@ module xc_functionals
  contains
    !
    character(lchlen) function xc_string(kind,functional)
-     !
+     !     
      integer        :: kind,functional
      character(4)   :: ch_kind
+     integer        :: i1,fun
      !
      select case (kind)
        case(-1,NONE)
@@ -116,5 +120,6 @@ module xc_functionals
      end select
      !
    end function
-   !
+!
+  !
 end module xc_functionals

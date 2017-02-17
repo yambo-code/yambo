@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -27,14 +27,13 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 &                         alpha_dim,eps_2_alpha,X_duplicate
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
-&                         BSS_n_descs,BSS_description,BSS_of_title,BS_K_coupling
+&                         BSS_n_descs,BS_K_coupling,BSS_Vnl_included,BSS_long_gauge
  use com,            ONLY:msg,warning
  use drivers,        ONLY:l_bs_fxc
- use stderr,         ONLY:intc,gen_fmt
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels,spin_occ,spin
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
- use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
+ use IO_m,           ONLY:io_control,OP_RD_CL,NONE
  !
  implicit none
  type(levels) ::Ken
@@ -45,7 +44,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Work Space
  !
- integer           ::ik,iv,ic,i1,i_sp,X_ib_save(2),ioBS_err,ID 
+ integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID 
  real(SP)          ::v(3)
  logical           ::run_Haydock,run_Diago,Pert_inversion
  integer, external ::ioBS
@@ -58,21 +57,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ioBS_err=ioBS(iq,X_static,ID)
  if (ioBS_err/=0) return
  !
- ! Titles & Descriptions
- !
  ! Polarizability ?
  !
  if (trim(alpha_dim)/='adim') then
    call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
    call msg('rn','Polarizability dimension      :',trim(alpha_dim))
-   BSS_of_title(1)  ='E/ev[1]'
-   BSS_of_title(2:3)=(/'alpha/Im','alpha/Re'/)
-   BSS_of_title(4:5)=(/'alphao/Im','alphao/Re'/) 
-   if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'alpha`/Im','alpha`/Re'/)
- else
-   BSS_of_title(1:3)=(/'E/ev','e/Im','e/Re'/)
-   BSS_of_title(4:5)=(/'eo/Im','eo/Re'/) 
-   if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'e`/Im','e`/Re'/)
  endif
  !
  ! Eps_0
@@ -93,6 +82,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  if (iq==1) then
    X_oscillators%q0=BSS_q0
    call Dipole_driver(Ken,Xk,X_oscillators,BSS_q0)
+   BSS_Vnl_included=X_oscillators%Vnl_included
+   BSS_long_gauge=X_oscillators%long_gauge
    do i1=1,BS_K_dim
      ik  =BS_eh_table(i1,1)
      iv  =BS_eh_table(i1,2)
@@ -125,27 +116,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  endif
  !
  !
- ! Write gauge and osservable to BSS_description
- !
- if (iq==1) v=BSS_q0
- if (iq/=1) v=q%pt(iq,:)
- !
- do i1=BSS_n_descs,1,-1
-   BSS_description(i1+4)=BSS_description(i1)
- enddo
- BSS_n_descs=BSS_n_descs+4
- !
- ch=' Absorption @ IQ '//trim(intc(iq))//' : '
- if (trim(alpha_dim)/='adim') ch=' Polarization (-<<X>>) ['//&
-&                                trim(alpha_dim)//'] @ IQ '//trim(intc(iq))//' : '
- write (BSS_description(1),'(a,3('//gen_fmt(r_v=v)//',1x))') trim(ch),v
- !
- BSS_description(2)=' '
- BSS_description(3)=' - The gauge is transverse -'
- if (X_oscillators%Vnl_included) BSS_description(3)=' - The gauge is transverse + [r,Vnl] -'
- if (X_oscillators%long_gauge)   BSS_description(3)=' - The gauge is longitudinal -'
- BSS_description(4)=' '
- !
  ! Solvers
  !
  run_Haydock         =index(BSS_mode,'h')/=0
@@ -162,14 +132,13 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    if (BS_not_const_eh_f) call warning('Fractional occupations still unsupported (Haydock)')
    !
    if (.not.BS_not_const_eh_f) then
-     call K_dump_to_o_file(iq,-1)
+     call K_output_file(iq,-1)
      call K_Haydock(iq,W_bss)
      BSS_n_descs=BSS_n_descs-4 
    endif
  endif
  !
  if (run_Diago)          call K_diagonalization(iq,W_bss)
- !
  !
  !
  ! CLEAN

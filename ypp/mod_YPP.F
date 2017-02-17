@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -36,9 +36,17 @@ module YPP
  integer  :: n_path_pts
  real(SP) :: Kgw_1(3)
  real(SP) :: qlong(3,3)
+ real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
  character(schlen) :: PtsPath
+ character(21), parameter :: output_string="o exc den mag wf curr"
+ ! 
+ ! DOS
+ !
+ logical      ::l_dos ! electrons and phonons
+ real(SP)     ::dos_broadening ! electrons
+ integer      ::dos_bands      ! electrons
  !
  ! REAL SPACE PLOT
  !
@@ -46,6 +54,7 @@ module YPP
  logical      ::l_wavefunction
  logical      ::l_density
  logical      ::l_mag
+ logical      ::l_current
  logical      ::l_sp_wf
  logical      ::l_exc_wf
  logical      ::l_norm_to_one
@@ -70,6 +79,8 @@ module YPP
  logical      ::l_amplitude
  logical      ::l_spin
  logical      ::l_free_hole
+ logical      ::l_angular_momentum
+ logical      ::l_position
  integer      ::lambda
  integer      ::n_lambda
  integer      ::BS_H_dim
@@ -81,10 +92,10 @@ module YPP
  !
  !EL-PH
  !
- logical :: l_dos
  logical :: l_gkkp
  logical :: l_phonons
  logical :: l_eliashberg
+ logical :: l_atomic_amplitude
  integer :: elph_steps
  real(SP):: elph_gamma_broad
  real(SP):: ph_broad
@@ -114,12 +125,13 @@ module YPP
  !
  logical           :: ltrans
  real(SP)          :: Ecv_min, Ecv_max
+ real(SP)          :: qdir(3)
  integer           :: idir
  !
  !
  interface
    !
-   subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
+   subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq,verbose)
      use pars,          ONLY:SP
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
@@ -132,9 +144,10 @@ module YPP
      real(SP),optional  :: S_z(BS_H_dim)
      real(SP),optional  :: S_sq(BS_H_dim)
      integer, optional  :: BS_E_degs(BS_H_dim)
+     logical, optional  :: verbose
    end subroutine
    !
-   subroutine  elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
+   subroutine  ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
      implicit none
@@ -150,7 +163,6 @@ module YPP
    !
    subroutine K_transform(k,in_mode)
      !
-     use D_lattice,    ONLY:alat
      use units,        ONLY:pi
      use vec_operate,  ONLY:c2a
      !
@@ -162,21 +174,21 @@ module YPP
          if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="kc2i")
          if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="kc2a")
          if (trim(coo_out)=="alat") then
-           k=k*alat(1)/2./pi
+           k=k*alat_used_for_output/2./pi
          endif
        case ('iku')
          if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ki2c")
          if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="ki2a")
          if (trim(coo_out)=="alat") then
            call c2a(v_in=k,mode="ki2c")
-           k=k*alat(1)/2./pi
+           k=k*alat_used_for_output/2./pi
          endif
        case ('rlu')
          if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ka2c")
          if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="ka2i")
          if (trim(coo_out)=="alat") then
            call c2a(v_in=k,mode="ka2c")
-           k=k*alat(1)/2./pi
+           k=k*alat_used_for_output/2./pi
          endif
      end select
      !

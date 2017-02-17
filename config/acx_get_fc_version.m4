@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2010 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -23,7 +23,7 @@ AC_DEFUN([ACX_GET_FC_VERSION],
 [
 FCVERSION="unknown"
 case "${FC}" in
-    *pgf90*)
+    *pgf9*)
       ;;
     *abf90*)
       ;;

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -27,7 +27,7 @@ module UNITS
  !
  ! UNITs CONVERSION
  !
- real(SP), parameter :: BOHR=0.52917721_SP            ! Armostrongs
+ real(SP), parameter :: BOHR=0.52917721_SP            ! Armstrongs
  real(SP), parameter :: radian=pi/180.0_SP  
  !
  ! Energies
@@ -41,7 +41,6 @@ module UNITS
  !
  ! Frequencies
  !
- !
  real(SP), parameter :: HA2GHZ=HARTREE*241798.474_SP
  real(SP), parameter :: HA2THZ=HA2GHZ/1000._SP
  !
@@ -52,7 +51,7 @@ module UNITS
  ! Time
  !
  real(SP), parameter :: HA2PSm1=HA2THZ
- real(SP), parameter :: HA2FSm1=HA2THZ/1000._SP     ! Note that 1 THz = 10^-3 / fs
+ real(SP), parameter :: HA2FSm1=HA2THZ/1000._SP       ! Note that 1 THz = 10^-3 / fs
  real(SP), parameter :: AUT2SEC=2.418884326505_SP*10._SP**(-17)
  real(SP), parameter :: SEC2AUT=1._SP/AUT2SEC
  real(SP), parameter :: FS2AUT =10.**2/2.418884326505_SP
@@ -60,7 +59,37 @@ module UNITS
  !
  ! Magnetic fields
  !
- real(SP), parameter :: AU2Tesla=2.350517*10.**5
+ real(SP), parameter :: AU2Tesla=1.7152551_SP*10._SP**3        ! (A.U. + C.G.S.)
  real(SP), parameter :: Tesla2AU=1./AU2Tesla
+ !
+ ! Magnetization 
+ !
+ real(SP), parameter :: Bohr_magneton=9.24700915*10._SP**(-24) ! J * T^{-1} (A.U. +S.I.)
+ !
+ ! Electric fields and current
+ !
+ real(SP), parameter :: AU2Vmm=5.14220632*10._SP**(8)          !  [V/mm]
+ real(SP), parameter :: AU2nAmpere=6.62361782*10._SP**(6)      !  [nano-Ampere]
+ !
+ ! From Octopus ( http://www.tddft.org/programs/octopus )
+ !
+ ! It is very common to describe the strength of a laser field by it intensity, 
+ ! rather than using the electric field amplitude. In atomic units, the relationship 
+ ! between instantaneous electric field and intensity is:
+ !
+ ! I(t) = \frac{c}{8\pi} E^2(t)
+ !
+ ! It is common to read intensities in kW cm^-2. The dimensions of intensities are [W]/(L^2T), 
+ ! where [W] are the dimensions of energy. The relevant conversion factors are:
+ !
+ ! Hartree / (a_0^2 atomic_time) = 6.4364086e+09 kW cm^-2
+ !
+ ! If, in atomic units, we set the electric field amplitude to E_0, then the intensity is:
+ !
+ ! I_0 = \frac{c}{8 \pi}  1./W2Au kW cm^-2 (E_0^2)
+ !
+ real(SP), parameter :: SPEED_OF_LIGHT = 137.03599911
+ !
+ real(SP), parameter :: W2Au = 1./6.4364086E+09 
  !
 end module 

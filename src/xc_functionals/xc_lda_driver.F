@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -67,7 +67,7 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 &                        E_xc,F_xc,V_xc,XC_LDA_X,&
 &                        XC_LDA_C_PW,xc_string,XC_LDA_C_PZ,&
 &                        XC_LDA_C_WIGNER,XC_LDA_C_HL,XC_LDA_C_XALPHA,&
-&                        XC_LDA_C_KP,el_mag,NONE
+&                        XC_LDA_C_KP,two_spin_density,NONE
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk

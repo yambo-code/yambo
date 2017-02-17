@@ -1,4 +1,6 @@
 GW_REAL_AXIS_objects =
-objs = QP_driver.o QP_newton.o QP_ppa_chosex.o \
-       $(GW_REAL_AXIS_objects) \
-       QP_descriptions.o QP_XX_Vxc.o DFT_Vxc.o QP_of.o
+
+
+
+
+objs = QP_driver.o QP_newton.o QP_ppa_cohsex.o $(GW_REAL_AXIS_objects) QP_descriptions.o QP_report_and_write.o QP_of.o XCo_driver.o XCo_Hartree_Fock.o XCo_local.o

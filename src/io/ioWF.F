@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,8 +28,9 @@ integer function ioWF(ID,wf)
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_bulk,io_header,ver_is_gt_or_eq,&
-&                           io_fragment,RD_CL_IF_END,RD_CL,io_action,&
-&                           io_elemental,io_fragmented,dbs_fragment,write_is_on
+&                           RD_CL_IF_END,RD_CL,io_action,&
+&                           io_elemental,io_fragmented,Fragmented_IO,write_is_on
+ use fragments,        ONLY:io_fragment
  implicit none
  integer,       intent(in) :: ID
  real(SP),      optional   :: wf(:,:,:,:)
@@ -59,7 +60,7 @@ integer function ioWF(ID,wf)
  !
  if (wf_nb_io/=n_bands.and.write_is_on(ID)) then
    io_fragmented(ID)=.true.
-   dbs_fragment=.true.
+   Fragmented_IO=.true.
  endif
  !
  ! S/N
@@ -94,7 +95,7 @@ integer function ioWF(ID,wf)
    !
    ! Fragmentation
    !
-   call io_fragment(ID,i_pointer=ik,j_pointer=ib_grp)
+   call io_fragment(ID,i_fragment=ik,j_fragment=ib_grp)
    !
    VAR_NAME="WF_REAL_COMPONENTS_@_K"//trim(intc(ik))//"_BAND_GRP_"//trim(intc(ib_grp))
    call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/wf_nb_io,wf_ncx,n_spin/))
@@ -112,7 +113,7 @@ integer function ioWF(ID,wf)
    !
    ! Fragmentation
    !
-   call io_fragment(ID,i_pointer=ik)
+   call io_fragment(ID,i_fragment=ik)
    !
    write (VAR_NAME,'(a,i6.6)') 'WF_IK_RE_',ik
    call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands,wf_ncx,n_spin/))

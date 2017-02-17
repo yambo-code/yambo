@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+  Copyright (C) 2000-2010 A. Marini and the YAMBO team 
                http://www.yambo-code.org
   
   This file is distributed under the terms of the GNU 
@@ -36,7 +36,7 @@
   {"help",  "h","Short Help",0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0}, 
   {"jobstr","J","Job string identifier",0,0,1,0},   
-  {"infver", "V","Input file verbosity",1,0,0,0}, 
+  {"infver", "V","Input file verbosity [opt=gen]",0,0,1,0},    
   {"ifile", "F","Input file",0,0,1,0},              
   {"idir",  "I","Core I/O directory",0,0,1,0},         
   {"odir",  "O","Additional I/O directory",0,0,1,0},        
@@ -45,7 +45,7 @@
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal]",0,0,1,0}, 
   {"excitons", "e","Excitons  [(s)ort,(a)mplitude,(w)ave]",0,0,1,0}, 
-  {"electrons","l","Electrons [(w)ave,(d)ensity]",0,0,1,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,do(s)]",0,0,1,0}, 
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0}, 
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0}, 
   {NULL,NULL,NULL,0,0,0,0}

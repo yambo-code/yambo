@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2010 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -26,10 +26,9 @@
  !
  use P2Y,                   only: pw_unit, verboseIO
  use pars,                  ONLY:SP,DP
- use electrons,             ONLY:n_bands, n_spin, n_sp_pol, n_spinor
- use D_lattice,             ONLY:n_atom_species
+ use electrons,             ONLY:n_bands, n_spin
  use R_lattice,             ONLY:nkibz
- use wave_func,             ONLY:wf_ncx,wf_nc_k, wf_igk, wf_nb_io,wf_nb_io_groups
+ use wave_func,             ONLY:wf_ncx,wf_nc_k, wf_igk, wf_nb_io
 #if defined _P2Y_EXPORT
  use pw_export
 #else

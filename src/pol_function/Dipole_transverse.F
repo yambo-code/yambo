@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -26,13 +26,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
- use D_lattice,           ONLY:alat,n_atom_species,n_atoms
+ use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR_or_P,Dipole_bands_ordered,Eval_P_and_P2_only,P_square
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
- use wave_func,           ONLY:wf,wf_ng,wf_state, wf_load
+ use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -55,18 +55,14 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Check for the KB PP DB 
  !
- if (Eval_P_and_P2_only) then
-   ioKB_err=-1
- else
-   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-   ioKB_err=ioKB_PP(ID)
- endif
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+ ioKB_err=ioKB_PP(ID)
  !
  if (ioKB_err==0) then
    X%Vnl_included=.true.
    pp_kbv_dim=0
-   do is = 1,n_atom_species
-     do ia = 1,n_atoms(is)
+   do is = 1,n_atomic_species
+     do ia = 1,n_atoms_species(is)
        do il = 1, pp_n_l_comp(is)
          do im = 1,2*(il-1)+1
            pp_kbv_dim=pp_kbv_dim+1
@@ -92,7 +88,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
- call live_timing('Dipole (T):',px%stps(myid+1)*n_spin)
+ call live_timing('Dipole (T):',px%n_of_element_1D(myid+1)*n_spin)
  call pp_redux_wait
  !
  wf_dim=3
@@ -120,11 +116,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
      !
      do iv=X%ib(1),iv_max 
        !
-       if (.not.px%i2p(ik,iv)) cycle
+       if (.not.px%element_2D(ik,iv)) cycle
        !
        do ic=ic_min,X%ib(2)
          !
-         rho(:)=(0.,0.)
+         rho(:)=(0._SP,0._SP)
          !
          Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
          if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
@@ -157,7 +153,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          call cgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
 #endif
          !
-         if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:),kbv)
+         if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
          !
          if ( .not.Eval_P_and_P2_only ) rho(:)=rho(:)/Ev_m_Ec
          !

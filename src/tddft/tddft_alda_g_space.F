@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,7 +28,7 @@ subroutine tddft_alda_g_space(E,k)
  use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_g_table
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,G_m_G
- use wave_func,     ONLY:wf_load,WF_free
+ use wave_func,     ONLY:WF_load,WF_free
  use xc_functionals,ONLY:F_xc
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  implicit none
@@ -52,7 +52,7 @@ subroutine tddft_alda_g_space(E,k)
  !
  ! WFs
  !
- call wf_load(0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
+ call WF_load(0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
  !
  ! ALDA functional
  !

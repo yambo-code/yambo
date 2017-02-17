@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -34,7 +34,7 @@ subroutine crystal_lattice()
  real(SP)           :: test_a(3,3,n_lattices),a_test_m1(3,3),&
 &                      a_m1(3,3),coeff(3),v(3)
  character(schlen)  :: lattice_name(n_lattices)
- integer            :: ia,i_l,i,j,k
+ integer            :: i_l,i,j,k
  logical            :: lattice_test_failed(n_lattices)
  !
  ! Load standard lattice vectors 

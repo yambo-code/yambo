@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -51,11 +51,12 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin
- use D_lattice,             ONLY:n_atom_species
+ use D_lattice,             ONLY:n_atomic_species
  use pseudo,                ONLY:pp_n_l_comp_max,PP_alloc,pp_kbs,pp_kb,pp_kbd
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  use defs_datatypes,        ONLY:hdr_type, wffile_type
+ use mod_com2y,             ONLY:artificial_spin_pol
  implicit none
  !
  integer        :: ikibz,ib_grp
@@ -71,13 +72,13 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  type(hdr_type)     :: ahdr
  type(wffile_type)  :: wff
  real(DP)           :: pp_kb_kdb_disk(wf_ncx),&
-&                      pp_kbs_disk(n_atom_species,pp_n_l_comp_max)
+&                      pp_kbs_disk(n_atomic_species,pp_n_l_comp_max)
  complex(DP)        :: wf_disk_DP(wf_ncx)
  integer            :: fform,i_spin
  !
  ! Number of records for each k-point
  !
- number_of_records_each_k=n_atom_species*pp_n_l_comp_max*2+1+wf_nb_io
+ number_of_records_each_k=n_atomic_species*pp_n_l_comp_max*2+1+wf_nb_io
  !
  if (ikibz==1.and.ib_grp==1) then
    open(unit=11,file=KSS_file_name,form='unformatted')
@@ -89,7 +90,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      read(11)
    enddo
    call PP_alloc()
-   read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_comp_max),i1=1,n_atom_species)
+   read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_comp_max),i1=1,n_atomic_species)
    pp_kbs=pp_kbs_disk
  endif
  !
@@ -99,7 +100,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  ! 
    !
    if (ib_grp==1) then
-     do i1=1,n_atom_species
+     do i1=1,n_atomic_species
        do i2=1,pp_n_l_comp_max
          read(11) pp_kb_kdb_disk
          pp_kb(:,i1,i2,i_spin)=pp_kb_kdb_disk

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -32,11 +32,22 @@ module it_m
  character(2),parameter :: G_unit='RL'
  character(2),parameter :: T_unit='eV'
  character(2),parameter :: Time_unit='fs'
- character(2),parameter :: B_unit='T'
+ character(2),parameter :: Bfield_unit='T'
+ character(4),parameter :: Efield_unit='V/mm'
+ character(5),parameter :: I_unit='kWLm2'
+ character(3),parameter :: Angle_unit='deg'
  ! 
  ! Verbosity
+ !===========
  !
- integer, parameter :: V_more=1,V_qp=2,V_io=3,V_testing=4
+ integer, parameter :: V_RL=1
+ integer, parameter :: V_kpt=2
+ integer, parameter :: V_sc=3
+ integer, parameter :: V_qp=4
+ integer, parameter :: V_io=5
+ integer, parameter :: V_general=6
+ integer, parameter :: V_resp=7
+ integer, parameter :: V_real_time=8
  !
  integer, parameter :: maxrnlvls=50
  integer, parameter :: maxflags =50
@@ -280,7 +291,7 @@ module it_m
            flags(nflags,1)=name
            flags(nflags,2)=description
            if (present(verb_level)) call initverbosity(name,nflags,'f',defs,verb_level)
-           else if (initmode==4) then
+         else if (initmode==4) then
            do i1=1,nflags
              if (trim(flags(i1,1))==trim(name)) then
                call parser(trim(name),ldef)
@@ -470,11 +481,13 @@ module it_m
      !
    end subroutine
    !
-   subroutine loadrnvar(defs,name,description,defval,unit,verb_level)
-     use parser_m,       ONLY:parser
+   subroutine loadrnvar(defs,name,description,defval,unit,verb_level,protect)
+     use drivers,       ONLY:infile_editing
+     use parser_m,      ONLY:parser
      character(*)::name,description
      character(*), optional :: unit
      integer,optional :: verb_level
+     logical, optional::protect
      real(SP) :: defval(:)
      type(initdefs)::defs
      integer :: dim,v_id
@@ -515,7 +528,12 @@ module it_m
          do i1=1,nr2v
            if (trim(r2vars(i1,1))==trim(name)) then
              v_id=i1
-             if (initmode==4) call parser(trim(name),defs%r2def(i1,:))
+             if (initmode==4) then
+               if (present(protect)) then
+                 if (.not.protect.and.infile_editing) cycle
+               endif
+               call parser(trim(name),defs%r2def(i1,:))
+             endif
              if (initmode<=3) defs%r2def(i1,:)=defval
              defval=defs%r2def(i1,:)
              exit
@@ -525,7 +543,12 @@ module it_m
          do i1=1,nr3v
            if (trim(r3vars(i1,1))==trim(name)) then
              v_id=i1
-             if (initmode==4) call parser(trim(name),defs%r3def(i1,:))
+             if (initmode==4) then
+               if (present(protect)) then
+                 if (.not.protect.and.infile_editing) cycle
+               endif
+               call parser(trim(name),defs%r3def(i1,:))
+             endif
              if (initmode<=3) defs%r3def(i1,:)=defval
              defval=defs%r3def(i1,:)
              exit
@@ -535,7 +558,12 @@ module it_m
          do i1=1,nr4v
           if (trim(r4vars(i1,1))==trim(name)) then
             v_id=i1
-            if (initmode==4) call parser(trim(name),defs%r4def(i1,:))
+            if (initmode==4) then
+              if (present(protect)) then
+                if (.not.protect.and.infile_editing) cycle
+              endif
+              call parser(trim(name),defs%r4def(i1,:))
+            endif
             if (initmode<=3) defs%r4def(i1,:)=defval
             defval=defs%r4def(i1,:)
             exit
@@ -762,7 +790,7 @@ module it_m
            nflines=nflines+1
            if (ou/=20) call init_convert(0._SP,defs%i1def(i2),i1vars(i2,3),.FALSE.)
            ch(2)=gen_fmt((/defs%i1def(i2)/))
-           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t26,a,t30,2a)'
+           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t30,2a)'
            write (flines(nflines),trim(ch(1))) trim(i1vars(i2,1)),'=',&
 &                defs%i1def(i2),trim(i1vars(i2,3)),'# ',trim(i1vars(i2,2))
          endif
@@ -775,7 +803,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i2vars(i2,1))
            ch(2)=gen_fmt(defs%i2def(i2,:))
-           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t26,a,t30,2a)'
+           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t30,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%i2def(i2,1),'|',defs%i2def(i2,2),'|',&
@@ -793,7 +821,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i3vars(i2,1))
            ch(2)=gen_fmt(defs%i3def(i2,:))
-           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t40,2a)'
+           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t42,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%i3def(i2,1),'|',defs%i3def(i2,2),'|',defs%i3def(i2,3),'|',&
@@ -825,7 +853,7 @@ module it_m
            call init_convert(unit_factor,0,r1vars(i2,3),.FALSE.)
            nflines=nflines+1
            ch(2)=gen_fmt(r_v=(/defs%r1def(i2)*unit_factor/))
-           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t26,a,t30,2a)'
+           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t30,2a)'
            write (flines(nflines),trim(ch(1))) &
 &                trim(r1vars(i2,1)),'=',defs%r1def(i2)*unit_factor,&
 &                trim(r1vars(i2,3)),'# ',trim(r1vars(i2,2))
@@ -839,7 +867,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r2vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r2def(i2,:)*unit_factor)
-           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t26,a,t30,2a)'
+           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t30,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%r2def(i2,1)*unit_factor,'|',defs%r2def(i2,2)*unit_factor,&
@@ -856,7 +884,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r3vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r3def(i2,:)*unit_factor)
-           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t40,2a)'
+           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t42,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%r3def(i2,1)*unit_factor,'|',defs%r3def(i2,2)*unit_factor,&
@@ -920,7 +948,7 @@ module it_m
        if (it_verbose_Ilevel(i1)==0) cycle
        if (trim(it_verbose_Ivars(i1))==trim(var_name))then
          if(all(var_val==it_verbose_Idefs(i1,:nvar)).and.&
-&           infile_verbosity< it_verbose_Ilevel(i1)) return
+&           infile_verbosity/=it_verbose_Ilevel(i1)) return
        endif
      enddo
      Iverbose_enough=.true.
@@ -938,7 +966,7 @@ module it_m
        if (it_verbose_Rlevel(i1)==0) cycle
        if (trim(it_verbose_Rvars(i1))==trim(var_name))then
          if(all(var_val==it_verbose_Rdefs(i1,:nvar)).and.&
-&               infile_verbosity< it_verbose_Rlevel(i1)) return
+&               infile_verbosity/=it_verbose_Rlevel(i1)) return
        endif
      enddo
      Rverbose_enough=.true.
@@ -956,7 +984,7 @@ module it_m
        if (it_verbose_Clevel(i1)==0) cycle
        if (trim(it_verbose_Cvars(i1))==trim(var_name))then
          if(var_val(1)==it_verbose_Cdefs(i1).and.&
-&           infile_verbosity< it_verbose_Clevel(i1)) return
+&           infile_verbosity/=it_verbose_Clevel(i1)) return
        endif
      enddo
      Cverbose_enough=.true.
@@ -971,7 +999,7 @@ module it_m
        if (it_verbose_Chlevel(i1)==0) cycle
        if (trim(it_verbose_Chvars(i1))==trim(var_name))then
          if(var_val==it_verbose_Chdefs(i1).and.&
-&           infile_verbosity< it_verbose_Chlevel(i1)) return
+&           infile_verbosity/=it_verbose_Chlevel(i1)) return
        endif
      enddo
      Chverbose_enough=.true.
@@ -988,7 +1016,7 @@ module it_m
       if (it_verbose_Flevel(i1)==0) cycle
       if (trim(it_verbose_Fvars(i1))==trim(var_name))then
         if(fstatus(ivar)>0.and.&
-&          infile_verbosity< it_verbose_Flevel(i1)) return
+&          infile_verbosity/=it_verbose_Flevel(i1)) return
        endif
      enddo
      Fverbose_enough=.true.

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,7 +23,7 @@ integer function ioKB_PP(ID)
  !
  use pars,             ONLY:schlen,IP,SP
  use stderr,           ONLY:intc
- use D_lattice,        ONLY:n_atoms_max,n_atom_species,n_atoms,&
+ use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
  use pseudo,           ONLY:pp_n_l_comp_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
@@ -60,30 +60,30 @@ integer function ioKB_PP(ID)
    ! In the case when kb_pp is not present these variables
    ! are available anyway.
    !
-   call io_elemental(ID,I0=n_atoms_max)
-   call io_elemental(ID,I0=n_atom_species)
+   call io_elemental(ID,I0=n_atoms_species_max)
+   call io_elemental(ID,I0=n_atomic_species)
    !
    call io_elemental(ID,I0=pp_n_l_comp_max)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (read_is_on(ID)) then
      ! 
-     if (.not.allocated(n_atoms)) then
-       allocate(n_atoms(n_atom_species))
-       allocate(atom_pos(3,n_atoms_max,n_atom_species))
-       call mem_est("n_atoms atom_pos",&
-&                   (/n_atom_species,size(atom_pos)/),(/IP,SP/))
+     if (.not.allocated(n_atoms_species)) then
+       allocate(n_atoms_species(n_atomic_species))
+       allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
+       call mem_est("n_atoms_species atom_pos",&
+&                   (/n_atomic_species,size(atom_pos)/),(/IP,SP/))
      endif
      if (.not.allocated(pp_n_l_comp)) then
-       allocate(pp_n_l_comp(n_atom_species))
-       call mem_est("pp_n_l_comp",(/n_atom_species/),(/IP/))
+       allocate(pp_n_l_comp(n_atomic_species))
+       call mem_est("pp_n_l_comp",(/n_atomic_species/),(/IP/))
      endif
      !
    endif
    !
-   call io_bulk(ID,VAR="N_ATOMS",VAR_SZ=(/n_atom_species/))
-   call io_bulk(ID,I1=n_atoms)
-   call io_bulk(ID,VAR="ATOM_L_COMP",VAR_SZ=(/n_atom_species/))
+   call io_bulk(ID,VAR="N_ATOMS",VAR_SZ=(/n_atomic_species/))
+   call io_bulk(ID,I1=n_atoms_species)
+   call io_bulk(ID,VAR="ATOM_L_COMP",VAR_SZ=(/n_atomic_species/))
    call io_bulk(ID,I1=pp_n_l_comp)
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))
    call io_bulk(ID,R3=atom_pos)
@@ -100,7 +100,7 @@ integer function ioKB_PP(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- allocate(pp_disk(wf_ncx,n_atom_species,pp_n_l_comp_max))
+ allocate(pp_disk(wf_ncx,n_atomic_species,pp_n_l_comp_max))
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP

@@ -1,5 +1,1 @@
-objs = eval_G_minus_G.o damping.o \
-       fermi_level.o pol_fit.o \
-       coarse_grid.o kk.o freqs_setup.o \
-       extend_occupations.o QP_state_extract.o QP_state_table_setup.o \
-       crystal_lattice.o
+objs = eval_G_minus_G.o FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o crystal_lattice.o Kramers_Kronig.o OCCUPATIONS_Fermi.o OCCUPATIONS_Extend.o QP_state_extract.o pol_fit.o

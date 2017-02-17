@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -189,7 +189,6 @@ module X_output
      endif
      !
    end subroutine
-   !
    !
    subroutine X_setup_headers(desc)
      !

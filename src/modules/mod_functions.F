@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,21 +30,19 @@ module functions
  !
  interface
    !
-   integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out)
+   integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out)
      !
      use pars, ONLY: SP
      !
-     ! This function makes a fit of RT_occ(RT_E) to the Fermi-Dirac function using two
+     ! This function makes a fit of RT_occ_in to the Fermi-Dirac function using two
      ! temperature and two fermi level, one for the valence and one for the conduction
      !
-     integer, intent(in)   :: nstates
-     real(SP),intent(in)   :: RT_E(nstates)
-     real(SP),intent(in)   :: RT_occ(nstates)
+     integer,  intent(in)  :: nstates
+     real(SP), intent(in)  :: RT_occ_in(nstates)
      !
      real(SP), intent(out) :: T_fit(2)
      real(SP), intent(out) :: Ef_fit(2)
      real(SP), intent(out) :: err_fit(4)
-     !
      real(SP), intent(out), optional :: RT_occ_fit_out(1000,2)
      real(SP), intent(out), optional :: RT_E_fit_out(1000,2)
      !
@@ -54,6 +52,12 @@ module functions
  !
  contains
    !
+   ! Temperature pre-factor
+   !-----------------------
+   !
+   subroutine SET_the_temperature_pre_factor( )
+   end subroutine
+   !
    ! Fermi functions
    !-----------------
    !
@@ -61,12 +65,12 @@ module functions
      !
      use electrons, ONLY:filled_tresh
      real(SP)::E,T,Fermi_fnc
-     Fermi_fnc=1.
-     if (T==0..and.E>0.) Fermi_fnc=0.
+     Fermi_fnc=1._SP
+     if (T==0._SP.and.E>0._SP) Fermi_fnc=0._SP
      !
-     if (T/=0.) Fermi_fnc=1./(1.+exp(E/T))
+     if (T/=0._SP) Fermi_fnc=1._SP/(1._SP+exp(E/T))
      !
-     if (Fermi_fnc<filled_tresh)  Fermi_fnc=0.
+     if (Fermi_fnc<filled_tresh)  Fermi_fnc=0._SP
      !
    end function
    !
@@ -91,7 +95,7 @@ module functions
      real(SP) :: E,T,Fermi_fnc_T_derivative
      real(SP),parameter :: tresh=0._SP
      Fermi_fnc_T_derivative=0._SP
-     if (T/=0._SP) Fermi_fnc_T_derivative=E/(2._SP+exp(E/T)+exp(-E/T))/T**2._SP
+     if (T/=0._SP) Fermi_fnc_T_derivative=E/(2._SP+exp(E/T)+exp(-E/T))/T**2
    end function
    !
    ! Bose functions
@@ -129,58 +133,6 @@ module functions
      if (.not.Finite_Tel) return
      if (abs(E)<=bose_E_cut*Tel) bose_decay=E**2./(Tel*bose_E_cut)**2.
      !
-   end function
-   !
-   ! Lifetime functions e2et/h2ht
-   !------------------------------
-   !
-   ! Gamma_n = 2 i \sum_m  { -/+ i Im[e^-1(e_n -e_m) (spin_occ-f+bose_f) <- e2et
-   !                           + i Im[e^-1(e_m -e_n) (         f+bose_f) <- h2ht }
-   !
-   ! where - for T-ordered theory, + for causal (finite Tel)
-   !
-   function e2et(is,os,E,F)
-     !
-     use electrons,   ONLY:levels
-     use drivers,     ONLY:Finite_Tel
-     use electrons,   ONLY:spin_occ
-     integer      ::is(3),os(3),e2et
-     type(levels) ::E
-     real(SP) :: F
-     real(SP) :: dE !ws
-     e2et=0
-     !
-     ! "Electron 2 Electron" decay
-     !
-     dE=E%E(is(1),is(2),is(3))-E%E(os(1),os(2),os(3))
-     !
-     F=               -(spin_occ-E%f(os(1),os(2),os(3))+bose_f(dE))
-     if (Finite_Tel) F=(spin_occ-E%f(os(1),os(2),os(3))+bose_f(dE))
-     !
-     if (dE>0..and.abs(F)>epsilon(1.)) e2et=1
-     if (e2et==0) F=0.
-   end function
-   !
-   function h2ht(is,os,E,F)
-     !
-     use electrons, ONLY:levels
-     integer      ::is(3),os(3),h2ht
-     type(levels) ::E
-     real(SP) :: F
-     !
-     ! Work Space
-     !
-     real(SP) :: dE 
-     h2ht=0
-     !
-     !"Hole 2 Hole" decay
-     !
-     dE=E%E(os(1),os(2),os(3))-E%E(is(1),is(2),is(3))
-     !
-     F=E%f(os(1),os(2),os(3))+bose_f(dE)
-     !
-     if (dE>0..and.abs(F)>epsilon(1.)) h2ht=1
-     if (h2ht==0) F=0.
    end function
    !
    logical function K_scatter(E,Ep,Er,Dr)

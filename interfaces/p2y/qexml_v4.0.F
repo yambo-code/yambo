@@ -2379,6 +2379,12 @@ CONTAINS
          CALL iotk_scan_attr( ATTR, "UNITS", degauss_units_ , IERR=ierr )
          IF (ierr/=0) RETURN
          !
+      ELSE
+         !
+         ngauss_=0
+         degauss_=0.0
+         degauss_units_=" "
+         !
       ENDIF
       !
       CALL iotk_scan_dat( iunit, "TETRAHEDRON_METHOD", ltetra_, IERR=ierr )
@@ -2400,6 +2406,8 @@ CONTAINS
             !
          ENDDO
          !
+      ELSE
+         ntetra_ = 0
       ENDIF
       !
       CALL iotk_scan_dat( iunit, "FIXED_OCCUPATIONS", tfixed_occ_, IERR=ierr )
@@ -2447,6 +2455,9 @@ CONTAINS
             !
          ENDIF
          !
+      ELSE
+         nstates_up_=0
+         nstates_dw_=0
       ENDIF
       !
       CALL iotk_scan_end( iunit, "OCCUPATIONS", IERR=ierr )
@@ -2457,9 +2468,9 @@ CONTAINS
       IF ( PRESENT( ltetra ))           ltetra      = ltetra_
       IF ( PRESENT( tfixed_occ ))       tfixed_occ  = tfixed_occ_
       IF ( PRESENT( ngauss ))           ngauss      = ngauss_
-      IF ( PRESENT( ntetra ))           ntetra      = ntetra_
-      IF ( PRESENT( degauss ))          degauss     = degauss_
       IF ( PRESENT( degauss_units ))    degauss_units  = TRIM(degauss_units_)
+      IF ( PRESENT( degauss ))          degauss     = degauss_
+      IF ( PRESENT( ntetra ))           ntetra      = ntetra_
       IF ( PRESENT( nstates_up ))       nstates_up  = nstates_up_
       IF ( PRESENT( nstates_dw ))       nstates_dw  = nstates_dw_
       !
@@ -3259,6 +3270,12 @@ subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
   call iotk_scan_end(u,"PP_LOCAL",ierr=ierr)
   !
   ! Nonlocal data
+  !
+  if(nbeta==0) then
+    rewind(u)
+    close(u)
+    return
+  endif 
   !
   rewind(u)
   call iotk_scan_begin(u,"PP_NONLOCAL")

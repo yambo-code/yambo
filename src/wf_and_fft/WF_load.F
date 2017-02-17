@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,8 +33,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spin,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz
- use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
-&                        fft_g_table,fft_size
+ use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
@@ -368,8 +367,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Check normalization @ 1st k-point only.
  !
- mndp=10.
- mxdp=-1.
+ mndp=10._SP
+ mxdp=-1._SP
  do i1=1,min(int(nel)+5,WF%b(2))
    do i2=1,min(int(nel)+5,WF%b(2))
      do is=1,n_sp_pol

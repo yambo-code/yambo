@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -106,8 +106,15 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
  ! Splitting + SPIN support still not implemented (see a2y_wf.F for more details)
+ ! Davide: barrier removed. I do not see any reason for keeping it
  !
+ !
+ !
+ !
+ 
  if(n_spin==1) call WF_splitter()
+ 
+ !
  !
  call msg('s','Writing WFs and (eventually) nlPP ...')
  !

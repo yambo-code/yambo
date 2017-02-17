@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,21 +40,20 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 &                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
- use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
+ use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
  use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&
 &                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL,io_RESPONSE,io_SCREEN
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
-&                        QP_n_W_freqs_redux 
+&                        QP_n_W_freqs_redux,e2et,h2ht
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use functions,     ONLY:e2et,h2ht,bose_decay
+ use functions,     ONLY:bose_decay
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
  use stderr,        ONLY:intc
- use wrapper_omp,   ONLY:Vstar_dot_V_omp
- use wrapper,       ONLY:Vstar_dot_V,V_dot_V
+ use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -69,7 +68,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! WorkSpace
  !
- type(ggwinfo)    ::scattering_main,scattering_prime
+ type(elemental_collision) ::scattering_main,scattering_prime
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
  integer          ::i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
 &                   iv4(4),io_err,X_id,WID,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
@@ -83,8 +82,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! Presets
  !=========
  !
- call collision_reset(scattering_main)
- call collision_reset(scattering_prime)
+ call elemental_collision_free(scattering_main)
+ call elemental_collision_free(scattering_prime)
  !
  if (l_life) then
    do iqibz=1,q%nibz
@@ -287,13 +286,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call X_alloc('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
  !
- call scatterBamp_alloc(scattering_main)
- call scatterBamp_alloc(scattering_prime)
- allocate(scattering_main%gamp(X%ng,X%ng),scattering_main%rhotw(X%ng),scattering_prime%rhotw(X%ng),stat=i_err)
- call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/i_err/))
+ call elemental_collision_alloc(scattering_main,NG=X%ng,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
+ call elemental_collision_alloc(scattering_prime,NG=X%ng,TITLE="GW")
  !
  QP_Sc=cZERO
- scattering_main%ngrho=X%ng
  scattering_main%iqref=0
  !
  ! Main Loop
@@ -333,7 +329,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      !
      if (.not.io_RESPONSE) X_range=(/QP_n_W_freqs_redux*(i_q_mem-1)+1,QP_n_W_freqs_redux*(i_q_mem-1)+X_life_W(iqibz)%n_freqs/)
      !
-     call scatterGamp(scattering_main,'c')
+     call scatter_Gamp(scattering_main,'c')
      !
      ! I/O
      !
@@ -435,20 +431,18 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        !
        if (l_life.and.i_or==0) cycle
        !
-       call scatterBamp(scattering_main)
+       call scatter_Bamp(scattering_main)
        scattering_prime%rhotw=scattering_main%rhotw
        !
-       if (any(scattering_main%is/=scattering_prime%is)) call scatterBamp(scattering_prime)
+       if (any(scattering_main%is/=scattering_prime%is)) call scatter_Bamp(scattering_prime)
        !
        if (l_life) then
          !
          i2=life_W_table(iqibz,QP_n_W_freqs)
          !
-!$omp parallel do default(shared), private(i3)
          do i3=1,X%ng
-           lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+           lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
          enddo
-!$omp end parallel do
          !       
          ! To compensate the Tel/w divergence of the Bose function at finite
          ! Tel I multiply the X_mat function by [w/(Tel*Bose_E_cut)]^2
@@ -461,19 +455,15 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          !
        else ! .not.l_life
          !
-!$omp parallel default(shared), private(i3,i2)
          do i2=1,QP_n_W_freqs
            !
-!$omp do
            do i3=1,X%ng
-             lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+             lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
            enddo
-!$omp end do
            !
-           QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*Vstar_dot_V(X%ng,scattering_prime%rhotw,lrhotw)
+           QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
            !
          enddo
-!$omp end parallel
          !
        endif
        !
@@ -514,11 +504,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! CLEAN
  !
- call scatterBamp_free(scattering_main)
- call scatterBamp_free(scattering_prime)
- deallocate(scattering_main%gamp,scattering_main%rhotw,scattering_prime%rhotw)
- call mem_est("ISC-GAMP")
- !
  if (l_life) then
    deallocate(life_W_table)
    call mem_est("life_W_table")
@@ -544,9 +529,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  endif
  !
  if (io_RESPONSE) call X_alloc('X')
+ !
  call WF_free(WF)
- call collision_reset(scattering_main)
- call collision_reset(scattering_prime)
+ call elemental_collision_free(scattering_main)
+ call elemental_collision_free(scattering_prime)
  call PP_redux_wait()
  !
 #if defined _TIMING

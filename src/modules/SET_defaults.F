@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -79,11 +79,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
- use interpolate, ONLY:interpls,max_interpls
 #if defined _TIMING
  use timing_m,    ONLY:timing_allocate,nclockx
 #endif
- use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread
+ use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
  !
  implicit none
  !
@@ -101,6 +100,16 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! CPU structures
  !
  call CPU_str_reset()
+ !
+ ! OpenMP
+ !
+ omp_is_off    = .FALSE.
+ !
+#if defined _OPENMP
+ !
+ if (index(INSTR,'noopenmp')>0) omp_is_off=.TRUE.
+ !
+#endif
  !
  call OPENMP_initialize( )
  call OPENMP_update(master_thread)
@@ -326,10 +335,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  fft_size=0
  fft_dim=0
  fft_multiplier=(/1,1,1/)
- !
- ! Interpolation
- !
- interpls(1:max_interpls)%ndim=0
  !
  do i1=1,max_io_units
    call io_reset(i1)

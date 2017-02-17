@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,27 +25,41 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  !
  ! Here I want to approx the integral
  !
- ! 1/vol \int_vol F(q) d3q = 1/vol \int_vol d3q/q^2 [q^2 F(q)] =
+ ! 1/vol \int_vol F(q) d3q = 1/vol \int_vol d3q/q^power [q^power F(q)] =
  !                         = 1/vol \sum_{Qi} \int_Si d3q/q^power [q^power F(q)] ~
  !                         ~ 1/vol \sum_{Qi} [Qi^power F(Qi)] \int_Si d3q/q^power
  !
- ! with Si a sphere of radius "radius" and volume vol/Np. F(q) is divergent at gamma
- ! and it goes like 1/q^2. Therefore [q^2 F(q)] is regular.
+ ! with Si a sphere of radius "radius" and volume vol/Np. 
  !
- ! Finally I will rewrite 
+ ! a) MULTIPLY_BY_Q=.TRUE. 
  !
- ! 1/vol \int_vol F(q) d3q ~ \sum_{Qi} Wi F(Qi)
- !
+ ! If F(q) is divergent at gamma and it goes like 1/q^power. Therefore [q^power F(q)] is regular.
+ ! I use this property to regularize the integral and rewrite 
+ ! 
+ !  1/vol \int_vol F(q) d3q = 1/vol \int_vol q^power/q^power F(q) d3q 
+ ! 
  ! with
- !
- ! MULTIPLY_BY_Q=.TRUE. 
- !
- !   with Wi = Qi^power/vol*\int_Si d3q/q^power
- !
- ! MULTIPLY_BY_Q=.FALSE. 
- !
- !   with Wi = 1/vol*\int_Si d3q/q^power
- !
+ ! 
+ !  1/vol \int_vol F(q) d3q ~ \sum_{Qi} Wi F(Qi)
+ ! 
+ ! and
+ !  
+ !  Wi = 1/vol Qi^power \int_Si d3q/q^power
+ ! 
+ ! and Wi stored in p_weight
+ ! 
+ !  a) MULTIPLY_BY_Q=.FALSE. 
+ ! 
+ ! In this case I want to integrate the 1/q^power straight away, i.e. F(q)=1/q^power
+ ! 
+ !  1/vol \int_vol F(q) d3q = 1/vol \int_vol 1./q^power d3q  ~ \sum_{Qi} Wi
+ ! 
+ ! with
+ ! 
+ !  Wi = 1/vol \int_Si d3q/q^power
+ ! 
+ ! and Wi stored in p_weight
+ ! 
  use pars,          ONLY:SP,pi,DP
  use drivers,       ONLY:l_real_time
  use com,           ONLY:msg
@@ -69,8 +83,13 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  integer            :: iseed(8)
  real(DP), external :: dlaran
  !
- if (RIM_n_rand_pts==0) then
-   p_weight=1./float(Np)
+ if (RIM_n_rand_pts==0)then
+   do ip=1,Np
+     p_weight(ip)=0.
+     pt_cc=points(ip,:)*2.*pi/alat(:)
+     if(     MULTIPLY_BY_Q) p_weight(ip)=1./float(Np)
+     if(.not.MULTIPLY_BY_Q.and.v_norm(pt_cc)>0._SP) p_weight(ip)=1./float(Np)/v_norm(pt_cc)**power
+   enddo
    return
  endif
  !

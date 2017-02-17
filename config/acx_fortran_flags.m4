@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2015 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -35,7 +35,7 @@ if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 case "${host}" in
 i?86*linux*)
   case "${FC}" in
-  *pgf9* | *ftn* )
+  *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
@@ -65,7 +65,7 @@ i?86*linux*)
   *ifort*)
     CPU_FLAG=""
     case "${FCVERSION}" in
-      *11* | *12* | *13* |*14* | *15* )
+      *11* | *12* | *13* |*14* | *15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
@@ -95,6 +95,12 @@ i?86*linux*)
  ;;
 *86*apple* )
   case "${FC}" in
+  *pgf9* | *ftn* | *pgfortran* )
+    SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    UFFLAGS="-O0 -Mbackslash"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    ;;
   *gfortran*)
     SYSFLAGS="-g -O3 -mtune=native"
     UFFLAGS="-g -O0 -mtune=native"
@@ -129,6 +135,12 @@ i?86*linux*)
   ;;
 ia64*linux* )
   case "${FC}" in
+  *pgf9* | *ftn* | *pgfortran* )
+    SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    UFFLAGS="-O0 -Mbackslash"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    ;;
   *gfortran*)
     SYSFLAGS="-g -O3 -mtune=native"
     UFFLAGS="-g -O0 -mtune=native"
@@ -139,12 +151,6 @@ ia64*linux* )
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
     UFFLAGS="-g -O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
-    ;;
-  *pgf9* | *ftn* )
-    SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-    UFFLAGS="-O0 -Mbackslash"
-    FCMFLAG="-Mnomain"
-    OMPFLAGS="-mp"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -188,6 +194,12 @@ ia64*linux* )
   ;;
 *x86*64* )
   case "${FC}" in
+  *pgf9* | *ftn* | *pgfortran* )
+    SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    UFFLAGS="-O0 -Mbackslash"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    ;;
   *gfortran*)
     SYSFLAGS="-g -O3 -mtune=native"
     UFFLAGS="-g -O0 -mtune=native"
@@ -198,12 +210,6 @@ ia64*linux* )
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
     UFFLAGS="-g -O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
-    ;;
-  *pgf9* | *ftn* )
-    SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-    UFFLAGS="-O0 -Mbackslash"
-    FCMFLAG="-Mnomain"
-    OMPFLAGS="-mp"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -216,7 +222,7 @@ ia64*linux* )
   *ifort*)
     CPU_FLAG=""
     case "${FCVERSION}" in
-      *11* | *12* | *13* |*14* |*15* )
+      *11* | *12* | *13* |*14* |*15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;

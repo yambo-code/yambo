@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -74,6 +74,8 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  !
  allocate(px%n_of_elements(ncpu_loop))
  px%n_of_elements=0
+ !
+ if (uplim(1)==0) goto 1
  !
  if (nindxs==1.and.local_CONSECUTIVE) then
    !
@@ -193,7 +195,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
    !
  endif
  !
- deallocate(lowlim)
+1 deallocate(lowlim)
  if(allocated(i_done)) deallocate(i_done)
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,6 +46,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
  i_lin_algebra_chain=0
  !
  ! For the moment I assume that here ncpu_lin_alg is always equal to one of the roles present in the input
+ !
  do i_chain=1,MAX_N_OF_CHAINS
    if(N_cpu_lin_algebra/=ncpu_chain(i_chain)) cycle
    i_lin_algebra_chain=i_chain

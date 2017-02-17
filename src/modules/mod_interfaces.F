@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,6 +26,20 @@ module interfaces
  implicit none
  !
  interface
+   !
+   subroutine SCATTERING_GW_kinematics(i_qp,i_q_bz,i_m,I,k,q,E,N,G0,Ek,Ekmq,E_diff)
+     use pars,                ONLY:SP
+     use electrons,           ONLY:levels
+     use R_lattice,           ONLY:bz_samp
+     use QP_m,                ONLY:QP_table
+     use collision,           ONLY:elemental_collision
+     integer,       intent(in) ::i_qp,i_q_bz,i_m
+     type(elemental_collision) ::I
+     type(bz_samp)             ::k,q
+     type(levels),  OPTIONAL   ::E
+     integer,       OPTIONAL   ::N,G0
+     real(SP),      OPTIONAL   ::Ek,Ekmq,E_diff
+   end subroutine
    !
    subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
      use pars,           ONLY:SP
@@ -147,12 +161,6 @@ module interfaces
      type(MPI_comm),optional :: COMM_A2A_1
      type(MPI_comm),optional :: COMM_A2A_2
      type(MPI_comm),optional :: COMM_A2A_3
-   end subroutine
-   !
-   subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
-     character(*) :: ENVIRONMENT
-     integer      :: n_elements
-     character(*) :: ROLE(:)
    end subroutine
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)

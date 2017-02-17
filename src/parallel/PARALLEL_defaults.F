@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -58,8 +58,9 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  !
  call DEFAULT_action("define")
  !
- if (product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))/=ncpu) &
-&    call error('Impossible to define an appropriate parallel structure')
+ if (product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))/=ncpu) then
+   call error('Impossible to define an appropriate parallel structure')
+ endif
  !
  contains
    !

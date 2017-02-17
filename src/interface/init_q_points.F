@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -111,6 +111,7 @@ subroutine init_q_points(l_WRITE)
      write (db_name,'(a,i6.6)') 's.dbph_',iabs(i_q)
      io_err=io_connect(desc=trim(db_name),type=-2,ID=ID)
      get_e_p_q_point=io_err
+     !
      if (io_err==0) then
        read (io_unit(ID)) 
        read (io_unit(ID)) alat_DP,q_in

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -533,7 +533,9 @@ subroutine K_inversion(iq,W,E,k,q)
        ! The parallel loop is controlled in the manin body loop 
        ! when a full inversion is performed
        !
-       if (.not.do_it_full.and..not.px%element_1D(i3)) cycle
+       if (.not.do_it_full) then
+         if(.not.px%element_1D(i3)) cycle
+       endif
        !
        if (     do_it_full) perform_inv= inv_err(i3)/= 0
        if (.not.do_it_full) perform_inv= inv_err(i3)==-1

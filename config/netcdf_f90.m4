@@ -2,7 +2,7 @@
 # autoconf macro for detecting NetCDF module file
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2015 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -108,6 +108,9 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [use netcdf]),
      [netcdf=yes 
       for file in `find "$try_incdir" \( -name '*netcdf*' -o -name '*typesizes*' \) `; do
+        cp $file include/ 
+      done
+      for file in `find "$try_incdir" \( -name '*NETCDF*' -o -name '*TYPESIZES*' \) `; do
         cp $file include/ 
       done
       for file in `find $try_libdir -name '*netcdf*.a'`; do

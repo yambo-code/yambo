@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -135,7 +135,7 @@ subroutine init_barriers()
  ! SPIN
  !=============
  if (n_spin>2) then
-   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scrun'
    on_runlevels=trim(on_runlevels)//' negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
    on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
@@ -147,7 +147,7 @@ subroutine init_barriers()
  !
 #if defined _KERR
  if(l_kerr) then
-   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scrun'
    on_runlevels='optics bse'
    if(bss_inv.or.bss_tddft) on_runlevels=' '
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))

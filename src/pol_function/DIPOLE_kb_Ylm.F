@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,6 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
- !
  !
  ! Ylm(il,im) := Spherical harmonic 
  ! dYlm([1,2],il,im) := Derivative of the Spherical harmonic [1=theta,2=phi]

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -86,9 +86,7 @@ subroutine PARALLEL_WF_index(COMM)
    enddo
    !
    do ib=1,NB
-     if (states_to_load(ib,ik,1)) then
-       WF_linear%element_1D(NK*(ib-1)+ik)=.TRUE.
-     endif
+     if (states_to_load(ib,ik,1)) WF_linear%element_1D(NK*(ib-1)+ik)=.TRUE.
    enddo
  enddo
  !
@@ -98,9 +96,7 @@ subroutine PARALLEL_WF_index(COMM)
  !
  do ik=1,NK
    do ib=1,NB
-     if (WF_linear_no_overlaps%element_1D(NK*(ib-1)+ik)) then
-       PAR_IND_WF_linear%element_2D(ib,ik)=.TRUE.
-     endif
+     if (WF_linear_no_overlaps%element_1D(NK*(ib-1)+ik)) PAR_IND_WF_linear%element_2D(ib,ik)=.TRUE.
    enddo
  enddo
  !

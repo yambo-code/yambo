@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -51,7 +51,7 @@ subroutine K_kerr_IP(w)
  integer           ::ik_bz,iv,ic,i1,i_sp,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
  !
  n_SOC=1
- if( E_SOC_nbands/=0) n_SOC=2
+ !
  !
  B_Hall=cZERO
  !
@@ -75,7 +75,7 @@ subroutine K_kerr_IP(w)
      ik_mem= PAR_Xk_bz_index(ik_bz)
      !
      if (E_SOC_nbands==0) IP_E(1)=BS_T_grp(i_T_g)%E(i_T)
-     if (E_SOC_nbands/=0) IP_E(:)=BS_T_grp(i_T_g)%E(i_T)+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+     !
      !
      if (allocated(BS_T_grp(i_T_g)%Z)) local_Z=BS_T_grp(i_T_g)%Z(i_T)
      !
@@ -116,7 +116,7 @@ subroutine K_kerr_IP(w)
  if (l_rpa_IP) call live_timing()
  !
  if (E_SOC_nbands==0) Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
- if (E_SOC_nbands/=0) Co=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
+ !
  !
  if(trim(global_gauge)=='length'   ) X_epsilon(6,:)= X_epsilon(6,:)*Co/q_norm(1)**2
  if(trim(global_gauge)=='velocity' ) X_epsilon(6,:)= X_epsilon(6,:)*Co/  w(:)   **2

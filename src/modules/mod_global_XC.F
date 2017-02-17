@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -101,7 +101,7 @@ module global_XC
    SE_GWo           = 405, &
    SE_POLARON       = 406, &
    SE_GW_NEQ        = 407, &
-   SE_GW_EL_PHOTON  = 408
+   SE_GW_QED        = 408
  !
  ! More Self-Energies
  integer, public, parameter :: &
@@ -229,6 +229,10 @@ module global_XC
          global_XC_string='GWo on real axis'
        case(SE_POLARON)
          global_XC_string='Polarons'
+       case(SE_GW_NEQ)
+         global_XC_string='OUT-of-EQ GW'
+       case(SE_GW_QED)
+         global_XC_string='QED-based GW'
      end select
      !
      ch_plus='+'

@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2015 the YAMBO team
+         Copyright (C) 2000-2016 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -47,15 +47,20 @@
   {"cdir",   "C","Communications I/O directory",0,0,1,0,1},  
   {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
   {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
-  {"dbfrag", "S","DataBases fragmentation",0,0,0,0,1}, 
-  {"parmem", "M","Memory distribution (parallel runs)",0,0,0,0,1}, 
+  {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
+#if defined _MPI
+  {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
+#endif
+#if defined _OPENMP
+  {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,1}, 
+#endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
   {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex]",0,0,1,0,0},
   {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
   {"bss",    "y","BSE solver [opt=h/d/(p/f)i]",0,0,1,0,0},                      
   {"DESC",   " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0,0},
-  {"rim_cut","c","Coulomb interaction",0,0,0,0,0},  
+  {"rim_cut","r","Coulomb potential",0,0,0,0,0},  
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0,0},        
@@ -65,7 +70,7 @@
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _ELPH 
-  {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    
+  {"corrtp", "c","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}

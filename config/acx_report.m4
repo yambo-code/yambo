@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2015 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -84,9 +84,6 @@ if test "$compile_lapack" = "yes" ; then LAPACK_str="I"; fi
 BLAS_str="E"
 if test "$compile_blas" = "yes" ; then BLAS_str="I"; fi
 
-SLK_str="-"
-if test "$enable_scalapack" = "yes" ; then SLK_str="E"; fi
-
 BGQ_str="-"
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
 
@@ -110,7 +107,6 @@ AC_SUBST(ETSF_str)
 AC_SUBST(PW_str)
 AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
-AC_SUBST(SLK_str)
 AC_SUBST(OPENMP_str)
 AC_SUBST(BGQ_str)
 AC_SUBST(TIME_profile_str)

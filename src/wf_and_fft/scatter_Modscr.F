@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2015 M. Gruening and the YAMBO team 
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): MG
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,11 +26,12 @@ subroutine scatter_ModScr(isc,mu)
  ! multiply scatterGamp by exp((-|q+G|^2)/(4\mu^2))
  !
  use pars,          ONLY:SP,pi
- use collision,     ONLY:ggwinfo
+ use collision,     ONLY:elemental_collision
  use R_lattice,     ONLY:bare_qpg
  implicit none
- type(ggwinfo)::isc
- real(SP) :: mu
+ !
+ type(elemental_collision)::isc
+ real(SP)                 :: mu
  !
  !Working Space
  !

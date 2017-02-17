@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
 &                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
- use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
+ use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE
@@ -71,7 +71,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer                  ::i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
 &                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),iv4(4),io_err,ID,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
- type(ggwinfo)            ::isc,iscp
+ type(elemental_collision)::isc,iscp
  character(schlen)::ch,Sc_name
  logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
@@ -81,8 +81,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Reset
  !
- call collision_reset(isc)
- call collision_reset(iscp)
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
@@ -123,19 +123,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call k_expand(k)
  !
- ! Dimensions...
- !
- isc%iqref=0
- isc%ngrho=X%ng
- if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) isc%ngrho=maxval(G_m_G)
- iscp%ngrho=isc%ngrho
- !
  ! WF distributed & load
  !=======================
  !
-if( .not.l_sc_run ) then
- call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-endif
+ if ( .not.l_sc_run ) call PARALLEL_global_indexes(E,k,q,"Self_Energy")
  !
  ! Redefine iq_to_start to be CPU-dependent
  !
@@ -153,7 +144,19 @@ endif
  endif
  !
  ch='-GW'
+ !
+ ! wf and collisions dimension
+ !-----------------------------
+ isc%ngrho=X%ng
+ if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) isc%ngrho=maxval(G_m_G)
+ !
  call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),title=trim(ch))
+ !
+ ! Elemental Collisions
+ !====================== 
+ isc%iqref=0
+ call elemental_collision_alloc(isc,NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
+ call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
  !
 #if defined _TIMING
  call timing('GW(ppa)',OPR='start')
@@ -185,11 +188,6 @@ endif
    endif
  endif
  !
- call scatterBamp_alloc(isc)
- call scatterBamp_alloc(iscp)
- allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
- call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
- !
  call PP_redux_wait
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
@@ -214,7 +212,7 @@ endif
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
-     call scatterGamp(isc,'c')
+     call scatter_Gamp(isc,'c')
      !
      ! I/O
      !
@@ -295,7 +293,7 @@ endif
        iscs_save(2,:3)=isc%qs
        isc%os=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
        isc%qs=(/1,1,1/)
-       call scatterBamp(isc)
+       call scatter_Bamp(isc)
        !
        if(l_GW_terminator) then
          do is=1,n_sp_pol
@@ -363,11 +361,11 @@ endif
        !
        isc%os(1)=ib
        !
-       call scatterBamp(isc)
+       call scatter_Bamp(isc)
        iscp%os=isc%os
        !
        iscp%rhotw=isc%rhotw
-       if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
+       if (any(isc%is/=iscp%is)) call scatter_Bamp(iscp)
        !
        dc=cZERO
        !
@@ -488,9 +486,7 @@ endif
  !
  ! CLEAN
  !
- call scatterBamp_free(isc)
- call scatterBamp_free(iscp)
- deallocate(isc%gamp,isc%rhotw,iscp%rhotw,dc)
+ deallocate(dc)
  if(l_ppa) then
    deallocate(W_)
    if(l_GW_terminator) then
@@ -518,7 +514,7 @@ endif
  !
  if(.not.l_sc_run) call WF_free(WF)
  !
- call collision_reset(isc)
- call collision_reset(iscp)
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
  !
 end subroutine

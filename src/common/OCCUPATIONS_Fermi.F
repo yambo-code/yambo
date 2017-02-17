@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -254,7 +254,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  call OCCUPATIONS_Gaps(E)
  !
- if (E%nbf==0 ) call error(' Input temperature is too high. Set a lower temperature in the input')
+! if (E%nbf==0 ) call error(' Input temperature is too high. Set a lower temperature in the input')
  !
  ! Mode = 1. Define E%f and exits
  !

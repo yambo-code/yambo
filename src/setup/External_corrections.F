@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -42,12 +42,10 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  ! Work Space
  !
- logical       ::l_apply_QP_corrections,l_dynamical,VERBOSE
+ logical       ::l_apply_QP_corrections,l_dynamical
  integer       ::X_kind,bands_to_correct(2)
  !
  call section('*','External corrections')
- !
- VERBOSE=.TRUE.
  !
  ! 1) Screening
  ! ==============

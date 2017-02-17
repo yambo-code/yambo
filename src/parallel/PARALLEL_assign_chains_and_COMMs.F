@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -52,6 +52,7 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
  !
  i_chain(1)=nchains_group(chain_now)
  i_cpu(1)  =ncpu_chain(i_chain(1))
+ !
  call COMM_copy(INTRA_CHAIN(i_chain(1)),COMM_index_1)
  if (present(COMM_A2A_1)) then
    call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_A2A_1)

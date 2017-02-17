@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS, AM, MG
@@ -48,7 +48,7 @@ subroutine K_diag_compute_epsilon(iq,W,BS_E,BS_E_SOC_corr,BS_R,BS_R_kerr)
  !
  type(PP_indexes)     ::px
  !
- integer              :: i1,n_soc,i_pert_SOC
+ integer              :: i1,i_pert_SOC,n_SOC
  logical              :: K_is_not_hermitian
  real(SP)             :: Co
  complex(SP)          :: factor_jj,EXC_E(2)
@@ -57,7 +57,7 @@ subroutine K_diag_compute_epsilon(iq,W,BS_E,BS_E_SOC_corr,BS_R,BS_R_kerr)
  K_is_not_hermitian=BS_K_coupling.or.allocated(BSS_eh_W)
  !
  n_SOC=1
- if(E_SOC_nbands/=0) n_SOC=2
+ !
  !
  X_epsilon(1,:)=cZERO
  X_epsilon(2,:)=cZERO
@@ -77,14 +77,13 @@ subroutine K_diag_compute_epsilon(iq,W,BS_E,BS_E_SOC_corr,BS_R,BS_R_kerr)
    if (.not.px%element_1D(i1)) cycle
    !
    !
-   !
-   ! Note the use of a causal expression here needed to avoid any
-   ! distinction between the resonant and antiresonant e/h Green's functions.
-   !
    if (E_SOC_nbands==0) EXC_E(1)=BS_E(i1)
-   if (E_SOC_nbands/=0) EXC_E(:)=BS_E(i1)+BS_E_SOC_corr(:,i1)
    !
    do i_pert_SOC=1,n_SOC
+     !
+     ! Note the use of a causal expression here needed to avoid any
+     ! distinction between the resonant and antiresonant e/h Green's functions.
+     !
      if (     K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-EXC_E(i_pert_SOC))
      if (.not.K_is_not_hermitian) then
        X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-EXC_E(i_pert_SOC))

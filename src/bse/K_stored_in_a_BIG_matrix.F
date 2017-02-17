@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -31,7 +31,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !      | (-K_c^*)  (-K_r^*) |
  !
  ! 
- use electrons,      ONLY:n_sp_pol
+ use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_T_INDEX,PAR_COM_Xk_ibz_INDEX
  use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
@@ -85,6 +85,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      BSS_eh_f(H_pos(1))=BS_T_grp(i_g)%f(i_c)
      if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos(1))=BS_T_grp(i_g)%Z(i_c)
      if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos(1))=BS_T_grp(i_g)%W(i_c)
+     !
      !
      BSS_rhoq0(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
      BS_mat(H_pos(1),H_pos(1))=BS_T_grp(i_g)%E(i_c)/real( PAR_COM_T_INDEX%n_CPU )

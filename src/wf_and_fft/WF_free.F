@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,10 +34,15 @@ subroutine WF_free(WF)
  !
  if (.not.associated(WF%c)) return
  !
+ deallocate(WF%c)
  call mem_est('WF',quiet=QUIET_free)
- !
  nullify(WF%c)
- nullify(WF%state)
+ !
+ if (associated(WF%state)) then
+   deallocate(WF%state)
+   nullify(WF%state)
+ endif 
+ !
  if (WF%space=="R") then
    fft_size=0
    fft_dim=0

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
- use collision,      ONLY:scatterBamp_alloc,scatterBamp_free
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -54,7 +53,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  ! Allocate
  !
- call scatterBamp_alloc(K_EXCH_collision)
  call BS_oscillators_alloc(.TRUE.,i_T_grp,.FALSE.,0)
  !
  T_loop: do i_T_el=1,BS_T_grp(i_T_grp)%size
@@ -97,7 +95,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      if  (i_s==1.or.i_T_grp_last_with_identity_sym<0) then
        !
-       call scatterBamp(K_EXCH_collision)
+       call scatter_Bamp(K_EXCH_collision)
        !
 !$omp parallel do default(shared), private(i_g1,i_g2)
        do i_g1=1,BS_n_g_exch
@@ -116,7 +114,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      endif
    else
      !
-     call scatterBamp(K_EXCH_collision)
+     call scatter_Bamp(K_EXCH_collision)
      !
 !$omp parallel do default(shared), private(i_g1)
      do i_g1=1,BS_n_g_exch
@@ -128,8 +126,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
    endif
    !
  enddo T_loop
- !
- call scatterBamp_free(K_EXCH_collision)
  !
 #if defined _TIMING
  call timing('T_space EXX Osc.',OPR='stop')

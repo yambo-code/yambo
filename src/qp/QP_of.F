@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,18 +48,18 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=26
+ integer, parameter:: tpar=27
  integer       :: ntitles,titles_order(tpar)
  real(SP)      :: values(tpar)
  character(schlen) :: titles(tpar)
  !
  titles(1)  = trim(Vxc_kind) ! 1 
- titles(2)  = 'Sc(Eo)' ! 2
- titles(3)  = 'Sc(Eqp)' ! 3
+ titles(2)  = 'Sc|Eo' ! 2
+ titles(3)  = 'Sc|E' ! 3
  titles(4)  = 'Eo'  ! 4
- titles(5)  = 'Eqp' ! 5
- titles(6)  =  'Z' ! 6
- titles(7)  =  'Sc`(Eo)' ! 7
+ titles(5)  = 'E' ! 5
+ titles(6)  = 'Z' ! 6
+ titles(7)  = 'dSc/dw|Eo' ! 7
  titles(8)  = 'E-Eo' ! 8
  titles(9)  = 'K-point' ! 9
  titles(10) = 'Band' ! 10
@@ -79,6 +79,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  titles(24) = 'E-Eo(Mhz)' ! 24
  titles(25) = 'E-Eo(meV)' ! 25
  titles(26) = 'Ehf' ! 26
+ titles(27) = 'Sc|Eo(meV)' ! 25
  !
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)

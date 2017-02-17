@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,9 +31,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,master_cpu, &
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
- use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
+ use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer,wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
 &                        IO_and_Messaging_switch,io_RESPONSE,NONE
  use com,           ONLY:depth
@@ -110,7 +110,14 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
+ ! X%ngostnts is defined only for the group of CPU's that eval q=1
+ ! and must be spread to all CPUs before doing the IO of the header
+ call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
+ !
  if (io_RESPONSE) then
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
+   i_err=io_X(X,Xw,Xdb)
    !
    do iq=X%iq(1),X%iq(2)
      !
@@ -126,12 +133,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        Xw%er=minmax_ehe
      endif
      !
-     if (iq==1) then
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=Xdb)
-     else
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
-     endif
-     !
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
      io_X_done(iq)=io_X(X,Xw,Xdb)
      !
    enddo
@@ -176,6 +178,22 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  integrating_over_q=.true.
  !
+ if (io_RESPONSE) then
+   !
+   if(master_cpu) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb) 
+     i_err=io_X(X,Xw,Xdb)
+   endif
+   !
+   call PP_redux_wait()
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=Xdb)
+   i_err=io_X(X,Xw,Xdb)
+   !
+ endif
+ !
+ ! Only the head of each q group writes the IO
+ !
  do iq=X%iq(1),X%iq(2)
    !
    ! TDDFT setup
@@ -192,7 +210,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
    endif
    !
-   if (     io_X_done(iq)>0) cycle
+   if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
    iq_mem=PAR_Q_index(iq)
@@ -209,21 +227,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !
-   if ( (iq==X%iq(1).and..not.l_life) .or. (iq==1.and.l_life) ) then
-     !
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
-     !
-   else
-     !
-     ! Only the cpus that write the q=1 component knows the value of ng_db this must 
-     ! be initialized for all the cpus
-     !
-     X%ng_db=X%ng
-     !
-     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
-     !
-   endif
-   !
+   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)
@@ -239,11 +243,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  enddo
  !
  integrating_over_q=.false.
- !
- ! X%ngostnts is defined only for the group of CPU's that
- ! eval q=1 and must be spread to all CPUs to allow futrher I/O
- !
- call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
  !
  ! CLEAN (2)
  !

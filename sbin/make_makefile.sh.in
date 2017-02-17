@@ -1,6 +1,6 @@
 #! @SHELL@
 #
-#        Copyright (C) 2000-2015 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -80,24 +80,24 @@ llibinclude="\$(netcdf_idir)"
 #
 case $target in
   yambo*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lfftqe) \$(llapack) \$(lblas)"
    llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(lfftqe) \$(llapack) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(llapack) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(iotk_idir) \$(netcdf_idir)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(llapack) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(etsf_idir) \$(netcdf_idir)"
     ;;
   ypp*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="$llibs \$(lfftqe) \$(llapack) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(netcdf_idir)"
     ;;
   ydb*)
@@ -120,7 +120,7 @@ echo "dmpi=$dmpi" >> $cdir/Makefile
 echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
 echo "lock_file=$lock_file" >> $cdir/Makefile
 cp $cdir/$ofile $cdir/$ofile.c
-$cpp $cppflags $dopts -D_$os $cdir/$ofile.c >> $cdir/Makefile
+$cpp $cppflags $dopts -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile
 rm -f $cdir/$ofile.c
 
 if [ "$mode" = "x" ] ; then 

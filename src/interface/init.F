@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -145,9 +145,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! 
  call call_init_load('create_shadow_vars')
  !
- ! DB props listing mode ?
+ ! Command line reading
  !
  call read_command_line(instr,init)
+ !
+ ! DB props listing mode ?
  !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
@@ -386,8 +388,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! CPU structure
  !
-#if defined _MPI
- !
  if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa) then
    if (l_optics.and..not.l_bse) then
      call CPU_activate("X_q_0")
@@ -403,18 +403,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'SE_Threads')
  endif
  !
-#endif
- !
  if (l_eval_collisions) then
-   call CPU_activate("RT")
-   call initactivate(1,'RT_Threads')
  endif
  !
-#if defined _MPI
- !
  if (l_real_time) then
-   call CPU_activate("RT")
-   call initactivate(1,'RT_Threads')
  else if (l_sc_run) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
@@ -425,7 +417,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
-#endif
  !
  !Setup
  !
@@ -433,6 +424,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'MinusQ BSEscatt')
 #endif
+ !
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')
  !
@@ -503,7 +495,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call init_QP_ctl_switch('K')
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
-#if defined _SC || defined _KERR
+#if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
    !
@@ -637,8 +629,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! El-Ph: Frohlich Hamiltonian
  !
  !
- !
- ! DFT
+ ! Self-Consistency
  !
  !
  !
@@ -665,7 +656,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- QP_field=any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_eval_collisions
+ QP_field=any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run
  !
  if (QP_field) then
    !
@@ -759,6 +750,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine CPU_activate(what)
      character(*) :: what 
+#if defined _MPI
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
      if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") then
@@ -767,6 +759,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (what=="BS") then
        call initactivate(1,what//"_nCPU_diago")
      endif
+#endif
      !
    end subroutine
    !
@@ -828,7 +821,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! In some cases l_elel_corr is switched on by default
        !
        if (.not.l_elel_corr) then
-         l_elel_corr=(l_gw0.or.l_life.or.l_eval_collisions).and.(.not.l_elph_corr.and..not.l_elphoton_corr)
+         l_elel_corr=(l_gw0.or.l_life).and.(.not.l_elph_corr.and..not.l_elphoton_corr)
        endif
        !
        ! Check if this runlevel is allowed in the 
@@ -842,11 +835,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      l_rpa_IP     = trim(Chi_mode)=='IP'.or.trim(BSK_mode)=='IP'
      l_td_hartree = trim(Chi_mode)=='Hartree'.or.trim(BSK_mode)=='Hartree'
-     if (l_tddft) then
-       l_alda_fxc = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
-       l_lrc_fxc  = trim(Chi_mode)=='LRC' 
-       l_bs_fxc   = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
-     endif
+     l_alda_fxc   = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
+     l_lrc_fxc    = trim(Chi_mode)=='LRC' 
+     l_bs_fxc     = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
+     l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
      l_td_hf      = trim(BSK_mode)=="HF"
      l_W_eh       = trim(BSK_mode)=="SEX"
      !
@@ -880,8 +872,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
+     if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) l_elel_corr=.true.
 #if defined  _ELPH 
-     if (.not.l_elel_corr.and..not.l_elph_corr) l_elel_corr=.true.
      elph_nDBs_used=elph_nDBs
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
@@ -902,6 +894,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        if (l_alda_fxc) BS_res_mode='x'     
        !
+       !
        if (io_X_err(2)==0) then
          if (io_BS_err/=0) BS_n_g_W=X(2)%ng
        else if (io_X_err(4)==0) then
@@ -917,8 +910,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        n_threads_X=n_threads
        n_threads_DIP=n_threads
      endif
-     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) n_threads_SE=n_threads
-     if (l_eval_collisions.or.l_real_time)    n_threads_RT=n_threads
+     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=n_threads
+     if (l_real_time)                                     n_threads_RT=n_threads
 #endif
      !
    end subroutine before_infile_write_setup 
@@ -946,7 +939,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        if(l_W_eh) then
          call parser('WehDiag',l_W_eh_diag)
-         l_W_eh_cpl=trim(BSE_mode)=='xc_coupling'
+         call parser('WehCpl' ,l_W_eh_cpl )
          if (l_W_eh_diag)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
          if (.not.l_W_eh_cpl)          BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
        endif
@@ -988,7 +981,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Work Space
      !
-     integer          ::i1,i2,n_pieces,i3
+     integer          ::i1,i2,n_pieces,i_cycle
      character(schlen)::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(nrnlvls)
      !
      ! Bug fix (17/9/2012). If any string following a -### identifier contains 
@@ -1011,7 +1004,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      enddo
      if (n_pieces==0) return
      !
-     do i3=1,2
+     do i_cycle=1,2
        !
        INPUT_strings_loop: do i1=1,n_pieces
          !
@@ -1079,7 +1072,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if ( trim(rstr_piece(i1)) == 'wallt' ) then
            USER_wall_time_string=trim(rstr_piece(i1+1))
-           if (i3==1) call GET_user_WALL_time()
+           if (i_cycle==1) call GET_user_WALL_time()
          endif
          !
          if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&
@@ -1089,7 +1082,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! BSE/LLR
          !
-         if ( trim(rstr_piece(i1)) == 'optics' )  then
+         if (i_cycle==2.and.trim(rstr_piece(i1)) == 'optics' )  then
            !
            l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
            l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
@@ -1109,7 +1102,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Approximation used for the BSE/LLR kernel
          !
-         if ( i3==2 .and. trim(rstr_piece(i1)) == 'kernel' )  then
+         if ( i_cycle==2 .and. trim(rstr_piece(i1)) == 'kernel' )  then
            !
            ! if the optics option is not present define defaults
            ! since kernel does not correspond to a runlevel, set 
@@ -1145,8 +1138,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            endif
            !
            if((trim(rstr_piece(i1+1)) == 'alda').or.&
-             &(trim(rstr_piece(i1+1)) == 'lrc').or.&
-             &(trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
+&             (trim(rstr_piece(i1+1)) == 'lrc').or.&
+&             (trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
            !
            if(l_bse)   call initactivate(1,'bsk')
            !
@@ -1229,6 +1222,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
          !
          ! RT
+         !
+         !
+         ! COLLISIONS
          !
          !
        enddo INPUT_strings_loop

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -83,13 +83,25 @@ integer function variables_BS(ID,local_description,X)
 &     VAR="    |Exchange           [cpl]:",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
- call io_elemental(ID,DB_L0=td_hf_disk,&
-&     VAR="    |W interaction is bare   :",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_local_desc))
- i_local_desc=i_local_desc+1
- call io_elemental(ID,DB_L0=cpl_corr_disk,&
-&     VAR="    |Correlation        [cpl]:",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_local_desc))
+ !
+ if (ver_is_gt_or_eq(ID,revision=4888)) then
+   call io_elemental(ID,DB_L0=cpl_corr_disk,&
+&       VAR="    |Correlation        [cpl]:",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_local_desc))
+   i_local_desc=i_local_desc+1
+   call io_elemental(ID,DB_L0=td_hf_disk,&
+&       VAR="    |W interaction is bare   :",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_local_desc))
+ else
+   call io_elemental(ID,DB_L0=td_hf_disk,&
+&       VAR="    |W interaction is bare   :",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_local_desc))
+   i_local_desc=i_local_desc+1
+   call io_elemental(ID,DB_L0=cpl_corr_disk,&
+&       VAR="    |Correlation        [cpl]:",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_local_desc))
+ endif
+ !
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
 &     VAR="    |ALDA kernel in R-space  :",L0=BS_K_is_ALDA,CHECK=.true.,OP=(/"=="/),&

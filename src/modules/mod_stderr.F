@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,6 +37,14 @@ module stderr
  integer :: f_format_length
  integer :: g_format_length
  integer :: of_tabs(30)
+ !
+ ! Slash
+ !
+#if defined _aix || defined _BLUEGENE
+ character(2), parameter :: slash="\\"
+#else 
+ character(1), parameter :: slash="\"
+#endif
  !
  interface  
    !

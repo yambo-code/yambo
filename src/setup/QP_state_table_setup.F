@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -51,6 +51,7 @@ subroutine QP_state_table_setup(en)
  integer :: e_rng_lines,k_rng_lines,icheck,ik,ib,i1,i2,i3,&
 &           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,bands_mixed,v(2)
  real(SP):: rcheck
+ logical :: Mixing
  integer,    allocatable:: QP_i_limits(:,:)
  real(SP)   ,allocatable:: QP_r_limits(:,:)
  !

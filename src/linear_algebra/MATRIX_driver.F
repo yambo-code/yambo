@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill,det)
  !
- use pars,          ONLY:SP,cONE
+ use pars,          ONLY:SP,cONE,cZERO
  use matrix_operate,ONLY:blacs_t,INV,DIAGO,USE_LK,USE_SVD,USE_SLK,min_cpu_block_size
  use wrapper,       ONLY:M_by_M,SV_decomposition,LU_factorization,LU_inversion,M_eigenvalues
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV,PAR_COM_DIAGO,mpi_comm_world
@@ -62,23 +62,6 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  real(SP),    allocatable :: SV(:),r_WK(:)
  complex(SP), allocatable :: U(:,:),VH(:,:)
  !
-#if defined _SCALAPACK
- !
- ! ...parallel inversion
- !
- complex(SP), allocatable :: lM(:,:) 
- integer                  :: i, j, i_loc, j_loc, liwork
- type(blacs_t)            :: iblt
- !
- ! ...parallel diagonalization
- !
- complex(SP), allocatable :: lV(:,:)
- integer,     allocatable :: iwork(:)
- integer      :: numroc, indxl2g,rwork
- character(1) :: top=' '
- !
-#endif
- !
  ! M dimensions and initialization
  !
  M_size=size(M,2)
@@ -89,9 +72,6 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  ! Decide which to use among LK or SLK
  !
  lib_in_use=USE_LK
-#if defined _SCALAPACK 
- lib_in_use=USE_SLK
-#endif
  if (present(lib_in)) then
     lib_in_use=lib_in
  endif
@@ -133,11 +113,11 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
    !
    if(ifail/=0) call report_diago_error('GESVD (SVD)','failed')
    !
-   SV_min=1./10.**SVD_digits
+   SV_min=10._SP**(-SVD_digits)
    !
    do i1=1,M_size
      if (abs(SV(i1))<SV_min) then
-       VH(i1,:)=cmplx(0.,0.,SP) 
+       VH(i1,:)=cZERO
      else
        VH(i1,:)=VH(i1,:)/SV(i1)
      endif
@@ -229,135 +209,6 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
    deallocate(work,rwk)
    return
  endif
- !
- ! =============== PARALLEL SECTION ===============
- !
-#if defined _SCALAPACK
- !
- if (lib_in_use==USE_SLK) then
-   !
-   if (present(fill)) call v2v_blt(blt,iblt)
-   if (.not.present(fill)) then
-     !
-     call blacs_pinfo(myID_in_use, Ncpu_in_use)
-     call blacs_get(-1, 0, iblt%ictxt)
-     !
-     ! Creation of the processor grid
-     !
-     iblt%npcol = Ncpu_in_use / 2 
-     iblt%nprow = Ncpu_in_use / iblt%npcol
-     call blacs_gridinit(iblt%ictxt,'r',iblt%nprow,iblt%npcol)
-     call blacs_gridinfo(iblt%ictxt,iblt%nprow,iblt%npcol,iblt%myrow, iblt%mycol)
-     !
-     ! blocking factor: number of rows of the global array in each local array
-     !
-     iblt%blocking_factor  = BF_compute(M_size)
-     !
-     ! definition of the leading M_size of a block (iblt%ldrow, iblt%ldcol)
-     !
-     iblt%ldrow = numroc(M_size, iblt%blocking_factor, iblt%myrow, 0, iblt%nprow)
-     iblt%ldcol = numroc(M_size, iblt%blocking_factor, iblt%mycol, 0, iblt%npcol)
-     !
-     ! definition of the array descriptors
-     !
-     call descinit(iblt%descM,M_size,M_size,iblt%blocking_factor,&
-&                  iblt%blocking_factor,0,0,iblt%ictxt,iblt%ldrow,ifail)
-   end if
-   !
-   ! ###> PARALLEL INVERSION
-   !
-   if (idriver==INV) then
-     allocate( lM( iblt%ldrow, iblt%ldcol ) )
-     do i_loc = 1, iblt%ldrow
-       do j_loc = 1, iblt%ldcol
-         i = indxl2g(i_loc, iblt%blocking_factor, iblt%myrow, 0, iblt%nprow)
-         j = indxl2g(j_loc, iblt%blocking_factor, iblt%mycol, 0, iblt%npcol)
-         lM(i_loc, j_loc) = M(i, j)
-       end do
-     end do
-     !
-     !Inversion of the global array M
-     !
-     allocate( ipvt(M_size + iblt%blocking_factor) )
-     call pcgetrf( M_size, M_size, lM, 1, 1, iblt%descM, ipvt, ifail )
-     if(ifail.ne.0) call report_diago_error('Par. Inv.','factorization failed')
-     !
-     allocate( work(1), iwork(1) )
-     call pcgetri( M_size, lM, 1, 1, iblt%descM, ipvt, work, -1, iwork, -1, ifail )
-     if(ifail.ne.0) call report_diago_error('Par. Inv.','workspace failed')
-     !
-     lwork = int( real(work(1)) )
-     liwork = int( iwork(1) )
-     deallocate( work, iwork )
-     allocate( work(lwork), iwork(liwork) )
-     call pcgetri(M_size, lM, 1, 1, iblt%descM, ipvt, work, lwork, iwork, liwork, ifail )
-     if(ifail.ne.0) call report_diago_error('Par. Inv.','failed')
-     !
-     deallocate(ipvt, work, iwork)
-     !
-     ! Distribute the inverted array over the grid
-     !
-     M = 0
-     do i_loc = 1, iblt%ldrow
-       do j_loc = 1, iblt%ldcol
-         i = indxl2g(i_loc, iblt%blocking_factor, iblt%myrow, 0, iblt%nprow)
-         j = indxl2g(j_loc, iblt%blocking_factor, iblt%mycol, 0, iblt%npcol)
-         M(i,j) = lM(i_loc, j_loc)
-       end do
-     end do  
-     call PP_redux_wait(M,COMM=PAR_COM_INV%COMM)
-     deallocate(lM)
-   end if
-   !
-   ! ###> PARALLEL DIAGONALIZATION
-   !
-   if (idriver==DIAGO) then
-     call descinit(iblt%descV,M_size,M_size,iblt%blocking_factor,&
-&                  iblt%blocking_factor,0,0,iblt%ictxt,iblt%ldrow,ifail)
-     !
-     ! Filling of the local array distributed in the processor grid
-     !
-     allocate( lM( iblt%ldrow, iblt%ldcol), lV( iblt%ldrow, iblt%ldcol) )
-     do i_loc=1,M_size
-       do j_loc=1,M_size
-         call pcelset(lM,i_loc,j_loc,iblt%descM,M(i_loc,j_loc))
-       enddo
-     enddo
-     !
-     ! Diagonalization of the global array M
-     !
-     allocate( work(1), rwk(1) )
-     call pcheev('V','U',M_size,lM,1,1,iblt%descM,E_real,lV,1,1,iblt%descV,&
-&                work,-1,rwk,-1,ifail )
-     if(ifail.ne.0) call report_diago_error('Par. Diag.','workspace failed')
-     !
-     lwork = int(real(work(1))); rwork = int(real(rwk(1)))*2
-     deallocate( work, rwk )
-     allocate( work(lwork), rwk(rwork) )
-     call pcheev('V','U',M_size,lM,1,1,iblt%descM,E_real,lV,1,1,iblt%descV,&
-&                work,lwork,rwk,rwork,ifail )
-     if(ifail.ne.0) call report_diago_error('Par. Diag.','failed')
-     !
-     deallocate( work, rwk, lM)
-     !
-     ! Distribute the eigenvectors all over the grid
-     !
-     M = 0
-     do i_loc = 1,M_size 
-       do j_loc = 1,M_size 
-         call pcelget('A', top, M(i_loc,j_loc), lV, i_loc, j_loc, iblt%descV)
-       end do
-     end do
-     deallocate(lV)
-   end if
-   !
-   !Release the proc grid and the BLACS library
-   !
-   call blacs_gridexit(iblt%ictxt)
-   !
- endif
- !
-#endif
  !
  contains  
    !

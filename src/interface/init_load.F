@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,6 +32,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
 &                        X_en_comp,global_gauge,Dipole_approach
  use com,           ONLY:grid_paths
+ use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
@@ -175,7 +176,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE/BSK
  !
- call it(defs,'BSEmod',  '[BSE] resonant/causal/x_coupling/xc_coupling',BSE_mode)
+ call it(defs,'BSEmod',  '[BSE] resonant/causal/coupling',BSE_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -279,6 +280,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      use parallel_m, ONLY:n_CPU_str_max,CPU_structure
      integer           :: i_s
      character(schlen) :: name,possible_fields
+     !
      do i_s=1,n_CPU_str_max 
        !
        if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
@@ -302,6 +304,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
        call it(defs,trim(name),'[PARALLEL] CPUs for matrix inversion',&
 &              CPU_structure(i_s)%nCPU_inversion,verb_level=V_parallel)
      enddo
+     !
    end subroutine
    !
 #endif

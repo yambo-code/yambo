@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -30,7 +30,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
- use electrons,     ONLY:levels,spin_occ,spin,nel
+ use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel
  use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,&
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge, &
@@ -119,6 +119,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    n_SOC=1
    !
+   !
    call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
    !
    BSS_Vnl_included=X_oscillators%Vnl_included
@@ -142,7 +143,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
        ik_mem= PAR_Xk_bz_index(ik_bz)
        !
-       IP_E(1)=BS_T_grp(i_T_g)%E(i_T)
+       if (E_SOC_nbands==0) IP_E(1)=BS_T_grp(i_T_g)%E(i_T)
+       !
+       !
        !
        if (allocated(BS_T_grp(i_T_g)%Z)) local_Z=BS_T_grp(i_T_g)%Z(i_T)
        !
@@ -153,7 +156,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_mem,i_sp))*sqrt(BS_T_grp(i_T_g)%f(i_T))
        if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_mem,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))
        !
-       if ( abs(IP_E(1))<1.E-5  .and. l_drude) cycle
+       if ( (abs(IP_E(1))<1.E-5 .or. (abs(IP_E(2))<1.E-5.and.E_SOC_nbands/=0))  .and. l_drude) cycle
        !
        do i_pert_SOC=1,n_SOC
          X_epsilon(3,:)=X_epsilon(3,:)-BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg( BS_T_grp(i_T_g)%dipoles_R(i_T) )*&
@@ -190,7 +193,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    call PP_redux_wait( X_epsilon ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( X_epsilon ,COMM=PAR_COM_eh_INDEX%COMM )
    !
-   Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
+   if (E_SOC_nbands==0) Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
+   !
    !
    ! Pure diamagnetic term
    diam_term=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)

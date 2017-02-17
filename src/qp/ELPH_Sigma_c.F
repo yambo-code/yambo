@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -44,7 +44,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
 &                        On_Mass_Shell_approx,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
-&                        QP_ctl_interp_neigh,QP_ctl_db
+&                        QP_ctl_interp_neigh,QP_ctl_db,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
@@ -68,7 +68,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! WorkSpace  
  !
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
-&                   time_order_sign,ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,&
+&                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,&
 &                   live_timing_steps,iq_range(2)
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,iv4(4)
@@ -192,15 +192,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !-----------------
  call PARALLEL_global_indexes(en,k,q,"Self_Energy")
  !
- ! Time-Ordering
- !----------------
- time_order_sign=-1                ! T-order
- if (Finite_Tel) time_order_sign=1 ! Causal
- !
  ! Note that only by using causal ordering it is correct to use 
  ! the KK to calculate the Green's function
  !
- if (trim(QP_solver)=='g')  time_order_sign=1
+ if (trim(QP_solver)=='g')  QP_time_order_sign=1
  !
  ! Q ranges and Spherical RIM
  !============================
@@ -394,14 +389,14 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            gsqF_life_bose(i_qp,iq_mem,il,iw)= &
 &              gsqF_life_bose(i_qp,iq_mem,il,iw)+2.*pi*elph_gkkp_sq*q_weight(iq_loop)*&
 &              ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) + &
-&              time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )
+&              QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )
            !
            ! "f" Term
            !
            gsqF_life_f(i_qp,iq_mem,il,iw)= &
 &               gsqF_life_f(i_qp,iq_mem,il,iw)+pi*elph_gkkp_sq*q_weight(iq_loop)*&
 &               ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
-&               time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
+&               QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
 &               Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
            !
            if (eval_G_using_KK) cycle

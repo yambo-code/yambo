@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,10 +30,10 @@ integer function io_QP_and_GF(what,qp,ID)
 &                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
-&                         write_is_on,io_mode,DUMP,VERIFY,ver_is_gt_or_eq,DB_is_OK,&
+&                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,&
 &                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
  use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_COHSEX,SE_NONE,&
-&                         SE_POLARON
+&                         SE_POLARON,SE_GW_QED
  !
  implicit none
  type(QP_t)  ::qp
@@ -93,7 +93,7 @@ integer function io_QP_and_GF(what,qp,ID)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=.true.)
    case(SE_GoWo,SE_GWo)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
-   case(SE_POLARON)
+   case(SE_POLARON,SE_GW_QED)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
  !

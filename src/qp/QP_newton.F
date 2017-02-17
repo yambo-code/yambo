@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2015 the YAMBO team
+!        Copyright (C) 2000-2016 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -80,12 +80,12 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      QP_Sc=cZERO
    endif
    !
-   !
 # if defined _ELPH 
    !
    if (l_elph_corr)     call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
+   !
    !
    do i1=1,QP_n_states
      !

@@ -1,1 +1,1 @@
-objs = MATRIX_driver.o MATRIX_resolvant_via_perturbative_inversion.o MATRIX_resolvant_via_exact_inversion.o 
+objs = MATRIX_driver.o MATRIX_resolvant_via_perturbative_inversion.o MATRIX_resolvant_via_exact_inversion.o

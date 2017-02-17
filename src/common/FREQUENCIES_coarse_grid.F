@@ -61,6 +61,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  !
  real(SP), parameter :: default_treshold=1.E-5
  real(SP), parameter :: default_treshold_ini=1.E-5
+ integer,  parameter :: MAX_cycles=1000
  !
  ! Work Space
  ! 
@@ -142,7 +143,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    enddo
    if (icycle==1) dncg=i_cg
    if (cg_percentual>0._SP) coarse_grid_N=max(int(cg_percentual*real(dncg,SP)/100._SP),1)
-   if (i_cg<=coarse_grid_N.or.cg_percentual==100._SP) lcycle=.false.
+   if (i_cg<=coarse_grid_N.or.cg_percentual==100._SP.or.icycle>MAX_cycles) lcycle=.false.
    if (icycle==1) then
      itresh=npts-coarse_grid_N
      tresh=bg_diffs(max(itresh,1))

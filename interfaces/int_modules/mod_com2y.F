@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -28,7 +28,10 @@ module mod_com2y
  logical :: force_noWFs
  logical :: force_noSYMM
  logical :: artificial_spin_pol
- logical :: use_all_G_vectors
+ logical :: l_Vnl
+ logical :: verboseIO
+ !
+ integer, public  :: N_G_vectors
  !
  real(SP):: alat_mult_factor
  !
@@ -50,11 +53,14 @@ module mod_com2y
      force_noSYMM         =index(in_string,'nosy')>0
      force_noWFs          =index(in_string,'nowf')>0
      artificial_spin_pol  =index(in_string,'dupl')>0
-     use_all_G_vectors    =index(in_string,'allG')>0
+     verboseIO            =index(in_string,'verb')>0
+     l_Vnl                =index(in_string,'dovnl')>0
      !
      alat_mult_factor=1.
+     N_G_vectors=0
      do i1=1,100
-       if ( trim(str_piece(i1))=='alat_f' )  read(str_piece(i1+1),*) alat_mult_factor
+       if ( trim(str_piece(i1))=='alat_f')  read(str_piece(i1+1),*) alat_mult_factor
+       if ( trim(str_piece(i1))=='Gnum')    read(str_piece(i1+1),*) N_G_vectors
      enddo
      !
    end subroutine
@@ -64,13 +70,13 @@ module mod_com2y
      use com,       ONLY:msg,error
      use electrons, ONLY:spin_orbit
      use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,&
-&                        atoms_spatial_invertion,i_space_inv
-     use R_lattice, ONLY:b
+&                        atoms_spatial_invertion,i_space_inv,alat
+     use R_lattice, ONLY:b,rl_sop
      !
      integer :: nsym_
      integer :: int_sop(3,3,nsym_) ! Symmetries in RLU
      !
-     integer :: is,is_inv
+     integer :: is,is_inv,i2,i3
      logical :: l_identity,l_inversion
      logical :: double_symmetries
      real(SP):: sop_mat(3,3)
@@ -177,6 +183,12 @@ module mod_com2y
        sop_mat=matmul(transpose(a),int_sop(:,:,is))
        dl_sop(:,:,is)=matmul(sop_mat,b)/2._SP/pi
        if (double_symmetries) dl_sop(:,:,is+nsym_)=-dl_sop(:,:,is)
+     enddo
+
+
+     allocate(rl_sop(3,3,nsym))
+     do is=1,nsym
+       forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
      enddo
      !
    end subroutine

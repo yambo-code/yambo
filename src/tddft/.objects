@@ -1,1 +1,2 @@
-objs = tddft_do_X_W_typs.o tddft_alda_g_space.o tddft_alda_r_space.o
+objs =	tddft_do_X_W_typs.o \
+        tddft_alda_g_space.o tddft_alda_r_space.o

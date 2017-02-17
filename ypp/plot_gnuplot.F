@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 D. Varsano, A. Marini and the YAMBO team
+! Copyright (C) 2000-2012 D. Varsano, A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -22,7 +22,7 @@
 subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  !
  use pars,        ONLY:SP,schlen
- use units,       ONLY:BOHR
+ use units,       ONLY:BO2ANG
  use com,         ONLY:msg
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a
@@ -46,6 +46,8 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  endif
  !
  if (.not.eval_only) then
+   !
+   titles=" "
    !
    titles(:3)=(/'||a1 [A]','||a2 [A]','||a3 [A]'/)
    if (l_wavefunction) titles(4) = '|wf|^2 [1 at max]'
@@ -168,7 +170,7 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
      real(SP):: rv(3)
      !
      rv(:)=I*a(dir,:)/fft_dim(dir)-r_hole(:)
-     projection_=dot_product(rv,a(dir,:))/v_norm(a(dir,:))*BOHR
+     projection_=dot_product(rv,a(dir,:))/v_norm(a(dir,:))*BO2ANG
      !
    end function
    !

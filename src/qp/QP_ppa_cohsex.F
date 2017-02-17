@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,10 +21,10 @@
 !
 subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
- ! Plasmon Pole Correlation Self-Energy
+ ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
  use pars,          ONLY:SP,pi,schlen
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
@@ -130,7 +130,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (GW_iter==0) then
    call msg('r', '[GW/PPA] Bands range     :',QP_n_G_bands)
    if (l_ppa) then
-     call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HARTREE)
+     call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HA2EV)
      call msg('r','')
    endif
    iv4=(/1,1,0,0/)
@@ -202,12 +202,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  !any other
  !do iqbz=iq_to_start,q%nbz 
- ! do i_qp=1,QP_n_states
+ ! do i_qp=i_qp_to_start,QP_n_states
  !  do ib=QP_n_G_bands(1),QP_n_G_bands(2)
- !   if (.not.px%element_1D(ib)) cycle
+ !   if (.not.px%element_2D(iqbz,ib)) cycle
  !
    !
-   timing_states=px%n_of_elements(myid+1)*(QP_n_states*(q%nbz-iq_to_start)+QP_n_states-i_qp_to_start+1)
+   timing_states=px%n_of_elements(myid+1)*(QP_n_states-i_qp_to_start+1)
    !
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_states)
    if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_states)
@@ -342,7 +342,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          dc(1)=-4._SP/spin_occ*pi*pre_factor
          !
-         dc(1)=dc(1)*e%f(isc%os(1),isc%os(2),1) 
+         dc(1)=dc(1)*e%f(isc%os(1),isc%os(2),isc%os(4))
          !
          ! COH
          !

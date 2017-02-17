@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,7 +21,8 @@
 !
 module fields
  !
- use pars, ONLY:SP,schlen,lchlen
+ use pars, ONLY:SP,schlen,lchlen,pi
+ use units,ONLY:HA2EV,FS2AUT,HBAR_eVfs
  !
  implicit none
  !

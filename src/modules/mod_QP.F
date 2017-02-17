@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -81,11 +81,11 @@ module QP_m
  type QP_t
    !
    character(schlen)  :: description(max_qp_descs)
-   integer,    pointer:: table(:,:)
-   real(SP)   ,pointer:: k(:,:)
-   real(SP)   ,pointer:: E_bare(:)
-   complex(SP),pointer:: E(:)
-   complex(SP),pointer:: Z(:)
+   integer,    pointer:: table(:,:) => null()
+   real(SP)   ,pointer:: k(:,:)     => null()
+   real(SP)   ,pointer:: E_bare(:)  => null()
+   complex(SP),pointer:: E(:)       => null()
+   complex(SP),pointer:: Z(:)       => null()
    integer  :: n_descs
    integer  :: nk
    integer  :: nb
@@ -94,9 +94,9 @@ module QP_m
    ! Green Function and Self-Energy
    !
    integer            :: GreenF_n_steps
-   complex(SP),pointer:: S_total(:,:)
-   complex(SP),pointer:: GreenF(:,:)
-   complex(SP),pointer:: GreenF_W(:,:)
+   complex(SP),pointer:: S_total(:,:)   => null()
+   complex(SP),pointer:: GreenF(:,:)    => null()
+   complex(SP),pointer:: GreenF_W(:,:)  => null()
    !
  end type QP_t
  !
@@ -106,8 +106,11 @@ module QP_m
  !% ?fnQP_E
  !  0 |  0 | 0 |               # [?] QP parameters (E).
  !% 
- !% ?fnQP_W
- !  0 |  0 | 0 | 0 |           # [?] QP parameters (W).
+ !% ?fnQP_Wc
+ !  0 |  0 | 0 |               # [?] QP parameters (W) conduction.
+ !%
+ !% ?fnQP_Wv
+ !  0 |  0 | 0 |               # [?] QP parameters (W) valence.
  !%
  !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
  !  
@@ -122,9 +125,17 @@ module QP_m
  ! is not used in non-collinear or scalar cases.
  !
  real(SP)                :: QP_ctl_E(3,3,2)
- real(SP)                :: QP_ctl_W(3,4,2)
+ real(SP)                :: QP_ctl_Wc(3,3,2)
+ real(SP)                :: QP_ctl_Wv(3,3,2)
  complex(SP)             :: QP_ctl_Z(3,2)
  logical                 :: QP_ctl_applied
+ !
+ ! NEGF Occupations I/O. The general format is
+ !
+ ! ??nOcc= "DIR"
+ !
+ character(schlen)       :: OCC_ctl(3) ! Database directory
+ real(SP)                :: OCC_T_ref  ! Occupations loaded at this time
  !
  contains
    !
@@ -133,13 +144,20 @@ module QP_m
      qp%description=' '
      qp%n_descs=0
      qp%n_states=0
+     if(associated(qp%table))      deallocate(qp%table)
+     if(associated(qp%E))          deallocate(qp%E)
+     if(associated(qp%Z))          deallocate(qp%Z)
+     if(associated(qp%E_bare))     deallocate(qp%E_bare)
+     if(associated(qp%S_total))    deallocate(qp%S_total)
+     if(associated(qp%GreenF))     deallocate(qp%GreenF)
+     if(associated(qp%GreenF_W))   deallocate(qp%GreenF_W)
      nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare,qp%S_total,qp%GreenF,qp%GreenF_W)
    end subroutine
    !
    subroutine QP_states_simmetrize(en,vec_2_sim,state_is_2do)
      !
      use pars,          ONLY:SP
-     use units,         ONLY:HARTREE
+     use units,         ONLY:HA2EV
      use vec_operate,   ONLY:sort,degeneration_finder
      use electrons,     ONLY:levels
      !
@@ -160,7 +178,7 @@ module QP_m
      forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
      !
      call sort(Eo_sorted,indx=Eo_sorted_index)
-     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
+     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
      !
      if (present(state_is_2do)) then
        state_is_2do=.TRUE.

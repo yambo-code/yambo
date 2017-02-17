@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 D. De Fausti and the YAMBO team
+! Copyright (C) 2000-2012 F. De Fausti and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -25,7 +25,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  use pars,          ONLY:SP
  use wrapper,       ONLY:V_by_V_plus_V,V_copy
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
@@ -71,6 +71,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  GreenF  = cmplx(0.,0.,SP)
  drude_GreenF = cmplx(0.,0.,SP)
  !
+ !
  ! Logicals  to skip wf_load and/or to use bare or RIM GF (no poles accumulation)
  !==========
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
@@ -96,7 +97,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  if ( Drude_term ) then
    !
-   call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HARTREE)
+   call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HA2EV)
    !
    ! drude_factor is the eh_occ factor calculated in the Xo loop
    ! evaluated at the fermi state
@@ -149,6 +150,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if (.not.half_X_mat_only) then
    half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
+ !
  g2_max=X%ng
  iwmax=1
  if (half_X_mat_only) g2_max=-1
@@ -235,6 +237,7 @@ loop_bg: do i2 = 1,bg_npts(i1)
        do g2=1,X%ng
          call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
+       !
      enddo loop_bg
      !
      do i2=iwmax,Xw%n(2)
@@ -243,6 +246,7 @@ loop_bg: do i2 = 1,bg_npts(i1)
        do g2=1,X%ng
          call V_by_V_plus_V(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,i2))
          if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,i2))
+         !
        enddo
      enddo
      !

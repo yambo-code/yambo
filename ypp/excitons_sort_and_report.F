@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 D. Varsano, A. Marini and the YAMBO team
+! Copyright (C) 2000-2012 D. Varsano, A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -23,12 +23,12 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
 &                                   A_weight,S_z,S_sq,verbose)
  !
  use pars,          ONLY:SP,schlen,pi
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol
  use stderr,        ONLY:intc
  use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table,BS_bands
  use com,           ONLY:msg,of_open_close
- use YPP,           ONLY:deg_energy,lambda
+ use YPP,           ONLY:deg_energy,lambda,min_weight
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
@@ -111,7 +111,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    ! Apply quasi-particle correction if presents
    ! 
-   call QP_apply(BS_bands,E,Xk,3,msg_fmt='s')
+   call QP_apply(BS_bands,E,Xk,'G',msg_fmt='s')
    !
    ! report on file the weights and the amplitude
    ! of the excitonic state...
@@ -144,7 +144,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    titles(1:4)=(/'             ','K-point [iku]','             ','Weight       '/)
    call msg('o weight','#',titles(:4),INDENT=0,USE_TABS=.true.)
    do ikibz=1,Xk%nibz
-     if (K_weight(ikibz)>0.05) then
+     if (K_weight(ikibz)>min_weight*5._SP) then
        call msg('o weight','# ',(/Xk%pt(ikibz,:),K_weight(ikibz)/),INDENT=0,USE_TABS=.true.)
      endif
    enddo
@@ -164,7 +164,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    do neh = BS_H_dim,1,-1
      !
-     if (A_weight(neh)/maxval(A_weight)<0.01) cycle
+     if (A_weight(neh)/maxval(A_weight)<min_weight) cycle
      !
      ikbz = BS_eh_table(S_indx(neh),1)
      iv = BS_eh_table(S_indx(neh),2)
@@ -178,17 +178,17 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      amp_trans(amp_n_trans,1)=E%E(ic,ikibz,i_spin)-E%E(iv,ikibz,i_spin)
      amp_trans(amp_n_trans,2)=A_weight(neh)
      !
-     if (A_weight(neh)<0.05) cycle
+     if (A_weight(neh)<min_weight*5._SP) cycle
      !
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
-&                             A_weight(neh),amp_trans(amp_n_trans,1)*HARTREE/),&
+&                             A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
    enddo
    !
    ! Excitonic Amplitude
    !
-   amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HARTREE,&
-&              maxval(amp_trans(:amp_n_trans,1))+0.5/HARTREE/)
+   amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HA2EV,&
+&              maxval(amp_trans(:amp_n_trans,1))+0.5/HA2EV/)
    amp_damping=(amp_range(2)-amp_range(1))/100. 
    amp_I=0.
    do j2=1,amp_steps
@@ -200,7 +200,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    enddo
    amp_I=amp_I/maxval(amp_I)
    do j1=1,amp_steps
-     call msg('o amp','',(/real(amp_E(j1),SP)*HARTREE,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
+     call msg('o amp','',(/real(amp_E(j1),SP)*HA2EV,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
    enddo
    !
    call of_open_close(ch_dummy(1))
@@ -268,7 +268,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    R(:) = BS_R(:)*conjg(BS_R(:))
    if (write_widths)  R(:) = abs(BS_R(:))
    R(:) = R(:)*real(spin_occ,SP)/(2.*pi)**3.*&
-&         d3k_factor*4.*pi/q0_def_norm**2*HARTREE
+&         d3k_factor*4.*pi/q0_def_norm**2*HA2EV
    Rmax = maxval(R)
    !
    if (trim(R_normalize)=='yes') R=R/Rmax
@@ -283,10 +283,10 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      if (i_mode == 1) j2=S_indx(BS_H_dim-j1+1)
      if (i_mode == 2) j2=S_indx(j1)
      !
-     rv(:3)=(/real(BS_E(j2),SP)*HARTREE,R(j2),real(j2,SP)/)
+     rv(:3)=(/real(BS_E(j2),SP)*HA2EV,R(j2),real(j2,SP)/)
      !
      if (write_widths) then
-       rv(4)=abs(aimag(BS_E(j2)))*HARTREE*1000.
+       rv(4)=abs(aimag(BS_E(j2)))*HA2EV*1000.
        call msg('o sort','',rv(:4),INDENT=-2,USE_TABS=.TRUE.)
      else if (write_spin) then
        rv(4:5)=(/S_z(j2),S_sq(j2)/)

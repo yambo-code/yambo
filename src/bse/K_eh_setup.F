@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -66,6 +66,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
    BS_blk_dim=0
    !
    do ikbz=1,Xk%nbz
+     !
      Iic=0
      Iiv=0
      !
@@ -83,7 +84,6 @@ subroutine K_eh_setup(iq,Ken,Xk)
            !
            f_eh=Ken%f(iv,ikp,i_sp)*(spin_occ-Ken%f(ic,ik,i_sp))
            if (abs(f_eh)<epsilon(1._SP)) cycle
-           f_eh=f_eh/spin_occ/spin_occ          
            !
            ! Additional (?) condition for spin-resolved calculations
            !
@@ -94,7 +94,8 @@ subroutine K_eh_setup(iq,Ken,Xk)
            ! A 5% fractional occupation swiches on the particular
            ! treatment of finite temp. BSE 
            !
-           if ( abs(f_eh-1.)> 0.05) BS_not_const_eh_f=.TRUE.
+           f_eh=f_eh/spin_occ/spin_occ          
+           if ( abs(f_eh-1.)> filled_tresh) BS_not_const_eh_f=.TRUE.
            !
            ! The e/h occ must be 1. in the T=0 case as the spin factor (spin_occ)
            ! would erronously increase the e-e scattering

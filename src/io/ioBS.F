@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -100,7 +100,7 @@ integer function ioBS(iq,X,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
-   ioBS=variables_BS(ID,local_description,'BSK',X=X)
+   ioBS=variables_BS(ID,local_description,X=X)
    !
    if (ioBS/=0) then
      !

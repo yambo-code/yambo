@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -26,7 +26,8 @@ integer function ioQINDX(Xk,q,io_db)
 &                         Xk_grid_is_uniform,bz_samp,nXkbz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,read_is_on,io_header,&
-&                         ver_is_gt_or_eq
+&                         ver_is_gt_or_eq,io_fragmented,io_extension
+ use fragments,      ONLY:io_fragment
  implicit none
  type(bz_samp)::q,Xk
  integer      ::io_db
@@ -78,13 +79,30 @@ integer function ioQINDX(Xk,q,io_db)
  !
  if (any((/io_sec(io_db,:)==3/))) then
    if (read_is_on(io_db)) call qindx_alloc()
+   !
+   ! Fragmentation (1)
+   !
+   io_extension(io_db)='kindx'
+   if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=1)
+   !
    call io_bulk(io_db,VAR="Qindx",VAR_SZ=shape(qindx_X))
    call io_bulk(io_db,I3=qindx_X)
+   !
    if (Xk_grid_is_uniform) then
+     !
+     ! Fragmentation (2)
+     !
+     io_extension(io_db)='kindx'
+     if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=2)
      call io_bulk(io_db,VAR="Sindx",VAR_SZ=shape(qindx_S))
      call io_bulk(io_db,I3=qindx_S)
    endif
    if (bse_scattering) then
+     !
+     ! Fragmentation (3)
+     !
+     io_extension(io_db)='kindx'
+     if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=3)
      call io_bulk(io_db,VAR="Bindx",VAR_SZ=shape(qindx_B))
      call io_bulk(io_db,I3=qindx_B)
    endif

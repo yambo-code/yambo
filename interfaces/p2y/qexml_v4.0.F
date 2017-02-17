@@ -2921,7 +2921,6 @@ subroutine read_pseudo_header(psfile,nmesh,nbeta)
   logical       :: ldummy
   INTEGER :: i,idummy,idummy2, unit, iostat, u,ierr
 
-
   CALL iotk_free_unit(u)
   filename= TRIM(datadir_in)//trim(psfile)
   open (unit = u, file = filename, status = 'old', form = &
@@ -2952,6 +2951,7 @@ subroutine read_upf_header_v2( u, nmesh, nbeta, psfile, ierr )
   CALL iotk_open_read(u, attr=attr, root=root, ierr=ierr_)
   IF((abs(ierr_)>0) .or. .not. matches('UPF',root) ) THEN
        CALL iotk_close_read(u,ierr=ierr)
+       ierr = 1 ! have to force error to make v1 called
        RETURN
    ENDIF
    CALL iotk_scan_begin(u,'PP_INFO',found=found)
@@ -3000,10 +3000,10 @@ subroutine read_upf_header_v1( u, nmesh, nbeta, psfile, ierr )
     read(u,*,iostat=iostat) dummy
     read(u,*,iostat=iostat) nmesh
     read(u,*,iostat=iostat) idummy,nbeta
+!   close(u)
         exit header_loop
      endif
   enddo header_loop
-!    if(ierr.eq.1) write(*,*) "<PP_HEADER> not found! in"//trim(psfile)
 200  return
 end subroutine read_upf_header_v1
 
@@ -3109,8 +3109,9 @@ subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
 !     if(idummy/=ibeta) ERROR("")
 !     if(idummy2/=ibeta) ERROR("")
     end do
-    close(unit)
-    
+    rewind(unit)
+
+   close(unit)
 
    return 
 end subroutine read_pseudo_data

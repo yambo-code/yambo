@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -39,7 +39,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  !Work Space
  !
  integer      ::i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ik,ikp
- real(SP)     ::ffac,f0fac,W_
+ real(SP)     ::ffac,f0fac,W_,s_ffac
  complex(SP)  ::Z_,pole
  !
  GreenF  = cmplx(0.,0.,SP)
@@ -67,10 +67,10 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
    pole=Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)-(0.,1.)*W_
    !
    do iw=fr(1),fr(2)
-     if (ordering=="t") GreenF(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
-     if (ordering=="c") GreenF(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+conjg(pole)))
-     if (ordering=="r") GreenF(iw-fr(1)+1)=Z_/(Xw%p(iw)-pole)
-     if (ordering=="a") GreenF(iw-fr(1)+1)=                      -Z_/(conjg(Xw%p(iw))+pole)
+     if (ordering=="t" ) GreenF(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
+     if (ordering=="c" ) GreenF(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+conjg(pole)))
+     if (ordering=="r" ) GreenF(iw-fr(1)+1)=Z_/    (Xw%p(iw)-pole)
+     if (ordering=="a" ) GreenF(iw-fr(1)+1)=                      -Z_/(conjg(Xw%p(iw))+pole)
    enddo
    !
    return
@@ -93,19 +93,23 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
      !
      pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)+(0.,1.)*W_
      !
-     ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
-&         real(BZ_RIM_nkpt(ikbz))/f0fac
+     s_ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/real(BZ_RIM_nkpt(ikbz))
+     ffac=s_ffac/f0fac
      !
      do iw=fr(1),fr(2)
        !
-       if (ordering=="t") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
-&                         ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
-       if (ordering=="c") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
-&                         ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
-       if (ordering=="r") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
-&                         ffac/(Xw%p(iw)-pole)
-       if (ordering=="a") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
-&                                                -ffac/(conjg(Xw%p(iw))+pole)
+       if (ordering=="t" ) GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                             +ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
+       if (ordering=="c" ) GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                             +ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
+       if (ordering=="r" ) GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                             +ffac/(Xw%p(iw)-pole)
+       if (ordering=="a" ) GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                             -ffac/(conjg(Xw%p(iw))+pole)
+       if (ordering=="sr") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                             +s_ffac/(Xw%p(iw)-pole)/spin_occ**2.
+       if (ordering=="sa") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                             -s_ffac/(Xw%p(iw)+pole)/spin_occ**2.
      enddo
      !
    enddo

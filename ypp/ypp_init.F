@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,7 +23,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  use YPP
  use pars,           ONLY:pi
- use units,          ONLY:HARTREE,FS2AUT
+ use units,          ONLY:HA2EV,FS2AUT
  use wave_func,      ONLY:wf_ng 
  use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:ng_vec,nkibz
@@ -44,6 +44,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! Work Space
  !
+ logical          ::l_QP_init
  type(initdefs)   ::defs
  integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
@@ -65,8 +66,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! DOS
  !
  l_dos=.false.
- dos_broadening=0.1/HARTREE
- dos_bands=n_bands
+ dos_broadening=0.1/HA2EV
+ dos_bands=(/1,n_bands/)
+ dos_E_range=(/1.,-1./)/HA2EV
+ dos_E_steps=500
+ !
  !
  ! PLOT
  !
@@ -74,8 +78,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  mag_dir    ='X'
  p_format   ='g'
  wf_ng      =ng_vec
- l_exc_wf=.false.
- l_density=.false.
+ l_exc_wf   =.false.
+ l_density  =.false.
+ V_value    ='RE'
  l_mag=.false.
  l_sp_wf=.false.
  l_norm_to_one=.true.
@@ -91,7 +96,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  r_hole= (/0.,0.,0./)
  lambda = 1          
  state_ctl = '1 - 1'
- deg_energy =0.01/HARTREE
+ deg_energy =0.01/HA2EV
+ min_weight =0.01
  WF_multiplier=1.
  !
  !
@@ -101,7 +107,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  coo_in="iku"
  coo_out="rlu"
  Kgw_1=0.
- qlong= 0.0_SP
+ q_shift= 0.0_SP
  PtsPath= ' '
  N_path_pts=0
  alat_used_for_output=alat(1)
@@ -114,6 +120,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! DATABASES 
  !===========
+ !
  !
  !
  ! Defaults->Defs + Initialization
@@ -150,12 +157,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'bzgrids') then
        l_k_grid=trim(rstr_piece(i1+1))=='k'
        l_q_grid=trim(rstr_piece(i1+1))=='q'
-       l_long_grid=trim(rstr_piece(i1+1))=='l'
+       l_shifted_grid=trim(rstr_piece(i1+1))=='s'
        !
        !
        if (l_k_grid) call initactivate(1,"K_grid")
        if (l_q_grid) call initactivate(1,"Q_grid")
-       if (l_long_grid) call initactivate(1,"Long_Gauge")
+       if (l_shifted_grid) call initactivate(1,"Shifted_Grid")
        if (l_high_sym_pts) call initactivate(1,"High_Symm")
     endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
@@ -186,6 +193,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'phonons'.or. trim(rstr_piece(i1)) == 'electrons') then
        if (l_dos)            call initactivate(1,'dos')
      endif
+     if ( trim(rstr_piece(i1)) == 'electrons') then
+#if defined _YPP_TEST_2	     
+       if (l_bands)          call initactivate(1,'bands')
+#endif	       
+     endif
    enddo
  enddo
  !
@@ -194,7 +206,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_bz_grids  = runlevel_is_on('bzgrids')
  l_k_grid    = runlevel_is_on('K_grid')
  l_q_grid    = runlevel_is_on('Q_grid')
- l_long_grid = runlevel_is_on('Long_Gauge')
+ l_shifted_grid = runlevel_is_on('Shifted_Grid')
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
  l_excitons =runlevel_is_on('excitons')
@@ -214,7 +226,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call initactivate(1,"cooIn cooOut")
    if (l_k_grid) call initactivate(1,"GWKpts")
    if (l_q_grid) call initactivate(1,"Qpts")
-   if (l_long_grid) call initactivate(1,"KShift1 KShift2 KShift3")
+   if (l_shifted_grid) call initactivate(1,"KShift1 KShift2 KShift3")
    if (l_high_sym_pts) then
      call initactivate(1,"PtsPath NPtsPath")
      call initactivate(-1,"NoWeights ForceUserPts cooIn")
@@ -223,16 +235,22 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    endif
  endif
  !
+ !	   
  l_bzrim     =runlevel_is_on('bzrim')
  !
  l_qpdb = runlevel_is_on('qpdb')
  !
- if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat GammaRadius")
  !
- if (l_electrons.and.l_dos) then
-    if(l_dos) call QP_ctl_switch('G')
-    call initactivate(1,"DOS_broad DOS_bands")
+ if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
+ !
+ if (l_electrons) then
+    if (l_dos.or.l_bands) call QP_ctl_switch('G')
+    if (l_dos) then
+      call initactivate(1,"OCCdT OCCTime")
+      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
+    endif
  endif
+ !
  !
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs") 
@@ -243,7 +261,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_excitons) then
    if (l_amplitude) call QP_ctl_switch('G')
    call initactivate(1,"States")
-   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step")
+   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
    if (l_spin) call initactivate(1,"Degen_Step")
@@ -259,9 +277,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
  if(l_qpdb) call qpdb_init()
- ! 
- if (l_plot.and.l_sp_wf) &
-&                        call QP_init(.FALSE.,.FALSE.)
+ !
+ l_QP_init=l_plot.and.l_sp_wf
+ !
+ if (l_QP_init) call QP_init(.FALSE.,.FALSE.)
  !
 contains
  !

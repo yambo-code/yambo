@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -50,7 +50,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  !I/O
  !
- integer :: ID,io_err
+ integer :: ID,io_err(2)
  integer, external :: io_DIPOLES
  !
  if (allocated(DIP_q_dot_iR)) return
@@ -67,15 +67,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  Dipole_uses_shifted_grids=trim(grid_path)/='none'
  !
- !
  ! Check first if ostnts DB is already done
  !
  X%ngostnts=wf_ng
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=io_DIPOLES(X,Xen,ID)
+ io_err(1)=io_DIPOLES(X,Xen,ID)
  !
- if (io_err.ne.0) then
+ io_err(2)=0
+ !
+ if (any(io_err/=0)) then
    !
    ! OptGrad allocation...
    !
@@ -103,10 +104,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    call WF_free()
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=io_DIPOLES(X,Xen,ID)
+   io_err(1)=io_DIPOLES(X,Xen,ID)
+   !
    !
  end if
- !
  !
  !
  ! Warn about missing [Vnl,r] commutator

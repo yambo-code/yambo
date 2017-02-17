@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,8 +21,8 @@
 !
 subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
- use drivers,       ONLY:l_ph_corr,l_el_corr,l_life
- use units,         ONLY:HARTREE,HBAR_eVfs
+ use drivers,       ONLY:l_ph_corr,l_el_corr,l_life,l_cohsex
+ use units,         ONLY:HA2EV,HBAR_eVfs
  use pars,          ONLY:SP,schlen,lchlen
  use com,           ONLY:msg
  use stderr,        ONLY:intc
@@ -68,7 +68,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx.and..not.use_GreenF_to_eval_QP
  report_Vnlxc=l_el_corr.and..not.l_life
- report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'.and..not.use_GreenF_to_eval_QP
+ report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'.and..not.use_GreenF_to_eval_QP.and..not.l_cohsex
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then
    do_IO=.FALSE.
@@ -116,6 +116,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  forall (iqp=1:QP_n_states) i_k(iqp)=QP_table(iqp,3)
  !
+ i_spin=0
+ !
  do iqp=1,QP_n_states
    !
    i_band=QP_table(iqp,1)
@@ -124,8 +126,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    ! SHADOWS
    ! =======
    n_shadows=4
-   shadow(:4)=(/qp%E_bare(iqp)*HARTREE,real(qp%E(iqp))*HARTREE,&
-                real(qp%E(iqp)-qp%E_bare(iqp))*HARTREE,real(qp%Z(iqp))/)
+   shadow(:4)=(/qp%E_bare(iqp)*HA2EV,real(qp%E(iqp))*HA2EV,&
+                real(qp%E(iqp)-qp%E_bare(iqp))*HA2EV,real(qp%Z(iqp))/)
    shadow_string(1)=' Eo='
    shadow_fmt(1)   ='(a,f6.2)'
    shadow_string(2)=' E='
@@ -138,16 +140,16 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    if (report_Vnlxc) then
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' nlXC='
-     shadow(n_shadows)=real(QP_Vnl_xc(iqp))*HARTREE
+     shadow(n_shadows)=real(QP_Vnl_xc(iqp))*HA2EV
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' lXC='
-     shadow(n_shadows)=real(QP_Vxc(iqp))*HARTREE
+     shadow(n_shadows)=real(QP_Vxc(iqp))*HA2EV
    endif
    !
    if (report_Sc) then
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' So='
-     shadow(n_shadows)=real(QP_Sc(iqp,1))*HARTREE
+     shadow(n_shadows)=real(QP_Sc(iqp,1))*HA2EV
    endif
    !
    if (report_dSc.and.QP_dSc_steps>2) then
@@ -164,11 +166,11 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      ! =======
      !
      n_shadows=4
-     shadow(:2)=(/qp%E_bare(iqp)*HARTREE,real(qp%Z(iqp))/)
-     shadow(3)=aimag(qp%E(iqp))*HARTREE/1.E-3
+     shadow(:2)=(/qp%E_bare(iqp)*HA2EV,real(qp%Z(iqp))/)
+     shadow(3)=aimag(qp%E(iqp))*HA2EV/1.E-3
      shadow(4)=0.
      !
-     if (abs(shadow(3))>0.) shadow(4)=HBAR_eVfs/abs(aimag(qp%E(iqp)))/HARTREE
+     if (abs(shadow(3))>0.) shadow(4)=HBAR_eVfs/abs(aimag(qp%E(iqp)))/HA2EV
      !
      shadow_string(2)=' Z='
      shadow_fmt(2)   ='(a,f4.2)'

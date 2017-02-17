@@ -2,7 +2,7 @@
 # autoconf macro for detecting NetCDF module file
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-# Copyright (C) 2000-2010 A. Marini and the YAMBO team
+# Copyright (C) 2000-2012 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -125,15 +125,15 @@ if test "x$netcdf" = xyes; then
 fi
 
 if test "x$netcdf" = xyes; then  
-     if test "`nc-config --flibs`"; then
-       NCLIBS="`nc-config --flibs`"
-       NCLIBS="${NCLIBS} `nc-config --libs`"
-     else
-       NCLIBS="-lnetcdf ${NCLIBS}"
-     fi
-     if test "x$hdf5" = xyes; then
-       NCLIBS="${NCLIBS} ${NETCDF_LINKS}"
-     fi
+  if test "`nc-config --flibs`"; then
+    NCLIBS="`nc-config --flibs`"
+    NCLIBS="${NCLIBS} `nc-config --libs`"
+  else
+    NCLIBS="-lnetcdf ${NCLIBS}"
+  fi
+  if test "x$hdf5" = xyes; then
+    NCLIBS="${NCLIBS} ${NETCDF_LINKS}"
+  fi
 fi
 
 AC_SUBST(NCLIBS)

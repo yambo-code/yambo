@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2012 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,7 +23,7 @@ subroutine p2y_db1(en,k)
  !
  use P2Y
  use com,                   ONLY : msg
- use mod_com2y,             ONLY : print_interface_dimensions,use_all_G_vectors
+ use mod_com2y,             ONLY : print_interface_dimensions,N_G_vectors
  use xc_functionals,        ONLY : xc_string,GS_xc_KIND,GS_xc_FUNCTIONAL
  use R_lattice,             ONLY : ng_vec
  use wave_func,             ONLY : wf_ng
@@ -104,7 +104,7 @@ subroutine p2y_db1(en,k)
  !
  call get_IGK(k)
  !
- if (.not.use_all_G_vectors) ng_vec=wf_ng
+ if (N_G_vectors>0) ng_vec=max(N_G_vectors,wf_ng)
  !
  call msg('l','done')
  !---------------------------------------------------------------------*

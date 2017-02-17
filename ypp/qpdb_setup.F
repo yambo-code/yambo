@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2012 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,7 +22,7 @@
 subroutine qpdb_setup(en,k)
  !
  use pars,          ONLY:SP,IP,DP
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use com,           ONLY:error,msg,warning
  use memory_m,      ONLY:mem_est
  use electrons,     ONLY:levels,n_sp_pol,spin_occ
@@ -75,9 +75,12 @@ subroutine qpdb_setup(en,k)
  do i1=1,k_rng_lines
    ikrange(1:2)=int(QP_r_corrections(i1,1:2))
    ibrange(1:2)=int(QP_r_corrections(i1,3:4))
+   !
+   if(ikrange(2)>en%nk.or.ibrange(2)>en%nb) call error("Indices out of the range!")
+   !
    do ik=ikrange(1),ikrange(2)
      do ib=ibrange(1),ibrange(2)
-       qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HARTREE+en%E(ib,ik,1),QP_r_corrections(i1,6)/HARTREE)
+       qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HA2EV+en%E(ib,ik,1),QP_r_corrections(i1,6)/HA2EV)
        qp%E_bare(ic) =en%E(ib,ik,1)
        qp%Z(ic)      =QP_r_corrections(i1,7)
        qp%table(ic,1)=ib

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -41,20 +41,20 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  !
  apply_QP=(l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa).or.&
         (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
- if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,1,msg_fmt='s')
+ if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,"X",msg_fmt='s')
  !
  ! - Static X -
  !
  apply_QP=l_em1s.or.(l_optics.and.l_bse.and..not.l_ppa).or.l_bss.or.(l_em1d.and.l_cohsex)
- if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,1,msg_fmt='s')
+ if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,"X",msg_fmt='s')
  !
  ! - Plasmon Pole X -
  !
  apply_QP=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_el_corr)
- if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,1,msg_fmt='s')
+ if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,"X",msg_fmt='s')
  !
  ! - Green's Function (not the one used in the BSE -
  !
- if (l_gw0)     call QP_apply((/1,n_bands/),en,k,3,msg_fmt='s')
+ if (l_gw0)     call QP_apply((/1,n_bands/),en,k,"G",msg_fmt='s')
  !
 end subroutine

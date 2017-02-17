@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,7 +22,7 @@
 subroutine REPORT_Occupations(E,mode)
  !
  use pars,          ONLY:SP,lchlen
- use units,         ONLY:HARTREE,BOHR,Bohr_magneton
+ use units,         ONLY:HA2EV,BO2ANG,Bohr_magneton
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
  !
@@ -115,7 +115,7 @@ subroutine REPORT_Occupations(E,mode)
    if (n_sp_pol>1.and.i_s_pol==2) prefix_='                   [dn]'
    ind_gaps(1)=minval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
    ind_gaps(2)=maxval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
-   call msg('r',prefix_//':',ind_gaps*HARTREE)
+   call msg('r',prefix_//':',ind_gaps*HA2EV)
    !
  enddo
  !
@@ -135,7 +135,7 @@ subroutine REPORT_Occupations(E,mode)
      dir_gaps(2)=max(dir_gaps(2),&
 &                    E%E(nbf_(i_s_pol)+1,i1,i_s_pol)-E%E(nbf_(i_s_pol),i1,i_s_pol) )
    enddo
-   call msg('r',prefix_//':',dir_gaps*HARTREE)
+   call msg('r',prefix_//':',dir_gaps*HA2EV)
    !
  enddo
  !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2012 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,18 +21,23 @@
 !
 integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
- use P2Y,                 only : pw_init, pw_close, verboseIO
- use LOGO,                only : pickup_a_random
- use pars,                only : SP,lchlen
- use memory_m,            only : mem_est
- use com,                 only : msg,write_to_report,core_io_path, error
- use par_proc_m,          only : ncpu,myid,p_finalize
- use electrons,           only : levels,E_reset,n_bands, n_spin
- use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
- use wave_func,           only : wf_ncx,ioWF, wf_nb_io_groups,wf_nb_io
- use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
- use mod_com2y,           only : interface_presets,force_noWFs
- use mod_wf2y,            only : wf_splitter
+#if !defined _P2Y_EXPORT
+ use qexml_module
+#endif
+ use wave_func,           ONLY : wf_nc_k, wf_igk, wf_ng
+ use P2Y,                 ONLY : pw_init, pw_close 
+ use LOGO,                ONLY : pickup_a_random
+ use pars,                ONLY : SP,lchlen,DP
+ use memory_m,            ONLY : mem_est
+ use com,                 ONLY : msg,write_to_report,core_io_path,error,write_the_logo
+ use par_proc_m,          ONLY : ncpu,myid,p_finalize,pwait
+ use electrons,           ONLY : levels,E_reset,n_bands, n_spin
+ use R_lattice,           ONLY : bz_samp,bz_samp_reset,nkibz
+ use wave_func,           ONLY : wf_ncx,ioWF, wf_nb_io_groups,wf_nb_io
+ use IO_m,                ONLY : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number,OP_RD_CL,DUMP
+ use mod_com2y,           ONLY : interface_presets,force_noWFs,l_Vnl,verboseIO
+ use mod_wf2y,            ONLY : wf_splitter
+ use stderr,              ONLY : intc
  !
  implicit none
  type(levels)                 :: en
@@ -46,9 +51,9 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(ijs),   intent(in) :: js
  character(icd),   intent(in) :: com_dir   
  !
- character(lchlen) :: lch
- integer           :: ID,io_err,ik, ib_grp
- integer, external :: ioDB1
+ character(lchlen)     :: lch
+ integer               :: ID,io_err,ik, ib_grp,ierr,npwk
+ integer, external     :: ioDB1
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  ! Presets
@@ -61,6 +66,10 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call bz_samp_reset(k)
  call E_reset(en)
  !
+ ! LOGO
+ !
+ call write_the_logo(6,' ')
+ !
  ! S/N
  !
  serial_number=pickup_a_random(10000._SP)
@@ -70,30 +79,30 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  write_to_report=.FALSE.
  !
 #if defined _P2Y_EXPORT
- call section('*','P(W) 2 Y(ambo) - pw_export.x version')
+ lch='P(W) 2 Y(ambo) - pw_export.x version'
 #elif defined _P2Y_V31
- call section('*','P(W) 2 Y(ambo) Ver(s). 3.1 ')
+ lch='P(W) 2 Y(ambo) Ver(s). 3.1 '
 #elif defined _P2Y_V311
- call section('*','P(W) 2 Y(ambo) Ver(s). 3.1.1')
+ lch='P(W) 2 Y(ambo) Ver(s). 3.1.1'
 #elif defined _P2Y_V32
- call section('*','P(W) 2 Y(ambo) Ver. 3.2')
+ lch='P(W) 2 Y(ambo) Ver. 3.2'
 #elif defined _P2Y_V40
- call section('*','P(W) 2 Y(ambo) Ver. 4.0')
+ lch='P(W) 2 Y(ambo) Ver. 4.0'
 #else
  call error('Unknown version of P2Y. Stopping.')
 #endif
+ !
+ if (ncpu>1) lch=trim(lch)//' @ '//trim(intc(ncpu))//' CPUs'
+ !
+ call msg('s',trim(lch))
+ !
  call msg('s','DBs path set to ',trim(core_io_path))
- !
- ! Verbose I/O
- !
- verboseIO = .false.
- if(index(instr,'verb').ne.0) verboseIO = .true.
  !
  ! Open XML index files and units
  !
  call pw_init(instr,inf)
  !
- ! Make db1 database                                              *
+ ! Make db1 database
  !
  call p2y_db1(en,k)
  !
@@ -109,8 +118,20 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  else
    call msg('l','done ==')
  endif
+ ! 
+ ! Some definitions are done during the I/O in DB1. As only the
+ ! cpu 0 has IO_write=TRUE all cpu's need to re-read the database
  !
- ! Make db2 database                                              *
+ if (ncpu>1) then
+   !
+   call pwait()
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+   io_err=ioDB1(en,k,ID)
+   !
+ endif
+ !
+ ! Make db2 database
  !
  call msg('s','== DB2 (wavefunctions) ... ')
  !
@@ -129,12 +150,11 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
    ! Print verbose wfc read message
    !
-   if(verboseIO.and.(any( (/1,2,nkibz/)-ik.eq.0 ) &
-&  .or.mod(ik,max(k%nibz/4,1)).eq.0)) then
+   if(verboseIO.and.(any( (/1,2,nkibz/)-ik.eq.0 ).or.mod(ik,max(k%nibz/4,1)).eq.0)) then
      write(lch,'(" :: K-point:",i5,"/",i5," Spinors ",i1)') ik,nkibz,n_spin
      call msg('s',trim(lch))
    endif
-   
+   ! 
    do ib_grp=1,wf_nb_io_groups
       !
       ! Read a single wfc component from disk
@@ -146,18 +166,35 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
       if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
       if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
       io_err=ioWF(ID,wf=wf_disk)
+      !
    enddo
    !
  enddo
  !
  deallocate(wf_disk)
+ call mem_est("wf_disk")
  !
- call pw_close
  if(verboseIO) then
    call msg('s','== DB2 (wavefunctions) ... done ==')
  else
-   call msg('ln','done ==')
+   call msg('l','done ==')
  endif
+ !
+ if (l_Vnl) then
+#if defined _P2Y_V40
+   call msg('s','=== Non-local pseudo-potential commutator === ')
+   call Vnl_driver(en,k)
+#else
+   call msg('s','Vnl support only with PWscf v4.0 or later.')
+#endif
+ endif
+ !
+ call msg('s','== P2Y completed ==')
+ call msg('s',' ')
+ !
+ call pwait()
+ !
+ call pw_close
  !
  call p_finalize
  !

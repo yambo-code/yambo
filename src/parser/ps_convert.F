@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -99,10 +99,10 @@ subroutine ps_convert(rvar,ivar,v_name)
    !
    if (index(v_line,'eV')/=0.or.index(v_line,'ev')/=0) then
     if (index(v_line,'meV')/=0.or.index(v_line,'mev')/=0) then
-      rvar=rvar/HARTREE/1000.
+      rvar=rvar/HA2EV/1000.
       call set_itp_unit('meV',1)
     else
-      rvar=rvar/HARTREE
+      rvar=rvar/HA2EV
       call set_itp_unit('eV',1)
     endif
     return
@@ -128,7 +128,7 @@ subroutine ps_convert(rvar,ivar,v_name)
      return
    endif
    if (index(v_line,'K')/=0) then
-     rvar=rvar/11604./HARTREE
+     rvar=rvar/11604./HA2EV
      call set_itp_unit('Kn',1)
      return
    endif
@@ -165,7 +165,7 @@ subroutine ps_convert(rvar,ivar,v_name)
    !
    ! If nothing has been done and the real has a unit I assume it is in eV!
    !
-   rvar=rvar/HARTREE
+   rvar=rvar/HA2EV
    !
  else if (var_is_B) then
    !
@@ -182,7 +182,7 @@ subroutine ps_convert(rvar,ivar,v_name)
    ! Electric Fields
    !
    if (index(v_line,'V/mm')/=0) then
-     rvar=rvar/AU2Vmm
+     rvar=rvar/AU2VMm1
      call set_itp_unit('V/mm',1)
      return
    endif 
@@ -192,7 +192,7 @@ subroutine ps_convert(rvar,ivar,v_name)
    ! Angles (among B and z direction, used by MAGNETIC project)
    ! 
    if (index(v_line,'deg')/=0) then
-     rvar=rvar*radian
+     rvar=rvar*DEG2RAD
      call set_itp_unit('deg',1)
      return
    else
@@ -205,7 +205,7 @@ subroutine ps_convert(rvar,ivar,v_name)
    ! Laser Intensity 
    !
    if (index(v_line,'kWLm2')/=0) then
-     rvar=rvar*W2Au
+     rvar=rvar*kWCMm22AU
      call set_itp_unit('kWLm2',1)
      return
    endif 

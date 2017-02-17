@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2000-2010 A. Marini and the YAMBO team
+# Copyright (C) 2000-2012 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -22,24 +22,55 @@
 AC_DEFUN([AC_HAVE_FFTW],[
 AC_ARG_WITH(fftw,AC_HELP_STRING([--with-fftw=<path>],
             [Path of the FFTW library directory]),[],[])
+AC_ARG_WITH(fftw_lib,AC_HELP_STRING([--with-fftw-lib=<lib>],
+            [FFTW library name]),[],[])
 AC_MSG_CHECKING([for FFTW])
-FFTW_LIBS="-lfftw3"
 FFTW_PATH=""
 case $with_fftw in
   no )
     FFTW_LIBS=""
     ;;
-  "" ) ;;
-  *)
+  "" | * ) 
     FFTW_PATH="-L$with_fftw"
     ;;
 esac
 save_ldflags="$LDFLAGS"
-AS_IF([test "$FFTW_LIBS"], [LIBS="${FFTW_PATH} ${FFTW_LIBS}"])
-AC_LINK_IFELSE([AC_LANG_CALL([], [dfftw_destroy_plan(1)])],
- [HAVE_FFTW="yes"; FFT_CPP="-D_FFTW";
- FFT_DESCRIPTION="FFTW Fast Fourier transform";LDFLAGS="$FFTW_PATH"],
- [HAVE_FFTW="no"; FFT_CPP=""; FFTW_LIBS="";LDFLAGS="$save_ldflags"])
+
+case $with_fftw_lib in
+  no | "" )
+    EXTERNAL_FFTW="-lfftw3";
+  ;;
+  *)
+    EXTERNAL_FFTW="$with_fftw_lib";
+  ;;
+esac
+
+if test -d "$with_fftw" ; then
+  for FFTW_LIBS in "$EXTERNAL_FFTW" ; do      
+    AS_IF([test "$FFTW_LIBS"], [LIBS="${FFTW_PATH} ${FFTW_LIBS}"])
+    AC_LINK_IFELSE([AC_LANG_CALL([], [dfftw_destroy_plan(1)])],
+    [HAVE_FFTW="yes";],[HAVE_FFTW="no";])
+    if test "$HAVE_FFTW" = "yes" ; then
+      break;
+    fi
+  done
+  if test "$HAVE_FFTW" = "yes" ; then
+    FFT_CPP="-D_FFTW"
+    if test "$FFTW_LIBS" = "-lfftw3" ; then
+      FFT_DESCRIPTION="FFTW Fast Fourier transform";
+    else 
+      FFT_DESCRIPTION="External Fast Fourier transform";
+    fi
+    LDFLAGS="$FFTW_PATH";
+  else
+    FFT_CPP=""; 
+    FFTW_LIBS="";
+    LDFLAGS="$save_ldflags";
+  fi
+else
+ HAVE_FFTW="no";
+fi
+
 AC_MSG_RESULT($HAVE_FFTW)
 if test "$HAVE_FFTW" = "no" ; then
 # SG FFT NCACHE 

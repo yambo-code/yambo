@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+  Copyright (C) 2000-2012 A. Marini and the YAMBO team 
                http://www.yambo-code.org
   
   This file is distributed under the terms of the GNU 
@@ -37,15 +37,16 @@
   {"help",  "h","Short Help",0,0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0,0}, 
   {"nompi", "N","Skip MPI initialization",0,0,0,0,0},
-  {"ifile", "F","XML index file name",0,0,1,0,0}, 
-  {"odir",  "O","Output directory",0,0,1,0,0}, 
-  {"dbfrag","S","DataBases fragmentation",0,0,0,0,0}, 
-  {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,0},
-  {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,0},
-  {"nosy",  "n","Force no symmetries",0,0,0,0,0},
-  {"nowf",  "w","Force no wavefunctions",0,0,0,0,0},
-  {"allG",  "g","Force use of all available RL vectors",0,0,0,0,0},
-  {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0,0}, 
+  {"ifile", "F","XML index file name",0,0,1,0,1}, 
+  {"odir",  "O","Output directory",0,0,1,0,1}, 
+  {"dbfrag","S","DataBases fragmentation",0,0,0,0,1}, 
+  {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,1},
+  {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,1},
+  {"nosy",  "n","Force no symmetries",0,0,0,0,1},
+  {"nowf",  "w","Force no wavefunctions",0,0,0,0,1},
+  {"Gnum",  "g","Number of RL vectors to be used",1,0,0,0,1},
+  {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0,1}, 
+  {"dovnl", "c","Compute nonlocal pseudo commutator",0,0,0,0,1}, 
   {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="p2y";

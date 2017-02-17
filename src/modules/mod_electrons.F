@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -66,24 +66,24 @@ module electrons
    !
    ! QP corrections
    !
-   integer,pointer :: QP_corrected(:,:,:)
-   real(SP),   pointer :: E(:,:,:)
-   real(SP),   pointer :: Eo(:,:,:)
-   real(SP),   pointer :: f(:,:,:)
-   real(SP),   pointer :: W(:,:,:)
-   complex(SP),pointer :: Z(:,:,:)
+   integer,pointer :: QP_corrected(:,:,:)  => null()
+   real(SP),   pointer :: E(:,:,:)         => null()
+   real(SP),   pointer :: Eo(:,:,:)        => null()
+   real(SP),   pointer :: f(:,:,:)         => null()
+   real(SP),   pointer :: W(:,:,:)         => null()
+   complex(SP),pointer :: Z(:,:,:)         => null()
    !
    ! Green Functions
    !
    logical             :: GreenF_is_causal
    integer             :: GreenF_n_E_steps
-   complex(SP),pointer :: GreenF_W(:,:,:,:)
-   complex(SP),pointer :: GreenF(:,:,:,:)
+   complex(SP),pointer :: GreenF_W(:,:,:,:)   => null()
+   complex(SP),pointer :: GreenF(:,:,:,:)     => null()
    ! 
    ! Fine energy grid
    !  
-   real(SP),   pointer :: E_RIM(:,:,:)
-   real(SP),   pointer :: f_RIM(:,:,:)
+   real(SP),   pointer :: E_RIM(:,:,:)        => null()
+   real(SP),   pointer :: f_RIM(:,:,:)        => null()
    !
  end type levels
  ! 
@@ -174,9 +174,19 @@ module electrons
      E%kf=0 
      E%GreenF_n_E_steps=0 
      E%GreenF_is_causal=.FALSE. 
+     if(associated(E%E))              deallocate(E%E)
+     if(associated(E%Eo))             deallocate(E%Eo)
+     if(associated(E%Z))              deallocate(E%Z)
+     if(associated(E%W))              deallocate(E%W)
+     if(associated(E%f))              deallocate(E%f)
+     if(associated(E%QP_corrected))   deallocate(E%QP_corrected)
+     if(associated(E%GreenF))         deallocate(E%GreenF)
+     if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
      nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
      call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
+     if(associated(E%E_RIM))      deallocate(E%E_RIM)
+     if(associated(E%f_RIM))      deallocate(E%f_RIM)
      nullify(E%E_RIM,E%f_RIM)
      call mem_est("E_RIM f_RIM")
      !

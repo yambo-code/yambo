@@ -1,1 +1,6 @@
-objs = eval_G_minus_G.o FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o FREQUENCIES_Green_Function.o FREQUENCIES_reset.o crystal_lattice.o Kramers_Kronig.o RIntegrate.o CIntegrate.o QPartilize.o OCCUPATIONS_Fermi.o OCCUPATIONS_Extend.o QP_state_extract.o pol_fit.o
+objs = eval_G_minus_G.o \
+       FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o \
+       FREQUENCIES_Green_Function.o FREQUENCIES_reset.o \
+       crystal_lattice.o Kramers_Kronig.o RIntegrate.o CIntegrate.o QPartilize.o \
+       OCCUPATIONS_Fermi.o OCCUPATIONS_Extend.o \
+       QP_state_extract.o pol_fit.o pert_inversion.o

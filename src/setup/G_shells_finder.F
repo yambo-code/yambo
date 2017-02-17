@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,9 +28,9 @@ subroutine G_shells_finder()
  use pars,         ONLY:SP,IP
  use timing,       ONLY:live_timing
  use memory_m,     ONLY:mem_est
- use D_lattice,    ONLY:nsym
+ use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
-&                       g_vec,g_rot,E_of_shell,rl_sop
+&                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
  use vec_operate,  ONLY:iku_v_norm,v_is_zero
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero
@@ -138,11 +138,30 @@ subroutine G_shells_finder()
  allocate(ng_in_shell(n_g_shells),E_of_shell(n_g_shells))
  call mem_est("RL_Gshells RL_Eshells",&
 &             (/n_g_shells+nsym*ng_closed,n_g_shells/),(/IP,SP/))
-
- ng_in_shell=ng_in_shell_TMP(:n_g_shells)
- E_of_shell=E_of_shell_TMP(:n_g_shells)
  !
+ ng_in_shell=ng_in_shell_TMP(:n_g_shells)
  ng_closed=ng_in_shell(n_g_shells)
+ !
+ ! Andrea [12/10/2011]: when the symmetries are removed using ypp
+ ! or when, for any reason, both the spatial inversion and the time-reversal
+ ! are not introduced the coupling part of the BSE (and maybe also other parts
+ ! of the code) must access an ad-hoc table of the -G vectors evaluated in eval_minus_G.
+ ! However if the inversion symmetry is not used here the eval_minus_G routine
+ ! will fail as the shells are not closed anymore with respect to the inversion.
+ !
+ if (inv_index<0) then
+   call IO_and_Messaging_switch("-timing")
+   call eval_minus_G()
+   do while (  count(minus_G==0)>0 ) 
+     n_g_shells=n_g_shells-1 
+     ng_closed=ng_in_shell(n_g_shells)
+     call eval_minus_G()
+   enddo
+   call IO_and_Messaging_switch("+timing")
+   ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
+ endif
+ !
+ E_of_shell(:n_g_shells)=E_of_shell_TMP(:n_g_shells)
  !
  !I/O
  !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -152,6 +152,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call G_shells_finder()
  call msg('rn','Shells, format: [S#] G_RL(mHa)')
  !
+ ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G. When there is no Spatial inversion
+ ! the map is built in G_shells_finder
+ !
+ if (inv_index>0) call eval_minus_G()
+ !
  do i1=n_g_shells,max(n_g_shells-27,1),-4
    dumb_ch1=' '
    do i2=i1,max(i1-3,1),-1
@@ -231,5 +236,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Once the occupations have been evaluated I dump Xen in Ken
  !
  call E_duplicate(Xen,Ken)
+ !
  !
 end subroutine

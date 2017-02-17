@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,10 +28,11 @@ subroutine k_grids(en,k,Xk,q)
  use com,                 ONLY:msg,warning
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
- use YPP,                 ONLY:coo_in,coo_out,qlong,l_k_grid,l_q_grid,&
-&                              l_long_grid,l_high_sym_pts,K_transform
+ use YPP,                 ONLY:coo_in,coo_out,q_shift,l_k_grid,l_q_grid,&
+&                              l_shifted_grid,l_high_sym_pts,K_transform
  use timing,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero,k_rlu_zero
+ use stderr,              ONLY:set_real_printed_length
  !
  implicit none
  type(levels) ::en       
@@ -41,12 +42,10 @@ subroutine k_grids(en,k,Xk,q)
  !
  type(bz_samp)::USER_K,Final_K,Q_user
  real(SP)     ::real_ctl,v(3),ka(3),q0(3)
- integer      ::i1,i2,is,ik, j1
- real(SP):: kout(Xk%nibz,3)
+ integer      ::i1,i2,is,ik
+ real(SP):: kout(Xk%nibz,3),k_plus_q(Xk%nibz,3)
  integer,  allocatable :: int_ctl(:)
  character(schlen)     :: ch
- character(len=35)     :: fm
- integer               :: fac(3)
  logical               :: No_Weight,Force_User_points
  !
  call bz_samp_reset(USER_K)
@@ -54,6 +53,8 @@ subroutine k_grids(en,k,Xk,q)
  call bz_samp_reset(Final_K)
  !
  if (len_trim(coo_in)==0) return
+ !
+ call section('*',"BZ grid analyzer/generator") 
  !
  ! Setup logicals 
  !
@@ -69,15 +70,16 @@ subroutine k_grids(en,k,Xk,q)
  !
  if (.not.l_high_sym_pts) then
    !
-   call section('*',"== Built-in K-grid ==")
-   !=========================================
-   call print_the_grid(Xk,' ',.FALSE.)
+   write(ch,'(a,a,a)') "== Built-in IBZ K-grid [",trim(coo_out),"] =="
+   !==================================================================
+   call section('+',trim(ch))
+   call print_the_grid(Xk%pt,Xk%nibz,'iku',.FALSE.)
    !
  endif
  !
  if (l_k_grid) then
    !
-   call section('*',"== GW K-grid analyzer ==")
+   call section('=',"== GW K-grid analyzer ==")
    !===========================================
    !
    !Input file parsing
@@ -113,10 +115,10 @@ subroutine k_grids(en,k,Xk,q)
    !
    do i1=1,USER_K%nibz
      !      
-     v=USER_K%pt(USER_K%nibz,:)
-     if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="kc2i")
-     if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="ka2i")
-     USER_K%pt(USER_K%nibz,:)=v      
+     v=USER_K%pt(i1,:)
+     if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="kc2i")
+     if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="ka2i")
+     USER_K%pt(i1,:)=v      
      !
    enddo
    !
@@ -142,7 +144,7 @@ subroutine k_grids(en,k,Xk,q)
  !
  if (l_q_grid) then
    !
-   call section('*',"== Q-grid analyzer ==")
+   call section('=',"== Q-grid analyzer ==")
    !========================================
    !
    ! Input file parsing
@@ -176,7 +178,7 @@ subroutine k_grids(en,k,Xk,q)
    if (Q_user%nibz>=1) call msg("s",'User Q-points :',Q_user%nibz)
    !
    if (Force_User_points) then
-     call print_the_grid(Q_user,coo_in,.TRUE.)
+     call print_the_grid(Q_user%pt,Q_user%nibz,coo_in,.TRUE.)
      goto 1
    endif
    !
@@ -201,75 +203,57 @@ subroutine k_grids(en,k,Xk,q)
    !
  endif
  !
- if (l_long_grid) then
+ if (l_shifted_grid) then
    !
    ! Generate shifted k-points set for dipole calculation
    !
-   call section('*',"== Dipole grids generator ==")
-   !================================================
-   !
-   call parser('KShift1',qlong(1,:))
-   call parser('KShift2',qlong(2,:))
-   call parser('KShift3',qlong(3,:))
-   !
-   if(any(abs(qlong)/=0.)) then
+   if(any(abs(q_shift)/=0.)) then
      !
-     live_timing_is_on=.false.
      kout(:,:) = Xk%pt(:,:)
-     write(ch,'(a,a,a)') " -- Unshifted IBZ K-grid [",trim(coo_out),"] -----"
-     call msg("s",trim(ch))
      !
      ! Convert IBZ mesh to coo_out
      !
      do ik=1,Xk%nibz
-       !
        call K_transform(kout(ik,:),'iku')
-       !
-       write(ch,'(3f12.7)') kout(ik,:)
-       call msg("s",trim(ch))
      enddo
+     !
      i2=0
      do i1=1,3
-       q0 = qlong(i1,:)
        !
-       if (v_norm(q0)>1.E-4) q0 = qlong(i1,:)*1.E-4/v_norm(q0)
-       call msg("s","Renormalize long shift to :",q0)
-       !
-       if(v_norm(q0).gt.1e-6) then
+       if (v_norm(q_shift(i1,:))>1.E-4) then
+         !
+         q0 = q_shift(i1,:)*1.E-4/v_norm(q_shift(i1,:))
          !
          i2 = i2 + 1
          !
-         ! Convert input q0 to iku
-         !
-         if (trim(coo_in)=="cc")  call c2a(v_in=q0(:),mode="kc2i")
-         if (trim(coo_in)=="rlu") call c2a(v_in=q0(:),mode="ka2i")
-         !
          ! Convert q0[iku] to coo_out
          !
-         call K_transform(q0,'iku')
+         call K_transform(q0,trim(coo_in))
          !
          ! Print shift vector in new basis
          !
-         write(ch,'(a,i1,a,3(f13.10,a),2a)') " -- Shifted K-grid[",i2,&
-&        "]: {K} + (",q0(1),",",q0(2),",",q0(3),") [",trim(coo_out),"]"
-         call msg("s",trim(ch))
+         write(ch,'(a,i1,a,3(f13.10,a),2a)') "Shifted K-grid[",i2,"]: {K} + (",q0(1),",",q0(2),",",q0(3),") [",trim(coo_out),"]"
+         call section("=",trim(ch))
          !
-         ! Print the shifted mesh
+         ! Apply the shift
          !
          do ik=1,Xk%nibz
            !
-           ! Ensure 7 *significant figures*, otherwise round off errors may
-           ! occur later
+           k_plus_q(ik,:)=kout(ik,:)+q0(:)
            !
-           fac = 1 ! fall back for q=0
-           where(abs(kout).lt.1e-7) kout = 0.0_SP ! remove SP error k points
-           where(abs(kout(ik,:)+q0(:)).gt.0.0_SP) &
-&             fac(:) = -floor(log10( abs(kout(ik,:)+q0(:)) )+0.001)
-           write(fm,'(a,3(a,i2,a,i2,a),a)') &
-&                   "(",("f",12+fac(j1),".",6+fac(j1),",",j1=1,3),"a)"
-           write(ch,fm) kout(ik,:)+q0(:), " WK" ! WK is useful for replacing with weights when needed
-           call msg("s",trim(ch))
+           if (v_norm(k_plus_q(ik,:)).lt.1.E-7) k_plus_q(ik,:) = 0.0_SP ! remove SP error k points
+           !
          enddo
+         !
+         ! Print the shifted mesh
+         ! Ensure 7 *significant figures*, otherwise round off errors may occur later
+         !
+         call set_real_printed_length(f_length=10,g_length=10)
+         !
+         call print_the_grid(k_plus_q,Xk%nibz,coo_out,.FALSE.)
+         !
+         call set_real_printed_length( )
+         !
        endif
      enddo
      !
@@ -292,24 +276,34 @@ subroutine k_grids(en,k,Xk,q)
  !
  contains
    !
-   subroutine print_the_grid(K_,coo_in_,formatted_)
-     type(bz_samp)   ::K_
+   subroutine print_the_grid(k,nk,coo_in_,formatted_)
+     !
+     ! Whatever coo_in this routine prints the list of points 
+     ! using coo_out
+     !
+     integer         ::nk,i1_
+     real(SP)        ::k(nk,3)
      character(*)    ::coo_in_
      logical         ::formatted_
      !
      live_timing_is_on=.false.
-     do i1=1,K_%nibz
+     do i1_=1,nk
        !
-       if (trim(coo_in_)=="rlu") call c2a(v_in=K_%pt(i1,:),mode="ka2i")
-       if (trim(coo_in_)=="cc")  call c2a(v_in=K_%pt(i1,:),mode="kc2i")
+       if (trim(coo_in_)=="rlu") call c2a(v_in=k(i1_,:),mode="ka2i")
+       if (trim(coo_in_)=="cc")  call c2a(v_in=k(i1_,:),mode="kc2i")
        !
-       v=K_%pt(i1,:)
+       v=k(i1_,:)
        !
        call K_transform(v,'iku')
        !
-       write(ch,'(3(f12.7,1x))') v
-       if (formatted_) write(ch,'(3(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|'
-       call msg("s",'      ',trim(ch))
+       if (formatted_) then
+         write(ch,'(3(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|'
+         write(ch,'(3(f12.7,1x))') v
+         call msg("s",'      ',trim(ch))
+       else
+         call msg("s",'      ',v)
+       endif
+       !
      enddo
      live_timing_is_on=.true.
      !

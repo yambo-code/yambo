@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -29,12 +29,14 @@ subroutine QP_ctl_switch(what)
  !
  ! Work Space
  !
- call initactivate(1,what//'fnQPdb '//what//'fnQP_N ')
+ call initactivate(1,what//'fnQPdb '//what//'fnQP_N '//what//'fnFdb')
  if (n_sp_pol==1) then
-   call initactivate(1,what//'fnQP_E '//what//'fnQP_W '//what//'fnQP_Z') 
+   call initactivate(1,what//'fnQP_E '//what//'fnQP_Wv '//what//'fnQP_Wc '//what//'fnQP_Z')   
  else
-   call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_W '//what//'fnQP_up_Z') 
-   call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_W '//what//'fnQP_dn_Z') 
+   call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_Wv '//what//'fnQP_up_Wc '//what//'fnQP_up_Z')   
+   call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_Wv '//what//'fnQP_dn_Wc '//what//'fnQP_dn_Z')   
  endif
+ !
+ !
  !
 end subroutine

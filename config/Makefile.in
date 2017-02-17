@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2000-2010 A. Marini and the YAMBO team
+# Copyright (C) 2000-2012 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -59,7 +59,7 @@ MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
 #
 # Interfaces
 #
-2YLIBS       = external_c modules parser communicate common io 
+2YLIBS       = external_c modules parser communicate common io bz_ops
 #
 # YPP
 #

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,10 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_BS(ID,local_description,DB,X)
+integer function variables_BS(ID,local_description,X)
  !
  use pars,          ONLY:lchlen
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use drivers,       ONLY:l_td_hf
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry
@@ -31,12 +31,11 @@ integer function variables_BS(ID,local_description,DB,X)
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr
- use IO_m,          ONLY: io_elemental,io_status,ver_is_gt_or_eq,read_is_on
+ use IO_m,          ONLY: io_elemental,io_status,ver_is_gt_or_eq
  implicit none
  !
  integer            ::ID
  character(lchlen)  ::local_description(100)
- character(*)       ::DB
  type(X_t), optional::X
  !
  ! Work Space
@@ -107,7 +106,7 @@ integer function variables_BS(ID,local_description,DB,X)
 &     DESCRIPTION=local_description(i_local_desc))
  endif
  i_local_desc=i_local_desc+1
- call io_elemental(ID,UNIT=HARTREE,&
+ call io_elemental(ID,UNIT=HA2EV,&
 &     VAR="    |E/h energy range    [ev]:",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
@@ -136,7 +135,7 @@ integer function variables_BS(ID,local_description,DB,X)
 &         VAR="    |Bands                   :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),&
 &         DESCRIPTION=local_description(i_local_desc))
      i_local_desc=i_local_desc+1
-     call io_elemental(ID,UNIT=HARTREE,&
+     call io_elemental(ID,UNIT=HA2EV,&
 &         VAR="    |e/h energy range    [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),&
 &         DESCRIPTION=local_description(i_local_desc))
      i_local_desc=i_local_desc+1

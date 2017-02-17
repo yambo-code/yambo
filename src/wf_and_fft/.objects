@@ -1,6 +1,9 @@
-FFT_object = sgfft.o
 #if defined _FFTW
 FFT_object =
+#else
+FFT_object = sgfft.o
 #endif
 WF_rot_object =
-objs = fft_setup.o fft_3d.o $(FFT_object) scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o WF_load.o $(WF_rot_object) $(DISTRIBUTED_objects)
+objs = fft_setup.o fft_3d.o $(FFT_object)  \
+       scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o WF_load.o \
+       $(WF_rot_object) $(DISTRIBUTED_objects)

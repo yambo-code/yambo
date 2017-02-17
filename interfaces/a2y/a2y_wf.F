@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -36,7 +36,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  ! do isppol=1,nsppol
  !  do ikpt=1,nkpt
  !    do is=1,ntypat
- !     do il=1,mpsang
+ !     do il=1,mpsang   (or mpsang*m_proj*n_spinor for HGH)
  !      write(untkss) (vkb (trsl(ig),is,il),ig=1,npwkss)
  !      write(untkss) (vkbd(trsl(ig),is,il),ig=1,npwkss)
  !     end do
@@ -52,7 +52,8 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin,n_spinor,n_sp_pol
  use D_lattice,             ONLY:n_atomic_species
- use pseudo,                ONLY:pp_n_l_comp_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,l_a2y_KBPP
+ use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,&
+&                                l_many_proj,pp_table
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  use defs_datatypes,        ONLY:hdr_type, wffile_type
@@ -72,14 +73,13 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  type(hdr_type)     :: ahdr
  type(wffile_type)  :: wff
  real(DP)           :: pp_kb_kdb_disk(wf_ncx),&
-&                      pp_kbs_disk(n_atomic_species,pp_n_l_comp_max)
+&                      pp_kbs_disk(n_atomic_species,pp_n_l_times_proj_max)
  complex(DP)        :: wf_disk_DP(wf_ncx,n_spinor)
  integer            :: fform,i_spin,i_spinor
  !
  ! Number of records for each k-point
  !
- number_of_records_each_k=n_atomic_species*pp_n_l_comp_max*2+1+wf_nb_io
- if(.not.l_a2y_KBPP) number_of_records_each_k=1+wf_nb_io
+ number_of_records_each_k=n_atomic_species*pp_n_l_times_proj_max*2+1+wf_nb_io
  !
  if (ikibz==1.and.ib_grp==1) then
    open(unit=11,file=KSS_file_name,form='unformatted')
@@ -87,25 +87,40 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    wff%accesswff=0
    fform=1
    call hdr_io_wfftype(fform,ahdr,5,wff)
-   do i1=1,7
+   do i1=1,3
      read(11)
    enddo
+   !
+   if(l_many_proj) then
+     read(11)
+     read(11) ((pp_table(1,i1,i2),i1=1,pp_n_l_times_proj_max),i2=1,n_atomic_species)
+     read(11) ((pp_table(2,i1,i2),i1=1,pp_n_l_times_proj_max),i2=1,n_atomic_species)
+     read(11) ((pp_table(3,i1,i2),i1=1,pp_n_l_times_proj_max),i2=1,n_atomic_species)
+     !
+     pp_table(1,:,:)=pp_table(1,:,:)+1  ! l+1 , not l
+     !
+   endif
+   !
+   do i1=1,4
+     read(11)
+   enddo
+   !
    call PP_alloc()
-   if(l_a2y_KBPP) read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_comp_max),i1=1,n_atomic_species)
-   if(.not.l_a2y_KBPP) pp_kbs_disk=0.
+   read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_times_proj_max),i1=1,n_atomic_species)
    pp_kbs=pp_kbs_disk
+   !
  endif
  !
- wf_disk(:,:,:,:)=0.
+ wf_disk=0.
+ pp_kb=0.
+ pp_kbd=0.
  !
   i_spin=1
  ! 
    !
-   pp_kb=0.
-   pp_kbd=0.
-   if (ib_grp==1.and.l_a2y_KBPP) then
+   if (ib_grp==1) then
      do i1=1,n_atomic_species
-       do i2=1,pp_n_l_comp_max
+       do i2=1,pp_n_l_times_proj_max
          read(11) pp_kb_kdb_disk
          pp_kb(:,i1,i2,i_spin)=pp_kb_kdb_disk
          read(11) pp_kb_kdb_disk

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -45,6 +45,7 @@ module memory_m
      use drivers,      ONLY:infile_editing
      use com,          ONLY:msg,error,warning
      use par_proc_m,   ONLY:master_cpu
+     use units,        ONLY:Gigabyte
      character(*)         :: what
      integer,optional     :: elements_size(:)
      integer,optional     :: elements_kind(:)
@@ -81,7 +82,7 @@ module memory_m
          mem_element(i2)=trim(input_name(i1))
          local_kind=preset_kind
          if (present(elements_kind)) local_kind=elements_kind(i1)
-         mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1))*real(local_kind)/1.E9
+         mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1))*real(local_kind)/Gigabyte
          if (present(errors)) then
            if (errors(i1)/=0) then
              write (ch(1),'(3a,f10.5,a)') 'Mem All. failed. Element ',trim(mem_element(i2)),&
@@ -134,7 +135,7 @@ module memory_m
      if (stdout_report.and.present(quiet)) stdout_report=.not.quiet
      if (.not.stdout_report) return
      !
-     write (ch(2),'(a,f5.3,4a,f5.3,a)') "[M ",mem_sum," Gb] ",trim(action),&
+     write (ch(2),'(a,f6.3,4a,f6.3,a)') "[M ",mem_sum," Gb] ",trim(action),&
 &                                       trim(ch(1))," (",mem_moved,")"
      call msg('s',trim(ch(2)))
      !

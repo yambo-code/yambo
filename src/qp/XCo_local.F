@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -25,12 +25,13 @@ subroutine XCo_local(E,Xk)
  !
  use pars,          ONLY:SP,DP,pi
  use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol,spin
- use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table,QP_nk
+ use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_state
  use xc_functionals,ONLY:V_xc,xc_string
  use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use wrapper,       ONLY:Vstar_dot_V
  !
  implicit none
  type(levels) ::E       
@@ -39,11 +40,6 @@ subroutine XCo_local(E,Xk)
  ! Work Space
  !
  integer     ::i1,ifft,ifftp,ifft_sp1,ifftp_sp1,ifft_sp2,ib,ibp,ik,i_sp1
-#if defined _DOUBLE
- complex(DP) ::zdotc,zdotu
-#else 
- complex(SP) ::cdotc,cdotu
-#endif
  complex(SP) ::c_ws(fft_size,n_spin)
  !
  ! Spin support (collinear and not collinear)
@@ -81,11 +77,7 @@ subroutine XCo_local(E,Xk)
      ifftp=wf_state(ibp,ik,1)
      c_ws(:,1)=V_xc(:,1)*wf(:,ifftp)
      !
-#if defined _DOUBLE
-     QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft),1,c_ws(:,1),1)
-#else 
-     QP_Vxc(i1)=cdotc(fft_size,wf(:,ifft),1,c_ws(:,1),1)
-#endif
+     QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,ifft),c_ws(:,1))
      !
    enddo
    !

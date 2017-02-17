@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -29,8 +29,9 @@ subroutine QP_ctl_load(defs,i_type)
  ! spin unless the DB1 is read. 
  !
  use electrons,     ONLY:n_sp_pol
- use it_m,          ONLY:it,initmode,initdefs,V_qp
- use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
+ use it_m,          ONLY:it,initmode,initdefs,V_qp,V_real_time
+ use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_Wv,&
+&                        QP_ctl_Wc,QP_ctl_Z,OCC_ctl
  !
  implicit none
  integer, intent(in) :: i_type
@@ -42,10 +43,11 @@ subroutine QP_ctl_load(defs,i_type)
  character(1)      ::prefix(3)
  character(3)      ::spin_ch(3)
  character(7)      ::description_ch(3)
- character(9)      ::spin_description_ch(3)
+ character(4)      ::spin_description_ch(3)
  !
  spin_ch=(/'   ','_up','_dn'/)
- spin_description_ch=(/'       ','spin up','spin dn'/)
+ spin_description_ch= ' '
+ spin_description_ch=(/'    ','UP  ','DOWN'/)
  prefix=(/'X','K','G'/)
  description_ch(1)='Xd'
  description_ch(2)='BSK BSS'
@@ -63,14 +65,20 @@ subroutine QP_ctl_load(defs,i_type)
    call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_E',&
 &          '[EXTQP '//trim(description_ch(i_type))//'] E parameters '//&
-&          trim(spin_description_ch(i1))//' (c/v)',&
+&          trim(spin_description_ch(i1))//' (c/v) eV|adim|adim',&
 &          QP_ctl_E(i_type,:,i_spin),verb_level=V_qp)
    !
    call it(defs,&
-&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_W',&
+&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wv',&
 &          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
-&          trim(spin_description_ch(i1))//' (c/v)',&
-&          QP_ctl_W(i_type,:,i_spin),verb_level=V_qp)
+&          trim(spin_description_ch(i1))//' (valence) eV|adim|eV^-1',&
+&          QP_ctl_Wv(i_type,:,i_spin),verb_level=V_qp)
+   !
+   call it(defs,&
+&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wc',&
+&          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
+&          trim(spin_description_ch(i1))//' (conduction) eV|adim|eV^-1',&
+&          QP_ctl_Wc(i_type,:,i_spin),verb_level=V_qp)
    !
    call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Z',&
@@ -87,5 +95,7 @@ subroutine QP_ctl_load(defs,i_type)
  call it(defs,prefix(i_type)//'fnQP_N',&
 &        '[EXTQP '//trim(description_ch(i_type))//'] Interpolation neighbours',&
 &        QP_ctl_interp_neigh(i_type),verb_level=V_qp)
+ !
+!
  !
 end subroutine

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+  Copyright (C) 2000-2012 A. Marini and the YAMBO team 
                http://www.yambo-code.org
   
   This file is distributed under the terms of the GNU 
@@ -50,10 +50,10 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT || _DISTRIBUTED
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT || _DISTRIBUTED 
  #define _YAMBO_MAIN
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_BOLTZMANN
+#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_BOLTZMANN || _YPP_TEST_2
  #define _YPP_MAIN
 #endif
 /* 
@@ -67,6 +67,9 @@ typedef struct
 #endif
 #if defined _a2y
  #include "a2y.h"
+#endif
+#if defined _c2y
+ #include "c2y.h"
 #endif
 #if defined _f2y
  #include "f2y.h"
@@ -273,6 +276,14 @@ int main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(ypp_i,YPP_I)(
+         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
+#endif
+#if defined _c2y 
+ /* 
+   Running the Fortran c2y driver
+ ===========================================================================
+ */
+ F90_FUNC(c2y_i,C2Y_I)(
          &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
 #endif
 #if defined _a2y 

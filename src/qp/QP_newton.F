@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,7 +22,7 @@
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  use pars,          ONLY:SP
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_cohsex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
@@ -50,7 +50,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  if (l_cohsex) then
    !
-   call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HARTREE)
+   call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HA2EV)
    call msg('r', '[Newton] Sc steps      :',QP_dSc_steps)
    !
  endif
@@ -76,29 +76,34 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
    do i1=1,QP_n_states
      !
-     QP_dSc(i1,1)=(0.,0.)
-     if (.not.On_Mass_Shell_approx) then
+     if(.not.l_cohsex) then
+       !     
+       QP_dSc(i1,1)=(0._SP,0._SP)
+       if (.not.On_Mass_Shell_approx) then
+         do i2=1,QP_dSc_steps-1
+           QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
+         enddo
+       endif
+       !
        do i2=1,QP_dSc_steps-1
-         QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
+         Z(i2)=1._SP/(1._SP-QP_dSc(i1,i2))
+         !
+         Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
+         if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Vnl_xc(i1)-QP_Vxc(i1))
+         !
        enddo
-     endif
-     do i2=1,QP_dSc_steps-1
-       Z(i2)=1./(1.-QP_dSc(i1,i2))
        !
-       Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
-       if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Vnl_xc(i1)-QP_Vxc(i1))
+       qp%E(i1)=Eqp(1)
+       qp%Z(i1)=Z(1)
        !
-     enddo
-     !
-     ! COHSEX: no energy dependence
-     !
-     if (l_cohsex) then
-       Eqp(1)=qp%E_bare(i1)+(QP_Sc(i1,1)+QP_Vnl_xc(i1)-QP_Vxc(i1))
-       Z(1)=1.
+     else
+       !
+       ! COHSEX: no energy dependence
+       !
+       qp%E(i1)=qp%E_bare(i1)+(QP_Sc(i1,1)+QP_Vnl_xc(i1)-QP_Vxc(i1))
+       qp%Z(i1)=1._SP
+       !
      endif
-     !
-     qp%E(i1)=Eqp(1)
-     qp%Z(i1)=Z(1)
      !
    enddo
    !

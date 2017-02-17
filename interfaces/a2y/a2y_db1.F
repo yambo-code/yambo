@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -24,12 +24,13 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use pars,                  ONLY: SP, DP,pi
  use com,                   ONLY: msg,warning,error
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
-&                                 n_spinor 
+&                                 n_spinor,spin_orbit 
  use R_lattice,             ONLY: bz_samp, ng_vec, g_vec,nkibz, b
  use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,&
 &                                 n_atomic_species,n_atoms_species,&
 &                                 n_atoms_species_max,atom_pos,Z_species,lattice
- use pseudo,                ONLY: pp_n_l_comp_max,pp_n_l_comp,l_a2y_KBPP
+ use pseudo,                ONLY: pp_n_l_times_proj_max,pp_n_l_comp,&
+&                                 pp_n_l_max,pp_table,l_many_proj
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
@@ -51,6 +52,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  type(hdr_type)                 :: ahdr
  type(wffile_type)              :: wff
+ integer                        :: psp_so
  integer                        :: fform,ishm
  integer,  allocatable          :: rel_gvec(:,:)
  real(DP), allocatable          :: rstr(:)
@@ -67,14 +69,24 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('l','abinit version ',ahdr%codvsn)
  read(11)
  read(11) 
- read(11) ahdr%nsym, n_bands, ng_vec, ishm, pp_n_l_comp_max
+ read(11) ahdr%nsym, n_bands, ng_vec, ishm, pp_n_l_times_proj_max
+ !
+ l_many_proj= (ishm==-1)
+ !
+ if(     l_many_proj) then
+   read(11)  pp_n_l_max, psp_so
+   read(11) 
+   read(11) 
+   read(11) 
+   !
+   spin_orbit=(psp_so>1)
+ else
+   pp_n_l_max=abs(pp_n_l_times_proj_max)
+ endif
  en%nb=n_bands
  !
  call msg('s','Pseudo Potential KB form factors...')
- l_a2y_KBPP=pp_n_l_comp_max>=0
- if (     l_a2y_KBPP)  call msg('l','yes')
- if (.not.l_a2y_KBPP)  call msg('l','no')
- if (.not.l_a2y_KBPP)  pp_n_l_comp_max=-pp_n_l_comp_max
+ call msg('l','yes')
  !
  ! XC KIND/FUNCTIONAL
  !===================
@@ -139,8 +151,20 @@ subroutine a2y_db1(en,k,KSS_file_name)
  enddo
  !
  n_atomic_species=ahdr%ntypat
- allocate(n_atoms_species(n_atomic_species),pp_n_l_comp(n_atomic_species))
- pp_n_l_comp=pp_n_l_comp_max
+ !
+ allocate(n_atoms_species(n_atomic_species),pp_n_l_comp(n_atomic_species),&
+&         pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+ pp_n_l_comp(:)=pp_n_l_max
+ !
+ ! if "l_many_proj" the table is readen in a2y_wf
+ if(.not.l_many_proj) then
+   do i1=1,pp_n_l_times_proj_max
+     pp_table(1,:,i1)=i1  !  l+1
+     pp_table(2,:,i1)=1   !  n_proj
+     pp_table(3,:,i1)=1   !  i_spin
+   enddo
+ endif
+ !
  n_atoms_species(:)=0
  do i1=1,ahdr%natom
    n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
@@ -182,7 +206,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  read(11) (rel_gvec(:,i1),i1=1,ng_vec)
  read(11) 
- if (l_a2y_KBPP) read(11) 
+ read(11) 
  do i1=1,ng_vec
    g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
  enddo
@@ -200,14 +224,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! 
    !
    do ik=1,k%nibz
-     if (l_a2y_KBPP) then
-       do i1=1,n_atomic_species
-         do i2=1,pp_n_l_comp_max
-           read(11)
-           read(11) 
-         enddo
+     do i1=1,n_atomic_species
+       do i2=1,pp_n_l_times_proj_max
+         read(11)
+         read(11) 
        enddo
-     endif
+     enddo
      read(11) rstr
      en%E(:,ik,i_spin)=rstr(:)
      do i1=1,en%nb

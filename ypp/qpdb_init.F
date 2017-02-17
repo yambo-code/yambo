@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2012 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,7 +28,7 @@ subroutine qpdb_init()
  use it_m,      ONLY: nflines,flines,infile
  use parser_m,  ONLY: parser       
  use IO_m,      ONLY:OP_RD_CL,DUMP,io_control,NONE
- use units,     ONLY:HARTREE
+ use units,     ONLY:HA2EV
  implicit none
  ! 
  ! Work Space
@@ -43,7 +43,7 @@ subroutine qpdb_init()
  !
  !If there are already the QP lines or there's not the input file todo return
  !
- if (l_lines_in_input.and..not.infile_editing) return 
+ if (.not.infile_editing) return 
  !
  call QP_reset(qp)
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
@@ -60,7 +60,7 @@ subroutine qpdb_init()
    do i1=1,qp%n_states
      nflines=nflines+1
      write (flines(nflines+1),'(4(i3,a),3(f12.6,a))') qp%table(i1,3),'|',qp%table(i1,3),'|',qp%table(i1,1),'|',qp%table(i1,1),'|' &
-&                            ,real(qp%E(i1)-qp%E_bare(i1))*HARTREE,'|',aimag(qp%E(i1))*HARTREE,'|',real(qp%Z(i1)),'|'
+&                            ,real(qp%E(i1)-qp%E_bare(i1))*HA2EV,'|',aimag(qp%E(i1))*HA2EV,'|',real(qp%Z(i1)),'|'
    enddo
  else
    nflines=nflines+1

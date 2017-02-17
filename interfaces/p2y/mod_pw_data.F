@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Hogan and the YAMBO team
+! Copyright (C) 2000-2012 C. Hogan and the YAMBO team
 !              http://www.yambo-code.org
 !   
 ! This file is distributed under the terms of the GNU 
@@ -41,6 +41,7 @@ module pw_data
 
 ! Planewaves
   integer                    :: ngm_, npwx_
+  real(DP)                   :: ecutwfc_
   integer, allocatable       :: igv_(:,:)
   logical                    :: gamma_only_
 

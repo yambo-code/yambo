@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -25,8 +25,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
- use D_lattice,      ONLY:inv_index
- use stderr,         ONLY:string_remove,string_add
+ use stderr,         ONLY:string_remove,string_add,intc
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
@@ -55,14 +54,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  type(X_t)   :: X_tddft
  integer, external :: eval_G_minus_G
  !
+ !
  call X_reset(X_tddft)
  call W_reset(W_bss)
  !
  ! In these two lines I ensure the at least all the metallic
  ! bands are included in the X summation
  !
- if (BS_bands(1)>Ken%nbf+1) BS_bands(1)=Ken%nbf+1
- if (BS_bands(2)<Ken%nbm)   BS_bands(2)=Ken%nbm
+ if (any((/BS_bands(1)>Ken%nbf+1,BS_bands(2)<Ken%nbm/))) then
+   BS_bands=(/Ken%nbf+1,Ken%nbm/)
+   call warning('BS bands redefined to be :'//trim(intc(BS_bands(1)))//' - '//trim(intc(BS_bands(2))))
+ endif
  !
  ! If using ALDA enough bands must be loaded to
  ! be able to calculate the density
@@ -72,7 +74,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! ... and the QP corrections
  !
- call QP_apply(bands_to_correct,Ken,Xk,2,msg_fmt='s')
+ call QP_apply(bands_to_correct,Ken,Xk,"K",msg_fmt='s')
  !
  !
  ! W RL size setup looking at the max index of G-G' 
@@ -110,15 +112,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- !
- ! Without spatial inversion it is not possible to include Coupling
- !
- if (BS_K_coupling.and.inv_index<0) then
-   call warning('Coupling switched off without spatial inversion')
-   BS_cpl_K_corr=.false.
-   BS_cpl_K_exchange=.false.
-   BS_K_coupling=.false.
- endif
  !
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -97,9 +97,10 @@ module com
          folder="."
          if (present(subfolder)) folder=subfolder
          !
-         ! No inpath/outpath must pre-appended when an explicit path is given
+         ! As I want the path to be relative to the working directory I need to set ch(1)=".". In case 
+         ! the path shpuld be absolute ch(1) must be " " 
          !
-         ch(1)=' '
+         ch(1)='.'
          !
        case(0)
          ch(2)="s."//trim(desc)

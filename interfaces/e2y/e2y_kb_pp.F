@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Hogan and the YAMBO team
+! Copyright (C) 2000-2012 C. Hogan and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -42,7 +42,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
   use etsf_io_low_level
   use etsf_data
   use D_lattice,            only : n_atomic_species,n_atoms_species_max
-  use pseudo,               only : pp_n_l_comp_max,pp_n_l_comp,&
+  use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
 &                                  pp_kbs,pp_kb,pp_kbd
   use wave_func,            only : wf_ncx,wf_nc_k
   implicit none
@@ -73,7 +73,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
   call etsf_io_low_read_var(ncid, "kb_formfactors", &
                             & pp_section, lstat, error_data = error_data, &
 &                             start = start, count =  count )
-  forall( ig=1:wf_nc_k(ikibz), ia=1:n_atomic_species, ip=1:pp_n_l_comp_max ) &
+  forall( ig=1:wf_nc_k(ikibz), ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kb(ig,ia,ip,1) = pp_section(ig,ip,ia)
   !
   ! Form factor derivatives 
@@ -81,7 +81,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
   call etsf_io_low_read_var(ncid, "kb_formfactor_derivative", &
                             & pp_section, lstat, error_data = error_data, &
 &                             start = start, count = count)
-  forall( ig=1:wf_nc_k(ikibz), ia=1:n_atomic_species, ip=1:pp_n_l_comp_max ) &
+  forall( ig=1:wf_nc_k(ikibz), ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbd(ig,ia,ip,1) = pp_section(ig,ip,ia)
   !
   ! Form factor signs
@@ -91,7 +91,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
                             & pp_kbs_, lstat,          &
                             & error_data = error_data)
 
-  forall( ia=1:n_atomic_species, ip=1:pp_n_l_comp_max ) &
+  forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
 
   return

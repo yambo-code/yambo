@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -31,6 +31,8 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR
  use vec_operate,    ONLY:v_norm
  !
+ implicit none
+ !
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(inout) :: Xen
  type(X_t),     intent(inout) :: X
@@ -47,6 +49,8 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  ! to the norm of the grid shift.
  !
  field_dir=field_dir*q0_def_norm/v_norm(field_dir)
+ !
+ !
  q_norm(1)=q0_def_norm
  if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
  !
@@ -73,6 +77,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
          !
          DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
          if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
+         !
          !
        !
      enddo

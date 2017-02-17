@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2012 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -24,11 +24,12 @@
  ! Reads the WFs for single k-point ikibz and group of bands
  ! associated with group ib_grp
  !
- use P2Y,                   only: pw_unit, verboseIO
+ use P2Y,                   ONLY:pw_unit
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands, n_spin
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nc_k, wf_igk, wf_nb_io
+ use mod_com2y,             ONLY:verboseIO
 #if defined _P2Y_EXPORT
  use pw_export
 #else

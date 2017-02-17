@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -83,6 +83,7 @@ module timing
      character(*),optional :: message
      integer     ,optional :: steps
      logical     ,optional :: SERIAL
+     if (.not.live_timing_is_on) return
      if (present(message).and.present(steps)) then
        if (present(SERIAL)) call live_timing_activate(message,steps,.TRUE.)
        if (.not.present(SERIAL)) call live_timing_activate(message,steps,.FALSE.)

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -27,7 +27,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! [2] Electronic Lifetimes
  !
  use pars,          ONLY:SP,schlen,pi,IP
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use drivers,       ONLY:l_life
  use electrons,     ONLY:levels,spin
  use frequency,     ONLY:w_samp,cg_index_bg,cg_npts,W_reset
@@ -134,7 +134,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  if (GW_iter> 0) call section('=',trim(Sc_name)//"W0 on the real axis")
  !
  if (.not.l_life) call msg('r', '[GW] Bands range     :',QP_n_G_bands)
- call msg('r', '[GW] G damping   [ev]:',QP_G_damp*HARTREE)
+ call msg('r', '[GW] G damping   [ev]:',QP_G_damp*HA2EV)
  call msg('r','')
  iv4=(/1,1,0,0/)
  do while(QP_state_extract(iv4)>0)

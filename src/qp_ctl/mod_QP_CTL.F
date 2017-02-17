@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,7 +22,7 @@
 module QP_CTL_m
  !
  use pars,  ONLY:SP,schlen,IP
- use units, ONLY:HARTREE
+ use units, ONLY:HA2EV
  !
  implicit none
  !
@@ -69,7 +69,7 @@ module QP_CTL_m
      QP_ctl%fit_scissor=0.
    end subroutine
    !
-   subroutine QP_apply(band_range,en,k,Eid,msg_fmt,qp_impose,QP_ctl_impose)
+   subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      !
      ! This routine manages the external qp corrections.
      ! The task is tricky, as YAMBO has three different energy
@@ -86,12 +86,12 @@ module QP_CTL_m
      !
      ! Eid
      !::::::
-     ! 1 : X
-     ! 2 : BSK
-     ! 3 : G
+     ! 1 : X (object = "X")
+     ! 2 : BSK (object = "K")
+     ! 3 : G (object = "G")
      !
      use memory_m,      ONLY:mem_est
-     use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
+     use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
      use com,           ONLY:msg,depth
      use electrons,     ONLY:levels,E_reset,n_sp_pol,&
@@ -101,10 +101,11 @@ module QP_CTL_m
      use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
 &                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
 &                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
-     integer       ::Eid,band_range(2)
+     integer       ::band_range(2)
      type(levels)  ::en
      type(bz_samp) ::k
      character(*)  ::msg_fmt
+     character(1)  ::object
      type(QP_t),       optional::qp_impose
      type(QP_ctl_t),   optional::QP_ctl_impose(n_sp_pol)
      !
@@ -118,11 +119,16 @@ module QP_CTL_m
      character(schlen)::ch
      character(1)     ::what
      character(11)    ::spin_ch(2)
-     logical          ::is_def(4),GFs_from_DB
+     logical          ::is_def(4),GFs_from_DB,W_def(2)
+     integer          ::Eid
      integer, allocatable :: RIM_k_done(:)
      integer, external    :: QP_load_DB
      !
      ! Resets
+     !
+     if (object=="X") Eid=1
+     if (object=="K") Eid=2
+     if (object=="G") Eid=3
      !
      call QP_reset(qp)
      do i_spin=1,n_sp_pol
@@ -142,7 +148,9 @@ module QP_CTL_m
        call parser(what//'fnQP_up_E',is_def(2))
        call parser(what//'fnQP_dn_E',is_def(3))
        call parser(what//'fnQPdb',is_def(4))
-       if (.not.any((/is_def/))) return
+       call parser(what//'fnQP_Wv',W_def(1))
+       call parser(what//'fnQP_Wc',W_def(2))
+       if (.not.any((/is_def,W_def/))) return
      endif
      !
      ! Allocation of qp_done table to keep track of the corrections
@@ -201,7 +209,7 @@ module QP_CTL_m
        ! being careful that the scissor must go in QP_ctl_input_or_impose%E(1)
        !
        do i_spin=1,n_sp_pol
-         QP_ctl_input_or_impose(i_spin)%E=(/QP_ctl_E(Eid,1,i_spin)/HARTREE,&
+         QP_ctl_input_or_impose(i_spin)%E=(/QP_ctl_E(Eid,1,i_spin)/HA2EV,&
 &                                           QP_ctl_E(Eid,2,i_spin),0._SP,QP_ctl_E(Eid,3,i_spin)/)
        enddo
        !
@@ -218,13 +226,17 @@ module QP_CTL_m
        !
        QP_ctl_db(Eid)=trim(QP_ctl_from_DB(1)%db)
        !
-       ! Note the QP_ctl_W(Eid,1/3) is in ev^{-1} while QP_ctl_W(Eid,2/4) is in
-       !  ev^{-2}
+       ! Note the units of QP_ctl_W:
+       !
+       !   QP_ctl_Wc/v(Eid,1,:) is in ev
+       !   QP_ctl_Wc/v(Eid,2,:) is adim
+       !   QP_ctl_Wc/v(Eid,3,:) is ev^{-1}
        !
        do i_spin=1,n_sp_pol
-         QP_ctl_input_or_impose(i_spin)%W=&
-&                     (/0._SP,QP_ctl_W(Eid,1,i_spin)/HARTREE,QP_ctl_W(Eid,2,i_spin)/HARTREE**2.,&
-&                       0._SP,QP_ctl_W(Eid,3,i_spin)/HARTREE,QP_ctl_W(Eid,4,i_spin)/HARTREE**2./)
+         QP_ctl_input_or_impose(i_spin)%W(1:3)=(/QP_ctl_Wc(Eid,1,i_spin)/HA2EV,&
+&                                                QP_ctl_Wc(Eid,2,i_spin),QP_ctl_Wc(Eid,3,i_spin)*HA2EV/)
+         QP_ctl_input_or_impose(i_spin)%W(4:6)=(/QP_ctl_Wv(Eid,1,i_spin)/HA2EV,&
+&                                                QP_ctl_Wv(Eid,2,i_spin),QP_ctl_Wv(Eid,3,i_spin)*HA2EV/)
          QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)
        enddo
        !
@@ -243,7 +255,7 @@ module QP_CTL_m
      !
      ! Finally I apply the generalized stretch
      !
-     call QP_apply_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected)
+     call QP_apply_global_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected)
      !
      ! Fermi Level Updates
      !=====================
@@ -308,13 +320,13 @@ module QP_CTL_m
      !
      ! Reporting
      !
-     call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HARTREE)
+     call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HA2EV)
      call msg('r',   '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
      if (en%nbf==en%nbm) then
        if (n_sp_pol==1) then
          call msg('r','[QP] Ind. Gap Correction  [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HARTREE)
+&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
          !
          !
        endif

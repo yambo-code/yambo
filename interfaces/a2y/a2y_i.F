@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,7 +23,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use pars,                ONLY:SP,lchlen
  use LOGO,                ONLY:pickup_a_random
- use com,                 ONLY:msg,write_to_report,core_io_path
+ use com,                 ONLY:msg,write_to_report,core_io_path,write_the_logo
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_spin
  use D_lattice,           ONLY:n_atoms_species_max
@@ -32,7 +32,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:wf_splitter
- use pseudo,              ONLY:l_a2y_KBPP
+ use pseudo,              ONLY:PP_free
  !
  implicit none
  type(levels)                 :: en 
@@ -69,7 +69,11 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  write_to_report=.FALSE.
  !
- call section('*','A(binit) 2 Y(ambo)')
+ ! LOGO
+ !
+ call write_the_logo(6,' ')
+ !
+ call msg('s','A(binit) 2 Y(ambo)')
  !
  call msg('s','Checking input file ...')
  !
@@ -102,8 +106,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (n_spin==1) call wf_splitter()
  !
- if (     l_a2y_KBPP) call msg('s','== WFs + nlPP ...')
- if (.not.l_a2y_KBPP) call msg('s','== WFs ...')
+ call msg('s','== WFs + nlPP ...')
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  !
@@ -113,7 +116,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      !
      call a2y_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
      !
-     if (n_atoms_species_max>0.and.ib_grp==1.and.l_a2y_KBPP) then
+     if (n_atoms_species_max>0.and.ib_grp==1) then
        if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
        if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
        io_err=ioKB_PP(ID)
@@ -127,6 +130,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
  enddo
  deallocate(wf_disk)
+ call PP_free()
  !
  call msg('ln','done ==')
  !

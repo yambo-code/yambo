@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -272,10 +272,16 @@ module stderr
          write (gen_fmt,'(2(a,i2.2))')  'F',f_format_length,'.',f_format_length-3-iexp
        else
          !
+         ! 23/9/2011. Field intensities formats are wrong when iexp=9. This is beacause
+         ! depending on the compiler 1.E9 is written  as 0.1E10. Therefore I need to uses
+         ! a reference iexp=8 to distinguish the two possible formats.
+         !
+         if (iexp< 9) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-5,'E1'
+         !
          !  g_format_length-6: 6 because of '-1.','E00'
          !
-         if (iexp<10) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-5,'E1'
-         if (iexp> 9) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-6,'E2'
+         if (iexp> 8) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-6,''
+         !
        endif
      endif
      !

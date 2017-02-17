@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,7 +22,7 @@
 module X_m
  !
  use pars,  ONLY:SP,lchlen,schlen
- use units, ONLY:HARTREE
+ use units, ONLY:HA2EV
  implicit none
  !
  ! Polarizability
@@ -65,6 +65,11 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_RIM
+ !
+ ! I/O descriptions
+ !
+ integer          :: n_X_descs
+ character(lchlen):: X_description(100)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
@@ -185,7 +190,7 @@ module X_m
      X%whoami=0
      X%Vnl_included=.false.
      if (present(type)) X%whoami=type
-     X%ehe=(/-1.,-1./)/HARTREE
+     X%ehe=(/-1.,-1./)/HA2EV
      X%q0=(/1.,0.,0./)
      X%Wd=cmplx(0.,0.,SP)
      X%cg_percentual=100.

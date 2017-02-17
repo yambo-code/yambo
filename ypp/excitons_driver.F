@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 D. Varsano, A. Marini and the YAMBO team
+! Copyright (C) 2000-2012 D. Varsano, A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -22,7 +22,7 @@
 subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  use pars,          ONLY:SP,IP,pi
- use units,         ONLY:BOHR
+ use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_rot_r,fft_dim
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
@@ -302,7 +302,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    r_hole=r_cell_cc(:,ir_hole)
    !
    call msg('s','::      translated position      [cc]:',r_hole)
-   call msg('s','::                                [A]:',r_hole*BOHR)
+   call msg('s','::                                [A]:',r_hole*BO2ANG)
    !
  endif
  !

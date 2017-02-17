@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -25,14 +25,15 @@ integer function ioKB_PP(ID)
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
- use pseudo,           ONLY:pp_n_l_comp_max,&
+ use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
  use memory_m,         ONLY:mem_est
  use wave_func,        ONLY:wf_ncx,wf_igk,wf_nc_k,wf_ng
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
-&                           io_elemental,io_bulk,io_header,&
-&                           read_is_on,write_is_on,ver_is_gt_or_eq
+&                           io_elemental,io_bulk,io_header,io_fragmented,&
+&                           read_is_on,write_is_on,ver_is_gt_or_eq,io_extension
  use electrons,        ONLY:n_spin
+ use fragments,        ONLY:io_fragment
  implicit none
  integer,       intent(in) :: ID
  character(schlen)         :: VAR_NAME
@@ -40,7 +41,7 @@ integer function ioKB_PP(ID)
  ! 
  ! Work Space
  !
- integer :: ik,i1,i_spin
+ integer :: ik,i1,i_spin,var_size
  ik=maxval(io_sec(ID,:))-1
  !
  ioKB_PP=io_connect(desc="kb_pp",type=0,ID=ID)
@@ -53,7 +54,10 @@ integer function ioKB_PP(ID)
    ioKB_PP=io_header(ID,IMPOSE_SN=.true.)
    if (ioKB_PP/=0) goto 1
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=0)
+   var_size=3
+   if (ver_is_gt_or_eq(ID,revision=898)) var_size=4
+   !
+   call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
    ! n_atoms_max and n_atom_species are redundant as they are
    ! already read from the DB1.
@@ -62,8 +66,13 @@ integer function ioKB_PP(ID)
    !
    call io_elemental(ID,I0=n_atoms_species_max)
    call io_elemental(ID,I0=n_atomic_species)
+   call io_elemental(ID,I0=pp_n_l_times_proj_max)
    !
-   call io_elemental(ID,I0=pp_n_l_comp_max)
+   if (ver_is_gt_or_eq(ID,revision=898)) then
+     call io_elemental(ID,I0=pp_n_l_max)
+   else
+     pp_n_l_max=pp_n_l_times_proj_max
+   endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (read_is_on(ID)) then
@@ -78,6 +87,10 @@ integer function ioKB_PP(ID)
        allocate(pp_n_l_comp(n_atomic_species))
        call mem_est("pp_n_l_comp",(/n_atomic_species/),(/IP/))
      endif
+     if (.not.allocated(pp_table)) then
+       allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+       call mem_est("pp_table",(/size(pp_table)/),(/IP/))
+     endif
      !
    endif
    !
@@ -85,6 +98,17 @@ integer function ioKB_PP(ID)
    call io_bulk(ID,I1=n_atoms_species)
    call io_bulk(ID,VAR="ATOM_L_COMP",VAR_SZ=(/n_atomic_species/))
    call io_bulk(ID,I1=pp_n_l_comp)
+   if (ver_is_gt_or_eq(ID,revision=898)) then
+     call io_bulk(ID,VAR="PP_TABLE",VAR_SZ=(/3,n_atomic_species,pp_n_l_times_proj_max/))
+     call io_bulk(ID,I3=pp_table)
+   else
+     do i1=1,pp_n_l_times_proj_max
+       pp_table(1,i1,:)=i1
+       pp_table(2,i1,:)=1
+       pp_table(3,i1,:)=1
+     enddo
+   endif
+   !
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))
    call io_bulk(ID,R3=atom_pos)
    !
@@ -100,7 +124,9 @@ integer function ioKB_PP(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- allocate(pp_disk(wf_ncx,n_atomic_species,pp_n_l_comp_max))
+ allocate(pp_disk(wf_ncx,n_atomic_species,pp_n_l_times_proj_max))
+ !
+ if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP

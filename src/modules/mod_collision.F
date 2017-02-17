@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,6 +22,7 @@
 module collision
  !
  use pars, ONLY :SP
+ !
  implicit none
  !
  type ggwinfo
@@ -36,14 +37,16 @@ module collision
    integer :: os(4)
    integer :: qs(3)
    integer :: ngrho,iqref
-   complex(SP), pointer :: gamp(:,:)
-   complex(SP), pointer :: rhotw(:)
+   complex(SP), pointer :: gamp(:,:) => null()
+   complex(SP), pointer :: rhotw(:)  => null()
  end type ggwinfo
  !
  contains
    !
    subroutine collision_reset(ggw)
      type(ggwinfo)::ggw
+     if(associated(ggw%gamp))  deallocate(ggw%gamp)
+     if(associated(ggw%rhotw)) deallocate(ggw%rhotw)
      nullify(ggw%gamp,ggw%rhotw)
    end subroutine
    !

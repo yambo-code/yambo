@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -40,11 +40,11 @@ module par_proc_m
  logical            :: local_master_cpu(max_n_of_cpus)
  !
  type pp_indexes 
-   logical, pointer :: element_1D(:)
-   logical, pointer :: element_2D(:,:)
-   integer, pointer :: n_of_elements(:)
-   integer, pointer :: weight_1D(:)
-   integer, pointer :: first_of_1D(:)
+   logical, pointer :: element_1D(:)     => null()
+   logical, pointer :: element_2D(:,:)   => null()
+   integer, pointer :: n_of_elements(:)  => null()
+   integer, pointer :: weight_1D(:)      => null()
+   integer, pointer :: first_of_1D(:)    => null()
  end type pp_indexes
  !
  integer, private :: local_type
@@ -107,6 +107,11 @@ module par_proc_m
    !
    subroutine pp_indexes_reset(ip)
      type(pp_indexes)::ip
+     if(associated(ip%element_1D))    deallocate(ip%element_1D)
+     if(associated(ip%element_2D))    deallocate(ip%element_2D)
+     if(associated(ip%weight_1D))     deallocate(ip%weight_1D)
+     if(associated(ip%n_of_elements)) deallocate(ip%n_of_elements)
+     if(associated(ip%first_of_1D))   deallocate(ip%first_of_1D)
      nullify(ip%element_1D,ip%element_2D,ip%n_of_elements,ip%weight_1D,ip%first_of_1D)
    end subroutine
    !

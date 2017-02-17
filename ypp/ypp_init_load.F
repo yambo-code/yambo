@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -55,6 +55,11 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'DOS_broad', 'Broadening of the DOS',dos_broadening,E_unit) 
  call it(defs,'DOS_bands', 'DOS bands',dos_bands) 
+ call it(defs,'DOSERange', 'Energy range',dos_E_range,unit=E_unit,verb_level=V_general) 
+ call it(defs,'DOSESteps', 'Energy steps',dos_E_steps,verb_level=V_general) 
+ !
+ ! BANDS
+ !
  !
  ! BZ grids
  !
@@ -62,9 +67,9 @@ subroutine ypp_init_load(defs)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
  call it(defs,'GWKpts','GW K-point grid',Kgw_1)
  call it(defs,'Qpts',  'Q-point grid',   Kgw_1)
- call it(defs,'KShift1','K-grid shift vector[1] ',qlong(1,:))
- call it(defs,'KShift2','K-grid shift vector[2] ',qlong(2,:))
- call it(defs,'KShift3','K-grid shift vector[3] ',qlong(3,:))
+ call it(defs,'KShift1','K-grid shift vector[1] ',q_shift(1,:))
+ call it(defs,'KShift2','K-grid shift vector[2] ',q_shift(2,:))
+ call it(defs,'KShift3','K-grid shift vector[3] ',q_shift(3,:))
  !
  !
  call it('f',defs,'NoWeights',    ' Do not print K-points weight') 
@@ -75,6 +80,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)
  call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',&
 &                           deg_energy,E_unit)
+ call it(defs,'MinWeight', 'Print transitions with weight => MinWeight',min_weight,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
@@ -96,5 +102,6 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
+ !
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -29,7 +29,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  use drivers
  use pars,           ONLY:schlen,lchlen
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,E_reset,n_sp_pol
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
@@ -229,7 +229,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !In DUMP mode qp%table is dumped as well (to be used in QP_apply).
  !Here, however, qp%table is not needed
  !
- if (associated(qp%table)) nullify(qp%table)
+ if (associated(qp%table)) then
+   deallocate(qp%table)
+   nullify(qp%table)
+ endif
  !
  ! Green Functions
  !
@@ -348,14 +351,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
  !
- !COLLISIONS
- !
- !
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath Qdirection QShiftOrder')
+   call initactivate(1,'ShiftedPath Qdirection QShiftOrder')
    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
@@ -366,7 +366,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_optics.and.l_bse) then
    call QP_ctl_switch('K')
-   call initactivate(1,'LongPath')
+   call initactivate(1,'ShiftedPath')
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
    call initactivate(1,'BSENGBlk BSENGexx ALLGexx BSEEhEny BSEClmns BSehWind')
  endif
@@ -375,7 +375,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_em1s) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath')
+   call initactivate(1,'ShiftedPath')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
  endif
@@ -384,7 +384,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath')
+   call initactivate(1,'ShiftedPath')
    if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                      'EhEngy','LongDr','PPAPnt'/))
    if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk',&
@@ -395,7 +395,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_acfdt) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath')
+   call initactivate(1,'ShiftedPath')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
@@ -408,7 +408,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      call QP_ctl_switch('X')
      call QP_ctl_switch('G')
-     call initactivate(1,'BoseCut LongPath')
+     call initactivate(1,'BoseCut ShiftedPath')
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
@@ -473,7 +473,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bss) then
   call QP_ctl_switch('K')
-  call initactivate(1,'BoseCut LongPath')
+  call initactivate(1,'BoseCut ShiftedPath')
   call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
@@ -482,6 +482,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
  ! DFT
+ !
  !
  !
  !
@@ -528,6 +529,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (allocated(QP_table)) deallocate(QP_table)
    !
  endif
+ !
  !
  if (infile_editing) return
  !
@@ -685,7 +687,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
-     if (l_em1s) Xw(2)%dr=0.001/HARTREE
+     if (l_em1s) Xw(2)%dr=0.001/HA2EV
      !
      if (len_trim(BS_cpl_mode)==0) BS_cpl_mode="none"
      if (len_trim(BS_res_mode)==0) BS_res_mode="none"

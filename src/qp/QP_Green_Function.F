@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -31,7 +31,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  !
  use pars,          ONLY:SP,pi
  use com,           ONLY:msg
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use QP_m,          ONLY:QP_t,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,use_GreenF_to_eval_QP,QP_Sc_steps,QP_G_dr,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,&
@@ -141,8 +141,8 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  enddo
  !
  if ( use_GreenF_Zoom .and. GFdb_read_err==0) then
-   call msg('nr','[Green zoom] Frequency step              (current)   [ev]:',old_min_max_step*HARTREE)
-   call msg('r', '[Green zoom]                                (zoom)   [ev]:',new_min_max_step*HARTREE)
+   call msg('nr','[Green zoom] Frequency step              (current)   [ev]:',old_min_max_step*HA2EV)
+   call msg('r', '[Green zoom]                                (zoom)   [ev]:',new_min_max_step*HA2EV)
  endif
  !
 end subroutine

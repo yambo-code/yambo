@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -23,25 +23,25 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
  use pars,       ONLY:SP
- use units,      ONLY:HARTREE,FS2AUT,AU2Vmm
+ use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use fields,     ONLY:global_gauge,grid_path
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,&
 &                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
-&                      q_plus_G_direction,Q_Shift_Order
+&                      q_plus_G_direction,Q_Shift_Order,n_X_descs
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     COHSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx,&
-&                     Vnlxc_kind,Vxc_kind,l_extended_output 
+&                     COHSEX_use_empties,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,On_Mass_Shell_approx,&
+&                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
 &                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
- use pseudo,     ONLY:pp_n_l_comp_max,pp_kbv_dim
+ use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
@@ -157,7 +157,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  input_Tel_commands_over_header=.false.
  non_periodic_directions='none'
  lattice='Unknown'
- Bose_Temp=-1./HARTREE
+ Bose_Temp=-1./HA2EV
  !
  ! R_lattice
  !
@@ -188,7 +188,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Pseudo
  !
- pp_n_l_comp_max=0
+ pp_n_l_times_proj_max=0
  pp_kbv_dim=0
  !
  !drivers
@@ -220,6 +220,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_sc_magnetic=.false.
  l_collisions_IO=.false.
  l_elph_Hamiltonian=.false.
+ l_kerr=.false.
  !
  !electrons
  !
@@ -259,6 +260,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  IO_write=master_cpu
  n_nodes=1
  !
+ !
  Parallel_Fragments=.FALSE.
  Fragmented_IO=index(INSTR,'dbfrag')>0
  Fragmented_IO_save=Fragmented_IO
@@ -284,6 +286,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0.
  Q_Shift_Order=1
+ n_X_descs=0
  !
  !QPm
  !
@@ -294,19 +297,19 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  QP_n_W_freqs=100
  QP_dSc_test=.false.
  QP_solver=' '
- QP_G_damp=0.1/HARTREE
- QP_dSc_delta=0.1/HARTREE
+ QP_G_damp=0.1/HA2EV
+ QP_dSc_delta=0.1/HA2EV
  QP_W_er=0.
- QP_W_dr=0.1/HARTREE
+ QP_W_dr=0.1/HA2EV
  QP_W_partially_done=.false.
- QP_G_er=(/-10._SP/HARTREE,10._SP/HARTREE/)
- QP_G_dr=0.1/HARTREE
+ QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
+ QP_G_dr=0.1/HA2EV
  QP_cg_percent=100.
  GWo_iterations=0
  GWo_SC_done=.false.
  COHSEX_use_empties=.false.
  On_Mass_Shell_approx=.false.
- SC_E_threshold=0.01/HARTREE
+ SC_E_threshold=0.01/HA2EV
  SC_band_mixing=100.
  Vnlxc_kind='HF'
  Vxc_kind='LDA'
@@ -317,13 +320,19 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  QP_ctl_db="none"
  QP_ctl_interp_neigh=1
  forall (i1=1:3,i2=1:2) QP_ctl_E(i1,:,i2)=(/0.,1.,1./)
- forall (i1=1:3,i2=1:2) QP_ctl_W(i1,:,i2)=0.
+ forall (i1=1:3,i2=1:2) QP_ctl_Wc(i1,:,i2)=0.
+ forall (i1=1:3,i2=1:2) QP_ctl_Wv(i1,:,i2)=0.
  forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1.,0.)
+ !
+ ! Occupations control
+ !
+ OCC_ctl="none"
+ OCC_T_ref=0.
  !
  ! BS/BSS
  !
  BS_n_g_W=1
- BS_eh_en=(/-1.,-1./)/HARTREE
+ BS_eh_en=(/-1.,-1./)/HA2EV
  BS_identifier=0
  BS_q=1
  BS_eh_win=100.
@@ -333,8 +342,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BSS_mode=' '
  BSS_n_freqs=100
  BSS_n_descs=0
- BSS_er=(/0.,10./)/HARTREE
- BSS_dr=.1/HARTREE
+ BSS_er=(/0.,10./)/HA2EV
+ BSS_dr=.1/HA2EV
  BSS_q0=(/1.,0.,0./)
  BSS_uses_RIM=.FALSE.
  BSS_damp_reference=0.
@@ -361,13 +370,12 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ACFDT_n_lambda=1
  ACFDT_n_freqs=10
- ACFDT_E_range=(/100.,1000./)/HARTREE
+ ACFDT_E_range=(/100.,1000./)/HA2EV
  !
  ! xc_functionals  
  !
  GS_xc_FUNCTIONAL=-1             ! unknow 
  GS_xc_KIND=-1                   ! unknow 
- !
  !
  !
  !

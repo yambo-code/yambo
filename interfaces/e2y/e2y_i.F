@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Hogan and the YAMBO team
+! Copyright (C) 2000-2012 C. Hogan and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -24,7 +24,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use etsf_io_low_level
  use pars,                only : SP,lchlen
  use LOGO,                only : pickup_a_random
- use com,                 only : msg,write_to_report,core_io_path, file_exists
+ use com,                 only : msg,write_to_report,core_io_path, file_exists,write_the_logo
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands,n_spin
  use D_lattice,           only : n_atoms_species_max
@@ -80,7 +80,11 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !================================
  write_to_report=.FALSE.
  !
- call section('*','E(TSF) 2 Y(ambo)')
+ ! LOGO
+ !
+ call write_the_logo(6,' ')
+ !
+ call msg('s','E(TSF) 2 Y(ambo)')
  !
  ! Check input filenames 
  !

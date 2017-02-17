@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -93,6 +93,9 @@ module par_indexes_m
            enddo
          enddo
      end select
+     !
+     deallocate(lowlim)
+     if(allocated(i_done)) deallocate(i_done)
      !
    end subroutine
    !

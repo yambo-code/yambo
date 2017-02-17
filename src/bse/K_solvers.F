@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -120,6 +120,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  run_Diago           =index(BSS_mode,'d')/=0
  run_Haydock         =index(BSS_mode,'h')/=0
  !
+ Pert_inversion      =index(BSS_mode,'i')/=0
  !
  if (run_Haydock.and.associated(Ken%W)) then
    call warning('K with QP widths not supported in the Haydock solver')
@@ -139,6 +140,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (run_Diago)          call K_diagonalization(iq,W_bss)
  !
+ if (Pert_inversion)     call K_inversion(iq,W_bss,Ken,Xk,q)
  !
  ! CLEAN
  !

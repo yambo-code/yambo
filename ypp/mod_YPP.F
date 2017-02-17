@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -31,28 +31,36 @@ module YPP
  logical  :: l_bz_grids
  logical  :: l_k_grid
  logical  :: l_q_grid
- logical  :: l_long_grid
+ logical  :: l_shifted_grid
  logical  :: l_high_sym_pts
  integer  :: n_path_pts
  real(SP) :: Kgw_1(3)
- real(SP) :: qlong(3,3)
+ real(SP) :: q_shift(3,3)
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
  character(schlen) :: PtsPath
- character(21), parameter :: output_string="o exc den mag wf curr"
+ character(23), parameter :: output_string="o exc den mag wf curr V"
  ! 
  ! DOS
  !
  logical      ::l_dos ! electrons and phonons
  real(SP)     ::dos_broadening ! electrons
- integer      ::dos_bands      ! electrons
+ real(SP)     ::dos_E_range(2) ! Energy Range
+ integer      ::dos_bands(2)   ! Bands Range
+ integer      ::dos_E_steps    ! Energy steps
+ !
+ ! BANDS
+ !
+ integer               ::BANDS_steps
+ integer               ::BANDS_range(2)
  !
  ! REAL SPACE PLOT
  !
  logical      ::l_plot
  logical      ::l_wavefunction
  logical      ::l_density
+ logical      ::l_bands
  logical      ::l_mag
  logical      ::l_current
  logical      ::l_sp_wf
@@ -66,6 +74,7 @@ module YPP
  character(3) ::p_dir        
  character(lchlen) ::output_fname 
  character(schlen) ::plot_title 
+ character(schlen) ::V_value 
  integer               ::nr(3)
  integer               ::nr_tot
  integer               ::plot_dim
@@ -88,6 +97,7 @@ module YPP
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
+ real(SP)     ::min_weight   
  real(SP)     ::WF_multiplier   
  character(schlen) ::state_ctl 
  !
@@ -142,6 +152,7 @@ module YPP
  !
  logical     :: l_qpdb
  !
+ !
  interface
    !
    subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq,verbose)
@@ -170,17 +181,16 @@ module YPP
      integer, optional  :: BS_E_degs(:)
    end subroutine
    !
-   subroutine  RT_init_X_one(dump_and_write)
+   subroutine  RT_initialize(dump_and_write)
      implicit none
      logical, optional  :: dump_and_write
    end subroutine
    !
-   subroutine  RT_databases(en,IO_error,first_sec_only,COM_,mesg)
+   subroutine  RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
      use electrons,     ONLY:levels
      implicit none
      type(levels)       :: en
-     logical, optional  :: IO_error
-     logical, optional  :: first_sec_only
+     logical, optional  :: IO_error,first_sec_only,G_lesser_only
      integer, optional  :: COM_
      character(*), optional  :: mesg
    end subroutine

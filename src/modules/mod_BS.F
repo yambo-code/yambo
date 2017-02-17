@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -104,12 +104,11 @@ module BS
      complex(SP), optional ::Vi(:),Vo(:)
    end subroutine
    !
-   integer function variables_BS(ID,local_description,DB,X)
+   integer function variables_BS(ID,local_description,X)
      use pars,       ONLY:lchlen
      use X_m,        ONLY:X_t
      integer            ::ID
      character(lchlen)  ::local_description(100)
-     character(*)       ::DB
      type(X_t), optional::X
    end function
    !

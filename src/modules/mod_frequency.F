@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,7 +22,7 @@
 module frequency
  !
  use pars,  ONLY:SP
- use units, ONLY:HARTREE
+ use units, ONLY:HA2EV
  implicit none
  !
  ! Bare 2 Coarse grid
@@ -131,8 +131,8 @@ module frequency
      type(w_samp)::W
      W%n=100
      W%per_memstps=100.
-     W%er=(/0.,10./)/HARTREE
-     W%dr=(/.1,.1/)/HARTREE
+     W%er=(/0.,10./)/HA2EV
+     W%dr=(/.1,.1/)/HA2EV
      W%damp_reference=0.
      nullify(W%p)
      call mem_est("W-p")

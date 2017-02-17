@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,32 +22,27 @@
 integer function io_DIPOLES(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
- use units,         ONLY:HARTREE
- use X_m,           ONLY:X_t,DIP_iR,X_alloc,Dipole_bands_ordered,&
-&                        Dipole_uses_shifted_grids,P_square
+ use X_m,           ONLY:X_t,DIP_iR,X_alloc,Dipole_bands_ordered
  use electrons,     ONLY:levels,n_sp_pol
- use R_lattice,     ONLY:nXkibz,q0_def_norm
+ use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_control,&
-&                        io_elemental,io_status,io_bulk,IO_OUTDATED_DB,&
-&                        read_is_on,write_is_on,io_header,io_mode,io_com,io_action
- use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
+&                        io_bulk,read_is_on,write_is_on,io_header,io_extension
+ use fragments,     ONLY:io_fragment
  !
  implicit none
- type(X_t)::X
+ type(X_t)   ::X
  type(levels)::Xen
  integer     ::ID
  !
  ! Work Space
  !
- integer :: i1,ixyz,sec_size,i_spin,IDP
- integer :: db_nbm,db_nbf,db_nb(2)
+ integer :: i1,ixyz,sec_size,i_spin,db_nbm,db_nb(2)
+ integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
- logical              :: local_long_gauge  
  real(SP),allocatable :: DIP_iR_disk(:,:,:)
  !
  io_DIPOLES=io_connect(desc='dipoles',type=2,ID=ID)
- !
  if (io_DIPOLES/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -55,39 +50,9 @@ integer function io_DIPOLES(X,Xen,ID)
    io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
    if (io_DIPOLES/=0) goto 1
    !
-   sec_size=16
-   !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=sec_size,MENU=0)
-   call io_elemental(ID,DB_I1=db_nb,&
-&       VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/">=","<="/))
-   call io_elemental(ID,UNIT=HARTREE,&
-&       VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
-   call io_elemental(ID,DB_I0=db_nbm,&
-&       VAR=" Metallic bands         :",I0=Xen%nbm,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,DB_I0=db_nbf,&
-&       VAR=" Filled bands           :",I0=Xen%nbf,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR=" RL vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
-   call io_elemental(ID,&
-&       VAR=" [r,Vnl] included       :",L0=X%Vnl_included,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR=" Transitions ordered    :",L0=Dipole_bands_ordered,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR=" Using shifted grids    :",L0=Dipole_uses_shifted_grids,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
-   !
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   !
-   ! Wavefunctions xc 
-   !
-   call io_elemental(ID,VAR='WAVE_FUNC_XC',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,DB_CH0=Dipole_WF_xc_string,CH0=loaded_WF_xc_string,&
-&       VAR=' Wavefunctions          :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0)
-   !
-   io_DIPOLES=io_status(ID)
+   io_DIPOLES=variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
    if (io_DIPOLES/=0) goto 1
+   !
  endif
  !
  if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
@@ -99,9 +64,14 @@ integer function io_DIPOLES(X,Xen,ID)
    !
    allocate(DIP_iR_disk(db_nb(2),db_nbm,2))
    !
-   if(read_is_on(ID)) call X_alloc('DIP_iR',(/3,X%ib(2),db_nbm,nXkibz/))
+   if (read_is_on(ID)) call X_alloc('DIP_iR',(/3,X%ib(2),db_nbm,nXkibz/))
    !
    do i1=1,nXkibz
+     !
+     ! Fragmentation
+     !
+     io_extension(ID)='dipoles'
+     if (io_fragmented(ID)) call io_fragment(ID,i_fragment=i1)
      !
      do ixyz=1,3
        !
@@ -124,7 +94,6 @@ integer function io_DIPOLES(X,Xen,ID)
    deallocate(DIP_iR_disk)
    !
  endif
- !
  !
 1 call io_disconnect(ID=ID)
  !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,7 +28,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  use pars,           ONLY:SP,schlen
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
-&                         c2a,sort,ak2bz
+&                         c2a,sort,rlu_v_norm
  use com,            ONLY:msg,warning
  use matrix_operate, ONLY:m3det,m3inv
  use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&
@@ -44,7 +44,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  ! Work Space
  !
  integer  :: i1,i2,i3,iv(3),ig,N_g_vecs,N_ext_K_pts,k_grid_borders(3,2)
- real(SP) :: v0(3),v1(3),v0_ibz_mod,k_b_m1(3,3)
+ real(SP) :: v0(3),v1(3),v0_ibz_mod,k_b_m1(3,3),min_idist(2)
  real(SP),allocatable ::idist(:),extended_k_points(:,:)
  integer, allocatable ::order(:)
  character(schlen)    ::warn_msg,ch 
@@ -100,7 +100,11 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  enddo
  !
  allocate(idist(N_ext_K_pts),order(N_ext_K_pts))
+ !
+ min_idist=1.E10
+ !
  do i1=1,N_ext_K_pts
+   !
    v0=extended_k_points(i1,:)
    !
    ! Andrea (5/3/2010): Here I am searching for the smallest
@@ -112,10 +116,23 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    ! At the moment I cannot judge if this change will or not yield other problems in the case.
    ! In any case the deep checks in bz_samp_indexes should prevent them.
    !
-   ! idist(i1)=ak2bz(v0)  <- PREVIOUS CALL 
+   ! Andrea (29/12/2011). The 2D surface of the tutorials still does not work. And this is due to 
+   ! the change introduced in 2010. Therefore I try to use the method that yields the smalles
+   ! norm
    !
-   idist(i1)=v_norm(v0)
-   order(i1)=i1
+   do i2=1,2
+     !
+     if (i2==1) then
+       if (v_is_zero(v0,zero_=k_rlu_zero)) cycle
+       min_idist(1)=min(min_idist(1), rlu_v_norm(v0))
+       min_idist(2)=min(min_idist(2), v_norm(v0))
+     else if (min_idist(1)<min_idist(2)) then
+       idist(i1)=rlu_v_norm(v0)
+     else if (min_idist(1)>=min_idist(2)) then
+       idist(i1)=v_norm(v0)
+     endif
+     order(i1)=i1
+   enddo
  enddo
  if (N_ext_K_pts>1) call sort(idist,indx=order)
  deallocate(idist)

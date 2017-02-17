@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini, M. Gruning and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini, M. Gruning and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -142,7 +142,7 @@ subroutine K_Haydock(iq,W)
    ItParity = (-1._SP)**it_on_disk
    if (it_on_disk==0) then
      Cf= (0.,0.)
-     Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
+     Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)*BS_eh_f(:BS_K_dim)
      Vn(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
      call K_BSmat_by_V(iq,iter=it_on_disk,Vi=Vn,Vo=Vnp1)
      Haydock_v0_mod=sqrt(fdot_product(Vn,Vnp1))

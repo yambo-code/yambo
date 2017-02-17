@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,7 +23,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
 &                          CUTOFF,GAUGE,IMPOSE_GAUGE)
  !
  use pars,          ONLY:SP,schlen,lchlen
- use units,         ONLY:HARTREE,Kelvin
+ use units,         ONLY:HA2EV,HA2KEL
  use fields,        ONLY:global_gauge 
  use drivers,       ONLY:list_dbs
  use LOGO,          ONLY:code_version,code_revision
@@ -249,15 +249,15 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
      call io_elemental(ID,VAR="TEMPERATURES",VAR_SZ=2,MENU=MENU)
      MENU=0
      call io_elemental(ID,R0=Tel,&
-&         VAR=' Electronic Temperature        [K]:',UNIT=Kelvin,WARN=WARN,OP=(/"=="/))
+&         VAR=' Electronic Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
      call io_elemental(ID,R0=Bose_Temp,&
-&         VAR=' Bosonic    Temperature        [K]:',UNIT=Kelvin,WARN=WARN,OP=(/"=="/))
+&         VAR=' Bosonic    Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    else
      call io_elemental(ID,VAR="T_EL",VAR_SZ=1,MENU=MENU)
      MENU=0
      call io_elemental(ID,R0=Tel,&
-&         VAR=' Electronic Temperature        [K]:',UNIT=Kelvin,WARN=WARN,OP=(/"=="/))
+&         VAR=' Electronic Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !

@@ -80,7 +80,7 @@ void F90_FUNC_(ifolder_list, IFOLDER_LIST)
 {
  DIR *dir,*subdir;
  struct dirent *ent;
- char the_list[10000]={'\0'};
+ char the_list[100000]={'\0'};
  char  PWD[256] = ".";
  *ln=0;
  getcwd(PWD,256);

@@ -259,7 +259,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_K_is_ALDA) then
    allocate(F_xc(fft_size))
-   call xc_lda_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
+   call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
  if (BS_res_K_corr) then
@@ -472,6 +472,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_res_K_exchange) H_res_x=cdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
 #endif
          !
+         ! :::Exchange    (coupling):::
+         !
+#if defined _DOUBLE
+         if (BS_cpl_K_exchange) H_cpl_x=zdotu(BS_n_g_exch,&
+&                               O2x( g_rot(inv_index,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
+#else
+         if (BS_cpl_K_exchange) H_cpl_x=cdotu(BS_n_g_exch,&
+&                               O2x( g_rot(inv_index,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
+#endif
          !
          ! :::ALDA        (resonant):::
          !
@@ -479,6 +488,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                (/iv1,iv2/),(/is1,is2,is1,is2/),1)
          !
+         ! :::ALDA        (coupling):::
+         !
+         if (BS_K_is_ALDA) H_cpl_x=H_cpl_x+&
+&                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+&                                                (/iv1,iv2/),(/is1,is2,is1,is2/),2)
          !
          ! :::Correlation (resonant):::
          !
@@ -520,14 +534,52 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
          endif
          !
+         ! :::Correlation (coupling):::
          !
-         ! Impose the kernel to be hermitian
+         if (BS_cpl_K_corr.and.i_sp1==i_sp2) then
+           !
+           iOcv=O_table(ic1-BS_bands(1)+1,is1, iv2-BS_bands(1)+1,is2,i_sp1)
+           iOvc=O_table(iv1-BS_bands(1)+1,is1p,ic2-BS_bands(1)+1,is2p,i_sp2)
+           inv_s1=sop_inv(is1)
+           is1xis2=sop_tab(sop_inv(is1),is2)
+           !
+           forall(i1=1:BS_n_g_W) Ocv(i1)=&
+ &         BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcv)*O_phase(is1xis2,iv2,i_sp1)
+           forall(i1=1:BS_n_g_W) Ovc(i1)=&
+ &         BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvc)*O_phase(is1xis2,ic2,i_sp2)
+           !
+           if (is1>nsym/(i_time_rev+1)) Ocv=conjg(Ocv)
+           if (is1>nsym/(i_time_rev+1)) Ovc=conjg(Ovc)
+           if (BS_W_is_diagonal) then
+             !
+             forall(i1=1:BS_n_g_W) Cc(i1)=Ocv(i1)*BS_W(i1,1,iq_W)
+             !
+           else
+             !
+             do i1=1,BS_n_g_W
+#if defined _DOUBLE
+               Cc(i1)=zdotu(BS_n_g_W,Ocv,1,BS_W(1,i1,iq_W),1)
+#else
+               Cc(i1)=cdotu(BS_n_g_W,Ocv,1,BS_W(1,i1,iq_W),1)
+#endif
+             enddo
+           endif
+           !
+#if defined _DOUBLE
+           H_cpl_c=zdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
+#else
+           H_cpl_c=cdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
+#endif
+           !
+         endif
+         !
+         ! Impose the resonant part of the kernel to be hermitian
          !
          if (ik1==ik2.and.icv1==icv2) H_res_c=real(H_res_c)
          !
          BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
          !
-         !
+         if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*real(spin_occ)*Co-H_cpl_c
        enddo
      enddo
      call pp_redux_wait(BS_mat)
@@ -579,8 +631,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call mem_est("O_RES_WS")
    deallocate(BS_O)
    call mem_est("BS_O")
-   !
-   !
+   if (BS_cpl_K_corr) then
+     deallocate(Ovc,Ocv)
+     call mem_est("O_CPL_WS")
+   endif
  endif
  !
  if (l_bs_fxc) then

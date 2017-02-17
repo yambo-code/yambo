@@ -69,6 +69,7 @@ subroutine K_Haydock(iq,W)
  !
  if (BS_K_Coupling) then
    !
+   allocate(Cf(Max_iterations+1),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),Vnp1(2*BS_K_dim))
    !
  else
    allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
@@ -82,6 +83,7 @@ subroutine K_Haydock(iq,W)
  !
  if (BS_K_Coupling) then 
    !
+   io_err=ioBSS_Haydock(ID,1,2*BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
    !
  else
    io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn)
@@ -93,8 +95,8 @@ subroutine K_Haydock(iq,W)
    it_on_disk=io_err 
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then 
-     !
-     !
+     io_err=ioBSS_Haydock(ID,it_on_disk,2*BS_K_dim,reached_treshold,Af(:it_on_disk),&
+&            Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
    else
      io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn)
@@ -132,6 +134,25 @@ subroutine K_Haydock(iq,W)
  ! 
  if (BS_K_Coupling) then
    !
+   ! Before starting iterate one needs
+   !
+   ! | Vn > =     |q->0>/(<q->0| F (H |q->0>))
+   ! | Vnp1 > = H |Vn>
+   !
+   ItParity = (-1._SP)**it_on_disk
+   if (it_on_disk==0) then
+     Cf= (0.,0.)
+     Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
+     Vn(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
+     call K_BSmat_by_V(iq,iter=it_on_disk,Vi=Vn,Vo=Vnp1)
+     Haydock_v0_mod=sqrt(fdot_product(Vn,Vnp1))
+     Cf(1) = dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
+     Vnp1(:) = Vnp1(:)/Haydock_v0_mod
+     Vn(:)   = Vn(:)/Haydock_v0_mod
+   else
+     Haydock_v0_mod = Bf(1)
+     Bf(1) = 0._SP
+   endif     
    !
  else
    !
@@ -184,14 +205,45 @@ subroutine K_Haydock(iq,W)
      !
    else 
      !
+     ! A(n) = <Vn+1|F|Vn+1> (that is <Vn|HFH|Vn>), 
+     !      =  0   by symmetry 
+     !
+     ItParity=(-1._SP)**it
+     Af(it)=0._SP
+     !
+     !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
+     !
+     call V_by_V_plus_V(2*BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,Vnp1)
+     call V_by_V_plus_V(2*BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1) 
+     !
+     ! |Vn-1> = |Vn> 
+     ! |Vn>   = |Vn+1> 
+     !
+     Vnm1=Vn
+     Vn  =Vnp1
+     !
+     !|Vn+1> = H |Vn>
+     !
+     call K_BSmat_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
+     !
+     ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
+     !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry, 
+     !          where the dot_product is just on eh pair space 
+     !
+     Bf(it+1)=sqrt(fdot_product(Vn,Vnp1)) 
+     !
+     !|Vn> =|Vn+1> / B(n+1)
+     !
+     forall(i1=1:2*BS_K_dim) Vn(i1)=Vn(i1)/Bf(it+1)
+     forall(i1=1:2*BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
+     Cf(it+1)= dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
      !
    endif
    !
    if (it>2) then
      !
      if (BS_K_Coupling) then 
-       !
-       !
+       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf(:it))
      else
        call build_L_and_check_convergence(Af(:it),Bf(:it+1),it)
      end if
@@ -219,8 +271,10 @@ subroutine K_Haydock(iq,W)
    !
    call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then
-     !
-     !
+     Bf(1) = Haydock_v0_mod
+     io_err=ioBSS_Haydock(ID,it,2*BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),   &
+&       Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
+     Bf(1) = 0._SP
    else
      io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vnm1,Vn)
    end if
@@ -237,8 +291,7 @@ subroutine K_Haydock(iq,W)
  ! CLEAN
  !
  if (allocated(BS_mat)) deallocate(BS_mat)
- !
- !
+ if (BS_K_Coupling) deallocate(Cf)
  deallocate(Vn,Vnm1,Vnp1) 
  !
  ! Either if BS_mat is allocated (no fragments) or is not allocated
@@ -276,9 +329,7 @@ subroutine K_Haydock(iq,W)
      UseTerminator = .false.  
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
-     !
-     !
-     !
+     if (BS_K_Coupling) allocate(X_i(2,it))
      if (Useterminator) then 
        if (.not.BS_K_Coupling) then
          Av1 = 0._SP
@@ -290,8 +341,14 @@ subroutine K_Haydock(iq,W)
          Av1 = Av1/it
          Av2 = Av2/it
        else
-       !
-       !
+         Av1 = 0._SP
+         Av2 = 0._SP
+         do i1 = 2,it+1,2
+           Av1 = Av1 + Bf(i1)
+           Av2 = Av2 + Bf(i1+1)
+         end do
+         Av1 = Av1/(it/2+mod(it,2))
+         Av2 = Av2/(it/2)
        end if
      end if
      !
@@ -299,8 +356,8 @@ subroutine K_Haydock(iq,W)
        X_o=(0._SP,0._SP)
        if (UseTerminator) then 
          if (.not.BS_K_Coupling) X_t = terminator(W%p(iw),Av1,Av2,RES)
-       !
-       !
+         if (BS_K_Coupling.and.(mod(it,2)==0)) X_t = terminator(W%p(iw),Av1,Av2,COUPL)
+         if (BS_K_Coupling.and.(mod(it,2)==1)) X_t = terminator(W%p(iw),Av2,Av1,COUPL)
        endif
        X_o(:,it)=1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t)
        do i1=it-1,1,-1
@@ -309,8 +366,20 @@ subroutine K_Haydock(iq,W)
        do i1=it-2,1,-1
          X_o(2,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1))
        enddo
-       !
-       !
+       if (BS_K_Coupling) then
+         X_i(:,1) = X_o(:,1)
+         X_i(:,2) = Bf(2)*X_o(:,2)*X_i(:,1)
+         YbyX(:) = X_i(:,1)*Cf(1) + X_i(:,2)*Cf(2)
+         do i1 = 2,it-1
+           X_i(1,i1+1) = -Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)
+           YbyX(1) = YbyX(1) + Cf(i1+1)*X_i(1,i1+1)
+         end do
+         do i1 = 2,it-2
+           X_i(2,i1+1) = -Bf(i1+1)*X_o(2,i1+1)*X_i(2,i1)
+           YbyX(2) = YbyX(2) + Cf(i1+1)*X_i(2,i1+1)
+         end do
+         X_o(:,1) = YbyX(:)
+       endif
        X_epsilon(1,iw)=W%p(iw)
        X_epsilon(2,iw)=-X_o(1,1)*Co+1._SP
        X_epsilon(4,iw)=-X_o(2,1)*Co+1._SP
@@ -319,8 +388,7 @@ subroutine K_Haydock(iq,W)
        if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
 &         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw))/real(W%n(1))
      enddo
-     !
-     !
+     if (BS_K_Coupling) deallocate(X_i)
    end subroutine
    !
    function fdot_product(v,w)
@@ -342,8 +410,10 @@ subroutine K_Haydock(iq,W)
      !
      select case(which)
      case (1) 
-     !
-     !
+       f = x**2 - c1**2 + c2**2
+       g = 2._SP*x*c2**2
+       terminator = f + sqrt(f**2 -2._SP*x*g) 
+       terminator = terminator/g
      case (2)
        f = (x-c1)
        terminator = f + sqrt(f**2 -4._SP*c2**2.)

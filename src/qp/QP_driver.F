@@ -67,8 +67,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !==============================================================
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
  !
- QP_solver='n'
- !
  ! Head message
  !==============
  call QP_reset(qp)
@@ -79,8 +77,24 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call section('*','Dyson equation: Newton solver')
  else if (trim(QP_solver)=='s') then
    !
+   ! When using secant no SC available
    !
+   GWo_iterations=0
    !
+   write (qp%description(1),'(a)') ' GW solver              : Secant'
+   call section('*','Dyson equation: non perturbative secant method')
+   !
+ else if (trim(QP_solver)=='g') then
+   write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
+   call section('*','Dyson equation: full Green`s function')
+   call msg('r', '[Green] Sc steps                                         :',QP_Sc_steps)
+   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HARTREE)
+   call msg('rn','[Green] Sc damping range                             [ev]:',QP_G_dr*HARTREE)
+   !
+   GF_is_causal=Finite_Tel.or.l_ph_corr 
+   !
+ else if (.not.l_life) then
+   return
    !
  endif
  qp%n_descs=2
@@ -100,6 +114,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
  else
    !
+   qp%description(2)=' == Real Axis GW =='
+   !
+   ! Here I am not considering the case where ELPH + GW is used.
+   ! For this case I need to create a new global KIND.
+   !
+   QP_DB_kind=SE_GoWo
+   !
    !
  endif
  !
@@ -116,6 +137,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  qp%nb=QP_nb
  qp%n_states=QP_n_states
  !
+ ! In lifetimes calculations  the X db may be not
+ ! present. So I need to define some variables that 
+ ! must be correctly written in the QP_description(s)
+ !
+ if (l_life) then
+   call X_pre_setup(Xen,X)
+   if (X%ng_db==0) X%ng_db=X%ng
+ endif
  !
  ! Local Allocations
  !===================
@@ -155,9 +184,54 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      return
    endif
    !
+   ! Green Functions I/O
+   !=====================
+   !
+   if (trim(QP_solver)=='g') then
+     !
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_G)
+     io_G_err=ioQP('G',qp,ID_G)
+     !
+     if (io_G_err==0.or.io_G_err==IO_NO_BINDING_ERROR) then
+       !
+       if (use_GreenF_to_eval_QP) use_GreenF_to_eval_QP=(.not.io_QP_err==0).and.(io_G_err==0)
+       if (use_GreenF_Zoom)       use_GreenF_Zoom=io_G_err==IO_NO_BINDING_ERROR.and..not.use_GreenF_to_eval_QP
+       !
+       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_G)
+       io_G_err=ioQP('G',qp,ID_G)
+       !
+       if (use_GreenF_to_eval_QP) then
+         call QP_Green_Function(qp,en,0) 
+         call QP_report_and_write(k,qp,en,-1)
+         call local_free()
+         return
+       endif
+       !
+       if (use_GreenF_Zoom) then
+         allocate(QP_G_zoom_er(QP_n_states,2))
+         call mem_est("QP_G_zoom_er",(/size(QP_G_zoom_er)/),(/SP/))
+       else
+         QP_G_Zoom_treshold=0.
+       endif
+       call QP_Green_Function(qp,en,0) 
+       if (.not.use_GreenF_Zoom) then
+         call QP_report_and_write(k,qp,en,0)
+         call local_free()
+         return
+       endif
+       !
+     else
+       QP_G_Zoom_treshold=0.
+     endif
+     !
+   endif
    !
  endif
  !
+ ! Updated descriptions (needed in case of Zoomed GFs)
+ !=======================
+ !
+ call QP_descriptions(qp,X,Xw,.TRUE.)
  !
  call mem_est("QP_Sc",(/size(QP_Sc)/))
  !
@@ -179,10 +253,40 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    endif
  endif
  !
+ ! SECANT
+ !--------
+ if (trim(QP_solver)=='s') call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! GREEN`s FUNCTIONS
  !-------------------
  !
+ if (trim(QP_solver)=='g') then
+   !
+   if (l_el_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   !
+
+   !
+   call QP_Green_Function(qp,en,-1)
+   !
+   call QP_report_and_write(k,qp,en,-1)
+   call local_free()
+   return
+   !
+ endif
+ !
+ ! LIFETIMES
+ !
+ if (l_life) then
+   !
+   call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   !
+   qp%Z=1.
+   !
+   call QP_report_and_write(k,qp,en,-1)
+   call local_free()
+   return
+   !
+ endif
  !
  ! Reporting
  !

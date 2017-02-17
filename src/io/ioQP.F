@@ -74,18 +74,26 @@ integer function ioQP(what,qp,ID)
      ! reload to apply QP corrections. In this case QP_DB_kind must be 
      ! present to be transferred in the energy type by mod_qp_ctl
      !
+#if defined _NETCDF_IO
      if (variable_is_found(ID,"QP_DB_kind")==1.or.write_is_on(ID)) then
+#endif
        call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
        call io_elemental(ID,I0=QP_DB_kind)
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+#if defined _NETCDF_IO
      else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then
        QP_DB_kind=0
        ioQP=IO_INCOMPATIBLE_VAR
        return
      endif
+#endif
+     !
    endif
    !
    l_CUTOFF=.FALSE.
+#if defined_TEST_2
+   l_CUTOFF=.TRUE.
+#endif
    !
    if (what=="W") then
      ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.,XC_KIND="Xd",CUTOFF=l_CUTOFF)
@@ -131,6 +139,23 @@ integer function ioQP(what,qp,ID)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+   if (index(what,".G")/=0.or.what=="G") then
+     !
+     ! Tough the GF's parameters are already stored in the QP_descriptions
+     ! I need then on-fly to, eventually, rebuild the Green's function
+     !
+     var_size=6
+     if (ver_is_gt_or_eq(ID,revision=530))  var_size=7
+     call io_elemental(ID,VAR="SE_OPERATOR_PARAMETERS",VAR_SZ=var_size,MENU=0)
+     call io_elemental(ID,I0=qp%GreenF_n_steps)
+     call io_elemental(ID,R1=QP_G_er) ! <- This is, actually, not needed as the
+                                      !    full frequency dependence is stored in sec 3
+     call io_elemental(ID,R1=QP_G_dr)
+     call io_elemental(ID,L0=GF_is_causal)
+     if (ver_is_gt_or_eq(ID,revision=530)) call io_elemental(ID,R0=QP_G_Zoom_treshold)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+   endif
    !
    ioQP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
@@ -172,7 +197,6 @@ integer function ioQP(what,qp,ID)
        endif
      else if (what=="G") then
        call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
-       if (index(qp%description(i1),'Zoom')>0.and.io_status(ID)<0)  io_status(ID)=IO_NO_BINDING_ERROR
      else
        if (index(qp%description(i1),'QP')>0) then
          call io_elemental(ID,CH0=qp%description(i1),VAR='')
@@ -304,6 +328,51 @@ integer function ioQP(what,qp,ID)
      !
    endif
    !
+   if (index(what,".G")/=0.or.what=="G") then
+     !
+     allocate(qp_DATA_disk(qp%n_states,qp%GreenF_n_steps,6))
+     !
+     ! Real axis Self Energy & Green Function 
+     !=========================================
+     !
+     if (write_is_on(ID)) then
+       do i1=1,qp%n_states
+         qp_DATA_disk(i1,:,1)=real(qp%S_total(i1,:))
+         qp_DATA_disk(i1,:,2)=aimag(qp%S_total(i1,:))
+         qp_DATA_disk(i1,:,3)=real(qp%GreenF(i1,:))
+         qp_DATA_disk(i1,:,4)=aimag(qp%GreenF(i1,:))
+         qp_DATA_disk(i1,:,5)=real(qp%GreenF_W(i1,:))
+         qp_DATA_disk(i1,:,6)=aimag(qp%GreenF_W(i1,:))
+       enddo
+     endif
+     !
+     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
+     call io_bulk(ID,R3=qp_DATA_disk(:,:,1:2))
+     call io_bulk(ID,VAR="Green_Functions",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
+     call io_bulk(ID,R3=qp_DATA_disk(:,:,3:4))
+     call io_bulk(ID,VAR="Green_Functions_Energies",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
+     call io_bulk(ID,R3=qp_DATA_disk(:,:,5:6))
+     !
+     if (read_is_on(ID)) then
+       allocate(qp%S_total(qp%n_states,qp%GreenF_n_steps))
+       call mem_est("qp_S_total",(/size(qp%S_total)/))
+       allocate(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
+       call mem_est("qp_GreenF",(/size(qp%GreenF)/))
+       allocate(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
+       call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
+       do i1=1,qp%n_states
+         qp%S_total(i1,:) =cmplx(qp_DATA_disk(i1,:,1),qp_DATA_disk(i1,:,2),SP)
+         qp%GreenF(i1,:)  =cmplx(qp_DATA_disk(i1,:,3),qp_DATA_disk(i1,:,4),SP)
+         qp%GreenF_W(i1,:)=cmplx(qp_DATA_disk(i1,:,5),qp_DATA_disk(i1,:,6),SP)
+       enddo
+     endif
+     !
+     deallocate(qp_DATA_disk)
+     !
+   endif
+   !
+   ioQP=io_status(ID)
+   if (.not.DB_is_OK(ID)) goto 1
    !
  endif
  !

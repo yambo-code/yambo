@@ -1,0 +1,219 @@
+2010-09-26 16:03:43 r7 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in K_Haydock.F fixed
+
+2010-09-21 09:43:22 r6 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc int_modules/.objects int_modules/mod_xc2y.F p2y/p2y_db1.F a2y/a2y_db1.F config/Makefile.in config/configure.ac xc_functionals/el_current.F xc_functionals/XC_potential_driver.F xc_functionals/xc_lda_driver.F xc_functionals/XC_lda_driver.F xc_functionals/XC_libxc_driver.F xc_functionals/spin_density.F xc_functionals/.objects qp/QP_driver.F qp/XCo_local.F qp/QP_real_axis.F qp/QP_newton.F qp/bracket.F qp/QP_life_transitions.F qp/QP_secant.F qp/secant.F qp/QP_W2Sc.F qp/.objects common/FREQUENCIES_reset.F common/FREQUENCIES_Green_Function.F common/.objects bz_ops/k_ibz2bz.F pol_function/X_os.F pol_function/O_driver.F pol_function/X_em1.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F interface/barriers.F setup/G_shells_finder.F tddft/tddft_alda_g_space.F io/variables_BS.F io/ioDB1.F io/io_HF_and_locXC.F io/ioX.F io/ioQP.F io/io_header.F io/ioBSS_Haydock.F io/ioOSTNTS.F io/.objects io/io_DIPOLES.F modules/mod_BS.F modules/mod_R_lattice.F modules/mod_fields.F modules/mod_functions.F modules/mod_libxc_int.F modules/mod_drivers.F modules/mod_xc_functionals.F modules/mod_X_output.F modules/std_presets.F modules/mod_X.F modules/mod_IO.F modules/mod_com.F modules/.objects modules/mod_global_XC.F bse/K_Haydock.F bse/K_BSmat_by_V.F bse/K_diagonalization.F bse/K_solvers.F bse/K_output_file.F bse/K.F ChangeLog ypp/ypp_init.F ypp/plot_cube.F ypp/excitons_sort_and_report.F ypp/k_grids.F ypp/.objects ypp/excitons_driver.F ypp/mod_YPP.F ypp/plot_check_and_launch.F ypp/electrons_driver.F ypp/ypp_init_load.F driver/yambo_driver.F driver/driver.c driver/yambo.h driver/ypp.h sbin/make_makefile.sh.in
+
+	Additions:
+
+	- *** BSE/TDDFT beyond the TDA ***
+	  It is now possible to calculate TDDFT and BSE response functions beyond the
+	  Tamm-Dancoff approximation. The antiresonant and coupling blocks of the
+	  Hamiltonians can be computed.
+	  The final Dyson equation is, then. solved using diagonalization or the
+	  quasi-Hermitian Haydock algorithm proposed in Nano Letters, 9, 2820 (2009)
+
+	- *** LIBXC support ***
+	  This means that Yambo can ALWAYS read GS (abinit) databases generated using libxc.
+	  If, in addition, yambo is linked against LIBXC (see --with-libxc-include/--with-libxc-lib options
+	  of configure) this is used to evalute DFT xc terms.
+
+	- *** REAL AXIS GW ***
+	  It is now possible to calculate the GW self-energy on the real-axis. This means no plasmon-pole
+	  approx and the possibility of calculating electronic lifetimes.
+	  In addition the secant (recursive) solver of the Dyson equation has been added.
+
+	- *** CUBE format ***
+	  Added support plot 3D isosurfaces in Gaussian cube format.
+
+	Patch sent by: The Yambo Team
+
+2010-07-09 10:05:07 r5 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac interface/init_load.F sbin/svn2cl.pl
+
+	Bugs:
+	- In src/interface/init_load.F a too long description ( > 100 Chars) was causing seg-fault
+
+	Changes:
+	- Tests option removed from Makefile. To be soon replaced by the use of the test-suite branch.
+
+	Patch sent by: Andrea
+
+2010-07-02 14:56:07 r4 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc e2y/e2y_wf.F e2y/e2y_db1.F e2y/e2y_i.F e2y/e2y_kb_pp.F e2y/etsf_data.F int_modules/mod_wf2y.F int_modules/mod_com2y.F p2y/qexml_v3.1.F p2y/qexml_v4.0.F p2y/mod_pw_data.F p2y/qexml_v3.2.F p2y/p2y_db1.F p2y/p2y_i.F p2y/pw_errore.F p2y/mod_pw_export.F p2y/p2y_wf.F p2y/mod_p2y.F a2y/a2y_db1.F a2y/.objects a2y/a2y_i.F a2y/hdr_io.F a2y/a2y_wf.F a2y/a2y_KSS_file_name.F config/libxc.m4 config/report.in config/Makefile.in config/acx_report.m4 config/fftw.m4 config/acx.m4 config/acx_cpp.m4 config/acx_mpi.m4 config/netcdf_f90.m4 config/acx_fortran_flags.m4 config/configure.ac config/ax_f90_module_flag.m4 config/setup.in config/acx_get_fc_version.m4 doc/QuickGuidedTour.pdf doc/sample/bulk_silicon/SAVE doc/sample/bulk_silicon/SAVE/database_DB1_NETCDF_format.gz doc/sample/bulk_silicon/SAVE/database_WF_NETCDF_format.gz doc/README lib/lapack/dlacpy.f lib/lapack/slacpy.f lib/lapack/.objects xc_functionals/el_density.F xc_functionals/xcxalp.F xc_functionals/.objects xc_functionals/xc_lda_driver.F xc_functionals/xc_rpa_kp.F xc_functionals/mod_xc_costants.F xc_functionals/xcspol.F xc_functionals/el_magnetization.F qp/QP_driver.F qp/DFT_Vxc.F qp/QP_XX_Vxc.F qp/.objects qp/XCo_local.F qp/QP_of.F qp/XCo_driver.F qp/XCo_Hartree_Fock.F qp/QP_descriptions.F qp/QP_report_and_write.F qp/QP_ppa_chosex.F qp/QP_ppa_cohsex.F qp/QP_newton.F qp_ctl/QP_apply_interpolate.F qp_ctl/QP_apply_stretch.F qp_ctl/mod_QP_CTL.F qp_ctl/QP_apply_global_stretch.F qp_ctl/QP_apply_DB_interpolation.F qp_ctl/.objects qp_ctl/QP_load_DB.F qp_ctl/QP_check_if_corrected.F qp_ctl/QP_fit_DB_values.F qp_ctl/QP_apply_fit.F qp_ctl/QP_apply_db.F qp_ctl/QP_apply_done.F external_c/c_printing.c common/pol_fit.F common/OCCUPATIONS_Extend.F common/extend_occupations.F common/freqs_setup.F common/kk.F common/QP_state_table_setup.F common/FREQUENCIES_damping.F common/OCCUPATIONS_Fermi.F common/FREQUENCIES_coarse_grid.F common/QP_state_extract.F common/Kramers_Kronig.F common/eval_G_minus_G.F common/damping.F common/coarse_grid.F common/.objects common/crystal_lattice.F common/fermi_level.F common/FREQUENCIES_setup.F bz_ops/k_the_nearest.F bz_ops/k_ibz2bz.F bz_ops/k_sym2sym.F bz_ops/k_lattice.F bz_ops/k_reduce.F bz_ops/.objects bz_ops/k_expand.F bz_ops/bz_samp_indexes.F parser/Gclose.F parser/parser_lib.F parser/ps_convert.F parser/init_convert.F parser/mod_parser_m.F parser/mod_itm.F wf_and_fft/wf_load.F wf_and_fft/WF_load.F wf_and_fft/space_inv_by_wf.F wf_and_fft/fft_setup.F wf_and_fft/.objects wf_and_fft/scatter_Bamp.F wf_and_fft/fft_3d.F wf_and_fft/WF_spatial_invertion.F wf_and_fft/scatter_Gamp.F pol_function/X_bare_RIM_GreenF.F pol_function/X_pre_setup.F pol_function/X_eh_setup.F pol_function/Dipole_kb_pp_comp.F pol_function/O_select_q_and_G.F pol_function/X_simple_GreenF.F pol_function/O_eels.F pol_function/X_delta_part.F pol_function/X_os.F pol_function/Dipole_kb_Ylm.F pol_function/O_driver.F pol_function/X_em1.F pol_function/Dipole_kb_sum.F pol_function/X_Gf.F pol_function/X_bare_RIM_Gf.F pol_function/.objects pol_function/Dipole_driver.F pol_function/Dipole_transverse.F pol_function/X_s.F pol_function/X_drude.F setup setup/QP_external_corrections.F setup/check_periodic_directions.F setup/setup.F setup/.objects setup/G_shells_finder.F setup/QP_state_table_setup.F coulomb/cutoff_sphere.F coulomb/cutoff_box.F coulomb/cutoff_driver.F coulomb/bessel_F2.F coulomb/bessel_F3.F coulomb/bessel_F4.F coulomb/bessel_J0.F coulomb/bessel_F5.F coulomb/bessel_F6.F coulomb/cutoff_cylinder.F coulomb/cutoff_test.F coulomb/rim.F coulomb/col_driver.F coulomb/rim_integrate.F interface/check_periodic_directions.F interface/parse_K_list.F interface/setup.F interface/QP_ctl_load.F interface/init_load.F interface/.objects interface/QP_init.F interface/init.F interface/QP_ctl_switch.F interface/G_shells_finder.F interface/stop_now.F interface/barriers.F interface/init_q_pts.F communicate/report_energies.F communicate/REPORT_Energies.F communicate/REPORT_Occupations.F communicate/.objects communicate/section.F communicate/fermi_msg.F communicate/acknowledge_yambo.F communicate/job_setup.F tddft/tddft_alda_r_space.F tddft/.objects tddft/tddft_do_X_W_typs.F tddft/tddft_alda_g_space.F io/variables_BS.F io/ioBS.F io/io_elemental.F io/io_HF_and_locXC.F io/ioDB1.F io/ioX.F io/IO_mute.F io/ioGROT.F io/ioWF.F io/ver_is_gt_or_eq.F io/IO_and_Messaging_switch.F io/ioQP.F io/ioXXVXC.F io/ioQINDX.F io/io_header.F io/ioRIM.F io/ioCOL_CUT.F io/ioBSS_Haydock.F io/Fragments_Synchronize.F io/ioOSTNTS.F io/ioBSS_diago.F io/ioKB_PP.F io/.objects io/ioE_RIM.F io/io_bulk.F io/ioDB1_reload.F io/IO_Setup.F io/Fragments_Restart.F modules/mod_electrons.F modules/mod_logo.F modules/mod_frequency.F modules/mod_zeros.F modules/mod_units.F modules/mod_BS.F modules/mod_TDDFT.F modules/mod_R_lattice.F modules/mod_memory.F modules/mod_functions.F modules/mod_wave_func.F modules/mod_drivers.F modules/mod_xc_functionals.F modules/mod_ACFDT.F modules/mod_fragments.F modules/mod_timing.F modules/mod_X_output.F modules/mod_vec_operate.F modules/mod_pseudo.F modules/std_presets.F modules/mod_par_indexes.F modules/mod_stderr.F modules/mod_par_proc.F modules/mod_pars.F modules/mod_X.F modules/mod_IO.F modules/mod_com.F modules/mod_FFT.F modules/mod_wrapper.F modules/mod_QP.F modules/mod_matrix_operate.F modules/.objects modules/mod_D_lattice.F modules/mod_global_XC.F modules/mod_collision.F bse/K_Haydock.F bse/K_exchange.F bse/K_scattering.F bse/K_dump_to_o_file.F bse/K_filling.F bse/Kernel_by_V.F bse/K_BSmat_by_V.F bse/.objects bse/K_driver.F bse/K_diagonalization.F bse/K_eh_setup.F bse/K_solvers.F bse/K_output_file.F bse/K.F ypp/ypp_init.F ypp/plot_xcrysden.F ypp/excitons_sort_and_report.F ypp/ypp_i.F ypp/k_grids.F ypp/.objects ypp/plot_gnuplot.F ypp/excitons_driver.F ypp/mod_YPP.F ypp/plot_check_and_launch.F ypp/electrons_driver.F ypp/ypp_init_load.F driver/p2y.h driver/a2y.h driver/editor.h.in driver/codever.h.in driver/e2y.h driver/yambo_driver.F driver/driver.c driver/yambo.h driver/ypp.h sbin/make_message.pl.in sbin/make_makefile.sh.in sbin/objects_debug.sh.in
+
+	Additions:
+	- COHSEX support added to the GPL version
+	- Wrapper module for BLAS subroutines => Many (not all) caxpy,cgemm, cdotc calls replaced
+	- Added configure support for SUN compiler (-M instead of -I for module path; -I for INCLUDE file path) tested on x86_64.
+	- "-g" option to p2y in order to force p2y to use ALL RL-vectors. This means that the default p2y
+	  behaviour has been changed. From now on p2y will write only the wavefuntion RL-vectors unless the
+	  "-g" option is used.
+	- Added configure support for g95 under x86_64; for Open64 under x86_64.
+	- MacOSX support in configure
+	- Time-Dependent HF support added
+	- Large transferred momenta (outside IBZ) now possible
+	- Electronic DOS can now be calculated using ypp.
+
+	Bugs:
+	- In k_lattice.F: fixed wrong definition of K-grid size in specific (and very few) cases
+	- Fixed compilation and configure problems with pgf95
+	- Wrong DB loading in BSE when using PPA screened interaction
+	- CPP flags fixed
+	- Wrong precompiler options used to link SCALAPACK not fixed.
+
+	Changes:
+	- Routines involved in the evaluation of the electronic occupations renamed.
+	- Fixed symmetries setup in interfaces
+	- Diagonalization DB I/O added in K_diagonalization.F (it has been removed by mistake)
+	- Global renaming: chosex -> cohsex
+	- Definition and use of database fragments deeply restyled.
+	- Gfortran support in configure
+	- **GLOBAL** restyling of messaging and output file naming in O_driver and
+	  K_solvers
+	- **VERBOSITY** options changed. Use yambo -H to learn more.
+
+	Patch sent by: Andrea
+
+2010-04-15 12:04:10 r3 svn
+
+	Yambo GPL Release 3 version 3.2.1 (oldrev448)
+
+	Additions:
+	 -  XC functional now recognized by p2y.
+	 -  Added self-detection of lattice  geometry (devel)
+	- Support for Intel Fortrant v. 11
+	- Q databases I/O to apply previously calculated
+	  Q corrections on-fly
+	- During I/O databases are searched in all user provide
+	  paths (-I and -O options).
+	-  check in p2y of non symmorphic symmetries
+	- Acknowledge message at the end of each run
+	- A2Y support for Abinit 5.7.3
+	- Added warning in case optical oscillators are loaded
+	  to perform an optical calculation without including
+	  non-local pseudo commutator
+	- In configure added : --enable-msgs-comps to exapand the compilation messages
+	                       --enable-options-check to allow the check of the options
+	                                              passed to driver.c
+	   By using --disable-options-check it is possible to solve the
+	   annoying problem caused by some mpirun scripts (-p option)
+	- Added DOUBLE PRECISION slatec sources
+	- O_eels.F and check_periodic_directions.F. Used to allow the user
+	  to specify non periodic directions. In case those are given
+	  the polarizability is calculated by using KK transformations
+	  even in the TDA.
+	-  Added Time-Rev check using WFs to all  branches.
+	- Added check for dlaran when using external lapack lib.
+	  In case dlaran is missing an additional lib (lib/local)
+	  is compiled and linked.
+	- Added check for C/Fortran precompiler in configure.
+	- Changed -with--netcdf with --with-netcdf-include AND
+	  --with-netcdf-lib. Both must be passed to configure to
+	  activate NETCDF support.
+	- Added V_testing verbosity level.
+	- X_os.F restiled to be processed by yamboo.pl.
+	- Verbosity to ypp.
+
+	Changes:
+	 -  fermi_level.F and k_lattice.F definitively replaced
+	   with the devel versions.
+	-  Ifort optimization option "-ip" added
+	- Overall syncronization of trunk with  and +SIN branches
+	- Removed different make clean*. Now only available "make clean"
+	  and "make clean_all". In the first case the configuration files
+	  are not removed and the code can be compiled without running
+	  configure again.
+	- slatec routines used for polynomial fit replaced with
+	  single/double versions.
+	- Input file name set to "(none)" when the file is not found/written
+	- Added set_real_printed_length rotuine in STDERR module in order
+	  to tune on-fly the format of the output/report file for reals
+	- el_density.F moved in mod_electrons.F
+	- exc_properties renamed in excitons_driver.F
+	- Fixed use of "implicit none" in many modules
+	- plot_driver renamed in electrons_driver.F
+	- To avoid long preprocessor commands in driver.c, introduced two
+	  new global variables (_YAMBO_MAIN _Y_MAIN)
+	- Deep restyling of ypp command-line options.
+	- "-xT" Intel compiler option replaced with "-xW"
+	- removed V_debug intger from mod_itm
+	- removed old interfaces/int_modules/mod_interfaces.F file
+
+	Bugs:
+	 -  Double precision build fixed.
+	- Fixed wrong input file variables when using "-g n -p p"
+	  command line options.
+	- Fixed minor bug in X_O_transverse
+	-  Added  in the devel/04_03_2009 a new test version of fermi_level.F
+	        in response to the problem posted in the forum:
+	        http://www.yambo-code.org/forum/viewtopic.php?f=12&t=18
+	- Bug in K_driver.F. Fixed thanks to John awson
+	- Fix BU in ioKB_. Wrong VARIABE_NAME.
+	- In ypp (Claudio)
+	- C test failed when using IBM "XF" based compilers
+	- Wrong linking of BAS/AACK
+	- In ct_etime.c wrong declaration of tt variable in double
+	  precision builds.
+	- qp_ctl: wrong transfer of gap correction obtained after a fit
+	- mod_IO: use of optional "subfolder" even if not passed
+	- ypp_i : wrong use of ioWF (not declared as part if wave_func module)
+	- Wrong dimension of c1vars in mod_itm was causing weird
+	  behaviour when compiled using pgf90
+	- Wrong use of integers in mod function in K_filling.F/K.F
+	- Wrong transferred momentum vector written to output files
+	- Unrecognized atomic elements (to fix) changed with '--'
+	  in setup.F
+	- Bug fix in self-evaluation of the X energy range
+
+2010-04-15 12:00:03 r2 svn
+
+	Yambo GPL Release 2 version 3.2.0 (oldrev315)
+
+	Additions:
+	- Optimization of ifort 10 on x86_64 platforms
+	- qexml_v4.0.F added
+	- Removed -ifile option to ypp (appeared twice)
+	- doc/sample/bulk_silicon/experiment.dat
+	- ver_is_gt_or_eq function moved out of mod_IO so to add
+	  optional revision argument.
+	- doc/ dir in GPL branch.
+	- the QuickGuidedTour.pdf  in the doc/ dir.
+	- Added the sample core databases of
+	  silicon used on the CPC paper and in the QuickGuidedTour.pdf
+	- Support for cygwin in Makefile (still to test)
+	- No other runlevel than setup is now permitted when
+	  either G-shells or K-pts DBs are not present.
+	- Support for PWscf 4.0 in p2y
+	Changes:
+	- In GPL release, fermi level search permitted using a
+	  finite temperature.
+	- Remove spurious option in ypp.h/ypp.h_gpl
+	- Cleaned the acx.m4,acx_mpi.m4 and configure.ac. Removed call
+	  to preprocessor inquire, as it is already detected at the beginning.
+	- Changed tags in ioX.F to permit calculations above 999 Q-points.
+	- CPP replaced with "gcc -E" . This to avoid compatibility problems
+	  with cpp.
+	Bugs:
+	- Wrong use of CPPFLAGS in configure fixed. This bug was preventing
+	  some compilation with MPI support.
+	- In QP_driver QP_solver defined "by hand" to initialize the Dyson solver
+	- In GPL procedure to initialize the Dyson solver
+	- Preload of WF DB in ypp. Fragmentation parameters were not read at the
+	  start-up => NETCDF I/O error in ypp for bands-fragmented DBs.
+
+2010-04-15 11:55:40 r1 svn
+
+	Yambo GPL Release 1, version 3.1.2 (oldrev300)
+
+	

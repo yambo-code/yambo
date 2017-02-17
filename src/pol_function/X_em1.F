@@ -25,9 +25,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0
- use X_m,           ONLY:X_t,X_alloc,X_mat,X_poles_tab,self_detect_E_range
+ use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range
  use memory_m,      ONLY:mem_est
- use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
+ use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use par_proc_m,    ONLY:pp_redux_wait
@@ -82,6 +82,19 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  call X_pre_setup(Xen,X)
  !
+ ! In the next lines Yambo will VERIFY the em1d database
+ ! to check if this iq has been alrady done. 
+ ! When self_detect_E_range=.TRUE. however the Xw%er setup is
+ ! done only in X_os and the VERIFY fails. This is why the procedure
+ ! must be repeated here (Andrea fixed Bug by C. Attaccalite on October 2008)
+ !
+ if (self_detect_E_range) then
+   call X_eh_setup(-X%iq(1),X,Xen,Xk,minmax_ehe)
+   Xw%er=minmax_ehe
+ endif
+ !
+ ! Build frequency range only if Xw%p was not already allocated
+ ! like in LifeTimes calculations or when self_detect_E_range=.TRUE. (real axis GW)
  !
  call FREQUENCIES_setup(Xw)
  !
@@ -127,20 +140,14 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    ! CLEAN (1)
    !
-   if (associated(Xw%p)) then
-     deallocate(Xw%p)
-     call mem_est("W-p")
-   endif
-   if (allocated(rg_index_bg)) deallocate(rg_index_bg)
-   deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)
-   call mem_est("X_poles_tab RGi BGn CGp CGi")
+   call FREQUENCIES_reset(Xw)
    !
  enddo
  !
  ! CLEAN (2)
  !
  call X_alloc('X')
- call X_alloc('OptOsc')
+ call X_alloc('DIP_q_dot_iR')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free()
  call pp_redux_wait
  !

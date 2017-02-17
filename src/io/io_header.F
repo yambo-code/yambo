@@ -19,10 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF)
+integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,&
+&                          CUTOFF,GAUGE,IMPOSE_GAUGE)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HARTREE,Kelvin
+ use fields,        ONLY:global_gauge 
  use drivers,       ONLY:list_dbs
  use LOGO,          ONLY:code_version,code_revision
  use com,           ONLY:msg,warning
@@ -43,7 +45,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  implicit none
  integer               :: ID
- logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF
+ logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE
  character(*),optional :: XC_KIND
  !
  ! Work Space
@@ -54,7 +56,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
  logical             :: WARN,xc_kind_force
- character(schlen)   :: xc_string_kinds(10)
+ character(schlen)   :: xc_string_kinds(10),DB_gauge
  !
  io_header=0
  !
@@ -294,6 +296,29 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
          call XC_WF_KIND_io('K',K_WF_xc_string, ' BS kernel          wavefunctions :')
      end select
    enddo
+   !
+   io_header=io_status(ID)
+   if (io_header/=0) goto 1
+ endif
+ !
+ ! GAUGE
+ !
+ if (present(GAUGE).and.ver_is_gt_or_eq(ID,revision=625) ) then
+   call io_elemental(ID,VAR='GAUGE',CH0="",VAR_SZ=1,MENU=MENU)
+   MENU=0
+   if (present(IMPOSE_GAUGE)) then
+     if (IMPOSE_GAUGE) then
+       call io_elemental(ID,CH0=global_gauge,&
+&           VAR=' Global Gauge                     :',CHECK=.true.,OP=(/"=="/))
+     else
+       call io_elemental(ID,CH0=global_gauge,&
+&           VAR=' Global Gauge                     :',WARN=.true.,OP=(/"=="/))
+     endif
+   else
+     call io_elemental(ID,CH0=global_gauge,&
+&         VAR=' Global Gauge                     :',WARN=.true.,OP=(/"=="/))
+   endif
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    io_header=io_status(ID)
    if (io_header/=0) goto 1

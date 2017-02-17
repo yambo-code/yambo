@@ -63,7 +63,7 @@ subroutine XCo_local(E,Xk)
    l_call_the_driver=.TRUE.
    !
    if (l_call_the_driver) then
-      call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1)
+     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
    endif
    !
  !

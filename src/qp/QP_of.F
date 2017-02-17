@@ -152,6 +152,52 @@ subroutine QP_of(qp,en,QPdb_read_err)
    enddo
    call of_open_close(file_name)
    !
+ else if (trim(QP_solver)=='g') then
+   !
+   call QP_states_simmetrize(en,state_is_2do=state_is_2do)
+   !
+   call set_real_printed_length(f_length=12,g_length=12)
+   !
+   do  i1=1,QP_n_states
+     !
+     write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
+     call of_open_close(G_Sc_name,'ot')
+     call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
+     call msg('o G_Sc','#')
+     do i2=2,qp%n_descs
+       call msg('o G_Sc','# ',trim(qp%description(i2)),INDENT=0)
+     enddo
+     call msg('o G_Sc','#')
+     call msg('o G_Sc','# Spectral function at this point integrates to:',QP_G_amplitude_integral(i1),&
+&             INDENT=0)
+     call msg('o G_Sc','#')
+     titles(1)='Energy'
+     titles(2:3)=(/' Re[G] ','|Im(G)|'/)
+     titles(4)=    'Re(S_tot)'
+     titles(5:6)=(/'|Im(S_c)|',' Re(S_c) '/)
+     if (report_Vnlxc) then
+       call msg('o G_Sc','#',titles(:6),INDENT=0,USE_TABS=.TRUE.)
+     else
+       call msg('o G_Sc','#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
+     endif
+     call msg('o G_Sc','#')
+     do i2=1,QP_Sc_steps
+       values=0.
+       values(1)  =real(qp%GreenF_W(i1,i2))*HARTREE
+       values(2:3)=(/real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)/HARTREE
+       values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HARTREE
+       values(6)=values(4)
+       if (report_Vnlxc) then
+         values(6)=values(6)-real(QP_Vnl_xc(i1)-QP_Vxc(i1))*HARTREE
+         call msg('o G_Sc','',values(:6),INDENT=-2,USE_TABS=.TRUE.)
+       else
+         call msg('o G_Sc','',values(:5),INDENT=-2,USE_TABS=.TRUE.)
+       endif
+     enddo
+     call of_open_close(G_Sc_name)
+   enddo
+   !
+   call set_real_printed_length()
    !
  endif
  !

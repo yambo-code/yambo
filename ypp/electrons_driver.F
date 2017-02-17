@@ -31,7 +31,7 @@ subroutine electrons_driver(Xk,Xen)
  use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
-&                         use_gnuplot,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
+&                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,dos_broadening,DOS_bands,l_angular_momentum,&
 &                         l_position,l_current
  use com,            ONLY:msg,of_open_close,warning
@@ -94,7 +94,7 @@ subroutine electrons_driver(Xk,Xen)
      titles(2)='DOS [up]'
      titles(3)='DOS [dn]'
      titles(4)='DOS [up+dn]'
-     call msg('o dos','#',titles(:2),INDENT=0,USE_TABS=.true.)    
+     call msg('o dos','#',titles(:4),INDENT=0,USE_TABS=.true.)    
    endif
    call msg('o dos',"#")
    !
@@ -138,11 +138,16 @@ subroutine electrons_driver(Xk,Xen)
    v2plot=el_den
    !
    ch_ws='density_'//trim(intc(plot_dim))
+   if (use_cube) output_fname=trim(ch_ws)//'d.cube'
    if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
    if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
    !
-   call of_open_close(trim(output_fname),'ot')
-   call msg('o den',"#")
+   if (use_cube) then 
+     call of_open_close(trim(output_fname),'o')
+   else
+     call of_open_close(trim(output_fname),'ot')
+     call msg('o den',"#")
+   endif
    !
    plot_title='density'
    call plot_check_and_launch(.false.)
@@ -191,11 +196,16 @@ subroutine electrons_driver(Xk,Xen)
          ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim)) 
          !
        !
+       if (use_cube) output_fname=trim(ch_ws)//'d.cube'
        if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
        if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
        !
-       call of_open_close(trim(output_fname),'ot')
-       call msg('o wf',"#")
+       if (use_cube) then 
+         call of_open_close(trim(output_fname),'o')
+       else
+         call of_open_close(trim(output_fname),'ot')
+         call msg('o wf',"#")
+       endif
        !
        call plot_check_and_launch(.false.)
        !

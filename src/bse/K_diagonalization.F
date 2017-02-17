@@ -293,10 +293,8 @@ subroutine K_diagonalization(iq,W)
    ! distinction between the resonant and antiresonant e/h Green's
    ! functions.
    !
-   if (K_is_not_hermitian)      X_epsilon(2,:)=&
-&                               X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
-   if (.not.K_is_not_hermitian) X_epsilon(2,:)=&
-&                               X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
+    if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
+    if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
    !
    call live_timing(steps=1)
  enddo

@@ -31,7 +31,7 @@ integer function variables_BS(ID,local_description,DB,X)
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr
- use IO_m,          ONLY: io_elemental,io_status,ver_is_gt_or_eq
+ use IO_m,          ONLY: io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  implicit none
  !
  integer            ::ID
@@ -43,7 +43,7 @@ integer function variables_BS(ID,local_description,DB,X)
  !
  integer             ::var_size,i_local_desc
  logical             ::res_corr_disk,res_exch_disk,cpl_disk,&
-&                      cpl_corr_disk,cpl_exch_disk,td_hf_disk
+&                      cpl_corr_disk,cpl_exch_disk,td_hf_disk,local_long_gauge
  !
  ! PARS1
  !
@@ -152,14 +152,15 @@ integer function variables_BS(ID,local_description,DB,X)
 &         VAR="    |[r,Vnl] included        :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_local_desc))
      !
-     if (ver_is_gt_or_eq(ID,(/3,0,9/))) then
+     if (ver_is_gt_or_eq(ID,(/3,0,9/)).and..not.ver_is_gt_or_eq(ID,revision=626)) then
        !
        ! v 3.0.8: Inclusion of %long_gauge 
        !
        i_local_desc=i_local_desc+1
        call io_elemental(ID,&
-&           VAR="    |Longitudinal Gauge      :",L0=X%long_gauge,WARN=.true.,OP=(/"=="/),&
+&           VAR="    |Longitudinal Gauge      :",L0=local_long_gauge,&
 &           DESCRIPTION=local_description(i_local_desc))
+       !
      endif
      !
      i_local_desc=i_local_desc+1

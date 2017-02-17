@@ -21,6 +21,8 @@
 !
 subroutine Dipole_transverse(Xen,Xk,X)
  !
+ ! This routine returns <iR> and <P^2>.
+ !
  use pars,                ONLY:SP,pi
  use timing,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
@@ -29,10 +31,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR_or_P,Dipole_bands_ordered,Eval_P_and_P2_only,P_square
+ use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
+ use wrapper,             ONLY:M_by_V
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -72,6 +75,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
    enddo
    allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
+ else
+   X%Vnl_included=.false.
  endif
  !
  ! Set up band limits
@@ -125,10 +130,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
          if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
          !
-         if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
-&                  -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
+         if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.Eval_P_and_P2_only) cycle
+         if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
          !
@@ -147,23 +151,19 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
          !
-#if defined _DOUBLE
-         call zgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
-#else
-         call cgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
-#endif
+         call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
          if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
-         !
-         if ( .not.Eval_P_and_P2_only ) rho(:)=rho(:)/Ev_m_Ec
          !
          ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
          !
          !     DIP_iR_or_P(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
          !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
          !
+         rho(1:3)=rho(1:3)/Ev_m_Ec
+         !
            !
-           DIP_iR_or_P(:,ic,iv,ik,i_spin)=rho(:3)
+           DIP_iR(:,ic,iv,ik,i_spin)=rho(:3)
            !
          !
        enddo    ! conduction band loop
@@ -188,7 +188,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  endif 
  !
  do i_spin=1,n_sp_pol
-   call pp_redux_wait(DIP_iR_or_P(:,:,:,:,i_spin))
+   call pp_redux_wait(DIP_iR(:,:,:,:,i_spin))
  enddo
  !
 end subroutine Dipole_transverse

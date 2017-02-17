@@ -30,11 +30,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc
- use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
+ use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_poles_tab,X_fxc,&
+ use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_fxc,&
 &                        use_X_RIM,eval_alpha,eps_2_alpha,O_eels
  use par_proc_m,    ONLY:pp_redux_wait
  use wave_func,     ONLY:WF_free
@@ -180,7 +180,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
        !
-       call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%long_gauge,X%ordering)
+       call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%ordering)
        !
        ! Titles 
        !
@@ -271,17 +271,17 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call X_alloc('X')
    !
-   deallocate(X_epsilon,wv%p)
-   call mem_est("W-p")
+   deallocate(X_epsilon)
+   !
+   call FREQUENCIES_reset(wv)
+   !
    if (allocated(X_fxc)) deallocate(X_fxc)
-   if (allocated(rg_index_bg)) deallocate(rg_index_bg)
-   deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)
-   call mem_est("X_poles_tab RGi BGn CGp CGi")
+   !
  enddo
  !
  ! CLEAN
  !
- call X_alloc('OptOsc')
+ call X_alloc('DIP_q_dot_iR')
  call WF_free()
  call pp_redux_wait
  call set_real_printed_length()

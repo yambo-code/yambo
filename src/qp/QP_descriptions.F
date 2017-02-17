@@ -49,6 +49,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  integer, external :: QP_state_extract
  !
  if (.not.Update) n_descs_save=qp%n_descs
+ if (     Update) qp%n_descs  =n_descs_save
  !
  if (allocated(RIM_qpg)) then
    qp%n_descs=qp%n_descs+1

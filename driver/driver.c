@@ -67,6 +67,9 @@ typedef struct
 #if defined _a2y
  #include "a2y.h"
 #endif
+#if defined _c2y
+ #include "c2y.h"
+#endif
 #if defined _f2y
  #include "f2y.h"
 #endif
@@ -266,6 +269,14 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(ypp_i,YPP_I)(
+          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
+#endif
+#if defined _c2y 
+ /* 
+   Running the Fortran c2y driver
+ ===========================================================================
+ */
+ F90_FUNC(c2y_i,C2Y_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
 #if defined _a2y 

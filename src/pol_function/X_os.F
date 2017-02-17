@@ -38,7 +38,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_norm 
  use wave_func,     ONLY:WF_load
  use memory_m,      ONLY:mem_est
- use X_m,           ONLY:X_t,X_poles,DIP_iq_dot_r,current_iq,X_poles_tab,&
+ use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
  implicit none
  type(levels)         :: Xen
@@ -228,7 +228,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
          isc%rhotw(g1)=rhotw_save(g2)
        enddo
        if (is>nsym/(i_time_rev+1)) isc%rhotw=conjg(isc%rhotw)
-       isc%rhotw(1)=-conjg(DIP_iq_dot_r(ic,iv,ikbz,i_spin))
+       isc%rhotw(1)=-conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))
        !
        !
        ! Filling the upper triangular part of the residual here ! 
@@ -316,6 +316,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
      enddo
    enddo
  endif
+ !
  !
  ! CLEAN
  !=======

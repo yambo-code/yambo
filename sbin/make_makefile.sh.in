@@ -24,6 +24,7 @@ os="@build_os@"
 cpp="@CPP@"
 cppflags="@C_AS_CPP_FLAGS@"
 ECHO_N="@ECHO_N@"
+PREFIX="@MKMF_PREFIX@"
 #
 if [ $# = 0 ] ; then
  echo $0 "dir target objectfile mode(l/x) Dflag1 Dflag2 Dflag3 ..."
@@ -77,7 +78,7 @@ case $target in
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
-  a2y|elk2y)
+  a2y|elk2y|c2y)
    llibs="-lint_modules $llibs \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   p2y*)

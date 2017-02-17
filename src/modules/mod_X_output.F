@@ -25,6 +25,7 @@ module X_output
  use stderr,  ONLY:intc
  use com,     ONLY:msg
  use X_m,     ONLY:alpha_dim
+ use fields,  ONLY:global_gauge
  implicit none
  !
  character(15)     :: headers(7)
@@ -32,11 +33,11 @@ module X_output
  !
  contains
    !
-   subroutine X_write_messages_before_headers(iq,GreenF,Vnl_included,long_gauge,ordering)
+   subroutine X_write_messages_before_headers(iq,GreenF,Vnl_included,ordering)
      use drivers,   ONLY:l_chi,l_bss
      use global_XC, ONLY:X_E_xc_string,X_WF_xc_string,K_E_xc_string,K_WF_xc_string
      integer      :: iq
-     logical      :: Vnl_included,long_gauge,GreenF
+     logical      :: Vnl_included,GreenF
      character(1) :: ordering
      ! WS
      character(schlen) :: message
@@ -63,9 +64,11 @@ module X_output
      ! Gauges
      !
      if (iq==1) then
-       message='- The gauge is transverse -'
-       if (Vnl_included) message='- The gauge is transverse + [r,Vnl] -'
-       if (long_gauge)   message='- The gauge is longitudinal -'
+       message='- Using the Length Gauge -'
+       if (trim(global_gauge)=='velocity')       message='- Using the Velocity Gauge -'
+       call msg('o eps eel alpha','# ',trim(message),INDENT=0)
+       message='- [r,Vnl] is *NOT* included -'
+       if (Vnl_included) message='- [r,Vnl] *is* included -'
        call msg('o eps eel alpha','# ',trim(message),INDENT=0)
      endif
      !

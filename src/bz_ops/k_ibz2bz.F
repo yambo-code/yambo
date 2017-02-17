@@ -59,6 +59,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  ! ...then the pts
  !
  allocate(k%ptbz(k%nbz,3))
+ !
  do i1=1,k%nbz
    !
    ! k_bz is in iku

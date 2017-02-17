@@ -40,12 +40,13 @@ module X_m
  !
  logical                  :: Vnl_commutator_warning
  !
- ! Dipole M.E.: gauges and kinetic energy
+ ! Dipole M.E.
  !
  logical                  :: Dipole_bands_ordered
- logical                  :: Eval_P_and_P2_only
- complex(SP), allocatable :: DIP_iq_dot_r(:,:,:,:)
- complex(SP), allocatable :: DIP_iR_or_P(:,:,:,:,:)
+ logical                  :: Dipole_uses_shifted_grids
+ complex(SP), allocatable :: DIP_q_dot_iR(:,:,:,:)
+ complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
@@ -64,7 +65,7 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_RIM
- character(lchlen) :: long_path
+ !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
    integer    :: ng
@@ -78,7 +79,6 @@ module X_m
    real(SP)   :: ppaE
    complex(SP):: Wd
    logical          :: Vnl_included
-   logical          :: long_gauge
    character(1)     :: ordering
    character(schlen):: f_xc
  end type
@@ -113,13 +113,17 @@ module X_m
          if (allocated(X_mat)) return
          allocate(X_mat(d(1),d(2),d(3)),stat=err)
          call mem_est(what,(/product(d)/),errors=(/err/))
-       case('OptGrad')
-         if (allocated(DIP_iR_or_P)) return
-         allocate(DIP_iR_or_P(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
+       case('DIP_iR')
+         if (allocated(DIP_iR)) return
+         allocate(DIP_iR(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
-       case('OptOsc')
-         if (allocated(DIP_iq_dot_r)) return
-         allocate(DIP_iq_dot_r(d(1),d(2),d(3),n_sp_pol),stat=err)
+       case('DIP_P')
+         if (allocated(DIP_P)) return
+         allocate(DIP_P(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
+         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+       case('DIP_q_dot_iR')
+         if (allocated(DIP_q_dot_iR)) return
+         allocate(DIP_q_dot_iR(d(1),d(2),d(3),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        case('P_square')
          if (allocated(P_square)) return
@@ -139,12 +143,14 @@ module X_m
          if (.not.allocated(X_mat)) return
          deallocate(X_mat)
          !
-       case('OptGrad')
-         if (.not.allocated(DIP_iR_or_P)) return
-         deallocate(DIP_iR_or_P)
-       case('OptOsc')
-         if (.not.allocated(DIP_iq_dot_r)) return
-         deallocate(DIP_iq_dot_r)
+       case('DIP_iR')
+         if (.not.allocated(DIP_iR)) return
+       case('DIP_P')
+         if (.not.allocated(DIP_P)) return
+         deallocate(DIP_iR)
+       case('DIP_q_dot_iR')
+         if (.not.allocated(DIP_q_dot_iR)) return
+         deallocate(DIP_q_dot_iR)
        case('P_square')
          if (.not.allocated(P_square)) return
          deallocate(P_square)
@@ -162,7 +168,6 @@ module X_m
      Xo%ngostnts=Xi%ngostnts
      Xo%ordering=Xi%ordering
      Xo%Vnl_included=Xi%Vnl_included
-     Xo%long_gauge=Xi%long_gauge
      Xo%ehe=Xi%ehe
      Xo%q0=Xi%q0
      Xo%cg_percentual=Xi%cg_percentual
@@ -179,7 +184,6 @@ module X_m
      X%iq=(/1,-1/)
      X%whoami=0
      X%Vnl_included=.false.
-     X%long_gauge=.false.
      if (present(type)) X%whoami=type
      X%ehe=(/-1.,-1./)/HARTREE
      X%q0=(/1.,0.,0./)

@@ -43,7 +43,7 @@ integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioBSS_Haydock=io_header(ID,XC_KIND="K_E force")
+   ioBSS_Haydock=io_header(ID,XC_KIND="K_E force",GAUGE=.TRUE.,IMPOSE_GAUGE=.TRUE.)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    call io_elemental(ID,VAR=&

@@ -21,16 +21,17 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics,l_real_time
- use pars,           ONLY:SP
- use com,            ONLY:warning
+ use drivers,        ONLY:l_optics,l_real_time,l_sc_run
+ use pars,           ONLY:SP,cI
+ use com,            ONLY:warning,error
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:DIP_iq_dot_r,X_alloc,X_t,DIP_iR_or_P,long_path,Dipole_bands_ordered,&
-&                         Vnl_commutator_warning,Eval_P_and_P2_only,P_square
+ use fields,         ONLY:grid_path,global_gauge
+ use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
+&                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use vec_operate,    ONLY:v_norm
@@ -44,15 +45,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Work Space
  !
  integer                   :: ik,i1,ic,iv,is,i_spin
- real(SP)                  :: field_dir_rot(3)
+ real(SP)                  :: field_dir_rot(3),E_m_Ep
  logical                   :: use_trans_gauge
  !
  !I/O
  !
  integer :: ID,io_err
- integer, external :: ioOSTNTS
+ integer, external :: io_DIPOLES
  !
- if (allocated(DIP_iq_dot_r)) return
+ if (allocated(DIP_q_dot_iR)) return
  !
  ! Transitions ordering
  !
@@ -64,17 +65,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! in real-time simulations P and P^2 are ALWAYS calculated => no band ordering
  !
  !
+ Dipole_uses_shifted_grids=trim(grid_path)/='none'
+ !
+ !
  ! Check first if ostnts DB is already done
  !
  X%ngostnts=wf_ng
  !
- !
- ! Swith off I/O in case gradient is calculated
- if (Eval_P_and_P2_only) call IO_and_Messaging_switch("-io_in -io_out")
- !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=ioOSTNTS(X,Xen,ID)
- !
+ io_err=io_DIPOLES(X,Xen,ID)
  !
  if (io_err.ne.0) then
    !
@@ -84,12 +83,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! in the new basis. So all transitions are needed
    !
    if (Dipole_bands_ordered) then
-     call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
+     call X_alloc('DIP_iR',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    else
-     call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
+     call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),Xk%nibz/))
    endif
-   DIP_iR_or_P=(0.,0.)
+   DIP_iR=(0.,0.)
    !
+   !   
    !
    call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
    !
@@ -102,18 +102,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    call WF_free()
    !
-   ! Write the DIP_iR_or_P to its database (Only in the case of "R")
-   !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=ioOSTNTS(X,Xen,ID)
+   io_err=io_DIPOLES(X,Xen,ID)
    !
  end if
  !
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
- ! oscillator strengths have been calculated using the long. gauge.
+ ! oscillator strengths have been calculated using the shifted grids.
  ! In this case q0_def_norm is not the default one but corresponds
- ! to the norm of the longitudinal shift.
+ ! to the norm of the grid shift.
  !
  field_dir=field_dir*q0_def_norm/v_norm(field_dir)
  q_norm(1)=q0_def_norm
@@ -126,10 +124,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    Vnl_commutator_warning=.TRUE.
  endif
  !
- ! Calculate the q-dependent oscillators (OptOsc)
+ ! Calculate the q-dependent oscillators
  !
- call X_alloc('OptOsc',(/X%ib(2),Xen%nbm,Xk%nbz/))
- DIP_iq_dot_r = (0.0_SP,0.0_SP)
+ call X_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,Xk%nbz/))
+ DIP_q_dot_iR = (0.0_SP,0.0_SP)
  !
  do i1 = 1,Xk%nbz
    !
@@ -147,21 +145,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          !
          ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
-         DIP_iq_dot_r(ic,iv,i1,i_spin) = & 
-&          dot_product( field_dir_rot, DIP_iR_or_P(:,ic,iv,ik,i_spin) )
-         if ( is > nsym/(i_time_rev+1) ) DIP_iq_dot_r(ic,iv,i1,i_spin) = &
-&          dot_product( DIP_iR_or_P(:,ic,iv,ik,i_spin), field_dir_rot ) 
+         DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
+         if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
          !
-         ! 
        !
      enddo
-     DIP_iq_dot_r(iv,iv,i1,:) = (1.0_SP,0.0_SP)
+     DIP_q_dot_iR(iv,iv,i1,:) = (1.0_SP,0.0_SP)
    enddo
+   !
  enddo
  call pp_redux_wait()
  !
  ! Clean up
  !
- call X_alloc('OptGrad') ! Used in O_transverse/O_longitudinal/ioOSTNTS
+ call X_alloc('DIP_iR') 
  !
 end subroutine

@@ -158,6 +158,29 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    endif
    !
    !
+   if (l_life) then
+     !
+     ! Note the definition of Lifetime is
+     !
+     !  tau = 1/(2 pi Sigma_2) => tau[fs] = 1/(2 pi Sigma_2[H]) / HA2FSm1
+     !
+     ! now HA2FSm1 = HARTREE*241.798474*10^-3 = > tau[fs]= 1/( 2 Sigma_2[H] HARTREE ) * 
+     !                                                     10^3/( pi 241.798474 )
+     !
+     ! SHADOWS
+     ! =======
+     !
+     n_shadows=4
+     shadow(:2)=(/qp%E_bare(iqp)*HARTREE,real(qp%Z(iqp))/)
+     shadow(3)=aimag(qp%E(iqp))*HARTREE/1.E-3
+     shadow(4)=0.
+     if (shadow(3)>0.) shadow(4)=1./(HA2FSm1*2*pi*aimag(qp%E(iqp)))
+     shadow_string(2)=' Z='
+     shadow_fmt(2)   ='(a,f4.2)'
+     shadow_string(3)=' Gm='
+     shadow_string(4)=' Gf='
+   endif
+   !
    ! Write to Report File
    !======================
    !

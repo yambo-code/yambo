@@ -24,10 +24,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,Efield_unit,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
 &                        Time_unit,I_unit,Angle_unit,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
- use X_m,           ONLY:X_t,long_path,q_plus_G_direction,Q_Shift_Order
+ use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order
+ use fields,        ONLY:global_gauge,grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
@@ -46,6 +47,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
+#if defined _TWO_LEVELS
+ use real_time,     ONLY:l_3levels,en_levels,lambda_diag,lambda_offdiag,dip
+#endif
  !
  implicit none
  type(initdefs)::defs
@@ -72,6 +76,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
  call it('r',defs,'tdhf',    '[R TDHF] Unscreened e-h interaction: TD Hartree-Fock')
  call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
+ call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
  !
  !
  !
@@ -88,20 +93,27 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt) 
+ call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
  !
  ! S_xc
  !
+ call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evalute Z factors',QP_dSc_delta,E_unit)
- !
+ call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver,protect=.FALSE.)
+ call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
+ call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
+ call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
+ call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
  !
  ! BSE
  !
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
+ call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`;`u`)',BS_cpl_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)

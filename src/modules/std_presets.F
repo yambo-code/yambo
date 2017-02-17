@@ -25,9 +25,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use pars,       ONLY:SP
  use units,      ONLY:HARTREE,FS2AUT,AU2Vmm
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
+ use fields,     ONLY:global_gauge,grid_path
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
-&                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only,&
+&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,&
+&                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
 &                      q_plus_G_direction,Q_Shift_Order
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
@@ -62,7 +63,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns,BSS_Vnl_included,BSS_long_gauge,BSS_uses_GreenF
+&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
@@ -71,6 +72,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
+#if defined _TWO_LEVELS
+ use real_time,  ONLY:l_3levels,en_levels,dip,lambda_diag,lambda_offdiag
+#endif
  !
  implicit none
  !
@@ -274,18 +278,16 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  self_detect_E_range=.false.
  half_X_mat_only=.false.
  Dipole_bands_ordered=.true.
+ Dipole_uses_shifted_grids=.false.
  use_X_RIM=.false.
  eps_2_alpha=1._SP
  alpha_dim='adim'
- long_path='none'
+ global_gauge='length'
+ grid_path='none'
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0.
  Q_Shift_Order=1
- !
- !Dipole
- !
- Eval_P_and_P2_only=.FALSE.
  !
  !QPm
  !
@@ -345,7 +347,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Haydock_treshold=-0.02
  BS_columns=0
  BSS_Vnl_included=.FALSE.
- BSS_long_gauge=.FALSE.
  BSS_uses_GreenF=.FALSE.
  !
  ! TDDFT
@@ -371,6 +372,16 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_KIND=-1                   ! unknow 
  !
  !
+ !
+#if defined _TWO_LEVELS
+ !
+ l_3levels     =.FALSE.
+ en_levels     =0._SP
+ lambda_offdiag=0._SP
+ lambda_diag   =0._SP    
+ dip           =0._SP            
+ !
+#endif
  !
  !
  !

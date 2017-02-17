@@ -58,7 +58,7 @@ module IO_m
  ! I/O errors
  !
  integer, parameter:: IO_NO_DATABASE=-1,IO_INCOMPATIBLE_VAR=-2,IO_GENERIC_ERROR=-3,&
-&                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0
+&                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0,IO_OUTDATED_DB=-5
  !
  ! Units
  !
@@ -127,9 +127,9 @@ module IO_m
      !
    end subroutine
    !
-   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF)
+   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,IMPOSE_GAUGE)
      integer               :: ID
-     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF
+     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE
      character(*),optional :: XC_KIND
    end function
    !

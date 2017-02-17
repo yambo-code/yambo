@@ -21,7 +21,7 @@
 !
 module YPP
  !
- use pars,    ONLY:SP
+ use pars,    ONLY:SP,DP
  use pars,    ONLY:lchlen
  use pars,    ONLY:schlen
  implicit none
@@ -60,6 +60,7 @@ module YPP
  logical      ::l_norm_to_one
  logical      ::use_gnuplot
  logical      ::use_xcrysden
+ logical      ::use_cube
  character(1) ::p_format     
  character(1) ::mag_dir     
  character(3) ::p_dir        

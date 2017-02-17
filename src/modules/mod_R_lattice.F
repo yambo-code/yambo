@@ -104,6 +104,7 @@ module R_lattice
  real(SP)                :: box_length(3)
  real(SP)                :: cyl_cut
  character(schlen)       :: cut_geometry
+ character(schlen)       :: cut_description
  complex(SP),allocatable :: bare_qpg(:,:)
  logical                 :: CUTOFF_plus_RIM
  real(SP)                :: cyl_vr_save
@@ -192,6 +193,7 @@ module R_lattice
      box_length=0.
      cyl_length=0.
      cut_geometry='none'
+     cut_description='none'
      CUTOFF_plus_RIM=.false.
    end subroutine
    !

@@ -26,12 +26,14 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
  use units,         ONLY:HARTREE
  use electrons,     ONLY:spin_occ,levels,spin
  use stderr,        ONLY:intc
- use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table
+ use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table,BS_bands
  use com,           ONLY:msg,of_open_close
  use YPP,           ONLY:deg_energy,lambda
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
+ use QP_CTL_m,      ONLY:QP_apply
+ !
  implicit none 
  !
  integer            ::BS_H_dim
@@ -104,8 +106,12 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    allocate(S_indx(BS_H_dim),amp_trans(BS_H_dim,2))
    !
    ! Sort the weights
-   ! 
+   !
    call sort(arrin=A_weight,indx=S_indx)
+   !
+   ! Apply quasi-particle correction if presents
+   ! 
+   call QP_apply(BS_bands,E,Xk,3,msg_fmt='s')
    !
    ! report on file the weights and the amplitude
    ! of the excitonic state...
@@ -175,7 +181,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      if (A_weight(neh)<0.05) cycle
      !
      call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
-&                             A_weight(neh),amp_trans(amp_n_trans,1)/),&
+&                             A_weight(neh),amp_trans(amp_n_trans,1)*HARTREE/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
    enddo
    !

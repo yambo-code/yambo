@@ -1,1 +1,11 @@
-objs = mod_xc_costants.o xc_rpa_kp.o xcspol.o xcpzca.o xcwign.o xchelu.o xcxalp.o el_density.o xc_lda_driver.o
+LIBXC_objects = XC_lda_driver.o 
+#if defined _BOLTZMANN 
+BOLTZMANN_objects = el_current.o
+#endif
+#if defined _LIBXC
+LIBXC_objects =  XC_libxc_driver.o
+#endif
+objs =  mod_xc_costants.o  xc_rpa_kp.o \
+        xcspol.o xcpzca.o xcwign.o xchelu.o xcxalp.o \
+        spin_density.o el_density.o XC_potential_driver.o\
+        $(LIBXC_objects) $(BOLTZMANN_objects)

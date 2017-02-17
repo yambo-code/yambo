@@ -160,6 +160,32 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
 &                     Vo(frag_pointer(1)+1),1)
 #endif
            !
+           if (BS_K_coupling) then
+             !
+             ! Calculate respectively: the diagonal anti-resonant, coupling, anti-coupling part
+             !
+#if defined _DOUBLE
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1),1)
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+#else
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1),1)
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+#endif       
+           end if
            !
          end if
          !
@@ -175,6 +201,11 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
 &                 i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
 &                 BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
            !
+           if (BS_K_coupling) then
+             forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1),&
+&                   i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
+&                   BS_mat(i2,BS_K_dim+i1)=BS_mat(i1,BS_K_dim+i2)
+           endif
            !
          else
            !
@@ -194,6 +225,50 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
 &                     Vo(frag_pointer(2)+1),1)
 #endif
            !
+           if (BS_K_coupling) then
+             !
+             ! Calculate respectively: the off-diagonal anti-resonant, coupling, anti-coupling part
+             !
+#if defined _DOUBLE
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call zgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+BS_K_dim+1),1)
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1),1)
+             call zgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+1),1)
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call zgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+BS_K_dim+1),1)
+#else
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call cgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+BS_K_dim+1),1)
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1),1)
+             call cgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+1),1)
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call cgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+BS_K_dim+1),1)
+#endif       
+           endif
            !
          endif
          !
@@ -206,7 +281,23 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
    enddo
  endif
  !
+ ! Filling the anti-resonant and anti-coupling parts
  !
+ if (BS_K_coupling.and..not.use_fragments.and.db_load) then
+   !
+   ! If Coupling the half lower part of K must be filled
+   !
+   ! Anti-resonant
+   !
+   forall(i1=BS_K_dim+1:BS_H_dim,i2=BS_K_dim+1:BS_H_dim) &
+&        BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2-BS_K_dim))
+   !
+   ! Anti-coupling
+   !
+   forall(i1=BS_K_dim+1:BS_H_dim,i2=1:BS_K_dim) &
+&        BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
+   !
+ endif
  !
  ! No need to do any matrix X vector multiplication
  !

@@ -113,7 +113,7 @@ subroutine G_shells_finder()
      !
      i_G_shell=i1
      ng_in_shell_TMP(n_g_shells)=i_G_shell
-     E_of_shell_TMP(n_g_shells)=iku_v_norm(g_vec(i_G_shell,:))*2./2.
+     E_of_shell_TMP(n_g_shells)=iku_v_norm(g_vec(i_G_shell,:))**2./2.
      !
    endif
    !

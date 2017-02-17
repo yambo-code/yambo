@@ -89,7 +89,6 @@ subroutine barriers()
  ! (those runlevels can be on if a non-gpl input file is being reading)
  !====================================================================
  !
- call switch_off_runlevel('life',on_name=' ')
  call switch_off_runlevel('acfdt',on_name=' ')
  call switch_off_runlevel('bs_fxc',on_name=' ')
  !
@@ -104,7 +103,17 @@ subroutine barriers()
  endif
  !
  !
+ if (l_life) then
+   call switch_off_runlevel('all',on_name='life em1d '//trim(always_runlevels))
+   goto 1
+ endif
  !
+ if (gw0_raxis) then
+   on_runlevels='gw0 em1d el_el el_ph HF_and_locXC'
+   on_runlevels='gw0 em1d el_el HF_and_locXC'
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
+   goto 1
+ endif
  !
  if (gw0_ppa) then
    on_runlevels='gw0 ppa em1d el_el el_ph HF_and_locXC'
@@ -122,7 +131,7 @@ subroutine barriers()
  endif
  if (l_bss.or.l_bse) then
    on_runlevels='tdhf bs_fxc bse bss em1s em1d ppa optics'
-   on_runlevels='tdhf bse bss em1s ppa optics'
+   on_runlevels='tdhf bse bss em1s em1d ppa optics'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif

@@ -63,11 +63,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Work Space
  !
- integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
+ integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_PP_err,&
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err
- integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
+ integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
+ logical           :: OSTNTS_Vnl_included
  !
  !
  !
@@ -225,20 +226,29 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (associated(qp%table)) nullify(qp%table)
  !
+ ! Green Functions
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
+ io_err=ioQP('G',qp,io_ID) 
+ !
+ ! W
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
+ io_err=ioQP('W',qp,io_ID) 
  !
  ! ostnts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioOSTNTS(X(3),en,io_ID)
+ io_err=io_DIPOLES(X(3),en,io_ID)
+ !
+ OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
  !
  ! kb_pp
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioKB_PP(io_ID)
+ io_KB_PP_err=ioKB_PP(io_ID)
  !
- ! If the KB non local factors are found set to T the Vnl_included logical
- !
- if (io_err==0) forall(i1=1:4) X(i1)%Vnl_included=.true.
+ if (io_err/=0) OSTNTS_Vnl_included=io_KB_PP_err==0
  !
  ! I transfer to all X types the X(3) used in the previous io's 
  !
@@ -250,6 +260,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (nqibz>0) X(i1)%iq=(/1,nqibz/)
    if (io_X_err(i1)>0) X(i1)%iq(1)=io_X_err(i1)+1
  enddo
+ !
+ ! The GLOBAL vcalue of %Vnl_included is decided on the basis of the contents
+ ! of db.OSTENTS OR on the presence of the KB_PP. This means that if the
+ ! response functions DBs were made in presence of KB_PP and later this
+ ! DB is deleted the X dbs will be recalculated
+ !
+ forall(i1=1:4) X(i1)%Vnl_included=OSTNTS_Vnl_included
  !
  ! bs
  !
@@ -453,14 +470,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
   call initactivate(1,'BoseCut LongPath')
   call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
-  if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
-  if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTer')
+  if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVdig FxcMEStps FxcCausal')
   if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
  endif
  !
  ! DFT
  !
+#if defined _TWO_LEVELS
+ call initactivate(1,'RT3Levels RTEnLevels RTDephasing RTLifeTimes RTDipoles')
+#endif
  !
  !
  ! RAS
@@ -579,6 +598,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_alda_fxc=runlevel_is_on('alda_fxc')
        l_lrc_fxc=runlevel_is_on('lrc_fxc')
        l_td_hf=runlevel_is_on('tdhf')
+       l_life=runlevel_is_on('life')
        !
        !
        l_cohsex=runlevel_is_on('cohsex')
@@ -681,7 +701,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine read_command_line(rstr,init_) 
      !
      use stderr, ONLY:string_split
-     use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
+     use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
+&                     V_real_time,V_all
      implicit none
      integer     :: init_
      character(*):: rstr
@@ -733,6 +754,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! V_general=6
        ! V_resp=7
        ! V_real_time=8
+       ! V_all=99
        !
        if ( trim(rstr_piece(i1)) == 'infver' ) then
          select case (trim(rstr_piece(i1+1)))
@@ -752,6 +774,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              infile_verbosity=V_resp
            case ('rt')
              infile_verbosity=V_real_time
+           case ('all')
+             infile_verbosity=V_all
          end select
        endif
        !

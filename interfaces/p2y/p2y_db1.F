@@ -30,7 +30,6 @@ subroutine p2y_db1(en,k)
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
-
  !---------------------------------------------------------------------*
  !    Read dimensions                                                  *
  !---------------------------------------------------------------------*

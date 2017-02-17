@@ -44,13 +44,13 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'plot',         '[R] Plot')
  call it('r',defs,'density',      '[R] Density')
  call it('r',defs,'wavefunction', '[R] Wavefunction')
+ call QP_ctl_load(defs,3)
  !
  !
  ! DOS
  !
  call it(defs,'DOS_broad', 'Broadening of the DOS',dos_broadening,E_unit) 
  call it(defs,'DOS_bands', 'DOS bands',dos_bands) 
- call QP_ctl_load(defs,3)
  !
  ! BZ grids
  !
@@ -81,9 +81,9 @@ subroutine ypp_init_load(defs)
  !
  ! p_dir: plot cut in the a1,a2,a3 basis
  ! 
- ! p_format: (g)nuplot/(x)crysden
+ ! p_format: (c)ube/(g)nuplot/(x)crysden
  !
- call it(defs,'Format', 'Output format [(g)nuplot/(x)crysden]',p_format)
+ call it(defs,'Format', 'Output format [(c)ube/(g)nuplot/(x)crysden]',p_format)
  call it(defs,'Direction', '[rlu] [1/2/3] for 1d or [12/13/23] for 2d [123] for 3D',p_dir)
  !
  !

@@ -79,6 +79,12 @@ module drivers
  logical :: l_sc_cohsex
  logical :: l_sc_contains_lda
  !
+ ! OEP approximations
+ !
+ logical :: l_oep_exact
+ logical :: l_oep_kli
+ logical :: l_oep_slater
+ !
  ! The XC types (Fxc)
  !
  logical :: l_alda_fxc

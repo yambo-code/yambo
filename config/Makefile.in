@@ -23,10 +23,11 @@ cpu         = @build_cpu@
 os          = @build_os@
 mpi         = @mpi_cpp@
 netcdf      = @dnetcdf@
+libxc       = @dlibxc@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
+xcpp        = @dnetcdf@ @dlibxc@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -98,6 +99,17 @@ ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
 #
+# TESTs
+#
+tests: yambo
+	@if ! test -f ../branches/test-suite/run-tests.pl ;  then echo "TESTs folder not found"; fi
+	@if test -f ../branches/test-suite/run-tests.pl ;  then \
+	cd ../branches/test-suite/; ./run-tests.pl -t b -test "Al111 01_init 02_eels 03_eps_drude 04_HF" -bindir=${PWD}/bin/ ; \
+	cd ../branches/test-suite/; ./run-tests.pl -t b -test "C6H3Cl3 01_init 02_ALDA_diago 03_ALDA_haydo 04_QP 05_BSE 06_QP_RIM" -bindir=${PWD}/bin/; \
+	cd ../branches/test-suite/; ./run-tests.pl -t b -test "hBN 01_init 02_HF 03_QP 04_BSE" -bindir=${PWD}/bin/; \
+	cd ../branches/test-suite/; ./run-tests.pl -t b -test "LiF 01_init 02_RPA_no_LF 04_alda_g_space" -bindir=${PWD}/bin/; \
+	fi
+#
 clean: clean_fast
 clean_fast: 
 	@$(objects_clean)
@@ -132,7 +144,7 @@ define mklib
   if test ! -f "$(libdir)/lib$$ldir.a" ; \
   echo " " ; \
   echo ">>>[Making $$ldir]<<<" ; \
-  then ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $$ADF ; \
+  then ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $(xcpp) $$ADF ; \
   cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
@@ -161,7 +173,7 @@ define objects_clean
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
-       grep -v netcdf | grep -v iotk | grep -v typesize | xargs rm -f 
+       grep -v netcdf | grep -v xc_ | grep -v libxc | grep -v iotk | grep -v typesize | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef

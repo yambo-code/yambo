@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -179,7 +179,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (wf_space=='C') allocate(wf_DP(wf_ncx))
  call mem_est("wf_DP",(/size(wf_DP)/),(/2*DP/))
  !
- if (wf_space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
+ if (wf_space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
  if (use_live_timing) call live_timing('[WF'//trim(wf_title)//' loader] Wfs (re)loading',wf_n_states,SERIAL=.true.)
  !

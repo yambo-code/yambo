@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_reduce(k)
+subroutine k_reduce(k,FORCE_BZ)
  !
  ! Input:
  !
@@ -36,6 +36,7 @@ subroutine k_reduce(k)
  use zeros,          ONLY:k_rlu_zero
  implicit none
  type(bz_samp)::k
+ logical      ::FORCE_BZ
  !
  ! Work Space
  !
@@ -56,7 +57,8 @@ subroutine k_reduce(k)
      enddo
    enddo
    k%nibz=k%nibz+1
-   call k2bz(k%ptbz(i1,:),k_ibz(k%nibz,:),b)
+   if(     FORCE_BZ) call k2bz(k%ptbz(i1,:),k_ibz(k%nibz,:),b)
+   if(.not.FORCE_BZ) k_ibz(k%nibz,:)=k%ptbz(i1,:)
  enddo kloop
  !
  allocate(k%pt(k%nibz,3))

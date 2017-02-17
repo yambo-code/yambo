@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -248,7 +248,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
    do i_spin=1,n_sp_pol
      call PP_redux_wait(DIP_iR(:,:,:,ik,i_spin))
 #if defined _KERR
-   if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
+     if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,ik,i_spin))
 #endif
    enddo
    !
@@ -263,7 +263,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
        do ic=iv+1,X%ib(2)
          DIP_iR(:,ic,iv,ik,:)=-conjg(DIP_iR(:,iv,ic,ik,:))
 #if defined _KERR
-         if(trim(global_gauge)=="velocity")DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
+         if(trim(global_gauge)=="velocity") DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
 #endif        
        enddo
      enddo

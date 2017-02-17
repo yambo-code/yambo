@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -139,7 +139,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
    enddo
    if (.not.allocated(q_pt)) then
-     call k_reduce(q)
+     call k_reduce(q,.true.)
      deallocate(q%ptbz)
    else
      q%nibz=nqibz

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 D. Sangalli, C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2014 D. Sangalli, C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,8 +22,8 @@
 subroutine build_kpts_map(k,k_save,kpoints_map,action_kind)
  !
  use pars,                ONLY:SP
- use zeros,               ONLY:k_iku_zero
- use vec_operate,         ONLY:v_is_zero
+ use zeros,               ONLY:k_rlu_zero
+ use vec_operate,         ONLY:rlu_v_is_zero,c2a
  use R_lattice,           ONLY:bz_samp
  !
  implicit none
@@ -36,9 +36,9 @@ subroutine build_kpts_map(k,k_save,kpoints_map,action_kind)
  ! 
  ! Work space
  !
- integer               :: i1,ik,ik_save,ic,is
+ integer               :: i1,ik,ik_save
  integer               :: iv(2),nk
- real(SP)              :: v1(3)
+ real(SP)              :: v1(3),v2(3)
  ! 
  !
  ! Map k-point using the save BZ
@@ -56,7 +56,11 @@ subroutine build_kpts_map(k,k_save,kpoints_map,action_kind)
    do ik_save=1,k_save%nbz
      if(action_kind==1) v1=k_save%ptbz(ik_save,:)
      if(action_kind==2) v1=k_save%pt(ik_save,:)
-     if (v_is_zero(k%pt(ik,:)-v1,zero_=k_iku_zero)) then
+     !
+     call c2a(v_in=v1,mode='ki2a')
+     call c2a(v_in=k%pt(ik,:),v_out=v2,mode='ki2a')
+     !
+     if (rlu_v_is_zero(v2-v1,zero_=k_rlu_zero)) then
        if(action_kind==1) kpoints_map(:, ik ) = k_save%sstar(ik_save,:)
        if(action_kind==2) kpoints_map(1, ik ) = ik_save
        exit 

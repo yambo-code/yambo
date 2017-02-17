@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite, A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 C. Attaccalite, A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -77,8 +77,8 @@ subroutine symmetries_driver(E,Xk)
  endif
  !
  ! Expansion of default k-points
- call k_ibz2bz(Xk,'i',.true.)
- call k_reduce(Xk)
+ call k_ibz2bz(Xk,'i',.false.)
+ call k_reduce(Xk,.false.)
  !
  call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
@@ -97,7 +97,7 @@ subroutine symmetries_driver(E,Xk)
  !
  call msg('s',trim(intc(Xk%nibz))//' k-points are now expanded/reduced to ...')
  deallocate(Xk%pt)
- call k_reduce(Xk)
+ call k_reduce(Xk,.false.)
  call msg('l'," "//trim(intc(Xk%nibz)))
  !
  allocate(kpoints_map(2,Xk%nibz))

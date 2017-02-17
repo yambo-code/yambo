@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -385,7 +385,7 @@ subroutine k_grids(en,k,Xk,q)
      call define_zeros(vector_=K_grid%ptbz,zero_=k_rlu_zero,RLU=.TRUE.)
      !
      call msg("s","Reducing & Expanding the "//trim(intc(K_grid%nbz))//" k-points ...")
-     call k_reduce(K_grid)
+     call k_reduce(K_grid,.true.)
      call k_expand(K_grid)
      !
      call msg("l","done")

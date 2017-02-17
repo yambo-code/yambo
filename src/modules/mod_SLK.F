@@ -53,7 +53,7 @@ module SLK_m
    INTEGER :: task   = 0         ! task id for the ortho group
    INTEGER :: n_CPU = 1          ! size of the ortho group:
    INTEGER :: leg   = 1          ! the distance in the father communicator
-                                 ! of two neighbour processors in ortho_comm
+   !                             ! of two neighbour processors in ortho_comm
    INTEGER :: COMM  = 0          ! communicator for the ortho group
    INTEGER :: ROW_comm  = 0      ! communicator for the ortho row group
    INTEGER :: COL_comm  = 0      ! communicator for the ortho col group
@@ -64,9 +64,9 @@ module SLK_m
    INTEGER :: world_cntx = -1    ! BLACS context of all processor 
    INTEGER :: ortho_cntx = -1    ! BLACS context for ortho_comm
  end type ORTHO_group
- !_
- ! Common Work Space
  !
+ ! SLK matrix distributed block and informations
+ !===============================================
  type SLK_matrix 
    integer :: desc(desc_len)
    integer :: lwork    = 0
@@ -85,14 +85,8 @@ module SLK_m
  ! Specific SLK worlds ...
  !========================
  !
- type(POOL_group ),SAVE :: SLK_INV_pool
- type(ORTHO_group),SAVE :: SLK_INV_ortho
- type(SLK_matrix), SAVE :: SLK_INV_mat
- !
- type(POOL_group ),SAVE :: SLK_DIAGO_pool
- type(ORTHO_group),SAVE :: SLK_DIAGO_ortho
- type(SLK_matrix), SAVE :: SLK_DIAGO_mat
- type(SLK_matrix), SAVE :: SLK_DIAGO_eigenv
+ type(POOL_group ),SAVE :: SLK_POOL
+ type(ORTHO_group),SAVE :: SLK_ORTHO
  !
  type(MPI_comm),SAVE    :: SLK_COM_INDEX(2)
  type(MPI_comm),SAVE    :: SLK_COM_A2A(2)

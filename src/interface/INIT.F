@@ -39,7 +39,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
- use electrons,      ONLY:levels,E_reset,n_spin
+ use electrons,      ONLY:levels,E_reset,n_spinor
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -545,8 +545,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_em1s) then
    call INIT_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPaths')
-   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','DmRnge','CGrdSp','EhEngy',&
-&                  'LongDr','DrudeW'/))
+   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
    call initactivate(1,'XTermKind')
    call initactivate(1,'XTermEn')
  endif
@@ -761,18 +760,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MPI
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") then
-       call initactivate(1,what//"_nCPU_invert")
-     endif
-     if (what=="BS") then
-       call initactivate(1,what//"_nCPU_diago")
-     endif
+     if ((what=="X_q_0".and..not.l_real_time).or.&
+&         what=="X_finite_q".or.what=="X_all_q".or.what=="BS") call initactivate(1,what//"_nCPU_LinAlg_INV")
+     if (what=="BS")                                           call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
 #endif
 #if defined _SCALAPACK &&  defined _MPI
-     if (what=="SLK") then
-       call initactivate(1,what//"_nCPU_diago")
-       call initactivate(1,what//"_nCPU_invert")
-     endif
+     if (what=="SLK")                                          call initactivate(1,what//"_nCPU_LinAlg_INV")
 #endif
      !
    end subroutine

@@ -33,7 +33,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  use wave_func,     ONLY:WF
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
- use interfaces,    ONLY:WF_load
+ use interfaces,    ONLY:WF_load,eval_G_minus_G
  !
  implicit none
  !
@@ -44,7 +44,6 @@ subroutine TDDFT_ALDA_G_space(E,k)
  !
  integer                  :: i1,i2
  complex(DP), allocatable :: F_xc_DP(:)
- integer, external        :: eval_G_minus_G
  !
  if (allocated(FXC)) return
  !

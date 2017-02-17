@@ -39,7 +39,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
- use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
@@ -56,7 +56,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  type(X_t)         :: X_tddft,X_oscillators
  integer           :: iq,Max_G_m_G
- integer, external :: eval_G_minus_G
  type(w_samp)      :: W_bss 
  !
  call section('*','Response Functions in Transition space')
@@ -118,12 +117,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
- !
- !
- 
- l_anomalous_Hall=l_kerr
-
- !
+ if(l_kerr) call parser('AnHall',l_anomalous_Hall)
 #endif
  !
  ! Energy points

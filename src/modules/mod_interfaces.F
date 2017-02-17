@@ -79,6 +79,13 @@ module interfaces
      integer, intent(in)     , optional ::i_coll
    end function
    !
+   integer function eval_G_minus_G(iG,iGo,COMM)
+     use parallel_m,      ONLY:MPI_comm
+     implicit none
+     integer :: iG,iGo
+     type(MPI_comm), optional :: COMM
+   end function
+   !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
 &                     spins_to_load,space,title,impose_free_and_alloc,&
 &                     force_WFo,keep_states_to_load)

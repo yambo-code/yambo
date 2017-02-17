@@ -27,7 +27,7 @@ subroutine K_inversion_restart(iq,W)
  use X_m,            ONLY:Epsilon_ii
  use BS_solvers,     ONLY:BSS_dr,BSS_er,BSS_n_freqs,K_Inversion_data,K_INV_EPS
  use IO_m,           ONLY:io_control,NONE,OP_RD_CL,REP,VERIFY
- use parallel_m,     ONLY:ncpu
+ use parallel_m,     ONLY:PAR_COM_SLK_INDEX_local
  use com,            ONLY:msg
  use frequency,      ONLY:w_samp,W_reset
  !
@@ -155,7 +155,7 @@ subroutine K_inversion_restart(iq,W)
        deallocate(Epsilon_ii)
        allocate(Epsilon_ii(BSS_n_freqs,4))
        Epsilon_ii(:,1)=W%p(:)
-       Epsilon_ii(:,2)=TYP%spectra(:,1)/real(ncpu,SP)
+       Epsilon_ii(:,2)=TYP%spectra(:,1)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
        Epsilon_ii(:,3)=TYP%spectra(:,2)
        Epsilon_ii(:,4)=TYP%spectra(:,3)
      endif

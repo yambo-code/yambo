@@ -36,7 +36,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
 &                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,X_is_evaluated_for_all_Qs,&
-&                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_inversion_mode,&
+&                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_linalg_mode,&
 &                     X_use_lin_sys
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
@@ -58,7 +58,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
- use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization
+ use parallel_m, ONLY:ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
 &                     n_max_jobstr,grid_paths
@@ -360,7 +360,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !X
  !
  Chi_mode=' '
- Chi_inversion_mode="inversion"
+ Chi_linalg_mode="lin_sys"
  X_use_lin_sys=.FALSE.
  current_iq=0
  X_DbGd_nkpts=0
@@ -505,14 +505,5 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !
  !
- !
- ! Parallel
- !
- PARALLEL_cpu_mat_diagonalization=1
- PARALLEL_cpu_mat_inversion      =1
-#if defined _SCALAPACK
- PARALLEL_cpu_mat_diagonalization=0
- PARALLEL_cpu_mat_inversion      =0
-#endif
  !
 end subroutine

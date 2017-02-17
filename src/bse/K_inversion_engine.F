@@ -23,8 +23,8 @@
 !
 subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
  !
- use pars,           ONLY:SP,cZERO,rZERO
- use parallel_m,     ONLY:PP_indexes
+ use pars,           ONLY:SP,cZERO
+ use parallel_m,     ONLY:PP_indexes,myid
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:Epsilon_ii,global_gauge
  use LIVE_t,         ONLY:live_timing
@@ -86,7 +86,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
        !
        call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
        !
-       if (what=="EPS") then
+       if (what=="EPS".or.what=="any") then
          call EPS_compose(i_L)
          K_INV_EPS%err(iw)=0
        endif

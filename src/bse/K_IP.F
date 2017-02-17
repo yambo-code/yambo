@@ -30,7 +30,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
- use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel
+ use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
  use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        DIP_projected,X_drude_term,X_alloc,iw_ref,global_gauge,   &
@@ -59,9 +59,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Work space
  !
- integer           ::ik_bz,iv,ic,i_sp,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
+ integer           ::ik_bz,iv,ic,i_sp_pol,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
  real(SP)          ::conjg_fac,Z_
- complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2),diam_term,diam_term0
+ complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),diam_term,diam_term0
  !
  call section('=','Independent Particles absorption') 
  !===================================================
@@ -70,6 +70,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  call timing('T_space IP',OPR='start')
 #endif
  !
+ ! Look for the W(iw_ref) closest 0
+ !==================================
+ call FREQUENCIES_set_reference_point(W_bss%p,BSS_n_freqs)
  !
  if (l_bs_fxc) goto 1
  !
@@ -111,11 +114,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  if (iq==1) then
    !
-   if( E_SOC_nbands==0) then
+   if( E_SOC_nbands==0.or.n_sp_pol==2) then
      n_SOC=1
      Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
    !
+#if defined _KERR
+   if (trim(global_gauge)=='velocity') A_drude(1)=cZERO
+#endif
    !
    call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
    !
@@ -135,7 +141,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ik_bz = BS_T_grp(i_T_g)%table(i_T,1)
        iv    = BS_T_grp(i_T_g)%table(i_T,2)
        ic    = BS_T_grp(i_T_g)%table(i_T,3)
-       i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
+       i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)
        !
        ik_bz_mem= PAR_Xk_bz_index(ik_bz)
        !
@@ -149,8 +155,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
        !              see definition of conjg_fac few lines before for the -1
        !
-       BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_bz_mem,i_sp))
-       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_bz_mem,i_sp)
+       BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_bz_mem,i_sp_pol))
+       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_bz_mem,i_sp_pol)
        !
        if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
        !

@@ -28,7 +28,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
  use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_evaluated_for_all_Qs,&
-&                        l_X_terminator,X_terminator_Kind,Chi_inversion_mode,X_use_lin_sys
+&                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -63,7 +63,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  self_detect_E_range=.false.
  !
  X_use_lin_sys=.false.
- if (trim(Chi_inversion_mode)=="lin_sys") X_use_lin_sys=.true.
+ if (trim(Chi_linalg_mode)=="lin_sys") X_use_lin_sys=.true.
  !
  l_X_terminator = X_terminator_Kind/='none'
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &

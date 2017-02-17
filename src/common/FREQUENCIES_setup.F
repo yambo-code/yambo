@@ -79,5 +79,27 @@ subroutine FREQUENCIES_setup(W)
    W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cI
  enddo
  !
+ call parser('MetDamp',metallic_damping)
+ !
+ if(.not.metallic_damping) return
+ !
+ ! Davide
+ ! Implementation of eq. 10, PRB 82, 035104 (2010): w=sqrt(Re[w]*(Re[w]+2*i*Im[w])),
+ ! notice that this is sqrt(w^2+Im[w]^2)
+ ! 1) This expression should guarantee the correct behaviour of Re[eps^m1] nearby w=0
+ !    in metals. Sistems with a gap are not affected.
+ ! 2) Thanks to this expression the length and the velocity gauge are finally identical
+ !    and the divergency for w->0 in the velocity is removed (there is just some numerical noise)
+ !
+ do i1=1,W%n_freqs
+   w_n=W%er(1)+delta_w*real(i1-1,SP)
+   if(w_n>0._SP) W%p(i1)=cmplx( w_n**2/sqrt(w_n**2+aimag(W%p(i1))**2),aimag(W%p(i1)),SP)
+   if(w_n<0._SP) W%p(i1)=cmplx(-w_n**2/sqrt(w_n**2+aimag(W%p(i1))**2),aimag(W%p(i1)),SP)
+ enddo
+ !
+ do i1=1,W%n_freqs
+   if ( real(W%p(i1))>=0._SP ) W%p(i1)= sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
+   if ( real(W%p(i1))< 0._SP ) W%p(i1)=-sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
+ enddo
  !
 end subroutine

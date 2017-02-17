@@ -65,9 +65,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  ! Work Space
  !
- integer :: ikbz,iv,ic,iv_SOC(2),ic_SOC(2),ik,ikp,i_sp,i_star,nb(2),&
-&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp
- real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2),E_v_SOC(2),E_c_SOC(2),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
+ integer :: ikbz,iv,ic,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),ik,ikp,i_sp,i_star,nb(2),&
+&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,pert_range(2/n_sp_pol,2)
+ real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
  !
  if (FILL_the_groups) then

@@ -26,11 +26,11 @@ subroutine K_kerr_IP(iq,w)
  use pars,           ONLY:SP,cZERO,cI
  use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_rpa_IP
- use X_m,            ONLY:Epsilon_ij,global_gauge
+ use X_m,            ONLY:Epsilon_ij,global_gauge,Dipole_Energy_treshold
  use KERR,           ONLY:DIP_projected_r90,KERR_alloc,B_Hall
  use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
- use electrons,      ONLY:E_SOC_nbands
+ use electrons,      ONLY:E_SOC_nbands,n_sp_pol
  use R_lattice,      ONLY:q_norm
  use drivers,        ONLY:l_anomalous_Hall
  use parallel_m,     ONLY:PAR_BS_nT_col_grps,PP_redux_wait,&
@@ -45,8 +45,8 @@ subroutine K_kerr_IP(iq,w)
  ! Work Space
  !
  real(SP)          :: conjg_fac
- complex(SP)       :: E_plus_W0,res,E_plus_W(2)
- integer           :: ik_bz,iv,ic,i_sp,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
+ complex(SP)       :: E_plus_W0,res,E_plus_W(2/n_sp_pol)
+ integer           :: ik_bz,iv,ic,i_sp_pol,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
  !
  allocate(Epsilon_ij(BSS_n_freqs,4))
  Epsilon_ij=cZERO
@@ -72,7 +72,7 @@ subroutine K_kerr_IP(iq,w)
      ik_bz = BS_T_grp(i_T_g)%table(i_T,1)
      iv    = BS_T_grp(i_T_g)%table(i_T,2)
      ic    = BS_T_grp(i_T_g)%table(i_T,3)
-     i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
+     i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)
      !
      ik_mem= PAR_Xk_bz_index(ik_bz)
      !
@@ -82,10 +82,10 @@ subroutine K_kerr_IP(iq,w)
      if (E_SOC_nbands==0) E_plus_W=E_plus_W0
      !
      !
-     BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=conjg_fac*conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp))
-     if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_projected_r90(ic,iv,ik_mem,i_sp)
+     BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=conjg_fac*conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp_pol))
+     if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_projected_r90(ic,iv,ik_mem,i_sp_pol)
      !
-     if ( (abs(real(E_plus_W(1)))<1.E-5 .or. (abs(real(E_plus_W(2)))<1.E-5.and.E_SOC_nbands/=0))) cycle
+     if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
      !
      ! Residuals
      res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_kerr(i_T))*BS_T_grp(i_T_g)%f_RES(i_T)

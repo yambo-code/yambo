@@ -171,8 +171,8 @@ module BS_solvers
        BSS_eh_Z = cZERO
      endif
      if (E_SOC_nbands/=0) then
-       allocate(BSS_eh_E_SOC_corr(2,BS_H_dim))
-       call mem_est("BSS_eh_E_SOC_corr",(/2*BS_H_dim/),(/SP/))
+       allocate(BSS_eh_E_SOC_corr(2/n_sp_pol,BS_H_dim))
+       call mem_est("BSS_eh_E_SOC_corr",(/2/n_sp_pol*BS_H_dim/),(/SP/))
        BSS_eh_E_SOC_corr = rZERO
      endif
    end subroutine

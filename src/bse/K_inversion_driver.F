@@ -42,7 +42,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use SLK_m,          ONLY:BLACS_structure_in_use
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
- use interfaces,     ONLY:SLK_matrix_transfer
+ use interfaces,     ONLY:MATRIX_transfer
  use parallel_m,     ONLY:linear_algebra_is_parallel
 #endif
 #if defined _TIMING
@@ -139,7 +139,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! 
  ! SLK matrix initialization before the Kernel loading
  !
- call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
+ call MATRIX_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
  !
  if ( SLK_ORTHO%coordinate(1) /= -1 )BLACS_structure_in_use=.TRUE.
  !
@@ -158,13 +158,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    ! Prepare the BLACS matrices (reference, K_slk and local, K_inv_slk)
    !============================
    !
-   call SLK_matrix_transfer("fill_the_SLK", K_slk, BS_blk )
+   call MATRIX_transfer("fill_the_SLK", K_slk, BS_blk )
    !
    ! Diagonal removal
    !==================
    call K_diagonal(iq,"rm_OCC DIAG")
    !
-   if (FULL) call SLK_matrix_duplicate( "none", K_slk, K_inv_slk )
+   if (FULL) call MATRIX_duplicate( "none", K_slk, K_inv_slk )
    !
 #endif
    !

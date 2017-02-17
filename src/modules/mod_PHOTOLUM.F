@@ -35,7 +35,7 @@ module PHOTOLUM
  !
  ! PL direction
  !
- real(SP)                 :: PL_weights(3)=(/1.,1.,1./)
+ real(SP)                 :: PL_weights(3)
  !
  ! BS dipoles
  !
@@ -49,6 +49,7 @@ module PHOTOLUM
      use pars,       ONLY:pi,rZERO
      use units,      ONLY:SPEED_OF_LIGHT
      use R_lattice,  ONLY:RL_vol,nqbz
+     use vec_operate,ONLY:v_norm
      use BS_solvers, ONLY:BSS_n_freqs
      !
      integer :: ic
@@ -59,9 +60,7 @@ module PHOTOLUM
      !
      YAMBO_ALLOCATE(PL,(BSS_n_freqs,3))!2(int)3(nonint)
      PL = rZERO
-     do ic=1,3
-       PL_weights(ic) = PL_weights(ic)/(sqrt(PL_weights(ic)))
-     enddo
+     PL_weights=PL_weights/v_norm(PL_weights)
      !
    end subroutine
    !

@@ -65,16 +65,13 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
 &                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
-&                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
+&                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use fragments,  ONLY:Parallel_Fragments
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
-#if defined _TWO_LEVELS
- use real_time,  ONLY:l_3levels,en_levels,dip,lambda_diag,lambda_offdiag
-#endif
  !
  implicit none
  !
@@ -113,8 +110,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ! PAR PROC Setup
  !
  master_cpu          =myid==0
- local_master_cpu(1) =.TRUE.
- local_master_cpu(2:)=.TRUE.
+ local_master_cpu    =myid==0
  !
  ! TTY size 
  !
@@ -357,6 +353,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  FXC_n_g_corr=1
  FXC_per_memstps=100.
  FXC_LRC_alpha=0.
+ FXC_LRC_beta=0.
  FXC_SVD_digits=0
  FXC_is_causal=.false.
  !
@@ -373,15 +370,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !
  !
-#if defined _TWO_LEVELS
- !
- l_3levels     =.FALSE.
- en_levels     =0._SP
- lambda_offdiag=0._SP
- lambda_diag   =0._SP    
- dip           =0._SP            
- !
-#endif
  !
  !
  !

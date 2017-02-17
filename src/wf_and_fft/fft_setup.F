@@ -26,7 +26,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use vec_operate,    ONLY:c2a
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv
  use R_lattice,      ONLY:b,g_vec,ng_vec
- use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_norm,fft_g_table,fft_multiplier
+ use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_norm,fft_g_table,fft_multiplier,modx
  use wave_func,      ONLY:wf_ng
  implicit none
  integer :: iG_max,iGo_max
@@ -119,26 +119,6 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  enddo
  !
  contains
-   !
-   integer function modx(i,j)
-     !
-     !  Calculate a function similar to MOD:
-     !  modx(i,j) = mod (i,j) i>=0
-     !          = mod ( mod(i,j)+j , j) i<0
-     !  Thus 
-     !   modx(3,2)=1 
-     !   modx(-1,2)=1.
-     !  This is different from MOD for i negative.
-     !
-     implicit none
-     integer i,j
-     if (i>=0) then
-       modx = mod(i,j)
-     else
-       modx = mod( mod(i,j) + j , j)
-     endif
-     !
-   end function
    !
    subroutine fft_best_size(test_fft_size)
      !

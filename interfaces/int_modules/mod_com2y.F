@@ -26,6 +26,7 @@ module mod_com2y
  !
  logical :: use_SI_instead_of_TR
  logical :: force_noWFs
+ logical :: force_noSYMM
  logical :: artificial_spin_pol
  logical :: use_all_G_vectors
  !
@@ -46,6 +47,7 @@ module mod_com2y
      call string_split(in_string,str_piece)
      !
      use_SI_instead_of_TR =index(in_string,'notr')>0
+     force_noSYMM         =index(in_string,'nosy')>0
      force_noWFs          =index(in_string,'nowf')>0
      artificial_spin_pol  =index(in_string,'dupl')>0
      use_all_G_vectors    =index(in_string,'allG')>0
@@ -87,6 +89,18 @@ module mod_com2y
      !
      l_identity=.false.
      l_inversion=.false.
+     !
+     ! Force not to read symmetries and set the first
+     ! symmetry equal to the identity
+     !
+     if(force_noSYMM) then
+       nsym_=1
+       int_sop(:,:,1)=0
+       int_sop(1,1,1)=1
+       int_sop(2,2,1)=1
+       int_sop(3,3,1)=1
+     endif
+     !
      do is=1,nsym_
        if (int_sop(1,1,is)==1.and.int_sop(1,2,is)==0.and.int_sop(1,3,is)==0.and.&
 &          int_sop(2,1,is)==0.and.int_sop(2,2,is)==1.and.int_sop(2,3,is)==0.and.&
@@ -99,6 +113,7 @@ module mod_com2y
          is_inv=is
        endif 
      enddo
+     !
      if (.not.l_identity) call msg("l","[I no]...")
      if (l_identity)      call msg("l","[I yes]...")
      !
@@ -123,7 +138,7 @@ module mod_com2y
      !
      ! TR ?
      !
-     if (spin_orbit) i_time_rev=0
+     if (spin_orbit.or.force_noSYMM) i_time_rev=0
      ! 
      ! when the TR is imposed to be removed from the user it must be replaced
      ! by the spatial inversion. Otherwise it cannot be removed.
@@ -160,7 +175,7 @@ module mod_com2y
      allocate(dl_sop(3,3,nsym))
      do is=1,nsym_
        sop_mat=matmul(transpose(a),int_sop(:,:,is))
-       dl_sop(:,:,is)=matmul(sop_mat,b)/2./pi
+       dl_sop(:,:,is)=matmul(sop_mat,b)/2._SP/pi
        if (double_symmetries) dl_sop(:,:,is+nsym_)=-dl_sop(:,:,is)
      enddo
      !

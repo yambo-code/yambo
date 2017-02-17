@@ -64,12 +64,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_PP_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err
+&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included
  !
+ integer, external :: ioE_RIM
  !
  !
  type(X_t)        ::Xbsk
@@ -210,6 +211,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioCOL_CUT(io_ID) 
  !
+ ! e_rim
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_err=ioE_RIM(en,io_ID) 
  !
  ! xxvxc
  !
@@ -277,6 +282,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ELPH 
  !
  !
+ ! RT 
+ !
+ !
  ! SC 
  !
  !
@@ -315,8 +323,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh More_IO_Path Com_Path')
- !
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh')
  !
  !FFT
  !
@@ -445,9 +452,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_alda_fxc.and.&
 &    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/))) &
 &    call initactivate(1,'FxcGRLc')
- if (l_lrc_fxc.and.&
-&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/))) &
-&    call initactivate(1,'LRC_alpha')
+ if (l_lrc_fxc.and.any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,&
+&                        l_cohsex,l_gw0/))) call initactivate(1,'LRC_alpha LRC_beta')
  !
  ! BSE + TDDFT = no BS db, Fxc + LF on-fly
  !
@@ -477,9 +483,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! DFT
  !
-#if defined _TWO_LEVELS
- call initactivate(1,'RT3Levels RTEnLevels RTDephasing RTLifeTimes RTDipoles')
-#endif
  !
  !
  ! RAS
@@ -696,6 +699,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      if (l_gw0) l_el_corr=.true.
      !
+     !
    end subroutine varsetup2
    !
    subroutine read_command_line(rstr,init_) 
@@ -788,7 +792,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_lrc_fxc= trim(rstr_piece(i1+1)) == 'l'
          if (.not.l_alda_fxc.and..not.l_bs_fxc.and..not.l_lrc_fxc) l_alda_fxc=.true.
          if (l_alda_fxc)  call initactivate(1,'alda_fxc optics')
-         if (l_lrc_fxc)  call initactivate(1,'lrc_fxc chi optics')
+         if (l_lrc_fxc)   call initactivate(1,'lrc_fxc chi optics')
          !
          !
          infile_editing=.true.

@@ -22,7 +22,7 @@
 subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,Efield_unit
+&                        Time_unit,Bfield_unit,Efield_unit,V_real_time
  use wave_func,     ONLY:wf_ng
  use YPP
  implicit none
@@ -45,6 +45,10 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'density',      '[R] Density')
  call it('r',defs,'wavefunction', '[R] Wavefunction')
  call QP_ctl_load(defs,3)
+ !
+ !
+ call it('r',defs,'bzrim',   '[R] BZ energy RIM analyzer')
+ call it('r',defs,'qpdb',    '[R] Quasi-particle database manager')
  !
  !
  ! DOS
@@ -88,5 +92,9 @@ subroutine ypp_init_load(defs)
  !
  !
  !
+ !BZ E RIM
+ !
+ call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
+ call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
  !
 end subroutine

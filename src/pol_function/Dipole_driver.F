@@ -87,7 +87,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    else
      call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),Xk%nibz/))
    endif
-   DIP_iR=(0.,0.)
+   DIP_iR=(0._SP,0._SP)
    !
    !   
    !
@@ -108,14 +108,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  end if
  !
  !
- ! The field direction and the gamma-point norm must be renormalized here in case the
- ! oscillator strengths have been calculated using the shifted grids.
- ! In this case q0_def_norm is not the default one but corresponds
- ! to the norm of the grid shift.
- !
- field_dir=field_dir*q0_def_norm/v_norm(field_dir)
- q_norm(1)=q0_def_norm
- if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
  !
  ! Warn about missing [Vnl,r] commutator
  !
@@ -124,36 +116,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    Vnl_commutator_warning=.TRUE.
  endif
  !
- ! Calculate the q-dependent oscillators
+ call Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
- call X_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,Xk%nbz/))
- DIP_q_dot_iR = (0.0_SP,0.0_SP)
- !
- do i1 = 1,Xk%nbz
-   !
-   ik = Xk%sstar(i1,1)
-   is = sop_inv(Xk%sstar(i1,2))
-   field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
-   !
-   do iv = X%ib(1), Xen%nbm
-     !
-     do ic = Xen%nbf+1, X%ib(2)
-     !
-       !
-        i_spin=1
-       ! 
-         !
-         ! DIP_iq_dot_r = i q . < v k | r | c k >
-         !
-         DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
-         if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
-         !
-       !
-     enddo
-     DIP_q_dot_iR(iv,iv,i1,:) = (1.0_SP,0.0_SP)
-   enddo
-   !
- enddo
  call pp_redux_wait()
  !
  ! Clean up

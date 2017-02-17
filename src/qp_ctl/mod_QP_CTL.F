@@ -252,6 +252,31 @@ module QP_CTL_m
      !
      if ((Eid<3.and.associated(en%Eo)).and..not.associated(en%GreenF)) then
        !
+       if (associated(en%E_RIM)) then
+         !
+         allocate(RIM_k_done(BZ_RIM_tot_nkpts))
+         RIM_k_done=0
+         !
+         do ik_bz=1,k%nbz
+           !
+           ik_ibz=k%sstar(ik_bz,1)
+           !
+           do i1=1,BZ_RIM_nkpt(ik_bz)
+             ik_r=BZ_RIM_table(ik_bz,i1)
+             !
+             if (RIM_k_done(ik_r)==1) cycle
+             !
+             forall (ib=1:BZ_RIM_nbands,i_spin=1:n_sp_pol) &
+&                                        en%E_RIM(ib,ik_r,i_spin)=en%E_RIM(ib,ik_r,i_spin)+&
+&                                        en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin)
+             RIM_k_done(ik_r)=1
+           enddo
+           !
+         enddo
+         !
+         deallocate(RIM_k_done)
+         !
+       endif
        !
        call OCCUPATIONS_Fermi(en,k,1)
        !

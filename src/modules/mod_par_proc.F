@@ -42,7 +42,7 @@ module par_proc_m
  type pp_indexes 
    logical, pointer :: element_1D(:)
    logical, pointer :: element_2D(:,:)
-   integer, pointer :: n_of_element_1D(:)
+   integer, pointer :: n_of_elements(:)
    integer, pointer :: weight_1D(:)
    integer, pointer :: first_of_1D(:)
  end type pp_indexes
@@ -107,7 +107,7 @@ module par_proc_m
    !
    subroutine pp_indexes_reset(ip)
      type(pp_indexes)::ip
-     nullify(ip%element_1D,ip%element_2D,ip%n_of_element_1D,ip%weight_1D,ip%first_of_1D)
+     nullify(ip%element_1D,ip%element_2D,ip%n_of_elements,ip%weight_1D,ip%first_of_1D)
    end subroutine
    !
    subroutine p_finalize

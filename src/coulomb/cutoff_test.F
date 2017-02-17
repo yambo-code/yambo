@@ -109,7 +109,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  call k_ibz2bz(q,'i',.true.)
  !
  call par_indexes(px,(/n_dl_pts**2/))
- call live_timing('CutOff Test',px%n_of_element_1D(myid+1))
+ call live_timing('CutOff Test',px%n_of_elements(myid+1))
  !
  do ip=1,n_dl_pts**2
    !

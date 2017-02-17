@@ -26,7 +26,7 @@ integer function ioCOL_CUT(ID)
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,CUTOFF_plus_RIM,&
 &                         cyl_ph_radius,box_length,cyl_length,cut_geometry,&
-&                         ng_closed,nqibz,bare_qpg
+&                         ng_closed,nqibz,bare_qpg,cut_description
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
  implicit none
@@ -49,6 +49,9 @@ integer function ioCOL_CUT(ID)
    call io_elemental(ID,VAR='GEOMETRY',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=cut_geometry,&
 &       VAR=' CutOff Geometry                 :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR='DESCRIPTION',CH0="",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,CH0=cut_description,&
+&       VAR=' Coulomb cutoff potential        :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=10,MENU=0)

@@ -24,6 +24,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! This routine returns <iR> and <P^2>.
  !
  use pars,                ONLY:SP,pi
+ use drivers,             ONLY:l_real_time
  use timing,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
@@ -31,7 +32,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square
+ use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
@@ -93,10 +94,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
- call live_timing('Dipole (T):',px%n_of_element_1D(myid+1)*n_spin)
+ !
+ call live_timing('Dipole (T):',px%n_of_elements(myid+1)*n_spin)
+ wf_dim=3
  call pp_redux_wait
  !
- wf_dim=3
  allocate(wf_xyz(wf_ng,wf_dim))
  !
  ! Main loop over k in IBZ
@@ -132,7 +134,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
+         if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.l_real_time) cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
          !
@@ -145,7 +147,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          icfft=wf_state(ic,ik,i_spin)
          !
-         ! rho = wf_xyz^* fdo(ic,ik)= - i < fdo(iv,ik)| grad |  fdo(ic,ik) > =
+         ! WARNING !!!!!!!! The convention is to revert the order of the bands indexes
+         !==================
+         ! in the definition of DIP_P and DIP_iR
+         !
+         ! DIP_P(iv,ic)  = P_cv
+         ! DIP_iR(iv,ic) = (iR)_cv 
+         !
+         ! Note that P is Hermitian and iR anti-hermitian.
+         !
+         ! rho = <v|p|c> = P_vc =
+         !     = wf_xyz^* fdo(ic,ik)= - i < fdo(iv,ik)| grad |  fdo(ic,ik) > =
          !       \sum_G -i u^*_{iv ik}(G) i ( k + G ) u_{ic ik}(G)
          !     = \sum_G u^*_{iv ik}(G) ( k + G ) u_{ic ik}(G)
          !
@@ -154,13 +166,21 @@ subroutine Dipole_transverse(Xen,Xk,X)
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
          if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
+         !=====
+         ! <P>
+         !=====
+         ! P_vc=rho(:3)
+         !======
+         ! <iR>
+         !======
+         ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x. So from rho (that is P_vc) we can extract
          !
-         ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
-         !
-         !     DIP_iR_or_P(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
-         !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
+         ! DIP_iR(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
+         !             = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec) = P_vc/(Ev-Ec)
          !
          rho(1:3)=rho(1:3)/Ev_m_Ec
+         !
+         if (abs(Ev_m_Ec)<=1.E-5_SP) rho(1:3)=(0._SP,0._SP)
          !
            !
            DIP_iR(:,ic,iv,ik,i_spin)=rho(:3)
@@ -172,6 +192,20 @@ subroutine Dipole_transverse(Xen,Xk,X)
        !
      enddo      ! valence band loop
      ! 
+   !
+   ! Symmetrization 
+   !================
+   !
+   ! To avoid numerical noise in the real-time evolution we need to impose
+   ! P (iR) to be Hermitian (anti-Hermitian)
+   !
+   if (.not.Dipole_bands_ordered) then
+     do iv=X%ib(1),X%ib(2)
+       do ic=iv+1,X%ib(2)
+         DIP_iR(:,ic,iv,ik,:)=-conjg(DIP_iR(:,iv,ic,ik,:))
+       enddo
+     enddo
+   endif
    !
  enddo          ! k-points
  !

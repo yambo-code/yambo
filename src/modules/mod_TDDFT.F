@@ -32,6 +32,7 @@ module TDDFT
  integer          :: FXC_SVD_digits
  real(SP)         :: FXC_per_memstps
  real(SP)         :: FXC_LRC_alpha
+ real(SP)         :: FXC_LRC_beta
  logical          :: FXC_is_causal
  !
  real(SP),    allocatable :: FXC_K_diagonal(:)

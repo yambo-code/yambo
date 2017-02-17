@@ -19,8 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                      com_dir,icd,js,ijs,np,pid)
+integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use pars,                ONLY:SP,lchlen
  use LOGO,                ONLY:pickup_a_random
@@ -33,6 +32,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:wf_splitter
+ use pseudo,              ONLY:l_a2y_KBPP
  !
  implicit none
  type(levels)                 :: en 
@@ -102,7 +102,8 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if (n_spin==1) call wf_splitter()
  !
- call msg('s','== DB2 + nlPP ...')
+ if (     l_a2y_KBPP) call msg('s','== WFs + nlPP ...')
+ if (.not.l_a2y_KBPP) call msg('s','== WFs ...')
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  !
@@ -112,7 +113,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
      !
      call a2y_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
      !
-     if (n_atoms_species_max>0.and.ib_grp==1) then
+     if (n_atoms_species_max>0.and.ib_grp==1.and.l_a2y_KBPP) then
        if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
        if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
        io_err=ioKB_PP(ID)

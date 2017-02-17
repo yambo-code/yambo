@@ -19,25 +19,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FREQUENCIES_Green_Function(iqp,W,E)
+subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
  !
- use pars,       ONLY:SP
+ use pars,       ONLY:SP,cI
+ use units
  use R_lattice,  ONLY:nkibz
  use electrons,  ONLY:n_bands,spin,n_sp_pol
  use frequency,  ONLY:w_samp
  use QP_m,       ONLY:QP_table,QP_G_dr,QP_G_er,QP_G_zoom_er
  implicit none
  !
- integer      :: iqp
- type(w_samp) :: W
- real(SP)     :: E(n_bands,nkibz,n_sp_pol)
+ integer,      intent(in)    :: iqp
+ type(w_samp), intent(inout) :: W
+ real(SP),     intent(in)    :: E(n_bands,nkibz,n_sp_pol)
+ logical,      intent(in)    :: Spectral_Function
  !
- if (allocated(QP_G_zoom_er)) then
-   W%er=QP_G_zoom_er(iqp,:)
- else
-   W%er=QP_G_er+E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))
- endif
+ ! Work Space
+ !
+ integer :: iw,n_small_freqs
+ real(SP):: wide_range(2),Eo,small_step,large_step,running_step
+ !
  W%dr=QP_G_dr
- call FREQUENCIES_setup(W)
+ if (allocated(QP_G_zoom_er).and..not.Spectral_Function) then
+   W%er=QP_G_zoom_er(iqp,:)
+   call FREQUENCIES_setup(W)
+ else if (.not.Spectral_Function) then
+   Eo=E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))
+   W%er=QP_G_er+Eo
+   call FREQUENCIES_setup(W)
+ else if (Spectral_Function) then
+   !
+   !
+ endif
  !
 end subroutine

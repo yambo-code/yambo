@@ -26,10 +26,10 @@ integer function ioQP(what,qp,ID)
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use matrix_operate, ONLY:mat_c2r,mat_r2c
- use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_G_dr,&
+ use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_G_dr,QP_Sc_steps,&
 &                         QP_n_G_bands,QP_n_states,QP_W,QP_G_er,&
 &                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,&
-&                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
+&                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold,QP_Sc
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,io_restart_point,&
@@ -47,13 +47,12 @@ integer function ioQP(what,qp,ID)
  !
  ! Work Space
  !
- integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,&
+ integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,restart_point,&
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,var_size
  character(schlen)    ::ch
- logical              ::l_CUTOFF
  character(2)         ::OP(1)
  integer ,    allocatable ::qp_table_disk(:,:)
- real(SP),    allocatable ::qp_DATA_disk(:,:,:),QP_W_disk(:,:,:)
+ real(SP),    allocatable ::qp_DATA_disk(:,:,:),QP_W_disk(:,:,:),QP_Sc_disk(:,:)
  !
  if (what=="QP".or.what=="W".or.what=="G") then
    ioQP=io_connect(desc=what,type=2,ID=ID)
@@ -64,7 +63,7 @@ integer function ioQP(what,qp,ID)
  !
  ! Check the restart point 
  !  
- if (what=="W") call Fragments_Restart(ID)
+ if (what=="W".or.what=="QP") call Fragments_Restart(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    ! 
@@ -90,13 +89,8 @@ integer function ioQP(what,qp,ID)
      !
    endif
    !
-   l_CUTOFF=.FALSE.
-#if defined_TEST_2
-   l_CUTOFF=.TRUE.
-#endif
-   !
    if (what=="W") then
-     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.,XC_KIND="Xd",CUTOFF=l_CUTOFF)
+     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.,XC_KIND="Xd",CUTOFF=.true.)
    else
      !
      ! QP_DB_kind points to the "type" of self-energy. This is used
@@ -105,15 +99,15 @@ integer function ioQP(what,qp,ID)
      !
      select case (QP_DB_kind)
        case(0,SE_NONE)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=l_CUTOFF)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=.true.)
        case(SE_COHSEX)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=l_CUTOFF)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=.true.)
        case(SE_GoWo_PPA,SE_GWo_PPA)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=l_CUTOFF)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=.true.)
        case(SE_GoWo,SE_GWo)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=l_CUTOFF)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
        case(SE_POLARON)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=l_CUTOFF)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
      end select
    endif
    if (ioQP/=0) goto 1
@@ -269,10 +263,11 @@ integer function ioQP(what,qp,ID)
  ! Now that the menu is closed I can return with ioQP/=0 if
  ! there is a restart point
  !
- if (what=="W") then
+ if (what=="W".or.what=="QP") then
    ioQP=io_restart_point(ID)
    if (ioQP/=0.and.io_netcdf_support(ID)) then
      QP_W_partially_done=.true.
+     if(qp_n_states_disk/=qp%n_states) QP_W_partially_done=.false.
      goto 1
    endif
  endif
@@ -373,6 +368,35 @@ integer function ioQP(what,qp,ID)
    !
    ioQP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
+   !
+ endif
+ !
+ ! Section used to save the QP_Sc during the bands loop
+ ! =====================================================
+ if(any((/io_sec(ID,:)<0/)).and.what=="QP".and.ver_is_gt_or_eq(ID,revision=770)) then
+   !
+   ! This is used in the restart for PPA and COHSEX cases
+   !
+   allocate(QP_Sc_disk(qp_n_states_disk,2*QP_Sc_steps))
+   if(write_is_on(ID)) then
+     QP_Sc_disk(:,1)= real(QP_Sc(:,1),SP)
+     QP_Sc_disk(:,2)=aimag(QP_Sc(:,1))
+     if (QP_Sc_steps>1) then
+       QP_Sc_disk(:,3)= real(QP_Sc(:,2),SP)
+       QP_Sc_disk(:,4)=aimag(QP_Sc(:,2))
+     endif
+     restart_point=iabs(minval(io_sec(ID,:)))
+   endif
+   call io_bulk(ID,VAR="QP_Sc",VAR_SZ=(/qp_n_states_disk,2*QP_Sc_steps/))
+   call io_bulk(ID,R2=QP_Sc_disk)
+   if(read_is_on(ID)) then
+     QP_Sc(:,1)=cmplx(QP_Sc_disk(:,1),QP_Sc_disk(:,2))
+     if (QP_Sc_steps>1) QP_Sc(:,2)=cmplx(QP_Sc_disk(:,3),QP_Sc_disk(:,4))
+   endif
+   !
+   deallocate(QP_Sc_disk)
+   !
+   call Fragments_Restart(ID,current_fragment=restart_point,fragments_todo=nqbz*qp%n_states)
    !
  endif
  !

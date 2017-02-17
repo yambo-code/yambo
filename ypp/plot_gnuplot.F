@@ -27,7 +27,7 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a
  use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
-&                      plot_title,output_string,l_wavefunction,l_current
+&                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden
  use timing,      ONLY:live_timing
  !
  implicit none
@@ -101,9 +101,15 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
      !
    case(2)
      !
-     if (use_2d(1)) nr2plot=(/nr(1),nr(2)/)
-     if (use_2d(2)) nr2plot=(/nr(1),nr(3)/)
-     if (use_2d(3)) nr2plot=(/nr(2),nr(3)/)
+     if (.not.use_xcrysden) then
+       if (use_2d(1)) nr2plot=(/nr(1),nr(2)/)
+       if (use_2d(2)) nr2plot=(/nr(1),nr(3)/)
+       if (use_2d(3)) nr2plot=(/nr(2),nr(3)/)
+     else
+       if (use_2d(1)) nr2plot=(/nr(1)+1,nr(2)+1/)
+       if (use_2d(2)) nr2plot=(/nr(1)+1,nr(3)+1/)
+       if (use_2d(3)) nr2plot=(/nr(2)+1,nr(3)+1/)
+     endif
      if (use_2d(1)) dir2plot=(/1,2/)
      if (use_2d(2)) dir2plot=(/1,3/)
      if (use_2d(3)) dir2plot=(/2,3/)
@@ -121,6 +127,11 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
        enddo
        call live_timing(steps=1)
      enddo
+     if(use_xcrysden) then
+       v2plot2D(nr2plot(1),:nr2plot(2)-1)=v2plot2D(1,:nr2plot(2)-1)
+       v2plot2D(:nr2plot(1)-1,nr2plot(2))=v2plot2D(:nr2plot(1)-1,1)
+       v2plot2D(nr2plot(1),nr2plot(2))=v2plot2D(1,1)
+     endif
      !
      v_max=maxval(v2plot2D(:,:))
      if (l_norm_to_one) v2plot2D=v2plot2D/v_max  

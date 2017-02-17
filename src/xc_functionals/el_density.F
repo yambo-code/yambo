@@ -60,16 +60,17 @@ subroutine el_density(en,Xk,rho,force_si)
   integer :: i1,i2,ik,i_spin,ifft,rho_syms,ifft2
   real(SP):: rho_no_sym(fft_size),f_occ
   logical :: warn_done
-  integer :: iv_max
+  integer :: iv_max,iv_min
   !
   rho=0._SP
   rho_no_sym=0._SP
   warn_done=.false.
   !
   iv_max=en%nbm
+  iv_min=1
   !
   !
-  do i1=1,iv_max
+  do i1=iv_min,iv_max
     do i2=1,Xk%nibz
       !
       !        

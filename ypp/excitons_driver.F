@@ -163,6 +163,18 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Create the anti-resonant part of the eh_table
  !
  !
+ if (BS_K_coupling) then
+   do neh=BS_K_dim+1,BS_H_dim
+     BS_eh_table(neh,:)=BS_eh_table(neh-BS_K_dim,1)
+     !
+     ! invert conduction <-> valence order
+     !
+     BS_eh_table(neh,2)=BS_eh_table(neh-BS_K_dim,3)
+     BS_eh_table(neh,3)=BS_eh_table(neh-BS_K_dim,2)
+   enddo
+ endif
+ !
+ !
  if (.not.BSS_write_eig_2_db) call error('Diago database does not contain excitonic wfs')
  !
  ! Sort energies to find degenerate states
@@ -172,7 +184,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Excitonic Eliashberg function 
  !================================
- !
  !
  ! 
  ! Loading  Wf 
@@ -325,7 +336,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                                   trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
    !
-   call live_timing('ExcWF@'//trim(intc(lambda)),px%n_of_element_1D(myid+1))  
+   call live_timing('ExcWF@'//trim(intc(lambda)),px%n_of_elements(myid+1))  
    !
    v2plot  =0._SP
    wf_vc   =(0._SP,0._SP)

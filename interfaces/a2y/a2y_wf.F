@@ -50,9 +50,9 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  ! close(unit=ntkss)
  !
  use pars,                  ONLY:SP,DP
- use electrons,             ONLY:n_bands,n_spin
+ use electrons,             ONLY:n_bands,n_spin,n_spinor,n_sp_pol
  use D_lattice,             ONLY:n_atomic_species
- use pseudo,                ONLY:pp_n_l_comp_max,PP_alloc,pp_kbs,pp_kb,pp_kbd
+ use pseudo,                ONLY:pp_n_l_comp_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,l_a2y_KBPP
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  use defs_datatypes,        ONLY:hdr_type, wffile_type
@@ -73,12 +73,13 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  type(wffile_type)  :: wff
  real(DP)           :: pp_kb_kdb_disk(wf_ncx),&
 &                      pp_kbs_disk(n_atomic_species,pp_n_l_comp_max)
- complex(DP)        :: wf_disk_DP(wf_ncx)
- integer            :: fform,i_spin
+ complex(DP)        :: wf_disk_DP(wf_ncx,n_spinor)
+ integer            :: fform,i_spin,i_spinor
  !
  ! Number of records for each k-point
  !
  number_of_records_each_k=n_atomic_species*pp_n_l_comp_max*2+1+wf_nb_io
+ if(.not.l_a2y_KBPP) number_of_records_each_k=1+wf_nb_io
  !
  if (ikibz==1.and.ib_grp==1) then
    open(unit=11,file=KSS_file_name,form='unformatted')
@@ -90,7 +91,8 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      read(11)
    enddo
    call PP_alloc()
-   read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_comp_max),i1=1,n_atomic_species)
+   if(l_a2y_KBPP) read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_comp_max),i1=1,n_atomic_species)
+   if(.not.l_a2y_KBPP) pp_kbs_disk=0.
    pp_kbs=pp_kbs_disk
  endif
  !
@@ -99,7 +101,9 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
   i_spin=1
  ! 
    !
-   if (ib_grp==1) then
+   pp_kb=0.
+   pp_kbd=0.
+   if (ib_grp==1.and.l_a2y_KBPP) then
      do i1=1,n_atomic_species
        do i2=1,pp_n_l_comp_max
          read(11) pp_kb_kdb_disk
@@ -107,9 +111,9 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
          read(11) pp_kb_kdb_disk
          pp_kbd(:,i1,i2,i_spin)=pp_kb_kdb_disk
        enddo
-     enddo
-     read(11) 
+     enddo   
    endif
+   if (ib_grp==1) read(11) ! line with the energies
    !
    ! Read all bands or only the remaining in the last block
    !
@@ -117,11 +121,17 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    if (ib_grp*wf_nb_io>n_bands) nb_to_read=n_bands-wf_nb_io*(ib_grp-1) 
    !
    do i1=1,nb_to_read
-     read(11) wf_disk_DP
-     wf_disk(1,i1,:,i_spin)=real(wf_disk_DP(:))
-     wf_disk(2,i1,:,i_spin)=aimag(wf_disk_DP(:))
+     read(11) (wf_disk_DP(:,i_spinor),i_spinor=1,n_spinor)
+     !
+     wf_disk(1,i1,:,i_spin)=real(wf_disk_DP(:,1))
+     wf_disk(2,i1,:,i_spin)=aimag(wf_disk_DP(:,1))
+     !
+     if (n_spinor==2) then
+       wf_disk(1,i1,:,2)=real(wf_disk_DP(:,2))
+       wf_disk(2,i1,:,2)=aimag(wf_disk_DP(:,2))
+     endif
    enddo
-   ! 
+   !
  !
  if (ikibz==nkibz.and.ib_grp==wf_nb_io_groups) close(11)
  !

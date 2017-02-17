@@ -85,7 +85,6 @@ subroutine scatterBamp(isc)
    ifft=wf_state(ib,ik,i_sp+i_spr-1)
    offt=wf_state(ob,ok,o_sp+i_spr-1)
    !
-   !
    rho_tw_rs(:,i_spr)=wf(fft_rot_r(is,:),ifft)
    if (.not.litr) rho_tw_rs(:,i_spr)=conjg(rho_tw_rs(:,i_spr))
    if (lotr)      rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*conjg(wf(fft_rot_r(os,:),offt))

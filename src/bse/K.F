@@ -55,6 +55,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
  use xc_functionals,ONLY:F_xc
+ use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  implicit none
  type(levels)  ::Ken 
@@ -70,11 +71,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2)
  integer    :: iOcv, iOvc
-#if defined _DOUBLE
- complex(SP):: zdotc,zdotu
-#else
- complex(SP):: cdotc,cdotu
-#endif
  complex(SP):: Co,H_res_x,H_res_c,H_cpl_x,H_cpl_c
  !
  ! Kernel
@@ -246,7 +242,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
      !
-     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
+     if (ik2<BS_k_and_row_restart(2)) cycle
+     if (ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1)) cycle
      !
      call K_scattering(iq,ik1,ik2,Xk,q)  
      O_dim=max(O_dim,O_n_scatt)
@@ -371,6 +368,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call pp_redux_wait
  do ik2=1,BS_columns
+   !
    ikk2=sum(BS_blk_dim(:ik2-1))
    !
    if (load_O_X) call K_exchange(.not.l_col_cut,iq,ik2,Xk,O2x,O_x_dim) 
@@ -466,21 +464,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! 
          ! :::Exchange    (resonant):::
          !
-#if defined _DOUBLE
-         if (BS_res_K_exchange) H_res_x=zdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
-#else
-         if (BS_res_K_exchange) H_res_x=cdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
-#endif
+         if (BS_res_K_exchange) H_res_x=Vstar_dot_V(BS_n_g_exch,O2x(:,icv2),O1x(:,icv1))
          !
          ! :::Exchange    (coupling):::
          !
-#if defined _DOUBLE
-         if (BS_cpl_K_exchange) H_cpl_x=zdotu(BS_n_g_exch,&
-&                               O2x( g_rot(inv_index,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
-#else
-         if (BS_cpl_K_exchange) H_cpl_x=cdotu(BS_n_g_exch,&
-&                               O2x( g_rot(inv_index,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
-#endif
+         if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x(:,icv1))
          !
          ! :::ALDA        (resonant):::
          !
@@ -517,20 +505,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              !
              if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
              !
-             do i1=1,BS_n_g_W 
-#if defined _DOUBLE
-               Cc(i1)=zdotu(BS_n_g_W,Occ,1,BS_W(1,i1,iq_W),1)
-#else
-               Cc(i1)=cdotu(BS_n_g_W,Occ,1,BS_W(1,i1,iq_W),1)
-#endif
-             enddo
+             call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),Occ(:),Cc)
+             !
            endif
            !
-#if defined _DOUBLE
-           H_res_c=zdotc(BS_n_g_W,Ovv,1,Cc,1)*4.*pi
-#else
-           H_res_c=cdotc(BS_n_g_W,Ovv,1,Cc,1)*4.*pi
-#endif
+           H_res_c=Vstar_dot_V(BS_n_g_W,Ovv,Cc)*4._SP*pi
            !
          endif
          !
@@ -556,20 +535,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              !
            else
              !
-             do i1=1,BS_n_g_W
-#if defined _DOUBLE
-               Cc(i1)=zdotu(BS_n_g_W,Ocv,1,BS_W(1,i1,iq_W),1)
-#else
-               Cc(i1)=cdotu(BS_n_g_W,Ocv,1,BS_W(1,i1,iq_W),1)
-#endif
-             enddo
+             call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),Ocv(:),Cc)
+             !
            endif
            !
-#if defined _DOUBLE
-           H_cpl_c=zdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
-#else
-           H_cpl_c=cdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
-#endif
+           H_cpl_c=Vstar_dot_V(BS_n_g_W,Ovc,Cc)*4._SP*pi
            !
          endif
          !

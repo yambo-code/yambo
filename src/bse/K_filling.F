@@ -66,8 +66,9 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
      ikk1=sum(BS_blk_dim(:ik1-1))
      ikk2=sum(BS_blk_dim(:ik2-1))
      !
-     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      call live_timing(steps=1)
+     if (ik2<BS_k_and_row_restart(2)) cycle
+     if (ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1)) cycle
      !
      do icv1=1,BS_blk_dim(ik1)
        do icv2=1,BS_blk_dim(ik2)
@@ -90,7 +91,11 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  !
  do i_cpu=1,ncpu
    write (ch,'(a,i2.2,a)') '[P ',i_cpu,'] Kernel filling [o/o]'
-   call msg('rs',trim(ch),real(n_K_elements(i_cpu))/real(tot_n_K_elements)*100._SP)
+   if (tot_n_K_elements>0) then
+     call msg('rs',trim(ch),real(n_K_elements(i_cpu))/real(tot_n_K_elements)*100._SP)
+   else
+     call msg('rs',trim(ch),0._SP)
+   endif
  enddo
  !
  ! Rescale the total number of K elements that are passed to the

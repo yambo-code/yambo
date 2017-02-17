@@ -43,6 +43,11 @@ subroutine IO_Setup(en,k)
  !
  call section('*','Files & I/O Directories') 
  !
+ ! CPU's structure
+ !
+ local_master_cpu(myid+1)=master_cpu
+ !
+ !
  ! 
  call msg('r','CORE databases in ',trim(core_io_path))
  call msg('r','Additional I/O in ',trim(more_io_path))

@@ -41,7 +41,9 @@ module UNITS
  !
  ! Frequencies
  !
- real(SP), parameter :: HA2GHZ=HARTREE*241798.474_SP
+ real(SP), parameter :: CORE_CNST=2.418884326505_SP
+ !
+ real(SP), parameter :: HA2GHZ=HARTREE*CORE_CNST*10._SP**5
  real(SP), parameter :: HA2THZ=HA2GHZ/1000._SP
  !
  ! wavelength
@@ -52,10 +54,22 @@ module UNITS
  !
  real(SP), parameter :: HA2PSm1=HA2THZ
  real(SP), parameter :: HA2FSm1=HA2THZ/1000._SP       ! Note that 1 THz = 10^-3 / fs
- real(SP), parameter :: AUT2SEC=2.418884326505_SP*10._SP**(-17)
- real(SP), parameter :: SEC2AUT=1._SP/AUT2SEC
- real(SP), parameter :: FS2AUT =10.**2/2.418884326505_SP
- real(SP), parameter :: PS2AUT =10.**5/2.418884326505_SP
+ !
+ real(SP), parameter :: FS2AUT =10.**2/CORE_CNST
+ real(SP), parameter :: PS2AUT =10.**5/CORE_CNST
+ !
+ ! LifeTimes
+ !
+ ! To express the mean lifetime \tau (fs) in terms of its decay width \gamma (in eV) 
+ ! one uses
+ !
+ !   \gamma=\hbar/\tau
+ !
+ ! and equivalently
+ !
+ !   \tau=\hbar/\gamma
+ !
+ real(SP), parameter :: HBAR_eVfs = 6.58211899_SP*10._SP**(-1._SP) ! eV*fs
  !
  ! Magnetic fields
  !

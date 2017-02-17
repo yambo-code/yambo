@@ -94,7 +94,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
    !
  enddo
  !
- call msg('r','[QP] Kpts covered exactly  [o/o]:',&
+ call msg('sr','[QP] Kpts covered exactly  [o/o]:',&
 &              real(nk_exact)/real(k%nibz)*100._SP)
  if (l_plan_todo_EWZI(4).and.nk_interpolated>0) then
    call msg('r','[Interpolate] Nighbours         :',n_neigh)
@@ -163,6 +163,8 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
          DB_corrected(i3,ik,:)=1
          !
        endif
+     enddo
+     do i3=band_range(1),band_range(2)
        if (l_plan_todo_EWZI(2)) then
          !
          if (any(Wl(i3,:)==0._SP)) cycle
@@ -178,6 +180,8 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
          DB_corrected(i3,ik,:)=1
          !
        endif
+     enddo
+     do i3=band_range(1),band_range(2)
        if (l_plan_todo_EWZI(3)) then
          !
          if (any(Zl(i3,:)==(0._SP,0._SP))) cycle
@@ -197,7 +201,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
      !
    end subroutine
    !
-   real function kmin_distance(k,p) ! k/p are iku
+   real(SP) function kmin_distance(k,p) ! k/p are iku
      use pars
      use vec_operate,  ONLY:iku_v_norm,c2a
      use R_lattice,    ONLY:b

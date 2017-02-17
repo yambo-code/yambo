@@ -36,10 +36,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        COHSEX_use_empties
+&                        COHSEX_use_empties,QP_W_partially_done
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF_load,WF_free
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
@@ -55,13 +55,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Work Space
  !
- integer                  ::i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4)
+ integer                  ::i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
+&                           i_qp_to_start,iq_to_start
  real(SP),    allocatable ::PPaP(:,:)
  complex(SP), allocatable ::PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:)
  type(ggwinfo)            ::isc,iscp
  type(pp_indexes)         ::px
- integer          ::iv4(4),io_err,ID, timing_states
- integer, external::ioX,QP_state_extract
+ integer          ::iv4(4),io_err,ID, timing_states,qp_ID
+ integer, external::ioX,QP_state_extract,ioQP
+ logical, external::stop_now
  character(schlen)::ch,Sc_name
  logical          ::PPaR_is_TR_rotated
  complex(SP)      ::local_rhotw(X%ng),pre_factor
@@ -71,11 +73,45 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)
+ i_qp_to_start=1
+ iq_to_start  =1
+ if(.not.l_collisions_IO) QP_Sc        =cmplx(0.,0.,SP)
  !
  ! COHSEX: bands setup
  !
  if ((l_sc_srpa.or.l_cohsex).and.(.not.COHSEX_use_empties)) &
 &                                  QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
+ !
+ ! Restart
+ !
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=qp_ID)
+ io_err=ioQP('QP',qp,qp_ID)
+ !
+ if (QP_W_partially_done.and.io_err>0) then
+   !
+   ! Assuming i_qp_to_start=QP_n_states I get ...
+   !
+   iq_to_start   = io_err/QP_n_states
+   i_qp_to_start = io_err-(iq_to_start-1)*QP_n_states
+   !
+   ! If i_qp_to_start/QP_n_states I get ...
+   !
+   if (i_qp_to_start/=QP_n_states) then
+     iq_to_start   = iq_to_start+1
+     i_qp_to_start = io_err-(iq_to_start-1)*QP_n_states
+   endif
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/-1/),ID=qp_ID)
+   io_err=ioQP('QP',qp,qp_ID)
+   !
+   ! Only the master keeps in memory the QP_Sc in order 
+   ! to avoid double countings in the final ALL 2 ALL
+   !
+   if(.not.master_cpu) QP_Sc=(0._SP,0._SP)
+   !
+ endif
+ !
  !
  ! Section
  !
@@ -117,8 +153,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! WFs
  !
- call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),&
-&             (/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
+ call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -152,23 +187,33 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
  !
+ ! Parallel Indexes & LIVE-TIMING STEPS
  !
- QP_Sc=cmplx(0.,0.,SP)
- !
- call par_indexes(px,(/q%nbz,QP_n_G_bands(2)/),(/1,QP_n_G_bands(1)/))
- !
+ call par_indexes(px,(/q%nbz,QP_n_G_bands(2)/),(/iq_to_start,QP_n_G_bands(1)/))
  !
  call pp_redux_wait
  !
- ! LIVE-TIMING message
+ !_RT (COLLISIONS)
+ !do i_qp=1,QP_n_states
+ ! if (.not.px%element_1D(i_qp)) cycle
+ ! do iqbz=iq_to_start,q%nbz 
+ !  do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+ !   do ib2=QP_n_G_bands(1),QP_n_G_bands(2)
  !
-   if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%n_of_element_1D(myid+1)*QP_n_states) 
-   if (l_cohsex) call live_timing&
-&                             (trim(Sc_name)//'W0 COHSEX',px%n_of_element_1D(myid+1)*QP_n_states) 
+ !any other
+ !do iqbz=iq_to_start,q%nbz 
+ ! do i_qp=1,QP_n_states
+ !  do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+ !   if (.not.px%element_1D(ib)) cycle
  !
- !
- do iqbz=1,q%nbz 
    !
+   timing_states=px%n_of_elements(myid+1)*(QP_n_states*(q%nbz-iq_to_start)+QP_n_states-i_qp_to_start+1)
+   !
+   if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_states)
+   if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_states)
+ !
+ !
+ Q_loop: do iqbz=iq_to_start,q%nbz 
    !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
@@ -179,10 +224,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! I/O
      !
-     if (iqibz==1) call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=ID)
-     if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
-     if (iqibz> 1) call io_control(ACTION=RD_CL_IF_END,COM=NONE,&
-&                                  SEC=(/2*isc%qs(2),2*isc%qs(2)+1/),ID=ID)
+     if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)
+     if (q%nbz==1         ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
+     if (iqbz> iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
      io_err=ioX(X,Xw,ID)
      !
      ! Poles and Residuals
@@ -213,7 +257,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      PPaR(:,:)=PPaR_ws(:,:)
    endif
    !
-   do i_qp=1,QP_n_states
+   do i_qp=i_qp_to_start,QP_n_states
+     !
+     ! i_qp must start from i_qp_to_start only during the first loop
+     ! of the restart. Then it must be set to 1.
+     !
+     if (i_qp==QP_n_states) i_qp_to_start=1
      !
      !
      !
@@ -278,7 +327,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
          enddo
          !
-         if(.not.l_collisions_IO) QP_Sc(i_qp,:2)=QP_Sc(i_qp,:2)+dc(:2)
+         if(.not.l_collisions_IO) QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
          !
        else
 #if defined _DOUBLE
@@ -303,25 +352,43 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        endif
        !
-     enddo
-   enddo
+     enddo ! loop on scattering states
+ !
+     !
+     ! ALL 2 ALL of QP_Sc
+     !
+     call pp_redux_wait(QP_Sc)
+     if(.not.master_cpu) QP_Sc=(0._SP,0._SP)
+     !
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,- (i_qp+QP_n_states*(iqbz-1 ))/),ID=qp_ID)
+     io_err=ioQP('QP',qp,qp_ID)
+     !
+     ! In parallel runs only few cpus have access to the DB. Therefore, as QP_W_partially_done
+     ! is defined  in ioQP I need to redefine it here for the CPUs not involved in the I/O
+     !
+     QP_W_partially_done=.true.
+     if (i_qp==QP_n_states.and.iqbz==q%nbz) QP_W_partially_done=.false.
+     !
+     if (stop_now(.FALSE.)) exit Q_loop
+     !
+     !
+   enddo ! loop on quasi-particles
    !
-   !
-   !
- enddo
+ enddo Q_loop 
  !
  call live_timing()
- !
- ! ALL 2 ALL of QP_Sc
- !
- if (allocated(QP_Sc)) call pp_redux_wait(QP_Sc)
  !
  ! CLEAN
  !
  deallocate(isc%gamp,isc%rhotw,iscp%rhotw,dc,PPaR_ws,PPaR)
  if (l_ppa) deallocate(E_,PPaP)
- call mem_est("PPaP ISC-GAMP GW-E")
+ call mem_est("ISC-GAMP GW-E")
  call X_alloc('X')
+ if (l_cohsex.or.l_sc_srpa) then
+   call mem_est("PPaR")
+ else
+   call mem_est("PPaP")
+ endif
  !
  !
  call WF_free()

@@ -45,6 +45,7 @@ typedef struct
         int   nr;
         int   nc;
         int   st;
+        int   mp;
 } Ldes;
 /* 
  Yambo/Ypp driver flag
@@ -66,9 +67,6 @@ typedef struct
 #endif
 #if defined _a2y
  #include "a2y.h"
-#endif
-#if defined _c2y
- #include "c2y.h"
 #endif
 #if defined _f2y
  #include "f2y.h"
@@ -97,7 +95,7 @@ static void title(FILE *file_name,char *cmnt);
  #define F90_FUNC_(name,NAME) name
 #endif
 /* */
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
  int io,i,c,j,k,nf,lni,lnr,lnc,ttd,
      iif=0,iid=1,iod=1,icd=1,nr=0,ijs=0,np=1,pid=0;
@@ -163,18 +161,9 @@ main(int argc, char *argv[])
      if (strcmp(opts[j].ln,"help")==0) {usage(1);exit(0);};
      if (strcmp(opts[j].ln,"lhelp")==0) {usage(2);exit(0);};
 /* 
- Switch off MPI_init as I have options used to create the input file...
+ Switch off MPI_init for non-prallel options ...
 */
-#if defined _YAMBO_MAIN
-     if (j> 10) {mpi_init=-1;};
-#endif
-#if defined  _YPP_MAIN
-     if (j> 6) {mpi_init=-1;};
-#endif
-/* 
- ... or if nompi is given 
-*/
-     if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
+     if (opts[j].mp==0)  {mpi_init=-1;};
 /* 
 */
      opts[j].st++; 
@@ -255,13 +244,28 @@ main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
+ /* Note on passing characters from C to Fortran:
+  For each CHARACTER*n argument passed to a Fortran subprogram, 
+  two items are actually passed as arguments:
+  - The address of the character argument in memory (that is, a pointer to the argument).
+  - The arguments length in bytes. This is the "hidden" length argument 
+  that is available to the subprogram from the stack.
+  To pass a string argument from Fortran to C, you must explicitly prepare 
+  the C function to receive the string address argument and the hidden argument. 
+  The order of the address arguments in the argument list will be the same 
+  in C as in Fortran. The hidden length arguments, however, will come at the end of the list. 
+  If more than one string argument is passed, the length arguments will 
+  follow the same order as the address arguments, but at the end of the C's argument list.
+  Both C and Fortran both pass strings by reference. 
+  See: http://docs.hp.com/en/B3909-90002/ch08s05.html
+ */
 #if defined _YAMBO_MAIN
  /* 
    Running the Fortran YAMBO driver 
  ===========================================================================
  */
  F90_FUNC(yambo_driver,YAMBO_DRIVER)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
+         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
 #endif
 #if defined _YPP_MAIN
  /* 
@@ -269,15 +273,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(ypp_i,YPP_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
-#endif
-#if defined _c2y 
- /* 
-   Running the Fortran c2y driver
- ===========================================================================
- */
- F90_FUNC(c2y_i,C2Y_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
+         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
 #endif
 #if defined _a2y 
  /* 
@@ -285,7 +281,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(a2y_i,A2Y_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
+         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
 #endif
 #if defined _p2y
  /* 
@@ -293,7 +289,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(p2y_i,P2Y_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
+         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
 #endif
 #if defined _e2y 
  /* 
@@ -301,7 +297,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(e2y_i,E2Y_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
+         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
 #endif
  /* 
    INPUT FILE

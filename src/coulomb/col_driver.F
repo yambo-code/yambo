@@ -62,6 +62,7 @@ subroutine col_driver(bare_NG,q)
  !
  ! Work Space
  !
+ logical          :: l_RandQpts
  integer          :: ig,iq,ID,io_err
  integer, external:: ioRIM
  !
@@ -94,7 +95,8 @@ subroutine col_driver(bare_NG,q)
  !
  if (.not.l_rim) then
    RIM_ng=0
-   RIM_n_rand_pts=0
+   call parser('RandQpts',l_RandQpts)
+   if (.not.l_RandQpts) RIM_n_rand_pts=0
  endif
  !
  call parser('QpgFull',RIM_is_diagonal)

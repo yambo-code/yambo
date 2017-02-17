@@ -24,7 +24,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_collisions_IO,l_real_time
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_collisions_IO
  use com,           ONLY:msg
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -44,7 +44,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp
+ integer                 :: i2,iq,ib,ibp,jb,ik,i_qp
+ integer                 :: Sx_lower_band,Sx_upper_band
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
 #else 
@@ -70,6 +71,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
  !
+ Sx_lower_band=1
  Sx_upper_band=E%nbm
  !
  !
@@ -79,6 +81,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
    ! QP_table -> report
    !
+   call msg('r','')
    i4=(/1,1,0,0/)
    do while(QP_state_extract(i4)>0)
      write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
@@ -111,10 +114,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ch='EXS'
  !
  if (l_sc_exx) then
-   call live_timing(trim(ch),px%n_of_element_1D(myid+1)*E%nbf*&
+   call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbf*&
         &(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3)))
  else  
-   call live_timing(trim(ch),px%n_of_element_1D(myid+1)*QP_n_states)
+   call live_timing(trim(ch),px%n_of_elements(myid+1)*QP_n_states)
  endif
  !
  do i_qp=1,QP_n_states
@@ -148,7 +151,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      iscp%qs=isc%qs
      !
      !
-     do jb=1,Sx_upper_band
+     do jb=Sx_lower_band,Sx_upper_band
        !      
        if (.not.px%element_2D(iq,jb)) cycle
        isc%os(1)=jb
@@ -191,6 +194,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
  !
- if (.not.l_real_time) call pp_redux_wait(QP_Vnl_xc)
+ call pp_redux_wait(QP_Vnl_xc)
  !
 end subroutine

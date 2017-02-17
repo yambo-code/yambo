@@ -41,7 +41,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,&
-&                        QP_G_dr,QP_Sc_steps
+&                        QP_G_dr,QP_Sc_steps,QP_W_partially_done
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:e2et,h2ht,bose_decay
  use memory_m,      ONLY:mem_est
@@ -73,10 +73,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 #endif
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
- integer, external   ::ioX,QP_state_extract,ioQP,X_em1
- !
- integer, external   ::QP_life_transitions
- !
+ integer, external   ::ioX,QP_state_extract,ioQP,X_em1,QP_life_transitions
+ logical, external   ::stop_now
  character(schlen)   ::ch,Sc_name
  logical             ::X_is_TR_rotated
  !
@@ -125,8 +123,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
    do i1=1,qp%n_states
      Sc_W(i1)%n =QP_Sc_steps
-     Sc_W(i1)%dr=QP_G_dr
-     call FREQUENCIES_Green_Function(i1,Sc_W(i1),en%E)
+     call FREQUENCIES_Green_Function(i1,Sc_W(i1),en%E,.FALSE.)
      QP_Sc_steps=Sc_W(i1)%n(1)
    enddo
  endif
@@ -240,7 +237,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !===========
  !
  call pp_redux_wait
- call live_timing(trim(Sc_name)//'W0',px%n_of_element_1D(myid+1)*(q%nbz-iq_to_start+1))
+ call live_timing(trim(Sc_name)//'W0',px%n_of_elements(myid+1)*(q%nbz-iq_to_start+1))
  !
  do iqbz=iq_to_start,q%nbz
    !
@@ -396,6 +393,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        io_err=ioQP('W',qp,WID)
        !
      endif
+     !
+     QP_W_partially_done=.true.
+     if (iqbz==q%nbz) QP_W_partially_done=.false.
+     !
+     if (stop_now(.FALSE.)) exit 
      !
    endif
    !

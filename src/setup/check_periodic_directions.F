@@ -26,6 +26,8 @@ subroutine check_periodic_directions()
  use X_m,            ONLY:eps_2_alpha,alpha_dim,eval_alpha
  use D_lattice,      ONLY:DL_vol,a,non_periodic_directions
  use vec_operate,    ONLY:v_norm
+ !
+ !
  implicit none
  !
  ! Work Space
@@ -96,7 +98,7 @@ subroutine check_periodic_directions()
    call warning('Non periodic geometry and unit cell are incompatible')
    return
  endif
- ! 
+ !
  !
  call msg('r', 'Non-periodic chartesian directions :',trim(non_periodic_directions))
  call msg('r', 'Optical renormalization        [au]:',eps_2_alpha)

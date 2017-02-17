@@ -23,13 +23,15 @@ module fields
  !
  use pars, ONLY:SP,schlen,lchlen
  !
+ implicit none
+ !
  ! Main Gauge
  !
  character(schlen) :: global_gauge
- !
  !
  ! Path for the shifted grids
  !
  character(lchlen) :: grid_path
  !
+   !
 end module

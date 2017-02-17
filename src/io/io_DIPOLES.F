@@ -24,7 +24,7 @@ integer function io_DIPOLES(X,Xen,ID)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HARTREE
  use X_m,           ONLY:X_t,DIP_iR,X_alloc,Dipole_bands_ordered,&
-&                        Dipole_uses_shifted_grids
+&                        Dipole_uses_shifted_grids,P_square
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,q0_def_norm
  use matrix_operate,ONLY:mat_c2r,mat_r2c

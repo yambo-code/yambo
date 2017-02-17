@@ -94,9 +94,9 @@ module wave_func
      use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
      integer :: err
      !
-     !
-     wf_n_states=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
-     !
+       !
+       wf_n_states=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
+       !
      !
      if (wf_space=="R") allocate(wf(fft_size,wf_n_states),stat=err)
      if (wf_space=="G") allocate(wf(wf_ng,wf_n_states),stat=err)

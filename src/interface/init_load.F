@@ -42,14 +42,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode,BSS_damp_reference
- use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,&
+ use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
-#if defined _TWO_LEVELS
- use real_time,     ONLY:l_3levels,en_levels,lambda_diag,lambda_offdiag,dip
-#endif
  !
  implicit none
  type(initdefs)::defs
@@ -132,6 +129,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'FxcGRLc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr,G_unit)
  call it(defs,'LRC_alpha','[TDDFT] LRC alpha factor',FXC_LRC_alpha)
+ call it(defs,'LRC_beta', '[TDDFT] LRC beta factor',FXC_LRC_beta,verb_level=V_resp)
  !
  ! Xs Xd Xp
  !

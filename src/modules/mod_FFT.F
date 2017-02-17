@@ -35,4 +35,25 @@ module FFT_m
  !
  integer(8)  :: fftw_plan !(FW) +1 sign: G-space to R-space & oscillators
                           !(BW) -1 sign: R-space to G-space
+ contains
+   integer function modx(i,j)
+     !
+     !  Calculate a function similar to MOD:
+     !  modx(i,j) = mod (i,j) i>=0
+     !          = mod ( mod(i,j)+j , j) i<0
+     !  Thus 
+     !   modx(3,2)=1 
+     !   modx(-1,2)=1.
+     !  This is different from MOD for i negative.
+     !
+     implicit none
+     integer i,j
+     if (i>=0) then
+       modx = mod(i,j)
+     else
+       modx = mod( mod(i,j) + j , j)
+     endif
+     !
+   end function
+   !
 end module

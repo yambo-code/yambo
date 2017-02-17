@@ -48,13 +48,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! Dyson equation: Newton solver 
  !
- ! ... no energy dependence in GW COHSEX
- !
  if (l_cohsex) then
-   !
-   QP_dSc_steps=1
-   !
- else
    !
    call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HARTREE)
    call msg('r', '[Newton] Sc steps      :',QP_dSc_steps)

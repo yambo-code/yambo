@@ -44,7 +44,7 @@ integer function ioX(X,Xw,ID)
  !Work Space
  !
  integer             ::sec_size,i1,iq,i_err,io_com_save
- logical             ::different_db_RL_order,l_CUTOFF,local_long_gauge
+ logical             ::different_db_RL_order,local_long_gauge
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
  real(SP)            ::Wd_disk(2)
@@ -71,13 +71,11 @@ integer function ioX(X,Xw,ID)
    !
    ! Header
    !
-   l_CUTOFF=.FALSE.
-   !
    if (X%whoami==1) local_XC_KIND="Xx"
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
-   ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,CUTOFF=l_CUTOFF,GAUGE=.TRUE.)
+   ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,CUTOFF=.true.,GAUGE=.TRUE.)
    if (ioX/=0) goto 1
    !
    ! PARS_1

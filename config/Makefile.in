@@ -99,17 +99,6 @@ ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
 #
-# TESTs
-#
-tests: yambo
-	@if ! test -f ../branches/test-suite/run-tests.pl ;  then echo "TESTs folder not found"; fi
-	@if test -f ../branches/test-suite/run-tests.pl ;  then \
-	cd ../branches/test-suite/; ./run-tests.pl -t b -test "Al111 01_init 02_eels 03_eps_drude 04_HF" -bindir=${PWD}/bin/ ; \
-	cd ../branches/test-suite/; ./run-tests.pl -t b -test "C6H3Cl3 01_init 02_ALDA_diago 03_ALDA_haydo 04_QP 05_BSE 06_QP_RIM" -bindir=${PWD}/bin/; \
-	cd ../branches/test-suite/; ./run-tests.pl -t b -test "hBN 01_init 02_HF 03_QP 04_BSE" -bindir=${PWD}/bin/; \
-	cd ../branches/test-suite/; ./run-tests.pl -t b -test "LiF 01_init 02_RPA_no_LF 04_alda_g_space" -bindir=${PWD}/bin/; \
-	fi
-#
 clean: clean_fast
 clean_fast: 
 	@$(objects_clean)

@@ -31,7 +31,7 @@ if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 case "${host}" in
 i?86*linux*)
   case "${FC}" in
-  *pgf9*)
+  *pgf9* | *ftn* )
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
@@ -57,7 +57,10 @@ i?86*linux*)
   *ifort*)
     CPU_FLAG=""
     case "${FCVERSION}" in
-      *1*)
+      *11* | *12* )
+       CPU_FLAG="-xHost"
+       ;;
+      *10*)
        CPU_FLAG="-xW"
        ;;
       *)
@@ -121,7 +124,7 @@ ia64*linux* )
     UFFLAGS="-O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
     ;;
-  *pgf9*)
+  *pgf9* | *ftn* )
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
@@ -174,7 +177,7 @@ ia64*linux* )
     UFFLAGS="-O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
     ;;
-  *pgf9*)
+  *pgf9* | *ftn* )
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
@@ -189,7 +192,10 @@ ia64*linux* )
   *ifort*)
     CPU_FLAG=""
     case "${FCVERSION}" in
-      *1*)
+      *11* | *12* )
+       CPU_FLAG="-xHost"
+       ;;
+      *10*)
        CPU_FLAG="-xW"
        ;;
       *)
@@ -227,7 +233,7 @@ powerpc64*linux* )
   ;;
 powerpc-ibm* )
   CFLAGS="-O -q64"
-  SYSFLAGS="-O3 -q64 -qstrict -qarch=pwr5 -qtune=pwr5 -qmaxmem=-1"
+  SYSFLAGS="-O3 -q64 -qstrict -qarch=auto -qtune=auto -qmaxmem=-1"
   UFFLAGS="-q64"
   ;;
 mips-sgi-irix*)

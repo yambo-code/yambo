@@ -89,7 +89,7 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  call par_indexes(px,(/q%nibz,wf_ng/))
  !
- call live_timing('Cylinder',px%n_of_element_1D(myid+1))
+ call live_timing('Cylinder',px%n_of_elements(myid+1))
  !
  ! finite cylinder
  !

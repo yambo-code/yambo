@@ -25,6 +25,8 @@ subroutine REPORT_Occupations(E,mode)
  use units,         ONLY:HARTREE,BOHR,Bohr_magneton
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
+ !
+ !
  implicit none
  type(levels)::E
  integer     ::mode

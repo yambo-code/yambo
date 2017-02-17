@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.3 r.676 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.4 r.855 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
-SSUBLEVEL="3"
-SREVISION="676"
+SSUBLEVEL="4"
+SREVISION="855"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -132,8 +132,8 @@ AC_SUBST(iotk_dir)
 AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y=<mode>],
  [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0>]))
 
-PW_VER="3.2"
-PW_CPP="_P2Y_V32"
+PW_VER="4.0"
+PW_CPP="_P2Y_V40"
 if test "$compile_p2y" = "yes"; then
  if test "$with_p2y" = "export"; then
   PW_VER="export"
@@ -158,28 +158,6 @@ if test "$compile_p2y" = "yes"; then
 fi
 AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
-
-# ============================================================================
-# check for ETSF library
-AC_ARG_WITH(etsf, AC_HELP_STRING([--with-etsf=<path>],
- [Path of the ETSF I/O library directory]))
-compile_e2y="no"
-etsf_io_dir=""
-if ! test "$with_etsf" = "" ; then
- AC_MSG_CHECKING([$with_etsf for the ETSF I/O library])
- if test -r $with_etsf/lib/libetsf_io.a ; then
-  compile_e2y="yes"
-  etsf_dir="$with_etsf/include/intel"
-  AC_MSG_RESULT([yes])
-  cp "$with_etsf/lib/libetsf_io.a" lib/
-  cp "$with_etsf/lib/libetsf_io_low_level.a" lib/
-  cp "$with_etsf/lib/libetsf_io_utils.a" lib/
- else
-  AC_MSG_RESULT([no])
- fi
-fi
-AC_SUBST(compile_e2y)
-AC_SUBST(etsf_dir)
 
 # ============================================================================
 #
@@ -377,12 +355,38 @@ AC_HAVE_FFTW
 # SCALAPACK/BLACS
 SLK_SETUP
 # ============================================================================
-# NETCDF
-AC_ARG_ENABLE(largedb, AC_HELP_STRING([--enable-largedb],
- [Enable NetCDF large file support. Default is no.]))
-if test x"$enable_largedb" = "x"; then enable_largedb="no"; fi
-AC_SUBST(enable_largedb)
+# NETCDF 
 KH_PATH_NETCDF_F90
+# ============================================================================
+# ETSF_IO
+AC_ARG_WITH(etsf_io_include, AC_HELP_STRING([--with-etsf-io-include=<path>],
+   [Path of the ETSF_IO include directory]))
+AC_ARG_WITH(etsf_io_lib, AC_HELP_STRING([--with-etsf-io-lib=<path>],
+   [Path of the ETSF_IO lib directory]))
+compile_e2y="no"
+etsf_dir=""
+if test -d "$with_etsf_io_include" && test -d "$with_etsf_io_lib" ; then
+  if test "$netcdf" = "yes"; then
+    AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_lib and $with_etsf_io_include])
+    if test -r $with_etsf_io_lib/libetsf_io.a ; then
+      compile_e2y="yes"
+      etsf_dir="$with_etsf_io_lib"
+      for file in `find $with_etsf_io_include \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
+        cp $file include/ 
+      done
+      for file in `find $with_etsf_io_lib -name '*etsf_io*.a'`; do
+        cp $file lib/ 
+      done
+      AC_MSG_RESULT([yes])
+    else
+      AC_MSG_RESULT([no])
+    fi
+    AC_SUBST(compile_e2y)
+    AC_SUBST(etsf_dir)
+  else
+    AC_MSG_WARN([ETSF_IO requires NETCDF. ETSF_IO support removed.])
+  fi
+fi
 # ============================================================================
 # LIBXC
 KH_PATH_LIBXC_F90

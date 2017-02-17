@@ -77,5 +77,67 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
    !
  endif
  !
+ ! In the X_o loop the GreenF is multiplied by 
+ !
+ !  f0fac/spin_occ/real(Xk%nbz)/DL_vol
+ !
+ ! so that I have to divide/multiply to correctly renormalize 
+ !
+ f0fac=Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))
+ !
+ if (iq==1) then
+   !
+   do i1=1,BZ_RIM_nkpt(ikbz)
+     ! 
+     ik_rand=BZ_RIM_table(ikbz,i1) 
+     !
+     pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)+(0.,1.)*W_
+     !
+     ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
+&         real(BZ_RIM_nkpt(ikbz))/f0fac
+     !
+     do iw=fr(1),fr(2)
+       !
+       if (ordering=="t") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
+&                         ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
+       if (ordering=="c") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
+&                         ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
+       if (ordering=="r") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
+&                         ffac/(Xw%p(iw)-pole)
+       if (ordering=="a") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                                -ffac/(conjg(Xw%p(iw))+pole)
+     enddo
+     !
+   enddo
+   !
+ else
+   !
+   do i1=1,BZ_RIM_nkpt(ikbz)
+     ik_rand=BZ_RIM_table(ikbz,i1) 
+     !
+     do i2=1,BZ_RIM_nkpt(ikpbz)
+       ikp_rand=BZ_RIM_table(ikpbz,i2) 
+       !
+       pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)+(0.,1.)*W_
+       !
+       ffac=Z_*Xen%f_RIM(iv,ikp_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
+&         real(BZ_RIM_nkpt(ikbz))/real(BZ_RIM_nkpt(ikpbz))/f0fac
+       !
+       do iw=fr(1),fr(2)
+         if (ordering=="t") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
+&                           ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
+         if (ordering=="c") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
+&                           ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
+         if (ordering=="r") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
+&                           ffac/(Xw%p(iw)-pole)
+         if (ordering=="a") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                                  -ffac/(conjg(Xw%p(iw))+pole)
+       enddo
+       !
+     enddo
+     !
+   enddo
+   !
+ endif
  !
 end subroutine

@@ -65,4 +65,8 @@ module pw_data
 ! XC
    character(256)            :: pw_dft
 
+! Pseudopotentials
+  character(256),allocatable :: psfile(:)
+  integer, allocatable       :: nmesh(:), nbeta(:)
+
 end module pw_data

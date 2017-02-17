@@ -55,7 +55,7 @@ module it_m
  integer, parameter :: maxi1vars=50
  integer, parameter :: maxi2vars=50
  integer, parameter :: maxi3vars=50
- integer, parameter :: maxr1vars=50
+ integer, parameter :: maxr1vars=60
  integer, parameter :: maxr2vars=50
  integer, parameter :: maxr3vars=50
  integer, parameter :: maxr4vars=50

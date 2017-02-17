@@ -31,7 +31,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  use stderr,        ONLY:string_split
  use D_lattice,     ONLY:Tel,a,alat,input_Tel_commands_over_header,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor
- use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt
+ use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt,cut_description
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
  use IO_m,          ONLY:io_elemental,io_bulk,io_code_version,io_status,&
@@ -224,6 +224,16 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! Cutoff
  !
+ if (present(CUTOFF)) then
+   if (CUTOFF.and. (ver_is_gt_or_eq(ID,revision=718).or.write_is_on(ID)) ) then
+     call io_elemental(ID,VAR="CUTOFF",CH0='',VAR_SZ=1,MENU=MENU)
+     MENU=0
+     call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential         :",WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     io_header=io_status(ID)
+     if (io_header/=0) goto 1
+   endif
+ endif
  !
  ! Things that can be dumped
  !===========================

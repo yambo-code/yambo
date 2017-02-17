@@ -21,19 +21,19 @@
 !
 subroutine ypp_init(instr,lnstr,FINALIZE)
  !
+ use YPP
  use pars,           ONLY:pi
  use units,          ONLY:HARTREE,FS2AUT
  use wave_func,      ONLY:wf_ng 
  use D_lattice,      ONLY:alat
- use R_lattice,      ONLY:ng_vec
+ use R_lattice,      ONLY:ng_vec,nkibz
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls,runlevel_is_on,&
-&                         infile_verbosity,V_general,V_qp,V_all
+&                         infile_verbosity,V_general,V_qp,V_all,V_real_time
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
- use YPP
  use electrons,      ONLY:n_spin,n_bands
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
@@ -106,6 +106,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  N_path_pts=0
  alat_used_for_output=alat(1)
  !
+ !BZ RIM
+ !
+ BZ_RIM_path="."
+ gamma_radius=0.
+ !
  !
  ! DATABASES 
  !===========
@@ -132,6 +137,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    if (i1<50) then
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
+     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='rt' )  infile_verbosity=V_real_time
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='qp' )  infile_verbosity=V_qp
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='all' )  infile_verbosity=V_all
    endif
@@ -156,7 +162,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        l_sort           =trim(rstr_piece(i1+1))=='s'
        l_amplitude      =trim(rstr_piece(i1+1))=='a'
-       !
        !
        !
      endif
@@ -218,6 +223,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    endif
  endif
  !
+ l_bzrim     =runlevel_is_on('bzrim')
+ !
+ l_qpdb = runlevel_is_on('qpdb')
+ !
+ if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat GammaRadius")
  !
  if (l_electrons.and.l_dos) then
     if(l_dos) call QP_ctl_switch('G')
@@ -248,6 +258,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call pp_redux_wait
  endif
  !
+ if(l_qpdb) call qpdb_init()
+ ! 
  if (l_plot.and.l_sp_wf) &
 &                        call QP_init(.FALSE.,.FALSE.)
  !

@@ -83,6 +83,7 @@ module drivers
  !
  logical :: l_oep_exact
  logical :: l_oep_kli
+ logical :: l_oep_ceda
  logical :: l_oep_slater
  !
  ! The XC types (Fxc)

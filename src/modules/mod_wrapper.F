@@ -153,8 +153,9 @@ module wrapper
    !======
    !
    subroutine V_copy(N,CX,CY)
-     integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(*),CY(*)
+     integer,    intent(in)  :: N
+     complex(SP),intent(in)  :: CX(*)
+     complex(SP),intent(out) :: CY(*)
 #if defined _DOUBLE
      call zcopy(N,CX,1,CY,1)
 #else

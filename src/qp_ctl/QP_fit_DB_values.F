@@ -67,11 +67,11 @@ subroutine QP_fit_DB_values(band_range,qp,en,QP_ctl,what)
      if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2)) cycle
      if (spin(qp%table(i1,:))/=i_spin) cycle
      if (real(qp%E_bare(i1))<=1.E-5) then
-       Eov=max(Eov,real(qp%E_bare(i1)))
-       Ev=max(Ev,real(qp%E(i1))) 
+       Eov=max(Eov,real(qp%E_bare(i1),SP))
+       Ev=max(Ev,real(qp%E(i1),SP)) 
      else
-       Eoc=min(Eoc,real(qp%E_bare(i1)))
-       Ec=min(Ec,real(qp%E(i1))) 
+       Eoc=min(Eoc,real(qp%E_bare(i1),SP))
+       Ec=min(Ec,real(qp%E(i1),SP)) 
      endif
    enddo
    !

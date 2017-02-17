@@ -178,7 +178,7 @@ subroutine K_diagonalization(iq,W)
      ! [1] BS_R_right(i)=<q0|j><j|i_R>
      !                  =conjg(BSS_rhoq0(j))*BS_V_right(j,i)
      !
-     call live_timing('BSK R residuals',px%n_of_element_1D(myid+1))
+     call live_timing('BSK R residuals',px%n_of_elements(myid+1))
      !
      do i1=1,BS_H_dim
        BS_R_right(i1)=cmplx(0.,0.,SP)
@@ -202,7 +202,7 @@ subroutine K_diagonalization(iq,W)
      BSS_rhoq0(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
      BSS_rhoq0(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
      !
-     call live_timing('BSK L residuals',px%n_of_element_1D(myid+1))
+     call live_timing('BSK L residuals',px%n_of_elements(myid+1))
      !
      do i1=1,BS_H_dim
        BS_R(i1)=cmplx(0.,0.,SP)
@@ -234,7 +234,7 @@ subroutine K_diagonalization(iq,W)
      !
      ! [4] BS_R_left(i)=BS_overlap(i,j)BS_R(j)
      !
-     call live_timing('BSK L x overlap',px%n_of_element_1D(myid+1))
+     call live_timing('BSK L x overlap',px%n_of_elements(myid+1))
      do i1=1,BS_H_dim
        BS_R_left(i1)=cmplx(0.,0.,SP)
        if (.not.px%element_1D(i1)) cycle
@@ -260,7 +260,7 @@ subroutine K_diagonalization(iq,W)
      ! BS_R(i)=\sum_k <q0|k><k|i> =
      !         \sum_k BS_mat(k,i) x conjg( BSS_rhoq0(k) )
      !
-     call live_timing('BSK   residuals',px%n_of_element_1D(myid+1))
+     call live_timing('BSK   residuals',px%n_of_elements(myid+1))
      BS_R=(0.,0.)
      !
      do i1=1,BS_K_dim
@@ -285,7 +285,7 @@ subroutine K_diagonalization(iq,W)
  X_epsilon(1,:)=(0.,0.)
  X_epsilon(2,:)=(0.,0.)
  X_epsilon(3,:)=X_epsilon(3,:)/real(ncpu,SP)
- call live_timing('BSK res epsilon',px%n_of_element_1D(myid+1))
+ call live_timing('BSK res epsilon',px%n_of_elements(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !

@@ -35,6 +35,8 @@ subroutine spin_density(en,Xk)
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf_state,wf
  use xc_functionals, ONLY:two_spin_density
+ !
+ !
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
@@ -46,6 +48,8 @@ subroutine spin_density(en,Xk)
  !
  two_spin_density=0.
  cv=0.
+ !
+ !
  !
  if (n_spin==1) return
  !

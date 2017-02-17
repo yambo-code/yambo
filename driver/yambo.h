@@ -27,37 +27,38 @@
 #else
  int yambo_driver_
 #endif
- (char *str1,int *,char *inf,int *,char* id,
-  int *,char *od,int *,char *com_dir,int *,char *js,int *,int *,int *); 
+ (int *, int *,int *,int *,int *,int *,int *,int *,
+  char *rnstr2, char *inf, char *id, char *od, char *com_dir, char *js,
+  int lni,int iif,int iid,int iod,int icd,int ijs);
 /*
  Command line structure
 */
- static Ldes opts[] = { /* Int Real Ch (Dummy)*/
-  {"help",   "h","Short Help",0,0,0,0},              
-  {"lhelp",  "H","Long Help",0,0,0,0},               
-  {"jobstr", "J","Job string identifier",0,0,1,0},   
-  {"infver", "V","Input file verbosity",0,0,1,0},    
-  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all",0,0,0,0},
-  {"ifile",  "F","Input file",0,0,1,0},              
-  {"idir",   "I","Core I/O directory",0,0,1,0},         
-  {"odir",   "O","Additional I/O directory",0,0,1,0},   
-  {"cdir",   "C","Communications I/O directory",0,0,1,0},  
-  {"nompi",  "N","Skip MPI initialization",0,0,0,0}, 
-  {"dbpr",   "D","DataBases properties",0,0,0,0},    
-  {"dbfrag", "S","DataBases fragmentation",0,0,0,0}, 
-  {"setup",  "i","Initialization",0,0,0,0},          
-  {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0},    
-  {"tddft",  "t","The TDDFTs [opt=(a)LDA/(l)RC]",0,0,1,0},     
-  {"rim_cut","c","Coulomb interaction",0,0,0,0},  
-  {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0},      
-  {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0},     
-  {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},        
-  {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0},              
-  {"gw0",    "g","Dyson Equation solver",0,0,1,0}, 
-  {"DESC",   " ","opt=n(ewton)/s(ecant)/g(reen)",0,0,0,0},
-  {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  
-  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      
-  {NULL,NULL,NULL,0,0,0,0}
+ static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+  {"help",   "h","Short Help",0,0,0,0,0},              
+  {"lhelp",  "H","Long Help",0,0,0,0,0},               
+  {"jobstr", "J","Job string identifier",0,0,1,0,1},   
+  {"infver", "V","Input file verbosity",0,0,1,0,0},    
+  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all",0,0,0,0,0},
+  {"ifile",  "F","Input file",0,0,1,0,1},              
+  {"idir",   "I","Core I/O directory",0,0,1,0,1},         
+  {"odir",   "O","Additional I/O directory",0,0,1,0,1},   
+  {"cdir",   "C","Communications I/O directory",0,0,1,0,1},  
+  {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
+  {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
+  {"dbfrag", "S","DataBases fragmentation",0,0,0,0,1}, 
+  {"setup",  "i","Initialization",0,0,0,0,0},          
+  {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0,0},    
+  {"tddft",  "t","The TDDFTs [opt=(a)LDA/(b)SE/(l)RC]",0,0,1,0,0},     
+  {"rim_cut","c","Coulomb interaction",0,0,0,0,0},  
+  {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
+  {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     
+  {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0,0},        
+  {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0,0},              
+  {"gw0",    "g","Dyson Equation solver",0,0,1,0,0}, 
+  {"DESC",   " ","opt=n(ewton)/s(ecant)/g(reen)",0,0,0,0,0},
+  {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
+  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      
+  {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="yambo";
  char *tdesc="A shiny pot of fun and happiness [C.D.Hogan]";

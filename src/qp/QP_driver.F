@@ -176,7 +176,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_QP)
    io_QP_err=ioQP('QP',qp,ID_QP)
    !
-   if (io_QP_err==0.and..not.trim(QP_solver)=='g') then
+   if (io_QP_err==0.and..not.trim(QP_solver)=='g'.and..not.QP_W_partially_done) then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_QP)
      io_QP_err=ioQP('QP',qp,ID_QP)
      call QP_report_and_write(k,qp,en,0)
@@ -255,7 +255,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  ! SECANT
  !--------
- if (trim(QP_solver)=='s') call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
+ if (trim(QP_solver)=='s') then
+   call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
+   if (QP_W_partially_done) then
+     call local_free()
+     return
+   endif
+ endif
  !
  ! GREEN`s FUNCTIONS
  !-------------------
@@ -264,7 +270,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    if (l_el_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
-
    !
    call QP_Green_Function(qp,en,-1)
    !
@@ -312,6 +317,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      !
      if (.not.l_life)                 QP_dSc_steps=2
      if (.not.l_life.and.QP_dSc_test) QP_dSc_steps=3
+     !
+     ! Cohsex is static
+     !
+     if (l_cohsex)                    QP_dSc_steps=1
+     !
+     if (trim(QP_solver)/='g')        QP_Sc_steps=QP_dSc_steps
      !
      allocate(QP_Sc(QP_n_states,QP_Sc_steps))
      call mem_est("QP_Sc",(/size(QP_Sc)/))

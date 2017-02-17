@@ -50,7 +50,6 @@ subroutine electrons_driver(Xk,Xen)
  integer               :: i1,i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2)
  logical               :: success
  character(schlen)     :: ch_ws,titles(4)
- !
  if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
 &   /))) return
  !

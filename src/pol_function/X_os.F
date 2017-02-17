@@ -51,7 +51,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  ! Work Space
  !
  integer                 :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
-&                           isp,iv,ic,g1,g2,g2_max,g2_min,iw,iwmax,isave(4),n_poles 
+&                           isp,iv,ic,g1,g2,g2_max,iw,iwmax,isave(4),n_poles 
  logical                 :: force_bare_X_G,skip_WF_load,Drude_term
  real(SP)                :: minmax_ehe(2),drude_factor,eh_occ
  type(pp_indexes)        :: px
@@ -75,7 +75,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !==========
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  skip_WF_load=.false.
- g2_min=1
  !
  ! Project's dependent presets
  !=============================
@@ -165,7 +164,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  ! LiveTiming Title
  !==================
  call live_timing('Xo@q['//trim(intc(iq))//'] '//&
-&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_element_1D(myid+1))
+&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_elements(myid+1))
  !
  n_poles=0
  !
@@ -196,7 +195,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        if (.not.force_bare_X_G) GreenF(1) = X_simple_GreenF(Xw%p(fr(1)),cg_pt(i1),X%ordering)
        if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,GreenF,X%ordering)
      endif
-     do i2 = 1,bg_npts(i1)
+loop_bg: do i2 = 1,bg_npts(i1)
        n_poles = n_poles+1
        ikbz   = X_poles_tab(n_poles,1)
        iv     = X_poles_tab(n_poles,2)
@@ -233,10 +232,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        !
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^
-       do g2=g2_min,X%ng
+       do g2=1,X%ng
          call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
-     enddo
+     enddo loop_bg
      !
      do i2=iwmax,Xw%n(2)
        iw=i2+fr(1)-1

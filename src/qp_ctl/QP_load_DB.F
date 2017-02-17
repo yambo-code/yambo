@@ -24,12 +24,12 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  !
  use drivers,       ONLY:l_chi,l_bss
  use pars,          ONLY:SP,schlen,lchlen
- use stderr,        ONLY:string_split
- use QP_m,          ONLY:QP_t
+ use stderr,        ONLY:string_split,string_pack
+ use QP_m,          ONLY:QP_t,QP_reset
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg,warning,error
  use QP_CTL_m,      ONLY:QP_ctl_t
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,REP,io_reset
  !
@@ -45,16 +45,18 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  !
  ! Work Space
  !
- character(schlen)::ch,db_piece(10)
- character(lchlen)::qp_msg,qp_db_name
- integer          :: i1,i_sp
+ integer,parameter::n_pieces=20,max_n_of_dbs=10
+ character(schlen)::ch,db_piece(n_pieces)
+ type(QP_t)       ::qp_from_dbs(max_n_of_dbs)
+ character(lchlen)::qp_msg,qp_db_name,dummy_db_name
+ integer          :: i1,i2,i_sp,n_qp_db
  logical          :: l_plan_todo_EWZI(4),& ! = ( E W Z INTERPOLATION )
 &                    QPs_DB,GFs_DB
- logical,  external    :: QP_check_if_corrected
+ logical,external :: QP_check_if_corrected
  !
  ! QP I/O
  !
- integer           ::io_err,ID
+ integer           ::io_err,ID(max_n_of_dbs)
  integer, external ::ioQP
  !
  ! Comments extracted from the QP descriptions
@@ -63,6 +65,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  integer            :: if,c_pos
  character(lchlen)  :: field(n_fields,2)
  !
+ ID(:) = 0
  field(1,1)="X G`s            [used]"
  field(1,2)="XG"
  field(2,1)="X bands"
@@ -80,6 +83,9 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  QP_load_DB=1
  QPs_DB=.false.
  GFs_DB=.false.
+ do i1=1,max_n_of_dbs
+   call QP_reset(qp_from_dbs(i1))
+ enddo
  !
  if (qp%n_states/=0) then
    !
@@ -98,29 +104,56 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    !
    ! First check the DB file 
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
    io_err=-1
+   dummy_db_name=' '
    qp_db_name=' '
-   do i1=1,10
+   n_qp_db=0
+   do i1=1,n_pieces
      if (trim(db_piece(i1))=="<") then
-       qp_db_name=db_piece(i1+1)
-       if (index(trim(qp_db_name),'.QP')/=0) io_err=ioQP(trim( db_piece(i1+1) ),qp,ID)
+       do i2=1,min(n_pieces-i1,max_n_of_dbs)
+         dummy_db_name=db_piece(i1+i2)
+         !
+         if (len_trim(dummy_db_name)==0) cycle
+         !
+         n_qp_db=n_qp_db+1
+         !
+         if (n_qp_db==1) qp_db_name=dummy_db_name
+         if (n_qp_db> 1) qp_db_name=string_pack(trim(qp_db_name),"+",trim(dummy_db_name))
+         !
+         if (n_qp_db>max_n_of_dbs) call warning('Too many QP databases provided.')
+         !
+         call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID(i2))
+         !
+         if (index(trim(dummy_db_name),'.QP')/=0) io_err=ioQP(trim( db_piece(i1+i2) ),qp_from_dbs(i2),ID(i2))
+         !
+         if (io_err/=0) n_qp_db=n_qp_db-1
+       enddo
      endif
    enddo
    !
+   if (n_qp_db>0) io_err=0
+   !
+   ! If at least 1 DB is read io_err=0. In this case the database(s)
+   ! are flagged to be QP-like (QPs_DB=.TRUE.) or GF-related (GFs_DB=.TRUE.)
+   !
+   ! If no DB are read both logicals are .FALSE. .
+   !
    if (len_trim(qp_db_name)/=0.and.io_err==0) then
+     !
+     call QP_merge_DBs(n_qp_db,qp_from_dbs,qp)
+     !
      QPs_DB=index(trim(qp_db_name),'.QP')/=0
      !
-     ! The GF are implemented only in the linear response module (real and reciprocal space)
-     !
-     GFs_DB=index(trim(qp_db_name),'.G')/=0.and. ( l_chi.or.l_bss )
      !
    endif
-   call io_reset(ID=ID)
+   !
+   do i1=1,max_n_of_dbs
+     if (ID(i1)/=0) call io_reset(ID=ID(i1))
+   enddo
    !
    ! Then check what is asked to load
    !
-   do i1=1,10
+   do i1=1,n_pieces
      if (QPs_DB) then
        if (.not.l_plan_todo_EWZI(1)) l_plan_todo_EWZI(1)=any((/trim(db_piece(i1))=="E",trim(db_piece(i1))=="e"/))
        if (.not.l_plan_todo_EWZI(2)) l_plan_todo_EWZI(2)=any((/trim(db_piece(i1))=="W",trim(db_piece(i1))=="w"/))
@@ -132,9 +165,6 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
      endif
    enddo
    !
-   ! note that the DB must contain the exact number of bands/k-pts
-   !
-   if (GFs_DB.and.io_err==0) GFs_from_DB=qp%nb==band_range(2).and.qp%nk==k%nibz
    !
    ! No compatible DB/actions 
    !

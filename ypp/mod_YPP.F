@@ -121,6 +121,8 @@ module YPP
  logical           :: lloc
  real(SP)          :: lowerlim, upperlim
  integer           :: normdir, ngloc
+ integer           :: loc_bands(2)
+ integer           :: loc_kpts(2)
  !
  ! Transition Analysis
  !
@@ -129,6 +131,16 @@ module YPP
  real(SP)          :: qdir(3)
  integer           :: idir
  !
+ ! BZ RIM
+ !
+ integer  :: BZ_RIM_nkpts
+ logical  :: l_bzrim
+ real(SP) :: Gamma_radius
+ character(lchlen) :: BZ_RIM_path
+ !
+ ! Quasi-Particles
+ !
+ logical     :: l_qpdb
  !
  interface
    !
@@ -156,6 +168,21 @@ module YPP
      type(levels)       :: en,Xen
      integer, optional  :: lambda_s(:)
      integer, optional  :: BS_E_degs(:)
+   end subroutine
+   !
+   subroutine  RT_init_X_one(dump_and_write)
+     implicit none
+     logical, optional  :: dump_and_write
+   end subroutine
+   !
+   subroutine  RT_databases(en,IO_error,first_sec_only,COM_,mesg)
+     use electrons,     ONLY:levels
+     implicit none
+     type(levels)       :: en
+     logical, optional  :: IO_error
+     logical, optional  :: first_sec_only
+     integer, optional  :: COM_
+     character(*), optional  :: mesg
    end subroutine
    !
  end interface

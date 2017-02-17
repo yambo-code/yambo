@@ -29,7 +29,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,&
 &                                 n_atomic_species,n_atoms_species,&
 &                                 n_atoms_species_max,atom_pos,Z_species,lattice
- use pseudo,                ONLY: pp_n_l_comp_max,pp_n_l_comp
+ use pseudo,                ONLY: pp_n_l_comp_max,pp_n_l_comp,l_a2y_KBPP
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
@@ -69,6 +69,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  read(11) 
  read(11) ahdr%nsym, n_bands, ng_vec, ishm, pp_n_l_comp_max
  en%nb=n_bands
+ !
+ call msg('s','Pseudo Potential KB form factors...')
+ l_a2y_KBPP=pp_n_l_comp_max>=0
+ if (     l_a2y_KBPP)  call msg('l','yes')
+ if (.not.l_a2y_KBPP)  call msg('l','no')
+ if (.not.l_a2y_KBPP)  pp_n_l_comp_max=-pp_n_l_comp_max
  !
  ! XC KIND/FUNCTIONAL
  !===================
@@ -119,8 +125,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! ABINIT 
  !#########
  !
- call msg('s',":: Atom's informations...")
- !=========================================
+ call msg('s',"Atom's informations...")
+ !=====================================
  !
  default_nel = 0.
  do i1 = 1, ahdr%natom
@@ -176,7 +182,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  read(11) (rel_gvec(:,i1),i1=1,ng_vec)
  read(11) 
- read(11) 
+ if (l_a2y_KBPP) read(11) 
  do i1=1,ng_vec
    g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
  enddo
@@ -194,12 +200,14 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! 
    !
    do ik=1,k%nibz
-     do i1=1,n_atomic_species
-       do i2=1,pp_n_l_comp_max
-         read(11)
-         read(11) 
+     if (l_a2y_KBPP) then
+       do i1=1,n_atomic_species
+         do i2=1,pp_n_l_comp_max
+           read(11)
+           read(11) 
+         enddo
        enddo
-     enddo
+     endif
      read(11) rstr
      en%E(:,ik,i_spin)=rstr(:)
      do i1=1,en%nb

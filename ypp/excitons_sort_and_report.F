@@ -24,7 +24,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HARTREE
- use electrons,     ONLY:spin_occ,levels,spin
+ use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol
  use stderr,        ONLY:intc
  use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table,BS_bands
  use com,           ONLY:msg,of_open_close
@@ -51,8 +51,8 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
  integer               ::j1,j2,ia,is,i_mode,ikbz,ikibz,iv,ic,neh,i_spin
  integer,  allocatable ::S_indx(:)
  real(SP), allocatable ::R(:),v2sort(:)
- real(SP)              ::Rmax,rv(10),K_weight(Xk%nibz)
- character(schlen) ::titles(6),ch_dummy(2)
+ real(SP)              ::Rmax,rv(10),K_weight(Xk%nibz),value
+ character(schlen) ::titles(7),ch_dummy(2)
  logical           ::write_widths,write_spin,verbose_
  !
  ! Excitonc amplitude
@@ -153,8 +153,8 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
    titles(1:4)=(/'Band_V','Band_C','K  ibz','Symm. '/)
-   titles(5:6)=(/'Weight','Energy'/)
-   call msg('o weight','#',titles(:6),INDENT=0,USE_TABS=.true.)
+     titles(5:6)=(/'Weight','Energy'/)
+     call msg('o weight','#',titles(:6),INDENT=0,USE_TABS=.true.)
    titles(1:2)=(/'E    [eV]','Amplitude'/)
    call msg('o amp','#',titles(:2),INDENT=0,USE_TABS=.true.)
    call msg('o weight amp','#','',INDENT=0,USE_TABS=.true.)
@@ -180,7 +180,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      !
      if (A_weight(neh)<0.05) cycle
      !
-     call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
+       call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
 &                             A_weight(neh),amp_trans(amp_n_trans,1)*HARTREE/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
    enddo
@@ -189,7 +189,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HARTREE,&
 &              maxval(amp_trans(:amp_n_trans,1))+0.5/HARTREE/)
-   amp_damping=(amp_range(2)-amp_range(1))/50. 
+   amp_damping=(amp_range(2)-amp_range(1))/100. 
    amp_I=0.
    do j2=1,amp_steps
      amp_E(j2)=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps,SP)+&

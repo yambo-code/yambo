@@ -59,7 +59,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
+&                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
@@ -182,9 +182,9 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  !                            ===================
  call WF_spatial_inversion(Xen,Xk)
  !
- half_X_mat_only=i_space_inv==1
- if (.not.half_X_mat_only) half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
- if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
+ X_FILL_UP_matrix_only=i_space_inv==1
+ if (.not.X_FILL_UP_matrix_only) X_FILL_UP_matrix_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
+ if (X_FILL_UP_matrix_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
  ! omp settings and workspace
  !=================================
@@ -290,7 +290,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
 #endif
        call V_by_V_plus_V(ig2,GreenF(iw),Xo_res(:ig2,ig2),Xo(:ig2,ig2,iw))
        !
-       if (.not.half_X_mat_only) then
+       if (.not.X_FILL_UP_matrix_only) then
          call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_res(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
        endif
 #if defined _OPENMP
@@ -338,7 +338,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  ! Symmetrize Xo when only half has been avaluated
  !=================================================
  !
- if (half_X_mat_only) then
+ if (X_FILL_UP_matrix_only) then
    !
 #if defined _OPENMP
    !$omp parallel default(shared), private(ig2,ig1)

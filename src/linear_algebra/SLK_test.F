@@ -1,3 +1,33 @@
+!
+!        Copyright (C) 2000-2017 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM, AF
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+! Copyright (C) 2004 WanT Group
+!
+! This file is distributed under the terms of the
+! GNU General Public License. See the file `License'
+! in the root directory of the present distribution,
+! or http://www.gnu.org/copyleft/gpl.txt .
+!
 subroutine SLK_test(E,k,q) 
  ! 
  ! simple program to check parallel linear algebra
@@ -36,7 +66,6 @@ subroutine SLK_test(E,k,q)
  allocate( A_in(ndim,ndim) )
  allocate( A_out(ndim,ndim) )
  allocate( A_out_par(ndim,ndim) )
- 
  !
  ! matrix inversion
  !
@@ -51,7 +80,6 @@ subroutine SLK_test(E,k,q)
  !
  call matrix_check( "InvMat", ndim, ndim, A_out, A_out_par )
  call inverse_check( ndim, A_in, A_out_par )
-
  !
  ! Linear system solving
  !
@@ -71,7 +99,6 @@ subroutine SLK_test(E,k,q)
  !
  call matrix_check( "LinSys X", ndim, ndim, A_out, A_out_par )
  deallocate(B_in,M_mat)
-
  !
  ! matrix multiplication
  !
@@ -84,7 +111,6 @@ subroutine SLK_test(E,k,q)
  call LINEAR_ALGEBRA_driver(MAT_MUL,M=A_in,B=A_in,C=A_out_par,lib_in=USE_SLK)
  !
  call matrix_check( "Mat Mult", ndim, ndim, A_out, A_out_par )
-
  !
  ! diagonalization
  !
@@ -107,12 +133,9 @@ subroutine SLK_test(E,k,q)
  ! an overall phase must be aligned.
  ! At least we can check their moduli
  !
- !call matrix_check( "EigenVect", ndim, ndim, A_out, A_out_par )
  call matrix_check( "EigenVect", ndim, ndim, cmplx(abs(A_out),KIND=SP), cmplx(abs(A_out_par),KIND=SP) )
  !
  deallocate(W,W_par)
-
- !
  !
  ! cleanup
  !
@@ -120,9 +143,9 @@ subroutine SLK_test(E,k,q)
  !
 end subroutine SLK_test 
 !
-!===========================================
+!====================================
  subroutine build_matrix(ndim, Amat )
- !===========================================
+ !===================================
  !
  ! build A = I + scal * randmat
  ! a small value of scal ensures A is invertible
@@ -168,9 +191,9 @@ end subroutine SLK_test
  !
 end subroutine build_matrix
 !
-!==================================================
+!============================================
  subroutine inverse_check( ndim, Amat, Ainv )
- !==================================================
+ !===========================================
  use pars,       ONLY:SP
  use com,        ONLY:error,msg
  use parallel_m, ONLY:mpi_comm_world
@@ -195,12 +218,12 @@ end subroutine build_matrix
  lerror = .false.
  outer_loop:&
  do j = 1, ndim
- do i = j+1, ndim
-   if ( abs( zmat(i,j) ) > toll ) then 
-     lerror = .true.
-     exit outer_loop
-   endif
- enddo
+   do i = j+1, ndim
+     if ( abs( zmat(i,j) ) > toll ) then 
+       lerror = .true.
+       exit outer_loop
+     endif
+   enddo
  enddo outer_loop
  !
  do i = 1, ndim
@@ -220,9 +243,9 @@ end subroutine build_matrix
  !
 end subroutine inverse_check
 !
-!==================================================
+!=========================================================
  subroutine matrix_check( label, ndim1, ndim2, Amat, Bmat)
- !==================================================
+ !========================================================
  use pars,       ONLY:SP
  use com,        ONLY:error,msg
  use parallel_m, ONLY:mpi_comm_world
@@ -236,25 +259,25 @@ end subroutine inverse_check
  integer   :: i, j
  logical   :: lerror=.false.
  real(SP)  :: toll=1.0E-4
- 
+ !
  outer_loop:&
  do j = 1, ndim2
- do i = 1, ndim1
-   if ( abs( Amat(i,j)-Bmat(i,j) ) > toll ) then 
-     lerror = .true.
-     exit outer_loop
-   endif
- enddo
+   do i = 1, ndim1
+     if ( abs( Amat(i,j)-Bmat(i,j) ) > toll ) then 
+       lerror = .true.
+       exit outer_loop
+     endif
+   enddo
  enddo outer_loop
  !
  if ( .not. lerror ) call msg("sr",'  matrix_check on  '//trim(label)//' :   passed')
  if (       lerror ) call msg("sr",'  matrix_check on  '//trim(label)//' :   failed')
  !
 end subroutine matrix_check
-
-!==================================================
+!
+!======================================================
  subroutine matrix_write( filename, ndim1, ndim2, Amat)
- !==================================================
+ !=====================================================
  use pars,       ONLY:SP
  use parallel_m, ONLY:myid
  implicit none
@@ -268,14 +291,11 @@ end subroutine matrix_check
  if (myid/=0) return
  if (ndim1>100) return
  open(10,file=filename)
-   do j = 1, ndim2
+ do j = 1, ndim2
    do i = 1, ndim1
       write(10,"(2i5,2f20.12)") i,j, Amat(i,j)
    enddo
-   enddo
+ enddo
  close(10)
  !
 end subroutine matrix_write
- 
-
-

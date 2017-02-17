@@ -98,7 +98,7 @@ module X_m
  integer :: current_iq
  integer :: iw_ref
  integer :: X_DbGd_nkpts
- logical :: half_X_mat_only
+ logical :: X_FILL_UP_matrix_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
  real(SP):: X_terminator_E

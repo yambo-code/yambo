@@ -242,7 +242,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 & '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,W,SC,BS,ALL)',&
 & DBs_IO_control_string,verb_level=V_io)
  call it(defs,'DBsFRAGpm', &
-& '[IO] Space-separated list of +DB to be FRAG and -DB NOT to be FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
+& '[IO] Space-separated list of +DB to FRAG and -DB to NOT FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
 & DBs_FRAG_control_string,verb_level=V_io)
  !
  ! S_xc

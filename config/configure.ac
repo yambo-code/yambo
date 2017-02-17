@@ -187,18 +187,6 @@ fi
 AC_SUBST(memory_profile_cpp)
 # ============================================================================
 #
-# Time Profiling (mod_timing)
-#
-AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
-              [Extended timing profile of specific sections]))
-if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
-time_profile_cpp=" "
-if test x"$enable_time_profile" = "xyes"; then 
- time_profile_cpp="-D_TIMING"
-fi
-AC_SUBST(time_profile_cpp)
-# ============================================================================
-#
 # Verbose compilation
 #
 AC_ARG_ENABLE(msgs-comps, AC_HELP_STRING([--enable-msgs-comps],

@@ -276,7 +276,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
     if (l_dos.or.l_bands) call QP_ctl_switch('G')
     if (l_dos) then
       call initactivate(1,"OCCdT OCCTime")
-      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
+      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad PrtOccOnly")
     endif
  endif
  !

@@ -26,7 +26,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  Use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,nkibz
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:levels,spin,n_sp_pol
+ use electrons,      ONLY:levels,spin,n_sp_pol,spin_occ
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,dos_broadening,dos_bands,&
@@ -35,6 +35,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use functions,      ONLY:Fermi_fnc_derivative
  use QP_CTL_m,       ONLY:QP_apply
  use QP_m,           ONLY:OCC_ctl
+ use parser_m,       ONLY:parser     
  implicit none
  !
  type(bz_samp) ::Xk
@@ -46,7 +47,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  real(SP)              :: el_dos(n_sp_pol),dos_E,delta_E,f_occ,io_Time
  integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps
  character(schlen)     :: ch_ws,titles(4)
- logical               :: l_3D_plot
+ logical               :: l_3D_plot,l_prt_occ_only
+ !
+ call parser('PrtOccOnly',l_prt_occ_only)
  !
  ! DOS
  !=====
@@ -95,7 +98,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
          do ik=1,nkibz
            do i_spin=1,n_sp_pol
              !
-             f_occ=Xen%f(ib,ik,i_spin)/2.
+             f_occ=spin_occ
+             if(l_prt_occ_only) f_occ=Xen%f(ib,ik,i_spin)/2.
              !
              el_dos(i_spin)=el_dos(i_spin)+f_occ*&
 &                           Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)/DL_vol

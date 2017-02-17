@@ -27,13 +27,16 @@ subroutine WF_apply_symm(isc,WF_symm)
  use electrons,     ONLY:n_spinor
  use D_lattice,     ONLY:nsym,spin_sop,i_time_rev,idt_index
  !
+ implicit none
+ !
  integer     :: isc(4)
  complex(SP) :: WF_symm(fft_size,n_spinor)
  !
+ integer     :: ifft
  integer     :: i_wf(n_spinor)
  !
  i_wf(1)=wf_state(isc(1),isc(2),isc(4))
- if(n_spinor==2)  i_wf(n_spinor)=wf_state(isc(1),isc(2),n_spinor)
+ if(n_spinor==2)  i_wf(2)=wf_state(isc(1),isc(2),2)
  !
  if(isc(3)==idt_index) then
    WF_symm(:,1)=wf(:,i_wf(1))
@@ -41,14 +44,13 @@ subroutine WF_apply_symm(isc,WF_symm)
    return
  endif
  !
- WF_symm(:,1)=wf(fft_rot_r(isc(3),:),i_wf(1))
+ if(n_spinor==1) WF_symm(:,1)=wf(fft_rot_r(isc(3),:),i_wf(1))
  !
  if (n_spinor==2) then
-   WF_symm(:,2)=wf(fft_rot_r(isc(3),:),i_wf(2))
-   do ifft=1,fft_size
-     WF_symm(ifft,1)=spin_sop(1,1,isc(3))*WF_symm(ifft,1)+spin_sop(1,2,isc(3))*WF_symm(ifft,2)
-     WF_symm(ifft,2)=spin_sop(2,1,isc(3))*WF_symm(ifft,1)+spin_sop(2,2,isc(3))*WF_symm(ifft,2)
-   enddo
+   WF_symm(:,1)=spin_sop(1,1,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(1))+ &
+&                    spin_sop(1,2,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(2))
+   WF_symm(:,2)=spin_sop(2,1,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(1))+ &
+&                    spin_sop(2,2,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(2))
  endif
  !
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)

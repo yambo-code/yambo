@@ -101,12 +101,11 @@ module SLK_m
      type(SLK_matrix)  :: M_slk
      integer, optional :: nrows, ncols 
      !
-     Y_FREE(M_slk%blc)
+     YAMBO_FREE(M_slk%blc)
      if (present(nrows).and.present(ncols)) then
        M_slk%nrows    = nrows
        M_slk%ncols    = ncols
-       Y_ALLOCATE(M_slk%blc(nrows,ncols))
-       Y_MEM(M_slk%blc)
+       YAMBO_ALLOC(M_slk%blc,(nrows,ncols))
      else
        M_slk%N        = 0
        M_slk%desc     = 0

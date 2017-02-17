@@ -48,7 +48,7 @@ subroutine K_inversion_do_it_SLK(Lo,what)
  if (borders(1)<borders(2)) then
    do i_r=borders(1),borders(2)
      !
-     K_inv_slk%blc(i_r,i_r,1)=K_inv_slk%blc(i_r,i_r,1)+1._SP/Lo(i_r)
+     K_inv_slk%blc(i_r,i_r)=K_inv_slk%blc(i_r,i_r)+1._SP/Lo(i_r)
      !
    enddo
  endif

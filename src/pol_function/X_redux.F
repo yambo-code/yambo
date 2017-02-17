@@ -65,16 +65,13 @@ subroutine X_redux(iq,X,Xw,W_range)
  !
  call PP_indexes_reset(PAR_IND_freqs)
  !
- Y_ALLOCATE(tddftk(X%ng,X%ng))
- Y_MEM(tddftk)
- Y_ALLOCATE(Xo(X%ng,X%ng))
- Y_MEM(Xo)
+ YAMBO_ALLOC(tddftk,(X%ng,X%ng))
+ YAMBO_ALLOC(Xo,(X%ng,X%ng))
  !
  ! Xo^-1 matrix (BS Fxc)
  !
  if (l_bs_fxc) then
-   Y_ALLOCATE(Xom1(FXC_n_g_corr,FXC_n_g_corr))
-   Y_MEM(Xom1)
+   YAMBO_ALLOC(Xom1,(FXC_n_g_corr,FXC_n_g_corr))
  endif
  !
  ! Stop... 
@@ -239,10 +236,10 @@ subroutine X_redux(iq,X,Xw,W_range)
  ! CLEAN
  !
  call PP_indexes_reset(PAR_IND_freqs)
- Y_FREE(tddftk)
- Y_FREE(Xo)
+ YAMBO_FREE(tddftk)
+ YAMBO_FREE(Xo)
  if (l_bs_fxc) then
-   Y_FREE(Xom1)
+   YAMBO_FREE(Xom1)
  endif
  !
 end subroutine

@@ -149,8 +149,7 @@ module BS_solvers
      !
      do i_B=1,n_BS_blks
        !
-       Y_ALLOCATE(BLKs_out(i_B)%mat(BLKS_in(i_B)%size(1),BLKS_in(i_B)%size(2)))
-       Y_MEM(BLKs_out(i_B)%mat)
+       YAMBO_ALLOC(BLKs_out(i_B)%mat,(BLKS_in(i_B)%size(1),BLKS_in(i_B)%size(2)))
        !
        tot_size=tot_size+BLKS_in(i_B)%size(1)*BLKS_in(i_B)%size(2)
        !

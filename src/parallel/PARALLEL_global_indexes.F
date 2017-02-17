@@ -334,8 +334,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  CALL PARALLEL_defaults(ENVIRONMENT)
  !
- CALL DIPOLE_COMMUNICATORS_default( )
- !
 #if defined _SCALAPACK
  !
  !======================================================

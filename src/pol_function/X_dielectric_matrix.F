@@ -142,12 +142,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        ! In the next lines Yambo will VERIFY the em1d database
        ! to check if this iq has been already done. 
        ! When self_detect_E_range=.TRUE. however the Xw%er setup is
-       ! done only in X_os and the VERIFY fails. This is why the procedure
+       ! done only in X_irredux and the VERIFY fails. This is why the procedure
        ! must be repeated here:
        !
        if (self_detect_E_range) then
          call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
-         Y_FREE(X_poles)
+         YAMBO_FREE(X_poles)
          Xw%er=minmax_ehe
        endif
        !
@@ -224,11 +224,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    X_range               =(/1,Xw%n_freqs/)
    if (.not.io_RESPONSE) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
    !
-   call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
+   call X_irredux(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
-   if (X%whoami/=1) call X_s(iq,X,Xw,X_range)
+   if (X%whoami/=1) call X_redux(iq,X,Xw,X_range)
    !
    call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !

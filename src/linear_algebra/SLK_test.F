@@ -180,8 +180,7 @@ end subroutine SLK_test
    !
    do j = 1, ndim
      do i = j, ndim
-       Amat(i,j) = Amat(i,j) + scal * i/10.+(0,1.)*j/20.
-!dlaran(iseed(4:))+(0,1.)*dlaran(iseed(4:))
+       Amat(i,j) = Amat(i,j) + scal * dlaran(iseed(4:))+(0,1.)*dlaran(iseed(4:))
        Amat(j,i) = conjg(Amat(i,j))
      enddo
    enddo
@@ -265,7 +264,6 @@ end subroutine inverse_check
  do j = 1, ndim2
    do i = 1, ndim1
      if ( abs( Amat(i,j)-Bmat(i,j) ) > toll ) then 
-       write (*,*)  i,j,Amat(i,j),Bmat(i,j)
        lerror = .true.
        exit outer_loop
      endif

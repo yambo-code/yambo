@@ -112,7 +112,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! X%ngostnts is defined only for the group of CPU's that eval q=1
  ! and must be spread to all CPUs before doing the IO of the header
- call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
+ !
+ if(X%iq(1)>1) call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
  !
  if (io_RESPONSE) then
    !

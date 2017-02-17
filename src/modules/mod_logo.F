@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -24,6 +24,7 @@ module LOGO
  implicit none
  !
  integer      :: code_version(3)
+ integer      :: code_GPL_revision
  integer      :: code_revision
  !
  integer                     :: n_logo_lines
@@ -72,7 +73,7 @@ module LOGO
      !
      comment(1)='GPL Version '//&
 &                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
-&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))
+&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_GPL_revision))
      !
      comment(2)='http://www.yambo-code.org'
      !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -86,6 +86,7 @@ module BS
  character(schlen):: BSS_inversion_mode
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
+ integer  :: BSS_inv_iter_max
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
@@ -103,15 +104,6 @@ module BS
  interface 
    !
    !
-   subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
-     use pars,          ONLY:SP
-     integer               ::iq
-     integer               ::iter
-     complex(SP)           ::Vi(:),Vo(:)
-     real(SP),optional     ::iter_par
-     character(3),optional ::call_kind
-   end subroutine
-   !
    integer function variables_BS(ID,local_description,X)
      use pars,       ONLY:lchlen
      use X_m,        ONLY:X_t
@@ -120,12 +112,20 @@ module BS
      type(X_t), optional::X
    end function
    !
-   integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf)
+   integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID,bsR_kerr)
+     use pars,          ONLY:SP
+     integer             :: iq,ID,BS_H_dim
+     complex(SP)         :: bsE(BS_H_dim),bsR(BS_H_dim)
+     complex(SP),optional:: bsR_kerr(BS_H_dim)
+   end function
+   !
+   integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
      use pars,          ONLY:SP
      integer             :: ID,it,BS_H_dim
      real(SP)            :: reached_treshold,Bf(it+1),Af(it)
      complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
      complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
+     complex(SP),optional:: Cf_kerr(it+1)
    end function
    !
  end interface

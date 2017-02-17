@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -95,9 +95,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  p_dir      ='1'
  mag_dir    ='X'
  p_format   ='g'
- wf_ng=ng_vec
- ! Notice that ng_vec can be larger than maxval(wf_igk) 
- ! and this can cause some problem in ypp. TO BE CHECKED
  l_exc_wf   =.false.
  l_density  =.false.
  V_value    ='RE'
@@ -395,8 +392,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  endif
  !
  if (l_excitons) then
-   if (l_amplitude) call QP_ctl_switch('G')
    call initactivate(1,"States")
+   if (l_amplitude) then
+     call QP_ctl_switch('G')
+     call initactivate(1,"DipWeight")
+   endif
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 

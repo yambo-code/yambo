@@ -67,7 +67,8 @@ subroutine bz_interp_setup(Xk)
    int_sop(:,:,is)=nint(matmul(int_sop(:,:,is),b_inv))
    !
  enddo
-
+ !
+ if(abs(int_sop(1,1,1)+1._SP)<zero) int_sop=-int_sop
  !
  nR_max=product(2*R_max+1)
  !

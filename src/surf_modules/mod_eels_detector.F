@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 C. Hogan  and the YAMBO team 
+! Copyright (C) 2000-2016 C. Hogan  and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -239,6 +239,9 @@ end subroutine init_detector
         phi_det(n_rand)   = phi_tmp
         w_det(n_rand)     = 1.0_SP/real(n_det_pt)
 
+!DEBUG>
+!       write(30,100) n_rand, x,y,r, phi_det(n_rand)/radian, theta_det(n_rand)/radian ! DEBUG
+!DEBUG<
 100 format(i4,2f7.3,3x,f6.3,f9.3,f9.3)
         if(n_rand.eq.n_det_pt) exit
       enddo

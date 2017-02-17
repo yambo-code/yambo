@@ -13,6 +13,8 @@ MODULE qexml_module
   ! in XML format the data produced by Quantum-ESPRESSO package.
   !
   ! Written by Andrea Ferretti (2006).
+  ! Modified by M. Gruening to read exx info's, 
+  ! apparently no official version does that yet
   !
   ! Important parts of the implementation are taken from xml_io_base.f90
   ! (written by Carlo Sbraccia) in the Quantum-ESPRESSO distribution,
@@ -2210,7 +2212,7 @@ CONTAINS
       INTEGER,                    INTENT(OUT) :: ierr
       !
       CHARACTER(256) :: dft_
-      LOGICAL        :: lda_plus_u_
+      LOGICAL        :: lda_plus_u_, lfound
       INTEGER        :: Hubbard_lmax_, nsp_
       INTEGER,    ALLOCATABLE :: Hubbard_l_(:)
       REAL(dbl),  ALLOCATABLE :: Hubbard_U_(:)
@@ -2225,8 +2227,9 @@ CONTAINS
       CALL iotk_scan_dat( iunit, "DFT", dft_, IERR=ierr )
       IF ( ierr/=0 ) RETURN
       !
-      CALL iotk_scan_dat( iunit, "LDA_PLUS_U_CALCULATION", lda_plus_u_, IERR=ierr )
+      CALL iotk_scan_dat( iunit, "LDA_PLUS_U_CALCULATION", lda_plus_u_, FOUND=lfound, IERR=ierr )
       IF ( ierr/=0 ) RETURN
+      IF ( .NOT. lfound ) lda_plus_u_=.FALSE.
       !
       IF ( lda_plus_u_ ) THEN
          !
@@ -2319,6 +2322,12 @@ CONTAINS
          CALL iotk_scan_attr( ATTR, "UNITS", degauss_units_ , IERR=ierr )
          IF (ierr/=0) RETURN
          !
+      ELSE
+         !
+         ngauss_=0
+         degauss_=0.0
+         degauss_units_=" "
+         !
       ENDIF
       !
       CALL iotk_scan_dat( iunit, "TETRAHEDRON_METHOD", ltetra_, IERR=ierr )
@@ -2340,6 +2349,8 @@ CONTAINS
             !
          ENDDO
          !
+      ELSE
+         ntetra_ = 0
       ENDIF
       !
       CALL iotk_scan_dat( iunit, "FIXED_OCCUPATIONS", tfixed_occ_, IERR=ierr )
@@ -2387,6 +2398,9 @@ CONTAINS
             !
          ENDIF
          !
+      ELSE
+         nstates_up_=0
+         nstates_dw_=0
       ENDIF
       !
       CALL iotk_scan_end( iunit, "OCCUPATIONS", IERR=ierr )
@@ -3162,6 +3176,7 @@ end subroutine
 subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
 &                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
   use pars,    ONLY:SP
+  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
@@ -3170,9 +3185,11 @@ subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
   CHARACTER(256), INTENT(IN) :: filename
   !
+  REAL(SP)      :: beta_tmp(nmesh,nbeta),d_tmp(nbeta,nbeta),rdummy
+  COMPLEX(SP)   :: cd_tmp(nbeta,nbeta)
   character(50) :: dummy
   logical       :: ldummy
-  INTEGER :: idummy,ibeta,idummy2
+  INTEGER :: idummy,ibeta,ibetap,i_dij,n_dij,idummy2,i1
   INTEGER        :: i, iostat, u ,ierr, ios
   !
   open(unit=u,file=trim(filename),status='old',form='formatted', iostat=iostat)
@@ -3204,19 +3221,32 @@ subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
     !if(idummy/=ibeta) ERROR(tools_char(idummy,10))
     read(u,*,iostat=iostat) mesh_beta(ibeta)
     beta(:,ibeta) = 0.0
-    read(u,*,iostat=iostat) beta(1:mesh_beta(ibeta),ibeta)
+    read(u,*,iostat=iostat) beta_tmp(1:mesh_beta(ibeta),ibeta)
     call iotk_scan_end(u,"PP_BETA")
   end do
   call iotk_scan_begin(u,"PP_DIJ")
-  read(u,*,iostat=iostat) idummy
+  read(u,*,iostat=iostat) n_dij
   !if(idummy/=nbeta) ERROR(tools_char(idummy,10))
-  do ibeta=1,nbeta
-    read(u,*,iostat=iostat) idummy,idummy2,d(ibeta)
-    !if(idummy/=ibeta) ERROR("")
-    !if(idummy2/=ibeta) ERROR("")
+  d_tmp=0._SP
+  do i_dij=1,n_dij
+    read(u,*,iostat=iostat) ibeta,ibetap,rdummy
+    d_tmp(ibeta ,ibetap)=rdummy
+    d_tmp(ibetap,ibeta )=rdummy
   end do
   call iotk_scan_end(u,"PP_DIJ")
   call iotk_scan_end(u,"PP_NONLOCAL",ierr=ierr)
+  !
+  if(nbeta>1) then
+    cd_tmp=cmplx(d_tmp,0._SP)
+    call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
+    d_tmp=real(cd_tmp)
+  else
+    d=d_tmp(1,1)
+    d_tmp(1,1)=1._SP
+  endif
+  !
+  lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
+  forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
   !
   rewind(u)
   !
@@ -3231,6 +3261,7 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
   !
   use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
   use pars,           ONLY:SP
+  use stderr,         ONLY:intc
   !
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
@@ -3245,7 +3276,6 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
   complex(SP) :: cd_tmp(nbeta,nbeta)
   !
   character(50) :: dummy
-  character(2)  :: intc(9)
   logical       :: ldummy
   INTEGER :: idummy,ibeta,idummy2,i1
   INTEGER        :: i, iostat, u, ierr, ierr_
@@ -3278,18 +3308,8 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
     !
     CALL iotk_scan_begin(u, 'PP_NONLOCAL')
     !
-    intc(1)='.1'
-    intc(2)='.2'
-    intc(3)='.3'
-    intc(4)='.4'
-    intc(5)='.5'
-    intc(6)='.6'
-    intc(7)='.7'
-    intc(8)='.8'
-    intc(9)='.9'
-    !
     DO ibeta=1,nbeta
-      CALL iotk_scan_dat(u, 'PP_BETA'//intc(ibeta), &
+      CALL iotk_scan_dat(u, 'PP_BETA.'//intc(ibeta), &
                              beta_tmp(:,ibeta), attr=attr)
       CALL iotk_scan_attr(attr, 'size',  mesh_beta(ibeta))
       CALL iotk_scan_attr(attr, 'angular_momentum',  lbeta(ibeta))
@@ -3318,7 +3338,7 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
     CALL iotk_scan_begin(u, 'PP_SPIN_ORB')
     !
     DO ibeta = 1,nbeta
-      CALL iotk_scan_empty(u, 'PP_RELBETA'//intc(ibeta),attr=attr)
+      CALL iotk_scan_empty(u, 'PP_RELBETA.'//intc(ibeta),attr=attr)
       CALL iotk_scan_attr(attr, 'jjj',   jbeta(ibeta))
     ENDDO
     jbeta=matmul(transpose(d_tmp)**2,jbeta)

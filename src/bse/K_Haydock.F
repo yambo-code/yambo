@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini, M. Gruning and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini, M. Gruning and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -32,8 +32,9 @@ subroutine K_Haydock(iq,W)
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
 &                         BS_DB_is_fragmented,ioBSS_Haydock,&
-&                         BS_K_Coupling,Haydock_terminator,&
-&                         K_BSmat_by_V,BSE_mode
+&                         BS_K_Coupling,Haydock_terminator,BSE_mode
+ !
+ !
  use timing,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
@@ -49,10 +50,13 @@ subroutine K_Haydock(iq,W)
  integer, parameter ::Max_iterations=1000
  complex(SP),allocatable :: Vn(:),Vnm1(:),Vnp1(:)
  complex(SP),allocatable :: Cf(:)
+ !
+ !
  real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
- real(SP)           ::ItParity
+ integer            ::ItParity
  character(schlen)  ::dumb_ch
  logical, external  ::stop_now
+ logical            ::use_cpl_scheme
  !
  ! I/O
  !
@@ -67,9 +71,15 @@ subroutine K_Haydock(iq,W)
  ! Use terminator?
  if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
  !
- if (BS_K_Coupling) then
+ ! Which approach
+ use_cpl_scheme=BS_K_Coupling
+ !
+ !
+ if (use_cpl_scheme) then
+   !
    allocate(Cf(Max_iterations+1))
    allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
+   !
  else
    allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
  end if
@@ -80,19 +90,27 @@ subroutine K_Haydock(iq,W)
  it_on_disk=0
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  !
- if (BS_K_Coupling) then 
-   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+ if (use_cpl_scheme) then
+     !
+     io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(:2),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:2))   
+     !
+   !
  else
-   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn)
+   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(:2),Vnm1,Vn)
+   !
  endif
  !
  if (io_err>0) then 
    !
    it_on_disk=io_err 
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-   if (BS_K_Coupling) then 
-     io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
-&                          Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
+   if (use_cpl_scheme) then 
+     !
+       !
+       io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
+&                            Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
+       !
+     !
    else
      io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn)
@@ -128,21 +146,24 @@ subroutine K_Haydock(iq,W)
    Bf= 0.
  end if
  ! 
- if (BS_K_Coupling) then
+ if (use_cpl_scheme) then
    !
    ! Before starting iterate one needs
    !
    ! | Vn > =     |q->0>/(<q->0| F (H |q->0>))
    ! | Vnp1 > = H |Vn>
    !
-   ItParity = (-1._SP)**it_on_disk
+   ItParity = (-1)**it_on_disk
    if (it_on_disk==0) then
      Cf= (0.,0.)
+     !
+     !
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)
      !
-     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_BSmat_by_V(iq,it_on_disk,BS_K_dim,Vn,Vnp1,ItParity,'Hay')
      Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
      Cf(1) = 0.
+     !
      !
      Vnp1(:) = Vnp1(:)/Haydock_v0_mod
      Vn(:)   = Vn(:)/Haydock_v0_mod
@@ -172,11 +193,11 @@ subroutine K_Haydock(iq,W)
    !
    ! Hermitian case: 
    !
-   if (.not.BS_K_Coupling) then
+   if (.not.use_cpl_scheme) then
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,call_kind='Hay')
+     call K_BSmat_by_V(iq,it-it_on_disk,BS_K_dim,Vn,Vnp1,1,'Hay')
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -190,7 +211,11 @@ subroutine K_Haydock(iq,W)
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
      !
      Bf(it+1)=sqrt(dot_product(Vnp1,Vnp1))
-     if( Bf(it+1)==Bf(it+1)+1. ) call error('Bf=NaN likely because some eigenvalue of BSE is negative.')
+     if( isnan(Bf(it+1)) ) then 
+        write(6,*)'iteration==>',it
+        write(6,*)'dot_product(Vnp1,Vnp1)==>',dot_product(Vnp1,Vnp1)
+        call error('Bf=NaN likely because some eigenvalue of BSE is negative.')
+     end if
      !
      !|Vn-1> = |Vn>
      !
@@ -207,7 +232,7 @@ subroutine K_Haydock(iq,W)
      ! A(n) = <Vn+1|F|Vn+1> (that is <Vn|HFH|Vn>), 
      !      =  0   by symmetry 
      !
-     ItParity=(-1._SP)**it
+     ItParity=(-1)**it
      Af(it)=0._SP
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
@@ -222,7 +247,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_BSmat_by_V(iq,it-it_on_disk,BS_K_dim,Vn,Vnp1,ItParity,'Hay')
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry, 
@@ -240,17 +265,19 @@ subroutine K_Haydock(iq,W)
      ! Cf=(1-ItParity)Re(<rhoq0|Vn>) + i*(1+ItParity)Im(<rhoq0|Vn>) 
      ! with all product evaluated just in the eh pairs subspace 
      !
-     Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0(:BS_K_dim),Vn)))/Haydock_v0_mod
+     Cf(it+1)= ((1._SP-real(ItParity,SP))*real(dot_product(BSS_rhoq0(:BS_K_dim),Vn),SP))/Haydock_v0_mod
+     !
      !
    endif
    !
    if (it>2) then
      !
-     if (BS_K_Coupling) then 
+     if (use_cpl_scheme) then 
        call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf(:it),1)
      else
        call build_L_and_check_convergence(Af(:it),Bf(:it+1),it)
      end if
+     !
      !
      BSS_description(BSS_n_descs-1)='        |Accuracy (reached)   [o/o]:'//&
 &                                    trim(real2ch(reached_treshold))
@@ -274,10 +301,14 @@ subroutine K_Haydock(iq,W)
    !Haydock Coefficients and restart vectors on disk
    !
    call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
-   if (BS_K_Coupling) then
+   if (use_cpl_scheme) then
      Bf(1) = Haydock_v0_mod
-     io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
-&                          Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
+     !
+       !
+       io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
+&                            Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
+       !
+     !
      Bf(1) = 0._SP
    else
      io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vnm1,Vn)
@@ -298,6 +329,7 @@ subroutine K_Haydock(iq,W)
  if (allocated(BS_mat))  deallocate(BS_mat)
  if (allocated(Cf))      deallocate(Cf)
  !
+ !
  call mem_est("BS_mat")
  !
  contains
@@ -313,6 +345,8 @@ subroutine K_Haydock(iq,W)
      !
      integer     :: i1,iw,i_eps(2)
      real(SP)    :: Co
+     !
+     !
      complex(SP) :: X_o(4,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
      !
@@ -329,8 +363,8 @@ subroutine K_Haydock(iq,W)
      X_t =(0._SP,0._SP)
      UseTerminator = .false.  
      !
-     causal  = (trim(BSE_mode)=='causal'.and..not.BS_K_Coupling)
-     coupling= BS_K_Coupling
+     causal  = (trim(BSE_mode)=='causal'.and..not.use_cpl_scheme)
+     coupling= use_cpl_scheme
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -398,6 +432,8 @@ subroutine K_Haydock(iq,W)
        endif
        X_epsilon(1,iw)=W%p(iw)
        !
+       !
+       !
        X_epsilon(i_eps(:),iw)=1._SP-X_o(:2,1)*Co*Haydock_v0_mod**2._SP
        if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_o(3:4,1)*Co*Haydock_v0_mod**2._SP
        if (i_eps(1)==2) then
@@ -406,6 +442,7 @@ subroutine K_Haydock(iq,W)
        endif
        if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
        !
+       !
        if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(i_eps(1),iw)-X_epsilon(i_eps(2),iw))/abs(X_epsilon(2,iw)))
        if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
@@ -413,7 +450,7 @@ subroutine K_Haydock(iq,W)
        !
      enddo
      !
-     if (BS_K_Coupling) deallocate(X_i)
+     if (use_cpl_scheme) deallocate(X_i)
    end subroutine
    !
    function terminator(x,c1,c2,which)

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 M. Gruning and the YAMBO team 
+! Copyright (C) 2000-2016 M. Gruning and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -150,10 +150,12 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
          E_xc = E_xc + tmp_exc    
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
+         ! vsigma(2)=vsigma_{updw}+vsigma_{dwup}=2.*vsigma_{updw}
+         if(n_spin==2) vsigma(2,:)=vsigma(2,:)/2._SP
          do is1 = 1,n_spin
            vdrho(:,:) = 0._SP 
            do is2 = 1,n_spin
-             is = min(is2*(is1+1)/2,is1*(is2+1)/2)
+             is = max(is2*(is1+1)/2,is1*(is2+1)/2)
              forall(ic=1:3,i1=1:fft_size) vdrho(ic,i1) = vdrho(ic,i1) + &
                   & 2._SP*real(vsigma(is,i1),SP)*drho(ic,is2,i1)
            end do

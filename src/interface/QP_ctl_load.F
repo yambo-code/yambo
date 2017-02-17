@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -50,7 +50,7 @@ subroutine QP_ctl_load(defs,i_type)
  spin_description_ch=(/'    ','UP  ','DOWN'/)
  prefix=(/'X','K','G'/)
  description_ch(1)='Xd'
- description_ch(2)='BSK BSS'
+ description_ch(2)='BSE'
  description_ch(3)='G'
  !
  verbosity_here=V_qp

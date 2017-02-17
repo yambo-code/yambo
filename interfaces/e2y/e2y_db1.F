@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 C. Hogan and the YAMBO team
+! Copyright (C) 2000-2016 C. Hogan and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -84,6 +84,13 @@ subroutine e2y_db1(en,k,ncid)
  nkibz   = k%nibz
  n_bands = en%nb
  call msg("l","done")
+ !>>>DEBUG
+ ! call msg('s',':: K-points              :',k%nibz)
+ ! call msg('s',':: Bands                 :',en%nb)
+ ! call msg('s',':: Spin  [components/pol]:',(/n_spinor,n_sp_pol/))
+ ! call msg('s',':: Max WF components     :',wf_ncx) 
+ ! call msg('s',':: Atomic species        :',n_atom_species)
+ !<<<DEBUG
  !
  ! Geometry (must appear first, in order to define alat)
  !
@@ -275,8 +282,8 @@ contains
     type(etsf_basisdata)          :: basisdata_group
     integer                       :: g_lim(6), gtotmax, ig_wf, ng_vec_old, ig, ic, ik
     real(SP)                      :: g_vec_new(3)
-    real(SP),    allocatable      :: g_vec_tmp(:,:),G_mod(:)
-    integer(SP), allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
+    real(SP), allocatable         :: g_vec_tmp(:,:),G_mod(:)
+    integer,  allocatable         :: wf_igk_tmp(:,:),G_mod_indx(:)
     logical                       :: gamma_only,l_new
     character(len=15)             :: format1
     !

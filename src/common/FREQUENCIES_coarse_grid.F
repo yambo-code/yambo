@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -57,7 +57,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  !
  ! DEFAULT TRESHOLD
  !
- real(SP), parameter :: default_treshold=1.E-6
+ real(SP), parameter :: default_treshold=1.E-5
  !
  ! Work Space
  ! 
@@ -68,7 +68,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  integer ,allocatable:: bg_sorted_x(:),i_vec(:)
  real(SP),allocatable:: bg_diffs(:),bg_sorted(:)
  !
- if (cg_percentual==0.or.npts==1) then
+ if (cg_percentual==0._SP .or. npts==1) then
    !
    ! Zero cg_percentual does nothing!  This is used when 
    ! the response function is calculated using an external set of
@@ -86,6 +86,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  !
  allocate(bg_diffs(npts-1),bg_sorted(npts),bg_sorted_x(npts))
  bg_sorted=bg_pt
+ !
  call sort(bg_sorted,indx=bg_sorted_x)
  do i1=1,npts-1
    bg_diffs(i1)=bg_sorted(i1+1)-bg_sorted(i1)
@@ -102,11 +103,15 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  do while(lcycle)
    icycle=icycle+1
    i2=1
+   i3=1
    ipos(1,1)=i2
    ipos(bg_sorted_x(1),2)=1
    do i1=2,npts
-     df=bg_sorted(i1)-bg_sorted(i1-1)
-     if (df>tresh) i2=i2+1
+     df=bg_sorted(i1)-bg_sorted(i3)
+     if (df>tresh) then
+       i2=i2+1
+       i3=i1
+     endif
      ipos(i1,1)=i2
      ipos(bg_sorted_x(i1),2)=i1
    enddo

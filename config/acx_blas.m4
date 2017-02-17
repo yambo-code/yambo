@@ -7,13 +7,13 @@ AC_PREREQ(2.50)
 AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 acx_blas_ok=no
 
-AC_ARG_WITH(blas,
-        [AC_HELP_STRING([--with-blas=<lib>], [Use BLAS library <lib>])])
-case $with_blas in
+AC_ARG_WITH(blas_libs,
+        [AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
+case $with_blas_libs in
         yes | "") ;;
         no) acx_blas_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) BLAS_LIBS="$with_blas" ;;
-        *) BLAS_LIBS="-l$with_blas" ;;
+        -* | */* | *.a | *.so | *.so.* | *.o) BLAS_LIBS="$with_blas_libs" ;;
+        *) BLAS_LIBS="-l$with_blas_libs" ;;
 esac
 
 # Set fortran linker names of BLAS functions to check for.

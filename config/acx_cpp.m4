@@ -1,6 +1,8 @@
 #
-# Copyright (C) 2000-2014 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2015 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -21,6 +23,9 @@
 #
 AC_DEFUN([ACX_CPP],
 [
+AC_ARG_VAR(FCCPP,Fortran preprocessor)
+if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi
+#
 case "${CPP}" in
  *icc* )
    if test -z "$CPPFLAGS"; then CPPFLAGS="-ansi"; fi
@@ -94,19 +99,19 @@ AC_MSG_RESULT([$acx_C_ok])
 #
 acx_F90_ok=yes
 AC_MSG_CHECKING([if precompiler works on F90 source])
-cat << EOF_ > conftest.F
+cat > conftest.F << EOF_
  program conftest
  character (1) :: a
  a="a"
  write (*,'('//a//')') 'hello'
- ! Replace "S" with "\" and find the max length of
  end program
 EOF_
+# ! Replace "S" with "\" and find the max length of
 (eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
 
 if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`"  ; then 
  eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
- eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2
+ eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2 >&5
  if test -s conftest.er2 ; then 
   if ! test -n "`grep successful conftest.er2`"  ; then 
    acx_F90_ok=no ; 
@@ -130,4 +135,5 @@ C_AS_CPP_FLAGS=$CPPFLAGS
 CPPFLAGS=""
 AC_SUBST(C_AS_CPP)
 AC_SUBST(C_AS_CPP_FLAGS)
+AC_SUBST(FCCPP)
 ])

@@ -15,5 +15,6 @@ objs =  caxpy.o  cdotc.o  cgemm.o  cgeru.o  cswap.o  ctrmv.o  \
 	scasum.o ctrsv.o  xerbla.o csymm.o  chemm.o  csyrk.o  \
         cherk.o  csscal.o sdot.o sgemm.o strsm.o sger.o sswap.o\
 	chpmv.o chpr2.o snrm2.o ssyrk.o sasum.o\
-	sgemv.o strmm.o strmv.o
+	sgemv.o strmm.o strmv.o \
+        zdscal.o dscal.o
 #endif

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -345,12 +345,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      enddo
    enddo
    !
-   call PP_redux_wait
-   call PP_redux_wait(QP_W)
-   !
    ! To be written in W
    !
    if (.not.l_life) then
+     !
+     call PP_redux_wait(QP_W)
      !
      QP_W_er=Xw%er
      QP_W_dr=Xw%dr

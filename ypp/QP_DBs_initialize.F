@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 C. Attaccalite, A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 C. Attaccalite, A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -31,6 +31,7 @@ subroutine QP_DBs_initialize()
  use IO_m,      ONLY:OP_RD_CL,DUMP,io_control,NONE
  use units,     ONLY:HA2EV
  use YPP,       ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,QP_db,QP_db_what,QP_db_name
+ !
  implicit none
  ! 
  ! Work Space
@@ -80,9 +81,9 @@ subroutine QP_DBs_initialize()
      ! QP databases
      !
      nflines=nflines+1
-     write (flines(nflines),'(a,t30,a)') '%Actions_and_names','# [QPDB] QP databases and Actions (format is what|DB|)'
+     write (flines(nflines),'(a,t30,a)') '%Actions_and_names','# [QPDB] QP databases and Actions (format is "what"|"DB"|)'
      nflines=nflines+1
-     flines(nflines)=" E | none |"
+     flines(nflines)=' "E" | "none" |'
      nflines=nflines+1
      flines(nflines)='%'
    else

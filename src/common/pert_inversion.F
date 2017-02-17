@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -26,7 +26,7 @@ integer function pert_inversion(iw,N,W,C,f,V)
  use pars,           ONLY:SP
  use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
- use BS,             ONLY:K_BSmat_by_V
+ use BS,             ONLY:BSS_inv_iter_max
  use com,            ONLY:error
  !
  implicit none
@@ -38,7 +38,6 @@ integer function pert_inversion(iw,N,W,C,f,V)
  ! Work Space
  !
  real(SP),parameter       :: perc_treshold=0.01
- integer     ::BSS_inv_iter_max=51
  integer     ::it,i1,i2
  complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
  !
@@ -55,7 +54,7 @@ integer function pert_inversion(iw,N,W,C,f,V)
  !
  do while (it<=BSS_inv_iter_max) 
    !
-   call K_BSmat_by_V(1,it*iw,A_nm1,A_n,call_kind='Inv')
+   call K_BSmat_by_V(1,it*iw,N,A_nm1,A_n,1,'Inv')
    A_n(:)=V(:)*A_n(:)
    delta_f=C*Vstar_dot_V(N,W,A_n)
    !

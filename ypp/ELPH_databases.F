@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -481,6 +481,23 @@ integer function ELPH_databases(k,E,q)
      read (io_unit(ID)) pol_vec
      !
      if (ik==1.and..not.use_ext_ph_modes) pol_vector=pol_vec
+     !
+     !DEBUG>
+     !if (ik==1) then
+     !  write (*,'(a,i3)') 'q=',iabs(idb_)
+     !  do il=1,ph_modes
+     !    pol_vec_norm=0._SP
+     !    do ia=1,n_atoms
+     !      do ic=1,3
+     !        pol_vec_norm=pol_vec_norm+conjg(pol_vec(il,ia,ic))*pol_vec(il,ia,ic)
+     !      enddo
+     !      write (*,'(a,i2,6f10.6)') 'Matd file ia',ia,pol_vector(il,ia,:)/159.25556471558120362737
+     !      write (*,'(a,i2,6f10.6)') 'DBPH file ia',ia,pol_vec(il,ia,:)
+     !    enddo
+     !    write (*,'(a,i3,a,f9.6)') 'mode=',il,' norm=',pol_vec_norm
+     !  enddo
+     !endif
+     !DEBUG<
      !
      if (idb==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
      !

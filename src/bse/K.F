@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -49,7 +49,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,BSS_uses_RIM,&
-&                       O_n_scatt,BS_O,BS_cpl_K_corr
+&                       O_n_scatt,BS_O,BS_cpl_K_corr,BS_eh_f
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
@@ -135,7 +135,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  W_is_em1s=X%whoami==2
  W_is_pp  =X%whoami==4
- !
+ ! 
  if (BS_res_K_corr.and..not.l_td_hf) then
    !
    call section('p','Screened interaction header I/O')
@@ -462,13 +462,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! :::ALDA        (resonant):::
          !
          if (BS_K_is_ALDA) H_res_x=H_res_x+&
-&                          tddft_alda_r_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+&                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                (/iv1,iv2/),(/is1,is2,is1,is2/),1)
          !
          ! :::ALDA        (coupling):::
          !
          if (BS_K_is_ALDA) H_cpl_x=H_cpl_x+&
-&                          tddft_alda_r_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+&                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                (/iv1,iv2/),(/is1,is2,is1,is2/),2)
          !
          ! :::Correlation (resonant):::
@@ -536,7 +536,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          if (iBSE1==iBSE2) H_res_c=real(H_res_c)
          !
-         BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
+         BS_mat(icv1,icv2)=sqrt(BS_eh_f(iBSE1))*(H_res_x*real(spin_occ)*Co-H_res_c)*sqrt(BS_eh_f(iBSE2))
          !
          if (BSS_uses_RIM.and.iBSE1==iBSE2) BS_mat_diagonal(iBSE1)=BS_mat(icv1,icv2)
          !

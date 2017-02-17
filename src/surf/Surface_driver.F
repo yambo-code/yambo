@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2016 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -328,6 +328,9 @@ subroutine setup_loc(iv1,iv2,ic1,ic2)
 &                           (loc(iv,ik) <  locfac).and.(loc(ic,ik) >= locfac)
         if(loctype.eq."bb") transloc(ic,iv,ik) = &
 &                           (loc(iv,ik) <  locfac).and.(loc(ic,ik) <  locfac)
+!DEBUG>
+!write(88,'(3i4,l2,2f7.3,1x,f7.3)') ik,iv,ic,transloc(ic,iv,ik),loc(iv,ik),loc(ic,ik),locfac  ! DEBUG
+!DEBUG<
       enddo
     enddo
   enddo

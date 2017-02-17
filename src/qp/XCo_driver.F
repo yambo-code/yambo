@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,9 +21,10 @@
 !
 subroutine XCo_driver(E,k,Xk,q)
  !
- use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
+ use pars,          ONLY:SP
+ use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time,l_gw0
  use pars,          ONLY:schlen
- use com,           ONLY:msg
+ use com,           ONLY:msg,of_open_close
  use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc,real2ch
@@ -42,13 +43,15 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  ! Reporting
  !
- integer           ::i_qp,ib,ik,ibp
+ integer           ::i_qp,ib,ik,ibp,i_spin
  character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
  !
  ! IO
  !
  integer           :: ID,io_err
  integer, external :: io_HF_and_locXC
+ real(SP)          :: output(4)
+ character(schlen) :: of_name(n_sp_pol)
  !
  ! Section
  !
@@ -114,6 +117,21 @@ subroutine XCo_driver(E,k,Xk,q)
      !
      Vxc_kind='DFT'
      !
+     if(.not.l_gw0) then
+       if(n_sp_pol==2) then
+         of_name(1)='HFup'
+         of_name(2)='HFdw'
+       else
+         of_name(1)='HF'
+       endif
+       !
+       do i_spin=1,n_sp_pol
+         call of_open_close(of_name(i_spin),'ot')
+         call msg('o '//trim(of_name(i_spin)),'#',' HF corrections to be plotted',INDENT=0)    
+         call msg('o '//trim(of_name(i_spin)),'#','  E_LDA       E_HF       S_x        V_xc',INDENT=0)    
+       enddo
+     endif
+     !
      ik=QP_table(1,3)
      call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
      !
@@ -146,7 +164,22 @@ subroutine XCo_driver(E,k,Xk,q)
        if (i_qp/=QP_n_states) call msg('r',trim(ch))
        if (i_qp==QP_n_states) call msg('rn',trim(ch))
        !
+       if(.not.l_gw0) then
+         i_spin=spin(QP_table(i_qp,:))
+         output(1)=E%E(ib,ik,i_spin)*HA2EV
+         output(2)=output(1)-( QP_Vxc(i_qp)-QP_Vnl_xc(i_qp) )*HA2EV
+         output(3)=QP_Vnl_xc(i_qp)*HA2EV
+         output(4)=QP_Vxc(i_qp)   *HA2EV
+         call msg('o '//trim(of_name(i_spin)),'',output,INDENT=-2,USE_TABS=.true.)
+       endif
+       !
      enddo
+     !
+     if(.not.l_gw0) then
+       do i_spin=1,n_sp_pol
+         call of_open_close(of_name(i_spin))
+       enddo
+     endif
      !
      ! I/O
      !

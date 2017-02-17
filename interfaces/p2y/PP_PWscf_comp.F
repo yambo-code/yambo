@@ -1,7 +1,7 @@
 ! Self-energies and eXcitations (SaX)
 ! Copyright (C) 2006 SaX developers team
 !
-! Copyright (C) 2000-2014 D. Sangalli and the YAMBO team 
+! Copyright (C) 2000-2016 D. Sangalli and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This program is free software; you can redistribute it and/or

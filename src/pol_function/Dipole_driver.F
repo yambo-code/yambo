@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,6 +22,7 @@
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run
+ use timing,         ONLY:what_is_running
  use pars,           ONLY:SP,cI
  use com,            ONLY:warning,error
  use drivers,        ONLY:l_col_cut
@@ -34,7 +35,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use vec_operate,    ONLY:v_norm
-#if defined _KERR
+#if defined _SC  || defined _KERR
  use X_m,            ONLY:P_square
 #endif
  use WF_distribute,  ONLY:WF_states_setup
@@ -59,7 +60,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  integer :: ID,io_err(2)
  integer, external :: io_DIPOLES
-#if defined _KERR
+#if defined _SC || defined _KERR
  integer, external :: io_P_and_P2
 #endif
  !
@@ -89,6 +90,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    io_err(2)=io_P_and_P2(X,Xen,ID)
  endif
 #endif
+ !
+ if (index(what_is_running,'YPP')>0 .and. any(io_err/=0)) &
+&  call error(' Error while reading dipoles DB')
  !
  if (any(io_err/=0)) then
    !

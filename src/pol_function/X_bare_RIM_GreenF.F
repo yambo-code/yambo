@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -72,7 +72,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
      if (ordering=="c" )  GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+conjg(pole)))
      if (ordering=="r" )  GreenF(iw)=Z_/    (Xw%p(iw)-pole)
      if (ordering=="a" )  GreenF(iw)=                      -Z_/(conjg(Xw%p(iw))+pole)
-     if (ordering=="ca" ) GreenF(iw)=                      -Z_/(Xw%p(iw)+pole)
+     if (ordering=="ca" ) GreenF(iw)=                      -Z_/(Xw%p(iw)+conjg(pole))
    enddo
    !
    return
@@ -93,7 +93,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
      ! 
      ik_rand=BZ_RIM_table(ikbz,i1) 
      !
-     pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)+(0.,1.)*W_
+     pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)-(0.,1.)*W_
      !
      s_ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))*&
 &    BZ_RIM_ipol_weight(i1)/real(BZ_RIM_nkpt(ikbz))
@@ -103,12 +103,12 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
      do iw=1,Xw%n(1)
        !
        if (ordering=="t" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
-       if (ordering=="c" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
+       if (ordering=="c" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+conjg(pole))
        if (ordering=="r" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)
-       if (ordering=="a" ) GreenF(iw)=GreenF(iw)-ffac/(conjg(Xw%p(iw))+pole)
-       if (ordering=="ca") GreenF(iw)=GreenF(iw)-ffac/(Xw%p(iw)+pole)
+       if (ordering=="a" ) GreenF(iw)=GreenF(iw)-ffac/(conjg(Xw%p(iw))+pole)          ! T-ordered anti-resonant
+       if (ordering=="ca") GreenF(iw)=GreenF(iw)-ffac/(Xw%p(iw)+conjg(pole))
        if (ordering=="sr") GreenF(iw)=GreenF(iw)+s_ffac/(Xw%p(iw)-pole)/spin_occ**2.
-       if (ordering=="sa") GreenF(iw)=GreenF(iw)-s_ffac/(Xw%p(iw)+pole)/spin_occ**2.
+       if (ordering=="sa") GreenF(iw)=GreenF(iw)-s_ffac/(Xw%p(iw)+conjg(pole))/spin_occ**2.
      enddo
      !
    enddo
@@ -121,7 +121,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
      do i2=1,BZ_RIM_nkpt(ikpbz)
        ikp_rand=BZ_RIM_table(ikpbz,i2) 
        !
-       pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)+(0.,1.)*W_
+       pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)-(0.,1.)*W_
        !
        ffac=Z_*Xen%f_RIM(iv,ikp_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))*&
 &         BZ_RIM_ipol_weight(i1)*BZ_RIM_ipol_weight(i2)/real(BZ_RIM_nkpt(ikbz))/real(BZ_RIM_nkpt(ikpbz))/f0fac
@@ -130,10 +130,10 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
          if (ordering=="t" ) GreenF(iw)=GreenF(iw)+&
 &                             ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
          if (ordering=="c" ) GreenF(iw)=GreenF(iw)+&
-&                             ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
+&                             ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+conjg(pole))
          if (ordering=="r" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)
          if (ordering=="a" ) GreenF(iw)=GreenF(iw)-ffac/(conjg(Xw%p(iw))+pole)
-         if (ordering=="ca") GreenF(iw)=GreenF(iw)-ffac/(Xw%p(iw)+pole)
+         if (ordering=="ca") GreenF(iw)=GreenF(iw)-ffac/(Xw%p(iw)+conjg(pole))
        enddo
        !
      enddo

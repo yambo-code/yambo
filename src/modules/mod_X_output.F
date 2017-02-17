@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -33,7 +33,7 @@ module X_output
  !
  character(15)     :: headers(7)
  character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name
- character(schlen) :: off_file_name,beta_file_name,moke_file_name
+ character(schlen) :: off_file_name,beta_file_name,moke_file_name,fara_file_name
  !
  contains
    !
@@ -48,32 +48,32 @@ module X_output
      !
      ! T-ordering
      !
-     call msg('o eps eel alpha off beta moke','#')
+     call msg('o eps eel alpha off beta moke fara','#')
      if (GreenF) then
        if (l_chi) call msg('o eps eel alpha','# ','- G. Functions  are '//trim(X_E_xc_string(4)),INDENT=0)
-       if (l_bss) call msg('o eps eel alpha off beta moke','# ','- G. Functions  are '//trim(K_E_xc_string),INDENT=0)
+       if (l_bss) call msg('o eps eel alpha off beta moke fara','# ','- G. Functions  are '//trim(K_E_xc_string),INDENT=0)
      else
        if (l_chi) call msg('o eps eel alpha','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
-       if (l_bss) call msg('o eps eel alpha off beta moke','# ','- Energies      are '//trim(K_E_xc_string),INDENT=0)
+       if (l_bss) call msg('o eps eel alpha off beta moke fara','# ','- Energies      are '//trim(K_E_xc_string),INDENT=0)
      endif
      if (l_chi) call msg('o eps eel alpha','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
-     if (l_bss) call msg('o eps eel alpha off beta moke','# ','- Wavefunctions are '//trim(K_WF_xc_string),INDENT=0)
-     call msg('o eps eel alpha off beta moke','# ')
+     if (l_bss) call msg('o eps eel alpha off beta moke fara','# ','- Wavefunctions are '//trim(K_WF_xc_string),INDENT=0)
+     call msg('o eps eel alpha off beta moke fara','# ')
      message='- The Green`s function is T-ordered -'
      if (trim(ordering)=='a') message='- The Green`s function is antiresonant -'
      if (trim(ordering)=='r') message='- The Green`s function is resonant -'
      if (trim(ordering)=='c') message='- The Green`s function is causal -'
-     call msg('o eps eel alpha off beta moke','# ',trim(message),INDENT=0)
+     call msg('o eps eel alpha off beta moke fara','# ',trim(message),INDENT=0)
      !
      ! Gauges
      !
      if (iq==1) then
        message='- Using Shifted Grids -'
        if (trim(global_gauge)=='velocity')       message='- Using the Velocity Gauge -'
-       call msg('o eps eel alpha off beta moke','# ',trim(message),INDENT=0)
+       call msg('o eps eel alpha off beta moke fara','# ',trim(message),INDENT=0)
        message='- [r,Vnl] is *NOT* included -'
        if (Vnl_included) message='- [r,Vnl] *is* included -'
-       call msg('o eps eel alpha off beta moke','# ',trim(message),INDENT=0)
+       call msg('o eps eel alpha off beta moke fara','# ',trim(message),INDENT=0)
      endif
      !
    end subroutine
@@ -81,11 +81,11 @@ module X_output
    subroutine X_write_descriptions(n_descs,desc)
      integer      :: n_descs,i_d
      character(*) :: desc(n_descs)
-     call msg('o eps eel fxc alpha off beta moke','#')    
+     call msg('o eps eel fxc alpha off beta moke fara','#')    
      do i_d=1,n_descs
-       call msg('o eps eel fxc alpha off beta moke','#  ',trim(desc(i_d)),INDENT=0)    
+       call msg('o eps eel fxc alpha off beta moke fara','#  ',trim(desc(i_d)),INDENT=0)    
      enddo
-     call msg('o eps eel fxc alpha off beta moke','#')    
+     call msg('o eps eel fxc alpha off beta moke fara','#')    
    end subroutine
    !
    subroutine X_write_q_plus_G(iq,Q_plus_G_pt,ig)
@@ -93,7 +93,7 @@ module X_output
      integer           :: iq
      integer,optional  :: ig
      real(SP)          :: Q_plus_G_pt(3)
-     character(schlen) :: message(7)
+     character(schlen) :: message(8)
      !
      if (iq==1.and.ig==1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
@@ -103,6 +103,7 @@ module X_output
        message(5) = '# Off-diagonal Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
        message(6) = '# Off-diagonal Polarizability @ Q('//trim(intc(iq))//') [q->0 direction] :'
        message(7) = '# moke parameters @ Q('//trim(intc(iq))//') [q->0 direction] :'
+       message(8) = '# faraday parameters per unit length @ Q('//trim(intc(iq))//') [q->0 direction] :'
      else  if (iq/=1.and.ig==1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') [iku] :'
        message(2) = '# EELS @ Q('//trim(intc(iq))//')  [iku]:'
@@ -121,7 +122,8 @@ module X_output
      call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0)
      call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0)
      call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0)
-     call msg('o eps eel fxc alpha off moke','#')    
+     call msg("o fara",trim(message(7)),Q_plus_G_pt,INDENT=0)
+     call msg('o eps eel fxc alpha off moke fara','#')    
      !
    end subroutine
    !
@@ -140,6 +142,7 @@ module X_output
      off_file_name  ='off_q'//trim(intc(iq))
      beta_file_name ='beta_q'//trim(intc(iq))
      moke_file_name ='moke_q'//trim(intc(iq))
+     fara_file_name ='fara_q'//trim(intc(iq))
      !
      if (present(ig)) then
        if (ig>1) then
@@ -156,6 +159,7 @@ module X_output
        off_file_name  =  trim(off_file_name)//'_'//solver
        beta_file_name =  trim(beta_file_name)//'_'//solver
        moke_file_name =  trim(moke_file_name)//'_'//solver
+       fara_file_name =  trim(fara_file_name)//'_'//solver
      endif
      !
      if (len_trim(approx)>0) then
@@ -165,6 +169,7 @@ module X_output
        off_file_name  =  trim(off_file_name)//'_'//approx
        beta_file_name =  trim(beta_file_name)//'_'//approx
        moke_file_name =  trim(moke_file_name)//'_'//approx
+       fara_file_name =  trim(fara_file_name)//'_'//approx
      endif
      !
      if (len_trim(equation)>0) then
@@ -174,6 +179,7 @@ module X_output
        off_file_name  =  trim(off_file_name)//'_'//equation
        beta_file_name =  trim(beta_file_name)//'_'//equation
        moke_file_name =  trim(moke_file_name)//'_'//equation
+       fara_file_name =  trim(fara_file_name)//'_'//equation
      endif
      !
 #if defined _KERR
@@ -182,6 +188,7 @@ module X_output
        off_file_name=' '
        beta_file_name=' '
        moke_file_name=' '
+       fara_file_name=' '
 #if defined _KERR
      endif
 #endif

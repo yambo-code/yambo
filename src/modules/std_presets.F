@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -48,8 +48,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, l_spin_orbit,n_spin_den,        &
-&                     eval_magn
+&                     filled_tresh, l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
@@ -62,7 +61,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,IO_write,serial_number,IO_read,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
- use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
+ use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,BSS_inv_iter_max,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
@@ -73,14 +72,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_is_causal,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use fragments,  ONLY:Parallel_Fragments
+ use interpolate, ONLY:interpls,max_interpls
+ use memory_m,   ONLY:mem_reset
+ use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
+ use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,nQ_memory,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh
 #endif
- use memory_m,   ONLY:mem_reset
- use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
- use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
- use interpolate, ONLY:interpls,max_interpls
  !
  implicit none
  !
@@ -248,6 +247,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_sc_magnetic=.false.
  l_collisions_IO=.false.
  l_elph_Hamiltonian=.false.
+ l_kerr=.false.
+ l_anomalous_Hall=.false.
  l_carrier_dynamics=.false.
  !
  !electrons
@@ -387,6 +388,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_K_dim=0
  BSS_mode=' '
  BSS_inversion_mode='pf'
+ BSS_inv_iter_max=51
  BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0.,10./)/HA2EV

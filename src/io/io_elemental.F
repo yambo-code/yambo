@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -24,10 +24,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                       DESCRIPTION,DO_NOT_DUMP)
  !
  use pars,    ONLY:SP,schlen,lchlen
-#if defined _NETCDF_IO
  use pars,    ONLY:nf90_SP
  use netcdf
-#endif
  use drivers, ONLY:list_dbs
  use com,     ONLY:msg
  use stderr,  ONLY:string_pack,intc,real2ch
@@ -78,7 +76,6 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    if (VAR_SZ>0) then
      if (write_is_on(ID)) then
        if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
          call netcdf_call(nf90_redef(io_unit(ID)))
          if (present(CH0).or.present(CH1)) then
            call netcdf_call(nf90_def_var(io_unit(ID),VAR,&
@@ -94,7 +91,6 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
            endif
          endif
          call netcdf_call(nf90_enddef(io_unit(ID))) 
-#endif
        endif
        ch=string_pack("[WR",trim(io_file(ID)),"]",&
 &                     repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
@@ -102,9 +98,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        ch=string_pack("[RD",trim(io_file(ID)),"]",&
 &                     repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
        if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
          call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)))
-#endif
        endif
      endif
      if (.not.present(MENU)) call msg(msg_where,trim(ch))
@@ -126,10 +120,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  if (present(I0)) then
    if (write_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
 &                       I0,(/io_rec_pos(ID)/)))
-#endif
      else
        write(io_unit(ID)) I0
      endif
@@ -137,10 +129,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (present(VAR)) call msg(msg_where,VAR,I0)
    else if (read_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
 &                       i_db(1),(/io_rec_pos(ID)/)))
-#endif
      else
        read(io_unit(ID)) i_db(1)
      endif
@@ -176,10 +166,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  if (present(I1)) then
    if (write_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
 &                       I1,(/io_rec_pos(ID)/)))
-#endif
      else
        write(io_unit(ID)) I1
      endif
@@ -187,10 +175,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (present(VAR)) call msg(msg_where,VAR,I1)
    else if (read_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
 &                       i_db(:size(I1)),(/io_rec_pos(ID)/)))
-#endif
      else
        read(io_unit(ID)) i_db(:size(I1))
      endif
@@ -226,10 +212,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  if (present(R0)) then
    if (write_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
 &                       R0,(/io_rec_pos(ID)/)))
-#endif
      else
        write(io_unit(ID)) R0
      endif
@@ -237,10 +221,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (present(VAR)) call msg(msg_where,VAR,R0*local_unit)
    else if (read_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
 &                       r_db(1),(/io_rec_pos(ID)/)))
-#endif
      else
        read(io_unit(ID)) r_db(1)
      endif
@@ -276,10 +258,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  if (present(R1)) then
    if (write_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
 &                       R1,(/io_rec_pos(ID)/)))
-#endif
      else
        write(io_unit(ID)) R1
      endif
@@ -287,10 +267,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (present(VAR)) call msg(msg_where,VAR,R1*local_unit)
    else if (read_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
 &                       r_db(:size(R1)),(/io_rec_pos(ID)/)))
-#endif
      else
        read(io_unit(ID)) r_db(:size(R1))
      endif
@@ -332,10 +310,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    if (L0) i_db(1)=1
    if (write_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
 &                       i_db(1),(/io_rec_pos(ID)/)))
-#endif
      else
        write(io_unit(ID)) i_db(1)
      endif
@@ -343,10 +319,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (present(DB_L0)) DB_L0=i_db(1)==1
    else if (read_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
 &                       i_db(2),(/io_rec_pos(ID)/)))
-#endif
      else
        read(io_unit(ID)) i_db(2)
      endif
@@ -383,10 +357,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    if (write_is_on(ID)) then
      db_ch(1)=CH0
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
 &                       db_ch(:1),(/io_rec_pos(ID)/)))
-#endif
      else
        write(io_unit(ID)) db_ch(1)
      endif
@@ -394,10 +366,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (present(VAR)) call msg(msg_where,VAR,trim(db_ch(1)))
    else if (read_is_on(ID)) then
      if (io_netcdf_support(ID)) then
-#if defined _NETCDF_IO
        call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
 &                       db_ch(:1),(/io_rec_pos(ID)/)))
-#endif
      else
        read(io_unit(ID)) db_ch(1)
      endif

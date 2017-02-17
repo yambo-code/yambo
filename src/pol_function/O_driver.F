@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -112,7 +112,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! OutPut files...
    !
    if(.not.l_rpa_IP) call X_setup_file_names(iq,'inv',trim(FXC_type),'dyson',ig=i_G_shift)
-   if(     l_rpa_IP) call X_setup_file_names(iq,'IP','','',ig=i_G_shift)
+   if(     l_rpa_IP) call X_setup_file_names(iq,'ip','','',ig=i_G_shift)
    !
    ! ... open ...
    !

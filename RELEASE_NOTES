@@ -1,0 +1,74 @@
+Releases:
+=========
+Version: 4 (devel)
+------------------
+Date of the 4.0.0 release           : April    9th 2015
+Date of the previous (4.0.1) release: June    18th 2015
+Date of the latest   (4.0.2) release: October 26th 2015
+
+Version: 3 (stable)
+-------------------
+
+Introduction:
+=============
+Starting from version 4 Yambo implements a massive parallelization scheme based on a 
+pyramidal organization of CPU's among many different levels.
+
+See http://www.yambo-code.org/doc/parallel for more informations and check the new 
+http://www.yambo-code.org/tutorials/Parallel/ tutorial to have a first practical introduction 
+to the new code functionalities.
+
+This version is in devel status. This means that, in the next months, we will fix all possible 
+bugs and mis-functionalities reported by the users. When the new source will be stable enough 
+it will made the new stable version.
+
+Compared to the stable version the new yambo devel release includes many changes, bug fixes and 
+new structures. From a deep point of view the old source has been revolutionized.
+
+Additions: 
+----------
+Yambo 4 now can be linked to a wealth of external libraries. Several common and/or vendor 
+specific FFT libraries are now supported. In addition the standard NETCDF, libxc, ETSF-IO and 
+IOTK libraries can be downloaded, configured and installed during the configuration process 
+using the very same compilation flags used for Yambo.
+
+Changes:
+--------
+The new parallel structure is based on a brand new MPI+OPENMP environment. This has imposed 
+several deep changes of the code structure. These changes now allow Yambo to implement:
+
+-an efficient workload distribution, up to thousands of cores. 
+
+-an efficient memory distribution 
+
+-a controllable I/O that can be even reduced to no databases written (except the output files) 
+ and only a minimal reading of the wave-functions (via a buffering system)
+
+Changes from 4.0.1 to 4.0.2
+
+- Major bug fix in the parallelization
+
+- Major change: now the code can run on any number of processors.
+  The parallelization variables do not need to be powers of 2.
+
+- Removed --enable-open-mpi option and --enable-netcdf. They are not needed anymore
+
+- yambo_surf and ypp_surf project temporarly switched off
+
+- p2y 'PZ ' functional is now recognized
+
+- p2y, psps of UPF version 1 and with multi projector are now correctly read
+
+- BSE parallelization improved
+
+- Fixed bug in BSE+openmp coupling case
+
+- Dipoles computation and I/O reorganized
+
+- Fixed bug in FREQUENCIES_coarse_grid
+
+- OCCUPATIONS_Fermi with double_grid fixed
+
+- Support to plain fortran removed
+
+- ...

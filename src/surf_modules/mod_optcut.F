@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 C. Hogan  and the YAMBO team 
+! Copyright (C) 2000-2016 C. Hogan  and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -208,6 +208,10 @@ end subroutine init_cutoff
           igtab(n1,n2,n3) = ig ! this is the label needed in wfc(ib,G) and gvec
           if(n3.lt.n3limit(n1,n2,1)) n3limit(n1,n2,1) = n3
           if(n3.gt.n3limit(n1,n2,2)) n3limit(n1,n2,2) = n3
+!DEBUG>
+!         write(77,223) n1,n2,n3,ig,gvecaff(igtab(n1,n2,n3),xyz(:))  ! DEBUG
+!  223 format(3i4,2x,i7,3i4,2x,3i4)  ! DEBUG
+!DEBUG<
     enddo
     
     call check_index
@@ -272,6 +276,9 @@ end subroutine init_cutoff
                    call msg('sr','[ERROR] Bug found in check_index.')
                    stop
                 endif
+!DEBUG>
+!                write (78,224) n1,n2,n3,ig1,gvecaff(ig1,xyz(:)) ! DEBUG
+!DEBUG<
 224 format(3i4,2x,i7,3i4,2x,3i4)
              enddo
           endif

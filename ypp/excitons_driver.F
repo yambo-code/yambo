@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 D. Varsano, A. Marini and the YAMBO team
+! Copyright (C) 2000-2016 D. Varsano, A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -23,11 +23,12 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:BO2ANG
+ use parser_m,      ONLY:parser
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_dim,fft_size
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
  use wave_func,     ONLY:WF_load,wf,WF_symm,WF_free,wf_ng
- use R_lattice,     ONLY:nXkibz,bz_samp
+ use R_lattice,     ONLY:nXkibz,bz_samp,q_norm,bare_qpg
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
 &                        excitons_sort_and_report,l_amplitude,l_free_hole,&
@@ -36,19 +37,20 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use YPP,           ONLY:l_eliashberg,l_gkkp
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
+ use BS,            ONLY:BS_K_dim,BS_bands,BS_q,BSS_q0,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
-&                        BSS_n_descs,BSS_description
+&                        BSS_n_descs,BSS_description,ioBSS_diago
  use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use com,           ONLY:msg,error,warning,of_open_close
- use X_m,           ONLY:X_t
+ use X_m,           ONLY:X_t,DIP_q_dot_iR
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
  use vec_operate,   ONLY:c2a
  use wrapper,       ONLY:V_dot_V
+ use vec_operate,   ONLY:v_norm
  !
  implicit none
  type(bz_samp) ::Xk,k,q
@@ -88,8 +90,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  !
  integer           ::io_err,ID,io_ID
- integer, external ::ioBSS_diago,ioBS
- type(X_t)         ::Xbsk
+ integer, external ::ioBS,io_DIPOLES
+ type(X_t)         ::Xbsk,Xdip
  !
  !... Energies and Residulas
  !
@@ -107,12 +109,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Variables needed to the report of eigenvectors
  !
+ real(SP)         :: dip_factor
  real(SP), allocatable ::A_weight(:)
  !
  ! Here I read information from the BS database
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=ioBS(1,Xbsk,io_ID)
+ !
  if (io_err/=0) return
  if (BS_cpl_K_exchange) BS_cpl_mode='x'
  if (BS_cpl_K_corr) BS_cpl_mode='c'
@@ -254,8 +258,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
      do neh = 1,BS_H_dim
        !
+       dip_factor=1._SP
+       !
        do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
-         A_weight(neh)=A_weight(neh)+BS_mat(neh,i_l)*conjg(BS_mat(neh,i_l))
+         A_weight(neh)=A_weight(neh)+(BS_mat(neh,i_l)*dip_factor)*conjg(BS_mat(neh,i_l)*dip_factor)
        enddo
        !
      enddo
@@ -324,7 +330,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      !
      ! (***) Daniele 15/7/07 rev Andrea 12/07:
      ! 
-     ! The number of cells are always odd so that the hole can
+     ! The number of cells is always odd so that the hole can
      ! be placed in the middle.
      !
      r_hole_rlu(j1)=r_hole_rlu(j1)+ncell(j1)/2*fft_dim(j1)
@@ -396,8 +402,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
        k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
        !
-       WF1_ir=WF_symm(rindex(ir),(/iv,ikibz,is,i_spin/))
-       WF2_ir=WF_symm(rindex(ir),(/ic,ikibz,is,i_spin/))
+       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikibz,is,i_spin/))
+       WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
        !
        wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
        if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2016 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -306,6 +306,9 @@ contains
        call iotk_scan_attr(attr,"npw",npw,IERR=ierr)
        if ( ierr/= 0) call errore("Wrong input format in NPW","read_kgrid",ABS(ierr) )
        pw_npwk_(ik) = npw
+!DEBUG
+!      write(*,*) "CDH:",ik,pw_npwk_(ik)
+!END DEBUG
        allocate( kindex(npw), STAT=ierr )
        if ( ierr/=0 ) call errore('pw_igkindex','Unable allocate kindex',ABS(ierr))
        call iotk_scan_dat(pwunit,'index',kindex(:),IERR=ierr)

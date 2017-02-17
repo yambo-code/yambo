@@ -1,23 +1,42 @@
-
 #
 # [VER] @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@
+# 
+# - GENERAL CONFIGURATIONS -
 # 
 # [SYS] @build_os@@@build_cpu@
 # [SRC] @srcdir_path@
 # [BIN] @exec_prefix@/bin
-# [FFT] @FFT_DESCRIPTION@
-#
 # [@DP_str@] Double precision
 # [@Red_str@] Redundant compilation  
-# [@MPI_str@] MPI 
-# [@OPENMP_str@] OpenMP 
-# [@PW_str@] PW (@PW_VER@) support
-# [@ETSF_str@] ETSF I/O support
-# [@SLK_str@] SCALAPACK
-# [@NETCDF_str@@HDF5_str@@NETCDF_LF_str@] NETCDF/HDF5/Large Files 
-# [@BLAS_str@@LAPACK_str@@LOCAL_str@] Built-in BLAS/LAPACK/LOCAL
+# [@TIME_profile_str@] Run-Time timing profile 
+# 
+# - PARALLEL SUPPORT -
 #
-# [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @OPENMPLIBS@
+# [@MPI_str@] MPI
+# [@OPENMP_str@] OpenMP 
+# [@BGQ_str@] Blue-Gene specific procedures
+# 
+# - LIBRARIES (E=external library; I=internal library; -=not used;) -
+#
+#  I/O
+# [ @PW_str@ ] IOTK   : @IOTK_LIBS@ (QE @PW_VER@)
+# [ @ETSF_str@ ] ETSF_IO: @ETSF_LIBS@
+# [ @NETCDF_str@ ] NETCDF : @NETCDF_LIBS@ @NETCDF_LF_str@
+# [ @HDF5_str@ ] HDF5   : @HDF5_LIBS@ @HDF5_support@
+#
+#  MATH 
+# [ @FFT_str@ ] FFT      : @FFT_LIBS@ @FFT_DESCRIPTION@
+# [ @BLAS_str@ ] BLAS     : @BLAS_LIBS@
+# [ @LAPACK_str@ ] LAPACK   : @LAPACK_LIBS@
+# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@ @BLACS_LIBS@
+#
+#  OTHER
+# [ @LIBXC_str@ ] LibXC      : @LIBS_LIBXC@
+# [ @MPI_LIB_str@ ] MPI library: @MPILIBS@
+#
+# - COMPILERS, MAKE and EDITOR -
+#
+# [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
 # [  C  ] @CC@ @CFLAGS@
 # [MPICC] @PCC@ @PCCFLAGS@
 # [ F90 ] @F90@ @FCFLAGS@ @OPENMPLIBS@

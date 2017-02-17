@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -94,6 +94,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer          ::i1
  !
  ! What is running ?
+ !
  !
  what_is_running='YAMBO'
 #if defined _ELPH 
@@ -465,11 +466,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation
-   !
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
    !
-   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode')
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSSInvItMax')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
    !
@@ -767,11 +767,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      l_rpa_IP     = trim(Chi_mode)=='IP'.or.trim(BSK_mode)=='IP'
      l_td_hartree = trim(Chi_mode)=='Hartree'.or.trim(BSK_mode)=='Hartree'
-     if (l_tddft) then
-       l_alda_fxc = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
-       l_lrc_fxc  = trim(Chi_mode)=='LRC' 
-       l_bs_fxc   = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
-     endif
+     l_alda_fxc   = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
+     l_lrc_fxc    = trim(Chi_mode)=='LRC' 
+     l_bs_fxc     = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
+     l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
      l_td_hf      = trim(BSK_mode)=="HF"
      l_W_eh       = trim(BSK_mode)=="SEX"
      !
@@ -827,8 +826,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bss)    call initactivate(1,'bsk')
      if (l_bs_fxc) BSS_mode="t"
      if (l_bse) then
-       !
-       if (l_alda_fxc) BS_res_mode='x'     
        !
        if (io_X_err(2)==0) then
          if (ioBS_err/=0) BS_n_g_W=X(2)%ng

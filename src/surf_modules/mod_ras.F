@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 C. Hogan and the YAMBO team 
+! Copyright (C) 2000-2016 C. Hogan and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -64,6 +64,7 @@ subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf,label)
      RAS(i)    = cost * hw(i) * d_surf * ( Aw(i) * Idelta(i) - Bw(i) * Rdelta(i) )
      SDR(i)    = -1.0_SP * cost * hw(i) * d_surf * &
 &           AIMAG( (1.0_SP - 0.5*(eps_x(i)+eps_y(i)))/(1.0_SP - eps_b(i)) )
+     write(72,*) hw(i)*HA2EV, Idelta(i),Rdelta(i),aimag(eps_b(i))
   enddo
 
   write (of_name,'(a,a)') 'ras'//label

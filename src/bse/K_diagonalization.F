@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,7 +28,10 @@ subroutine K_diagonalization(iq,W)
  use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
  use X_m,            ONLY:X_epsilon,X_drude_term
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
-&                         BSS_write_eig_2_db,BS_eh_W,BS_eh_E,BS_anti_res
+&                         BSS_write_eig_2_db,BS_eh_W,BS_eh_E,BS_anti_res,&
+&                         ioBSS_diago
+ !
+ !
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
@@ -68,10 +71,11 @@ subroutine K_diagonalization(iq,W)
  complex(SP), allocatable ::BS_R_left(:)
  complex(SP), allocatable ::BS_R_right(:)
  !
+ !
  ! I/O
  !
  integer              ::io_err,ID
- integer, external    ::ioBSS_diago
+ !
  !  
  ! Sectioning
  !
@@ -95,12 +99,15 @@ subroutine K_diagonalization(iq,W)
  allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
  !
+ !
  if (K_is_not_hermitian) then
    allocate(BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim))
    call mem_est("BS_V_left BS_V_right",(/BS_H_dim,size(BS_V_left),size(BS_V_right)/))
    allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim))
    call mem_est("BS_R_left BS_R_right BS_overlap",(/BS_H_dim,BS_H_dim,size(BS_overlap)/))
    BS_overlap=(0.,0.)
+   !
+   !
  else
    allocate(BS_E_real(BS_H_dim))
    call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))
@@ -111,8 +118,11 @@ subroutine K_diagonalization(iq,W)
  !
  ! Diagonalization DB (IN)
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ !
+ !
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ !
  !
  if(io_err<0) then
    !
@@ -180,6 +190,7 @@ subroutine K_diagonalization(iq,W)
      call PP_redux_wait(BS_R_right)
      call live_timing
      !
+     !
      ! [2] BS_R(i)= <i_K|j><j|q0> 
      !            = conjg( BS_V_left(k,i))*BSS_rhoq0(k)*R_k
      !
@@ -227,6 +238,8 @@ subroutine K_diagonalization(iq,W)
      !
      do i1=1,BS_H_dim
        BS_R(i1)=BS_R_left(i1)*BS_R_right(i1)
+       !
+       !
      enddo
      !
    else
@@ -251,6 +264,7 @@ subroutine K_diagonalization(iq,W)
      !
      call PP_redux_wait(BS_R)
      !
+     !
    endif
  endif
  !
@@ -263,11 +277,13 @@ subroutine K_diagonalization(iq,W)
  X_epsilon(2,:)=(0.,0.)
  X_epsilon(3,:)=X_epsilon(3,:)/real(ncpu,SP)
  !
+ !
  call live_timing('BSK     epsilon',px%n_of_elements(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !
    gauge_factor=1._SP
+   !
    !
    ! Note the use of a causal expression here needed to avoid any
    ! distinction between the resonant and antiresonant e/h Green's functions.
@@ -277,14 +293,18 @@ subroutine K_diagonalization(iq,W)
      if(BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor
    endif
    !
+   !
    call live_timing(steps=1)
  enddo
  call live_timing
  call PP_redux_wait(X_epsilon)
  !
+ !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
  !
+ !
  X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude_term(:))*Co
+ !
  !
  X_epsilon(1,:)=W%p(:)
  !
@@ -295,8 +315,12 @@ subroutine K_diagonalization(iq,W)
  ! Diagonalization DB (OUT)
  !
  if (io_err/=0) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+   !
+   !
+     call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
+     io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+   !
+   !
  endif
  !
  ! CLEAN
@@ -305,9 +329,13 @@ subroutine K_diagonalization(iq,W)
  call mem_est("BS_mat")
  deallocate(BS_R,BS_E)
  call mem_est("BS_R BS_E")
+ !
+ !
  if (K_is_not_hermitian) then
    deallocate(BS_V_left,BS_V_right,BS_R_left,BS_R_right)
    call mem_est("BS_V_left BS_V_right BS_R_left BS_R_right")
+   !
+   !
  else
    deallocate(BS_E_real)
    call mem_est("BS_E_real")

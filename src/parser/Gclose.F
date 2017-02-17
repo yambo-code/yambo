@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -33,6 +33,7 @@ subroutine Gclose(ng,what)
  real(SP):: ng_r
  character(*) :: what
  !
+ if (ng==0        .and.      (trim(what)=="fRL".or.trim(what)=="tRL") )   return
  if (n_g_shells==0.and.      (trim(what)=="fRL".or.trim(what)=="tRL") )   return
  if (n_g_shells==0.and. .not.(trim(what)=="fRL".or.trim(what)=="tRL") ) &
 &  call error(' Initialization not yet done. Use RL units in input or run initialization')
@@ -62,6 +63,7 @@ subroutine Gclose(ng,what)
    case ('tRL','fRL')
      ng=G2G(ng)
  end select
+ !
  !
 contains
   !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,9 +21,7 @@
 !
 module pars
  !
-#if defined _NETCDF_IO
  use netcdf
-#endif  
  !
  implicit none
  !
@@ -39,9 +37,9 @@ module pars
  !
  ! NetCDF types
  !
-#if defined _NETCDF_IO && defined _DOUBLE
+#if defined _DOUBLE
  integer, parameter  :: nf90_SP = nf90_double
-#elif defined _NETCDF_IO 
+#else 
  integer, parameter  :: nf90_SP = nf90_real
 #endif
  !

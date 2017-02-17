@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -46,7 +46,7 @@ module ELPH
  real(SP),    allocatable :: f_k_plus_q(:,:,:)
  complex(SP), allocatable :: elph_gkkp(:,:,:,:)
  complex(SP), allocatable :: pol_vector(:,:,:)
- type(levels), save       :: E_k_p_q
+ type(levels)             :: E_k_p_q
  !
  ! El_h Hamiltonian
  !

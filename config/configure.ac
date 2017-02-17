@@ -1,6 +1,8 @@
 #
-# Copyright (C) 2000-2014 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2015 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -19,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.4.1 r.3187 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.4.2 r.93 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="4"
-SSUBLEVEL="1"
-SREVISION="3187"
+SSUBLEVEL="2"
+SREVISION="5108"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -33,12 +35,14 @@ AC_CONFIG_SRCDIR([driver/driver.c])
 m4_include([config/acx_lapack.m4])
 m4_include([config/acx_mpi.m4])
 m4_include([config/acx_blas.m4])
-m4_include([config/acx.m4])
+m4_include([config/acx_misc.m4])
 m4_include([config/acx_gmake.m4])
 m4_include([config/netcdf_f90.m4])
 m4_include([config/libxc.m4])
-m4_include([config/fftw.m4])
-m4_include([config/slk.m4])
+m4_include([config/fft.m4])
+m4_include([config/iotk.m4])
+m4_include([config/etsf_io.m4])
+m4_include([config/scalapack.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
@@ -59,6 +63,14 @@ AC_FUNC_STAT
 AC_PROG_MAKE_SET
 
 # ============================================================================
+# check size of pointers to int - needed to decide the size of integer
+# arrays in fortran holding C pointers for FFTW
+ACX_POINTER_SIZE
+SIZEOF_INT_P=$ac_pointersize
+AC_SUBST(SIZEOF_INT_P)
+# 
+
+# ============================================================================
 # Checks for programs.
 AC_PROG_CC
 #
@@ -67,7 +79,7 @@ hostname=`uname -n`
 AC_SUBST(hostname)
 # ============================================================================
 # EDITOR
-AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor])) 
+AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor],[32])) 
 AC_CHECK_PROGS(editor,[$with_editor vim vi pico],["none"])
 AC_SUBST(editor)
 
@@ -99,11 +111,20 @@ if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
 AC_SUBST(enable_debug)
 # ============================================================================= 
 # KEEP SOURCE FILES 
-AC_ARG_ENABLE(keepsource, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
+AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
 dp_cpp=""
 if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
-if test x"$enable_keep_src" = "xyes"; then enalbe_keep_src="yes"; fi
+if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 AC_SUBST(enable_keep_src)
+# ============================================================================
+# KEEP EXT LIBS
+AC_ARG_ENABLE(keep-extlibs, AC_HELP_STRING([--enable-keep-extlibs], [Keep downloaded packages as tar.gz . Default is no.]))
+dp_cpp=""
+if test x"$enable_keep_extlibs" = "xno";  then 
+   if test -e ./lib/archive/keep-extlibs-stamp ; then rm ./lib/archive/keep-extlibs-stamp ; fi
+fi
+if test x"$enable_keep_extlibs" = "xyes"; then enable_keep_extlibs="yes"; touch ./lib/archive/keep-extlibs-stamp ; fi
+AC_SUBST(enable_keep_extlibs)
 # ============================================================================
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
@@ -113,76 +134,63 @@ if test x"$enable_dp" = "xyes"; then dp_cpp="-D_DOUBLE"; fi
 AC_SUBST(enable_dp)
 AC_SUBST(dp_cpp)
 # ============================================================================
-# check for IOTK library 
-#
-AC_ARG_WITH(iotk, AC_HELP_STRING([--with-iotk=<path>],
- [Path of the IOTK library directory]))
-compile_p2y="no"
-iotk_dir=""
-if ! test "$with_iotk" = "" ; then
- AC_MSG_CHECKING([$with_iotk IOTK library])
- if test -r $with_iotk/src/libiotk.a ; then
-  compile_p2y="yes"
-  iotk_dir="$with_iotk/src"
-  AC_MSG_RESULT([yes])
-  cp "$with_iotk/src/libiotk.a" lib/
- else
-  AC_MSG_RESULT([no])
- fi
-fi
-AC_SUBST(compile_p2y)
-AC_SUBST(iotk_dir)
-
-# ============================================================================
 # check for p2y versions
 #
-AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y=<mode>],
- [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>]))
+AC_ARG_WITH(p2y_version, AC_HELP_STRING([--with-p2y-version=<flags>],
+ [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>],[32]))
 
 PW_VER="5.0"
 PW_CPP="_P2Y_V50"
 if test "$compile_p2y" = "yes"; then
- if test "$with_p2y" = "export"; then
+ if test "$with_p2y_version" = "export"; then
   PW_VER="export"
   PW_CPP="_P2Y_EXPORT"
  fi
- if test "$with_p2y" = "3.1"; then
+ if test "$with_p2y_version" = "3.1"; then
   PW_VER="3.1"
   PW_CPP="_P2Y_V31"
  fi
- if test "$with_p2y" = "3.1.1"; then
+ if test "$with_p2y_version" = "3.1.1"; then
   PW_VER="3.1.1"
   PW_CPP="_P2Y_V311"
  fi
- if test "$with_p2y" = "3.2"; then
+ if test "$with_p2y_version" = "3.2"; then
   PW_VER="3.2"
   PW_CPP="_P2Y_V32"
  fi
- if test "$with_p2y" = "4.0"; then
+ if test "$with_p2y_version" = "4.0"; then
   PW_VER="4.0"
   PW_CPP="_P2Y_V40"
  fi
- if test "$with_p2y" = "5.0"; then
+ if test "$with_p2y_version" = "5.0"; then
   PW_VER="5.0"
   PW_CPP="_P2Y_V50"
  fi
 fi
 AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
-
+# ============================================================================
+# BLUEGENE support
+#
+AC_ARG_ENABLE(bluegene, AC_HELP_STRING([--enable-bluegene],[Bluegene specific code instructions.]))
+if test x"$enable_bluegene" = "x"; then enable_bluegene="no"; fi
+bluegene_cpp=" "
+if test x"$enable_bluegene" = "xyes"; then 
+ bluegene_cpp="-D_BLUEGENE"
+fi
+AC_SUBST(bluegene_cpp)
 # ============================================================================
 #
-# Verbose compilation
+# Time Profiling (mod_timing)
 #
-AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
-if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-openmp_cpp=" "
-OPENMPLIBS=" "
-if test x"$enable_open_mp" = "xyes"; then 
- OPENMPLIBS="-openmp -lpthread"; 
- openmp_cpp="-D_OPENMP"
+AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
+              [Extended timing profile of specific sections]))
+if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
+time_profile_cpp=" "
+if test x"$enable_time_profile" = "xyes"; then 
+ time_profile_cpp="-D_TIMING"
 fi
-AC_SUBST(OPENMPLIBS)
+AC_SUBST(time_profile_cpp)
 # ============================================================================
 #
 # Verbose compilation
@@ -222,8 +230,8 @@ AC_LANG_PUSH(Fortran)
 #
 # F90 extension
 #
-AC_ARG_WITH(f90ext, AC_HELP_STRING([--with-f90ext=<ext>],
-[Use .<ext> Fortran 90 extension]))
+AC_ARG_WITH(f90ext, AC_HELP_STRING([--with-f90ext=<flags>],
+           [Use .<flags> Fortran 90 extension],[32]))
 if ! test -z "$with_f90ext"; then F90SUFFIX=".$with_f90ext"; fi
 case $F90SUFFIX in
  .f90)
@@ -244,10 +252,30 @@ ACX_FCSETUP()
 #
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
+
+# ============================================================================
+#
+# OpenMP
+#
+AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
+if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
+openmp_cpp=" "
+OPENMPLIBS=" "
+if test x"$enable_open_mp" = "xyes"; then 
+ OPENMPLIBS="$OMPFLAGS"; 
+ openmp_cpp="-D_OPENMP"
+fi
+AC_SUBST(OPENMPLIBS)
+# ============================================================================
 #
 # Underscore options in subroutine naming
 #
 ACX_EXTUS
+#
+# Commented by AM on August 28 because it was imposing an F77 different from the FC
+# leading to linking conflicts
+#
+#AC_F77_WRAPPERS
 #
 # Free Form sepcific options
 #
@@ -287,7 +315,7 @@ compile_blas="no"
 compile_lapack="no"
 BLAS_LIBS=" "
 LAPACK_LIBS=" "
-if test "$with_blas" = "" || test "$with_lapack" = "" ; then
+if test "$with_blas_libs" = "" || test "$with_lapack_libs" = "" ; then
  compile_blas="yes"
  compile_lapack="yes"
 else
@@ -313,29 +341,28 @@ AC_SUBST(compile_lapack)
 # ============================================================================
 # check for local libs needed
 # 
-compile_local=no
-LOCAL_LIBS=""
+DLARAN=""
 if test x"$acx_dlaran_ok" = xno; then
- compile_local=yes
- LOCAL_LIBS="-llocal"
+ DLARAN="dlaran.o"
 fi
-AC_SUBST(compile_local)
-AC_SUBST(LOCAL_LIBS)
+AC_SUBST(DLARAN)
 #
 # ============================================================================
 # MPI
 mpibuild="yes" 
-AC_ARG_WITH(mpi, AC_HELP_STRING([--with-mpi=<lib>],[Use MPI library <lib>]))
-case $with_mpi in
+AC_ARG_WITH(mpi-libs, AC_HELP_STRING([--with-mpi-libs=<lib>],[Use MPI library <lib>],[32]))
+case $with_mpi_libs in
   yes | "") ;;
   no ) 
     mpibuild="no" 
     ;;
   -* | */* | *.a | *.so | *.so.* | *.o)
-    MPILIBS="$with_mpi"
+    MPILIBS="$with_mpi_libs"
+    enable_mpi_libs="yes"
     ;;
   *) 
-    MPILIBS="-l$with_mpi"
+    MPILIBS="-l$with_mpi_libs"
+    enable_mpi_libs="yes"
     ;;
 esac
 if test "$mpibuild" = "yes"; then
@@ -358,7 +385,6 @@ if test "$mpibuild" = "yes"; then
 # OVERALL CHECK
 #
  if test "$mpibuild" = "no" ; then 
-  openmp_cpp=""
   mpi_cpp=""
   MPILIBS=""
   PF90=""
@@ -368,6 +394,7 @@ if test "$mpibuild" = "yes"; then
  fi
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
+ AC_SUBST(enable_mpi_libs)
  AC_SUBST(MPILIBS)
  AC_SUBST(PF90)
  AC_SUBST(PF90FLAGS)
@@ -375,46 +402,23 @@ if test "$mpibuild" = "yes"; then
  AC_SUBST(PCCFLAGS)
  AC_SUBST(mpibuild)
 fi
+
 # ============================================================================
 # FFT 
 AC_LANG_PUSH(Fortran)
-AC_HAVE_FFTW
+AC_HAVE_FFT
 # ============================================================================
 # SCALAPACK/BLACS
 SLK_SETUP
 # ============================================================================
+# IOTK library 
+AC_HAVE_IOTK
+# ============================================================================
 # NETCDF 
-KH_PATH_NETCDF_F90
+AC_HAVE_NETCDF_F90
 # ============================================================================
 # ETSF_IO
-AC_ARG_WITH(etsf_io_include, AC_HELP_STRING([--with-etsf-io-include=<path>],
-   [Path of the ETSF_IO include directory]))
-AC_ARG_WITH(etsf_io_lib, AC_HELP_STRING([--with-etsf-io-lib=<path>],
-   [Path of the ETSF_IO lib directory]))
-compile_e2y="no"
-etsf_dir=""
-if test -d "$with_etsf_io_include" && test -d "$with_etsf_io_lib" ; then
-  if test "$netcdf" = "yes"; then
-    AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_lib and $with_etsf_io_include])
-    if test -r $with_etsf_io_lib/libetsf_io.a ; then
-      compile_e2y="yes"
-      etsf_dir="$with_etsf_io_lib"
-      for file in `find $with_etsf_io_include \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
-        cp $file include/ 
-      done
-      for file in `find $with_etsf_io_lib -name '*etsf_io*.a'`; do
-        cp $file lib/ 
-      done
-      AC_MSG_RESULT([yes])
-    else
-      AC_MSG_RESULT([no])
-    fi
-    AC_SUBST(compile_e2y)
-    AC_SUBST(etsf_dir)
-  else
-    AC_MSG_WARN([ETSF_IO requires NETCDF. ETSF_IO support removed.])
-  fi
-fi
+AC_HAVE_ETSF_IO
 # ============================================================================
 # LIBXC
 ACX_LIBXC
@@ -423,7 +427,7 @@ ACX_LIBXC
 ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
-                 src/wf_and_fft/sgfft.F
+                 src/wf_and_fft/sgfft.F lib/local/.objects
                  sbin/make_makefile.sh sbin/make_message.pl sbin/objects_debug.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 AC_OUTPUT

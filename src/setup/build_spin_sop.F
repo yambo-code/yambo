@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 D. Sangalli and the YAMBO team 
+! Copyright (C) 2000-2016 D. Sangalli and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,8 +23,8 @@ subroutine build_spin_sop()
  !
  use pars,           ONLY:SP,pi,cI,cONE,cZERO
  use matrix_operate, ONLY:m3det
- use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,sop_inv
- use electrons,      ONLY:n_spin,n_sp_pol,n_spinor
+ use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev
+ use electrons,      ONLY:n_spin,n_sp_pol
  !
  implicit none
  !
@@ -64,11 +64,11 @@ subroutine build_spin_sop()
    tmp_sop= tmp_sop*m3det(tmp_sop)
    !
    !           "Tait–Bryan angles"
-   if (tmp_sop(3,1)==-1._SP) then
+   if (abs(tmp_sop(3,1)+1._SP)<1.E-5) then
      alpha=0._SP
      beta= pi/2._SP
      delta=atan2(tmp_sop(1,2),tmp_sop(1,3))
-   elseif (tmp_sop(3,1)==+1.) then
+   elseif (abs(tmp_sop(3,1)-1._SP)<1.E-5) then
      alpha=0._SP
      beta=-pi/2._SP
      delta=atan2(-tmp_sop(1,2),-tmp_sop(1,3))

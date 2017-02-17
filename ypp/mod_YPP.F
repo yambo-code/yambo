@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -284,32 +284,45 @@ module YPP
  !
  contains
    !
-   subroutine K_transform(k,in_mode)
+   subroutine K_transform(k,in_mode,out_mode)
      !
      use units,        ONLY:pi
      use vec_operate,  ONLY:c2a
      !
      real(SP)     :: k(3)
      character(*) :: in_mode
+     character(*),optional :: out_mode
+     !
+     character(schlen) :: out_coord
+     !
+     if(.not.present(out_mode)) out_coord=coo_out
+     if(     present(out_mode)) out_coord=out_mode
      !
      select case (in_mode)
+       case ('alat')
+         k=k/alat_used_for_output*2.*pi
+         if (trim(out_coord)=="iku")  call c2a(v_in=k,mode="kc2i")
+         if (trim(out_coord)=="rlu")  call c2a(v_in=k,mode="kc2a")
+         if (trim(out_coord)=="alat") then
+           k=k*alat_used_for_output/2./pi
+         endif
        case ('cc')
-         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="kc2i")
-         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="kc2a")
-         if (trim(coo_out)=="alat") then
+         if (trim(out_coord)=="iku")  call c2a(v_in=k,mode="kc2i")
+         if (trim(out_coord)=="rlu")  call c2a(v_in=k,mode="kc2a")
+         if (trim(out_coord)=="alat") then
            k=k*alat_used_for_output/2./pi
          endif
        case ('iku')
-         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ki2c")
-         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="ki2a")
-         if (trim(coo_out)=="alat") then
+         if (trim(out_coord)=="cc")   call c2a(v_in=k,mode="ki2c")
+         if (trim(out_coord)=="rlu")  call c2a(v_in=k,mode="ki2a")
+         if (trim(out_coord)=="alat") then
            call c2a(v_in=k,mode="ki2c")
            k=k*alat_used_for_output/2./pi
          endif
        case ('rlu')
-         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ka2c")
-         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="ka2i")
-         if (trim(coo_out)=="alat") then
+         if (trim(out_coord)=="cc")   call c2a(v_in=k,mode="ka2c")
+         if (trim(out_coord)=="iku")  call c2a(v_in=k,mode="ka2i")
+         if (trim(out_coord)=="alat") then
            call c2a(v_in=k,mode="ka2c")
            k=k*alat_used_for_output/2./pi
          endif

@@ -1,5 +1,5 @@
 ! 
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team
+! Copyright (C) 2000-2016 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -106,7 +106,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
    endif
    !
+   !
    OCC_T_range=0.
+   !
    !
    if (l_RIM) dos_bands(2)=min(dos_bands(2),BZ_RIM_nbands)
    !
@@ -141,7 +143,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    endif
    delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
    !
-   dos_norm=1./DL_vol/spin_occ
+   dos_norm=1./DL_vol
    if (l_RIM) dos_norm=dos_norm/real(sum(BZ_RIM_nkpt))
    !
    ! Fermi distribution

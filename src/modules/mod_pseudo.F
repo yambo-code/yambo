@@ -36,7 +36,6 @@ module pseudo
  integer :: pp_kbv_dim
  integer,  allocatable:: pp_table(:,:,:)
  integer,  allocatable:: pp_n_l_comp(:)
- integer,  allocatable:: spin_m_table(:,:,:,:)
  real(SP), allocatable:: pp_factor(:,:,:,:,:)
  !
  ! ABINIT and PWSCF KB

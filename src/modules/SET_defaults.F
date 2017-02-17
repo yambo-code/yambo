@@ -28,10 +28,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,Chi_mode,&
+&                      alpha_dim,use_X_DbGd,use_X_Drude,X_DbGd_nkpts,Dipole_bands_ordered,Chi_mode,&
 &                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
-&                      X_terminator,X_en_comp,global_gauge
+&                      X_terminator,X_en_comp,global_gauge,l_rotate_dipoles
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,&
@@ -48,8 +48,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
+&                     cutoff_presets,k_map
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset
@@ -66,7 +66,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
-&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
+&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_DbGd,BSS_damp_reference,&
 &                     BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
@@ -74,7 +74,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
-&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh
+&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
@@ -209,6 +209,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  bse_scattering=.FALSE.
  Xk_grid_is_uniform=.TRUE.
  q0_def_norm=1.E-5
+ k_map%g0_minus_idx  =-1
+ k_map%g0_plus_idx   =-1
+ k_map%q_step  =-1
+ k_map%max_kdir= 0
  !
  ! RIM
  !
@@ -288,8 +292,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
- BZ_RIM_nbands=0
- BZ_RIM_tot_nkpts=0
+ BZ_DbGd_nbands=0
+ BZ_DbGd_tot_nkpts=0
  BZ_ASSOCIATED_nkpts=0
  filled_tresh=0.00001
  !
@@ -334,19 +338,21 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  Chi_mode=' '
  current_iq=0
- X_RIM_nkpts=0
+ X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
  half_X_mat_only=.FALSE.
  Dipole_bands_ordered=.TRUE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
  Dipole_uses_shifted_grids=.FALSE.
- use_X_RIM=.FALSE.
+ use_X_DbGd=.FALSE.
+ use_X_Drude=.FALSE.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
  grid_path='none'
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
+ l_rotate_dipoles=.FALSE.
  q_plus_G_direction=0.
  Q_Shift_Order=1
  n_X_descs=0
@@ -409,7 +415,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BSS_er=(/0.,10./)/HA2EV
  BSS_dr=.1/HA2EV
  BSS_q0=(/1.,0.,0./)
- BSS_uses_RIM=.FALSE.
+ BSS_uses_DbGd=.FALSE.
  BSS_damp_reference=0.
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
@@ -454,6 +460,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  elph_Ham_bands=0
  elph_Ham_ik=1
  RES_tresh=0.01
+ DW_deltaE_treshold=1.E-6_SP/HA2EV
+ FAN_deltaE_treshold=1.E-6_SP/HA2EV
 #endif
  !
  !

@@ -33,6 +33,9 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
  use wave_func,           ONLY:io_WF
+ use interfaces,          ONLY:PARALLEL_global_indexes
+ use LIVE_t,              ONLY:live_timing_is_on
+ use stderr,              ONLY:write_to_log
  use YPP
  implicit none
  !
@@ -52,8 +55,8 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  logical           :: l_flag
  integer           :: ID,i_err
  integer, external :: io_DB1,io_QINDX,io_GROT
- integer           :: i_err_RIM
- integer, external :: io_RIM_E_and_k
+ integer           :: i_err_DbGd
+ integer, external :: io_Double_Grid
 #if defined _YPP_ELPH
  integer, external :: ELPH_databases
 #endif
@@ -77,6 +80,8 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Switch off report file support
  !
  write_to_report=.FALSE.
+ live_timing_is_on=myid==0
+ write_to_log=myid==0
  !
  ! DB1
  !
@@ -139,7 +144,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Rim energies and kpts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
- i_err_RIM=io_RIM_E_and_k(en,Xk,ID) 
+ i_err_DbGd=io_Double_Grid(en,Xk,ID) 
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
@@ -161,6 +166,8 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !============
  !
  call setup(en,Xen,Ken,k,Xk)
+ !
+ call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)
  !
  ! Specific SECTIONS
  !===================

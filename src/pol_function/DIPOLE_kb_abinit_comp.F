@@ -28,6 +28,7 @@
 subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  !
  use pars,          ONLY:SP,pi
+ use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
  use wave_func,     ONLY:wf_ng
@@ -38,7 +39,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  implicit none
  !
  type(bz_samp) :: Xk
- complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4)
+ complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4,n_spinor)
  integer       :: ik,i_spin
  ! 
  ! Work Space
@@ -48,7 +49,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  real(SP)    :: Ygrad(2,3)
  !
  integer     :: ig,i1,is,ia,pp_spin
- integer     :: im,im_min,im_max,il,i_pp!,j2p1
+ integer     :: im,il,i_pp
  complex(SP) :: e_iGR
  real(SP)    :: KpG_cc(3),G_cc(3)
  real(SP)    :: KpG_norm,G_dot_Rat,sf
@@ -70,25 +71,20 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
          !
          il      = pp_table(1,is,i_pp)
          if(il==0) cycle
-         !j2p1 = pp_table(2,is,i_pp)+1
          pp_spin = pp_table(3,is,i_pp)
          if(pp_spin==0) cycle
          if(pp_spin> 1) cycle
          !
-         im_min=1              !1+spin_m_table(1+i_spin,il,j2p1,is)
-         im_max=2*(il-1)+1     !spin_m_table(1,il,j2p1,is)+spin_m_table(1+i_spin,il,j2p1,is)
          sf=sqrt(4._SP*pi/(2._SP*real(il-1,SP)+1._SP))
          !
-         do im = im_min,im_max
+         do im = 1,2*(il-1)+1
            !
            kb_Ylm(1)=Ylm(il,im)
            kb_Ylm(2:4)=dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:)
            !
-           !sf=pp_factor(im,il,j2p1,is,i_spin)
-           !
            i1=i1+1
-           kbv(ig,i1,1)=kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*e_iGR*sf
-           kbv(ig,i1,2:4)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ig,is,i_pp,i_spin)+ &
+           kbv(ig,i1,1  ,1)=kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*e_iGR*sf
+           kbv(ig,i1,2:4,1)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ig,is,i_pp,i_spin)+ &
 &                                 kb_Ylm(2:4)*pp_kb(ig,is,i_pp,i_spin))*e_iGR*sf
            !
          enddo
@@ -97,7 +93,9 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
    enddo
  enddo
  !
- !kbv=conjg(kbv)
+ if (n_spinor==2) kbv(:,:,:,2)=kbv(:,:,:,1)
+ !
+ !kbv=conjg(kbv)      ! To be checked if I need this for Kerr
  !
  return
  !

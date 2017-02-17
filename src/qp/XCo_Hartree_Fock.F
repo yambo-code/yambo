@@ -96,7 +96,7 @@ if(.not.l_sc_run .and. .not.l_real_time) then
    !
    if ((l_gw0.or.l_cohsex).and.WF_buffered_IO) then
      !
-     call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+     call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER')
      !
    endif
    !
@@ -191,7 +191,7 @@ endif
        !
        DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
        !
-       QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+real(DP_Sx,SP)
+       QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+cmplx(real(DP_Sx),aimag(DP_Sx),SP)
        !
        if (q%sstar(iq,2)==1) call live_timing(steps=1)
        !

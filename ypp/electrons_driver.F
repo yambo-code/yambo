@@ -37,7 +37,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,l_RT_life_Bands,&
-&                         l_bands,l_current,current_dir
+&                         l_bands,l_current,current_dir,plot_is_1D
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -122,7 +122,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! WFs
  !=====
  !
- flag=.not.l_dos
+ flag=.not.l_dos.and..not.l_bands
  !===
  !
  if(flag) then
@@ -149,8 +149,13 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !======================
  !
  if(l_bands.or.l_RT_occ_Bands.or.l_RT_life_Bands) then
-   if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
+   !
+   if ( i_time_rev==1 ) call error(' Bands interpolation does not work with T-rev symmetry')
+   !
    call electrons_bands(Xk,Xen,nb_to_load)
+   !
+   return
+   !
  endif
  !
  !
@@ -243,7 +248,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
    call section('*','Single Particle Magnetization along '//mag_dir)
    !
-   call el_magnetization(Xen,Xk)
+   call el_magnetization(Xen,Xk,magn)
    !
    v2plot=magn(:,mag_i_dir)
    !

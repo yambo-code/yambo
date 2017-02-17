@@ -32,7 +32,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use drivers
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
- use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
@@ -83,7 +82,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     io_COL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
  !
- integer, external :: io_RIM_E_and_k
+ integer, external :: io_Double_Grid
  !
 #if defined _ELPH 
  integer           :: io_ELPH_err
@@ -245,7 +244,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! E_rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_RIM_E_and_k(en,k,io_ID) 
+ io_err=io_Double_Grid(en,k,io_ID) 
  !
  ! xxvxc
  !
@@ -478,7 +477,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    !
    call init_QP_ctl_switch('X')
-   call initactivate(1,'ShiftedPath Qdirection QShiftOrder')
+   call initactivate(1,'DipoleCov ShiftedPath Qdirection QShiftOrder')
    !
    !
  endif
@@ -549,7 +548,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_em1s) then
    call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
-   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
+   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','DmRnge','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
    call initactivate(1,'XTermKind'//'Xs')
    call initactivate(1,'XTermEn'//'Xs')
@@ -629,7 +628,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    if (l_elph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
+     call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_elph_corr) then
@@ -728,7 +727,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    endif
    !
-   call QP_init(.TRUE.,.TRUE.)
+   call init_QP(.TRUE.,.TRUE.)
    !
    ! I use it to propose the value in the input file ...
    !
@@ -902,11 +901,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine before_infile_write_setup 
      !
-     ! After DB reading/stdin logicals
-     ! I propose here values for the input file
+     ! After DB reading/stdin logicals I propose here values for the input file
      !
-     ! If optics with BS FXC I need to dump on X(3) the
-     ! Fxc specs
+     ! If optics with BS FXC I need to dump on X(3) the F_xc specs
      !
      if (all((/l_bs_fxc,l_optics,l_chi.or.l_bse,io_BS_Fxc_err==0/))) then
        QP_ctl_E(1,:,:)=QP_ctl_E(2,:,:) 
@@ -939,6 +936,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bss)    call initactivate(1,'bse')
      if (l_bss)    call initactivate(1,'bsk')
      if (l_bs_fxc) BSS_mode="t"
+     !
      if (l_bse) then
        !
        if (l_alda_fxc) BS_res_mode='x'     
@@ -968,12 +966,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! q0 renormalization
      !
-     BSS_q0(:)=BSS_q0(:)*q0_def_norm/v_norm(BSS_q0)
+     BSS_q0(:) = BSS_q0(:)*q0_def_norm/v_norm( BSS_q0)
      X(1)%q0(:)=X(1)%q0(:)*q0_def_norm/v_norm(X(1)%q0)
      X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
-     if (l_em1s) Xw(2)%dr=0.001/HA2EV
      !
      if (len_trim(BSE_mode)==0) BSE_mode="causal"
      !
@@ -994,12 +991,21 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
      endif
      !
-     ! When running BSE from input file l_bse is FALSE in before_infile_write_setup.
-     ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
-     !
-     if (l_bse.and.io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
-       call X_duplicate(X(4),X(2))
-       call W_duplicate(Xw(4),Xw(2))
+     if (l_bse) then
+       !
+       ! When running BSE from input file l_bse is FALSE in before_infile_write_setup.
+       ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
+       !
+       if (io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
+         call X_duplicate(X(4),X(2))
+         call W_duplicate(Xw(4),Xw(2))
+       endif
+       !
+       if (io_BS_err==0) then
+         if (l_ppa)      call X_duplicate(Xbsk,X(4))
+         if (.not.l_ppa) call X_duplicate(Xbsk,X(2))
+       endif
+       !
      endif
 #if !defined _ELPH  && !defined _QED
      if (l_gw0) l_elel_corr=.true.

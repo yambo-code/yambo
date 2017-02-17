@@ -28,7 +28,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t,X_epsilon,X_drude_term
- use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode
+ use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode,&
+&                         BS_K_has_been_calculated_loaded
  use parallel_m,     ONLY:master_cpu
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
@@ -43,6 +44,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  logical           ::run_Haydock,run_Diago,run_inversion
  logical           ::stop_Haydock
+ !
+ ! Check first if the BS database has been calculated/loaded in K.F
+ !
+ if (.not. BS_K_has_been_calculated_loaded ) return
  !
  call section('*','BSE solver(s)')
  !

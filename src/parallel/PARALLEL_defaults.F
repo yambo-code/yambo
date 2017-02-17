@@ -48,11 +48,13 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  !
  if (product(CPU_s)==ncpu) return
  !
- call PARALLEL_live_message('CPU structure provided for the '//trim(ENVIRONMENT)//' ENVIRONMENT is incomplete. Switching to defaults')
+ call PARALLEL_live_message('CPU structure provided for the '//trim(ENVIRONMENT)//&
+&                           ' ENVIRONMENT is incomplete. Switching to defaults')
  !
  call DEFAULT_action("define")
  !
- if (product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))/=ncpu) call error('Impossible to define an appropriate parallel structure')
+ if (product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))/=ncpu) &
+&    call error('Impossible to define an appropriate parallel structure')
  !
  contains
    !

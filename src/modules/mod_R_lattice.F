@@ -60,11 +60,20 @@ module R_lattice
    real(SP), pointer :: pt(:,:)      => null()
    real(SP), pointer :: ptbz(:,:)    => null()
    real(SP), pointer :: weights(:)   => null()
-   real(SP), pointer :: pt_RIM(:,:)  => null()
-   real(SP), pointer :: ptbz_RIM(:,:)=> null()
    character(6)      :: description
    character(1)      :: units
  end type bz_samp
+ !
+ type bz_map
+   integer, allocatable :: k_map_inv(:,:)
+   integer, allocatable :: k_map_dir(:,:,:)
+   integer      :: g0_plus_idx(3,2)
+   integer      :: g0_minus_idx(3,2)
+   integer      :: max_kdir(3)
+   integer      :: g_idx(-3:3,-3:3,-3:3) 
+   real(SP)     :: g0_length(3,2)
+   real(SP)     :: q_step(3)
+ end type bz_map 
  !
  ! Q/K sampling shadow tables
  !
@@ -120,6 +129,14 @@ module R_lattice
  real(SP)                :: cyl_vr_save
  real(SP)                :: cyl_vz_save
  real(SP)                :: cyl_zz_save
+ !
+ ! BZ map by direction
+ !
+ type(bz_map) :: k_map
+ !
+ ! Shift by a G-vector associated to each symmtry to respect the periodic gauge
+ ! 
+ integer, allocatable :: symm_shift(:,:)
  !
  interface
    !
@@ -193,8 +210,6 @@ module R_lattice
      if(associated(k%star))     deallocate(k%star)
      if(associated(k%sstar))    deallocate(k%sstar)
      if(associated(k%pt))       deallocate(k%pt)
-     if(associated(k%pt_RIM))   deallocate(k%pt_RIM)
-     if(associated(k%ptbz_RIM)) deallocate(k%ptbz_RIM)
      if(associated(k%ptbz))     deallocate(k%ptbz)
      if(associated(k%weights))  deallocate(k%weights)
      nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights,k%s_table,k%k_table)
@@ -210,14 +225,6 @@ module R_lattice
      BZo%description = BZi%description
      allocate( BZo%pt(BZo%nibz,3) )
      BZo%pt(:,:) = BZi%pt(:,:)
-     if (associated( BZi%pt_RIM )) then
-       allocate( BZo%pt_RIM(size(BZi%pt_RIM,1),3) ) 
-       BZo%pt_RIM=BZi%pt_RIM
-     endif
-     if (associated( BZi%ptbz_RIM )) then
-       allocate( BZo%ptbz_RIM(size(BZi%ptbz_RIM,1),3) ) 
-       BZo%ptbz_RIM=BZi%ptbz_RIM
-     endif
      if (associated( BZi%nstar )) then
        allocate( BZo%nstar(BZo%nibz) ) 
        BZo%nstar=BZi%nstar

@@ -35,13 +35,12 @@ subroutine PARALLEL_minimal_index_from_overlaping(IND_in,IND_out,PAR_COMM)
  ! Work Space
  !
  integer               :: i1,D_,i2,i3,i_cpu,ID_,NC_
- integer,  allocatable :: I_tmp(:),J_indx(:)
- real(SP), allocatable :: R_tmp(:)
+ integer,  allocatable :: I_tmp(:),J_indx(:),J_tmp(:)
  !
  D_ =size( IND_in%element_1D)
  ID_=PAR_COMM%CPU_id
  NC_=PAR_COMM%n_CPU
- allocate(I_tmp(NC_),J_indx(NC_),R_tmp(NC_))
+ allocate(I_tmp(NC_),J_indx(NC_),J_tmp(NC_))
  !
  call PAR_INDEX_copy(IND_in,IND_out)
  !
@@ -50,17 +49,17 @@ subroutine PARALLEL_minimal_index_from_overlaping(IND_in,IND_out,PAR_COMM)
  !
  do i2=1,D_
    !
-   R_tmp=0
+   J_tmp=0
    I_tmp=0
    i_cpu=0
    !
-   R_tmp(ID_+1)=real(count( IND_out%element_1D(:) ))
+   J_tmp(ID_+1)=count( IND_out%element_1D(:) )
    if (IND_in%element_1D(i2)) I_tmp(ID_+1)=1
    !
    call PP_redux_wait(I_tmp,COMM=PAR_COMM%COMM)
-   call PP_redux_wait(R_tmp,COMM=PAR_COMM%COMM)
+   call PP_redux_wait(J_tmp,COMM=PAR_COMM%COMM)
    !
-   call sort(R_tmp,indx=J_indx)
+   call sort(J_tmp,indx=J_indx)
    !
    do i1=1,NC_
      i3=J_indx(i1)
@@ -77,6 +76,6 @@ subroutine PARALLEL_minimal_index_from_overlaping(IND_in,IND_out,PAR_COMM)
  !
  IND_out%n_of_elements(ID_+1)=count(IND_out%element_1D)
  !
- deallocate(I_tmp,J_indx,R_tmp)
+ deallocate(I_tmp,J_indx,J_tmp)
  !
 end subroutine PARALLEL_minimal_index_from_overlaping

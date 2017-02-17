@@ -41,7 +41,7 @@ module interfaces
      !
    end subroutine
    !
-   subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill)
+   subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill,det)
      !
      use matrix_operate, ONLY:blacs_t
      use pars,           ONLY:SP
@@ -55,6 +55,7 @@ module interfaces
      real(SP),     optional :: E_real(:)
      integer,      optional :: lib_in
      integer,      optional :: fill
+     complex(SP),  optional :: det
      integer,      optional :: SVD_digits 
      !
    end subroutine

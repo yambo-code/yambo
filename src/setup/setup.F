@@ -25,7 +25,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
-&                         BZ_RIM_nbands,RIM_is_symmetry_expanded,BZ_RIM_tot_nkpts
+&                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nkpts
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_invertion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
@@ -49,7 +49,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2)
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
- integer, external :: k_lattice,RIM_grid_consistency_check
+ integer, external :: k_lattice
  !
  call section('*','CORE Variables Setup') 
  !########################################
@@ -234,14 +234,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
  endif
  !
- if (BZ_RIM_nbands>0.and.associated(en%E_RIM)) then
+ if (BZ_DbGd_nbands>0.and.associated(en%E_DbGd)) then
    !
-   call section('=','Second K-grid')
+   call section('=','Double K-grid')
    !=======================================
    !
-   call msg('rn','RIM K-points :',BZ_RIM_tot_nkpts)
-   call msg('rn','RIM bands    :',BZ_RIM_nbands)
-   call msg('rn','RIM expanded :',RIM_is_symmetry_expanded)
+   call msg('rn','K-points             :',BZ_DbGd_tot_nkpts)
+   call msg('rn','Bands                :',BZ_DbGd_nbands)
+   call msg('rn','Is the grid expanded :',DbGd_is_symmetry_expanded)
    !
  endif
  !

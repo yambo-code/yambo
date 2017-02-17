@@ -34,7 +34,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  use com,            ONLY:msg
  use vec_operate,    ONLY:sort
  use electrons,      ONLY:n_sp_pol
- use R_lattice,      ONLY:k_the_nearest
+ use R_lattice,      ONLY:k_the_nearest,nkibz
  !
  implicit none
  !
@@ -48,12 +48,13 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  !
  ! Work Space
  !
- logical  :: write_message
+ logical  :: write_message,done
  real(SP) :: idist(Nki),odist(Nki),k_dist(n_neigh),toti(N_int),toto(N_int)
- integer  :: order(Nki),ik_near(n_neigh)
- integer  :: iko,iki,i_err,nk_exact,nk_interpolated,i_state,i_val
+ integer  :: order(Nki),ik_near(n_neigh),iko,iki,i_err,nk_exact,&
+&            nk_interpolated,i_state,i_val
  !
  write_message=.true.
+ !
  !
  !
  nk_exact=0
@@ -85,10 +86,10 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
    !
    if (i_err==0.and.n_neigh==1) then
      call val_transfer()
-     nk_exact=nk_exact+1
+     if (done) nk_exact=nk_exact+1
    else
      call val_transfer()
-     nk_interpolated=nk_interpolated+1
+     if (done) nk_interpolated=nk_interpolated+1
    endif
    !
  enddo
@@ -126,6 +127,8 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
      !
      integer     :: i_neigh,i_band,i_spin
      !
+     done=.false.
+     !
      do i_spin=1,n_sp_pol
        do i_val=1,N_int
          Valo(:,iko,i_spin,i_val)=0._SP
@@ -141,6 +144,8 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
          i_spin=spin(table(i_state,:))
          !
          if (i_band<Nb(1).or.i_band>Nb(2)) cycle
+         !
+         done=.true.
          !
          do i_val=1,N_int
            Valo(i_band,iko,i_spin,i_val)=Valo(i_band,iko,i_spin,i_val)+Vali(i_state,i_val)/real(n_neigh)

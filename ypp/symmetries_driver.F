@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -73,7 +73,7 @@ subroutine symmetries_driver(E,Xk)
  if(n_spinor==2) then
    call WF_load(WF,0,1,(/1,E%nbm/),(/1,Xk%nibz/),title='-Magn')
    allocate(magn(fft_size,3))
-   call el_magnetization(E,Xk)
+   call el_magnetization(E,Xk,magn)
    call msg('s','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
    deallocate(magn)
    call WF_free(WF)

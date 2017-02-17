@@ -25,7 +25,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  !
  use com,                 ONLY:msg
  use memory_m,            ONLY:mem_est
- use vec_operate,         ONLY:v_norm,i_sort
+ use vec_operate,         ONLY:v_norm,sort
  use wave_func,           ONLY:wf_nc_k, wf_igk,wf_ncx,wf_ng
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed
  use vec_operate,         ONLY:v_norm
@@ -94,7 +94,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      !
      wf_nc_k(ik) = wf_nc_k_save(ik_save)
      wf_igk(1:wf_nc_k(ik),ik) = g_rot(is,wf_igk_save(1:wf_nc_k_save(ik_save),ik_save))
-     call i_sort( wf_igk(1:wf_nc_k(ik),ik) )
+     call sort( wf_igk(1:wf_nc_k(ik),ik) )
      !
    enddo
    !

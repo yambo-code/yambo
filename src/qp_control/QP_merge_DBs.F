@@ -77,6 +77,9 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
  !
  allocate(qp%k(qp%nk,3),qp%wk(qp%nk),qp%table(qp%n_states,3+n_sp_pol-1))
  !
+ qp%k =rZERO
+ qp%wk=rZERO
+ !
  if (l_QP_db) then
    allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
    qp%Z=cZERO

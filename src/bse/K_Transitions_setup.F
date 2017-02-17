@@ -62,7 +62,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  ! Work Space
  !
- integer :: ikbz,iv,ic,ik,ikp,i_sp,i_star,&
+ integer :: ikbz,iv,ic,ik,ikp,i_sp,i_star,nb(2),&
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp
  real(SP):: E_eh,f_eh,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
@@ -94,6 +94,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  call k_build_up_BZ_tables(Xk)
  !
+ nb(1)=Ken%nbf+1
+ nb(2)=Ken%nbm
+ !
  do i_loop=1,n_loops
    !
    i_T_at_k=0
@@ -102,8 +105,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    i_T_group_last=0
    !
    do ik=1,Xk%nibz
-     do iv=BS_bands(1),Ken%nbm
-       do ic=Ken%nbf+1,BS_bands(2)
+     do iv=BS_bands(1),nb(2)
+       do ic=nb(1),BS_bands(2)
          !
          do i_star=1,Xk%nstar(ik)
            !
@@ -213,6 +216,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      E_eh= Ken%E(ic,ik ,i_sp)-Ken%E(iv,ikp,i_sp)
      f_eh=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
      !
+     f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
+     f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
+     !
      ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
      if ( abs(abs(f_eh)-1._SP)> filled_tresh) BS_not_const_eh_f=.TRUE.
      !
@@ -220,17 +226,16 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      ! f_eh=0 transitions give no contribution to absorption and are not considered
      if ( f_eh<=0._SP ) T_is_ok=.FALSE.
      !
-     ! Small energies transitions are included only via the Drude model
-     if (abs(E_eh)<1.E-5) then
-       if(all((/ic==Ken%bf,iv==Ken%bf,ik==Ken%kf,i_sp==Ken%sf,&
-&              real(Wd)/=0.,aimag(Wd)/=0./))) BS_drude_f_eh=f_eh
+     ! Small energy transitions
+     ! If I add a Drude term just the poles inside K_f are considered
+     ! Remember that the Drude terms wants the f_e*f_h occupation factor
+     if (abs(E_eh)<1.E-5 .and. all((/real(Wd)/=0.,aimag(Wd)/=0./)) ) then
+       if(all((/ic==Ken%bf,iv==Ken%bf,ik==Ken%kf,i_sp==Ken%sf/))) BS_drude_f_eh=f_e*f_h
        T_is_ok=.FALSE.
      endif
      !
      ! If I've included in valence states that are almost empty
      ! or in conduction states that are almost full, those are neglected
-     f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
-     f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
      if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
      !
      if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0.,&

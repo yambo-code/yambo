@@ -63,7 +63,6 @@ subroutine SET_logicals()
  call string_split(DBs_IO_control_string,ch_piece)
  !
  do i_ch=1,10
-   io_DIP=.FALSE.
    if (any((/"DIP","dip"/)==trim(ch_piece(i_ch)))) io_DIP=.FALSE.
    if (any((/"X","x"/)==trim(ch_piece(i_ch)))) io_RESPONSE=.FALSE.
    io_SCREEN=.FALSE.

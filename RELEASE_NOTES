@@ -1,8 +1,9 @@
-Version: 4.0.0
-Date:    9/4/2015
+Version: 4
+Date of the 4.0.0 release         : April 9th 2015
+Date of the latest (4.0.1) release: June 18th 2015
 
 Introduction:
-Starting from version 4.0.0 Yambo implements a massive parallelization scheme based on a 
+Starting from version 4 Yambo implements a massive parallelization scheme based on a 
 pyramidal organization of CPU's among many different levels.
 
 See http://www.yambo-code.org/doc/parallel for more informations and check the new 
@@ -17,7 +18,7 @@ Compared to the stable version the new yambo devel release includes many changes
 new structures. From a deep point of view the old source has been revolutionized.
 
 Additions: 
-Yambo 4.0.0 now can be linked to a wealth of external libraries. Several common and/or vendor 
+Yambo 4 now can be linked to a wealth of external libraries. Several common and/or vendor 
 specific FFT libraries are now supported. In addition the standard NETCDF, libxc, ETSF-IO and 
 IOTK libraries can be downloaded, configured and installed during the configuration process 
 using the very same compilation flags used for Yambo.

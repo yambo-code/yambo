@@ -23,15 +23,16 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics
+ use drivers,        ONLY:l_optics,l_sc_run
  use LIVE_t,         ONLY:is_section_time_short
  use interfaces,     ONLY:WF_load
  use pars,           ONLY:SP
  use com,            ONLY:warning,grid_path
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
-&                         Vnl_commutator_warning,Dipole_uses_shifted_grids
+ use R_lattice,      ONLY:bz_samp,k_map
+ use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,Dipole_covariant,&
+&                         DIP_cov,l_rotate_dipoles,Vnl_commutator_warning,         &
+&                         Dipole_uses_shifted_grids,DIP_P,DIP_S
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
 &                         IO_and_Messaging_switch,io_DIP
  use wave_func,      ONLY:wf_ng,WF
@@ -53,13 +54,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer           :: ik
+ integer           :: ik,bands_to_load(2)
  logical           :: use_trans_gauge
  !
  ! I/O
  !
- integer           :: ID,io_err(2)
- integer, external :: io_DIPOLES
+ integer           :: ID,io_err(3)
+ integer, external :: io_DIPOLES,io_Overlaps
  !
  ! Transitions ordering
  !
@@ -94,7 +95,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  endif
  !
- io_err(2)=0
+ io_err(2:3)=0
  !
  !
  if (any(io_err/=0)) then
@@ -121,19 +122,23 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      DIP_P=(0._SP,0._SP)
    endif
 #endif
+   !
+   bands_to_load=X%ib
+   !
    !   
    ! WF load 
    !
    ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
    ! there will be other WF_load calls using the present WF distribution. 
    !
-   call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&               force_WFo=.true.,keep_states_to_load=.TRUE.)
+   call WF_load(WF,0,1,bands_to_load,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
+&               force_WFo=(l_sc_run.or.l_rotate_dipoles),keep_states_to_load=.TRUE.)
    !
    use_trans_gauge = .true.
    !
    !
-   if (use_trans_gauge) call DIPOLE_transverse(Xen,Xk,X)
+   if (use_trans_gauge)  call DIPOLE_transverse(Xen,Xk,X)
+   !
    !
    ! Free any loaded WFs
    !
@@ -149,6 +154,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    if (master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)
+     !
+     !
    endif
    !
    do ik=1,Xk%nibz
@@ -160,6 +167,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      io_err(1)=io_DIPOLES(X,Xen,ID)
      !
    enddo
+   !
    !
    !
  end if
@@ -176,10 +184,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    Vnl_commutator_warning=.TRUE.
  endif
  !
+ !
  call DIPOLE_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Clean up
  !
  call X_alloc('DIP_iR') 
+ !
  !
 end subroutine

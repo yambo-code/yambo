@@ -25,30 +25,30 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! This routine returns <iR> and <P^2>.
  !
- use pars,                ONLY:SP,pi,schlen
+ use pars,                ONLY:SP,schlen,cONE,CZERO
  use drivers,             ONLY:l_real_time
  use LIVE_t,              ONLY:live_timing
- use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
+ use electrons,           ONLY:levels,n_spin,n_spinor,n_sp_pol
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_CON_BANDS_X,PAR_IND_DIPk_ibz,&
 &                              PAR_DIPk_ibz_index,PAR_IND_VAL_BANDS_X,&
 &                              PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_CON_BANDS_X_ID,&
 &                              PAR_IND_Xk_ibz_ID,PAR_COM_q_for_Xo,PAR_COM_k_for_P,&
 &                              PAR_IND_B_mat,PAR_IND_B_mat_ID,PAR_IND_WF_k
- use D_lattice,           ONLY:alat
- use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,PP_free,  &
-&                              pp_kbv_dim,spin_m_table,pp_factor
- use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
+ use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,  &
+&                              pp_kbv_dim,pp_factor
+ use R_lattice,           ONLY:bz_samp
+ use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,&
+&                              Dipole_Energy_treshold,l_rotate_dipoles
  use IO_m,                ONLY:io_control,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf_ng,WF
- use wrapper,             ONLY:M_by_V
- use com,                 ONLY:error,msg
+ use com,                 ONLY:error,msg,warning
 #if defined _KERR
  use X_m,                 ONLY:global_gauge
 #endif
  !
  implicit none
+ !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
@@ -57,12 +57,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_P,l_eval_DIP_P2
- integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_spin,E_i_spin,pp_spin,&
-&                                alloc_err,wf_dim,n_LT_steps,ik_mem
-#if defined _OPENMP
- integer                      :: ig
-#endif
- complex(SP), allocatable     :: wf_xyz(:,:),kbv(:,:,:)
+ integer                      :: ik,i1,icfft(n_spinor),ivfft(n_spinor),ic,iv,iv_max,ic_min,&
+&                                i_sp_pol,i_spinor,i_spin,alloc_err,wf_dim,n_LT_steps,ik_mem
+ complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4),tmp(3)
  real(SP)                     :: Ev_m_Ec
  !
@@ -78,7 +75,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  io_Vnl_err     = io_err(3)
  !
  if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-   allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
+   allocate(kbv(wf_ng,pp_kbv_dim,4,n_spinor),stat=alloc_err)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  endif
  !
@@ -92,16 +89,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ic_min=X%ib(1)
  endif
  !
- if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
+ if (associated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
  !
  !
  if (Dipole_bands_ordered) then
    n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
 &             PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_IND_CON_BANDS_X_ID(X%whoami)+1)*&
-&             PAR_IND_VAL_BANDS_X(X%whoami)%n_of_elements(PAR_IND_VAL_BANDS_X_ID(X%whoami)+1)*n_spin
+&             PAR_IND_VAL_BANDS_X(X%whoami)%n_of_elements(PAR_IND_VAL_BANDS_X_ID(X%whoami)+1)*n_sp_pol
  else
    n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
-&             PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)*n_spin
+&             PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)*n_sp_pol
  endif
  !
  !
@@ -125,8 +122,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
  endif
  !
  call PP_redux_wait(COMM=PAR_COM_q_for_Xo%COMM)
- !
- allocate(wf_xyz(wf_ng,wf_dim))
  !
  ! Main loop over k in IBZ
  !
@@ -156,16 +151,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
    !
    ik_mem=PAR_DIPk_ibz_index(ik)
    ! 
-   do i_spin=1,n_spin
+   do i_sp_pol=1,n_sp_pol
      ! 
-     pp_spin=i_spin
-     if (io_KB_abinit_err==0.and.n_spinor==2) pp_spin=1
-     if (io_KB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
-     if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,pp_spin,Xk,kbv)
-     if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
-     !
-     E_i_spin=i_spin
-     if (n_spinor==2) E_i_spin=1
+     if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
+     if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      !
      do ic=ic_min,X%ib(2)
        !
@@ -180,10 +169,23 @@ subroutine Dipole_transverse(Xen,Xk,X)
          else
          endif
          !
-         rho(:)=(0._SP,0._SP)
+         do i_spinor=1,n_spinor
+           !
+           i_spin=i_sp_pol+i_spinor-1
+           ivfft(i_spinor)=WF%index(iv,ik,i_spin)
+           icfft(i_spinor)=WF%index(ic,ik,i_spin)
+           !
+           if (ivfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
+           if (icfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
+           !
+         enddo
          !
-         Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
-         if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
+         if(l_rotate_dipoles) then
+           Ev_m_Ec=Xen%E_dip(iv,ik,i_sp_pol)-Xen%E_dip(ic,ik,i_sp_pol)
+         else
+           Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+           if (associated(Xen%Eo) ) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+         endif
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/)).or.&
 &            abs(Ev_m_Ec)<=Dipole_Energy_treshold.and..not.l_real_time) then
@@ -193,67 +195,23 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
          endif
          !
-         ivfft=WF%index(iv,ik,i_spin)
-         if (ivfft==0) call error(" Error in parallel wf distribution (Dipole iv)")
+         ! Evaluate <ivfft|p|icfft>
+         call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
          !
-         ! wf_xyz = -i grad fdo(iv,ik)
+         ! This is outside the nspinor loop because the kb operator can be non diagonal
+         ! in spin space if n_spinor=2
+         if (io_Vnl_err==0) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ivfft,icfft,rho(:3),kbv,1)
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ivfft,icfft,rho(:3),kbv,2)
          !
-#if defined _OPENMP
-!$omp parallel default(shared), private(i1,ig)
-         do i1=1,3
-!$omp do
-           do ig=1,wf_ng
-             wf_xyz(ig,i1)=WF%c(ig,ivfft)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
-           enddo
-!$omp end do
-         enddo
-!$omp end parallel
-#else
-         do i1=1,3
-           wf_xyz(:,i1)=WF%c(:,ivfft)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
-         enddo
-#endif
-         ! 
-         !
-         icfft=WF%index(ic,ik,i_spin)
-         if (icfft==0) call error(" Error in parallel wf distribution (Dipole ic)")
-         !
-         ! WARNING: 
-         ! ========
-         ! The convention is to revert the order of the bands
-         ! indexes in the definition of DIP_P and DIP_iR :
-         ! DIP_P(iv,ic)  = P_cv ; DIP_iR(iv,ic) = (iR)_cv 
-         !
-         ! Note that P is Hermitian and iR anti-hermitian.
-         !
-         ! rho = <v|p|c> = P_vc =
-         !     = wf_xyz^* fdo(ic,ik)= - i < fdo(iv,ik)| grad |  fdo(ic,ik) > =
-         !       \sum_G -i u^*_{iv ik}(G) i ( k + G ) u_{ic ik}(G)
-         !     = \sum_G u^*_{iv ik}(G) ( k + G ) u_{ic ik}(G)
-         !
-         ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
-         !
-         call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,WF%c(:,icfft),1,(0._SP,0._SP),rho,1)
-         !
-         if (io_KB_abinit_err==0.or.io_KB_pwscf_err==0) call DIPOLE_kb_sum(ivfft,icfft,rho(:3),kbv)
-         if (io_Vnl_err==0) then
-           if(n_spinor==1) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_spin)*0.5
-           if(n_spinor==2.and.i_spin==2) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
-         endif
+#if defined _SC || defined _KERR
          !
          !=====
          ! <P>
          !=====
          ! P_vc=rho(:3)
          !
-#if defined _SC || defined _KERR
-         if (l_eval_DIP_P) then
-           if (n_spinor==2) then
-             DIP_P(:,ic,iv,ik_mem,1)=DIP_P(:,ic,iv,ik_mem,1)+rho(:3)
-           else
-             DIP_P(:,ic,iv,ik_mem,i_spin)=rho(:3)
-           endif
-         endif
+         if (l_eval_DIP_P) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
 #endif
          !
          !======
@@ -266,13 +224,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          rho(1:3)=rho(1:3)/Ev_m_Ec
          !
-         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) rho(1:3)=(0._SP,0._SP)
+         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) rho(1:3)=cZERO
          !
-         if (n_spinor==2) then
-           DIP_iR(:,ic,iv,ik_mem,1)=DIP_iR(:,ic,iv,ik_mem,1)+rho(:3)
-         else 
-           DIP_iR(:,ic,iv,ik_mem,i_spin)=rho(:3)
-         endif
+         DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
          !
          !
          call live_timing(steps=1)
@@ -281,7 +235,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
        !
      enddo      ! valence band loop
      ! 
-   enddo        ! spin loop
+   enddo        ! sp_pol loop
    ! 
  enddo          ! k-points
  !
@@ -289,14 +243,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! CLEAN
  !
- deallocate(wf_xyz)
- !
  if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
    if (allocated(kbv))          deallocate(kbv)
    if (allocated(pp_n_l_comp))  deallocate(pp_n_l_comp)
    if (allocated(pp_table))     deallocate(pp_table)
    if (allocated(pp_factor))    deallocate(pp_factor)
-   if (allocated(spin_m_table)) deallocate(spin_m_table)
    call PP_free()
    call mem_est("KBV") 
  else if (io_Vnl_err==0) then
@@ -309,11 +260,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
    !
    ik_mem=PAR_DIPk_ibz_index(ik)
    ! 
-   do i_spin=1,n_sp_pol
-     call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
+   do i_sp_pol=1,n_sp_pol
+     call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
 #if defined _SC || defined _KERR || !defined _YPP_RT
-     if (l_eval_DIP_P ) call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
-     if (l_eval_DIP_P2) call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
+     if (l_eval_DIP_P ) call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
+     if (l_eval_DIP_P2) call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_k_for_P%COMM)
 #endif
    enddo
    !
@@ -326,20 +277,20 @@ subroutine Dipole_transverse(Xen,Xk,X)
    if (.not.Dipole_bands_ordered) then
      do iv=X%ib(1),X%ib(2)
        do ic=iv+1,X%ib(2)
-         do i_spin=1,n_sp_pol
-           tmp=( DIP_iR(:,ic,iv,ik_mem,i_spin)-conjg(DIP_iR(:,iv,ic,ik_mem,i_spin)) )/2._SP
-           DIP_iR(:,ic,iv,ik_mem,i_spin) =       tmp
-           DIP_iR(:,iv,ic,ik_mem,i_spin) =-conjg(tmp)
+         do i_sp_pol=1,n_sp_pol
+           tmp=( DIP_iR(:,ic,iv,ik_mem,i_sp_pol)-conjg(DIP_iR(:,iv,ic,ik_mem,i_sp_pol)) )/2._SP
+           DIP_iR(:,ic,iv,ik_mem,i_sp_pol) =       tmp
+           DIP_iR(:,iv,ic,ik_mem,i_sp_pol) =-conjg(tmp)
 #if defined _SC || defined _KERR
            if (l_eval_DIP_P ) then
-             tmp=( DIP_P(:,ic,iv,ik_mem,i_spin) + conjg(DIP_P(:,iv,ic,ik_mem,i_spin)) )/2._SP
-             DIP_P(:,ic,iv,ik_mem,i_spin) =       tmp
-             DIP_P(:,iv,ic,ik_mem,i_spin) = conjg(tmp)
+             tmp=( DIP_P(:,ic,iv,ik_mem,i_sp_pol) + conjg(DIP_P(:,iv,ic,ik_mem,i_sp_pol)) )/2._SP
+             DIP_P(:,ic,iv,ik_mem,i_sp_pol) =       tmp
+             DIP_P(:,iv,ic,ik_mem,i_sp_pol) = conjg(tmp)
            endif
            if (l_eval_DIP_P2) then
-             tmp(1)=( P_square(ic,iv,ik_mem,i_spin) + conjg(P_square(iv,ic,ik_mem,i_spin)) )/2._SP 
-             P_square(ic,iv,ik_mem,i_spin) =       tmp(1)
-             P_square(iv,ic,ik_mem,i_spin) = conjg(tmp(1))
+             tmp(1)=( P_square(ic,iv,ik_mem,i_sp_pol) + conjg(P_square(iv,ic,ik_mem,i_sp_pol)) )/2._SP 
+             P_square(ic,iv,ik_mem,i_sp_pol) =       tmp(1)
+             P_square(iv,ic,ik_mem,i_sp_pol) = conjg(tmp(1))
            endif
 #endif
          enddo
@@ -348,5 +299,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
    endif
    !
  enddo
+ !
  !
 end subroutine Dipole_transverse

@@ -67,6 +67,8 @@ module ELPH
  !
  integer   :: QP_PH_n_G_bands
  logical   :: eval_G_using_KK ! Perform KK of the spectral function
+ real(SP)  :: FAN_deltaE_treshold
+ real(SP)  :: DW_deltaE_treshold
  !
  contains
    !

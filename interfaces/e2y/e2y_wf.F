@@ -28,7 +28,7 @@ subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
   use etsf_io_low_level
   use etsf_data,             only : dims,ETSF_kind
   use pars,                  only : SP
-  use vec_operate,           only : i_sort
+  use vec_operate,           only : sort
   use com,                   only : msg, error
   use electrons,             only : n_bands, n_spin, n_sp_pol, n_spinor
   use R_lattice,             only : nkibz
@@ -87,7 +87,7 @@ subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
   start(:) = 1     ; count(:) = 0
   start(5) = ikibz ; count(5) = 1   ! Split on k always
   !
-  if(ETSF_kind=='WFK') call i_sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
+  if(ETSF_kind=='WFK') call sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
   !
   do ispin = 1, n_spin
     !

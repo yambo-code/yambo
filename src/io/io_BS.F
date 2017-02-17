@@ -28,7 +28,7 @@ integer function io_BS(iq,X,ID)
  use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use parallel_m,    ONLY:myid
- use BS,            ONLY:BS_blk,n_BS_blks,&
+ use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded,&
 &                        BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_bulk,&
@@ -121,6 +121,14 @@ integer function io_BS(iq,X,ID)
  !
  deallocate(BS_mat_disk)
  !
-1 call io_disconnect(ID)
+1 continue
+ !
+ ! If the database is not ok but the BS_identifier has been read I may have problems
+ ! with the inversion database (like dimensions errors).
+ !
+ if (io_BS==0) BS_K_has_been_calculated_loaded=.TRUE.
+ if (io_BS<0 ) BS_K_has_been_calculated_loaded=.FALSE.
+ !
+ call io_disconnect(ID)
  !
 end function

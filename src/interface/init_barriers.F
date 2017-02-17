@@ -27,7 +27,7 @@ subroutine init_barriers()
  use pars,       ONLY:lchlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use R_lattice,  ONLY:Xk_grid_is_uniform
- use BS,         ONLY:BSS_mode
+ use BS,         ONLY:BSS_mode,BSK_mode
  use electrons,  ONLY:n_spin,n_met_bands,n_full_bands
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
@@ -35,24 +35,32 @@ subroutine init_barriers()
  ! 
  ! Additional logicals ...
  !
- logical :: metallic_system, newton,secant,green,bss_tddft,&
-            TR_or_SI,gw0_raxis,alda_r_space,bss_diago,&
-&           bss_haydock,gw0_ppa,gw0_cohsex,gw0_el_ph,alda_g_space,bss_inv
+ logical :: metallic_system, newton,secant,green,bss_tddft,bse_bsfxc,&
+            TR_or_SI,gw0_raxis,tddft_r_space,bss_diago,bse_sex,&
+&           bss_haydock,gw0_ppa,gw0_cohsex,gw0_el_ph,tddft_g_space,bss_inv
  character(lchlen) :: always_runlevels,on_runlevels
  !
  ! ...
  !
  metallic_system=n_met_bands/=n_full_bands
+ !
  newton=trim(QP_solver)=='n'
  secant=trim(QP_solver)=='s'
  green=trim(QP_solver)=='g'
+ !
  TR_or_SI=i_time_rev==1.or.i_space_inv==1
+ !
  gw0_raxis=l_gw0.and..not.l_cohsex.and..not.l_ppa
  gw0_ppa=l_gw0.and.l_ppa
  gw0_cohsex=l_gw0.and.l_cohsex
  gw0_el_ph=l_gw0.and.l_elph_corr
- alda_r_space=l_alda_fxc.and.l_bse
- alda_g_space=l_alda_fxc.and..not.l_bse
+ !
+ tddft_r_space=l_tddft.and.     l_bse
+ tddft_g_space=l_tddft.and..not.l_bse
+ !
+ bse_sex  =trim(BSK_mode)=='SEX'
+ bse_bsfxc=trim(BSK_mode)=='BSfxc'
+ !
  bss_diago=l_bss.and.index(BSS_mode,'d')/=0
  bss_inv=l_bss.and.index(BSS_mode,'i')/=0
  bss_haydock=l_bss.and.index(BSS_mode,'h')/=0
@@ -96,19 +104,16 @@ subroutine init_barriers()
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
- if (alda_g_space) then
+ if (tddft_g_space) then
    call switch_off_runlevel('all',on_name='optics chi tddft '//trim(always_runlevels))
    goto 1
  endif
- if (alda_r_space) then
+ if (tddft_r_space) then
    call switch_off_runlevel('all',on_name='optics bse bsk bss tddft '//trim(always_runlevels))
    goto 1
  endif
  if (l_bss.or.l_bse) then
    on_runlevels='optics bse bsk bss tddft em1s em1d ppa'
-    !This barrier prevent tddft to work as l_alda_fxc is not defined and alda_r_space does not work...
-    !Barrier commented (Davide: 25/06/2013)
-    !on_runlevels='optics bse bsk bss tddft em1s em1d ppa'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -121,7 +126,9 @@ subroutine init_barriers()
  ! Non Uniform grids
  !===================
  if (.not.Xk_grid_is_uniform) then
-   on_runlevels='optics chi gw0 el_ph_corr'
+   on_runlevels='optics chi bse bsk bss'
+   if (l_elph_corr) on_runlevels='optics chi bse bsk bss el_ph_corr gw0'
+   if (tddft_r_space.or.bse_sex.or.bse_bsfxc) BSK_mode='hartree'    
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
  endif 
  !

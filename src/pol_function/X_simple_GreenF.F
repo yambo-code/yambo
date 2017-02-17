@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM,DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,15 +24,24 @@
 function X_simple_GreenF(W,pole,ordering)
  !
  use pars, ONLY:SP
- implicit none
- real(SP)     ::pole
- complex(SP)  ::W,X_simple_GreenF
- character(*) ::ordering
  !
- if (trim(ordering)=="t")  X_simple_GreenF=1._SP/(W-pole)-1._SP/(conjg(W)+pole)
- if (trim(ordering)=="c")  X_simple_GreenF=1._SP/(W-pole)-1._SP/(W+pole)       
- if (trim(ordering)=="r")  X_simple_GreenF=1._SP/(W-pole)                   
- if (trim(ordering)=="a")  X_simple_GreenF=           -1._SP/(conjg(W)+pole)
- if (trim(ordering)=="ca") X_simple_GreenF=           -1._SP/(W+pole)
+ implicit none
+ !
+ complex(SP)  ::pole,W,X_simple_GreenF
+ character(*) ::ordering
+ !              
+ logical      ::ord_t_ordered,ord__retarded,ord__resonant,ord_anti_reso,ord_ret_areso
+ !
+ ord_t_ordered= trim(ordering)=="t"                             ! T-ordered
+ ord__retarded= trim(ordering)=="c"                             ! Retarded   (in yambo it is called "c"=causal)
+ ord__resonant= trim(ordering)=="r" .or. trim(ordering)=="sr"   ! Resonant      part of the T-ordered
+ ord_anti_reso= trim(ordering)=="a" .or. trim(ordering)=="sa"   ! Anti-resonant part of the T-ordered
+ ord_ret_areso= trim(ordering)=="ca"                            ! Anti-resonant part of the Retarded
+ !
+ if ( ord_t_ordered ) X_simple_GreenF=1._SP/(W-pole)-1._SP/(conjg(W)+      pole )
+ if ( ord__retarded ) X_simple_GreenF=1._SP/(W-pole)-1._SP/(      W +conjg(pole))       
+ if ( ord__resonant ) X_simple_GreenF=1._SP/(W-pole)
+ if ( ord_anti_reso ) X_simple_GreenF=              -1._SP/(conjg(W)+      pole )
+ if ( ord_ret_areso ) X_simple_GreenF=              -1._SP/(      W +conjg(pole))
  !
 end function

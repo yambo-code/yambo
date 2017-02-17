@@ -30,7 +30,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use R_lattice,      ONLY:bz_samp,nkibz,nkbz
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor,n_spin,spin_occ, &
-&                         BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands
+&                         BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,l_RT_dos,dos_broadening,dos_bands,&
@@ -55,7 +55,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 &                         el_dos_max,WF_fac(dos_bands(1):dos_bands(2),nkibz,n_spinor)
  integer               :: i_E,ik,ik_bz,ib,i_wf,i_spin,i_spinor,i_T,n_T_steps,ik_rand,i1,dos_spin
  character(schlen)     :: ch_ws,titles(4)
- logical               :: l_3D_plot,l_RIM,l_prt_occ_only,l_separate_eh
+ logical               :: l_3D_plot,l_DbGd,l_prt_occ_only,l_separate_eh
  type(PP_indexes)      :: px
  !
  call parser('PrtOccOnly',l_prt_occ_only)
@@ -64,9 +64,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  !=======
  !
  if(.not.l_RT_dos) then
-   l_RIM=.FALSE.
-   if (BZ_RIM_nbands>0) then
-     l_RIM=.TRUE.
+   l_DbGd=.FALSE.
+   if (BZ_DbGd_nbands>0) then
+     l_DbGd=.TRUE.
      call OCCUPATIONS_Extend(Xen,Xen)
    endif
  endif
@@ -106,7 +106,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    endif
    !
    !
-   if (l_RIM) dos_bands(2)=min(dos_bands(2),BZ_RIM_nbands)
+   if (l_DbGd) dos_bands(2)=min(dos_bands(2),BZ_DbGd_nbands)
    !
    el_dos_max=0.
    !
@@ -137,7 +137,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
    !
    dos_norm=1./DL_vol
-   if (l_RIM) dos_norm=dos_norm/real(sum(BZ_RIM_nkpt))
+   if (l_DbGd) dos_norm=dos_norm/real(sum(BZ_DbGd_nkpt))
    !
    ! Parallel setup and live_timing
    !================================
@@ -160,15 +160,15 @@ subroutine electrons_dos_and_charge(Xk,Xen)
        do ib=dos_bands(1),dos_bands(2)
          do i_spin=1,n_sp_pol
            !
-           if (l_RIM) then
+           if (l_DbGd) then
              do ik_bz=1,nkbz
                ik=Xk%sstar(ik_bz,1)
-               do i1=1,BZ_RIM_nkpt(ik_bz)
-                 ik_rand=BZ_RIM_table(ik_bz,i1)
+               do i1=1,BZ_DbGd_nkpt(ik_bz)
+                 ik_rand=BZ_DbGd_table(ik_bz,i1)
                  f_occ=spin_occ
-                 if(l_prt_occ_only) f_occ=Xen%f_RIM(ib,ik_rand,i_spin)
+                 if(l_prt_occ_only) f_occ=Xen%f_DbGd(ib,ik_rand,i_spin)
                  el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
-&                      Fermi_fnc_derivative(Xen%E_RIM(ib,ik_rand,i_spin)-dos_E,dos_broadening)*dos_norm
+&                      Fermi_fnc_derivative(Xen%E_DbGd(ib,ik_rand,i_spin)-dos_E,dos_broadening)*dos_norm
                enddo
              enddo
            else

@@ -331,6 +331,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &        (/2*SP,       2*SP,       SP,         SP,           IP/))
      qp%table=QP_table
      qp%E=(0._SP,0._SP)
+     qp%k=0._SP
      !
      ! Sc energy steps. 2/3 If Newton/Secant. QP_Sc_steps 
      ! the full Green`s function is requested.

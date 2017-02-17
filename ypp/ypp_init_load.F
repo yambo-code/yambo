@@ -104,8 +104,7 @@ subroutine ypp_init_load(defs)
  ! BANDS
  !
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
- call it(defs,'BKpts','Bands circuit',Kgw_1)
- call it(defs,'INTERPGrid', 'Interpolation Grid',interp_grid)
+ call it(defs,'INTERPGrid', 'Interpolation BZ Grid',interp_grid)
  call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
  !
  ! Wannier interface
@@ -117,11 +116,6 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku/alat',coo_in)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
- call it(defs,'GWKpts','GW K-point grid',Kgw_1)
- call it(defs,'Qpts',  'Q-point grid',   Kgw_1)
- call it(defs,'KShift1','K-grid shift vector[1] ',q_shift(1,:))
- call it(defs,'KShift2','K-grid shift vector[2] ',q_shift(2,:))
- call it(defs,'KShift3','K-grid shift vector[3] ',q_shift(3,:))
  !
  !
  call it('f',defs,'NoWeights',    ' Do not print points weight') 
@@ -144,7 +138,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !
- !
+ ! 
  ! PLOT
  !
  ! p_dir: plot cut in the a1,a2,a3 basis
@@ -154,7 +148,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'Format', 'Output format [(c)ube/(g)nuplot/(x)crysden]',p_format)
  call it(defs,'Direction', '[rlu] [1/2/3] for 1d or [12/13/23] for 2d [123] for 3D',p_dir)
  call it(defs,'MagDir', 'Magnetization component',mag_dir)
- call it(defs,'CurrentDir', '[cc] Carthesian direction to average the current',current_dir)
+ call it(defs,'CurrentDir', '[cc] Carthesian direction (used to average in 2D/3D plots or to plot in 1D)',current_dir)
+ call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
 #if defined _YPP_ELPH
  !
  !EL-PH
@@ -203,11 +198,11 @@ subroutine ypp_init_load(defs)
  !
 #endif
  !
- !BZ E RIM
+ !BZ E Double Grid
  !
- call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
+ call it(defs,'BZ_DbGd_Nk','BZ Random Integration points',BZ_DbGd_nkpts)
  call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
- call it('f',defs,'noBZExpand' , 'Keep the RIM k-points in the IBZ without using the symmetries')
+ call it('f',defs,'noBZExpand' , 'Keep the Double Grid k-points in the IBZ without using the symmetries')
  !
  ! Wannier bands
  !

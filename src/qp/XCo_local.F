@@ -26,7 +26,6 @@ subroutine XCo_local(E,Xk)
  ! Local V_xc
  !
  use pars,          ONLY:SP,pi
- use drivers,       ONLY:l_real_time
  use electrons,     ONLY:levels,n_spin,n_spinor,spin
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
@@ -49,7 +48,6 @@ subroutine XCo_local(E,Xk)
  !
  ! Spin support (collinear and not collinear)
  !
- logical     :: l_call_the_driver
  complex(SP), allocatable :: V_xc_mat(:,:,:)
  !
  ! Allocation 
@@ -61,12 +59,9 @@ subroutine XCo_local(E,Xk)
  ! Precompiler options in case a non-DFT potential is required
  !
    !
-   l_call_the_driver=.TRUE.
-   !
-   if (l_call_the_driver) then
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
 &         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
-   endif
+   !
    !
  !
  if (n_spin==1) then
@@ -77,19 +72,9 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
-     if (l_real_time) then
-       !
-       if(ib>ibp) then
-         QP_Vxc(i1) = conjg(QP_Vxc(i1-1))
-         cycle
-       endif
-       !
-       !
-     else
        !
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
        !
-     endif
      !
      ! <iwf|V_xc|iwfp>
      !
@@ -125,10 +110,7 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
-     if (l_real_time) then
-     else
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-     endif
      !
      if (n_spinor==1) then
        !
@@ -163,9 +145,8 @@ subroutine XCo_local(E,Xk)
  !
  ! Clean
  !
- if(n_spin>1) deallocate(magn)
- ! 
- deallocate(V_xc)
+   deallocate(V_xc)
+   if(n_spin>1) deallocate(magn)
  !
  call PP_redux_wait(QP_Vxc)
  !

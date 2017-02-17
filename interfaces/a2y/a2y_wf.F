@@ -81,7 +81,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  ! Number of records for each k-point
  !
- number_of_records_each_k=n_atomic_species*pp_n_l_times_proj_max*2+1+n_bands
+ number_of_records_each_k=n_atomic_species*pp_n_l_times_proj_max*2+1+wf_nb_io
  !
  if (ikibz==1.and.ib_grp==1) then
    open(unit=11,file=KSS_file_name,form='unformatted')

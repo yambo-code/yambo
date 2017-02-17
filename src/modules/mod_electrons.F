@@ -76,7 +76,9 @@ module electrons
    integer,pointer :: QP_corrected(:,:,:)  => null()
    real(SP),   pointer :: E(:,:,:)         => null()
    real(SP),   pointer :: Eo(:,:,:)        => null()
+   real(SP),   pointer :: E_dip(:,:,:)     => null()
    real(SP),   pointer :: f(:,:,:)         => null()
+   real(SP),   pointer :: df(:,:,:)        => null()
    real(SP),   pointer :: fo(:,:,:)        => null()
    real(SP),   pointer :: W(:,:,:)         => null()
    complex(SP),pointer :: Z(:,:,:)         => null()
@@ -88,24 +90,25 @@ module electrons
    complex(SP),pointer :: GreenF_W(:,:,:,:)   => null()
    complex(SP),pointer :: GreenF(:,:,:,:)     => null()
    ! 
-   ! Fine energy grid
+   ! Double energy and k-points grid
    !   
-   real(SP),   pointer :: E_RIM(:,:,:)        => null()
-   real(SP),   pointer :: W_RIM(:,:,:)        => null()
-   real(SP),   pointer :: f_RIM(:,:,:)        => null()
+   real(SP),   pointer :: E_DbGd(:,:,:)        => null()
+   real(SP),   pointer :: W_DbGd(:,:,:)        => null()
+   real(SP),   pointer :: f_DbGd(:,:,:)        => null()
    !
  end type levels
  ! 
  ! Fine energy grid Tables
  !   
- integer  :: BZ_RIM_max_filling = 1
- integer  :: BZ_RIM_tot_nkpts
+ integer  :: BZ_DbGd_max_filling = 1
+ integer  :: BZ_DbGd_tot_nkpts
  integer  :: BZ_ASSOCIATED_nkpts
- integer  :: BZ_RIM_nbands
- logical  :: RIM_is_symmetry_expanded=.FALSE.
- integer ,allocatable :: BZ_RIM_nkpt(:)
- integer ,allocatable :: BZ_RIM_table(:,:)
- real(SP),allocatable :: BZ_RIM_ipol_weight(:)
+ integer  :: BZ_DbGd_nbands
+ logical  :: DbGd_is_symmetry_expanded=.FALSE.
+ integer ,allocatable :: BZ_DbGd_nkpt(:)
+ integer ,allocatable :: BZ_DbGd_table(:,:)
+ real(SP),allocatable :: BZ_DbGd_ipol_weight(:)
+ real(SP),allocatable :: BZ_DbGd_kpts(:,:)
  !
  contains
    !
@@ -132,13 +135,15 @@ module electrons
      endif
      allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
      call mem_est("E-E E-f",(/size(Eo%E),size(Eo%f)/),(/SP,SP/))
-     Eo%E=0.
-     Eo%f=0.
+     Eo%E=0._SP
+     Eo%f=0._SP
      !
      ! This line is beacause in _RT calculations the actual first size of %Eo may differ
-     ! from %nb as it is limited by SC_bands
+     ! from %nb as it is limited by SC_bands. To be checked after implementatio of E_dip
      !
      BOUNDS(1)=size(Ei%Eo,1)
+     BOUNDS(2)=BOUNDS(1)
+     if (associated(Ei%E_dip)) BOUNDS(2)=size(Ei%E_dip,1)
      !
      if (naive) then
        Eo%f(:,:,:)=Ei%f(:,:,:)
@@ -148,20 +153,25 @@ module electrons
          call mem_est("E-Eo",(/size(Eo%Eo)/),(/SP/))
          Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
        endif
+       if (associated(Ei%E_dip)) then
+         allocate(Eo%E_dip(BOUNDS(2),Eo%nk,n_sp_pol))
+         call mem_est("E-E_dip",(/size(Eo%E_dip)/),(/SP/))
+         Eo%E_dip(:BOUNDS(2),:,:)=Ei%E_dip(:BOUNDS(2),:,:)
+       endif
        if (associated(Ei%fo)) then
-         allocate(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
+         allocate(Eo%fo(BOUNDS(2),Eo%nk,n_sp_pol))
          call mem_est("E-fo",(/size(Eo%fo)/),(/SP/))
-         Eo%fo(:BOUNDS(1),:,:)=Ei%fo(:BOUNDS(1),:,:)
+         Eo%fo(:BOUNDS(2),:,:)=Ei%fo(:BOUNDS(2),:,:)
        endif
        if (associated(Ei%W)) then
-         allocate(Eo%W(BOUNDS(1),Eo%nk,n_sp_pol))
+         allocate(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
          call mem_est("E-W",(/size(Eo%W)/),(/SP/))
-         Eo%W(:BOUNDS(1),:,:)=Ei%W(:BOUNDS(1),:,:)
+         Eo%W(:BOUNDS(2),:,:)=Ei%W(:BOUNDS(2),:,:)
        endif
        if (associated(Ei%Z)) then
-         allocate(Eo%Z(BOUNDS(1),Eo%nk,n_sp_pol))
+         allocate(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
          call mem_est("E-Z",(/size(Eo%Z)/))
-         Eo%Z(:BOUNDS(1),:,:)=Ei%Z(:BOUNDS(1),:,:)
+         Eo%Z(:BOUNDS(2),:,:)=Ei%Z(:BOUNDS(2),:,:)
        endif
        if (associated(Ei%QP_corrected)) then
          BOUNDS(1)=size(Ei%QP_corrected,1)
@@ -174,16 +184,16 @@ module electrons
        Eo%E(:,:,:)=Ei%E(:,:Eo%nk,:)
      endif
      !
-     ! E RIM
+     ! E Double Grid
      !
-     if (BZ_RIM_nbands/=0.and.Ei%nk==Eo%nk) then
-       allocate(Eo%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-       allocate(Eo%W_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-       allocate(Eo%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-       call mem_est("E_RIM W_RIM f_RIM",(/size(Eo%E_RIM),size(Eo%W_RIM),size(Eo%f_RIM)/),(/SP,SP,SP/))
-       Eo%E_RIM=Ei%E_RIM
-       Eo%W_RIM=Ei%W_RIM
-       Eo%f_RIM=Ei%f_RIM
+     if (BZ_DbGd_nbands/=0.and.Ei%nk==Eo%nk) then
+       allocate(Eo%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       allocate(Eo%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       allocate(Eo%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       call mem_est("E_DbGd W_DbGd f_DbGd",(/size(Eo%E_DbGd),size(Eo%W_DbGd),size(Eo%f_DbGd)/),(/SP,SP,SP/))
+       Eo%E_DbGd=Ei%E_DbGd
+       Eo%W_DbGd=Ei%W_DbGd
+       Eo%f_DbGd=Ei%f_DbGd
      endif
      !
    end subroutine
@@ -191,10 +201,10 @@ module electrons
    subroutine E_reset(E)
      use memory_m, ONLY:mem_est
      type(levels)::E
-     E%E_dir_gap=0.
-     E%E_Fermi=0.
-     E%E_VBM=0.
-     E%E_CBm=0.
+     E%E_dir_gap=0._SP
+     E%E_Fermi=0._SP
+     E%E_VBM=0._SP
+     E%E_CBm=0._SP
      E%nb=0
      E%nk=0
      E%nbf=0 
@@ -205,6 +215,7 @@ module electrons
      E%GreenF_is_causal=.FALSE. 
      if(associated(E%E))              deallocate(E%E)
      if(associated(E%Eo))             deallocate(E%Eo)
+     if(associated(E%E_dip))          deallocate(E%E_dip)
      if(associated(E%Z))              deallocate(E%Z)
      if(associated(E%W))              deallocate(E%W)
      if(associated(E%f))              deallocate(E%f)
@@ -212,36 +223,37 @@ module electrons
      if(associated(E%QP_corrected))   deallocate(E%QP_corrected)
      if(associated(E%GreenF))         deallocate(E%GreenF)
      if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%fo,E%QP_corrected,E%GreenF,E%GreenF_W)
-     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
+     nullify(E%E,E%Eo,E%E_dip,E%Z,E%W,E%f,E%fo,E%QP_corrected,E%GreenF,E%GreenF_W)
+     call mem_est("E-E E-Eo E-E_dip E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
-     call E_RIM_components_reset(E,.FALSE.)
+     call E_DbGd_components_reset(E,.FALSE.)
      !
    end subroutine
    !
-   subroutine E_RIM_components_reset(E,FULL_RESET)
+   subroutine E_DbGd_components_reset(E,FULL_RESET)
      !
      use memory_m, ONLY:mem_est
      !
      type(levels)::E
      logical     ::FULL_RESET
      !
-     if(associated(E%E_RIM))      deallocate(E%E_RIM)
-     if(associated(E%W_RIM))      deallocate(E%W_RIM)
-     if(associated(E%f_RIM))      deallocate(E%f_RIM)
+     if(associated(E%E_DbGd) )      deallocate(E%E_DbGd )
+     if(associated(E%W_DbGd) )      deallocate(E%W_DbGd )
+     if(associated(E%f_DbGd) )      deallocate(E%f_DbGd )
      !
-     nullify(E%E_RIM,E%W_RIM,E%f_RIM)
-     call mem_est("E_RIM W_RIM f_RIM")
+     nullify(E%E_DbGd,E%W_DbGd,E%f_DbGd)
+     call mem_est("E_DbGd W_DbGd f_DbGd")
      !
      if (.not.FULL_RESET) return
      !
-     BZ_RIM_tot_nkpts=0
+     BZ_DbGd_tot_nkpts=0
      BZ_ASSOCIATED_nkpts=0
-     BZ_RIM_nbands=0
+     BZ_DbGd_nbands=0
      !
-     if(allocated(BZ_RIM_nkpt))        deallocate(BZ_RIM_nkpt)
-     if(allocated(BZ_RIM_table))       deallocate(BZ_RIM_table)
-     if(allocated(BZ_RIM_ipol_weight)) deallocate(BZ_RIM_ipol_weight)
+     if(allocated(BZ_DbGd_nkpt))        deallocate(BZ_DbGd_nkpt)
+     if(allocated(BZ_DbGd_table))       deallocate(BZ_DbGd_table)
+     if(allocated(BZ_DbGd_ipol_weight)) deallocate(BZ_DbGd_ipol_weight)
+     if(allocated(BZ_DbGd_kpts))        deallocate(BZ_DbGd_kpts)
      !
    end subroutine
    !

@@ -19,20 +19,35 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
+/*
+ Driver declaration
+*/
+#if defined _FORTRAN_US
+ int ypp_i
+#else
+ int ypp_i_
+#endif
+ (char *str1,int *,char *inf,int *,char* id,
+  int *,char *od,int *,char *com_dir,int *,char *js,int *,int *,int *); 
+/*
+ Command line structure
+*/
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
-  {"help","h","Short Help",0,0,0,0}, 
-  {"lhelp","H","Long Help",0,0,0,0}, 
+  {"help",  "h","Short Help",0,0,0,0}, 
+  {"lhelp", "H","Long Help",0,0,0,0}, 
   {"jobstr","J","Job string identifier",0,0,1,0},   
-  {"ifile",  "F","Input file",0,0,1,0},              
-  {"idir",   "I","Core I/O directory",0,0,1,0},         
-  {"odir",   "O","Additional I/O directory",0,0,1,0},        
+  {"infver", "V","Input file verbosity",1,0,0,0}, 
+  {"ifile", "F","Input file",0,0,1,0},              
+  {"idir",  "I","Core I/O directory",0,0,1,0},         
+  {"odir",  "O","Additional I/O directory",0,0,1,0},        
   {"cdir",   "C","Communications I/O directory",0,0,1,0},
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
-  {"kpt","k","K-grid generator",0,0,0,0}, 
-  {"excp","e","Excitons [(s)ort,(a)mplitude]",0,0,1,0},
-  {"plot","p","Plot [(e)xciton,(d)ensity,(w)aves]",0,0,1,0}, 
-  {"freehole","f","Free hole position [excitonic plot]",0,0,0,0},
+  {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal]",0,0,1,0}, 
+  {"excitons", "e","Excitons  [(s)ort,(a)mplitude,(w)ave]",0,0,1,0}, 
+  {"electrons","l","Electrons [(w)ave,(d)ensity]",0,0,1,0}, 
+  {"freehole","f","Free hole position [excitons plot]",0,0,0,0}, 
+  {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0}, 
   {NULL,NULL,NULL,0,0,0,0}
  };
  char *tool="ypp";

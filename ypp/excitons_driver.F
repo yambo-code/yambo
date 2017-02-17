@@ -19,17 +19,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exc_properties(Xk,Xen)
+subroutine excitons_driver(k,Xk,en,Xen,q)
  !
- use pars,          ONLY:SP,IP,pi,BOHR
+ use pars,          ONLY:SP,IP,pi
+ use units,         ONLY:BOHR
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_rot_r,fft_dim
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
  use wave_func,     ONLY:wf_load,wf_state,wf,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
-&                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,&
-&                        exc_wf_sort_and_report,l_amplitude,l_free_hole,&
+&                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
+&                        excitons_sort_and_report,l_amplitude,l_free_hole,&
 &                        output_fname,use_xcrysden,use_gnuplot,plot_dim,l_norm_to_one
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
@@ -46,12 +47,12 @@ subroutine exc_properties(Xk,Xen)
  use vec_operate,   ONLY:c2a
  !
  implicit none
- type(bz_samp) ::Xk
- type(levels)  ::Xen
+ type(bz_samp) ::Xk,k,q
+ type(levels)  ::Xen,en
  !
  ! Work Space
  !
- integer              :: n_lambda,i_lambda
+ integer              :: i_lambda
  integer ,allocatable :: lambda_s(:)
  !
  ! ... parameters
@@ -82,7 +83,6 @@ subroutine exc_properties(Xk,Xen)
 #else
  complex(SP)  :: cdotu
 #endif
- type(bz_samp)    ::q
  type(pp_indexes) ::px
  logical          ::TR_apply
  !
@@ -124,7 +124,8 @@ subroutine exc_properties(Xk,Xen)
  !
  n_lambda = get_lambda()
  !
- if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin/))) return
+ if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin&
+&                           /))) return
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
@@ -143,7 +144,7 @@ subroutine exc_properties(Xk,Xen)
  if (l_sort) then
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
-   call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E)
+   call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E)
    deallocate(BS_R,BS_E)
    call mem_est('BS_R_E')
    return
@@ -167,7 +168,11 @@ subroutine exc_properties(Xk,Xen)
  ! Sort energies to find degenerate states
  !========================================
  !
- call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,BS_E_degs=BS_E_degs)
+ call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,BS_E_degs=BS_E_degs)
+ !
+ ! Excitonic Eliashberg function 
+ !================================
+ !
  !
  ! 
  ! Loading  Wf 
@@ -201,7 +206,7 @@ subroutine exc_properties(Xk,Xen)
      !
      n_lambda_deg=count(BS_E_degs==BS_E_degs(lambda))
      !
-     if (n_lambda_deg>0) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
+     if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
 &                                     trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
      do neh = 1,BS_H_dim
@@ -212,7 +217,7 @@ subroutine exc_properties(Xk,Xen)
        !
      enddo
      !
-     call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight)
+     call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight)
      !
    enddo
    !
@@ -316,7 +321,7 @@ subroutine exc_properties(Xk,Xen)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(lambda))
    !
-   if (n_lambda_deg>0) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
+   if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
 &                                   trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
    !

@@ -19,6 +19,9 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
+/*
+ INCLUDES
+*/
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -28,6 +31,11 @@
 #if defined _MPI 
  #include <mpi.h>
 #endif
+#include "editor.h"
+#include "codever.h"
+/* 
+ Command line options structure
+*/
 typedef struct 
 {
         char *ln;
@@ -38,19 +46,22 @@ typedef struct
         int   nc;
         int   st;
 } Ldes;
-#if defined _FORTRAN_US
- #define F90_FUNC(name,NAME) name ## _
- #define F90_FUNC_(name,NAME) name ## _
-#else
- #define F90_FUNC(name,NAME) name
- #define F90_FUNC_(name,NAME) name
+/* 
+ Yambo/Ypp driver flag
+*/
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT
+ #define _YAMBO_MAIN
 #endif
-#include "editor.h"
-#include "codever.h"
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB
+#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT
+ #define _YPP_MAIN
+#endif
+/* 
+ Includes (II)
+*/
+#if defined _YAMBO_MAIN
  #include "yambo_cpp.h"
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RAS
+#if defined _YPP_MAIN
  #include "ypp_cpp.h"
 #endif
 #if defined _a2y
@@ -65,8 +76,24 @@ typedef struct
 #if defined _e2y
  #include "e2y.h"
 #endif
+/* 
+ Declarations 
+*/
 static void usage(int verbose);
 static void title(FILE *file_name,char *cmnt);
+/*
+*/
+/* 
+ F90 wrapper
+*/
+#if defined _FORTRAN_US
+ #define F90_FUNC(name,NAME) name ## _
+ #define F90_FUNC_(name,NAME) name ## _
+#else
+ #define F90_FUNC(name,NAME) name
+ #define F90_FUNC_(name,NAME) name
+#endif
+/* */
 main(int argc, char *argv[])
 {
  int io,i,c,j,k,nf,lni,lnr,lnc,ttd,
@@ -79,11 +106,10 @@ main(int argc, char *argv[])
  double rv[4];
  char *cv[4];
  char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL,*com_dir=NULL;
- extern int optind, optopt;
+ extern int optind;
  extern int guess_winsize();
  char rnstr1[500]={'\0'},rnstr2[500]={'\0'},edit_line[100]={'\0'};
  struct stat buf;
-
 /* 
  Default input file, Job string, I/O directories
 */
@@ -91,10 +117,14 @@ main(int argc, char *argv[])
  strcpy(inf,tool);
  strcat(inf,".in");
  iif=strlen(inf);
- id  = (char *) malloc(2);strcpy(id,".");
- od  = (char *) malloc(2);strcpy(od,".");
- com_dir  = (char *) malloc(2);strcpy(com_dir,".");
- js  = (char *) malloc(2);strcpy(js," ");
+ id  = (char *) malloc(2);
+ od  = (char *) malloc(2);
+ com_dir  = (char *) malloc(2);
+ js  = (char *) malloc(2);
+ strcpy(od,".");
+ strcpy(js," ");
+ strcpy(id,".");
+ strcpy(com_dir,".");
 
  ttd=guess_winsize();
 
@@ -113,9 +143,17 @@ main(int argc, char *argv[])
      io=optind;
      if (io==1) {io++;};
      for(i=0;i<=nr-1;i++) {
-       if (strstr(argv[io-1],opts[i].sn)!=0 && opts[i].st==0) { j=i;break;};
+       if (strstr(argv[io-1],opts[i].sn)!=0 && opts[i].st==0) { 
+        j=i;
+        break;};
      };
+#if defined _NO_OPTIONS_CHECK 
+     if (c=='?') {break;};
+     nf=opts[j].ni+opts[j].nr+opts[j].nc;
+     if (optind+nf>argc) {break;};
+#else
      if (c=='?') {usage(1);exit(0);};
+#endif
  /*
    Upper Case actions
  */
@@ -124,18 +162,22 @@ main(int argc, char *argv[])
 /* 
  Switch off MPI_init as I have options used to create the input file...
 */
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB
+#if defined _YAMBO_MAIN
      if (j> 10) {mpi_init=-1;};
 #endif
-#if defined _ypp || _YPP_ELPH || _YPP_RAS
+#if defined  _YPP_MAIN
      if (j> 6) {mpi_init=-1;};
 #endif
 /* 
  ... or if nompi is given 
 */
      if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
-
-     opts[j].st++; lni=0;lnr=0;lnc=0;
+/* 
+*/
+     opts[j].st++; 
+     lni=0;
+     lnr=0;
+     lnc=0;
      nf=opts[j].ni+opts[j].nr+opts[j].nc;
      if (optind+nf>argc) {
        fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(1);exit(0);
@@ -143,7 +185,11 @@ main(int argc, char *argv[])
      for(i=1;i<=nf;i++) {
        k=0;
        if (strspn(argv[optind-1+i],"-")==1) {
+#if defined _NO_OPTIONS_CHECK 
+         break;
+#else
          fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(1);exit(0);
+#endif
        };
        if (opts[j].ni!=0 && k==0) {lni++;iv[lni]=atoi(argv[optind-1+i]);opts[j].ni--;k=1;};
        if (opts[j].nr!=0 && k==0) {lnr++;rv[lnr]=atof(argv[optind-1+i]);opts[j].nr--;k=1;};
@@ -194,13 +240,20 @@ main(int argc, char *argv[])
 
    };
  };
-/* 
- If id/od/com_dir are not found switch to the deafult i/o directory 
-*/
  lni=strlen(rnstr2);
+ /* 
+
+ If id/od/com_dir are not found switch to the deafult i/o directory 
+
+ [June 2009] 
+ I have removed this line beacuse the additional I/O directories
+ can be written by the code on-fly (Andrea)
+
  if (stat(id, &buf) != 0) {strcpy(id,".");iid=1;};
- if (stat(od, &buf) != 0) {strcpy(od,".");iod=1;};
+ if (stat(od, &buf) != 0) {strcpy(od,".");iod=1;}; 
  if (stat(com_dir, &buf) != 0) {strcpy(com_dir,".");icd=1;};
+
+ */
  /* 
    MPI
  ===========================================================================
@@ -212,7 +265,7 @@ main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB
+#if defined _YAMBO_MAIN
  /* 
    Running the Fortran YAMBO driver 
  ===========================================================================
@@ -220,7 +273,7 @@ main(int argc, char *argv[])
  F90_FUNC(yambo_driver,YAMBO_DRIVER)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
-#if defined _ypp || _YPP_ELPH || _YPP_RAS
+#if defined _YPP_MAIN
  /* 
    Running the Fortran YPP driver
  ===========================================================================
@@ -252,21 +305,13 @@ main(int argc, char *argv[])
  F90_FUNC(e2y_i,E2Y_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
-#if defined _f2y 
- /* 
-   Running the Fortran f2y driver 
- ===========================================================================
- */
- F90_FUNC(f2y_i,F2Y_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
-#endif
  /* 
    INPUT FILE
  ===========================================================================
  */
  strcpy(edit_line,editor);
  strncat(edit_line,inf,strlen(inf));
-#if defined _yambo || _RAS || _REELS || _ypp || _ELPH || _SC || _YPP_ELPH || _YPP_RAS  || _MANYK|| _TB
+#if defined _YAMBO_MAIN || defined _YPP_MAIN 
  if (iif == 1 && ttd>0)
  {
   if(strstr(editor,"none ")==0) { system(edit_line); };

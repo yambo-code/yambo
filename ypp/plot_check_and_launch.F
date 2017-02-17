@@ -97,7 +97,7 @@ subroutine plot_check_and_launch(check_only)
  if (switch_to_gnuplot.and.check_only)  call warning('Switching to GnuPlot')
  !
  if (switch_to_xcrysden) p_format='x'
- if (switch_to_gnuplot) p_format='p'
+ if (switch_to_gnuplot) p_format='g'
  !
  if (check_only) return
  !

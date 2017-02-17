@@ -102,18 +102,14 @@ case "${host}" in
 esac
 AC_MSG_RESULT([yes])
 
-C_AS_CPP_FLAGS="-P"
-
 AC_MSG_NOTICE([WIDESETUP: using build_os="$build_os"])
 AC_MSG_NOTICE([WIDESETUP: using F90SUFFIX="$F90SUFFIX"])
 AC_MSG_NOTICE([WIDESETUP: using AR="$AR"])
 AC_MSG_NOTICE([WIDESETUP: using AR_FLAGS="$AR_FLAGS"])
-AC_MSG_NOTICE([WIDESETUP: using C_AS_CPP_FLAGS="$C_AS_CPP_FLAGS"])
 AC_SUBST(F90SUFFIX)
 AC_SUBST(TIMER)
 AC_SUBST(AR)
 AC_SUBST(AR_FLAGS)
-AC_SUBST(C_AS_CPP_FLAGS)
 ])
 
 ################################################
@@ -143,21 +139,21 @@ if test -z "${FCFLAGS}"; then
       FCMFLAG=""
       ;;
     *g95*)
-      FCFLAGS="-O0 -fbackslash -g -fno-second-underscore"
-      UFFLAGS="-O0 -fbackslash -g -fno-second-underscore"
+      FCFLAGS="-O3 -fbackslash -fno-second-underscore -mtune=pentium4"
+      UFFLAGS="-O0 -fbackslash -fno-second-underscore"
       FCMFLAG=""
       ;;
     *ifort*)
       CPU_FLAG=""
       case "${FCVERSION}" in
-        *10*)
-         CPU_FLAG="-xT"
+        *1*)
+         CPU_FLAG="-xW"
          ;;
         *)
          CPU_FLAG="-tpp7"
          ;;
       esac
-      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
     ;;
@@ -175,14 +171,14 @@ if test -z "${FCFLAGS}"; then
     *ifort*)
       CPU_FLAG=""
       case "${FCVERSION}" in
-        *10*)
+        *1*)
          CPU_FLAG="-mtune=pentium4"
          ;;
         *)
          CPU_FLAG="-mtune=pentium4"
          ;;
       esac
-      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
       ;;
@@ -206,14 +202,14 @@ if test -z "${FCFLAGS}"; then
     *ifort*)
       CPU_FLAG=""
       case "${FCVERSION}" in
-        *10*)
-         CPU_FLAG="-xT"
+        *1*)
+         CPU_FLAG="-xW"
          ;;
         *)
          CPU_FLAG="-tpp7"
          ;;
       esac
-      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
       ;;
@@ -228,7 +224,7 @@ if test -z "${FCFLAGS}"; then
     ;;
   powerpc64*linux* )
     CFLAGS="-q64 -O2"
-    FCFLAGS="-q64 -O3 -qnostrict -qarch=ppc970 -qtune=ppc970"
+    FCFLAGS="-q64 -O3 -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"
     UFFLAGS="-q64 -O0"
     ;;
   powerpc-ibm* )

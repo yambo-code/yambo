@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.0 r.315 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.1 r.448 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
-SSUBLEVEL="0"
-SREVISION="315"
+SSUBLEVEL="1"
+SREVISION="448"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -40,6 +40,7 @@ m4_include([config/fftw.m4])
 m4_include([config/slk.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
+m4_include([config/acx_cpp.m4])
 
 AC_PREFIX_DEFAULT($PWD)
 
@@ -58,14 +59,9 @@ AC_PROG_MAKE_SET
 # Checks for programs.
 AC_PROG_CC
 #
-# AS CPPFLAGS are used (dunno why) in the MPI check of MPICC
-# we need to rename the CPP precompiler in C_AS_CPP
-C_AS_CPP=$CPP
-#
 AC_CANONICAL_HOST
 hostname=`uname -n`
 AC_SUBST(hostname)
-AC_SUBST(C_AS_CPP)
 # ============================================================================
 # EDITOR
 AC_ARG_WITH(EDITOR, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor])) 
@@ -95,26 +91,17 @@ test -z "$AR_FLAGS" && AR_FLAGS="-ru"
 
 # ============================================================================
 # DEBUG
-AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],
- [Objects are removed. Production option.]))
-enable_debug="yes"
-if ! test x"$disable_debug" = "x"; then
- enable_debug="no"
-fi
+AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],[Objects are not removed but saved in appropriate directories. Default is yes.]))
+if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
 AC_SUBST(enable_debug)
-
 # ============================================================================
 # DP
-AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build.]))
-dp_cpp="-D_DOUBLE"
-if test x"$enable_dp" = "x"; then
- dp_cpp=""
- enable_dp="no"
-fi
-#
+AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
+dp_cpp=""
+if test x"$enable_dp" = "x"; then enable_dp="no"; fi
+if test x"$enable_dp" = "xyes"; then dp_cpp="-D_DOUBLE"; fi
 AC_SUBST(enable_dp)
 AC_SUBST(dp_cpp)
-
 # ============================================================================
 # check for IOTK library 
 #
@@ -193,6 +180,30 @@ AC_SUBST(etsf_dir)
 
 # ============================================================================
 #
+# Verbose compilation
+#
+AC_ARG_ENABLE(msgs-comps, AC_HELP_STRING([--enable-msgs-comps],
+              [Compress compilation messaging. Default is yes.]))
+if test x"$enable_msgs_comps" = "x"; then enable_msgs_comps="yes"; fi
+MKMF_PREFIX=" "
+if test x"$enable_msgs_comps" = "xyes"; then MKMF_PREFIX="@"; fi
+AC_SUBST(MKMF_PREFIX)
+AC_SUBST(ECHO_N)
+#
+# ============================================================================
+#
+# C options specific for driver.c
+#
+AC_ARG_ENABLE(options_check, AC_HELP_STRING([--enable-options-check],
+              [Enable the command line options check in driver.c. Default is yes.]))
+if test x"$enable_options_check" = "x"; then enable_options_check="yes"; fi
+if test x"$enable_options_check" = "xno"; then
+ SAVE=$CFLAGS
+ CFLAGS="${SAVE} -D_NO_OPTIONS_CHECK"
+fi
+#
+# ============================================================================
+#
 # Fortran 90
 #
 acx_save_fcflags="$FCFLAGS"
@@ -232,6 +243,10 @@ AC_SUBST(AR_FLAGS)
 AC_LANG_POP(Fortran)
 #
 # ============================================================================
+# CPP check & flags
+ACX_CPP
+#
+# ============================================================================
 # Fortran 77: test if the FC works as F77 as well
 #
 AC_LANG_PUSH(Fortran 77)
@@ -248,16 +263,16 @@ AC_LANG_POP(Fortran 77)
 # check for BLAS/Lapack
 compile_blas="no"
 compile_lapack="no"
+BLAS_LIBS=" "
+LAPACK_LIBS=" "
 if test "$with_blas" = "" || test "$with_lapack" = "" ; then
  compile_blas="yes"
  compile_lapack="yes"
- BLAS_LIBS="-lblas"
- LAPACK_LIBS="-llapack"
 else
  ACX_BLAS([], 
   compile_blas="yes";
   AC_MSG_NOTICE([Could not find blas. Using the built-in library]))
- if test "$compile_blas"="no"; then
+ if test "$compile_blas" = "no"; then
   ACX_LAPACK([], 
    compile_lapack="yes";
    AC_MSG_NOTICE([Could not find lapack. Using the built-in library]))
@@ -265,8 +280,23 @@ else
   compile_lapack="yes"
  fi
 fi
+if test x"$compile_blas" = "xyes"; then BLAS_LIBS="-lblas"; fi
+if test x"$compile_lapack" = "xyes"; then LAPACK_LIBS="-llapack"; fi
+AC_SUBST(BLAS_LIBS)
+AC_SUBST(LAPACK_LIBS)
 AC_SUBST(compile_blas)
 AC_SUBST(compile_lapack)
+# ============================================================================
+# check for local libs needed
+# 
+compile_local=no
+LOCAL_LIBS=""
+if test x"$acx_dlaran_ok" = xno; then
+ compile_local=yes
+ LOCAL_LIBS="-llocal"
+fi
+AC_SUBST(compile_local)
+AC_SUBST(LOCAL_LIBS)
 #
 # ============================================================================
 # MPI
@@ -328,8 +358,8 @@ AC_HAVE_FFTW
 SLK_SETUP
 # ============================================================================
 # NETCDF
-AC_ARG_ENABLE(extlibs, AC_HELP_STRING([--enable-largedb],
- [Enable NetCDF large file support for Wfcs DB]))
+AC_ARG_ENABLE(largedb, AC_HELP_STRING([--enable-largedb],
+ [Enable NetCDF large file support. Default is no.]))
 if test x"$enable_largedb" = "x"; then enable_largedb="no"; fi
 AC_SUBST(enable_largedb)
 KH_PATH_NETCDF_F90

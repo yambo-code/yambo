@@ -28,11 +28,19 @@ function bessel_F4(z)
  ! Work Space
  !
  real(SP)  :: arg,bessel_F4
+#if defined _DOUBLE
+ real(SP), external :: DBESJ0_
+#else
  real(SP), external :: BESJ0
+#endif
  if (z==0) then
    bessel_F4=0.
  else 
    arg=cyl_vr_save*z
+#if defined _DOUBLE
+   bessel_F4=DBESJ0_(arg)*z*log((cyl_cut+sqrt(cyl_cut**2+z**2))/z)
+#else
    bessel_F4=BESJ0(arg)*z*log((cyl_cut+sqrt(cyl_cut**2+z**2))/z)
+#endif
  endif
 end function

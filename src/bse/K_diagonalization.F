@@ -50,9 +50,9 @@ subroutine K_diagonalization(iq,W)
  integer              ::i1,lib_driver,BS_H_dim
  logical              ::K_is_not_hermitian
 #if defined _DOUBLE
- complex(DP):: zdotu,zdotc
+ complex(DP)::zdotu,zdotc
 #else
- complex(SP):: cdotu,cdotc
+ complex(SP)::cdotu,cdotc
 #endif
  !
  ! Residuals & Energies
@@ -74,8 +74,8 @@ subroutine K_diagonalization(iq,W)
  !
  ! I/O
  !
- integer           ::io_err,ID
- integer, external ::ioBSS_diago
+ integer              ::io_err,ID
+ integer, external    ::ioBSS_diago
  !  
  ! Sectioning
  !
@@ -95,6 +95,7 @@ subroutine K_diagonalization(iq,W)
  !
  BS_H_dim=BS_K_dim
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+ !
  !
  allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
@@ -118,8 +119,7 @@ subroutine K_diagonalization(iq,W)
  !
  ! Diagonalization DB (IN)
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ io_err=-1
  !
  if(io_err<0) then
    !
@@ -339,7 +339,6 @@ subroutine K_diagonalization(iq,W)
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
    io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
  endif
- !
  !
  ! CLEAN
  !

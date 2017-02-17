@@ -28,21 +28,25 @@ module it_m
  !
  ! Units Names
  !
- character(2),parameter :: E_unit='eV',G_unit='RL',T_unit='eV'
+ character(2),parameter :: E_unit='eV'
+ character(2),parameter :: G_unit='RL'
+ character(2),parameter :: T_unit='eV'
+ character(2),parameter :: Time_unit='fs'
+ character(2),parameter :: B_unit='T'
  ! 
  ! Verbosity
  !
- integer, parameter :: V_more=1,V_qp=2,V_io=3,V_debug=4
+ integer, parameter :: V_more=1,V_qp=2,V_io=3,V_testing=4
  !
- integer, parameter :: maxrnlvls=30
- integer, parameter :: maxflags =20
+ integer, parameter :: maxrnlvls=50
+ integer, parameter :: maxflags =50
  integer, parameter :: maxi1vars=50
  integer, parameter :: maxi2vars=50
  integer, parameter :: maxi3vars=50
  integer, parameter :: maxr1vars=50
  integer, parameter :: maxr2vars=50
  integer, parameter :: maxr3vars=50
- integer, parameter :: maxr4vars=10
+ integer, parameter :: maxr4vars=50
  integer, parameter :: maxc1vars=50
  integer, parameter :: maxchvars=50
  integer, parameter :: nvars=(maxi1vars+2*maxi2vars+2*maxi3vars+&
@@ -69,7 +73,7 @@ module it_m
  integer ::           r3st(maxr3vars)
  character(schlen) :: r4vars(maxr4vars,3)
  integer ::           r4st(maxr4vars)
- character(schlen) :: c1vars(maxr4vars,3)
+ character(schlen) :: c1vars(maxc1vars,3)
  integer ::           c1st(maxc1vars)
  character(schlen) :: chvars(maxchvars,2)
  integer ::           chst(maxchvars)
@@ -309,7 +313,7 @@ module it_m
        do i1=1,ni1v
          if (trim(i1vars(i1,1))==trim(name)) then
            if (initmode==4) call parser(trim(name),defs%i1def(i1))
-           if (initmode==2) call init_convert(0.,defval,i1vars(i1,3),.TRUE.)
+           if (initmode==2) call init_convert(0._SP,defval,i1vars(i1,3),.TRUE.)
            if (initmode<=3) defs%i1def(i1)=defval
            defval=defs%i1def(i1)
            v_id=i1
@@ -362,7 +366,7 @@ module it_m
              if (initmode==4) call parser(trim(name),defs%i2def(i1,:))
              if (initmode==2) then
                do i2=1,dim
-                 call init_convert(0.,defval(i2),i2vars(i1,3),.TRUE.)
+                 call init_convert(0._SP,defval(i2),i2vars(i1,3),.TRUE.)
                enddo
              endif
              if (initmode<=3) defs%i2def(i1,:)=defval
@@ -377,7 +381,7 @@ module it_m
              if (initmode==4) call parser(trim(name),defs%i3def(i1,:))
              if (initmode==2) then
                do i2=1,dim
-                 call init_convert(0.,defval(i2),i3vars(i1,3),.TRUE.)
+                 call init_convert(0._SP,defval(i2),i3vars(i1,3),.TRUE.)
                enddo
              endif
              if (initmode<=3) defs%i3def(i1,:)=defval
@@ -549,12 +553,14 @@ module it_m
      endif
    end subroutine
    !
-   subroutine loadchvar(defs,name,description,defval,verb_level)
+   subroutine loadchvar(defs,name,description,defval,verb_level,protect)
+     use drivers,        ONLY:infile_editing
      use parser_m,       ONLY:parser
      character(*)::name,description,defval
      type(initdefs)::defs
      integer::v_id
-     integer, optional::verb_level !ws
+     integer, optional::verb_level 
+     logical, optional::protect
      if (initmode==0) then
        chst=0
        nchv=nchv+1
@@ -568,11 +574,9 @@ module it_m
          if (trim(chvars(i1,1))==trim(name)) then
            v_id=i1
            if (initmode==4) then
-             if (trim(name)=='OutDir'.and.trim(defs%chdef(i1))/='.') cycle
-             if (trim(name)=='InDir'.and.trim(defs%chdef(i1))/='.') cycle
-             if (trim(name)=='BSSmod'.and.trim(defs%chdef(i1))/='') cycle
-             if (trim(name)=='DysSolver'.and.trim(defs%chdef(i1))/='') cycle
-             if (trim(name)=='SCPot'.and.trim(defs%chdef(i1))/='none') cycle
+             if (present(protect)) then
+               if (.not.protect.and.infile_editing) cycle
+             endif
              call parser(trim(name),defs%chdef(i1))
            endif
            if (initmode<=3) defs%chdef(i1)=defval
@@ -756,7 +760,7 @@ module it_m
          if (i1st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i1vars(i2,1)),1,defs%i1def(i2))) cycle
            nflines=nflines+1
-           if (ou/=20) call init_convert(0.,defs%i1def(i2),i1vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert(0._SP,defs%i1def(i2),i1vars(i2,3),.FALSE.)
            ch(2)=gen_fmt((/defs%i1def(i2)/))
            write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t26,a,t30,2a)'
            write (flines(nflines),trim(ch(1))) trim(i1vars(i2,1)),'=',&
@@ -766,8 +770,8 @@ module it_m
        do i2=1,ni2v
          if (i2st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i2vars(i2,1)),2,defs%i2def(i2,:))) cycle
-           if (ou/=20) call init_convert(0.,defs%i2def(i2,1),i2vars(i2,3),.FALSE.)
-           if (ou/=20) call init_convert(0.,defs%i2def(i2,2),i2vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert(0._SP,defs%i2def(i2,1),i2vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert(0._SP,defs%i2def(i2,2),i2vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i2vars(i2,1))
            ch(2)=gen_fmt(defs%i2def(i2,:))
@@ -783,9 +787,9 @@ module it_m
        do i2=1,ni3v
          if (i3st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i3vars(i2,1)),3,defs%i3def(i2,:))) cycle
-           if (ou/=20) call init_convert(0.,defs%i3def(i2,1),i3vars(i2,3),.FALSE.)
-           if (ou/=20) call init_convert(0.,defs%i3def(i2,2),i3vars(i2,3),.FALSE.)
-           if (ou/=20) call init_convert(0.,defs%i3def(i2,3),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert(0._SP,defs%i3def(i2,1),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert(0._SP,defs%i3def(i2,2),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert(0._SP,defs%i3def(i2,3),i3vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i3vars(i2,1))
            ch(2)=gen_fmt(defs%i3def(i2,:))

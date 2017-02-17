@@ -21,8 +21,13 @@
 !
 module D_lattice
  !
- use pars, ONLY:SP,lchlen
+ use pars,      ONLY:SP,lchlen
  implicit none
+ !
+ ! Non periodic directions
+ !
+ character(lchlen) :: non_periodic_directions
+ !
  !
  ! Temperature
  !
@@ -52,39 +57,52 @@ module D_lattice
  integer,  allocatable :: znucl(:)
  real(SP), allocatable :: atom_pos(:,:,:)
  character(lchlen)     :: atoms_string
+ character(7)          :: lattice
  !
  ! Periodic Table
  character(len=2)      :: PT_elements(103)
  !
- ! KB Pseudo
- !
- integer :: pp_n_l_comp_max
- integer :: pp_kbv_dim
- integer,  allocatable:: pp_n_l_comp(:)
- real(SP), allocatable:: pp_kbs(:,:)
- real(SP), allocatable:: pp_kb(:,:,:)
- real(SP), allocatable:: pp_kbd(:,:,:)
- !
  contains
    !
-   subroutine PP_alloc()
-     use memory_m,   ONLY:mem_est
-     use wave_func,  ONLY:wf_ng
-     integer  :: alloc_err(3)
-     allocate(pp_kbs(n_atom_species,pp_n_l_comp_max),stat=alloc_err(1))
-     allocate(pp_kb(wf_ng,n_atom_species,pp_n_l_comp_max),stat=alloc_err(2))
-     allocate(pp_kbd(wf_ng,n_atom_species,pp_n_l_comp_max),stat=alloc_err(3))
-     call mem_est("pp_kbs pp_kb pp_kbd",&
-&                 (/size(pp_kbs),size(pp_kb),size(pp_kbd)/),&
-&                 elements_kind=(/SP,SP,SP/),errors=alloc_err)
+   subroutine symmetry_group_table(msg_where)
+     !
+     use pars,           ONLY:SP,IP
+     use com,            ONLY:error,msg
+     use memory_m,       ONLY:mem_est
+     !
+     character(*) :: msg_where
+     !
+     ! Work Space
+     !
+     integer  :: i1,i2,i3
+     real(SP) :: m(3,3)
+     !
+     if (allocated(sop_tab)) then
+       deallocate(sop_tab,sop_inv)
+       call mem_est("SYMtable SYMinv")
+     endif
+     allocate(sop_tab(nsym,nsym),sop_inv(nsym))
+     call mem_est("SYMtable SYMinv",(/3*3*nsym,nsym**2+nsym/),(/SP,IP/))
+     sop_tab=0
+     sop_inv=0
+     do i1=1,nsym
+       do i2=1,nsym
+         m=matmul(dl_sop(:,:,i1),dl_sop(:,:,i2))
+         do i3=1,nsym
+           if (all(abs(m-dl_sop(:,:,i3))<=1.E-5)) then
+             if (sop_tab(i1,i2)/=0) call error('[SYMs] check the input symmetries!')        
+             sop_tab(i1,i2)=i3
+             if (sop_tab(i1,i2)==1) sop_inv(i1)=i2                
+           endif
+         enddo
+         if (sop_tab(i1,i2)==0) call error('[SYMs] check the input symmetries!')    
+       enddo
+     enddo
+     if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
+     call msg(msg_where,'[SYMs] Group table built correctly')
+     !
    end subroutine
    !
-   subroutine PP_free()
-     use memory_m,   ONLY:mem_est
-     if (.not.allocated(pp_kbs)) return
-     deallocate(pp_kbs,pp_kb,pp_kbd)
-     call mem_est("pp_kbs pp_kb pp_kbd")
-   end subroutine
    !
    subroutine atoms_spatial_invertion()
      use pars,           ONLY:zero_dfl

@@ -19,36 +19,38 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_lattice(k,Xk)
+integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  ! Output(s)
  !
  !  k_grid_b k_grid_dim k_grid k_grid_uc_vol
- !  eps_2_alpha alpha_dim
  !
  use pars,           ONLY:SP,schlen
- use X_m,            ONLY:eps_2_alpha,alpha_dim
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
 &                         c2a,sort,ak2bz
- use com,            ONLY:msg,error
- use matrix_operate, ONLY:m3det
- use D_lattice,      ONLY:DL_vol,a
+ use com,            ONLY:msg,warning
+ use matrix_operate, ONLY:m3det,m3inv
  use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
-&                         bz_samp
+&                         bz_samp,g_vec,ng_in_shell
  use zeros,          ONLY:k_rlu_zero
  !
  implicit none
  type(bz_samp)::k,Xk
+ integer      ::G_shell
+ logical      ::be_verbose
  !
  ! Work Space
  !
- integer  :: i1,i2,i3,iv(3),i_dim_coord(3)
- real(SP) :: v0(3),v1(3),v0_ibz_mod
- real(SP),allocatable ::idist(:)
+ integer  :: i1,i2,i3,iv(3),ig,N_g_vecs,N_ext_K_pts,k_grid_borders(3,2)
+ real(SP) :: v0(3),v1(3),v0_ibz_mod,k_b_m1(3,3)
+ real(SP),allocatable ::idist(:),extended_K_points(:,:)
  integer, allocatable ::order(:)
- character(schlen)    ::ch
+ character(schlen)    ::warn_msg,ch 
+ logical  :: small_b_in_UC
+ !
+ k_lattice=0
  !
  ! First I define the Xk type from the first nXkibz kpts of k
  !
@@ -56,14 +58,19 @@ subroutine k_lattice(k,Xk)
  Xk%description='Xk'
  Xk%nibz       =nXkibz
  !
- allocate(Xk%pt(Xk%nibz,3))
- call mem_est("Xk-pt",(/Xk%nibz*3/),(/SP/))
- Xk%pt(:,:)=k%pt(:Xk%nibz,:)
+ if (G_shell == 1) then
+   !
+   allocate(Xk%pt(Xk%nibz,3))
+   call mem_est("Xk-pt",(/Xk%nibz*3/),(/SP/))
+   Xk%pt(:,:)=k%pt(:Xk%nibz,:)
+   !
+   ! IBZ -> BZ
+   !
+   call k_expand(k)
+   call k_expand(Xk)
+   !
+ endif
  !
- ! IBZ -> BZ
- !
- call k_expand(k)
- call k_expand(Xk)
  call k_ibz2bz(Xk,'a',.true.)
  !
  nkibz     =k%nibz
@@ -71,19 +78,40 @@ subroutine k_lattice(k,Xk)
  nXkbz     =Xk%nbz
  d3k_factor=RL_vol/real(Xk%nbz)
  !
- allocate(idist(Xk%nbz),order(Xk%nbz))
- do i1=1,Xk%nbz
-   v0=Xk%ptbz(i1,:)-Xk%ptbz(1,:) 
+ N_g_vecs=ng_in_shell(G_shell)
+ !
+ ! Andrea 31/03/2009. Bug pointed out by a user.
+ !
+ ! writing this routine I assumed that a subgroup of the
+ ! k-points constituets a uniform grid .
+ ! Of course this is not true if you pick up gamma plus
+ ! a point exactly on the BZ border. As a first work around
+ ! I extended the k-grid using a certain number of 
+ ! RL vectors shells. (passed via G_shell)
+ !
+ allocate(extended_k_points(nXkbz*N_g_vecs,3))
+ N_ext_K_pts=0
+ do ig=1,N_g_vecs
+   call c2a(b,v_in=g_vec(ig,:),v_out=v1,mode='ki2a')
+   do i1=1,Xk%nbz
+     N_ext_K_pts=N_ext_K_pts+1
+     extended_k_points(N_ext_K_pts,:)= Xk%ptbz(i1,:)-Xk%ptbz(1,:)+ v1
+   enddo
+ enddo
+ !
+ allocate(idist(N_ext_K_pts),order(N_ext_K_pts))
+ do i1=1,N_ext_K_pts
+   v0=extended_k_points(i1,:)
    idist(i1)=ak2bz(v0)
    order(i1)=i1
  enddo
- if (Xk%nbz>1) call sort(idist,indx=order)
+ if (N_ext_K_pts>1) call sort(idist,indx=order)
  deallocate(idist)
  !
  k_grid_dim=0
  k_grid_b=0.
- do i1=1,Xk%nbz
-   v0=Xk%ptbz(order(i1),:)-Xk%ptbz(1,:)
+ do i1=1,N_ext_K_pts
+   v0=extended_k_points(order(i1),:)
    v0_ibz_mod=ak2bz(v0)
    if (v_norm(v0)<=1.E-5) cycle
    select case(k_grid_dim)
@@ -114,7 +142,7 @@ subroutine k_lattice(k,Xk)
        exit
     end select
  enddo
- deallocate(order)
+ deallocate(order,extended_k_points)
  k_grid=0
  k_grid(k_grid_dim+1:)=1
  !
@@ -133,7 +161,7 @@ subroutine k_lattice(k,Xk)
      if (abs(v1(1))<=1.E-5) then
        i3=i3+1
        if (i3+k_grid_dim>3) then
-         ch='The grid is not 3D but YAMBO cannot find the _|_ vector(s)'
+         warn_msg='Impossible to define the grid unit vectors'
          goto 1
        endif
        !
@@ -143,32 +171,75 @@ subroutine k_lattice(k,Xk)
        call c2a(b,b(i1,:),k_grid_b(k_grid_dim+i3,:),'kc2a')
      endif
    enddo
+   if (i3==0) then
+     warn_msg='Impossible to define the grid unit vectors'
+     goto 1
+   endif
  endif
  !
  if (k_grid_dim==0.and.Xk%nbz/=1) then
-   ch='The grid is 0D but I have more than 1 kpt.'
+   warn_msg='The grid is 0D but I have more than 1 kpt.'
    goto 1
  endif 
  !
  ! Check Net size to store all BZ KPTS in rlu coordinates
+ ! 
+ ! Andrea 31/03/2009. 
  !
- iv=1
- i2=0
- if (k_grid_dim<3) iv(k_grid_dim+1:)=0
- do while (any(iv==1))
-   do i1=1,k_grid_dim
-     v0=i2*k_grid_b(i1,:)
-     if (any((/v0(1)>1.-1.E-5,-1.+1.E-5>v0(1),&
-&              v0(2)>1.-1.E-5,-1.+1.E-5>v0(2),&
-&              v0(3)>1.-1.E-5,-1.+1.E-5>v0(3)/))) iv(i1)=0
-     if (iv(i1)>0) k_grid(i1)=i2+1
+ ! I have rewritten more clearly these lines where the
+ ! size of the grid is esatbilshed.
+ !
+ k_b_m1(:,1)=k_grid_b(1,:)
+ k_b_m1(:,2)=k_grid_b(2,:)
+ k_b_m1(:,3)=k_grid_b(3,:)
+ k_grid_borders(:,1)= 100
+ k_grid_borders(:,2)=-100
+ if (abs(m3det(k_b_m1))>1.E-7) then
+   call m3inv(M=k_b_m1)
+   do i1=1,Xk%nbz
+     v1=matmul(k_b_m1,Xk%ptbz(i1,:)-Xk%ptbz(1,:)) 
+     iv=nint(v1)
+     !
+     ! The borders are the min/max value of the coefficients of
+     ! the k-pts in terms of the grid unit vectors
+     !
+     do i2=1,3
+       k_grid_borders(i2,1)=min( k_grid_borders(i2,1), iv(i2) )
+       k_grid_borders(i2,2)=max( k_grid_borders(i2,2), iv(i2) )
+     enddo
    enddo
-   i2=i2+1
- enddo
- if (product(k_grid)<Xk%nbz) then
-   ch='Impossible to verify the K-grid dimension'
+ else
+   warn_msg='Error in determing the shape of the K-grid'
    goto 1
  endif
+ do i1=1,k_grid_dim
+   !
+   ! When the min and max border is zero it means the 
+   ! the corresponding unit cell vector is a RL vector (G_shells>1)
+   !
+   if (all(k_grid_borders(i1,:)/=0)) then
+     !
+     ! Exclude the max index when both borders are on the border of the
+     ! rlu unit cell
+     ! 
+     small_b_in_UC=.FALSE.
+     !
+     do while (.not.small_b_in_UC)
+       v0=(k_grid_borders(i1,2)-k_grid_borders(i1,1))*abs(k_grid_b(i1,:))
+       if (any(v0>1.-1.E-5)) then
+         k_grid_borders(i1,2)=k_grid_borders(i1,2)-1
+       else
+         small_b_in_UC=.TRUE.
+       endif
+     enddo
+     !
+   endif
+   if (k_grid(i1)==0) k_grid(i1)=1
+   !
+   ! Size of the shifted grid (used by bz_samp_indexes)
+   ! 
+   k_grid(i1)=sum(iabs(k_grid_borders(i1,:)))+1
+ enddo
  !
  ! Reporting
  !
@@ -193,54 +264,27 @@ subroutine k_lattice(k,Xk)
  if (k_grid_dim>0) call msg('r','Grid dimensions               :',k_grid(:k_grid_dim))
  call msg('r',                  'K lattice UC volume       [au]:',k_grid_uc_vol)
  !
- ! Polarizability convertion factor
- !
- i_dim_coord=1
- if (all((/Xk%pt(:,1)==0./))) i_dim_coord(1)=0
- if (all((/Xk%pt(:,2)==0./))) i_dim_coord(2)=0
- if (all((/Xk%pt(:,3)==0./))) i_dim_coord(3)=0
- if (sum(i_dim_coord)==k_grid_dim) then
-   select case(k_grid_dim)
-     case(2)
-       if (i_dim_coord(1)==0) then
-         eps_2_alpha=sqrt(dot_product(a(1,:),a(1,:)))
-       else if (i_dim_coord(2)==0) then
-         eps_2_alpha=sqrt(dot_product(a(2,:),a(2,:)))
-       else if (i_dim_coord(3)==0) then
-         eps_2_alpha=sqrt(dot_product(a(3,:),a(3,:)))
-       endif
-       alpha_dim='length'
-     case(1)
-       if (i_dim_coord(1)==1) then
-         eps_2_alpha=DL_vol/sqrt(dot_product(a(1,:),a(1,:)))
-       else if (i_dim_coord(2)==1) then
-         eps_2_alpha=DL_vol/sqrt(dot_product(a(2,:),a(2,:)))
-       else if (i_dim_coord(3)==1) then
-         eps_2_alpha=DL_vol/sqrt(dot_product(a(3,:),a(3,:)))
-       endif
-       alpha_dim='area'
-     case(0)
-       alpha_dim='volume'
-       eps_2_alpha=DL_vol
-   end select
- endif
- !
  ! CLEAN
  !
  call k_ibz2bz(Xk,"d",.false.)
  return
  !
-1 if (len_trim(ch)>0) call error(ch)
+1 continue
+ !
+ if (len_trim(warn_msg)>0) then
+   if (be_verbose) call warning(warn_msg) 
+   k_lattice=-1
+ endif
+ call k_ibz2bz(Xk,"d",.false.)
  !
  contains
    !
    function proj(v1,v2)
-   !
-   implicit none
-   real(SP) :: v1(3),v2(3),proj
-   proj=0.
-   if (v_is_zero(v2,zero_=k_rlu_zero)) return
-   proj=dot_product(v1,v2)/v_norm(v2)**2.
+     implicit none
+     real(SP) :: v1(3),v2(3),proj
+     proj=0.
+     if (v_is_zero(v2,zero_=k_rlu_zero)) return
+     proj=dot_product(v1,v2)/v_norm(v2)**2.
    end function
    !
-end subroutine
+end function

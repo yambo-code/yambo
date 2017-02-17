@@ -23,7 +23,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Non interacting X with SPIN support.
  !
- use pars,          ONLY:SP,HARTREE
+ use pars,          ONLY:SP
+ use units,         ONLY:HARTREE
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
@@ -36,7 +37,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_norm 
  use wave_func,     ONLY:wf_load
  use memory_m,      ONLY:mem_est
- use X_m,           ONLY:X_t,X_poles,X_rhoq0,iq_now,X_poles_tab,&
+ use X_m,           ONLY:X_t,X_poles,DIP_iq_dot_r,iq_now,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
  implicit none
  type(levels)         :: Xen
@@ -49,8 +50,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  ! Work Space
  !
  integer              :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
-&                        isp,iv,ic,g1,g2,g2max,iw,iwmax,isave(4),n_poles 
- logical              :: force_bare_X_G
+&                        isp,iv,ic,g1,g2,g2_max,g2_min,iw,iwmax,isave(4),n_poles 
+ logical              :: force_bare_X_G,skip_WF_load,Drude_term
  real(SP)             :: minmax_ehe(2),drude_factor,eh_occ
  type(pp_indexes)     :: px
  type(ggwinfo)        :: isc
@@ -70,19 +71,27 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  drude_Gf = cmplx(0.,0.,SP)
  !
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM
+ skip_WF_load=.false.
+ g2_min=1
+ !
+ ! Project's dependent presets
+ !
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
  !
  !  Optical strengths
  !
- if (iq==1) call X_O_strengths(Xen, Xk, X, X%q0)
+ if (iq==1) call Dipole_driver(Xen, Xk, X, X%q0)
  !
  !
- ! Drude Contrib.
+ ! Drude Contrib. if all of following conditions hold
+ !  . Non zero Drude Freq.
+ !  . Metallic system 
+ !  . Optical response @ q = Gamma
  !
- if (all((/real(X%Wd)>0.,aimag(X%Wd)>0.,&   ! Non zero Drude Freq.
-&          Xen%kf>0,Xen%nbf/=Xen%nbm,&      ! Metallic system 
-&          iq==1/))) then                   ! Optical response
+ Drude_term=all((/real(X%Wd)>0.,aimag(X%Wd)>0.,Xen%kf>0,Xen%nbf/=Xen%nbm,iq==1/))
+ !
+ if ( Drude_term ) then
    !
    call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HARTREE)
    !
@@ -95,11 +104,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    do iw=fr(1),fr(2)
      drude_Gf(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
    enddo
+   !
  endif
  !
  ! WF load
  !
-   call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+ if (.not.skip_WF_load) call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
  if (iq/=iq_now) then
    !
@@ -109,7 +119,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
    if (.not.force_bare_X_G) call coarse_grid('X',X_poles,n_poles,X%cg_percentual)
-   if (force_bare_X_G)      call coarse_grid('X',X_poles,n_poles,0.)
+   if (force_bare_X_G)      call coarse_grid('X',X_poles,n_poles,0._SP)
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
    deallocate(X_poles)
@@ -121,17 +131,20 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !  the q-loop of X_em1
    !
    call freqs_setup(Xw)
- !
+   !
  endif 
  !
+ ! Time-Rev is Spatial Inv => only half X is eval
+ !                            ===================
+ call space_inv_by_wf(Xen,Xk)
  !
  half_X_mat_only=i_space_inv==1
  if (.not.half_X_mat_only) then
    half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
- g2max=X%ng
+ g2_max=X%ng
  iwmax=1
- if (half_X_mat_only) g2max=-1
+ if (half_X_mat_only) g2_max=-1
  if (Xw%n(2)==1.and.half_X_mat_only) iwmax=2
  if (iq_now==0.and.half_X_mat_only ) call msg('s','[X] Upper matrix triangle filled')
  !
@@ -202,12 +215,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
          isc%rhotw(g1)=rhotw_save(g2)
        enddo
        if (is>nsym/(i_time_rev+1)) isc%rhotw=conjg(isc%rhotw)
-       isc%rhotw(1)=-conjg(X_rhoq0(ic,iv,ikbz,i_spin))
+       isc%rhotw(1)=-conjg(DIP_iq_dot_r(ic,iv,ikbz,i_spin))
        !
        !
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^
-       do g2=1,X%ng
+       do g2=g2_min,X%ng
 #if defined _DOUBLE
          call zaxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #else
@@ -222,12 +235,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        do g2=1,X%ng
 #if defined _DOUBLE
          call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                               1,Xo(g2+1:,g2,i2),1)
+         if (g2<g2_max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
+&                                  1,Xo(g2+1:,g2,i2),1)
 #else
          call caxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                               1,Xo(g2+1:,g2,i2),1)
+         if (g2<g2_max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
+&                                  1,Xo(g2+1:,g2,i2),1)
 #endif
        enddo
      enddo
@@ -277,12 +290,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        do g2=1,X%ng
 #if defined _DOUBLE
          call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                                 1,Xo(g2+1:,g2,i2),1)
+         if (g2<g2_max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
+&                                  1,Xo(g2+1:,g2,i2),1)
 #else
          call caxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                                 1,Xo(g2+1:,g2,i2),1)
+         if (g2<g2_max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
+&                                  1,Xo(g2+1:,g2,i2),1)
 #endif
        enddo
      enddo

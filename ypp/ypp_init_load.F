@@ -21,7 +21,7 @@
 !
 subroutine ypp_init_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_more,Time_unit
  use wave_func,     ONLY:wf_ng
  use YPP
  implicit none
@@ -29,17 +29,22 @@ subroutine ypp_init_load(defs)
  !
  ! RunLevels
  !
- call it('r',defs,'kpt',     '[R] K-grid analysis') 
- call it('r',defs,'excp',    '[R] Excitonic Properties')
- call it('r',defs,'exc_wf',  '[R] Excitonic Wavefunction')
- call it('r',defs,'freehole','[R] Free hole position')
- call it('r',defs,'exc_amp', '[R] Excitonic Amplitudes')
+ call it('r',defs,'bzgrids',   '[R] BZ Grid') 
+ call it('r',defs,'K_grid',    '[R] K-grid analysis') 
+ call it('r',defs,'Q_grid',    '[R] Q-grid analysis') 
+ !
+ !
+ call it('r',defs,'High_Symm', '[R] High_Symmetry points and paths') 
+ call it('r',defs,'excitons',  '[R] Excitons')
+ call it('r',defs,'electrons', '[R] Electrons (and holes)')
+ call it('r',defs,'freehole',  '[R] Free hole position')
+ call it('r',defs,'amplitude', '[R] Amplitude')
  call it('r',defs,'plot',         '[R] Plot')
  call it('r',defs,'density',      '[R] Density')
  call it('r',defs,'wavefunction', '[R] Wavefunction')
  !
  !
- ! Kpt analysis
+ ! BZ grids
  !
  call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku',coo_in)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku',coo_out)
@@ -49,6 +54,10 @@ subroutine ypp_init_load(defs)
  call it(defs,'KShift2','K-grid shift vector[2] ',qlong(2,:))
  call it(defs,'KShift3','K-grid shift vector[3] ',qlong(3,:))
  !
+ !
+ call it('f',defs,'NoWeights',    ' Do not print K-points weight') 
+ call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
+ !
  ! EXC WF
  !
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)
@@ -57,7 +66,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
- call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier)
+ call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_more)
  !
  ! PLOT
  !

@@ -21,7 +21,8 @@
 !
 integer function ioX(X,Xw,ID)
  !
- use pars,          ONLY:SP,schlen,HARTREE
+ use pars,          ONLY:SP,schlen
+ use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nqibz,g_vec
  use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
@@ -32,7 +33,7 @@ integer function ioX(X,Xw,ID)
 &                        read_is_on,write_is_on,io_check_restart,io_header,&
 &                        io_fragment,RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
-&                        io_save_to_try_again,io_restore_to_try_again,NONE
+&                        NONE
  use stderr,        ONLY:intc
  implicit none
  type(X_t)   :: X
@@ -57,16 +58,7 @@ integer function ioX(X,Xw,ID)
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
  !
- call io_save_to_try_again(ID)
  ioX=io_connect(desc=trim(db_desc),type=2,ID=ID) 
- !
- ! The em1s DB is searched in the SAVE folder when 
- ! it is not found in the JOBNAME folder
- !
- if (read_is_on(ID).and.ioX/=0) then
-   call io_restore_to_try_again(ID)
-   ioX=io_connect(desc=trim(db_desc),type=1,ID=ID) 
- endif
  if (ioX/=0) goto 1
  !
  ! Check the restart point

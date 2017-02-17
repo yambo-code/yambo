@@ -21,10 +21,16 @@
 !
 module QP_m
  !
- use pars
+ use pars,      ONLY:SP,schlen
  implicit none
  !
- integer, parameter :: max_qp_descs=100
+ integer, parameter:: max_qp_descs=100
+ !
+ ! Mixing for non perturbative calculations
+ !
+ integer           :: SC_bands_mixed
+ real(SP)          :: SC_band_mixing
+ real(SP)          :: SC_E_threshold
  !
  integer           :: QP_dSc_steps
  integer           :: QP_Sc_steps
@@ -40,6 +46,7 @@ module QP_m
  logical           :: QP_W_partially_done
  logical           :: GWo_SC_done
  logical           :: CHOSEX_use_empties
+ logical           :: On_Mass_Shell_approx
  character(schlen) :: QP_rep_string
  character(schlen) :: QP_solver
  real(SP)          :: QP_G_damp
@@ -85,12 +92,18 @@ module QP_m
  !  
  ! 1(X) 2(K) 3(G) 
  !
- character(schlen):: QP_ctl_db(3)
- integer    :: QP_ctl_interp_neigh(3)
- real(SP)   :: QP_ctl_E(3,3)
- real(SP)   :: QP_ctl_W(3,4)
- complex(SP):: QP_ctl_Z(3)
- logical    :: QP_ctl_applied
+ character(schlen)       :: QP_ctl_db(3)
+ integer                 :: QP_ctl_interp_neigh(3)
+ !
+ ! Note that QP_ctl_E/W/Z are dimensioned *,2)
+ ! to describe spin polarized systems.
+ ! The second element of the last argument 
+ ! is not used in non-collinear or scalar cases.
+ !
+ real(SP)                :: QP_ctl_E(3,3,2)
+ real(SP)                :: QP_ctl_W(3,4,2)
+ complex(SP)             :: QP_ctl_Z(3,2)
+ logical                 :: QP_ctl_applied
  !
  contains
    !
@@ -100,6 +113,68 @@ module QP_m
      qp%n_descs=0
      qp%n_states=0
      nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare)
+   end subroutine
+   !
+   subroutine QP_states_simmetrize(en,vec_2_sim,state_is_2do)
+     !
+     use pars,          ONLY:SP
+     use units,         ONLY:HARTREE
+     use vec_operate,   ONLY:sort,degeneration_finder
+     use electrons,     ONLY:levels
+     !
+     real(SP), optional  ::vec_2_sim(QP_n_states)
+     logical,  optional  ::state_is_2do(QP_n_states)
+     type(levels) ::en
+     !
+     ! Work Space
+     !
+     real(SP) ::Eo_sorted(QP_n_states),sym_value
+     integer  ::Eo_sorted_index(QP_n_states),i1,inx,i2,&
+&               first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp
+     !
+     ! Degenerate bands average.
+     ! The PW gkkp m.e. are not symmetrized and, consequently,
+     ! degnerate bands can be splitted.
+     !
+     forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
+     !
+     call sort(Eo_sorted,indx=Eo_sorted_index)
+     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
+     !
+     if (present(state_is_2do)) then
+       state_is_2do=.TRUE.
+     endif
+     !
+     do i1=1,n_deg_grp
+       !
+       sym_value=0.
+       !
+       do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
+         !
+         inx   =Eo_sorted_index(i2)
+         !
+         if (present(state_is_2do)) then
+           if (i2>first_el(i1)) state_is_2do(inx)=.FALSE.
+         endif
+         !
+         if (present(vec_2_sim)) then
+           sym_value=sym_value+vec_2_sim(inx)/real( n_of_el(i1) )
+         endif
+         !
+       enddo
+       !
+       do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
+         !
+         inx   =Eo_sorted_index(i2)
+         !
+         if (present(vec_2_sim)) then
+           vec_2_sim(inx)=sym_value
+         endif
+         !
+       enddo
+       !
+     enddo
+     !
    end subroutine
    !
 end module 

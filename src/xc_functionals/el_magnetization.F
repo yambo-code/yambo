@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_magnetization(en,Xk,el_mag)
+subroutine el_magnetization(en,Xk)
  !
  ! Electronic Magnetization for electronic Spinors
  !
@@ -28,16 +28,16 @@ subroutine el_magnetization(en,Xk,el_mag)
  !  PSI^I = spinor
  !  Sigma_Pauli=the 3 Pauli matrices
  !
- use pars,          ONLY:SP
- use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels,n_spin,n_spinor
- use D_lattice,     ONLY:nsym
- use FFT_m,         ONLY:fft_size,fft_rot_r
- use wave_func,     ONLY:wf_state,wf
+ use pars,           ONLY:SP
+ use R_lattice,      ONLY:bz_samp
+ use electrons,      ONLY:levels,n_spin,n_spinor
+ use D_lattice,      ONLY:nsym
+ use FFT_m,          ONLY:fft_size,fft_rot_r
+ use wave_func,      ONLY:wf_state,wf
+ use xc_functionals, ONLY:el_mag
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
- real(SP)     ::el_mag(fft_size,3)
  !
  ! Work Space
  !

@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                       com_dir,icd,js,ijs,np,pid)
+integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
+&                      com_dir,icd,js,ijs,np,pid)
  !
  use P2Y,                 only : pw_init, pw_close, verboseIO
  use LOGO,                only : pickup_a_random
  use pars,                only : SP,lchlen
  use memory_m,            only : mem_est
- use com,                 only : msg,write_to_report,more_io_path, error
+ use com,                 only : msg,write_to_report,core_io_path, error
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands, n_spin, n_sp_pol
  use D_lattice,           only : n_atoms_max
@@ -59,7 +59,7 @@
  p2y_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,ind,od,'','')
+ call std_presets(instr,od,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
@@ -86,7 +86,7 @@
 #else
  call error('Unknown version of P2Y. Stopping.')
 #endif
- call msg('s','DBs path set to ',trim(more_io_path))
+ call msg('s','DBs path set to ',trim(core_io_path))
  !
  ! Verbose I/O
  !

@@ -18,11 +18,11 @@
 !!  hdr_io_wfftype to which a wffil datatype is given
 !!
 !! COPYRIGHT
-!! Copyright (C) 2002-2005 ABINIT group (XG)
+!! Copyright (C) 2002-2009 ABINIT group (XG,MB)
 !! This file is distributed under the terms of the
-!! GNU General Public License, see ~ABINIT/Infos/copyright
+!! GNU General Public License, see ~abinit/COPYING
 !! or http://www.gnu.org/copyleft/gpl.txt .
-!! For the initials of contributors, see ~ABINIT/Infos/contributors.
+!! For the initials of contributors, see ~abinit/doc/developers/contributors.txt.
 !!
 !! INPUTS
 !!  rdwr= if 1, read the hdr structured variable from the header of the file,
@@ -30,7 +30,7 @@
 !!        if 3, echo part of the header to formatted file (records 1 and 2)
 !!        if 4, echo the header to formatted file
 !!        if 5, read the hdr without rewinding (unformatted)
-!!        if 6, read the hdr without rewinding (unformatted)
+!!        if 6, write the hdr without rewinding (unformatted)
 !!  unitfi=unit number of the file (unformatted if rdwr=1, 2, 5 or 6 formatted if rdwr=3,4)
 !!
 !! OUTPUT
@@ -56,9 +56,9 @@
 !!      rdem1,rdkss,testepsm1,testlda,uderiv,vtorho3,wrem1
 !!
 !! CHILDREN
-!!      leave_new,wrtout
+!!      leave_new,rhoij_alloc,wrtout
 !!
-!! SOURCE
+! SOURCE
 
  subroutine hdr_io_wfftype(fform,hdr,rdwr,wff)
 
@@ -70,7 +70,7 @@
  integer,intent(inout) :: fform
  integer,intent(in) :: rdwr
  type(hdr_type),intent(inout) :: hdr
- type(wffile_type),intent(in) :: wff
+ type(wffile_type),intent(inout) :: wff
 
 !Local variables-------------------------------
  integer :: unitfi,ierr
@@ -99,12 +99,12 @@
  type(hdr_type),intent(inout) :: hdr
 
 !Local variables-------------------------------
- integer :: bantot,bsize,headform,iatom,ii,ikpt,ilmn,ipsp,ispden,isym
- integer :: itypat,jlmn,lloc,lmax,lmn2_size,mmax,natinc,natom,nkpt,npsp,nselect,nsppol
+ integer :: bantot,bsize,cplex,headform,iatom,ierr,ii,ikpt,ipsp,ispden,isym
+ integer :: jj,lloc,lmax,mmax,natinc,natom,nkpt,npsp,nselect,nspden,nsppol
  integer :: nsym,ntypat
  character(len=500) :: message
  character(len=6) :: codvsn
- integer(dp), allocatable :: ibuffer(:),nsel(:,:)
+ integer, allocatable :: ibuffer(:),nsel44(:,:),nsel56(:)
  real(dp) :: acell(3)
  real(dp), allocatable :: buffer(:)
 
@@ -120,11 +120,18 @@
 
 ! Reading the first record of the file ------------------------------------
 
-  read(unitfi,err=1000) codvsn,fform
+  read(unitfi,iostat=ierr)codvsn,fform
+  if (ierr /=0) then
+   fform=0
+   return   ! This is to allow treatment of old epsm1 format
+  end if
 
-  if(fform==1   .or. fform==2   .or. &
-&    fform==51  .or. fform==52  .or. &
-&    fform==101 .or. fform==102       )then
+  if(fform==1   .or. &
+&    fform==2   .or. &
+&    fform==51  .or. &
+&    fform==52  .or. &
+&    fform==101 .or. &
+&    fform==102       )then
 !  This is the old format
    headform=22
 
@@ -134,15 +141,22 @@
    backspace (unitfi)
    read (unitfi)   codvsn,headform,fform
 
-   if(headform/=23 .and. headform/=34 .and. headform/=40 .and. headform/=41 .and. &
-&     headform/=42 .and. headform/=44                                            )then
+   if(headform/=23 .and. &
+&     headform/=34 .and. &
+&     headform/=40 .and. &
+&     headform/=41 .and. &
+&     headform/=42 .and. &
+&     headform/=44 .and. &
+&     headform/=53 .and. &
+&     headform/=56 .and. &
+&     headform/=57         )then
     write(message, '(4a,i3,3a,i8,3a)' ) ch10,&
 &    ' hdr_io : ERROR -',ch10,&
 &    '  The first line of the (WF, DEN or POT) file read in unit ',unitfi,' is erroneous.',ch10,&
-&    '  headform is ',headform,', while it should be 23, 34, 40, 41, 42, or 44.',ch10,&
+&    '  headform is ',headform,', while it should be 23, 34, 40, 41, 42, 44, 53 or 56 or 57.',ch10,&
 &    '  Action : check the correctness of your file.'
-!    call wrtout(6,message,'COLL')
-!    call leave_new('COLL')
+    !call wrtout(6,message,'COLL')
+    !call leave_new('COLL')
    end if
 
   end if
@@ -159,6 +173,7 @@
   hdr%occopt=1
   hdr%pertcase=1
   hdr%usepaw=0
+  hdr%usewvl=0
   hdr%ecut=zero
   hdr%ecutdg=zero
   hdr%ecutsm=zero
@@ -211,13 +226,21 @@
 &    hdr%ecut, hdr%ecutsm, hdr%ecut_eff, hdr%qptn(1:3), hdr%rprimd,&
 &    hdr%stmbias, hdr%tphysel, hdr%tsmear
 
-  else if(headform>=44)then
+  else if(headform>=44 .and. headform<57)then
 
 !   Compared to v4.2, add usepaw and ecutdg
     read(unitfi) bantot, hdr%date, hdr%intxc, hdr%ixc, natom, hdr%ngfft(1:3),&
 &    nkpt, hdr%nspden, hdr%nspinor, nsppol, nsym, npsp, ntypat, hdr%occopt, hdr%pertcase,&
 &    hdr%usepaw, hdr%ecut, hdr%ecutdg, hdr%ecutsm, hdr%ecut_eff, hdr%qptn(1:3), hdr%rprimd,&
 &    hdr%stmbias, hdr%tphysel, hdr%tsmear
+
+  else if(headform>=57)then
+
+!   Compared to v4.4, add usewvl
+    read(unitfi) bantot, hdr%date, hdr%intxc, hdr%ixc, natom, hdr%ngfft(1:3),&
+&    nkpt, hdr%nspden, hdr%nspinor, nsppol, nsym, npsp, ntypat, hdr%occopt, hdr%pertcase,&
+&    hdr%usepaw, hdr%ecut, hdr%ecutdg, hdr%ecutsm, hdr%ecut_eff, hdr%qptn(1:3), hdr%rprimd,&
+&    hdr%stmbias, hdr%tphysel, hdr%tsmear, hdr%usewvl
 
   end if
 
@@ -253,23 +276,27 @@
   allocate(hdr%pspdat(npsp))
   allocate(hdr%pspso(npsp))
   allocate(hdr%pspxc(npsp))
-  allocate(hdr%so_typat(ntypat))
+  allocate(hdr%so_psp(npsp))
   allocate(hdr%symafm(nsym))
   allocate(hdr%symrel(3,3,nsym))
   allocate(hdr%title(npsp))
   allocate(hdr%tnons(3,nsym))
   allocate(hdr%typat(natom))
+  allocate(hdr%wtk(nkpt))
   allocate(hdr%xred(3,natom))
   allocate(hdr%zionpsp(npsp))
   allocate(hdr%znuclpsp(npsp))
   allocate(hdr%znucltypat(ntypat))
-  if(hdr%usepaw==1) allocate(hdr%atmrhoij(natom))
+
+!DEBUG
+! write(6,*)' hdr_io : after allocate '
+!ENDDEBUG
 
 ! Reading the third record of the file ------------------------------------
 
 ! Initialize the values that are not present for all versions
   hdr%istwfk(:)=1
-  hdr%so_typat(:)=1
+  hdr%so_psp(:)=1
   hdr%symafm(:)=1
 
   if(headform==22 .and. (fform==1 .or. fform==51 .or. fform==101))then
@@ -286,13 +313,22 @@
 &    hdr%typat(:), hdr%istwfk(:), hdr%kptns(:,:), hdr%occ(:), &
 &    hdr%tnons(:,:), hdr%znucltypat(:)
 
-  else if(headform>=40)then
+  else if(headform>=40 .and. headform < 50)then
 
-!   Compared to pre v4.0, add so_typat and symafm, and switch istwfk
+!   Compared to pre v4.0, add so_psp and symafm, and switch istwfk
+
     read(unitfi)  hdr%istwfk(:), hdr%nband(:), hdr%npwarr(:), &
-&    hdr%so_typat(:), hdr%symafm(:), hdr%symrel(:,:,:), &
+&    hdr%so_psp(:), hdr%symafm(:), hdr%symrel(:,:,:), &
 &    hdr%typat(:), hdr%kptns(:,:), hdr%occ(:), &
 &    hdr%tnons(:,:), hdr%znucltypat(:)
+
+  else if(headform>=50)then
+
+!   Compared to pre v5.0, add wtk
+    read(unitfi)  hdr%istwfk(:), hdr%nband(:), hdr%npwarr(:), &
+&    hdr%so_psp(:), hdr%symafm(:), hdr%symrel(:,:,:), &
+&    hdr%typat(:), hdr%kptns(:,:), hdr%occ(:), &
+&    hdr%tnons(:,:), hdr%znucltypat(:), hdr%wtk(:)
 
   end if
 
@@ -351,35 +387,6 @@
    read(unitfi) hdr%residm, hdr%xred(:,:), hdr%etot, hdr%fermie
   end if
 
-! Reading the Rhoij tab if the PAW method was used  -----------------------
-  if ((headform>= 44).and.(hdr%usepaw==1)) then
-   do iatom=1,hdr%natom
-    itypat=hdr%typat(iatom)
-    lmn2_size=hdr%lmn_size(itypat)*(hdr%lmn_size(itypat)+1)/2
-    hdr%atmrhoij(iatom)%lmn2_size=lmn2_size
-    hdr%atmrhoij(iatom)%nspden=hdr%nspden
-    allocate(hdr%atmrhoij(iatom)%nrhoijsel(hdr%nspden))
-    allocate(hdr%atmrhoij(iatom)%rhoij(lmn2_size,hdr%nspden))
-    allocate(hdr%atmrhoij(iatom)%rhoijselect(lmn2_size,hdr%nspden))
-   end do
-   allocate(nsel(hdr%nspden,hdr%natom))
-   read(unitfi) ((nsel(ispden,iatom),ispden=1,hdr%nspden),iatom=1,hdr%natom)
-   do iatom=1,hdr%natom
-    hdr%atmrhoij(iatom)%nrhoijsel(1:hdr%nspden)=nsel(1:hdr%nspden,iatom)
-   enddo
-   bsize=sum(nsel);allocate(ibuffer(bsize),buffer(bsize));ii=0
-   read(unitfi) ibuffer(:),buffer(:)
-   do iatom=1,hdr%natom
-    do ispden=1,hdr%nspden
-     nselect=nsel(ispden,iatom)
-     hdr%atmrhoij(iatom)%rhoijselect(1:nselect,ispden)=ibuffer(ii+1:ii+nselect)
-     hdr%atmrhoij(iatom)%rhoij      (1:nselect,ispden)= buffer(ii+1:ii+nselect)
-     ii=ii+nselect
-    end do
-   end do
-   deallocate(ibuffer,buffer,nsel)
-  end if
-
 ! -------------------------------------------------------------------------
 ! Writing the header of an unformatted file
 ! -------------------------------------------------------------------------
@@ -391,8 +398,8 @@
 
   if(rdwr==2) rewind(unitfi)
 
-! Writing always use format 44
-  headform=44
+! Writing always use last format version
+  headform=57
   write(unitfi) hdr%codvsn, headform, fform
 
   write(unitfi) hdr%bantot, hdr%date, hdr%intxc, hdr%ixc, &
@@ -400,10 +407,11 @@
 &  hdr%nspden, hdr%nspinor, &
 &  hdr%nsppol, hdr%nsym, hdr%npsp, hdr%ntypat, hdr%occopt, hdr%pertcase,&
 &  hdr%usepaw, hdr%ecut, hdr%ecutdg, hdr%ecutsm, hdr%ecut_eff, &
-&  hdr%qptn, hdr%rprimd, hdr%stmbias, hdr%tphysel, hdr%tsmear
+&  hdr%qptn, hdr%rprimd, hdr%stmbias, hdr%tphysel, hdr%tsmear, &
+&  hdr%usewvl
 
   write(unitfi) hdr%istwfk(:), hdr%nband(:), hdr%npwarr(:),&
-&   hdr%so_typat(:), hdr%symafm(:), hdr%symrel(:,:,:), &
+&   hdr%so_psp(:), hdr%symafm(:), hdr%symrel(:,:,:), &
 &   hdr%typat(:), hdr%kptns(:,:), hdr%occ(:), &
 &   hdr%tnons(:,:), hdr%znucltypat(:)
 
@@ -417,189 +425,10 @@
 
   write(unitfi) hdr%residm, hdr%xred(:,:), hdr%etot, hdr%fermie
 
-  if (hdr%usepaw==1) then
-   allocate(nsel(hdr%nspden,hdr%natom))
-   do iatom=1,hdr%natom
-    nsel(1:hdr%nspden,iatom)=hdr%atmrhoij(iatom)%nrhoijsel(1:hdr%nspden)
-   end do
-   write(unitfi) ((nsel(ispden,iatom),ispden=1,hdr%nspden),iatom=1,hdr%natom)
-   bsize=sum(nsel);allocate(ibuffer(bsize),buffer(bsize));ii=0
-   do iatom=1,hdr%natom
-    do ispden=1,hdr%nspden
-     nselect=nsel(ispden,iatom)
-     ibuffer(ii+1:ii+nselect)=hdr%atmrhoij(iatom)%rhoijselect(1:nselect,ispden)
-     buffer (ii+1:ii+nselect)=hdr%atmrhoij(iatom)%rhoij      (1:nselect,ispden)
-     ii=ii+nselect
-    end do
-   end do
-   write(unitfi) ibuffer(:),buffer(:)
-   deallocate(ibuffer,buffer,nsel)
-  end if
-
-! -------------------------------------------------------------------------
-! Writing the header of a formatted file
-! -------------------------------------------------------------------------
-
- else if(rdwr==3 .or. rdwr==4)then
-
-  write(unitfi, '(a)' )&
-&  ' ==============================================================================='
-  if(rdwr==3)write(unitfi, '(a)' ) ' ECHO of part of the ABINIT file header '
-  if(rdwr==4)write(unitfi, '(a)' ) ' ECHO of the ABINIT file header '
-  write(unitfi, '(a)' ) ' '
-  write(unitfi, '(a)' ) ' First record :'
-  write(unitfi, '(a,a6,2i5)' )  ' codvsn,headform,fform = ',&
-&  hdr%codvsn, hdr%headform, fform     ! Do not worry about 22 format
-
-  write(unitfi, '(a)' ) ' '
-  write(unitfi, '(a)' ) ' Second record :'
-  write(unitfi, '(a,4i6)') ' bantot,intxc,ixc,natom  =',&
-&                            hdr%bantot, hdr%intxc, hdr%ixc, hdr%natom
-  write(unitfi, '(a,4i6)') ' ngfft(1:3),nkpt         =',&
-&                            hdr%ngfft(1:3), hdr%nkpt
-
-  if(hdr%headform>=23)then
-   write(unitfi, '(a,4i6)') ' nspden,nspinor          =',&
-&                            hdr%nspden, hdr%nspinor
-  end if
-
-  if(hdr%headform<=23)then
-   write(unitfi, '(a,4i6)' ) ' nsppol,nsym,ntypat,occopt=',&
-&                            hdr%nsppol,hdr%nsym,hdr%ntypat,hdr%occopt
-  else if(hdr%headform<=40)then
-   write(unitfi, '(a,5i6)' ) ' nsppol,nsym,npsp,ntypat,occopt=',&
-&                            hdr%nsppol,hdr%nsym,hdr%npsp,hdr%ntypat,hdr%occopt
-
-  else if(hdr%headform==41 .or. hdr%headform==42)then
-   write(unitfi, '(a,6i6)' ) ' nsppol,nsym,npsp,ntypat,occopt,pertcase=',&
-&                            hdr%nsppol,hdr%nsym,hdr%npsp,hdr%ntypat,hdr%occopt,hdr%pertcase
-  else if(hdr%headform>=44)then
-   write(unitfi, '(a,4i6)' ) ' nsppol,nsym,npsp,ntypat =',&
-&                            hdr%nsppol,hdr%nsym,hdr%npsp,hdr%ntypat
-   write(unitfi, '(a,3i6)' ) ' occopt,pertcase,usepaw  =',&
-&                            hdr%occopt,hdr%pertcase,hdr%usepaw
-  end if
-
-  if(hdr%headform==40 .or. hdr%headform==41 .or. hdr%headform==42)then
-   write(unitfi, '(a,2es18.10)') ' ecut,ecutsm             =',hdr%ecut, hdr%ecutsm
-  else if(hdr%headform>=44)then
-   write(unitfi, '(a,3es18.10)') ' ecut,ecutdg,ecutsm      =',&
-&   hdr%ecut, hdr%ecutdg, hdr%ecutsm
-  end if
-
-  write(unitfi, '(a, es18.10)' ) ' ecut_eff                =',hdr%ecut_eff
-
-  if(hdr%headform>=41)then
-   write(unitfi, '(a,3es18.10)') ' qptn(1:3)               =',hdr%qptn(1:3)
-  end if
-
-  write(unitfi, '(a,3es18.10)' ) ' rprimd(1:3,1)           =',hdr%rprimd(1:3,1)
-  write(unitfi, '(a,3es18.10)' ) ' rprimd(1:3,2)           =',hdr%rprimd(1:3,2)
-  write(unitfi, '(a,3es18.10)' ) ' rprimd(1:3,3)           =',hdr%rprimd(1:3,3)
-
-  if(hdr%headform==40.or.hdr%headform==41)then
-   write(unitfi, '(a,2es18.10)') ' tphysel,tsmear          =',hdr%tphysel, hdr%tsmear
-  else if(hdr%headform>=42)then
-   write(unitfi, '(a,3es18.10)') ' stmbias,tphysel,tsmear  =',&
-&   hdr%stmbias,hdr%tphysel, hdr%tsmear
-  end if
-
-  write(unitfi, '(a)' )
-  if(rdwr==3)then
-   write(unitfi, '(a,i3,a)' ) ' The header contain ',hdr%npsp+2,' additional records.'
-  else
-
-   write(unitfi, '(a)' ) ' Third record :'
-   write(unitfi, '(a,(12i4,8x))') ' istwfk=',hdr%istwfk(:)
-   write(unitfi, '(a,(12i4,8x))') ' nband =',hdr%nband(:)
-   write(unitfi, '(a,(10i5,8x))') ' npwarr=',hdr%npwarr(:)
-
-   if(hdr%headform>=40)then
-    write(unitfi, '(a,(12i4,8x))') ' so_typat=',hdr%so_typat(:)
-   end if
-
-   if(hdr%headform>=40)then
-    write(unitfi, '(a)') ' symafm='
-    write(unitfi, '(8x,24i3,8x)') hdr%symafm(:)
-   end if
-
-   write(unitfi, '(a)' ) ' symrel='
-   do isym=1,hdr%nsym/2
-    write(unitfi, '(a,9i4,a,9i4)' ) '        ',hdr%symrel(:,:,2*isym-1),&
-&                                         '  ',hdr%symrel(:,:,2*isym)
-   end do
-   if(2*(hdr%nsym/2)/=hdr%nsym)write(unitfi, '(a,9i4)' ) '        ',hdr%symrel(:,:,hdr%nsym)
-
-   write(unitfi, '(a,(12i4,8x))') ' type  =',hdr%typat(:)
-   write(unitfi, '(a)' ) ' kptns =                 (max 50 k-points will be written)'
-   do ikpt=1,min(hdr%nkpt,50)
-    write(unitfi, '(a,3es16.6)' ) '        ',hdr%kptns(:,ikpt)
-   end do
-   write(unitfi, '(a)' ) '   occ ='
-   do ii=1,hdr%bantot,10
-    write(unitfi, '(a,10f6.2)') '        ',hdr%occ(ii:min(hdr%bantot,ii+10-1))
-   end do
-   write(unitfi, '(a)' ) ' tnons ='
-   do isym=1,hdr%nsym/2
-    write(unitfi, '(a,3f10.6,a,3f10.6)' ) '        ',hdr%tnons(:,2*isym-1),&
-&                                               '  ',hdr%tnons(:,2*isym)
-   end do
-   if(2*(hdr%nsym/2)/=hdr%nsym)write(unitfi, '(a,3f10.6)' ) '        ',hdr%tnons(:,hdr%nsym)
-   write(unitfi, '(a,(10f6.2,8x))') '  znucl=',hdr%znucltypat(:)
-   write(unitfi,'(a)')
-
-   write(unitfi, '(a)' ) ' Pseudopotential info :'
-   do ipsp=1,hdr%npsp
-    write(unitfi,'(a,a)' ) ' title=',trim(hdr%title(ipsp))
-    write(unitfi,'(a,f6.2,a,f6.2,a,i3,a,i6,a,i3,a,i3)' ) &
-&    '  znuclpsp=',hdr%znuclpsp(ipsp),    ', zionpsp=',  hdr%zionpsp(ipsp),    &
-&    ', pspso=' , hdr%pspso(ipsp),  ', pspdat=',hdr%pspdat(ipsp),  &
-&    ', pspcod=', hdr%pspcod(ipsp), ', pspxc=', hdr%pspxc(ipsp)
-    if(hdr%headform>=44)then
-     if(hdr%usepaw==1)then
-      write(unitfi,'(a,i3)' ) '  lmn_size=', hdr%lmn_size(ipsp)
-     else
-      write(unitfi,'(a,i3)' ) '  lmnmax  =', hdr%lmn_size(ipsp)
-     end if
-    end if
-
-   end do
-
-   write(unitfi, '(a)' ) ' '
-   write(unitfi, '(a)' ) ' Last record :'
-   write(unitfi, '(a,es16.6,es22.12,es16.6)' ) &
-&   ' residm,etot,fermie=',hdr%residm, hdr%etot, hdr%fermie
-   write(unitfi, '(a)' ) ' xred ='
-   do iatom=1,hdr%natom
-    write(unitfi, '(a,3es16.6)' ) '        ',hdr%xred(:,iatom)
-   end do
-
-   if(hdr%usepaw==1)then
-    natinc=1;if(hdr%natom>1) natinc=hdr%natom-1
-    do iatom=1,hdr%natom,natinc
-     itypat=hdr%typat(iatom)
-     do ispden=1,hdr%nspden
-      write(unitfi, '(a,i4,a,i1,a)' ) ' rhoij(',iatom,',',ispden,&
-&           ')=  (max 12 non-zero components will be written)'
-!      call print_ij(hdr%atmrhoij(iatom)%rhoij(:,ispden),&
-!&                   hdr%atmrhoij(iatom)%nrhoijsel(ispden),&
-!&                   hdr%lmn_size(ispden),1,1,&
-!&                   hdr%atmrhoij(iatom)%rhoijselect(:,ispden),1)
-     end do
-    end do
-   end if
-
-  if(rdwr==3)write(unitfi, '(a)' ) ' End the ECHO of part of the ABINIT file header '
-  if(rdwr==4)write(unitfi, '(a)' ) ' End the ECHO of the ABINIT file header '
-  write(unitfi, '(a)' )&
-&  ' ==============================================================================='
-
-  end if ! rdwr is 3 or 4
 
  end if ! choice read/write/echo
 
  return
- 1000 fform=0 ; return   ! This is to allow treatment of old epsm1 format
 
- end subroutine hdr_io_int
+end subroutine hdr_io_int
 !!***

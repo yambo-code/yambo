@@ -21,29 +21,44 @@
 !
 module X_m
  !
- use pars, ONLY:SP,HARTREE,lchlen,schlen
+ use pars,  ONLY:SP,lchlen,schlen
+ use units, ONLY:HARTREE
+ implicit none
+ !
+ ! Polarizability
+ !
+ real(SP)                 :: eps_2_alpha
+ character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
+ logical                  :: eval_alpha
+ !
+ ! Warning about non-local commutator
+ !
+ logical                  :: Vnl_commutator_warning
+ !
+ ! Dipole M.E.: gauges and kinetic energy
+ !
+ logical                  :: Dipole_bands_ordered
+ logical                  :: Eval_P_and_P2_only
+ complex(SP), allocatable :: DIP_iq_dot_r(:,:,:,:)
+ complex(SP), allocatable :: DIP_iR_or_P(:,:,:,:,:)
+ complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
  !
- real(SP)                 :: eps_2_alpha
  complex(SP), allocatable :: X_epsilon(:,:)
  complex(SP), allocatable :: X_fxc(:)
- character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  !
  ! Response function
  !
  real(SP),    allocatable :: X_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
- complex(SP), allocatable :: X_rhoq0(:,:,:,:)
- complex(SP), allocatable :: X_q0grad(:,:,:,:,:)
  complex(SP), allocatable :: X_mat(:,:,:)
  integer :: iq_now
  integer :: X_RIM_nkpts
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_RIM
- logical :: P_bands_ordered
  character(lchlen) :: long_path
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
@@ -63,13 +78,23 @@ module X_m
    character(schlen):: f_xc
  end type
  !
+ interface
+   logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
+     use pars,          ONLY:SP
+     integer              :: nw 
+     complex(SP)          :: wv(nw)
+     logical              :: be_verbose
+     character(1)         :: ordering
+     complex(SP) ,optional:: eps(nw),eel(nw)
+   end function
+ end interface
+ !
  contains
    !
    subroutine X_alloc(what,d)
      !
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
-     implicit none
      character(*)      :: what
      integer, optional :: d(:)
      !
@@ -84,12 +109,16 @@ module X_m
          allocate(X_mat(d(1),d(2),d(3)),stat=err)
          call mem_est(what,(/product(d)/),errors=(/err/))
        case('OptGrad')
-         if (allocated(X_q0grad)) return
-         allocate(X_q0grad(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
+         if (allocated(DIP_iR_or_P)) return
+         allocate(DIP_iR_or_P(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        case('OptOsc')
-         if (allocated(X_rhoq0)) return
-         allocate(X_rhoq0(d(1),d(2),d(3),n_sp_pol),stat=err)
+         if (allocated(DIP_iq_dot_r)) return
+         allocate(DIP_iq_dot_r(d(1),d(2),d(3),n_sp_pol),stat=err)
+         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+       case('P_square')
+         if (allocated(P_square)) return
+         allocate(P_square(d(1),d(2),d(3),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        end select
      else
@@ -106,18 +135,20 @@ module X_m
          deallocate(X_mat)
          !
        case('OptGrad')
-         if (.not.allocated(X_q0grad)) return
-         deallocate(X_q0grad)
+         if (.not.allocated(DIP_iR_or_P)) return
+         deallocate(DIP_iR_or_P)
        case('OptOsc')
-         if (.not.allocated(X_rhoq0)) return
-         deallocate(X_rhoq0)
+         if (.not.allocated(DIP_iq_dot_r)) return
+         deallocate(DIP_iq_dot_r)
+       case('P_square')
+         if (.not.allocated(P_square)) return
+         deallocate(P_square)
        end select
        call mem_est(what)
      endif
    end subroutine
    !
    subroutine X_duplicate(Xi,Xo)
-     implicit none
      type(X_t):: Xi,Xo
      Xo%ng=Xi%ng
      Xo%ng_db=Xi%ng_db
@@ -136,7 +167,6 @@ module X_m
    end subroutine
    !
    subroutine X_reset(X,type)
-     implicit none
      integer, optional :: type
      type(X_t)::X
      X%ng=1

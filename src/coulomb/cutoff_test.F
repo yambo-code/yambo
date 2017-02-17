@@ -65,9 +65,9 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  !
  if (cut_is_cyl) then
    dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
-   if (is_cut(1)) dummy(1)=2._SP*plot_factor*dummy(1)*10
-   if (is_cut(2)) dummy(2)=2._SP*plot_factor*dummy(2)*10
-   if (is_cut(3)) dummy(3)=2._SP*plot_factor*dummy(3)*10
+   if (is_cut(1).and.cyl_length==0) dummy(1)=2._SP*plot_factor*dummy(1)*10
+   if (is_cut(2).and.cyl_length==0) dummy(2)=2._SP*plot_factor*dummy(2)*10
+   if (is_cut(3).and.cyl_length==0) dummy(3)=2._SP*plot_factor*dummy(3)*10
  endif
  if (cut_is_box) then
    if (is_cut(1)) dummy(1)=2._SP*plot_factor*box_length(1)
@@ -197,14 +197,14 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
      real(SP) :: r(3)
      V_in_cyl=0.
      if (cyl_length>0) then 
-       if ( (is_cut(1).and.abs(r(1))<cyl_length.and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius).or.&
-&           (is_cut(2).and.abs(r(2))<cyl_length.and.abs(r(1))**2+abs(r(3))**2<cyl_ph_radius).or.&
-&           (is_cut(3).and.abs(r(3))<cyl_length.and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius) ) &
+       if ( (is_cut(1).and.abs(r(1))<cyl_length.and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
+&           (is_cut(2).and.abs(r(2))<cyl_length.and.abs(r(1))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
+&           (is_cut(3).and.abs(r(3))<cyl_length.and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2) ) &
 &       V_in_cyl=1./v_norm(r)
      else
-       if ( (is_cut(1).and.sqrt(abs(r(2))**2+abs(r(3))**2)<cyl_ph_radius).or.&
-&           (is_cut(2).and.sqrt(abs(r(1))**2+abs(r(3))**2)<cyl_ph_radius).or.&
-&           (is_cut(3).and.sqrt(abs(r(1))**2+abs(r(2))**2)<cyl_ph_radius)) V_in_cyl=1./v_norm(r)
+       if ( (is_cut(1).and.sqrt(abs(r(2))**2+abs(r(3))**2)<cyl_ph_radius**2).or.&
+&           (is_cut(2).and.sqrt(abs(r(1))**2+abs(r(3))**2)<cyl_ph_radius**2).or.&
+&           (is_cut(3).and.sqrt(abs(r(1))**2+abs(r(2))**2)<cyl_ph_radius**2)) V_in_cyl=1./v_norm(r)
      endif
    end function
  !

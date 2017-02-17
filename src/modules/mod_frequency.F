@@ -21,7 +21,9 @@
 !
 module frequency
  !
- use pars
+ use pars,  ONLY:SP
+ use units, ONLY:HARTREE
+ implicit none
  !
  ! Bare 2 Coarse grid
  !

@@ -27,8 +27,7 @@
  use P2Y,                   only: pw_unit, verboseIO
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands, n_spin, n_sp_pol, n_spinor
- use D_lattice,             ONLY:n_atom_species,pp_n_l_comp_max,&
-&                                PP_alloc,pp_kbs,pp_kb,pp_kbd
+ use D_lattice,             ONLY:n_atom_species
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nc_k, wf_igk, wf_nb_io,wf_nb_io_groups
 #if defined _P2Y_EXPORT

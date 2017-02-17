@@ -22,6 +22,8 @@
 module electrons
  !
  use pars
+ implicit none
+ !
  real(SP) :: nel
  real(SP) :: default_nel
  real(SP) :: spin_occ
@@ -53,7 +55,7 @@ module electrons
    integer         :: bf
    integer         :: kf
    integer         :: sf
-   integer,pointer :: qp_done(:,:)
+   integer,pointer :: QP_corrected(:,:,:)
    real(SP)            :: Efermi(3)
    real(SP),   pointer :: E(:,:,:)
    real(SP),   pointer :: Eo(:,:,:)
@@ -76,15 +78,15 @@ module electrons
  integer ,allocatable :: BZ_RIM_nkpt(:)
  integer ,allocatable :: BZ_RIM_table(:,:)
  !
+ !
  contains
    !
    subroutine E_duplicate(Ei,Eo)
      use com,       ONLY:warning
      use memory_m,  ONLY:mem_est
-     implicit none
      type(levels):: Ei,Eo
      !
-     integer :: qp_done_bounds(2)
+     integer :: QP_corrected_bounds(2)
      logical :: naive
      !
      naive=Eo%nk==0
@@ -120,11 +122,12 @@ module electrons
          call mem_est("E-Z",(/size(Eo%Z)/))
          Eo%Z=Ei%Z
        endif
-       if (associated(Ei%qp_done)) then
-         qp_done_bounds=shape(Ei%qp_done)
-         allocate(Eo%qp_done(qp_done_bounds(1),qp_done_bounds(2)))
-         call mem_est("E-qp_done",(/size(Eo%qp_done)/),(/IP/))
-         Eo%qp_done=Ei%qp_done
+       if (associated(Ei%QP_corrected)) then
+         QP_corrected_bounds(1)=size(Ei%QP_corrected,1)
+         QP_corrected_bounds(2)=size(Ei%QP_corrected,2)
+         allocate(Eo%QP_corrected(QP_corrected_bounds(1),QP_corrected_bounds(2),n_sp_pol))
+         call mem_est("E-QP_corrected",(/size(Eo%QP_corrected)/),(/IP/))
+         Eo%QP_corrected=Ei%QP_corrected
          call warning(' QP corrections transferred in energy levels duplication')
        endif
      else
@@ -145,7 +148,6 @@ module electrons
    !
    subroutine E_reset(E)
      use memory_m, ONLY:mem_est
-     implicit none
      type(levels)::E
      E%Efermi=0.
      E%nb=0
@@ -154,8 +156,8 @@ module electrons
      E%nbm=0
      E%bf=0
      E%kf=0 
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%qp_done)
-     call mem_est("E-E E-Eo E-f E-W E-Z E-qp_done")
+     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected)
+     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected")
      !
      nullify(E%E_RIM,E%f_RIM)
      call mem_est("E_RIM f_RIM")

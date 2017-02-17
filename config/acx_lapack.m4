@@ -52,9 +52,21 @@ for lapack in lapack lapack_rs6k; do
         fi
 done
 
-AC_SUBST(LAPACK_LIBS)
+# Finally, check for dlaran routine in lapack. This routine
+# sometimes is not included in the package and must be directly compiled
+# and linked
+if test x"$acx_lapack_ok" = xyes; then
+ AC_F77_FUNC(dlaran)
+ if test "x$LAPACK_LIBS" != x; then
+        save_LIBS="$LIBS"; LIBS="$LAPACK_LIBS"
+        AC_MSG_CHECKING([for $dlaran in $LAPACK_LIBS])
+        AC_TRY_LINK_FUNC($dlaran, [acx_dlaran_ok=yes], [acx_dlaran_ok=no])
+        AC_MSG_RESULT($acx_dlaran_ok)
+        LIBS="$save_LIBS"
+ fi
+fi
 
-# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+# Execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_lapack_ok" = xyes; then
         ifelse([$1],,AC_DEFINE(HAVE_LAPACK,1,[Define if you have LAPACK library.]),[$1])
         :
@@ -62,4 +74,5 @@ else
         acx_lapack_ok=no
         $2
 fi
+
 ])dnl ACX_LAPACK

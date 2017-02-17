@@ -21,7 +21,8 @@
 !
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
- use pars,          ONLY:SP,schlen,IP,HARTREE
+ use pars,          ONLY:SP,schlen,IP,pi
+ use units,         ONLY:HARTREE,HA2FSm1
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_chosex
  use electrons,     ONLY:levels,n_sp_pol,spin
@@ -35,7 +36,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_Sx,QP_n_states,QP_nb,&
 &                        QP_nk,QP_rep_string,QP_state,QP_dSc_test,QP_reset,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done,&
-&                        GWo_iterations,CHOSEX_use_empties
+&                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use global_XC,     ONLY:QP_DB_kind,SE_CHOSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo   
  implicit none
@@ -53,7 +54,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Parser
  !
  call parser('NewtDchk',QP_dSc_test)
+ call parser('OnMassShell',On_Mass_Shell_approx)
  call parser('UseEbands',CHOSEX_use_empties)
+ !
+ if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
  !
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped
@@ -74,11 +78,19 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  else if (trim(QP_solver)=='s') then
    !
    !
+   !
+   !
  endif
  qp%n_descs=2
  if (l_ppa) then
    qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HARTREE))
    QP_DB_kind=SE_GoWo_PPA
+   !
+   !
+ else if (l_chosex) then
+   !
+   !
+ else
    !
    !
  endif
@@ -159,6 +171,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    if (QP_W_partially_done) return
  endif
+ !
  ! 
  !
  ! Reporting
@@ -190,7 +203,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
          call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
          call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
          if (l_ph_corr) then
-           call msg('rn','- Gm : Width [meV]- Gf  : Width [fs]')
+           call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
+           call msg('rn','- dSp : Sc derivative precision')
          else
            call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
          endif
@@ -225,7 +239,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
            if (l_ph_corr) then
              r_numbers(6)=aimag(qp%E(i1))*HARTREE/1.E-3
              r_numbers(7)=0.
-             if (r_numbers(6)>0.) r_numbers(7)=0.65822/2./aimag(qp%E(i1))/HARTREE
+             if (r_numbers(6)>0.) r_numbers(7)=1./(HA2FSm1*2*pi*aimag(qp%E(i1)))
            endif
            r_fmt=gen_fmt(r_v=r_numbers(:7))
            fmt_='(3(a,f6.2),a,f4.2,4(a,'//trim(r_fmt)//'))'
@@ -275,11 +289,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        !
      endif
      !
-     ! o.qp
+     ! o.qp / Green's functions o. files
      !
-     if (l_ph_corr)   QP_rep_string=trim(QP_rep_string)//'lm'
+     if (l_ph_corr.and.index(QP_rep_string,'lm')==0)  &
+&                     QP_rep_string=trim(QP_rep_string)//'lm'
      if (widths)      QP_rep_string='kpbne0lmlf'
      if (n_sp_pol==2) QP_rep_string=trim(QP_rep_string)//'sp'
+     !
      call QP_of(k,qp,en)
      !
      ! CLEAN

@@ -27,15 +27,14 @@ integer function ioBS(iq,X,ID)
  use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use BS,            ONLY:BS_mat,BS_K_dim,BS_K_coupling,&
-&                        BS_blk_dim,BS_blk_coord,BS_res_mode,cumulative_index,BS_blocks,&
+&                        BS_blk_dim,BS_k_and_row_restart,BS_res_mode,BS_IO_index,BS_blocks,&
 &                        BS_DB_is_fragmented,&
 &                        BS_cpl_mat,BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_bulk,io_restart,&
 &                        read_is_on,write_is_on,io_check_restart,io_header,io_mode,&
 &                        VERIFY,io_fragment,io_fragmented,dbs_fragment,&
-&                        ver_is_gt_or_eq,&
-&                        io_save_to_try_again,io_restore_to_try_again
+&                        ver_is_gt_or_eq
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
@@ -50,16 +49,7 @@ integer function ioBS(iq,X,ID)
  !
  db_name='BS_Q'//trim(intc(iq))
  !
- call io_save_to_try_again(ID)
  ioBS=io_connect(desc=trim(db_name),type=2,ID=ID)
- !
- ! The BS DB is searched in the SAVE folder when 
- ! it is not found in the JOBNAME folder
- !
- if (read_is_on(ID).and.ioBS/=0) then
-   call io_restore_to_try_again(ID)
-   ioBS=io_connect(desc=trim(db_name),type=1,ID=ID)
- endif 
  if (ioBS/=0) goto 1
  !
  call io_check_restart(trim(db_name),ID)
@@ -141,7 +131,7 @@ integer function ioBS(iq,X,ID)
  !
  if (io_restart(ID)>0.and.io_mode(ID)==VERIFY) then
    ioBS=io_restart(ID)-1
-   BS_blk_coord=BS_blocks(ioBS)
+   BS_k_and_row_restart=BS_blocks(ioBS)
  endif
  !
  i_pointer=maxval(io_sec(ID,:))
@@ -165,8 +155,8 @@ integer function ioBS(iq,X,ID)
  if (write_is_on(ID)) call mat_c2r(BS_mat(:,:),BS_mat_disk)
  call io_bulk(ID,R3=BS_mat_disk)
  if (read_is_on(ID)) call mat_r2c(BS_mat_disk,&
-&   BS_mat(BS_blk_coord(1)+1:BS_blk_coord(1)+BS_blk_dim(ik12(1)),&
-&          BS_blk_coord(2)+1:BS_blk_coord(2)+BS_blk_dim(ik12(2))))
+&   BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik12(1)),&
+&          BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik12(2))))
  !
  ! Coupling I/O
  !
@@ -184,15 +174,15 @@ integer function ioBS(iq,X,ID)
    if (read_is_on(ID)) then
      if (.not.load_DB_once_for_all) call mat_r2c(BS_mat_disk,BS_cpl_mat)
      if (load_DB_once_for_all)      call mat_r2c(BS_mat_disk,&
-&     BS_mat(BS_blk_coord(1)+1:BS_blk_coord(1)+BS_blk_dim(ik12(1)),&
-&            BS_K_dim+BS_blk_coord(2)+1:BS_K_dim+BS_blk_coord(2)+BS_blk_dim(ik12(2))))
+&     BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik12(1)),&
+&            BS_K_dim+BS_k_and_row_restart(2)+1:BS_K_dim+BS_k_and_row_restart(2)+BS_blk_dim(ik12(2))))
    endif
    !
  end if
  !
  deallocate(BS_mat_disk)
  !
- call io_check_restart(trim(db_name),ID,now=i_pointer,todo=cumulative_index(1,nXkibz))
+ call io_check_restart(trim(db_name),ID,now=i_pointer,todo=BS_IO_index(1,nXkibz))
  ioBS=io_restart(ID)
  !
 1 call io_disconnect(ID)

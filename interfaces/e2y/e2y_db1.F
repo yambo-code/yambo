@@ -46,7 +46,7 @@ subroutine e2y_db1(en,k,ncid)
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp
  use D_lattice,            only : nsym, n_atom_species
- use mod_com2y,           only : print_interface_dimensions
+ use mod_com2y,            only : print_interface_dimensions
  implicit none
  type(levels),   intent(inout) :: en
  type(bz_samp),  intent(inout) :: k
@@ -334,7 +334,8 @@ contains
   ! This routine must be called, however, to set pp_n_l_comp array.
   !
   subroutine import_gwdata_group
-    use D_lattice,             only : n_atom_species,pp_n_l_comp_max,&
+    use D_lattice,             only : n_atom_species
+    use pseudo,                only : pp_n_l_comp_max,&
 &                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd
     implicit none
     type(etsf_gwdata)            :: gwdata_group

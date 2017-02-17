@@ -21,15 +21,15 @@
 !
 integer function ioOSTNTS(X,Xen,ID)
  !
- use pars,          ONLY:SP,HARTREE,schlen
- use X_m,           ONLY:X_t,X_q0grad,X_alloc,P_bands_ordered
+ use pars,          ONLY:SP,schlen
+ use units,         ONLY:HARTREE
+ use X_m,           ONLY:X_t,DIP_iR_or_P,X_alloc,Dipole_bands_ordered
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,q0_def_norm
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_elemental,io_status,io_bulk,io_save_to_try_again,&
-&                        read_is_on,write_is_on,io_header,ver_is_gt_or_eq,&
-&                        io_restore_to_try_again
+&                        io_elemental,io_status,io_bulk,&
+&                        read_is_on,write_is_on,io_header,ver_is_gt_or_eq
  use global_XC,     ONLY:WF_global_xc_string
  !
  implicit none
@@ -42,18 +42,9 @@ integer function ioOSTNTS(X,Xen,ID)
  integer :: i1,ixyz,sec_size,i_spin
  integer :: db_nbm,db_nbf,db_nb(2)
  character(schlen)    :: VAR_name
- real(SP),allocatable :: X_q0grad_disk(:,:,:)
+ real(SP),allocatable :: DIP_iR_or_P_disk(:,:,:)
  !
- call io_save_to_try_again(ID)
  ioOSTNTS=io_connect(desc='ostnts',type=2,ID=ID)
- !
- ! The OSTNTS DB is searched in the SAVE folder when 
- ! it is not found in the JOBNAME folder
- !
- if (read_is_on(ID).and.ioOSTNTS/=0) then
-   call io_restore_to_try_again(ID)
-   ioOSTNTS=io_connect(desc='ostnts',type=1,ID=ID)
- endif
  if (ioOSTNTS/=0) goto 1
  !
  sec_size=8
@@ -85,7 +76,7 @@ integer function ioOSTNTS(X,Xen,ID)
    !
    if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
      call io_elemental(ID,&
-&       VAR=" Transitions ordered    :",L0=P_bands_ordered,CHECK=.true.,OP=(/"=="/))
+&       VAR=" Transitions ordered    :",L0=Dipole_bands_ordered,CHECK=.true.,OP=(/"=="/))
    endif
    !
    if (ver_is_gt_or_eq(ID,(/3,0,9/))) then
@@ -115,12 +106,12 @@ integer function ioOSTNTS(X,Xen,ID)
    if (ioOSTNTS/=0) goto 1
  endif
  !
- ! On disk the size is X_q0grad(3,db_nb(2),db_nbm,nXkibz)
+ ! On disk the size is DIP_iR_or_P(3,db_nb(2),db_nbm,nXkibz)
  !
  sec_size=3*db_nb(2)*db_nbm
  if (any((/io_sec(ID,:)==2/))) then
    !
-   allocate(X_q0grad_disk(db_nb(2),db_nbm,2))
+   allocate(DIP_iR_or_P_disk(db_nb(2),db_nbm,2))
    !
    if (read_is_on(ID)) call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,nXkibz/))
    !
@@ -130,13 +121,13 @@ integer function ioOSTNTS(X,Xen,ID)
        !
        do i_spin=1,n_sp_pol
          !
-         if (write_is_on(ID)) call mat_c2r(X_q0grad(ixyz,:,:,i1,i_spin),X_q0grad_disk)
+         if (write_is_on(ID)) call mat_c2r(DIP_iR_or_P(ixyz,:,:,i1,i_spin),DIP_iR_or_P_disk)
          !
          write (VAR_name,'(3(a,i4.4))') 'OptGrad_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
-         call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(X_q0grad_disk))
-         call io_bulk(ID,R3=X_q0grad_disk)
+         call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_or_P_disk))
+         call io_bulk(ID,R3=DIP_iR_or_P_disk)
          !
-         if (read_is_on(ID)) call mat_r2c(X_q0grad_disk,X_q0grad(ixyz,:,:,i1,i_spin))
+         if (read_is_on(ID)) call mat_r2c(DIP_iR_or_P_disk,DIP_iR_or_P(ixyz,:,:,i1,i_spin))
          !
        enddo
        !
@@ -144,7 +135,7 @@ integer function ioOSTNTS(X,Xen,ID)
      !
    enddo
    !
-   deallocate(X_q0grad_disk)
+   deallocate(DIP_iR_or_P_disk)
    !
  endif
  !

@@ -23,6 +23,7 @@ module memory_m
  !
  use pars,       ONLY:SP,lchlen,schlen
  use stderr,     ONLY:string_split
+ implicit none
  !
  integer, parameter :: max_mem_elements=2000
  integer, parameter :: preset_kind=2*SP
@@ -44,7 +45,6 @@ module memory_m
      use drivers,      ONLY:infile_editing
      use com,          ONLY:msg,error,warning
      use par_proc_m,   ONLY:master_cpu
-     implicit none
      character(*)         :: what
      integer,optional     :: elements_size(:)
      integer,optional     :: elements_kind(:)

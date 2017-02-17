@@ -1,6 +1,8 @@
-objs = O_driver.o \
-       X_O_strengths.o \
-       X_O_kb_pp_comp.o X_O_kb_sum.o X_O_kb_Ylm.o \
-       X_O_transverse.o \
+SC_objects =
+RAS_objects = 
+objs = O_driver.o O_eels.o \
+       Dipole_driver.o \
+       Dipole_kb_pp_comp.o Dipole_kb_sum.o Dipole_kb_Ylm.o \
+       Dipole_transverse.o $(SC_objects)  \
        X_drude.o  X_pre_setup.o X_Gf.o X_eh_setup.o X_em1.o X_os.o X_s.o \
-       X_delta_part.o X_bare_RIM_Gf.o
+       X_delta_part.o X_bare_RIM_Gf.o $(RAS_objects)

@@ -25,19 +25,20 @@ subroutine DFT_Vxc(E,Xk)
  !
  use pars,          ONLY:SP,DP,pi
  use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol,spin
- use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
+ use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table,QP_nk
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_state
  use xc_functionals,ONLY:V_xc,xc_string,el_mag
  use global_XC,     ONLY:WF_kind,WF_xc_functional
+ !
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  !
  ! Work Space
  !
- integer     ::i1,ifft,ifftp,ifft_sp1,ifft_sp2,ib,ibp,ik,i_sp1,io_err
+ integer     ::i1,ifft,ifftp,ifft_sp1,ifftp_sp1,ifft_sp2,ib,ibp,ik,i_sp1,io_err
 #if defined _DOUBLE
  complex(DP) ::zdotc,zdotu
 #else 
@@ -54,7 +55,7 @@ subroutine DFT_Vxc(E,Xk)
  !
  allocate(V_xc(fft_size,n_spin),el_mag(fft_size,3))
  !
-   call xc_lda_driver(E,Xk,WF_KIND,WF_xc_FUNCTIONAL,1)
+   call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1)
  !
  if (n_spin==1) then
    ! 

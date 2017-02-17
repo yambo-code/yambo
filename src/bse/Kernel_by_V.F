@@ -39,9 +39,9 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  use R_lattice,      ONLY:nXkibz
- use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_blk_coord,BS_eh_E,&
-&                         cumulative_index,BS_DB_is_fragmented,BS_K_coupling,&
-&                         BS_cpl_mat 
+ use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
+&                         BS_DB_is_fragmented,BS_K_coupling,&
+&                         BS_cpl_mat,BS_IO_index
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
  implicit none
@@ -89,7 +89,7 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
      !
    else
      call pp_indexes_reset(Kp)
-     call par_indexes(Kp,(/cumulative_index(1,nXkibz)-1/))
+     call par_indexes(Kp,(/BS_IO_index(1,nXkibz)-1/))
      if (present(iter)) then
        if (iter==1) call mem_est('BS_mat',(/maxval(BS_blk_dim)**2/)) 
      endif
@@ -97,15 +97,15 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
    !
    do ik2=1,nXkibz
      do ik1=ik2,1,-1
-       BS_blk_coord=(/ sum(BS_blk_dim(:ik1-1)),sum(BS_blk_dim(:ik2-1)) /)
+       BS_k_and_row_restart(:2)=(/ sum(BS_blk_dim(:ik1-1)),sum(BS_blk_dim(:ik2-1)) /)
        !
        ACTION=RD
        if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
        !
        if (use_fragments) then
-         frag_pointer=BS_blk_coord
-         BS_blk_coord=0
-         if (.not.Kp%i1p(cumulative_index(ik1,ik2)-1)) cycle
+         frag_pointer=BS_k_and_row_restart(:2)
+         BS_k_and_row_restart=0
+         if (.not.Kp%i1p(BS_IO_index(ik1,ik2)-1)) cycle
          allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          ACTION=OP_RD_CL
@@ -115,12 +115,12 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
        !
        ! BS I/O
        ! 
-       call io_control(ACTION=ACTION,COM=NONE,SEC=(/cumulative_index(ik1,ik2)/),ID=ID)
+       call io_control(ACTION=ACTION,COM=NONE,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
        ioBS_err=ioBS(iq,X,ID)
        !
        if (ik1==ik2) then
          !
-         forall(i1=BS_blk_coord(1)+1:BS_blk_coord(1)+BS_blk_dim(ik1)) &
+         forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
 &              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(frag_pointer(1)+i1)
          !
          ! On diagonal block simmetrization
@@ -134,7 +134,7 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
          !
          ! in coupling i2=BS_K_dim+1,BS_K_dim+i1-1
          !
-         do i1=BS_blk_coord(1)+1,BS_blk_coord(1)+BS_blk_dim(ik1)
+         do i1=BS_k_and_row_restart(1)+1,BS_k_and_row_restart(1)+BS_blk_dim(ik1)
            do i2=1,i1-1
              BS_mat(i1,i2)=conjg(BS_mat(i2,i1))
              !
@@ -171,8 +171,8 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
          !  Coupling K is simmetric
          !
          if (.not.use_fragments) then
-           forall(i1=BS_blk_coord(1)+1:BS_blk_coord(1)+BS_blk_dim(ik1),&
-&                 i2=BS_blk_coord(2)+1:BS_blk_coord(2)+BS_blk_dim(ik2)) &
+           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1),&
+&                 i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
 &                 BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
            !
            !

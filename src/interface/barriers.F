@@ -41,13 +41,15 @@ subroutine barriers()
  !  OPT G-SPACE l_chi          OPT BSE     l_bse 
  !  BSE DIAGO   bss_diago      BSE INV     bss_inv 
  !  BSE HAYD    bss_haydock    SC          l_sc_run
+ !  TDHF
+ !  MAGNETIC    l_magnetic
  !
  use drivers
  use pars,       ONLY:schlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use R_lattice,  ONLY:Xk_grid_is_uniform
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none
@@ -57,7 +59,7 @@ subroutine barriers()
  logical :: metallic_system, newton,secant,green,bss_tddft,&
             TR_or_SI,gw0_raxis,alda_r_space,bss_diago,&
 &           bss_haydock,gw0_ppa,gw0_chosex,gw0_el_ph,alda_g_space,bss_inv
- character(schlen) :: always_runlevels
+ character(schlen) :: always_runlevels,on_runlevels
  !
  ! ...
  !
@@ -84,20 +86,27 @@ subroutine barriers()
  ! only already activated runlevels
  !
  ! NON-GPL RUNLEVELS that MUST BE SWITCHED OFF  
- ! (thos runlevels can be on if a non-gpl input file is being reading)
+ ! (those runlevels can be on if a non-gpl input file is being reading)
  !====================================================================
  !
  call switch_off_runlevel('life',on_name=' ')
  call switch_off_runlevel('acfdt',on_name=' ')
  call switch_off_runlevel('bs_fxc',on_name=' ')
+ call switch_off_runlevel('tdhf',on_name=' ')
+ !
  call switch_off_runlevel('chosex',on_name=' ')
  !
  ! RUNLEVELS
  !===========
  !
  !
+ !
+ !
+ !
  if (gw0_ppa) then
-   call switch_off_runlevel('all',on_name='gw0 ppa em1d el_el el_ph xxvxc '//trim(always_runlevels))
+   on_runlevels='gw0 ppa em1d el_el el_ph xxvxc'
+   on_runlevels='gw0 ppa em1d xxvxc'
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  if (alda_g_space) then
@@ -109,7 +118,9 @@ subroutine barriers()
    goto 1
  endif
  if (l_bss.or.l_bse) then
-   call switch_off_runlevel('all',on_name='bse bss em1s em1d ppa optics '//trim(always_runlevels))
+   on_runlevels='tdhf bs_fxc bse bss em1s em1d ppa optics'
+   on_runlevels='bse bss em1s ppa optics'
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !

@@ -24,23 +24,24 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! VERBOSITY
  ! 
  ! 0 (default)
- ! 1 (More)
- ! 2 (QP)
- ! 3 (I/O)
- ! 4 (debug)
+ ! 1 (More) V_more
+ ! 2 (QP)   V_qp
+ ! 3 (I/O)  V_io
+ ! 4 (testing)  V_testing
  !
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,&
-&                        V_qp,V_io
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,B_unit,&
+&                        V_qp,V_io,V_testing,Time_unit
  use X_m,           ONLY:X_t,long_path
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
-&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations
+&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
+&                        SC_E_threshold
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
- use D_lattice,     ONLY:Tel
+ use D_lattice,     ONLY:Tel,non_periodic_directions
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
@@ -50,10 +51,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,&
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
- use SC,            ONLY:SC_band_mixing
  !
  implicit none
  type(initdefs)::defs
@@ -81,6 +80,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  !
  !
+ !
  !================
  ! GPL VARIABLES
  !================
@@ -93,6 +93,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',&
 &                        ng_closed,unit=G_unit,verb_level=V_more)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_more)
+ call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,Verb_level=V_more)
+ call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_more)
+ call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_more) 
  !
  ! S_xc
  !
@@ -101,11 +104,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  !
- ! QP ctl
  !
- call it(defs,'XfnQP_E', '[EXTQP Xd] E parameters (c/v)',QP_ctl_E(1,:),verb_level=V_qp)
- call it(defs,'KfnQP_E', '[EXTQP BSK BSS] E parameters (c/v)',QP_ctl_E(2,:),verb_level=V_qp)
- call it(defs,'GfnQP_E', '[EXTQP G] E parameters (c/v)',QP_ctl_E(3,:),verb_level=V_qp)
  !
  ! BSE
  !
@@ -113,7 +112,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
- call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode)
+ call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
@@ -152,10 +151,21 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_more)
  !
  !
+ !
+ ! QP ctl 
+ !
+ call QP_ctl_load(1)
+ call QP_ctl_load(2)
+ call QP_ctl_load(3)
+ !
+ !
  ! El-Ph
  !
  ! 
  ! SC
+ !
+ ! 
+ ! SC [common with RT]
  !
  ! 
  ! RAS
@@ -181,7 +191,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
-&          'NGsBlk','QpntsR','BndsRn','DmMode'/)
+&          'NGsBlk','QpntsR','BndsRn','DmERef'/)
      des(1) ='Green`s function t/c/r/a'
      des(2) ='Energy range'
      des(3) ='Damping range'
@@ -221,6 +231,74 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms(12),des(12),X%iq,verb_level=0)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_more)
+     !
+   end subroutine
+   !
+   subroutine QP_ctl_load(i_type)
+     !
+     ! Note that this routine is called in 'load' mode BEFORE
+     ! the DB1 is read, so before n_sp_pol is set to the correct value.
+     ! 
+     ! Thus we must call it on the the no spin, spin + and spin - cases 
+     ! because the code does not know if there is
+     ! spin unless the DB1 is read. 
+     !
+     use electrons,     ONLY:n_sp_pol
+     use it_m,          ONLY:initmode
+     use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
+     integer           ::i_type
+     ! 
+     ! Work Space
+     ! 
+     integer           ::i_spin,i1,i1_range(2)
+     character(1)      ::prefix(3)
+     character(3)      ::spin_ch(3)
+     character(7)      ::description_ch(3)
+     character(9)      ::spin_description_ch(3)
+     !
+     spin_ch=(/'   ','_up','_dn'/)
+     spin_description_ch=(/'       ','spin up','spin dn'/)
+     prefix=(/'X','K','G'/)
+     description_ch(1)='Xd'
+     description_ch(2)='BSK BSS'
+     description_ch(3)='G'
+     !
+     if (initmode==0) i1_range=(/1,3/)
+     if (initmode/=0.and.n_sp_pol==1) i1_range=1
+     if (initmode/=0.and.n_sp_pol==2) i1_range=(/2,3/)
+     !
+     do i1=i1_range(1),i1_range(2)
+       ! 
+       if (i1==1) i_spin=1
+       if (i1> 1) i_spin=i1-1
+       !
+       call it(defs,&
+&              prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_E',&
+&              '[EXTQP '//trim(description_ch(i_type))//'] E parameters '//&
+&              trim(spin_description_ch(i1))//' (c/v)',&
+&              QP_ctl_E(i_type,:,i_spin),verb_level=V_qp)
+       !
+       call it(defs,&
+&              prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_W',&
+&              '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
+&              trim(spin_description_ch(i1))//' (c/v)',&
+&              QP_ctl_W(i_type,:,i_spin),verb_level=V_testing)
+       !
+       call it(defs,&
+&              prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Z',&
+&              '[EXTQP '//trim(description_ch(i_type))//'] Z factor '//&
+&              trim(spin_description_ch(i1))//' (c/v)',&
+&              QP_ctl_Z(i_type,i_spin),verb_level=V_testing)
+       !
+     enddo
+     !
+     call it(defs,prefix(i_type)//'fnQPdb',&
+&            '[EXTQP '//trim(description_ch(i_type))//'] Database',&
+&            QP_ctl_db(i_type),verb_level=V_qp)
+     !
+     call it(defs,prefix(i_type)//'fnQP_N',&
+&            '[EXTQP '//trim(description_ch(i_type))//'] Interpolation neighbours',&
+&            QP_ctl_interp_neigh(i_type),verb_level=V_qp)
      !
    end subroutine
    !

@@ -50,7 +50,6 @@ module com
  integer            :: of_unit(max_open_ofs)
  logical            :: write_to_of
  logical            :: write_to_report
- integer, parameter :: of_tabs(10)=(/2,13,24,35,46,57,68,79,90,101/)
  !
  interface msg
    module procedure na0msg,na1msg,namsg,ni1msg,nimsg,nr1msg,nrmsg,nl0msg
@@ -60,16 +59,18 @@ module com
    !
    character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,NETCDF)
      !
-     ! -2 ----------------  -> desc (NETCDF as OUTPUT)
+     ! -2 ----------------  -> desc (NETCDF deduced from presence of "ndb" in desc)
      ! -1 ----------------  -> subfolder/(n)desc
      !  0 Stable s.         -> CORE_IO_PATH/SAVE/subfolder/(n)s.desc
      !  1 Stable db.        -> CORE_IO_PATH/SAVE/subfolder/(n)db.desc
-     !  2 Job dependent db. -> MORE_IO_PATH/JOBSTR/subfolder/(n)db.desc
-     !  3 Job dependent o.  -> MORE_IO_PATH/o.desc-JOBSTR
+     !  2 Job dependent db. -> PATH/JOBSTR/subfolder/(n)db.desc
+     !  3 Job dependent o.  -> COM_PATH/o.desc-JOBSTR
      !  4 ----------------  -> MORE_IO_PATH/RESTART/(n)db.desc_FOLDER
      !                                                    |
+     ! if (CORE_IO) PATH=core_io_path
+     ! if (MORE_IO) PATH=more_io_path
+     ! if ( COM_IO) PATH=com_path
      !                                                    JOBSTR, or  SAVE if no JOBSTR 
-     use stderr,         ONLY:string_pack
      character(*)           ::desc
      integer                ::type
      logical                ::CORE_IO,MORE_IO,NETCDF,COM_IO
@@ -84,50 +85,58 @@ module com
      folder="SAVE"
      if (.not.CORE_IO.and..not.MORE_IO.and..not.COM_IO) return
      !
-     if (CORE_IO) ch(1)=core_io_path
-     if (MORE_IO) ch(1)=more_io_path
-     if ( COM_IO) ch(1)=com_path
+     ch(1)=core_io_path
      !
      select case(type)
        case(-2)
-         get_name=string_pack('./',desc)
+         get_name="./"//trim(desc)
          NETCDF=index(desc,'ndb')>0
          return
        case(-1)
          ch(2)=desc
          folder="."
          if (present(subfolder)) folder=subfolder
+         !
+         ! No inpath/outpath must pre-appended when an explicit path is given
+         !
+         ch(1)=' '
+         !
        case(0)
-         ch(2)=string_pack('s.',desc)
+         ch(2)="s."//trim(desc)
        case(1)
-         ch(2)=string_pack('db.',desc)
+         ch(2)="db."//trim(desc)
        case(2,4)
-         ch(2)=string_pack('db.',desc)
+         ch(2)="db."//trim(desc)
          if (len_trim(jobstr)>0) folder=trim(jobstr)
          if (type==4) then
-           ch(2)=string_pack('db.',desc,'_',trim(folder))
+           ch(2)="db."//trim(desc)//"_"//trim(folder)
            folder="RESTART"
+           !
+           ! The RESTART folder is always in the outpath
+           !
+           ch(1)=more_io_path
+           !
+         else if (type==2) then
+           !
+           if (CORE_IO) ch(1)=core_io_path
+           if (MORE_IO) ch(1)=more_io_path
+           if ( COM_IO) ch(1)=com_path
+           !
          endif
        case(3)
-         ch(2)=string_pack('o.',desc)
+         ch(2)="o."//trim(desc)
          folder=""
-         if (len_trim(jobstr)>0) ch(2)=string_pack('o-',trim(jobstr),'.',desc)
+         if (len_trim(jobstr)>0) ch(2)="o-"//trim(jobstr)//"."//trim(desc)
+         ch(1)=com_path
      end select 
      !
-     ! The RESTART folder is always in the outpath
+     if (len_trim(folder)>0) ch(1)=trim(ch(1))//"/"//trim(folder)
+     if (present(subfolder).and.type>=0) ch(1)=trim(ch(1))//"/"//trim(subfolder)
      !
-     if (type==4 ) ch(1)=more_io_path
-     !
-     ! No inpath/outpath must pre-appended when an explicit path is given
-     !
-     if (type==-1) ch(1)=' '
-     !
-     if (len_trim(folder)>0) ch(1)=string_pack(trim(ch(1)),'/',folder)
-     if (present(subfolder).and.type>=0) ch(1)=string_pack(trim(ch(1)),'/',subfolder)
      if (NETCDF) then
-       get_name=string_pack(trim(ch(1)),'/n',trim(ch(2)))
+       get_name=trim(ch(1))//"/n"//trim(ch(2))
      else
-       get_name=string_pack(trim(ch(1)),'/',trim(ch(2)))
+       get_name=trim(ch(1))//"/"//trim(ch(2))
      endif
      !
    end function
@@ -292,6 +301,16 @@ module com
      open(unit=11,file=trim(repfile),position='append')
    end subroutine
    !
+   subroutine msg_deliver(formatted_msg)
+     character(*) :: formatted_msg
+     integer      :: i_unit
+     do i_unit=1,max_open_ofs
+       if (of_unit(i_unit)<=0) cycle
+       write (of_unit(i_unit),'(a)') formatted_msg
+       of_unit(i_unit)=-of_unit(i_unit)
+     enddo
+    end subroutine
+   !
    !#######################
    ! INTERFACE STARTS HERE
    !#######################
@@ -420,7 +439,7 @@ module com
      if (index(how,'s')/=0) call live_time_msg("n",trim(lch),"","%s")
    end subroutine
    !
-   subroutine nrmsg(how,mesg,val,USE_TABS,INDENT)
+   subroutine nrmsg(how,mesg,val,USE_TABS,INDENT,formatted_msg)
      use stderr,   ONLY: c_print,write_to_log,tty_size
      use timing,   ONLY: live_time_msg
      character(*)     :: mesg
@@ -428,6 +447,7 @@ module com
      real(SP)         :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
+     character(lchlen), optional :: formatted_msg
      ! 
      ! Work Space
      !
@@ -443,8 +463,12 @@ module com
      msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),size(val),l_fmt,l_indent)
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
-       write (of_unit(i1),trim(msgfmt)) mesg,val
-       of_unit(i1)=-of_unit(i1)
+       if (present(formatted_msg)) then
+         write (formatted_msg,trim(msgfmt)) mesg,val
+       else
+         write (of_unit(i1),trim(msgfmt)) mesg,val
+         of_unit(i1)=-of_unit(i1)
+       endif
      enddo
      if (index(how,'o')>0.or.index(how,'O')>0) return
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
@@ -456,7 +480,7 @@ module com
    end subroutine
    !
    character(lchlen) function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
-     use stderr, ONLY:string_pack
+     use stderr, ONLY:string_pack,of_tabs
      character(*)     :: basic_fmt
      integer          :: n,INDENT
      logical          :: USE_TABS

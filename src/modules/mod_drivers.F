@@ -27,34 +27,54 @@ module drivers
  logical :: infile_editing
  logical :: Finite_Tel
  !
- ! Runlevels
+ ! Specific Drivers
  !
- logical :: l_setup,l_rim,l_col_cut,l_acfdt
+ logical :: l_setup     ! Initial setup
+ logical :: l_rim       ! Random Integration Method
+ logical :: l_col_cut   ! Coloumb potential cutoff
+ logical :: l_acfdt     ! Total Energy
+ logical :: l_real_time ! Real Time evolution
  !
- ! Specific runlevels drivers...
+ ! The self-energy correlation "kind"
  !
- ! Correlation
+ logical :: l_el_corr
+ logical :: l_ph_corr
  !
- logical :: l_el_corr,l_ph_corr
+ ! Real Axis non SC Self-energies
  !
- ! QP
+ logical :: l_xxvxc   ! HF
+ logical :: l_life    ! GoWo lifetims
+ logical :: l_gw0     ! GWo main logical
+ logical :: l_ppa     ! PPA
+ logical :: l_chosex  ! CHOSEX
  !
- logical :: l_xxvxc,l_ppa,l_gw0,l_life,l_chosex
+ ! The optical runlevels ...
  !
- ! LR
+ logical :: l_optics
+ logical :: l_chi
+ logical :: l_em1d
+ logical :: l_em1s
  !
- logical :: l_optics,l_chi,l_em1d,l_em1s
+ ! ... and BS solvers
  !
- ! BSE
+ logical :: l_bse
+ logical :: l_bss
+ logical :: l_td_hf
  !
- logical :: l_bse,l_bss
+ logical :: l_sc_run ! SC 
+ logical :: l_sc_magnetic ! SC + Magnetic field
  !
- ! SC
+ ! The XC types (Vxc)
  !
- logical :: l_sc_run,l_sc_hartree,l_sc_exx,l_sc_exxc,l_sc_hf,l_sc_chosex,l_sc_pz,l_sc_lda_x
+ logical :: l_sc_exx
+ logical :: l_sc_hf
+ logical :: l_sc_chosex
+ logical :: l_sc_contains_lda
  !
- ! TDDFT
+ ! The XC types (Fxc)
  !
- logical :: l_alda_fxc,l_bs_fxc,l_lrc_fxc
+ logical :: l_alda_fxc
+ logical :: l_bs_fxc
+ logical :: l_lrc_fxc
  !
 end module drivers

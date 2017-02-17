@@ -21,7 +21,8 @@
 !
 subroutine report_energies(E,k,Xk,n_bands_,k_range,what,header)
  !
- use pars,           ONLY:schlen,HARTREE,SP
+ use pars,           ONLY:schlen,SP
+ use units,          ONLY:HARTREE
  use R_lattice,      ONLY:bz_samp,nXkibz
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
  use stderr,         ONLY:intc,real2ch
@@ -40,6 +41,9 @@ subroutine report_energies(E,k,Xk,n_bands_,k_range,what,header)
  integer           :: ik,is_pol,ib,i1
  character(schlen) :: dumb_ch
  real(SP)          :: E_(n_bands_,n_sp_pol)
+ !
+ if (header.and..not.(k_range(1)==k_range(2).and.k_range(1)>1) )  &
+&   call msg('rn','Energy unit is electronVolt [eV]')
  !
  do ik=k_range(1),k_range(2)
    ! 
@@ -65,8 +69,8 @@ subroutine report_energies(E,k,Xk,n_bands_,k_range,what,header)
          call msg('r',what//' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
        else
          if (i1==1) then
-           if (is_pol==1) call msg('r','[dn] '//what//' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
-           if (is_pol==2) call msg('r','[up] '//what//' ',(/(E_(ib,2),ib=i1,min(i1+7,n_bands_))/))
+           if (is_pol==1) call msg('r','[up] '//what//' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
+           if (is_pol==2) call msg('r','[dn] '//what//' ',(/(E_(ib,2),ib=i1,min(i1+7,n_bands_))/))
          else
            if (is_pol==1) call msg('r','     '//what//' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
            if (is_pol==2) call msg('r','     '//what//' ',(/(E_(ib,2),ib=i1,min(i1+7,n_bands_))/))

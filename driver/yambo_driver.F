@@ -155,7 +155,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_xxvxc.and..not.l_sc_run) call QP_XX_Vxc(en,k,Xk,q)
+ if (l_xxvxc.and..not.(l_sc_run.or.l_real_time)) call QP_XX_Vxc(en,k,Xk,q)
  !
  ! RAS & REELS
  !=============
@@ -182,14 +182,22 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
    !
  endif
  !
- if (l_gw0) then
+ if (l_gw0.or.l_life) then
    !
+   if (l_chosex) then
+     !
+     !
+   else if (l_ppa) then
      !
      ! PPA 
      !=====
      !
      call QP_driver(X(4),Xen,Xk,en,k,q,Xw(4))
      !
+   else 
+     !
+     !
+   endif
    !
  endif
  !
@@ -202,6 +210,16 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  endif
  !
  !
+ ! SC
+ !====
+ !
+ if (l_sc_run) then
+ !
+   !
+   ! REAL-TIME
+   !==========
+   !
+ endif
  !
  ! GAME OVER :(
  !==============

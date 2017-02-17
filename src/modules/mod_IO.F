@@ -184,7 +184,8 @@ module IO_m
      ! Work Space
      !
      integer          ::CREATE_MODE
-     character(lchlen)::alternative_file(3),folder
+     character(lchlen)::alternative_file(8),folder
+     character(schlen)::subfolder_
      !
      io_connect=0
      if ( (read_is_on(ID).and..not.IO_read).or.&
@@ -204,26 +205,61 @@ module IO_m
      !
      ! Build the file name
      !
+     subfolder_=' '
+     if (present(subfolder)) subfolder_=subfolder
+     !
+     alternative_file=" "
+     !
      if (len_trim(io_file(ID))==0) then
        !
-       io_file(ID)=get_name(desc,subfolder,type,open_is_on(ID),&
-&                           write_is_on(ID),.FALSE.,io_netcdf_support(ID))
-       alternative_file=" "
-       if (type/=-2) then
+       if (write_is_on(ID)) then
          !
-         ! First alternative is same DB with(/out) NETCDF support
+         ! NEW databases are always written respecting the "type" (see mod_com.F)
          !
-         alternative_file(1)=get_name(desc,subfolder,type,open_is_on(ID),&
-&                                     write_is_on(ID),.FALSE.,.not.io_netcdf_support(ID))
-         if (type/=0.and.read_is_on(ID)) then
+         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
+&                             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+         !
+       else if (read_is_on(ID)) then
+         !
+         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
+&                             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+         !
+         if (type/=-2.and.type/=1.and.type/=2) then
            !
-           ! 2nd/3rd alternatives are  DBs with(/out) NETCDF support in SAVE folder
+           ! Alternative is the same as when write_is_on(ID)=.TRUE. with(/out) NETCDF support
            !
-           alternative_file(2)=get_name(desc,subfolder,type,.FALSE.,&
-&                                       .TRUE.,.FALSE.,io_netcdf_support(ID))
-           alternative_file(3)=get_name(desc,subfolder,type,.FALSE.,&
-&                                       .TRUE.,.FALSE.,.not.io_netcdf_support(ID))
+           alternative_file(1)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
          endif
+         !
+         if (type==1.or.type==2) then
+           !
+           ! OLD databases are searched in the following order:
+           !
+           ! 1/2. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
+           ! 3/4. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
+           ! 5/6. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=2 (with JOBSTR)
+           ! 7/8. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=1 (no   JOBSTR)
+           !
+           alternative_file(1)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           alternative_file(2)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           alternative_file(3)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           alternative_file(4)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           alternative_file(5)=get_name(desc,subfolder_,2,CORE_IO=.TRUE.,&
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           alternative_file(6)=get_name(desc,subfolder_,2,CORE_IO=.TRUE.,&
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           alternative_file(7)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           alternative_file(8)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           !
+         endif
+         !
        endif
        !
      endif
@@ -310,6 +346,18 @@ module IO_m
          else if (file_exists(trim(alternative_file(3)))) then
            io_file(ID)=alternative_file(3)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+         else if (file_exists(trim(alternative_file(4)))) then
+           io_file(ID)=alternative_file(4)
+         else if (file_exists(trim(alternative_file(5)))) then
+           io_file(ID)=alternative_file(5)
+           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+         else if (file_exists(trim(alternative_file(6)))) then
+           io_file(ID)=alternative_file(6)
+         else if (file_exists(trim(alternative_file(7)))) then
+           io_file(ID)=alternative_file(7)
+           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+         else if (file_exists(trim(alternative_file(8)))) then
+           io_file(ID)=alternative_file(8)
          else
            io_connect=-1
            call io_reset(ID)
@@ -337,27 +385,9 @@ module IO_m
      !
    end function
    !
-   subroutine io_save_to_try_again(ID)
-     implicit none
-     integer           :: ID
-     io_unit_save=io_unit(ID)
-     io_action_save=io_action(ID)
-     io_mode_save=io_mode(ID)
-     io_sec_save=io_sec(ID,:)
-     io_com_save=io_com(ID)
-   end subroutine
-   !
-   subroutine io_restore_to_try_again(ID)
-     implicit none
-     integer           :: ID
-     io_unit(ID)=io_unit_save
-     io_action(ID)=io_action_save
-     io_mode(ID)=io_mode_save
-     io_sec(ID,:)=io_sec_save
-     io_com(ID)=io_com_save    
-   end subroutine
-   !
-   subroutine io_fragment(ID,i_pointer,j_pointer,ierr)
+   subroutine io_fragment(ID,i_pointer,j_pointer,k_pointer,ierr)
+     !
+     use stderr, ONLY:intc
      !
      ! This routine checks if the DB is fragmented. If it is
      ! it closes the DB and opens the fragment corresponding
@@ -370,7 +400,7 @@ module IO_m
      !
      implicit none
      integer           :: ID
-     integer, optional :: i_pointer,j_pointer,ierr
+     integer, optional :: i_pointer,j_pointer,k_pointer,ierr
      !
      ! Work Space
      !
@@ -404,7 +434,11 @@ module IO_m
      !
      ! Note that the fragment DB keeps the same type of the DB core (io_type(ID))
      !
-     ierr_=io_connect('fragment',subfolder=subfolder,type=io_type(ID),ID=ID)
+     if (present(k_pointer)) then
+       ierr_=io_connect('fragment_'//trim(intc(k_pointer)),subfolder=subfolder,type=io_type(ID),ID=ID)
+     else
+       ierr_=io_connect('fragment',subfolder=subfolder,type=io_type(ID),ID=ID)
+     endif
      if (present(ierr)) ierr=ierr_
      !
      ! io_action must be saved otherwise any io_disconnect call would
@@ -452,9 +486,9 @@ module IO_m
        !
        if (.not.write_is_on(ID)) return
        !
-       restart_file=get_name(desc=desc,type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
+       restart_file  =get_name(desc=desc,type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
        !
-       restart_folder = string_pack(trim(more_io_path),"/RESTART")
+       restart_folder=string_pack(trim(more_io_path),"/RESTART")
        !
        if (now==todo) then
          call rm_file(restart_file)
@@ -574,12 +608,19 @@ module IO_m
    end subroutine
    !
    subroutine mk_dir(dirname)
-     use pars
      use stderr,         ONLY:cstr
      implicit none
      character(*)      :: dirname
      if (len_trim(dirname)==0) return
      call imkdir( cstr(trim(dirname)) )
+   end subroutine
+   !
+   subroutine cp_file(file_,dest_,ierr_)
+     use stderr,         ONLY:cstr
+     implicit none
+     character(*)      :: file_,dest_
+     integer           :: ierr_
+     call isystem( cstr("cp "//file_//" "//dest_//" >& /dev/null" ), ierr_ )
    end subroutine
    !
    subroutine rm_file(filename)

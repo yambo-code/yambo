@@ -21,7 +21,10 @@
 !
 module timing
  !
- use pars,     ONLY:SP,DP,schlen,lchlen
+ use pars,     ONLY:SP
+ use pars,     ONLY:DP
+ use pars,     ONLY:schlen
+ use pars,     ONLY:lchlen
  implicit none
  !
  ! What is running ?

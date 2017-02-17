@@ -19,8 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_O_strengths(Xen,Xk,X,field_dir)
+subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
+ use drivers,        ONLY:l_optics
  use pars,           ONLY:SP
  use com,            ONLY:warning
  use drivers,        ONLY:l_col_cut
@@ -28,9 +29,9 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  use par_proc_m,     ONLY:pp_redux_wait
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path,P_bands_ordered
+ use X_m,            ONLY:DIP_iq_dot_r,X_alloc,X_t,DIP_iR_or_P,long_path,Dipole_bands_ordered,&
+&                         Vnl_commutator_warning,Eval_P_and_P2_only,P_square
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use memory_m,       ONLY:mem_est
  use wave_func,      ONLY:wf_ng,wf_load,WF_free
  use vec_operate,    ONLY:v_norm
  implicit none
@@ -51,20 +52,25 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  integer :: ID,io_err
  integer, external :: ioOSTNTS
  !
- if (allocated(X_rhoq0)) return
+ if (allocated(DIP_iq_dot_r)) return
  !
  !
  ! Transitions ordering
  !
- P_bands_ordered=.true.
+ Dipole_bands_ordered=.true.
+ Eval_P_and_P2_only=.false.
  !
  ! Check first if ostnts DB is already done
  !
  X%ngostnts=wf_ng
  !
  !
+ ! Swith off I/O in case gradient is calculated
+ if (Eval_P_and_P2_only) call IO_mute("io_in io_out")
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
+ !
  !
  if (io_err.ne.0) then
    !
@@ -73,30 +79,31 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    ! When using internal SC potentials oscilators must be rotated
    ! in the new basis. So all transitions are needed
    !
-   if (P_bands_ordered) then
+   if (Dipole_bands_ordered) then
      call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    else
      call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
    endif
-   X_q0grad=(0.,0.)
+   DIP_iR_or_P=(0.,0.)
    !
    call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
    !
    use_trans_gauge = .true.
    !
    !
-   if (use_trans_gauge) call X_O_transverse(Xen,Xk,X)
+   if (use_trans_gauge) call Dipole_transverse(Xen,Xk,X)
    !
    ! Free any loaded WFs
    !
    call WF_free()
    !
-   ! Write the q0grad to its database
+   ! Write the DIP_iR_or_P to its database (Only in the case of "R")
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioOSTNTS(X,Xen,ID)
    !
  end if
+ !
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
  ! oscillator strengths have been calculated using the long. gauge.
@@ -107,10 +114,18 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  q_norm(1)=q0_def_norm
  if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
  !
+ ! Warn about missing [Vnl,r] commutator
+ !
+ if (.not.X%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics) then
+   call warning(' Missing non-local pseudopoential contribution')
+   Vnl_commutator_warning=.TRUE.
+ endif
+ !
  ! Calculate the q-dependent oscillators (OptOsc)
  !
  call X_alloc('OptOsc',(/X%ib(2),Xen%nbm,Xk%nbz/))
- X_rhoq0 = (0.0_SP,0.0_SP)
+ DIP_iq_dot_r = (0.0_SP,0.0_SP)
+ !
  do i1 = 1,Xk%nbz
    !
    ik = Xk%sstar(i1,1)
@@ -121,18 +136,21 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
      !
      do ic = Xen%nbf+1, X%ib(2)
      !
-       do i_spin = 1, n_sp_pol
+       !
+        i_spin=1
+       ! 
          !
-         ! X_rhoq0 = i q . < v k | r | c k >
+         ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
-         X_rhoq0(ic,iv,i1,i_spin) = & 
-&          dot_product( field_dir_rot, X_q0grad(:,ic,iv,ik,i_spin) )
-         if ( is > nsym/(i_time_rev+1) ) X_rhoq0(ic,iv,i1,i_spin) = &
-&          dot_product( X_q0grad(:,ic,iv,ik,i_spin), field_dir_rot ) 
+         DIP_iq_dot_r(ic,iv,i1,i_spin) = & 
+&          dot_product( field_dir_rot, DIP_iR_or_P(:,ic,iv,ik,i_spin) )
+         if ( is > nsym/(i_time_rev+1) ) DIP_iq_dot_r(ic,iv,i1,i_spin) = &
+&          dot_product( DIP_iR_or_P(:,ic,iv,ik,i_spin), field_dir_rot ) 
          !
-       enddo
+         ! 
+       !
      enddo
-     X_rhoq0(iv,iv,i1,:) = (1.0_SP,0.0_SP)
+     DIP_iq_dot_r(iv,iv,i1,:) = (1.0_SP,0.0_SP)
    enddo
  enddo
  call pp_redux_wait()

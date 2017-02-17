@@ -55,7 +55,8 @@ subroutine X_pre_setup(Xen,X)
  ! Here I set up the RIM flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation
  !
- use_X_RIM=X%ib(2)<=BZ_RIM_nbands.and.(.not.l_bs_fxc)
+ use_X_RIM=BZ_RIM_nbands/=0.and.X%ib(1)<BZ_RIM_nbands.and.(.not.l_bs_fxc)
+ !
  if (use_X_RIM) X_RIM_nkpts=BZ_RIM_tot_nkpts
  !
  ! CHO checks

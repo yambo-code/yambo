@@ -23,7 +23,8 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasomon Pole Correlation Self-Energy
  !
- use pars,          ONLY:SP,pi,HARTREE,schlen
+ use pars,          ONLY:SP,pi,schlen
+ use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
@@ -130,6 +131,9 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  io_err=ioX(X,Xw,ID)
  if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
+ ! Test the spatial Inversion
+ !   
+ call space_inv_by_wf(E,Xk)
  !
  ! ALLOCATION
  !------------

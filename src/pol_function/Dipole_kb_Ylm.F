@@ -23,7 +23,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_O_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
+subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  !
  !
  ! Ylm(il,im) := Spherical harmonic 
@@ -37,7 +37,7 @@ subroutine X_O_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! Ygrad(1,i) = \partial(theta)/\partial(k_i) i=1,3
  ! Ygrad(2,i) = \partial(phi)/\partial(k_i) i=1,3
  !
- use pars
+ use pars, ONLY:SP,pi
  implicit none
  integer     :: lang
  complex(SP) :: Ylm(lang,2*lang+1),dYlm(2,lang,2*lang+1)

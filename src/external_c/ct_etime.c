@@ -15,7 +15,11 @@
 #include <sys/resource.h>
 
 double F90_FUNC(etime,ETIME)(tt)
+#if defined _DOUBLE
+double tt[2];
+#else
 float tt[2];
+#endif
 {
   int who;
   struct rusage used;

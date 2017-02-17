@@ -21,16 +21,16 @@
 !
 subroutine setup(en,Xen,Ken,k,Xk)
  !
- use pars,           ONLY:SP,IP,pi,schlen
+ use pars,           ONLY:SP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
- use memory_m,       ONLY:mem_est
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,&
-&                         sop_tab,atoms_spatial_invertion,i_space_inv,input_Tel_fixed,&
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
+&                         atoms_spatial_invertion,i_space_inv,input_Tel_fixed,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms,znucl,&
-&                         n_atom_species,PT_elements
+&                         n_atom_species,PT_elements,non_periodic_directions,lattice,&
+&                         symmetry_group_table
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
- use com,            ONLY:msg,error
+ use com,            ONLY:msg,error,warning
  use stderr,         ONLY:intc,real2ch
  use IO_m,           ONLY:REP,DUMP,NONE
  use vec_operate,    ONLY:cross_product,c2a
@@ -43,23 +43,33 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: rv(3),m(3,3)
- integer           :: i1,i2,i3,is,ia
+ integer           :: i1,i2,i3,is,ia,i_err
  character(schlen) :: dumb_ch1,dumb_ch2
+ integer, external :: k_lattice
  !
  call section('*','Input variables setup') 
- !========================================
+ !########################################
+ !
+ call section('+','Unit cells') 
+ !=============================
+ call crystal_lattice()
+ !
+ call msg('rn','Unit cell is '//trim(lattice))
  !
  call load_PT_elements()
+ !
  atoms_string=' '
+ !
  if (allocated(znucl)) then
    do is=1,n_atom_species
-     dumb_ch1=trim(intc(n_atoms(is)))//PT_elements(znucl(is))
+     dumb_ch1=trim(intc(n_atoms(is)))//'--'
+     if (znucl(is)/=0) dumb_ch1=trim(intc(n_atoms(is)))//PT_elements(znucl(is))
      atoms_string=trim(atoms_string)//trim(dumb_ch1)
    enddo
-   call msg('rn','Unit cell contains '//trim(atoms_string)//' atoms')
+   call msg('rn','... containing '//trim(atoms_string)//' atoms')
  endif
  !
- call msg('r','Unit cell scaling factors [a.u.]:',alat)
+ call msg('r','... with scaling factors [a.u.]:',alat)
  call msg('nr','Direct Lattice(DL) unit cell [iru]')
  call msg('r','A1 =',a(1,:)/alat(:))
  call msg('r','A2 =',a(2,:)/alat(:))
@@ -99,6 +109,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  !  R_i*R_j=R_stab(i,j)
  !
+ call section('=','Symmetries') 
+ !=============================
  call msg('r','DL (S)ymmetries [cc]')
  !
  allocate(rl_sop(3,3,nsym))
@@ -118,7 +130,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    case(0)
      call msg('nr','[SYMs] K-space Time-reversal not included')
      do is=1,nsym
-        if ( all(reshape(dl_sop(:,:,is),(/9/))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
      enddo
  end select
  !
@@ -128,35 +140,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (inv_index>0) then
    if (i_space_inv==1) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
    if (i_space_inv==0) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')
+ else
+   call warning('Spatial Inversion not found among the given symmetry list')
  endif
  !
  ! Symmetries Multiplication Table
  !
- allocate(sop_tab(nsym,nsym),sop_inv(nsym))
- call mem_est("SOP-adds SOPs",(/3*3*nsym,nsym**2+nsym/),(/SP,IP/))
- !
- sop_tab=0
- sop_inv=0
- do i1=1,nsym
-   do i2=1,nsym
-     m=matmul(dl_sop(:,:,i1),dl_sop(:,:,i2))
-     do i3=1,nsym
-       if (all(abs(m-dl_sop(:,:,i3))<=1.E-5)) then
-         if (sop_tab(i1,i2)/=0) call error('Error (stab 1): check the input symmetries!')        
-         sop_tab(i1,i2)=i3
-         if (sop_tab(i1,i2)==1) sop_inv(i1)=i2                
-       endif
-     enddo
-     if (sop_tab(i1,i2)==0) call error('[SYMs] check the input symmetries!')    
-   enddo
- enddo
- if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
- call msg('r','[SYMs] Group table built correctly')
- !
- call section('+','K-grid lattice')
- !=================================
- !
- call k_lattice(k,Xk) 
+ call symmetry_group_table('r')
  !
  call section('=','RL shells')
  !============================
@@ -184,8 +174,35 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call msg('r',trim(dumb_ch2))
  enddo
  !
- call section('=','Input (E)nergies[ev] & Occupations')
- !=====================================================
+ call section('=','K-grid lattice')
+ !=================================
+ !
+ i_err=k_lattice(k,Xk,1,.TRUE.)
+ if (i_err /= 0 ) then
+   call warning('Trying to expand the k-grid')
+   call msg('r','')
+   i1=2
+   i2=min(20,n_g_shells) 
+   do while ( i_err /= 0 .and. i1<=i2)
+     if (i1/=i2) i_err=k_lattice(k,Xk,i1,.FALSE.)
+     if (i1==i2) i_err=k_lattice(k,Xk,i1,.TRUE.)
+     i1=i1+1
+   enddo
+   if (i_err/=0) call error('Impossible to determine the K-grid lattice')
+ endif
+ !
+ !
+ if (trim(non_periodic_directions)/="none") then
+   !
+   call section('=','Non periodic geometry')
+   !========================================
+   !
+   call check_periodic_directions()
+   !
+ endif
+ !
+ call section('=','Energies [ev] & Occupations')
+ !==============================================
  !
  Xen%nk=Xk%nibz
  ! 
@@ -204,7 +221,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call fermi_level(Xen,Xk,Tel,2)
  call extend_occupations(Xen,en)
  !
- n_met_bands=en%nbm
+ n_met_bands =en%nbm
  n_full_bands=en%nbf
  !
  ! K points / Energies report

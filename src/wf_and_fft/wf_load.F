@@ -90,7 +90,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (loaded_bounds_ok) then
    !
-   if (wf_space=="G") return
+   if (wf_space=="G".or.wf_space=="C") return
    !
    call fft_setup(iG_max,iGo_max,.true.)
    !

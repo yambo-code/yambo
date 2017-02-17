@@ -32,7 +32,8 @@ subroutine extend_occupations(Xe,E)
  ! if the Xe grid.
  ! If this is not possible a warning message is reported. 
  !
- use pars,       ONLY:SP,HARTREE
+ use pars,       ONLY:SP
+ use units,      ONLY:HARTREE
  use electrons,  ONLY:levels,n_sp_pol,spin_occ,BZ_RIM_nbands,&
 &                     BZ_RIM_tot_nkpts
  use com,        ONLY:msg,warning

@@ -22,10 +22,15 @@
 module stderr
  !
  use pars
+ implicit none
  !
  integer          :: tty_size
  logical          :: write_to_log
  character(lchlen):: logfile
+ !
+ integer :: f_format_length
+ integer :: g_format_length
+ integer :: of_tabs(10)
  !
  interface  
    !
@@ -40,6 +45,26 @@ module stderr
  end interface
  !
  contains
+   !
+   subroutine set_real_printed_length(f_length,g_length)
+     integer, optional :: f_length,g_length
+     integer           :: it
+     if (present(f_length)) then
+       f_format_length=f_length
+     endif
+     if (present(g_length)) then
+       g_format_length=g_length
+     endif
+     if (.not.present(f_length).and..not.present(g_length)) then
+       f_format_length=9
+       g_format_length=9
+     endif
+     !
+     of_tabs(1)=2
+     do it=2,10
+       of_tabs(it)=of_tabs(it-1)+2+max(f_format_length,g_format_length)
+     enddo
+   end subroutine
    !
    subroutine c_print(lfmt,msg,rfmt,sfmt)
      character(*) :: lfmt,rfmt,msg,sfmt
@@ -145,6 +170,22 @@ module stderr
      !
    end function
    !
+   character(lchlen) function string_add(string_in,what)
+     !
+     character(*)     :: string_in
+     character(*)     :: what
+     !
+     ! Work Space
+     !
+     integer          :: i_pos
+     !
+     string_add=string_in
+     i_pos=index(string_in,what)
+     if (i_pos/=0) return
+     write (string_add,'(2a)') trim(string_in),trim(what)
+     !
+   end function
+   !
    character(6) function intc(i)
      !
      character(6) temp
@@ -196,7 +237,6 @@ module stderr
      !
      integer  :: MXexp,MNexp,MDexp,iexp,MXval,i1
      real(SP) :: MX,MN,abs_r_v
-     integer, parameter :: f_length=9,g_length=9
      !
      if (present(i_v)) then
        MXval=max(maxval(i_v),-minval(i_v))
@@ -223,15 +263,15 @@ module stderr
        endif
        if (iexp<=2.and.MDexp<=2) then
          !
-         !  f_length-3-iexp:  3 for '-','.' + 1 as iexp(10)=1/iexp(100)=2
+         !  f_format_length-3-iexp:  3 for '-','.' + 1 as iexp(10)=1/iexp(100)=2
          !
-         write (gen_fmt,'(2(a,i2.2))')  'F',f_length,'.',f_length-3-iexp
+         write (gen_fmt,'(2(a,i2.2))')  'F',f_format_length,'.',f_format_length-3-iexp
        else
          !
-         !  g_length-6: 6 because of '-1.','E00'
+         !  g_format_length-6: 6 because of '-1.','E00'
          !
-         if (iexp<10) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_length,'.',g_length-5,'E1'
-         if (iexp> 9) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_length,'.',g_length-6,'E2'
+         if (iexp<10) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-5,'E1'
+         if (iexp> 9) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-6,'E2'
        endif
      endif
      !

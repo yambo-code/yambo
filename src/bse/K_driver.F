@@ -23,9 +23,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  use pars,           ONLY:SP,IP
  use parser_m,       ONLY:parser
- use com,            ONLY:msg
+ use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
- use stderr,         ONLY:string_remove
+ use D_lattice,      ONLY:inv_index
+ use stderr,         ONLY:string_remove,string_add
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
@@ -34,11 +35,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
- use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc
+ use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc,l_td_hf
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
@@ -77,6 +78,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! W RL size setup looking at the max index of G-G' 
  !
  if (BS_n_g_W/= eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2))) ) then
+   BS_n_g_W= eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+   call warning (' W size reduced due to symmetry constraints')
    call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
  endif
  !
@@ -92,6 +95,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
  endif
  !
+ !
  ! Logicals (Drivers)
  !
  BS_res_K_corr=index(BS_res_mode,'c')/=0
@@ -99,8 +103,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !
+ ! Without spatial inversion it is not possible to include Coupling
+ !
+ if (BS_K_coupling.and.inv_index<0) then
+   call warning('Coupling switched off without spatial inversion')
+   BS_cpl_K_corr=.false.
+   BS_cpl_K_exchange=.false.
+   BS_K_coupling=.false.
+ endif
+ !
+ BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !
  BS_K_is_ALDA=l_alda_fxc
  !
@@ -122,12 +135,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! KERNEL
  !
  iq=BS_q(1)
- !
+ ! 
  call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
  !
  ! SOLVER
  !
- if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ if (l_bss.and.BS_columns==Xk%nibz) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  !
  ! CLEAN

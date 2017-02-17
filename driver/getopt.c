@@ -147,7 +147,11 @@ static char *nextchar;
 /* Callers store zero here to inhibit the error message
    for unrecognized options.  */
 
+#if defined _NO_OPTIONS_CHECK
+int opterr = 0;
+#else
 int opterr = 1;
+#endif
 
 /* Set to an option character which was unrecognized.
    This must be initialized on some systems to avoid linking in the

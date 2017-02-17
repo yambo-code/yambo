@@ -23,6 +23,8 @@
 os="@build_os@"
 cpp="@CPP@"
 cppflags="@CPPFLAGS@"
+ECHO_N="@ECHO_N@"
+PREFIX="@MKMF_PREFIX@"
 #
 if [ $# = 0 ] ; then
  echo $0 "dir target objectfile mode(l/x) Dflag1 Dflag2 Dflag3 ..."
@@ -70,21 +72,21 @@ linclude="-I\$(includedir)"
 case $target in
   yambo*)
    llibs="$llibs \$(llapack) \$(lscalapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) -lslatec \$(lfftw) -lm $llmpi"
+   llibs="$llibs \$(lnetcdf) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   a2y|f2y)
-   llibs="-lint_modules $llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -liotk \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -liotk \$(llapack) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(iotk_dir)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -letsf_io \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -letsf_io \$(llapack) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(etsf_dir)"
     ;;
   ypp*)
-   llibs="$llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   llibs="$llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
 esac
 
@@ -109,7 +111,6 @@ cat << EOF >> $cdir/Makefile
 	\$(driver)\$
 	\$(link)\$
 	\$(modmove)\$ 
-	\$(done)\$
 	\$(dircheck)\$
 	@mv \$@ \$(exec_prefix)
 EOF
@@ -118,48 +119,43 @@ rm -f ./lib/$target
 cat << EOF >> $cdir/Makefile
 \$(target): locks \$(objs) arcreate  
 	\$(modmove)\$ 
-	\$(done)\$
 EOF
 fi
 
 cat << EOF >> $cdir/Makefile
 locks:
-	@if test ! -f \$(lock_file) && test "\$(debug)" = "no" ; then \
+	${PREFIX}if test ! -f \$(lock_file) && test "\$(debug)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); fi
-	@if test "\$(debug)" = "yes"; \
+	${PREFIX}if test "\$(debug)" = "yes"; \
 	then "\$(srcdir)"/sbin/objects_debug.sh \$(lock_file); fi
 arcreate:
-	@\$(ar) \$(arflags) \$(target) \$(objs)
-	@mv \$(target) \$(libdir) ; chmod u+x \$(libdir)/\$(target)
+	${PREFIX}(eval \$(ar) \$(arflags) \$(target) \$(objs)) > /dev/null
+	${PREFIX}mv \$(target) \$(libdir) ; chmod u+x \$(libdir)/\$(target)
 #
 # Functions
 #
 define driver
- @if test -f \$(srcdir)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
+ ${PREFIX}if test -f \$(srcdir)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
                     \$(srcdir)/driver/yambo.h > \$(srcdir)/driver/yambo_cpp.h; fi
- @if test -f \$(srcdir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
+ ${PREFIX}if test -f \$(srcdir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
                    \$(srcdir)/driver/ypp.h > \$(srcdir)/driver/ypp_cpp.h; fi
- \$(cc) \$(cflags) -c \$(srcdir)/driver/getopt.c
- @if test "\$(dmpi)" = ""; \
+ ${PREFIX}( eval \$(cc) \$(cflags) -c \$(srcdir)/driver/getopt.c > /dev/null)
+ ${PREFIX}if test "\$(dmpi)" = ""; \
   then \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
- @if test ! "\$(dmpi)" = ""; \
+ ${PREFIX}if test ! "\$(dmpi)" = ""; \
   then \$(pcc) \$(pccflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
- @rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/ypp_cpp.h
+ ${PREFIX}rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/ypp_cpp.h
+ @echo
 endef
 define link
- \$(fc) \$(fcflags) \$(linclude) -o \$@ driver.o getopt.o \$(objs) \$(llibs)
+ ${PREFIX}(eval \$(fc) \$(fcflags) \$(linclude) -o \$@ driver.o getopt.o \$(objs) \$(llibs) ) > /dev/null
 endef
 define modmove
- @test \`\$(mfiles) | wc -l\` -eq 0 || mv *.mod \$(includedir)
+ ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || mv *.mod \$(includedir)
 endef
 define dircheck
- @if test ! -d \$(exec_prefix); then mkdir \$(exec_prefix);fi
-endef
-define done
- @echo "____________________________________________________"
- @echo "               [" \$@ "] completed"
- @echo "----------------------------------------------------"
+ ${PREFIX}if test ! -d \$(exec_prefix); then mkdir \$(exec_prefix);fi
 endef
 #
 # Sources that do not want optimization
@@ -167,15 +163,16 @@ endef
 F77_NOOPT_SRC= xerbla.o slamch.o
 #
 \$(F77_NOOPT_SRC):
-	\$(f77) -c \$(f77uflags) \$*.f
+	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$*.f) > /dev/null
 #
 FC_NOOPT_SRC= mod_parser_m.o 
 #
 \$(FC_NOOPT_SRC):
 	@rm -f \$*\$(f90suffix)
-	\$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)
-	\$(fc) -c \$(fcuflags) \$(linclude) \$*\$(f90suffix)
-	@rm -f \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	@echo $ECHO_N \$* " "
+	@rm -f \$*\$(f90suffix)".o "
 #
 # Suffixes
 #
@@ -185,11 +182,14 @@ FC_NOOPT_SRC= mod_parser_m.o
 #
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	\$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)
-	\$(fc) -c \$(fcflags) \$(linclude) \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(fc) -c \$(fcflags) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	@rm -f \$*\$(f90suffix)
+	@echo $ECHO_N \$*".F "
 .f.o:
-	\$(f77) -c \$(f77flags) \$*.f
+	${PREFIX}(eval \$(f77) -c \$(f77flags) \$*.f) > /dev/null
+	@echo $ECHO_N \$*".f "
 .c.o:
-	\$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<
+	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<) > /dev/null
+	@echo $ECHO_N \$< " "
 EOF

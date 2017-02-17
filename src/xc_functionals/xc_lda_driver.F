@@ -50,10 +50,17 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! Andrea (9/8/06)
  !
+ ! In case of spin polarized systems *REMEMBER* that:
+ !
+ !  whatever(1) == whatever UP
+ !  whatever(2) == whatever DOWN
+ !
+ ! Yambo have been considering the wrong order up to revision 335 (November 2008)
+ !
  use pars,          ONLY:SP,DP,pi
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:DL_vol
- use com,           ONLY:msg
+ use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_spin
  use FFT_m,         ONLY:fft_size
  use xc_functionals,ONLY:XC_EXCHANGE,XC_EXCHANGE_CORRELATION,XC_CORRELATION,&
@@ -78,7 +85,7 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! note that multidimensional dvxc & vxc is allowed only in xcspol
  !
  real(DP) :: dvxc(fft_size,3),exc(fft_size),vxc(fft_size,n_spin)
- real(DP) :: dvx(fft_size),ex(fft_size),vx(fft_size)
+ real(DP) :: dvx(fft_size,3), ex(fft_size), vx(fft_size,n_spin)
  !
  ! Init
  !
@@ -102,19 +109,10 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! Electronic density & Rs
  !
- call el_density(en,Xk,rho_sp,.FALSE.)
+ call el_density(en,Xk,rho_sp,.false.)
  rho=rho_sp*real(fft_size,DP)/real(DL_vol,DP)
  forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/rho(i1))**(1._DP/3._DP)
  !
- if (n_spin==2) then
-   !
-   ! Electronic magnetization & Zeta
-   !
-   call el_magnetization(en,Xk,el_mag)
-   !
-   zeta(:)=sqrt(el_mag(:,1)**2+el_mag(:,2)**2+el_mag(:,3)**2)/rho_sp
-   !
- endif
  !
  ! Hartree
  !
@@ -125,14 +123,14 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    return
  endif
  !
- ! EXX = X_alpha when alpha=3/4
+ ! EXX = X_alpha when alpha=3/4. HF when alpha=1.
  !
  if (KIND/=XC_EXCHANGE_CORRELATION.or.FUNCTIONAL==XC_LDA_X) then
-   call xcxalp(1._DP,ex,fft_size,ORDER,rspts,vx,dvx)
+   call xcxalp(1._DP,ex,fft_size,n_spin,ORDER,rspts,zeta,vx,dvx)
    if (KIND==XC_EXCHANGE.or.FUNCTIONAL==XC_LDA_X) then
      exc=ex
-     vxc(:,1)=vx
-     dvxc(:,1)=dvx
+     vxc=vx
+     dvxc=dvx
    endif
  endif
  !
@@ -155,25 +153,22 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
        call xchelu(dvxc(:,1),exc,fft_size,ORDER,rspts,vxc(:,1))
        !
      case (XC_LDA_C_XALPHA)
-       call xcxalp(3._DP/2._DP,exc,fft_size,ORDER,rspts,vxc(:,1),dvxc(:,1))
+       call xcxalp(3._DP/2._DP,exc,fft_size,n_spin,ORDER,rspts,zeta,vxc,dvxc)
        !
      case (XC_LDA_C_KP)
        call xc_rpa_kp(rspts,exc)
        !
    end select
    !
+   !
  endif
- !
- ! Only XC_LDA_C_PW supports spin
- ! 
- if (FUNCTIONAL/=XC_LDA_C_PW.and.n_spin==2) vxc(:,2)=vxc(:,1)
  !
  ! CORRELATION ONLY
  !
  if (KIND==XC_CORRELATION) then
-   exc=exc-ex
-   vxc(:,1)=vxc(:,1)-vx
-   dvxc(:,1)=dvxc(:,1)-dvx
+   exc =exc-ex
+   vxc =vxc-vx
+   dvxc=dvxc-dvx
  endif
  !
  ! Allocation and Transfer

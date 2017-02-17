@@ -24,12 +24,11 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  use pars,                ONLY:SP,lchlen
  use LOGO,                ONLY:pickup_a_random
- use com,                 ONLY:msg,write_to_report,more_io_path
+ use com,                 ONLY:msg,write_to_report,core_io_path
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_bands,n_spin
  use D_lattice,           ONLY:n_atoms_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
- use timing,              ONLY:live_timing_is_on
  use wave_func,           ONLY:wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
@@ -57,7 +56,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  a2y_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,ind,od,'','')
+ call std_presets(instr,od,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
@@ -69,7 +68,6 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! Switch off report file support
  !
  write_to_report=.FALSE.
- ! live_timing_is_on=.FALSE.
  !
  call section('*','A(binit) 2 Y(ambo)')
  !
@@ -82,7 +80,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  endif
  call msg('l',trim(KSS_file_name))
  !
- call msg('s','DBs path set to :',trim(more_io_path))
+ call msg('s','DBs path set to :',trim(core_io_path))
  !
  call a2y_db1(en,k,trim(KSS_file_name))
  !
@@ -99,7 +97,10 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    call msg('l','done ==')
  endif
  !
- call wf_splitter()
+ ! Splitting + SPIN support still not implemented (see a2y_wf.F for
+ ! more details)
+ !
+ if (n_spin==1) call wf_splitter()
  !
  call msg('s','== DB2 + nlPP ...')
  !

@@ -22,14 +22,17 @@
 integer function ioKB_PP(ID)
  !
  use pars,             ONLY:schlen,IP,SP
+ use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_max,n_atom_species,n_atoms,&
-&                           atom_pos,pp_n_l_comp_max,&
+&                           atom_pos
+ use pseudo,           ONLY:pp_n_l_comp_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
  use memory_m,         ONLY:mem_est
  use wave_func,        ONLY:wf_ncx,wf_igk,wf_nc_k,wf_ng
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,&
-&                           read_is_on,write_is_on
+&                           read_is_on,write_is_on,ver_is_gt_or_eq
+ use electrons,        ONLY:n_spin
  implicit none
  integer,       intent(in) :: ID
  character(schlen)         :: VAR_NAME
@@ -37,7 +40,7 @@ integer function ioKB_PP(ID)
  ! 
  ! Work Space
  !
- integer :: ik,i1
+ integer :: ik,i1,i_spin
  ik=maxval(io_sec(ID,:))-1
  !
  ioKB_PP=io_connect(desc="kb_pp",type=0,ID=ID)
@@ -99,33 +102,48 @@ integer function ioKB_PP(ID)
  !
  allocate(pp_disk(wf_ncx,n_atom_species,pp_n_l_comp_max))
  !
- if (write_is_on(ID)) pp_disk=pp_kb
- !
- write (VAR_NAME,'(a,i4.4)') 'PP_KB_IK',ik
- call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk))
- call io_bulk(ID,R3=pp_disk)
- !
  if (read_is_on(ID)) then
    pp_kb=0._SP
-   do i1=1,wf_nc_k(ik)
-     if (wf_igk(i1,ik) > wf_ng) cycle
-     pp_kb( wf_igk(i1,ik) ,:,:) = pp_disk(i1,:,:)
-   enddo
- endif
- !
- if (write_is_on(ID)) pp_disk=pp_kbd
- !
- write (VAR_NAME,'(a,i4.4)') 'PP_KBD_IK',ik
- call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk))
- call io_bulk(ID,R3=pp_disk)
- !
- if (read_is_on(ID)) then
    pp_kbd=0._SP
-   do i1=1,wf_nc_k(ik)
-     if (wf_igk(i1,ik) > wf_ng) cycle
-     pp_kbd( wf_igk(i1,ik) ,:,:) = pp_disk(i1,:,:)
-   enddo
  endif
+ ! 
+  i_spin=1
+ ! 
+   !
+   if (write_is_on(ID)) pp_disk=pp_kb(:,:,:,i_spin)
+   !
+   if (ver_is_gt_or_eq(ID,revision=374)) then
+     call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik))//'_SPIN'//trim(intc(i_spin)),VAR_SZ=shape(pp_disk)) 
+   else
+     write (VAR_NAME,'(a,i4.4)') 'PP_KB_IK',ik
+     call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk)) 
+   endif
+   call io_bulk(ID,R3=pp_disk)
+   !
+   if (read_is_on(ID)) then
+     do i1=1,wf_nc_k(ik)
+       if (wf_igk(i1,ik) > wf_ng) cycle
+       pp_kb( wf_igk(i1,ik) ,:,:,i_spin) = pp_disk(i1,:,:)
+     enddo
+   endif
+   !
+   if (write_is_on(ID)) pp_disk=pp_kbd(:,:,:,i_spin)
+   !
+   if (ver_is_gt_or_eq(ID,revision=374)) then
+     call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik))//'_SPIN'//trim(intc(i_spin)),VAR_SZ=shape(pp_disk)) 
+   else
+     write (VAR_NAME,'(a,i4.4)') 'PP_KBD_IK',ik
+     call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk)) 
+   endif
+   call io_bulk(ID,R3=pp_disk)
+   !
+   if (read_is_on(ID)) then
+     do i1=1,wf_nc_k(ik)
+       if (wf_igk(i1,ik) > wf_ng) cycle
+       pp_kbd( wf_igk(i1,ik) ,:,:,i_spin) = pp_disk(i1,:,:)
+     enddo
+   endif
+   ! 
  !
  deallocate(pp_disk)
  !

@@ -31,6 +31,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
+ use wave_func,           ONLY:ioWF
  use YPP
  implicit none
  !
@@ -48,7 +49,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! I/O 
  !
  integer           :: ID,i_err
- integer, external :: ioDB1,ioQINDX,iogrot,ioWF
+ integer, external :: ioDB1,ioQINDX,iogrot
  !
  ! Presets
  !
@@ -144,15 +145,15 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! Specific SECTIONS
  !===================
  !
- if (lkanalyze) call k_analize(en,k,Xk,q)
+ if (l_bz_grids) call k_grids(en,k,Xk,q)
  !   =========
  !
  !
- if (l_exc_props) call exc_properties(Xk,Xen)
+ if (l_excitons) call excitons_driver(k,Xk,en,Xen,q)
  !   ===========
  !
- if (l_plot.and..not.l_exc_props) call plot_driver(Xk,Xen)
- !   ======
+ if (l_electrons)                       call electrons_driver(Xk,Xen)
+ !   ===========
  !
  !
  !

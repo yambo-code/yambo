@@ -21,12 +21,14 @@
 !
 module matrix_operate
  !
+ implicit none
+ !
  integer, parameter :: USE_LK=1
  integer, parameter :: USE_SLK=2
  integer, parameter :: ALREADY_FILLED=3
  integer, parameter :: DIAGO=4
  integer, parameter :: INV=5
- integer, parameter :: PDIAGO=6
+ integer, parameter :: PARTIAL_DIAGO=6
  integer, parameter :: USE_SVD=7
  !
  integer, parameter :: min_cpu_block_size=100
@@ -49,7 +51,6 @@ module matrix_operate
      ! Copy mr in mc using m_order indexes for mc
      !
      use pars, ONLY:SP
-     implicit none
      real(SP)    :: mr(:,:,:)
      complex(SP) :: mc(:,:)
      integer     :: m_order(:)
@@ -71,7 +72,6 @@ module matrix_operate
      ! Copy mr in mc 
      !
      use pars, ONLY:SP
-     implicit none
      real(SP)    :: mr(:,:,:)
      complex(SP) :: mc(:,:)
      integer     :: i1,i2,mr_shp(3),mc_shp(2) ! Work Space
@@ -92,7 +92,6 @@ module matrix_operate
      ! Copy mc in mr
      !
      use pars, ONLY:SP
-     implicit none
      real(SP)    :: mr(:,:,:)
      complex(SP) :: mc(:,:)
      integer     :: i1,i2,mr_shp(3),mc_shp(2) ! Work Space
@@ -113,20 +112,20 @@ module matrix_operate
      !
      use pars, ONLY:SP
      use com,  ONLY:error,warning
-     implicit none
      real(SP)          :: m(3,3)
      real(SP),optional :: m_inv(3,3)
      real(SP)          :: det,inv(3,3) ! Work Space
      det=m3det(m)
-     inv(1,1)=(-(m(2,3)*m(3,2)) + m(2,2)*m(3,3))/det
-     inv(1,2)=(m(1,3)*m(3,2) - m(1,2)*m(3,3))/det
-     inv(1,3)=(-(m(1,3)*m(2,2)) + m(1,2)*m(2,3))/det
-     inv(2,1)=(m(2,3)*m(3,1) - m(2,1)*m(3,3))/det
-     inv(2,2)=(-(m(1,3)*m(3,1)) + m(1,1)*m(3,3))/det
-     inv(2,3)= (m(1,3)*m(2,1) - m(1,1)*m(2,3))/det
-     inv(3,1)= (-(m(2,2)*m(3,1)) + m(2,1)*m(3,2))/det
-     inv(3,2)= (m(1,2)*m(3,1) - m(1,1)*m(3,2))/det
-     inv(3,3)= (-(m(1,2)*m(2,1)) + m(1,1)*m(2,2))/det
+     inv(1,1)=(-m(2,3)*m(3,2) + m(2,2)*m(3,3) )/det
+     inv(1,2)=( m(1,3)*m(3,2) - m(1,2)*m(3,3) )/det
+     inv(1,3)=(-m(1,3)*m(2,2) + m(1,2)*m(2,3) )/det
+     inv(2,1)=( m(2,3)*m(3,1) - m(2,1)*m(3,3) )/det
+     inv(2,2)=(-m(1,3)*m(3,1) + m(1,1)*m(3,3) )/det
+     inv(2,3)=( m(1,3)*m(2,1) - m(1,1)*m(2,3) )/det
+     inv(3,1)=(-m(2,2)*m(3,1) + m(2,1)*m(3,2) )/det
+     inv(3,2)=( m(1,2)*m(3,1) - m(1,1)*m(3,2) )/det
+     inv(3,3)=(-m(1,2)*m(2,1) + m(1,1)*m(2,2) )/det
+     !
      if (abs(det)<=1.E-7) call error('Null determinant. Inversion failed.')
      if (present(m_inv))      m_inv=inv
      if (.not.present(m_inv)) m=inv
@@ -135,11 +134,10 @@ module matrix_operate
    !
    function m3det(m)
      use pars, ONLY:SP
-     implicit none
      real(SP) :: m(3,3),m3det
-     m3det =-m(1,3)*m(2,2)*m(3,1) + m(1,2)*m(2,3)*m(3,1) &
-&           + m(1,3)*m(2,1)*m(3,2) - m(1,1)*m(2,3)*m(3,2) &
-&           - m(1,2)*m(2,1)*m(3,3) + m(1,1)*m(2,2)*m(3,3)
+     m3det = m(1,1)*( m(2,2)*m(3,3) - m(2,3)*m(3,2) )   &
+&           -m(1,2)*( m(2,1)*m(3,3) - m(2,3)*m(3,1) ) + &
+&            m(1,3)*( m(2,1)*m(3,2) - m(2,2)*m(3,1) )
    end function
    !
    subroutine mat_dia_inv(idriver,lib_in,M,blt,V_left,V_right,&
@@ -147,7 +145,6 @@ module matrix_operate
      !
      use pars,        ONLY:SP
      use par_proc_m,  ONLY:pp_redux_wait,ncpu,myid
-     implicit none
      integer                :: idriver,lib_in
      complex(SP)            :: M(:,:)
      complex(SP),  optional :: V_left(:,:),V_right(:,:),E_cmpl(:)
@@ -200,6 +197,9 @@ module matrix_operate
 #if ! defined _SLK
      lib_in_use=USE_LK
 #endif
+     !
+     ! =============== SERIAL SECTION ===============
+     !
      !
      ! ####> SVD INVERTION (Using Singular Value decomposition)
      !

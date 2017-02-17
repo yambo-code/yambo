@@ -21,7 +21,8 @@
 !
 module QP_CTL_m
  !
- use pars,  ONLY:SP,schlen,IP,HARTREE
+ use pars,  ONLY:SP,schlen,IP
+ use units, ONLY:HARTREE
  !
  ! QP Pars
  !
@@ -106,54 +107,52 @@ module QP_CTL_m
      type(bz_samp) ::k
      character(*)  ::msg_fmt
      type(QP_t),       optional::qp_impose
-     type(QP_ctl_t),   optional::QP_ctl_impose
+     type(QP_ctl_t),   optional::QP_ctl_impose(n_sp_pol)
      !
      ! Work Space
      !
      type(levels)     ::Fermi_en
      type(QP_t)       ::qp
-     type(QP_ctl_t)   ::QP_ctl_from_DB,QP_ctl_input_or_impose
-     integer          ::DB_corrected(en%nb,en%nk),ik_bz,ik_ibz,ib,i1,ik_r,SE_MORE
+     type(QP_ctl_t)   ::QP_ctl_from_DB(n_sp_pol),QP_ctl_input_or_impose(n_sp_pol)
+     integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_bz,ik_ibz,ib,i1,&
+&                       ik_r,SE_MORE,i_spin,QP_apply_db_err
      character(schlen)::ch
      character(1)     ::what
-     logical          ::is_def(2)
+     character(11)    ::spin_ch(2)
+     logical          ::is_def(4)
      integer, allocatable :: RIM_k_done(:)
+     integer, external    :: QP_apply_db
      !
      ! Resets
      !
      call QP_reset(qp)
-     call reset_QP_ctl(QP_ctl_from_DB)
-     call reset_QP_ctl(QP_ctl_input_or_impose)
+     do i_spin=1,n_sp_pol
+       call reset_QP_ctl(QP_ctl_from_DB(i_spin))
+       call reset_QP_ctl(QP_ctl_input_or_impose(i_spin))
+     enddo
      call E_Reset(Fermi_en)
      !
      ! If I'm not imposing a fit (QP_ctl_impose) of QP (qp_impose)
      ! return if the field are not present in the input file
      !
      if (.not.present(QP_ctl_impose).and..not.present(qp_impose)) then
-       select case(Eid)
-         case(1)
-           call parser('XfnQP_E',is_def(1))
-           call parser('XfnQPdb',is_def(2))
-           what='X'
-         case(2)
-           call parser('KfnQP_E',is_def(1))
-           call parser('KfnQPdb',is_def(2))
-           what='K'
-         case(3)
-           call parser('GfnQP_E',is_def(1))
-           call parser('GfnQPdb',is_def(2))
-           what='G'
-       end select
+       if (Eid==1) what='X'
+       if (Eid==2) what='K'
+       if (Eid==3) what='G'
+       call parser(what//'fnQP_E',is_def(1))
+       call parser(what//'fnQP_up_E',is_def(2))
+       call parser(what//'fnQP_dn_E',is_def(3))
+       call parser(what//'fnQPdb',is_def(4))
        if (.not.any((/is_def/))) return
      endif
      !
      ! Allocation of qp_done table to keep track of the corrections
      ! done
      !
-     if (.not.associated(en%qp_done)) then
-       allocate(en%qp_done(en%nb,en%nk))
-       call mem_est("E-qp_done",(/size(en%qp_done)/),(/IP/))
-       en%qp_done=0
+     if (.not.associated(en%QP_corrected)) then
+       allocate(en%QP_corrected(en%nb,en%nk,n_sp_pol))
+       call mem_est("E-QP_corrected",(/size(en%QP_corrected)/),(/IP/))
+       en%QP_corrected=0
      endif 
      !
      DB_corrected=0
@@ -161,24 +160,15 @@ module QP_CTL_m
      !
      ! Description initialization
      !
-     if (Eid==1) then
-       QP_ctl_from_DB%short_descr='[QP@X]'
-       QP_ctl_input_or_impose%short_descr='[QP@X]'
-       ch='External QP corrections (X)'
-     endif
-     if (Eid==2) then
-       QP_ctl_from_DB%short_descr='[QP@K]'
-       QP_ctl_input_or_impose%short_descr='[QP@K]'
-       ch='External QP corrections (K)'
-     endif
-     if (Eid==3) then
-       QP_ctl_from_DB%short_descr='[QP@G]'
-       QP_ctl_input_or_impose%short_descr='[QP@G]'
-       ch='External QP corrections (G)'
-       if (present(qp_impose)) ch='Internal QP corrections (G)'
-     endif
+     spin_ch=(/'',''/)
+     if (n_sp_pol==2) spin_ch=(/'(spin down)','  (spin up)'/)
      !
-     ! Section 
+     do i_spin=1,n_sp_pol
+       QP_ctl_from_DB(i_spin)%short_descr='[QP@'//what//trim(spin_ch(i_spin))//']'
+       QP_ctl_input_or_impose(i_spin)%short_descr='[QP@'//what//trim(spin_ch(i_spin))//']'
+       ch='External QP corrections ('//what//')'
+       if (present(qp_impose)) ch='Internal QP corrections ('//what//')'
+     enddo
      !
      if (depth>0) then
        call section('=',trim(ch))
@@ -188,19 +178,21 @@ module QP_CTL_m
      !
      ! Interpolation neighbours is always input file controlled
      !
-     QP_ctl_input_or_impose%interp_neigh=QP_ctl_interp_neigh(Eid)
-     QP_ctl_from_DB%interp_neigh=QP_ctl_interp_neigh(Eid)
+     QP_ctl_input_or_impose(:)%interp_neigh=QP_ctl_interp_neigh(Eid)
+     QP_ctl_from_DB(:)%interp_neigh=QP_ctl_interp_neigh(Eid)
      !
      ! NOW I HAVE DIFFERENT OPTIONS ... 
      !
-     ! 1] I am using the input file QP parameters
+     ! 1] I am using the input file QP correctins (contained in the qp_impose type)
      !
      if (.not.present(qp_impose).and..not.present(QP_ctl_impose)) then
        !
+       QP_ctl_from_DB(:)%db=QP_ctl_db(Eid)
+       QP_apply_db_err=QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
        !
        ! Update QP db kind in the global_XC kinds 
        !
-       if (QP_DB_kind/=SE_NONE) then
+       if (QP_DB_kind/=SE_NONE.and.QP_apply_db_err>0) then
          if (Eid==1) X_kind=QP_DB_kind
          if (Eid==2) K_kind=QP_DB_kind
          if (Eid==3) G_kind=QP_DB_kind
@@ -209,27 +201,33 @@ module QP_CTL_m
        ! Now I have to include the input file QP parameters in QP_ctl
        ! being careful that the scissor must go in QP_ctl_input_or_impose%E(1)
        !
-       QP_ctl_input_or_impose%E=(/QP_ctl_E(Eid,1)/HARTREE,QP_ctl_E(Eid,2),0._SP,QP_ctl_E(Eid,3)/)
+       do i_spin=1,n_sp_pol
+         QP_ctl_input_or_impose(i_spin)%E=(/QP_ctl_E(Eid,1,i_spin)/HARTREE,&
+&                                           QP_ctl_E(Eid,2,i_spin),0._SP,QP_ctl_E(Eid,3,i_spin)/)
+       enddo
        !
        ! Then update scissor & stretching in the global_XC kinds 
        !
        SE_MORE=MORE_NONE
-       if (QP_ctl_E(Eid,1)/=0.) SE_MORE=MORE_SCISSOR
-       if (any(QP_ctl_E(Eid,2:3)/=1.)) SE_MORE=MORE_STRETCH
-       if (QP_ctl_E(Eid,1)/=0..and.any(QP_ctl_E(Eid,2:3)/=1.)) SE_MORE=MORE_SCIS_AND_STRE
+       if (any(QP_ctl_E(Eid,1,:)/=0.))   SE_MORE=MORE_SCISSOR
+       if (any(QP_ctl_E(Eid,2:3,:)/=1.)) SE_MORE=MORE_STRETCH
+       if (any(QP_ctl_E(Eid,1,:)/=0.).and.any(QP_ctl_E(Eid,2:3,:)/=1.)) SE_MORE=MORE_SCIS_AND_STRE
        !
        if (SE_MORE>0.and.Eid==1) call setup_global_XC(what,X_kind,SE_MORE,X_xc_functional)
        if (SE_MORE>0.and.Eid==2) call setup_global_XC(what,K_kind,SE_MORE,K_xc_functional)
        if (SE_MORE>0.and.Eid==3) call setup_global_XC(what,G_kind,SE_MORE,G_xc_functional)
        !
-       QP_ctl_db(Eid)=trim(QP_ctl_from_DB%db)
+       QP_ctl_db(Eid)=trim(QP_ctl_from_DB(1)%db)
        !
        ! Note the QP_ctl_W(Eid,1/3) is in ev^{-1} while QP_ctl_W(Eid,2/4) is in
        !  ev^{-2}
        !
-       QP_ctl_input_or_impose%W=(/0._SP,QP_ctl_W(Eid,1)/HARTREE,QP_ctl_W(Eid,2)/HARTREE**2.,&
-&                     0._SP,QP_ctl_W(Eid,3)/HARTREE,QP_ctl_W(Eid,4)/HARTREE**2./)
-       QP_ctl_input_or_impose%Z=QP_ctl_Z(Eid)
+       do i_spin=1,n_sp_pol
+         QP_ctl_input_or_impose(i_spin)%W=&
+&                     (/0._SP,QP_ctl_W(Eid,1,i_spin)/HARTREE,QP_ctl_W(Eid,2,i_spin)/HARTREE**2.,&
+&                       0._SP,QP_ctl_W(Eid,3,i_spin)/HARTREE,QP_ctl_W(Eid,4,i_spin)/HARTREE**2./)
+         QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)
+       enddo
        !
      endif
      !
@@ -237,9 +235,11 @@ module QP_CTL_m
      ! 3] I am using an externally defined FIT parameters
      !
      if (present(QP_ctl_impose)) then
-       QP_ctl_input_or_impose%E=QP_ctl_impose%E
-       QP_ctl_input_or_impose%W=QP_ctl_impose%W
-       QP_ctl_input_or_impose%Z=QP_ctl_impose%Z
+       do i_spin=1,n_sp_pol
+         QP_ctl_input_or_impose(i_spin)%E=QP_ctl_impose(i_spin)%E
+         QP_ctl_input_or_impose(i_spin)%W=QP_ctl_impose(i_spin)%W
+         QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_impose(i_spin)%Z
+       enddo
      endif
      !
      ! Finally I apply the generalized stretch
@@ -259,12 +259,16 @@ module QP_CTL_m
      ! the K-points of the X grid !
      !
      if (Eid==3) then
+       !
        Fermi_en%nb=en%nb
        Fermi_en%nk=nXkibz
+       !
        allocate(Fermi_en%E(Fermi_en%nb,Fermi_en%nk,n_sp_pol))
        Fermi_en%E(:,:,:)=en%E(:,:nXkibz,:)
+       !
        call fermi_level(Fermi_en,k,Tel,1)
        call extend_occupations(Fermi_en,en)
+       !
        nullify(Fermi_en%E)
      endif
      !
@@ -273,11 +277,16 @@ module QP_CTL_m
      ! Reporting
      !
      call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HARTREE)
-     call msg('r', '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
+     call msg('r',   '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
      if (en%nbf==en%nbm) then
-       call msg('r','[QP] Ind. Gap Correction  [ev]:',&
-&                (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HARTREE)
+       if (n_sp_pol==1) then
+         call msg('r','[QP] Ind. Gap Correction  [ev]:',&
+&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
+&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HARTREE)
+         !
+         !
+       endif
+       !
      endif
      !
      end subroutine

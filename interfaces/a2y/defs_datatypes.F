@@ -1,29 +1,49 @@
-!
-! COPYRIGHT
-! Copyright (C) 2001-2003 ABINIT group (XG)
-! This file is distributed under the terms of the
-! GNU General Public License, see ~ABINIT/Infos/copyright
-! or http://www.gnu.org/copyleft/gpl.txt .
-!
- module defs_datatypes
+!{\src2tex{textfont=tt}}
+!!****m* ABINIT/defs_datatypes
+!! NAME
+!! defs_datatypes
+!!
+!! FUNCTION
+!! This module contains definitions of all structured datatypes for the
+!! ABINIT package.
+!! If you want to add one new datatype, please, examine first whether
+!! another datatype might meet your need (e.g. adding some records to it).
+!! Then, if you are sure your new structured datatype is needed,
+!! write it here, and DOCUMENT it properly (not all datastructure here are
+!! well documented, it is a shame ...).
+!! Do not forget : you will likely be the major winner if you document
+!! properly.
+!! Proper documentation of a structured datatype means :
+!!  (1) Mention it in the list just below
+!!  (2) Describe it in the NOTES section
+!!  (3) Put it in alphabetical order in the the main section of this module
+!!  (4) Document each of its records, except if they are described elsewhere
+!!      (this exception is typically the case of the dataset associated with
+!!      input variables, for which there is a help file)
+!!
+!! List of datatypes :
+!! * hdr_type   : the header of wf, den and pot files
+!! * wffile_type : a handler for dealing with the IO of a wavefunction file
+!!
+!! COPYRIGHT
+!! Copyright (C) 2001-2009 ABINIT group (XG)
+!! This file is distributed under the terms of the
+!! GNU General Public License, see ~abinit/COPYING
+!! or http://www.gnu.org/copyleft/gpl.txt .
+!!
+!! SOURCE
+
+module defs_datatypes
 
  implicit none
 
  integer, parameter :: dp=kind(1.0d0)
- integer, parameter :: fnlen=132
- integer, parameter :: i8b=selected_int_kind(8)
+ integer, parameter :: fnlen=264     ! maximum length of file name variables
+ integer, parameter :: abinit_offset = 8
 
  character(1), parameter :: ch10 = char(10)
  real(dp),     parameter :: zero=0._dp
  real(dp), parameter :: tol6= 0.000001_dp
-
- type atmrhoij_type
-  integer :: lmn2_size                 ! First dimension of rhoij
-  integer :: nspden                    ! Number of spin-density components
-  integer, pointer :: nrhoijsel(:)     ! Number of non-zero values of rhoij(:,ispden)
-  integer, pointer :: rhoijselect(:,:) ! (i,j) indexes of non-zero elements of rhoij
-  real(dp), pointer :: rhoij(:,:)      ! rhoij(lmn2_size,nspden) augmentation waves occupancies
- end type atmrhoij_type
 
  type hdr_type
   integer :: bantot        ! total number of bands (sum of nband on all kpts and spins)
@@ -33,6 +53,7 @@
   integer :: nspinor,nsppol,nsym,ntypat,occopt        ! input variables
   integer :: pertcase      ! the index of the perturbation, 0 if GS calculation
   integer :: usepaw        ! input variable (0=norm-conserving psps, 1=paw)
+  integer :: usewvl        ! input variable (0=plane-waves, 1=wavelets)
   integer :: ngfft(3)      ! input variable
 
 ! This record is not a part of the hdr_type, although it is present in the
@@ -45,11 +66,13 @@
   integer, pointer :: lmn_size(:)  ! lmn_size(npsp) from psps
   integer, pointer :: nband(:)     ! input variable nband(nkpt*nsppol)
   integer, pointer :: npwarr(:)    ! npwarr(nkpt) array holding npw for each k point
+  integer          :: nwvlarr(2)   ! nwvlarr(2) array holding the number of wavelets
+                                   ! for each resolution.
   integer, pointer :: pspcod(:)    ! pscod(npsp) from psps
   integer, pointer :: pspdat(:)    ! psdat(npsp) from psps
   integer, pointer :: pspso(:)     ! pspso(npsp) from psps
   integer, pointer :: pspxc(:)     ! pspxc(npsp) from psps
-  integer, pointer :: so_typat(:)  ! input variable so_typat(ntypat)
+  integer, pointer :: so_psp(:)    ! input variable so_psp(npsp)
   integer, pointer :: symafm(:)    ! input variable symafm(nsym)
   integer, pointer :: symrel(:,:,:)! input variable symrel(3,3,nsym)
   integer, pointer :: typat(:)     ! input variable typat(natom)
@@ -67,6 +90,7 @@
   real(dp), pointer :: kptns(:,:)   ! input variable kptns(3,nkpt)
   real(dp), pointer :: occ(:)       ! EVOLVING variable occ(bantot)
   real(dp), pointer :: tnons(:,:)   ! input variable tnons(3,nsym)
+  real(dp), pointer :: wtk(:)       ! weight of kpoints wtk(nkpt)
   real(dp), pointer :: xred(:,:)    ! EVOLVING variable xred(3,natom)
   real(dp), pointer :: zionpsp(:)   ! zionpsp(npsp) from psps
   real(dp), pointer :: znuclpsp(:)  ! znuclpsp(npsp) from psps
@@ -76,11 +100,24 @@
   character(len=6) :: codvsn              ! version of the code
   character(len=132), pointer :: title(:) ! title(npsp) from psps
 
-  type(atmrhoij_type), pointer :: atmrhoij(:) ! EVOLVING variable paw_ij(natom)%rhoij(lmn2_size,nspden), only for paw
-
-!Should make a list of supplementary infos
-
  end type hdr_type
+
+!----------------------------------------------------------------------
+
+!!****t* defs_datatypes/wffile_type
+!! NAME
+!! wffile_type
+!!
+!! FUNCTION
+!! This structure datatype is a handler for dealing with the IO of a
+!! wavefunction file.
+!! It contains, among other things, the method of access to the file
+!! (standard F90 read/write, or NetCDF call, or MPI IO), the unit number
+!! if applicable, the filename, the information on the
+!! parallelism, etc ...
+!!
+!! SOURCE
+
 
  type wffile_type
 
@@ -122,6 +159,13 @@
    ! nbOct_ch octet number of character value
    ! lght_recs length of record
 
- end type wffile_type
+  integer(abinit_offset)  :: offwff,off_recs
+   ! offwff  offset position of unformatted wavefunction disk file
+   ! off_recs  offset position of start record
+   !             (use in parallel)
 
- end module defs_datatypes
+ end type wffile_type
+!!***
+
+end module defs_datatypes
+!!***

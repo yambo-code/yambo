@@ -19,17 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_O_transverse(Xen,Xk,X)
+subroutine Dipole_transverse(Xen,Xk,X)
  !
  use pars,                ONLY:SP,pi
  use timing,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
- use D_lattice,           ONLY:alat,pp_kbv_dim,&
-&                              n_atom_species,n_atoms,pp_n_l_comp,PP_free
+ use D_lattice,           ONLY:alat,n_atom_species,n_atoms
+ use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,X_q0grad,P_bands_ordered
+ use X_m,                 ONLY:X_t,DIP_iR_or_P,Dipole_bands_ordered,Eval_P_and_P2_only,P_square
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, wf_load
@@ -42,9 +42,9 @@ subroutine X_O_transverse(Xen,Xk,X)
  ! Work Space
  !
  integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min
- integer                      :: is,ia,il,im,alloc_err,i_spin,E_i_spin
+ integer                      :: is,ia,il,im,alloc_err,i_spin,E_i_spin,wf_dim
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
- complex(SP)                  :: rho(3,n_spin)
+ complex(SP)                  :: rho(4)
  real(SP)                     :: Ev_m_Ec
  type(pp_indexes)             :: px
  !
@@ -52,16 +52,16 @@ subroutine X_O_transverse(Xen,Xk,X)
  !
  integer                      :: ID,io_err,ioKB_err
  integer, external            :: ioKB_PP
-#if defined _DOUBLE
- complex(SP)                  :: zdotc
-#else 
- complex(SP)                  :: cdotc
-#endif
  !
  ! Check for the KB PP DB 
  !
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- ioKB_err=ioKB_PP(ID)
+ if (Eval_P_and_P2_only) then
+   ioKB_err=-1
+ else
+   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   ioKB_err=ioKB_PP(ID)
+ endif
+ !
  if (ioKB_err==0) then
    X%Vnl_included=.true.
    pp_kbv_dim=0
@@ -80,7 +80,7 @@ subroutine X_O_transverse(Xen,Xk,X)
  !
  ! Set up band limits
  !
- if (P_bands_ordered) then
+ if (Dipole_bands_ordered) then
    iv_max=Xen%nbm
    ic_min=Xen%nbf+1
  else
@@ -92,10 +92,11 @@ subroutine X_O_transverse(Xen,Xk,X)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
- call live_timing('Dipole (T):',px%stps(myid+1))
+ call live_timing('Dipole (T):',px%stps(myid+1)*n_spin)
  call pp_redux_wait
  !
- allocate(wf_xyz(wf_ng,3))
+ wf_dim=3
+ allocate(wf_xyz(wf_ng,wf_dim))
  !
  ! Main loop over k in IBZ
  !
@@ -107,26 +108,31 @@ subroutine X_O_transverse(Xen,Xk,X)
      if (ik< Xk%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      io_err=ioKB_PP(ID)
-     call X_O_kb_pp_comp(ik,Xk,kbv)
    endif
-   do iv=X%ib(1),iv_max 
+   ! 
+    i_spin=1
+   ! 
      !
-     if (.not.px%i2p(ik,iv)) cycle
+     if (ioKB_err==0) call Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
      !
-     do ic=ic_min,X%ib(2)
-       do i_spin=1,n_spin
+     E_i_spin=i_spin
+     if (n_spinor==2) E_i_spin=1
+     !
+     do iv=X%ib(1),iv_max 
+       !
+       if (.not.px%i2p(ik,iv)) cycle
+       !
+       do ic=ic_min,X%ib(2)
          !
-         rho(:,i_spin)=(0.,0.)
-         !
-         E_i_spin=i_spin
-         if (n_sp_pol/=2) E_i_spin=1
+         rho(:)=(0.,0.)
          !
          Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
          if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
 &                  -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
-         if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
+         !
+         if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.Eval_P_and_P2_only) cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
          !
@@ -135,6 +141,7 @@ subroutine X_O_transverse(Xen,Xk,X)
          do i1=1,3
            wf_xyz(:,i1)=wf(:,ivfft)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
          enddo
+         ! 
          !
          icfft=wf_state(ic,ik,i_spin)
          !
@@ -142,36 +149,35 @@ subroutine X_O_transverse(Xen,Xk,X)
          !       \sum_G -i u^*_{iv ik}(G) i ( k + G ) u_{ic ik}(G)
          !     = \sum_G u^*_{iv ik}(G) ( k + G ) u_{ic ik}(G)
          !
+         ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
+         !
 #if defined _DOUBLE
-         rho(1,i_spin)=zdotc(wf_ng,wf_xyz(:,1),1,wf(:,icfft),1)
-         rho(2,i_spin)=zdotc(wf_ng,wf_xyz(:,2),1,wf(:,icfft),1)
-         rho(3,i_spin)=zdotc(wf_ng,wf_xyz(:,3),1,wf(:,icfft),1)
+         call zgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
 #else
-         rho(1,i_spin)=cdotc(wf_ng,wf_xyz(:,1),1,wf(:,icfft),1)
-         rho(2,i_spin)=cdotc(wf_ng,wf_xyz(:,2),1,wf(:,icfft),1)
-         rho(3,i_spin)=cdotc(wf_ng,wf_xyz(:,3),1,wf(:,icfft),1)
+         call cgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
 #endif
-         if (ioKB_err==0) call X_O_kb_sum(ivfft,icfft,rho(:,i_spin),kbv)
          !
-         rho(:,i_spin)=rho(:,i_spin)/Ev_m_Ec
+         if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:),kbv)
          !
-       enddo    ! spin loop
-       !
-       ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
-       !
-       !     X_q0grad(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
-       !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
-       !
+         if ( .not.Eval_P_and_P2_only ) rho(:)=rho(:)/Ev_m_Ec
          !
-         X_q0grad(:,ic,iv,ik,1)=rho(:,1)
+         ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
          !
+         !     DIP_iR_or_P(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
+         !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
+         !
+           !
+           DIP_iR_or_P(:,ic,iv,ik,i_spin)=rho(:3)
+           !
+         !
+       enddo    ! conduction band loop
        !
-     enddo  ! conduction band loop
-     !
-     call live_timing(steps=1)
-     !
-   enddo      ! valence band loop
- enddo        ! k-points
+       call live_timing(steps=1)
+       !
+     enddo      ! valence band loop
+     ! 
+   !
+ enddo          ! k-points
  !
  call live_timing
  !
@@ -186,8 +192,7 @@ subroutine X_O_transverse(Xen,Xk,X)
  endif 
  !
  do i_spin=1,n_sp_pol
-   call pp_redux_wait(X_q0grad(:,:,:,:,i_spin))
+   call pp_redux_wait(DIP_iR_or_P(:,:,:,:,i_spin))
  enddo
  !
- return
-end subroutine X_O_transverse
+end subroutine Dipole_transverse

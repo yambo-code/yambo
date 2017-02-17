@@ -26,7 +26,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use pars,         ONLY:SP,pi,IP
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
- use drivers,      ONLY:l_bs_fxc,l_col_cut
+ use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,spin
  use FFT_m,        ONLY:fft_size
@@ -38,15 +38,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       RIM_anisotropy,ik_is_table,bare_qpg
  use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
  use com,          ONLY:msg,warning,error
- use timing,       ONLY:live_timing,nhash
+ use timing,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_eh_E,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,O_n_c_states,&
 &                       BS_n_g_W,BS_blk_dim,O_table,BS_mat,&
 &                       O_phase,O_c_state,O_v_state,O_ng,BS_eh_table,BS_columns,&
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
-&                       BS_K_dim,BS_eh_win,BS_blk_coord,&
-&                       cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
+&                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
+&                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,&
 &                       O_n_scatt,BS_O,BS_cpl_K_corr
  use collision,    ONLY:ggwinfo,collision_reset
@@ -64,7 +64,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Kernel loop
  !
- integer    :: ikk1,ikk2,live_timing_steps,is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
+ integer    :: ikk1,ikk2,live_timing_steps,live_timing_step_size,live_timing_accumulate,&
+&              is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
 &              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2)
  integer    :: iOcv, iOvc
@@ -106,7 +107,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Setups
  !
  if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
- BS_blk_coord=0
+ BS_k_and_row_restart=0
  !
  ! Dimensions and Tables
  ! 
@@ -154,9 +155,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  W_is_em1s=X%whoami==2
  W_is_pp  =X%whoami==4
- !
- if (BS_res_K_corr&
-    ) then
+ if (BS_res_K_corr) then
    call section('+','Screneed interaction header I/O')
    !
    ! X%ng are the G's in the X DB while BS_n_g_W the G's I want to read.
@@ -182,7 +181,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  E_eh_range=(/minval(abs(BS_eh_E))-1.E-5,maxval(abs(BS_eh_E))/)
  S_eh_range=(/BS_eh_win(1)/100.*(E_eh_range(2)-E_eh_range(1)),& 
 &             BS_eh_win(2)/100.*(E_eh_range(2)-E_eh_range(1))/)
- call K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements)
+ call K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
+&               live_timing_steps,live_timing_step_size)
  !
  if (all(n_K_elements==0)) return
  !
@@ -190,7 +190,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc) then
    !  
-   if (iq==1) call X_O_strengths(Ken,Xk,X,BSS_q0)
+   if (iq==1) call Dipole_driver(Ken,Xk,X,BSS_q0)
    !
    ! Allocation
    !
@@ -226,6 +226,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  ! 
+ ! Test the spatial Inversion
+ !
+ call space_inv_by_wf(Ken,Xk)
  !
  allocate(O_table(BS_bands(2)-BS_bands(1)+1,nsym,&
 &                 BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol),stat=alloc_err(1))
@@ -237,7 +240,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
      !
-     if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
+     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      !
      call K_scattering(iq,ik1,ik2,Xk,q)  
      O_dim=max(O_dim,O_n_scatt)
@@ -250,7 +253,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_K_is_ALDA) then
    allocate(F_xc(fft_size))
-   call xc_lda_driver(Ken,Xk,WF_KIND,WF_xc_FUNCTIONAL,2)
+   call xc_lda_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
  if (BS_res_K_corr) then
@@ -259,8 +262,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Screneed interaction
    !
    X%ng=BS_n_g_W
-   if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
-   if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
+     if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
+     if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
    !
    i1=BS_n_g_W
    if (BS_W_is_diagonal) i1=1
@@ -277,28 +280,29 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    allocate(isc%gamp(i1,BS_n_g_W))
    !
-   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
-   ioX_err=ioX(X,Xw,XID)
+     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
+     ioX_err=ioX(X,Xw,XID)
    !
    do iq_W=1,q%nibz
      !
      isc%qs(2)=iq_W
      call scatterGamp(isc,'c')
      !
-     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
-     ioX_err=ioX(X,Xw,XID)
-     !
-     forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
-     do i2=1,BS_n_g_W
-       do i3=1,BS_n_g_W
-         if (.not.BS_W_is_diagonal) then
-           BS_W(i2,i3,iq_W)=X_mat(i2,i3,1)*isc%gamp(i2,i3)
-           if (i_space_inv==0.and.i_time_rev==1) &
-&             BS_W(i2,i3,q%nibz+iq_W)=X_mat(i3,i2,1)*isc%gamp(i2,i3)
-         endif
-         if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,iq_W)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
+       ioX_err=ioX(X,Xw,XID)
+       !
+       forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
+       do i2=1,BS_n_g_W
+         do i3=1,BS_n_g_W
+           if (.not.BS_W_is_diagonal) then
+             BS_W(i2,i3,iq_W)=X_mat(i2,i3,1)*isc%gamp(i2,i3)
+             if (i_space_inv==0.and.i_time_rev==1) &
+&               BS_W(i2,i3,q%nibz+iq_W)=X_mat(i3,i2,1)*isc%gamp(i2,i3)
+           endif
+           if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,iq_W)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
+         enddo
        enddo
-     enddo
+     ! 
    enddo
    !
    ! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
@@ -307,7 +311,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
    !
    deallocate(isc%gamp)
-   call X_alloc('X')
+   !
+   if (.not.l_td_hf) call X_alloc('X')
    !
    X%ng=X%ng_db
    call collision_reset(isc)
@@ -315,7 +320,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! DB identifier 
  !
- BS_identifier=pickup_a_random(10000.)
+ BS_identifier=pickup_a_random(10000._SP)
  !
  call section('=','Main loop')
  !
@@ -341,11 +346,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
  if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
  !
- if (.not.l_bs_fxc) call live_timing('BSK',int(n_K_elements(myid+1),4))
- if (l_bs_fxc) call live_timing('BSK->Fxc',int(n_K_elements(myid+1),4))
+ if (.not.l_bs_fxc) call live_timing('BSK',live_timing_steps)
+ if (l_bs_fxc) call live_timing('BSK->Fxc',live_timing_steps)
  !
  tot_n_K_elements=0
- live_timing_steps=0
+ live_timing_accumulate=0
  i8nc=ncpu
  i8id=myid
  !
@@ -357,7 +362,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    do ik1=ik2,1,-1
      !
-     if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
+     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      !
      ikk1=sum(BS_blk_dim(:ik1-1))
      !
@@ -379,9 +384,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          do i1=1,BS_blk_dim(ik1)
            do i2=1,BS_n_g_exch
              O1x(i2,i1)=O1x(i2,i1)/bare_qpg(iq,i2)**2
-             enddo
+           enddo
          enddo
        endif 
+       !
+       ! Even if the cutoff coulomb interaction is used and this term should
+       ! be in principle included, they are vanishing due to the q->0 in the
+       ! oscillator and the finitness of qpg(1,1) term.
        !
        O1x(1,:)=(0.,0.)
        O2x(1,:)=(0.,0.)
@@ -417,10 +426,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! ::: Timing START :::
          !
-         live_timing_steps=live_timing_steps+1
-         if (live_timing_steps==n_K_elements(myid+1)/10/nhash) then
-           call live_timing(steps=live_timing_steps)
-           live_timing_steps=0
+         live_timing_accumulate=live_timing_accumulate+1
+         if (live_timing_accumulate==live_timing_step_size) then
+           call live_timing(steps=1)
+           live_timing_accumulate=0
          endif
          !
          ! ::: Timing END :::
@@ -514,9 +523,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      else
        if (ik2==1.and.ik1==1) then
-         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,cumulative_index(1,1)/),ID=ID)
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,BS_IO_index(1,1)/),ID=ID)
        else
-         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/cumulative_index(ik1,ik2)/),ID=ID)
+         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
        endif
        ioBS_Fxc_err=ioBS(iq,X,ID)
      endif
@@ -528,24 +537,27 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Live Timing finalize
  !
- live_timing_steps=mod( n_K_elements(myid+1) , int(10*nhash,KIND=KIND(n_K_elements)) )
- if (live_timing_steps>0) call live_timing(steps=live_timing_steps)
+ if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
  call live_timing()
  call pp_redux_wait
  !
- ! CLEAN
+ ! GLOBAL CLEANING 
+ !=================
  !
  deallocate(O_table)
  call mem_est("O_table")
- !
- call WF_free()
  call mem_est("BS_mat")
+ !
+ if (load_O_X) then
+   deallocate(O1x,O2x)
+   call mem_est("O1x O2x")
+ endif
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
    call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
-   deallocate(BS_W,O_phase,ik_is_table)
-   call mem_est("BS_W O_phase ik_is_table")
+   deallocate(O_phase,ik_is_table)
+   call mem_est("O_phase ik_is_table")
    deallocate(Ovv,Occ,Cc)
    call mem_est("O_RES_WS")
    deallocate(BS_O)
@@ -554,16 +566,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- if (load_O_X) then
-   deallocate(O1x,O2x)
-   call mem_est("O1x O2x")
- endif
- !
  if (l_bs_fxc) then
    !
    !
  else if (BS_K_is_ALDA) then
    deallocate(F_xc)
  endif
+ !
+ ! Final CLEAN
+ !
+ call WF_free()
  !
 end subroutine

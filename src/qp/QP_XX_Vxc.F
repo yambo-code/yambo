@@ -23,8 +23,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  ! Hartree S_x self-energy + call to V_xc 
  !
- use pars,          ONLY:SP,schlen,DP,pi,HARTREE
- use drivers,       ONLY:l_sc_run,l_acfdt,l_sc_exx,l_sc_exxc
+ use pars,          ONLY:SP,schlen,DP,pi
+ use units,         ONLY:HARTREE
+ use drivers,       ONLY:l_sc_run,l_acfdt,l_sc_exx,l_real_time
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,depth
  use timing,        ONLY:live_timing
@@ -46,7 +47,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i1,i2,iq,ib,ik,ibp,jb
+ integer                 ::i1,i2,iq,ib,ibp,jb,ik
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
 #else 
@@ -73,6 +74,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  call pp_indexes_reset(px)
  !
  ! Section
+ !
  !
  if (l_acfdt) then
    call section('p','EX(change)S(elf-energy) and Vxc potential')
@@ -175,20 +177,27 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
          iscp%os=isc%os
          call live_timing(steps=1)
          !
+         !
          call scatterBamp(isc)
+         !
+         !
+         ! Normal case, the density matrix is diagonal
          !
          iscp%rhotw=isc%rhotw
          if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
          !
          local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(jb,isc%os(2),isc%os(4))
          !
-         DP_Sx=(0.d0,0.d0)
+           !
 #if defined _DOUBLE
-         DP_Sx=zdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
+           DP_Sx=zdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
 #else 
-         DP_Sx=cdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
+           DP_Sx=cdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
 #endif
+           !
+         !
          QP_Sx(i1)=QP_Sx(i1)+DP_Sx
+         !
        enddo
        !
      enddo
@@ -196,6 +205,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    enddo
    !
    call live_timing()
+
+   !
+   !
    deallocate(isc%gamp,isc%rhotw,iscp%rhotw,local_rhotw)
    !
    call pp_redux_wait(QP_Sx)
@@ -205,7 +217,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    !
    ! Vxc
    !
-   if (.not.l_sc_run) then
+   if (.not.l_sc_run.and..not.l_real_time) then
      call DFT_Vxc(E,Xk)
      call WF_free()
    endif

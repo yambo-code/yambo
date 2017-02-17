@@ -23,7 +23,7 @@ subroutine QP_descriptions(qp,X,Xw)
  ! 
  ! WARNING ! Changes here must be updated in ioQP as well.
  !
- use pars,          ONLY:HARTREE
+ use units,         ONLY:HARTREE
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
@@ -34,7 +34,6 @@ subroutine QP_descriptions(qp,X,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
  use IO_m,          ONLY:ver_is_gt_or_eq
- use ELPH,          ONLY:QP_PH_n_G_bands
  implicit none
  !
  type(QP_t)::qp
@@ -150,36 +149,6 @@ subroutine QP_descriptions(qp,X,Xw)
 &       ' Sx RL components       :',QP_ng_Sx
  endif
  !
- ! El-Ph
- !
- if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
-   !
-   if (l_ph_corr) then
-     if (.not.l_el_corr) then
-       qp%n_descs=n_descs_save+1
-       write (qp%description(qp%n_descs),trim(&
-&            string_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &
-&            ' [ph] dS/dw steps        :',QP_dSc_steps
-       qp%n_descs=qp%n_descs+1
-       write (qp%description(qp%n_descs),trim(&
-&            string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HARTREE /) ),')'))) &
-&            ' [ph] dS/dw step     [ev]:',QP_dSc_delta*HARTREE
-       qp%n_descs=qp%n_descs+1
-       write (qp%description(qp%n_descs),trim(&
-&           string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HARTREE /) ),')')))&
-&           ' [ph] Sc/G damping   [ev]:',QP_G_damp*HARTREE
-     endif
-     !
-     qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=' El-Ph correlation      : yes'
-     !
-     qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&          string_pack('(a,2',gen_fmt( (/QP_PH_n_G_bands/) ),')'))) &
-&          ' El-Ph Sc. G bands      :',(/1,QP_PH_n_G_bands/)
-   endif
-   !
- endif
  !
  i4=(/1,1,0,0/)
  do while(QP_state_extract(i4)>0)

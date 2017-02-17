@@ -21,7 +21,8 @@
 !
 subroutine QP_of(kp,qp,en)
  !
- use pars,      ONLY:HARTREE,SP,lchlen
+ use pars,      ONLY:SP,lchlen,pi
+ use units,     ONLY:HARTREE,HA2FSM1
  use drivers,   ONLY:l_life,l_el_corr
  use com,       ONLY:msg,of_open_close
  use R_lattice, ONLY:bz_samp
@@ -29,6 +30,7 @@ subroutine QP_of(kp,qp,en)
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Sx,QP_table,&
 &                    QP_rep_string,QP_solver,QP_n_states,&
 &                    QP_G,QP_G_er,QP_G_dr,QP_Sc_steps
+ use stderr,    ONLY:set_real_printed_length
  use frequency, ONLY:w_samp,W_reset
  implicit none
  type(QP_t)   ::qp
@@ -99,7 +101,7 @@ subroutine QP_of(kp,qp,en)
      endif
      values(4:6)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
      values(9:10)=(/real(qp_k),real(qp_b)/)
-     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),0.65822/2./aimag(qp%E(i1))/HARTREE/)
+     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),1./(HA2FSm1*2*pi*aimag(qp%E(i1)))/)
      if (qp_isp==1) values(14)= 1.
      if (qp_isp==2) values(14)=-1.
      if (aimag(qp%E(i1))==0.) values(12:13)=0.
@@ -107,7 +109,9 @@ subroutine QP_of(kp,qp,en)
    enddo
    call of_open_close(file_name)
    !
- else if (trim(QP_solver)=='g'.and.l_el_corr) then
+ else if (trim(QP_solver)=='g') then
+   !
+   call set_real_printed_length(f_length=12,g_length=12)
    !
    call W_reset(Sc_W)
    Sc_W%n=QP_Sc_steps
@@ -142,6 +146,8 @@ subroutine QP_of(kp,qp,en)
      call of_open_close(G_Sc_name)
    enddo
    call W_reset(Sc_W)
+   !
+   call set_real_printed_length()
    !
  endif
  !

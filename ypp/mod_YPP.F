@@ -21,25 +21,33 @@
 !
 module YPP
  !
- use pars,    ONLY:SP,lchlen,schlen
+ use pars,    ONLY:SP
+ use pars,    ONLY:lchlen
+ use pars,    ONLY:schlen
  implicit none
  !
- ! K analysis
+ ! BZ grids 
  !
- logical  :: lkanalyze
+ logical  :: l_bz_grids
+ logical  :: l_k_grid
+ logical  :: l_q_grid
+ logical  :: l_long_grid
+ logical  :: l_high_sym_pts
+ integer  :: n_path_pts
  real(SP) :: Kgw_1(3)
  real(SP) :: qlong(3,3)
  character(schlen) :: coo_in
  character(schlen) :: coo_out
+ character(schlen) :: PtsPath
  !
- ! PLOT
+ ! REAL SPACE PLOT
  !
  logical      ::l_plot
- logical      ::l_exc_wf
- logical      ::l_sp_wf
+ logical      ::l_wavefunction
  logical      ::l_density
  logical      ::l_mag
- logical      ::l_merge
+ logical      ::l_sp_wf
+ logical      ::l_exc_wf
  logical      ::l_norm_to_one
  logical      ::use_gnuplot
  logical      ::use_xcrysden
@@ -47,20 +55,23 @@ module YPP
  character(1) ::mag_dir     
  character(3) ::p_dir        
  character(lchlen) ::output_fname 
+ character(schlen) ::plot_title 
  integer               ::nr(3)
  integer               ::nr_tot
  integer               ::plot_dim
  real(SP), allocatable ::v2plot(:)
  real(SP), allocatable ::v2plot2D(:,:)
  !
- ! Exc Properties
+ ! Exc/SP Properties
  !
- logical      ::l_exc_props
+ logical      ::l_excitons
+ logical      ::l_electrons
  logical      ::l_sort
  logical      ::l_amplitude
  logical      ::l_spin
  logical      ::l_free_hole
  integer      ::lambda
+ integer      ::n_lambda
  integer      ::BS_H_dim
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
@@ -68,11 +79,47 @@ module YPP
  real(SP)     ::WF_multiplier   
  character(schlen) ::state_ctl 
  !
+ !EL-PH
+ !
+ logical :: l_dos
+ logical :: l_gkkp
+ logical :: l_phonons
+ logical :: l_eliashberg
+ integer :: elph_steps
+ real(SP):: elph_gamma_broad
+ real(SP):: ph_broad
+ real(SP):: elph_Ef
+ real(SP):: elph_E_max
+ character(schlen) :: elph_dbs_path
+ character(schlen) :: ph_freqs_file
+ !
+ !RAS
+ !
+ logical           :: lras, lsurf, lreels, lcelleps
+ character(schlen) :: xdata, ydata, zdata
+ character(len=5)  :: datatype
+ real(SP)          :: sshift
+ real(SP)          :: d_cellin
+ !
+ ! REELS
+ !
+ !
+ ! Localization
+ !
+ logical           :: lloc
+ real(SP)          :: lowerlim, upperlim
+ integer           :: normdir, ngloc
+ !
+ ! Transition Analysis
+ !
+ logical           :: ltrans
+ real(SP)          :: Ecv_min, Ecv_max
+ integer           :: idir
  !
  !
  interface
    !
-   subroutine exc_wf_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
+   subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
      use pars,          ONLY:SP
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
@@ -87,6 +134,52 @@ module YPP
      integer, optional  :: BS_E_degs(BS_H_dim)
    end subroutine
    !
+   subroutine  elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
+     use R_lattice,     ONLY:bz_samp
+     use electrons,     ONLY:levels
+     implicit none
+     type(bz_samp)      :: k,q,Xk
+     type(levels)       :: en,Xen
+     integer, optional  :: lambda_s(:)
+     integer, optional  :: BS_E_degs(:)
+   end subroutine
+   !
  end interface
  !
+ contains
+   !
+   subroutine K_transform(k,in_mode)
+     !
+     use D_lattice,    ONLY:alat
+     use units,        ONLY:pi
+     use vec_operate,  ONLY:c2a
+     !
+     real(SP)     :: k(3)
+     character(*) :: in_mode
+     !
+     select case (in_mode)
+       case ('cc')
+         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="kc2i")
+         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="kc2a")
+         if (trim(coo_out)=="alat") then
+           k=k*alat(1)/2./pi
+         endif
+       case ('iku')
+         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ki2c")
+         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="ki2a")
+         if (trim(coo_out)=="alat") then
+           call c2a(v_in=k,mode="ki2c")
+           k=k*alat(1)/2./pi
+         endif
+       case ('rlu')
+         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ka2c")
+         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="ka2i")
+         if (trim(coo_out)=="alat") then
+           call c2a(v_in=k,mode="ka2c")
+           k=k*alat(1)/2./pi
+         endif
+     end select
+     !
+   end subroutine
+   !
 end module YPP

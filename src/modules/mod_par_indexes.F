@@ -21,12 +21,13 @@
 !
 module par_indexes_m
  !
+ implicit none
+ !
  contains
    !
    subroutine par_indexes(px,uplim,low_range)
      use par_proc_m, ONLY:pp_redux_wait,pp_indexes,ncpu,myid,p_prod
      use com,        ONLY:error
-     implicit none
      type(pp_indexes)  ::px
      integer           ::uplim(:)
      integer, optional ::low_range(:)

@@ -43,14 +43,4 @@ module pars
  real(SP), parameter :: pi=3.141592653589793238462643383279502884197_SP
  real(SP), parameter :: zero_dfl=1.E-5
  !
- ! UNITs CONVERSION
- !
- real(SP), parameter :: HARTREE=27.2113834_SP         ! ev
- real(SP), parameter :: HA2GHZ=HARTREE*241796_SP
- real(SP), parameter :: HA2THZ=HARTREE*241.796_SP
- real(SP), parameter :: HA2CM1=HARTREE*8065.5_SP
- real(SP), parameter :: Kelvin=1.1604*10.**4*HARTREE  ! ev
- real(SP), parameter :: BOHR=0.52917721  ! Armostrongs
- real(SP), parameter :: radian=pi/180.0_SP  
- !
 end module 

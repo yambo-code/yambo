@@ -17,8 +17,8 @@ case $with_blas in
 esac
 
 # Get fortran linker names of BLAS functions to check for.
-AC_F77_FUNC(sgemm)
-AC_F77_FUNC(dgemm)
+AC_F77_FUNC(caxpy)
+AC_F77_FUNC(daxpy)
 
 acx_blas_save_LIBS="$LIBS"
 LIBS="$LIBS $FLIBS"
@@ -27,25 +27,26 @@ LIBS="$LIBS $FLIBS"
 if test $acx_blas_ok = no; then
 if test "x$BLAS_LIBS" != x; then
         save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
-        AC_MSG_CHECKING([for $sgemm in $BLAS_LIBS])
-        AC_TRY_LINK_FUNC($sgemm, [acx_blas_ok=yes], [BLAS_LIBS=""])
+        AC_MSG_CHECKING([for $caxpy in $BLAS_LIBS])
+        AC_TRY_LINK_FUNC($caxpy, [acx_blas_ok=yes], [BLAS_LIBS=""])
         AC_MSG_RESULT($acx_blas_ok)
         LIBS="$save_LIBS"
 fi
 fi
 
+
 # BLAS linked to by default?  (happens on some supercomputers)
 if test $acx_blas_ok = no; then
         save_LIBS="$LIBS"; LIBS="$LIBS"
-        AC_CHECK_FUNC($sgemm, [acx_blas_ok=yes])
+        AC_CHECK_FUNC($caxpy, [acx_blas_ok=yes])
         LIBS="$save_LIBS"
 fi
 
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
 if test $acx_blas_ok = no; then
         AC_CHECK_LIB(atlas, ATL_xerbla,
-                [AC_CHECK_LIB(f77blas, $sgemm,
-                [AC_CHECK_LIB(cblas, cblas_dgemm,
+                [AC_CHECK_LIB(f77blas, $caxpy,
+                [AC_CHECK_LIB(cblas, cblas_daxpy,
                         [acx_blas_ok=yes
                          BLAS_LIBS="-lcblas -lf77blas -latlas"],
                         [], [-lf77blas -latlas])],
@@ -54,29 +55,29 @@ fi
 
 # BLAS in PhiPACK libraries? (requires generic BLAS lib, too)
 if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(blas, $sgemm,
-                [AC_CHECK_LIB(dgemm, $dgemm,
-                [AC_CHECK_LIB(sgemm, $sgemm,
-                        [acx_blas_ok=yes; BLAS_LIBS="-lsgemm -ldgemm -lblas"],
+        AC_CHECK_LIB(blas, $caxpy,
+                [AC_CHECK_LIB(daxpy, $daxpy,
+                [AC_CHECK_LIB(caxpy, $caxpy,
+                        [acx_blas_ok=yes; BLAS_LIBS="-lcaxpy -ldaxpy -lblas"],
                         [], [-lblas])],
                         [], [-lblas])])
 fi
 
 # BLAS in Alpha CXML library?
 if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(cxml, $sgemm, [acx_blas_ok=yes;BLAS_LIBS="-lcxml"])
+        AC_CHECK_LIB(cxml, $caxpy, [acx_blas_ok=yes;BLAS_LIBS="-lcxml"])
 fi
 
 # BLAS in Alpha DXML library? (now called CXML, see above)
 if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(dxml, $sgemm, [acx_blas_ok=yes;BLAS_LIBS="-ldxml"])
+        AC_CHECK_LIB(dxml, $caxpy, [acx_blas_ok=yes;BLAS_LIBS="-ldxml"])
 fi
 
 # BLAS in Sun Performance library?
 if test $acx_blas_ok = no; then
         if test "x$GCC" != xyes; then # only works with Sun CC
                 AC_CHECK_LIB(sunmath, acosp,
-                        [AC_CHECK_LIB(sunperf, $sgemm,
+                        [AC_CHECK_LIB(sunperf, $caxpy,
                                 [BLAS_LIBS="-xlic_lib=sunperf -lsunmath"
                                  acx_blas_ok=yes],[],[-lsunmath])])
         fi
@@ -84,29 +85,27 @@ fi
 
 # BLAS in SCSL library?  (SGI/Cray Scientific Library)
 if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(scs, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lscs"])
+        AC_CHECK_LIB(scs, $caxpy, [acx_blas_ok=yes; BLAS_LIBS="-lscs"])
 fi
 
 # BLAS in SGIMATH library?
 if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(complib.sgimath, $sgemm,
+        AC_CHECK_LIB(complib.sgimath, $caxpy,
                      [acx_blas_ok=yes; BLAS_LIBS="-lcomplib.sgimath"])
 fi
 
 # BLAS in IBM ESSL library? (requires generic BLAS lib, too)
 if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(blas, $sgemm,
-                [AC_CHECK_LIB(essl, $sgemm,
+        AC_CHECK_LIB(blas, $caxpy,
+                [AC_CHECK_LIB(essl, $caxpy,
                         [acx_blas_ok=yes; BLAS_LIBS="-lessl -lblas"],
                         [], [-lblas $FLIBS])])
 fi
 
 # Generic BLAS library?
 if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
+        AC_CHECK_LIB(blas, $caxpy, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
 fi
-
-AC_SUBST(BLAS_LIBS)
 
 LIBS="$acx_blas_save_LIBS"
 

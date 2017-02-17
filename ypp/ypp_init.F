@@ -21,12 +21,13 @@
 !
 subroutine ypp_init(instr,lnstr,FINALIZE)
  !
- use pars,           ONLY:HARTREE
+ use units,          ONLY:HARTREE,FS2AUT
  use wave_func,      ONLY:wf_ng 
  use R_lattice,      ONLY:ng_vec
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
-&                         nrnlvls,rnlvls,runlevel_is_on,switch_off_runlevel
+&                         nrnlvls,rnlvls,runlevel_is_on,&
+&                         infile_verbosity
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
@@ -68,9 +69,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    l_density=.false.
    l_mag=.false.
    l_sp_wf=.false.
-   l_merge=.true.
    l_norm_to_one=.true.
    output_fname=' '
+   plot_title=' '
    !
    ! EXC WF
    !
@@ -86,12 +87,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    !
    !
-   ! K analyze
+   ! BZ grids
    !
    coo_in="iku"
    coo_out="rlu"
    Kgw_1=0.
    qlong= 0.0_SP
+   PtsPath= ' '
+   N_path_pts=0
    !
    !
  endif
@@ -112,61 +115,87 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    if ( i1>1) then
      if (trim(rstr_piece(i1-1))=="jobstr" ) cycle
    endif
+   !
+   ! Verbosity
+   !
+   if ( trim(rstr_piece(i1)) == 'infver' )  read(rstr_piece(i1+1),*) infile_verbosity
+   if (infile_verbosity<0) infile_verbosity=0
+   !
    do i2=1,nrnlvls
      if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) then
        infile_editing=.true.
        call initactivate(1,trim(rnlvls(i2,1)))
      endif
-     if ( trim(rstr_piece(i1)) == 'plot') then
-       l_exc_wf    =trim(rstr_piece(i1+1))=='e'
+     if ( trim(rstr_piece(i1)) == 'bzgrids') then
+       l_k_grid=trim(rstr_piece(i1+1))=='k'
+       l_q_grid=trim(rstr_piece(i1+1))=='q'
+       l_long_grid=trim(rstr_piece(i1+1))=='l'
        !
-       l_density =trim(rstr_piece(i1+1))=='d'
-       l_sp_wf   =trim(rstr_piece(i1+1))=='w'
+       !
+       if (l_k_grid) call initactivate(1,"K_grid")
+       if (l_q_grid) call initactivate(1,"Q_grid")
+       if (l_long_grid) call initactivate(1,"Long_Gauge")
+       if (l_high_sym_pts) call initactivate(1,"High_Symm")
+    endif
+     if ( trim(rstr_piece(i1)) == 'excitons') then
+       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
+       l_sort           =trim(rstr_piece(i1+1))=='s'
+       l_amplitude      =trim(rstr_piece(i1+1))=='a'
        !
        !
-       if (trim(rstr_piece(i1+1))=='em') then
-         call initactivate(1,'excp')
-         l_mag=.true.
-         l_free_hole=.true.
-       endif
-       !
-       if  (l_exc_wf)  call initactivate(1,'exc_wf')
-       if  (l_exc_wf)  call initactivate(1,'excp')
-       if  (l_density) call initactivate(1,'density')
-       if  (l_mag)     call initactivate(1,'magnetization')
-       if  (l_sp_wf)   call initactivate(1,'wavefunction')
        !
      endif
-     if ( trim(rstr_piece(i1)) == 'excp') then
+     if ( trim(rstr_piece(i1)) == 'electrons') then
+       !
+       l_density        =trim(rstr_piece(i1+1))=='d'
+       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        !
        !
-       l_sort       =trim(rstr_piece(i1+1))=='s'
-       l_amplitude  =trim(rstr_piece(i1+1))=='a'
-       if  (l_amplitude)   call initactivate(1,'exc_amp')
        !
-       !
-       if  (l_sort) infile_editing=.false.
-       !
+     endif
+     if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
+       if (l_amplitude)      call initactivate(1,'amplitude')
+       if (l_spin)           call initactivate(1,'spin')
+       if (l_mag)            call initactivate(1,'magnetization')
+       if (l_wavefunction)   call initactivate(1,'wavefunction')
+       if (l_density)        call initactivate(1,'density')
+       if (l_sort)           infile_editing=.false.
      endif
    enddo
  enddo
  !
  if (.not.l_sort) call call_init_load('parserload')
  !
- lkanalyze  =runlevel_is_on('kpt')
- l_exc_props=runlevel_is_on('excp')
+ l_bz_grids  = runlevel_is_on('bzgrids')
+ l_k_grid    = runlevel_is_on('K_grid')
+ l_q_grid    = runlevel_is_on('Q_grid')
+ l_long_grid = runlevel_is_on('Long_Gauge')
+ l_high_sym_pts = runlevel_is_on('High_Symm')
+ l_excitons =runlevel_is_on('excitons')
+ l_electrons=runlevel_is_on('electrons')
+ l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
+&             runlevel_is_on('density')/))
  l_free_hole=runlevel_is_on('freehole')
- l_amplitude=runlevel_is_on('exc_amp')
- l_exc_wf   =runlevel_is_on('exc_wf')
- l_density  =runlevel_is_on('density')
+ l_amplitude=runlevel_is_on('amplitude')
+ l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
+ l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
+ l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
- l_sp_wf    =runlevel_is_on('wavefunction')
- l_plot     =runlevel_is_on('plot')
  if (.not.l_exc_wf) l_free_hole=.false.
  !
  !
- !
- if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
+ if (l_bz_grids) then
+   call initactivate(1,"cooIn cooOut")
+   if (l_k_grid) call initactivate(1,"GWKpts")
+   if (l_q_grid) call initactivate(1,"Qpts")
+   if (l_long_grid) call initactivate(1,"KShift1 KShift2 KShift3")
+   if (l_high_sym_pts) then
+     call initactivate(1,"PtsPath NPtsPath")
+     call initactivate(-1,"NoWeights ForceUserPts cooIn")
+   else
+     call initactivate(1,"NoWeights ForceUserPts")
+   endif
+ endif
  !
  !
  if (l_plot) then
@@ -175,9 +204,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    if (l_mag)   call initactivate(1,"MagDir") 
  endif
  !
- if (l_exc_props) then
+ if (l_excitons) then
    call initactivate(1,"States")
-   if (l_exc_wf) call initactivate(1,"Degen_Step")
+   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
    if (l_spin) call initactivate(1,"Degen_Step")
@@ -192,9 +221,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call pp_redux_wait
  endif
  !
- if (l_plot.and.l_sp_wf) call QP_init(.FALSE.,.FALSE.)
+ if (l_plot.and.l_sp_wf) &
+&                        call QP_init(.FALSE.,.FALSE.)
  !
- contains
+contains
  !
  subroutine call_init_load(mode) 
    character(*)::mode

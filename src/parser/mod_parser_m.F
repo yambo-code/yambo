@@ -53,7 +53,7 @@ module parser_m
      integer :: def           !ws
      def=res
      call iparse_int(cstr(trim(name)),def,res)
-     call ps_convert(0.,res,name)
+     call ps_convert(0._SP,res,name)
    end subroutine
    !
    subroutine iqparser(name,res)
@@ -67,7 +67,7 @@ module parser_m
      if (iparse_isdef(cstr(trim(name)))==0) return
      do i1=1,dim(1)
        call iparse_block_int(cstr(trim(name)),0,i1-1,res(i1))
-       call ps_convert(0.,res(i1),name)
+       call ps_convert(0._SP,res(i1),name)
      enddo
    end subroutine
    !
@@ -83,7 +83,7 @@ module parser_m
      do i1=1,dim(1)
        do i2=1,dim(2)
          call iparse_block_int(cstr(trim(name)),i1-1,i2-1,res(i1,i2))
-         call ps_convert(0.,res(i1,i2),name)
+         call ps_convert(0._SP,res(i1,i2),name)
        enddo
      enddo
    end subroutine
@@ -160,7 +160,7 @@ module parser_m
      r_r=real(dres);r_i=aimag(dres)
      call ps_convert(r_r,0,name)
      call ps_convert(r_i,0,name)
-     res=r_r+(0.,1.)*r_i
+     res=r_r+(0._SP,1._SP)*r_i
    end subroutine
    !
 end module parser_m

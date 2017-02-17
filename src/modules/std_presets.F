@@ -22,20 +22,23 @@
 subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
- use pars,       ONLY:SP,HARTREE
+ use pars,       ONLY:SP
+ use units,      ONLY:HARTREE,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered
+&                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
+&                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
-&                     QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
-&                     QP_Sc_steps,QP_G_er,QP_G_dr,&
+&                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
+&                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     CHOSEX_use_empties
+&                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx
  use functions,  ONLY:bose_E_cut
- use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,&
-&                     pp_kbv_dim,input_Tel_fixed
+ use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,&
+&                     input_Tel_fixed,non_periodic_directions,lattice
+ use pseudo,     ONLY:pp_n_l_comp_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
@@ -46,30 +49,33 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path
- use stderr,     ONLY:win_size,tty_size,write_to_log,logfile
+ use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,IO_write,dbs_fragment,serial_number,IO_read
+ use IO_m,       ONLY:io_reset,max_io_units,IO_write,dbs_fragment,serial_number,IO_read,mk_dir
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
-&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference
+&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
+&                     BS_columns
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use ELPH,       ONLY:ph_modes,elph_nb,PH_null_E_rgn,ph_damping
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
- use SC,         ONLY:SC_band_mixing
  !
  implicit none
  !
  character(*) :: INSTR,IND,OD,JS,COM_DIR
- integer      :: i1
+ integer      :: i1,i2
+ !
+ ! Printed reals format lengths 
+ !
+ call set_real_printed_length()
  !
  ! Stack Size 
  !
@@ -82,11 +88,22 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  k_rlu_zero=zero_dfl
  G_iku_zero=zero_dfl
  !
- ! PATHS 
+ ! PATHS  ...
  !
  core_io_path=IND
  more_io_path=OD
  com_path=COM_DIR
+ !
+ ! ... created
+ !
+ call mk_dir(core_io_path)
+ call mk_dir(trim(core_io_path)//'/SAVE')
+ call mk_dir(more_io_path)
+ call mk_dir(trim(more_io_path)//'/SAVE')
+ call mk_dir(com_path)
+ !
+ ! ... and Job string
+ !
  jobstr=JS
  !
  ! PAR PROC Setup
@@ -136,8 +153,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !D_lattice
  !
  input_Tel_fixed=.false.
+ non_periodic_directions='none'
+ lattice='Unknown'
  !
- !R_lattice
+ ! R_lattice
  !
  n_g_shells=0
  nqibz=0
@@ -158,13 +177,16 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  call cutoff_presets()
  !
- !D_lattice
+ ! D_lattice 
  !
  n_atoms_max=0
  n_atom_species=0
+ i_space_inv=-1
+ !
+ ! Pseudo
+ !
  pp_n_l_comp_max=0
  pp_kbv_dim=0
- i_space_inv=-1
  !
  !drivers
  !
@@ -188,13 +210,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_el_corr=.false.
  l_ph_corr=.false.
  l_sc_run=.false.
- l_sc_hartree=.false.
  l_sc_hf=.false.
  l_sc_chosex=.false.
  l_sc_exx=.false.
- l_sc_exxc=.false.
- l_sc_lda_x=.false.
- l_sc_pz=.false.
+ l_sc_contains_lda=.false.
  !
  !electrons
  !
@@ -245,11 +264,17 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  X_RIM_nkpts=0
  self_detect_E_range=.false.
  half_X_mat_only=.false.
- P_bands_ordered=.true.
+ Dipole_bands_ordered=.true.
  use_X_RIM=.false.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  long_path='none'
+ eval_alpha=.FALSE.
+ Vnl_commutator_warning=.FALSE.
+ !
+ !Dipole
+ !
+ Eval_P_and_P2_only=.FALSE.
  !
  !QPm
  !
@@ -271,14 +296,17 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GWo_iterations=0
  GWo_SC_done=.false.
  CHOSEX_use_empties=.false.
+ On_Mass_Shell_approx=.false.
+ SC_E_threshold=0.01/HARTREE
+ SC_band_mixing=100.
+ !
+ ! QP_ctl control
  !
  QP_ctl_db="none"
  QP_ctl_interp_neigh=1
- QP_ctl_E(1,:)=(/0.,1.,1./)
- QP_ctl_E(2,:)=(/0.,1.,1./)
- QP_ctl_E(3,:)=(/0.,1.,1./)
- QP_ctl_W=0.
- QP_ctl_Z=(1.,0.)
+ forall (i1=1:3,i2=1:2) QP_ctl_E(i1,:,i2)=(/0.,1.,1./)
+ forall (i1=1:3,i2=1:2) QP_ctl_W(i1,:,i2)=0.
+ forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1.,0.)
  !
  ! BS/BSS
  !
@@ -301,6 +329,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
  Haydock_treshold=-0.02
+ BS_columns=0
  !
  ! TDDFT
  !
@@ -324,13 +353,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_FUNCTIONAL=-1             ! unknow 
  GS_xc_KIND=-1                   ! unknow 
  !
- ! ELPH
  !
- ph_modes=0
- elph_nb=0
- ph_damping=0.
- ph_null_E_rgn=0.1/HARTREE
  !
- SC_band_mixing=100.
  !
 end subroutine

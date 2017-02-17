@@ -44,6 +44,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! Work Space
  !
  integer :: iq,Xdb,i_err,iq_to_start
+ real(SP):: minmax_ehe(2)
  integer, external :: ioX
  character(1)      :: sec_mode
  !
@@ -81,8 +82,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  call X_pre_setup(Xen,X)
  !
- ! Build frequency range only if Xw%p was not already allocated
- ! like in LifeTimes calculations
  !
  call freqs_setup(Xw)
  !

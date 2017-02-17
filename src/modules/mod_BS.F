@@ -33,7 +33,7 @@ module BS
  integer :: BS_n_g_W
  integer :: BS_q(2)
  integer :: BS_identifier
- integer :: BS_blk_coord(2)
+ integer :: BS_k_and_row_restart(2)
  real(SP):: BS_eh_en(2)
  real(SP):: BS_eh_win(2)
  logical :: BS_W_is_diagonal
@@ -45,7 +45,6 @@ module BS
  logical :: BS_K_is_ALDA
  logical :: BS_DB_is_fragmented
  logical :: BS_not_const_eh_f
- logical :: BS_bare_W
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  integer    , allocatable :: BS_eh_table(:,:)
@@ -78,7 +77,7 @@ module BS
  ! Solvers
  !
  character(lchlen):: BSS_description(100)
- character(lchlen):: BSS_file_name(2)
+ character(lchlen):: BSS_file_name(3)
  character(schlen):: BSS_mode
  character(schlen):: BSS_of_title(7)
  integer  :: BSS_n_descs
@@ -91,6 +90,9 @@ module BS
  real(SP) :: Haydock_v0_mod
  logical  :: BSS_write_eig_2_db
  logical  :: BSS_uses_RIM
+#if defined _PARTIAL_DIAGO
+ logical  :: BSS_uses_partial_diago
+#endif
  complex(SP),allocatable :: BSS_rhoq0(:)
  !
  interface 
@@ -123,10 +125,11 @@ module BS
  !
  contains
    !
-   integer function cumulative_index(ik1,ik2)
+   integer function BS_IO_index(ik1,ik2)
      integer :: ik1,ik2
-     cumulative_index=(ik2**2+ik2)/2-ik1+2
+     BS_IO_index=(ik2**2+ik2)/2-ik1+2
    end function
+   !
    !
    function BS_blocks(I)
      use R_lattice, ONLY:nXkibz
@@ -135,7 +138,7 @@ module BS
      BS_blocks=0
      do ik1=1,nXkibz
        do ik2=1,nXkibz
-         if (cumulative_index(ik1,ik2)==I) then
+         if (BS_IO_index(ik1,ik2)==I) then
            BS_blocks=(/ik1,ik2/)
            return
          endif

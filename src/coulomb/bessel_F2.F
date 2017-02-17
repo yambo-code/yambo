@@ -31,7 +31,12 @@ function bessel_F2(z)
  real(SP)      :: abserr,G,work(12),bessel_F2
  real(SP), external :: bessel_J0
  cyl_zz_save=z
+#if defined _DOUBLE
+ call dqag(bessel_J0,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
+&         3,12,last,iwork,work)
+#else
  call qag(bessel_J0,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
 &         3,12,last,iwork,work)
+#endif
  bessel_F2=G
 end function 

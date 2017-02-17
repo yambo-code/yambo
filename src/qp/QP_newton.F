@@ -21,14 +21,14 @@
 !
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
- use pars,          ONLY:SP,HARTREE
+ use pars,          ONLY:SP
+ use units,         ONLY:HARTREE
  use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_chosex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
- use SC,            ONLY:SC_E_threshold
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Sx,QP_Vxc,QP_Sc,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,&
-&                        GWo_SC_done,GWo_iterations
+&                        GWo_SC_done,GWo_iterations,SC_E_threshold 
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -44,7 +44,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  integer     :: i1,i2,iter
  real(SP)    :: SC_corr_prev,SC_corr_now
- complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1),Eqp_prev(QP_n_states)
+ complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  !
  ! Dyson equation: Newton solver 
  !
@@ -59,7 +59,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  iter=0
  SC_corr_prev=1.
- Eqp_prev(:)=qp%E_bare(:)
  !
    !
    if (l_el_corr) then
@@ -80,8 +79,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
        Z(i2)=1./(1.-QP_dSc(i1,i2))
        !
-       if (.not.l_el_corr) Z(i2)=1.
-       !
        Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
        if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Sx(i1)-QP_Vxc(i1))
        !
@@ -99,9 +96,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      !
    enddo
    !
-   SC_corr_now= maxval(real(qp%E(:)-Eqp_prev(:)))
+   SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))
    GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==GWo_iterations
-   Eqp_prev(:)=qp%E(:)
    !
  !
  ! Update GWo_iterations

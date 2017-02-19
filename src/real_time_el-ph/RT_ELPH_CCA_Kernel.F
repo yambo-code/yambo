@@ -78,10 +78,6 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,k,ph_freq,Gkkp,l_skip_ABS)
      !
      i_b_mat_mem=PAR_B_mat_index(i_n_shift,i_np_shift)
      !
-     pre_factor=abs(Gkkp(i_np,i_n))**2/real(RT_Nk_ibz(ik_m_q))
-     !
-     if( pre_factor==0._SP ) cycle
-     !
      if (.not. l_RT_uses_E_FineGd) then
        !
        if(RT_E_and_k%En(i_np_shift,ik_m_q)<RT_eh_en(1) .or. RT_E_and_k%En(i_np_shift,ik_m_q)>RT_eh_en(2)) cycle
@@ -91,6 +87,10 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,k,ph_freq,Gkkp,l_skip_ABS)
        DELTA_W=RT_E_and_k%W(i_n_shift,ik) +RT_E_and_k%W(i_np_shift,ik_m_q)
        !
      endif
+     !
+     pre_factor=abs(Gkkp(i_np,i_n))**2/real(RT_Nk_ibz(ik_m_q))
+     !
+     if( pre_factor==0._SP ) cycle
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !

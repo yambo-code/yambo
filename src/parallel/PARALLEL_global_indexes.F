@@ -26,7 +26,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use pars,          ONLY:IP
  use com,           ONLY:secnm
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,MPI_comm,COMM_copy,&
-&                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands
+&                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands,EH_range
  ! LOGICALS
  use parallel_m,    ONLY:l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q
  ! COMMUNICATORS
@@ -38,7 +38,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t,l_X_terminator
  use drivers,       ONLY:l_gw0,l_HF_and_locXC,l_life,l_elphoton_corr
- use BS,            ONLY:BS_bands
+ use BS,            ONLY:BS_bands,BS_nT_at_k
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
@@ -61,7 +61,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use IO_m,          ONLY:IO_and_Messaging_switch
- use QP_m,          ONLY:QP_nb,QP_n_G_bands
+ use QP_m,          ONLY:QP_nb,QP_n_G_bands,QP_n_states
  use com,           ONLY:warning
  !
  implicit none
@@ -74,7 +74,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
- integer              :: X_type
+ integer              :: X_type,i_k
  logical              :: reset_all,computing_Fock
  !
  ! Resets...
@@ -158,6 +158,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
  endif
  !
+ ! EH-range
+ !----------
+ if (ENVIRONMENT=="Response_T_space"                ) then
+   EH_range=maxval( BS_nT_at_k )
+   do i_k=1,Xk%nibz
+     if (BS_nT_at_k(i_k)<EH_range.and.BS_nT_at_k(i_k)>0) EH_range=BS_nT_at_k(i_k)
+   enddo
+ endif
+ !
  ! Generic Bands
  !---------------
  if (ENVIRONMENT=="Self_Energy"                     ) then
@@ -177,6 +186,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #if defined _RT
  if (ENVIRONMENT=="Real_Time"                       ) n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
 #endif
+ !
+ ! QP states
+ !-----------
+ if (ENVIRONMENT=="Self_Energy"                     ) QP_range=QP_n_states
  !
  !==========
  ! DEFAULTS

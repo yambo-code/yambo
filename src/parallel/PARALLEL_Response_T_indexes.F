@@ -29,7 +29,7 @@ subroutine PARALLEL_Response_T_indexes(E,Xk,q,ENVIRONMENT,X_type)
  use IO_m,          ONLY:IO_and_Messaging_switch
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
- use parallel_m,    ONLY:master_cpu,EH_range,COMM_copy,PAR_index_copy,K_range
+ use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_index_copy,K_range
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_ordered,PAR_COM_DIPOLES, &
@@ -59,11 +59,6 @@ subroutine PARALLEL_Response_T_indexes(E,Xk,q,ENVIRONMENT,X_type)
  !========================================================================================================
  if (ENVIRONMENT=="Response_T_space") then
    !======================================================================================================
-   !
-   EH_range=maxval( BS_nT_at_k )
-   do i_k=1,Xk%nibz
-     if (BS_nT_at_k(i_k)<EH_range.and.BS_nT_at_k(i_k)>0) EH_range=BS_nT_at_k(i_k)
-   enddo
    !
    CALL PARALLEL_structure(3,(/"k ","eh","t "/))
    !

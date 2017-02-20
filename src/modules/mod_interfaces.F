@@ -27,7 +27,7 @@ module interfaces
  !
  interface
    !
-   subroutine SLK_matrix_transfer( mode, M_slk, M_bse, M )
+   subroutine MATRIX_transfer( mode, M_slk, M_bse, M )
      !
      use SLK_m, ONLY:SLK_matrix
      use pars,  ONLY:SP

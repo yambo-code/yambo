@@ -1,0 +1,4 @@
+objs = NoSource.F 
+#if defined _SCALAPACK
+objs = MATRIX_init.o MATRIX_transfer.o MATRIX_duplicate.o
+#endif

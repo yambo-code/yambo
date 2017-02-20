@@ -40,7 +40,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
-&                        io_RESPONSE
+&                        io_RESPONSE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind
@@ -245,6 +245,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        endif
        !
        io_err=io_X(X,Xw,ID)
+       !
+       call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)
        !
      endif
      !

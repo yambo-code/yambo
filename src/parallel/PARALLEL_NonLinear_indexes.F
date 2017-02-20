@@ -31,7 +31,7 @@ subroutine PARALLEL_NonLinear_indexes(E,Xk,q,ENVIRONMENT)
  use real_time,     ONLY:RT_bands
  use IO_m,          ONLY:IO_and_Messaging_switch
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:n_freqs,ncpu,Q_range,n_bands,COMM_copy,PAR_index_copy
+ use parallel_m,    ONLY:ncpu,Q_range,n_bands,COMM_copy,PAR_index_copy
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_G_b_A2A,PAR_COM_G_b_INDEX,PAR_COM_WF_k_INDEX,&
@@ -63,9 +63,6 @@ subroutine PARALLEL_NonLinear_indexes(E,Xk,q,ENVIRONMENT)
  integer      ::  i_qp,ib1,ib2,i_k
  !
  if (ENVIRONMENT=="Non_Linear") then
-   !
-   n_freqs =n_frequencies
-   !
    !
    CALL PARALLEL_structure(4,(/"w ","k ","b ","q "/))
    !

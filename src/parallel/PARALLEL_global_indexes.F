@@ -26,7 +26,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use pars,          ONLY:IP
  use com,           ONLY:secnm
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,MPI_comm,COMM_copy,&
-&                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands,EH_range
+&                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands,n_freqs,EH_range
  ! LOGICALS
  use parallel_m,    ONLY:l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_NL,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q
  ! COMMUNICATORS
@@ -53,6 +53,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
 #if defined _QED
  use parallel_m,    ONLY:l_par_SC
+#endif
+#if defined _NL
+ use nl_optics,     ONLY:n_frequencies
 #endif
 #if defined _SC || defined _RT
  use drivers,       ONLY:l_eval_collisions
@@ -200,6 +203,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! QP states
  !-----------
  if (ENVIRONMENT=="Self_Energy"                     ) QP_range=QP_n_states
+ !
+#if defined _NL
+ if (ENVIRONMENT=="Non_Linear") n_freqs =n_frequencies
+#endif
  !
  !==========
  ! DEFAULTS

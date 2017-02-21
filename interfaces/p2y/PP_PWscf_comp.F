@@ -30,7 +30,7 @@ subroutine PP_PWscf_comp(basis,atoms)
   !
   use pars,                  ONLY:SP,DP
   use electrons,     ONLY:n_spinor
-  use pseudo,        ONLY:pp_table,pp_kb,pp_kbd,pp_kbs
+  use pseudo,        ONLY:pp_kb,pp_kbd,pp_kbs
   !
   implicit none
   !

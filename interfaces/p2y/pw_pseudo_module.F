@@ -37,15 +37,17 @@ public :: pw_pseudo,           &
 
 type pw_pseudo
   logical          :: psp_has_so
+  logical          :: psp_has_nlcc
   real(SP)         :: z               ! Ionic charge
   integer          :: nbeta           ! Number of nonlocal projectors
   integer          :: nmesh           ! Number of points in mesh
   real(SP), pointer    :: mesh(:)         ! Mesh [nmesh]
   real(SP), pointer    :: wmesh(:)        ! weights for integrals [nmesh]
+  real(SP), pointer    :: rho_nlcc(:)     ! nlcc charge density [nmesh]
   real(SP), pointer    :: vloc(:)         ! Local potential [nmesh]
-  integer,  pointer :: lbeta(:)
+  integer,  pointer    :: lbeta(:)
   real(SP), pointer    :: jbeta(:)
-  integer,     pointer :: mesh_beta(:)
+  integer,  pointer    :: mesh_beta(:)
   real(SP), pointer    :: beta(:,:)       ! Non-local projectors [nmesh,nbeta]
   real(SP), pointer    :: d(:)            ! D_ii factors (diagonal for NC) [nbeta]
   real(SP)             :: cutoff          ! Maximum useful cutoff (Ry)
@@ -71,6 +73,7 @@ subroutine pw_pseudo_init0(pseudo)
   pseudo%nmesh = 0
   allocate(pseudo%mesh(0))
   allocate(pseudo%wmesh(0))
+  allocate(pseudo%rho_nlcc(0))
   allocate(pseudo%vloc(0))
   allocate(pseudo%lbeta(0))
   allocate(pseudo%jbeta(0))
@@ -97,6 +100,7 @@ subroutine pw_pseudo_destroy0(pseudo)
   pseudo%nmesh = 0
   deallocate(pseudo%mesh)
   deallocate(pseudo%wmesh)
+  deallocate(pseudo%rho_nlcc)
   deallocate(pseudo%vloc)
   deallocate(pseudo%lbeta)
   deallocate(pseudo%jbeta)
@@ -162,6 +166,7 @@ subroutine pw_pseudo_set_dim(pseudo,nbeta,nmesh)
   pseudo%nmesh = nmesh
   allocate(pseudo%mesh(nmesh))
   allocate(pseudo%wmesh(nmesh))
+  allocate(pseudo%rho_nlcc(nmesh))
   allocate(pseudo%vloc(nmesh))
   allocate(pseudo%lbeta(nbeta))
   allocate(pseudo%jbeta(nbeta))

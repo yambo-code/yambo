@@ -3014,43 +3014,46 @@ CONTAINS
       !
     END SUBROUTINE qexml_read_rho
 
-subroutine read_pseudo_header(iunaux,z,psfile,nmesh,nbeta,psp_has_so) 
+subroutine read_pseudo_header(iunaux,z,psfile,nmesh,nbeta,psp_has_so,psp_has_nlcc) 
   use pars,   ONLY:SP
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   INTEGER,  INTENT(OUT) :: nmesh,nbeta
   REAL(SP), INTENT(OUT)    :: z
   LOGICAL, OPTIONAL, INTENT(OUT) :: psp_has_so
+  LOGICAL, OPTIONAL, INTENT(OUT) :: psp_has_nlcc
   !
   CHARACTER(256) :: filename
   character(50) :: dummy
   logical       :: ldummy
   INTEGER :: i,idummy,idummy2, unit, iostat, iunaux,ierr
-  logical :: psp_has_so_
+  logical :: psp_has_so_,psp_has_nlcc_
   CHARACTER(len=iotk_attlenx) :: attr,root
   !
   CALL iotk_free_unit(iunaux)
   filename= TRIM(datadir_in)//trim(psfile)
   !
-  CALL read_upf_header_v2( iunaux, filename, z, nmesh, nbeta, psfile, psp_has_so_, ierr )
+  CALL read_upf_header_v2( iunaux, filename, z, nmesh, nbeta, psfile, psp_has_so_, psp_has_nlcc_, ierr )
   !
-  if(ierr>0) CALL read_upf_header_v1( iunaux, filename , z, nmesh, nbeta, psfile, ierr )
+  if(ierr>0) CALL read_upf_header_v1( iunaux, filename, z, nmesh, nbeta, psfile, psp_has_nlcc_, ierr )
   !
   if(ierr>0) CALL errore('read_pseudo_header', &
 &                'Cannot open file: '//TRIM(filename),1)
   !
-  if(present(psp_has_so)) psp_has_so=psp_has_so_
+  if(present(psp_has_so))   psp_has_so=psp_has_so_
+  if(present(psp_has_nlcc)) psp_has_nlcc=psp_has_nlcc_
   !
   return
   !
 end subroutine read_pseudo_header
 
-subroutine read_upf_header_v2( u, filename, z, nmesh, nbeta, psfile, psp_has_so, ierr )
+subroutine read_upf_header_v2( u, filename, z, nmesh, nbeta, psfile, psp_has_so, psp_has_nlcc, ierr )
   use pars,        ONLY:SP
   implicit none
   INTEGER, INTENT(OUT) :: nmesh,nbeta
   REAL(SP), INTENT(OUT) :: z
   LOGICAL, INTENT(OUT) :: psp_has_so
+  LOGICAL, INTENT(OUT) :: psp_has_nlcc
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   CHARACTER(256), INTENT(IN) :: filename
   !
@@ -3077,9 +3080,10 @@ subroutine read_upf_header_v2( u, filename, z, nmesh, nbeta, psfile, psp_has_so,
    CALL iotk_scan_attr(attr, 'is_ultrasoft',   tvanp) 
    CALL iotk_scan_attr(attr, 'z_valence',      z)
    if(tvanp) call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile)//' not supported',1)
+   CALL iotk_scan_attr(attr, 'has_so', psp_has_so)
+   CALL iotk_scan_attr(attr, 'core_correction', psp_has_nlcc)
    CALL iotk_scan_attr(attr, 'mesh_size',      nmesh)
    CALL iotk_scan_attr(attr, 'number_of_proj', nbeta)
-   CALL iotk_scan_attr(attr, 'has_so', psp_has_so)
   !
   CALL iotk_close_read(u, ierr=ierr)
   !
@@ -3087,11 +3091,12 @@ subroutine read_upf_header_v2( u, filename, z, nmesh, nbeta, psfile, psp_has_so,
   !
 end subroutine read_upf_header_v2
 
-subroutine read_upf_header_v1( u, filename, z, nmesh, nbeta, psfile, ierr )
+subroutine read_upf_header_v1( u, filename, z, nmesh, nbeta, psfile, psp_has_nlcc, ierr )
   use pars,       ONLY:SP
   implicit none
   INTEGER, INTENT(IN)  :: u
   INTEGER, INTENT(OUT) :: nmesh,nbeta
+  LOGICAL, INTENT(OUT) :: psp_has_nlcc
   REAL(SP), INTENT(OUT) :: z
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   CHARACTER(256), INTENT(IN) :: filename
@@ -3116,7 +3121,7 @@ subroutine read_upf_header_v1( u, filename, z, nmesh, nbeta, psfile, ierr )
   read(u,*,iostat=iostat) dummy
   if(trim(dummy) == "USPP") call errore( 'check_pseudo : ','Ultrasoft'//trim(psfile)//' not supported',1)
   if(.not. trim(dummy) == "NC") call errore( 'check_pseudo :',trim(psfile)//' file not norm conserving!',1)
-  read(u,*,iostat=iostat) ldummy
+  read(u,*,iostat=iostat) psp_has_nlcc
   read(u,*,iostat=iostat) dummy
   read(u,*,iostat=iostat) z
   read(u,*,iostat=iostat) dummy
@@ -3164,16 +3169,16 @@ end subroutine read_upf_header_v1
   end function matches
 
 subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
-&          wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psp_has_so) 
+&          wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,psp_has_so,psp_has_nlcc) 
   use pars,      ONLY:SP
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
   INTEGER, INTENT(INOUT) :: nmesh,nbeta
-  REAL(SP), INTENT(OUT)      :: z
-  REAL(SP), INTENT(OUT)      :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  REAL(SP), INTENT(OUT)  :: z
+  REAL(SP), INTENT(OUT)  :: mesh(:),wmesh(:),rho_nlcc(:),vloc(:),beta(:,:),d(:),jbeta(:)
   INTEGER, INTENT(OUT)   :: lbeta(:),mesh_beta(:)
-  LOGICAL, INTENT(INOUT) :: psp_has_so
+  LOGICAL, INTENT(INOUT) :: psp_has_so,psp_has_nlcc
     !
     character(50) :: dummy
     logical       :: ldummy
@@ -3183,29 +3188,30 @@ subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
     !
     ! Header data (sets value of unit u)
     !
-    call read_pseudo_header(u,z,psfile, nmesh, nbeta, psp_has_so=psp_has_so)
+    call read_pseudo_header(u,z,psfile, nmesh, nbeta, psp_has_so=psp_has_so, psp_has_nlcc=psp_has_nlcc)
     !
-    call read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so, &
-&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
+    call read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
+&                 wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
     !
     return
     ! 
 end subroutine read_pseudo_data
 
-subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so, &
-&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
+subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc,&
+&                 wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
   use pars,    ONLY:SP
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   LOGICAL, INTENT(IN)          :: psp_has_so
+  LOGICAL, INTENT(IN)          :: psp_has_nlcc
   !
-  INTEGER, INTENT(IN) :: nmesh,nbeta
-  REAL(SP),INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  INTEGER, INTENT(IN)  :: nmesh,nbeta
+  REAL(SP),INTENT(OUT) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:), jbeta(:)
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
   !
   CHARACTER(256) :: filename
-  character(50) :: dummy
-  logical       :: ldummy
+  character(50)  :: dummy
+  logical        :: ldummy
   INTEGER :: idummy,ibeta,idummy2
   INTEGER        :: i, iostat, ierr, u
   
@@ -3213,14 +3219,14 @@ subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so, &
   CALL iotk_free_unit(u)
   filename= TRIM(datadir_in)//trim(psfile)
   !
-  CALL read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
-&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
+  CALL read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
+&                 wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
   if(ierr>0) THEN
       REWIND(u)
       jbeta=0.
-      CALL read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
-&                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
+      CALL read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, psp_has_nlcc, &
+&                 wmesh,rho_nlcc,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
   ENDIF
   !
   IF(ierr>0) CALL errore('read_pseudo_parameters', &
@@ -3230,17 +3236,18 @@ subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so, &
   !
 end subroutine
 
-subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
-&                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
+subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, psp_has_nlcc, &
+&                 wmesh,rho_nlcc,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
   use pars,    ONLY:SP
   use interfaces,     ONLY:LINEAR_ALGEBRA_driver
   use linear_algebra, ONLY:DIAGO
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
-  INTEGER, INTENT(IN)  :: nmesh,nbeta
-  REAL(SP), INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:)
-  INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
+  INTEGER,  INTENT(IN)  :: nmesh,nbeta
+  LOGICAL,  INTENT(IN)  :: psp_has_nlcc
+  REAL(SP), INTENT(OUT) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:)
+  INTEGER,  INTENT(OUT) :: lbeta(:),mesh_beta(:)
   CHARACTER(256), INTENT(IN) :: filename
   !
   REAL(SP)      :: beta_tmp(nmesh,nbeta),d_tmp(nbeta,nbeta),rdummy
@@ -3261,6 +3268,17 @@ subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
   read(u,*,iostat=iostat) wmesh
   call iotk_scan_end(u,"PP_RAB")
   call iotk_scan_end(u,"PP_MESH",ierr=ierr)
+  !
+  ! NLCC
+  !
+  if (psp_has_nlcc) then
+    rewind(u)
+    call iotk_scan_begin(u,"PP_NLCC")
+    read(u,*,iostat=iostat) rho_nlcc
+    call iotk_scan_end(u,"PP_NLCC",ierr=ierr)
+  else
+    rho_nlcc(:)=0.0
+  endif
   !
   ! Local data
   !
@@ -3320,8 +3338,8 @@ subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
   !
 end subroutine
 
-subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
-&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
+subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
+&                 wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
   use interfaces,     ONLY:LINEAR_ALGEBRA_driver
   use linear_algebra, ONLY:DIAGO
@@ -3331,9 +3349,10 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   LOGICAL, INTENT(IN)          :: psp_has_so
+  LOGICAL, INTENT(IN)          :: psp_has_nlcc
   !
   INTEGER,  INTENT(IN)  :: nmesh,nbeta
-  REAL(SP), INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  REAL(SP), INTENT(OUT) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:), jbeta(:)
   INTEGER,  INTENT(OUT) :: lbeta(:),mesh_beta(:)
   CHARACTER(256), INTENT(IN) :: filename
   !
@@ -3366,6 +3385,12 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
   CALL iotk_scan_dat(u, 'PP_RAB', wmesh)
   !
   CALL iotk_scan_end(u, 'PP_MESH')
+  !
+  if (psp_has_nlcc) then
+    CALL iotk_scan_dat(u, 'PP_NLCC', rho_nlcc)
+  else 
+    rho_nlcc = 0.0
+  endif
   !
   CALL iotk_scan_dat(u, 'PP_LOCAL', vloc)
   !

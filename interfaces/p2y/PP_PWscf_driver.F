@@ -197,8 +197,8 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  ! Read data from UPF files, fill pseudo% types
  !
  call read_pseudo_data(psfile,nmesh,nbeta,pseudo%z,pseudo%mesh,&
-&                      pseudo%wmesh,pseudo%vloc,pseudo%lbeta,pseudo%jbeta,&
-&                      pseudo%mesh_beta,pseudo%beta,pseudo%d,pseudo%psp_has_so)
+&                      pseudo%wmesh,pseudo%rho_nlcc,pseudo%vloc,pseudo%lbeta,pseudo%jbeta,&
+&                      pseudo%mesh_beta,pseudo%beta,pseudo%d,pseudo%psp_has_so,pseudo%psp_has_nlcc)
  !
  ! Fill the pseudo%interpolation table
  ! ecutwfc(Ha) -> cutoff(Ry)

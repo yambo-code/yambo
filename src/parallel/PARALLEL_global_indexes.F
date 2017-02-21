@@ -201,18 +201,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! ENVIRONMENT DEPENDENT SCHEMES
  !==============================
  !
- if (index(ENVIRONMENT, "Response_G_space")>0) call PARALLEL_Response_G_indexes(E,Xk,q,ENVIRONMENT,X_type)
+ if (index(ENVIRONMENT, "Response_G_space")>0) call PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
- if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_SelfEnergy_indexes(E,Xk,q,ENVIRONMENT,X_type)
+ if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT,X_type)
  !
- if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_Response_T_indexes(E,Xk,q,ENVIRONMENT,X_type)
+ if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T(E,Xk,q,ENVIRONMENT,X_type)
  !
 #if defined _RT
- if (      ENVIRONMENT=="Real_Time")           call PARALLEL_RealTime_indexes(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
 #endif
  !
 #if defined _SCALAPACK
- if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_ScaLapack_indexes(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapacK(E,Xk,q,ENVIRONMENT)
 #endif
  !
  !======

@@ -241,7 +241,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    ! 1) First compute the residuals
    !================================
-   call X_os_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
+   call X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !
    ! 2) Then the frequency dependent term
    !=======================================

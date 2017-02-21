@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_Response_T_indexes(E,Xk,q,ENVIRONMENT,X_type)
+subroutine PARALLEL_global_Response_T(E,Xk,q,ENVIRONMENT,X_type)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -150,4 +150,4 @@ subroutine PARALLEL_Response_T_indexes(E,Xk,q,ENVIRONMENT,X_type)
    !  
  endif
  !
-end subroutine PARALLEL_Response_T_indexes
+end subroutine PARALLEL_global_Response_T

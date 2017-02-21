@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
+logical function OPTICS_eels(wv,nw,be_verbose,ordering,eps,eel)
  ! 
  use pars,          ONLY:SP,pi,cZERO,cI
  use units,         ONLY:HA2EV
@@ -40,13 +40,13 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  integer            :: iw
  complex(SP)        :: eps_extended(nw),eps_kk(nw),wv_kk(nw)
  !
- O_eels=.TRUE.
+ OPTICS_eels=.TRUE.
  !
  if (.not.present(eps)) then
    if (ordering=='Tr'.or.ordering=='Ta') then
      if (real(wv(1))<-real(wv(1))) then
-       O_eels=.FALSE.
-       if (be_verbose) call warning(' [O_eels] Impossible to evaluate the EELS')
+       OPTICS_eels=.FALSE.
+       if (be_verbose) call warning(' [OPTICS_eels] Impossible to evaluate the EELS')
        return
      endif
    endif
@@ -61,7 +61,7 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  if ( (maxval(aimag(eps))/aimag(eps(1))<100._SP   .or. &
 &      maxval(aimag(eps))/aimag(eps(nw))<100._SP) .and. be_verbose) then
    !
-   call warning(' [O_eels] Possible inaccuracy in the EPS prolungation')
+   call warning(' [OPTICS_eels] Possible inaccuracy in the EPS prolungation')
    !
  endif
  !

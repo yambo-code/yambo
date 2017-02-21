@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
+integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
@@ -84,7 +84,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  sec_mode='*'
  if (depth>0) sec_mode='='
  !
- X_em1=-1
+ X_dielectric_matrix=-1
  !
  if (.not.APPEND_NO_VERIFY) then
    if (X%whoami==2) then
@@ -162,7 +162,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (all(io_X_done(X%iq(1):X%iq(2))>0)) then
      call FREQUENCIES_reset(Xw,"all")
-     if (X%iq(1)==X%iq(2)) X_em1=X%iq(1)
+     if (X%iq(1)==X%iq(2)) X_dielectric_matrix=X%iq(1)
      return
    endif
    !
@@ -224,11 +224,11 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    X_range               =(/1,Xw%n_freqs/)
    if (.not.io_RESPONSE) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
    !
-   call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
+   call X_irredux(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
-   if (X%whoami/=1) call X_s(iq,X,Xw,X_range)
+   if (X%whoami/=1) call X_redux(iq,X,Xw,X_range)
    !
    call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !

@@ -89,9 +89,10 @@ PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
 #
 # YPP
 #
-YPP_LIBS        = modules interpolate init qp plotting electrons excitons symmetries k-points bits 
-YPPPH_LIBS      = modules interpolate init qp plotting electrons elph excitons symmetries k-points bits 
-YPPRT_LIBS      = modules interpolate init qp plotting electrons elph real_time excitons symmetries k-points bits 
+YPP_BASIC_LIBS  = modules interpolate init qp plotting electrons 
+YPP_LIBS        = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
+YPPPH_LIBS      = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 
+YPPRT_LIBS      = $(YPP_BASIC_LIBS) elph real_time excitons symmetries k-points bits 
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc

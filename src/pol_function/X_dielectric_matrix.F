@@ -142,7 +142,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        ! In the next lines Yambo will VERIFY the em1d database
        ! to check if this iq has been already done. 
        ! When self_detect_E_range=.TRUE. however the Xw%er setup is
-       ! done only in X_os and the VERIFY fails. This is why the procedure
+       ! done only in X_irredux and the VERIFY fails. This is why the procedure
        ! must be repeated here:
        !
        if (self_detect_E_range) then

@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
+subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Non interacting Xo
  !

@@ -36,23 +36,25 @@ public :: pw_pseudo,           &
         
 
 type pw_pseudo
-  logical          :: psp_has_so
-  logical          :: psp_has_nlcc
-  real(SP)         :: z               ! Ionic charge
-  integer          :: nbeta           ! Number of nonlocal projectors
-  integer          :: nmesh           ! Number of points in mesh
-  real(SP), pointer    :: mesh(:)         ! Mesh [nmesh]
-  real(SP), pointer    :: wmesh(:)        ! weights for integrals [nmesh]
-  real(SP), pointer    :: rho_nlcc(:)     ! nlcc charge density [nmesh]
-  real(SP), pointer    :: vloc(:)         ! Local potential [nmesh]
-  integer,  pointer    :: lbeta(:)
-  real(SP), pointer    :: jbeta(:)
-  integer,  pointer    :: mesh_beta(:)
-  real(SP), pointer    :: beta(:,:)       ! Non-local projectors [nmesh,nbeta]
-  real(SP), pointer    :: d(:)            ! D_ii factors (diagonal for NC) [nbeta]
-  real(SP)             :: cutoff          ! Maximum useful cutoff (Ry)
+  logical           :: psp_has_so
+  logical           :: psp_has_nlcc
+  real(SP)          :: z               ! Ionic charge
+  integer           :: nbeta           ! Number of nonlocal projectors
+  integer           :: nmesh           ! Number of points in mesh
+  real(SP)          :: cutoff          ! Maximum useful cutoff (Ry)
+  real(SP), pointer :: mesh(:)         ! Mesh [nmesh]
+  real(SP), pointer :: wmesh(:)        ! weights for integrals [nmesh]
+  real(SP), pointer :: rho_nlcc(:)     ! nlcc charge density [nmesh]
+  real(SP), pointer :: vloc(:)         ! Local potential [nmesh]
+  integer,  pointer :: lbeta(:)
+  real(SP), pointer :: jbeta(:)
+  integer,  pointer :: mesh_beta(:)
+  real(SP), pointer :: beta(:,:)       ! Non-local projectors [nmesh,nbeta]
+  real(SP), pointer :: d(:)            ! D_ii factors (diagonal for NC) [nbeta]
   type(num_interpolation), &
-           pointer :: interpolation(:)      ! Interpolation table
+            pointer :: interpolation(:)    ! Interpolation table beta-proj
+  type(num_interpolation)  &
+                    :: interpolation_nlcc  ! Interpolation table rho_nlcc
 end type pw_pseudo
 
 interface pw_pseudo_init
@@ -71,6 +73,7 @@ subroutine pw_pseudo_init0(pseudo)
   pseudo%z    = 0.0
   pseudo%nbeta = 0
   pseudo%nmesh = 0
+  pseudo%cutoff = 0.0
   allocate(pseudo%mesh(0))
   allocate(pseudo%wmesh(0))
   allocate(pseudo%rho_nlcc(0))
@@ -81,7 +84,6 @@ subroutine pw_pseudo_init0(pseudo)
   allocate(pseudo%beta(0,0))
   allocate(pseudo%d(0))
   allocate(pseudo%interpolation(0))
-  pseudo%cutoff = 0.0
 end subroutine pw_pseudo_init0
 
 subroutine pw_pseudo_init1(pseudo)
@@ -98,6 +100,7 @@ subroutine pw_pseudo_destroy0(pseudo)
   pseudo%z    = 0.0
   pseudo%nbeta = 0
   pseudo%nmesh = 0
+  pseudo%cutoff = 0._SP
   deallocate(pseudo%mesh)
   deallocate(pseudo%wmesh)
   deallocate(pseudo%rho_nlcc)
@@ -111,7 +114,7 @@ subroutine pw_pseudo_destroy0(pseudo)
     call num_interpolation_destroy(pseudo%interpolation(i))
   end do
   deallocate(pseudo%interpolation)
-  pseudo%cutoff = 0._SP
+  call num_interpolation_destroy(pseudo%interpolation_nlcc)
 end subroutine pw_pseudo_destroy0
 
 subroutine pw_pseudo_destroy1(pseudo)
@@ -126,13 +129,12 @@ subroutine pw_pseudo_set_table(pseudo,cutoff)
 ! use tools_module
 ! use num_module
   type (pw_pseudo), intent(inout) :: pseudo
-  real(SP),             intent(in)    :: cutoff
-  integer :: nr
-  real(SP)    :: q_max,q,delta_q
-  integer :: ir,iq,ibeta,l
-  real(SP)    :: aux(pseudo%nmesh),aux1(pseudo%nmesh)
+  real(SP),         intent(in)    :: cutoff
+  integer  :: nr
+  real(SP) :: q_max,q,delta_q
+  integer  :: ir,iq,ibeta,l
+  real(SP) :: aux(pseudo%nmesh),aux1(pseudo%nmesh)
   
-
   pseudo%cutoff = cutoff
   q_max = sqrt(2.0*cutoff)
   delta_q = 0.01
@@ -156,6 +158,26 @@ subroutine pw_pseudo_set_table(pseudo,cutoff)
               num_4pi*num_simpson(aux1(1:nr))
     end do
   end do
+  !
+  ! NLCC
+  !
+  if (pseudo%psp_has_nlcc) then
+    call num_interpolation_init(pseudo%interpolation_nlcc,0._SP,q_max, &
+                                delta_q,parity=+1)
+    nr = pseudo%nmesh
+    ! l = 0 is used
+    do ir=1,nr
+      aux(ir) = pseudo%rho_nlcc(ir)*pseudo%wmesh(ir)*pseudo%mesh(ir)
+    end do
+    do iq=0,pseudo%interpolation_nlcc%n
+      q = pseudo%interpolation_nlcc%x(iq)
+      do ir=1,nr
+        aux1(ir) = aux(ir) * num_xmlsphbes(q*pseudo%mesh(ir),0)
+      end do
+      pseudo%interpolation_nlcc%y(iq) = num_4pi*num_simpson(aux1(1:nr))
+    end do
+  endif
+  !
 end subroutine pw_pseudo_set_table
 
 subroutine pw_pseudo_set_dim(pseudo,nbeta,nmesh)

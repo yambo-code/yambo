@@ -151,6 +151,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
+ ! AF: add 2-levels paprallelism here
+ !
  do ik=1,nkibz
    !
    ! Print verbose wfc read message

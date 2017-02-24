@@ -32,7 +32,7 @@ type pw_atoms
   type (pw_struct), pointer :: struct
   integer                   :: natoms,ntypes
   type (pw_pseudo), pointer :: pseudo(:)
-  character(100),    pointer :: names(:)
+  character(100),   pointer :: names(:)
   real,             pointer :: positions(:,:)
   integer,          pointer :: type_map(:)
   real                      :: cutoff_vloc

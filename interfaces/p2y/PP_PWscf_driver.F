@@ -30,7 +30,7 @@ subroutine PP_PWscf_driver(k)
  !
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:levels,n_bands,n_spin,n_spinor,n_sp_pol
- use R_lattice,             ONLY:bz_samp
+ use R_lattice,             ONLY:bz_samp,ng_vec
  use D_lattice,             ONLY:n_atomic_species
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
  use X_m,                   ONLY:X_t
@@ -54,6 +54,7 @@ subroutine PP_PWscf_driver(k)
  integer :: ik, ngmax,io_err,ID
  integer :: ibeta,itype
  integer, external :: io_KB_pwscf
+ integer, external :: io_NLCC_pwscf
  !
  interface
     subroutine fill_basis(basis,struct,ik,ngmax)
@@ -113,6 +114,20 @@ subroutine PP_PWscf_driver(k)
    !
  end do
  !
+ ! write NLCC info if needed
+ !
+ if( any(atoms%pseudo(:)%psp_has_nlcc) ) then
+   !
+   call fill_basis_rho(basis_con,struct,ng_vec)
+   call PP_PWscf_comp_nlcc(basis_con,atoms)
+   !
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+   io_err=io_NLCC_pwscf(ID)
+   !
+ endif
+ !
+ ! cleanup
+ !
  call PP_free()
  deallocate(pp_table,pp_n_l_comp)
  !
@@ -152,6 +167,7 @@ subroutine fill_atoms(atoms,struct)
  use pw_data, only : psfile, nbeta, nmesh, nat_, atm_, tau_, ityp_
  use pw_struct_module
  use pw_atoms_module
+ use pw_pseudo_module
  use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
 &                       atom_pos, Z_species,atomic_number
  implicit none
@@ -186,9 +202,9 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  use qexml_module
  use pw_data, only : ecutwfc_
  implicit none
- type(pw_pseudo), intent(out) :: pseudo
- integer, intent(inout)       :: nbeta, nmesh
- character(256), intent(in)   :: psfile
+ type(pw_pseudo), intent(inout) :: pseudo
+ integer,         intent(inout) :: nbeta, nmesh
+ character(256),  intent(in)    :: psfile
  !
  ! Allocates pseudo% types and Inizializes pseudo%interpolation table
  !
@@ -252,3 +268,31 @@ subroutine fill_basis(basis,struct,ik,ngmax)
  ! 
  return
 end subroutine fill_basis
+
+subroutine fill_basis_rho(basis,struct,ngmax)
+ use pw_struct_module
+ use pw_basis_module
+ use pw_data,               ONLY : igv_, ngm_
+ implicit none
+ type(pw_struct), target :: struct
+ type(pw_basis)      :: basis   
+ integer, intent(in) :: ngmax
+ real :: at(3,3)
+ integer :: npw, ic, i
+ !
+ npw = min(ngm_,ngmax)
+ basis%struct => struct
+ !
+ ! Allocates basis%g(npw) and sets basis%npw
+ !
+ call pw_basis_set_npw(basis,npw)
+ !
+ do ic=1,npw
+   basis%g(1:3,ic) =  igv_(1:3,ic)  
+ enddo
+ basis%r0 = (/ 0.0, 0.0, 0.0 /)  ! not used
+ ! unused
+ basis%k  = 0.0
+ ! 
+ return
+end subroutine fill_basis_rho

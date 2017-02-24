@@ -56,9 +56,6 @@ integer function io_NLCC_pwscf(ID)
    ! n_atoms_max and n_atom_species are redundant as they are
    ! already read from the DB1.
    !
-   !call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=0)
-   !call io_elemental(ID,I0=n_atomic_species,VAR=" PP Number of Atomic Species")
-   !
    call io_elemental(ID,VAR="NUM_ATOMIC_SPECIES",VAR_SZ=1,MENU=0)
    call io_elemental(ID,I0=n_atomic_species,VAR=" PP Number of Atomic Species")
    call io_elemental(ID,VAR="NUM_RL_RHO_NLCC",VAR_SZ=1,MENU=0)

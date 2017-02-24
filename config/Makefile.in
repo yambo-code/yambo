@@ -105,8 +105,8 @@ nothing:
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
 all: interfaces
-	for target in $(PROJECTS); do $(MAKE) $$target ; done
 	for target in $(TARGETS); do $(MAKE) $$target ; done
+	for target in $(PROJECTS); do $(MAKE) $$target ; done
 	for target in $(DEBUG); do $(MAKE) $$target ; done
 libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \

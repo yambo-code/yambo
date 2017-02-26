@@ -48,7 +48,10 @@
   {"odir",  "O","Additional I/O directory",0,0,1,0,1},        
   {"cdir",  "C","Communications I/O directory",0,0,1,0,1},
 #if defined _MPI
-  {"nompi", "M","Skip MPI initialization",0,0,0,0,0}, 
+  {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
+#endif
+#if defined _OPENMP
+  {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,1}, 
 #endif
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom]",0,0,1,0,0}, 
   {"QPDBs",  "q","(g)enerate-modify/(m)erge quasi-particle databases",0,0,1,0,0}, 

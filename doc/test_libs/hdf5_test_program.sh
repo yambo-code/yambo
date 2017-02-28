@@ -1,5 +1,4 @@
 
-
 cat << EOF > hdf5_prog.f90
   program test_hdf5
     use hdf5
@@ -15,13 +14,15 @@ EOF
 # COMPILER #
 FC="gfortran"
 
+local_libs="${HOME}/libs/compiled/gnu_etsfmi_4.8.5"
+
 ##########
 # NETCDF #
 ##########
 # put here what you would use in --with-netcdf-libs=""
-NETCDF_LIBS="-L/usr/lib/x86_64-linux-gnu/ -lnetcdf -lnetcdff"
-# put here what you would use in --with-hdf5-libs=""
-NETCDF_INCS="/usr/include"
+NETCDF_LIBS="-L$local_libs/netcdf/lib -lnetcdf -lnetcdff"
+# put here what you would use in --with-netcdf-includedir=""
+NETCDF_INCS="$local_libs/netcdf/include"
 
 ##########
 #  HDF5  #

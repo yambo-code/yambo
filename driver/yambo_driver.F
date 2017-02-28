@@ -4,7 +4,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 ! 
-! This file is distributed under the terms of the GNU 
+! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or 
 ! modify it under the terms of the GNU General Public 
 ! License as published by the Free Software Foundation; 
@@ -80,11 +80,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Local Variables
  !
  integer           ::i_err,i_X_kind
- logical           ::l_sta_X,l_dyn_X
+ logical           ::l_sta_X,l_dyn_X,l_XCo
  !
  ! Externals
  !
- integer, external ::X_em1,INIT
+ integer, external ::X_dielectric_matrix,INIT
  !
  ! Presets
  !
@@ -171,7 +171,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! OPTICS
  !========
  !
- if (l_optics.and.l_chi) call O_driver(Xen,Xk,q,Xw(3),X(3),Dip)
+ if (l_optics.and.l_chi) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3),Dip)
  !
 #if defined _SURF
  !
@@ -185,12 +185,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !
- if (l_em1s.or.l_em1d.or.l_ppa) i_err=X_em1(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
+ if (l_em1s.or.l_em1d.or.l_ppa) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
  !
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))) call XCo_driver(en,k,Xk,q)
+ l_XCo=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
+ !
+ if (l_XCo)             call XCo_driver(en,k,Xk,q)
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================

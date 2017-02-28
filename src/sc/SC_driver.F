@@ -84,7 +84,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch,dumb_ch2
- integer, external        :: io_SC_components,X_em1
+ integer, external        :: io_SC_components,X_dielectric_matrix
  logical, external        :: stop_now
  !
  ! ws for states spread evaluation
@@ -412,7 +412,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        current_iq=0
        call IO_and_Messaging_switch("-report")
-       io_X_err=X_em1(E,Xk,q,X(2),Xw(2),Dip,.true.)
+       io_X_err=X_dielectric_matrix(E,Xk,q,X(2),Xw(2),Dip,.true.)
        call IO_and_Messaging_switch("+report")
        !
        ! Reload and rotate wave-functions if W is updated

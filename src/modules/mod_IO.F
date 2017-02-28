@@ -97,11 +97,12 @@ module IO_m
  integer, parameter:: IO_WRITE_MODE =ior(nf90_share,nf90_write)
  integer, parameter:: IO_READ_MODE  =               nf90_nowrite
  !
- integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
 #if defined _NC_CLASSIC
  integer, parameter:: IO_CREATE_MODE=    nf90_share
 #elif defined _HDF5_IO
  integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_hdf5)
+#else
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
 #endif
  !
  ! Units

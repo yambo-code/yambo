@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine O_driver(Xen,Xk,q,wv,X)
+subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  ! 
  ! Optics driver
  !
@@ -37,7 +37,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_DIPOLES
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -143,7 +143,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Check if EELS can be evaluated
    !
-   eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
    if (eval_alpha) eval_alpha=eval_eels
    !
@@ -204,7 +204,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    EEL       =cZERO
    Alpha     =cZERO
    !
-   call X_os(X_mat,iq,Xen,Xk,wv,X)     
+   call X_irredux(X_mat,iq,Xen,Xk,wv,X)     
    !
    ! Without LF eps
    !
@@ -215,7 +215,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    if(l_rpa_IP) then
      Epsilon_ii(:,2)=Epsilon_ii(:,1)
    else
-     call X_s(iq,X,wv,(/1,wv%n_freqs/))
+     call X_redux(iq,X,wv,(/1,wv%n_freqs/))
      !
      Epsilon_ii(:,2)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
    endif
@@ -224,7 +224,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    call of_open_close(eel_file_name,'oa')
    call of_open_close(alpha_file_name,'oa')
    !
-   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
+   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_irredux
    !
    call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%ordering)
    !
@@ -260,9 +260,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call of_open_close(eel_file_name,'oa')
      call of_open_close(alpha_file_name,'oa')
      !
-     eval_eels= O_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
+     eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
      if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
-     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
+     if(.not.l_rpa_IP) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
      !
      if (eval_alpha) then
        !

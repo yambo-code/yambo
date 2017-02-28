@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE SLK_matrix_duplicate( operation, M_in, M_out )
+SUBROUTINE MATRIX_duplicate( operation, M_in, M_out )
  !
  ! operation can be "none/+1/-1/-C(= -1 * conjg)"
  !

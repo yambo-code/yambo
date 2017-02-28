@@ -99,7 +99,7 @@ module IO_m
  !
  integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
 #if defined _NC_CLASSIC
- integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_classic)
+ integer, parameter:: IO_CREATE_MODE=    nf90_share
 #elif defined _HDF5_IO
  integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif
@@ -472,18 +472,31 @@ module IO_m
      endif
    end function
    !
-   subroutine deliver_IO_error_message(i_err,DB)
+   subroutine deliver_IO_error_message(i_err,DB,STOP_it)
      !
-     use com,        ONLY:warning
+     use com,        ONLY:warning,error
      !
-     integer      :: i_err
-     character(*) :: DB
+     integer          :: i_err
+     logical,optional :: STOP_it
+     character(*)     :: DB
+     !
+     ! ws
+     logical          :: STOP_
      !
      if (i_err==0) return
      !
-     if (i_err==IO_NO_DATABASE     ) call warning('Missing all or part of '//DB//' DB')
-     if (i_err==IO_INCOMPATIBLE_VAR) call warning('Variable not compatible in '//DB//' DB')
-     if (i_err==IO_OUTDATED_DB)      call warning('Too old '//DB//' DB')
+     STOP_=.FALSE.
+     if (present(STOP_it)) STOP_=STOP_it
+     !
+     if (STOP_) then
+       if (i_err==IO_NO_DATABASE     ) call error('Missing all or part of '//DB//' DB')
+       if (i_err==IO_INCOMPATIBLE_VAR) call error('Variable not compatible in '//DB//' DB')
+       if (i_err==IO_OUTDATED_DB)      call error('Too old '//DB//' DB')
+     else
+       if (i_err==IO_NO_DATABASE     ) call warning('Missing all or part of '//DB//' DB')
+       if (i_err==IO_INCOMPATIBLE_VAR) call warning('Variable not compatible in '//DB//' DB')
+       if (i_err==IO_OUTDATED_DB)      call warning('Too old '//DB//' DB')
+     endif
      !
    end subroutine
    !

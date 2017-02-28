@@ -275,4 +275,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  !
  call netcdf_call(nf_error,ID)
  !
+ deallocate(ipos_loc)
+ if (allocated(isize_loc)) deallocate(isize_loc)
+ !
 end subroutine

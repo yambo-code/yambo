@@ -40,7 +40,7 @@ module stderr
  !
  ! Slash
  !
-#if defined _aix || defined _BLUEGENE
+#if defined _aix || defined _XLF
  character(2), parameter :: slash="\\"
 #else 
  character(1), parameter :: slash="\"

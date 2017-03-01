@@ -1,4 +1,3 @@
-objs = 
 #if defined _SCALAPACK
-objs = MATRIX_init.o MATRIX_transfer.o MATRIX_duplicate.o
+objs = SLK_matrix_init.o MATRIX_transfer.o MATRIX_duplicate.o
 #endif

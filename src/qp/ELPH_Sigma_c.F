@@ -521,8 +521,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! CLEAN
  !
  call elph_global_free()
- deallocate(q_each_cpu)
- deallocate(q_weight)
+ if(allocated(q_each_cpu)) deallocate(q_each_cpu)
+ if(allocated(q_weight))   deallocate(q_weight)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))
  enddo

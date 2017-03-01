@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_ScaLapack_indexes(E,Xk,q,ENVIRONMENT)
+subroutine PARALLEL_global_ScaLapacK(E,Xk,q,ENVIRONMENT)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -52,4 +52,4 @@ subroutine PARALLEL_ScaLapack_indexes(E,Xk,q,ENVIRONMENT)
    !
  endif
  !
-end subroutine PARALLEL_ScaLapack_indexes
+end subroutine PARALLEL_global_ScaLapacK

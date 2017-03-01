@@ -24,9 +24,7 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
- use com,           ONLY:secnm
- use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,MPI_comm,COMM_copy,&
-&                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands,n_freqs,EH_range
+ use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,MPI_comm,COMM_copy,n_c_bands,n_v_bands
  ! LOGICALS
  use parallel_m,    ONLY:l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_NL,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q
  ! COMMUNICATORS
@@ -36,35 +34,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use X_m,           ONLY:X_t,l_X_terminator
- use drivers,       ONLY:l_gw0,l_HF_and_locXC,l_life,l_elphoton_corr
- use BS,            ONLY:BS_bands,BS_nT_at_k
-#if defined _ELPH
- use drivers,       ONLY:l_elph_corr
- use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
-#endif
-#if defined _SC
- use drivers,       ONLY:l_sc_run
- use SC,            ONLY:SC_bands
- use collision_ext, ONLY:P_collisions,COH_collisions,HXC_collisions
-#endif
-#if defined _RT
- use real_time,     ONLY:RT_bands
-#endif
+ use X_m,           ONLY:X_t,X_reset,X_duplicate,l_X_terminator
+ use drivers,       ONLY:l_HF_and_locXC,l_life,l_elphoton_corr
 #if defined _QED
  use parallel_m,    ONLY:l_par_SC
 #endif
-#if defined _NL
- use nl_optics,     ONLY:n_frequencies
-#endif
-#if defined _SC || defined _RT
- use drivers,       ONLY:l_eval_collisions
- use collision_ext, ONLY:COLL_bands
-#endif
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp,nqibz,nqbz
+ use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:IO_and_Messaging_switch
- use QP_m,          ONLY:QP_nb,QP_n_G_bands,QP_n_states
  use com,           ONLY:warning
  !
  implicit none
@@ -77,13 +54,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
- integer              :: X_type,i_k
- logical              :: reset_all,computing_Fock
+ type(X_t)            :: X_local
+ integer              :: X_type
+ logical              :: reset_all
  !
  ! Resets...
  !
  reset_all=.TRUE.
  if (present(RESET)) reset_all=RESET
+ !
+ call X_reset(X_local)
+ if(present(X)) call X_duplicate(X,X_local)
  !
  X_type=1
  if (present(X)) X_type=X%whoami
@@ -93,8 +74,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_reset(Xk,ENVIRONMENT,X_type)
    if(present(RESET)) return
  endif
- !
- computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Bare local and non-local Exchange-Correlation")/=0 )
  !
  ! Logicals
  !
@@ -119,94 +98,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Dimensions
  !============
  !
- ! K-pts
- !-------
- K_range=Xk%nibz
- if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) K_range=Xk%nibz
- if (ENVIRONMENT=="Response_T_space"                ) K_range=Xk%nibz
- if (ENVIRONMENT=="Real_Time"                       ) K_range=Xk%nibz
- if (ENVIRONMENT=="Non_Linear"                      ) K_range=Xk%nibz
- if (ENVIRONMENT=="Response_G_space"                ) K_range=Xk%nbz
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum") K_range=Xk%nbz
- !
- ! COND bands
- !------------
- if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) n_c_bands= (/E%nbf+1,X%ib(2)/)
- if (ENVIRONMENT=="Response_G_space"                ) n_c_bands= (/E%nbf+1,X%ib(2)/)
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum") n_c_bands= (/E%nbf+1,X%ib(2)/)
- if (ENVIRONMENT=="Response_T_space"                ) n_c_bands= (/E%nbf+1,BS_bands(2)/)
- !
- ! VAL bands
- !-----------
- 
-#if defined _NL | defined _SC
- if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) n_v_bands= (/1,X%ib(2)/)
-#else
- if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) n_v_bands= (/X%ib(1),E%nbm/) 
-#endif
- if (ENVIRONMENT=="Response_G_space"                ) n_v_bands= (/X%ib(1),E%nbm/)
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum") n_v_bands= (/X%ib(1),E%nbm/)
- if (ENVIRONMENT=="Response_T_space"                ) n_v_bands= (/BS_bands(1),E%nbm/)
- !
- ! Q-pts
- !-------
- Q_range=(/1,nqibz/)
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum") Q_range=(/max(X%iq(1),2),X%iq(2)/)
- if (ENVIRONMENT=="Real_Time"                       ) Q_range=(/1,nqbz/)
- if (ENVIRONMENT=="Self_Energy"                     ) then
-#if defined _SC
-   if (l_sc_run.and.&
-&      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
-&                                                     Q_range=(/1,nqbz/)
-#endif
-#if defined _SC || defined _RT
-   if (l_eval_collisions)                             Q_range=(/1,nqbz/)
-#endif
-#if defined _ELPH
-   if (l_elph_corr.and.elph_use_q_grid)               Q_range=(/1,nqbz/)
-   if (l_elph_corr.and..not.elph_use_q_grid)          Q_range=(/1,elph_nDBs_used/)
-#endif
- endif
- !
- ! EH-range
- !----------
- if (ENVIRONMENT=="Response_T_space"                ) then
-   EH_range=maxval( BS_nT_at_k )
-   do i_k=1,Xk%nibz
-     if (BS_nT_at_k(i_k)<EH_range.and.BS_nT_at_k(i_k)>0) EH_range=BS_nT_at_k(i_k)
-   enddo
- endif
- !
- ! Generic Bands
- !---------------
- if (ENVIRONMENT=="Self_Energy"                     ) then
-   if (l_HF_and_locXC)                               n_bands=(/1,max(E%nbm,QP_nb)/)
-   if ((l_gw0.or.l_life).and..not.computing_Fock)    n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
-   if (.not.computing_Fock)                          n_bands(1)=QP_n_G_bands(1)
-#if defined _SC || defined _RT
-   if (l_eval_collisions)                            n_bands=COLL_bands
-#endif
-#if defined _SC
-   if (l_sc_run)                                     n_bands=SC_bands
-#endif
-#if defined _ELPH
-   if (l_elph_corr)                                  n_bands=(/1,QP_PH_n_G_bands/)
-#endif
- endif
-#if defined _RT
- if (ENVIRONMENT=="Real_Time" ) n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
-#endif
-#if defined _NL
- if (ENVIRONMENT=="Non_Linear") n_bands=RT_bands
-#endif
- !
- ! QP states
- !-----------
- if (ENVIRONMENT=="Self_Energy"                     ) QP_range=QP_n_states
- !
-#if defined _NL
- if (ENVIRONMENT=="Non_Linear") n_freqs =n_frequencies
-#endif
+ call PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT,X_local)
  !
  !==========
  ! DEFAULTS
@@ -218,22 +110,22 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! ENVIRONMENT DEPENDENT SCHEMES
  !==============================
  !
- if (index(ENVIRONMENT, "Response_G_space")>0) call PARALLEL_Response_G_indexes(E,Xk,q,ENVIRONMENT,X_type)
+ if (index(ENVIRONMENT, "Response_G_space")>0) call PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
- if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_SelfEnergy_indexes(E,Xk,q,ENVIRONMENT,X_type)
+ if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT,X_type)
  !
- if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_Response_T_indexes(E,Xk,q,ENVIRONMENT,X_type)
+ if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T(E,Xk,q,ENVIRONMENT,X_type)
  !
 #if defined _RT
- if (      ENVIRONMENT=="Real_Time")           call PARALLEL_RealTime_indexes(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
 #endif
  !
-#if defined _RT
- if (      ENVIRONMENT=="Non_Linear")          call PARALLEL_NonLinear_indexes(E,Xk,q,ENVIRONMENT)
+#if defined _NL
+ if (      ENVIRONMENT=="Non_Linear")          call PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 #endif
  !
 #if defined _SCALAPACK
- if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_ScaLapack_indexes(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapacK(E,Xk,q,ENVIRONMENT)
 #endif
  !
  !======

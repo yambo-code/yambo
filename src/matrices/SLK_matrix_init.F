@@ -28,7 +28,7 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine MATRIX_init(ORTHO, POOL, M_slk, N )
+subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset

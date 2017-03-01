@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_RealTime_indexes(E,Xk,q,ENVIRONMENT)
+subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
  !
  use drivers,       ONLY:l_eval_collisions
  use electrons,     ONLY:levels
@@ -247,4 +247,4 @@ subroutine PARALLEL_RealTime_indexes(E,Xk,q,ENVIRONMENT)
    !
  endif
  !
-end subroutine Parallel_RealTime_indexes
+end subroutine Parallel_global_Real_Time

@@ -132,9 +132,7 @@ int main(int argc, char *argv[])
  strcpy(js," ");
  strcpy(id,".");
  strcpy(com_dir,".");
-
  ttd=guess_winsize();
-
  strcpy(rnstr2," ");
  if (argc>1) {
    while(opts[nr].ln!=NULL) {nr++;};
@@ -163,15 +161,19 @@ int main(int argc, char *argv[])
 #endif
  /*
    Upper Case actions
+   
+   Help...
  */
      if (strcmp(opts[j].ln,"help")==0) {usage(1);exit(0);};
      if (strcmp(opts[j].ln,"lhelp")==0) {usage(2);exit(0);};
 /* 
- Switch off MPI_init for non-prallel options ...
+ ...switch off MPI_init for non-parallel options ...
 */
      if (opts[j].mp==0)  {mpi_init=-1;};
 /* 
+ ...or for an explicit request
 */
+     if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
 /*
  Switch off launch editor
 */
@@ -405,8 +407,7 @@ static void usage(int verbose)
    };
   };
   fprintf(stderr,"\n");
-  fprintf(stderr,"%s\t%s\n\t%s\n\n","By","YAMBO developers group",
-                 "http://www.yambo-code.org");
+  fprintf(stderr,"%s\n\n"," YAMBO developers group (http://www.yambo-code.org)");
  };
 };
 static void title(FILE *file_name,char *cmnt)

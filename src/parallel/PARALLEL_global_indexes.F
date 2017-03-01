@@ -34,7 +34,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use X_m,           ONLY:X_t,l_X_terminator
+ use X_m,           ONLY:X_t,X_reset,X_duplicate,l_X_terminator
  use drivers,       ONLY:l_HF_and_locXC,l_life,l_elphoton_corr
 #if defined _QED
  use parallel_m,    ONLY:l_par_SC
@@ -62,6 +62,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  reset_all=.TRUE.
  if (present(RESET)) reset_all=RESET
+ !
+ call X_reset(X_local)
+ if(present(X)) call X_duplicate(X,X_local)
  !
  X_type=1
  if (present(X)) X_type=X%whoami
@@ -94,8 +97,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Dimensions
  !============
  !
- if(     present(X)) call PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT,X)
- if(.not.present(X)) call PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT,X_local)
+ call PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT,X_local)
  !
  !==========
  ! DEFAULTS

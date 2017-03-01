@@ -59,8 +59,8 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  integer             :: i_sign,istat
  integer             :: STRIDE,RANK,DIST,BATCH
  !
- if (fft_sign>0) i_sign=+1
- if (fft_sign<0) i_sign=-1
+ if (fft_sign>0) i_sign=CUFFT_INVERSE
+ if (fft_sign<0) i_sign=CUFFT_FORWARD
  !
  if (cufft_plan==0) then
    !

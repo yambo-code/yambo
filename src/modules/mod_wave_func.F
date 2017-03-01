@@ -24,6 +24,9 @@
 module wave_func
  !
  use pars,           ONLY:SP
+#if defined _CUDA
+ use cudafor
+#endif
  implicit none
  !
  type WAVEs 
@@ -36,6 +39,9 @@ module wave_func
    integer    , pointer :: index(:,:,:)  => null()
    logical    , pointer :: state(:,:,:)  => null()
    logical              :: to_load = .TRUE.
+#if defined _CUDA
+   complex(SP), pointer, device :: c_d(:,:) => null()
+#endif
  end type WAVEs
  !
  ! Buffered WFs
@@ -103,6 +109,15 @@ module wave_func
      complex(SP),dimension(n_spinor) :: WF_symm
    end function
    !
+#if defined _CUDA
+   function WF_symm_gpu(ifft,isc)
+     use pars,        ONLY: SP
+     use electrons,   ONLY: n_spinor
+     integer             :: ifft,isc(4)
+     complex(SP),dimension(n_spinor), device :: WF_symm_gpu
+   end function
+#endif
+   !
  end interface 
  !
  contains
@@ -122,6 +137,9 @@ module wave_func
      allocate(WF_out%index(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
      WF_out%c=WF_in%c
      WF_out%index=WF_in%index
+#if defined _CUDA
+     if (associated(WF_in%c_d)) allocate(WF_out%c_d,source=WF_in%c)
+#endif
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)

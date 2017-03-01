@@ -174,3 +174,124 @@ subroutine scatter_Bamp(isc)
  if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
  !
 end subroutine
+
+#ifdef _CUDA
+subroutine scatter_Bamp_gpu(isc)
+ !
+ ! rhotw(G)=<ib ik_is i_sp| e^[I(RsG-G0).r] | ob ok_os o_sp>   
+ !
+ !  is(3)=(ib,ik,is,i_sp) --<--:--<-- os(3)=(ob,ok,os,o_sp)
+ !                             :
+ !                            /:\ iqs=(ig0,iq,qs)
+ !                             :
+ !
+ !                     \:/
+ ! REMEMBER that     ->-:->-  =  conjg [-<-:-<-]
+ !                                        /:\
+ !  iq_is = ik_is-ok_os-Go
+ !
+ use pars,           ONLY:cZERO,cONE,DP,SP
+ use electrons,      ONLY:n_spinor
+ use collision_el,   ONLY:elemental_collision
+ use D_lattice,      ONLY:idt_index
+ use R_lattice,      ONLY:g_rot
+ use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table
+ use FFT_m,          ONLY:cufft_plan
+ !
+ implicit none
+ !
+ type(elemental_collision)::isc
+ !
+ ! WORKAROUND
+ !
+ integer, allocatable, device :: fft_g_table_d(:,:)
+ integer, allocatable, device :: g_rot_d(:,:)
+
+ !
+ integer     :: qs,iGo
+ integer     :: ig, ir
+ !
+ complex(SP), pointer, device :: WF_symm_i_d(:,:), WF_symm_o_d(:,:)
+ complex(SP), pointer, device :: rhotw_d(:)
+ complex(DP), pointer, device :: rho_tw_rs_d(:)
+
+ !
+ ! WORKAROUND
+ !
+ allocate(fft_g_table_d,source=fft_g_table)
+ allocate(g_rot_d,source=g_rot)
+
+ !
+ ! define pointer to enable CUF kernels
+ !
+ WF_symm_i_d => isc%WF_symm_i_d
+ WF_symm_o_d => isc%WF_symm_o_d
+ rho_tw_rs_d => isc%rho_tw_rs_d
+ rhotw_d     => isc%rhotw_d 
+
+ !
+ ! |ib ik_is i_sp>
+ call WF_apply_symm_gpu(isc%is,isc%WF_symm_i_d)
+ !
+ ! | ob ok_os o_sp>   
+ call WF_apply_symm_gpu(isc%os,isc%WF_symm_o_d)
+
+ !
+ ! \tilde{\rho} in Real Space
+ !
+ !$cuf kernel do(1) <<<*,*>>>
+ do ir = 1, fft_size
+   rho_tw_rs_d(ir) = cmplx(conjg(WF_symm_i_d(ir,1))*WF_symm_o_d(ir,1),kind=DP)
+ enddo
+ !
+ if (n_spinor==2) then
+   !$cuf kernel do(1) <<<*,*>>>
+   do ir = 1, fft_size
+     rho_tw_rs_d(ir) = rho_tw_rs_d(ir)+cmplx(conjg(WF_symm_i_d(ir,2))*WF_symm_o_d(ir,2),kind=DP)
+   enddo
+ endif
+
+ !
+ ! perform the actual FFT
+ !
+ call fft_3d_cuda(rho_tw_rs_d,fft_dim,+1,cufft_plan)
+
+ !
+ ! e^[I(Rs(G-G0)).r]
+ !
+ iGo=isc%qs(1)
+ qs =isc%qs(3)
+ !
+ if (qs==idt_index) then 
+   !$cuf kernel do(1) <<<*,*>>>
+   do ig = 1, isc%ngrho
+     rhotw_d(ig)= cmplx(rho_tw_rs_d(fft_g_table_d(ig,iGo)),kind=SP)
+   enddo
+ else
+   !$cuf kernel do(1) <<<*,*>>>
+   do ig = 1, isc%ngrho
+     rhotw_d(ig)= cmplx(rho_tw_rs_d(fft_g_table_d(g_rot_d(qs,ig),iGo)),kind=SP)
+   enddo
+ endif
+
+ !
+ ! Dev 2 Host
+ !
+ isc%rhotw=isc%rhotw_d
+
+ !
+ ! q=0, G=0 case
+ !
+ if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
+ if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
+ 
+ !
+ ! WORKAROUND
+ !
+ deallocate(fft_g_table_d)
+ deallocate(g_rot_d)
+
+end subroutine scatter_Bamp_gpu
+
+#endif
+

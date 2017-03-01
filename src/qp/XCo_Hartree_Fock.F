@@ -106,9 +106,15 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
    !
+#ifdef _CUDA
+   call msg('rns', '[EXS] Copying WF data to Device')
+   allocate(WF%c_d,source=WF%c)
+#endif
+   !
  endif
  !
 #if defined _TIMING
+ 
  call timing('HF',OPR='start')
 #endif
  !
@@ -188,12 +194,21 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        isc%os(1)=jb
        iscp%os=isc%os
        !
+#ifdef _CUDA
+       call scatter_Bamp_gpu(isc)
+#else
        call scatter_Bamp(isc)
+#endif
        !
        ! Normal case, the density matrix is diagonal
        !
        iscp%rhotw=isc%rhotw
+#ifdef _CUDA
        if (isc%is(1)/=iscp%is(1)) call scatter_Bamp(iscp)
+#else
+       if (isc%is(1)/=iscp%is(1)) call scatter_Bamp_gpu(iscp)
+#endif
+       !
        !
 #if defined _OPENMP
 !$omp parallel do default(shared), private(ig)

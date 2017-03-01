@@ -26,6 +26,9 @@ subroutine build_spin_sop()
  use pars,           ONLY:SP,pi,cI,cONE,cZERO
  use matrix_operate, ONLY:m3det
  use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev
+!#if defined _CUDA
+! use D_lattice,      ONLY:spin_sop_d
+!#endif
  use electrons,      ONLY:n_spinor
  !
  implicit none
@@ -98,5 +101,10 @@ subroutine build_spin_sop()
    enddo
    !
  enddo
+ !
+!#if defined _CUDA
+! if (allocated(spin_sop_d)) deallocate(spin_sop_d)
+! allocate(spin_sop_d,source=spin_sop)
+!#endif
  !
 end subroutine

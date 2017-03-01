@@ -41,6 +41,7 @@ m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
 m4_include([config/ax_f90_module_flag.m4])
 m4_include([config/acx_fortran_flags.m4])
+m4_include([config/cuda.m4])
 
 AC_PREFIX_DEFAULT($PWD)
 
@@ -405,6 +406,9 @@ AC_HAVE_ETSF_IO
 # ============================================================================
 # LIBXC
 ACX_LIBXC
+# ============================================================================
+# CUDA
+AC_HAVE_CUDA
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

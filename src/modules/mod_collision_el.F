@@ -57,6 +57,13 @@ module collision_el
    complex(SP), pointer :: WF_symm_i(:,:) => null()
    complex(SP), pointer :: WF_symm_o(:,:) => null()
    !
+#if defined(_CUDA)
+   complex(SP), pointer, device :: rhotw_d(:)  => null()
+   complex(DP), pointer, device :: rho_tw_rs_d(:) => null()
+   complex(SP), pointer, device :: WF_symm_i_d(:,:) => null()
+   complex(SP), pointer, device :: WF_symm_o_d(:,:) => null()
+#endif
+   !
  end type elemental_collision
  !
  contains
@@ -80,8 +87,17 @@ module collision_el
        if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
        if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
        if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
+#if defined(_CUDA)
+       if(associated(ggw%rhotw_d))     deallocate(ggw%rhotw_d)
+       if(associated(ggw%rho_tw_rs_d)) deallocate(ggw%rho_tw_rs_d)
+       if(associated(ggw%WF_symm_i_d)) deallocate(ggw%WF_symm_i_d)
+       if(associated(ggw%WF_symm_o_d)) deallocate(ggw%WF_symm_o_d)
+#endif
      endif
      nullify(ggw%gamp,ggw%rhotw,ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
+#if defined(_CUDA)
+     nullify(ggw%rhotw_d,ggw%rho_tw_rs_d,ggw%WF_symm_i_d,ggw%WF_symm_o_d)
+#endif
    end subroutine
    !
    subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)
@@ -102,6 +118,11 @@ module collision_el
      allocate(ggw%rho_tw_rs(fft_size))
      allocate(ggw%WF_symm_i(fft_size,n_spinor))
      allocate(ggw%WF_symm_o(fft_size,n_spinor))
+#if defined _CUDA
+     allocate(ggw%rho_tw_rs_d(fft_size))
+     allocate(ggw%WF_symm_i_d(fft_size,n_spinor))
+     allocate(ggw%WF_symm_o_d(fft_size,n_spinor))
+#endif
      !
      call mem_est(trim(ggw%name)//"-rho_tw_rs",(/fft_size/),(/2*SP/))
      call mem_est(trim(ggw%name)//"-WF_symm_i",(/fft_size*n_spinor/),(/2*SP/))
@@ -113,6 +134,13 @@ module collision_el
        else
          allocate(ggw%rhotw(NG))
        endif
+#if defined _CUDA
+       if (present(GRADIENT)) then
+         if (GRADIENT) allocate(ggw%rhotw_d(3*NG))
+       else
+         allocate(ggw%rhotw_d(NG))
+       endif
+#endif
        ggw%ngrho=NG
        call mem_est(trim(ggw%name)//"-rhotw",(/size(ggw%rhotw)/),(/2*SP/))
      endif
